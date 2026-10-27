@@ -885,3 +885,286 @@ example {Object EventFrame TimeFrame : Type}
     # process lifecycle; this is not a statutory or modal-axiom proof.
     (tmp_path / source_name).write_bytes(run.output_files[source_name])
     (tmp_path / output_name).write_bytes(run.output_files[output_name])
+
+
+SECTION_101_HEAD = "Dbd48f41add569aaa0eb3e500460119c4aa990ec31eb4867a98e24aa609ad6c3a"
+SECTION_101_BODY = "Da40ab2d15eb233346a3c5255c6377439b1d0e46f75b030463de7697564fc9d1f"
+SECTION_101_AST_SHA = "3d5ea9d4a02c3b6134b1e37f02b589d16fd4c0fdffbf568da7dac8f98480e500"
+NATIVE_TOOLCHAIN = "leanprover/lean4:v4.34.1"
+
+
+def interface_row(candidate_id, codec, payload, toolchain=None):
+    text = payload if type(payload) is str else wire(payload).decode("utf-8")
+    return {"candidate_id": candidate_id, "codec": codec, "payload_raw_utf8": text,
+            "payload_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
+            "toolchain": toolchain}
+
+
+def interface_prepare(rows):
+    request = {"schema": bridge.INTERFACE_REQUEST_SCHEMA, "candidates": rows}
+    raw = wire(request)
+    report = bridge.prepare_candidate_ir_interface_v1(
+        raw, expected_request_sha256=hashlib.sha256(raw).hexdigest())
+    return raw, report
+
+
+def mixed_member_request():
+    event = signatures.LogicSort("EventFrame")
+    time = signatures.LogicSort("TimeFrame")
+    builder = Builder()
+    body = ast.mk_predicate(builder.nid(), "Member", [
+        ast.mk_variable(builder.nid(), "actor", OBJECT),
+        ast.mk_variable(builder.nid(), "event", event),
+        ast.mk_variable(builder.nid(), "moment", time)])
+    root = body
+    for name, sort in (("moment", time), ("event", event), ("actor", OBJECT)):
+        root = ast.mk_forall(builder.nid(), [ast.Binder(name, sort)], root)
+    signature = signatures.LogicSignature("fixture:mixed", family="tdfol", profile="tdfol_default",
+        sorts=(OBJECT, event, time),
+        symbols=(signatures.declare_predicate("Member", (OBJECT, event, time)),))
+    expression = ast.TypedExpression("fixture:mixed-expression", root, signature)
+    return {"schema": bridge.MIXED_REQUEST_SCHEMA, "profile": bridge.MIXED_PROFILE,
+            "interpretation_status": "authored_unreviewed_declaration",
+            "expression": expression.to_dict(),
+            "argument_roles": [{"symbol": "Member", "roles": ["actor", "event", "moment"]}],
+            "source_binding": None}
+
+
+def section101_fragment(family="fol"):
+    from ipfs_datasets_py.logic.autoformal import family_qualification
+    from ipfs_datasets_py.logic.autoformal import legal_family_routes as routes
+    from ipfs_datasets_py.logic.intent_ir.formalize.modal_projections import _ast
+    formula = "∀x.(↔ " + SECTION_101_HEAD + "(x) " + SECTION_101_BODY + "(x))"
+    native_ast = _ast(family_qualification._strict_tdfol(formula)[0])
+    return routes.prepare_native_fragment(family=family, formula=formula, expected_ast=native_ast)
+
+
+def _object_equality_request():
+    request = approval_request()
+    request["expression"]["root"] = ast.mk_equality(
+        "fixture:unsupported", ast.mk_variable("fixture:left", "actor", OBJECT),
+        ast.mk_variable("fixture:right", "actor", OBJECT)).to_dict()
+    return reseal_expression(request)
+
+
+def _object_reserved_request():
+    request = approval_request()
+    request["expression"]["root"]["binders"][0]["name"] = "O"
+    return reseal_expression(request)
+
+
+def test_candidate_interface_covers_every_declared_disposition_and_keeps_order():
+    reserved = _object_reserved_request()
+    unsupported = _object_equality_request()
+    representable = approval_request()
+    swapped = approval_request()
+    swapped["argument_roles"][0]["roles"] = ["recipient", "actor"]
+    raw, report = interface_prepare([
+        interface_row("focused:representable", "object_relational", representable),
+        interface_row("focused:unsupported", "object_relational", unsupported),
+        interface_row("focused:ambiguous", "object_relational", reserved),
+        interface_row("focused:role-order", "object_relational", swapped),
+    ])
+    records = report["candidate_records"]
+    assert [record["disposition"] for record in records] == [
+        "representable", "unsupported", "ambiguous", "representable"]
+    assert set(record["disposition"] for record in records) == set(bridge.INTERFACE_DISPOSITIONS)
+    assert [record["candidate_id"] for record in records] == [
+        row["candidate_id"] for row in json.loads(raw)["candidates"]]
+    assert records[0]["ordered_binders"] == [
+        {"name": "actor", "sort": "Object"}, {"name": "recipient", "sort": "Object"},
+        {"name": "approver", "sort": "Object"}]
+    assert records[0]["ordered_constructors"][0] == "forall"
+    assert "predicate" in records[0]["ordered_constructors"]
+    assert "extension" in records[0]["ordered_constructors"]
+    assert records[0]["argument_roles"] == representable["argument_roles"]
+    assert records[1]["ordered_constructors"][0] == "equality"
+    assert records[1]["argument_roles"] == unsupported["argument_roles"]
+    assert records[1]["reason"] == "qualified_codec_refuses"
+    assert records[2]["reason"] == "reserved_identifier"
+    assert records[2]["ordered_binders"][0]["name"] == "O"
+    assert records[2]["argument_roles"] == reserved["argument_roles"]
+    assert records[3]["argument_roles"][0]["roles"] == ["recipient", "actor"]
+    assert records[0]["argument_roles"] != records[3]["argument_roles"]
+    census = report["constructor_vocab_census"]
+    assert census["corpus_census_executed"] is False
+    assert [row["candidate_id"] for row in census["ordered_by_candidate"]] == [
+        record["candidate_id"] for record in records]
+    assert census["first_seen_constructors"][0] == "forall"
+    assert "equality" in census["first_seen_constructors"]
+    assert census["first_seen_constructors"].index("forall") < census["first_seen_constructors"].index("equality")
+
+
+def test_unsupported_and_ambiguous_candidates_keep_payloads_without_replacement():
+    unsupported = _object_equality_request()
+    reserved = _object_reserved_request()
+    pretty = json.dumps(reserved, indent=2)
+    assert "\n" in pretty
+    _, report = interface_prepare([
+        interface_row("focused:unsupported", "object_relational", unsupported),
+        interface_row("focused:ambiguous", "object_relational", pretty),
+    ])
+    refused, ambiguous = report["candidate_records"]
+    for record, payload in ((refused, wire(unsupported).decode()), (ambiguous, pretty)):
+        assert record["payload_raw_utf8"] == payload
+        assert hashlib.sha256(record["payload_raw_utf8"].encode()).hexdigest() == record["payload_sha256"]
+        assert record["roles_dropped"] is False and record["roles_present"] is True
+        assert record["replacement_ast"] is None and record["codec_projection_sha256"] is None
+        assert record["projection_replaces_candidate"] is False
+        assert record["legal_acceptance"] is False and record["admitted"] is False
+        assert record["formalized"] is False
+        assert "native_ast" not in record and "renderer_ast" not in record
+        assert "typed_expression" not in record
+    assert refused["argument_roles"] == unsupported["argument_roles"]
+    assert json.loads(ambiguous["payload_raw_utf8"])["expression"]["root"]["binders"][0]["name"] == "O"
+    assert ambiguous["candidate_ast_sha256"] == hashlib.sha256(
+        bridge._wire(reserved["expression"], bridge.MAX_REQUEST_BYTES)).hexdigest()
+    budget = report["codec_projection_budget"]
+    assert budget["corpus_census_executed"] is False
+    assert budget["missing_interface_recipe"]["implemented"] is False
+    assert budget["missing_interface_recipe"]["replacement_ast_created"] is False
+    assert budget["object_relational"]["max_nodes"] == bridge.MAX_NODES
+    assert budget["object_relational"]["graph_projection"] == "not_registered"
+    assert budget["mixed_relational"]["native_ast"] is None
+    assert all(question["status"] == "unanswered" for question in report["unresolved_questions"])
+    assert report["unresolved_questions"][0]["candidate_ids"] == [
+        "focused:unsupported", "focused:ambiguous"]
+
+
+def test_ambiguous_reserved_identifier_does_not_call_a_codec(monkeypatch):
+    def forbidden(*args, **kwargs):
+        pytest.fail("ambiguous candidate reached a qualified codec")
+    monkeypatch.setattr(bridge, "prepare_relational_norm_v1", forbidden)
+    monkeypatch.setattr(bridge, "prepare_mixed_relational_norm_v1", forbidden)
+    _, report = interface_prepare([
+        interface_row("focused:ambiguous", "object_relational", _object_reserved_request())])
+    record = report["candidate_records"][0]
+    assert record["disposition"] == "ambiguous" and record["reason"] == "reserved_identifier"
+    assert record["replacement_ast"] is None and record["roles_dropped"] is False
+
+
+def test_candidate_order_and_serialization_are_lossless():
+    first, second = approval_request(), approval_request()
+    second["argument_roles"][0]["roles"] = ["recipient", "actor"]
+    left_raw, left = interface_prepare([
+        interface_row("alpha", "object_relational", first),
+        interface_row("beta", "object_relational", second)])
+    right_raw, right = interface_prepare([
+        interface_row("beta", "object_relational", second),
+        interface_row("alpha", "object_relational", first)])
+    assert [row["candidate_id"] for row in left["candidate_records"]] == ["alpha", "beta"]
+    assert [row["candidate_id"] for row in right["candidate_records"]] == ["beta", "alpha"]
+    assert bridge.candidate_ir_interface_sha256(left) != bridge.candidate_ir_interface_sha256(right)
+    digest = bridge.candidate_ir_interface_sha256(left)
+    assert digest == hashlib.sha256(wire(left)).hexdigest()
+    regenerated = bridge.validate_candidate_ir_interface_v1(left, left_raw,
+        expected_request_sha256=hashlib.sha256(left_raw).hexdigest(),
+        expected_report_sha256=digest)
+    assert regenerated == left
+    damaged = deepcopy(left)
+    damaged["candidate_records"][0]["ordered_constructors"].reverse()
+    with pytest.raises(ValueError):
+        bridge.validate_candidate_ir_interface_v1(damaged, left_raw,
+            expected_request_sha256=hashlib.sha256(left_raw).hexdigest(),
+            expected_report_sha256=bridge.candidate_ir_interface_sha256(damaged))
+    assert right_raw != left_raw
+
+
+@pytest.mark.parametrize("rows", [
+    [],
+    [interface_row("same", "object_relational", approval_request())] * 2,
+    [interface_row("extra-" + str(index), "object_relational", {"schema": "x"})
+     for index in range(bridge.INTERFACE_MAX_CANDIDATES + 1)],
+])
+def test_candidate_interface_bounds_refuse_before_classification(rows):
+    request = {"schema": bridge.INTERFACE_REQUEST_SCHEMA, "candidates": rows}
+    raw = wire(request)
+    with pytest.raises(ValueError):
+        bridge.prepare_candidate_ir_interface_v1(
+            raw, expected_request_sha256=hashlib.sha256(raw).hexdigest())
+
+
+def test_mixed_and_native_codecs_retain_every_disposition():
+    mixed = mixed_member_request()
+    mixed_unsupported = deepcopy(mixed)
+    mixed_unsupported["expression"]["signature"]["sorts"].append(
+        signatures.LogicSort("CivilDate").to_dict())
+    mixed_unsupported = reseal_expression(mixed_unsupported)
+    mixed_ambiguous = deepcopy(mixed)
+    mixed_ambiguous["expression"]["root"]["binders"][0]["name"] = "forall"
+    mixed_ambiguous = reseal_expression(mixed_ambiguous)
+    fragment = section101_fragment()
+    assert hashlib.sha256(wire(fragment["native_ast"])).hexdigest() == SECTION_101_AST_SHA
+    existential = deepcopy(fragment)
+    existential["native_ast"]["quantifier"]["value"] = "∃"
+    conflict = deepcopy(fragment)
+    conflict["native_ast"]["formula"]["operator"]["value"] = "→"
+    _, report = interface_prepare([
+        interface_row("mixed:representable", "mixed_relational", mixed),
+        interface_row("mixed:unsupported", "mixed_relational", mixed_unsupported),
+        interface_row("mixed:ambiguous", "mixed_relational", mixed_ambiguous),
+        interface_row("native:representable", "native_unary_preservation", fragment, NATIVE_TOOLCHAIN),
+        interface_row("native:unsupported", "native_unary_preservation", existential, NATIVE_TOOLCHAIN),
+        interface_row("native:ambiguous", "native_unary_preservation", conflict, NATIVE_TOOLCHAIN),
+    ])
+    by_id = {record["candidate_id"]: record for record in report["candidate_records"]}
+    assert [by_id[key]["disposition"] for key in (
+        "mixed:representable", "mixed:unsupported", "mixed:ambiguous",
+        "native:representable", "native:unsupported", "native:ambiguous")] == [
+            "representable", "unsupported", "ambiguous", "representable", "unsupported", "ambiguous"]
+    assert by_id["mixed:representable"]["ordered_binders"] == [
+        {"name": "actor", "sort": "Object"}, {"name": "event", "sort": "EventFrame"},
+        {"name": "moment", "sort": "TimeFrame"}]
+    assert by_id["mixed:representable"]["argument_roles"] == mixed["argument_roles"]
+    assert by_id["mixed:unsupported"]["argument_roles"] == mixed_unsupported["argument_roles"]
+    assert by_id["mixed:ambiguous"]["ordered_binders"][0]["name"] == "forall"
+    assert by_id["mixed:ambiguous"]["roles_dropped"] is False
+    native = by_id["native:representable"]
+    assert native["candidate_ast_sha256"] == SECTION_101_AST_SHA
+    assert native["candidate_ast_kind"] == "native_ast"
+    assert native["argument_roles"] is None and native["roles_present"] is False
+    assert native["roles_dropped"] is False and native["replacement_ast"] is None
+    assert native["ordered_constructors"][0] == "QuantifiedFormula"
+    assert native["ordered_binders"] == [{"name": "x", "sort": None}]
+    assert by_id["native:unsupported"]["payload_raw_utf8"].count("∃") == 1
+    conflict_record = by_id["native:ambiguous"]
+    assert conflict_record["reason"] == "formula_ast_conflict"
+    assert "↔" in json.loads(conflict_record["payload_raw_utf8"])["formula"]
+    assert json.loads(conflict_record["payload_raw_utf8"])["native_ast"]["formula"]["operator"]["value"] == "→"
+    assert conflict_record["replacement_ast"] is None
+    budget = report["codec_projection_budget"]
+    assert budget["native_unary_preservation"]["max_files"] == 7
+    assert budget["native_unary_preservation"]["max_ast_nodes"] == 4096
+    assert budget["mixed_relational"]["renderer_schema"] == "sorted-relational-renderer-ast/v1"
+    assert [owner["symbol"] for owner in report["reuse_owners"]] == [
+        "prepare_relational_norm_v1", "prepare_mixed_relational_norm_v1",
+        "prepare_native_ast_preservation", "sorted_relational_document"]
+
+
+def test_retained_7214_candidates_keep_identity_roles_and_binder_order(mixed_retained_reports):
+    rows = []
+    for item in mixed_retained_reports:
+        raw = item["request_raw"]
+        rows.append({"candidate_id": item["alternative"]["alternative_id"],
+            "codec": "mixed_relational", "payload_raw_utf8": raw.decode("utf-8"),
+            "payload_sha256": hashlib.sha256(raw).hexdigest(), "toolchain": None})
+    _, report = interface_prepare(rows)
+    assert report["constructor_vocab_census"]["corpus_census_executed"] is False
+    assert [record["candidate_id"] for record in report["candidate_records"]] == [
+        "7214:cap_within_permission", "7214:cap_as_permission_guard"]
+    for record, item in zip(report["candidate_records"], mixed_retained_reports, strict=True):
+        expression = item["request"]["expression"]
+        assert record["disposition"] == "representable"
+        assert record["legal_acceptance"] is False and record["admitted"] is False
+        assert record["roles_dropped"] is False and record["replacement_ast"] is None
+        assert record["projection_replaces_candidate"] is False
+        assert record["argument_roles"] == item["request"]["argument_roles"]
+        assert len(record["argument_roles"]) == 10
+        assert len(record["ordered_binders"]) == 12
+        assert len(record["ordered_constructors"]) == 98
+        assert [binder["sort"] for binder in record["ordered_binders"][:2]] == [
+            "EventFrame", "TimeFrame"]
+        assert record["candidate_ast_sha256"] == hashlib.sha256(
+            bridge._wire(expression, bridge.MAX_REQUEST_BYTES)).hexdigest()
+        assert record["codec_projection_sha256"] != record["candidate_ast_sha256"]
+        assert record["payload_raw_utf8"].encode("utf-8") == item["request_raw"]
