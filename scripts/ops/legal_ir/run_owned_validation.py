@@ -23,14 +23,17 @@ import time
 ROOT = Path(__file__).resolve().parents[3]
 
 
-def snapshot(path, maximum=1024*1024):
+def snapshot(path, maximum=1024*1024, *, allow_empty=False):
+    if type(allow_empty) is not bool:
+        raise ValueError('allow_empty must be an exact bool')
+    minimum = 0 if allow_empty else 1
     path = Path(path)
     for parent in (path.parent, *path.parent.parents):
         if not stat.S_ISDIR(parent.lstat().st_mode):
             raise ValueError('input directory is missing or aliased')
     with os.fdopen(os.open(path, os.O_RDONLY|os.O_NOFOLLOW|os.O_NONBLOCK), 'rb') as stream:
         before = os.fstat(stream.fileno())
-        if not stat.S_ISREG(before.st_mode) or before.st_nlink != 1 or not 0 < before.st_size <= maximum:
+        if not stat.S_ISREG(before.st_mode) or before.st_nlink != 1 or not minimum <= before.st_size <= maximum:
             raise ValueError('bounded unaliased regular input required')
         raw = stream.read(maximum+1)
         after = os.fstat(stream.fileno())
@@ -45,7 +48,7 @@ def request(path, digest):
     if hashlib.sha256(raw).hexdigest() != digest:
         raise ValueError('request hash differs')
     value = json.loads(raw)
-    if value.get('schema') != 'owned-validation-request/v1':
+    if value.get('schema') not in ('owned-validation-request/v1', 'owned-validation-request/v2'):
         raise ValueError('unsupported validation request')
     return value, raw
 
@@ -55,7 +58,7 @@ def source_guard(value):
     if type(pins) is not dict or not pins:
         raise ValueError('explicit validation source pins required')
     for path, digest in pins.items():
-        if hashlib.sha256(snapshot(path, 4*1024*1024)).hexdigest() != digest:
+        if hashlib.sha256(snapshot(path, 4*1024*1024, allow_empty=True)).hexdigest() != digest:
             raise ValueError('validation source changed: '+path)
 
 
@@ -165,6 +168,50 @@ def _source_custody_witness(owner, reservation, value, request_raw, request_path
             'release_authorized': False})
 
 
+
+PRE_OWNER_REFUSAL_SCHEMA = 'owned-validation-pre-owner-refusal/v1'
+_PRE_OWNER_EVENTS = _LIFECYCLE_EVENTS | {'owner_construction_attempted', 'owner_construction_returned'}
+
+
+def _pre_owner_refusal_terminal(value, request_raw, request_path, request_pin,
+        resource_ledger, failure):
+    """Report only the fixed constructor branch before owner.open is reachable.
+
+    Construction validates metadata and opens the existing policy read-only;
+    the original owner acquires native/storage custody only in open(). This
+    certificate grants no cleanup, admission, storage release or test credit.
+    """
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_daemon_resources as host
+    identity = host._process(os.getpid())
+    if identity is None:
+        raise RuntimeError('original pre-owner process identity unavailable')
+    owner = {key: identity[key] for key in ('pid', 'birth')}
+    guards = {'request_unchanged': False, 'source_pins_unchanged': False,
+              'owner_identity_unchanged': False, 'errors': []}
+    for name, check in (
+            ('request_unchanged', lambda: snapshot(request_path) == request_raw),
+            ('source_pins_unchanged', lambda: _lifecycle_source_guard(value) is None),
+            ('owner_identity_unchanged', lambda: host._process(os.getpid()) is not None
+                and all(host._process(os.getpid())[key] == owner[key] for key in ('pid', 'birth')))):
+        try:
+            guards[name] = check() is True
+        except BaseException as error:
+            guards['errors'].append(name + ': ' + type(error).__name__)
+    producer = str(Path(__file__).resolve())
+    witness = dict(schema=PRE_OWNER_REFUSAL_SCHEMA, request_sha256=request_pin,
+        producer={'path': producer, 'sha256': value['source_sha256'].get(producer)},
+        owner=owner, ledger_path=str(resource_ledger), stage='owner_construction_refused',
+        events={key: key == 'owner_construction_attempted' for key in _PRE_OWNER_EVENTS},
+        native_grant={'status': 'not_requested'},
+        storage={'status': 'not_requested', 'release_authorized': False}, source_guards=guards)
+    return dict(schema='owned-validation-failure-terminal/v1', request_sha256=request_pin,
+        completed=False, admitted=False, Lean_admitted=False, reservation={},
+        process_cleanup_error=None, owner_exit_error=None, source_custody_lifecycle=witness,
+        failure=dict(error_type=type(failure).__name__, error=str(failure)[:8192],
+            completed=False, executed_checks=[], returncode=None, admitted=False,
+            Lean_admitted=False, authority_granted=False, model_weights_downloaded=False))
+
+
 def classify_owned_validation_source_custody(terminal, request_raw, *,
         expected_request_sha256, owner_pid, owner_birth, returncode, expected_resource_ledger):
     """Prove only explicit original no-child/no-native source-custody closure.
@@ -183,7 +230,8 @@ def classify_owned_validation_source_custody(terminal, request_raw, *,
              and type(expected_request_sha256) is str
              and hashlib.sha256(request_raw).hexdigest() == expected_request_sha256)
         value = json.loads(request_raw)
-        need(type(value) is dict and value.get('schema') == 'owned-validation-request/v1')
+        need(type(value) is dict and value.get('schema') in
+             ('owned-validation-request/v1', 'owned-validation-request/v2'))
         need(type(expected_resource_ledger) is str and Path(expected_resource_ledger).is_absolute()
              and str(Path(expected_resource_ledger).resolve(strict=True)) == expected_resource_ledger)
         ledger_info = Path(expected_resource_ledger).lstat()
@@ -200,6 +248,47 @@ def classify_owned_validation_source_custody(terminal, request_raw, *,
              and all(terminal[key] is False for key in ('completed', 'admitted', 'Lean_admitted'))
              and terminal['process_cleanup_error'] is None and terminal['owner_exit_error'] is None)
         failure, reservation, witness = terminal['failure'], terminal['reservation'], terminal['source_custody_lifecycle']
+        if type(witness) is dict and witness.get('schema') == PRE_OWNER_REFUSAL_SCHEMA:
+            # The invalid request is intentionally not revalidated as an admitted
+            # v1/v2 workload. The pinned producer proves the earlier constructor
+            # refusal, where no owner.open or child launch was attempted.
+            need(reservation == {} and type(reservation) is dict)
+            need(set(witness) == {'schema', 'request_sha256', 'producer', 'owner', 'ledger_path',
+                'stage', 'events', 'native_grant', 'storage', 'source_guards'})
+            need(witness['request_sha256'] == expected_request_sha256
+                and witness['owner'] == {'pid': owner_pid, 'birth': owner_birth}
+                and type(witness['owner']['pid']) is int
+                and witness['ledger_path'] == expected_resource_ledger
+                and witness['stage'] == 'owner_construction_refused')
+            producer = str(Path(__file__).resolve())
+            producer_pin = value['source_sha256'].get(producer)
+            need(type(producer_pin) is str
+                and witness['producer'] == {'path': producer, 'sha256': producer_pin}
+                and hashlib.sha256(snapshot(producer, 4*1024*1024)).hexdigest() == producer_pin)
+            _lifecycle_source_guard(value)
+            need(type(failure) is dict and set(failure) == {'error_type', 'error', 'completed',
+                'executed_checks', 'returncode', 'admitted', 'Lean_admitted', 'authority_granted',
+                'model_weights_downloaded'}
+                and type(failure['error_type']) is str and failure['error_type'].isidentifier()
+                and len(failure['error_type']) <= 128 and type(failure['error']) is str
+                and len(failure['error']) <= 8192 and failure['executed_checks'] == []
+                and failure['returncode'] is None
+                and all(failure[key] is False for key in ('completed', 'admitted', 'Lean_admitted',
+                    'authority_granted', 'model_weights_downloaded')))
+            events = witness['events']
+            need(type(events) is dict and set(events) == _PRE_OWNER_EVENTS
+                and all(type(flag) is bool for flag in events.values())
+                and events['owner_construction_attempted'] is True
+                and all(events[key] is False for key in _PRE_OWNER_EVENTS - {'owner_construction_attempted'}))
+            need(witness['native_grant'] == {'status': 'not_requested'}
+                and witness['storage'] == {'status': 'not_requested', 'release_authorized': False}
+                and witness['storage']['release_authorized'] is False
+                and witness['source_guards'] == {'request_unchanged': True, 'source_pins_unchanged': True,
+                    'owner_identity_unchanged': True, 'errors': []}
+                and all(type(witness['source_guards'][key]) is bool for key in
+                    ('request_unchanged', 'source_pins_unchanged', 'owner_identity_unchanged')))
+            return dict(verdict='proven_original_no_child_no_native_grant', source_custody_closed=True,
+                        storage_release_authorized=False)
         need(type(failure) is dict and failure.get('error_type') == 'LeaseTimeoutError'
              and failure.get('request_sha256') == expected_request_sha256
              and failure.get('completed') is False and failure.get('executed_checks') == []
@@ -218,6 +307,45 @@ def classify_owned_validation_source_custody(terminal, request_raw, *,
              and hashlib.sha256(snapshot(producer, 4*1024*1024)).hexdigest() == producer_pin)
         # Independently recheck all original pinned sources at verification.
         _lifecycle_source_guard(value)
+        if value['schema'] == 'owned-validation-request/v2':
+            import importlib.util
+            for package_name in ('ipfs_datasets_py', 'ipfs_datasets_py.optimizers',
+                    'ipfs_datasets_py.optimizers.logic_theorem_optimizer'):
+                package = sys.modules.get(package_name)
+                need(package is not None and list(getattr(package, '__path__', [])) ==
+                     [str(ROOT/package_name.replace('.', '/'))])
+            parser_name = 'ipfs_datasets_py.optimizers.logic_theorem_optimizer.validation_run_resources'
+            parser_path = ROOT/'ipfs_datasets_py/optimizers/logic_theorem_optimizer/validation_run_resources.py'
+            parser_spec = importlib.util.find_spec(parser_name)
+            need(parser_spec is not None and parser_spec.origin == str(parser_path))
+            from ipfs_datasets_py.optimizers.logic_theorem_optimizer.validation_run_resources import (
+                _parse_physical_fixture_profile, PHYSICAL_FIXTURE_SCHEMA)
+            need(sys.modules[parser_name].__file__ == str(parser_path)
+                 and _parse_physical_fixture_profile.__code__.co_filename == str(parser_path))
+            need(set(value) == {'schema', 'argv', 'cwd', 'selected_checks', 'source_sha256',
+                'timeout_seconds', 'storage_bytes', 'memory_mb', 'cpu_slots',
+                'child_process_slots', 'attempt_directory', 'outputs',
+                'declared_external_writable_paths', 'process_scope', 'scheduler_state_path',
+                'expected_scheduler_policy_sha256', 'roots', 'physical_fixture_profile'})
+            for field in ('argv', 'selected_checks'):
+                need(type(value[field]) is list and 0 < len(value[field]) <= 256
+                     and all(type(item) is str and item.strip() and len(item) <= 8192
+                             and '\x00' not in item for item in value[field]))
+            need(len(set(value['selected_checks'])) == len(value['selected_checks'])
+                 and type(value['attempt_directory']) is str
+                 and Path(value['attempt_directory']).is_absolute())
+            profile, cases, entries = _parse_physical_fixture_profile(
+                value, Path(value['attempt_directory']))
+            observation = reservation.get('physical_fixture_profile')
+            need(type(observation) is dict and set(observation) == {'schema', 'request_sha256',
+                 'root', 'case_count', 'entry_count', 'live_special_file_window'}
+                 and type(observation['case_count']) is int
+                 and type(observation['entry_count']) is int
+                 and observation['live_special_file_window'] is False)
+            need(observation == {
+                'schema': PHYSICAL_FIXTURE_SCHEMA, 'request_sha256': expected_request_sha256,
+                'root': profile['root'], 'case_count': len(cases), 'entry_count': len(entries),
+                'live_special_file_window': False})
         need(witness['source_guards'] == {'request_unchanged': True, 'source_pins_unchanged': True,
              'owner_identity_unchanged': True, 'errors': []}
              and all(type(witness['source_guards'][key]) is bool for key in
@@ -355,13 +483,27 @@ def main(argv=None):
     if Path(host.__file__).resolve() != ROOT/'ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py':
         raise RuntimeError('different native resource tree loaded')
     ledger = json.loads(snapshot(args.resource_ledger,16*1024*1024))
-    owner = ValidationResourceReservation(args.resource_ledger,roots=[row['path'] for row in ledger['roots']],
-        attempt_directory=value['attempt_directory'],storage_bytes=value['storage_bytes'],
-        memory_mb=value['memory_mb'],cpu_slots=value['cpu_slots'],child_process_slots=value['child_process_slots'],
-        scheduler_state_path=value['scheduler_state_path'],
-        expected_scheduler_policy_sha256=value['expected_scheduler_policy_sha256'],
-        validation_manifest_path=args.request,frozen_validation_manifest_sha256=args.expected_request_sha256,
-        timeout_seconds=value['timeout_seconds'])
+    try:
+        owner = ValidationResourceReservation(args.resource_ledger,roots=[row['path'] for row in ledger['roots']],
+            attempt_directory=value['attempt_directory'],storage_bytes=value['storage_bytes'],
+            memory_mb=value['memory_mb'],cpu_slots=value['cpu_slots'],child_process_slots=value['child_process_slots'],
+            scheduler_state_path=value['scheduler_state_path'],
+            expected_scheduler_policy_sha256=value['expected_scheduler_policy_sha256'],
+            validation_manifest_path=args.request,frozen_validation_manifest_sha256=args.expected_request_sha256,
+            timeout_seconds=value['timeout_seconds'])
+    except BaseException as error:
+        # This branch precedes owner.open, signal handlers and every child path.
+        # Keep the original exception/exit while publishing bounded typed facts.
+        try:
+            print(json.dumps(_pre_owner_refusal_terminal(value, raw, args.request,
+                args.expected_request_sha256, args.resource_ledger, error)), flush=True)
+        except BaseException as reporting_error:
+            try:
+                print('Failed to report original validation pre-owner refusal: ' +
+                    type(reporting_error).__name__, file=sys.stderr, flush=True)
+            except BaseException:
+                pass
+        raise
     cancelled = threading.Event()
     errors = []
     finished = threading.Event()
@@ -422,7 +564,8 @@ def main(argv=None):
                     PYTHONNOUSERSITE='1',PYTHONDONTWRITEBYTECODE='1',
                     IPFS_DATASETS_PY_MINIMAL_IMPORTS='1',IPFS_DATASETS_AUTO_INSTALL='0',
                     IPFS_AUTO_INSTALL='false',TRANSFORMERS_OFFLINE='1'),stdin=subprocess.PIPE,
-                stdout=out,stderr=err,start_new_session=True)
+                stdout=out,stderr=err,start_new_session=True,
+                umask=0o077 if value['schema']=='owned-validation-request/v2' else -1)
             lifecycle_events['child_created'] = True
             identity = host._process(child.pid)
             if identity is None:

@@ -1475,3 +1475,140 @@ def test_lifecycle_builder_never_promotes_subclass_spoof_or_legacy_timeout(priva
             assert observed['storage']['release_authorized'] is False
     finally:
         blocker.release()
+
+
+# Constructor refusals precede owner.open and retain no reservation or child.
+# These ordinary-file tests start the actual pinned CLI against the existing
+# private scheduler/ledger fixture; no shared host state or model is used.
+def _actual_pre_owner_refusal_cli(control, schema='owned-validation-request/v1'):
+    module, launcher, attempt, manifest, request, _ = _prepare_no_child_lifecycle(control)
+    request['selected_checks'] = ['authored invalid selected check\x00']
+    if schema == 'owned-validation-request/v2':
+        request['schema'] = schema
+        request['argv'].extend(['--owned-physical-fixtures', '-p',
+            'ipfs_datasets_py.optimizers.logic_theorem_optimizer.validation_pytest'])
+        request['physical_fixture_profile'] = {
+            'schema': 'owned-validation-physical-fixtures/v1',
+            'root': str(attempt/'tmp'/'physical-fixtures'),
+            'cases': [{'nodeid': request['selected_checks'][0], 'entries': [
+                {'path': 'unused.pipe', 'kind': 'fifo', 'target': None, 'target_kind': None}]}]}
+        plugin = Path(validation.__file__).with_name('validation_pytest.py')
+        request['source_sha256'][str(plugin.resolve())] = _sha(plugin)
+    _write_json(manifest, request)
+    ledger_before = control['ledger'].read_bytes()
+    scheduler_before = control['scheduler'].state_path.read_bytes()
+    environment = dict(os.environ, PYTHONDONTWRITEBYTECODE='1', PYTHONNOUSERSITE='1',
+        IPFS_DATASETS_PY_MINIMAL_IMPORTS='1', IPFS_DATASETS_AUTO_INSTALL='0',
+        IPFS_AUTO_INSTALL='false', OMP_NUM_THREADS='1', MKL_NUM_THREADS='1', OPENBLAS_NUM_THREADS='1')
+    cli = None
+    try:
+        cli = subprocess.Popen([sys.executable, '-B', str(launcher), '--request', str(manifest),
+            '--expected-request-sha256', _sha(manifest), '--resource-ledger', str(control['ledger'])],
+            cwd=launcher.parents[3], env=environment, text=True,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, start_new_session=True)
+        identity = native_disk._process(cli.pid)
+        assert identity is not None
+        stdout, stderr = cli.communicate(timeout=30)
+        assert cli.returncode != 0, (stdout, stderr)
+        terminal = json.loads(stdout)
+        assert terminal['failure']['error_type'] == 'ValidationResourceError', (stdout, stderr)
+        assert control['ledger'].read_bytes() == ledger_before
+        assert control['scheduler'].state_path.read_bytes() == scheduler_before
+        assert not tuple(attempt.iterdir())
+        return module, terminal, manifest.read_bytes(), dict(
+            expected_request_sha256=_sha(manifest), owner_pid=cli.pid,
+            owner_birth=identity['birth'], returncode=cli.returncode,
+            expected_resource_ledger=str(control['ledger'])), manifest, attempt
+    finally:
+        if cli is not None:
+            if cli.poll() is None:
+                cli.terminate()
+                cli.wait(timeout=10)
+            _stop_group(cli)
+
+
+@pytest.mark.parametrize('schema', ['owned-validation-request/v1', 'owned-validation-request/v2'],
+    ids=['v1-invalid-selected-check', 'v2-invalid-selected-check'])
+def test_pre_owner_actual_cli_constructor_refusal_closes_source_without_resources(private_control, schema):
+    module, terminal, raw, caller, _, _ = _actual_pre_owner_refusal_cli(private_control, schema)
+    assert '\x00' in json.loads(raw)['selected_checks'][0]
+    assert terminal['reservation'] == {}
+    witness = terminal['source_custody_lifecycle']
+    assert witness['schema'] == module.PRE_OWNER_REFUSAL_SCHEMA
+    assert witness['stage'] == 'owner_construction_refused'
+    assert witness['events'] == {key: key == 'owner_construction_attempted'
+                                 for key in module._PRE_OWNER_EVENTS}
+    assert witness['native_grant'] == {'status': 'not_requested'}
+    assert witness['storage'] == {'status': 'not_requested', 'release_authorized': False}
+    assert witness['source_guards'] == {'request_unchanged': True, 'source_pins_unchanged': True,
+        'owner_identity_unchanged': True, 'errors': []}
+    assert module.classify_owned_validation_source_custody(terminal, raw, **caller) == {
+        'verdict': 'proven_original_no_child_no_native_grant',
+        'source_custody_closed': True, 'storage_release_authorized': False}
+    assert all(terminal[key] is False for key in ('completed', 'admitted', 'Lean_admitted'))
+
+
+def test_pre_owner_classifier_refuses_spoofed_missing_or_opened_certificates(private_control):
+    module, terminal, raw, caller, _, _ = _actual_pre_owner_refusal_cli(private_control)
+    unknown = {'verdict': 'requires_original_native_cleanup', 'source_custody_closed': False,
+               'storage_release_authorized': False}
+    for fault in ('missing', 'schema', 'request', 'producer', 'pid', 'birth', 'ledger', 'stage',
+            'reservation', 'construct_returned', 'construct_not_attempted', 'open', 'child', 'exit',
+            'event_integer', 'native', 'storage', 'storage_integer', 'source_guard', 'guard_integer',
+            'failure_authority', 'failure_checks', 'failure_returncode', 'failure_extra'):
+        changed = deepcopy(terminal)
+        witness = changed['source_custody_lifecycle']
+        if fault == 'missing': changed.pop('source_custody_lifecycle')
+        elif fault == 'schema': witness['schema'] += '-different'
+        elif fault == 'request': witness['request_sha256'] = '0'*64
+        elif fault == 'producer': witness['producer']['sha256'] = '0'*64
+        elif fault == 'pid': witness['owner']['pid'] += 1
+        elif fault == 'birth': witness['owner']['birth'] += '1'
+        elif fault == 'ledger': witness['ledger_path'] += '.foreign'
+        elif fault == 'stage': witness['stage'] = 'owner_open_refused'
+        elif fault == 'reservation': changed['reservation'] = {'record': {}}
+        elif fault == 'construct_returned': witness['events']['owner_construction_returned'] = True
+        elif fault == 'construct_not_attempted': witness['events']['owner_construction_attempted'] = False
+        elif fault == 'open': witness['events']['owner_open_attempted'] = True
+        elif fault == 'child': witness['events']['child_launch_attempted'] = True
+        elif fault == 'exit': witness['events']['owner_exit_handling_completed'] = True
+        elif fault == 'event_integer': witness['events']['owner_open_attempted'] = 0
+        elif fault == 'native': witness['native_grant']['status'] = 'acquired'
+        elif fault == 'storage': witness['storage']['release_authorized'] = True
+        elif fault == 'storage_integer': witness['storage']['release_authorized'] = 0
+        elif fault == 'source_guard': witness['source_guards']['source_pins_unchanged'] = False
+        elif fault == 'guard_integer': witness['source_guards']['source_pins_unchanged'] = 1
+        elif fault == 'failure_authority': changed['failure']['admitted'] = True
+        elif fault == 'failure_checks': changed['failure']['executed_checks'] = ['not a constructor refusal']
+        elif fault == 'failure_returncode': changed['failure']['returncode'] = 0
+        else: changed['failure']['extra'] = True
+        assert module.classify_owned_validation_source_custody(changed, raw, **caller) == unknown, fault
+    for key, value in (('owner_pid', True), ('owner_birth', 'unknown'), ('returncode', 0),
+            ('returncode', False), ('expected_request_sha256', '0'*64),
+            ('expected_resource_ledger', str(private_control['ledger'])+'.foreign')):
+        assert module.classify_owned_validation_source_custody(terminal, raw,
+            **{**caller, key: value}) == unknown, key
+
+
+def test_pre_owner_classifier_rechecks_original_request_and_source_pins(private_control):
+    module, terminal, raw, caller, _, _ = _actual_pre_owner_refusal_cli(private_control)
+    expected = {'verdict': 'proven_original_no_child_no_native_grant', 'source_custody_closed': True,
+                'storage_release_authorized': False}
+    for name in module._LIFECYCLE_OWNER_NAMES:
+        value = json.loads(raw)
+        value['source_sha256'].pop(str(module.ROOT/'ipfs_datasets_py/optimizers/logic_theorem_optimizer'/name))
+        altered = json.dumps(value, sort_keys=True, separators=(',', ':')).encode()
+        pin = hashlib.sha256(altered).hexdigest()
+        changed = deepcopy(terminal)
+        changed['request_sha256'] = changed['source_custody_lifecycle']['request_sha256'] = pin
+        assert module.classify_owned_validation_source_custody(changed, altered,
+            **{**caller, 'expected_request_sha256': pin})['source_custody_closed'] is False, name
+    source = private_control['source']
+    before = source.read_bytes()
+    try:
+        source.write_bytes(before+b'\n# authored endpoint drift\n')
+        assert module.classify_owned_validation_source_custody(terminal, raw,
+            **caller)['source_custody_closed'] is False
+    finally:
+        source.write_bytes(before)
+    assert module.classify_owned_validation_source_custody(terminal, raw, **caller) == expected
