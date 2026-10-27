@@ -9,17 +9,23 @@ conditions row 3 is active: 130 of 780 stored scalars. The frozen38 seal is
 the digest of those 38 F18 donor tensors. F15 remains the masked-KL teacher
 and is never the donor. The old F15-origin frozen36 seal is not reused.
 
-No encoder forward, checkpoint write, historical census or optimizer step
-runs here. Matched coefficient 0 and 0.25 fits stay separately admitted.
+Configuration and wiring perform no forward or update. Versioned delta
+checkpoint and finite continuation primitives require explicit caller-owned
+original admission; matched coefficient 0 and 0.25 fits remain separate calls.
+No historical checkpoint is loaded or rewritten by these primitives.
 """
 from __future__ import annotations
 
+import copy
 import hashlib
+import struct
+import time
 import math
 from pathlib import Path
 import re
 
 from ipfs_datasets_py.logic.legal_ir.conditions_fullspan_margin_v1 import (
+    MAX_TOKENS as MAX_CONDITIONS_TOKENS,
     SCHEMA as MARGIN_SCHEMA,
     conditions_fullspan_margin_from_logits,
 )
@@ -61,6 +67,7 @@ MARGIN_ARMS = (0.0, 0.25)
 MAX_FLOAT32 = 3.4028234663852886e38
 _SHA = re.compile(r"[0-9a-f]{64}\Z")
 _ROOT = Path(__file__).resolve().parents[3]
+_PROFILE_SOURCE_AT_IMPORT = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
 FROZEN = tuple(name for name in f18.MODEL_PARAMETER_NAMES if name not in SELECTED)
 REUSE_PINS = {
     "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_modality_conditions_retention.py": (
@@ -367,6 +374,9 @@ def configuration(state, provenance, *, selection=None, margin_weight=0.25):
             },
             "seed": SEED,
             "batch_size": BATCH_SIZE,
+            "training_row_count": TRAIN_INDEX_COUNT,
+            "batch_order_owner": "legal_span_targeted_loss._batch_indices(168, progress, 12, 1729)",
+            "absent_conditions_margin": "connected_zero_in_full_batch_mean",
             "latent_enabled": False,
             "margin_arms": list(MARGIN_ARMS),
             "margin_schema": MARGIN_SCHEMA,
@@ -477,17 +487,32 @@ def clip_selected_gradients(torch, selected):
 
 def _bind_batch(records, indices, population):
     _require(type(records) is list and type(indices) is list and len(records) == len(indices) == BATCH_SIZE,
-             "gold-present TRAIN row count required")
-    _require(len(set(indices)) == BATCH_SIZE, "gold-present TRAIN row count required")
+             "full TRAIN batch row count required")
+    _require(all(type(index) is int and 0 <= index < TRAIN_INDEX_COUNT for index in indices)
+             and len(set(indices)) == BATCH_SIZE, "typed full TRAIN batch indices required")
     bound = []
     for record, index in zip(records, indices, strict=True):
-        _require(type(record) is dict and type(index) is int and index in population, "TRAIN partition required")
-        _require(record.get("partition") == "TRAIN" and record.get("gold_present") is True
-                 and record.get("id") == population[index] and record.get("training_index") == index,
-                 "TRAIN partition required")
+        _require(type(record) is dict and type(record.get("id")) is str and record["id"],
+                 "TRAIN record identity required")
         labels = record.get("labels")
-        _require(type(labels) is dict and labels.get("presence", (None, None, None, None))[3] is True,
-                 "gold-present TRAIN row count required")
+        presence = labels.get("presence") if type(labels) is dict else None
+        _require(type(presence) in (list, tuple) and len(presence) == 6
+                 and all(type(value) is bool for value in presence), "typed TRAIN presence labels required")
+        present = presence[CONDITIONS_ROW]
+        _require((present and population.get(index) == record["id"])
+                 or (not present and index not in population and record["id"] not in population.values()),
+                 "gold-present TRAIN membership differs")
+        # Original F18 records have no partition/gold_present/training_index
+        # sidecars: indices travel separately, and its immutable teacher/weight
+        # tables bind each selected record. Reject conflicting optional tags.
+        if "partition" in record:
+            _require(record["partition"] == "TRAIN", "TRAIN partition required")
+        if "training_index" in record:
+            _require(type(record["training_index"]) is int and record["training_index"] == index,
+                     "TRAIN index annotation differs")
+        if "gold_present" in record:
+            _require(type(record["gold_present"]) is bool and record["gold_present"] is present,
+                     "TRAIN presence annotation differs")
         bound.append(record)
     return bound
 
@@ -495,12 +520,22 @@ def _bind_batch(records, indices, population):
 def _conditions_targets(records):
     targets = []
     for record in records:
-        labels = record["labels"]
-        count = len(record["tokens"])
-        span = labels["spans"][3]
-        _require(type(count) is int and count >= 1 and type(span) in (list, tuple) and len(span) == 2,
+        _require(type(record) is dict and type(record.get("tokens")) in (list, tuple),
+                 "conditions token geometry required")
+        labels = record.get("labels")
+        presence = labels.get("presence") if type(labels) is dict else None
+        spans = labels.get("spans") if type(labels) is dict else None
+        _require(type(presence) in (list, tuple) and len(presence) == 6
+                 and all(type(value) is bool for value in presence)
+                 and type(spans) in (list, tuple) and len(spans) == 6,
                  "conditions row 3 selection required")
-        targets.append({"token_count": count, "present": True, "span": (int(span[0]), int(span[1]))})
+        count, present, span = len(record["tokens"]), presence[CONDITIONS_ROW], spans[CONDITIONS_ROW]
+        _require(1 <= count <= MAX_CONDITIONS_TOKENS and type(span) in (list, tuple) and len(span) == 2
+                 and all(type(value) is int for value in span), "integer conditions target geometry required")
+        left, right = span
+        _require((0 <= left <= right < count) if present else (left, right) == (-100, -100),
+                 "present conditions span or absent sentinel required")
+        targets.append({"token_count": count, "present": present, "span": (left, right)})
     return targets
 
 
@@ -516,6 +551,7 @@ def compose_objective(torch, output, records, indices, teacher, weights, state, 
     _require(type(provenance) is dict and "_state" not in provenance, "donor provenance required")
     _, _, _, _, population = _validate_provenance(provenance, state)
     _bind_batch(records, indices, population)
+    targets = _conditions_targets(records)
     policy = f18._policy("modality-conditions-retention-ce")
     total, details = f18._loss(torch, output, records, indices, policy, teacher, weights)
     _require(details["weighted_CE"]["batch_denominator"] == BATCH_SIZE
@@ -529,7 +565,7 @@ def compose_objective(torch, output, records, indices, teacher, weights, state, 
              and start.shape[0] == BATCH_SIZE, "conditions row 3 selection required")
     margin = conditions_fullspan_margin_from_logits(
         torch, start[:, CONDITIONS_ROW, :], end[:, CONDITIONS_ROW, :],
-        _conditions_targets(records), weight=margin_weight)
+        targets, weight=margin_weight)
     combined = total + margin["weighted_loss"]
     _require(bool(torch.isfinite(combined)), "nonfinite control")
     return {
@@ -600,8 +636,521 @@ def scoring_preflight(cases, permissions, provenance, state):
     }
 
 
-def run_admitted_updates(*_args, **_kwargs):
-    raise ValueError("resource and model fitting admission is separate; this profile executes no updates")
+# Checkpoint and numerical primitives below require a fresh original-owned
+# admission at their call site. Descriptors and resource observations are not
+# grant tokens; none of these APIs grants scientific or resource authority.
+CHECKPOINT_SCHEMA = "conditions-fullspan-f18-four-tensor-checkpoint/v1"
+CHECKPOINT_LINEAGE_ID = "conditions_fullspan_f18_four_tensor_v1"
+CHECKPOINT_POLICY_SCHEMA = "conditions-fullspan-f18-four-tensor-policy/v1"
+BINDINGS_SCHEMA = "conditions-fullspan-f18-four-tensor-input-bindings/v1"
+ADAM_SCHEMA = "conditions-fullspan-four-tensor-adam/v1"
+MAX_CHECKPOINT_BYTES = 4 * 1024 * 1024
+MAX_SECONDS = 32
+BINDING_FIELDS = frozenset({
+    "schema", "donor_checkpoint_sha256", "donor_model_state_sha256",
+    "donor_provenance_sha256", "source_parent_checkpoint_sha256",
+    "source_parent_model_state_sha256", "context_contract_sha256",
+    "training_manifest_sha256", "prepared_training_records_sha256",
+    "teacher_checkpoint_sha256", "teacher_model_state_sha256",
+    "teacher_capture_sha256", "teacher_training_sha256",
+    "row_weight_training_sha256", "training_mask_certificate_sha256",
+})
+_CHECKPOINT_FIELDS = frozenset({
+    "schema", "lineage_id", "implementation", "training_policy",
+    "training_policy_sha256", "input_bindings", "donor_provenance",
+    "selection_sha256", "donor_state_sha256", "source_frozen38_sha256",
+    "source_inactive650_sha256", "selected_state", "model_state_sha256",
+    "optimizer_state", "progress", "parent_checkpoint_sha256",
+    "initial_checkpoint_sha256", "authority",
+})
+_AUTHORITY = {"admitted": False, "formalized": False, "promoted": False,
+              "qualified": False, "semantic_review_performed": False,
+              "model_gain_claimed": False}
+checkpoint_digest = f18.checkpoint_digest
+
+
+def _checkpoint_raw(value):
+    try:
+        return f18._raw(value)
+    except (TypeError, ValueError, OverflowError, RecursionError) as error:
+        raise ValueError("finite bounded checkpoint JSON required") from error
+
+
+def _detached(value):
+    # Wire roundtrip both detaches caller containers and rejects non-JSON values.
+    import json
+    return json.loads(_checkpoint_raw(value))
+
+
+def _inactive650(state):
+    return {name: [state[name][index] for index in INACTIVE_ROWS] for name in SELECTED}
+
+
+def _binary32_tree(value, shape, label, *, nonnegative=False):
+    if shape:
+        _require(type(value) is list and len(value) == shape[0], "exact tensor shape required: " + label)
+        for child in value:
+            _binary32_tree(child, shape[1:], label, nonnegative=nonnegative)
+        return
+    # Authentic state_dict().tolist() and packed Adam buffers are float32
+    # values represented as JSON floats; reject silent restore-time rounding.
+    _require(type(value) is float and math.isfinite(value) and abs(value) <= MAX_FLOAT32
+             and (not nonnegative or value >= 0), "finite binary32 tensor required: " + label)
+    _require(struct.unpack("<f", struct.pack("<f", value))[0] == value,
+             "exact binary32 tensor required: " + label)
+
+
+def _checkpoint_implementation():
+    owners = _reuse_owners()
+    paths = (
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_fullspan_training_v1.py",
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_targeted_loss.py",
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py",
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_invocation_contracts.py",
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/validation_run_resources.py",
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py",
+    )
+    for path in paths:
+        file = _ROOT / path
+        _require(file.is_file() and not file.is_symlink(), "checkpoint source owner missing: " + path)
+        digest = hashlib.sha256(file.read_bytes()).hexdigest()
+        if file == Path(__file__).resolve():
+            _require(digest == _PROFILE_SOURCE_AT_IMPORT, "profile source changed since import")
+        owners.append({"path": path, "sha256": digest})
+    return {"schema": "conditions-fullspan-checkpoint-source-owners/v1", "owners": owners,
+            "retained_F18_source_family": f18._implementation()}
+
+
+def _schedule():
+    progress = {"epochs_completed": 0, "row_cursor": 0, "optimizer_steps": 0}
+    result = []
+    for _ in range(MAX_UPDATES):
+        indices = f18.targeted._batch_indices(TRAIN_INDEX_COUNT, progress, BATCH_SIZE, SEED)
+        after = f18.targeted._advance_progress(progress, len(indices), TRAIN_INDEX_COUNT)
+        result.append({"before": dict(progress), "indices": indices, "after": after})
+        progress = after
+    return result
+
+
+def checkpoint_policy(*, margin_weight):
+    """Fixed four-tensor continuation recipe; no model or admission is created."""
+    _require(type(margin_weight) in (int, float) and math.isfinite(margin_weight)
+             and margin_weight in MARGIN_ARMS, "matched margin arm required")
+    return {
+        "schema": CHECKPOINT_POLICY_SCHEMA, "profile_schema": SCHEMA,
+        "margin_schema": MARGIN_SCHEMA, "margin_weight": float(margin_weight),
+        "selection": selection_mask_contract(),
+        "optimizer": {"name": "Adam", "parameter_order": list(SELECTED),
+                      "learning_rate": LEARNING_RATE, "betas": list(ADAM_BETAS),
+                      "eps": ADAM_EPS, "weight_decay": WEIGHT_DECAY, "foreach": False,
+                      "gradient_clip_norm": GRADIENT_CLIP_NORM, "inherited_moments": False},
+        "seed": SEED, "batch_size": BATCH_SIZE, "training_rows": TRAIN_INDEX_COUNT,
+        "gold_present_rows": GOLD_PRESENT_TRAIN_ROWS, "gold_absent_rows": 96,
+        "max_cumulative_updates": MAX_UPDATES, "max_call_seconds": MAX_SECONDS,
+        "schedule_sha256": checkpoint_digest(_schedule()),
+        "schedule_owner": "legal_span_targeted_loss._batch_indices/_advance_progress",
+        "objective_owner": "legal_span_modality_conditions_retention._loss + conditions_fullspan_margin_from_logits",
+        "ce_outer_denominator": CE_OUTER_DENOMINATOR, "kl_full_batch_denominator": KL_BLOCKS * BATCH_SIZE,
+        "latent_enabled": False, "teacher_model_forwards": 0,
+        "tuning_or_evaluation_references_used": False,
+        "rng_policy": "deterministic_F18_no_CPU_RNG_consumption; scoped_restore_on_success_or_error",
+        "input_authentication_owner": "caller_original_physical_source_resource_owner",
+    }
+
+
+def _prepared_inputs(state, provenance, records, teacher, weights, expected_bindings):
+    shapes, donor_root, seal, _, population = _validate_provenance(provenance, state)
+    for name, shape in shapes.items():
+        _binary32_tree(state[name], shape, name)
+    _require(type(expected_bindings) is dict and set(expected_bindings) == BINDING_FIELDS
+             and expected_bindings["schema"] == BINDINGS_SCHEMA, "closed independently expected input bindings required")
+    for key in BINDING_FIELDS - {"schema"}:
+        _sha256_text(expected_bindings[key])
+    _require(type(records) is list and len(records) == TRAIN_INDEX_COUNT, "complete mixed168 TRAIN records required")
+    _require(all(type(row) is dict and type(row.get("id")) is str and row["id"] for row in records)
+             and len({row["id"] for row in records}) == TRAIN_INDEX_COUNT,
+             "unique complete TRAIN record IDs required")
+    for record in records:
+        f18.targeted._actor_record(record)
+        _require("latent" in record, "prepared source latent geometry required")
+        _finite_tree(record["latent"], (384,), "prepared source latent")
+    for first in range(0, TRAIN_INDEX_COUNT, BATCH_SIZE):
+        _bind_batch(records[first:first + BATCH_SIZE], list(range(first, first + BATCH_SIZE)), population)
+    _conditions_targets(records)
+    teacher_keys = {"schema", "blocks", "teacher_capture_sha256", "teacher_model_state_sha256",
+                    "training_manifest_sha256", "rows", "rows_sha256", "teacher_model_forwards", "evaluation_references_used"}
+    weight_keys = {"schema", "teacher_capture_sha256", "training_manifest_sha256", "rows",
+                   "row_ID_order_sha256", "rows_sha256", "near_complete_mask_sha256",
+                   "selected_count", "selected_ids", "derived_before_update0",
+                   "candidate_predictions_used", "evaluation_references_used"}
+    _require(type(teacher) is dict and set(teacher) == teacher_keys
+             and teacher["schema"] == "source-authenticated-masked-F15-retention-targets/v1"
+             and teacher["blocks"] == list(f18.RETENTION_BLOCKS)
+             and type(teacher["teacher_model_forwards"]) is int and teacher["teacher_model_forwards"] == 0
+             and teacher["evaluation_references_used"] is False, "complete prepared F15 teacher contract required")
+    _require(type(weights) is dict and set(weights) == weight_keys
+             and weights["schema"] == "source-authenticated-F15-conditions-only-row-weights/v1"
+             and weights["derived_before_update0"] is True and weights["candidate_predictions_used"] is False
+             and weights["evaluation_references_used"] is False, "complete prepared F15 row-weight contract required")
+    for table in (teacher, weights):
+        _require(type(table["rows"]) is list and len(table["rows"]) == TRAIN_INDEX_COUNT
+                 and table["rows_sha256"] == checkpoint_digest(table["rows"]), "complete immutable TRAIN table root differs")
+        _require(table["teacher_capture_sha256"] == f18.TEACHER_CAPTURE_SHA256
+                 and table["training_manifest_sha256"] == expected_bindings["training_manifest_sha256"],
+                 "original teacher capture/manifest bindings differ")
+    _require(teacher["teacher_model_state_sha256"] == f18.SOURCE_ACTOR_REFINEMENT_MODEL_SHA256,
+             "F15 teacher model binding differs")
+    weight_row_keys = {"id", "training_index", "source_sha256", "tokens_sha256", "labels_sha256",
+                       "raw_output_sha256", "raw_status", "raw_reason", "error_fields",
+                       "conditions_only_mask", "conditions_facet_weight"}
+    _require(all(type(row) is dict and set(row) == weight_row_keys
+                 and type(row["training_index"]) is int and row["training_index"] == index
+                 for index, row in enumerate(weights["rows"])), "closed ordered prepared weight rows required")
+    selected_ids = []
+    for first in range(0, TRAIN_INDEX_COUNT, BATCH_SIZE):
+        f18._weight_batch(records[first:first + BATCH_SIZE], list(range(first, first + BATCH_SIZE)), weights)
+    for index, (record, target, weight) in enumerate(zip(records, teacher["rows"], weights["rows"], strict=True)):
+        _require(type(target) is dict and set(target) == {"id", "training_index", "source_sha256", "token_count", "blocks"}
+                 and target["id"] == record["id"] and type(target["training_index"]) is int
+                 and target["training_index"] == index and type(target["token_count"]) is int
+                 and target["token_count"] == len(record["tokens"])
+                 and target["source_sha256"] == hashlib.sha256(record["source_text"].encode()).hexdigest(),
+                 "prepared teacher source/order/geometry differs")
+        _require(type(target["blocks"]) is dict and set(target["blocks"]) == set(f18.RETENTION_BLOCKS),
+                 "closed six-block teacher row required")
+        labels = record["labels"]
+        gold = {"actor_start": labels["spans"][0][0], "actor_end": labels["spans"][0][1],
+                "modality": labels["modality"], "conditions_start": labels["spans"][3][0],
+                "conditions_end": labels["spans"][3][1], "exceptions_presence": int(labels["presence"][4])}
+        for name in f18.RETENTION_BLOCKS:
+            block = target["blocks"][name]
+            width = 3 if name == "modality" else 2 if name == "exceptions_presence" else len(record["tokens"])
+            _require(type(block) is dict and set(block) == {"logits", "gold_index", "teacher_argmax", "mask"},
+                     "closed prepared teacher block required")
+            _finite_tree(block["logits"], (width,), name)
+            argmax = max(range(width), key=block["logits"].__getitem__)
+            present = not name.startswith("conditions_") or labels["presence"][CONDITIONS_ROW]
+            expected_gold = gold[name] if present else None
+            _require((block["gold_index"] is None if expected_gold is None else
+                      type(block["gold_index"]) is int and block["gold_index"] == expected_gold)
+                     and type(block["teacher_argmax"]) is int and block["teacher_argmax"] == argmax
+                     and type(block["mask"]) is bool and block["mask"] is (expected_gold is not None and argmax == expected_gold),
+                     "prepared teacher gold/argmax/mask differs")
+        if weight["conditions_only_mask"]:
+            selected_ids.append(record["id"])
+    mask = [{key: row[key] for key in ("id", "training_index", "conditions_only_mask", "conditions_facet_weight")}
+            for row in weights["rows"]]
+    _require(type(weights["selected_count"]) is int and weights["selected_count"] == len(selected_ids) == 2
+             and weights["selected_ids"] == selected_ids
+             and weights["row_ID_order_sha256"] == checkpoint_digest([row["id"] for row in weights["rows"]])
+             and weights["near_complete_mask_sha256"] == checkpoint_digest(mask), "prepared weight selection roots differ")
+    available = {
+        "donor_model_state_sha256": donor_root, "donor_provenance_sha256": checkpoint_digest(provenance),
+        "prepared_training_records_sha256": checkpoint_digest(records),
+        "teacher_checkpoint_sha256": f18.SOURCE_ACTOR_REFINEMENT_SHA256,
+        "teacher_model_state_sha256": f18.SOURCE_ACTOR_REFINEMENT_MODEL_SHA256,
+        "teacher_capture_sha256": f18.TEACHER_CAPTURE_SHA256,
+        "teacher_training_sha256": checkpoint_digest(teacher), "row_weight_training_sha256": checkpoint_digest(weights),
+    }
+    _require(all(expected_bindings[key] == value for key, value in available.items()),
+             "independently expected donor/training/teacher/weight bindings differ")
+    return shapes, donor_root, seal
+
+
+def _validate_four_adam(value, steps, shapes):
+    _require(type(value) is dict and set(value) == {"schema", "parameters"} and value["schema"] == ADAM_SCHEMA
+             and type(value["parameters"]) is dict
+             and set(value["parameters"]) == (set(SELECTED) if steps else set()), "closed fresh four-tensor Adam state required")
+    for name, moment in value["parameters"].items():
+        _require(type(moment) is dict and set(moment) == {"step", "exp_avg", "exp_avg_sq"}
+                 and type(moment["step"]) is int and moment["step"] == steps, "Adam step/progress differs")
+        for key in ("exp_avg", "exp_avg_sq"):
+            _binary32_tree(moment[key], shapes[name], name, nonnegative=key == "exp_avg_sq")
+            _require(all(f18._all_zero(moment[key][row]) for row in INACTIVE_ROWS), "inactive650 Adam moments changed")
+
+
+def _checkpoint_origin(checkpoint, state):
+    origin = copy.deepcopy(checkpoint)
+    origin.pop("initial_checkpoint_sha256", None)
+    origin.update(selected_state={name: copy.deepcopy(state[name]) for name in SELECTED},
+                  model_state_sha256=checkpoint_digest(state),
+                  optimizer_state={"schema": ADAM_SCHEMA, "parameters": {}},
+                  progress={"epochs_completed": 0, "row_cursor": 0, "optimizer_steps": 0},
+                  parent_checkpoint_sha256=None)
+    return origin
+
+
+def _checked_checkpoint(checkpoint, state, provenance, records, teacher, weights, expected_bindings, margin_weight):
+    shapes, donor_root, seal = _prepared_inputs(state, provenance, records, teacher, weights, expected_bindings)
+    _require(type(checkpoint) is dict and set(checkpoint) == _CHECKPOINT_FIELDS, "closed four-tensor checkpoint required")
+    raw = _checkpoint_raw(checkpoint)
+    _require(0 < len(raw) <= MAX_CHECKPOINT_BYTES, "four-tensor checkpoint byte bound exceeded")
+    policy = checkpoint_policy(margin_weight=margin_weight)
+    _require(checkpoint["schema"] == CHECKPOINT_SCHEMA and checkpoint["lineage_id"] == CHECKPOINT_LINEAGE_ID
+             and _checkpoint_raw(checkpoint["authority"]) == _checkpoint_raw(_AUTHORITY), "checkpoint schema/lineage/authority differs")
+    _require(checkpoint["implementation"] == _checkpoint_implementation(), "checkpoint source owner binding differs")
+    _require(_checkpoint_raw(checkpoint["training_policy"]) == _checkpoint_raw(policy)
+             and checkpoint["training_policy_sha256"] == checkpoint_digest(policy), "checkpoint policy/selection/margin/schedule differs")
+    _require(_checkpoint_raw(checkpoint["input_bindings"]) == _checkpoint_raw(expected_bindings)
+             and _checkpoint_raw(checkpoint["donor_provenance"]) == _checkpoint_raw(provenance), "checkpoint input/provenance bindings differ")
+    _require(checkpoint["donor_state_sha256"] == donor_root and checkpoint["source_frozen38_sha256"] == seal
+             and checkpoint["source_inactive650_sha256"] == checkpoint_digest(_inactive650(state))
+             and checkpoint["selection_sha256"] == checkpoint_digest(selection_mask_contract()), "checkpoint donor/frozen38/inactive650/selection roots differ")
+    selected = checkpoint["selected_state"]
+    _require(type(selected) is dict and set(selected) == set(SELECTED), "exact four selected tensors required")
+    reconstructed = copy.deepcopy(state)
+    for name in SELECTED:
+        _binary32_tree(selected[name], shapes[name], name)
+        reconstructed[name] = copy.deepcopy(selected[name])
+    _validate_state(reconstructed, shapes)
+    _require(frozen38_seal(reconstructed) == seal and _checkpoint_raw(_inactive650(reconstructed)) == _checkpoint_raw(_inactive650(state))
+             and checkpoint["model_state_sha256"] == checkpoint_digest(reconstructed), "reconstructed42 or inactive650 state differs")
+    progress = f18.targeted._progress(checkpoint["progress"])
+    _require(progress["optimizer_steps"] <= MAX_UPDATES, "cumulative32 update budget exceeded")
+    f18.targeted._batch_indices(TRAIN_INDEX_COUNT, progress, BATCH_SIZE, SEED)
+    _validate_four_adam(checkpoint["optimizer_state"], progress["optimizer_steps"], shapes)
+    if progress["optimizer_steps"] == 0:
+        _require(checkpoint["parent_checkpoint_sha256"] is None
+                 and _checkpoint_raw(reconstructed) == _checkpoint_raw(state), "initial donor/parent state differs")
+    else:
+        _sha256_text(checkpoint["parent_checkpoint_sha256"])
+    _require(checkpoint["initial_checkpoint_sha256"] == checkpoint_digest(_checkpoint_origin(checkpoint, state)),
+             "initial checkpoint lineage differs")
+    return reconstructed
+
+
+def build_checkpoint(state, provenance, *, records, teacher, weights, expected_bindings, margin_weight):
+    """Create a delta checkpoint from caller-authenticated prepared inputs.
+
+    Physical donor/source/capture/certificate/parity authentication remains the
+    original outer owner's job. Hash bindings here establish input continuity,
+    not an authenticated issuer, gradient replay, legal meaning or admission.
+    """
+    _, donor_root, seal = _prepared_inputs(state, provenance, records, teacher, weights, expected_bindings)
+    policy = checkpoint_policy(margin_weight=margin_weight)
+    checkpoint = {
+        "schema": CHECKPOINT_SCHEMA, "lineage_id": CHECKPOINT_LINEAGE_ID,
+        "implementation": _checkpoint_implementation(), "training_policy": policy,
+        "training_policy_sha256": checkpoint_digest(policy), "input_bindings": _detached(expected_bindings),
+        "donor_provenance": _detached(provenance), "selection_sha256": checkpoint_digest(selection_mask_contract()),
+        "donor_state_sha256": donor_root, "source_frozen38_sha256": seal,
+        "source_inactive650_sha256": checkpoint_digest(_inactive650(state)),
+        "selected_state": {name: copy.deepcopy(state[name]) for name in SELECTED},
+        "model_state_sha256": donor_root, "optimizer_state": {"schema": ADAM_SCHEMA, "parameters": {}},
+        "progress": {"epochs_completed": 0, "row_cursor": 0, "optimizer_steps": 0},
+        "parent_checkpoint_sha256": None, "authority": dict(_AUTHORITY),
+    }
+    checkpoint["initial_checkpoint_sha256"] = checkpoint_digest(_checkpoint_origin(checkpoint, state))
+    _checked_checkpoint(checkpoint, state, provenance, records, teacher, weights, expected_bindings, margin_weight)
+    return _detached(checkpoint)
+
+
+def validate_checkpoint(checkpoint, *, state, provenance, records, teacher, weights, expected_bindings, margin_weight):
+    """Pure source/data/shape/lineage validation; does not construct Torch."""
+    _checked_checkpoint(checkpoint, state, provenance, records, teacher, weights, expected_bindings, margin_weight)
+
+
+def save_checkpoint(checkpoint, path, *, state, provenance, records, teacher, weights, expected_bindings, margin_weight):
+    """Exclusive bounded canonical persistence, without a model or forward."""
+    from . import autoencoder_daemon_invocation_contracts as io
+    value = _detached(checkpoint)
+    validate_checkpoint(value, state=state, provenance=provenance, records=records, teacher=teacher,
+                        weights=weights, expected_bindings=expected_bindings, margin_weight=margin_weight)
+    ref = io.write_new(path, value, MAX_CHECKPOINT_BYTES)
+    loaded = load_checkpoint(ref["path"], expected_sha256=ref["sha256"], state=state, provenance=provenance,
+                             records=records, teacher=teacher, weights=weights,
+                             expected_bindings=expected_bindings, margin_weight=margin_weight)
+    _require(_checkpoint_raw(loaded) == _checkpoint_raw(value), "persisted checkpoint bytes differ")
+    return {**ref, "schema": CHECKPOINT_SCHEMA}
+
+
+def load_checkpoint(path, *, expected_sha256, state, provenance, records, teacher, weights, expected_bindings, margin_weight):
+    """Restore a bounded wire value only against all supplied expected inputs."""
+    from . import autoencoder_daemon_invocation_contracts as io
+    from . import validation_run_resources as storage
+    _sha256_text(expected_sha256)
+    # The original strict reader adds nlink and final pathname/ctime identity
+    # fences to the existing invocation JSON and exclusive-write primitives.
+    try:
+        _, raw, _ = storage._regular_bytes(path, MAX_CHECKPOINT_BYTES)
+        _require(0 < len(raw) and hashlib.sha256(raw).hexdigest() == expected_sha256, "checkpoint raw hash differs")
+        value = io.parse_json(raw)
+    except (storage.host.DaemonResourceError, OSError) as error:
+        raise ValueError("bounded unaliased checkpoint input required") from error
+    validate_checkpoint(value, state=state, provenance=provenance, records=records, teacher=teacher,
+                        weights=weights, expected_bindings=expected_bindings, margin_weight=margin_weight)
+    return _detached(value)
+
+
+def restore_optimizer(torch, checkpoint, state, provenance, *, records, teacher, weights, expected_bindings, margin_weight):
+    """Fresh F18 model/four-Adam restoration under the caller's admission.
+
+    No legacy F18 checkpoint or six-tensor optimizer loader is called. This
+    reconstructs all42 against the supplied donor and performs no forward.
+    """
+    reconstructed = _checked_checkpoint(checkpoint, state, provenance, records, teacher, weights,
+                                        expected_bindings, margin_weight)
+    ambient = torch.get_rng_state().clone()
+    with torch.random.fork_rng(devices=[]):
+        wired = wire_optimizer(torch, state, provenance, margin_weight=margin_weight)
+        model, optimizer, named = wired["model"], wired["optimizer"], wired["named"]
+        _require(all(value.dtype == torch.float32 and value.device.type == "cpu"
+                     for value in model.state_dict().values()), "CPU float32 F18 restoration required")
+        model.load_state_dict({name: f18.span._tensor(torch, reconstructed[name], parameter.shape, name)
+                               for name, parameter in model.state_dict().items()}, strict=True)
+        for name in SELECTED:
+            moment = checkpoint["optimizer_state"]["parameters"].get(name)
+            if moment is not None:
+                parameter = named[name]
+                optimizer.state[parameter] = {"step": torch.tensor(float(moment["step"]), dtype=torch.float32, device="cpu"),
+                    "exp_avg": f18.span._tensor(torch, moment["exp_avg"], parameter.shape, name),
+                    "exp_avg_sq": f18.span._tensor(torch, moment["exp_avg_sq"], parameter.shape, name, nonnegative=True)}
+        _require(all(parameter.grad is None for parameter in named.values()), "restore accumulated parameter gradients")
+        model.eval()
+    _require(torch.equal(ambient, torch.get_rng_state()), "restore changed ambient CPU RNG")
+    wired.update(progress=dict(checkpoint["progress"]), checkpoint_sha256=checkpoint_digest(checkpoint),
+                 optimizer_steps=checkpoint["progress"]["optimizer_steps"], restored=True,
+                 torch=torch, config=copy.deepcopy(provenance["config"]), **_AUTHORITY)
+    actual, moments = _live_state(torch, wired, state, checkpoint["progress"]["optimizer_steps"])
+    _require(checkpoint_digest(actual) == checkpoint["model_state_sha256"]
+             and _checkpoint_raw(moments) == _checkpoint_raw(checkpoint["optimizer_state"]),
+             "restored42/four-Adam state differs from checkpoint")
+    wired["_capture_witness"] = _capture_witness(model)
+    return wired
+
+
+def _live_state(torch, wired, donor, steps, *, gradients=False):
+    model, named, optimizer = wired["model"], wired["named"], wired["optimizer"]
+    _require(tuple(named) == f18.MODEL_PARAMETER_NAMES and len({id(value) for value in named.values()}) == DONOR_TENSOR_COUNT,
+             "live closed42 parameter identity differs")
+    _require(all(named[name].requires_grad is (name in SELECTED) for name in named)
+             and all(named[name].grad is None for name in FROZEN), "frozen38 gradients or selection changed")
+    _require(len(optimizer.param_groups) == 1
+             and tuple(id(parameter) for parameter in optimizer.param_groups[0]["params"]) == tuple(id(named[name]) for name in SELECTED)
+             and set(optimizer.state) <= {named[name] for name in SELECTED}, "live ordered four-tensor Adam differs")
+    controls = {"lr": LEARNING_RATE, "betas": ADAM_BETAS, "eps": ADAM_EPS, "weight_decay": WEIGHT_DECAY, "foreach": False}
+    _require(all(optimizer.param_groups[0].get(key) == value and optimizer.defaults.get(key) == value
+                 for key, value in controls.items()), "live Adam recipe changed")
+    if gradients:
+        for name in SELECTED:
+            grad = named[name].grad
+            _require(grad is not None and bool(torch.isfinite(grad).all())
+                     and all(bool((grad[row] == 0).all()) for row in INACTIVE_ROWS), "finite row3-only gradients required")
+    _require(all(bool(torch.isfinite(value).all()) for value in model.state_dict().values()), "nonfinite live42 state")
+    weights, moments = f18.span._pack(model, optimizer)
+    moments["schema"] = ADAM_SCHEMA
+    _validate_four_adam(moments, steps, _donor_shapes(wired["config"]))
+    _require(frozen38_seal(weights) == frozen38_seal(donor)
+             and _checkpoint_raw(_inactive650(weights)) == _checkpoint_raw(_inactive650(donor)), "live frozen38/inactive650 bytes changed")
+    return weights, moments
+
+
+def run_admitted_updates(checkpoint, provenance=None, *, torch=None, state=None, records=None, teacher=None,
+                         weights=None, expected_bindings=None, margin_weight=None, max_steps=32, max_seconds=32):
+    """Execute a caller-owned finite continuation, never granting admission.
+
+    The original outer source/native/resource owner must freshly admit this
+    call. No bool, callback, environment flag, cached lease descriptor or hash
+    is treated as a grant. There are no tuning/evaluation inputs or scoring.
+    """
+    _require(all(value is not None for value in (torch, state, provenance, records, teacher, weights,
+                                                 expected_bindings, margin_weight))
+             and type(checkpoint) is dict and checkpoint.get("schema") == CHECKPOINT_SCHEMA,
+             "this profile executes no updates without a complete caller-owned checkpoint/input scope")
+    _require(type(max_steps) is int and 0 <= max_steps <= MAX_UPDATES
+             and type(max_seconds) in (int, float) and math.isfinite(max_seconds) and 0 <= max_seconds <= MAX_SECONDS,
+             "bounded32-step/32-second call required")
+    started = time.monotonic()
+    deadline = started + max_seconds
+    _checked_checkpoint(checkpoint, state, provenance, records, teacher, weights, expected_bindings, margin_weight)
+    value = _detached(checkpoint)
+    input_checkpoint_root = checkpoint_digest(value)
+    donor, provenance = copy.deepcopy(state), copy.deepcopy(provenance)
+    records, teacher, weights = copy.deepcopy(records), copy.deepcopy(teacher), copy.deepcopy(weights)
+    expected_bindings = copy.deepcopy(expected_bindings)
+    progress = dict(value["progress"])
+    _require(progress["optimizer_steps"] + max_steps <= MAX_UPDATES, "cumulative32 update budget exceeded")
+    before_progress = dict(progress)
+    trace, reason = [], "step_limit"
+    wired = None
+    ambient = torch.get_rng_state().clone()
+    incoming_grad_mode = torch.is_grad_enabled()
+    try:
+        with torch.random.fork_rng(devices=[]), torch.enable_grad():
+            if max_steps and time.monotonic() < deadline:
+                wired = restore_optimizer(torch, value, donor, provenance, records=records, teacher=teacher,
+                                          weights=weights, expected_bindings=expected_bindings, margin_weight=margin_weight)
+                _live_state(torch, wired, donor, progress["optimizer_steps"])
+            for _ in range(max_steps):
+                if time.monotonic() >= deadline:
+                    reason = "deadline_before_batch"
+                    break
+                _require(wired is not None, "bounded restore did not complete")
+                indices = f18.targeted._batch_indices(TRAIN_INDEX_COUNT, progress, BATCH_SIZE, SEED)
+                batch = [records[index] for index in indices]
+                model, optimizer = wired["model"], wired["optimizer"]
+                optimizer.zero_grad(set_to_none=True)
+                _live_state(torch, wired, donor, progress["optimizer_steps"])
+                model.train()
+                output = model(*f18.span._batch(torch, batch))
+                objective = compose_objective_for_state(torch, output, batch, indices, teacher, weights,
+                                                         donor, provenance, margin_weight=margin_weight)
+                margin_trace = {key: float(value.detach()) if key in ("loss", "weighted_loss") else copy.deepcopy(value)
+                                for key, value in objective["margin"].items()}
+                margin_inputs = {"start_logits": output["start"][:, CONDITIONS_ROW, :].detach().tolist(),
+                                 "end_logits": output["end"][:, CONDITIONS_ROW, :].detach().tolist(),
+                                 "targets": _conditions_targets(batch), "pre_update": True}
+                objective["loss"].backward()
+                _live_state(torch, wired, donor, progress["optimizer_steps"], gradients=True)
+                gradient = float(clip_selected_gradients(torch, wired["selected"]))
+                optimizer.step()
+                after = f18.targeted._advance_progress(progress, len(indices), TRAIN_INDEX_COUNT)
+                current, moments = _live_state(torch, wired, donor, after["optimizer_steps"], gradients=True)
+                _require(torch.equal(ambient, torch.get_rng_state()), "fixed F18 step consumed CPU RNG")
+                f18_loss = float(objective["f18_ce_plus_kl"].detach())
+                legacy_trace = f18.targeted._batch_trace_entry(indices, records, progress, after,
+                                                              loss=f18_loss, gradient_norm=gradient)
+                details = {"weighted_CE": objective["weighted_CE"], "retention": objective["retention"],
+                           "total_loss": f18_loss, "teacher_forcing": True, "evaluation_references_used": False}
+                f18._validate_objective_entry({"optimizer_step": after["optimizer_steps"], "indices": indices,
+                                               "ids": legacy_trace["ids"], "details": details}, legacy_trace,
+                                              f18._policy("modality-conditions-retention-ce"), teacher, weights)
+                trace.append({**legacy_trace, "loss": float(objective["loss"].detach()),
+                              "f18_ce_plus_kl": f18_loss,
+                              "weighted_conditions_margin": float(objective["margin"]["weighted_loss"].detach()),
+                              "margin_weight": float(margin_weight),
+                              "f18_objective_details": copy.deepcopy(details),
+                              "conditions_margin": margin_trace, "conditions_margin_inputs": margin_inputs,
+                              "model_state_sha256": checkpoint_digest(current),
+                              "frozen38_sha256": frozen38_seal(current),
+                              "inactive650_sha256": checkpoint_digest(_inactive650(current)),
+                              "optimizer_state_sha256": checkpoint_digest(moments)})
+                progress = after
+            if trace:
+                value.update(selected_state={name: current[name] for name in SELECTED},
+                             model_state_sha256=checkpoint_digest(current), optimizer_state=moments,
+                             progress=progress, parent_checkpoint_sha256=input_checkpoint_root)
+    finally:
+        if wired is not None:
+            wired["model"].eval()
+            wired["optimizer"].zero_grad(set_to_none=True)
+    _require(torch.equal(ambient, torch.get_rng_state()) and torch.is_grad_enabled() is incoming_grad_mode,
+             "caller CPU RNG or gradient mode changed")
+    _checked_checkpoint(value, donor, provenance, records, teacher, weights, expected_bindings, margin_weight)
+    report = {"schema": "conditions-fullspan-four-tensor-continuation-report/v1",
+              "checkpoint_sha256": checkpoint_digest(value), "input_checkpoint_sha256": input_checkpoint_root,
+              "initial_checkpoint_sha256": value["initial_checkpoint_sha256"],
+              "training_policy_sha256": value["training_policy_sha256"], "input_bindings": _detached(expected_bindings),
+              "before_progress": before_progress, "after_progress": dict(progress), "optimizer_steps": len(trace),
+              "requested_steps": max_steps, "reason": reason, "all_requested_steps_completed": len(trace) == max_steps,
+              "elapsed_seconds": time.monotonic() - started, "max_seconds": max_seconds,
+              "deadline_checked_before_batches": True, "batch_trace": trace,
+              "training_executed": bool(trace), "teacher_model_forwards": 0,
+              "ambient_cpu_rng_preserved": True, "incoming_grad_mode_preserved": True,
+              "model_eval_on_exit": True, "tuning_or_evaluation_references_used": False,
+              "lineage_integrity_only_not_gradient_replay": True, **_AUTHORITY}
+    _require(len(_checkpoint_raw(report)) <= 32 * 1024 * 1024, "finite32-update report byte bound exceeded")
+    return _detached(value), _detached(report)
 
 
 def score_frozen_cases(*_args, **_kwargs):
@@ -656,6 +1205,9 @@ def engineering_preparation():
             "kl_denominator": KL_BLOCKS * BATCH_SIZE,
             "optimizer_steps_executed": 0,
             "structured_objective_invoked": False,
+            "training_row_count": TRAIN_INDEX_COUNT,
+            "batch_order_owner": "legal_span_targeted_loss._batch_indices(168, progress, 12, 1729)",
+            "absent_conditions_margin": "connected_zero_in_full_batch_mean",
         },
         "selection_mask_contract": contract,
         "acceptance_controls": {
@@ -683,6 +1235,7 @@ def engineering_preparation():
             "comparators_not_rerun": ["F18", "F15", "N11", "F16", "F17", "F19"],
         },
         "unresolved_questions": [
+            "Caller-state self-hashes do not independently authenticate the retained final F18 donor or its source/teacher/mask artifact roots; original-owned admission must bind them.",
             "Matched coefficient 0 and 0.25 arms still need separate resource admission before the 32-update fit.",
             "Frozen raw and joint complete-IR scoring against retained comparators, casewise retention and the 32 permission decisions is preflight only.",
             "Statutory gold, governing meaning, latent-width comparison and parent LIR-17 semantic dependencies remain unresolved.",
@@ -723,3 +1276,219 @@ __all__ = [
     "scoring_preflight", "frozen38_seal", "frozen36_digest", "selection_mask_contract",
     "engineering_preparation", "run_admitted_updates", "score_frozen_cases",
 ]
+
+__all__ += ["CHECKPOINT_SCHEMA", "CHECKPOINT_LINEAGE_ID", "CHECKPOINT_POLICY_SCHEMA",
+            "BINDINGS_SCHEMA", "BINDING_FIELDS", "ADAM_SCHEMA", "MAX_CHECKPOINT_BYTES",
+            "checkpoint_policy", "checkpoint_digest", "build_checkpoint", "validate_checkpoint",
+            "save_checkpoint", "load_checkpoint", "restore_optimizer"]
+
+
+CAPTURE_SCHEMA = "conditions-fullspan-four-tensor-target-free-head-capture/v1"
+INFERENCE_SCHEMA = "conditions-fullspan-four-tensor-inference/v1"
+_CAPTURE_FACTORY = f18._model
+_CAPTURE_DECODE = f18.span.SpanLegalFormulaDecoder._decode
+_CAPTURE_VERIFY = f18.capture._verify_greedy
+_CAPTURE_TENSOR = f18.capture._tensor
+_CAPTURE_CODES = tuple(value.__code__ for value in (_CAPTURE_FACTORY, _CAPTURE_DECODE, _CAPTURE_VERIFY, _CAPTURE_TENSOR))
+
+
+def _capture_method(value):
+    return getattr(value, "__func__", value)
+
+
+def _capture_witness(model):
+    # Runtime references, not serialized checkpoint fields or an admission token.
+    return {"model": model,
+            "parameters": tuple((name, parameter) for name, parameter in model.named_parameters()),
+            "modules": tuple((name, module, _capture_method(module.forward), getattr(_capture_method(module.forward), "__code__", None))
+                             for name, module in model.named_modules()),
+            "counter_keys": {name: tuple(getattr(model, name)) for name in
+                             ("_actor_forward_accounting", "_conditions_forward_accounting")}}
+
+
+def _capture_counter_values(model, witness):
+    result = {}
+    for name, keys in witness["counter_keys"].items():
+        table = getattr(model, name)
+        _require(type(table) is dict and tuple(table) == keys
+                 and all(type(value) is int and value >= 0 for value in table.values()),
+                 "native capture counter identity changed")
+        result[name] = dict(table)
+    return result
+
+
+def _capture_guard(runtime, checkpoint, state, provenance, records, teacher, weights,
+                   expected_bindings, margin_weight, checkpoint_root):
+    _require(type(runtime) is dict and runtime.get("checkpoint_sha256") == checkpoint_root
+             and checkpoint_digest(checkpoint) == checkpoint_root, "capture checkpoint binding changed")
+    _checked_checkpoint(checkpoint, state, provenance, records, teacher, weights, expected_bindings, margin_weight)
+    torch, model = runtime["torch"], runtime["model"]
+    _require(torch is f18.sys.modules.get("torch"), "capture numerical owner changed")
+    _require(_checkpoint_raw(runtime["config"]) == _checkpoint_raw(provenance["config"])
+             and _checkpoint_raw(runtime["configuration"]) == _checkpoint_raw(configuration(state, provenance, margin_weight=margin_weight))
+             and runtime["progress"] == checkpoint["progress"]
+             and type(runtime["optimizer_steps"]) is int
+             and runtime["optimizer_steps"] == checkpoint["progress"]["optimizer_steps"], "capture config/progress changed")
+    global_hooks = torch.nn.modules.module
+    _require(all(not getattr(global_hooks, name, {}) for name in
+                 ("_global_forward_hooks", "_global_forward_pre_hooks", "_global_backward_hooks",
+                  "_global_backward_pre_hooks", "_global_forward_hooks_always_called")),
+             "capture requires empty global module hook registries")
+    witness = runtime.get("_capture_witness")
+    _require(type(witness) is dict and witness.get("model") is model, "restored capture runtime witness required")
+    modules, parameters = tuple(model.named_modules()), tuple(model.named_parameters())
+    _require(tuple(runtime["named"]) == tuple(name for name, _ in parameters)
+             and all(runtime["named"][name] is parameter for name, parameter in parameters)
+             and len(runtime["selected"]) == len(SELECTED)
+             and all(value is runtime["named"][name] for value, name in zip(runtime["selected"], SELECTED, strict=True)),
+             "capture named/selected parameter references changed")
+    _require(len(parameters) == len(witness["parameters"])
+             and all(name == old_name and parameter is old for (name, parameter), (old_name, old)
+                     in zip(parameters, witness["parameters"], strict=True)), "capture parameter identity changed")
+    _require(len(modules) == len(witness["modules"]), "capture module tree changed")
+    for (name, module), (old_name, old_module, forward, code) in zip(modules, witness["modules"], strict=True):
+        _require(name == old_name and module is old_module and _capture_method(module.forward) is forward
+                 and getattr(_capture_method(module.forward), "__code__", None) is code,
+                 "capture forward callable changed")
+        _require(not module.training and not module._forward_hooks and not module._forward_pre_hooks
+                 and not module._backward_hooks and not getattr(module, "_backward_pre_hooks", {}),
+                 "capture requires eval mode and empty module hook registries")
+    _require(f18._model is _CAPTURE_FACTORY and f18.span.SpanLegalFormulaDecoder._decode is _CAPTURE_DECODE
+             and f18.capture._verify_greedy is _CAPTURE_VERIFY and f18.capture._tensor is _CAPTURE_TENSOR,
+             "original capture/decode callable changed")
+    _require(all(value.__code__ is code for value, code in zip(
+                 (_CAPTURE_FACTORY, _CAPTURE_DECODE, _CAPTURE_VERIFY, _CAPTURE_TENSOR), _CAPTURE_CODES, strict=True)),
+             "original capture/decode code changed")
+    # The retained factory defines one named forward. Compare its compiled code
+    # constant without constructing a second model or patching any owner.
+    code_type = type(_CAPTURE_CODES[0])
+    classes = [value for value in _CAPTURE_CODES[0].co_consts
+               if isinstance(value, code_type) and value.co_name == "ModalityConditionsRetentionAdapter"]
+    forwards = [value for body in classes for value in body.co_consts
+                if isinstance(value, code_type) and value.co_name == "forward"]
+    bound = model.forward
+    _require(len(forwards) == 1 and getattr(bound, "__self__", None) is model
+             and getattr(_capture_method(bound), "__code__", None) is forwards[0],
+             "original retained model forward code required")
+    _require(all(parameter.grad is None for _, parameter in parameters), "capture parameter gradients changed")
+    actual, moments = _live_state(torch, runtime, state, checkpoint["progress"]["optimizer_steps"])
+    _require(checkpoint_digest(actual) == checkpoint["model_state_sha256"]
+             and _checkpoint_raw(moments) == _checkpoint_raw(checkpoint["optimizer_state"]),
+             "capture full42/Adam state changed")
+    counters = _capture_counter_values(model, witness)
+    _require(type(runtime["model_forwards"]) is int
+             and runtime["model_forwards"] == counters["_conditions_forward_accounting"]["source_model_forwards"],
+             "unattributed source model forward")
+    return torch, model, counters
+
+
+def captured_inference(runtime, checkpoint, rows, *, state, provenance, records, teacher, weights,
+                       expected_bindings, margin_weight, control="none"):
+    """Observe original source-only readout on one already restored runtime.
+
+    The original outer owner admits the finite inference operation. Only closed
+    source triples reach the unchanged decoder; no labels, teacher predictions,
+    scores or reference artifacts are supplied to that readout. No restore,
+    optimizer step, greedy arithmetic or joint-selection arithmetic occurs here.
+    """
+    _require(type(rows) is list and 1 <= len(rows) <= 128
+             and all(type(row) is dict and set(row) == {"id", "source_text", "latent"}
+                     and type(row["id"]) is str and 0 < len(row["id"].strip()) <= 512
+                     and type(row["source_text"]) is str and row["source_text"].strip() for row in rows),
+             "closed source-only id/source_text/latent triples required")
+    _require(len({row["id"] for row in rows}) == len(rows), "unique capture source IDs required")
+    _require(type(control) is str and control in ("none", "zero", "disabled", "rotate")
+             and (control != "rotate" or len(rows) > 1), "bounded capture control required")
+    sources_raw = _checkpoint_raw(rows)
+    sources = copy.deepcopy(rows)
+    tokens = [f18.span.tokenize_source(row["source_text"]) for row in sources]
+    _require(all(1 <= len(value) <= 128 for value in tokens), "bounded complete capture source tokens required")
+    vectors = [f18.span._vector(row["latent"], 384) for row in sources]
+    if control == "zero":
+        vectors = [[0.0] * 384 for _ in vectors]
+    elif control == "rotate":
+        vectors = vectors[1:] + vectors[:1]
+    checkpoint_root = checkpoint_digest(checkpoint)
+    torch, model, before = _capture_guard(runtime, checkpoint, state, provenance, records, teacher,
+                                         weights, expected_bindings, margin_weight, checkpoint_root)
+    ambient = torch.get_rng_state().clone()
+    grad_mode = torch.is_grad_enabled()
+    with torch.random.fork_rng(devices=[]), torch.set_grad_enabled(grad_mode):
+        try:
+            captures = []
+            handle = None
+            def hook(module, incoming, output):
+                index = len(captures)
+                _require(module is model and index < len(sources) and type(output) is dict
+                         and set(output) == {"modality", "presence", "start", "end"}, "unexpected extra source head capture")
+                count = len(tokens[index])
+                _require(type(incoming) is tuple and len(incoming) == 4
+                         and tuple(incoming[0].shape)[:2] == (1, count)
+                         and incoming[2].detach().cpu().tolist() == [count], "exact one-source forward required")
+                modality = _CAPTURE_TENSOR(output["modality"], (1, 3))[0]
+                presence = _CAPTURE_TENSOR(output["presence"], (1, 4, 2))[0]
+                starts = _CAPTURE_TENSOR(output["start"], (1, 6, count))[0]
+                ends = _CAPTURE_TENSOR(output["end"], (1, 6, count))[0]
+                captures.append({"schema": "joint-source-span-scores/v1",
+                    "tokens": [{key: token[key] for key in ("text", "start", "end")} for token in tokens[index]],
+                    "modality_logits": modality,
+                    "presence_logits": dict(zip(f18.span.OPTIONAL_FIELDS, presence, strict=True)),
+                    "start_logits": dict(zip(f18.span.SPAN_FIELDS, starts, strict=True)),
+                    "end_logits": dict(zip(f18.span.SPAN_FIELDS, ends, strict=True))})
+                return None
+            try:
+                with torch.random.fork_rng(devices=[]):
+                    view = object.__new__(f18.span.SpanLegalFormulaDecoder)
+                    view.torch, view.model = torch, model
+                    view.checkpoint = {"config": copy.deepcopy(runtime["config"])}
+                    handle = model.register_forward_hook(hook)
+                    decoded = [_CAPTURE_DECODE(view, row["source_text"], vector, enabled=control != "disabled")
+                               for row, vector in zip(sources, vectors, strict=True)]
+                    _require(torch.equal(ambient, torch.get_rng_state()), "source capture consumed CPU RNG")
+            finally:
+                if handle is not None:
+                    handle.remove()
+                model.eval()
+            _require(len(captures) == len(decoded) == len(sources)
+                     and torch.equal(ambient, torch.get_rng_state()) and torch.is_grad_enabled() is grad_mode,
+                     "capture coverage/RNG/gradmode changed")
+            for source, scores, raw in zip(sources, captures, decoded, strict=True):
+                _require(raw["source_sha256"] == hashlib.sha256(source["source_text"].encode()).hexdigest(),
+                         "capture source occurrence changed")
+                _CAPTURE_VERIFY(source["source_text"], scores, raw)
+            after = _capture_counter_values(model, runtime["_capture_witness"])
+            deltas = {name: {key: value - before[name][key] for key, value in table.items()} for name, table in after.items()}
+            _require(all(value == len(sources) for table in deltas.values() for value in table.values()),
+                     "native forward counter deltas differ from source count")
+            runtime["model_forwards"] = after["_conditions_forward_accounting"]["source_model_forwards"]
+            _capture_guard(runtime, checkpoint, state, provenance, records, teacher, weights,
+                           expected_bindings, margin_weight, checkpoint_root)
+            _require(_checkpoint_raw(rows) == sources_raw, "offered capture source triples changed")
+            report = {"schema": INFERENCE_SCHEMA, "checkpoint_sha256": checkpoint_root,
+                      "model_state_sha256": checkpoint["model_state_sha256"], "rows": decoded,
+                      "decoded_count": sum(row["status"] == "decoded" for row in decoded),
+                      "latent_ablation": control, "target_access": False, "teacher_forcing": False,
+                      "training_executed": False, **_AUTHORITY}
+            result = {"schema": CAPTURE_SCHEMA, "inference": report,
+                      "occurrences": [{"id": row["id"], "source_sha256": hashlib.sha256(row["source_text"].encode()).hexdigest(),
+                                       "scores": scores} for row, scores in zip(sources, captures, strict=True)],
+                      "source_rows_sha256": hashlib.sha256(sources_raw).hexdigest(),
+                      "actual_source_forwards": len(sources), "extra_capture_forwards": 0,
+                      "forward_counter_deltas": {"actor": deltas["_actor_forward_accounting"],
+                                                 "conditions": deltas["_conditions_forward_accounting"]},
+                      "cumulative_source_forwards": runtime["model_forwards"],
+                      "feature_paths_per_source_forward": 3, "model_weights_unchanged": True,
+                      "ambient_CPU_RNG_preserved": True, "incoming_grad_mode_preserved": True,
+                      "original_greedy_observations_verified": True, "target_access": False,
+                      "teacher_forcing": False, "training_executed": False, **_AUTHORITY}
+            detached = _detached(result)
+            _capture_guard(runtime, checkpoint, state, provenance, records, teacher, weights,
+                           expected_bindings, margin_weight, checkpoint_root)
+            _require(_checkpoint_raw(rows) == sources_raw and _capture_counter_values(model, runtime["_capture_witness"]) == after
+                     and torch.equal(ambient, torch.get_rng_state()) and torch.is_grad_enabled() is grad_mode,
+                     "capture closing source/counter/RNG/gradmode fence changed")
+            return detached
+        finally:
+            model.eval()
+
+__all__ += ["CAPTURE_SCHEMA", "INFERENCE_SCHEMA", "captured_inference"]
