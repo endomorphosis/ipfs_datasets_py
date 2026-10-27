@@ -1,12 +1,10 @@
 # Training and experiment history
 
-
 ## Retained compatibility diagnostic and F18 asset locations, 2026-10-27
 
 The [15-case/45-phase observation](../../../../docs/autoformalization/evidence/legal-ir-retained-lean-compatibility-diagnostic-20261027.json) covers only the new compatibility frontier on retained `8fc89b20`: 0.65s, 35 selected source pins and original compute/storage/source closure. Fresh original CLI `66a608dc` accepted the exact empty source pin; it did not replay or rewrite the old 141 request. It is neither current-public runtime/source-port qualification nor the unfinished card's full owning-suite/task-checker gate. Both 1800-second full gates remain failed; real Lean, semantic and model qualification are not supplied.
 
 Six retained F18 dependencies are located by path/presence/size in the same capsule. Their payloads were not opened or hashed, and no donor/teacher/source/mask authentication, paired fit or scoring follows. The separate attempt 4→1 incident reflects the existing source-hash-based obsolescence-rearm policy with retained event history; its policy fix is separate and no deployment is claimed here.
-
 
 ## F18 four-tensor mechanics qualification, 2026-10-27
 

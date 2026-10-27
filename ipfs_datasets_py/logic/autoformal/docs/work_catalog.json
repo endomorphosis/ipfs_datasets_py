@@ -5837,8 +5837,8 @@
     },
     {
       "id": "retained-lean-compatibility-diagnostic-20261027-01",
-      "observed_bytes": 6162,
-      "observed_sha256": "6cd9f9ff1536977329771d962eef9c5f431d24baf362b2ed2341869971980041",
+      "observed_bytes": 6437,
+      "observed_sha256": "c4a79ef124d3334d13ab2ff01cf2b7f7ce4674c656cf5b3d16738a78c002f182",
       "path": "docs/autoformalization/evidence/legal-ir-retained-lean-compatibility-diagnostic-20261027.json",
       "required_for_catalog_check": true,
       "root": "datasets_repository",

@@ -15,7 +15,9 @@
     },
     "independent_queue_review": {
       "bytes": 10332,
-      "local_path": "/tmp/legal-ir-lean-compatibility-diagnostic-queue-review-20261027.json",
+      "original_local_path": "/tmp/legal-ir-lean-compatibility-diagnostic-queue-review-20261027.json",
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/review-closeout-v03/01-legal-ir-lean-compatibility-diagnostic-queue-review-20261027.json",
+      "root": "datasets_repository",
       "sha256": "e0d4452572c53ea6bde90567b8b74119a4225fdc02d228560fa6078e2e74efee"
     },
     "original_owner_closeout": {
