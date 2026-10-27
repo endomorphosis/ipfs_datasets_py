@@ -314,6 +314,91 @@ def _file(module, imports, body):
             + "namespace " + module + "\n" + body + "\nend " + module + "\n")
 
 
+# Identical public replays inside one packet/index read share one preparation.
+# The key covers the verified corpus pin and the full review tree, so a changed
+# input, toolchain, or owner file misses and runs the corpus replay again.
+_PREPARE_CACHE = {}
+_PREPARE_CACHE_MAX = 4
+
+
+def _tree_digest(value):
+    digest = hashlib.sha256()
+
+    def visit(item):
+        kind = type(item)
+        if kind is dict:
+            digest.update(b"d")
+            digest.update(str(len(item)).encode())
+            for key in sorted(item):
+                if type(key) is not str or visit(key) is False or visit(item[key]) is False:
+                    return False
+        elif kind is list or kind is tuple:
+            digest.update(b"l" if kind is list else b"t")
+            digest.update(str(len(item)).encode())
+            for child in item:
+                if visit(child) is False:
+                    return False
+        elif kind is str:
+            raw = item.encode()
+            digest.update(b"s")
+            digest.update(str(len(raw)).encode())
+            digest.update(raw)
+        elif kind is bytes:
+            digest.update(b"b")
+            digest.update(str(len(item)).encode())
+            digest.update(item)
+        elif kind is bool:
+            digest.update(b"t" if item else b"f")
+        elif kind is int:
+            digest.update(b"i")
+            digest.update(str(item).encode())
+        elif item is None:
+            digest.update(b"n")
+        elif kind is float:
+            if not math.isfinite(item):
+                return False
+            digest.update(b"r")
+            digest.update(repr(item).encode())
+        else:
+            return False
+        return True
+
+    if visit(value) is False:
+        return None
+    return digest.digest()
+
+
+def _prepare_cache_key(expected_corpus_preparation_sha256, expected_assessment_file_sha256,
+                       review_inputs, toolchain, owners):
+    review = _tree_digest(review_inputs)
+    if review is None:
+        return None
+    digest = hashlib.sha256()
+    digest.update(expected_corpus_preparation_sha256.encode())
+    digest.update(expected_assessment_file_sha256.encode())
+    digest.update(toolchain.encode())
+    digest.update(review)
+    for module in owners:
+        digest.update(Path(module.__file__).read_bytes())
+    return digest.digest()
+
+
+def _prepare_cache_get(key):
+    cached = _PREPARE_CACHE.get(key)
+    if cached is None:
+        return None
+    _PREPARE_CACHE.pop(key)
+    _PREPARE_CACHE[key] = cached
+    return cached
+
+
+def _prepare_cache_put(key, preparation):
+    _PREPARE_CACHE.pop(key, None)
+    _PREPARE_CACHE[key] = preparation
+    while len(_PREPARE_CACHE) > _PREPARE_CACHE_MAX:
+        _PREPARE_CACHE.pop(next(iter(_PREPARE_CACHE)))
+
+
 def prepare_definition_use_preservation_v2(corpus_preparation, assessment_raw, *,
         expected_corpus_preparation_sha256, expected_assessment_file_sha256,
         review_inputs, toolchain):
@@ -322,6 +407,13 @@ def prepare_definition_use_preservation_v2(corpus_preparation, assessment_raw, *
         corpus_preparation, assessment_raw, expected_corpus_preparation_sha256,
         expected_assessment_file_sha256, review_inputs, toolchain)
     owners = _owners()
+    cache_key = _prepare_cache_key(
+        expected_corpus_preparation_sha256, expected_assessment_file_sha256,
+        review_inputs, toolchain, owners)
+    if cache_key is not None:
+        cached = _prepare_cache_get(cache_key)
+        if cached is not None:
+            return cached
     _, corpus_native, standalone_owner, contracts = owners
     original = corpus_native.validate_definition_use_native_v2(
         corpus_preparation, assessment_raw,
@@ -500,6 +592,8 @@ def prepare_definition_use_preservation_v2(corpus_preparation, assessment_raw, *
     preparation = DefinitionUsePreservationPreparation(
         _wire(manifest, MAX_RECORD_BYTES).decode(), tuple(sorted(files.items())))
     preparation_sha256(preparation)
+    if cache_key is not None:
+        _prepare_cache_put(cache_key, preparation)
     return preparation
 
 
