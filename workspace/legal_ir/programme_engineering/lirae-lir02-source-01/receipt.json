@@ -1,0 +1,57 @@
+{
+  "schema": "legal-ir-supervisor-task-receipt/v1",
+  "task_id": "LIRAE-LIR02-SOURCE-01",
+  "task_kind": "programme_engineering",
+  "status": "implemented",
+  "outcome": "implemented",
+  "authority": {
+    "admitted": false,
+    "formalized": false
+  },
+  "parent_reference": {
+    "repository": "ipfs_datasets_py",
+    "revision": "eb023a439a23c59acdfaf485c66127f5202ecc8f",
+    "path": "ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json",
+    "task_id": "LIR-02",
+    "task_sha256": "f76d37ed866ab50581aa691ed88840d50f1c47e1c59289b882fc677cfffe5b41"
+  },
+  "source_binding": {
+    "repository": "ipfs_datasets_py",
+    "public_main_commit": "eb023a439a23c59acdfaf485c66127f5202ecc8f",
+    "backlog_path": "ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json",
+    "backlog_sha256": "d1f74b427c3a7b27988a1d174f258fa6e867b681178978b90c611f4088ff401a"
+  },
+  "implementation_route": {
+    "primary_provider_id": "grok_cli",
+    "primary_model_id": "grok-4.7",
+    "fallback_provider_id": "codex",
+    "fallback_model_id": "gpt-6.1-sol",
+    "fallback_trigger": "primary_quota_exhausted",
+    "fallback_reasoning_effort": "high"
+  },
+  "artifacts": [
+    {
+      "kind": "preparation",
+      "path": "workspace/legal_ir/programme_engineering/lirae-lir02-source-01/preparation.json",
+      "sha256": "aeabbd8bf176aefa76e8ed10fccfae962062a3fb586e25c7c2e62757d0361d94"
+    }
+  ],
+  "code_changes": [
+    {
+      "path": "ipfs_datasets_py/logic/autoformal/legal_source_correspondence_requests_v1.py",
+      "sha256": "954f1fe8c1da03486ec46503751dd453f142dcb401f42f4ce828ac79a7d278c3"
+    },
+    {
+      "path": "ipfs_datasets_py/logic/autoformal/legal_source_review_handoff.py",
+      "sha256": "52fb8301b969db0ff12b0aa867573d8b02e24c420960ee585463db8f13257eef"
+    },
+    {
+      "path": "tests/unit/logic/autoformal/test_legal_source_correspondence_requests_v1.py",
+      "sha256": "a8046b531e96d83e980172b90a2f4e3f420f3f634438ab70a70ae12ec5656a23"
+    },
+    {
+      "path": "tests/unit/logic/autoformal/test_legal_source_review_handoff.py",
+      "sha256": "674e929b7f794589b4360d8c07f529a7dd23a694e65626049699542578c61f99"
+    }
+  ]
+}

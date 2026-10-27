@@ -1,0 +1,345 @@
+{
+  "schema": "legal-ir-programme-engineering-preparation/v1",
+  "task_id": "LIRAE-LIR02-SOURCE-01",
+  "parent_reference": {
+    "repository": "ipfs_datasets_py",
+    "revision": "eb023a439a23c59acdfaf485c66127f5202ecc8f",
+    "path": "ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json",
+    "task_id": "LIR-02",
+    "task_sha256": "f76d37ed866ab50581aa691ed88840d50f1c47e1c59289b882fc677cfffe5b41"
+  },
+  "source_binding": {
+    "repository": "ipfs_datasets_py",
+    "public_main_commit": "eb023a439a23c59acdfaf485c66127f5202ecc8f",
+    "backlog_path": "ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json",
+    "backlog_sha256": "d1f74b427c3a7b27988a1d174f258fa6e867b681178978b90c611f4088ff401a"
+  },
+  "admitted": false,
+  "formalized": false,
+  "semantic_review_performed": false,
+  "model_gain_claimed": false,
+  "training_executed": false,
+  "result": {
+    "source_manifest": {
+      "schema": "legal-source-edition-context-manifest/v1",
+      "coordinate_namespace": "decoded_supplied_text",
+      "coordinate_receipt": {
+        "observation_id": "selected-parent-coordinate-observation-20261022-01",
+        "schema": "legal-ir-selected-parent-coordinate-observation/v1",
+        "status": "closed_original_owned_two_parent_sentence_coordinate_observation",
+        "sha256": "8193ce3c85c961eb38d8ded7f1be8b35ccc32410b68a895685052ca4aa47c4a3",
+        "bytes": 26420,
+        "completed": true,
+        "result_counts": {
+          "emitted_sentence_spans": 130,
+          "historical_progress_observations": 15,
+          "matching_position_references": 45,
+          "unique_matching_coordinate_span_indices": 32,
+          "observations_with_multiple_matching_positions": 3
+        },
+        "full_parent_row_ordinals": [
+          2674,
+          2675
+        ],
+        "ambiguous_position_count": 3,
+        "position_population_sha256": "29a8ce6cda53031b7c0630e6f2476dc56b9e9f655c22f5e85663a93bf921d63e",
+        "segmentation_repeated": false,
+        "matching_repeated": false,
+        "alignment_repeated": false,
+        "ledger_census_repeated": false,
+        "corpus_census_repeated": false
+      },
+      "identity_bindings": [
+        {
+          "artifact_revision": null,
+          "artifact_sha256": null,
+          "binding_id": "binding:source",
+          "declared_revision": null,
+          "path_in_repo": null,
+          "repository_id": null,
+          "role": "source",
+          "row_ordinal": null,
+          "row_sha256": null,
+          "status": "unresolved"
+        },
+        {
+          "artifact_revision": null,
+          "artifact_sha256": null,
+          "binding_id": "binding:span",
+          "declared_revision": null,
+          "path_in_repo": null,
+          "repository_id": null,
+          "role": "span",
+          "row_ordinal": null,
+          "row_sha256": null,
+          "status": "unresolved"
+        },
+        {
+          "artifact_revision": null,
+          "artifact_sha256": null,
+          "binding_id": "binding:entity",
+          "declared_revision": null,
+          "path_in_repo": null,
+          "repository_id": null,
+          "role": "entity",
+          "row_ordinal": null,
+          "row_sha256": null,
+          "status": "unresolved"
+        },
+        {
+          "artifact_revision": null,
+          "artifact_sha256": null,
+          "binding_id": "binding:parent_cache",
+          "declared_revision": null,
+          "path_in_repo": null,
+          "repository_id": null,
+          "role": "parent_cache",
+          "row_ordinal": null,
+          "row_sha256": null,
+          "status": "unresolved"
+        }
+      ],
+      "offsets": [],
+      "offsets_status": "unresolved_not_supplied",
+      "edition_status": "missing",
+      "edition": null,
+      "context_status": "missing",
+      "context": null,
+      "crosswalk_status": "missing",
+      "crosswalk": null,
+      "source_span_entity_crosswalk": "missing",
+      "evidence_pins": [
+        {
+          "pin_id": "retained-pilot-source-crosswalk-20261024",
+          "role": "unreviewed_candidate_register",
+          "sha256": "4f4fa06c31c28072f414e130a6d3001e98f210a036f4be742b48bc587393e9f3",
+          "bytes": 35136
+        },
+        {
+          "pin_id": "source7346-full-b-parent-correspondence-20261025",
+          "role": "unreviewed_candidate_register",
+          "sha256": "a88dd2c17953ca9d9d1e21a1151ca0bca21859943f68a02ac59e06f2efa32d54",
+          "bytes": 352605
+        }
+      ],
+      "governing_edition_selected": false
+    },
+    "candidate_dispositions": [
+      {
+        "candidate_id": "full-parent-row:2674",
+        "kind": "full_parent_bank",
+        "disposition": "unresolved_alternative",
+        "operative_use": false,
+        "selected": false,
+        "row_ordinal": 2674,
+        "file_revision": null,
+        "legal_id": null,
+        "source_occurrence_id": null,
+        "candidate_span_indices": null
+      },
+      {
+        "candidate_id": "full-parent-row:2675",
+        "kind": "full_parent_bank",
+        "disposition": "unresolved_alternative",
+        "operative_use": false,
+        "selected": false,
+        "row_ordinal": 2675,
+        "file_revision": null,
+        "legal_id": null,
+        "source_occurrence_id": null,
+        "candidate_span_indices": null
+      },
+      {
+        "candidate_id": "ambiguous-position:3",
+        "kind": "ambiguous_coordinate_position",
+        "disposition": "retained_ambiguous_position",
+        "operative_use": false,
+        "selected": false,
+        "row_ordinal": null,
+        "file_revision": null,
+        "retained_row_index": 3,
+        "multiple_positions": true,
+        "match_count": 7,
+        "candidate_span_indices": [
+          10,
+          14,
+          29,
+          35,
+          38,
+          41,
+          44
+        ],
+        "historical_span_ordinal": 4049,
+        "legal_id": "usc:us:10:7213",
+        "source_span_id": "uscode-span-109c290c2e97ccd742f84d194121182e3b764e42edd126f56db1f3a80fd18368",
+        "source_sha256": "5bfe62d9f7d85f01c08cd136878aff9508276fa1d75c2ae2f21c43cf29316eec",
+        "source_occurrence_id": "uscode-span-109c290c2e97ccd742f84d194121182e3b764e42edd126f56db1f3a80fd18368"
+      },
+      {
+        "candidate_id": "ambiguous-position:12",
+        "kind": "ambiguous_coordinate_position",
+        "disposition": "retained_ambiguous_position",
+        "operative_use": false,
+        "selected": false,
+        "row_ordinal": null,
+        "file_revision": null,
+        "retained_row_index": 12,
+        "multiple_positions": true,
+        "match_count": 13,
+        "candidate_span_indices": [
+          56,
+          60,
+          64,
+          100,
+          104,
+          107,
+          110,
+          113,
+          116,
+          119,
+          122,
+          125,
+          128
+        ],
+        "historical_span_ordinal": 4130,
+        "legal_id": "usc:us:10:7214",
+        "source_span_id": "uscode-span-0c49542f9e2bd5febebeb3a4da426204bee2b2c961d119c63a49c37dd410b422",
+        "source_sha256": "5bfe62d9f7d85f01c08cd136878aff9508276fa1d75c2ae2f21c43cf29316eec",
+        "source_occurrence_id": "uscode-span-0c49542f9e2bd5febebeb3a4da426204bee2b2c961d119c63a49c37dd410b422"
+      },
+      {
+        "candidate_id": "ambiguous-position:14",
+        "kind": "ambiguous_coordinate_position",
+        "disposition": "retained_ambiguous_position",
+        "operative_use": false,
+        "selected": false,
+        "row_ordinal": null,
+        "file_revision": null,
+        "retained_row_index": 14,
+        "multiple_positions": true,
+        "match_count": 13,
+        "candidate_span_indices": [
+          56,
+          60,
+          64,
+          100,
+          104,
+          107,
+          110,
+          113,
+          116,
+          119,
+          122,
+          125,
+          128
+        ],
+        "historical_span_ordinal": 4142,
+        "legal_id": "usc:us:10:7214",
+        "source_span_id": "uscode-span-07c33feb872b699927c7b52e74acdc8e0c010e91aafe5da3d77e1827348885f4",
+        "source_sha256": "5bfe62d9f7d85f01c08cd136878aff9508276fa1d75c2ae2f21c43cf29316eec",
+        "source_occurrence_id": "uscode-span-07c33feb872b699927c7b52e74acdc8e0c010e91aafe5da3d77e1827348885f4"
+      },
+      {
+        "candidate_id": "officer_definition",
+        "disposition": "unresolved_alternative",
+        "evidence_pin_id": "retained-pilot-source-crosswalk-20261024",
+        "kind": "officer_alternative",
+        "legal_id": null,
+        "operative_use": false,
+        "source_occurrence_id": "baguqeeracyfied5gomuscg5pdep44znimi2zdlqjbs4n2jwq4yf6dekbgera",
+        "selected": false,
+        "row_ordinal": null,
+        "file_revision": null,
+        "candidate_span_indices": null
+      },
+      {
+        "candidate_id": "officer_use_7213",
+        "disposition": "unresolved_operative_use",
+        "evidence_pin_id": "retained-pilot-source-crosswalk-20261024",
+        "kind": "officer_alternative",
+        "legal_id": null,
+        "operative_use": false,
+        "source_occurrence_id": "baguqeerarbvejvawh23hjqt5b7e7ii5x5zzibekdweepvmi36sqzywkchcda",
+        "selected": false,
+        "row_ordinal": null,
+        "file_revision": null,
+        "candidate_span_indices": null
+      },
+      {
+        "candidate_id": "officer_use_7214",
+        "disposition": "unresolved_operative_use",
+        "evidence_pin_id": "retained-pilot-source-crosswalk-20261024",
+        "kind": "officer_alternative",
+        "legal_id": null,
+        "operative_use": false,
+        "source_occurrence_id": "baguqeeracdglsquykktyomvkuyrq2xf4ljhzwbdn7kguvnhithregnhhpoja",
+        "selected": false,
+        "row_ordinal": null,
+        "file_revision": null,
+        "candidate_span_indices": null
+      },
+      {
+        "candidate_id": "full_b_v02:de_dicto_list",
+        "disposition": "unresolved_alternative",
+        "evidence_pin_id": "source7346-full-b-parent-correspondence-20261025",
+        "kind": "norm_use_candidate",
+        "legal_id": null,
+        "operative_use": false,
+        "source_occurrence_id": "baguqeerapsfsqefap4ckqmvlsjjzfhlmnu3z27tzh6r7nfo3sjvrp2s3sl5q",
+        "selected": false,
+        "row_ordinal": null,
+        "file_revision": null,
+        "candidate_span_indices": null
+      },
+      {
+        "candidate_id": "full_b_v02:de_re_list",
+        "disposition": "unresolved_alternative",
+        "evidence_pin_id": "source7346-full-b-parent-correspondence-20261025",
+        "kind": "norm_use_candidate",
+        "legal_id": null,
+        "operative_use": false,
+        "source_occurrence_id": "baguqeerapsfsqefap4ckqmvlsjjzfhlmnu3z27tzh6r7nfo3sjvrp2s3sl5q",
+        "selected": false,
+        "row_ordinal": null,
+        "file_revision": null,
+        "candidate_span_indices": null
+      }
+    ],
+    "unresolved_questions": [
+      "source revision is unresolved",
+      "span revision is unresolved",
+      "entity revision is unresolved",
+      "parent_cache revision is unresolved",
+      "governing edition is missing",
+      "statutory context is missing",
+      "source/span/entity crosswalk is missing",
+      "operative uses are unresolved",
+      "physical cache and producer binding remain unresolved",
+      "legal meaning and review are not manufactured",
+      "pending review obligation: producer_historical_source_correspondence",
+      "pending review obligation: official_edition_authentication",
+      "pending review obligation: region_legal_classification",
+      "pending review obligation: definition_closure",
+      "pending review obligation: reference_closure",
+      "pending review obligation: exception_scope_closure",
+      "pending review obligation: temporal_closure",
+      "pending review obligation: IR_semantic_fidelity",
+      "pending review obligation: global_consistency",
+      "pending review obligation: Lean4_kernel_check"
+    ],
+    "reuse_owners": [
+      {
+        "path": "ipfs_datasets_py/logic/autoformal/legal_source_correspondence_requests_v1.py",
+        "symbol": "prepare_source_edition_context_dossier",
+        "role": "source edition context dossier export",
+        "sha256": "954f1fe8c1da03486ec46503751dd453f142dcb401f42f4ce828ac79a7d278c3"
+      },
+      {
+        "path": "ipfs_datasets_py/logic/autoformal/legal_source_review_handoff.py",
+        "symbol": "bind_source_dossier_review_questions",
+        "role": "pending review questions without a review receipt",
+        "sha256": "52fb8301b969db0ff12b0aa867573d8b02e24c420960ee585463db8f13257eef"
+      }
+    ]
+  }
+}
