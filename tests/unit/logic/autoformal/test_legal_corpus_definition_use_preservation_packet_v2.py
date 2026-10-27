@@ -1125,3 +1125,125 @@ def test_parent_norm_packet_original_physical_file_drift_after_genuine_replay_re
     finally:
         parent_file.write_bytes(original_bytes)
         assert parent_file.read_bytes() == original_bytes
+
+
+def compatibility_candidates():
+    raw = owner.retained_lean_compatibility_request_bytes()
+    return json.loads(raw.decode())["candidates"]
+
+
+def compatibility_request(candidates):
+    raw = canonical({"schema": owner.LEAN_COMPATIBILITY_REQUEST_SCHEMA, "candidates": candidates})
+    return raw, owner.prepare_lean_compatibility_request_v1(
+        raw, expected_request_sha256=sha(raw))
+
+
+def test_compatibility_request_binds_selected_ast_and_blocks_admission():
+    candidates = compatibility_candidates()
+    raw, report = compatibility_request(candidates)
+    assert [row["route"] for row in report["compatibility_matrix"]] == list(owner.LEAN_COMPATIBILITY_ROUTES)
+    assert [row["candidate_id"] for row in report["compatibility_matrix"]] == [
+        row["candidate_id"] for row in json.loads(raw)["candidates"]]
+    parent, direct, conditional, native, preservation = report["compatibility_matrix"]
+    assert parent["missing_packet_index_profile"] == parent["profile"]
+    assert parent["packet_index_reader"] is None and parent["packet_index_admitted"] is False
+    assert parent["artifact_closure"]["retained_files"] == 29
+    assert parent["evidence"][0]["pure_cases"] == 32 and parent["evidence"][0]["pure_phases"] == 96
+    assert parent["evidence"][0]["actual_native_cases"] == 2 and parent["evidence"][0]["actual_native_phases"] == 6
+    assert parent["evidence"][0]["counts_pooled"] is False
+    assert parent["ast_sha256"] == parent["evidence"][0]["sha256"]
+    assert direct["evidence"][0]["cases"] == 68 and direct["evidence"][0]["phases"] == 204
+    assert direct["artifact_closure"]["packet_files"] == 23
+    assert direct["packet_index_reader"] == "validate_parent_norm_native_packet_v1"
+    assert native["evidence"][0]["cases"] == 23 and native["evidence"][0]["phases"] == 69
+    assert conditional["artifact_closure"] == {"modules": 6, "project_files": 9, "theorems": 3}
+    assert len(preservation["axioms"]) == 15 and len(preservation["imports"]) == 12
+    assert preservation["artifact_closure"]["packet_files"] == 49
+    assert preservation["evidence"][0]["historical_cohort_rerun"] is False
+    closure = report["request_import_premise_axiom_closure"]
+    assert closure["compiler_invoked"] is False
+    assert [(row["route"], row["imports"], row["premises"], row["axioms"]) for row in closure["candidates"]] == [
+        (row["route"], row["imports"], row["premises"], row["axioms"]) for row in report["compatibility_matrix"]]
+    assert report["artifact_closure"]["compiler_invoked"] is False
+    assert all(row["packet_index_admitted"] is False for row in report["artifact_closure"]["rows"])
+    assert all(question["status"] == "unanswered" for question in report["unresolved_questions"])
+    assert {question["id"] for question in report["unresolved_questions"]} >= {
+        "parent_bound_29_file_packet_index_unadmitted", "lean_admission_blocked", "legal_admission_blocked"}
+    assert all(row["lean_admitted"] is False and row["legal_admitted"] is False and row["admitted"] is False
+               and row["formalized"] is False and row["compiler_invoked"] is False and row["introduced_axioms"] == []
+               for row in report["compatibility_matrix"])
+    assert any(item["symbol"] == "not_registered" and item["packet_index_api_registered"] is False
+               for item in report["reuse_owners"])
+
+
+@pytest.mark.parametrize("route", owner.LEAN_COMPATIBILITY_ROUTES)
+def test_compatibility_request_refuses_foreign_profile(route):
+    candidates = [row for row in compatibility_candidates() if row["route"] == route]
+    candidates[0]["profile"] = "foreign-lean-profile/v9"
+    raw = canonical({"schema": owner.LEAN_COMPATIBILITY_REQUEST_SCHEMA, "candidates": candidates})
+    with pytest.raises(ValueError, match="foreign compatibility profile"):
+        owner.prepare_lean_compatibility_request_v1(raw, expected_request_sha256=sha(raw))
+
+
+@pytest.mark.parametrize("route", owner.LEAN_COMPATIBILITY_ROUTES)
+def test_compatibility_request_refuses_missing_premise_or_artifact_closure(route):
+    base = [row for row in compatibility_candidates() if row["route"] == route][0]
+    missing_premise = deepcopy(base)
+    missing_premise["premises"] = missing_premise["premises"][:-1]
+    missing_artifact = deepcopy(base)
+    missing_artifact["artifact_closure"] = dict(missing_artifact["artifact_closure"])
+    missing_artifact["artifact_closure"].pop(next(iter(missing_artifact["artifact_closure"])))
+    for damaged, message in ((missing_premise, "missing premise closure"),
+                             (missing_artifact, "missing artifact closure")):
+        raw = canonical({"schema": owner.LEAN_COMPATIBILITY_REQUEST_SCHEMA, "candidates": [damaged]})
+        with pytest.raises(ValueError, match=message):
+            owner.prepare_lean_compatibility_request_v1(raw, expected_request_sha256=sha(raw))
+
+
+def test_compatibility_request_refuses_new_axioms_and_admission_claims():
+    candidate = [row for row in compatibility_candidates() if row["route"] == "native"][0]
+    axiomed = deepcopy(candidate)
+    axiomed["axioms"] = {"original_norm_preserved": ["sorryAx"]}
+    claimed = deepcopy(candidate)
+    claimed["lean_admitted"] = True
+    for damaged in (axiomed, claimed):
+        raw = canonical({"schema": owner.LEAN_COMPATIBILITY_REQUEST_SCHEMA, "candidates": [damaged]})
+        with pytest.raises(ValueError):
+            owner.prepare_lean_compatibility_request_v1(raw, expected_request_sha256=sha(raw))
+
+
+def test_compatibility_request_serialization_is_stable_and_order_sensitive():
+    left_rows = compatibility_candidates()
+    right_rows = list(reversed(left_rows))
+    left_raw, left = compatibility_request(left_rows)
+    right_raw, right = compatibility_request(right_rows)
+    again_raw, again = compatibility_request(json.loads(left_raw.decode())["candidates"])
+    assert again == left and again_raw == left_raw
+    assert [row["route"] for row in left["compatibility_matrix"]] == [
+        row["route"] for row in left_rows]
+    assert [row["route"] for row in right["compatibility_matrix"]] == [
+        row["route"] for row in right_rows]
+    assert owner.lean_compatibility_request_sha256(left) != owner.lean_compatibility_request_sha256(right)
+    digest = owner.lean_compatibility_request_sha256(left)
+    assert digest == sha(canonical(left))
+    regenerated = owner.validate_lean_compatibility_request_v1(
+        left, left_raw, expected_request_sha256=sha(left_raw), expected_report_sha256=digest)
+    assert regenerated == left
+    damaged = deepcopy(left)
+    damaged["compatibility_matrix"][0]["lean_admitted"] = True
+    with pytest.raises(ValueError):
+        owner.validate_lean_compatibility_request_v1(
+            damaged, left_raw, expected_request_sha256=sha(left_raw),
+            expected_report_sha256=owner.lean_compatibility_request_sha256(damaged))
+
+
+def test_compatibility_request_does_not_invoke_a_compiler_or_packet_owners(monkeypatch):
+    def refuse(*args, **kwargs):
+        raise AssertionError("compiler or packet owner invoked")
+    monkeypatch.setattr(subprocess, "run", refuse)
+    monkeypatch.setattr(subprocess, "Popen", refuse)
+    monkeypatch.setattr(owner, "_owners", refuse)
+    monkeypatch.setattr(owner, "_parent_norm_packet_owners", refuse)
+    raw, report = compatibility_request(compatibility_candidates())
+    assert report["artifact_closure"]["compiler_invoked"] is False
+    assert all(row["compiler_invoked"] is False for row in report["compatibility_matrix"])
