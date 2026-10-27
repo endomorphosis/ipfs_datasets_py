@@ -2619,7 +2619,7 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 
 ## LIRAE-CONT-OCCURRENCE-VALIDATE-01 Validate retained occurrence-context fixture evidence without rerunning it
 
-- Status: todo
+- Status: completed
 - completion: manual
 - is schedulable: true
 - priority: P1
