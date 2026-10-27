@@ -104,8 +104,8 @@ def test_enrichment_refuses_missing_tasks_and_check_board_refuses_duplicates(tmp
         contract.check_board(tmp_path)
 
 
-@pytest.mark.parametrize("bad", [True, 0, None, "false"])
-@pytest.mark.parametrize("field", ["admitted", "formalized", "roundtrip_ok"])
+@pytest.mark.parametrize("bad", [True, 0, None, "false"], ids=['legacy-axis-0-00', 'legacy-axis-0-01', 'legacy-axis-0-02', 'legacy-axis-0-03'])
+@pytest.mark.parametrize("field", ["admitted", "formalized", "roundtrip_ok"], ids=['legacy-axis-1-00', 'legacy-axis-1-01', 'legacy-axis-1-02'])
 def test_flags_must_be_boolean_false_even_nested(field, bad):
     row = false_row(roundtrip_ok=False)
     contract.false_flags(row, constitution=True)
@@ -130,30 +130,39 @@ def test_artifact_digest_authenticates_actual_bytes_and_detects_tampering(tmp_pa
         contract.read_artifacts(tmp_path, task_id, receipt)
 
 
-@pytest.mark.parametrize("attack", ["traversal", "absolute", "symlink", "empty", "duplicate", "receipt"])
+@pytest.mark.parametrize("attack", ["traversal", "absolute", "symlink", "empty", "duplicate", "receipt"], ids=['legacy-axis-0-00', 'legacy-axis-0-01', 'legacy-axis-0-02', 'legacy-axis-0-03', 'legacy-axis-0-04', 'legacy-axis-0-05'])
 def test_artifacts_reject_authority_escape_and_ambiguous_references(tmp_path, attack):
-    task_id, path, receipt = artifact_case(tmp_path)
-    entry = receipt["artifacts"][0]
-    if attack == "traversal":
-        entry["path"] = "../outside.json"
-    elif attack == "absolute":
-        entry["path"] = str(path)
-    elif attack == "symlink":
-        outside = tmp_path / "unowned.json"
-        outside.write_bytes(path.read_bytes())
-        path.unlink()
-        path.symlink_to(outside)
-    elif attack == "empty":
-        path.write_bytes(b"")
-        entry["sha256"] = contract.sha(b"")
-    elif attack == "duplicate":
-        receipt["artifacts"].append(dict(entry))
-    else:
-        target = path.with_name("receipt.json")
-        target.write_bytes(path.read_bytes())
-        entry["path"] = target.relative_to(tmp_path).as_posix()
-    with pytest.raises(contract.ContractError):
-        contract.read_artifacts(tmp_path, task_id, receipt)
+    created_alias = created_target = None
+    try:
+        task_id, path, receipt = artifact_case(tmp_path)
+        entry = receipt["artifacts"][0]
+        if attack == "traversal":
+            entry["path"] = "../outside.json"
+        elif attack == "absolute":
+            entry["path"] = str(path)
+        elif attack == "symlink":
+            outside = tmp_path / "unowned.json"
+            outside.write_bytes(path.read_bytes())
+            path.unlink()
+            created_alias, created_target = path, outside
+            path.symlink_to(outside)
+        elif attack == "empty":
+            path.write_bytes(b"")
+            entry["sha256"] = contract.sha(b"")
+        elif attack == "duplicate":
+            receipt["artifacts"].append(dict(entry))
+        else:
+            target = path.with_name("receipt.json")
+            target.write_bytes(path.read_bytes())
+            entry["path"] = target.relative_to(tmp_path).as_posix()
+        with pytest.raises(contract.ContractError):
+            contract.read_artifacts(tmp_path, task_id, receipt)
+        if created_alias is not None:
+            assert created_alias.is_symlink() and created_alias.readlink() == created_target
+    finally:
+        # Exact declared v2 fixture lifecycle; preserve unexpected leaves.
+        if created_alias is not None and created_alias.is_symlink() and created_alias.readlink() == created_target:
+            created_alias.unlink()
 
 
 def constitution_case(task_id):
@@ -469,7 +478,7 @@ def test_programme_entries_are_native_append_compatible_without_writes(monkeypat
 
 
 @pytest.mark.parametrize('attack', ['unknown_id', 'parent', 'route', 'zero', 'negative', 'boolean',
-                                    'escape_owner', 'escape_allowed', 'unknown_field'])
+                                    'escape_owner', 'escape_allowed', 'unknown_field'], ids=['legacy-axis-0-00', 'legacy-axis-0-01', 'legacy-axis-0-02', 'legacy-axis-0-03', 'legacy-axis-0-04', 'legacy-axis-0-05', 'legacy-axis-0-06', 'legacy-axis-0-07', 'legacy-axis-0-08'])
 def test_programme_coding_contract_rejects_malformed_or_broadened_authority(attack):
     task = deepcopy(programme_bundle()['prepared_tasks'][0])
     if attack == 'unknown_id': task['task_id'] = 'LIRAE-USC-T01'
@@ -485,13 +494,13 @@ def test_programme_coding_contract_rejects_malformed_or_broadened_authority(atta
 
 
 @pytest.mark.parametrize('value', ['/tmp/out', '../out', 'owner/../out', './owner',
-                                  'owner//file', 'owner/*.py', 'owner\\file', 'owner\x00file'])
+                                  'owner//file', 'owner/*.py', 'owner\\file', 'owner\x00file'], ids=['legacy-axis-0-00', 'legacy-axis-0-01', 'legacy-axis-0-02', 'legacy-axis-0-03', 'legacy-axis-0-04', 'legacy-axis-0-05', 'legacy-axis-0-06', 'legacy-axis-0-07'])
 def test_programme_paths_reject_escape_aliases_and_globs(value):
     with pytest.raises(contract.ContractError):
         contract._programme_safe_path(value)
 
 
-@pytest.mark.parametrize('attack', ['old_id', 'old_metadata', 'old_board', 'baseline', 'child_parent'])
+@pytest.mark.parametrize('attack', ['old_id', 'old_metadata', 'old_board', 'baseline', 'child_parent'], ids=['legacy-axis-0-00', 'legacy-axis-0-01', 'legacy-axis-0-02', 'legacy-axis-0-03', 'legacy-axis-0-04'])
 def test_programme_preservation_rejects_changed_legacy_or_parent_binding(tmp_path, attack):
     plan = json.loads((ROOT / contract.PLAN).read_text())
     board = (ROOT / contract.BOARD).read_text()
@@ -528,28 +537,38 @@ def test_programme_receipt_authenticates_actual_owner_test_changes(tmp_path, mon
 
 
 @pytest.mark.parametrize('attack', ['training', 'review', 'gain', 'parent', 'route', 'no_tests',
-                                    'escape', 'symlink', 'hash', 'empty_result', 'nonfinite', 'artifact'])
+                                    'escape', 'symlink', 'hash', 'empty_result', 'nonfinite', 'artifact'], ids=['legacy-axis-0-00', 'legacy-axis-0-01', 'legacy-axis-0-02', 'legacy-axis-0-03', 'legacy-axis-0-04', 'legacy-axis-0-05', 'legacy-axis-0-06', 'legacy-axis-0-07', 'legacy-axis-0-08', 'legacy-axis-0-09', 'legacy-axis-0-10', 'legacy-axis-0-11'])
 def test_programme_receipt_rejects_forged_completion_or_execution_claims(tmp_path, monkeypatch, attack):
-    task, receipt, preparation = programme_case(tmp_path, monkeypatch)
-    if attack in ('training', 'review', 'gain'):
-        preparation[{'training': 'training_executed', 'review': 'semantic_review_performed',
-                     'gain': 'model_gain_claimed'}[attack]] = True
-    elif attack == 'parent': receipt['parent_reference'] = {'task_id': 'LIR-16'}
-    elif attack == 'route': receipt['implementation_route'] = {'primary_provider_id': 'codex'}
-    elif attack == 'no_tests': receipt['code_changes'].pop()
-    elif attack == 'escape': receipt['code_changes'][0]['path'] = '../outside.py'
-    elif attack == 'symlink':
-        path = tmp_path / receipt['code_changes'][0]['path']
-        target = tmp_path / 'outside.py'
-        target.write_bytes(path.read_bytes())
-        path.unlink(); path.symlink_to(target)
-    elif attack == 'hash': receipt['code_changes'][0]['sha256'] = '0' * 64
-    elif attack == 'empty_result': preparation['result'][task['result_fields'][0]] = []
-    elif attack == 'nonfinite': preparation['result'][task['result_fields'][0]] = float('nan')
-    data = {'preparation': raw(preparation)}
-    if attack == 'artifact': data['asserted-results'] = b'{}'
-    with pytest.raises((contract.ContractError, ValueError)):
-        contract.validate_programme_engineering(tmp_path, task, receipt, data)
+    created_alias = created_target = None
+    try:
+        task, receipt, preparation = programme_case(tmp_path, monkeypatch)
+        if attack in ('training', 'review', 'gain'):
+            preparation[{'training': 'training_executed', 'review': 'semantic_review_performed',
+                         'gain': 'model_gain_claimed'}[attack]] = True
+        elif attack == 'parent': receipt['parent_reference'] = {'task_id': 'LIR-16'}
+        elif attack == 'route': receipt['implementation_route'] = {'primary_provider_id': 'codex'}
+        elif attack == 'no_tests': receipt['code_changes'].pop()
+        elif attack == 'escape': receipt['code_changes'][0]['path'] = '../outside.py'
+        elif attack == 'symlink':
+            path = tmp_path / receipt['code_changes'][0]['path']
+            target = tmp_path / 'outside.py'
+            target.write_bytes(path.read_bytes())
+            path.unlink()
+            created_alias, created_target = path, target
+            path.symlink_to(target)
+        elif attack == 'hash': receipt['code_changes'][0]['sha256'] = '0' * 64
+        elif attack == 'empty_result': preparation['result'][task['result_fields'][0]] = []
+        elif attack == 'nonfinite': preparation['result'][task['result_fields'][0]] = float('nan')
+        data = {'preparation': raw(preparation)}
+        if attack == 'artifact': data['asserted-results'] = b'{}'
+        with pytest.raises((contract.ContractError, ValueError)):
+            contract.validate_programme_engineering(tmp_path, task, receipt, data)
+        if created_alias is not None:
+            assert created_alias.is_symlink() and created_alias.readlink() == created_target
+    finally:
+        # Exact declared v2 fixture lifecycle; preserve unexpected leaves.
+        if created_alias is not None and created_alias.is_symlink() and created_alias.readlink() == created_target:
+            created_alias.unlink()
 
 
 
@@ -607,3 +626,417 @@ def test_programme_profile_targets_new_numerical_wiring_and_preserves_checkpoint
     assert any(path.endswith('structured_span_objective.py') for path in task['read_only_source_sha256'])
     assert task['completion_scope'] == 'engineering_preparation_only'
     assert task['satisfies_parent_semantic_dependencies'] is False
+
+
+def _continuation_ref_for(path, root):
+    data = path.read_bytes()
+    return dict(path=path.relative_to(root).as_posix(), bytes=len(data), sha256=contract.sha(data))
+
+
+def _continuation_case(tmp_path, monkeypatch):
+    """Synthetic evidence exercises the audit checker, not model qualification."""
+    def evidence(name, value):
+        path = tmp_path / 'retained' / name
+        write_json(path, value)
+        return _continuation_ref_for(path, tmp_path)
+    owners = [evidence('owner.json', {'source': 'owner'}), evidence('test.json', {'source': 'test'})]
+    inputs = [evidence('input.json', {'fixture': 'bounded'})]
+    request = evidence('request.json', {'operation': 'original-finite-qualification',
+        'source_sha256': {ref['path']: ref['sha256'] for ref in [*owners, *inputs]}})
+    verifier = evidence('verifier.json', {'source': 'original-independent-verifier'})
+    result = evidence('result.json', {'collected_absolute_checks': ['case1', 'case2', 'case3'],
+        'pytest_returncode': 0, 'all_phases_passed': True, 'closing_errors': [],
+        'actual_executed_paths': [ref['path'] for ref in owners],
+        'actual_compiled_source_utf8': {ref['path']: (tmp_path / ref['path']).read_text() for ref in owners},
+        'opening_frozen_sources': {ref['path']: {key: ref[key] for key in ('bytes', 'sha256')} for ref in owners},
+        'closing_frozen_sources': {ref['path']: {key: ref[key] for key in ('bytes', 'sha256')} for ref in owners}})
+    reap = evidence('reap.json', {'completed': True, 'outer_exec_genuinely_reaped': True,
+        'outer_exec_exit_code': 0, 'request': request, 'result': result})
+    closeout = evidence('original-closeout.json', {'accepted': True, 'completed': True,
+        'source_native_storage_closed': True, 'source_READ_closed': True,
+        'actual_storage_record': {'status': 'released'}, 'auditor': verifier,
+        'request': request, 'result': result, 'root_actual_outer_reap': reap})
+    binding = dict(candidate_sources=owners, inputs=inputs, request=request, verifier=verifier,
+        result=result, native=closeout, storage=closeout, source=closeout, reap=reap,
+        candidate_qualification=closeout,
+        independent_verifier_id='sha256:' + verifier['sha256'],
+        assertions={name: dict(role=role,
+            path=[{'cases': 'collected_absolute_checks', 'actual_executed_source_count': 'actual_compiled_source_utf8',
+                   'returncode': 'outer_exec_exit_code', 'outer_reaped': 'outer_exec_genuinely_reaped',
+                   'native_accepted': 'accepted', 'native_completed': 'completed',
+                   'native_custody_closed': 'source_native_storage_closed',
+                   'storage_closed': 'source_native_storage_closed'}.get(name, name)]
+                if name != 'storage_status' else ['actual_storage_record', 'status'],
+            expected=3 if name == 'cases' else 2 if name == 'actual_executed_source_count' else expected)
+            for name, (role, expected) in contract.CONTINUATION_ASSERTIONS.items()},
+        executed_source_correspondence=[dict(candidate_path=ref['path'], executed_path=ref['path']) for ref in owners],
+        request_correspondence=dict(role='native', path=['request']))
+    tasks = [dict(task_id=task_id, title='Audit already qualified ' + operation,
+        engineering_continuation=contract.CONTINUATION_SCHEMA, operation_kind=operation,
+        goal_id='LIR-17.continuation.' + str(index), parent_task_id='LIR-17',
+        parent_reference=dict(repository='ipfs_datasets_py', revision='a' * 40,
+            path='ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json',
+            task_id='LIR-17', task_sha256='b' * 64),
+        binding=deepcopy(binding), limits=deepcopy(contract.CONTINUATION_LIMITS))
+        for index, (task_id, operation) in enumerate(contract.CONTINUATION_SPECS.items())]
+    retained = [dict(task_id='LIRAE-RETAINED-' + str(index)) for index in range(139)]
+    board = '# Retained board\n\n' + '\n'.join('## ' + task['task_id']
+        + ' Existing\n- status: completed\n' for task in retained)
+    (tmp_path / contract.BOARD).parent.mkdir(parents=True, exist_ok=True)
+    (tmp_path / contract.BOARD).write_text(board)
+    receipts = []
+    for task in retained:
+        ref = evidence(task['task_id'] + '.json', {'completed': task['task_id']})
+        receipts.append(dict(task_id=task['task_id'], **ref))
+    baseline = dict(schema='legal-ir-supervisor-continuation-baseline/v1', task_count=139,
+        board_bytes=len(board.encode()), board_sha256=contract.sha(board.encode()),
+        board_revision='taskboard:sha256:' + contract.sha(b'agent-supervisor-taskboard-revision-v1\0' + board.encode()),
+        plan_tasks_sha256=contract.sha(contract._programme_json(retained)), receipts=receipts)
+    for name, value in (
+        ('CONTINUATION_BASE_BOARD_BYTES', len(board.encode())),
+        ('CONTINUATION_BASE_BOARD_SHA256', baseline['board_sha256']),
+        ('CONTINUATION_BASE_TASKS_SHA256', baseline['plan_tasks_sha256']),
+        ('CONTINUATION_BASELINE_SHA256', contract.sha(json.dumps(baseline, sort_keys=True, indent=2).encode() + b'\n'))):
+        monkeypatch.setattr(contract, name, value)
+    monkeypatch.setattr(contract, 'check_programme_engineering_plan', lambda root, plan=None: {})
+    monkeypatch.setattr(contract, '_require_programme_source_alignment', lambda root: {})
+    plan = dict(tasks=retained)
+    write_json(tmp_path / contract.PLAN, plan)
+    bundle = dict(schema=contract.CONTINUATION_SCHEMA, baseline=baseline, tasks=tasks,
+        dispatch_authorized_by_this_metadata=False, completion_authority=False)
+    return plan, bundle
+
+
+def _refresh_continuation_shared_ref(binding, root, path):
+    ref = _continuation_ref_for(path, root)
+    for role in ('candidate_qualification', 'native', 'storage', 'source', 'reap'):
+        if binding[role]['path'] == ref['path']:
+            binding[role] = deepcopy(ref)
+
+
+def _rebind_continuation_result(binding, root, path):
+    binding['result'] = _continuation_ref_for(path, root)
+    reap_path = root / binding['reap']['path']; reap = json.loads(reap_path.read_bytes())
+    reap['result'] = binding['result']; write_json(reap_path, reap)
+    _refresh_continuation_shared_ref(binding, root, reap_path)
+    qualified_path = root / binding['candidate_qualification']['path']
+    qualified = json.loads(qualified_path.read_bytes())
+    qualified.update(result=binding['result'], root_actual_outer_reap=binding['reap'])
+    write_json(qualified_path, qualified)
+    _refresh_continuation_shared_ref(binding, root, qualified_path)
+
+
+def _adopt_continuation_fixture(root, plan, bundle):
+    updated = dict(plan, engineering_continuation=bundle,
+        tasks=plan['tasks'] + [{**task, **contract.continuation_contract(task)} for task in bundle['tasks']])
+    write_json(root / contract.PLAN, updated)
+    original = (root / contract.BOARD).read_bytes()
+    (root / contract.BOARD).write_bytes(original + b'\n' + '\n\n'.join(
+        contract.render_continuation_task(task) for task in bundle['tasks']).encode() + b'\n')
+    return updated
+
+
+def test_continuation_prepares_two_disjoint_local_audits_without_writes(tmp_path, monkeypatch):
+    plan, bundle = _continuation_case(tmp_path, monkeypatch)
+    before = [(tmp_path / path).read_bytes() for path in (contract.PLAN, contract.BOARD)]
+    delta = contract.prepare_continuation(tmp_path, bundle)
+    assert len(delta['entries']) == len(delta['plan_task_additions']) == 2
+    assert delta['dispatch_authorized_by_this_metadata'] is delta['completion_authority'] is delta['mutation_authority'] is False
+    assert before == [(tmp_path / path).read_bytes() for path in (contract.PLAN, contract.BOARD)]
+    first, second = delta['plan_task_additions']
+    assert set(first['allowed_paths']).isdisjoint(second['allowed_paths'])
+    for task in (first, second):
+        assert task['provider_role'] == 'deterministic-only' and task['context_budget_tokens'] == 0
+        assert contract.kind(task['task_id']) == 'continuation_validation'
+        assert len(task['outputs']) == 2 and all(path.endswith('.json') for path in task['outputs'])
+        assert all(' --materialize-continuation-validation ' in command or ' --check-task ' in command
+                   for command in task['validation_commands'])
+        assert not any('pytest' in command or 'grok' in command for command in task['validation_commands'])
+        binding = task['binding']
+        assert binding['candidate_qualification'] == binding['native'] == binding['storage'] == binding['source']
+
+
+def test_continuation_materializes_and_checks_exact_receipts_only(tmp_path, monkeypatch):
+    plan, bundle = _continuation_case(tmp_path, monkeypatch)
+    _adopt_continuation_fixture(tmp_path, plan, bundle)
+    old = {ref['path']: (tmp_path / ref['path']).read_bytes() for ref in bundle['baseline']['receipts']}
+    task_id = bundle['tasks'][0]['task_id']
+    result = contract.materialize_continuation_validation(tmp_path, task_id)
+    assert result['materialized'] is True and result['tests_rerun'] is False
+    assert contract.validate(tmp_path, task_id)['validated'] is True
+    audit = json.loads((tmp_path / contract.continuation_directory(task_id) / 'validation.json').read_bytes())
+    assert audit['new_audit_model_call_count'] == audit['new_audit_provider_call_count'] == 0
+    assert 'model_call_count' not in audit['observations'] and 'provider_call_count' not in audit['observations']
+    assert old == {path: (tmp_path / path).read_bytes() for path in old}
+    paths = [tmp_path / path for path in contract.continuation_contract(bundle['tasks'][0])['outputs']]
+    before = [path.read_bytes() for path in paths]
+    contract.materialize_continuation_validation(tmp_path, task_id)
+    assert before == [path.read_bytes() for path in paths]
+
+
+@pytest.mark.parametrize('attack', ['kind', 'unknown', 'parent', 'scope', 'provider', 'context',
+    'boolean_context', 'shell', 'limits', 'boolean_limit', 'zero_cases', 'boolean_cases', 'false_native',
+    'boolean_returncode', 'missing_assertion', 'extra_binding', 'verifier'], ids=['case-kind', 'case-unknown', 'case-parent', 'case-scope', 'case-provider', 'case-context', 'case-boolean_context', 'case-shell', 'case-limits', 'case-boolean_limit', 'case-zero_cases', 'case-boolean_cases', 'case-false_native', 'case-boolean_returncode', 'case-missing_assertion', 'case-extra_binding', 'case-verifier'])
+def test_continuation_closed_contract_rejects_broadened_or_nonpositive_tasks(tmp_path, monkeypatch, attack):
+    _, bundle = _continuation_case(tmp_path, monkeypatch)
+    task = deepcopy(bundle['tasks'][0])
+    if attack == 'kind': task['operation_kind'] = 'training'
+    elif attack == 'unknown': task['task_id'] = 'LIRAE-CONT-ARBITRARY-01'
+    elif attack == 'parent': task['parent_reference']['task_sha256'] = 'latest'
+    elif attack == 'scope': task['allowed_paths'] = ['.']
+    elif attack == 'provider': task['provider_role'] = 'grok-implement'
+    elif attack == 'context': task['context_budget_tokens'] = 48000
+    elif attack == 'boolean_context': task['context_budget_tokens'] = False
+    elif attack == 'shell': task['validation_commands'] = ['sh -c arbitrary']
+    elif attack == 'limits': task['limits']['attempts'] = 2
+    elif attack == 'boolean_limit': task['limits']['attempts'] = True
+    elif attack == 'zero_cases': task['binding']['assertions']['cases']['expected'] = 0
+    elif attack == 'boolean_cases': task['binding']['assertions']['cases']['expected'] = True
+    elif attack == 'false_native': task['binding']['assertions']['native_accepted']['expected'] = False
+    elif attack == 'boolean_returncode': task['binding']['assertions']['returncode']['expected'] = False
+    elif attack == 'missing_assertion': del task['binding']['assertions']['storage_closed']
+    elif attack == 'extra_binding': task['binding']['arbitrary_argv'] = ['grok']
+    elif attack == 'verifier': task['binding']['independent_verifier_id'] = ''
+    with pytest.raises(contract.ContractError):
+        contract.continuation_contract(task)
+
+
+@pytest.mark.parametrize('attack', ['source_bytes', 'zero_actual_cases', 'executed_source',
+    'missing_executed_source', 'request_link', 'qualifier', 'native', 'storage', 'source',
+    'input_pin', 'alias', 'outside', 'symlink', 'filename_only', 'opening_source',
+    'closing_source', 'duplicate_cases', 'nonpassing_phases', 'boolean_result_returncode',
+    'boolean_native_returncode', 'conflicting_shared_closure', 'duplicate_candidates',
+    'duplicate_inputs', 'scope_alias'], ids=['case-source_bytes', 'case-zero_actual_cases', 'case-executed_source', 'case-missing_executed_source', 'case-request_link', 'case-qualifier', 'case-native', 'case-storage', 'case-source', 'case-input_pin', 'case-alias', 'case-outside', 'case-symlink', 'case-filename_only', 'case-opening_source', 'case-closing_source', 'case-duplicate_cases', 'case-nonpassing_phases', 'case-boolean_result_returncode', 'case-boolean_native_returncode', 'case-conflicting_shared_closure', 'case-duplicate_candidates', 'case-duplicate_inputs', 'case-scope_alias'])
+def test_continuation_requires_actual_pinned_correspondence_and_closed_original_custody(tmp_path, monkeypatch, attack):
+    created_alias = created_target = None
+    try:
+        _, bundle = _continuation_case(tmp_path, monkeypatch)
+        task = deepcopy(bundle['tasks'][0]); binding = task['binding']
+        if attack == 'source_bytes':
+            (tmp_path / binding['candidate_sources'][0]['path']).write_bytes(b'changed candidate')
+        elif attack in {'zero_actual_cases', 'executed_source', 'filename_only', 'opening_source',
+                        'closing_source', 'duplicate_cases', 'nonpassing_phases', 'boolean_result_returncode'}:
+            path = tmp_path / binding['result']['path']; value = json.loads(path.read_bytes())
+            if attack == 'zero_actual_cases': value['collected_absolute_checks'] = []
+            elif attack == 'executed_source': value['actual_compiled_source_utf8'][binding['candidate_sources'][0]['path']] = 'fabricated body'
+            elif attack == 'filename_only': del value['actual_compiled_source_utf8'][binding['candidate_sources'][0]['path']]
+            elif attack in {'opening_source', 'closing_source'}:
+                value['opening_frozen_sources' if attack == 'opening_source' else 'closing_frozen_sources'][binding['candidate_sources'][0]['path']]['sha256'] = 'f' * 64
+            elif attack == 'duplicate_cases': value['collected_absolute_checks'].append(value['collected_absolute_checks'][0])
+            elif attack == 'nonpassing_phases': value['all_phases_passed'] = False
+            else: value['pytest_returncode'] = False
+            write_json(path, value); _rebind_continuation_result(binding, tmp_path, path)
+        elif attack == 'missing_executed_source': binding['executed_source_correspondence'].pop()
+        elif attack == 'request_link': binding['request_correspondence']['path'] = ['accepted']
+        elif attack == 'qualifier':
+            path = tmp_path / binding['candidate_qualification']['path']; value = json.loads(path.read_bytes())
+            value['auditor']['sha256'] = 'f' * 64; write_json(path, value)
+            _refresh_continuation_shared_ref(binding, tmp_path, path)
+        elif attack in {'native', 'storage', 'source', 'boolean_native_returncode'}:
+            role = 'reap' if attack == 'boolean_native_returncode' else attack
+            path = tmp_path / binding[role]['path']; value = json.loads(path.read_bytes())
+            value['outer_exec_exit_code' if attack == 'boolean_native_returncode' else 'completed' if role == 'native' else 'source_native_storage_closed' if role == 'storage' else 'source_READ_closed'] = False
+            write_json(path, value); _refresh_continuation_shared_ref(binding, tmp_path, path)
+            qualified_path = tmp_path / binding['candidate_qualification']['path']
+            if role == 'reap':
+                qualified = json.loads(qualified_path.read_bytes()); qualified['root_actual_outer_reap'] = binding['reap']
+                write_json(qualified_path, qualified); _refresh_continuation_shared_ref(binding, tmp_path, qualified_path)
+        elif attack == 'input_pin': binding['inputs'][0]['sha256'] = 'f' * 64
+        elif attack == 'conflicting_shared_closure':
+            binding['storage'] = dict(binding['storage'], sha256='f' * 64)
+        elif attack == 'duplicate_candidates': binding['candidate_sources'].append(deepcopy(binding['candidate_sources'][0]))
+        elif attack == 'duplicate_inputs': binding['inputs'].append(deepcopy(binding['inputs'][0]))
+        elif attack == 'scope_alias':
+            binding['storage'] = dict(binding['storage'], path=str(tmp_path / binding['storage']['path']))
+        elif attack == 'alias': binding['verifier'] = deepcopy(binding['request'])
+        elif attack == 'outside': binding['inputs'][0]['path'] = '/etc/passwd'
+        elif attack == 'symlink':
+            path = tmp_path / binding['inputs'][0]['path']; content = path.read_bytes()
+            target = path.with_name('target.json'); target.write_bytes(content); path.unlink()
+            created_alias, created_target = path, target
+            path.symlink_to(target)
+        with pytest.raises((contract.ContractError, ValueError)):
+            contract._continuation_observe(tmp_path, task)
+        if created_alias is not None:
+            assert created_alias.is_symlink() and created_alias.readlink() == created_target
+    finally:
+        # Exact declared v2 fixture lifecycle; preserve unexpected leaves.
+        if created_alias is not None and created_alias.is_symlink() and created_alias.readlink() == created_target:
+            created_alias.unlink()
+
+
+@pytest.mark.parametrize('attack', ['card', 'completed_status', 'plan_record', 'receipt', 'baseline',
+                                   'added_task', 'missing_task', 'authority'], ids=['case-card', 'case-completed_status', 'case-plan_record', 'case-receipt', 'case-baseline', 'case-added_task', 'case-missing_task', 'case-authority'])
+def test_continuation_preserves_all139_completed_raw_cards_records_and_receipts(tmp_path, monkeypatch, attack):
+    plan, bundle = _continuation_case(tmp_path, monkeypatch)
+    plan = dict(plan, engineering_continuation=bundle)
+    if attack in {'card', 'completed_status'}:
+        path = tmp_path / contract.BOARD
+        path.write_text(path.read_text().replace('Existing' if attack == 'card' else 'completed',
+                                                'Changed' if attack == 'card' else 'todo', 1))
+    elif attack == 'plan_record': plan['tasks'][0]['title'] = 'changed'
+    elif attack == 'receipt': (tmp_path / bundle['baseline']['receipts'][0]['path']).write_bytes(b'changed')
+    elif attack == 'baseline': bundle['baseline']['receipts'].pop()
+    elif attack == 'added_task': bundle['tasks'].append(deepcopy(bundle['tasks'][0]))
+    elif attack == 'missing_task': bundle['tasks'].pop()
+    elif attack == 'authority': bundle['dispatch_authorized_by_this_metadata'] = True
+    with pytest.raises(contract.ContractError):
+        contract.check_continuation_plan(tmp_path, plan)
+
+
+def test_continuation_refuses_changed_owned_outputs_and_never_rearms_history(tmp_path, monkeypatch):
+    plan, bundle = _continuation_case(tmp_path, monkeypatch)
+    _adopt_continuation_fixture(tmp_path, plan, bundle)
+    task_id = bundle['tasks'][0]['task_id']
+    contract.materialize_continuation_validation(tmp_path, task_id)
+    path = tmp_path / contract.continuation_directory(task_id) / 'validation.json'
+    path.write_bytes(b'prior attempt evidence must survive')
+    before = [(tmp_path / item).read_bytes() for item in (contract.PLAN, contract.BOARD)]
+    with pytest.raises(contract.ContractError, match='retained continuation output differs'):
+        contract.materialize_continuation_validation(tmp_path, task_id)
+    assert path.read_bytes() == b'prior attempt evidence must survive'
+    assert before == [(tmp_path / item).read_bytes() for item in (contract.PLAN, contract.BOARD)]
+
+
+def test_continuation_nested_worktree_uses_original_primary_source_authority(tmp_path, monkeypatch):
+    primary = tmp_path / 'primary'; primary.mkdir()
+    lane = tmp_path / 'deep/lane/task-worktree'; lane.mkdir(parents=True)
+    evidence = primary / 'retained.json'; evidence.write_bytes(b'{"closed":true}')
+    calls = []
+    def original_authority(root):
+        calls.append(root)
+        return primary
+    monkeypatch.setattr(contract, '_continuation_primary_source_root', original_authority)
+    ref = dict(path=str(evidence), bytes=evidence.stat().st_size,
+               sha256=contract.sha(evidence.read_bytes()))
+    assert contract._continuation_ref(lane, ref) == evidence.read_bytes()
+    assert calls == [lane]
+    other = tmp_path / 'unrelated.json'; other.write_bytes(evidence.read_bytes())
+    ref['path'] = str(other)
+    with pytest.raises(contract.ContractError, match='outside original shared source authority'):
+        contract._continuation_ref(lane, ref)
+
+
+def _continuation_peer_case(root, monkeypatch):
+    _, bundle = _continuation_case(root, monkeypatch)
+    task = deepcopy(bundle['tasks'][0]); old = task['binding']
+    def evidence(name, value):
+        path = root / 'retained' / ('peer-' + name + '.json')
+        write_json(path, value)
+        return _continuation_ref_for(path, root)
+    candidates = old['candidate_sources']
+    names = [str(root / ref['path']) for ref in candidates]
+    nodes = ['retained/test.json::case1', 'retained/test.json::case2']
+    request = evidence('request', dict(schema='owned-validation-request/v1', cwd=str(root / 'canonical'),
+        selected_checks=nodes, source_sha256={**{ref['path']: ref['sha256'] for ref in old['inputs']},
+            **{name: ref['sha256'] for name, ref in zip(names, candidates)}}))
+    capture = evidence('capture', dict(schema='legal-ir-occurrence-inference-focused-source-capture/v1',
+        completed=True, source_READ_closed=True))
+    prepared = evidence('plan', dict(schema='legal-ir-occurrence-inference-fixture-original-plan/v1',
+        request=request, source_capture=capture, candidate_root=str(root), canonical_root=str(root / 'canonical')))
+    verifier = evidence('independent-review', dict(schema='legal-ir-occurrence-inference-focused-independent-request-review/v1',
+        accepted_for_original_owned_occurrence_inference_fixture_launch=True, source_READ_closed=True,
+        request=request, source_capture=capture))
+    buffers = [{**ref, 'path': name} for ref, name in zip(candidates, names)]
+    observation = evidence('observation', dict(schema='legal-ir-occurrence-inference-focused-torch-observation/v1',
+        completed=True, pytest_returncode=0, cases_passed=2, phase_events_passed=6,
+        selected_node_ids=nodes, audit=dict(selected_compile_events=buffers, denied_operations=[]),
+        import_origins={'fixture.owner': buffers[0]},
+        compiled_source_buffers=[dict(buffers[0], code_filename=names[0], compilation='actual_selected_bytes')]))
+    terminal = evidence('terminal', dict(schema='legal-ir-occurrence-inference-focused-torch-terminal/v1',
+        actual_test_cases=2, actual_phase_events=6, output_endpoint_guards_closed=True,
+        project_import_origin_guards_closed=True, selected_sources_unchanged=True,
+        source_buffer_compilation_guards_closed=True, original_resource_closeout_not_claimed_by_worker=True))
+    complete = evidence('complete', dict(schema='legal-ir-occurrence-inference-fixture-original-controller-complete/v1',
+        completed=True, worker_succeeded=True, source_READ_closed_after_verified_original_cleanup=True,
+        returncode=0, request_sha256=request['sha256'], selected_cases=2, selected_phase_events=6))
+    worker = evidence('worker', dict(schema='owned-validation-result/v1', completed=True,
+        returncode=0, request_sha256=request['sha256'], executed_checks=nodes))
+    collection = evidence('collection', dict(nodes=nodes))
+    phases = evidence('phases', dict(phase_events=[dict(nodeid=node, when=phase,
+        outcome='passed', wasxfail=False) for node in nodes for phase in ('setup', 'call', 'teardown')]))
+    proof = evidence('closeout', dict(schema='legal-ir-occurrence-inference-fixture-independent-result-review/v1',
+        accepted_actual_occurrence_inference_fixture_qualification=True, metadata_source_READ_closed=True,
+        source_native_storage_custody_closed=True, original_owned_pipeline_succeeded=True,
+        genuine_fixture_worker_succeeded=True, actual_worker_returncode=0, original_owner_returncode=0,
+        request=request, independent_request_review=verifier, worker_observation=observation,
+        terminal_custody=terminal, controller_complete=complete, worker_result=worker,
+        worker_phases=phases, worker_collection=collection, source_capture=capture, prepared_plan=prepared,
+        resource_closeout=dict(cleanup_proven=True, current_selected_storage_record_matches_terminal=True,
+            native_lease_absent_from_current_active_scheduler=True, native_released=True,
+            original_owner_and_child_PIDs_absent=True, source_READ_closed=True,
+            live_processes=0, rss_bytes=0, storage_status='released', recovery_needed=False)))
+    task['binding'] = dict(evidence_profile=contract.CONTINUATION_PEER_PROFILE,
+        candidate_sources=candidates, inputs=old['inputs'], candidate_qualification=proof,
+        request=request, verifier=verifier, result=observation, native=proof, storage=proof,
+        source=proof, independent_verifier_id='sha256:' + verifier['sha256'], terminal=terminal,
+        controller_complete=complete, worker_result=worker, phases=phases, collection=collection,
+        source_capture=capture, prepared_plan=prepared, expected_cases=2,
+        executed_source_correspondence=[dict(candidate_path=candidates[0]['path'], executed_path=names[0],
+            source_kind='module', module='fixture.owner'), dict(candidate_path=candidates[1]['path'],
+            executed_path=names[1], source_kind='test', module=None)])
+    return task
+
+
+def _rebind_peer_document(root, binding, role, body):
+    path = root / binding[role]['path']; write_json(path, body)
+    fresh = _continuation_ref_for(path, root)
+    if role == 'candidate_qualification':
+        for name in ('candidate_qualification', 'native', 'storage', 'source'):
+            binding[name] = deepcopy(fresh)
+        return
+    binding[role] = fresh
+    if role == 'verifier':
+        binding['independent_verifier_id'] = 'sha256:' + fresh['sha256']
+    field = {'result': 'worker_observation', 'verifier': 'independent_request_review',
+        'phases': 'worker_phases', 'collection': 'worker_collection', 'terminal': 'terminal_custody'}.get(role, role)
+    path = root / binding['candidate_qualification']['path']; proof = json.loads(path.read_bytes())
+    proof[field] = fresh; write_json(path, proof)
+    for name in ('candidate_qualification', 'native', 'storage', 'source'):
+        binding[name] = _continuation_ref_for(path, root)
+
+
+def test_continuation_original_peer_dialect_preserves_its_actual_measurement_scope(tmp_path, monkeypatch):
+    task = _continuation_peer_case(tmp_path, monkeypatch)
+    observation = contract._continuation_observe(tmp_path, task)
+    assert observation['cases'] == 2 and observation['phase_reports'] == 6
+    assert observation['observed_compiled_source_count'] == 2
+    assert 'actual_executed_source_count' not in observation
+    assert observation['actual_exec_event_buffers_attested'] is False
+    assert observation['outer_tool_reap_observed'] is False
+    assert observation['auditor_executable_attested'] is False
+    assert observation['independent_verifier_kind'] == 'original_pinned_independent_review_metadata'
+
+
+@pytest.mark.parametrize('attack', ['boolean_cases', 'zero_cases', 'compile_hash', 'module_origin',
+    'failed_phase', 'xfail', 'duplicate_phase', 'native_open', 'storage_open', 'live_child',
+    'controller_open', 'boolean_worker_return', 'wrong_request_review', 'wrong_candidate_root'],
+    ids=['peer-boolean-cases', 'peer-zero-cases', 'peer-compile-hash', 'peer-module-origin',
+         'peer-failed-phase', 'peer-xfail', 'peer-duplicate-phase', 'peer-native-open',
+         'peer-storage-open', 'peer-live-child', 'peer-controller-open', 'peer-boolean-worker-return',
+         'peer-wrong-request-review', 'peer-wrong-candidate-root'])
+def test_continuation_original_peer_dialect_rejects_forged_counts_sources_and_custody(tmp_path, monkeypatch, attack):
+    task = _continuation_peer_case(tmp_path, monkeypatch); binding = task['binding']
+    if attack == 'boolean_cases': binding['expected_cases'] = True
+    elif attack == 'zero_cases': binding['expected_cases'] = 0
+    else:
+        role = 'result' if attack in {'compile_hash', 'module_origin'} else 'phases' if attack in {
+            'failed_phase', 'xfail', 'duplicate_phase'} else 'candidate_qualification' if attack in {
+            'native_open', 'storage_open', 'live_child'} else 'controller_complete' if attack == 'controller_open' \
+            else 'worker_result' if attack == 'boolean_worker_return' else 'verifier' if attack == 'wrong_request_review' else 'prepared_plan'
+        body = json.loads((tmp_path / binding[role]['path']).read_bytes())
+        if attack == 'compile_hash': body['audit']['selected_compile_events'][0]['sha256'] = 'f' * 64
+        elif attack == 'module_origin': body['import_origins']['fixture.owner']['sha256'] = 'f' * 64
+        elif attack == 'failed_phase': body['phase_events'][0]['outcome'] = 'failed'
+        elif attack == 'xfail': body['phase_events'][0]['wasxfail'] = True
+        elif attack == 'duplicate_phase': body['phase_events'][1] = deepcopy(body['phase_events'][0])
+        elif attack == 'native_open': body['resource_closeout']['native_released'] = False
+        elif attack == 'storage_open': body['resource_closeout']['storage_status'] = 'reserved'
+        elif attack == 'live_child': body['resource_closeout']['live_processes'] = 1
+        elif attack == 'controller_open': body['source_READ_closed_after_verified_original_cleanup'] = False
+        elif attack == 'boolean_worker_return': body['returncode'] = False
+        elif attack == 'wrong_request_review': body['request']['sha256'] = 'f' * 64
+        else: body['candidate_root'] = str(tmp_path / 'wrong-frozen-root')
+        _rebind_peer_document(tmp_path, binding, role, body)
+    with pytest.raises(contract.ContractError):
+        contract._continuation_observe(tmp_path, task)

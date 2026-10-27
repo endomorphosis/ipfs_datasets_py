@@ -11,6 +11,7 @@ import importlib
 import io
 import json
 import math
+import os
 from pathlib import Path
 import re
 import sys
@@ -649,7 +650,8 @@ def check_programme_engineering_plan(root, plan=None):
     baseline = bundle.get('legacy_preservation')
     require(sha(_programme_json(baseline)) == PROGRAMME_LEGACY_BASELINE_SHA256,
             'retained legacy baseline differs')
-    old = [task for task in plan['tasks'] if task.get('programme_engineering') is None]
+    old = [task for task in plan['tasks'] if task.get('programme_engineering') is None
+           and task.get('engineering_continuation') is None]
     require(len(old) == 135 and sha(_programme_json(old)) == baseline['plan_tasks_sha256'],
             'retained legacy task population or metadata differs')
     blocks = _programme_task_blocks((root / BOARD).read_text())
@@ -840,7 +842,577 @@ def validate_programme_engineering(root, task, receipt, data):
     return True
 
 
+# Inserted into the protected checker by the private candidate preparation only.
+CONTINUATION_SCHEMA = 'legal-ir-supervisor-continuation/v1'
+CONTINUATION_RESULT_SCHEMA = 'legal-ir-supervisor-continuation-validation/v1'
+CONTINUATION_SPECS = {
+    'LIRAE-CONT-OCCURRENCE-VALIDATE-01': 'occurrence_context_validation',
+    'LIRAE-CONT-VALIDATION-LIFECYCLE-VALIDATE-01': 'validation_lifecycle_validation',
+}
+CONTINUATION_BASE_BOARD_BYTES = 481975
+CONTINUATION_BASE_BOARD_SHA256 = '6211004f48db19580c759262ddc3d750426fac1d4f6ff56d82dd4e60616c1116'
+CONTINUATION_BASE_TASKS_SHA256 = 'd5af911a9ddd29e002aa86ff68973b515bce471e292e5fcf7cea6a9bef58fe1c'
+CONTINUATION_BASELINE_SHA256 = '49abdbda09cda125d91e911b3a135e2491db0a558fd2e8ebf6c38cefa7dd190e'
+CONTINUATION_SOURCE_OWNER_SHA256 = '42e9f07d0d458177079269d9f495f0b70512180c1adc2f7fe0bfdb05518a12f9'
+CONTINUATION_PEER_PROFILE = 'legal-ir-occurrence-inference-fixture-original/v1'
+CONTINUATION_LIMITS = dict(timeout_seconds=600, cpu_slots=2, memory_mb=4096,
+    storage_bytes=67108864, child_process_slots=6, attempts=1,
+    model_call_count=0, provider_call_count=0)
+CONTINUATION_ASSERTIONS = {
+    'cases': ('result', 'positive_integer'),
+    'returncode': ('reap', 0),
+    'native_accepted': ('native', True),
+    'native_completed': ('native', True),
+    'native_custody_closed': ('native', True),
+    'storage_closed': ('storage', True),
+    'storage_status': ('storage', 'released'),
+    'source_READ_closed': ('source', True),
+    'outer_reaped': ('reap', True),
+    'actual_executed_source_count': ('result', 'positive_integer'),
+}
+
+
+def continuation_directory(task_id):
+    require(task_id in CONTINUATION_SPECS, 'unknown continuation identity')
+    return EVIDENCE / task_id.lower()
+
+
+def _continuation_primary_source_root(root):
+    """Use the original shared-source authority for nested linked lane roots."""
+    path = Path(root) / 'ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_source_lease.py'
+    require(path.absolute() == path.resolve() and path.is_file() and not path.is_symlink()
+            and sha(path.read_bytes()) == CONTINUATION_SOURCE_OWNER_SHA256,
+            'exact original continuation source authority unavailable')
+    name = 'legal_ir_continuation_original_source_lease'
+    spec = importlib.util.spec_from_file_location(name, path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+    return module.canonical_source_root(root)
+
+
+def _continuation_ref(root, ref, *, check_file=True):
+    require(type(ref) is dict and set(ref) == {'path', 'bytes', 'sha256'},
+            'closed continuation file reference required')
+    require(type(ref['bytes']) is int and 0 < ref['bytes'] <= 128 * 1024 * 1024
+            and type(ref['sha256']) is str and re.fullmatch('[0-9a-f]{64}', ref['sha256']),
+            'bounded positive continuation file commitment required')
+    require(type(ref['path']) is str and '\x00' not in ref['path']
+            and '\\' not in ref['path'], 'unsafe continuation input path')
+    path = Path(ref['path'])
+    require('..' not in path.parts and '*' not in ref['path'] and '?' not in ref['path']
+            and '[' not in ref['path'], 'unsafe continuation input path')
+    path = path if path.is_absolute() else Path(root) / path
+    # Inputs may retain original evidence custody in the datasets checkout;
+    # output authority remains the exact two task directories below.
+    require(path.absolute() == path.resolve(), 'aliased continuation input')
+    if not path.resolve().is_relative_to(Path(root).resolve()):
+        primary = _continuation_primary_source_root(root)
+        require(path.resolve().is_relative_to(primary),
+                'continuation input outside original shared source authority')
+    if check_file:
+        require(path.is_file() and not path.is_symlink(), 'continuation input unavailable')
+        before = path.stat()
+        require(before.st_size == ref['bytes'], 'continuation input size differs')
+        with path.open('rb') as stream:
+            raw = stream.read(ref['bytes'] + 1)
+        after = path.stat()
+        require((before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns, before.st_ctime_ns)
+                == (after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns, after.st_ctime_ns)
+                and len(raw) == ref['bytes'] and sha(raw) == ref['sha256'],
+                'continuation input bytes differ')
+        return raw
+    return None
+
+
+def continuation_contract(task):
+    require(type(task) is dict and task.get('engineering_continuation') == CONTINUATION_SCHEMA,
+            'continuation validation contract required')
+    task_id = task.get('task_id')
+    require(task_id in CONTINUATION_SPECS
+            and task.get('operation_kind') == CONTINUATION_SPECS[task_id],
+            'unknown continuation operation')
+    require(set(task) <= {'task_id', 'title', 'engineering_continuation', 'operation_kind',
+            'goal_id', 'parent_task_id', 'parent_reference', 'binding', 'limits'} | {
+            'outputs', 'allowed_paths', 'provider_role', 'context_budget_tokens',
+            'validation_commands', 'required_validation_executables', 'receipt_instructions'},
+            'unknown continuation contract field')
+    require(type(task.get('title')) is str and 0 < len(task['title']) <= 256
+            and '\n' not in task['title'] and '\r' not in task['title'], 'continuation title required')
+    for name in ('goal_id', 'parent_task_id'):
+        require(type(task.get(name)) is str and re.fullmatch('[A-Za-z0-9_.:-]{1,256}', task[name]),
+                'exact continuation goal/parent required')
+    parent = task.get('parent_reference')
+    require(type(parent) is dict and set(parent) == {'repository', 'revision', 'path',
+            'task_id', 'task_sha256'} and parent['repository'] == 'ipfs_datasets_py'
+            and parent['path'] == 'ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json'
+            and parent['task_id'] == task['parent_task_id']
+            and type(parent['revision']) is str and re.fullmatch('[0-9a-f]{40}', parent['revision'])
+            and type(parent['task_sha256']) is str and re.fullmatch('[0-9a-f]{64}', parent['task_sha256']),
+            'exact original maintained parent commitment required')
+    require(task.get('limits') == CONTINUATION_LIMITS
+            and all(type(task['limits'][name]) is int for name in CONTINUATION_LIMITS),
+            'finite continuation limits differ')
+    binding = task.get('binding')
+    if type(binding) is dict and binding.get('evidence_profile') == CONTINUATION_PEER_PROFILE:
+        require(task['operation_kind'] == 'occurrence_context_validation', 'fixture dialect is only the occurrence audit')
+        _continuation_peer_binding_contract(binding)
+    else:
+        require(type(binding) is dict and set(binding) == {'candidate_sources', 'inputs',
+                'candidate_qualification', 'request', 'verifier', 'result', 'native', 'storage',
+                'source', 'reap', 'independent_verifier_id', 'assertions', 'executed_source_correspondence',
+                'request_correspondence'}, 'closed continuation binding required')
+        require(type(binding['independent_verifier_id']) is str
+                and re.fullmatch('[A-Za-z0-9_.:-]{1,256}', binding['independent_verifier_id']),
+                'independent continuation verifier required')
+        require(type(binding['candidate_sources']) is list and 2 <= len(binding['candidate_sources']) <= 256
+                and type(binding['inputs']) is list and 1 <= len(binding['inputs']) <= 256,
+                'nonempty exact candidate/input population required')
+        assertions = binding['assertions']
+        require(type(assertions) is dict and set(assertions) == set(CONTINUATION_ASSERTIONS),
+                'positive continuation assertion population differs')
+        for name, (role, expected) in CONTINUATION_ASSERTIONS.items():
+            item = assertions[name]
+            require(type(item) is dict and set(item) == {'role', 'path', 'expected'}
+                    and item['role'] == role and type(item['path']) is list
+                    and 1 <= len(item['path']) <= 16
+                    and all((type(key) is str and 0 < len(key) <= 256)
+                            or (type(key) is int and 0 <= key <= 100000) for key in item['path']),
+                    'closed source-bound continuation assertion required')
+            wanted = item['expected']
+            if expected == 'positive_integer':
+                require(type(wanted) is int and 1 <= wanted <= 100000,
+                        'positive continuation case/source count required')
+                require(item['path'] == ['collected_absolute_checks' if name == 'cases'
+                                         else 'actual_compiled_source_utf8'],
+                        'actual case/source observation selector differs')
+            else:
+                require(type(wanted) is type(expected) and wanted == expected,
+                        'continuation positive/zero-call assertion differs')
+    task_dir = continuation_directory(task_id).as_posix()
+    outputs = [task_dir + '/receipt.json', task_dir + '/validation.json']
+    contract = dict(outputs=outputs, allowed_paths=outputs,
+        provider_role='deterministic-only', context_budget_tokens=0,
+        validation_commands=[
+            'IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 ' + SCRIPT
+                + ' --materialize-continuation-validation ' + task_id,
+            'IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 ' + SCRIPT
+                + ' --check-task ' + task_id], required_validation_executables=['python3'],
+        receipt_instructions='Materialize only the exact two continuation receipt outputs from '
+            'independently qualified pinned candidate/native/storage evidence. This is a fresh '
+            'metadata and receipt validation; it reruns no tests, model, compiler or training. '
+            'Use legal-ir-supervisor-task-receipt/v1 task_kind=continuation_validation; '
+            'all scientific authority flags remain false. Never edit source/protected files, '
+            'rearm a completed task, or infer scientific completion from this validation.')
+    require('context_budget_tokens' not in task or type(task['context_budget_tokens']) is int,
+            'continuation context must be exact integer zero')
+    for key, value in contract.items():
+        require(key not in task or task[key] == value, 'continuation execution contract differs')
+    return contract
+
+
+def _continuation_pointer(document, path):
+    require(type(path) is list and 1 <= len(path) <= 32, 'bounded evidence pointer required')
+    value = document
+    for key in path:
+        if type(value) is dict:
+            require(type(key) is str and key in value, 'positive continuation evidence missing')
+        else:
+            require(type(value) is list and type(key) is int and 0 <= key < len(value),
+                    'positive continuation evidence missing')
+        value = value[key]
+    return value
+
+
+def _continuation_peer_binding_contract(binding):
+    require(type(binding) is dict and set(binding) == {'evidence_profile', 'candidate_sources',
+        'inputs', 'candidate_qualification', 'request', 'verifier', 'result', 'native', 'storage',
+        'source', 'independent_verifier_id', 'executed_source_correspondence', 'terminal',
+        'controller_complete', 'worker_result', 'phases', 'collection', 'source_capture', 'prepared_plan', 'expected_cases'}
+        and binding['evidence_profile'] == CONTINUATION_PEER_PROFILE,
+        'closed original occurrence-fixture evidence profile required')
+    require(type(binding['candidate_sources']) is list and 2 <= len(binding['candidate_sources']) <= 256
+        and type(binding['inputs']) is list and 1 <= len(binding['inputs']) <= 256
+        and type(binding['expected_cases']) is int and 1 <= binding['expected_cases'] <= 100000,
+        'positive original occurrence-fixture population required')
+    require(type(binding['independent_verifier_id']) is str,
+            'pinned independent review metadata identity required')
+
+
+def _continuation_peer_observe(root, task):
+    """Audit the existing12/36 fixture dialect without upgrading its measurements."""
+    binding = task['binding']
+    _continuation_peer_binding_contract(binding)
+    roles = ('candidate_qualification', 'request', 'verifier', 'result', 'native', 'storage',
+             'source', 'terminal', 'controller_complete', 'worker_result', 'phases',
+             'collection', 'source_capture', 'prepared_plan')
+    refs = [*binding['candidate_sources'], *binding['inputs'], *[binding[role] for role in roles]]
+    distinct = {}
+    for population in (binding['candidate_sources'], binding['inputs']):
+        require(len({ref['path'] for ref in population}) == len(population), 'duplicate peer source/input')
+    for ref in refs:
+        _continuation_ref(root, ref, check_file=False)
+        path = Path(ref['path']); physical = str((path if path.is_absolute() else Path(root) / path).resolve())
+        require(physical not in distinct or _programme_json(distinct[physical]) == _programme_json(ref),
+                'conflicting peer closure pins or scope aliases')
+        distinct[physical] = ref
+    refs = list(distinct.values())
+    require(sum(ref['bytes'] for ref in refs) <= 67108864, 'peer input read budget exceeded')
+    for ref in refs:
+        _continuation_ref(root, ref)
+    docs = {role: json.loads(_continuation_ref(root, binding[role])) for role in roles}
+    require(all(type(document) is dict for document in docs.values()), 'peer evidence objects required')
+    proof = docs['candidate_qualification']; observation = docs['result']; request = docs['request']
+    require(proof.get('schema') == 'legal-ir-occurrence-inference-fixture-independent-result-review/v1'
+        and proof.get('accepted_actual_occurrence_inference_fixture_qualification') is True
+        and proof.get('metadata_source_READ_closed') is True
+        and proof.get('source_native_storage_custody_closed') is True
+        and proof.get('original_owned_pipeline_succeeded') is True
+        and proof.get('genuine_fixture_worker_succeeded') is True,
+        'actual independent peer fixture acceptance/closure required')
+    for name in ('actual_worker_returncode', 'original_owner_returncode'):
+        require(type(proof.get(name)) is int and proof[name] == 0, 'actual peer owner/worker failed')
+    for role in ('native', 'storage', 'source'):
+        require(_programme_json(binding[role]) == _programme_json(binding['candidate_qualification']),
+                'peer native/source/storage must reuse original shared closeout')
+    for role, field in (('request', 'request'), ('verifier', 'independent_request_review'),
+        ('result', 'worker_observation'), ('terminal', 'terminal_custody'),
+        ('controller_complete', 'controller_complete'), ('worker_result', 'worker_result'),
+        ('phases', 'worker_phases'), ('collection', 'worker_collection'), ('source_capture', 'source_capture'),
+        ('prepared_plan', 'prepared_plan')):
+        require(_programme_json(proof.get(field)) == _programme_json(binding[role]),
+                'actual peer evidence chain differs: ' + field)
+    review = docs['verifier']
+    require(review.get('schema') == 'legal-ir-occurrence-inference-focused-independent-request-review/v1'
+        and review.get('accepted_for_original_owned_occurrence_inference_fixture_launch') is True
+        and review.get('source_READ_closed') is True and review.get('request') == binding['request']
+        and review.get('source_capture') == binding['source_capture']
+        and binding['independent_verifier_id'] == 'sha256:' + binding['verifier']['sha256'],
+        'actual independent peer request review differs')
+    closeout = proof.get('resource_closeout')
+    require(type(closeout) is dict, 'original peer resource closeout required')
+    for name in ('cleanup_proven', 'current_selected_storage_record_matches_terminal',
+        'native_lease_absent_from_current_active_scheduler', 'native_released',
+        'original_owner_and_child_PIDs_absent', 'source_READ_closed'):
+        require(closeout.get(name) is True, 'original peer cleanup missing: ' + name)
+    for name in ('live_processes', 'rss_bytes'):
+        require(type(closeout.get(name)) is int and closeout[name] == 0, 'peer live owner/child remains')
+    require(closeout.get('storage_status') == 'released' and closeout.get('recovery_needed') is False,
+            'original peer storage remains open')
+    complete = docs['controller_complete']; terminal = docs['terminal']; worker = docs['worker_result']
+    require(complete.get('schema') == 'legal-ir-occurrence-inference-fixture-original-controller-complete/v1'
+        and complete.get('completed') is True and complete.get('worker_succeeded') is True
+        and complete.get('source_READ_closed_after_verified_original_cleanup') is True
+        and type(complete.get('returncode')) is int and complete['returncode'] == 0
+        and complete.get('request_sha256') == binding['request']['sha256'], 'original peer controller not closed')
+    require(worker.get('schema') == 'owned-validation-result/v1' and worker.get('completed') is True
+        and type(worker.get('returncode')) is int and worker['returncode'] == 0
+        and worker.get('request_sha256') == binding['request']['sha256'], 'original peer worker result differs')
+    require(terminal.get('schema') == 'legal-ir-occurrence-inference-focused-torch-terminal/v1'
+        and all(terminal.get(name) is True for name in ('output_endpoint_guards_closed',
+            'project_import_origin_guards_closed', 'selected_sources_unchanged',
+            'source_buffer_compilation_guards_closed', 'original_resource_closeout_not_claimed_by_worker')),
+        'original peer terminal source/output guards remain open')
+    count = binding['expected_cases']; nodes = docs['collection'].get('nodes')
+    require(type(nodes) is list and len(nodes) == count and all(type(node) is str and node for node in nodes)
+        and len(set(nodes)) == count and nodes == request.get('selected_checks')
+        and nodes == observation.get('selected_node_ids') and nodes == worker.get('executed_checks'),
+        'actual peer selected/collected/executed case populations differ')
+    require(observation.get('schema') == 'legal-ir-occurrence-inference-focused-torch-observation/v1'
+        and observation.get('completed') is True and type(observation.get('pytest_returncode')) is int
+        and observation['pytest_returncode'] == 0, 'actual peer pytest failed')
+    for document, case_key, phase_key in ((observation, 'cases_passed', 'phase_events_passed'),
+        (terminal, 'actual_test_cases', 'actual_phase_events'), (complete, 'selected_cases', 'selected_phase_events')):
+        require(type(document.get(case_key)) is int and document[case_key] == count
+            and type(document.get(phase_key)) is int and document[phase_key] == 3 * count,
+            'actual positive peer case/phase counts differ')
+    phases = docs['phases'].get('phase_events')
+    require(type(phases) is list and len(phases) == 3 * count, 'actual peer phases required')
+    observed = []
+    for phase in phases:
+        require(type(phase) is dict and phase.get('nodeid') in nodes
+            and phase.get('when') in {'setup', 'call', 'teardown'} and phase.get('outcome') == 'passed'
+            and phase.get('wasxfail') is False, 'peer skipped/failed/nonpassing phase')
+        observed.append((phase['nodeid'], phase['when']))
+    require(len(set(observed)) == 3 * count, 'duplicate peer phases')
+    audit = observation.get('audit'); events = audit.get('selected_compile_events') if type(audit) is dict else None
+    require(type(events) is list and events and audit.get('denied_operations') == [],
+            'actual peer selected compile/audit observations required')
+    require(docs['source_capture'].get('schema') == 'legal-ir-occurrence-inference-focused-source-capture/v1'
+        and docs['source_capture'].get('completed') is True
+        and docs['source_capture'].get('source_READ_closed') is True, 'original peer source capture remains open')
+    plan = docs['prepared_plan']
+    require(plan.get('schema') == 'legal-ir-occurrence-inference-fixture-original-plan/v1'
+        and plan.get('request') == binding['request'] and plan.get('source_capture') == binding['source_capture']
+        and type(plan.get('candidate_root')) is str and type(plan.get('canonical_root')) is str
+        and request.get('cwd') == plan['canonical_root'], 'original peer frozen/canonical source plan differs')
+    pins = request.get('source_sha256')
+    require(type(pins) is dict and all(pins.get(ref['path']) == ref['sha256'] for ref in binding['inputs']),
+            'peer original static input pins differ')
+    sources = {ref['path']: ref for ref in binding['candidate_sources']}
+    correspondence = binding['executed_source_correspondence']
+    require(type(correspondence) is list and len(correspondence) == len(sources)
+        and {item.get('candidate_path') for item in correspondence if type(item) is dict} == set(sources),
+        'peer candidate compile/import/test correspondence missing')
+    for item in correspondence:
+        require(type(item) is dict and set(item) == {'candidate_path', 'executed_path', 'source_kind', 'module'}
+            and item['source_kind'] in {'module', 'test'}, 'closed peer source correspondence required')
+        ref = sources[item['candidate_path']]; name = item['executed_path']
+        require(type(name) is str and pins.get(name) == ref['sha256']
+            and any(row.get('path') == name and type(row.get('bytes')) is int
+                    and row['bytes'] == ref['bytes'] and row.get('sha256') == ref['sha256'] for row in events),
+            'peer actual selected compile buffer differs from candidate')
+        if item['source_kind'] == 'module':
+            origin = observation.get('import_origins', {}).get(item['module'])
+            require(type(origin) is dict and origin.get('path') == name
+                and type(origin.get('bytes')) is int and origin['bytes'] == ref['bytes']
+                and origin.get('sha256') == ref['sha256']
+                and any(row.get('path') == name and row.get('code_filename') == name
+                    and row.get('compilation') == 'actual_selected_bytes' and row.get('sha256') == ref['sha256']
+                    and type(row.get('bytes')) is int and row['bytes'] == ref['bytes']
+                    for row in observation.get('compiled_source_buffers', [])),
+                'peer genuine imported module/source buffer differs')
+        else:
+            require(item['module'] is None and Path(name).is_relative_to(Path(plan['candidate_root']))
+                and any(node.startswith(Path(name).relative_to(Path(plan['candidate_root'])).as_posix() + '::')
+                        for node in nodes), 'peer owning test source is not in actual passed cohort')
+    for ref in refs:
+        _continuation_ref(root, ref)
+    return dict(cases=count, phase_reports=3 * count, observed_compiled_source_count=len(events),
+        original_native_source_storage_closed=True, storage_status='released',
+        evidence_kind='selected_compile_buffer_hashes_and_import_origins_with_passed_test_phases',
+        actual_exec_event_buffers_attested=False, outer_tool_reap_observed=False,
+        auditor_executable_attested=False, independent_verifier_kind='original_pinned_independent_review_metadata')
+
+
+def _continuation_observe(root, task):
+    continuation_contract(task)
+    binding = task['binding']
+    if binding.get('evidence_profile') == CONTINUATION_PEER_PROFILE:
+        return _continuation_peer_observe(root, task)
+    roles = ('candidate_qualification', 'request', 'verifier', 'result', 'native', 'storage', 'source', 'reap')
+    refs = [*binding['candidate_sources'], *binding['inputs'], *[binding[role] for role in roles]]
+    for ref in refs:
+        _continuation_ref(root, ref, check_file=False)
+    for population in (binding['candidate_sources'], binding['inputs']):
+        require(len({ref['path'] for ref in population}) == len(population),
+                'candidate and input populations must each be unique')
+    distinct = {}
+    for ref in refs:
+        path = Path(ref['path'])
+        physical = str((path if path.is_absolute() else Path(root) / path).resolve())
+        require(physical not in distinct or _programme_json(distinct[physical]) == _programme_json(ref),
+                'conflicting shared closure pins or input scope aliases')
+        distinct[physical] = ref
+    refs = list(distinct.values())
+    require(sum(ref['bytes'] for ref in refs) <= 67108864,
+            'continuation metadata/source population exceeds finite input bound')
+    documents = {}
+    for ref in refs:
+        _continuation_ref(root, ref)
+    for role in ('candidate_qualification', 'request', 'result', 'native', 'storage', 'source', 'reap'):
+        documents[role] = json.loads(_continuation_ref(root, binding[role]))
+    qualified = documents['candidate_qualification']
+    require(type(qualified) is dict and qualified.get('accepted') is True
+            and qualified.get('completed') is True and qualified.get('source_READ_closed') is True
+            and qualified.get('source_native_storage_closed') is True
+            and qualified.get('request') == binding['request'] and qualified.get('result') == binding['result']
+            and qualified.get('auditor') == binding['verifier']
+            and binding['independent_verifier_id'] == 'sha256:' + binding['verifier']['sha256']
+            and any(qualified.get(key) == binding['reap']
+                    for key in ('root_actual_outer_reap', 'root_actual_owner_reap')),
+            'independent candidate/request/verifier/result/source/native/storage chain differs')
+    reap = documents['reap']
+    require(type(reap) is dict and reap.get('completed') is True
+            and reap.get('outer_exec_genuinely_reaped') is True
+            and reap.get('request') == binding['request'] and reap.get('result') == binding['result'],
+            'actual original outer reap request/result chain differs')
+    require(type(documents['request']) is dict, 'original request object required')
+    request_sources = documents['request'].get('source_sha256')
+    require(type(request_sources) is dict and all(request_sources.get(ref['path']) == ref['sha256']
+            for ref in binding['inputs']), 'exact original request input commitments differ')
+    correspondence = binding['executed_source_correspondence']
+    sources = {ref['path']: ref for ref in binding['candidate_sources']}
+    result = documents['result']
+    require(type(result) is dict and type(result.get('actual_compiled_source_utf8')) is dict
+            and type(result.get('actual_executed_paths')) is list
+            and all(type(name) is str for name in result['actual_executed_paths'])
+            and type(result.get('opening_frozen_sources')) is dict
+            and type(result.get('closing_frozen_sources')) is dict,
+            'actual raw compiled/executed source observations required')
+    require(type(result.get('pytest_returncode')) is int and result['pytest_returncode'] == 0
+            and result.get('all_phases_passed') is True and result.get('closing_errors') == [],
+            'positive actual test phases and closing source guard required')
+    require(type(correspondence) is list and len(correspondence) == len(sources)
+            and {item.get('candidate_path') for item in correspondence if type(item) is dict}
+                == set(sources), 'every candidate requires actual executed-source correspondence')
+    for item in correspondence:
+        require(type(item) is dict and set(item) == {'candidate_path', 'executed_path'}
+                and type(item['executed_path']) is str, 'closed executed-source observation required')
+        name = item['executed_path']; ref = sources[item['candidate_path']]
+        raw = result['actual_compiled_source_utf8'].get(name)
+        expected_pin = {key: ref[key] for key in ('bytes', 'sha256')}
+        require(name in result['actual_executed_paths'] and type(raw) is str
+                and request_sources.get(name) == ref['sha256']
+                and len(raw.encode('utf-8')) == ref['bytes'] and sha(raw.encode('utf-8')) == ref['sha256']
+                and _programme_json(result['opening_frozen_sources'].get(name)) == _programme_json(expected_pin)
+                and _programme_json(result['closing_frozen_sources'].get(name)) == _programme_json(expected_pin),
+                'candidate bytes do not match actual raw executed and opening/closing source')
+    request_link = binding['request_correspondence']
+    require(type(request_link) is dict and set(request_link) == {'role', 'path'}
+            and request_link['role'] in {'native', 'source'}, 'original native request link required')
+    require(_continuation_pointer(documents[request_link['role']], request_link['path'])
+            == binding['request'], 'actual original native/source request commitment differs')
+    observations = {}
+    for name, assertion in binding['assertions'].items():
+        value = _continuation_pointer(documents[assertion['role']], assertion['path'])
+        if name == 'cases':
+            require(type(value) is list and all(type(case) is str and case for case in value)
+                    and len(value) == len(set(value)), 'actual collected case population required')
+            value = len(value)
+        elif name == 'actual_executed_source_count':
+            value = len(set(value) & set(result['actual_executed_paths']))
+        require(type(value) is type(assertion['expected']) and value == assertion['expected'],
+                'positive continuation observation differs: ' + name)
+        observations[name] = value
+    # Close the observation against the exact opening source/evidence bytes.
+    # This is a current read guard, not a new native or numerical execution.
+    for ref in refs:
+        _continuation_ref(root, ref)
+    return observations
+
+
+def check_continuation_plan(root, plan=None):
+    root = Path(root)
+    plan = json.loads((root / PLAN).read_bytes()) if plan is None else plan
+    bundle = plan.get('engineering_continuation')
+    require(type(bundle) is dict and set(bundle) == {'schema', 'baseline', 'tasks',
+            'dispatch_authorized_by_this_metadata', 'completion_authority'},
+            'closed engineering continuation bundle required')
+    require(bundle['schema'] == CONTINUATION_SCHEMA
+            and bundle['dispatch_authorized_by_this_metadata'] is False
+            and bundle['completion_authority'] is False, 'continuation metadata grants no authority')
+    baseline = bundle['baseline']
+    require(type(baseline) is dict and sha(json.dumps(baseline, sort_keys=True, indent=2).encode() + b'\n')
+            == CONTINUATION_BASELINE_SHA256, 'sealed continuation baseline differs')
+    raw = (root / BOARD).read_bytes()
+    require(len(raw) >= CONTINUATION_BASE_BOARD_BYTES
+            and sha(raw[:CONTINUATION_BASE_BOARD_BYTES]) == CONTINUATION_BASE_BOARD_SHA256,
+            'retained139 raw card bytes differ')
+    retained = [task for task in plan['tasks'] if task.get('engineering_continuation') is None]
+    require(len(retained) == 139 and sha(_programme_json(retained)) == CONTINUATION_BASE_TASKS_SHA256,
+            'retained139 plan task records differ')
+    for ref in baseline['receipts']:
+        _continuation_ref(root, {key: ref[key] for key in ('path', 'bytes', 'sha256')})
+    tasks = bundle['tasks']
+    require(type(tasks) is list and [task.get('task_id') for task in tasks] == list(CONTINUATION_SPECS),
+            'exact two continuation validation operations required')
+    for task in tasks:
+        continuation_contract(task)
+        _continuation_observe(root, task)
+    active = [task for task in plan['tasks'] if task.get('engineering_continuation') is not None]
+    require(not active or active == [{**task, **continuation_contract(task)} for task in tasks],
+            'continuation plan additions differ')
+    return bundle
+
+
+def render_continuation_task(task):
+    contract = continuation_contract(task)
+    return '\n'.join(['## ' + task['task_id'] + ' ' + task['title'], '',
+        '- status: todo', '- completion: manual', '- is schedulable: true',
+        '- priority: P1', '- track: legal-ir-programme',
+        '- goal id: ' + task['goal_id'], '- parent goal id: ' + task['parent_task_id'],
+        '- depends on: none', '- board namespace: legal-ir-autoencoder-v1',
+        '- provider role: deterministic-only', '- context budget tokens: 0',
+        '- outputs: ' + ', '.join(contract['outputs']),
+        '- allowed paths: ' + ', '.join(contract['allowed_paths']),
+        '- validation: ' + '; '.join(contract['validation_commands']),
+        '- required validation executables: python3',
+        '- receipt instructions: ' + contract['receipt_instructions'],
+        '- acceptance: Exact pinned positive case/result/source/native/storage evidence and '
+            'independent verifier commitments validate; no model calls, source edits or scientific authority'])
+
+
+def prepare_continuation(root, bundle):
+    """Return one exact two-entry delta; write, dispatch and rearm nothing."""
+    root = Path(root)
+    plan = json.loads((root / PLAN).read_bytes())
+    require('engineering_continuation' not in plan, 'continuation already adopted')
+    check_programme_engineering_plan(root, plan)
+    _require_programme_source_alignment(root)
+    candidate = dict(plan, engineering_continuation=bundle)
+    check_continuation_plan(root, candidate)
+    require((root / BOARD).stat().st_size == CONTINUATION_BASE_BOARD_BYTES,
+            'continuation requires exact139 base board')
+    return dict(schema='legal-ir-supervisor-continuation-materialization/v1',
+        entries=[dict(task_id=task['task_id'], goal_id=task['goal_id'],
+                      rendered_block=render_continuation_task(task)) for task in bundle['tasks']],
+        plan_task_additions=[{**task, **continuation_contract(task)} for task in bundle['tasks']],
+        plan_bundle_addition=bundle, base_board_sha256=CONTINUATION_BASE_BOARD_SHA256,
+        base_board_revision='taskboard:sha256:' + sha(b'agent-supervisor-taskboard-revision-v1\0'
+                                                    + (root / BOARD).read_bytes()),
+        dispatch_authorized_by_this_metadata=False, completion_authority=False,
+        mutation_authority=False)
+
+
+def _continuation_validation_record(root, task):
+    return dict(schema=CONTINUATION_RESULT_SCHEMA, task_id=task['task_id'],
+        operation_kind=task['operation_kind'], binding=task['binding'], limits=task['limits'],
+        observations=_continuation_observe(root, task), qualification_scope='metadata_receipt_validation_only',
+        new_audit_model_call_count=0, new_audit_provider_call_count=0,
+        tests_rerun=False, training_executed=False, admitted=False, formalized=False)
+
+
+def materialize_continuation_validation(root, task_id):
+    """Check existing qualified evidence, then create two exact owned outputs."""
+    root = Path(root).resolve()
+    plan = json.loads((root / PLAN).read_bytes())
+    check_continuation_plan(root, plan)
+    task = next(task for task in plan['tasks'] if task['task_id'] == task_id)
+    record = _continuation_validation_record(root, task)
+    directory = root / continuation_directory(task_id)
+    require(directory.absolute() == directory.resolve(), 'aliased continuation output scope')
+    directory.mkdir(parents=True, exist_ok=True)
+    data = _programme_json(record) + b'\n'
+    receipt = dict(schema=SCHEMA, task_id=task_id, task_kind='continuation_validation',
+        status='implemented', authority=dict(admitted=False, formalized=False),
+        artifacts=[dict(kind='validation', path=(continuation_directory(task_id) / 'validation.json').as_posix(),
+                        sha256=sha(data))])
+    # Existing outputs are immutable: a retry may read the exact same bytes,
+    # never overwrite or truncate a previous receipt.
+    for name, raw in (('validation.json', data), ('receipt.json', _programme_json(receipt) + b'\n')):
+        path = directory / name
+        require(not path.is_symlink(), 'aliased continuation output')
+        if path.exists():
+            require(path.read_bytes() == raw, 'retained continuation output differs')
+        else:
+            with path.open('xb') as stream:
+                stream.write(raw)
+                stream.flush()
+                os.fsync(stream.fileno())
+    descriptor = os.open(directory, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+    return dict(task_id=task_id, materialized=True, tests_rerun=False, admitted=False, formalized=False)
+
+
+def validate_continuation(root, task, receipt, data):
+    require(set(receipt) == {'schema', 'task_id', 'task_kind', 'status', 'authority', 'artifacts'}
+            and receipt.get('status') == 'implemented' and set(data) == {'validation'},
+            'exact positive continuation receipt/artifact required')
+    require(receipt.get('artifacts') == [dict(kind='validation',
+        path=(continuation_directory(task['task_id']) / 'validation.json').as_posix(),
+        sha256=sha(data['validation']))], 'exact continuation artifact path required')
+    require(_programme_json(payload(data, 'validation'))
+            == _programme_json(_continuation_validation_record(root, task)),
+            'continuation result/source/native/storage binding differs')
+
+
 def kind(task_id):
+    if task_id in CONTINUATION_SPECS:
+        return 'continuation_validation'
     if task_id in PROGRAMME_ENGINEERING_SPECS:
         return 'programme_engineering'
     for prefix, name in (('USC', 'uscode'), ('CONST', 'constitution'), ('WIDTH', 'width'), ('METHOD', 'method')):
@@ -850,6 +1422,8 @@ def kind(task_id):
 
 
 def directory(task_id):
+    if task_id in CONTINUATION_SPECS:
+        return continuation_directory(task_id)
     if task_id in PROGRAMME_ENGINEERING_SPECS:
         return Path(PROGRAMME_ENGINEERING_SPECS[task_id]['preparation_path']).parent
     require(re.fullmatch(r'LIRAE-[A-Z0-9-]+', task_id), 'invalid task ID')
@@ -1070,6 +1644,8 @@ def validate_engineering_width(root, task, receipt, data):
 
 
 def task_contract(task):
+    if task.get('engineering_continuation') is not None:
+        return continuation_contract(task)
     if task.get('programme_engineering') is not None:
         return programme_engineering_contract(task)
     if task.get('engineering_width_replay') is not None:
@@ -1188,6 +1764,10 @@ def enrich(root, *, enable_local_inventory=False, enable_local_width_replay=Fals
 def check_board(root):
     root = Path(root)
     plan = json.loads((root / PLAN).read_text())
+    require(not any(task.get('engineering_continuation') is not None for task in plan['tasks'])
+            or plan.get('engineering_continuation') is not None, 'continuation bundle required')
+    if plan.get('engineering_continuation') is not None:
+        check_continuation_plan(root, plan)
     require(not any(task.get('programme_engineering') is not None for task in plan['tasks'])
             or plan.get('programme_engineering') is not None, 'programme engineering bundle required')
     if plan.get('programme_engineering') is not None:
@@ -1216,6 +1796,10 @@ def check_board(root):
                 require('- ' + label + ': ' + str(contract[key]) in chunk, 'stale local execution metadata for ' + task_id)
         if 'proposal_artifact_envelope' in contract:
             require('- proposal artifact envelope: ' + json.dumps(contract['proposal_artifact_envelope'], separators=(',', ':'), sort_keys=True) in chunk, 'stale artifact envelope for ' + task_id)
+        if task.get('engineering_continuation') is not None:
+            for line in render_continuation_task(task).splitlines():
+                if line and not line.startswith('- status:'):
+                    require(chunk.splitlines().count(line) == 1, 'stale continuation board contract')
         if task.get('programme_engineering') is not None:
             for line in render_programme_engineering_task(task).splitlines():
                 if line and not line.startswith('- status:'):
@@ -1448,7 +2032,10 @@ def validate(root, task_id, *, source_parquet=None):
     require(receipt.get('status') in {'inventory', 'implemented'}, 'pending/unavailable work cannot complete')
     false_flags(receipt.get('authority'), family == 'constitution')
     data = read_artifacts(root, task_id, receipt)
-    if family == 'programme_engineering':
+    if family == 'continuation_validation':
+        check_continuation_plan(root, plan)
+        validate_continuation(root, task, receipt, data)
+    elif family == 'programme_engineering':
         validate_programme_engineering(root, task, receipt, data)
     elif family == 'uscode':
         validate_uscode(next(row for row in plan['shards'] if row['task_id'] == task_id), receipt, data, source_parquet=source_parquet)
@@ -1481,6 +2068,8 @@ def main(argv=None):
     modes.add_argument('--enable-local-inventory', action='store_true', help='Enable reviewed local inventory only for currently pending US Code shards; completed contracts remain unchanged')
     modes.add_argument('--enable-local-width-replay', action='store_true', help='Enable reviewed frozen replay only for pending384/768 tasks; preserve every other contract')
     modes.add_argument('--enable-engineering-width-v2', action='store_true', help='Select only reviewed genuine spaCy8/Leanstral4096 successor captures; preserve every other task and old contracts as history')
+    modes.add_argument('--prepare-continuation', type=Path, metavar='SELECTIONS', help='Print exact two-card139-preserving continuation delta; write and dispatch nothing')
+    modes.add_argument('--materialize-continuation-validation', choices=tuple(CONTINUATION_SPECS), help='Validate only retained pinned qualification receipts and create two owned outputs; run no code/model/training')
     modes.add_argument('--prepare-programme-engineering', action='store_true', help='Print four source-aligned native materialization entries and plan additions; write nothing and dispatch nothing')
     modes.add_argument('--check-board', action='store_true')
     modes.add_argument('--check-task', metavar='TASK_ID')
@@ -1494,7 +2083,11 @@ def main(argv=None):
     try:
         require(args.capture_selections is None or args.enable_engineering_width_v2,
                 'capture selections require explicit genuine successor mode')
-        if args.enable_engineering_width_v2:
+        if args.prepare_continuation is not None:
+            result = prepare_continuation(args.root, json.loads(args.prepare_continuation.read_bytes()))
+        elif args.materialize_continuation_validation is not None:
+            result = materialize_continuation_validation(args.root, args.materialize_continuation_validation)
+        elif args.enable_engineering_width_v2:
             require(args.capture_selections is not None, 'explicit reviewed capture selections required')
             selections = json.loads(args.capture_selections.read_bytes())
             require(type(selections) is dict and set(selections) == {'schema', 'selections'}
