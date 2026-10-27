@@ -1,7 +1,8 @@
 # Ordered relational requests in proposed legal graphs
 
-`legal_semantic_graph` accepts the explicit `relational_norm_v1` profile in its
-existing `build_graph`, `graph_to_ast` and `validate_graph` APIs. It transports a
+`legal_semantic_graph` accepts the explicit `relational_norm_v1` and
+`mixed_relational_norm_v1` profiles in its existing `build_graph`, `graph_to_ast`
+and `validate_graph` APIs. It transports a
 complete authored [`legal_relational_norm_v1`](legal_relational_norm_v1.md)
 request through the existing ordered JSON tree representation. No additional
 AST or graph codec is introduced.
@@ -55,7 +56,7 @@ SHA256. This invokes the existing strict typed/native structural validation.
 It neither substitutes a weaker schema check nor repairs an unsupported request.
 The original `canonical_rules_v1` and `normative_scope_v1` routes remain separate.
 
-The relational owner enforces bound Object variables, declared predicate arity,
+The Object-only `relational_norm_v1` owner enforces bound Object variables, declared predicate arity,
 ordered roles, binary Boolean operators, unary negation, individual quantifiers
 and the existing O/P/F extension. Free variables, binder shadowing, unsupported
 extensions, extra fields, constants, equality, counting, purpose and anaphora
@@ -67,6 +68,41 @@ depth is profile-specific: `relational_norm_v1` accepts at most 32, while
 `canonical_rules_v1` and `normative_scope_v1` retain 24. The relational owner's
 independent request and grammar limits still apply. Inputs above their selected
 profile bounds are refused, never truncated or flattened to fit.
+
+## Explicit mixed relational profile
+
+Pass the complete existing `legal-mixed-relational-norm-request/v1` request as
+`ast`, with `profile="mixed_relational_norm_v1"` in the same graph APIs. The
+branch calls the existing `prepare_mixed_relational_norm_v1`; it reuses the
+ordered tree and decoder above. It adds no AST representation, parser, implicit
+sort conversion, semantic entity extraction or graph framework. Object,
+EventFrame and TimeFrame, same-sort equality, ordered predicate arguments and
+roles, and individual forall/exists binders retain their authored structure.
+Unsupported typed content remains a refusal in the existing mixed codec.
+
+Only this opt-in profile allows an AST JSON depth of 48 and a final graph output
+of 2 MiB, including `graph_id`. Its 4,096-node limit remains unchanged. The
+existing three profiles keep their depth 24/24/32 and existing 1 MiB byte-checking behavior;
+the shared/default `wire` and `digest` limits also remain unchanged. The mixed
+codec's separate 512-node/48 grammar-depth/512 KiB request limits still apply.
+Nothing is truncated, flattened, simplified or omitted to fit a bound.
+
+The two retained §7214 complete requests have depths 45 and 42 and canonical
+request hashes `957b2011acde34b7fda85d8661061622160316605b03324a7b52c94cc17b6bc7`
+and `20017c7e69b094173ac62810c3c4d146401829f23d9e5d0626260f2227757c58`.
+Each transports all 98 typed nodes, 12 binders, six equalities and ten ordered
+predicate-role records. Their verbose existing ordered trees exceed 1 MiB;
+the explicit mixed output allowance permits complete roundtrips. Owning tests
+nominate a fictional source fixture separately. Those associations do not
+supply a governing source or edition for either retained alternative.
+
+The graph still requires independently supplied source and scope commitments,
+`scope_request=None`, and exact independent inputs for `validate_graph`.
+Changing a source revision or scope and recomputing internal hashes does not
+match the original proposal. The inner request's `source_binding` stays null;
+all source, semantic, proof and training authority flags remain false. This
+profile does not add corpus transport, a direct native-TDFOL AST roundtrip,
+a Lean build, reviewed meaning, a selected candidate or an admission decision.
 
 ## What the round trip preserves
 
@@ -97,6 +133,10 @@ a relational predicate does not create a validated legal entity, definition-use
 edge or governing norm.
 
 ## Existing corpus custody and exchange
+
+The existing corpus exchange in this section describes the Object-only
+`relational_norm_v1` profile. The new mixed graph profile does not establish
+corpus-adapter support or qualification; that boundary remains separate.
 
 [`corpus_proposed_graph_adapter`](legal_corpus_proposed_graph_adapter.md) can
 validate this proposal through the existing graph API and retain the original

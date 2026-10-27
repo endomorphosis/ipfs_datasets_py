@@ -22,12 +22,16 @@ SOURCE_SCHEMA = "legal-semantic-source-occurrence/v1"
 SCOPE_SCHEMA = "legal-semantic-explicit-scope/v1"
 PARENT_SOURCE_SCHEMA = "legal-semantic-parent-literal-source/v1"
 PARENT_SCOPE_SCHEMA = "legal-semantic-parent-declared-scope/v1"
-PROFILES = ("canonical_rules_v1", "normative_scope_v1", "relational_norm_v1")
+PROFILES = ("canonical_rules_v1", "normative_scope_v1", "relational_norm_v1", "mixed_relational_norm_v1")
 MAX_BYTES = 1024 * 1024
 MAX_NODES = 4096
 MAX_DEPTH = 24
 # Complete authored relational requests retain their signature and binder JSON.
 RELATIONAL_MAX_DEPTH = 32
+# Explicit mixed requests have deeper sort/quantifier JSON; other profiles keep
+# their previous limits. This is a transport limit, not the codec grammar depth.
+MIXED_RELATIONAL_MAX_DEPTH = 48
+MIXED_RELATIONAL_MAX_BYTES = 2 * 1024 * 1024
 MAX_ENTITIES = 256
 MAX_ASSERTIONS = 512
 MAX_REFS = 128
@@ -53,12 +57,12 @@ def require(ok, message):
         raise ValueError(message)
 
 
-def wire(value):
+def wire(value, *, maximum_depth=MAX_DEPTH + 8, maximum_bytes=MAX_BYTES):
     count = 0
     def visit(node, depth):
         nonlocal count
         count += 1
-        require(depth <= MAX_DEPTH + 8 and count <= MAX_NODES * 64, "graph JSON depth/node bound exceeded")
+        require(depth <= maximum_depth and count <= MAX_NODES * 64, "graph JSON depth/node bound exceeded")
         if type(node) is dict:
             require(all(type(key) is str for key in node), "plain graph JSON keys required")
             for child in node.values(): visit(child, depth + 1)
@@ -72,7 +76,7 @@ def wire(value):
         raw = json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
     except (UnicodeError, TypeError, ValueError, RecursionError) as error:
         raise ValueError("bounded UTF8 graph JSON required") from error
-    require(len(raw) <= MAX_BYTES, "graph byte bound exceeded; no truncation")
+    require(len(raw) <= maximum_bytes, "graph byte bound exceeded; no truncation")
     return raw
 
 
@@ -286,12 +290,34 @@ def _check_bindings(source, scope):
 
 def _profile_depth_limit(profile):
     require(profile in PROFILES, "unsupported graph AST profile")
+    if profile == "mixed_relational_norm_v1":
+        return MIXED_RELATIONAL_MAX_DEPTH
     return RELATIONAL_MAX_DEPTH if profile == "relational_norm_v1" else MAX_DEPTH
 
 
-def _validate_ast(ast, profile, source, scope_request):
-    wire(ast)
+def _profile_output_limit(profile):
     require(profile in PROFILES, "unsupported graph AST profile")
+    return MIXED_RELATIONAL_MAX_BYTES if profile == "mixed_relational_norm_v1" else MAX_BYTES
+
+
+def _graph_wire(value, profile):
+    # Output envelopes, including their full ordered tree, use only the selected
+    # profile's budget. The shared/default serializer remains1MiB.
+    return wire(value, maximum_bytes=_profile_output_limit(profile))
+
+
+def _graph_digest(value, profile):
+    return hashlib.sha256(_graph_wire(value, profile)).hexdigest()
+
+
+def _ast_wire(ast, profile):
+    # Preserve the prior shared wire limit for all existing profiles. Only the
+    # complete AST of the explicit mixed profile receives its deeper allowance.
+    return wire(ast, maximum_depth=max(MAX_DEPTH + 8, _profile_depth_limit(profile)))
+
+
+def _validate_ast(ast, profile, source, scope_request):
+    raw = _ast_wire(ast, profile)
     if profile == "canonical_rules_v1":
         CanonicalRoundTripIR.from_dict(ast)  # Type validation only; do not apply its sorting/deduplication.
         require(scope_request is None, "flat rules cannot carry an undeclared scope request")
@@ -306,8 +332,10 @@ def _validate_ast(ast, profile, source, scope_request):
         # argument roles. The graph's nominated paragraph does not populate the
         # relational owner's null source_binding or establish legal meaning.
         from . import legal_relational_norm_v1 as relational
-        raw = wire(ast)
-        relational.prepare_relational_norm_v1(raw, expected_request_sha256=hashlib.sha256(raw).hexdigest())
+        prepare = (relational.prepare_mixed_relational_norm_v1
+                   if profile == "mixed_relational_norm_v1"
+                   else relational.prepare_relational_norm_v1)
+        prepare(raw, expected_request_sha256=hashlib.sha256(raw).hexdigest())
 
 
 def _kind(value):
@@ -458,18 +486,24 @@ def build_graph(ast, *, profile, source, scope, semantic_declarations=None,
     _check_bindings(source, scope)
     maximum_depth = _profile_depth_limit(profile)
     _validate_ast(ast, profile, source, scope_request)
-    seed = digest({"profile": profile, "ast_sha256": digest(ast),
+    ast_sha256 = hashlib.sha256(_ast_wire(ast, profile)).hexdigest()
+    seed = digest({"profile": profile, "ast_sha256": ast_sha256,
                    "source_binding_sha256": source["source_binding_sha256"], "scope_id": scope["scope_id"]})
     root, nodes, edges = _tree(ast, seed, maximum_depth=maximum_depth)
     entities, assertions = _semantics(semantic_declarations, ast, source, scope)
-    body = {"schema": SCHEMA, "profile": profile, "ast_sha256": digest(ast), "tree_seed_sha256": seed,
+    body = {"schema": SCHEMA, "profile": profile, "ast_sha256": ast_sha256, "tree_seed_sha256": seed,
         "root_node_id": root, "nodes": nodes, "edges": edges, "source": deepcopy(source), "scope": deepcopy(scope),
         "scope_request": deepcopy(scope_request), "entities": entities, "assertions": assertions,
         "dependency_refs": _refs(dependency_refs), "evidence_refs": _refs(evidence_refs),
         "status": "proposed_unreviewed", "original_task_acceptance": "preparatory_subset_only",
         "authority": dict(FALSE_AUTHORITY)}
-    body = json.loads(wire(body))
-    return {**body, "graph_id": "legal-proposed-graph:sha256:" + digest(body)}
+    body = json.loads(_graph_wire(body, profile))
+    proposal = {**body, "graph_id": "legal-proposed-graph:sha256:" + _graph_digest(body, profile)}
+    if profile == "mixed_relational_norm_v1":
+        # The new output budget includes its final identity field. Retain the
+        # three legacy branches' existing serialization and boundary behavior.
+        _graph_wire(proposal, profile)
+    return proposal
 
 
 def graph_to_ast(graph):
@@ -477,9 +511,10 @@ def graph_to_ast(graph):
     _closed(graph, _GRAPH_KEYS, "proposed graph")
     require(graph["schema"] == SCHEMA, "versioned proposed graph required")
     maximum_depth = _profile_depth_limit(graph["profile"])
-    wire(graph)
-    require(graph.get("graph_id") == "legal-proposed-graph:sha256:" + digest(
-        {key: value for key, value in graph.items() if key != "graph_id"}), "graph content identity differs")
+    _graph_wire(graph, graph["profile"])
+    require(graph.get("graph_id") == "legal-proposed-graph:sha256:" + _graph_digest(
+        {key: value for key, value in graph.items() if key != "graph_id"}, graph["profile"]),
+        "graph content identity differs")
     require(wire(graph.get("authority")) == wire(FALSE_AUTHORITY)
             and graph.get("status") == "proposed_unreviewed", "graph cannot confer semantic authority")
     require(type(graph.get("nodes")) is list and 0 < len(graph["nodes"]) <= MAX_NODES
@@ -520,12 +555,14 @@ def graph_to_ast(graph):
         require(type(keys) is list and keys == sorted(set(keys)) and [edge["role"] for edge in links] == keys, "record field binding differs")
         return {edge["role"]: decode(edge["child_id"], path + "/" + edge["role"].replace("~", "~0").replace("/", "~1"), depth + 1) for edge in links}
     ast = decode(graph["root_node_id"], "", 0)
-    require(len(visited) == len(table) and graph["root_node_id"] not in parents and digest(ast) == graph["ast_sha256"], "orphan nodes or AST digest differs")
+    require(len(visited) == len(table) and graph["root_node_id"] not in parents and hashlib.sha256(_ast_wire(ast, graph["profile"])).hexdigest() == graph["ast_sha256"], "orphan nodes or AST digest differs")
     root, nodes, edges = _tree(ast, graph["tree_seed_sha256"], maximum_depth=maximum_depth)
-    require(wire([root, nodes, edges]) == wire([graph["root_node_id"], graph["nodes"], graph["edges"]]), "AST node typing or ordered graph representation differs")
+    require(_graph_wire([root, nodes, edges], graph["profile"]) == _graph_wire(
+        [graph["root_node_id"], graph["nodes"], graph["edges"]], graph["profile"]),
+        "AST node typing or ordered graph representation differs")
     _check_bindings(graph["source"], graph["scope"])
     _validate_ast(ast, graph["profile"], graph["source"], graph["scope_request"])
-    seed = digest({"profile": graph["profile"], "ast_sha256": digest(ast),
+    seed = digest({"profile": graph["profile"], "ast_sha256": hashlib.sha256(_ast_wire(ast, graph["profile"])).hexdigest(),
         "source_binding_sha256": graph["source"]["source_binding_sha256"], "scope_id": graph["scope"]["scope_id"]})
     require(seed == graph["tree_seed_sha256"], "AST source/scope seed differs")
     declarations = {"entities": [row["declaration"] for row in graph["entities"]],
@@ -540,9 +577,11 @@ def graph_to_ast(graph):
 
 def validate_graph(graph, *, ast, **kwargs):
     """Regenerate from independently supplied source, scope and declarations."""
-    require(wire(graph_to_ast(graph)) == wire(ast), "graph differs from externally expected AST")
+    require(_ast_wire(graph_to_ast(graph), graph["profile"]) == _ast_wire(ast, graph["profile"]),
+            "graph differs from externally expected AST")
     expected = build_graph(ast, **kwargs)
-    require(wire(graph) == wire(expected), "graph differs from externally expected proposal inputs")
+    require(_graph_wire(graph, graph["profile"]) == _graph_wire(expected, graph["profile"]),
+            "graph differs from externally expected proposal inputs")
     return {"schema": "legal-semantic-proposed-graph-validation/v1", "graph_id": graph["graph_id"],
             "ordered_ast_roundtrip_verified": True, "entity_count": len(graph["entities"]),
             "assertion_count": len(graph["assertions"]), "authority": dict(FALSE_AUTHORITY),
