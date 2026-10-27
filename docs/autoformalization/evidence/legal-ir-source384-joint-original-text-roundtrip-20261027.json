@@ -1,0 +1,446 @@
+{
+  "accepted_measurement": {
+    "audit": {
+      "bytes": 10278,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/training/source384-saved-output-score-v01/joint-metric-followup-v01/actual-rescore-v01/independent-result-review-v01.json",
+      "sha256": "73dbffada6caa8290e36dac32700d11b5e9818066aa4019967228d3bf544bbfe"
+    },
+    "custody": {
+      "cleanup_error": null,
+      "compute_released": true,
+      "durable_file_count": 11,
+      "final_attempt_bytes": 908956,
+      "live_observed_processes": 0,
+      "native_returncode": 0,
+      "observed_RSS_bytes": 0,
+      "overage": false,
+      "process_scope": "sampled_birth_bound_descendants",
+      "source_READ_held_through_original_native_cleanup_and_release_then_closed": true,
+      "storage_released": true
+    },
+    "measurements": {
+      "all_accuracy_denominators": "all_captured_input_rows",
+      "decoded": 60,
+      "exact_ir": 3,
+      "exact_original_utf8": 0,
+      "joint_cells": {
+        "both_exact": 0,
+        "denominator": "all_captured_input_rows",
+        "ir_only_exact": 3,
+        "neither_exact": 57,
+        "text_only_exact": 0,
+        "total": 60
+      },
+      "joint_ir_original_utf8_exact": 0,
+      "new_rendered_text_hashes_vs_recorded_source_hashes_verified": true,
+      "old_original_source_payloads_independently_reread": false,
+      "rendered": 60,
+      "row_joint_flags_and_IR_candidate_target_hashes_verified": true,
+      "rows": 60
+    },
+    "native_closeout": {
+      "bytes": 1401,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/training/source384-saved-output-score-v01/joint-metric-followup-v01/actual-rescore-v01/validation-01/closeout.json",
+      "sha256": "f10b04389f9532f6b13d6e21b57b4a5607f68ff9481e3ed50a6262fe810a3d9e"
+    },
+    "native_terminal": {
+      "bytes": 6706,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/training/source384-saved-output-score-v01/joint-metric-followup-v01/actual-rescore-v01/validation-01/native.stdout",
+      "sha256": "cac391c81279004849cf320f97045f5aa214ca0e73cd8c83f746ab4dcde8d32e"
+    },
+    "owner_entries": {
+      "all_original_entry_and_return_witnesses_verified": true,
+      "canonical_decompiler": 60,
+      "decompiler_sha256": "79eeb9072e74e68dc5fab7640b5ad49e82131d0f35232ff473c7f2dfbe232c64",
+      "score": 1,
+      "scorer_sha256": "e8f9ac5d86bc318a96354fbf1d5b7f15f9e949c17fc41e0b66cc0f6dd79336cd",
+      "test_or_JUnit_cases_from_actual_operation": 0,
+      "total": 61
+    },
+    "same_input_scope": {
+      "comparison_scope": "Original admitted worker enforced exact original input descriptors, ordered capture/projection commitments, and whole-old-report equality. This auditor verifies NEW witness/code/entry/commitment joins, not a fresh external comparison against old payloads.",
+      "new_capture_prediction_commitments_match_new_score": true,
+      "original_input_descriptors_match_reviewed_design": true,
+      "original_protected_input_bodies_reread_by_auditor": 0
+    },
+    "source_profile": {
+      "checked_raw_compiled_executed_buffers": 42,
+      "default_package_or_installed_runtime_qualified": false,
+      "explicit_namespace_initializer_bypasses": 6,
+      "explicit_product_modules": 4
+    },
+    "whole_old_report_compatibility": {
+      "all_old_metrics_unchanged": true,
+      "new_stripped_canonical_sha256": "f2f1bb8aa71493c04cf5803b3be3fd44a42c255320a25e46380a1a09b8a8b82e",
+      "new_stripped_digest_recomputed": true,
+      "old_score_or_old_commitment_reopened_by_auditor": false,
+      "strip_only": {
+        "counts": [
+          "joint_ir_original_utf8_exact"
+        ],
+        "rates": [
+          "joint_ir_original_utf8_exact"
+        ],
+        "row": [
+          "joint_ir_original_utf8_exact"
+        ],
+        "top": [
+          "ir_text_joint_counts"
+        ]
+      },
+      "whole_old_result_equal_in_worker": true
+    }
+  },
+  "api": "score_legal_original_text_roundtrip",
+  "id": "source384-joint-original-text-roundtrip-20261027-01",
+  "metric_contract": {
+    "denominator": "all_captured_input_rows",
+    "joint_requires_same_row_exact_IR_and_exact_original_UTF8": true,
+    "joint_table": "ir_text_joint_counts",
+    "old_metrics_denominators_and_input_profiles_unchanged": true,
+    "row_count_rate_key": "joint_ir_original_utf8_exact",
+    "table_cells": [
+      "both_exact",
+      "ir_only_exact",
+      "text_only_exact",
+      "neither_exact"
+    ],
+    "unselected_rendering_joint_metrics_and_table": null
+  },
+  "old_protected_payloads_raw_scores_source_texts_or_vectors_republished": false,
+  "owner": "ipfs_datasets_py/logic/formalization/autoencoder/ir_legal_text_roundtrip.py",
+  "owning_test": "tests/unit/logic/formalization/autoencoder/test_ir_legal_text_roundtrip.py",
+  "remaining_operational_gap": "Native source/constructor failures preceding the canonical terminal path need independently reviewed owned source-custody closeout. Selected preflight checks and watchdog health do not supply that terminal or release proof.",
+  "retained_startup_failure_summary": {
+    "admitted_failed_storage_claims_separately_administratively_closed": 3,
+    "attempts": 6,
+    "qualifications_reconstructed_or_failures_relabelled_successful": false,
+    "qualified_unit_cases": 0
+  },
+  "retained_startup_failures": [
+    {
+      "actual_unit_cases": 0,
+      "native_terminal_or_graceful_resource_release_claimed": false,
+      "qualification_credit": 0,
+      "request_sha256": "ae274b7e6f89f238e5aba4f5fca3bcad8f85d25c09a04306284b1a2c1c281eca",
+      "run": "unit-cohort-v01/validation-01",
+      "source_custody_audit": {
+        "bytes": 12436,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/training/source384-saved-output-score-v01/joint-metric-followup-v01/unit-cohort-v01/failure-recovery-v01/independent-failure-recovery-review-v01.json",
+        "sha256": "bcb7ba6ef70f651c0250e23d9b70b69d860753f590c1e34d3c1e4d2990503806"
+      },
+      "stage": "original_source_guard_rejected_empty_runtime_initializer_before_resource_owner_import"
+    },
+    {
+      "actual_unit_cases": 0,
+      "final_observed_source_custody_audit": {
+        "bytes": 6566,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/training/source384-saved-output-score-v01/joint-metric-followup-v01/unit-cohort-v02/failure-recovery-v01/independent-observed-source-custody-closeout-v01.json",
+        "sha256": "ab6f8e80acf8f314712b489f687c1d3fb146bfe77d4f66fc5028ace24525e452"
+      },
+      "native_terminal_or_graceful_resource_release_claimed": false,
+      "no_durable_reservation_or_native_grant_from_this_CLI": true,
+      "posthoc_source_custody_proof": {
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/training/source384-saved-output-score-v01/joint-metric-followup-v01/unit-cohort-v02/failure-recovery-v01/posthoc-constructor-source-custody-proof-v01.json",
+        "sha256": "b0651134893ce123a170928c461d1b3fd09b3d7ad5e034b32ce0775e0379496a"
+      },
+      "qualification_credit": 0,
+      "request_sha256": "869314e18d6b4f442f77ccbdc720f40941465cd23a6565f4eeb5b40cead2b51d",
+      "run": "unit-cohort-v02/validation-01",
+      "source_custody_scope": "Root-only exact birth/argv/FD-bound pidfd action and original exec exit137; observed original READ descriptor/process closure with lock inode preserved. No graceful exit, original canonical terminal, resource release or qualification claim.",
+      "stage": "physical_fixture_plugin_argv_rejection_during_constructor_before_open"
+    },
+    {
+      "actual_unit_cases": 0,
+      "administrative_storage_closeout": {
+        "audit": {
+          "bytes": 6076,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/training/source384-saved-output-score-v01/joint-metric-followup-v01/unit-cohort-v03/storage-recovery-v01/independent-result-review-v01.json",
+          "sha256": "6cba67e51fc6f7aa72c0cd35b5fedbc7d3a91ec73c13bcfd802b00ac53154ec3"
+        },
+        "original_validation_remains_failed": true,
+        "outputs_deleted": false,
+        "released": true,
+        "scope": "Separate original7702 administrative retained-storage reconciliation with exact selected-row CAS, fsynced unchanged authored outputs and independent actual postwrite census; not original validation success or native cleanup reconstruction.",
+        "successful_validation_seal_created": false,
+        "unit_qualification_credit": 0
+      },
+      "failed_result_audit": {
+        "bytes": 9851,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/training/source384-saved-output-score-v01/joint-metric-followup-v01/unit-cohort-v03/independent-failed-result-review-v01.json",
+        "sha256": "f7e62afbd17b7443d8f243e0b20c33241d7390ab81856063067d52baad854b67"
+      },
+      "original_source_and_compute_closed": true,
+      "original_storage_retention_reason": "context_failed",
+      "original_storage_status": "retained",
+      "original_successful_validation_seal": false,
+      "qualification_credit": 0,
+      "request_sha256": "c9b186880ad73c0f68e285135bcbcfd1f17071edaf4062ad561fd203f5ee76de",
+      "run": "unit-cohort-v03/validation-01",
+      "stage": "admitted_worker_user_site_pytest_import_refused_before_collection"
+    },
+    {
+      "actual_unit_cases": 0,
+      "audit": {
+        "bytes": 3278,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/training/source384-saved-output-score-v01/joint-metric-followup-v01/unit-cohort-v04/independent-prelaunch-source-drift-review-v01.json",
+        "sha256": "c08c43f7aad1bc1ce06be7e00904c97d7a8bf19d91586d56ca01b35deca9845d"
+      },
+      "native_child_request_attempt_or_resource_owner_created": false,
+      "qualification_credit": 0,
+      "run": "unit-cohort-v04/validation-01",
+      "source_READ_normally_closed_before_any_child": true,
+      "source_reversion_or_guard_relaxation_performed": false,
+      "stage": "canonical_launcher_generation_changed_and_prechild_pin_check_refused"
+    },
+    {
+      "actual_unit_cases": 0,
+      "administrative_storage_closeout": {
+        "audit": {
+          "bytes": 4589,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/training/source384-saved-output-score-v01/joint-metric-followup-v01/unit-cohort-v05/storage-recovery-v01/independent-result-review-v01.json",
+          "sha256": "e39fb9424f10639440501ddce5b4152e9011465fd92b2f4d8ebf40578aeafeee"
+        },
+        "original_validation_remains_failed": true,
+        "outputs_deleted": false,
+        "released": true,
+        "scope": "Separate original7702 administrative retained-storage reconciliation with exact selected-row CAS, fsynced unchanged authored outputs and independent actual postwrite census; not original validation success or native cleanup reconstruction.",
+        "successful_validation_seal_created": false,
+        "unit_qualification_credit": 0
+      },
+      "failed_result_audit": {
+        "bytes": 8996,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/training/source384-saved-output-score-v01/joint-metric-followup-v01/unit-cohort-v05/independent-failed-result-review-v01.json",
+        "sha256": "86f4381a41f90fab5513f23e188007904b089c1ef3bdc7d0503a919880325d4f"
+      },
+      "original_source_and_compute_closed": true,
+      "original_storage_retention_reason": "context_failed",
+      "original_storage_status": "retained",
+      "original_successful_validation_seal": false,
+      "qualification_credit": 0,
+      "request_sha256": "6227808e65a2331494115b3d513be538a9be7b932a51d933e11edb03c1e4bb17",
+      "run": "unit-cohort-v05/validation-01",
+      "stage": "admitted_real_pytest_plugin_entrypoint_metadata_discovery_refused_before_collection"
+    },
+    {
+      "actual_unit_cases": 0,
+      "administrative_storage_closeout": {
+        "audit": {
+          "bytes": 4636,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/training/source384-saved-output-score-v01/joint-metric-followup-v01/unit-cohort-v06/storage-recovery-v01/independent-result-review-v01.json",
+          "sha256": "45261d7665ce54354867726bc799efd548885a077a13e3b9a70fbb1d1c5c7a8c"
+        },
+        "original_validation_remains_failed": true,
+        "outputs_deleted": false,
+        "released": true,
+        "scope": "Separate original7702 administrative retained-storage reconciliation with exact selected-row CAS, fsynced unchanged authored outputs and independent actual postwrite census; not original validation success or native cleanup reconstruction.",
+        "successful_validation_seal_created": false,
+        "unit_qualification_credit": 0
+      },
+      "failed_result_audit": {
+        "bytes": 7411,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/training/source384-saved-output-score-v01/joint-metric-followup-v01/unit-cohort-v06/independent-failed-result-review-v01.json",
+        "sha256": "daa7944b934da5a077f53aff125454b73be1dd4f8d29d094a5c51113b5b3757c"
+      },
+      "original_source_and_compute_closed": true,
+      "original_storage_retention_reason": "context_failed",
+      "original_storage_status": "retained",
+      "original_successful_validation_seal": false,
+      "qualification_credit": 0,
+      "request_sha256": "f8aa325ef38ea5c95b0abb160f0f2f6910ee62d594f7ef0a6ea8adff71031d10",
+      "run": "unit-cohort-v06/validation-01",
+      "stage": "admitted_real_pytest_default_logging_devnull_write_refused_before_collection"
+    }
+  ],
+  "schema": "legal-ir-source384-joint-original-text-roundtrip-evidence/v1",
+  "scope": "Additive same-row joint metrics in the existing single-rule384D scorer, accepted replay of the same retained60saved outputs, and separately accepted68-case owning engineering regression qualification. No model, embeddings or saved reconstruction outputs were regenerated.",
+  "statutory_or_wider_dimension_reconstruction_qualification": false,
+  "unchanged_authority": {
+    "Lean_graph_corpus_or_proof_admission": false,
+    "evaluation_gold_mask": 0,
+    "independent_holdout_or_teacher_qualified": false,
+    "learned_original_prose_head_evaluated": false,
+    "model_accuracy_improvement_or_convergence_claim": false,
+    "new_embeddings": false,
+    "new_model_encoder_training_or_checkpoint_restore_calls": 0,
+    "semantic_authority": false,
+    "training_mask": 0
+  },
+  "unit_qualification": {
+    "actual_phases": 204,
+    "audit": {
+      "bytes": 8790,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/training/source384-saved-output-score-v01/joint-metric-followup-v01/unit-cohort-v07/independent-result-review-v01.json",
+      "sha256": "861e8b09e2f5261b3cb37cf268c5014776335c574ce21d8c07a8ce6d614ba0ad"
+    },
+    "authority": {
+      "accepted_actual60_measurement_untouched": true,
+      "failed_run_administrative_recoveries_remain_separate_from_successful_validation": true,
+      "model_accuracy_reconstruction_improvement_semantic_gold_or_Lean_authority": false,
+      "model_encoder_training_checkpoint_restore_or_new_embedding_calls": 0,
+      "six_prior_zero_case_failures_preserved": true,
+      "unit_engineering_qualification_only": true
+    },
+    "current_native_launcher_sha256": "66a608dc157b9a2d7f94b4e50257fa7df8f6b5a134c6a9c708808799da21bb11",
+    "fences": {
+      "external_write": [],
+      "model_or_database_import": 0,
+      "network": 0,
+      "observed_allowed_reads": 628,
+      "observed_allowed_writes": 88,
+      "process": 0,
+      "scope": "Cooperative checked source/import/open-file effects plus authored private fixtures; no general OS-mutator or kernel containment claim.",
+      "unadmitted_read": []
+    },
+    "interpreter": "/home/barberb/lift_coding/.venv/bin/python",
+    "native_compute": {
+      "acquired": true,
+      "cleanup_error": null,
+      "lease_id": "9512603207e941c9bb87b68d6869fd68",
+      "live_observed_processes": 0,
+      "observed_RSS_bytes": 0,
+      "released": true,
+      "scope": "sampled_birth_bound_descendants"
+    },
+    "original_evidence": {
+      "JUnit": {
+        "bytes": 13087,
+        "endpoint_stable": true,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/training/source384-saved-output-score-v01/joint-metric-followup-v01/unit-cohort-v07/validation-01/attempt/exports/pytest-results.xml",
+        "sha256": "51759393b6988ddb4ab67f07ad314fae8a8b20a37856582a38f06ced8011bb0f"
+      },
+      "controller_closeout": {
+        "bytes": 4929,
+        "endpoint_stable": true,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/training/source384-saved-output-score-v01/joint-metric-followup-v01/unit-cohort-v07/validation-01/closeout.json",
+        "sha256": "b4bca8d26b2a48315cd66e887e0f755cfc0eae41b898d656f4404bdc47969966"
+      },
+      "durability": {
+        "bytes": 15620,
+        "endpoint_stable": true,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/training/source384-saved-output-score-v01/joint-metric-followup-v01/unit-cohort-v07/validation-01/attempt/logs/validation-durability.json",
+        "sha256": "1606e8167258f518ae80b83d1c9b3bfa74bf94fd6751220dda12521a1480adde"
+      },
+      "manifest": {
+        "bytes": 38101,
+        "endpoint_stable": true,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/training/source384-saved-output-score-v01/joint-metric-followup-v01/unit-cohort-v07/unit-manifest-v01.json",
+        "sha256": "23dc3a6d3546996cb787a63e1d0f5a9025a9b521c10804a875d8848bf46af678"
+      },
+      "native_result": {
+        "bytes": 27558,
+        "endpoint_stable": true,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/training/source384-saved-output-score-v01/joint-metric-followup-v01/unit-cohort-v07/validation-01/attempt/logs/result.json",
+        "sha256": "b3d9be895bca546e1231950f634f9e2f29bc59785549b58d0d38e926d415e099"
+      },
+      "native_terminal": {
+        "bytes": 7217,
+        "endpoint_stable": true,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/training/source384-saved-output-score-v01/joint-metric-followup-v01/unit-cohort-v07/validation-01/native.stdout",
+        "sha256": "9714468e11301ae1a10d88793a33cc81fa24583ae48020eb99b66712a70f38f7"
+      },
+      "original_exec_exit": {
+        "bytes": 874,
+        "endpoint_stable": true,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/training/source384-saved-output-score-v01/joint-metric-followup-v01/unit-cohort-v07/original-exec-exit-observation-v01.json",
+        "sha256": "63769ed5bf02c20375769bda1437281cad7842bfb2c39897966f79f5a8df9d28"
+      },
+      "unit_results": {
+        "bytes": 284904,
+        "endpoint_stable": true,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/training/source384-saved-output-score-v01/joint-metric-followup-v01/unit-cohort-v07/validation-01/attempt/exports/unit-results.json",
+        "sha256": "d9c2ee874d6d06a20d91e607b8338ad7bdeeadf4e1ef9f8094b5e2666ac897c7"
+      }
+    },
+    "owning_test_sha256": "d69410eb1f90b6bca2c8174dd25dd3b1810b3193c3009c194f5b152420aaf723",
+    "planned_cases": 68,
+    "planned_phases": 204,
+    "process_and_source_custody": {
+      "native_owner_birth": "208858458",
+      "native_owner_pid": 3354851,
+      "native_owner_proc_absent": true,
+      "native_terminal_verified": true,
+      "observed_worker_birth": "208861238",
+      "observed_worker_pid": 3361602,
+      "observed_worker_proc_absent": true,
+      "original_READ_closed_after_original_native_storage_release": true,
+      "original_tool_exit_status": 0,
+      "original_tool_session": 35821,
+      "source_read_lease_acquired": true,
+      "source_read_lease_released": true
+    },
+    "pytest_version": "8.3.4",
+    "qualification": {
+      "JUnit_exact68_names_and_zero_fail_error_skip": true,
+      "actual_collected_cases": 68,
+      "actual_collected_exact_complete_selected_inventory": true,
+      "each_case_exact_ordered_setup_call_teardown_all_passed": true,
+      "errors": 0,
+      "expected_cases": 68,
+      "failures": 0,
+      "passed_phase_reports": 204,
+      "phase_reports": 204,
+      "pytest_returncode": 0,
+      "qualification_errors": [],
+      "qualified": true,
+      "scorer_entries": 68,
+      "scorer_entry_unique_case_count": 67,
+      "skips": 0,
+      "source_tests_not_omitted_replaced_or_weakened": true,
+      "successful": true
+    },
+    "qualified_unit_cases": 68,
+    "same_frozen_scorer_sha256": "e8f9ac5d86bc318a96354fbf1d5b7f15f9e949c17fc41e0b66cc0f6dd79336cd",
+    "scorer_entries": 68,
+    "scorer_entry_unique_case_count": 67,
+    "selected_execution_profile": "Real pytest, normal pinned original plugin-module preregistration with unchanged native-p/physical-fixture tail, explicit private logging/JUnit/basetemp, no conftest/external plugin autoload, plain assertions; namespace startup bypasses retained. All native source pins positive; the one original empty initializer is verified separately after admission. Software-contract qualification using authored fixtures only.",
+    "source_runtime": {
+      "available_runtime_source_files": 104,
+      "checked_raw_compiled_executed_source_files": 82,
+      "default_package_or_whole_interpreter_startup_qualified": false,
+      "effective_pins": 148,
+      "fixed_empty_source_post_admission_verified": true,
+      "namespace_initializers_bypassed": 3,
+      "native_pins": 147,
+      "native_request_source_map_mutated": false,
+      "retained_archival_bindings_verified": 134,
+      "runtime_module_origins": 81,
+      "scorer_sha256": "e8f9ac5d86bc318a96354fbf1d5b7f15f9e949c17fc41e0b66cc0f6dd79336cd",
+      "selected_scorer_test_original_plugin_compile_exec_hashes_verified": true,
+      "seven_exact_venv_top_level_origins_checked": true,
+      "source_profile_sha256": "0c4fc6fafe7a7bacb63e01e128f108b9077735e66468d5e46bf9bb726d8cb524",
+      "test_sha256": "d69410eb1f90b6bca2c8174dd25dd3b1810b3193c3009c194f5b152420aaf723",
+      "validation_plugin_sha256": "dc6ae4f1cd27628a56db13fc656156c1b84df8ff999d4158ff25e70fac89f7a6"
+    },
+    "status": "qualified",
+    "storage": {
+      "actual_regular_files": 75,
+      "all_owned_manifest_file_hash_size_device_inode_endpoints_reverified": true,
+      "artifacts_durable_asserted": true,
+      "claim_bytes": 67108864,
+      "durability_record_bytes": 15620,
+      "durability_record_files": 1,
+      "durable_manifest_file_bytes": 649572,
+      "durable_manifest_files": 74,
+      "final_attempt_bytes": 665192,
+      "final_external_charged_bytes": 0,
+      "final_total_charged_bytes": 665192,
+      "finalization_profile": {
+        "global_accounting_seconds": 27.12439603707753,
+        "global_inventory_count": 1,
+        "ledger_lock_wait_seconds": 0.0002611239906400442,
+        "process_check_seconds": 0.017841483931988478,
+        "schema_version": "daemon-resource-finalization-profile/v1",
+        "scope": "one_fresh_locked_census_with_full_claim_checked_before_release",
+        "strict_attempt_inventory_count": 1,
+        "strict_attempt_inventory_seconds": 0.005643680924549699
+      },
+      "one_typed_fixture_case_and_entry_final_window_closed": true,
+      "overage": false,
+      "released": true,
+      "reservation_id": "c6b63797a2f7415ea794bd15da28d58f",
+      "status": "released"
+    },
+    "test_fixture_exception": "One existing symlink-refusal fixture now unlinks only its authored alias in finally; assertion unchanged. Other24oldfunctions and5newfunctions retain their bodies."
+  }
+}
