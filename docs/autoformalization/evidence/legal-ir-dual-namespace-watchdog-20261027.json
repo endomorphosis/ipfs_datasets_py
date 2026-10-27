@@ -78,6 +78,17 @@
       "task_population": 64
     }
   },
+  "publication_gate_precision_correction": {
+    "as_of_utc": "2026-10-27T20:09:27.660798+00:00",
+    "prior_merge_status": "open_required_qualification_blocked_account_billing",
+    "prior_published_record": {
+      "bytes": 12364,
+      "path": "docs/autoformalization/evidence/legal-ir-dual-namespace-watchdog-20261027.json",
+      "repository_commit": "cf40fac2432c602dd39a94ab2db55a9d6b892c77",
+      "sha256": "2a8794e72442ad3a5dd0a720c1885682ac15848a28c481f08afe15a925d586a4"
+    },
+    "scope": "Correct the required hosted check name only; retain all qualification/runtime/history evidence and authority limits."
+  },
   "qualification": {
     "by_file": {
       "native_catalogue_probe": 27,
@@ -174,6 +185,41 @@
       }
     },
     "repair_cancellation_requires_current_board_unit_and_attempt_token": true
+  },
+  "required_gate_facts": {
+    "as_of_utc": "2026-10-27T20:09:27.660798+00:00",
+    "branch_protection": {
+      "active_rulesets": [],
+      "checks": [
+        {
+          "app_id": 15368,
+          "context": "documentation-gates"
+        }
+      ],
+      "required_contexts": [
+        "documentation-gates"
+      ],
+      "strict": false
+    },
+    "required_check": {
+      "annotation": "The job was not started because your account is locked due to a billing issue.",
+      "check_run_id": 122370018729,
+      "conclusion": "failure",
+      "job_execution": "not_started_per_GitHub_annotation",
+      "name": "documentation-gates",
+      "workflow_bytes": 3479,
+      "workflow_path": ".github/workflows/documentation-gates.yml",
+      "workflow_sha256": "0a46fa5b8905600cb9f74adaaec8b8aeb5f89878612a43fb7a847e586bde3763"
+    },
+    "separate_qualification_failures": {
+      "check_run_ids": [
+        122369989666,
+        122370016496
+      ],
+      "required_by_current_branch_protection": false
+    },
+    "source_commit": "9daede149079cbdcea816b8f101fb2da5fd2a22e",
+    "workflows_rules_statuses_or_billing_changed": false
   },
   "retained_prior_attempts": [
     "Original staged-v01 refused valid inherited-empty child objectives before database access; native schema compatibility was corrected and regression-qualified.",
@@ -282,7 +328,7 @@
   "source": {
     "bypass_used": false,
     "commit": "9daede149079cbdcea816b8f101fb2da5fd2a22e",
-    "merge_status": "open_required_qualification_blocked_account_billing",
+    "merge_status": "open_required_documentation_gates_not_started_billing_lock",
     "normal_merge_refused": true,
     "public_main_at_publication": "8c529a62db64d2cd015e6762aaa4b526c598cd6f",
     "pull_request": "https://github.com/endomorphosis/ipfs_accelerate_py/pull/304",
