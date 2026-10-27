@@ -3662,7 +3662,8 @@
         "save_checkpoint",
         "load_checkpoint",
         "restore_optimizer",
-        "run_admitted_updates"
+        "run_admitted_updates",
+        "captured_inference"
       ],
       "authentic_zero_step_delta": {
         "bytes": 122251,
@@ -3683,11 +3684,28 @@
         "f18-conditions-fullspan-genuine-mechanics-20261027-01",
         "f18-retained-input-authentication-20261027-01",
         "f18-four-tensor-persisted-resume-20261027-01",
-        "f18-retained-zero-step-delta-roundtrip-20261027-01"
+        "f18-retained-zero-step-delta-roundtrip-20261027-01",
+        "f18-source-capture-qualified-20261027-01",
+        "f18-initial632-parity-qualified-20261027-01"
       ],
       "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_span_conditions_fullspan_training_v1.md",
       "id": "conditions-fullspan-f18-four-tensor-training-v1",
-      "notes": "Reuse the original public component identity and prescribed optimizer owner. Original dfd source adoption, its immutable preparation oracle and5 pure/15-phase metadata controls remain a separate generation. Existing optimizer-package opt-in companion reuses immutable F18/F15 CE-KL and published margin owners. Genuine synthetic26 mechanics cover mixed168/72 present, full-batch absent connected-zero, frozen38 including modality, ordered four row3 tensors and130 active/780 stored/650 inactive scalars, byte preservation and in-memory Adam resume. Old25/1 failure and original storage recovery remain separate. Selected physical trained-donor/source-population/teacher/mask authentication now has a separate original-owned closed result; new four-tensor persisted checkpoint/resume and finite continuation now have the separate 39-case qualification and authentic zero-step delta roundtrip below. Remaining E1 assets/final-F18 initial 632-case parity, finite paired fit/scoring, statutory accuracy and actual Lake build remain open. The merged owning test restores lazy numerical imports and explicitly compares the original preparation oracle after only the enumerated additive schedule/authentication metadata fields; the final merged generation now has its own fresh original-owned26-case mechanics qualification with36 before/after source pins. Earlier generations remain separate.",
+      "initial632_parity_qualification": {
+        "active_four_width_comparison": false,
+        "binary32_head_scalars": 194812,
+        "capture_chunks": 11,
+        "child_seconds": 25.43108967412263,
+        "complete_greedy_formal_joint_rows_equal": true,
+        "evidence_id": "f18-initial632-parity-qualified-20261027-01",
+        "full42_model_state_sha256": "2ed0ccf633f55fac202e2edb95ea9fa6e390b8d99381a05925f4dd5221925883",
+        "new_trained_weights": false,
+        "optimizer_updates": 0,
+        "panels": 10,
+        "source_pins_before_after": 62,
+        "source_rows": 632,
+        "statutory_accuracy": false
+      },
+      "notes": "Reuse the original public component identity and prescribed optimizer owner. Original dfd source adoption, its immutable preparation oracle and5 pure/15-phase metadata controls remain a separate generation. Existing optimizer-package opt-in companion reuses immutable F18/F15 CE-KL and published margin owners. Genuine synthetic26 mechanics cover mixed168/72 present, full-batch absent connected-zero, frozen38 including modality, ordered four row3 tensors and130 active/780 stored/650 inactive scalars, byte preservation and in-memory Adam resume. Old25/1 failure and original storage recovery remain separate. Selected physical trained-donor/source-population/teacher/mask authentication now has a separate original-owned closed result; new four-tensor persisted checkpoint/resume and finite continuation now have the separate 39-case qualification and authentic zero-step delta roundtrip below. The new source-only capture and selected final-F18 initial632 parity have separate45-case/632-case results below. Other E1 comparator assets, the original training-purpose controller binding, finite paired fit/scoring, statutory accuracy and actual Lake build remain open. The merged owning test restores lazy numerical imports and explicitly compares the original preparation oracle after only the enumerated additive schedule/authentication metadata fields; that earlier source generation passed its separate 26-case mechanics qualification with 36 before/after source pins. The current capture extension has the distinct 45-case/73-pin qualification below. Earlier generations remain separate.",
       "numerical_qualification": {
         "cases": 26,
         "evidence_id": "f18-conditions-fullspan-genuine-mechanics-20261027-01",
@@ -3738,6 +3756,18 @@
         "present": 72,
         "selected_six_assets_authenticated": true,
         "training_rows": 168
+      },
+      "source_only_capture_qualification": {
+        "accuracy_gain": false,
+        "cases": 45,
+        "evidence_id": "f18-source-capture-qualified-20261027-01",
+        "owning_test_sha256": "bbed34c8d81ecac7ecf020e682e37dc550fc29a8839775107eacb43496b7d50a",
+        "phases": 135,
+        "prior39_prefix_preserved": true,
+        "product_source_sha256": "56bd0a248a07de09519f95e5c4bae02ab9d8eb1134b483c257c1f7e7bcb07147",
+        "pytest_seconds": 28.716,
+        "retained_input_fitting": false,
+        "source_pins_before_after": 73
       },
       "status": "focused_tests_qualified"
     }
@@ -3800,7 +3830,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-10-27T16:43:33.824011+00:00",
+  "last_updated_at_utc": "2026-10-27T17:54:10.301461+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -5973,6 +6003,26 @@
       "root": "datasets_repository",
       "scope": "Separate original-owned six-asset authentication and zero-step delta persistence/restore. The 122251-byte four-tensor delta requires the authenticated donor and reconstructs the 42-tensor root 2ed0 and frozen 38-tensor root 8562. One original legacy six-tensor restore plus one fresh four-tensor restore ran, with zero forwards, updates or scoring. All 55 selected source pins and original custody closed. No 632-case parity, paired fit, new trained weights, statutory-gold qualification or four-width comparison.",
       "status": "authentic_donor_zero_step_delta_roundtrip_qualified"
+    },
+    {
+      "id": "f18-source-capture-qualified-20261027-01",
+      "observed_bytes": 7878,
+      "observed_sha256": "f37cc3827ec2d0ac7e0031df40932a20c5f0c7a9419fdde60dca272eac43e23b",
+      "path": "docs/autoformalization/evidence/legal-ir-f18-source-capture-qualification-20261027.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Fresh 45-case / 135-phase cohort passed in 28.716 seconds on product56bd and testbbed. Six new cases verify original greedy/head/joint equivalence, persistent runtime counters, closed source-only inputs, callable/global-hook refusals and closing mutation checks. All 73 selected source pins and original custody closed. Counts of 35 forwards, 20 synthetic updates and 46 constructions are source-inferred upper bounds. The prior 44/1 failed regex generation and its original storage recovery remain separate; no actual retained-input fit or accuracy gain.",
+      "status": "focused_source_capture_mechanics_qualified"
+    },
+    {
+      "id": "f18-initial632-parity-qualified-20261027-01",
+      "observed_bytes": 13006,
+      "observed_sha256": "c69cd0973ee8563e3abdca07b1fe6954f563e1ff1b2d41c21dc655838012052f",
+      "path": "docs/autoformalization/evidence/legal-ir-f18-initial632-parity-20261027.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Separate original-owned source-only comparison over ten retained panels and 632 distinct sources: 194812 binary32 head scalars, complete greedy/formal rows and complete joint rows match final trained F18. Eleven chunks reuse one restored four-tensor runtime; all 20 outputs are frozen before retained comparison bodies open. Child interval25.4311 seconds; 62 selected source pins and original custody closed. Original vectors are unchanged, with finite384 for older panels and zero384 only fresh DEV/TEST. Earlier overconstrained-input failure is preserved. No gradients, updates, reference-label scoring, active-width comparison or statutory accuracy qualification.",
+      "status": "authentic_final_F18_initial_parity_qualified"
     }
   ]
 }

@@ -102,7 +102,47 @@ one original six-tensor Adam restore and one fresh four-tensor Adam restore, zer
 forwards or updates, full 42-tensor root `2ed0` and frozen 38-tensor root `8562`.
 The earlier 26-case mechanics cohorts remain distinct. These results supply no
 new trained weights, 632-case parity, paired fitting, scoring or statutory accuracy.
-Next compare source-only initial outputs against the final trained F18 across all
-632 cases using retained trained captures, then obtain separate training-purpose
-admission for matched 0/0.25 arms of 32 updates. Freeze both complete outputs before
-independent raw/joint full-IR, per-ID retention and all 32 permission decisions.
+The later 632-case result below closes that selected initial parity gate. A qualified
+training-purpose binding, matched 0/0.25 arms of 32 updates, complete frozen outputs
+and independent scoring remain next.
+
+## Source-only capture from the four-tensor runtime
+
+`captured_inference(runtime, checkpoint, rows, **kwargs)` reuses one runtime
+returned by `restore_optimizer`. It performs no restore or optimizer update.
+Pass the same checkpoint-validation keyword arguments used for restoration.
+
+```python
+runtime = profile.restore_optimizer(torch, loaded, **kwargs)
+source_rows = [{"id": row_id, "source_text": text, "latent": vector}]
+capture = profile.captured_inference(runtime, loaded, source_rows, **kwargs)
+```
+
+Each call accepts 1–128 unique source IDs and exactly the three displayed fields;
+label, target and reference fields are refused before model forwards. The original
+source tokenizer and greedy decoder remain the readout owners. The packet includes
+complete original greedy rows and same-forward `joint-source-span-scores/v1` heads.
+Use the existing `joint_span_selection.select_joint_spans` for the independent
+joint readout. No extra model forward is needed for capture or joint selection.
+
+The same runtime supports successive chunks. Counter deltas belong to each call;
+the cumulative count remains on the runtime. The 168-row TRAIN panel therefore
+uses chunks of 128 and 40 without resetting counters or restoring another model.
+Model, optimizer, config, source bindings, RNG, grad mode, hooks and callable
+witnesses are checked around capture. The witness is an in-memory consistency
+check and grants no execution or semantic authority.
+
+For the retained initial-parity gate, persist and freeze all new raw/joint outputs
+before opening any retained final-F18 comparison outputs. Compare complete head
+values in binary32, complete greedy rows and joint rows with original source-ID
+and text-hash joins. Keep this compatibility result separate from reference-label
+scoring, paired training, source meaning and four-width evaluation.
+
+The [45-case capture qualification](../../../../../docs/autoformalization/evidence/legal-ir-f18-source-capture-qualification-20261027.json)
+and [separate 632-case authentic parity](../../../../../docs/autoformalization/evidence/legal-ir-f18-initial632-parity-20261027.json)
+qualify the current source generation. All 194,812 head scalars, complete greedy/formal
+rows and joint rows match retained final F18; no training update or label scoring ran.
+Checkpoints remain bound to their exact source generation. The earlier zero-step
+delta and 39-case result retain their older source pins and separate scope.
+Actual matched fitting still needs the original training-purpose controller binding,
+followed by output freezing and separately admitted scoring.
