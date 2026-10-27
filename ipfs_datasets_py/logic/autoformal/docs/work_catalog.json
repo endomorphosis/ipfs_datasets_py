@@ -3687,8 +3687,59 @@
         "f18-retained-zero-step-delta-roundtrip-20261027-01",
         "f18-source-capture-qualified-20261027-01",
         "f18-initial632-parity-qualified-20261027-01",
-        "f18-trainer-controller-qualified-20261027-01"
+        "f18-trainer-controller-qualified-20261027-01",
+        "f18-four-tensor-hf-weight-publication-20261027-01"
       ],
+      "experimental_hf_weights": {
+        "accuracy_gain_qualified": false,
+        "checkpoint_files": [
+          {
+            "arm": "arm-0",
+            "checkpoint_bytes": 133639,
+            "checkpoint_filename": "releases/20261027-f18-four-tensor-conditions-pair-v1/cells/arm-0/results/checkpoint.json",
+            "checkpoint_sha256": "d5707c70643538f95ec4a0b1ece2f61dab4e20d9bd8dd0eca5ea5a81baef02b9",
+            "margin_weight": 0.0,
+            "model_state_sha256": "8974c708f86a2b52bb5df769330fd8994248215119012633ffdb1fac5d4f97cd",
+            "progress": {
+              "epochs_completed": 2,
+              "optimizer_steps": 32,
+              "row_cursor": 48
+            }
+          },
+          {
+            "arm": "arm-025",
+            "checkpoint_bytes": 133618,
+            "checkpoint_filename": "releases/20261027-f18-four-tensor-conditions-pair-v1/cells/arm-025/results/checkpoint.json",
+            "checkpoint_sha256": "8db89f121d35aa82440255ff10a631402f868bb9cc02112d94515a762c82e709",
+            "margin_weight": 0.25,
+            "model_state_sha256": "06fdf63589cb2b22c8543345caf294bbabba994f04fa92809d5fa9ce5237ec78",
+            "progress": {
+              "epochs_completed": 2,
+              "optimizer_steps": 32,
+              "row_cursor": 48
+            }
+          }
+        ],
+        "donor": {
+          "bytes": 21058430,
+          "filename": "releases/20261015-modality-conditions-retention-v1/cells/modality-conditions-retention-ce/results/cell-checkpoint.json",
+          "repo_id": "Publicus/legal-ir-autoencoder",
+          "repo_type": "model",
+          "revision": "c9cce4586dd96518088662fb12831173e98e36cc",
+          "sha256": "90031d084f2d86cf860c5fc95d2dae374dc254adec70bd85a90893f98c5a1555"
+        },
+        "donor_required": true,
+        "evidence_id": "f18-four-tensor-hf-weight-publication-20261027-01",
+        "immutable_source_commit": "e8b4d34c4534c845a5b052ca6af05e47607feb9f",
+        "model_promoted": false,
+        "prefix": "releases/20261027-f18-four-tensor-conditions-pair-v1",
+        "repo_id": "Publicus/legal-ir-autoencoder",
+        "repo_type": "model",
+        "revision": "270a753c1f439ac106877e825d5f5a3577916510",
+        "source_profile_sha256": "56bd0a248a07de09519f95e5c4bae02ab9d8eb1134b483c257c1f7e7bcb07147",
+        "standalone_whole_model": false,
+        "status": "experimental_unscored"
+      },
       "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_span_conditions_fullspan_training_v1.md",
       "id": "conditions-fullspan-f18-four-tensor-training-v1",
       "initial632_parity_qualification": {
@@ -3844,7 +3895,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-10-27T21:01:39.166921+00:00",
+  "last_updated_at_utc": "2026-10-27T21:21:38.728573+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -6057,6 +6108,16 @@
       "root": "datasets_repository",
       "scope": "105pure/315phases, separate3OShelpers, original zero-model trainerprobe. No pair/scoring/semantic or native-task credit.",
       "status": "original_controller_probe_qualified_pair_separate"
+    },
+    {
+      "id": "f18-four-tensor-hf-weight-publication-20261027-01",
+      "observed_bytes": 10282,
+      "observed_sha256": "d604310a45ade2866644221dc082c2e4d11b540c7309e09833dd28006e55c6f9",
+      "path": "docs/autoformalization/evidence/legal-ir-f18-four-tensor-hf-weight-publication-20261027.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Four immutable HF files byte-verified under separate closed original publication custody; two donor-dependent candidate deltas plus manifest/README. No new model execution, scoring, accuracy, promotion or scientific-task credit.",
+      "status": "published_immutable_bytes_verified_experimental_unscored"
     }
   ]
 }
