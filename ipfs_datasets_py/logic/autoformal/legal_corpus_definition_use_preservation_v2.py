@@ -410,10 +410,6 @@ def prepare_definition_use_preservation_v2(corpus_preparation, assessment_raw, *
     cache_key = _prepare_cache_key(
         expected_corpus_preparation_sha256, expected_assessment_file_sha256,
         review_inputs, toolchain, owners)
-    if cache_key is not None:
-        cached = _prepare_cache_get(cache_key)
-        if cached is not None:
-            return cached
     _, corpus_native, standalone_owner, contracts = owners
     original = corpus_native.validate_definition_use_native_v2(
         corpus_preparation, assessment_raw,
@@ -436,6 +432,19 @@ def prepare_definition_use_preservation_v2(corpus_preparation, assessment_raw, *
             expected_fragment_file_sha256=_sha(raw), toolchain=toolchain)
         standalone.append((row, raw, prepared))
     producers = _pins(owners, original_manifest, [item[2].to_dict() for item in standalone])
+    if cache_key is not None:
+        cached = _prepare_cache_get(cache_key)
+        if cached is not None:
+            _need(_preflight(corpus_preparation, assessment_raw,
+                    expected_corpus_preparation_sha256, expected_assessment_file_sha256,
+                    review_inputs, toolchain) == original_envelope,
+                  "cached preservation original inputs changed")
+            _need(_prepare_cache_key(expected_corpus_preparation_sha256,
+                    expected_assessment_file_sha256, review_inputs, toolchain, owners) == cache_key,
+                  "cached preservation input or direct owner generation changed")
+            _need(_pins(owners, original_manifest, [item[2].to_dict() for item in standalone]) == producers,
+                  "cached preservation transitive producer generation changed")
+            return cached
     original_files = dict(original.files)
     files = dict(original_files)
     semantics_module = "LegalCorpusV2.PreservationSemantics"

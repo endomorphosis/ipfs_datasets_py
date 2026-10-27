@@ -1648,6 +1648,9 @@ def _parent_norm_callbacks(correspondence, owners):
         _parent_norm_file_witness, _parent_norm_callbacks, _parent_norm_runtime,
         _render_parent_norm, _parent_norm_storage, _parent_norm_serialized_fence,
         parent_norm_preparation_sha256, _parent_norm_operation,
+        _parent_norm_cache_observation, _parent_norm_cached_return,
+        _parent_norm_validate_cache_key, _parent_norm_tree_digest,
+        _parent_norm_cache_get, _parent_norm_cache_put,
         prepare_parent_norm_corpus_v1, validate_parent_norm_corpus_v1,
         DefinitionUseCorpusPreparation.to_dict)
     return tuple((function, getattr(function, "__code__", None),
@@ -1941,6 +1944,70 @@ def _parent_norm_validate_cache_key(preparation_sha, expected_preparation_sha256
     return digest.digest()
 
 
+def _parent_norm_cache_observation(original, offered, expected_preparation_sha256):
+    """Observe the original bounded inputs and full operation generation."""
+    copied, commitment, _ = _parent_norm_capture(original, offered)
+    contracts.require_sha256(expected_preparation_sha256, "independent complete parent norm preparation")
+    _need(parent_norm_preparation_sha256(offered) == expected_preparation_sha256,
+          "independent complete parent norm preparation pin differs")
+    from . import legal_norm_scope_correspondence_v1 as correspondence
+    _need(copied["correspondence"].get("schema") == correspondence.SCHEMA_V2
+          and copied["correspondence"].get("profile") == "parent-literal-occurrence-authored-correspondence/v2",
+          "explicit genuine parent correspondence v2 required, never HTML relabeling")
+    _need(correspondence.norm_scope_correspondence_sha256(copied["correspondence"])
+          == copied["expected_correspondence_sha256"], "independent complete parent correspondence pin differs")
+    _parent_norm_preflight(copied, correspondence)
+    owners = _owners()
+    return (copied, commitment, correspondence, owners,
+            tuple(sorted(_parent_norm_pins(correspondence, owners).items())),
+            _parent_norm_callbacks(correspondence, owners),
+            _parent_commitment(_ParentInputBudget().copy(_parent_norm_runtime(owners))))
+
+
+def _parent_norm_cached_return(entry, original, offered, expected_preparation_sha256, observed):
+    """A memoized pure result still requires fresh complete physical custody."""
+    _need(type(entry) is tuple and len(entry) == 5, "closed parent norm cache entry required")
+    result, plan_json, pins, callbacks, runtime = entry
+    copied, commitment, correspondence, owners, current_pins, current_callbacks, current_runtime = observed
+    _need((pins, callbacks, runtime) == (current_pins, current_callbacks, current_runtime),
+          "cached parent norm operation generation changed")
+    _need(type(plan_json) is str and 0 < len(plan_json) <= MAX_INPUT_BYTES,
+          "bounded genuine cached parent/cache physical plan required")
+    plan = _ParentInputBudget().copy(json.loads(plan_json))
+    witness = None
+    primary = None
+
+    def fence():
+        _need(_parent_norm_capture(original, offered)[1] == commitment
+              and _parent_commitment(_ParentInputBudget().copy(copied)) == commitment,
+              "cached parent norm original or detached input changed")
+        _need(tuple(sorted(_parent_norm_pins(correspondence, owners).items())) == pins,
+              "cached parent norm source producer changed")
+        _need(_parent_norm_callbacks(correspondence, owners) == callbacks,
+              "cached parent norm operation callable changed")
+        _need(_parent_commitment(_ParentInputBudget().copy(_parent_norm_runtime(owners))) == runtime,
+              "cached parent norm runtime declarations changed")
+        _need(parent_norm_preparation_sha256(result) == expected_preparation_sha256,
+              "cached parent norm preparation storage changed")
+        _need(_parent_norm_file_plan(copied["correspondence_inputs"]) == plan,
+              "cached parent/cache physical plan changed")
+        if witness is not None:
+            _need(_parent_norm_file_witness(plan) == witness,
+                  "cached original parent/cache physical file witness changed")
+
+    try:
+        fence()
+        witness = _parent_norm_file_witness(plan)
+        fence()
+        return result
+    except BaseException as error:
+        primary = error
+        raise
+    finally:
+        scope = correspondence._owners()[0]
+        scope._parent_finish((fence, fence), primary)
+
+
 def _parent_norm_cache_get(key):
     cached = _PARENT_NORM_VALIDATE_CACHE.get(key)
     if cached is None:
@@ -1972,19 +2039,29 @@ def prepare_parent_norm_corpus_v1(correspondence, *, expected_correspondence_sha
 def validate_parent_norm_corpus_v1(preparation, correspondence, *, expected_preparation_sha256,
         expected_correspondence_sha256, correspondence_inputs, toolchain):
     """Regenerate the complete explicit parent norm project from original inputs."""
-    preparation_sha = parent_norm_preparation_sha256(preparation)
+    original = dict(correspondence=correspondence, expected_correspondence_sha256=expected_correspondence_sha256,
+                    correspondence_inputs=correspondence_inputs, toolchain=toolchain)
+    observed = _parent_norm_cache_observation(original, preparation, expected_preparation_sha256)
+    copied, commitment, owner, owners, pins, callbacks, runtime = observed
     cache_key = _parent_norm_validate_cache_key(
-        preparation_sha, expected_preparation_sha256, expected_correspondence_sha256,
-        correspondence, correspondence_inputs, toolchain)
+        expected_preparation_sha256, expected_preparation_sha256, expected_correspondence_sha256,
+        copied["correspondence"], copied["correspondence_inputs"], copied["toolchain"])
     if cache_key is not None:
         cached = _parent_norm_cache_get(cache_key)
         if cached is not None:
-            return cached
-    original = dict(correspondence=correspondence, expected_correspondence_sha256=expected_correspondence_sha256,
-                    correspondence_inputs=correspondence_inputs, toolchain=toolchain)
+            return _parent_norm_cached_return(
+                cached, original, preparation, expected_preparation_sha256, observed)
     result = _parent_norm_operation(original, preparation, expected_preparation_sha256)
+    _need(_parent_norm_capture(original, preparation)[1] == commitment
+          and tuple(sorted(_parent_norm_pins(owner, owners).items())) == pins
+          and _parent_norm_callbacks(owner, owners) == callbacks
+          and _parent_commitment(_ParentInputBudget().copy(_parent_norm_runtime(owners))) == runtime,
+          "parent norm cache fill input or operation generation changed")
     if cache_key is not None:
-        _parent_norm_cache_put(cache_key, result)
+        plan = _ParentInputBudget().copy(_parent_norm_file_plan(copied["correspondence_inputs"]))
+        entry = (result, json.dumps(plan, sort_keys=True, separators=(",", ":")), pins, callbacks, runtime)
+        _parent_norm_cached_return(entry, original, preparation, expected_preparation_sha256, observed)
+        _parent_norm_cache_put(cache_key, entry)
     return result
 
 

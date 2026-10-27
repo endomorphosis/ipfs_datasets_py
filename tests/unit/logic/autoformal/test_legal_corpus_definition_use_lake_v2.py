@@ -1352,3 +1352,52 @@ def test_parent_complete_norm_primary_error_keeps_secondary_custody_failure_note
         _parent_norm_prepare(owner, data)
     assert caught.value is primary
     assert observed and getattr(primary, "__notes__", [])
+
+
+@pytest.mark.parametrize("when", ("before_hit", "after_opening_witness"))
+def test_warm_parent_norm_cache_rechecks_complete_physical_parent_bytes(
+        owner, parent_norm_helpers, tmp_path, monkeypatch, when):
+    data = _parent_norm_materialize(parent_norm_helpers, tmp_path)
+    path = _parent_norm_parent_path(data)
+    original = path.read_bytes()
+    prepared = _parent_norm_prepare(owner, data)
+    underlying = owner._parent_norm_file_witness
+    state = {"armed": False, "calls": 0}
+    def witnessed(plan):
+        result = underlying(plan)
+        if state["armed"]:
+            state["calls"] += 1
+            if when == "after_opening_witness" and state["calls"] == 1:
+                path.write_bytes(bytes([original[0] ^ 1]) + original[1:])
+        return result
+    monkeypatch.setattr(owner, "_parent_norm_file_witness", witnessed)
+    assert _parent_norm_validate(owner, prepared, data) == prepared
+    state["armed"] = True
+    if when == "before_hit":
+        path.write_bytes(bytes([original[0] ^ 1]) + original[1:])
+    with pytest.raises(ValueError):
+        _parent_norm_validate(owner, prepared, data)
+    assert len(path.read_bytes()) == len(original) and path.read_bytes() != original
+
+
+def test_warm_parent_norm_cache_keeps_pure_replay_memoized_and_physical_fences(
+        owner, parent_norm_helpers, tmp_path, monkeypatch):
+    data = _parent_norm_materialize(parent_norm_helpers, tmp_path)
+    prepared = _parent_norm_prepare(owner, data)
+    operation = owner._parent_norm_operation
+    witness = owner._parent_norm_file_witness
+    calls = {"replay": 0, "physical": 0}
+    def replay(*args, **kwargs):
+        calls["replay"] += 1
+        return operation(*args, **kwargs)
+    def checked(plan):
+        calls["physical"] += 1
+        return witness(plan)
+    monkeypatch.setattr(owner, "_parent_norm_operation", replay)
+    monkeypatch.setattr(owner, "_parent_norm_file_witness", checked)
+    first = _parent_norm_validate(owner, prepared, data)
+    before = dict(calls)
+    second = _parent_norm_validate(owner, prepared, data)
+    assert second is first and second == prepared
+    assert calls["replay"] == before["replay"] == 1
+    assert calls["physical"] >= before["physical"] + 3
