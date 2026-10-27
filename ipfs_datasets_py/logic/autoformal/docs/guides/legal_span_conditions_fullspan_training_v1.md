@@ -142,7 +142,7 @@ qualify the current source generation. All 194,812 head scalars, complete greedy
 rows and joint rows match retained final F18; no training update or label scoring ran.
 Checkpoints remain bound to their exact source generation. The earlier zero-step
 delta and 39-case result retain their older source pins and separate scope.
-The original controller now has the separate zero-model qualification below. Actual matched fitting still needs its own finite original request, followed by output freezing and separately admitted scoring.
+The original controller and completed matched pair have separate qualification below. Both arms have frozen outputs; independently admitted full-IR, per-ID retention and permission scoring remains open.
 
 
 ## Closed original trainer controller
