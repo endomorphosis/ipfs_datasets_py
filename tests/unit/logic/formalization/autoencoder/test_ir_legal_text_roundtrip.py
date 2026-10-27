@@ -288,7 +288,10 @@ def test_corpus_pin_hash_and_bytes_are_checked(bundle):
 def test_symlink_corpus_is_not_accepted_as_an_original_file(bundle, tmp_path):
     alias = tmp_path / "alias.json"; alias.symlink_to(bundle["path"])
     bundle["pin"]["path"] = str(alias)
-    with pytest.raises(scorer.LegalTextRoundTripError): score(bundle)
+    try:
+        with pytest.raises(scorer.LegalTextRoundTripError): score(bundle)
+    finally:
+        alias.unlink()
 
 
 def test_late_corpus_change_by_renderer_is_refused(bundle):
@@ -322,3 +325,101 @@ def test_candidate_report_with_foreign_schema_cannot_get_any_credit(bundle):
 def test_huge_integer_vector_is_rejected_without_uncaught_overflow(bundle):
     bundle["inputs"][0]["embedding"][0] = 10 ** 400
     with pytest.raises(scorer.LegalTextRoundTripError): score(bundle)
+
+def test_joint_metrics_are_unmeasured_without_rendering(bundle):
+    result = score(bundle)
+    assert result["counts"]["exact_ir"] == 2
+    assert result["counts"]["joint_ir_original_utf8_exact"] is None
+    assert result["rates"]["joint_ir_original_utf8_exact"] is None
+    assert result["ir_text_joint_counts"] is None
+    assert all(row["joint_ir_original_utf8_exact"] is None for row in result["rows"])
+
+
+def test_discordant_ir_and_text_marginals_do_not_form_a_joint_success(bundle):
+    bundle["report"]["rows"][1]["candidate_ir"] = rule("clerk")
+
+    def renderer(predicted, request_id):
+        # Authored diagnostic outputs exercise a renderer that can return the
+        # original surface even when its supplied semantic IR is wrong.
+        text = ("The registrar is required to approve the notice."
+                if predicted["rules"][0]["actor"] == "clerk" else "Different wording.")
+        return {"status": "rendered", "text": text, "reason": None}
+
+    result = score(bundle, render_canonical=True, renderer=renderer)
+    assert result["counts"]["exact_ir"] == result["counts"]["exact_original_utf8"] == 1
+    assert result["rates"]["exact_ir"] == result["rates"]["exact_original_utf8"] == .5
+    assert result["counts"]["joint_ir_original_utf8_exact"] == 0
+    assert result["rates"]["joint_ir_original_utf8_exact"] == 0
+    assert [row["joint_ir_original_utf8_exact"] for row in result["rows"]] == [False, False]
+    assert result["ir_text_joint_counts"] == {"denominator": "all_captured_input_rows", "total": 2,
+        "both_exact": 0, "ir_only_exact": 1, "text_only_exact": 1, "neither_exact": 0}
+
+
+def test_ir_text_joint_table_keeps_all_four_cells_and_same_example_success(bundle):
+    rows = bundle["corpus"]["rows"]
+    for text in ("The clerk must approve the notice.", "The clerk is required to approve the notice."):
+        row = clone(rows[0])
+        row.update(id="row-" + str(len(rows)), source_text=text,
+                   source_sha256=hashlib.sha256(text.encode()).hexdigest(), target=rule("clerk"))
+        rows.append(row)
+    bundle["repin"]()
+    bundle["report"]["rows"][2]["candidate_ir"] = rule("visitor")
+    bundle["report"]["rows"][3]["candidate_ir"] = rule("auditor")
+
+    def renderer(predicted, request_id):
+        outputs = {"registrar": "The registrar must approve the notice.",
+                   "visitor": "The clerk must approve the notice.",
+                   "auditor": "An officer shall reject the form."}
+        return {"status": "rendered", "text": outputs[predicted["rules"][0]["actor"]], "reason": None}
+
+    result = score(bundle, render_canonical=True, renderer=renderer)
+    assert result["counts"]["attempted"] == 4
+    assert result["counts"]["exact_ir"] == result["counts"]["exact_original_utf8"] == 2
+    assert result["counts"]["joint_ir_original_utf8_exact"] == 1
+    assert result["rates"]["joint_ir_original_utf8_exact"] == .25
+    assert [row["joint_ir_original_utf8_exact"] for row in result["rows"]] == [True, False, False, False]
+    assert result["ir_text_joint_counts"] == {"denominator": "all_captured_input_rows", "total": 4,
+        "both_exact": 1, "ir_only_exact": 1, "text_only_exact": 1, "neither_exact": 1}
+
+
+@pytest.mark.parametrize("failure", ["missing", "duplicate", "invalid_prediction", "renderer_refused"])
+def test_joint_denominator_keeps_missing_duplicate_and_refused_rows(bundle, failure):
+    row = bundle["corpus"]["rows"][1]
+    row.update(source_text="The clerk must approve the notice.", target=rule("clerk"))
+    row["source_sha256"] = hashlib.sha256(row["source_text"].encode()).hexdigest()
+    bundle["repin"]()
+    if failure == "missing":
+        bundle["report"]["rows"].pop()
+    elif failure == "duplicate":
+        bundle["report"]["rows"].append(clone(bundle["report"]["rows"][1]))
+    elif failure == "invalid_prediction":
+        bundle["report"]["rows"][1].update(status="fail_open_invalid_output", candidate_ir=None)
+
+    def renderer(predicted, request_id):
+        if predicted["rules"][0]["actor"] == "clerk":
+            return {"status": "refused", "text": None, "reason": "authored_refusal"}
+        return render_first(predicted, request_id)
+
+    result = score(bundle, render_canonical=True, renderer=renderer)
+    assert result["counts"]["attempted"] == 2
+    assert result["counts"]["joint_ir_original_utf8_exact"] == 1
+    assert result["rates"]["joint_ir_original_utf8_exact"] == .5
+    assert [row["joint_ir_original_utf8_exact"] for row in result["rows"]] == [True, False]
+    table = result["ir_text_joint_counts"]
+    assert table == {"denominator": "all_captured_input_rows", "total": 2, "both_exact": 1,
+        "ir_only_exact": int(failure == "renderer_refused"), "text_only_exact": 0,
+        "neither_exact": int(failure != "renderer_refused")}
+    outcome = "rendering_refused" if failure == "renderer_refused" else (
+        "refused" if failure == "invalid_prediction" else failure)
+    assert result["counts"][outcome] == 1
+
+
+def test_joint_exactness_is_independent_of_edit_distance_budget(bundle):
+    result = score(bundle, render_canonical=True, renderer=render_first, max_edit_cells=1)
+    assert result["counts"]["exact_ir"] == 2
+    assert result["counts"]["exact_original_utf8"] == result["counts"]["joint_ir_original_utf8_exact"] == 1
+    assert result["rates"]["joint_ir_original_utf8_exact"] == .5
+    assert result["ir_text_joint_counts"] == {"denominator": "all_captured_input_rows", "total": 2,
+        "both_exact": 1, "ir_only_exact": 1, "text_only_exact": 0, "neither_exact": 0}
+    assert all(row["rendering"]["character_edit"]["status"] == "cell_budget_exhausted"
+               and row["rendering"]["character_edit"]["distance"] is None for row in result["rows"])
