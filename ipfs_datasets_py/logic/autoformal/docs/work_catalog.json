@@ -3568,6 +3568,33 @@
       "path": "ipfs_datasets_py/logic/autoformal/supervisor_loop.py",
       "required": true,
       "status": "implementation_present"
+    },
+    {
+      "apis": [
+        "donor_provenance",
+        "selection_mask_contract",
+        "configuration",
+        "wire_optimizer",
+        "compose_objective_for_state",
+        "clip_selected_gradients",
+        "scoring_preflight",
+        "engineering_preparation"
+      ],
+      "compatibility_dependency": false,
+      "evidence_ids": [
+        "conditions-fullspan-existing-owner-adoption-20261027-01"
+      ],
+      "guide": "ipfs_datasets_py/logic/autoformal/docs/TRAINING_HISTORY.md",
+      "id": "conditions-fullspan-f18-four-tensor-training-v1",
+      "notes": "Adopts existing worker dfd869ec source verbatim into its prescribed optimizer owner. Four ordered start/end tensors, conditions row3,42 donor states/38 frozen/130 active/780 stored/650 inactive; F15 masked-KL teacher. Five pure metadata controls are separate from the unqualified seven-pass worker log and existing36-case margin mechanics. Physical F18 donor authentication, genuine model/objective gradients, parity, resume, paired fits and semantic admission remain open. Fit/scoring entry points refuse; no historical source pins are rewritten.",
+      "owner_module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_conditions_fullspan_training_v1",
+      "ownership_role": "existing_single_owner",
+      "owning_tests": [
+        "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_conditions_fullspan_training_v1.py"
+      ],
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_fullspan_training_v1.py",
+      "required": true,
+      "status": "implementation_present"
     }
   ],
   "entry_point": "ipfs_datasets_py/logic/autoformal/README.md",
@@ -5681,6 +5708,16 @@
       "root": "datasets_repository",
       "scope": "Versioned source port reusing both retained Context150 product owners verbatim through the fixed opt-in retained-context150-source-compatibility/v1 profile. Owning-test portability change reads the same hash-pinned original patch/source oracles from the existing tracked archive with all test-function assertions preserved. Separate public integration check:28 pure metadata/negative-path cases,84 test phases,10 selectors,0 failures/skips/denied effects; no checkpoint assets or numerical/database frameworks. Default loader strictness, original checkpoint schemas/producers and false authority flags preserved; shared source and bridge unchanged. No historical38-case qualification transfer, new restore/forward/optimizer/training/model quality, native dispatch/rearm or statutory authority.",
       "status": "existing_owner_source_port"
+    },
+    {
+      "id": "conditions-fullspan-existing-owner-adoption-20261027-01",
+      "observed_bytes": 14894,
+      "observed_sha256": "373c0151677b9cfdb9ba51f3c39259b27aaf5e1fb1c777efdbe764bf09933d96",
+      "path": "docs/autoformalization/evidence/legal-ir-conditions-fullspan-owner-adoption-20261027.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Existing worker dfd869ec profile, locally merged65765e43 onto legal-ir-plaintext-definition-landing, adopted at its prescribed canonical optimizer owner with product bytes unchanged. Owning-test portability preserves7names/120assertions and the original preparation snapshot; numerical imports and NaN-gradient guard remain in separately admitted numerical tests. Immutable source/preparation oracle; pure-control outcomes live in canonical handoff/history and execution receipts. Existing F18/margin/structured-objective pins unchanged. No original numerical qualification from the retained7-pass report, physical donor authentication, model/gradient/parity/resume/paired-fit qualification, semantic admission or scientific task rearm.",
+      "status": "existing_owner_source_adoption"
     }
   ]
 }
