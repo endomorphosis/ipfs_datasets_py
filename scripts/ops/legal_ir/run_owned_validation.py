@@ -545,5 +545,580 @@ def main(argv=None):
             raise cleanup_error
 
 
+# The training branch is deliberately separate from validation manifests and
+# their source-custody classifier. Both branches use the original native owners.
+TRAINER_REQUEST_SCHEMA = 'owned-f18-conditions-training-request/v1'
+TRAINER_READY_SCHEMA = 'owned-f18-conditions-training-ready/v1'
+TRAINER_TERMINAL_SCHEMA = 'owned-f18-conditions-training-terminal/v1'
+_TRAINER_FIELDS = {'schema', 'mode', 'cwd', 'attempt_directory', 'outputs', 'roots',
+    'source_sha256', 'cpu_slots', 'memory_mb', 'storage_bytes', 'child_process_slots',
+    'timeout_seconds', 'scheduler_state_path', 'expected_scheduler_policy_sha256',
+    'process_scope', 'compute'}
+_TRAINER_OUTPUTS = {'logs', 'exports', 'tmp', 'cache', 'pytest', 'db'}
+_TRAINER_COMPUTE_FIELDS = {'input_descriptors', 'initial_parity', 'runtime_contract',
+    'population_manifest', 'max_steps_per_arm', 'max_seconds_per_arm'}
+_TRAINER_DIRECTORY = ROOT/'ipfs_datasets_py/optimizers/logic_theorem_optimizer'
+_TRAINER_BOOTSTRAP = _TRAINER_DIRECTORY/'autoencoder_campaign_process_worker.py'
+_TRAINER_NETWORK = _TRAINER_DIRECTORY/'autoencoder_daemon_invocation_worker.py'
+_TRAINER_DAEMON_SHA256 = '0cf17951048015d4ce01817c0bfdd74394a161cd5e7999b01a29f18f358e666a'
+
+
+def _trainer_need(condition, message):
+    if not condition:
+        raise ValueError(message)
+
+
+def _trainer_path(value):
+    _trainer_need(type(value) is str and 0 < len(value) <= 4096
+        and Path(value).is_absolute() and str(Path(value)) == value
+        and '..' not in Path(value).parts, 'canonical absolute trainer path required')
+    return Path(value)
+
+
+def _trainer_digest(value):
+    return type(value) is str and len(value) == 64 and all(c in '0123456789abcdef' for c in value)
+
+
+def _validate_trainer_request(value):
+    _trainer_need(type(value) is dict and set(value) == _TRAINER_FIELDS
+        and value['schema'] == TRAINER_REQUEST_SCHEMA, 'closed F18 training request required')
+    _trainer_need(type(value['mode']) is str and value['mode'] in ('native_probe', 'paired_fit')
+        and value['process_scope'] == 'isolated_process_group', 'closed trainer mode/process scope required')
+    _trainer_need(_trainer_path(value['cwd']) == ROOT, 'trainer must use its selected source tree')
+    attempt = _trainer_path(value['attempt_directory'])
+    _trainer_path(value['scheduler_state_path'])
+    _trainer_need(_trainer_digest(value['expected_scheduler_policy_sha256']), 'trainer scheduler policy pin required')
+    _trainer_need(type(value['outputs']) is dict and set(value['outputs']) == _TRAINER_OUTPUTS
+        and all(_trainer_path(path) == attempt/name for name, path in value['outputs'].items()),
+        'exact owned trainer output layout required')
+    roots = value['roots']
+    _trainer_need(type(roots) is list and 1 <= len(roots) <= 64
+        and all(type(x) is str for x in roots) and len(set(roots)) == len(roots), 'explicit trainer storage roots required')
+    paths = [_trainer_path(x) for x in roots]
+    _trainer_need(any(attempt != root and root in attempt.parents for root in paths)
+        and not any(a == b or a in b.parents or b in a.parents
+                    for i, a in enumerate(paths) for b in paths[:i]), 'trainer roots overlap or omit attempt')
+    for key, maximum in (('cpu_slots', 32), ('memory_mb', 1048576),
+                         ('child_process_slots', 8), ('storage_bytes', 50_000_000_000)):
+        _trainer_need(type(value[key]) is int and 0 < value[key] <= maximum, 'invalid trainer '+key)
+    _trainer_need(type(value['timeout_seconds']) in (int, float)
+        and math.isfinite(value['timeout_seconds']) and 0 < value['timeout_seconds'] <= 300,
+        'finite trainer timeout at most300 seconds required')
+    pins = value['source_sha256']
+    _trainer_need(type(pins) is dict and 1 <= len(pins) <= 256
+        and all(type(path) is str and _trainer_digest(pin) for path, pin in pins.items()),
+        'explicit trainer source pins required')
+    for path in pins:
+        _trainer_path(path)
+    if value['mode'] == 'native_probe':
+        _trainer_need(value['compute'] is None, 'native probe permits no payload or compute request')
+    else:
+        compute = value['compute']
+        _trainer_need(type(compute) is dict and set(compute) == _TRAINER_COMPUTE_FIELDS,
+            'closed paired F18 compute request required')
+        for name in ('input_descriptors', 'initial_parity', 'runtime_contract', 'population_manifest'):
+            ref = compute[name]
+            _trainer_need(type(ref) is dict and set(ref) == {'path', 'bytes', 'sha256'}
+                and type(ref['bytes']) is int and 0 < ref['bytes'] <= 131072
+                and _trainer_digest(ref['sha256']), 'bounded trainer metadata reference required')
+            _trainer_path(ref['path'])
+        _trainer_need(type(compute['max_steps_per_arm']) is int and compute['max_steps_per_arm'] == 32
+            and type(compute['max_seconds_per_arm']) is int
+            and compute['max_seconds_per_arm'] == 32, 'fixed paired32 update/time recipe required')
+    return json.loads(json.dumps(value, allow_nan=False))
+
+
+def _trainer_decode(raw):
+    def pairs(items):
+        result = {}
+        for key, value in items:
+            _trainer_need(key not in result, 'duplicate trainer JSON key')
+            result[key] = value
+        return result
+    return json.loads(raw, object_pairs_hook=pairs,
+        parse_constant=lambda token: (_ for _ in ()).throw(ValueError('nonfinite trainer JSON')))
+
+
+def trainer_request(path, digest):
+    raw = snapshot(path)
+    _trainer_need(_trainer_digest(digest) and hashlib.sha256(raw).hexdigest() == digest,
+        'trainer request hash differs')
+    return _validate_trainer_request(_trainer_decode(raw)), raw
+
+
+def _trainer_source_guard(value):
+    required = [Path(__file__).resolve(), *(_TRAINER_DIRECTORY/name for name in (
+        'autoencoder_daemon_resources.py', 'autoencoder_daemon_operation_journal.py',
+        'autoencoder_daemon_invocation_contracts.py', 'resource_scheduler.py',
+        'existing_resource_scheduler.py', 'proof_resource_safety.py',
+        'autoencoder_campaign_process_worker.py', 'autoencoder_daemon_invocation_worker.py'))]
+    _trainer_need(all(str(path) in value['source_sha256'] for path in required),
+        'explicit original trainer lifecycle source pins required')
+    _trainer_need(value['source_sha256'][str(_TRAINER_DIRECTORY/'autoencoder_daemon_resources.py')]
+        == _TRAINER_DAEMON_SHA256, 'different original public trainer backend requires new qualification')
+    source_guard(value)
+
+
+def _trainer_bootstrap(value):
+    # The original bootstrap is stdlib-only. No package ancestors or payloads
+    # are imported before the irreversible network filter and compute barrier.
+    import importlib.util
+    before = snapshot(_TRAINER_BOOTSTRAP)
+    _trainer_need(hashlib.sha256(before).hexdigest() == value['source_sha256'][str(_TRAINER_BOOTSTRAP)],
+        'original trainer bootstrap changed')
+    spec = importlib.util.spec_from_file_location('_f18_original_campaign_bootstrap', _TRAINER_BOOTSTRAP)
+    _trainer_need(spec is not None and spec.loader is not None, 'original trainer bootstrap unavailable')
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    _trainer_need(snapshot(_TRAINER_BOOTSTRAP) == before, 'original trainer bootstrap changed during import')
+    return module
+
+
+def _trainer_ready(payload, *, identity, owner_pid, request_pin):
+    _trainer_need(type(payload) is dict and set(payload) == {'schema', 'identity', 'owner_pid',
+        'request_sha256', 'canonical_root', 'network_guard'}, 'closed trainer READY required')
+    _trainer_need(type(payload['identity']) is dict and set(payload['identity']) == {'pid', 'group_pid', 'birth'}
+        and all(type(payload['identity'][key]) is int for key in ('pid', 'group_pid'))
+        and type(payload['identity']['birth']) is str
+        and len(payload['identity']['birth']) <= 32 and payload['identity']['birth'].isascii()
+        and payload['identity']['birth'].isdecimal() and int(payload['identity']['birth']) > 0
+        and payload['identity'] == identity and identity['pid'] == identity['group_pid'] and identity['pid'] > 0
+        and type(payload['owner_pid']) is int and payload['owner_pid'] == owner_pid
+        and payload['schema'] == TRAINER_READY_SCHEMA and payload['request_sha256'] == request_pin
+        and payload['canonical_root'] == str(ROOT)
+        and type(payload['network_guard']) is dict
+        and payload['network_guard'].get('socket_denial_verified') is True
+        and payload['network_guard'] == {'mechanism': 'linux_seccomp', 'denied_syscalls': [
+            'socket', 'connect', 'sendto', 'sendmsg', 'sendmmsg'], 'socket_denial_verified': True},
+        'trainer READY identity/source/network evidence differs')
+    return payload
+
+
+def _trainer_record_start(journal, payload):
+    _trainer_need(all(journal.get_metadata(key) is None for key in ('start', 'child', 'release_intent', 'released', 'terminal')),
+        'existing trainer start or terminal requires explicit original recovery; no automatic retry')
+    journal.set_metadata('start', payload)
+
+
+def _trainer_child_main(path, digest, *, ready_fd, release_fd, owner_pid):
+    _trainer_need(sys.flags.isolated and sys.flags.no_site and ready_fd >= 3 and release_fd >= 3
+        and ready_fd != release_fd and owner_pid > 0, 'isolated trainer bootstrap descriptors required')
+    _trainer_need(not any(name == 'ipfs_datasets_py' or name.startswith('ipfs_datasets_py.')
+        for name in sys.modules), 'trainer package imported before offline bootstrap')
+    value, raw = trainer_request(path, digest)
+    _trainer_source_guard(value)
+    bootstrap = _trainer_bootstrap(value)
+    guard = bootstrap._network_denial(value['source_sha256'][str(_TRAINER_NETWORK)])
+    identity = bootstrap._identity()
+    _trainer_need(identity['pid'] == identity['group_pid'] and os.getppid() == owner_pid,
+        'trainer child is not the actual owned isolated group')
+    bootstrap._send_ready(ready_fd, {'schema': TRAINER_READY_SCHEMA, 'identity': identity,
+        'owner_pid': owner_pid, 'request_sha256': digest, 'canonical_root': str(ROOT), 'network_guard': guard})
+    os.close(ready_fd)
+    bootstrap._await_release(release_fd, timeout_seconds=value['timeout_seconds'], owner_pid=owner_pid)
+    watcher = threading.Thread(target=bootstrap._watch_owner,
+        kwargs={'fd': release_fd, 'owner_pid': owner_pid, 'group_pid': identity['group_pid']}, daemon=True)
+    watcher.start()
+    _trainer_need(snapshot(path) == raw and Path.cwd() == ROOT, 'trainer request/cwd changed at release')
+    _trainer_source_guard(value)
+    if value['mode'] == 'native_probe':
+        result = {'schema': 'f18-native-trainer-probe-result/v1', 'mode': 'native_probe',
+            'completed': True, 'model_constructions': 0, 'checkpoint_payloads_opened': 0,
+            'model_forwards': 0, 'gradient_calls': 0, 'optimizer_updates': 0,
+            'admitted': False, 'formalized': False, 'promoted': False}
+    else:
+        bootstrap._configure_dependency_paths()
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_daemon_invocation_worker as worker
+        _trainer_need(Path(worker.__file__).resolve() == _TRAINER_NETWORK, 'different fixed trainer worker imported')
+        result = worker.run_f18_paired_training(value, output_directory=Path(value['outputs']['exports']))
+    _trainer_need(type(result) is dict and type(result.get('completed')) is bool
+        and all(result.get(key) is False for key in ('admitted', 'formalized', 'promoted')),
+        'fixed trainer result/authority differs')
+    _trainer_need(snapshot(path) == raw, 'trainer request changed during compute')
+    _trainer_source_guard(value)
+    immutable_json(Path(value['outputs']['exports'])/'trainer-result.json', result)
+    return 0 if result['completed'] else 4
+
+
+def _trainer_supervise(owner, journal, value, raw, *, request_path, request_pin, host, deadline=None, cancelled=None):
+    """One already-admitted original owner; no factory or retry is exposed."""
+    deadline = time.monotonic()+value['timeout_seconds'] if deadline is None else deadline
+    owner_identity = host._process(os.getpid())
+    _trainer_need(owner_identity is not None, 'original trainer owner identity unavailable')
+    events = dict(child_launch_attempted=False, child_created=False, ready_verified=False,
+                  barrier_release_attempted=False, barrier_released=False)
+    child = identity = None
+    reader = ready_write = release_read = release_write = None
+    ready_raw = b''
+    stopped, errors = threading.Event(), []
+    failure = cleanup_error = None
+    returncode = None
+    heartbeat_lock = threading.Lock()
+    next_heartbeat = [0.0]
+    def heartbeat(*, force=False):
+        with heartbeat_lock:
+            now = time.monotonic()
+            if force or now >= next_heartbeat[0]:
+                _trainer_need(owner.heartbeat(), 'original trainer lease lost')
+                next_heartbeat[0] = time.monotonic()+1.0
+    def guard(*, sources=False):
+        if sources:
+            _trainer_need(snapshot(request_path) == raw, 'trainer request changed')
+            _trainer_source_guard(value)
+        _trainer_need(time.monotonic() < deadline, 'trainer execution deadline exceeded')
+        _trainer_need(not errors and not owner.cancelled
+            and (cancelled is None or not cancelled.is_set()), 'original trainer custody cancelled: '+repr(errors))
+    def watch():
+        next_sources = 0.0
+        while not stopped.wait(.2):
+            try:
+                now = time.monotonic()
+                guard(sources=now >= next_sources)
+                if now >= next_sources:
+                    next_sources = time.monotonic()+1.0
+                heartbeat()
+                if identity is not None:
+                    group = host._group_usage({'pid': identity['pid'], 'birth': identity['birth']})
+                    _trainer_need(group.get('available') is True
+                        and type(group['rss_bytes']) is int and type(group['live_processes']) is int
+                        and group['rss_bytes'] <= value['memory_mb']*1024*1024
+                        and group['live_processes'] <= value['child_process_slots'], 'trainer local process/RSS bound exceeded')
+            except BaseException as error:
+                errors.append(type(error).__name__+': '+str(error))
+                return
+    monitor = threading.Thread(target=watch, name='original-f18-trainer-local-watchdog', daemon=True)
+    try:
+        guard(sources=True)
+        heartbeat(force=True)
+        _trainer_record_start(journal, {'request_sha256': request_pin,
+            'reservation_id': owner.reservation_id,
+            'owner': {'pid': owner_identity['pid'], 'birth': owner_identity['birth']}})
+        reader, ready_write = os.pipe()
+        release_read, release_write = os.pipe()
+        os.set_blocking(reader, False)
+        argv = [sys.executable, '-I', '-S', str(Path(__file__).resolve()),
+            '--trainer-request', str(request_path), '--expected-request-sha256', request_pin,
+            '--_trainer-child', '--ready-fd', str(ready_write), '--release-fd', str(release_read),
+            '--owner-pid', str(owner_identity['pid'])]
+        environment = dict(os.environ, PYTHONDONTWRITEBYTECODE='1', IPFS_DATASETS_PY_MINIMAL_IMPORTS='1',
+            IPFS_DATASETS_AUTO_INSTALL='0', IPFS_AUTO_INSTALL='false', TRANSFORMERS_OFFLINE='1',
+            HF_HUB_OFFLINE='1', CUDA_VISIBLE_DEVICES='', OMP_NUM_THREADS='1', MKL_NUM_THREADS='1',
+            OPENBLAS_NUM_THREADS='1', XDG_CACHE_HOME=value['outputs']['cache'],
+            TMPDIR=value['outputs']['tmp'], TEMP=value['outputs']['tmp'], TMP=value['outputs']['tmp'])
+        with (Path(value['outputs']['logs'])/'trainer.stdout').open('xb') as out, \
+             (Path(value['outputs']['logs'])/'trainer.stderr').open('xb') as err:
+            events['child_launch_attempted'] = True
+            child = subprocess.Popen(argv, cwd=value['cwd'], env=environment, stdin=subprocess.DEVNULL,
+                stdout=out, stderr=err, start_new_session=True, close_fds=True,
+                pass_fds=(ready_write, release_read))
+            events['child_created'] = True
+            os.close(ready_write); ready_write = None
+            os.close(release_read); release_read = None
+            observed = host._process(child.pid)
+            _trainer_need(observed is not None and observed['parent_pid'] == owner_identity['pid']
+                and observed['group_pid'] == observed['pid'], 'actual owned trainer child identity required')
+            identity = {key: observed[key] for key in ('pid', 'group_pid', 'birth')}
+            monitor.start()
+            # This is the unchanged original bind plus its fresh global census.
+            # The child remains behind RUN throughout this potentially slow call.
+            owner.check_usage(Path(value['attempt_directory']), child_pid=identity['pid'])
+            while b'\n' not in ready_raw:
+                guard()
+                heartbeat()
+                _trainer_need(child.poll() is None, 'trainer child exited before READY')
+                try:
+                    chunk = os.read(reader, 8193-len(ready_raw))
+                except BlockingIOError:
+                    time.sleep(.05)
+                    continue
+                _trainer_need(bool(chunk), 'trainer child closed READY before release')
+                ready_raw += chunk
+                _trainer_need(len(ready_raw) <= 8192, 'trainer READY exceeds bound')
+            _trainer_need(ready_raw.count(b'\n') == 1 and ready_raw.endswith(b'\n'), 'trainer READY framing differs')
+            ready = _trainer_ready(_trainer_decode(ready_raw), identity=identity,
+                owner_pid=owner_identity['pid'], request_pin=request_pin)
+            current = host._process(child.pid)
+            _trainer_need(current is not None and current['parent_pid'] == owner_identity['pid']
+                and {key: current[key] for key in identity} == identity, 'trainer child changed before RUN')
+            events['ready_verified'] = True
+            journal.set_metadata('child', {'identity': identity, 'bootstrap': ready})
+            guard(sources=True)
+            owner.check_usage(Path(value['attempt_directory']), child_pid=identity['pid'])
+            guard(sources=True)
+            heartbeat(force=True)
+            journal.set_metadata('release_intent', {'request_sha256': request_pin, 'identity': identity})
+            events['barrier_release_attempted'] = True
+            _trainer_need(os.write(release_write, b'RUN\n') == 4, 'trainer RUN token was not fully written')
+            events['barrier_released'] = True
+            journal.set_metadata('released', {'request_sha256': request_pin, 'identity': identity})
+            os.close(reader); reader = None
+            # Retain release_write until the original child and group are reaped.
+            # Closing it earlier would intentionally revoke the child watcher.
+            while child.poll() is None:
+                guard()
+                heartbeat()
+                time.sleep(.1)
+            returncode = child.returncode
+            _trainer_need(returncode == 0, 'fixed F18 trainer child failed: '+str(returncode))
+            guard(sources=True)
+    except BaseException as error:
+        failure = {'error_type': type(error).__name__, 'error': str(error)[:4096]}
+    finally:
+        try:
+            if child is not None and identity is None:
+                # No RUN was possible. Revoke the retained pipe, then reap the
+                # exact Popen child without signalling an unconfirmed identity.
+                if release_write is not None:
+                    os.close(release_write); release_write = None
+                child.wait(timeout=5)
+            else:
+                stop_and_reap(child, identity['birth'] if identity is not None else None)
+        except BaseException as error:
+            cleanup_error = type(error).__name__+': '+str(error)
+        stopped.set()
+        if monitor.ident is not None:
+            monitor.join(timeout=5)
+            if monitor.is_alive():
+                cleanup_error = cleanup_error or 'original trainer monitor did not stop'
+        for fd in (reader, ready_write, release_read, release_write):
+            if fd is not None:
+                os.close(fd)
+    try:
+        group = host._group_usage({'pid': identity['pid'], 'birth': identity['birth']} if identity else None)
+        if not _trainer_group_closed(group):
+            cleanup_error = cleanup_error or 'original trainer group death unconfirmed'
+    except BaseException as error:
+        group = {'available': False, 'live_processes': None, 'rss_bytes': None}
+        cleanup_error = cleanup_error or 'original group observation: '+type(error).__name__
+    return {'schema': 'owned-f18-trainer-child-execution/v1', 'completed': failure is None and cleanup_error is None,
+        'returncode': returncode, 'events': events, 'child_identity': identity, 'group_observation': group,
+        'error': failure, 'process_cleanup_error': cleanup_error, 'monitor_errors': errors,
+        'resource_scope': 'isolated_process_group', 'admitted': False, 'formalized': False, 'promoted': False}
+
+
+def _trainer_group_closed(group):
+    return (type(group) is dict and group.get('available') is True
+        and type(group.get('live_processes')) is int and group['live_processes'] == 0
+        and type(group.get('rss_bytes')) is int and group['rss_bytes'] == 0)
+
+
+def _trainer_durable_tree(attempt):
+    # Only owned regular artifacts are flushed. No source/data payload is opened.
+    for directory, dirs, files in os.walk(attempt, topdown=False, followlinks=False):
+        for name in (*dirs, *files):
+            path = Path(directory)/name
+            info = path.lstat()
+            _trainer_need(stat.S_ISDIR(info.st_mode) or (stat.S_ISREG(info.st_mode) and info.st_nlink == 1),
+                'trainer durability requires unaliased ordinary artifacts')
+            if stat.S_ISREG(info.st_mode):
+                fd = os.open(path, os.O_RDONLY|os.O_NOFOLLOW|os.O_NONBLOCK)
+                try:
+                    observed = os.fstat(fd)
+                    _trainer_need((observed.st_dev, observed.st_ino, observed.st_size, observed.st_mtime_ns)
+                        == (info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns), 'trainer artifact changed at durability')
+                    os.fsync(fd)
+                finally:
+                    os.close(fd)
+        fd = os.open(directory, os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW)
+        try:
+            os.fsync(fd)
+        finally:
+            os.close(fd)
+
+
+def classify_owned_trainer_source_custody(terminal, request_raw, *, expected_request_sha256,
+        owner_pid, owner_birth, returncode, expected_resource_ledger):
+    """Read-only typed evidence, after caller-observed original CLI exit.
+
+    Closure of native/source custody never authorizes release of retained storage.
+    Unknown or incomplete evidence preserves the original cleanup requirement.
+    """
+    unknown = {'verdict': 'requires_original_trainer_cleanup', 'source_custody_closed': False,
+               'storage_release_authorized': False}
+    try:
+        _trainer_need(type(request_raw) is bytes and _trainer_digest(expected_request_sha256)
+            and hashlib.sha256(request_raw).hexdigest() == expected_request_sha256, 'trainer request evidence differs')
+        value = _validate_trainer_request(_trainer_decode(request_raw))
+        _trainer_source_guard(value)
+        _trainer_need(type(terminal) is dict and terminal['schema'] == TRAINER_TERMINAL_SCHEMA
+            and terminal['request_sha256'] == expected_request_sha256
+            and terminal['resource_scope'] == 'isolated_process_group'
+            and terminal['mode'] == value['mode']
+            and terminal['owner'] == {'pid': owner_pid, 'birth': owner_birth}
+            and type(terminal['owner']['pid']) is int
+            and type(owner_pid) is int and owner_pid > 0 and type(owner_birth) is str and owner_birth.isdecimal()
+            and type(returncode) is int and type(terminal['completed']) is bool
+            and terminal['completed'] is (returncode == 0)
+            and terminal['owner_open_returned'] is True
+            and all(terminal.get(key) is False for key in ('admitted', 'Lean_admitted', 'formalized', 'promoted'))
+            and terminal['owner_exit_handling_completed'] is True
+            and terminal['process_cleanup_error'] is None and terminal['owner_exit_error'] is None
+            and terminal['source_guards'] == {'request_unchanged': True, 'sources_unchanged': True}
+            and all(type(flag) is bool for flag in terminal['source_guards'].values()),
+            'original trainer terminal custody is incomplete')
+        reservation = terminal['reservation']
+        record, lease = reservation['record'], reservation['resource_lease']
+        _trainer_need(type(record) is dict and type(lease) is dict and lease['released'] is True
+            and lease['parent_lease_id'] is None
+            and lease['lane'] == 'hammer_lean' and type(lease['owner_pid']) is int and lease['owner_pid'] == owner_pid
+            and type(lease['lease_id']) is str and len(lease['lease_id']) == 32
+            and type(record['owner_pid']) is int and record['owner_pid'] == owner_pid
+            and type(record['reservation_id']) is str and len(record['reservation_id']) == 32
+            and all(c in '0123456789abcdef' for c in record['reservation_id'])
+            and reservation['reservation_id'] == record['reservation_id']
+            and terminal['resource_request_id'] == 'daemon:'+record['reservation_id']
+            and reservation['scheduler_lane'] == record['scheduler_lane'] == 'hammer_lean'
+            and reservation['workload'] == record['workload'] == 'canonical_trainer'
+            and reservation['ledger_path'] == expected_resource_ledger
+            and terminal['scheduler'] == {'state_path': value['scheduler_state_path'],
+                'policy_sha256': value['expected_scheduler_policy_sha256'],
+                'lane': 'hammer_lean', 'workload': 'canonical_trainer'}
+            and record['attempt_directory']['path'] == value['attempt_directory']
+            and reservation['status'] == record['status'] and record['status'] in ('released', 'retained')
+            and record['prior_children'] == []
+            and all(type(lease[key]) is int and lease[key] == value[key]
+                    for key in ('cpu_slots', 'memory_mb', 'child_process_slots')),
+            'genuine original trainer/native binding differs')
+        _trainer_path(expected_resource_ledger)
+        ledger = Path(expected_resource_ledger).lstat()
+        _trainer_need(stat.S_ISREG(ledger.st_mode) and ledger.st_nlink == 1
+            and all(stat.S_ISDIR(p.lstat().st_mode) for p in Path(expected_resource_ledger).parents), 'trainer ledger alias')
+        _trainer_need(all(type(record[key]) is int and record[key] == value[key] for key in
+            ('cpu_slots', 'memory_mb', 'storage_bytes', 'child_process_slots')), 'trainer budget witness differs')
+        child, group = terminal['child_identity'], terminal['group_observation']
+        _trainer_need(_trainer_group_closed(group), 'trainer group cleanup unproven')
+        if child is not None:
+            _trainer_need(type(child) is dict and set(child) == {'pid', 'group_pid', 'birth'}
+                and type(child['pid']) is int and child['pid'] > 0
+                and type(child['group_pid']) is int and child['pid'] == child['group_pid']
+                and type(child['birth']) is str and 0 < len(child['birth']) <= 32
+                and child['birth'].isascii() and child['birth'].isdecimal() and int(child['birth']) > 0
+                and record['child'] == {'pid': child['pid'], 'birth': child['birth']}, 'trainer child binding differs')
+        else:
+            _trainer_need(record.get('child') is None
+                and terminal['events'].get('child_created', False) is False
+                and terminal['events'].get('child_launch_attempted', False) is False, 'unreported trainer child')
+        return {'verdict': 'proven_original_trainer_native_and_source_closed',
+                'source_custody_closed': True, 'storage_release_authorized': False}
+    except BaseException:
+        return unknown
+
+
+def trainer_main(argv=None):
+    parser = argparse.ArgumentParser(description='Run one closed F18 operation with the original canonical trainer owner')
+    parser.add_argument('--trainer-request', required=True, type=Path)
+    parser.add_argument('--expected-request-sha256', required=True)
+    parser.add_argument('--resource-ledger', type=Path)
+    parser.add_argument('--_trainer-child', action='store_true', help=argparse.SUPPRESS)
+    parser.add_argument('--ready-fd', type=int, help=argparse.SUPPRESS)
+    parser.add_argument('--release-fd', type=int, help=argparse.SUPPRESS)
+    parser.add_argument('--owner-pid', type=int, help=argparse.SUPPRESS)
+    args = parser.parse_args(argv)
+    if args._trainer_child:
+        return _trainer_child_main(args.trainer_request, args.expected_request_sha256,
+            ready_fd=args.ready_fd, release_fd=args.release_fd, owner_pid=args.owner_pid)
+    if args.resource_ledger is None:
+        parser.error('--resource-ledger is required for the original trainer owner')
+    value, raw = trainer_request(args.trainer_request, args.expected_request_sha256)
+    _trainer_source_guard(value)
+    _trainer_need(not any(x is not None for x in (args.ready_fd, args.release_fd, args.owner_pid)),
+        'trainer bootstrap descriptors are child-only')
+    _trainer_need('ipfs_datasets_py' not in sys.modules, 'run original trainer in a fresh process')
+    sys.path.insert(0, str(ROOT))
+    os.environ.update(IPFS_DATASETS_PY_MINIMAL_IMPORTS='1', IPFS_DATASETS_AUTO_INSTALL='0', IPFS_AUTO_INSTALL='false')
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_daemon_resources as host
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_daemon_operation_journal import DurableDaemonOperationJournal
+    _trainer_need(Path(host.__file__).resolve() == _TRAINER_DIRECTORY/'autoencoder_daemon_resources.py',
+        'different original trainer source tree imported')
+    ledger = json.loads(snapshot(args.resource_ledger, 16*1024*1024))
+    _trainer_need([row['path'] for row in ledger['roots']] == value['roots'], 'trainer ledger roots differ')
+    attempt = host._safe_path(value['attempt_directory'], directory=True)
+    _trainer_need(not any(attempt.iterdir()), 'trainer attempt must already exist empty; prior attempts require recovery')
+    owner_identity = host._process(os.getpid())
+    _trainer_need(owner_identity is not None, 'original trainer owner identity unavailable')
+    started = time.monotonic()
+    owner = host.DaemonResourceReservation(args.resource_ledger, roots=value['roots'],
+        storage_bytes=value['storage_bytes'], memory_mb=value['memory_mb'], cpu_slots=value['cpu_slots'],
+        child_process_slots=value['child_process_slots'], timeout_seconds=value['timeout_seconds'],
+        ledger_lock_timeout_seconds=5, scheduler_state_path=value['scheduler_state_path'],
+        expected_scheduler_policy_sha256=value['expected_scheduler_policy_sha256'], require_existing_ledger=True)
+    execution = dict(completed=False, returncode=None, events={}, child_identity=None,
+        group_observation=host._group_usage(None), process_cleanup_error=None)
+    failure = exit_error = None
+    opened = exited = False
+    journal = None
+    guards = {'request_unchanged': False, 'sources_unchanged': False}
+    cancelled = threading.Event()
+    interrupted = []
+    def on_signal(number, frame):
+        interrupted.append(number)
+        cancelled.set()
+    previous = {number: signal.signal(number, on_signal) for number in (signal.SIGTERM, signal.SIGINT)}
+    try:
+        owner.__enter__(); opened = True
+        _trainer_need(not cancelled.is_set() and time.monotonic() < started+value['timeout_seconds'],
+            'trainer total deadline/cancellation during admission')
+        for path in value['outputs'].values():
+            Path(path).mkdir(mode=0o700)
+        owner.check_usage(attempt)
+        journal = DurableDaemonOperationJournal(Path(value['outputs']['logs'])/'trainer-journal.json', {
+            'schema': TRAINER_REQUEST_SCHEMA, 'request_sha256': args.expected_request_sha256,
+            'attempt_directory': str(attempt), 'resource_request_id': 'daemon:'+owner.reservation_id})
+        execution = _trainer_supervise(owner, journal, value, raw, request_path=args.trainer_request,
+            request_pin=args.expected_request_sha256, host=host, deadline=started+value['timeout_seconds'], cancelled=cancelled)
+        journal.set_metadata('terminal', execution)
+        _trainer_need(execution['completed'] is True, 'original trainer child execution failed')
+        immutable_json(Path(value['outputs']['logs'])/'trainer-execution.json', execution)
+        journal.close(); journal = None
+        _trainer_need(snapshot(args.trainer_request) == raw, 'trainer request changed at closing')
+        _trainer_source_guard(value)
+        _trainer_durable_tree(attempt)
+        owner.finalize(attempt, artifacts_durable=True)
+    except BaseException as error:
+        failure = {'error_type': type(error).__name__, 'error': str(error)[:4096]}
+    finally:
+        if journal is not None:
+            try:
+                journal.close()
+            except BaseException as error:
+                exit_error = 'journal close: '+type(error).__name__+': '+str(error)
+        try:
+            _trainer_need(execution['process_cleanup_error'] is None
+                and _trainer_group_closed(execution['group_observation']),
+                'trainer group cleanup unconfirmed; original recovery required')
+            owner.__exit__(RuntimeError if failure else None, RuntimeError(str(failure)) if failure else None, None)
+            exited = True
+        except BaseException as error:
+            exit_error = type(error).__name__+': '+str(error)
+        try:
+            guards['request_unchanged'] = snapshot(args.trainer_request) == raw
+            _trainer_source_guard(value); guards['sources_unchanged'] = True
+        except BaseException:
+            pass
+        for number, handler in previous.items():
+            signal.signal(number, handler)
+    terminal = {'schema': TRAINER_TERMINAL_SCHEMA, 'request_sha256': args.expected_request_sha256,
+        'mode': value['mode'], 'completed': failure is None and exit_error is None and all(guards.values()),
+        'resource_scope': 'isolated_process_group', 'resource_request_id': 'daemon:'+owner.reservation_id,
+        'scheduler': {'state_path': value['scheduler_state_path'],
+            'policy_sha256': value['expected_scheduler_policy_sha256'],
+            'lane': 'hammer_lean', 'workload': 'canonical_trainer'},
+        'owner': {'pid': owner_identity['pid'], 'birth': owner_identity['birth']},
+        'owner_open_returned': opened, 'owner_exit_handling_completed': exited,
+        'child_identity': execution['child_identity'], 'group_observation': execution['group_observation'],
+        'events': execution['events'], 'process_cleanup_error': execution['process_cleanup_error'],
+        'owner_exit_error': exit_error, 'source_guards': guards, 'reservation': owner.to_dict(),
+        'error': failure, 'received_signals': interrupted, 'admitted': False, 'Lean_admitted': False, 'formalized': False, 'promoted': False}
+    print(json.dumps(terminal, sort_keys=True), flush=True)
+    return 0 if terminal['completed'] else 1
+
+
+def entrypoint(argv=None):
+    arguments = list(sys.argv[1:] if argv is None else argv)
+    if '--trainer-request' in arguments or any(x.startswith('--trainer-request=') for x in arguments):
+        return trainer_main(arguments)
+    return main(arguments)
+
+
 if __name__ == '__main__':
-    raise SystemExit(main())
+    raise SystemExit(entrypoint())

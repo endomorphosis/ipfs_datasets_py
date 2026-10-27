@@ -1564,3 +1564,770 @@ def test_source_snapshot_empty_opt_in_preserves_existing_size_limits(tmp_path):
         stream.write(b'x')
     with pytest.raises(ValueError, match='bounded unaliased regular input'):
         module.source_guard({'source_sha256': {str(source): _EMPTY_SOURCE_SHA256}})
+
+
+# Closed finite F18 trainer-controller controls. These cases use no model,
+# native grant, real subprocess, or production task/claim fixture.
+def _trainer_controller_request_case(tmp_path, *, paired=False):
+    module, launcher = _lifecycle_launcher_module()
+    root = tmp_path / "trainer-outputs"
+    root.mkdir()
+    attempt = root / "attempt"
+    attempt.mkdir(mode=0o700)
+    directory = module.ROOT / "ipfs_datasets_py/optimizers/logic_theorem_optimizer"
+    names = ("autoencoder_daemon_resources.py", "autoencoder_daemon_operation_journal.py",
+             "autoencoder_daemon_invocation_contracts.py", "resource_scheduler.py",
+             "existing_resource_scheduler.py", "proof_resource_safety.py",
+             "autoencoder_campaign_process_worker.py", "autoencoder_daemon_invocation_worker.py")
+    pins = {str(path): _sha(path) for path in (launcher, *(directory / name for name in names))}
+    value = {
+        "schema": "owned-f18-conditions-training-request/v1",
+        "mode": "paired_fit" if paired else "native_probe",
+        "cwd": str(module.ROOT), "attempt_directory": str(attempt),
+        "outputs": {name: str(attempt / name) for name in
+                    ("logs", "exports", "tmp", "cache", "pytest", "db")},
+        "roots": [str(root)], "source_sha256": pins,
+        "cpu_slots": 1, "memory_mb": 2048, "storage_bytes": 128 * 1024 * 1024,
+        "child_process_slots": 1, "timeout_seconds": 300,
+        "scheduler_state_path": str(tmp_path / "existing-scheduler.json"),
+        "expected_scheduler_policy_sha256": "a" * 64,
+        "process_scope": "isolated_process_group", "compute": None,
+    }
+    if paired:
+        value["compute"] = {
+            name: {"path": str(tmp_path / (name + ".json")), "bytes": 17, "sha256": "b" * 64}
+            for name in ("input_descriptors", "initial_parity", "runtime_contract", "population_manifest")
+        }
+        value["compute"].update(max_steps_per_arm=32, max_seconds_per_arm=32)
+    path = tmp_path / "trainer-request.json"
+    _write_json(path, value)
+    return module, path, value
+
+
+def _trainer_forbid_reference_bodies(monkeypatch, value):
+    """Sentinel for content access, not a claim about physical-file custody."""
+    import builtins
+    refs = value["compute"] or {}
+    forbidden = {Path(ref["path"]) for ref in refs.values() if type(ref) is dict and "path" in ref}
+    attempts = []
+    for owner, name in ((builtins, "open"), (os, "open"), (Path, "open")):
+        genuine = getattr(owner, name)
+        def guarded(path, *args, _genuine=genuine, **kwargs):
+            if isinstance(path, (str, bytes, os.PathLike)) and Path(os.fsdecode(path)) in forbidden:
+                attempts.append(str(path))
+                raise AssertionError("trainer metadata/payload opened before RUN")
+            return _genuine(path, *args, **kwargs)
+        monkeypatch.setattr(owner, name, guarded)
+    return attempts
+
+
+def test_closed_trainer_probe_parser_is_detached_and_has_no_generic_command(tmp_path):
+    module, path, offered = _trainer_controller_request_case(tmp_path)
+    before = path.read_bytes()
+    parsed, raw = module.trainer_request(path, _sha(path))
+    assert raw == before and parsed == offered and parsed is not offered
+    assert parsed["compute"] is None and set(parsed) == {
+        "schema", "mode", "cwd", "attempt_directory", "outputs", "roots", "source_sha256",
+        "cpu_slots", "memory_mb", "storage_bytes", "child_process_slots", "timeout_seconds",
+        "scheduler_state_path", "expected_scheduler_policy_sha256", "process_scope", "compute"}
+    assert "argv" not in parsed and "selected_checks" not in parsed
+    offered["outputs"]["logs"] = "/foreign"
+    assert parsed["outputs"]["logs"] != "/foreign"
+    assert path.read_bytes() == before
+    assert not Path(parsed["scheduler_state_path"]).exists()
+    assert tuple(Path(parsed["attempt_directory"]).iterdir()) == ()
+
+
+@pytest.mark.parametrize("damage", [
+    "generic_argv", "validation_checks", "extra_field", "foreign_mode", "foreign_scope",
+    "foreign_cwd", "attempt_outside_roots", "overlapping_roots", "output_escape",
+    "boolean_cpu", "zero_children", "storage_over_bound", "deadline_over_bound", "probe_compute",
+])
+def test_closed_trainer_probe_rejects_unbounded_or_borrowed_scope_before_admission(tmp_path, damage):
+    module, _, value = _trainer_controller_request_case(tmp_path)
+    if damage == "generic_argv": value["argv"] = [sys.executable, "-c", "raise SystemExit(0)"]
+    elif damage == "validation_checks": value["selected_checks"] = ["borrowed validation"]
+    elif damage == "extra_field": value["admitted"] = True
+    elif damage == "foreign_mode": value["mode"] = "arbitrary_worker"
+    elif damage == "foreign_scope": value["process_scope"] = "sampled_birth_bound_descendants"
+    elif damage == "foreign_cwd": value["cwd"] = str(tmp_path)
+    elif damage == "attempt_outside_roots": value["roots"] = [str(tmp_path / "different")]
+    elif damage == "overlapping_roots": value["roots"].append(str(Path(value["roots"][0]) / "nested"))
+    elif damage == "output_escape": value["outputs"]["exports"] = str(tmp_path / "exports")
+    elif damage == "boolean_cpu": value["cpu_slots"] = True
+    elif damage == "zero_children": value["child_process_slots"] = 0
+    elif damage == "storage_over_bound": value["storage_bytes"] = 50_000_000_001
+    elif damage == "deadline_over_bound": value["timeout_seconds"] = 301
+    else: value["compute"] = {}
+    with pytest.raises(ValueError):
+        module._validate_trainer_request(value)
+    assert not Path(value["scheduler_state_path"]).exists()
+    assert tuple(Path(value["attempt_directory"]).iterdir()) == ()
+
+
+def test_closed_trainer_pair_reference_validation_opens_no_reference_body(tmp_path, monkeypatch):
+    module, path, value = _trainer_controller_request_case(tmp_path, paired=True)
+    attempts = _trainer_forbid_reference_bodies(monkeypatch, value)
+    parsed, raw = module.trainer_request(path, _sha(path))
+    module._trainer_source_guard(parsed)
+    assert raw and parsed == value and parsed["compute"] is not value["compute"]
+    assert set(parsed["compute"]) == {"input_descriptors", "initial_parity", "runtime_contract",
+                                      "population_manifest", "max_steps_per_arm", "max_seconds_per_arm"}
+    assert parsed["compute"]["max_steps_per_arm"] == parsed["compute"]["max_seconds_per_arm"] == 32
+    assert attempts == [] and tuple(Path(value["attempt_directory"]).iterdir()) == ()
+
+
+@pytest.mark.parametrize("damage", [
+    "unknown_reference_field", "boolean_reference_bytes", "reference_over_bound", "missing_reference",
+    "extra_steps", "boolean_steps", "extra_seconds", "boolean_seconds", "float_seconds",
+])
+def test_closed_trainer_pair_bounds_are_refused_without_reference_reads(tmp_path, monkeypatch, damage):
+    module, _, value = _trainer_controller_request_case(tmp_path, paired=True)
+    attempts = _trainer_forbid_reference_bodies(monkeypatch, value)
+    compute = value["compute"]
+    if damage == "unknown_reference_field": compute["initial_parity"]["gold"] = "forbidden"
+    elif damage == "boolean_reference_bytes": compute["input_descriptors"]["bytes"] = True
+    elif damage == "reference_over_bound": compute["runtime_contract"]["bytes"] = 131073
+    elif damage == "missing_reference": compute.pop("population_manifest")
+    elif damage == "extra_steps": compute["max_steps_per_arm"] = 33
+    elif damage == "boolean_steps": compute["max_steps_per_arm"] = True
+    elif damage == "extra_seconds": compute["max_seconds_per_arm"] = 33
+    elif damage == "boolean_seconds": compute["max_seconds_per_arm"] = True
+    else: compute["max_seconds_per_arm"] = 32.0
+    with pytest.raises(ValueError):
+        module._validate_trainer_request(value)
+    assert attempts == [] and tuple(Path(value["attempt_directory"]).iterdir()) == ()
+
+
+@pytest.mark.parametrize("damage", ["hash", "duplicate_JSON", "nonfinite_JSON", "empty"])
+def test_closed_trainer_request_wire_refuses_ambiguity_and_hash_drift(tmp_path, damage):
+    module, path, value = _trainer_controller_request_case(tmp_path)
+    raw = path.read_bytes()
+    expected = _sha(path)
+    if damage == "hash": expected = "0" * 64
+    elif damage == "duplicate_JSON":
+        text = json.dumps(value)
+        assert text.count('"mode": "native_probe"') == 1
+        raw = text.replace('"mode": "native_probe"',
+                           '"mode": "paired_fit", "mode": "native_probe"', 1).encode()
+        path.write_bytes(raw)
+        expected = _sha(path)
+    elif damage == "nonfinite_JSON":
+        value["timeout_seconds"] = float("nan")
+        path.write_text(json.dumps(value))
+        expected = _sha(path)
+    else:
+        path.write_bytes(b"")
+        expected = _sha(path)
+    with pytest.raises(ValueError):
+        module.trainer_request(path, expected)
+    assert tuple(Path(value["attempt_directory"]).iterdir()) == ()
+
+
+def test_trainer_request_does_not_broaden_original_validation_parser(tmp_path):
+    module, path, trainer = _trainer_controller_request_case(tmp_path)
+    original = {"schema": "owned-validation-request/v1", "argv": ["unchanged-validation-command"]}
+    _write_json(path, original)
+    assert module.request(path, _sha(path))[0] == original
+    _write_json(path, {**original, "schema": "owned-validation-request/v2"})
+    with pytest.raises(ValueError, match="unsupported validation request"):
+        module.request(path, _sha(path))
+    _write_json(path, trainer)
+    with pytest.raises(ValueError, match="unsupported validation request"):
+        module.request(path, _sha(path))
+    with pytest.raises(ValueError):
+        module._validate_trainer_request({"schema": "owned-validation-request/v1"})
+
+
+def test_trainer_source_guard_requires_public_owner_and_rechecks_owned_source(tmp_path):
+    module, _, value = _trainer_controller_request_case(tmp_path)
+    module._trainer_source_guard(value)
+    owner_source = str(module.ROOT / "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py")
+    assert value["source_sha256"][owner_source] == "0cf17951048015d4ce01817c0bfdd74394a161cd5e7999b01a29f18f358e666a"
+    missing = deepcopy(value)
+    missing["source_sha256"].pop(owner_source)
+    with pytest.raises(ValueError):
+        module._trainer_source_guard(missing)
+    borrowed = deepcopy(value)
+    borrowed["source_sha256"][owner_source] = "0a2ee6f66c0b7613dc4b44966c9b991fbda9faf1fbc7eb3aa00c3ac5be9c8238"
+    with pytest.raises(ValueError, match="different original public trainer backend"):
+        module._trainer_source_guard(borrowed)
+    source = tmp_path / "owned_source_marker.py"
+    source.write_text("value = 1\n")
+    value["source_sha256"][str(source)] = _sha(source)
+    module._trainer_source_guard(value)
+    source.write_text("value = 2\n")
+    with pytest.raises(ValueError, match="source changed"):
+        module._trainer_source_guard(value)
+
+
+def _trainer_ready_case(module):
+    identity = {"pid": 20123, "group_pid": 20123, "birth": "90123"}
+    owner_pid, request_pin = 20122, "c" * 64
+    payload = {"schema": "owned-f18-conditions-training-ready/v1", "identity": deepcopy(identity),
+               "owner_pid": owner_pid, "request_sha256": request_pin, "canonical_root": str(module.ROOT),
+               "network_guard": {"mechanism": "linux_seccomp", "denied_syscalls": [
+                   "socket", "connect", "sendto", "sendmsg", "sendmmsg"], "socket_denial_verified": True}}
+    return payload, dict(identity=identity, owner_pid=owner_pid, request_pin=request_pin)
+
+
+def test_trainer_READY_accepts_only_exact_owner_birth_request_and_bootstrap_evidence():
+    module, _ = _lifecycle_launcher_module()
+    payload, expected = _trainer_ready_case(module)
+    assert module._trainer_ready(payload, **expected) == payload
+
+
+@pytest.mark.parametrize("damage", ["owner_boolean", "group", "birth", "request", "network", "network_boolean"])
+def test_trainer_READY_refuses_foreign_or_malformed_evidence(damage):
+    module, _ = _lifecycle_launcher_module()
+    payload, expected = _trainer_ready_case(module)
+    if damage == "schema": payload["schema"] = "autoencoder-campaign-process-ready-v1"
+    elif damage == "owner_boolean": payload["owner_pid"] = True
+    elif damage == "group": payload["identity"]["group_pid"] += 1
+    elif damage == "birth": payload["identity"]["birth"] += "1"
+    elif damage == "request": payload["request_sha256"] = "0" * 64
+    elif damage == "canonical_root": payload["canonical_root"] = "/different-tree"
+    elif damage == "network": payload["network_guard"] = {}
+    elif damage == "network_boolean": payload["network_guard"]["socket_denial_verified"] = 1
+    elif damage == "extra": payload["admitted"] = True
+    else: payload["identity"]["parent_pid"] = expected["owner_pid"]
+    with pytest.raises(ValueError):
+        module._trainer_ready(payload, **expected)
+
+
+def test_trainer_start_is_once_only_and_durable_journal_detaches_payload(tmp_path):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_daemon_operation_journal import DurableDaemonOperationJournal
+    module, _ = _lifecycle_launcher_module()
+    path = tmp_path / "controller-journal.json"
+    binding = {"schema": "trainer-controller-unit-journal/v1", "request_sha256": "d" * 64}
+    payload = {"request_sha256": "d" * 64, "mode": "native_probe", "owner": {"pid": 101, "birth": "201"}}
+    with DurableDaemonOperationJournal(path, binding) as journal:
+        module._trainer_record_start(journal, payload)
+        saved = journal.get_metadata("start")
+        payload["owner"]["birth"] = "mutated"
+        assert journal.get_metadata("start") == saved and saved["owner"]["birth"] == "201"
+        before = path.read_bytes()
+        with pytest.raises(ValueError, match="recovery|retry"):
+            module._trainer_record_start(journal, saved)
+        assert path.read_bytes() == before
+    with DurableDaemonOperationJournal(path, binding, create=False) as journal:
+        assert journal.get_metadata("start") == saved
+        with pytest.raises(ValueError, match="recovery|retry"):
+            module._trainer_record_start(journal, saved)
+
+
+@pytest.mark.parametrize("prior", ["start", "child", "release_intent", "released", "terminal"])
+def test_trainer_prior_lifecycle_fact_never_authorizes_a_new_start(tmp_path, prior):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_daemon_operation_journal import DurableDaemonOperationJournal
+    module, _ = _lifecycle_launcher_module()
+    path = tmp_path / "controller-journal.json"
+    binding = {"schema": "trainer-controller-unit-journal/v1", "request_sha256": "d" * 64}
+    with DurableDaemonOperationJournal(path, binding) as journal:
+        journal.set_metadata(prior, {"original_fact": True})
+        before = path.read_bytes()
+        with pytest.raises(ValueError, match="recovery|retry|lifecycle"):
+            module._trainer_record_start(journal, {"new_fact": True})
+        assert path.read_bytes() == before and journal.get_metadata(prior) == {"original_fact": True}
+
+
+def test_trainer_journal_request_binding_conflict_keeps_original_bytes(tmp_path):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_daemon_operation_journal import DurableDaemonOperationJournal, DaemonOperationJournalError
+    path = tmp_path / "controller-journal.json"
+    binding = {"schema": "trainer-controller-unit-journal/v1", "request_sha256": "d" * 64}
+    with DurableDaemonOperationJournal(path, binding):
+        pass
+    before = path.read_bytes()
+    with pytest.raises(DaemonOperationJournalError, match="binding differs"):
+        with DurableDaemonOperationJournal(path, {**binding, "request_sha256": "e" * 64}, create=False):
+            raise AssertionError("foreign journal was opened")
+    assert path.read_bytes() == before
+
+
+class _TrainerVirtualPipes:
+    """In-memory FD contract for PURE tests; never opens a kernel pipe."""
+    def __init__(self):
+        self.next_fd = 9000
+        self.handles = {}
+        self.run_writes = []
+
+    def _handle(self, channel, kind):
+        self.next_fd += 1
+        self.handles[self.next_fd] = (channel, kind)
+        channel[kind] += 1
+        return self.next_fd
+
+    def pipe(self):
+        channel = {"data": bytearray(), "read": 0, "write": 0}
+        return self._handle(channel, "read"), self._handle(channel, "write")
+
+    def duplicate(self, fd):
+        channel, kind = self.handles[fd]
+        return self._handle(channel, kind)
+
+    def read(self, fd, size):
+        channel, kind = self.handles[fd]
+        assert kind == "read"
+        if channel["data"]:
+            raw = bytes(channel["data"][:size])
+            del channel["data"][:size]
+            return raw
+        if channel["write"] == 0:
+            return b""
+        raise BlockingIOError()
+
+    def write(self, fd, raw):
+        channel, kind = self.handles[fd]
+        assert kind == "write" and channel["read"] > 0
+        channel["data"].extend(raw)
+        if raw == b"RUN\n": self.run_writes.append(fd)
+        return len(raw)
+
+    def close(self, fd):
+        channel, kind = self.handles.pop(fd)
+        channel[kind] -= 1
+
+
+@pytest.fixture
+def trainer_supervisor_fake(tmp_path, monkeypatch):
+    from types import SimpleNamespace
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_daemon_operation_journal import DurableDaemonOperationJournal
+    module, path, value = _trainer_controller_request_case(tmp_path)
+    for directory in value["outputs"].values(): Path(directory).mkdir(mode=0o700)
+    marker = tmp_path / "owned-controller-source.py"
+    marker.write_text("unchanged = True\n")
+    value["source_sha256"][str(marker)] = _sha(marker)
+    _write_json(path, value)
+    raw, pin = path.read_bytes(), _sha(path)
+    journal = DurableDaemonOperationJournal(Path(value["outputs"]["logs"])/"controller-journal.json",
+        {"schema": "trainer-controller-unit/v1", "request_sha256": pin})
+    state = SimpleNamespace(module=module, path=path, value=value, raw=raw, pin=pin,
+        journal=journal, pipes=_TrainerVirtualPipes(), events=[], clock=100.0, child=None,
+        fail_heartbeat=None, heartbeat_count=0, usage_count=0, timeout_at_usage=False,
+        mutate_at=None, journal_failure=None, bad_ready=None, cleanup_failure=False,
+        residual_group=False, group_available=True, post_release_polls=1, sleep_step=.1,
+        source_marker=marker)
+    class Event:
+        def __init__(self): self.flag = False; self.wait_count = 0
+        def set(self): self.flag = True
+        def is_set(self): return self.flag
+        def wait(self, _seconds):
+            self.wait_count += 1
+            return self.flag or self.wait_count > 1
+    class Thread:
+        def __init__(self, *, target, **_kwargs): self.target=target; self.ident=None
+        def start(self): self.ident=1; self.target()
+        def join(self, timeout): assert timeout > 0
+        def is_alive(self): return False
+    owner_pid = os.getpid()
+    owner_identity = {"pid": owner_pid, "birth": "1001", "parent_pid": os.getppid(), "group_pid": os.getpgrp()}
+    class Owner:
+        reservation_id = "1" * 32
+        cancelled = False
+        def heartbeat(self):
+            state.heartbeat_count += 1
+            return state.heartbeat_count != state.fail_heartbeat
+        def check_usage(self, attempt, child_pid=None):
+            assert attempt == Path(value["attempt_directory"]) and child_pid == 20123
+            assert state.pipes.run_writes == [], "RUN preceded original attachment/census"
+            state.usage_count += 1
+            state.events.append("usage")
+            if state.timeout_at_usage: state.clock += value["timeout_seconds"] + 1
+    class Process:
+        pid = 20123
+        returncode = None
+        live = True
+        def __init__(self, argv, options):
+            self.argv, self.options = argv, options
+            assert journal.get_metadata("start") is not None
+            assert journal.get_metadata("child") is None
+            assert options["start_new_session"] is True and argv[1:3] == ["-I", "-S"]
+            self.release = state.pipes.duplicate(int(argv[argv.index("--release-fd")+1]))
+            self.channel = state.pipes.handles[self.release][0]
+            ready_fd = int(argv[argv.index("--ready-fd")+1])
+            payload = {"schema": "owned-f18-conditions-training-ready/v1",
+                "identity": {"pid": self.pid, "group_pid": self.pid, "birth": "20124"},
+                "owner_pid": owner_pid, "request_sha256": pin, "canonical_root": str(module.ROOT),
+                "network_guard": {"mechanism": "linux_seccomp", "denied_syscalls": [
+                    "socket", "connect", "sendto", "sendmsg", "sendmmsg"], "socket_denial_verified": True}}
+            if state.bad_ready == "request": payload["request_sha256"] = "0" * 64
+            state.pipes.write(ready_fd, json.dumps(payload).encode()+b"\n")
+            state.events.append("spawn")
+            self.released = False
+        def poll(self):
+            if not self.live: return self.returncode
+            if not self.released:
+                try: token=state.pipes.read(self.release, 4)
+                except BlockingIOError: return None
+                if not token: self.live=False; self.returncode=125; return self.returncode
+                assert token == b"RUN\n"
+                assert journal.get_metadata("release_intent") is not None
+                self.released=True
+                state.events.append("after_RUN")
+            if state.post_release_polls:
+                state.post_release_polls -= 1
+                return None
+            self.live=False; self.returncode=0
+            return 0
+        def wait(self, timeout):
+            assert timeout > 0
+            if self.returncode is None:
+                self.poll()
+            assert self.returncode is not None
+            return self.returncode
+    original_close, original_read, original_write, original_blocking = os.close, os.read, os.write, os.set_blocking
+    monkeypatch.setattr(os, "pipe", state.pipes.pipe)
+    monkeypatch.setattr(os, "close", lambda fd: state.pipes.close(fd) if fd in state.pipes.handles else original_close(fd))
+    monkeypatch.setattr(os, "read", lambda fd,n: state.pipes.read(fd,n) if fd in state.pipes.handles else original_read(fd,n))
+    monkeypatch.setattr(os, "write", lambda fd,b: state.pipes.write(fd,b) if fd in state.pipes.handles else original_write(fd,b))
+    monkeypatch.setattr(os, "set_blocking", lambda fd,v: None if fd in state.pipes.handles else original_blocking(fd,v))
+    def popen(argv, **options):
+        state.child=Process(argv, options)
+        return state.child
+    def observed(pid):
+        if pid == owner_pid: return dict(owner_identity)
+        if state.child is not None and pid == state.child.pid and state.child.live:
+            return {"pid":pid,"group_pid":pid,"birth":"20124","parent_pid":owner_pid}
+        return None
+    def group(identity):
+        live = bool(identity and state.child is not None and (state.child.live or state.residual_group))
+        return {"available":state.group_available,"live_processes":int(live),"rss_bytes":128 if live else 0}
+    def stop(child, birth, owner=None):
+        if child is None: return
+        assert birth == "20124"
+        assert child.channel["write"] > 0, "owner FD closed before original cleanup"
+        state.events.append("cleanup")
+        if state.cleanup_failure: raise RuntimeError("unconfirmed owned group")
+        child.live=False
+        if child.returncode is None: child.returncode=-15
+        child.wait(timeout=1)
+        if child.release in state.pipes.handles: state.pipes.close(child.release)
+    original_set = journal.set_metadata
+    def record(key, payload):
+        if state.journal_failure == key: raise OSError("controlled journal failure")
+        original_set(key,payload)
+        state.events.append("journal:"+key)
+        if state.mutate_at == key:
+            if state.mutation == "request": path.write_bytes(raw+b" ")
+            else: marker.write_text("unchanged = False\n")
+    monkeypatch.setattr(journal, "set_metadata", record)
+    monkeypatch.setattr(module, "time", SimpleNamespace(monotonic=lambda:state.clock,
+        sleep=lambda _seconds:setattr(state,"clock",state.clock+state.sleep_step)))
+    import threading
+    monkeypatch.setattr(module, "threading", SimpleNamespace(Event=Event,Thread=Thread,Lock=threading.Lock))
+    monkeypatch.setattr(module, "subprocess", SimpleNamespace(Popen=popen,DEVNULL=subprocess.DEVNULL))
+    monkeypatch.setattr(module, "stop_and_reap", stop)
+    state.owner=Owner()
+    state.host=SimpleNamespace(_process=observed,_group_usage=group)
+    state.run=lambda: module._trainer_supervise(state.owner,journal,value,raw,
+        request_path=path,request_pin=pin,host=state.host)
+    yield state
+    journal.close()
+    state.pipes.handles.clear()
+
+
+def test_trainer_supervision_journals_before_RUN_and_retains_owner_FD_through_reap(trainer_supervisor_fake):
+    case=trainer_supervisor_fake
+    result=case.run()
+    assert result["completed"] is True and result["returncode"] == 0
+    assert all(result["events"].values()) and result["process_cleanup_error"] is None
+    assert result["group_observation"]["live_processes"] == 0
+    assert case.events.index("journal:start") < case.events.index("spawn")
+    assert case.events.index("journal:child") < case.events.index("journal:release_intent") < case.events.index("after_RUN")
+    assert case.events.index("journal:released") < case.events.index("cleanup")
+    assert len(case.pipes.run_writes) == 1 and case.pipes.handles == {}
+    assert result["resource_scope"] == "isolated_process_group"
+    assert all(result[key] is False for key in ("admitted","formalized","promoted"))
+
+
+@pytest.mark.parametrize("mutation", ["request","source"])
+def test_trainer_supervision_drift_at_child_journal_never_releases_RUN(trainer_supervisor_fake, mutation):
+    case=trainer_supervisor_fake;case.mutate_at="child";case.mutation=mutation
+    result=case.run()
+    assert result["completed"] is False and result["events"]["ready_verified"] is True
+    assert result["events"]["barrier_released"] is False and case.pipes.run_writes == []
+    assert case.journal.get_metadata("released") is None
+    assert result["group_observation"]["live_processes"] == 0
+
+
+@pytest.mark.parametrize("boundary", ["start","child","release_intent","released"])
+def test_trainer_supervision_journal_failure_never_becomes_a_retry(trainer_supervisor_fake, boundary):
+    case=trainer_supervisor_fake;case.journal_failure=boundary
+    result=case.run()
+    assert result["completed"] is False and "journal" in result["error"]["error"]
+    assert result["events"]["barrier_released"] is (boundary == "released")
+    if boundary != "start":
+        with pytest.raises(ValueError,match="recovery|retry"):
+            case.module._trainer_record_start(case.journal,{"replacement":True})
+    else:
+        assert case.child is None and case.pipes.run_writes == []
+
+
+def test_trainer_supervision_rechecks_deadline_after_gated_resource_census(trainer_supervisor_fake):
+    case=trainer_supervisor_fake;case.timeout_at_usage=True
+    result=case.run()
+    assert result["completed"] is False and "deadline" in result["error"]["error"]
+    assert not result["events"]["barrier_released"] and case.pipes.run_writes == []
+
+
+@pytest.mark.parametrize("failure_at", [1,2])
+def test_trainer_supervision_lost_native_heartbeat_never_releases_RUN(trainer_supervisor_fake,failure_at):
+    case=trainer_supervisor_fake;case.fail_heartbeat=failure_at
+    result=case.run()
+    assert result["completed"] is False and "lease lost" in result["error"]["error"]
+    assert case.pipes.run_writes == []
+
+
+def test_trainer_supervision_bad_READY_never_reaches_productive_boundary(trainer_supervisor_fake):
+    case=trainer_supervisor_fake;case.bad_ready="request"
+    result=case.run()
+    assert result["completed"] is False and not result["events"]["ready_verified"]
+    assert case.pipes.run_writes == [] and "after_RUN" not in case.events
+
+
+@pytest.mark.parametrize("uncertainty", ["cleanup","live_group","unavailable"])
+def test_trainer_supervision_unknown_cleanup_is_not_success(trainer_supervisor_fake,uncertainty):
+    case=trainer_supervisor_fake
+    if uncertainty == "cleanup": case.cleanup_failure=True
+    elif uncertainty == "live_group": case.residual_group=True
+    else: case.group_available=False
+    result=case.run()
+    assert result["completed"] is False and result["process_cleanup_error"] is not None
+
+
+def _trainer_terminal_case(tmp_path):
+    module,path,value=_trainer_controller_request_case(tmp_path)
+    raw=path.read_bytes();pin=_sha(path);pid=os.getpid();birth="123456"
+    ledger=tmp_path/"ledger.json";ledger.write_text("{}\n")
+    identity={"pid":20123,"group_pid":20123,"birth":"20124"}
+    record={"reservation_id":"1"*32,"status":"released","owner_pid":pid,
+        "scheduler_lane":"hammer_lean","workload":"canonical_trainer",
+        "attempt_directory":{"path":value["attempt_directory"]},
+        "child":{"pid":20123,"birth":"20124"},"prior_children":[],
+        **{k:value[k] for k in ("cpu_slots","memory_mb","storage_bytes","child_process_slots")}}
+    reservation={"reservation_id":record["reservation_id"],"record":record,
+        "resource_lease":{"released":True,"lane":"hammer_lean","owner_pid":pid,"lease_id":"2"*32,"parent_lease_id":None,
+                          **{k:value[k] for k in ("cpu_slots","memory_mb","child_process_slots")}},
+        "scheduler_lane":"hammer_lean","workload":"canonical_trainer","ledger_path":str(ledger),"status":"released"}
+    terminal={"schema":"owned-f18-conditions-training-terminal/v1","request_sha256":pin,
+        "mode":"native_probe","completed":True,"resource_scope":"isolated_process_group",
+        "resource_request_id":"daemon:"+record["reservation_id"],"owner":{"pid":pid,"birth":birth},
+        "owner_open_returned":True,"owner_exit_handling_completed":True,"child_identity":identity,
+        "group_observation":{"available":True,"live_processes":0,"rss_bytes":0},
+        "events":{"child_launch_attempted":True,"child_created":True,"ready_verified":True,
+                  "barrier_release_attempted":True,"barrier_released":True},
+        "process_cleanup_error":None,"owner_exit_error":None,
+        "source_guards":{"request_unchanged":True,"sources_unchanged":True},
+        "scheduler":{"state_path":value["scheduler_state_path"],"policy_sha256":value["expected_scheduler_policy_sha256"],
+                     "lane":"hammer_lean","workload":"canonical_trainer"},
+        "reservation":reservation,"admitted":False,"Lean_admitted":False,"formalized":False,"promoted":False}
+    caller=dict(expected_request_sha256=pin,owner_pid=pid,owner_birth=birth,returncode=0,expected_resource_ledger=str(ledger))
+    return module,terminal,raw,caller
+
+
+def test_trainer_typed_custody_closes_source_without_authorizing_storage_release(tmp_path):
+    module,terminal,raw,caller=_trainer_terminal_case(tmp_path)
+    expected={"verdict":"proven_original_trainer_native_and_source_closed","source_custody_closed":True,"storage_release_authorized":False}
+    assert module.classify_owned_trainer_source_custody(terminal,raw,**caller) == expected
+    terminal["completed"]=False;terminal["reservation"]["status"]="retained";terminal["reservation"]["record"]["status"]="retained"
+    assert module.classify_owned_trainer_source_custody(terminal,raw,**{**caller,"returncode":1}) == expected
+
+
+@pytest.mark.parametrize("damage", ['validation_purpose', 'borrowed_native_parent', 'native_not_released', 'live_group', 'cleanup', 'prior_child', 'unreported_child', 'missing_native', 'native_budget', 'native_boolean', 'boolean_child'])
+def test_trainer_typed_custody_refuses_borrowed_malformed_or_unclosed_evidence(tmp_path,damage):
+    module,t,raw,caller=_trainer_terminal_case(tmp_path);r=t["reservation"];record=r["record"];lease=r["resource_lease"]
+    if damage == "validation_purpose": r["workload"]=record["workload"]="canonical_validation"
+    elif damage == "borrowed_native_parent": lease["parent_lease_id"]="3"*32
+    elif damage == "native_not_released": lease["released"]=False
+    elif damage == "boolean_budget": record["cpu_slots"]=True
+    elif damage == "request": t["request_sha256"]="0"*64
+    elif damage == "owner_birth": t["owner"]["birth"]+="1"
+    elif damage == "source_boolean": t["source_guards"]["sources_unchanged"]=1
+    elif damage == "live_group": t["group_observation"]["live_processes"]=1
+    elif damage == "RSS_boolean": t["group_observation"]["rss_bytes"]=False
+    elif damage == "cleanup": t["process_cleanup_error"]="unconfirmed"
+    elif damage == "owner_exit": t["owner_exit_error"]="unconfirmed"
+    elif damage == "authority": t["admitted"]=True
+    elif damage == "prior_child": record["prior_children"]=[{"pid":40123,"birth":"40124"}]
+    elif damage == "unreported_child": t["child_identity"]=None;record["child"]=None
+    elif damage == "missing_native": r["resource_lease"]=None
+    elif damage == "completed_mismatch": t["completed"]=False
+    elif damage == "native_budget": lease["memory_mb"] += 1
+    elif damage == "native_boolean": lease["cpu_slots"] = True
+    else: t["child_identity"]["pid"] = True; t["child_identity"]["group_pid"] = True; record["child"]["pid"] = True
+    assert module.classify_owned_trainer_source_custody(t,raw,**caller) == {
+        "verdict":"requires_original_trainer_cleanup","source_custody_closed":False,"storage_release_authorized":False}
+
+
+def _trainer_child_fake_bootstrap_case(tmp_path, monkeypatch, *, stop_at_RUN):
+    from types import SimpleNamespace
+    module,path,value=_trainer_controller_request_case(tmp_path,paired=stop_at_RUN)
+    for directory in value["outputs"].values(): Path(directory).mkdir(mode=0o700)
+    events=[]
+    guard={"mechanism":"linux_seccomp","denied_syscalls":["socket","connect","sendto","sendmsg","sendmmsg"],"socket_denial_verified":True}
+    class BeforeRUN(BaseException): pass
+    def wait(fd, *, timeout_seconds, owner_pid):
+        assert fd == 7002 and 0 < timeout_seconds <= value["timeout_seconds"]
+        events.append("wait_RUN")
+        if stop_at_RUN: raise BeforeRUN()
+    bootstrap=SimpleNamespace(_network_denial=lambda pin:events.append("network") or guard,
+        _identity=lambda:{"pid":20123,"group_pid":20123,"birth":"20124"},
+        _send_ready=lambda fd,payload:events.append("ready"),_await_release=wait,
+        _watch_owner=lambda **kwargs:None,
+        _configure_dependency_paths=lambda:(_ for _ in ()).throw(AssertionError("probe imported compute dependencies")))
+    monkeypatch.setattr(module,"_trainer_bootstrap",lambda offered:bootstrap)
+    monkeypatch.setattr(module,"sys",SimpleNamespace(flags=SimpleNamespace(isolated=True,no_site=True),modules={}))
+    monkeypatch.setattr(module,"threading",SimpleNamespace(Thread=lambda **kwargs:SimpleNamespace(start=lambda:events.append("watch"))))
+    genuine_close=os.close
+    monkeypatch.setattr(os,"close",lambda fd:events.append("close_READY") if fd == 7001 else genuine_close(fd))
+    monkeypatch.chdir(module.ROOT)
+    return module,path,value,events,BeforeRUN
+
+
+def test_trainer_child_waits_for_original_RUN_before_reference_access_or_dispatch(tmp_path,monkeypatch):
+    module,path,value,events,BeforeRUN=_trainer_child_fake_bootstrap_case(tmp_path,monkeypatch,stop_at_RUN=True)
+    attempted=_trainer_forbid_reference_bodies(monkeypatch,value)
+    with pytest.raises(BeforeRUN):
+        module._trainer_child_main(path,_sha(path),ready_fd=7001,release_fd=7002,owner_pid=os.getppid())
+    assert events == ["network","ready","close_READY","wait_RUN"]
+    assert attempted == [] and tuple(Path(value["outputs"]["exports"]).iterdir()) == ()
+
+
+def test_trainer_child_native_probe_after_RUN_has_exact_zero_compute_authority(tmp_path,monkeypatch):
+    module,path,value,events,_=_trainer_child_fake_bootstrap_case(tmp_path,monkeypatch,stop_at_RUN=False)
+    assert module._trainer_child_main(path,_sha(path),ready_fd=7001,release_fd=7002,owner_pid=os.getppid()) == 0
+    report=_json(Path(value["outputs"]["exports"])/"trainer-result.json")
+    assert events == ["network","ready","close_READY","wait_RUN","watch"]
+    assert report["mode"] == "native_probe" and report["completed"] is True
+    assert all(report[key] == 0 for key in ("model_constructions","checkpoint_payloads_opened","model_forwards","gradient_calls","optimizer_updates"))
+    assert all(report[key] is False for key in ("admitted","formalized","promoted"))
+
+
+# Separate controlled-OS cohort: never include test_trainer_native_* in PURE.
+_TRAINER_NATIVE_HELPER_CHILD = r'''
+import hashlib,importlib.util,json,os,stat,sys,threading,time
+from pathlib import Path
+bootstrap_path,bootstrap_sha,network_sha,ready_text,release_text,owner_text,marker_text,timeout_text=sys.argv[1:]
+path=Path(bootstrap_path)
+raw=path.read_bytes()
+assert hashlib.sha256(raw).hexdigest()==bootstrap_sha
+spec=importlib.util.spec_from_file_location("original_trainer_helper_under_OS_test",path)
+helper=importlib.util.module_from_spec(spec);spec.loader.exec_module(helper)
+assert Path(helper.__file__).resolve()==path
+assert all(Path(getattr(helper,name).__code__.co_filename).resolve()==path for name in ("_send_ready","_await_release","_watch_owner","_identity"))
+guard=helper._network_denial(network_sha)
+identity=helper._identity();owner=int(owner_text);ready=int(ready_text);release=int(release_text)
+assert identity["pid"]==identity["group_pid"] and os.getppid()==owner
+helper._send_ready(ready,{"schema":"owned-f18-conditions-training-ready/v1","identity":identity,"owner_pid":owner,"request_sha256":bootstrap_sha,"canonical_root":str(helper.ROOT),"network_guard":guard})
+os.close(ready)
+try:
+    helper._await_release(release,timeout_seconds=float(timeout_text),owner_pid=owner)
+except BaseException as error:
+    print(json.dumps({"productive_marker":False,"refusal":str(error)}),flush=True)
+    raise SystemExit(2)
+threading.Thread(target=helper._watch_owner,kwargs={"fd":release,"owner_pid":owner,"group_pid":identity["group_pid"]},daemon=True).start()
+Path(marker_text).write_text("after original RUN\n")
+while True: time.sleep(.05)
+'''
+
+
+def _trainer_native_start(tmp_path):
+    import select
+    module,_=_lifecycle_launcher_module()
+    bootstrap=module.ROOT/"ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_campaign_process_worker.py"
+    network=module.ROOT/"ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_invocation_worker.py"
+    ready_read,ready_write=os.pipe();release_read,release_write=os.pipe()
+    marker=tmp_path/"productive-marker"
+    child=None;identity=None
+    try:
+        child=subprocess.Popen([sys.executable,"-I","-S","-c",_TRAINER_NATIVE_HELPER_CHILD,
+            str(bootstrap),_sha(bootstrap),_sha(network),str(ready_write),str(release_read),str(os.getpid()),str(marker),".35"],
+            stdin=subprocess.DEVNULL,stdout=subprocess.PIPE,stderr=subprocess.PIPE,
+            start_new_session=True,close_fds=True,pass_fds=(ready_write,release_read))
+        observed=native_disk._process(child.pid)
+        assert observed is not None and observed["parent_pid"]==os.getpid() and observed["group_pid"]==child.pid
+        identity={"pid":child.pid,"birth":observed["birth"]}
+        os.close(ready_write);ready_write=None
+        os.close(release_read);release_read=None
+        raw=b"";deadline=time.monotonic()+.8
+        while b"\n" not in raw:
+            remaining=deadline-time.monotonic()
+            assert remaining>0,"original helper did not become READY within declared bound"
+            readable,_,_=select.select([ready_read],[],[],remaining)
+            assert readable
+            piece=os.read(ready_read,8193-len(raw));assert piece
+            raw+=piece;assert len(raw)<=8192
+        assert raw.count(b"\n")==1 and raw.endswith(b"\n")
+        payload=json.loads(raw)
+        module._trainer_ready(payload,identity={"pid":child.pid,"group_pid":child.pid,"birth":identity["birth"]},
+            owner_pid=os.getpid(),request_pin=_sha(bootstrap))
+        assert not marker.exists() and child.poll() is None
+        return dict(child=child,identity=identity,ready_read=ready_read,release_write=release_write,marker=marker)
+    except BaseException:
+        for fd in (ready_read,ready_write,release_read,release_write):
+            if fd is not None:
+                try: os.close(fd)
+                except OSError: pass
+        if child is not None:
+            if identity is not None and native_disk._group_usage(identity)["live_processes"]:
+                os.killpg(child.pid,signal.SIGKILL)
+            child.wait(timeout=.8)
+        raise
+
+
+def _trainer_native_cleanup(case):
+    for field in ("ready_read","release_write"):
+        fd=case.get(field)
+        if fd is not None:
+            os.close(fd);case[field]=None
+    child,identity=case["child"],case["identity"]
+    usage=native_disk._group_usage(identity)
+    if usage["live_processes"]:
+        # Original helper checks the recorded birth before this owned-group signal.
+        again=native_disk._group_usage(identity)
+        if again["live_processes"]: os.killpg(identity["pid"],signal.SIGKILL)
+    child.communicate(timeout=.8)
+    assert native_disk._group_usage(identity)["live_processes"] == 0
+
+
+def test_trainer_native_RUN_gate_and_retained_EOF_stop_only_owned_group(tmp_path):
+    case=_trainer_native_start(tmp_path)
+    try:
+        assert not case["marker"].exists()
+        os.write(case["release_write"],b"RUN\n")
+        _wait_for(case["marker"].exists,"no productive marker after original RUN",timeout=.8)
+        os.close(case["release_write"]);case["release_write"]=None
+        assert case["child"].wait(timeout=.8) != 0
+        assert native_disk._group_usage(case["identity"])["live_processes"] == 0
+    finally:
+        _trainer_native_cleanup(case)
+
+
+
+
+def test_trainer_native_bad_RUN_token_refuses_all_work(tmp_path):
+    case=_trainer_native_start(tmp_path)
+    try:
+        os.write(case["release_write"],b"BAD\n")
+        stdout,_=case["child"].communicate(timeout=.8)
+        assert case["child"].returncode==2 and b"invalid compute release token" in stdout
+        assert not case["marker"].exists()
+    finally:
+        _trainer_native_cleanup(case)
+
+
+def test_trainer_native_release_deadline_refuses_work_without_rearm(tmp_path):
+    case=_trainer_native_start(tmp_path)
+    try:
+        stdout,_=case["child"].communicate(timeout=.8)
+        assert case["child"].returncode==2 and b"compute release deadline expired" in stdout
+        assert not case["marker"].exists()
+    finally:
+        _trainer_native_cleanup(case)
+
+
+def test_trainer_supervision_cancelled_owner_never_spawns_or_releases_RUN(trainer_supervisor_fake):
+    case=trainer_supervisor_fake;case.owner.cancelled=True
+    result=case.run()
+    assert result["completed"] is False and "cancelled" in result["error"]["error"]
+    assert case.child is None and case.pipes.run_writes == []
+    assert case.journal.get_metadata("start") is None

@@ -789,3 +789,321 @@ def test_independent_verifier_rejects_inconsistent_weight_evidence(invocation, t
 def test_describe_rejects_non_object_before_optional_weight_dispatch(query):
     with pytest.raises(c.DaemonInvocationError, match='closed worker query'):
         worker._describe(query, {})
+
+
+# Fixed F18 adapter controls below use only metadata and fake numerical owners.
+# They do not load Torch, retained model/source payloads, or native leases.
+def _f18_compute_fixture():
+    ref = {"path": "/tmp/f18-owned-metadata.json", "bytes": 1, "sha256": "a" * 64}
+    return {name: dict(ref) for name in ("input_descriptors", "initial_parity", "runtime_contract", "population_manifest")} | {
+        "max_steps_per_arm": 32, "max_seconds_per_arm": 32}
+
+
+def test_f18_compute_shape_is_pure_detached_and_has_no_authority(monkeypatch):
+    value = _f18_compute_fixture()
+    monkeypatch.setattr(worker, "_contracts", lambda: pytest.fail("shape validation opened dependencies"))
+    real_path = Path
+    class LexicalPath:
+        def __init__(self, value):
+            self.value = real_path(value)
+        def is_absolute(self):
+            return self.value.is_absolute()
+        @property
+        def parts(self):
+            return self.value.parts
+        def __str__(self):
+            return str(self.value)
+        def __getattr__(self, name):
+            pytest.fail("shape validation accessed filesystem method " + name)
+    monkeypatch.setattr(worker, "Path", LexicalPath)
+    actual = worker.validate_f18_compute(value)
+    assert actual == value and actual is not value
+    actual["input_descriptors"]["bytes"] = 2
+    assert value["input_descriptors"]["bytes"] == 1
+    assert "torch" not in worker.validate_f18_compute.__code__.co_names
+
+
+@pytest.mark.parametrize("bad", ["unknown", "reference_body", "relative", "escape", "alias_spelling", "nul",
+    "bytes_bool", "bytes_zero", "bytes_large", "sha", "ref_extra", "steps_bool", "steps_short", "seconds_float"])
+def test_f18_compute_rejects_nonclosed_or_unbounded_inputs_before_access(monkeypatch, bad):
+    value = _f18_compute_fixture()
+    if bad in {"unknown", "reference_body"}:
+        value[bad] = {"gold": "must never be opened"}
+    elif bad in {"relative", "escape", "alias_spelling", "nul"}:
+        value["initial_parity"]["path"] = {"relative": "relative.json", "escape": "/tmp/../secret.json",
+            "alias_spelling": "/tmp//metadata.json", "nul": "/tmp/invalid\x00.json"}[bad]
+    elif bad.startswith("bytes_"):
+        value["initial_parity"]["bytes"] = {"bytes_bool": True, "bytes_zero": 0, "bytes_large": 131073}[bad]
+    elif bad == "sha":
+        value["initial_parity"]["sha256"] = "A" * 64
+    elif bad == "ref_extra":
+        value["initial_parity"]["reference_body"] = []
+    elif bad == "steps_bool":
+        value["max_steps_per_arm"] = True
+    elif bad == "steps_short":
+        value["max_steps_per_arm"] = 31
+    else:
+        value["max_seconds_per_arm"] = 32.0
+    monkeypatch.setattr(worker, "_contracts", lambda: pytest.fail("invalid shape opened dependencies"))
+    with pytest.raises(ValueError):
+        worker.validate_f18_compute(value)
+
+
+def _f18_source_fixture():
+    owner = SimpleNamespace(_raw=c.canonical, checkpoint_digest=c.digest)
+    panels, index = {}, 0
+    for name, count, _ in worker._F18_PANELS:
+        rows = []
+        for _ in range(count):
+            rows.append({"id": "source-" + str(index), "source_text": "source text " + str(index),
+                         "latent": [0.0 if name in {"fresh_dev", "fresh_test"} else 0.125] * 384})
+            index += 1
+        panels[name] = rows
+    training = [dict(row, labels={"TRAIN_fixture_only": True}) for row in panels["training168"]]
+    donor = {"teacher_training_examples": training, "training_manifest_sha256": c.digest(training)}
+    original = {"schema": "temporal-adapter-source-only-diagnostics-export/v1", "training_rows": training,
+        "training_metadata": [{} for _ in training], "diagnostic_sources": {name: panels[name] for name, _, _ in worker._F18_PANELS[1:8]},
+        "semantic_gold": False}
+    fresh = {"schema": "temporal-attention-fresh-source-export/v1", "populations": {name: panels[name]
+        for name in ("fresh_dev", "fresh_test")}, "semantic_gold": False}
+    population = {"schema": "retained-final-f18-source-only-632-parity-descriptors/v1", "panels": [
+        {"panel": name, "expected_rows": count, "chunk_sizes": list(sizes)} for name, count, sizes in worker._F18_PANELS]}
+    return owner, donor, training, original, fresh, population
+
+
+def test_f18_source_projection_preserves_nonzero_dormant_vectors_and_strips_train_labels():
+    owner, donor, records, original, fresh, population = _f18_source_fixture()
+    raw = {worker._F18_ROLES[2]: c.canonical(original), worker._F18_ROLES[3]: c.canonical(fresh)}
+    panels = worker._f18_source_panels(c, owner, donor, records, raw, population)
+    assert sum(map(len, panels.values())) == 632
+    assert panels["training168"][0]["latent"] == [0.125] * 384
+    assert panels["old_tune"][0]["latent"] == [0.125] * 384
+    assert all(set(row) == {"id", "source_text", "latent"} for rows in panels.values() for row in rows)
+    assert panels["fresh_test"][0]["latent"] == [0.0] * 384
+    assert "labels" in records[0]
+
+
+@pytest.mark.parametrize("bad", ["raw_training", "reference_row", "fresh_nonzero", "bool_vector", "duplicate_source"])
+def test_f18_source_projection_refuses_crossed_training_gold_or_population(bad):
+    owner, donor, records, original, fresh, population = _f18_source_fixture()
+    if bad == "raw_training":
+        original = copy.deepcopy(original)
+        original["training_rows"][0]["source_text"] = "different original bank"
+    elif bad == "reference_row":
+        original["diagnostic_sources"]["law"][0]["canonical_ir"] = {"must_not_reach_decoder": True}
+    elif bad == "fresh_nonzero":
+        fresh["populations"]["fresh_dev"][0]["latent"][0] = 0.125
+    elif bad == "bool_vector":
+        original["diagnostic_sources"]["law"][0]["latent"][0] = False
+    else:
+        fresh["populations"]["fresh_dev"][0]["source_text"] = records[0]["source_text"]
+    raw = {worker._F18_ROLES[2]: c.canonical(original), worker._F18_ROLES[3]: c.canonical(fresh)}
+    with pytest.raises(ValueError):
+        worker._f18_source_panels(c, owner, donor, records, raw, population)
+
+
+class _F18FakeProfile:
+    """Metadata-only owner stub: no tensor, model, optimizer or lease exists."""
+    checkpoint_digest = staticmethod(c.digest)
+
+    def __init__(self, *, steps=32):
+        self.steps, self.events = steps, []
+
+    def build_checkpoint(self, **kwargs):
+        self.events.append(("build", kwargs["margin_weight"], kwargs["state"]))
+        return {"model_state_sha256": "b" * 64, "progress": {"epochs_completed": 0, "row_cursor": 0, "optimizer_steps": 0}}
+
+    def save_checkpoint(self, checkpoint, path, **kwargs):
+        self.events.append(("save", path.name, kwargs["margin_weight"]))
+        return c.write_new(path, checkpoint)
+
+    def load_checkpoint(self, path, *, expected_sha256, **kwargs):
+        self.events.append(("load", kwargs["margin_weight"]))
+        raw = Path(path).read_bytes()
+        assert c.digest(json.loads(raw)) == expected_sha256
+        return json.loads(raw)
+
+    def run_admitted_updates(self, checkpoint, *, torch, max_steps, max_seconds, **kwargs):
+        self.events.append(("run", kwargs["margin_weight"], max_steps, max_seconds))
+        steps = self.steps
+        trained = {"model_state_sha256": "c" * 64, "progress": {"epochs_completed": (steps * 12) // 168,
+            "row_cursor": (steps * 12) % 168, "optimizer_steps": steps}}
+        report = {"optimizer_steps": steps, "batch_trace": [{} for _ in range(steps)], "requested_steps": 32,
+            "before_progress": checkpoint["progress"], "after_progress": trained["progress"],
+            "checkpoint_sha256": c.digest(trained), "all_requested_steps_completed": steps == 32}
+        return trained, report
+
+
+def test_f18_fit_pair_uses_two_fixed_fresh_arms_and_persisted_capture_inputs(tmp_path, monkeypatch):
+    profile = _F18FakeProfile()
+    donor = {"model_state": {"same_donor": True}, "teacher_training": {}, "row_weight_training": {}}
+    captures = []
+    def capture(*args):
+        captures.append((args[5], args[6]["margin_weight"], args[-1].name))
+        return [{"panel": name} for name, _, _ in worker._F18_PANELS]
+    monkeypatch.setattr(worker, "_f18_capture_arm", capture)
+    arms, updates, forwards, complete = worker._f18_fit_pair(c, None, profile, None, object(), donor,
+        [], {}, {}, {}, tmp_path)
+    assert complete is True and updates == 64 and forwards == 1264
+    assert [row["margin_weight"] for row in arms] == [0.0, 0.25]
+    assert [event for event in profile.events if event[0] == "run"] == [("run", 0.0, 32, 32), ("run", 0.25, 32, 32)]
+    assert [event[2] for event in profile.events if event[0] == "build"] == [donor["model_state"], donor["model_state"]]
+    assert [row[1:] for row in captures] == [(0.0, "arm-0"), (0.25, "arm-025")]
+    assert all(c.digest(row[0]) == c.digest(json.loads(Path(arm["checkpoint"]["path"]).read_bytes()))
+               for row, arm in zip(captures, arms, strict=True))
+    assert profile.events.index(("load", 0.0)) < profile.events.index(("build", 0.25, donor["model_state"]))
+
+
+@pytest.mark.parametrize("steps", [0, 3, 31])
+def test_f18_partial_arm_is_saved_without_capture_second_arm_or_retry(tmp_path, monkeypatch, steps):
+    profile = _F18FakeProfile(steps=steps)
+    monkeypatch.setattr(worker, "_f18_capture_arm", lambda *a: pytest.fail("partial arm captured"))
+    arms, updates, captures, complete = worker._f18_fit_pair(c, None, profile, None, object(),
+        {"model_state": {}, "teacher_training": {}, "row_weight_training": {}}, [], {}, {}, {}, tmp_path)
+    assert complete is False and updates == steps and captures == 0 and len(arms) == 1
+    assert Path(arms[0]["checkpoint"]["path"]).is_file() and Path(arms[0]["report"]["path"]).is_file()
+    assert len([event for event in profile.events if event[0] == "run"]) == 1
+    assert not (tmp_path / "arm-025").exists()
+
+
+def test_f18_existing_arm_output_is_never_reused_or_overwritten(tmp_path, monkeypatch):
+    arm = tmp_path / "arm-0"
+    arm.mkdir()
+    prior = arm / "prior.json"
+    prior.write_bytes(b"retain original failure")
+    profile = _F18FakeProfile()
+    with pytest.raises(FileExistsError):
+        worker._f18_fit_pair(c, None, profile, None, object(),
+            {"model_state": {}, "teacher_training": {}, "row_weight_training": {}}, [], {}, {}, {}, tmp_path)
+    assert prior.read_bytes() == b"retain original failure" and profile.events == []
+
+
+def test_f18_parity_gate_binds_original_population_and_donor_before_fit():
+    bindings = {"donor_checkpoint_sha256": "a" * 64, "donor_model_state_sha256": worker._F18_MODEL_ROOT,
+        "training_manifest_sha256": "b" * 64, "prepared_training_records_sha256": "c" * 64}
+    compute = _f18_compute_fixture()
+    descriptors = [{"bytes": 1, "sha256": str(i) * 64} for i in range(6)]
+    population = {"source_inputs": {name: dict(descriptors[i]) for name, i in
+        (("authenticated_final_F18_checkpoint", 0), ("original_source_export", 2), ("fresh_source_export", 3))}}
+    parity = {"evidence_id": "f18-initial632-parity-qualified-20261027-01",
+        "selected_product_source": {"profile_sha256": worker._F18_PROFILE_SHA256},
+        "parity": {"qualified": True, "compared_head_scalars": 194812,
+            "all_heads_binary32_bits_including_signed_zero_equal": True,
+            "complete_original_greedy_formal_decoded_rows_equal": True, "complete_pure_joint_result_records_equal": True},
+        "population": {"total_rows": 632}, "evidence_inputs": {"source_population_manifest": compute["population_manifest"]},
+        "authenticated_roots": {"final_F18_physical_sha256": bindings["donor_checkpoint_sha256"],
+            "all42_model_state_sha256": worker._F18_MODEL_ROOT, "frozen38_sha256_including_modality": worker._F18_FROZEN_ROOT,
+            "raw_TRAIN168_manifest_sha256": bindings["training_manifest_sha256"],
+            "prepared_TRAIN168_records_sha256": bindings["prepared_training_records_sha256"]}}
+    worker._f18_parity(parity, bindings, compute, population, descriptors)
+    changed = copy.deepcopy(population)
+    changed["source_inputs"]["original_source_export"]["sha256"] = "f" * 64
+    with pytest.raises(ValueError, match="source asset identity"):
+        worker._f18_parity(parity, bindings, compute, changed, descriptors)
+    changed = copy.deepcopy(parity)
+    changed["selected_product_source"]["profile_sha256"] = "f" * 64
+    with pytest.raises(ValueError, match="initial632"):
+        worker._f18_parity(changed, bindings, compute, population, descriptors)
+
+
+class _F18FakeCaptureProfile(_F18FakeProfile):
+    def restore_optimizer(self, torch, checkpoint, **kwargs):
+        self.events.append(("capture_restore", kwargs["margin_weight"]))
+        return {"model_forwards": 0}
+
+    def captured_inference(self, runtime, checkpoint, rows, **kwargs):
+        import hashlib
+        self.events.append(("capture", kwargs["margin_weight"], len(rows)))
+        runtime["model_forwards"] += len(rows)
+        return {"actual_source_forwards": len(rows), "extra_capture_forwards": 0,
+            "cumulative_source_forwards": runtime["model_forwards"],
+            "forward_counter_deltas": {"actor": {"source": len(rows)}, "conditions": {"source": len(rows)}},
+            "target_access": False, "teacher_forcing": False,
+            "occurrences": [{"id": row["id"], "source_sha256": hashlib.sha256(row["source_text"].encode()).hexdigest(),
+                "scores": {"synthetic_metadata_only": True}} for row in rows]}
+
+
+def _f18_fake_panels():
+    return {name: [{"id": name + str(i), "source_text": name + " source " + str(i), "latent": []}
+                   for i in range(count)] for name, count, _ in worker._F18_PANELS}
+
+
+def test_f18_capture_uses_one_restore_eleven_chunks_and_complete_twenty_outputs(tmp_path):
+    profile = _F18FakeCaptureProfile()
+    selector = SimpleNamespace(select_joint_spans=lambda text, scores, **kw: {
+        "source": text, "top_k": kw["top_k"], "nodes": kw["max_search_nodes"]})
+    refs = worker._f18_capture_arm(c, None, profile, selector, object(), {},
+        {"margin_weight": 0.25}, _f18_fake_panels(), tmp_path)
+    assert len(refs) == 10 and sum(row["rows"] for row in refs) == 632
+    assert len(list(tmp_path.iterdir())) == 20
+    assert len([row for row in profile.events if row[0] == "capture_restore"]) == 1
+    assert [row[2] for row in profile.events if row[0] == "capture"] == [128, 40, 96, 36, 36, 72, 72, 72, 8, 36, 36]
+    assert all(c.parse_json(c.verify(row["joint"]))["reference_scoring_performed"] is False for row in refs)
+
+
+def _f18_fake_entry(tmp_path, monkeypatch, *, partial=False, drift=False):
+    from contextlib import contextmanager
+    meta = tmp_path / "metadata"
+    meta.mkdir()
+    assets = [{"role": role, **c.write_new(meta / (str(i) + ".json"), {"fixture": i})}
+              for i, role in enumerate(worker._F18_ROLES)]
+    values = {"input_descriptors": {"schema": "retained-f18-input-authentication-descriptors/v1", "assets": assets},
+              "initial_parity": {}, "runtime_contract": {}, "population_manifest": {}}
+    compute = {key: c.write_new(meta / (key + ".json"), value) for key, value in values.items()}
+    compute.update(max_steps_per_arm=32, max_seconds_per_arm=32)
+    output = tmp_path / "exports"
+    output.mkdir()
+    request = {"schema": "owned-f18-conditions-training-request/v1", "mode": "paired_fit", "compute": compute,
+               "outputs": {"exports": str(output)}}
+    profile = _F18FakeCaptureProfile(steps=3 if partial else 32)
+    selector = SimpleNamespace(select_joint_spans=lambda text, scores, **kw: {"source": text, **kw})
+    monkeypatch.setattr(worker, "_f18_owners", lambda request: (None, profile, selector))
+    monkeypatch.setattr(worker, "_f18_authenticate", lambda *args: (
+        {"model_state": {}, "teacher_training": {}, "row_weight_training": {}}, [], {}, {}))
+    monkeypatch.setattr(worker, "_f18_parity", lambda *args: None)
+    monkeypatch.setattr(worker, "_f18_source_panels", lambda *args: _f18_fake_panels())
+    @contextmanager
+    def runtime(*args):
+        yield object(), {"external_process_attempts": [], "scoped_dl_resolver_calls": [], "resolver_restored": True}
+    monkeypatch.setattr(worker, "_f18_runtime", runtime)
+    old_close = worker._f18_close
+    closed = []
+    def closing(caller, opened):
+        closed.append((output / "f18-paired/pair-output-freeze.json").exists())
+        if drift:
+            Path(compute["input_descriptors"]["path"]).write_bytes(b"changed after output freeze")
+        old_close(caller, opened)
+    monkeypatch.setattr(worker, "_f18_close", closing)
+    return request, output, profile, closed
+
+
+def test_f18_fixed_entry_freezes_both_arms_and_closes_inputs_before_completed(tmp_path, monkeypatch):
+    request, output, profile, closed = _f18_fake_entry(tmp_path, monkeypatch)
+    result = worker.run_f18_paired_training(request, output_directory=output)
+    assert result["completed"] is True and result["optimizer_updates"] == 64
+    assert result["model_forwards"] == 1328 and result["capture_source_forwards"] == 1264
+    assert result["fit_fresh4_restore_calls"] == result["capture_fresh4_restore_calls"] == 2
+    assert closed == [True]
+    freeze = c.parse_json(c.verify(result["output_freeze"]))
+    assert freeze["raw_joint_files"] == 40 and freeze["evaluation_gold_reference_or_comparator_bodies_opened"] == 0
+    assert freeze["future_scoring_performed"] is False
+    assert all(result[key] is False for key in worker._F18_FALSE)
+    assert len([event for event in profile.events if event[0] == "capture"]) == 22
+
+
+def test_f18_fixed_entry_returns_saved_partial_without_a_complete_freeze(tmp_path, monkeypatch):
+    request, output, profile, closed = _f18_fake_entry(tmp_path, monkeypatch, partial=True)
+    result = worker.run_f18_paired_training(request, output_directory=output)
+    assert result["completed"] is False and result["optimizer_updates"] == 3
+    assert result["model_forwards"] == 3 and result["capture_source_forwards"] == 0
+    assert result["output_freeze"] is None and closed == [False]
+    assert len([event for event in profile.events if event[0] == "run"]) == 1
+
+
+def test_f18_late_input_drift_refuses_success_after_preserving_frozen_outputs(tmp_path, monkeypatch):
+    request, output, profile, closed = _f18_fake_entry(tmp_path, monkeypatch, drift=True)
+    with pytest.raises(ValueError, match="changed"):
+        worker.run_f18_paired_training(request, output_directory=output)
+    assert closed == [True]
+    assert (output / "f18-paired/pair-output-freeze.json").is_file()
+    assert len([event for event in profile.events if event[0] == "run"]) == 2

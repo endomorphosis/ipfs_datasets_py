@@ -570,3 +570,401 @@ def main(argv=None):
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
+
+# This fixed numerical adapter is called only by the original trainer child
+# after its genuine retained READY/RUN barrier. It creates no grant or process.
+_F18_COMPUTE_FIELDS = frozenset(("input_descriptors", "initial_parity", "runtime_contract",
+                               "population_manifest", "max_steps_per_arm", "max_seconds_per_arm"))
+_F18_PROFILE_SHA256 = "56bd0a248a07de09519f95e5c4bae02ab9d8eb1134b483c257c1f7e7bcb07147"
+_F18_SOURCE_SHA256 = "fb7449d4794ca9a279b2df2ea533b89d360344ff786edc0798395ab799db1823"
+_F18_JOINT_SHA256 = "791c283f625ae7d8841e7afa697b34cbfa5c74361d0c0129b66af31fb5e13679"
+_F18_MODEL_ROOT = "2ed0ccf633f55fac202e2edb95ea9fa6e390b8d99381a05925f4dd5221925883"
+_F18_FROZEN_ROOT = "8562a4a944412a0385b26a88469fd669701573803c0eea3f444190f523414778"
+_F18_ROLES = ("retained_final_F18_donor_checkpoint", "trained_F15_teacher_checkpoint",
+              "original_TRAIN_source_export", "fresh_source_export",
+              "trained_F15_TRAIN168_teacher_capture", "qualified_F18_training_mask_certificate_v02")
+_F18_PANELS = (("training168", 168, (128, 40)), ("old_tune", 96, (96,)),
+               ("fresh_tune", 36, (36,)), ("fresh_challenge", 36, (36,)),
+               ("old_authored_eval", 72, (72,)), ("authored_dev", 72, (72,)),
+               ("authored_eval", 72, (72,)), ("law", 8, (8,)),
+               ("fresh_dev", 36, (36,)), ("fresh_test", 36, (36,)))
+_F18_FALSE = dict(admitted=False, formalized=False, promoted=False,
+                  training_authority_verified=False, semantic_accuracy_qualified=False)
+
+
+def _f18_require(condition, message):
+    if not condition:
+        raise ValueError(message)
+
+
+def validate_f18_compute(value):
+    """Pure lexical envelope validation; no input, numerical or grant access."""
+    _f18_require(type(value) is dict and set(value) == _F18_COMPUTE_FIELDS,
+                 "closed fixed F18 compute fields required")
+    for name in ("input_descriptors", "initial_parity", "runtime_contract", "population_manifest"):
+        ref = value[name]
+        _f18_require(type(ref) is dict and set(ref) == {"path", "bytes", "sha256"},
+                     "closed F18 metadata reference required")
+        path = ref["path"]
+        _f18_require(type(path) is str and 0 < len(path) <= 4096 and "\x00" not in path
+                     and Path(path).is_absolute() and str(Path(path)) == path
+                     and ".." not in Path(path).parts, "literal absolute F18 reference path required")
+        _f18_require(type(ref["bytes"]) is int and 0 < ref["bytes"] <= 128 * 1024
+                     and type(ref["sha256"]) is str and len(ref["sha256"]) == 64
+                     and all(ch in "0123456789abcdef" for ch in ref["sha256"]),
+                     "bounded F18 metadata bytes/SHA256 required")
+    _f18_require(type(value["max_steps_per_arm"]) is int and value["max_steps_per_arm"] == 32
+                 and type(value["max_seconds_per_arm"]) is int and value["max_seconds_per_arm"] == 32,
+                 "fixed32-step/32-second F18 arms required")
+    return {key: dict(item) if type(item) is dict else item for key, item in value.items()}
+
+
+def _f18_identity(path):
+    import stat
+    value = _contracts().safe_path(path).lstat()
+    _f18_require(stat.S_ISREG(value.st_mode) and value.st_nlink == 1,
+                 "F18 input must be an unaliased regular file")
+    return (value.st_dev, value.st_ino, value.st_size, value.st_mtime_ns, value.st_ctime_ns)
+
+
+def _f18_open(c, reference, limit, opened):
+    before = _f18_identity(reference["path"])
+    raw = c.verify(reference, limit)
+    _f18_require(_f18_identity(reference["path"]) == before, "F18 input changed at opening fence")
+    opened.append((dict(reference), before, limit))
+    return raw
+
+
+def _f18_close(c, opened):
+    for reference, identity, limit in opened:
+        _f18_require(_f18_identity(reference["path"]) == identity, "F18 input changed before closing fence")
+        c.verify(reference, limit)
+        _f18_require(_f18_identity(reference["path"]) == identity, "F18 input changed at closing fence")
+
+
+def _f18_owners(request):
+    import hashlib
+    from . import legal_span_modality_conditions_retention as f18
+    from . import legal_span_conditions_fullspan_training_v1 as profile
+    from ...logic.legal_ir import joint_span_selection as joint
+    root = Path(request["cwd"])
+    for module, expected in ((profile, _F18_PROFILE_SHA256), (f18, _F18_SOURCE_SHA256),
+                             (joint, _F18_JOINT_SHA256)):
+        path = Path(module.__file__).resolve()
+        _f18_require(path.is_relative_to(root) and hashlib.sha256(path.read_bytes()).hexdigest() == expected,
+                     "qualified F18 numerical source generation differs")
+    profile._reuse_owners()
+    return f18, profile, joint
+
+
+def _f18_authenticate(c, f18, profile, manifest, raw, descriptors):
+    donor = f18.load_checkpoint(descriptors[0]["path"], expected_sha256=descriptors[0]["sha256"])
+    _f18_require(donor["progress"]["optimizer_steps"] == 32, "final trained F18 donor required")
+    teacher = c.parse_json(raw[_F18_ROLES[1]])
+    _f18_require(f18._raw(teacher) == f18._raw(donor["source_actor_refinement_checkpoint"])
+                 and f18.checkpoint_digest(teacher) == f18.SOURCE_ACTOR_REFINEMENT_SHA256
+                 and f18.checkpoint_digest(teacher["model_state"]) == f18.SOURCE_ACTOR_REFINEMENT_MODEL_SHA256,
+                 "external/nested F15 teacher differs")
+    _f18_require(raw[_F18_ROLES[4]] == donor["teacher_capture_utf8"].encode(),
+                 "external/nested TRAIN-only F15 capture differs")
+    certificate = c.parse_json(raw[_F18_ROLES[5]])
+    _f18_require(f18._raw(certificate) == f18._raw(donor["training_mask_certificate"])
+                 and f18.checkpoint_digest(certificate) == donor["training_mask_certificate_sha256"],
+                 "external/nested training mask differs")
+    training, expected = donor["teacher_training_examples"], manifest["population_roots"]
+    _f18_require(type(training) is list and len(training) == 168
+                 and f18.checkpoint_digest(training) == donor["training_manifest_sha256"] == expected["training_manifest_sha256"]
+                 and f18.checkpoint_digest(training[:96]) == expected["legacy_prefix_sha256"],
+                 "original TRAIN168/legacy96 manifest differs")
+    records = f18._training_records(training)
+    present = [i for i, row in enumerate(records) if row["labels"]["presence"][3] is True]
+    _f18_require(len(records) == 168 and len(present) == 72
+                 and sum(row["labels"]["presence"][3] is False for row in records) == 96,
+                 "typed mixed TRAIN72/96 population differs")
+    for key, value in expected["aggregate_roots"].items():
+        _f18_require(donor["training_mask_certificate"]["targets"][key] == value,
+                     "source/teacher/mask aggregate differs")
+    _f18_require(donor["teacher_training"]["rows_sha256"] == expected["teacher_rows_sha256"],
+                 "teacher row root differs")
+    keys = ("hidden_size", "embedding_dim", "projection_width", "latent_dimension", "latent_enabled",
+            "residual_scale", "seed", "batch_size", "learning_rate")
+    provenance = profile.donor_provenance(donor["model_state"], config={key: donor["config"][key] for key in keys},
+        gold_present_train_indices=present, gold_present_row_ids=[records[i]["id"] for i in present])
+    _f18_require(f18.checkpoint_digest(donor["model_state"]) == _F18_MODEL_ROOT
+                 and profile.frozen38_seal(donor["model_state"]) == _F18_FROZEN_ROOT,
+                 "authenticated final F18 all42/frozen38 roots differ")
+    bindings = {"schema": profile.BINDINGS_SCHEMA, "donor_checkpoint_sha256": descriptors[0]["sha256"],
+        "donor_model_state_sha256": _F18_MODEL_ROOT, "donor_provenance_sha256": f18.checkpoint_digest(provenance),
+        "source_parent_checkpoint_sha256": donor["source_parent_checkpoint_sha256"],
+        "source_parent_model_state_sha256": donor["source_parent_model_state_sha256"],
+        "context_contract_sha256": donor["context_contract_sha256"],
+        "training_manifest_sha256": donor["training_manifest_sha256"],
+        "prepared_training_records_sha256": f18.checkpoint_digest(records),
+        "teacher_checkpoint_sha256": f18.SOURCE_ACTOR_REFINEMENT_SHA256,
+        "teacher_model_state_sha256": f18.SOURCE_ACTOR_REFINEMENT_MODEL_SHA256,
+        "teacher_capture_sha256": f18.TEACHER_CAPTURE_SHA256,
+        "teacher_training_sha256": f18.checkpoint_digest(donor["teacher_training"]),
+        "row_weight_training_sha256": f18.checkpoint_digest(donor["row_weight_training"]),
+        "training_mask_certificate_sha256": f18.checkpoint_digest(certificate)}
+    _f18_require(set(bindings) == profile.BINDING_FIELDS and len(bindings) == 15,
+                 "exact15 independent F18 bindings required")
+    return donor, records, provenance, bindings
+
+
+def _f18_source_panels(c, f18, donor, records, raw, population):
+    import math
+    original, fresh = (c.parse_json(raw[_F18_ROLES[index]]) for index in (2, 3))
+    _f18_require(type(original) is dict and set(original) == {
+        "schema", "training_rows", "training_metadata", "diagnostic_sources", "semantic_gold"}
+        and original["schema"] == "temporal-adapter-source-only-diagnostics-export/v1"
+        and original["semantic_gold"] is False, "closed original source export required")
+    _f18_require(type(original["training_rows"]) is list and type(original["training_metadata"]) is list
+        and len(original["training_rows"]) == len(original["training_metadata"]) == 168
+        and f18._raw(original["training_rows"]) == f18._raw(donor["teacher_training_examples"])
+        and f18.checkpoint_digest(original["training_rows"]) == donor["training_manifest_sha256"],
+        "original source-export raw TRAIN168 join differs")
+    old_names = {name for name, _, _ in _F18_PANELS[1:8]}
+    _f18_require(type(original["diagnostic_sources"]) is dict and set(original["diagnostic_sources"]) == old_names,
+                 "exact seven original source panels required")
+    _f18_require(type(fresh) is dict and set(fresh) == {"schema", "populations", "semantic_gold"}
+        and fresh["schema"] == "temporal-attention-fresh-source-export/v1" and fresh["semantic_gold"] is False
+        and type(fresh["populations"]) is dict and set(fresh["populations"]) == {"fresh_dev", "fresh_test"},
+        "closed fresh source export required")
+    _f18_require(population.get("schema") == "retained-final-f18-source-only-632-parity-descriptors/v1"
+        and [(row["panel"], row["expected_rows"], tuple(row["chunk_sizes"])) for row in population["panels"]]
+        == list(_F18_PANELS), "qualified632 population roster differs")
+    result, ids, texts = {}, set(), set()
+    for name, count, _ in _F18_PANELS:
+        offered = records if name == "training168" else (fresh["populations"][name]
+            if name in {"fresh_dev", "fresh_test"} else original["diagnostic_sources"][name])
+        _f18_require(type(offered) is list and len(offered) == count, "complete original panel count differs")
+        if name != "training168":
+            _f18_require(all(type(row) is dict and set(row) == {"id", "source_text", "latent"} for row in offered),
+                         "reference/gold fields forbidden in source-only rows")
+        rows = [{key: row[key] for key in ("id", "source_text", "latent")} for row in offered]
+        for row in rows:
+            _f18_require(type(row["id"]) is str and row["id"].strip() and type(row["source_text"]) is str
+                and 0 < len(row["source_text"].strip()) <= 16384 and row["id"] not in ids
+                and row["source_text"] not in texts, "unique bounded original source identity required")
+            _f18_require(type(row["latent"]) is list and len(row["latent"]) == 384
+                and all(type(v) in (int, float) and math.isfinite(v) for v in row["latent"]),
+                "finite original dormant384 vectors required")
+            if name in {"fresh_dev", "fresh_test"}:
+                _f18_require(all(v == 0.0 for v in row["latent"]), "fresh-only zero384 vectors required")
+            ids.add(row["id"]); texts.add(row["source_text"])
+        result[name] = rows
+    _f18_require(len(ids) == len(texts) == 632, "exact distinct632 source population required")
+    return result
+
+
+def _f18_parity(parity, bindings, compute, population, descriptors):
+    _f18_require(type(parity) is dict
+        and parity.get("evidence_id") == "f18-initial632-parity-qualified-20261027-01"
+        and parity["selected_product_source"]["profile_sha256"] == _F18_PROFILE_SHA256
+        and parity["parity"]["qualified"] is True
+        and parity["parity"]["compared_head_scalars"] == 194812
+        and parity["parity"]["all_heads_binary32_bits_including_signed_zero_equal"] is True
+        and parity["parity"]["complete_original_greedy_formal_decoded_rows_equal"] is True
+        and parity["parity"]["complete_pure_joint_result_records_equal"] is True
+        and parity["population"]["total_rows"] == 632,
+        "closed current-source initial632 parity evidence required")
+    _f18_require(parity["evidence_inputs"]["source_population_manifest"]["sha256"]
+        == compute["population_manifest"]["sha256"], "initial632 source population commitment differs")
+    for name, index in (("authenticated_final_F18_checkpoint", 0), ("original_source_export", 2), ("fresh_source_export", 3)):
+        _f18_require(all(population["source_inputs"][name][key] == descriptors[index][key]
+                         for key in ("bytes", "sha256")), "original632 source asset identity differs")
+    roots = parity["authenticated_roots"]
+    _f18_require(roots["final_F18_physical_sha256"] == bindings["donor_checkpoint_sha256"]
+        and roots["all42_model_state_sha256"] == bindings["donor_model_state_sha256"] == _F18_MODEL_ROOT
+        and roots["frozen38_sha256_including_modality"] == _F18_FROZEN_ROOT
+        and roots["raw_TRAIN168_manifest_sha256"] == bindings["training_manifest_sha256"]
+        and roots["prepared_TRAIN168_records_sha256"] == bindings["prepared_training_records_sha256"],
+        "initial632 donor/source roots differ from freshly authenticated inputs")
+
+
+from contextlib import contextmanager as _f18_contextmanager
+
+
+@_f18_contextmanager
+def _f18_runtime(c, runtime, opened, request):
+    import hashlib
+    import subprocess
+    _f18_require(type(runtime) is dict and set(runtime) == {"schema", "requested_library", "ctypes_util_pin",
+        "cuda_pathfinder_pin", "library_pin", "subprocess_fallback_allowed", "unlisted_library_names_allowed"}
+        and runtime["schema"] == "pinned-libdl-resolution/v1" and runtime["requested_library"] == "dl"
+        and runtime["subprocess_fallback_allowed"] is False and runtime["unlisted_library_names_allowed"] is False,
+        "closed original libdl runtime contract required")
+    for name in ("ctypes_util_pin", "cuda_pathfinder_pin", "library_pin"):
+        _f18_open(c, runtime[name], 128 * 1024, opened)
+    _f18_require(Path(ctypes.util.__file__).resolve() == Path(runtime["ctypes_util_pin"]["path"]),
+                 "real stdlib ctypes.util origin differs")
+    observations = {"external_process_attempts": [], "scoped_dl_resolver_calls": [], "resolver_restored": False}
+    original_popen, original_resolver = subprocess.Popen, ctypes.util.find_library
+    class RefusedPopen(original_popen):
+        def __init__(self, argv, *args, **kwargs):
+            observations["external_process_attempts"].append(repr(argv))
+            raise RuntimeError("external subprocess outside fixed F18 numerical worker")
+    def find_dl(name):
+        observations["scoped_dl_resolver_calls"].append(name)
+        _f18_require(type(name) is str and name == "dl", "unlisted runtime library lookup")
+        return runtime["library_pin"]["path"]
+    subprocess.Popen = RefusedPopen
+    ctypes.util.find_library = find_dl
+    try:
+        try:
+            import torch
+        finally:
+            ctypes.util.find_library = original_resolver
+            observations["resolver_restored"] = True
+        path = Path(torch.__file__).resolve()
+        _f18_require(request["source_sha256"].get(str(path)) == hashlib.sha256(path.read_bytes()).hexdigest(),
+                     "actual Torch source origin not pinned by original request")
+        torch.set_num_threads(1)
+        torch.set_num_interop_threads(1)
+        yield torch, observations
+        _f18_require(not observations["external_process_attempts"]
+                     and all(name == "dl" for name in observations["scoped_dl_resolver_calls"]),
+                     "numerical runtime scope changed")
+    finally:
+        ctypes.util.find_library = original_resolver
+        subprocess.Popen = original_popen
+
+
+def _f18_capture_arm(c, f18, profile, joint, torch, checkpoint, kwargs, panels, directory):
+    import hashlib
+    runtime = profile.restore_optimizer(torch, checkpoint, **kwargs)
+    outputs, total = [], 0
+    for name, count, sizes in _F18_PANELS:
+        rows, chunks, cursor = panels[name], [], 0
+        for size in sizes:
+            chunk = profile.captured_inference(runtime, checkpoint, rows[cursor:cursor + size], **kwargs)
+            total += size
+            _f18_require(chunk["actual_source_forwards"] == size and chunk["extra_capture_forwards"] == 0
+                and chunk["cumulative_source_forwards"] == total
+                and all(type(v) is int and v == size for table in chunk["forward_counter_deltas"].values() for v in table.values())
+                and chunk["target_access"] is False and chunk["teacher_forcing"] is False,
+                "canonical trained capture accounting differs")
+            chunks.append(chunk); cursor += size
+        _f18_require(cursor == count, "complete trained source panel required")
+        raw = c.write_new(directory / (name + "-raw.json"), {"schema": "f18-paired-target-free-panel/v1",
+            "panel": name, "rows": count, "chunks": chunks, "source_model_forwards": count,
+            "target_access": False, "teacher_forcing": False, **_F18_FALSE}, 32 * 1024 * 1024)
+        occurrences = [row for chunk in chunks for row in chunk["occurrences"]]
+        _f18_require(len(occurrences) == count, "complete trained occurrences required")
+        selected = []
+        for row, occurrence in zip(rows, occurrences, strict=True):
+            _f18_require(row["id"] == occurrence["id"] and occurrence["source_sha256"]
+                == hashlib.sha256(row["source_text"].encode()).hexdigest(), "trained capture source join differs")
+            selected.append({"id": row["id"], "result": joint.select_joint_spans(row["source_text"],
+                occurrence["scores"], top_k=8, max_search_nodes=50000)})
+        chosen = c.write_new(directory / (name + "-joint.json"), {"schema": "modality-conditions-retention-joint-panel/v1",
+            "rows": selected, "top_k": 8, "max_search_nodes": 50000, "reference_scoring_performed": False,
+            **_F18_FALSE}, 32 * 1024 * 1024)
+        outputs.append({"panel": name, "rows": count, "raw": raw, "joint": chosen})
+    _f18_require(total == runtime["model_forwards"] == 632, "exact trained632 native source count required")
+    return outputs
+
+
+def _f18_fit_pair(c, f18, profile, joint, torch, donor, records, provenance, bindings, panels, directory):
+    results, updates, captures = [], 0, 0
+    base = dict(state=donor["model_state"], provenance=provenance, records=records,
+                teacher=donor["teacher_training"], weights=donor["row_weight_training"], expected_bindings=bindings)
+    for label, margin in (("arm-0", 0.0), ("arm-025", 0.25)):
+        arm = directory / label
+        arm.mkdir(mode=0o700)
+        kwargs = {**base, "margin_weight": margin}
+        initial = profile.build_checkpoint(**kwargs)
+        initial_ref = profile.save_checkpoint(initial, arm / "initial-checkpoint.json", **kwargs)
+        trained, report = profile.run_admitted_updates(initial, torch=torch, **kwargs, max_steps=32, max_seconds=32)
+        checkpoint_ref = profile.save_checkpoint(trained, arm / "checkpoint.json", **kwargs)
+        report_ref = c.write_new(arm / "training-report.json", report, 32 * 1024 * 1024)
+        steps = report["optimizer_steps"]
+        _f18_require(type(steps) is int and 0 <= steps <= 32 and len(report["batch_trace"]) == steps
+            and report["requested_steps"] == 32 and report["before_progress"] == initial["progress"]
+            and report["after_progress"] == trained["progress"]
+            and report["checkpoint_sha256"] == profile.checkpoint_digest(trained)
+            and type(report["all_requested_steps_completed"]) is bool
+            and report["all_requested_steps_completed"] is (steps == 32), "finite32 training report differs")
+        updates += steps
+        row = {"arm": label, "margin_weight": margin, "initial_checkpoint": initial_ref,
+               "checkpoint": checkpoint_ref, "report": report_ref, "optimizer_updates": steps,
+               "model_state_sha256": trained["model_state_sha256"], "progress": dict(trained["progress"])}
+        results.append(row)
+        if steps != 32:
+            return results, updates, captures, False
+        _f18_require(trained["progress"] == {"epochs_completed": 2, "row_cursor": 48, "optimizer_steps": 32},
+                     "exact32 mixed168 schedule progress required")
+        persisted = profile.load_checkpoint(checkpoint_ref["path"], expected_sha256=checkpoint_ref["sha256"], **kwargs)
+        _f18_require(profile.checkpoint_digest(persisted) == profile.checkpoint_digest(trained),
+                     "trained checkpoint readback differs")
+        row["captures"] = _f18_capture_arm(c, f18, profile, joint, torch, persisted, kwargs, panels, arm)
+        captures += 632
+    return results, updates, captures, True
+
+
+def run_f18_paired_training(request, *, output_directory):
+    """Fixed0/.25 numerical work under caller-owned original trainer custody.
+
+    Called only after the genuine parent READY/RUN boundary. This function does
+    not inspect a bool/token as a grant, schedule a process, claim a lease, score
+    cases or change authority flags. All four metadata refs and six payloads
+    are opened here, never by the pre-release CLI shape parser.
+    """
+    import hashlib
+    _f18_require(type(request) is dict and request.get("schema") == "owned-f18-conditions-training-request/v1"
+        and request.get("mode") == "paired_fit", "fixed paired-fit trainer request required")
+    compute = validate_f18_compute(request.get("compute"))
+    c, opened = _contracts(), []
+    output = c.safe_path(output_directory)
+    _f18_require(output.is_dir() and output == Path(request["outputs"]["exports"]), "original owned exports required")
+    directory = output / "f18-paired"
+    directory.mkdir(mode=0o700)
+    metadata = {name: c.parse_json(_f18_open(c, compute[name], 128 * 1024, opened)) for name in
+                ("input_descriptors", "initial_parity", "runtime_contract", "population_manifest")}
+    manifest = metadata["input_descriptors"]
+    _f18_require(type(manifest) is dict and manifest.get("schema") == "retained-f18-input-authentication-descriptors/v1"
+        and type(manifest.get("assets")) is list and len(manifest["assets"]) == 6
+        and tuple(row.get("role") for row in manifest["assets"]) == _F18_ROLES,
+        "exact six original F18 authentication roles required")
+    descriptors, raw = manifest["assets"], {}
+    for row in descriptors:
+        _f18_require(type(row) is dict and set(row) == {"path", "bytes", "sha256", "role"},
+                     "closed original F18 asset descriptor required")
+        ref = {key: row[key] for key in ("path", "bytes", "sha256")}
+        raw[row["role"]] = _f18_open(c, ref, 32 * 1024 * 1024, opened)
+    _f18_require(len({row["path"] for row in descriptors}) == 6, "six distinct original F18 assets required")
+    f18, profile, joint = _f18_owners(request)
+    started = time.monotonic()
+    with _f18_runtime(c, metadata["runtime_contract"], opened, request) as (torch, runtime_observations):
+        donor, records, provenance, bindings = _f18_authenticate(c, f18, profile, manifest, raw, descriptors)
+        _f18_parity(metadata["initial_parity"], bindings, compute, metadata["population_manifest"], descriptors)
+        panels = _f18_source_panels(c, f18, donor, records, raw, metadata["population_manifest"])
+        arms, updates, captures, complete = _f18_fit_pair(c, f18, profile, joint, torch, donor, records,
+                                                        provenance, bindings, panels, directory)
+        freeze = None
+        if complete:
+            _f18_require(updates == 64 and captures == 1264 and len(arms) == 2
+                and sum(len(row["captures"]) * 2 for row in arms) == 40, "complete finite pair required")
+            freeze = c.write_new(directory / "pair-output-freeze.json", {
+                "schema": "f18-paired-training-output-freeze/v1", "profile_sha256": _F18_PROFILE_SHA256,
+                "input_metadata": {key: compute[key] for key in
+                    ("input_descriptors", "initial_parity", "runtime_contract", "population_manifest")},
+                "donor_model_state_sha256": _F18_MODEL_ROOT, "frozen38_sha256": _F18_FROZEN_ROOT,
+                "input_bindings": bindings, "arms": arms, "optimizer_updates": updates,
+                "source_capture_forwards": captures, "raw_joint_files": 40,
+                "evaluation_gold_reference_or_comparator_bodies_opened": 0,
+                "future_scoring_performed": False, **_F18_FALSE}, 4 * 1024 * 1024)
+        _f18_close(c, opened)
+    return {"schema": "f18-paired-conditions-training-result/v1", "completed": complete,
+        "profile_source_sha256": _F18_PROFILE_SHA256, "optimizer_updates": updates,
+        "model_forwards": updates + captures, "training_model_forwards": updates,
+        "capture_source_forwards": captures, "model_forward_scope": "one batch call per update plus one source call per capture",
+        "legacy6_donor_restore_calls": 1, "fit_fresh4_restore_calls": len(arms) if all(row["optimizer_updates"] > 0 for row in arms) else None,
+        "fit_fresh4_restore_calls_upper_bound": len(arms),
+        "capture_fresh4_restore_calls": sum("captures" in row for row in arms),
+        "teacher_model_restores": 0, "teacher_model_forwards": 0,
+        "arms": arms, "output_freeze": freeze, "input_bindings": bindings,
+        "runtime_observations": runtime_observations, "elapsed_seconds": time.monotonic() - started,
+        "training_executed": bool(updates), "scoring_performed": False,
+        "native_or_source_cleanup_asserted_by_worker": False, **_F18_FALSE}
