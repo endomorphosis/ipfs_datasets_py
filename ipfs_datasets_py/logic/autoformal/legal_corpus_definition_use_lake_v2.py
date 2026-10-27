@@ -1868,6 +1868,95 @@ def _parent_norm_operation(original, offered=None, expected_preparation_sha256=N
                               final_storage, fence), primary)
 
 
+# Repeated parent-norm validation replays the same correspondence. The key is
+# the full input tree plus preparation pin, so a changed witness misses.
+_PARENT_NORM_VALIDATE_CACHE = {}
+_PARENT_NORM_VALIDATE_CACHE_MAX = 4
+
+
+def _parent_norm_tree_digest(value):
+    digest = hashlib.sha256()
+
+    def visit(item):
+        kind = type(item)
+        if kind is dict:
+            digest.update(b"d")
+            digest.update(str(len(item)).encode())
+            for key in sorted(item):
+                if type(key) is not str or visit(key) is False or visit(item[key]) is False:
+                    return False
+        elif kind is list or kind is tuple:
+            digest.update(b"l" if kind is list else b"t")
+            digest.update(str(len(item)).encode())
+            for child in item:
+                if visit(child) is False:
+                    return False
+        elif kind is str:
+            raw = item.encode()
+            digest.update(b"s")
+            digest.update(str(len(raw)).encode())
+            digest.update(raw)
+        elif kind is bytes:
+            digest.update(b"b")
+            digest.update(str(len(item)).encode())
+            digest.update(item)
+        elif kind is bool:
+            digest.update(b"t" if item else b"f")
+        elif kind is int:
+            digest.update(b"i")
+            digest.update(str(item).encode())
+        elif item is None:
+            digest.update(b"n")
+        elif kind is float:
+            if not math.isfinite(item):
+                return False
+            digest.update(b"r")
+            digest.update(repr(item).encode())
+        else:
+            return False
+        return True
+
+    if visit(value) is False:
+        return None
+    return digest.digest()
+
+
+def _parent_norm_validate_cache_key(preparation_sha, expected_preparation_sha256,
+                                    expected_correspondence_sha256, correspondence,
+                                    correspondence_inputs, toolchain):
+    left = _parent_norm_tree_digest(correspondence)
+    right = _parent_norm_tree_digest(correspondence_inputs)
+    if left is None or right is None or type(toolchain) is not str:
+        return None
+    digest = hashlib.sha256()
+    digest.update(preparation_sha.encode())
+    digest.update(expected_preparation_sha256.encode())
+    digest.update(expected_correspondence_sha256.encode())
+    digest.update(toolchain.encode())
+    digest.update(left)
+    digest.update(right)
+    digest.update(Path(__file__).read_bytes())
+    for module in _owners():
+        digest.update(Path(module.__file__).read_bytes())
+    return digest.digest()
+
+
+def _parent_norm_cache_get(key):
+    cached = _PARENT_NORM_VALIDATE_CACHE.get(key)
+    if cached is None:
+        return None
+    _PARENT_NORM_VALIDATE_CACHE.pop(key)
+    _PARENT_NORM_VALIDATE_CACHE[key] = cached
+    return cached
+
+
+def _parent_norm_cache_put(key, preparation):
+    _PARENT_NORM_VALIDATE_CACHE.pop(key, None)
+    _PARENT_NORM_VALIDATE_CACHE[key] = preparation
+    while len(_PARENT_NORM_VALIDATE_CACHE) > _PARENT_NORM_VALIDATE_CACHE_MAX:
+        _PARENT_NORM_VALIDATE_CACHE.pop(next(iter(_PARENT_NORM_VALIDATE_CACHE)))
+
+
 def prepare_parent_norm_corpus_v1(correspondence, *, expected_correspondence_sha256,
                                   correspondence_inputs, toolchain):
     """Prepare one complete authored norm project with original parent custody.
@@ -1883,9 +1972,20 @@ def prepare_parent_norm_corpus_v1(correspondence, *, expected_correspondence_sha
 def validate_parent_norm_corpus_v1(preparation, correspondence, *, expected_preparation_sha256,
         expected_correspondence_sha256, correspondence_inputs, toolchain):
     """Regenerate the complete explicit parent norm project from original inputs."""
+    preparation_sha = parent_norm_preparation_sha256(preparation)
+    cache_key = _parent_norm_validate_cache_key(
+        preparation_sha, expected_preparation_sha256, expected_correspondence_sha256,
+        correspondence, correspondence_inputs, toolchain)
+    if cache_key is not None:
+        cached = _parent_norm_cache_get(cache_key)
+        if cached is not None:
+            return cached
     original = dict(correspondence=correspondence, expected_correspondence_sha256=expected_correspondence_sha256,
                     correspondence_inputs=correspondence_inputs, toolchain=toolchain)
-    return _parent_norm_operation(original, preparation, expected_preparation_sha256)
+    result = _parent_norm_operation(original, preparation, expected_preparation_sha256)
+    if cache_key is not None:
+        _parent_norm_cache_put(cache_key, result)
+    return result
 
 
 __all__ += ["PARENT_NORM_SCHEMA", "PARENT_NORM_PROFILE", "PARENT_NORM_FALSE_FLAGS",

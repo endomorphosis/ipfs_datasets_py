@@ -1074,3 +1074,82 @@ def test_parent_norm_index_mutating_returned_dict_does_not_change_projection(
     with pytest.raises((AttributeError, TypeError)):
         parent_index_projection.projection_json = "{}"
 
+
+def _compatibility_raw(candidates):
+    return canonical({"schema": packet_owner.LEAN_COMPATIBILITY_REQUEST_SCHEMA, "candidates": candidates})
+
+
+def _compatibility_candidates():
+    return json.loads(packet_owner.retained_lean_compatibility_request_bytes().decode())["candidates"]
+
+
+def test_compatibility_index_projects_stable_key_without_store_or_compiler(monkeypatch):
+    def refuse(*args, **kwargs):
+        raise AssertionError("store or compiler invoked")
+    monkeypatch.setattr(subprocess, "run", refuse)
+    monkeypatch.setattr(subprocess, "Popen", refuse)
+    monkeypatch.setattr(DuckDBProofStore, "__init__", refuse)
+    monkeypatch.setattr(owner, "_owners", refuse)
+    raw = packet_owner.retained_lean_compatibility_request_bytes()
+    projection = owner.project_lean_compatibility_index_v1(raw, expected_request_sha256=sha(raw))
+    assert projection["schema"] == owner.LEAN_COMPATIBILITY_INDEX_SCHEMA
+    assert projection["profile"] == owner.LEAN_COMPATIBILITY_INDEX_PROFILE
+    assert projection["profile"] != packet_owner.PROFILE
+    assert projection["store_opened"] is False and projection["compiler_invoked"] is False
+    assert projection["lean_admitted"] is False and projection["legal_admitted"] is False
+    assert projection["admitted"] is False and projection["formalized"] is False
+    assert projection["routes"] == list(packet_owner.LEAN_COMPATIBILITY_ROUTES)
+    assert all(question["status"] == "unanswered" for question in projection["unresolved_questions"])
+    assert all(row["packet_index_admitted"] is False for row in projection["artifact_closure"]["rows"])
+    assert projection["key_digest"] == sha(canonical({
+        key: projection[key] for key in (
+            "schema", "profile", "report_sha256", "routes", "ast_sha256", "compiler_invoked",
+            "store_opened", "lean_admitted", "legal_admitted", "admitted", "formalized")}))
+    digest = owner.lean_compatibility_index_sha256(projection)
+    regenerated = owner.validate_lean_compatibility_index_v1(
+        projection, raw, expected_request_sha256=sha(raw), expected_projection_sha256=digest)
+    assert regenerated == projection
+
+
+def test_compatibility_index_refuses_foreign_profile_before_store(monkeypatch):
+    def refuse(*args, **kwargs):
+        raise AssertionError("store invoked")
+    monkeypatch.setattr(DuckDBProofStore, "__init__", refuse)
+    monkeypatch.setattr(owner, "_owners", refuse)
+    candidate = [row for row in _compatibility_candidates() if row["route"] == "preservation"][0]
+    candidate["profile"] = "foreign-lean-profile/v9"
+    raw = _compatibility_raw([candidate])
+    with pytest.raises(ValueError, match="foreign compatibility profile"):
+        owner.project_lean_compatibility_index_v1(raw, expected_request_sha256=sha(raw))
+
+
+@pytest.mark.parametrize("field,message", [("premises", "missing premise closure"),
+                                           ("artifact_closure", "missing artifact closure")])
+def test_compatibility_index_refuses_missing_closure_before_store(field, message, monkeypatch):
+    def refuse(*args, **kwargs):
+        raise AssertionError("store invoked")
+    monkeypatch.setattr(DuckDBProofStore, "__init__", refuse)
+    candidate = deepcopy([row for row in _compatibility_candidates() if row["route"] == "direct"][0])
+    if field == "premises":
+        candidate["premises"] = candidate["premises"][:-1]
+    else:
+        candidate["artifact_closure"].pop("packet_files")
+    raw = _compatibility_raw([candidate])
+    with pytest.raises(ValueError, match=message):
+        owner.project_lean_compatibility_index_v1(raw, expected_request_sha256=sha(raw))
+
+
+def test_compatibility_index_serialization_is_stable_and_order_sensitive():
+    rows = _compatibility_candidates()
+    left_raw = _compatibility_raw(rows)
+    right_raw = _compatibility_raw(list(reversed(rows)))
+    left = owner.project_lean_compatibility_index_v1(left_raw, expected_request_sha256=sha(left_raw))
+    right = owner.project_lean_compatibility_index_v1(right_raw, expected_request_sha256=sha(right_raw))
+    again = owner.project_lean_compatibility_index_v1(left_raw, expected_request_sha256=sha(left_raw))
+    assert again == left
+    assert left["routes"] == [row["route"] for row in rows]
+    assert right["routes"] == [row["route"] for row in reversed(rows)]
+    assert owner.lean_compatibility_index_sha256(left) == sha(canonical(left))
+    assert owner.lean_compatibility_index_sha256(left) != owner.lean_compatibility_index_sha256(right)
+    assert left["report_sha256"] != right["report_sha256"]
+
