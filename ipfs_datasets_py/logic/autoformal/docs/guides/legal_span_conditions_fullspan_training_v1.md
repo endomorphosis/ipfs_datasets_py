@@ -102,7 +102,7 @@ one original six-tensor Adam restore and one fresh four-tensor Adam restore, zer
 forwards or updates, full 42-tensor root `2ed0` and frozen 38-tensor root `8562`.
 The earlier 26-case mechanics cohorts remain distinct. These results supply no
 new trained weights, 632-case parity, paired fitting, scoring or statutory accuracy.
-The later 632-case result below closes that selected initial parity gate. The later controller and matched-pair results close the selected binding and fixed-fit gates. Independent full-IR/per-ID retention and all 32 permission decisions remain next.
+The later 632-case result below closes the selected initial parity gate. The separate controller, matched-pair and saved-output results below close the selected binding, fixed-fit and parent-relative scoring gates. No reconstruction or margin advantage was measured; retained comparator and statutory gates remain open.
 
 ## Source-only capture from the four-tensor runtime
 
@@ -142,7 +142,7 @@ qualify the current source generation. All 194,812 head scalars, complete greedy
 rows and joint rows match retained final F18; no training update or label scoring ran.
 Checkpoints remain bound to their exact source generation. The earlier zero-step
 delta and 39-case result retain their older source pins and separate scope.
-The original controller and completed matched pair have separate qualification below. Both arms have frozen outputs; independently admitted full-IR, per-ID retention and permission scoring remains open.
+The original controller, completed matched pair and saved-output comparison have separate qualifications below. The comparison supplies parent-relative weak-label diagnostics; retained comparator and statutory gates remain open.
 
 
 ## Closed original trainer controller
@@ -155,8 +155,81 @@ The owner retains a real pipe through compute so parent loss revokes the isolate
 
 Each complete arm saves its four-tensor checkpoint and full training report, restores once for source-only632 capture and writes raw/joint files under exports/f18-paired. The complete pair-output-freeze.json precedes any independent reference scoring. Partial deadlines persist partial artifacts, return nonzero and retain the original claim for explicit recovery. All authority/promotion flags stay false.
 
-The separate original-owned matched pair reports 64 updates and frozen candidate outputs. The next adapter belongs in the existing `formula_generation_metrics.py` owner, reusing `compare_free_running_formulas`; preserve original readouts and defer quality claims until independent post-freeze scoring.
+The separate original-owned matched pair reports 64 updates and frozen candidate outputs. Reuse the frozen matched-arm comparison below and its separate original-owned saved-output result; another fit or capture is unnecessary for this comparison.
 
+## Frozen matched-arm comparison
+
+Use `compare_f18_frozen_matched_arms` in the existing
+[`formula_generation_metrics.py`](../../../../optimizers/logic_theorem_optimizer/formula_generation_metrics.py)
+owner. It calls the original `compare_free_running_formulas` for complete weak-label
+IR and preserves the original raw and joint producer envelopes. Supply `arms`,
+`targets`, explicit ordered `expected_ids`, `expected_source_sha256`,
+`retention_ids`, `permission_ids` and `unscored_ids`. The fixed arms are `parent`,
+`coefficient_0` and `coefficient_025`, each with ten ordered panels and all 632
+source IDs. There are 624 explicit compiler weak-label targets, 72 explicit
+conditions-present retention IDs, 32 explicit single-rule permission IDs and eight
+unscored sources. Membership and missing outputs are never inferred from targets.
+
+The detached report keeps every requested scored ID in the denominator, complete
+full-IR/facet results, per-ID retention transitions and all 32 permission decisions
+for both raw and joint readouts. Source hashes, ordered IDs, missing or duplicate
+outputs and raw/joint occurrence joins are checked. Invalid envelope or coverage
+declarations invalidate evaluation rather than silently dropping rows. Generation
+declarations are checked for consistency. The pure API does not prove roster,
+source or weak-label origin, freeze timing or model behavior.
+
+The [source qualification](../../../../../docs/autoformalization/evidence/legal-ir-f18-frozen-matched-scoring-20261027.json)
+records 82 authored pure cases, preserving all 47 prior cases and adding 35 controls,
+with 246 passing phases. No Torch, native admission, dataset payload, model or
+provider ran in that cohort. Two separate independent saved-consumer fixtures
+verify complete accounting and refusal of a late corrupted capture before any
+reference opens. The separate original-owned saved-output run below compares the actual frozen
+matched pair. This diagnostic is relative to final F18 parent and closes no
+separate N11/F15/F16/F17/F19 comparator gate.
+Compiler weak labels remain unreviewed; semantic, training/gold, promotion, corpus,
+Lean and native-task authority stays false. The original numerical profile and
+its refusal-only `score_frozen_cases` are unchanged.
+
+### Retained saved-output result
+
+The separate saved-only validation verified all 60 frozen capture files
+(48,323,901 bytes) before opening reference bodies: 20 retained final-F18 files
+and 40 candidate files. All 19 selected source pins stayed unchanged; original
+source/native/storage custody closed with zero live child processes or RSS. It
+ran no model forward, optimizer update or provider call. This original validation
+is separate from the 82-case author cohort and the two consumer fixtures.
+
+| Readout | Final F18 parent | Coefficient 0 | Coefficient 0.25 |
+| --- | --- | --- | --- |
+| Complete IR /624 compiler weak labels | 405 raw; 428 joint | 405 raw; 428 joint | 405 raw; 428 joint |
+| Conditions-present TRAIN retention /72 | 70 raw and joint | 70 raw and joint | 70 raw and joint |
+| Target-P modality retention /32 | 32 raw and joint | 32 raw and joint | 32 raw and joint |
+| Raw abstentions | 117 | 117 | 117 |
+| Joint abstentions | 18 | 19 | 19 |
+
+The32/32 measure requires the predicted rule-modality list to equal `[P]`.
+Complete-IR exactness is scored separately; this supplies no legal-permission
+correctness claim.
+
+All 624 per-ID full-IR gain and loss sets are empty for both candidates and both
+readouts; aggregate equality hides no exact-match turnover. The two persistent
+TRAIN failures affect conditions in
+`matched-temporal-train-condition_exception_duration-0-p-absent` and
+`matched-temporal-train-condition_exception_duration-0-p-present`. Both candidates
+add a joint abstention on
+`targeted-loss-authored_dev-actor_duration_name-0-f-absent`; the parent decoded it
+already incorrectly on actor and conditions. Joint modality matches decline from
+547/624 to 546/624. Fresh DEV and TEST each remain 0/36 complete-IR matches in all
+three arms and both readouts; the eight law snippets remain unscored.
+
+The engineering comparison completed successfully and measured no reconstruction
+gain or margin advantage. Preserve candidate status. Next diagnose the persistent
+TRAIN conditions failures and the joint abstention using frozen outputs, then
+close the separate retained comparator gates. This diagnosis grants no held-out
+tuning or additional fit. Compiler weak labels do not establish statutory meaning,
+reviewed gold, four-width quality, corpus/Lean admission or scientific-task success.
+
+The following immutable-publication description retains its original unscored release cutoff; the separate local comparison above does not change that release or promote a model.
 
 ## Published experimental candidate deltas
 

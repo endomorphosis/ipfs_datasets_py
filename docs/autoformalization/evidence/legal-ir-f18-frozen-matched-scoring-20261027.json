@@ -1,0 +1,714 @@
+{
+  "api": {
+    "arms": [
+      "parent",
+      "coefficient_0",
+      "coefficient_025"
+    ],
+    "conditions_present_retention_ids": 72,
+    "explicit_compiler_weak_label_targets": 624,
+    "name": "compare_f18_frozen_matched_arms",
+    "ordered_panels": 10,
+    "parent_relative_only": true,
+    "permission_ids": 32,
+    "readouts": [
+      "raw",
+      "joint"
+    ],
+    "result_schema": "f18-frozen-matched-arm-fidelity/v1",
+    "retained_other_comparator_no_loss_gate_evaluated": false,
+    "source_ids": 632,
+    "unscored_ids": 8
+  },
+  "author_unit_qualification": {
+    "Torch_native_dataset_provider_execution": false,
+    "author_cohort_not_external_independent": true,
+    "cases": 82,
+    "child_seconds": 6.506205467972904,
+    "errors": 0,
+    "failures": 0,
+    "guard_denied": 0,
+    "new_cases": 35,
+    "old_cases": 47,
+    "phases": 246,
+    "pytest_seconds": 6.46,
+    "result": {
+      "bytes": 5511,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/frozen-scoring-source-v01/unit-01/result.json",
+      "sha256": "2fc83340d39e0cfdb6b10a31b9424145694543e584ad51ec50fe84751f99fbf5"
+    },
+    "skipped": 0,
+    "source_READ_closed": true,
+    "source_pins_unchanged": true
+  },
+  "draft": false,
+  "evidence_id": "f18-frozen-matched-scoring-20261027-01",
+  "independent_saved_consumer": {
+    "freeze_fence": {
+      "all_frozen_capture_bytes": 48323901,
+      "all_frozen_capture_files_verified_before_reference_body_open": true,
+      "candidate_files": 40,
+      "retained_final_F18_files": 20
+    },
+    "guard_denials": 0,
+    "independent_native_custody_binding": {
+      "bytes": 5212,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/frozen-scoring-consumer-v01/independent-original-custody-binding-v01.json",
+      "sha256": "e8b5ad84be392f31fb62a37ccee705fda60c1be6ebb50aaaaf0c0dbaccedacad"
+    },
+    "law_rows_unscored": 8,
+    "model_forwards": 0,
+    "native_released": true,
+    "optimizer_updates": 0,
+    "original_closeout": {
+      "bytes": 9080,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/frozen-scoring-consumer-v01/root-source-closeout-v01.json",
+      "sha256": "1509d78cb0e33ee72fd95bcce4da5ed5348857ff10a65647e7444ea5c574d64c"
+    },
+    "original_elapsed_seconds": 84.59639796195552,
+    "original_source_READ_released": true,
+    "postcleanup_live_processes": 0,
+    "postcleanup_rss_bytes": 0,
+    "request": {
+      "bytes": 8283,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/frozen-scoring-consumer-v01/request-v01.json",
+      "sha256": "5ce21c378d2047c241fb7877aa88cb461710a0a1edccc20ee278f9a81823442a"
+    },
+    "result": {
+      "bytes": 8238895,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/frozen-scoring-consumer-v01/attempt-v01/exports/scoring-result.json",
+      "sha256": "041261269ba586ab55b399be90d150d73c9d6706cc38bb23da0da42c3fa332c1"
+    },
+    "root_arithmetic_readback": {
+      "bytes": 16141,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/frozen-scoring-consumer-v01/root-actual-scoring-readback-v01.json",
+      "sha256": "37e59d786cde6252f1982b5e693905f0e3ec30719970795fe765e65cc00b2195"
+    },
+    "root_casewise_diagnostic": {
+      "bytes": 2806,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/frozen-scoring-consumer-v01/root-casewise-diagnostic-v01.json",
+      "sha256": "eee19650c7d46de459b6ee1d91c5812515b74f78aa2581f1287647477820967c"
+    },
+    "root_control_exit_code": 0,
+    "scored_compiler_weak_label_rows": 624,
+    "source_pins_before_after": 19,
+    "status": "passed_saved_only_original_validation_custody_closed",
+    "storage_status": "released",
+    "validation_lane": "validation",
+    "workload": "canonical_validation"
+  },
+  "independent_saved_consumer_fixture": {
+    "cases": 2,
+    "elapsed_seconds": 0.5901,
+    "metadata_readback": {
+      "bytes": 1387,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/frozen-scoring-consumer-v01/root-fixture-readback-v01.json",
+      "sha256": "16c75b634058c2d4b98aeeb5d80613b8a193698c9f6398003e08b09abe364cc7"
+    },
+    "scope": "Separate authored complete fixture and late60th-file corruption refusal before seven reference files open; no actual retained payloads/models/native admission."
+  },
+  "limits": {
+    "active_8D_384D_768D_4096D_comparison": false,
+    "admission": false,
+    "freeze_timing_verified_by_pure_API": false,
+    "legal_semantics": false,
+    "new_model_training": false,
+    "promotion": false,
+    "retained_N11_F15_F16_F17_no_loss_gate_closed": false,
+    "reviewed_statutory_gold": false,
+    "roster_membership_verified_by_pure_API": false,
+    "scientific_task_completion": false,
+    "source_commitment_origin_verified_by_pure_API": false,
+    "training_gold": false,
+    "weak_label_origin_verified_by_pure_API": false
+  },
+  "next_work": [
+    "Run bounded diagnosis of the two persistent conditions-only TRAIN failures and the joint abstention regression using the existing frozen outputs and original metric/readout owners.",
+    "Preserve held-out exposure status; diagnosis does not authorize held-out tuning or another fit.",
+    "Qualify separate retained N11/F15/F16/F17/F19 comparator gates under their original source/input/admission contracts before any scientific success or promotion claim.",
+    "Source edition, statutory meaning, reviewed graph/corpus and Lean admission remain separate."
+  ],
+  "observed_at_utc": "2026-10-27T21:28:29.622315+00:00",
+  "preserved": [
+    "Prior39/45/632 qualifications retain exact generations and separate scope.",
+    "Original matched32+32 fit and forty frozen files are not rerun.",
+    "Existing92components and original64scientific-task prerequisites remain unchanged.",
+    "Stopped duplicate controller candidate is local recovery evidence only."
+  ],
+  "schema": "legal-ir-f18-frozen-matched-scoring-evidence/v1",
+  "selected_source_worktree": "/home/barberb/lift_coding/.worktrees/legal-ir-f18-frozen-scoring-20261027",
+  "source_generation": {
+    "helper": {
+      "bytes": 32455,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/formula_generation_metrics.py",
+      "sha256": "59578e51a1158ab756f1e6a66934ee6ee740d69de83ae3dd296e464f15141bc4"
+    },
+    "test": {
+      "bytes": 28200,
+      "path": "tests/unit/logic/test_formula_generation_metrics.py",
+      "sha256": "73962b0e75e02b6d80dbe25da079254975253cfd3f78013cb95b2205d442ff39"
+    },
+    "unchanged_profile": {
+      "bytes": 88600,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_fullspan_training_v1.py",
+      "sha256": "56bd0a248a07de09519f95e5c4bae02ab9d8eb1134b483c257c1f7e7bcb07147"
+    }
+  },
+  "title": "F18 saved matched-arm scoring qualified with no full-IR gain and one joint abstention regression",
+  "weak_label_outcome": {
+    "all624_per_ID_full_IR_gains_and_losses_empty_for_both_candidates_and_both_readouts": true,
+    "casewise_diagnostic": {
+      "all624_casewise_comparisons": {
+        "joint": {
+          "coefficient_0": {
+            "full_IR_gained_ids": [],
+            "full_IR_lost_ids": [],
+            "new_abstentions": [
+              {
+                "id": "targeted-loss-authored_dev-actor_duration_name-0-f-absent",
+                "panel": "authored_dev",
+                "prior_exact": false,
+                "prior_reasons": [
+                  "facet_mismatch:actor",
+                  "facet_mismatch:conditions"
+                ],
+                "prior_status": "decoded"
+              }
+            ]
+          },
+          "coefficient_025": {
+            "full_IR_gained_ids": [],
+            "full_IR_lost_ids": [],
+            "new_abstentions": [
+              {
+                "id": "targeted-loss-authored_dev-actor_duration_name-0-f-absent",
+                "panel": "authored_dev",
+                "prior_exact": false,
+                "prior_reasons": [
+                  "facet_mismatch:actor",
+                  "facet_mismatch:conditions"
+                ],
+                "prior_status": "decoded"
+              }
+            ]
+          }
+        },
+        "raw": {
+          "coefficient_0": {
+            "full_IR_gained_ids": [],
+            "full_IR_lost_ids": [],
+            "new_abstentions": []
+          },
+          "coefficient_025": {
+            "full_IR_gained_ids": [],
+            "full_IR_lost_ids": [],
+            "new_abstentions": []
+          }
+        }
+      },
+      "conditions_present_TRAIN72_persistent_failures": {
+        "joint": [
+          {
+            "failed_facets": [
+              "conditions"
+            ],
+            "id": "matched-temporal-train-condition_exception_duration-0-p-absent",
+            "parent_status": "decoded"
+          },
+          {
+            "failed_facets": [
+              "conditions"
+            ],
+            "id": "matched-temporal-train-condition_exception_duration-0-p-present",
+            "parent_status": "decoded"
+          }
+        ],
+        "raw": [
+          {
+            "failed_facets": [
+              "conditions"
+            ],
+            "id": "matched-temporal-train-condition_exception_duration-0-p-absent",
+            "parent_status": "decoded"
+          },
+          {
+            "failed_facets": [
+              "conditions"
+            ],
+            "id": "matched-temporal-train-condition_exception_duration-0-p-present",
+            "parent_status": "decoded"
+          }
+        ]
+      },
+      "formalized": false,
+      "input": {
+        "bytes": 8238895,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/frozen-scoring-consumer-v01/attempt-v01/exports/scoring-result.json",
+        "sha256": "041261269ba586ab55b399be90d150d73c9d6706cc38bb23da0da42c3fa332c1"
+      },
+      "no_new_training_or_tuning": true,
+      "promoted": false,
+      "schema": "f18-saved-scoring-casewise-diagnostic/v1",
+      "statutory_meaning_verified": false,
+      "strict_other_comparator_gate_evaluated": false
+    },
+    "conditions_present_TRAIN72_each_arm_each_readout": {
+      "exact": 70,
+      "exact_gained": 0,
+      "exact_lost": 0,
+      "still_incorrect": 2
+    },
+    "counts_are_not_statutory_accuracy": true,
+    "fresh_DEV_full_IR_exact_each_arm_each_readout": {
+      "matched": 0,
+      "total": 36
+    },
+    "fresh_TEST_full_IR_exact_each_arm_each_readout": {
+      "matched": 0,
+      "total": 36
+    },
+    "full_IR_exact_all_three_arms": {
+      "joint": {
+        "matched": 428,
+        "total": 624
+      },
+      "raw": {
+        "matched": 405,
+        "total": 624
+      }
+    },
+    "joint_abstentions": {
+      "coefficient_0": 19,
+      "coefficient_025": 19,
+      "parent": 18
+    },
+    "joint_modality_weak_label_matches": {
+      "coefficient_0": 546,
+      "coefficient_025": 546,
+      "parent": 547,
+      "total": 624
+    },
+    "measured_coefficient_025_advantage_over_coefficient_0": false,
+    "measured_full_IR_reconstruction_gain": false,
+    "panel_results": {
+      "authored_dev": {
+        "coefficient_0": {
+          "joint": {
+            "complete": false,
+            "fraction": 0.6388888888888888,
+            "matched": 46,
+            "total": 72
+          },
+          "raw": {
+            "complete": false,
+            "fraction": 0.625,
+            "matched": 45,
+            "total": 72
+          }
+        },
+        "coefficient_025": {
+          "joint": {
+            "complete": false,
+            "fraction": 0.6388888888888888,
+            "matched": 46,
+            "total": 72
+          },
+          "raw": {
+            "complete": false,
+            "fraction": 0.625,
+            "matched": 45,
+            "total": 72
+          }
+        },
+        "parent": {
+          "joint": {
+            "complete": false,
+            "fraction": 0.6388888888888888,
+            "matched": 46,
+            "total": 72
+          },
+          "raw": {
+            "complete": false,
+            "fraction": 0.625,
+            "matched": 45,
+            "total": 72
+          }
+        }
+      },
+      "authored_eval": {
+        "coefficient_0": {
+          "joint": {
+            "complete": false,
+            "fraction": 0.4722222222222222,
+            "matched": 34,
+            "total": 72
+          },
+          "raw": {
+            "complete": false,
+            "fraction": 0.375,
+            "matched": 27,
+            "total": 72
+          }
+        },
+        "coefficient_025": {
+          "joint": {
+            "complete": false,
+            "fraction": 0.4722222222222222,
+            "matched": 34,
+            "total": 72
+          },
+          "raw": {
+            "complete": false,
+            "fraction": 0.375,
+            "matched": 27,
+            "total": 72
+          }
+        },
+        "parent": {
+          "joint": {
+            "complete": false,
+            "fraction": 0.4722222222222222,
+            "matched": 34,
+            "total": 72
+          },
+          "raw": {
+            "complete": false,
+            "fraction": 0.375,
+            "matched": 27,
+            "total": 72
+          }
+        }
+      },
+      "fresh_challenge": {
+        "coefficient_0": {
+          "joint": {
+            "complete": false,
+            "fraction": 0.7222222222222222,
+            "matched": 26,
+            "total": 36
+          },
+          "raw": {
+            "complete": false,
+            "fraction": 0.7222222222222222,
+            "matched": 26,
+            "total": 36
+          }
+        },
+        "coefficient_025": {
+          "joint": {
+            "complete": false,
+            "fraction": 0.7222222222222222,
+            "matched": 26,
+            "total": 36
+          },
+          "raw": {
+            "complete": false,
+            "fraction": 0.7222222222222222,
+            "matched": 26,
+            "total": 36
+          }
+        },
+        "parent": {
+          "joint": {
+            "complete": false,
+            "fraction": 0.7222222222222222,
+            "matched": 26,
+            "total": 36
+          },
+          "raw": {
+            "complete": false,
+            "fraction": 0.7222222222222222,
+            "matched": 26,
+            "total": 36
+          }
+        }
+      },
+      "fresh_dev": {
+        "coefficient_0": {
+          "joint": {
+            "complete": false,
+            "fraction": 0.0,
+            "matched": 0,
+            "total": 36
+          },
+          "raw": {
+            "complete": false,
+            "fraction": 0.0,
+            "matched": 0,
+            "total": 36
+          }
+        },
+        "coefficient_025": {
+          "joint": {
+            "complete": false,
+            "fraction": 0.0,
+            "matched": 0,
+            "total": 36
+          },
+          "raw": {
+            "complete": false,
+            "fraction": 0.0,
+            "matched": 0,
+            "total": 36
+          }
+        },
+        "parent": {
+          "joint": {
+            "complete": false,
+            "fraction": 0.0,
+            "matched": 0,
+            "total": 36
+          },
+          "raw": {
+            "complete": false,
+            "fraction": 0.0,
+            "matched": 0,
+            "total": 36
+          }
+        }
+      },
+      "fresh_test": {
+        "coefficient_0": {
+          "joint": {
+            "complete": false,
+            "fraction": 0.0,
+            "matched": 0,
+            "total": 36
+          },
+          "raw": {
+            "complete": false,
+            "fraction": 0.0,
+            "matched": 0,
+            "total": 36
+          }
+        },
+        "coefficient_025": {
+          "joint": {
+            "complete": false,
+            "fraction": 0.0,
+            "matched": 0,
+            "total": 36
+          },
+          "raw": {
+            "complete": false,
+            "fraction": 0.0,
+            "matched": 0,
+            "total": 36
+          }
+        },
+        "parent": {
+          "joint": {
+            "complete": false,
+            "fraction": 0.0,
+            "matched": 0,
+            "total": 36
+          },
+          "raw": {
+            "complete": false,
+            "fraction": 0.0,
+            "matched": 0,
+            "total": 36
+          }
+        }
+      },
+      "fresh_tune": {
+        "coefficient_0": {
+          "joint": {
+            "complete": false,
+            "fraction": 0.5555555555555556,
+            "matched": 20,
+            "total": 36
+          },
+          "raw": {
+            "complete": false,
+            "fraction": 0.2222222222222222,
+            "matched": 8,
+            "total": 36
+          }
+        },
+        "coefficient_025": {
+          "joint": {
+            "complete": false,
+            "fraction": 0.5555555555555556,
+            "matched": 20,
+            "total": 36
+          },
+          "raw": {
+            "complete": false,
+            "fraction": 0.2222222222222222,
+            "matched": 8,
+            "total": 36
+          }
+        },
+        "parent": {
+          "joint": {
+            "complete": false,
+            "fraction": 0.5555555555555556,
+            "matched": 20,
+            "total": 36
+          },
+          "raw": {
+            "complete": false,
+            "fraction": 0.2222222222222222,
+            "matched": 8,
+            "total": 36
+          }
+        }
+      },
+      "law": {
+        "coefficient_0": {
+          "joint": null,
+          "raw": null
+        },
+        "coefficient_025": {
+          "joint": null,
+          "raw": null
+        },
+        "parent": {
+          "joint": null,
+          "raw": null
+        }
+      },
+      "old_authored_eval": {
+        "coefficient_0": {
+          "joint": {
+            "complete": false,
+            "fraction": 0.75,
+            "matched": 54,
+            "total": 72
+          },
+          "raw": {
+            "complete": false,
+            "fraction": 0.7083333333333334,
+            "matched": 51,
+            "total": 72
+          }
+        },
+        "coefficient_025": {
+          "joint": {
+            "complete": false,
+            "fraction": 0.75,
+            "matched": 54,
+            "total": 72
+          },
+          "raw": {
+            "complete": false,
+            "fraction": 0.7083333333333334,
+            "matched": 51,
+            "total": 72
+          }
+        },
+        "parent": {
+          "joint": {
+            "complete": false,
+            "fraction": 0.75,
+            "matched": 54,
+            "total": 72
+          },
+          "raw": {
+            "complete": false,
+            "fraction": 0.7083333333333334,
+            "matched": 51,
+            "total": 72
+          }
+        }
+      },
+      "old_tune": {
+        "coefficient_0": {
+          "joint": {
+            "complete": false,
+            "fraction": 0.9791666666666666,
+            "matched": 94,
+            "total": 96
+          },
+          "raw": {
+            "complete": false,
+            "fraction": 0.9791666666666666,
+            "matched": 94,
+            "total": 96
+          }
+        },
+        "coefficient_025": {
+          "joint": {
+            "complete": false,
+            "fraction": 0.9791666666666666,
+            "matched": 94,
+            "total": 96
+          },
+          "raw": {
+            "complete": false,
+            "fraction": 0.9791666666666666,
+            "matched": 94,
+            "total": 96
+          }
+        },
+        "parent": {
+          "joint": {
+            "complete": false,
+            "fraction": 0.9791666666666666,
+            "matched": 94,
+            "total": 96
+          },
+          "raw": {
+            "complete": false,
+            "fraction": 0.9791666666666666,
+            "matched": 94,
+            "total": 96
+          }
+        }
+      },
+      "training168": {
+        "coefficient_0": {
+          "joint": {
+            "complete": false,
+            "fraction": 0.9166666666666666,
+            "matched": 154,
+            "total": 168
+          },
+          "raw": {
+            "complete": false,
+            "fraction": 0.9166666666666666,
+            "matched": 154,
+            "total": 168
+          }
+        },
+        "coefficient_025": {
+          "joint": {
+            "complete": false,
+            "fraction": 0.9166666666666666,
+            "matched": 154,
+            "total": 168
+          },
+          "raw": {
+            "complete": false,
+            "fraction": 0.9166666666666666,
+            "matched": 154,
+            "total": 168
+          }
+        },
+        "parent": {
+          "joint": {
+            "complete": false,
+            "fraction": 0.9166666666666666,
+            "matched": 154,
+            "total": 168
+          },
+          "raw": {
+            "complete": false,
+            "fraction": 0.9166666666666666,
+            "matched": 154,
+            "total": 168
+          }
+        }
+      }
+    },
+    "parent_relative_only": true,
+    "permission_measure": "Predicted rule-modality list equals [P]; full-IR exactness scored separately; no legal-permission correctness claim",
+    "permission_modality_retention_all_three_arms_both_readouts": {
+      "matched": 32,
+      "total": 32
+    },
+    "raw_abstentions_all_three_arms": 117,
+    "strict_scientific_success": false
+  }
+}
