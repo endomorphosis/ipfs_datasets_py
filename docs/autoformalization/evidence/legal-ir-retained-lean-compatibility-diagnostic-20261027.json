@@ -1,0 +1,144 @@
+{
+  "authority": {
+    "full_validation_gate": false,
+    "public_runtime": false,
+    "real_Lean": false,
+    "semantic_review": false,
+    "task_completion": false,
+    "training_or_model_gain": false
+  },
+  "evidence_id": "retained-lean-compatibility-diagnostic-20261027-01",
+  "evidence_inputs": {
+    "JUnit": {
+      "bytes": 3414,
+      "sha256": "836fdf8e4e10039cb86bd7ecd54cc0e654a14e8c9903850de209ba5a250f5107"
+    },
+    "independent_queue_review": {
+      "bytes": 10332,
+      "original_local_path": "/tmp/legal-ir-lean-compatibility-diagnostic-queue-review-20261027.json",
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/review-closeout-v03/01-legal-ir-lean-compatibility-diagnostic-queue-review-20261027.json",
+      "root": "datasets_repository",
+      "sha256": "e0d4452572c53ea6bde90567b8b74119a4225fdc02d228560fa6078e2e74efee"
+    },
+    "original_owner_closeout": {
+      "bytes": 8969,
+      "sha256": "b27c236710a01bfcbf5865a3a6ccdfa530e98eccbcec3c084e6066736dc1f5d3"
+    },
+    "original_result": {
+      "bytes": 4113,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/lean-compatibility-diagnostic-v01/result-v01.json",
+      "root": "datasets_repository",
+      "sha256": "4dfcafaadebe24372cde90a45e6802a343b434e9e4b8e07f69bafa9cc7f346bf"
+    },
+    "stdout": {
+      "bytes": 12349,
+      "sha256": "4dc31a837e20f45b548a9b96350f09319a7cc461beda022b473579a38ba6d1d9"
+    }
+  },
+  "f18_six_asset_locator": {
+    "assets": [
+      {
+        "bytes": 21058430,
+        "path": "workspace/test-logs/legal-trigger-readout-pilot-20261007-01/modality-conditions-retention-20261014-modality-conditions-retention-ce-01/results/cell-checkpoint.json",
+        "present_as_observed": true,
+        "role": "retained_final_F18_donor_checkpoint",
+        "root": "datasets_repository"
+      },
+      {
+        "bytes": 12230969,
+        "path": "workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-refinement-20261014-actor-refinement-ce-01/results/cell-checkpoint.json",
+        "present_as_observed": true,
+        "role": "trained_F15_teacher_checkpoint",
+        "root": "datasets_repository"
+      },
+      {
+        "bytes": 4675279,
+        "path": "artifacts/legal-temporal-adapter-20261013-01/training-source-export-v01.json",
+        "present_as_observed": true,
+        "role": "original_TRAIN_source_export",
+        "root": "shared_workspace"
+      },
+      {
+        "bytes": 434236,
+        "path": "artifacts/legal-temporal-attention-20261013-01/fresh-source-export-v01.json",
+        "present_as_observed": true,
+        "role": "fresh_source_export",
+        "root": "shared_workspace"
+      },
+      {
+        "bytes": 3594328,
+        "path": "workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-refinement-20261014-actor-refinement-ce-01/results/trained-training168-raw.json",
+        "present_as_observed": true,
+        "role": "trained_F15_TRAIN168_teacher_capture",
+        "root": "datasets_repository"
+      },
+      {
+        "bytes": 879934,
+        "path": "artifacts/legal-modality-conditions-retention-20261014-01/modality-conditions-training-mask-v02.json",
+        "present_as_observed": true,
+        "role": "qualified_F18_training_mask_certificate_v02",
+        "root": "shared_workspace"
+      }
+    ],
+    "donor_teacher_source_mask_authentication_complete": false,
+    "metadata_receipt": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-next-admission-dependency-locator-v01.json",
+    "paired_fit_or_scoring_admitted": false,
+    "root": "datasets_repository",
+    "scope": "Recorded path presence and byte sizes only. None of these six payloads was opened, hashed, authenticated or loaded by this locator/documentation update."
+  },
+  "independent_diagnostic": {
+    "cases": 15,
+    "empty_regular_source_pin_accepted_by_new_original_preflight": true,
+    "errors": 0,
+    "failed": 0,
+    "final_observed_live_processes": 0,
+    "old141_request_replayed": false,
+    "old141_request_unchanged": true,
+    "original_compute_and_storage_released": true,
+    "original_source_READ_closed": true,
+    "passed": 15,
+    "phase_durations": {
+      "call": 15,
+      "rounded_zero_retained": 40,
+      "setup": 15,
+      "teardown": 15,
+      "total": 45
+    },
+    "pytest_seconds": 0.65,
+    "request_sha256": "46b13bdd9d050a440d5f12bfb8a125d71862d91d95c53019772e1cd1081cfb00",
+    "selectors": 12,
+    "skipped": 0,
+    "stdout_bytes": 12349,
+    "task_or_attempt_credit_granted": false
+  },
+  "operational_observation": {
+    "event": "ordinary_task_validation_obsolescence_rearmed",
+    "following_started_at_utc": "2026-10-27T02:37:50.338614+00:00",
+    "following_started_attempt": 1,
+    "interpretation": "Existing source/runtime-hash-based validation obsolescence policy rearmed the identity; prior attempts and failure events remain retained, not lost history.",
+    "observed_at_utc": "2026-10-27T02:37:46.349275+00:00",
+    "policy_correction": "Published in ipfs_accelerate_py PR301, merge2b9e094c4395ea6e93778620c0e0048aeab2e22f. Source-hash-only reset retired; existing exact receipts and bounded verified history enforce minimum consumed counts after quiescence, while approved repairs keep separate authority. Primary adaptation and runtime adoption remain separate observations.",
+    "policy_fix_deployed_claimed": false,
+    "policy_fix_pr": "https://github.com/endomorphosis/ipfs_accelerate_py/pull/301",
+    "policy_fix_public_merge": "2b9e094c4395ea6e93778620c0e0048aeab2e22f",
+    "previous_recorded_attempt_count": 4,
+    "source_qualification_cases": 125,
+    "task_id": "LIRAE-LIR12-LEAN-03"
+  },
+  "recorded_at_utc": "2026-10-27T03:04:00.815607+00:00",
+  "schema": "legal-ir-retained-lean-compatibility-diagnostic-evidence/v1",
+  "scope_limits": [
+    "Only the new bounded declared-record compatibility frontier on retained8fc; no heavy packet fixture reconstruction enrolled.",
+    "No public current-runtime/source-port, full-suite/task-checker, real Lean build, model or semantic qualification.",
+    "Both retained full owning-validation attempts (1800seconds each) remain failed independently; native LIRAE-LIR12-LEAN-03 remains unfinished."
+  ],
+  "source_generation": {
+    "complete_import_or_runtime_closure_attested": false,
+    "original_primary_CLI_sha256": "66a608dc157b9a2d7f94b4e50257fa7df8f6b5a134c6a9c708808799da21bb11",
+    "public_current_runtime_qualified": false,
+    "retained_commit": "8fc89b20f1896b52d867e2b7ce827d511d8e99a4",
+    "retained_implementation_ported_to_public_by_this_evidence": false,
+    "selected_source_pins_before_and_after": 35
+  },
+  "status": "retained_generation_focused_diagnostic_only"
+}

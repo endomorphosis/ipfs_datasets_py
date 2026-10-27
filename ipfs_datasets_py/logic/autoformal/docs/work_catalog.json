@@ -3742,7 +3742,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-10-27T03:18:02.659652+00:00",
+  "last_updated_at_utc": "2026-10-27T03:32:53.466346+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -5845,6 +5845,16 @@
       "root": "datasets_repository",
       "scope": "Additive same-row joint metrics in the existing single-rule384D scorer, accepted replay of the same retained60saved outputs, and separately accepted68-case owning engineering regression qualification. No model, embeddings or saved reconstruction outputs were regenerated.",
       "status": "accepted_saved_measurement_and_owning_unit_qualification"
+    },
+    {
+      "id": "retained-lean-compatibility-diagnostic-20261027-01",
+      "observed_bytes": 6902,
+      "observed_sha256": "c42cb32e6fbd562c3a191c6c42339248191b7a62aa193e42653239c6a53eb197",
+      "path": "docs/autoformalization/evidence/legal-ir-retained-lean-compatibility-diagnostic-20261027.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Retained8fc independent15case/45phase diagnostic only, originalCLI66 empty-source preflight and original resource/source closeout. Both1800s full gates failed/nativecard unfinished; no public runtime/source port/realLean/semantic credit. Six F18 asset path/size observations are not payload authentication; separate source-hash rearm policy fix not claimed deployed.",
+      "status": "retained_generation_focused_diagnostic_only"
     }
   ]
 }
