@@ -2511,7 +2511,7 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 
 ## LIRAE-LIR02-SOURCE-01 Implement source-bound review dossier preparation
 
-- status: todo
+- status: completed
 - completion: manual
 - is schedulable: true
 - priority: P1
