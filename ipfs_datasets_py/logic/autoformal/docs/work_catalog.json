@@ -6026,12 +6026,12 @@
     },
     {
       "id": "legal-ir-dual-namespace-watchdog-20261027-01",
-      "observed_bytes": 12364,
-      "observed_sha256": "2a8794e72442ad3a5dd0a720c1885682ac15848a28c481f08afe15a925d586a4",
+      "observed_bytes": 14140,
+      "observed_sha256": "6de9965f817c9f42dca11c38210cea3207d97598512e9e00e6640b66d95e8efc",
       "path": "docs/autoformalization/evidence/legal-ir-dual-namespace-watchdog-20261027.json",
       "required_for_catalog_check": true,
       "root": "datasets_repository",
-      "scope": "Exact92 focused passes plus staged/live dual-namespace readback and31.36s watchdog-main crash recovery; engineering139 complete remains separate from fresh64blocked scientifictasks. Explicit infrastructure-only policies preserve holds, cumulative/window budgets, UNKNOWN/retry refusal and exactboard/unit/attempt cancellation; no native task/model/legal/Lean authority. Installed Accelerate9daede14/release2b499e94; PR304open requiredCIbillingblocked, no main/pointer promotion or bypass. Original failedstage/driverattempts retained, counts notpooled.",
+      "scope": "Exact92 focused passes plus staged/live dual-namespace readback and31.36s watchdog-main crash recovery; engineering139 complete remains separate from fresh64blocked scientifictasks. Explicit infrastructure-only policies preserve holds, cumulative/window budgets, UNKNOWN/retry refusal and exactboard/unit/attempt cancellation; no native task/model/legal/Lean authority. Installed Accelerate9daede14/release2b499e94; PR304 open: required documentation-gates did not start under GitHub's billing lock; qualification failures are separate and not required by current branch protection. No main/pointer promotion or bypass. Original failedstage/driverattempts retained, counts notpooled.",
       "status": "dual_namespace_infrastructure_qualified_locally_activated_public_pr_ci_blocked"
     }
   ]
