@@ -2538,7 +2538,7 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 
 ## LIRAE-LIR07-IR-02 Implement complete candidate IR interface preparation
 
-- status: todo
+- status: completed
 - completion: manual
 - is schedulable: true
 - priority: P1
