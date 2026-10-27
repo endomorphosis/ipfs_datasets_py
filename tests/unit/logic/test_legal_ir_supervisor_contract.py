@@ -747,6 +747,7 @@ def test_continuation_prepares_two_disjoint_local_audits_without_writes(tmp_path
     assert set(first['allowed_paths']).isdisjoint(second['allowed_paths'])
     for task in (first, second):
         assert task['provider_role'] == 'deterministic-only' and task['context_budget_tokens'] == 0
+        assert len(task['validation_commands']) == 1, 'producer and consumer must share one scheduled unit'
         assert contract.kind(task['task_id']) == 'continuation_validation'
         assert len(task['outputs']) == 2 and all(path.endswith('.json') for path in task['outputs'])
         assert all(' --materialize-continuation-validation ' in command or ' --check-task ' in command
@@ -1040,3 +1041,21 @@ def test_continuation_original_peer_dialect_rejects_forged_counts_sources_and_cu
         _rebind_peer_document(tmp_path, binding, role, body)
     with pytest.raises(contract.ContractError):
         contract._continuation_observe(tmp_path, task)
+
+
+def test_continuation_producer_and_consumer_are_one_closed_ordered_validation_unit(tmp_path, monkeypatch):
+    """Same-stage declared commands run concurrently; one && unit orders the dependency."""
+    import shlex
+    _plan, bundle = _continuation_case(tmp_path, monkeypatch)
+    for task in bundle['tasks']:
+        commands = contract.continuation_contract(task)['validation_commands']
+        assert len(commands) == 1
+        lexer = shlex.shlex(commands[0], posix=True, punctuation_chars=';&|')
+        lexer.whitespace_split = True
+        tokens = list(lexer)
+        assert tokens.count('&&') == 1 and not any(token in (';', '&', '|', '||') for token in tokens)
+        boundary = tokens.index('&&')
+        prefix = ['IPFS_DATASETS_PY_MINIMAL_IMPORTS=1', 'PYTHONPATH=.', 'python3', contract.SCRIPT]
+        assert tokens[:boundary] == prefix + ['--materialize-continuation-validation', task['task_id']]
+        assert tokens[boundary + 1:] == prefix + ['--check-task', task['task_id']]
+        assert contract.continuation_contract(task)['context_budget_tokens'] == 0

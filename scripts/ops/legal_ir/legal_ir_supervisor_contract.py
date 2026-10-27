@@ -995,8 +995,8 @@ def continuation_contract(task):
         provider_role='deterministic-only', context_budget_tokens=0,
         validation_commands=[
             'IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 ' + SCRIPT
-                + ' --materialize-continuation-validation ' + task_id,
-            'IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 ' + SCRIPT
+                + ' --materialize-continuation-validation ' + task_id
+                + ' && IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 ' + SCRIPT
                 + ' --check-task ' + task_id], required_validation_executables=['python3'],
         receipt_instructions='Materialize only the exact two continuation receipt outputs from '
             'independently qualified pinned candidate/native/storage evidence. This is a fresh '

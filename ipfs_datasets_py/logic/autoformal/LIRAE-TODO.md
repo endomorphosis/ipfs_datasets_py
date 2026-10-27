@@ -2619,7 +2619,7 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 
 ## LIRAE-CONT-OCCURRENCE-VALIDATE-01 Validate retained occurrence-context fixture evidence without rerunning it
 
-- status: todo
+- Status: todo
 - completion: manual
 - is schedulable: true
 - priority: P1
@@ -2632,14 +2632,14 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - context budget tokens: 0
 - outputs: docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-cont-occurrence-validate-01/receipt.json, docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-cont-occurrence-validate-01/validation.json
 - allowed paths: docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-cont-occurrence-validate-01/receipt.json, docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-cont-occurrence-validate-01/validation.json
-- validation: IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 scripts/ops/legal_ir/legal_ir_supervisor_contract.py --materialize-continuation-validation LIRAE-CONT-OCCURRENCE-VALIDATE-01; IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 scripts/ops/legal_ir/legal_ir_supervisor_contract.py --check-task LIRAE-CONT-OCCURRENCE-VALIDATE-01
+- validation: IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 scripts/ops/legal_ir/legal_ir_supervisor_contract.py --materialize-continuation-validation LIRAE-CONT-OCCURRENCE-VALIDATE-01 && IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 scripts/ops/legal_ir/legal_ir_supervisor_contract.py --check-task LIRAE-CONT-OCCURRENCE-VALIDATE-01
 - required validation executables: python3
 - receipt instructions: Materialize only the exact two continuation receipt outputs from independently qualified pinned candidate/native/storage evidence. This is a fresh metadata and receipt validation; it reruns no tests, model, compiler or training. Use legal-ir-supervisor-task-receipt/v1 task_kind=continuation_validation; all scientific authority flags remain false. Never edit source/protected files, rearm a completed task, or infer scientific completion from this validation.
 - acceptance: Exact pinned positive case/result/source/native/storage evidence and independent verifier commitments validate; no model calls, source edits or scientific authority
 
 ## LIRAE-CONT-VALIDATION-LIFECYCLE-VALIDATE-01 Validate retained constructor-refusal and lease-timeout lifecycle evidence
 
-- status: todo
+- Status: todo
 - completion: manual
 - is schedulable: true
 - priority: P1
@@ -2652,7 +2652,7 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - context budget tokens: 0
 - outputs: docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-cont-validation-lifecycle-validate-01/receipt.json, docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-cont-validation-lifecycle-validate-01/validation.json
 - allowed paths: docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-cont-validation-lifecycle-validate-01/receipt.json, docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-cont-validation-lifecycle-validate-01/validation.json
-- validation: IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 scripts/ops/legal_ir/legal_ir_supervisor_contract.py --materialize-continuation-validation LIRAE-CONT-VALIDATION-LIFECYCLE-VALIDATE-01; IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 scripts/ops/legal_ir/legal_ir_supervisor_contract.py --check-task LIRAE-CONT-VALIDATION-LIFECYCLE-VALIDATE-01
+- validation: IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 scripts/ops/legal_ir/legal_ir_supervisor_contract.py --materialize-continuation-validation LIRAE-CONT-VALIDATION-LIFECYCLE-VALIDATE-01 && IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 scripts/ops/legal_ir/legal_ir_supervisor_contract.py --check-task LIRAE-CONT-VALIDATION-LIFECYCLE-VALIDATE-01
 - required validation executables: python3
 - receipt instructions: Materialize only the exact two continuation receipt outputs from independently qualified pinned candidate/native/storage evidence. This is a fresh metadata and receipt validation; it reruns no tests, model, compiler or training. Use legal-ir-supervisor-task-receipt/v1 task_kind=continuation_validation; all scientific authority flags remain false. Never edit source/protected files, rearm a completed task, or infer scientific completion from this validation.
 - acceptance: Exact pinned positive case/result/source/native/storage evidence and independent verifier commitments validate; no model calls, source edits or scientific authority

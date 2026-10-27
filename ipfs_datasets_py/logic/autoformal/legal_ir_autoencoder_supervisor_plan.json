@@ -11485,8 +11485,7 @@
       "task_id": "LIRAE-CONT-OCCURRENCE-VALIDATE-01",
       "title": "Validate retained occurrence-context fixture evidence without rerunning it",
       "validation_commands": [
-        "IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 scripts/ops/legal_ir/legal_ir_supervisor_contract.py --materialize-continuation-validation LIRAE-CONT-OCCURRENCE-VALIDATE-01",
-        "IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 scripts/ops/legal_ir/legal_ir_supervisor_contract.py --check-task LIRAE-CONT-OCCURRENCE-VALIDATE-01"
+        "IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 scripts/ops/legal_ir/legal_ir_supervisor_contract.py --materialize-continuation-validation LIRAE-CONT-OCCURRENCE-VALIDATE-01 && IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 scripts/ops/legal_ir/legal_ir_supervisor_contract.py --check-task LIRAE-CONT-OCCURRENCE-VALIDATE-01"
       ]
     },
     {
@@ -11679,8 +11678,7 @@
       "task_id": "LIRAE-CONT-VALIDATION-LIFECYCLE-VALIDATE-01",
       "title": "Validate retained constructor-refusal and lease-timeout lifecycle evidence",
       "validation_commands": [
-        "IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 scripts/ops/legal_ir/legal_ir_supervisor_contract.py --materialize-continuation-validation LIRAE-CONT-VALIDATION-LIFECYCLE-VALIDATE-01",
-        "IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 scripts/ops/legal_ir/legal_ir_supervisor_contract.py --check-task LIRAE-CONT-VALIDATION-LIFECYCLE-VALIDATE-01"
+        "IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 scripts/ops/legal_ir/legal_ir_supervisor_contract.py --materialize-continuation-validation LIRAE-CONT-VALIDATION-LIFECYCLE-VALIDATE-01 && IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 scripts/ops/legal_ir/legal_ir_supervisor_contract.py --check-task LIRAE-CONT-VALIDATION-LIFECYCLE-VALIDATE-01"
       ]
     }
   ]
