@@ -1,0 +1,291 @@
+{
+  "authority": {
+    "Lean_or_corpus_admission": false,
+    "legal_meaning": false,
+    "native_task_activation": false,
+    "native_task_settlement": false,
+    "new_model_weights": false,
+    "training_gold": false
+  },
+  "crash_recovery": {
+    "both_namespace_statuses_recovered": true,
+    "database_after": {
+      "bytes": 49295360,
+      "sha256": "86c7a1642600958b50c2711d23cf862a3ec3ff622a0f5fc93d135390c2011d79",
+      "wal_absent": true
+    },
+    "database_before": {
+      "bytes": 49295360,
+      "sha256": "86c7a1642600958b50c2711d23cf862a3ec3ff622a0f5fc93d135390c2011d79",
+      "wal_absent": true
+    },
+    "elapsed_seconds": 31.36122769396752,
+    "native_projection_preserved": true,
+    "native_task_changes": false,
+    "new_provider_or_model_calls": false,
+    "recorded_at_utc": "2026-10-27T17:57:41.146195+00:00",
+    "repair_job_files_preserved": true,
+    "repair_service_pid_preserved": true,
+    "schema": "legal-ir-dual-namespace-watchdog-crash-recovery/v1",
+    "scientific_executor_started": false,
+    "signal_scope": "SIGKILL dedicatedwatchdog main only",
+    "watchdog_after": {
+      "ActiveState": "active",
+      "Id": "ipfs-taskboard-legal-ir-watchdog.service",
+      "MainPID": "3136633",
+      "NRestarts": "1",
+      "SubState": "running",
+      "UnitFileState": "enabled"
+    },
+    "watchdog_attempt_counters_preserved": true,
+    "watchdog_before": {
+      "ActiveState": "active",
+      "Id": "ipfs-taskboard-legal-ir-watchdog.service",
+      "MainPID": "3044968",
+      "NRestarts": "0",
+      "SubState": "running",
+      "UnitFileState": "enabled"
+    }
+  },
+  "limits": [
+    "Read-only catalogue diagnostics and population-provenance binding do not admit native task execution or legal/model/corpus completion.",
+    "Repository tree ID is SHA-bound population/operator provenance, not independently attested from a native tree table.",
+    "The controlled production fault was only the dedicated watchdog main-process crash; actual stuck provider or scientific worker recovery was not exercised.",
+    "Tests used guarded authored fixtures; this is not whole-private-supervisor or whole-package qualification.",
+    "PR304 remains open because required hosted CI did not start under account billing lock."
+  ],
+  "namespaces": {
+    "legal-ir-autoencoder-v1": {
+      "active_workers": 0,
+      "board_id": "legal-ir",
+      "completed": 139,
+      "health": "healthy",
+      "ready": 0,
+      "shared_task_population": 139
+    },
+    "legal-ir-span-graph-lean-refinement-20261016": {
+      "active_executor_established": false,
+      "blocked": 64,
+      "board_id": "legal-ir-scientific",
+      "event_cursor": 214,
+      "health": "blocked",
+      "normalized_empty_rows_do_not_prove_zero_attempts_or_success": true,
+      "observer": "bounded isolated direct read-only native catalogue SQL",
+      "retained_LIR9001_attempt": 2,
+      "retained_automatic_retry_admitted": false,
+      "retained_failure_kind": "administrative_operator_stop_outcome_unknown",
+      "store_generation": 19,
+      "task_population": 64
+    }
+  },
+  "qualification": {
+    "by_file": {
+      "native_catalogue_probe": 27,
+      "repair": 27,
+      "watchdog": 38
+    },
+    "collected": 390,
+    "counts_not_pooled_with_prior_generations": true,
+    "deliberately_deselected": 298,
+    "denied_effects": 0,
+    "errors": 0,
+    "failures": 0,
+    "pytest_seconds": 9.14,
+    "selected_passed": 92,
+    "skips": 0
+  },
+  "receipts": {
+    "deployment-activation.json": {
+      "bytes": 7900,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/watchdog-dual-namespace-v01/deployment-activation.json",
+      "sha256": "ff454078524dcbe506c5654bc33667454a80163c6d33dc828bc996d511e38a22"
+    },
+    "independent-focused-04/result.json": {
+      "bytes": 13787,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/watchdog-dual-namespace-v01/independent-focused-04/result.json",
+      "sha256": "e98d2f5ca9aeb5bcf7bf1cf3477e2c19f65559b6889974ba275b3f82acf541cf"
+    },
+    "independent-operational-verification.json": {
+      "bytes": 7423,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/watchdog-dual-namespace-v01/independent-operational-verification.json",
+      "sha256": "284a23afc4908ac2f6fd328180a89615200cb8cbd6d313d587010b54762270f6"
+    },
+    "source-publication-v01.json": {
+      "bytes": 3521,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/watchdog-dual-namespace-v01/source-publication-v01.json",
+      "sha256": "1a283f3e9cbc0af1fab0defd12fc58d1716514a7900d4de56c167938b1b36d65"
+    },
+    "staged-v03/staged-cycle.json": {
+      "bytes": 43221,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/watchdog-dual-namespace-v01/staged-v03/staged-cycle.json",
+      "sha256": "c989727861daac2c8c4d1c11bf35188367fe8c17ca548e000ac508defd316360"
+    },
+    "watchdog-crash-recovery.json": {
+      "bytes": 1288,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/watchdog-dual-namespace-v01/watchdog-crash-recovery.json",
+      "sha256": "f1da8137ffa7d1776a7ebfcc2646b5d4cc419716ced4cce9ed4a0cd864e16aa2"
+    }
+  },
+  "recorded_at_utc": "2026-10-27T18:02:02.647908+00:00",
+  "recovery_policy": {
+    "coding_repair_workspace": "reviewed Accelerate engine worktree, never scientific data checkout",
+    "cooldown_seconds": 180,
+    "engineering_service_lane_monitor_unchanged": true,
+    "existing_provider_route_preserved": {
+      "fallback_model_id": "gpt-6.1-sol",
+      "fallback_provider_id": "codex",
+      "fallback_reasoning_effort": "high",
+      "fallback_trigger": "primary_quota_exhausted",
+      "primary_model_id": "grok-4.7",
+      "primary_provider_id": "grok_cli"
+    },
+    "max_repair_attempts_per_board": 3,
+    "maximum_backoff_seconds": 3600,
+    "namespace_isolated_state_and_incidents": true,
+    "native_heals_task_rearm_budget_reset_database_repair_or_activation": false,
+    "operator_holds_full_stop": true,
+    "profiles": {
+      "legal-ir": {
+        "circuit_breaker_seconds": 3600,
+        "max_actions_per_window": 3,
+        "profile": "infrastructure-only/v1",
+        "repairable_stalls": [
+          "probe_failed",
+          "probe_stale",
+          "service_fleet_report_unavailable",
+          "service_fleet_report_invalid",
+          "service_fleet_unhealthy",
+          "stalled_no_progress"
+        ],
+        "stop_own_repair_on_wait": true,
+        "window_seconds": 86400
+      },
+      "legal-ir-scientific": {
+        "circuit_breaker_seconds": 3600,
+        "max_actions_per_window": 3,
+        "profile": "infrastructure-only/v1",
+        "repairable_stalls": [
+          "probe_failed",
+          "probe_stale",
+          "native_catalogue_read_unavailable"
+        ],
+        "stop_own_repair_on_wait": true,
+        "window_seconds": 86400
+      }
+    },
+    "repair_cancellation_requires_current_board_unit_and_attempt_token": true
+  },
+  "retained_prior_attempts": [
+    "Original staged-v01 refused valid inherited-empty child objectives before database access; native schema compatibility was corrected and regression-qualified.",
+    "Original staged-v02 read the real catalogue but refused timestamps against pre-probe time; post-probe assessment clock was corrected without future-clock tolerance widening.",
+    "Independent01 guard refusal and independent03 zero-test driver preflight remain separate failed orchestration attempts; independent02 91 cases are not added to the final92."
+  ],
+  "runtime": {
+    "configuration": {
+      "bytes": 11110,
+      "path": "/home/barberb/.config/ipfs-taskboard-watchdog/legal-ir/fleet.json",
+      "sha256": "3b35a79a4c9104d8904e1796b71cc46416fe370fefec75cdd62121bf063a7e49"
+    },
+    "modules": {
+      "agent_implementation_route": {
+        "bytes": 343559,
+        "sha256": "5bd7370190448b9adc3446207ba58b2241b2ced50e5210362126e4dd6ec52f14"
+      },
+      "canonical_writer_custody": {
+        "bytes": 6059,
+        "sha256": "1d579269401e4679c6e7857b9a9028cf84feb5ce9078133e781042996f9178e6"
+      },
+      "diagnostic_handoff": {
+        "bytes": 12375,
+        "sha256": "893a21e9f4f4632d3222ddca829450e194b0b71c7313fc0cf74746aed59f58d5"
+      },
+      "fleet_completion": {
+        "bytes": 37486,
+        "sha256": "6254cc158e7b7542c6f960a8f238ad005ee0fc79353034c40dd451913dbdbf0c"
+      },
+      "fleet_heals": {
+        "bytes": 148902,
+        "sha256": "2ee2a1cad44085ec1c244672cbce18aec3f8e77537e69eee3287019987a2868a"
+      },
+      "fleet_holds": {
+        "bytes": 4412,
+        "sha256": "148976f2a699bf62a87f5485e73aa2fdff73918911c58b9382ffbafa9a592f65"
+      },
+      "fleet_repair": {
+        "bytes": 88753,
+        "sha256": "c324c7253158c5a7a6258baad0bab24f44f8de4333927f2af2704f31df83abaa"
+      },
+      "fleet_watchdog": {
+        "bytes": 74421,
+        "sha256": "d4d03900c39a4b922e83d3514fa5af578bcc9b97c7f60707ee2e9ca3c83a1e20"
+      },
+      "installer": {
+        "bytes": 34686,
+        "sha256": "a0953bb488c735721c7bab678518b167bd104e3a22ac3b331135ea28c2bc193d"
+      },
+      "live_board_probe": {
+        "bytes": 55749,
+        "sha256": "be02b81c285e89539e9b00f213d35beb2a87fbc054c3352453a6e2bb5617e853"
+      },
+      "native_catalogue_probe": {
+        "bytes": 23834,
+        "sha256": "45b6c3f2b680a2afc3a21c6e0a1505f9eb8c281ed9d396b1d2cb4070f56992a5"
+      },
+      "service_fleet_probe": {
+        "bytes": 10679,
+        "sha256": "ead0a4b0aa4cdf4d111a9ea64823841b6e8890d38b5ab2e79e68476a7a3409cd"
+      },
+      "storage_diagnostics": {
+        "bytes": 7927,
+        "sha256": "8b94832d3b11df7fbb4c57c160d9cc07ca62fd4bd6bf3732825d98ae697cbeb3"
+      }
+    },
+    "native_readback": {
+      "activation_state": "not_activated",
+      "board_namespace": "legal-ir-span-graph-lean-refinement-20261016",
+      "checked_at_epoch": 1793123723.283395,
+      "completion_authority": false,
+      "counts": {
+        "blocked": 64
+      },
+      "database_and_wal_metadata_unchanged": true,
+      "dependency_count": 115,
+      "event_cursor": 214,
+      "executor_health": "not_established",
+      "fresh_read": true,
+      "goal_count": 34,
+      "plan_root_cid": "baguqeeraiddmy4khowkyv37gwstmexmmku3lecsjtnaekhpqnlwx4vuwrhza",
+      "population_sha256": "ae902ebf03aee807ea9518a4b803e9f4a38bd36c3767895abe9c818048f85b89",
+      "repository_tree_id": "baguqeeraj2tqqwsde6kp76rnia3shklmkik46ffs4b4krdy3mlysoswyvptq",
+      "store_generation": 19,
+      "task_count": 64
+    },
+    "poll_seconds": 60,
+    "release": "/home/barberb/.local/lib/ipfs-taskboard-watchdog/releases/2b499e94d6c23f14cd72",
+    "source_checkout": "/home/barberb/lift_coding/.worktrees/legal-ir-scientific-watchdog-integration-20261027",
+    "units": {
+      "ipfs-taskboard-legal-ir-repair.service": {
+        "ActiveState": "active",
+        "MainPID": "3044971",
+        "SubState": "running",
+        "UnitFileState": "enabled"
+      },
+      "ipfs-taskboard-legal-ir-watchdog.service": {
+        "ActiveState": "active",
+        "MainPID": "3044968",
+        "SubState": "running",
+        "UnitFileState": "enabled"
+      }
+    }
+  },
+  "schema": "legal-ir-dual-namespace-watchdog-qualification/v1",
+  "source": {
+    "bypass_used": false,
+    "commit": "9daede149079cbdcea816b8f101fb2da5fd2a22e",
+    "merge_status": "open_required_qualification_blocked_account_billing",
+    "normal_merge_refused": true,
+    "public_main_at_publication": "8c529a62db64d2cd015e6762aaa4b526c598cd6f",
+    "pull_request": "https://github.com/endomorphosis/ipfs_accelerate_py/pull/304",
+    "repository": "endomorphosis/ipfs_accelerate_py"
+  }
+}
