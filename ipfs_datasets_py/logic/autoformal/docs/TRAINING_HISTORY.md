@@ -1,5 +1,15 @@
 # Training and experiment history
 
+## F18 frozen matched-arm scoring: no full-IR gain, 2026-10-27
+
+The [separate saved-only comparison](../../../../docs/autoformalization/evidence/legal-ir-f18-frozen-matched-scoring-20261027.json) uses the existing [formula metrics owner](guides/legal_span_conditions_fullspan_training_v1.md#retained-saved-output-result), preserving raw/joint producer envelopes and all632 source IDs. Final F18 parent, coefficient0 and coefficient0.25 each match405/624 complete IR raw and428/624 joint against retained compiler weak labels. All624 per-ID exact gain/loss sets are empty for both candidates and readouts. Of72 conditions-present TRAIN IDs,70 remain exact and two remain incorrect; all32 target-P modalities are retained in each arm and readout, with full-IR exactness scored separately. Both candidates add one joint abstention:19 versus parent18, with joint modality matches546/624 versus547/624. Raw abstentions remain117. Fresh DEV and TEST each remain0/36 complete-IR matches, and eight law snippets remain unscored. No reconstruction gain or margin advantage was measured.
+
+The original saved-only validation verified all60 frozen capture files (48,323,901bytes) before reference bodies opened, preserved19 selected source pins and closed source/native/storage custody with zero live children/RSS. It ran no model forward, optimizer update or provider call. The source adapter's82 authored pure cases/246phases (47 prior+35 new) and two independently run consumer fixtures are separate qualifications; their counts are never pooled with this actual comparison. The numerical profile remains byte-for-byte unchanged and prior39/45/632 results retain exact generations.
+
+The two persistent TRAIN failures are conditions-only on `matched-temporal-train-condition_exception_duration-0-p-absent` and `matched-temporal-train-condition_exception_duration-0-p-present`. Both candidates add a joint abstention on `targeted-loss-authored_dev-actor_duration_name-0-f-absent`, which the parent already decoded incorrectly on actor and conditions. Next diagnose these failures using frozen outputs and qualify retained N11/F15/F16/F17/F19 comparators under their original contracts. This supplies no held-out tuning or default new fit. These parent-relative compiler weak-label results establish no reviewed statutory gold, promotion, four-width quality, corpus/Lean admission or native scientific-task completion.
+
+The following publication section preserves its original unscored cutoff; the later saved-only result above supplies a separate local comparison without changing immutable Hub metadata.
+
 ## Experimental four-tensor candidate weight publication
 
 The first publication attempt failed during SDK import before a remote commit. Its original API storage recovery released the retained claim while preserving the failed logs. Source review identified user-site SDK shadowing in the launcher; the fresh successor used isolated standard virtual-environment loading (`-I`) and verified its SDK origins before publication. The original admission owner stayed unchanged.
@@ -12,7 +22,7 @@ the [separate controller result](../../../../docs/autoformalization/evidence/leg
 
 The separate fixed matched coefficients 0 and 0.25 pair reports 32 updates per arm, 64 total, and 1,264 native source captures. Both checkpoint/report sets and all 40 raw/joint files are frozen before independent reference scoring. These are candidate weights; no accuracy gain, promotion, reviewed statutory meaning or scientific-task completion follows.
 
-The original fixed numerical request remains separate from the controller tests and probe. A partial deadline remains partial; preserve artifacts and original recovery. Freeze complete candidate outputs before independent full-IR/per-ID/32-permission scoring.
+The original fixed numerical request remains separate from the controller tests and probe. A partial deadline remains partial; preserve artifacts and original recovery. The later saved-only comparison above scores the complete frozen candidates without another fit.
 
 ## Four-tensor source capture and final-F18 initial parity, 2026-10-27
 
@@ -22,7 +32,7 @@ The separate [authentic initial-parity run](../../../../docs/autoformalization/e
 
 The first actual-parity control failed before inference because it incorrectly required all dormant vectors to be zero. The original saved contract requires finite 384-value values for older panels and exact zeros only for fresh DEV/TEST. The corrected control preserves the actual vectors and adds a complete canonical TRAIN168 source-export/donor join. Both failed attempts retain their original logs and outputs; original exact-record recovery releases their claims without deleting evidence. This supplies no new statutory gold, active 8D/384D/768D/4096D comparison or accuracy improvement. Law8 stays unscored and the authored panels retain their prior exposure status.
 
-The next gate is the separately qualified original training-purpose controller binding, followed by matched 0/0.25 arms of 32 updates and freeze-first independent scoring. The current finite update primitive and source-capture API exist; the sealed v8 native campaign launcher is not a drop-in F18 worker. Preserve existing task prerequisites, original F18/F15/margin/objective bytes and historical adverse results.
+At this parity cutoff, the original training-purpose controller binding and matched 0/0.25 arms remained open. The later separate controller and matched-pair result above closes those selected gates and freezes complete outputs. The subsequent saved-only result above supplies selected parent-relative full-IR/per-ID/permission diagnostics; retained comparator and statutory gates remain open. Preserve existing task prerequisites, original F18/F15/margin/objective bytes and historical adverse results.
 
 ## F18 four-tensor disk resume and authentic zero-step delta, 2026-10-27
 
@@ -32,7 +42,7 @@ The separate [authentic zero-step roundtrip](../../../../docs/autoformalization/
 
 Earlier synthetic v01 failed before collection when Torch attempted external library discovery; v02 failed the original physical-root constructor before resource admission. Neither gets case/model qualification credit. The successful request explicitly reuses the existing scoped `pinned-libdl-resolution/v1` contract, verifies its three actual files and restores the real resolver immediately after Torch import; external-process attempts are empty. This is a documented mixed private-orchestration/public-product runtime projection, not whole-public-package or binary-ABI qualification. Failed artifacts are retained and the original exact-record recovery released v01 storage without changing other claims.
 
-Reuse the [API guide](guides/legal_span_conditions_fullspan_training_v1.md). `run_admitted_updates` is now a finite caller-owned primitive; `score_frozen_cases` remains a refusal stub. The original F18/F15/margin/objective owners and historical checkpoint bytes are unchanged. No initial parity receipt is fabricated inside checkpoint construction. The later source-capture and 632-case comparison above supply that initial parity gate. Next qualify the original training-purpose binding, then separately admit matched 0/0.25 arms of 32 updates; save both complete outputs before independent scoring. This is partial progress on existing `9103`–`9105`, with no task rearm/completion, new trained weights, statutory-gold qualification, four-width comparison or measured accuracy gain.
+Reuse the [API guide](guides/legal_span_conditions_fullspan_training_v1.md). `run_admitted_updates` is now a finite caller-owned primitive; `score_frozen_cases` remains a refusal stub. The original F18/F15/margin/objective owners and historical checkpoint bytes are unchanged. No initial parity receipt is fabricated inside checkpoint construction. The later source-capture and 632-case comparison above supply that initial parity gate. The later separate controller and matched-pair result above closes the selected binding and fixed-fit gates; its frozen candidate outputs feed the separate saved-only comparison above. This checkpoint/resume result is partial progress on existing `9103`–`9105`, with no task rearm/completion, new trained weights, statutory-gold qualification, four-width comparison or measured accuracy gain.
 
 ## Safe compatibility source integration, 2026-10-27
 

@@ -295,3 +295,245 @@ def test_invalid_or_open_targets_are_rejected(damage):
         del targets[0]["source_text"]
     with pytest.raises(ValueError):
         compare_free_running_formulas(_report(), targets)
+
+
+
+
+# These 632 occurrences are authored accounting fixtures, not retained data.
+def _f18_matched_fixture():
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.formula_generation_metrics import (
+        compare_f18_frozen_matched_arms,
+    )
+    sizes = {"train": 168, "old_tune": 64, **{"other_" + str(i): 56 for i in range(7)}, "law": 8}
+    expected, targets, hashes, source = {}, {}, {}, {}
+    for panel, size in sizes.items():
+        expected[panel], targets[panel], source[panel] = [], [], []
+        for index in range(size):
+            key = panel + ":" + str(index)
+            target = _target(key, key)
+            if panel == "old_tune" and index < 32:
+                target["canonical_ir"]["rules"][0]["modality"] = "P"
+            if panel == "train" and index < 72:
+                target["canonical_ir"]["rules"][0]["conditions"] = ["condition"]
+            expected[panel].append(key)
+            source[panel].append(target)
+            hashes[key] = hashlib.sha256(target["source_text"].encode()).hexdigest()
+            if panel != "law":
+                targets[panel].append(deepcopy(target))
+
+    arms = {}
+    for arm in ("parent", "coefficient_0", "coefficient_025"):
+        arms[arm] = []
+        for panel, rows in source.items():
+            chunks, joint = [], []
+            for start in range(0, len(rows), 128):
+                selected = rows[start:start + 128]
+                predictions = [_prediction(row) for row in selected]
+                for prediction in predictions:
+                    prediction.pop("id")
+                chunks.append({"schema": "conditions-fullspan-four-tensor-target-free-head-capture/v1",
+                    "inference": {"rows": predictions, "decoded_count": len(predictions),
+                                  "target_access": False, "teacher_forcing": False},
+                    "occurrences": [{"id": row["id"], "source_sha256": hashes[row["id"]], "scores": None}
+                                    for row in selected],
+                    "actual_source_forwards": len(selected), "extra_capture_forwards": 0,
+                    "target_access": False, "teacher_forcing": False})
+            if arm == "parent":
+                raw = {"schema": "modality-conditions-retention-adapter-target-free-head-capture/v1",
+                    "inference": {"rows": [row for chunk in chunks for row in chunk["inference"]["rows"]],
+                                  "decoded_count": len(rows), "teacher_forcing": False, "target_access": False},
+                    "occurrences": [row for chunk in chunks for row in chunk["occurrences"]],
+                    "actual_source_forwards": len(rows), "source_model_forwards": len(rows),
+                    "extra_capture_forwards": 0, "target_access": False, "teacher_forcing": False}
+            else:
+                raw = {"schema": "f18-paired-target-free-panel/v1", "panel": panel, "rows": len(rows),
+                       "chunks": chunks, "source_model_forwards": len(rows), "target_access": False, "teacher_forcing": False}
+            for row in rows:
+                result = _prediction(row)
+                result.pop("id")
+                result["status"] = "selected"
+                joint.append({"id": row["id"], "result": result})
+            arms[arm].append({"panel": panel, "raw": raw, "joint": {
+                "schema": "modality-conditions-retention-joint-panel/v1", "rows": joint,
+                "top_k": 8, "max_search_nodes": 50000, "reference_scoring_performed": False}})
+    return compare_f18_frozen_matched_arms, arms, targets, {
+        "expected_ids": expected, "expected_source_sha256": hashes,
+        "retention_ids": expected["train"][:72], "permission_ids": expected["old_tune"][:32],
+        "unscored_ids": expected["law"][:]}
+
+
+def _f18_fixture_prediction(arms, arm, mode, panel=0, row=0):
+    value = arms[arm][panel][mode]
+    if mode == "joint":
+        return value["rows"][row]["result"]
+    if arm == "parent":
+        return value["inference"]["rows"][row]
+    for chunk in value["chunks"]:
+        if row < len(chunk["inference"]["rows"]):
+            return chunk["inference"]["rows"][row]
+        row -= len(chunk["inference"]["rows"])
+    raise AssertionError("fixture row absent")
+
+
+def test_f18_matched_panels_keep_every_source_and_target_denominator_without_authority():
+    compare, arms, targets, options = _f18_matched_fixture()
+    before = deepcopy((arms, targets, options))
+    result = compare(arms, targets, **options)
+    assert result["valid_evaluation"]
+    assert result["expected_source_count"] == 632 and result["weak_label_target_count"] == 624
+    assert len(result["panels"]) == 30
+    for arm in ("parent", "coefficient_0", "coefficient_025"):
+        for mode in ("raw", "joint"):
+            assert result["arms"][arm][mode]["exact_reconstruction"]["matched"] == 624
+            assert result["arms"][arm][mode]["exact_reconstruction"]["total"] == 624
+            assert result["permission_counts"][mode][arm] == {"matched": 32, "total": 32, "fraction": 1.0}
+    for mode in ("raw", "joint"):
+        assert len(result["retention"][mode]) == 72
+        assert all(row["parent_to_coefficient_025"] == "retained" for row in result["retention"][mode])
+        assert len(result["permission_decisions"][mode]) == 32
+    for flag in ("qualified", "admitted", "formalized", "semantic_correctness_verified", "training_executed",
+                 "source_commitment_origin_verified", "target_origin_verified", "freeze_timing_verified",
+                 "roster_membership_verified", "retained_other_comparator_no_loss_gate_evaluated"):
+        assert result[flag] is False
+    assert result["parent_relative_only"] is True
+    assert (arms, targets, options) == before
+    assert compare(arms, targets, **options) == result
+    json.dumps(result, allow_nan=False)
+
+
+@pytest.mark.parametrize("damage", ["missing_panel", "panel_order", "raw_schema", "chunk_schema", "joint_envelope",
+                                  "inference_occurrence_length", "target_missing", "target_duplicate", "source_map_missing",
+                                  "source_map_invalid", "target_source_conflict", "expected_duplicate", "permission_31",
+                                  "permission_duplicate", "permission_not_target_p", "permission_multi_rule_target", "retention_71",
+                                  "retention_conditions_absent"])
+def test_f18_closed_rosters_and_envelopes_refuse_structural_ambiguity(damage):
+    compare, arms, targets, options = _f18_matched_fixture()
+    raw = arms["coefficient_025"][0]["raw"]
+    if damage == "missing_panel":
+        arms["coefficient_025"].pop()
+    elif damage == "panel_order":
+        arms["coefficient_025"][:2] = reversed(arms["coefficient_025"][:2])
+    elif damage == "raw_schema":
+        raw["schema"] = "unrecognized"
+    elif damage == "chunk_schema":
+        raw["chunks"][0]["schema"] = "unrecognized"
+    elif damage == "joint_envelope":
+        arms["coefficient_025"][0]["joint"]["rows"][0]["ignored"] = True
+    elif damage == "inference_occurrence_length":
+        raw["chunks"][0]["occurrences"].pop()
+    elif damage == "target_missing":
+        targets["train"].pop()
+    elif damage == "target_duplicate":
+        targets["train"][1] = deepcopy(targets["train"][0])
+    elif damage == "source_map_missing":
+        options["expected_source_sha256"].pop(options["unscored_ids"][0])
+    elif damage == "source_map_invalid":
+        options["expected_source_sha256"][options["unscored_ids"][0]] = "x" * 64
+    elif damage == "target_source_conflict":
+        targets["train"][0]["source_text"] += " changed"
+    elif damage == "expected_duplicate":
+        options["expected_ids"]["train"][1] = options["expected_ids"]["train"][0]
+    elif damage == "permission_31":
+        options["permission_ids"].pop()
+    elif damage == "permission_duplicate":
+        options["permission_ids"][1] = options["permission_ids"][0]
+    elif damage == "permission_not_target_p":
+        options["permission_ids"][0] = options["expected_ids"]["train"][0]
+    elif damage == "permission_multi_rule_target":
+        targets["old_tune"][0]["canonical_ir"]["rules"].append(deepcopy(targets["old_tune"][0]["canonical_ir"]["rules"][0]))
+    elif damage == "retention_71":
+        options["retention_ids"].pop()
+    elif damage == "retention_conditions_absent":
+        options["retention_ids"][0] = options["expected_ids"]["train"][100]
+    with pytest.raises(ValueError):
+        compare(arms, targets, **options)
+
+
+@pytest.mark.parametrize("damage", ["missing", "duplicate", "invalid_list_id", "invalid_dict_id", "raw_source_hash",
+                                  "occurrence_source_hash", "unscored_cross_arm_source_hash", "unscored_generation_flag",
+                                  "report_generation_flag", "nested_generation_flag", "raw_count", "decoded_count"])
+def test_f18_all_source_integrity_failures_remain_visible_without_favorable_selection(damage):
+    compare, arms, targets, options = _f18_matched_fixture()
+    raw, joint = arms["coefficient_025"][0]["raw"], arms["coefficient_025"][0]["joint"]
+    if damage == "missing":
+        joint["rows"].pop()
+    elif damage == "duplicate":
+        joint["rows"][1]["id"] = joint["rows"][0]["id"]
+        _replace(joint["rows"][1]["result"], "actor", "wrong")
+    elif damage in ("invalid_list_id", "invalid_dict_id"):
+        joint["rows"][0]["id"] = [] if damage == "invalid_list_id" else {}
+    elif damage == "raw_source_hash":
+        raw["chunks"][0]["inference"]["rows"][0]["source_sha256"] = "a" * 64
+    elif damage == "occurrence_source_hash":
+        raw["chunks"][0]["occurrences"][0]["source_sha256"] = "a" * 64
+    elif damage == "unscored_cross_arm_source_hash":
+        law = arms["coefficient_025"][-1]
+        law["raw"]["chunks"][0]["occurrences"][0]["source_sha256"] = "a" * 64
+        law["raw"]["chunks"][0]["inference"]["rows"][0]["source_sha256"] = "a" * 64
+        law["joint"]["rows"][0]["result"]["source_sha256"] = "a" * 64
+    elif damage == "unscored_generation_flag":
+        _f18_fixture_prediction(arms, "coefficient_025", "joint", panel=9)["target_access"] = True
+    elif damage == "report_generation_flag":
+        raw["teacher_forcing"] = True
+    elif damage == "nested_generation_flag":
+        raw["chunks"][0]["inference"]["target_access"] = True
+    elif damage == "raw_count":
+        raw["rows"] -= 1
+    elif damage == "decoded_count":
+        raw["chunks"][0]["inference"]["decoded_count"] -= 1
+    result = compare(arms, targets, **options)
+    assert result["valid_evaluation"] is False
+    assert result["arms"]["coefficient_025"]["joint"]["exact_reconstruction"]["total"] == 624
+    assert result["arms"]["coefficient_025"]["raw"]["exact_reconstruction"]["total"] == 624
+    if damage == "duplicate":
+        item = result["arms"]["coefficient_025"]["joint"]["rows"][0]
+        assert item["status"] == "duplicate" and item["exact"] is False
+    assert len(result["permission_decisions"]["joint"]) == 32
+
+
+def test_f18_equal_aggregate_gains_do_not_hide_casewise_retention_losses():
+    compare, arms, targets, options = _f18_matched_fixture()
+    for mode in ("raw", "joint"):
+        _replace(_f18_fixture_prediction(arms, "parent", mode, row=0), "actor", "wrong-parent")
+        _replace(_f18_fixture_prediction(arms, "coefficient_0", mode, row=0), "actor", "wrong-control")
+        _replace(_f18_fixture_prediction(arms, "coefficient_025", mode, row=1), "conditions", ["wrong-condition"])
+    result = compare(arms, targets, **options)
+    assert result["valid_evaluation"] is True
+    for mode in ("raw", "joint"):
+        assert result["arms"]["coefficient_0"][mode]["exact_reconstruction"]["matched"] == 623
+        assert result["arms"]["coefficient_025"][mode]["exact_reconstruction"]["matched"] == 623
+        rows = result["retention"][mode]
+        assert rows[0]["coefficient_0_to_coefficient_025"] == "gained"
+        assert rows[1]["coefficient_0_to_coefficient_025"] == "lost"
+        assert rows[1]["facets"]["conditions"]["parent_to_coefficient_025"] == "lost"
+        assert all(rows[1]["facets"][facet]["parent_to_coefficient_025"] == "retained"
+                   for facet in FACETS if facet != "conditions")
+
+
+@pytest.mark.parametrize("kind", ["modality_loss", "extra_rule", "abstention"])
+def test_f18_all_32_permission_decisions_include_lost_extra_rule_and_abstained_cases(kind):
+    compare, arms, targets, options = _f18_matched_fixture()
+    for mode in ("raw", "joint"):
+        row = _f18_fixture_prediction(arms, "coefficient_025", mode, panel=1)
+        if kind == "modality_loss":
+            _replace(row, "modality", "O")
+        elif kind == "extra_rule":
+            extra = deepcopy(row["canonical_ir"]["rules"][0])
+            extra["modality"] = "O"
+            row["canonical_ir"]["rules"].append(extra)
+            row["formal_outputs"].append({"family": "deontic", "format": "typed-deontic-rule/v1", "payload": deepcopy(extra)})
+        else:
+            row.update(status="abstained", canonical_ir=None, formal_outputs=[], formula_text=None)
+            if mode == "raw":
+                arms["coefficient_025"][1]["raw"]["chunks"][0]["inference"]["decoded_count"] -= 1
+    result = compare(arms, targets, **options)
+    assert result["valid_evaluation"]
+    for mode in ("raw", "joint"):
+        assert len(result["permission_decisions"][mode]) == 32
+        decision = result["permission_decisions"][mode][0]["arms"]["coefficient_025"]
+        assert decision["permission_retained"] is False and decision["full_ir_exact"] is False
+        assert result["permission_counts"][mode]["coefficient_025"] == {"matched": 31, "total": 32, "fraction": 31 / 32}
+        if kind == "extra_rule":
+            assert decision["predicted_modalities"] == ["P", "O"]
+        elif kind == "abstention":
+            assert decision["status"] == "abstained" and decision["predicted_modalities"] is None

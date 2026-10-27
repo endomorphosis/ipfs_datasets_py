@@ -3688,7 +3688,8 @@
         "f18-source-capture-qualified-20261027-01",
         "f18-initial632-parity-qualified-20261027-01",
         "f18-trainer-controller-qualified-20261027-01",
-        "f18-four-tensor-hf-weight-publication-20261027-01"
+        "f18-four-tensor-hf-weight-publication-20261027-01",
+        "f18-frozen-matched-scoring-20261027-01"
       ],
       "experimental_hf_weights": {
         "accuracy_gain_qualified": false,
@@ -3740,6 +3741,51 @@
         "standalone_whole_model": false,
         "status": "experimental_unscored"
       },
+      "frozen_matched_scoring": {
+        "all624_per_ID_full_IR_gains_or_losses": 0,
+        "api": "compare_f18_frozen_matched_arms",
+        "capture_files_verified_before_reference_access": 60,
+        "conditions_TRAIN_retention_all_arms_both_views": {
+          "exact": 70,
+          "still_incorrect": 2,
+          "total": 72
+        },
+        "evidence_id": "f18-frozen-matched-scoring-20261027-01",
+        "full_IR_exact_all_three_arms": {
+          "joint": 428,
+          "raw": 405,
+          "total": 624
+        },
+        "joint_abstentions": {
+          "coefficient_0": 19,
+          "coefficient_025": 19,
+          "parent": 18
+        },
+        "measured_margin_advantage": false,
+        "measured_reconstruction_gain": false,
+        "new_cases": 35,
+        "owner_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/formula_generation_metrics.py",
+        "owning_test": "tests/unit/logic/test_formula_generation_metrics.py",
+        "owning_test_sha256": "73962b0e75e02b6d80dbe25da079254975253cfd3f78013cb95b2205d442ff39",
+        "parent_relative_only": true,
+        "permission_measure": "Predicted rule-modality list equals [P]; full-IR exactness scored separately; no legal-permission correctness claim",
+        "permission_modality_retention_all_arms_both_views": {
+          "matched": 32,
+          "total": 32
+        },
+        "phases": 246,
+        "prior_cases_preserved": 47,
+        "product_source_sha256": "59578e51a1158ab756f1e6a66934ee6ee740d69de83ae3dd296e464f15141bc4",
+        "promotion": false,
+        "pure_cases": 82,
+        "retained_other_comparator_gate_evaluated": false,
+        "saved_only_original_validation_and_custody_closed": true,
+        "selected_source_pins_before_after": 19,
+        "separate_independent_saved_consumer_fixture_cases": 2,
+        "status": "saved_weak_label_comparison_closed_no_full_IR_gain_joint_abstention_regression",
+        "statutory_accuracy_qualified": false,
+        "strict_scientific_success": false
+      },
       "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_span_conditions_fullspan_training_v1.md",
       "id": "conditions-fullspan-f18-four-tensor-training-v1",
       "initial632_parity_qualification": {
@@ -3757,7 +3803,7 @@
         "source_rows": 632,
         "statutory_accuracy": false
       },
-      "notes": "Reuse the original public component identity and prescribed optimizer owner. Original dfd source adoption, its immutable preparation oracle and5 pure/15-phase metadata controls remain a separate generation. Existing optimizer-package opt-in companion reuses immutable F18/F15 CE-KL and published margin owners. Genuine synthetic26 mechanics cover mixed168/72 present, full-batch absent connected-zero, frozen38 including modality, ordered four row3 tensors and130 active/780 stored/650 inactive scalars, byte preservation and in-memory Adam resume. Old25/1 failure and original storage recovery remain separate. Selected physical trained-donor/source-population/teacher/mask authentication now has a separate original-owned closed result; new four-tensor persisted checkpoint/resume and finite continuation now have the separate 39-case qualification and authentic zero-step delta roundtrip below. The new source-only capture and selected final-F18 initial632 parity have separate45-case/632-case results below. Other E1 comparator assets, independent frozen-output scoring, statutory accuracy and actual Lake build remain open. The merged owning test restores lazy numerical imports and explicitly compares the original preparation oracle after only the enumerated additive schedule/authentication metadata fields; that earlier source generation passed its separate 26-case mechanics qualification with 36 before/after source pins. The current capture extension has the distinct 45-case/73-pin qualification below. Earlier generations remain separate. The original controller has its separate zero-model native qualification; actual paired-fit/scoring credit is not implied by that probe. The separate matched pair reports64 total updates and frozen candidate outputs; quality gains remain unqualified.",
+      "notes": "Reuse the original public component identity and prescribed optimizer owner. Original dfd source adoption, its immutable preparation oracle and5 pure/15-phase metadata controls remain a separate generation. Existing optimizer-package opt-in companion reuses immutable F18/F15 CE-KL and published margin owners. Genuine synthetic26 mechanics cover mixed168/72 present, full-batch absent connected-zero, frozen38 including modality, ordered four row3 tensors and130 active/780 stored/650 inactive scalars, byte preservation and in-memory Adam resume. Old25/1 failure and original storage recovery remain separate. Selected physical trained-donor/source-population/teacher/mask authentication now has a separate original-owned closed result; new four-tensor persisted checkpoint/resume and finite continuation now have the separate 39-case qualification and authentic zero-step delta roundtrip below. The new source-only capture and selected final-F18 initial632 parity have separate45-case/632-case results below. The later saved-only comparison closes selected parent-relative full-IR/per-ID/permission diagnostics with no reconstruction or margin advantage and one added joint abstention per candidate. Other E1 comparator assets, statutory accuracy and actual Lake build remain open. The merged owning test restores lazy numerical imports and explicitly compares the original preparation oracle after only the enumerated additive schedule/authentication metadata fields; that earlier source generation passed its separate 26-case mechanics qualification with 36 before/after source pins. The current capture extension has the distinct 45-case/73-pin qualification below. Earlier generations remain separate. The original controller has its separate zero-model native qualification; actual paired-fit/scoring credit is not implied by that probe. The separate matched pair reports64 total updates and frozen candidate outputs; saved-only weak-label scoring measures no full-IR gain or margin advantage.",
       "numerical_qualification": {
         "cases": 26,
         "evidence_id": "f18-conditions-fullspan-genuine-mechanics-20261027-01",
@@ -3895,7 +3941,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-10-27T21:21:38.728573+00:00",
+  "last_updated_at_utc": "2026-10-27T21:31:05.125526+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -6118,6 +6164,16 @@
       "root": "datasets_repository",
       "scope": "Four immutable HF files byte-verified under separate closed original publication custody; two donor-dependent candidate deltas plus manifest/README. No new model execution, scoring, accuracy, promotion or scientific-task credit.",
       "status": "published_immutable_bytes_verified_experimental_unscored"
+    },
+    {
+      "id": "f18-frozen-matched-scoring-20261027-01",
+      "observed_bytes": 22552,
+      "observed_sha256": "666c0b6fc8d3b10ca3b864f33a04e37afb700240b0ac3d6188d2a9d6b3ac7732",
+      "path": "docs/autoformalization/evidence/legal-ir-f18-frozen-matched-scoring-20261027.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "82 authored pure cases/246phases, separate2independent consumer fixtures and original-owned saved-only comparison. All60capture files/48323901bytes checked before labels;19pins and original custody closed. All3arms fullIR405/624raw428/624joint; no perID exact gains/losses, TRAIN70/72, target-Pmodalityretention32/32(fullIRseparate). Both candidates jointabstentions19vs18. No measured reconstruction/margin advantage; parent-relative weaklabels only, no retained comparator/statutory/scientific success. No model/update/provider in scoring.",
+      "status": "saved_weak_label_comparison_closed_no_full_IR_gain_joint_abstention_regression"
     }
   ]
 }
