@@ -1,0 +1,1770 @@
+{
+  "schema": "legal-ir-programme-engineering-preparation/v1",
+  "task_id": "LIRAE-LIR07-IR-02",
+  "parent_reference": {
+    "repository": "ipfs_datasets_py",
+    "revision": "eb023a439a23c59acdfaf485c66127f5202ecc8f",
+    "path": "ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json",
+    "task_id": "LIR-07",
+    "task_sha256": "d2bfcae5296f9dd0ab356bf7dc5a31dd8e2f60b6b4c7290666fd8826a49a2809"
+  },
+  "source_binding": {
+    "repository": "ipfs_datasets_py",
+    "public_main_commit": "eb023a439a23c59acdfaf485c66127f5202ecc8f",
+    "backlog_path": "ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json",
+    "backlog_sha256": "d1f74b427c3a7b27988a1d174f258fa6e867b681178978b90c611f4088ff401a"
+  },
+  "admitted": false,
+  "formalized": false,
+  "semantic_review_performed": false,
+  "model_gain_claimed": false,
+  "training_executed": false,
+  "result": {
+    "candidate_records": [
+      {
+        "admitted": false,
+        "argument_roles": [
+          {
+            "roles": [
+              "counted_personnel",
+              "counting_event_frame",
+              "counting_time_index"
+            ],
+            "symbol": "Member"
+          },
+          {
+            "roles": [
+              "authority_holder"
+            ],
+            "symbol": "President"
+          },
+          {
+            "roles": [
+              "proposed_corps_entity"
+            ],
+            "symbol": "CorpsEngineers"
+          },
+          {
+            "roles": [
+              "proposed_district_entity"
+            ],
+            "symbol": "DistrictColumbia"
+          },
+          {
+            "roles": [
+              "beneficiary_office_holder",
+              "district"
+            ],
+            "symbol": "MayorOf"
+          },
+          {
+            "roles": [
+              "personnel_member"
+            ],
+            "symbol": "Officer"
+          },
+          {
+            "roles": [
+              "assigned_personnel",
+              "assigned_organization"
+            ],
+            "symbol": "AssignedTo"
+          },
+          {
+            "roles": [
+              "detailing_authority",
+              "detailed_personnel",
+              "detail_frame",
+              "time_index"
+            ],
+            "symbol": "Detail"
+          },
+          {
+            "roles": [
+              "duties_collection",
+              "duties_holder"
+            ],
+            "symbol": "DutiesOf"
+          },
+          {
+            "roles": [
+              "detail_frame",
+              "assisting_personnel",
+              "beneficiary_office_holder",
+              "duties_collection",
+              "time_index"
+            ],
+            "symbol": "PurposeAssistInDischarging"
+          }
+        ],
+        "candidate_ast_kind": "typed_expression",
+        "candidate_ast_sha256": "22ceca124b2e7888e71aa1e2e69e78f11b3a9fd233327b24995c37a2077f7174",
+        "candidate_id": "7214:cap_within_permission",
+        "codec": "mixed_relational",
+        "codec_projection_sha256": "228a1b0b762bbe4547f8587f0548c50201c011eaf4f7dd95891bf1bfb83c0622",
+        "content_digest": "3a1c7c4c91e5b9e2bdecd3b8a3805d5cc42b53d2e02266947dc75c0878577bfa",
+        "disposition": "representable",
+        "formalized": false,
+        "legal_acceptance": false,
+        "ordered_binders": [
+          {
+            "name": "event",
+            "sort": "EventFrame"
+          },
+          {
+            "name": "time",
+            "sort": "TimeFrame"
+          },
+          {
+            "name": "president",
+            "sort": "Object"
+          },
+          {
+            "name": "mayor",
+            "sort": "Object"
+          },
+          {
+            "name": "corps",
+            "sort": "Object"
+          },
+          {
+            "name": "district",
+            "sort": "Object"
+          },
+          {
+            "name": "x0",
+            "sort": "Object"
+          },
+          {
+            "name": "x1",
+            "sort": "Object"
+          },
+          {
+            "name": "x2",
+            "sort": "Object"
+          },
+          {
+            "name": "x3",
+            "sort": "Object"
+          },
+          {
+            "name": "duties",
+            "sort": "Object"
+          },
+          {
+            "name": "officer",
+            "sort": "Object"
+          }
+        ],
+        "ordered_constructors": [
+          "forall",
+          "forall",
+          "forall",
+          "forall",
+          "forall",
+          "forall",
+          "implies",
+          "and",
+          "and",
+          "and",
+          "predicate",
+          "variable",
+          "predicate",
+          "variable",
+          "predicate",
+          "variable",
+          "predicate",
+          "variable",
+          "variable",
+          "extension",
+          "and",
+          "forall",
+          "forall",
+          "forall",
+          "forall",
+          "implies",
+          "and",
+          "and",
+          "and",
+          "predicate",
+          "variable",
+          "variable",
+          "variable",
+          "predicate",
+          "variable",
+          "variable",
+          "variable",
+          "predicate",
+          "variable",
+          "variable",
+          "variable",
+          "predicate",
+          "variable",
+          "variable",
+          "variable",
+          "or",
+          "or",
+          "or",
+          "or",
+          "or",
+          "equality",
+          "variable",
+          "variable",
+          "equality",
+          "variable",
+          "variable",
+          "equality",
+          "variable",
+          "variable",
+          "equality",
+          "variable",
+          "variable",
+          "equality",
+          "variable",
+          "variable",
+          "equality",
+          "variable",
+          "variable",
+          "exists",
+          "and",
+          "predicate",
+          "variable",
+          "variable",
+          "forall",
+          "implies",
+          "predicate",
+          "variable",
+          "variable",
+          "variable",
+          "and",
+          "and",
+          "and",
+          "predicate",
+          "variable",
+          "predicate",
+          "variable",
+          "variable",
+          "predicate",
+          "variable",
+          "variable",
+          "variable",
+          "variable",
+          "predicate",
+          "variable",
+          "variable",
+          "variable",
+          "variable",
+          "variable"
+        ],
+        "payload_bytes": 33989,
+        "payload_raw_utf8": "{\"argument_roles\":[{\"roles\":[\"counted_personnel\",\"counting_event_frame\",\"counting_time_index\"],\"symbol\":\"Member\"},{\"roles\":[\"authority_holder\"],\"symbol\":\"President\"},{\"roles\":[\"proposed_corps_entity\"],\"symbol\":\"CorpsEngineers\"},{\"roles\":[\"proposed_district_entity\"],\"symbol\":\"DistrictColumbia\"},{\"roles\":[\"beneficiary_office_holder\",\"district\"],\"symbol\":\"MayorOf\"},{\"roles\":[\"personnel_member\"],\"symbol\":\"Officer\"},{\"roles\":[\"assigned_personnel\",\"assigned_organization\"],\"symbol\":\"AssignedTo\"},{\"roles\":[\"detailing_authority\",\"detailed_personnel\",\"detail_frame\",\"time_index\"],\"symbol\":\"Detail\"},{\"roles\":[\"duties_collection\",\"duties_holder\"],\"symbol\":\"DutiesOf\"},{\"roles\":[\"detail_frame\",\"assisting_personnel\",\"beneficiary_office_holder\",\"duties_collection\",\"time_index\"],\"symbol\":\"PurposeAssistInDischarging\"}],\"expression\":{\"content_digest\":\"3a1c7c4c91e5b9e2bdecd3b8a3805d5cc42b53d2e02266947dc75c0878577bfa\",\"expression_id\":\"pilot7214:cap_within_permission:expression\",\"family\":{\"interface\":\"LogicIdentityNamespaces@1\",\"namespace\":\"family\",\"schema_version\":\"logic-identity-namespaces/v1\",\"value\":\"tdfol\",\"version\":\"1.0.0\"},\"interface\":\"TypedExpression@1\",\"metadata\":{},\"profile\":{\"interface\":\"LogicIdentityNamespaces@1\",\"namespace\":\"profile\",\"schema_version\":\"logic-identity-namespaces/v1\",\"value\":\"tdfol_default\",\"version\":\"1.0.0\"},\"root\":{\"arguments\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"pilot7214:cap_within_permission:32\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"president\"}],\"binders\":[],\"kind\":\"predicate\",\"metadata\":{},\"node_id\":\"pilot7214:cap_within_permission:31\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"President\"},{\"arguments\":[{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"pilot7214:cap_within_permission:34\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"corps\"}],\"binders\":[],\"kind\":\"predicate\",\"metadata\":{},\"node_id\":\"pilot7214:cap_within_permission:33\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"CorpsEngineers\"}],\"binders\":[],\"kind\":\"and\",\"metadata\":{},\"node_id\":\"pilot7214:cap_within_permission:40\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"},{\"arguments\":[{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"pilot7214:cap_within_permission:36\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"district\"}],\"binders\":[],\"kind\":\"predicate\",\"metadata\":{},\"node_id\":\"pilot7214:cap_within_permission:35\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"DistrictColumbia\"}],\"binders\":[],\"kind\":\"and\",\"metadata\":{},\"node_id\":\"pilot7214:cap_within_permission:41\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"},{\"arguments\":[{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"pilot7214:cap_within_permission:38\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"mayor\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"pilot7214:cap_within_permission:39\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"district\"}],\"binders\":[],\"kind\":\"predicate\",\"metadata\":{},\"node_id\":\"pilot7214:cap_within_permission:37\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"MayorOf\"}],\"binders\":[],\"kind\":\"and\",\"metadata\":{},\"node_id\":\"pilot7214:cap_within_permission:42\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"},{\"arguments\":[],\"binders\":[],\"extension\":{\"children\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:2\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"x0\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:3\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"EventFrame\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"event\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:4\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"TimeFrame\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"time\"}],\"binders\":[],\"kind\":\"predicate\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:1\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"Member\"},{\"arguments\":[{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:6\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"x1\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:7\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"EventFrame\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"event\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:8\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"TimeFrame\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"time\"}],\"binders\":[],\"kind\":\"predicate\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:5\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"Member\"}],\"binders\":[],\"kind\":\"and\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:36\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"},{\"arguments\":[{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:10\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"x2\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:11\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"EventFrame\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"event\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:12\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"TimeFrame\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"time\"}],\"binders\":[],\"kind\":\"predicate\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:9\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"Member\"}],\"binders\":[],\"kind\":\"and\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:37\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"},{\"arguments\":[{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:14\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"x3\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:15\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"EventFrame\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"event\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:16\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"TimeFrame\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"time\"}],\"binders\":[],\"kind\":\"predicate\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:13\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"Member\"}],\"binders\":[],\"kind\":\"and\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:38\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"},{\"arguments\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:18\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"x0\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:19\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"x1\"}],\"binders\":[],\"kind\":\"equality\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:17\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"},{\"arguments\":[{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:21\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"x0\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:22\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"x2\"}],\"binders\":[],\"kind\":\"equality\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:20\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"}],\"binders\":[],\"kind\":\"or\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:39\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"},{\"arguments\":[{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:24\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"x0\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:25\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"x3\"}],\"binders\":[],\"kind\":\"equality\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:23\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"}],\"binders\":[],\"kind\":\"or\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:40\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"},{\"arguments\":[{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:27\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"x1\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:28\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"x2\"}],\"binders\":[],\"kind\":\"equality\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:26\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"}],\"binders\":[],\"kind\":\"or\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:41\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"},{\"arguments\":[{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:30\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"x1\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:31\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"x3\"}],\"binders\":[],\"kind\":\"equality\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:29\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"}],\"binders\":[],\"kind\":\"or\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:42\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"},{\"arguments\":[{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:33\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"x2\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:34\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"x3\"}],\"binders\":[],\"kind\":\"equality\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:32\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"}],\"binders\":[],\"kind\":\"or\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:43\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"}],\"binders\":[],\"kind\":\"implies\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:35\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"}],\"binders\":[{\"name\":\"x3\",\"schema_version\":\"syntax-binder/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"}}],\"kind\":\"forall\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:44\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"}],\"binders\":[{\"name\":\"x2\",\"schema_version\":\"syntax-binder/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"}}],\"kind\":\"forall\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:45\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"}],\"binders\":[{\"name\":\"x1\",\"schema_version\":\"syntax-binder/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"}}],\"kind\":\"forall\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:46\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"}],\"binders\":[{\"name\":\"x0\",\"schema_version\":\"syntax-binder/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"}}],\"kind\":\"forall\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:47\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"},{\"arguments\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"pilot7214:cap_within_permission:27\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"duties\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"pilot7214:cap_within_permission:28\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"mayor\"}],\"binders\":[],\"kind\":\"predicate\",\"metadata\":{},\"node_id\":\"pilot7214:cap_within_permission:26\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"DutiesOf\"},{\"arguments\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"pilot7214:cap_within_permission:22\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"officer\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"pilot7214:cap_within_permission:23\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"EventFrame\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"event\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"pilot7214:cap_within_permission:24\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"TimeFrame\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"time\"}],\"binders\":[],\"kind\":\"predicate\",\"metadata\":{},\"node_id\":\"pilot7214:cap_within_permission:21\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"Member\"},{\"arguments\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"pilot7214:cap_within_permission:2\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"officer\"}],\"binders\":[],\"kind\":\"predicate\",\"metadata\":{},\"node_id\":\"pilot7214:cap_within_permission:1\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"Officer\"},{\"arguments\":[{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"pilot7214:cap_within_permission:4\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"officer\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"pilot7214:cap_within_permission:5\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"corps\"}],\"binders\":[],\"kind\":\"predicate\",\"metadata\":{},\"node_id\":\"pilot7214:cap_within_permission:3\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"AssignedTo\"}],\"binders\":[],\"kind\":\"and\",\"metadata\":{},\"node_id\":\"pilot7214:cap_within_permission:17\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"},{\"arguments\":[{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"pilot7214:cap_within_permission:7\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"president\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"pilot7214:cap_within_permission:8\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"officer\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"pilot7214:cap_within_permission:9\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"EventFrame\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"event\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"pilot7214:cap_within_permission:10\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"TimeFrame\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"time\"}],\"binders\":[],\"kind\":\"predicate\",\"metadata\":{},\"node_id\":\"pilot7214:cap_within_permission:6\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"Detail\"}],\"binders\":[],\"kind\":\"and\",\"metadata\":{},\"node_id\":\"pilot7214:cap_within_permission:18\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"},{\"arguments\":[{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"pilot7214:cap_within_permission:12\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"EventFrame\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"event\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"pilot7214:cap_within_permission:13\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"officer\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"pilot7214:cap_within_permission:14\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"mayor\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"pilot7214:cap_within_permission:15\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"duties\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"pilot7214:cap_within_permission:16\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"TimeFrame\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"time\"}],\"binders\":[],\"kind\":\"predicate\",\"metadata\":{},\"node_id\":\"pilot7214:cap_within_permission:11\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"PurposeAssistInDischarging\"}],\"binders\":[],\"kind\":\"and\",\"metadata\":{},\"node_id\":\"pilot7214:cap_within_permission:19\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"}],\"binders\":[],\"kind\":\"implies\",\"metadata\":{},\"node_id\":\"pilot7214:cap_within_permission:20\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"}],\"binders\":[{\"name\":\"officer\",\"schema_version\":\"syntax-binder/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"}}],\"kind\":\"forall\",\"metadata\":{},\"node_id\":\"pilot7214:cap_within_permission:25\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"}],\"binders\":[],\"kind\":\"and\",\"metadata\":{},\"node_id\":\"pilot7214:cap_within_permission:29\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"}],\"binders\":[{\"name\":\"duties\",\"schema_version\":\"syntax-binder/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"}}],\"kind\":\"exists\",\"metadata\":{},\"node_id\":\"pilot7214:cap_within_permission:30\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"}],\"binders\":[],\"kind\":\"and\",\"metadata\":{},\"node_id\":\"pilot7214:cap_within_permission:44\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"}],\"family\":{\"interface\":\"LogicIdentityNamespaces@1\",\"namespace\":\"family\",\"schema_version\":\"logic-identity-namespaces/v1\",\"value\":\"tdfol\",\"version\":\"1.0.0\"},\"features\":[\"legacy.classic_letter\",\"legacy.permission\"],\"interface\":\"LogicExtensionNode@1\",\"metadata\":{},\"node_id\":\"pilot7214:cap_within_permission:45:ext\",\"payload\":{\"kind\":\"permission\",\"letter\":\"P\",\"resolution\":\"deontic\",\"schema_version\":\"legacy.deontic/v1\"},\"payload_schema\":\"legacy.deontic/v1\",\"profile\":{\"interface\":\"LogicIdentityNamespaces@1\",\"namespace\":\"profile\",\"schema_version\":\"logic-identity-namespaces/v1\",\"value\":\"tdfol_default\",\"version\":\"1.0.0\"},\"schema_version\":\"syntax-logic-extension-node/v1\"},\"kind\":\"extension\",\"metadata\":{},\"node_id\":\"pilot7214:cap_within_permission:45\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"}],\"binders\":[],\"kind\":\"implies\",\"metadata\":{},\"node_id\":\"pilot7214:cap_within_permission:43\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"}],\"binders\":[{\"name\":\"district\",\"schema_version\":\"syntax-binder/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"}}],\"kind\":\"forall\",\"metadata\":{},\"node_id\":\"pilot7214:cap_within_permission:46\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"}],\"binders\":[{\"name\":\"corps\",\"schema_version\":\"syntax-binder/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"}}],\"kind\":\"forall\",\"metadata\":{},\"node_id\":\"pilot7214:cap_within_permission:47\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"}],\"binders\":[{\"name\":\"mayor\",\"schema_version\":\"syntax-binder/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"}}],\"kind\":\"forall\",\"metadata\":{},\"node_id\":\"pilot7214:cap_within_permission:48\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"}],\"binders\":[{\"name\":\"president\",\"schema_version\":\"syntax-binder/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"}}],\"kind\":\"forall\",\"metadata\":{},\"node_id\":\"pilot7214:cap_within_permission:49\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"}],\"binders\":[{\"name\":\"time\",\"schema_version\":\"syntax-binder/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"TimeFrame\",\"schema_version\":\"syntax-logic-sort/v1\"}}],\"kind\":\"forall\",\"metadata\":{},\"node_id\":\"pilot7214:cap_within_permission:50\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"}],\"binders\":[{\"name\":\"event\",\"schema_version\":\"syntax-binder/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"EventFrame\",\"schema_version\":\"syntax-logic-sort/v1\"}}],\"kind\":\"forall\",\"metadata\":{},\"node_id\":\"pilot7214:cap_within_permission:51\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"},\"schema_version\":\"syntax-typed-expression/v1\",\"signature\":{\"family\":{\"interface\":\"LogicIdentityNamespaces@1\",\"namespace\":\"family\",\"schema_version\":\"logic-identity-namespaces/v1\",\"value\":\"tdfol\",\"version\":\"1.0.0\"},\"features\":[],\"interface\":\"LogicSignature@1\",\"metadata\":{},\"profile\":{\"interface\":\"LogicIdentityNamespaces@1\",\"namespace\":\"profile\",\"schema_version\":\"logic-identity-namespaces/v1\",\"value\":\"tdfol_default\",\"version\":\"1.0.0\"},\"schema_version\":\"syntax-logic-signature/v1\",\"signature_id\":\"pilot7214:cap_within_permission:signature\",\"sorts\":[{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"EventFrame\",\"schema_version\":\"syntax-logic-sort/v1\"},{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"TimeFrame\",\"schema_version\":\"syntax-logic-sort/v1\"}],\"symbols\":[{\"domain\":[{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"EventFrame\",\"schema_version\":\"syntax-logic-sort/v1\"},{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"TimeFrame\",\"schema_version\":\"syntax-logic-sort/v1\"}],\"kind\":\"predicate\",\"metadata\":{},\"name\":\"Member\",\"range\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"schema_version\":\"syntax-symbol-declaration/v1\"},{\"domain\":[{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"}],\"kind\":\"predicate\",\"metadata\":{},\"name\":\"President\",\"range\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"schema_version\":\"syntax-symbol-declaration/v1\"},{\"domain\":[{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"}],\"kind\":\"predicate\",\"metadata\":{},\"name\":\"CorpsEngineers\",\"range\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"schema_version\":\"syntax-symbol-declaration/v1\"},{\"domain\":[{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"}],\"kind\":\"predicate\",\"metadata\":{},\"name\":\"DistrictColumbia\",\"range\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"schema_version\":\"syntax-symbol-declaration/v1\"},{\"domain\":[{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"}],\"kind\":\"predicate\",\"metadata\":{},\"name\":\"MayorOf\",\"range\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"schema_version\":\"syntax-symbol-declaration/v1\"},{\"domain\":[{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"}],\"kind\":\"predicate\",\"metadata\":{},\"name\":\"Officer\",\"range\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"schema_version\":\"syntax-symbol-declaration/v1\"},{\"domain\":[{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"}],\"kind\":\"predicate\",\"metadata\":{},\"name\":\"AssignedTo\",\"range\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"schema_version\":\"syntax-symbol-declaration/v1\"},{\"domain\":[{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"EventFrame\",\"schema_version\":\"syntax-logic-sort/v1\"},{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"TimeFrame\",\"schema_version\":\"syntax-logic-sort/v1\"}],\"kind\":\"predicate\",\"metadata\":{},\"name\":\"Detail\",\"range\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"schema_version\":\"syntax-symbol-declaration/v1\"},{\"domain\":[{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"}],\"kind\":\"predicate\",\"metadata\":{},\"name\":\"DutiesOf\",\"range\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"schema_version\":\"syntax-symbol-declaration/v1\"},{\"domain\":[{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"EventFrame\",\"schema_version\":\"syntax-logic-sort/v1\"},{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"TimeFrame\",\"schema_version\":\"syntax-logic-sort/v1\"}],\"kind\":\"predicate\",\"metadata\":{},\"name\":\"PurposeAssistInDischarging\",\"range\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"schema_version\":\"syntax-symbol-declaration/v1\"}]}},\"interpretation_status\":\"authored_unreviewed_declaration\",\"profile\":\"authored-many-sorted-relational-deontic/v1\",\"schema\":\"legal-mixed-relational-norm-request/v1\",\"source_binding\":null}",
+        "payload_sha256": "957b2011acde34b7fda85d8661061622160316605b03324a7b52c94cc17b6bc7",
+        "projection_replaces_candidate": false,
+        "reason": "qualified_codec_accepts_original",
+        "replacement_ast": null,
+        "roles_dropped": false,
+        "roles_present": true
+      },
+      {
+        "admitted": false,
+        "argument_roles": [
+          {
+            "roles": [
+              "counted_personnel",
+              "counting_event_frame",
+              "counting_time_index"
+            ],
+            "symbol": "Member"
+          },
+          {
+            "roles": [
+              "authority_holder"
+            ],
+            "symbol": "President"
+          },
+          {
+            "roles": [
+              "proposed_corps_entity"
+            ],
+            "symbol": "CorpsEngineers"
+          },
+          {
+            "roles": [
+              "proposed_district_entity"
+            ],
+            "symbol": "DistrictColumbia"
+          },
+          {
+            "roles": [
+              "beneficiary_office_holder",
+              "district"
+            ],
+            "symbol": "MayorOf"
+          },
+          {
+            "roles": [
+              "personnel_member"
+            ],
+            "symbol": "Officer"
+          },
+          {
+            "roles": [
+              "assigned_personnel",
+              "assigned_organization"
+            ],
+            "symbol": "AssignedTo"
+          },
+          {
+            "roles": [
+              "detailing_authority",
+              "detailed_personnel",
+              "detail_frame",
+              "time_index"
+            ],
+            "symbol": "Detail"
+          },
+          {
+            "roles": [
+              "duties_collection",
+              "duties_holder"
+            ],
+            "symbol": "DutiesOf"
+          },
+          {
+            "roles": [
+              "detail_frame",
+              "assisting_personnel",
+              "beneficiary_office_holder",
+              "duties_collection",
+              "time_index"
+            ],
+            "symbol": "PurposeAssistInDischarging"
+          }
+        ],
+        "candidate_ast_kind": "typed_expression",
+        "candidate_ast_sha256": "9bf9c04620a74e7d49d4e8d876ba23fc14e5fb5ab9a52cf81c98fe0bc93a36d2",
+        "candidate_id": "7214:cap_as_permission_guard",
+        "codec": "mixed_relational",
+        "codec_projection_sha256": "98f8fef29acdc64a92d770cad018cea22a629610ac0314e3dc9743ab99c0611d",
+        "content_digest": "acefe154b460bfaf7d708afcc396e17e6898e79ec339b66219215313ed76772e",
+        "disposition": "representable",
+        "formalized": false,
+        "legal_acceptance": false,
+        "ordered_binders": [
+          {
+            "name": "event",
+            "sort": "EventFrame"
+          },
+          {
+            "name": "time",
+            "sort": "TimeFrame"
+          },
+          {
+            "name": "president",
+            "sort": "Object"
+          },
+          {
+            "name": "mayor",
+            "sort": "Object"
+          },
+          {
+            "name": "corps",
+            "sort": "Object"
+          },
+          {
+            "name": "district",
+            "sort": "Object"
+          },
+          {
+            "name": "x0",
+            "sort": "Object"
+          },
+          {
+            "name": "x1",
+            "sort": "Object"
+          },
+          {
+            "name": "x2",
+            "sort": "Object"
+          },
+          {
+            "name": "x3",
+            "sort": "Object"
+          },
+          {
+            "name": "duties",
+            "sort": "Object"
+          },
+          {
+            "name": "officer",
+            "sort": "Object"
+          }
+        ],
+        "ordered_constructors": [
+          "forall",
+          "forall",
+          "forall",
+          "forall",
+          "forall",
+          "forall",
+          "implies",
+          "and",
+          "and",
+          "and",
+          "and",
+          "predicate",
+          "variable",
+          "predicate",
+          "variable",
+          "predicate",
+          "variable",
+          "predicate",
+          "variable",
+          "variable",
+          "forall",
+          "forall",
+          "forall",
+          "forall",
+          "implies",
+          "and",
+          "and",
+          "and",
+          "predicate",
+          "variable",
+          "variable",
+          "variable",
+          "predicate",
+          "variable",
+          "variable",
+          "variable",
+          "predicate",
+          "variable",
+          "variable",
+          "variable",
+          "predicate",
+          "variable",
+          "variable",
+          "variable",
+          "or",
+          "or",
+          "or",
+          "or",
+          "or",
+          "equality",
+          "variable",
+          "variable",
+          "equality",
+          "variable",
+          "variable",
+          "equality",
+          "variable",
+          "variable",
+          "equality",
+          "variable",
+          "variable",
+          "equality",
+          "variable",
+          "variable",
+          "equality",
+          "variable",
+          "variable",
+          "extension",
+          "exists",
+          "and",
+          "predicate",
+          "variable",
+          "variable",
+          "forall",
+          "implies",
+          "predicate",
+          "variable",
+          "variable",
+          "variable",
+          "and",
+          "and",
+          "and",
+          "predicate",
+          "variable",
+          "predicate",
+          "variable",
+          "variable",
+          "predicate",
+          "variable",
+          "variable",
+          "variable",
+          "variable",
+          "predicate",
+          "variable",
+          "variable",
+          "variable",
+          "variable",
+          "variable"
+        ],
+        "payload_bytes": 34097,
+        "payload_raw_utf8": "{\"argument_roles\":[{\"roles\":[\"counted_personnel\",\"counting_event_frame\",\"counting_time_index\"],\"symbol\":\"Member\"},{\"roles\":[\"authority_holder\"],\"symbol\":\"President\"},{\"roles\":[\"proposed_corps_entity\"],\"symbol\":\"CorpsEngineers\"},{\"roles\":[\"proposed_district_entity\"],\"symbol\":\"DistrictColumbia\"},{\"roles\":[\"beneficiary_office_holder\",\"district\"],\"symbol\":\"MayorOf\"},{\"roles\":[\"personnel_member\"],\"symbol\":\"Officer\"},{\"roles\":[\"assigned_personnel\",\"assigned_organization\"],\"symbol\":\"AssignedTo\"},{\"roles\":[\"detailing_authority\",\"detailed_personnel\",\"detail_frame\",\"time_index\"],\"symbol\":\"Detail\"},{\"roles\":[\"duties_collection\",\"duties_holder\"],\"symbol\":\"DutiesOf\"},{\"roles\":[\"detail_frame\",\"assisting_personnel\",\"beneficiary_office_holder\",\"duties_collection\",\"time_index\"],\"symbol\":\"PurposeAssistInDischarging\"}],\"expression\":{\"content_digest\":\"acefe154b460bfaf7d708afcc396e17e6898e79ec339b66219215313ed76772e\",\"expression_id\":\"pilot7214:cap_as_permission_guard:expression\",\"family\":{\"interface\":\"LogicIdentityNamespaces@1\",\"namespace\":\"family\",\"schema_version\":\"logic-identity-namespaces/v1\",\"value\":\"tdfol\",\"version\":\"1.0.0\"},\"interface\":\"TypedExpression@1\",\"metadata\":{},\"profile\":{\"interface\":\"LogicIdentityNamespaces@1\",\"namespace\":\"profile\",\"schema_version\":\"logic-identity-namespaces/v1\",\"value\":\"tdfol_default\",\"version\":\"1.0.0\"},\"root\":{\"arguments\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"pilot7214:cap_as_permission_guard:32\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"president\"}],\"binders\":[],\"kind\":\"predicate\",\"metadata\":{},\"node_id\":\"pilot7214:cap_as_permission_guard:31\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"President\"},{\"arguments\":[{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"pilot7214:cap_as_permission_guard:34\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"corps\"}],\"binders\":[],\"kind\":\"predicate\",\"metadata\":{},\"node_id\":\"pilot7214:cap_as_permission_guard:33\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"CorpsEngineers\"}],\"binders\":[],\"kind\":\"and\",\"metadata\":{},\"node_id\":\"pilot7214:cap_as_permission_guard:40\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"},{\"arguments\":[{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"pilot7214:cap_as_permission_guard:36\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"district\"}],\"binders\":[],\"kind\":\"predicate\",\"metadata\":{},\"node_id\":\"pilot7214:cap_as_permission_guard:35\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"DistrictColumbia\"}],\"binders\":[],\"kind\":\"and\",\"metadata\":{},\"node_id\":\"pilot7214:cap_as_permission_guard:41\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"},{\"arguments\":[{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"pilot7214:cap_as_permission_guard:38\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"mayor\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"pilot7214:cap_as_permission_guard:39\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"district\"}],\"binders\":[],\"kind\":\"predicate\",\"metadata\":{},\"node_id\":\"pilot7214:cap_as_permission_guard:37\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"MayorOf\"}],\"binders\":[],\"kind\":\"and\",\"metadata\":{},\"node_id\":\"pilot7214:cap_as_permission_guard:42\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"},{\"arguments\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:2\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"x0\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:3\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"EventFrame\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"event\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:4\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"TimeFrame\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"time\"}],\"binders\":[],\"kind\":\"predicate\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:1\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"Member\"},{\"arguments\":[{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:6\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"x1\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:7\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"EventFrame\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"event\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:8\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"TimeFrame\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"time\"}],\"binders\":[],\"kind\":\"predicate\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:5\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"Member\"}],\"binders\":[],\"kind\":\"and\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:36\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"},{\"arguments\":[{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:10\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"x2\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:11\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"EventFrame\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"event\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:12\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"TimeFrame\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"time\"}],\"binders\":[],\"kind\":\"predicate\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:9\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"Member\"}],\"binders\":[],\"kind\":\"and\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:37\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"},{\"arguments\":[{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:14\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"x3\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:15\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"EventFrame\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"event\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:16\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"TimeFrame\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"time\"}],\"binders\":[],\"kind\":\"predicate\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:13\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"Member\"}],\"binders\":[],\"kind\":\"and\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:38\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"},{\"arguments\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:18\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"x0\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:19\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"x1\"}],\"binders\":[],\"kind\":\"equality\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:17\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"},{\"arguments\":[{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:21\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"x0\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:22\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"x2\"}],\"binders\":[],\"kind\":\"equality\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:20\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"}],\"binders\":[],\"kind\":\"or\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:39\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"},{\"arguments\":[{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:24\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"x0\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:25\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"x3\"}],\"binders\":[],\"kind\":\"equality\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:23\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"}],\"binders\":[],\"kind\":\"or\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:40\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"},{\"arguments\":[{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:27\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"x1\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:28\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"x2\"}],\"binders\":[],\"kind\":\"equality\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:26\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"}],\"binders\":[],\"kind\":\"or\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:41\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"},{\"arguments\":[{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:30\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"x1\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:31\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"x3\"}],\"binders\":[],\"kind\":\"equality\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:29\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"}],\"binders\":[],\"kind\":\"or\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:42\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"},{\"arguments\":[{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:33\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"x2\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:34\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"x3\"}],\"binders\":[],\"kind\":\"equality\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:32\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"}],\"binders\":[],\"kind\":\"or\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:43\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"}],\"binders\":[],\"kind\":\"implies\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:35\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"}],\"binders\":[{\"name\":\"x3\",\"schema_version\":\"syntax-binder/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"}}],\"kind\":\"forall\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:44\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"}],\"binders\":[{\"name\":\"x2\",\"schema_version\":\"syntax-binder/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"}}],\"kind\":\"forall\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:45\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"}],\"binders\":[{\"name\":\"x1\",\"schema_version\":\"syntax-binder/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"}}],\"kind\":\"forall\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:46\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"}],\"binders\":[{\"name\":\"x0\",\"schema_version\":\"syntax-binder/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"}}],\"kind\":\"forall\",\"metadata\":{},\"node_id\":\"authored:counted-frame:node:47\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"}],\"binders\":[],\"kind\":\"and\",\"metadata\":{},\"node_id\":\"pilot7214:cap_as_permission_guard:44\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"},{\"arguments\":[],\"binders\":[],\"extension\":{\"children\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"pilot7214:cap_as_permission_guard:27\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"duties\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"pilot7214:cap_as_permission_guard:28\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"mayor\"}],\"binders\":[],\"kind\":\"predicate\",\"metadata\":{},\"node_id\":\"pilot7214:cap_as_permission_guard:26\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"DutiesOf\"},{\"arguments\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"pilot7214:cap_as_permission_guard:22\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"officer\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"pilot7214:cap_as_permission_guard:23\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"EventFrame\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"event\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"pilot7214:cap_as_permission_guard:24\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"TimeFrame\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"time\"}],\"binders\":[],\"kind\":\"predicate\",\"metadata\":{},\"node_id\":\"pilot7214:cap_as_permission_guard:21\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"Member\"},{\"arguments\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"pilot7214:cap_as_permission_guard:2\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"officer\"}],\"binders\":[],\"kind\":\"predicate\",\"metadata\":{},\"node_id\":\"pilot7214:cap_as_permission_guard:1\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"Officer\"},{\"arguments\":[{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"pilot7214:cap_as_permission_guard:4\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"officer\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"pilot7214:cap_as_permission_guard:5\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"corps\"}],\"binders\":[],\"kind\":\"predicate\",\"metadata\":{},\"node_id\":\"pilot7214:cap_as_permission_guard:3\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"AssignedTo\"}],\"binders\":[],\"kind\":\"and\",\"metadata\":{},\"node_id\":\"pilot7214:cap_as_permission_guard:17\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"},{\"arguments\":[{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"pilot7214:cap_as_permission_guard:7\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"president\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"pilot7214:cap_as_permission_guard:8\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"officer\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"pilot7214:cap_as_permission_guard:9\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"EventFrame\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"event\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"pilot7214:cap_as_permission_guard:10\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"TimeFrame\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"time\"}],\"binders\":[],\"kind\":\"predicate\",\"metadata\":{},\"node_id\":\"pilot7214:cap_as_permission_guard:6\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"Detail\"}],\"binders\":[],\"kind\":\"and\",\"metadata\":{},\"node_id\":\"pilot7214:cap_as_permission_guard:18\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"},{\"arguments\":[{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"pilot7214:cap_as_permission_guard:12\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"EventFrame\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"event\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"pilot7214:cap_as_permission_guard:13\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"officer\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"pilot7214:cap_as_permission_guard:14\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"mayor\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"pilot7214:cap_as_permission_guard:15\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"duties\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"pilot7214:cap_as_permission_guard:16\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"TimeFrame\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"time\"}],\"binders\":[],\"kind\":\"predicate\",\"metadata\":{},\"node_id\":\"pilot7214:cap_as_permission_guard:11\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"PurposeAssistInDischarging\"}],\"binders\":[],\"kind\":\"and\",\"metadata\":{},\"node_id\":\"pilot7214:cap_as_permission_guard:19\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"}],\"binders\":[],\"kind\":\"implies\",\"metadata\":{},\"node_id\":\"pilot7214:cap_as_permission_guard:20\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"}],\"binders\":[{\"name\":\"officer\",\"schema_version\":\"syntax-binder/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"}}],\"kind\":\"forall\",\"metadata\":{},\"node_id\":\"pilot7214:cap_as_permission_guard:25\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"}],\"binders\":[],\"kind\":\"and\",\"metadata\":{},\"node_id\":\"pilot7214:cap_as_permission_guard:29\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"}],\"binders\":[{\"name\":\"duties\",\"schema_version\":\"syntax-binder/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"}}],\"kind\":\"exists\",\"metadata\":{},\"node_id\":\"pilot7214:cap_as_permission_guard:30\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"}],\"family\":{\"interface\":\"LogicIdentityNamespaces@1\",\"namespace\":\"family\",\"schema_version\":\"logic-identity-namespaces/v1\",\"value\":\"tdfol\",\"version\":\"1.0.0\"},\"features\":[\"legacy.classic_letter\",\"legacy.permission\"],\"interface\":\"LogicExtensionNode@1\",\"metadata\":{},\"node_id\":\"pilot7214:cap_as_permission_guard:45:ext\",\"payload\":{\"kind\":\"permission\",\"letter\":\"P\",\"resolution\":\"deontic\",\"schema_version\":\"legacy.deontic/v1\"},\"payload_schema\":\"legacy.deontic/v1\",\"profile\":{\"interface\":\"LogicIdentityNamespaces@1\",\"namespace\":\"profile\",\"schema_version\":\"logic-identity-namespaces/v1\",\"value\":\"tdfol_default\",\"version\":\"1.0.0\"},\"schema_version\":\"syntax-logic-extension-node/v1\"},\"kind\":\"extension\",\"metadata\":{},\"node_id\":\"pilot7214:cap_as_permission_guard:45\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"}],\"binders\":[],\"kind\":\"implies\",\"metadata\":{},\"node_id\":\"pilot7214:cap_as_permission_guard:43\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"}],\"binders\":[{\"name\":\"district\",\"schema_version\":\"syntax-binder/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"}}],\"kind\":\"forall\",\"metadata\":{},\"node_id\":\"pilot7214:cap_as_permission_guard:46\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"}],\"binders\":[{\"name\":\"corps\",\"schema_version\":\"syntax-binder/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"}}],\"kind\":\"forall\",\"metadata\":{},\"node_id\":\"pilot7214:cap_as_permission_guard:47\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"}],\"binders\":[{\"name\":\"mayor\",\"schema_version\":\"syntax-binder/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"}}],\"kind\":\"forall\",\"metadata\":{},\"node_id\":\"pilot7214:cap_as_permission_guard:48\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"}],\"binders\":[{\"name\":\"president\",\"schema_version\":\"syntax-binder/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"}}],\"kind\":\"forall\",\"metadata\":{},\"node_id\":\"pilot7214:cap_as_permission_guard:49\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"}],\"binders\":[{\"name\":\"time\",\"schema_version\":\"syntax-binder/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"TimeFrame\",\"schema_version\":\"syntax-logic-sort/v1\"}}],\"kind\":\"forall\",\"metadata\":{},\"node_id\":\"pilot7214:cap_as_permission_guard:50\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"}],\"binders\":[{\"name\":\"event\",\"schema_version\":\"syntax-binder/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"EventFrame\",\"schema_version\":\"syntax-logic-sort/v1\"}}],\"kind\":\"forall\",\"metadata\":{},\"node_id\":\"pilot7214:cap_as_permission_guard:51\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"},\"schema_version\":\"syntax-typed-expression/v1\",\"signature\":{\"family\":{\"interface\":\"LogicIdentityNamespaces@1\",\"namespace\":\"family\",\"schema_version\":\"logic-identity-namespaces/v1\",\"value\":\"tdfol\",\"version\":\"1.0.0\"},\"features\":[],\"interface\":\"LogicSignature@1\",\"metadata\":{},\"profile\":{\"interface\":\"LogicIdentityNamespaces@1\",\"namespace\":\"profile\",\"schema_version\":\"logic-identity-namespaces/v1\",\"value\":\"tdfol_default\",\"version\":\"1.0.0\"},\"schema_version\":\"syntax-logic-signature/v1\",\"signature_id\":\"pilot7214:cap_as_permission_guard:signature\",\"sorts\":[{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"EventFrame\",\"schema_version\":\"syntax-logic-sort/v1\"},{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"TimeFrame\",\"schema_version\":\"syntax-logic-sort/v1\"}],\"symbols\":[{\"domain\":[{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"EventFrame\",\"schema_version\":\"syntax-logic-sort/v1\"},{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"TimeFrame\",\"schema_version\":\"syntax-logic-sort/v1\"}],\"kind\":\"predicate\",\"metadata\":{},\"name\":\"Member\",\"range\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"schema_version\":\"syntax-symbol-declaration/v1\"},{\"domain\":[{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"}],\"kind\":\"predicate\",\"metadata\":{},\"name\":\"President\",\"range\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"schema_version\":\"syntax-symbol-declaration/v1\"},{\"domain\":[{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"}],\"kind\":\"predicate\",\"metadata\":{},\"name\":\"CorpsEngineers\",\"range\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"schema_version\":\"syntax-symbol-declaration/v1\"},{\"domain\":[{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"}],\"kind\":\"predicate\",\"metadata\":{},\"name\":\"DistrictColumbia\",\"range\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"schema_version\":\"syntax-symbol-declaration/v1\"},{\"domain\":[{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"}],\"kind\":\"predicate\",\"metadata\":{},\"name\":\"MayorOf\",\"range\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"schema_version\":\"syntax-symbol-declaration/v1\"},{\"domain\":[{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"}],\"kind\":\"predicate\",\"metadata\":{},\"name\":\"Officer\",\"range\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"schema_version\":\"syntax-symbol-declaration/v1\"},{\"domain\":[{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"}],\"kind\":\"predicate\",\"metadata\":{},\"name\":\"AssignedTo\",\"range\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"schema_version\":\"syntax-symbol-declaration/v1\"},{\"domain\":[{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"EventFrame\",\"schema_version\":\"syntax-logic-sort/v1\"},{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"TimeFrame\",\"schema_version\":\"syntax-logic-sort/v1\"}],\"kind\":\"predicate\",\"metadata\":{},\"name\":\"Detail\",\"range\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"schema_version\":\"syntax-symbol-declaration/v1\"},{\"domain\":[{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"}],\"kind\":\"predicate\",\"metadata\":{},\"name\":\"DutiesOf\",\"range\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"schema_version\":\"syntax-symbol-declaration/v1\"},{\"domain\":[{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"EventFrame\",\"schema_version\":\"syntax-logic-sort/v1\"},{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"TimeFrame\",\"schema_version\":\"syntax-logic-sort/v1\"}],\"kind\":\"predicate\",\"metadata\":{},\"name\":\"PurposeAssistInDischarging\",\"range\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"schema_version\":\"syntax-symbol-declaration/v1\"}]}},\"interpretation_status\":\"authored_unreviewed_declaration\",\"profile\":\"authored-many-sorted-relational-deontic/v1\",\"schema\":\"legal-mixed-relational-norm-request/v1\",\"source_binding\":null}",
+        "payload_sha256": "20017c7e69b094173ac62810c3c4d146401829f23d9e5d0626260f2227757c58",
+        "projection_replaces_candidate": false,
+        "reason": "qualified_codec_accepts_original",
+        "replacement_ast": null,
+        "roles_dropped": false,
+        "roles_present": true
+      },
+      {
+        "admitted": false,
+        "argument_roles": null,
+        "candidate_ast_kind": "native_ast",
+        "candidate_ast_sha256": "3d5ea9d4a02c3b6134b1e37f02b589d16fd4c0fdffbf568da7dac8f98480e500",
+        "candidate_id": "section101:unary-definition",
+        "codec": "native_unary_preservation",
+        "codec_projection_sha256": "1593171477691991c29db15e1878a5b15138fc0c6b9d97434bf2f1af91663a04",
+        "content_digest": null,
+        "disposition": "representable",
+        "formalized": false,
+        "legal_acceptance": false,
+        "ordered_binders": [
+          {
+            "name": "x",
+            "sort": null
+          }
+        ],
+        "ordered_constructors": [
+          "QuantifiedFormula",
+          "Variable",
+          "BinaryFormula",
+          "Predicate",
+          "Variable",
+          "Predicate",
+          "Variable"
+        ],
+        "payload_bytes": 8690,
+        "payload_raw_utf8": "{\"admitted\":false,\"all_logic_families_supported\":false,\"backend_executed\":false,\"cross_family_equivalence_verified\":false,\"exact_native_ast_roundtrip\":true,\"family\":\"fol\",\"formula\":\"∀x.(↔ Dbd48f41add569aaa0eb3e500460119c4aa990ec31eb4867a98e24aa609ad6c3a(x) Da40ab2d15eb233346a3c5255c6377439b1d0e46f75b030463de7697564fc9d1f(x))\",\"formula_sha256\":\"2a524d643a903d2ccce7f51f7b4fa768ea7278830b9345354386dcadffce1f1c\",\"lean_body\":\"def formula_0 {Entity Agent : Type} (i : Interpretation Entity Agent) : Nat → Prop := (fun t => ∀ v0 : Entity, (fun t => ((fun t => i.atom \\\"Dbd48f41add569aaa0eb3e500460119c4aa990ec31eb4867a98e24aa609ad6c3a\\\" [v0] t) t) ↔ ((fun t => i.atom \\\"Da40ab2d15eb233346a3c5255c6377439b1d0e46f75b030463de7697564fc9d1f\\\" [v0] t) t)) t)\",\"lowering_details\":{\"assumptions\":[\"Object carrier and atomic predicates are arbitrary interpretation parameters.\",\"Deontic/cognitive operators are distinct interpretation parameters; no modal axioms or source truth are asserted.\",\"Supported temporal operators use discrete unbounded Nat traces.\"],\"operators\":[\"QuantifiedFormula\",\"BinaryFormula\",\"↔\",\"Predicate\",\"Predicate\"],\"validator\":\"strict_native_reparse_and_exact_AST\"},\"native_ast\":{\"formula\":{\"left\":{\"arguments\":[{\"name\":\"x\",\"node_type\":\"Variable\",\"sort\":null}],\"name\":\"Dbd48f41add569aaa0eb3e500460119c4aa990ec31eb4867a98e24aa609ad6c3a\",\"node_type\":\"Predicate\"},\"node_type\":\"BinaryFormula\",\"operator\":{\"enum\":\"LogicOperator\",\"value\":\"↔\"},\"right\":{\"arguments\":[{\"name\":\"x\",\"node_type\":\"Variable\",\"sort\":null}],\"name\":\"Da40ab2d15eb233346a3c5255c6377439b1d0e46f75b030463de7697564fc9d1f\",\"node_type\":\"Predicate\"}},\"node_type\":\"QuantifiedFormula\",\"quantifier\":{\"enum\":\"Quantifier\",\"value\":\"∀\"},\"variable\":{\"name\":\"x\",\"node_type\":\"Variable\",\"sort\":null}},\"native_ast_sha256\":\"3d5ea9d4a02c3b6134b1e37f02b589d16fd4c0fdffbf568da7dac8f98480e500\",\"parse_receipt\":{\"admitted\":false,\"ast_classes\":[\"BinaryFormula\",\"Predicate\",\"QuantifiedFormula\"],\"consumed_all_input\":true,\"diagnostics\":[],\"family\":\"fol\",\"formalized\":false,\"formula\":\"∀x.(↔ Dbd48f41add569aaa0eb3e500460119c4aa990ec31eb4867a98e24aa609ad6c3a(x) Da40ab2d15eb233346a3c5255c6377439b1d0e46f75b030463de7697564fc9d1f(x))\",\"formula_sha256\":\"2a524d643a903d2ccce7f51f7b4fa768ea7278830b9345354386dcadffce1f1c\",\"parser\":\"ipfs_datasets_py.logic.TDFOL.tdfol_parser.TDFOLParser\",\"parser_source_sha256\":\"8e1f8885be6dc2a7d692ecdf0364ccc4d01692c38c81137775d9d222d8b8d9d3\",\"passed\":true,\"predicates\":[\"Da40ab2d15eb233346a3c5255c6377439b1d0e46f75b030463de7697564fc9d1f\",\"Dbd48f41add569aaa0eb3e500460119c4aa990ec31eb4867a98e24aa609ad6c3a\"],\"printed\":\"∀x.(↔ Dbd48f41add569aaa0eb3e500460119c4aa990ec31eb4867a98e24aa609ad6c3a(x) Da40ab2d15eb233346a3c5255c6377439b1d0e46f75b030463de7697564fc9d1f(x))\",\"semantic_equivalence_checked\":false,\"source_bound\":false,\"syntax_valid\":true},\"printed\":\"∀x.(↔ Dbd48f41add569aaa0eb3e500460119c4aa990ec31eb4867a98e24aa609ad6c3a(x) Da40ab2d15eb233346a3c5255c6377439b1d0e46f75b030463de7697564fc9d1f(x))\",\"printed_parse_receipt\":{\"admitted\":false,\"ast_classes\":[\"BinaryFormula\",\"Predicate\",\"QuantifiedFormula\"],\"consumed_all_input\":true,\"diagnostics\":[],\"family\":\"fol\",\"formalized\":false,\"formula\":\"∀x.(↔ Dbd48f41add569aaa0eb3e500460119c4aa990ec31eb4867a98e24aa609ad6c3a(x) Da40ab2d15eb233346a3c5255c6377439b1d0e46f75b030463de7697564fc9d1f(x))\",\"formula_sha256\":\"2a524d643a903d2ccce7f51f7b4fa768ea7278830b9345354386dcadffce1f1c\",\"parser\":\"ipfs_datasets_py.logic.TDFOL.tdfol_parser.TDFOLParser\",\"parser_source_sha256\":\"8e1f8885be6dc2a7d692ecdf0364ccc4d01692c38c81137775d9d222d8b8d9d3\",\"passed\":true,\"predicates\":[\"Da40ab2d15eb233346a3c5255c6377439b1d0e46f75b030463de7697564fc9d1f\",\"Dbd48f41add569aaa0eb3e500460119c4aa990ec31eb4867a98e24aa609ad6c3a\"],\"printed\":\"∀x.(↔ Dbd48f41add569aaa0eb3e500460119c4aa990ec31eb4867a98e24aa609ad6c3a(x) Da40ab2d15eb233346a3c5255c6377439b1d0e46f75b030463de7697564fc9d1f(x))\",\"semantic_equivalence_checked\":false,\"source_bound\":false,\"syntax_valid\":true},\"producer_pins\":{\"/home/barberb/lift_coding/.worktrees/legal-ir-autoencoder-v1/data/legal-ir-autoencoder-v1/worktrees-lane-1/workspace_36a85dc22c3b_5c732139c785/ipfs_datasets_py/logic/CEC/native/dcec_cleaning.py\":\"06517ecd30e4889d2a54db6732279e61a53945906860ef66378b5d707cca04b0\",\"/home/barberb/lift_coding/.worktrees/legal-ir-autoencoder-v1/data/legal-ir-autoencoder-v1/worktrees-lane-1/workspace_36a85dc22c3b_5c732139c785/ipfs_datasets_py/logic/CEC/native/dcec_core.py\":\"bb977f411605fc1f0715ed23c988102d55fa012029053c21c8fc5b14aea17e14\",\"/home/barberb/lift_coding/.worktrees/legal-ir-autoencoder-v1/data/legal-ir-autoencoder-v1/worktrees-lane-1/workspace_36a85dc22c3b_5c732139c785/ipfs_datasets_py/logic/CEC/native/dcec_integration.py\":\"f039af934dba224d6c4984e8840fd8a4de00fe5e69837b0678d1d670dc26ac82\",\"/home/barberb/lift_coding/.worktrees/legal-ir-autoencoder-v1/data/legal-ir-autoencoder-v1/worktrees-lane-1/workspace_36a85dc22c3b_5c732139c785/ipfs_datasets_py/logic/CEC/native/dcec_parsing.py\":\"2756e3c94acf902579bfc54d469e01ddd25b72f53d177b88921829d71df7da70\",\"/home/barberb/lift_coding/.worktrees/legal-ir-autoencoder-v1/data/legal-ir-autoencoder-v1/worktrees-lane-1/workspace_36a85dc22c3b_5c732139c785/ipfs_datasets_py/logic/CEC/native/dcec_prototypes.py\":\"0e0b231ed68c39054cfd2fd674780cb736fd258cde7570881cb3a41cb5d2680e\",\"/home/barberb/lift_coding/.worktrees/legal-ir-autoencoder-v1/data/legal-ir-autoencoder-v1/worktrees-lane-1/workspace_36a85dc22c3b_5c732139c785/ipfs_datasets_py/logic/TDFOL/tdfol_core.py\":\"67be350d1fb0422a64ab040349b2d51c4008fbeeb8b59a99b8901d681d7d71c7\",\"/home/barberb/lift_coding/.worktrees/legal-ir-autoencoder-v1/data/legal-ir-autoencoder-v1/worktrees-lane-1/workspace_36a85dc22c3b_5c732139c785/ipfs_datasets_py/logic/TDFOL/tdfol_parser.py\":\"8e1f8885be6dc2a7d692ecdf0364ccc4d01692c38c81137775d9d222d8b8d9d3\",\"/home/barberb/lift_coding/.worktrees/legal-ir-autoencoder-v1/data/legal-ir-autoencoder-v1/worktrees-lane-1/workspace_36a85dc22c3b_5c732139c785/ipfs_datasets_py/logic/autoformal/family_qualification.py\":\"4db56c904cce8a030e5889b5d14687f01e9348842093480dd699649ad96dc1a8\",\"/home/barberb/lift_coding/.worktrees/legal-ir-autoencoder-v1/data/legal-ir-autoencoder-v1/worktrees-lane-1/workspace_36a85dc22c3b_5c732139c785/ipfs_datasets_py/logic/autoformal/legal_canonical_calendar.py\":\"6e5275dbd1f15d58bc7c0e1480b2af68fae11b08c03a8fe6a1c0e3d97c959501\",\"/home/barberb/lift_coding/.worktrees/legal-ir-autoencoder-v1/data/legal-ir-autoencoder-v1/worktrees-lane-1/workspace_36a85dc22c3b_5c732139c785/ipfs_datasets_py/logic/autoformal/legal_canonical_qualified.py\":\"580544f2bf329c54832eee9b66042794bab2e6938bad142952aca9f4438f5902\",\"/home/barberb/lift_coding/.worktrees/legal-ir-autoencoder-v1/data/legal-ir-autoencoder-v1/worktrees-lane-1/workspace_36a85dc22c3b_5c732139c785/ipfs_datasets_py/logic/autoformal/legal_family_routes.py\":\"5e997e84596c1875d0140573b33a08ff9c12902b003ed3669e1f7bf51aee7c2d\",\"/home/barberb/lift_coding/.worktrees/legal-ir-autoencoder-v1/data/legal-ir-autoencoder-v1/worktrees-lane-1/workspace_36a85dc22c3b_5c732139c785/ipfs_datasets_py/logic/formalization/autoencoder/native_family_lean_emitters.py\":\"dab6bbd4e17eef888f4181aab0c6ce3f087a717edc83a55befb7742fd1f598b1\",\"/home/barberb/lift_coding/.worktrees/legal-ir-autoencoder-v1/data/legal-ir-autoencoder-v1/worktrees-lane-1/workspace_36a85dc22c3b_5c732139c785/ipfs_datasets_py/logic/formalization/autoencoder/native_legal_qualified_lean.py\":\"5407ba7299b002048ff8f45dbea7295d3b210f41904f28a98684042d055d0b2a\",\"/home/barberb/lift_coding/.worktrees/legal-ir-autoencoder-v1/data/legal-ir-autoencoder-v1/worktrees-lane-1/workspace_36a85dc22c3b_5c732139c785/ipfs_datasets_py/logic/formalization/autoencoder/native_qualified_lean.py\":\"645d38508004833092cd5fd9870f29fdae34aa0e262471888973cb3203121408\",\"/home/barberb/lift_coding/.worktrees/legal-ir-autoencoder-v1/data/legal-ir-autoencoder-v1/worktrees-lane-1/workspace_36a85dc22c3b_5c732139c785/ipfs_datasets_py/logic/intent_ir/formalize/modal_projections.py\":\"7337b9266ed4f171ec7ee763828f8b637bf57930d8b89fa0d47139650996a14d\",\"/home/barberb/lift_coding/.worktrees/legal-ir-autoencoder-v1/data/legal-ir-autoencoder-v1/worktrees-lane-1/workspace_36a85dc22c3b_5c732139c785/ipfs_datasets_py/logic/ir_core/provenance.py\":\"16eaf7c258550e5625bc19e6e7468c94133aedd1e85e64075f057ab4e52c3efe\",\"/home/barberb/lift_coding/.worktrees/legal-ir-autoencoder-v1/data/legal-ir-autoencoder-v1/worktrees-lane-1/workspace_36a85dc22c3b_5c732139c785/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py\":\"d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b\"},\"schema\":\"legal-native-family-route/v1\",\"source_bound\":false,\"source_semantics_verified\":false}",
+        "payload_sha256": "787942030dca60d0c566a8ef40ee4c2101c66944da8476147a766bf290e2e8f3",
+        "projection_replaces_candidate": false,
+        "reason": "qualified_codec_accepts_original",
+        "replacement_ast": null,
+        "roles_dropped": false,
+        "roles_present": false
+      },
+      {
+        "admitted": false,
+        "argument_roles": [
+          {
+            "roles": [
+              "actor",
+              "recipient"
+            ],
+            "symbol": "Assign"
+          },
+          {
+            "roles": [
+              "actor",
+              "recipient"
+            ],
+            "symbol": "Transfer"
+          },
+          {
+            "roles": [
+              "approver",
+              "actor",
+              "recipient"
+            ],
+            "symbol": "Approved"
+          }
+        ],
+        "candidate_ast_kind": "typed_expression",
+        "candidate_ast_sha256": "83f1e9c88bd4a17e64ce2b219814416c253804029c81e80f248d99247b9515a9",
+        "candidate_id": "focused:object-relational-representable",
+        "codec": "object_relational",
+        "codec_projection_sha256": "e2d8663f84b6a0ec887eb6b4e66d3b45a67f97d85a66aa7fa3b208e17cf092a4",
+        "content_digest": "313aabd0fec565c6b9271ca74e748e78881960c97d84630c70d79cb69c8c264c",
+        "disposition": "representable",
+        "formalized": false,
+        "legal_acceptance": false,
+        "ordered_binders": [
+          {
+            "name": "actor",
+            "sort": "Object"
+          },
+          {
+            "name": "recipient",
+            "sort": "Object"
+          },
+          {
+            "name": "approver",
+            "sort": "Object"
+          }
+        ],
+        "ordered_constructors": [
+          "forall",
+          "forall",
+          "forall",
+          "implies",
+          "extension",
+          "or",
+          "predicate",
+          "variable",
+          "variable",
+          "predicate",
+          "variable",
+          "variable",
+          "predicate",
+          "variable",
+          "variable",
+          "variable"
+        ],
+        "payload_bytes": 7709,
+        "payload_raw_utf8": "{\"argument_roles\":[{\"roles\":[\"actor\",\"recipient\"],\"symbol\":\"Assign\"},{\"roles\":[\"actor\",\"recipient\"],\"symbol\":\"Transfer\"},{\"roles\":[\"approver\",\"actor\",\"recipient\"],\"symbol\":\"Approved\"}],\"expression\":{\"content_digest\":\"313aabd0fec565c6b9271ca74e748e78881960c97d84630c70d79cb69c8c264c\",\"expression_id\":\"fixture:expression\",\"family\":{\"interface\":\"LogicIdentityNamespaces@1\",\"namespace\":\"family\",\"schema_version\":\"logic-identity-namespaces/v1\",\"value\":\"tdfol\",\"version\":\"1.0.0\"},\"interface\":\"TypedExpression@1\",\"metadata\":{},\"profile\":{\"interface\":\"LogicIdentityNamespaces@1\",\"namespace\":\"profile\",\"schema_version\":\"logic-identity-namespaces/v1\",\"value\":\"tdfol_default\",\"version\":\"1.0.0\"},\"root\":{\"arguments\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[],\"binders\":[],\"extension\":{\"children\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"fixture:node:2\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"actor\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"fixture:node:3\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"recipient\"}],\"binders\":[],\"kind\":\"predicate\",\"metadata\":{},\"node_id\":\"fixture:node:1\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"Assign\"},{\"arguments\":[{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"fixture:node:5\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"actor\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"fixture:node:6\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"recipient\"}],\"binders\":[],\"kind\":\"predicate\",\"metadata\":{},\"node_id\":\"fixture:node:4\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"Transfer\"}],\"binders\":[],\"kind\":\"or\",\"metadata\":{},\"node_id\":\"fixture:node:7\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"}],\"family\":{\"interface\":\"LogicIdentityNamespaces@1\",\"namespace\":\"family\",\"schema_version\":\"logic-identity-namespaces/v1\",\"value\":\"tdfol\",\"version\":\"1.0.0\"},\"features\":[\"legacy.classic_letter\",\"legacy.permission\"],\"interface\":\"LogicExtensionNode@1\",\"metadata\":{},\"node_id\":\"fixture:node:12:ext\",\"payload\":{\"kind\":\"permission\",\"letter\":\"P\",\"resolution\":\"deontic\",\"schema_version\":\"legacy.deontic/v1\"},\"payload_schema\":\"legacy.deontic/v1\",\"profile\":{\"interface\":\"LogicIdentityNamespaces@1\",\"namespace\":\"profile\",\"schema_version\":\"logic-identity-namespaces/v1\",\"value\":\"tdfol_default\",\"version\":\"1.0.0\"},\"schema_version\":\"syntax-logic-extension-node/v1\"},\"kind\":\"extension\",\"metadata\":{},\"node_id\":\"fixture:node:12\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"},{\"arguments\":[{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"fixture:node:9\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"approver\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"fixture:node:10\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"actor\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"fixture:node:11\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"recipient\"}],\"binders\":[],\"kind\":\"predicate\",\"metadata\":{},\"node_id\":\"fixture:node:8\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"Approved\"}],\"binders\":[],\"kind\":\"implies\",\"metadata\":{},\"node_id\":\"fixture:node:13\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"}],\"binders\":[{\"name\":\"approver\",\"schema_version\":\"syntax-binder/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"}}],\"kind\":\"forall\",\"metadata\":{},\"node_id\":\"fixture:node:14\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"}],\"binders\":[{\"name\":\"recipient\",\"schema_version\":\"syntax-binder/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"}}],\"kind\":\"forall\",\"metadata\":{},\"node_id\":\"fixture:node:15\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"}],\"binders\":[{\"name\":\"actor\",\"schema_version\":\"syntax-binder/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"}}],\"kind\":\"forall\",\"metadata\":{},\"node_id\":\"fixture:node:16\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"},\"schema_version\":\"syntax-typed-expression/v1\",\"signature\":{\"family\":{\"interface\":\"LogicIdentityNamespaces@1\",\"namespace\":\"family\",\"schema_version\":\"logic-identity-namespaces/v1\",\"value\":\"tdfol\",\"version\":\"1.0.0\"},\"features\":[],\"interface\":\"LogicSignature@1\",\"metadata\":{},\"profile\":{\"interface\":\"LogicIdentityNamespaces@1\",\"namespace\":\"profile\",\"schema_version\":\"logic-identity-namespaces/v1\",\"value\":\"tdfol_default\",\"version\":\"1.0.0\"},\"schema_version\":\"syntax-logic-signature/v1\",\"signature_id\":\"fixture:signature\",\"sorts\":[{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"}],\"symbols\":[{\"domain\":[{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"}],\"kind\":\"predicate\",\"metadata\":{},\"name\":\"Assign\",\"range\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"schema_version\":\"syntax-symbol-declaration/v1\"},{\"domain\":[{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"}],\"kind\":\"predicate\",\"metadata\":{},\"name\":\"Transfer\",\"range\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"schema_version\":\"syntax-symbol-declaration/v1\"},{\"domain\":[{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"}],\"kind\":\"predicate\",\"metadata\":{},\"name\":\"Approved\",\"range\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"schema_version\":\"syntax-symbol-declaration/v1\"}]}},\"interpretation_status\":\"authored_unreviewed_declaration\",\"schema\":\"legal-relational-norm-request/v1\",\"source_binding\":null}",
+        "payload_sha256": "1a68aaaafe8d877a160ad4ebce958d197a6278b41f20c4d7c03cb88b6486de64",
+        "projection_replaces_candidate": false,
+        "reason": "qualified_codec_accepts_original",
+        "replacement_ast": null,
+        "roles_dropped": false,
+        "roles_present": true
+      },
+      {
+        "admitted": false,
+        "argument_roles": [
+          {
+            "roles": [
+              "actor",
+              "recipient"
+            ],
+            "symbol": "Assign"
+          },
+          {
+            "roles": [
+              "actor",
+              "recipient"
+            ],
+            "symbol": "Transfer"
+          },
+          {
+            "roles": [
+              "approver",
+              "actor",
+              "recipient"
+            ],
+            "symbol": "Approved"
+          }
+        ],
+        "candidate_ast_kind": "typed_expression",
+        "candidate_ast_sha256": "bce0bdebc12d4980a0bb525c1a9d59f26254c273057e4e8338068760d87578da",
+        "candidate_id": "focused:object-equality-unsupported",
+        "codec": "object_relational",
+        "codec_projection_sha256": null,
+        "content_digest": "ea8b68b5c148620c6f4adc0e369bda2c6e7eed7456c71b1dc4a7d86840aa89a0",
+        "disposition": "unsupported",
+        "formalized": false,
+        "legal_acceptance": false,
+        "ordered_binders": [],
+        "ordered_constructors": [
+          "equality",
+          "variable",
+          "variable"
+        ],
+        "payload_bytes": 3483,
+        "payload_raw_utf8": "{\"argument_roles\":[{\"roles\":[\"actor\",\"recipient\"],\"symbol\":\"Assign\"},{\"roles\":[\"actor\",\"recipient\"],\"symbol\":\"Transfer\"},{\"roles\":[\"approver\",\"actor\",\"recipient\"],\"symbol\":\"Approved\"}],\"expression\":{\"content_digest\":\"ea8b68b5c148620c6f4adc0e369bda2c6e7eed7456c71b1dc4a7d86840aa89a0\",\"expression_id\":\"fixture:expression\",\"family\":{\"interface\":\"LogicIdentityNamespaces@1\",\"namespace\":\"family\",\"schema_version\":\"logic-identity-namespaces/v1\",\"value\":\"tdfol\",\"version\":\"1.0.0\"},\"interface\":\"TypedExpression@1\",\"metadata\":{},\"profile\":{\"interface\":\"LogicIdentityNamespaces@1\",\"namespace\":\"profile\",\"schema_version\":\"logic-identity-namespaces/v1\",\"value\":\"tdfol_default\",\"version\":\"1.0.0\"},\"root\":{\"arguments\":[{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"fixture:left\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"actor\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"fixture:right\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"actor\"}],\"binders\":[],\"kind\":\"equality\",\"metadata\":{},\"node_id\":\"fixture:unsupported\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"},\"schema_version\":\"syntax-typed-expression/v1\",\"signature\":{\"family\":{\"interface\":\"LogicIdentityNamespaces@1\",\"namespace\":\"family\",\"schema_version\":\"logic-identity-namespaces/v1\",\"value\":\"tdfol\",\"version\":\"1.0.0\"},\"features\":[],\"interface\":\"LogicSignature@1\",\"metadata\":{},\"profile\":{\"interface\":\"LogicIdentityNamespaces@1\",\"namespace\":\"profile\",\"schema_version\":\"logic-identity-namespaces/v1\",\"value\":\"tdfol_default\",\"version\":\"1.0.0\"},\"schema_version\":\"syntax-logic-signature/v1\",\"signature_id\":\"fixture:signature\",\"sorts\":[{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"}],\"symbols\":[{\"domain\":[{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"}],\"kind\":\"predicate\",\"metadata\":{},\"name\":\"Assign\",\"range\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"schema_version\":\"syntax-symbol-declaration/v1\"},{\"domain\":[{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"}],\"kind\":\"predicate\",\"metadata\":{},\"name\":\"Transfer\",\"range\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"schema_version\":\"syntax-symbol-declaration/v1\"},{\"domain\":[{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"}],\"kind\":\"predicate\",\"metadata\":{},\"name\":\"Approved\",\"range\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"schema_version\":\"syntax-symbol-declaration/v1\"}]}},\"interpretation_status\":\"authored_unreviewed_declaration\",\"schema\":\"legal-relational-norm-request/v1\",\"source_binding\":null}",
+        "payload_sha256": "1091acba52ad7edcb3a9c69498e7f308e53293769b1cad22cc4ff7f6cd01ad94",
+        "projection_replaces_candidate": false,
+        "reason": "qualified_codec_refuses",
+        "replacement_ast": null,
+        "roles_dropped": false,
+        "roles_present": true
+      },
+      {
+        "admitted": false,
+        "argument_roles": [
+          {
+            "roles": [
+              "actor",
+              "recipient"
+            ],
+            "symbol": "Assign"
+          },
+          {
+            "roles": [
+              "actor",
+              "recipient"
+            ],
+            "symbol": "Transfer"
+          },
+          {
+            "roles": [
+              "approver",
+              "actor",
+              "recipient"
+            ],
+            "symbol": "Approved"
+          }
+        ],
+        "candidate_ast_kind": "typed_expression",
+        "candidate_ast_sha256": "c50af2cc307916a5c6c2ba5f12e207d3b2ebe4af8caa76b6b8c4c0e30bae85d7",
+        "candidate_id": "focused:object-reserved-binder-ambiguous",
+        "codec": "object_relational",
+        "codec_projection_sha256": null,
+        "content_digest": "7b1dd40525f98d8953c2d05051c016a99bcdf88fd1ee2cba7cca3a2e50489c7a",
+        "disposition": "ambiguous",
+        "formalized": false,
+        "legal_acceptance": false,
+        "ordered_binders": [
+          {
+            "name": "O",
+            "sort": "Object"
+          },
+          {
+            "name": "recipient",
+            "sort": "Object"
+          },
+          {
+            "name": "approver",
+            "sort": "Object"
+          }
+        ],
+        "ordered_constructors": [
+          "forall",
+          "forall",
+          "forall",
+          "implies",
+          "extension",
+          "or",
+          "predicate",
+          "variable",
+          "variable",
+          "predicate",
+          "variable",
+          "variable",
+          "predicate",
+          "variable",
+          "variable",
+          "variable"
+        ],
+        "payload_bytes": 7705,
+        "payload_raw_utf8": "{\"argument_roles\":[{\"roles\":[\"actor\",\"recipient\"],\"symbol\":\"Assign\"},{\"roles\":[\"actor\",\"recipient\"],\"symbol\":\"Transfer\"},{\"roles\":[\"approver\",\"actor\",\"recipient\"],\"symbol\":\"Approved\"}],\"expression\":{\"content_digest\":\"7b1dd40525f98d8953c2d05051c016a99bcdf88fd1ee2cba7cca3a2e50489c7a\",\"expression_id\":\"fixture:expression\",\"family\":{\"interface\":\"LogicIdentityNamespaces@1\",\"namespace\":\"family\",\"schema_version\":\"logic-identity-namespaces/v1\",\"value\":\"tdfol\",\"version\":\"1.0.0\"},\"interface\":\"TypedExpression@1\",\"metadata\":{},\"profile\":{\"interface\":\"LogicIdentityNamespaces@1\",\"namespace\":\"profile\",\"schema_version\":\"logic-identity-namespaces/v1\",\"value\":\"tdfol_default\",\"version\":\"1.0.0\"},\"root\":{\"arguments\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[],\"binders\":[],\"extension\":{\"children\":[{\"arguments\":[{\"arguments\":[{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"fixture:node:2\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"actor\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"fixture:node:3\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"recipient\"}],\"binders\":[],\"kind\":\"predicate\",\"metadata\":{},\"node_id\":\"fixture:node:1\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"Assign\"},{\"arguments\":[{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"fixture:node:5\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"actor\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"fixture:node:6\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"recipient\"}],\"binders\":[],\"kind\":\"predicate\",\"metadata\":{},\"node_id\":\"fixture:node:4\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"Transfer\"}],\"binders\":[],\"kind\":\"or\",\"metadata\":{},\"node_id\":\"fixture:node:7\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"}],\"family\":{\"interface\":\"LogicIdentityNamespaces@1\",\"namespace\":\"family\",\"schema_version\":\"logic-identity-namespaces/v1\",\"value\":\"tdfol\",\"version\":\"1.0.0\"},\"features\":[\"legacy.classic_letter\",\"legacy.permission\"],\"interface\":\"LogicExtensionNode@1\",\"metadata\":{},\"node_id\":\"fixture:node:12:ext\",\"payload\":{\"kind\":\"permission\",\"letter\":\"P\",\"resolution\":\"deontic\",\"schema_version\":\"legacy.deontic/v1\"},\"payload_schema\":\"legacy.deontic/v1\",\"profile\":{\"interface\":\"LogicIdentityNamespaces@1\",\"namespace\":\"profile\",\"schema_version\":\"logic-identity-namespaces/v1\",\"value\":\"tdfol_default\",\"version\":\"1.0.0\"},\"schema_version\":\"syntax-logic-extension-node/v1\"},\"kind\":\"extension\",\"metadata\":{},\"node_id\":\"fixture:node:12\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"},{\"arguments\":[{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"fixture:node:9\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"approver\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"fixture:node:10\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"actor\"},{\"arguments\":[],\"binders\":[],\"kind\":\"variable\",\"metadata\":{},\"node_id\":\"fixture:node:11\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"recipient\"}],\"binders\":[],\"kind\":\"predicate\",\"metadata\":{},\"node_id\":\"fixture:node:8\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"Approved\"}],\"binders\":[],\"kind\":\"implies\",\"metadata\":{},\"node_id\":\"fixture:node:13\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"}],\"binders\":[{\"name\":\"approver\",\"schema_version\":\"syntax-binder/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"}}],\"kind\":\"forall\",\"metadata\":{},\"node_id\":\"fixture:node:14\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"}],\"binders\":[{\"name\":\"recipient\",\"schema_version\":\"syntax-binder/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"}}],\"kind\":\"forall\",\"metadata\":{},\"node_id\":\"fixture:node:15\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"}],\"binders\":[{\"name\":\"O\",\"schema_version\":\"syntax-binder/v1\",\"sort\":{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"}}],\"kind\":\"forall\",\"metadata\":{},\"node_id\":\"fixture:node:16\",\"schema_version\":\"syntax-logic-node/v1\",\"sort\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"symbol\":\"\"},\"schema_version\":\"syntax-typed-expression/v1\",\"signature\":{\"family\":{\"interface\":\"LogicIdentityNamespaces@1\",\"namespace\":\"family\",\"schema_version\":\"logic-identity-namespaces/v1\",\"value\":\"tdfol\",\"version\":\"1.0.0\"},\"features\":[],\"interface\":\"LogicSignature@1\",\"metadata\":{},\"profile\":{\"interface\":\"LogicIdentityNamespaces@1\",\"namespace\":\"profile\",\"schema_version\":\"logic-identity-namespaces/v1\",\"value\":\"tdfol_default\",\"version\":\"1.0.0\"},\"schema_version\":\"syntax-logic-signature/v1\",\"signature_id\":\"fixture:signature\",\"sorts\":[{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"}],\"symbols\":[{\"domain\":[{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"}],\"kind\":\"predicate\",\"metadata\":{},\"name\":\"Assign\",\"range\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"schema_version\":\"syntax-symbol-declaration/v1\"},{\"domain\":[{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"}],\"kind\":\"predicate\",\"metadata\":{},\"name\":\"Transfer\",\"range\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"schema_version\":\"syntax-symbol-declaration/v1\"},{\"domain\":[{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"},{\"arguments\":[],\"kind\":\"atomic\",\"name\":\"Object\",\"schema_version\":\"syntax-logic-sort/v1\"}],\"kind\":\"predicate\",\"metadata\":{},\"name\":\"Approved\",\"range\":{\"arguments\":[],\"kind\":\"bool\",\"name\":\"Bool\",\"schema_version\":\"syntax-logic-sort/v1\"},\"schema_version\":\"syntax-symbol-declaration/v1\"}]}},\"interpretation_status\":\"authored_unreviewed_declaration\",\"schema\":\"legal-relational-norm-request/v1\",\"source_binding\":null}",
+        "payload_sha256": "829dbce4b3d3cd8b6436be59f9d94b1b56aa12eaa8b8b5525489144e86b08c2e",
+        "projection_replaces_candidate": false,
+        "reason": "reserved_identifier",
+        "replacement_ast": null,
+        "roles_dropped": false,
+        "roles_present": true
+      },
+      {
+        "admitted": false,
+        "argument_roles": null,
+        "candidate_ast_kind": "native_ast",
+        "candidate_ast_sha256": "e47ed830ef596a3debfa97a5bf826e6f25fed9db671761f690de3839226a0abe",
+        "candidate_id": "focused:native-existential-unsupported",
+        "codec": "native_unary_preservation",
+        "codec_projection_sha256": null,
+        "content_digest": null,
+        "disposition": "unsupported",
+        "formalized": false,
+        "legal_acceptance": false,
+        "ordered_binders": [
+          {
+            "name": "x",
+            "sort": null
+          }
+        ],
+        "ordered_constructors": [
+          "QuantifiedFormula",
+          "Variable",
+          "BinaryFormula",
+          "Predicate",
+          "Variable",
+          "Predicate",
+          "Variable"
+        ],
+        "payload_bytes": 8690,
+        "payload_raw_utf8": "{\"admitted\":false,\"all_logic_families_supported\":false,\"backend_executed\":false,\"cross_family_equivalence_verified\":false,\"exact_native_ast_roundtrip\":true,\"family\":\"fol\",\"formula\":\"∀x.(↔ Dbd48f41add569aaa0eb3e500460119c4aa990ec31eb4867a98e24aa609ad6c3a(x) Da40ab2d15eb233346a3c5255c6377439b1d0e46f75b030463de7697564fc9d1f(x))\",\"formula_sha256\":\"2a524d643a903d2ccce7f51f7b4fa768ea7278830b9345354386dcadffce1f1c\",\"lean_body\":\"def formula_0 {Entity Agent : Type} (i : Interpretation Entity Agent) : Nat → Prop := (fun t => ∀ v0 : Entity, (fun t => ((fun t => i.atom \\\"Dbd48f41add569aaa0eb3e500460119c4aa990ec31eb4867a98e24aa609ad6c3a\\\" [v0] t) t) ↔ ((fun t => i.atom \\\"Da40ab2d15eb233346a3c5255c6377439b1d0e46f75b030463de7697564fc9d1f\\\" [v0] t) t)) t)\",\"lowering_details\":{\"assumptions\":[\"Object carrier and atomic predicates are arbitrary interpretation parameters.\",\"Deontic/cognitive operators are distinct interpretation parameters; no modal axioms or source truth are asserted.\",\"Supported temporal operators use discrete unbounded Nat traces.\"],\"operators\":[\"QuantifiedFormula\",\"BinaryFormula\",\"↔\",\"Predicate\",\"Predicate\"],\"validator\":\"strict_native_reparse_and_exact_AST\"},\"native_ast\":{\"formula\":{\"left\":{\"arguments\":[{\"name\":\"x\",\"node_type\":\"Variable\",\"sort\":null}],\"name\":\"Dbd48f41add569aaa0eb3e500460119c4aa990ec31eb4867a98e24aa609ad6c3a\",\"node_type\":\"Predicate\"},\"node_type\":\"BinaryFormula\",\"operator\":{\"enum\":\"LogicOperator\",\"value\":\"↔\"},\"right\":{\"arguments\":[{\"name\":\"x\",\"node_type\":\"Variable\",\"sort\":null}],\"name\":\"Da40ab2d15eb233346a3c5255c6377439b1d0e46f75b030463de7697564fc9d1f\",\"node_type\":\"Predicate\"}},\"node_type\":\"QuantifiedFormula\",\"quantifier\":{\"enum\":\"Quantifier\",\"value\":\"∃\"},\"variable\":{\"name\":\"x\",\"node_type\":\"Variable\",\"sort\":null}},\"native_ast_sha256\":\"3d5ea9d4a02c3b6134b1e37f02b589d16fd4c0fdffbf568da7dac8f98480e500\",\"parse_receipt\":{\"admitted\":false,\"ast_classes\":[\"BinaryFormula\",\"Predicate\",\"QuantifiedFormula\"],\"consumed_all_input\":true,\"diagnostics\":[],\"family\":\"fol\",\"formalized\":false,\"formula\":\"∀x.(↔ Dbd48f41add569aaa0eb3e500460119c4aa990ec31eb4867a98e24aa609ad6c3a(x) Da40ab2d15eb233346a3c5255c6377439b1d0e46f75b030463de7697564fc9d1f(x))\",\"formula_sha256\":\"2a524d643a903d2ccce7f51f7b4fa768ea7278830b9345354386dcadffce1f1c\",\"parser\":\"ipfs_datasets_py.logic.TDFOL.tdfol_parser.TDFOLParser\",\"parser_source_sha256\":\"8e1f8885be6dc2a7d692ecdf0364ccc4d01692c38c81137775d9d222d8b8d9d3\",\"passed\":true,\"predicates\":[\"Da40ab2d15eb233346a3c5255c6377439b1d0e46f75b030463de7697564fc9d1f\",\"Dbd48f41add569aaa0eb3e500460119c4aa990ec31eb4867a98e24aa609ad6c3a\"],\"printed\":\"∀x.(↔ Dbd48f41add569aaa0eb3e500460119c4aa990ec31eb4867a98e24aa609ad6c3a(x) Da40ab2d15eb233346a3c5255c6377439b1d0e46f75b030463de7697564fc9d1f(x))\",\"semantic_equivalence_checked\":false,\"source_bound\":false,\"syntax_valid\":true},\"printed\":\"∀x.(↔ Dbd48f41add569aaa0eb3e500460119c4aa990ec31eb4867a98e24aa609ad6c3a(x) Da40ab2d15eb233346a3c5255c6377439b1d0e46f75b030463de7697564fc9d1f(x))\",\"printed_parse_receipt\":{\"admitted\":false,\"ast_classes\":[\"BinaryFormula\",\"Predicate\",\"QuantifiedFormula\"],\"consumed_all_input\":true,\"diagnostics\":[],\"family\":\"fol\",\"formalized\":false,\"formula\":\"∀x.(↔ Dbd48f41add569aaa0eb3e500460119c4aa990ec31eb4867a98e24aa609ad6c3a(x) Da40ab2d15eb233346a3c5255c6377439b1d0e46f75b030463de7697564fc9d1f(x))\",\"formula_sha256\":\"2a524d643a903d2ccce7f51f7b4fa768ea7278830b9345354386dcadffce1f1c\",\"parser\":\"ipfs_datasets_py.logic.TDFOL.tdfol_parser.TDFOLParser\",\"parser_source_sha256\":\"8e1f8885be6dc2a7d692ecdf0364ccc4d01692c38c81137775d9d222d8b8d9d3\",\"passed\":true,\"predicates\":[\"Da40ab2d15eb233346a3c5255c6377439b1d0e46f75b030463de7697564fc9d1f\",\"Dbd48f41add569aaa0eb3e500460119c4aa990ec31eb4867a98e24aa609ad6c3a\"],\"printed\":\"∀x.(↔ Dbd48f41add569aaa0eb3e500460119c4aa990ec31eb4867a98e24aa609ad6c3a(x) Da40ab2d15eb233346a3c5255c6377439b1d0e46f75b030463de7697564fc9d1f(x))\",\"semantic_equivalence_checked\":false,\"source_bound\":false,\"syntax_valid\":true},\"producer_pins\":{\"/home/barberb/lift_coding/.worktrees/legal-ir-autoencoder-v1/data/legal-ir-autoencoder-v1/worktrees-lane-1/workspace_36a85dc22c3b_5c732139c785/ipfs_datasets_py/logic/CEC/native/dcec_cleaning.py\":\"06517ecd30e4889d2a54db6732279e61a53945906860ef66378b5d707cca04b0\",\"/home/barberb/lift_coding/.worktrees/legal-ir-autoencoder-v1/data/legal-ir-autoencoder-v1/worktrees-lane-1/workspace_36a85dc22c3b_5c732139c785/ipfs_datasets_py/logic/CEC/native/dcec_core.py\":\"bb977f411605fc1f0715ed23c988102d55fa012029053c21c8fc5b14aea17e14\",\"/home/barberb/lift_coding/.worktrees/legal-ir-autoencoder-v1/data/legal-ir-autoencoder-v1/worktrees-lane-1/workspace_36a85dc22c3b_5c732139c785/ipfs_datasets_py/logic/CEC/native/dcec_integration.py\":\"f039af934dba224d6c4984e8840fd8a4de00fe5e69837b0678d1d670dc26ac82\",\"/home/barberb/lift_coding/.worktrees/legal-ir-autoencoder-v1/data/legal-ir-autoencoder-v1/worktrees-lane-1/workspace_36a85dc22c3b_5c732139c785/ipfs_datasets_py/logic/CEC/native/dcec_parsing.py\":\"2756e3c94acf902579bfc54d469e01ddd25b72f53d177b88921829d71df7da70\",\"/home/barberb/lift_coding/.worktrees/legal-ir-autoencoder-v1/data/legal-ir-autoencoder-v1/worktrees-lane-1/workspace_36a85dc22c3b_5c732139c785/ipfs_datasets_py/logic/CEC/native/dcec_prototypes.py\":\"0e0b231ed68c39054cfd2fd674780cb736fd258cde7570881cb3a41cb5d2680e\",\"/home/barberb/lift_coding/.worktrees/legal-ir-autoencoder-v1/data/legal-ir-autoencoder-v1/worktrees-lane-1/workspace_36a85dc22c3b_5c732139c785/ipfs_datasets_py/logic/TDFOL/tdfol_core.py\":\"67be350d1fb0422a64ab040349b2d51c4008fbeeb8b59a99b8901d681d7d71c7\",\"/home/barberb/lift_coding/.worktrees/legal-ir-autoencoder-v1/data/legal-ir-autoencoder-v1/worktrees-lane-1/workspace_36a85dc22c3b_5c732139c785/ipfs_datasets_py/logic/TDFOL/tdfol_parser.py\":\"8e1f8885be6dc2a7d692ecdf0364ccc4d01692c38c81137775d9d222d8b8d9d3\",\"/home/barberb/lift_coding/.worktrees/legal-ir-autoencoder-v1/data/legal-ir-autoencoder-v1/worktrees-lane-1/workspace_36a85dc22c3b_5c732139c785/ipfs_datasets_py/logic/autoformal/family_qualification.py\":\"4db56c904cce8a030e5889b5d14687f01e9348842093480dd699649ad96dc1a8\",\"/home/barberb/lift_coding/.worktrees/legal-ir-autoencoder-v1/data/legal-ir-autoencoder-v1/worktrees-lane-1/workspace_36a85dc22c3b_5c732139c785/ipfs_datasets_py/logic/autoformal/legal_canonical_calendar.py\":\"6e5275dbd1f15d58bc7c0e1480b2af68fae11b08c03a8fe6a1c0e3d97c959501\",\"/home/barberb/lift_coding/.worktrees/legal-ir-autoencoder-v1/data/legal-ir-autoencoder-v1/worktrees-lane-1/workspace_36a85dc22c3b_5c732139c785/ipfs_datasets_py/logic/autoformal/legal_canonical_qualified.py\":\"580544f2bf329c54832eee9b66042794bab2e6938bad142952aca9f4438f5902\",\"/home/barberb/lift_coding/.worktrees/legal-ir-autoencoder-v1/data/legal-ir-autoencoder-v1/worktrees-lane-1/workspace_36a85dc22c3b_5c732139c785/ipfs_datasets_py/logic/autoformal/legal_family_routes.py\":\"5e997e84596c1875d0140573b33a08ff9c12902b003ed3669e1f7bf51aee7c2d\",\"/home/barberb/lift_coding/.worktrees/legal-ir-autoencoder-v1/data/legal-ir-autoencoder-v1/worktrees-lane-1/workspace_36a85dc22c3b_5c732139c785/ipfs_datasets_py/logic/formalization/autoencoder/native_family_lean_emitters.py\":\"dab6bbd4e17eef888f4181aab0c6ce3f087a717edc83a55befb7742fd1f598b1\",\"/home/barberb/lift_coding/.worktrees/legal-ir-autoencoder-v1/data/legal-ir-autoencoder-v1/worktrees-lane-1/workspace_36a85dc22c3b_5c732139c785/ipfs_datasets_py/logic/formalization/autoencoder/native_legal_qualified_lean.py\":\"5407ba7299b002048ff8f45dbea7295d3b210f41904f28a98684042d055d0b2a\",\"/home/barberb/lift_coding/.worktrees/legal-ir-autoencoder-v1/data/legal-ir-autoencoder-v1/worktrees-lane-1/workspace_36a85dc22c3b_5c732139c785/ipfs_datasets_py/logic/formalization/autoencoder/native_qualified_lean.py\":\"645d38508004833092cd5fd9870f29fdae34aa0e262471888973cb3203121408\",\"/home/barberb/lift_coding/.worktrees/legal-ir-autoencoder-v1/data/legal-ir-autoencoder-v1/worktrees-lane-1/workspace_36a85dc22c3b_5c732139c785/ipfs_datasets_py/logic/intent_ir/formalize/modal_projections.py\":\"7337b9266ed4f171ec7ee763828f8b637bf57930d8b89fa0d47139650996a14d\",\"/home/barberb/lift_coding/.worktrees/legal-ir-autoencoder-v1/data/legal-ir-autoencoder-v1/worktrees-lane-1/workspace_36a85dc22c3b_5c732139c785/ipfs_datasets_py/logic/ir_core/provenance.py\":\"16eaf7c258550e5625bc19e6e7468c94133aedd1e85e64075f057ab4e52c3efe\",\"/home/barberb/lift_coding/.worktrees/legal-ir-autoencoder-v1/data/legal-ir-autoencoder-v1/worktrees-lane-1/workspace_36a85dc22c3b_5c732139c785/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py\":\"d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b\"},\"schema\":\"legal-native-family-route/v1\",\"source_bound\":false,\"source_semantics_verified\":false}",
+        "payload_sha256": "7bbf0ef6d5c697b872389be3bd3906f0a4d3b35322404905793a0ff10c4e3c25",
+        "projection_replaces_candidate": false,
+        "reason": "qualified_codec_refuses",
+        "replacement_ast": null,
+        "roles_dropped": false,
+        "roles_present": false
+      },
+      {
+        "admitted": false,
+        "argument_roles": null,
+        "candidate_ast_kind": "native_ast",
+        "candidate_ast_sha256": "fd37833cc45b7a95391d9d38e449fe361529f6cd62a8d6c2c6148029a5fed5a4",
+        "candidate_id": "focused:native-formula-ast-conflict-ambiguous",
+        "codec": "native_unary_preservation",
+        "codec_projection_sha256": null,
+        "content_digest": null,
+        "disposition": "ambiguous",
+        "formalized": false,
+        "legal_acceptance": false,
+        "ordered_binders": [
+          {
+            "name": "x",
+            "sort": null
+          }
+        ],
+        "ordered_constructors": [
+          "QuantifiedFormula",
+          "Variable",
+          "BinaryFormula",
+          "Predicate",
+          "Variable",
+          "Predicate",
+          "Variable"
+        ],
+        "payload_bytes": 8690,
+        "payload_raw_utf8": "{\"admitted\":false,\"all_logic_families_supported\":false,\"backend_executed\":false,\"cross_family_equivalence_verified\":false,\"exact_native_ast_roundtrip\":true,\"family\":\"fol\",\"formula\":\"∀x.(↔ Dbd48f41add569aaa0eb3e500460119c4aa990ec31eb4867a98e24aa609ad6c3a(x) Da40ab2d15eb233346a3c5255c6377439b1d0e46f75b030463de7697564fc9d1f(x))\",\"formula_sha256\":\"2a524d643a903d2ccce7f51f7b4fa768ea7278830b9345354386dcadffce1f1c\",\"lean_body\":\"def formula_0 {Entity Agent : Type} (i : Interpretation Entity Agent) : Nat → Prop := (fun t => ∀ v0 : Entity, (fun t => ((fun t => i.atom \\\"Dbd48f41add569aaa0eb3e500460119c4aa990ec31eb4867a98e24aa609ad6c3a\\\" [v0] t) t) ↔ ((fun t => i.atom \\\"Da40ab2d15eb233346a3c5255c6377439b1d0e46f75b030463de7697564fc9d1f\\\" [v0] t) t)) t)\",\"lowering_details\":{\"assumptions\":[\"Object carrier and atomic predicates are arbitrary interpretation parameters.\",\"Deontic/cognitive operators are distinct interpretation parameters; no modal axioms or source truth are asserted.\",\"Supported temporal operators use discrete unbounded Nat traces.\"],\"operators\":[\"QuantifiedFormula\",\"BinaryFormula\",\"↔\",\"Predicate\",\"Predicate\"],\"validator\":\"strict_native_reparse_and_exact_AST\"},\"native_ast\":{\"formula\":{\"left\":{\"arguments\":[{\"name\":\"x\",\"node_type\":\"Variable\",\"sort\":null}],\"name\":\"Dbd48f41add569aaa0eb3e500460119c4aa990ec31eb4867a98e24aa609ad6c3a\",\"node_type\":\"Predicate\"},\"node_type\":\"BinaryFormula\",\"operator\":{\"enum\":\"LogicOperator\",\"value\":\"→\"},\"right\":{\"arguments\":[{\"name\":\"x\",\"node_type\":\"Variable\",\"sort\":null}],\"name\":\"Da40ab2d15eb233346a3c5255c6377439b1d0e46f75b030463de7697564fc9d1f\",\"node_type\":\"Predicate\"}},\"node_type\":\"QuantifiedFormula\",\"quantifier\":{\"enum\":\"Quantifier\",\"value\":\"∀\"},\"variable\":{\"name\":\"x\",\"node_type\":\"Variable\",\"sort\":null}},\"native_ast_sha256\":\"3d5ea9d4a02c3b6134b1e37f02b589d16fd4c0fdffbf568da7dac8f98480e500\",\"parse_receipt\":{\"admitted\":false,\"ast_classes\":[\"BinaryFormula\",\"Predicate\",\"QuantifiedFormula\"],\"consumed_all_input\":true,\"diagnostics\":[],\"family\":\"fol\",\"formalized\":false,\"formula\":\"∀x.(↔ Dbd48f41add569aaa0eb3e500460119c4aa990ec31eb4867a98e24aa609ad6c3a(x) Da40ab2d15eb233346a3c5255c6377439b1d0e46f75b030463de7697564fc9d1f(x))\",\"formula_sha256\":\"2a524d643a903d2ccce7f51f7b4fa768ea7278830b9345354386dcadffce1f1c\",\"parser\":\"ipfs_datasets_py.logic.TDFOL.tdfol_parser.TDFOLParser\",\"parser_source_sha256\":\"8e1f8885be6dc2a7d692ecdf0364ccc4d01692c38c81137775d9d222d8b8d9d3\",\"passed\":true,\"predicates\":[\"Da40ab2d15eb233346a3c5255c6377439b1d0e46f75b030463de7697564fc9d1f\",\"Dbd48f41add569aaa0eb3e500460119c4aa990ec31eb4867a98e24aa609ad6c3a\"],\"printed\":\"∀x.(↔ Dbd48f41add569aaa0eb3e500460119c4aa990ec31eb4867a98e24aa609ad6c3a(x) Da40ab2d15eb233346a3c5255c6377439b1d0e46f75b030463de7697564fc9d1f(x))\",\"semantic_equivalence_checked\":false,\"source_bound\":false,\"syntax_valid\":true},\"printed\":\"∀x.(↔ Dbd48f41add569aaa0eb3e500460119c4aa990ec31eb4867a98e24aa609ad6c3a(x) Da40ab2d15eb233346a3c5255c6377439b1d0e46f75b030463de7697564fc9d1f(x))\",\"printed_parse_receipt\":{\"admitted\":false,\"ast_classes\":[\"BinaryFormula\",\"Predicate\",\"QuantifiedFormula\"],\"consumed_all_input\":true,\"diagnostics\":[],\"family\":\"fol\",\"formalized\":false,\"formula\":\"∀x.(↔ Dbd48f41add569aaa0eb3e500460119c4aa990ec31eb4867a98e24aa609ad6c3a(x) Da40ab2d15eb233346a3c5255c6377439b1d0e46f75b030463de7697564fc9d1f(x))\",\"formula_sha256\":\"2a524d643a903d2ccce7f51f7b4fa768ea7278830b9345354386dcadffce1f1c\",\"parser\":\"ipfs_datasets_py.logic.TDFOL.tdfol_parser.TDFOLParser\",\"parser_source_sha256\":\"8e1f8885be6dc2a7d692ecdf0364ccc4d01692c38c81137775d9d222d8b8d9d3\",\"passed\":true,\"predicates\":[\"Da40ab2d15eb233346a3c5255c6377439b1d0e46f75b030463de7697564fc9d1f\",\"Dbd48f41add569aaa0eb3e500460119c4aa990ec31eb4867a98e24aa609ad6c3a\"],\"printed\":\"∀x.(↔ Dbd48f41add569aaa0eb3e500460119c4aa990ec31eb4867a98e24aa609ad6c3a(x) Da40ab2d15eb233346a3c5255c6377439b1d0e46f75b030463de7697564fc9d1f(x))\",\"semantic_equivalence_checked\":false,\"source_bound\":false,\"syntax_valid\":true},\"producer_pins\":{\"/home/barberb/lift_coding/.worktrees/legal-ir-autoencoder-v1/data/legal-ir-autoencoder-v1/worktrees-lane-1/workspace_36a85dc22c3b_5c732139c785/ipfs_datasets_py/logic/CEC/native/dcec_cleaning.py\":\"06517ecd30e4889d2a54db6732279e61a53945906860ef66378b5d707cca04b0\",\"/home/barberb/lift_coding/.worktrees/legal-ir-autoencoder-v1/data/legal-ir-autoencoder-v1/worktrees-lane-1/workspace_36a85dc22c3b_5c732139c785/ipfs_datasets_py/logic/CEC/native/dcec_core.py\":\"bb977f411605fc1f0715ed23c988102d55fa012029053c21c8fc5b14aea17e14\",\"/home/barberb/lift_coding/.worktrees/legal-ir-autoencoder-v1/data/legal-ir-autoencoder-v1/worktrees-lane-1/workspace_36a85dc22c3b_5c732139c785/ipfs_datasets_py/logic/CEC/native/dcec_integration.py\":\"f039af934dba224d6c4984e8840fd8a4de00fe5e69837b0678d1d670dc26ac82\",\"/home/barberb/lift_coding/.worktrees/legal-ir-autoencoder-v1/data/legal-ir-autoencoder-v1/worktrees-lane-1/workspace_36a85dc22c3b_5c732139c785/ipfs_datasets_py/logic/CEC/native/dcec_parsing.py\":\"2756e3c94acf902579bfc54d469e01ddd25b72f53d177b88921829d71df7da70\",\"/home/barberb/lift_coding/.worktrees/legal-ir-autoencoder-v1/data/legal-ir-autoencoder-v1/worktrees-lane-1/workspace_36a85dc22c3b_5c732139c785/ipfs_datasets_py/logic/CEC/native/dcec_prototypes.py\":\"0e0b231ed68c39054cfd2fd674780cb736fd258cde7570881cb3a41cb5d2680e\",\"/home/barberb/lift_coding/.worktrees/legal-ir-autoencoder-v1/data/legal-ir-autoencoder-v1/worktrees-lane-1/workspace_36a85dc22c3b_5c732139c785/ipfs_datasets_py/logic/TDFOL/tdfol_core.py\":\"67be350d1fb0422a64ab040349b2d51c4008fbeeb8b59a99b8901d681d7d71c7\",\"/home/barberb/lift_coding/.worktrees/legal-ir-autoencoder-v1/data/legal-ir-autoencoder-v1/worktrees-lane-1/workspace_36a85dc22c3b_5c732139c785/ipfs_datasets_py/logic/TDFOL/tdfol_parser.py\":\"8e1f8885be6dc2a7d692ecdf0364ccc4d01692c38c81137775d9d222d8b8d9d3\",\"/home/barberb/lift_coding/.worktrees/legal-ir-autoencoder-v1/data/legal-ir-autoencoder-v1/worktrees-lane-1/workspace_36a85dc22c3b_5c732139c785/ipfs_datasets_py/logic/autoformal/family_qualification.py\":\"4db56c904cce8a030e5889b5d14687f01e9348842093480dd699649ad96dc1a8\",\"/home/barberb/lift_coding/.worktrees/legal-ir-autoencoder-v1/data/legal-ir-autoencoder-v1/worktrees-lane-1/workspace_36a85dc22c3b_5c732139c785/ipfs_datasets_py/logic/autoformal/legal_canonical_calendar.py\":\"6e5275dbd1f15d58bc7c0e1480b2af68fae11b08c03a8fe6a1c0e3d97c959501\",\"/home/barberb/lift_coding/.worktrees/legal-ir-autoencoder-v1/data/legal-ir-autoencoder-v1/worktrees-lane-1/workspace_36a85dc22c3b_5c732139c785/ipfs_datasets_py/logic/autoformal/legal_canonical_qualified.py\":\"580544f2bf329c54832eee9b66042794bab2e6938bad142952aca9f4438f5902\",\"/home/barberb/lift_coding/.worktrees/legal-ir-autoencoder-v1/data/legal-ir-autoencoder-v1/worktrees-lane-1/workspace_36a85dc22c3b_5c732139c785/ipfs_datasets_py/logic/autoformal/legal_family_routes.py\":\"5e997e84596c1875d0140573b33a08ff9c12902b003ed3669e1f7bf51aee7c2d\",\"/home/barberb/lift_coding/.worktrees/legal-ir-autoencoder-v1/data/legal-ir-autoencoder-v1/worktrees-lane-1/workspace_36a85dc22c3b_5c732139c785/ipfs_datasets_py/logic/formalization/autoencoder/native_family_lean_emitters.py\":\"dab6bbd4e17eef888f4181aab0c6ce3f087a717edc83a55befb7742fd1f598b1\",\"/home/barberb/lift_coding/.worktrees/legal-ir-autoencoder-v1/data/legal-ir-autoencoder-v1/worktrees-lane-1/workspace_36a85dc22c3b_5c732139c785/ipfs_datasets_py/logic/formalization/autoencoder/native_legal_qualified_lean.py\":\"5407ba7299b002048ff8f45dbea7295d3b210f41904f28a98684042d055d0b2a\",\"/home/barberb/lift_coding/.worktrees/legal-ir-autoencoder-v1/data/legal-ir-autoencoder-v1/worktrees-lane-1/workspace_36a85dc22c3b_5c732139c785/ipfs_datasets_py/logic/formalization/autoencoder/native_qualified_lean.py\":\"645d38508004833092cd5fd9870f29fdae34aa0e262471888973cb3203121408\",\"/home/barberb/lift_coding/.worktrees/legal-ir-autoencoder-v1/data/legal-ir-autoencoder-v1/worktrees-lane-1/workspace_36a85dc22c3b_5c732139c785/ipfs_datasets_py/logic/intent_ir/formalize/modal_projections.py\":\"7337b9266ed4f171ec7ee763828f8b637bf57930d8b89fa0d47139650996a14d\",\"/home/barberb/lift_coding/.worktrees/legal-ir-autoencoder-v1/data/legal-ir-autoencoder-v1/worktrees-lane-1/workspace_36a85dc22c3b_5c732139c785/ipfs_datasets_py/logic/ir_core/provenance.py\":\"16eaf7c258550e5625bc19e6e7468c94133aedd1e85e64075f057ab4e52c3efe\",\"/home/barberb/lift_coding/.worktrees/legal-ir-autoencoder-v1/data/legal-ir-autoencoder-v1/worktrees-lane-1/workspace_36a85dc22c3b_5c732139c785/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py\":\"d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b\"},\"schema\":\"legal-native-family-route/v1\",\"source_bound\":false,\"source_semantics_verified\":false}",
+        "payload_sha256": "19fbd0ac44acb19635e88ddc6ab00d6e4d80972b60f8aae560fba4428b192318",
+        "projection_replaces_candidate": false,
+        "reason": "formula_ast_conflict",
+        "replacement_ast": null,
+        "roles_dropped": false,
+        "roles_present": false
+      }
+    ],
+    "codec_projection_budget": {
+      "corpus_census_executed": false,
+      "dispositions": [
+        "representable",
+        "unsupported",
+        "ambiguous"
+      ],
+      "evaluation_gold_mask": 0,
+      "interface_schema": "legal-candidate-ir-interface-request/v1",
+      "logic_family_compatibility": {
+        "mixed_relational": [
+          "tdfol"
+        ],
+        "native_unary_preservation": [
+          "fol",
+          "tdfol"
+        ],
+        "object_relational": [
+          "tdfol"
+        ]
+      },
+      "max_candidates": 8,
+      "max_request_bytes": 2097152,
+      "missing_interface_recipe": {
+        "existing_qualified_codecs_preserved": true,
+        "gap": "semantic_graph_projection_and_mixed_native_tdfol_parser",
+        "implemented": false,
+        "reason": "Mixed Object/EventFrame/TimeFrame equality has no lossless native TDFOL parser, and none of these codecs registers a semantic graph projection.",
+        "replacement_ast_created": false,
+        "schema": "legal-candidate-ir-missing-interface-recipe/v1",
+        "steps": [
+          "Keep each caller candidate AST and ordered role ledger byte-identical.",
+          "Do not synthesize a native AST, graph record, or replacement typed expression.",
+          "Leave graph admission and a mixed native parser to their existing owners under a separate qualification."
+        ]
+      },
+      "mixed_relational": {
+        "graph_projection": "not_registered",
+        "logic_family": "tdfol",
+        "logic_profile": "tdfol_default",
+        "max_depth": 48,
+        "max_nodes": 512,
+        "max_predicates": 64,
+        "max_report_bytes": 8388608,
+        "max_request_bytes": 524288,
+        "modal_extension": "legacy.deontic/v1",
+        "native_ast": null,
+        "native_parser": "not_registered",
+        "output": "sorted_relational_renderer_ast_and_lean_body",
+        "predicate_arity_bounds": [
+          1,
+          8
+        ],
+        "profile": "authored-many-sorted-relational-deontic/v1",
+        "renderer_profile": "three-sort-variables-deontic-equality/v1",
+        "renderer_schema": "sorted-relational-renderer-ast/v1",
+        "report_schema": "legal-mixed-relational-norm-report/v1",
+        "request_schema": "legal-mixed-relational-norm-request/v1",
+        "sorts": [
+          "Object",
+          "EventFrame",
+          "TimeFrame"
+        ],
+        "supported_constructors": [
+          "variable",
+          "predicate",
+          "not",
+          "and",
+          "or",
+          "implies",
+          "iff",
+          "forall",
+          "exists",
+          "extension",
+          "equality"
+        ]
+      },
+      "native_unary_preservation": {
+        "families": [
+          "fol",
+          "tdfol"
+        ],
+        "fragment_schema": "legal-native-family-route/v1",
+        "graph_projection": "not_registered",
+        "input_schema": "legal-native-ast-preservation-inputs/v1",
+        "max_ast_depth": 32,
+        "max_ast_nodes": 4096,
+        "max_files": 7,
+        "max_fragment_bytes": 1048576,
+        "max_modules": 4,
+        "max_preparation_bytes": 20971520,
+        "max_project_bytes": 8388608,
+        "max_record_bytes": 1048576,
+        "max_theorems": 3,
+        "operators": [
+          "¬",
+          "∧",
+          "∨",
+          "→",
+          "↔"
+        ],
+        "output": "seven_file_preservation_project",
+        "profile": "native-unary-boolean-fol-json-value-preservation/v1",
+        "project_root": "LegalNativeAstPreservation",
+        "quantifiers": [
+          "∀"
+        ],
+        "schema": "legal-native-ast-preservation-preparation/v1",
+        "supported_constructors": [
+          "Predicate",
+          "Variable",
+          "UnaryFormula",
+          "BinaryFormula",
+          "QuantifiedFormula"
+        ]
+      },
+      "object_relational": {
+        "graph_projection": "not_registered",
+        "logic_family": "tdfol",
+        "logic_profile": "tdfol_default",
+        "max_depth": 48,
+        "max_nodes": 512,
+        "max_predicates": 64,
+        "max_report_bytes": 8388608,
+        "max_request_bytes": 524288,
+        "modal_extension": "legacy.deontic/v1",
+        "native_family": "deontic_fol",
+        "output": "native_ast_and_lean_body",
+        "predicate_arity_bounds": [
+          1,
+          8
+        ],
+        "profile": "authored-object-relational-deontic/v1",
+        "report_schema": "legal-relational-norm-report/v1",
+        "request_schema": "legal-relational-norm-request/v1",
+        "supported_constructors": [
+          "variable",
+          "predicate",
+          "not",
+          "and",
+          "or",
+          "implies",
+          "iff",
+          "forall",
+          "exists",
+          "extension"
+        ]
+      },
+      "report_schema": "legal-candidate-ir-interface-report/v1",
+      "schema": "legal-candidate-codec-projection-budget/v1",
+      "source_binding": null,
+      "training_mask": 0
+    },
+    "constructor_vocab_census": {
+      "corpus_census_executed": false,
+      "first_seen_constructors": [
+        "forall",
+        "implies",
+        "and",
+        "predicate",
+        "variable",
+        "extension",
+        "or",
+        "equality",
+        "exists",
+        "QuantifiedFormula",
+        "Variable",
+        "BinaryFormula",
+        "Predicate"
+      ],
+      "ordered_by_candidate": [
+        {
+          "argument_roles": [
+            {
+              "roles": [
+                "counted_personnel",
+                "counting_event_frame",
+                "counting_time_index"
+              ],
+              "symbol": "Member"
+            },
+            {
+              "roles": [
+                "authority_holder"
+              ],
+              "symbol": "President"
+            },
+            {
+              "roles": [
+                "proposed_corps_entity"
+              ],
+              "symbol": "CorpsEngineers"
+            },
+            {
+              "roles": [
+                "proposed_district_entity"
+              ],
+              "symbol": "DistrictColumbia"
+            },
+            {
+              "roles": [
+                "beneficiary_office_holder",
+                "district"
+              ],
+              "symbol": "MayorOf"
+            },
+            {
+              "roles": [
+                "personnel_member"
+              ],
+              "symbol": "Officer"
+            },
+            {
+              "roles": [
+                "assigned_personnel",
+                "assigned_organization"
+              ],
+              "symbol": "AssignedTo"
+            },
+            {
+              "roles": [
+                "detailing_authority",
+                "detailed_personnel",
+                "detail_frame",
+                "time_index"
+              ],
+              "symbol": "Detail"
+            },
+            {
+              "roles": [
+                "duties_collection",
+                "duties_holder"
+              ],
+              "symbol": "DutiesOf"
+            },
+            {
+              "roles": [
+                "detail_frame",
+                "assisting_personnel",
+                "beneficiary_office_holder",
+                "duties_collection",
+                "time_index"
+              ],
+              "symbol": "PurposeAssistInDischarging"
+            }
+          ],
+          "candidate_id": "7214:cap_within_permission",
+          "codec": "mixed_relational",
+          "disposition": "representable",
+          "ordered_binders": [
+            {
+              "name": "event",
+              "sort": "EventFrame"
+            },
+            {
+              "name": "time",
+              "sort": "TimeFrame"
+            },
+            {
+              "name": "president",
+              "sort": "Object"
+            },
+            {
+              "name": "mayor",
+              "sort": "Object"
+            },
+            {
+              "name": "corps",
+              "sort": "Object"
+            },
+            {
+              "name": "district",
+              "sort": "Object"
+            },
+            {
+              "name": "x0",
+              "sort": "Object"
+            },
+            {
+              "name": "x1",
+              "sort": "Object"
+            },
+            {
+              "name": "x2",
+              "sort": "Object"
+            },
+            {
+              "name": "x3",
+              "sort": "Object"
+            },
+            {
+              "name": "duties",
+              "sort": "Object"
+            },
+            {
+              "name": "officer",
+              "sort": "Object"
+            }
+          ],
+          "ordered_constructors": [
+            "forall",
+            "forall",
+            "forall",
+            "forall",
+            "forall",
+            "forall",
+            "implies",
+            "and",
+            "and",
+            "and",
+            "predicate",
+            "variable",
+            "predicate",
+            "variable",
+            "predicate",
+            "variable",
+            "predicate",
+            "variable",
+            "variable",
+            "extension",
+            "and",
+            "forall",
+            "forall",
+            "forall",
+            "forall",
+            "implies",
+            "and",
+            "and",
+            "and",
+            "predicate",
+            "variable",
+            "variable",
+            "variable",
+            "predicate",
+            "variable",
+            "variable",
+            "variable",
+            "predicate",
+            "variable",
+            "variable",
+            "variable",
+            "predicate",
+            "variable",
+            "variable",
+            "variable",
+            "or",
+            "or",
+            "or",
+            "or",
+            "or",
+            "equality",
+            "variable",
+            "variable",
+            "equality",
+            "variable",
+            "variable",
+            "equality",
+            "variable",
+            "variable",
+            "equality",
+            "variable",
+            "variable",
+            "equality",
+            "variable",
+            "variable",
+            "equality",
+            "variable",
+            "variable",
+            "exists",
+            "and",
+            "predicate",
+            "variable",
+            "variable",
+            "forall",
+            "implies",
+            "predicate",
+            "variable",
+            "variable",
+            "variable",
+            "and",
+            "and",
+            "and",
+            "predicate",
+            "variable",
+            "predicate",
+            "variable",
+            "variable",
+            "predicate",
+            "variable",
+            "variable",
+            "variable",
+            "variable",
+            "predicate",
+            "variable",
+            "variable",
+            "variable",
+            "variable",
+            "variable"
+          ]
+        },
+        {
+          "argument_roles": [
+            {
+              "roles": [
+                "counted_personnel",
+                "counting_event_frame",
+                "counting_time_index"
+              ],
+              "symbol": "Member"
+            },
+            {
+              "roles": [
+                "authority_holder"
+              ],
+              "symbol": "President"
+            },
+            {
+              "roles": [
+                "proposed_corps_entity"
+              ],
+              "symbol": "CorpsEngineers"
+            },
+            {
+              "roles": [
+                "proposed_district_entity"
+              ],
+              "symbol": "DistrictColumbia"
+            },
+            {
+              "roles": [
+                "beneficiary_office_holder",
+                "district"
+              ],
+              "symbol": "MayorOf"
+            },
+            {
+              "roles": [
+                "personnel_member"
+              ],
+              "symbol": "Officer"
+            },
+            {
+              "roles": [
+                "assigned_personnel",
+                "assigned_organization"
+              ],
+              "symbol": "AssignedTo"
+            },
+            {
+              "roles": [
+                "detailing_authority",
+                "detailed_personnel",
+                "detail_frame",
+                "time_index"
+              ],
+              "symbol": "Detail"
+            },
+            {
+              "roles": [
+                "duties_collection",
+                "duties_holder"
+              ],
+              "symbol": "DutiesOf"
+            },
+            {
+              "roles": [
+                "detail_frame",
+                "assisting_personnel",
+                "beneficiary_office_holder",
+                "duties_collection",
+                "time_index"
+              ],
+              "symbol": "PurposeAssistInDischarging"
+            }
+          ],
+          "candidate_id": "7214:cap_as_permission_guard",
+          "codec": "mixed_relational",
+          "disposition": "representable",
+          "ordered_binders": [
+            {
+              "name": "event",
+              "sort": "EventFrame"
+            },
+            {
+              "name": "time",
+              "sort": "TimeFrame"
+            },
+            {
+              "name": "president",
+              "sort": "Object"
+            },
+            {
+              "name": "mayor",
+              "sort": "Object"
+            },
+            {
+              "name": "corps",
+              "sort": "Object"
+            },
+            {
+              "name": "district",
+              "sort": "Object"
+            },
+            {
+              "name": "x0",
+              "sort": "Object"
+            },
+            {
+              "name": "x1",
+              "sort": "Object"
+            },
+            {
+              "name": "x2",
+              "sort": "Object"
+            },
+            {
+              "name": "x3",
+              "sort": "Object"
+            },
+            {
+              "name": "duties",
+              "sort": "Object"
+            },
+            {
+              "name": "officer",
+              "sort": "Object"
+            }
+          ],
+          "ordered_constructors": [
+            "forall",
+            "forall",
+            "forall",
+            "forall",
+            "forall",
+            "forall",
+            "implies",
+            "and",
+            "and",
+            "and",
+            "and",
+            "predicate",
+            "variable",
+            "predicate",
+            "variable",
+            "predicate",
+            "variable",
+            "predicate",
+            "variable",
+            "variable",
+            "forall",
+            "forall",
+            "forall",
+            "forall",
+            "implies",
+            "and",
+            "and",
+            "and",
+            "predicate",
+            "variable",
+            "variable",
+            "variable",
+            "predicate",
+            "variable",
+            "variable",
+            "variable",
+            "predicate",
+            "variable",
+            "variable",
+            "variable",
+            "predicate",
+            "variable",
+            "variable",
+            "variable",
+            "or",
+            "or",
+            "or",
+            "or",
+            "or",
+            "equality",
+            "variable",
+            "variable",
+            "equality",
+            "variable",
+            "variable",
+            "equality",
+            "variable",
+            "variable",
+            "equality",
+            "variable",
+            "variable",
+            "equality",
+            "variable",
+            "variable",
+            "equality",
+            "variable",
+            "variable",
+            "extension",
+            "exists",
+            "and",
+            "predicate",
+            "variable",
+            "variable",
+            "forall",
+            "implies",
+            "predicate",
+            "variable",
+            "variable",
+            "variable",
+            "and",
+            "and",
+            "and",
+            "predicate",
+            "variable",
+            "predicate",
+            "variable",
+            "variable",
+            "predicate",
+            "variable",
+            "variable",
+            "variable",
+            "variable",
+            "predicate",
+            "variable",
+            "variable",
+            "variable",
+            "variable",
+            "variable"
+          ]
+        },
+        {
+          "argument_roles": null,
+          "candidate_id": "section101:unary-definition",
+          "codec": "native_unary_preservation",
+          "disposition": "representable",
+          "ordered_binders": [
+            {
+              "name": "x",
+              "sort": null
+            }
+          ],
+          "ordered_constructors": [
+            "QuantifiedFormula",
+            "Variable",
+            "BinaryFormula",
+            "Predicate",
+            "Variable",
+            "Predicate",
+            "Variable"
+          ]
+        },
+        {
+          "argument_roles": [
+            {
+              "roles": [
+                "actor",
+                "recipient"
+              ],
+              "symbol": "Assign"
+            },
+            {
+              "roles": [
+                "actor",
+                "recipient"
+              ],
+              "symbol": "Transfer"
+            },
+            {
+              "roles": [
+                "approver",
+                "actor",
+                "recipient"
+              ],
+              "symbol": "Approved"
+            }
+          ],
+          "candidate_id": "focused:object-relational-representable",
+          "codec": "object_relational",
+          "disposition": "representable",
+          "ordered_binders": [
+            {
+              "name": "actor",
+              "sort": "Object"
+            },
+            {
+              "name": "recipient",
+              "sort": "Object"
+            },
+            {
+              "name": "approver",
+              "sort": "Object"
+            }
+          ],
+          "ordered_constructors": [
+            "forall",
+            "forall",
+            "forall",
+            "implies",
+            "extension",
+            "or",
+            "predicate",
+            "variable",
+            "variable",
+            "predicate",
+            "variable",
+            "variable",
+            "predicate",
+            "variable",
+            "variable",
+            "variable"
+          ]
+        },
+        {
+          "argument_roles": [
+            {
+              "roles": [
+                "actor",
+                "recipient"
+              ],
+              "symbol": "Assign"
+            },
+            {
+              "roles": [
+                "actor",
+                "recipient"
+              ],
+              "symbol": "Transfer"
+            },
+            {
+              "roles": [
+                "approver",
+                "actor",
+                "recipient"
+              ],
+              "symbol": "Approved"
+            }
+          ],
+          "candidate_id": "focused:object-equality-unsupported",
+          "codec": "object_relational",
+          "disposition": "unsupported",
+          "ordered_binders": [],
+          "ordered_constructors": [
+            "equality",
+            "variable",
+            "variable"
+          ]
+        },
+        {
+          "argument_roles": [
+            {
+              "roles": [
+                "actor",
+                "recipient"
+              ],
+              "symbol": "Assign"
+            },
+            {
+              "roles": [
+                "actor",
+                "recipient"
+              ],
+              "symbol": "Transfer"
+            },
+            {
+              "roles": [
+                "approver",
+                "actor",
+                "recipient"
+              ],
+              "symbol": "Approved"
+            }
+          ],
+          "candidate_id": "focused:object-reserved-binder-ambiguous",
+          "codec": "object_relational",
+          "disposition": "ambiguous",
+          "ordered_binders": [
+            {
+              "name": "O",
+              "sort": "Object"
+            },
+            {
+              "name": "recipient",
+              "sort": "Object"
+            },
+            {
+              "name": "approver",
+              "sort": "Object"
+            }
+          ],
+          "ordered_constructors": [
+            "forall",
+            "forall",
+            "forall",
+            "implies",
+            "extension",
+            "or",
+            "predicate",
+            "variable",
+            "variable",
+            "predicate",
+            "variable",
+            "variable",
+            "predicate",
+            "variable",
+            "variable",
+            "variable"
+          ]
+        },
+        {
+          "argument_roles": null,
+          "candidate_id": "focused:native-existential-unsupported",
+          "codec": "native_unary_preservation",
+          "disposition": "unsupported",
+          "ordered_binders": [
+            {
+              "name": "x",
+              "sort": null
+            }
+          ],
+          "ordered_constructors": [
+            "QuantifiedFormula",
+            "Variable",
+            "BinaryFormula",
+            "Predicate",
+            "Variable",
+            "Predicate",
+            "Variable"
+          ]
+        },
+        {
+          "argument_roles": null,
+          "candidate_id": "focused:native-formula-ast-conflict-ambiguous",
+          "codec": "native_unary_preservation",
+          "disposition": "ambiguous",
+          "ordered_binders": [
+            {
+              "name": "x",
+              "sort": null
+            }
+          ],
+          "ordered_constructors": [
+            "QuantifiedFormula",
+            "Variable",
+            "BinaryFormula",
+            "Predicate",
+            "Variable",
+            "Predicate",
+            "Variable"
+          ]
+        }
+      ],
+      "schema": "legal-candidate-constructor-vocab-census/v1",
+      "supported_constructors": {
+        "mixed_relational": [
+          "variable",
+          "predicate",
+          "not",
+          "and",
+          "or",
+          "implies",
+          "iff",
+          "forall",
+          "exists",
+          "extension",
+          "equality"
+        ],
+        "native_unary_preservation": [
+          "Predicate",
+          "Variable",
+          "UnaryFormula",
+          "BinaryFormula",
+          "QuantifiedFormula"
+        ],
+        "object_relational": [
+          "variable",
+          "predicate",
+          "not",
+          "and",
+          "or",
+          "implies",
+          "iff",
+          "forall",
+          "exists",
+          "extension"
+        ]
+      }
+    },
+    "reuse_owners": [
+      {
+        "path": "ipfs_datasets_py/logic/autoformal/legal_relational_norm_v1.py",
+        "symbol": "prepare_relational_norm_v1"
+      },
+      {
+        "path": "ipfs_datasets_py/logic/autoformal/legal_relational_norm_v1.py",
+        "symbol": "prepare_mixed_relational_norm_v1"
+      },
+      {
+        "path": "ipfs_datasets_py/logic/autoformal/legal_native_ast_preservation.py",
+        "symbol": "prepare_native_ast_preservation"
+      },
+      {
+        "path": "ipfs_datasets_py/logic/formalization/autoencoder/native_family_lean_emitters.py",
+        "symbol": "sorted_relational_document"
+      }
+    ],
+    "unresolved_questions": [
+      {
+        "candidate_ids": [
+          "7214:cap_within_permission",
+          "7214:cap_as_permission_guard",
+          "section101:unary-definition",
+          "focused:object-relational-representable",
+          "focused:object-equality-unsupported",
+          "focused:object-reserved-binder-ambiguous",
+          "focused:native-existential-unsupported",
+          "focused:native-formula-ast-conflict-ambiguous"
+        ],
+        "detail": "Inventory order is the caller order. No candidate is selected, admitted, or given legal meaning.",
+        "question_id": "candidate_selection",
+        "status": "unanswered"
+      },
+      {
+        "detail": "No governing definition, edition, or source binding is supplied.",
+        "question_id": "governing_definition",
+        "status": "unanswered"
+      },
+      {
+        "detail": "Constructor, binder, and role inventory is not legal acceptance.",
+        "question_id": "legal_meaning",
+        "status": "unanswered"
+      },
+      {
+        "detail": "No semantic graph projection is registered for these codecs.",
+        "question_id": "semantic_graph",
+        "status": "unanswered"
+      },
+      {
+        "detail": "Mixed sorts have no lossless native TDFOL parser in the qualified codecs.",
+        "question_id": "mixed_native_parser",
+        "status": "unanswered"
+      },
+      {
+        "detail": "Training and evaluation gold masks remain zero.",
+        "question_id": "training_gold",
+        "status": "unanswered"
+      }
+    ]
+  }
+}
