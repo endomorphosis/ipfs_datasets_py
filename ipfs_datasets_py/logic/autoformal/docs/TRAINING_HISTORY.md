@@ -1,5 +1,13 @@
 # Training and experiment history
 
+## Recipe-bound v2 numerical mechanics qualified, 2026-10-28
+
+The [separate original-owned qualification](../../../../docs/autoformalization/evidence/legal-ir-f18-v2-numerical-qualification-20261028.json) passed 32 genuine CPU float32 F18/Adam synthetic cases and 96 phases in 36.631 seconds, with no failures, errors or skips. The full original-owner operation took 131.652 seconds and released compute, observed descendants, storage and source custody. All 73 source pins stayed unchanged, 20 selected runtime module origins matched, and the explicit pinned-libdl resolver was restored after Torch import. There were no child external-process attempts. These selected source/runtime checks are not whole-process or ABI attestation.
+
+The new numerical sibling uses its own v2 checkpoint/lineage and the qualified pure recipe. Donor configuration and immutable v1 stay at learning rate 0.001. Independent first-step Adam equations and original-model/manual trajectory controls cover fixture rates, mixed CE/KL/margin, disk resume and byte-preserved frozen state. No retained payload, fresh 632-row parity, experiment rate selection, retained fit or capture ran. Source-derived method-count upper bounds are not instrumented counts. The existing original R physical-v2 validation route/plugin supervised W product code; no public frontend replacement or new controller was installed. Capture, explicit trainer integration, retained parity and new finite admission remain pending.
+
+The next section preserves the earlier metadata-only cutoff; its then-pending numerical mechanics are addressed only by the separate generation above.
+
 ## Prospective TRAIN optimizer metadata contract qualified, 2026-10-28
 
 The [separate pure qualification](../../../../docs/autoformalization/evidence/legal-ir-f18-optimizer-recipe-metadata-qualification-20261028.json) passed 160 cases and 480 setup/call/teardown phases in 16.339 seconds (16.5516 seconds for the guarded driver), with zero failures, errors, skips or guard denials. Nine selected source pins stayed unchanged and all 30 loaded first-party origins were checked. The companion preserves donor/v1 learning rate 0.001, original checkpoint policy and source family; only detached `optimizer_recipe.learning_rate` accepts an explicit prospective value. Validation uses independent caller expectations, literal bounded canonical JSON and detached results. All 14 authority flags remain false. Test rates are synthetic fixtures, not a selected experiment.
