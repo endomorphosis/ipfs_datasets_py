@@ -1,0 +1,108 @@
+{
+  "authority_limits": {
+    "Lean_or_corpus_admission": false,
+    "legal_or_training_review_approved": false,
+    "model_or_provider_invoked": false,
+    "native_identity_allocated": false,
+    "native_plan_delta_decoded_or_applied": false,
+    "native_task_database_opened_by_cohort": false,
+    "native_task_or_attempt_state_mutated": false,
+    "runtime_or_watchdog_binding_changed": false,
+    "worker_or_retry_authorized": false
+  },
+  "base_public_datasets_head": "bdb919673b27c5fa335aadb6dd54549a5f347f45",
+  "companion_diagnostic": {
+    "actual_isolated_diagnostic_subprocess_cases": 1,
+    "live_catalogue_used": false,
+    "new_hermetic_cases_passed": 54,
+    "original_hermetic_cases_passed": 27,
+    "population_schema": "legal-ir-native-task-population/v2",
+    "probe_sha256": "0a6fd30d433f8a271105ab0ce823ef5de82dfcfa3b53b4260d7535988a6bb506",
+    "pull_request": "https://github.com/endomorphosis/ipfs_accelerate_py/pull/307",
+    "repository": "endomorphosis/ipfs_accelerate_py",
+    "runtime_selected": false,
+    "scope": "Private fixture diagnostic tests only; no scientific-executor activation/health claim.",
+    "source_commit": "8c512d045ab479dd454c8036453a56ab4ced4060"
+  },
+  "native_validation": {
+    "child_process_slots": 4,
+    "cpu_slots": 1,
+    "launcher_sha256": "0e302d2ca4c17c9185f12e040f3a681ce043b2710a7673d06f5ee0fc4657fabf",
+    "memory_mb": 1024,
+    "native_validation_custody_closed": true,
+    "owner": "scripts/ops/legal_ir/run_owned_validation.py and original ValidationResourceReservation",
+    "process_scope": "sampled_birth_bound_descendants",
+    "request_sha256": "f80971ab8e8681d798198be0afc1665eb6fdc7a92a053f1e357e2182e8db4a47",
+    "retained_local_records": [
+      {
+        "bytes": 3987,
+        "path": "test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/candidates/representation-cell-amendment-v01/closed.json",
+        "qualification_passed": false,
+        "returncode": 1,
+        "root": "datasets_workspace",
+        "scope": "Original setup refusal before owner open/grant/test child; retained separately.",
+        "sha256": "a35cd333c417ac5211b8d48356ea62d259337be6c9b080133a69531e777abeb5",
+        "source_reads_closed": true
+      },
+      {
+        "bytes": 9525,
+        "path": "test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/candidates/representation-cell-amendment-v02/closed.json",
+        "qualification_passed": true,
+        "returncode": 0,
+        "root": "datasets_workspace",
+        "scope": "Earlier11-method cohort before donor-history guard; superseded for current source.",
+        "sha256": "8252dbdc24b59cc0f895a4968825eec91c2344312941adaf67f77347acdbd15e",
+        "source_reads_closed": true
+      },
+      {
+        "bytes": 9523,
+        "path": "test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/candidates/representation-cell-amendment-v03/closed.json",
+        "qualification_passed": true,
+        "returncode": 0,
+        "root": "datasets_workspace",
+        "scope": "Current14-method pure AST cohort with donor/child-history refusals.",
+        "sha256": "2d48bb3c5d5a7e7d29e1370814ff8e47adc5351392f56f6b2726bfa73c7e3a97",
+        "source_reads_closed": true
+      }
+    ],
+    "schema": "owned-validation-request/v1",
+    "source_pins_unchanged": true,
+    "source_reads_closed": true,
+    "storage_bytes": 67108864,
+    "timeout_seconds": 180
+  },
+  "owner": {
+    "api": "prepare_representation_cell_amendment_v1",
+    "bytes": 109890,
+    "function_sha256": "612040b3dfebf47597e74ea3c122dd080dc7c65035c7af3b578681aec1c7a7ba",
+    "path": "ipfs_datasets_py/logic/autoformal/supervisor_loop.py",
+    "preexisting_top_level_definitions_unchanged": 37,
+    "sha256": "8cff6bc382b8cf208dbedfd7cc894c507bfc50d7bb628e1990f2e2817daca2fc"
+  },
+  "owning_tests": {
+    "bytes": 26612,
+    "failed": 0,
+    "methods_passed": 14,
+    "path": "tests/unit/logic/test_supervisor_representation_cell_amendment.py",
+    "scope": "Actual selected canonical function AST; no product package, model, provider or task-database import.",
+    "sha256": "af253952b23fae80b1c10570a3c6da815761766f48ee282b212871c025e6cd5e",
+    "skipped": 0,
+    "subcase_execution_count_claimed": false
+  },
+  "proposal_invariants": [
+    "Exactly64 caller-supplied predecessor records,34goals and33goal edges in the selected profile.",
+    "One blocked4096D addition and exactly1901/1905 specification edits; old identities/ordinals/lifecycle/claims/receipts/history and goals/edges are preserved.",
+    "Donor/newchild runtime history fields are refused even when empty; no cleaning, zeroing or relabeling.",
+    "Declared budgets, negative authority and input/checkpoint provenance remain supported.",
+    "Genuine causal source width, actual bottleneck, token limits, producer/profile and bypasses remain distinct.",
+    "Native PlanDelta decoding/specification identity/current population/claim verification and original PlanRevisionStore admission remain required."
+  ],
+  "recorded_at_utc": "2026-10-28T05:26:43.309700+00:00",
+  "remaining_gates": [
+    "Original native UNKNOWN/spent-attempt frontier remains independently owned.",
+    "Actual native plan revision, owner readback and lineage-aware diagnostic binding cutover remain pending.",
+    "Default package/native operation, statutory meaning, model quality, graph and Lean admission remain unqualified by this cohort."
+  ],
+  "schema": "legal-ir-representation-cell-amendment-qualification/v1",
+  "scope": "Authored metadata-only selected-function AST qualification; not ordinary package integration or native plan admission."
+}
