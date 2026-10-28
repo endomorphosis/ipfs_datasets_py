@@ -2656,3 +2656,91 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - required validation executables: python3
 - receipt instructions: Materialize only the exact two continuation receipt outputs from independently qualified pinned candidate/native/storage evidence. This is a fresh metadata and receipt validation; it reruns no tests, model, compiler or training. Use legal-ir-supervisor-task-receipt/v1 task_kind=continuation_validation; all scientific authority flags remain false. Never edit source/protected files, rearm a completed task, or infer scientific completion from this validation.
 - acceptance: Exact pinned positive case/result/source/native/storage evidence and independent verifier commitments validate; no model calls, source edits or scientific authority
+
+## LIRAE-LIR03-SOURCE-PACKET-01 Prepare the finite source-release and cache-crosswalk execution packet
+
+- status: todo
+- completion: manual
+- is schedulable: true
+- priority: P1
+- track: legal-ir-programme
+- goal id: LIR-03.next-work-packets-v1
+- parent goal id: LIR-02
+- depends on: none
+- completion scope: control_admission_metadata_only
+- satisfies parent semantic dependencies: false
+- board namespace: legal-ir-autoencoder-v1
+- provider role: deterministic-only
+- context budget tokens: 0
+- outputs: docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-lir03-source-packet-01/packet.json, docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-lir03-source-packet-01/receipt.json
+- allowed paths: docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-lir03-source-packet-01/packet.json, docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-lir03-source-packet-01/receipt.json
+- validation: IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 scripts/ops/legal_ir/legal_ir_supervisor_contract.py --materialize-programme-preparation LIRAE-LIR03-SOURCE-PACKET-01 && IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 scripts/ops/legal_ir/legal_ir_supervisor_contract.py --check-task LIRAE-LIR03-SOURCE-PACKET-01
+- required validation executables: python3
+- receipt instructions: Materialize exactly packet.json and receipt.json from the fixed immutable admission snapshots using the local normal-package prepare_programme_work_packet_v1 owner. This prepares concrete control metadata only; metadata completeness grants no native/model dispatch, legal review, source changes, training/gold supervision, parent completion, retry or rearm authority. Preserve completed history.
+- acceptance: Exact immutable original/current parent, source/data dependencies, proposed roles, exclusivity, finite envelope and independent verifier declarations are complete; fresh original native admission and independent acceptance remain required
+
+## LIRAE-LIR03-IR-PACKET-01 Prepare the complete norm and independent review execution packet
+
+- status: todo
+- completion: manual
+- is schedulable: true
+- priority: P1
+- track: legal-ir-programme
+- goal id: LIR-03.next-work-packets-v1
+- parent goal id: LIR-07
+- depends on: none
+- completion scope: control_admission_metadata_only
+- satisfies parent semantic dependencies: false
+- board namespace: legal-ir-autoencoder-v1
+- provider role: deterministic-only
+- context budget tokens: 0
+- outputs: docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-lir03-ir-packet-01/packet.json, docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-lir03-ir-packet-01/receipt.json
+- allowed paths: docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-lir03-ir-packet-01/packet.json, docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-lir03-ir-packet-01/receipt.json
+- validation: IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 scripts/ops/legal_ir/legal_ir_supervisor_contract.py --materialize-programme-preparation LIRAE-LIR03-IR-PACKET-01 && IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 scripts/ops/legal_ir/legal_ir_supervisor_contract.py --check-task LIRAE-LIR03-IR-PACKET-01
+- required validation executables: python3
+- receipt instructions: Materialize exactly packet.json and receipt.json from the fixed immutable admission snapshots using the local normal-package prepare_programme_work_packet_v1 owner. This prepares concrete control metadata only; metadata completeness grants no native/model dispatch, legal review, source changes, training/gold supervision, parent completion, retry or rearm authority. Preserve completed history.
+- acceptance: Exact immutable original/current parent, source/data dependencies, proposed roles, exclusivity, finite envelope and independent verifier declarations are complete; fresh original native admission and independent acceptance remain required
+
+## LIRAE-LIR03-MODEL-PACKET-01 Prepare the source-conditioning and trajectory acceptance packet
+
+- status: todo
+- completion: manual
+- is schedulable: true
+- priority: P1
+- track: legal-ir-programme
+- goal id: LIR-03.next-work-packets-v1
+- parent goal id: LIR-17
+- depends on: none
+- completion scope: control_admission_metadata_only
+- satisfies parent semantic dependencies: false
+- board namespace: legal-ir-autoencoder-v1
+- provider role: deterministic-only
+- context budget tokens: 0
+- outputs: docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-lir03-model-packet-01/packet.json, docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-lir03-model-packet-01/receipt.json
+- allowed paths: docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-lir03-model-packet-01/packet.json, docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-lir03-model-packet-01/receipt.json
+- validation: IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 scripts/ops/legal_ir/legal_ir_supervisor_contract.py --materialize-programme-preparation LIRAE-LIR03-MODEL-PACKET-01 && IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 scripts/ops/legal_ir/legal_ir_supervisor_contract.py --check-task LIRAE-LIR03-MODEL-PACKET-01
+- required validation executables: python3
+- receipt instructions: Materialize exactly packet.json and receipt.json from the fixed immutable admission snapshots using the local normal-package prepare_programme_work_packet_v1 owner. This prepares concrete control metadata only; metadata completeness grants no native/model dispatch, legal review, source changes, training/gold supervision, parent completion, retry or rearm authority. Preserve completed history.
+- acceptance: Exact immutable original/current parent, source/data dependencies, proposed roles, exclusivity, finite envelope and independent verifier declarations are complete; fresh original native admission and independent acceptance remain required
+
+## LIRAE-LIR03-LEAN-PACKET-02 Prepare the graph Lean and release dependency execution packet
+
+- status: todo
+- completion: manual
+- is schedulable: true
+- priority: P1
+- track: legal-ir-programme
+- goal id: LIR-03.next-work-packets-v1
+- parent goal id: LIR-12
+- depends on: none
+- completion scope: control_admission_metadata_only
+- satisfies parent semantic dependencies: false
+- board namespace: legal-ir-autoencoder-v1
+- provider role: deterministic-only
+- context budget tokens: 0
+- outputs: docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-lir03-lean-packet-02/packet.json, docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-lir03-lean-packet-02/receipt.json
+- allowed paths: docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-lir03-lean-packet-02/packet.json, docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-lir03-lean-packet-02/receipt.json
+- validation: IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 scripts/ops/legal_ir/legal_ir_supervisor_contract.py --materialize-programme-preparation LIRAE-LIR03-LEAN-PACKET-02 && IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 scripts/ops/legal_ir/legal_ir_supervisor_contract.py --check-task LIRAE-LIR03-LEAN-PACKET-02
+- required validation executables: python3
+- receipt instructions: Materialize exactly packet.json and receipt.json from the fixed immutable admission snapshots using the local normal-package prepare_programme_work_packet_v1 owner. This prepares concrete control metadata only; metadata completeness grants no native/model dispatch, legal review, source changes, training/gold supervision, parent completion, retry or rearm authority. Preserve completed history.
+- acceptance: Exact immutable original/current parent, source/data dependencies, proposed roles, exclusivity, finite envelope and independent verifier declarations are complete; fresh original native admission and independent acceptance remain required

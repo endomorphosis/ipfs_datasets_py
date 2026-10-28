@@ -2032,6 +2032,522 @@
       "repository": "ipfs_datasets_py"
     }
   },
+  "programme_preparation": {
+    "baseline": {
+      "bytes": 36774,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/baseline141.json",
+      "sha256": "bd55266c06e9613d643ffd8e0226d73154e2cdec5052fda0432379e8bfb99018"
+    },
+    "completion_authority": false,
+    "dispatch_authorized_by_this_metadata": false,
+    "schema": "legal-ir-programme-preparation-bundle/v1",
+    "tasks": [
+      {
+        "binding": {
+          "admission_scope": {
+            "bytes": 3876,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/task-bindings-v01/scopes/lirae-lir03-source-packet-01.json",
+            "sha256": "0a564f1f4e94a4adbf05a3746f248c0ce6a492e8f99ca8e4cb00b1d8db710c6c"
+          },
+          "authority_binding": {
+            "board": {
+              "bytes": 485929,
+              "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/retained-board141.md",
+              "sha256": "9bf556eac25b39b463608aa0a898b7413f744ea149706b35910ed43b72448327"
+            },
+            "kind": "legacy_markdown",
+            "namespace": "legal-ir-autoencoder-v1",
+            "plan": {
+              "bytes": 825208,
+              "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/retained-plan141.json",
+              "sha256": "daf1185a1780c322df0d1f0736c797865f0bf60bc5ef1a9c2eb7de8ca50cab57"
+            },
+            "source_control_revision": "bd55266c06e9613d643ffd8e0226d73154e2cdec5052fda0432379e8bfb99018"
+          },
+          "base_board": {
+            "bytes": 485929,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/retained-board141.md",
+            "sha256": "9bf556eac25b39b463608aa0a898b7413f744ea149706b35910ed43b72448327"
+          },
+          "base_plan": {
+            "bytes": 825208,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/retained-plan141.json",
+            "sha256": "daf1185a1780c322df0d1f0736c797865f0bf60bc5ef1a9c2eb7de8ca50cab57"
+          },
+          "current_backlog": {
+            "bytes": 1116235,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/current-backlog.json",
+            "sha256": "792a0cdbbe507bab784fed4235bfd3fd6350c76a0f39b9bea0429b2e1155f759"
+          },
+          "evidence": [
+            {
+              "bytes": 20818,
+              "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/evidence/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/source-universe-intake-v01/qualification-summary-v01.json",
+              "sha256": "a2c0f10354e7ba1ca08aef82fcbcef989842be0f57c7c80465dd1493040afe23"
+            },
+            {
+              "bytes": 2834,
+              "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/evidence/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/occurrence-context-ingress-v01/restart-reconciliation-v01/maintained-runtime-refresh-v01/current-execution-plan-inputs-v01/hub-observation-v01.json",
+              "sha256": "25a9585fcce25de44a7324658a16b8e017223e528fe2323c4afcafc61d247ef4"
+            }
+          ],
+          "original_backlog": {
+            "bytes": 964737,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/original-backlog.json",
+            "sha256": "d1f74b427c3a7b27988a1d174f258fa6e867b681178978b90c611f4088ff401a"
+          },
+          "owner_sources": [
+            {
+              "bytes": 43854,
+              "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/owner-sources/ipfs_datasets_py/logic/autoformal/legal_source_package_intake_v1.py",
+              "sha256": "0bdd297291690449d29427ae6cee875e410a0a970abc04e29915d2bcd760b01a"
+            },
+            {
+              "bytes": 33933,
+              "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/owner-sources/ipfs_datasets_py/logic/autoformal/legal_source_span_entity_join_v1.py",
+              "sha256": "246a7e0599f175e695f9c98c0d04d3f4decb312dd075dc7b09acad9d5f64dc13"
+            }
+          ],
+          "packet_owner": {
+            "bytes": 81261,
+            "path": "ipfs_datasets_py/logic/autoformal/supervisor_loop.py",
+            "sha256": "a75ab17d1c2e87a4721c7f4eeea0144916413829a78416de570aaad3f217af81"
+          },
+          "remaining_gates": [
+            "source_release_manifest",
+            "source_custody",
+            "source_span_entity_crosswalk",
+            "edition_and_legal_as_of",
+            "independent_meaning_review",
+            "every_use_applicability_review",
+            "original_owner_admission",
+            "independent_acceptance",
+            "release_schema_compatibility",
+            "physical_occurrence_crosswalk"
+          ]
+        },
+        "current_parent_reference": {
+          "backlog": {
+            "bytes": 1116235,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/current-backlog.json",
+            "sha256": "792a0cdbbe507bab784fed4235bfd3fd6350c76a0f39b9bea0429b2e1155f759"
+          },
+          "task_id": "LIR-02",
+          "task_sha256": "8341e3e580626bb041b08f39c96d43cd4be8c2e72bc040abd2b83cb0ae6cab45"
+        },
+        "goal_id": "LIR-03.next-work-packets-v1",
+        "limits": {
+          "child_process_slots": 1,
+          "cpu_slots": 1,
+          "max_attempts": 1,
+          "memory_mb": 1024,
+          "storage_bytes": 16777216,
+          "wall_seconds": 300
+        },
+        "operation_kind": "source_cache_lineage",
+        "parent_reference": {
+          "path": "ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json",
+          "repository": "ipfs_datasets_py",
+          "revision": "eb023a439a23c59acdfaf485c66127f5202ecc8f",
+          "task_id": "LIR-02",
+          "task_sha256": "f76d37ed866ab50581aa691ed88840d50f1c47e1c59289b882fc677cfffe5b41"
+        },
+        "parent_task_id": "LIR-02",
+        "programme_preparation": "legal-ir-programme-preparation/v1",
+        "task_id": "LIRAE-LIR03-SOURCE-PACKET-01",
+        "title": "Prepare the finite source-release and cache-crosswalk execution packet"
+      },
+      {
+        "binding": {
+          "admission_scope": {
+            "bytes": 5474,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/task-bindings-v01/scopes/lirae-lir03-ir-packet-01.json",
+            "sha256": "43a3345e0407d9235c16e6ebab72b3e5a60fe3dab7c5b7e2ca4ba38d03233a84"
+          },
+          "authority_binding": {
+            "board": {
+              "bytes": 485929,
+              "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/retained-board141.md",
+              "sha256": "9bf556eac25b39b463608aa0a898b7413f744ea149706b35910ed43b72448327"
+            },
+            "kind": "legacy_markdown",
+            "namespace": "legal-ir-autoencoder-v1",
+            "plan": {
+              "bytes": 825208,
+              "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/retained-plan141.json",
+              "sha256": "daf1185a1780c322df0d1f0736c797865f0bf60bc5ef1a9c2eb7de8ca50cab57"
+            },
+            "source_control_revision": "bd55266c06e9613d643ffd8e0226d73154e2cdec5052fda0432379e8bfb99018"
+          },
+          "base_board": {
+            "bytes": 485929,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/retained-board141.md",
+            "sha256": "9bf556eac25b39b463608aa0a898b7413f744ea149706b35910ed43b72448327"
+          },
+          "base_plan": {
+            "bytes": 825208,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/retained-plan141.json",
+            "sha256": "daf1185a1780c322df0d1f0736c797865f0bf60bc5ef1a9c2eb7de8ca50cab57"
+          },
+          "current_backlog": {
+            "bytes": 1116235,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/current-backlog.json",
+            "sha256": "792a0cdbbe507bab784fed4235bfd3fd6350c76a0f39b9bea0429b2e1155f759"
+          },
+          "evidence": [
+            {
+              "bytes": 8470,
+              "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/evidence/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/source101-parent-definition-v01/actual-parent-bank-v01/paged-inventory-v01/actual-bank-v01/qualification-summary-v01.json",
+              "sha256": "712b5fe3350a8113a69ee8906bb61b633634d8f8530b9b504ec7d8b845515ce8"
+            },
+            {
+              "bytes": 14090,
+              "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/evidence/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/source101-parent-definition-v01/actual-parent-bank-v01/paged-inventory-v01/officer-definitions-v01/qualification-summary-v01.json",
+              "sha256": "b48e563bb93a61b2fdf960bd30ee1348869c2757edc14521f0b7754335658642"
+            },
+            {
+              "bytes": 35329,
+              "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/evidence/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/source101-parent-definition-v01/actual-parent-bank-v01/paged-inventory-v01/officer-definitions-v01/graph-aggregation-v01/qualification-summary-v01.json",
+              "sha256": "50ef75a1eead4095f9d158e1f8fc358ad259da4f3be15c75038d01c07e824d79"
+            }
+          ],
+          "original_backlog": {
+            "bytes": 964737,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/original-backlog.json",
+            "sha256": "d1f74b427c3a7b27988a1d174f258fa6e867b681178978b90c611f4088ff401a"
+          },
+          "owner_sources": [
+            {
+              "bytes": 18645,
+              "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/owner-sources/ipfs_datasets_py/logic/autoformal/legal_relational_norm_v1.py",
+              "sha256": "6af97bbe5bb729fc6218b77bc32551aaca5d2ed2ba89d61312937a3109032614"
+            },
+            {
+              "bytes": 36028,
+              "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/owner-sources/ipfs_datasets_py/logic/autoformal/corpus_definition_use_review_v2.py",
+              "sha256": "f8a8e36454555e27fe082504914db39d8924cea794802a41c4616ccc63081503"
+            },
+            {
+              "bytes": 19768,
+              "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/owner-sources/ipfs_datasets_py/logic/autoformal/corpus_definition_adapter_v2.py",
+              "sha256": "17412dc0e246e43ba5a1935f3f053c5312b2868d334d6204ca2801aba9230237"
+            }
+          ],
+          "packet_owner": {
+            "bytes": 81261,
+            "path": "ipfs_datasets_py/logic/autoformal/supervisor_loop.py",
+            "sha256": "a75ab17d1c2e87a4721c7f4eeea0144916413829a78416de570aaad3f217af81"
+          },
+          "remaining_gates": [
+            "source_release_manifest",
+            "source_custody",
+            "source_span_entity_crosswalk",
+            "edition_and_legal_as_of",
+            "independent_meaning_review",
+            "every_use_applicability_review",
+            "original_owner_admission",
+            "independent_acceptance",
+            "complete_typed_ir",
+            "graph_dependency_closure"
+          ]
+        },
+        "current_parent_reference": {
+          "backlog": {
+            "bytes": 1116235,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/current-backlog.json",
+            "sha256": "792a0cdbbe507bab784fed4235bfd3fd6350c76a0f39b9bea0429b2e1155f759"
+          },
+          "task_id": "LIR-07",
+          "task_sha256": "1970b99f9d6c969ba4aaeb1f7b521578faf0917cf97fa7c26bf2f2693bb4c262"
+        },
+        "goal_id": "LIR-03.next-work-packets-v1",
+        "limits": {
+          "child_process_slots": 1,
+          "cpu_slots": 1,
+          "max_attempts": 1,
+          "memory_mb": 1024,
+          "storage_bytes": 16777216,
+          "wall_seconds": 300
+        },
+        "operation_kind": "typed_ir_scoped_graph",
+        "parent_reference": {
+          "path": "ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json",
+          "repository": "ipfs_datasets_py",
+          "revision": "eb023a439a23c59acdfaf485c66127f5202ecc8f",
+          "task_id": "LIR-07",
+          "task_sha256": "d2bfcae5296f9dd0ab356bf7dc5a31dd8e2f60b6b4c7290666fd8826a49a2809"
+        },
+        "parent_task_id": "LIR-07",
+        "programme_preparation": "legal-ir-programme-preparation/v1",
+        "task_id": "LIRAE-LIR03-IR-PACKET-01",
+        "title": "Prepare the complete norm and independent review execution packet"
+      },
+      {
+        "binding": {
+          "admission_scope": {
+            "bytes": 5652,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/task-bindings-v01/scopes/lirae-lir03-model-packet-01.json",
+            "sha256": "45bbac5070fdfe404ea42379f4ff7ee97f0900994aa578ff6fadd6658ba18a73"
+          },
+          "authority_binding": {
+            "board": {
+              "bytes": 485929,
+              "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/retained-board141.md",
+              "sha256": "9bf556eac25b39b463608aa0a898b7413f744ea149706b35910ed43b72448327"
+            },
+            "kind": "legacy_markdown",
+            "namespace": "legal-ir-autoencoder-v1",
+            "plan": {
+              "bytes": 825208,
+              "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/retained-plan141.json",
+              "sha256": "daf1185a1780c322df0d1f0736c797865f0bf60bc5ef1a9c2eb7de8ca50cab57"
+            },
+            "source_control_revision": "bd55266c06e9613d643ffd8e0226d73154e2cdec5052fda0432379e8bfb99018"
+          },
+          "base_board": {
+            "bytes": 485929,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/retained-board141.md",
+            "sha256": "9bf556eac25b39b463608aa0a898b7413f744ea149706b35910ed43b72448327"
+          },
+          "base_plan": {
+            "bytes": 825208,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/retained-plan141.json",
+            "sha256": "daf1185a1780c322df0d1f0736c797865f0bf60bc5ef1a9c2eb7de8ca50cab57"
+          },
+          "current_backlog": {
+            "bytes": 1116235,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/current-backlog.json",
+            "sha256": "792a0cdbbe507bab784fed4235bfd3fd6350c76a0f39b9bea0429b2e1155f759"
+          },
+          "evidence": [
+            {
+              "bytes": 13288,
+              "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/evidence/docs/autoformalization/evidence/legal-ir-prepared384-retained-generation-pair-20261028.json",
+              "sha256": "0c1657a7a4038593cdbd4229e65335062bac861cce890cb7722a6876d738ef2b"
+            },
+            {
+              "bytes": 6898,
+              "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/evidence/docs/autoformalization/evidence/legal-ir-prepared384-occurrence-facade-v2-20261028.json",
+              "sha256": "3e331824b4720e9b7ae5691d4384bf64be519017a41ea8c58301a0a19351d044"
+            },
+            {
+              "bytes": 6957,
+              "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/evidence/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/conditions-trainer-binding-v01/scoring-reconciliation-v01/review-summary-v01.json",
+              "sha256": "36764105329b0ecea017f395a893643dc00be8e4ec34ef657f64e2de460405e2"
+            }
+          ],
+          "original_backlog": {
+            "bytes": 964737,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/original-backlog.json",
+            "sha256": "d1f74b427c3a7b27988a1d174f258fa6e867b681178978b90c611f4088ff401a"
+          },
+          "owner_sources": [
+            {
+              "bytes": 23948,
+              "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/owner-sources/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_legal_ir_runtime.py",
+              "sha256": "569b03444704bce108be10862ec55f26cce40906653695f68755f0ae4d8c9ae0"
+            },
+            {
+              "bytes": 38363,
+              "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/owner-sources/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_runtime.py",
+              "sha256": "6b59afd5b9280d3f8f63144630ce6ecaba50c646bfe7f5644c1564ca6e8d414c"
+            },
+            {
+              "bytes": 63251,
+              "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/owner-sources/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_numeric.py",
+              "sha256": "c1f01482ab6e69900af8b48ce9b5255d9bb6f3ec08e20a76c0cb3cf698d60999"
+            },
+            {
+              "bytes": 32455,
+              "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/owner-sources/ipfs_datasets_py/optimizers/logic_theorem_optimizer/formula_generation_metrics.py",
+              "sha256": "59578e51a1158ab756f1e6a66934ee6ee740d69de83ae3dd296e464f15141bc4"
+            }
+          ],
+          "packet_owner": {
+            "bytes": 81261,
+            "path": "ipfs_datasets_py/logic/autoformal/supervisor_loop.py",
+            "sha256": "a75ab17d1c2e87a4721c7f4eeea0144916413829a78416de570aaad3f217af81"
+          },
+          "remaining_gates": [
+            "source_release_manifest",
+            "source_custody",
+            "source_span_entity_crosswalk",
+            "edition_and_legal_as_of",
+            "independent_meaning_review",
+            "every_use_applicability_review",
+            "original_owner_admission",
+            "independent_acceptance",
+            "producer_head_compatibility",
+            "reviewed_complete_targets",
+            "exposure_grouped_partitions",
+            "frozen_quality_contract"
+          ]
+        },
+        "current_parent_reference": {
+          "backlog": {
+            "bytes": 1116235,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/current-backlog.json",
+            "sha256": "792a0cdbbe507bab784fed4235bfd3fd6350c76a0f39b9bea0429b2e1155f759"
+          },
+          "task_id": "LIR-17",
+          "task_sha256": "de78e8ef623271c12e3b0d903a07d4bd29e0bd55c04294f406ed6efe1b442f56"
+        },
+        "goal_id": "LIR-03.next-work-packets-v1",
+        "limits": {
+          "child_process_slots": 1,
+          "cpu_slots": 1,
+          "max_attempts": 1,
+          "memory_mb": 1024,
+          "storage_bytes": 16777216,
+          "wall_seconds": 300
+        },
+        "operation_kind": "model_compatibility_quality",
+        "parent_reference": {
+          "path": "ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json",
+          "repository": "ipfs_datasets_py",
+          "revision": "eb023a439a23c59acdfaf485c66127f5202ecc8f",
+          "task_id": "LIR-17",
+          "task_sha256": "1866c540278ad4270adc7c6b5ee938fec8128a0501cf6388161ce12a5c38a612"
+        },
+        "parent_task_id": "LIR-17",
+        "programme_preparation": "legal-ir-programme-preparation/v1",
+        "task_id": "LIRAE-LIR03-MODEL-PACKET-01",
+        "title": "Prepare the source-conditioning and trajectory acceptance packet"
+      },
+      {
+        "binding": {
+          "admission_scope": {
+            "bytes": 5768,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/task-bindings-v01/scopes/lirae-lir03-lean-packet-02.json",
+            "sha256": "2619eb2214de0ba08fc546898cf6b8948abb50b9232f25e47f51233816e2dc0d"
+          },
+          "authority_binding": {
+            "board": {
+              "bytes": 485929,
+              "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/retained-board141.md",
+              "sha256": "9bf556eac25b39b463608aa0a898b7413f744ea149706b35910ed43b72448327"
+            },
+            "kind": "legacy_markdown",
+            "namespace": "legal-ir-autoencoder-v1",
+            "plan": {
+              "bytes": 825208,
+              "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/retained-plan141.json",
+              "sha256": "daf1185a1780c322df0d1f0736c797865f0bf60bc5ef1a9c2eb7de8ca50cab57"
+            },
+            "source_control_revision": "bd55266c06e9613d643ffd8e0226d73154e2cdec5052fda0432379e8bfb99018"
+          },
+          "base_board": {
+            "bytes": 485929,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/retained-board141.md",
+            "sha256": "9bf556eac25b39b463608aa0a898b7413f744ea149706b35910ed43b72448327"
+          },
+          "base_plan": {
+            "bytes": 825208,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/retained-plan141.json",
+            "sha256": "daf1185a1780c322df0d1f0736c797865f0bf60bc5ef1a9c2eb7de8ca50cab57"
+          },
+          "current_backlog": {
+            "bytes": 1116235,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/current-backlog.json",
+            "sha256": "792a0cdbbe507bab784fed4235bfd3fd6350c76a0f39b9bea0429b2e1155f759"
+          },
+          "evidence": [
+            {
+              "bytes": 63821,
+              "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/evidence/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/source101-parent-definition-v01/actual-parent-bank-v01/paged-inventory-v01/officer-definitions-v01/graph-aggregation-v01/native-preservation-v01/qualification-summary-v01.json",
+              "sha256": "6c5fa2f766613709cebfd41c6d11ce2fce28210762fa0cb1d0008fc2ba168d48"
+            },
+            {
+              "bytes": 6593,
+              "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/evidence/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/cache-custody-fix-v01/landing-generation-v01/qualification-summary-v01.json",
+              "sha256": "43412d3e12fdeebf632c01a08c31d52a7f82efa03e592eae4f0feb3f32757e5e"
+            },
+            {
+              "bytes": 35784,
+              "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/evidence/docs/autoformalization/evidence/legal-ir-parent-bound-norm-definition-preservation-20261025.json",
+              "sha256": "36b831861eedabb5dddceb1874880359e4c63440465d9777995fc62ee729497a"
+            }
+          ],
+          "original_backlog": {
+            "bytes": 964737,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/original-backlog.json",
+            "sha256": "d1f74b427c3a7b27988a1d174f258fa6e867b681178978b90c611f4088ff401a"
+          },
+          "owner_sources": [
+            {
+              "bytes": 26612,
+              "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/owner-sources/ipfs_datasets_py/logic/autoformal/legal_native_ast_preservation.py",
+              "sha256": "2cdf3e8c0734ad8e4226c5df30f737322d8dee0f4e5a3674c3ad4d7c36ac810e"
+            },
+            {
+              "bytes": 110825,
+              "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/owner-sources/ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_packet_v2.py",
+              "sha256": "58f8e118d49437e5d749bf53f3604934f8c5b70d06d391f620ecf92661979dc2"
+            },
+            {
+              "bytes": 81633,
+              "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/owner-sources/ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_index_v2.py",
+              "sha256": "af7e7d0da15ffd53d334d3c58d6da695d73b2dfb23959529ea00d741646be9e0"
+            },
+            {
+              "bytes": 17454,
+              "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/owner-sources/ipfs_datasets_py/logic/autoformal/corpus_graph_exchange.py",
+              "sha256": "32800bca0662830409de0622e16902bd458cf6d47c821fc7079cdf4ba9ddc9ad"
+            }
+          ],
+          "packet_owner": {
+            "bytes": 81261,
+            "path": "ipfs_datasets_py/logic/autoformal/supervisor_loop.py",
+            "sha256": "a75ab17d1c2e87a4721c7f4eeea0144916413829a78416de570aaad3f217af81"
+          },
+          "remaining_gates": [
+            "source_release_manifest",
+            "source_custody",
+            "source_span_entity_crosswalk",
+            "edition_and_legal_as_of",
+            "independent_meaning_review",
+            "every_use_applicability_review",
+            "original_owner_admission",
+            "independent_acceptance",
+            "explicit_interpretation_and_assumptions",
+            "lean_import_toolchain_closure",
+            "native_preservation_and_build",
+            "immutable_release_readback"
+          ]
+        },
+        "current_parent_reference": {
+          "backlog": {
+            "bytes": 1116235,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/current-backlog.json",
+            "sha256": "792a0cdbbe507bab784fed4235bfd3fd6350c76a0f39b9bea0429b2e1155f759"
+          },
+          "task_id": "LIR-12",
+          "task_sha256": "cdec23d8b20cf9ba5c354155b4ce05fde21ad800ba3bbd7616e7ef978b6d3ae3"
+        },
+        "goal_id": "LIR-03.next-work-packets-v1",
+        "limits": {
+          "child_process_slots": 1,
+          "cpu_slots": 1,
+          "max_attempts": 1,
+          "memory_mb": 1024,
+          "storage_bytes": 16777216,
+          "wall_seconds": 300
+        },
+        "operation_kind": "lean_release_verification",
+        "parent_reference": {
+          "path": "ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json",
+          "repository": "ipfs_datasets_py",
+          "revision": "eb023a439a23c59acdfaf485c66127f5202ecc8f",
+          "task_id": "LIR-12",
+          "task_sha256": "a8a01f70597884aecc2a7e8fc9d34be2cbbd7d6c8131495e23de2da1c81d6fb2"
+        },
+        "parent_task_id": "LIR-12",
+        "programme_preparation": "legal-ir-programme-preparation/v1",
+        "task_id": "LIRAE-LIR03-LEAN-PACKET-02",
+        "title": "Prepare the graph Lean and release dependency execution packet"
+      }
+    ]
+  },
   "schema": "legal-ir-autoencoder-supervisor-plan/v3",
   "shard_count": 1000,
   "shards": [
@@ -11679,6 +12195,578 @@
       "title": "Validate retained constructor-refusal and lease-timeout lifecycle evidence",
       "validation_commands": [
         "IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 scripts/ops/legal_ir/legal_ir_supervisor_contract.py --materialize-continuation-validation LIRAE-CONT-VALIDATION-LIFECYCLE-VALIDATE-01 && IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 scripts/ops/legal_ir/legal_ir_supervisor_contract.py --check-task LIRAE-CONT-VALIDATION-LIFECYCLE-VALIDATE-01"
+      ]
+    },
+    {
+      "allowed_paths": [
+        "docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-lir03-source-packet-01/packet.json",
+        "docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-lir03-source-packet-01/receipt.json"
+      ],
+      "binding": {
+        "admission_scope": {
+          "bytes": 3876,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/task-bindings-v01/scopes/lirae-lir03-source-packet-01.json",
+          "sha256": "0a564f1f4e94a4adbf05a3746f248c0ce6a492e8f99ca8e4cb00b1d8db710c6c"
+        },
+        "authority_binding": {
+          "board": {
+            "bytes": 485929,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/retained-board141.md",
+            "sha256": "9bf556eac25b39b463608aa0a898b7413f744ea149706b35910ed43b72448327"
+          },
+          "kind": "legacy_markdown",
+          "namespace": "legal-ir-autoencoder-v1",
+          "plan": {
+            "bytes": 825208,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/retained-plan141.json",
+            "sha256": "daf1185a1780c322df0d1f0736c797865f0bf60bc5ef1a9c2eb7de8ca50cab57"
+          },
+          "source_control_revision": "bd55266c06e9613d643ffd8e0226d73154e2cdec5052fda0432379e8bfb99018"
+        },
+        "base_board": {
+          "bytes": 485929,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/retained-board141.md",
+          "sha256": "9bf556eac25b39b463608aa0a898b7413f744ea149706b35910ed43b72448327"
+        },
+        "base_plan": {
+          "bytes": 825208,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/retained-plan141.json",
+          "sha256": "daf1185a1780c322df0d1f0736c797865f0bf60bc5ef1a9c2eb7de8ca50cab57"
+        },
+        "current_backlog": {
+          "bytes": 1116235,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/current-backlog.json",
+          "sha256": "792a0cdbbe507bab784fed4235bfd3fd6350c76a0f39b9bea0429b2e1155f759"
+        },
+        "evidence": [
+          {
+            "bytes": 20818,
+            "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/evidence/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/source-universe-intake-v01/qualification-summary-v01.json",
+            "sha256": "a2c0f10354e7ba1ca08aef82fcbcef989842be0f57c7c80465dd1493040afe23"
+          },
+          {
+            "bytes": 2834,
+            "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/evidence/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/occurrence-context-ingress-v01/restart-reconciliation-v01/maintained-runtime-refresh-v01/current-execution-plan-inputs-v01/hub-observation-v01.json",
+            "sha256": "25a9585fcce25de44a7324658a16b8e017223e528fe2323c4afcafc61d247ef4"
+          }
+        ],
+        "original_backlog": {
+          "bytes": 964737,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/original-backlog.json",
+          "sha256": "d1f74b427c3a7b27988a1d174f258fa6e867b681178978b90c611f4088ff401a"
+        },
+        "owner_sources": [
+          {
+            "bytes": 43854,
+            "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/owner-sources/ipfs_datasets_py/logic/autoformal/legal_source_package_intake_v1.py",
+            "sha256": "0bdd297291690449d29427ae6cee875e410a0a970abc04e29915d2bcd760b01a"
+          },
+          {
+            "bytes": 33933,
+            "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/owner-sources/ipfs_datasets_py/logic/autoformal/legal_source_span_entity_join_v1.py",
+            "sha256": "246a7e0599f175e695f9c98c0d04d3f4decb312dd075dc7b09acad9d5f64dc13"
+          }
+        ],
+        "packet_owner": {
+          "bytes": 81261,
+          "path": "ipfs_datasets_py/logic/autoformal/supervisor_loop.py",
+          "sha256": "a75ab17d1c2e87a4721c7f4eeea0144916413829a78416de570aaad3f217af81"
+        },
+        "remaining_gates": [
+          "source_release_manifest",
+          "source_custody",
+          "source_span_entity_crosswalk",
+          "edition_and_legal_as_of",
+          "independent_meaning_review",
+          "every_use_applicability_review",
+          "original_owner_admission",
+          "independent_acceptance",
+          "release_schema_compatibility",
+          "physical_occurrence_crosswalk"
+        ]
+      },
+      "context_budget_tokens": 0,
+      "current_parent_reference": {
+        "backlog": {
+          "bytes": 1116235,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/current-backlog.json",
+          "sha256": "792a0cdbbe507bab784fed4235bfd3fd6350c76a0f39b9bea0429b2e1155f759"
+        },
+        "task_id": "LIR-02",
+        "task_sha256": "8341e3e580626bb041b08f39c96d43cd4be8c2e72bc040abd2b83cb0ae6cab45"
+      },
+      "goal_id": "LIR-03.next-work-packets-v1",
+      "limits": {
+        "child_process_slots": 1,
+        "cpu_slots": 1,
+        "max_attempts": 1,
+        "memory_mb": 1024,
+        "storage_bytes": 16777216,
+        "wall_seconds": 300
+      },
+      "operation_kind": "source_cache_lineage",
+      "outputs": [
+        "docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-lir03-source-packet-01/packet.json",
+        "docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-lir03-source-packet-01/receipt.json"
+      ],
+      "parent_reference": {
+        "path": "ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json",
+        "repository": "ipfs_datasets_py",
+        "revision": "eb023a439a23c59acdfaf485c66127f5202ecc8f",
+        "task_id": "LIR-02",
+        "task_sha256": "f76d37ed866ab50581aa691ed88840d50f1c47e1c59289b882fc677cfffe5b41"
+      },
+      "parent_task_id": "LIR-02",
+      "programme_preparation": "legal-ir-programme-preparation/v1",
+      "provider_role": "deterministic-only",
+      "receipt_instructions": "Materialize exactly packet.json and receipt.json from the fixed immutable admission snapshots using the local normal-package prepare_programme_work_packet_v1 owner. This prepares concrete control metadata only; metadata completeness grants no native/model dispatch, legal review, source changes, training/gold supervision, parent completion, retry or rearm authority. Preserve completed history.",
+      "required_validation_executables": [
+        "python3"
+      ],
+      "task_id": "LIRAE-LIR03-SOURCE-PACKET-01",
+      "title": "Prepare the finite source-release and cache-crosswalk execution packet",
+      "validation_commands": [
+        "IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 scripts/ops/legal_ir/legal_ir_supervisor_contract.py --materialize-programme-preparation LIRAE-LIR03-SOURCE-PACKET-01 && IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 scripts/ops/legal_ir/legal_ir_supervisor_contract.py --check-task LIRAE-LIR03-SOURCE-PACKET-01"
+      ]
+    },
+    {
+      "allowed_paths": [
+        "docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-lir03-ir-packet-01/packet.json",
+        "docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-lir03-ir-packet-01/receipt.json"
+      ],
+      "binding": {
+        "admission_scope": {
+          "bytes": 5474,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/task-bindings-v01/scopes/lirae-lir03-ir-packet-01.json",
+          "sha256": "43a3345e0407d9235c16e6ebab72b3e5a60fe3dab7c5b7e2ca4ba38d03233a84"
+        },
+        "authority_binding": {
+          "board": {
+            "bytes": 485929,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/retained-board141.md",
+            "sha256": "9bf556eac25b39b463608aa0a898b7413f744ea149706b35910ed43b72448327"
+          },
+          "kind": "legacy_markdown",
+          "namespace": "legal-ir-autoencoder-v1",
+          "plan": {
+            "bytes": 825208,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/retained-plan141.json",
+            "sha256": "daf1185a1780c322df0d1f0736c797865f0bf60bc5ef1a9c2eb7de8ca50cab57"
+          },
+          "source_control_revision": "bd55266c06e9613d643ffd8e0226d73154e2cdec5052fda0432379e8bfb99018"
+        },
+        "base_board": {
+          "bytes": 485929,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/retained-board141.md",
+          "sha256": "9bf556eac25b39b463608aa0a898b7413f744ea149706b35910ed43b72448327"
+        },
+        "base_plan": {
+          "bytes": 825208,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/retained-plan141.json",
+          "sha256": "daf1185a1780c322df0d1f0736c797865f0bf60bc5ef1a9c2eb7de8ca50cab57"
+        },
+        "current_backlog": {
+          "bytes": 1116235,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/current-backlog.json",
+          "sha256": "792a0cdbbe507bab784fed4235bfd3fd6350c76a0f39b9bea0429b2e1155f759"
+        },
+        "evidence": [
+          {
+            "bytes": 8470,
+            "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/evidence/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/source101-parent-definition-v01/actual-parent-bank-v01/paged-inventory-v01/actual-bank-v01/qualification-summary-v01.json",
+            "sha256": "712b5fe3350a8113a69ee8906bb61b633634d8f8530b9b504ec7d8b845515ce8"
+          },
+          {
+            "bytes": 14090,
+            "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/evidence/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/source101-parent-definition-v01/actual-parent-bank-v01/paged-inventory-v01/officer-definitions-v01/qualification-summary-v01.json",
+            "sha256": "b48e563bb93a61b2fdf960bd30ee1348869c2757edc14521f0b7754335658642"
+          },
+          {
+            "bytes": 35329,
+            "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/evidence/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/source101-parent-definition-v01/actual-parent-bank-v01/paged-inventory-v01/officer-definitions-v01/graph-aggregation-v01/qualification-summary-v01.json",
+            "sha256": "50ef75a1eead4095f9d158e1f8fc358ad259da4f3be15c75038d01c07e824d79"
+          }
+        ],
+        "original_backlog": {
+          "bytes": 964737,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/original-backlog.json",
+          "sha256": "d1f74b427c3a7b27988a1d174f258fa6e867b681178978b90c611f4088ff401a"
+        },
+        "owner_sources": [
+          {
+            "bytes": 18645,
+            "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/owner-sources/ipfs_datasets_py/logic/autoformal/legal_relational_norm_v1.py",
+            "sha256": "6af97bbe5bb729fc6218b77bc32551aaca5d2ed2ba89d61312937a3109032614"
+          },
+          {
+            "bytes": 36028,
+            "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/owner-sources/ipfs_datasets_py/logic/autoformal/corpus_definition_use_review_v2.py",
+            "sha256": "f8a8e36454555e27fe082504914db39d8924cea794802a41c4616ccc63081503"
+          },
+          {
+            "bytes": 19768,
+            "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/owner-sources/ipfs_datasets_py/logic/autoformal/corpus_definition_adapter_v2.py",
+            "sha256": "17412dc0e246e43ba5a1935f3f053c5312b2868d334d6204ca2801aba9230237"
+          }
+        ],
+        "packet_owner": {
+          "bytes": 81261,
+          "path": "ipfs_datasets_py/logic/autoformal/supervisor_loop.py",
+          "sha256": "a75ab17d1c2e87a4721c7f4eeea0144916413829a78416de570aaad3f217af81"
+        },
+        "remaining_gates": [
+          "source_release_manifest",
+          "source_custody",
+          "source_span_entity_crosswalk",
+          "edition_and_legal_as_of",
+          "independent_meaning_review",
+          "every_use_applicability_review",
+          "original_owner_admission",
+          "independent_acceptance",
+          "complete_typed_ir",
+          "graph_dependency_closure"
+        ]
+      },
+      "context_budget_tokens": 0,
+      "current_parent_reference": {
+        "backlog": {
+          "bytes": 1116235,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/current-backlog.json",
+          "sha256": "792a0cdbbe507bab784fed4235bfd3fd6350c76a0f39b9bea0429b2e1155f759"
+        },
+        "task_id": "LIR-07",
+        "task_sha256": "1970b99f9d6c969ba4aaeb1f7b521578faf0917cf97fa7c26bf2f2693bb4c262"
+      },
+      "goal_id": "LIR-03.next-work-packets-v1",
+      "limits": {
+        "child_process_slots": 1,
+        "cpu_slots": 1,
+        "max_attempts": 1,
+        "memory_mb": 1024,
+        "storage_bytes": 16777216,
+        "wall_seconds": 300
+      },
+      "operation_kind": "typed_ir_scoped_graph",
+      "outputs": [
+        "docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-lir03-ir-packet-01/packet.json",
+        "docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-lir03-ir-packet-01/receipt.json"
+      ],
+      "parent_reference": {
+        "path": "ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json",
+        "repository": "ipfs_datasets_py",
+        "revision": "eb023a439a23c59acdfaf485c66127f5202ecc8f",
+        "task_id": "LIR-07",
+        "task_sha256": "d2bfcae5296f9dd0ab356bf7dc5a31dd8e2f60b6b4c7290666fd8826a49a2809"
+      },
+      "parent_task_id": "LIR-07",
+      "programme_preparation": "legal-ir-programme-preparation/v1",
+      "provider_role": "deterministic-only",
+      "receipt_instructions": "Materialize exactly packet.json and receipt.json from the fixed immutable admission snapshots using the local normal-package prepare_programme_work_packet_v1 owner. This prepares concrete control metadata only; metadata completeness grants no native/model dispatch, legal review, source changes, training/gold supervision, parent completion, retry or rearm authority. Preserve completed history.",
+      "required_validation_executables": [
+        "python3"
+      ],
+      "task_id": "LIRAE-LIR03-IR-PACKET-01",
+      "title": "Prepare the complete norm and independent review execution packet",
+      "validation_commands": [
+        "IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 scripts/ops/legal_ir/legal_ir_supervisor_contract.py --materialize-programme-preparation LIRAE-LIR03-IR-PACKET-01 && IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 scripts/ops/legal_ir/legal_ir_supervisor_contract.py --check-task LIRAE-LIR03-IR-PACKET-01"
+      ]
+    },
+    {
+      "allowed_paths": [
+        "docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-lir03-model-packet-01/packet.json",
+        "docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-lir03-model-packet-01/receipt.json"
+      ],
+      "binding": {
+        "admission_scope": {
+          "bytes": 5652,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/task-bindings-v01/scopes/lirae-lir03-model-packet-01.json",
+          "sha256": "45bbac5070fdfe404ea42379f4ff7ee97f0900994aa578ff6fadd6658ba18a73"
+        },
+        "authority_binding": {
+          "board": {
+            "bytes": 485929,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/retained-board141.md",
+            "sha256": "9bf556eac25b39b463608aa0a898b7413f744ea149706b35910ed43b72448327"
+          },
+          "kind": "legacy_markdown",
+          "namespace": "legal-ir-autoencoder-v1",
+          "plan": {
+            "bytes": 825208,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/retained-plan141.json",
+            "sha256": "daf1185a1780c322df0d1f0736c797865f0bf60bc5ef1a9c2eb7de8ca50cab57"
+          },
+          "source_control_revision": "bd55266c06e9613d643ffd8e0226d73154e2cdec5052fda0432379e8bfb99018"
+        },
+        "base_board": {
+          "bytes": 485929,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/retained-board141.md",
+          "sha256": "9bf556eac25b39b463608aa0a898b7413f744ea149706b35910ed43b72448327"
+        },
+        "base_plan": {
+          "bytes": 825208,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/retained-plan141.json",
+          "sha256": "daf1185a1780c322df0d1f0736c797865f0bf60bc5ef1a9c2eb7de8ca50cab57"
+        },
+        "current_backlog": {
+          "bytes": 1116235,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/current-backlog.json",
+          "sha256": "792a0cdbbe507bab784fed4235bfd3fd6350c76a0f39b9bea0429b2e1155f759"
+        },
+        "evidence": [
+          {
+            "bytes": 13288,
+            "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/evidence/docs/autoformalization/evidence/legal-ir-prepared384-retained-generation-pair-20261028.json",
+            "sha256": "0c1657a7a4038593cdbd4229e65335062bac861cce890cb7722a6876d738ef2b"
+          },
+          {
+            "bytes": 6898,
+            "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/evidence/docs/autoformalization/evidence/legal-ir-prepared384-occurrence-facade-v2-20261028.json",
+            "sha256": "3e331824b4720e9b7ae5691d4384bf64be519017a41ea8c58301a0a19351d044"
+          },
+          {
+            "bytes": 6957,
+            "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/evidence/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/conditions-trainer-binding-v01/scoring-reconciliation-v01/review-summary-v01.json",
+            "sha256": "36764105329b0ecea017f395a893643dc00be8e4ec34ef657f64e2de460405e2"
+          }
+        ],
+        "original_backlog": {
+          "bytes": 964737,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/original-backlog.json",
+          "sha256": "d1f74b427c3a7b27988a1d174f258fa6e867b681178978b90c611f4088ff401a"
+        },
+        "owner_sources": [
+          {
+            "bytes": 23948,
+            "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/owner-sources/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_legal_ir_runtime.py",
+            "sha256": "569b03444704bce108be10862ec55f26cce40906653695f68755f0ae4d8c9ae0"
+          },
+          {
+            "bytes": 38363,
+            "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/owner-sources/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_runtime.py",
+            "sha256": "6b59afd5b9280d3f8f63144630ce6ecaba50c646bfe7f5644c1564ca6e8d414c"
+          },
+          {
+            "bytes": 63251,
+            "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/owner-sources/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_numeric.py",
+            "sha256": "c1f01482ab6e69900af8b48ce9b5255d9bb6f3ec08e20a76c0cb3cf698d60999"
+          },
+          {
+            "bytes": 32455,
+            "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/owner-sources/ipfs_datasets_py/optimizers/logic_theorem_optimizer/formula_generation_metrics.py",
+            "sha256": "59578e51a1158ab756f1e6a66934ee6ee740d69de83ae3dd296e464f15141bc4"
+          }
+        ],
+        "packet_owner": {
+          "bytes": 81261,
+          "path": "ipfs_datasets_py/logic/autoformal/supervisor_loop.py",
+          "sha256": "a75ab17d1c2e87a4721c7f4eeea0144916413829a78416de570aaad3f217af81"
+        },
+        "remaining_gates": [
+          "source_release_manifest",
+          "source_custody",
+          "source_span_entity_crosswalk",
+          "edition_and_legal_as_of",
+          "independent_meaning_review",
+          "every_use_applicability_review",
+          "original_owner_admission",
+          "independent_acceptance",
+          "producer_head_compatibility",
+          "reviewed_complete_targets",
+          "exposure_grouped_partitions",
+          "frozen_quality_contract"
+        ]
+      },
+      "context_budget_tokens": 0,
+      "current_parent_reference": {
+        "backlog": {
+          "bytes": 1116235,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/current-backlog.json",
+          "sha256": "792a0cdbbe507bab784fed4235bfd3fd6350c76a0f39b9bea0429b2e1155f759"
+        },
+        "task_id": "LIR-17",
+        "task_sha256": "de78e8ef623271c12e3b0d903a07d4bd29e0bd55c04294f406ed6efe1b442f56"
+      },
+      "goal_id": "LIR-03.next-work-packets-v1",
+      "limits": {
+        "child_process_slots": 1,
+        "cpu_slots": 1,
+        "max_attempts": 1,
+        "memory_mb": 1024,
+        "storage_bytes": 16777216,
+        "wall_seconds": 300
+      },
+      "operation_kind": "model_compatibility_quality",
+      "outputs": [
+        "docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-lir03-model-packet-01/packet.json",
+        "docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-lir03-model-packet-01/receipt.json"
+      ],
+      "parent_reference": {
+        "path": "ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json",
+        "repository": "ipfs_datasets_py",
+        "revision": "eb023a439a23c59acdfaf485c66127f5202ecc8f",
+        "task_id": "LIR-17",
+        "task_sha256": "1866c540278ad4270adc7c6b5ee938fec8128a0501cf6388161ce12a5c38a612"
+      },
+      "parent_task_id": "LIR-17",
+      "programme_preparation": "legal-ir-programme-preparation/v1",
+      "provider_role": "deterministic-only",
+      "receipt_instructions": "Materialize exactly packet.json and receipt.json from the fixed immutable admission snapshots using the local normal-package prepare_programme_work_packet_v1 owner. This prepares concrete control metadata only; metadata completeness grants no native/model dispatch, legal review, source changes, training/gold supervision, parent completion, retry or rearm authority. Preserve completed history.",
+      "required_validation_executables": [
+        "python3"
+      ],
+      "task_id": "LIRAE-LIR03-MODEL-PACKET-01",
+      "title": "Prepare the source-conditioning and trajectory acceptance packet",
+      "validation_commands": [
+        "IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 scripts/ops/legal_ir/legal_ir_supervisor_contract.py --materialize-programme-preparation LIRAE-LIR03-MODEL-PACKET-01 && IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 scripts/ops/legal_ir/legal_ir_supervisor_contract.py --check-task LIRAE-LIR03-MODEL-PACKET-01"
+      ]
+    },
+    {
+      "allowed_paths": [
+        "docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-lir03-lean-packet-02/packet.json",
+        "docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-lir03-lean-packet-02/receipt.json"
+      ],
+      "binding": {
+        "admission_scope": {
+          "bytes": 5768,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/task-bindings-v01/scopes/lirae-lir03-lean-packet-02.json",
+          "sha256": "2619eb2214de0ba08fc546898cf6b8948abb50b9232f25e47f51233816e2dc0d"
+        },
+        "authority_binding": {
+          "board": {
+            "bytes": 485929,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/retained-board141.md",
+            "sha256": "9bf556eac25b39b463608aa0a898b7413f744ea149706b35910ed43b72448327"
+          },
+          "kind": "legacy_markdown",
+          "namespace": "legal-ir-autoencoder-v1",
+          "plan": {
+            "bytes": 825208,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/retained-plan141.json",
+            "sha256": "daf1185a1780c322df0d1f0736c797865f0bf60bc5ef1a9c2eb7de8ca50cab57"
+          },
+          "source_control_revision": "bd55266c06e9613d643ffd8e0226d73154e2cdec5052fda0432379e8bfb99018"
+        },
+        "base_board": {
+          "bytes": 485929,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/retained-board141.md",
+          "sha256": "9bf556eac25b39b463608aa0a898b7413f744ea149706b35910ed43b72448327"
+        },
+        "base_plan": {
+          "bytes": 825208,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/retained-plan141.json",
+          "sha256": "daf1185a1780c322df0d1f0736c797865f0bf60bc5ef1a9c2eb7de8ca50cab57"
+        },
+        "current_backlog": {
+          "bytes": 1116235,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/current-backlog.json",
+          "sha256": "792a0cdbbe507bab784fed4235bfd3fd6350c76a0f39b9bea0429b2e1155f759"
+        },
+        "evidence": [
+          {
+            "bytes": 63821,
+            "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/evidence/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/source101-parent-definition-v01/actual-parent-bank-v01/paged-inventory-v01/officer-definitions-v01/graph-aggregation-v01/native-preservation-v01/qualification-summary-v01.json",
+            "sha256": "6c5fa2f766613709cebfd41c6d11ce2fce28210762fa0cb1d0008fc2ba168d48"
+          },
+          {
+            "bytes": 6593,
+            "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/evidence/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/cache-custody-fix-v01/landing-generation-v01/qualification-summary-v01.json",
+            "sha256": "43412d3e12fdeebf632c01a08c31d52a7f82efa03e592eae4f0feb3f32757e5e"
+          },
+          {
+            "bytes": 35784,
+            "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/evidence/docs/autoformalization/evidence/legal-ir-parent-bound-norm-definition-preservation-20261025.json",
+            "sha256": "36b831861eedabb5dddceb1874880359e4c63440465d9777995fc62ee729497a"
+          }
+        ],
+        "original_backlog": {
+          "bytes": 964737,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/original-backlog.json",
+          "sha256": "d1f74b427c3a7b27988a1d174f258fa6e867b681178978b90c611f4088ff401a"
+        },
+        "owner_sources": [
+          {
+            "bytes": 26612,
+            "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/owner-sources/ipfs_datasets_py/logic/autoformal/legal_native_ast_preservation.py",
+            "sha256": "2cdf3e8c0734ad8e4226c5df30f737322d8dee0f4e5a3674c3ad4d7c36ac810e"
+          },
+          {
+            "bytes": 110825,
+            "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/owner-sources/ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_packet_v2.py",
+            "sha256": "58f8e118d49437e5d749bf53f3604934f8c5b70d06d391f620ecf92661979dc2"
+          },
+          {
+            "bytes": 81633,
+            "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/owner-sources/ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_index_v2.py",
+            "sha256": "af7e7d0da15ffd53d334d3c58d6da695d73b2dfb23959529ea00d741646be9e0"
+          },
+          {
+            "bytes": 17454,
+            "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/owner-sources/ipfs_datasets_py/logic/autoformal/corpus_graph_exchange.py",
+            "sha256": "32800bca0662830409de0622e16902bd458cf6d47c821fc7079cdf4ba9ddc9ad"
+          }
+        ],
+        "packet_owner": {
+          "bytes": 81261,
+          "path": "ipfs_datasets_py/logic/autoformal/supervisor_loop.py",
+          "sha256": "a75ab17d1c2e87a4721c7f4eeea0144916413829a78416de570aaad3f217af81"
+        },
+        "remaining_gates": [
+          "source_release_manifest",
+          "source_custody",
+          "source_span_entity_crosswalk",
+          "edition_and_legal_as_of",
+          "independent_meaning_review",
+          "every_use_applicability_review",
+          "original_owner_admission",
+          "independent_acceptance",
+          "explicit_interpretation_and_assumptions",
+          "lean_import_toolchain_closure",
+          "native_preservation_and_build",
+          "immutable_release_readback"
+        ]
+      },
+      "context_budget_tokens": 0,
+      "current_parent_reference": {
+        "backlog": {
+          "bytes": 1116235,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/input-snapshots-v01/current-backlog.json",
+          "sha256": "792a0cdbbe507bab784fed4235bfd3fd6350c76a0f39b9bea0429b2e1155f759"
+        },
+        "task_id": "LIR-12",
+        "task_sha256": "cdec23d8b20cf9ba5c354155b4ce05fde21ad800ba3bbd7616e7ef978b6d3ae3"
+      },
+      "goal_id": "LIR-03.next-work-packets-v1",
+      "limits": {
+        "child_process_slots": 1,
+        "cpu_slots": 1,
+        "max_attempts": 1,
+        "memory_mb": 1024,
+        "storage_bytes": 16777216,
+        "wall_seconds": 300
+      },
+      "operation_kind": "lean_release_verification",
+      "outputs": [
+        "docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-lir03-lean-packet-02/packet.json",
+        "docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-lir03-lean-packet-02/receipt.json"
+      ],
+      "parent_reference": {
+        "path": "ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json",
+        "repository": "ipfs_datasets_py",
+        "revision": "eb023a439a23c59acdfaf485c66127f5202ecc8f",
+        "task_id": "LIR-12",
+        "task_sha256": "a8a01f70597884aecc2a7e8fc9d34be2cbbd7d6c8131495e23de2da1c81d6fb2"
+      },
+      "parent_task_id": "LIR-12",
+      "programme_preparation": "legal-ir-programme-preparation/v1",
+      "provider_role": "deterministic-only",
+      "receipt_instructions": "Materialize exactly packet.json and receipt.json from the fixed immutable admission snapshots using the local normal-package prepare_programme_work_packet_v1 owner. This prepares concrete control metadata only; metadata completeness grants no native/model dispatch, legal review, source changes, training/gold supervision, parent completion, retry or rearm authority. Preserve completed history.",
+      "required_validation_executables": [
+        "python3"
+      ],
+      "task_id": "LIRAE-LIR03-LEAN-PACKET-02",
+      "title": "Prepare the graph Lean and release dependency execution packet",
+      "validation_commands": [
+        "IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 scripts/ops/legal_ir/legal_ir_supervisor_contract.py --materialize-programme-preparation LIRAE-LIR03-LEAN-PACKET-02 && IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 scripts/ops/legal_ir/legal_ir_supervisor_contract.py --check-task LIRAE-LIR03-LEAN-PACKET-02"
       ]
     }
   ]
