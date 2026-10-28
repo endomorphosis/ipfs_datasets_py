@@ -441,3 +441,351 @@ def test_administrative_atomic_write_error_is_not_rolled_back_or_retried(setup, 
         assert json.loads(ledger.read_bytes())['reservations'][args['reservation_id']]['status'] == 'released'
     else:
         assert ledger.read_bytes() == unchanged
+
+
+def _released_metadata_pin(path, value):
+    """Create or rewrite test-local retained metadata, not an artifact payload."""
+    import hashlib
+    raw = (json.dumps(value, sort_keys=True, separators=(',', ':'), allow_nan=False) + '\n').encode()
+    with path.open('wb') as stream:
+        stream.write(raw)
+        stream.flush()
+        os.fsync(stream.fileno())
+    path.chmod(0o600)
+    descriptor = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+    return {'path': str(path), 'bytes': len(raw), 'sha256': hashlib.sha256(raw).hexdigest()}
+
+
+def released_relocation(setup, monkeypatch, kind='batch'):
+    """Private metadata-protocol fixtures, with safely absent selected PIDs.
+
+    Original closeout APIs create the ordinary/batch receipt shapes, but the
+    synthetic native fields below do not qualify host, model or legal outcomes.
+    """
+    _, roots, _, _ = setup
+    if kind == 'batch':
+        for name in ('third-root', 'fourth-root'):
+            path = roots[0].parent / name
+            path.mkdir()
+            roots.append(path)
+    ledger, old_args, _ = retained(setup, monkeypatch)
+    for index in range(24):
+        (old_args['attempt_directory'] / ('item-%02d.json' % index)).write_text('{}\n')
+    old_args['expected_artifacts'] = recovery._durable_inventory(old_args['attempt_directory'])
+    if kind == 'batch':
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_external_resource_recovery
+        claim = {key: old_args[key] for key in ('reservation_id', 'expected_record_sha256',
+                                               'attempt_directory', 'expected_artifacts')}
+        claim['attempt_directory'] = str(claim['attempt_directory'])
+        claim.update(allow_empty_failed_admission=False,
+                     conservative_named_roots_external_disposition=None)
+        autoencoder_external_resource_recovery.reconcile_retained_reservations_batch(
+            ledger, roots=roots, claims=[claim], artifacts_durable=True)
+    else:
+        recovery.reconcile_retained_reservation(ledger, **old_args,
+            capacity_policy='administrative_closeout' if kind == 'ordinary-v2' else 'require_capacity')
+    state = json.loads(ledger.read_bytes())
+    row = state['reservations'][old_args['reservation_id']]
+    # Literal historical custody stays opaque: relocation may neither infer nor
+    # resolve UNKNOWN, or change null, boolean, integer and finite-float values.
+    row['retained_native_outcome'] = {'provider_outcome': 'UNKNOWN', 'native_lease_id': None,
+        'provider_completed': False, 'native_disposition_known': True,
+        'attempt_number': 1, 'finite_value': 1.0}
+    ledger.write_text(json.dumps(state, sort_keys=True, separators=(',', ':')) + '\n')
+    archive = _released_metadata_pin(roots[1] / 'released-original-row.json', row)
+    manifest = _released_metadata_pin(roots[1] / 'retained-artifacts.json', {
+        'schema': 'retained-artifact-inventory/v1', 'attempt_directory': row['attempt_directory'],
+        'artifacts': old_args['expected_artifacts']})
+    args = dict(roots=roots, reservation_id=row['reservation_id'],
+        expected_record_sha256=recovery._digest(row),
+        artifact_inventory_manifest=manifest, released_record_archive=archive)
+    return ledger, args, state
+
+
+@pytest.mark.parametrize('kind', ['ordinary-v1', 'ordinary-v2', 'batch'])
+def test_released_artifact_externalization_preserves_complete_history_and_never_releases_resources(
+        setup, monkeypatch, kind):
+    import copy
+    ledger, args, before = released_relocation(setup, monkeypatch, kind)
+    factory, _, _, scheduler = setup
+    with factory() as other:
+        pass
+    before = json.loads(ledger.read_bytes())
+    scheduler_before = scheduler.snapshot()
+    def forbidden(*unused, **keywords):
+        raise AssertionError('metadata relocation cannot census, acquire or enter')
+    monkeypatch.setattr(recovery.resources, '_inventory', forbidden)
+    monkeypatch.setattr(recovery, '_durable_inventory', forbidden)
+    monkeypatch.setattr(recovery, '_administrative_census', forbidden)
+    monkeypatch.setattr(recovery.resources, 'get_global_resource_scheduler', forbidden)
+    monkeypatch.setattr(recovery.resources.DaemonResourceReservation, '__enter__', forbidden)
+    monkeypatch.setattr(recovery.resources.DaemonResourceReservation, '_account', forbidden)
+    result = recovery.externalize_released_reconciliation_artifacts_v1(ledger, **args)
+    after = json.loads(ledger.read_bytes())
+    rid = args['reservation_id']
+    old, new = before['reservations'][rid], after['reservations'][rid]
+    assert recovery._digest({k: v for k, v in old.items() if k != 'explicit_reconciliation'}) == recovery._digest(
+        {k: v for k, v in new.items() if k != 'explicit_reconciliation'})
+    expected = copy.deepcopy(old['explicit_reconciliation'])
+    target = expected['selected_claim'] if kind == 'batch' else expected
+    artifacts = target.pop('artifacts')
+    target.update(artifact_inventory_manifest=args['artifact_inventory_manifest'], artifact_count=len(artifacts),
+                  artifact_bytes=sum(row['bytes'] for row in artifacts),
+                  artifact_manifest_schema='retained-artifact-inventory/v1')
+    expected['schema'] = ('explicit-retained-reservation-batch-reconciliation/v2' if kind == 'batch'
+                          else 'explicit-retained-reservation-reconciliation/v3')
+    expected['artifact_metadata_relocation'] = new['explicit_reconciliation']['artifact_metadata_relocation']
+    assert recovery._digest(new['explicit_reconciliation']) == recovery._digest(expected)
+    assert recovery._digest(json.loads(Path(args['released_record_archive']['path']).read_bytes())) == recovery._digest(old)
+    assert recovery._digest({k: v for k, v in after['reservations'].items() if k != rid}) == recovery._digest(
+        {k: v for k, v in before['reservations'].items() if k != rid})
+    assert {k: v for k, v in after.items() if k != 'reservations'} == {
+        k: v for k, v in before.items() if k != 'reservations'}
+    assert result['state_written'] is True and result['atomic_ledger_write_count'] == 1
+    assert result['hot_ledger_metadata_bytes_removed'] > 0
+    assert result['current_process_absence_observed_only'] is True
+    assert result['ledger_bytes_after'] < result['ledger_bytes_before']
+    assert result['disk_promises_released'] == 0
+    for field in ('global_census_performed', 'status_changed', 'new_reservation_created',
+                  'new_resource_lease_acquired', 'native_cleanup_performed',
+                  'historical_native_release_established', 'qualification_claimed', 'admitted',
+                  'outputs_deleted', 'cap_changed'):
+        assert result[field] is False
+    assert scheduler.snapshot() == scheduler_before
+
+
+def test_released_artifact_externalization_same_refs_are_read_only_and_changed_refs_refuse(setup, monkeypatch):
+    ledger, args, before = released_relocation(setup, monkeypatch)
+    first = recovery.externalize_released_reconciliation_artifacts_v1(ledger, **args)
+    raw = ledger.read_bytes()
+    def forbidden(*unused, **keywords):
+        raise AssertionError('idempotent readback must not write')
+    monkeypatch.setattr(recovery.resources.DaemonResourceReservation, '_write', forbidden)
+    again = recovery.externalize_released_reconciliation_artifacts_v1(ledger, **args)
+    assert ledger.read_bytes() == raw and again['state_written'] is False
+    assert again['idempotent_readback'] is True and again['atomic_ledger_write_count'] == 0
+    assert again['current_record_sha256'] == first['current_record_sha256']
+    assert again['relocated_at'] == first['relocated_at']
+    manifest = json.loads(Path(args['artifact_inventory_manifest']['path']).read_bytes())
+    args['artifact_inventory_manifest'] = _released_metadata_pin(
+        Path(args['artifact_inventory_manifest']['path']).with_name('different-identical-manifest.json'), manifest)
+    with pytest.raises(recovery.resources.DaemonResourceError, match='references changed'):
+        recovery.externalize_released_reconciliation_artifacts_v1(ledger, **args)
+    assert ledger.read_bytes() == raw
+
+
+@pytest.mark.parametrize('status', ['active', 'retained', 'reserved'])
+def test_released_artifact_externalization_never_accepts_charged_rows(setup, monkeypatch, status):
+    ledger, args, state = released_relocation(setup, monkeypatch)
+    state['reservations'][args['reservation_id']]['status'] = status
+    ledger.write_text(json.dumps(state))
+    before = ledger.read_bytes()
+    with pytest.raises(recovery.resources.DaemonResourceError, match='only durable released'):
+        recovery.externalize_released_reconciliation_artifacts_v1(ledger, **args)
+    assert ledger.read_bytes() == before
+
+
+@pytest.mark.parametrize('damage', ['float-cap', 'float-root-inode'])
+def test_released_artifact_externalization_refuses_typed_storage_scope_drift(setup, monkeypatch, damage):
+    ledger, args, state = released_relocation(setup, monkeypatch)
+    if damage == 'float-cap': state['limit_bytes'] = float(state['limit_bytes'])
+    else: state['roots'][0]['inode'] = float(state['roots'][0]['inode'])
+    ledger.write_text(json.dumps(state))
+    before = ledger.read_bytes()
+    with pytest.raises(recovery.resources.DaemonResourceError, match='typed original ledger roots and cap'):
+        recovery.externalize_released_reconciliation_artifacts_v1(ledger, **args)
+    assert ledger.read_bytes() == before
+
+
+@pytest.mark.parametrize('kind', ['owner', 'child', 'prior-child'])
+def test_released_artifact_externalization_refuses_live_original_custody(setup, monkeypatch, kind):
+    ledger, args, state = released_relocation(setup, monkeypatch)
+    row = state['reservations'][args['reservation_id']]
+    group = {'pid': 99999998, 'birth': '123'}
+    if kind != 'owner':
+        if kind == 'child': row['child'] = group
+        else: row['prior_children'] = [group]
+        ledger.write_text(json.dumps(state))
+        args['released_record_archive'] = _released_metadata_pin(
+            Path(args['released_record_archive']['path']), row)
+        args['expected_record_sha256'] = recovery._digest(row)
+        original = recovery.resources._group_usage
+        monkeypatch.setattr(recovery.resources, '_group_usage',
+            lambda child: {'live_processes': 1} if child == group else original(child))
+    else:
+        original = recovery.resources._process
+        monkeypatch.setattr(recovery.resources, '_process',
+            lambda pid: {'pid': pid} if pid == row['owner_pid'] else original(pid))
+    before = ledger.read_bytes()
+    with pytest.raises(recovery.resources.DaemonResourceError, match='still exists|still alive'):
+        recovery.externalize_released_reconciliation_artifacts_v1(ledger, **args)
+    assert ledger.read_bytes() == before
+
+
+def test_released_artifact_externalization_rechecks_owner_absence_before_write(setup, monkeypatch):
+    ledger, args, state = released_relocation(setup, monkeypatch)
+    owner_pid = state['reservations'][args['reservation_id']]['owner_pid']
+    original_read = recovery._released_artifact_reference
+    original_process = recovery.resources._process
+    alive = False
+    def read(reference, helper, attempt):
+        nonlocal alive
+        value = original_read(reference, helper, attempt)
+        alive = True
+        return value
+    monkeypatch.setattr(recovery, '_released_artifact_reference', read)
+    monkeypatch.setattr(recovery.resources, '_process',
+        lambda pid: {'pid': pid} if alive and pid == owner_pid else original_process(pid))
+    before = ledger.read_bytes()
+    with pytest.raises(recovery.resources.DaemonResourceError, match='owner PID still exists'):
+        recovery.externalize_released_reconciliation_artifacts_v1(ledger, **args)
+    assert alive and ledger.read_bytes() == before
+
+
+@pytest.mark.parametrize('field,replacement', [
+    ('provider_completed', 0), ('native_disposition_known', 1),
+    ('attempt_number', 1.0), ('finite_value', 1), ('native_lease_id', False)])
+def test_released_artifact_externalization_refuses_typed_archive_drift(setup, monkeypatch, field, replacement):
+    ledger, args, state = released_relocation(setup, monkeypatch)
+    archive = json.loads(Path(args['released_record_archive']['path']).read_bytes())
+    archive['retained_native_outcome'][field] = replacement
+    args['released_record_archive'] = _released_metadata_pin(Path(args['released_record_archive']['path']), archive)
+    before = ledger.read_bytes()
+    with pytest.raises(recovery.resources.DaemonResourceError, match='archive digest differs'):
+        recovery.externalize_released_reconciliation_artifacts_v1(ledger, **args)
+    assert ledger.read_bytes() == before
+
+
+@pytest.mark.parametrize('damage', ['manifest-hash', 'archive-hash', 'missing-archive', 'wrong-task',
+    'wrong-attempt', 'missing-artifact', 'reordered-artifacts', 'boolean-artifact-bytes',
+    'duplicate-artifact', 'archive-missing-receipt', 'descriptor-boolean-bytes'])
+def test_released_artifact_externalization_refuses_incomplete_or_wrong_evidence(setup, monkeypatch, damage):
+    ledger, args, state = released_relocation(setup, monkeypatch)
+    manifest_path, archive_path = (Path(args[key]['path']) for key in
+        ('artifact_inventory_manifest', 'released_record_archive'))
+    manifest = json.loads(manifest_path.read_bytes())
+    archive = json.loads(archive_path.read_bytes())
+    if damage == 'manifest-hash': args['artifact_inventory_manifest']['sha256'] = '0' * 64
+    elif damage == 'archive-hash': args['released_record_archive']['sha256'] = '0' * 64
+    elif damage == 'missing-archive': archive_path.unlink()
+    elif damage == 'wrong-task': archive['reservation_id'] = 'f' * 32
+    elif damage == 'wrong-attempt': manifest['attempt_directory']['inode'] += 1
+    elif damage == 'missing-artifact': manifest['artifacts'].pop()
+    elif damage == 'reordered-artifacts': manifest['artifacts'].reverse()
+    elif damage == 'boolean-artifact-bytes': manifest['artifacts'][0]['bytes'] = False
+    elif damage == 'duplicate-artifact': manifest['artifacts'].append(manifest['artifacts'][0])
+    elif damage == 'archive-missing-receipt': archive.pop('explicit_reconciliation')
+    elif damage == 'descriptor-boolean-bytes': args['artifact_inventory_manifest']['bytes'] = True
+    if damage in ('wrong-task', 'archive-missing-receipt'):
+        args['released_record_archive'] = _released_metadata_pin(archive_path, archive)
+    if damage in ('wrong-attempt', 'missing-artifact', 'reordered-artifacts',
+                  'boolean-artifact-bytes', 'duplicate-artifact'):
+        args['artifact_inventory_manifest'] = _released_metadata_pin(manifest_path, manifest)
+    before = ledger.read_bytes()
+    with pytest.raises(recovery.resources.DaemonResourceError):
+        recovery.externalize_released_reconciliation_artifacts_v1(ledger, **args)
+    assert ledger.read_bytes() == before
+
+
+@pytest.mark.parametrize('key', ['artifact_inventory_manifest', 'released_record_archive'])
+@pytest.mark.parametrize('alias', ['hardlink', 'symlink', 'traversal', 'outside-roots'])
+def test_released_artifact_externalization_refuses_aliased_or_unowned_locations(setup, monkeypatch, key, alias):
+    ledger, args, state = released_relocation(setup, monkeypatch)
+    source = Path(args[key]['path'])
+    created_alias = None
+    try:
+        if alias == 'hardlink':
+            target = source.with_suffix('.alias')
+            os.link(source, target)
+            created_alias = target
+        elif alias == 'symlink':
+            target = source.with_suffix('.symlink')
+            target.symlink_to(source)
+            created_alias = target
+            args[key]['path'] = str(target)
+        elif alias == 'traversal': args[key]['path'] = str(source.parent) + '/sub/../' + source.name
+        else:
+            outside = source.parent.parent / ('outside-' + source.name)
+            args[key] = _released_metadata_pin(outside, json.loads(source.read_bytes()))
+        before = ledger.read_bytes()
+        with pytest.raises(recovery.resources.DaemonResourceError):
+            recovery.externalize_released_reconciliation_artifacts_v1(ledger, **args)
+        assert ledger.read_bytes() == before
+    finally:
+        # Authored teardown of only this test's link, after its refusal checks.
+        if created_alias is not None:
+            created_alias.unlink()
+            assert not os.path.lexists(created_alias)
+            assert source.stat().st_nlink == 1
+
+
+@pytest.mark.parametrize('key', ['artifact_inventory_manifest', 'released_record_archive'])
+def test_released_artifact_externalization_rechecks_metadata_before_atomic_write(setup, monkeypatch, key):
+    ledger, args, state = released_relocation(setup, monkeypatch)
+    original = recovery._released_artifact_reference
+    changed = False
+    def mutate(reference, helper, attempt):
+        nonlocal changed
+        value = original(reference, helper, attempt)
+        if not changed and reference['path'] == args[key]['path']:
+            changed = True
+            with Path(reference['path']).open('ab') as stream:
+                stream.write(b' ')
+        return value
+    monkeypatch.setattr(recovery, '_released_artifact_reference', mutate)
+    before = ledger.read_bytes()
+    with pytest.raises(recovery.resources.DaemonResourceError):
+        recovery.externalize_released_reconciliation_artifacts_v1(ledger, **args)
+    assert changed and ledger.read_bytes() == before
+
+
+def test_released_artifact_externalization_checks_actual_disk_cas_not_only_loaded_row(setup, monkeypatch):
+    ledger, args, state = released_relocation(setup, monkeypatch)
+    original = recovery._released_artifact_reference
+    changed = False
+    def mutate(reference, helper, attempt):
+        nonlocal changed
+        value = original(reference, helper, attempt)
+        if not changed:
+            changed = True
+            other_writer = json.loads(ledger.read_bytes())
+            other_writer['reservations'][args['reservation_id']]['owner_pid'] += 1
+            ledger.write_text(json.dumps(other_writer))
+        return value
+    monkeypatch.setattr(recovery, '_released_artifact_reference', mutate)
+    writes = []
+    monkeypatch.setattr(recovery.resources.DaemonResourceReservation, '_write', lambda *a: writes.append(a))
+    with pytest.raises(recovery.resources.DaemonResourceError, match='on-disk.*changed'):
+        recovery.externalize_released_reconciliation_artifacts_v1(ledger, **args)
+    assert changed and writes == []
+    assert 'artifacts' in json.loads(ledger.read_bytes())['reservations'][args['reservation_id']][
+        'explicit_reconciliation']['selected_claim']
+
+
+@pytest.mark.parametrize('write_completed', [False, True])
+def test_released_artifact_externalization_write_error_is_not_retried_or_rolled_back(
+        setup, monkeypatch, write_completed):
+    ledger, args, state = released_relocation(setup, monkeypatch)
+    original = recovery.resources.DaemonResourceReservation._write
+    writes = []
+    def fail(helper, value):
+        writes.append(value)
+        if write_completed:
+            original(helper, value)
+        raise OSError('selected original atomic write failed')
+    monkeypatch.setattr(recovery.resources.DaemonResourceReservation, '_write', fail)
+    before = ledger.read_bytes()
+    with pytest.raises(OSError, match='atomic write failed'):
+        recovery.externalize_released_reconciliation_artifacts_v1(ledger, **args)
+    assert len(writes) == 1
+    if not write_completed:
+        assert ledger.read_bytes() == before
+    else:
+        assert json.loads(ledger.read_bytes())['reservations'][args['reservation_id']][
+            'explicit_reconciliation']['schema'] == 'explicit-retained-reservation-batch-reconciliation/v2'
+        again = recovery.externalize_released_reconciliation_artifacts_v1(ledger, **args)
+        assert again['idempotent_readback'] is True and len(writes) == 1
