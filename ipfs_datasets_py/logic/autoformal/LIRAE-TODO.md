@@ -2703,7 +2703,7 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 
 ## LIRAE-LIR03-MODEL-PACKET-01 Prepare the source-conditioning and trajectory acceptance packet
 
-- status: todo
+- status: completed
 - completion: manual
 - is schedulable: true
 - priority: P1
