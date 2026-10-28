@@ -765,6 +765,73 @@ def capability_purpose_main_v1(argv: list[str]) -> int:
     return 0
 
 
+def programme_index_main_v1(argv: list[str]) -> int:
+    """Prepare/verify one metadata programme index without native or model effects."""
+    parser = argparse.ArgumentParser(description=programme_index_main_v1.__doc__)
+    parser.add_argument("operation", choices=("prepare", "verify"))
+    parser.add_argument("--inputs", type=Path, required=True)
+    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--freeze-out", type=Path)
+    parser.add_argument("--report", type=Path)
+    parser.add_argument("--freeze", type=Path)
+    parser.add_argument("--verifier-principal")
+    args = parser.parse_args(argv)
+    if args.operation == "prepare" and (args.freeze_out is None or args.report is not None
+            or args.freeze is not None or args.verifier_principal is not None):
+        parser.error("prepare requires --freeze-out and forbids verifier inputs")
+    if args.operation == "verify" and (args.report is None or args.freeze is None
+            or not args.verifier_principal or args.freeze_out is not None):
+        parser.error("verify requires --report, --freeze and --verifier-principal")
+    try:
+        paths = [p for p in (args.inputs, args.output, args.freeze_out, args.report, args.freeze) if p is not None]
+        for path in paths:
+            if (not path.is_absolute() or ".." in path.parts
+                    or any(part.is_symlink() for part in (path, *path.parents))):
+                raise ValueError("exact absolute programme index paths without traversal or aliases required")
+        resolved = [path.resolve() for path in paths]
+        if len(resolved) != len(set(resolved)):
+            raise ValueError("programme index input and output paths must be distinct")
+        for path in ([args.output, args.freeze_out] if args.operation == "prepare" else [args.output]):
+            if os.path.lexists(path):
+                raise ValueError("programme index output exists; preserve and reconcile")
+        if str(ROOT) not in sys.path:
+            sys.path.insert(0, str(ROOT))
+        from ipfs_datasets_py.logic.autoformal.supervisor_loop import (
+            _handoff_reconciliation_bytes_v2,
+            prepare_current_reviewed_programme_packet_index_v1,
+            verify_current_reviewed_programme_packet_index_v1,
+        )
+        inputs = _read_handoff_metadata_v2(args.inputs)
+        if args.operation == "prepare":
+            value = prepare_current_reviewed_programme_packet_index_v1(**inputs)
+            raw = _handoff_reconciliation_bytes_v2(value)
+            freeze = {"schema": "legal-ir-programme-packet-index-producer-freeze/v1",
+                "report_sha256": hashlib.sha256(raw).hexdigest(), "report_bytes": len(raw),
+                "producer_principal": value["producer_principal"], "frozen_before_verification": True}
+            _write_handoff_metadata_v2(args.output, raw)
+            _write_handoff_metadata_v2(args.freeze_out, _handoff_reconciliation_bytes_v2(freeze))
+        else:
+            report = _read_handoff_metadata_v2(args.report)
+            canonical = _handoff_reconciliation_bytes_v2(report)
+            fd = os.open(args.report, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+            try:
+                if os.read(fd, 4 * 1024 * 1024 + 1) != canonical:
+                    raise ValueError("programme index report bytes are not the frozen canonical serialization")
+            finally:
+                os.close(fd)
+            freeze = _read_handoff_metadata_v2(args.freeze)
+            value = verify_current_reviewed_programme_packet_index_v1(report, producer_freeze=freeze,
+                verifier_principal=args.verifier_principal, **inputs)
+            _write_handoff_metadata_v2(args.output, _handoff_reconciliation_bytes_v2(value))
+    except (OSError, ValueError, TypeError, RecursionError) as exc:
+        print(json.dumps({"schema": "legal-ir-programme-packet-index-metadata-refusal/v1", "valid": False,
+                          "reason": str(exc), "native_admission": False, "completion_authority": False}))
+        return 2
+    print(json.dumps({"schema": value["schema"], "output": str(args.output),
+                      "completion_authority": False, "native_admission": False}))
+    return 0
+
+
 def parser() -> argparse.ArgumentParser:
     result = argparse.ArgumentParser(description=__doc__)
     result.add_argument("--accelerate-root", type=Path, required=True)
@@ -842,6 +909,8 @@ def parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     effective_argv = list(sys.argv[1:] if argv is None else argv)
+    if effective_argv and effective_argv[0] == "programme-index":
+        return programme_index_main_v1(effective_argv[1:])
     if effective_argv and effective_argv[0] == "capability-purpose":
         return capability_purpose_main_v1(effective_argv[1:])
     if effective_argv and effective_argv[0] == "handoff-reconciliation":

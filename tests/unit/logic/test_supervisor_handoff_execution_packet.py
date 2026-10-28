@@ -892,3 +892,351 @@ def test_capability_metadata_cli_roundtrip_freeze_and_output_preservation(tmp_pa
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ReviewedProgrammePacketIndexTests(unittest.TestCase):
+    """Genuine normally imported owners; no AST proxy or native execution.
+
+    The older AST classes in this file remain their separate collection scope.
+    These independent fixtures describe synthetic closed observations only.
+    """
+    def setUp(self):
+        import ipfs_datasets_py.logic.autoformal.supervisor_loop as module
+        self.module = module
+        self.assertEqual(Path(module.__file__).resolve(), OWNER.resolve())
+        self.prepare = module.prepare_current_reviewed_programme_packet_index_v1
+        self.verify = module.verify_current_reviewed_programme_packet_index_v1
+        self.assertEqual(self.prepare.__module__, module.__name__)
+        self.assertEqual(self.verify.__module__, module.__name__)
+
+    @staticmethod
+    def canonical(value):
+        return (json.dumps(value, sort_keys=True, separators=(',', ':'), ensure_ascii=False, allow_nan=False) + '\n').encode()
+
+    def bound(self, value, path):
+        raw = self.canonical(value)
+        return {'descriptor': {'path': path, 'bytes': len(raw), 'sha256': hashlib.sha256(raw).hexdigest()}, 'json_text': raw.decode()}
+
+    def rebind(self, item, edit):
+        value = json.loads(item['json_text'])
+        edit(value)
+        item.update(self.bound(value, item['descriptor']['path']))
+
+    def fixture(self):
+        m = self.module
+        criteria = [
+            'Each productive task has a current purpose-specific source/runtime/input contract before unblocking.',
+            'Empty Validation fields in this planning board cannot grant completion; only the materialized execution copy receives actual commands.',
+            'Implementation packets declare exact new/changed code and test paths, shared-file lease keys and independently reviewed acceptance; Existing owners remain read-only context until scoped.',
+        ]
+        implementations = ['LIR-0702', 'LIR-0802', 'LIR-1202', 'LIR-1501', 'LIR-1702', 'LIR-2202', 'LIR-9103']
+        names = ['LIR-9001', 'LIR-9002', 'LIR-9003'] + implementations + ['LIR-' + str(1001 + i) for i in range(54)]
+        tasks = []
+        for i, alias in enumerate(names):
+            deps = [] if i == 0 else [names[i - 1]]
+            if 3 <= i < 55:
+                deps.append(names[0])
+            tasks.append(dict(task_alias=alias, task_cid='cid:' + alias, goal_cid='goal:' + str(i % 34), plan_cid='plan:fixture',
+                revision=15 if i == 0 else 4 if i == 1 else 2, status='completed' if i < 2 else 'blocked',
+                dependencies=[dict(dependency_task_cid='cid:' + name, kind='depends_on') for name in deps],
+                body=dict(authored_task=dict(validation=[]), validation=[], code_edit_allowlist=[],
+                    requires_product_change_scope=alias in implementations, legacy_parent_task=None, existing_owners=[], constraints=dict(canonical_logic_root='/retained'))))
+        by_alias = {row['task_alias']: row for row in tasks}
+        tasks[2]['acceptance'] = [dict(ordinal=i, criterion=c, evidence_policy=dict(criterion=c)) for i, c in enumerate(criteria)]
+        no_authority = dict(dispatch_authorized=False, native_admission=False, formalized=False, training_authorized=False,
+            semantic_review_verified=False, supervision_masks=dict(training=0, evaluation_gold=0))
+        report = dict(schema='legal-ir-current-capability-and-purpose-map/v1', producer_principal='fixture-producer9002',
+            task_scope=dict(task_alias='LIR-9002', task_cid=tasks[1]['task_cid'], goal_cid=tasks[1]['goal_cid'], plan_cid=tasks[1]['plan_cid'], revision=3), dependency_scope={key: tasks[0][key] for key in ('task_alias', 'task_cid', 'revision', 'status')}, repository_roots=dict(datasets_metadata='/datasets', native_control='/native', runtime_resources='/retained'), **copy.deepcopy(no_authority))
+        report_raw = self.canonical(report)
+        freeze = dict(schema='legal-ir-capability-purpose-producer-freeze/v1', producer_principal=report['producer_principal'],
+            report_sha256=hashlib.sha256(report_raw).hexdigest(), report_bytes=len(report_raw), frozen_before_verification=True)
+        checked = dict(schema='legal-ir-current-capability-purpose-verification/v1', valid=True,
+            checked_scope='factual_capability_inventory_only', producer_principal=report['producer_principal'],
+            verifier_principal='fixture-verifier9002', report_sha256=freeze['report_sha256'], report_bytes=len(report_raw),
+            task_scope=dict(task_cid=tasks[1]['task_cid'], revision=3), **copy.deepcopy(no_authority))
+        closed = dict(schema='f18-original-owner-control-closeout/v1', returncode=0, request_unchanged=True, source_pins_unchanged=True,
+            source_READ_retained_through_owner_exit_and_closing_source_check=True,
+            custody=dict(source_custody_closed=True, original_storage_status='released'))
+        evidence = {name: self.bound(value, '/retained/' + name + '.json') for name, value in dict(
+            report=report, producer_freeze=freeze, independent_verification=checked, independent_owner_closeout=closed,
+            completion_result=dict(schema='legal-ir-native-capability-purpose-completion-result/v1', completed_revision=4,
+                task_cid=tasks[1]['task_cid'], evidence_digest='cid:evidence9002', all_other63_tasks_unchanged=True,
+                native_DAG_unchanged=True, **{'9001_UNKNOWN_history_unchanged': True, '9002_attempt_history_inherited': False},
+                model_calls=0, provider_calls=0, task_rearms=0),
+            completion_capture=dict(owner_returncode=0, launch=dict(path='/old/actual-native-completion-launch-v01.json', bytes=1, sha256='a' * 64), original_terminal=dict(request_sha256='b' * 64, completed=True, child_returncode=0,
+                source_READ_closed=True, original_native_compute_closed=True, child_reaped=True, storage_status='released', cleanup_errors=[])),
+            independent_completion_binding=dict(verdict='CLEAR_ACTUAL_FACTUAL_CAPABILITY_INVENTORY_COMPLETION',
+                evidence_digest='cid:evidence9002', other63_full_records_unchanged=True)).items()}
+        tasks[1]['body']['completion_receipt'] = dict(schema='legal-ir-native-independent-capability-purpose-completion/v1',
+            task_cid=tasks[1]['task_cid'], reviewed_revision=3, evidence_digest='cid:evidence9002',
+            attempt_history_copied_from_other_tasks=False, independent_verification=evidence['independent_verification']['descriptor'],
+            independent_closed_owner_receipt=evidence['independent_owner_closeout']['descriptor'], **copy.deepcopy(no_authority))
+        evidence['completion_capture']['descriptor']['path'] = '/retained/capability-purpose-9002-v01/root-native-completion-capture-v01.json'
+        root = '/retained/capability-purpose-9002-v01/retained-request-controls-v01/manifest.json'
+        manifest = dict(schema='legal-ir-request-control-source-archive/v1',
+            new_source_execution_or_qualification=False, original_requests_receipts_and_failed_attempts_modified=False,
+            purpose='Fixture retained aliases, not source execution', source_requests=[], unique_object_bytes=3,
+            entries=[dict(bytes=1, captured_path='/retained/capability-purpose-9002-v01/retained-request-controls-v01/objects/' + 'a' * 64, expected_sha256=['a' * 64],
+                original_path='/old/actual-native-completion-launch-v01.json', sha256='a' * 64, status='exact_current_pinned_bytes_retained'),
+                dict(bytes=2, captured_path='/retained/capability-purpose-9002-v01/retained-request-controls-v01/objects/' + 'b' * 64, expected_sha256=['b' * 64],
+                original_path='/old/actual-native-completion-request-v01.json', sha256='b' * 64, status='exact_current_pinned_bytes_retained')])
+        preparations, comparisons = [], []
+        supporting = {
+            'source_cache_lineage': ['LIR-02', 'LIR-05', 'LIR-24'],
+            'typed_ir_scoped_graph': ['LIR-' + str(i).zfill(2) for i in range(4, 12)],
+            'model_compatibility_quality': ['LIR-01', 'LIR-17', 'LIR-18', 'LIR-19', 'LIR-20', 'LIR-23'],
+            'lean_release_verification': ['LIR-12', 'LIR-13', 'LIR-14', 'LIR-15', 'LIR-21', 'LIR-22'],
+        }
+        logical_owners = {
+            'source_cache_lineage': ['ipfs_datasets_py/logic/autoformal/legal_source_package_intake_v1.py', 'ipfs_datasets_py/logic/autoformal/legal_source_span_entity_join_v1.py'],
+            'typed_ir_scoped_graph': ['ipfs_datasets_py/logic/autoformal/legal_relational_norm_v1.py', 'ipfs_datasets_py/logic/autoformal/corpus_definition_use_review_v2.py', 'ipfs_datasets_py/logic/autoformal/corpus_definition_adapter_v2.py'],
+            'model_compatibility_quality': ['ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_legal_ir_runtime.py', 'ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_runtime.py', 'ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_numeric.py', 'ipfs_datasets_py/optimizers/logic_theorem_optimizer/formula_generation_metrics.py'],
+            'lean_release_verification': ['ipfs_datasets_py/logic/autoformal/legal_native_ast_preservation.py', 'ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_packet_v2.py', 'ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_index_v2.py', 'ipfs_datasets_py/logic/autoformal/corpus_graph_exchange.py'],
+        }
+        operations = dict(source_cache_lineage='prepare_source_cache_lineage', typed_ir_scoped_graph='prepare_typed_ir_scoped_graph', model_compatibility_quality='propose_source_conditioning_trajectory_controls', lean_release_verification='prepare_lean_release_verification')
+        for task_id, role, parent, _ in m._PROGRAMME_WORK_PACKET_SPECS_V1:
+            sources = [dict(path='snapshots/owner-sources/' + logical, bytes=1, sha256='a' * 64) for logical in logical_owners[role]]
+            descriptor = lambda path: dict(path=path, bytes=1, sha256='a' * 64)
+            packet = m.prepare_programme_work_packet_v1(task_id=task_id,
+                parent_reference=dict(repository='ipfs_datasets_py', revision='a' * 40,
+                    path='ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json', task_id=parent, task_sha256='b' * 64),
+                current_parent_reference=dict(backlog=descriptor('/retained/current.json'), task_id=parent, task_sha256='c' * 64),
+                authority_binding=dict(kind='legacy_markdown', namespace='legal-ir-autoencoder-v1', board=descriptor('/retained/board.md'), plan=descriptor('/retained/plan.json'), source_control_revision='d' * 64),
+                owner_sources=sources, evidence=[descriptor('/retained/evidence.json')], remaining_gates=['original_owner_admission', 'independent_acceptance'])
+            record = dict(packet=packet, task_id=task_id, role=role, metadata_complete=True, snapshot_binding_only=True, scientific_parent_satisfied=False, readiness='original_admission_required')
+            scope = dict(schema='legal-ir-programme-admission-scope/v1', task_id=task_id, role=role, parent_task_id=parent, future_operation=operations[role],
+                supporting_parents=[dict(task_id=name, task_sha256='e' * 64) for name in supporting[role]], logical_owner_paths=logical_owners[role],
+                dependencies={key: packet[key] for key in ('owner_sources', 'evidence')},
+                principals=dict(worker='fixture-worker', independent_verifier='fixture-reviewer', identity_verified=False),
+                exclusive_keys=packet['exclusive_keys'], proposed_limits=packet['budgets'], native_binding=dict(task_cid=None, control_revision=None, status='original_admission_required'),
+                remaining_gates=packet['remaining_gates'], grants=dict(dispatch=False, native_execution=False, model_execution=False, training=False, meaning_review=False, parent_completion=False))
+            binding = dict(original_backlog=descriptor('/retained/original.json'), current_backlog=packet['current_parent_reference']['backlog'],
+                base_plan=packet['authority_binding']['plan'], base_board=packet['authority_binding']['board'], packet_owner=descriptor('owner.py'),
+                owner_sources=packet['owner_sources'], evidence=packet['evidence'], authority_binding=packet['authority_binding'], remaining_gates=packet['remaining_gates'], admission_scope=descriptor('/retained/scope.json'))
+            record.update(schema='legal-ir-programme-preparation/v1', admission_scope=scope, binding=binding,
+                admitted=False, dispatch_authorized=False, formalized=False, model_executed=False, mutation_authorized=False, training_executed=False)
+            bound_record = self.bound(record, '/peer/' + packet['outputs'][0])
+            receipt = dict(schema='legal-ir-supervisor-task-receipt/v1', task_id=task_id, task_kind='programme_preparation', status='implemented', authority=dict(admitted=False, formalized=False),
+                artifacts=[dict(kind='packet', path=packet['outputs'][0], sha256=bound_record['descriptor']['sha256'])])
+            resolved = [dict(declared=ref, read_only_data_not_executable=True,
+                resolved=dict(ref, path='/retained/' + ref['path']), role=key, root='/retained') for key in ('owner_sources', 'evidence') for ref in packet[key]]
+            # Actual retained evidence references are repository-relative.
+            packet['evidence'][0]['path'] = 'snapshots/evidence.json'
+            record['packet'] = packet
+            bound_record = self.bound(record, bound_record['descriptor']['path'])
+            receipt['artifacts'][0]['sha256'] = bound_record['descriptor']['sha256']
+            resolved[-1] = dict(declared=packet['evidence'][0], read_only_data_not_executable=True,
+                resolved=dict(packet['evidence'][0], path='/retained/snapshots/evidence.json'), role='evidence', root='/retained')
+            preparations.append(dict(task_id=task_id, role=role, packet=bound_record, receipt=self.bound(receipt, '/peer/' + packet['outputs'][1]),
+                native_binding=dict(task_cid=None, control_revision=None, status='original_admission_required'), readiness='original_admission_required',
+                remaining_gates=packet['remaining_gates'], resolved_snapshot_dependencies=resolved,
+                reuse_scope='retained_preparation_only', supporting_parent_contexts=supporting[role]))
+            for ref in sources:
+                logical = ref['path'].split('/owner-sources/')[1]
+                comparisons.append(dict(packet=task_id, logical_owner_path=logical, retained_sha256=ref['sha256'],
+                    current_selected_W=dict(ref, path='/datasets/' + logical), matches_retained=True))
+        missing = ['current_task_revision_and_dependency_receipts', 'selected_current_sources_and_role_authorized_inputs',
+            'exact_argv_cwd_owned_outputs', 'finite_purpose_specific_original_owner_request', 'retry_and_invalidation_keys', 'distinct_actual_verifier_and_acceptance']
+        rows = []
+        for native in sorted(tasks, key=lambda row: row['task_alias']):
+            body = native['body'];done = native['status'] == 'completed';impl = native['task_alias'] in implementations
+            rows.append(dict(task_alias=native['task_alias'], task_cid=native['task_cid'], revision=native['revision'], status=native['status'], legacy_parent_task=None,
+                dependency_bindings=[{key: by_alias[d['dependency_task_cid'].removeprefix('cid:')][key] for key in ('task_alias', 'task_cid', 'revision', 'status')} for d in native['dependencies']],
+                disposition='accepted_existing_native_completion' if done else 'blocked_non_packet_disposition', engineering_preparation_ids=[],
+                current_planning_validation=[], current_runtime_validation=body['validation'], current_code_allowlist=[], existing_owner_paths_read_only_context=[],
+                requires_exact_implementation_scope=impl, required_missing_packet_fields=[] if done else missing + (['exact_changed_new_code_and_test_paths', 'shared_file_lease_keys', 'independently_reviewed_implementation_acceptance'] if impl else []),
+                execution_ready=False, is_current_productive_execution_packet=False, source_code_edit_allowed=False))
+        snapshot = dict(schema='ipfs_accelerate_py/agent-supervisor/intent-plan-projection@1', tasks=tasks,
+            goals=[dict(goal_cid='goal:' + str(i)) for i in range(34)], goal_edges=[dict(parent=i, child=i + 1) for i in range(33)], plans=[dict(plan_cid='plan:fixture')])
+        data = dict(schema='legal-ir-reviewed-programme-packet-index-inputs/v1',
+            repository_roots=dict(datasets_metadata='/datasets', native_control='/native', peer_engineering='/peer', retained_snapshots='/retained'),
+            dependency_evidence=evidence, retention_alias_manifest=self.bound(manifest, root), engineering_preparations=preparations,
+            current_owner_generation_comparison=comparisons, row_dispositions=rows,
+            runtime_outputs=dict(report='/private/index.json', freeze='/private/index.freeze.json', verification='/private/verified.json'),
+            input_role_policy=dict(retained_evidence_is_metadata_only=True, owner_snapshots_never_imported=True, original_native_admission_required=True,
+                complete_productive_packets_claimed=0, blocked_dispositions_authorize_execution=False))
+        return dict(original_snapshot=copy.deepcopy(snapshot), current_snapshot=snapshot, packet_index=data,
+            producer_principal='fixture-index-producer', expected_task_revision=2)
+
+    def frozen(self, request):
+        report = self.prepare(**request);raw = self.canonical(report)
+        freeze = dict(schema='legal-ir-programme-packet-index-producer-freeze/v1', report_sha256=hashlib.sha256(raw).hexdigest(),
+            report_bytes=len(raw), producer_principal=request['producer_principal'], frozen_before_verification=True)
+        return report, freeze
+
+    def test_normal_owner_reconstructs_detached_metadata_and_keeps_objective_open(self):
+        request = self.fixture();before = copy.deepcopy(request);report, freeze = self.frozen(request)
+        self.assertEqual(request, before)
+        self.assertEqual(report['task_scope']['revision'], 2)
+        self.assertEqual(len(report['row_dispositions']), 64)
+        self.assertEqual(report['counts']['current_complete_productive_packets'], 0)
+        self.assertEqual([r['status'] for r in report['acceptance_assessment']], ['open_for_task_objective', 'satisfied_for_factual_index_scope_only', 'open'])
+        checked = self.verify(report, producer_freeze=freeze, verifier_principal='fixture-index-reviewer', **request)
+        self.assertTrue(checked['valid']);self.assertFalse(checked['task_objective_satisfied'])
+        self.assertFalse(checked['completion_authority']);self.assertFalse(checked['dispatch_authorized'])
+        report['row_dispositions'][0]['status'] = 'mutated'
+        self.assertEqual(request, before)
+
+    def test_population_revision_and_native_copy_changes_refuse(self):
+        for damage in ('copy', 'missing', 'duplicate', 'revision', 'dependency', 'criteria', 'ordinal', 'policy', 'completion', 'history', 'body-none', 'plan-missing'):
+            with self.subTest(damage=damage):
+                request = self.fixture();snapshot = request['current_snapshot'];task = next(r for r in snapshot['tasks'] if r['task_alias'] == 'LIR-9003')
+                if damage == 'copy': snapshot['goals'][0]['extra'] = False
+                elif damage == 'missing': snapshot['tasks'].pop()
+                elif damage == 'duplicate': snapshot['tasks'][-1] = copy.deepcopy(snapshot['tasks'][-2])
+                elif damage == 'revision': task['revision'] = 3
+                elif damage == 'dependency': task['dependencies'] = []
+                elif damage == 'criteria': task['acceptance'][2]['criterion'] = 'Weaker criterion'
+                elif damage == 'ordinal': task['acceptance'][0]['ordinal'] = False
+                elif damage == 'policy': task['acceptance'][0]['evidence_policy']['evidence_kind'] = 'factual-completion'
+                elif damage == 'completion': task['body']['completion_receipt'] = {}
+                elif damage == 'body-none': task['body'] = None
+                elif damage == 'plan-missing': task.pop('plan_cid')
+                else: task['body']['retained_execution_outcomes'] = []
+                if damage != 'copy': request['original_snapshot'] = copy.deepcopy(snapshot)
+                with self.assertRaises(ValueError): self.prepare(**request)
+
+    def test_role_policy_requires_exact_boolean_types(self):
+        for key, value in [('retained_evidence_is_metadata_only', 1), ('owner_snapshots_never_imported', 1),
+                           ('original_native_admission_required', 1), ('blocked_dispositions_authorize_execution', 0),
+                           ('complete_productive_packets_claimed', False)]:
+            with self.subTest(key=key):
+                request = self.fixture();request['packet_index']['input_role_policy'][key] = value
+                with self.assertRaises(ValueError): self.prepare(**request)
+
+    def test_accepted_dependency_evidence_cannot_be_forged_or_reopened(self):
+        for damage in ('bytes', 'freeze', 'same-principal', 'open-source', 'native-open', 'inherited', 'receipt-bool', 'false-as-zero', 'receipt-none', 'task-scope-none', 'custody-none', 'terminal-none', 'digest-missing', 'report-scope', 'roots', 'revision-float', 'report-bytes-float'):
+            with self.subTest(damage=damage):
+                request = self.fixture();evidence = request['packet_index']['dependency_evidence']
+                if damage == 'bytes': evidence['report']['descriptor']['sha256'] = 'f' * 64
+                elif damage == 'freeze': self.rebind(evidence['producer_freeze'], lambda v: v.update(frozen_before_verification=1))
+                elif damage == 'same-principal': self.rebind(evidence['independent_verification'], lambda v: v.update(verifier_principal=v['producer_principal']))
+                elif damage == 'open-source': self.rebind(evidence['independent_owner_closeout'], lambda v: v.update(source_READ_retained_through_owner_exit_and_closing_source_check=False))
+                elif damage == 'native-open': self.rebind(evidence['completion_capture'], lambda v: v['original_terminal'].update(original_native_compute_closed=False))
+                elif damage == 'inherited': self.rebind(evidence['completion_result'], lambda v: v.update({'9002_attempt_history_inherited': True}))
+                elif damage == 'receipt-bool':
+                    for snapshot in (request['original_snapshot'], request['current_snapshot']):
+                        next(r for r in snapshot['tasks'] if r['task_alias'] == 'LIR-9002')['body']['completion_receipt']['attempt_history_copied_from_other_tasks'] = 0
+                elif damage in {'receipt-none', 'digest-missing', 'revision-float'}:
+                    for snapshot in (request['original_snapshot'], request['current_snapshot']):
+                        body = next(r for r in snapshot['tasks'] if r['task_alias'] == 'LIR-9002')['body']
+                        if damage == 'receipt-none': body['completion_receipt'] = None
+                        elif damage == 'digest-missing': body['completion_receipt'].pop('evidence_digest')
+                        else: body['completion_receipt']['reviewed_revision'] = 3.0
+                elif damage == 'report-bytes-float':
+                    self.rebind(evidence['independent_verification'], lambda v: v.update(report_bytes=float(v['report_bytes'])))
+                    for snapshot in (request['original_snapshot'], request['current_snapshot']):
+                        next(r for r in snapshot['tasks'] if r['task_alias'] == 'LIR-9002')['body']['completion_receipt']['independent_verification'] = copy.deepcopy(evidence['independent_verification']['descriptor'])
+                elif damage == 'task-scope-none': self.rebind(evidence['independent_verification'], lambda v: v.update(task_scope=None))
+                elif damage == 'custody-none': self.rebind(evidence['independent_owner_closeout'], lambda v: v.update(custody=None))
+                elif damage == 'terminal-none': self.rebind(evidence['completion_capture'], lambda v: v.update(original_terminal=None))
+                elif damage == 'report-scope': self.rebind(evidence['report'], lambda v: v['task_scope'].update(revision=3.0))
+                elif damage == 'roots': request['packet_index']['repository_roots']['retained_snapshots'] = '/other'
+                else: self.rebind(evidence['report'], lambda v: v.update(dispatch_authorized=0))
+                with self.assertRaises(ValueError): self.prepare(**request)
+
+    def test_retention_alias_manifest_remains_exact_and_durable(self):
+        for damage in ('status', 'capture', 'zero', 'digest', 'duplicate', 'flag', 'unjoined', 'request'):
+            with self.subTest(damage=damage):
+                request = self.fixture();item = request['packet_index']['retention_alias_manifest']
+                def edit(value):
+                    entry = value['entries'][0]
+                    if damage == 'status': entry['status'] = 'missing'
+                    elif damage == 'capture': entry['captured_path'] = '/tmp/old.py'
+                    elif damage == 'zero': entry['bytes'] = 0
+                    elif damage == 'digest': entry['expected_sha256'] = ['b' * 64]
+                    elif damage == 'duplicate': value['entries'].append(copy.deepcopy(entry))
+                    elif damage == 'unjoined': entry['original_path'] = '/old/unconsumed.py'
+                    elif damage == 'request': value['entries'][1]['original_path'] = '/old/unconsumed-request.json'
+                    else: value['original_requests_receipts_and_failed_attempts_modified'] = 0
+                self.rebind(item, edit)
+                with self.assertRaises(ValueError): self.prepare(**request)
+
+    def test_legacy_reuse_and_current_source_mapping_never_grant_execution(self):
+        for damage in ('native', 'root', 'current-source', 'duplicate', 'packet-flag', 'receipt-flag', 'owner-count', 'scope-grant', 'scope-native', 'scope-deps', 'scope-owner'):
+            with self.subTest(damage=damage):
+                request = self.fixture();data = request['packet_index'];item = data['engineering_preparations'][0]
+                if damage == 'native': item['native_binding']['task_cid'] = 'invented'
+                elif damage == 'root': item['resolved_snapshot_dependencies'][0]['root'] = '/peer'
+                elif damage == 'current-source': data['current_owner_generation_comparison'][0]['matches_retained'] = False
+                elif damage == 'duplicate': data['engineering_preparations'][1] = copy.deepcopy(item)
+                elif damage == 'packet-flag': self.rebind(item['packet'], lambda v: v['packet'].update(dispatch_authorized=0))
+                elif damage == 'receipt-flag': self.rebind(item['receipt'], lambda v: v['authority'].update(admitted=0))
+                elif damage == 'scope-grant': self.rebind(item['packet'], lambda v: v['admission_scope']['grants'].update(dispatch=True))
+                elif damage == 'scope-native': self.rebind(item['packet'], lambda v: v['admission_scope']['native_binding'].update(task_cid='invented'))
+                elif damage == 'scope-deps': self.rebind(item['packet'], lambda v: v['binding'].update(evidence=[]))
+                elif damage == 'scope-owner': self.rebind(item['packet'], lambda v: v['admission_scope'].update(logical_owner_paths=['owners/invented.py']))
+                else: data['current_owner_generation_comparison'].pop()
+                with self.assertRaises(ValueError): self.prepare(**request)
+
+    def test_all64_dispositions_and_seven_scope_gaps_are_derived(self):
+        for damage in ('missing', 'ready', 'boolean', 'implementation', 'commands'):
+            with self.subTest(damage=damage):
+                request = self.fixture();rows = request['packet_index']['row_dispositions']
+                if damage == 'missing': rows.pop()
+                elif damage == 'ready': rows[0]['execution_ready'] = True
+                elif damage == 'boolean': rows[0]['execution_ready'] = 0
+                elif damage == 'implementation': rows[0]['requires_exact_implementation_scope'] = not rows[0]['requires_exact_implementation_scope']
+                else: rows[0]['current_planning_validation'] = [['invented']]
+                with self.assertRaises(ValueError): self.prepare(**request)
+
+    def test_frozen_verifier_requires_exact_report_freeze_and_distinct_principal(self):
+        for damage in ('report', 'freeze', 'freeze-bool', 'principal', 'masks'):
+            with self.subTest(damage=damage):
+                request = self.fixture();report, freeze = self.frozen(request);principal = 'fixture-reviewer'
+                if damage == 'report': report['task_objective_satisfied'] = True
+                elif damage == 'freeze': freeze['report_sha256'] = 'f' * 64
+                elif damage == 'freeze-bool': freeze['frozen_before_verification'] = 1
+                elif damage == 'principal': principal = request['producer_principal']
+                else: report['supervision_masks']['training'] = False
+                with self.assertRaises(ValueError): self.verify(report, producer_freeze=freeze, verifier_principal=principal, **request)
+
+    def test_exact_builtin_json_bounds_and_extra_fields_refuse(self):
+        class Hostile(dict):
+            def items(self):
+                raise AssertionError('custom mapping executed')
+        for damage in ('subclass', 'nan', 'depth', 'schema', 'extra', 'revision-bool'):
+            with self.subTest(damage=damage):
+                request = self.fixture()
+                if damage == 'subclass': request['packet_index'] = Hostile(request['packet_index'])
+                elif damage == 'nan': request['packet_index']['extra'] = float('nan')
+                elif damage == 'depth':
+                    value = []
+                    for _ in range(34): value = [value]
+                    request['packet_index']['extra'] = value
+                elif damage == 'schema': request['packet_index']['schema'] = 'other'
+                elif damage == 'extra': request['packet_index']['dispatch_authorized'] = True
+                else: request['expected_task_revision'] = True
+                with self.assertRaises(ValueError): self.prepare(**request)
+
+    def cli(self):
+        import importlib.util
+        import sys
+        path = Path(__file__).resolve().parents[3] / 'scripts/ops/legal_ir/run_autoformal_supervisor.py'
+        spec = importlib.util.spec_from_file_location('legal_ir_programme_index_normal_cli_test', path)
+        module = importlib.util.module_from_spec(spec);sys.modules[spec.name] = module;spec.loader.exec_module(module)
+        self.assertEqual(Path(module.__file__).resolve(), path.resolve())
+        self.assertEqual(module.programme_index_main_v1.__code__.co_filename, str(path))
+        return module
+
+    def test_normal_canonical_cli_prepares_freezes_and_verifies_private_metadata(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory);inputs = root / 'inputs.json';report = root / 'report.json';freeze = root / 'freeze.json';checked = root / 'verified.json'
+            inputs.write_bytes(self.canonical(self.fixture()));cli = self.cli()
+            self.assertEqual(cli.main(['programme-index', 'prepare', '--inputs', str(inputs), '--output', str(report), '--freeze-out', str(freeze)]), 0)
+            self.assertEqual(cli.main(['programme-index', 'verify', '--inputs', str(inputs), '--report', str(report), '--freeze', str(freeze), '--verifier-principal', 'fixture-cli-reviewer', '--output', str(checked)]), 0)
+            value = json.loads(checked.read_bytes());self.assertTrue(value['valid']);self.assertFalse(value['completion_authority'])
+            self.assertEqual(json.loads(report.read_bytes())['task_scope']['revision'], 2)
+
+    def test_normal_cli_preserves_existing_outputs_and_rejects_noncanonical_report(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory);inputs = root / 'inputs.json';report = root / 'report.json';freeze = root / 'freeze.json';checked = root / 'verified.json'
+            inputs.write_bytes(self.canonical(self.fixture()));cli = self.cli()
+            argv = ['programme-index', 'prepare', '--inputs', str(inputs), '--output', str(report), '--freeze-out', str(freeze)]
+            self.assertEqual(cli.main(argv), 0);before = report.read_bytes()
+            self.assertEqual(cli.main(argv), 2);self.assertEqual(report.read_bytes(), before)
+            report.write_bytes(before + b' ')
+            self.assertEqual(cli.main(['programme-index', 'verify', '--inputs', str(inputs), '--report', str(report), '--freeze', str(freeze), '--verifier-principal', 'fixture-cli-reviewer', '--output', str(checked)]), 2)
+            self.assertFalse(checked.exists())
