@@ -651,7 +651,8 @@ def check_programme_engineering_plan(root, plan=None):
     require(sha(_programme_json(baseline)) == PROGRAMME_LEGACY_BASELINE_SHA256,
             'retained legacy baseline differs')
     old = [task for task in plan['tasks'] if task.get('programme_engineering') is None
-           and task.get('engineering_continuation') is None]
+           and task.get('engineering_continuation') is None
+           and not _programme_preparation_extension_task(task)]
     require(len(old) == 135 and sha(_programme_json(old)) == baseline['plan_tasks_sha256'],
             'retained legacy task population or metadata differs')
     blocks = _programme_task_blocks((root / BOARD).read_text())
@@ -1299,7 +1300,8 @@ def check_continuation_plan(root, plan=None):
     require(len(raw) >= CONTINUATION_BASE_BOARD_BYTES
             and sha(raw[:CONTINUATION_BASE_BOARD_BYTES]) == CONTINUATION_BASE_BOARD_SHA256,
             'retained139 raw card bytes differ')
-    retained = [task for task in plan['tasks'] if task.get('engineering_continuation') is None]
+    retained = [task for task in plan['tasks'] if task.get('engineering_continuation') is None
+                and not _programme_preparation_extension_task(task)]
     require(len(retained) == 139 and sha(_programme_json(retained)) == CONTINUATION_BASE_TASKS_SHA256,
             'retained139 plan task records differ')
     for ref in baseline['receipts']:
@@ -1410,7 +1412,460 @@ def validate_continuation(root, task, receipt, data):
             'continuation result/source/native/storage binding differs')
 
 
+
+PROGRAMME_PREPARATION_SCHEMA = 'legal-ir-programme-preparation/v1'
+PROGRAMME_PREPARATION_BUNDLE_SCHEMA = 'legal-ir-programme-preparation-bundle/v1'
+PROGRAMME_PREPARATION_SCOPE_SCHEMA = 'legal-ir-programme-admission-scope/v1'
+PROGRAMME_PREPARATION_GOAL = 'LIR-03.next-work-packets-v1'
+PROGRAMME_PREPARATION_OWNER = 'ipfs_datasets_py/logic/autoformal/supervisor_loop.py'
+PROGRAMME_PREPARATION_BASELINE_SHA256 = 'bd55266c06e9613d643ffd8e0226d73154e2cdec5052fda0432379e8bfb99018'
+PROGRAMME_PREPARATION_TASKS_SHA256 = '6e881992f5d8681610f12d79cbfbf7a9c5b095b234aa707a6a4d9a0b15244d8d'
+PROGRAMME_PREPARATION_BASE_COUNT = 141
+PROGRAMME_PREPARATION_BASE_TASKS_SHA256 = '6a88256c40cfd370d0bf2640312375af8f9ec7d42c25c7cc11da5afb61a77082'
+PROGRAMME_PREPARATION_BASE_BOARD_BYTES = 485929
+PROGRAMME_PREPARATION_BASE_BOARD_SHA256 = '9bf556eac25b39b463608aa0a898b7413f744ea149706b35910ed43b72448327'
+PROGRAMME_PREPARATION_LIMITS = dict(wall_seconds=300, cpu_slots=1, memory_mb=1024,
+    storage_bytes=16777216, child_process_slots=1, max_attempts=1)
+PROGRAMME_PREPARATION_FALSE_FLAGS = ('descriptor_hashes_verified', 'current_parent_row_verified',
+    'current_source_epoch_verified', 'native_status_verified', 'capability_verified', 'independently_verified',
+    'dispatch_authorized', 'mutation_authorized', 'native_admission', 'model_execution_authorized',
+    'training_authorized', 'parent_semantic_admission', 'task_completion_authority', 'goal_completion_authority',
+    'completion_authority', 'admitted', 'formalized', 'semantic_review_verified')
+PROGRAMME_PREPARATION_SPECS = {
+    'LIRAE-LIR03-SOURCE-PACKET-01': ('source_cache_lineage', 'LIR-02',
+        'prepare_source_cache_lineage', ('LIR-02', 'LIR-05', 'LIR-24')),
+    'LIRAE-LIR03-IR-PACKET-01': ('typed_ir_scoped_graph', 'LIR-07',
+        'prepare_typed_ir_scoped_graph',
+        ('LIR-04', 'LIR-05', 'LIR-06', 'LIR-07', 'LIR-08', 'LIR-09', 'LIR-10', 'LIR-11')),
+    'LIRAE-LIR03-MODEL-PACKET-01': ('model_compatibility_quality', 'LIR-17',
+        'propose_source_conditioning_trajectory_controls',
+        ('LIR-01', 'LIR-17', 'LIR-18', 'LIR-19', 'LIR-20', 'LIR-23')),
+    'LIRAE-LIR03-LEAN-PACKET-02': ('lean_release_verification', 'LIR-12',
+        'prepare_lean_release_verification',
+        ('LIR-12', 'LIR-13', 'LIR-14', 'LIR-15', 'LIR-21', 'LIR-22')),
+}
+PROGRAMME_PREPARATION_OWNER_PATHS = {
+    'source_cache_lineage': (
+        'ipfs_datasets_py/logic/autoformal/legal_source_package_intake_v1.py',
+        'ipfs_datasets_py/logic/autoformal/legal_source_span_entity_join_v1.py'),
+    'typed_ir_scoped_graph': (
+        'ipfs_datasets_py/logic/autoformal/legal_relational_norm_v1.py',
+        'ipfs_datasets_py/logic/autoformal/corpus_definition_use_review_v2.py',
+        'ipfs_datasets_py/logic/autoformal/corpus_definition_adapter_v2.py'),
+    'model_compatibility_quality': (
+        'ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_legal_ir_runtime.py',
+        'ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_runtime.py',
+        'ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_numeric.py',
+        'ipfs_datasets_py/optimizers/logic_theorem_optimizer/formula_generation_metrics.py'),
+    'lean_release_verification': (
+        'ipfs_datasets_py/logic/autoformal/legal_native_ast_preservation.py',
+        'ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_packet_v2.py',
+        'ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_index_v2.py',
+        'ipfs_datasets_py/logic/autoformal/corpus_graph_exchange.py'),
+}
+
+
+def programme_preparation_directory(task_id):
+    require(task_id in PROGRAMME_PREPARATION_SPECS, 'unknown programme preparation identity')
+    return EVIDENCE / task_id.lower()
+
+
+def _programme_preparation_json(raw):
+    def pairs(items):
+        result = {}
+        for key, value in items:
+            require(key not in result, 'duplicate programme preparation JSON key')
+            result[key] = value
+        return result
+    def nonfinite(value):
+        raise ContractError('nonfinite programme preparation JSON')
+    result = json.loads(raw, object_pairs_hook=pairs, parse_constant=nonfinite)
+    _programme_json(result)
+    return result
+
+
+def _programme_preparation_ref_contract(ref, *, relative=False, suffix=None):
+    require(type(ref) is dict and set(ref) == {'path', 'bytes', 'sha256'}
+            and type(ref['path']) is str and type(ref['bytes']) is int
+            and 0 < ref['bytes'] <= 8 * 1024 * 1024
+            and type(ref['sha256']) is str and re.fullmatch('[0-9a-f]{64}', ref['sha256']),
+            'closed bounded programme preparation snapshot required')
+    value = ref['path']
+    require(0 < len(value.encode('utf-8')) <= 1024
+            and not any(ord(char) < 32 or ord(char) == 127 for char in value)
+            and value == Path(value).as_posix()
+            and not any(part in ('', '.', '..') for part in value.split('/')[1 if value.startswith('/') else 0:])
+            and not any(char in value for char in '\\:*?[]'), 'unsafe programme preparation snapshot path')
+    require(not relative or not Path(value).is_absolute(), 'relative owner snapshot required')
+    require(suffix is None or value.endswith(suffix), 'programme preparation snapshot suffix differs')
+
+
+def _programme_preparation_ref(root, ref, *, primary_relative=False):
+    _programme_preparation_ref_contract(ref)
+    value = dict(ref)
+    if primary_relative and not Path(ref['path']).is_absolute():
+        relative = _programme_safe_path(ref['path'])
+        value['path'] = str(_continuation_primary_source_root(root) / relative)
+    return _continuation_ref(root, value)
+
+
+def _programme_preparation_extension_task(task):
+    if task.get('programme_preparation') is None:
+        return False
+    programme_preparation_contract(task)
+    return True
+
+
+def programme_preparation_contract(task):
+    require(type(task) is dict and task.get('programme_preparation') == PROGRAMME_PREPARATION_SCHEMA,
+            'closed programme preparation task required')
+    task_id = task.get('task_id')
+    require(task_id in PROGRAMME_PREPARATION_SPECS, 'unknown programme preparation task')
+    role, parent, _operation, _parents = PROGRAMME_PREPARATION_SPECS[task_id]
+    fields = {'task_id', 'title', 'programme_preparation', 'operation_kind', 'goal_id',
+        'parent_task_id', 'parent_reference', 'current_parent_reference', 'binding', 'limits'}
+    derived = {'outputs', 'allowed_paths', 'provider_role', 'context_budget_tokens',
+        'validation_commands', 'required_validation_executables', 'receipt_instructions'}
+    require(fields <= set(task) <= fields | derived, 'unknown or missing programme preparation field')
+    require(task['operation_kind'] == role and task['parent_task_id'] == parent
+            and task['goal_id'] == PROGRAMME_PREPARATION_GOAL,
+            'programme preparation role/parent/goal differs')
+    require(type(task['title']) is str and 0 < len(task['title']) <= 256
+            and not any(ord(char) < 32 or ord(char) == 127 for char in task['title']),
+            'bounded plain programme preparation title required')
+    original = task['parent_reference']
+    require(type(original) is dict and set(original) == {'repository', 'revision', 'path', 'task_id', 'task_sha256'}
+            and original['repository'] == 'ipfs_datasets_py'
+            and original['path'] == 'ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json'
+            and original['task_id'] == parent
+            and type(original['revision']) is str and re.fullmatch('[0-9a-f]{40}', original['revision'])
+            and type(original['task_sha256']) is str and re.fullmatch('[0-9a-f]{64}', original['task_sha256']),
+            'original programme parent commitment differs')
+    current = task['current_parent_reference']
+    require(type(current) is dict and set(current) == {'backlog', 'task_id', 'task_sha256'}
+            and current['task_id'] == parent and type(current['task_sha256']) is str
+            and re.fullmatch('[0-9a-f]{64}', current['task_sha256']),
+            'current programme parent snapshot differs')
+    binding = task['binding']
+    require(type(binding) is dict and set(binding) == {'original_backlog', 'current_backlog',
+            'base_plan', 'base_board', 'packet_owner', 'owner_sources', 'evidence',
+            'authority_binding', 'remaining_gates', 'admission_scope'},
+            'closed programme preparation binding required')
+    require(current['backlog'] == binding['current_backlog'], 'current parent backlog differs')
+    require(task['limits'] == PROGRAMME_PREPARATION_LIMITS
+            and all(type(task['limits'][key]) is int for key in PROGRAMME_PREPARATION_LIMITS),
+            'finite programme preparation declaration differs')
+    for key in ('original_backlog', 'current_backlog', 'base_plan', 'admission_scope'):
+        _programme_preparation_ref_contract(binding[key], suffix='.json')
+    _programme_preparation_ref_contract(binding['base_board'], suffix='.md')
+    _programme_preparation_ref_contract(binding['packet_owner'], relative=True, suffix='.py')
+    require(binding['packet_owner']['path'] == PROGRAMME_PREPARATION_OWNER,
+            'normal local programme preparation owner required')
+    require(type(binding['owner_sources']) is list and 1 <= len(binding['owner_sources']) <= 64
+            and type(binding['evidence']) is list and 1 <= len(binding['evidence']) <= 64,
+            'bounded programme preparation source/evidence population required')
+    for key in ('owner_sources', 'evidence'):
+        seen = set()
+        for ref in binding[key]:
+            require(type(ref) is dict and type(ref.get('path')) is str and ref['path'] not in seen,
+                    'unique programme preparation references required')
+            seen.add(ref['path'])
+            _programme_preparation_ref_contract(ref, relative=key == 'owner_sources',
+                suffix='.py' if key == 'owner_sources' else '.json')
+    directory = programme_preparation_directory(task_id).as_posix()
+    outputs = [directory + '/packet.json', directory + '/receipt.json']
+    command = 'IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 ' + SCRIPT
+    contract = dict(outputs=outputs, allowed_paths=list(outputs), provider_role='deterministic-only',
+        context_budget_tokens=0, validation_commands=[command + ' --materialize-programme-preparation '
+            + task_id + ' && ' + command + ' --check-task ' + task_id],
+        required_validation_executables=['python3'], receipt_instructions='Materialize exactly packet.json '
+            'and receipt.json from the fixed immutable admission snapshots using the local normal-package '
+            'prepare_programme_work_packet_v1 owner. This prepares concrete control metadata only; '
+            'metadata completeness grants no native/model dispatch, legal review, source changes, '
+            'training/gold supervision, parent completion, retry or rearm authority. Preserve completed history.')
+    require('context_budget_tokens' not in task or type(task['context_budget_tokens']) is int,
+            'programme preparation context must be exact integer zero')
+    for key, value in contract.items():
+        require(key not in task or task[key] == value, 'programme preparation executable contract differs')
+    return contract
+
+
+def _programme_preparation_owner(root, ref):
+    _programme_preparation_ref(root, ref)
+    module = importlib.import_module('ipfs_datasets_py.logic.autoformal.supervisor_loop')
+    require(Path(module.__file__).resolve() == (Path(root).resolve() / PROGRAMME_PREPARATION_OWNER),
+            'programme packet owner must be the normal local source module')
+    function = getattr(module, 'prepare_programme_work_packet_v1', None)
+    require(callable(function) and function.__module__ == module.__name__,
+            'public programme packet owner unavailable')
+    return function
+
+
+def _programme_preparation_parent_rows(backlog):
+    require(type(backlog) is dict and type(backlog.get('tasks')) is list
+            and 1 <= len(backlog['tasks']) <= 24, 'bounded original programme parent population required')
+    result = {}
+    for row in backlog['tasks']:
+        require(type(row) is dict and type(row.get('id')) is str and row['id'] not in result,
+                'unique original programme parent rows required')
+        result[row['id']] = row
+    return result
+
+
+def _programme_preparation_scope(task, scope, current_rows):
+    role, parent, operation, parents = PROGRAMME_PREPARATION_SPECS[task['task_id']]
+    require(type(scope) is dict and set(scope) == {'schema', 'task_id', 'role', 'parent_task_id',
+            'future_operation', 'supporting_parents', 'logical_owner_paths', 'dependencies', 'principals',
+            'exclusive_keys', 'proposed_limits', 'native_binding', 'remaining_gates', 'grants'},
+            'closed concrete admission scope required')
+    require(scope['schema'] == PROGRAMME_PREPARATION_SCOPE_SCHEMA
+            and scope['task_id'] == task['task_id'] and scope['role'] == role
+            and scope['parent_task_id'] == parent and scope['future_operation'] == operation,
+            'proposed programme operation differs')
+    require(all(key in current_rows for key in parents), 'supporting programme parent unavailable')
+    require(scope['supporting_parents'] == [dict(task_id=key,
+            task_sha256=sha(_programme_json(current_rows[key]))) for key in parents],
+            'supporting original parent snapshots differ')
+    require(scope['logical_owner_paths'] == list(PROGRAMME_PREPARATION_OWNER_PATHS[role]),
+            'proposed owner role/path whitelist differs')
+    sources = task['binding']['owner_sources']
+    require(len(sources) == len(scope['logical_owner_paths']) and all(
+            ref['path'].endswith('/owner-sources/' + logical)
+            for ref, logical in zip(sources, scope['logical_owner_paths'], strict=True)),
+            'owner snapshot/logical source correspondence differs')
+    require(scope['dependencies'] == {key: task['binding'][key] for key in ('owner_sources', 'evidence')},
+            'proposed source/data dependency roster differs')
+    people = scope['principals']
+    require(type(people) is dict and set(people) == {'worker', 'independent_verifier', 'identity_verified'}
+            and people['identity_verified'] is False and people['worker'] != people['independent_verifier']
+            and all(type(people[key]) is str and re.fullmatch('[A-Za-z0-9_.:-]{1,128}', people[key])
+                    for key in ('worker', 'independent_verifier')),
+            'distinct proposed principals required; no identity proof inferred')
+    require(scope['exclusive_keys'] == ['programme-preparation:' + task['task_id']]
+            and scope['proposed_limits'] == PROGRAMME_PREPARATION_LIMITS
+            and all(type(scope['proposed_limits'][key]) is int for key in PROGRAMME_PREPARATION_LIMITS),
+            'proposed exclusivity/budget declaration differs')
+    require(scope['native_binding'] == dict(task_cid=None, control_revision=None,
+            status='original_admission_required'), 'unobserved native authority must remain unknown')
+    require(scope['remaining_gates'] == task['binding']['remaining_gates'], 'remaining admission gates differ')
+    grants = scope['grants']
+    require(type(grants) is dict and set(grants) == {'dispatch', 'native_execution', 'model_execution',
+            'training', 'meaning_review', 'parent_completion'} and all(value is False for value in grants.values()),
+            'admission scope cannot grant execution or meaning authority')
+
+
+def _programme_preparation_record(root, task):
+    programme_preparation_contract(task)
+    binding = task['binding']
+    documents = {key: _programme_preparation_json(_programme_preparation_ref(root, binding[key]))
+        for key in ('original_backlog', 'current_backlog', 'base_plan')}
+    original = _programme_preparation_parent_rows(documents['original_backlog'])
+    current = _programme_preparation_parent_rows(documents['current_backlog'])
+    parent = task['parent_task_id']
+    require(parent in original and parent in current
+            and sha(_programme_json(original[parent])) == task['parent_reference']['task_sha256']
+            and sha(_programme_json(current[parent])) == task['current_parent_reference']['task_sha256'],
+            'actual original/current programme parent row differs')
+    plan = documents['base_plan']
+    require(type(plan) is dict and type(plan.get('tasks')) is list and len(plan['tasks']) == PROGRAMME_PREPARATION_BASE_COUNT
+            and sha(_programme_json(plan['tasks'])) == PROGRAMME_PREPARATION_BASE_TASKS_SHA256,
+            'immutable141 plan snapshot differs')
+    board = _programme_preparation_ref(root, binding['base_board'])
+    require(len(board) == PROGRAMME_PREPARATION_BASE_BOARD_BYTES
+            and sha(board) == PROGRAMME_PREPARATION_BASE_BOARD_SHA256,
+            'immutable141 board snapshot differs')
+    authority = binding['authority_binding']
+    require(type(authority) is dict and authority.get('board') == binding['base_board']
+            and authority.get('plan') == binding['base_plan']
+            and authority.get('source_control_revision') == PROGRAMME_PREPARATION_BASELINE_SHA256,
+            'programme authority snapshot correspondence differs')
+    for ref in binding['owner_sources']:
+        _programme_preparation_ref(root, ref, primary_relative=True)
+    for ref in binding['evidence']:
+        _programme_preparation_json(_programme_preparation_ref(root, ref, primary_relative=True))
+    scope = _programme_preparation_json(_programme_preparation_ref(root, binding['admission_scope']))
+    _programme_preparation_scope(task, scope, current)
+    _programme_preparation_ref(root, binding['packet_owner'])
+    function = _programme_preparation_owner(root, binding['packet_owner'])
+    packet = function(task_id=task['task_id'], parent_reference=task['parent_reference'],
+        current_parent_reference=task['current_parent_reference'], authority_binding=authority,
+        owner_sources=binding['owner_sources'], evidence=binding['evidence'], remaining_gates=binding['remaining_gates'])
+    contract = programme_preparation_contract(task)
+    require(packet['outputs'] == contract['outputs'] and packet['allowed_paths'] == contract['allowed_paths']
+            and packet['validation_commands'] == contract['validation_commands']
+            and packet['budgets'] == PROGRAMME_PREPARATION_LIMITS
+            and all(type(value) is int for value in packet['budgets'].values())
+            and packet['schema'] == 'programme-work-execution-packet/v1'
+            and packet['task_id'] == task['task_id'] and packet['role'] == task['operation_kind']
+            and packet['metadata_complete'] is True and packet['readiness'] == 'original_admission_required'
+            and packet['snapshot_binding_only'] is True
+            and packet['supervision_masks'] == dict(training=0, evaluation_gold=0)
+            and all(type(value) is int for value in packet['supervision_masks'].values())
+            and all(packet[key] is False for key in PROGRAMME_PREPARATION_FALSE_FLAGS),
+            'normal programme owner executable declaration differs')
+    return dict(schema=PROGRAMME_PREPARATION_SCHEMA, task_id=task['task_id'], role=task['operation_kind'],
+        packet=packet, admission_scope=scope, binding=binding, metadata_complete=True,
+        readiness='original_admission_required', snapshot_binding_only=True,
+        dispatch_authorized=False, mutation_authorized=False, admitted=False, formalized=False,
+        training_executed=False, model_executed=False, scientific_parent_satisfied=False)
+
+
+def check_programme_preparation_plan(root, plan=None):
+    root = Path(root)
+    plan = _programme_preparation_json((root / PLAN).read_bytes()) if plan is None else plan
+    active = [task for task in plan['tasks'] if task.get('programme_preparation') is not None]
+    bundle = plan.get('programme_preparation')
+    if bundle is None:
+        require(not active, 'programme preparation bundle required')
+        return None
+    require(type(bundle) is dict and set(bundle) == {'schema', 'baseline', 'tasks',
+            'dispatch_authorized_by_this_metadata', 'completion_authority'}
+            and bundle['schema'] == PROGRAMME_PREPARATION_BUNDLE_SCHEMA
+            and bundle['dispatch_authorized_by_this_metadata'] is False and bundle['completion_authority'] is False,
+            'closed metadata-only programme preparation bundle required')
+    require(type(PROGRAMME_PREPARATION_TASKS_SHA256) is str
+            and re.fullmatch('[0-9a-f]{64}', PROGRAMME_PREPARATION_TASKS_SHA256),
+            'ROOT-sealed four-task bindings unavailable')
+    tasks = bundle['tasks']
+    require(type(tasks) is list and [task.get('task_id') for task in tasks] == list(PROGRAMME_PREPARATION_SPECS)
+            and sha(_programme_json(tasks)) == PROGRAMME_PREPARATION_TASKS_SHA256,
+            'exact sealed four programme preparation bindings required')
+    baseline_raw = _programme_preparation_ref(root, bundle['baseline'])
+    require(sha(baseline_raw) == PROGRAMME_PREPARATION_BASELINE_SHA256, 'sealed141 baseline differs')
+    baseline = _programme_preparation_json(baseline_raw)
+    require(type(baseline) is dict and set(baseline) == {'schema', 'task_count', 'board_bytes',
+            'board_sha256', 'board_revision', 'plan_tasks_sha256', 'receipts'}
+            and baseline['schema'] == 'legal-ir-supervisor-programme-preparation-baseline/v1'
+            and baseline['task_count'] == PROGRAMME_PREPARATION_BASE_COUNT
+            and baseline['board_bytes'] == PROGRAMME_PREPARATION_BASE_BOARD_BYTES
+            and baseline['board_sha256'] == PROGRAMME_PREPARATION_BASE_BOARD_SHA256
+            and baseline['plan_tasks_sha256'] == PROGRAMME_PREPARATION_BASE_TASKS_SHA256,
+            'sealed141 baseline commitments differ')
+    retained = [task for task in plan['tasks'] if not _programme_preparation_extension_task(task)]
+    require(len(retained) == PROGRAMME_PREPARATION_BASE_COUNT
+            and plan['tasks'][:PROGRAMME_PREPARATION_BASE_COUNT] == retained
+            and sha(_programme_json(retained)) == PROGRAMME_PREPARATION_BASE_TASKS_SHA256,
+            'retained141 plan task records differ')
+    board = (root / BOARD).read_bytes()
+    require(len(board) >= PROGRAMME_PREPARATION_BASE_BOARD_BYTES
+            and sha(board[:PROGRAMME_PREPARATION_BASE_BOARD_BYTES]) == PROGRAMME_PREPARATION_BASE_BOARD_SHA256,
+            'retained141 raw board prefix differs')
+    require(baseline['board_revision'] == 'taskboard:sha256:' + sha(
+            b'agent-supervisor-taskboard-revision-v1\0' + board[:PROGRAMME_PREPARATION_BASE_BOARD_BYTES]),
+            'retained141 board revision differs')
+    receipts = baseline['receipts']
+    require(type(receipts) is list and len(receipts) == PROGRAMME_PREPARATION_BASE_COUNT
+            and [ref.get('task_id') for ref in receipts] == [task['task_id'] for task in retained]
+            and len({ref.get('path') for ref in receipts}) == len(receipts),
+            'exact141 retained receipt population required')
+    for ref in receipts:
+        require(type(ref) is dict and set(ref) == {'task_id', 'path', 'bytes', 'sha256'},
+                'closed retained141 receipt commitment required')
+        _continuation_ref(root, {key: ref[key] for key in ('path', 'bytes', 'sha256')})
+    require(not active or active == [{**task, **programme_preparation_contract(task)} for task in tasks],
+            'active programme preparation additions differ')
+    for task in tasks:
+        _programme_preparation_record(root, task)
+    return bundle
+
+
+def render_programme_preparation_task(task):
+    contract = programme_preparation_contract(task)
+    return '\n'.join(['## ' + task['task_id'] + ' ' + task['title'], '',
+        '- status: todo', '- completion: manual', '- is schedulable: true',
+        '- priority: P1', '- track: legal-ir-programme', '- goal id: ' + task['goal_id'],
+        '- parent goal id: ' + task['parent_task_id'], '- depends on: none',
+        '- completion scope: control_admission_metadata_only',
+        '- satisfies parent semantic dependencies: false',
+        '- board namespace: legal-ir-autoencoder-v1', '- provider role: deterministic-only',
+        '- context budget tokens: 0', '- outputs: ' + ', '.join(contract['outputs']),
+        '- allowed paths: ' + ', '.join(contract['allowed_paths']),
+        '- validation: ' + '; '.join(contract['validation_commands']),
+        '- required validation executables: python3',
+        '- receipt instructions: ' + contract['receipt_instructions'],
+        '- acceptance: Exact immutable original/current parent, source/data dependencies, proposed '
+            'roles, exclusivity, finite envelope and independent verifier declarations are complete; '
+            'fresh original native admission and independent acceptance remain required'])
+
+
+def prepare_programme_preparation(root, bundle):
+    root = Path(root)
+    plan = _programme_preparation_json((root / PLAN).read_bytes())
+    require('programme_preparation' not in plan and len(plan['tasks']) == PROGRAMME_PREPARATION_BASE_COUNT,
+            'programme preparation already adopted or base population differs')
+    require((root / BOARD).stat().st_size == PROGRAMME_PREPARATION_BASE_BOARD_BYTES,
+            'programme preparation requires exact141 base board')
+    check_programme_preparation_plan(root, dict(plan, programme_preparation=bundle))
+    return dict(schema='legal-ir-programme-preparation-materialization/v1',
+        entries=[dict(task_id=task['task_id'], goal_id=task['goal_id'],
+            rendered_block=render_programme_preparation_task(task)) for task in bundle['tasks']],
+        plan_task_additions=[{**task, **programme_preparation_contract(task)} for task in bundle['tasks']],
+        plan_bundle_addition=bundle, base_board_sha256=PROGRAMME_PREPARATION_BASE_BOARD_SHA256,
+        base_board_revision='taskboard:sha256:' + sha(b'agent-supervisor-taskboard-revision-v1\0'
+            + (root / BOARD).read_bytes()), dispatch_authorized_by_this_metadata=False,
+        completion_authority=False, mutation_authority=False)
+
+
+def materialize_programme_preparation(root, task_id):
+    root = Path(root).resolve()
+    plan = _programme_preparation_json((root / PLAN).read_bytes())
+    check_programme_preparation_plan(root, plan)
+    matches = [task for task in plan['tasks'] if task['task_id'] == task_id]
+    require(len(matches) == 1 and _programme_preparation_extension_task(matches[0]),
+            'adopted programme preparation task required')
+    record = _programme_preparation_record(root, matches[0])
+    packet = _programme_json(record) + b'\n'
+    require(len(packet) <= PROGRAMME_PREPARATION_LIMITS['storage_bytes'], 'programme packet exceeds output bound')
+    relative = programme_preparation_directory(task_id)
+    receipt = dict(schema=SCHEMA, task_id=task_id, task_kind='programme_preparation',
+        status='implemented', authority=dict(admitted=False, formalized=False),
+        artifacts=[dict(kind='packet', path=(relative / 'packet.json').as_posix(), sha256=sha(packet))])
+    directory = root / relative
+    require(directory.absolute() == directory.resolve(), 'aliased programme preparation output scope')
+    directory.mkdir(parents=True, exist_ok=True)
+    for name, data in (('packet.json', packet), ('receipt.json', _programme_json(receipt) + b'\n')):
+        path = directory / name
+        require(not path.is_symlink(), 'aliased programme preparation output')
+        if path.exists():
+            info = path.lstat()
+            require(stat.S_ISREG(info.st_mode) and info.st_nlink == 1
+                    and info.st_size == len(data) and path.read_bytes() == data,
+                    'retained programme preparation output differs')
+        else:
+            descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW | os.O_CLOEXEC, 0o600)
+            with os.fdopen(descriptor, 'wb') as stream:
+                stream.write(data)
+                stream.flush()
+                os.fsync(stream.fileno())
+    descriptor = os.open(directory, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+    return dict(task_id=task_id, materialized=True, metadata_complete=True,
+        readiness='original_admission_required', tests_rerun=False, training_executed=False,
+        model_executed=False, admitted=False, formalized=False, scientific_parent_satisfied=False)
+
+
+def validate_programme_preparation(root, task, receipt, data):
+    require(set(receipt) == {'schema', 'task_id', 'task_kind', 'status', 'authority', 'artifacts'}
+            and receipt['schema'] == SCHEMA and receipt['task_id'] == task['task_id']
+            and receipt['task_kind'] == 'programme_preparation' and receipt['status'] == 'implemented'
+            and receipt['authority'] == dict(admitted=False, formalized=False)
+            and all(value is False for value in receipt['authority'].values()) and set(data) == {'packet'},
+            'exact programme preparation receipt/artifact required')
+    require(receipt['artifacts'] == [dict(kind='packet',
+            path=(programme_preparation_directory(task['task_id']) / 'packet.json').as_posix(),
+            sha256=sha(data['packet']))], 'programme preparation artifact path differs')
+    observed = _programme_preparation_json(data['packet'])
+    require(_programme_json(observed) == _programme_json(_programme_preparation_record(root, task)),
+            'programme preparation metadata or source binding differs')
+
+
+
 def kind(task_id):
+    if task_id in PROGRAMME_PREPARATION_SPECS:
+        return 'programme_preparation'
     if task_id in CONTINUATION_SPECS:
         return 'continuation_validation'
     if task_id in PROGRAMME_ENGINEERING_SPECS:
@@ -1422,6 +1877,8 @@ def kind(task_id):
 
 
 def directory(task_id):
+    if task_id in PROGRAMME_PREPARATION_SPECS:
+        return programme_preparation_directory(task_id)
     if task_id in CONTINUATION_SPECS:
         return continuation_directory(task_id)
     if task_id in PROGRAMME_ENGINEERING_SPECS:
@@ -1644,6 +2101,8 @@ def validate_engineering_width(root, task, receipt, data):
 
 
 def task_contract(task):
+    if task.get('programme_preparation') is not None:
+        return programme_preparation_contract(task)
     if task.get('engineering_continuation') is not None:
         return continuation_contract(task)
     if task.get('programme_engineering') is not None:
@@ -1764,6 +2223,7 @@ def enrich(root, *, enable_local_inventory=False, enable_local_width_replay=Fals
 def check_board(root):
     root = Path(root)
     plan = json.loads((root / PLAN).read_text())
+    check_programme_preparation_plan(root, plan)
     require(not any(task.get('engineering_continuation') is not None for task in plan['tasks'])
             or plan.get('engineering_continuation') is not None, 'continuation bundle required')
     if plan.get('engineering_continuation') is not None:
@@ -1800,6 +2260,10 @@ def check_board(root):
             for line in render_continuation_task(task).splitlines():
                 if line and not line.startswith('- status:'):
                     require(chunk.splitlines().count(line) == 1, 'stale continuation board contract')
+        if task.get('programme_preparation') is not None:
+            for line in render_programme_preparation_task(task).splitlines():
+                if line and not line.startswith('- status:'):
+                    require(chunk.splitlines().count(line) == 1, 'stale programme preparation board contract')
         if task.get('programme_engineering') is not None:
             for line in render_programme_engineering_task(task).splitlines():
                 if line and not line.startswith('- status:'):
@@ -2032,7 +2496,10 @@ def validate(root, task_id, *, source_parquet=None):
     require(receipt.get('status') in {'inventory', 'implemented'}, 'pending/unavailable work cannot complete')
     false_flags(receipt.get('authority'), family == 'constitution')
     data = read_artifacts(root, task_id, receipt)
-    if family == 'continuation_validation':
+    if family == 'programme_preparation':
+        check_programme_preparation_plan(root, plan)
+        validate_programme_preparation(root, task, receipt, data)
+    elif family == 'continuation_validation':
         check_continuation_plan(root, plan)
         validate_continuation(root, task, receipt, data)
     elif family == 'programme_engineering':
@@ -2068,6 +2535,8 @@ def main(argv=None):
     modes.add_argument('--enable-local-inventory', action='store_true', help='Enable reviewed local inventory only for currently pending US Code shards; completed contracts remain unchanged')
     modes.add_argument('--enable-local-width-replay', action='store_true', help='Enable reviewed frozen replay only for pending384/768 tasks; preserve every other contract')
     modes.add_argument('--enable-engineering-width-v2', action='store_true', help='Select only reviewed genuine spaCy8/Leanstral4096 successor captures; preserve every other task and old contracts as history')
+    modes.add_argument('--prepare-programme-preparation', type=Path, metavar='BUNDLE', help='Print four sealed141-preserving control-packet entries; write and dispatch nothing')
+    modes.add_argument('--materialize-programme-preparation', choices=tuple(PROGRAMME_PREPARATION_SPECS), help='Materialize only packet/receipt metadata from sealed snapshots; execute no native/model operation')
     modes.add_argument('--prepare-continuation', type=Path, metavar='SELECTIONS', help='Print exact two-card139-preserving continuation delta; write and dispatch nothing')
     modes.add_argument('--materialize-continuation-validation', choices=tuple(CONTINUATION_SPECS), help='Validate only retained pinned qualification receipts and create two owned outputs; run no code/model/training')
     modes.add_argument('--prepare-programme-engineering', action='store_true', help='Print four source-aligned native materialization entries and plan additions; write nothing and dispatch nothing')
@@ -2083,7 +2552,11 @@ def main(argv=None):
     try:
         require(args.capture_selections is None or args.enable_engineering_width_v2,
                 'capture selections require explicit genuine successor mode')
-        if args.prepare_continuation is not None:
+        if args.prepare_programme_preparation is not None:
+            result = prepare_programme_preparation(args.root, _programme_preparation_json(args.prepare_programme_preparation.read_bytes()))
+        elif args.materialize_programme_preparation is not None:
+            result = materialize_programme_preparation(args.root, args.materialize_programme_preparation)
+        elif args.prepare_continuation is not None:
             result = prepare_continuation(args.root, json.loads(args.prepare_continuation.read_bytes()))
         elif args.materialize_continuation_validation is not None:
             result = materialize_continuation_validation(args.root, args.materialize_continuation_validation)

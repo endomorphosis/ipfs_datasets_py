@@ -1706,3 +1706,213 @@ def _prior_span_state(prior: Mapping[str, Any] | None) -> tuple[set[str], set[st
             if span:
                 proved.add(span)
     return seen, proved
+
+
+# This additive metadata profile preserves the independent D/G owner prefixes.
+_PROGRAMME_WORK_PACKET_SPECS_V1 = (
+    ("LIRAE-LIR03-SOURCE-PACKET-01", "source_cache_lineage", "LIR-02",
+     ("release_schema_compatibility", "physical_occurrence_crosswalk")),
+    ("LIRAE-LIR03-IR-PACKET-01", "typed_ir_scoped_graph", "LIR-07",
+     ("complete_typed_ir", "graph_dependency_closure")),
+    ("LIRAE-LIR03-MODEL-PACKET-01", "model_compatibility_quality", "LIR-17",
+     ("producer_head_compatibility", "reviewed_complete_targets",
+      "exposure_grouped_partitions", "frozen_quality_contract")),
+    ("LIRAE-LIR03-LEAN-PACKET-02", "lean_release_verification", "LIR-12",
+     ("explicit_interpretation_and_assumptions", "lean_import_toolchain_closure",
+      "native_preservation_and_build", "immutable_release_readback")),
+)
+_PROGRAMME_WORK_PACKET_GLOBAL_GATES_V1 = (
+    "source_release_manifest", "source_custody", "source_span_entity_crosswalk",
+    "edition_and_legal_as_of", "independent_meaning_review",
+    "every_use_applicability_review", "original_owner_admission",
+    "independent_acceptance",
+)
+
+
+def prepare_programme_work_packet_v1(
+    *, task_id, parent_reference, current_parent_reference, authority_binding,
+    owner_sources, evidence, remaining_gates,
+):
+    """Prepare one of four detached, legacy-authority metadata work packets.
+
+    Every descriptor and role is supplied consistency metadata. This function
+    opens no file, imports no owner, invokes no callback or command, and claims
+    no work. The original caller must authenticate the fixed permitted source
+    and evidence paths, immutable 141-card authority snapshots, current-parent
+    snapshot row, and selected source epoch. Snapshot binding is not current
+    native status, independent review, resource admission or legal authority.
+
+    The original public parent and the supplied current-parent snapshot retain
+    independent hashes. Later edits to a live BACKLOG/board/plan do not rewrite
+    these immutable observations. Actual dispatch requires fresh admission by
+    the original authority; neither this preview nor a completed engineering
+    receipt admits its scientific parent. Only fixed metadata commands and two
+    output paths are derived. Caller-supplied commands and effects are absent.
+    """
+    max_nodes, max_depth, max_text_bytes, max_metadata_bytes = 2048, 8, 1024, 262144
+    max_refs, max_ref_bytes = 64, 8388608
+    nodes = [0]
+
+    def fail(reason):
+        raise ValueError("programme work packet: " + reason)
+
+    def text(value, where):
+        if type(value) is not str or not value or value != value.strip():
+            fail(where + " must be a nonempty plain string")
+        try:
+            length = len(value.encode("utf-8"))
+        except UnicodeEncodeError:
+            fail(where + " must be strict UTF-8")
+        if length > max_text_bytes or any(ord(c) < 32 or ord(c) == 127 for c in value):
+            fail(where + " exceeds its string bound or contains control characters")
+        return value
+
+    def copy_json(value, depth=0):
+        nodes[0] += 1
+        if nodes[0] > max_nodes or depth > max_depth:
+            fail("metadata node/depth bound exceeded")
+        kind = type(value)
+        if kind is dict:
+            if len(value) > max_nodes or any(type(key) is not str for key in value):
+                fail("metadata requires plain string dictionary keys")
+            return {copy_json(key, depth + 1): copy_json(item, depth + 1)
+                    for key, item in value.items()}
+        if kind is list:
+            if len(value) > max_nodes:
+                fail("metadata list bound exceeded")
+            return [copy_json(item, depth + 1) for item in value]
+        if kind is str:
+            return text(value, "metadata string")
+        if kind is int and -(2 ** 63) <= value < 2 ** 63:
+            return value
+        if value is None or kind is bool:
+            return value
+        fail("only exact finite JSON builtin values are supported")
+
+    supplied = copy_json({
+        "task_id": task_id, "parent_reference": parent_reference,
+        "current_parent_reference": current_parent_reference,
+        "authority_binding": authority_binding, "owner_sources": owner_sources,
+        "evidence": evidence, "remaining_gates": remaining_gates,
+    })
+
+    def json_bound(value):
+        body = json.dumps(value, ensure_ascii=False, sort_keys=True,
+                          separators=(",", ":"), allow_nan=False).encode("utf-8")
+        if len(body) > max_metadata_bytes:
+            fail("serialized metadata byte bound exceeded")
+
+    json_bound(supplied)
+
+    def keys(value, wanted, where):
+        if type(value) is not dict or set(value) != set(wanted):
+            fail(where + " has unknown or missing fields")
+
+    def digest(value, size, where):
+        if type(value) is not str or len(value) != size or any(c not in "0123456789abcdef" for c in value):
+            fail(where + " must be lowercase hexadecimal")
+
+    def safe_path(value, where, *, relative=False, suffix=None):
+        text(value, where)
+        parts = value.split("/")
+        components = parts[1:] if value.startswith("/") else parts
+        if ((relative and value.startswith("/")) or not components
+                or any(part in {"", ".", ".."} for part in components)
+                or any(c in value for c in "\\:*?[]")
+                or (suffix is not None and not value.endswith(suffix))):
+            fail(where + " must be a safe explicit path")
+
+    def reference(value, where, *, relative=False, suffix=None):
+        keys(value, ("path", "bytes", "sha256"), where)
+        safe_path(value["path"], where + ".path", relative=relative, suffix=suffix)
+        if type(value["bytes"]) is not int or not 0 <= value["bytes"] <= max_ref_bytes:
+            fail(where + ".bytes exceeds its descriptor bound")
+        digest(value["sha256"], 64, where + ".sha256")
+
+    selected = next((row for row in _PROGRAMME_WORK_PACKET_SPECS_V1
+                     if supplied["task_id"] == row[0]), None)
+    if selected is None:
+        fail("unsupported fixed preparation task")
+    selected_id, role, parent_id, role_gates = selected
+    origin = supplied["parent_reference"]
+    keys(origin, ("repository", "revision", "path", "task_id", "task_sha256"),
+         "parent_reference")
+    if (origin["repository"] != "ipfs_datasets_py"
+            or origin["path"] != "ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json"
+            or origin["task_id"] != parent_id):
+        fail("original parent identity differs")
+    digest(origin["revision"], 40, "parent_reference.revision")
+    digest(origin["task_sha256"], 64, "parent_reference.task_sha256")
+    current = supplied["current_parent_reference"]
+    keys(current, ("backlog", "task_id", "task_sha256"), "current_parent_reference")
+    reference(current["backlog"], "current_parent_reference.backlog", suffix=".json")
+    if current["task_id"] != parent_id:
+        fail("current snapshot parent identity differs")
+    digest(current["task_sha256"], 64, "current_parent_reference.task_sha256")
+    authority = supplied["authority_binding"]
+    keys(authority, ("kind", "namespace", "board", "plan", "source_control_revision"),
+         "authority_binding")
+    if authority["kind"] != "legacy_markdown" or authority["namespace"] != "legal-ir-autoencoder-v1":
+        fail("selected authority differs")
+    reference(authority["board"], "authority_binding.board", suffix=".md")
+    reference(authority["plan"], "authority_binding.plan", suffix=".json")
+    digest(authority["source_control_revision"], 64, "authority_binding.source_control_revision")
+
+    for name, source in (("owner_sources", True), ("evidence", False)):
+        values = supplied[name]
+        if type(values) is not list or not 1 <= len(values) <= max_refs:
+            fail(name + " requires a bounded nonempty descriptor list")
+        paths = []
+        for index, value in enumerate(values):
+            reference(value, name + ":" + str(index), relative=source,
+                      suffix=".py" if source else ".json")
+            paths.append(value["path"])
+        if len(set(paths)) != len(paths):
+            fail(name + " paths must be unique")
+    gates = supplied["remaining_gates"]
+    allowed = _PROGRAMME_WORK_PACKET_GLOBAL_GATES_V1 + role_gates
+    if (type(gates) is not list or not 2 <= len(gates) <= len(allowed)
+            or any(type(gate) is not str or gate not in allowed for gate in gates)
+            or len(set(gates)) != len(gates)
+            or not {"original_owner_admission", "independent_acceptance"} <= set(gates)):
+        fail("remaining_gates must retain exact supported unresolved admission gates")
+
+    script = "scripts/ops/legal_ir/legal_ir_supervisor_contract.py"
+    argv = [["python3", script, "--materialize-programme-preparation", selected_id],
+            ["python3", script, "--check-task", selected_id]]
+    env = "IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. "
+    command = env + " ".join(argv[0]) + " && " + env + " ".join(argv[1])
+    directory = "docs/implementation/reports/evidence/legal_ir_autoencoder/" + selected_id.lower()
+    outputs = [directory + "/packet.json", directory + "/receipt.json"]
+    result = {
+        "schema": "programme-work-execution-packet/v1",
+        **supplied, "role": role, "parent_task_id": parent_id,
+        "execution_kind": "control_metadata_only", "metadata_complete": True,
+        "readiness": "original_admission_required", "snapshot_binding_only": True,
+        "validation_argv": argv, "validation_commands": [command],
+        "outputs": outputs, "allowed_paths": list(outputs),
+        "code_allowlist": [], "test_allowlist": [],
+        "exclusive_keys": ["programme-preparation:" + selected_id],
+        "budgets": {"wall_seconds": 300, "cpu_slots": 1, "memory_mb": 1024,
+                    "storage_bytes": 16777216, "child_process_slots": 1,
+                    "max_attempts": 1},
+        "descriptor_hashes_verified": False, "current_parent_row_verified": False,
+        "current_source_epoch_verified": False, "native_status_verified": False,
+        "capability_verified": False, "independently_verified": False,
+        "dispatch_authorized": False, "mutation_authorized": False,
+        "native_admission": False, "model_execution_authorized": False,
+        "training_authorized": False, "parent_semantic_admission": False,
+        "task_completion_authority": False, "goal_completion_authority": False,
+        "completion_authority": False, "admitted": False, "formalized": False,
+        "semantic_review_verified": False,
+        "supervision_masks": {"training": 0, "evaluation_gold": 0},
+        "verification_limits": [
+            "Descriptors and principals are supplied metadata, not authenticated file bytes or independence.",
+            "Snapshot binding is not current native task state, capability, scope or resource admission.",
+            "The original caller must verify fixed source/evidence paths, snapshot bytes and parent rows.",
+            "Owner source snapshots are data references and are never imported or executed by this API.",
+            "Later dispatch requires original admission; engineering completion admits no scientific parent.",
+        ],
+    }
+    json_bound(result)
+    return result

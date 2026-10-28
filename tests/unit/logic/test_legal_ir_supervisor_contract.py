@@ -114,10 +114,16 @@ def test_flags_must_be_boolean_false_even_nested(field, bad):
         contract.false_flags(row, constitution=True)
 
 
-def artifact_case(tmp_path):
+def artifact_case(tmp_path, *, initial_symlink=False):
     task_id = "LIRAE-CONST-A1"
     path = tmp_path / contract.directory(task_id) / "spans.json"
-    write_json(path, [false_row(id="span-1")])
+    if initial_symlink:
+        target = tmp_path / "unowned.json"
+        write_json(target, [false_row(id="span-1")])
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.symlink_to(target)
+    else:
+        write_json(path, [false_row(id="span-1")])
     entry = {"kind": "spans", "path": path.relative_to(tmp_path).as_posix(), "sha256": contract.sha(path.read_bytes())}
     return task_id, path, {"artifacts": [entry]}
 
@@ -134,7 +140,7 @@ def test_artifact_digest_authenticates_actual_bytes_and_detects_tampering(tmp_pa
 def test_artifacts_reject_authority_escape_and_ambiguous_references(tmp_path, attack):
     created_alias = created_target = None
     try:
-        task_id, path, receipt = artifact_case(tmp_path)
+        task_id, path, receipt = artifact_case(tmp_path, initial_symlink=attack == "symlink")
         entry = receipt["artifacts"][0]
         if attack == "traversal":
             entry["path"] = "../outside.json"
@@ -406,7 +412,7 @@ def programme_bundle():
     return json.loads((ROOT / contract.PLAN).read_text())['programme_engineering']
 
 
-def programme_case(tmp_path, monkeypatch):
+def programme_case(tmp_path, monkeypatch, *, initial_symlink=False):
     task = deepcopy(programme_bundle()['prepared_tasks'][0])
     monkeypatch.setattr(contract, '_require_programme_source_alignment',
                         lambda root: dict(contract.PROGRAMME_SOURCE_BINDING))
@@ -414,7 +420,12 @@ def programme_case(tmp_path, monkeypatch):
     for value in (task['owner_paths'][0], task['test_paths'][0]):
         path = tmp_path / value
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text('independently changed owner or test\n')
+        if initial_symlink and value == task['owner_paths'][0]:
+            target = tmp_path / 'outside.py'
+            target.write_text('independently changed owner or test\n')
+            path.symlink_to(target)
+        else:
+            path.write_text('independently changed owner or test\n')
         changes.append({'path': value, 'sha256': contract.sha(path.read_bytes())})
     receipt = {'status': 'implemented', 'parent_reference': task['parent_reference'],
                'source_binding': contract.PROGRAMME_SOURCE_BINDING,
@@ -541,7 +552,7 @@ def test_programme_receipt_authenticates_actual_owner_test_changes(tmp_path, mon
 def test_programme_receipt_rejects_forged_completion_or_execution_claims(tmp_path, monkeypatch, attack):
     created_alias = created_target = None
     try:
-        task, receipt, preparation = programme_case(tmp_path, monkeypatch)
+        task, receipt, preparation = programme_case(tmp_path, monkeypatch, initial_symlink=attack == 'symlink')
         if attack in ('training', 'review', 'gain'):
             preparation[{'training': 'training_executed', 'review': 'semantic_review_performed',
                          'gain': 'model_gain_claimed'}[attack]] = True
@@ -633,11 +644,16 @@ def _continuation_ref_for(path, root):
     return dict(path=path.relative_to(root).as_posix(), bytes=len(data), sha256=contract.sha(data))
 
 
-def _continuation_case(tmp_path, monkeypatch):
+def _continuation_case(tmp_path, monkeypatch, *, initial_symlink=False):
     """Synthetic evidence exercises the audit checker, not model qualification."""
     def evidence(name, value):
         path = tmp_path / 'retained' / name
-        write_json(path, value)
+        if initial_symlink and name == 'input.json':
+            target = path.with_name('target.json')
+            write_json(target, value)
+            path.symlink_to(target)
+        else:
+            write_json(path, value)
         return _continuation_ref_for(path, tmp_path)
     owners = [evidence('owner.json', {'source': 'owner'}), evidence('test.json', {'source': 'test'})]
     inputs = [evidence('input.json', {'fixture': 'bounded'})]
@@ -811,7 +827,7 @@ def test_continuation_closed_contract_rejects_broadened_or_nonpositive_tasks(tmp
 def test_continuation_requires_actual_pinned_correspondence_and_closed_original_custody(tmp_path, monkeypatch, attack):
     created_alias = created_target = None
     try:
-        _, bundle = _continuation_case(tmp_path, monkeypatch)
+        _, bundle = _continuation_case(tmp_path, monkeypatch, initial_symlink=attack == 'symlink')
         task = deepcopy(bundle['tasks'][0]); binding = task['binding']
         if attack == 'source_bytes':
             (tmp_path / binding['candidate_sources'][0]['path']).write_bytes(b'changed candidate')
@@ -1059,3 +1075,267 @@ def test_continuation_producer_and_consumer_are_one_closed_ordered_validation_un
         assert tokens[:boundary] == prefix + ['--materialize-continuation-validation', task['task_id']]
         assert tokens[boundary + 1:] == prefix + ['--check-task', task['task_id']]
         assert contract.continuation_contract(task)['context_budget_tokens'] == 0
+
+
+def _preparation_ref(path, root):
+    value = path.read_bytes()
+    return dict(path=path.relative_to(root).as_posix(), bytes=len(value), sha256=contract.sha(value))
+
+
+def _preparation_fixture(tmp_path, monkeypatch, *, retained_count=3):
+    from ipfs_datasets_py.logic.autoformal.supervisor_loop import prepare_programme_work_packet_v1
+    retained = [dict(task_id='LIRAE-RETAINED-' + str(i).zfill(3), title='Retained ' + str(i))
+                for i in range(retained_count)]
+    board = '# Retained fixture\n\n' + ''.join('## ' + row['task_id'] + ' Old task\n\n- status: completed\n\n'
+                                             for row in retained)
+    (tmp_path / contract.BOARD).parent.mkdir(parents=True, exist_ok=True)
+    (tmp_path / contract.BOARD).write_text(board)
+    plan = dict(tasks=retained)
+    write_json(tmp_path / contract.PLAN, plan)
+    snapshot = tmp_path / 'workspace/snapshots'
+    original = dict(tasks=[dict(id='LIR-' + str(i).zfill(2), snapshot='original') for i in range(1, 25)])
+    current = dict(tasks=[dict(id='LIR-' + str(i).zfill(2), snapshot='current') for i in range(1, 25)])
+    for name, body in [('original-backlog.json', original), ('current-backlog.json', current),
+                       ('retained-plan.json', plan)]:
+        write_json(snapshot / name, body)
+    (snapshot / 'retained-board.md').write_text(board)
+    receipts = []
+    for row in retained:
+        path = tmp_path / 'retained' / (row['task_id'].lower() + '.json')
+        write_json(path, dict(task_id=row['task_id'], retained=True))
+        receipts.append(dict(task_id=row['task_id'], **_preparation_ref(path, tmp_path)))
+    base_sha = contract.sha(contract._programme_json(retained))
+    monkeypatch.setattr(contract, 'PROGRAMME_PREPARATION_BASE_COUNT', retained_count)
+    monkeypatch.setattr(contract, 'PROGRAMME_PREPARATION_BASE_TASKS_SHA256', base_sha)
+    monkeypatch.setattr(contract, 'PROGRAMME_PREPARATION_BASE_BOARD_BYTES', len(board.encode()))
+    monkeypatch.setattr(contract, 'PROGRAMME_PREPARATION_BASE_BOARD_SHA256', contract.sha(board.encode()))
+    baseline = dict(schema='legal-ir-supervisor-programme-preparation-baseline/v1', task_count=retained_count,
+        board_bytes=len(board.encode()), board_sha256=contract.sha(board.encode()),
+        board_revision='taskboard:sha256:' + contract.sha(b'agent-supervisor-taskboard-revision-v1\0' + board.encode()),
+        plan_tasks_sha256=base_sha, receipts=receipts)
+    write_json(snapshot / 'baseline.json', baseline)
+    baseline_ref = _preparation_ref(snapshot / 'baseline.json', tmp_path)
+    monkeypatch.setattr(contract, 'PROGRAMME_PREPARATION_BASELINE_SHA256', baseline_ref['sha256'])
+    monkeypatch.setattr(contract, '_continuation_primary_source_root', lambda root: tmp_path)
+    # This synthetic fixture substitutes only the loader. Its actual packet
+    # builder remains the normally imported genuine pure public owner function.
+    monkeypatch.setattr(contract, '_programme_preparation_owner', lambda root, ref: prepare_programme_work_packet_v1)
+    owner = tmp_path / contract.PROGRAMME_PREPARATION_OWNER
+    owner.parent.mkdir(parents=True, exist_ok=True)
+    owner.write_bytes((ROOT / contract.PROGRAMME_PREPARATION_OWNER).read_bytes())
+    oldrows = {row['id']: row for row in original['tasks']}
+    currentrows = {row['id']: row for row in current['tasks']}
+    tasks = []
+    for task_id, (role, parent, operation, parents) in contract.PROGRAMME_PREPARATION_SPECS.items():
+        sources = []
+        for logical in contract.PROGRAMME_PREPARATION_OWNER_PATHS[role]:
+            path = snapshot / 'owner-sources' / logical
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text('snapshot_only = True\n')  # Data, never imported.
+            sources.append(_preparation_ref(path, tmp_path))
+        evidence_path = snapshot / 'evidence' / (role + '.json')
+        write_json(evidence_path, dict(kind='closed_metadata_fixture', role=role, qualified=True,
+                                      admitted=False, formalized=False))
+        evidence = [_preparation_ref(evidence_path, tmp_path)]
+        authority = dict(kind='legacy_markdown', namespace='legal-ir-autoencoder-v1',
+            board=_preparation_ref(snapshot / 'retained-board.md', tmp_path),
+            plan=_preparation_ref(snapshot / 'retained-plan.json', tmp_path),
+            source_control_revision=baseline_ref['sha256'])
+        gates = ['original_owner_admission', 'independent_acceptance']
+        scope = dict(schema='legal-ir-programme-admission-scope/v1', task_id=task_id, role=role,
+            parent_task_id=parent, future_operation=operation,
+            supporting_parents=[dict(task_id=key, task_sha256=contract.sha(contract._programme_json(currentrows[key])))
+                                for key in parents],
+            logical_owner_paths=list(contract.PROGRAMME_PREPARATION_OWNER_PATHS[role]),
+            dependencies=dict(owner_sources=sources, evidence=evidence),
+            principals=dict(worker='fixture-worker:' + task_id, independent_verifier='fixture-verifier:' + task_id,
+                            identity_verified=False),
+            exclusive_keys=['programme-preparation:' + task_id],
+            proposed_limits=dict(contract.PROGRAMME_PREPARATION_LIMITS),
+            native_binding=dict(task_cid=None, control_revision=None, status='original_admission_required'),
+            remaining_gates=gates, grants={key: False for key in
+                ('dispatch', 'native_execution', 'model_execution', 'training', 'meaning_review', 'parent_completion')})
+        scope_path = snapshot / 'scopes' / (task_id.lower() + '.json')
+        write_json(scope_path, scope)
+        tasks.append(dict(task_id=task_id, title='Prepare concrete ' + role + ' control packet',
+            programme_preparation='legal-ir-programme-preparation/v1', operation_kind=role,
+            goal_id='LIR-03.next-work-packets-v1', parent_task_id=parent,
+            parent_reference=dict(repository='ipfs_datasets_py', revision='a' * 40,
+                path='ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json', task_id=parent,
+                task_sha256=contract.sha(contract._programme_json(oldrows[parent]))),
+            current_parent_reference=dict(backlog=_preparation_ref(snapshot / 'current-backlog.json', tmp_path),
+                task_id=parent, task_sha256=contract.sha(contract._programme_json(currentrows[parent]))),
+            binding=dict(original_backlog=_preparation_ref(snapshot / 'original-backlog.json', tmp_path),
+                current_backlog=_preparation_ref(snapshot / 'current-backlog.json', tmp_path),
+                base_plan=authority['plan'], base_board=authority['board'], packet_owner=_preparation_ref(owner, tmp_path),
+                owner_sources=sources, evidence=evidence, authority_binding=authority, remaining_gates=gates,
+                admission_scope=_preparation_ref(scope_path, tmp_path)),
+            limits=dict(contract.PROGRAMME_PREPARATION_LIMITS)))
+    monkeypatch.setattr(contract, 'PROGRAMME_PREPARATION_TASKS_SHA256', contract.sha(contract._programme_json(tasks)))
+    bundle = dict(schema='legal-ir-programme-preparation-bundle/v1', baseline=baseline_ref, tasks=tasks,
+                  dispatch_authorized_by_this_metadata=False, completion_authority=False)
+    return plan, bundle
+
+
+def _adopt_preparation_fixture(root, plan, bundle):
+    updated = dict(plan, programme_preparation=bundle,
+        tasks=plan['tasks'] + [{**task, **contract.programme_preparation_contract(task)} for task in bundle['tasks']])
+    write_json(root / contract.PLAN, updated)
+    with (root / contract.BOARD).open('ab') as stream:
+        stream.write(('\n' + '\n'.join(contract.render_programme_preparation_task(task)
+                                     for task in bundle['tasks']) + '\n').encode())
+    return updated
+
+
+@pytest.mark.parametrize('task_id,role,parent', [
+    ('LIRAE-LIR03-SOURCE-PACKET-01', 'source_cache_lineage', 'LIR-02'),
+    ('LIRAE-LIR03-IR-PACKET-01', 'typed_ir_scoped_graph', 'LIR-07'),
+    ('LIRAE-LIR03-MODEL-PACKET-01', 'model_compatibility_quality', 'LIR-17'),
+    ('LIRAE-LIR03-LEAN-PACKET-02', 'lean_release_verification', 'LIR-12'),
+], ids=['source', 'ir', 'model', 'lean'])
+def test_programme_preparation_materializes_concrete_bound_packet_without_dispatch(tmp_path, monkeypatch, task_id, role, parent):
+    plan, bundle = _preparation_fixture(tmp_path, monkeypatch, retained_count=141)
+    assert len(plan['tasks']) == 141
+    before_plan = (tmp_path / contract.PLAN).read_bytes()
+    before_board = (tmp_path / contract.BOARD).read_bytes()
+    preview = contract.prepare_programme_preparation(tmp_path, bundle)
+    assert len(preview['entries']) == 4 and preview['completion_authority'] is False
+    assert (tmp_path / contract.PLAN).read_bytes() == before_plan
+    assert (tmp_path / contract.BOARD).read_bytes() == before_board
+    _adopt_preparation_fixture(tmp_path, plan, bundle)
+    task = next(row for row in bundle['tasks'] if row['task_id'] == task_id)
+    commands = contract.programme_preparation_contract(task)['validation_commands']
+    import shlex
+    tokens = shlex.split(commands[0])
+    assert len(commands) == 1 and tokens.count('&&') == 1
+    boundary = tokens.index('&&')
+    prefix = ['IPFS_DATASETS_PY_MINIMAL_IMPORTS=1', 'PYTHONPATH=.', 'python3', contract.SCRIPT]
+    assert tokens[:boundary] == prefix + ['--materialize-programme-preparation', task_id]
+    assert tokens[boundary + 1:] == prefix + ['--check-task', task_id]
+    assert contract.kind(task_id) == 'programme_preparation'
+    result = contract.materialize_programme_preparation(tmp_path, task_id)
+    assert result['readiness'] == 'original_admission_required' and result['scientific_parent_satisfied'] is False
+    packet_path = tmp_path / contract.programme_preparation_directory(task_id) / 'packet.json'
+    packet = json.loads(packet_path.read_bytes())
+    assert packet['task_id'] == task_id and packet['role'] == role
+    assert packet['packet']['parent_task_id'] == parent
+    assert packet['packet']['metadata_complete'] is True
+    assert packet['packet']['current_parent_reference']['task_sha256'] != packet['packet']['parent_reference']['task_sha256']
+    assert packet['admission_scope']['native_binding']['task_cid'] is None
+    assert packet['admission_scope']['principals']['identity_verified'] is False
+    assert all(packet['packet'][name] is False for name in contract.PROGRAMME_PREPARATION_FALSE_FLAGS)
+    assert packet['packet']['supervision_masks'] == {'training': 0, 'evaluation_gold': 0}
+    assert contract.validate(tmp_path, task_id)['validated'] is True
+    before = {path.name: (path.read_bytes(), path.stat().st_ino) for path in packet_path.parent.iterdir()}
+    contract.materialize_programme_preparation(tmp_path, task_id)
+    assert {path.name: (path.read_bytes(), path.stat().st_ino) for path in packet_path.parent.iterdir()} == before
+    assert (tmp_path / contract.BOARD).read_bytes().startswith(before_board)
+    assert json.loads((tmp_path / contract.PLAN).read_bytes())['tasks'][:141] == plan['tasks']
+
+
+@pytest.mark.parametrize('attack', ['unknown_id', 'wrong_role', 'wrong_parent', 'unknown_field',
+    'context_bool', 'budget_bool', 'arbitrary_command', 'output_escape'],
+    ids=['unknown-id', 'wrong-role', 'wrong-parent', 'unknown-field', 'context-bool',
+         'budget-bool', 'arbitrary-command', 'output-escape'])
+def test_programme_preparation_rejects_broadened_executable_contract(tmp_path, monkeypatch, attack):
+    _, bundle = _preparation_fixture(tmp_path, monkeypatch)
+    task = deepcopy(bundle['tasks'][0])
+    if attack == 'unknown_id': task['task_id'] = 'LIRAE-LIR03-SOURCE-PACKET-99'
+    elif attack == 'wrong_role': task['operation_kind'] = 'model_compatibility_quality'
+    elif attack == 'wrong_parent': task['parent_task_id'] = 'LIR-17'
+    elif attack == 'unknown_field': task['callback'] = 'run_anything'
+    elif attack == 'context_bool': task['context_budget_tokens'] = False
+    elif attack == 'budget_bool': task['limits']['cpu_slots'] = True
+    elif attack == 'arbitrary_command': task['validation_commands'] = ['python3 -c arbitrary']
+    else: task['outputs'] = ['../receipt.json']
+    with pytest.raises(contract.ContractError):
+        contract.programme_preparation_contract(task)
+
+
+@pytest.mark.parametrize('attack', ['meaning_grant', 'same_principal', 'invented_native', 'future_command',
+    'supporting_parent', 'owner_role', 'dependencies', 'unknown_gate'],
+    ids=['meaning-grant', 'same-principal', 'invented-native', 'future-command',
+         'supporting-parent', 'owner-role', 'dependencies', 'unknown-gate'])
+def test_programme_preparation_rejects_forged_admission_scope(tmp_path, monkeypatch, attack):
+    plan, bundle = _preparation_fixture(tmp_path, monkeypatch)
+    task = bundle['tasks'][0]
+    path = tmp_path / task['binding']['admission_scope']['path']
+    scope = json.loads(path.read_bytes())
+    if attack == 'meaning_grant': scope['grants']['meaning_review'] = True
+    elif attack == 'same_principal': scope['principals']['independent_verifier'] = scope['principals']['worker']
+    elif attack == 'invented_native': scope['native_binding']['task_cid'] = 'invented'
+    elif attack == 'future_command': scope['future_operation'] = 'python3 -c arbitrary'
+    elif attack == 'supporting_parent': scope['supporting_parents'][0]['task_sha256'] = '0' * 64
+    elif attack == 'owner_role': scope['logical_owner_paths'][0] = 'ipfs_datasets_py/logic/autoformal/other.py'
+    elif attack == 'dependencies': scope['dependencies']['evidence'] = []
+    else: scope['remaining_gates'].append('all_legal_meaning_reviewed')
+    write_json(path, scope)
+    task['binding']['admission_scope'] = _preparation_ref(path, tmp_path)
+    monkeypatch.setattr(contract, 'PROGRAMME_PREPARATION_TASKS_SHA256', contract.sha(contract._programme_json(bundle['tasks'])))
+    with pytest.raises((contract.ContractError, ValueError)):
+        contract.prepare_programme_preparation(tmp_path, bundle)
+    assert not (tmp_path / contract.programme_preparation_directory(task['task_id'])).exists()
+
+
+@pytest.mark.parametrize('attack', ['source', 'evidence', 'current_parent', 'original_parent', 'plan', 'board', 'receipt'],
+    ids=['source', 'evidence', 'current-parent', 'original-parent', 'plan', 'board', 'receipt'])
+def test_programme_preparation_requires_physical_snapshot_and_retained_history_integrity(tmp_path, monkeypatch, attack):
+    _, bundle = _preparation_fixture(tmp_path, monkeypatch)
+    task = bundle['tasks'][0]
+    if attack in ('source', 'evidence'):
+        path = tmp_path / task['binding']['owner_sources' if attack == 'source' else 'evidence'][0]['path']
+    elif attack in ('current_parent', 'original_parent'):
+        path = tmp_path / task['binding']['current_backlog' if attack == 'current_parent' else 'original_backlog']['path']
+    elif attack == 'plan': path = tmp_path / contract.PLAN
+    elif attack == 'board': path = tmp_path / contract.BOARD
+    else: path = tmp_path / 'retained/lirae-retained-000.json'
+    path.write_bytes(path.read_bytes() + b' ')
+    if attack == 'plan':
+        body = json.loads(path.read_bytes());body['tasks'][0]['title'] = 'Changed';write_json(path, body)
+    with pytest.raises(contract.ContractError):
+        contract.prepare_programme_preparation(tmp_path, bundle)
+
+
+@pytest.mark.parametrize('body', [b'{"schema":"a","schema":"b"}', b'{"value":NaN}'],
+                         ids=['duplicate-key', 'nonfinite'])
+def test_programme_preparation_refuses_unsafe_snapshot_json(tmp_path, monkeypatch, body):
+    _, bundle = _preparation_fixture(tmp_path, monkeypatch)
+    task = bundle['tasks'][0];path = tmp_path / task['binding']['admission_scope']['path'];path.write_bytes(body)
+    task['binding']['admission_scope'] = _preparation_ref(path, tmp_path)
+    monkeypatch.setattr(contract, 'PROGRAMME_PREPARATION_TASKS_SHA256', contract.sha(contract._programme_json(bundle['tasks'])))
+    with pytest.raises(contract.ContractError):
+        contract.prepare_programme_preparation(tmp_path, bundle)
+
+
+@pytest.mark.parametrize('path', ['../escape.json', 'workspace/../escape.json', 'workspace/*.json',
+    'workspace/a\x00.json', 'workspace/a\\b.json', 'workspace/a[1].json'],
+    ids=['parent-escape', 'nested-parent', 'glob', 'nul', 'backslash', 'brackets'])
+def test_programme_preparation_rejects_unsafe_reference_paths(path):
+    with pytest.raises(contract.ContractError):
+        contract._programme_preparation_ref_contract(dict(path=path, bytes=1, sha256='a' * 64))
+
+
+def test_programme_preparation_retained_outputs_are_immutable(tmp_path, monkeypatch):
+    plan, bundle = _preparation_fixture(tmp_path, monkeypatch)
+    _adopt_preparation_fixture(tmp_path, plan, bundle)
+    task_id = bundle['tasks'][0]['task_id']
+    contract.materialize_programme_preparation(tmp_path, task_id)
+    path = tmp_path / contract.programme_preparation_directory(task_id) / 'packet.json'
+    path.write_bytes(path.read_bytes() + b' ')
+    before = path.read_bytes()
+    with pytest.raises(contract.ContractError, match='retained programme preparation output differs'):
+        contract.materialize_programme_preparation(tmp_path, task_id)
+    assert path.read_bytes() == before
+
+
+def test_programme_preparation_uses_only_the_normal_local_public_owner():
+    path = ROOT / contract.PROGRAMME_PREPARATION_OWNER
+    from ipfs_datasets_py.logic.autoformal.supervisor_loop import prepare_programme_work_packet_v1
+    assert contract._programme_preparation_owner(ROOT, _preparation_ref(path, ROOT)) is prepare_programme_work_packet_v1
+
+
+def test_programme_preparation_absent_bundle_preserves_existing_plan():
+    plan = json.loads((ROOT / contract.PLAN).read_bytes())
+    assert 'programme_preparation' not in plan
+    assert contract.check_programme_preparation_plan(ROOT, plan) is None
+
