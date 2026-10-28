@@ -186,6 +186,300 @@
     },
     "repair_cancellation_requires_current_board_unit_and_attempt_token": true
   },
+  "recovery_policy_followup_20261028": {
+    "cause_precision": "The overnight early retry follows the demonstrated next_job repair_launch_failed_immediately shortcut. Enqueue shortening was guarded prospectively and is not asserted as the observed cause. All worker failures and spent counters remain retained.",
+    "deployment": {
+      "LIR9001_preserved": {
+        "automatic_retry_admitted": false,
+        "completion_receipt_attempt_number": 2,
+        "goal_cid": "baguqeeraltwtz3jrjl3jw64ql5gjl652d22gwvwu2haubymvyllwjapwgqzq",
+        "plan_cid": "baguqeeraiddmy4khowkyv37gwstmexmmku3lecsjtnaekhpqnlwx4vuwrhza",
+        "receipt_attempt_budget_exhausted": null,
+        "receipt_failure_kind": "administrative_operator_stop_outcome_unknown",
+        "receipt_max_task_attempts": null,
+        "revision": 13,
+        "status": "blocked",
+        "task_alias": "LIR-9001",
+        "task_cid": "baguqeeraqk2ln7d3plwfonnyycsxkr5tjrpo7e5uq4p7rhe6vi6btpxsaeyq"
+      },
+      "active_clean_worktree_must_be_retained_until_reviewed_successor": true,
+      "actual_activation_receipt": {
+        "bytes": 12060,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/watchdog-dual-namespace-v01/recovery-policy-20261028-v01/root-runtime-adoption-v01.json",
+        "sha256": "39999efc38394bd44dad95e3d2d073fb0767b3460249adbabd19735f18c27fef"
+      },
+      "both_namespace_observations_are_post_start": true,
+      "budget_reset_or_job_rearm": false,
+      "canonical_owner": "existing Accelerate rescue/provider modules; selected worktree is not a second implementation",
+      "engineering_actions": 3,
+      "engineering_budget_sha256": "17c65ebb009e70155d098b89a35f5b349148864d92b5846899d22a108cb3f00c",
+      "engineering_budget_unchanged": true,
+      "engineering_total_actions": 3,
+      "finished_at_utc": "2026-10-28T04:47:02.053842+00:00",
+      "four_target_postimages": {
+        "/home/barberb/.config/ipfs-taskboard-watchdog/legal-ir/fleet.json": {
+          "after_bytes": 11080,
+          "after_sha256": "a001b46c8de229f31dc704224dd27f36b67ab4f26907b13e64f83a7b761c2133",
+          "before_sha256": "3b35a79a4c9104d8904e1796b71cc46416fe370fefec75cdd62121bf063a7e49",
+          "mode": 384
+        },
+        "/home/barberb/.config/ipfs-taskboard-watchdog/legal-ir/inventory.json": {
+          "after_bytes": 5263,
+          "after_sha256": "8484acd5f9a9791160bd015b9e16e83c5a395ef28f37ef22af0a5057b7fac6cd",
+          "before_sha256": "f6bf77822e01a5e7c0a8ccedb60e1b74fecaed701323561c936c755e6aa0945a",
+          "mode": 384
+        },
+        "/home/barberb/.config/systemd/user/ipfs-taskboard-legal-ir-repair.service": {
+          "after_bytes": 919,
+          "after_sha256": "e980397314d618786006f7e14828ea5c7716e7431cc762f2999d3840060c6259",
+          "before_sha256": "43a639f83c4d5c380dc2e014605e8914e44cdc269708b041dc574c84e29fae71",
+          "mode": 384
+        },
+        "/home/barberb/.config/systemd/user/ipfs-taskboard-legal-ir-watchdog.service": {
+          "after_bytes": 927,
+          "after_sha256": "e6c51e847c05072e1d3db36f4bdd4fb7db6b60244d1e95263030e6acaef58cc9",
+          "before_sha256": "e00606d80742d3f2beadd9a59378e25a6f2811a156fe7cc5d2014463726ca940",
+          "mode": 384
+        }
+      },
+      "fresh_observations": {
+        "legal-ir": {
+          "attempts": 0,
+          "health": "healthy",
+          "infrastructure_budget": {
+            "actions": 3,
+            "board_id": "legal-ir",
+            "circuit_open_until": 1793144902.9172723,
+            "schema": "agent-supervisor/infrastructure-budget@1",
+            "status": "open",
+            "total_actions": 3,
+            "window_started_at": 1793140758.6836767
+          },
+          "observed_at": 1793162821.385023,
+          "stall_class": "none"
+        },
+        "legal-ir-scientific": {
+          "attempts": 0,
+          "health": "blocked",
+          "infrastructure_budget": {
+            "actions": 0,
+            "board_id": "legal-ir-scientific",
+            "circuit_open_until": 0,
+            "schema": "agent-supervisor/infrastructure-budget@1",
+            "status": "available",
+            "total_actions": 0,
+            "window_started_at": 1793162821.6868107
+          },
+          "observed_at": 1793162821.6868107,
+          "stall_class": "native_catalogue_outcome_unknown"
+        }
+      },
+      "independent_binding_limits": [
+        "This binds observed metadata and process environment; it is not whole-process import attestation.",
+        "The retained scientific report is evidence of the original probe read; this review did not reopen the database.",
+        "No provider operation or native/legal completion is established by healthy observer startup."
+      ],
+      "independent_metadata_process_environment_binding": {
+        "bytes": 15950,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/watchdog-dual-namespace-v01/recovery-policy-20261028-v01/independent-runtime-adoption-v01/binding.json",
+        "sha256": "f61580d0a52022729342add6516c2172c8af9f1e7fe4d2b975c0dbb1e92f5150"
+      },
+      "native_task_mutations": false,
+      "original_standalone_release_preserved": "2b499e94d6c23f14cd72",
+      "other_units_changed": false,
+      "plan": {
+        "bytes": 25218,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/watchdog-dual-namespace-v01/recovery-policy-20261028-v01/deployment-candidates/plan.json",
+        "sha256": "ef4f915ca7bd54d4185189f6972cce2cb39d33662fdf7ed0c740edcda4b17ccf"
+      },
+      "post_start_status": {
+        "bytes": 54235,
+        "path": "/home/barberb/.local/state/ipfs-taskboard-watchdog/legal-ir/status.json",
+        "sha256": "d55dab692c8e7caed876d6b5dffa1c418afe9935088c87a11a87fb01f6a697f5"
+      },
+      "provider_execution": false,
+      "retained_job_sha256": "eeed6868115fab5e93689df84178cdf34305b8ef96237b6b1314ddd7d08793e5",
+      "retained_job_unchanged": true,
+      "retained_repair_attempts": 3,
+      "science_preserved": {
+        "activation_state": "not_activated",
+        "completion_authority": false,
+        "counts": {
+          "blocked": 64
+        },
+        "database_and_wal_metadata_unchanged": true,
+        "dependency_count": 115,
+        "event_cursor": 214,
+        "executor_health": "not_established",
+        "goal_count": 34,
+        "store_generation": 19,
+        "task_count": 64
+      },
+      "scientific_durable_budget_file_remains_absent": true,
+      "service_start_epoch": 1793162760.344272,
+      "source_worktree": "/home/barberb/lift_coding/.worktrees/legal-ir-watchdog-recovery-contract-20261028",
+      "started_at_utc": "2026-10-28T04:45:59.918166+00:00",
+      "state": "activated_fresh_both_namespaces_preserved_spent_budgets",
+      "units_after": {
+        "ipfs-taskboard-legal-ir-repair.service": {
+          "ActiveState": "active",
+          "Id": "ipfs-taskboard-legal-ir-repair.service",
+          "MainPID": "3104064",
+          "NRestarts": "0",
+          "SubState": "running",
+          "UnitFileState": "enabled"
+        },
+        "ipfs-taskboard-legal-ir-watchdog.service": {
+          "ActiveState": "active",
+          "Id": "ipfs-taskboard-legal-ir-watchdog.service",
+          "MainPID": "3104063",
+          "NRestarts": "0",
+          "SubState": "running",
+          "UnitFileState": "enabled"
+        }
+      },
+      "whole_process_import_attestation": false
+    },
+    "independent_static_review": {
+      "bytes": 10557,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/watchdog-dual-namespace-v01/recovery-policy-20261028-v01/independent-documentation-review-v01/final-review.json",
+      "sha256": "73f9a414c61ce447f2963a02eaa688ae589241b68061886d4e77ab7c92a721ac"
+    },
+    "limits": [
+      "Original92-case/139-card/crash-recovery source generation and all old source/runtime/CI records remain historical and unchanged.",
+      "No whole-suite, live-provider or live service-repair qualification is inferred from fake cohorts or the ordinary import smoke.",
+      "Native scientific UNKNOWN, blocked task population, existing holds and mandatory positive caps are preserved.",
+      "No new model, legal-meaning, training/gold, graph/corpus/Lean or native task/goal success is claimed.",
+      "Retain the active clean d861 source worktree until a reviewed successor deployment replaces it. PR publication does not establish public-main or parent-submodule adoption. Healthy-state consecutive bookkeeping at0 does not replenish the separate spent durable budgets."
+    ],
+    "overnight_observation": {
+      "LIR9001_attempt": 2,
+      "automatic_retry_admitted": false,
+      "cumulative_repair_job_attempts": 3,
+      "daily_watchdog_actions": 3,
+      "engineering_completed": 141,
+      "engineering_durable_budget_sha256": "17c65ebb009e70155d098b89a35f5b349148864d92b5846899d22a108cb3f00c",
+      "engineering_shared_population": 141,
+      "event_cursor": 214,
+      "failure_kind": "administrative_operator_stop_outcome_unknown",
+      "overnight_worker_attempts": 2,
+      "prior_retained_worker_attempts": 1,
+      "receipt": {
+        "bytes": 25445,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/watchdog-dual-namespace-v01/overnight-recovery-audit-20261028-v01/audit.json",
+        "sha256": "cf17068ffc9e25b9bf6edbd36837e226e051390213c20d03bb50589b17659166"
+      },
+      "retained_job_sha256": "eeed6868115fab5e93689df84178cdf34305b8ef96237b6b1314ddd7d08793e5",
+      "retained_job_status": "retired_wait",
+      "scientific_blocked": 64,
+      "scientific_budget_projection_actions": 0,
+      "scientific_durable_budget_file_absent": true,
+      "store_generation": 19,
+      "successful_autonomous_coding_repair_established": false
+    },
+    "prior_published_record": {
+      "bytes": 14140,
+      "datasets_base": "bdb919673b27c5fa335aadb6dd54549a5f347f45",
+      "sha256": "6de9965f817c9f42dca11c38210cea3207d97598512e9e00e6640b66d95e8efc"
+    },
+    "qualification": {
+      "baseline_generic_failures": {
+        "attribution": {
+          "bytes": 7768,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/watchdog-dual-namespace-v01/recovery-policy-20261028-v01/cooldown-candidates/baseline-attribution-readback-v01.json",
+          "sha256": "094b325be70006dee34d34d09fbf1011d4698f1df693bd05c9c77a180ca74aca"
+        },
+        "count": 3,
+        "original_commit": "9daede149079cbdcea816b8f101fb2da5fd2a22e",
+        "passing_credit": false,
+        "same_case_ids": [
+          "test/api/test_agent_supervisor_fleet_watchdog.py::test_crash_after_intent_preserves_pending_action_and_cooldown",
+          "test/api/test_agent_supervisor_fleet_watchdog.py::test_live_worker_wait_retries_unstall_on_cooldown",
+          "test/api/test_agent_supervisor_fleet_watchdog.py::test_stall_cooldown_survives_restart_and_reason_changes"
+        ]
+      },
+      "cohorts_are_separate_not_pooled": true,
+      "full_generic_suites_qualified": false,
+      "live_provider_fallback_or_service_repair_qualified": false,
+      "monitor_classification": {
+        "actual_provider_service_native_DB_or_model_effects": false,
+        "passed": 110,
+        "phases": 330,
+        "result": {
+          "bytes": 10958,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/watchdog-dual-namespace-v01/recovery-policy-20261028-v01/cooldown-candidates/unit-04/result.json",
+          "sha256": "5ff3ab69e036b1d01c443fac090b6f5f30a68829509f15ff7c38fa7a0e02e538"
+        }
+      },
+      "physical_quota_adapter_and_durable_deadline": {
+        "actual_provider_service_native_DB_or_model_effects": false,
+        "passed": 55,
+        "phases": 165,
+        "result": {
+          "bytes": 34676,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/watchdog-dual-namespace-v01/recovery-policy-20261028-v01/provider-qualification-v03/result.json",
+          "sha256": "28da12d5176d5c7aef94d1cca986619d222a8dea03e8e1b1907878a11f40b95f"
+        }
+      },
+      "refused_broader_attempts": "Broader collection required unrelated native-state fixtures; the effect guard refused an old native-heal service call and an old subprocess smoke before execution. Those failures are retained outside passing credit.",
+      "unchanged_original_pure_route_regressions": {
+        "actual_provider_service_native_DB_or_model_effects": false,
+        "guard_denials": 0,
+        "passed": 6,
+        "phases": 18,
+        "pytest_seconds": 1.1,
+        "result": {
+          "bytes": 45304,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/watchdog-dual-namespace-v01/recovery-policy-20261028-v01/root-original-pure-route-regressions-v01/result.json",
+          "sha256": "392754c530aea5feaacb215a6d8810f0ea840e3c4f2a8e73901dc8cbe8435576"
+        }
+      }
+    },
+    "recorded_at_utc": "2026-10-28T04:56:54.954017+00:00",
+    "source": {
+      "commit": "d861eacccaa4fa188ff4bee9fcf7abf95f9bbf9d",
+      "public_main_or_parent_gitlink_adoption_claimed": false,
+      "publication": {
+        "annotation": "The job was not started because your account is locked due to a billing issue.",
+        "bypass_used": false,
+        "head": "d861eacccaa4fa188ff4bee9fcf7abf95f9bbf9d",
+        "job_id": 122635945599,
+        "merge_state_status": "BLOCKED",
+        "normal_merge_attempt_result": "base branch policy prohibits merge",
+        "normal_merge_attempt_returncode": 1,
+        "parent_accelerate_gitlink": "089fe9f8125c2dd59f5f3e035d2d5d45476f8228",
+        "public_main_adopted": false,
+        "pull_request": "https://github.com/endomorphosis/ipfs_accelerate_py/pull/304",
+        "receipt": {
+          "bytes": 1001,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/watchdog-dual-namespace-v01/recovery-policy-20261028-v01/root-publication-state-v01.json",
+          "sha256": "5d5273e4304bef9dfd0d7a167986a81421262f49b7da6cb8e756a7c28c8843cd"
+        },
+        "required_app_id": 15368,
+        "required_context": "documentation-gates",
+        "required_job_execution": "not_started_per_GitHub_annotation",
+        "run_id": 40633776166,
+        "state": "OPEN"
+      },
+      "runtime_import_smoke_reported_passed_by_root": true,
+      "source_commit_receipt": {
+        "bytes": 673,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/watchdog-dual-namespace-v01/recovery-policy-20261028-v01/root-source-commit-v01.json",
+        "sha256": "e91101dbfe4c6e149717cf7f772ba238e43d70951606373e83517090b5202d95"
+      },
+      "tree": "1043c5a47a1418f9118ff0b5ba969dff34f3dbb6",
+      "worktree": "/home/barberb/lift_coding/.worktrees/legal-ir-watchdog-recovery-contract-20261028"
+    },
+    "state": "locally_activated_fresh_both_namespaces_spent_caps_preserved",
+    "verified_source_contracts": [
+      "Complete fresh live non-restart backpressure lanes and exact monitor issue population yield an infrastructure wait, even with positive ready/selectable counts.",
+      "Independent ready or active work remains runnable; a finite genuine scheduling stall carries a closed board/token/threshold/time frame through assessment, admission and enqueue.",
+      "Only the scheduling anchor pauses; meaningful progress, task authority, operator holds and cumulative/window budgets remain unchanged.",
+      "Repair argv selects the existing physical strict-quota adapter, retaining --require-terminal-quota-frame; the private receipt recognizes the exact direct-script and -P forms without relaxing quota-only fallback.",
+      "Explicit infrastructure durable retry deadlines survive quick failures, migration, enqueue, reconciliation, productive continuation, final claim and early refusal after clock rollback. Positive cumulative caps remain mandatory.",
+      "Fresh backpressure discovered at prelaunch/reconciliation/completion retires the exact repair job as a wait without claiming native/task/goal recovery."
+    ]
+  },
   "required_gate_facts": {
     "as_of_utc": "2026-10-27T20:09:27.660798+00:00",
     "branch_protection": {
