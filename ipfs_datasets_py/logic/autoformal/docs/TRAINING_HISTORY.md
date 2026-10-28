@@ -1,5 +1,21 @@
 # Training and experiment history
 
+[Current source qualification evidence](../../../../docs/autoformalization/evidence/legal-ir-reviewed-programme-packet-index-source-qualification-20261028.json).
+
+## Programme packet source adoption and current qualification cutoff, 2026-10-28
+
+**Programme packet owner adoption, 2026-10-28:** The existing `supervisor_loop` now includes the peer `prepare_programme_work_packet_v1` and its programme-preparation CLI helpers, preserving the 9001/9002 owners. The port makes one explicit compatibility correction: descriptor byte counts must be positive, matching the physical CLI reader; zero is now a negative control. The new `prepare_current_reviewed_programme_packet_index_v1` / `verify_current_reviewed_programme_packet_index_v1` and canonical `programme-index prepare|verify` route reconstruct a frozen factual index from the unchanged saved native population.
+
+**Native status remains 2 completed and 62 blocked, cursor 220. LIR-9003 remains blocked at revision 2.** Its original criteria 0 and 2 remain open; criterion 1 is satisfied only within the factual-index scope. Seven implementation cards remain blocked non-packet dispositions because current task/revision, edit/test scope, lease and acceptance contracts are unbound. This does not assert that their implementations are absent. No native amendment, completion, dispatch, retry, training, semantic review or supervision-mask grant follows.
+
+Fresh original-owned qualification passed **115 parent cases, 345 phases and 69 subtests** (JUnit summary 184, 2.243 seconds). The 65 legacy packet cases, 38 preparation CLI cases, 11 new normal-import cases and one saved-data rehearsal retain their declared scopes. Both earlier failed qualifications remain retained. The actual normal canonical producer and distinct verifier have now closed under separate original VALIDATION owners, using the immutable input and frozen report. They reproduce the factual 64-row index while LIR-9003 stays blocked at revision 2 with criteria 0 and 2 open. The producer bound 184 data/source pins; the verifier bound 190. Both released source, native, process and storage custody. This grants no productive execution or native completion.
+
+For LIR-9103, reconcile the existing four-tensor/margin implementation and retained mechanics, saved-output comparison and diagnostics. Its separately qualified v2 capture/parity owner is also present. Recipe-bound v2 trainer request/worker integration and narrow pre-entry refusal recovery are already merged, with separate 241-case pure/fake contract evidence and no numerical/model/update work. Its actual zero-model probe refused before grant or child; that evidence grants no retry or storage release. A new TRAIN rate, retained fit, numerical-dispatch qualification, v2 saved-output scorer and scientific/Lean admission remain open. Reuse the existing implementation and completed fits.
+
+**Current operations:** the dedicated runtime has separate accepted two-sample evidence on source `677329ab904ec1b15734a5c53021bc993dfca7d3`, release `1e35437a45b9e3e1e704`, with held/spent budgets and native history preserved. Accelerator [PR310](https://github.com/endomorphosis/ipfs_accelerate_py/pull/310) is officially merged at `345a8f60939f4baacfcc198091b9aec86618f3a7` (2026-10-28 17:05:34 UTC); this supersedes the earlier open/billing cutoff below. Runtime acceptance, publication, source qualification and scientific acceptance remain separate evidence.
+
+Earlier records below retain their original cutoffs.
+
 ## V2 trainer integration and bounded pre-entry recovery, 2026-10-28
 
 **V2 trainer contracts and pre-entry recovery qualified, 2026-10-28:** the [final original-owned cohort](../../../../docs/autoformalization/evidence/legal-ir-f18-v2-trainer-integration-recovery-20261028.json) passed **241 pure/fake cases, 723 phases**, in **4.679 seconds**; all 80 source pins stayed unchanged and native, descendant, storage and source custody closed. The existing launcher/worker accepts explicit `owned-f18-conditions-training-request/v2`, authenticates through immutable v1 helpers, binds the exact fresh v2 parity result and constructs/validates both recipes before either arm starts. Donor and historical parity rates remain 0.001; no TRAIN rate is selected. V1 defaults and the original request-hash-bound lifecycle remain compatible.

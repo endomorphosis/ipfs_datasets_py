@@ -881,6 +881,501 @@ def verify_current_capability_and_purpose_map_v1(
         "native_admission": False, "formalized": False, "supervision_masks": {"training": 0, "evaluation_gold": 0}}
 
 
+_PROGRAMME_WORK_PACKET_SPECS_V1 = (
+    ("LIRAE-LIR03-SOURCE-PACKET-01", "source_cache_lineage", "LIR-02",
+     ("release_schema_compatibility", "physical_occurrence_crosswalk")),
+    ("LIRAE-LIR03-IR-PACKET-01", "typed_ir_scoped_graph", "LIR-07",
+     ("complete_typed_ir", "graph_dependency_closure")),
+    ("LIRAE-LIR03-MODEL-PACKET-01", "model_compatibility_quality", "LIR-17",
+     ("producer_head_compatibility", "reviewed_complete_targets",
+      "exposure_grouped_partitions", "frozen_quality_contract")),
+    ("LIRAE-LIR03-LEAN-PACKET-02", "lean_release_verification", "LIR-12",
+     ("explicit_interpretation_and_assumptions", "lean_import_toolchain_closure",
+      "native_preservation_and_build", "immutable_release_readback")),
+)
+
+_PROGRAMME_WORK_PACKET_GLOBAL_GATES_V1 = (
+    "source_release_manifest", "source_custody", "source_span_entity_crosswalk",
+    "edition_and_legal_as_of", "independent_meaning_review",
+    "every_use_applicability_review", "original_owner_admission",
+    "independent_acceptance",
+)
+
+def prepare_programme_work_packet_v1(
+    *, task_id, parent_reference, current_parent_reference, authority_binding,
+    owner_sources, evidence, remaining_gates,
+):
+    """Prepare one of four detached, legacy-authority metadata work packets.
+
+    Every descriptor and role is supplied consistency metadata. This function
+    opens no file, imports no owner, invokes no callback or command, and claims
+    no work. The original caller must authenticate the fixed permitted source
+    and evidence paths, immutable 141-card authority snapshots, current-parent
+    snapshot row, and selected source epoch. Snapshot binding is not current
+    native status, independent review, resource admission or legal authority.
+
+    The original public parent and the supplied current-parent snapshot retain
+    independent hashes. Later edits to a live BACKLOG/board/plan do not rewrite
+    these immutable observations. Actual dispatch requires fresh admission by
+    the original authority; neither this preview nor a completed engineering
+    receipt admits its scientific parent. Only fixed metadata commands and two
+    output paths are derived. Caller-supplied commands and effects are absent.
+    """
+    max_nodes, max_depth, max_text_bytes, max_metadata_bytes = 2048, 8, 1024, 262144
+    max_refs, max_ref_bytes = 64, 8388608
+    nodes = [0]
+
+    def fail(reason):
+        raise ValueError("programme work packet: " + reason)
+
+    def text(value, where):
+        if type(value) is not str or not value or value != value.strip():
+            fail(where + " must be a nonempty plain string")
+        try:
+            length = len(value.encode("utf-8"))
+        except UnicodeEncodeError:
+            fail(where + " must be strict UTF-8")
+        if length > max_text_bytes or any(ord(c) < 32 or ord(c) == 127 for c in value):
+            fail(where + " exceeds its string bound or contains control characters")
+        return value
+
+    def copy_json(value, depth=0):
+        nodes[0] += 1
+        if nodes[0] > max_nodes or depth > max_depth:
+            fail("metadata node/depth bound exceeded")
+        kind = type(value)
+        if kind is dict:
+            if len(value) > max_nodes or any(type(key) is not str for key in value):
+                fail("metadata requires plain string dictionary keys")
+            return {copy_json(key, depth + 1): copy_json(item, depth + 1)
+                    for key, item in value.items()}
+        if kind is list:
+            if len(value) > max_nodes:
+                fail("metadata list bound exceeded")
+            return [copy_json(item, depth + 1) for item in value]
+        if kind is str:
+            return text(value, "metadata string")
+        if kind is int and -(2 ** 63) <= value < 2 ** 63:
+            return value
+        if value is None or kind is bool:
+            return value
+        fail("only exact finite JSON builtin values are supported")
+
+    supplied = copy_json({
+        "task_id": task_id, "parent_reference": parent_reference,
+        "current_parent_reference": current_parent_reference,
+        "authority_binding": authority_binding, "owner_sources": owner_sources,
+        "evidence": evidence, "remaining_gates": remaining_gates,
+    })
+
+    def json_bound(value):
+        body = json.dumps(value, ensure_ascii=False, sort_keys=True,
+                          separators=(",", ":"), allow_nan=False).encode("utf-8")
+        if len(body) > max_metadata_bytes:
+            fail("serialized metadata byte bound exceeded")
+
+    json_bound(supplied)
+
+    def keys(value, wanted, where):
+        if type(value) is not dict or set(value) != set(wanted):
+            fail(where + " has unknown or missing fields")
+
+    def digest(value, size, where):
+        if type(value) is not str or len(value) != size or any(c not in "0123456789abcdef" for c in value):
+            fail(where + " must be lowercase hexadecimal")
+
+    def safe_path(value, where, *, relative=False, suffix=None):
+        text(value, where)
+        parts = value.split("/")
+        components = parts[1:] if value.startswith("/") else parts
+        if ((relative and value.startswith("/")) or not components
+                or any(part in {"", ".", ".."} for part in components)
+                or any(c in value for c in "\\:*?[]")
+                or (suffix is not None and not value.endswith(suffix))):
+            fail(where + " must be a safe explicit path")
+
+    def reference(value, where, *, relative=False, suffix=None):
+        keys(value, ("path", "bytes", "sha256"), where)
+        safe_path(value["path"], where + ".path", relative=relative, suffix=suffix)
+        if type(value["bytes"]) is not int or not 0 < value["bytes"] <= max_ref_bytes:
+            fail(where + ".bytes exceeds its descriptor bound")
+        digest(value["sha256"], 64, where + ".sha256")
+
+    selected = next((row for row in _PROGRAMME_WORK_PACKET_SPECS_V1
+                     if supplied["task_id"] == row[0]), None)
+    if selected is None:
+        fail("unsupported fixed preparation task")
+    selected_id, role, parent_id, role_gates = selected
+    origin = supplied["parent_reference"]
+    keys(origin, ("repository", "revision", "path", "task_id", "task_sha256"),
+         "parent_reference")
+    if (origin["repository"] != "ipfs_datasets_py"
+            or origin["path"] != "ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json"
+            or origin["task_id"] != parent_id):
+        fail("original parent identity differs")
+    digest(origin["revision"], 40, "parent_reference.revision")
+    digest(origin["task_sha256"], 64, "parent_reference.task_sha256")
+    current = supplied["current_parent_reference"]
+    keys(current, ("backlog", "task_id", "task_sha256"), "current_parent_reference")
+    reference(current["backlog"], "current_parent_reference.backlog", suffix=".json")
+    if current["task_id"] != parent_id:
+        fail("current snapshot parent identity differs")
+    digest(current["task_sha256"], 64, "current_parent_reference.task_sha256")
+    authority = supplied["authority_binding"]
+    keys(authority, ("kind", "namespace", "board", "plan", "source_control_revision"),
+         "authority_binding")
+    if authority["kind"] != "legacy_markdown" or authority["namespace"] != "legal-ir-autoencoder-v1":
+        fail("selected authority differs")
+    reference(authority["board"], "authority_binding.board", suffix=".md")
+    reference(authority["plan"], "authority_binding.plan", suffix=".json")
+    digest(authority["source_control_revision"], 64, "authority_binding.source_control_revision")
+
+    for name, source in (("owner_sources", True), ("evidence", False)):
+        values = supplied[name]
+        if type(values) is not list or not 1 <= len(values) <= max_refs:
+            fail(name + " requires a bounded nonempty descriptor list")
+        paths = []
+        for index, value in enumerate(values):
+            reference(value, name + ":" + str(index), relative=source,
+                      suffix=".py" if source else ".json")
+            paths.append(value["path"])
+        if len(set(paths)) != len(paths):
+            fail(name + " paths must be unique")
+    gates = supplied["remaining_gates"]
+    allowed = _PROGRAMME_WORK_PACKET_GLOBAL_GATES_V1 + role_gates
+    if (type(gates) is not list or not 2 <= len(gates) <= len(allowed)
+            or any(type(gate) is not str or gate not in allowed for gate in gates)
+            or len(set(gates)) != len(gates)
+            or not {"original_owner_admission", "independent_acceptance"} <= set(gates)):
+        fail("remaining_gates must retain exact supported unresolved admission gates")
+
+    script = "scripts/ops/legal_ir/legal_ir_supervisor_contract.py"
+    argv = [["python3", script, "--materialize-programme-preparation", selected_id],
+            ["python3", script, "--check-task", selected_id]]
+    env = "IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. "
+    command = env + " ".join(argv[0]) + " && " + env + " ".join(argv[1])
+    directory = "docs/implementation/reports/evidence/legal_ir_autoencoder/" + selected_id.lower()
+    outputs = [directory + "/packet.json", directory + "/receipt.json"]
+    result = {
+        "schema": "programme-work-execution-packet/v1",
+        **supplied, "role": role, "parent_task_id": parent_id,
+        "execution_kind": "control_metadata_only", "metadata_complete": True,
+        "readiness": "original_admission_required", "snapshot_binding_only": True,
+        "validation_argv": argv, "validation_commands": [command],
+        "outputs": outputs, "allowed_paths": list(outputs),
+        "code_allowlist": [], "test_allowlist": [],
+        "exclusive_keys": ["programme-preparation:" + selected_id],
+        "budgets": {"wall_seconds": 300, "cpu_slots": 1, "memory_mb": 1024,
+                    "storage_bytes": 16777216, "child_process_slots": 1,
+                    "max_attempts": 1},
+        "descriptor_hashes_verified": False, "current_parent_row_verified": False,
+        "current_source_epoch_verified": False, "native_status_verified": False,
+        "capability_verified": False, "independently_verified": False,
+        "dispatch_authorized": False, "mutation_authorized": False,
+        "native_admission": False, "model_execution_authorized": False,
+        "training_authorized": False, "parent_semantic_admission": False,
+        "task_completion_authority": False, "goal_completion_authority": False,
+        "completion_authority": False, "admitted": False, "formalized": False,
+        "semantic_review_verified": False,
+        "supervision_masks": {"training": 0, "evaluation_gold": 0},
+        "verification_limits": [
+            "Descriptors and principals are supplied metadata, not authenticated file bytes or independence.",
+            "Snapshot binding is not current native task state, capability, scope or resource admission.",
+            "The original caller must verify fixed source/evidence paths, snapshot bytes and parent rows.",
+            "Owner source snapshots are data references and are never imported or executed by this API.",
+            "Later dispatch requires original admission; engineering completion admits no scientific parent.",
+        ],
+    }
+    json_bound(result)
+    return result
+
+
+def prepare_current_reviewed_programme_packet_index_v1(
+    *, original_snapshot, current_snapshot, packet_index, producer_principal,
+    expected_task_revision=2,
+):
+    """Reconstruct a closed saved-population index, without native effects.
+
+    The completed legacy preparations are reused consistency metadata. They
+    are not productive execution packets. Physical bytes, live native state,
+    principals and resource admission remain the original caller's duties.
+    """
+    def need(condition, reason):
+        if not condition:
+            raise ValueError('programme index: ' + reason)
+
+    def same(left, right):
+        return _handoff_reconciliation_bytes_v2(left) == _handoff_reconciliation_bytes_v2(right)
+
+    nodes = [0]
+    def detached(value, depth=0):
+        nodes[0] += 1
+        need(nodes[0] <= 150000 and depth <= 32, 'metadata node/depth bound exceeded')
+        kind = type(value)
+        if kind is dict:
+            need(all(type(key) is str for key in value), 'plain JSON keys required')
+            return {detached(key, depth + 1): detached(item, depth + 1) for key, item in value.items()}
+        if kind is list:
+            return [detached(item, depth + 1) for item in value]
+        if kind is str:
+            need(len(value.encode('utf-8')) <= 2 * 1024**2, 'metadata string bound exceeded')
+            return value
+        if value is None or kind is bool or kind is int and -(2**63) <= value < 2**63:
+            return value
+        # Original closeout observations contain bounded finite elapsed times.
+        need(kind is float and value == value and abs(value) <= 2**63, 'finite builtin JSON required')
+        return value
+
+    def text(value):
+        return type(value) is str and 0 < len(value) <= 4096 and value == value.strip() and not any(ord(c) < 32 for c in value)
+
+    def path(value):
+        return text(value) and value.startswith('/') and value != '/' and all(p not in {'', '.', '..'} for p in value.split('/')[1:]) and not any(c in value for c in '\\*?[]')
+
+    def digest(value):
+        return type(value) is str and len(value) == 64 and all(c in '0123456789abcdef' for c in value)
+
+    def ref(value):
+        return type(value) is dict and set(value) == {'path', 'bytes', 'sha256'} and path(value['path']) and type(value['bytes']) is int and 0 < value['bytes'] <= 4 * 1024**2 and digest(value['sha256'])
+
+    def bound_json(item):
+        need(type(item) is dict and set(item) == {'descriptor', 'json_text'} and ref(item['descriptor']) and type(item['json_text']) is str, 'closed byte-bound JSON record required')
+        raw = item['json_text'].encode('utf-8')
+        need(len(raw) == item['descriptor']['bytes'] and hashlib.sha256(raw).hexdigest() == item['descriptor']['sha256'], 'descriptor/content mismatch')
+        def pairs(values):
+            result = {}
+            for key, value in values:
+                need(key not in result, 'duplicate evidence JSON key')
+                result[key] = value
+            return result
+        value = json.loads(raw, object_pairs_hook=pairs,
+            parse_constant=lambda _: (_ for _ in ()).throw(ValueError('nonfinite evidence JSON')))
+        need(type(value) is dict, 'evidence object required')
+        return detached(value)
+
+    need(type(expected_task_revision) is int and expected_task_revision == 2, 'unchanged9003 revision2 required')
+    need(text(producer_principal), 'bounded producer principal required')
+    supplied = detached(dict(original_snapshot=original_snapshot, current_snapshot=current_snapshot, packet_index=packet_index))
+    _handoff_reconciliation_bytes_v2(supplied)
+    original, current, data = (supplied[key] for key in ('original_snapshot', 'current_snapshot', 'packet_index'))
+    need(type(original) is dict and same(original, current) and original.get('schema') == 'ipfs_accelerate_py/agent-supervisor/intent-plan-projection@1', 'exact unchanged saved native projection required')
+    tasks, goals, edges, plans = (current.get(key) for key in ('tasks', 'goals', 'goal_edges', 'plans'))
+    need(type(tasks) is list and len(tasks) == 64 and type(goals) is list and len(goals) == 34 and type(edges) is list and len(edges) == 33 and type(plans) is list and len(plans) == 1, 'exact64/34/33/1 population required')
+    need(all(type(row) is dict and text(row.get('task_alias')) and text(row.get('task_cid')) and type(row.get('revision')) is int and row['revision'] > 0 and text(row.get('goal_cid')) and text(row.get('plan_cid')) and type(row.get('body')) is dict for row in tasks), 'native identities/revisions required')
+    aliases = {row['task_alias']: row for row in tasks}
+    cids = {row['task_cid']: row for row in tasks}
+    need(len(aliases) == len(cids) == 64 and {'LIR-9001', 'LIR-9002', 'LIR-9003'} <= set(aliases), 'unique native64 identities required')
+    goal_ids = {row.get('goal_cid') for row in goals if type(row) is dict}
+    need(len(goal_ids) == 34 and all(text(v) for v in goal_ids), 'unique goal identities required')
+    dependency_count = 0
+    for row in tasks:
+        deps = row.get('dependencies')
+        need(row.get('goal_cid') in goal_ids and type(deps) is list and all(type(d) is dict and set(d) == {'dependency_task_cid', 'kind'} and d['kind'] == 'depends_on' and d['dependency_task_cid'] in cids and d['dependency_task_cid'] != row['task_cid'] for d in deps), 'native dependency/goal binding required')
+        need(len({d['dependency_task_cid'] for d in deps}) == len(deps), 'duplicate dependency')
+        dependency_count += len(deps)
+    need(dependency_count == 115 and sum(r.get('status') == 'completed' for r in tasks) == 2 and sum(r.get('status') == 'blocked' for r in tasks) == 62, 'closed115-dependency2/62 population required')
+    task, dependency, handoff = (aliases[key] for key in ('LIR-9003', 'LIR-9002', 'LIR-9001'))
+    need(task['revision'] == expected_task_revision and task['status'] == 'blocked' and dependency['revision'] == 4 and dependency['status'] == 'completed' and handoff['revision'] == 15 and handoff['status'] == 'completed', 'current9003/dependency9002/handoff9001 state required')
+    need(same(task['dependencies'], [{'dependency_task_cid': dependency['task_cid'], 'kind': 'depends_on'}]), '9003 depends only on accepted9002')
+    criteria = [
+        'Each productive task has a current purpose-specific source/runtime/input contract before unblocking.',
+        'Empty Validation fields in this planning board cannot grant completion; only the materialized execution copy receives actual commands.',
+        'Implementation packets declare exact new/changed code and test paths, shared-file lease keys and independently reviewed acceptance; Existing owners remain read-only context until scoped.',
+    ]
+    need(same(task.get('acceptance'), [{'criterion': criterion, 'evidence_policy': {'criterion': criterion}, 'ordinal': i} for i, criterion in enumerate(criteria)]), 'all three original criteria/policies must remain unchanged')
+    need(type(task.get('body')) is dict and 'completion_receipt' not in task['body'] and 'retained_execution_outcomes' not in task['body'], 'no9003 completion or inherited attempt history')
+    need(type(data) is dict and set(data) == {'schema', 'repository_roots', 'dependency_evidence', 'retention_alias_manifest', 'engineering_preparations', 'current_owner_generation_comparison', 'row_dispositions', 'runtime_outputs', 'input_role_policy'} and data['schema'] == 'legal-ir-reviewed-programme-packet-index-inputs/v1', 'closed index input schema required')
+    roots = data['repository_roots']
+    need(type(roots) is dict and set(roots) == {'datasets_metadata', 'native_control', 'peer_engineering', 'retained_snapshots'} and all(path(value) for value in roots.values()) and len(set(roots.values())) == 4, 'four explicit repository roots required')
+    outputs = data['runtime_outputs']
+    need(type(outputs) is dict and set(outputs) == {'report', 'freeze', 'verification'} and all(path(value) for value in outputs.values()) and len(set(outputs.values())) == 3, 'distinct explicit metadata outputs required')
+    role_policy = dict(retained_evidence_is_metadata_only=True, owner_snapshots_never_imported=True,
+        original_native_admission_required=True, complete_productive_packets_claimed=0,
+        blocked_dispositions_authorize_execution=False)
+    need(same(data['input_role_policy'], role_policy) and type(data['input_role_policy']['complete_productive_packets_claimed']) is int, 'metadata-only role policy required')
+    manifest = bound_json(data['retention_alias_manifest'])
+    need(set(manifest) == {'schema', 'entries', 'new_source_execution_or_qualification', 'original_requests_receipts_and_failed_attempts_modified', 'purpose', 'source_requests', 'unique_object_bytes'} and manifest['schema'] == 'legal-ir-request-control-source-archive/v1' and manifest['new_source_execution_or_qualification'] is False and manifest['original_requests_receipts_and_failed_attempts_modified'] is False, 'immutable retention manifest required')
+    entries = manifest['entries']
+    need(type(entries) is list and 1 <= len(entries) <= 128, 'bounded retention aliases required')
+    aliases_seen, alias_paths = set(), set()
+    for entry in entries:
+        need(type(entry) is dict and set(entry) == {'bytes', 'captured_path', 'expected_sha256', 'original_path', 'sha256', 'status'} and path(entry['original_path']) and path(entry['captured_path']) and type(entry['bytes']) is int and 0 < entry['bytes'] <= 4 * 1024**2 and digest(entry['sha256']) and type(entry['expected_sha256']) is list and entry['sha256'] in entry['expected_sha256'] and all(digest(value) for value in entry['expected_sha256']) and entry['status'] == 'exact_current_pinned_bytes_retained', 'closed exact retention alias required')
+        key = (entry['original_path'], entry['bytes'], entry['sha256'])
+        need(key not in aliases_seen and entry['original_path'] not in alias_paths and entry['captured_path'] == data['retention_alias_manifest']['descriptor']['path'].rsplit('/', 1)[0] + '/objects/' + entry['sha256'], 'unique content-addressed durable alias required')
+        aliases_seen.add(key);alias_paths.add(entry['original_path'])
+    evidence = data['dependency_evidence']
+    need(type(evidence) is dict and set(evidence) == {'completion_capture', 'completion_result', 'independent_completion_binding', 'independent_owner_closeout', 'independent_verification', 'producer_freeze', 'report'}, 'exact accepted9002 evidence set required')
+    values = {key: bound_json(item) for key, item in evidence.items()}
+    completion, checked, report, freeze, closed, capture, binding = (values[key] for key in ('completion_result', 'independent_verification', 'report', 'producer_freeze', 'independent_owner_closeout', 'completion_capture', 'independent_completion_binding'))
+    receipt = dependency['body'].get('completion_receipt')
+    need(type(receipt) is dict and text(receipt.get('evidence_digest')) and type(checked.get('task_scope')) is dict
+         and type(closed.get('custody')) is dict and type(capture.get('original_terminal')) is dict,
+         'closed accepted receipt, scope and custody objects required')
+    need(report.get('schema') == 'legal-ir-current-capability-and-purpose-map/v1' and type(report.get('task_scope')) is dict
+         and same(report['task_scope'], {**{key: dependency[key] for key in ('task_alias', 'task_cid', 'goal_cid', 'plan_cid')}, 'revision': 3})
+         and same(report.get('dependency_scope'), {key: handoff[key] for key in ('task_alias', 'task_cid', 'revision', 'status')}),
+         'accepted9002 report scope must bind9002 reviewed3 and completed9001 revision15')
+    need(type(report.get('repository_roots')) is dict and same(report['repository_roots'], dict(datasets_metadata=roots['datasets_metadata'], native_control=roots['native_control'], runtime_resources=roots['retained_snapshots']))
+         and type(task['body'].get('constraints')) is dict and task['body']['constraints'].get('canonical_logic_root') == roots['retained_snapshots'],
+         'repository roots must join accepted9002 and original9003 source authority')
+    need(receipt.get('schema') == 'legal-ir-native-independent-capability-purpose-completion/v1' and receipt.get('task_cid') == dependency['task_cid'] and type(receipt.get('reviewed_revision')) is int and receipt['reviewed_revision'] == 3 and receipt.get('attempt_history_copied_from_other_tasks') is False, 'actual9002 accepted receipt required')
+    need(completion.get('schema') == 'legal-ir-native-capability-purpose-completion-result/v1' and type(completion.get('completed_revision')) is int and completion['completed_revision'] == 4 and completion.get('task_cid') == dependency['task_cid'] and completion.get('evidence_digest') == receipt.get('evidence_digest') and completion.get('all_other63_tasks_unchanged') is True and completion.get('native_DAG_unchanged') is True and completion.get('9001_UNKNOWN_history_unchanged') is True and completion.get('9002_attempt_history_inherited') is False and all(type(completion.get(k)) is int and completion[k] == 0 for k in ('model_calls', 'provider_calls', 'task_rearms')), 'actual9002 completion binding required')
+    need(same(receipt.get('independent_verification'), evidence['independent_verification']['descriptor']) and same(receipt.get('independent_closed_owner_receipt'), evidence['independent_owner_closeout']['descriptor']), 'native receipt must bind distinct accepted verifier/owner')
+    report_raw = _handoff_reconciliation_bytes_v2(report)
+    need(same(freeze, {'schema': 'legal-ir-capability-purpose-producer-freeze/v1', 'producer_principal': report.get('producer_principal'), 'report_sha256': hashlib.sha256(report_raw).hexdigest(), 'report_bytes': len(report_raw), 'frozen_before_verification': True}), 'accepted9002 producer freeze required')
+    need(checked.get('schema') == 'legal-ir-current-capability-purpose-verification/v1' and checked.get('valid') is True and checked.get('checked_scope') == 'factual_capability_inventory_only' and checked.get('report_sha256') == freeze['report_sha256'] and type(checked.get('report_bytes')) is int and checked['report_bytes'] == freeze['report_bytes'] and checked.get('producer_principal') == freeze['producer_principal'] and text(checked.get('verifier_principal')) and checked['verifier_principal'] != checked['producer_principal'] and checked.get('task_scope', {}).get('task_cid') == dependency['task_cid'] and type(checked['task_scope'].get('revision')) is int and checked['task_scope']['revision'] == 3, 'actual distinct9002 verification required')
+    need(closed.get('schema') == 'f18-original-owner-control-closeout/v1' and type(closed.get('returncode')) is int and closed['returncode'] == 0 and closed.get('request_unchanged') is True and closed.get('source_pins_unchanged') is True and closed.get('source_READ_retained_through_owner_exit_and_closing_source_check') is True and closed.get('custody', {}).get('source_custody_closed') is True and closed['custody'].get('original_storage_status') == 'released', 'accepted9002 verifier custody must be closed')
+    terminal = capture.get('original_terminal', {})
+    capture_path = evidence['completion_capture']['descriptor']['path']
+    need(capture_path.startswith(roots['retained_snapshots'] + '/') and capture_path.endswith('/capability-purpose-9002-v01/root-native-completion-capture-v01.json')
+         and data['retention_alias_manifest']['descriptor']['path'] == capture_path.rsplit('/', 1)[0] + '/retained-request-controls-v01/manifest.json', 'retention manifest must belong to the accepted9002 durable evidence root')
+    launch = capture.get('launch')
+    need(ref(launch) and (launch['path'], launch['bytes'], launch['sha256']) in aliases_seen, 'completion launch must join an exact retained alias')
+    request_aliases = [entry for entry in entries if entry['original_path'] == launch['path'].rsplit('/', 1)[0] + '/actual-native-completion-request-v01.json'
+                       and entry['sha256'] == terminal.get('request_sha256')]
+    need(len(request_aliases) == 1 and digest(terminal.get('request_sha256')), 'completion terminal request must join its original retained alias')
+    need(type(capture.get('owner_returncode')) is int and capture['owner_returncode'] == 0 and terminal.get('completed') is True and type(terminal.get('child_returncode')) is int and terminal['child_returncode'] == 0 and all(terminal.get(key) is True for key in ('source_READ_closed', 'original_native_compute_closed', 'child_reaped')) and terminal.get('storage_status') == 'released' and terminal.get('cleanup_errors') == [], 'actual9002 completion owner custody required')
+    need(binding.get('verdict') == 'CLEAR_ACTUAL_FACTUAL_CAPABILITY_INVENTORY_COMPLETION' and binding.get('evidence_digest') == receipt.get('evidence_digest') and binding.get('other63_full_records_unchanged') is True, 'independent9002 completion binding required')
+    for obj in (receipt, checked, report):
+        need(all(obj.get(key) is False for key in ('dispatch_authorized', 'native_admission', 'formalized', 'training_authorized', 'semantic_review_verified')) and same(obj.get('supervision_masks'), {'training': 0, 'evaluation_gold': 0}), 'accepted inventory grants no new execution/meaning')
+    preparations = data['engineering_preparations']
+    need(type(preparations) is list and len(preparations) == 4, 'four reused engineering preparations required')
+    specs = {row[0]: row for row in _PROGRAMME_WORK_PACKET_SPECS_V1}
+    supporting = {
+        'source_cache_lineage': ['LIR-02', 'LIR-05', 'LIR-24'],
+        'typed_ir_scoped_graph': ['LIR-' + str(i).zfill(2) for i in range(4, 12)],
+        'model_compatibility_quality': ['LIR-01', 'LIR-17', 'LIR-18', 'LIR-19', 'LIR-20', 'LIR-23'],
+        'lean_release_verification': ['LIR-12', 'LIR-13', 'LIR-14', 'LIR-15', 'LIR-21', 'LIR-22'],
+    }
+    logical_owners = {
+        'source_cache_lineage': ['ipfs_datasets_py/logic/autoformal/legal_source_package_intake_v1.py', 'ipfs_datasets_py/logic/autoformal/legal_source_span_entity_join_v1.py'],
+        'typed_ir_scoped_graph': ['ipfs_datasets_py/logic/autoformal/legal_relational_norm_v1.py', 'ipfs_datasets_py/logic/autoformal/corpus_definition_use_review_v2.py', 'ipfs_datasets_py/logic/autoformal/corpus_definition_adapter_v2.py'],
+        'model_compatibility_quality': ['ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_legal_ir_runtime.py', 'ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_runtime.py', 'ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_numeric.py', 'ipfs_datasets_py/optimizers/logic_theorem_optimizer/formula_generation_metrics.py'],
+        'lean_release_verification': ['ipfs_datasets_py/logic/autoformal/legal_native_ast_preservation.py', 'ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_packet_v2.py', 'ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_index_v2.py', 'ipfs_datasets_py/logic/autoformal/corpus_graph_exchange.py'],
+    }
+    operations = dict(source_cache_lineage='prepare_source_cache_lineage', typed_ir_scoped_graph='prepare_typed_ir_scoped_graph',
+        model_compatibility_quality='propose_source_conditioning_trajectory_controls', lean_release_verification='prepare_lean_release_verification')
+    prep_ids, owner_bindings, parent_reuse = set(), {}, {}
+    for item in preparations:
+        need(type(item) is dict and set(item) == {'native_binding', 'packet', 'readiness', 'receipt', 'remaining_gates', 'resolved_snapshot_dependencies', 'reuse_scope', 'role', 'supporting_parent_contexts', 'task_id'} and item.get('task_id') in specs and item['task_id'] not in prep_ids, 'unique fixed preparation record required')
+        prep_ids.add(item['task_id'])
+        record, legacy_receipt = bound_json(item['packet']), bound_json(item['receipt'])
+        packet = record.get('packet')
+        need(type(packet) is dict, 'closed retained packet object required')
+        request_keys = ('task_id', 'parent_reference', 'current_parent_reference', 'authority_binding', 'owner_sources', 'evidence', 'remaining_gates')
+        expected = prepare_programme_work_packet_v1(**{key: packet.get(key) for key in request_keys})
+        need(item['packet']['descriptor']['path'] == roots['peer_engineering'] + '/' + expected['outputs'][0] and item['receipt']['descriptor']['path'] == roots['peer_engineering'] + '/' + expected['outputs'][1], 'engineering packet/receipt must bind their original fixed output scope')
+        need(same(packet, expected) and expected['task_id'] == item['task_id'] and expected['role'] == specs[item['task_id']][1] and record.get('task_id') == item['task_id'] and record.get('role') == item['role'] == expected['role'] and record.get('metadata_complete') is True and record.get('snapshot_binding_only') is True and record.get('scientific_parent_satisfied') is False, 'retained preparation must reproduce existing owner')
+        need(same(item['native_binding'], {'task_cid': None, 'control_revision': None, 'status': 'original_admission_required'}) and item['readiness'] == record.get('readiness') == 'original_admission_required' and item['remaining_gates'] == packet['remaining_gates'], 'legacy preparation does not bind native execution')
+        need(same(legacy_receipt, {'schema': 'legal-ir-supervisor-task-receipt/v1', 'task_id': item['task_id'], 'task_kind': 'programme_preparation', 'status': 'implemented', 'authority': {'admitted': False, 'formalized': False}, 'artifacts': [{'kind': 'packet', 'path': expected['outputs'][0], 'sha256': item['packet']['descriptor']['sha256']}]}), 'exact completed engineering receipt required')
+        scope, binding = record.get('admission_scope'), record.get('binding')
+        need(type(scope) is dict and set(scope) == {'schema', 'task_id', 'role', 'parent_task_id', 'future_operation', 'supporting_parents', 'logical_owner_paths', 'dependencies', 'principals', 'exclusive_keys', 'proposed_limits', 'native_binding', 'remaining_gates', 'grants'}
+             and scope['schema'] == 'legal-ir-programme-admission-scope/v1' and scope['task_id'] == item['task_id'] and scope['role'] == item['role']
+             and scope['parent_task_id'] == expected['parent_task_id'] and scope['future_operation'] == operations[item['role']], 'retained outer admission scope must preserve its original operation')
+        need(type(binding) is dict and set(binding) == {'original_backlog', 'current_backlog', 'base_plan', 'base_board', 'packet_owner', 'owner_sources', 'evidence', 'authority_binding', 'remaining_gates', 'admission_scope'}, 'closed retained preparation binding required')
+        need(same(scope['native_binding'], item['native_binding']) and same(scope['grants'], dict(dispatch=False, native_execution=False, model_execution=False, training=False, meaning_review=False, parent_completion=False))
+             and same(scope['dependencies'], {key: packet[key] for key in ('owner_sources', 'evidence')})
+             and all(same(binding[key], packet[key]) for key in ('owner_sources', 'evidence', 'authority_binding', 'remaining_gates'))
+             and same(scope['remaining_gates'], packet['remaining_gates']) and same(scope['proposed_limits'], packet['budgets'])
+             and same(scope['exclusive_keys'], packet['exclusive_keys']) and same(scope['logical_owner_paths'], logical_owners[item['role']]), 'outer scope cannot invent admission, dependencies, owners or budgets')
+        need(record.get('schema') == 'legal-ir-programme-preparation/v1' and all(record.get(key) is False for key in ('admitted', 'dispatch_authorized', 'formalized', 'model_executed', 'mutation_authorized', 'scientific_parent_satisfied', 'training_executed')), 'outer record grants no execution or semantic authority')
+        people = scope['principals']
+        need(type(people) is dict and set(people) == {'worker', 'independent_verifier', 'identity_verified'} and people['identity_verified'] is False
+             and all(text(people[key]) and len(people[key]) <= 128 for key in ('worker', 'independent_verifier')) and people['worker'] != people['independent_verifier'], 'distinct proposed, unauthenticated legacy principals required')
+        parent_rows = scope['supporting_parents']
+        need(type(parent_rows) is list and all(type(row) is dict for row in parent_rows) and [row.get('task_id') for row in parent_rows if type(row) is dict] == supporting[item['role']]
+             and all(set(row) == {'task_id', 'task_sha256'} and digest(row['task_sha256']) for row in parent_rows), 'fixed supporting parent hash commitments required')
+        need(len(packet['owner_sources']) == len(logical_owners[item['role']]) and all(ref['path'].endswith('/owner-sources/' + logical) for ref, logical in zip(packet['owner_sources'], logical_owners[item['role']])), 'fixed original role owner paths required')
+        parents = item['supporting_parent_contexts']
+        need(parents == supporting[item['role']], 'fixed supporting parent contexts required')
+        for parent in parents:
+            parent_reuse.setdefault(parent, []).append(item['task_id'])
+        deps = item['resolved_snapshot_dependencies']
+        declared = [(role, value) for role in ('owner_sources', 'evidence') for value in packet[role]]
+        need(type(deps) is list and len(deps) == len(declared), 'explicit retained snapshot root mapping required')
+        for observed, (role, descriptor) in zip(deps, declared):
+            resolved = dict(descriptor, path=roots['retained_snapshots'] + '/' + descriptor['path'])
+            need(same(observed, {'declared': descriptor, 'read_only_data_not_executable': True, 'resolved': resolved, 'role': role, 'root': roots['retained_snapshots']}) and ref(resolved), 'snapshot references resolve only under original primary root')
+            if role == 'owner_sources':
+                logical = descriptor['path'].split('/owner-sources/', 1)
+                need(len(logical) == 2, 'logical source mapping missing')
+                owner_bindings[(item['task_id'], logical[1])] = descriptor['sha256']
+    comparisons = data['current_owner_generation_comparison']
+    need(type(comparisons) is list and len(comparisons) == len(owner_bindings) == 13, 'all13 current owner comparisons required')
+    compared = set()
+    for row in comparisons:
+        need(type(row) is dict and set(row) == {'current_selected_W', 'logical_owner_path', 'matches_retained', 'packet', 'retained_sha256'}, 'closed owner comparison required')
+        key = (row['packet'], row['logical_owner_path'])
+        need(key in owner_bindings and key not in compared and row['retained_sha256'] == owner_bindings[key] and ref(row['current_selected_W']) and row['current_selected_W']['path'] == roots['datasets_metadata'] + '/' + row['logical_owner_path'] and type(row['matches_retained']) is bool and row['matches_retained'] == (row['current_selected_W']['sha256'] == row['retained_sha256']), 'current owner source comparison mismatch')
+        compared.add(key)
+    missing = ['current_task_revision_and_dependency_receipts', 'selected_current_sources_and_role_authorized_inputs', 'exact_argv_cwd_owned_outputs', 'finite_purpose_specific_original_owner_request', 'retry_and_invalidation_keys', 'distinct_actual_verifier_and_acceptance']
+    implementation = ['LIR-0702', 'LIR-0802', 'LIR-1202', 'LIR-1501', 'LIR-1702', 'LIR-2202', 'LIR-9103']
+    rows = []
+    for native in sorted(tasks, key=lambda row: row['task_alias']):
+        body = native.get('body', {})
+        authored = body.get('authored_task', {})
+        need(type(authored) is dict and authored.get('validation') == [] and body.get('code_edit_allowlist') == [], 'empty planning validation/edit scopes must remain explicit')
+        implementation_required = body.get('requires_product_change_scope')
+        need(type(implementation_required) is bool and implementation_required == (native['task_alias'] in implementation), 'seven implementation cards must remain unscoped')
+        done = native['status'] == 'completed'
+        rows.append(dict(task_alias=native['task_alias'], task_cid=native['task_cid'], revision=native['revision'], status=native['status'],
+            legacy_parent_task=body.get('legacy_parent_task'), dependency_bindings=[{key: cids[d['dependency_task_cid']][key] for key in ('task_alias', 'task_cid', 'revision', 'status')} for d in native['dependencies']],
+            disposition='accepted_existing_native_completion' if done else 'blocked_non_packet_disposition',
+            engineering_preparation_ids=sorted(parent_reuse.get(body.get('legacy_parent_task'), [])),
+            current_planning_validation=authored['validation'], current_runtime_validation=body.get('validation', []),
+            current_code_allowlist=body['code_edit_allowlist'], existing_owner_paths_read_only_context=body.get('existing_owners', []),
+            requires_exact_implementation_scope=implementation_required,
+            required_missing_packet_fields=[] if done else missing + (['exact_changed_new_code_and_test_paths', 'shared_file_lease_keys', 'independently_reviewed_implementation_acceptance'] if implementation_required else []),
+            execution_ready=False, is_current_productive_execution_packet=False, source_code_edit_allowed=False))
+    need(same(data['row_dispositions'], rows), 'all64 row dispositions must independently reconstruct')
+    assessments = [dict(ordinal=i, criterion=criterion, status=('satisfied_for_factual_index_scope_only' if i == 1 else 'open_for_task_objective' if i == 0 else 'open')) for i, criterion in enumerate(criteria)]
+    assessments[2]['blocked_task_aliases'] = implementation
+    commitments = {key: hashlib.sha256(_handoff_reconciliation_bytes_v2(value)).hexdigest() for key, value in supplied.items()}
+    return dict(schema='legal-ir-current-reviewed-programme-packet-index/v1', producer_principal=producer_principal,
+        task_scope={key: task[key] for key in ('task_alias', 'task_cid', 'goal_cid', 'plan_cid', 'revision', 'status')},
+        dependency_scope={key: dependency[key] for key in ('task_alias', 'task_cid', 'revision', 'status')},
+        counts=dict(tasks=64, goals=34, goal_edges=33, dependencies=115, completed=2, blocked=62, legacy_preparations=4, current_complete_productive_packets=0, implementation_non_packet_dispositions=7),
+        repository_roots=roots, runtime_outputs=outputs, runtime_outputs_are_proposed_logical_paths_only=True, native_output_ownership_granted=False, input_commitments=commitments, row_dispositions=rows,
+        dependency_evidence={key: value['descriptor'] for key, value in evidence.items()},
+        retention_alias_manifest=data['retention_alias_manifest']['descriptor'], retained_alias_count=len(entries),
+        retained_completion_control_aliases=dict(launch=launch, original_request={key: request_aliases[0][key] for key in ('original_path', 'bytes', 'sha256')}),
+        engineering_preparations=[{key: item[key] for key in ('task_id', 'role', 'native_binding', 'readiness', 'supporting_parent_contexts')} for item in preparations],
+        current_owner_generation_comparison=comparisons, acceptance_assessment=assessments,
+        task_objective_satisfied=False, all_productive_tasks_required_runnable_for_factual_index=False,
+        free_text_dependency_blockers_are_retained_proposal_context=True, current_native_state_is_saved_observation=True,
+        descriptor_files_authenticated=False, native_status_verified=False, principals_authenticated=False,
+        completion_authority=False, task_or_goal_status_changed=False, dispatch_authorized=False, native_admission=False,
+        rearm_authorized=False, training_authorized=False, model_execution_authorized=False, semantic_review_verified=False,
+        formalized=False, supervision_masks=dict(training=0, evaluation_gold=0))
+
+
+def verify_current_reviewed_programme_packet_index_v1(
+    report, *, producer_freeze, verifier_principal, **independent_inputs,
+):
+    """Reproduce the frozen factual index; leave the native objective open."""
+    expected = prepare_current_reviewed_programme_packet_index_v1(**independent_inputs)
+    if type(verifier_principal) is not str or not 0 < len(verifier_principal) <= 4096 or verifier_principal != verifier_principal.strip() or any(ord(c) < 32 for c in verifier_principal) or verifier_principal == expected['producer_principal']:
+        raise ValueError('distinct bounded programme index verifier principal required')
+    raw = _handoff_reconciliation_bytes_v2(report)
+    if raw != _handoff_reconciliation_bytes_v2(expected):
+        raise ValueError('frozen programme index does not reproduce')
+    digest = hashlib.sha256(raw).hexdigest()
+    freeze = dict(schema='legal-ir-programme-packet-index-producer-freeze/v1', report_sha256=digest,
+        report_bytes=len(raw), producer_principal=expected['producer_principal'], frozen_before_verification=True)
+    if type(producer_freeze) is not dict or _handoff_reconciliation_bytes_v2(producer_freeze) != _handoff_reconciliation_bytes_v2(freeze):
+        raise ValueError('programme index producer freeze differs')
+    return dict(schema='legal-ir-current-reviewed-programme-packet-index-verification/v1', valid=True,
+        task_scope=expected['task_scope'], dependency_scope=expected['dependency_scope'], report_sha256=digest,
+        report_bytes=len(raw), producer_principal=expected['producer_principal'], verifier_principal=verifier_principal,
+        input_commitments=expected['input_commitments'], acceptance_assessment=expected['acceptance_assessment'],
+        checked_scope='factual_programme_packet_index_only', task_objective_satisfied=False,
+        descriptor_files_authenticated=False, native_status_verified=False, principals_authenticated=False,
+        freeze_chronology_authenticated=False, task_or_goal_status_changed=False, completion_authority=False,
+        dispatch_authorized=False, native_admission=False, rearm_authorized=False, formalized=False,
+        training_authorized=False, model_execution_authorized=False, semantic_review_verified=False,
+        supervision_masks=dict(training=0, evaluation_gold=0))
+
+
 def progress_log_path(board_path: Any) -> Path | None:
     if board_path is None:
         return None
