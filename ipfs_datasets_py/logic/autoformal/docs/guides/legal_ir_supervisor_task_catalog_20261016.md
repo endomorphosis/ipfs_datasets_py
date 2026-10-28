@@ -91,6 +91,63 @@ For factual work reconciliation, capability inventories and review/dispatch prep
 
 The [separate follow-up qualification](../../../../../docs/autoformalization/evidence/legal-ir-control-metadata-preflight-20261026.json) passed 14 methods / 67 subcases and prepared four actual previews from retained LIR-9001–9004 snapshot metadata. These remain incomplete: no operation commands/cwd, budgets, principals, verifier, reviewed directive mapping, complete attempt histories or exhausted-attempt disposition were invented. Snapshot revisions are 13 for LIR-9001 and 2 for LIR-9002–9004; these observations do not establish current native status. Retained LIR-9001 spent its budget of two attempts and has UNKNOWN provider outcome. Its old factual reconciliation output is reused as prior evidence, never as a provider-success receipt; the old revision-11 command is not a revision-13 launch default. Preserve original-owner amendment/rearm ordering (the retained recovery review identifies exact revision 14), all failures and the existing dependency frontier. Do not query a remote provider with a local native attempt/invocation ID or infer outcome from another status read.
 
+## Representation-cell amendment preparation
+
+The existing `supervisor_loop` owner now provides the opt-in pure function
+`prepare_representation_cell_amendment_v1(current_population=...,
+current_task_bindings=..., amendment_request=...)`. Its
+[owning tests](../../../../../tests/unit/logic/test_supervisor_representation_cell_amendment.py)
+and [qualification](../../../../../docs/autoformalization/evidence/legal-ir-representation-cell-amendment-20261028.json)
+cover the selected 64-task predecessor, one proposed blocked Leanstral4096D
+child and the two necessary specification edits under existing `LIR-19`.
+It opens no file, model, provider or task store and invokes no native owner.
+
+Supply the complete current population and exact record/revision/native-spec
+bindings as metadata. The request binds the predecessor commitment, a proposed
+continuation root, the reviewed child/profile, complete replacements for
+`LIR-1901` and `LIR-1905`, replacement commitments and closed PlanDelta wire
+data. The new child is appended without renumbering original tasks. The design
+objective includes four native systems, and the comparison adds the child's
+durable CID dependency and matching required-result/authored metadata. Partial
+updates, collisions, stale bindings and known unsafe lifecycle states fail
+before a preview is returned. Native decoding, authentic specification identity
+and live claim verification remain independent owner checks.
+
+The child cannot inherit runtime receipts, attempt/claim/provider history or
+settlement results from its 768D template. This v1 profile refuses recognized
+history fields on either template or child, including empty values and known
+nested runtime wrappers; it never strips or resets history to make input look
+new. Existing unrelated task history remains unchanged. Declared budgets,
+negative authority flags and checkpoint/source input provenance remain valid
+metadata. A future clean-authoring projection of a historical template needs
+its own explicit versioned contract.
+
+Keep genuine causal source width, actual bottleneck, producer revision,
+pooling/normalization, input/output token caps and source-text/residual bypasses
+explicit. The selected comparison is a four-native-producer systems study;
+a bypass-free bottleneck study has a separate contract. Reuse retained captures
+and compatible checkpoints; this preparation grants no recapture or training.
+
+The detached result has schema
+`legal-ir-representation-cell-amendment-preview/v1`. It supplies candidate task
+records, unchanged goals/edges and the proposed one-ADD/two-AMEND wire bundle.
+All execution, identity-allocation, retry, completion and supervision authority
+stays false/zero. It is not a `PlanRevisionStore` receipt or native admission.
+The responsible original owner must verify and apply the complete reviewed
+bundle with its lease, fence, idempotency, current roots, specification CAS and
+rollback/verification contract. Original tasks retain their plan CIDs and all
+attempt history; the new task belongs to a continuation root.
+
+The old single-root observer cannot validate that post-amendment layout.
+[Accelerate PR307](https://github.com/endomorphosis/ipfs_accelerate_py/pull/307)
+adds a separately qualified opt-in `legal-ir-native-task-population/v2`
+diagnostic. Prepare its exact task origins, ordered continuation rows, native
+plan revisions/body hashes and population binding from post-application owner
+readback. The preview does not fabricate those values. Keep the current native
+population and watchdog binding selected until native application and its
+diagnostic cutover are independently admitted. The observer still supplies no
+scientific-executor activation or health grant.
+
 ## Native intake and recovery
 
 The existing `logic.autoformal.supervisor_loop.ingest_population()` forwards the reviewed population to `DatabaseTaskSource.materialize()`. The adapter uses the supervisor's own identity primitive and preserves explicit parent CIDs and `goal_parent` edges, CID-resolved task dependencies, mapping-shaped outputs and separate acceptance entries. It does not use the generic taskboard converter that drops hierarchy/output metadata.

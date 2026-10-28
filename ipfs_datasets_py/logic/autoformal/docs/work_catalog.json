@@ -3626,21 +3626,24 @@
     },
     {
       "apis": [
-        "prepare_handoff_execution_packet_v1"
+        "prepare_handoff_execution_packet_v1",
+        "prepare_representation_cell_amendment_v1"
       ],
       "compatibility_dependency": false,
       "evidence_ids": [
         "legal-ir-handoff-execution-preflight-qualified-20261026-01",
         "legal-ir-control-metadata-preflight-qualified-20261026-01",
-        "legal-ir-programme-dispatch-reconciliation-20261028-01"
+        "legal-ir-programme-dispatch-reconciliation-20261028-01",
+        "legal-ir-representation-cell-amendment-qualified-20261028-01"
       ],
       "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_ir_supervisor_task_catalog_20261016.md",
       "id": "supervisor-handoff-preflight",
-      "notes": "Opt-in control_metadata_only preparation in the existing handoff owner; default model profile checks preserved. Selected-function AST only: 14 methods / 67 subcases and four retained incomplete metadata previews. Snapshot joins are not fresh authenticated status or provider outcome proof. No native admission, rearm, task settlement, model/DB/provider/Lean execution or semantic/training/gold authority.",
+      "notes": "Opt-in control_metadata_only preparation in the existing handoff owner; default model profile checks preserved. Selected-function AST only: 14 methods / 67 subcases and four retained incomplete metadata previews. Snapshot joins are not fresh authenticated status or provider outcome proof. No native admission, rearm, task settlement, model/DB/provider/Lean execution or semantic/training/gold authority. Separate opt-in representation-cell amendment preparation preserves the original64 records except exactly2 reviewed specifications and proposes one blocked4096child; donor/child runtime history is refused. Fourteen pure AST unittest methods passed through the original validation owner with complete resource/source closeout. No actual native PlanDelta decode/application, scientific execution, retry, model, training, graph or Lean admission follows.",
       "owner_module": "ipfs_datasets_py.logic.autoformal.supervisor_loop",
       "ownership_role": "existing_single_owner",
       "owning_tests": [
-        "tests/unit/logic/test_supervisor_handoff_execution_packet.py"
+        "tests/unit/logic/test_supervisor_handoff_execution_packet.py",
+        "tests/unit/logic/test_supervisor_representation_cell_amendment.py"
       ],
       "path": "ipfs_datasets_py/logic/autoformal/supervisor_loop.py",
       "required": true,
@@ -3975,7 +3978,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-10-28T04:32:06.412772+00:00",
+  "last_updated_at_utc": "2026-10-28T05:26:43.309700+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -6228,6 +6231,16 @@
       "root": "datasets_repository",
       "scope": "Fresh90/270 joint-status controls on actual0e launcher, separate4fixtures/6calls and9saved replays/12parses/60preTRAIN fence.26/71/73pins and original custody closed. TRAIN gold stays top8 below rank1; DEV no-compatible retained-domain abstention without gold. No new model, fit, whole624 score, quality or scientific-task credit.",
       "status": "joint_status_guard_and_fixed_case_diagnosis_closed_no_new_fit"
+    },
+    {
+      "id": "legal-ir-representation-cell-amendment-qualified-20261028-01",
+      "observed_bytes": 5720,
+      "observed_sha256": "42305f8fb378efa6f0bcac914080ec4410dd0490227673b4b171ef9666ce932a",
+      "path": "docs/autoformalization/evidence/legal-ir-representation-cell-amendment-20261028.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "One blocked4096child/two-spec amendment preview with preserved original identities/history; runtime-history inheritance refusal. Separate14-method original-owned AST qualification, not native PlanDelta application, executor admission or model/statutory/Lean qualification.",
+      "status": "fourteen_pure_AST_methods_passed_native_plan_and_deployment_pending"
     }
   ]
 }
