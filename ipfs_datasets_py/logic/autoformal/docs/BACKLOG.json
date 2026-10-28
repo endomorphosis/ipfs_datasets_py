@@ -128,6 +128,15 @@
             "LIR-1903": 384,
             "LIR-1904": 768
           },
+          "preparation_implementation": {
+            "api": "prepare_representation_cell_amendment_v1",
+            "companion_pull_request": "https://github.com/endomorphosis/ipfs_accelerate_py/pull/307",
+            "diagnostic_profile_required": "legal-ir-native-task-population/v2",
+            "evidence_id": "legal-ir-representation-cell-amendment-qualified-20261028-01",
+            "native_population_amended": false,
+            "owner_module": "ipfs_datasets_py.logic.autoformal.supervisor_loop",
+            "status": "pure_metadata_preparer_qualified_native_application_pending"
+          },
           "state": "requires_reviewed_native_population_amendment"
         },
         {
