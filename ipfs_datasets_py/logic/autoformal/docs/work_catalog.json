@@ -3627,18 +3627,44 @@
     {
       "apis": [
         "prepare_handoff_execution_packet_v1",
-        "prepare_representation_cell_amendment_v1"
+        "prepare_representation_cell_amendment_v1",
+        "prepare_current_handoff_reconciliation_v2",
+        "verify_current_handoff_reconciliation_v2"
       ],
       "compatibility_dependency": false,
+      "current_factual_native_completion_v2": {
+        "evidence_id": "legal-ir-native-handoff-factual-completion-20261028-01",
+        "next_task": "LIR-9002",
+        "next_task_manual_packet_and_original_admission_required": true,
+        "normal_producer_CLI_and_independent_verifier_executed_separately": true,
+        "other63_and_DAG_unchanged": true,
+        "preserved_UNKNOWN_outcome": true,
+        "preserved_attempts_spent_of_budget": [
+          2,
+          2
+        ],
+        "publication_status": "PRs 304, 306 and 308 merged; origin/main 6db07d2c36 integration requires fresh qualification; successor runtime not activated.",
+        "regular_parent_cases": 630,
+        "regular_typed_subtests": 456,
+        "revision": 15,
+        "runtime_activation_claimed": false,
+        "saved_population_blocked": 63,
+        "saved_population_completed": 1,
+        "selected_pure_AST_methods": 44,
+        "separate_physical_cases": 22,
+        "status": "completed",
+        "task_alias": "LIR-9001"
+      },
       "evidence_ids": [
         "legal-ir-handoff-execution-preflight-qualified-20261026-01",
         "legal-ir-control-metadata-preflight-qualified-20261026-01",
         "legal-ir-programme-dispatch-reconciliation-20261028-01",
-        "legal-ir-representation-cell-amendment-qualified-20261028-01"
+        "legal-ir-representation-cell-amendment-qualified-20261028-01",
+        "legal-ir-native-handoff-factual-completion-20261028-01"
       ],
       "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_ir_supervisor_task_catalog_20261016.md",
       "id": "supervisor-handoff-preflight",
-      "notes": "Opt-in control_metadata_only preparation in the existing handoff owner; default model profile checks preserved. Selected-function AST only: 14 methods / 67 subcases and four retained incomplete metadata previews. Snapshot joins are not fresh authenticated status or provider outcome proof. No native admission, rearm, task settlement, model/DB/provider/Lean execution or semantic/training/gold authority. Separate opt-in representation-cell amendment preparation preserves the original64 records except exactly2 reviewed specifications and proposes one blocked4096child; donor/child runtime history is refused. Fourteen pure AST unittest methods passed through the original validation owner with complete resource/source closeout. No actual native PlanDelta decode/application, scientific execution, retry, model, training, graph or Lean admission follows.",
+      "notes": "Opt-in control_metadata_only preparation in the existing handoff owner; default model profile checks preserved. Selected-function AST only: 14 methods / 67 subcases and four retained incomplete metadata previews. Snapshot joins are not fresh authenticated status or provider outcome proof. No native admission, rearm, task settlement, model/DB/provider/Lean execution or semantic/training/gold authority. Separate opt-in representation-cell amendment preparation preserves the original64 records except exactly2 reviewed specifications and proposes one blocked4096child; donor/child runtime history is refused. Fourteen pure AST unittest methods passed through the original validation owner with complete resource/source closeout. No actual native PlanDelta decode/application, scientific execution, retry, model, training, graph or Lean admission follows. Current factual reconciliation v2 is separately integrated through actual canonical CLI producer and independent verifier; original native evidence/CAS completed only LIR-9001 at revision 15 with UNKNOWN/attempt 2 of 2 retained. Its new selected evidence preserves historical pure-AST scopes, regular 630+456 and separatephysical 22. No successor watchdog activation, provider outcome resolution, model/legal/Lean admission or other 63-task completion follows; LIR-9002 remains manual pending its reviewed packet and original admission.",
       "owner_module": "ipfs_datasets_py.logic.autoformal.supervisor_loop",
       "ownership_role": "existing_single_owner",
       "owning_tests": [
@@ -4053,7 +4079,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-10-28T07:28:52.995443+00:00",
+  "last_updated_at_utc": "2026-10-28T07:35:27.845500+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -6316,6 +6342,16 @@
       "root": "datasets_repository",
       "scope": "One blocked4096child/two-spec amendment preview with preserved original identities/history; runtime-history inheritance refusal. Separate14-method original-owned AST qualification, not native PlanDelta application, executor admission or model/statutory/Lean qualification.",
       "status": "fourteen_pure_AST_methods_passed_native_plan_and_deployment_pending"
+    },
+    {
+      "id": "legal-ir-native-handoff-factual-completion-20261028-01",
+      "observed_bytes": 14324,
+      "observed_sha256": "0e441026ab48e2f08947e8147132d75faa3c1795c24e1f9f7136c3d6377877b8",
+      "path": "docs/autoformalization/evidence/legal-ir-native-handoff-factual-completion-20261028.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Actual frozen canonical CLI producer, separate original-owned independent verifier, native evidence KIND/CID and CAS revision 14 to 15 for LIR-9001 only. Saved population: 1 completed, 63 blocked; all 115 dependencies and old UNKNOWN/attempt 2 of 2/retry refusal retained. Regular 630 parents plus 456 subtests and separate physical 22 cases/66 phases retain distinct scopes. Current PRs 304/306/308 are merged; origin/main 6db07d2c36 integration requires fresh qualification before successor runtime activation.",
+      "status": "independently_bound_native_factual_completion_only"
     },
     {
       "id": "f18-optimizer-recipe-metadata-contract-qualified-20261028-01",
