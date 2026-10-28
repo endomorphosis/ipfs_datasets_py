@@ -15,6 +15,22 @@ Before installing a new profile or public API, refresh this handoff/catalog and 
 
 Do not replace these with artifact-local schedulers or broad process/resource queries. Retain the original failure and closure status. Unknown native/storage release remains unknown until the responsible owner supplies exact evidence; no other task may infer cleanup from a source-lease release alone.
 
+### Validation capacity refusals
+
+When `owner.open()` raises the original storage-capacity error, the validation
+launcher emits one bounded JSON line on stderr with schema
+`owned-validation-capacity-refusal/v1`. It carries the captured accounting
+aggregates and separate storage-cap and physical-free-space deficits. It reads
+no additional inventory or ledger and preserves the original exception and
+failure lifecycle. Malformed observations or unavailable stderr do not replace
+the failure.
+
+This is the original refusal's observation, not a fresh admission decision.
+Use the existing recovery owner to reconcile exact closed technical claims;
+retain their original failures and artifacts. A later operation still needs a
+fresh purpose-specific resource admission. The diagnostic grants no release,
+retry, limit change or task completion.
+
 ### Nested tools and source custody
 
 The 17-field validation request preserves the legacy `isolated_process_group` profile. Select `sampled_birth_bound_descendants` explicitly for nested native tools that create separate sessions. `ValidationResourceReservation` in the existing optimizer owner retains resource/storage custody; the existing operations launcher supervises execution and reuses the shared `logic/backends/process.py` birth/pidfd tracker. Legal preparation, review and Lean orchestration remain in `logic/autoformal`.
