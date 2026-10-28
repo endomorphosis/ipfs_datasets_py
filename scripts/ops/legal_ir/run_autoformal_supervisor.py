@@ -859,10 +859,11 @@ def job_packet_index_main_v1(argv: list[str]) -> int:
                   prefix + ["verify", "--inputs", str(args.inputs), "--report", str(args.report), "--freeze", str(args.freeze),
                   "--verifier-principal", args.verifier_principal, "--output", str(args.output)])
         declared_argv = self_packet["argv"] if args.operation == "prepare" else self_packet["verifier"]["argv"]
-        if (actual != declared_argv or self_packet["validation_argv"] != self_packet["verifier"]["argv"]
+        if (actual != declared_argv or self_packet["cwd"] != str(Path.cwd())
+                or self_packet["validation_argv"] != self_packet["verifier"]["argv"]
                 or self_packet["worker"]["principal"] != spec["producer_principal"]
                 or (args.operation == "verify" and self_packet["verifier"]["principal"] != args.verifier_principal)):
-            raise ValueError("actual producer/verifier command or declared role differs from the self packet")
+            raise ValueError("actual producer/verifier command, working directory or declared role differs from the self packet")
         owned = {str(Path(spec["primary_snapshot_root"]) / value) for value in self_packet["outputs"]}
         if not {str(args.output), *([str(args.freeze_out)] if args.operation == "prepare" else [])} <= owned:
             raise ValueError("actual outputs differ from native self-packet ownership")

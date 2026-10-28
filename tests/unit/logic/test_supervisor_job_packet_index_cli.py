@@ -112,7 +112,7 @@ class JobPacketIndexCLITests(unittest.TestCase):
         packet = factory.proposal(request)
         packet.update(task_alias=tasks[2]["task_alias"], task_cid=tasks[2]["task_cid"], revision=3,
             dependencies=[{"task_cid": tasks[1]["task_cid"], "revision": 4, "status": "completed"}],
-            purpose="control_metadata_analysis", outputs=logical, exclusive_keys=tasks[2]["body"]["exclusive_keys"],
+            purpose="control_metadata_analysis", cwd=str(ROOT), outputs=logical, exclusive_keys=tasks[2]["body"]["exclusive_keys"],
             source_descriptors=source_pins, entrypoint_source=source_pins[0], validation_source=source_pins[0],
             inputs=[{"role": "prior_evidence", "use": "verification", "descriptor": value}
                     for value in (snapshot, cap, checked, audit_pin)])
@@ -226,6 +226,13 @@ class JobPacketIndexCLITests(unittest.TestCase):
         refused = self.run_cli()
         self.assertEqual(refused.returncode, 2, refused.stdout + refused.stderr)
         self.assertIn("review_context", refused.stdout)
+        self.assertFalse(self.output.exists())
+        self.spec = copy.deepcopy(original)
+        self.spec["packet_proposals"][0]["cwd"] = str(self.directory)
+        self.put(self.inputs_path, self.spec)
+        refused = self.run_cli()
+        self.assertEqual(refused.returncode, 2, refused.stdout + refused.stderr)
+        self.assertIn("working directory", refused.stdout)
         self.assertFalse(self.output.exists())
         self.spec = copy.deepcopy(original)
         self.spec["packet_proposals"][0]["argv"][-1] = str(self.directory / "another-freeze.json")
