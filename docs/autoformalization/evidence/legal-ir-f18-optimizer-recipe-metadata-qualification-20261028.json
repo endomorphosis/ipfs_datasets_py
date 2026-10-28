@@ -1,0 +1,163 @@
+{
+  "authority": {
+    "budget_reset": false,
+    "four_width_benefit": false,
+    "fresh632_parity": false,
+    "graph_or_Lean_admission": false,
+    "model_gain": false,
+    "native_training_admission": false,
+    "new_executable_profile": false,
+    "new_fit": false,
+    "new_selected_rate": false,
+    "physical_donor_authentication": false,
+    "promotion": false,
+    "scientific_task_rearmed": false,
+    "statutory_accuracy": false,
+    "training_updates": 0
+  },
+  "contract": {
+    "authority_flags_all_false": 14,
+    "base_policy_unchanged": true,
+    "closed_top_level_fields": 10,
+    "digest_alias": "recipe_digest is original base.checkpoint_digest, not a separate function definition",
+    "donor_config_learning_rate": 0.001,
+    "fixture_rates_are_not_selected_experiments": true,
+    "function_APIs": [
+      "build_optimizer_recipe",
+      "validate_optimizer_recipe"
+    ],
+    "inherited_declarations_only": {
+      "active_scalars": 130,
+      "conditions_present_TRAIN_rows": 72,
+      "frozen_tensors": 38,
+      "inactive_scalars": 650,
+      "max_call_seconds": 32,
+      "max_cumulative_updates": 32,
+      "training_rows": 168
+    },
+    "original_input_binding_fields": 15,
+    "partition": "TRAIN",
+    "prospective_change_only": "Explicit finite positive learning_rate in detached optimizer_recipe; every other optimizer field and the complete base_policy are unchanged.",
+    "schema": "conditions-fullspan-f18-optimizer-recipe/v1",
+    "selected_training_rate": null,
+    "source_identity_limits": "Actual profile56 bytes, original implementation family and sibling recipe source continuity are bound; no physical input authenticity, unaliased origin or whole-process attestation.",
+    "validation": "Rebuild expected metadata from independent caller kwargs; compare literal bounded finite canonical JSON; return detached expected metadata."
+  },
+  "draft": false,
+  "evidence_id": "f18-optimizer-recipe-metadata-contract-qualified-20261028-01",
+  "existing_task": "LIR-17",
+  "independent_static_review": {
+    "bytes": 6259,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/independent-source-test-static-review-v01.json",
+    "sha256": "64c4da634305dc0a18c7660dd7f843b7ca4ee78589672ea2a573d4902ff4b4e0"
+  },
+  "limits": [
+    "Metadata construction and validation only; not an optimizer, model, checkpoint, resume, capture, admission or training implementation.",
+    "No model gain, numerical parity, accuracy, statutory meaning, four-width benefit, graph/Lean admission, promotion or scientific-task settlement.",
+    "V1 profile/source policy, original receipts/failed attempts, immutable HF weights and completed endpoint diagnosis remain unchanged.",
+    "Indexed older F19 and gated prototypes are distinct history; no second plan or native task board."
+  ],
+  "observed_at_utc": "2026-10-28T05:27:05.802285+00:00",
+  "preserved_completed_work": {
+    "TRAIN_gold_ranks_each_candidate": [
+      2,
+      2
+    ],
+    "TRAIN_gold_ranks_parent": [
+      2,
+      3
+    ],
+    "all624_per_ID_full_IR_gains_or_losses": 0,
+    "completed_saved_endpoint_replays": 9,
+    "conditions_TRAIN_retention": {
+      "exact": 70,
+      "total": 72
+    },
+    "endpoint_DEV_exposure_scope": "Nine fixed-case endpoint replays only; prior whole-624 saved scoring used held-out weak-label references and that exposure is preserved.",
+    "endpoint_diagnosis_DEV_gold_accessed": false,
+    "endpoint_diagnosis_evidence_id": "f18-conditions-ranking-diagnosis-20261028-01",
+    "extra_joint_abstention_each_candidate": 1,
+    "frozen_scoring_evidence_id": "f18-frozen-matched-scoring-20261027-01",
+    "full_IR_exact_all_three_arms": {
+      "joint": 428,
+      "raw": 405,
+      "total": 624
+    },
+    "kernel_scope": "Original 36-case supplied-logit qualification; new_trained_weights=false remains scoped to that pure kernel.",
+    "new_whole624_scoring_or_endpoint_replay_here": false,
+    "positive_gaps_remain": true,
+    "prior_pair_capsule": {
+      "binding": "separate_stages.separate_paired_fit binds 32 updates per arm (64 total) and original checkpoint/report descriptors; separate from the zero-model probe.",
+      "bytes": 15879,
+      "path": "docs/autoformalization/evidence/legal-ir-f18-trainer-controller-qualification-20261027.json",
+      "sha256": "c46a98a51c89d58c5313b5f8438b49220ff04f5e9e0a9fad2d6b8712a287c472"
+    },
+    "target_P_modality_retention": {
+      "matched": 32,
+      "measure": "Predicted rule-modality list equals [P]; full-IR exactness is separate; no legal-permission correctness claim.",
+      "total": 32
+    }
+  },
+  "pure_qualification": {
+    "JUnit": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 160
+    },
+    "cases": 160,
+    "driver_seconds": 16.55161154596135,
+    "external_independence_claimed": false,
+    "guard_denied_count": 0,
+    "loaded_canonical_source_origins": 30,
+    "loaded_source_scope": "Every loaded first-party origin checked against selected worktree and original base/new-candidate pins.",
+    "native_compute_storage_or_state_read": false,
+    "numerical_libraries_imported": false,
+    "original_source_READ_closed": true,
+    "passed": true,
+    "phase_counts": {
+      "call": 160,
+      "setup": 160,
+      "teardown": 160
+    },
+    "phases": 480,
+    "provider_or_service_contacted": false,
+    "pytest_seconds": 16.339,
+    "result": {
+      "bytes": 19672,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/unit-01/result.json",
+      "sha256": "8a92dc62063aeda07a6a290a6be844479a99acb8e20ee758d6cce0ab94f4b067"
+    },
+    "retained_dataset_or_frozen_payloads_opened": false,
+    "selected_source_pins_before_after": 9,
+    "source_pins_unchanged": true,
+    "training_or_optimizer_updates": 0
+  },
+  "remaining_existing_LIR17_scope": [
+    "Implement and separately qualify an executable numerical profile, optimizer/checkpoint/capture contract and any original CLI integration in existing numerical owners.",
+    "Select and preregister a TRAIN-only rate and finite schedule; no experiment value is selected here.",
+    "Reauthenticate original donor/source/teacher/mask inputs and all 168 TRAIN rows; require fresh zero-step parity on 632 source rows before updates.",
+    "Fresh finite original training-purpose admission/resource custody; preserve failed/partial attempts, v1 budgets and scientific holds.",
+    "Freeze before references; score full IR and per-ID gains/losses, retention on all 72 conditions-present TRAIN rows, all 32 target-P modalities separately from complete permission IR, and original retained comparator no-loss gates."
+  ],
+  "schema": "legal-ir-f18-optimizer-recipe-metadata-qualification/v1",
+  "source_generation": {
+    "immutable_v1_profile": {
+      "bytes": 88600,
+      "sha256": "56bd0a248a07de09519f95e5c4bae02ab9d8eb1134b483c257c1f7e7bcb07147"
+    },
+    "owning_test": {
+      "bytes": 20149,
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_conditions_fullspan_optimizer_recipe_v1.py",
+      "sha256": "5262dd4227021f9b77f43d51f477a5dcec7b90022e4ba8fdf1d948dddec0014a"
+    },
+    "product": {
+      "bytes": 7716,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_fullspan_optimizer_recipe_v1.py",
+      "sha256": "d22b932b80c48b688ff3f18d5f141152a6032b7cb2f6195845840af818d8dc84"
+    },
+    "source_base_commit": "75fa0205fd6e020f08ef9564e1a0fb4196a44117"
+  },
+  "status": "pure_metadata_contract_qualified_no_executable_profile_or_selected_rate",
+  "title": "Prospective TRAIN optimizer metadata qualified; executable numerical successor pending"
+}
