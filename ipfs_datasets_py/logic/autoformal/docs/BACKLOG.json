@@ -82,6 +82,74 @@
         "Immutable release and coverage/cost ledgers reconstruct from retained inputs; no pilot/fixture/engineering-card extrapolation"
       ]
     },
+    "dispatch_reconciliation": {
+      "automatic_dispatch_or_retry_authorized": false,
+      "evidence_id": "legal-ir-programme-dispatch-reconciliation-20261028-01",
+      "guide": "ipfs_datasets_py/logic/autoformal/docs/OPERATIONS.md#dispatch-decisions-for-existing-programme-tasks",
+      "native_ids_claims_revisions_statuses_dependencies_and_attempt_history_changed": false,
+      "requirements": [
+        {
+          "acceptance": [
+            "A reviewed discriminated schema or distinct retention field preserves both closed policy contracts.",
+            "Retain infrastructure allowlists, action windows, cumulative repair budgets, backoff, holds and exact shared-unit cancellation identity.",
+            "Retain UNKNOWN-outcome denials and fresh-probe/effect-boundary guards; test malformed/mixed policies and unchanged ordinary-board behavior hermetically.",
+            "Verify exact selected source/runtime generation and post-repair accepted progress; no silent replacement of the running LegalIR profile."
+          ],
+          "existing_parents": [
+            "LIR-03",
+            "LIR-22"
+          ],
+          "id": "recovery-policy-interoperability",
+          "owner": "external/ipfs_accelerate existing fleet watchdog/repair and service-monitor owners",
+          "runtime_rollout_authorized": false,
+          "selected_profiles": {
+            "legal_ir_pr304": "recovery_policy.profile=infrastructure-only/v1",
+            "retained_owner_pr306": "recovery_policy.schema=agent-supervisor/owner-retention@1"
+          },
+          "state": "requires_separate_integration_qualification"
+        },
+        {
+          "acceptance": [
+            "Prepare an owner-reviewed amendment and dependency map under LIR-19 without replacing original task/goal CIDs, revisions, claims or attempts.",
+            "Allocate native identity only through the existing owner and verify its exact amended population readback before dispatch.",
+            "Reuse retained 4096D source captures/checkpoint/profile; declare actual token limits, causal hidden width, decoder/bottleneck width and text/residual bypasses.",
+            "Bind independent source/review eligibility, finite native/resource admission and frozen comparison outputs; a prepared cell is not numerical or statutory qualification."
+          ],
+          "dispatch_authorized": false,
+          "existing_parents": [
+            "LIR-19"
+          ],
+          "id": "leanstral4096-native-cell-coverage",
+          "native_amendment_applied": false,
+          "native_child_identity": null,
+          "observed_comparison_task": "LIR-1905",
+          "observed_existing_cells": {
+            "LIR-1902": 8,
+            "LIR-1903": 384,
+            "LIR-1904": 768
+          },
+          "state": "requires_reviewed_native_population_amendment"
+        },
+        {
+          "acceptance": [
+            "Preserve current read-only catalogue semantics and explicit not_activated/not_established results.",
+            "Bind actual activation epoch, admitted population/claim, process births, meaningful progress and terminal native receipts for future executor observation.",
+            "A fresh observer cannot grant task activation, retry, outcome settlement, source/review eligibility or model/Lean completion."
+          ],
+          "executor_activation_authorized": false,
+          "existing_parents": [
+            "LIR-22",
+            "LIR-23"
+          ],
+          "id": "scientific-executor-observation",
+          "owner": "existing external/ipfs_accelerate native catalogue probe and dedicated LegalIR monitoring owners",
+          "state": "requires_executor_bound_observation_qualification"
+        }
+      ],
+      "reuse_rule": "Read the newest selected handoff/training/evidence frontier; completed captures, fits, scoring, publications and canonical ports remain completed within their original scopes.",
+      "schema": "legal-ir-programme-dispatch-reconciliation/v1",
+      "scope": "Planning-only refinement of the existing seven phases and original24 task records; no second queue or native execution packet."
+    },
     "goal": {
       "completion": "qualified_manual_release",
       "completion_gate": "Every manifest occurrence and dependency has a reconciled disposition. Every in-scope normative provision has independently reviewed meaning and definition applicability, lossless complete typed representation, closed reviewed graph and supported pinned Lean preservation/build. All approved non-normative/out-of-scope exclusions have witnesses; no in-scope unsupported/unresolved/failed normative unit is silently excluded or counted complete.",
@@ -359,6 +427,26 @@
     "representation_contract": {
       "bottleneck_study": "Separate selected experiment: one frozen encoder and compatible decoder family, declared8/384/768/4096 bottleneck-only route, no raw-vector/text/token/residual bypass. No padding, relabeling checkpoints or comparison of unrelated latent coordinates.",
       "common_rule": "Record producer/tokenizer/pooling/normalization/source-view pin, native width, actual bottleneck, residual/text/token bypasses, decoder input/hidden size/vocabulary/codec/output cap, checkpoint and optimizer lineage separately.",
+      "inventory_isolation": {
+        "existing_owners": [
+          "ir_decoder_profile_inventory",
+          "ir_model_manager_import",
+          "ir_model_hub_publish"
+        ],
+        "identity_fields": [
+          "ir_family",
+          "native_source_width",
+          "bottleneck_width",
+          "producer_revision_and_source_view",
+          "schema_version",
+          "decoder_task",
+          "codec_vocabulary_and_head",
+          "actual_input_and_output_token_limits",
+          "checkpoint_and_optimizer_lineage"
+        ],
+        "qualification_rule": "Registered, published, callable, resumable and measured-quality statuses remain separate; incompatible states require an explicit versioned adapter and qualification, not padding or renaming.",
+        "storage_rule": "Use existing per-family/dimension inventories and configured separate DuckDB/DuckLake and Hub ownership. Reuse immutable payload references; a shared index is not permission to merge profiles or overwrite another family/decoder checkpoint."
+      },
       "lanes": [
         {
           "gate": "Target-aware feature reconstruction is not formula fidelity; feature-to-donor transfer needs an explicit compatible profile.",
@@ -505,6 +593,7 @@
     },
     "watchdog_and_incidents": {
       "bounded_recovery": "Use existing configured retry/backoff/deadline and admission bounds. Refresh exact generation/input/claim evidence and preserve attempt history; avoid overlapping old/new service writers. Repeated identical incidents require explicit escalation instead of retry loops.",
+      "dispatch_reconciliation_evidence_id": "legal-ir-programme-dispatch-reconciliation-20261028-01",
       "existing_units": [
         "legal-ir-autoencoder-v1-monitor.timer",
         "legal-ir-autoencoder-v1-monitor.service",
