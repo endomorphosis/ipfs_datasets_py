@@ -76,6 +76,56 @@ def immutable_json(path, value):
         os.close(parent)
 
 
+def report_capacity_refusal(error):
+    """Best-effort aggregate diagnostic from the original refusal snapshot."""
+    try:
+        message = 'storage reservation capacity exceeded'
+        if (type(error).__name__ != 'DaemonResourceError'
+                or type(error.args) is not tuple or len(error.args) != 1
+                or type(error.args[0]) is not str
+                or error.args != (message,) or str(error) != message):
+            return False
+        observation = error.capacity_observation
+        integer_fields = ('observed_apparent_bytes', 'outstanding_full_reservations_bytes',
+            'additional_requested_bytes', 'charged_bytes', 'limit_bytes',
+            'minimum_filesystem_free_bytes', 'storage_capacity_deficit_bytes',
+            'filesystem_free_deficit_bytes')
+        boolean_fields = ('storage_capacity_exceeded', 'filesystem_free_insufficient')
+        if (type(observation) is not dict
+                or any(type(key) is not str for key in observation)
+                or set(observation) != {'schema', 'scope', *integer_fields, *boolean_fields}
+                or type(observation['schema']) is not str
+                or observation['schema'] != 'daemon-resource-capacity-observation/v1'
+                or type(observation['scope']) is not str
+                or observation['scope'] != 'named_roots_only_apparent_bytes'
+                or any(type(observation[key]) is not int
+                       or not 0 <= observation[key] < 2**63 for key in integer_fields)
+                or any(type(observation[key]) is not bool for key in boolean_fields)):
+            return False
+        requested = (observation['outstanding_full_reservations_bytes']
+                     + observation['additional_requested_bytes'])
+        charged = observation['observed_apparent_bytes'] + requested
+        storage_deficit = max(0, charged - observation['limit_bytes'])
+        filesystem_deficit = max(0, requested - observation['minimum_filesystem_free_bytes'])
+        if (observation['charged_bytes'] != charged
+                or observation['storage_capacity_deficit_bytes'] != storage_deficit
+                or observation['filesystem_free_deficit_bytes'] != filesystem_deficit
+                or observation['storage_capacity_exceeded'] is not (storage_deficit > 0)
+                or observation['filesystem_free_insufficient'] is not (filesystem_deficit > 0)
+                or not (storage_deficit > 0 or filesystem_deficit > 0)):
+            return False
+        raw = json.dumps(dict(schema='owned-validation-capacity-refusal/v1',
+            stage='owner.open', error_type='DaemonResourceError', error=message,
+            observation=observation), sort_keys=True, separators=(',', ':'),
+            ensure_ascii=True, allow_nan=False) + '\n'
+        if len(raw.encode('utf-8')) > 4096:
+            return False
+        written = sys.stderr.write(raw)
+        return type(written) is int and written == len(raw)
+    except BaseException:
+        return False
+
+
 LIFECYCLE_SCHEMA = 'owned-validation-source-custody-lifecycle/v1'
 _LIFECYCLE_EVENTS = {'owner_open_attempted', 'owner_open_returned',
     'child_launch_attempted', 'child_created', 'barrier_release_attempted',
@@ -387,7 +437,11 @@ def main(argv=None):
         model_weights_downloaded=False,authority_granted=False)
     try:
         lifecycle_events['owner_open_attempted'] = True
-        owner.open()
+        try:
+            owner.open()
+        except host.DaemonResourceError as error:
+            report_capacity_refusal(error)
+            raise
         lifecycle_events['owner_open_returned'] = True
         deadline = time.monotonic()+value['timeout_seconds']
         def guard():
