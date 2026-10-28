@@ -588,6 +588,115 @@ def execute_goal_loop(
     }
 
 
+def _read_handoff_metadata_v2(path: Path) -> dict:
+    """Read one bounded ordinary metadata file without native constructors."""
+    import stat
+
+    fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+    try:
+        before = os.fstat(fd)
+        if not stat.S_ISREG(before.st_mode) or not 0 < before.st_size <= 4 * 1024 * 1024:
+            raise ValueError("bounded regular handoff metadata file required")
+        raw = bytearray()
+        while len(raw) <= 4 * 1024 * 1024:
+            block = os.read(fd, min(65536, 4 * 1024 * 1024 + 1 - len(raw)))
+            if not block:
+                break
+            raw.extend(block)
+        after = os.fstat(fd)
+        stamp = lambda st: (st.st_dev, st.st_ino, st.st_mode, st.st_size, st.st_mtime_ns, st.st_ctime_ns)
+        if len(raw) != before.st_size or stamp(before) != stamp(after) or stamp(after) != stamp(path.lstat()):
+            raise ValueError("handoff metadata changed during read")
+    finally:
+        os.close(fd)
+    def unique(pairs):
+        result = {}
+        for key, value in pairs:
+            if key in result:
+                raise ValueError("duplicate handoff metadata key")
+            result[key] = value
+        return result
+    def constant(_):
+        raise ValueError("nonfinite handoff metadata")
+    value = json.loads(raw, object_pairs_hook=unique, parse_constant=constant)
+    if type(value) is not dict:
+        raise ValueError("handoff metadata root must be an object")
+    return value
+
+
+def _write_handoff_metadata_v2(path: Path, raw: bytes) -> None:
+    """Create one requested output exclusively; preserve partial failures."""
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+    try:
+        view = memoryview(raw)
+        while view:
+            count = os.write(fd, view)
+            if count <= 0:
+                raise OSError("short handoff metadata write")
+            view = view[count:]
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+
+
+def handoff_reconciliation_main_v2(argv: list[str]) -> int:
+    """Metadata-only prepare/verify mode; no DB, provider or task mutation."""
+    parser = argparse.ArgumentParser(description=handoff_reconciliation_main_v2.__doc__)
+    parser.add_argument("operation", choices=("prepare", "verify"))
+    parser.add_argument("--inputs", type=Path, required=True)
+    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--freeze-out", type=Path)
+    parser.add_argument("--report", type=Path)
+    parser.add_argument("--freeze", type=Path)
+    parser.add_argument("--verifier-principal")
+    args = parser.parse_args(argv)
+    if args.operation == "prepare" and (args.freeze_out is None or args.report is not None or args.freeze is not None or args.verifier_principal is not None):
+        parser.error("prepare requires --freeze-out and forbids verifier inputs")
+    if args.operation == "verify" and (args.report is None or args.freeze is None or not args.verifier_principal or args.freeze_out is not None):
+        parser.error("verify requires --report, --freeze and --verifier-principal")
+    paths = [p.resolve() for p in (args.inputs, args.output, args.freeze_out, args.report, args.freeze) if p is not None]
+    if len(paths) != len(set(paths)):
+        parser.error("handoff input and output paths must be distinct")
+    if str(ROOT) not in sys.path:
+        sys.path.insert(0, str(ROOT))
+    from ipfs_datasets_py.logic.autoformal.supervisor_loop import (
+        _handoff_reconciliation_bytes_v2,
+        prepare_current_handoff_reconciliation_v2,
+        verify_current_handoff_reconciliation_v2,
+    )
+    try:
+        inputs = _read_handoff_metadata_v2(args.inputs)
+        if args.operation == "prepare":
+            value = prepare_current_handoff_reconciliation_v2(**inputs)
+            raw = _handoff_reconciliation_bytes_v2(value)
+            freeze = {"schema": "legal-ir-handoff-producer-freeze/v2",
+                      "report_sha256": hashlib.sha256(raw).hexdigest(), "report_bytes": len(raw),
+                      "producer_principal": value["producer_principal"], "frozen_before_verification": True}
+            _write_handoff_metadata_v2(args.output, raw)
+            _write_handoff_metadata_v2(args.freeze_out, _handoff_reconciliation_bytes_v2(freeze))
+        else:
+            report = _read_handoff_metadata_v2(args.report)
+            canonical = _handoff_reconciliation_bytes_v2(report)
+            # The on-disk bytes, not merely an equivalent parsed object, are frozen.
+            fd = os.open(args.report, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+            try:
+                if os.read(fd, 4 * 1024 * 1024 + 1) != canonical:
+                    raise ValueError("report bytes are not the frozen canonical serialization")
+            finally:
+                os.close(fd)
+            freeze = _read_handoff_metadata_v2(args.freeze)
+            value = verify_current_handoff_reconciliation_v2(report, producer_freeze=freeze,
+                verifier_principal=args.verifier_principal, **inputs)
+            _write_handoff_metadata_v2(args.output, _handoff_reconciliation_bytes_v2(value))
+    except (OSError, ValueError, TypeError, RecursionError) as exc:
+        print(json.dumps({"schema": "legal-ir-handoff-metadata-refusal/v2", "valid": False,
+                          "reason": str(exc), "native_admission": False, "completion_authority": False}))
+        return 2
+    print(json.dumps({"schema": value["schema"], "output": str(args.output),
+                      "completion_authority": False, "native_admission": False}))
+    return 0
+
+
 def parser() -> argparse.ArgumentParser:
     result = argparse.ArgumentParser(description=__doc__)
     result.add_argument("--accelerate-root", type=Path, required=True)
@@ -664,6 +773,9 @@ def parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
+    effective_argv = list(sys.argv[1:] if argv is None else argv)
+    if effective_argv and effective_argv[0] == "handoff-reconciliation":
+        return handoff_reconciliation_main_v2(effective_argv[1:])
     args = parser().parse_args(argv)
     args.task_id = args.task_id or ""
     if args.task_id and args.command not in {"preflight", "supervise"}:

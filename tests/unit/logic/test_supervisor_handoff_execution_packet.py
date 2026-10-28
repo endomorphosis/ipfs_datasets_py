@@ -297,5 +297,301 @@ class HandoffExecutionPacketTests(unittest.TestCase):
 
 
 
+
+# These controls extend the same disclosed AST-extraction qualification profile.
+_RECONCILIATION_NAMES = {"_handoff_reconciliation_bytes_v2", "_handoff_reconciliation_facts_v2",
+                         "prepare_current_handoff_reconciliation_v2", "verify_current_handoff_reconciliation_v2"}
+_RECONCILIATION_NODES = [n for n in ast.parse(OWNER_TEXT).body
+                         if isinstance(n, ast.FunctionDef) and n.name in _RECONCILIATION_NAMES]
+assert len(_RECONCILIATION_NODES) == 4
+_RECONCILIATION_NAMESPACE = {"json": json, "hashlib": hashlib, "Any": Any, "Mapping": Mapping}
+exec(compile(ast.Module(body=_RECONCILIATION_NODES, type_ignores=[]), str(OWNER), "exec"), _RECONCILIATION_NAMESPACE)
+_reconcile = _RECONCILIATION_NAMESPACE["prepare_current_handoff_reconciliation_v2"]
+_verify_reconciliation = _RECONCILIATION_NAMESPACE["verify_current_handoff_reconciliation_v2"]
+_reconciliation_bytes = _RECONCILIATION_NAMESPACE["_handoff_reconciliation_bytes_v2"]
+
+
+class CurrentHandoffReconciliationTests(unittest.TestCase):
+    """Authored metadata controls, without native-store or provider access."""
+
+    def fixture(self):
+        aliases = ["LIR-9001", "LIR-9002", "LIR-9003", "LIR-9004", "LIR-0101", "LIR-0201", "LIR-0202", "LIR-0502"] + ["LIR-X" + str(i).zfill(3) for i in range(56)]
+        goals = [{"goal_cid": "goal:" + str(i), "goal_alias": "LIR-G000" if i == 0 else "LIR-G090" if i == 1 else "goal-alias:" + str(i),
+                  "parent_goal_cid": "" if i == 0 else "goal:0", "objective_id": "objective:test"} for i in range(34)]
+        tasks = []
+        for i, alias in enumerate(aliases):
+            deps = [] if i == 0 else ["task:" + str(i - 1)]
+            if 2 <= i <= 53:
+                deps.append("task:" + str(i - 2))
+            tasks.append({"task_alias": alias, "task_cid": "task:" + str(i), "goal_cid": "goal:1", "plan_cid": "plan:test",
+                          "objective_id": "objective:test", "dependencies": deps, "legacy_parent_task": None,
+                          "authored_task": {"title": "authored " + alias}})
+        parents, maintained_parents = [], []
+        at = 12
+        for i in range(1, 25):
+            parent = "LIR-" + str(i).zfill(2)
+            children = tasks[at:at + (3 if i <= 4 else 2)]
+            at += len(children)
+            for child in children:
+                child["legacy_parent_task"] = parent
+            parents.append({"id": parent, "depends_on": [], "subtasks": [c["task_alias"] for c in children],
+                            "related_lac_equivalence": "unreviewed_related_scope_only", "related_lac_tasks": ["LAC-authored"]})
+            maintained_parents.append({"id": parent, "depends_on": [], "supervisor_execution": {"task_links": [
+                {key: c[key] for key in ("task_alias", "task_cid", "goal_cid", "legacy_parent_task")} for c in children]}})
+        self.assertEqual(at, 64)
+        edges = [{"parent_goal_cid": "goal:0", "child_goal_cid": "goal:" + str(i), "edge_kind": "goal_parent"} for i in range(1, 34)]
+        original = {"schema": "legal-ir-native-task-population/v1", "board_namespace": "test-board", "plan_root_cid": "plan:test",
+                    "repository_tree_id": "tree:test", "tasks": tasks, "goals": goals, "goal_edges": edges,
+                    "plans": [{"plan_cid": "plan:test", "legacy_parent_crosswalk": parents}]}
+        current = {key: copy.deepcopy(original[key]) for key in ("board_namespace", "plan_root_cid", "repository_tree_id", "tasks", "goals", "goal_edges")}
+        current["schema"] = "legal-ir-current-native-programme-snapshot/v2"
+        for row in current["tasks"]:
+            row.update(revision=14 if row["task_alias"] == "LIR-9001" else 2, status="blocked")
+        receipt = {"task_cid": "task:0", "operation": "database_task_claim_failure", "attempt_number": 2,
+                   "automatic_retry_admitted": False, "failure_kind": "administrative_operator_stop_outcome_unknown",
+                   "attempt_id": "original-unknown-attempt", "provider_invocation_count": 1}
+        digest = hashlib.sha256(_reconciliation_bytes(receipt)[:-1]).hexdigest()
+        current["tasks"][0].update(completion_receipt=copy.deepcopy(receipt), retained_execution_outcomes=[{
+            "task_cid": "task:0", "task_revision": 13, "completion_receipt": copy.deepcopy(receipt), "sha256": digest}])
+        prior = {key: current["tasks"][0][key] for key in ("task_alias", "task_cid", "goal_cid", "plan_cid")}
+        prior.update(repository_tree_id="tree:test", revision=13, status="blocked", completion_receipt=copy.deepcopy(receipt),
+                     attempt_history={"attempts": 2, "max_attempts": 2, "outcome": "UNKNOWN"})
+        programme = {"schema": "legal-ir-existing-native-programme-links/v1", "historical_board_namespace": "test-board",
+                     "historical_plan_root_cid": "plan:test", "historical_repository_tree_id": "tree:test",
+                     "unparented_handoff_and_engineering_task_links": [{key: c[key] for key in ("task_alias", "task_cid", "goal_cid")} for c in tasks[:12]]}
+        return {"original_population": original, "current_snapshot": current,
+                "backlog": {"schema": "legal-ir-active-work-items/v1", "supervisor_programme": programme, "tasks": maintained_parents},
+                "work_catalog": {"schema": "legal-autoformal-work-catalog/v1", "components": [{"id": "owner-a", "path": "owner.py", "status": "retained", "evidence_ids": ["proof-a"]}], "selected_evidence": [{"id": "proof-a"}]},
+                "prior_task_metadata": prior, "producer_principal": "metadata-author", "expected_task_revision": 14}
+
+    def report_and_freeze(self, inputs):
+        report = _reconcile(**inputs)
+        raw = _reconciliation_bytes(report)
+        freeze = {"schema": "legal-ir-handoff-producer-freeze/v2", "report_sha256": hashlib.sha256(raw).hexdigest(),
+                  "report_bytes": len(raw), "producer_principal": inputs["producer_principal"], "frozen_before_verification": True}
+        return report, freeze
+
+    def test_valid_join_preserves_counts_current_statuses_and_unknown_history(self):
+        inputs = self.fixture()
+        before = copy.deepcopy(inputs)
+        report = _reconcile(**inputs)
+        self.assertEqual(report["counts"], {"tasks": 64, "goals": 34, "goal_edges": 33, "dependencies": 115, "parents": 24})
+        self.assertEqual(report["prior_provider_outcome"], "UNKNOWN")
+        self.assertEqual(report["prior_attempt_history"], {"attempts": 2, "max_attempts": 2, "outcome": "UNKNOWN"})
+        self.assertEqual({r["status"] for r in report["current_task_states"]}, {"blocked"})
+        self.assertEqual(report["retained_execution_outcomes"], inputs["current_snapshot"]["tasks"][0]["retained_execution_outcomes"])
+        self.assertEqual(inputs, before)
+        for field in ("native_status_verified", "descriptor_files_authenticated", "old_provider_outcome_resolved",
+                      "old_provider_success_claimed", "attempts_rearmed", "attempt_budget_reset", "task_or_goal_status_changed",
+                      "completion_authority", "dispatch_authorized", "native_admission", "training_authorized", "formalized"):
+            self.assertIs(report[field], False)
+        report["reuse_candidates"][0]["evidence_ids"].append("changed")
+        self.assertEqual(inputs, before)
+
+    def test_independent_frozen_verification_has_no_native_or_legal_authority(self):
+        inputs = self.fixture()
+        report, freeze = self.report_and_freeze(inputs)
+        before = copy.deepcopy((inputs, report, freeze))
+        checked = _verify_reconciliation(report, producer_freeze=freeze, verifier_principal="independent-reviewer", **inputs)
+        self.assertIs(checked["valid"], True)
+        self.assertEqual(checked["task_scope"]["revision"], 14)
+        self.assertEqual(checked["report_sha256"], freeze["report_sha256"])
+        self.assertEqual(checked["checked_scope"], "factual_metadata_only")
+        for key in ("principals_authenticated", "freeze_chronology_authenticated", "native_status_verified",
+                    "old_provider_outcome_resolved", "completion_authority", "native_admission", "training_authorized", "formalized"):
+            self.assertIs(checked[key], False)
+        self.assertEqual((inputs, report, freeze), before)
+
+    def test_stale_task_and_prior_revisions_are_refused(self):
+        for field, value in (("current", 13), ("current", 15), ("current", True), ("prior", 12), ("prior", 14), ("expected", 15)):
+            with self.subTest(field=field, value=value):
+                x = self.fixture()
+                if field == "current": x["current_snapshot"]["tasks"][0]["revision"] = value
+                elif field == "prior": x["prior_task_metadata"]["revision"] = value
+                else: x["expected_task_revision"] = value
+                with self.assertRaises(ValueError): _reconcile(**x)
+
+    def test_missing_or_duplicate_population_rows_and_edges_are_refused(self):
+        for key in ("tasks", "goals", "goal_edges"):
+            for damage in ("missing", "duplicate"):
+                with self.subTest(key=key, damage=damage):
+                    x = self.fixture(); rows = x["current_snapshot"][key]
+                    if damage == "missing": rows.pop()
+                    else: rows[-1] = copy.deepcopy(rows[0])
+                    with self.assertRaises(ValueError): _reconcile(**x)
+
+    def test_task_identity_authored_metadata_or_dependency_change_is_refused(self):
+        for key in ("task_cid", "goal_cid", "plan_cid", "objective_id", "legacy_parent_task", "authored_task", "dependencies"):
+            with self.subTest(key=key):
+                x = self.fixture(); row = x["current_snapshot"]["tasks"][-1]
+                row[key] = {"changed": True} if key == "authored_task" else [] if key == "dependencies" else "changed"
+                with self.assertRaises(ValueError): _reconcile(**x)
+
+    def test_parent_crosswalk_and_lac_equivalence_changes_are_refused(self):
+        for damage in ("parent", "dependency", "cid", "lac", "unparented", "current_lac"):
+            with self.subTest(damage=damage):
+                x = self.fixture(); p = x["backlog"]["tasks"][0]
+                if damage == "parent": p["id"] = "LIR-99"
+                elif damage == "dependency": p["depends_on"] = ["LIR-02"]
+                elif damage == "cid": p["supervisor_execution"]["task_links"][0]["task_cid"] = "wrong"
+                elif damage == "lac": x["original_population"]["plans"][0]["legacy_parent_crosswalk"][0]["related_lac_equivalence"] = "completed"
+                elif damage == "current_lac": p["related_lac_equivalence"] = "completed"
+                else: x["backlog"]["supervisor_programme"]["unparented_handoff_and_engineering_task_links"].pop()
+                with self.assertRaises(ValueError): _reconcile(**x)
+
+    def test_spent_budget_unknown_receipt_and_history_are_not_forged_or_erased(self):
+        for damage in ("attempt", "retry", "failure", "budget", "outcome", "current_receipt", "missing_history", "history_hash", "history_revision", "history_task", "duplicate_history"):
+            with self.subTest(damage=damage):
+                x = self.fixture(); prior = x["prior_task_metadata"]; row = x["current_snapshot"]["tasks"][0]
+                if damage == "attempt": prior["completion_receipt"]["attempt_number"] = 1
+                elif damage == "retry": prior["completion_receipt"]["automatic_retry_admitted"] = True
+                elif damage == "failure": prior["completion_receipt"]["failure_kind"] = "provider_succeeded"
+                elif damage == "budget": prior["attempt_history"]["max_attempts"] = 3
+                elif damage == "outcome": prior["attempt_history"]["outcome"] = "SUCCEEDED"
+                elif damage == "current_receipt": row["completion_receipt"]["attempt_id"] = "other"
+                elif damage == "missing_history": row["retained_execution_outcomes"] = []
+                elif damage == "history_hash": row["retained_execution_outcomes"][0]["sha256"] = "0" * 64
+                elif damage == "history_revision": row["retained_execution_outcomes"][0]["task_revision"] = 14
+                elif damage == "history_task": row["retained_execution_outcomes"][0]["task_cid"] = "other"
+                else: row["retained_execution_outcomes"].append(copy.deepcopy(row["retained_execution_outcomes"][0]))
+                with self.assertRaises(ValueError): _reconcile(**x)
+
+    def test_report_changes_cannot_borrow_a_valid_freeze_or_grant_authority(self):
+        for damage in ("status", "authority", "unknown", "extra"):
+            with self.subTest(damage=damage):
+                x = self.fixture(); report, freeze = self.report_and_freeze(x)
+                if damage == "status": report["current_task_states"][0]["status"] = "completed"
+                elif damage == "authority": report["completion_authority"] = True
+                elif damage == "unknown": report["prior_provider_outcome"] = "SUCCEEDED"
+                else: report["unreviewed_extra"] = True
+                with self.assertRaises(ValueError): _verify_reconciliation(report, producer_freeze=freeze, verifier_principal="reviewer", **x)
+
+    def test_freeze_and_declared_principal_separation_are_required(self):
+        for damage in ("hash", "bytes", "producer", "order", "same_principal", "missing_verifier"):
+            with self.subTest(damage=damage):
+                x = self.fixture(); report, freeze = self.report_and_freeze(x); principal = "reviewer"
+                if damage == "hash": freeze["report_sha256"] = "0" * 64
+                elif damage == "bytes": freeze["report_bytes"] += 1
+                elif damage == "producer": freeze["producer_principal"] = "other"
+                elif damage == "order": freeze["frozen_before_verification"] = False
+                elif damage == "same_principal": principal = x["producer_principal"]
+                else: principal = ""
+                with self.assertRaises(ValueError): _verify_reconciliation(report, producer_freeze=freeze, verifier_principal=principal, **x)
+
+    def test_catalog_link_and_finite_json_requirements_are_checked(self):
+        for damage in ("missing_evidence", "duplicate_component", "nan"):
+            with self.subTest(damage=damage):
+                x = self.fixture()
+                if damage == "missing_evidence": x["work_catalog"]["selected_evidence"][0]["id"] = "other"
+                elif damage == "duplicate_component": x["work_catalog"]["components"] *= 2
+                else: x["work_catalog"]["bad_scalar"] = float("nan")
+                with self.assertRaises(ValueError): _reconcile(**x)
+
+    def reviewed_fixture(self):
+        x = self.fixture()
+        allowed = {
+            "LIR-0101": {"existing_owners", "objective", "inputs", "acceptance_criteria", "acceptance"},
+            "LIR-0201": {"existing_owners", "objective", "inputs", "acceptance_criteria", "acceptance", "title"},
+            "LIR-0202": {"existing_owners", "objective", "inputs", "acceptance_criteria", "acceptance"},
+            "LIR-0502": {"acceptance_criteria", "acceptance"},
+        }
+        originals = {r["task_alias"]: r for r in x["original_population"]["tasks"]}
+        approvals = []
+        for row in x["current_snapshot"]["tasks"]:
+            alias = row["task_alias"]
+            if alias not in allowed:
+                continue
+            row["revision"] = 3
+            for field in allowed[alias]:
+                row["authored_task"][field] = "reviewed field: " + field
+            independent_sha = lambda value: hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False).encode()).hexdigest()
+            approvals.append({"task_alias": alias, "task_cid": row["task_cid"], "revision": 3,
+                              "original_authored_sha256": independent_sha(originals[alias]["authored_task"]),
+                              "current_authored_sha256": independent_sha(row["authored_task"]),
+                              "review": {"path": "/retained/authoring-review.json", "bytes": 123, "sha256": "a" * 64}})
+        x["reviewed_current_task_amendments"] = approvals
+        return x
+
+    def test_exact_four_reviewed_current_authoring_amendments_are_disclosed_without_authority(self):
+        x = self.reviewed_fixture()
+        before = copy.deepcopy(x)
+        report, freeze = self.report_and_freeze(x)
+        self.assertEqual(len(report["reviewed_current_authoring_differences"]), 4)
+        self.assertEqual({r["task_alias"] for r in report["reviewed_current_authoring_differences"]}, {"LIR-0101", "LIR-0201", "LIR-0202", "LIR-0502"})
+        self.assertIs(report["authoring_review_authenticated"], False)
+        checked = _verify_reconciliation(report, producer_freeze=freeze, verifier_principal="independent-reviewer", **x)
+        self.assertIs(checked["valid"], True)
+        self.assertIs(checked["completion_authority"], False)
+        self.assertEqual(x, before)
+
+    def test_missing_wrong_extra_or_unreviewed_authoring_approval_is_refused(self):
+        for damage in ("missing", "hash", "revision", "cid", "alias", "extra_field", "review", "unreviewed"):
+            with self.subTest(damage=damage):
+                x = self.reviewed_fixture(); approvals = x["reviewed_current_task_amendments"]
+                if damage == "missing": approvals.pop()
+                elif damage == "hash": approvals[0]["current_authored_sha256"] = "0" * 64
+                elif damage == "revision": approvals[0]["revision"] = 4
+                elif damage == "cid": approvals[0]["task_cid"] = "wrong"
+                elif damage == "alias": approvals[0]["task_alias"] = "LIR-9001"
+                elif damage == "extra_field": x["current_snapshot"]["tasks"][4]["authored_task"]["unreviewed"] = True
+                elif damage == "review": approvals[0]["review"]["sha256"] = "b" * 64
+                else: x["current_snapshot"]["tasks"][-1]["authored_task"]["unreviewed"] = True
+                with self.assertRaises(ValueError): _reconcile(**x)
+
+    def test_goal_parent_cycle_is_refused_even_if_both_inputs_repeat_it(self):
+        x = self.fixture()
+        for population in (x["original_population"], x["current_snapshot"]):
+            population["goals"][1]["parent_goal_cid"] = "goal:2"
+            population["goals"][2]["parent_goal_cid"] = "goal:1"
+            population["goal_edges"][0]["parent_goal_cid"] = "goal:2"
+            population["goal_edges"][1]["parent_goal_cid"] = "goal:1"
+        with self.assertRaisesRegex(ValueError, "goal parent cycle"):
+            _reconcile(**x)
+
+
+
+_CLI_OWNER = OWNER.parents[3] / "scripts/ops/legal_ir/run_autoformal_supervisor.py"
+_CLI_BYTES = _CLI_OWNER.read_bytes()
+_CLI_TEXT = _CLI_BYTES.decode("utf-8")
+_CLI_NODES = [n for n in ast.parse(_CLI_TEXT).body if isinstance(n, ast.FunctionDef)
+              and n.name in {"_read_handoff_metadata_v2", "_write_handoff_metadata_v2", "main"}]
+assert len(_CLI_NODES) == 3
+import os
+import sys
+_CLI_NAMESPACE = {"os": os, "sys": sys, "json": json, "Path": Path}
+exec(compile(ast.Module(body=_CLI_NODES, type_ignores=[]), str(_CLI_OWNER), "exec"), _CLI_NAMESPACE)
+
+
+def test_handoff_metadata_reader_rejects_duplicate_nonfinite_and_nonobject_json(tmp_path):
+    for i, raw in enumerate((b'{"x":1,"x":2}', b'{"x":NaN}', b'[]')):
+        source = tmp_path / ("bad-" + str(i) + ".json")
+        source.write_bytes(raw)
+        with unittest.TestCase().assertRaises(ValueError):
+            _CLI_NAMESPACE["_read_handoff_metadata_v2"](source)
+    source = tmp_path / "good.json"
+    source.write_bytes(b'{"scope":"metadata"}')
+    assert _CLI_NAMESPACE["_read_handoff_metadata_v2"](source) == {"scope": "metadata"}
+
+
+def test_handoff_metadata_outputs_are_exclusive_and_preserve_existing_bytes(tmp_path):
+    output = tmp_path / "report.json"
+    write = _CLI_NAMESPACE["_write_handoff_metadata_v2"]
+    write(output, b'{"valid":false}\n')
+    with unittest.TestCase().assertRaises(FileExistsError):
+        write(output, b'{"valid":true}\n')
+    assert output.read_bytes() == b'{"valid":false}\n'
+
+
+def test_handoff_metadata_mode_routes_before_native_argument_parsing():
+    called = []
+    namespace = dict(_CLI_NAMESPACE)
+    namespace["handoff_reconciliation_main_v2"] = lambda argv: called.append(argv) or 17
+    namespace["parser"] = lambda: (_ for _ in ()).throw(AssertionError("native parser reached"))
+    node = next(n for n in ast.parse(_CLI_TEXT).body if isinstance(n, ast.FunctionDef) and n.name == "main")
+    exec(compile(ast.Module(body=[node], type_ignores=[]), str(_CLI_OWNER), "exec"), namespace)
+    assert namespace["main"](["handoff-reconciliation", "prepare", "--inputs", "metadata.json"]) == 17
+    assert called == [["prepare", "--inputs", "metadata.json"]]
+
+
 if __name__ == "__main__":
     unittest.main()

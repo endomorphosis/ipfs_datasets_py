@@ -230,6 +230,340 @@ def prepare_handoff_execution_packet_v1(
     }
 
 
+def _handoff_reconciliation_bytes_v2(value: Any) -> bytes:
+    """Canonical bounded JSON used by the factual report and its freeze."""
+    try:
+        raw = (json.dumps(value, sort_keys=True, separators=(",", ":"),
+                          ensure_ascii=False, allow_nan=False) + "\n").encode("utf-8")
+    except (TypeError, ValueError, RecursionError) as exc:
+        raise ValueError("handoff metadata must be finite JSON") from exc
+    if len(raw) > 4 * 1024 * 1024:
+        raise ValueError("handoff metadata exceeds its byte bound")
+    return raw
+
+
+def _handoff_reconciliation_facts_v2(
+    *, original_population: Mapping[str, Any], current_snapshot: Mapping[str, Any],
+    backlog: Mapping[str, Any], work_catalog: Mapping[str, Any],
+    prior_task_metadata: Mapping[str, Any], producer_principal: str,
+    expected_task_revision: int = 14, reviewed_current_task_amendments: Any = None,
+) -> dict[str, Any]:
+    """Check supplied metadata joins; authentication stays with native owners."""
+    def need(condition: bool, reason: str) -> None:
+        if not condition:
+            raise ValueError(reason)
+
+    def text(value: Any) -> bool:
+        return type(value) is str and 0 < len(value) <= 512 and not any(ord(c) < 32 for c in value)
+
+    def index(rows: Any, key: str, count: int) -> dict[str, Any]:
+        need(type(rows) is list and len(rows) == count, "population count differs: " + key)
+        need(all(type(row) is dict and text(row.get(key)) for row in rows), "invalid row: " + key)
+        result = {row[key]: row for row in rows}
+        need(len(result) == count, "duplicate identity: " + key)
+        return result
+
+    supplied = {"original_population": original_population, "current_snapshot": current_snapshot,
+                "backlog": backlog, "work_catalog": work_catalog,
+                "prior_task_metadata": prior_task_metadata,
+                "reviewed_current_task_amendments": [] if reviewed_current_task_amendments is None else reviewed_current_task_amendments}
+    detached = {}
+    commitments = {}
+    for name, value in supplied.items():
+        if name == "reviewed_current_task_amendments":
+            need(type(value) is list, "reviewed amendments must be a list")
+            raw = _handoff_reconciliation_bytes_v2(value)
+        else:
+            need(isinstance(value, Mapping), "metadata mapping required: " + name)
+            raw = _handoff_reconciliation_bytes_v2(dict(value))
+        detached[name] = json.loads(raw)
+        commitments[name] = {"bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest()}
+    old, current, maintained, catalog, prior = (detached[k] for k in
+        ("original_population", "current_snapshot", "backlog", "work_catalog", "prior_task_metadata"))
+    need(text(producer_principal), "producer principal required")
+    need(type(expected_task_revision) is int and expected_task_revision == 14,
+         "this replacement contract requires task revision 14")
+    need(old.get("schema") == "legal-ir-native-task-population/v1", "original population schema differs")
+    need(current.get("schema") == "legal-ir-current-native-programme-snapshot/v2", "current snapshot schema differs")
+    for key in ("board_namespace", "plan_root_cid", "repository_tree_id"):
+        need(text(old.get(key)) and old[key] == current.get(key), "programme binding differs: " + key)
+    need(maintained.get("schema") == "legal-ir-active-work-items/v1", "backlog schema differs")
+    programme = maintained.get("supervisor_programme")
+    need(type(programme) is dict and programme.get("schema") == "legal-ir-existing-native-programme-links/v1",
+         "programme crosswalk missing")
+    for old_key, current_key in (("board_namespace", "historical_board_namespace"),
+                                 ("plan_root_cid", "historical_plan_root_cid"),
+                                 ("repository_tree_id", "historical_repository_tree_id")):
+        need(old[old_key] == programme.get(current_key), "maintained programme identity differs")
+    before = index(old.get("tasks"), "task_alias", 64)
+    now = index(current.get("tasks"), "task_alias", 64)
+    need(set(before) == set(now), "task aliases differ")
+    need(all(text(row.get("task_cid")) for row in list(before.values()) + list(now.values())), "task CID missing")
+    need(len({row.get("task_cid") for row in before.values()}) == 64, "duplicate original task CID")
+    need(len({row.get("task_cid") for row in now.values()}) == 64, "duplicate current task CID")
+    allowed_amendments = {
+        "LIR-0101": {"existing_owners", "objective", "inputs", "acceptance_criteria", "acceptance"},
+        "LIR-0201": {"existing_owners", "objective", "inputs", "acceptance_criteria", "acceptance", "title"},
+        "LIR-0202": {"existing_owners", "objective", "inputs", "acceptance_criteria", "acceptance"},
+        "LIR-0502": {"acceptance_criteria", "acceptance"},
+    }
+    approval_rows = detached["reviewed_current_task_amendments"]
+    need(len(approval_rows) in (0, 4), "reviewed authoring amendment population differs")
+    approvals = {}
+    approved_fields = {"task_alias", "task_cid", "revision", "original_authored_sha256", "current_authored_sha256", "review"}
+    def is_sha(value: Any) -> bool:
+        return type(value) is str and len(value) == 64 and all(c in "0123456789abcdef" for c in value)
+    for row in approval_rows:
+        need(type(row) is dict and set(row) == approved_fields and row.get("task_alias") in allowed_amendments
+             and row["task_alias"] not in approvals and row["task_alias"] in before,
+             "reviewed authoring amendment identity differs")
+        need(row.get("task_cid") == before[row["task_alias"]]["task_cid"] and type(row.get("revision")) is int
+             and row["revision"] == 3 and is_sha(row.get("original_authored_sha256"))
+             and is_sha(row.get("current_authored_sha256")), "reviewed authoring amendment binding differs")
+        proof = row.get("review")
+        need(type(proof) is dict and set(proof) == {"path", "bytes", "sha256"} and text(proof.get("path"))
+             and type(proof.get("bytes")) is int and proof["bytes"] > 0 and is_sha(proof.get("sha256")),
+             "reviewed authoring descriptor missing")
+        approvals[row["task_alias"]] = row
+    need(not approvals or set(approvals) == set(allowed_amendments), "exact four reviewed amendments required")
+    need(not approval_rows or all(row["review"] == approval_rows[0]["review"] for row in approval_rows),
+         "reviewed authoring source descriptors differ")
+    authoring_differences = []
+    old_goals = index(old.get("goals"), "goal_cid", 34)
+    new_goals = index(current.get("goals"), "goal_cid", 34)
+    need(set(old_goals) == set(new_goals), "goal identities differ")
+    need(all(text(row.get("goal_alias")) for row in old_goals.values()), "goal alias missing")
+    need(len({row.get("goal_alias") for row in old_goals.values()}) == 34, "duplicate goal alias")
+    for cid, goal in old_goals.items():
+        other = new_goals[cid]
+        for key in ("goal_alias", "parent_goal_cid", "objective_id"):
+            need(goal.get(key) == other.get(key), "goal binding differs: " + key)
+    old_edges, new_edges = old.get("goal_edges"), current.get("goal_edges")
+    need(type(old_edges) is list and type(new_edges) is list and len(old_edges) == len(new_edges) == 33,
+         "goal edge count differs")
+    edge_keys = {"parent_goal_cid", "child_goal_cid", "edge_kind"}
+    need(all(type(edge) is dict and set(edge) == edge_keys and edge.get("edge_kind") == "goal_parent"
+             and edge.get("parent_goal_cid") in old_goals and edge.get("child_goal_cid") in old_goals
+             and old_goals[edge["child_goal_cid"]].get("parent_goal_cid") == edge["parent_goal_cid"]
+             for edge in old_edges + new_edges), "goal edge endpoint differs")
+    edge_identity = lambda rows: sorted(_handoff_reconciliation_bytes_v2(row) for row in rows)
+    need(edge_identity(old_edges) == edge_identity(new_edges) and len(set(edge_identity(old_edges))) == 33,
+         "goal edges differ or repeat")
+    for start in old_goals:
+        seen = set()
+        at = start
+        while at:
+            need(at in old_goals and at not in seen, "goal parent cycle or missing goal")
+            seen.add(at)
+            at = old_goals[at].get("parent_goal_cid")
+    need(sum(not row.get("parent_goal_cid") for row in old_goals.values()) == 1, "goal root count differs")
+    need(all(text(row.get("task_cid")) and text(row.get("goal_cid")) and text(row.get("plan_cid"))
+             and text(row.get("objective_id")) for row in before.values()), "task identity missing")
+    cids = {row["task_cid"] for row in before.values()}
+    dependencies = {}
+    states = []
+    for alias, original in before.items():
+        selected = now[alias]
+        for key in ("task_cid", "goal_cid", "plan_cid", "objective_id", "legacy_parent_task"):
+            need(original.get(key) == selected.get(key), "task binding differs: " + alias + ":" + key)
+        original_authored, current_authored = original.get("authored_task"), selected.get("authored_task")
+        if original_authored != current_authored:
+            approval = approvals.get(alias)
+            need(type(original_authored) is dict and type(current_authored) is dict and approval is not None,
+                 "unreviewed task authoring changed: " + alias)
+            changed_fields = {key for key in set(original_authored) | set(current_authored)
+                              if original_authored.get(key) != current_authored.get(key)}
+            old_sha = hashlib.sha256(_handoff_reconciliation_bytes_v2(original_authored)[:-1]).hexdigest()
+            current_sha = hashlib.sha256(_handoff_reconciliation_bytes_v2(current_authored)[:-1]).hexdigest()
+            need(changed_fields == allowed_amendments[alias] and selected.get("revision") == approval["revision"]
+                 and old_sha == approval["original_authored_sha256"] and current_sha == approval["current_authored_sha256"],
+                 "reviewed task authoring content differs: " + alias)
+            authoring_differences.append({**approval, "changed_fields": sorted(changed_fields),
+                                         "scope": "retained_current_directive_strengthening_only"})
+        need(selected.get("goal_cid") in old_goals and selected.get("plan_cid") == old["plan_root_cid"],
+             "task goal or plan differs")
+        need(type(selected.get("revision")) is int and selected["revision"] > 0 and text(selected.get("status")),
+             "current task revision/status missing")
+        for row in (original, selected):
+            deps = row.get("dependencies")
+            need(type(deps) is list and all(type(dep) is str and dep in cids for dep in deps)
+                 and len(deps) == len(set(deps)) and row["task_cid"] not in deps, "task dependencies invalid")
+        need(sorted(original["dependencies"]) == sorted(selected["dependencies"]), "task dependencies changed")
+        dependencies[selected["task_cid"]] = list(selected["dependencies"])
+        states.append({"task_alias": alias, "task_cid": selected["task_cid"],
+                       "revision": selected["revision"], "status": selected["status"]})
+    need({row["task_alias"] for row in authoring_differences} == set(approvals), "unused authoring amendment approval")
+    need(sum(map(len, dependencies.values())) == 115, "task dependency count differs")
+    visited, visiting = set(), set()
+    def visit(cid: str) -> None:
+        need(cid not in visiting, "task dependency cycle")
+        if cid not in visited:
+            visiting.add(cid)
+            for dep in dependencies[cid]:
+                visit(dep)
+            visiting.remove(cid)
+            visited.add(cid)
+    for cid in dependencies:
+        visit(cid)
+    plans = old.get("plans")
+    need(type(plans) is list and len(plans) == 1 and type(plans[0]) is dict
+         and plans[0].get("plan_cid") == old["plan_root_cid"],
+         "original plan missing")
+    parents = index(plans[0].get("legacy_parent_crosswalk"), "id", 24)
+    maintained_parents = index(maintained.get("tasks"), "id", 24)
+    expected_parents = {"LIR-" + str(n).zfill(2) for n in range(1, 25)}
+    need(set(parents) == set(maintained_parents) == expected_parents, "original 24 parent IDs differ")
+    crosswalk, linked = [], set()
+    for parent in sorted(parents):
+        original, selected = parents[parent], maintained_parents[parent]
+        need(original.get("related_lac_equivalence") == "unreviewed_related_scope_only",
+             "LAC equivalence was promoted")
+        need(selected.get("related_lac_equivalence", "unreviewed_related_scope_only") == "unreviewed_related_scope_only",
+             "current LAC equivalence was promoted")
+        need(original.get("depends_on") == selected.get("depends_on"), "parent dependencies changed")
+        need(type(selected.get("supervisor_execution")) is dict, "parent execution crosswalk missing")
+        links = selected["supervisor_execution"].get("task_links")
+        need(type(links) is list and links, "native parent task links missing")
+        aliases = []
+        for link in links:
+            need(type(link) is dict and link.get("task_alias") in before, "unknown parent child")
+            child = before[link["task_alias"]]
+            need(all(link.get(k) == child.get(k) for k in ("task_cid", "goal_cid", "legacy_parent_task"))
+                 and child.get("legacy_parent_task") == parent and link["task_alias"] not in linked,
+                 "parent child identity differs")
+            linked.add(link["task_alias"])
+            aliases.append(link["task_alias"])
+        need(sorted(aliases) == sorted(original.get("subtasks", [])), "parent child population changed")
+        crosswalk.append({"parent_id": parent, "task_aliases": sorted(aliases),
+                          "related_lac_tasks": original.get("related_lac_tasks", []),
+                          "related_lac_equivalence": "unreviewed_related_scope_only"})
+    unparented = programme.get("unparented_handoff_and_engineering_task_links")
+    need(type(unparented) is list and len(unparented) == 12, "unparented population differs")
+    for link in unparented:
+        need(type(link) is dict and link.get("task_alias") in before and link["task_alias"] not in linked,
+             "unparented child invalid or repeated")
+        child = before[link["task_alias"]]
+        need(child.get("legacy_parent_task") is None and all(link.get(k) == child.get(k)
+             for k in ("task_cid", "goal_cid")), "unparented child identity differs")
+        linked.add(link["task_alias"])
+    need(linked == set(before), "crosswalk does not cover all tasks")
+    selected = now.get("LIR-9001")
+    need(type(selected) is dict and selected["revision"] == expected_task_revision
+         and selected["status"] == "blocked" and selected["dependencies"] == [], "replacement task revision/status differs")
+    for key in ("task_alias", "task_cid", "goal_cid", "plan_cid"):
+        need(prior.get(key) == selected.get(key), "prior task identity differs")
+    need(prior.get("repository_tree_id") == old["repository_tree_id"] and prior.get("revision") == 13
+         and type(prior.get("revision")) is int and prior.get("status") == "blocked", "prior task revision differs")
+    need(prior.get("attempt_history") == {"attempts": 2, "max_attempts": 2, "outcome": "UNKNOWN"},
+         "spent attempt history differs")
+    receipt = prior.get("completion_receipt")
+    need(type(receipt) is dict and receipt.get("task_cid") == selected["task_cid"]
+         and receipt.get("operation") == "database_task_claim_failure"
+         and type(receipt.get("attempt_number")) is int and receipt["attempt_number"] == 2
+         and receipt.get("automatic_retry_admitted") is False
+         and receipt.get("failure_kind") == "administrative_operator_stop_outcome_unknown",
+         "prior UNKNOWN failure receipt differs")
+    need(selected.get("completion_receipt") == receipt, "amendment overwrote the old failure receipt")
+    history = selected.get("retained_execution_outcomes")
+    need(type(history) is list and 1 <= len(history) <= 16, "retained execution history missing")
+    receipt_hash = hashlib.sha256(_handoff_reconciliation_bytes_v2(receipt)[:-1]).hexdigest()
+    matches = []
+    seen_revisions = set()
+    for entry in history:
+        need(type(entry) is dict and set(entry) == {"task_cid", "task_revision", "completion_receipt", "sha256"}
+             and entry.get("task_cid") == selected["task_cid"]
+             and type(entry.get("task_revision")) is int and 0 < entry["task_revision"] < expected_task_revision
+             and entry["task_revision"] not in seen_revisions and type(entry.get("completion_receipt")) is dict,
+             "retained execution entry differs")
+        seen_revisions.add(entry["task_revision"])
+        need(entry.get("sha256") == hashlib.sha256(
+            _handoff_reconciliation_bytes_v2(entry["completion_receipt"])[:-1]).hexdigest(), "retained receipt digest differs")
+        if entry["task_revision"] == 13:
+            matches.append(entry)
+    need(len(matches) == 1 and matches[0]["completion_receipt"] == receipt and matches[0]["sha256"] == receipt_hash,
+         "exact old UNKNOWN receipt is not retained")
+    need(catalog.get("schema") == "legal-autoformal-work-catalog/v1", "work catalog schema differs")
+    components, evidence = catalog.get("components"), catalog.get("selected_evidence")
+    need(type(components) is list and 1 <= len(components) <= 512
+         and type(evidence) is list and 1 <= len(evidence) <= 2048, "catalog bounds differ")
+    evidence_ids = [item.get("id") for item in evidence if type(item) is dict]
+    need(all(text(v) for v in evidence_ids) and len(evidence_ids) == len(evidence) == len(set(evidence_ids)),
+         "catalog evidence identities differ")
+    reuse, component_ids = [], set()
+    for component in components:
+        need(type(component) is dict and text(component.get("id")) and component["id"] not in component_ids
+             and text(component.get("path")) and text(component.get("status")), "catalog component invalid")
+        component_ids.add(component["id"])
+        refs = component.get("evidence_ids")
+        need(type(refs) is list and all(type(v) is str and v in evidence_ids for v in refs), "catalog evidence link missing")
+        reuse.append({"component_id": component["id"], "owner_path": component["path"],
+                      "recorded_qualification": component["status"], "evidence_ids": refs})
+    return {"task_scope": {"task_alias": "LIR-9001", "task_cid": selected["task_cid"],
+                           "goal_cid": selected["goal_cid"], "plan_cid": selected["plan_cid"],
+                           "repository_tree_id": old["repository_tree_id"], "revision": expected_task_revision},
+            "producer_principal": producer_principal, "input_commitments": commitments,
+            "counts": {"tasks": 64, "goals": 34, "goal_edges": 33, "dependencies": 115, "parents": 24},
+            "current_task_states": sorted(states, key=lambda row: row["task_alias"]),
+            "parent_crosswalk": crosswalk, "reuse_candidates": sorted(reuse, key=lambda row: row["component_id"]),
+            "retained_execution_outcomes": history,
+            "reviewed_current_authoring_differences": sorted(authoring_differences, key=lambda row: row["task_alias"]),
+            "authoring_review_authenticated": False,
+            "prior_attempt_history": prior["attempt_history"], "prior_provider_outcome": "UNKNOWN",
+            "native_status_verified": False, "descriptor_files_authenticated": False,
+            "old_provider_outcome_resolved": False, "old_provider_success_claimed": False,
+            "attempts_rearmed": False, "attempt_budget_reset": False,
+            "task_or_goal_status_changed": False, "completion_authority": False,
+            "dispatch_authorized": False, "native_admission": False,
+            "training_authorized": False, "formalized": False,
+            "supervision_masks": {"training": 0, "evaluation_gold": 0}}
+
+
+def prepare_current_handoff_reconciliation_v2(**inputs: Any) -> dict[str, Any]:
+    """Prepare factual reconciliation from supplied metadata, without effects.
+
+    Original owners must authenticate snapshots, bytes, principals and current
+    scope. Recorded catalogue qualification is attributed history; this report
+    neither transfers it nor resolves the earlier UNKNOWN provider invocation.
+    """
+    return {"schema": "legal-ir-current-handoff-reconciliation/v2",
+            **_handoff_reconciliation_facts_v2(**inputs)}
+
+
+def verify_current_handoff_reconciliation_v2(
+    report: Mapping[str, Any], *, producer_freeze: Mapping[str, Any],
+    verifier_principal: str, **independent_inputs: Any,
+) -> dict[str, Any]:
+    """Reconstruct one frozen report from independently supplied metadata.
+
+    This pure verifier checks content equality and declared role separation.
+    Native owners must additionally authenticate principals, source custody and
+    the actual prepare/freeze/verify ordering before accepting its result.
+    """
+    expected = prepare_current_handoff_reconciliation_v2(**independent_inputs)
+    if (type(verifier_principal) is not str or not 0 < len(verifier_principal) <= 512
+            or any(ord(c) < 32 for c in verifier_principal) or verifier_principal == expected["producer_principal"]):
+        raise ValueError("independent verifier principal required")
+    raw = _handoff_reconciliation_bytes_v2(report)
+    if json.loads(raw) != expected:
+        raise ValueError("frozen report does not reproduce current factual metadata")
+    digest = hashlib.sha256(raw).hexdigest()
+    freeze = {"schema": "legal-ir-handoff-producer-freeze/v2", "report_sha256": digest,
+              "report_bytes": len(raw), "producer_principal": expected["producer_principal"],
+              "frozen_before_verification": True}
+    if not isinstance(producer_freeze, Mapping) or dict(producer_freeze) != freeze:
+        raise ValueError("producer freeze differs")
+    return {"schema": "legal-ir-current-handoff-verification/v2", "valid": True,
+            "task_scope": expected["task_scope"], "report_sha256": digest,
+            "report_bytes": len(raw), "producer_principal": expected["producer_principal"],
+            "verifier_principal": verifier_principal, "input_commitments": expected["input_commitments"],
+            "checked_scope": "factual_metadata_only", "native_status_verified": False,
+            "principals_authenticated": False, "freeze_chronology_authenticated": False,
+            "old_provider_outcome_resolved": False, "task_or_goal_status_changed": False,
+            "completion_authority": False, "dispatch_authorized": False, "native_admission": False,
+            "training_authorized": False, "formalized": False,
+            "supervision_masks": {"training": 0, "evaluation_gold": 0}}
+
+
 def progress_log_path(board_path: Any) -> Path | None:
     if board_path is None:
         return None
