@@ -449,3 +449,177 @@ def test_v1_checkpoint_schema_refused_before_model(case, monkeypatch):
     with pytest.raises(ValueError):
         subject.restore_optimizer(torch, checkpoint, **kwargs)
     assert calls == []
+
+
+# Capture controls extend the exact 32-case numerical prefix above.
+def _source_rows(case, count=2):
+    return [{"id": "v2-source-%03d" % index,
+             "source_text": case["records"][index]["source_text"],
+             "latent": list(case["records"][index]["latent"])}
+            for index in range(count)]
+
+
+def _capture_setup(torch, case, *, margin_weight=0.25):
+    kwargs = _kwargs(case, margin_weight=margin_weight)
+    checkpoint = subject.build_checkpoint(**kwargs)
+    runtime = subject.restore_optimizer(torch, checkpoint, **kwargs)
+    return kwargs, checkpoint, runtime
+
+
+@pytest.mark.parametrize("margin_weight", [0.0, 0.25], ids=["arm0", "arm025"])
+def test_v2_capture_matches_original_v1_heads_and_complete_readout(case, monkeypatch, margin_weight):
+    import torch
+    kwargs, checkpoint, runtime = _capture_setup(torch, case, margin_weight=margin_weight)
+    rows = _source_rows(case)
+    original_kwargs = {**case, "margin_weight": margin_weight}
+    original_checkpoint = base.build_checkpoint(**original_kwargs)
+    original_runtime = base.restore_optimizer(torch, original_checkpoint, **original_kwargs)
+    reference = base.captured_inference(original_runtime, original_checkpoint, rows, **original_kwargs)
+    before = base._checkpoint_raw(base.f18.span._pack(runtime["model"], runtime["optimizer"]))
+    offered = base._checkpoint_raw(rows)
+    rng, grad_mode = torch.get_rng_state().clone(), torch.is_grad_enabled()
+
+    def forbidden_restore(*args, **kwargs):
+        raise AssertionError("capture attempted another restore")
+
+    monkeypatch.setattr(subject, "restore_optimizer", forbidden_restore)
+    result = subject.captured_inference(runtime, checkpoint, rows, **kwargs)
+    assert result["schema"] == "conditions-fullspan-four-tensor-target-free-head-capture/v2"
+    assert result["inference"]["schema"] == "conditions-fullspan-four-tensor-inference/v2"
+    assert result["inference"]["rows"] == reference["inference"]["rows"]
+    assert result["occurrences"] == reference["occurrences"]
+    assert result["actual_source_forwards"] == result["cumulative_source_forwards"] == 2
+    assert result["extra_capture_forwards"] == 0
+    assert all(v == 2 for table in result["forward_counter_deltas"].values() for v in table.values())
+    assert result["inference"]["recipe_sha256"] == subject.checkpoint_digest(kwargs["recipe"])
+    assert result["inference"]["learning_rate"] == 0.002
+    assert result["inference"]["donor_config_learning_rate"] == 0.001
+    assert before == base._checkpoint_raw(base.f18.span._pack(runtime["model"], runtime["optimizer"]))
+    assert offered == base._checkpoint_raw(rows)
+    assert torch.equal(rng, torch.get_rng_state()) and torch.is_grad_enabled() is grad_mode
+    assert not runtime["model"].training and not runtime["model"]._forward_hooks
+    assert result["target_access"] is result["teacher_forcing"] is result["training_executed"] is False
+    _assert_false(result)
+    _assert_false(result["inference"])
+
+
+def test_v2_capture_reuses_one_runtime_for_128_and_40_source_rows(case):
+    import torch
+    kwargs, checkpoint, runtime = _capture_setup(torch, case)
+    rows = _source_rows(case, 168)
+    with torch.no_grad():
+        first = subject.captured_inference(runtime, checkpoint, rows[:128], **kwargs)
+        second = subject.captured_inference(runtime, checkpoint, rows[128:], **kwargs)
+        assert torch.is_grad_enabled() is False
+    assert first["actual_source_forwards"] == first["cumulative_source_forwards"] == 128
+    assert second["actual_source_forwards"] == 40 and second["cumulative_source_forwards"] == 168
+    assert all(v == 40 for table in second["forward_counter_deltas"].values() for v in table.values())
+    assert [v["id"] for v in first["occurrences"] + second["occurrences"]] == [v["id"] for v in rows]
+    assert runtime["optimizer_steps"] == 0 and runtime["optimizer"].state == {}
+    assert runtime["model_forwards"] == 168
+    _assert_partition(torch, runtime, case["state"], steps=0)
+
+
+@pytest.mark.parametrize("damage", ["labels", "reference", "duplicate", "nonfinite", "empty", "over128"])
+def test_v2_capture_rejects_target_or_invalid_rows_before_forward(case, damage):
+    import torch
+    kwargs, checkpoint, runtime = _capture_setup(torch, case)
+    valid = _source_rows(case)
+    rows = copy.deepcopy(valid)
+    if damage in ("labels", "reference"):
+        rows[0][damage] = "unpermitted target"
+    elif damage == "duplicate":
+        rows[1]["id"] = rows[0]["id"]
+    elif damage == "nonfinite":
+        rows[0]["latent"][0] = float("nan")
+    elif damage == "empty":
+        rows = []
+    else:
+        rows = _source_rows(case, 129)
+    with pytest.raises(ValueError):
+        subject.captured_inference(runtime, checkpoint, rows, **kwargs)
+    assert runtime["model_forwards"] == 0
+    assert all(v == 0 for v in runtime["model"]._conditions_forward_accounting.values())
+    assert subject.captured_inference(runtime, checkpoint, valid[:1], **kwargs)["actual_source_forwards"] == 1
+
+
+@pytest.mark.parametrize("damage", ["state", "learning_rate", "progress", "local_hook", "global_hook", "callable", "decoder_code", "named_parameter"])
+def test_v2_capture_runtime_and_hooks_are_refused_before_forward(case, monkeypatch, damage):
+    import torch
+    kwargs, checkpoint, runtime = _capture_setup(torch, case)
+    model = runtime["model"]
+    handle = None
+    if damage == "state":
+        with torch.no_grad():
+            runtime["named"]["start.bias"][3] += 0.125
+    elif damage == "learning_rate":
+        runtime["optimizer"].param_groups[0]["lr"] = 0.004
+    elif damage == "progress":
+        runtime["progress"]["optimizer_steps"] = 1
+    elif damage == "local_hook":
+        handle = model.register_forward_hook(lambda *args: None)
+    elif damage == "global_hook":
+        handle = torch.nn.modules.module.register_module_forward_hook(lambda *args: None)
+    elif damage == "callable":
+        monkeypatch.setattr(model, "forward", lambda *args: None)
+    elif damage == "decoder_code":
+        original = base._CAPTURE_DECODE
+        monkeypatch.setattr(original, "__code__", (lambda *args, **kwargs: None).__code__)
+    else:
+        runtime["named"]["start.bias"] = torch.nn.Parameter(runtime["named"]["start.bias"].detach().clone())
+    try:
+        with pytest.raises(ValueError):
+            subject.captured_inference(runtime, checkpoint, _source_rows(case), **kwargs)
+        assert runtime["model_forwards"] == 0
+        assert all(v == 0 for v in model._conditions_forward_accounting.values())
+    finally:
+        if handle is not None:
+            handle.remove()
+
+
+@pytest.mark.parametrize("damage", ["source", "counter"])
+def test_v2_capture_closing_fence_retains_context_and_refuses_failed_runtime(case, monkeypatch, damage):
+    import torch
+    kwargs, checkpoint, runtime = _capture_setup(torch, case)
+    rows = _source_rows(case)
+    original_copy = subject._copy
+    rng = torch.get_rng_state().clone()
+
+    def mutate_late(value):
+        detached = original_copy(value)
+        if isinstance(value, dict) and value.get("schema") == subject.CAPTURE_SCHEMA:
+            if damage == "source":
+                rows[0]["source_text"] += " changed after capture"
+            else:
+                runtime["model_forwards"] += 1
+        return detached
+
+    monkeypatch.setattr(subject, "_copy", mutate_late)
+    with torch.no_grad():
+        with pytest.raises(ValueError):
+            subject.captured_inference(runtime, checkpoint, rows, **kwargs)
+        assert torch.is_grad_enabled() is False and torch.equal(rng, torch.get_rng_state())
+    assert runtime["_capture_failed"] is True
+    assert not runtime["model"].training and not runtime["model"]._forward_hooks
+    assert all(p.grad is None for p in runtime["named"].values())
+    count = dict(runtime["model"]._conditions_forward_accounting)
+    with pytest.raises(ValueError, match="prior capture failed"):
+        subject.captured_inference(runtime, checkpoint, _source_rows(case), **kwargs)
+    assert runtime["model"]._conditions_forward_accounting == count
+
+
+def test_v2_capture_accepts_a_restored_updated_v2_checkpoint_without_updating_it(case):
+    import torch
+    kwargs = _kwargs(case)
+    initial = subject.build_checkpoint(**kwargs)
+    updated, report = subject.run_admitted_updates(initial, torch=torch, **kwargs, max_steps=1, max_seconds=32)
+    runtime = subject.restore_optimizer(torch, updated, **kwargs)
+    before = base._checkpoint_raw(base.f18.span._pack(runtime["model"], runtime["optimizer"]))
+    captured = subject.captured_inference(runtime, updated, _source_rows(case), **kwargs)
+    assert captured["inference"]["checkpoint_sha256"] == subject.checkpoint_digest(updated)
+    assert captured["inference"]["model_state_sha256"] == updated["model_state_sha256"]
+    assert captured["actual_source_forwards"] == 2 and runtime["optimizer_steps"] == 1
+    assert report["optimizer_steps"] == 1
+    assert before == base._checkpoint_raw(base.f18.span._pack(runtime["model"], runtime["optimizer"]))
+    subject.validate_checkpoint(updated, **kwargs)
+    _assert_partition(torch, runtime, case["state"], steps=1)

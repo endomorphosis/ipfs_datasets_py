@@ -3961,17 +3961,19 @@
         "save_checkpoint",
         "load_checkpoint",
         "restore_optimizer",
-        "run_admitted_updates"
+        "run_admitted_updates",
+        "captured_inference"
       ],
       "compatibility_dependency": false,
       "evidence_ids": [
-        "f18-v2-recipe-bound-numerical-qualified-20261028-01"
+        "f18-v2-recipe-bound-numerical-qualified-20261028-01",
+        "f18-v2-source-capture-and-initial632-parity-qualified-20261028-01"
       ],
       "existing_task": "LIR-17",
       "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_span_conditions_fullspan_training_v1.md",
       "id": "conditions-fullspan-f18-four-tensor-training-v2",
       "immutable_base_component_id": "conditions-fullspan-f18-four-tensor-training-v1",
-      "notes": "Distinct v2 checkpoint/lineage and recipe-aware actual Adam with bounded updates. Reuses original F18 numerical kernels and original native lifecycle; no duplicate model or controller. 32 genuine synthetic cases/96 phases qualify mechanics, not retained capture/parity/fit. Donor config remains 0.001; no experiment rate selected. Public physical-v2 validation frontend support remains separate from the original R route used here.",
+      "notes": "Current v2 source binds its independently supplied recipe, immutable donor configuration and a fresh actual Adam. All 52 genuine numerical/capture cases pass; separate retained zero-step parity matches 632 sources and complete heads/readouts. It extends the original F18 numerical owner family and original resource lifecycle, with no duplicate controller. The earlier 32-case source remains separately attributed in evidence. No experiment rate, retained fit or model gain is selected. Explicit original trainer-v2 integration and fresh finite TRAIN admission remain open; the public physical-v2 validation frontend gap is separate.",
       "owner_module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_conditions_fullspan_training_v2",
       "owning_tests": [
         "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_conditions_fullspan_training_v2.py"
@@ -3979,6 +3981,17 @@
       "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_fullspan_training_v2.py",
       "recipe_component_id": "conditions-fullspan-f18-optimizer-recipe-metadata-v1",
       "required": true,
+      "source_capture_and_parity": {
+        "binary32_scalars": 194812,
+        "evidence_id": "f18-v2-source-capture-and-initial632-parity-qualified-20261028-01",
+        "owning_test_sha256": "30a1c841d7f938cfaef3ec16c6351d312fde75acc4735ae7977c19abc9fb0cf2",
+        "retained_initial_parity_rows": 632,
+        "retained_updates": 0,
+        "selected_experiment_rate": null,
+        "source_sha256": "d80a08844c06daae6466a39b87bc0c395e0dd4a2da01b284704a4e03e44af0f1",
+        "synthetic_cases": 52,
+        "synthetic_phases": 156
+      },
       "status": "focused_tests_qualified"
     }
   ],
@@ -4040,7 +4053,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-10-28T06:32:10.720284+00:00",
+  "last_updated_at_utc": "2026-10-28T07:28:52.995443+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -6323,6 +6336,16 @@
       "root": "datasets_repository",
       "scope": "Separate 32-case/96-phase genuine synthetic checkpoint/restore/update generation. All 73 source pins unchanged and original native/descendant/storage/source closure observed; 20 selected origins verified. No retained payload, capture, fresh 632 parity, experiment selection, retained fit, numerical-gain or scientific-task credit. Original R physical-v2 owner/plugin with W product, public W trainer preserved.",
       "status": "synthetic_numeric_checkpoint_update_qualified_capture_and_retained_parity_pending"
+    },
+    {
+      "id": "f18-v2-source-capture-and-initial632-parity-qualified-20261028-01",
+      "observed_bytes": 16623,
+      "observed_sha256": "228b3a49618412fe2b7cdcf025502e9d9c05cac0876d46f0844527f78d33b968",
+      "path": "docs/autoformalization/evidence/legal-ir-f18-v2-source-capture-parity-20261028.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Separate 52-case/156-phase genuine synthetic qualification and fresh retained 632-row initial parity. All 194812 binary32 head scalars and complete greedy/formal/joint records match, freeze before references, no retained gradients/updates/scoring. Original 73/65 source/native/storage closures. No experiment rate, fit, semantic, width, promotion or scientific-task authority.",
+      "status": "genuine_capture_and_retained_initial_parity_qualified_no_fit_or_promotion"
     }
   ]
 }

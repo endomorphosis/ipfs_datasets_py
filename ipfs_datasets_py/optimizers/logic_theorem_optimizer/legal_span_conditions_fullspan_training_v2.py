@@ -309,6 +309,7 @@ def restore_optimizer(torch, checkpoint, state, provenance, *, records, teacher,
                   "v2 restored42/four-Adam differs")
         _need(torch.equal(ambient, torch.get_rng_state())
               and torch.is_grad_enabled() is incoming_grad_mode, "v2 restore changed caller RNG/gradmode")
+        runtime["_capture_witness"] = base._capture_witness(model)
         _need(_implementation() == checkpoint["implementation"], "v2 restore closing source changed")
         return runtime
     finally:
@@ -433,3 +434,192 @@ __all__ = ["SCHEMA", "CHECKPOINT_SCHEMA", "CHECKPOINT_LINEAGE_ID", "REPORT_SCHEM
     "MAX_UPDATES", "MAX_SECONDS", "MAX_CHECKPOINT_BYTES", "BINDINGS_SCHEMA", "BINDING_FIELDS",
     "checkpoint_digest", "build_checkpoint", "validate_checkpoint", "save_checkpoint",
     "load_checkpoint", "restore_optimizer", "run_admitted_updates"]
+
+
+# These are the unchanged original numerical readout owners, not checkpoint views.
+CAPTURE_SCHEMA = "conditions-fullspan-four-tensor-target-free-head-capture/v2"
+INFERENCE_SCHEMA = "conditions-fullspan-four-tensor-inference/v2"
+_CAPTURE_FACTORY = base._CAPTURE_FACTORY
+_CAPTURE_DECODE = base._CAPTURE_DECODE
+_CAPTURE_VERIFY = base._CAPTURE_VERIFY
+_CAPTURE_TENSOR = base._CAPTURE_TENSOR
+_CAPTURE_CODES = base._CAPTURE_CODES
+
+
+def _capture_guard(runtime, checkpoint, state, provenance, records, teacher, weights,
+                   expected_bindings, recipe, learning_rate, margin_weight, checkpoint_root):
+    _need(type(runtime) is dict and runtime.get("_capture_failed") is not True
+          and runtime.get("checkpoint_sha256") == checkpoint_root
+          and checkpoint_digest(checkpoint) == checkpoint_root,
+          "v2 capture checkpoint/runtime binding changed or prior capture failed")
+    _, policy = _checked_checkpoint(checkpoint, state, provenance, records, teacher,
+        weights, expected_bindings, recipe, learning_rate, margin_weight)
+    torch, model = runtime["torch"], runtime["model"]
+    _need(torch is base.f18.sys.modules.get("torch")
+          and _raw(runtime["config"]) == _raw(provenance["config"])
+          and _raw(runtime["progress"]) == _raw(checkpoint["progress"])
+          and type(runtime["optimizer_steps"]) is int
+          and runtime["optimizer_steps"] == checkpoint["progress"]["optimizer_steps"],
+          "v2 capture numerical/config/progress owner changed")
+    hooks = torch.nn.modules.module
+    _need(all(not getattr(hooks, name, {}) for name in
+        ("_global_forward_hooks", "_global_forward_pre_hooks", "_global_backward_hooks",
+         "_global_backward_pre_hooks", "_global_forward_hooks_always_called")),
+        "v2 capture requires empty global hook registries")
+    witness = runtime.get("_capture_witness")
+    _need(type(witness) is dict and witness.get("model") is model,
+          "v2 restored capture witness required")
+    modules, parameters = tuple(model.named_modules()), tuple(model.named_parameters())
+    _need(len(parameters) == len(witness["parameters"])
+          and all(name == old_name and parameter is old for (name, parameter), (old_name, old)
+                  in zip(parameters, witness["parameters"], strict=True)),
+          "v2 capture parameter identity changed")
+    _need(len(modules) == len(witness["modules"]), "v2 capture module tree changed")
+    for (name, module), (old_name, old_module, forward, code) in zip(modules, witness["modules"], strict=True):
+        _need(name == old_name and module is old_module
+              and base._capture_method(module.forward) is forward
+              and getattr(base._capture_method(module.forward), "__code__", None) is code,
+              "v2 capture forward callable/code changed")
+        _need(not module.training and not module._forward_hooks and not module._forward_pre_hooks
+              and not module._backward_hooks and not getattr(module, "_backward_pre_hooks", {}),
+              "v2 capture requires eval mode and empty local hooks")
+    _need(base.f18._model is _CAPTURE_FACTORY
+          and base.f18.span.SpanLegalFormulaDecoder._decode is _CAPTURE_DECODE
+          and base.f18.capture._verify_greedy is _CAPTURE_VERIFY
+          and base.f18.capture._tensor is _CAPTURE_TENSOR,
+          "v2 original capture/decode callable changed")
+    _need(all(value.__code__ is code for value, code in zip(
+        (_CAPTURE_FACTORY, _CAPTURE_DECODE, _CAPTURE_VERIFY, _CAPTURE_TENSOR), _CAPTURE_CODES, strict=True)),
+        "v2 original capture/decode code changed")
+    code_type = type(_CAPTURE_CODES[0])
+    classes = [value for value in _CAPTURE_CODES[0].co_consts
+               if isinstance(value, code_type) and value.co_name == "ModalityConditionsRetentionAdapter"]
+    forwards = [value for body in classes for value in body.co_consts
+                if isinstance(value, code_type) and value.co_name == "forward"]
+    _need(len(forwards) == 1 and getattr(model.forward, "__self__", None) is model
+          and getattr(base._capture_method(model.forward), "__code__", None) is forwards[0],
+          "v2 original retained forward code required")
+    _need(all(parameter.grad is None for _, parameter in parameters),
+          "v2 capture parameter gradients changed")
+    actual, moments = _live_state(torch, runtime, state, checkpoint["progress"]["optimizer_steps"], policy)
+    _need(checkpoint_digest(actual) == checkpoint["model_state_sha256"]
+          and _raw(moments) == _raw(checkpoint["optimizer_state"]),
+          "v2 capture full42/Adam state changed")
+    counters = base._capture_counter_values(model, witness)
+    return torch, model, counters
+
+def captured_inference(runtime, checkpoint, rows, *, state, provenance, records, teacher, weights,
+                       expected_bindings, recipe, learning_rate, margin_weight, control="none"):
+    """Observe original source-only readout on one already restored runtime.
+
+    The original outer owner admits the finite inference operation. Only closed
+    source triples reach the unchanged decoder; no labels, teacher predictions,
+    scores or reference artifacts are supplied to that readout. No restore,
+    optimizer step, greedy arithmetic or joint-selection arithmetic occurs here.
+    """
+    _need(type(rows) is list and 1 <= len(rows) <= 128
+             and all(type(row) is dict and set(row) == {"id", "source_text", "latent"}
+                     and type(row["id"]) is str and 0 < len(row["id"].strip()) <= 512
+                     and type(row["source_text"]) is str and row["source_text"].strip() for row in rows),
+             "closed source-only id/source_text/latent triples required")
+    _need(len({row["id"] for row in rows}) == len(rows), "unique capture source IDs required")
+    _need(type(control) is str and control in ("none", "zero", "disabled", "rotate")
+             and (control != "rotate" or len(rows) > 1), "bounded capture control required")
+    sources_raw = _raw(rows)
+    sources = copy.deepcopy(rows)
+    tokens = [base.f18.span.tokenize_source(row["source_text"]) for row in sources]
+    _need(all(1 <= len(value) <= 128 for value in tokens), "bounded complete capture source tokens required")
+    vectors = [base.f18.span._vector(row["latent"], 384) for row in sources]
+    if control == "zero":
+        vectors = [[0.0] * 384 for _ in vectors]
+    elif control == "rotate":
+        vectors = vectors[1:] + vectors[:1]
+    checkpoint_root = checkpoint_digest(checkpoint)
+    torch, model, before = _capture_guard(runtime, checkpoint, state, provenance, records, teacher,
+                                         weights, expected_bindings, recipe, learning_rate, margin_weight, checkpoint_root)
+    ambient = torch.get_rng_state().clone()
+    grad_mode = torch.is_grad_enabled()
+    with torch.random.fork_rng(devices=[]), torch.set_grad_enabled(grad_mode):
+        try:
+            captures = []
+            handle = None
+            def hook(module, incoming, output):
+                index = len(captures)
+                _need(module is model and index < len(sources) and type(output) is dict
+                         and set(output) == {"modality", "presence", "start", "end"}, "unexpected extra source head capture")
+                count = len(tokens[index])
+                _need(type(incoming) is tuple and len(incoming) == 4
+                         and tuple(incoming[0].shape)[:2] == (1, count)
+                         and incoming[2].detach().cpu().tolist() == [count], "exact one-source forward required")
+                modality = _CAPTURE_TENSOR(output["modality"], (1, 3))[0]
+                presence = _CAPTURE_TENSOR(output["presence"], (1, 4, 2))[0]
+                starts = _CAPTURE_TENSOR(output["start"], (1, 6, count))[0]
+                ends = _CAPTURE_TENSOR(output["end"], (1, 6, count))[0]
+                captures.append({"schema": "joint-source-span-scores/v1",
+                    "tokens": [{key: token[key] for key in ("text", "start", "end")} for token in tokens[index]],
+                    "modality_logits": modality,
+                    "presence_logits": dict(zip(base.f18.span.OPTIONAL_FIELDS, presence, strict=True)),
+                    "start_logits": dict(zip(base.f18.span.SPAN_FIELDS, starts, strict=True)),
+                    "end_logits": dict(zip(base.f18.span.SPAN_FIELDS, ends, strict=True))})
+                return None
+            try:
+                with torch.random.fork_rng(devices=[]):
+                    view = object.__new__(base.f18.span.SpanLegalFormulaDecoder)
+                    view.torch, view.model = torch, model
+                    view.checkpoint = {"config": copy.deepcopy(runtime["config"])}
+                    handle = model.register_forward_hook(hook)
+                    decoded = [_CAPTURE_DECODE(view, row["source_text"], vector, enabled=control != "disabled")
+                               for row, vector in zip(sources, vectors, strict=True)]
+                    _need(torch.equal(ambient, torch.get_rng_state()), "source capture consumed CPU RNG")
+            finally:
+                if handle is not None:
+                    handle.remove()
+                model.eval()
+            _need(len(captures) == len(decoded) == len(sources)
+                     and torch.equal(ambient, torch.get_rng_state()) and torch.is_grad_enabled() is grad_mode,
+                     "capture coverage/RNG/gradmode changed")
+            for source, scores, raw in zip(sources, captures, decoded, strict=True):
+                _need(raw["source_sha256"] == hashlib.sha256(source["source_text"].encode()).hexdigest(),
+                         "capture source occurrence changed")
+                _CAPTURE_VERIFY(source["source_text"], scores, raw)
+            after = base._capture_counter_values(model, runtime["_capture_witness"])
+            deltas = {name: {key: value - before[name][key] for key, value in table.items()} for name, table in after.items()}
+            _need(all(value == len(sources) for table in deltas.values() for value in table.values()),
+                     "native forward counter deltas differ from source count")
+            runtime["model_forwards"] = after["_conditions_forward_accounting"]["source_model_forwards"]
+            _capture_guard(runtime, checkpoint, state, provenance, records, teacher, weights,
+                           expected_bindings, recipe, learning_rate, margin_weight, checkpoint_root)
+            _need(_raw(rows) == sources_raw, "offered capture source triples changed")
+            report = {"schema": INFERENCE_SCHEMA, "checkpoint_sha256": checkpoint_root,
+                      "model_state_sha256": checkpoint["model_state_sha256"], "rows": decoded,
+                      "recipe_sha256": runtime["recipe_sha256"], "learning_rate": learning_rate,
+                      "donor_config_learning_rate": provenance["config"]["learning_rate"],
+                      "decoded_count": sum(row["status"] == "decoded" for row in decoded),
+                      "latent_ablation": control, "target_access": False, "teacher_forcing": False,
+                      "training_executed": False, **_AUTHORITY}
+            result = {"schema": CAPTURE_SCHEMA, "inference": report,
+                      "occurrences": [{"id": row["id"], "source_sha256": hashlib.sha256(row["source_text"].encode()).hexdigest(),
+                                       "scores": scores} for row, scores in zip(sources, captures, strict=True)],
+                      "source_rows_sha256": hashlib.sha256(sources_raw).hexdigest(),
+                      "actual_source_forwards": len(sources), "extra_capture_forwards": 0,
+                      "forward_counter_deltas": {"actor": deltas["_actor_forward_accounting"],
+                                                 "conditions": deltas["_conditions_forward_accounting"]},
+                      "cumulative_source_forwards": runtime["model_forwards"],
+                      "feature_paths_per_source_forward": 3, "model_weights_unchanged": True,
+                      "ambient_CPU_RNG_preserved": True, "incoming_grad_mode_preserved": True,
+                      "original_greedy_observations_verified": True, "target_access": False,
+                      "teacher_forcing": False, "training_executed": False, **_AUTHORITY}
+            detached = _copy(result)
+            _capture_guard(runtime, checkpoint, state, provenance, records, teacher, weights,
+                           expected_bindings, recipe, learning_rate, margin_weight, checkpoint_root)
+            _need(_raw(rows) == sources_raw and base._capture_counter_values(model, runtime["_capture_witness"]) == after
+                     and torch.equal(ambient, torch.get_rng_state()) and torch.is_grad_enabled() is grad_mode,
+                     "capture closing source/counter/RNG/gradmode fence changed")
+            return detached
+        except BaseException:
+            runtime["_capture_failed"] = True
+            raise
+        finally:
+            model.eval()
+
+__all__ += ["CAPTURE_SCHEMA", "INFERENCE_SCHEMA", "captured_inference"]
