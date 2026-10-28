@@ -2659,7 +2659,7 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 
 ## LIRAE-LIR03-SOURCE-PACKET-01 Prepare the finite source-release and cache-crosswalk execution packet
 
-- status: todo
+- status: completed
 - completion: manual
 - is schedulable: true
 - priority: P1
