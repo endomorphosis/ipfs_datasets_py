@@ -2331,3 +2331,257 @@ def test_trainer_supervision_cancelled_owner_never_spawns_or_releases_RUN(traine
     assert result["completed"] is False and "cancelled" in result["error"]["error"]
     assert case.child is None and case.pipes.run_writes == []
     assert case.journal.get_metadata("start") is None
+
+
+# Explicit v2 controller controls are lexical/fake only; no retained TRAIN work.
+def _v2_trainer_controller_case(tmp_path):
+    module, path, value = _trainer_controller_request_case(tmp_path, paired=True)
+    value["schema"] = "owned-f18-conditions-training-request/v2"
+    value["compute"]["learning_rate"] = 0.003  # authored metadata, no experiment selection
+    directory = module.ROOT / "ipfs_datasets_py/optimizers/logic_theorem_optimizer"
+    for name in ("legal_span_conditions_fullspan_training_v2.py",
+                 "legal_span_conditions_fullspan_optimizer_recipe_v1.py"):
+        value["source_sha256"][str(directory / name)] = _sha(directory / name)
+    _write_json(path, value)
+    return module, path, value
+
+
+def test_v2_trainer_request_is_explicit_lexical_and_detached(tmp_path, monkeypatch):
+    module, path, value = _v2_trainer_controller_case(tmp_path)
+    attempts = _trainer_forbid_reference_bodies(monkeypatch, value)
+    parsed, raw = module.trainer_request(path, _sha(path))
+    module._trainer_source_guard(parsed)
+    assert parsed == value and parsed is not value and raw
+    parsed["compute"]["learning_rate"] = 0.007
+    assert value["compute"]["learning_rate"] == 0.003
+    assert attempts == [] and not Path(value["scheduler_state_path"]).exists()
+    assert tuple(Path(value["attempt_directory"]).iterdir()) == ()
+
+
+@pytest.mark.parametrize("damage", ["missing_rate", "boolean_rate", "false_rate", "zero_rate",
+    "negative_rate", "nan_rate", "positive_inf", "negative_inf", "string_rate", "null_rate",
+    "huge_integer", "unknown_field", "v1_with_rate", "foreign_schema"])
+def test_v2_trainer_request_refuses_invalid_rate_or_version_without_payload_access(tmp_path, monkeypatch, damage):
+    module, _, value = _v2_trainer_controller_case(tmp_path)
+    attempts = _trainer_forbid_reference_bodies(monkeypatch, value)
+    rates = {"boolean_rate": True, "false_rate": False, "zero_rate": 0.0, "negative_rate": -0.001,
+        "nan_rate": float("nan"), "positive_inf": float("inf"), "negative_inf": -float("inf"),
+        "string_rate": "0.003", "null_rate": None, "huge_integer": 10 ** 400}
+    if damage == "missing_rate": value["compute"].pop("learning_rate")
+    elif damage in rates: value["compute"]["learning_rate"] = rates[damage]
+    elif damage == "unknown_field": value["compute"]["admitted"] = True
+    elif damage == "v1_with_rate": value["schema"] = "owned-f18-conditions-training-request/v1"
+    else: value["schema"] = "owned-f18-conditions-training-request/v3"
+    with pytest.raises(ValueError):
+        module._validate_trainer_request(value)
+    assert attempts == [] and tuple(Path(value["attempt_directory"]).iterdir()) == ()
+
+
+@pytest.mark.parametrize("missing", ["legal_span_conditions_fullspan_training_v2.py",
+                                   "legal_span_conditions_fullspan_optimizer_recipe_v1.py"])
+def test_v2_trainer_source_guard_requires_each_explicit_numerical_owner(tmp_path, missing):
+    module, _, value = _v2_trainer_controller_case(tmp_path)
+    directory = module.ROOT / "ipfs_datasets_py/optimizers/logic_theorem_optimizer"
+    value["source_sha256"].pop(str(directory / missing))
+    with pytest.raises(ValueError, match="explicit v2 numerical and recipe"):
+        module._trainer_source_guard(value)
+    assert tuple(Path(value["attempt_directory"]).iterdir()) == ()
+
+
+def test_v2_native_probe_keeps_compute_empty_and_validation_schema_unchanged(tmp_path):
+    module, _, value = _v2_trainer_controller_case(tmp_path)
+    value.update(mode="native_probe", compute=None)
+    parsed = module._validate_trainer_request(value)
+    assert parsed["compute"] is None
+    value["compute"] = {"learning_rate": 0.003}
+    with pytest.raises(ValueError, match="native probe permits no payload"):
+        module._validate_trainer_request(value)
+    with pytest.raises(ValueError):
+        module._validate_trainer_request({"schema": "owned-validation-request/v2"})
+
+
+
+def test_v2_trainer_child_preserves_original_RUN_barrier_before_all_reference_access(tmp_path, monkeypatch):
+    module, path, value, events, BeforeRUN = _trainer_child_fake_bootstrap_case(
+        tmp_path, monkeypatch, stop_at_RUN=True)
+    module.sys.float_info = sys.float_info
+    value["schema"] = "owned-f18-conditions-training-request/v2"
+    value["compute"]["learning_rate"] = 0.003
+    directory = module.ROOT / "ipfs_datasets_py/optimizers/logic_theorem_optimizer"
+    for name in ("legal_span_conditions_fullspan_training_v2.py",
+                 "legal_span_conditions_fullspan_optimizer_recipe_v1.py"):
+        value["source_sha256"][str(directory / name)] = _sha(directory / name)
+    _write_json(path, value)
+    attempts = _trainer_forbid_reference_bodies(monkeypatch, value)
+    with pytest.raises(BeforeRUN):
+        module._trainer_child_main(path, _sha(path), ready_fd=7001, release_fd=7002, owner_pid=os.getppid())
+    assert events == ["network", "ready", "close_READY", "wait_RUN"] and attempts == []
+    assert tuple(Path(value["outputs"]["exports"]).iterdir()) == ()
+
+
+def test_v2_probe_after_RUN_keeps_original_zero_compute_result_and_lifecycle(tmp_path, monkeypatch):
+    module, path, value, events, _ = _trainer_child_fake_bootstrap_case(
+        tmp_path, monkeypatch, stop_at_RUN=False)
+    value["schema"] = "owned-f18-conditions-training-request/v2"
+    _write_json(path, value)
+    assert module._trainer_child_main(path, _sha(path), ready_fd=7001, release_fd=7002, owner_pid=os.getppid()) == 0
+    report = _json(Path(value["outputs"]["exports"]) / "trainer-result.json")
+    assert events == ["network", "ready", "close_READY", "wait_RUN", "watch"]
+    assert report["schema"] == "f18-native-trainer-probe-result/v1"
+    assert module.TRAINER_READY_SCHEMA.endswith("/v1") and module.TRAINER_TERMINAL_SCHEMA.endswith("/v1")
+    assert all(report[key] == 0 for key in (
+        "model_constructions", "checkpoint_payloads_opened", "model_forwards", "gradient_calls", "optimizer_updates"))
+    assert all(report[key] is False for key in ("admitted", "formalized", "promoted"))
+
+
+
+def _trainer_preentry_inventory_refusal_case(tmp_path):
+    """Authored source-close evidence only; no native reservation is created."""
+    module, terminal, raw, caller = _trainer_terminal_case(tmp_path)
+    value = json.loads(raw)
+    reservation = terminal["reservation"]
+    roots = [{"path": path, "device": 1, "inode": i+1} for i, path in enumerate(value["roots"])]
+    reservation.update(status="not_entered", record=None, resource_lease=None, cleanup_error=None,
+        schema="daemon-resource-reservations-v1", roots=roots, storage_limit_bytes=native_disk.MAX_STORAGE_BYTES)
+    terminal.update(completed=False, owner_open_returned=False, child_identity=None, events={},
+        error={"error_type": "DaemonResourceError", "error": "storage inventory entry bound exceeded"})
+    _write_json(Path(caller["expected_resource_ledger"]), {"schema": "daemon-resource-reservations-v1",
+        "reservations": {}, "roots": roots, "limit_bytes": native_disk.MAX_STORAGE_BYTES})
+    policy = {"proof_safety_enabled": True, "authored_policy_only": True}
+    value["expected_scheduler_policy_sha256"] = existing.policy_sha256(policy)
+    raw = json.dumps(value).encode(); caller["expected_request_sha256"] = hashlib.sha256(raw).hexdigest()
+    terminal["request_sha256"] = caller["expected_request_sha256"]
+    terminal["scheduler"]["policy_sha256"] = value["expected_scheduler_policy_sha256"]
+    _write_json(Path(value["scheduler_state_path"]), {"config": policy,
+        "schema_version": native.RESOURCE_SCHEDULER_SCHEMA_VERSION, "next_sequence": 1,
+        "leases": {}, "waiters": {}, "metrics": {}})
+    caller["returncode"] = 1
+    return module, terminal, raw, caller
+
+
+@pytest.mark.parametrize("version", [1, 2])
+def test_trainer_preentry_inventory_refusal_closes_source_without_grant_retry_or_storage_permission(tmp_path, version):
+    module, terminal, raw, caller = _trainer_preentry_inventory_refusal_case(tmp_path)
+    if version == 2:
+        value = json.loads(raw); value["schema"] = "owned-f18-conditions-training-request/v2"
+        raw = json.dumps(value).encode(); caller["expected_request_sha256"] = hashlib.sha256(raw).hexdigest()
+        terminal["request_sha256"] = caller["expected_request_sha256"]
+    ledger = Path(caller["expected_resource_ledger"])
+    scheduler = Path(json.loads(raw)["scheduler_state_path"])
+    before = (ledger.read_bytes(), scheduler.read_bytes(), deepcopy(terminal))
+    assert module.classify_owned_trainer_source_custody(terminal, raw, **caller) == {
+        "verdict": "proven_original_trainer_preentry_inventory_refusal_source_closed",
+        "source_custody_closed": True, "storage_release_authorized": False}
+    assert before == (ledger.read_bytes(), scheduler.read_bytes(), terminal)
+
+
+@pytest.mark.parametrize("damage", ["opened_boolean", "opened_true", "record", "native_lease", "status",
+    "cleanup", "unrecognized_error", "error_type", "child", "launch_event", "live_group", "rss_boolean",
+    "exit_incomplete", "source_guard", "completed", "returncode", "reservation_id", "request_id",
+    "wrong_purpose", "wrong_ledger", "wrong_scheduler", "durable_record", "durable_native_request",
+    "durable_schema", "durable_roots", "durable_limit", "changed_backend_pin"])
+def test_trainer_preentry_inventory_refusal_rejects_partial_or_conflicting_evidence(tmp_path, damage):
+    module, t, raw, caller = _trainer_preentry_inventory_refusal_case(tmp_path)
+    r = t["reservation"]
+    ledger = Path(caller["expected_resource_ledger"])
+    scheduler = Path(json.loads(raw)["scheduler_state_path"])
+    if damage == "opened_boolean": t["owner_open_returned"] = 0
+    elif damage == "opened_true": t["owner_open_returned"] = True
+    elif damage == "record": r["record"] = {"reservation_id": r["reservation_id"]}
+    elif damage == "native_lease": r["resource_lease"] = {"released": False}
+    elif damage == "status": r["status"] = "retained"
+    elif damage == "cleanup": r["cleanup_error"] = "unknown"
+    elif damage == "unrecognized_error": t["error"]["error"] = "later native acquisition failure"
+    elif damage == "error_type": t["error"]["error_type"] = "ValueError"
+    elif damage == "child": t["child_identity"] = {"pid": 123, "birth": "456"}
+    elif damage == "launch_event": t["events"]["child_launch_attempted"] = True
+    elif damage == "live_group": t["group_observation"]["live_processes"] = 1
+    elif damage == "rss_boolean": t["group_observation"]["rss_bytes"] = False
+    elif damage == "exit_incomplete": t["owner_exit_handling_completed"] = False
+    elif damage == "source_guard": t["source_guards"]["sources_unchanged"] = False
+    elif damage == "completed": t["completed"] = True
+    elif damage == "returncode": caller["returncode"] = 0
+    elif damage == "reservation_id": r["reservation_id"] = "Z" * 32
+    elif damage == "request_id": t["resource_request_id"] = "daemon:" + "3" * 32
+    elif damage == "wrong_purpose": r["workload"] = "canonical_validation"
+    elif damage == "wrong_ledger": r["ledger_path"] = str(tmp_path / "foreign-ledger")
+    elif damage == "wrong_scheduler": t["scheduler"]["lane"] = "validation"
+    elif damage == "durable_record":
+        body = _json(ledger); body["reservations"][r["reservation_id"]] = {}; _write_json(ledger, body)
+    elif damage == "durable_native_request": _write_json(scheduler, {"request": "daemon:" + r["reservation_id"]})
+    elif damage == "durable_schema":
+        body = _json(ledger); body["schema"] = "unrecognized"; _write_json(ledger, body)
+    elif damage == "durable_roots":
+        body = _json(ledger); body["roots"][0]["inode"] += 1; _write_json(ledger, body)
+    elif damage == "durable_limit":
+        body = _json(ledger); body["limit_bytes"] += 1; _write_json(ledger, body)
+    else:
+        value = json.loads(raw)
+        directory = module.ROOT / "ipfs_datasets_py/optimizers/logic_theorem_optimizer"
+        value["source_sha256"][str(directory / "autoencoder_daemon_resources.py")] = "f" * 64
+        raw = json.dumps(value).encode(); caller["expected_request_sha256"] = hashlib.sha256(raw).hexdigest()
+        t["request_sha256"] = caller["expected_request_sha256"]
+    assert module.classify_owned_trainer_source_custody(t, raw, **caller) == {
+        "verdict": "requires_original_trainer_cleanup", "source_custody_closed": False,
+        "storage_release_authorized": False}
+
+
+
+@pytest.mark.parametrize("damage", ["empty_state", "wrong_schema", "boolean_sequence", "missing_waiters",
+    "invalid_lease", "wrong_policy", "proof_disabled", "escaped_value_id", "escaped_key_id"])
+def test_trainer_preentry_recovery_uses_original_typed_reader_and_decoded_native_id_refusal(tmp_path, monkeypatch, damage):
+    module, t, raw, caller = _trainer_preentry_inventory_refusal_case(tmp_path)
+    path = Path(json.loads(raw)["scheduler_state_path"])
+    state = _json(path)
+    rid = t["reservation"]["reservation_id"]
+    if damage == "empty_state": state = {}
+    elif damage == "wrong_schema": state["schema_version"] = "unrecognized"
+    elif damage == "boolean_sequence": state["next_sequence"] = True
+    elif damage == "missing_waiters": state.pop("waiters")
+    elif damage == "invalid_lease": state["leases"]["authored-lease"] = {}
+    elif damage == "wrong_policy": state["config"]["authored_policy_only"] = False
+    elif damage == "proof_disabled":
+        state["config"]["proof_safety_enabled"] = False
+        value = json.loads(raw); value["expected_scheduler_policy_sha256"] = existing.policy_sha256(state["config"])
+        raw = json.dumps(value).encode(); caller["expected_request_sha256"] = hashlib.sha256(raw).hexdigest()
+        t["request_sha256"] = caller["expected_request_sha256"]
+        t["scheduler"]["policy_sha256"] = value["expected_scheduler_policy_sha256"]
+    elif damage == "escaped_value_id": state["metrics"]["request"] = "daemon:" + rid
+    else: state["metrics"]["daemon:" + rid] = "observed"
+    encoded = json.dumps(state)
+    if damage.startswith("escaped_"):
+        encoded = encoded.replace(rid, "\\u0031" * 32)
+        assert rid not in encoded and rid in json.dumps(json.loads(encoded))
+    path.write_text(encoded)
+    monkeypatch.setattr(existing, "open_existing_scheduler", lambda *a, **k: pytest.fail("opened scheduler facade"))
+    monkeypatch.setattr(native, "GlobalResourceScheduler", lambda *a, **k: pytest.fail("constructed scheduler"))
+    before = path.read_bytes()
+    assert module.classify_owned_trainer_source_custody(t, raw, **caller) == {
+        "verdict": "requires_original_trainer_cleanup", "source_custody_closed": False,
+        "storage_release_authorized": False}
+    assert path.read_bytes() == before
+
+
+@pytest.mark.parametrize("damage", ["missing_cleanup", "ledger_extra", "wrong_record_key", "embedded_identity",
+    "invalid_status", "boolean_storage", "boolean_owner", "invalid_charges"])
+def test_trainer_preentry_recovery_refuses_incomplete_or_conflicting_original_ledger(tmp_path, damage):
+    module, t, raw, caller = _trainer_preentry_inventory_refusal_case(tmp_path)
+    path = Path(caller["expected_resource_ledger"])
+    ledger = _json(path)
+    rid = t["reservation"]["reservation_id"]
+    key = "4" * 32
+    record = {"reservation_id": key, "status": "released", "storage_bytes": 1, "owner_pid": 123}
+    if damage == "missing_cleanup": t["reservation"].pop("cleanup_error")
+    elif damage == "ledger_extra": ledger["unrecognized"] = True
+    else:
+        if damage == "wrong_record_key": record["reservation_id"] = rid
+        elif damage == "embedded_identity": record["observed_identity"] = "daemon:" + rid
+        elif damage == "invalid_status": record["status"] = "not_entered"
+        elif damage == "boolean_storage": record["storage_bytes"] = True
+        elif damage == "boolean_owner": record["owner_pid"] = True
+        else: record["external_charges"] = {"authored": True}
+        ledger["reservations"][key] = record
+    _write_json(path, ledger)
+    assert module.classify_owned_trainer_source_custody(t, raw, **caller) == {
+        "verdict": "requires_original_trainer_cleanup", "source_custody_closed": False,
+        "storage_release_authorized": False}

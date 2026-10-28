@@ -577,6 +577,9 @@ if __name__ == "__main__":
 _F18_COMPUTE_FIELDS = frozenset(("input_descriptors", "initial_parity", "runtime_contract",
                                "population_manifest", "max_steps_per_arm", "max_seconds_per_arm"))
 _F18_PROFILE_SHA256 = "56bd0a248a07de09519f95e5c4bae02ab9d8eb1134b483c257c1f7e7bcb07147"
+_F18_V2_PROFILE_SHA256 = "d80a08844c06daae6466a39b87bc0c395e0dd4a2da01b284704a4e03e44af0f1"
+_F18_RECIPE_SHA256 = "d22b932b80c48b688ff3f18d5f141152a6032b7cb2f6195845840af818d8dc84"
+_F18_V2_PARITY_SHA256 = "6d846ed3bab241e26d72aad4d5d1ee6d42310b9a10c66538dd04ae2c3868678e"
 _F18_SOURCE_SHA256 = "fb7449d4794ca9a279b2df2ea533b89d360344ff786edc0798395ab799db1823"
 _F18_JOINT_SHA256 = "791c283f625ae7d8841e7afa697b34cbfa5c74361d0c0129b66af31fb5e13679"
 _F18_MODEL_ROOT = "2ed0ccf633f55fac202e2edb95ea9fa6e390b8d99381a05925f4dd5221925883"
@@ -598,10 +601,17 @@ def _f18_require(condition, message):
         raise ValueError(message)
 
 
-def validate_f18_compute(value):
+def validate_f18_compute(value, *, version=1):
     """Pure lexical envelope validation; no input, numerical or grant access."""
-    _f18_require(type(value) is dict and set(value) == _F18_COMPUTE_FIELDS,
+    _f18_require(type(version) is int and version in (1, 2), "explicit supported F18 version required")
+    fields = _F18_COMPUTE_FIELDS | ({"learning_rate"} if version == 2 else set())
+    _f18_require(type(value) is dict and set(value) == fields,
                  "closed fixed F18 compute fields required")
+    if version == 2:
+        import sys
+        rate = value["learning_rate"]
+        _f18_require(type(rate) in (int, float) and 0 < rate <= sys.float_info.max,
+                     "explicit finite positive TRAIN learning_rate required")
     for name in ("input_descriptors", "initial_parity", "runtime_contract", "population_manifest"):
         ref = value[name]
         _f18_require(type(ref) is dict and set(ref) == {"path", "bytes", "sha256"},
@@ -783,6 +793,75 @@ def _f18_parity(parity, bindings, compute, population, descriptors):
         "initial632 donor/source roots differ from freshly authenticated inputs")
 
 
+def _f18_v2_profile(request):
+    """Select the separately qualified v2 numerical owner after original RUN."""
+    import hashlib
+    from . import legal_span_conditions_fullspan_training_v2 as profile
+    root = Path(request["cwd"])
+    for module, expected in ((profile, _F18_V2_PROFILE_SHA256), (profile.recipes, _F18_RECIPE_SHA256)):
+        path = Path(module.__file__).resolve()
+        _f18_require(path.is_relative_to(root)
+            and request["source_sha256"].get(str(path)) == expected
+            and hashlib.sha256(path.read_bytes()).hexdigest() == expected,
+            "qualified v2 numerical/recipe source generation differs")
+    profile._implementation()
+    return profile
+
+
+def _f18_v2_parity(parity, bindings, compute, population, descriptors):
+    """Reuse the exact closed zero-step result, independently of the TRAIN rate."""
+    _f18_require(compute["initial_parity"]["sha256"] == _F18_V2_PARITY_SHA256
+        and compute["initial_parity"]["bytes"] == 30633
+        and type(parity) is dict
+        and parity.get("schema") == "retained-f18-four-tensor-initial632-parity-result/v2"
+        and parity.get("profile_source_sha256") == _F18_V2_PROFILE_SHA256
+        and parity.get("original_f18_source_sha256") == _F18_SOURCE_SHA256
+        and parity.get("initial632_parity_qualified") is True
+        and parity.get("parity_receipt_fabricated") is False,
+        "exact qualified v2 initial632 parity generation required")
+    _f18_require(parity.get("expected_input_bindings") == bindings
+        and parity.get("inputs_sha256") == compute["input_descriptors"]["sha256"]
+        and parity.get("parity_manifest_sha256") == compute["population_manifest"]["sha256"]
+        and parity.get("runtime_contract_sha256") == compute["runtime_contract"]["sha256"],
+        "v2 parity independent input/population/runtime bindings differ")
+    assets = parity.get("verified_assets")
+    _f18_require(type(assets) is list and len(assets) == len(descriptors) == 6
+        and all(type(a) is dict and type(b) is dict
+            and a.get("role") == b.get("role") == role
+            and all(a.get(key) == b.get(key) for key in ("bytes", "sha256"))
+            for a, b, role in zip(assets, descriptors, _F18_ROLES, strict=True)),
+        "v2 parity six authenticated physical asset identities differ")
+    _f18_require(parity.get("authenticated_final_F18_whole_sha256") == bindings["donor_checkpoint_sha256"]
+        and parity.get("all42_model_state_sha256") == bindings["donor_model_state_sha256"] == _F18_MODEL_ROOT
+        and parity.get("frozen38_sha256_including_modality") == _F18_FROZEN_ROOT,
+        "v2 parity authenticated donor/frozen roots differ")
+    for name, expected in (("head_binary32_scalar_comparisons", 194812),
+            ("canonical_capture_source_forwards", 632), ("canonical_capture_chunks", 11),
+            ("training_rows", 168), ("conditions_present", 72), ("conditions_absent", 96),
+            ("optimizer_updates", 0), ("gradient_calls", 0), ("teacher_model_restores", 0)):
+        _f18_require(type(parity.get(name)) is int and parity[name] == expected,
+                     "v2 parity finite zero-step counts differ: " + name)
+    _f18_require(all(parity.get(key) is False for key in (
+        "fit_executed", "scoring_executed", "new_trained_weights", "admitted", "formalized", "promoted"))
+        and parity.get("experiment_rate_selected") is None
+        and parity.get("parity_optimizer_learning_rate") == 0.001
+        and parity.get("donor_config_learning_rate") == 0.001,
+        "v2 parity control is not a TRAIN experiment or authority")
+    panels = parity.get("panel_comparisons")
+    _f18_require(type(panels) is list and len(panels) == len(_F18_PANELS)
+        and all(type(row) is dict and row.get("panel") == name
+            and type(row.get("rows")) is int and row["rows"] == count
+            and type(row.get("binary32_head_scalars")) is int and row["binary32_head_scalars"] > 0
+            and all(row.get(key) is True for key in (
+                "all_heads_bitwise_equal", "entire_greedy_formal_rows_equal", "complete_joint_rows_equal"))
+            for row, (name, count, _) in zip(panels, _F18_PANELS, strict=True))
+        and sum(row["binary32_head_scalars"] for row in panels) == 194812,
+        "v2 parity complete ten-panel binary32/greedy/joint comparison required")
+    for name, index in (("authenticated_final_F18_checkpoint", 0), ("original_source_export", 2), ("fresh_source_export", 3)):
+        _f18_require(all(population["source_inputs"][name][key] == descriptors[index][key]
+            for key in ("bytes", "sha256")), "v2 parity source population asset differs")
+
+
 from contextlib import contextmanager as _f18_contextmanager
 
 
@@ -847,7 +926,7 @@ def _f18_capture_arm(c, f18, profile, joint, torch, checkpoint, kwargs, panels, 
                 "canonical trained capture accounting differs")
             chunks.append(chunk); cursor += size
         _f18_require(cursor == count, "complete trained source panel required")
-        raw = c.write_new(directory / (name + "-raw.json"), {"schema": "f18-paired-target-free-panel/v1",
+        raw = c.write_new(directory / (name + "-raw.json"), {"schema": "f18-paired-target-free-panel/v2" if "recipe" in kwargs else "f18-paired-target-free-panel/v1",
             "panel": name, "rows": count, "chunks": chunks, "source_model_forwards": count,
             "target_access": False, "teacher_forcing": False, **_F18_FALSE}, 32 * 1024 * 1024)
         occurrences = [row for chunk in chunks for row in chunk["occurrences"]]
@@ -866,14 +945,31 @@ def _f18_capture_arm(c, f18, profile, joint, torch, checkpoint, kwargs, panels, 
     return outputs
 
 
-def _f18_fit_pair(c, f18, profile, joint, torch, donor, records, provenance, bindings, panels, directory):
+def _f18_fit_pair(c, f18, profile, joint, torch, donor, records, provenance, bindings, panels, directory,
+                  *, learning_rate=None):
     results, updates, captures = [], 0, 0
     base = dict(state=donor["model_state"], provenance=provenance, records=records,
                 teacher=donor["teacher_training"], weights=donor["row_weight_training"], expected_bindings=bindings)
-    for label, margin in (("arm-0", 0.0), ("arm-025", 0.25)):
+    recipes = None
+    if learning_rate is not None:
+        import sys
+        _f18_require(type(learning_rate) in (int, float) and 0 < learning_rate <= sys.float_info.max,
+                     "explicit finite positive TRAIN learning_rate required")
+        # Build and validate both from caller-bound data before either arm exists.
+        recipes = []
+        for margin in (0.0, 0.25):
+            expected = dict(donor_config=provenance["config"], expected_bindings=bindings,
+                            learning_rate=learning_rate, margin_weight=margin)
+            recipe = profile.recipes.build_optimizer_recipe(**expected)
+            recipes.append(profile.recipes.validate_optimizer_recipe(recipe, **expected))
+    for index, (label, margin) in enumerate((("arm-0", 0.0), ("arm-025", 0.25))):
         arm = directory / label
         arm.mkdir(mode=0o700)
         kwargs = {**base, "margin_weight": margin}
+        recipe_ref = None
+        if recipes is not None:
+            kwargs.update(recipe=recipes[index], learning_rate=learning_rate)
+            recipe_ref = c.write_new(arm / "optimizer-recipe.json", recipes[index], 128 * 1024)
         initial = profile.build_checkpoint(**kwargs)
         initial_ref = profile.save_checkpoint(initial, arm / "initial-checkpoint.json", **kwargs)
         trained, report = profile.run_admitted_updates(initial, torch=torch, **kwargs, max_steps=32, max_seconds=32)
@@ -890,6 +986,9 @@ def _f18_fit_pair(c, f18, profile, joint, torch, donor, records, provenance, bin
         row = {"arm": label, "margin_weight": margin, "initial_checkpoint": initial_ref,
                "checkpoint": checkpoint_ref, "report": report_ref, "optimizer_updates": steps,
                "model_state_sha256": trained["model_state_sha256"], "progress": dict(trained["progress"])}
+        if recipe_ref is not None:
+            row.update(optimizer_recipe=recipe_ref, learning_rate=learning_rate,
+                       donor_config_learning_rate=provenance["config"]["learning_rate"])
         results.append(row)
         if steps != 32:
             return results, updates, captures, False
@@ -912,9 +1011,12 @@ def run_f18_paired_training(request, *, output_directory):
     are opened here, never by the pre-release CLI shape parser.
     """
     import hashlib
-    _f18_require(type(request) is dict and request.get("schema") == "owned-f18-conditions-training-request/v1"
+    _f18_require(type(request) is dict and type(request.get("schema")) is str
+        and request["schema"] in ("owned-f18-conditions-training-request/v1", "owned-f18-conditions-training-request/v2")
         and request.get("mode") == "paired_fit", "fixed paired-fit trainer request required")
-    compute = validate_f18_compute(request.get("compute"))
+    version = 2 if request["schema"] == "owned-f18-conditions-training-request/v2" else 1
+    compute = validate_f18_compute(request.get("compute"), version=version)
+    profile_sha256 = _F18_V2_PROFILE_SHA256 if version == 2 else _F18_PROFILE_SHA256
     c, opened = _contracts(), []
     output = c.safe_path(output_directory)
     _f18_require(output.is_dir() and output == Path(request["outputs"]["exports"]), "original owned exports required")
@@ -938,26 +1040,38 @@ def run_f18_paired_training(request, *, output_directory):
     started = time.monotonic()
     with _f18_runtime(c, metadata["runtime_contract"], opened, request) as (torch, runtime_observations):
         donor, records, provenance, bindings = _f18_authenticate(c, f18, profile, manifest, raw, descriptors)
-        _f18_parity(metadata["initial_parity"], bindings, compute, metadata["population_manifest"], descriptors)
+        fit_options = {}
+        if version == 2:
+            _f18_v2_parity(metadata["initial_parity"], bindings, compute, metadata["population_manifest"], descriptors)
+            numerical = _f18_v2_profile(request)
+            fit_options["learning_rate"] = compute["learning_rate"]
+        else:
+            _f18_parity(metadata["initial_parity"], bindings, compute, metadata["population_manifest"], descriptors)
+            numerical = profile
         panels = _f18_source_panels(c, f18, donor, records, raw, metadata["population_manifest"])
-        arms, updates, captures, complete = _f18_fit_pair(c, f18, profile, joint, torch, donor, records,
-                                                        provenance, bindings, panels, directory)
+        arms, updates, captures, complete = _f18_fit_pair(c, f18, numerical, joint, torch, donor, records,
+                                                        provenance, bindings, panels, directory, **fit_options)
         freeze = None
         if complete:
             _f18_require(updates == 64 and captures == 1264 and len(arms) == 2
                 and sum(len(row["captures"]) * 2 for row in arms) == 40, "complete finite pair required")
             freeze = c.write_new(directory / "pair-output-freeze.json", {
-                "schema": "f18-paired-training-output-freeze/v1", "profile_sha256": _F18_PROFILE_SHA256,
+                "schema": "f18-paired-training-output-freeze/v" + str(version), "profile_sha256": profile_sha256,
                 "input_metadata": {key: compute[key] for key in
                     ("input_descriptors", "initial_parity", "runtime_contract", "population_manifest")},
                 "donor_model_state_sha256": _F18_MODEL_ROOT, "frozen38_sha256": _F18_FROZEN_ROOT,
                 "input_bindings": bindings, "arms": arms, "optimizer_updates": updates,
                 "source_capture_forwards": captures, "raw_joint_files": 40,
                 "evaluation_gold_reference_or_comparator_bodies_opened": 0,
-                "future_scoring_performed": False, **_F18_FALSE}, 4 * 1024 * 1024)
+                "future_scoring_performed": False,
+                 **({"training_learning_rate": compute["learning_rate"], "donor_config_learning_rate": 0.001,
+                     "optimizer_recipe_source_sha256": _F18_RECIPE_SHA256} if version == 2 else {}),
+                 **_F18_FALSE}, 4 * 1024 * 1024)
         _f18_close(c, opened)
-    return {"schema": "f18-paired-conditions-training-result/v1", "completed": complete,
-        "profile_source_sha256": _F18_PROFILE_SHA256, "optimizer_updates": updates,
+    return {"schema": "f18-paired-conditions-training-result/v" + str(version), "completed": complete,
+        **({"training_learning_rate": compute["learning_rate"], "donor_config_learning_rate": 0.001,
+            "optimizer_recipe_source_sha256": _F18_RECIPE_SHA256} if version == 2 else {}),
+        "profile_source_sha256": profile_sha256, "optimizer_updates": updates,
         "model_forwards": updates + captures, "training_model_forwards": updates,
         "capture_source_forwards": captures, "model_forward_scope": "one batch call per update plus one source call per capture",
         "legacy6_donor_restore_calls": 1, "fit_fresh4_restore_calls": len(arms) if all(row["optimizer_updates"] > 0 for row in arms) else None,
