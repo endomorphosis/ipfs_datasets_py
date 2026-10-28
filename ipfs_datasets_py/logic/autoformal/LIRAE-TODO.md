@@ -2681,7 +2681,7 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 
 ## LIRAE-LIR03-IR-PACKET-01 Prepare the complete norm and independent review execution packet
 
-- status: todo
+- status: completed
 - completion: manual
 - is schedulable: true
 - priority: P1
