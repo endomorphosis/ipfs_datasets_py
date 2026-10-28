@@ -1,0 +1,494 @@
+{
+  "APIs": [
+    "prepare_programme_work_packet_v1",
+    "prepare_current_reviewed_programme_packet_index_v1",
+    "verify_current_reviewed_programme_packet_index_v1"
+  ],
+  "authored_control_correction": {
+    "change": "One implementation-scope negative now inverts the existing Boolean rather than setting its already-true value.",
+    "failed_v05_not_relabelled": true,
+    "owning_test_sha256": "4eb4d15b7029b848b4ef29b42ddaef33c65480d26a7f8a2164fbf978d3e3bb97"
+  },
+  "canonical_owner_sources": [
+    {
+      "bytes": 204723,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-lean-diagnostic-docs-20261027/ipfs_datasets_py/logic/autoformal/supervisor_loop.py",
+      "sha256": "583c0e70f1eda47ae878036709fb82c9bf8c24c1ff3df85005e92630267203a6"
+    },
+    {
+      "bytes": 146729,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-lean-diagnostic-docs-20261027/scripts/ops/legal_ir/legal_ir_supervisor_contract.py",
+      "sha256": "a15f7e3fbb1fca17a6529714592b9acd36f3aec741d754237043b515d12df37f"
+    },
+    {
+      "bytes": 15990,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-lean-diagnostic-docs-20261027/tests/unit/logic/test_programme_work_execution_packet.py",
+      "sha256": "2eff39f61c3ed5ffd16f6f5a58e37722bc04e9043d98629b7b3fbc2a8ea08657"
+    },
+    {
+      "bytes": 53290,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-lean-diagnostic-docs-20261027/tests/unit/logic/test_legal_ir_supervisor_contract.py",
+      "sha256": "c4ddc0a679333cac52d93dc7609fa36ac28b502749c849f8d342c48d6dccfacd"
+    },
+    {
+      "bytes": 64389,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-lean-diagnostic-docs-20261027/scripts/ops/legal_ir/run_autoformal_supervisor.py",
+      "sha256": "d5c1a4f36fa7f9154e6f8d10579ad3581f3bf76b647c2f5fe31ced400d4d886d"
+    },
+    {
+      "bytes": 97837,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-lean-diagnostic-docs-20261027/tests/unit/logic/test_supervisor_handoff_execution_packet.py",
+      "sha256": "4eb4d15b7029b848b4ef29b42ddaef33c65480d26a7f8a2164fbf978d3e3bb97"
+    }
+  ],
+  "durable_actual_saved_input": {
+    "bytes": 1965277,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/native-handoff-acceptance-20261028-v01/reviewed-programme-9003-v01/factual-inputs-v04.json",
+    "sha256": "00ebe158ab98ede8729411b06b45bfd39c2cea601a1e2524799df7514f3ae108"
+  },
+  "existing9103_implementation_reuse": {
+    "audit": {
+      "bytes": 33167,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/native-handoff-acceptance-20261028-v01/reviewed-programme-9003-v01/existing-implementation-reuse-9103-v01/existing-implementation-reuse-audit-v01.json",
+      "sha256": "4df8e8caa0df73853f6d847b938831d3925b409c8e2552604acd46f43e7001dd"
+    },
+    "next": "Reconcile exact task/revision/source/evidence/acceptance bindings; do not recreate existing mechanics or repeat completed fits.",
+    "reuse_existing_v1_four_tensor_margin_pair_comparison_and_diagnostics": true,
+    "separate_v2_capture_parity_is_not_new_fit_or_native_acceptance": true,
+    "unbound_native_task_scope_does_not_mean_missing_implementation": true
+  },
+  "legacy_port": {
+    "all44_prior_owner_definitions_preserved": true,
+    "disclosed_fix": "Reference bytes must be strictly positive to agree with the physical CLI reader; zero added to the existing negative controls.",
+    "legacy_bounds_unchanged": true,
+    "reused_existing_four_ID_preparer": true,
+    "source_only_scope_has_no_native_constructor_or_writer": true,
+    "unrelated_continuation_machinery_not_ported": true
+  },
+  "limitations": [
+    "Normally imported APIs and complete in-process CLI owners with private ordinary-file fixtures; old AST classes only run collection code and receive no qualification credit. The saved-data rehearsal remains consistency metadata, not live native or productive-task acceptance.",
+    "Saved snapshot/content/descriptor consistency is separate from live native status, physical evidence custody, principal identity and chronological freeze authentication.",
+    "No checkpoint/model payload, numerical update, statutory semantic review, four-width quality improvement, graph/corpus admission or Lean build was performed by this metadata qualification.",
+    "The actual normal CLI producer and distinct verifier reproduce a factual index only; original native9003 criteria0/2 remain open and no productive packet or native completion is admitted."
+  ],
+  "merged_peer_trainer_integration": {
+    "actual_probe": "Refused before native grant or child at the exact pinned inventory-count contract.",
+    "evidence": {
+      "bytes": 14311,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-lean-diagnostic-docs-20261027/docs/autoformalization/evidence/legal-ir-f18-v2-trainer-integration-recovery-20261028.json",
+      "sha256": "60ec5598ff38632ec20c191615360a0160e10b31c29fe6537b668e7650c115be"
+    },
+    "numerical_model_or_update_work_executed_by_this_contract_qualification": false,
+    "phases": 723,
+    "publication": "PR1447 /702ade33a",
+    "pure_fake_parent_cases": 241,
+    "refusal_scope": "Exact source-close and typed durable-store absence only; no storage-release or retry authority.",
+    "remaining": [
+      "new finite TRAIN learning rate",
+      "retained fit",
+      "numerical-dispatch qualification",
+      "v2 saved-output scorer",
+      "scientific or Lean admission"
+    ],
+    "seconds": 4.679,
+    "source_integration_completed_at_contract_scope": true,
+    "source_pins": 80,
+    "upstream_W_validation_frontend_is_separate_unconsumed_generation": true
+  },
+  "native_cutoff": {
+    "blocked": 62,
+    "completed": 2,
+    "criterion_statuses": [
+      "open_for_task_objective",
+      "satisfied_for_factual_index_scope_only",
+      "open"
+    ],
+    "current_complete_productive_packets": 0,
+    "cursor": 220,
+    "dependencies": 115,
+    "goal_edges": 33,
+    "goals": 34,
+    "history_copied_to9003": false,
+    "implementation_non_packet_aliases": [
+      "LIR-0702",
+      "LIR-0802",
+      "LIR-1202",
+      "LIR-1501",
+      "LIR-1702",
+      "LIR-2202",
+      "LIR-9103"
+    ],
+    "new_native_amendment": false,
+    "new_native_completion": false,
+    "old9001_UNKNOWN_history_retained": true,
+    "original_criteria_preserved": true,
+    "revision": 2,
+    "status": "blocked",
+    "task": "LIR-9003",
+    "task_objective_satisfied": false,
+    "tasks": 64
+  },
+  "owner": "ipfs_datasets_py.logic.autoformal.supervisor_loop",
+  "permissions": {
+    "dispatch": false,
+    "formalized": false,
+    "model_execution": false,
+    "native_admission": false,
+    "new_productive_execution": false,
+    "retry_or_rearm": false,
+    "semantic_review": false,
+    "task_or_goal_completion": false,
+    "training": false
+  },
+  "post_merge_consumed_source_preservation": {
+    "evidence": {
+      "bytes": 620,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/native-handoff-acceptance-20261028-v01/reviewed-programme-9003-v01/post-merge-consumed-source-readback-v01.json",
+      "sha256": "df036fb3112957275cba22bf7ea854a0c13cb20977e2c9b1aa0af7dd18802289"
+    },
+    "readback": {
+      "adopted_upstream": "51e330b3fc9f73d32deeb645a9fa877db49526ea",
+      "merge_commit": "df25dd9a44fb91d5392259d05d8178af2da8ebea",
+      "original_R_0e_owner_preserved": true,
+      "pin_readback": [
+        {
+          "all_matched": true,
+          "operation": "qualification",
+          "pins": 51
+        },
+        {
+          "all_matched": true,
+          "operation": "producer",
+          "pins": 184
+        },
+        {
+          "all_matched": true,
+          "operation": "verifier",
+          "pins": 190
+        }
+      ],
+      "qualification_transferred_to_unconsumed_upstream_code": false,
+      "schema": "legal-ir-post-merge-consumed-source-readback/v1",
+      "tests_rerun": false
+    }
+  },
+  "preserved_failures": {
+    "final_retained_descriptors": [
+      {
+        "bytes": 19098,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/native-handoff-acceptance-20261028-v01/reviewed-programme-9003-v01/qualification-v04/root-source-closeout-v01.json",
+        "sha256": "eb3578df21e65ea3c6f2e93ee4a2e1409c62b54bd44a06331bef2e4be81a2fac"
+      },
+      {
+        "bytes": 4119,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/native-handoff-acceptance-20261028-v01/reviewed-programme-9003-v01/qualification-v04/root-capture-closeout-v01.json",
+        "sha256": "e2157ddeafc735de63bc4b6b08eff79ddc6912b809790e355546714f73e2aeb8"
+      },
+      {
+        "bytes": 51734,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/native-handoff-acceptance-20261028-v01/reviewed-programme-9003-v01/qualification-v04/attempt-v01/exports/qualification-result.json",
+        "sha256": "ae23386bb4cae464320d907a61ffcea7ed7babd8cba161d6226db9461cc04053"
+      },
+      {
+        "bytes": 19098,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/native-handoff-acceptance-20261028-v01/reviewed-programme-9003-v01/qualification-v05/root-source-closeout-v01.json",
+        "sha256": "0dd3dbb72b38d9362842da23435c0b265df8e25d6c92e4775c939874b0a00097"
+      },
+      {
+        "bytes": 4120,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/native-handoff-acceptance-20261028-v01/reviewed-programme-9003-v01/qualification-v05/root-capture-closeout-v01.json",
+        "sha256": "cb663cd63110c0323e25d1669412ca456f2476c971eba69d206688028ceaac67"
+      },
+      {
+        "bytes": 52176,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/native-handoff-acceptance-20261028-v01/reviewed-programme-9003-v01/qualification-v05/attempt-v01/exports/qualification-result.json",
+        "sha256": "cfc135a0c71c3383c79c6b1dc45282fd8e67ce59cda61d9457105699a8c4e5e9"
+      }
+    ],
+    "original_capture_binding": "Failed descriptors match their original durable captures and the independent v06 review.",
+    "v04": "Private harness selector matching refused before tests; closed original custody with retained storage.",
+    "v05": "One authored implementation-scope negative was a no-op; failed subtest and retained storage preserved."
+  },
+  "recorded_at_utc": "2026-10-28",
+  "reused_preparations": {
+    "code_and_test_allowlists": [],
+    "count": 4,
+    "current_owner_generations_changed": 7,
+    "current_owner_generations_matched": 6,
+    "legacy_native_CID_and_revision": null,
+    "original_snapshot_root": "/home/barberb/lift_coding/external/ipfs_datasets",
+    "parent_context_population": 24,
+    "parent_contexts": 22,
+    "parent_linked_native_rows": 49,
+    "parent_linked_population": 52,
+    "principal_identity_verified": false,
+    "readiness": "original_admission_required",
+    "retained_evidence_snapshots": 11,
+    "retained_owner_snapshots": 13,
+    "uncovered_aliases": [
+      "LIR-0301",
+      "LIR-0302",
+      "LIR-1601"
+    ],
+    "unparented_control_and_E1_rows": 12
+  },
+  "schema": "legal-ir-reviewed-programme-packet-index-source-qualification/v1",
+  "scope": "canonical_source_qualification_and_actual_closed_factual_metadata_operations_only",
+  "selected_groups": {
+    "actual_saved_metadata_rehearsal_parents": 1,
+    "legacy_packet_parents": 65,
+    "new_normal_index_parents": 11,
+    "preparation_CLI_parents": 38
+  },
+  "separate_current_operations": {
+    "PR310_official_merge": {
+      "bytes": 564,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/native-handoff-acceptance-20261028-v01/reviewed-programme-9003-v01/github-PR310-merged-observation-v01.json",
+      "sha256": "aa440d192398696560665acdd5c0380bbe4d63761e6b279ba3545c5fa856f05c"
+    },
+    "publication_does_not_transfer_qualification": true,
+    "runtime_acceptance": {
+      "bytes": 15081,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/watchdog-dual-namespace-v01/current-frontier-20261028-v01/targeted-v03/runtime-readonly-acceptance-v01/independent-runtime-acceptance-v01.json",
+      "sha256": "1aaf96cd7e742c17b147660a172c2d74608b7a6bc05098eba0c4a2adc0113d60"
+    },
+    "runtime_release": "1e35437a45b9e3e1e704",
+    "runtime_source": "677329ab904ec1b15734a5c53021bc993dfca7d3"
+  },
+  "separately_owned_factual_operation": {
+    "actual_verification": {
+      "bytes": 2331,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/native-handoff-acceptance-20261028-v01/reviewed-programme-9003-v01/independent-verification-v01/attempt-v01/exports/verification.json",
+      "sha256": "7544e57a750564ea933b00a0190afeee82fa81933afa5a3f912b965dcea7e3e1"
+    },
+    "all_original_custody_closed": true,
+    "checked_scope": "factual_programme_packet_index_only",
+    "descriptor_files_authenticated": false,
+    "durable_inputs": {
+      "bytes": 1965277,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/native-handoff-acceptance-20261028-v01/reviewed-programme-9003-v01/factual-inputs-v04.json",
+      "sha256": "00ebe158ab98ede8729411b06b45bfd39c2cea601a1e2524799df7514f3ae108"
+    },
+    "freeze_chronology_authenticated": false,
+    "frozen_report": {
+      "bytes": 99028,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/native-handoff-acceptance-20261028-v01/reviewed-programme-9003-v01/producer-v02/attempt-v01/exports/report.json",
+      "sha256": "77efe2970763857feb9468e3f16694c789e4efc06a08ff4ce766f630b08495c1"
+    },
+    "independent_execution_binding": {
+      "bytes": 11502,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/native-handoff-acceptance-20261028-v01/reviewed-programme-9003-v01/independent-verification-v01/independent-verifier-execution-and-binding-v01.json",
+      "sha256": "79a9d77da71d878b89d43a5d839d689cda596b6866a2ed506df99711b2ed90ce"
+    },
+    "independent_verifier_executed": true,
+    "native_status_live_query_performed": false,
+    "native_task_revision_or_status_changed": false,
+    "original_criteria_open": [
+      0,
+      2
+    ],
+    "principals_authenticated": false,
+    "producer": {
+      "closeout": {
+        "bytes": 9133,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/native-handoff-acceptance-20261028-v01/reviewed-programme-9003-v01/producer-v02/root-source-closeout-v01.json",
+        "sha256": "06131456c02f77ed84cc1c0ff33fa31e70a927a89706d5aeb43c14fb32b02c41"
+      },
+      "original_child_result": {
+        "bytes": 870,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/native-handoff-acceptance-20261028-v01/reviewed-programme-9003-v01/producer-v02/attempt-v01/logs/result.json",
+        "sha256": "fd46b8bdedb81180a87a440ca75a507530037962e7bd2443675dd92d819ad9fe"
+      },
+      "owner_birth": "222848410",
+      "owner_pid": 3172677,
+      "request": {
+        "bytes": 61661,
+        "path": "/tmp/legal-ir-programme-index-factual-owners-20261028-v01/producer-request-v02.json",
+        "sha256": "0eee643639555de9da4eb5f3c1982a0cee746b335e8894463ce2eda644ef4542"
+      },
+      "source_native_process_storage_closed": true,
+      "source_pin_count": 184,
+      "storage_status": "released"
+    },
+    "producer_executed": true,
+    "producer_freeze": {
+      "bytes": 266,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/native-handoff-acceptance-20261028-v01/reviewed-programme-9003-v01/producer-v02/attempt-v01/exports/producer-freeze.json",
+      "sha256": "464aced6d9567470a3b02d0f755414a0143bbe419141e5e85fc4427c9ad9f159"
+    },
+    "producer_principal": "legal-ir-programme-index-author-20261028",
+    "producer_v01_child_grant_and_storage_absent": true,
+    "producer_v02_fresh_attempt_mode": "0700",
+    "proposal_runtime_paths_grant_native_ownership": false,
+    "retained_first_producer_refusal": [
+      {
+        "bytes": 2966,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/native-handoff-acceptance-20261028-v01/reviewed-programme-9003-v01/producer-v01/root-source-closeout-v01.json",
+        "sha256": "5ff9f3ef33393e0a260c029a39d88c79f2ec154554121e924c9ee37049a386db"
+      },
+      {
+        "bytes": 1815,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/native-handoff-acceptance-20261028-v01/reviewed-programme-9003-v01/producer-v01/root-original-pre-owner-refusal-closure-binding-v01.json",
+        "sha256": "e8f8ebdf2411a888fbdcb8cf44a7b2df3e0fab30716241b42caf53d622c0e4a7"
+      },
+      {
+        "bytes": 1704,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/native-handoff-acceptance-20261028-v01/reviewed-programme-9003-v01/producer-v01/root-original-pre-owner-refusal-root-exit-v01.json",
+        "sha256": "daa8a8278c65dd9d02a034a600f5758bc7a04d791c57efd84753a674d0e48868"
+      }
+    ],
+    "source_qualification_is_not_native_acceptance": true,
+    "status": "actual_canonical_factual_producer_and_distinct_verifier_closed",
+    "task_objective_satisfied": false,
+    "verifier": {
+      "closeout": {
+        "bytes": 9254,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/native-handoff-acceptance-20261028-v01/reviewed-programme-9003-v01/independent-verification-v01/root-source-closeout-v01.json",
+        "sha256": "803c5b6d342aec3e78fbd6144347c9b55404b538c5bc00f67a1a8f32c80eb2bb"
+      },
+      "original_child_result": {
+        "bytes": 898,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/native-handoff-acceptance-20261028-v01/reviewed-programme-9003-v01/independent-verification-v01/attempt-v01/logs/result.json",
+        "sha256": "b2b35f44d55bc304a98139e2f45f399f9ada3ad55954f42767b617fdd0a0baee"
+      },
+      "owner_birth": "222871722",
+      "owner_pid": 3397118,
+      "request": {
+        "bytes": 63963,
+        "path": "/tmp/legal-ir-programme-index-factual-owners-20261028-v01/verifier-request-v01.json",
+        "sha256": "e78e90a9abb6e636e31fa1749df3c39c72ed538e1a4e0f775bdaca7d0916ca99"
+      },
+      "source_native_process_storage_closed": true,
+      "source_pin_count": 190,
+      "storage_status": "released"
+    },
+    "verifier_principal": "legal-ir-programme-index-reviewer-20261028"
+  },
+  "source_qualification": {
+    "JUnit_seconds": 2.243,
+    "JUnit_summary_tests": 184,
+    "actual_XML_testcase_elements": 115,
+    "capture": {
+      "bytes": 4115,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/native-handoff-acceptance-20261028-v01/reviewed-programme-9003-v01/qualification-v06/root-capture-closeout-v01.json",
+      "sha256": "b4d3e277ed1e259cbd424d86bedb47de07ff7a80259b1469ea4befc668cf8c5c"
+    },
+    "current_adopted_source_descriptors": [
+      {
+        "bytes": 204723,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-lean-diagnostic-docs-20261027/ipfs_datasets_py/logic/autoformal/supervisor_loop.py",
+        "sha256": "583c0e70f1eda47ae878036709fb82c9bf8c24c1ff3df85005e92630267203a6"
+      },
+      {
+        "bytes": 146729,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-lean-diagnostic-docs-20261027/scripts/ops/legal_ir/legal_ir_supervisor_contract.py",
+        "sha256": "a15f7e3fbb1fca17a6529714592b9acd36f3aec741d754237043b515d12df37f"
+      },
+      {
+        "bytes": 15990,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-lean-diagnostic-docs-20261027/tests/unit/logic/test_programme_work_execution_packet.py",
+        "sha256": "2eff39f61c3ed5ffd16f6f5a58e37722bc04e9043d98629b7b3fbc2a8ea08657"
+      },
+      {
+        "bytes": 53290,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-lean-diagnostic-docs-20261027/tests/unit/logic/test_legal_ir_supervisor_contract.py",
+        "sha256": "c4ddc0a679333cac52d93dc7609fa36ac28b502749c849f8d342c48d6dccfacd"
+      },
+      {
+        "bytes": 64389,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-lean-diagnostic-docs-20261027/scripts/ops/legal_ir/run_autoformal_supervisor.py",
+        "sha256": "d5c1a4f36fa7f9154e6f8d10579ad3581f3bf76b647c2f5fe31ced400d4d886d"
+      },
+      {
+        "bytes": 97837,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-lean-diagnostic-docs-20261027/tests/unit/logic/test_supervisor_handoff_execution_packet.py",
+        "sha256": "4eb4d15b7029b848b4ef29b42ddaef33c65480d26a7f8a2164fbf978d3e3bb97"
+      }
+    ],
+    "current_request_source_pins": 51,
+    "independent_review": {
+      "bytes": 14921,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/native-handoff-acceptance-20261028-v01/reviewed-programme-9003-v01/qualification-v06/independent-qualification-binding-v01.json",
+      "sha256": "fa2014476fdbe031ed054bf70fe56bff4ed92dbc41e55ef100002d4874daa30e"
+    },
+    "inner_source_lease_count": 0,
+    "limits": "Normally imported APIs and complete in-process CLI owners with private ordinary-file fixtures; old AST classes only run collection code and receive no qualification credit. The saved-data rehearsal remains consistency metadata, not live native or productive-task acceptance.",
+    "loaded_source_origins": {
+      "bytes": 6666,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/native-handoff-acceptance-20261028-v01/reviewed-programme-9003-v01/qualification-v06/attempt-v01/exports/loaded-source-origins.json",
+      "sha256": "910b2771588e953d3a7bd786fa82cc9216bce0b55b3d0682ae094f1836340bc4"
+    },
+    "original_child_result": {
+      "bytes": 6490,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/native-handoff-acceptance-20261028-v01/reviewed-programme-9003-v01/qualification-v06/attempt-v01/logs/result.json",
+      "sha256": "184478f29686c1c2439a18eabcfe5eb2813db5c4dd8aae188dea2aa890881c48"
+    },
+    "outer_original_source_coverage": true,
+    "owner_closeout": {
+      "bytes": 9192,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/native-handoff-acceptance-20261028-v01/reviewed-programme-9003-v01/qualification-v06/root-source-closeout-v01.json",
+      "sha256": "a9533e8c0fa0fbc9c19d0b8855953101d5d3bc5d6673115fdcd37a70ef72d6ea"
+    },
+    "parent_cases": 115,
+    "phase_evidence": {
+      "bytes": 146572,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/native-handoff-acceptance-20261028-v01/reviewed-programme-9003-v01/qualification-v06/attempt-v01/exports/phase-observations.json",
+      "sha256": "4c2eded8ca755bec6b7fbac1e621079cc8547d65680d4254aecf5109e9bf629e"
+    },
+    "phases": 345,
+    "preserved_failed_cohort": [
+      {
+        "bytes": 19098,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/native-handoff-acceptance-20261028-v01/reviewed-programme-9003-v01/qualification-v04/root-source-closeout-v01.json",
+        "sha256": "eb3578df21e65ea3c6f2e93ee4a2e1409c62b54bd44a06331bef2e4be81a2fac"
+      },
+      {
+        "bytes": 4119,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/native-handoff-acceptance-20261028-v01/reviewed-programme-9003-v01/qualification-v04/root-capture-closeout-v01.json",
+        "sha256": "e2157ddeafc735de63bc4b6b08eff79ddc6912b809790e355546714f73e2aeb8"
+      },
+      {
+        "bytes": 51734,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/native-handoff-acceptance-20261028-v01/reviewed-programme-9003-v01/qualification-v04/attempt-v01/exports/qualification-result.json",
+        "sha256": "ae23386bb4cae464320d907a61ffcea7ed7babd8cba161d6226db9461cc04053"
+      },
+      {
+        "bytes": 19098,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/native-handoff-acceptance-20261028-v01/reviewed-programme-9003-v01/qualification-v05/root-source-closeout-v01.json",
+        "sha256": "0dd3dbb72b38d9362842da23435c0b265df8e25d6c92e4775c939874b0a00097"
+      },
+      {
+        "bytes": 4120,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/native-handoff-acceptance-20261028-v01/reviewed-programme-9003-v01/qualification-v05/root-capture-closeout-v01.json",
+        "sha256": "cb663cd63110c0323e25d1669412ca456f2476c971eba69d206688028ceaac67"
+      },
+      {
+        "bytes": 52176,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/native-handoff-acceptance-20261028-v01/reviewed-programme-9003-v01/qualification-v05/attempt-v01/exports/qualification-result.json",
+        "sha256": "cfc135a0c71c3383c79c6b1dc45282fd8e67ce59cda61d9457105699a8c4e5e9"
+      }
+    ],
+    "result": {
+      "bytes": 54716,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/native-handoff-acceptance-20261028-v01/reviewed-programme-9003-v01/qualification-v06/attempt-v01/exports/qualification-result.json",
+      "sha256": "5b5bd0c9b5a6d8c46783cf5a7cfb55c363e5fe3833e0ec9c8f69994862ce41db"
+    },
+    "scope": {
+      "bytes": 30438,
+      "path": "/tmp/legal-ir-reviewed-programme-9003-qualification-20261028-v01/packet-final-v03/scope-v01.json",
+      "sha256": "86004771723c8efd25a1950c14f65004e462362cb60c0ea9d4df80e29e06de61"
+    },
+    "scope_source_pins": 50,
+    "status": "passed_original_owned_normal_import_scope",
+    "subtest_calls": 69,
+    "subtest_evidence": {
+      "bytes": 32530,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/native-handoff-acceptance-20261028-v01/reviewed-programme-9003-v01/qualification-v06/attempt-v01/exports/subtest-observations.json",
+      "sha256": "1eb94e52fd248f1f8ed101c7270a44c530fa147dbb6e276278fa76ba935d9885"
+    }
+  },
+  "supervision_masks": {
+    "evaluation_gold": 0,
+    "training": 0
+  }
+}
