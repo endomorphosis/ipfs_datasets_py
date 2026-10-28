@@ -1,5 +1,15 @@
 # Training and experiment history
 
+## Native factual handoff completion and separate qualification scopes, 2026-10-28
+
+**Current native handoff, 2026-10-28:** [independently bound completion](../../../../docs/autoformalization/evidence/legal-ir-native-handoff-factual-completion-20261028.json) records `LIR-9001` revision14→15, completed through the original native evidence/CAS owner after frozen producer output and a separate original-owned independent verifier. The saved population is **one completed and 63 blocked**; the other 63 task records, all 115 dependencies, 34 goals and 33 parent edges are unchanged. Original attempt2 of2, automatic-retry refusal and UNKNOWN provider outcome remain retained and unresolved. No attempt or budget was reset and no provider/model work ran. Earlier 64-blocked and revision 13/14 statements below describe their original cutoffs.
+
+The existing `supervisor_loop` factual preparation/verifier APIs and canonical `handoff-reconciliation prepare|verify` CLI executed under separate original owners. Keep that actual integration separate from the 44 selected Datasets pure-AST methods, the 630-parent/456-subtest regular core (JUnit summary 1086; actual XML 630 cases), and the separate 22 physical cases/66 phases. Source/native/child/storage closeouts are hash-bound in the evidence capsule. The producer closeout's root-observed reconstruction and later source changes are disclosed; no whole-process import attestation or successor watchdog activation is claimed.
+
+Continue with existing **`LIR-9002`**, manual and still blocked pending a reviewed capability/purpose/role execution packet and original admission. Completing its dependency does not dispatch it. Preserve unavailable capabilities and source/meaning decisions. Historical training results, four-width comparison, full-USCode/graph/Lean closure and other 63 native tasks retain their existing gates.
+
+**Current publication status:** PRs 304, 306 and 308 are merged, superseding the earlier open/billing observations below. The working integration combines origin/main `6db07d2c36` with the reviewed recovery changes and requires fresh focused qualification. The successor watchdog runtime has not been activated.
+
 ## Fixed-case conditions ranking diagnosis and joint status qualification, 2026-10-28
 
 The [new evidence](../../../../docs/autoformalization/evidence/legal-ir-f18-conditions-ranking-diagnosis-20261028.json) keeps three fresh scopes separate: 90 pure cases and 270 phases in 7.232 seconds on metric `a62101f1` and test `2cbccb6f`, with 26 source pins; four authored fixtures and six selector calls, with 71 pins; and three retained cases across three frozen states, giving nine selector replays with 73 pins. Original source, native, process and storage custody closes in each scope. The joint projection now accepts only original `selected` or `abstained` status. Invalid producer provenance receives no exact-IR or permission credit.
