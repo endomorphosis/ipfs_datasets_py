@@ -588,6 +588,316 @@ def execute_goal_loop(
     }
 
 
+def _read_handoff_metadata_v2(path: Path) -> dict:
+    """Read one bounded ordinary metadata file without native constructors."""
+    import stat
+
+    fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+    try:
+        before = os.fstat(fd)
+        if not stat.S_ISREG(before.st_mode) or not 0 < before.st_size <= 4 * 1024 * 1024:
+            raise ValueError("bounded regular handoff metadata file required")
+        raw = bytearray()
+        while len(raw) <= 4 * 1024 * 1024:
+            block = os.read(fd, min(65536, 4 * 1024 * 1024 + 1 - len(raw)))
+            if not block:
+                break
+            raw.extend(block)
+        after = os.fstat(fd)
+        stamp = lambda st: (st.st_dev, st.st_ino, st.st_mode, st.st_size, st.st_mtime_ns, st.st_ctime_ns)
+        if len(raw) != before.st_size or stamp(before) != stamp(after) or stamp(after) != stamp(path.lstat()):
+            raise ValueError("handoff metadata changed during read")
+    finally:
+        os.close(fd)
+    def unique(pairs):
+        result = {}
+        for key, value in pairs:
+            if key in result:
+                raise ValueError("duplicate handoff metadata key")
+            result[key] = value
+        return result
+    def constant(_):
+        raise ValueError("nonfinite handoff metadata")
+    value = json.loads(raw, object_pairs_hook=unique, parse_constant=constant)
+    if type(value) is not dict:
+        raise ValueError("handoff metadata root must be an object")
+    return value
+
+def _write_handoff_metadata_v2(path: Path, raw: bytes) -> None:
+    """Create one requested output exclusively; preserve partial failures."""
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+    try:
+        view = memoryview(raw)
+        while view:
+            count = os.write(fd, view)
+            if count <= 0:
+                raise OSError("short handoff metadata write")
+            view = view[count:]
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+
+
+def _checked_job_packet_bytes_v1(pin: dict) -> bytes:
+    """Read a declared metadata/source file as data; never import its bytes."""
+    import stat
+
+    if (type(pin) is not dict or set(pin) != {"path", "bytes", "sha256"}
+            or type(pin["path"]) is not str or type(pin["bytes"]) is not int
+            or not 0 < pin["bytes"] <= 4 * 1024**2 or type(pin["sha256"]) is not str):
+        raise ValueError("bounded metadata descriptor required")
+    path = Path(pin["path"])
+    if (not path.is_absolute() or ".." in path.parts
+            or any(part.is_symlink() for part in (path, *path.parents))):
+        raise ValueError("exact unaliased metadata descriptor path required")
+    fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+    try:
+        before = os.fstat(fd)
+        if not stat.S_ISREG(before.st_mode) or before.st_size != pin["bytes"]:
+            raise ValueError("metadata descriptor file or size differs")
+        raw = bytearray()
+        while len(raw) <= 4 * 1024**2:
+            block = os.read(fd, min(65536, 4 * 1024**2 + 1 - len(raw)))
+            if not block:
+                break
+            raw.extend(block)
+        after = os.fstat(fd)
+        stamp = lambda st: (st.st_dev, st.st_ino, st.st_mode, st.st_size, st.st_mtime_ns, st.st_ctime_ns)
+        if (stamp(before) != stamp(after) or stamp(after) != stamp(path.lstat())
+                or len(raw) != pin["bytes"] or hashlib.sha256(raw).hexdigest() != pin["sha256"]):
+            raise ValueError("metadata descriptor bytes changed or differ")
+        return bytes(raw)
+    finally:
+        os.close(fd)
+
+
+def _job_packet_index_arguments_v1(spec: dict, owner) -> tuple[dict, dict]:
+    """Join one shared retained capsule to actual metadata and current sources."""
+    def need(value, message):
+        if not value:
+            raise ValueError(message)
+
+    def json_pin(pin):
+        raw = _checked_job_packet_bytes_v1(pin)
+        def unique(pairs):
+            value = {}
+            for key, item in pairs:
+                need(key not in value, "duplicate retained metadata key")
+                value[key] = item
+            return value
+        value = json.loads(raw, object_pairs_hook=unique,
+            parse_constant=lambda _: need(False, "nonfinite retained metadata"))
+        need(type(value) is dict, "retained metadata object required")
+        return value
+
+    fields = {"schema", "canonical_owner", "inputs", "reuse_audit", "primary_snapshot_root",
+              "packet_proposals", "producer_principal", "expected_task_revision"}
+    need(type(spec) is dict and set(spec) == fields
+         and spec["schema"] == "legal-ir-job-packet-index-cli-inputs/v1", "closed packet-index CLI inputs required")
+    need(spec["canonical_owner"]["path"] == str(Path(owner.__file__).resolve()), "canonical metadata owner pin differs")
+    _checked_job_packet_bytes_v1(spec["canonical_owner"])
+    need(type(spec["inputs"]) is dict and set(spec["inputs"]) ==
+         {"current_snapshot", "capability_report", "capability_verification"}, "three actual metadata input files required")
+    inputs = {key: json_pin(pin) for key, pin in spec["inputs"].items()}
+    kwargs = {**inputs, **{key: spec[key] for key in ("packet_proposals", "producer_principal", "expected_task_revision")}}
+    audit = json_pin(spec["reuse_audit"])
+    need(audit.get("schema") == "legal-ir-LIR9003-completed-engineering-reuse/v1"
+         and audit.get("native_or_model_execution") is False, "existing completed-engineering reuse capsule required")
+    root = Path(spec["primary_snapshot_root"])
+    need(root.is_absolute() and root.is_dir() and ".." not in root.parts
+         and not any(p.is_symlink() for p in (root, *root.parents)), "explicit primary snapshot root required")
+    rows = audit.get("packets")
+    expected_ids = {row[0] for row in owner._PROGRAMME_WORK_PACKET_SPECS_V1}
+    need(type(rows) is list and len(rows) == 4 and all(type(row) is dict for row in rows)
+         and {row.get("task_id") for row in rows} == expected_ids, "four existing preparation identities required")
+    parents, source_paths, evidence_paths, all_checked = set(), set(), set(), set()
+    retained, current_sources, evidence = [], {}, {}
+    for row in rows:
+        packet, receipt = json_pin(row["packet"]), json_pin(row["receipt"])
+        task_id = row["task_id"]
+        need(packet.get("schema") == "legal-ir-programme-preparation/v1" and packet.get("task_id") == task_id
+             and packet.get("metadata_complete") is True and packet.get("snapshot_binding_only") is True
+             and all(packet.get(flag) is False for flag in ("admitted", "formalized", "dispatch_authorized",
+                 "mutation_authorized", "model_executed", "training_executed", "scientific_parent_satisfied")),
+             "retained preparation must remain unadmitted metadata")
+        need(receipt.get("schema") == "legal-ir-supervisor-task-receipt/v1" and receipt.get("task_id") == task_id
+             and receipt.get("status") == "implemented" and receipt.get("task_kind") == "programme_preparation"
+             and receipt.get("authority") == {"admitted": False, "formalized": False}
+             and any(item.get("kind") == "packet" and item.get("sha256") == row["packet"]["sha256"]
+                 and type(item.get("path")) is str and row["packet"]["path"].endswith("/" + item["path"])
+                 for item in receipt.get("artifacts", []) if type(item) is dict), "retained receipt/packet join differs")
+        scope = packet["admission_scope"]
+        need(scope["native_binding"] == {"control_revision": None, "status": "original_admission_required", "task_cid": None},
+             "historical preparation cannot acquire a native binding")
+        selected_parents = [item["task_id"] for item in scope["supporting_parents"]]
+        need(selected_parents == row["supporting_parent_contexts"], "retained parent coverage differs")
+        parents.update(selected_parents)
+        retained.append({key: row[key] for key in ("task_id", "packet", "receipt", "supporting_parent_contexts")})
+        all_checked.update((row["packet"]["path"], row["receipt"]["path"]))
+        sources = {}
+        for item in row["resolved_snapshot_dependencies"]:
+            declared, resolved = item["declared"], item["resolved_primary_R"]
+            relative = Path(declared["path"])
+            need(not relative.is_absolute() and ".." not in relative.parts
+                 and item["role"] in {"owner_sources", "evidence"} and resolved["path"] == str(root / relative)
+                 and resolved["bytes"] == declared["bytes"] and resolved["sha256"] == declared["sha256"],
+                 "explicit retained snapshot root mapping differs")
+            _checked_job_packet_bytes_v1(resolved)
+            need(declared in scope["dependencies"][item["role"]], "retained dependency membership differs")
+            all_checked.add(resolved["path"])
+            if item["role"] == "owner_sources":
+                source_paths.add(resolved["path"])
+                logical = declared["path"].split("/owner-sources/", 1)
+                need(len(logical) == 2 and logical[1] in scope["logical_owner_paths"]
+                     and not Path(logical[1]).is_absolute() and ".." not in Path(logical[1]).parts,
+                     "retained source owner path differs")
+                current = {**resolved, "path": str(root / logical[1])}
+                _checked_job_packet_bytes_v1(current)
+                all_checked.add(current["path"])
+                sources[logical[1]] = declared["sha256"]
+                current_sources[logical[1]] = {"logical_path": logical[1], "current_primary": current,
+                                               "retained_snapshot": resolved}
+            else:
+                evidence_paths.add(resolved["path"])
+                evidence[resolved["path"]] = resolved
+        need(set(sources) == set(scope["logical_owner_paths"]), "complete retained source owner closure required")
+        # current_W comparisons are immutable historical observations. Current
+        # PRIMARY files above are the selected execution-source comparison.
+    need(len(source_paths) == 13 and len(evidence_paths) == 11 and len(parents) == 22,
+         "existing13-source/11-evidence/22-parent capsule coverage differs")
+    native = inputs["current_snapshot"]["tasks"]
+    bindings = [{"task_alias": row["task_alias"], "task_cid": row["task_cid"], "revision": row["revision"],
+                 "preparations": [item["task_id"] for item in rows
+                     if row.get("body", {}).get("legacy_parent_task") in item["supporting_parent_contexts"]]}
+                for row in native if row.get("body", {}).get("legacy_parent_task") in parents]
+    need(len(bindings) == 49 and len({row["task_cid"] for row in bindings}) == 49, "current49 native child bindings required")
+    # These seven native tasks explicitly need an implementation scope. The
+    # retained preparation evidence cannot fill code, test, lease or acceptance
+    # fields. This control-only CLI preserves that boundary in the frozen report.
+    gaps = [{"task_alias": row["task_alias"], "task_cid": row["task_cid"], "revision": row["revision"],
+             "current_code_edit_allowlist": row["body"].get("code_edit_allowlist", []),
+             "reviewed_implementation_packet_present": False,
+             "unbound_requirements": ["exact_code_change_paths", "owning_test_paths", "shared_file_lease_keys",
+                                      "independent_implementation_acceptance"]}
+            for row in native if row.get("body", {}).get("requires_product_change_scope") is True]
+    need(len(gaps) == 7, "current seven implementation scope gaps required")
+    context = {"schema": "legal-ir-job-packet-index-review-context/v1",
+        "retained_preparations": sorted(retained, key=lambda row: row["task_id"]),
+        "current_primary_source_closure": [current_sources[key] for key in sorted(current_sources)],
+        "retained_evidence_snapshots": [evidence[key] for key in sorted(evidence)],
+        "supporting_parent_contexts": sorted(parents),
+        "current_native_child_bindings": sorted(bindings, key=lambda row: row["task_alias"]),
+        "implementation_scope_gaps": sorted(gaps, key=lambda row: row["task_alias"]),
+        "historical_W_comparisons_are_context_only": True, "native_binding_authority": False}
+    proposals = spec["packet_proposals"]
+    need(type(proposals) is list and all(type(row) is dict and row.get("task_alias") in
+         {"LIR-9003", "LIR-9004"} for row in proposals), "control-only packet proposals required")
+    self_proposals = [row for row in proposals if row["task_alias"] == "LIR-9003"]
+    need(len(self_proposals) == 1, "concrete9003 self packet required")
+    context_raw = owner._handoff_reconciliation_bytes_v2(context)
+    need(owner._handoff_reconciliation_bytes_v2(self_proposals[0].get("review_context")) == context_raw,
+         "self packet review_context differs from actual retained/current grounding")
+    return kwargs, {"review_context_sha256": hashlib.sha256(context_raw).hexdigest(),
+        "implementation_scope_gaps": len(gaps), "retained_preparations": 4, "retained_receipts": 4, "retained_owner_sources": 13,
+        "current_primary_sources_matching": 13, "retained_evidence": 11, "covered_parent_contexts": 22,
+        "current_native_children_bound": 49, "native_child_binding_sha256": hashlib.sha256(
+            owner._handoff_reconciliation_bytes_v2(bindings)).hexdigest(), "retained_materializers_rerun": False,
+        "historical_W_comparisons_are_context_only": True, "checked_file_count": len(all_checked),
+        "checked_file_paths_sha256": hashlib.sha256(owner._handoff_reconciliation_bytes_v2(sorted(all_checked))).hexdigest()}
+
+
+def job_packet_index_main_v1(argv: list[str]) -> int:
+    """Prepare and independently reconstruct concrete, source-bound metadata."""
+    parser = argparse.ArgumentParser(description=job_packet_index_main_v1.__doc__)
+    parser.add_argument("operation", choices=("prepare", "verify"))
+    parser.add_argument("--inputs", type=Path, required=True)
+    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--freeze-out", type=Path)
+    parser.add_argument("--report", type=Path)
+    parser.add_argument("--freeze", type=Path)
+    parser.add_argument("--verifier-principal")
+    args = parser.parse_args(argv)
+    if args.operation == "prepare" and (args.freeze_out is None or args.report is not None
+            or args.freeze is not None or args.verifier_principal is not None):
+        parser.error("prepare requires --freeze-out and forbids verifier inputs")
+    if args.operation == "verify" and (args.report is None or args.freeze is None
+            or not args.verifier_principal or args.freeze_out is not None):
+        parser.error("verify requires --report, --freeze and --verifier-principal")
+    try:
+        paths = [p for p in (args.inputs, args.output, args.freeze_out, args.report, args.freeze) if p is not None]
+        if (any(not p.is_absolute() or ".." in p.parts or any(part.is_symlink() for part in (p, *p.parents)) for p in paths)
+                or len({str(p.resolve()) for p in paths}) != len(paths)):
+            raise ValueError("distinct absolute unaliased packet-index paths required")
+        for path in ([args.output, args.freeze_out] if args.operation == "prepare" else [args.output]):
+            if os.path.lexists(path):
+                raise ValueError("packet-index output exists; preserve and reconcile")
+        sys.path.insert(0, str(ROOT))
+        from ipfs_datasets_py.logic.autoformal import supervisor_loop as owner
+        if Path(owner.__file__).resolve() != ROOT / "ipfs_datasets_py/logic/autoformal/supervisor_loop.py":
+            raise ValueError("canonical metadata owner import origin differs")
+        spec = _read_handoff_metadata_v2(args.inputs)
+        inputs, reuse = _job_packet_index_arguments_v1(spec, owner)
+        if args.operation == "prepare":
+            value = owner.prepare_current_job_packet_index_v1(**inputs)
+            index = value
+        else:
+            index = _read_handoff_metadata_v2(args.report)
+            canonical = owner._handoff_reconciliation_bytes_v2(index)
+            if _checked_job_packet_bytes_v1({"path": str(args.report), "bytes": len(canonical),
+                    "sha256": hashlib.sha256(canonical).hexdigest()}) != canonical:
+                raise ValueError("report is not the frozen canonical serialization")
+            value = owner.verify_current_job_packet_index_v1(index, producer_freeze=_read_handoff_metadata_v2(args.freeze),
+                verifier_principal=args.verifier_principal, **inputs)
+        complete = [row for row in index["entries"] if row["metadata_complete"]]
+        if (not complete or any(row["task_alias"] not in {"LIR-9003", "LIR-9004"} for row in complete)
+                or not any(row["task_alias"] == "LIR-9003" for row in complete)):
+            raise ValueError("concrete9003 control packet required; negative-only previews remain in the pure API")
+        self_packet = next(row["packet_proposal"] for row in complete if row["task_alias"] == "LIR-9003")
+        prefix = [sys.executable, "-B", str(Path(__file__).resolve()), "job-packet-index"]
+        actual = (prefix + ["prepare", "--inputs", str(args.inputs), "--output", str(args.output),
+                  "--freeze-out", str(args.freeze_out)] if args.operation == "prepare" else
+                  prefix + ["verify", "--inputs", str(args.inputs), "--report", str(args.report), "--freeze", str(args.freeze),
+                  "--verifier-principal", args.verifier_principal, "--output", str(args.output)])
+        declared_argv = self_packet["argv"] if args.operation == "prepare" else self_packet["verifier"]["argv"]
+        if (actual != declared_argv or self_packet["validation_argv"] != self_packet["verifier"]["argv"]
+                or self_packet["worker"]["principal"] != spec["producer_principal"]
+                or (args.operation == "verify" and self_packet["verifier"]["principal"] != args.verifier_principal)):
+            raise ValueError("actual producer/verifier command or declared role differs from the self packet")
+        owned = {str(Path(spec["primary_snapshot_root"]) / value) for value in self_packet["outputs"]}
+        if not {str(args.output), *([str(args.freeze_out)] if args.operation == "prepare" else [])} <= owned:
+            raise ValueError("actual outputs differ from native self-packet ownership")
+        declared = [item["descriptor"] for item in self_packet["inputs"]]
+        if any(pin not in declared for pin in [*spec["inputs"].values(), spec["reuse_audit"]]):
+            raise ValueError("actual metadata and shared reuse capsule must join role-bound self inputs")
+        if any(pin["path"] == str(args.inputs) for pin in declared):
+            raise ValueError("self input-file hash belongs only in the outer native request")
+        checked = {}
+        for row in complete:
+            packet = row["packet_proposal"]
+            pins = packet["source_descriptors"] + [item["descriptor"] for item in packet["inputs"]]
+            for pin in pins:
+                if pin["path"] in checked and checked[pin["path"]] != pin:
+                    raise ValueError("ambiguous repeated metadata descriptor")
+                checked[pin["path"]] = pin
+                if len(checked) > 256:
+                    raise ValueError("packet descriptor population exceeds its bound")
+                _checked_job_packet_bytes_v1(pin)
+        raw = owner._handoff_reconciliation_bytes_v2(value)
+        _write_handoff_metadata_v2(args.output, raw)
+        if args.operation == "prepare":
+            freeze = {"schema": "legal-ir-job-packet-index-producer-freeze/v1", "report_sha256": hashlib.sha256(raw).hexdigest(),
+                "report_bytes": len(raw), "producer_principal": value["producer_principal"], "frozen_before_verification": True}
+            _write_handoff_metadata_v2(args.freeze_out, owner._handoff_reconciliation_bytes_v2(freeze))
+    except (OSError, ValueError, TypeError, KeyError, RecursionError) as exc:
+        print(json.dumps({"schema": "legal-ir-job-packet-index-CLI-refusal/v1", "valid": False,
+            "reason": str(exc), "native_admission": False, "completion_authority": False}))
+        return 2
+    print(json.dumps({"schema": value["schema"], "output": str(args.output), "owner_path": str(Path(owner.__file__).resolve()),
+        "checked_packet_input_files": len(checked), "reuse": reuse, "task_acceptance_satisfied": False,
+        "productive_runnable_coverage_complete": False, "native_admission": False, "completion_authority": False}))
+    return 0
+
+
 def parser() -> argparse.ArgumentParser:
     result = argparse.ArgumentParser(description=__doc__)
     result.add_argument("--accelerate-root", type=Path, required=True)
@@ -664,6 +974,9 @@ def parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
+    effective_argv = list(sys.argv[1:] if argv is None else argv)
+    if effective_argv and effective_argv[0] == "job-packet-index":
+        return job_packet_index_main_v1(effective_argv[1:])
     args = parser().parse_args(argv)
     args.task_id = args.task_id or ""
     if args.task_id and args.command not in {"preflight", "supervise"}:

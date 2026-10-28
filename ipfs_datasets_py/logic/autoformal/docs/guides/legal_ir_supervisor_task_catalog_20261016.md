@@ -122,3 +122,53 @@ separately bind current source/input bytes, purpose grants, review and lifecycle
 before any task becomes runnable. Caller principal strings and supplied source
 hashes remain unauthenticated by this pure API.
 
+
+### Concrete metadata CLI
+
+The existing `scripts/ops/legal_ir/run_autoformal_supervisor.py` adds the early
+`job-packet-index prepare|verify` route before repair/native-store setup. This
+source addition awaits cold normal-package qualification. It calls the existing
+pure owner directly; it does not claim a task or launch a supervisor.
+
+A frozen `legal-ir-job-packet-index-cli-inputs/v1` object supplies exactly
+`canonical_owner`, `inputs` (current_snapshot, capability_report and
+capability_verification file descriptors), `reuse_audit`,
+`primary_snapshot_root`, `packet_proposals`, `producer_principal` and
+`expected_task_revision`, plus its schema. Use the single existing completed
+engineering reuse capsule. The CLI checks its four packet/receipt pairs,
+13 source and11 evidence snapshots, matches the13 current PRIMARY owners and
+joins49 current child CID/revision records through22 parent contexts. Historical
+W-only generation differences stay context. Captured sources are read as data;
+the four completed materializers are never rerun or given native bindings.
+
+The first concrete profile requires a metadata-complete9003 self packet;
+9004 may retain its pending metadata qualification packet. Both remain subject
+to current dependency acceptance. Shared prior-evidence descriptors bind the
+three external metadata files and reuse capsule once. The inputs file's own
+hash belongs only in the original outer request, avoiding a self-reference.
+Actual commands, principals, output ownership and declared file bytes must
+match the self packet. All-negative inventories remain pure API previews.
+
+Run `job-packet-index prepare --inputs <absolute-inputs> --output <index>
+--freeze-out <freeze>` under the existing original source/native/storage owner.
+After that producer closes, a distinct original verifier runs
+`job-packet-index verify --inputs <same-inputs> --report <index> --freeze <freeze>
+--verifier-principal <distinct-principal> --output <verification>`. Every path
+is absolute; output files are created exclusively. Bind exact argv to the
+self packet rather than substituting these documentation placeholders.
+
+Descriptor checks and reuse counts are emitted separately in CLI evidence.
+The canonical report and verifier retain their existing false admission,
+completion, runnable-coverage and task-acceptance flags. Actual independent
+review, current original task authority and purpose-specific admission remain
+required before unblocking. No scientific/model/Lean or whole-corpus acceptance
+follows from this metadata route.
+
+
+The CLI reconstructs the shared review context from actual retained files and
+current primary source bytes, and requires that exact context in the LIR-9003
+self proposal. Its producer freeze therefore covers the four retained packets
+and receipts, 13 source comparisons, 11 evidence snapshots, 49 current child
+bindings and seven explicit implementation scope gaps. The independent verifier
+reconstructs these facts again. Historical private-worktree comparisons remain
+context only; this metadata route grants no code or task admission.
