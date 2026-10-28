@@ -2229,3 +2229,360 @@ def _prior_span_state(prior: Mapping[str, Any] | None) -> tuple[set[str], set[st
             if span:
                 proved.add(span)
     return seen, proved
+
+
+def prepare_representation_cell_amendment_v1(
+    *,
+    current_population: Mapping[str, Any],
+    current_task_bindings: Mapping[str, Any],
+    amendment_request: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Prepare one detached 4096D addition and two exact specification edits.
+
+    This finite metadata-only profile accepts the retained 64-task population
+    with supplied current revisions and native specification identities. Its
+    PlanDelta/PlanDeltaItem wire data is a proposal, not a decoded/admitted
+    native contract. Original-owner readback, native specification computation,
+    PlanRevisionStore authorization and lineage-aware observation remain gates.
+    No store, file, command, provider, model or identity allocator is opened.
+    """
+    supplied: dict[str, Any] = {}
+
+    def need(condition: bool, reason: str) -> None:
+        if not condition:
+            raise ValueError(reason)
+
+    def text(value: Any) -> bool:
+        return type(value) is str and 0 < len(value) <= 1024 and bool(value.strip()) and "\x00" not in value
+
+    def positive(value: Any) -> bool:
+        return type(value) is int and 0 < value < 2 ** 63
+
+    def digest(value: Any) -> bool:
+        return type(value) is str and len(value) == 64 and all(c in "0123456789abcdef" for c in value)
+
+    def commitment(value: Any) -> str:
+        return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":"),
+                                         ensure_ascii=False, allow_nan=False).encode("utf-8")).hexdigest()
+
+    def closed(value: Any, fields: set[str], reason: str) -> None:
+        need(type(value) is dict and set(value) == fields, reason)
+
+    def strings(value: Any, *, empty: bool = False) -> bool:
+        return (type(value) is list and (empty or bool(value)) and len(value) <= 512
+                and all(text(item) for item in value) and len(value) == len(set(value)))
+
+    def descriptor(value: Any) -> bool:
+        return (type(value) is dict and set(value) == {"path", "bytes", "sha256"}
+                and text(value.get("path")) and type(value.get("bytes")) is int
+                and 0 <= value["bytes"] <= 2 ** 40 and digest(value.get("sha256")))
+
+    def detached(name: str, value: Any) -> dict[str, Any]:
+        need(isinstance(value, Mapping), name + " must be a mapping")
+        nodes = 0
+
+        def finite(item: Any, depth: int) -> None:
+            nonlocal nodes
+            nodes += 1
+            need(nodes <= 50000 and depth <= 24, name + " exceeds metadata bounds")
+            if type(item) is dict:
+                need(all(type(key) is str for key in item), name + " requires string keys")
+                for child in item.values():
+                    finite(child, depth + 1)
+            elif type(item) is list:
+                need(len(item) <= 4096, name + " exceeds list bound")
+                for child in item:
+                    finite(child, depth + 1)
+            else:
+                need(item is None or type(item) in {str, int, float, bool}, name + " contains non-JSON data")
+                if type(item) is str:
+                    need(len(item) <= 16384 and "\x00" not in item, name + " contains invalid metadata text")
+        original = dict(value)
+        finite(original, 0)
+        try:
+            raw = json.dumps(original, allow_nan=False, ensure_ascii=False)
+            need(len(raw.encode("utf-8")) <= 2 * 1024 ** 2, name + " exceeds byte bound")
+            return json.loads(raw)
+        except (TypeError, ValueError, RecursionError) as exc:
+            raise ValueError(name + " must contain bounded finite JSON") from exc
+
+    for name, value in (("current_population", current_population),
+                        ("current_task_bindings", current_task_bindings),
+                        ("amendment_request", amendment_request)):
+        supplied[name] = detached(name, value)
+    population, bindings, request = (supplied[name] for name in
+        ("current_population", "current_task_bindings", "amendment_request"))
+    closed(population, {"schema", "board_namespace", "repository_tree_id", "plan_root_cid",
+                        "goals", "goal_edges", "plans", "tasks"}, "population fields must be exact")
+    need(population["schema"] == "legal-ir-native-task-population/v1", "unsupported population profile")
+    need(population["board_namespace"] == "legal-ir-span-graph-lean-refinement-20261016", "wrong programme namespace")
+    need(text(population["plan_root_cid"]) and text(population["repository_tree_id"]), "population roots required")
+    need(type(population["tasks"]) is list and len(population["tasks"]) == 64, "exact 64-task predecessor required")
+    need(type(population["goals"]) is list and len(population["goals"]) == 34
+         and type(population["goal_edges"]) is list and len(population["goal_edges"]) == 33,
+         "original goal population required")
+    need(type(population["plans"]) is list and len(population["plans"]) == 1
+         and type(population["plans"][0]) is dict
+         and population["plans"][0].get("plan_cid") == population["plan_root_cid"]
+         and positive(population["plans"][0].get("revision")), "exact current predecessor plan required")
+    by_alias: dict[str, dict[str, Any]] = {}
+    identities: set[str] = set()
+    ordinals: set[int] = set()
+    for task in population["tasks"]:
+        need(type(task) is dict and text(task.get("task_alias")) and text(task.get("task_cid"))
+             and positive(task.get("ordinal")) and positive(task.get("revision")), "current task metadata incomplete")
+        alias, cid, ordinal = task["task_alias"], task["task_cid"], task["ordinal"]
+        need(alias not in by_alias and cid not in identities and ordinal not in ordinals, "duplicate predecessor identity")
+        need(task.get("plan_cid") == population["plan_root_cid"], "predecessor is not the selected single-root profile")
+        by_alias[alias] = task
+        identities.add(cid)
+        ordinals.add(ordinal)
+    need(set(bindings) == set(by_alias), "all current task bindings required")
+    for alias, task in by_alias.items():
+        binding = bindings[alias]
+        closed(binding, {"task_cid", "revision", "spec_revision", "record_sha256"}, "closed current binding required")
+        need(binding["task_cid"] == task["task_cid"] and positive(binding["revision"])
+             and binding["revision"] == task["revision"]
+             and text(binding["spec_revision"]) and digest(binding["record_sha256"])
+             and binding["record_sha256"] == commitment(task), "stale current task/specification binding")
+    need({"LIR-1901", "LIR-1902", "LIR-1903", "LIR-1904", "LIR-1905"} <= set(by_alias), "original width cells required")
+    design, comparison = by_alias["LIR-1901"], by_alias["LIR-1905"]
+    goal_cid = design.get("goal_cid")
+    need(text(goal_cid) and all(by_alias[a].get("goal_cid") == goal_cid
+         and by_alias[a].get("goal_id") == "LIR-G119" for a in
+         ("LIR-1901", "LIR-1902", "LIR-1903", "LIR-1904", "LIR-1905")), "wrong representation goal")
+    need(sum(g.get("goal_cid") == goal_cid and g.get("goal_alias") == "LIR-G119"
+             for g in population["goals"] if type(g) is dict) == 1, "representation goal absent")
+    closed(request, {"schema", "base_population_sha256", "candidate_plan_root_cid", "child_task",
+                     "replacement_tasks", "replacement_spec_bindings", "profile", "review", "delta"},
+           "amendment request fields must be exact")
+    need(request["schema"] == "legal-ir-representation-cell-amendment-request/v1", "unsupported amendment profile")
+    need(request["base_population_sha256"] == commitment(population), "stale predecessor population")
+    new_root = request["candidate_plan_root_cid"]
+    need(text(new_root) and new_root != population["plan_root_cid"], "distinct proposed continuation root required")
+    review = request["review"]
+    closed(review, {"reviewer", "scope", "evidence"}, "closed review metadata required")
+    need(text(review["reviewer"]) and review["scope"] == "representation_cell_and_comparison_metadata_only"
+         and descriptor(review["evidence"]), "review evidence required")
+    profile = request["profile"]
+    closed(profile, {"ir_family", "source_dimension", "actual_bottleneck_dimension", "schema_version",
+                     "decoder_task", "producer_family", "producer_id", "producer_revision", "causal_forward", "pooling",
+                     "normalization", "input_token_limit", "output_token_limit", "sidecars",
+                     "raw_vector_residual_bypass", "study_kind", "comparison_widths"}, "closed representation profile required")
+    need(profile["ir_family"] == "legal_ir" and type(profile["source_dimension"]) is int
+         and profile["source_dimension"] == 4096 and positive(profile["actual_bottleneck_dimension"])
+         and text(profile["schema_version"]) and text(profile["decoder_task"]), "4096D LegalIR profile required")
+    need(profile["producer_family"] == "leanstral" and text(profile["producer_id"]) and text(profile["producer_revision"])
+         and profile["causal_forward"] == "full" and profile["pooling"] == "last"
+         and profile["normalization"] == "l2", "genuine Leanstral causal producer profile required")
+    need(positive(profile["input_token_limit"]) and positive(profile["output_token_limit"])
+         and strings(profile["sidecars"], empty=True) and type(profile["raw_vector_residual_bypass"]) is bool,
+         "explicit context/bypass limits required")
+    need(profile["study_kind"] == "native_producer_systems"
+         and profile["comparison_widths"] == [8, 384, 768, 4096], "four-system comparison must be separate from bottleneck study")
+    child = request["child_task"]
+    need(type(child) is dict, "child task required")
+    template = by_alias["LIR-1904"]
+    # A new logical identity cannot inherit another task's execution evidence,
+    # even an empty receipt/history field. This v1 profile refuses a runtime
+    # donor rather than silently cleaning or zeroing its original metadata.
+    # Inspect only task-runtime containers: checkpoint/source lineage inside
+    # inputs is retained provenance, not proof that this new task has executed.
+    runtime_fields = {
+        "history", "attempt_history", "execution_history", "status_history", "completion_history",
+        "provider_history", "claim_history", "lease_history", "settlement_history", "retry_history",
+        "attempt", "attempt_id", "attempt_number", "attempts", "attempt_count", "attempt_budget_consumed",
+        "current_attempt", "current_attempt_id", "last_attempt", "last_attempt_id",
+        "result", "results", "execution_result", "execution_results", "implementation_result",
+        "provider_result", "provider_results", "last_result", "last_cycle_result", "terminal_result",
+        "completion_receipt", "completion_receipts", "completion_evidence", "failure_receipt",
+        "failure_terminal", "success_receipt", "terminal_receipt", "recovery_receipt", "recovery_terminal",
+        "original_owner_disposition", "outcome", "callback_outcome", "provider_outcome", "outcome_knowledge",
+        "claim", "claims", "claim_id", "claim_cid", "claim_state", "claim_status", "claim_owner",
+        "active_claim", "current_claim", "claimed_at", "claimed_by",
+        "lease", "leases", "lease_id", "lease_epoch", "lease_deadline_ms", "lease_expires_at", "current_lease",
+        "provider_invocation", "provider_invocations", "provider_invocation_id", "provider_attempt_id",
+        "provider_dispatched", "provider_status", "invocation_id", "invocation_status",
+        "settlement", "settlements", "settlement_receipt", "settlement_status", "settlement_outcome",
+        "fencing_token", "fence_epoch", "owner_session_id", "process_birth", "process_instance_id",
+        "worker_pid", "worker_birth", "worker_exit_code", "started_at", "finished_at", "completed_at",
+        "last_started_at", "last_finished_at",
+    }
+    runtime_containers = {"authored_task", "body", "runtime", "runtime_state", "runtime_metadata",
+                          "execution", "execution_state", "execution_metadata", "state", "metadata",
+                          "task", "task_record", "record"}
+    for origin, record in (("donor", template), ("child", child)):
+        pending = [record]
+        inspected = 0
+        while pending:
+            node = pending.pop()
+            if type(node) is not dict:
+                continue
+            inspected += 1
+            need(inspected <= 1024, "task runtime metadata exceeds inspection bound")
+            need(not (set(node) & runtime_fields), origin + " runtime history/evidence cannot initialize a new task")
+            for key in runtime_containers:
+                value = node.get(key)
+                if type(value) is dict:
+                    pending.append(value)
+                elif type(value) is list:
+                    pending.extend(item for item in value if type(item) is dict)
+    mutable_child = {"task_id", "task_alias", "task_cid", "ordinal", "revision", "plan_cid", "title", "objective",
+                     "outputs", "owned_paths", "exclusive_keys", "inputs", "existing_owners", "authored_task", "representation_profile"}
+    need(set(child) == set(template) | {"representation_profile"}, "child fields must preserve selected task profile")
+    need(all(child[k] == v for k, v in template.items() if k not in mutable_child), "child changed inherited constraints/history")
+    alias, cid = child.get("task_alias"), child.get("task_cid")
+    need(text(alias) and len(alias) == 8 and alias.startswith("LIR-19") and alias[6:].isdigit()
+         and alias not in by_alias and child.get("task_id") == alias and text(cid) and cid not in identities
+         and cid != alias and not cid.startswith("LIR-") and (":" in cid or cid.startswith("b")),
+         "new durable child identity required; aliases are not dependency CIDs")
+    need(child.get("goal_cid") == goal_cid and child.get("goal_id") == "LIR-G119"
+         and child.get("legacy_parent_task") == "LIR-19" and child.get("plan_cid") == new_root,
+         "child parent/continuation mismatch")
+    need(child.get("ordinal") == max(ordinals) + 1 and type(child.get("ordinal")) is int
+         and child.get("revision") == 0 and type(child.get("revision")) is int
+         and child.get("status") == "blocked", "new child must be appended and blocked")
+    need(child.get("depends_on") == ["LIR-1901"] and child.get("dependencies") == [design["task_cid"]], "child design dependency required")
+    need(text(child.get("title")) and text(child.get("objective")), "child title/objective required")
+    need("existing_owners" not in child or strings(child["existing_owners"]), "declared child owners must be nonempty")
+    need(child.get("representation_profile") == profile and child.get("resource_profile") == "inference"
+         and child.get("resource_stage") == "inference" and child.get("validation_commands") == [], "child inference profile mismatch")
+    need(child.get("execution_authorized_by_this_file") is False and child.get("execution_packet_required") is True
+         and child.get("completion") == "manual" and child.get("gold_or_teacher_admission_granted") is False,
+         "child cannot acquire execution or supervision authority")
+    need(type(child.get("inputs")) is dict and set(child["inputs"]) == set(template.get("inputs", {}))
+         and child["inputs"].get("roles") == ["source", "allowed_context", "verified_model_and_encoder", "self_generated_prefixes"]
+         and child["inputs"].get("required_dependency_results") == ["LIR-1901"]
+         and strings(child["inputs"].get("references")), "child source/review roles must be preserved")
+    def relative_path(value: Any) -> bool:
+        return text(value) and not value.startswith("/") and ".." not in value.split("/") and not any(c in value for c in "*?[]")
+    need(strings(child.get("owned_paths")) and all(relative_path(p) for p in child["owned_paths"])
+         and strings(child.get("exclusive_keys")), "explicit child writer scopes required")
+    for previous in population["tasks"]:
+        need(not set(child["exclusive_keys"]) & set(previous.get("exclusive_keys", [])), "child writer identity collides")
+        for old_path in previous.get("owned_paths", []):
+            for new_path in child["owned_paths"]:
+                need(new_path != old_path and not new_path.startswith(old_path.rstrip("/") + "/")
+                     and not old_path.startswith(new_path.rstrip("/") + "/"), "child output scope collides")
+    need(type(child.get("outputs")) is list and 0 < len(child["outputs"]) <= 32
+         and all(type(o) is dict and relative_path(o.get("path")) and o.get("materialized") is False
+                 and any(o["path"].startswith(p.rstrip("/") + "/") for p in child["owned_paths"])
+                 for o in child["outputs"]), "unmaterialized child outputs must remain in its owned scope")
+    if "authored_task" in child:
+        authored = child["authored_task"]
+        need(type(authored) is dict and authored.get("objective") == child.get("objective")
+             and authored.get("depends_on") == child["depends_on"] and authored.get("inputs") == child["inputs"],
+             "child authored metadata must match its declared task")
+        for field in ("task_id", "goal_id", "owned_paths", "exclusive_keys", "status", "revision", "priority",
+                      "repository", "track", "resource_profile", "resource_stage", "completion", "existing_owners",
+                      "execution_packet_required", "execution_authorized_by_this_file", "gold_or_teacher_admission_granted",
+                      "requires_product_change_scope", "constraints", "validation"):
+            need(field not in authored or (field in child and authored[field] == child[field]),
+                 "child authored identity/scope/authority mismatch")
+        if "outputs" in authored:
+            need(authored["outputs"] == [o["path"] for o in child["outputs"]], "child authored outputs mismatch")
+    replacements = request["replacement_tasks"]
+    after_bindings = request["replacement_spec_bindings"]
+    closed(replacements, {"LIR-1901", "LIR-1905"}, "both comparison/design edits required atomically")
+    closed(after_bindings, {"LIR-1901", "LIR-1905"}, "both replacement specification bindings required")
+    expected_objectives = {
+        "LIR-1901": "Freeze compatible 8D/384D/768D/Leanstral4096D native-producer systems on identical reviewed source groups, complete targets, permitted context and output budgets; keep a bypass-free single-producer bottleneck study separate.",
+        "LIR-1905": "Independently compare frozen complete reviewed outputs, controls and all-enrolled fidelity/coverage/cost across the four admitted native-producer cells; this is not an isolated bottleneck-width ablation.",
+    }
+    for name, original in (("LIR-1901", design), ("LIR-1905", comparison)):
+        need(original.get("status") in {"proposed", "admitted", "ready", "todo", "blocked"}, "claimed/running/terminal specifications cannot be amended")
+        expected = json.loads(json.dumps(original))
+        expected["objective"] = expected_objectives[name]
+        if name == "LIR-1905":
+            need(original.get("depends_on") == ["LIR-1902", "LIR-1903", "LIR-1904"]
+                 and original.get("dependencies") == [by_alias[a]["task_cid"] for a in original["depends_on"]], "comparison predecessor dependencies mismatch")
+            expected["depends_on"].append(alias)
+            expected["dependencies"].append(cid)
+            expected["inputs"]["required_dependency_results"] = expected["depends_on"][:]
+        if "authored_task" in expected:
+            expected["authored_task"]["objective"] = expected["objective"]
+            if name == "LIR-1905":
+                expected["authored_task"]["depends_on"] = expected["depends_on"][:]
+                expected["authored_task"]["inputs"]["required_dependency_results"] = expected["depends_on"][:]
+        need(replacements[name] == expected, "replacement may change only the complete reviewed comparison specification")
+        binding = after_bindings[name]
+        closed(binding, {"spec_revision", "record_sha256"}, "closed replacement binding required")
+        need(text(binding["spec_revision"]) and binding["spec_revision"] != bindings[name]["spec_revision"]
+             and binding["record_sha256"] == commitment(expected), "replacement specification commitment mismatch")
+    delta = request["delta"]
+    delta_fields = {"schema", "contract_version", "base_plan_root", "base_plan_revision", "request_cid", "roots", "items",
+                    "expected_effects", "deferred_item_keys", "claimed_population_digest", "accepted_population_digest",
+                    "scan_receipt_cid", "evidence_bundle_cid", "admission_receipt_cid"}
+    closed(delta, delta_fields, "closed PlanDelta wire contract required")
+    need(delta["schema"] == "ipfs_accelerate_py/agent-supervisor/plan-delta@1"
+         and delta["contract_version"] == 1 and type(delta["contract_version"]) is int
+         and delta["base_plan_root"] == population["plan_root_cid"]
+         and positive(delta["base_plan_revision"])
+         and delta["base_plan_revision"] == population["plans"][0]["revision"]
+         and text(delta["request_cid"]), "PlanDelta predecessor binding invalid")
+    roots = delta["roots"]
+    root_fields = {"repository_id", "repository_root_cid", "dirty_worktree_root", "task_source_id",
+                   "task_source_revision", "policy_root", "intent_ir_root", "legal_ir_root", "security_ir_root",
+                   "program_root", "capability_catalog_root", "provider_catalog_root", "usage_policy_root", "configuration_root"}
+    closed(roots, root_fields | {"schema", "contract_version"}, "closed PlanAuthorityRoots wire contract required")
+    need(roots["schema"] == "ipfs_accelerate_py/agent-supervisor/plan-authority-roots@1"
+         and type(roots["contract_version"]) is int and roots["contract_version"] == 1
+         and all(text(roots[key]) for key in root_fields)
+         and roots["repository_root_cid"] == population["repository_tree_id"], "declared authority roots required")
+    need(delta["expected_effects"] == ["add_task", "amend_unstarted_task"] and delta["deferred_item_keys"] == []
+         and type(delta["items"]) is list and len(delta["items"]) == 3, "one atomic add/two-amend delta required")
+    item_fields = {"schema", "contract_version", "item_key", "operation", "target_cid", "expected_target_lifecycle",
+                   "expected_target_spec_revision", "before_digest", "after_record_cid", "effect_class", "rationale", "provenance",
+                   "preconditions", "expected_effects", "rollback_refs", "affected_goal_cids", "affected_task_cids", "affected_paths",
+                   "dependency_impact", "conflict_impact", "resource_impact"}
+    seen: set[str] = set()
+    amended: set[str] = set()
+    additions = 0
+    for item in delta["items"]:
+        closed(item, item_fields, "closed PlanDeltaItem wire contract required")
+        need(item["schema"] == "ipfs_accelerate_py/agent-supervisor/plan-delta-item@1"
+             and item["contract_version"] == 1 and type(item["contract_version"]) is int
+             and text(item["item_key"]) and item["item_key"] not in seen
+             and item["effect_class"] == "materializable_now" and text(item["rationale"]), "invalid delta item")
+        seen.add(item["item_key"])
+        if item["operation"] == "add_task":
+            additions += 1
+            need(item["target_cid"] == "" and item["expected_target_lifecycle"] == "proposed"
+                 and item["expected_target_spec_revision"] == "" and item["before_digest"] == ""
+                 and item["after_record_cid"] == cid, "ADD_TASK requires the proposed durable child CID")
+        else:
+            names = [a for a in ("LIR-1901", "LIR-1905") if by_alias[a]["task_cid"] == item["target_cid"]]
+            need(item["operation"] == "amend_unstarted_task" and len(names) == 1 and names[0] not in amended,
+                 "only two selected specification amendments permitted")
+            name = names[0]
+            amended.add(name)
+            lifecycle = "unstarted" if by_alias[name]["status"] == "todo" else by_alias[name]["status"]
+            need(item["expected_target_lifecycle"] == lifecycle
+                 and item["expected_target_spec_revision"] == bindings[name]["spec_revision"]
+                 and item["before_digest"] == bindings[name]["record_sha256"]
+                 and item["after_record_cid"] == after_bindings[name]["spec_revision"], "stale amendment specification CAS")
+        expected_target = cid if item["operation"] == "add_task" else item["target_cid"]
+        need(item["affected_goal_cids"] == [goal_cid] and item["affected_task_cids"] == [expected_target]
+             and type(item["provenance"]) is dict, "exact affected identities and provenance required")
+        for field in ("preconditions", "expected_effects", "rollback_refs", "affected_paths",
+                      "dependency_impact", "conflict_impact", "resource_impact"):
+            need(strings(item[field], empty=True), "delta item collection must be bounded unique metadata")
+    for field in ("claimed_population_digest", "accepted_population_digest", "scan_receipt_cid",
+                  "evidence_bundle_cid", "admission_receipt_cid"):
+        need(type(delta[field]) is str and (delta[field] == "" or text(delta[field])), "delta evidence identity invalid")
+    need(additions == 1 and amended == {"LIR-1901", "LIR-1905"}, "partial comparison delta refused")
+    candidate_tasks = [replacements.get(t["task_alias"], t) for t in population["tasks"]] + [child]
+    return {
+        "schema": "legal-ir-representation-cell-amendment-preview/v1", "scope": "caller_supplied_review_metadata_only",
+        "metadata_complete": True, "base_population_sha256": commitment(population),
+        "candidate_plan_root_cid": new_root, "candidate_tasks": candidate_tasks,
+        "unchanged_goals": population["goals"], "unchanged_goal_edges": population["goal_edges"],
+        "plan_delta_wire": delta, "profile": profile, "review": review,
+        "native_contract_decode_required": True, "native_specification_identity_verification_required": True,
+        "native_owner_current_population_and_claim_verification_required": True,
+        "native_plan_revision_store_admission_required": True, "lineage_aware_watchdog_cutover_pending": True,
+        "native_application_authorized": False, "native_identity_allocated": False,
+        "dispatch_authorized": False, "rearm_authorized": False, "workers_started": False,
+        "completion_authority": False, "training_authorized": False, "semantic_review_verified": False,
+        "supervision_masks": {"training": 0, "evaluation_gold": 0},
+    }
