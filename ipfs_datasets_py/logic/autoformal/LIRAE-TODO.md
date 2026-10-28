@@ -2725,7 +2725,7 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 
 ## LIRAE-LIR03-LEAN-PACKET-02 Prepare the graph Lean and release dependency execution packet
 
-- status: todo
+- status: completed
 - completion: manual
 - is schedulable: true
 - priority: P1
