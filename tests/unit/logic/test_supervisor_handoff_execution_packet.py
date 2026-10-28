@@ -593,5 +593,302 @@ def test_handoff_metadata_mode_routes_before_native_argument_parsing():
     assert called == [["prepare", "--inputs", "metadata.json"]]
 
 
+
+# Authored inventory controls extend the disclosed pure-function AST profile.
+# CLI controls below substitute only the extracted pure owner at its import
+# boundary; separate actual canonical-namespace execution remains mandatory.
+_CAPABILITY_NAMES = {"_handoff_reconciliation_bytes_v2", "prepare_current_capability_and_purpose_map_v1",
+                     "verify_current_capability_and_purpose_map_v1"}
+_CAPABILITY_NODES = [node for node in ast.parse(OWNER_TEXT).body
+    if isinstance(node, ast.FunctionDef) and node.name in _CAPABILITY_NAMES]
+assert len(_CAPABILITY_NODES) == 3
+_CAPABILITY_NAMESPACE = {"json": json, "hashlib": hashlib, "Any": Any, "Mapping": Mapping}
+exec(compile(ast.Module(body=_CAPABILITY_NODES, type_ignores=[]), str(OWNER), "exec"), _CAPABILITY_NAMESPACE)
+_capability_prepare = _CAPABILITY_NAMESPACE["prepare_current_capability_and_purpose_map_v1"]
+_capability_verify = _CAPABILITY_NAMESPACE["verify_current_capability_and_purpose_map_v1"]
+
+
+class CapabilityPurposeInventoryTests(unittest.TestCase):
+    """Supplied metadata fixtures; no actual native or scientific capabilities."""
+
+    def fixture(self):
+        roots = {"datasets_metadata": "/fixture/datasets", "native_control": "/fixture/accelerate", "runtime_resources": "/fixture/runtime"}
+        files = {
+            "source_lease": "autoencoder_source_lease.py", "resource_scheduler": "resource_scheduler.py",
+            "existing_scheduler": "existing_resource_scheduler.py", "daemon_owner": "autoencoder_daemon_resources.py",
+            "parented_owner": "parented_phase_resources.py", "validation_owner": "validation_run_resources.py",
+            "runtime_observer": "autoencoder_owned_runtime.py", "pipeline_scheduler": "pipeline_stage_scheduler.py",
+            "training_preparer": "autoencoder_campaign_owned_training.py", "training_executor": "autoencoder_campaign_owned_execution.py",
+            "inference_route": "autoencoder_inference.py", "inference4096": "legal_span_4096_device_inference.py"}
+        sources = {key: {"path": roots["runtime_resources"] + "/ipfs_datasets_py/optimizers/logic_theorem_optimizer/" + leaf,
+                         "bytes": 123, "sha256": "a" * 64} for key, leaf in files.items()}
+        for key, root, relative in (
+            ("validation_cli", "runtime_resources", "scripts/ops/legal_ir/run_owned_validation.py"),
+            ("lean_backend", "runtime_resources", "ipfs_datasets_py/logic/backends/kernel/lean.py"),
+            ("native_task_source", "native_control", "ipfs_accelerate_py/agent_supervisor/task_sources/database_task_source.py"),
+            ("native_intent_owner", "native_control", "ipfs_accelerate_py/agent_supervisor/task_sources/intent_repository.py"),
+            ("pure_packet_preparer", "datasets_metadata", "ipfs_datasets_py/logic/autoformal/supervisor_loop.py"),
+            ("canonical_metadata_cli", "datasets_metadata", "scripts/ops/legal_ir/run_autoformal_supervisor.py")):
+            sources[key] = {"path": roots[root] + "/" + relative, "bytes": 123, "sha256": "a" * 64}
+        criteria = ["Unavailable capabilities remain explicit blockers.",
+            "Validation replay cannot authorize training; semantic_review is a proposed reviewer stage until its capability adapter is bound."]
+        aliases = ["LIR-9001", "LIR-9002"] + ["LIR-X" + str(i) for i in range(62)]
+        tasks = []
+        for index, alias in enumerate(aliases):
+            dependencies = [] if index == 0 else [{"dependency_task_cid": "task:" + str(index - 1), "kind": "depends_on"}]
+            if 2 <= index <= 53:
+                dependencies.append({"dependency_task_cid": "task:" + str(index - 2), "kind": "depends_on"})
+            tasks.append({"task_alias": alias, "task_cid": "task:" + str(index), "goal_cid": "goal:1", "plan_cid": "plan:test",
+                "revision": 2, "status": "blocked", "spec_cid": "spec:" + str(index), "dependencies": dependencies,
+                "body": {"completion": "manual", "authored_task": {"task_id": alias}}, "outputs": [], "acceptance": [], "validations": []})
+        baseline = {"schema": "ipfs_accelerate_py/agent-supervisor/intent-plan-projection@1", "projection_cid": "projection:old",
+            "tasks": tasks, "goals": [{"goal_cid": "goal:" + str(i)} for i in range(34)],
+            "goal_edges": [{"parent_goal_cid": "goal:0", "child_goal_cid": "goal:" + str(i)} for i in range(1, 34)],
+            "plans": [{"plan_cid": "plan:test"}], "objectives": []}
+        old_failure = {"task_cid": "task:0", "attempt_number": 2, "outcome": "UNKNOWN"}
+        values = {
+            "completion_result": {"schema": "legal-ir-native-independent-factual-completion-result/v2", "task_cid": "task:0",
+                "completed_revision": 15, "evidence_digest": "evidence:accepted", "all_other63_tasks_unchanged": True, "native_DAG_unchanged": True},
+            "independent_verification": {"schema": "legal-ir-current-handoff-verification/v2", "valid": True,
+                "task_scope": {"task_cid": "task:0", "revision": 14}, "checked_scope": "factual_metadata_only", "old_provider_outcome_resolved": False},
+            "independent_owner_closeout": {"schema": "f18-original-owner-control-closeout/v1", "returncode": 0,
+                "request_unchanged": True, "source_pins_unchanged": True,
+                "source_READ_retained_through_owner_exit_and_closing_source_check": True,
+                "custody": {"source_custody_closed": True, "original_storage_status": "released"}},
+            "completion_terminal": {"schema": "legal-ir-original-native-control-terminal/v1", "completed": True, "child_returncode": 0,
+                "source_READ_closed": True, "original_native_compute_closed": True, "storage_status": "released", "cleanup_errors": []}}
+        evidence = {}
+        for key, value in values.items():
+            raw = (json.dumps(value, sort_keys=True) + "\n").encode()
+            evidence[key] = {"descriptor": {"path": "/retained/" + key + ".json", "bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest()},
+                             "json_text": raw.decode()}
+        receipt = {"schema": "legal-ir-native-independent-factual-completion/v2", "task_cid": "task:0", "reviewed_revision": 14,
+            "operation": "independent_factual_metadata_completion_v2", "evidence_digest": "evidence:accepted",
+            "prior_provider_outcome": "UNKNOWN", "old_provider_outcome_resolved": False, "provider_success_claimed": False,
+            "old_failure_receipt": old_failure, "independent_verification": evidence["independent_verification"]["descriptor"],
+            "independent_closed_owner_receipt": evidence["independent_owner_closeout"]["descriptor"]}
+        tasks[0].update(revision=15, status="completed")
+        tasks[0]["body"].update(completion_receipt=receipt, retained_execution_outcomes=[{"task_cid": "task:0", "task_revision": 13,
+            "completion_receipt": old_failure, "sha256": hashlib.sha256(_reconciliation_bytes(old_failure)[:-1]).hexdigest()}])
+        tasks[1]["acceptance"] = [{"criterion": criterion, "ordinal": i, "evidence_policy": {"criterion": criterion}}
+                                  for i, criterion in enumerate(criteria)]
+        current = copy.deepcopy(baseline);selected = current["tasks"][1];selected.update(revision=3, spec_cid="spec:amended")
+        outputs = {"report": roots["runtime_resources"] + "/workspace/test-logs/evidence/outputs/LIR-9002/capability-and-purpose-map-current-v1.json"}
+        outputs.update(freeze=outputs["report"][:-5] + ".freeze.json", verification=outputs["report"][:-5] + ".verification.json")
+        relative = {key: value[len(roots["runtime_resources"]) + 1:] for key, value in outputs.items()}
+        verifier_argv = ["/fixture/python", "-B", sources["canonical_metadata_cli"]["path"], "capability-purpose", "verify",
+            "--inputs", "/fixture/inputs.json", "--report", outputs["report"], "--freeze", outputs["freeze"],
+            "--verifier-principal", "independent-reviewer", "--output", "/fixture/verification.json"]
+        selected["body"]["control_capability_purpose_inventory_v1"] = {"schema": "legal-ir-native-capability-purpose-contract/v1",
+            "execution_kind": "control_metadata_only", "provider_execution_allowed": False, "new_provider_attempt_allowed": False,
+            "replacement_evidence_kind": "legal_ir_capability_purpose_inventory_independent_v1", "history_copied_from_other_tasks": False,
+            "output_paths": relative, "publication_root": roots["runtime_resources"], "verification_argv": verifier_argv,
+            "prior_outputs": [], "prior_validations": [], "prior_owned_paths": None}
+        selected["body"].update(validation=[verifier_argv], validation_commands=[{"argv":verifier_argv}])
+        selected["outputs"] = [{"path": value} for value in relative.values()]
+        for row in selected["acceptance"]:
+            row["evidence_policy"].update(evidence_kind="legal_ir_capability_purpose_inventory_independent_v1",
+                independent_post_freeze_validation_required=True, scope="factual_capability_inventory_only")
+        specs = [
+            ("source_custody", ["source_lease"], ["source_metadata"]),
+            ("control_metadata_analysis", ["existing_scheduler", "daemon_owner", "parented_owner", "native_task_source", "native_intent_owner"], ["source_metadata", "prior_evidence"]),
+            ("metadata_validation", ["validation_owner", "validation_cli"], ["source_metadata", "prior_evidence"]),
+            ("training", ["training_preparer", "training_executor", "pipeline_scheduler"], ["source_text", "permitted_context", "reviewed_training_target"]),
+            ("inference_8D_384D_768D_4096D", ["inference_route", "inference4096"], ["source_text", "permitted_context", "representation", "checkpoint"]),
+            ("lean_kernel_and_library_build", ["lean_backend", "resource_scheduler"], ["candidate_formalization", "source_metadata"]),
+            ("semantic_review", [], ["source_text", "permitted_context", "candidate_formalization"]),
+            ("runtime_filesystem_observation", ["runtime_observer"], ["source_metadata"]),
+            ("task_manual_acceptance", ["native_task_source", "native_intent_owner"], ["source_metadata", "prior_evidence"])]
+        rows = [{"purpose": purpose, "owners": owners, "owner_sources": [sources[key] for key in owners],
+            "disposition": "unavailable" if purpose == "semantic_review" else "implementation_unbound",
+            "blockers": ["No new operation-specific native admission or authorized reviewer adapter."], "evidence_ids": [],
+            "permitted_input_roles": roles, "new_execution_authorized": False} for purpose, owners, roles in specs]
+        for row in rows:
+            if row["purpose"] in {"source_custody", "control_metadata_analysis", "metadata_validation", "task_manual_acceptance"}:
+                row.update(disposition="retained_scope_only", evidence_ids=["completion_terminal", "independent_owner_closeout"])
+        inventory = {"schema": "legal-ir-capability-purpose-inputs/v1", "repository_roots": roots, "source_descriptors": sources,
+            "capabilities": rows, "dependency_evidence": evidence, "runtime_outputs": outputs,
+            "input_role_policy": {"target_as_inference_input": False, "review_as_inference_input": False,
+                "target_derived_context_as_inference_input": False, "evaluation_reference_requires_output_freeze": True,
+                "training_requires_distinct_native_owner": True, "semantic_review_requires_authorized_adapter": True},
+            "input_roots": {"source_metadata": sorted(roots.values()), "model_source": [], "context": [], "targets": [], "evaluation_reference": []}}
+        return {"original_snapshot": baseline, "current_snapshot": current, "inventory": inventory,
+                "producer_principal": "inventory-author", "expected_task_revision": 3}
+
+    def freeze(self, request):
+        report = _capability_prepare(**request);raw = _reconciliation_bytes(report)
+        return report, {"schema": "legal-ir-capability-purpose-producer-freeze/v1", "report_sha256": hashlib.sha256(raw).hexdigest(),
+            "report_bytes": len(raw), "producer_principal": report["producer_principal"], "frozen_before_verification": True}
+
+    def test_unavailable_capabilities_are_valid_inventory_and_never_execution_authority(self):
+        request = self.fixture();before = copy.deepcopy(request);report, freeze = self.freeze(request)
+        self.assertEqual(report["counts"], {"tasks":64,"goals":34,"goal_edges":33,"dependencies":115,"purposes":9})
+        self.assertFalse(report["all_capabilities_required_runnable"])
+        self.assertTrue(report["unavailable_capabilities_remain_explicit_blockers"])
+        self.assertEqual(request, before)
+        checked = _capability_verify(report, producer_freeze=freeze, verifier_principal="independent-reviewer", **request)
+        self.assertTrue(checked["valid"])
+        for key in ("native_admission", "completion_authority", "training_authorized", "semantic_review_verified", "descriptor_files_authenticated"):
+            self.assertIs(report[key], False);self.assertIs(checked[key], False)
+        self.assertEqual(checked["supervision_masks"], {"training":0,"evaluation_gold":0})
+
+    def test_stale_dependency_revision_status_receipt_and_evidence_are_refused(self):
+        for mutation in ("revision", "status", "receipt", "verification", "terminal", "evidence_hash", "history"):
+            with self.subTest(mutation=mutation):
+                request=self.fixture();row=request["current_snapshot"]["tasks"][0]
+                if mutation=="revision":row["revision"]=14
+                elif mutation=="status":row["status"]="blocked"
+                elif mutation=="receipt":row["body"]["completion_receipt"]["old_provider_outcome_resolved"]=True
+                elif mutation=="history":row["body"]["retained_execution_outcomes"]=[]
+                else:
+                    evidence=request["inventory"]["dependency_evidence"]
+                    if mutation=="evidence_hash":evidence["completion_result"]["descriptor"]["sha256"]="f"*64
+                    else:
+                        key="independent_verification" if mutation=="verification" else "completion_terminal"
+                        value=json.loads(evidence[key]["json_text"]);value["valid" if mutation=="verification" else "source_READ_closed"]=False
+                        raw=(json.dumps(value,sort_keys=True)+"\n").encode();evidence[key]["json_text"]=raw.decode()
+                        evidence[key]["descriptor"].update(bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest())
+                if mutation in {"revision", "status", "receipt", "history"}:
+                    # Preserve the between-snapshot join to exercise the
+                    # dependency acceptance checks themselves.
+                    request["original_snapshot"]["tasks"][0]=copy.deepcopy(row)
+                with self.assertRaises(ValueError):_capability_prepare(**request)
+
+    def test_native_generated_ids_do_not_require_guessed_pre_CAS_cids(self):
+        request=self.fixture();expected=_capability_prepare(**request)
+        request["current_snapshot"]["projection_cid"]="actual-native-projection"
+        request["current_snapshot"]["tasks"][1]["spec_cid"]="actual-native-specification"
+        self.assertEqual(_capability_prepare(**request),expected)
+        self.assertEqual(expected["current_snapshot_commitment_omits_native_generated_ids"],
+                         ["projection_cid","tasks[LIR-9002].spec_cid"])
+
+    def test_exact_native_identity_population_criteria_and_other_rows_are_preserved(self):
+        for mutation in ("task", "revision", "dependency", "other_row", "count", "goal", "criterion", "authored", "history_copy"):
+            with self.subTest(mutation=mutation):
+                request=self.fixture();current=request["current_snapshot"];row=current["tasks"][1]
+                if mutation=="task":row["task_cid"]="other-task"
+                elif mutation=="revision":row["revision"]=4
+                elif mutation=="dependency":row["dependencies"][0]["dependency_task_cid"]="task:2"
+                elif mutation=="other_row":current["tasks"][3]["status"]="completed"
+                elif mutation=="count":current["tasks"].pop()
+                elif mutation=="goal":current["goals"].pop()
+                elif mutation=="criterion":row["acceptance"][0]["criterion"]="Every capability is runnable."
+                elif mutation=="authored":row["body"]["authored_task"]["task_id"]="LIR-9001"
+                else:row["body"]["attempt_history"]={"attempts":2,"outcome":"UNKNOWN"}
+                with self.assertRaises(ValueError):_capability_prepare(**request)
+
+    def test_source_owners_roles_and_purposes_cannot_be_mismatched(self):
+        for mutation in ("source_hash", "source_path", "owner", "role", "duplicate_purpose"):
+            with self.subTest(mutation=mutation):
+                request=self.fixture();data=request["inventory"];row=data["capabilities"][2]
+                if mutation=="source_hash":row["owner_sources"][0]=dict(row["owner_sources"][0],sha256="b"*64)
+                elif mutation=="source_path":data["source_descriptors"]["validation_owner"]["path"]="/fixture/runtime/other.py"
+                elif mutation=="owner":row["owners"]=["training_executor"]
+                elif mutation=="role":row["permitted_input_roles"].append("target")
+                else:data["capabilities"][-1]=copy.deepcopy(data["capabilities"][0])
+                with self.assertRaises(ValueError):_capability_prepare(**request)
+
+    def test_validation_receipts_cannot_qualify_training_inference_lean_or_runtime(self):
+        for purpose in ("training", "inference_8D_384D_768D_4096D", "lean_kernel_and_library_build", "runtime_filesystem_observation"):
+            with self.subTest(purpose=purpose):
+                request=self.fixture();row=next(r for r in request["inventory"]["capabilities"] if r["purpose"]==purpose)
+                row.update(disposition="retained_scope_only",evidence_ids=["independent_owner_closeout"])
+                with self.assertRaises(ValueError):_capability_prepare(**request)
+        for field in ("qualified", "new_execution_authorized"):
+            request=self.fixture();request["inventory"]["capabilities"][0][field]=True
+            with self.assertRaises(ValueError):_capability_prepare(**request)
+
+    def test_unbound_semantic_review_requires_an_explicit_unavailable_disposition(self):
+        for mutation in ("available", "adapter", "empty_blocker"):
+            with self.subTest(mutation=mutation):
+                request=self.fixture();row=next(r for r in request["inventory"]["capabilities"] if r["purpose"]=="semantic_review")
+                if mutation=="available":row.update(disposition="retained_scope_only",evidence_ids=["completion_terminal"])
+                elif mutation=="adapter":row["owners"]=["validation_owner"]
+                else:row["blockers"]=[]
+                with self.assertRaises(ValueError):_capability_prepare(**request)
+
+    def test_target_review_and_reference_roles_do_not_become_inference_permissions(self):
+        for field in ("target_as_inference_input", "review_as_inference_input", "target_derived_context_as_inference_input"):
+            request=self.fixture();request["inventory"]["input_role_policy"][field]=True
+            with self.assertRaises(ValueError):_capability_prepare(**request)
+        request=self.fixture();request["inventory"]["input_roots"]["targets"]=["/fixture/answers"]
+        with self.assertRaises(ValueError):_capability_prepare(**request)
+
+    def test_report_freeze_mutation_and_same_principal_cannot_borrow_acceptance(self):
+        request=self.fixture();report,freeze=self.freeze(request)
+        for mutation in ("report", "freeze", "principal"):
+            with self.subTest(mutation=mutation):
+                candidate=copy.deepcopy(report);seal=copy.deepcopy(freeze);principal="independent-reviewer"
+                if mutation=="report":candidate["capabilities"][0]["new_execution_authorized"]=True
+                elif mutation=="freeze":seal["report_sha256"]="f"*64
+                else:principal=request["producer_principal"]
+                with self.assertRaises(ValueError):_capability_verify(candidate,producer_freeze=seal,verifier_principal=principal,**request)
+
+    def test_traversal_duplicate_dependency_keys_and_nonfinite_inputs_are_refused(self):
+        for mutation in ("source_traversal", "root_traversal", "output_traversal", "duplicate_key", "nonfinite"):
+            with self.subTest(mutation=mutation):
+                request=self.fixture();data=request["inventory"]
+                if mutation=="source_traversal":data["source_descriptors"]["source_lease"]["path"]="/fixture/runtime/../outside.py"
+                elif mutation=="root_traversal":data["repository_roots"]["datasets_metadata"]="/fixture/../outside"
+                elif mutation=="output_traversal":data["runtime_outputs"]["report"]="/fixture/runtime/workspace/test-logs/../outside.json"
+                elif mutation=="nonfinite":data["capabilities"][0]["blockers"]=[float("nan")]
+                else:
+                    item=data["dependency_evidence"]["completion_result"];raw=b'{"schema":"one","schema":"two"}'
+                    item.update(json_text=raw.decode());item["descriptor"].update(bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest())
+                with self.assertRaises(ValueError):_capability_prepare(**request)
+
+
+def _capability_cli_fixture_namespace():
+    import argparse
+    import builtins
+    from types import SimpleNamespace
+    selected = {"_read_handoff_metadata_v2", "_write_handoff_metadata_v2", "capability_purpose_main_v1", "main"}
+    nodes = [node for node in ast.parse(_CLI_TEXT).body if isinstance(node, ast.FunctionDef) and node.name in selected]
+    assert len(nodes) == 4
+    real_import = builtins.__import__
+    owner = SimpleNamespace(**{key: _CAPABILITY_NAMESPACE[key] for key in _CAPABILITY_NAMES})
+    def fixture_import(name, globals=None, locals=None, fromlist=(), level=0):
+        if name == "ipfs_datasets_py.logic.autoformal.supervisor_loop":
+            return owner
+        return real_import(name, globals, locals, fromlist, level)
+    namespace = {"__builtins__": dict(vars(builtins), __import__=fixture_import), "argparse":argparse,
+        "os":os,"sys":SimpleNamespace(path=[],argv=[]),"json":json,"Path":Path,"hashlib":hashlib,"ROOT":OWNER.parents[3]}
+    exec(compile(ast.Module(body=nodes,type_ignores=[]),str(_CLI_OWNER),"exec"),namespace)
+    return namespace
+
+
+def test_capability_metadata_routes_before_native_parser():
+    namespace=_capability_cli_fixture_namespace();calls=[]
+    namespace["capability_purpose_main_v1"]=lambda argv:calls.append(argv) or 23
+    namespace["parser"]=lambda:(_ for _ in ()).throw(AssertionError("native parser reached"))
+    assert namespace["main"](["capability-purpose","prepare","--inputs","metadata.json"])==23
+    assert calls==[["prepare","--inputs","metadata.json"]]
+
+
+def test_capability_metadata_cli_refuses_duplicate_json_and_traversal(tmp_path):
+    namespace=_capability_cli_fixture_namespace();run=namespace["capability_purpose_main_v1"]
+    source=tmp_path/"inputs.json";output=tmp_path/"report.json";freeze=tmp_path/"freeze.json"
+    source.write_bytes(b'{"inventory":{},"inventory":{}}')
+    call=["prepare","--inputs",str(source),"--output",str(output),"--freeze-out",str(freeze)]
+    assert run(call)==2 and not output.exists() and not freeze.exists()
+    call[2]=str(tmp_path/".."/"outside.json")
+    assert run(call)==2 and not output.exists()
+
+
+def test_capability_metadata_cli_roundtrip_freeze_and_output_preservation(tmp_path):
+    namespace=_capability_cli_fixture_namespace();run=namespace["capability_purpose_main_v1"]
+    request=CapabilityPurposeInventoryTests().fixture();source=tmp_path/"inputs.json";source.write_bytes(_reconciliation_bytes(request))
+    report=tmp_path/"report.json";freeze=tmp_path/"freeze.json";verification=tmp_path/"verification.json"
+    prepare_call=["prepare","--inputs",str(source),"--output",str(report),"--freeze-out",str(freeze)]
+    assert run(prepare_call)==0
+    before=report.read_bytes();assert run(prepare_call)==2 and report.read_bytes()==before
+    verify_call=["verify","--inputs",str(source),"--report",str(report),"--freeze",str(freeze),
+                 "--verifier-principal","independent-reviewer","--output",str(verification)]
+    assert run(verify_call)==0 and json.loads(verification.read_bytes())["valid"] is True
+    assert run(verify_call)==2
+    verification.unlink();report.write_bytes(before+b" ")
+    assert run(verify_call)==2 and not verification.exists()
+
+
 if __name__ == "__main__":
     unittest.main()
