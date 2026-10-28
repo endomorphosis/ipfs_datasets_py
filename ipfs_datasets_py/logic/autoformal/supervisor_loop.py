@@ -564,6 +564,323 @@ def verify_current_handoff_reconciliation_v2(
             "supervision_masks": {"training": 0, "evaluation_gold": 0}}
 
 
+
+def prepare_current_capability_and_purpose_map_v1(
+    *, original_snapshot: Mapping[str, Any], current_snapshot: Mapping[str, Any],
+    inventory: Mapping[str, Any], producer_principal: str, expected_task_revision: int = 3,
+) -> dict[str, Any]:
+    """Reconstruct one detached LIR-9002 factual inventory from supplied JSON.
+
+    Native/source owners authenticate snapshots, descriptor bytes and actual
+    roles separately. An unavailable capability is a valid inventory result,
+    never permission to run that capability or to change another task.
+    """
+    def need(value: bool, reason: str) -> None:
+        if not value:
+            raise ValueError(reason)
+
+    def text(value: Any) -> bool:
+        return type(value) is str and 0 < len(value) <= 4096 and not any(ord(c) < 32 for c in value)
+
+    def path(value: Any) -> bool:
+        return (text(value) and value.startswith("/") and value != "/"
+                and all(part not in {"", ".", ".."} for part in value.split("/")[1:])
+                and not any(c in value for c in "*?[]\\"))
+
+    def sha(value: Any) -> bool:
+        return type(value) is str and len(value) == 64 and all(c in "0123456789abcdef" for c in value)
+
+    def descriptor(value: Any) -> bool:
+        return (type(value) is dict and set(value) == {"path", "bytes", "sha256"}
+                and path(value["path"]) and type(value["bytes"]) is int
+                and 0 < value["bytes"] <= 4 * 1024**2 and sha(value["sha256"]))
+
+    def strings(value: Any, *, empty: bool = False) -> bool:
+        return (type(value) is list and len(value) <= 64 and (empty or bool(value))
+                and all(text(item) for item in value) and len(value) == len(set(value)))
+
+    def decode_unique(raw: bytes) -> Any:
+        def pairs(items):
+            result = {}
+            for key, value in items:
+                need(key not in result, "duplicate dependency evidence key")
+                result[key] = value
+            return result
+        return json.loads(raw, object_pairs_hook=pairs,
+                          parse_constant=lambda _: (_ for _ in ()).throw(ValueError("nonfinite dependency evidence")))
+
+    need(type(expected_task_revision) is int and expected_task_revision == 3, "LIR-9002 inventory revision must be3")
+    need(text(producer_principal), "bounded inventory producer principal required")
+    supplied = json.loads(_handoff_reconciliation_bytes_v2({
+        "original_snapshot": original_snapshot, "current_snapshot": current_snapshot, "inventory": inventory}))
+    original, current, data = (supplied[key] for key in ("original_snapshot", "current_snapshot", "inventory"))
+    need(all(type(value) is dict for value in (original, current, data)), "inventory metadata objects required")
+    need(original.get("schema") == current.get("schema") == "ipfs_accelerate_py/agent-supervisor/intent-plan-projection@1",
+         "original native projection schema required")
+
+    def population(value):
+        tasks, goals, edges, plans = (value.get(key) for key in ("tasks", "goals", "goal_edges", "plans"))
+        need(type(tasks) is list and len(tasks) == 64 and type(goals) is list and len(goals) == 34
+             and type(edges) is list and len(edges) == 33 and type(plans) is list and len(plans) == 1,
+             "exact64/34/33/1 native population required")
+        need(all(type(row) is dict and text(row.get("task_alias")) and text(row.get("task_cid")) for row in tasks),
+             "bounded native task identities required")
+        by_alias = {row["task_alias"]: row for row in tasks}
+        by_cid = {row["task_cid"]: row for row in tasks}
+        need(len(by_alias) == len(by_cid) == 64 and {"LIR-9001", "LIR-9002"} <= set(by_alias),
+             "unique existing handoff identities required")
+        goal_ids = {row.get("goal_cid") for row in goals if type(row) is dict}
+        need(len(goal_ids) == 34 and None not in goal_ids, "unique native goal identities required")
+        dependency_count = 0
+        for row in tasks:
+            deps = row.get("dependencies")
+            need(type(deps) is list and all(type(d) is dict and set(d) == {"dependency_task_cid", "kind"}
+                 and d["kind"] == "depends_on" and d["dependency_task_cid"] in by_cid
+                 and d["dependency_task_cid"] != row["task_cid"] for d in deps), "native dependency binding required")
+            need(len({d["dependency_task_cid"] for d in deps}) == len(deps) and row.get("goal_cid") in goal_ids,
+                 "unique native dependencies and owning goals required")
+            dependency_count += len(deps)
+        need(dependency_count == 115, "exact115 original dependencies required")
+        return by_alias
+
+    before, after = population(original), population(current)
+    need(set(original) == set(current) and all(original[key] == current[key]
+         for key in original if key not in {"tasks", "projection_cid"}), "native programme metadata changed")
+    need(set(before) == set(after) and all(before[key] == after[key] for key in before if key != "LIR-9002"),
+         "other63 native task rows must remain unchanged")
+    old, task, dependency = before["LIR-9002"], after["LIR-9002"], after["LIR-9001"]
+    need(old.get("revision") == 2 and old.get("status") == "blocked"
+         and task.get("revision") == expected_task_revision and task.get("status") == "blocked",
+         "exact blocked9002 revision2→3 contract required")
+    need(set(old) == set(task) and all(old[key] == task.get(key) for key in old
+         if key not in {"revision", "spec_cid", "body", "outputs", "acceptance"}), "9002 native identity or dependencies changed")
+    need(task["dependencies"] == [{"dependency_task_cid": dependency["task_cid"], "kind": "depends_on"}],
+         "9002 must depend only on existing9001")
+    need(dependency.get("revision") == 15 and dependency.get("status") == "completed", "completed9001 revision15 required")
+    body, old_body = task.get("body"), old.get("body")
+    need(type(body) is dict and type(old_body) is dict and body.get("authored_task") == old_body.get("authored_task")
+         and body.get("completion") == "manual" and "completion_receipt" not in body,
+         "original manual9002 authoring and absent prior completion receipt required")
+    changed_body = {"control_capability_purpose_inventory_v1", "owned_paths", "validation", "validation_commands"}
+    need({key: value for key, value in body.items() if key not in changed_body}
+         == {key: value for key, value in old_body.items() if key not in changed_body}, "9002 history or unrelated metadata changed")
+    criteria = ["Unavailable capabilities remain explicit blockers.",
+        "Validation replay cannot authorize training; semantic_review is a proposed reviewer stage until its capability adapter is bound."]
+    need([row.get("criterion") for row in old.get("acceptance", [])] == criteria
+         and [row.get("criterion") for row in task.get("acceptance", [])] == criteria, "two original inventory criteria required")
+    kind = "legal_ir_capability_purpose_inventory_independent_v1"
+    for ordinal, row in enumerate(task["acceptance"]):
+        policy = row.get("evidence_policy", {})
+        need(row.get("ordinal") == old["acceptance"][ordinal].get("ordinal") == ordinal
+             and policy.get("evidence_kind") == kind and policy.get("independent_post_freeze_validation_required") is True
+             and policy.get("scope") == "factual_capability_inventory_only", "independent inventory evidence policy required")
+    contract = body.get("control_capability_purpose_inventory_v1", {})
+    need(contract.get("schema") == "legal-ir-native-capability-purpose-contract/v1"
+         and contract.get("execution_kind") == "control_metadata_only"
+         and contract.get("provider_execution_allowed") is False and contract.get("new_provider_attempt_allowed") is False
+         and contract.get("replacement_evidence_kind") == kind
+         and contract.get("history_copied_from_other_tasks") is False
+         and contract.get("prior_outputs") == old.get("outputs")
+         and contract.get("prior_validations") == old.get("validations")
+         and contract.get("prior_owned_paths") == old_body.get("owned_paths"),
+         "model-free manual inventory contract required")
+    need(set(data) == {"schema", "repository_roots", "source_descriptors", "capabilities", "input_role_policy",
+                       "dependency_evidence", "runtime_outputs", "input_roots"}
+         and data["schema"] == "legal-ir-capability-purpose-inputs/v1", "closed capability inventory input schema required")
+    roots = data["repository_roots"]
+    need(type(roots) is dict and set(roots) == {"datasets_metadata", "native_control", "runtime_resources"}
+         and all(path(value) for value in roots.values()) and len(set(roots.values())) == 3,
+         "three exact current repository roots required")
+    relative_sources = {
+        "source_lease": ("runtime_resources", "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_source_lease.py"),
+        "resource_scheduler": ("runtime_resources", "ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py"),
+        "existing_scheduler": ("runtime_resources", "ipfs_datasets_py/optimizers/logic_theorem_optimizer/existing_resource_scheduler.py"),
+        "daemon_owner": ("runtime_resources", "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py"),
+        "parented_owner": ("runtime_resources", "ipfs_datasets_py/optimizers/logic_theorem_optimizer/parented_phase_resources.py"),
+        "validation_owner": ("runtime_resources", "ipfs_datasets_py/optimizers/logic_theorem_optimizer/validation_run_resources.py"),
+        "validation_cli": ("runtime_resources", "scripts/ops/legal_ir/run_owned_validation.py"),
+        "runtime_observer": ("runtime_resources", "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_owned_runtime.py"),
+        "pipeline_scheduler": ("runtime_resources", "ipfs_datasets_py/optimizers/logic_theorem_optimizer/pipeline_stage_scheduler.py"),
+        "training_preparer": ("runtime_resources", "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_campaign_owned_training.py"),
+        "training_executor": ("runtime_resources", "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_campaign_owned_execution.py"),
+        "inference_route": ("runtime_resources", "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_inference.py"),
+        "inference4096": ("runtime_resources", "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_4096_device_inference.py"),
+        "lean_backend": ("runtime_resources", "ipfs_datasets_py/logic/backends/kernel/lean.py"),
+        "native_task_source": ("native_control", "ipfs_accelerate_py/agent_supervisor/task_sources/database_task_source.py"),
+        "native_intent_owner": ("native_control", "ipfs_accelerate_py/agent_supervisor/task_sources/intent_repository.py"),
+        "pure_packet_preparer": ("datasets_metadata", "ipfs_datasets_py/logic/autoformal/supervisor_loop.py"),
+        "canonical_metadata_cli": ("datasets_metadata", "scripts/ops/legal_ir/run_autoformal_supervisor.py"),
+    }
+    sources = data["source_descriptors"]
+    need(type(sources) is dict and set(sources) == set(relative_sources), "exact selected purpose owner sources required")
+    for key, (root, relative) in relative_sources.items():
+        need(descriptor(sources[key]) and sources[key]["path"] == roots[root] + "/" + relative,
+             "purpose owner source path or descriptor mismatch: " + key)
+    outputs = data["runtime_outputs"]
+    need(type(outputs) is dict and set(outputs) == {"report", "freeze", "verification"}
+         and all(path(value) and value.startswith(roots["runtime_resources"] + "/workspace/test-logs/")
+                 for value in outputs.values()), "bounded versioned inventory output paths required")
+    suffix = "/outputs/LIR-9002/capability-and-purpose-map-current-v1"
+    need(outputs["report"].endswith(suffix + ".json")
+         and outputs["freeze"] == outputs["report"][:-5] + ".freeze.json"
+         and outputs["verification"] == outputs["report"][:-5] + ".verification.json", "exact9002 versioned output companions required")
+    need(contract.get("output_paths") == {key: value[len(roots["runtime_resources"]) + 1:] for key, value in outputs.items()}
+         and contract.get("publication_root") == roots["runtime_resources"]
+         and [row.get("path") for row in task.get("outputs", [])]
+             == [outputs[key][len(roots["runtime_resources"]) + 1:] for key in ("report", "freeze", "verification")],
+         "native9002 outputs do not match inventory")
+    verifier_argv = contract.get("verification_argv")
+    need(type(verifier_argv) is list and len(verifier_argv) == 15 and all(text(value) for value in verifier_argv)
+         and path(verifier_argv[0]) and verifier_argv[1:3] == ["-B", sources["canonical_metadata_cli"]["path"]]
+         and verifier_argv[3:6] == ["capability-purpose", "verify", "--inputs"]
+         and path(verifier_argv[6]) and verifier_argv[7:12] == ["--report", outputs["report"], "--freeze", outputs["freeze"], "--verifier-principal"]
+         and verifier_argv[12] != producer_principal and verifier_argv[13] == "--output" and path(verifier_argv[14])
+         and body.get("validation") == [verifier_argv] and body.get("validation_commands") == [{"argv": verifier_argv}],
+         "exact canonical independent inventory validation argv required")
+    role_policy = {"target_as_inference_input": False, "review_as_inference_input": False,
+        "target_derived_context_as_inference_input": False, "evaluation_reference_requires_output_freeze": True,
+        "training_requires_distinct_native_owner": True, "semantic_review_requires_authorized_adapter": True}
+    need(data["input_role_policy"] == role_policy, "source/context/target purpose separation required")
+    input_roots = data["input_roots"]
+    need(type(input_roots) is dict and set(input_roots) == {"source_metadata", "model_source", "context", "targets", "evaluation_reference"}
+         and input_roots["source_metadata"] == sorted(set(roots.values()))
+         and all(input_roots[key] == [] for key in input_roots if key != "source_metadata"),
+         "this inventory binds metadata roots only; scientific input roots remain unbound")
+    evidence = data["dependency_evidence"]
+    need(type(evidence) is dict and set(evidence) == {"completion_result", "independent_verification", "independent_owner_closeout", "completion_terminal"},
+         "exact9001 acceptance evidence set required")
+    values = {}
+    evidence_descriptors = {}
+    for key, item in evidence.items():
+        need(type(item) is dict and set(item) == {"descriptor", "json_text"} and descriptor(item["descriptor"])
+             and type(item["json_text"]) is str, "byte-bound dependency evidence required")
+        raw = item["json_text"].encode("utf-8")
+        need(len(raw) == item["descriptor"]["bytes"] and hashlib.sha256(raw).hexdigest() == item["descriptor"]["sha256"],
+             "dependency evidence descriptor/content mismatch")
+        values[key] = decode_unique(raw);evidence_descriptors[key] = item["descriptor"]
+        need(type(values[key]) is dict, "dependency evidence object required")
+    receipt = dependency.get("body", {}).get("completion_receipt", {})
+    need(receipt.get("schema") == "legal-ir-native-independent-factual-completion/v2"
+         and receipt.get("task_cid") == dependency["task_cid"] and receipt.get("reviewed_revision") == 14
+         and receipt.get("operation") == "independent_factual_metadata_completion_v2"
+         and receipt.get("prior_provider_outcome") == "UNKNOWN" and receipt.get("old_provider_outcome_resolved") is False
+         and receipt.get("provider_success_claimed") is False, "completed9001 factual receipt and UNKNOWN history required")
+    old_failure = receipt.get("old_failure_receipt")
+    history = dependency.get("body", {}).get("retained_execution_outcomes")
+    need(type(old_failure) is dict and old_failure.get("attempt_number") == 2
+         and old_failure.get("task_cid") == dependency["task_cid"]
+         and type(history) is list and len(history) <= 16
+         and any(entry == {"task_cid": dependency["task_cid"], "task_revision": 13,
+                 "completion_receipt": old_failure,
+                 "sha256": hashlib.sha256(_handoff_reconciliation_bytes_v2(old_failure)[:-1]).hexdigest()}
+                 for entry in history), "original9001 UNKNOWN failure history must remain bound")
+    completion, checked, closed, terminal = (values[key] for key in ("completion_result", "independent_verification", "independent_owner_closeout", "completion_terminal"))
+    need(completion.get("schema") == "legal-ir-native-independent-factual-completion-result/v2"
+         and completion.get("completed_revision") == 15 and completion.get("task_cid") == dependency["task_cid"]
+         and completion.get("evidence_digest") == receipt.get("evidence_digest")
+         and completion.get("all_other63_tasks_unchanged") is True and completion.get("native_DAG_unchanged") is True,
+         "actual9001 completion-result binding required")
+    need(receipt.get("independent_verification") == evidence_descriptors["independent_verification"]
+         and receipt.get("independent_closed_owner_receipt") == evidence_descriptors["independent_owner_closeout"]
+         and checked.get("schema") == "legal-ir-current-handoff-verification/v2" and checked.get("valid") is True
+         and checked.get("task_scope", {}).get("task_cid") == dependency["task_cid"]
+         and checked["task_scope"].get("revision") == 14 and checked.get("checked_scope") == "factual_metadata_only"
+         and checked.get("old_provider_outcome_resolved") is False, "actual9001 independent factual evidence required")
+    need(closed.get("schema") == "f18-original-owner-control-closeout/v1" and type(closed.get("returncode")) is int
+         and closed["returncode"] == 0 and closed.get("request_unchanged") is True and closed.get("source_pins_unchanged") is True
+         and closed.get("source_READ_retained_through_owner_exit_and_closing_source_check") is True
+         and closed.get("custody", {}).get("source_custody_closed") is True
+         and closed["custody"].get("original_storage_status") == "released", "closed9001 independent source/native owner required")
+    need(terminal.get("schema") == "legal-ir-original-native-control-terminal/v1"
+         and terminal.get("completed") is True and type(terminal.get("child_returncode")) is int and terminal["child_returncode"] == 0
+         and terminal.get("source_READ_closed") is True and terminal.get("original_native_compute_closed") is True
+         and terminal.get("storage_status") == "released" and terminal.get("cleanup_errors") == [],
+         "closed actual9001 native completion terminal required")
+    specs = {
+        "source_custody": (["source_lease"], ["source_metadata"]),
+        "control_metadata_analysis": (["existing_scheduler", "daemon_owner", "parented_owner", "native_task_source", "native_intent_owner"], ["source_metadata", "prior_evidence"]),
+        "metadata_validation": (["validation_owner", "validation_cli"], ["source_metadata", "prior_evidence"]),
+        "training": (["training_preparer", "training_executor", "pipeline_scheduler"], ["source_text", "permitted_context", "reviewed_training_target"]),
+        "inference_8D_384D_768D_4096D": (["inference_route", "inference4096"], ["source_text", "permitted_context", "representation", "checkpoint"]),
+        "lean_kernel_and_library_build": (["lean_backend", "resource_scheduler"], ["candidate_formalization", "source_metadata"]),
+        "semantic_review": ([], ["source_text", "permitted_context", "candidate_formalization"]),
+        "runtime_filesystem_observation": (["runtime_observer"], ["source_metadata"]),
+        "task_manual_acceptance": (["native_task_source", "native_intent_owner"], ["source_metadata", "prior_evidence"]),
+    }
+    rows = data["capabilities"]
+    need(type(rows) is list and len(rows) == 9 and all(type(row) is dict for row in rows), "exact nine purpose dispositions required")
+    by_purpose = {row.get("purpose"): row for row in rows if type(row.get("purpose")) is str}
+    need(set(by_purpose) == set(specs), "unique canonical purpose rows required")
+    for purpose, (owners, roles) in specs.items():
+        row = by_purpose[purpose]
+        need(set(row) == {"purpose", "owners", "owner_sources", "disposition", "blockers", "evidence_ids", "permitted_input_roles", "new_execution_authorized"}
+             and row["owners"] == owners and row["owner_sources"] == [sources[key] for key in owners]
+             and row["permitted_input_roles"] == roles and row["new_execution_authorized"] is False,
+             "owner/source/roles must match exact purpose: " + purpose)
+        need(row["disposition"] in {"retained_scope_only", "implementation_unbound", "unavailable"}
+             and strings(row["blockers"]) and strings(row["evidence_ids"], empty=True)
+             and set(row["evidence_ids"]) <= set(evidence), "explicit unavailable/unbound purpose disposition required")
+        if purpose in {"training", "inference_8D_384D_768D_4096D", "lean_kernel_and_library_build", "runtime_filesystem_observation"}:
+            need(row["disposition"] in {"implementation_unbound", "unavailable"} and row["evidence_ids"] == [],
+                 "retained metadata validation cannot qualify scientific or runtime execution")
+        elif purpose == "semantic_review":
+            need(row["disposition"] == "unavailable" and row["owners"] == [] and row["evidence_ids"] == [],
+                 "semantic_review stays unavailable until an authorized adapter is bound")
+        elif row["disposition"] == "retained_scope_only":
+            need(bool(row["evidence_ids"]), "retained capability scope needs exact dependency evidence")
+    # Native upsert allocates the selected specification/projection identities.
+    # Do not invent those IDs in a pre-CAS rehearsal or make a semantic report
+    # depend on a guessed native CID. All other63 complete rows were compared
+    # above; the real owner separately authenticates the exact native readback.
+    current_commitment = {key: value for key, value in current.items() if key != "projection_cid"}
+    current_commitment["tasks"] = [({key: value for key, value in row.items() if key != "spec_cid"}
+        if row["task_alias"] == "LIR-9002" else row) for row in current["tasks"]]
+    commitments = {key: hashlib.sha256(_handoff_reconciliation_bytes_v2(
+        current_commitment if key == "current_snapshot" else value)).hexdigest() for key, value in supplied.items()}
+    return {"schema": "legal-ir-current-capability-and-purpose-map/v1", "producer_principal": producer_principal,
+        "task_scope": {key: task[key] for key in ("task_alias", "task_cid", "goal_cid", "plan_cid", "revision")},
+        "dependency_scope": {key: dependency[key] for key in ("task_alias", "task_cid", "revision", "status")},
+        "dependency_evidence": evidence_descriptors, "counts": {"tasks": 64, "goals": 34, "goal_edges": 33, "dependencies": 115, "purposes": 9},
+        "repository_roots": roots, "selected_owner_sources": sources, "input_roots": input_roots,
+        "input_role_policy": role_policy, "runtime_outputs": outputs,
+        "capabilities": [by_purpose[key] for key in specs], "input_commitments": commitments,
+        "current_snapshot_commitment_omits_native_generated_ids": ["projection_cid", "tasks[LIR-9002].spec_cid"],
+        "unavailable_capabilities_remain_explicit_blockers": True, "all_capabilities_required_runnable": False,
+        "prior_provider_outcome": "UNKNOWN", "old_provider_outcome_resolved": False,
+        "descriptor_files_authenticated": False, "native_status_verified": False, "principals_authenticated": False,
+        "semantic_review_verified": False, "training_authorized": False, "completion_authority": False,
+        "dispatch_authorized": False, "native_admission": False, "task_or_goal_status_changed": False,
+        "formalized": False, "supervision_masks": {"training": 0, "evaluation_gold": 0}}
+
+
+def verify_current_capability_and_purpose_map_v1(
+    report: Mapping[str, Any], *, producer_freeze: Mapping[str, Any], verifier_principal: str,
+    **independent_inputs: Any,
+) -> dict[str, Any]:
+    """Independently reconstruct frozen9002 inventory; grant no native authority."""
+    expected = prepare_current_capability_and_purpose_map_v1(**independent_inputs)
+    if (type(verifier_principal) is not str or not 0 < len(verifier_principal) <= 4096
+            or any(ord(c) < 32 for c in verifier_principal) or verifier_principal == expected["producer_principal"]):
+        raise ValueError("distinct bounded inventory verifier principal required")
+    raw = _handoff_reconciliation_bytes_v2(report)
+    if json.loads(raw) != expected:
+        raise ValueError("frozen capability inventory does not reproduce")
+    digest = hashlib.sha256(raw).hexdigest()
+    freeze = {"schema": "legal-ir-capability-purpose-producer-freeze/v1", "report_sha256": digest,
+              "report_bytes": len(raw), "producer_principal": expected["producer_principal"], "frozen_before_verification": True}
+    if not isinstance(producer_freeze, Mapping) or dict(producer_freeze) != freeze:
+        raise ValueError("capability inventory producer freeze differs")
+    return {"schema": "legal-ir-current-capability-purpose-verification/v1", "valid": True,
+        "task_scope": expected["task_scope"], "dependency_scope": expected["dependency_scope"],
+        "report_sha256": digest, "report_bytes": len(raw), "producer_principal": expected["producer_principal"],
+        "verifier_principal": verifier_principal, "input_commitments": expected["input_commitments"],
+        "checked_scope": "factual_capability_inventory_only", "native_status_verified": False,
+        "descriptor_files_authenticated": False, "principals_authenticated": False, "freeze_chronology_authenticated": False,
+        "old_provider_outcome_resolved": False, "semantic_review_verified": False, "training_authorized": False,
+        "task_or_goal_status_changed": False, "completion_authority": False, "dispatch_authorized": False,
+        "native_admission": False, "formalized": False, "supervision_masks": {"training": 0, "evaluation_gold": 0}}
+
+
 def progress_log_path(board_path: Any) -> Path | None:
     if board_path is None:
         return None
