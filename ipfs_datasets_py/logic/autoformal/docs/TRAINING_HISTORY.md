@@ -1,5 +1,15 @@
 # Training and experiment history
 
+## V2 source capture and fresh retained initial parity, 2026-10-28
+
+The [new source generation](../../../../docs/autoformalization/evidence/legal-ir-f18-v2-source-capture-parity-20261028.json) passed 52 genuine synthetic cases and 156 phases in 64.510 seconds, separately from the older 32-case source. It preserves and requalifies all 32 numerical controls and adds 20 source-only capture controls. The new capture operation matches complete original v1 heads and readouts on synthetic inputs, reuses one runtime for 128+40 rows and refuses target contamination, hooks/callable changes, state/recipe/progress drift and late mutations. Failed admitted captures refuse reuse. No older qualification is transferred to changed source bytes.
+
+A separate original-owned retained run then authenticated the original final F18 donor, F15 teacher/masks and source population, built a fresh source-bound v2 zero-step delta and captured all 632 sources in 11 chunks. All 194,812 head scalars match in binary32 including signed zero; complete greedy/formal rows and complete joint records match at unchanged top-k 8/search budget 50000. All 20 new capture files were frozen before opening 20 retained comparison captures. The child took 26.2082 seconds with one legacy6 restore, one v2 delta4 restore, 632 source forwards, zero teacher model restores, gradients or updates, and no gold/accuracy scoring.
+
+Both scopes closed original native, observed-descendant, storage and source custody. Their 73 and 65 pins stayed unchanged; the existing original R validation route remains explicit. The fixed 0.001 parity control is not a selected experiment. Original v1 weights, prior authored exposure and adverse matched-fit/scoring outcomes are preserved. V2 trainer integration, a newly selected finite TRAIN-only admission and retained comparator gates remain open; no promotion, statutory or width benefit follows.
+
+The following section retains its original numerical-only source cutoff; its then-pending capture/parity gates are addressed only by the separate generation above.
+
 ## Recipe-bound v2 numerical mechanics qualified, 2026-10-28
 
 The [separate original-owned qualification](../../../../docs/autoformalization/evidence/legal-ir-f18-v2-numerical-qualification-20261028.json) passed 32 genuine CPU float32 F18/Adam synthetic cases and 96 phases in 36.631 seconds, with no failures, errors or skips. The full original-owner operation took 131.652 seconds and released compute, observed descendants, storage and source custody. All 73 source pins stayed unchanged, 20 selected runtime module origins matched, and the explicit pinned-libdl resolver was restored after Torch import. There were no child external-process attempts. These selected source/runtime checks are not whole-process or ABI attestation.
