@@ -242,16 +242,22 @@ Displayed float32 gaps are rounded; the capsule retains the exact scalar observa
 
 The 90-case request uses actual source-pinned original launcher `0e302d2c`. Its recorded preflight handling event remains a limitation. The passing positive validation path transfers no qualification from `66a608dc` and does not qualify the new pre-owner-refusal branch.
 
+### Prospective optimizer metadata contract, 2026-10-28
+
+The [companion metadata owner](../../../../optimizers/logic_theorem_optimizer/legal_span_conditions_fullspan_optimizer_recipe_v1.py) exposes `build_optimizer_recipe` and `validate_optimizer_recipe`; `recipe_digest` aliases the original checkpoint digest. The [separate qualification](../../../../../docs/autoformalization/evidence/legal-ir-f18-optimizer-recipe-metadata-qualification-20261028.json) passed 160 pure cases (480 phases) in 16.339 seconds with no failures, errors, skips or guard denials. It keeps authenticated `donor_config` at learning rate 0.001 and the complete immutable v1 policy separate from detached `optimizer_recipe`. Only its explicit prospective learning rate changes. Validation rebuilds expectations from independent caller kwargs and compares literal bounded canonical JSON; outputs are detached and all 14 authority flags remain false.
+
+No executable numerical profile, optimizer, checkpoint, restore, capture or original training request is implemented here, and no new rate is selected. Source hashes record continuity rather than physical input authenticity or whole-process attestation. This pure cohort opens no historical payload and imports no numerical library. Original source/resource custody, fresh 632-row parity and scientific gates remain separate.
+
 ### Next goal within existing LIR-17
 
 Improve the original TRAIN conditions ranking through an explicit new optimizer contract. These maintained subgoals use the existing programme and create no task IDs, queue, budget reset or native activation.
 
 | Subgoal | Tasks and completion evidence |
 | --- | --- |
-| Versioned optimizer contract | Keep v1/profile56 source, checkpoint policy and existing HF weights immutable. Retain authenticated `donor_config` at learning rate 0.001. Declare a distinct versioned `optimizer_recipe` with its own training rate and a predeclared finite schedule. An outer LR override cannot honestly reuse v1. No new recipe value or implementation is selected here. |
+| Versioned optimizer contract | Pure metadata construction/validation is complete in the separate 160-case contract above. Keep v1/profile56 source, checkpoint policy and HF weights immutable, with authenticated `donor_config` at learning rate 0.001. An explicit prospective rate belongs only in detached `optimizer_recipe`; no experiment rate or executable numerical profile is selected. Implement and qualify the numerical successor and its checkpoint/capture contract before declaring a finite experiment. An outer LR override cannot honestly reuse v1. |
 | Source qualification and initial parity | Qualify the new profile, checkpoint recipe and pure mechanics in the existing numerical owner family. Reauthenticate the original donor, source, teacher and mask inputs and all 168 TRAIN rows. Before updates, require fresh zero-step parity on all 632 source rows against the retained donor, preserving all 42 tensors, the 38 frozen tensors including modality, and original readout behavior. |
 | Finite TRAIN-only admission | Seal one experiment bound to source and inputs, using TRAIN evidence only, with a predeclared objective, optimizer state, seed and step, time and storage limits. Review source preflight before launch and acquire fresh original training-purpose custody. Preserve partial and failed artifacts. Do not reset v1 optimizer budgets or rearm scientific cards. |
-| Freeze and independent acceptance | Freeze every new output before reference readback. Score full IR, every per-ID gain and loss, retention on all 72 conditions-present TRAIN cases, and all 32 permission decisions. Close the original retained comparator no-loss gates under their own contracts. Keep adverse results and held-out exposure. Promotion, statutory and four-width claims require their relevant gates. |
+| Freeze and independent acceptance | Freeze every new output before reference readback. Score full IR, every per-ID gain and loss, retention on all 72 conditions-present TRAIN cases, and all 32 target-P modality checks (complete permission IR is scored separately). Close the original retained comparator no-loss gates under their own contracts. Keep adverse results and held-out exposure. Promotion, statutory and four-width claims require their relevant gates. |
 
 The following immutable-publication description retains its original unscored release cutoff; the separate local comparison above does not change that release or promote a model.
 
