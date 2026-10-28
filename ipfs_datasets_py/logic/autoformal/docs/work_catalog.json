@@ -3631,7 +3631,8 @@
       "compatibility_dependency": false,
       "evidence_ids": [
         "legal-ir-handoff-execution-preflight-qualified-20261026-01",
-        "legal-ir-control-metadata-preflight-qualified-20261026-01"
+        "legal-ir-control-metadata-preflight-qualified-20261026-01",
+        "legal-ir-programme-dispatch-reconciliation-20261028-01"
       ],
       "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_ir_supervisor_task_catalog_20261016.md",
       "id": "supervisor-handoff-preflight",
@@ -3941,7 +3942,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-10-27T21:31:05.125526+00:00",
+  "last_updated_at_utc": "2026-10-28T03:49:51.604205+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -6174,6 +6175,16 @@
       "root": "datasets_repository",
       "scope": "82 authored pure cases/246phases, separate2independent consumer fixtures and original-owned saved-only comparison. All60capture files/48323901bytes checked before labels;19pins and original custody closed. All3arms fullIR405/624raw428/624joint; no perID exact gains/losses, TRAIN70/72, target-Pmodalityretention32/32(fullIRseparate). Both candidates jointabstentions19vs18. No measured reconstruction/margin advantage; parent-relative weaklabels only, no retained comparator/statutory/scientific success. No model/update/provider in scoring.",
       "status": "saved_weak_label_comparison_closed_no_full_IR_gain_joint_abstention_regression"
+    },
+    {
+      "id": "legal-ir-programme-dispatch-reconciliation-20261028-01",
+      "observed_bytes": 7741,
+      "observed_sha256": "b6b8a747d40a7b65e1c2d3410c35fb358192ee2d255fdf35ecdbbc3ec78abc8d",
+      "path": "docs/autoformalization/evidence/legal-ir-programme-dispatch-reconciliation-20261028.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Current dual-namespace diagnostic metadata, three proposed interoperability/native-cell/executor-observation requirements and original-task preservation. Reuses completed training/scoring and canonical ports; no database/model/provider/native mutation, new loop or statutory/Lean authority.",
+      "status": "planning_reconciliation_no_execution_or_quality_qualification"
     }
   ]
 }

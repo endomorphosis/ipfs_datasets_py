@@ -55,6 +55,87 @@ The [dual-namespace receipt](../../../../docs/autoformalization/evidence/legal-i
 
 The actual controlled watchdog-main crash recovered in31.36s with both namespace views, task projection, database/WAL state, counters and prior repair job preserved; the repair service remained up. This supplies watchdog infrastructure evidence only. Preserve original failures and source pins, and require a fresh exact-bound observation after repair; a coding-process exit cannot grant native/legal/model/graph/Lean/corpus completion. [PR304](https://github.com/endomorphosis/ipfs_accelerate_py/pull/304) is published but unmerged because its required `documentation-gates` job did not start under GitHub's reported account billing lock. The separate `qualification` checks are not listed as required by current branch protection. The local profile uses the reviewed feature commit; keep public-main and parent-gitlink adoption pending the protected merge, without CI/rule bypass.
 
+### Dispatch decisions for existing programme tasks
+
+Use the [whole-corpus hierarchy](BACKLOG.json) and the latest
+[handoff](HANDOFF.md#current-execution-priorities-after-artifact-review) together
+with the [training history](TRAINING_HISTORY.md). The
+[dispatch reconciliation](../../../../docs/autoformalization/evidence/legal-ir-programme-dispatch-reconciliation-20261028.json)
+records planning observations and missing interfaces, not native admission or
+another task queue. Read newer selected delivery receipts before historical
+"next" instructions: completed captures, fits, scoring and artifact ports must
+not be scheduled again merely because an older paragraph lists them as pending.
+
+| Existing phase and parent tasks | Parallel work and acceptance fence |
+| --- | --- |
+| Lineage: LIR-01,03,16 | Reconcile current producer, source, checkpoint, codec and optimizer capabilities; reuse qualified deliveries and preserve original experiment results. |
+| Source and review: LIR-02,05,06 | Prepare one complete norm, its governing definition and two distinct physical operative uses; authenticate edition/context and retain unresolved interpretation decisions. |
+| Complete IR: LIR-07,09,10 | Check full-span representability, ordered roles, binders, counting, conditions, exceptions, time and lossless codecs before enrolling targets for training. |
+| Graphs: LIR-04,08,11 | Preserve occurrence, mention, sense, entity, definition and norm identities; close reviewed edges and dependencies without merging alternatives or treating string matches as meaning. |
+| Lean: LIR-12–15 | Reuse the interpretation and preservation owners; bind exact modules, imports, toolchain, premises and axiom policy. An actual pinned build and source-meaning review remain separate gates. |
+| Models and cost: LIR-17–20,23 | Reuse retained assets and frozen outputs; select only a missing compatible comparison. Four native producer systems and a bypass-free bottleneck experiment are separate studies. |
+| Release and expansion: LIR-21,22,24 | Require immutable readback and complete stage-specific dispositions; expand connected components, then the selected pilot and dependency shards, before claiming whole-manifest coverage. |
+
+Preparation can proceed in parallel while semantic dependencies remain open;
+its completion does not satisfy those dependencies. Existing protected claims,
+resource owners and finite reviewed packets govern execution. Root retains
+adoption, deployment and publication ownership. Keep exact UTF8 restoration
+with a retained surface sidecar, canonical rendering and learned source-free
+prose reconstruction separate under the existing
+[reconstruction contract](HANDOFF.md#reconstruction-contract-for-model-promotion); none is a proxy
+for autonomous complete-IR fidelity or statutory meaning.
+
+The four-width plan currently exceeds native task-cell coverage. The selected
+64-task population names `LIR-1902`, `LIR-1903` and `LIR-1904` for 8D, 384D and
+768D, with `LIR-1905` for comparison; it has no dedicated 4096D cell. Record a
+reviewed amendment under existing LIR-19 before dispatching that cell. Preserve
+all original IDs/CIDs, revisions, dependencies, claims and failures; allocate
+new native identity only through its owner. Reuse the existing Leanstral
+captures and decoder profile, explicitly separating causal source width from
+a learned legal bottleneck and declaring source-text/residual bypasses.
+
+Keep model and cache identities separated by IR family, width, producer,
+schema/version and decoder task. Reuse the existing inventory, ModelManager,
+DuckDB/DuckLake and Hub owners and immutable payload references. Registration,
+public availability, callable compatibility and measured quality remain
+different states; a shared release index cannot make one family's checkpoint
+or original optimizer state compatible with another profile.
+
+### Watchdog decisions and deployment compatibility
+
+| Observed state | Existing owner response |
+| --- | --- |
+| No admitted ready child; completed engineering work | Intentional idle. Keep observing; do not restart lanes to manufacture progress. |
+| Source, review, context, dependency or activation block | Report the missing prerequisite against its existing task identity. Generic infrastructure repair cannot rearm or admit it. |
+| Runnable work and a policy-allowlisted infrastructure fault | Use the existing bounded infrastructure repair owner, preserving holds, action/attempt limits and cooldowns; require fresh bound evidence and accepted progress after repair. |
+| Unknown callback outcome or denied retry | Retain the owner, attempt history and budgets. Only exact outcome evidence through its native owner can settle the uncertainty. |
+| Model, compiler or semantic failure | Return diagnostic evidence to the existing scientific task and its review/experiment gate. A service restart cannot establish reconstruction gain or corpus completion. |
+
+The scientific catalogue observer deliberately reports `not_activated` and
+`not_established`; it is not an executor-health or native-capability endpoint.
+Qualify an extension bound to actual activation epoch, admitted task population,
+claim/process births, meaningful progress and terminal receipts before using
+the monitor to attest a scientific executor. A fresh observer timestamp alone
+does not establish any of those facts.
+
+The active LegalIR profile from [PR304](https://github.com/endomorphosis/ipfs_accelerate_py/pull/304)
+uses `recovery_policy.profile="infrastructure-only/v1"`. The separate retained
+owner work in [PR306](https://github.com/endomorphosis/ipfs_accelerate_py/pull/306)
+uses `recovery_policy.schema="agent-supervisor/owner-retention@1"`; its closed
+validator denies other present policies. Their individual qualifications do
+not qualify a combined runtime. Reconcile these schemas in the existing
+Accelerate watchdog/repair owners before rollout, preserving infrastructure
+classification, cumulative budgets, shared-unit cancellation identity,
+operator holds, retention denials and fresh-probe/effect-boundary checks.
+Do not silently replace the functioning dedicated LegalIR generation or
+install another loop. Catalogue recovery must leave scientific blocks intact.
+
+Record publication, filesystem installation, configured runtime generation,
+staged observation and admitted executor/current claim separately. A published
+branch, installed file or healthy observer supplies no native execution grant.
+Keep protected merges and superproject-pointer adoption separate from staging;
+retain the previous usable release when either is pending.
+
 ## Documentation and migration
 
 Maintain this module's README, handoff, architecture, training history, operations and original task backlog in place. Detailed API guides live in `docs/guides`; old handbook paths redirect here. Update one current plan instead of appending the same paragraph to several dated plans. Preserve historical task identities/dependencies and reference a precise new result rather than duplicate a complete run tree.
