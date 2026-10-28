@@ -101,6 +101,36 @@ For factual work reconciliation, capability inventories and review/dispatch prep
 
 The [separate follow-up qualification](../../../../../docs/autoformalization/evidence/legal-ir-control-metadata-preflight-20261026.json) passed 14 methods / 67 subcases and prepared four actual previews from retained LIR-9001–9004 snapshot metadata. These remain incomplete: no operation commands/cwd, budgets, principals, verifier, reviewed directive mapping, complete attempt histories or exhausted-attempt disposition were invented. Snapshot revisions are 13 for LIR-9001 and 2 for LIR-9002–9004; these observations do not establish current native status. Retained LIR-9001 spent its budget of two attempts and has UNKNOWN provider outcome. Its old factual reconciliation output is reused as prior evidence, never as a provider-success receipt; the old revision-11 command is not a revision-13 launch default. Preserve original-owner amendment/rearm ordering (the retained recovery review identifies exact revision 14), all failures and the existing dependency frontier. Do not query a remote provider with a local native attempt/invocation ID or infer outcome from another status read.
 
+## Current job packet inventory preparation
+
+`supervisor_loop.prepare_current_job_packet_index_v1` and
+`verify_current_job_packet_index_v1` extend the existing metadata owner for
+`LIR-9003`. This source addition awaits focused qualification; no product or
+native execution is claimed here. Supply the complete current 64-task native
+projection, the accepted `LIR-9002` capability report and its separate verifier
+result, explicit packet proposals and a producer principal. The report joins
+completed9002 revision4 to its revision3 verification commitment and preserves
+completed9001 revision15 with its unresolved historical provider outcome.
+
+Every existing task receives a revision/dependency/record commitment and an
+explicit disposition. Missing packets remain `packet_missing`; completed scopes
+remain retained. Supplied metadata needs source-bound operation, validation and
+verifier argv, exact native output/exclusive keys, role-bound inputs, finite
+resources, distinct acceptance principal and retry/invalidation keys. The first
+profile supports model-free control metadata with zero model tokens and no code
+edits. Scientific purposes retain their unavailable or unbound capability facts.
+The preparer opens no descriptor, database or provider and does not execute argv.
+
+`full_index_coverage` includes negative dispositions. It does **not** mean all
+productive tasks have reviewed executable packets. Both preparation and frozen
+independent reconstruction explicitly return
+`productive_runnable_coverage_complete=false`, `task_acceptance_satisfied=false`
+and no completion, admission or dispatch authority. A metadata inventory cannot
+complete `LIR-9003` or activate productive work. Existing native task owners must
+separately bind current source/input bytes, purpose grants, review and lifecycle
+before any task becomes runnable. Caller principal strings and supplied source
+hashes remain unauthenticated by this pure API.
+
 ## Representation-cell amendment preparation
 
 The existing `supervisor_loop` owner now provides the opt-in pure function

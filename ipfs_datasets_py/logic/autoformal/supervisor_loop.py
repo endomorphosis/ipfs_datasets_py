@@ -881,6 +881,286 @@ def verify_current_capability_and_purpose_map_v1(
         "native_admission": False, "formalized": False, "supervision_masks": {"training": 0, "evaluation_gold": 0}}
 
 
+def prepare_current_job_packet_index_v1(
+    *, current_snapshot: Mapping[str, Any], capability_report: Mapping[str, Any],
+    capability_verification: Mapping[str, Any], packet_proposals: list[Mapping[str, Any]],
+    producer_principal: str, expected_task_revision: int = 2,
+) -> dict[str, Any]:
+    """Inventory current9003 packets and explicit gaps; never admit or complete.
+
+    This pure metadata owner reads no descriptor or native store. A complete
+    supplied packet is still unreviewed and unadmitted. Full index coverage,
+    including negative dispositions, cannot satisfy9003's executable-packet
+    acceptance or make a productive task runnable.
+    """
+    def need(condition: bool, reason: str) -> None:
+        if not condition:
+            raise ValueError(reason)
+
+    def text(value: Any) -> bool:
+        return type(value) is str and 0 < len(value) <= 4096 and not any(ord(c) < 32 for c in value)
+
+    def positive(value: Any) -> bool:
+        return type(value) is int and value > 0
+
+    def path(value: Any, *, absolute: bool = False) -> bool:
+        if not text(value) or (absolute and not value.startswith("/")):
+            return False
+        parts = value.split("/")[1:] if value.startswith("/") else value.split("/")
+        return all(part not in {"", ".", ".."} for part in parts) and not any(char in value for char in "*?[]\\")
+
+    def strings(value: Any, *, empty: bool = False) -> bool:
+        return (type(value) is list and len(value) <= 128 and (empty or bool(value))
+                and all(text(item) for item in value) and len(set(value)) == len(value))
+
+    def argv(value: Any) -> bool:
+        return type(value) is list and 0 < len(value) <= 128 and all(text(item) for item in value)
+
+    def descriptor(value: Any) -> bool:
+        return (type(value) is dict and set(value) == {"path", "bytes", "sha256"}
+                and path(value["path"], absolute=True) and positive(value["bytes"])
+                and value["bytes"] <= 4 * 1024**2 and type(value["sha256"]) is str
+                and len(value["sha256"]) == 64 and all(c in "0123456789abcdef" for c in value["sha256"]))
+
+    def commitment(value: Any) -> str:
+        return hashlib.sha256(_handoff_reconciliation_bytes_v2(value)).hexdigest()
+
+    supplied = json.loads(_handoff_reconciliation_bytes_v2({"current_snapshot": current_snapshot,
+        "capability_report": capability_report, "capability_verification": capability_verification,
+        "packet_proposals": packet_proposals}))
+    current, report, checked, proposals = (supplied[key] for key in
+        ("current_snapshot", "capability_report", "capability_verification", "packet_proposals"))
+    need(text(producer_principal) and positive(expected_task_revision), "bounded producer and exact9003 revision required")
+    need(type(current) is dict and current.get("schema") == "ipfs_accelerate_py/agent-supervisor/intent-plan-projection@1",
+         "current native projection metadata required")
+    tasks, goals, edges, plans = (current.get(key) for key in ("tasks", "goals", "goal_edges", "plans"))
+    need(type(tasks) is list and len(tasks) == 64 and type(goals) is list and len(goals) == 34
+         and type(edges) is list and len(edges) == 33 and type(plans) is list and len(plans) == 1,
+         "exact64/34/33/1 native programme required")
+    need(all(type(row) is dict and all(text(row.get(key)) for key in
+         ("task_alias", "task_cid", "goal_cid", "plan_cid", "status")) and positive(row.get("revision")) for row in tasks),
+         "exact current task identities and revisions required")
+    by_alias, by_cid = ({row[key]: row for row in tasks} for key in ("task_alias", "task_cid"))
+    need(all(type(row) is dict and text(row.get("goal_cid")) for row in goals), "bounded goal identities required")
+    goal_ids = {row["goal_cid"] for row in goals}
+    need(len(by_alias) == len(by_cid) == 64 and len(goal_ids) == 34 and None not in goal_ids
+         and {"LIR-9001", "LIR-9002", "LIR-9003", "LIR-9004"} <= set(by_alias), "unique original programme identities required")
+    need(all(type(row) is dict and row.get("edge_kind") == "goal_parent"
+         and text(row.get("parent_goal_cid")) and text(row.get("child_goal_cid"))
+         and row["parent_goal_cid"] in goal_ids and row["child_goal_cid"] in goal_ids for row in edges),
+         "original owning goal edges required")
+    need(len({row["child_goal_cid"] for row in edges}) == 33 and all(row["parent_goal_cid"] != row["child_goal_cid"] for row in edges)
+         and type(plans[0]) is dict and text(plans[0].get("plan_cid"))
+         and all(row["plan_cid"] == plans[0]["plan_cid"] and type(row.get("body")) is dict
+                 and type(row.get("outputs")) is list and all(type(output) is dict and path(output.get("path"))
+                     for output in row["outputs"]) for row in tasks),
+         "original single-plan ownership and distinct parent edges required")
+    dependencies = {}
+    for row in tasks:
+        values = row.get("dependencies")
+        need(row["goal_cid"] in goal_ids and type(values) is list and all(type(item) is dict
+             and set(item) == {"dependency_task_cid", "kind"} and item["kind"] == "depends_on"
+             and text(item["dependency_task_cid"]) and item["dependency_task_cid"] in by_cid
+             and item["dependency_task_cid"] != row["task_cid"] for item in values),
+             "exact existing dependency bindings required")
+        ids = [item["dependency_task_cid"] for item in values]
+        need(len(set(ids)) == len(ids), "duplicate task dependency")
+        dependencies[row["task_cid"]] = ids
+    need(sum(map(len, dependencies.values())) == 115, "exact115 native dependencies required")
+    visiting, visited = set(), set()
+
+    def visit(cid: str) -> None:
+        need(cid not in visiting, "cyclic native dependency metadata")
+        if cid not in visited:
+            visiting.add(cid)
+            for dependency in dependencies[cid]:
+                visit(dependency)
+            visiting.remove(cid)
+            visited.add(cid)
+
+    for cid in by_cid:
+        visit(cid)
+    task, dependency, first = (by_alias[key] for key in ("LIR-9003", "LIR-9002", "LIR-9001"))
+    need(task["revision"] == expected_task_revision and task["status"] == "blocked"
+         and task.get("body", {}).get("completion") == "manual"
+         and dependencies[task["task_cid"]] == [dependency["task_cid"]], "exact blocked manual9003 frontier required")
+    receipt = dependency.get("body", {}).get("completion_receipt", {})
+    need(dependency["revision"] == 4 and dependency["status"] == "completed"
+         and receipt.get("operation") == "independent_capability_purpose_inventory_completion_v1"
+         and receipt.get("scope") == "factual_capability_inventory_only" and receipt.get("reviewed_revision") == 3,
+         "accepted factual9002 revision4 required")
+    need(type(report) is dict and report.get("schema") == "legal-ir-current-capability-and-purpose-map/v1"
+         and type(checked) is dict and checked.get("schema") == "legal-ir-current-capability-purpose-verification/v1"
+         and checked.get("valid") is True and checked.get("checked_scope") == "factual_capability_inventory_only"
+         and checked.get("task_scope") == report.get("task_scope")
+         and report.get("task_scope") == {key: (3 if key == "revision" else dependency[key])
+             for key in ("task_alias", "task_cid", "goal_cid", "plan_cid", "revision")}
+         and checked.get("report_sha256") == commitment(report)
+         and checked.get("report_bytes") == len(_handoff_reconciliation_bytes_v2(report))
+         and text(report.get("producer_principal"))
+         and checked.get("producer_principal") == report.get("producer_principal")
+         and text(checked.get("verifier_principal")) and checked["verifier_principal"] != report.get("producer_principal"),
+         "exact accepted capability report and distinct verifier metadata required")
+    verification_pin = receipt.get("independent_verification", {})
+    need(descriptor(verification_pin) and verification_pin["sha256"] == commitment(checked)
+         and verification_pin["bytes"] == len(_handoff_reconciliation_bytes_v2(checked)), "9002 receipt verification commitment differs")
+    for value in (report, checked, receipt):
+        need(all(value.get(flag) is False for flag in
+             ("training_authorized", "semantic_review_verified", "dispatch_authorized", "native_admission", "formalized"))
+             and value.get("supervision_masks") == {"training": 0, "evaluation_gold": 0}, "9002 limited authority must remain explicit")
+    old = first.get("body", {}).get("completion_receipt", {})
+    old_failure = old.get("old_failure_receipt")
+    history = first.get("body", {}).get("retained_execution_outcomes")
+    need(first["revision"] == 15 and first["status"] == "completed"
+         and old.get("old_provider_outcome_resolved") is False and old.get("provider_success_claimed") is False
+         and type(old_failure) is dict and old_failure.get("task_cid") == first["task_cid"]
+         and old_failure.get("failure_kind") == "administrative_operator_stop_outcome_unknown"
+         and old_failure.get("automatic_retry_admitted") is False and type(history) is list
+         and {"task_cid": first["task_cid"], "task_revision": 13, "completion_receipt": old_failure,
+              "sha256": hashlib.sha256(_handoff_reconciliation_bytes_v2(old_failure)[:-1]).hexdigest()} in history,
+         "9001 unresolved historical outcome must remain retained")
+    purposes = report.get("capabilities")
+    need(type(purposes) is list and len(purposes) == 9 and all(type(row) is dict and text(row.get("purpose"))
+         and row.get("new_execution_authorized") is False and row.get("disposition") in
+         {"retained_scope_only", "implementation_unbound", "unavailable"} and strings(row.get("blockers"))
+         and strings(row.get("permitted_input_roles")) for row in purposes),
+         "all nine negative or retained capability dispositions required")
+    capabilities = {row["purpose"]: row for row in purposes}
+    need(set(capabilities) == {"source_custody", "control_metadata_analysis", "metadata_validation", "training",
+         "inference_8D_384D_768D_4096D", "lean_kernel_and_library_build", "semantic_review",
+         "runtime_filesystem_observation", "task_manual_acceptance"}
+         and capabilities["semantic_review"]["disposition"] == "unavailable"
+         and report.get("unavailable_capabilities_remain_explicit_blockers") is True
+         and report.get("all_capabilities_required_runnable") is False, "capability coverage must retain unavailable scopes")
+    need(type(proposals) is list and len(proposals) <= 64 and all(type(row) is dict for row in proposals), "bounded packet proposals required")
+    selected = {}
+    for proposal in proposals:
+        alias = proposal.get("task_alias")
+        need(type(alias) is str and alias in by_alias and alias not in selected, "unique existing packet task required")
+        row = by_alias[alias]
+        need(row["status"] == "blocked" and proposal.get("task_cid") == row["task_cid"]
+             and type(proposal.get("revision")) is int and proposal["revision"] == row["revision"], "stale, started or completed packet target")
+        need(all(proposal.get(flag, False) is False for flag in
+             ("admitted", "dispatch_authorized", "native_admission", "rearm_authorized", "completion_authority", "training_authorized",
+              "workers_started", "worker_launch_authorized", "execution_authorized_by_this_file", "task_completion_authority",
+              "goal_completion_authority", "formalized", "semantic_review_verified"))
+             and proposal.get("supervision_masks", {"training": 0, "evaluation_gold": 0}) == {"training": 0, "evaluation_gold": 0},
+             "packet proposal cannot request execution or completion authority")
+        selected[alias] = proposal
+    entries = []
+    budget_keys = {"cpu_threads", "memory_mib", "storage_bytes", "max_children", "max_tokens", "deadline_seconds", "max_attempts"}
+    for row in tasks:
+        alias = row["task_alias"]
+        dep_rows = [{"task_cid": cid, "revision": by_cid[cid]["revision"], "status": by_cid[cid]["status"]}
+                    for cid in dependencies[row["task_cid"]]]
+        proposal = selected.get(alias)
+        missing = []
+
+        def require(condition: bool, reason: str) -> None:
+            if not condition:
+                missing.append(reason)
+
+        capability = None
+        if proposal is not None:
+            capability = capabilities.get(proposal.get("purpose")) if type(proposal.get("purpose")) is str else None
+            require(capability is not None, "purpose_not_in_accepted_inventory")
+            require(proposal.get("purpose") in {"control_metadata_analysis", "metadata_validation"}, "productive_purpose_contract_not_selected")
+            require(proposal.get("dependencies") == dep_rows, "exact_dependency_revisions_and_states_required")
+            require(proposal.get("execution_kind") == "control_metadata_only", "model_execution_contract_not_selected")
+            for key in ("argv", "validation_argv"):
+                require(argv(proposal.get(key)), "exact_" + key + "_required")
+            require(path(proposal.get("cwd"), absolute=True), "absolute_cwd_required")
+            sources = proposal.get("source_descriptors")
+            require(type(sources) is list and bool(sources) and all(descriptor(pin) for pin in sources), "exact_source_descriptors_required")
+            for key, command_key in (("entrypoint_source", "argv"), ("validation_source", "validation_argv")):
+                pin = proposal.get(key)
+                require(descriptor(pin) and type(sources) is list and pin in sources
+                        and argv(proposal.get(command_key)) and pin["path"] in proposal[command_key], "source_bound_" + command_key + "_required")
+            inputs = proposal.get("inputs")
+            roles = capability.get("permitted_input_roles", []) if capability else []
+            require(type(inputs) is list and bool(inputs) and all(type(item) is dict and item.get("role") in roles
+                and item.get("use") in ("verification", "provenance") and descriptor(item.get("descriptor"))
+                and "profile" not in item for item in inputs), "purpose_role_bound_metadata_inputs_required")
+            declared = [output.get("path") for output in row.get("outputs", []) if type(output) is dict]
+            require(strings(proposal.get("outputs")) and all(path(value) for value in proposal["outputs"])
+                    and proposal["outputs"] == declared, "exact_native_output_paths_required")
+            body = row.get("body", {})
+            require(strings(proposal.get("exclusive_keys")) and proposal["exclusive_keys"] == body.get("exclusive_keys"), "exact_native_exclusive_keys_required")
+            for key in ("code_allowlist", "test_allowlist"):
+                require(strings(proposal.get(key), empty=True) and all(path(value) for value in proposal[key]), "explicit_" + key + "_required")
+            require(proposal.get("code_allowlist") == body.get("code_edit_allowlist", []) == [], "model_free_metadata_cannot_grant_code_edits")
+            budgets = proposal.get("budgets")
+            require(type(budgets) is dict and set(budgets) == budget_keys
+                    and all(positive(value) for key, value in budgets.items() if key != "max_tokens")
+                    and type(budgets["max_tokens"]) is int and budgets["max_tokens"] == 0, "finite_model_free_resource_retry_and_deadline_bounds_required")
+            for key in ("retry_key", "invalidation_key"):
+                require(text(proposal.get(key)), "explicit_" + key + "_required")
+            worker, verifier = proposal.get("worker"), proposal.get("verifier")
+            require(type(worker) is dict and text(worker.get("principal")) and text(worker.get("role")), "worker_role_and_principal_required")
+            require(type(verifier) is dict and verifier.get("role") == "independent_acceptance" and text(verifier.get("principal"))
+                and type(worker) is dict and verifier.get("principal") != worker.get("principal") and argv(verifier.get("argv")), "distinct_independent_verifier_required")
+            require(type(verifier) is dict and descriptor(verifier.get("source_descriptor")) and type(sources) is list
+                    and verifier["source_descriptor"] in sources and argv(verifier.get("argv"))
+                    and verifier["source_descriptor"]["path"] in verifier["argv"], "source_bound_independent_verifier_required")
+        elif row["status"] != "completed":
+            missing.append("job_packet_not_supplied")
+        complete = proposal is not None and not missing
+        execution_blockers = ["original_owner_current_scope_and_admission_required", "independent_packet_acceptance_required"]
+        execution_blockers.extend("dependency_not_completed:" + item["task_cid"] for item in dep_rows if item["status"] != "completed")
+        if capability is not None:
+            execution_blockers.extend(capability["blockers"])
+        disposition = ("completed_scope_retained" if row["status"] == "completed" else
+                       "packet_missing" if proposal is None else "metadata_bound_pending_review" if complete else "packet_metadata_incomplete")
+        entries.append({"task_alias": alias, "task_cid": row["task_cid"], "revision": row["revision"], "status": row["status"],
+            "task_record_sha256": commitment(row), "dependencies": dep_rows, "disposition": disposition,
+            "metadata_complete": complete, "metadata_blockers": missing, "execution_blockers": execution_blockers,
+            "capability_disposition": capability["disposition"] if capability else "not_selected",
+            "packet_proposal": proposal, "independently_reviewed": False, "runnable": False, "dispatch_authorized": False})
+    counts = {key: sum(entry["disposition"] == key for entry in entries) for key in
+        ("completed_scope_retained", "packet_missing", "metadata_bound_pending_review", "packet_metadata_incomplete")}
+    return {"schema": "legal-ir-current-job-packet-index/v1", "producer_principal": producer_principal,
+        "task_scope": {key: task[key] for key in ("task_alias", "task_cid", "goal_cid", "plan_cid", "revision")},
+        "dependency_scope": {key: dependency[key] for key in ("task_alias", "task_cid", "revision", "status")},
+        "input_commitments": {key: commitment(value) for key, value in supplied.items()}, "entries": entries,
+        "capability_dispositions": purposes,
+        "counts": {"tasks": 64, "goals": 34, "goal_edges": 33, "dependencies": 115, **counts},
+        "full_index_coverage": True, "productive_runnable_coverage_complete": False, "task_acceptance_satisfied": False,
+        "prior_provider_outcome": "UNKNOWN", "old_provider_outcome_resolved": False,
+        "descriptor_files_authenticated": False, "native_status_verified": False, "principals_authenticated": False,
+        "task_or_goal_status_changed": False, "completion_authority": False, "dispatch_authorized": False,
+        "native_admission": False, "training_authorized": False, "semantic_review_verified": False,
+        "formalized": False, "supervision_masks": {"training": 0, "evaluation_gold": 0}}
+
+
+def verify_current_job_packet_index_v1(
+    report: Mapping[str, Any], *, producer_freeze: Mapping[str, Any], verifier_principal: str,
+    **independent_inputs: Any,
+) -> dict[str, Any]:
+    """Reconstruct the factual9003 inventory; executable acceptance stays open."""
+    expected = prepare_current_job_packet_index_v1(**independent_inputs)
+    if (type(verifier_principal) is not str or not 0 < len(verifier_principal) <= 4096
+            or any(ord(c) < 32 for c in verifier_principal) or verifier_principal == expected["producer_principal"]):
+        raise ValueError("distinct bounded packet-index verifier principal required")
+    raw = _handoff_reconciliation_bytes_v2(report)
+    if json.loads(raw) != expected:
+        raise ValueError("frozen job packet index does not reproduce")
+    digest = hashlib.sha256(raw).hexdigest()
+    freeze = {"schema": "legal-ir-job-packet-index-producer-freeze/v1", "report_sha256": digest,
+        "report_bytes": len(raw), "producer_principal": expected["producer_principal"], "frozen_before_verification": True}
+    if not isinstance(producer_freeze, Mapping) or dict(producer_freeze) != freeze:
+        raise ValueError("job packet index producer freeze differs")
+    return {"schema": "legal-ir-current-job-packet-index-verification/v1", "valid": True,
+        "checked_scope": "factual_job_packet_inventory_only", "task_scope": expected["task_scope"],
+        "report_sha256": digest, "report_bytes": len(raw), "producer_principal": expected["producer_principal"],
+        "verifier_principal": verifier_principal, "input_commitments": expected["input_commitments"],
+        "full_index_coverage": True, "productive_runnable_coverage_complete": False, "task_acceptance_satisfied": False,
+        "native_status_verified": False, "descriptor_files_authenticated": False, "principals_authenticated": False,
+        "freeze_chronology_authenticated": False, "task_or_goal_status_changed": False,
+        "old_provider_outcome_resolved": False, "completion_authority": False, "dispatch_authorized": False,
+        "native_admission": False, "training_authorized": False, "semantic_review_verified": False,
+        "formalized": False, "supervision_masks": {"training": 0, "evaluation_gold": 0}}
+
+
 def progress_log_path(board_path: Any) -> Path | None:
     if board_path is None:
         return None
