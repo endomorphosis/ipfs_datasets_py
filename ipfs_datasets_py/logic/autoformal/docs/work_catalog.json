@@ -4039,13 +4039,14 @@
       "compatibility_dependency": false,
       "evidence_ids": [
         "f18-v2-recipe-bound-numerical-qualified-20261028-01",
-        "f18-v2-source-capture-and-initial632-parity-qualified-20261028-01"
+        "f18-v2-source-capture-and-initial632-parity-qualified-20261028-01",
+        "f18-v2-trainer-integration-and-preentry-recovery-qualified-20261028-01"
       ],
       "existing_task": "LIR-17",
       "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_span_conditions_fullspan_training_v1.md",
       "id": "conditions-fullspan-f18-four-tensor-training-v2",
       "immutable_base_component_id": "conditions-fullspan-f18-four-tensor-training-v1",
-      "notes": "Current v2 source binds its independently supplied recipe, immutable donor configuration and a fresh actual Adam. All 52 genuine numerical/capture cases pass; separate retained zero-step parity matches 632 sources and complete heads/readouts. It extends the original F18 numerical owner family and original resource lifecycle, with no duplicate controller. The earlier 32-case source remains separately attributed in evidence. No experiment rate, retained fit or model gain is selected. Explicit original trainer-v2 integration and fresh finite TRAIN admission remain open; the public physical-v2 validation frontend gap is separate.",
+      "notes": "Existing v2 numerical/capture owner remains atd80 with its separate52 genuine cases and retained632 initial parity. The original trainer request/worker now has a separate241-case pure/fake integration and pre-entry recovery qualification. Both recipes validate before arms start; no duplicate controller. Actual nativeprobe refused the existing inventory-count bound before entry/grant/child; no new TRAIN rate, fit, model gain or scientific activation. Inventory capacity, saved v2 consumer support, fresh finite TRAIN admission and the separate publicphysical-v2 frontend gap remain open.",
       "owner_module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_conditions_fullspan_training_v2",
       "owning_tests": [
         "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_conditions_fullspan_training_v2.py"
@@ -4064,7 +4065,21 @@
         "synthetic_cases": 52,
         "synthetic_phases": 156
       },
-      "status": "focused_tests_qualified"
+      "status": "focused_tests_qualified",
+      "trainer_integration": {
+        "actual_probe": "preentry_inventory_capacity_refusal",
+        "evidence_id": "f18-v2-trainer-integration-and-preentry-recovery-qualified-20261028-01",
+        "launcher": "scripts/ops/legal_ir/run_owned_validation.py",
+        "numerical_dispatch_qualified": false,
+        "owning_tests": [
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_daemon_invocation_worker.py",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_validation_run_resources.py"
+        ],
+        "phases": 723,
+        "pure_cases": 241,
+        "selected_experiment_rate": null,
+        "worker": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_invocation_worker.py"
+      }
     }
   ],
   "entry_point": "ipfs_datasets_py/logic/autoformal/README.md",
@@ -4125,7 +4140,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-10-28T16:09:22.930198+00:00",
+  "last_updated_at_utc": "2026-10-28T17:38:13.117452+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -6438,6 +6453,16 @@
       "root": "datasets_repository",
       "scope": "14 parent cases/42 phases/36 subtests (JUnit 50, XML 14); separate actual canonical producer resume and distinct independent verifier; dedicated native evidence and CAS revision 3 to 4. Saved population 2 completed/62 blocked, cursor 220, all other 63 records/DAG and LIR-9001 UNKNOWN history retained. No inherited 9002 provider history, scientific/semantic/dispatch grants, mask change or model-quality claim. First producer failure, accepted runtime and publication-tree lineage retain separate scopes. PR310 remains open under the required documentation-gate billing lock, without bypass. Next LIR-9003 reuses the existing peer preparer and grouped evidence; it needs explicit native64/root/role/resource binding.",
       "status": "factual_capability_inventory_completed_by_original_native_owner"
+    },
+    {
+      "id": "f18-v2-trainer-integration-and-preentry-recovery-qualified-20261028-01",
+      "observed_bytes": 14311,
+      "observed_sha256": "60ec5598ff38632ec20c191615360a0160e10b31c29fe6537b668e7650c115be",
+      "path": "docs/autoformalization/evidence/legal-ir-f18-v2-trainer-integration-recovery-20261028.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "241 pure/fake cases/723phases under original validation custody; no numerical imports/retained payloads. Historical195/224 source generations, native probe inventory refusal, administrative source closure and preparation argv refusal remain separate. No newfit/rate/promotion/native retry/watchdog or legal/Lean admission.",
+      "status": "trainer_contracts_and_preentry_recovery_pure_qualified_native_probe_refused"
     }
   ]
 }

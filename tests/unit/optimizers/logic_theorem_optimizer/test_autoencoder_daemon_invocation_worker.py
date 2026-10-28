@@ -1107,3 +1107,344 @@ def test_f18_late_input_drift_refuses_success_after_preserving_frozen_outputs(tm
     assert closed == [True]
     assert (output / "f18-paired/pair-output-freeze.json").is_file()
     assert len([event for event in profile.events if event[0] == "run"]) == 2
+
+
+# Explicit v2 trainer controls use authored metadata and fake numerical owners.
+# The fixture rate .003 selects no retained experiment and no tensor is created.
+def _f18_v2_compute_fixture():
+    return {**_f18_compute_fixture(), "learning_rate": 0.003}
+
+
+def test_f18_v2_compute_is_explicit_detached_and_lexical(monkeypatch):
+    value = _f18_v2_compute_fixture()
+    monkeypatch.setattr(worker, "_contracts", lambda: pytest.fail("compute parser opened dependencies"))
+    actual = worker.validate_f18_compute(value, version=2)
+    assert actual == value and actual is not value
+    actual["input_descriptors"]["bytes"] = 2
+    assert value["input_descriptors"]["bytes"] == 1
+    assert actual["learning_rate"] == 0.003
+
+
+@pytest.mark.parametrize("rate", [True, False, None, "0.003", 0, -0.003,
+    float("nan"), float("inf"), -float("inf")])
+def test_f18_v2_compute_refuses_invalid_rate_before_access(monkeypatch, rate):
+    value = _f18_v2_compute_fixture()
+    value["learning_rate"] = rate
+    monkeypatch.setattr(worker, "_contracts", lambda: pytest.fail("invalid rate opened dependencies"))
+    with pytest.raises(ValueError, match="learning_rate"):
+        worker.validate_f18_compute(value, version=2)
+
+
+@pytest.mark.parametrize("version", [True, False, None, "2", 0, 3])
+def test_f18_compute_refuses_implicit_or_unknown_version(version):
+    with pytest.raises(ValueError, match="version"):
+        worker.validate_f18_compute(_f18_v2_compute_fixture(), version=version)
+
+
+@pytest.mark.parametrize("version,extra_rate", [(1, True), (2, False)])
+def test_f18_compute_refuses_cross_version_fields(version, extra_rate):
+    value = _f18_v2_compute_fixture() if extra_rate else _f18_compute_fixture()
+    with pytest.raises(ValueError, match="closed"):
+        worker.validate_f18_compute(value, version=version)
+
+
+@pytest.mark.parametrize("damage", ["steps", "seconds", "reference", "extra"])
+def test_f18_v2_compute_keeps_original_bounds(damage):
+    value = _f18_v2_compute_fixture()
+    if damage == "steps": value["max_steps_per_arm"] = 33
+    elif damage == "seconds": value["max_seconds_per_arm"] = 32.0
+    elif damage == "reference": value["initial_parity"]["bytes"] = True
+    else: value["argv"] = ["forbidden generic command"]
+    with pytest.raises(ValueError):
+        worker.validate_f18_compute(value, version=2)
+
+
+def _f18_v2_parity_fixture():
+    """Authored gate input; no assertion of physical receipt authenticity."""
+    compute = _f18_v2_compute_fixture()
+    compute["initial_parity"].update(bytes=30633, sha256=worker._F18_V2_PARITY_SHA256)
+    descriptors = [{"role": role, "path": "/tmp/f18-v2-asset-" + str(i),
+                    "bytes": i + 1, "sha256": str(i) * 64}
+                   for i, role in enumerate(worker._F18_ROLES)]
+    bindings = {"donor_checkpoint_sha256": descriptors[0]["sha256"],
+                "donor_model_state_sha256": worker._F18_MODEL_ROOT,
+                "training_manifest_sha256": "b" * 64,
+                "prepared_training_records_sha256": "c" * 64}
+    population = {"source_inputs": {name: dict(descriptors[i]) for name, i in
+        (("authenticated_final_F18_checkpoint", 0), ("original_source_export", 2), ("fresh_source_export", 3))}}
+    counts = (51204, 33564, 9108, 9108, 20232, 20232, 20232, 4852, 12924, 13356)
+    parity = {"schema": "retained-f18-four-tensor-initial632-parity-result/v2",
+        "profile_source_sha256": worker._F18_V2_PROFILE_SHA256,
+        "original_f18_source_sha256": worker._F18_SOURCE_SHA256,
+        "initial632_parity_qualified": True, "parity_receipt_fabricated": False,
+        "expected_input_bindings": copy.deepcopy(bindings),
+        "inputs_sha256": compute["input_descriptors"]["sha256"],
+        "parity_manifest_sha256": compute["population_manifest"]["sha256"],
+        "runtime_contract_sha256": compute["runtime_contract"]["sha256"],
+        "verified_assets": copy.deepcopy(descriptors),
+        "authenticated_final_F18_whole_sha256": bindings["donor_checkpoint_sha256"],
+        "all42_model_state_sha256": worker._F18_MODEL_ROOT,
+        "frozen38_sha256_including_modality": worker._F18_FROZEN_ROOT,
+        "head_binary32_scalar_comparisons": 194812,
+        "canonical_capture_source_forwards": 632, "canonical_capture_chunks": 11,
+        "training_rows": 168, "conditions_present": 72, "conditions_absent": 96,
+        "optimizer_updates": 0, "gradient_calls": 0, "teacher_model_restores": 0,
+        "fit_executed": False, "scoring_executed": False, "new_trained_weights": False,
+        "admitted": False, "formalized": False, "promoted": False,
+        "experiment_rate_selected": None, "parity_optimizer_learning_rate": 0.001,
+        "donor_config_learning_rate": 0.001,
+        "panel_comparisons": [{"panel": name, "rows": count, "binary32_head_scalars": scalars,
+            "all_heads_bitwise_equal": True, "entire_greedy_formal_rows_equal": True,
+            "complete_joint_rows_equal": True}
+            for (name, count, _), scalars in zip(worker._F18_PANELS, counts, strict=True)]}
+    return parity, bindings, compute, population, descriptors
+
+
+def test_f18_v2_parity_reuses_bound_zero_step_control_independent_of_train_rate(monkeypatch):
+    parity, bindings, compute, population, descriptors = _f18_v2_parity_fixture()
+    monkeypatch.setattr(worker, "_contracts", lambda: pytest.fail("pure parity gate opened dependencies"))
+    before = copy.deepcopy((parity, bindings, compute, population, descriptors))
+    worker._f18_v2_parity(parity, bindings, compute, population, descriptors)
+    assert (parity, bindings, compute, population, descriptors) == before
+    assert compute["learning_rate"] == 0.003 and parity["parity_optimizer_learning_rate"] == 0.001
+
+
+@pytest.mark.parametrize("damage", ["receipt_hash", "receipt_bytes", "old_schema", "profile", "f18_source",
+    "qualified_boolean", "fabricated", "input_binding", "inputs", "population_digest", "runtime",
+    "asset_role", "asset_bytes", "asset_hash", "asset_missing", "donor", "all42", "frozen38",
+    "heads_count", "updates_boolean", "gradient", "fit", "scoring", "authority", "selected_rate",
+    "donor_rate", "panel_missing", "panel_order", "panel_rows", "panel_heads_sum", "panel_greedy",
+    "panel_joint", "population_asset"])
+def test_f18_v2_parity_refuses_crossed_or_incomplete_evidence(damage):
+    parity, bindings, compute, population, descriptors = _f18_v2_parity_fixture()
+    if damage == "receipt_hash": compute["initial_parity"]["sha256"] = "f" * 64
+    elif damage == "receipt_bytes": compute["initial_parity"]["bytes"] = 30632
+    elif damage == "old_schema": parity["schema"] = "retained-f18-four-tensor-initial632-parity-result/v1"
+    elif damage == "profile": parity["profile_source_sha256"] = worker._F18_PROFILE_SHA256
+    elif damage == "f18_source": parity["original_f18_source_sha256"] = "f" * 64
+    elif damage == "qualified_boolean": parity["initial632_parity_qualified"] = 1
+    elif damage == "fabricated": parity["parity_receipt_fabricated"] = True
+    elif damage == "input_binding": bindings["prepared_training_records_sha256"] = "f" * 64
+    elif damage == "inputs": parity["inputs_sha256"] = "f" * 64
+    elif damage == "population_digest": parity["parity_manifest_sha256"] = "f" * 64
+    elif damage == "runtime": parity["runtime_contract_sha256"] = "f" * 64
+    elif damage == "asset_role": parity["verified_assets"][1]["role"] = worker._F18_ROLES[0]
+    elif damage == "asset_bytes": parity["verified_assets"][1]["bytes"] += 1
+    elif damage == "asset_hash": parity["verified_assets"][1]["sha256"] = "f" * 64
+    elif damage == "asset_missing": parity["verified_assets"].pop()
+    elif damage == "donor": parity["authenticated_final_F18_whole_sha256"] = "f" * 64
+    elif damage == "all42": parity["all42_model_state_sha256"] = "f" * 64
+    elif damage == "frozen38": parity["frozen38_sha256_including_modality"] = "f" * 64
+    elif damage == "heads_count": parity["head_binary32_scalar_comparisons"] -= 1
+    elif damage == "updates_boolean": parity["optimizer_updates"] = False
+    elif damage == "gradient": parity["gradient_calls"] = 1
+    elif damage == "fit": parity["fit_executed"] = True
+    elif damage == "scoring": parity["scoring_executed"] = True
+    elif damage == "authority": parity["admitted"] = True
+    elif damage == "selected_rate": parity["experiment_rate_selected"] = 0.003
+    elif damage == "donor_rate": parity["donor_config_learning_rate"] = 0.003
+    elif damage == "panel_missing": parity["panel_comparisons"].pop()
+    elif damage == "panel_order": parity["panel_comparisons"].reverse()
+    elif damage == "panel_rows": parity["panel_comparisons"][0]["rows"] = 167
+    elif damage == "panel_heads_sum": parity["panel_comparisons"][0]["binary32_head_scalars"] -= 1
+    elif damage == "panel_greedy": parity["panel_comparisons"][0]["entire_greedy_formal_rows_equal"] = False
+    elif damage == "panel_joint": parity["panel_comparisons"][0]["complete_joint_rows_equal"] = False
+    else: population["source_inputs"]["original_source_export"]["sha256"] = "f" * 64
+    with pytest.raises(ValueError):
+        worker._f18_v2_parity(parity, bindings, compute, population, descriptors)
+
+
+class _F18FakeV2Recipes:
+    """No numerical state or authority: records independently supplied kwargs."""
+    recipe_digest = staticmethod(c.digest)
+
+    def __init__(self, directory, *, refuse_second=False):
+        self.directory, self.refuse_second, self.events = directory, refuse_second, []
+
+    def build_optimizer_recipe(self, **kwargs):
+        assert not tuple(self.directory.iterdir()), "an arm existed before both recipes were validated"
+        self.events.append(("build", copy.deepcopy(kwargs)))
+        return {"synthetic_metadata_only": True, **copy.deepcopy(kwargs)}
+
+    def validate_optimizer_recipe(self, recipe, **kwargs):
+        assert not tuple(self.directory.iterdir()), "an arm existed before both recipes were validated"
+        self.events.append(("validate", copy.deepcopy(kwargs)))
+        assert recipe == {"synthetic_metadata_only": True, **kwargs}
+        if self.refuse_second and kwargs["margin_weight"] == 0.25:
+            raise ValueError("authored second recipe refusal")
+        return copy.deepcopy(recipe)
+
+
+class _F18FakeV2Profile(_F18FakeCaptureProfile):
+    def __init__(self, directory, *, steps=32, refuse_second=False):
+        super().__init__(steps=steps)
+        self.recipes = _F18FakeV2Recipes(directory, refuse_second=refuse_second)
+        self.v2_kwargs = []
+
+    def build_checkpoint(self, **kwargs):
+        assert kwargs["learning_rate"] == kwargs["recipe"]["learning_rate"] == 0.003
+        assert kwargs["margin_weight"] == kwargs["recipe"]["margin_weight"]
+        self.v2_kwargs.append(copy.deepcopy(kwargs))
+        return super().build_checkpoint(**kwargs)
+
+
+def _f18_v2_fit_fixture(directory, *, steps=32, refuse_second=False):
+    profile = _F18FakeV2Profile(directory, steps=steps, refuse_second=refuse_second)
+    donor = {"model_state": {"same_original_donor": True}, "teacher_training": {}, "row_weight_training": {}}
+    provenance = {"config": {"learning_rate": 0.001, "synthetic_metadata_only": True}}
+    bindings = {"independent_bindings": True}
+    return profile, donor, provenance, bindings
+
+
+def test_f18_v2_fit_validates_both_recipes_before_arms_and_persists_independent_rate(tmp_path, monkeypatch):
+    profile, donor, provenance, bindings = _f18_v2_fit_fixture(tmp_path)
+    captured = []
+    def capture(*args):
+        captured.append(copy.deepcopy(args[6]))
+        return [{"panel": name} for name, _, _ in worker._F18_PANELS]
+    monkeypatch.setattr(worker, "_f18_capture_arm", capture)
+    arms, updates, forwards, complete = worker._f18_fit_pair(c, None, profile, None, object(), donor,
+        [], provenance, bindings, {}, tmp_path, learning_rate=0.003)
+    assert complete is True and updates == 64 and forwards == 1264
+    assert [event[0] for event in profile.recipes.events] == ["build", "validate", "build", "validate"]
+    assert [event[1]["margin_weight"] for event in profile.recipes.events] == [0.0, 0.0, 0.25, 0.25]
+    assert all(event[1]["donor_config"] == provenance["config"] and event[1]["expected_bindings"] == bindings
+               and event[1]["learning_rate"] == 0.003 for event in profile.recipes.events)
+    assert [row["learning_rate"] for row in arms] == [0.003, 0.003]
+    assert all(row["donor_config_learning_rate"] == 0.001 for row in arms)
+    for row, kwargs in zip(arms, captured, strict=True):
+        saved = c.parse_json(c.verify(row["optimizer_recipe"]))
+        assert saved == kwargs["recipe"] and kwargs["learning_rate"] == 0.003
+        assert saved["donor_config"]["learning_rate"] == 0.001
+        assert kwargs["expected_bindings"] == bindings
+    assert provenance["config"]["learning_rate"] == 0.001
+
+
+def test_f18_v2_second_recipe_refusal_creates_no_arm_or_model_stub_call(tmp_path, monkeypatch):
+    profile, donor, provenance, bindings = _f18_v2_fit_fixture(tmp_path, refuse_second=True)
+    monkeypatch.setattr(worker, "_f18_capture_arm", lambda *a: pytest.fail("refused recipe captured"))
+    with pytest.raises(ValueError, match="second recipe"):
+        worker._f18_fit_pair(c, None, profile, None, object(), donor, [], provenance, bindings,
+            {}, tmp_path, learning_rate=0.003)
+    assert tuple(tmp_path.iterdir()) == () and profile.events == []
+    assert len(profile.recipes.events) == 4
+
+
+@pytest.mark.parametrize("steps", [0, 3, 31])
+def test_f18_v2_partial_arm_preserves_recipe_without_capture_second_arm_or_retry(tmp_path, monkeypatch, steps):
+    profile, donor, provenance, bindings = _f18_v2_fit_fixture(tmp_path, steps=steps)
+    monkeypatch.setattr(worker, "_f18_capture_arm", lambda *a: pytest.fail("partial v2 arm captured"))
+    arms, updates, captures, complete = worker._f18_fit_pair(c, None, profile, None, object(), donor,
+        [], provenance, bindings, {}, tmp_path, learning_rate=0.003)
+    assert complete is False and updates == steps and captures == 0 and len(arms) == 1
+    assert c.parse_json(c.verify(arms[0]["optimizer_recipe"]))["learning_rate"] == 0.003
+    assert Path(arms[0]["checkpoint"]["path"]).is_file()
+    assert len([event for event in profile.events if event[0] == "run"]) == 1
+    assert not (tmp_path / "arm-025").exists()
+
+
+def test_f18_v2_capture_keeps_versioned_outer_panel_and_original_joint_limits(tmp_path):
+    profile = _F18FakeCaptureProfile()
+    calls = []
+    def select(text, scores, **kwargs):
+        calls.append(dict(kwargs))
+        return {"source": text, **kwargs}
+    refs = worker._f18_capture_arm(c, None, profile, SimpleNamespace(select_joint_spans=select), object(), {},
+        {"margin_weight": 0.25, "recipe": {"synthetic_metadata_only": True}, "learning_rate": 0.003},
+        _f18_fake_panels(), tmp_path)
+    assert len(refs) == 10 and len(calls) == 632
+    assert all(call == {"top_k": 8, "max_search_nodes": 50000} for call in calls)
+    assert all(c.parse_json(c.verify(row["raw"]))["schema"] == "f18-paired-target-free-panel/v2" for row in refs)
+    assert all(c.parse_json(c.verify(row["joint"]))["schema"] == "modality-conditions-retention-joint-panel/v1" for row in refs)
+    assert len([event for event in profile.events if event[0] == "capture_restore"]) == 1
+
+
+@pytest.mark.parametrize("damage", [None, "missing_request_pin", "changed_profile", "changed_recipe", "foreign_root"])
+def test_f18_v2_profile_selection_binds_both_owners_before_implementation(tmp_path, monkeypatch, damage):
+    import hashlib
+    import ipfs_datasets_py.optimizers.logic_theorem_optimizer as package
+    profile_file, recipe_file = tmp_path / "profile.py", tmp_path / "recipe.py"
+    profile_file.write_text("# authored profile metadata fixture\n")
+    recipe_file.write_text("# authored recipe metadata fixture\n")
+    profile_pin = hashlib.sha256(profile_file.read_bytes()).hexdigest()
+    recipe_pin = hashlib.sha256(recipe_file.read_bytes()).hexdigest()
+    checked = []
+    profile = SimpleNamespace(__file__=str(profile_file), recipes=SimpleNamespace(__file__=str(recipe_file)),
+                              _implementation=lambda: checked.append(True))
+    monkeypatch.setattr(package, "legal_span_conditions_fullspan_training_v2", profile, raising=False)
+    monkeypatch.setattr(worker, "_F18_V2_PROFILE_SHA256", profile_pin)
+    monkeypatch.setattr(worker, "_F18_RECIPE_SHA256", recipe_pin)
+    request = {"cwd": str(tmp_path), "source_sha256": {str(profile_file): profile_pin, str(recipe_file): recipe_pin}}
+    if damage == "missing_request_pin": request["source_sha256"].pop(str(recipe_file))
+    elif damage == "changed_profile": profile_file.write_text("# changed profile fixture\n")
+    elif damage == "changed_recipe": recipe_file.write_text("# changed recipe fixture\n")
+    elif damage == "foreign_root": request["cwd"] = str(tmp_path / "foreign")
+    if damage is None:
+        assert worker._f18_v2_profile(request) is profile and checked == [True]
+    else:
+        with pytest.raises(ValueError, match="source generation"):
+            worker._f18_v2_profile(request)
+        assert checked == []
+
+
+def _f18_v2_fake_entry(tmp_path, monkeypatch, *, partial=False, drift=False):
+    request, output, original_profile, closed = _f18_fake_entry(tmp_path, monkeypatch, partial=partial, drift=drift)
+    request["schema"] = "owned-f18-conditions-training-request/v2"
+    request["compute"]["learning_rate"] = 0.003
+    directory = output / "f18-paired"
+    numerical = _F18FakeV2Profile(directory, steps=3 if partial else 32)
+    dispatch = []
+    donor = {"model_state": {}, "teacher_training": {}, "row_weight_training": {}}
+    provenance = {"config": {"learning_rate": 0.001}}
+    def authenticate(caller, f18, profile, *args):
+        assert profile is original_profile
+        dispatch.append("original_authentication")
+        return donor, [], provenance, {}
+    def parity(*args):
+        dispatch.append("v2_parity")
+    def select_profile(value):
+        assert value is request
+        dispatch.append("v2_profile")
+        return numerical
+    monkeypatch.setattr(worker, "_f18_authenticate", authenticate)
+    monkeypatch.setattr(worker, "_f18_parity", lambda *a: pytest.fail("v2 request borrowed v1 parity"))
+    monkeypatch.setattr(worker, "_f18_v2_parity", parity)
+    monkeypatch.setattr(worker, "_f18_v2_profile", select_profile)
+    return request, output, original_profile, numerical, closed, dispatch
+
+
+def test_f18_v2_entry_dispatches_original_authentication_and_freezes_versioned_outputs(tmp_path, monkeypatch):
+    request, output, original, numerical, closed, dispatch = _f18_v2_fake_entry(tmp_path, monkeypatch)
+    result = worker.run_f18_paired_training(request, output_directory=output)
+    assert dispatch == ["original_authentication", "v2_parity", "v2_profile"] and original.events == []
+    assert result["schema"] == "f18-paired-conditions-training-result/v2"
+    assert result["completed"] is True and result["optimizer_updates"] == 64
+    assert result["training_learning_rate"] == 0.003 and result["donor_config_learning_rate"] == 0.001
+    assert result["profile_source_sha256"] == worker._F18_V2_PROFILE_SHA256
+    assert result["optimizer_recipe_source_sha256"] == worker._F18_RECIPE_SHA256
+    freeze = c.parse_json(c.verify(result["output_freeze"]))
+    assert freeze["schema"] == "f18-paired-training-output-freeze/v2" and closed == [True]
+    assert freeze["training_learning_rate"] == 0.003 and freeze["raw_joint_files"] == 40
+    assert freeze["evaluation_gold_reference_or_comparator_bodies_opened"] == 0
+    assert all(result[key] is False for key in worker._F18_FALSE)
+    assert all(c.parse_json(c.verify(row["raw"]))["schema"] == "f18-paired-target-free-panel/v2"
+               for arm in result["arms"] for row in arm["captures"])
+    assert len(numerical.v2_kwargs) == 2
+
+
+def test_f18_v2_entry_preserves_partial_and_closes_inputs_without_complete_freeze(tmp_path, monkeypatch):
+    request, output, original, numerical, closed, dispatch = _f18_v2_fake_entry(tmp_path, monkeypatch, partial=True)
+    result = worker.run_f18_paired_training(request, output_directory=output)
+    assert result["completed"] is False and result["optimizer_updates"] == 3
+    assert result["output_freeze"] is None and result["capture_source_forwards"] == 0
+    assert closed == [False] and len(result["arms"]) == 1
+    assert c.parse_json(c.verify(result["arms"][0]["optimizer_recipe"]))["learning_rate"] == 0.003
+    assert not (output / "f18-paired/arm-025").exists()
+
+
+def test_f18_v2_entry_late_input_drift_refuses_after_preserving_frozen_outputs(tmp_path, monkeypatch):
+    request, output, original, numerical, closed, dispatch = _f18_v2_fake_entry(tmp_path, monkeypatch, drift=True)
+    with pytest.raises(ValueError, match="changed"):
+        worker.run_f18_paired_training(request, output_directory=output)
+    assert closed == [True] and (output / "f18-paired/pair-output-freeze.json").is_file()
+    assert len([event for event in numerical.events if event[0] == "run"]) == 2

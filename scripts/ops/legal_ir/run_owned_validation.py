@@ -548,6 +548,7 @@ def main(argv=None):
 # The training branch is deliberately separate from validation manifests and
 # their source-custody classifier. Both branches use the original native owners.
 TRAINER_REQUEST_SCHEMA = 'owned-f18-conditions-training-request/v1'
+TRAINER_V2_REQUEST_SCHEMA = 'owned-f18-conditions-training-request/v2'
 TRAINER_READY_SCHEMA = 'owned-f18-conditions-training-ready/v1'
 TRAINER_TERMINAL_SCHEMA = 'owned-f18-conditions-training-terminal/v1'
 _TRAINER_FIELDS = {'schema', 'mode', 'cwd', 'attempt_directory', 'outputs', 'roots',
@@ -581,7 +582,9 @@ def _trainer_digest(value):
 
 def _validate_trainer_request(value):
     _trainer_need(type(value) is dict and set(value) == _TRAINER_FIELDS
-        and value['schema'] == TRAINER_REQUEST_SCHEMA, 'closed F18 training request required')
+        and type(value['schema']) is str
+        and value['schema'] in (TRAINER_REQUEST_SCHEMA, TRAINER_V2_REQUEST_SCHEMA),
+        'closed F18 training request required')
     _trainer_need(type(value['mode']) is str and value['mode'] in ('native_probe', 'paired_fit')
         and value['process_scope'] == 'isolated_process_group', 'closed trainer mode/process scope required')
     _trainer_need(_trainer_path(value['cwd']) == ROOT, 'trainer must use its selected source tree')
@@ -614,8 +617,14 @@ def _validate_trainer_request(value):
         _trainer_need(value['compute'] is None, 'native probe permits no payload or compute request')
     else:
         compute = value['compute']
-        _trainer_need(type(compute) is dict and set(compute) == _TRAINER_COMPUTE_FIELDS,
+        version2 = value['schema'] == TRAINER_V2_REQUEST_SCHEMA
+        fields = _TRAINER_COMPUTE_FIELDS | ({'learning_rate'} if version2 else set())
+        _trainer_need(type(compute) is dict and set(compute) == fields,
             'closed paired F18 compute request required')
+        if version2:
+            rate = compute['learning_rate']
+            _trainer_need(type(rate) in (int, float) and 0 < rate <= sys.float_info.max,
+                'explicit finite positive TRAIN learning_rate required')
         for name in ('input_descriptors', 'initial_parity', 'runtime_contract', 'population_manifest'):
             ref = compute[name]
             _trainer_need(type(ref) is dict and set(ref) == {'path', 'bytes', 'sha256'}
@@ -647,6 +656,11 @@ def trainer_request(path, digest):
 
 
 def _trainer_source_guard(value):
+    if value['schema'] == TRAINER_V2_REQUEST_SCHEMA and value['mode'] == 'paired_fit':
+        _trainer_need(all(str(_TRAINER_DIRECTORY/name) in value['source_sha256'] for name in (
+            'legal_span_conditions_fullspan_training_v2.py',
+            'legal_span_conditions_fullspan_optimizer_recipe_v1.py')),
+            'explicit v2 numerical and recipe source pins required')
     required = [Path(__file__).resolve(), *(_TRAINER_DIRECTORY/name for name in (
         'autoencoder_daemon_resources.py', 'autoencoder_daemon_operation_journal.py',
         'autoencoder_daemon_invocation_contracts.py', 'resource_scheduler.py',
@@ -949,7 +963,6 @@ def classify_owned_trainer_source_custody(terminal, request_raw, *, expected_req
             and type(owner_pid) is int and owner_pid > 0 and type(owner_birth) is str and owner_birth.isdecimal()
             and type(returncode) is int and type(terminal['completed']) is bool
             and terminal['completed'] is (returncode == 0)
-            and terminal['owner_open_returned'] is True
             and all(terminal.get(key) is False for key in ('admitted', 'Lean_admitted', 'formalized', 'promoted'))
             and terminal['owner_exit_handling_completed'] is True
             and terminal['process_cleanup_error'] is None and terminal['owner_exit_error'] is None
@@ -957,6 +970,70 @@ def classify_owned_trainer_source_custody(terminal, request_raw, *, expected_req
             and all(type(flag) is bool for flag in terminal['source_guards'].values()),
             'original trainer terminal custody is incomplete')
         reservation = terminal['reservation']
+        if terminal['owner_open_returned'] is False:
+            # Only the pinned backend's inventory refusal before record/native
+            # acquisition is proven here. Other __enter__ failures stay unknown.
+            _trainer_need(returncode != 0 and terminal['completed'] is False
+                and terminal.get('error') == {'error_type': 'DaemonResourceError',
+                    'error': 'storage inventory entry bound exceeded'}
+                and terminal['child_identity'] is None and terminal['events'] == {}
+                and _trainer_group_closed(terminal['group_observation'])
+                and type(reservation) is dict and reservation['status'] == 'not_entered'
+                and reservation['record'] is None and reservation['resource_lease'] is None
+                and reservation['cleanup_error'] is None
+                and reservation['schema'] == 'daemon-resource-reservations-v1'
+                and reservation['scheduler_lane'] == 'hammer_lean'
+                and reservation['workload'] == 'canonical_trainer'
+                and reservation['ledger_path'] == expected_resource_ledger
+                and terminal['scheduler'] == {'state_path': value['scheduler_state_path'],
+                    'policy_sha256': value['expected_scheduler_policy_sha256'],
+                    'lane': 'hammer_lean', 'workload': 'canonical_trainer'},
+                'original pre-entry inventory refusal is incomplete')
+            rid = reservation['reservation_id']
+            _trainer_need(type(rid) is str and len(rid) == 32
+                and all(c in '0123456789abcdef' for c in rid)
+                and terminal['resource_request_id'] == 'daemon:'+rid,
+                'pre-entry reservation identity differs')
+            ledger_path = _trainer_path(expected_resource_ledger)
+            ledger = _trainer_decode(snapshot(ledger_path, 16*1024*1024))
+            from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_daemon_resources as host
+            _trainer_need(Path(host.__file__).resolve() == _TRAINER_DIRECTORY/'autoencoder_daemon_resources.py',
+                'different original storage metadata owner imported')
+            _trainer_need(type(ledger) is dict and set(ledger) == {'schema', 'roots', 'limit_bytes', 'reservations'}
+                and ledger.get('schema') == host.SCHEMA
+                and type(ledger.get('reservations')) is dict and rid not in ledger['reservations']
+                and ledger.get('roots') == reservation['roots']
+                and [root['path'] for root in ledger['roots']] == value['roots']
+                and type(ledger.get('limit_bytes')) is int
+                and type(reservation.get('storage_limit_bytes')) is int
+                and ledger['limit_bytes'] == reservation['storage_limit_bytes'] == host.MAX_STORAGE_BYTES
+                and len(ledger['reservations']) <= host.MAX_RESERVATIONS,
+                'pre-entry durable storage evidence differs')
+            for key, record in ledger['reservations'].items():
+                _trainer_need(type(record) is dict and record.get('reservation_id') == key
+                    and record.get('status') in {'reserved', 'active', 'retained', 'released'},
+                    'pre-entry durable reservation record differs')
+                host._integer(record.get('storage_bytes'), 'ledger storage_bytes', maximum=host.MAX_STORAGE_BYTES)
+                host._integer(record.get('owner_pid'), 'ledger owner_pid')
+                if 'child_process_slots' in record:
+                    host._integer(record['child_process_slots'], 'ledger child_process_slots')
+                host._external_charges(record)
+            _trainer_need(rid not in json.dumps(ledger['reservations'], ensure_ascii=True, sort_keys=True, allow_nan=False),
+                'pre-entry identity appears in durable storage metadata')
+            from ipfs_datasets_py.optimizers.logic_theorem_optimizer import existing_resource_scheduler as existing
+            _trainer_need(Path(existing.__file__).resolve() == _TRAINER_DIRECTORY/'existing_resource_scheduler.py',
+                'different original scheduler reader imported')
+            scheduler_path = _trainer_path(value['scheduler_state_path'])
+            parents = existing._parents(scheduler_path)
+            _, scheduler = existing._read(scheduler_path)
+            _trainer_need(existing._parents(scheduler_path) == parents
+                and existing.policy_sha256(scheduler['config']) == value['expected_scheduler_policy_sha256']
+                and scheduler['config'].get('proof_safety_enabled') is True
+                and rid not in json.dumps(scheduler, ensure_ascii=True, sort_keys=True, allow_nan=False),
+                'pre-entry request exists in durable native state or policy differs')
+            return {'verdict': 'proven_original_trainer_preentry_inventory_refusal_source_closed',
+                    'source_custody_closed': True, 'storage_release_authorized': False}
+        _trainer_need(terminal['owner_open_returned'] is True, 'original trainer entry unproven')
         record, lease = reservation['record'], reservation['resource_lease']
         _trainer_need(type(record) is dict and type(lease) is dict and lease['released'] is True
             and lease['parent_lease_id'] is None
