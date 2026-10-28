@@ -642,3 +642,316 @@ def test_f18_raw_decoded_and_joint_selected_keep_their_distinct_valid_routes():
         assert result["arms"]["coefficient_025"][mode]["exact_reconstruction"]["matched"] == 624
         assert result["permission_counts"][mode]["coefficient_025"]["matched"] == 32
     assert all(row[mode]["source_integrity_valid"] is True for row in result["panels"] for mode in ("raw", "joint"))
+
+
+# V2 expectations below are independent authored commitments. Rendering those
+# commitments into fake captures does not authenticate files or select a fit.
+def _f18_v2_training_context():
+    bindings = {name: "a" * 64 for name in (
+        "donor_checkpoint_sha256", "donor_model_state_sha256", "donor_provenance_sha256",
+        "source_parent_checkpoint_sha256", "source_parent_model_state_sha256", "context_contract_sha256",
+        "training_manifest_sha256", "prepared_training_records_sha256", "teacher_checkpoint_sha256",
+        "teacher_model_state_sha256", "teacher_capture_sha256", "teacher_training_sha256",
+        "row_weight_training_sha256", "training_mask_certificate_sha256")}
+    bindings.update(schema="conditions-fullspan-f18-four-tensor-input-bindings/v1",
+        donor_checkpoint_sha256="90031d084f2d86cf860c5fc95d2dae374dc254adec70bd85a90893f98c5a1555",
+        donor_model_state_sha256="2ed0ccf633f55fac202e2edb95ea9fa6e390b8d99381a05925f4dd5221925883")
+    return {"schema": "f18-frozen-matched-training-expectations/v2",
+        "profile_source_sha256": "d80a08844c06daae6466a39b87bc0c395e0dd4a2da01b284704a4e03e44af0f1",
+        "optimizer_recipe_source_sha256": "d22b932b80c48b688ff3f18d5f141152a6032b7cb2f6195845840af818d8dc84",
+        "input_bindings": bindings, "learning_rate": 0.003, "donor_config_learning_rate": 0.001,
+        "arms": {"coefficient_0": {"checkpoint_sha256": "4" * 64, "model_state_sha256": "3" * 64,
+                                   "recipe_sha256": "6" * 64, "margin_weight": 0.0},
+                 "coefficient_025": {"checkpoint_sha256": "5" * 64, "model_state_sha256": "3" * 64,
+                                     "recipe_sha256": "7" * 64, "margin_weight": 0.25}}}
+
+
+def _f18_render_v2_capture_metadata(arms, context):
+    for arm in ("coefficient_0", "coefficient_025"):
+        expected = context["arms"][arm]
+        for panel in arms[arm]:
+            panel["raw"]["schema"] = "f18-paired-target-free-panel/v2"
+            for chunk in panel["raw"]["chunks"]:
+                chunk.update(schema="conditions-fullspan-four-tensor-target-free-head-capture/v2",
+                             training_executed=False)
+                chunk["inference"].update(schema="conditions-fullspan-four-tensor-inference/v2",
+                    checkpoint_sha256=expected["checkpoint_sha256"], model_state_sha256=expected["model_state_sha256"],
+                    recipe_sha256=expected["recipe_sha256"], learning_rate=context["learning_rate"],
+                    donor_config_learning_rate=context["donor_config_learning_rate"],
+                    training_executed=False, latent_ablation="none")
+
+
+def _f18_v2_matched_fixture():
+    context = _f18_v2_training_context()
+    compare, arms, targets, options = _f18_matched_fixture()
+    _f18_render_v2_capture_metadata(arms, context)
+    options["expected_training"] = context
+    return compare, arms, targets, options
+
+
+def test_f18_v2_complete_comparison_binds_detached_expectations_without_origin_or_training_authority():
+    compare, arms, targets, options = _f18_v2_matched_fixture()
+    before = deepcopy((arms, targets, options))
+    context = options["expected_training"]
+    assert context["arms"]["coefficient_0"]["model_state_sha256"] == context["arms"]["coefficient_025"]["model_state_sha256"]
+    result = compare(arms, targets, **options)
+    assert (arms, targets, options) == before and result["valid_evaluation"] is True
+    assert result["schema"] == "f18-frozen-matched-arm-fidelity/v2"
+    assert result["training_expectations"] == context and result["training_expectations"] is not context
+    raw = json.dumps(context, sort_keys=True, separators=(",", ":"), ensure_ascii=True, allow_nan=False).encode()
+    assert result["training_expectations_sha256"] == hashlib.sha256(raw).hexdigest()
+    assert result["training_expectations_consistency_verified"] is True
+    for flag in ("training_expectations_origin_verified", "checkpoint_recipe_source_bindings_independently_verified",
+                 "freeze_timing_verified", "source_commitment_origin_verified", "target_origin_verified",
+                 "qualified", "admitted", "formalized", "training_executed", "promotion_performed"):
+        assert result[flag] is False
+    for arm in ("parent", "coefficient_0", "coefficient_025"):
+        for mode in ("raw", "joint"):
+            assert result["arms"][arm][mode]["exact_reconstruction"]["matched"] == 624
+            assert result["arms"][arm][mode]["exact_reconstruction"]["total"] == 624
+            assert result["permission_counts"][mode][arm]["matched"] == 32
+    result["training_expectations"]["arms"]["coefficient_0"]["recipe_sha256"] = "e" * 64
+    assert options == before[2]
+
+
+def test_f18_v2_comparison_executes_without_import_or_file_access(monkeypatch):
+    import builtins
+    import os
+    from pathlib import Path
+    compare, arms, targets, options = _f18_v2_matched_fixture()
+    attempts = []
+    def refuse(*args, **kwargs):
+        attempts.append(repr(args[:1]))
+        raise AssertionError("pure comparison attempted import or file access")
+    with monkeypatch.context() as guard:
+        guard.setattr(builtins, "open", refuse)
+        guard.setattr(os, "open", refuse)
+        for name in ("open", "read_bytes", "read_text", "write_bytes", "write_text"):
+            guard.setattr(Path, name, refuse)
+        # pytest resolves patch metadata with imports; install this guard last.
+        # It is restored first by context teardown, after the actual comparison.
+        guard.setattr(builtins, "__import__", refuse)
+        result = compare(arms, targets, **options)
+    assert attempts == [] and result["valid_evaluation"] is True
+
+
+@pytest.mark.parametrize("explicit_schema", [False, True])
+def test_f18_v1_default_retains_result_shape_and_legacy_inference_schema_policy(explicit_schema):
+    compare, arms, targets, options = _f18_matched_fixture()
+    if explicit_schema:
+        for arm in ("coefficient_0", "coefficient_025"):
+            for panel in arms[arm]:
+                for chunk in panel["raw"]["chunks"]:
+                    chunk["inference"]["schema"] = "conditions-fullspan-four-tensor-inference/v1"
+    result = compare(arms, targets, **options)
+    assert result == compare(arms, targets, **options, expected_training=None)
+    assert result["valid_evaluation"] is True and result["schema"] == "f18-frozen-matched-arm-fidelity/v1"
+    assert not any(key.startswith("training_expectations") for key in result)
+    assert "checkpoint_recipe_source_bindings_independently_verified" not in result
+
+
+@pytest.mark.parametrize("schema", ["conditions-fullspan-four-tensor-inference/v2", "foreign", None])
+def test_f18_v1_cannot_hide_an_explicit_different_inference_generation(schema):
+    compare, arms, targets, options = _f18_matched_fixture()
+    arms["coefficient_025"][-1]["raw"]["chunks"][0]["inference"]["schema"] = schema
+    with pytest.raises(ValueError):
+        compare(arms, targets, **options)
+
+
+@pytest.mark.parametrize("damage", ["no_expectations", "old_envelopes"])
+def test_f18_v2_requires_explicit_context_and_matching_generation(damage):
+    if damage == "no_expectations":
+        compare, arms, targets, options = _f18_v2_matched_fixture()
+        options.pop("expected_training")
+    else:
+        compare, arms, targets, options = _f18_matched_fixture()
+        options["expected_training"] = _f18_v2_training_context()
+    with pytest.raises(ValueError):
+        compare(arms, targets, **options)
+
+
+@pytest.mark.parametrize("damage", ["panel", "chunk", "inference", "inference_missing"])
+def test_f18_v2_refuses_mixed_generation_even_on_last_unscored_panel(damage):
+    compare, arms, targets, options = _f18_v2_matched_fixture()
+    raw = arms["coefficient_025"][-1]["raw"]
+    if damage == "panel": raw["schema"] = "f18-paired-target-free-panel/v1"
+    elif damage == "chunk": raw["chunks"][0]["schema"] = "conditions-fullspan-four-tensor-target-free-head-capture/v1"
+    elif damage == "inference": raw["chunks"][0]["inference"]["schema"] = "conditions-fullspan-four-tensor-inference/v1"
+    else: raw["chunks"][0]["inference"].pop("schema")
+    with pytest.raises(ValueError):
+        compare(arms, targets, **options)
+
+
+@pytest.mark.parametrize("field", ["checkpoint_sha256", "model_state_sha256", "recipe_sha256",
+                                   "learning_rate", "donor_config_learning_rate"])
+@pytest.mark.parametrize("arm,panel,chunk", [("coefficient_0", 0, 0), ("coefficient_025", 0, 1), ("coefficient_025", 9, 0)])
+def test_f18_v2_identity_is_checked_on_both_arms_later_chunks_and_unscored_panels(field, arm, panel, chunk):
+    compare, arms, targets, options = _f18_v2_matched_fixture()
+    inference = arms[arm][panel]["raw"]["chunks"][chunk]["inference"]
+    inference[field] = "e" * 64 if field.endswith("sha256") else 0.004
+    with pytest.raises(ValueError):
+        compare(arms, targets, **options)
+
+
+@pytest.mark.parametrize("field", ["checkpoint_sha256", "model_state_sha256", "recipe_sha256",
+                                   "learning_rate", "donor_config_learning_rate"])
+def test_f18_v2_identity_fields_cannot_be_missing(field):
+    compare, arms, targets, options = _f18_v2_matched_fixture()
+    arms["coefficient_025"][0]["raw"]["chunks"][1]["inference"].pop(field)
+    with pytest.raises(ValueError):
+        compare(arms, targets, **options)
+
+
+def test_f18_v2_learning_rate_requires_exact_declared_numeric_type():
+    compare, arms, targets, options = _f18_v2_matched_fixture()
+    options["expected_training"]["learning_rate"] = 3
+    _f18_render_v2_capture_metadata(arms, options["expected_training"])
+    arms["coefficient_025"][0]["raw"]["chunks"][1]["inference"]["learning_rate"] = 3.0
+    with pytest.raises(ValueError):
+        compare(arms, targets, **options)
+
+
+@pytest.mark.parametrize("damage", ["chunk_training", "chunk_training_missing", "inference_training",
+                                   "inference_training_missing", "ablation", "ablation_missing"])
+def test_f18_v2_readout_scope_requires_no_training_and_original_unablated_inference(damage):
+    compare, arms, targets, options = _f18_v2_matched_fixture()
+    chunk = arms["coefficient_025"][-1]["raw"]["chunks"][0]
+    if damage == "chunk_training": chunk["training_executed"] = True
+    elif damage == "chunk_training_missing": chunk.pop("training_executed")
+    elif damage == "inference_training": chunk["inference"]["training_executed"] = True
+    elif damage == "inference_training_missing": chunk["inference"].pop("training_executed")
+    elif damage == "ablation": chunk["inference"]["latent_ablation"] = "zero"
+    else: chunk["inference"].pop("latent_ablation")
+    with pytest.raises(ValueError):
+        compare(arms, targets, **options)
+
+
+@pytest.mark.parametrize("field", ["checkpoint_sha256", "recipe_sha256"])
+def test_f18_v2_capture_cannot_borrow_other_arm_commitment(field):
+    compare, arms, targets, options = _f18_v2_matched_fixture()
+    arms["coefficient_025"][0]["raw"]["chunks"][0]["inference"][field] = options["expected_training"]["arms"]["coefficient_0"][field]
+    with pytest.raises(ValueError):
+        compare(arms, targets, **options)
+
+
+@pytest.mark.parametrize("rate", [True, False, None, "0.003", 0, -0.003,
+                                  float("nan"), float("inf"), -float("inf"), 10 ** 400])
+def test_f18_v2_training_expectations_refuse_nonfinite_boolean_or_unbounded_rates(rate):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.formula_generation_metrics import _f18_training_expectations
+    context = _f18_v2_training_context()
+    context["learning_rate"] = rate
+    with pytest.raises(ValueError):
+        _f18_training_expectations(context)
+
+
+@pytest.mark.parametrize("damage", ["outer_extra", "outer_missing", "schema", "profile", "recipe_source",
+    "arms_list", "arm_missing", "arm_extra", "arm_fields_extra", "arm_fields_missing", "checkpoint_hash",
+    "model_hash", "recipe_hash", "margin_boolean", "margin_integer", "wrong_margin", "shared_checkpoint",
+    "shared_recipe", "donor_rate", "donor_rate_boolean", "bindings_list", "bindings_extra", "bindings_schema",
+    "donor_checkpoint", "donor_model", "binding_hash"])
+def test_f18_v2_training_expectations_refuse_unclosed_crossed_or_borrowed_commitments(damage):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.formula_generation_metrics import _f18_training_expectations
+    context = _f18_v2_training_context()
+    candidate = context["arms"]["coefficient_025"]
+    if damage == "outer_extra": context["admitted"] = True
+    elif damage == "outer_missing": context.pop("learning_rate")
+    elif damage == "schema": context["schema"] = "f18-frozen-matched-training-expectations/v1"
+    elif damage == "profile": context["profile_source_sha256"] = "e" * 64
+    elif damage == "recipe_source": context["optimizer_recipe_source_sha256"] = "e" * 64
+    elif damage == "arms_list": context["arms"] = list(context["arms"].values())
+    elif damage == "arm_missing": context["arms"].pop("coefficient_0")
+    elif damage == "arm_extra": context["arms"]["parent"] = deepcopy(candidate)
+    elif damage == "arm_fields_extra": candidate["admitted"] = True
+    elif damage == "arm_fields_missing": candidate.pop("recipe_sha256")
+    elif damage == "checkpoint_hash": candidate["checkpoint_sha256"] = "A" * 64
+    elif damage == "model_hash": candidate["model_state_sha256"] = "3" * 63
+    elif damage == "recipe_hash": candidate["recipe_sha256"] = 7
+    elif damage == "margin_boolean": context["arms"]["coefficient_0"]["margin_weight"] = False
+    elif damage == "margin_integer": context["arms"]["coefficient_0"]["margin_weight"] = 0
+    elif damage == "wrong_margin": candidate["margin_weight"] = 0.0
+    elif damage == "shared_checkpoint": candidate["checkpoint_sha256"] = context["arms"]["coefficient_0"]["checkpoint_sha256"]
+    elif damage == "shared_recipe": candidate["recipe_sha256"] = context["arms"]["coefficient_0"]["recipe_sha256"]
+    elif damage == "donor_rate": context["donor_config_learning_rate"] = 0.003
+    elif damage == "donor_rate_boolean": context["donor_config_learning_rate"] = True
+    elif damage == "bindings_list": context["input_bindings"] = []
+    elif damage == "bindings_extra": context["input_bindings"]["unrecognized"] = "a" * 64
+    elif damage == "bindings_schema": context["input_bindings"]["schema"] = "unrecognized"
+    elif damage == "donor_checkpoint": context["input_bindings"]["donor_checkpoint_sha256"] = "e" * 64
+    elif damage == "donor_model": context["input_bindings"]["donor_model_state_sha256"] = "e" * 64
+    else: context["input_bindings"]["teacher_capture_sha256"] = "invalid"
+    with pytest.raises(ValueError):
+        _f18_training_expectations(context)
+
+
+@pytest.mark.parametrize("field", ["schema", "donor_checkpoint_sha256", "donor_model_state_sha256",
+    "donor_provenance_sha256", "source_parent_checkpoint_sha256", "source_parent_model_state_sha256",
+    "context_contract_sha256", "training_manifest_sha256", "prepared_training_records_sha256",
+    "teacher_checkpoint_sha256", "teacher_model_state_sha256", "teacher_capture_sha256",
+    "teacher_training_sha256", "row_weight_training_sha256", "training_mask_certificate_sha256"])
+def test_f18_v2_training_expectations_require_every_original_input_binding(field):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.formula_generation_metrics import _f18_training_expectations
+    context = _f18_v2_training_context()
+    context["input_bindings"].pop(field)
+    with pytest.raises(ValueError):
+        _f18_training_expectations(context)
+
+
+@pytest.mark.parametrize("damage", ["honest_abstention", "independent_actor_loss", "invalid_joint_status",
+                                   "missing_row", "unscored_source_mismatch"])
+def test_f18_v2_generation_consistency_never_substitutes_for_complete_fidelity_accounting(damage):
+    compare, arms, targets, options = _f18_v2_matched_fixture()
+    prediction = _f18_fixture_prediction(arms, "coefficient_025", "joint", panel=1, row=31)
+    if damage == "honest_abstention":
+        prediction.update(status="abstained", canonical_ir=None, formal_outputs=[], formula_text=None)
+    elif damage == "independent_actor_loss":
+        _replace(prediction, "actor", "a different authored actor")
+    elif damage == "invalid_joint_status": prediction["status"] = "decoded"
+    elif damage == "missing_row": arms["coefficient_025"][1]["joint"]["rows"].pop()
+    else:
+        _f18_fixture_prediction(arms, "coefficient_025", "joint", panel=9, row=0)["source_sha256"] = "e" * 64
+    result = compare(arms, targets, **options)
+    assert result["training_expectations_consistency_verified"] is True
+    assert result["weak_label_target_count"] == 624
+    assert len(result["retention"]["joint"]) == 72 and len(result["permission_decisions"]["joint"]) == 32
+    assert result["arms"]["coefficient_025"]["joint"]["exact_reconstruction"]["total"] == 624
+    if damage in {"honest_abstention", "independent_actor_loss"}:
+        assert result["valid_evaluation"] is True
+        assert result["arms"]["coefficient_025"]["joint"]["exact_reconstruction"]["matched"] == 623
+        decision = result["permission_decisions"]["joint"][31]["arms"]["coefficient_025"]
+        assert decision["full_ir_exact"] is False
+        assert decision["permission_retained"] is (damage == "independent_actor_loss")
+    else:
+        assert result["valid_evaluation"] is False
+    assert result["training_expectations_origin_verified"] is False
+
+
+
+@pytest.mark.parametrize("damage", ["context_schema", "profile_source", "recipe_source", "bindings_schema",
+    "context_key", "binding_key", "arm_key", "arm_field", "panel_schema", "chunk_schema",
+    "inference_schema", "latent_ablation"])
+def test_f18_v2_context_and_generation_names_require_literal_strings(damage):
+    class EqualString(str):
+        def __eq__(self, other): return True
+        __hash__ = str.__hash__
+    compare, arms, targets, options = _f18_v2_matched_fixture()
+    context = options["expected_training"]
+    chunk = arms["coefficient_025"][-1]["raw"]["chunks"][0]
+    if damage in {"context_schema", "profile_source", "recipe_source"}:
+        field = {"context_schema": "schema", "profile_source": "profile_source_sha256",
+                 "recipe_source": "optimizer_recipe_source_sha256"}[damage]
+        context[field] = EqualString("unrecognized")
+    elif damage == "bindings_schema": context["input_bindings"]["schema"] = EqualString("unrecognized")
+    elif damage == "context_key": context[EqualString("schema")] = context.pop("schema")
+    elif damage == "binding_key":
+        bindings = context["input_bindings"]
+        bindings[EqualString("teacher_capture_sha256")] = bindings.pop("teacher_capture_sha256")
+    elif damage == "arm_key": context["arms"][EqualString("coefficient_025")] = context["arms"].pop("coefficient_025")
+    elif damage == "arm_field":
+        arm = context["arms"]["coefficient_025"]
+        arm[EqualString("recipe_sha256")] = arm.pop("recipe_sha256")
+    elif damage == "panel_schema": arms["coefficient_025"][-1]["raw"]["schema"] = EqualString("unrecognized")
+    elif damage == "chunk_schema": chunk["schema"] = EqualString("unrecognized")
+    elif damage == "inference_schema": chunk["inference"]["schema"] = EqualString("unrecognized")
+    else: chunk["inference"]["latent_ablation"] = EqualString("unrecognized")
+    with pytest.raises(ValueError):
+        compare(arms, targets, **options)

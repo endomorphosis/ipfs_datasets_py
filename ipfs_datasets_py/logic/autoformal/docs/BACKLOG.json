@@ -16991,7 +16991,8 @@
           "f18-frozen-matched-scoring-20261027-01",
           "f18-conditions-ranking-diagnosis-20261028-01",
           "f18-optimizer-recipe-metadata-contract-qualified-20261028-01",
-          "f18-v2-trainer-integration-and-preentry-recovery-qualified-20261028-01"
+          "f18-v2-trainer-integration-and-preentry-recovery-qualified-20261028-01",
+          "f18-v2-saved-scoring-contract-qualified-20261028-01"
         ],
         "completed_successor_evidence_scopes": {
           "f18-optimizer-recipe-metadata-contract-qualified-20261028-01": "Pure metadata only: 160 cases (480 phases); no selected rate, executable numerical profile, new parity/admission or fit.",
@@ -17022,6 +17023,7 @@
           }
         ],
         "v2_numerical_successor": {
+          "actual_retained_v2_outputs_compared": false,
           "capture_evidence_id": "f18-v2-source-capture-and-initial632-parity-qualified-20261028-01",
           "cases": 52,
           "component_id": "conditions-fullspan-f18-four-tensor-training-v2",
@@ -17030,17 +17032,20 @@
           "native_task_activation": false,
           "new_experiment_rate_selected": null,
           "next_tasks": [
-            "Resolve the current inventory-capacity refusal through a compatible original resource-owner generation without altering retained evidence, admitted roots, budgets or model-bound source identities implicitly.",
-            "Extend existing formula_generation_metrics saved-output consumer with explicit v2 panel/chunk/inference consistency and refusal tests; do not relabel v2 captures as v1.",
-            "Select and preregister one finite TRAIN-only experiment and obtain fresh original training-purpose admission before retained updates.",
-            "Freeze all outputs before independent full-IR/per-ID,72 conditions-present TRAIN,32 target-P modality and original comparator no-loss gates.",
-            "Public physical-v2 validation frontend support remains separate; preserve existing trainer branch."
+            "Port only the existing finite headroom change through original resource owner; qualify corresponding trainer/source/checkpoint/parity generation without rewriting old identities.",
+            "Extend indexed original saved-comparison orchestration with v2 freeze/recipe/independent-context joins and score-storage stripping; preserve complete60-file verification before7referencefiles. No v2retainedcandidate outputs exist yet.",
+            "Predeclare one finite TRAIN-only rate/objective and acquire fresh original training-purpose admission before retained updates.",
+            "Freeze outputs before independent complete-IR/per-ID,72 conditions-present TRAIN,32 target-P modality and original comparator no-loss gates.",
+            "Public physical-v2 validation frontend reconciliation remains separate."
           ],
           "phases": 156,
           "prior_numerical_evidence_id": "f18-v2-recipe-bound-numerical-qualified-20261028-01",
           "retained_fit": false,
+          "saved_scoring_cases": 200,
+          "saved_scoring_contract_qualified": true,
+          "saved_scoring_evidence_id": "f18-v2-saved-scoring-contract-qualified-20261028-01",
           "source_sha256": "d80a08844c06daae6466a39b87bc0c395e0dd4a2da01b284704a4e03e44af0f1",
-          "status": "numerical_capture_parity_and_trainer_contracts_qualified_inventory_and_saved_v2_scoring_open",
+          "status": "numerical_capture_parity_trainer_and_saved_scoring_contracts_qualified_operational_port_open",
           "trainer_contract_cases": 241,
           "trainer_evidence_id": "f18-v2-trainer-integration-and-preentry-recovery-qualified-20261028-01",
           "trainer_native_probe_qualified": false,

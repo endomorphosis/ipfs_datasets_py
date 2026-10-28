@@ -23,7 +23,9 @@ flowchart LR
 ```
 
 
-The [v2 trainer integration and pre-entry recovery qualification](../../../docs/autoformalization/evidence/legal-ir-f18-v2-trainer-integration-recovery-20261028.json) passed 241 pure/fake cases through the original validation owner. It extends the existing controller/worker and keeps both arm recipes and v2 output identities explicit. A separate native probe hit the unchanged inventory-count bound before any grant or child; no retained training or new rate ran. The narrow source-close recovery is qualified, while inventory capacity, v2 saved-output scoring and fresh TRAIN admission remain open.
+The [v2 trainer integration and pre-entry recovery qualification](../../../docs/autoformalization/evidence/legal-ir-f18-v2-trainer-integration-recovery-20261028.json) passed 241 pure/fake cases through the original validation owner. It extends the existing controller/worker and keeps both arm recipes and v2 output identities explicit. A separate native probe hit the unchanged inventory-count bound before any grant or child; no retained training or new rate ran. The narrow source-close recovery is qualified, while inventory capacity, outer v2 saved-comparison orchestration and fresh TRAIN admission remain open.
+
+The [opt-in v2 saved scorer](../../../docs/autoformalization/evidence/legal-ir-f18-v2-saved-scoring-20261028.json) now has200 passing authored cases. It checks independent caller context and every candidate generation without importing numerical owners or opening files. Physical authentication remains external; no retained-v2 outputs were compared. The inventory diagnosis reuses an existing local4million-entry headroom change; a qualified public port and fresh operational bindings remain before training.
 
 Start with one reviewed norm, its governing definition and two distinct statutory uses from the retained 2024 Title 10 pilot. Expand to 20–40 connected provisions, then bounded dependency components covering every requested occurrence in the selected release. Keep processed, unresolved, unsupported and admitted coverage separate. Model outputs enter the same review and admission path.
 

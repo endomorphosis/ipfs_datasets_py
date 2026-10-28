@@ -299,6 +299,76 @@ _F18_PARENT_CAPTURE = "modality-conditions-retention-adapter-target-free-head-ca
 _F18_TRAINED_PANEL = "f18-paired-target-free-panel/v1"
 _F18_TRAINED_CAPTURE = "conditions-fullspan-four-tensor-target-free-head-capture/v1"
 _F18_JOINT_PANEL = "modality-conditions-retention-joint-panel/v1"
+F18_MATCHED_V2_SCHEMA = "f18-frozen-matched-arm-fidelity/v2"
+F18_EXPECTED_TRAINING_SCHEMA = "f18-frozen-matched-training-expectations/v2"
+_F18_V2_PANEL = "f18-paired-target-free-panel/v2"
+_F18_V2_CAPTURE = "conditions-fullspan-four-tensor-target-free-head-capture/v2"
+_F18_INFERENCE = "conditions-fullspan-four-tensor-inference/v1"
+_F18_V2_INFERENCE = "conditions-fullspan-four-tensor-inference/v2"
+_F18_V2_PROFILE_SHA256 = "d80a08844c06daae6466a39b87bc0c395e0dd4a2da01b284704a4e03e44af0f1"
+_F18_RECIPE_SOURCE_SHA256 = "d22b932b80c48b688ff3f18d5f141152a6032b7cb2f6195845840af818d8dc84"
+_F18_DONOR_SHA256 = "90031d084f2d86cf860c5fc95d2dae374dc254adec70bd85a90893f98c5a1555"
+_F18_DONOR_MODEL_SHA256 = "2ed0ccf633f55fac202e2edb95ea9fa6e390b8d99381a05925f4dd5221925883"
+_F18_INPUT_BINDINGS = frozenset(("schema", "donor_checkpoint_sha256", "donor_model_state_sha256",
+    "donor_provenance_sha256", "source_parent_checkpoint_sha256", "source_parent_model_state_sha256",
+    "context_contract_sha256", "training_manifest_sha256", "prepared_training_records_sha256",
+    "teacher_checkpoint_sha256", "teacher_model_state_sha256", "teacher_capture_sha256",
+    "teacher_training_sha256", "row_weight_training_sha256", "training_mask_certificate_sha256"))
+_F18_V2_IDENTITY_FIELDS = ("checkpoint_sha256", "model_state_sha256", "recipe_sha256",
+                           "learning_rate", "donor_config_learning_rate")
+
+
+def _f18_sha256(value):
+    return type(value) is str and len(value) == 64 and all(char in "0123456789abcdef" for char in value)
+
+
+def _f18_training_expectations(value):
+    """Validate caller declarations only; no recipe/checkpoint/source is opened.
+
+    The original outer consumer must independently authenticate freeze, recipe,
+    checkpoint and input commitments. A matching tuple proves consistency with
+    these declared expectations, not their physical origin or recipe semantics.
+    """
+    _require(type(value) is dict and all(type(key) is str for key in value)
+        and set(value) == {"schema", "profile_source_sha256",
+        "optimizer_recipe_source_sha256", "input_bindings", "learning_rate",
+        "donor_config_learning_rate", "arms"}, "closed v2 training expectations required")
+    _require(all(type(value[key]) is str for key in ("schema", "profile_source_sha256",
+        "optimizer_recipe_source_sha256")) and value["schema"] == F18_EXPECTED_TRAINING_SCHEMA
+        and value["profile_source_sha256"] == _F18_V2_PROFILE_SHA256
+        and value["optimizer_recipe_source_sha256"] == _F18_RECIPE_SOURCE_SHA256,
+        "v2 training expectation source generation differs")
+    rate = value["learning_rate"]
+    _require(type(rate) in (int, float) and 0 < rate <= 1.7976931348623157e308,
+        "explicit finite positive v2 training learning_rate required")
+    _require(type(value["donor_config_learning_rate"]) is float and value["donor_config_learning_rate"] == 0.001,
+        "original v2 donor configuration rate required")
+    bindings = value["input_bindings"]
+    _require(type(bindings) is dict and all(type(key) is str for key in bindings)
+        and set(bindings) == _F18_INPUT_BINDINGS
+        and type(bindings.get("schema")) is str
+        and bindings.get("schema") == "conditions-fullspan-f18-four-tensor-input-bindings/v1"
+        and all(_f18_sha256(bindings[key]) for key in _F18_INPUT_BINDINGS - {"schema"})
+        and bindings["donor_checkpoint_sha256"] == _F18_DONOR_SHA256
+        and bindings["donor_model_state_sha256"] == _F18_DONOR_MODEL_SHA256,
+        "closed original v2 donor/input commitments required")
+    arms = value["arms"]
+    _require(type(arms) is dict and all(type(key) is str for key in arms)
+        and set(arms) == set(_F18_ARMS[1:]), "two explicit v2 candidate expectations required")
+    for arm, margin in zip(_F18_ARMS[1:], (0.0, 0.25), strict=True):
+        row = arms[arm]
+        _require(type(row) is dict and all(type(key) is str for key in row)
+            and set(row) == {"checkpoint_sha256", "model_state_sha256",
+            "recipe_sha256", "margin_weight"}
+            and all(_f18_sha256(row[key]) for key in ("checkpoint_sha256", "model_state_sha256", "recipe_sha256"))
+            and type(row["margin_weight"]) is float and row["margin_weight"] == margin,
+            "closed v2 arm checkpoint/recipe/margin expectations required")
+    _require(all(arms["coefficient_0"][key] != arms["coefficient_025"][key]
+        for key in ("checkpoint_sha256", "recipe_sha256")), "distinct fixed-arm v2 checkpoint and recipe commitments required")
+    raw = _json(value)
+    _require(len(raw.encode()) <= 16 * 1024, "bounded v2 training expectations required")
+    return json.loads(raw)
+
 
 
 def _f18_ids(values, *, count=None):
@@ -314,27 +384,46 @@ def _f18_declarations(value, issues, where, *, required=False):
             issues.append(where + ":" + field + "_not_false")
 
 
-def _f18_raw_rows(panel, *, parent, panel_name):
+def _f18_raw_rows(panel, *, parent, panel_name, expected_inference=None):
     _require(type(panel) is dict, "F18 raw panel object required")
     issues = []
     _f18_declarations(panel, issues, "raw_panel", required=True)
+    version2 = expected_inference is not None
+    _require(not (parent and version2), "original parent capture has no v2 training expectations")
     if parent:
         _require(panel.get("schema") == _F18_PARENT_CAPTURE, "original F18 parent capture schema required")
         chunks = [panel]
     else:
-        _require(panel.get("schema") == _F18_TRAINED_PANEL and panel.get("panel") == panel_name,
+        expected_panel = _F18_V2_PANEL if version2 else _F18_TRAINED_PANEL
+        _require((not version2 or type(panel.get("schema")) is str)
+            and panel.get("schema") == expected_panel and panel.get("panel") == panel_name,
                  "trained F18 raw panel schema/name differs")
         chunks = panel.get("chunks")
         _require(type(chunks) is list and 1 <= len(chunks) <= MAX_ROWS, "bounded F18 capture chunks required")
     rows = []
     for index, chunk in enumerate(chunks):
         _require(type(chunk) is dict, "F18 capture object required")
-        _require(parent or chunk.get("schema") == _F18_TRAINED_CAPTURE, "original F18 trained chunk schema required")
+        expected_capture = _F18_V2_CAPTURE if version2 else _F18_TRAINED_CAPTURE
+        _require((not version2 or type(chunk.get("schema")) is str)
+            and (parent or chunk.get("schema") == expected_capture), "original F18 trained chunk schema required")
         _f18_declarations(chunk, issues, "chunk:" + str(index), required=True)
         inference, occurrences = chunk.get("inference"), chunk.get("occurrences")
         _require(type(inference) is dict and type(inference.get("rows")) is list
                  and type(occurrences) is list and len(inference["rows"]) == len(occurrences)
                  and 1 <= len(occurrences) <= MAX_ROWS, "F18 inference/occurrence lengths differ")
+        if version2:
+            _require(type(inference.get("schema")) is str and inference["schema"] == _F18_V2_INFERENCE,
+                     "v2 panel/capture/inference generation must agree")
+            _require(all(type(inference.get(key)) is type(expected_inference[key])
+                and inference[key] == expected_inference[key] for key in _F18_V2_IDENTITY_FIELDS),
+                "v2 capture identity differs from independent caller expectations")
+            _require(chunk.get("training_executed") is False and inference.get("training_executed") is False
+                and type(inference.get("latent_ablation")) is str
+                and inference["latent_ablation"] == "none", "original target-free v2 inference scope required")
+        elif not parent and "schema" in inference:
+            # Legacy v1 fixtures may omit this field. An explicit different
+            # generation must never hide inside a v1 panel/chunk wrapper.
+            _require(inference["schema"] == _F18_INFERENCE, "v1 capture/inference generation differs")
         if type(chunk.get("actual_source_forwards")) is not int or chunk["actual_source_forwards"] != len(occurrences):
             issues.append("chunk:" + str(index) + ":source_count_differs")
         if type(chunk.get("extra_capture_forwards")) is not int or chunk["extra_capture_forwards"] != 0:
@@ -419,7 +508,7 @@ def _f18_transition(before, after):
 
 
 def compare_f18_frozen_matched_arms(arms, targets, *, expected_ids, expected_source_sha256,
-                                  retention_ids, permission_ids, unscored_ids):
+                                  retention_ids, permission_ids, unscored_ids, expected_training=None):
     """Pure comparison of three already frozen F18 arms and explicit weak labels.
 
     This fixed experiment has ten ordered panels, 632 distinct source IDs, 624
@@ -430,7 +519,13 @@ def compare_f18_frozen_matched_arms(arms, targets, *, expected_ids, expected_sou
     No target ID, membership, permission label or missing output is inferred.
     This parent-relative diagnostic does not establish the separate scientific
     no-loss gates against retained N11/F15/F16/F17 comparators.
+
+    ``expected_training`` explicitly opts into v2 candidate envelopes. It is a
+    detached caller context checked against every chunk, not authenticated
+    recipe/checkpoint/freeze evidence. The original outer saved consumer must
+    establish those bindings separately before references are opened.
     """
+    training = None if expected_training is None else _f18_training_expectations(expected_training)
     _require(type(expected_ids) is dict and len(expected_ids) == 10
              and all(_id(key) for key in expected_ids), "ten explicit ordered F18 panels required")
     panels = list(expected_ids)
@@ -476,7 +571,12 @@ def compare_f18_frozen_matched_arms(arms, targets, *, expected_ids, expected_sou
         for name, item in zip(panels, collection, strict=True):
             _require(type(item) is dict and set(item) == {"panel", "raw", "joint"} and item["panel"] == name,
                      "F18 arm panel envelope/name/order differs")
-            raw, raw_issues = _f18_raw_rows(item["raw"], parent=arm == "parent", panel_name=name)
+            expected_inference = None
+            if training is not None and arm != "parent":
+                expected_inference = {key: training["arms"][arm][key] for key in _F18_V2_IDENTITY_FIELDS[:3]}
+                expected_inference.update({key: training[key] for key in _F18_V2_IDENTITY_FIELDS[3:]})
+            raw, raw_issues = _f18_raw_rows(item["raw"], parent=arm == "parent", panel_name=name,
+                                          expected_inference=expected_inference)
             joint, joint_issues = _f18_joint_rows(item["joint"])
             raw_hashes, joint_hashes = defaultdict(list), defaultdict(list)
             for rows, hashes in ((raw, raw_hashes), (joint, joint_hashes)):
@@ -538,7 +638,11 @@ def compare_f18_frozen_matched_arms(arms, targets, *, expected_ids, expected_sou
                     "permission_retained": predicted == ["P"], "full_ir_exact": item["exact"]}
             permission[mode].append({"id": key, "expected_modalities": ["P"], "arms": decisions})
     valid = all(report["valid_evaluation"] for values in reports.values() for report in values.values())
-    return {"schema": F18_MATCHED_SCHEMA, "valid_evaluation": valid,
+    return {"schema": F18_MATCHED_V2_SCHEMA if training is not None else F18_MATCHED_SCHEMA,
+            **({"training_expectations": training, "training_expectations_sha256": _sha(_json(training)),
+                "training_expectations_consistency_verified": True, "training_expectations_origin_verified": False,
+                "checkpoint_recipe_source_bindings_independently_verified": False} if training is not None else {}),
+            "valid_evaluation": valid,
             "expected_source_count": 632, "weak_label_target_count": 624, "unscored_ids": list(unscored_ids),
             "retention_ids": list(retention_ids), "permission_ids": list(permission_ids),
             "expected_ids": {name: list(values) for name, values in expected_ids.items()},
@@ -552,4 +656,5 @@ def compare_f18_frozen_matched_arms(arms, targets, *, expected_ids, expected_sou
             "teacher_forcing": False, "metric_target_access": True, "training_executed": False, **_FALSE}
 
 
-__all__ += ["compare_f18_frozen_matched_arms", "F18_MATCHED_SCHEMA"]
+__all__ += ["compare_f18_frozen_matched_arms", "F18_MATCHED_SCHEMA", "F18_MATCHED_V2_SCHEMA",
+            "F18_EXPECTED_TRAINING_SCHEMA"]
