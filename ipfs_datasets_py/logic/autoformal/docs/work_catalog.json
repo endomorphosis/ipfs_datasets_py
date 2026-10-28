@@ -3680,6 +3680,38 @@
         "source_pins_before_after": 55
       },
       "compatibility_dependency": false,
+      "conditions_ranking_diagnosis": {
+        "DEV_candidate_reason": "no_compatible_assignment_in_retained_domain",
+        "DEV_gold_accessed": false,
+        "TRAIN_gold_ranks_each_candidate": [
+          2,
+          2
+        ],
+        "TRAIN_gold_ranks_parent": [
+          2,
+          3
+        ],
+        "TRAIN_gold_within_top8": true,
+        "TRAIN_positive_head_score_gaps_remain": true,
+        "actual_saved_replays": 9,
+        "evidence_id": "f18-conditions-ranking-diagnosis-20261028-01",
+        "literal_fixture_cases": 4,
+        "literal_fixture_selector_calls": 6,
+        "metric_source_sha256": "a62101f13cc7fbc1a42a8519054926c404e95095feb6186e019afb4ff7dfa113",
+        "new_accuracy_gain": false,
+        "new_full624_scoring": false,
+        "new_model_or_fit": false,
+        "next_contract": "Distinct versioned optimizer_recipe with immutable donor_config/v1 learning rate0.001; initial parity and fresh finite TRAIN admission.",
+        "owning_test_sha256": "2cbccb6fea53f5826a44c02df4eb595cf42d55503904a69c35b77af272737417",
+        "pure_cases": 90,
+        "pure_phases": 270,
+        "source_pins_by_scope": [
+          26,
+          71,
+          73
+        ],
+        "status": "joint_status_guard_and_fixed_case_diagnosis_closed"
+      },
       "evidence_ids": [
         "conditions-fullspan-existing-owner-adoption-20261027-01",
         "f18-conditions-fullspan-genuine-mechanics-20261027-01",
@@ -3690,7 +3722,8 @@
         "f18-initial632-parity-qualified-20261027-01",
         "f18-trainer-controller-qualified-20261027-01",
         "f18-four-tensor-hf-weight-publication-20261027-01",
-        "f18-frozen-matched-scoring-20261027-01"
+        "f18-frozen-matched-scoring-20261027-01",
+        "f18-conditions-ranking-diagnosis-20261028-01"
       ],
       "experimental_hf_weights": {
         "accuracy_gain_qualified": false,
@@ -3804,7 +3837,7 @@
         "source_rows": 632,
         "statutory_accuracy": false
       },
-      "notes": "Reuse the original public component identity and prescribed optimizer owner. Original dfd source adoption, its immutable preparation oracle and5 pure/15-phase metadata controls remain a separate generation. Existing optimizer-package opt-in companion reuses immutable F18/F15 CE-KL and published margin owners. Genuine synthetic26 mechanics cover mixed168/72 present, full-batch absent connected-zero, frozen38 including modality, ordered four row3 tensors and130 active/780 stored/650 inactive scalars, byte preservation and in-memory Adam resume. Old25/1 failure and original storage recovery remain separate. Selected physical trained-donor/source-population/teacher/mask authentication now has a separate original-owned closed result; new four-tensor persisted checkpoint/resume and finite continuation now have the separate 39-case qualification and authentic zero-step delta roundtrip below. The new source-only capture and selected final-F18 initial632 parity have separate45-case/632-case results below. The later saved-only comparison closes selected parent-relative full-IR/per-ID/permission diagnostics with no reconstruction or margin advantage and one added joint abstention per candidate. Other E1 comparator assets, statutory accuracy and actual Lake build remain open. The merged owning test restores lazy numerical imports and explicitly compares the original preparation oracle after only the enumerated additive schedule/authentication metadata fields; that earlier source generation passed its separate 26-case mechanics qualification with 36 before/after source pins. The current capture extension has the distinct 45-case/73-pin qualification below. Earlier generations remain separate. The original controller has its separate zero-model native qualification; actual paired-fit/scoring credit is not implied by that probe. The separate matched pair reports64 total updates and frozen candidate outputs; saved-only weak-label scoring measures no full-IR gain or margin advantage.",
+      "notes": "Reuse the original public component identity and prescribed optimizer owner. Original dfd source adoption, its immutable preparation oracle and5 pure/15-phase metadata controls remain a separate generation. Existing optimizer-package opt-in companion reuses immutable F18/F15 CE-KL and published margin owners. Genuine synthetic26 mechanics cover mixed168/72 present, full-batch absent connected-zero, frozen38 including modality, ordered four row3 tensors and130 active/780 stored/650 inactive scalars, byte preservation and in-memory Adam resume. Old25/1 failure and original storage recovery remain separate. Selected physical trained-donor/source-population/teacher/mask authentication now has a separate original-owned closed result; new four-tensor persisted checkpoint/resume and finite continuation now have the separate 39-case qualification and authentic zero-step delta roundtrip below. The new source-only capture and selected final-F18 initial632 parity have separate45-case/632-case results below. The later saved-only comparison closes selected parent-relative full-IR/per-ID/permission diagnostics with no reconstruction or margin advantage and one added joint abstention per candidate. Other E1 comparator assets, statutory accuracy and actual Lake build remain open. The merged owning test restores lazy numerical imports and explicitly compares the original preparation oracle after only the enumerated additive schedule/authentication metadata fields; that earlier source generation passed its separate 26-case mechanics qualification with 36 before/after source pins. The current capture extension has the distinct 45-case/73-pin qualification below. Earlier generations remain separate. The original controller has its separate zero-model native qualification; actual paired-fit/scoring credit is not implied by that probe. The separate matched pair reports64 total updates and frozen candidate outputs; saved-only weak-label scoring measures no full-IR gain or margin advantage. The later joint producer-status guard has a separate fresh90-case qualification and fixed-case saved diagnosis: TRAIN gold remains in top8 below rank1, and the DEV candidate abstention is incompatible retained domain. No new whole624 score or fit ran. Preserve immutable v1LR0.001; a distinct TRAIN-only optimizer recipe, fresh initial parity/admission and retained comparator gates remain next.",
       "numerical_qualification": {
         "cases": 26,
         "evidence_id": "f18-conditions-fullspan-genuine-mechanics-20261027-01",
@@ -3942,7 +3975,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-10-28T03:49:51.604205+00:00",
+  "last_updated_at_utc": "2026-10-28T04:32:06.412772+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -6185,6 +6218,16 @@
       "root": "datasets_repository",
       "scope": "Current dual-namespace diagnostic metadata, three proposed interoperability/native-cell/executor-observation requirements and original-task preservation. Reuses completed training/scoring and canonical ports; no database/model/provider/native mutation, new loop or statutory/Lean authority.",
       "status": "planning_reconciliation_no_execution_or_quality_qualification"
+    },
+    {
+      "id": "f18-conditions-ranking-diagnosis-20261028-01",
+      "observed_bytes": 20391,
+      "observed_sha256": "d9efceccc428e0a7e1bd3a5375135d036de01ffaf09799d8459684fa405d5925",
+      "path": "docs/autoformalization/evidence/legal-ir-f18-conditions-ranking-diagnosis-20261028.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Fresh90/270 joint-status controls on actual0e launcher, separate4fixtures/6calls and9saved replays/12parses/60preTRAIN fence.26/71/73pins and original custody closed. TRAIN gold stays top8 below rank1; DEV no-compatible retained-domain abstention without gold. No new model, fit, whole624 score, quality or scientific-task credit.",
+      "status": "joint_status_guard_and_fixed_case_diagnosis_closed_no_new_fit"
     }
   ]
 }

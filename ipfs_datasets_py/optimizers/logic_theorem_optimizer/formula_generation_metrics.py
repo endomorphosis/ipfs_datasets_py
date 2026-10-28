@@ -383,9 +383,15 @@ def _f18_joint_rows(panel):
         if "id" in row:
             issues.append("joint_result_unexpected_id")
         row["id"] = original["id"]
-        # A detached evaluator view changes only this producer-specific status.
-        if row.get("status") == "selected":
+        # Only the original joint producer's selected/abstained statuses
+        # may enter this detached evaluator view. A decoder-shaped status is
+        # not evidence that the joint selector produced the record.
+        producer_status = row.get("status")
+        if producer_status == "selected":
             row["status"] = "decoded"
+        elif producer_status != "abstained":
+            issues.append("joint_row:" + str(len(rows)) + ":producer_status_not_selected_or_abstained")
+            row["status"] = "invalid_joint_producer_status"
         rows.append(row)
     return rows, issues
 

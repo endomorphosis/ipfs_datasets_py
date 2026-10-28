@@ -223,11 +223,35 @@ already incorrectly on actor and conditions. Joint modality matches decline from
 three arms and both readouts; the eight law snippets remain unscored.
 
 The engineering comparison completed successfully and measured no reconstruction
-gain or margin advantage. Preserve candidate status. Next diagnose the persistent
-TRAIN conditions failures and the joint abstention using frozen outputs, then
-close the separate retained comparator gates. This diagnosis grants no held-out
+gain or margin advantage. Preserve candidate status. The later fixed-case diagnosis below records persistent TRAIN ranking and DEV retained-domain failures. A separately versioned TRAIN-only recipe and the original retained comparator gates remain next. This diagnosis grants no held-out
 tuning or additional fit. Compiler weak labels do not establish statutory meaning,
 reviewed gold, four-width quality, corpus/Lean admission or scientific-task success.
+
+## Validated joint producer route and fixed-case diagnosis
+
+The [fresh qualification and diagnosis](../../../../../docs/autoformalization/evidence/legal-ir-f18-conditions-ranking-diagnosis-20261028.json) adds a producer-route guard to the same metric owner. Original joint status must be `selected` or `abstained`. Already-`decoded`, missing or other joint statuses invalidate provenance and receive no exact-IR or permission credit. Raw `decoded` rows retain their original route and all seven-facet semantics. A fresh 90-case, 270-phase run passed in 7.232 seconds with 26 source pins and complete original cleanup. The older 82-case source-595 qualification and whole 624-row outcome stay separate.
+
+Four authored controls cover literal rank 2 with gap 2, rank 45 outside the top eight, a DEV tie with no supplied gold, and refusal before opening a mismatched source. Their six selector calls ran in a separate original admission with 71 pins. The actual saved-only scope then authenticated 60 files before TRAIN labels, parsed 12 capture files, and ran exactly nine selector replays at unchanged `top_k=8` and `max_search_nodes=50000`. All complete cached joint records and original greedy observations reproduced; 73 source pins and original cleanup checks passed. Only canonical preparation of the original 168 TRAIN rows supplies label coordinates. DEV rows contain source data only, and no DEV gold is opened or supplied to selection.
+
+| Conditions-present TRAIN case | Parent rank / best-minus-gold gap | Coefficient 0 | Coefficient 0.25 |
+| --- | --- | --- | --- |
+| `condition_exception_duration-0-p-absent` | 2 / 0.656990 | 2 / 0.452349 | 2 / 0.412020 |
+| `condition_exception_duration-0-p-present` | 3 / 0.396683 | 2 / 0.193958 | 2 / 0.161106 |
+
+Displayed float32 gaps are rounded; the capsule retains the exact scalar observations. All gold candidates remain in the top eight, gaps remain positive, and no active selected other facet overlaps gold conditions. Search completes without exhausting its budget. These observations support a residual TRAIN head-ranking interpretation; they supply no hidden-state or gradient proof. Both candidate DEV states reproduce `no_compatible_assignment_in_retained_domain`, while the parent selects. The authored tie fixture is a separate control path. This operation performs no whole 624-row rescore, new model load, forward, gradient, update or fit and establishes no accuracy gain.
+
+The 90-case request uses actual source-pinned original launcher `0e302d2c`. Its recorded preflight handling event remains a limitation. The passing positive validation path transfers no qualification from `66a608dc` and does not qualify the new pre-owner-refusal branch.
+
+### Next goal within existing LIR-17
+
+Improve the original TRAIN conditions ranking through an explicit new optimizer contract. These maintained subgoals use the existing programme and create no task IDs, queue, budget reset or native activation.
+
+| Subgoal | Tasks and completion evidence |
+| --- | --- |
+| Versioned optimizer contract | Keep v1/profile56 source, checkpoint policy and existing HF weights immutable. Retain authenticated `donor_config` at learning rate 0.001. Declare a distinct versioned `optimizer_recipe` with its own training rate and a predeclared finite schedule. An outer LR override cannot honestly reuse v1. No new recipe value or implementation is selected here. |
+| Source qualification and initial parity | Qualify the new profile, checkpoint recipe and pure mechanics in the existing numerical owner family. Reauthenticate the original donor, source, teacher and mask inputs and all 168 TRAIN rows. Before updates, require fresh zero-step parity on all 632 source rows against the retained donor, preserving all 42 tensors, the 38 frozen tensors including modality, and original readout behavior. |
+| Finite TRAIN-only admission | Seal one experiment bound to source and inputs, using TRAIN evidence only, with a predeclared objective, optimizer state, seed and step, time and storage limits. Review source preflight before launch and acquire fresh original training-purpose custody. Preserve partial and failed artifacts. Do not reset v1 optimizer budgets or rearm scientific cards. |
+| Freeze and independent acceptance | Freeze every new output before reference readback. Score full IR, every per-ID gain and loss, retention on all 72 conditions-present TRAIN cases, and all 32 permission decisions. Close the original retained comparator no-loss gates under their own contracts. Keep adverse results and held-out exposure. Promotion, statutory and four-width claims require their relevant gates. |
 
 The following immutable-publication description retains its original unscored release cutoff; the separate local comparison above does not change that release or promote a model.
 

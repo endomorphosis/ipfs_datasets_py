@@ -537,3 +537,108 @@ def test_f18_all_32_permission_decisions_include_lost_extra_rule_and_abstained_c
             assert decision["predicted_modalities"] == ["P", "O"]
         elif kind == "abstention":
             assert decision["status"] == "abstained" and decision["predicted_modalities"] is None
+
+
+# The joint producer's selected/abstained route is distinct from raw decoding.
+@pytest.mark.parametrize("damage", ["decoded", "unknown", "missing", "boolean", "list"])
+def test_f18_joint_producer_status_cannot_borrow_exact_IR_or_permission_credit(damage):
+    compare, arms, targets, options = _f18_matched_fixture()
+    target = targets["old_tune"][31]
+    prediction = _f18_fixture_prediction(arms, "coefficient_025", "joint", panel=1, row=31)
+    # All seven facets are exact, including P: only producer provenance is bad.
+    assert set(prediction["canonical_ir"]["rules"][0]) == set(FACETS)
+    assert prediction["canonical_ir"] == target["canonical_ir"]
+    assert prediction["formal_outputs"][0]["payload"] == target["canonical_ir"]["rules"][0]
+    if damage == "missing":
+        prediction.pop("status")
+    else:
+        prediction["status"] = {
+            "decoded": "decoded", "unknown": "unknown_producer_status",
+            "boolean": True, "list": [],
+        }[damage]
+    before = deepcopy((arms, targets, options))
+    result = compare(arms, targets, **options)
+    assert (arms, targets, options) == before
+    assert result["valid_evaluation"] is False
+    panel = next(row for row in result["panels"]
+                 if row["arm"] == "coefficient_025" and row["panel"] == "old_tune")
+    assert panel["joint"]["source_coverage"]["valid"] is True
+    assert panel["joint"]["source_integrity_valid"] is False
+    assert panel["raw"]["source_integrity_valid"] is True
+    raw, joint = result["arms"]["coefficient_025"]["raw"], result["arms"]["coefficient_025"]["joint"]
+    assert raw["valid_evaluation"] is True and raw["exact_reconstruction"]["matched"] == 624
+    assert joint["valid_evaluation"] is False and joint["exact_reconstruction"]["matched"] == 0
+    diagnostic = next(row for row in joint["rows"] if row["id"] == target["id"])
+    assert diagnostic["exact"] is False and all(value is False for value in diagnostic["facets"].values())
+    decisions = result["permission_decisions"]["joint"]
+    assert len(decisions) == 32 and decisions[31]["id"] == target["id"]
+    assert decisions[31]["arms"]["coefficient_025"]["permission_retained"] is False
+    assert decisions[31]["arms"]["coefficient_025"]["full_ir_exact"] is False
+    assert decisions[31]["arms"]["coefficient_025"]["predicted_modalities"] is None
+    assert result["permission_counts"]["joint"]["coefficient_025"]["matched"] == 0
+    assert result["permission_counts"]["raw"]["coefficient_025"]["matched"] == 32
+    assert result["permission_counts"]["joint"]["parent"]["matched"] == 32
+    assert result["permission_counts"]["joint"]["coefficient_0"]["matched"] == 32
+
+
+def test_f18_honest_joint_abstention_is_valid_but_loses_last_permission_and_full_IR():
+    compare, arms, targets, options = _f18_matched_fixture()
+    target = targets["old_tune"][31]
+    prediction = _f18_fixture_prediction(arms, "coefficient_025", "joint", panel=1, row=31)
+    prediction.update(status="abstained", canonical_ir=None, formal_outputs=[], formula_text=None)
+    before = deepcopy((arms, targets, options))
+    result = compare(arms, targets, **options)
+    assert (arms, targets, options) == before
+    assert result["valid_evaluation"] is True
+    joint = result["arms"]["coefficient_025"]["joint"]
+    assert joint["operational_complete"] is True and joint["all_targets_decoded"] is False
+    assert joint["counts"]["abstained"] == 1 and joint["exact_reconstruction"]["matched"] == 623
+    decisions = result["permission_decisions"]["joint"]
+    assert len(decisions) == 32 and decisions[31]["id"] == target["id"]
+    decision = decisions[31]["arms"]["coefficient_025"]
+    assert decision == {"status": "abstained", "predicted_modalities": None,
+                        "permission_retained": False, "full_ir_exact": False}
+    assert all(row["arms"]["coefficient_025"]["permission_retained"] is True for row in decisions[:31])
+    assert result["permission_counts"]["joint"]["coefficient_025"] == {
+        "matched": 31, "total": 32, "fraction": 31 / 32}
+    assert result["permission_counts"]["raw"]["coefficient_025"]["matched"] == 32
+    assert result["arms"]["coefficient_025"]["raw"]["exact_reconstruction"]["matched"] == 624
+
+
+def test_f18_selected_permission_does_not_hide_an_independent_seven_facet_mismatch():
+    compare, arms, targets, options = _f18_matched_fixture()
+    target = targets["old_tune"][31]
+    prediction = _f18_fixture_prediction(arms, "coefficient_025", "joint", panel=1, row=31)
+    prediction["canonical_ir"]["rules"][0]["actor"] = "a different authored actor"
+    prediction["formal_outputs"][0]["payload"]["actor"] = "a different authored actor"
+    expected_facets = {"modality": True, "actor": False, "action": True, "object": True,
+                       "conditions": True, "exceptions": True, "temporal": True}
+    assert {facet: prediction["canonical_ir"]["rules"][0][facet] == target["canonical_ir"]["rules"][0][facet]
+            for facet in FACETS} == expected_facets
+    before = deepcopy((arms, targets, options))
+    result = compare(arms, targets, **options)
+    assert (arms, targets, options) == before and prediction["status"] == "selected"
+    assert result["valid_evaluation"] is True
+    joint = result["arms"]["coefficient_025"]["joint"]
+    diagnostic = next(row for row in joint["rows"] if row["id"] == target["id"])
+    assert diagnostic["status"] == "decoded" and diagnostic["facets"] == expected_facets
+    assert diagnostic["exact"] is False and joint["exact_reconstruction"]["matched"] == 623
+    decision = result["permission_decisions"]["joint"][31]["arms"]["coefficient_025"]
+    assert decision == {"status": "decoded", "predicted_modalities": ["P"],
+                        "permission_retained": True, "full_ir_exact": False}
+    assert result["permission_counts"]["joint"]["coefficient_025"]["matched"] == 32
+
+
+def test_f18_raw_decoded_and_joint_selected_keep_their_distinct_valid_routes():
+    compare, arms, targets, options = _f18_matched_fixture()
+    raw = _f18_fixture_prediction(arms, "coefficient_025", "raw", panel=0, row=0)
+    joint = _f18_fixture_prediction(arms, "coefficient_025", "joint", panel=0, row=0)
+    assert raw["status"] == "decoded" and joint["status"] == "selected"
+    before = deepcopy((arms, targets, options))
+    result = compare(arms, targets, **options)
+    assert result["valid_evaluation"] is True and (arms, targets, options) == before
+    assert raw["status"] == "decoded" and joint["status"] == "selected"
+    for mode in ("raw", "joint"):
+        assert result["arms"]["coefficient_025"][mode]["exact_reconstruction"]["matched"] == 624
+        assert result["permission_counts"][mode]["coefficient_025"]["matched"] == 32
+    assert all(row[mode]["source_integrity_valid"] is True for row in result["panels"] for mode in ("raw", "joint"))
