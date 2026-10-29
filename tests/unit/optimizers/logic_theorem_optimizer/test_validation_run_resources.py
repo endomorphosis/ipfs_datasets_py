@@ -1743,7 +1743,7 @@ def test_trainer_source_guard_requires_public_owner_and_rechecks_owned_source(tm
     module, _, value = _trainer_controller_request_case(tmp_path)
     module._trainer_source_guard(value)
     owner_source = str(module.ROOT / "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py")
-    assert value["source_sha256"][owner_source] == "0cf17951048015d4ce01817c0bfdd74394a161cd5e7999b01a29f18f358e666a"
+    assert value["source_sha256"][owner_source] == "da6c3596a413ba5c8dab14f9e06a6fc288d7eb9166d261a96abfdf96dd60130b"
     missing = deepcopy(value)
     missing["source_sha256"].pop(owner_source)
     with pytest.raises(ValueError):

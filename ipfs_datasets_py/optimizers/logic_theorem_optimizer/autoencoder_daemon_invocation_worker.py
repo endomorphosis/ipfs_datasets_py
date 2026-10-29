@@ -579,7 +579,8 @@ _F18_COMPUTE_FIELDS = frozenset(("input_descriptors", "initial_parity", "runtime
 _F18_PROFILE_SHA256 = "56bd0a248a07de09519f95e5c4bae02ab9d8eb1134b483c257c1f7e7bcb07147"
 _F18_V2_PROFILE_SHA256 = "d80a08844c06daae6466a39b87bc0c395e0dd4a2da01b284704a4e03e44af0f1"
 _F18_RECIPE_SHA256 = "d22b932b80c48b688ff3f18d5f141152a6032b7cb2f6195845840af818d8dc84"
-_F18_V2_PARITY_SHA256 = "6d846ed3bab241e26d72aad4d5d1ee6d42310b9a10c66538dd04ae2c3868678e"
+_F18_V1_PARITY_SHA256 = "738273e56a0bcad5e77825b7227e3a7df49861d02885df6165a7b3cb28bbaf92"
+_F18_V2_PARITY_SHA256 = "1b564a1658aaee6b0449d3114697f08661239b9436b46a27fc225f19722e1cb3"
 _F18_SOURCE_SHA256 = "fb7449d4794ca9a279b2df2ea533b89d360344ff786edc0798395ab799db1823"
 _F18_JOINT_SHA256 = "791c283f625ae7d8841e7afa697b34cbfa5c74361d0c0129b66af31fb5e13679"
 _F18_MODEL_ROOT = "2ed0ccf633f55fac202e2edb95ea9fa6e390b8d99381a05925f4dd5221925883"
@@ -769,28 +770,64 @@ def _f18_source_panels(c, f18, donor, records, raw, population):
 
 
 def _f18_parity(parity, bindings, compute, population, descriptors):
-    _f18_require(type(parity) is dict
-        and parity.get("evidence_id") == "f18-initial632-parity-qualified-20261027-01"
-        and parity["selected_product_source"]["profile_sha256"] == _F18_PROFILE_SHA256
-        and parity["parity"]["qualified"] is True
-        and parity["parity"]["compared_head_scalars"] == 194812
-        and parity["parity"]["all_heads_binary32_bits_including_signed_zero_equal"] is True
-        and parity["parity"]["complete_original_greedy_formal_decoded_rows_equal"] is True
-        and parity["parity"]["complete_pure_joint_result_records_equal"] is True
-        and parity["population"]["total_rows"] == 632,
-        "closed current-source initial632 parity evidence required")
-    _f18_require(parity["evidence_inputs"]["source_population_manifest"]["sha256"]
-        == compute["population_manifest"]["sha256"], "initial632 source population commitment differs")
+    """Bind the genuine fresh v1 zero-step result, separate from v2 parity."""
+    _f18_require(compute["initial_parity"]["sha256"] == _F18_V1_PARITY_SHA256
+        and compute["initial_parity"]["bytes"] == 31655
+        and type(parity) is dict
+        and parity.get("schema") == "retained-f18-four-tensor-initial632-parity-result/v1"
+        and parity.get("profile_source_sha256") == _F18_PROFILE_SHA256
+        and parity.get("original_f18_source_sha256") == _F18_SOURCE_SHA256
+        and parity.get("initial632_parity_qualified") is True
+        and parity.get("parity_receipt_fabricated") is False,
+        "exact qualified v1 initial632 parity generation required")
+    binding_fields = {"schema", "donor_checkpoint_sha256", "donor_model_state_sha256",
+        "donor_provenance_sha256", "source_parent_checkpoint_sha256", "source_parent_model_state_sha256",
+        "context_contract_sha256", "training_manifest_sha256", "prepared_training_records_sha256",
+        "teacher_checkpoint_sha256", "teacher_model_state_sha256", "teacher_capture_sha256",
+        "teacher_training_sha256", "row_weight_training_sha256", "training_mask_certificate_sha256"}
+    _f18_require(type(bindings) is dict and set(bindings) == binding_fields
+        and bindings.get("schema") == "conditions-fullspan-f18-four-tensor-input-bindings/v1"
+        and all(type(bindings[key]) is str and len(bindings[key]) == 64
+            and all(char in "0123456789abcdef" for char in bindings[key])
+            for key in binding_fields - {"schema"})
+        and parity.get("expected_input_bindings") == bindings
+        and parity.get("inputs_sha256") == compute["input_descriptors"]["sha256"]
+        and parity.get("parity_manifest_sha256") == compute["population_manifest"]["sha256"]
+        and parity.get("runtime_contract_sha256") == compute["runtime_contract"]["sha256"],
+        "v1 parity independent input/population/runtime bindings differ")
+    assets = parity.get("verified_assets")
+    _f18_require(type(assets) is list and len(assets) == len(descriptors) == 6
+        and all(type(a) is dict and type(b) is dict
+            and a.get("role") == b.get("role") == role
+            and all(a.get(key) == b.get(key) for key in ("bytes", "sha256"))
+            for a, b, role in zip(assets, descriptors, _F18_ROLES, strict=True)),
+        "v1 parity six authenticated physical asset identities differ")
+    _f18_require(parity.get("authenticated_final_F18_whole_sha256") == bindings["donor_checkpoint_sha256"]
+        and parity.get("all42_model_state_sha256") == bindings["donor_model_state_sha256"] == _F18_MODEL_ROOT
+        and parity.get("frozen38_sha256_including_modality") == _F18_FROZEN_ROOT,
+        "v1 parity authenticated donor/frozen roots differ")
+    for name, expected in (("head_binary32_scalar_comparisons", 194812),
+            ("canonical_capture_source_forwards", 632), ("canonical_capture_chunks", 11),
+            ("training_rows", 168), ("conditions_present", 72), ("conditions_absent", 96),
+            ("optimizer_updates", 0), ("gradient_calls", 0), ("teacher_model_restores", 0)):
+        _f18_require(type(parity.get(name)) is int and parity[name] == expected,
+                     "v1 parity finite zero-step counts differ: " + name)
+    _f18_require(all(parity.get(key) is False for key in (
+        "fit_executed", "scoring_executed", "new_trained_weights", "admitted", "formalized", "promoted")),
+        "v1 parity control is not a TRAIN experiment or authority")
+    panels = parity.get("panel_comparisons")
+    _f18_require(type(panels) is list and len(panels) == len(_F18_PANELS)
+        and all(type(row) is dict and row.get("panel") == name
+            and type(row.get("rows")) is int and row["rows"] == count
+            and type(row.get("binary32_head_scalars")) is int and row["binary32_head_scalars"] > 0
+            and all(row.get(key) is True for key in (
+                "all_heads_bitwise_equal", "entire_greedy_formal_rows_equal", "complete_joint_rows_equal"))
+            for row, (name, count, _) in zip(panels, _F18_PANELS, strict=True))
+        and sum(row["binary32_head_scalars"] for row in panels) == 194812,
+        "v1 parity complete ten-panel binary32/greedy/joint comparison required")
     for name, index in (("authenticated_final_F18_checkpoint", 0), ("original_source_export", 2), ("fresh_source_export", 3)):
         _f18_require(all(population["source_inputs"][name][key] == descriptors[index][key]
-                         for key in ("bytes", "sha256")), "original632 source asset identity differs")
-    roots = parity["authenticated_roots"]
-    _f18_require(roots["final_F18_physical_sha256"] == bindings["donor_checkpoint_sha256"]
-        and roots["all42_model_state_sha256"] == bindings["donor_model_state_sha256"] == _F18_MODEL_ROOT
-        and roots["frozen38_sha256_including_modality"] == _F18_FROZEN_ROOT
-        and roots["raw_TRAIN168_manifest_sha256"] == bindings["training_manifest_sha256"]
-        and roots["prepared_TRAIN168_records_sha256"] == bindings["prepared_training_records_sha256"],
-        "initial632 donor/source roots differ from freshly authenticated inputs")
+            for key in ("bytes", "sha256")), "original632 source asset identity differs")
 
 
 def _f18_v2_profile(request):
@@ -811,7 +848,7 @@ def _f18_v2_profile(request):
 def _f18_v2_parity(parity, bindings, compute, population, descriptors):
     """Reuse the exact closed zero-step result, independently of the TRAIN rate."""
     _f18_require(compute["initial_parity"]["sha256"] == _F18_V2_PARITY_SHA256
-        and compute["initial_parity"]["bytes"] == 30633
+        and compute["initial_parity"]["bytes"] == 31777
         and type(parity) is dict
         and parity.get("schema") == "retained-f18-four-tensor-initial632-parity-result/v2"
         and parity.get("profile_source_sha256") == _F18_V2_PROFILE_SHA256

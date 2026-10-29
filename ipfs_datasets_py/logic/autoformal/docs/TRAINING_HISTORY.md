@@ -1,5 +1,11 @@
 # Training and experiment history
 
+## Current resource generation and distinct v1/v2 parity, 2026-10-29
+
+The [qualified inventory/parity port](../../../../docs/autoformalization/evidence/legal-ir-f18-inventory-headroom-parity-20261029.json) reuses the existing finite headroom implementation: 2 million to 4 million entries, with scanner methods, the 220 GB cap and accounting policy unchanged. Existing suites passed 3, 52 and 242 cases in 0.109, 65.967 and 4.772 seconds, respectively. Separate v1 and v2 runs each reproduced 632 source cases and 194,812 binary32 head values with complete raw/joint equality and zero updates. Both proofs use the same 632-source population.
+
+Fresh v1/v2 raw parity receipts now bind the controller/worker generation; the old v1 summary is retained history rather than current input. Donor/model roots and numerical source files remain unchanged. No retained training, experiment rate or accuracy gain occurred. Native probe, outer v2 comparison ordering and fresh TRAIN admission remain open; see the current handoff and guide.
+
 ## V2 saved-output scoring contract and existing headroom diagnosis, 2026-10-28
 
 **V2 saved-scoring contract qualified, 2026-10-28:** the [existing scorer and owning tests](../../../../docs/autoformalization/evidence/legal-ir-f18-v2-saved-scoring-20261028.json) passed **200 authored cases/600 phases** in **16.315 seconds**, including all90 earlier cases and110 new controls. The original owner closed compute, processes, storage and exclusive source custody in109.6705seconds; all26pins stayed unchanged. `compare_f18_frozen_matched_arms` now accepts explicit independent `expected_training`: allcandidate panels/chunks/inference packets must be v2 and their checkpoint/model/recipe/rate/donor-rate tuples must match on every panel, including unscoredlaw. Genuine v1 result shape and missing-schema fixtures remain compatible; explicitly incompatible inference schemas are refused.

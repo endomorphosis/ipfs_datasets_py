@@ -17027,12 +17027,23 @@
           "capture_evidence_id": "f18-v2-source-capture-and-initial632-parity-qualified-20261028-01",
           "cases": 52,
           "component_id": "conditions-fullspan-f18-four-tensor-training-v2",
+          "current_resource_generation_evidence_id": "f18-inventory-headroom-parity-qualified-20261029-01",
+          "current_v1_raw_initial_parity": {
+            "bytes": 31655,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/trainer-integration-v01/inventory-headroom-port-v01/retained-initial632-v1-v01/attempt-v02/exports/initial-parity-result-v02.json",
+            "sha256": "738273e56a0bcad5e77825b7227e3a7df49861d02885df6165a7b3cb28bbaf92"
+          },
+          "current_v2_raw_initial_parity": {
+            "bytes": 31777,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/trainer-integration-v01/inventory-headroom-port-v01/retained-initial632-v01/attempt-v01/exports/initial-v2-632-parity-result.json",
+            "sha256": "1b564a1658aaee6b0449d3114697f08661239b9436b46a27fc225f19722e1cb3"
+          },
           "evidence_id": "f18-v2-source-capture-and-initial632-parity-qualified-20261028-01",
           "fresh632_parity": true,
           "native_task_activation": false,
           "new_experiment_rate_selected": null,
           "next_tasks": [
-            "Port only the existing finite headroom change through original resource owner; qualify corresponding trainer/source/checkpoint/parity generation without rewriting old identities.",
+            "Prepare a fresh original zero-model native probe for current source generation; preserve prior refusal and all historical task budgets.",
             "Extend indexed original saved-comparison orchestration with v2 freeze/recipe/independent-context joins and score-storage stripping; preserve complete60-file verification before7referencefiles. No v2retainedcandidate outputs exist yet.",
             "Predeclare one finite TRAIN-only rate/objective and acquire fresh original training-purpose admission before retained updates.",
             "Freeze outputs before independent complete-IR/per-ID,72 conditions-present TRAIN,32 target-P modality and original comparator no-loss gates.",
@@ -17045,12 +17056,12 @@
           "saved_scoring_contract_qualified": true,
           "saved_scoring_evidence_id": "f18-v2-saved-scoring-contract-qualified-20261028-01",
           "source_sha256": "d80a08844c06daae6466a39b87bc0c395e0dd4a2da01b284704a4e03e44af0f1",
-          "status": "numerical_capture_parity_trainer_and_saved_scoring_contracts_qualified_operational_port_open",
-          "trainer_contract_cases": 241,
+          "status": "headroom_and_current_v1_v2_parity_trainer_gates_qualified_dispatch_and_outer_scoring_open",
+          "trainer_contract_cases": 242,
           "trainer_evidence_id": "f18-v2-trainer-integration-and-preentry-recovery-qualified-20261028-01",
           "trainer_native_probe_qualified": false,
           "trainer_v2_integrated": true,
-          "trainer_v2_scope": "Source and241 pure/fake contracts; actual nativeprobe refusedpreentry, no numerical-dispatch or retained-fit qualification."
+          "trainer_v2_scope": "Current4million-entry backend and exact current v1/v2 raw parity gates;242 pure/fake cases. Actual native probe and numerical dispatch remain open; no retained fit or new rate."
         }
       },
       "connected_statutory_pilot_spec": {

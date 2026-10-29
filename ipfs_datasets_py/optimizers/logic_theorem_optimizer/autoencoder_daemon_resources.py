@@ -45,7 +45,7 @@ MAX_CHILDREN_PER_RESERVATION = 16
 MAX_EXTERNAL_CHARGES = 128
 # The same exact-root census observed 1,359,805 entries on 2026-10-02. Increase
 # only the finite scan bound; path/identity checks and accounting stay unchanged.
-MAX_INVENTORY_ENTRIES = 2_000_000
+MAX_INVENTORY_ENTRIES = 4_000_000
 SCHEMA = "daemon-resource-reservations-v1"
 SCHEDULER_LANE = ResourceLane.HAMMER_LEAN
 SCHEDULER_WORKLOAD = "canonical_trainer"

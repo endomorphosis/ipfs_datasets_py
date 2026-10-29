@@ -978,30 +978,68 @@ def test_f18_existing_arm_output_is_never_reused_or_overwritten(tmp_path, monkey
     assert prior.read_bytes() == b"retain original failure" and profile.events == []
 
 
-def test_f18_parity_gate_binds_original_population_and_donor_before_fit():
-    bindings = {"donor_checkpoint_sha256": "a" * 64, "donor_model_state_sha256": worker._F18_MODEL_ROOT,
-        "training_manifest_sha256": "b" * 64, "prepared_training_records_sha256": "c" * 64}
+def _f18_v1_parity_fixture():
+    """Authored raw-v1 gate input; no receipt file or numerical model is opened."""
     compute = _f18_compute_fixture()
-    descriptors = [{"bytes": 1, "sha256": str(i) * 64} for i in range(6)]
+    compute["initial_parity"].update(bytes=31655, sha256=worker._F18_V1_PARITY_SHA256)
+    descriptors = [{"role": role, "bytes": i + 1, "sha256": str(i) * 64}
+                   for i, role in enumerate(worker._F18_ROLES)]
+    bindings = {key: "a" * 64 for key in (
+        "donor_checkpoint_sha256", "donor_model_state_sha256", "donor_provenance_sha256",
+        "source_parent_checkpoint_sha256", "source_parent_model_state_sha256", "context_contract_sha256",
+        "training_manifest_sha256", "prepared_training_records_sha256", "teacher_checkpoint_sha256",
+        "teacher_model_state_sha256", "teacher_capture_sha256", "teacher_training_sha256",
+        "row_weight_training_sha256", "training_mask_certificate_sha256")}
+    bindings.update(schema="conditions-fullspan-f18-four-tensor-input-bindings/v1",
+                    donor_checkpoint_sha256=descriptors[0]["sha256"], donor_model_state_sha256=worker._F18_MODEL_ROOT)
     population = {"source_inputs": {name: dict(descriptors[i]) for name, i in
         (("authenticated_final_F18_checkpoint", 0), ("original_source_export", 2), ("fresh_source_export", 3))}}
-    parity = {"evidence_id": "f18-initial632-parity-qualified-20261027-01",
-        "selected_product_source": {"profile_sha256": worker._F18_PROFILE_SHA256},
-        "parity": {"qualified": True, "compared_head_scalars": 194812,
-            "all_heads_binary32_bits_including_signed_zero_equal": True,
-            "complete_original_greedy_formal_decoded_rows_equal": True, "complete_pure_joint_result_records_equal": True},
-        "population": {"total_rows": 632}, "evidence_inputs": {"source_population_manifest": compute["population_manifest"]},
-        "authenticated_roots": {"final_F18_physical_sha256": bindings["donor_checkpoint_sha256"],
-            "all42_model_state_sha256": worker._F18_MODEL_ROOT, "frozen38_sha256_including_modality": worker._F18_FROZEN_ROOT,
-            "raw_TRAIN168_manifest_sha256": bindings["training_manifest_sha256"],
-            "prepared_TRAIN168_records_sha256": bindings["prepared_training_records_sha256"]}}
+    counts = (51204, 33564, 9108, 9108, 20232, 20232, 20232, 4852, 12924, 13356)
+    parity = {"schema": "retained-f18-four-tensor-initial632-parity-result/v1",
+        "profile_source_sha256": worker._F18_PROFILE_SHA256,
+        "original_f18_source_sha256": worker._F18_SOURCE_SHA256,
+        "initial632_parity_qualified": True, "parity_receipt_fabricated": False,
+        "expected_input_bindings": copy.deepcopy(bindings),
+        "inputs_sha256": compute["input_descriptors"]["sha256"],
+        "parity_manifest_sha256": compute["population_manifest"]["sha256"],
+        "runtime_contract_sha256": compute["runtime_contract"]["sha256"],
+        "verified_assets": copy.deepcopy(descriptors),
+        "authenticated_final_F18_whole_sha256": bindings["donor_checkpoint_sha256"],
+        "all42_model_state_sha256": worker._F18_MODEL_ROOT,
+        "frozen38_sha256_including_modality": worker._F18_FROZEN_ROOT,
+        "head_binary32_scalar_comparisons": 194812,
+        "canonical_capture_source_forwards": 632, "canonical_capture_chunks": 11,
+        "training_rows": 168, "conditions_present": 72, "conditions_absent": 96,
+        "optimizer_updates": 0, "gradient_calls": 0, "teacher_model_restores": 0,
+        "fit_executed": False, "scoring_executed": False, "new_trained_weights": False,
+        "admitted": False, "formalized": False, "promoted": False,
+        "panel_comparisons": [{"panel": name, "rows": count, "binary32_head_scalars": scalars,
+            "all_heads_bitwise_equal": True, "entire_greedy_formal_rows_equal": True,
+            "complete_joint_rows_equal": True}
+            for (name, count, _), scalars in zip(worker._F18_PANELS, counts, strict=True)]}
+    return parity, bindings, compute, population, descriptors
+
+
+def test_f18_parity_gate_binds_original_population_and_donor_before_fit():
+    parity, bindings, compute, population, descriptors = _f18_v1_parity_fixture()
     worker._f18_parity(parity, bindings, compute, population, descriptors)
     changed = copy.deepcopy(population)
     changed["source_inputs"]["original_source_export"]["sha256"] = "f" * 64
     with pytest.raises(ValueError, match="source asset identity"):
         worker._f18_parity(parity, bindings, compute, changed, descriptors)
     changed = copy.deepcopy(parity)
-    changed["selected_product_source"]["profile_sha256"] = "f" * 64
+    changed["profile_source_sha256"] = "f" * 64
+    with pytest.raises(ValueError, match="initial632"):
+        worker._f18_parity(changed, bindings, compute, population, descriptors)
+    # Both historical raw and public-capsule references remain reader-only.
+    for digest, size in (("de6c6f821bffabdd6015db0ff392d9dc961f9c412edd21e08104bc9649399843", 28023),
+                         ("c69cd0973ee8563e3abdca07b1fe6954f563e1ff1b2d41c21dc655838012052f", 13006)):
+        offered = copy.deepcopy(compute)
+        offered["initial_parity"].update(sha256=digest, bytes=size)
+        with pytest.raises(ValueError, match="initial632"):
+            worker._f18_parity(parity, bindings, offered, population, descriptors)
+    changed = copy.deepcopy(parity)
+    changed["schema"] = "legal-ir-f18-source-only-initial632-parity-qualification/v1"
     with pytest.raises(ValueError, match="initial632"):
         worker._f18_parity(changed, bindings, compute, population, descriptors)
 
@@ -1162,7 +1200,7 @@ def test_f18_v2_compute_keeps_original_bounds(damage):
 def _f18_v2_parity_fixture():
     """Authored gate input; no assertion of physical receipt authenticity."""
     compute = _f18_v2_compute_fixture()
-    compute["initial_parity"].update(bytes=30633, sha256=worker._F18_V2_PARITY_SHA256)
+    compute["initial_parity"].update(bytes=31777, sha256=worker._F18_V2_PARITY_SHA256)
     descriptors = [{"role": role, "path": "/tmp/f18-v2-asset-" + str(i),
                     "bytes": i + 1, "sha256": str(i) * 64}
                    for i, role in enumerate(worker._F18_ROLES)]
@@ -1209,7 +1247,7 @@ def test_f18_v2_parity_reuses_bound_zero_step_control_independent_of_train_rate(
     assert compute["learning_rate"] == 0.003 and parity["parity_optimizer_learning_rate"] == 0.001
 
 
-@pytest.mark.parametrize("damage", ["receipt_hash", "receipt_bytes", "old_schema", "profile", "f18_source",
+@pytest.mark.parametrize("damage", ["receipt_hash", "old_receipt", "receipt_bytes", "old_schema", "profile", "f18_source",
     "qualified_boolean", "fabricated", "input_binding", "inputs", "population_digest", "runtime",
     "asset_role", "asset_bytes", "asset_hash", "asset_missing", "donor", "all42", "frozen38",
     "heads_count", "updates_boolean", "gradient", "fit", "scoring", "authority", "selected_rate",
@@ -1218,7 +1256,9 @@ def test_f18_v2_parity_reuses_bound_zero_step_control_independent_of_train_rate(
 def test_f18_v2_parity_refuses_crossed_or_incomplete_evidence(damage):
     parity, bindings, compute, population, descriptors = _f18_v2_parity_fixture()
     if damage == "receipt_hash": compute["initial_parity"]["sha256"] = "f" * 64
-    elif damage == "receipt_bytes": compute["initial_parity"]["bytes"] = 30632
+    elif damage == "old_receipt":
+        compute["initial_parity"].update(bytes=30633, sha256="6d846ed3bab241e26d72aad4d5d1ee6d42310b9a10c66538dd04ae2c3868678e")
+    elif damage == "receipt_bytes": compute["initial_parity"]["bytes"] -= 1
     elif damage == "old_schema": parity["schema"] = "retained-f18-four-tensor-initial632-parity-result/v1"
     elif damage == "profile": parity["profile_source_sha256"] = worker._F18_PROFILE_SHA256
     elif damage == "f18_source": parity["original_f18_source_sha256"] = "f" * 64

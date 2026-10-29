@@ -4134,6 +4134,23 @@
         ],
         "status": "joint_status_guard_and_fixed_case_diagnosis_closed"
       },
+      "current_resource_generation": {
+        "binary32_head_scalars": 194812,
+        "evidence_id": "f18-inventory-headroom-parity-qualified-20261029-01",
+        "max_inventory_entries": 4000000,
+        "native_probe_qualified": false,
+        "raw_initial_parity": {
+          "bytes": 31655,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/trainer-integration-v01/inventory-headroom-port-v01/retained-initial632-v1-v01/attempt-v02/exports/initial-parity-result-v02.json",
+          "sha256": "738273e56a0bcad5e77825b7227e3a7df49861d02885df6165a7b3cb28bbaf92"
+        },
+        "resource_source_sha256": "da6c3596a413ba5c8dab14f9e06a6fc288d7eb9166d261a96abfdf96dd60130b",
+        "retained_fit": false,
+        "rows": 632,
+        "selected_experiment_rate": null,
+        "trainer_cases": 242,
+        "trainer_phases": 726
+      },
       "evidence_ids": [
         "conditions-fullspan-existing-owner-adoption-20261027-01",
         "f18-conditions-fullspan-genuine-mechanics-20261027-01",
@@ -4145,7 +4162,8 @@
         "f18-trainer-controller-qualified-20261027-01",
         "f18-four-tensor-hf-weight-publication-20261027-01",
         "f18-frozen-matched-scoring-20261027-01",
-        "f18-conditions-ranking-diagnosis-20261028-01"
+        "f18-conditions-ranking-diagnosis-20261028-01",
+        "f18-inventory-headroom-parity-qualified-20261029-01"
       ],
       "experimental_hf_weights": {
         "accuracy_gain_qualified": false,
@@ -4384,11 +4402,29 @@
         "captured_inference"
       ],
       "compatibility_dependency": false,
+      "current_resource_generation": {
+        "binary32_head_scalars": 194812,
+        "evidence_id": "f18-inventory-headroom-parity-qualified-20261029-01",
+        "max_inventory_entries": 4000000,
+        "native_probe_qualified": false,
+        "raw_initial_parity": {
+          "bytes": 31777,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/trainer-integration-v01/inventory-headroom-port-v01/retained-initial632-v01/attempt-v01/exports/initial-v2-632-parity-result.json",
+          "sha256": "1b564a1658aaee6b0449d3114697f08661239b9436b46a27fc225f19722e1cb3"
+        },
+        "resource_source_sha256": "da6c3596a413ba5c8dab14f9e06a6fc288d7eb9166d261a96abfdf96dd60130b",
+        "retained_fit": false,
+        "rows": 632,
+        "selected_experiment_rate": null,
+        "trainer_cases": 242,
+        "trainer_phases": 726
+      },
       "evidence_ids": [
         "f18-v2-recipe-bound-numerical-qualified-20261028-01",
         "f18-v2-source-capture-and-initial632-parity-qualified-20261028-01",
         "f18-v2-trainer-integration-and-preentry-recovery-qualified-20261028-01",
-        "f18-v2-saved-scoring-contract-qualified-20261028-01"
+        "f18-v2-saved-scoring-contract-qualified-20261028-01",
+        "f18-inventory-headroom-parity-qualified-20261029-01"
       ],
       "existing_task": "LIR-17",
       "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_span_conditions_fullspan_training_v1.md",
@@ -4418,6 +4454,7 @@
       },
       "source_capture_and_parity": {
         "binary32_scalars": 194812,
+        "current_resource_generation_evidence_id": "f18-inventory-headroom-parity-qualified-20261029-01",
         "evidence_id": "f18-v2-source-capture-and-initial632-parity-qualified-20261028-01",
         "owning_test_sha256": "30a1c841d7f938cfaef3ec16c6351d312fde75acc4735ae7977c19abc9fb0cf2",
         "retained_initial_parity_rows": 632,
@@ -4430,6 +4467,9 @@
       "status": "focused_tests_qualified",
       "trainer_integration": {
         "actual_probe": "preentry_inventory_capacity_refusal",
+        "current_generation_cases": 242,
+        "current_generation_phases": 726,
+        "current_resource_generation_evidence_id": "f18-inventory-headroom-parity-qualified-20261029-01",
         "evidence_id": "f18-v2-trainer-integration-and-preentry-recovery-qualified-20261028-01",
         "launcher": "scripts/ops/legal_ir/run_owned_validation.py",
         "numerical_dispatch_qualified": false,
@@ -4502,7 +4542,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-10-28T21:14:23.319724+00:00",
+  "last_updated_at_utc": "2026-10-29T02:08:35.488266+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -6845,6 +6885,16 @@
       "root": "datasets_repository",
       "scope": "200authoredcases/600phases,26pinsunchanged, originalnative/process/storage/exclusive-sourceclosed. No numericalimports/files/retainedpayloads inmetric, no actualretainedv2comparison/fit/rate/gain. Priorcapacity/199of200/ledgerlock attempts and originalrecoveries remain distinct. Local3-case4mheadroom evidence is reused metadata only, no Wportqualification transfer.",
       "status": "pure_v2_saved_scoring_contract_qualified_resource_port_and_outer_authentication_open"
+    },
+    {
+      "id": "f18-inventory-headroom-parity-qualified-20261029-01",
+      "observed_bytes": 18266,
+      "observed_sha256": "997602273fa7b8523b9aaf026742fe6bbcb6df8dee64e36d38dc4e5b2d6e3363",
+      "path": "docs/autoformalization/evidence/legal-ir-f18-inventory-headroom-parity-20261029.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "3resource/52numeric/242trainer cases; each v1/v2 independently632-case zero-step parity under currentDA6. Exact raw receipts bound; old receipts retained/refused. No retainedfit/rate/nativeprobe/task activation/semantic or Lean claim.",
+      "status": "inventory_headroom_current_v1_v2_parity_and_trainer_gates_qualified"
     }
   ]
 }
