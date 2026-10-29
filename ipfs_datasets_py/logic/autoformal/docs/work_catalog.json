@@ -4447,13 +4447,14 @@
         "f18-v2-saved-scoring-contract-qualified-20261028-01",
         "f18-inventory-headroom-parity-qualified-20261029-01",
         "f18-native-probe-metric-view-qualified-20261029-01",
-        "f18-outer-v2-saved-consumer-prepared-20261029-01"
+        "f18-outer-v2-saved-consumer-prepared-20261029-01",
+        "f18-outer-v2-saved-consumer-authored-qualified-20261029-01"
       ],
       "existing_task": "LIR-17",
       "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_span_conditions_fullspan_training_v1.md",
       "id": "conditions-fullspan-f18-four-tensor-training-v2",
       "immutable_base_component_id": "conditions-fullspan-f18-four-tensor-training-v1",
-      "notes": "Numerical/capture owner d80 retains separate52 genuine cases and632initialparity; trainer contracts have241purecases. Existing savedscorer now has200authoredcases for explicitv2context, everychunk identities and unchanged complete fidelity accounting. No new numerical fit/rate/gain. Reuse existing local4mheadroom work as qualified public operational/source port; resource bytes are checkpoint-bound. Outer60-file freeze/recipe joins, fresh parity/admission and physical-v2frontend reconciliation remain separate. Run-specific outerv2 consumer implemented and captured for source review; current27-case qualification remains pending filesystem headroom, with exact16+11 bounded requests. Prior16 expectedcase outcomes belong to a retained failed fixture batch; no qualification is transferred. Numerical dispatch/TRAIN admission and physical-v2 frontend reconciliation remain separate.",
+      "notes": "Numerical/capture owner d80 retains separate52 genuine cases and632initialparity; trainer contracts have241purecases. Existing savedscorer now has200authoredcases for explicitv2context, everychunk identities and unchanged complete fidelity accounting. No new numerical fit/rate/gain. Reuse existing local4mheadroom work as qualified public operational/source port; resource bytes are checkpoint-bound. Outer60-file freeze/recipe joins, fresh parity/admission and physical-v2frontend reconciliation remain separate. At the prior preparation cutoff, the run-specific outerv2 consumer was implemented and captured for source review; its27-case qualification awaited filesystem headroom, with exact16+11 bounded requests. Prior16 expectedcase outcomes belong to a retained failed fixture batch; no qualification is transferred. Numerical dispatch/TRAIN admission and physical-v2 frontend reconciliation remain separate. Later unchangedconsumerA3/currentfixture73 qualification passed all27 authored file/metadata controls with56 unchanged pins and real originalVALIDATION custody fullyclosed. Priorprepared/failed evidence stays immutable. Fictional producer witnesses do not qualify numerical trainer dispatch, retained-v2 training/comparison, legal meaning or Lean; bounded split templates remain unexecuted.",
       "owner_module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_conditions_fullspan_training_v2",
       "owning_tests": [
         "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_conditions_fullspan_training_v2.py"
@@ -4480,6 +4481,7 @@
         },
         "outer_saved_consumer": {
           "actual_retained_outputs_compared": false,
+          "authored_cases": 27,
           "bounded_cohorts": [
             {
               "cases": 16,
@@ -4492,12 +4494,16 @@
               "storage_bytes": 24117248
             }
           ],
-          "current_full27_qualified": false,
-          "evidence_id": "f18-outer-v2-saved-consumer-prepared-20261029-01",
+          "bounded_templates_executed": false,
+          "current_full27_qualified": true,
+          "evidence_id": "f18-outer-v2-saved-consumer-authored-qualified-20261029-01",
           "new_product_owner": false,
+          "original_owner_custody_closed": true,
           "prior_expected_case_outcomes_observed": 16,
+          "qualification_scope": "Authored file/metadata only; fictional producer/parity/native/training witnesses.",
+          "source_pins": 56,
           "source_sha256": "a003f73cf0a3c9900a02cbf242f79f76889b06164371e4a117c0bc2b8c79b8ef",
-          "status": "implemented_and_prepared_current_27_case_qualification_pending_filesystem_headroom"
+          "status": "authored27_file_metadata_controls_qualified_real_retained_v2_comparison_open"
         },
         "owner": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/formula_generation_metrics.py",
         "owning_tests": [
@@ -4600,7 +4606,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-10-29T06:08:12.067280+00:00",
+  "last_updated_at_utc": "2026-10-29T06:44:51.532414+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -6973,6 +6979,16 @@
       "root": "datasets_repository",
       "scope": "Consumer implemented; currentfixture/bounded16+11 controls statically prepared, notexecuted. Priorfailedbatch observed16 expectedoutcomes. Ownclaimsclosed; v05preentrynoadmission. No newfit/rate/nativeactivation/legal/Lean qualification.",
       "status": "implemented_and_prepared_current_27_case_qualification_pending_filesystem_headroom"
+    },
+    {
+      "id": "f18-outer-v2-saved-consumer-authored-qualified-20261029-01",
+      "observed_bytes": 54763,
+      "observed_sha256": "2c17714eddebe736aaf29c43fdd8b63b14a25ecd9a1cd98c28e7292fceac11d5",
+      "path": "docs/autoformalization/evidence/legal-ir-f18-outer-v2-saved-consumer-qualification-20261029.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "27authored cases under originalVALIDATION owner,56 unchangedpins and fullyclosednative/process/storage/source custody. Fictional producer/parity/training witnesses; no numericaldispatch/TRAINrate/fit/statutory/Lean qualification. Splittemplates unexecuted.",
+      "status": "authored27_file_metadata_controls_qualified_real_retained_v2_comparison_open"
     }
   ]
 }

@@ -1,0 +1,894 @@
+{
+  "actual_root_control": {
+    "source": {
+      "bytes": 7349,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/frozen-scoring-consumer-v01/v2-successor-v01/full27-qualification-v01/root-run-original-validation-v01.py",
+      "sha256": "fbcacb4a972887ab9adf69bb9316f81ad80feebb8dd63c160ae729653f58829f"
+    },
+    "utf8": "\"\"\"One original-owned authored saved v2 filesystem consumer qualification; no reusable execution owner.\"\"\"\nfrom pathlib import Path\nimport datetime,hashlib,json,os,subprocess,sys,time,types,shutil\nR=Path('/home/barberb/lift_coding/external/ipfs_datasets')\nN=Path(__file__).resolve().parent\nLEASE=R/'ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_source_lease.py'\nraw=LEASE.read_bytes();assert hashlib.sha256(raw).hexdigest()=='42e9f07d0d458177079269d9f495f0b70512180c1adc2f7fe0bfdb05518a12f9'\nl=types.ModuleType('_v2_original_lease');l.__file__=str(LEASE);sys.modules[l.__name__]=l;exec(compile(raw,str(LEASE),'exec'),l.__dict__)\nrecord={'schema':'f18-saved-v2-consumer-original-root-source-closeout/v1','started_at_utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),'actual_retained_input_fit':False,'pure_fake_controls_only':True,'fictional_producer_and_parity_witnesses':True,'model_rate_selected':None,'native_task_rearmed':False}\nprint('WAITING_ORIGINAL_SOURCE_WRITE',flush=True)\nwith l.source_lease(R,mode='write',timeout_seconds=600):\n print('ORIGINAL_SOURCE_WRITE_ACQUIRED',flush=True)\n p=R/'workspace/test-logs/federal-corpus-audits/legal-ir-normative-target-binding-20261021-01/controls/install_product_v02.py';raw=p.read_bytes();assert hashlib.sha256(raw).hexdigest()=='733d651fb88f08fd1f09c4075e0b6d2b496509c1dcac04926f9e00d373d85671'\n io=types.ModuleType('_v2_original_io');io.__file__=str(p);sys.modules[io.__name__]=io;exec(compile(raw,str(p),'exec'),io.__dict__)\n request_path=N/'request-v01.json';request_raw=io.read(request_path);pin='fa9d6296bfddcfc2307355555a76cabf3470e2492e4c6cfbed7c72e07a2d9d6c';assert io.sha(request_raw)==pin\n value=io.parse(request_raw);assert len(value['selected_checks'])==27 and value['schema']=='owned-validation-request/v1'\n before={name:io.sha(io.read(Path(name))) for name in value['source_sha256']};assert before==value['source_sha256']\n attempt=Path(value['attempt_directory']);assert not any(attempt.iterdir()) and (attempt.stat().st_mode&0o777)==0o700\n ledger=R/'workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json';launcher=R/'scripts/ops/legal_ir/run_owned_validation.py'\n assert before[str(launcher)]=='0e302d2ca4c17c9185f12e040f3a681ce043b2710a7673d06f5ee0fc4657fabf'\n # Conservative observational preflight: the full claim remains outstanding\n # while up to one attempt-sized payload is written. Original admission still applies.\n live=io.parse(io.read(ledger));assert live['schema']=='daemon-resource-reservations-v1'\n outstanding=sum(row['storage_bytes'] for row in live['reservations'].values() if row['status']!='released')\n free=min(shutil.disk_usage(Path(path)).free for path in value['roots'])\n required=outstanding+2*value['storage_bytes']\n if free<required:\n  deferred={'schema':'f18-bounded-validation-filesystem-preflight-deferral/v1','request_sha256':pin,'filesystem_free_bytes':free,'outstanding_reservation_bytes':outstanding,'full_claim_peak_allowance_bytes':2*value['storage_bytes'],'deficit_bytes':required-free,'original_owner_invoked':False,'reservation_created':False,'native_lease_acquired':False,'tests_executed':False,'fixture_qualification':False,'capacity_policy_changed':False}\n  path=N/'capacity-deferral-v01.json'\n  if not path.exists():io.save(path,deferred)\n  print('CAPACITY_DEFERRED_BEFORE_ORIGINAL_OWNER '+json.dumps(deferred,sort_keys=True),flush=True)\n  raise SystemExit(75)\n\n env=dict(os.environ);env.update(PYTHONDONTWRITEBYTECODE='1',IPFS_DATASETS_PY_MINIMAL_IMPORTS='1',IPFS_DATASETS_AUTO_INSTALL='0',IPFS_DATASETS_AUTO_INSTALL_TEST_DEPS='0',IPFS_AUTO_INSTALL='false',PYTEST_DISABLE_PLUGIN_AUTOLOAD='1',TRANSFORMERS_OFFLINE='1',HF_HUB_OFFLINE='1',OMP_NUM_THREADS='1',MKL_NUM_THREADS='1',OPENBLAS_NUM_THREADS='1',CUDA_VISIBLE_DEVICES='')\n argv=[value['argv'][0],'-B','-u',str(launcher),'--request',str(request_path),'--expected-request-sha256',pin,'--resource-ledger',str(ledger)]\n started=time.monotonic()\n with (N/'owner-v01.stdout').open('xb') as out,(N/'owner-v01.stderr').open('xb') as err:\n  child=subprocess.Popen(argv,cwd=R,env=env,stdout=out,stderr=err)\n  stat=(Path('/proc')/str(child.pid)/'stat').read_text();birth=stat[stat.rfind(')')+2:].split()[19]\n  record.update(original_owner_pid=child.pid,original_owner_birth=birth,request_sha256=pin)\n  print('ORIGINAL_VALIDATION_OWNER_STARTED '+str(child.pid),flush=True)\n  rc=child.wait()\n  out.flush();os.fsync(out.fileno());err.flush();os.fsync(err.fileno())\n stdout=io.read(N/'owner-v01.stdout');terminal=None\n for line in stdout.decode().splitlines():\n  try:obj=json.loads(line)\n  except ValueError:continue\n  if isinstance(obj,dict) and 'reservation' in obj:terminal=obj\n record.update(returncode=rc,command_elapsed_seconds=time.monotonic()-started,original_terminal=terminal,owner_stdout=io.desc(N/'owner-v01.stdout',stdout),owner_stderr=io.desc(N/'owner-v01.stderr',io.read(N/'owner-v01.stderr')))\n after={name:io.sha(io.read(Path(name))) for name in before};record['source_pins_unchanged']=after==before;record['source_pin_count']=len(before)\n closed=False\n if terminal is not None:\n  res=terminal.get('reservation') or {};lease=res.get('resource_lease') or {};obs=res.get('process_observation') or {};row=res.get('record') or {}\n  closed=(lease.get('released') is True and res.get('cleanup_error') is None and obs.get('live_processes')==0 and obs.get('rss_bytes')==0 and obs.get('out_of_group_live_identities')==[] and not obs.get('tracking_error') and row.get('status') in ('released','retained') and row.get('owner_pid')==child.pid and res.get('workload')=='canonical_validation' and res.get('scheduler_lane')=='validation')\n  if not closed and rc!=0 and terminal.get('schema')=='owned-validation-failure-terminal/v1':\n   os.environ.update(IPFS_DATASETS_PY_MINIMAL_IMPORTS='1',IPFS_DATASETS_AUTO_INSTALL='0',IPFS_AUTO_INSTALL='false')\n   sys.path.insert(0,str(R));src=io.read(launcher);mod=types.ModuleType('_v2_original_validation_closeout');mod.__file__=str(launcher);sys.modules[mod.__name__]=mod;exec(compile(src,str(launcher),'exec'),mod.__dict__)\n   decision=mod.classify_owned_validation_source_custody(terminal,request_raw,expected_request_sha256=pin,owner_pid=child.pid,owner_birth=birth,returncode=rc,expected_resource_ledger=str(ledger));record['original_failure_custody_decision']=decision;closed=decision.get('source_custody_closed') is True\n record['original_native_and_descendants_closed']=closed\n if not closed:\n  io.save(N/'root-unresolved-custody-v01.json',record)\n  print('SOURCE_WRITE_RETAINED_ORIGINAL_CLEANUP_REQUIRED '+json.dumps(record,sort_keys=True),flush=True)\n  while True:time.sleep(30)\n record['source_WRITE_closure_permitted']=True\nrecord['source_WRITE_closed']=True;record['finished_at_utc']=datetime.datetime.now(datetime.timezone.utc).isoformat();io.save(N/'root-source-closeout-v01.json',record)\nprint(json.dumps({'returncode':rc,'source_WRITE_closed':True,'original_native_and_descendants_closed':closed,'source_pins_unchanged':record['source_pins_unchanged'],'elapsed_seconds':record['command_elapsed_seconds'],'terminal_completed':None if terminal is None else terminal.get('completed'),'receipt':io.desc(N/'root-source-closeout-v01.json',io.read(N/'root-source-closeout-v01.json'))},sort_keys=True),flush=True)\nraise SystemExit(rc if record['source_pins_unchanged'] else 99)\n"
+  },
+  "admitted": false,
+  "adverse_diagnostics": {
+    "conditions_candidate_exact": 623,
+    "conditions_candidate_total": 624,
+    "conditions_present_retained": 71,
+    "permission_candidate_exact": 623,
+    "permission_candidate_total": 624,
+    "target_P_retained": 31
+  },
+  "authored_cases_passed": 27,
+  "bounded_prefix_and_hybrid_templates": {
+    "executed": false,
+    "qualification_transferred": false,
+    "status": "Retained optional preparation only; full27 standard fixture.main ran instead."
+  },
+  "canonical_product_source_changed": false,
+  "cases": [
+    {
+      "boundary_fault_hits": [],
+      "boundary_fault_kind": null,
+      "closing_entered": true,
+      "closing_mutated": false,
+      "diagnostic": {
+        "conditions_present_retained": 72,
+        "exact": {
+          "coefficient_0": {
+            "joint": {
+              "matched": 624,
+              "total": 624
+            },
+            "raw": {
+              "matched": 624,
+              "total": 624
+            }
+          },
+          "coefficient_025": {
+            "joint": {
+              "matched": 624,
+              "total": 624
+            },
+            "raw": {
+              "matched": 624,
+              "total": 624
+            }
+          },
+          "parent": {
+            "joint": {
+              "matched": 624,
+              "total": 624
+            },
+            "raw": {
+              "matched": 624,
+              "total": 624
+            }
+          }
+        },
+        "law_unscored": 8,
+        "permission_retained": 32,
+        "weak_label_denominator": 624
+      },
+      "diagnostic_artifact_retained": true,
+      "expected": "success",
+      "fence_crossed": true,
+      "name": "success",
+      "origin_differs_from_physical_initial": true,
+      "outcome": "expected_success",
+      "reference_open_count": 21,
+      "stream_verified_count": 60,
+      "tampered_stream_ordinal": null
+    },
+    {
+      "boundary_fault_hits": [],
+      "boundary_fault_kind": null,
+      "closing_entered": true,
+      "closing_mutated": false,
+      "diagnostic": {
+        "conditions_present_retained": 71,
+        "exact": {
+          "coefficient_0": {
+            "joint": {
+              "matched": 624,
+              "total": 624
+            },
+            "raw": {
+              "matched": 624,
+              "total": 624
+            }
+          },
+          "coefficient_025": {
+            "joint": {
+              "matched": 623,
+              "total": 624
+            },
+            "raw": {
+              "matched": 623,
+              "total": 624
+            }
+          },
+          "parent": {
+            "joint": {
+              "matched": 624,
+              "total": 624
+            },
+            "raw": {
+              "matched": 624,
+              "total": 624
+            }
+          }
+        },
+        "law_unscored": 8,
+        "permission_retained": 32,
+        "weak_label_denominator": 624
+      },
+      "diagnostic_artifact_retained": true,
+      "expected": "success",
+      "fence_crossed": true,
+      "name": "lossy_ir_diagnostic",
+      "origin_differs_from_physical_initial": true,
+      "outcome": "expected_success",
+      "reference_open_count": 21,
+      "stream_verified_count": 60,
+      "tampered_stream_ordinal": null
+    },
+    {
+      "boundary_fault_hits": [],
+      "boundary_fault_kind": null,
+      "closing_entered": true,
+      "closing_mutated": false,
+      "diagnostic": {
+        "conditions_present_retained": 72,
+        "exact": {
+          "coefficient_0": {
+            "joint": {
+              "matched": 624,
+              "total": 624
+            },
+            "raw": {
+              "matched": 624,
+              "total": 624
+            }
+          },
+          "coefficient_025": {
+            "joint": {
+              "matched": 623,
+              "total": 624
+            },
+            "raw": {
+              "matched": 623,
+              "total": 624
+            }
+          },
+          "parent": {
+            "joint": {
+              "matched": 624,
+              "total": 624
+            },
+            "raw": {
+              "matched": 624,
+              "total": 624
+            }
+          }
+        },
+        "law_unscored": 8,
+        "permission_retained": 31,
+        "weak_label_denominator": 624
+      },
+      "diagnostic_artifact_retained": true,
+      "expected": "success",
+      "fence_crossed": true,
+      "name": "permission_loss_diagnostic",
+      "origin_differs_from_physical_initial": true,
+      "outcome": "expected_success",
+      "reference_open_count": 21,
+      "stream_verified_count": 60,
+      "tampered_stream_ordinal": null
+    },
+    {
+      "boundary_fault_hits": [],
+      "boundary_fault_kind": null,
+      "closing_entered": false,
+      "closing_mutated": false,
+      "diagnostic_artifact_retained": false,
+      "error": "input bytes or identity changed",
+      "error_type": "ValueError",
+      "expected": "pre_reference",
+      "fence_crossed": false,
+      "name": "last_raw_score_byte_tamper",
+      "origin_differs_from_physical_initial": true,
+      "outcome": "expected_refusal",
+      "reference_open_count": 0,
+      "stream_verified_count": 58,
+      "tampered_stream_ordinal": 59
+    },
+    {
+      "boundary_fault_hits": [],
+      "boundary_fault_kind": null,
+      "closing_entered": false,
+      "closing_mutated": false,
+      "diagnostic_artifact_retained": false,
+      "error": "input bytes or identity changed",
+      "error_type": "ValueError",
+      "expected": "pre_reference",
+      "fence_crossed": false,
+      "name": "last_joint_byte_tamper",
+      "origin_differs_from_physical_initial": true,
+      "outcome": "expected_refusal",
+      "reference_open_count": 0,
+      "stream_verified_count": 59,
+      "tampered_stream_ordinal": 60
+    },
+    {
+      "boundary_fault_hits": [],
+      "boundary_fault_kind": null,
+      "closing_entered": false,
+      "closing_mutated": false,
+      "diagnostic_artifact_retained": false,
+      "error": "v2 capture identity differs from independent caller expectations",
+      "error_type": "ValueError",
+      "expected": "after_reference",
+      "fence_crossed": true,
+      "name": "later_arm_unscored_identity",
+      "origin_differs_from_physical_initial": true,
+      "outcome": "expected_refusal",
+      "reference_open_count": 7,
+      "stream_verified_count": 60,
+      "tampered_stream_ordinal": null
+    },
+    {
+      "boundary_fault_hits": [],
+      "boundary_fault_kind": null,
+      "closing_entered": true,
+      "closing_mutated": false,
+      "diagnostic_artifact_retained": true,
+      "error": "frozen comparison evaluation is invalid; retained diagnostic requires review",
+      "error_type": "ValueError",
+      "expected": "after_reference",
+      "fence_crossed": true,
+      "name": "later_training_chunk_missing",
+      "origin_differs_from_physical_initial": true,
+      "outcome": "expected_refusal",
+      "reference_open_count": 21,
+      "stream_verified_count": 60,
+      "tampered_stream_ordinal": null
+    },
+    {
+      "boundary_fault_hits": [],
+      "boundary_fault_kind": null,
+      "closing_entered": false,
+      "closing_mutated": false,
+      "diagnostic_artifact_retained": false,
+      "error": "complete independent v2 producer generation differs",
+      "error_type": "ValueError",
+      "expected": "pre_reference",
+      "fence_crossed": false,
+      "name": "old_freeze_schema",
+      "origin_differs_from_physical_initial": true,
+      "outcome": "expected_refusal",
+      "reference_open_count": 0,
+      "stream_verified_count": 0,
+      "tampered_stream_ordinal": null
+    },
+    {
+      "boundary_fault_hits": [],
+      "boundary_fault_kind": null,
+      "closing_entered": false,
+      "closing_mutated": false,
+      "diagnostic_artifact_retained": false,
+      "error": "v2 panel/capture/inference generation must agree",
+      "error_type": "ValueError",
+      "expected": "after_reference",
+      "fence_crossed": true,
+      "name": "mixed_capture_schema",
+      "origin_differs_from_physical_initial": true,
+      "outcome": "expected_refusal",
+      "reference_open_count": 7,
+      "stream_verified_count": 60,
+      "tampered_stream_ordinal": null
+    },
+    {
+      "boundary_fault_hits": [],
+      "boundary_fault_kind": null,
+      "closing_entered": false,
+      "closing_mutated": false,
+      "diagnostic_artifact_retained": false,
+      "error": "exact independently trusted initial parity required",
+      "error_type": "ValueError",
+      "expected": "pre_reference",
+      "fence_crossed": false,
+      "name": "stale_parity",
+      "origin_differs_from_physical_initial": true,
+      "outcome": "expected_refusal",
+      "reference_open_count": 0,
+      "stream_verified_count": 0,
+      "tampered_stream_ordinal": null
+    },
+    {
+      "boundary_fault_hits": [],
+      "boundary_fault_kind": null,
+      "closing_entered": false,
+      "closing_mutated": false,
+      "diagnostic_artifact_retained": false,
+      "error": "trusted independent parity/source commitments differ",
+      "error_type": "ValueError",
+      "expected": "pre_reference",
+      "fence_crossed": false,
+      "name": "crossed_input15",
+      "origin_differs_from_physical_initial": true,
+      "outcome": "expected_refusal",
+      "reference_open_count": 0,
+      "stream_verified_count": 0,
+      "tampered_stream_ordinal": null
+    },
+    {
+      "boundary_fault_hits": [],
+      "boundary_fault_kind": null,
+      "closing_entered": false,
+      "closing_mutated": false,
+      "diagnostic_artifact_retained": false,
+      "error": "original fifteen input commitments required",
+      "error_type": "ValueError",
+      "expected": "pre_reference",
+      "fence_crossed": false,
+      "name": "missing_input15",
+      "origin_differs_from_physical_initial": true,
+      "outcome": "expected_refusal",
+      "reference_open_count": 0,
+      "stream_verified_count": 0,
+      "tampered_stream_ordinal": null
+    },
+    {
+      "boundary_fault_hits": [],
+      "boundary_fault_kind": null,
+      "closing_entered": false,
+      "closing_mutated": false,
+      "diagnostic_artifact_retained": false,
+      "error": "optimizer recipe differs from independent expectations",
+      "error_type": "ValueError",
+      "expected": "pre_reference",
+      "fence_crossed": false,
+      "name": "jointly_changed_recipe_capture_rate",
+      "origin_differs_from_physical_initial": true,
+      "outcome": "expected_refusal",
+      "reference_open_count": 0,
+      "stream_verified_count": 0,
+      "tampered_stream_ordinal": null
+    },
+    {
+      "boundary_fault_hits": [],
+      "boundary_fault_kind": null,
+      "closing_entered": false,
+      "closing_mutated": false,
+      "diagnostic_artifact_retained": false,
+      "error": "plan/source/metadata/capture/artifact path collision",
+      "error_type": "ValueError",
+      "expected": "pre_reference",
+      "fence_crossed": false,
+      "name": "crossed_arm_recipe",
+      "origin_differs_from_physical_initial": true,
+      "outcome": "expected_refusal",
+      "reference_open_count": 0,
+      "stream_verified_count": 0,
+      "tampered_stream_ordinal": null
+    },
+    {
+      "boundary_fault_hits": [],
+      "boundary_fault_kind": null,
+      "closing_entered": false,
+      "closing_mutated": false,
+      "diagnostic_artifact_retained": false,
+      "error": "plan/source/metadata/capture/artifact path collision",
+      "error_type": "ValueError",
+      "expected": "pre_reference",
+      "fence_crossed": false,
+      "name": "crossed_arm_checkpoint",
+      "origin_differs_from_physical_initial": true,
+      "outcome": "expected_refusal",
+      "reference_open_count": 0,
+      "stream_verified_count": 0,
+      "tampered_stream_ordinal": null
+    },
+    {
+      "boundary_fault_hits": [],
+      "boundary_fault_kind": null,
+      "closing_entered": false,
+      "closing_mutated": false,
+      "diagnostic_artifact_retained": false,
+      "error": "canonical closed v2 checkpoint required",
+      "error_type": "ValueError",
+      "expected": "pre_reference",
+      "fence_crossed": false,
+      "name": "noncanonical_checkpoint",
+      "origin_differs_from_physical_initial": true,
+      "outcome": "expected_refusal",
+      "reference_open_count": 0,
+      "stream_verified_count": 0,
+      "tampered_stream_ordinal": null
+    },
+    {
+      "boundary_fault_hits": [],
+      "boundary_fault_kind": null,
+      "closing_entered": false,
+      "closing_mutated": false,
+      "diagnostic_artifact_retained": false,
+      "error": "canonical recipe bytes required",
+      "error_type": "ValueError",
+      "expected": "pre_reference",
+      "fence_crossed": false,
+      "name": "noncanonical_recipe",
+      "origin_differs_from_physical_initial": true,
+      "outcome": "expected_refusal",
+      "reference_open_count": 0,
+      "stream_verified_count": 0,
+      "tampered_stream_ordinal": null
+    },
+    {
+      "boundary_fault_hits": [],
+      "boundary_fault_kind": null,
+      "closing_entered": false,
+      "closing_mutated": false,
+      "diagnostic_artifact_retained": false,
+      "error": "plan/source/metadata/capture/artifact path collision",
+      "error_type": "ValueError",
+      "expected": "pre_reference",
+      "fence_crossed": false,
+      "name": "duplicate_capture_path",
+      "origin_differs_from_physical_initial": true,
+      "outcome": "expected_refusal",
+      "reference_open_count": 0,
+      "stream_verified_count": 0,
+      "tampered_stream_ordinal": null
+    },
+    {
+      "boundary_fault_hits": [
+        {
+          "caller_file": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/frozen-scoring-consumer-v01/score_saved_pair_control-v01.py",
+          "caller_function": "identity",
+          "injected_field": "st_mode",
+          "injected_value": 41396,
+          "kind": "symlink_mode",
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/frozen-scoring-consumer-v01/v2-successor-v01/full27-qualification-v01/attempt-v01/tmp/fixtures/case-19-symlink_mode_boundary_fault/producer-attempt/exports/f18-paired/arm-025/fresh_test-joint.json",
+          "physical_nlink": 1,
+          "physical_regular": true,
+          "stream_ordinal": 60
+        }
+      ],
+      "boundary_fault_kind": "symlink_mode",
+      "closing_entered": false,
+      "closing_mutated": false,
+      "diagnostic_artifact_retained": false,
+      "error": "unaliased regular input required",
+      "error_type": "ValueError",
+      "expected": "pre_reference",
+      "fence_crossed": false,
+      "name": "symlink_mode_boundary_fault",
+      "origin_differs_from_physical_initial": true,
+      "outcome": "expected_refusal",
+      "physical_nlink_after_refusal": 1,
+      "physical_regular_after_refusal": true,
+      "reference_open_count": 0,
+      "stream_verified_count": 59,
+      "tampered_stream_ordinal": null
+    },
+    {
+      "boundary_fault_hits": [
+        {
+          "caller_file": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/frozen-scoring-consumer-v01/score_saved_pair_control-v01.py",
+          "caller_function": "identity",
+          "injected_field": "st_nlink",
+          "injected_value": 2,
+          "kind": "nlink2",
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/frozen-scoring-consumer-v01/v2-successor-v01/full27-qualification-v01/attempt-v01/tmp/fixtures/case-20-nlink2_boundary_fault/producer-attempt/exports/f18-paired/arm-025/fresh_test-joint.json",
+          "physical_nlink": 1,
+          "physical_regular": true,
+          "stream_ordinal": 60
+        }
+      ],
+      "boundary_fault_kind": "nlink2",
+      "closing_entered": false,
+      "closing_mutated": false,
+      "diagnostic_artifact_retained": false,
+      "error": "unaliased regular input required",
+      "error_type": "ValueError",
+      "expected": "pre_reference",
+      "fence_crossed": false,
+      "name": "nlink2_boundary_fault",
+      "origin_differs_from_physical_initial": true,
+      "outcome": "expected_refusal",
+      "physical_nlink_after_refusal": 1,
+      "physical_regular_after_refusal": true,
+      "reference_open_count": 0,
+      "stream_verified_count": 59,
+      "tampered_stream_ordinal": null
+    },
+    {
+      "boundary_fault_hits": [],
+      "boundary_fault_kind": null,
+      "closing_entered": true,
+      "closing_mutated": true,
+      "diagnostic_artifact_retained": false,
+      "error": "closing input identity differs",
+      "error_type": "ValueError",
+      "expected": "closing",
+      "fence_crossed": true,
+      "name": "closing_capture_mutation",
+      "origin_differs_from_physical_initial": true,
+      "outcome": "expected_refusal",
+      "reference_open_count": 7,
+      "stream_verified_count": 60,
+      "tampered_stream_ordinal": null
+    },
+    {
+      "boundary_fault_hits": [],
+      "boundary_fault_kind": null,
+      "closing_entered": true,
+      "closing_mutated": true,
+      "diagnostic_artifact_retained": false,
+      "error": "closing input identity differs",
+      "error_type": "ValueError",
+      "expected": "closing",
+      "fence_crossed": true,
+      "name": "closing_metadata_mutation",
+      "origin_differs_from_physical_initial": true,
+      "outcome": "expected_refusal",
+      "reference_open_count": 7,
+      "stream_verified_count": 60,
+      "tampered_stream_ordinal": null
+    },
+    {
+      "boundary_fault_hits": [],
+      "boundary_fault_kind": null,
+      "closing_entered": true,
+      "closing_mutated": true,
+      "diagnostic_artifact_retained": false,
+      "error": "closing input identity differs",
+      "error_type": "ValueError",
+      "expected": "closing",
+      "fence_crossed": true,
+      "name": "closing_source_mutation",
+      "origin_differs_from_physical_initial": true,
+      "outcome": "expected_refusal",
+      "reference_open_count": 7,
+      "stream_verified_count": 60,
+      "tampered_stream_ordinal": null
+    },
+    {
+      "boundary_fault_hits": [],
+      "boundary_fault_kind": null,
+      "closing_entered": true,
+      "closing_mutated": true,
+      "diagnostic_artifact_retained": true,
+      "error": "input bytes or identity changed",
+      "error_type": "ValueError",
+      "expected": "closing",
+      "fence_crossed": true,
+      "name": "closing_after_report_mutation",
+      "origin_differs_from_physical_initial": true,
+      "outcome": "expected_refusal",
+      "reference_open_count": 14,
+      "stream_verified_count": 60,
+      "tampered_stream_ordinal": null
+    },
+    {
+      "boundary_fault_hits": [],
+      "boundary_fault_kind": null,
+      "closing_entered": false,
+      "closing_mutated": false,
+      "diagnostic_artifact_retained": false,
+      "error": "complete pre-reference pair freeze required",
+      "error_type": "ValueError",
+      "expected": "pre_reference",
+      "fence_crossed": false,
+      "name": "reference_leak_flag",
+      "origin_differs_from_physical_initial": true,
+      "outcome": "expected_refusal",
+      "reference_open_count": 0,
+      "stream_verified_count": 0,
+      "tampered_stream_ordinal": null
+    },
+    {
+      "boundary_fault_hits": [],
+      "boundary_fault_kind": null,
+      "closing_entered": false,
+      "closing_mutated": false,
+      "diagnostic_artifact_retained": false,
+      "error": "false authority boundary differs",
+      "error_type": "ValueError",
+      "expected": "pre_reference",
+      "fence_crossed": false,
+      "name": "authority_flag",
+      "origin_differs_from_physical_initial": true,
+      "outcome": "expected_refusal",
+      "reference_open_count": 0,
+      "stream_verified_count": 0,
+      "tampered_stream_ordinal": null
+    },
+    {
+      "boundary_fault_hits": [],
+      "boundary_fault_kind": null,
+      "closing_entered": false,
+      "closing_mutated": false,
+      "diagnostic_artifact_retained": false,
+      "error": "checkpoint origin projection differs",
+      "error_type": "ValueError",
+      "expected": "pre_reference",
+      "fence_crossed": false,
+      "name": "origin_physical_substitution",
+      "origin_differs_from_physical_initial": true,
+      "outcome": "expected_refusal",
+      "reference_open_count": 0,
+      "stream_verified_count": 0,
+      "tampered_stream_ordinal": null
+    }
+  ],
+  "current_consumer_source": {
+    "bytes": 50487,
+    "sha256": "a003f73cf0a3c9900a02cbf242f79f76889b06164371e4a117c0bc2b8c79b8ef"
+  },
+  "current_fixture_source": {
+    "bytes": 45600,
+    "sha256": "73badeadab30c9f69eaafd3b6217f830f979cf25b0890a3c5079230cfcddc167"
+  },
+  "evidence": {
+    "fixture_result": {
+      "bytes": 386343,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/frozen-scoring-consumer-v01/v2-successor-v01/full27-qualification-v01/attempt-v01/tmp/fixtures/fixture-qualification.json",
+      "sha256": "1d19d54acd0305697d8553957522cd085949ff42c7220bcf1524188056e0ed73"
+    },
+    "independent_fixture_observation_review": {
+      "bytes": 21363,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/frozen-scoring-consumer-v01/v2-successor-v01/full27-qualification-v01/independent-fixture-result-review-v01.json",
+      "sha256": "677332b3b8fe9335430dd0a2c6b4e5adb9d44c09109a0cef66912acbcf761940"
+    },
+    "independent_original_owner_result_review": {
+      "bytes": 17708,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/frozen-scoring-consumer-v01/v2-successor-v01/full27-qualification-v01/independent-result-review-v01.json",
+      "sha256": "f1e1e2417c59b4464431f180912ec9b1834ed1c5f29f8dd9202315b659ad9c58"
+    },
+    "independent_request_review": {
+      "bytes": 4000,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/frozen-scoring-consumer-v01/v2-successor-v01/full27-qualification-v01/independent-request-review-v01.json",
+      "sha256": "03d8c406a44bc8c34e340e41540b79041172e4b5af61191fbc893e86306f8020"
+    },
+    "request": {
+      "bytes": 17882,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/frozen-scoring-consumer-v01/v2-successor-v01/full27-qualification-v01/request-v01.json",
+      "sha256": "fa9d6296bfddcfc2307355555a76cabf3470e2492e4c6cfbed7c72e07a2d9d6c"
+    },
+    "root_source_closeout": {
+      "bytes": 10039,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/frozen-scoring-consumer-v01/v2-successor-v01/full27-qualification-v01/root-source-closeout-v01.json",
+      "sha256": "315ec8acb558a769b0e716942cacf28fe8a3e189a6a750fca37a76fd559541ad"
+    },
+    "scope": {
+      "bytes": 5026,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/frozen-scoring-consumer-v01/v2-successor-v01/full27-qualification-v01/scope-v01.json",
+      "sha256": "f78d594d6b8fb839ab638cbf1d7b6e14994ed1cb379118ec9d8ac1425bdc652e"
+    }
+  },
+  "expected_refusals": 24,
+  "fence_observations": {
+    "both_corruptions_reference_opens": 0,
+    "closing_after_report_refusal_retained_diagnostic": true,
+    "diagnostic_presence_is_not_success": true,
+    "joint_corruption_prior_successful_streams": 59,
+    "joint_corruption_stream_ordinal": 60,
+    "positive_cases_each_streamed_capture_files": 60,
+    "positive_cases_each_total_reference_opens_including_closing_rehashes": 21,
+    "positive_cases_each_unique_reference_paths": 7,
+    "raw_corruption_prior_successful_streams": 58,
+    "raw_score_only_corruption_stream_ordinal": 59
+  },
+  "fixed_authored_rosters": {
+    "conditions_present_TRAIN": 72,
+    "law_unscored": 8,
+    "source_rows": 632,
+    "target_P_old_tune": 32,
+    "weak_label_rows": 624
+  },
+  "formalized": false,
+  "id": "f18-outer-v2-saved-consumer-authored-qualified-20261029-01",
+  "native_goal_or_task_completed": false,
+  "native_task_activated": false,
+  "new_TRAIN_rate_selected": null,
+  "new_model_forwards": 0,
+  "new_optimizer_updates": 0,
+  "new_retained_fit": false,
+  "next_gates": [
+    "Qualify numerical trainer dispatch on existing owners and reconcile public physical-v2 frontend bindings as required.",
+    "Bind a reviewed TRAIN-only objective/rate/state/seed/step/time/storage scope and acquire fresh original training-purpose admission before retained fitting.",
+    "Freeze actual trained-v2 outputs and perform separate saved-only comparison with retained comparator no-loss gates.",
+    "Continue existing LIR-0102 and parallel source/span/entity/review/Lean work; source edition, legal meaning and corpus admission retain their separate gates."
+  ],
+  "original_execution_seconds": 77.04026741907,
+  "original_owner_seconds": 117.20036831079051,
+  "original_storage_record": {
+    "artifacts_durable_asserted": true,
+    "cleanup_error": null,
+    "final_attempt_bytes": 118368054,
+    "native_lease_released": true,
+    "owner_pid": 539929,
+    "process_observation": {
+      "group_rss": {
+        "available": true,
+        "live_processes": 0,
+        "rss_bytes": 0
+      },
+      "live_processes": 0,
+      "observed_identities": [
+        {
+          "birth_ticks": 227367958,
+          "parent_pid": 539929,
+          "pid": 569654,
+          "process_group_id": 569654,
+          "session_id": 569654
+        }
+      ],
+      "out_of_group_live_identities": [],
+      "rss_bytes": 0,
+      "scope": "sampled_birth_bound_descendants",
+      "tracking_error": ""
+    },
+    "reservation_id": "54b2d86e5c534de8ada4c41c9a063e6d",
+    "reserved_storage_bytes": 134217728,
+    "status": "released"
+  },
+  "original_validation_native_process_storage_source_custody_closed": true,
+  "phase_count_claimed": false,
+  "prior_source_captures_and_failure_history": {
+    "id": "f18-outer-v2-saved-consumer-prepared-20261029-01",
+    "immutable_preparation_cutoff_retained": true,
+    "path": "docs/autoformalization/evidence/legal-ir-f18-outer-v2-saved-consumer-20261029.json",
+    "sha256": "2ffdc4d38c97e4ee67497253c090c726a8271ec7bcfd2896ecffffd809f724a9"
+  },
+  "promoted": false,
+  "qualification": "passed_authored_file_and_saved_metadata_controls_only",
+  "recorded_at_utc": "2026-10-29T06:44:51.532414+00:00",
+  "request": {
+    "argv": [
+      "/home/barberb/lift_coding/.venv/bin/python",
+      "-I",
+      "-S",
+      "-B",
+      "-u",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/frozen-scoring-consumer-v01/v2-successor-v01/qualify_saved_control_fixture-v02.py",
+      "--base",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/frozen-scoring-consumer-v01/v2-successor-v01/full27-qualification-v01/attempt-v01/tmp/fixtures",
+      "--worktree",
+      "/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028"
+    ],
+    "attempt_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/frozen-scoring-consumer-v01/v2-successor-v01/full27-qualification-v01/attempt-v01",
+    "child_process_slots": 2,
+    "cpu_slots": 1,
+    "cwd": "/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028",
+    "declared_external_writable_paths": [],
+    "expected_scheduler_policy_sha256": "4662bd8fe6caf6f2c048e3d7cff7abb4d80e5c875b21e02e204b1b89371b8286",
+    "memory_mb": 2048,
+    "outputs": {
+      "cache": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/frozen-scoring-consumer-v01/v2-successor-v01/full27-qualification-v01/attempt-v01/cache",
+      "db": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/frozen-scoring-consumer-v01/v2-successor-v01/full27-qualification-v01/attempt-v01/db",
+      "exports": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/frozen-scoring-consumer-v01/v2-successor-v01/full27-qualification-v01/attempt-v01/exports",
+      "logs": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/frozen-scoring-consumer-v01/v2-successor-v01/full27-qualification-v01/attempt-v01/logs",
+      "pytest": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/frozen-scoring-consumer-v01/v2-successor-v01/full27-qualification-v01/attempt-v01/pytest",
+      "tmp": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/frozen-scoring-consumer-v01/v2-successor-v01/full27-qualification-v01/attempt-v01/tmp"
+    },
+    "process_scope": "sampled_birth_bound_descendants",
+    "roots": [
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues",
+      "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence",
+      "/tmp/pytest-of-barberb"
+    ],
+    "scheduler_state_path": "/tmp/ipfs-datasets-resource-scheduler-1000.json",
+    "schema": "owned-validation-request/v1",
+    "selected_checks": [
+      "authored-v2-saved-consumer::success",
+      "authored-v2-saved-consumer::lossy_ir_diagnostic",
+      "authored-v2-saved-consumer::permission_loss_diagnostic",
+      "authored-v2-saved-consumer::last_raw_score_byte_tamper",
+      "authored-v2-saved-consumer::last_joint_byte_tamper",
+      "authored-v2-saved-consumer::later_arm_unscored_identity",
+      "authored-v2-saved-consumer::later_training_chunk_missing",
+      "authored-v2-saved-consumer::old_freeze_schema",
+      "authored-v2-saved-consumer::mixed_capture_schema",
+      "authored-v2-saved-consumer::stale_parity",
+      "authored-v2-saved-consumer::crossed_input15",
+      "authored-v2-saved-consumer::missing_input15",
+      "authored-v2-saved-consumer::jointly_changed_recipe_capture_rate",
+      "authored-v2-saved-consumer::crossed_arm_recipe",
+      "authored-v2-saved-consumer::crossed_arm_checkpoint",
+      "authored-v2-saved-consumer::noncanonical_checkpoint",
+      "authored-v2-saved-consumer::noncanonical_recipe",
+      "authored-v2-saved-consumer::duplicate_capture_path",
+      "authored-v2-saved-consumer::symlink_mode_boundary_fault",
+      "authored-v2-saved-consumer::nlink2_boundary_fault",
+      "authored-v2-saved-consumer::closing_capture_mutation",
+      "authored-v2-saved-consumer::closing_metadata_mutation",
+      "authored-v2-saved-consumer::closing_source_mutation",
+      "authored-v2-saved-consumer::closing_after_report_mutation",
+      "authored-v2-saved-consumer::reference_leak_flag",
+      "authored-v2-saved-consumer::authority_flag",
+      "authored-v2-saved-consumer::origin_physical_substitution"
+    ],
+    "source_sha256": {
+      "/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/ipfs_datasets_py/__init__.py": "f258f8eada774251feacd8e2ee2048efe56c89a8ee88efd50e4271ea41d43dc9",
+      "/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/ipfs_datasets_py/logic/__init__.py": "f25a9702ddc282092dbae1bc1731afdcc35576c10745487dccedaa531ccc9e79",
+      "/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/ipfs_datasets_py/logic/backends/process.py": "cc2741550e16966292dc8b64a634a7b0a493e2a43e909fae326e1205715c9626",
+      "/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/ipfs_datasets_py/logic/formalization/__init__.py": "91c60c1dfbf9038b8271ae6b1495dbbaf0be8d6ce438524c33f4f7a586f17266",
+      "/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/ipfs_datasets_py/logic/formalization/autoencoder/__init__.py": "82206d6ca08b8626b2afd37534679ac3ea001005f934ed211aa0f1f4eb81f073",
+      "/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/ipfs_datasets_py/logic/formalization/autoencoder/retained_span_score_capture.py": "e11329b8de6876642c500ee6cf2c4f261c6bb3b26556806a1b4caaea625b4909",
+      "/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/ipfs_datasets_py/logic/legal_ir/__init__.py": "53ce51e56a292ea3210010fa17b352e9d40eb5b59cf15c5e732147000b40fee1",
+      "/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/ipfs_datasets_py/logic/legal_ir/conditions_fullspan_margin_v1.py": "e4f16146cf6f64b16e979e5ee0803a41ee41a8377bfa7833918b0a25dd7d1160",
+      "/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/ipfs_datasets_py/logic/legal_ir/joint_span_selection.py": "791c283f625ae7d8841e7afa697b34cbfa5c74361d0c0129b66af31fb5e13679",
+      "/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/ipfs_datasets_py/logic/legal_ir/structured_span_objective.py": "68a459fe5271248ee478ae05767396842c1e1b83e33971b980c77b1afd3f8c84",
+      "/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/ipfs_datasets_py/optimizers/__init__.py": "a12bab3724da07be67b447719ace42fc1f480cb5635581f320a99a372f02f450",
+      "/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/ipfs_datasets_py/optimizers/logic_theorem_optimizer/__init__.py": "9d693fa576f00dc36899faad75ef3044c437e2bfec5c62306f7031236725bb0e",
+      "/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_campaign_process_worker.py": "b01b4b08bd9d76c82c9cce06aaa7641944abfa6f1a70f313dd0d4937dcb378e1",
+      "/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_invocation_contracts.py": "34682aedf9bf565ff4a65ea79c9beb7fa2f3854c94cc5f0db18451e6fb0ba714",
+      "/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_invocation_worker.py": "bd31a954e2537f9de637308c73c6470b9e30b7cc4c9f21ac76f8cdc34f842a96",
+      "/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_operation_journal.py": "8008b2cf10e7dab119ee703a84a84b0bd2c72931615969170002230e224036e3",
+      "/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py": "da6c3596a413ba5c8dab14f9e06a6fc288d7eb9166d261a96abfdf96dd60130b",
+      "/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/ipfs_datasets_py/optimizers/logic_theorem_optimizer/existing_resource_scheduler.py": "d654ab5ed2fec314ea5ac07a662784ab20843b0b2feb56f13989ce1504607776",
+      "/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/ipfs_datasets_py/optimizers/logic_theorem_optimizer/formula_generation_metrics.py": "96e9c8b4448546f9e8b86aab2d58bca55a17959bcc20c44e2829aec6d1cbde38",
+      "/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_context_ranking.py": "6f37e5295ab09fe5f61215ab0445e6348d2972551c6bee1719e1c3c2ce2bd1aa",
+      "/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_features.py": "498093553607bdeac57e42a6dfaf95275efc081ff46c0a7b428b39b99b3c54a3",
+      "/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_refinement.py": "a6b004330c0b0be63182e5931d9d77654ae0a3144526113fc9bd3075a121642e",
+      "/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_fullspan_optimizer_recipe_v1.py": "d22b932b80c48b688ff3f18d5f141152a6032b7cb2f6195845840af818d8dc84",
+      "/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_fullspan_training_v1.py": "56bd0a248a07de09519f95e5c4bae02ab9d8eb1134b483c257c1f7e7bcb07147",
+      "/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_fullspan_training_v2.py": "d80a08844c06daae6466a39b87bc0c395e0dd4a2da01b284704a4e03e44af0f1",
+      "/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_presence.py": "50d2ac6ac4acc790718eba1769e260bf5e746da69c9d29f8e36aecaee75eee25",
+      "/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_continuation.py": "3f13a711906103270a5e75f0f3c3411461ad2900537a640371fe10cc4042c79c",
+      "/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185",
+      "/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_joint_readout_retention.py": "34db345e9b0f3daa04b5b8caee4dfa389c48598ea79cd0da529415ea5bb7c502",
+      "/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_modality_conditions_retention.py": "fb7449d4794ca9a279b2df2ea533b89d360344ff786edc0798395ab799db1823",
+      "/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_targeted_loss.py": "f611490b2c15dee3437d0181686f16bb3aa56f3b20a00b9fa0d4ae2b2624637b",
+      "/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/ipfs_datasets_py/optimizers/logic_theorem_optimizer/proof_resource_safety.py": "3655923785cb99409171caaba8c523354f03dbe8d82b6deb45a7b46db8394633",
+      "/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py": "2c00683202b4a783b5050329caa24a411f83788010baba86d9380123bae7d083",
+      "/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/ipfs_datasets_py/optimizers/logic_theorem_optimizer/runtime_telemetry.py": "542f705867b93fcb138a117e1f5c97a144ad6635dc92c37bc5034eee5065ef63",
+      "/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/ipfs_datasets_py/optimizers/logic_theorem_optimizer/validation_run_resources.py": "1cf169b22c944c878e1e622ce45e5f381ca831aaa40f4b1186082cae2383f429",
+      "/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/ipfs_datasets_py/router_deps.py": "56f66dfff183d9d0ee7977a314c49adbaa181e6fe0087c8f1c581a7d2973bf4c",
+      "/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/scripts/ops/legal_ir/run_owned_validation.py": "c2cd1783d03984c644f4953d31f71e5942fae30e64863d3808ea7418a413caa4",
+      "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/__init__.py": "f258f8eada774251feacd8e2ee2048efe56c89a8ee88efd50e4271ea41d43dc9",
+      "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/__init__.py": "f25a9702ddc282092dbae1bc1731afdcc35576c10745487dccedaa531ccc9e79",
+      "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/backends/process.py": "cc2741550e16966292dc8b64a634a7b0a493e2a43e909fae326e1205715c9626",
+      "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/__init__.py": "a12bab3724da07be67b447719ace42fc1f480cb5635581f320a99a372f02f450",
+      "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/__init__.py": "9d693fa576f00dc36899faad75ef3044c437e2bfec5c62306f7031236725bb0e",
+      "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py": "4c351874ac6725bfdaf43b9e16b1ceba70d283044e9d59a4588c35f83f1142c0",
+      "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_source_lease.py": "42e9f07d0d458177079269d9f495f0b70512180c1adc2f7fe0bfdb05518a12f9",
+      "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/existing_resource_scheduler.py": "d654ab5ed2fec314ea5ac07a662784ab20843b0b2feb56f13989ce1504607776",
+      "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/proof_resource_safety.py": "3655923785cb99409171caaba8c523354f03dbe8d82b6deb45a7b46db8394633",
+      "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py": "2c00683202b4a783b5050329caa24a411f83788010baba86d9380123bae7d083",
+      "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/runtime_telemetry.py": "542f705867b93fcb138a117e1f5c97a144ad6635dc92c37bc5034eee5065ef63",
+      "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/validation_pytest.py": "dc6ae4f1cd27628a56db13fc656156c1b84df8ff999d4158ff25e70fac89f7a6",
+      "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/validation_run_resources.py": "6695f98258e23a1de5b1639142dcd6e1f875f25723d465688e534407a1595f72",
+      "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/router_deps.py": "56f66dfff183d9d0ee7977a314c49adbaa181e6fe0087c8f1c581a7d2973bf4c",
+      "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/run_owned_validation.py": "0e302d2ca4c17c9185f12e040f3a681ce043b2710a7673d06f5ee0fc4657fabf",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/frozen-scoring-consumer-v01/score_saved_pair_control-v01.py": "94206ff13fc2d8543ba3d9b62c6663b2f62455428a056e9ebf0a291700dd587e",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/frozen-scoring-consumer-v01/v2-successor-v01/full27-qualification-v01/scope-v01.json": "f78d594d6b8fb839ab638cbf1d7b6e14994ed1cb379118ec9d8ac1425bdc652e",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/frozen-scoring-consumer-v01/v2-successor-v01/qualify_saved_control_fixture-v02.py": "73badeadab30c9f69eaafd3b6217f830f979cf25b0890a3c5079230cfcddc167",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/frozen-scoring-consumer-v01/v2-successor-v01/score_saved_pair_control-v02.py": "a003f73cf0a3c9900a02cbf242f79f76889b06164371e4a117c0bc2b8c79b8ef"
+    },
+    "storage_bytes": 134217728,
+    "timeout_seconds": 300
+  },
+  "schema": "f18-authored-saved-v2-file-metadata-qualification/v1",
+  "scope_limits": {
+    "Lean_qualification": false,
+    "actual_retained_v2_saved_comparison": false,
+    "all_producer_parity_native_training_witnesses_are_fictional": true,
+    "deliberate_import_process_network_unowned_write_denial_injections_tested": false,
+    "filesystem_alias_inventory_qualification": false,
+    "full_numerical_checkpoint_validation": false,
+    "historical_comparator_no_loss_criteria_evaluated": false,
+    "independent_native_or_kernel_training_admission_authentication": false,
+    "independent_selected_state_or_donor_state_verification": false,
+    "producer_freeze_timing_independently_verified": false,
+    "real_filesystem_link_behavior_tested": false,
+    "real_validation_owner_custody_is_separate_from_fictional_producer_witnesses": true,
+    "scientific_or_statutory_qualification": false
+  },
+  "semantic_review_performed": false,
+  "source_base_datasets_commit": "6fac80ac6050cfc0923d5bf6b146456a5d301286",
+  "source_pins": 56,
+  "source_pins_unchanged": true,
+  "successful_diagnostics": 3
+}
