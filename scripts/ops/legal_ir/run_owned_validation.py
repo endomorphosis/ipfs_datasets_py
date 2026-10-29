@@ -615,7 +615,7 @@ _TRAINER_COMPUTE_FIELDS = {'input_descriptors', 'initial_parity', 'runtime_contr
 _TRAINER_DIRECTORY = ROOT/'ipfs_datasets_py/optimizers/logic_theorem_optimizer'
 _TRAINER_BOOTSTRAP = _TRAINER_DIRECTORY/'autoencoder_campaign_process_worker.py'
 _TRAINER_NETWORK = _TRAINER_DIRECTORY/'autoencoder_daemon_invocation_worker.py'
-_TRAINER_DAEMON_SHA256 = '0cf17951048015d4ce01817c0bfdd74394a161cd5e7999b01a29f18f358e666a'
+_TRAINER_DAEMON_SHA256 = 'da6c3596a413ba5c8dab14f9e06a6fc288d7eb9166d261a96abfdf96dd60130b'
 
 
 def _trainer_need(condition, message):

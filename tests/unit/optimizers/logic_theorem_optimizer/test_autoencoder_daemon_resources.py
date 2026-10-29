@@ -38,7 +38,7 @@ def test_production_storage_cap_is_two_hundred_twenty_gb_without_admission(tmp_p
     reservation = resources.DaemonResourceReservation(
         ledger, roots=[root], storage_bytes=7, memory_mb=1)
     assert resources.MAX_STORAGE_BYTES == 220_000_000_000
-    assert resources.MAX_INVENTORY_ENTRIES == 2_000_000
+    assert resources.MAX_INVENTORY_ENTRIES == 4_000_000
     assert reservation._read() == {
         "schema": resources.SCHEMA, "roots": reservation.root_identities,
         "limit_bytes": 220_000_000_000, "reservations": {},
