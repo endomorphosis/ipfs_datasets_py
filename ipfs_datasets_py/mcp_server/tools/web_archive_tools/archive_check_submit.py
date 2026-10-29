@@ -485,7 +485,7 @@ async def _submit_to_archive_org(url: str, wait_for_completion: bool = False, ti
     try:
         from ipfs_datasets_py.mcp_server.tools.web_archive_tools.wayback_machine_search import archive_to_wayback
         
-        result = await archive_to_wayback(url)
+        result = await archive_to_wayback(url, timeout=timeout)
         
         if wait_for_completion:
             # Wait a bit and verify it was archived

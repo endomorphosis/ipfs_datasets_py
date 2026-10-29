@@ -7,8 +7,26 @@ import logging
 from typing import Dict, List, Optional, Any, Literal
 from datetime import datetime, timedelta
 import re
+import asyncio
+import random
+from time import monotonic
 
 logger = logging.getLogger(__name__)
+
+
+# Wayback save endpoint can be slow and may throttle. Serialize submissions.
+_WAYBACK_SAVE_LOCK = asyncio.Lock()
+_WAYBACK_LAST_SAVE_AT = 0.0
+
+
+async def _wayback_rate_limit(min_interval_seconds: float) -> None:
+    global _WAYBACK_LAST_SAVE_AT
+    async with _WAYBACK_SAVE_LOCK:
+        now = monotonic()
+        wait_for = (_WAYBACK_LAST_SAVE_AT + float(min_interval_seconds)) - now
+        if wait_for > 0:
+            await asyncio.sleep(wait_for)
+        _WAYBACK_LAST_SAVE_AT = monotonic()
 
 async def search_wayback_machine(
     url: str,
@@ -286,7 +304,7 @@ async def _get_wayback_content_direct(
             "error": str(e)
         }
 
-async def archive_to_wayback(url: str) -> Dict[str, Any]:
+async def archive_to_wayback(url: str, timeout: int = 60) -> Dict[str, Any]:
     """Archive a URL to Wayback Machine.
 
     Args:
@@ -305,7 +323,7 @@ async def archive_to_wayback(url: str) -> Dict[str, Any]:
         except ImportError:
             # Fallback to direct submission
             import requests
-            return await _archive_to_wayback_direct(url)
+            return await _archive_to_wayback_direct(url, timeout=timeout)
 
         # Submit for archiving using internetarchive library
         try:
@@ -333,21 +351,37 @@ async def archive_to_wayback(url: str) -> Dict[str, Any]:
             "error": str(e)
         }
 
-async def _archive_to_wayback_direct(url: str) -> Dict[str, Any]:
+async def _archive_to_wayback_direct(url: str, timeout: int = 60) -> Dict[str, Any]:
     """Direct archive submission fallback."""
     try:
         import requests
         
         # Submit to Wayback Machine save API
         save_url = f"https://web.archive.org/save/{url}"
-        
-        response = requests.get(save_url, timeout=60)
-        response.raise_for_status()
+
+        max_attempts = 3
+        min_interval_seconds = 2.0
+        last_error: Optional[str] = None
+
+        for attempt in range(1, max_attempts + 1):
+            await _wayback_rate_limit(min_interval_seconds)
+            try:
+                # Use a connect+read timeout tuple to avoid hanging too long.
+                read_timeout = max(5, min(30, int(timeout) if timeout else 30))
+                response = requests.get(save_url, timeout=(10, read_timeout))
+                response.raise_for_status()
+                return {
+                    "status": "success",
+                    "archived_url": save_url,
+                    "message": f"Successfully submitted {url} for archiving"
+                }
+            except requests.RequestException as e:
+                last_error = f"{type(e).__name__}: {e}"
+                await asyncio.sleep(min(30.0, (2 ** attempt) + random.uniform(0.0, 1.0)))
 
         return {
-            "status": "success",
-            "archived_url": save_url,
-            "message": f"Successfully submitted {url} for archiving"
+            "status": "error",
+            "error": f"Wayback submission failed after {max_attempts} attempts: {last_error}",
         }
 
     except Exception as e:

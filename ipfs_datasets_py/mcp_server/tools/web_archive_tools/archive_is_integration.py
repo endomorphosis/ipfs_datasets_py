@@ -8,8 +8,36 @@ from typing import Dict, List, Optional, Any
 from datetime import datetime
 import re
 import time
+import asyncio
+import random
+from time import monotonic
 
 logger = logging.getLogger(__name__)
+
+
+# Archive.is can rate limit aggressively (429). Keep submissions serialized and spaced.
+_ARCHIVE_IS_SUBMIT_LOCK = asyncio.Lock()
+_ARCHIVE_IS_LAST_SUBMIT_AT = 0.0
+
+
+async def _archive_is_rate_limit(min_interval_seconds: float) -> None:
+    global _ARCHIVE_IS_LAST_SUBMIT_AT
+    async with _ARCHIVE_IS_SUBMIT_LOCK:
+        now = monotonic()
+        wait_for = (_ARCHIVE_IS_LAST_SUBMIT_AT + float(min_interval_seconds)) - now
+        if wait_for > 0:
+            await asyncio.sleep(wait_for)
+        _ARCHIVE_IS_LAST_SUBMIT_AT = monotonic()
+
+
+def _parse_retry_after_seconds(headers: Dict[str, Any]) -> Optional[int]:
+    try:
+        ra = headers.get("Retry-After") or headers.get("retry-after")
+        if not ra:
+            return None
+        return max(0, int(str(ra).strip()))
+    except Exception:
+        return None
 
 async def archive_to_archive_is(
     url: str,
@@ -48,12 +76,39 @@ async def archive_to_archive_is(
             'anyway': '1'  # Archive even if already archived
         }
 
-        # Submit for archiving
-        response = requests.post(submit_url, data=data, timeout=30)
-        response.raise_for_status()
+        # Submit for archiving with simple rate limiting + retry/backoff.
+        # Archive.is frequently returns 429; respect Retry-After where present.
+        max_attempts = 4
+        min_interval_seconds = 10.0
+        last_error: Optional[str] = None
+
+        response = None
+        post_timeout = max(5, min(30, int(timeout) if timeout else 30))
+        for attempt in range(1, max_attempts + 1):
+            await _archive_is_rate_limit(min_interval_seconds)
+            try:
+                response = requests.post(submit_url, data=data, timeout=post_timeout)
+                if response.status_code == 429:
+                    ra = _parse_retry_after_seconds(getattr(response, "headers", {}) or {})
+                    sleep_s = ra if ra is not None else int(min(60, 2 ** attempt))
+                    # Add small jitter to reduce thundering herd.
+                    await asyncio.sleep(float(sleep_s) + random.uniform(0.0, 1.0))
+                    last_error = f"429 Too Many Requests (attempt {attempt}/{max_attempts})"
+                    continue
+                response.raise_for_status()
+                break
+            except requests.RequestException as e:
+                last_error = f"{type(e).__name__}: {e}"
+                # Exponential backoff, capped.
+                await asyncio.sleep(min(30.0, (2 ** attempt) + random.uniform(0.0, 1.0)))
+        else:
+            return {
+                "status": "error",
+                "error": f"Archive.is submission failed after {max_attempts} attempts: {last_error}",
+            }
 
         # Parse response to get archive URL or job ID
-        if response.status_code == 200:
+        if response is not None and response.status_code == 200:
             # Check if we got a direct redirect to archive URL
             if 'archive.is' in response.url and response.url != submit_url:
                 archive_url = response.url
