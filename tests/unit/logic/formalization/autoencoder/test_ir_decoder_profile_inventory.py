@@ -1094,3 +1094,166 @@ def test_counted_transfer_never_calls_model_tensor_or_optimizer_owners(counted_h
     plan = _counted_transfer_build(counted_head_spec, counted_head_codec, donor)
     assert plan['model_calls'] == plan['transfer_calls'] == plan['training_calls'] == 0
     assert plan['authority']['weights_transferred'] is False
+
+
+def decoder_witness_expected_identity(registry):
+    """Read the original serialized declarations; never synthesize replacement IDs."""
+    record, profile, target = registry["checkpoints"][0], registry["profiles"][0], registry["formats"][0]
+    return {**{key: record["request"][key] for key in
+        ("ir_family_id", "dimension", "dimension_role", "task_id")},
+        "checkpoint_schema": record["format_contract"]["checkpoint_schema"],
+        "target_format_schema_version": target["identity"]["schema_version"],
+        "profile_id": profile["profile_id"], "format_id": target["format_id"],
+        "original_checkpoint_pin": deepcopy(record["checkpoint_receipt"]),
+        "architecture": profile["identity"]["decoder_architecture_id"]}
+
+
+@pytest.fixture
+def decoder_witness_original(data):
+    # Reuse the existing nonnumerical original-format fixture, including its
+    # serialized registry shape. The selector itself must not rebuild it.
+    registry = build(data)
+    return registry, decoder_witness_expected_identity(registry)
+
+
+def select_decoder_witness(registry, expected, record_id=None):
+    return inventory.select_ir_decoder_identity_witness_v1(registry,
+        record_id=registry["checkpoints"][0]["record_id"] if record_id is None else record_id,
+        expected_identity=expected)
+
+
+@pytest.mark.parametrize("family", FAMILIES)
+def test_decoder_identity_witness_selects_original_ids_without_asset_reads_or_rebuild(
+        tmp_path, monkeypatch, family):
+    registry = build(make_profile_data(tmp_path, family))
+    expected, before = decoder_witness_expected_identity(registry), deepcopy(registry)
+    record, profile, target = registry["checkpoints"][0], registry["profiles"][0], registry["formats"][0]
+    material = {key: record[key] for key in ("profile_id", "format_id", "run_id",
+        "checkpoint_receipt", "package_manifest_receipt", "corpus_receipt")}
+    assert record["record_id"] == "ir-decoder-checkpoint-record/v1:" + digest(material)
+    assert profile["profile_id"] == "ir-decoder-profile/v1:" + digest(profile["identity"])
+    assert target["format_id"] == "ir-decoder-format/v1:" + digest(target["identity"])
+    def forbidden(*args, **kwargs):
+        pytest.fail("selected metadata identity witness reopened or rebuilt original assets")
+    monkeypatch.setattr(inventory, "_build", forbidden)
+    monkeypatch.setattr(inventory, "_endpoint_fence", forbidden)
+    monkeypatch.setattr(inventory.routing, "_read_pin", forbidden)
+    monkeypatch.setattr(inventory.cached, "_json", forbidden)
+    monkeypatch.setattr(inventory.formats, "prepare_ir_decoder_format_runtime", forbidden)
+    selected = select_decoder_witness(registry, expected)
+    assert selected["schema"] == "ir-decoder-identity-witness-selection/v1"
+    assert selected["record_id"] == record["record_id"]
+    assert selected["selected_checkpoint"] == record
+    assert selected["selected_profile"] == profile and selected["selected_format"] == target
+    assert selected["checkpoint_schema"] == expected["checkpoint_schema"]
+    assert selected["target_format_schema_version"] == expected["target_format_schema_version"]
+    assert selected["checkpoint_schema"] != selected["target_format_schema_version"]
+    assert selected["scope"] == "selected_registry_metadata_identity_consistency_only"
+    for key in ("registry_rebuilt", "descriptor_files_authenticated", "checkpoint_payload_schema_verified"):
+        assert selected[key] is False
+    assert all(type(value) is bool and value is False for value in selected["authority"].values())
+    selected["selected_checkpoint"]["request"]["ir_family_id"] = "foreign"
+    selected["selected_profile"]["identity"]["decoder_configuration"].clear()
+    assert registry == before
+
+
+def test_decoder_identity_witness_preserves_original_literal_receipt_path_spellings(tmp_path, monkeypatch):
+    original_directory = tmp_path / "literal[?]*-é"
+    original_directory.mkdir()
+    registry = build(make_profile_data(original_directory))
+    expected = decoder_witness_expected_identity(registry)
+    checkpoint = registry["checkpoints"][0]
+    assert "literal[?]*-é" in checkpoint["checkpoint_receipt"]["path"]
+    original_id, original_pin = checkpoint["record_id"], deepcopy(checkpoint["checkpoint_receipt"])
+    def forbidden(*args, **kwargs):
+        pytest.fail("pure witness attempted to reopen a literal original receipt path")
+    monkeypatch.setattr(inventory.routing, "_read_pin", forbidden)
+    selected = select_decoder_witness(registry, expected)
+    assert selected["record_id"] == original_id
+    assert selected["selected_checkpoint"]["checkpoint_receipt"] == original_pin
+    assert selected["descriptor_files_authenticated"] is False
+
+
+@pytest.mark.parametrize("field,value", [
+    ("ir_family_id", "security_ir"), ("dimension", 768), ("dimension", 384.0),
+    ("dimension", True), ("dimension_role", "latent"), ("task_id", "legal_text_reconstruction"),
+    ("checkpoint_schema", "foreign-checkpoint/v1"),
+    ("target_format_schema_version", "foreign-target/v1"),
+    ("profile_id", "ir-decoder-profile/v1:" + "1" * 64),
+    ("format_id", "ir-decoder-format/v1:" + "2" * 64),
+    ("architecture", "foreign-decoder"),
+])
+def test_decoder_identity_witness_rejects_same_id_with_different_expected_labels(
+        decoder_witness_original, field, value):
+    registry, expected = decoder_witness_original
+    expected[field] = value
+    with pytest.raises(inventory.DecoderProfileInventoryError):
+        select_decoder_witness(registry, expected)
+
+
+@pytest.mark.parametrize("fault", ["checkpoint_as_target", "target_as_checkpoint", "pin_float", "pin_path"])
+def test_decoder_identity_witness_separates_checkpoint_schema_target_schema_and_original_pin(
+        decoder_witness_original, fault):
+    registry, expected = decoder_witness_original
+    if fault == "checkpoint_as_target":
+        expected["target_format_schema_version"] = expected["checkpoint_schema"]
+    elif fault == "target_as_checkpoint":
+        expected["checkpoint_schema"] = expected["target_format_schema_version"]
+    elif fault == "pin_float":
+        expected["original_checkpoint_pin"]["bytes"] = float(expected["original_checkpoint_pin"]["bytes"])
+    else:
+        expected["original_checkpoint_pin"]["path"] += ".same-content-alias"
+    with pytest.raises(inventory.DecoderProfileInventoryError):
+        select_decoder_witness(registry, expected)
+
+
+@pytest.mark.parametrize("collection", ["formats", "profiles", "checkpoints"])
+def test_decoder_identity_witness_rejects_duplicate_original_selections(decoder_witness_original, collection):
+    registry, expected = decoder_witness_original
+    registry[collection].append(deepcopy(registry[collection][0]))
+    with pytest.raises(inventory.DecoderProfileInventoryError):
+        select_decoder_witness(registry, expected)
+
+
+@pytest.mark.parametrize("fault", ["format_id", "profile_id", "record_id", "profile_link",
+    "configuration_link", "request_link", "original_pin", "registry_binding", "replay_link",
+    "contract_digest", "contract_architecture", "authority_true", "authority_integer"])
+def test_decoder_identity_witness_rejects_original_id_and_crosslink_corruption(decoder_witness_original, fault):
+    registry, expected = decoder_witness_original
+    record, profile, target = registry["checkpoints"][0], registry["profiles"][0], registry["formats"][0]
+    selected_id = record["record_id"]
+    if fault == "format_id": target["format_id"] = "ir-decoder-format/v1:" + "0" * 64
+    elif fault == "profile_id": profile["profile_id"] = "ir-decoder-profile/v1:" + "0" * 64
+    elif fault == "record_id": record["record_id"] = "ir-decoder-checkpoint-record/v1:" + "0" * 64
+    elif fault == "profile_link": profile["format_id"] = "ir-decoder-format/v1:" + "0" * 64
+    elif fault == "configuration_link": record["full_checkpoint_configuration"]["hidden_size"] += 1
+    elif fault == "request_link": record["request"]["checkpoint_sha256"] = "0" * 64
+    elif fault == "original_pin": record["checkpoint_receipt"]["sha256"] = "0" * 64
+    elif fault == "registry_binding": registry["bindings"][0]["run_id"] = "different-run"
+    elif fault == "replay_link": record["replay_binding_options"]["request"]["dimension"] = 768
+    elif fault == "contract_digest": record["format_contract"]["contract_sha256"] = "0" * 64
+    elif fault == "contract_architecture":
+        contract = record["format_contract"]
+        contract["architecture"] = "foreign-decoder"
+        body = {key: value for key, value in contract.items() if key not in ("contract_sha256", "contract_id")}
+        contract["contract_sha256"] = digest(body)
+        contract["contract_id"] = inventory.formats.CONTRACT_SCHEMA + ":" + digest(body)
+    elif fault == "authority_true": registry["authority"][next(iter(registry["authority"]))] = True
+    else: registry["authority"][next(iter(registry["authority"]))] = 0
+    with pytest.raises(inventory.DecoderProfileInventoryError):
+        select_decoder_witness(registry, expected, selected_id)
+
+
+@pytest.mark.parametrize("fault", ["unknown_record", "nonfinite", "too_deep", "expected_extra"])
+def test_decoder_identity_witness_refuses_unbounded_or_nonplain_metadata(decoder_witness_original, fault):
+    registry, expected = decoder_witness_original
+    selected_id = registry["checkpoints"][0]["record_id"]
+    if fault == "unknown_record": selected_id = "ir-decoder-checkpoint-record/v1:" + "f" * 64
+    elif fault == "nonfinite": expected["dimension"] = float("nan")
+    elif fault == "expected_extra": expected["runtime_ready"] = False
+    else:
+        nested = None
+        for _ in range(35): nested = [nested]
+        expected["dimension"] = nested
+    with pytest.raises(inventory.DecoderProfileInventoryError):
+        select_decoder_witness(registry, expected, selected_id)
