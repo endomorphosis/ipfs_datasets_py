@@ -17128,6 +17128,18 @@
             "Freeze outputs before independent complete-IR/per-ID,72 conditions-present TRAIN,32 target-P modality and original comparator no-loss gates.",
             "Public physical-v2 validation frontend reconciliation remains separate."
           ],
+          "outer_saved_consumer": {
+            "consumer_source_sha256": "a003f73cf0a3c9900a02cbf242f79f76889b06164371e4a117c0bc2b8c79b8ef",
+            "current_full27_qualified": false,
+            "evidence_id": "f18-outer-v2-saved-consumer-prepared-20261029-01",
+            "fixture_source_sha256": "73badeadab30c9f69eaafd3b6217f830f979cf25b0890a3c5079230cfcddc167",
+            "native_activation": false,
+            "new_TRAIN_rate_selected": null,
+            "next_action": "Acquire original filesystem headroom, then execute exact16 readonly replay and11 hybrid authored cohorts under original owners. Preserve current request/source pins and all failed evidence; numerical trainer dispatch and finite TRAIN-only admission remain later gates.",
+            "prior_expected_case_outcomes_observed": 16,
+            "retained_v2_outputs_compared": false,
+            "status": "implemented_and_prepared_current_27_case_qualification_pending_filesystem_headroom"
+          },
           "phases": 156,
           "prior_numerical_evidence_id": "f18-v2-recipe-bound-numerical-qualified-20261028-01",
           "retained_fit": false,

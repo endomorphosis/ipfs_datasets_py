@@ -1,16 +1,24 @@
 # Training and experiment history
 
+## Outer v2 consumer prepared; authored qualification incomplete, 2026-10-29
+
+The [saved-consumer evidence](../../../../docs/autoformalization/evidence/legal-ir-f18-outer-v2-saved-consumer-20261029.json) records implementation and preparation, with no new autoencoder training, experiment-rate selection or retained-v2 comparison. Consumer `a003f73c…` is unchanged; current fixture `73badead…` and its bounded replay controls remain unexecuted. The prior v04 fixture recorded 16 expected authored outcomes before its noncanonical-recipe case hit the correct 128 KiB bound: pretty JSON was 143,755 bytes. The corrected negative uses compact JSON plus a newline within that same bound. These authored counts are neither learned reconstruction results nor legal accuracy measurements.
+
+Earlier v03 failed before a completed case on a fictional READY literal; v02 was cancelled by the original inventory's rejection of real aliases. Failed artifacts and source cutoffs remain retained. Their three own storage claims were released through the original recovery owner after source/native/process closure, with no policy, cap, root or budget reset. The current alias negatives are explicit stat-boundary injections on regular files; they do not test real filesystem links. Deliberate import/process/network/unowned-write denial injections are not part of this fixture inventory.
+
+The corrected v05 admission was refused before any own claim or child; the idle wrapper's administrative source close grants no canonical terminal or fixture success. The unchanged 220 GB charged cap and filesystem reservation-headroom gate both apply, with full reservations held while outputs are written. Prepared 32 MiB prefix16 replay and 23 MiB hybrid suffix11 remain pending capacity. Reuse retained inputs read-only where declared, preserve the independent stale-parity negative, and require actual original-owner closure for both batches before reporting a composed 27-case result. Numerical trainer dispatch, finite TRAIN-only admission, real v2 outputs, retained comparator gates and legal/Lean acceptance remain separate. Existing completed v1 fits, scoring and v1/v2 zero-step parity require no repetition for this source-only work.
+
 ## Native bootstrap and canonical saved views, 2026-10-29
 
 The [current native probe](../../../../docs/autoformalization/evidence/legal-ir-f18-native-probe-metric-view-20261029.json) exercised the original trainer lane with no model, checkpoint payload, forward, gradient or optimizer step. The actual grant and READY/RUN lifecycle closed with released storage and unchanged source pins. The isolated bootstrap now requires explicit bytecode suppression; its existing 242 cases passed in 4.874 seconds.
 
-The canonical metric-view projection passed 231 cases in 18.211 seconds, preserving the earlier 200-case test prefix. It discards score payloads before copying metadata and preserves all generation identities. No retained comparison or training occurred. Numerical sources, donor roots and separate v1/v2 parity inputs are unchanged. Full outer v2 authentication and comparison orchestration remain the next task.
+The canonical metric-view projection passed 231 cases in 18.211 seconds, preserving the earlier 200-case test prefix. It discards score payloads before copying metadata and preserves all generation identities. No retained comparison or training occurred. Numerical sources, donor roots and separate v1/v2 parity inputs are unchanged. The outer v2 control is now implemented; its current authored qualification remains pending capacity as recorded above.
 
 ## Current resource generation and distinct v1/v2 parity, 2026-10-29
 
 The [qualified inventory/parity port](../../../../docs/autoformalization/evidence/legal-ir-f18-inventory-headroom-parity-20261029.json) reuses the existing finite headroom implementation: 2 million to 4 million entries, with scanner methods, the 220 GB cap and accounting policy unchanged. Existing suites passed 3, 52 and 242 cases in 0.109, 65.967 and 4.772 seconds, respectively. Separate v1 and v2 runs each reproduced 632 source cases and 194,812 binary32 head values with complete raw/joint equality and zero updates. Both proofs use the same 632-source population.
 
-Fresh v1/v2 raw parity receipts now bind the controller/worker generation; the old v1 summary is retained history rather than current input. Donor/model roots and numerical source files remain unchanged. No retained training, experiment rate or accuracy gain occurred. Native probe, outer v2 comparison ordering and fresh TRAIN admission remain open; see the current handoff and guide.
+Fresh v1/v2 raw parity receipts bind the controller/worker generation; the old v1 summary is retained history rather than current input. Donor/model roots and numerical source files are unchanged. No retained training, experiment rate or accuracy gain occurred. At this source-generation cutoff, native probe, outer v2 comparison ordering and fresh TRAIN admission remained open; later native-probe evidence and the current pending consumer preparation have their separate scopes above.
 
 ## V2 saved-output scoring contract and existing headroom diagnosis, 2026-10-28
 
