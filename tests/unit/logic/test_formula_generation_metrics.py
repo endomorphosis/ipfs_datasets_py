@@ -955,3 +955,159 @@ def test_f18_v2_context_and_generation_names_require_literal_strings(damage):
     else: chunk["inference"]["latent_ablation"] = EqualString("unrecognized")
     with pytest.raises(ValueError):
         compare(arms, targets, **options)
+
+
+# Saved metric views are authored projections, never physical freeze witnesses.
+def _f18_metric_capture_view_fixture(form):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.formula_generation_metrics import (
+        f18_metric_capture_view,
+    )
+    _, arms, _, _ = _f18_v2_matched_fixture() if form == "v2" else _f18_matched_fixture()
+    raw = arms["parent" if form == "parent" else "coefficient_025"][0]["raw"]
+    raw["projection_metadata"] = {"flag": False, "integer": 1, "float": 1.0,
+        "negative_zero": -0.0, "text": "\u00e9", "nil": None, "scores": {"keep": [9]}}
+    for index, chunk in enumerate(raw.get("chunks", [raw])):
+        chunk["projection_metadata_chunk"] = {"position": index, "keep": ["metadata"]}
+        for position, occurrence in enumerate(chunk["occurrences"]):
+            occurrence["scores"] = {"large_payload_standin": [[float(index), float(position)]]}
+    return f18_metric_capture_view, raw
+
+
+def _f18_metric_capture_mutable_ids(value):
+    if type(value) is dict:
+        return {id(value)}.union(*(_f18_metric_capture_mutable_ids(item) for item in value.values()))
+    if type(value) is list:
+        return {id(value)}.union(*(_f18_metric_capture_mutable_ids(item) for item in value))
+    return set()
+
+
+@pytest.mark.parametrize("form", ["parent", "v1", "v2"])
+def test_f18_metric_capture_view_preserves_three_forms_and_all_chunks(form):
+    view_capture, raw = _f18_metric_capture_view_fixture(form)
+    before = deepcopy(raw)
+    expected = deepcopy(raw)
+    for chunk in expected.get("chunks", [expected]):
+        for occurrence in chunk["occurrences"]:
+            occurrence["scores"] = None
+    view = view_capture(raw)
+    assert json.dumps(view, sort_keys=True, allow_nan=False) == json.dumps(expected, sort_keys=True, allow_nan=False)
+    assert raw == before and view["schema"] == raw["schema"]
+    assert _f18_metric_capture_mutable_ids(view).isdisjoint(_f18_metric_capture_mutable_ids(raw))
+    if form != "parent":
+        assert [len(chunk["occurrences"]) for chunk in view["chunks"]] == [128, 40]
+    view["projection_metadata"]["scores"]["keep"].append(10)
+    first = view.get("chunks", [view])[0]
+    first["inference"]["rows"][0]["canonical_ir"]["rules"][0]["actor"] = "changed only in detached view"
+    assert raw == before
+
+
+@pytest.mark.parametrize("form", ["v1", "v2"])
+def test_f18_metric_capture_view_accepts_single_trained_capture_without_relabeling(form):
+    view_capture, raw = _f18_metric_capture_view_fixture(form)
+    single = raw["chunks"][1]
+    before = deepcopy(single)
+    view = view_capture(single)
+    assert single == before and view["schema"] == single["schema"]
+    assert view["inference"] == single["inference"]
+    assert len(view["occurrences"]) == 40 and all(row["scores"] is None for row in view["occurrences"])
+    assert _f18_metric_capture_mutable_ids(view).isdisjoint(_f18_metric_capture_mutable_ids(single))
+
+
+def test_f18_metric_capture_view_does_not_copy_or_encode_discarded_scores():
+    view_capture, raw = _f18_metric_capture_view_fixture("v2")
+    class UnreadableScores:
+        def __deepcopy__(self, memo): raise AssertionError("score payload copied")
+        def __iter__(self): raise AssertionError("score payload inspected")
+        def __repr__(self): raise AssertionError("score payload encoded")
+    payload = UnreadableScores()
+    for chunk in raw["chunks"]:
+        for occurrence in chunk["occurrences"]:
+            occurrence["scores"] = payload
+    view = view_capture(raw)
+    assert all(row["scores"] is payload for chunk in raw["chunks"] for row in chunk["occurrences"])
+    assert all(row["scores"] is None for chunk in view["chunks"] for row in chunk["occurrences"])
+
+
+def test_f18_metric_capture_view_executes_without_import_or_file_access(monkeypatch):
+    import builtins
+    import os
+    from pathlib import Path
+    view_capture, raw = _f18_metric_capture_view_fixture("v2")
+    attempts = []
+    def refuse(*args, **kwargs):
+        attempts.append(repr(args[:1]))
+        raise AssertionError("pure metric projection attempted import or file access")
+    with monkeypatch.context() as guard:
+        guard.setattr(builtins, "open", refuse)
+        guard.setattr(os, "open", refuse)
+        for name in ("open", "read_bytes", "read_text", "write_bytes", "write_text"):
+            guard.setattr(Path, name, refuse)
+        # Install last so pytest can set up and restore its own patch metadata.
+        guard.setattr(builtins, "__import__", refuse)
+        view = view_capture(raw)
+    assert attempts == [] and view["schema"] == raw["schema"]
+
+
+@pytest.mark.parametrize("damage", ["root_type", "root_schema", "root_schema_subclass", "root_key_subclass",
+    "chunks_not_list", "chunks_empty", "chunk_schema", "mixed_chunk_schema", "missing_occurrences",
+    "occurrences_not_list", "missing_score", "extra_occurrence_field", "occurrence_key_subclass",
+    "metadata_tuple", "metadata_nonfinite", "metadata_cycle"])
+def test_f18_metric_capture_view_refuses_unknown_or_malformed_projection_shapes(damage):
+    view_capture, raw = _f18_metric_capture_view_fixture("v2")
+    chunk = raw["chunks"][0]
+    occurrence = chunk["occurrences"][0]
+    class EqualString(str):
+        def __eq__(self, other): return True
+        __hash__ = str.__hash__
+    if damage == "root_type": raw = []
+    elif damage == "root_schema": raw["schema"] = "f18-paired-target-free-panel/v3"
+    elif damage == "root_schema_subclass": raw["schema"] = EqualString(raw["schema"])
+    elif damage == "root_key_subclass": raw[EqualString("schema")] = raw.pop("schema")
+    elif damage == "chunks_not_list": raw["chunks"] = tuple(raw["chunks"])
+    elif damage == "chunks_empty": raw["chunks"] = []
+    elif damage == "chunk_schema": chunk["schema"] = "conditions-fullspan-four-tensor-target-free-head-capture/v3"
+    elif damage == "mixed_chunk_schema": chunk["schema"] = "conditions-fullspan-four-tensor-target-free-head-capture/v1"
+    elif damage == "missing_occurrences": chunk.pop("occurrences")
+    elif damage == "occurrences_not_list": chunk["occurrences"] = tuple(chunk["occurrences"])
+    elif damage == "missing_score": occurrence.pop("scores")
+    elif damage == "extra_occurrence_field": occurrence["extra"] = False
+    elif damage == "occurrence_key_subclass": occurrence[EqualString("id")] = occurrence.pop("id")
+    elif damage == "metadata_tuple": raw["projection_metadata"]["unsupported"] = (1,)
+    elif damage == "metadata_nonfinite": raw["projection_metadata"]["unsupported"] = float("nan")
+    else: raw["projection_metadata"]["cycle"] = raw
+    with pytest.raises(ValueError):
+        view_capture(raw)
+
+
+@pytest.mark.parametrize("version", ["v1", "v2"])
+def test_f18_metric_capture_view_keeps_complete_canonical_comparison_unchanged(version):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.formula_generation_metrics import f18_metric_capture_view
+    compare, arms, targets, options = _f18_v2_matched_fixture() if version == "v2" else _f18_matched_fixture()
+    before = deepcopy((arms, targets, options))
+    expected = compare(arms, targets, **options)
+    projected = {arm: [{**panel, "raw": f18_metric_capture_view(panel["raw"])} for panel in panels]
+                 for arm, panels in arms.items()}
+    assert compare(projected, targets, **options) == expected
+    assert (arms, targets, options) == before
+    assert expected["all_source_rows"] == 632 if "all_source_rows" in expected else expected["valid_evaluation"] is True
+
+
+@pytest.mark.parametrize("damage", ["checkpoint", "model", "recipe", "rate_type", "inference_generation", "training_scope"])
+def test_f18_metric_capture_view_preserves_invalid_v2_identity_for_canonical_refusal(damage):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.formula_generation_metrics import f18_metric_capture_view
+    compare, arms, targets, options = _f18_v2_matched_fixture()
+    if damage == "rate_type":
+        options["expected_training"]["learning_rate"] = 1.0
+        _f18_render_v2_capture_metadata(arms, options["expected_training"])
+    raw = arms["coefficient_025"][-1]["raw"]
+    inference = raw["chunks"][0]["inference"]
+    field = {"checkpoint": "checkpoint_sha256", "model": "model_state_sha256", "recipe": "recipe_sha256",
+             "rate_type": "learning_rate", "inference_generation": "schema", "training_scope": "training_executed"}[damage]
+    inference[field] = (1 if damage == "rate_type" else True if damage == "training_scope"
+                        else "conditions-fullspan-four-tensor-inference/v1" if damage == "inference_generation" else "e" * 64)
+    before = deepcopy(raw)
+    arms["coefficient_025"][-1]["raw"] = f18_metric_capture_view(raw)
+    detached = arms["coefficient_025"][-1]["raw"]["chunks"][0]["inference"]
+    assert raw == before and type(detached[field]) is type(inference[field]) and detached[field] == inference[field]
+    with pytest.raises(ValueError):
+        compare(arms, targets, **options)

@@ -4134,11 +4134,21 @@
         ],
         "status": "joint_status_guard_and_fixed_case_diagnosis_closed"
       },
+      "current_native_probe": {
+        "evidence_id": "f18-native-probe-metric-view-qualified-20261029-01",
+        "mode": "zero_model_native_probe",
+        "model_constructions": 0,
+        "numerical_dispatch_qualified": false,
+        "optimizer_updates": 0,
+        "qualified": true,
+        "source_native_process_storage_closed": true,
+        "source_pins": 53
+      },
       "current_resource_generation": {
         "binary32_head_scalars": 194812,
         "evidence_id": "f18-inventory-headroom-parity-qualified-20261029-01",
         "max_inventory_entries": 4000000,
-        "native_probe_qualified": false,
+        "native_probe_qualified": true,
         "raw_initial_parity": {
           "bytes": 31655,
           "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/trainer-integration-v01/inventory-headroom-port-v01/retained-initial632-v1-v01/attempt-v02/exports/initial-parity-result-v02.json",
@@ -4163,7 +4173,8 @@
         "f18-four-tensor-hf-weight-publication-20261027-01",
         "f18-frozen-matched-scoring-20261027-01",
         "f18-conditions-ranking-diagnosis-20261028-01",
-        "f18-inventory-headroom-parity-qualified-20261029-01"
+        "f18-inventory-headroom-parity-qualified-20261029-01",
+        "f18-native-probe-metric-view-qualified-20261029-01"
       ],
       "experimental_hf_weights": {
         "accuracy_gain_qualified": false,
@@ -4402,11 +4413,21 @@
         "captured_inference"
       ],
       "compatibility_dependency": false,
+      "current_native_probe": {
+        "evidence_id": "f18-native-probe-metric-view-qualified-20261029-01",
+        "mode": "zero_model_native_probe",
+        "model_constructions": 0,
+        "numerical_dispatch_qualified": false,
+        "optimizer_updates": 0,
+        "qualified": true,
+        "source_native_process_storage_closed": true,
+        "source_pins": 53
+      },
       "current_resource_generation": {
         "binary32_head_scalars": 194812,
         "evidence_id": "f18-inventory-headroom-parity-qualified-20261029-01",
         "max_inventory_entries": 4000000,
-        "native_probe_qualified": false,
+        "native_probe_qualified": true,
         "raw_initial_parity": {
           "bytes": 31777,
           "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/trainer-integration-v01/inventory-headroom-port-v01/retained-initial632-v01/attempt-v01/exports/initial-v2-632-parity-result.json",
@@ -4424,7 +4445,8 @@
         "f18-v2-source-capture-and-initial632-parity-qualified-20261028-01",
         "f18-v2-trainer-integration-and-preentry-recovery-qualified-20261028-01",
         "f18-v2-saved-scoring-contract-qualified-20261028-01",
-        "f18-inventory-headroom-parity-qualified-20261029-01"
+        "f18-inventory-headroom-parity-qualified-20261029-01",
+        "f18-native-probe-metric-view-qualified-20261029-01"
       ],
       "existing_task": "LIR-17",
       "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_span_conditions_fullspan_training_v1.md",
@@ -4444,6 +4466,17 @@
         "authored_cases": 200,
         "context_schema": "f18-frozen-matched-training-expectations/v2",
         "evidence_id": "f18-v2-saved-scoring-contract-qualified-20261028-01",
+        "metric_view_projection": {
+          "api": "f18_metric_capture_view",
+          "cases": 231,
+          "evidence_id": "f18-native-probe-metric-view-qualified-20261029-01",
+          "new_cases": 31,
+          "original_cases": 200,
+          "owner_module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.formula_generation_metrics",
+          "phases": 693,
+          "scope": "Detached projection only; outer physical authentication and trained-v2 comparison remain open.",
+          "source_sha256": "96e9c8b4448546f9e8b86aab2d58bca55a17959bcc20c44e2829aec6d1cbde38"
+        },
         "owner": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/formula_generation_metrics.py",
         "owning_tests": [
           "tests/unit/logic/test_formula_generation_metrics.py"
@@ -4466,11 +4499,14 @@
       },
       "status": "focused_tests_qualified",
       "trainer_integration": {
-        "actual_probe": "preentry_inventory_capacity_refusal",
+        "actual_probe": "current_source_zero_model_native_probe_qualified",
+        "bytecode_bootstrap_qualification_cases": 242,
         "current_generation_cases": 242,
         "current_generation_phases": 726,
+        "current_native_probe_evidence_id": "f18-native-probe-metric-view-qualified-20261029-01",
         "current_resource_generation_evidence_id": "f18-inventory-headroom-parity-qualified-20261029-01",
         "evidence_id": "f18-v2-trainer-integration-and-preentry-recovery-qualified-20261028-01",
+        "historical_actual_probe": "preentry_inventory_capacity_refusal",
         "launcher": "scripts/ops/legal_ir/run_owned_validation.py",
         "numerical_dispatch_qualified": false,
         "owning_tests": [
@@ -4542,7 +4578,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-10-29T02:08:35.488266+00:00",
+  "last_updated_at_utc": "2026-10-29T03:46:52.591770+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -6895,6 +6931,16 @@
       "root": "datasets_repository",
       "scope": "3resource/52numeric/242trainer cases; each v1/v2 independently632-case zero-step parity under currentDA6. Exact raw receipts bound; old receipts retained/refused. No retainedfit/rate/nativeprobe/task activation/semantic or Lean claim.",
       "status": "inventory_headroom_current_v1_v2_parity_and_trainer_gates_qualified"
+    },
+    {
+      "id": "f18-native-probe-metric-view-qualified-20261029-01",
+      "observed_bytes": 12779,
+      "observed_sha256": "d53067aa61d611e575b43fb194017900362e62f3760a7df48e68643ca903fae0",
+      "path": "docs/autoformalization/evidence/legal-ir-f18-native-probe-metric-view-20261029.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "242bootstrap controls, actual53-pin zero-model native probe with released storage, and231pure metric cases(200preserved+31projection). No numerical dispatch, retained fit/rate or fullouterv2comparison.",
+      "status": "current_zero_model_native_probe_and_canonical_metric_view_qualified_outer_v2_consumer_open"
     }
   ]
 }

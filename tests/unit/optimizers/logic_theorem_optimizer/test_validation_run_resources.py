@@ -1940,7 +1940,7 @@ def trainer_supervisor_fake(tmp_path, monkeypatch):
             self.argv, self.options = argv, options
             assert journal.get_metadata("start") is not None
             assert journal.get_metadata("child") is None
-            assert options["start_new_session"] is True and argv[1:3] == ["-I", "-S"]
+            assert options["start_new_session"] is True and argv[1:4] == ["-I", "-S", "-B"]
             self.release = state.pipes.duplicate(int(argv[argv.index("--release-fd")+1]))
             self.channel = state.pipes.handles[self.release][0]
             ready_fd = int(argv[argv.index("--ready-fd")+1])
@@ -2175,7 +2175,7 @@ def _trainer_child_fake_bootstrap_case(tmp_path, monkeypatch, *, stop_at_RUN):
         _watch_owner=lambda **kwargs:None,
         _configure_dependency_paths=lambda:(_ for _ in ()).throw(AssertionError("probe imported compute dependencies")))
     monkeypatch.setattr(module,"_trainer_bootstrap",lambda offered:bootstrap)
-    monkeypatch.setattr(module,"sys",SimpleNamespace(flags=SimpleNamespace(isolated=True,no_site=True),modules={}))
+    monkeypatch.setattr(module,"sys",SimpleNamespace(flags=SimpleNamespace(isolated=True,no_site=True,dont_write_bytecode=True),modules={}))
     monkeypatch.setattr(module,"threading",SimpleNamespace(Thread=lambda **kwargs:SimpleNamespace(start=lambda:events.append("watch"))))
     genuine_close=os.close
     monkeypatch.setattr(os,"close",lambda fd:events.append("close_READY") if fd == 7001 else genuine_close(fd))
@@ -2186,6 +2186,17 @@ def _trainer_child_fake_bootstrap_case(tmp_path, monkeypatch, *, stop_at_RUN):
 def test_trainer_child_waits_for_original_RUN_before_reference_access_or_dispatch(tmp_path,monkeypatch):
     module,path,value,events,BeforeRUN=_trainer_child_fake_bootstrap_case(tmp_path,monkeypatch,stop_at_RUN=True)
     attempted=_trainer_forbid_reference_bodies(monkeypatch,value)
+    def premature_access(*_args, **_kwargs):
+        raise AssertionError("bytecode-enabled child reached request or bootstrap access")
+    with monkeypatch.context() as guard:
+        guard.setattr(module.sys.flags,"dont_write_bytecode",False)
+        guard.setenv("PYTHONDONTWRITEBYTECODE","1")
+        guard.setattr(module,"trainer_request",premature_access)
+        guard.setattr(module,"_trainer_bootstrap",premature_access)
+        with pytest.raises(ValueError,match="bytecode-disabled"):
+            module._trainer_child_main(path,_sha(path),ready_fd=7001,release_fd=7002,owner_pid=os.getppid())
+    assert events == [] and attempted == []
+    assert tuple(Path(value["outputs"]["exports"]).iterdir()) == ()
     with pytest.raises(BeforeRUN):
         module._trainer_child_main(path,_sha(path),ready_fd=7001,release_fd=7002,owner_pid=os.getppid())
     assert events == ["network","ready","close_READY","wait_RUN"]

@@ -1,0 +1,186 @@
+{
+  "actual_native_probe": {
+    "all_source_native_process_storage_custody_closed": true,
+    "durable_storage_released": true,
+    "genuine_grant_child_READY_RUN_and_exit": true,
+    "historical_inventory_refusal_preserved": true,
+    "lane": "hammer_lean",
+    "original_entry_count": 2088443,
+    "owner_seconds": 169.05124190123752,
+    "request_schema": "owned-f18-conditions-training-request/v2",
+    "result_schema": "f18-native-trainer-probe-result/v1",
+    "source_pins": 53,
+    "v2_numerical_dispatch_qualified": false,
+    "workload": "canonical_trainer",
+    "zero_counts": {
+      "checkpoint_payloads_opened": 0,
+      "gradient_calls": 0,
+      "model_constructions": 0,
+      "model_forwards": 0,
+      "optimizer_updates": 0
+    }
+  },
+  "all_three_new_runs_source_pins_unchanged_and_custody_closed": true,
+  "bytecode_fix": {
+    "PYTHONDONTWRITEBYTECODE_environment_not_used_as_isolated_child_proof": true,
+    "cases": 242,
+    "dont_write_bytecode_checked_before_request_and_bootstrap": true,
+    "isolated_child_flags": [
+      "-I",
+      "-S",
+      "-B"
+    ],
+    "phases": 726,
+    "pytest_seconds": 4.874,
+    "source_pins": 80
+  },
+  "canonical_metric_projection": {
+    "actual_retained_v2_comparison": false,
+    "api": "f18_metric_capture_view",
+    "cases": 231,
+    "file_authentication_freeze_recipe_checkpoint_or_fidelity_not_granted_by_projection": true,
+    "identities_schemas_literal_types_all_chunks_and_other_metadata_preserved": true,
+    "input_unmodified_and_output_detached": true,
+    "new_cases": 31,
+    "only_occurrence_scores_replaced_by_None": true,
+    "original200_test_prefix_unchanged": true,
+    "original_cases_requalified": 200,
+    "owner_module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.formula_generation_metrics",
+    "phases": 693,
+    "prior_metric_function_ASTs_unchanged": true,
+    "pytest_seconds": 18.211,
+    "recognized_parent_single_v1_v2_and_panels": true,
+    "scores_not_copied_or_encoded": true,
+    "source_pins": 26,
+    "unknown_schemas_and_malformed_literal_metadata_refused": true
+  },
+  "evidence": {
+    "bytecode_independent_review": {
+      "bytes": 8956,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/trainer-integration-v01/inventory-headroom-port-v01/native-probe-v01/bytecode-qualification-v01/independent-result-review-v01.json",
+      "sha256": "ac4befa7a16ac76647dca8eac2aa50a69ad30720fb67e4d458ef8dc253a7a270"
+    },
+    "bytecode_qualification": {
+      "bytes": 4553,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/trainer-integration-v01/inventory-headroom-port-v01/native-probe-v01/bytecode-qualification-v01/qualification-result-v01.json",
+      "sha256": "c2720dad4fa4e69205d995ac08ea31522456e828f840801c95648add91ffbc3c"
+    },
+    "bytecode_source_installation": {
+      "bytes": 2116,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/trainer-integration-v01/inventory-headroom-port-v01/native-probe-v01/bytecode-source-installation-v01.json",
+      "sha256": "f5a6a66068ad6d412ed890c60780b447647643cf3264b82dcd7bbc8140555557"
+    },
+    "final_product_source_review": {
+      "bytes": 9720,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/trainer-integration-v01/inventory-headroom-port-v01/native-probe-v01/final-source-review-v01.json",
+      "sha256": "9b780cfcc59848dedc00dcb5799b3d02cbd5582cbf5a8dcd4a2bcb05c9854835"
+    },
+    "metric_view_independent_review": {
+      "bytes": 7281,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/trainer-integration-v01/inventory-headroom-port-v01/native-probe-v01/metric-view-qualification-v01/independent-result-review-v01.json",
+      "sha256": "ab821ea031eb15f4153454df4c3042139c57df9c0cc2030d5c25dbb831b45f01"
+    },
+    "metric_view_qualification": {
+      "bytes": 4715,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/trainer-integration-v01/inventory-headroom-port-v01/native-probe-v01/metric-view-qualification-v01/qualification-result-v01.json",
+      "sha256": "e33e786044c9e1fdbb47f5b06a55368424dbdd0023d4f4c614c85c3117bfc35d"
+    },
+    "metric_view_source_installation": {
+      "bytes": 10058,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/trainer-integration-v01/inventory-headroom-port-v01/native-probe-v01/metric-view-source-installation-v01.json",
+      "sha256": "9b99e3130a6229332f8b142d3d310480ad0362233ed3f51b0c9ccc7753c2e861"
+    },
+    "native_probe_independent_review": {
+      "bytes": 9009,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/trainer-integration-v01/inventory-headroom-port-v01/native-probe-v01/independent-result-review-v02.json",
+      "sha256": "87ae9f82644379ac600f5d0446b2e0fa8aba2297673455e97f3adf9037f5c61c"
+    },
+    "native_probe_qualification": {
+      "bytes": 6803,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/trainer-integration-v01/inventory-headroom-port-v01/native-probe-v01/qualification-result-v02.json",
+      "sha256": "142c32eea952209a8f04a9734e15feb987733438ec76bc193dc4cd5a3dd74fca"
+    },
+    "native_probe_request_review": {
+      "bytes": 5290,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/trainer-integration-v01/inventory-headroom-port-v01/native-probe-v01/independent-request-review-v02.json",
+      "sha256": "6c57b1ce3785b4757ccf831f64cfc0b1c7926910626ff84bca588723d545587e"
+    }
+  },
+  "evidence_id": "f18-native-probe-metric-view-qualified-20261029-01",
+  "existing_work_item": "LIR-17 / LIR-9103",
+  "native_task_activation_or_budget_reset": false,
+  "new_experiment_rate_selected": null,
+  "numerical_profiles_and_v1_v2_parity_inputs_unchanged": true,
+  "recorded_at_utc": "2026-10-29T03:46:52.591770+00:00",
+  "remaining_work": [
+    "Implement the thin run-specific v2 saved consumer using this canonical projection and canonical recipe/scorer owners; retain the existing complete60-file-before7-reference fence and closing identity/hash checks.",
+    "Join preregistered request, closed producer/freeze, all15 inputs, independently authenticated donor configuration/rate, both canonical recipes/checkpoints/reports and expected_training; do not infer expectations from captures being scored.",
+    "Qualify authored outer-consumer fixtures before a real retained comparison; no retained-v2 trained candidate outputs exist yet.",
+    "Prepare finite TRAIN-only experiment and fresh original training-purpose admission; preserve source, semantic review, graph and Lean gates.",
+    "Public physical-v2 validation frontend reconciliation remains separate."
+  ],
+  "retained_fit": false,
+  "schema": "legal-ir-f18-native-probe-and-metric-view-qualification/v1",
+  "scope": "Corrected isolated trainer bootstrap, real current-source zero-model native probe and canonical saved-score metric projection. This is not retained fitting, v2 numerical dispatch, complete outer v2 comparison or legal/graph/Lean admission.",
+  "selected_product_sources": {
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/formula_generation_metrics.py": {
+      "bytes": 43956,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/formula_generation_metrics.py",
+      "sha256": "96e9c8b4448546f9e8b86aab2d58bca55a17959bcc20c44e2829aec6d1cbde38"
+    },
+    "scripts/ops/legal_ir/run_owned_validation.py": {
+      "bytes": 76328,
+      "path": "scripts/ops/legal_ir/run_owned_validation.py",
+      "sha256": "c2cd1783d03984c644f4953d31f71e5942fae30e64863d3808ea7418a413caa4"
+    },
+    "tests/unit/logic/test_formula_generation_metrics.py": {
+      "bytes": 63491,
+      "path": "tests/unit/logic/test_formula_generation_metrics.py",
+      "sha256": "2384a0eb0eaccd453849628a845e0d469742392bd23c3982fe94db96b0bb3f92"
+    },
+    "tests/unit/optimizers/logic_theorem_optimizer/test_validation_run_resources.py": {
+      "bytes": 143867,
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_validation_run_resources.py",
+      "sha256": "9955a466f3bb9dac30d6286aa3b592e2d31b636c6986ea1e5945e16247497cfd"
+    }
+  },
+  "source_base_commit": "22cfb0dc3c01618d450bebe71c9fd005462510a3",
+  "source_lease_mode": "write",
+  "unchanged_numerical_resource_and_worker_sources": {
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_invocation_worker.py": {
+      "bytes": 70558,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_invocation_worker.py",
+      "sha256": "bd31a954e2537f9de637308c73c6470b9e30b7cc4c9f21ac76f8cdc34f842a96"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py": {
+      "bytes": 41515,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py",
+      "sha256": "da6c3596a413ba5c8dab14f9e06a6fc288d7eb9166d261a96abfdf96dd60130b"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_fullspan_optimizer_recipe_v1.py": {
+      "bytes": 7716,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_fullspan_optimizer_recipe_v1.py",
+      "sha256": "d22b932b80c48b688ff3f18d5f141152a6032b7cb2f6195845840af818d8dc84"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_fullspan_training_v1.py": {
+      "bytes": 88600,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_fullspan_training_v1.py",
+      "sha256": "56bd0a248a07de09519f95e5c4bae02ab9d8eb1134b483c257c1f7e7bcb07147"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_fullspan_training_v2.py": {
+      "bytes": 40762,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_fullspan_training_v2.py",
+      "sha256": "d80a08844c06daae6466a39b87bc0c395e0dd4a2da01b284704a4e03e44af0f1"
+    },
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_daemon_invocation_worker.py": {
+      "bytes": 85087,
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_daemon_invocation_worker.py",
+      "sha256": "4acd3f427fb65bf45ac4171cbbc2a3b920aa719dd7c355eaadb1d103eb6aca73"
+    },
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_daemon_resources.py": {
+      "bytes": 41374,
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_daemon_resources.py",
+      "sha256": "f6ae4fcc6b9777bf791dd81f1eefd9c81562df687b4218ca02ecf9361a75d159"
+    }
+  }
+}
