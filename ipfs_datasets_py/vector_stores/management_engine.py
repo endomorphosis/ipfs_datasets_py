@@ -86,7 +86,7 @@ except (ImportError, ModuleNotFoundError):
     EMBEDDINGS_AVAILABLE = False
     AdvancedIPFSEmbeddings = None  # type: ignore
 
-_INDEXES_DIR = "./vector_indexes"
+_INDEXES_DIR = os.environ.get("IPFS_DATASETS_VECTOR_INDEXES_DIR", "./vector_indexes")
 
 # ---------------------------------------------------------------------------
 # DuckDB vector shadow / dual-mode authority catalog (DQK-062 / DQK-063)
@@ -574,8 +574,8 @@ class VectorShadowCatalog:
         self._enabled = bool(enabled)
         self._path = (
             ":memory:"
-            if catalog_path in (None, ":memory:")
-            else str(Path(catalog_path))
+            if catalog_path in (None, ":memory:") and not (catalog_path is None and os.environ.get("IPFS_DATASETS_VECTOR_CATALOG_PATH"))
+            else str(Path(catalog_path or os.environ["IPFS_DATASETS_VECTOR_CATALOG_PATH"]))
         )
         self._lock = threading.RLock()
         self._store: Any = None
@@ -1261,6 +1261,7 @@ class VectorShadowCatalog:
         shard_manifest: Optional[Mapping[str, Any]] = None,
         index_build: Optional[Mapping[str, Any]] = None,
         operation_id: Optional[str] = None,
+        documents: Optional[Sequence[Mapping[str, Any]]] = None,
     ) -> ShadowCreateResult:
         """Project a legacy create into the DuckDB shadow catalog.
 
@@ -1304,6 +1305,17 @@ class VectorShadowCatalog:
                 map_payload[vid] = i
                 raw_by_vid[vid] = raw
             ids = list(map_payload.keys())
+
+        document_payloads = None
+        if documents is not None:
+            if (metadata_json or {}).get("document_payload_policy") != "matched-only" or len(documents) != len(ids) or len(documents) > 1024:
+                raise ValueError("document payloads require explicit matched-only policy and one document per vector")
+            document_payloads = []
+            for document in documents:
+                payload = json.loads(json.dumps(dict(document), allow_nan=False))
+                if not isinstance(payload.get("text"), str) or len(_canonical_json(payload)) > 16384:
+                    raise ValueError("indexed document must contain bounded actual text")
+                document_payloads.append(payload)
 
         identities = self._default_identities(
             dimension=int(dimension),
@@ -1440,10 +1452,20 @@ class VectorShadowCatalog:
                         else:
                             values = list(values)[: identities["dimension"]]
                     producer_raw = raw_by_vid.get(vid, str(i))
+                    payload = document_payloads[i] if document_payloads is not None else None
+                    stored_doc = doc
+                    if payload is not None:
+                        stored_doc = self._store.add_document(
+                            collection_id=col.collection_id, generation_id=gen.generation_id,
+                            source={"kind": "indexed_document", "backend": backend, "logical_name": logical,
+                                    "producer_vector_id": producer_raw, "payload_digest": _digest(payload)},
+                            document_id=sanitize_id(f"document_{collection_id}_{i}", prefix="doc"),
+                            metadata={"indexed_document": payload, "payload_digest": _digest(payload)},
+                        )
                     self._store.add_chunk(
                         collection_id=col.collection_id,
                         generation_id=gen.generation_id,
-                        document_id=doc.document_id,
+                        document_id=stored_doc.document_id,
                         vector=values,
                         ordinal=int(map_payload.get(vid, i)),
                         chunk_id=vid,
@@ -1452,13 +1474,14 @@ class VectorShadowCatalog:
                             "producer_vector_id": producer_raw,
                             "backend": backend,
                         },
-                        text="",
+                        text=payload["text"] if payload is not None else "",
                         metadata={
                             "legacy_id": vid,
                             "producer_vector_id": producer_raw,
                             "raw_vector_id": producer_raw,
                             "backend": backend,
                             "logical_name": logical,
+                            **({"document_payload_digest": _digest(payload)} if payload is not None else {}),
                         },
                     )
 
@@ -2051,6 +2074,42 @@ class VectorShadowCatalog:
     # Dual-mode authority (DQK-063)
     # ------------------------------------------------------------------
 
+    def matched_document(self, logical_name: str, backend: str, producer_vector_id: str) -> Optional[Dict[str, Any]]:
+        """Resolve one matched ID from published authoritative rows only.
+
+        Payload retrieval is opt-in per collection at indexing time. Never
+        consult metadata.json, caller-supplied documents or publication stats.
+        """
+        if not self.enabled or self._store is None:
+            return None
+        with self._lock:
+            key = self._legacy_key(logical_name, backend)
+            collection_id = self._logical_to_collection.get(key)
+            if collection_id is None:
+                self.rehydrate_process_maps_from_store()
+                collection_id = self._logical_to_collection.get(key)
+            if collection_id is None:
+                return None
+            collection = self._store.get_collection(collection_id)
+            policy = (collection.metadata or {}).get("metadata_json", {})
+            if collection.status != "active" or policy.get("document_payload_policy") != "matched-only":
+                return None
+            chunks = [chunk for chunk in self._store.list_query_visible_chunks(collection_id)
+                      if chunk.metadata.get("producer_vector_id") == producer_vector_id]
+            if len(chunks) != 1:
+                return None
+            chunk = chunks[0]
+            document = self._store.get_document(chunk.document_id)
+            payload = document.metadata.get("indexed_document")
+            if (document.collection_id != collection_id or document.generation_id != collection.published_generation
+                    or not isinstance(payload, dict) or document.metadata.get("payload_digest") != _digest(payload)
+                    or chunk.metadata.get("document_payload_digest") != _digest(payload)):
+                return None
+            return {"document": payload, "provenance": {"source": "duckdb_authority", "collection_id": collection_id,
+                    "generation_id": collection.published_generation, "document_id": document.document_id,
+                    "chunk_id": chunk.chunk_id, "producer_vector_id": producer_vector_id,
+                    "payload_digest": _digest(payload)}}
+
     def dual_create(
         self,
         *,
@@ -2073,6 +2132,7 @@ class VectorShadowCatalog:
         index_build: Optional[Mapping[str, Any]] = None,
         operation_id: Optional[str] = None,
         bytes_location: str = "engine",
+        documents: Optional[Sequence[Mapping[str, Any]]] = None,
     ) -> ShadowCreateResult:
         """Create under dual/db-primary mode; DuckDB owns lifecycle metadata.
 
@@ -2123,6 +2183,7 @@ class VectorShadowCatalog:
             shard_manifest=shard_manifest,
             index_build=index_build,
             operation_id=op_id,
+            documents=documents,
         )
         auth = self._authority_label()
         # In dual/db-primary, DuckDB metadata is the authority surface even when
@@ -3758,6 +3819,12 @@ class VectorStoreManager:
                     "distance_metric": distance_metric,
                 },
             )
+            payload_policy = (config or {}).get("document_payload_policy")
+            if payload_policy is not None:
+                if payload_policy != "matched-only" or self._resolve_authority() is None:
+                    raise ValueError("document_payload_policy requires matched-only and a native authoritative catalog")
+                create_kwargs["documents"] = documents
+                create_kwargs["metadata_json"]["document_payload_policy"] = "matched-only"
             if (
                 self._resolve_authority() is not None
                 and duckdb_metadata_is_authority()
@@ -3766,6 +3833,8 @@ class VectorStoreManager:
                 shadow = self._dual_after_create(**create_kwargs)
             else:
                 shadow = self._shadow_after_create(**create_kwargs)
+            if payload_policy is not None and (shadow is None or not shadow.ok):
+                raise ValueError("authoritative indexed-document publication did not succeed")
             if shadow is not None:
                 result["shadow"] = shadow.to_dict()
                 result["authority"] = shadow.authority
@@ -4029,12 +4098,18 @@ class VectorStoreManager:
                 if docs and int(idx) < len(docs):
                     entry["document"] = docs[int(idx)]
                 else:
-                    # DuckDB-only path: expose approved id/stats, not free docs.
+                    # Default policy remains ID-only. Explicit matched-only
+                    # collections resolve payloads from published DuckDB rows.
                     entry["vector_id"] = f"doc_{int(idx)}"
                     entry["document"] = {
                         "id": f"doc_{int(idx)}",
                         "source": "duckdb_authority",
                     }
+                    catalog = self._resolve_authority()
+                    matched = catalog.matched_document(index_name, "faiss", entry["vector_id"]) if catalog is not None else None
+                    if matched is not None:
+                        entry["document"] = matched["document"]
+                        entry["document_provenance"] = matched["provenance"]
                 results.append(entry)
             return {
                 "status": "success",

@@ -1624,6 +1624,21 @@ class DuckDBVectorStore:
 
     # -- documents / chunks --------------------------------------------------
 
+    def get_document(self, document_id: str) -> DocumentRecord:
+        """Read the stored document record; callers enforce query visibility."""
+        document_id = _require_id(document_id, field="document_id")
+        with self._lock:
+            row = self._conn.execute(
+                """SELECT document_id, collection_id, generation_id, source_identity,
+                          source_digest, created_at, metadata_json
+                   FROM vector_documents WHERE document_id = ?""", [document_id]
+            ).fetchone()
+        if row is None:
+            raise VectorStoreContractError("DOCUMENT_NOT_FOUND", f"document {document_id!r} not found")
+        return DocumentRecord(document_id=row[0], collection_id=row[1], generation_id=int(row[2]),
+                              source_identity=row[3], source_digest=row[4], created_at=row[5],
+                              metadata=_parse_metadata(row[6]))
+
     def add_document(
         self,
         *,
