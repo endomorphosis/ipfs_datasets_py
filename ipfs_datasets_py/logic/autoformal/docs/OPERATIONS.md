@@ -15,6 +15,9 @@ Before installing a new profile or public API, refresh this handoff/catalog and 
 
 Do not replace these with artifact-local schedulers or broad process/resource queries. Retain the original failure and closure status. Unknown native/storage release remains unknown until the responsible owner supplies exact evidence; no other task may infer cleanup from a source-lease release alone.
 
+Create new validation attempts as empty owner-private directories with explicit
+mode `0700` before freezing their requests.
+
 ### Validation capacity refusals
 
 When `owner.open()` raises the original storage-capacity error, the validation
@@ -116,6 +119,19 @@ DuckDB/DuckLake and Hub owners and immutable payload references. Registration,
 public availability, callable compatibility and measured quality remain
 different states; a shared release index cannot make one family's checkpoint
 or original optimizer state compatible with another profile.
+
+Known-format decoder imports can opt into `decoder_identity_witness`
+(`ir-decoder-identity-witness/v1`) on the import-plan model record. Pin the
+original decoder profile inventory, select its existing checkpoint record ID,
+and declare the target IR schema version separately from the checkpoint payload
+schema. The importer checks the original format/profile/checkpoint identity
+chain and exact JSON types through metadata conversion and persisted readback.
+The witness stays in the import plan and outcome evidence, allowing existing
+ModelManager rows to be verified and reused without adding metadata fields or
+changing checkpoint IDs. Existing metadata-only imports keep their contracts.
+The known-format inventory currently supports IntentIR and SecurityIR at 384D;
+this check does not extend that support or establish numerical, runtime, teacher
+or proof qualification.
 
 ### Watchdog decisions and deployment compatibility
 
