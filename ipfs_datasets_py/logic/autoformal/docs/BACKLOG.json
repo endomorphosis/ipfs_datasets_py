@@ -633,6 +633,78 @@
         "status": "live_verified"
       },
       "restart_gate": "Root verifies prior worker/child drain, claim/source/native/storage custody and new service-generation provenance before accepting successor results. Accept successor results only for the verified deployed source and service generation; preserve controlled quiescence and restart custody."
+    },
+    "latest_reviewed_frontier": {
+      "schema": "legal-ir-reviewed-programme-frontier/v1",
+      "recorded_at_utc": "2026-10-29T05:26:38.224639+00:00",
+      "scope": "Receipt-bound documentation checkpoint. Retained earlier dispatch requirements keep their original source cutoffs; this record does not qualify every current public runtime source.",
+      "accepted_runtime_receipt_sha256": "1b754707e744e57c66482f7c83d396f5fa4b8d3be83869d01d733a3322c6627b",
+      "observed_runtime": {
+        "SDK_commit": "4ec280ceef94d84bfaf46ff6ea07b0bb72e7754a",
+        "release": "4dbfeb895908767abb16",
+        "native_tasks": 64,
+        "goals": 34,
+        "dependency_edges": 115,
+        "completed": 5,
+        "blocked": 59,
+        "event_cursor": 232,
+        "activation_state": "not_activated",
+        "executor_health": "not_established"
+      },
+      "engineering_inventory": {
+        "completed": 145,
+        "total": 145,
+        "not_a_formalized_provision_count": true
+      },
+      "completed_native_metadata_aliases": [
+        "LIR-9001",
+        "LIR-9002",
+        "LIR-9003",
+        "LIR-9004",
+        "LIR-0101"
+      ],
+      "LIR0101_completed_revision": 7,
+      "next_existing_task": {
+        "alias": "LIR-0102",
+        "bounded_metadata_CHECK": "accepted_reuse_without_repetition",
+        "remaining": [
+          "original_owner_current_policy_and_packet_admission",
+          "actual_validation_and_evidence_chain",
+          "separate_producer_freeze_and_distinct_verifier",
+          "scoped_manual_acceptance"
+        ],
+        "new_packet_or_task_created": false
+      },
+      "training": {
+        "coefficient_0_and_025_fits_and_saved_scoring": "completed_no_complete_formula_gain",
+        "repeat_fit_selected": false,
+        "next_gate": "Complete independently reviewed targets, native-space conditioning and codec/budget compatibility, exposure-grouped evaluation and original finite admission.",
+        "warm_start": "Reuse compatible learned8D/384D donors and fitted768D student; copy tensors only for matching architecture/vocabulary/schema/task or use explicit adapters. Preserve producer/codec/masks/optimizer lineage and retained embeddings."
+      },
+      "text_roundtrip_retrospective": {
+        "attempted": 60,
+        "exact_IR": 3,
+        "exact_original_UTF8": 0,
+        "learned_prose_head_evaluated": false,
+        "source_sidecar_restoration_is_separate": true
+      },
+      "representation_rule": "Run native8D/384D/768D/Leanstral4096 source lanes in parallel with distinct family/schema/task/profile checkpoints. Existing512-token comparisons do not qualify768D8192-token inference. Source hidden width and bypasses are not a learned bottleneck; a bypass-free bottleneck study is separate.",
+      "watchdog": {
+        "existing_units_reused": true,
+        "poll_seconds": 60,
+        "existing_services_and_timers_enabled": true,
+        "unattended_source_repair_ready": false,
+        "remaining_existing_LIR03_LIR22_gates": [
+          "bounded_hung_monitor_freshness_or_main_loop_heartbeat_with_custody_qualification",
+          "mechanically_enforced_isolated_candidate_and_live_source_protection",
+          "independent_candidate_qualification_and_separate_guarded_adoption",
+          "original_owner_exhausted_budget_disposition_preserving_history"
+        ]
+      },
+      "first_scientific_delivery": "One complete norm, governing definition and two genuinely distinct operative physical uses; then20–40 connected provisions, closed dependency components and all members of the selected manifest.",
+      "governing_edition_or_legal_asof_selected": false,
+      "original24_task_records_or_native_statuses_changed": false,
+      "dispatch_retry_rearm_resource_or_semantic_authority": false
     }
   },
   "schema": "legal-ir-active-work-items/v1",
