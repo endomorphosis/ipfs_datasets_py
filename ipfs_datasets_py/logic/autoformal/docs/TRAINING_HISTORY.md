@@ -1,5 +1,11 @@
 # Training and experiment history
 
+## Native bootstrap and canonical saved views, 2026-10-29
+
+The [current native probe](../../../../docs/autoformalization/evidence/legal-ir-f18-native-probe-metric-view-20261029.json) exercised the original trainer lane with no model, checkpoint payload, forward, gradient or optimizer step. The actual grant and READY/RUN lifecycle closed with released storage and unchanged source pins. The isolated bootstrap now requires explicit bytecode suppression; its existing 242 cases passed in 4.874 seconds.
+
+The canonical metric-view projection passed 231 cases in 18.211 seconds, preserving the earlier 200-case test prefix. It discards score payloads before copying metadata and preserves all generation identities. No retained comparison or training occurred. Numerical sources, donor roots and separate v1/v2 parity inputs are unchanged. Full outer v2 authentication and comparison orchestration remain the next task.
+
 ## Current resource generation and distinct v1/v2 parity, 2026-10-29
 
 The [qualified inventory/parity port](../../../../docs/autoformalization/evidence/legal-ir-f18-inventory-headroom-parity-20261029.json) reuses the existing finite headroom implementation: 2 million to 4 million entries, with scanner methods, the 220 GB cap and accounting policy unchanged. Existing suites passed 3, 52 and 242 cases in 0.109, 65.967 and 4.772 seconds, respectively. Separate v1 and v2 runs each reproduced 632 source cases and 194,812 binary32 head values with complete raw/joint equality and zero updates. Both proofs use the same 632-source population.

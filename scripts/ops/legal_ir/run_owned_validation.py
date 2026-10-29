@@ -769,8 +769,9 @@ def _trainer_record_start(journal, payload):
 
 
 def _trainer_child_main(path, digest, *, ready_fd, release_fd, owner_pid):
-    _trainer_need(sys.flags.isolated and sys.flags.no_site and ready_fd >= 3 and release_fd >= 3
-        and ready_fd != release_fd and owner_pid > 0, 'isolated trainer bootstrap descriptors required')
+    _trainer_need(sys.flags.isolated and sys.flags.no_site and sys.flags.dont_write_bytecode
+        and ready_fd >= 3 and release_fd >= 3 and ready_fd != release_fd and owner_pid > 0,
+        'isolated bytecode-disabled trainer bootstrap descriptors required')
     _trainer_need(not any(name == 'ipfs_datasets_py' or name.startswith('ipfs_datasets_py.')
         for name in sys.modules), 'trainer package imported before offline bootstrap')
     value, raw = trainer_request(path, digest)
@@ -864,7 +865,7 @@ def _trainer_supervise(owner, journal, value, raw, *, request_path, request_pin,
         reader, ready_write = os.pipe()
         release_read, release_write = os.pipe()
         os.set_blocking(reader, False)
-        argv = [sys.executable, '-I', '-S', str(Path(__file__).resolve()),
+        argv = [sys.executable, '-I', '-S', '-B', str(Path(__file__).resolve()),
             '--trainer-request', str(request_path), '--expected-request-sha256', request_pin,
             '--_trainer-child', '--ready-fd', str(ready_write), '--release-fd', str(release_read),
             '--owner-pid', str(owner_identity['pid'])]

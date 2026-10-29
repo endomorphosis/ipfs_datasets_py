@@ -371,6 +371,79 @@ def _f18_training_expectations(value):
 
 
 
+def f18_metric_capture_view(raw):
+    """Detach a saved capture for metrics, replacing only occurrence scores.
+
+    Recognized parent/single captures and v1/v2 candidate panels keep their
+    complete metadata, generation identities and chunk order. Score payloads
+    are neither copied nor inspected. This projection validates no numerical
+    scores, checkpoint origin, freeze, fidelity or admission; the original
+    outer owner must authenticate complete file bytes before making the view.
+    """
+    _require(type(raw) is dict and all(type(key) is str for key in raw),
+             "literal saved capture object required")
+    schema = raw.get("schema")
+    _require(type(schema) is str, "literal saved capture schema required")
+    wrappers = {_F18_TRAINED_PANEL: _F18_TRAINED_CAPTURE,
+                _F18_V2_PANEL: _F18_V2_CAPTURE}
+    if schema in wrappers:
+        chunks = raw.get("chunks")
+        _require(type(chunks) is list and 1 <= len(chunks) <= MAX_ROWS,
+                 "bounded saved capture chunks required")
+        expected_chunk = wrappers[schema]
+    else:
+        _require(schema in (_F18_PARENT_CAPTURE, _F18_TRAINED_CAPTURE, _F18_V2_CAPTURE),
+                 "recognized saved capture schema required")
+        chunks, expected_chunk = [raw], schema
+    projected_chunks, count = [], 0
+    for chunk in chunks:
+        _require(type(chunk) is dict and all(type(key) is str for key in chunk)
+                 and type(chunk.get("schema")) is str
+                 and chunk["schema"] == expected_chunk,
+                 "saved panel and capture generation must agree")
+        occurrences = chunk.get("occurrences")
+        _require(type(occurrences) is list and 1 <= len(occurrences) <= MAX_ROWS,
+                 "bounded saved capture occurrences required")
+        count += len(occurrences)
+        _require(count <= MAX_ROWS, "saved capture exceeds row bound")
+        projected = dict(chunk)
+        projected["occurrences"] = []
+        for occurrence in occurrences:
+            _require(type(occurrence) is dict
+                     and all(type(key) is str for key in occurrence)
+                     and set(occurrence) == {"id", "source_sha256", "scores"},
+                     "closed saved occurrence required")
+            projected["occurrences"].append({"id": occurrence["id"],
+                "source_sha256": occurrence["source_sha256"], "scores": None})
+        projected_chunks.append(projected)
+    projected = dict(raw) if schema in wrappers else projected_chunks[0]
+    if schema in wrappers:
+        projected["chunks"] = projected_chunks
+
+    def detach(value, active):
+        kind = type(value)
+        if kind in (str, int, float, bool, type(None)):
+            return value
+        _require(kind in (dict, list), "literal JSON capture metadata required")
+        _require(id(value) not in active, "cyclic capture metadata")
+        active.add(id(value))
+        try:
+            if kind is dict:
+                _require(all(type(key) is str for key in value),
+                         "literal JSON capture metadata keys required")
+                return {key: detach(item, active) for key, item in value.items()}
+            return [detach(item, active) for item in value]
+        finally:
+            active.remove(id(value))
+
+    try:
+        result = detach(projected, set())
+        _json(result)  # Reject nonfinite metadata without encoding score payloads.
+    except (TypeError, ValueError, OverflowError, RecursionError) as error:
+        raise ValueError("finite literal JSON capture metadata required") from error
+    return result
+
+
 def _f18_ids(values, *, count=None):
     _require(type(values) is list and all(_id(item) for item in values)
              and len(set(values)) == len(values), "F18 IDs require an ordered unique string list")
@@ -656,5 +729,5 @@ def compare_f18_frozen_matched_arms(arms, targets, *, expected_ids, expected_sou
             "teacher_forcing": False, "metric_target_access": True, "training_executed": False, **_FALSE}
 
 
-__all__ += ["compare_f18_frozen_matched_arms", "F18_MATCHED_SCHEMA", "F18_MATCHED_V2_SCHEMA",
+__all__ += ["f18_metric_capture_view", "compare_f18_frozen_matched_arms", "F18_MATCHED_SCHEMA", "F18_MATCHED_V2_SCHEMA",
             "F18_EXPECTED_TRAINING_SCHEMA"]
