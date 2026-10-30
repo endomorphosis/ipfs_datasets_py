@@ -636,18 +636,18 @@
     },
     "latest_reviewed_frontier": {
       "schema": "legal-ir-reviewed-programme-frontier/v1",
-      "recorded_at_utc": "2026-10-29T05:26:38.224639+00:00",
-      "scope": "Receipt-bound documentation checkpoint. Retained earlier dispatch requirements keep their original source cutoffs; this record does not qualify every current public runtime source.",
-      "accepted_runtime_receipt_sha256": "1b754707e744e57c66482f7c83d396f5fa4b8d3be83869d01d733a3322c6627b",
+      "recorded_at_utc": "2026-10-30T21:36:43.929396+00:00",
+      "scope": "Receipt-bound source/numerical and read-only programme checkpoint; synthetic dispatch is separate from retained-data, legal meaning and Lean acceptance. Earlier source cutoffs remain historical.",
+      "accepted_runtime_receipt_sha256": "c05f9beffec4922c8a6180abc02177972cdf2ccb8d091c22663d64e5ba8559d8",
       "observed_runtime": {
-        "SDK_commit": "4ec280ceef94d84bfaf46ff6ea07b0bb72e7754a",
-        "release": "4dbfeb895908767abb16",
+        "SDK_commit": "f7f40bab6f942f178b1edea83b42256433057f22",
+        "release": "5394b75459a0a090c8fa",
         "native_tasks": 64,
         "goals": 34,
         "dependency_edges": 115,
-        "completed": 5,
-        "blocked": 59,
-        "event_cursor": 232,
+        "completed": 10,
+        "blocked": 54,
+        "event_cursor": 253,
         "activation_state": "not_activated",
         "executor_health": "not_established"
       },
@@ -657,21 +657,24 @@
         "not_a_formalized_provision_count": true
       },
       "completed_native_metadata_aliases": [
-        "LIR-9001",
-        "LIR-9002",
-        "LIR-9003",
         "LIR-9004",
-        "LIR-0101"
+        "LIR-0102",
+        "LIR-9103",
+        "LIR-9003",
+        "LIR-9101",
+        "LIR-9001",
+        "LIR-1601",
+        "LIR-0101",
+        "LIR-9002",
+        "LIR-0301"
       ],
       "LIR0101_completed_revision": 7,
       "next_existing_task": {
-        "alias": "LIR-0102",
-        "bounded_metadata_CHECK": "accepted_reuse_without_repetition",
+        "alias": "LIR-0201",
         "remaining": [
-          "original_owner_current_policy_and_packet_admission",
-          "actual_validation_and_evidence_chain",
-          "separate_producer_freeze_and_distinct_verifier",
-          "scoped_manual_acceptance"
+          "current_task_packet_and_capability_admission",
+          "accepted_dependency_and_current_scope_binding",
+          "bounded_SourceCorpusBinding_and_source_span_correspondence"
         ],
         "new_packet_or_task_created": false
       },
@@ -679,7 +682,15 @@
         "coefficient_0_and_025_fits_and_saved_scoring": "completed_no_complete_formula_gain",
         "repeat_fit_selected": false,
         "next_gate": "Complete independently reviewed targets, native-space conditioning and codec/budget compatibility, exposure-grouped evaluation and original finite admission.",
-        "warm_start": "Reuse compatible learned8D/384D donors and fitted768D student; copy tensors only for matching architecture/vocabulary/schema/task or use explicit adapters. Preserve producer/codec/masks/optimizer lineage and retained embeddings."
+        "warm_start": "Reuse compatible learned8D/384D donors and fitted768D student; copy tensors only for matching architecture/vocabulary/schema/task or use explicit adapters. Preserve producer/codec/masks/optimizer lineage and retained embeddings.",
+        "synthetic_numerical_dispatch": {
+          "evidence_id": "f18-v2-synthetic-native-numerical-probe-qualified-20261030-01",
+          "actual_optimizer_updates": 1,
+          "capture_forwards": 2,
+          "captures_abstained": 2,
+          "retained_fit": false,
+          "selected_experiment_rate": null
+        }
       },
       "text_roundtrip_retrospective": {
         "attempted": 60,
@@ -695,16 +706,62 @@
         "existing_services_and_timers_enabled": true,
         "unattended_source_repair_ready": false,
         "remaining_existing_LIR03_LIR22_gates": [
-          "bounded_hung_monitor_freshness_or_main_loop_heartbeat_with_custody_qualification",
-          "mechanically_enforced_isolated_candidate_and_live_source_protection",
-          "independent_candidate_qualification_and_separate_guarded_adoption",
-          "original_owner_exhausted_budget_disposition_preserving_history"
-        ]
+          "productive_candidate_policy_and_candidate_runtime_binding",
+          "real_original_validation_and_adoption_owner_binding",
+          "original_owner_exhausted_budget_disposition_preserving_all_history"
+        ],
+        "latest_observation_evidence_id": "f18-v2-synthetic-native-numerical-probe-qualified-20261030-01",
+        "accepted_runtime_receipt_sha256": "c05f9beffec4922c8a6180abc02177972cdf2ccb8d091c22663d64e5ba8559d8",
+        "qualified_runtime_controls": "Accepted5394 main-PID heartbeat, isolated candidate protection and pending validation/adoption guards; productive authoring remains unconfigured."
       },
       "first_scientific_delivery": "One complete norm, governing definition and two genuinely distinct operative physical uses; then20–40 connected provisions, closed dependency components and all members of the selected manifest.",
       "governing_edition_or_legal_asof_selected": false,
       "original24_task_records_or_native_statuses_changed": false,
-      "dispatch_retry_rearm_resource_or_semantic_authority": false
+      "dispatch_retry_rearm_resource_or_semantic_authority": false,
+      "previous_frontier_cutoff": {
+        "recorded_at_utc": "2026-10-29T05:26:38.224639+00:00",
+        "accepted_runtime_receipt_sha256": "1b754707e744e57c66482f7c83d396f5fa4b8d3be83869d01d733a3322c6627b",
+        "observed_runtime": {
+          "SDK_commit": "4ec280ceef94d84bfaf46ff6ea07b0bb72e7754a",
+          "release": "4dbfeb895908767abb16",
+          "native_tasks": 64,
+          "goals": 34,
+          "dependency_edges": 115,
+          "completed": 5,
+          "blocked": 59,
+          "event_cursor": 232,
+          "activation_state": "not_activated",
+          "executor_health": "not_established"
+        }
+      },
+      "LIR0102_completed_revision": 7,
+      "parallel_existing_frontier": [
+        {
+          "alias": "LIR-0201",
+          "revision": 3,
+          "objective": "Use the completed source inventory, unchanged frozen partitions and retained portable package through a fresh read-only SourceCorpusBinding, then bind a bounded cache manifest/physical row selection and enumerate source-to-span correspondence candidates within the explicitly searched source population.",
+          "remaining_gate": "current task packet, capability and dependency acceptance pending"
+        },
+        {
+          "alias": "LIR-9104",
+          "revision": 2,
+          "objective": "Review parameter routes, unchanged anchor association, optimizer/checkpoint validation, teacher masks, domain coverage and bounded inference compatibility.",
+          "remaining_gate": "current task packet, capability and dependency acceptance pending"
+        },
+        {
+          "alias": "LIR-9102",
+          "revision": 2,
+          "objective": "Bind F18 plan/snapshot/runtime chain, training export, F15 teacher capture, mask certificate and comparator descriptors; authenticate bodies only within the native owner.",
+          "remaining_gate": "current task packet, capability and dependency acceptance pending"
+        },
+        {
+          "alias": "LIR-0302",
+          "revision": 2,
+          "objective": "Reuse completed compatibility checks and target codec/example adapters; qualify only new or changed boundary behavior through the existing validation owner.",
+          "remaining_gate": "current task packet, capability and dependency acceptance pending"
+        }
+      ],
+      "pilot_source_choice": "Retained 2024 Title 10; governing whole-corpus edition/legal-as-of and independent meaning remain separate."
     }
   },
   "schema": "legal-ir-active-work-items/v1",

@@ -1,5 +1,11 @@
 # F18 conditions full-span delta checkpoints and continuation
 
+**V2 numerical trainer probe, 2026-10-30:** the [actual original-owned qualification](../../../../../docs/autoformalization/evidence/legal-ir-f18-v2-native-numerical-probe-20261030.json) closes synthetic post-RUN numerical dispatch. It supplies no retained-data producer, experiment-rate, accuracy or legal/Lean qualification. Reuse existing fits/parity; both diagnostic captures abstained.
+
+The canonical trainer accepts numerical_probe only under owned-f18-conditions-training-request/v2. Its compute object contains exactly runtime_contract and synthetic_fixture descriptors (path, bytes, SHA256), bounded by 128 KiB and 2 MiB. The two paths must be distinct, outside the output attempt, separate from the request and absent from source pins. Lexical parsing opens no input body; actual numerical imports and input access follow the original READY/RUN barrier. The native_probe mode remains zero-compute; paired_fit retains its existing 32-update arm recipe.
+
+The worker run_f18_numerical_probe consumes the explicitly invented 168-row/72-present/96-absent template, builds and reloads checkpoints through the unchanged v2 owner, performs exactly one fixed diagnostic 0.002-rate/0.25-margin update, restores the saved optimizer/model and captures two target-free rows. Product code imports no test or workspace implementation. Fixture generation uses the existing pinned test helper under a separate original VALIDATION owner. Preserve partial artifacts on refusal; successful return requires input closing rehashes, and outer success additionally requires actual native/process/storage/source closure. The evidence retains inert run-control sources for host-specific preparation; copied receipts grant no execution authority.
+
 The existing [optimizer owner](../../../../optimizers/logic_theorem_optimizer/legal_span_conditions_fullspan_training_v1.py)
 owns these APIs. F18/F15, weighted CE, masked KL and the published margin kernel
 retain their original owners and bytes. This is a caller-owned numerical primitive:

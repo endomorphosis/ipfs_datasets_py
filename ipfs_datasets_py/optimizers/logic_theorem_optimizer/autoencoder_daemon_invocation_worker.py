@@ -1119,3 +1119,158 @@ def run_f18_paired_training(request, *, output_directory):
         "runtime_observations": runtime_observations, "elapsed_seconds": time.monotonic() - started,
         "training_executed": bool(updates), "scoring_performed": False,
         "native_or_source_cleanup_asserted_by_worker": False, **_F18_FALSE}
+
+
+# Fixed synthetic numerical dispatch is separate from the retained paired fit.
+# The caller owns the genuine trainer grant and READY/RUN barrier. This adapter
+# opens only two explicitly pinned diagnostic inputs and never imports a test.
+_F18_PROBE_FIXTURE_LIMIT = 2 * 1024 * 1024
+_F18_PROBE_CASE_FIELDS = frozenset(("state", "provenance", "records", "teacher", "weights", "expected_bindings"))
+_F18_PROBE_CONFIG = {"hidden_size": 32, "embedding_dim": 8, "projection_width": 8,
+    "latent_dimension": 384, "latent_enabled": False, "residual_scale": 0.25,
+    "seed": 1729, "batch_size": 12, "learning_rate": 0.001}
+
+
+def validate_f18_numerical_probe_compute(value):
+    """Validate only the closed, bounded lexical synthetic-probe envelope."""
+    _f18_require(type(value) is dict and set(value) == {"runtime_contract", "synthetic_fixture"},
+                 "closed numerical probe compute fields required")
+    limits = {"runtime_contract": 128 * 1024, "synthetic_fixture": _F18_PROBE_FIXTURE_LIMIT}
+    for name, maximum in limits.items():
+        ref = value[name]
+        _f18_require(type(ref) is dict and set(ref) == {"path", "bytes", "sha256"},
+                     "closed numerical probe metadata reference required")
+        path = ref["path"]
+        _f18_require(type(path) is str and 0 < len(path) <= 4096 and "\x00" not in path
+            and Path(path).is_absolute() and str(Path(path)) == path and ".." not in Path(path).parts,
+            "literal absolute numerical probe reference path required")
+        _f18_require(type(ref["bytes"]) is int and 0 < ref["bytes"] <= maximum
+            and type(ref["sha256"]) is str and len(ref["sha256"]) == 64
+            and all(ch in "0123456789abcdef" for ch in ref["sha256"]),
+            "bounded numerical probe reference bytes/SHA256 required")
+    _f18_require(value["runtime_contract"]["path"] != value["synthetic_fixture"]["path"],
+                 "distinct numerical probe inputs required")
+    return {name: dict(ref) for name, ref in value.items()}
+
+
+def _f18_numerical_probe_fixture(value):
+    """Accept the explicit invented template; canonical owners validate numerics."""
+    _f18_require(type(value) is dict and set(value) == {
+        "schema", "synthetic", "source_legal_claim", "case", "capture_rows"}
+        and value["schema"] == "f18-synthetic-numerical-probe-input/v1"
+        and value["synthetic"] is True and value["source_legal_claim"] is False,
+        "explicit synthetic numerical probe input required")
+    case = value["case"]
+    _f18_require(type(case) is dict and set(case) == _F18_PROBE_CASE_FIELDS
+        and type(case["state"]) is dict and len(case["state"]) == 42
+        and type(case["provenance"]) is dict
+        and type(case["provenance"].get("config")) is dict
+        and _contracts().digest(case["provenance"]["config"]) == _contracts().digest(_F18_PROBE_CONFIG)
+        and type(case["teacher"]) is dict and type(case["weights"]) is dict
+        and type(case["expected_bindings"]) is dict and len(case["expected_bindings"]) == 15,
+        "fixed invented numerical probe case/configuration required")
+    records = case["records"]
+    _f18_require(type(records) is list and len(records) == 168, "invented mixed168 probe rows required")
+    for index, row in enumerate(records):
+        expected_id = ("synthetic-gold-" if index < 72 else "synthetic-absent-") + "%03d" % index
+        _f18_require(type(row) is dict and set(row) == {"id", "source_text", "tokens", "labels", "latent"}
+            and row["id"] == expected_id and row["source_text"] == "actor%d acts when ready" % index
+            and type(row["latent"]) is list and len(row["latent"]) == 384
+            and all(type(item) is float and item == 0.0 for item in row["latent"])
+            and type(row["labels"]) is dict and type(row["labels"].get("presence")) is list
+            and len(row["labels"]["presence"]) == 6 and row["labels"]["presence"][3] is (index < 72),
+            "fixed invented source/latent/presence template required")
+    expected_rows = [{key: row[key] for key in ("id", "source_text", "latent")} for row in records[:2]]
+    _f18_require(type(value["capture_rows"]) is list
+        and _contracts().digest(value["capture_rows"]) == _contracts().digest(expected_rows),
+        "exact two invented target-free probe rows required")
+    # These metadata witnesses are invented; their literal compatibility fields
+    # never establish authenticated retained-data or teacher provenance.
+    return case, value["capture_rows"]
+
+
+def run_f18_numerical_probe(request, *, output_directory):
+    """One fixed synthetic update and capture, only after original READY/RUN.
+
+    No retained source, donor, teacher, parity or comparator body is requested.
+    Fixture rate0.002/margin0.25 is diagnostic and selects no TRAIN experiment.
+    All numerical/model/checkpoint implementation remains in the unchanged v2
+    owner; this function grants no custody, authority, retry or scientific task.
+    """
+    _f18_require(type(request) is dict
+        and request.get("schema") == "owned-f18-conditions-training-request/v2"
+        and request.get("mode") == "numerical_probe", "explicit v2 numerical probe request required")
+    compute = validate_f18_numerical_probe_compute(request.get("compute"))
+    reference_paths = {ref["path"] for ref in compute.values()}
+    _f18_require(not reference_paths.intersection(request.get("source_sha256", {})),
+                 "numerical probe inputs must be distinct from execution sources")
+    attempt = Path(request["attempt_directory"])
+    _f18_require(all(Path(path) != attempt and not Path(path).is_relative_to(attempt)
+                     for path in reference_paths), "numerical probe inputs must precede the owned attempt")
+    c, opened = _contracts(), []
+    output = c.safe_path(output_directory)
+    _f18_require(output.is_dir() and output == Path(request["outputs"]["exports"]),
+                 "original owned numerical probe exports required")
+    directory = output / "f18-numerical-probe"
+    directory.mkdir(mode=0o700)
+    runtime_contract = c.parse_json(_f18_open(c, compute["runtime_contract"], 128 * 1024, opened))
+    fixture = c.parse_json(_f18_open(c, compute["synthetic_fixture"], _F18_PROBE_FIXTURE_LIMIT, opened))
+    case, rows = _f18_numerical_probe_fixture(fixture)
+    fixture_root = c.digest(fixture)
+    started = time.monotonic()
+    with _f18_runtime(c, runtime_contract, opened, request) as (torch, runtime_observations):
+        profile = _f18_v2_profile(request)
+        recipe = profile.recipes.build_optimizer_recipe(donor_config=case["provenance"]["config"],
+            expected_bindings=case["expected_bindings"], learning_rate=0.002, margin_weight=0.25)
+        kwargs = {**case, "recipe": recipe, "learning_rate": 0.002, "margin_weight": 0.25}
+        recipe_ref = c.write_new(directory / "optimizer-recipe.json", recipe, 128 * 1024)
+        initial = profile.build_checkpoint(**kwargs)
+        initial_ref = profile.save_checkpoint(initial, directory / "initial-checkpoint.json", **kwargs)
+        persisted_initial = profile.load_checkpoint(initial_ref["path"], expected_sha256=initial_ref["sha256"], **kwargs)
+        _f18_require(profile.checkpoint_digest(persisted_initial) == profile.checkpoint_digest(initial),
+                     "synthetic initial checkpoint readback differs")
+        trained, report = profile.run_admitted_updates(persisted_initial, torch=torch, **kwargs,
+                                                       max_steps=1, max_seconds=32)
+        trained_ref = profile.save_checkpoint(trained, directory / "checkpoint.json", **kwargs)
+        report_ref = c.write_new(directory / "training-report.json", report, 32 * 1024 * 1024)
+        # Persist partial work before refusing; no second call, arm or retry.
+        _f18_require(type(report.get("optimizer_steps")) is int and report["optimizer_steps"] == 1
+            and report.get("requested_steps") == 1 and report.get("all_requested_steps_completed") is True
+            and report.get("training_model_forwards") == 1 and len(report.get("batch_trace", [])) == 1
+            and report.get("checkpoint_sha256") == profile.checkpoint_digest(trained)
+            and trained["progress"] == {"epochs_completed": 0, "row_cursor": 12, "optimizer_steps": 1},
+            "exact one synthetic numerical probe update required")
+        _f18_require(all(trained[name] == initial[name] for name in (
+            "source_frozen38_sha256", "source_inactive650_sha256")),
+            "synthetic frozen38/inactive650 commitment differs")
+        persisted = profile.load_checkpoint(trained_ref["path"], expected_sha256=trained_ref["sha256"], **kwargs)
+        _f18_require(profile.checkpoint_digest(persisted) == profile.checkpoint_digest(trained),
+                     "synthetic trained checkpoint readback differs")
+        runtime = profile.restore_optimizer(torch, persisted, **kwargs)
+        capture = profile.captured_inference(runtime, persisted, rows, **kwargs)
+        capture_ref = c.write_new(directory / "capture.json", capture, 32 * 1024 * 1024)
+        _f18_require(capture.get("actual_source_forwards") == 2 and capture.get("extra_capture_forwards") == 0
+            and capture.get("cumulative_source_forwards") == runtime["model_forwards"] == 2
+            and capture.get("target_access") is False and capture.get("teacher_forcing") is False
+            and capture.get("model_weights_unchanged") is True
+            and all(type(count) is int and count == 2
+                    for table in capture["forward_counter_deltas"].values() for count in table.values()),
+            "exact two target-free synthetic numerical probe forwards required")
+        _f18_require(c.digest(fixture) == fixture_root, "synthetic numerical probe input changed")
+        _f18_close(c, opened)
+    return {"schema": "f18-native-numerical-trainer-probe-result/v1", "mode": "numerical_probe",
+        "completed": True, "synthetic_fixture_only": True, "source_legal_claim": False,
+        "retained_assets_opened": 0, "retained_fit_executed": False, "initial_parity_verified": False,
+        "experiment_rate_selected": None, "diagnostic_learning_rate": 0.002,
+        "donor_config_learning_rate": 0.001, "diagnostic_margin_weight": 0.25,
+        "optimizer_updates": report["optimizer_steps"], "training_model_forwards": report["training_model_forwards"],
+        "capture_source_forwards": capture["actual_source_forwards"],
+        "model_forwards": report["training_model_forwards"] + capture["actual_source_forwards"],
+        "frozen38_and_inactive650_verified_by_canonical_owner": True,
+        "input_metadata": compute, "synthetic_fixture_canonical_sha256": fixture_root,
+        "optimizer_recipe": recipe_ref, "initial_checkpoint": initial_ref,
+        "checkpoint": trained_ref, "training_report": report_ref, "capture": capture_ref,
+        "profile_source_sha256": _F18_V2_PROFILE_SHA256, "optimizer_recipe_source_sha256": _F18_RECIPE_SHA256,
+        "runtime_observations": runtime_observations, "elapsed_seconds": time.monotonic() - started,
+        "scoring_performed": False, "training_executed": True,
+        "native_or_source_cleanup_asserted_by_worker": False, **_F18_FALSE}

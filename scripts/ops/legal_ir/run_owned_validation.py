@@ -639,7 +639,7 @@ def _validate_trainer_request(value):
         and type(value['schema']) is str
         and value['schema'] in (TRAINER_REQUEST_SCHEMA, TRAINER_V2_REQUEST_SCHEMA),
         'closed F18 training request required')
-    _trainer_need(type(value['mode']) is str and value['mode'] in ('native_probe', 'paired_fit')
+    _trainer_need(type(value['mode']) is str and value['mode'] in ('native_probe', 'numerical_probe', 'paired_fit')
         and value['process_scope'] == 'isolated_process_group', 'closed trainer mode/process scope required')
     _trainer_need(_trainer_path(value['cwd']) == ROOT, 'trainer must use its selected source tree')
     attempt = _trainer_path(value['attempt_directory'])
@@ -669,6 +669,24 @@ def _validate_trainer_request(value):
         _trainer_path(path)
     if value['mode'] == 'native_probe':
         _trainer_need(value['compute'] is None, 'native probe permits no payload or compute request')
+    elif value['mode'] == 'numerical_probe':
+        _trainer_need(value['schema'] == TRAINER_V2_REQUEST_SCHEMA,
+            'numerical probe requires explicit v2 request')
+        compute = value['compute']
+        _trainer_need(type(compute) is dict and set(compute) == {'runtime_contract', 'synthetic_fixture'},
+            'closed synthetic numerical probe references required')
+        reference_paths = []
+        for name, maximum in (('runtime_contract', 131072), ('synthetic_fixture', 2 * 1024 * 1024)):
+            ref = compute[name]
+            _trainer_need(type(ref) is dict and set(ref) == {'path', 'bytes', 'sha256'}
+                and type(ref['bytes']) is int and 0 < ref['bytes'] <= maximum
+                and _trainer_digest(ref['sha256']), 'bounded synthetic numerical probe reference required')
+            path = _trainer_path(ref['path'])
+            _trainer_need(path != attempt and attempt not in path.parents
+                and str(path) not in pins,
+                'numerical probe input must precede its owned attempt and be separate from source pins')
+            reference_paths.append(path)
+        _trainer_need(len(set(reference_paths)) == 2, 'distinct numerical probe references required')
     else:
         compute = value['compute']
         version2 = value['schema'] == TRAINER_V2_REQUEST_SCHEMA
@@ -706,11 +724,15 @@ def trainer_request(path, digest):
     raw = snapshot(path)
     _trainer_need(_trainer_digest(digest) and hashlib.sha256(raw).hexdigest() == digest,
         'trainer request hash differs')
-    return _validate_trainer_request(_trainer_decode(raw)), raw
+    value = _validate_trainer_request(_trainer_decode(raw))
+    if value['mode'] == 'numerical_probe':
+        _trainer_need(all(Path(ref['path']) != Path(path) for ref in value['compute'].values()),
+            'numerical probe inputs must be separate from the trainer request')
+    return value, raw
 
 
 def _trainer_source_guard(value):
-    if value['schema'] == TRAINER_V2_REQUEST_SCHEMA and value['mode'] == 'paired_fit':
+    if value['schema'] == TRAINER_V2_REQUEST_SCHEMA and value['mode'] in ('paired_fit', 'numerical_probe'):
         _trainer_need(all(str(_TRAINER_DIRECTORY/name) in value['source_sha256'] for name in (
             'legal_span_conditions_fullspan_training_v2.py',
             'legal_span_conditions_fullspan_optimizer_recipe_v1.py')),
@@ -799,7 +821,10 @@ def _trainer_child_main(path, digest, *, ready_fd, release_fd, owner_pid):
         bootstrap._configure_dependency_paths()
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_daemon_invocation_worker as worker
         _trainer_need(Path(worker.__file__).resolve() == _TRAINER_NETWORK, 'different fixed trainer worker imported')
-        result = worker.run_f18_paired_training(value, output_directory=Path(value['outputs']['exports']))
+        if value['mode'] == 'numerical_probe':
+            result = worker.run_f18_numerical_probe(value, output_directory=Path(value['outputs']['exports']))
+        else:
+            result = worker.run_f18_paired_training(value, output_directory=Path(value['outputs']['exports']))
     _trainer_need(type(result) is dict and type(result.get('completed')) is bool
         and all(result.get(key) is False for key in ('admitted', 'formalized', 'promoted')),
         'fixed trainer result/authority differs')
