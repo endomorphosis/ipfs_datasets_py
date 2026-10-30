@@ -1488,3 +1488,195 @@ def test_f18_v2_entry_late_input_drift_refuses_after_preserving_frozen_outputs(t
         worker.run_f18_paired_training(request, output_directory=output)
     assert closed == [True] and (output / "f18-paired/pair-output-freeze.json").is_file()
     assert len([event for event in numerical.events if event[0] == "run"]) == 2
+
+
+# Synthetic numerical-probe dispatch contracts use test doubles here. The real
+# one-update native child needs its own original-owner numerical qualification.
+def _f18_probe_fixture_data():
+    records = [{"id": ("synthetic-gold-" if index < 72 else "synthetic-absent-") + "%03d" % index,
+        "source_text": "actor%d acts when ready" % index, "tokens": [],
+        "labels": {"presence": [True, True, False, index < 72, False, False]},
+        "latent": [0.0] * 384} for index in range(168)]
+    case = {"state": {"invented-%02d" % index: [] for index in range(42)},
+        "provenance": {"config": dict(worker._F18_PROBE_CONFIG)}, "records": records,
+        "teacher": {}, "weights": {}, "expected_bindings": {"field-%02d" % i: "invented" for i in range(15)}}
+    return {"schema": "f18-synthetic-numerical-probe-input/v1", "synthetic": True,
+        "source_legal_claim": False, "case": case,
+        "capture_rows": [{key: row[key] for key in ("id", "source_text", "latent")} for row in records[:2]]}
+
+
+def _f18_probe_compute():
+    return {name: {"path": "/invented/" + name + ".json", "bytes": 1, "sha256": "a" * 64}
+            for name in ("runtime_contract", "synthetic_fixture")}
+
+
+def test_f18_numerical_probe_compute_is_detached_and_does_not_open_inputs(monkeypatch):
+    monkeypatch.setattr(worker, "_contracts", lambda: pytest.fail("pure compute opened an owner"))
+    offered = _f18_probe_compute()
+    returned = worker.validate_f18_numerical_probe_compute(offered)
+    assert returned == offered and returned is not offered
+    returned["synthetic_fixture"]["bytes"] = 2
+    assert offered["synthetic_fixture"]["bytes"] == 1
+
+
+@pytest.mark.parametrize("damage", ["missing", "extra", "none", "bool_bytes", "zero_bytes",
+    "runtime_large", "fixture_large", "relative", "escape", "digest", "alias"],
+    ids=["missing", "extra", "none", "bool_bytes", "zero_bytes", "runtime_large", "fixture_large",
+         "relative", "escape", "digest", "alias"])
+def test_f18_numerical_probe_compute_refuses_before_owner_access(monkeypatch, damage):
+    monkeypatch.setattr(worker, "_contracts", lambda: pytest.fail("invalid compute opened an owner"))
+    offered = _f18_probe_compute()
+    if damage == "missing": offered.pop("synthetic_fixture")
+    elif damage == "extra": offered["learning_rate"] = 0.002
+    elif damage == "none": offered = None
+    elif damage == "bool_bytes": offered["synthetic_fixture"]["bytes"] = True
+    elif damage == "zero_bytes": offered["synthetic_fixture"]["bytes"] = 0
+    elif damage == "runtime_large": offered["runtime_contract"]["bytes"] = 131073
+    elif damage == "fixture_large": offered["synthetic_fixture"]["bytes"] = 2097153
+    elif damage == "relative": offered["synthetic_fixture"]["path"] = "relative.json"
+    elif damage == "escape": offered["synthetic_fixture"]["path"] = "/invented/../other.json"
+    elif damage == "digest": offered["synthetic_fixture"]["sha256"] = "A" * 64
+    else: offered["synthetic_fixture"]["path"] = offered["runtime_contract"]["path"]
+    with pytest.raises(ValueError): worker.validate_f18_numerical_probe_compute(offered)
+
+
+@pytest.mark.parametrize("damage", ["schema", "claim", "synthetic", "extra", "config", "rows", "source",
+    "id", "latent", "presence", "capture_target", "capture_source"],
+    ids=["schema", "claim", "synthetic", "extra", "config", "rows", "source", "id", "latent",
+         "presence", "capture_target", "capture_source"])
+def test_f18_numerical_probe_fixture_refuses_noninvented_templates(damage):
+    offered = _f18_probe_fixture_data()
+    if damage == "schema": offered["schema"] = "retained-input/v1"
+    elif damage == "claim": offered["source_legal_claim"] = True
+    elif damage == "synthetic": offered["synthetic"] = 1
+    elif damage == "extra": offered["donor_path"] = "/retained/checkpoint.json"
+    elif damage == "config": offered["case"]["provenance"]["config"]["learning_rate"] = 0.003
+    elif damage == "rows": offered["case"]["records"].pop()
+    elif damage == "source": offered["case"]["records"][167]["source_text"] = "a legal source"
+    elif damage == "id": offered["case"]["records"][0]["id"] = "retained-id"
+    elif damage == "latent": offered["case"]["records"][0]["latent"][0] = 1.0
+    elif damage == "presence": offered["case"]["records"][72]["labels"]["presence"][3] = True
+    elif damage == "capture_target": offered["capture_rows"][0]["labels"] = {}
+    else: offered["capture_rows"][0]["source_text"] = "another source"
+    with pytest.raises(ValueError): worker._f18_numerical_probe_fixture(offered)
+
+
+class _F18ProbeProfile:
+    checkpoint_digest = staticmethod(c.digest)
+    def __init__(self, *, partial=False, bad_capture=False):
+        self.events, self.partial, self.bad_capture = [], partial, bad_capture
+        self.recipes = SimpleNamespace(build_optimizer_recipe=lambda **kwargs: dict(kwargs))
+    def build_checkpoint(self, **kwargs):
+        self.events.append("build")
+        assert kwargs["learning_rate"] == 0.002 and kwargs["margin_weight"] == 0.25
+        return {"progress": {"epochs_completed": 0, "row_cursor": 0, "optimizer_steps": 0},
+            "source_frozen38_sha256": "a" * 64, "source_inactive650_sha256": "b" * 64}
+    def save_checkpoint(self, value, path, **kwargs):
+        self.events.append("save")
+        return c.write_new(path, value)
+    def load_checkpoint(self, path, *, expected_sha256, **kwargs):
+        self.events.append("load")
+        raw = Path(path).read_bytes()
+        assert c.describe(path)["sha256"] == expected_sha256
+        return c.parse_json(raw)
+    def run_admitted_updates(self, checkpoint, **kwargs):
+        self.events.append("update")
+        assert kwargs["max_steps"] == 1 and kwargs["max_seconds"] == 32
+        steps = 0 if self.partial else 1
+        trained = {**checkpoint, "progress": {"epochs_completed": 0, "row_cursor": steps * 12, "optimizer_steps": steps}}
+        return trained, {"optimizer_steps": steps, "requested_steps": 1,
+            "all_requested_steps_completed": not self.partial, "training_model_forwards": steps,
+            "batch_trace": [{}] * steps, "checkpoint_sha256": c.digest(trained)}
+    def restore_optimizer(self, torch, checkpoint, **kwargs):
+        self.events.append("restore")
+        return {"model_forwards": 0}
+    def captured_inference(self, runtime, checkpoint, rows, **kwargs):
+        self.events.append("capture")
+        assert len(rows) == 2 and all(set(row) == {"id", "source_text", "latent"} for row in rows)
+        runtime["model_forwards"] = 2
+        return {"actual_source_forwards": 2, "extra_capture_forwards": 0, "cumulative_source_forwards": 2,
+            "target_access": self.bad_capture, "teacher_forcing": False, "model_weights_unchanged": True,
+            "forward_counter_deltas": {"actor": {"source": 2}, "conditions": {"source": 2}}}
+
+
+def _f18_probe_entry(tmp_path, monkeypatch, *, partial=False, bad_capture=False, closing_drift=False):
+    from contextlib import contextmanager
+    output = tmp_path / "attempt/exports"
+    output.mkdir(parents=True)
+    fixture = c.write_new(tmp_path / "fixture.json", _f18_probe_fixture_data(), 2097152)
+    runtime_ref = c.write_new(tmp_path / "runtime.json", {"invented_runtime_metadata": True})
+    request = {"schema": "owned-f18-conditions-training-request/v2", "mode": "numerical_probe",
+        "compute": {"synthetic_fixture": fixture, "runtime_contract": runtime_ref}, "outputs": {"exports": str(output)},
+        "attempt_directory": str(tmp_path / "attempt"), "source_sha256": {}}
+    events, profile = [], _F18ProbeProfile(partial=partial, bad_capture=bad_capture)
+    @contextmanager
+    def runtime(*args):
+        events.append("runtime_enter")
+        try: yield object(), {"external_process_attempts": []}
+        finally: events.append("runtime_exit")
+    def choose(value):
+        assert value is request
+        events.append("v2_profile")
+        return profile
+    original_close = worker._f18_close
+    def close(caller, opened):
+        if closing_drift: Path(fixture["path"]).write_text("{}")
+        original_close(caller, opened)
+        events.append("closed")
+    monkeypatch.setattr(worker, "_f18_runtime", runtime)
+    monkeypatch.setattr(worker, "_f18_v2_profile", choose)
+    monkeypatch.setattr(worker, "_f18_close", close)
+    return request, output, profile, events
+
+
+def test_f18_numerical_probe_dispatches_one_step_and_two_source_rows(tmp_path, monkeypatch):
+    request, output, profile, events = _f18_probe_entry(tmp_path, monkeypatch)
+    result = worker.run_f18_numerical_probe(request, output_directory=output)
+    assert events == ["runtime_enter", "v2_profile", "closed", "runtime_exit"]
+    assert profile.events == ["build", "save", "load", "update", "save", "load", "restore", "capture"]
+    assert result["schema"] == "f18-native-numerical-trainer-probe-result/v1" and result["completed"] is True
+    assert (result["optimizer_updates"], result["training_model_forwards"], result["capture_source_forwards"], result["model_forwards"]) == (1, 1, 2, 3)
+    assert result["synthetic_fixture_only"] is True and result["retained_assets_opened"] == 0
+    assert result["experiment_rate_selected"] is None and result["retained_fit_executed"] is False
+    assert all(result[key] is False for key in worker._F18_FALSE)
+    assert c.parse_json(c.verify(result["optimizer_recipe"]))["donor_config"]["learning_rate"] == 0.001
+
+
+@pytest.mark.parametrize("damage", ["v1", "native_probe", "paired_fit"], ids=["v1", "native_probe", "paired_fit"])
+def test_f18_numerical_probe_rejects_other_modes_before_owner(tmp_path, monkeypatch, damage):
+    request = {"schema": "owned-f18-conditions-training-request/v2", "mode": "numerical_probe"}
+    if damage == "v1": request["schema"] = "owned-f18-conditions-training-request/v1"
+    else: request["mode"] = damage
+    monkeypatch.setattr(worker, "_contracts", lambda: pytest.fail("wrong mode accessed owner"))
+    with pytest.raises(ValueError): worker.run_f18_numerical_probe(request, output_directory=tmp_path)
+
+
+def test_f18_numerical_probe_persists_partial_without_capture_or_retry(tmp_path, monkeypatch):
+    request, output, profile, events = _f18_probe_entry(tmp_path, monkeypatch, partial=True)
+    with pytest.raises(ValueError, match="exact one synthetic"):
+        worker.run_f18_numerical_probe(request, output_directory=output)
+    assert profile.events == ["build", "save", "load", "update", "save"]
+    assert (output / "f18-numerical-probe/checkpoint.json").is_file()
+    assert (output / "f18-numerical-probe/training-report.json").is_file()
+    assert events == ["runtime_enter", "v2_profile", "runtime_exit"]
+
+
+@pytest.mark.parametrize("damage", ["capture", "closing"], ids=["capture", "closing"])
+def test_f18_numerical_probe_late_failure_preserves_artifacts_without_success(tmp_path, monkeypatch, damage):
+    request, output, profile, events = _f18_probe_entry(tmp_path, monkeypatch,
+        bad_capture=damage == "capture", closing_drift=damage == "closing")
+    with pytest.raises(ValueError): worker.run_f18_numerical_probe(request, output_directory=output)
+    assert profile.events[-1] == "capture" and "closed" not in events
+    assert events[-1] == "runtime_exit" and (output / "f18-numerical-probe/capture.json").is_file()
+
+
+@pytest.mark.parametrize("damage", ["source", "attempt"], ids=["source", "attempt"])
+def test_f18_numerical_probe_refuses_source_or_output_alias_before_body(tmp_path, monkeypatch, damage):
+    request = {"schema": "owned-f18-conditions-training-request/v2", "mode": "numerical_probe",
+        "compute": _f18_probe_compute(), "attempt_directory": "/invented/attempt", "source_sha256": {}}
+    if damage == "source":
+        request["source_sha256"][request["compute"]["synthetic_fixture"]["path"]] = "a" * 64
+    else:
+        request["compute"]["synthetic_fixture"]["path"] = "/invented/attempt/input.json"
+    monkeypatch.setattr(worker, "_contracts", lambda: pytest.fail("aliased input body/owner accessed"))
+    with pytest.raises(ValueError): worker.run_f18_numerical_probe(request, output_directory=tmp_path)

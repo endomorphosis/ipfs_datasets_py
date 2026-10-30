@@ -1,0 +1,548 @@
+{
+  "actual_native_probe": {
+    "actual_native_process_storage_source_custody_closed": true,
+    "all130_active_scalars_changed": true,
+    "all_sources_unchanged": true,
+    "capture_outcomes": {
+      "abstained": 2,
+      "accuracy_gain_established": false,
+      "reason": "copied_spans_overlap",
+      "rows": 2
+    },
+    "capture_source_forwards": 2,
+    "frozen38_tensors_and_inactive650_scalars_unchanged": true,
+    "initial_model_state_sha256": "9525c84b8202ab6eb6a60f3ba0c524f4dc9a70f871fbc70b194314e0239a3aba",
+    "optimizer_updates": 1,
+    "owner_seconds": 188.06643278803676,
+    "pins": 76,
+    "result": {
+      "bytes": 5245,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/trainer-integration-v01/numerical-dispatch-v01/native-numerical-probe-v01/attempt-v01/exports/trainer-result.json",
+      "sha256": "1a866b1edcd04039b3585e75df1d251ebb98f119b7c88877de1c7d3ed87d6f85"
+    },
+    "root": {
+      "bytes": 9058,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/trainer-integration-v01/numerical-dispatch-v01/native-numerical-probe-v01/root-source-closeout-v01.json",
+      "sha256": "e9151c7ba2f22992a6e62694d2df0cb7749f3167ca6a6666e28761714e3a487f"
+    },
+    "total_model_forwards": 3,
+    "trained_model_state_sha256": "2703aab7f6bbcc3bc73cde36376cf2f51d11ddefb8a9e0c83f7279637ccf078b",
+    "training_model_forwards": 1,
+    "worker_seconds": 5.543747865129262
+  },
+  "authority": {
+    "formalized": false,
+    "legal_or_Lean_qualified": false,
+    "new_experiment_rate": false,
+    "promoted": false,
+    "retained_fit": false,
+    "scientific_activation": false
+  },
+  "canonical_code": [
+    {
+      "bytes": 78012,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/scripts/ops/legal_ir/run_owned_validation.py",
+      "repository_path": "scripts/ops/legal_ir/run_owned_validation.py",
+      "sha256": "b6a389f768344b5746362ef7c83c714f1ca3f6a385e4f1c44a347f2e44cced7c"
+    },
+    {
+      "bytes": 81807,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_invocation_worker.py",
+      "repository_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_invocation_worker.py",
+      "sha256": "2e84f04851a07a84b8dc5f698ffacc835f514c3972c6d66e8f1784444b340a13"
+    },
+    {
+      "bytes": 97174,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_daemon_invocation_worker.py",
+      "repository_path": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_daemon_invocation_worker.py",
+      "sha256": "6736e9861b0e7b82da49517ca80b62c731383f1804dd73026ee5f90de3ead3b3"
+    },
+    {
+      "bytes": 151077,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/tests/unit/optimizers/logic_theorem_optimizer/test_validation_run_resources.py",
+      "repository_path": "tests/unit/optimizers/logic_theorem_optimizer/test_validation_run_resources.py",
+      "sha256": "2b1ecc08a28a380a2ab20fad599b64239cc2cb5c614841721030d54a7823cacc"
+    }
+  ],
+  "contract_qualification": {
+    "disjoint_cohorts": [
+      {
+        "cases": 242,
+        "owner_seconds": 109.91236954694614,
+        "phases": 726,
+        "pins": 84,
+        "root": {
+          "bytes": 10856,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/trainer-integration-v01/numerical-dispatch-v01/pure-qualification-v04-legacy242/root-source-closeout-v01.json",
+          "sha256": "f05057352dac29961cde794c271d6f51012874fe697789705564930a36a7fc9e"
+        }
+      },
+      {
+        "cases": 57,
+        "owner_seconds": 103.7780260280706,
+        "phases": 171,
+        "pins": 84,
+        "root": {
+          "bytes": 10815,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/trainer-integration-v01/numerical-dispatch-v01/pure-qualification-v03-new57/root-source-closeout-v01.json",
+          "sha256": "05a6f098aba0a8d723a2d0dd1d8d865af3cd2e0c433f7c55eb1145045217bc6c"
+        }
+      }
+    ],
+    "models_or_updates": 0,
+    "single_299_case_admission": false,
+    "union_cases": 299,
+    "union_phases": 897
+  },
+  "diagnostic_recipe": {
+    "donor_config_learning_rate": 0.001,
+    "learning_rate": 0.002,
+    "margin_weight": 0.25,
+    "selected_TRAIN_experiment_rate": null
+  },
+  "evidence": [
+    {
+      "bytes": 10856,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/trainer-integration-v01/numerical-dispatch-v01/pure-qualification-v04-legacy242/root-source-closeout-v01.json",
+      "sha256": "f05057352dac29961cde794c271d6f51012874fe697789705564930a36a7fc9e"
+    },
+    {
+      "bytes": 10815,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/trainer-integration-v01/numerical-dispatch-v01/pure-qualification-v03-new57/root-source-closeout-v01.json",
+      "sha256": "05a6f098aba0a8d723a2d0dd1d8d865af3cd2e0c433f7c55eb1145045217bc6c"
+    },
+    {
+      "bytes": 11175,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/trainer-integration-v01/numerical-dispatch-v01/fixture-seal-v01/root-source-closeout-v02.json",
+      "sha256": "58536ef5c20b26caa9302b1d3ea4a18f3c4fbfa1f53acfaeca0a4dc3d43fad89"
+    },
+    {
+      "bytes": 9058,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/trainer-integration-v01/numerical-dispatch-v01/native-numerical-probe-v01/root-source-closeout-v01.json",
+      "sha256": "e9151c7ba2f22992a6e62694d2df0cb7749f3167ca6a6666e28761714e3a487f"
+    },
+    {
+      "bytes": 10283,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/trainer-integration-v01/numerical-dispatch-v01/native-numerical-probe-v01/independent-result-review-v01.json",
+      "sha256": "7f628bf2998d5b11e3694b555e746819eed7f34192239233c34853c641694981"
+    },
+    {
+      "bytes": 5433,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/trainer-integration-v01/numerical-dispatch-v01/native-numerical-probe-v01/independent-request-review-v01.json",
+      "sha256": "7cd516e1df957cd58695e86615469fcd3a9baf32f55a4b6c5be08ca590a5dd3d"
+    },
+    {
+      "bytes": 10254,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/trainer-integration-v01/numerical-dispatch-v01/independent-pure-and-sealer-result-review-v01.json",
+      "sha256": "06d9ac6f4755ebb871b91881dda4091b237c193991b351bf023c2ce2a0b47a7d"
+    },
+    {
+      "bytes": 14333,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/trainer-integration-v01/numerical-dispatch-v01/independent-disjoint299-result-acceptance-v01.json",
+      "sha256": "d9b4bfe84fc6c72e593503bd7dcc38d53e159bb089d747d9325e7a9c9342a372"
+    },
+    {
+      "bytes": 7063,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/trainer-integration-v01/numerical-dispatch-v01/fixture-seal-v01/independent-result-acceptance-v01.json",
+      "sha256": "95ff2357ed61a2a8199be1ae16db1f8081612450ac9da011951cfc0d32014749"
+    },
+    {
+      "bytes": 4043,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/trainer-integration-v01/numerical-dispatch-v01/pure-qualification-v01/root-source-closeout-v01.json",
+      "sha256": "afc768c0a35550907134950472106a6693a9890fa3b2f73c1c06fea6834fad5f"
+    },
+    {
+      "bytes": 76733,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/trainer-integration-v01/numerical-dispatch-v01/pure-qualification-v02-legacy242/root-source-closeout-v01.json",
+      "sha256": "0b7d66c37972883da345f7baac1899a3d5ba1770bea4ea40365b04d3241ab13f"
+    },
+    {
+      "bytes": 4155,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/trainer-integration-v01/numerical-dispatch-v01/pure-qualification-v02-legacy242/retained-storage-recovery-result-v01.json",
+      "sha256": "c6d31c947dcf8550544bf498184bb27291c3e37266242ebc57867af42e70ca26"
+    },
+    {
+      "bytes": 12185,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/trainer-integration-v01/numerical-dispatch-v01/source-restoration-v01.json",
+      "sha256": "0abd761f32f1c69ed0597f63bb8709a0e5fd58f8b77238242ad28e2ba2db527e"
+    },
+    {
+      "bytes": 642,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/trainer-integration-v01/numerical-dispatch-v01/import-closure-restoration-v01.json",
+      "sha256": "c2d0d88993dd1e38bc66ecc43bd493221aa4759976dcbd09a14e580e2a18e817"
+    },
+    {
+      "bytes": 1416,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/trainer-integration-v01/numerical-dispatch-v01/complete-package-restoration-v01.json",
+      "sha256": "ebdb18926e0fac0c9e2082fe18d427df7282035bda04499ed5460d501f062a50"
+    },
+    {
+      "bytes": 4140,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/trainer-integration-v01/numerical-dispatch-v01/watchdog-publication-readback-v01.json",
+      "sha256": "a6bc19e30794e42eca33cd680fb2e93a24bb9c5c905a2e959416db9955a69272"
+    },
+    {
+      "bytes": 1001741,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/trainer-integration-v01/numerical-dispatch-v01/programme-readonly-frontier-v01.json",
+      "sha256": "d3b651b5ebc90a8f4eb26014adbcef81b803e0cb286aeacfd626bcbab0230cdd"
+    },
+    {
+      "bytes": 10157,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/native-handoff-acceptance-20261028-v01/job-packet-index-9003-v01/native-admission-gate-v01/unattended-code-repair-integration-qualification-20261029-v06/durable-request-controls-v01/runtime-independent-acceptance.json",
+      "sha256": "c05f9beffec4922c8a6180abc02177972cdf2ccb8d091c22663d64e5ba8559d8"
+    },
+    {
+      "bytes": 5969,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/watchdog-self-liveness-qualification-v01/task-source-availability-v01/recovery-summary-v01.json",
+      "sha256": "2dae32e274557ec52567f5c8e8562de70eb40b52eefdc649048c6d29e55a1e7b"
+    }
+  ],
+  "fixture_seal": {
+    "fixture": {
+      "bytes": 1174209,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/trainer-integration-v01/numerical-dispatch-v01/fixture-seal-v01/attempt-v01/exports/synthetic-fixture.json",
+      "sha256": "b41cd25ba3a1ca8eeeb9a8826a620b6c2e6b56f8344856eb0456d63d3e120d18"
+    },
+    "forwards": 0,
+    "models_initialized": 1,
+    "optimizer_updates": 0,
+    "pins": 79,
+    "pytest_phase_credit": 0,
+    "root": {
+      "bytes": 11175,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/trainer-integration-v01/numerical-dispatch-v01/fixture-seal-v01/root-source-closeout-v02.json",
+      "sha256": "58536ef5c20b26caa9302b1d3ea4a18f3c4fbfa1f53acfaeca0a4dc3d43fad89"
+    }
+  },
+  "own_five_claims": {
+    "488b220578214327bdf5fbb5a607f31a": {
+      "artifacts_durable_asserted": true,
+      "owner_pid": 1972442,
+      "status": "released",
+      "storage_bytes": 16777216
+    },
+    "619682d7b279418ea57da8ce5116a453": {
+      "artifacts_durable_asserted": true,
+      "owner_pid": 2138888,
+      "status": "released",
+      "storage_bytes": 67108864
+    },
+    "96ee85c5877b44a1ba82a4d083a40bac": {
+      "artifacts_durable_asserted": true,
+      "owner_pid": 2036443,
+      "status": "released",
+      "storage_bytes": 16777216
+    },
+    "ba330c7e99504f6494ac0ae03ce6e15e": {
+      "artifacts_durable_asserted": true,
+      "owner_pid": 2183686,
+      "status": "released",
+      "storage_bytes": 134217728
+    },
+    "dbf81b5da97d42ed97f1e4f2d7f12c72": {
+      "artifacts_durable_asserted": true,
+      "owner_pid": 2071315,
+      "status": "released",
+      "storage_bytes": 16777216
+    }
+  },
+  "passed": true,
+  "portable_control_sources": [
+    {
+      "bytes": 7273,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/trainer-integration-v01/numerical-dispatch-v01/fixture-seal-v01/seal_synthetic_fixture-v01.py",
+      "role": "Inert run-control source capture; no product import. Fresh host/path mapping and original admission are required after relocation.",
+      "sha256": "0a1948bb529e3a50cac9a97daae6a59005bc63625994fa4796ee2fab4fe9b429",
+      "utf8": "\"\"\"Seal the existing invented fixture only inside original validation custody.\"\"\"\nfrom pathlib import Path\nimport argparse, hashlib, json, os, sys, types\n\ndef need(value, message):\n    if not value:\n        raise ValueError(message)\n\ndef wire(value):\n    return json.dumps(value, sort_keys=True, separators=(',', ':'), ensure_ascii=False, allow_nan=False).encode()\n\ndef save_new(path, raw):\n    fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY | os.O_NOFOLLOW, 0o600)\n    with os.fdopen(fd, 'wb') as stream:\n        stream.write(raw); stream.flush(); os.fsync(stream.fileno())\n    fd = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)\n    try:\n        os.fsync(fd)\n    finally:\n        os.close(fd)\n    return {'path': str(path), 'bytes': len(raw), 'sha256': hashlib.sha256(raw).hexdigest()}\n\ndef main():\n    parser = argparse.ArgumentParser()\n    parser.add_argument('--scope', required=True, type=Path)\n    parser.add_argument('--scope-sha256', required=True)\n    options = parser.parse_args()\n    need(sys.flags.dont_write_bytecode and sys.dont_write_bytecode, 'bytecode suppression required before imports')\n    raw = options.scope.read_bytes()\n    need(hashlib.sha256(raw).hexdigest() == options.scope_sha256, 'scope changed')\n    scope = json.loads(raw)\n    need(scope['schema'] == 'f18-synthetic-numerical-fixture-seal-scope/v1', 'scope schema differs')\n    worktree = Path(scope['worktree'])\n    need(Path.cwd() == worktree, 'exact source checkout required')\n    output, receipt = Path(scope['fixture_output']), Path(scope['receipt_output'])\n    need(output.parent == receipt.parent == Path(scope['owned_exports']) and output.parent.is_dir(), 'original owned exports required')\n    need(not output.exists() and not receipt.exists(), 'never overwrite retained artifacts')\n    os.environ.update(IPFS_DATASETS_PY_MINIMAL_IMPORTS='1', IPFS_DATASETS_AUTO_INSTALL='0', IPFS_DATASETS_AUTO_INSTALL_TEST_DEPS='0', IPFS_AUTO_INSTALL='false', PYTEST_DISABLE_PLUGIN_AUTOLOAD='1', OMP_NUM_THREADS='1', MKL_NUM_THREADS='1', OPENBLAS_NUM_THREADS='1', CUDA_VISIBLE_DEVICES='', TRANSFORMERS_OFFLINE='1', HF_HUB_OFFLINE='1')\n    cache = Path(os.environ['XDG_CACHE_HOME'])\n    os.environ.update(TORCH_HOME=str(cache / 'torch'), HF_HOME=str(cache / 'huggingface'))\n    sys.path.insert(0, str(worktree))\n    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_daemon_invocation_worker as worker\n    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_span_conditions_fullspan_training_v1 as base\n    need(Path(worker.__file__).resolve() == worktree / 'ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_invocation_worker.py', 'worker origin differs')\n    contracts, opened = worker._contracts(), []\n    runtime = contracts.parse_json(worker._f18_open(contracts, scope['runtime_contract'], 128 * 1024, opened))\n    supplied = scope['fixture_owner']\n    fixture_path = Path(supplied['path'])\n    fixture_raw = worker._f18_open(contracts, supplied, 256 * 1024, opened)\n    need(supplied['sha256'] == 'bbed34c8d81ecac7ecf020e682e37dc550fc29a8839775107eacb43496b7d50a', 'existing fixture bytes differ')\n    need(fixture_path == worktree / 'tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_conditions_fullspan_training_v1.py', 'existing fixture path differs')\n    models = []\n    with worker._f18_runtime(contracts, runtime, opened, scope) as (torch, observations):\n        numerical = worker._f18_v2_profile(scope)\n        module = types.ModuleType('_f18_original_fixture_sealer')\n        module.__file__ = str(fixture_path)\n        sys.modules[module.__name__] = module\n        exec(compile(fixture_raw, str(fixture_path), 'exec'), module.__dict__)\n        original_model = base.f18._model\n        def counted_model(*args, **kwargs):\n            model = original_model(*args, **kwargs)\n            models.append(model)\n            return model\n        base.f18._model = counted_model\n        try:\n            case = module._checkpoint_case(actual_model=True)\n        finally:\n            base.f18._model = original_model\n        need(len(models) == 1, 'exactly one invented model initialization required')\n        counters = {name: dict(getattr(models[0], name)) for name in ('_actor_forward_accounting', '_conditions_forward_accounting')}\n        need(all(type(value) is int and value == 0 for table in counters.values() for value in table.values()), 'fixture creation performed a forward')\n        need(set(case) == {'state', 'provenance', 'records', 'teacher', 'weights', 'expected_bindings'} and len(case['records']) == 168 and len(case['state']) == 42 and len(base.FROZEN) == 38, 'closed invented case differs')\n        value = {'schema': 'f18-synthetic-numerical-probe-input/v1', 'synthetic': True, 'source_legal_claim': False, 'case': case, 'capture_rows': [{key: row[key] for key in ('id', 'source_text', 'latent')} for row in case['records'][:2]]}\n        offered = wire(value)\n        need(0 < len(offered) <= 2097152, 'synthetic fixture exceeds two MiB')\n        normalized = json.loads(offered)\n        case = normalized['case']\n        recipe = numerical.recipes.build_optimizer_recipe(donor_config=case['provenance']['config'], expected_bindings=case['expected_bindings'], learning_rate=0.002, margin_weight=0.25)\n        kwargs = {**case, 'recipe': recipe, 'learning_rate': 0.002, 'margin_weight': 0.25}\n        checkpoint = numerical.build_checkpoint(**kwargs)\n        need(numerical.validate_checkpoint(checkpoint, **kwargs) is None, 'normalized checkpoint invalid')\n        need(all(value is False for value in checkpoint['authority'].values()), 'fixture claims authority')\n        need(wire(normalized) == offered and len(models) == 1, 'normalization changed or extra model constructed')\n        worker._f18_close(contracts, opened)\n        result = {'schema': 'f18-synthetic-numerical-fixture-seal-result/v1', 'completed': True, 'synthetic': True, 'source_legal_claim': False, 'fixture_owner': supplied, 'fixture': save_new(output, offered), 'initial_checkpoint_sha256': numerical.checkpoint_digest(checkpoint), 'all42_synthetic_model_state_sha256': numerical.checkpoint_digest(case['state']), 'frozen38_synthetic_sha256': base.frozen38_seal(case['state']), 'fixture_counters': {'models_constructed': len(models), 'model_forwards': 0, 'optimizer_constructions': 0, 'gradient_calls': 0, 'optimizer_updates': 0}, 'observed_model_forward_counters': counters, 'runtime_observations': observations, 'diagnostic_fixture_rate': 0.002, 'diagnostic_fixture_margin': 0.25, 'selected_TRAIN_experiment_rate': None, 'retained_assets_used': False, 'retained_parity_repeated': False, 'training_performed': False, 'admitted': False, 'formalized': False, 'promoted': False, 'numerical_dispatch_qualified': False, 'custody_claimed_by_child': False, 'natural_pytest_phase_credit': 0}\n    need(observations['resolver_restored'] is True and not observations['external_process_attempts'], 'runtime guard did not restore')\n    worker._f18_close(contracts, opened)\n    ref = save_new(receipt, wire(result))\n    print(json.dumps({'completed': True, 'fixture': result['fixture'], 'receipt': ref}, sort_keys=True), flush=True)\n    return 0\n\nif __name__ == '__main__':\n    raise SystemExit(main())\n"
+    },
+    {
+      "bytes": 14847,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/trainer-integration-v01/numerical-dispatch-v01/native-numerical-probe-v01/prepare-native-numerical-probe-v02.py",
+      "role": "Inert run-control source capture; no product import. Fresh host/path mapping and original admission are required after relocation.",
+      "sha256": "18a01a7917dd718f06fde241d7ce6542979d642865d9f112a62d1e2cef706f6e",
+      "utf8": "\"\"\"Prepare one native numerical-probe request only from actual closed prerequisites.\n\nThis metadata-only generator never starts tests, models, trainers or providers.\nMissing/failed gates create no request or attempt. Compute bodies are not opened.\n\"\"\"\nfrom pathlib import Path\nimport argparse, ast, collections, datetime, hashlib, json, os, stat, sys, types\nR = Path('/home/barberb/lift_coding/external/ipfs_datasets')\nW = Path('/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028')\nN = Path(__file__).resolve().parent\nT = N.parent.parent\nLEASE = R / 'ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_source_lease.py'\nLEASE_SHA = '42e9f07d0d458177079269d9f495f0b70512180c1adc2f7fe0bfdb05518a12f9'\nFROZEN = {'/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/scripts/ops/legal_ir/run_owned_validation.py': 'b6a389f768344b5746362ef7c83c714f1ca3f6a385e4f1c44a347f2e44cced7c', '/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_invocation_worker.py': '2e84f04851a07a84b8dc5f698ffacc835f514c3972c6d66e8f1784444b340a13', '/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_daemon_invocation_worker.py': '6736e9861b0e7b82da49517ca80b62c731383f1804dd73026ee5f90de3ead3b3', '/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/tests/unit/optimizers/logic_theorem_optimizer/test_validation_run_resources.py': '2b1ecc08a28a380a2ab20fad599b64239cc2cb5c614841721030d54a7823cacc'}\nTEMPLATE_SHA = '6d0e8607f65baf2e0b56b7e6e891d6575436035715c63548c8054e04a75e52b6'\nPROTECTED_RUNTIME_PATH = '/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-retained-delta-roundtrip-v01/runtime-loader-contract-v01.json'\nPROTECTED_RUNTIME_SHA = '1caaf4a3d9e779bc569ad92fa7fb953ae42a004db5049766272879ab8a3d5eab'\n\ndef need(value, message):\n    if not value:\n        raise ValueError(message)\n\ndef main():\n    parser = argparse.ArgumentParser()\n    parser.add_argument('--legacy-root', type=Path, required=True)\n    parser.add_argument('--new-root', type=Path, required=True)\n    parser.add_argument('--fixture-root', type=Path, required=True)\n    options = parser.parse_args()\n    missing = [str(path) for path in (options.legacy_root, options.new_root, options.fixture_root) if not path.exists()]\n    if missing:\n        print(json.dumps({'schema': 'f18-native-numerical-probe-preparation-deferred/v1', 'reason': 'actual_closed_prerequisites_missing', 'missing': missing, 'request_created': False, 'attempt_created': False}, sort_keys=True))\n        return 75\n    raw = LEASE.read_bytes(); need(hashlib.sha256(raw).hexdigest() == LEASE_SHA, 'original source lease differs')\n    module = types.ModuleType('_native_numeric_prepare_lease'); module.__file__ = str(LEASE); sys.modules[module.__name__] = module; exec(compile(raw, str(LEASE), 'exec'), module.__dict__)\n    with module.source_lease(R, mode='write', timeout_seconds=600):\n        ip = R / 'workspace/test-logs/federal-corpus-audits/legal-ir-normative-target-binding-20261021-01/controls/install_product_v02.py'\n        raw = ip.read_bytes(); need(hashlib.sha256(raw).hexdigest() == '733d651fb88f08fd1f09c4075e0b6d2b496509c1dcac04926f9e00d373d85671', 'original metadata reader differs')\n        io = types.ModuleType('_native_numeric_prepare_io'); io.__file__ = str(ip); sys.modules[io.__name__] = io; exec(compile(raw, str(ip), 'exec'), io.__dict__)\n        evidence = {}\n        def read_json(path):\n            path = Path(path)\n            need(path.is_relative_to(N.parent), 'prerequisite must stay in current numerical-dispatch evidence tree')\n            raw = io.read(path); evidence[str(path)] = io.desc(path, raw)\n            return io.parse(raw)\n        def actual_closed(root_path):\n            root = read_json(root_path)\n            need(root.get('returncode') == 0 and type(root.get('returncode')) is int and root.get('source_WRITE_closed') is True and root.get('source_pins_unchanged') is True, 'prerequisite original source/return closure failed')\n            terminal = root.get('original_terminal'); need(type(terminal) is dict, 'actual original terminal missing')\n            res = terminal.get('reservation') or {}; lease = res.get('resource_lease') or {}; obs = res.get('process_observation') or {}; row = res.get('record') or {}\n            need(lease.get('released') is True and res.get('cleanup_error') is None and obs.get('live_processes') == 0 and obs.get('rss_bytes') == 0 and obs.get('out_of_group_live_identities') == [] and not obs.get('tracking_error'), 'prerequisite native/process custody not actually closed')\n            need(row.get('status') == 'released' and row.get('artifacts_durable_asserted') is True and row.get('owner_pid') == root.get('original_owner_pid') and res.get('scheduler_lane') == 'validation' and res.get('workload') == 'canonical_validation', 'prerequisite storage/original-owner binding missing')\n            request_files = []\n            for path in Path(root_path).parent.glob('request-*.json'):\n                raw = io.read(path)\n                if hashlib.sha256(raw).hexdigest() == root.get('request_sha256'): request_files.append(path)\n            need(len(request_files) == 1, 'actual root must identify exactly one preserved request')\n            request_path = request_files[0]; request = read_json(request_path)\n            need(request.get('schema') == 'owned-validation-request/v1' and request.get('cwd') == str(W), 'wrong original validation purpose/check-out')\n            need(row.get('attempt_directory', {}).get('path') == request['attempt_directory'], 'prerequisite attempt mismatch')\n            need(root['source_pin_count'] == len(request['source_sha256']), 'prerequisite pin count differs')\n            # The sealer previously source-pinned its runtime INPUT. Its actual\n            # original closure authenticates that old generation; do not reopen\n            # a protected compute body while preparing a later RUN-gated packet.\n            if PROTECTED_RUNTIME_PATH in request['source_sha256']:\n                need(request['source_sha256'][PROTECTED_RUNTIME_PATH] == PROTECTED_RUNTIME_SHA, 'protected historical runtime descriptor changed')\n            need(all(path == PROTECTED_RUNTIME_PATH or hashlib.sha256(io.read(Path(path))).hexdigest() == digest for path, digest in request['source_sha256'].items()), 'qualified prerequisite source bytes changed')\n            need(all(request['source_sha256'].get(path) == digest for path, digest in FROZEN.items()), 'prerequisite did not qualify all four current execution sources')\n            result_path = Path(terminal['result']); need(result_path == Path(request['outputs']['logs']) / 'result.json', 'actual result path differs')\n            result = read_json(result_path); execution = read_json(Path(request['outputs']['logs']) / 'execution.json')\n            need(result.get('completed') is True and result.get('returncode') == 0 and execution.get('completed') is True and execution.get('returncode') == 0, 'actual result/execution did not complete')\n            need(result.get('request_sha256') == root['request_sha256'] and result.get('executed_checks') == request['selected_checks'], 'actual result/check scope differs')\n            return root, request\n        selected_sets = []\n        for root_path, count in ((options.legacy_root, 242), (options.new_root, 57)):\n            root, request = actual_closed(root_path)\n            need(len(request['selected_checks']) == count and len(set(request['selected_checks'])) == count, 'closed disjoint cohort size differs')\n            scope_path = Path(request['argv'][4]); scope = read_json(scope_path)\n            need(scope['selected_checks'] == request['selected_checks'] and scope['worktree'] == str(W), 'actual pure scope differs')\n            phase = read_json(Path(scope['phase_output'])); expected = request['selected_checks']\n            need(phase.get('schema') == 'f18-trainer-pure-test-observation/v1' and phase.get('pytest_returncode') == 0 and phase.get('collected') == expected and phase.get('started') == expected and phase.get('finished') == expected, 'actual pure cohort incomplete')\n            need(phase.get('numerical_import_attempts') == [] and phase.get('external_process_attempts') == [] and phase.get('model_constructions') == 0 and phase.get('optimizer_updates') == 0, 'pure guard/zero-model scope differs')\n            need([(row['nodeid'], row['phase'], row['outcome']) for row in phase['phases']] == [(node, stage, 'passed') for node in expected for stage in ('setup', 'call', 'teardown')], 'actual three-phase pass proof differs')\n            selected_sets.append(set(expected))\n        need(not selected_sets[0].intersection(selected_sets[1]) and len(selected_sets[0] | selected_sets[1]) == 299, 'cohorts must be disjoint 242+57')\n        fixture_root, fixture_request = actual_closed(options.fixture_root)\n        need(len(fixture_request['selected_checks']) == 1 and fixture_request['source_sha256'].get(str(N.parent / 'fixture-seal-v01/seal_synthetic_fixture-v01.py')) == '0a1948bb529e3a50cac9a97daae6a59005bc63625994fa4796ee2fab4fe9b429', 'exact existing fixture sealer not proven')\n        sealed = read_json(Path(fixture_request['outputs']['exports']) / 'fixture-seal-result.json')\n        need(sealed.get('schema') == 'f18-synthetic-numerical-fixture-seal-result/v1' and sealed.get('completed') is True and sealed.get('synthetic') is True and sealed.get('source_legal_claim') is False, 'actual fixture seal missing')\n        need(sealed.get('fixture_counters') == {'models_constructed': 1, 'model_forwards': 0, 'optimizer_constructions': 0, 'gradient_calls': 0, 'optimizer_updates': 0} and sealed.get('retained_assets_used') is False and sealed.get('selected_TRAIN_experiment_rate') is None and sealed.get('natural_pytest_phase_credit') == 0, 'fixture preparation scope differs')\n        fixture_ref = sealed['fixture']\n        need(type(fixture_ref) is dict and set(fixture_ref) == {'path', 'bytes', 'sha256'} and type(fixture_ref['bytes']) is int and 0 < fixture_ref['bytes'] <= 2097152 and fixture_ref['path'] == str(Path(fixture_request['outputs']['exports']) / 'synthetic-fixture.json'), 'bounded actual fixture descriptor differs')\n        fixture_scope = read_json(Path(fixture_request['argv'][5])); runtime_ref = fixture_scope['runtime_contract']\n        need(type(runtime_ref) is dict and set(runtime_ref) == {'path', 'bytes', 'sha256'} and runtime_ref['bytes'] == 758 and runtime_ref['sha256'] == '1caaf4a3d9e779bc569ad92fa7fb953ae42a004db5049766272879ab8a3d5eab', 'existing exact runtime descriptor differs')\n        old = T / 'inventory-headroom-port-v01/native-probe-v01/request-v02.json'; oldraw = io.read(old)\n        need(hashlib.sha256(oldraw).hexdigest() == '136779b9eb163f9e44f61194442f7c93138d7cad7e8626b68b488c4175e1e33f', 'historical original native packet differs')\n        request = io.parse(oldraw); pins = request['source_sha256']\n        for path, digest in FROZEN.items(): pins[path] = digest\n        need(PROTECTED_RUNTIME_PATH not in pins, 'native source map may not contain the compute runtime body')\n        need(all(hashlib.sha256(io.read(Path(path))).hexdigest() == digest for path, digest in pins.items()), 'native current numerical/resource/source generation changed')\n        pins.update({path: ref['sha256'] for path, ref in evidence.items()})\n        pins[str(Path(__file__).resolve())] = hashlib.sha256(io.read(Path(__file__).resolve())).hexdigest()\n        template_path = N / 'root-run-original-trainer-template-v01.py'; template_raw = io.read(template_path)\n        need(hashlib.sha256(template_raw).hexdigest() == TEMPLATE_SHA, 'reviewed original root template changed'); pins[str(template_path)] = TEMPLATE_SHA\n        compute = {'runtime_contract': runtime_ref, 'synthetic_fixture': fixture_ref}\n        need(all(ref['path'] not in pins for ref in compute.values()), 'never source-pin or pre-open compute bodies')\n        need(len(pins) <= 256, 'native request source pin bound exceeded')\n        attempt = N / 'attempt-v01'\n        need(not attempt.exists() and not attempt.is_symlink() and not (N / 'request-v01.json').exists(), 'native preparation already exists; use explicit successor')\n        scope = {'schema': 'f18-native-numerical-probe-scope/v1', 'recorded_at_utc': datetime.datetime.now(datetime.timezone.utc).isoformat(), 'prerequisites': evidence, 'disjoint_pure_cases': 299, 'disjoint_passed_phases': 897, 'fixture_seal': sealed, 'compute_body_reads_in_generator': 0, 'retained_assets_or_parity_or_fit': False, 'fixed_synthetic_optimizer_updates': 1, 'fixed_synthetic_capture_source_forwards': 2, 'fixed_synthetic_total_model_forwards': 3, 'selected_TRAIN_experiment_rate': None, 'native_probe_executed': False, 'qualification_granted': False}\n        scope_path = N / 'scope-v01.json'; io.save(scope_path, scope); pins[str(scope_path)] = hashlib.sha256(io.read(scope_path)).hexdigest()\n        attempt.mkdir(mode=0o700)\n        request.update(schema='owned-f18-conditions-training-request/v2', mode='numerical_probe', compute=compute, cwd=str(W), attempt_directory=str(attempt), outputs={name: str(attempt / name) for name in ('logs', 'exports', 'tmp', 'cache', 'pytest', 'db')}, source_sha256=pins, cpu_slots=1, memory_mb=2048, child_process_slots=2, storage_bytes=134217728, timeout_seconds=300)\n        request_path = N / 'request-v01.json'; io.save(request_path, request); request_sha = hashlib.sha256(io.read(request_path)).hexdigest()\n        root = template_raw.decode().replace('__REQUEST_SHA256__', request_sha).replace('__LAUNCHER_SHA256__', FROZEN[str(W / 'scripts/ops/legal_ir/run_owned_validation.py')])\n        ast.parse(root); root_path = N / 'root-run-original-trainer-v01.py'; fd = os.open(root_path, os.O_CREAT | os.O_EXCL | os.O_WRONLY | os.O_NOFOLLOW, 0o600)\n        with os.fdopen(fd, 'wb') as stream: stream.write(root.encode()); stream.flush(); os.fsync(stream.fileno())\n        prepared = {'schema': 'f18-native-numerical-probe-preparation/v1', 'prepared_at_utc': datetime.datetime.now(datetime.timezone.utc).isoformat(), 'prepared_only': True, 'native_execution': False, 'request': io.desc(request_path, io.read(request_path)), 'root_control': io.desc(root_path, io.read(root_path)), 'source_pins': len(pins), 'compute_body_reads': 0, 'actual_closed_prerequisites': evidence, 'selected_TRAIN_experiment_rate': None}\n        io.save(N / 'preparation-v01.json', prepared)\n        print(json.dumps(prepared, sort_keys=True), flush=True)\n        return 0\n\nif __name__ == '__main__':\n    raise SystemExit(main())\n"
+    },
+    {
+      "bytes": 7954,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/trainer-integration-v01/numerical-dispatch-v01/native-numerical-probe-v01/root-run-original-trainer-template-v01.py",
+      "role": "Inert run-control source capture; no product import. Fresh host/path mapping and original admission are required after relocation.",
+      "sha256": "6d0e8607f65baf2e0b56b7e6e891d6575436035715c63548c8054e04a75e52b6",
+      "utf8": "\"\"\"One actual original-owned synthetic numerical trainer probe; no retry owner.\"\"\"\nfrom pathlib import Path\nimport datetime, hashlib, json, os, subprocess, sys, time, types\nR = Path('/home/barberb/lift_coding/external/ipfs_datasets')\nN = Path(__file__).resolve().parent\nREQUEST_SHA256 = '__REQUEST_SHA256__'\nLAUNCHER_SHA256 = '__LAUNCHER_SHA256__'\nLEASE = R / 'ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_source_lease.py'\nraw = LEASE.read_bytes()\nassert hashlib.sha256(raw).hexdigest() == '42e9f07d0d458177079269d9f495f0b70512180c1adc2f7fe0bfdb05518a12f9'\nl = types.ModuleType('_native_numeric_probe_original_lease'); l.__file__ = str(LEASE); sys.modules[l.__name__] = l; exec(compile(raw, str(LEASE), 'exec'), l.__dict__)\nrecord = {'schema': 'f18-native-numerical-probe-root-closeout/v1', 'started_at_utc': datetime.datetime.now(datetime.timezone.utc).isoformat(), 'actual_retained_input_fit': False, 'synthetic_numerical_probe_only': True, 'v2_numerical_dispatch_qualified': False, 'model_rate_selected': None, 'native_task_rearmed': False}\nrecord['control_pid'] = os.getpid()\n_stat = (Path('/proc') / str(os.getpid()) / 'stat').read_text(); record['control_birth'] = _stat[_stat.rfind(')')+2:].split()[19]\nprint('WAITING_ORIGINAL_SOURCE_WRITE', flush=True)\nwith l.source_lease(R, mode='write', timeout_seconds=600):\n    print('ORIGINAL_SOURCE_WRITE_ACQUIRED', flush=True)\n    p = R / 'workspace/test-logs/federal-corpus-audits/legal-ir-normative-target-binding-20261021-01/controls/install_product_v02.py'\n    raw = p.read_bytes(); assert hashlib.sha256(raw).hexdigest() == '733d651fb88f08fd1f09c4075e0b6d2b496509c1dcac04926f9e00d373d85671'\n    io = types.ModuleType('_native_numeric_probe_original_io'); io.__file__ = str(p); sys.modules[io.__name__] = io; exec(compile(raw, str(p), 'exec'), io.__dict__)\n    request_path = N / 'request-v01.json'; request_raw = io.read(request_path); assert io.sha(request_raw) == REQUEST_SHA256\n    value = io.parse(request_raw)\n    assert value['schema'] == 'owned-f18-conditions-training-request/v2' and value['mode'] == 'numerical_probe' and set(value['compute']) == {'runtime_contract', 'synthetic_fixture'}\n    assert all(ref['path'] not in value['source_sha256'] for ref in value['compute'].values()), 'compute bodies must open only after RUN'\n    before = {name: io.sha(io.read(Path(name))) for name in value['source_sha256']}; assert before == value['source_sha256']\n    attempt = Path(value['attempt_directory']); assert not any(attempt.iterdir()) and (attempt.stat().st_mode & 0o777) == 0o700\n    ledger = R / 'workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json'\n    launcher = Path(value['cwd']) / 'scripts/ops/legal_ir/run_owned_validation.py'\n    assert before[str(launcher)] == LAUNCHER_SHA256\n    state = io.parse(io.read(ledger)); outstanding = sum(row['storage_bytes'] for row in state['reservations'].values() if row.get('status') != 'released')\n    free = min(os.statvfs(path).f_bavail * os.statvfs(path).f_frsize for path in value['roots'])\n    record['observational_preflight'] = {'filesystem_free_bytes': free, 'outstanding_full_claims': outstanding, 'new_claim': value['storage_bytes'], 'required_conservative_free': outstanding + 2 * value['storage_bytes'], 'ledger_bytes': ledger.stat().st_size, 'original_admission_still_required': True}\n    if free < outstanding + 2 * value['storage_bytes'] or ledger.stat().st_size > 16 * 1024 * 1024 - 65536:\n        record.update(deferred_before_owner=True, actual_native_lease_released=False, source_WRITE_closure_permitted=True)\n        io.save(N / 'preentry-observational-deferral-v01.json', record)\n        print('DEFERRED_BEFORE_ORIGINAL_ADMISSION ' + json.dumps(record, sort_keys=True), flush=True)\n        raise SystemExit(75)\n    env = dict(os.environ); env.update(PYTHONDONTWRITEBYTECODE='1', IPFS_DATASETS_PY_MINIMAL_IMPORTS='1', IPFS_DATASETS_AUTO_INSTALL='0', IPFS_DATASETS_AUTO_INSTALL_TEST_DEPS='0', IPFS_AUTO_INSTALL='false', PYTEST_DISABLE_PLUGIN_AUTOLOAD='1', TRANSFORMERS_OFFLINE='1', HF_HUB_OFFLINE='1', OMP_NUM_THREADS='1', MKL_NUM_THREADS='1', OPENBLAS_NUM_THREADS='1', CUDA_VISIBLE_DEVICES='')\n    argv = ['/home/barberb/lift_coding/.venv/bin/python', '-B', '-u', str(launcher), '--trainer-request', str(request_path), '--expected-request-sha256', REQUEST_SHA256, '--resource-ledger', str(ledger)]\n    started = time.monotonic()\n    with (N / 'owner-v01.stdout').open('xb') as out, (N / 'owner-v01.stderr').open('xb') as err:\n        child = subprocess.Popen(argv, cwd=Path(value['cwd']), env=env, stdout=out, stderr=err)\n        stat = (Path('/proc') / str(child.pid) / 'stat').read_text(); birth = stat[stat.rfind(')')+2:].split()[19]\n        record.update(original_owner_pid=child.pid, original_owner_birth=birth, request_sha256=REQUEST_SHA256)\n        print('ORIGINAL_TRAINER_OWNER_STARTED ' + str(child.pid), flush=True)\n        rc = child.wait(); out.flush(); os.fsync(out.fileno()); err.flush(); os.fsync(err.fileno())\n    stdout = io.read(N / 'owner-v01.stdout'); terminal = None\n    for line in stdout.decode().splitlines():\n        try: obj = json.loads(line)\n        except ValueError: continue\n        if isinstance(obj, dict) and 'reservation' in obj: terminal = obj\n    record.update(returncode=rc, command_elapsed_seconds=time.monotonic()-started, original_terminal=terminal, owner_stdout=io.desc(N / 'owner-v01.stdout', stdout), owner_stderr=io.desc(N / 'owner-v01.stderr', io.read(N / 'owner-v01.stderr')))\n    after = {name: io.sha(io.read(Path(name))) for name in before}; record['source_pins_unchanged'] = after == before; record['source_pin_count'] = len(before)\n    os.environ.update(IPFS_DATASETS_PY_MINIMAL_IMPORTS='1', IPFS_DATASETS_AUTO_INSTALL='0', IPFS_AUTO_INSTALL='false')\n    sys.path.insert(0, value['cwd']); src = io.read(launcher)\n    mod = types.ModuleType('_native_numeric_probe_original_closeout'); mod.__file__ = str(launcher); sys.modules[mod.__name__] = mod; exec(compile(src, str(launcher), 'exec'), mod.__dict__)\n    decision = mod.classify_owned_trainer_source_custody(terminal, request_raw, expected_request_sha256=REQUEST_SHA256, owner_pid=child.pid, owner_birth=birth, returncode=rc, expected_resource_ledger=str(ledger))\n    record['original_trainer_custody_decision'] = decision\n    source_closed = decision.get('source_custody_closed') is True\n    reservation = (terminal or {}).get('reservation') or {}; lease = reservation.get('resource_lease') or {}; row = reservation.get('record') or {}\n    record['source_custody_closed'] = source_closed\n    record['actual_native_lease_released'] = source_closed and lease.get('released') is True\n    record['actual_storage_claim_released'] = row.get('status') == 'released'\n    record['typed_notentered_source_close'] = source_closed and reservation.get('status') == 'not_entered' and reservation.get('resource_lease') is None\n    if not source_closed:\n        io.save(N / 'root-unresolved-custody-v01.json', record)\n        print('SOURCE_WRITE_RETAINED_ORIGINAL_CLEANUP_REQUIRED ' + json.dumps(record, sort_keys=True), flush=True)\n        while True: time.sleep(30)\n    record['source_WRITE_closure_permitted'] = True\nrecord['source_WRITE_closed'] = True; record['finished_at_utc'] = datetime.datetime.now(datetime.timezone.utc).isoformat()\nio.save(N / 'root-source-closeout-v01.json', record)\nprint(json.dumps({'returncode': rc, 'source_WRITE_closed': True, 'source_custody_closed': source_closed, 'actual_native_lease_released': record['actual_native_lease_released'], 'actual_storage_claim_released': record['actual_storage_claim_released'], 'typed_notentered_source_close': record['typed_notentered_source_close'], 'source_pins_unchanged': record['source_pins_unchanged'], 'receipt': io.desc(N / 'root-source-closeout-v01.json', io.read(N / 'root-source-closeout-v01.json'))}, sort_keys=True), flush=True)\nraise SystemExit(rc if record['source_pins_unchanged'] else 99)\n"
+    }
+  ],
+  "prior_failures": {
+    "299_case_request": "Refused before owner construction by unchanged 256 selected-check limit; no native/storage request or child.",
+    "first242_collection": "140 items collected and import error;0 test phases. Exact omitted source restored from e698, no stub; own 16 MiB claim released through original e132 owner.",
+    "preserved": true
+  },
+  "programme": {
+    "completed_metadata_aliases": [
+      {
+        "id": "LIR-9004",
+        "operation": "independent_native_handoff_metadata_completion_v1",
+        "revision": 5
+      },
+      {
+        "id": "LIR-0102",
+        "operation": "independent_consumer_compatibility_0102_completion_v1",
+        "revision": 7
+      },
+      {
+        "id": "LIR-9103",
+        "operation": "independent_conditions_profile_9103_adoption_v1",
+        "revision": 3
+      },
+      {
+        "id": "LIR-9003",
+        "operation": "independent_job_packet_index_factual_completion_v1",
+        "revision": 4
+      },
+      {
+        "id": "LIR-9101",
+        "operation": "independent_conditions_ranking_9101_freeze_v1",
+        "revision": 3
+      },
+      {
+        "id": "LIR-9001",
+        "operation": "independent_factual_metadata_completion_v2",
+        "revision": 15
+      },
+      {
+        "id": "LIR-1601",
+        "operation": "independent_temporal_diagnostic_1601_adoption_v1",
+        "revision": 3
+      },
+      {
+        "id": "LIR-0101",
+        "operation": "independent_asset_contribution_inventory_completion_v1",
+        "revision": 7
+      },
+      {
+        "id": "LIR-9002",
+        "operation": "independent_capability_purpose_inventory_completion_v1",
+        "revision": 4
+      },
+      {
+        "id": "LIR-0301",
+        "operation": "independent_evidence_policy_0301_adoption_v1",
+        "revision": 3
+      }
+    ],
+    "cursor": 253,
+    "dependencies": 115,
+    "goals": 34,
+    "native_counts": {
+      "blocked": 54,
+      "completed": 10
+    },
+    "native_status_mutation_by_this_milestone": false,
+    "parallel_existing_frontier": [
+      {
+        "id": "LIR-0201",
+        "objective": "Use the completed source inventory, unchanged frozen partitions and retained portable package through a fresh read-only SourceCorpusBinding, then bind a bounded cache manifest/physical row selection and enumerate source-to-span correspondence candidates within the explicitly searched source population.",
+        "phase_blocker": "current task packet, capability and dependency acceptance pending",
+        "revision": 3
+      },
+      {
+        "id": "LIR-9104",
+        "objective": "Review parameter routes, unchanged anchor association, optimizer/checkpoint validation, teacher masks, domain coverage and bounded inference compatibility.",
+        "phase_blocker": "current task packet, capability and dependency acceptance pending",
+        "revision": 2
+      },
+      {
+        "id": "LIR-9102",
+        "objective": "Bind F18 plan/snapshot/runtime chain, training export, F15 teacher capture, mask certificate and comparator descriptors; authenticate bodies only within the native owner.",
+        "phase_blocker": "current task packet, capability and dependency acceptance pending",
+        "revision": 2
+      },
+      {
+        "id": "LIR-0302",
+        "objective": "Reuse completed compatibility checks and target codec/example adapters; qualify only new or changed boundary behavior through the existing validation owner.",
+        "phase_blocker": "current task packet, capability and dependency acceptance pending",
+        "revision": 2
+      }
+    ],
+    "parent_work_items": 24,
+    "pilot": "Retained 2024 Title 10",
+    "tasks": 64
+  },
+  "recorded_at_utc": "2026-10-30T21:36:43.929396+00:00",
+  "remaining": [
+    "Retained-v2 producer/body authentication, fresh finite TRAIN-only objective/rate admission and actual frozen-output comparison.",
+    "Existing source binding, complete reviewed targets, codec/definition/graph closure, grouped evaluation and statutory/Lean acceptance.",
+    "Current native packet/capability/dependency admission for existing 0201/9104/9102/0302; no automatic retry or budget reset."
+  ],
+  "reuse": {
+    "completed_v1_paired_fits_repeated": false,
+    "four_width_comparison_or_promotion": false,
+    "numerical_checkpoint_source_generation_changed": false,
+    "outer27_consumer_checks_repeated": false,
+    "v1_v2_632_parity_repeated": false
+  },
+  "runtime_acceptance": {
+    "bytes": 10157,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/native-handoff-acceptance-20261028-v01/job-packet-index-9003-v01/native-admission-gate-v01/unattended-code-repair-integration-qualification-20261029-v06/durable-request-controls-v01/runtime-independent-acceptance.json",
+    "sha256": "c05f9beffec4922c8a6180abc02177972cdf2ccb8d091c22663d64e5ba8559d8"
+  },
+  "schema": "legal-ir-f18-v2-native-synthetic-numerical-probe-qualified/v1",
+  "scope": "Actual original-trainer post-READY/RUN synthetic numerical dispatch; no retained-data fit, real-v2 producer authentication, source-law accuracy or Lean acceptance.",
+  "separate_peer_path_recovery": {
+    "bytes": 5969,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/watchdog-self-liveness-qualification-v01/task-source-availability-v01/recovery-summary-v01.json",
+    "sha256": "2dae32e274557ec52567f5c8e8562de70eb40b52eefdc649048c6d29e55a1e7b"
+  },
+  "unchanged_checkpoint_and_numerical_owners": [
+    {
+      "bytes": 88600,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_fullspan_training_v1.py",
+      "repository_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_fullspan_training_v1.py",
+      "sha256": "56bd0a248a07de09519f95e5c4bae02ab9d8eb1134b483c257c1f7e7bcb07147"
+    },
+    {
+      "bytes": 40762,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_fullspan_training_v2.py",
+      "repository_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_fullspan_training_v2.py",
+      "sha256": "d80a08844c06daae6466a39b87bc0c395e0dd4a2da01b284704a4e03e44af0f1"
+    },
+    {
+      "bytes": 7716,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_fullspan_optimizer_recipe_v1.py",
+      "repository_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_fullspan_optimizer_recipe_v1.py",
+      "sha256": "d22b932b80c48b688ff3f18d5f141152a6032b7cb2f6195845840af818d8dc84"
+    },
+    {
+      "bytes": 15567,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_invocation_contracts.py",
+      "repository_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_invocation_contracts.py",
+      "sha256": "34682aedf9bf565ff4a65ea79c9beb7fa2f3854c94cc5f0db18451e6fb0ba714"
+    },
+    {
+      "bytes": 41515,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py",
+      "repository_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py",
+      "sha256": "da6c3596a413ba5c8dab14f9e06a6fc288d7eb9166d261a96abfdf96dd60130b"
+    }
+  ],
+  "watchdog": {
+    "activation_state": "not_activated",
+    "engineering_lanes": [
+      {
+        "action": "none",
+        "active": false,
+        "blocked_count": 0,
+        "board_namespace": "legal-ir-autoencoder-v1",
+        "checked_at_epoch": 1793396199.6070864,
+        "completed_count": 145,
+        "global_ready_count": 0,
+        "healthy": true,
+        "lane_id": "lane-0",
+        "last_progress_at_epoch": 1793394092.824474,
+        "last_work_event_at_epoch": 1793394092.824474,
+        "namespace_mismatch": false,
+        "native_daemon_pid_alive": true,
+        "native_progress_status": "idle",
+        "native_status_at_epoch": 1793396199.487005,
+        "ready_count": 0,
+        "restart_eligible": false,
+        "selectable_ready_count": 0,
+        "selection_idle_reason": "no_shard_selectable_ready_tasks",
+        "service": "legal-ir-autoencoder-v1.service",
+        "status": "completed",
+        "task_count": 145,
+        "waiting_count": 0
+      },
+      {
+        "action": "none",
+        "active": false,
+        "blocked_count": 0,
+        "board_namespace": "legal-ir-autoencoder-v1",
+        "checked_at_epoch": 1793396199.6078331,
+        "completed_count": 145,
+        "global_ready_count": 0,
+        "healthy": true,
+        "lane_id": "lane-1",
+        "last_progress_at_epoch": 1793394092.394735,
+        "last_work_event_at_epoch": 1793394092.394735,
+        "namespace_mismatch": false,
+        "native_daemon_pid_alive": true,
+        "native_progress_status": "idle",
+        "native_status_at_epoch": 1793396199.513968,
+        "ready_count": 0,
+        "restart_eligible": false,
+        "selectable_ready_count": 0,
+        "selection_idle_reason": "no_shard_selectable_ready_tasks",
+        "service": "legal-ir-autoencoder-v1-lane-1.service",
+        "status": "completed",
+        "task_count": 145,
+        "waiting_count": 0
+      },
+      {
+        "action": "none",
+        "active": false,
+        "blocked_count": 0,
+        "board_namespace": "legal-ir-autoencoder-v1",
+        "checked_at_epoch": 1793396199.6071167,
+        "completed_count": 145,
+        "global_ready_count": 0,
+        "healthy": true,
+        "lane_id": "lane-2",
+        "last_progress_at_epoch": 1793394092.779391,
+        "last_work_event_at_epoch": 1793394092.779391,
+        "namespace_mismatch": false,
+        "native_daemon_pid_alive": true,
+        "native_progress_status": "idle",
+        "native_status_at_epoch": 1793396199.488411,
+        "ready_count": 0,
+        "restart_eligible": false,
+        "selectable_ready_count": 0,
+        "selection_idle_reason": "no_shard_selectable_ready_tasks",
+        "service": "legal-ir-autoencoder-v1-lane-2.service",
+        "status": "completed",
+        "task_count": 145,
+        "waiting_count": 0
+      },
+      {
+        "action": "none",
+        "active": false,
+        "blocked_count": 0,
+        "board_namespace": "legal-ir-autoencoder-v1",
+        "checked_at_epoch": 1793396199.6078255,
+        "completed_count": 145,
+        "global_ready_count": 0,
+        "healthy": true,
+        "lane_id": "lane-3",
+        "last_progress_at_epoch": 1793394092.921741,
+        "last_work_event_at_epoch": 1793394092.921741,
+        "namespace_mismatch": false,
+        "native_daemon_pid_alive": true,
+        "native_progress_status": "idle",
+        "native_status_at_epoch": 1793396199.472217,
+        "ready_count": 0,
+        "restart_eligible": false,
+        "selectable_ready_count": 0,
+        "selection_idle_reason": "no_shard_selectable_ready_tasks",
+        "service": "legal-ir-autoencoder-v1-lane-3.service",
+        "status": "completed",
+        "task_count": 145,
+        "waiting_count": 0
+      }
+    ],
+    "engineering_namespace": "legal-ir-autoencoder-v1",
+    "event_cursor": 253,
+    "executor_health": "not_established",
+    "observed_at": 1793396200.9482276,
+    "repair_or_restart_by_this_milestone": false,
+    "retained_unknown_outcome_task_cids": [
+      "baguqeeraqk2ln7d3plwfonnyycsxkr5tjrpo7e5uq4p7rhe6vi6btpxsaeyq"
+    ],
+    "retry_not_admitted_task_cids": [
+      "baguqeeraqk2ln7d3plwfonnyycsxkr5tjrpo7e5uq4p7rhe6vi6btpxsaeyq"
+    ],
+    "schema": "legal-ir-numerical-publication-watchdog-readback/v1",
+    "scientific_counts": {
+      "blocked": 54,
+      "completed": 10
+    },
+    "scientific_namespace": "legal-ir-span-graph-lean-refinement-20261016"
+  }
+}

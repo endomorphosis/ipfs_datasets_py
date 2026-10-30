@@ -2596,3 +2596,113 @@ def test_trainer_preentry_recovery_refuses_incomplete_or_conflicting_original_le
     assert module.classify_owned_trainer_source_custody(t, raw, **caller) == {
         "verdict": "requires_original_trainer_cleanup", "source_custody_closed": False,
         "storage_release_authorized": False}
+
+
+# Pure lexical/fake-dispatch controls; actual numerical execution is separate.
+def _numerical_probe_controller_case(tmp_path):
+    module, path, value = _v2_trainer_controller_case(tmp_path)
+    value["mode"] = "numerical_probe"
+    value["compute"] = {name: {"path": str(tmp_path / (name + ".json")), "bytes": 17, "sha256": "b" * 64}
+        for name in ("runtime_contract", "synthetic_fixture")}
+    _write_json(path, value)
+    return module, path, value
+
+
+def test_numerical_probe_parser_is_detached_and_opens_no_input(tmp_path, monkeypatch):
+    module, path, value = _numerical_probe_controller_case(tmp_path)
+    attempted = _trainer_forbid_reference_bodies(monkeypatch, value)
+    parsed, raw = module.trainer_request(path, _sha(path))
+    module._trainer_source_guard(parsed)
+    assert parsed == value and parsed is not value and raw == path.read_bytes()
+    parsed["compute"]["synthetic_fixture"]["bytes"] = 123
+    assert value["compute"]["synthetic_fixture"]["bytes"] == 17
+    assert attempted == [] and tuple(Path(value["attempt_directory"]).iterdir()) == ()
+
+
+@pytest.mark.parametrize("damage", ["v1", "null", "extra_rate", "retained_inputs", "missing_runtime",
+    "missing_fixture", "boolean_bytes", "empty_bytes", "runtime_over_bound", "fixture_over_bound",
+    "bad_digest", "relative_path", "alias_refs", "input_in_attempt", "source_pin_alias", "extra_ref_field"])
+def test_numerical_probe_refuses_scope_expansion_before_access(tmp_path, monkeypatch, damage):
+    module, _, value = _numerical_probe_controller_case(tmp_path)
+    attempted = _trainer_forbid_reference_bodies(monkeypatch, value)
+    compute = value["compute"]
+    if damage == "v1": value["schema"] = "owned-f18-conditions-training-request/v1"
+    elif damage == "null": value["compute"] = None
+    elif damage == "extra_rate": compute["learning_rate"] = 0.004
+    elif damage == "retained_inputs": compute["input_descriptors"] = compute["synthetic_fixture"].copy()
+    elif damage == "missing_runtime": compute.pop("runtime_contract")
+    elif damage == "missing_fixture": compute.pop("synthetic_fixture")
+    elif damage == "boolean_bytes": compute["synthetic_fixture"]["bytes"] = True
+    elif damage == "empty_bytes": compute["synthetic_fixture"]["bytes"] = 0
+    elif damage == "runtime_over_bound": compute["runtime_contract"]["bytes"] = 131073
+    elif damage == "fixture_over_bound": compute["synthetic_fixture"]["bytes"] = 2097153
+    elif damage == "bad_digest": compute["synthetic_fixture"]["sha256"] = "g" * 64
+    elif damage == "relative_path": compute["synthetic_fixture"]["path"] = "relative.json"
+    elif damage == "alias_refs": compute["synthetic_fixture"]["path"] = compute["runtime_contract"]["path"]
+    elif damage == "input_in_attempt": compute["synthetic_fixture"]["path"] = str(Path(value["outputs"]["exports"]) / "input.json")
+    elif damage == "source_pin_alias": value["source_sha256"][compute["synthetic_fixture"]["path"]] = "b" * 64
+    else: compute["synthetic_fixture"]["gold"] = True
+    with pytest.raises(ValueError): module._validate_trainer_request(value)
+    assert attempted == [] and tuple(Path(value["attempt_directory"]).iterdir()) == ()
+
+
+@pytest.mark.parametrize("missing", ["legal_span_conditions_fullspan_training_v2.py",
+    "legal_span_conditions_fullspan_optimizer_recipe_v1.py"])
+def test_numerical_probe_requires_explicit_v2_source_pins(tmp_path, missing):
+    module, _, value = _numerical_probe_controller_case(tmp_path)
+    directory = module.ROOT / "ipfs_datasets_py/optimizers/logic_theorem_optimizer"
+    value["source_sha256"].pop(str(directory / missing))
+    with pytest.raises(ValueError, match="explicit v2 numerical and recipe"): module._trainer_source_guard(value)
+
+
+def _numerical_probe_child_case(tmp_path, monkeypatch, stop):
+    module, path, value, events, before = _trainer_child_fake_bootstrap_case(tmp_path, monkeypatch, stop_at_RUN=stop)
+    value["schema"] = "owned-f18-conditions-training-request/v2"
+    value["mode"] = "numerical_probe"
+    value["compute"] = {name: {"path": str(tmp_path / (name + ".json")), "bytes": 17, "sha256": "b" * 64}
+        for name in ("runtime_contract", "synthetic_fixture")}
+    directory = module.ROOT / "ipfs_datasets_py/optimizers/logic_theorem_optimizer"
+    for name in ("legal_span_conditions_fullspan_training_v2.py", "legal_span_conditions_fullspan_optimizer_recipe_v1.py"):
+        value["source_sha256"][str(directory / name)] = _sha(directory / name)
+    _write_json(path, value)
+    return module, path, value, events, before
+
+
+def test_numerical_probe_preserves_RUN_barrier_before_dependencies_or_inputs(tmp_path, monkeypatch):
+    module, path, value, events, BeforeRUN = _numerical_probe_child_case(tmp_path, monkeypatch, True)
+    attempted = _trainer_forbid_reference_bodies(monkeypatch, value)
+    with pytest.raises(BeforeRUN):
+        module._trainer_child_main(path, _sha(path), ready_fd=7001, release_fd=7002, owner_pid=os.getppid())
+    assert events == ["network", "ready", "close_READY", "wait_RUN"] and attempted == []
+    assert tuple(Path(value["outputs"]["exports"]).iterdir()) == ()
+
+
+@pytest.mark.parametrize("outcome", ["complete", "incomplete", "authority"])
+def test_numerical_probe_after_RUN_dispatch_and_terminal_guards(tmp_path, monkeypatch, outcome):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_daemon_invocation_worker as worker
+    module, path, value, events, _ = _numerical_probe_child_case(tmp_path, monkeypatch, False)
+    module._trainer_bootstrap(value)._configure_dependency_paths = lambda: events.append("dependencies")
+    def dispatch(offered, *, output_directory):
+        assert events[-3:] == ["wait_RUN", "watch", "dependencies"]
+        assert offered == value and output_directory == Path(value["outputs"]["exports"])
+        events.append("numerical_dispatch")
+        return {"completed": outcome != "incomplete", "admitted": outcome == "authority", "formalized": False, "promoted": False}
+    monkeypatch.setattr(worker, "run_f18_numerical_probe", dispatch)
+    if outcome == "authority":
+        with pytest.raises(ValueError, match="result/authority"):
+            module._trainer_child_main(path, _sha(path), ready_fd=7001, release_fd=7002, owner_pid=os.getppid())
+        assert not (Path(value["outputs"]["exports"]) / "trainer-result.json").exists()
+    else:
+        rc = module._trainer_child_main(path, _sha(path), ready_fd=7001, release_fd=7002, owner_pid=os.getppid())
+        assert rc == (0 if outcome == "complete" else 4)
+        assert _json(Path(value["outputs"]["exports"]) / "trainer-result.json")["completed"] is (outcome == "complete")
+    assert events == ["network", "ready", "close_READY", "wait_RUN", "watch", "dependencies", "numerical_dispatch"]
+
+
+def test_numerical_probe_refuses_reference_to_its_request_before_bootstrap(tmp_path):
+    module, path, value = _numerical_probe_controller_case(tmp_path)
+    value["compute"]["synthetic_fixture"]["path"] = str(path)
+    _write_json(path, value)
+    with pytest.raises(ValueError, match="separate from the trainer request"):
+        module.trainer_request(path, _sha(path))
+    assert tuple(Path(value["attempt_directory"]).iterdir()) == ()

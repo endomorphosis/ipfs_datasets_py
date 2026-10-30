@@ -4448,7 +4448,8 @@
         "f18-inventory-headroom-parity-qualified-20261029-01",
         "f18-native-probe-metric-view-qualified-20261029-01",
         "f18-outer-v2-saved-consumer-prepared-20261029-01",
-        "f18-outer-v2-saved-consumer-authored-qualified-20261029-01"
+        "f18-outer-v2-saved-consumer-authored-qualified-20261029-01",
+        "f18-v2-synthetic-native-numerical-probe-qualified-20261030-01"
       ],
       "existing_task": "LIR-17",
       "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_span_conditions_fullspan_training_v1.md",
@@ -4545,6 +4546,20 @@
         "pure_cases": 241,
         "selected_experiment_rate": null,
         "worker": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_invocation_worker.py"
+      },
+      "current_synthetic_numerical_trainer_probe": {
+        "evidence_id": "f18-v2-synthetic-native-numerical-probe-qualified-20261030-01",
+        "worker_api": "autoencoder_daemon_invocation_worker.run_f18_numerical_probe",
+        "contract_cases_disjoint": 299,
+        "contract_phases": 897,
+        "actual_post_RUN_numerical_probe": true,
+        "native_source_pins": 76,
+        "optimizer_updates": 1,
+        "training_forwards": 1,
+        "capture_forwards": 2,
+        "captures_abstained": 2,
+        "retained_fit_or_experiment_rate_selected": false,
+        "source_native_process_storage_closed": true
       }
     }
   ],
@@ -4606,7 +4621,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-10-29T06:44:51.532414+00:00",
+  "last_updated_at_utc": "2026-10-30T21:36:43.929396+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -6989,6 +7004,16 @@
       "root": "datasets_repository",
       "scope": "27authored cases under originalVALIDATION owner,56 unchangedpins and fullyclosednative/process/storage/source custody. Fictional producer/parity/training witnesses; no numericaldispatch/TRAINrate/fit/statutory/Lean qualification. Splittemplates unexecuted.",
       "status": "authored27_file_metadata_controls_qualified_real_retained_v2_comparison_open"
+    },
+    {
+      "id": "f18-v2-synthetic-native-numerical-probe-qualified-20261030-01",
+      "observed_bytes": 61923,
+      "observed_sha256": "bbcd97c6d31a1b67879bcbfa499cdab934094a375fbd500455f247464aa93f83",
+      "path": "docs/autoformalization/evidence/legal-ir-f18-v2-native-numerical-probe-20261030.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "299 disjoint pure contracts and actual synthetic native one-step/two-capture dispatch, with complete custody. Both captures abstained. No retained-data fit, new TRAIN rate, task activation or statutory/Lean gain.",
+      "status": "synthetic_post_RUN_numerical_dispatch_qualified_retained_producer_and_science_gates_open"
     }
   ]
 }
