@@ -34,11 +34,11 @@ logger = logging.getLogger(__name__)
 
 # HuggingFace dataset repos
 DATASET_REPOS = {
-    "federal": "endomorphosis/common_crawl_federal_index",
-    "state": "endomorphosis/common_crawl_state_index",
-    "municipal": "endomorphosis/common_crawl_municipal_index",
-    "pointers": "endomorphosis/common_crawl_pointers_by_collection",
-    "meta": "endomorphosis/common_crawl_meta_indexes",
+    "federal": "Publicus/common_crawl_federal_index",
+    "state": "Publicus/common_crawl_state_index",
+    "municipal": "Publicus/common_crawl_municipal_index",
+    "pointers": "Publicus/common_crawl_pointers_by_collection",
+    "meta": "Publicus/common_crawl_meta_indexes",
 }
 
 # Try to import HuggingFace libraries

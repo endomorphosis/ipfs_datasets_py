@@ -8915,7 +8915,7 @@ class BaseStateScraper(ABC):
 
         Args:
             url: URL to scrape from Common Crawl
-            dataset_name: HuggingFace dataset name (e.g., "endomorphosis/common_crawl_state_index")
+            dataset_name: HuggingFace dataset name (e.g., "Publicus/common_crawl_state_index")
 
         Returns:
             Scraped content or None if not found
@@ -8923,7 +8923,7 @@ class BaseStateScraper(ABC):
         Example:
             content = await scraper.scrape_from_common_crawl(
                 "https://legislature.example.gov/code.html",
-                dataset_name="endomorphosis/common_crawl_state_index"
+                dataset_name="Publicus/common_crawl_state_index"
             )
         """
         self._raise_if_retained_replay_only_network(

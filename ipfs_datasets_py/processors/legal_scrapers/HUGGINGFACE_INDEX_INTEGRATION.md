@@ -54,11 +54,11 @@ This document describes the integration of HuggingFace-hosted Common Crawl index
 - State-specific filtering
 
 **Supported Repositories**:
-1. `endomorphosis/common_crawl_federal_index` - Federal .gov domains
-2. `endomorphosis/common_crawl_state_index` - State government domains
-3. `endomorphosis/common_crawl_municipal_index` - Municipal/county domains
-4. `endomorphosis/common_crawl_pointers_by_collection` - WARC file pointers
-5. `endomorphosis/common_crawl_meta_indexes` - Metadata about collections
+1. `Publicus/common_crawl_federal_index` - Federal .gov domains
+2. `Publicus/common_crawl_state_index` - State government domains
+3. `Publicus/common_crawl_municipal_index` - Municipal/county domains
+4. `Publicus/common_crawl_pointers_by_collection` - WARC file pointers
+5. `Publicus/common_crawl_meta_indexes` - Metadata about collections
 
 #### 2. LegalWebArchiveSearch Integration
 

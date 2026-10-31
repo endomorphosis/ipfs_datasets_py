@@ -497,7 +497,7 @@ class _FakeParquetResponse:
             {
                 "parquet_files": [
                     {
-                        "url": "https://huggingface.co/datasets/endomorphosis/common_crawl_state_index/resolve/main/data.parquet"
+                        "url": "https://huggingface.co/datasets/Publicus/common_crawl_state_index/resolve/main/data.parquet"
                     }
                 ]
             }
@@ -528,7 +528,7 @@ def test_get_hf_parquet_urls_sends_authorization_when_token_available(monkeypatc
     loader = CommonCrawlIndexLoader(use_hf_fallback=True)
     urls = loader._get_hf_parquet_urls("state")
     assert urls == [
-        "https://huggingface.co/datasets/endomorphosis/common_crawl_state_index/resolve/main/data.parquet"
+        "https://huggingface.co/datasets/Publicus/common_crawl_state_index/resolve/main/data.parquet"
     ]
     request = captured["request"]
     assert isinstance(request, Request)
