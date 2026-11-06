@@ -1,0 +1,335 @@
+{
+  "canonical_documentation": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_bound_variable_definition_v1.md",
+  "current_public_integration": {
+    "all_current_owning_suites_qualified": false,
+    "all_published_test_bytes_identical_to_frozen_tests": false,
+    "custody": {
+      "final_attempt_bytes": 539257,
+      "native_lease_released": true,
+      "no_child_fallback_exercised": false,
+      "original_R_READ_closed_after_verified_cleanup": true,
+      "original_controller_returncode": 0,
+      "original_durability_asserted_and_files_read_back": true,
+      "original_native_cleanup_proven": true,
+      "own_W_READ_closed_after_original_main_return": true,
+      "sampled_live_descendants_at_close": 0,
+      "scope": "Cooperative sampled birth-bound descendants; no arbitrary-descendant containment or kernel-quota guarantee.",
+      "storage_reservation_released": true,
+      "wrapper_returncode": 0
+    },
+    "frozen_project_source_files": 223,
+    "module_origin_records": 125,
+    "new_models_training_or_native_Lean": false,
+    "original_receipts": [
+      {
+        "bytes": 13851,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-definition-public-port-v01/independent-saved-result-review-v01.json",
+        "sha256": "7f30a05dc85181c42a453ad5b8477014fe988298f110b5d20a140aa465b6a5f7"
+      },
+      {
+        "bytes": 83193,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-definition-public-port-v01/request-bound-definition-v01.json",
+        "sha256": "bb1bda3054e00c4d723740a7a7567f65f8f61dd96446143a5e3aa96a83bd731b"
+      },
+      {
+        "bytes": 1339,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-definition-public-port-v01/prepared-plan-v01.json",
+        "sha256": "57e10e67aae6983917532d9700ca40596bbd6cd5d9537ff9fb5397fcc63947b5"
+      },
+      {
+        "bytes": 1404,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-definition-public-port-v01/source-freeze-v01.json",
+        "sha256": "ea97f7902860695d46a6e506499fe152b56ef726c3e0abfd976fefb8659a70d5"
+      },
+      {
+        "bytes": 277,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-definition-public-port-v01/qualification-controller-complete-bound-definition-v01.json",
+        "sha256": "dcd646fb940b702e787ac56dff011d5886e47b23ed3d06867af2e7421adc04aa"
+      },
+      {
+        "bytes": 13472,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-definition-public-port-v01/attempt-bound-definition-v01/exports/test-result.json",
+        "sha256": "5700b3be54027c8757a5bb6739836c8c57c1595d6fd59c5d5b51268c61946d36"
+      },
+      {
+        "bytes": 46356,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-definition-public-port-v01/attempt-bound-definition-v01/exports/import-origins.json",
+        "sha256": "556e3fccfbb2b0a7c3e1e205e07f8d7e7ece6e2e45a35af247b7b721ad62e9a6"
+      }
+    ],
+    "post_qualification_test_only_normalization": [
+      {
+        "AST_identical": true,
+        "change": "Remove one trailing blank line at EOF only.",
+        "path": "tests/unit/logic/autoformal/test_legal_norm_scope_correspondence_v1.py",
+        "published_bytes": 29917,
+        "published_sha256": "0194712dccaedd79a704f104b236185e345290d53675c1cbc16a83b4bb4d6a61",
+        "qualified_bytes": 29918,
+        "qualified_sha256": "e7888beae5486f8efc9feec84f6ab51ceb85e91e2bb6e768c55eb5b1de7563b8"
+      },
+      {
+        "AST_identical": true,
+        "change": "Remove one trailing blank line at EOF only.",
+        "path": "tests/unit/logic/autoformal/test_legal_source_sampling_review_context.py",
+        "published_bytes": 22709,
+        "published_sha256": "2b8059a5b59c2afc5e1d93402ae489c914c4a53ec368e1d60f2809a8a3fcca9f",
+        "qualified_bytes": 22710,
+        "qualified_sha256": "7d98b1139f65d9b472c40537f8aea8ed9d3d1ee8be54defbc6fbdcec272a5424"
+      }
+    ],
+    "published_product_bodies_match_qualified_generation": true,
+    "qualification": {
+      "bound_owner_cases": 32,
+      "cases_passed": 52,
+      "collection_errors": 0,
+      "function_selectors": 34,
+      "native_owner_seconds": 164.4270385738928,
+      "phases_passed": 156,
+      "selected_upstream_regressions": 20,
+      "skips_xfails_or_deselections": 0,
+      "timings_nested_not_additive": true,
+      "worker_seconds": 114.2598100991454
+    },
+    "raw_executed_buffer_archive_retained": false,
+    "raw_source_compile_path_observations": 134,
+    "receipt_scope": "Selected pinned frozen generation using unchanged2c8 namespace/import profile; relocation is not another runtime execution.",
+    "request_source_pins": 249,
+    "status": "passed_selected_authored_cases"
+  },
+  "historical_qualification": {
+    "native_conditional": {
+      "actual_invocations": 6,
+      "axiom_dependencies": {
+        "body_instance": [],
+        "definition_instance": []
+      },
+      "negative_controls": [
+        "missing_membership",
+        "wrong_member_variable",
+        "unjustified_single_disjunct"
+      ],
+      "original_norm_compiled_as_premise": false,
+      "original_norm_rewritten": false,
+      "physical_statutory_occurrences": 1,
+      "positive_returncode": 0,
+      "scope": "Separate historical operation; hDefinition/hMembership/carrier/interpretation/fixed time/binder valuation remain unverified premises. Failed compile02 storage134MiB remains a distinct historical disposition; no global cleanup claim."
+    },
+    "python": {
+      "Lean_builds": 0,
+      "bound_definition_cases": 32,
+      "cases_passed": 103,
+      "deselections": 0,
+      "failures": 0,
+      "models": 0,
+      "pytest_seconds": 126.73,
+      "relational_regression_cases": 71,
+      "scope": "Fictional structural/evidence replay fixtures; broad package startup excluded; captured original generation only.",
+      "skips": 0,
+      "source_and_resource_closeout_recorded": true,
+      "training": 0
+    },
+    "receipts": [
+      {
+        "bytes": 1624,
+        "path": "/home/barberb/lift_coding/artifacts/legal-bound-variable-definition-20261017-02/final-review.json",
+        "sha256": "3880c0bde5ec7c71c5237ec691893266549652f86ae39a403bd2efb152265009"
+      },
+      {
+        "bytes": 4614,
+        "path": "/home/barberb/lift_coding/artifacts/legal-bound-variable-definition-20261017-02/readback-01/independent-readback.json",
+        "sha256": "744e55c9fcab330f386124bc66f531734996944f1c0ed87da2daa62e3a56b778"
+      },
+      {
+        "bytes": 2040,
+        "path": "/home/barberb/lift_coding/artifacts/legal-bound-variable-definition-20261017-02/run-01/execution.json",
+        "sha256": "61efc09093f0328a774dd2c972d00d66888c2c9f9249638f16c633627b4f3a57"
+      },
+      {
+        "bytes": 23507,
+        "path": "/home/barberb/lift_coding/artifacts/legal-bound-variable-definition-20261017-02/run-01/source-pins.json",
+        "sha256": "95208c6d48438631bef1d6380107daee4b0cbde4bd02d91ded7867b43c1b4c9c"
+      },
+      {
+        "bytes": 8939,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-bound-variable-native-20261017-01/qualification-summary.json",
+        "sha256": "ce6f2c5cb05f584f3386d0ef7cf0628ca31079854fe2f987a423032e432bc9b0"
+      }
+    ]
+  },
+  "limits": {
+    "accepted_semantic_edge_created": false,
+    "evaluation_gold_mask": 0,
+    "governing_definition_selected": false,
+    "membership_truth_verified": false,
+    "new_Lean_execution": 0,
+    "new_human_reviews": 0,
+    "new_models_or_training": 0,
+    "new_signatures": 0,
+    "norm_interpretation_ready": false,
+    "reviewed_statutory_meaning": false,
+    "source_bound_complete_norm_corpus_composition": false,
+    "training_mask": 0
+  },
+  "pilot_source_edition_selection": {
+    "evaluation_gold_mask": 0,
+    "governing_legal_as_of": null,
+    "meaning_or_governing_definition_or_every_use_review_supplied": false,
+    "original_record": {
+      "bytes": 700,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-definition-public-port-v01/user-pilot-edition-selection-v01.json",
+      "sha256": "f4b3c1cafe90d836e5bdcbbfed2f3e8c9ac55e1f1af1bfde115de0ce92b1f01c"
+    },
+    "selected": "Retained 2024 Title 10 pilot",
+    "source": "Explicit user answer in this session",
+    "source_adoption_or_statutory_admission_granted": false,
+    "training_mask": 0
+  },
+  "raw_runs_or_checkpoints_bundled": false,
+  "recorded_at_utc": "2026-10-23T16:45:36.041806+00:00",
+  "schema": "legal-ir-bound-definition-existing-owner-source-port/v1",
+  "scope": "Existing original relational review and exact-occurrence unary-definition conditional owners, with a separate selected52-case current-public frozen-source integration. Legal meaning and complete-norm corpus composition remain separate.",
+  "selected_source_owners": [
+    {
+      "bytes": 25445,
+      "matches_original103_source_pin": true,
+      "original103_source_pin": "fb3b52614697ea270077201a8682b1f77210990a0ba9319d25acc1ada23c9b49",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_bound_variable_definition_v1.py",
+      "public_functions": [
+        "bound_variable_definition_sha256",
+        "prepare_bound_variable_definition_v1",
+        "validate_bound_variable_definition_v1"
+      ],
+      "sha256": "fb3b52614697ea270077201a8682b1f77210990a0ba9319d25acc1ada23c9b49"
+    },
+    {
+      "bytes": 23387,
+      "matches_original103_source_pin": true,
+      "original103_source_pin": "40b351a0e5b8fb9e074f612a9f7a49804c4479b482175db14eaebb363f1c17b6",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_norm_definition_evidence_v1.py",
+      "public_functions": [
+        "norm_definition_evidence_sha256",
+        "prepare_norm_definition_evidence_v1",
+        "validate_norm_definition_evidence_v1"
+      ],
+      "sha256": "40b351a0e5b8fb9e074f612a9f7a49804c4479b482175db14eaebb363f1c17b6"
+    },
+    {
+      "bytes": 25432,
+      "matches_original103_source_pin": true,
+      "original103_source_pin": "60ab3051ce4b598586ea4b5e38e18a597e0b9f0548a912bc0a2e8e0ad50dd3e0",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_norm_interpretation_review_v1.py",
+      "public_functions": [
+        "norm_review_sha256",
+        "prepare_norm_review_evidence_v1",
+        "build_norm_review_subject_v1",
+        "assess_norm_reviews_v1",
+        "validate_norm_review_assessment_v1"
+      ],
+      "sha256": "60ab3051ce4b598586ea4b5e38e18a597e0b9f0548a912bc0a2e8e0ad50dd3e0"
+    },
+    {
+      "bytes": 24388,
+      "matches_original103_source_pin": true,
+      "original103_source_pin": "7e68c2f3c21749cbe9c9ea06db2f6f13a6c97258c7423d4f6d5b4bb60daa1553",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_norm_scope_correspondence_v1.py",
+      "public_functions": [
+        "prepare_norm_scope_correspondence_v1",
+        "norm_scope_correspondence_sha256",
+        "validate_norm_scope_correspondence_v1"
+      ],
+      "sha256": "7e68c2f3c21749cbe9c9ea06db2f6f13a6c97258c7423d4f6d5b4bb60daa1553"
+    },
+    {
+      "bytes": 18433,
+      "matches_original103_source_pin": true,
+      "original103_source_pin": "d5422415f3311451259818f89928d62e69f0bbd9df70648290dbe4a84d4e0645",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_source_sampling_review_context.py",
+      "public_functions": [
+        "prepare",
+        "packet_sha256",
+        "validate",
+        "record_response",
+        "validate_response",
+        "summarize"
+      ],
+      "sha256": "d5422415f3311451259818f89928d62e69f0bbd9df70648290dbe4a84d4e0645"
+    },
+    {
+      "bytes": 19555,
+      "matches_original103_source_pin": true,
+      "original103_source_pin": "b8d97fdefbebd3d565e7e6601a7e15a43cf387ecdd402fca74e4b1388323aaf4",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_source_sampling_context_definition_binding_v2.py",
+      "public_functions": [
+        "prepare",
+        "binding_sha256",
+        "validate"
+      ],
+      "sha256": "b8d97fdefbebd3d565e7e6601a7e15a43cf387ecdd402fca74e4b1388323aaf4"
+    },
+    {
+      "bytes": 15936,
+      "matches_original103_source_pin": true,
+      "original103_source_pin": "0575f4027e66dbceaf94ed27ffde18eb1ce1667af81d3f0366fda0644675c4f4",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_source_sampling_context_definition_review_v2.py",
+      "public_functions": [
+        "prepare",
+        "correspondence_sha256",
+        "validate"
+      ],
+      "sha256": "0575f4027e66dbceaf94ed27ffde18eb1ce1667af81d3f0366fda0644675c4f4"
+    },
+    {
+      "bytes": 37589,
+      "matches_original103_source_pin": true,
+      "original103_source_pin": "0434ee6773f68365598394a02d4130d89f18d5c822ea521fcfd5d381e2375e46",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_source_sampling_review.py",
+      "public_functions": [
+        "prepare_sampling_review_bundle",
+        "sampling_review_bundle_sha256",
+        "validate_sampling_review_bundle",
+        "record_sampling_review_response",
+        "validate_sampling_review_response",
+        "summarize_sampling_review_population",
+        "prepare_sampling_review_context",
+        "sampling_review_context_sha256",
+        "validate_sampling_review_context",
+        "record_sampling_review_context_response",
+        "validate_sampling_review_context_response",
+        "summarize_sampling_review_context_population"
+      ],
+      "sha256": "0434ee6773f68365598394a02d4130d89f18d5c822ea521fcfd5d381e2375e46"
+    },
+    {
+      "bytes": 25148,
+      "matches_original103_source_pin": true,
+      "original103_source_pin": "52bf992918db6ef9d2a1030aee0321e4a031f01c2055502693f63835da0bb141",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_source_sampling_definition_binding_v2.py",
+      "public_functions": [
+        "prepare_definition_binding_v2",
+        "definition_binding_sha256",
+        "validate_definition_binding_v2",
+        "prepare_contextual_definition_binding_v2",
+        "contextual_definition_binding_sha256",
+        "validate_contextual_definition_binding_v2"
+      ],
+      "sha256": "52bf992918db6ef9d2a1030aee0321e4a031f01c2055502693f63835da0bb141"
+    },
+    {
+      "bytes": 30204,
+      "matches_original103_source_pin": true,
+      "original103_source_pin": "6bbcf0e6126441c28420d7197db7c93a1117cfb0ccd042affec748ccc7387cf9",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_source_sampling_definition_review_v2.py",
+      "public_functions": [
+        "prepare_definition_review_correspondence_v2",
+        "definition_review_correspondence_sha256",
+        "validate_definition_review_correspondence_v2",
+        "prepare_contextual_definition_review_correspondence_v2",
+        "contextual_definition_review_correspondence_sha256",
+        "validate_contextual_definition_review_correspondence_v2"
+      ],
+      "sha256": "6bbcf0e6126441c28420d7197db7c93a1117cfb0ccd042affec748ccc7387cf9"
+    }
+  ],
+  "source_generation": "Original103-case relational profile; later private counted norm-review successor is not included.",
+  "status": "source_port_with_closed_selected_authored_integration"
+}

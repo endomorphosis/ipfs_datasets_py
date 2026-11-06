@@ -1,0 +1,233 @@
+{
+  "HF_loader_producer_model_training_or_Lean_rerun": false,
+  "authored_local_Arrow_fixture_execution": true,
+  "cases": 123,
+  "coordinate_test": {
+    "bytes": 42055,
+    "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/wire-join-v01/candidate-v01/tests/unit/logic/autoformal/test_legal_source_span_entity_coordinate_join_v2.py",
+    "sha256": "275aa3bccb00ff064c6710c51e767652d6ebb37dc09e8aa8c44b69bd8e62bb45"
+  },
+  "downstream_consumers_automatically_adopted": false,
+  "duckdb_version": "1.4.3",
+  "metadata_profile": "hf-default-parquet-envelope/v1",
+  "namespace_scope": "Explicit namespace parents; optional package initializers not qualified.",
+  "per_module_cases": {
+    "tests/unit/logic/autoformal/test_legal_source_span_entity_coordinate_join_v2.py": 75,
+    "tests/unit/logic/autoformal/test_legal_source_span_entity_join_v1.py": 48
+  },
+  "phase_passes": 369,
+  "prior_failed_generation": {
+    "failure": "pytest_logging_configuration_refused_before_collection",
+    "label": "hf-wire-v01",
+    "later_administrative_storage_closeout": {
+      "actual_postwrite_readback": {
+        "bytes": 7574,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/wire-join-v01/v01-storage-closeout/actual-postwrite-readback.json",
+        "sha256": "d840c30312ba9f3ad715c8168e8920d1709425356e407436f724800d974274ce"
+      },
+      "independent_review": {
+        "bytes": 11478,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/wire-join-v01/v01-storage-closeout/independent-result-review-v01.json",
+        "sha256": "c060b6941b8354feaf25883b8fc3e0801c8cff023c3cee8872b255cc2536b0b2"
+      },
+      "original_API_calls": 1,
+      "qualification_credit": 0,
+      "released_promise_bytes": 268435456,
+      "retained_log_bytes": 5763,
+      "retained_log_files": 3,
+      "scope": "Separate reviewed existing-owner storage reconciliation; no validation success, new native grant or log deletion.",
+      "status": "released",
+      "summary": {
+        "bytes": 2425,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/wire-join-v01/v01-storage-closeout/summary.json",
+        "sha256": "18cd131a5a64acc4f1061139805285c9738f0601414e90f076c9c1dae7ae83b2"
+      }
+    },
+    "original_compute_and_source_READ_closed": true,
+    "original_failure_review": {
+      "bytes": 12204,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/wire-join-v01/independent-failed-result-review-hf-wire-v01.json",
+      "sha256": "51e9d9702d539306264e28c4c3b6e7d2550188ed18d05ab2dc332c99c59d7761"
+    },
+    "original_returncode": 1,
+    "original_terminal_storage_promise_bytes": 268435456,
+    "original_terminal_storage_status": "retained",
+    "qualified_cases": 0,
+    "qualified_phase_passes": 0
+  },
+  "profile": "paired-coordinate-hf-wire-three-cache-join/v1",
+  "pyarrow_version": "25.0.1",
+  "qualification_label": "hf-wire-v02",
+  "receipts": [
+    {
+      "bytes": 59419,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/wire-join-v01/manifest-hf-wire-v02.json",
+      "sha256": "29504adda08ecca1d974469f298cdb79e8ea9969aadb85db009fde2f9b87d393"
+    },
+    {
+      "bytes": 33978,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/wire-join-v01/request-hf-wire-v02.json",
+      "sha256": "2379457069d64bf490c66d1ff6ad190142cc8b0312a97415497a7dbf2b879f5f"
+    },
+    {
+      "bytes": 8773,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/wire-join-v01/independent-result-review-hf-wire-v02.json",
+      "sha256": "c0e1a896cb08ef860abdc3be85f776e827af6b91ea272f4c2e75669a458f7076"
+    },
+    {
+      "bytes": 308,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/wire-join-v01/controller-complete-hf-wire-v02.json",
+      "sha256": "201cdc2f7cd14e85f5031026c3a77697cd5e50103801fecd416866b1bc98ce2f"
+    },
+    {
+      "bytes": 7783,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/wire-join-v01/launch-hf-wire-v02.json",
+      "sha256": "c5131bb3516a1e6b7e85ef5b63676c4056d5bdebfc3eb11604f66ed9bb09ab89"
+    },
+    {
+      "bytes": 100937,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/wire-join-v01/attempt-hf-wire-v02/exports/test-result.json",
+      "sha256": "5553ff06d988526881d5c1ec3a429f49ef0e80e32036d064772708d2fdec07c2"
+    },
+    {
+      "bytes": 23933,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/wire-join-v01/attempt-hf-wire-v02/exports/junit.xml",
+      "sha256": "7dceafc2f1ea3229e1bad4f273d76191668b8d7871b52b6e3fcd8e6566fe5655"
+    },
+    {
+      "bytes": 884,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/wire-join-v01/capture-hf-wire-v02.json",
+      "sha256": "5bb8f8a25aa44917047fd4ccc8e89340390c01b1711010eea511e57b948af846"
+    },
+    {
+      "bytes": 12156,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/wire-join-v01/baseline-capture-v01.json",
+      "sha256": "0a07249956c4b1ff16b3f841b39b929b053c669cd923fb8f0f80813ee7346571"
+    },
+    {
+      "bytes": 6260,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/wire-join-v01/independent-product-review-v01.json",
+      "sha256": "fc9e9ccd2c6278adb1c63098c404d5ccf1459b21d0d50a0bce49392134959dba"
+    },
+    {
+      "bytes": 11956,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/wire-join-v01/independent-tests-review-v01.json",
+      "sha256": "78f2118fc15a32c5ce74455677e9e30cbaac98f6ef1f4021dc8f09b99c794cc6"
+    },
+    {
+      "bytes": 12204,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/wire-join-v01/independent-failed-result-review-hf-wire-v01.json",
+      "sha256": "51e9d9702d539306264e28c4c3b6e7d2550188ed18d05ab2dc332c99c59d7761"
+    },
+    {
+      "bytes": 12204,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/wire-join-v01/independent-result-review-v01.json",
+      "sha256": "51e9d9702d539306264e28c4c3b6e7d2550188ed18d05ab2dc332c99c59d7761"
+    },
+    {
+      "bytes": 59419,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/wire-join-v01/manifest-hf-wire-v01.json",
+      "sha256": "9a65b2ca690bd01e156ef9c6a866cfa512470b5e51287031f5c7f8e7402daa83"
+    },
+    {
+      "bytes": 33978,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/wire-join-v01/request-hf-wire-v01.json",
+      "sha256": "f1a70527b908b14f1e8deb55b5bbdf4abed45781baa58f54c69ca04e20269827"
+    },
+    {
+      "bytes": 11964,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/wire-join-v01/launch-hf-wire-v01.json",
+      "sha256": "a6ac5567fd311839a831d8831a435c2d98a11ba297c87ab913102c24d54796e3"
+    },
+    {
+      "bytes": 309,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/wire-join-v01/controller-complete-hf-wire-v01.json",
+      "sha256": "fe03d840acce33d9c5efb97102b3b3af45437a73cd97efd90fc3c93b0788b2a1"
+    },
+    {
+      "bytes": 9217,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/wire-join-v01/failed-v01-storage-closeout-source-review-v01.json",
+      "sha256": "e63ae2d44c787070f708b615673b50a394b1c049363e3e3835af67aed656f945"
+    },
+    {
+      "bytes": 7912,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/wire-join-v01/independent-failed-v01-storage-closeout-review-v01.json",
+      "sha256": "3ebcdb4da6494d4f4e8aae1056842dfc8a822e0e1099a5f2e395ab7e471686a9"
+    },
+    {
+      "bytes": 2425,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/wire-join-v01/v01-storage-closeout/summary.json",
+      "sha256": "18cd131a5a64acc4f1061139805285c9738f0601414e90f076c9c1dae7ae83b2"
+    },
+    {
+      "bytes": 7574,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/wire-join-v01/v01-storage-closeout/actual-postwrite-readback.json",
+      "sha256": "d840c30312ba9f3ad715c8168e8920d1709425356e407436f724800d974274ce"
+    },
+    {
+      "bytes": 1911,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/wire-join-v01/v01-storage-closeout/api-return.json",
+      "sha256": "651868122613bb74beb9a5b42c2268fa8b4a0a052131158124a2c5c7b8200220"
+    },
+    {
+      "bytes": 11478,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/wire-join-v01/v01-storage-closeout/independent-result-review-v01.json",
+      "sha256": "c060b6941b8354feaf25883b8fc3e0801c8cff023c3cee8872b255cc2536b0b2"
+    },
+    {
+      "bytes": 12552,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/wire-join-v01/v01-storage-closeout/readonly-plan-v01.json",
+      "sha256": "67a9e57078ee5756ce8074feb1cc331f64c39da5ba80197c3d8c2f3e1ab2011e"
+    },
+    {
+      "bytes": 18268,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/wire-join-v01/controls/recover_wire_join_v01_storage_once_v01.py",
+      "sha256": "b5b4c7dc9a99b96c9e84778682f7e4abffdb9adcc076574548f7ed7c290b9191"
+    },
+    {
+      "bytes": 1728,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/wire-join-v01/v01-storage-closeout/control-root-review-v01.json",
+      "sha256": "a5ce626b30bd83c306d2fa6833612fef30bca1105774d5bd2aa177b71dca7781"
+    },
+    {
+      "bytes": 6015,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/wire-join-v01/v01-storage-closeout/control-independent-review-v01.json",
+      "sha256": "2a39e05514fdf3ed93b35c8f9865b412e24e429cacff0b70fd94159f5c09139b"
+    },
+    {
+      "bytes": 1666,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/wire-join-v01/attempt-hf-wire-v01/logs/failure.json",
+      "sha256": "8d3ae98511ad375f0a99255e866023f74c1875923c8a6d50775c48f215253321"
+    },
+    {
+      "bytes": 921,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/wire-join-v01/attempt-hf-wire-v01/logs/stderr.log",
+      "sha256": "3b36930d37f04c6f69adde02ef292c318da840aeb8c9d331fee503da0f95b7ed"
+    },
+    {
+      "bytes": 3176,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/wire-join-v01/attempt-hf-wire-v01/logs/stdout.log",
+      "sha256": "5f2081d36f8fa9f944cc55ae941a284739bf8051588b394355fc1f29a3d6734f"
+    }
+  ],
+  "recorded_at_utc": "2026-10-24T02:47:43.279792+00:00",
+  "remote_or_selected_release_changed": false,
+  "report_schema": "legal-source-span-entity-join-manifest/v3",
+  "request_schema": "legal-source-span-entity-join-request/v3",
+  "schema": "legal-ir-hf-wire-coordinate-join-local-qualification/v1",
+  "scope": "Explicit wire-coordinate join v3 passed 123 authored cases / 369 phases: 48 unchanged legacy and 75 coordinate cases, including 35 prior coordinate and 40 v3 controls. Genuine intake-v2 and complete coordinate payload replay preserve false authority and zero masks. Downstream census/eligibility/crosswalk/graph/native adoption and legal/source/Lean admission remain separate.",
+  "selected_original_compute_storage_and_source_READ_closed": true,
+  "source": {
+    "bytes": 33933,
+    "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/wire-join-v01/candidate-v01/ipfs_datasets_py/logic/autoformal/legal_source_span_entity_join_v1.py",
+    "sha256": "246a7e0599f175e695f9c98c0d04d3f4decb312dd075dc7b09acad9d5f64dc13"
+  },
+  "source_alias_edition_semantic_training_gold_graph_or_Lean_authority": false,
+  "source_tables_read_or_Arrow_bytes_measured": false,
+  "status": "focused_authored_fixture_tests_qualified",
+  "unchanged_legacy_test": {
+    "bytes": 22843,
+    "path": "tests/unit/logic/autoformal/test_legal_source_span_entity_join_v1.py",
+    "sha256": "c7d0460c874467f8882ec384fb1de296247b45ee7979631b66aedbaf103cf614"
+  }
+}

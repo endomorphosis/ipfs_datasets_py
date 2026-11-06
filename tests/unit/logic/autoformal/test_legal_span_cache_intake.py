@@ -1162,3 +1162,404 @@ def test_coordinate_graph_v2_request_cannot_silently_enter_historical_v1_api(coo
             raw, case["eligibility_raw"], case["eligibility_request_raw"], case["join_raw"],
             expected_request_sha256=_coordinate_graph_sha(raw),
             join_originals=case["originals"], source_bindings=case["bindings"])
+
+
+# Explicit graph-v3 consumes the qualified wire eligibility-v4 operation.  The
+# upstream fixture remains an authored local Parquet/metadata fixture; importing
+# its helpers does not collect or repeat the upstream qualification suites.
+from tests.unit.logic.autoformal.test_legal_source_span_entity_coordinate_join_v2 import wire_coordinate_join
+from tests.unit.logic.autoformal.test_legal_source_span_target_eligibility_v1 import (
+    wire_original_replay_v4, wire_original_inputs_v4, prepare_wire_eligibility_v4,
+)
+
+_WIRE_GRAPH_PROFILE = "original-input-wire-coordinate-source-graph-intake/v1"
+_WIRE_GRAPH_METADATA = "hf-default-parquet-envelope/v1"
+
+
+@pytest.fixture
+def wire_graph_v3_case(wire_original_replay_v4):
+    original = wire_original_replay_v4
+    request_raw, join_raw = wire_original_inputs_v4(original)
+    observed = prepare_wire_eligibility_v4(original)
+    eligibility_raw = (json.dumps(observed, ensure_ascii=False, indent=2) + "\n").encode()
+    joined, transport = original["join"], original["case"]
+    scope = graphs.bind_scope(jurisdiction="US-federal", instrument="USCode", edition=2024,
+        applicability="section-local", definition_scope="usc:us:5:551")
+    bindings = {}
+    revision = transport["coordinate"]["report"]["release_id"]
+    # These are independently nominated authored HTML occurrences, not a
+    # source/edition correspondence inferred from the HF logical config alias.
+    for physical, payload in zip(observed["physical_rows"], joined["paired_bundles"][0]["payload_intake"]["rows"]):
+        source = json.loads(payload["derived_row_json"])["source"]
+        text = source["text"]
+        raw_html = ('<meta charset="utf-8"><h3 class="section-head">§551. Authored wire graph fixture</h3>'
+            '<p class="statutory-body">(a) ' + _html_escape(text) + '</p>'
+            '<p class="statutory-body">(b) ' + _html_escape(text) + '</p>').encode()
+        document = context.extract_document(raw_html,
+            url="https://www.govinfo.gov/content/pkg/USCODE-2024-title5/html/USCODE-2024-title5-sec551.htm",
+            edition=2024, legal_id=source["legal_id"])
+        selectors = context.exact_view_occurrences(document, raw_html, text=text)
+        bindings[physical["physical_identity_sha256"]] = subject.make_source_binding(
+            document, raw_html, document_revision=revision, scope=scope,
+            candidate_selectors=[selectors[physical["physical_identity"]["row_ordinal"] % 2]],
+            context_observation={"status": "authored_unreviewed_no_edition_crosswalk"})
+    return {"case": transport, "joined": joined, "join_raw": join_raw,
+        "originals": original["originals"], "eligibility": observed,
+        "eligibility_raw": eligibility_raw, "eligibility_request_raw": request_raw, "bindings": bindings}
+
+
+def _wire_graph_v3_request(case, **changes):
+    return _coordinate_graph_wire({
+        "schema": "legal-coordinate-source-graph-intake-request/v3",
+        "source_compatibility_profile": _WIRE_GRAPH_PROFILE,
+        "metadata_profile": _WIRE_GRAPH_METADATA, "graph_profile": "canonical_rules_v1",
+        "eligibility_report_raw_sha256": _coordinate_graph_sha(case["eligibility_raw"]),
+        "eligibility_report_sha256": eligibility.source_span_target_eligibility_sha256(case["eligibility"]),
+        "eligibility_request_sha256": _coordinate_graph_sha(case["eligibility_request_raw"]),
+        "join_manifest_raw_sha256": _coordinate_graph_sha(case["join_raw"]),
+        "join_manifest_sha256": coordinate_join_owner.source_span_entity_join_manifest_sha256(case["joined"]),
+        "join_originals_sha256": eligibility.source_span_target_join_originals_sha256(case["originals"]),
+        "source_bindings_sha256": subject.source_bindings_sha256(case["bindings"]),
+        "expected_physical_ids": [row["physical_identity_sha256"] for row in case["eligibility"]["physical_rows"]],
+        **changes})
+
+
+def _prepare_wire_graph_v3(case, *, request_raw=None):
+    raw = _wire_graph_v3_request(case) if request_raw is None else request_raw
+    return subject.prepare_coordinate_source_graph_intake_v3(raw, case["eligibility_raw"],
+        case["eligibility_request_raw"], case["join_raw"],
+        expected_request_sha256=_coordinate_graph_sha(raw),
+        join_originals=case["originals"], source_bindings=case["bindings"])
+
+
+def _validate_wire_graph_v3(case, report):
+    raw = _wire_graph_v3_request(case)
+    value = json.loads(report) if type(report) is bytes else report
+    return subject.validate_coordinate_source_graph_intake_v3(report, raw, case["eligibility_raw"],
+        case["eligibility_request_raw"], case["join_raw"],
+        expected_request_sha256=_coordinate_graph_sha(raw),
+        expected_report_sha256=subject.coordinate_source_graph_intake_sha256(value),
+        join_originals=case["originals"], source_bindings=case["bindings"])
+
+
+def _assert_wire_graph_v3_unqualified(report, case):
+    assert report["schema"] == "legal-coordinate-source-graph-intake/v3"
+    assert report["source_compatibility_profile"] == _WIRE_GRAPH_PROFILE
+    assert report["metadata_profile"] == _WIRE_GRAPH_METADATA
+    assert report["source_metadata_intake_sha256"] == case["joined"]["source_metadata_intake_sha256"]
+    assert report["selected_occurrence"] is None and report["source_binding_mask"] == 0
+    assert report["entity_binding"] == "unavailable_semantic_companions_not_supplied"
+    assert report["current_source_release_correspondence"] == "unverified_no_independent_crosswalk"
+    assert report["checkpoint_status"] == "not_assessed"
+    assert all(type(value) is bool and value is False for value in report["authority"].values())
+    _assert_coordinate_graph_authority_absent(report)
+
+
+@_supported_coordinate_graph
+def test_wire_graph_v3_genuine_complete_roundtrip_keeps_unreviewed_carrier(wire_graph_v3_case, monkeypatch):
+    case = wire_graph_v3_case
+    genuine_graph, genuine_eligibility = graphs.build_graph, eligibility.validate_source_span_target_eligibility_v4
+    graph_calls, replay_calls = [], []
+    def observe_graph(*args, **kwargs):
+        result = genuine_graph(*args, **kwargs); graph_calls.append(result); return result
+    def observe_eligibility(*args, **kwargs):
+        result = genuine_eligibility(*args, **kwargs); replay_calls.append(result)
+        assert kwargs["expected_report_sha256"] == eligibility.source_span_target_eligibility_sha256(case["eligibility"])
+        return result
+    monkeypatch.setattr(graphs, "build_graph", observe_graph)
+    monkeypatch.setattr(eligibility, "validate_source_span_target_eligibility_v4", observe_eligibility)
+    before = deepcopy(case["originals"]), deepcopy(case["bindings"])
+    report = _prepare_wire_graph_v3(case)
+    assert len(graph_calls) == len(replay_calls) == 2
+    assert len(json.loads(_wire_graph_v3_request(case))) == 12
+    assert report["physical_rows"] == case["eligibility"]["physical_rows"]
+    assert report["row_references"] == case["eligibility"]["row_references"]
+    assert [row["eligibility_output"] for row in report["output_occurrences"]] == case["eligibility"]["output_occurrences"]
+    assert report["eligibility_report_raw_utf8"].encode() == case["eligibility_raw"]
+    assert "eligibility_report" not in report and "join_manifest_raw_utf8" not in report
+    assert _coordinate_graph_sha(case["eligibility_raw"]) != eligibility.source_span_target_eligibility_sha256(case["eligibility"])
+    assert report["eligibility_report_reference"]["report_artifact_sha256"] == _coordinate_graph_sha(case["eligibility_raw"])
+    assert report["join_manifest_reference"]["json_pointer"] == "/join_manifest_raw_utf8"
+    retained = json.loads(report["eligibility_report_raw_utf8"])
+    assert retained["join_manifest_raw_utf8"].encode() == case["join_raw"]
+    assert json.loads(retained["join_manifest_raw_utf8"])["paired_bundles"][0]["payload_intake"]["source_coordinates"]["report_sha256"] == case["case"]["coordinate"]["pin"]
+    assert case["joined"]["source_metadata_intake"]["source_identity"]["aliases_mapped"] is False
+    assert [row["output_occurrence_ordinal"] for row in report["output_occurrences"]] == [0, 1]
+    for row in report["output_occurrences"]:
+        assert row["disposition"] == "proposed_unreviewed_graph"
+        assert graphs.graph_to_ast(row["graph"]) == row["eligibility_output"]["canonical_ir"] == {"rules": [_COORDINATE_GRAPH_RULE]}
+        assert row["graph_request"]["ast"] == row["eligibility_output"]["canonical_ir"]
+        assert row["eligibility_output"]["source_coordinate_span_index"] == 1
+        assert row["eligibility_output"]["source_provenance_json"] == case["case"]["coordinate"]["references"][0]
+    assert _validate_wire_graph_v3(case, _coordinate_graph_wire(report)) == report
+    assert len(graph_calls) == len(replay_calls) == 4
+    assert (case["originals"], case["bindings"]) == before
+    _assert_wire_graph_v3_unqualified(report, case)
+
+
+def test_wire_graph_v3_unsupported_targets_remain_lossless_without_graphs(wire_graph_v3_case):
+    case = wire_graph_v3_case; report = _prepare_wire_graph_v3(case)
+    assert report["physical_rows"] == case["eligibility"]["physical_rows"]
+    assert report["row_references"] == case["eligibility"]["row_references"]
+    assert [row["eligibility_output"] for row in report["output_occurrences"]] == case["eligibility"]["output_occurrences"]
+    assert report["output_occurrences"] and all(row["graph"] is None and row["disposition"] == "unresolved" for row in report["output_occurrences"])
+    _assert_wire_graph_v3_unqualified(report, case)
+
+
+@_repeated_coordinate_graph
+def test_wire_graph_v3_equal_text_keeps_two_physical_sources_and_four_outputs(wire_graph_v3_case):
+    case = wire_graph_v3_case; report = _prepare_wire_graph_v3(case)
+    rows = report["physical_rows"]
+    assert len(rows) == 2 and rows[0]["source_text"] == rows[1]["source_text"]
+    assert len({row["physical_identity_sha256"] for row in rows}) == 2
+    assert [row["source_coordinate_span_index"] for row in rows] == [1, 3]
+    assert [row["output_occurrence_ordinal"] for row in report["output_occurrences"]] == [0, 1, 2, 3]
+    assert [row["eligibility_output"]["source_coordinate_span_index"] for row in report["output_occurrences"]] == [1, 1, 3, 3]
+    assert len({row["source_binding"]["selector"]["occurrence_id"] for row in report["output_occurrences"]}) == 2
+    assert all(graphs.graph_to_ast(row["graph"]) == {"rules": [_COORDINATE_GRAPH_RULE]} for row in report["output_occurrences"])
+    _assert_wire_graph_v3_unqualified(report, case)
+
+
+@_supported_coordinate_graph
+@pytest.mark.parametrize("old_profile", ["public-v2", "original-v3"])
+def test_wire_graph_v3_refuses_genuine_older_eligibility_profiles_before_graph(request, coordinate_join, monkeypatch, old_profile):
+    case = request.getfixturevalue("coordinate_graph_case" if old_profile == "public-v2" else "coordinate_graph_v2_case")
+    monkeypatch.setattr(graphs, "build_graph", lambda *a, **kw: pytest.fail("foreign eligibility profile reached graph"))
+    with pytest.raises(ValueError): _prepare_wire_graph_v3(case)
+
+
+@_supported_coordinate_graph
+@pytest.mark.parametrize("old_graph", ["v1", "v2"])
+def test_wire_graph_v3_carrier_cannot_enter_either_old_graph_api(wire_graph_v3_case, monkeypatch, old_graph):
+    case = wire_graph_v3_case
+    monkeypatch.setattr(graphs, "build_graph", lambda *a, **kw: pytest.fail("wire eligibility silently entered old graph profile"))
+    prepare = _prepare_coordinate_graph if old_graph == "v1" else _prepare_coordinate_graph_v2
+    with pytest.raises(ValueError): prepare(case)
+
+
+@_supported_coordinate_graph
+@pytest.mark.parametrize("damage", ["missing-metadata", "foreign-profile", "extra-field"])
+def test_wire_graph_v3_requires_exact_closed_profile_declarations(wire_graph_v3_case, monkeypatch, damage):
+    case = wire_graph_v3_case; request = json.loads(_wire_graph_v3_request(case))
+    if damage == "missing-metadata": request.pop("metadata_profile")
+    elif damage == "foreign-profile": request["source_compatibility_profile"] = subject.COORDINATE_GRAPH_PROFILE_V2
+    else: request["undeclared_wire_hint"] = True
+    monkeypatch.setattr(graphs, "build_graph", lambda *a, **kw: pytest.fail("malformed graph declaration reached graph"))
+    with pytest.raises(ValueError): _prepare_wire_graph_v3(case, request_raw=_coordinate_graph_wire(request))
+
+
+@_supported_coordinate_graph
+@pytest.mark.parametrize("pin", ["eligibility_report_raw_sha256", "eligibility_report_sha256", "join_originals_sha256", "source_bindings_sha256"])
+def test_wire_graph_v3_independent_pins_cannot_be_repaired_by_outer_resealing(wire_graph_v3_case, pin):
+    case = wire_graph_v3_case
+    with pytest.raises(ValueError): _prepare_wire_graph_v3(case, request_raw=_wire_graph_v3_request(case, **{pin: "0" * 64}))
+
+
+@_supported_coordinate_graph
+@pytest.mark.parametrize("damage", ["eligibility-pointer", "global-index", "output-provenance", "training-mask"])
+def test_wire_graph_v3_resealed_reference_provenance_or_mask_changes_refuse(wire_graph_v3_case, damage):
+    case = wire_graph_v3_case; report = _prepare_wire_graph_v3(case)
+    if damage == "eligibility-pointer": report["join_manifest_reference"]["json_pointer"] = "/unselected_join"
+    elif damage == "global-index": report["physical_rows"][0]["source_coordinate_span_index"] = 0
+    elif damage == "output-provenance": report["output_occurrences"][0]["eligibility_output"]["source_provenance_json"] += " "
+    else: report["output_occurrences"][0]["training_mask"] = 1
+    with pytest.raises(ValueError): _validate_wire_graph_v3(case, report)
+
+
+@_repeated_coordinate_graph
+@pytest.mark.parametrize("damage", ["drop-physical", "reverse-outputs", "reverse-references"])
+def test_wire_graph_v3_resealed_population_order_or_omission_refuses(wire_graph_v3_case, damage):
+    case = wire_graph_v3_case; report = _prepare_wire_graph_v3(case)
+    if damage == "drop-physical": report["physical_rows"].pop()
+    elif damage == "reverse-outputs": report["output_occurrences"].reverse()
+    else: report["row_references"].reverse()
+    with pytest.raises(ValueError): _validate_wire_graph_v3(case, report)
+
+
+@_supported_coordinate_graph
+@pytest.mark.parametrize("damage", ["revision", "ambiguous"])
+def test_wire_graph_v3_independent_html_nomination_never_repairs_source_crosswalk(wire_graph_v3_case, damage):
+    case = wire_graph_v3_case; binding = next(iter(case["bindings"].values()))
+    if damage == "revision": binding["document_revision"] = "different-authored-release"
+    else:
+        raw = __import__("base64").b64decode(binding["raw_html_base64"])
+        binding["candidate_selectors"] = context.exact_view_occurrences(binding["document"], raw, text="Clerk shall file report.")
+        assert len(binding["candidate_selectors"]) == 2
+    report = _prepare_wire_graph_v3(case)
+    assert all(row["graph"] is None and row["disposition"] == "unresolved" and row["issues"] for row in report["output_occurrences"])
+    assert [row["eligibility_output"] for row in report["output_occurrences"]] == case["eligibility"]["output_occurrences"]
+    _assert_wire_graph_v3_unqualified(report, case)
+
+
+@_supported_coordinate_graph
+@pytest.mark.parametrize("damage", ["bindings", "originals", "eligibility-callable", "table"])
+def test_wire_graph_v3_closing_replay_refuses_live_original_and_owner_changes(wire_graph_v3_case, monkeypatch, damage):
+    case = wire_graph_v3_case; actual_graph = graphs.build_graph
+    actual_validator = eligibility.validate_source_span_target_eligibility_v4; calls = []
+    def replacement(*args, **kwargs): return actual_validator(*args, **kwargs)
+    def mutate_after_genuine_graph(*args, **kwargs):
+        result = actual_graph(*args, **kwargs); calls.append(result)
+        if damage == "bindings": next(iter(case["bindings"].values()))["context_observation"]["status"] = "changed after graph"
+        elif damage == "originals": case["originals"]["source_metadata_bytes"]["README.md"] += b"changed after graph"
+        elif damage == "eligibility-callable": monkeypatch.setattr(eligibility, "validate_source_span_target_eligibility_v4", replacement)
+        else:
+            table = _coordinate_graph_retained_table(case); table.write_bytes(table.read_bytes() + b"changed after graph")
+        return result
+    monkeypatch.setattr(graphs, "build_graph", mutate_after_genuine_graph)
+    with pytest.raises(ValueError): _prepare_wire_graph_v3(case)
+    assert calls
+
+
+@_supported_coordinate_graph
+def test_wire_graph_v3_primary_error_preserves_genuine_closing_original_custody_failure(wire_graph_v3_case, monkeypatch):
+    case = wire_graph_v3_case; actual_graph = graphs.build_graph
+    actual_validator = eligibility.validate_source_span_target_eligibility_v4
+    sentinel, calls, replays = RuntimeError("negative wire graph callback boundary"), [], []
+    def observe_replay(*args, **kwargs):
+        result = actual_validator(*args, **kwargs); replays.append(result); return result
+    def fail_after_genuine_graph(*args, **kwargs):
+        result = actual_graph(*args, **kwargs); calls.append(result)
+        case["originals"]["source_metadata_bytes"]["README.md"] += b"changed before primary error"
+        raise sentinel
+    monkeypatch.setattr(eligibility, "validate_source_span_target_eligibility_v4", observe_replay)
+    monkeypatch.setattr(graphs, "build_graph", fail_after_genuine_graph)
+    with pytest.raises(RuntimeError) as caught: _prepare_wire_graph_v3(case)
+    assert caught.value is sentinel and calls and len(replays) == 2
+    assert any("original" in note and "changed" in note for note in getattr(sentinel, "__notes__", ()))
+
+
+@_supported_coordinate_graph
+def test_wire_graph_v3_validator_retains_offered_report_through_genuine_graph(wire_graph_v3_case, monkeypatch):
+    case = wire_graph_v3_case; report = _prepare_wire_graph_v3(case)
+    actual = graphs.build_graph; reached = []
+    def mutate_offered(*args, **kwargs):
+        graph = actual(*args, **kwargs); reached.append(graph)
+        report["output_occurrences"][0]["context_observation"] = {"late": "offered-report-mutation"}
+        return graph
+    monkeypatch.setattr(graphs, "build_graph", mutate_offered)
+    with pytest.raises(ValueError): _validate_wire_graph_v3(case, report)
+    assert reached
+
+
+@_supported_coordinate_graph
+def test_wire_graph_v3_final_serialization_keeps_original_inputs_guarded(wire_graph_v3_case, monkeypatch):
+    case = wire_graph_v3_case; genuine = subject._coordinate_graph_wire; reached = []
+    genuine_validate = eligibility.validate_source_span_target_eligibility_v4; replays = []
+    def observe_replay(*args, **kwargs):
+        result = genuine_validate(*args, **kwargs); replays.append(result); return result
+    def mutate_after_wire(value, *args, **kwargs):
+        raw = genuine(value, *args, **kwargs)
+        if len(replays) == 2 and not reached and type(value) is dict and value.get("schema") == "legal-coordinate-source-graph-intake/v3":
+            reached.append(True); case["originals"]["source_metadata_bytes"]["README.md"] += b"changed after graph serialization"
+        return raw
+    monkeypatch.setattr(eligibility, "validate_source_span_target_eligibility_v4", observe_replay)
+    monkeypatch.setattr(subject, "_coordinate_graph_wire", mutate_after_wire)
+    with pytest.raises(ValueError): _prepare_wire_graph_v3(case)
+    assert reached == [True] and len(replays) == 2
+
+
+@_supported_coordinate_graph
+def test_wire_graph_v3_nested_foreign_owner_path_refuses_before_body_read(wire_graph_v3_case, monkeypatch, tmp_path):
+    case = wire_graph_v3_case; foreign = tmp_path / "foreign-graph-checkout"
+    original_read = Path.read_bytes; original_file = graphs.__file__
+    def refuse_foreign_read(path):
+        assert foreign not in path.parents, "foreign graph owner read before canonical-path refusal"
+        return original_read(path)
+    monkeypatch.setattr(graphs, "__file__", str(foreign / "ipfs_datasets_py/logic/autoformal/legal_semantic_graph.py"))
+    monkeypatch.setattr(Path, "read_bytes", refuse_foreign_read)
+    with pytest.raises(ValueError): _prepare_wire_graph_v3(case)
+    assert graphs.__file__ != original_file and not foreign.exists()
+
+
+@_supported_coordinate_graph
+def test_wire_graph_v3_keeps_genuine_graph_objects_guarded_after_closing_replay(wire_graph_v3_case, monkeypatch):
+    case = wire_graph_v3_case
+    genuine_graph = graphs.build_graph
+    genuine_validate = eligibility.validate_source_span_target_eligibility_v4
+    returned_graphs, replay_calls, changed = [], [], []
+    def capture_graph(*args, **kwargs):
+        graph = genuine_graph(*args, **kwargs); returned_graphs.append(graph); return graph
+    def mutate_after_genuine_closing(*args, **kwargs):
+        result = genuine_validate(*args, **kwargs); replay_calls.append(result)
+        if len(replay_calls) == 2:
+            assert len(returned_graphs) == 2
+            returned_graphs[0]["graph_id"] = "0" * 64
+            changed.append(True)
+        return result
+    monkeypatch.setattr(graphs, "build_graph", capture_graph)
+    monkeypatch.setattr(eligibility, "validate_source_span_target_eligibility_v4", mutate_after_genuine_closing)
+    with pytest.raises(ValueError): _prepare_wire_graph_v3(case)
+    assert changed == [True] and len(replay_calls) == len(returned_graphs) == 2
+
+
+@_supported_coordinate_graph
+@pytest.mark.parametrize("damage", ["originals", "bindings"])
+def test_wire_graph_v3_outer_validator_keeps_caller_inputs_after_genuine_inner_prepare(wire_graph_v3_case, monkeypatch, damage):
+    case = wire_graph_v3_case; report = _prepare_wire_graph_v3(case)
+    genuine_prepare = subject._prepare_coordinate_source_graph_intake
+    changed = []
+    def mutate_after_genuine_inner(*args, **kwargs):
+        result = genuine_prepare(*args, **kwargs)
+        assert kwargs["profile_version"] == 3
+        if damage == "originals": case["originals"]["source_metadata_bytes"]["README.md"] += b"changed after complete inner graph prepare"
+        else: next(iter(case["bindings"].values()))["context_observation"]["status"] = "changed after complete inner graph prepare"
+        changed.append(True)
+        return result
+    monkeypatch.setattr(subject, "_prepare_coordinate_source_graph_intake", mutate_after_genuine_inner)
+    with pytest.raises(ValueError): _validate_wire_graph_v3(case, report)
+    assert changed == [True]
+
+
+@_supported_coordinate_graph
+def test_wire_graph_v3_outer_parsed_retained_cannot_nominate_a_foreign_file(wire_graph_v3_case, monkeypatch):
+    case = wire_graph_v3_case; report = _prepare_wire_graph_v3(case)
+    genuine_preflight = subject._coordinate_graph_preflight
+    genuine_prepare = subject._prepare_coordinate_source_graph_intake
+    genuine_files = coordinate_join_owner._coordinate_file_witnesses
+    outer, changed, file_calls = [], [], []
+    sentinel = "unselected/outer-wire-graph-validator.parquet"
+    def observe_preflight(*args, **kwargs):
+        result = genuine_preflight(*args, **kwargs)
+        if kwargs.get("profile_version") == 3: outer.append(result)
+        return result
+    def mutate_after_genuine_inner(*args, **kwargs):
+        result = genuine_prepare(*args, **kwargs)
+        assert kwargs["profile_version"] == 3 and len(outer) >= 2
+        outer[0][2]["span_inventory"]["manifests"][0]["manifest"]["tables"]["paired_spans"]["path_in_repo"] = sentinel
+        changed.append(True)
+        return result
+    def observe_files(location, selected):
+        assert sentinel not in [row["path_in_repo"] for row in selected["manifest"]["tables"].values()], \
+            "mutated outer retained graph state nominated an unselected file"
+        file_calls.append(True)
+        return genuine_files(location, selected)
+    monkeypatch.setattr(subject, "_coordinate_graph_preflight", observe_preflight)
+    monkeypatch.setattr(subject, "_prepare_coordinate_source_graph_intake", mutate_after_genuine_inner)
+    monkeypatch.setattr(coordinate_join_owner, "_coordinate_file_witnesses", observe_files)
+    with pytest.raises(ValueError): _validate_wire_graph_v3(case, report)
+    assert changed == [True] and file_calls
+
+
+@_supported_coordinate_graph
+def test_wire_graph_v3_detached_returned_report_stays_guarded_after_serialization(wire_graph_v3_case, monkeypatch):
+    case = wire_graph_v3_case
+    genuine_read, genuine_wire = subject._coordinate_graph_read, subject._coordinate_graph_wire
+    genuine_validate = eligibility.validate_source_span_target_eligibility_v4
+    detached, changed, replays = [], [], []
+    def observe_replay(*args, **kwargs):
+        result = genuine_validate(*args, **kwargs); replays.append(result); return result
+    def capture_detached(*args, **kwargs):
+        value = genuine_read(*args, **kwargs)
+        if type(value) is dict and value.get("schema") == "legal-coordinate-source-graph-intake/v3": detached.append(value)
+        return value
+    def mutate_after_wire(value, *args, **kwargs):
+        raw = genuine_wire(value, *args, **kwargs)
+        if len(replays) == 2 and not changed and any(value is observed for observed in detached):
+            value["counts"]["proposed_unreviewed_graphs"] += 1
+            changed.append(True)
+        return raw
+    monkeypatch.setattr(subject, "_coordinate_graph_read", capture_detached)
+    monkeypatch.setattr(subject, "_coordinate_graph_wire", mutate_after_wire)
+    monkeypatch.setattr(eligibility, "validate_source_span_target_eligibility_v4", observe_replay)
+    with pytest.raises(ValueError): _prepare_wire_graph_v3(case)
+    assert changed == [True] and detached and len(replays) == 2

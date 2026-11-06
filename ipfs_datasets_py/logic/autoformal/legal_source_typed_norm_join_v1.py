@@ -16,6 +16,11 @@ import re
 REQUEST_SCHEMA = "legal-source-typed-norm-join-request/v1"
 SCHEMA = "legal-source-typed-norm-join-proposal/v1"
 PROFILE = "whole-source-partial-typed-correspondence/v1"
+REQUEST_SCHEMA_V2 = "legal-source-typed-norm-join-request/v2"
+SCHEMA_V2 = "legal-source-typed-norm-join-proposal/v2"
+PROFILE_V2 = "whole-source-partial-counted-frame-correspondence/v1"
+MAX_COUNTED_REQUEST_BYTES = 131072
+MAX_COUNTED_REPORT_BYTES = 1024 * 1024
 MAX_REQUEST_BYTES = 512 * 1024
 MAX_SCOPE_BYTES = 65536
 MAX_SCOPE_REPORT_BYTES = 1024 * 1024
@@ -144,11 +149,15 @@ def _reference(value):
 
 
 def _request(raw, expected_sha256):
+    return _request_for_schema(raw, expected_sha256, REQUEST_SCHEMA)
+
+
+def _request_for_schema(raw, expected_sha256, request_schema):
     value = _load(raw, expected_sha256, "join request", MAX_REQUEST_BYTES)
     _keys(value, {"schema", "interpretation_status", "component_id", "alternative_id",
                   "selected_unit_ref", "node_correspondences", "introduced_unresolved"},
           "join request")
-    _need(value["schema"] == REQUEST_SCHEMA
+    _need(value["schema"] == request_schema
           and value["interpretation_status"] == "unreviewed_correspondence_proposal",
           "unreviewed correspondence request required")
     _text(value["component_id"], "component identity")
@@ -350,7 +359,11 @@ def _correspondences(request, scope_report, relational_report):
         _need(request["node_correspondences"] == [] and request["introduced_unresolved"] == [],
               "source-only pending input cannot introduce a typed interpretation")
         return []
-    derived = _derived_structure(relational_report)
+    return _checked_correspondences(request, scope_report, _derived_structure(relational_report))
+
+
+def _checked_correspondences(request, scope_report, derived):
+    """Check one complete owner-derived ordered domain without choosing meaning."""
     paths = [row["typed_path"] for row in derived]
     _need([row["typed_path"] for row in request["node_correspondences"]] == paths,
           "every authoritative typed path required once in original order")
@@ -530,5 +543,271 @@ def validate_source_typed_norm_join_v1(
     return regenerated
 
 
+def _counted_owners():
+    from . import legal_source_norm_scope_v1 as source_scope
+    from . import legal_counted_frame_v1 as counted
+    return source_scope, counted
+
+
+def _counted_producer_pins(source_scope, counted, scope_report, counted_report):
+    # Discover trusted owners before following any offered producer path.
+    trusted_scope = source_scope._pins(source_scope._owners())
+    _need(type(scope_report.get("producer_pins")) is dict
+          and scope_report["producer_pins"] == trusted_scope,
+          "source scope producer commitments differ from trusted owners")
+    trusted_counted = counted._owners()[-1]
+    _need(type(counted_report.get("producer_pins")) is dict
+          and counted_report["producer_pins"] == trusted_counted,
+          "counted producer commitments differ from trusted owners")
+    pins = dict(trusted_scope)
+    for path, digest in trusted_counted.items():
+        _need(path not in pins or pins[path] == digest,
+              "shared producer commitments differ")
+        pins[path] = digest
+    pins[str(Path(__file__).resolve())] = _SELF_PIN
+    _check_producer_pins(pins)
+    return pins
+
+
+def _derived_counted_structure(report):
+    """Retain the checked counted owner's nodes and separate lexical binders.
+
+    The fixed counted owner maps syntax to specialized generated text rather
+    than native AST paths. This ledger therefore supplies no native_path.
+    """
+    mapping, binders = report["structural_mapping"], report["binder_ledger"]
+    _need(len(mapping) == 49 and len(binders) == 6,
+          "complete fixed counted node and binder domains required")
+    by_path = {row["typed_path"]: row for row in mapping}
+    binder_paths = {row["typed_path"]: row for row in binders}
+    _need(len(by_path) == 49 and len(binder_paths) == 6
+          and not set(by_path) & set(binder_paths),
+          "unique disjoint counted node and binder paths required")
+    roles = report["membership"]["argument_roles"]
+    _need(report["membership"]["symbol"] == "Member"
+          and roles == ["object", "event", "time"],
+          "original ordered counted membership declaration required")
+    derived, visited_nodes, visited_binders = [], [], []
+
+    def visit(node, path, bound, *, predicate_argument=None, equality_operand=None):
+        kind = node["kind"]
+        identity = {"typed_path": path, "node_id": node["node_id"],
+                    "kind": kind, "sort": node["sort"]["name"]}
+        _need(by_path.get(path) == identity,
+              "derived counted node differs from authoritative structural mapping")
+        visited_nodes.append(identity)
+        row = {"typed_path": path, "node_id": node["node_id"], "kind": kind,
+               "typed_sort": node["sort"],
+               "native_mapping_scope": "counted_syntax_only_no_native_path"}
+        derived.append(row)
+        if kind == "variable":
+            name = node["symbol"]
+            _need(name in bound
+                  and ((predicate_argument is None) != (equality_operand is None)),
+                  "counted variable requires exact binding and one operand context")
+            _need(bound[name]["variable_sort"] == node["sort"],
+                  "counted variable sort differs from its lexical binder")
+            row.update(variable_name=name, variable_sort=node["sort"],
+                       binding_quantifier=bound[name],
+                       predicate_argument=predicate_argument,
+                       equality_operand=equality_operand,
+                       term_context=("predicate_argument" if predicate_argument is not None
+                                     else "equality_operand"))
+        elif kind == "predicate":
+            _need(node["symbol"] == "Member" and len(node["arguments"]) == 3,
+                  "fixed counted membership predicate required")
+            row.update(predicate_symbol="Member", argument_roles=roles,
+                       argument_typed_paths=[path + "/arguments/" + str(index)
+                                             for index in range(3)])
+            for index, child in enumerate(node["arguments"]):
+                visit(child, path + "/arguments/" + str(index), bound,
+                      predicate_argument={"predicate_symbol": "Member",
+                          "predicate_typed_path": path, "argument_index": index,
+                          "declared_role": roles[index]})
+        elif kind == "equality":
+            _need(len(node["arguments"]) == 2
+                  and node["arguments"][0]["sort"] == node["arguments"][1]["sort"],
+                  "ordered equally sorted counted equality operands required")
+            paths = [path + "/arguments/0", path + "/arguments/1"]
+            row.update(equality_operator="built_in_identity",
+                       ordered_operand_paths=paths, operand_roles=["left", "right"],
+                       operand_sort=node["arguments"][0]["sort"])
+            for index, child in enumerate(node["arguments"]):
+                visit(child, paths[index], bound,
+                      equality_operand={"equality_typed_path": path,
+                          "equality_node_id": node["node_id"], "operand_index": index,
+                          "endpoint_role": ("left" if index == 0 else "right"),
+                          "opposite_typed_path": paths[1 - index]})
+        elif kind == "forall":
+            _need(len(node["binders"]) == 1 and len(node["arguments"]) == 1,
+                  "single fixed counted quantifier binder required")
+            binder = node["binders"][0]
+            binder_path, body_path = path + "/binders/0", path + "/arguments/0"
+            binder_identity = {"typed_path": binder_path, "variable": binder["name"],
+                               "sort": binder["sort"]["name"]}
+            _need(binder_paths.get(binder_path) == binder_identity
+                  and binder["name"] not in bound,
+                  "counted binder differs from the authoritative lexical ledger")
+            visited_binders.append(binder_identity)
+            binding = {"quantifier_typed_path": path,
+                       "quantifier_node_id": node["node_id"], "quantifier_kind": "forall",
+                       "binder_typed_path": binder_path, "variable_name": binder["name"],
+                       "variable_sort": binder["sort"], "scope_body_typed_path": body_path}
+            row.update(quantifier_kind="forall", binder_typed_path=binder_path,
+                       variable_name=binder["name"], scope_body_typed_path=body_path)
+            derived.append({"typed_path": binder_path, "kind": "binder",
+                "native_mapping_scope": "counted_syntax_only_no_native_path",
+                "binder_name": binder["name"], "binder_sort": binder["sort"],
+                "binding_quantifier": binding})
+            visit(node["arguments"][0], body_path, {**bound, binder["name"]: binding})
+        elif kind in {"and", "or", "implies"}:
+            row.update(connective_operator=kind,
+                       ordered_child_paths=[path + "/arguments/" + str(index)
+                                            for index in range(len(node["arguments"]))])
+            for index, child in enumerate(node["arguments"]):
+                visit(child, path + "/arguments/" + str(index), bound)
+        else:
+            raise ValueError("unsupported counted provenance kind")
+
+    visit(report["typed_expression"]["root"], "/root", {})
+    _need(visited_nodes == mapping and visited_binders == binders and len(derived) == 55,
+          "complete original counted node/binder order and coverage required")
+    return derived
+
+
+def prepare_source_typed_norm_join_v2(
+    scope_report, counted_report, join_request_raw, *,
+    expected_join_request_sha256, expected_scope_report_sha256,
+    expected_counted_report_sha256, scope_replay_inputs,
+    counted_request_raw, expected_counted_request_sha256,
+):
+    """Retain an explicit counted-only hypothesis through both original owners.
+
+    V2 requires a complete authored counted report and request. It neither
+    falls back to relational v1 nor accepts a source-only/null counted state.
+    """
+    request = _request_for_schema(join_request_raw, expected_join_request_sha256,
+                                  REQUEST_SCHEMA_V2)
+    checked_scope = _pinned_copy(scope_report, expected_scope_report_sha256,
+                                "complete scope report", MAX_SCOPE_REPORT_BYTES)
+    replay = _replay_inputs(scope_replay_inputs)
+    _need(request["selected_unit_ref"] == replay["selected_unit_ref"],
+          "join selected unit differs from original scope replay inputs")
+    checked_counted = _pinned_copy(counted_report, expected_counted_report_sha256,
+                                  "complete counted report", MAX_COUNTED_REPORT_BYTES)
+    _load(counted_request_raw, expected_counted_request_sha256,
+          "counted request", MAX_COUNTED_REQUEST_BYTES)
+
+    source_scope, counted = _counted_owners()
+    # The counted request has a closed fixed declaration independent of syntax
+    # owner replay. Reject it before discovering lazy syntax-operation owners.
+    counted._parse(counted_request_raw, expected_counted_request_sha256)
+    pins_before = _counted_producer_pins(source_scope, counted, checked_scope, checked_counted)
+    source_scope.validate_sampled_norm_scope_v1(checked_scope,
+        expected_report_sha256=expected_scope_report_sha256, **replay)
+    _check_producer_pins(pins_before)
+    _need(checked_scope["input_pins"]["selected_unit_ref"] == request["selected_unit_ref"],
+          "join selected unit differs from the authoritative scope report")
+    checked_counted = counted.validate_counted_frame(checked_counted, counted_request_raw,
+        expected_request_sha256=expected_counted_request_sha256,
+        expected_report_sha256=expected_counted_report_sha256)
+    _need(checked_counted["source_binding"] is None
+          and checked_counted["source_bound"] is False,
+          "external counted preparation must retain its authored source-unbound contract")
+    pins = _counted_producer_pins(source_scope, counted, checked_scope, checked_counted)
+    _need(pins == pins_before, "producer commitments changed across prior owner replay")
+    ledger = _checked_correspondences(request, checked_scope,
+                                      _derived_counted_structure(checked_counted))
+    candidate = {
+        "schema": "legal-source-typed-norm-candidate/v2",
+        "interpretation_status": "unreviewed_partial_counted_frame_hypothesis",
+        "expression": checked_counted["typed_expression"],
+        "typed_expression_content_digest": checked_counted["typed_expression_content_digest"],
+        "typed_expression_sha256": checked_counted["typed_expression_sha256"],
+        "counted_profile": checked_counted["profile"],
+        "argument_roles": [{"symbol": checked_counted["membership"]["symbol"],
+                            "roles": checked_counted["membership"]["argument_roles"]}],
+        "counts": checked_counted["counts"], "frame": checked_counted["frame"],
+        "membership": checked_counted["membership"],
+        "distinctness": checked_counted["distinctness"], "maximum": checked_counted["maximum"],
+        "identity_pairs": checked_counted["identity_pairs"],
+        "binder_ledger": checked_counted["binder_ledger"],
+        "assumptions": checked_counted["assumptions"],
+        "source_binding": None, "source_meaning_verified": False,
+        "source_translation_performed": False,
+    }
+    report = {
+        "schema": SCHEMA_V2, "profile": PROFILE_V2,
+        "status": "unreviewed_partial_counted_frame_correspondence_retained",
+        "component_id": request["component_id"], "alternative_id": request["alternative_id"],
+        "join_request": request, "join_request_raw_utf8": join_request_raw.decode("utf-8"),
+        "input_pins": {
+            "join_request_raw_sha256": expected_join_request_sha256,
+            "join_request_raw_bytes": len(join_request_raw),
+            "join_request_canonical_sha256": _digest(request, MAX_REQUEST_BYTES),
+            "scope_report_full_canonical_sha256": expected_scope_report_sha256,
+            "source_scope_input_pins": checked_scope["input_pins"],
+            "counted_report_full_canonical_sha256": expected_counted_report_sha256,
+            "counted_request_raw_sha256": expected_counted_request_sha256,
+            "counted_request_raw_bytes": len(counted_request_raw),
+        },
+        "source_scope_report": checked_scope, "counted_frame_report": checked_counted,
+        "source_custody": {
+            "selected_unit_ref": checked_scope["input_pins"]["selected_unit_ref"],
+            "source_records": checked_scope["source_records"],
+            "source_selector": checked_scope["source_selector"],
+            "source_context_packet": checked_scope["source_context_packet"],
+        },
+        "typed_candidate": candidate, "provenance_ledger": ledger,
+        "original_unresolved": checked_scope["scope_declaration"]["unresolved"],
+        "introduced_unresolved": request["introduced_unresolved"],
+        "literal_accounting_complete": checked_scope["literal_accounting_complete"],
+        "declared_semantic_coverage": checked_scope["declared_semantic_coverage"],
+        "source_custody_linked": True, "source_meaning_selected": False,
+        "source_translation_performed": False, "external_counted_source_binding": None,
+        "original_context_preserved": True, "external_context_nominations_applied": False,
+        "formal_norm_ast": None, "lowered_IR": None, "native_output_for_source": None,
+        "graph": None, "lookup": None, "governing_use": None,
+        "accepted_lookup": None, "governing_definition_use": None,
+        "native_build_executed": False, "human_reviews": 0,
+        "signatures_constructed": 0, "admissions": 0,
+        "training_mask": 0, "evaluation_gold_mask": 0,
+        "masks": dict(checked_scope["masks"]),
+        "authority": {**AUTHORITY, "counting_frame_verified": False,
+                      "object_identity_verified": False},
+        "model_calls": 0, "training_calls": 0, "native_processes": 0,
+        "producer_pins": pins,
+        "limitations": [
+            "Exact source custody and all counted syntax/binder correspondences retain caller hypotheses, not statutory meaning.",
+            "The authored at-most-three-distinct profile does not encode the complete statutory norm, its modality, participants, duties or applicability.",
+            "Membership object/event/time roles, equality endpoints and lexical binding are syntax facts, not reviewed legal identities or temporal scopes.",
+            "All original unresolved source issues and authored counted assumptions are preserved; introduced structure requires explicit unresolved declarations.",
+            "The counted owner remains source-unbound; its retained generated text and nativefalse receipt are not statutory output or a new native qualification.",
+            "No native AST path is invented for the counted owner's specialized text renderer.",
+            "Related source hypotheses cannot constitute independent training or evaluation cases.",
+            "No source selection, governing-use edge, admitted graph, review, signer, native execution or qualified target is supplied.",
+        ],
+    }
+    retained = _wire(report, MAX_REPORT_BYTES)
+    _check_producer_pins(pins)
+    return json.loads(retained)
+
+
+def validate_source_typed_norm_join_v2(
+    report, scope_report, counted_report, join_request_raw, *,
+    expected_report_sha256, **preparation_inputs,
+):
+    """Require an independently pinned v2 report and complete original replay."""
+    supplied = _pinned_copy(report, expected_report_sha256, "complete join report", MAX_REPORT_BYTES)
+    regenerated = prepare_source_typed_norm_join_v2(
+        scope_report, counted_report, join_request_raw, **preparation_inputs)
+    _need(_wire(supplied, MAX_REPORT_BYTES) == _wire(regenerated, MAX_REPORT_BYTES),
+          "join proposal differs from complete authoritative regeneration")
+    return regenerated
+
+
 __all__ = ["prepare_source_typed_norm_join_v1", "source_typed_norm_join_sha256",
-           "validate_source_typed_norm_join_v1"]
+           "validate_source_typed_norm_join_v1", "prepare_source_typed_norm_join_v2",
+           "validate_source_typed_norm_join_v2"]
+
+

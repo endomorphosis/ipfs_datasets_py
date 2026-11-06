@@ -45,3 +45,54 @@ The explicit source-only pending state has `relational_report`, its expected has
 The result supplies a custody-linked **partial hypothesis**, its typed candidate and provenance ledger. Full statutory `formal_norm_ast`, lowered IR, native output for source, graph, lookup and governing-use outputs remain absent. The independently validated relational syntax report can retain generated Lean text as authored syntax evidence; that text is not promoted into a source output by this join. Actual reviews, accepted meanings, signatures, admission authority and training/evaluation masks remain false/zero.
 
 The [retained pilot](../../../../../../../artifacts/legal-corpus-source-typed-join-20261015-01/README.md) associates two competing partial hypotheses with the same §7213 paragraph while preserving its passive-role, direction, approval, plural and applicability issues. §7214 remains source-only pending. The organizer/team has seen the hypotheses; they are not blind targets, learned outputs or independent evaluation samples. Actual statutory meaning selection and native builds remain later gates.
+
+## Explicit counted-frame correspondence v2
+
+The additive counted-only entry points live in this same owner. V1 retains its
+relational and source-only contracts. Its retained pilot's source-only §7214
+state remains historical evidence; the new API does not reinterpret that pilot.
+
+Use `prepare_source_typed_norm_join_v2(scope_report, counted_report,
+join_request_raw, ...)` and `validate_source_typed_norm_join_v2(report,
+scope_report, counted_report, join_request_raw, expected_report_sha256=..., ...)`.
+Both use `source_typed_norm_join_sha256` for complete report identity. Preparation
+requires `expected_join_request_sha256`, `expected_scope_report_sha256`,
+`expected_counted_report_sha256`, `scope_replay_inputs`, `counted_request_raw`
+and `expected_counted_request_sha256`. Every counted input is required; v2 has
+no null-input, relational fallback or implicit source-only mode.
+
+V2 requests use `legal-source-typed-norm-join-request/v2` and the same seven
+request fields shown above. Their status remains
+`unreviewed_correspondence_proposal`. Source anchor paths and issue declarations
+must cover the complete new typed domain: 49 nodes plus six binder rows. Each
+quantifier is followed by its binder, then its body. The owner compares the node
+and binder projections with both original counted ledgers in exact order. It
+derives all four `Member` occurrences with ordered object/event/time roles, all
+six built-in equality occurrences with ordered left/right endpoints, and all
+24 variable occurrences with their precise lexical binding and predicate or
+equality context. It supplies no `native_path` for the counted owner's
+specialized generated-text renderer.
+
+The existing [authored counted-frame owner](legal_counted_frame_v1.md) is fully
+replayed from its original independently pinned request and complete report.
+V2 retains that report as `counted_frame_report`, including its original
+assumptions and nonexecuting preparation receipt. A detached typed candidate
+retains the fixed frame, membership relation, identity pairs, counts and all
+assumptions. The join neither changes the counted owner's source-unbound
+contract nor borrows a separate native build as a source-meaning proof.
+
+The v2 result has schema `legal-source-typed-norm-join-proposal/v2` and profile
+`whole-source-partial-counted-frame-correspondence/v1`. It records only an
+unreviewed partial counted-frame hypothesis. Source custody, original unresolved
+issues and context remain intact; counting scope, legal object identity,
+participants, modality, duties, governing definition and applicability remain
+unresolved. The counted clause does not by itself represent the complete
+statutory norm. Formal norm, lowering, native output for source, graph and
+review/admission outputs remain null or false; training/evaluation masks remain
+integer zero. No model, training or native process executes in either join API.
+
+## Retained counted engineering qualification and public source review
+
+The [original counted correspondence receipt](../../../../../docs/autoformalization/evidence/legal-ir-counted-source-correspondence-20261021.json) records 158 authored cases: 98 existing relational/source-only controls and 60 counted v2 controls. No phase total is asserted. That frozen campaign used counted producer `72501580...`; its source/native/storage closeouts retain their original scope. It supplies no statutory meaning or complete norm.
+
+The [public source reconciliation](../../../../../docs/autoformalization/evidence/legal-ir-counted-public-source-reconciliation-20261024.json) separately identifies the selected join and the existing `df91798d...` counted producer. The [249-case companion receipt](../../../../../docs/autoformalization/evidence/legal-ir-counted-decoder-example-20261022.json) belongs to its own frozen generation and is not a rerun of the 158-case join campaign. Public source, fixture and initializer review supplies no new test execution or whole-runtime qualification. All source meaning, admission and training/evaluation masks remain unresolved, false or zero.

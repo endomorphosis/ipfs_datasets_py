@@ -389,3 +389,199 @@ def emit_projection(row):
         return '\n'.join(definitions),{'validator':'exact_native_frame_record_source_replay','operators':['frame_relation'],
             'assumptions':['Frame triples are interpreted relations; declaration records do not establish the source proposition.']}
     raise UnsupportedNativeLean('no_semantics_preserving_Lean_emitter_for_projection:'+pid)
+
+
+# Explicit renderer-only profile. These records are not native TDFOL ASTs and
+# do not enter emit_projection or alter any existing native parser route.
+SORTED_RELATIONAL_AST_SCHEMA = 'sorted-relational-renderer-ast/v1'
+SORTED_RELATIONAL_PROFILE = 'three-sort-variables-deontic-equality/v1'
+SORTED_RELATIONAL_SORTS = ('Object', 'EventFrame', 'TimeFrame')
+SORTED_RELATIONAL_CARRIER = '''abbrev SortedRelationalEntity (Object EventFrame TimeFrame : Type) :=
+  Sum Unit (Sum Object (Sum EventFrame TimeFrame))
+'''
+
+
+def _sorted_relational_wire(value):
+    """Bound a detached ordinary renderer record, not an arbitrary native AST."""
+    remaining = 100000
+
+    def visit(item, depth):
+        nonlocal remaining
+        remaining -= 1
+        require(remaining >= 0 and depth <= 96, 'bounded_sorted_renderer_JSON_required')
+        if type(item) is dict:
+            for key, child in item.items():
+                require(type(key) is str, 'ordinary_sorted_renderer_keys_required')
+                visit(key, depth + 1)
+                visit(child, depth + 1)
+        elif type(item) in (list, tuple):
+            for child in item:
+                visit(child, depth + 1)
+        elif type(item) is str:
+            string(item)
+        elif item is None:
+            pass
+        else:
+            raise UnsupportedNativeLean('closed_sorted_renderer_value_required')
+
+    visit(value, 0)
+    raw = json.dumps(value, sort_keys=True, separators=(',', ':'),
+                     ensure_ascii=False, allow_nan=False).encode('utf-8')
+    require(len(raw) <= 524288, 'sorted_renderer_complete_byte_bound_exceeded')
+    return raw
+
+
+class SortedFormulaRenderer(FormulaRenderer):
+    """Reuse Boolean/modal rendering with raw sorted binders and equality.
+
+    Only atom arguments enter the disjoint tagged carrier. Source sorts may be
+    empty: the extra Unit tag realizes unused fields of the unchanged prelude.
+    """
+
+    def __init__(self, predicate_sorts):
+        super().__init__()
+        require(type(predicate_sorts) is dict and len(predicate_sorts) <= 64,
+                'bounded_sorted_predicate_signature_required')
+        self.predicate_sorts = {}
+        for name, domain in predicate_sorts.items():
+            require(type(name) is str and bool(name) and len(name) <= 64,
+                    'bounded_sorted_predicate_name_required')
+            string(name)
+            require(type(domain) in (list, tuple) and 1 <= len(domain) <= 8
+                    and all(type(sort) is str and sort in SORTED_RELATIONAL_SORTS for sort in domain),
+                    'closed_sorted_predicate_domain_required')
+            self.predicate_sorts[name] = tuple(domain)
+        self.bound_names = set()
+        self.used_predicates = set()
+
+    @staticmethod
+    def _variable(node):
+        require(type(node) is dict and set(node) == {'node_type', 'name', 'sort'}
+                and node['node_type'] == 'Variable' and type(node['name']) is str
+                and bool(node['name']) and len(node['name']) <= 64
+                and type(node['sort']) is str and node['sort'] in SORTED_RELATIONAL_SORTS,
+                'closed_sorted_variable_required')
+        string(node['name'])
+        return node['name'], node['sort']
+
+    def _raw_variable(self, node, environment, depth):
+        self.step(depth)
+        name, sort = self._variable(node)
+        require(name in environment, 'free_sorted_variable_requires_binding')
+        binding = environment[name]
+        require(type(binding) is tuple and len(binding) == 2 and binding[1] == sort,
+                'sorted_variable_binding_differs')
+        return binding[0], sort
+
+    def term(self, node, environment, depth=0):
+        name, sort = self._raw_variable(node, environment, depth)
+        if sort == 'Object':
+            return '(Sum.inr (Sum.inl '+name+'))'
+        if sort == 'EventFrame':
+            return '(Sum.inr (Sum.inr (Sum.inl '+name+')))'
+        return '(Sum.inr (Sum.inr (Sum.inr '+name+')))'
+
+    def formula(self, node, environment=None, depth=0):
+        require(type(node) is dict and type(node.get('node_type')) is str,
+                'closed_sorted_formula_required')
+        require(environment is None or type(environment) is dict,
+                'closed_sorted_environment_required')
+        require(depth > 0 or environment is None or environment == {},
+                'closed_sorted_root_required')
+        environment = {} if environment is None else environment
+        kind = node['node_type']
+        if kind == 'QuantifiedFormula':
+            require(set(node) == {'node_type', 'quantifier', 'variable', 'formula'}
+                    and type(node['quantifier']) is dict
+                    and set(node['quantifier']) == {'value'}
+                    and node['quantifier']['value'] in ('∀', '∃'),
+                    'closed_sorted_quantifier_required')
+            self.step(depth)
+            self.operators.append(kind)
+            name, sort = self._variable(node['variable'])
+            require(name not in environment and name not in self.bound_names,
+                    'distinct_nonshadowing_sorted_binder_required')
+            self.bound_names.add(name)
+            rendered = 'v'+str(self.counter)
+            self.counter += 1
+            body = self.formula(node['formula'],
+                {**environment, name: (rendered, sort)}, depth + 1)
+            return '(fun t => '+node['quantifier']['value']+' '+rendered+' : '+sort+', '+body+' t)'
+        if kind == 'EqualityFormula':
+            require(set(node) == {'node_type', 'left', 'right'},
+                    'closed_sorted_equality_required')
+            self.step(depth)
+            self.operators.append(kind)
+            left, left_sort = self._raw_variable(node['left'], environment, depth + 1)
+            right, right_sort = self._raw_variable(node['right'], environment, depth + 1)
+            require(left_sort == right_sort, 'same_sort_builtin_equality_required')
+            return '(fun t => '+left+' = '+right+')'
+        if kind == 'AtomicFormula':
+            require(set(node) == {'node_type', 'name', 'arguments'}
+                    and type(node['name']) is str and node['name'] in self.predicate_sorts
+                    and type(node['arguments']) is list,
+                    'closed_declared_sorted_predicate_required')
+            sorts = tuple(self._variable(argument)[1] for argument in node['arguments'])
+            require(sorts == self.predicate_sorts[node['name']],
+                    'ordered_sorted_predicate_domain_differs')
+            self.used_predicates.add(node['name'])
+        elif kind == 'BinaryFormula':
+            require(set(node) == {'node_type', 'operator', 'left', 'right'}
+                    and type(node['operator']) is dict and set(node['operator']) == {'value'}
+                    and node['operator']['value'] in ('∧', '∨', '→', '↔'),
+                    'closed_sorted_binary_connective_required')
+        elif kind == 'UnaryFormula':
+            require(set(node) == {'node_type', 'operator', 'formula'}
+                    and type(node['operator']) is dict and set(node['operator']) == {'value'}
+                    and node['operator']['value'] == '¬',
+                    'closed_sorted_negation_required')
+        elif kind == 'DeonticFormula':
+            require(set(node) == {'node_type', 'operator', 'formula', 'agent', 'context'}
+                    and type(node['operator']) is dict and set(node['operator']) == {'value'}
+                    and node['operator']['value'] in ('O', 'P', 'F')
+                    and node['agent'] is None and node['context'] is None,
+                    'closed_sorted_deontic_operator_required')
+        else:
+            raise UnsupportedNativeLean('unsupported_sorted_formula:'+kind)
+        # Every child re-enters this strict profile through self.formula/term.
+        # The original Boolean and O/P/F lowering remains its single owner.
+        return super().formula(node, environment, depth)
+
+
+def sorted_relational_document(renderer_ast, *, predicate_sorts):
+    """Render one explicit sorted record; no native parser or backend executes."""
+    original = {'renderer_ast': renderer_ast, 'predicate_sorts': predicate_sorts}
+    before = _sorted_relational_wire(original)
+    detached = json.loads(before)
+    payload = detached['renderer_ast']
+    require(type(payload) is dict and set(payload) == {'schema', 'profile', 'root'}
+            and payload['schema'] == SORTED_RELATIONAL_AST_SCHEMA
+            and payload['profile'] == SORTED_RELATIONAL_PROFILE,
+            'explicit_sorted_renderer_profile_required')
+    renderer = SortedFormulaRenderer(detached['predicate_sorts'])
+    body = renderer.formula(payload['root'])
+    require(renderer.used_predicates == set(renderer.predicate_sorts),
+            'every_sorted_declared_predicate_must_be_used')
+    source = SORTED_RELATIONAL_CARRIER + (
+        'def formula {Object EventFrame TimeFrame : Type} '
+        '(i : Interpretation (SortedRelationalEntity Object EventFrame TimeFrame) Unit) '
+        ': Nat → Prop := '+body+'\n')
+    require(_sorted_relational_wire(original) == before
+            and _sorted_relational_wire(detached) == before,
+            'sorted_renderer_inputs_changed_during_lowering')
+    return source, {
+        'validator': 'explicit_sorted_renderer_record_and_declared_predicate_domains',
+        'profile': SORTED_RELATIONAL_PROFILE, 'operators': list(renderer.operators),
+        'renderer_nodes': renderer.nodes,
+        'carrier_encoding': 'Sum Unit (Sum Object (Sum EventFrame TimeFrame))',
+        'ambient_time': 'Nat', 'authored_time_sort': 'TimeFrame',
+        'native_ast': False, 'backend_executed': False,
+        'assumptions': [
+            'Object, EventFrame and TimeFrame are independent arbitrary carriers and may be empty.',
+            'Only predicate arguments enter disjoint tagged carriers; quantifiers and equality retain their source sorts.',
+            'The Unit tag realizes unused constant/function fields without inhabiting a source sort; the unused agent carrier is Unit.',
+            'Same-sort equality is Lean equality, not an interpreted predicate.',
+            'O/P/F reuse distinct unconstrained interpretation parameters with their exact authored child placement.',
+            'Ambient Nat trace time is independent of authored TimeFrame; no civil-time or modal axioms are supplied.',
+        ],
+    }

@@ -1,7 +1,8 @@
 # Ordered relational requests in proposed legal graphs
 
-`legal_semantic_graph` accepts the explicit `relational_norm_v1` profile in its
-existing `build_graph`, `graph_to_ast` and `validate_graph` APIs. It transports a
+`legal_semantic_graph` accepts the explicit `relational_norm_v1` and
+`mixed_relational_norm_v1` profiles in its existing `build_graph`, `graph_to_ast`
+and `validate_graph` APIs. It transports a
 complete authored [`legal_relational_norm_v1`](legal_relational_norm_v1.md)
 request through the existing ordered JSON tree representation. No additional
 AST or graph codec is introduced.
@@ -55,18 +56,53 @@ SHA256. This invokes the existing strict typed/native structural validation.
 It neither substitutes a weaker schema check nor repairs an unsupported request.
 The original `canonical_rules_v1` and `normative_scope_v1` routes remain separate.
 
-The relational owner enforces bound Object variables, declared predicate arity,
+The Object-only `relational_norm_v1` owner enforces bound Object variables, declared predicate arity,
 ordered roles, binary Boolean operators, unary negation, individual quantifiers
 and the existing O/P/F extension. Free variables, binder shadowing, unsupported
 extensions, extra fields, constants, equality, counting, purpose and anaphora
 remain unsupported. Actor/recipient or other role names remain caller labels,
 not inferred legal sorts or validated source roles.
 
-The unchanged graph limits also apply: at most 4,096 tree nodes, depth 24, and
-1 MiB for each bounded graph JSON value. The relational owner's independent
-request and grammar limits apply as well. Consequently some otherwise accepted
-relational requests can exceed graph bounds. They are refused, never truncated
-or flattened to fit.
+The existing 4,096-node and 1 MiB graph-JSON limits remain unchanged. Tree
+depth is profile-specific: `relational_norm_v1` accepts at most 32, while
+`canonical_rules_v1` and `normative_scope_v1` retain 24. The relational owner's
+independent request and grammar limits still apply. Inputs above their selected
+profile bounds are refused, never truncated or flattened to fit.
+
+## Explicit mixed relational profile
+
+Pass the complete existing `legal-mixed-relational-norm-request/v1` request as
+`ast`, with `profile="mixed_relational_norm_v1"` in the same graph APIs. The
+branch calls the existing `prepare_mixed_relational_norm_v1`; it reuses the
+ordered tree and decoder above. It adds no AST representation, parser, implicit
+sort conversion, semantic entity extraction or graph framework. Object,
+EventFrame and TimeFrame, same-sort equality, ordered predicate arguments and
+roles, and individual forall/exists binders retain their authored structure.
+Unsupported typed content remains a refusal in the existing mixed codec.
+
+Only this opt-in profile allows an AST JSON depth of 48 and a final graph output
+of 2 MiB, including `graph_id`. Its 4,096-node limit remains unchanged. The
+existing three profiles keep their depth 24/24/32 and existing 1 MiB byte-checking behavior;
+the shared/default `wire` and `digest` limits also remain unchanged. The mixed
+codec's separate 512-node/48 grammar-depth/512 KiB request limits still apply.
+Nothing is truncated, flattened, simplified or omitted to fit a bound.
+
+The two retained §7214 complete requests have depths 45 and 42 and canonical
+request hashes `957b2011acde34b7fda85d8661061622160316605b03324a7b52c94cc17b6bc7`
+and `20017c7e69b094173ac62810c3c4d146401829f23d9e5d0626260f2227757c58`.
+Each transports all 98 typed nodes, 12 binders, six equalities and ten ordered
+predicate-role records. Their verbose existing ordered trees exceed 1 MiB;
+the explicit mixed output allowance permits complete roundtrips. Owning tests
+nominate a fictional source fixture separately. Those associations do not
+supply a governing source or edition for either retained alternative.
+
+The graph still requires independently supplied source and scope commitments,
+`scope_request=None`, and exact independent inputs for `validate_graph`.
+Changing a source revision or scope and recomputing internal hashes does not
+match the original proposal. The inner request's `source_binding` stays null;
+all source, semantic, proof and training authority flags remain false. This
+profile does not add corpus transport, a direct native-TDFOL AST roundtrip,
+a Lean build, reviewed meaning, a selected candidate or an admission decision.
 
 ## What the round trip preserves
 
@@ -97,6 +133,10 @@ a relational predicate does not create a validated legal entity, definition-use
 edge or governing norm.
 
 ## Existing corpus custody and exchange
+
+The existing corpus exchange in this section describes the Object-only
+`relational_norm_v1` profile. The new mixed graph profile does not establish
+corpus-adapter support or qualification; that boundary remains separate.
 
 [`corpus_proposed_graph_adapter`](legal_corpus_proposed_graph_adapter.md) can
 validate this proposal through the existing graph API and retain the original
@@ -155,5 +195,49 @@ Relational validation uses native parsing and generates Lean text internally.
 No `lake build`, solver execution, model inference, training, network access or
 publication is introduced by this profile. A structural qualification should
 report exact round trips and negative controls separately from any later actual
-statutory review or Lean qualification. There are no execution counts or outcome
-claims in this API guide.
+statutory review or Lean qualification. The contract sections above do not assert execution outcomes. The retained
+qualification below records its original engineering and data-operation scopes
+separately.
+
+## Profile-specific depth and retained qualification
+
+The existing owner uses `RELATIONAL_MAX_DEPTH=32` only for `relational_norm_v1`.
+`canonical_rules_v1` and `normative_scope_v1` retain `MAX_DEPTH=24`, and existing
+node, wire, schema, grammar and ordered-identity contracts remain unchanged.
+Unknown profiles and over-depth requests refuse rather than truncate.
+
+The [original focused qualification](../../../../../docs/autoformalization/evidence/legal-ir-source7346-relational-graph-depth-focused-20261025.json)
+passed 13 cases (10 new, three legacy) across eight selectors, on exact b7 source
+and unchanged c841 owning tests. Phase events were not counted; no 39-phase
+result is claimed. The explicit `semantic-graph-depth-parent:numbered_false/v1`
+fixture proxy changes only `tmp_path_factory.mktemp` for one basename to avoid
+its best-effort `current` symlink; no legal AST/source helper is replaced.
+Ordinary unadapted pytest and the whole current public runtime were not
+qualified. Earlier failures keep zero credit; the unselected test-fix candidate
+is not part of this delivery.
+
+The [separate original parent-graph observation](../../../../../docs/autoformalization/evidence/legal-ir-source7346-parent-proposed-graphs-20261025.json)
+retains 837 parent records and 16 cache rows. Both unchanged authored A/B
+alternatives have 693 nodes, 692 edges and depth27, beyond the old depth24
+relational boundary. Four shared proposed lexical mentions lie within the same
+one selected `(c)` physical occurrence, with zero relationship assertions.
+They supply neither two distinct statutory uses nor selected meaning, edition,
+governing definition or accepted entity resolution. The relational request's
+source binding remains null; earlier scope/correspondence generation is retained
+as inert references, without fresh current scope/correspondence qualification.
+
+The earlier HTML example keeps its paragraph-selector contract. The existing
+literal-parent route instead uses `bind_parent_source_occurrence` and
+`bind_parent_scope` with complete independently pinned physical parent/producer
+inputs and an undeclared edition. A parent occurrence is not thereby a
+paragraph or governing legal source.
+
+These exact source/test and literal evidence files reuse their original
+qualifications. This adoption runs no new tests, model/training, SQL, solver or
+Lean process. Current public use requires fresh original inputs and exact current
+producer commitments; do not normalize paths/hashes, reseal or relabel private
+packets/preparations/index identities or old receipts as a new generation.
+Graphs stay proposed/unreviewed, authority false and learning/gold masks zero.
+The separately bounded corpus adapter, complete context/meaning review,
+definition/two-use closure, reconstructable corpus and Lean admission keep their
+own gates. Prior depth24 deployment observations retain their historical scope.

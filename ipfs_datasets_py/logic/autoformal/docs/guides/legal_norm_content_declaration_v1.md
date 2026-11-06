@@ -108,3 +108,11 @@ The enclosing workspace maintains the retained-pilot qualification packet at
 `artifacts/legal-ir-norm-content-declaration-20261016-01/`. It includes both
 §7213 hypotheses and both officer-definition alternatives, complete pending
 declarations, source captures and original extraction/qualification lineage.
+
+## Public source integration (2026-10-24)
+
+The unsigned owner and owning test are byte-exact to their original 144-case generation (`4d72a8e7…` / `5252f848…`). The [shared fresh integration](../../../../../docs/autoformalization/evidence/legal-ir-norm-content-declaration-binding-public-integration-20261024.json) passed six existing declaration controls within a separate 21-case / 63-phase cohort. The full 144-case qualification and original A/B preparation were not rerun. Preserve the original qualification's documented source READ, resource, storage and durability scope; the fresh namespace/raw-buffer/phase evidence does not apply retrospectively to it.
+
+The other fifteen fresh cases cover declaration binding: twelve existing controls and three later existing cases. That later binding generation differs from its original 64-case implementation by one raw-length ledger mark; its qualification is separate from this unchanged unsigned owner. The existing signed-response and adjudication owners retain their own completed scopes.
+
+Original A/B declarations remain unsubmitted proposals over one retained §7213 paragraph and two §101 officer-definition alternatives, with no accepted meaning, governing use or applied definition. Publication supplies no actual review, signer, trusted clock, complete meaning unit, physical cache join, second statutory norm or training/Lean admission. All source-width/task/checkpoint/context/output and eligibility contracts remain unchanged.

@@ -831,3 +831,708 @@ def test_coordinate_corpus_validator_fences_offered_report_after_genuine_delegat
     with pytest.raises(ValueError):
         _validate_coordinate_corpus(case, report)
     assert calls
+
+
+# The explicit wire port reuses the genuine graph-v3/eligibility-v4/join-v3
+# owners and the existing candidate adapter and physical bundle writer.
+from tests.unit.logic.autoformal.test_legal_span_cache_intake import (
+    wire_coordinate_join,
+    wire_original_replay_v4,
+    wire_graph_v3_case,
+    _wire_graph_v3_request,
+    _prepare_wire_graph_v3,
+)
+
+
+_WIRE_CORPUS_SCHEMA = "legal-coordinate-graph-corpus/v2"
+_WIRE_CORPUS_EXPORT_SCHEMA = "legal-coordinate-graph-corpus-output-export/v2"
+_WIRE_CORPUS_PROFILE = "original-input-wire-coordinate-graph-v3-corpus-custody/v1"
+_WIRE_CORPUS_METADATA = "hf-default-parquet-envelope/v1"
+_WIRE_CORPUS_BUNDLE_FILES = {"manifest.json", "snapshot.json", "nodes.parquet", "edges.parquet"}
+
+
+@pytest.fixture
+def wire_corpus_v2_case(wire_graph_v3_case):
+    upstream = wire_graph_v3_case
+    intake = _prepare_wire_graph_v3(upstream)
+    request_raw = _wire_graph_v3_request(upstream)
+    intake_inputs = {
+        "request_raw": request_raw,
+        "eligibility_report_raw": upstream["eligibility_raw"],
+        "eligibility_request_raw": upstream["eligibility_request_raw"],
+        "join_manifest_raw": upstream["join_raw"],
+        "expected_request_sha256": sha(request_raw),
+        "join_originals": upstream["originals"],
+        "source_bindings": upstream["bindings"],
+    }
+    slots = []
+    for output in intake["output_occurrences"]:
+        slot = _custody_empty_slot(output)
+        if output["graph"] is not None:
+            inputs = deepcopy(output["graph_request"])
+            inputs.update(semantic_declarations=None, scope_request=None)
+            assert set(inputs) == adapter.TRUSTED_INPUT_FIELDS
+            binding = upstream["bindings"][output["physical_identity_sha256"]]
+            raw_html = _coordinate_base64.b64decode(binding["raw_html_base64"], validate=True)
+            slot.update(expected_proposal_sha256=sha(canonical_dag_json_bytes(output["graph"])),
+                trusted_proposal_inputs=inputs,
+                expected_inputs_sha256=sha(canonical_dag_json_bytes(inputs)),
+                expected_raw_sha256=sha(raw_html),
+                expected_extracted_sha256=sha(binding["document"]["document_text"].encode("utf-8")))
+        slots.append(slot)
+    return {"upstream": upstream, "intake": intake,
+        "intake_raw": (json.dumps(intake, ensure_ascii=False, indent=2) + "\n").encode("utf-8"),
+        "intake_inputs": intake_inputs, "output_inputs": slots}
+
+
+def _prepare_wire_corpus_v2(case, **changes):
+    return adapter.prepare_coordinate_graph_corpus_v2(case["intake_raw"],
+        **_custody_arguments(case, **changes))
+
+
+def _validate_wire_corpus_v2(case, report, **changes):
+    value = json.loads(report) if type(report) is bytes else report
+    arguments = _custody_arguments(case)
+    arguments["expected_report_sha256"] = adapter.coordinate_graph_corpus_sha256(value)
+    arguments.update(changes)
+    return adapter.validate_coordinate_graph_corpus_v2(report, case["intake_raw"], **arguments)
+
+
+def _export_wire_corpus_v2(case, report, ordinal, directory, **changes):
+    arguments = _custody_arguments(case)
+    arguments["expected_report_sha256"] = adapter.coordinate_graph_corpus_sha256(report)
+    arguments.update(changes)
+    return adapter.export_coordinate_graph_corpus_output_v2(
+        report, ordinal, directory, case["intake_raw"], **arguments)
+
+
+def _wire_corpus_original_drift(case):
+    case["intake_inputs"]["join_originals"]["source_metadata_bytes"]["README.md"] += b"authored corpus metadata drift"
+
+
+def _assert_wire_corpus_unreviewed(report):
+    _assert_coordinate_corpus_unreviewed(report)
+    assert report["schema"] == _WIRE_CORPUS_SCHEMA
+    assert report["source_compatibility_profile"] == _WIRE_CORPUS_PROFILE
+    assert report["metadata_profile"] == _WIRE_CORPUS_METADATA
+    assert report["consumer_eligible"] is False and report["atomic_snapshot_verified"] is False
+    assert report["coordinate_to_graph_source_correspondence"] == "unverified_no_independent_crosswalk"
+    assert report["current_source_release_correspondence"] == "unverified_no_independent_crosswalk"
+
+    def check(value):
+        if type(value) is dict:
+            for key, item in value.items():
+                if key.endswith("_mask"):
+                    assert type(item) is int and item == 0
+                elif key == "field_masks":
+                    assert type(item) is dict and all(type(mask) is int and mask == 0 for mask in item.values())
+                elif key == "authority":
+                    assert type(item) is dict and all(type(flag) is bool and flag is False for flag in item.values())
+                check(item)
+        elif type(value) is list:
+            for item in value:
+                check(item)
+
+    check(report)
+
+
+@_custody_supported
+@pytest.mark.parametrize("offered", ["object", "bytes"])
+def test_wire_corpus_v2_genuine_owners_preserve_canonical_graph_typed_ast_and_raw_carrier(
+    wire_corpus_v2_case, monkeypatch, offered,
+):
+    case = wire_corpus_v2_case
+    genuine_graph = _coordinate_intake.validate_coordinate_source_graph_intake_v3
+    genuine_adapt = adapter.adapt_proposed_graph_bytes
+    genuine_candidate = adapter.validate_proposed_graph_candidate
+    calls = {"graph": [], "adapt": [], "candidate": []}
+
+    def graph(*args, **kwargs):
+        result = genuine_graph(*args, **kwargs)
+        calls["graph"].append(result)
+        return result
+
+    def adapt(*args, **kwargs):
+        result = genuine_adapt(*args, **kwargs)
+        calls["adapt"].append(result)
+        return result
+
+    def candidate(*args, **kwargs):
+        result = genuine_candidate(*args, **kwargs)
+        calls["candidate"].append(result)
+        return result
+
+    monkeypatch.setattr(_coordinate_intake, "validate_coordinate_source_graph_intake_v3", graph)
+    monkeypatch.setattr(adapter, "adapt_proposed_graph_bytes", adapt)
+    monkeypatch.setattr(adapter, "validate_proposed_graph_candidate", candidate)
+    before = deepcopy(case["intake_inputs"]), deepcopy(case["output_inputs"])
+    report = _prepare_wire_corpus_v2(case)
+    assert len(calls["graph"]) == 2 and len(calls["candidate"]) == 2
+    assert len(calls["adapt"]) >= 4
+    assert report["counts"] == {"physical_rows": 1, "row_references": 1,
+        "output_occurrences": 2, "candidate_outputs": 2, "unresolved_outputs": 0}
+    assert report["source_metadata_intake_sha256"] == case["upstream"]["joined"]["source_metadata_intake_sha256"]
+    assert report["physical_rows"] == case["intake"]["physical_rows"]
+    assert report["row_references"] == case["intake"]["row_references"]
+    assert report["intake_report_raw_utf8"].encode("utf-8") == case["intake_raw"]
+    raw_intake = json.loads(report["intake_report_raw_utf8"])
+    assert raw_intake["eligibility_report_raw_utf8"].encode("utf-8") == case["upstream"]["eligibility_raw"]
+    retained_eligibility = json.loads(raw_intake["eligibility_report_raw_utf8"])
+    assert retained_eligibility["join_manifest_raw_utf8"].encode("utf-8") == case["upstream"]["join_raw"]
+    retained_join = json.loads(retained_eligibility["join_manifest_raw_utf8"])
+    assert retained_join["paired_bundles"][0]["payload_intake"]["source_coordinates"] == \
+        case["upstream"]["joined"]["paired_bundles"][0]["payload_intake"]["source_coordinates"]
+    for output, original in zip(report["output_occurrences"], case["intake"]["output_occurrences"]):
+        assert output["intake_output"] == original
+        assert {field: output[field] for field in _CUSTODY_IDENTITY} == {
+            field: original[field] for field in _CUSTODY_IDENTITY}
+        stored = output["candidate"]
+        assert stored["proposal_record"]["proposal_json"].encode("utf-8") == canonical_dag_json_bytes(original["graph"])
+        assert json.loads(stored["proposal_record"]["proposal_json"]) == original["graph"]
+        assert stored["ast_record"]["ast"] == original["graph_request"]["ast"] == proposed.graph_to_ast(original["graph"])
+        assert stored["ast_record"]["ast"] == original["eligibility_output"]["canonical_ir"]
+        assert "intake_report_raw_utf8" not in output and "intake_report_raw_utf8" not in stored
+    assert (case["intake_inputs"], case["output_inputs"]) == before
+    assert _validate_wire_corpus_v2(case, _custody_wire(report) if offered == "bytes" else report) == report
+    assert len(calls["graph"]) == 4
+    _assert_wire_corpus_unreviewed(report)
+
+
+@_custody_repeated
+def test_wire_corpus_v2_repeated_equal_text_keeps_physical_routes_and_raw_output_slots(wire_corpus_v2_case):
+    case = wire_corpus_v2_case
+    report = _prepare_wire_corpus_v2(case)
+    outputs = report["output_occurrences"]
+    assert len(report["physical_rows"]) == len(report["row_references"]) == 2
+    assert report["physical_rows"][0]["source_text"] == report["physical_rows"][1]["source_text"]
+    assert len(outputs) == len(case["output_inputs"]) == 4
+    assert [row["output_occurrence_ordinal"] for row in outputs] == [0, 1, 2, 3]
+    assert [row["intake_output"]["source_coordinate_span_index"] for row in outputs] == [1, 1, 3, 3]
+    assert len({row["physical_identity_sha256"] for row in outputs}) == 2
+    assert len({row["candidate"]["source_occurrence"]["record_cid"] for row in outputs}) == 2
+    assert [row["route"] for row in outputs] == ["compiler.formal_outputs", "compiler.canonical_formal_outputs"] * 2
+    assert [row["intake_output"] for row in outputs] == case["intake"]["output_occurrences"]
+    assert [row["intake_output"]["eligibility_output"] for row in outputs] == case["upstream"]["eligibility"]["output_occurrences"]
+    assert _validate_wire_corpus_v2(case, report) == report
+    _assert_wire_corpus_unreviewed(report)
+
+
+def test_wire_corpus_v2_unsupported_outputs_keep_every_slot_and_refuse_export(wire_corpus_v2_case, tmp_path):
+    case = wire_corpus_v2_case
+    assert case["intake"]["output_occurrences"]
+    assert all(row["graph"] is None for row in case["intake"]["output_occurrences"])
+    report = _prepare_wire_corpus_v2(case)
+    assert [row["intake_output"] for row in report["output_occurrences"]] == case["intake"]["output_occurrences"]
+    assert len(report["output_occurrences"]) == len(case["output_inputs"])
+    assert all(row["candidate"] is None and row["disposition"] == "unresolved"
+        and row["custody_issues"] == [{"code": "upstream_graph_unresolved"}]
+        for row in report["output_occurrences"])
+    assert all(all(slot[field] is None for field in _CUSTODY_FIELDS) for slot in case["output_inputs"])
+    destination = tmp_path / "wire-corpus-unsupported"
+    with pytest.raises(ValueError):
+        _export_wire_corpus_v2(case, report, 0, destination)
+    assert not destination.exists()
+    _assert_wire_corpus_unreviewed(report)
+
+
+@_custody_supported
+def test_wire_corpus_v2_export_uses_real_writer_readback_and_four_graph_validations(
+    wire_corpus_v2_case, monkeypatch, tmp_path,
+):
+    case = wire_corpus_v2_case
+    report = _prepare_wire_corpus_v2(case)
+    genuine_export = adapter.export_proposed_graph_candidate
+    genuine_graph = _coordinate_intake.validate_coordinate_source_graph_intake_v3
+    exports, graphs = [], []
+
+    def export(*args, **kwargs):
+        result = genuine_export(*args, **kwargs)
+        exports.append(result)
+        return result
+
+    def graph(*args, **kwargs):
+        result = genuine_graph(*args, **kwargs)
+        graphs.append(result)
+        return result
+
+    monkeypatch.setattr(adapter, "export_proposed_graph_candidate", export)
+    monkeypatch.setattr(_coordinate_intake, "validate_coordinate_source_graph_intake_v3", graph)
+    destination = tmp_path / "wire-corpus-output"
+    receipt = _export_wire_corpus_v2(case, report, 1, destination)
+    selected = report["output_occurrences"][1]
+    assert len(graphs) == 4 and exports == [receipt["graph_manifest"]]
+    assert receipt["schema"] == _WIRE_CORPUS_EXPORT_SCHEMA
+    assert receipt["source_compatibility_profile"] == _WIRE_CORPUS_PROFILE
+    assert receipt["metadata_profile"] == _WIRE_CORPUS_METADATA
+    assert receipt["source_metadata_intake_sha256"] == report["source_metadata_intake_sha256"]
+    assert receipt["corpus_report_sha256"] == adapter.coordinate_graph_corpus_sha256(report)
+    assert {field: receipt[field] for field in _CUSTODY_IDENTITY} == {field: selected[field] for field in _CUSTODY_IDENTITY}
+    assert receipt["candidate_record_cid"] == selected["candidate"]["record_cid"]
+    assert receipt["graph_manifest_sha256"] == sha(canonical_dag_json_bytes(receipt["graph_manifest"]))
+    loaded = load_graph_bundle(destination, expected_manifest_sha256=receipt["graph_manifest_sha256"])
+    assert loaded["snapshot"] == selected["candidate"]["graph"]
+    assert {path.name for path in destination.iterdir()} == _WIRE_CORPUS_BUNDLE_FILES
+    assert receipt["snapshot_cid"] == selected["candidate"]["graph"]["record_cid"]
+    assert receipt["delegated_writer_readback_performed"] is True
+    assert receipt["full_candidate_retained_separately_required"] is True
+    assert receipt["selected_occurrence"] is None and receipt["atomic_snapshot_verified"] is False
+    assert receipt["consumer_eligible"] is False
+    assert receipt["coordinate_to_graph_source_correspondence"] == "unverified_no_independent_crosswalk"
+    assert all(type(flag) is bool and flag is False for flag in receipt["authority"].values())
+    for field in ("training_mask", "evaluation_gold_mask", "source_binding_mask"):
+        assert type(receipt[field]) is int and receipt[field] == 0
+
+
+@_custody_supported
+@pytest.mark.parametrize("route", ["old-v2-into-new-v2", "wire-v3-into-old-v1"])
+def test_wire_corpus_v2_and_old_v1_refuse_genuine_foreign_graph_routes(request, coordinate_join, monkeypatch, route):
+    case = request.getfixturevalue("coordinate_corpus_case" if route == "old-v2-into-new-v2" else "wire_corpus_v2_case")
+    monkeypatch.setattr(adapter, "adapt_proposed_graph_bytes",
+        lambda *args, **kwargs: pytest.fail("foreign graph route reached corpus candidate adapter"))
+    with pytest.raises(ValueError):
+        (_prepare_wire_corpus_v2 if route == "old-v2-into-new-v2" else _prepare_coordinate_corpus)(case)
+
+
+@_custody_supported
+@pytest.mark.parametrize("axis", ["metadata_profile", "source_metadata_intake_sha256"])
+def test_wire_corpus_v2_resealed_metadata_axes_cannot_replace_genuine_ancestry(wire_corpus_v2_case, monkeypatch, axis):
+    case = wire_corpus_v2_case
+    case["intake"][axis] = "foreign-wire-profile" if axis == "metadata_profile" else "0" * 64
+    case["intake_raw"] = _custody_wire(case["intake"])
+    monkeypatch.setattr(adapter, "adapt_proposed_graph_bytes",
+        lambda *args, **kwargs: pytest.fail("resealed metadata reached corpus candidate adapter"))
+    with pytest.raises(ValueError):
+        _prepare_wire_corpus_v2(case)
+
+
+@_custody_supported
+@pytest.mark.parametrize("pin", ["expected_intake_raw_sha256", "expected_intake_sha256",
+    "expected_intake_inputs_sha256", "expected_output_inputs_sha256"])
+def test_wire_corpus_v2_checks_all_four_independent_pins(wire_corpus_v2_case, pin):
+    with pytest.raises(ValueError):
+        _prepare_wire_corpus_v2(wire_corpus_v2_case, **{pin: "0" * 64})
+
+
+@_custody_repeated
+@pytest.mark.parametrize("damage", ["drop", "reorder", "identity", "boolean_ordinal"])
+def test_wire_corpus_v2_recommitted_slots_require_exact_complete_ordered_population(wire_corpus_v2_case, damage):
+    case = wire_corpus_v2_case
+    if damage == "drop":
+        case["output_inputs"].pop()
+    elif damage == "reorder":
+        case["output_inputs"].reverse()
+    elif damage == "identity":
+        case["output_inputs"][0]["physical_identity_sha256"] = "0" * 64
+    else:
+        case["output_inputs"][0]["output_occurrence_ordinal"] = True
+    with pytest.raises(ValueError):
+        _prepare_wire_corpus_v2(case, expected_output_inputs_sha256=sha(_custody_wire(case["output_inputs"])))
+
+
+@_custody_repeated
+@pytest.mark.parametrize("damage", ["reference", "mask", "candidate"])
+def test_wire_corpus_v2_rehashed_report_requires_genuine_complete_regeneration(wire_corpus_v2_case, damage):
+    case = wire_corpus_v2_case
+    report = _prepare_wire_corpus_v2(case)
+    if damage == "reference":
+        report["row_references"].reverse()
+    elif damage == "mask":
+        report["output_occurrences"][0]["training_mask"] = True
+    else:
+        candidate = report["output_occurrences"][0]["candidate"]
+        candidate["ast_record"]["ast"]["rules"][0]["actor"] = "resealed foreign actor"
+        candidate["ast_record"] = reseal(candidate["ast_record"])
+        report["output_occurrences"][0]["candidate"] = reseal(candidate)
+    with pytest.raises(ValueError):
+        _validate_wire_corpus_v2(case, report)
+
+
+@_custody_supported
+@pytest.mark.parametrize("damage", ["metadata_original", "source_binding", "output_slot", "producer", "physical_table"])
+def test_wire_corpus_v2_late_mutation_during_genuine_adapter_is_refused(wire_corpus_v2_case, monkeypatch, damage):
+    case = wire_corpus_v2_case
+    genuine = adapter.adapt_proposed_graph_bytes
+    calls, changed = [], []
+
+    def mutate(*args, **kwargs):
+        candidate = genuine(*args, **kwargs)
+        calls.append(candidate)
+        if not changed:
+            changed.append(damage)
+            if damage == "metadata_original":
+                _wire_corpus_original_drift(case)
+            elif damage == "source_binding":
+                next(iter(case["intake_inputs"]["source_bindings"].values()))["context_observation"]["status"] = "late changed"
+            elif damage == "output_slot":
+                case["output_inputs"][0]["trusted_proposal_inputs"]["ast"]["rules"][0]["actor"] = "late changed"
+            elif damage == "producer":
+                monkeypatch.setattr(_coordinate_intake, "validate_coordinate_source_graph_intake_v3",
+                    lambda *args, **kwargs: pytest.fail("changed producer callback was invoked"))
+            else:
+                path = _coordinate_graph_retained_table(case["upstream"])
+                path.write_bytes(path.read_bytes() + b"changed during genuine corpus adaptation")
+        return candidate
+
+    monkeypatch.setattr(adapter, "adapt_proposed_graph_bytes", mutate)
+    with pytest.raises(ValueError):
+        _prepare_wire_corpus_v2(case)
+    assert calls and changed == [damage]
+
+
+@_custody_supported
+def test_wire_corpus_v2_primary_error_retains_observed_genuine_closing_failure(wire_corpus_v2_case, monkeypatch):
+    case = wire_corpus_v2_case
+    genuine_adapt = adapter.adapt_proposed_graph_bytes
+    genuine_graph = _coordinate_intake.validate_coordinate_source_graph_intake_v3
+    primary = RuntimeError("authored wire corpus adaptation primary failure")
+    attempts, failures, candidates = [], [], []
+
+    def graph(*args, **kwargs):
+        attempts.append(True)
+        try:
+            return genuine_graph(*args, **kwargs)
+        except BaseException as error:
+            failures.append(error)
+            raise
+
+    def fail(*args, **kwargs):
+        candidate = genuine_adapt(*args, **kwargs)
+        candidates.append(candidate)
+        path = _coordinate_graph_retained_table(case["upstream"])
+        path.write_bytes(path.read_bytes() + b"authored closing failure after real candidate")
+        raise primary
+
+    monkeypatch.setattr(_coordinate_intake, "validate_coordinate_source_graph_intake_v3", graph)
+    monkeypatch.setattr(adapter, "adapt_proposed_graph_bytes", fail)
+    with pytest.raises(RuntimeError, match="authored wire corpus adaptation primary failure") as observed:
+        _prepare_wire_corpus_v2(case)
+    assert observed.value is primary and candidates
+    assert len(attempts) == 2 and len(failures) == 1
+    detail = type(failures[0]).__name__ + ": " + str(failures[0])[:512]
+    assert any(detail in note for note in getattr(primary, "__notes__", ()))
+
+
+@_custody_supported
+def test_wire_corpus_v2_opening_graph_return_stays_guarded_after_genuine_closing(wire_corpus_v2_case, monkeypatch):
+    case = wire_corpus_v2_case
+    genuine = _coordinate_intake.validate_coordinate_source_graph_intake_v3
+    returned, changed = [], []
+
+    def mutate(*args, **kwargs):
+        result = genuine(*args, **kwargs)
+        returned.append(result)
+        if len(returned) == 2:
+            returned[0]["output_occurrences"][0]["training_mask"] = 1
+            changed.append(True)
+        return result
+
+    monkeypatch.setattr(_coordinate_intake, "validate_coordinate_source_graph_intake_v3", mutate)
+    with pytest.raises(ValueError):
+        _prepare_wire_corpus_v2(case)
+    assert changed == [True] and len(returned) == 2
+
+
+@_custody_supported
+@pytest.mark.parametrize("returned_kind", ["adapter", "checked"])
+def test_wire_corpus_v2_genuine_candidate_return_stays_guarded_after_genuine_closing(wire_corpus_v2_case, monkeypatch, returned_kind):
+    case = wire_corpus_v2_case
+    genuine_adapt = adapter.adapt_proposed_graph_bytes
+    genuine_validate = adapter.validate_proposed_graph_candidate
+    genuine_graph = _coordinate_intake.validate_coordinate_source_graph_intake_v3
+    candidates, checked, graphs, changed = [], [], [], []
+
+    def adapt(*args, **kwargs):
+        result = genuine_adapt(*args, **kwargs)
+        candidates.append(result)
+        return result
+
+    def validate(*args, **kwargs):
+        result = genuine_validate(*args, **kwargs)
+        checked.append(result)
+        return result
+
+    def graph(*args, **kwargs):
+        result = genuine_graph(*args, **kwargs)
+        graphs.append(result)
+        if len(graphs) == 2:
+            assert candidates and checked and candidates[0] is not checked[0]
+            held = candidates if returned_kind == "adapter" else checked
+            held[0]["ast_record"]["ast"]["rules"][0]["actor"] = "changed held genuine " + returned_kind
+            changed.append(True)
+        return result
+
+    monkeypatch.setattr(adapter, "adapt_proposed_graph_bytes", adapt)
+    monkeypatch.setattr(adapter, "validate_proposed_graph_candidate", validate)
+    monkeypatch.setattr(_coordinate_intake, "validate_coordinate_source_graph_intake_v3", graph)
+    with pytest.raises(ValueError):
+        _prepare_wire_corpus_v2(case)
+    assert changed == [True] and len(graphs) == 2
+
+
+@_custody_supported
+def test_wire_corpus_v2_validator_keeps_offered_report_guarded_during_genuine_adapter(wire_corpus_v2_case, monkeypatch):
+    case = wire_corpus_v2_case
+    report = _prepare_wire_corpus_v2(case)
+    genuine = adapter.adapt_proposed_graph_bytes
+    reached = []
+
+    def mutate(*args, **kwargs):
+        result = genuine(*args, **kwargs)
+        report["output_occurrences"][0]["source_binding_mask"] = 1
+        reached.append(True)
+        return result
+
+    monkeypatch.setattr(adapter, "adapt_proposed_graph_bytes", mutate)
+    with pytest.raises(ValueError):
+        _validate_wire_corpus_v2(case, report)
+    assert reached
+
+
+@_custody_supported
+@pytest.mark.parametrize("damage", ["originals", "slots"])
+def test_wire_corpus_v2_outer_validator_keeps_inputs_after_genuine_inner_prepare(wire_corpus_v2_case, monkeypatch, damage):
+    case = wire_corpus_v2_case
+    report = _prepare_wire_corpus_v2(case)
+    genuine = adapter._prepare_coordinate_graph_corpus
+    changed = []
+
+    def mutate(*args, **kwargs):
+        result = genuine(*args, **kwargs)
+        assert kwargs["profile_version"] == 2
+        if damage == "originals":
+            _wire_corpus_original_drift(case)
+        else:
+            case["output_inputs"][0]["trusted_proposal_inputs"]["ast"]["rules"][0]["actor"] = "changed after real inner prepare"
+        changed.append(True)
+        return result
+
+    monkeypatch.setattr(adapter, "_prepare_coordinate_graph_corpus", mutate)
+    with pytest.raises(ValueError):
+        _validate_wire_corpus_v2(case, report)
+    assert changed == [True]
+
+
+@_custody_supported
+def test_wire_corpus_v2_outer_parsed_intake_cannot_nominate_a_foreign_file(wire_corpus_v2_case, monkeypatch):
+    case = wire_corpus_v2_case
+    report = _prepare_wire_corpus_v2(case)
+    genuine_read = adapter._corpus_read
+    genuine_prepare = adapter._prepare_coordinate_graph_corpus
+    genuine_plan = adapter._corpus_wire_physical_plan
+    parsed, changed, plans = [], [], []
+    sentinel = "unselected/outer-wire-corpus-validator.parquet"
+
+    def read(*args, **kwargs):
+        result = genuine_read(*args, **kwargs)
+        if len(args) > 2 and args[2] == "coordinate graph intake":
+            parsed.append(result)
+        return result
+
+    def mutate(*args, **kwargs):
+        result = genuine_prepare(*args, **kwargs)
+        assert kwargs["profile_version"] == 2 and len(parsed) >= 2
+        eligibility = json.loads(parsed[0]["eligibility_report_raw_utf8"])
+        joined = json.loads(eligibility["join_manifest_raw_utf8"])
+        joined["span_inventory"]["manifests"][0]["manifest"]["tables"]["paired_spans"]["path_in_repo"] = sentinel
+        eligibility["join_manifest_raw_utf8"] = _custody_wire(joined).decode("utf-8")
+        parsed[0]["eligibility_report_raw_utf8"] = _custody_wire(eligibility).decode("utf-8")
+        changed.append(True)
+        return result
+
+    def plan(*args, **kwargs):
+        assert not changed, "mutated outer parsed intake reached physical file nomination"
+        plans.append(True)
+        return genuine_plan(*args, **kwargs)
+
+    monkeypatch.setattr(adapter, "_corpus_read", read)
+    monkeypatch.setattr(adapter, "_prepare_coordinate_graph_corpus", mutate)
+    monkeypatch.setattr(adapter, "_corpus_wire_physical_plan", plan)
+    with pytest.raises(ValueError):
+        _validate_wire_corpus_v2(case, report)
+    assert changed == [True] and plans
+
+
+@_custody_supported
+@pytest.mark.parametrize("damage", ["originals", "detached_report"])
+def test_wire_corpus_v2_postclosing_serialization_keeps_originals_and_detached_return_guarded(wire_corpus_v2_case, monkeypatch, damage):
+    case = wire_corpus_v2_case
+    genuine_graph = _coordinate_intake.validate_coordinate_source_graph_intake_v3
+    genuine_read, genuine_wire = adapter._corpus_read, adapter._corpus_wire
+    graphs, detached, changed = [], [], []
+
+    def graph(*args, **kwargs):
+        result = genuine_graph(*args, **kwargs)
+        graphs.append(result)
+        return result
+
+    def read(*args, **kwargs):
+        result = genuine_read(*args, **kwargs)
+        if type(result) is dict and result.get("schema") == _WIRE_CORPUS_SCHEMA:
+            detached.append(result)
+        return result
+
+    def wire(value, *args, **kwargs):
+        raw = genuine_wire(value, *args, **kwargs)
+        eligible = type(value) is dict and value.get("schema") == _WIRE_CORPUS_SCHEMA
+        if damage == "detached_report":
+            eligible = eligible and any(value is item for item in detached)
+        if len(graphs) == 2 and eligible and not changed:
+            if damage == "originals":
+                _wire_corpus_original_drift(case)
+            else:
+                value["counts"]["candidate_outputs"] += 1
+            changed.append(True)
+        return raw
+
+    monkeypatch.setattr(_coordinate_intake, "validate_coordinate_source_graph_intake_v3", graph)
+    monkeypatch.setattr(adapter, "_corpus_read", read)
+    monkeypatch.setattr(adapter, "_corpus_wire", wire)
+    with pytest.raises(ValueError):
+        _prepare_wire_corpus_v2(case)
+    assert changed == [True] and len(graphs) == 2
+    if damage == "detached_report":
+        assert detached
+
+
+@_custody_supported
+@pytest.mark.parametrize("ordinal", [True, -1, 2], ids=["boolean", "negative", "out_of_range"])
+def test_wire_corpus_v2_export_requires_plain_in_range_resolved_ordinal(wire_corpus_v2_case, monkeypatch, tmp_path, ordinal):
+    case = wire_corpus_v2_case
+    report = _prepare_wire_corpus_v2(case)
+    monkeypatch.setattr(adapter, "export_proposed_graph_candidate",
+        lambda *args, **kwargs: pytest.fail("invalid wire ordinal reached real graph writer"))
+    destination = tmp_path / "refused-wire-ordinal"
+    with pytest.raises(ValueError):
+        _export_wire_corpus_v2(case, report, ordinal, destination)
+    assert not destination.exists()
+
+
+@_custody_supported
+def test_wire_corpus_v2_real_writer_closing_drift_retains_four_unqualified_files(wire_corpus_v2_case, monkeypatch, tmp_path):
+    case = wire_corpus_v2_case
+    report = _prepare_wire_corpus_v2(case)
+    genuine = adapter.export_proposed_graph_candidate
+    exports = []
+
+    def mutate(*args, **kwargs):
+        result = genuine(*args, **kwargs)
+        exports.append(result)
+        path = _coordinate_graph_retained_table(case["upstream"])
+        path.write_bytes(path.read_bytes() + b"changed after real wire graph writer")
+        return result
+
+    monkeypatch.setattr(adapter, "export_proposed_graph_candidate", mutate)
+    destination = tmp_path / "written-wire-but-unqualified"
+    with pytest.raises(ValueError):
+        _export_wire_corpus_v2(case, report, 0, destination)
+    assert len(exports) == 1 and {path.name for path in destination.iterdir()} == _WIRE_CORPUS_BUNDLE_FILES
+    retained = load_graph_bundle(destination, expected_manifest_sha256=sha(canonical_dag_json_bytes(exports[0])))
+    assert retained["snapshot"] == report["output_occurrences"][0]["candidate"]["graph"]
+
+
+@_custody_supported
+@pytest.mark.parametrize("damage", ["offered_report", "physical_bundle"])
+def test_wire_corpus_v2_postwriter_report_or_bundle_drift_refuses_receipt_without_repair(wire_corpus_v2_case, monkeypatch, tmp_path, damage):
+    case = wire_corpus_v2_case
+    report = _prepare_wire_corpus_v2(case)
+    genuine = adapter.export_proposed_graph_candidate
+    destination = tmp_path / "wire-export-late-drift"
+    changed, written = [], []
+
+    def mutate(*args, **kwargs):
+        result = genuine(*args, **kwargs)
+        written.append(result)
+        if damage == "offered_report":
+            report["output_occurrences"][0]["training_mask"] = 1
+        else:
+            path = destination / "edges.parquet"
+            path.write_bytes(path.read_bytes() + b"authored late bundle drift")
+            changed.append(path.read_bytes())
+        return result
+
+    monkeypatch.setattr(adapter, "export_proposed_graph_candidate", mutate)
+    with pytest.raises(ValueError):
+        _export_wire_corpus_v2(case, report, 0, destination)
+    assert len(written) == 1 and {path.name for path in destination.iterdir()} == _WIRE_CORPUS_BUNDLE_FILES
+    if damage == "physical_bundle":
+        assert changed == [(destination / "edges.parquet").read_bytes()]
+    else:
+        retained = load_graph_bundle(destination, expected_manifest_sha256=sha(canonical_dag_json_bytes(written[0])))
+        assert retained["snapshot"] == report["output_occurrences"][0]["candidate"]["graph"]
+
+
+@_custody_supported
+@pytest.mark.parametrize("returned_kind", ["writer_manifest", "loader_readback"])
+def test_wire_corpus_v2_genuine_export_returns_stay_guarded_after_genuine_closing(
+    wire_corpus_v2_case, monkeypatch, tmp_path, returned_kind,
+):
+    case = wire_corpus_v2_case
+    report = _prepare_wire_corpus_v2(case)
+    genuine_export = adapter.export_proposed_graph_candidate
+    genuine_witness = adapter._corpus_wire_export_witness
+    genuine_graph = _coordinate_intake.validate_coordinate_source_graph_intake_v3
+    manifests, manifest_pins, readbacks, graphs, changed = [], [], [], [], []
+
+    def export(*args, **kwargs):
+        result = genuine_export(*args, **kwargs)
+        manifests.append(result)
+        manifest_pins.append(sha(canonical_dag_json_bytes(result)))
+        return result
+
+    def witness(*args, **kwargs):
+        result = genuine_witness(*args, **kwargs)
+        readbacks.append(result[1])
+        return result
+
+    def graph(*args, **kwargs):
+        result = genuine_graph(*args, **kwargs)
+        graphs.append(result)
+        if len(graphs) == 4:
+            assert manifests and readbacks
+            if returned_kind == "writer_manifest":
+                manifests[0]["snapshot_cid"] = "changed held genuine writer return"
+            else:
+                readbacks[0]["snapshot"]["record_cid"] = "changed held genuine loader return"
+            changed.append(returned_kind)
+        return result
+
+    monkeypatch.setattr(adapter, "export_proposed_graph_candidate", export)
+    monkeypatch.setattr(adapter, "_corpus_wire_export_witness", witness)
+    monkeypatch.setattr(_coordinate_intake, "validate_coordinate_source_graph_intake_v3", graph)
+    destination = tmp_path / "wire-held-export-return"
+    with pytest.raises(ValueError):
+        _export_wire_corpus_v2(case, report, 0, destination)
+    assert changed == [returned_kind] and len(graphs) == 4
+    assert {path.name for path in destination.iterdir()} == _WIRE_CORPUS_BUNDLE_FILES
+    # Return-object tampering leaves the genuine physical writer output intact.
+    retained = load_graph_bundle(destination, expected_manifest_sha256=manifest_pins[0])
+    assert retained["snapshot"] == report["output_occurrences"][0]["candidate"]["graph"]
+
+
+@_custody_supported
+def test_wire_corpus_v2_final_receipt_serialization_keeps_original_inputs_guarded(wire_corpus_v2_case, monkeypatch, tmp_path):
+    case = wire_corpus_v2_case
+    report = _prepare_wire_corpus_v2(case)
+    genuine_graph = _coordinate_intake.validate_coordinate_source_graph_intake_v3
+    genuine_wire = adapter._corpus_wire
+    graphs, changed = [], []
+
+    def graph(*args, **kwargs):
+        result = genuine_graph(*args, **kwargs)
+        graphs.append(result)
+        return result
+
+    def wire(value, *args, **kwargs):
+        raw = genuine_wire(value, *args, **kwargs)
+        if len(graphs) == 4 and not changed and type(value) is dict and value.get("schema") == _WIRE_CORPUS_EXPORT_SCHEMA:
+            _wire_corpus_original_drift(case)
+            changed.append(True)
+        return raw
+
+    monkeypatch.setattr(_coordinate_intake, "validate_coordinate_source_graph_intake_v3", graph)
+    monkeypatch.setattr(adapter, "_corpus_wire", wire)
+    destination = tmp_path / "wire-receipt-final-drift"
+    with pytest.raises(ValueError):
+        _export_wire_corpus_v2(case, report, 0, destination)
+    assert changed == [True] and len(graphs) == 4
+    assert {path.name for path in destination.iterdir()} == _WIRE_CORPUS_BUNDLE_FILES

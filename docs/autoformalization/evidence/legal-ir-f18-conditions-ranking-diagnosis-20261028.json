@@ -1,0 +1,442 @@
+{
+  "actual_saved_diagnosis": {
+    "DEV_gold_opened": false,
+    "TRAIN_gold_accessed": true,
+    "all9_actual_greedy_observations_verified_from_scores": true,
+    "all9_cached_joint_records_reproduced": true,
+    "all9_greedy_status_reason_IR_matches": true,
+    "all_opened_inputs_closing_verified": true,
+    "capture_files_authenticated_before_TRAIN_labels": 60,
+    "capture_files_parsed": 12,
+    "complete168TRAIN_preparation": true,
+    "derived_result": {
+      "bytes": 267248,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/frozen-conditions-diagnosis-v01/attempt-v02/exports/diagnosis-result.json",
+      "sha256": "346b4a11c5c1e1172959a1715f5f57b1bd668cd85b090e80acfb9cc2a6433f2b"
+    },
+    "fixed_cases": 3,
+    "fixed_policy": {
+      "max_search_nodes": 50000,
+      "new_decoder_policy": false,
+      "top_k": 8
+    },
+    "frozen_states": 3,
+    "full624_scoring_rerun": false,
+    "gradient_program_path": false,
+    "guard_denials": [],
+    "independent_binding": {
+      "bytes": 13386,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/frozen-conditions-diagnosis-v01/independent-actual-diagnosis-binding-v02.json",
+      "root": "datasets_repository",
+      "sha256": "b191db43077687b2a21da2a270354157bd5e51050bf76cca0f361d6da6071a35"
+    },
+    "joint_selector_replay_calls": 9,
+    "model_forwards": 0,
+    "new_decoder_policy": false,
+    "optimizer_updates": 0,
+    "original_closeout": {
+      "bytes": 9111,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/frozen-conditions-diagnosis-v01/root-source-closeout-v02.json",
+      "root": "datasets_repository",
+      "sha256": "c12dcd2ca74fab7270bb64d86d5ab5fc7505c5b8dfa8d3126b91759c6ce2cd93"
+    },
+    "original_control_seconds": 84.19551619887352,
+    "original_native_source_storage_closed": true,
+    "plan": {
+      "bytes": 3318,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/frozen-conditions-diagnosis-v01/diagnosis-plan-v02.json",
+      "sha256": "33df85d6dc10189ccf0732bee69c9949407056a4fdb31c733b064cd9aeabc538"
+    },
+    "request": {
+      "bytes": 20396,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/frozen-conditions-diagnosis-v01/request-v02.json",
+      "root": "datasets_repository",
+      "sha256": "afeb9921a9f7ccfa5668982c0bfe8c4ab1480ad649df0e1ccc48a664d923440e"
+    },
+    "scalar_case_readback": [
+      {
+        "TRAIN_conditions": {
+          "best_minus_gold_score_float32": 0.6569900512695312,
+          "boundary8_minus_gold_score_float32": -2.717884063720703,
+          "excluded_from_top8": false,
+          "full_candidate_count": 561,
+          "independent_best_span_margin_float32": 0.6569900512695312,
+          "rank_one_based": 2,
+          "retained_top_k": 8,
+          "top8_boundary_tied_with_gold_within_guard": false
+        },
+        "active_selected_other_facets_overlap_gold_conditions": false,
+        "actual_greedy_from_saved_scores_verified": true,
+        "arm": "parent",
+        "cached_joint_full_record_reproduced": true,
+        "greedy_status_reason_IR_matches": true,
+        "id": "matched-temporal-train-condition_exception_duration-0-p-absent",
+        "joint_margin": 0.6569900512695312,
+        "joint_reason": null,
+        "joint_status": "selected",
+        "panel": "training168",
+        "search_budget_exhausted": false,
+        "search_completed": true
+      },
+      {
+        "TRAIN_conditions": {
+          "best_minus_gold_score_float32": 0.3966827392578125,
+          "boundary8_minus_gold_score_float32": -3.18353271484375,
+          "excluded_from_top8": false,
+          "full_candidate_count": 666,
+          "independent_best_span_margin_float32": 0.21928024291992188,
+          "rank_one_based": 3,
+          "retained_top_k": 8,
+          "top8_boundary_tied_with_gold_within_guard": false
+        },
+        "active_selected_other_facets_overlap_gold_conditions": false,
+        "actual_greedy_from_saved_scores_verified": true,
+        "arm": "parent",
+        "cached_joint_full_record_reproduced": true,
+        "greedy_status_reason_IR_matches": true,
+        "id": "matched-temporal-train-condition_exception_duration-0-p-present",
+        "joint_margin": 0.21928024291992188,
+        "joint_reason": null,
+        "joint_status": "selected",
+        "panel": "training168",
+        "search_budget_exhausted": false,
+        "search_completed": true
+      },
+      {
+        "TRAIN_gold_diagnostics_present": false,
+        "actual_greedy_from_saved_scores_verified": true,
+        "arm": "parent",
+        "cached_joint_full_record_reproduced": true,
+        "greedy_status_reason_IR_matches": true,
+        "id": "targeted-loss-authored_dev-actor_duration_name-0-f-absent",
+        "joint_margin": 8.792745590209961,
+        "joint_reason": null,
+        "joint_status": "selected",
+        "panel": "authored_dev",
+        "search_budget_exhausted": false,
+        "search_completed": true
+      },
+      {
+        "TRAIN_conditions": {
+          "best_minus_gold_score_float32": 0.4523487091064453,
+          "boundary8_minus_gold_score_float32": -3.118745803833008,
+          "excluded_from_top8": false,
+          "full_candidate_count": 561,
+          "independent_best_span_margin_float32": 0.4523487091064453,
+          "rank_one_based": 2,
+          "retained_top_k": 8,
+          "top8_boundary_tied_with_gold_within_guard": false
+        },
+        "active_selected_other_facets_overlap_gold_conditions": false,
+        "actual_greedy_from_saved_scores_verified": true,
+        "arm": "coefficient_0",
+        "cached_joint_full_record_reproduced": true,
+        "greedy_status_reason_IR_matches": true,
+        "id": "matched-temporal-train-condition_exception_duration-0-p-absent",
+        "joint_margin": 0.4523487091064453,
+        "joint_reason": null,
+        "joint_status": "selected",
+        "panel": "training168",
+        "search_budget_exhausted": false,
+        "search_completed": true
+      },
+      {
+        "TRAIN_conditions": {
+          "best_minus_gold_score_float32": 0.19395828247070312,
+          "boundary8_minus_gold_score_float32": -3.4237823486328125,
+          "excluded_from_top8": false,
+          "full_candidate_count": 666,
+          "independent_best_span_margin_float32": 0.19395828247070312,
+          "rank_one_based": 2,
+          "retained_top_k": 8,
+          "top8_boundary_tied_with_gold_within_guard": false
+        },
+        "active_selected_other_facets_overlap_gold_conditions": false,
+        "actual_greedy_from_saved_scores_verified": true,
+        "arm": "coefficient_0",
+        "cached_joint_full_record_reproduced": true,
+        "greedy_status_reason_IR_matches": true,
+        "id": "matched-temporal-train-condition_exception_duration-0-p-present",
+        "joint_margin": 0.19395828247070312,
+        "joint_reason": null,
+        "joint_status": "selected",
+        "panel": "training168",
+        "search_budget_exhausted": false,
+        "search_completed": true
+      },
+      {
+        "TRAIN_gold_diagnostics_present": false,
+        "actual_greedy_from_saved_scores_verified": true,
+        "arm": "coefficient_0",
+        "cached_joint_full_record_reproduced": true,
+        "greedy_status_reason_IR_matches": true,
+        "id": "targeted-loss-authored_dev-actor_duration_name-0-f-absent",
+        "joint_margin": null,
+        "joint_reason": "no_compatible_assignment_in_retained_domain",
+        "joint_status": "abstained",
+        "panel": "authored_dev",
+        "search_budget_exhausted": false,
+        "search_completed": true
+      },
+      {
+        "TRAIN_conditions": {
+          "best_minus_gold_score_float32": 0.4120197296142578,
+          "boundary8_minus_gold_score_float32": -3.1590747833251953,
+          "excluded_from_top8": false,
+          "full_candidate_count": 561,
+          "independent_best_span_margin_float32": 0.4120197296142578,
+          "rank_one_based": 2,
+          "retained_top_k": 8,
+          "top8_boundary_tied_with_gold_within_guard": false
+        },
+        "active_selected_other_facets_overlap_gold_conditions": false,
+        "actual_greedy_from_saved_scores_verified": true,
+        "arm": "coefficient_025",
+        "cached_joint_full_record_reproduced": true,
+        "greedy_status_reason_IR_matches": true,
+        "id": "matched-temporal-train-condition_exception_duration-0-p-absent",
+        "joint_margin": 0.4120197296142578,
+        "joint_reason": null,
+        "joint_status": "selected",
+        "panel": "training168",
+        "search_budget_exhausted": false,
+        "search_completed": true
+      },
+      {
+        "TRAIN_conditions": {
+          "best_minus_gold_score_float32": 0.16110610961914062,
+          "boundary8_minus_gold_score_float32": -3.389341354370117,
+          "excluded_from_top8": false,
+          "full_candidate_count": 666,
+          "independent_best_span_margin_float32": 0.16110610961914062,
+          "rank_one_based": 2,
+          "retained_top_k": 8,
+          "top8_boundary_tied_with_gold_within_guard": false
+        },
+        "active_selected_other_facets_overlap_gold_conditions": false,
+        "actual_greedy_from_saved_scores_verified": true,
+        "arm": "coefficient_025",
+        "cached_joint_full_record_reproduced": true,
+        "greedy_status_reason_IR_matches": true,
+        "id": "matched-temporal-train-condition_exception_duration-0-p-present",
+        "joint_margin": 0.16110610961914062,
+        "joint_reason": null,
+        "joint_status": "selected",
+        "panel": "training168",
+        "search_budget_exhausted": false,
+        "search_completed": true
+      },
+      {
+        "TRAIN_gold_diagnostics_present": false,
+        "actual_greedy_from_saved_scores_verified": true,
+        "arm": "coefficient_025",
+        "cached_joint_full_record_reproduced": true,
+        "greedy_status_reason_IR_matches": true,
+        "id": "targeted-loss-authored_dev-actor_duration_name-0-f-absent",
+        "joint_margin": null,
+        "joint_reason": "no_compatible_assignment_in_retained_domain",
+        "joint_status": "abstained",
+        "panel": "authored_dev",
+        "search_budget_exhausted": false,
+        "search_completed": true
+      }
+    ],
+    "selector_received_gold_targets": false,
+    "source_pins": 73
+  },
+  "draft": false,
+  "evidence_id": "f18-conditions-ranking-diagnosis-20261028-01",
+  "findings": {
+    "DEV_both_candidate_reason": "no_compatible_assignment_in_retained_domain",
+    "DEV_candidate_status": "abstained",
+    "DEV_gold_used": false,
+    "DEV_parent_status": "selected",
+    "DEV_search_completed_without_budget_exhaustion": true,
+    "TRAIN_gold_in_retained_top8_all_states": true,
+    "TRAIN_gold_ranks_coefficient0": [
+      2,
+      2
+    ],
+    "TRAIN_gold_ranks_coefficient025": [
+      2,
+      2
+    ],
+    "TRAIN_gold_ranks_parent": [
+      2,
+      3
+    ],
+    "TRAIN_not_excluded_by_top8_or_search_budget": true,
+    "TRAIN_other_active_selected_facets_do_not_overlap_gold_conditions": true,
+    "TRAIN_positive_head_score_gaps_remain": true,
+    "interpretation": "Consistent with residual TRAIN condition-head ranking error; no hidden-state or gradient proof.",
+    "literal_DEV_tie_fixture_is_separate_from_actual_observed_reason": true
+  },
+  "fresh_source_qualification": {
+    "JUnit_seconds": 7.232,
+    "actual_launcher_sha256": "0e302d2ca4c17c9185f12e040f3a681ce043b2710a7673d06f5ee0fc4657fabf",
+    "cases": 90,
+    "errors": 0,
+    "external_process_attempts": [],
+    "failures": 0,
+    "independent_binding": {
+      "bytes": 7466,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-postfreeze-scoring-v01/joint-producer-status-qualification-v01/independent-original-qualification-binding-v01.json",
+      "root": "datasets_repository",
+      "sha256": "2258c58ad171875f07a1d64a82fb5610a45d7e0cbeebd4efb0da025479d9d8e2"
+    },
+    "normal_namespace_origins": 5,
+    "numerical_import_attempts": [],
+    "original_closeout": {
+      "bytes": 9147,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-postfreeze-scoring-v01/joint-producer-status-qualification-v01/root-source-closeout-v01.json",
+      "root": "datasets_repository",
+      "sha256": "c7e0db8595630be4f01c624e71406c2055da47ee696fdc7536b57c5cb53bf1a0"
+    },
+    "original_control_seconds": 90.7973327129148,
+    "original_native_source_storage_closed": true,
+    "phases": 270,
+    "prior82_source_cohort_not_pooled": true,
+    "request": {
+      "bytes": 49721,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-postfreeze-scoring-v01/joint-producer-status-qualification-v01/request-v01.json",
+      "root": "datasets_repository",
+      "sha256": "938dcc318b2c279e4099cabd7973dd032ca1272537beeab584b323ddd31ff6ec"
+    },
+    "skipped": 0,
+    "source_pins": 26
+  },
+  "joint_producer_status_fix": {
+    "accepted_original_joint_statuses": [
+      "selected",
+      "abstained"
+    ],
+    "invalid_joint_provenance_receives_no_full_IR_or_permission_credit": true,
+    "original_decoded_or_unknown_status_cannot_borrow_decoder_credit": true,
+    "valid_raw_decoded_route_and_default_seven_facet_kernel_unchanged": true
+  },
+  "limits": {
+    "Lean_or_corpus_admission": false,
+    "active_four_width_comparison": false,
+    "heldout_tuning": false,
+    "hidden_state_or_gradient_proof": false,
+    "legal_semantics": false,
+    "model_promoted": false,
+    "native_scientific_task_rearm_or_completion": false,
+    "new_accuracy_or_margin_advantage": false,
+    "new_checkpoint_restore": false,
+    "new_model_training": false,
+    "new_whole624_scoring": false,
+    "retained_N11_F15_F16_F17_F19_no_loss_gates_closed": false,
+    "reviewed_statutory_gold": false,
+    "source_or_weak_label_origin_verified": false
+  },
+  "next_goal": {
+    "existing_task": "LIR-17",
+    "new_profile_or_fit_implemented_here": false,
+    "proposed_new_training_learning_rate_is_a_separate_versioned_optimizer_recipe": true,
+    "recipe_values_selected_here": false,
+    "scope": "Design and qualify a distinct TRAIN-only optimizer recipe; no new task or queue activation.",
+    "subgoals": [
+      "Specify separate authenticated donor_config and versioned optimizer_recipe.",
+      "Qualify source/mechanics, authenticate original inputs, and require fresh zero-step632 initial parity.",
+      "Seal one finite TRAIN-only request and acquire fresh original training-purpose admission.",
+      "Freeze outputs, score independently, and close retained full-IR/no-loss/32P gates before promotion."
+    ],
+    "v1_donor_config_learning_rate": 0.001,
+    "v1_source_and_checkpoint_policy_immutable": true
+  },
+  "observed_at_utc": "2026-10-28T04:32:06.412772+00:00",
+  "preserved_prior_whole624_result": {
+    "evidence": {
+      "bytes": 22552,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-lean-diagnostic-docs-20261027/docs/autoformalization/evidence/legal-ir-f18-frozen-matched-scoring-20261027.json",
+      "root": "local_source_metadata",
+      "sha256": "666c0b6fc8d3b10ca3b864f33a04e37afb700240b0ac3d6188d2a9d6b3ac7732"
+    },
+    "new_whole624_rerun": false,
+    "no_prior_gain_or_margin_advantage": true,
+    "original_case_count": 82,
+    "qualification_not_transferred_to_corrected_source": true,
+    "reported_joint_exact": 428,
+    "reported_raw_exact": 405,
+    "source_sha256": "59578e51a1158ab756f1e6a66934ee6ee740d69de83ae3dd296e464f15141bc4",
+    "total": 624
+  },
+  "procedural_limitation": {
+    "actual0e_generation_explicitly_pinned_from_request_start": true,
+    "actual_launcher_source_snapshot": {
+      "bytes": 40829,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-postfreeze-scoring-v01/joint-producer-status-qualification-v01/actual-launcher-source-snapshot-v01.py",
+      "root": "datasets_repository",
+      "sha256": "0e302d2ca4c17c9185f12e040f3a681ce043b2710a7673d06f5ee0fc4657fabf"
+    },
+    "actual_positive_validation_path_audited": true,
+    "event": {
+      "bytes": 1308,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-postfreeze-scoring-v01/joint-producer-status-qualification-v01/actual-launcher-generation-review-v01.json",
+      "root": "datasets_repository",
+      "sha256": "fe022edf685b07405e6bf685c943537556e8969d006d5b532ba428a6df65026d"
+    },
+    "launch_preceded_handling_of_preflight_result": true,
+    "new_pre_owner_refusal_branch_qualified": false,
+    "preflight_source_change_flagged": true,
+    "prior66_qualification_transferred": false,
+    "snapshot_executed": false
+  },
+  "schema": "legal-ir-f18-conditions-ranking-diagnosis-evidence/v1",
+  "separate_literal_fixtures": {
+    "authored_not_retained_payloads": true,
+    "cases": 4,
+    "cases_scope": [
+      "rank2/gap2",
+      "rank45/top8 exclusion",
+      "DEVtie with no gold",
+      "source binding refusal before content open"
+    ],
+    "failures": 0,
+    "guard_denials": [],
+    "independent_binding": {
+      "bytes": 5304,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/frozen-conditions-diagnosis-v01/fixture-qualification-v01/independent-original-fixture-binding-v01.json",
+      "root": "datasets_repository",
+      "sha256": "a62b82fe78ffa7441188f77c0c4b68b49e0154d830321e5594fe39d75d8428db"
+    },
+    "joint_selector_calls": 6,
+    "literal_rank_gap_oracles_independent_of_rank_function": true,
+    "original_closeout": {
+      "bytes": 9339,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/frozen-conditions-diagnosis-v01/fixture-qualification-v01/root-source-closeout-v01.json",
+      "root": "datasets_repository",
+      "sha256": "689a5a48ef15f699d63dc045c45956b27f9b37e0d055dbb392ac20de6f7a5063"
+    },
+    "original_control_seconds": 84.16272011492401,
+    "original_native_source_storage_closed": true,
+    "source_pins": 71
+  },
+  "source_generation": {
+    "actual_original_launcher": {
+      "bytes": 40829,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/run_owned_validation.py",
+      "sha256": "0e302d2ca4c17c9185f12e040f3a681ce043b2710a7673d06f5ee0fc4657fabf"
+    },
+    "metrics": {
+      "bytes": 32844,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-lean-diagnostic-docs-20261027/ipfs_datasets_py/optimizers/logic_theorem_optimizer/formula_generation_metrics.py",
+      "root": "local_source_metadata",
+      "sha256": "a62101f13cc7fbc1a42a8519054926c404e95095feb6186e019afb4ff7dfa113"
+    },
+    "owning_test": {
+      "bytes": 35036,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-lean-diagnostic-docs-20261027/tests/unit/logic/test_formula_generation_metrics.py",
+      "root": "local_source_metadata",
+      "sha256": "2cbccb6fea53f5826a44c02df4eb595cf42d55503904a69c35b77af272737417"
+    },
+    "unchanged_v1_profile": {
+      "bytes": 88600,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-lean-diagnostic-docs-20261027/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_fullspan_training_v1.py",
+      "root": "local_source_metadata",
+      "sha256": "56bd0a248a07de09519f95e5c4bae02ab9d8eb1134b483c257c1f7e7bcb07147"
+    }
+  },
+  "title": "Validated joint producer route and fixed-case saved TRAIN ranking diagnosis"
+}

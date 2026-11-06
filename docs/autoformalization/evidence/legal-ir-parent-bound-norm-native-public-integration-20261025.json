@@ -1,0 +1,363 @@
+{
+  "actual_Lean_builds": 0,
+  "actual_native_compiler_invocations": 0,
+  "actual_project_readbacks": [
+    {
+      "actual_Lean_builds": 0,
+      "actual_pointers_resolved": 23,
+      "all_authority_false": true,
+      "complete_original_native_fragments_equal": true,
+      "complete_report_sha256": "a4a837cad01f0dc4e12a2068a4bd16e2522f164ff420c082fe503eb5febe0fce",
+      "conditional_theorem_count": 3,
+      "conditional_theorem_tail_byte_exact": true,
+      "context_projection_sha256": "48b2e4b978dc1a531934f051d7015aaced697e7f8e91f9ad3253215e4242d6d7",
+      "definition_contexts": 2,
+      "fields_per_definition_context": 5,
+      "generated_file_sha256": {
+        "LegalCorpusBoundNormDefinition.lean": "ec8e4d17a496095b3594eecad5cf4dc4b6668b6f47aee07e2949f84e5b7f5bda",
+        "LegalCorpusBoundNormDefinition/Definition_74957febbc2a84115b4e27fd118b3196ed74bf59c655a10b5e99c3573b8e9b8d.lean": "ba682d1d4b929504df342c4ceddc41778336ac0d346f1549690969a5226ee710",
+        "LegalCorpusBoundNormDefinition/Norm_bc8362faa914b0adf6c711ccf150c75a4018554d7ef3a3765e1f0a6582303929.lean": "6143c4c17ed95c960bdb27fd7972da777430266495287d018019b7ae9c8a1ed3",
+        "LegalCorpusBoundNormDefinition/Occurrence_a4a837cad01f0dc4e12a2068a4bd16e2522f164ff420c082fe503eb5febe0fce.lean": "0f4fa2cdae438cf437865c189d8bb534dbb148d509588a22ac8b9fd15b59f756",
+        "LegalCorpusBoundNormDefinition/Prelude.lean": "4a67c6ce597b1a85acd13060e7e6b2c38f92d89474b73513074d4e9229e462e4",
+        "LegalCorpusBoundNormDefinition/Preservation_cb30353cf7975a13b643ebcf60671556edb93ac8da65ad3e49fe29e9fc536617.lean": "c900a65616d4aec30f4bc182c8ee555a5c8c25d403909d68e68ce534d5d9030a",
+        "bound-norm-input-bindings.json": "8eacdc1f50b1386bd3efe734415e0f9d6710665d0d4fd7f2f642ca14dbf97ad9",
+        "lakefile.toml": "17c201531939f20cc40e9905a8e656fdb358595d04948813c85db67f35008555",
+        "lean-toolchain": "d5edba4e4b8faad9c1baeadb265716d20d03be4d1a2647dc5e35b0c0325bea7b"
+      },
+      "generated_files": 9,
+      "input_envelope": {
+        "bytes": 784432,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-native-public-integration-v01/attempt-pure-v01/pytest/cases/test_parent_bound_norm_native_instrumented_hando-hitmo_fv/parent-bound-synthetic/project/bound-norm-input-bindings.json",
+        "sha256": "8eacdc1f50b1386bd3efe734415e0f9d6710665d0d4fd7f2f642ca14dbf97ad9"
+      },
+      "input_envelope_fields": 4,
+      "integer_masks_zero": true,
+      "manifest": {
+        "bytes": 82661,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-native-public-integration-v01/attempt-pure-v01/pytest/cases/test_parent_bound_norm_native_instrumented_hando-hitmo_fv/parent-bound-synthetic/project/corpus-manifest.json",
+        "sha256": "6b73ef6c1d5103d33f5158f256bf3d3fb3797e99d50832876f9960717a20b325"
+      },
+      "mode": "body_with_membership",
+      "norm_context_fields": 6,
+      "total_files": 10
+    },
+    {
+      "actual_Lean_builds": 0,
+      "actual_pointers_resolved": 23,
+      "all_authority_false": true,
+      "complete_original_native_fragments_equal": true,
+      "complete_report_sha256": "b587c944c015240d4ac7781f74eee752b4f72b72835edeb20d6a36fbea420662",
+      "conditional_theorem_count": 2,
+      "conditional_theorem_tail_byte_exact": true,
+      "context_projection_sha256": "48b2e4b978dc1a531934f051d7015aaced697e7f8e91f9ad3253215e4242d6d7",
+      "definition_contexts": 2,
+      "fields_per_definition_context": 5,
+      "generated_file_sha256": {
+        "LegalCorpusBoundNormDefinition.lean": "f94f0a495632822f28b724b690d53aa50e0045029eb5fd761cf3fc4aedab9c0e",
+        "LegalCorpusBoundNormDefinition/Definition_74957febbc2a84115b4e27fd118b3196ed74bf59c655a10b5e99c3573b8e9b8d.lean": "ba682d1d4b929504df342c4ceddc41778336ac0d346f1549690969a5226ee710",
+        "LegalCorpusBoundNormDefinition/Norm_69b5e85ca9bc661285f06e1e7a8bcba7da6f35d3d4326d658a24a948960ea849.lean": "1d6ab3a889c904936c63e3a7fcaf7a5a854b2bdbd31c53399c0221c37928064f",
+        "LegalCorpusBoundNormDefinition/Occurrence_b587c944c015240d4ac7781f74eee752b4f72b72835edeb20d6a36fbea420662.lean": "b9503ad5c1d4db38062c49bf241cdfa46df9ffeb932bc8d81c3721a5039c2388",
+        "LegalCorpusBoundNormDefinition/Prelude.lean": "4a67c6ce597b1a85acd13060e7e6b2c38f92d89474b73513074d4e9229e462e4",
+        "LegalCorpusBoundNormDefinition/Preservation_abb6a6d9afa0635c0b1d077b797ad6a9edd3c2813d7e39fc5509bb394e496e44.lean": "204b9709f715aec3cc028b940d892d8f2227bed2db8e5df47d7d9522dc1ae2d5",
+        "bound-norm-input-bindings.json": "6ce1cf6cd3041781181df1b8d916d550ee8083d4d113ac1423501165f411d7ec",
+        "lakefile.toml": "17c201531939f20cc40e9905a8e656fdb358595d04948813c85db67f35008555",
+        "lean-toolchain": "d5edba4e4b8faad9c1baeadb265716d20d03be4d1a2647dc5e35b0c0325bea7b"
+      },
+      "generated_files": 9,
+      "input_envelope": {
+        "bytes": 783597,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-native-public-integration-v01/attempt-pure-v01/pytest/cases/test_parent_bound_norm_native_instrumented_hando-jjc08ml1/parent-bound-synthetic/project/bound-norm-input-bindings.json",
+        "sha256": "6ce1cf6cd3041781181df1b8d916d550ee8083d4d113ac1423501165f411d7ec"
+      },
+      "input_envelope_fields": 4,
+      "integer_masks_zero": true,
+      "manifest": {
+        "bytes": 81957,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-native-public-integration-v01/attempt-pure-v01/pytest/cases/test_parent_bound_norm_native_instrumented_hando-jjc08ml1/parent-bound-synthetic/project/corpus-manifest.json",
+        "sha256": "bf7f7cac01cc04d29c44c77d197c1b9a2a18bb4410509e2d5d273ec441ed86ee"
+      },
+      "mode": "instance_only",
+      "norm_context_fields": 6,
+      "total_files": 10
+    }
+  ],
+  "actual_public_dependency_origin_files": 195,
+  "actual_synthetic_capture_files": 58,
+  "actual_synthetic_capture_readbacks": [
+    {
+      "actual_bytes": 1701045,
+      "actual_files": 29,
+      "actual_native_builds": 0,
+      "all29_tree_members_read_back": true,
+      "all_authority_false": true,
+      "all_project_and_executed_input_bytes_equal": true,
+      "all_retained_manifest_fields_hashed": true,
+      "all_six_olean_buffers_and_logs_hashed": true,
+      "integer_masks_zero": true,
+      "mode": "instance_only",
+      "output_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-native-public-integration-v01/attempt-pure-v01/pytest/cases/test_parent_bound_norm_native_instrumented_hando-jjc08ml1/parent-bound-synthetic",
+      "receipt": {
+        "bytes": 40492,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-native-public-integration-v01/attempt-pure-v01/pytest/cases/test_parent_bound_norm_native_instrumented_hando-jjc08ml1/parent-bound-synthetic/build-receipt.json",
+        "sha256": "90c2625c8991f49dc95ca96d114bf3eb402eb81e829fb15419d2fc765bf452fd"
+      },
+      "selected_node": "tests/unit/logic/autoformal/test_legal_corpus_definition_use_native_v2.py::test_parent_bound_norm_native_instrumented_handoff_preserves_complete_project_and_pending_meaning[instance]",
+      "source_context_pointers_resolved": 23,
+      "synthetic_compiler_PID_version_olean_axiom_fields": true
+    },
+    {
+      "actual_bytes": 1704652,
+      "actual_files": 29,
+      "actual_native_builds": 0,
+      "all29_tree_members_read_back": true,
+      "all_authority_false": true,
+      "all_project_and_executed_input_bytes_equal": true,
+      "all_retained_manifest_fields_hashed": true,
+      "all_six_olean_buffers_and_logs_hashed": true,
+      "integer_masks_zero": true,
+      "mode": "body_with_membership",
+      "output_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-native-public-integration-v01/attempt-pure-v01/pytest/cases/test_parent_bound_norm_native_instrumented_hando-hitmo_fv/parent-bound-synthetic",
+      "receipt": {
+        "bytes": 41028,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-native-public-integration-v01/attempt-pure-v01/pytest/cases/test_parent_bound_norm_native_instrumented_hando-hitmo_fv/parent-bound-synthetic/build-receipt.json",
+        "sha256": "7317747631d987c816867ea135c4ff19806b59892bf7925d3c85d8924459753b"
+      },
+      "selected_node": "tests/unit/logic/autoformal/test_legal_corpus_definition_use_native_v2.py::test_parent_bound_norm_native_instrumented_handoff_preserves_complete_project_and_pending_meaning[membership]",
+      "source_context_pointers_resolved": 23,
+      "synthetic_compiler_PID_version_olean_axiom_fields": true
+    }
+  ],
+  "checked_compile_buffers": 167,
+  "completed": true,
+  "completed_c59_four_case_result_relabelled": false,
+  "consumer_mask": 0,
+  "controlled_late_upstream_adoption": {
+    "bytes": 68948,
+    "path": "/tmp/legal-ir-next-step-review-20261025-11/late-upstream-adoption-v01.json",
+    "sha256": "cf5d9d0ed4fe5458a3bbaec2074acc654b722be4ad3d4920a39946ccbd4bfef5"
+  },
+  "declared_bypassed_initializers": 8,
+  "declared_namespace_containers": 14,
+  "delivery_base": "8b6e7461f3c4503fd2cbde9acd3cda479d4f673e",
+  "delivery_generation_runtime_execution_qualified": false,
+  "evaluation_gold_mask": 0,
+  "expected_nodes": [
+    "tests/unit/logic/autoformal/test_legal_corpus_definition_use_native_v2.py::test_parent_bound_norm_native_genuine_public_validation_replays_both_modes_without_tools[membership]",
+    "tests/unit/logic/autoformal/test_legal_corpus_definition_use_native_v2.py::test_parent_bound_norm_native_instrumented_handoff_preserves_complete_project_and_pending_meaning[instance]",
+    "tests/unit/logic/autoformal/test_legal_corpus_definition_use_native_v2.py::test_parent_bound_norm_native_instrumented_handoff_preserves_complete_project_and_pending_meaning[membership]",
+    "tests/unit/logic/autoformal/test_legal_corpus_definition_use_native_v2.py::test_parent_bound_norm_native_independent_preflight_refuses_before_operation_owners[request]"
+  ],
+  "frozen_source_files": 197,
+  "full_package_qualification": false,
+  "genuine_public_native_validation_modes": [
+    "body_with_membership"
+  ],
+  "governing_definition_use": null,
+  "instrumented_native_handoff_modes": [
+    "instance_only",
+    "body_with_membership"
+  ],
+  "late_upstream_dependency_change": {
+    "completed_execution_source": {
+      "bytes": 34676,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/logic/autoformal/legal_semantic_graph.py",
+      "sha256": "f929572c71536bc61364cccbf274c8f03e0bbc01655d2c6b0a3435d34d1a70c4"
+    },
+    "fresh_delivery_source": {
+      "bytes": 35170,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/logic/autoformal/legal_semantic_graph.py",
+      "sha256": "b7d2f994b923f6db3bcf535561d4064ef686844d2faea560ad30952a580c511e"
+    },
+    "relative_path": "ipfs_datasets_py/logic/autoformal/legal_semantic_graph.py",
+    "unchanged_other_public_dependencies": 194
+  },
+  "late_upstream_source_forest_comparison": {
+    "bytes": 81856,
+    "path": "/tmp/legal-ir-next-step-review-20261025-11/fresh-main-8b6-review-v01/source-forest-comparison-v01.json",
+    "sha256": "c709470816cfa93f5cddc4796b32f81a49bfe499bfec5ccc65960f927ba8135f"
+  },
+  "late_upstream_static_review": {
+    "descriptor": {
+      "bytes": 2490,
+      "path": "/tmp/legal-ir-next-step-review-20261025-11/late-graph-depth-review-v01/independent-old-domain-compatibility-v01.json",
+      "sha256": "49629e4b2a4a34d5d45c5178b727c58d7aa29512474fa855c3dec25875994332"
+    },
+    "record": {
+      "W_or_D10_mutated": false,
+      "accepted": true,
+      "actual_saved_legal_semantic_proposed_graph_objects": 0,
+      "changed_dependencies": 1,
+      "changed_relative_path": "ipfs_datasets_py/logic/autoformal/legal_semantic_graph.py",
+      "completed_c59_four_case_result_relabelled": false,
+      "completed_public_execution_base": "c59ce54ca6865a27a4b030fce79005de0ca33d46",
+      "current_generation_status": "Source availability/adoption only; new194public+graphb7+native2 combination runtime remains unmeasured.",
+      "issues": [],
+      "new_mixed_generation_runtime_qualification_claimed": false,
+      "new_pure_or_native_run_performed": false,
+      "new_source": {
+        "bytes": 35170,
+        "path": "/tmp/legal-ir-next-step-review-20261025-11/late-graph-depth-review-v01/legal_semantic_graph.8b6e7461.py",
+        "sha256": "b7d2f994b923f6db3bcf535561d4064ef686844d2faea560ad30952a580c511e"
+      },
+      "normalized_changed_function_ASTs_identical": [
+        "_tree",
+        "build_graph",
+        "graph_to_ast"
+      ],
+      "observed_affected_graph_depth": null,
+      "old_domain_algorithm_preserved": true,
+      "old_domain_scope": "Relational maximum depth alone expands24to32; original accepted <=24 inputs retain identical tree construction/decoding, IDs/seeds, node/edge ordering and wire fields. Other profiles and private_tree default remain24. Known-profile guard fails closed.",
+      "old_source": {
+        "bytes": 34676,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/logic/autoformal/legal_semantic_graph.py",
+        "sha256": "f929572c71536bc61364cccbf274c8f03e0bbc01655d2c6b0a3435d34d1a70c4"
+      },
+      "product_or_test_imported": false,
+      "public_dependency_files_compared": 195,
+      "public_dependency_files_unchanged": 194,
+      "reviewed_upstream_main": "8b6e7461f3c4503fd2cbde9acd3cda479d4f673e",
+      "saved_graph_depth_compatibility_claimed": false,
+      "schema": "legal-ir-late-graph-depth-static-compatibility/v1",
+      "scope": "Bounded source and metadata static review only; no runtime qualification.",
+      "separate_native_source_test_beforeimages_unchanged": true,
+      "source_forest_comparison": {
+        "bytes": 81856,
+        "path": "/tmp/legal-ir-next-step-review-20261025-11/fresh-main-8b6-review-v01/source-forest-comparison-v01.json",
+        "sha256": "c709470816cfa93f5cddc4796b32f81a49bfe499bfec5ccc65960f927ba8135f"
+      },
+      "unchanged_byte_node_other_limits": true,
+      "unchanged_schema_profile_and_graph_wire_fields": true,
+      "upstream_graph_exact_original_R_qualified_graph": true
+    }
+  },
+  "limitations": [
+    "Four current-public dependency snapshot plus two retained source overlays cases only; one genuine membership public validation and two separate instrumented handoffs plus request-pin refusal.",
+    "Compiler versions, process IDs, six olean buffers per mode, axiom stdout and receipt native-success booleans inside the two instrumented captures are synthetic.",
+    "Actual original owned Python/controller/process/resource cleanup is reviewed separately; synthetic compiler PIDs are never used as process-closeout witnesses.",
+    "Original retained R32pure/96 and separate R2actualLean/6phase qualifications retain their own source generation and are not pooled into this result.",
+    "Whole-package startup, worker bootstrap and third-party cached bytecode/native C I/O are outside this attestation.",
+    "No new actual Lean build, model/training, source meaning, governing applicability, semantic graph/corpus or training/gold admission follows.",
+    "Only this original selected reservation/native lease and two controller READs are reviewed; unrelated historical claims/global source holders are not closed."
+  ],
+  "model_forwards": 0,
+  "module_origins": 146,
+  "new_authored_cases": 33,
+  "observed_bypassed_initializers": 5,
+  "observed_namespace_containers": 10,
+  "optimizer_steps": 0,
+  "original_R_independent_reviews": [
+    {
+      "bytes": 8755,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/native-integration-v01/independent-result-review-pure-v01.json",
+      "sha256": "6429c9f59e64ef5f207b217397cb5559fe5dae5943bf4cd8c12352cef1ee7c15"
+    },
+    {
+      "bytes": 14575,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/native-integration-v01/independent-result-review-native-v01.json",
+      "sha256": "a3388bf4a74f40148610c46e07197d169feff5e3f56791950f1c24b1a59412f7"
+    }
+  ],
+  "original_R_readiness_and_closure_observation": {
+    "bytes": 21290,
+    "path": "/tmp/legal-ir-next-step-review-20261025-11/retained-native-integration-next-step-review-v01.json",
+    "sha256": "04db995059d5900805fec3b4f5e56a4b0eec208dc4cf226650a8bb364ed895c8"
+  },
+  "original_compute_released": true,
+  "original_preparation_build_eligible": false,
+  "original_recorded_live_processes": 0,
+  "original_source_READs_closed": true,
+  "original_storage_released": true,
+  "other_new_authored_cases_not_enrolled": 29,
+  "owning_test": {
+    "bytes": 111627,
+    "canonical_beforeimage": {
+      "bytes": 79427,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/tests/unit/logic/autoformal/test_legal_corpus_definition_use_native_v2.py",
+      "sha256": "3ad91e5bd1f48a67dbeea4c9abc2e3e22ed80c85f5222d9779ecfa9bc3209bd7"
+    },
+    "canonical_relative_path": "tests/unit/logic/autoformal/test_legal_corpus_definition_use_native_v2.py",
+    "canonical_target_path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/tests/unit/logic/autoformal/test_legal_corpus_definition_use_native_v2.py",
+    "executed_from_canonical_target": false,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-native-public-integration-v01/intake/test_legal_corpus_definition_use_native_v2.py",
+    "sha256": "02acd69da2f15abbaa41181db79af53216bdee2a3b94de20bd2bc00ae024234d",
+    "tested_as_retained_overlay": true
+  },
+  "preparer_native_handoff_registered": false,
+  "public_dependency_base": "c59ce54ca6865a27a4b030fce79005de0ca33d46",
+  "public_source_root": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023",
+  "qualification_profile": "public-parent-bound-norm-native-instrumented-compatibility-pure-controls/v1",
+  "qualified": true,
+  "recorded_at_utc": "2026-10-25T17:55:40.927449+00:00",
+  "required_genuine_source_execution_paths": 38,
+  "retained_R_qualification": {
+    "actual_native_commands": 6,
+    "bytes": 19801,
+    "evidence_path": "docs/autoformalization/evidence/legal-ir-parent-bound-norm-definition-native-integration-20261025.json",
+    "native_cases": 2,
+    "native_phases": 6,
+    "ordinary_version_probes": 4,
+    "owned_build_lifecycles": 2,
+    "pooled_with_public_run": false,
+    "pure_cases": 32,
+    "pure_phases": 96,
+    "sha256": "769fbf8717177e2a2c42f6abc7cb54fc95a6342665340d16ffc14dcf6362f655",
+    "source_origin_profile": "current-canonical-R-dependencies-plus-four-reviewed-native-overlays/v1"
+  },
+  "retained_overlay_origin_files": 2,
+  "saved_independent_public_review": {
+    "bytes": 51732,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-native-public-integration-v01/independent-public-native-compatibility-review-v01.json",
+    "sha256": "540702ec30740dd7e23e19ee10145d88567547e1daf6c74e458320b0631431c6"
+  },
+  "schema": "legal-ir-parent-bound-norm-native-public-pure-compatibility/v1",
+  "scope": "Four completed c59 public dependency snapshot plus two retained source-overlay pure cases only; later8b6 graph compatibility is source-only review, with no mixed-generation runtime or actual native build.",
+  "selected_cases": 4,
+  "selected_checks": [
+    "tests/unit/logic/autoformal/test_legal_corpus_definition_use_native_v2.py::test_parent_bound_norm_native_genuine_public_validation_replays_both_modes_without_tools[membership]",
+    "tests/unit/logic/autoformal/test_legal_corpus_definition_use_native_v2.py::test_parent_bound_norm_native_instrumented_handoff_preserves_complete_project_and_pending_meaning[instance]",
+    "tests/unit/logic/autoformal/test_legal_corpus_definition_use_native_v2.py::test_parent_bound_norm_native_instrumented_handoff_preserves_complete_project_and_pending_meaning[membership]",
+    "tests/unit/logic/autoformal/test_legal_corpus_definition_use_native_v2.py::test_parent_bound_norm_native_independent_preflight_refuses_before_operation_owners[request]"
+  ],
+  "selected_interpretation": null,
+  "selected_manifest": {
+    "bytes": 119950,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-native-public-integration-v01/manifest-pure-v01.json",
+    "sha256": "a0f6023ec17275c5b0f821837bf918312f4315f3d63ead51bf0688fe60ee512d"
+  },
+  "selected_new_cases": 4,
+  "selected_phases": 12,
+  "selected_request": {
+    "bytes": 76597,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-native-public-integration-v01/request-pure-v01.json",
+    "sha256": "100e3d91251ff9157a1af7aae6e1df97a29a3f6e5165be52d21cd74ce5767d3d"
+  },
+  "selected_selectors": 4,
+  "semantic_mask": 0,
+  "source": {
+    "bytes": 112386,
+    "canonical_beforeimage": {
+      "bytes": 82891,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_native_v2.py",
+      "sha256": "3513ce4ffc426e7829167d4c91563cda105a29d72924426d10f33d883abc2441"
+    },
+    "canonical_relative_path": "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_native_v2.py",
+    "canonical_target_path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_native_v2.py",
+    "executed_from_canonical_target": false,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-native-public-integration-v01/intake/legal_corpus_definition_use_native_v2.py",
+    "sha256": "6e6dd8214e8c55d9984ddb8a4b960b3bddbd2e724bf4eb7187d1f5386306843d",
+    "tested_as_retained_overlay": true
+  },
+  "source_origin_profile": "current-public-W-195-dependencies-plus-two-retained-native-overlays/v1",
+  "synthetic_capture_interpretation": "Compiler versions, PIDs, olean bytes, axiom stdout and successful compiler booleans in the two captures are instrumented data, never actual compiler/kernel observations or process-closeout witnesses.",
+  "training_mask": 0,
+  "unchanged_preparer": {
+    "bytes": 27993,
+    "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/logic/autoformal/legal_corpus_parent_bound_norm_lake_v1.py",
+    "sha256": "014dc6d2972d5b64479ab15ec233199167991fa7801ed3a9b538dc7667f2c437"
+  },
+  "unchanged_renderer": {
+    "bytes": 95493,
+    "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_lake_v2.py",
+    "sha256": "5c98152db328b75583f6c0cd181e2724ca5f7392870ec0faf1e4d870cbb76b32"
+  }
+}

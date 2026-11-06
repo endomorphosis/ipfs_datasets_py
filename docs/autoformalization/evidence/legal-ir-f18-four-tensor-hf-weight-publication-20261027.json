@@ -1,0 +1,193 @@
+{
+  "artifacts": {
+    "closeout": {
+      "bytes": 9077,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/hf-experimental-weights-v01/root-source-closeout-v02.json",
+      "root": "datasets_repository",
+      "sha256": "18ef68b7fc6b4416882dd021358b3b247c0e7c27cdb1e379e5ea22a247bd1cb6"
+    },
+    "input": {
+      "bytes": 3683,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/hf-experimental-weights-v01/publication-input-v02.json",
+      "root": "datasets_repository",
+      "sha256": "91511eab13afaf75d0ea23653ea376be88e8bee0ee54f291d312b2d0aa2401b7"
+    },
+    "intent": {
+      "bytes": 1365,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/hf-experimental-weights-v01/attempt-v02/exports/commit-intent.json",
+      "root": "datasets_repository",
+      "sha256": "dd902def000041780c6e6a0b4d3317edf7ec41b268634ee5501a8f2ff5446304"
+    },
+    "result": {
+      "bytes": 3012,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/hf-experimental-weights-v01/attempt-v02/exports/publication-result.json",
+      "root": "datasets_repository",
+      "sha256": "f27ee19b98a4cdd126a9ee1d0b2b1f2a0b2c6638f6cb7a155a9a6b966c3ab31c"
+    },
+    "returned": {
+      "bytes": 367,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/hf-experimental-weights-v01/attempt-v02/exports/commit-returned.json",
+      "root": "datasets_repository",
+      "sha256": "3796dc282a30b50a460e0af5fe290aa6cd2e4a98187950dc4aa40e0315bb45c1"
+    }
+  },
+  "candidate_arms": [
+    {
+      "arm": "arm-0",
+      "checkpoint_bytes": 133639,
+      "checkpoint_filename": "releases/20261027-f18-four-tensor-conditions-pair-v1/cells/arm-0/results/checkpoint.json",
+      "checkpoint_sha256": "d5707c70643538f95ec4a0b1ece2f61dab4e20d9bd8dd0eca5ea5a81baef02b9",
+      "margin_weight": 0.0,
+      "model_state_sha256": "8974c708f86a2b52bb5df769330fd8994248215119012633ffdb1fac5d4f97cd",
+      "progress": {
+        "epochs_completed": 2,
+        "optimizer_steps": 32,
+        "row_cursor": 48
+      }
+    },
+    {
+      "arm": "arm-025",
+      "checkpoint_bytes": 133618,
+      "checkpoint_filename": "releases/20261027-f18-four-tensor-conditions-pair-v1/cells/arm-025/results/checkpoint.json",
+      "checkpoint_sha256": "8db89f121d35aa82440255ff10a631402f868bb9cc02112d94515a762c82e709",
+      "margin_weight": 0.25,
+      "model_state_sha256": "06fdf63589cb2b22c8543345caf294bbabba994f04fa92809d5fa9ce5237ec78",
+      "progress": {
+        "epochs_completed": 2,
+        "optimizer_steps": 32,
+        "row_cursor": 48
+      }
+    }
+  ],
+  "evidence_id": "f18-four-tensor-hf-weight-publication-20261027-01",
+  "immutable_source_commit": "e8b4d34c4534c845a5b052ca6af05e47607feb9f",
+  "limits": {
+    "Lean_or_corpus_admission": false,
+    "accuracy_gain_qualified": false,
+    "active_four_width_comparison": false,
+    "default_changed": false,
+    "donor_required": true,
+    "experimental_unscored": true,
+    "model_promoted": false,
+    "new_training_or_inference": false,
+    "numerical_or_legal_quality_requalified": false,
+    "opaque_delta_bytes_verified": true,
+    "scientific_task_rearm_or_completion": false,
+    "standalone_whole_model": false,
+    "statutory_semantics": false
+  },
+  "observed_at_utc": "2026-10-27T21:21:38.728573+00:00",
+  "original_training_evidence": {
+    "path": "docs/autoformalization/evidence/legal-ir-f18-trainer-controller-qualification-20261027.json",
+    "sha256": "c46a98a51c89d58c5313b5f8438b49220ff04f5e9e0a9fad2d6b8712a287c472"
+  },
+  "prior_failed_attempt": {
+    "automatic_commit_retry": false,
+    "error_type": "ImportError",
+    "failure": {
+      "bytes": 388,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/hf-experimental-weights-v01/attempt-v01/exports/publication-failure.json",
+      "root": "datasets_repository",
+      "sha256": "0575d5b0f64de5cdd3e6c2b616f73d9761ff2ccf100f63e4ac80388f82a2bd0b"
+    },
+    "generation": "v01",
+    "original_closeout": {
+      "bytes": 13063,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/hf-experimental-weights-v01/root-source-closeout-v01.json",
+      "root": "datasets_repository",
+      "sha256": "958f26523e3c3b1b930ab21d972e380ccd8087bfdf48d29b832ba108c6c1e742"
+    },
+    "original_storage_recovery": {
+      "bytes": 2074,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/hf-experimental-weights-v01/failed-v01-original-storage-recovery.json",
+      "root": "datasets_repository",
+      "sha256": "7350e54d9804cdf5bd89d25cff5909e27cfdc2027f03876aa253cdc16c2426c5"
+    },
+    "phase": "sdk_import_and_origin_check",
+    "preserved": true,
+    "remote_commit_submitted": false,
+    "source_correction_review": {
+      "bytes": 3369,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/hf-experimental-weights-v01/source-preparation-review-v02.json",
+      "root": "datasets_repository",
+      "sha256": "821f34d8b10252e871aaddee04111c2449efa30788fba5613db835163083c7d8"
+    },
+    "source_review_diagnosis": "The original launcher prepends user-site dependencies; source review identified potential shadowing of the selected SDK. The first attempt did not record module origins.",
+    "successor_fix": "Fresh explicitly isolated standard virtual-environment process (-I); original admission owner unchanged.",
+    "successor_sdk_module_origins": {
+      "httpx": "/home/barberb/lift_coding/.venv/lib/python3.12/site-packages/httpx/__init__.py",
+      "httpx._client": "/home/barberb/lift_coding/.venv/lib/python3.12/site-packages/httpx/_client.py",
+      "huggingface_hub": "/home/barberb/lift_coding/.venv/lib/python3.12/site-packages/huggingface_hub/__init__.py",
+      "huggingface_hub._commit_api": "/home/barberb/lift_coding/.venv/lib/python3.12/site-packages/huggingface_hub/_commit_api.py",
+      "huggingface_hub.file_download": "/home/barberb/lift_coding/.venv/lib/python3.12/site-packages/huggingface_hub/file_download.py",
+      "huggingface_hub.hf_api": "/home/barberb/lift_coding/.venv/lib/python3.12/site-packages/huggingface_hub/hf_api.py",
+      "huggingface_hub.utils._headers": "/home/barberb/lift_coding/.venv/lib/python3.12/site-packages/huggingface_hub/utils/_headers.py",
+      "huggingface_hub.utils._http": "/home/barberb/lift_coding/.venv/lib/python3.12/site-packages/huggingface_hub/utils/_http.py"
+    }
+  },
+  "publication_scope": {
+    "external_process_attempts": [],
+    "model_forwards": 0,
+    "model_or_checkpoint_loads": 0,
+    "native_source_process_storage_closed": true,
+    "numerical_import_attempts": [],
+    "optimizer_updates": 0,
+    "original_control_seconds": 109.07344845496118,
+    "publisher_seconds": 2.7489888528361917,
+    "remote_donor_metadata_verified": true,
+    "remote_donor_payload_downloaded": false,
+    "resource_lane": "validation",
+    "resource_workload": "canonical_validation",
+    "source_pin_count": 33,
+    "source_scoring": false
+  },
+  "remote": {
+    "assets": [
+      {
+        "bytes": 133639,
+        "filename": "releases/20261027-f18-four-tensor-conditions-pair-v1/cells/arm-0/results/checkpoint.json",
+        "sha256": "d5707c70643538f95ec4a0b1ece2f61dab4e20d9bd8dd0eca5ea5a81baef02b9",
+        "verified": true
+      },
+      {
+        "bytes": 133618,
+        "filename": "releases/20261027-f18-four-tensor-conditions-pair-v1/cells/arm-025/results/checkpoint.json",
+        "sha256": "8db89f121d35aa82440255ff10a631402f868bb9cc02112d94515a762c82e709",
+        "verified": true
+      },
+      {
+        "bytes": 1176,
+        "filename": "releases/20261027-f18-four-tensor-conditions-pair-v1/README.md",
+        "sha256": "a093dae3b19aaa9ba995d172e6abda8a3e45957abc11fba43c5e3f1eb456e1d3",
+        "verified": true
+      },
+      {
+        "bytes": 4181,
+        "filename": "releases/20261027-f18-four-tensor-conditions-pair-v1/release-manifest.json",
+        "sha256": "b2024b0719dbca2c4509a20d9bc5cb9a30fcf6fdc8e33ccb2be8950abdf54575",
+        "verified": true
+      }
+    ],
+    "commit_url": "https://huggingface.co/Publicus/legal-ir-autoencoder/commit/270a753c1f439ac106877e825d5f5a3577916510",
+    "exact_file_count": 4,
+    "parent_revision": "be0d0226235144c8d67cb2d1ca35828d5c3a8710",
+    "prefix": "releases/20261027-f18-four-tensor-conditions-pair-v1",
+    "repo_id": "Publicus/legal-ir-autoencoder",
+    "repo_type": "model",
+    "revision": "270a753c1f439ac106877e825d5f5a3577916510",
+    "tree_url": "https://huggingface.co/Publicus/legal-ir-autoencoder/tree/270a753c1f439ac106877e825d5f5a3577916510/releases/20261027-f18-four-tensor-conditions-pair-v1"
+  },
+  "required_donor": {
+    "bytes": 21058430,
+    "filename": "releases/20261015-modality-conditions-retention-v1/cells/modality-conditions-retention-ce/results/cell-checkpoint.json",
+    "repo_id": "Publicus/legal-ir-autoencoder",
+    "repo_type": "model",
+    "revision": "c9cce4586dd96518088662fb12831173e98e36cc",
+    "sha256": "90031d084f2d86cf860c5fc95d2dae374dc254adec70bd85a90893f98c5a1555"
+  },
+  "schema": "legal-ir-experimental-hf-weight-publication-evidence/v1",
+  "selected_publication_generation": "v02",
+  "source_profile_sha256": "56bd0a248a07de09519f95e5c4bae02ab9d8eb1134b483c257c1f7e7bcb07147",
+  "status": "published_immutable_bytes_verified_experimental_unscored",
+  "title": "Immutable publication of donor-dependent experimental F18 four-tensor candidates"
+}

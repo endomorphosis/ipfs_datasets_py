@@ -215,7 +215,11 @@ sys.meta_path.insert(0, Deny())
 spec = importlib.util.spec_from_file_location("_cold_join", sys.argv[1])
 module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(module)
-assert len(module.__all__) == 3
+assert set(module.__all__) == {
+    "prepare_source_typed_norm_join_v1", "source_typed_norm_join_sha256",
+    "validate_source_typed_norm_join_v1", "prepare_source_typed_norm_join_v2",
+    "validate_source_typed_norm_join_v2",
+}
 assert len(module.source_typed_norm_join_sha256({"ordinary": True})) == 64
 assert not attempts
 print(json.dumps({"operation_owner_import_attempts": attempts}))
@@ -621,3 +625,535 @@ def test_resealed_reports_cannot_nominate_foreign_files_before_authoritative_rep
     with pytest.raises(ValueError, match="producer commitments differ from trusted owners"):
         prepare(value)
     assert foreign_reads == [] and prior_operations == []
+
+
+# The counted companion is an explicit new profile. These fixtures reuse the
+# existing fictional whole-source scope and the original fixed counted owner;
+# they create no statutory target, new native build, signer or model output.
+def _counted_test_owner():
+    from ipfs_datasets_py.logic.autoformal import legal_counted_frame_v1
+    return legal_counted_frame_v1
+
+
+def _independent_counted_paths(expression):
+    """Enumerate node/binder provenance directly from the serialized AST."""
+    rows = []
+
+    def visit(node, path):
+        rows.append((path, node["kind"], node))
+        for index, binder in enumerate(node["binders"]):
+            rows.append((path + "/binders/" + str(index), "binder", binder))
+        for index, child in enumerate(node["arguments"]):
+            visit(child, path + "/arguments/" + str(index))
+
+    visit(expression["root"], "/root")
+    return rows
+
+
+@pytest.fixture(scope="module")
+def counted_v2_case(base_case):
+    counted = _counted_test_owner()
+    request = counted.authored_counted_frame_request()
+    counted_raw = wire(request)
+    counted_report = counted.prepare_counted_frame(
+        counted_raw, expected_request_sha256=raw_digest(counted_raw))
+    inventory = _independent_counted_paths(request["expression"])
+    assert len(inventory) == 55
+    code = "counted_objects_identity_event_and_time_unreviewed"
+    rows = []
+    for path, kind, node in inventory:
+        anchors = []
+        if kind == "predicate":
+            anchors = ["/coverage/segments/0/span"]
+        elif kind == "variable" and node["symbol"] in {"x0", "x1", "x2", "x3"}:
+            anchors = ["/occurrences/0/anchor"]
+        rows.append({"typed_path": path, "source_anchor_paths": anchors,
+            "disposition": "lexical_hypothesis" if anchors else "introduced_unresolved",
+            "unresolved_codes": [code],
+            "rationale": "Authored custody nomination only; counting objects, identity, frame and legal meaning remain unresolved."})
+    source = deepcopy(base_case)
+    return {
+        "scope_report": source["scope_report"],
+        "counted_report": counted_report,
+        "join_request": {
+            "schema": "legal-source-typed-norm-join-request/v2",
+            "interpretation_status": "unreviewed_correspondence_proposal",
+            "component_id": "fictional:counted:one",
+            "alternative_id": "unreviewed_counted_frame",
+            "selected_unit_ref": deepcopy(source["join_request"]["selected_unit_ref"]),
+            "node_correspondences": rows,
+            "introduced_unresolved": [{"code": code,
+                "rationale": "All introduced counting, carrier identity and event/time choices are unverified.",
+                "affected_typed_paths": [path for path, _, _ in inventory]}],
+        },
+        "kwargs": {
+            "expected_scope_report_sha256": source["kwargs"]["expected_scope_report_sha256"],
+            "expected_counted_report_sha256": counted.counted_frame_report_sha256(counted_report),
+            "scope_replay_inputs": source["kwargs"]["scope_replay_inputs"],
+            "counted_request_raw": counted_raw,
+            "expected_counted_request_sha256": raw_digest(counted_raw),
+        },
+    }
+
+
+def _prepare_counted_v2(value, *, join_raw=None, expected_join_pin=None):
+    raw = wire(value["join_request"]) if join_raw is None else join_raw
+    pin = raw_digest(raw) if expected_join_pin is None else expected_join_pin
+    return subject.prepare_source_typed_norm_join_v2(
+        value["scope_report"], value["counted_report"], raw,
+        expected_join_request_sha256=pin, **value["kwargs"])
+
+
+def _validate_counted_v2(value, report, *, expected_report_pin=None):
+    raw = wire(value["join_request"])
+    pin = subject.source_typed_norm_join_sha256(report) if expected_report_pin is None else expected_report_pin
+    return subject.validate_source_typed_norm_join_v2(
+        report, value["scope_report"], value["counted_report"], raw,
+        expected_report_sha256=pin, expected_join_request_sha256=raw_digest(raw),
+        **value["kwargs"])
+
+
+@pytest.fixture(scope="module")
+def counted_v2_report(counted_v2_case):
+    return _prepare_counted_v2(counted_v2_case)
+
+
+def _no_native_path_key(value):
+    if type(value) is dict:
+        return "native_path" not in value and all(_no_native_path_key(child) for child in value.values())
+    if type(value) is list:
+        return all(_no_native_path_key(child) for child in value)
+    return True
+
+
+def test_counted_v2_public_replay_calls_both_unchanged_owners(counted_v2_case, monkeypatch):
+    counted = _counted_test_owner()
+    actual_scope = source_scope.validate_sampled_norm_scope_v1
+    actual_counted = counted.validate_counted_frame
+    calls = []
+
+    def scope_replay(*args, **kwargs):
+        calls.append("scope")
+        return actual_scope(*args, **kwargs)
+
+    def counted_replay(*args, **kwargs):
+        calls.append("counted")
+        return actual_counted(*args, **kwargs)
+
+    monkeypatch.setattr(source_scope, "validate_sampled_norm_scope_v1", scope_replay)
+    monkeypatch.setattr(counted, "validate_counted_frame", counted_replay)
+    value = deepcopy(counted_v2_case)
+    before = deepcopy(value)
+    report = _prepare_counted_v2(value)
+    assert _validate_counted_v2(value, report) == report
+    assert calls == ["scope", "counted", "scope", "counted"]
+    assert value == before
+
+
+def test_counted_v2_derived_inventory_preserves_49_nodes_and_six_typed_binders(
+    counted_v2_case, counted_v2_report,
+):
+    report = counted_v2_report
+    original = counted_v2_case["counted_report"]
+    rows = report["provenance_ledger"]
+    expected = _independent_counted_paths(original["typed_expression"])
+    assert len(rows) == 55 and len({row["typed_path"] for row in rows}) == 55
+    assert [(row["typed_path"], row["kind"]) for row in rows] == [
+        (path, kind) for path, kind, _ in expected]
+    nodes = [row for row in rows if row["kind"] != "binder"]
+    binders = [row for row in rows if row["kind"] == "binder"]
+    assert len(nodes) == 49 and len(binders) == 6
+    assert [row["typed_path"] for row in nodes] == [
+        row["typed_path"] for row in original["structural_mapping"]]
+    assert [row["typed_path"] for row in binders] == [
+        row["typed_path"] for row in original["binder_ledger"]]
+    assert [(row["binder_name"], row["binder_sort"]["name"]) for row in binders] == [
+        ("event", "EventFrame"), ("time", "TimeFrame"),
+        ("x0", "Object"), ("x1", "Object"), ("x2", "Object"), ("x3", "Object")]
+    assert all(row["native_mapping_scope"] == "counted_syntax_only_no_native_path" for row in rows)
+    assert _no_native_path_key(rows)
+
+
+def test_counted_v2_member_and_equality_operands_keep_order_roles_and_exact_binders(
+    counted_v2_case, counted_v2_report,
+):
+    expression = counted_v2_case["counted_report"]["typed_expression"]
+    rows = counted_v2_report["provenance_ledger"]
+    by_path = {row["typed_path"]: row for row in rows}
+    members = [row for row in rows if row["kind"] == "predicate"]
+    equalities = [row for row in rows if row["kind"] == "equality"]
+    variables = [row for row in rows if row["kind"] == "variable"]
+    assert len(members) == 4 and len(equalities) == 6 and len(variables) == 24
+    member_tuples = []
+    for row in members:
+        assert row["predicate_symbol"] == "Member"
+        assert row["argument_roles"] == ["object", "event", "time"]
+        arguments = row["argument_typed_paths"]
+        assert arguments == [row["typed_path"] + "/arguments/" + str(i) for i in range(3)]
+        member_tuples.append([by_path[path]["variable_name"] for path in arguments])
+        for index, path in enumerate(arguments):
+            variable = by_path[path]
+            assert variable["term_context"] == "predicate_argument"
+            assert variable["equality_operand"] is None
+            assert variable["predicate_argument"] == {
+                "predicate_symbol": "Member", "predicate_typed_path": row["typed_path"],
+                "argument_index": index, "declared_role": row["argument_roles"][index]}
+    assert member_tuples == [[name, "event", "time"] for name in ("x0", "x1", "x2", "x3")]
+    pairs = []
+    for row in equalities:
+        assert row["equality_operator"] == "built_in_identity"
+        assert row["operand_roles"] == ["left", "right"] and row["operand_sort"]["name"] == "Object"
+        operands = row["ordered_operand_paths"]
+        assert operands == [row["typed_path"] + "/arguments/" + str(i) for i in range(2)]
+        pairs.append([by_path[path]["variable_name"] for path in operands])
+        for index, path in enumerate(operands):
+            variable = by_path[path]
+            assert variable["term_context"] == "equality_operand"
+            assert variable["predicate_argument"] is None
+            assert variable["equality_operand"] == {
+                "equality_typed_path": row["typed_path"], "equality_node_id": row["node_id"],
+                "operand_index": index, "endpoint_role": ("left", "right")[index],
+                "opposite_typed_path": operands[1 - index]}
+    assert pairs == [["x0", "x1"], ["x0", "x2"], ["x0", "x3"],
+                     ["x1", "x2"], ["x1", "x3"], ["x2", "x3"]]
+    for variable in variables:
+        node = pointer(expression, variable["typed_path"])
+        assert variable["variable_sort"] == node["sort"]
+        binding = variable["binding_quantifier"]
+        assert binding["variable_name"] == variable["variable_name"]
+        binder = pointer(expression, binding["binder_typed_path"])
+        assert binder["name"] == variable["variable_name"] and binder["sort"] == variable["variable_sort"]
+
+
+@pytest.mark.parametrize("damage", ["drop_node", "drop_binder", "duplicate", "reverse",
+    "invent_equality_endpoint", "binder_sort_pointer", "unknown_anchor", "unanchored_original_only"])
+def test_counted_v2_closed_mapping_cannot_omit_or_invent_typed_provenance(counted_v2_case, damage):
+    value = deepcopy(counted_v2_case)
+    rows = value["join_request"]["node_correspondences"]
+    expected = _independent_counted_paths(value["counted_report"]["typed_expression"])
+    if damage == "drop_node": rows.pop()
+    elif damage == "drop_binder": rows.pop(next(i for i, (_, kind, _) in enumerate(expected) if kind == "binder"))
+    elif damage == "duplicate": rows[-1] = deepcopy(rows[0])
+    elif damage == "reverse": rows.reverse()
+    elif damage == "invent_equality_endpoint":
+        row = next(row for row in rows if pointer(value["counted_report"]["typed_expression"], row["typed_path"]).get("kind") == "equality")
+        row["typed_path"] += "/arguments/2"
+    elif damage == "binder_sort_pointer": rows[1]["typed_path"] += "/sort"
+    elif damage == "unknown_anchor": rows[-1]["source_anchor_paths"] = ["/coverage/segments/0/span/text"]
+    elif damage == "unanchored_original_only": rows[0]["unresolved_codes"] = ["passive_subject_agent_unresolved"]
+    with pytest.raises(ValueError):
+        _prepare_counted_v2(value)
+
+
+@pytest.mark.parametrize("damage", ["drop_node", "drop_binder", "frame", "identity", "source_binding"])
+def test_counted_v2_rehashed_counted_report_requires_the_complete_original_request(counted_v2_case, damage):
+    counted = _counted_test_owner()
+    value = deepcopy(counted_v2_case)
+    report = value["counted_report"]
+    if damage == "drop_node": report["structural_mapping"].pop()
+    elif damage == "drop_binder": report["binder_ledger"].pop()
+    elif damage == "frame": report["frame"]["time"]["semantics"] = "calendar_order"
+    elif damage == "identity": report["identity_pairs"][0].reverse()
+    elif damage == "source_binding": report["source_binding"] = {"source": "invented"}
+    value["kwargs"]["expected_counted_report_sha256"] = counted.counted_frame_report_sha256(report)
+    with pytest.raises(ValueError):
+        _prepare_counted_v2(value)
+
+
+@pytest.mark.parametrize("damage", ["binder", "equality", "role", "frame", "native_path",
+    "original_issue", "authority", "mask", "complete_norm", "native_output"])
+def test_counted_v2_resealed_output_cannot_change_geometry_or_promote_source_authority(
+    counted_v2_case, counted_v2_report, damage,
+):
+    report = deepcopy(counted_v2_report)
+    rows = report["provenance_ledger"]
+    if damage == "binder": next(row for row in rows if row["kind"] == "variable")["binding_quantifier"]["variable_name"] = "invented"
+    elif damage == "equality": next(row for row in rows if row["kind"] == "equality")["operand_roles"].reverse()
+    elif damage == "role": next(row for row in rows if row["kind"] == "predicate")["argument_roles"].reverse()
+    elif damage == "frame": report["typed_candidate"]["frame"]["policy"] = "global_lifetime"
+    elif damage == "native_path": rows[0]["native_path"] = "/invented"
+    elif damage == "original_issue": report["original_unresolved"].pop()
+    elif damage == "authority": report["authority"]["source_bound"] = True
+    elif damage == "mask": report["training_mask"] = 1
+    elif damage == "complete_norm": report["formal_norm_ast"] = {"complete": True}
+    elif damage == "native_output": report["native_output_for_source"] = "invented"
+    with pytest.raises(ValueError):
+        _validate_counted_v2(counted_v2_case, report)
+
+
+def test_counted_v2_retains_both_original_reports_without_completing_the_norm(
+    counted_v2_case, counted_v2_report,
+):
+    original = counted_v2_case["counted_report"]
+    scope = counted_v2_case["scope_report"]
+    report = counted_v2_report
+    assert report["schema"] == "legal-source-typed-norm-join-proposal/v2"
+    assert report["profile"] == "whole-source-partial-counted-frame-correspondence/v1"
+    assert report["source_scope_report"] == scope
+    assert report["counted_frame_report"] == original
+    candidate = report["typed_candidate"]
+    assert candidate["interpretation_status"] == "unreviewed_partial_counted_frame_hypothesis"
+    for field in ("counts", "frame", "membership", "distinctness", "maximum",
+                  "identity_pairs", "binder_ledger", "assumptions"):
+        assert candidate[field] == original[field]
+    assert candidate["expression"] == original["typed_expression"]
+    assert report["original_unresolved"] == scope["scope_declaration"]["unresolved"]
+    assert report["declared_semantic_coverage"] == scope["declared_semantic_coverage"]
+    assert report["source_custody"]["selected_unit_ref"] == scope["input_pins"]["selected_unit_ref"]
+    assert report["external_counted_source_binding"] is None
+    assert candidate["source_binding"] is None and original["source_binding"] is None
+    assert original["source_bound"] is False and original["native_build_executed"] is False
+    assert report["source_custody_linked"] is True
+    for field in ("source_meaning_selected", "source_translation_performed", "native_build_executed"):
+        assert report[field] is False
+    for field in ("formal_norm_ast", "lowered_IR", "native_output_for_source", "graph", "lookup",
+                  "governing_use", "accepted_lookup", "governing_definition_use"):
+        assert report[field] is None
+    assert all(value is False for value in report["authority"].values())
+    assert report["masks"] == scope["masks"]
+    for field in ("training_mask", "evaluation_gold_mask", "human_reviews", "signatures_constructed",
+                  "admissions", "model_calls", "training_calls", "native_processes"):
+        assert report[field] == 0
+    assert _no_native_path_key(report["provenance_ledger"])
+
+
+@pytest.mark.parametrize("replacement", ["other_occurrence", "other_edition"])
+def test_counted_v2_exact_source_identity_does_not_follow_identical_text(
+    counted_v2_case, replacement,
+):
+    source = source_case(duplicate=(replacement == "other_occurrence"),
+                         edition=2025 if replacement == "other_edition" else 2024)
+    if replacement == "other_occurrence":
+        source["unit"] = source["units"][1]
+    changed = case(source_only=True, source=source)
+    value = deepcopy(counted_v2_case)
+    value["scope_report"] = changed["scope_report"]
+    value["kwargs"]["scope_replay_inputs"] = changed["kwargs"]["scope_replay_inputs"]
+    value["kwargs"]["expected_scope_report_sha256"] = changed["kwargs"]["expected_scope_report_sha256"]
+    assert value["scope_report"]["source_selector"]["text"] == counted_v2_case["scope_report"]["source_selector"]["text"]
+    assert value["kwargs"]["scope_replay_inputs"]["selected_unit_ref"] != value["join_request"]["selected_unit_ref"]
+    with pytest.raises(ValueError, match="selected unit differs"):
+        _prepare_counted_v2(value)
+
+
+@pytest.mark.parametrize("damage", ["v1_schema", "extra_join_field", "join_duplicate", "join_not_bytes",
+    "join_pin", "scope_pin", "scope_nonordinary", "extra_replay_field", "counted_pin",
+    "counted_nonordinary", "counted_null", "counted_request_null", "counted_request_duplicate",
+    "counted_request_pin"])
+def test_counted_v2_independent_preflight_refuses_before_owner_imports(counted_v2_case, monkeypatch, damage):
+    value = deepcopy(counted_v2_case)
+    raw = None
+    expected = None
+    if damage == "v1_schema": value["join_request"]["schema"] = subject.REQUEST_SCHEMA
+    elif damage == "extra_join_field": value["join_request"]["unexpected"] = True
+    elif damage == "join_duplicate": raw = b'{"schema":"x","schema":"y"}'
+    elif damage == "join_not_bytes": raw = wire(value["join_request"]).decode("utf-8")
+    elif damage == "join_pin": expected = "0" * 64
+    elif damage == "scope_pin": value["kwargs"]["expected_scope_report_sha256"] = "0" * 64
+    elif damage == "scope_nonordinary": value["scope_report"]["unexpected"] = object()
+    elif damage == "extra_replay_field": value["kwargs"]["scope_replay_inputs"]["unexpected"] = 1
+    elif damage == "counted_pin": value["kwargs"]["expected_counted_report_sha256"] = "0" * 64
+    elif damage == "counted_nonordinary": value["counted_report"]["unexpected"] = object()
+    elif damage == "counted_null": value["counted_report"] = None
+    elif damage == "counted_request_null": value["kwargs"]["counted_request_raw"] = None
+    elif damage == "counted_request_duplicate":
+        value["kwargs"]["counted_request_raw"] = b'{"expression":{},"expression":{}}'
+        value["kwargs"]["expected_counted_request_sha256"] = raw_digest(value["kwargs"]["counted_request_raw"])
+    elif damage == "counted_request_pin": value["kwargs"]["expected_counted_request_sha256"] = "0" * 64
+    monkeypatch.setattr(subject, "_counted_owners", lambda: (_ for _ in ()).throw(AssertionError("owners imported")))
+    if type(raw) is str:
+        expected = raw_digest(raw.encode("utf-8"))
+    with pytest.raises(ValueError):
+        _prepare_counted_v2(value, join_raw=raw, expected_join_pin=expected)
+
+
+def test_counted_v2_output_pin_is_independent_before_replay(counted_v2_case, counted_v2_report, monkeypatch):
+    monkeypatch.setattr(subject, "_counted_owners", lambda: (_ for _ in ()).throw(AssertionError("owners imported")))
+    with pytest.raises(ValueError, match="independent canonical pin"):
+        _validate_counted_v2(counted_v2_case, counted_v2_report, expected_report_pin="0" * 64)
+
+
+@pytest.mark.parametrize("damage", ["schema", "maximum", "frame", "extra_field"])
+def test_counted_v2_fixed_request_is_checked_before_lazy_syntax_discovery(
+    counted_v2_case, monkeypatch, damage,
+):
+    value = deepcopy(counted_v2_case)
+    request = json.loads(value["kwargs"]["counted_request_raw"])
+    if damage == "schema": request["schema"] = "unknown-counted-request/v1"
+    elif damage == "maximum": request["maximum"] = 4
+    elif damage == "frame": request["frame"]["policy"] = "whole_lifetime"
+    elif damage == "extra_field": request["unexpected"] = True
+    raw = wire(request)
+    value["kwargs"]["counted_request_raw"] = raw
+    value["kwargs"]["expected_counted_request_sha256"] = raw_digest(raw)
+    monkeypatch.setattr(subject, "_counted_producer_pins",
+        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("lazy syntax discovery ran")))
+    with pytest.raises(ValueError):
+        _prepare_counted_v2(value)
+
+
+def test_counted_v2_request_does_not_enter_the_unchanged_relational_v1_profile(counted_v2_case, monkeypatch):
+    raw = wire(counted_v2_case["join_request"])
+    monkeypatch.setattr(subject, "_owners", lambda: (_ for _ in ()).throw(AssertionError("relational owners imported")))
+    with pytest.raises(ValueError, match="unreviewed correspondence request"):
+        subject.prepare_source_typed_norm_join_v1(counted_v2_case["scope_report"],
+            counted_v2_case["counted_report"], raw,
+            expected_join_request_sha256=raw_digest(raw),
+            expected_scope_report_sha256=counted_v2_case["kwargs"]["expected_scope_report_sha256"],
+            expected_relational_report_sha256=None,
+            scope_replay_inputs=counted_v2_case["kwargs"]["scope_replay_inputs"],
+            relational_request_raw=None, expected_relational_request_sha256=None)
+
+
+def test_counted_v2_distinguishes_raw_request_transport_and_complete_input_commitments(counted_v2_case):
+    value = deepcopy(counted_v2_case)
+    raw = json.dumps(value["join_request"], ensure_ascii=False, indent=2).encode("utf-8")
+    counted_raw = json.dumps(json.loads(value["kwargs"]["counted_request_raw"]), indent=2).encode("utf-8")
+    value["kwargs"]["counted_request_raw"] = counted_raw
+    value["kwargs"]["expected_counted_request_sha256"] = raw_digest(counted_raw)
+    # The counted owner independently binds its original request bytes, so a
+    # changed transport requires its genuine report, never only a new join pin.
+    counted = _counted_test_owner()
+    value["counted_report"] = counted.prepare_counted_frame(counted_raw,
+        expected_request_sha256=raw_digest(counted_raw))
+    value["kwargs"]["expected_counted_report_sha256"] = counted.counted_frame_report_sha256(value["counted_report"])
+    report = _prepare_counted_v2(value, join_raw=raw)
+    pins = report["input_pins"]
+    assert report["join_request_raw_utf8"].encode("utf-8") == raw
+    assert pins["join_request_raw_sha256"] == raw_digest(raw)
+    assert pins["join_request_canonical_sha256"] == digest(value["join_request"])
+    assert pins["join_request_raw_sha256"] != pins["join_request_canonical_sha256"]
+    assert pins["counted_request_raw_sha256"] == raw_digest(counted_raw)
+    assert pins["counted_request_raw_bytes"] == len(counted_raw)
+    assert pins["counted_report_full_canonical_sha256"] == value["kwargs"]["expected_counted_report_sha256"]
+    assert pins["scope_report_full_canonical_sha256"] == value["kwargs"]["expected_scope_report_sha256"]
+
+
+@pytest.mark.parametrize("report_kind", ["scope", "counted"])
+@pytest.mark.parametrize("mutation", ["insert", "replace"])
+def test_counted_v2_resealed_foreign_producer_paths_are_not_read_or_replayed(
+    counted_v2_case, monkeypatch, report_kind, mutation,
+):
+    value = deepcopy(counted_v2_case)
+    counted = _counted_test_owner()
+    report = value["scope_report" if report_kind == "scope" else "counted_report"]
+    foreign = Path("/tmp/legal_counted_join_foreign_producer_must_not_be_read")
+    pins = report["producer_pins"]
+    if mutation == "replace": pins.pop(next(iter(pins)))
+    pins[str(foreign)] = "0" * 64
+    key = "expected_scope_report_sha256" if report_kind == "scope" else "expected_counted_report_sha256"
+    value["kwargs"][key] = digest(report)
+    original_read = Path.read_bytes
+    foreign_reads, prior_operations = [], []
+
+    def guarded_read(path):
+        if path.resolve() == foreign:
+            foreign_reads.append(str(path))
+            raise AssertionError("foreign producer read")
+        return original_read(path)
+
+    def prior_validate(*args, **kwargs):
+        prior_operations.append(True)
+        raise AssertionError("prior operation ran before producer rejection")
+
+    monkeypatch.setattr(Path, "read_bytes", guarded_read)
+    monkeypatch.setattr(source_scope, "validate_sampled_norm_scope_v1", prior_validate)
+    monkeypatch.setattr(counted, "validate_counted_frame", prior_validate)
+    with pytest.raises(ValueError, match="producer commitments differ from trusted owners"):
+        _prepare_counted_v2(value)
+    assert foreign_reads == [] and prior_operations == []
+
+
+@pytest.mark.parametrize("boundary", ["counted_replay", "correspondence", "final_serialization"])
+def test_counted_v2_producer_changes_at_closing_boundaries_refuse_return(
+    counted_v2_case, monkeypatch, boundary,
+):
+    counted = _counted_test_owner()
+    original_read = Path.read_bytes
+    target = Path(counted.__file__).resolve()
+
+    def changed_read(path):
+        return b"changed at counted closing boundary" if path.resolve() == target else original_read(path)
+
+    if boundary == "counted_replay":
+        original_operation = counted.validate_counted_frame
+        def operation(*args, **kwargs):
+            result = original_operation(*args, **kwargs)
+            monkeypatch.setattr(Path, "read_bytes", changed_read)
+            return result
+        monkeypatch.setattr(counted, "validate_counted_frame", operation)
+    elif boundary == "correspondence":
+        original_operation = subject._checked_correspondences
+        def operation(*args, **kwargs):
+            result = original_operation(*args, **kwargs)
+            monkeypatch.setattr(Path, "read_bytes", changed_read)
+            return result
+        monkeypatch.setattr(subject, "_checked_correspondences", operation)
+    else:
+        original_operation = subject._wire
+        def operation(value, maximum):
+            result = original_operation(value, maximum)
+            if type(value) is dict and value.get("schema") == subject.SCHEMA_V2:
+                monkeypatch.setattr(Path, "read_bytes", changed_read)
+            return result
+        monkeypatch.setattr(subject, "_wire", operation)
+    with pytest.raises(ValueError, match="producer changed|producer commitments differ"):
+        _prepare_counted_v2(counted_v2_case)
+
+
+def test_counted_v2_inputs_and_returned_history_are_detached(counted_v2_case):
+    value = deepcopy(counted_v2_case)
+    before = deepcopy(value)
+    report = _prepare_counted_v2(value)
+    assert value == before
+    report["typed_candidate"]["identity_pairs"][0].reverse()
+    report["source_scope_report"]["scope_declaration"]["unresolved"].clear()
+    report["counted_frame_report"]["binder_ledger"].clear()
+    report["join_request"]["node_correspondences"].clear()
+    assert value == before
+    other = _prepare_counted_v2(value)
+    value["counted_report"]["binder_ledger"].clear()
+    value["scope_report"]["scope_declaration"]["unresolved"].clear()
+    value["join_request"]["introduced_unresolved"].clear()
+    assert len(other["counted_frame_report"]["binder_ledger"]) == 6
+    assert other["original_unresolved"] and other["introduced_unresolved"]
+
+
+def test_counted_v2_caller_mutation_during_replay_does_not_replace_captured_inputs(
+    counted_v2_case, monkeypatch,
+):
+    value = deepcopy(counted_v2_case)
+    original = deepcopy(value)
+    counted = _counted_test_owner()
+    original_validate = counted.validate_counted_frame
+
+    def replay_then_mutate_caller(*args, **kwargs):
+        result = original_validate(*args, **kwargs)
+        value["scope_report"]["scope_declaration"]["unresolved"].clear()
+        value["counted_report"]["binder_ledger"].clear()
+        value["join_request"]["node_correspondences"].clear()
+        return result
+
+    monkeypatch.setattr(counted, "validate_counted_frame", replay_then_mutate_caller)
+    report = _prepare_counted_v2(value)
+    assert report["source_scope_report"] == original["scope_report"]
+    assert report["counted_frame_report"] == original["counted_report"]
+    assert report["join_request"] == original["join_request"]
+
+
+def test_counted_v2_validator_snapshots_offered_report_before_regeneration(
+    counted_v2_case, counted_v2_report, monkeypatch,
+):
+    offered = deepcopy(counted_v2_report)
+    original_prepare = subject.prepare_source_typed_norm_join_v2
+
+    def regenerate_then_mutate_offered(*args, **kwargs):
+        result = original_prepare(*args, **kwargs)
+        offered["authority"]["source_bound"] = True
+        offered["typed_candidate"]["identity_pairs"][0].reverse()
+        return result
+
+    monkeypatch.setattr(subject, "prepare_source_typed_norm_join_v2", regenerate_then_mutate_offered)
+    report = _validate_counted_v2(counted_v2_case, offered)
+    assert report == counted_v2_report
+    assert offered["authority"]["source_bound"] is True

@@ -1,0 +1,223 @@
+{
+  "Lean_corpus_admitted": false,
+  "accepted_entity_resolution": false,
+  "actual_837_parent_operation_performed": false,
+  "actual_checked_buffers": 164,
+  "actual_compile_execute_count": 171,
+  "actual_initializer_bypasses": [],
+  "actual_product_origins": 126,
+  "adapter_source": {
+    "bytes": 92971,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/corpus_proposed_graph_adapter.py",
+    "sha256": "58115e83df44085bf7a6c83af4edcef76e5796e3bb1913609e1b08e5434d8be7"
+  },
+  "admission": {
+    "bytes": 82978,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/source7346-lexical-projection-01/next-definition-alignment-v01/green-v02/focused-tests-admission-v01.json",
+    "sha256": "800d2d4cabcc2e82fef9b2640c824e0aac4ff4833372dac43518a638f2c70ca8"
+  },
+  "admitted_source_origins": 215,
+  "all_declared_source_pins_verified_by_original_audit": true,
+  "authority": false,
+  "canonical_source_installation": {
+    "bytes": 13540,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/source7346-lexical-projection-01/next-definition-alignment-v01/canonical-source-installation-v02.json",
+    "sha256": "9f1a03163e64a371fc99d6a8e09240d7d3d90cd0947143dbf9218359ee3f31ba"
+  },
+  "cases": 35,
+  "completed": true,
+  "contracts": {
+    "bytes": 7279,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/corpus_contracts.py",
+    "sha256": "b89146e2471b7335f23115222c5a9bc5298a20bb02f02cce5d91496e6563d8aa"
+  },
+  "declared_source_pins": 231,
+  "default_pytest_whole_environment_qualified": false,
+  "durability": {
+    "bytes": 2222,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/source7346-lexical-projection-01/next-definition-alignment-v01/green-v02/attempt-focused-tests-v01/logs/validation-durability.json",
+    "sha256": "78c5ca1eb8c458cf563796ecca7e42e0435704ce041a0abd5efe6afa8dc87f51"
+  },
+  "errors": 0,
+  "evaluation_gold_mask": 0,
+  "existing_CID_recipes_and_projection_AST_preserved": true,
+  "failed_intermediate_generation": {
+    "adapter_source": {
+      "bytes": 92955,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/corpus_proposed_graph_adapter.py",
+      "sha256": "9bb24c6d89ec6df82707e962b2f57b6c2905be56465cedca06cf246d19cf976c"
+    },
+    "cohort_qualification_credit": 0,
+    "independent_failed_result_review": {
+      "bytes": 22986,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/source7346-lexical-projection-01/next-definition-alignment-v01/green-v01/independent-failed-green-result-review-v02.json",
+      "sha256": "05b47a78b398dbf9442b1bf51f97c3f426b0f51542dd8339de39884e34682aa0"
+    },
+    "independent_storage_postreview": {
+      "bytes": 6519,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/source7346-lexical-projection-01/next-definition-alignment-v01/green-v01/green-failed-storage-closeout-v01/post-closeout-review-v01.json",
+      "sha256": "73de838ea4431714af96905127eeb00c4bac519855aa29ee1401a448d5658a85"
+    },
+    "model_training_Lean_calls": null,
+    "observed_cases": 35,
+    "observed_failed": 2,
+    "observed_new_drift_passed": 14,
+    "observed_passed": 33,
+    "observed_retained_lexical_passed": 19,
+    "operation_guard_counts": null,
+    "original_recovery_API_calls": 1,
+    "original_storage_recovery": {
+      "bytes": 12120,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/source7346-lexical-projection-01/next-definition-alignment-v01/green-v01/green-failed-storage-closeout-v01/summary.json",
+      "sha256": "bd3776322b7c9d9a7b9edf26633bd0453028b5a42297156387be99efa90aca40"
+    },
+    "owning_test": {
+      "bytes": 22169,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/autoformal/test_corpus_proposed_graph_adapter_lexical.py",
+      "sha256": "c76eabaa7f80780032e70c54ab691ed78e410f99d2cb69b3de89f4b46c2b8e99"
+    },
+    "qualified": false,
+    "reason": "Two unchanged owning tests rejected the changed authority/mask diagnostic; v02 restores their original independently regenerated phrase without weakening tests. The failed9bb generation and33passing observations remain unqualified and never pooled into this35.",
+    "released_storage_promise_bytes": 134217728,
+    "retained_bytes": 25366,
+    "retained_files": 9,
+    "retained_raw_checked_buffer_attestation": false,
+    "root_genuine_failed_reap": {
+      "bytes": 2439,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/source7346-lexical-projection-01/next-definition-alignment-v01/green-v01/root-green-failed-reap-v01.json",
+      "sha256": "a86134868d19c36e02192acf27f8bdaf94d5362a88377a4a9dfbe5da8c54b816"
+    },
+    "source_native_storage_closed": true,
+    "worker_proof": null
+  },
+  "failures": 0,
+  "governing_definition_use": null,
+  "governing_edition": null,
+  "governing_source": null,
+  "graph_source": {
+    "bytes": 35170,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/legal_semantic_graph.py",
+    "sha256": "b7d2f994b923f6db3bcf535561d4064ef686844d2faea560ad30952a580c511e"
+  },
+  "historical_41_case_or_837_qualifications_pooled_or_resealed": false,
+  "independent_code_review": {
+    "bytes": 3169,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/source7346-lexical-projection-01/next-definition-alignment-v01/independent-diagnostic-source-review-v02.json",
+    "sha256": "4136a0459fac240552025f5157fd8429c1449713c417c152434a7700d41d27ef"
+  },
+  "independent_result_review": {
+    "bytes": 33293,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/source7346-lexical-projection-01/next-definition-alignment-v01/green-v02/independent-focused-result-review-v01.json",
+    "sha256": "371fc93159a0fe15db22b0464ee51618cbf9d2bbc15b2f49ea663bd780c577f5"
+  },
+  "launch": {
+    "bytes": 10066,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/source7346-lexical-projection-01/next-definition-alignment-v01/green-v02/launch-focused-tests-green-02-v01.json",
+    "sha256": "e78e7f5676588aa846fadee81557420d3e47813f7f41660da3fbdac64fcc9947"
+  },
+  "model_training_Lean_calls": 0,
+  "namespace_synthesis": false,
+  "native_current_absence_is_not_a_released_row_claim": true,
+  "native_lease_id": "8b18241501a34ea7976cd38efb62e321",
+  "native_wrapper_exit_code": 0,
+  "natural_product_imports": true,
+  "new_current_public_runtime_qualification": false,
+  "new_drift_cases": 14,
+  "new_logic_families_or_cross_graph_join": false,
+  "no_conftest": true,
+  "operation_counter_scope": "Only the enrolled guarded test operations and original worker proof. No whole-host/startup, arbitrary descendant containment, entire third-party package or ordinary environment attestation is implied.",
+  "operation_guard_counts": {
+    "database": 0,
+    "external_write": 0,
+    "network": 0,
+    "subprocess": 0
+  },
+  "original_owner_result": {
+    "bytes": 779,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/source7346-lexical-projection-01/next-definition-alignment-v01/green-v02/attempt-focused-tests-v01/logs/result.json",
+    "sha256": "24824d82fa295de851609d41fe9f4445221c0a38e7f15d2a0d218f93f9d7f5b2"
+  },
+  "original_resource_envelope": {
+    "child_process_slots": 2,
+    "cpu_slots": 1,
+    "memory_mb": 2048,
+    "storage_bytes": 134217728,
+    "timeout_seconds": 300
+  },
+  "owned_temp_factory_adapter": null,
+  "owning_test": {
+    "bytes": 22169,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/autoformal/test_corpus_proposed_graph_adapter_lexical.py",
+    "sha256": "c76eabaa7f80780032e70c54ab691ed78e410f99d2cb69b3de89f4b46c2b8e99"
+  },
+  "phase_events_not_counted": true,
+  "plain_assertions": true,
+  "projection_contract": {
+    "bytes": 15485,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/source7346-lexical-projection-01/next-definition-alignment-v01/projection-closing-custody-contract-v02.json",
+    "sha256": "6c3757de8f600ff19e2a9a139b041f0ed57d6b386227cc8d887ba701518222fe"
+  },
+  "public_whole_package_runtime_qualified": false,
+  "purewire": {
+    "bytes": 17742,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/legal_paired_manifest_inventory_v1.py",
+    "sha256": "f5778bbb6f2fef41a45057ce45ca2f409f0f27647c39e538b21909dd38a1990b"
+  },
+  "purewire_executed_under_this_green_source_generation": true,
+  "pytest_exit_code": 0,
+  "qualified": true,
+  "recorded_at_utc": "2026-10-26T03:15:34.402717+00:00",
+  "red_defect_observation": {
+    "bytes": 8870,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/source7346-lexical-projection-01/next-definition-alignment-v01/red-defect-observation-v01.json",
+    "sha256": "168449b7eadc9d8c339e78cdf3480f78e0fd679a5638561790d13b6874e5e605"
+  },
+  "request": {
+    "bytes": 45519,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/source7346-lexical-projection-01/next-definition-alignment-v01/green-v02/request-focused-tests-v01.json",
+    "sha256": "e709b756a2b79afc1d3366f80a999e2c9a1d04b194c57e9fd116a0155dec8c6a"
+  },
+  "retained_bytes": 3958469,
+  "retained_file_hashes_and_physical_identities_verified_twice": true,
+  "retained_files": 12,
+  "retained_lexical_cases": 21,
+  "root_genuine_owner_reap": {
+    "bytes": 2046,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/source7346-lexical-projection-01/next-definition-alignment-v01/green-v02/root-green-success-reap-v01.json",
+    "sha256": "dbeab67eac1f88a42de20e4a14d89d6ea714feadac10ddf4f664aef76ee275f4"
+  },
+  "schema": "legal-ir-source7346-lexical-closing-green-qualification/v1",
+  "scope": "Fresh green-v02 finite authored lexical engineering cohort only, on final diagnostic-fixed581 source and unchangedc76 owning test. Exactly35cases(21retained+14new) close original/detached input, actual result and serialization custody and preserve primary failures. Earlier red/failedgreen-v01, original41 lexical,16depth/4graph and837-data observations retain separate outcomes/generations and supply no pooled credit.",
+  "second_distinct_typed_statutory_use_established": false,
+  "selected_legal_meaning": null,
+  "semantic_graph_admitted": false,
+  "setup_call_teardown_phase_events_recorded": false,
+  "skipped": 0,
+  "source_READ": {
+    "canonical_root": "/home/barberb/lift_coding/external/ipfs_datasets",
+    "cooperative": true,
+    "lock_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/control-plane/source-leases/source.lock",
+    "mode": "read",
+    "schema_version": "autoencoder-source-lease/v1",
+    "waited_seconds": 4.1279010474681854e-05
+  },
+  "source_READ_closed": true,
+  "source_native_storage_closed": true,
+  "source_native_storage_closure_independently_verified": true,
+  "storage_reservation_id": "6ecfa15968af43b3aa66b060dca02223",
+  "storage_status": "released",
+  "summary_author_product_native_test_model_training_Lean_SQL_or_recovery_API_calls": 0,
+  "test_qualification_success_credit": 35,
+  "test_results": {
+    "bytes": 6979,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/source7346-lexical-projection-01/next-definition-alignment-v01/green-v02/attempt-focused-tests-v01/exports/test-results.xml",
+    "sha256": "cc907ddf5d4cf71fd81060499bac3c995b349ed97675a09cee54b811b3ca3f09"
+  },
+  "training_mask": 0,
+  "whole_package_qualification": false,
+  "worker_proof": {
+    "bytes": 3939148,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/source7346-lexical-projection-01/next-definition-alignment-v01/green-v02/attempt-focused-tests-v01/exports/test-worker-proof.json",
+    "sha256": "713b0f4b8429e345959e877a571ed2903a91b577893e0bf5dae0acc5fefee744"
+  }
+}

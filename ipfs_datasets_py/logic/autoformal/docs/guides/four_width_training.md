@@ -1,5 +1,7 @@
 # Training the separate 8D, 384D, 768D and 4096D decoders
 
+This is a chronological experiment record. Use [training history](../TRAINING_HISTORY.md) and the [current four-width plan](../HANDOFF.md#four-source-widths) for the latest reuse priorities and compatibility gates. Earlier availability/preparation statements retain their original cutoffs; later native captures and fitted states already exist. Do not restart completed campaigns from an earlier unavailable/no-fit statement.
+
 This guide records a sequence of October 4 experiments. The first comparison
 trains separate Legal formula sidecars for 8D, 384D and 768D sources; 4096D was
 unavailable in that comparison. Later sections record authenticated native

@@ -1,0 +1,155 @@
+{
+  "authority_limits": {
+    "automatic_retry_authorized": false,
+    "canonical_install_note": "This refresh supplies current source-pinned diagnostic metadata and existing status observations only. Any canonical planning-only installation must preserve the unresolved native authority gate; a diagnostic status read is not native worker/capability admission.",
+    "fresh_authenticated_native_owner_admission_refreshed": false,
+    "full_attempt_history_established": false,
+    "provider_unknown_outcome_resolved": false,
+    "statutory_or_Lean_completion": false,
+    "worker_launch_authorized": false
+  },
+  "base_public_datasets_head": "590483978264e22b1ff0d5520f91af21cb2c4f7c",
+  "changes": {
+    "corpus_or_lean_completion_claimed": false,
+    "model_or_legal_payloads_read": false,
+    "native_population_changed": false,
+    "new_watchdog_or_queue_installed": false,
+    "numerical_or_semantic_qualification_claimed": false,
+    "original_24_tasks_unchanged": true,
+    "services_or_runtime_config_changed": false
+  },
+  "engineering_projection": {
+    "completed_cards": 141,
+    "runnable_work": false,
+    "scope": "One shared engineering population observed by four lanes, not four independent populations or formalized provisions."
+  },
+  "local_audit": {
+    "bytes": 21462,
+    "path": "test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/candidates/legal-ir-programme-supervisor-audit-20261028-v01.json",
+    "portable_audit_bytes_published": false,
+    "recorded_at_utc": "2026-10-28T03:45:35.721930+00:00",
+    "root": "datasets_workspace",
+    "sha256": "5632d5f85a3107582e6e7317011d29ea3c55c59a33eb8ffda217f643b6d75ce9"
+  },
+  "observed_dataset_heads": {
+    "justicedao/ipfs_uscode": "91ca1838853ac82d7a12dd4ab47d9686f47667f9",
+    "justicedao/uscode-autoformal-entity-cache": "79d54378c5d6a89ab56e7a27e0f0ba867e800e19",
+    "justicedao/uscode-autoformal-span-cache": "60501f3e920f6c9050cfc452e0d9fcc2b7c184f3"
+  },
+  "parallel_work_reused": {
+    "artifacts": "Use work_catalog known_candidate_relationships and canonical successors; no repeated port of indexed duplicates.",
+    "numerical_frontier": "Reuse the selected F18 frozen matched scoring already on public main; its active diagnosis and native384 facade work remain with their existing parallel owners. Do not repeat fit, capture or scoring.",
+    "source_and_lean_preparation": "Retain current canonical intake/review/graph/Lean owners and original task dependencies."
+  },
+  "planning_requirements": [
+    {
+      "acceptance": [
+        "A reviewed discriminated schema or distinct retention field preserves both closed policy contracts.",
+        "Retain infrastructure allowlists, action windows, cumulative repair budgets, backoff, holds and exact shared-unit cancellation identity.",
+        "Retain UNKNOWN-outcome denials and fresh-probe/effect-boundary guards; test malformed/mixed policies and unchanged ordinary-board behavior hermetically.",
+        "Verify exact selected source/runtime generation and post-repair accepted progress; no silent replacement of the running LegalIR profile."
+      ],
+      "existing_parents": [
+        "LIR-03",
+        "LIR-22"
+      ],
+      "id": "recovery-policy-interoperability",
+      "owner": "external/ipfs_accelerate existing fleet watchdog/repair and service-monitor owners",
+      "runtime_rollout_authorized": false,
+      "selected_profiles": {
+        "legal_ir_pr304": "recovery_policy.profile=infrastructure-only/v1",
+        "retained_owner_pr306": "recovery_policy.schema=agent-supervisor/owner-retention@1"
+      },
+      "state": "requires_separate_integration_qualification"
+    },
+    {
+      "acceptance": [
+        "Prepare an owner-reviewed amendment and dependency map under LIR-19 without replacing original task/goal CIDs, revisions, claims or attempts.",
+        "Allocate native identity only through the existing owner and verify its exact amended population readback before dispatch.",
+        "Reuse retained 4096D source captures/checkpoint/profile; declare actual token limits, causal hidden width, decoder/bottleneck width and text/residual bypasses.",
+        "Bind independent source/review eligibility, finite native/resource admission and frozen comparison outputs; a prepared cell is not numerical or statutory qualification."
+      ],
+      "dispatch_authorized": false,
+      "existing_parents": [
+        "LIR-19"
+      ],
+      "id": "leanstral4096-native-cell-coverage",
+      "native_amendment_applied": false,
+      "native_child_identity": null,
+      "observed_comparison_task": "LIR-1905",
+      "observed_existing_cells": {
+        "LIR-1902": 8,
+        "LIR-1903": 384,
+        "LIR-1904": 768
+      },
+      "state": "requires_reviewed_native_population_amendment"
+    },
+    {
+      "acceptance": [
+        "Preserve current read-only catalogue semantics and explicit not_activated/not_established results.",
+        "Bind actual activation epoch, admitted population/claim, process births, meaningful progress and terminal native receipts for future executor observation.",
+        "A fresh observer cannot grant task activation, retry, outcome settlement, source/review eligibility or model/Lean completion."
+      ],
+      "executor_activation_authorized": false,
+      "existing_parents": [
+        "LIR-22",
+        "LIR-23"
+      ],
+      "id": "scientific-executor-observation",
+      "owner": "existing external/ipfs_accelerate native catalogue probe and dedicated LegalIR monitoring owners",
+      "state": "requires_executor_bound_observation_qualification"
+    }
+  ],
+  "recorded_at_utc": "2026-10-28T03:49:51.604205+00:00",
+  "retained_handoff_diagnostic": {
+    "automatic_retry_admitted": false,
+    "completion_receipt_attempt_number": 2,
+    "receipt_failure_kind": "administrative_operator_stop_outcome_unknown",
+    "revision": 13,
+    "status": "blocked",
+    "task_alias": "LIR-9001"
+  },
+  "retained_owner_work": {
+    "pull_request": "https://github.com/endomorphosis/ipfs_accelerate_py/pull/306",
+    "separate_scope": "SAWM retained-owner diagnostics and generic retention guards; not the installed LegalIR integration.",
+    "source_commit": "8d9ffd78523ec7d421b27f0031e2edf09451f23b"
+  },
+  "running_watchdog": {
+    "observed_services": [
+      {
+        "active_state": "active",
+        "unit": "ipfs-taskboard-legal-ir-watchdog.service"
+      },
+      {
+        "active_state": "active",
+        "unit": "ipfs-taskboard-legal-ir-repair.service"
+      }
+    ],
+    "poll_seconds": 60,
+    "recovery_profile": "infrastructure-only/v1",
+    "release": "2b499e94d6c23f14cd72",
+    "scientific_planned_action": "",
+    "scientific_stall_class": "native_catalogue_outcome_unknown",
+    "source_commit": "9daede149079cbdcea816b8f101fb2da5fd2a22e"
+  },
+  "schema": "legal-ir-programme-dispatch-reconciliation-evidence/v1",
+  "scientific_diagnostic_observation": {
+    "activation_state": "not_activated",
+    "attempt_history_complete": false,
+    "board_namespace": "legal-ir-span-graph-lean-refinement-20261016",
+    "counts": {
+      "blocked": 64
+    },
+    "dependency_count": 115,
+    "event_cursor": 214,
+    "executor_health": "not_established",
+    "fresh_read": true,
+    "goal_count": 34,
+    "provider_outcome_knowledge": "not_established",
+    "store_generation": 19,
+    "store_schema_revision": 5,
+    "task_count": 64
+  },
+  "scope": "Source/control metadata review and proposed planning requirements only; no native database, model, provider, training or Lean execution.",
+  "source_selection_limit": "Metadata heads/card review only. No finite corpus manifest or governing edition/legal-as-of is selected, and no corpus census or payload download is performed."
+}

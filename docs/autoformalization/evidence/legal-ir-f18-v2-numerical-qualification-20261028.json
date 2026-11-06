@@ -1,0 +1,186 @@
+{
+  "authority": {
+    "capture_qualified": false,
+    "four_width_benefit": false,
+    "fresh632_parity": false,
+    "graph_or_Lean_admission": false,
+    "model_gain": false,
+    "new_experiment_rate_selected": null,
+    "new_retained_input_fit": false,
+    "promotion": false,
+    "scientific_task_rearm_or_completion": false,
+    "statutory_meaning": false,
+    "training_controller_v2_integrated": false,
+    "watchdog_budget_reset": false
+  },
+  "effect_accounting": {
+    "fixture_rates_are_experiment_selection": false,
+    "instrumented_method_counts": false,
+    "retained_input_fit": false,
+    "retained_payload_loads": 0,
+    "source_inferred_conservative_upper_bounds": {
+      "historical_payload_loads": 0,
+      "retained_input_fit_steps": 0,
+      "scope": "source-derived conservative bounds, not instrumented",
+      "synthetic_F18_top_level_forwards": 32,
+      "synthetic_model_constructions": 40,
+      "synthetic_optimizer_updates": 32,
+      "teacher_model_forwards": 0
+    }
+  },
+  "evidence": {
+    "JUnit": {
+      "bytes": 6665,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/attempt-v01/exports/test-results.xml",
+      "sha256": "83c21034e2dd88e91d0df632b0297358180c3be0d62ccb350c25459e78bf8bbb"
+    },
+    "observer": {
+      "bytes": 70357,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/attempt-v01/exports/phase-observations.json",
+      "sha256": "05b64f9735dd8eda933b4ccf5824a2619c6c0bd6f66a93e42a695deb2959d34a"
+    },
+    "original_result": {
+      "bytes": 8607,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/attempt-v01/logs/result.json",
+      "sha256": "ed167ee66d30561d06787db43c0259486586388d3b8ce60ab2d68a3ab8affc3d"
+    },
+    "request": {
+      "bytes": 29953,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/request-v01.json",
+      "sha256": "3c7dfbde4b5fed75a7eba564f8d0879e00e594c8ab772051bb9876ed10235ae8"
+    },
+    "scope": {
+      "bytes": 15986,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/scope-v01.json",
+      "sha256": "746d603770085d7d459039a1eacd42e63203becba1e014192504ae5f44518329"
+    },
+    "source_closeout": {
+      "bytes": 10376,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/root-source-closeout-v01.json",
+      "sha256": "a0049b998cb619f3809b36956eb8911bee0a22f9aa56f2ff854d71eddf5f98fd"
+    }
+  },
+  "evidence_id": "f18-v2-recipe-bound-numerical-qualified-20261028-01",
+  "existing_task": "LIR-17",
+  "frontend_scope": {
+    "original_R_launcher_sha256": "0e302d2ca4c17c9185f12e040f3a681ce043b2710a7673d06f5ee0fc4657fabf",
+    "original_R_pytest_plugin_sha256": "dc6ae4f1cd27628a56db13fc656156c1b84df8ff999d4158ff25e70fac89f7a6",
+    "original_R_validation_owner_sha256": "6695f98258e23a1de5b1639142dcd6e1f875f25723d465688e534407a1595f72",
+    "pre_owner_refusal_branch_qualified_here": false,
+    "public_W_frontend_changed": false,
+    "public_W_physical_v2_validation_supported": false,
+    "public_W_trainer_route_preserved": true,
+    "selected_product_and_strict_loader": "Normal W imports; original physical-v2 plugin loaded from R at its real module name, reusing the previously established cross-tree validation pattern.",
+    "unapplied_replacement": "Standalone R launcher was retained as reference only because it lacks the public trainer suffix; no whole-file replacement or controller duplication was installed."
+  },
+  "immutable_old_test_sha256": "bbed34c8d81ecac7ecf020e682e37dc550fc29a8839775107eacb43496b7d50a",
+  "immutable_profile56_sha256": "56bd0a248a07de09519f95e5c4bae02ab9d8eb1134b483c257c1f7e7bcb07147",
+  "immutable_pure_recipe_sha256": "d22b932b80c48b688ff3f18d5f141152a6032b7cb2f6195845840af818d8dc84",
+  "numerical_result": {
+    "JUnit": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 32
+    },
+    "cases": 32,
+    "owner_elapsed_seconds": 131.65215544123203,
+    "phases": 96,
+    "pytest_seconds": 36.631,
+    "selected_runtime_origins_verified": 20,
+    "source_pin_count": 73,
+    "source_pins_unchanged": true
+  },
+  "observed_at_utc": "2026-10-28T06:32:10.720284+00:00",
+  "original_custody": {
+    "artifacts_preserved": true,
+    "child_process_slots": 2,
+    "cpu_slots": 1,
+    "lane": "validation",
+    "live_processes": 0,
+    "memory_mb": 2048,
+    "native_lease_released": true,
+    "physical_fixture_cases": 2,
+    "physical_special_files_absent_after_teardown": true,
+    "resource_ledger": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+    "rss_bytes": 0,
+    "scheduler_policy_sha256": "4662bd8fe6caf6f2c048e3d7cff7abb4d80e5c875b21e02e204b1b89371b8286",
+    "scheduler_state_path": "/tmp/ipfs-datasets-resource-scheduler-1000.json",
+    "source_READ_closed": true,
+    "storage_bytes": 134217728,
+    "storage_status": "released",
+    "timeout_seconds": 300,
+    "workload": "canonical_validation"
+  },
+  "preparation_observation": "A missing sparse tracked test initializer was refused before request sealing or any owner/native construction; original tracked files were hydrated and the private attempt stayed empty until actual admission.",
+  "qualified_scope": [
+    "A distinct v2 checkpoint schema and lineage bind the complete independently validated prospective recipe; donor configuration remains at learning rate 0.001. V1 checkpoints are refused rather than relabelled.",
+    "Fresh direct recipe-rate Adam restoration preserves all 42 donor tensors, 38 frozen tensors including modality, and 650 inactive scalars/moments; only conditions row 3 of four tensors is active.",
+    "Real CPU float32 first steps match independent Adam equations at fixture rates 0.002 and 0.004. Original mixed-batch CE/KL/margin updates match an independently constructed F18 model and optimizer.",
+    "One-plus-one disk-resumed updates match uninterrupted two-step and independent manual trajectories for coefficient 0 and 0.25, including full model bytes, named moments and progress. Immediate parent checkpoint roots correctly differ.",
+    "Cross-recipe/source/input contamination, nonbinary state, inactive moments, cumulative budget, wrong schema and strict hash/symlink/FIFO refusals; caller RNG/gradient mode and eval cleanup on success/error."
+  ],
+  "remaining": [
+    "Implement and qualify source-only capture for the v2 checkpoint/runtime without fabricated v1 views.",
+    "Reauthenticate original retained inputs and establish fresh zero-step parity on all 632 source rows before any retained update.",
+    "Select and preregister a TRAIN-only experiment rate and finite schedule, extend the existing original trainer request/worker explicitly, and acquire fresh original training-purpose admission.",
+    "Freeze outputs before independent full-IR/per-ID scoring, 72 conditions-present TRAIN cases, 32 target-P modalities and original retained comparator no-loss gates.",
+    "Reconcile the physical-v2 validation frontend with the published trainer branch before claiming a standalone public end-to-end launch route."
+  ],
+  "review": {
+    "external_independence_claimed": false,
+    "final_source_test_request_and_result_reviewer": "/root",
+    "limitation": "Subagents reached their session usage limit after staging. Root completed final review and genuine qualification; no final separate-agent numerical readback is claimed.",
+    "source_and_test_authors": "Separate collaborating agents"
+  },
+  "runtime_resolution": {
+    "external_process_attempts": [],
+    "pinned_libdl_resolution": {
+      "ctypes_util_pin": {
+        "bytes": 14584,
+        "path": "/usr/lib/python3.12/ctypes/util.py",
+        "sha256": "9cddec0d3640c812f023cf850107e38705a040fb22213181a8cd30cdd49ea0d1"
+      },
+      "cuda_pathfinder_pin": {
+        "bytes": 7953,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/cuda/pathfinder/_dynamic_libs/load_dl_linux.py",
+        "sha256": "c83cfcc0d33e14cda10ec533a21a6443db36bb032d3bf5216f109e8811ac74e9"
+      },
+      "library_pin": {
+        "bytes": 67440,
+        "path": "/usr/lib/aarch64-linux-gnu/libdl.so.2",
+        "sha256": "97387fb55ccfc0cc109dfe99b81de2b7bbaac723d1c215107dc69a068c4b1fae"
+      },
+      "requested_library": "dl",
+      "schema": "pinned-libdl-resolution/v1",
+      "subprocess_fallback_allowed": false,
+      "unlisted_library_names_allowed": false
+    },
+    "resolutions": [
+      {
+        "allowed": true,
+        "requested_library": "'dl'",
+        "resolved_path": "/usr/lib/aarch64-linux-gnu/libdl.so.2",
+        "subprocess_fallback": false
+      }
+    ],
+    "resolver_restored_after_Torch_import": true,
+    "whole_runtime_or_ABI_attested": false
+  },
+  "schema": "legal-ir-f18-recipe-bound-numerical-qualification/v1",
+  "source": {
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_fullspan_training_v2.py": {
+      "bytes": 27575,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_fullspan_training_v2.py",
+      "sha256": "75337c54fc8a6fd9a5075545a69f1c02427421232bc1155eee431964c748edc4"
+    },
+    "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_conditions_fullspan_training_v2.py": {
+      "bytes": 23412,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_conditions_fullspan_training_v2.py",
+      "sha256": "be22c9ff99ca13a80138d5a8247efc8950b48e775a4c7d0f47ceaddbe7438122"
+    }
+  },
+  "source_base_commit": "85b1832abeba6dfee10b6d7ab7cb17f9fb595d11",
+  "status": "synthetic_numeric_checkpoint_update_qualified_capture_and_retained_parity_pending",
+  "title": "Genuine synthetic v2 checkpoint and bounded update qualification"
+}

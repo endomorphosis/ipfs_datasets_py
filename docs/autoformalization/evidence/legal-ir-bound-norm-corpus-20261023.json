@@ -1,0 +1,320 @@
+{
+  "all_attempts_storage_released": false,
+  "authority": {
+    "Lean_admitted": false,
+    "actual_membership_verified": false,
+    "applicability_verified": false,
+    "corpus_admitted": false,
+    "evaluation_gold_qualified": false,
+    "governing_definition_use_verified": false,
+    "graph_admitted": false,
+    "independently_reviewed": false,
+    "model_convergence_proven": false,
+    "norm_truth_proved": false,
+    "proof_authority": false,
+    "source_authenticity_verified": false,
+    "source_meaning_verified": false,
+    "training_qualified": false
+  },
+  "canonical_home": "ipfs_datasets_py/logic/autoformal",
+  "code_snapshot_commit": "a990c6100f006b37cc0df4fd6888e29cec48cd2d",
+  "evaluation_gold_mask": 0,
+  "namespace_scope": {
+    "bypassed_frozen_pinned_initializers": [
+      "ipfs_datasets_py/logic/integration/__init__.py",
+      "ipfs_datasets_py/logic/integration/reasoning/__init__.py"
+    ],
+    "full_package_initializer_integration_qualified": false,
+    "kernel_containment_attested": false,
+    "new_genuine_fileless_namespace": "ipfs_datasets_py.logic.backends",
+    "ownership_is_sampled": true,
+    "profile": "bound-norm-corpus-scoped-unit-namespaces/v1"
+  },
+  "native_v02": {
+    "accounting_reader": {
+      "bytes": 4490,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/native-v02-accepted-accounting-reader-v01.json",
+      "sha256": "178391b64fb331bc3fa299cf3fa18cdf6291021bfcf25d4ae5f88b3d2b212765"
+    },
+    "all_compile_payloads_compared_to_source": true,
+    "bounded_invocations": [
+      [
+        "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake",
+        "--version"
+      ],
+      [
+        "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lean",
+        "--version"
+      ],
+      [
+        "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake",
+        "--offline",
+        "--no-cache",
+        "build",
+        "legal"
+      ],
+      [
+        "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake",
+        "--offline",
+        "--no-cache",
+        "build",
+        "legal"
+      ]
+    ],
+    "cases": 2,
+    "exact_compile_buffer_observations": 146,
+    "explicit_plain_assertions": true,
+    "imported_modules": 130,
+    "invocations_observed_in_this_successful_attempt": 4,
+    "manifest": {
+      "bytes": 42673,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/native-v02/validation-manifest-v01.json",
+      "sha256": "3e9aac2df0e206a01468b3dbbbc3ee22e98a8ad082dd02cabdb4b75fe84285d5"
+    },
+    "negative": {
+      "expected_type_mismatch_observed": true,
+      "native_pid": 2337784,
+      "returncode": 1,
+      "scope": "hNorm cannot be supplied directly to the headAt membership parameter; no general logical non-derivability result",
+      "unchanged_original_modules": [
+        "LegalCorpusBoundNormDefinition.Prelude",
+        "LegalCorpusBoundNormDefinition.Norm_fe0b30aafdc1d68be9f2f66d13dc315b9dc1f79209ae743a5cee2fc271e8cce2",
+        "LegalCorpusBoundNormDefinition.Definition_26d85e51e7c156837010f249062144b19b53408fa6b5991cb06a95d2a7df9766"
+      ]
+    },
+    "negative_observation": {
+      "bytes": 3622,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/native-v02/attempt-bound-norm-native-v02/pytest/cases/bound-norm-native/negative-norm-is-not-membership/negative-observation.json",
+      "sha256": "b9326b38aa55b23c98c7f527e49771c5b5d813e29804ba19884731acbc94dcb3"
+    },
+    "original_accounting": {
+      "artifacts_durable_asserted": true,
+      "compute_lease_id": "c0328f2514404b8c86bb5e92b4bbf141",
+      "compute_released": true,
+      "final_attempt_bytes": 424599,
+      "final_total_charged_bytes": 424599,
+      "source_READs_closed": true,
+      "storage_reservation_id": "b6acaca6bae24c96aa8fc5b7961f3d82",
+      "storage_status": "released"
+    },
+    "passed_phases": 6,
+    "positive": {
+      "compiler_log_bytes": {
+        "runner-error.txt": 0,
+        "stderr.txt": 138,
+        "stdout.txt": 1526
+      },
+      "conditional_theorems": 3,
+      "empty_axiom_results": 3,
+      "files": 9,
+      "generated_source_bytes": 6800,
+      "modules": 6,
+      "native_pid": 2329783,
+      "olean_bytes": 142048,
+      "preparation_sha256": "977205d91f8b2f2cd9ceb5b47c813206f86a6caf1b3cb3a0df0e97c35e52142b"
+    },
+    "positive_receipt": {
+      "bytes": 42103,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/native-v02/attempt-bound-norm-native-v02/pytest/cases/bound-norm-native/positive/build-receipt.json",
+      "sha256": "cf4f76f50f860c64afd3f16af5c91d287571279d5e534a4beb07a99fcca729c6"
+    },
+    "reader": {
+      "bytes": 7193,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/independent-saved-native-v02-review-v01.json",
+      "sha256": "604684bc96d75f14e7c70f1ffe00e60dc2aeac629c6a9e4467b14cbf52953723"
+    },
+    "request": {
+      "bytes": 80710,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/native-v02/request-bound-norm-native-v02.json",
+      "sha256": "d1d6ffcce1768ed2258a3c06083512e8b0b75f57b93ddaa253d2ceecbd6ed303"
+    },
+    "request_source_pins": 256,
+    "source_READs_closed": true,
+    "source_bytes": 6868031,
+    "source_files": 230,
+    "source_spec": {
+      "bytes": 41790,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/native-v02/source-closure-spec-v01.json",
+      "sha256": "3fa5b850451e814521433e3b1e0daaae32b8c8741c7d787aa6f7e21233b3e7bf"
+    },
+    "status": "passed_conditional_engineering_qualification",
+    "toolchain": "leanprover/lean4:v4.34.1"
+  },
+  "new_model_or_training_execution": false,
+  "next_work": [
+    "Bind the reviewed statutory source/span/entity component, complete norm, governing definition and two distinct physical uses through existing owners.",
+    "Retain competing senses and unresolved source/meaning/applicability decisions; qualify graph endpoints and source-to-AST correspondence before admission.",
+    "Extend shared/incremental composition only for the compatible reviewed complete-norm profile; reuse existing renderers and native owners.",
+    "Reuse retained 8D/384D/768D/4096D representations and checkpoints against eligible source-grouped targets; keep numerical compatibility, training gains and semantic accuracy separate from these compiler fixtures."
+  ],
+  "project": {
+    "alternatives": 2,
+    "compiled_modules": 6,
+    "conditional_theorems_by_mode": {
+      "body_with_membership": 3,
+      "instance_only": 2
+    },
+    "external_complete_replay_inputs_required": true,
+    "fixture_physical_anchors": 1,
+    "fixture_typed_argument_uses": 2,
+    "generated_files": 9,
+    "nominations": 4,
+    "original_complete_norm_body_byte_exact": true,
+    "original_definition_theorem_suffix_preserved": true,
+    "preservation_scope": "Definitional alias identity only. Definition instance assumes hDefinition; body consequence additionally assumes exact-entity/time hMembership. No definition substitution into the norm, witness or membership inference.",
+    "relational_source_binding": null,
+    "relational_source_bound": false,
+    "shared_Interpretation": true
+  },
+  "publication_reconciliation": {
+    "existing_owners_extended": 2,
+    "new_owner_modules": 0,
+    "peer_changed_paths_disjoint_from_qualification": true,
+    "peer_components_preserved": 72,
+    "peer_selected_evidence_preserved": 124,
+    "qualified_runtime_sources_preserved_after_rebase": 230,
+    "record": {
+      "bytes": 4031,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/public-base-reconciliation-v01.json",
+      "sha256": "0a88eb81597c57858a5dfe57f5d6b2b49292423d3a59f055dc973c09704f5454"
+    }
+  },
+  "pure": {
+    "Lake_cases": 26,
+    "actual_Lean_builds_claimed": 0,
+    "all_compile_payloads_compared_to_source": false,
+    "cases": 42,
+    "compile_origin_observations": 146,
+    "exact_product_PinnedLoader_buffers": true,
+    "existing_native_regressions": 3,
+    "fixture_assertion_rewriting_excluded": false,
+    "imported_modules": 131,
+    "new_native_control_cases": 13,
+    "original_compute_and_storage_released": true,
+    "original_native_test_buffer_sha256": "fa7e3199324eb690c392ff67085fff37ae6aa6577e779a70a7c3b9cdbf46347e",
+    "passed_phases": 126,
+    "pytest_reported_seconds": 713.28,
+    "reader": {
+      "bytes": 20187,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/independent-saved-pure-review-v02.json",
+      "sha256": "0282874c790a9c72fcda9141f9716b85e6fbd4134601bc0032fb61f7de2e4db8"
+    },
+    "request": {
+      "bytes": 80180,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/request-bound-norm-pure-v01.json",
+      "sha256": "4af2e72df82a336404da4441bdbc07756f0fd5a9e1639d2258cfcfc4b1604bb9"
+    },
+    "request_source_pins": 256,
+    "result": {
+      "bytes": 10082,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/attempt-bound-norm-pure-v01/exports/test-result.json",
+      "sha256": "4a1c1cdc6d3acf039b518650d19a32fcf90397bb1420a0d1caddda84f9f3ed9c"
+    },
+    "source_READs_closed": true,
+    "source_bytes": 6868015,
+    "source_files": 230,
+    "source_spec": {
+      "bytes": 41860,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/source-closure-spec-v01.json",
+      "sha256": "bb7df4ba3fa1e040f1976d68272a9acce2c61767a68e38fcd5a7b6ef5692b0d0"
+    },
+    "status": "passed",
+    "synthetic_compiler_scope_only": true,
+    "worker_elapsed_seconds": 713.3934209290892
+  },
+  "reader_only_correction": {
+    "first_pure_reader_rejected": true,
+    "preserved_rejection": {
+      "bytes": 3471,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/independent-saved-pure-review-v01.json",
+      "sha256": "2844bcb204dcbd6e541d72cdcdc38b9c6f213cef1eaa7a7279de9284e80c3d15"
+    },
+    "reason": "Reader incorrectly required --assert=plain from the original pure worker; corrected reader reports actual assertion behavior. Original test run stayed successful and was not repeated."
+  },
+  "reconciled_public_main": "8a42c2fd7690a995fb76253771d842945279ed92",
+  "recorded_at_utc": "2026-10-23T22:16:06.316125+00:00",
+  "retained_2024_Title_10_pilot": {
+    "every_use_applicability_review": "pending",
+    "governing_definition_review": "pending",
+    "legal_as_of": null,
+    "meaning_review": "pending",
+    "reviewed_complete_norm_definition_two_distinct_use_component": false,
+    "user_selected_source_edition": 2024
+  },
+  "retained_native_v01_failure": {
+    "Lean_execution_enrolled": true,
+    "actual_compiler_invocations": "unknown_not_retained",
+    "attempt_entries": 12,
+    "files_deleted_or_links_unlinked": false,
+    "inventory_reader": {
+      "bytes": 4542,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/native-v01-failed-inventory-reader-v01.json",
+      "sha256": "078a6e7debe5a586b6f166617221dc4475f4b87ef88f4aa6d9f4f0d179093997"
+    },
+    "original_compute_released": true,
+    "qualification_passed": false,
+    "reader": {
+      "bytes": 16245,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/independent-saved-native-v01-failure-review.json",
+      "sha256": "555d68cabf37ec0a9d20c678a3a01b44bc16014c04c570e081d59998067cc5aa"
+    },
+    "reason": "Original strict inventory cancelled pytest numbered-factory convenience symlink. No completed checks or durable compiler-call observation export were retained.",
+    "regular_artifact_bytes": 1665,
+    "reserved_storage_bytes": 201326592,
+    "source_READs_closed_after_verified_cleanup": true,
+    "storage_reservation_id": "42548f3f6044457b8af05149a652134f",
+    "storage_status": "retained",
+    "supported_immutable_release_route_found": false,
+    "symlink_preserved": true,
+    "terminal": {
+      "bytes": 12062,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/native-v01/launch-bound-norm-native-v01.json",
+      "sha256": "75b898e2ddf23caecc052e6d631bbe9a91fab0b91ba9a1e323d9ef9c50bfa32f"
+    }
+  },
+  "schema": "legal-ir-bound-norm-corpus-engineering/v1",
+  "scope": "One authored complete quantified/modal norm beside one exact-occurrence conditional definition in the two existing corpus owners. Separate namespace-scoped pure and actual Lean qualifications; no reviewed statutory corpus admission.",
+  "source_postimages": {
+    "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_lake_v2.py": {
+      "bytes": 67180,
+      "sha256": "8a43095f1575b8e4275cb9c548984da7ce9330695d6c8b669e4ceab710ce1b31"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_native_v2.py": {
+      "bytes": 55635,
+      "sha256": "50b86914895e99f05a057abbbb3c692751f463d6c9ab930dc427a2ff72926127"
+    },
+    "tests/unit/logic/autoformal/test_legal_corpus_definition_use_lake_v2.py": {
+      "bytes": 40649,
+      "sha256": "887e43be4f15ebf71663d6351d480437a2a80baf7d41072c384e93c3c8f10282"
+    },
+    "tests/unit/logic/autoformal/test_legal_corpus_definition_use_native_v2.py": {
+      "bytes": 53832,
+      "sha256": "4348e1e0c65354df20f3f68998df6a467bdda7c964b9571dc88fcfa64582d493"
+    }
+  },
+  "test_fixture_reconciliation": {
+    "all_other_229_source_descriptors_unchanged": true,
+    "all_production_sources_byte_unchanged": true,
+    "all_selected_pure_tests_and_helper_AST_unchanged": true,
+    "bytes_added": 16,
+    "fresh_native_v02_exercises_repaired_fixture": true,
+    "independent_source_review": {
+      "bytes": 1078,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/native-v02-fixture-source-compatibility-reader-v01.json",
+      "sha256": "c0ed4d40387ddf7260232e0eb4a539906df4b81441ad5a01dd744c96f7202e8d"
+    },
+    "installation": {
+      "bytes": 1973,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/source-fixture-repair-v01.json",
+      "sha256": "5f522c78b69d9e23f831bff1faf3784b6dcc286d3652403b009a4cf564294f34"
+    },
+    "only_change": "numbered=False in gated actual bound_norm_actual_project mktemp call",
+    "pure_cohort_rerun": false,
+    "static_review": {
+      "bytes": 5482,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/static-fixture-reconciliation-v01.json",
+      "sha256": "05977494b29d0d50059d1d9c9b5c6d3fa26d1478bd828edc49e8ca70281e2986"
+    }
+  },
+  "training_mask": 0
+}

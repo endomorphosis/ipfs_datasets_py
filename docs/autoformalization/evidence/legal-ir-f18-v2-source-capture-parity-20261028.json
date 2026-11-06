@@ -1,0 +1,281 @@
+{
+  "authority": {
+    "corpus_graph_or_Lean_admission": false,
+    "experiment_rate_selected": null,
+    "four_width_benefit": false,
+    "model_gain_or_accuracy_improvement": false,
+    "promotion": false,
+    "retained_initial_parity_qualified": true,
+    "retained_nonzero_fit": false,
+    "scientific_task_completion_or_rearm": false,
+    "statutory_meaning_or_reviewed_gold": false,
+    "trainer_v2_integrated": false,
+    "watchdog_budget_reset": false
+  },
+  "capture_contract": [
+    "Extend the existing v2 owner; attach an original-model runtime witness during restoration and validate its own checkpoint/recipe/state, actual Adam controls, parameter/module/callable code identities, hooks and native counters.",
+    "Reuse the unchanged original decoder, tensor conversion, greedy verification and counter/witness helpers. No fabricated v1 checkpoint or v1 runtime is used.",
+    "Accept only 1–128 unique id/source_text/finite384-latent triples; one existing source forward per row, no additional restore/update or joint-selection inference inside capture.",
+    "Retain whole-state/moment and source/RNG/grad-mode/counter closing checks. Remove the capture hook and leave eval mode on exit. Failed admitted captures refuse runtime reuse; preflight input refusals perform zero forwards.",
+    "The original decoder uses its shape/configuration view without a checkpoint schema or admission claim; actual v2 checkpoint/runtime validation remains separate."
+  ],
+  "evidence_id": "f18-v2-source-capture-and-initial632-parity-qualified-20261028-01",
+  "existing_task": "LIR-17",
+  "observed_at_utc": "2026-10-28T07:28:52.995443+00:00",
+  "original_custody": {
+    "each_admission_envelope": {
+      "child_process_slots": 2,
+      "cpu_slots": 1,
+      "memory_mb": 2048,
+      "storage_bytes": 134217728,
+      "timeout_seconds": 300
+    },
+    "retained_parity": {
+      "lane": "validation",
+      "live_processes": 0,
+      "native_storage_descendant_source_closed": true,
+      "source_pins": 65,
+      "storage_status": "released",
+      "workload": "canonical_validation"
+    },
+    "scope": "Existing unchanged original R validation owner/frontend; normal W product. The synthetic physical-v2 plugin is the pinned original R owner. No public frontend or trainer route replacement.",
+    "synthetic": {
+      "lane": "validation",
+      "live_processes": 0,
+      "native_storage_descendant_source_closed": true,
+      "source_pins": 73,
+      "storage_status": "released",
+      "workload": "canonical_validation"
+    }
+  },
+  "parity_comparison": {
+    "all42_model_root": "2ed0ccf633f55fac202e2edb95ea9fa6e390b8d99381a05925f4dd5221925883",
+    "all_head_bits_including_signed_zero_match": true,
+    "chunks": 11,
+    "compared_binary32_head_scalars": 194812,
+    "complete_greedy_formal_rows_match": true,
+    "complete_original_joint_records_match": true,
+    "experiment_rate_selected": null,
+    "extra_capture_forwards": 0,
+    "frozen38_root": "8562a4a944412a0385b26a88469fd669701573803c0eea3f444190f523414778",
+    "gold_or_accuracy_scoring": false,
+    "gradient_calls": 0,
+    "joint_max_search_nodes": 50000,
+    "joint_top_k": 8,
+    "new_raw_and_joint_files_frozen_before_retained_final_F18_comparison_capture_bodies": 20,
+    "optimizer_updates": 0,
+    "panels": 10,
+    "parity_control_learning_rate": 0.001,
+    "prior_authored_exposure_preserved": true,
+    "retained_comparison_files_opened_after_freeze": 20,
+    "rows": 632,
+    "source_and_geometry": "Same authenticated final F18, F15 teacher/masks and 168/72/96 TRAIN inputs; original finite dormant 384 vectors preserved, exact zero required only on original fresh dev/test sources.",
+    "source_model_forwards": 632,
+    "teacher_model_restores": 0,
+    "training_chunks": [
+      128,
+      40
+    ]
+  },
+  "preserved": [
+    "Original v1 source, pure recipe, weights, failed attempts and all prior qualification generations.",
+    "Original paired32+32 fit, whole624 saved scoring and nine endpoint replays; no repeated fit or gold scoring.",
+    "The separate 32-case v2 source75337 qualification remains historical. New source d80 is freshly qualified by all52 cases, not by transferring that older result.",
+    "Scientific task status, UNKNOWN retry refusal, holds, watchdog source and spent budgets."
+  ],
+  "remaining": [
+    "Explicit v2 mode/request integration with the existing original trainer/worker; no duplicate controller.",
+    "Select and preregister a TRAIN-only finite experiment with fresh original training-purpose admission before retained updates.",
+    "Freeze all new outputs before independent full-IR/per-ID and retained comparator no-loss gates, including72 conditions-present TRAIN and32 target-P modality checks.",
+    "Reconcile physical-v2 validation frontend support with the published trainer branch before claiming a standalone public end-to-end launch path."
+  ],
+  "review": {
+    "external_independence_claimed": false,
+    "scope": "Separate original admissions and frozen controls; no final external-agent review claimed.",
+    "source_test_and_final_result_reviewer": "/root"
+  },
+  "runtime_and_count_limits": {
+    "external_process_attempts_retained": [],
+    "external_process_attempts_synthetic": [],
+    "retained_effects": "Exactly one original legacy6 donor restore and one new v2 delta4 restore; 632 native source forwards, zero teacher model restore/gradient/update.",
+    "selected_source_runtime_pins_not_whole_process_or_ABI_attestation": true,
+    "synthetic_conservative_method_bounds_not_instrumented_counts": {
+      "historical_payload_loads": 0,
+      "retained_input_fit_steps": 0,
+      "scope": "source-derived conservative bounds, not instrumented",
+      "synthetic_F18_top_level_forwards": 256,
+      "synthetic_model_constructions": 70,
+      "synthetic_optimizer_updates": 40,
+      "teacher_model_forwards": 0
+    }
+  },
+  "schema": "legal-ir-f18-v2-source-capture-parity-qualification/v1",
+  "separate_retained_initial_parity": {
+    "all42_model_state_sha256": "2ed0ccf633f55fac202e2edb95ea9fa6e390b8d99381a05925f4dd5221925883",
+    "all_heads_and_complete_greedy_and_joint_rows_equal": true,
+    "checkpoint_metadata_only": {
+      "bytes": 222721,
+      "checkpoint_sha256": "1bb96b0e27ccc0bfb01043720b839e4198d07bf616e09fd3ee34bf6deccccbcc",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/retained-initial632-v01/attempt-v01/exports/current-source-zero-step-v2-delta.json",
+      "progress": {
+        "epochs_completed": 0,
+        "optimizer_steps": 0,
+        "row_cursor": 0
+      },
+      "schema": "conditions-fullspan-f18-four-tensor-checkpoint/v2",
+      "sha256": "1bb96b0e27ccc0bfb01043720b839e4198d07bf616e09fd3ee34bf6deccccbcc",
+      "source_inactive650_sha256": "1c34e96867e070c60e8d0a3822894e316ffad8a46b65551c12a644b2fcfd68fe"
+    },
+    "checkpoint_or_capture_payloads_opened_by_metadata_review": false,
+    "child_seconds": 26.208212985191494,
+    "chunks": 11,
+    "compared_head_binary32_scalars": 194812,
+    "evidence": {
+      "child_result_metadata": {
+        "bytes": 30633,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/retained-initial632-v01/attempt-v01/exports/initial-v2-632-parity-result.json",
+        "sha256": "6d846ed3bab241e26d72aad4d5d1ee6d42310b9a10c66538dd04ae2c3868678e"
+      },
+      "control": {
+        "bytes": 40595,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/retained-initial632-v01/initial_f18_v2_632_parity_control-v01.py",
+        "sha256": "ddc595f650bf615accdbfe6c480ef7b9b45d0939d310ecc3476379fe7631f013"
+      },
+      "original_result": {
+        "bytes": 1468,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/retained-initial632-v01/attempt-v01/logs/result.json",
+        "sha256": "16ed8d174fe21a4c0828a67ef1b6070e3aadcdd75f6c1801f1fd20df30861832"
+      },
+      "original_source_closeout": {
+        "bytes": 10260,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/retained-initial632-v01/root-source-closeout-v01.json",
+        "sha256": "2a1ff0d3c0d41cbbbb5a1aab80c92ffcef8f07fd86112246043b1ae6a551ee76"
+      },
+      "request": {
+        "bytes": 20152,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/retained-initial632-v01/request-v01.json",
+        "sha256": "6a5e8a117a5ee19649c6779ba1d9eb02a69cca3309f5fb65aece62040607bb45"
+      },
+      "scope": {
+        "bytes": 2441,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/retained-initial632-v01/scope-v01.json",
+        "sha256": "20d6c9bb15ea321ccbdac29a100b96e83c977378a7b80e3b6fd5b41b00344d46"
+      }
+    },
+    "experiment_rate_selected": null,
+    "external_independence_claimed": false,
+    "frozen38_sha256": "8562a4a944412a0385b26a88469fd669701573803c0eea3f444190f523414778",
+    "gradient_calls": 0,
+    "native_closing_forward_counters": {
+      "actor": {
+        "actor_attention_pool_forwards": 632,
+        "actor_context_feature_forwards": 632,
+        "actor_end_head_forwards": 632,
+        "actor_start_head_forwards": 632,
+        "modality_encoder_forwards": 632,
+        "original_end_head_forwards": 632,
+        "original_presence_head_forwards": 632,
+        "original_start_head_forwards": 632,
+        "source_model_forwards": 632,
+        "span_encoder_forwards": 632
+      },
+      "conditions": {
+        "actor_features_model_forwards": 632,
+        "additional_frozen_span_encoder_forwards": 632,
+        "conditions_presence_head_forwards": 632,
+        "frozen_modality_encoder_forwards": 632,
+        "frozen_span_encoder_forwards": 632,
+        "source_model_forwards": 632
+      }
+    },
+    "native_storage_descendant_and_source_custody_closed": true,
+    "new_captures_frozen_before_retained_comparison_files": 20,
+    "new_v2_delta4_restore_calls": 1,
+    "optimizer_updates": 0,
+    "original_F18_loader_legacy6_restore_calls": 1,
+    "owner_seconds": 136.44381836988032,
+    "panels": 10,
+    "parity_control_learning_rate": 0.001,
+    "passed": true,
+    "profile_source_sha256": "d80a08844c06daae6466a39b87bc0c395e0dd4a2da01b284704a4e03e44af0f1",
+    "recorded_at_utc": "2026-10-28T07:24:34.302787+00:00",
+    "rows": 632,
+    "schema": "legal-ir-f18-v2-retained632-parity-qualification/v1",
+    "source_pin_count": 65,
+    "source_pins_before_and_after_unchanged": true,
+    "teacher_model_restores": 0
+  },
+  "separate_synthetic_qualification": {
+    "JUnit": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 52
+    },
+    "cases": 52,
+    "evidence": {
+      "JUnit": {
+        "bytes": 10882,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/attempt-v01/exports/test-results.xml",
+        "sha256": "ab902e017d37f286b534a4f08a39828043e5f9f8cc1c405e4c9bbd2389146694"
+      },
+      "observer": {
+        "bytes": 112305,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/attempt-v01/exports/phase-observations.json",
+        "sha256": "e162084e82d7fd951a081f9e4c72759d53f38795cac63792c5b8de7df4e97784"
+      },
+      "original_result": {
+        "bytes": 13732,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/attempt-v01/logs/result.json",
+        "sha256": "b801be9a615228e7e4da19ed7ccbdf4bcb243dd6454e0a7bd260bce4124876a3"
+      },
+      "request": {
+        "bytes": 35486,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/request-v01.json",
+        "sha256": "79e35acd423fc571b417e1bfde0a3cd3ed04ecd25a7baa81466f101b705ab5cb"
+      },
+      "scope": {
+        "bytes": 21286,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/scope-v01.json",
+        "sha256": "3c92f791d61c4dfd7dcfec378f21a38a6a8f83b7b3bac0516db29de8cb4bacd1"
+      },
+      "source_closeout": {
+        "bytes": 10643,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/root-source-closeout-v01.json",
+        "sha256": "d60d03e973fd65e4f810fe937cd1e3268e0d4e7a0e4fb24b2f59de17d3373b56"
+      }
+    },
+    "experiment_rate_selected": null,
+    "external_independence_claimed": false,
+    "fresh632_parity": false,
+    "new_capture_cases": 20,
+    "old_numerical_cases_requalified": 32,
+    "original_native_descendants_storage_and_source_closed": true,
+    "owner_elapsed_seconds": 171.41197284683585,
+    "passed": true,
+    "phases": 156,
+    "pytest_seconds": 64.51,
+    "retained_payloads_or_fit": false,
+    "schema": "legal-ir-f18-v2-capture-genuine-qualification/v1",
+    "selected_runtime_origins_verified": 20,
+    "source_pin_count": 73,
+    "source_pins_unchanged": true
+  },
+  "source": {
+    "immutable_pure_recipe_sha256": "d22b932b80c48b688ff3f18d5f141152a6032b7cb2f6195845840af818d8dc84",
+    "immutable_v1_profile_sha256": "56bd0a248a07de09519f95e5c4bae02ab9d8eb1134b483c257c1f7e7bcb07147",
+    "old32_test_prefix_verbatim": true,
+    "owner": {
+      "bytes": 40762,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_fullspan_training_v2.py",
+      "sha256": "d80a08844c06daae6466a39b87bc0c395e0dd4a2da01b284704a4e03e44af0f1"
+    },
+    "owning_test": {
+      "bytes": 32561,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_conditions_fullspan_training_v2.py",
+      "sha256": "30a1c841d7f938cfaef3ec16c6351d312fde75acc4735ae7977c19abc9fb0cf2"
+    }
+  },
+  "source_base_commit": "23354717b423fdb9f57baed2f3178dde1cccf2eb",
+  "title": "V2 source capture and fresh retained 632-row initial parity"
+}

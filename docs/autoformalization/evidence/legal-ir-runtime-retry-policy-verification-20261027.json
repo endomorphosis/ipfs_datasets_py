@@ -1,0 +1,219 @@
+{
+  "actual_generation": {
+    "allfour_loaded_current_matches": true,
+    "revision_metadata": "b1d9833855351598b3ddeb8a02707efbd1e4f82a",
+    "scope": "Existing owner-reported source snapshot, independently recomputed via documented canonicalJSON/CID recipe with stdlib; old GitHEAD alone is not a feature/deployment test.",
+    "source_id": "baguqeeramhstsmcxz3sskzphygym7dn6ndecxtwzz3ho7jpzy3quvrikwqwa",
+    "sources": [
+      {
+        "available": true,
+        "path": "ipfs_accelerate_py/agent_supervisor/todo_daemon/implementation_supervisor.py",
+        "sha256": "2abf354640dca05d1cdc0f2ed6710f9b2ba18767632e9ae1743dbeeef764dc45",
+        "size_bytes": 1025639
+      },
+      {
+        "available": true,
+        "path": "ipfs_accelerate_py/agent_supervisor/todo_daemon/implementation_daemon.py",
+        "sha256": "ea0b628e7aae311ba425cd1f5a70c6fbe94dee26f8a679bc321ef95fb008e874",
+        "size_bytes": 3310130
+      },
+      {
+        "available": true,
+        "path": "ipfs_accelerate_py/agent_supervisor/todo_daemon/implementation_supervisor_runner.py",
+        "sha256": "2bf46d6404ee22d9513e9046cc024e4ee3289ebc8a336ddf6d6cf89f3551f47f",
+        "size_bytes": 112364
+      },
+      {
+        "available": true,
+        "path": "ipfs_accelerate_py/agent_supervisor/todo_daemon/supervisor_loop.py",
+        "sha256": "f162054ffc62d6784dca1407c7c2ff67b7c6e681a645594824f3d96ea569966f",
+        "size_bytes": 38040
+      },
+      {
+        "available": true,
+        "path": "ipfs_accelerate_py/agent_supervisor/objectives/backlog_refinery.py",
+        "sha256": "17f8cd206c3e2e7e0c6751ef47723adb73dcf4895fdf3ff2640912c05d66fdb6",
+        "size_bytes": 385163
+      },
+      {
+        "available": true,
+        "path": "ipfs_accelerate_py/agent_supervisor/merge/merge_queue.py",
+        "sha256": "55524c1907ceff624af899e1c23b12f7ebd28cd19e7e885a9c0924832273f18c",
+        "size_bytes": 161605
+      },
+      {
+        "available": true,
+        "path": "ipfs_accelerate_py/agent_supervisor/task_sources/duckdb_state.py",
+        "sha256": "73cdf804ec0a11c5be9893054862259269d3f404c426fb606ade1c68257c2026",
+        "size_bytes": 91147
+      },
+      {
+        "available": true,
+        "path": "ipfs_accelerate_py/agent_supervisor/validation/proposal_validation.py",
+        "sha256": "1475b8645a229aa96fdb3761cbb44fc2f3fd297a6a58cf4a55b58ebdccebc40d",
+        "size_bytes": 208854
+      },
+      {
+        "available": true,
+        "path": "ipfs_accelerate_py/agent_supervisor/validation/validation_scheduler.py",
+        "sha256": "c8fb85aa58f9a0b49bbb4ef967cebc7a90b697a712a5618e08ce90f9491b262a",
+        "size_bytes": 316716
+      },
+      {
+        "available": true,
+        "path": "ipfs_accelerate_py/agent_supervisor/proof/code_proof_obligations.py",
+        "sha256": "1dc11e7f4ef62ed4ad491c21c93d63d9616d238a0696b8e1b3066005e7f7b84a",
+        "size_bytes": 272371
+      }
+    ],
+    "total_bytes": 5922029,
+    "tree_metadata": "7e400b5c56805ae8052c042587372260c7623836"
+  },
+  "attempt_history": {
+    "authoritative_minimum_attempt_floor": null,
+    "canonical_task_cid": "baguqeeraetedvqina6tkqlkkkw3nt2wag5ah7waailytfzcgfn3zlarc7gta",
+    "counter_correction_or_rearm_performed": false,
+    "history_verification_open": true,
+    "matching_rearm_event_at": "2026-10-27T02:37:46.349275+00:00",
+    "matching_rearm_event_id": "sha256:78c62fdd83e6f7b9e102b5c8d617c623fd9df1d02d21b1543a6d8fb56cf795f9",
+    "matching_rearm_fingerprint": "sha256:f0adcadcb1c7778115f1ffdeb539a23aae1abb5213286ce3a5a8fdf7b18d6526",
+    "matching_rearm_previous_CID_attempt_count": 4,
+    "matching_rearm_previous_display_attempt_count": 4,
+    "projection_CID_attempt_count": 2,
+    "projection_cursor_position": 1972,
+    "projection_display_attempt_count": 2,
+    "projection_generation": 265,
+    "projection_status": "completed",
+    "scope": "Existing raw checkpoint projection at cursor, plus one matching retained historical event; no authoritative native database refresh.",
+    "task_id": "LIRAE-LIR12-LEAN-03"
+  },
+  "critical_source_comparison": {
+    "AST_equal_functions": {
+      "_durable_protected_recovery_attempt": "6a37e4c3332dcce43d5c067fc9bd5f2da377841d332da7360b8aa84363788df4",
+      "_iter_merge_lifecycle_events": "39caf8bc8db74b9af90582b021b7e1a4f252db5fa4fe35292d0ff2a3bd794047",
+      "_partition_tasks_at_attempt_limit": "175679925a145cb1dfc530404a4b5efa0c72acb34551a9a2d50024c2421bc852",
+      "_protected_attempt_event_latch": "0c853783f57fe4c33d39b3c359e89050f3b7d035816472eeb670a0fa62afaf79",
+      "_restore_consumed_validation_rearm_attempt_floors": "aeb469325cab7bf59270967a6bfd7cc8f7456507d3a243847977d98646e43677",
+      "_task_attempt_has_implementation_finish": "a9904a5a9ec0809b363be7e90738a803db735c4494ea0be86e4c4a78385533c3"
+    },
+    "active_path": "Portalrun_once -> _run_once -> strict partition/verified-history/protected exemption/consumed floor or typed refusal -> filtered unique selection -> _run_implementation",
+    "constants": {
+      "VALIDATION_OBSOLESCENCE_REARM_POLICY_REVISION": "ipfs_accelerate_py.agent_supervisor.validation-obsolescence-rearm@2",
+      "VALIDATION_REARM_FLOOR_MAX_JOURNAL_BYTES": 33554432,
+      "VALIDATION_REARM_FLOOR_MAX_JOURNAL_FILES": 64
+    },
+    "critical_block_AST_sha256": "b69031a7f54b15a4e2f1273dd86ea0fcc78e8b033c4b023afb40eb4506f9ca04",
+    "critical_statement_count": 9,
+    "inflight_recovery_branch_AST_sha256": "3766dc68aa1b68c1581a44a760c096bc99afed4494d29abf968d67d422a66120",
+    "post_floor_count_maps_propagated_before_dispatch": true,
+    "same_verified_history_rows_for_protected_recovery_and_floor": true,
+    "source_hash_only_rearm_is_noop": true,
+    "typed_evidence_refusal_excludes_affected_CIDs_from_dispatch": true
+  },
+  "datasets_documentation_base": "2c34992ba9b511f6994d1398e4c1eba9d0440ba0",
+  "disposition": {
+    "core_protection_already_integrated_in_owner_reported_loaded_generation": true,
+    "full_PR301_optional_selector_rollout_claimed": false,
+    "new_tests_or_125case_credit_claimed": false,
+    "redundant_checkout_replacement_or_restart_needed": false,
+    "whole_process_code_object_or_live_provider_behavior_attested": false
+  },
+  "evidence_id": "runtime-retry-policy-verification-20261027-01",
+  "new_runtime_unit_source_nativeDB_task_budget_provider_model_Lean_or_test_operations": false,
+  "original_source_READs_closed": true,
+  "public_policy": {
+    "merge": "2b9e094c4395ea6e93778620c0e0048aeab2e22f",
+    "pull_request": "https://github.com/endomorphosis/ipfs_accelerate_py/pull/301",
+    "raw_qualification_receipts_revalidated_by_this_review": false,
+    "reported_fake_cases": 125
+  },
+  "publication_lineage": {
+    "parent_accelerate_contains_PR301": true,
+    "parent_accelerate_gitlink": "089fe9f8125c2dd59f5f3e035d2d5d45476f8228",
+    "parent_datasets_gitlink": "2c34992ba9b511f6994d1398e4c1eba9d0440ba0",
+    "parent_main_observed": "69be81388c1a7bfb3f6960e29489ff3612a709f0"
+  },
+  "quiescence": {
+    "healthy": true,
+    "lanes": [
+      {
+        "active_worker_count": 0,
+        "completed_count": 139,
+        "lane_id": "lane-0",
+        "maintenance_window": null,
+        "ready_count": 0,
+        "status": "completed",
+        "task_count": 139,
+        "worker_descendant_count": 0
+      },
+      {
+        "active_worker_count": 0,
+        "completed_count": 139,
+        "lane_id": "lane-1",
+        "maintenance_window": null,
+        "ready_count": 0,
+        "status": "completed",
+        "task_count": 139,
+        "worker_descendant_count": 0
+      },
+      {
+        "active_worker_count": 0,
+        "completed_count": 139,
+        "lane_id": "lane-2",
+        "maintenance_window": null,
+        "ready_count": 0,
+        "status": "completed",
+        "task_count": 139,
+        "worker_descendant_count": 0
+      },
+      {
+        "active_worker_count": 0,
+        "completed_count": 139,
+        "lane_id": "lane-3",
+        "maintenance_window": null,
+        "ready_count": 0,
+        "status": "completed",
+        "task_count": 139,
+        "worker_descendant_count": 0
+      }
+    ],
+    "observed_at": "2026-10-27T15:41:07.942691+00:00",
+    "scientific_completion_authority": false,
+    "single_legacy_engineering_board_tasks": 139
+  },
+  "recorded_date_utc": "2026-10-27",
+  "remaining_difference": {
+    "disable_0_policy_requested": false,
+    "exact_public_whole_file_equivalence": false,
+    "future_disable_0_policy_requires_explicit_owner_qualification": true,
+    "ordinary_automatic_recovery_requested": true,
+    "public_closed_0_1_campaign_selector_and_its_guards_equal_private": false,
+    "setting_or_policy_change_performed": false
+  },
+  "retained_review_receipts": {
+    "critical-call-path-review.json": {
+      "bytes": 22853,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/runtime-policy-adoption-v01/critical-call-path-review.json",
+      "sha256": "9b9c53e8de80e421ab1aed661a471e5a9dabd259baf8c12d3b6a2b652ae4b1cd"
+    },
+    "runtime-readiness-closeout.json": {
+      "bytes": 17050,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/runtime-policy-adoption-v01/runtime-readiness-closeout.json",
+      "sha256": "369888f7173fdeb45ff23e807688759506b1b4fae679fed6053144a82ef7a970"
+    },
+    "source-admission-review.json": {
+      "bytes": 11869,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/current-plan-refresh-v01/runtime-policy-adoption-v01/source-admission-review.json",
+      "sha256": "288a3dd5b4e38e412c3e5089f2327883dcdc3bd89d09e72cc29048ae02a01ffc"
+    }
+  },
+  "schema": "legal-ir-runtime-retry-policy-source-verification/v1",
+  "scientific64_task_completion_or_LIR9001_rearm_claimed": false,
+  "scope": "Existing owner-reported loaded source identity and static critical retry-policy call paths; no new runtime behavior qualification.",
+  "unit_names": [
+    "legal-ir-autoencoder-v1.service",
+    "legal-ir-autoencoder-v1-lane-1.service",
+    "legal-ir-autoencoder-v1-lane-2.service",
+    "legal-ir-autoencoder-v1-lane-3.service"
+  ]
+}

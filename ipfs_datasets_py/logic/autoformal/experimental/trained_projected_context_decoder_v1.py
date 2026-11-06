@@ -121,6 +121,14 @@ def _manifests(source, parent):
 
 def _anchors(torch, source, parity_module, parent, initial, parent_file_sha256,
              initial_file_sha256):
+    return _anchors_core(torch, source, parity_module, parent, initial,
+                         parent_file_sha256, initial_file_sha256, profile=None)
+
+
+def _anchors_core(torch, source, parity_module, parent, initial, parent_file_sha256,
+             initial_file_sha256, *, profile):
+    _bridge.require_module("context_initialization", parity_module)
+    parity_module._profile_mode(profile)
     _require(not torch.cuda.is_initialized(), "CPU-only trained context loader required")
     implementation = _implementation(source, parity_module)
     _require(type(parent) is dict and set(parent) == PARENT_FIELDS
@@ -135,10 +143,10 @@ def _anchors(torch, source, parity_module, parent, initial, parent_file_sha256,
     # source implementation, all thirteen exact float32 tensors, original
     # codec/normalization, copied blocks, and zero added columns. Trained state
     # is never supplied to it. No Runtime/model is created in this validation.
-    initial_tensors = parity_module._validate(
-        torch, source, parent, initial, parent_file_sha256)
-    parent_tensors, parent_reference = parity_module._parent(
-        torch, source, parent, parent_file_sha256)
+    initial_tensors = parity_module._validate_core(
+        torch, source, parent, initial, parent_file_sha256, profile=profile)
+    parent_tensors, parent_reference = parity_module._parent_core(
+        torch, source, parent, parent_file_sha256, profile=profile)
     _require(_same(source, source.FALSE, FALSE), "genuine unqualified source flags differ")
     initial_reference = {
         "schema": PARITY_SCHEMA, "architecture": ARCHITECTURE,
@@ -189,6 +197,16 @@ def _provenance(provenance):
 
 def _validate(torch, source, parity_module, parent, initial, checkpoint,
               parent_file_sha256, initial_file_sha256):
+    return _validate_core(torch, source, parity_module, parent, initial, checkpoint,
+                          parent_file_sha256, initial_file_sha256, profile=None)
+
+
+def _validate_core(torch, source, parity_module, parent, initial, checkpoint,
+              parent_file_sha256, initial_file_sha256, *, profile):
+    _bridge.require_module("context_initialization", parity_module)
+    parity_module._profile_mode(profile)
+    if profile is not None:
+        parity_module._retained_context150_checkpoint(source, checkpoint, "trained")
     _require(type(checkpoint) is dict and set(checkpoint) == FIELDS,
              "closed trained context checkpoint required")
     _require(len(_raw(source, checkpoint)) <= MAX_BYTES, "trained checkpoint exceeds8MiB")
@@ -199,12 +217,14 @@ def _validate(torch, source, parity_module, parent, initial, checkpoint,
              "trained schema, architecture or decoder binding differs")
     _require(all(checkpoint[key] is False for key in FALSE),
              "trained checkpoint cannot grant authority")
-    parent_state, parent_ref, initial_ref, implementation, manifests = _anchors(
-        torch, source, parity_module, parent, initial, parent_file_sha256, initial_file_sha256)
+    parent_state, parent_ref, initial_ref, implementation, manifests = _anchors_core(
+        torch, source, parity_module, parent, initial, parent_file_sha256, initial_file_sha256, profile=profile)
     for name, expected in (("parent_reference", parent_ref), ("initial_reference", initial_ref),
                            ("implementation", implementation),
                            ("initialization", _initialization(parity_module)),
                            ("config", parity_module._config(parent))):
+        if name == "implementation" and profile is not None:
+            continue  # Exact complete retained recipe was authenticated before tensor access.
         _require((_bridge.compatible_implementation(checkpoint[name], expected)
                   if name == "implementation" else _same(source, checkpoint[name], expected)),
                  "trained " + name + " differs")
@@ -234,37 +254,8 @@ def _validate(torch, source, parity_module, parent, initial, checkpoint,
 
 
 def _model_interface(torch, parity_module, model, vocabulary_size):
-    kind = type(model)
-    _require(kind.__name__ == "ProjectedContextDecoder"
-             and kind.__module__ == parity_module.__name__,
-             "genuine immutable parity numerical constructor required")
-    code_path = str(Path(parity_module.__file__).resolve())
-    for name in ("project", "start", "next_logits", "forward"):
-        method = getattr(kind, name, None)
-        _require(name not in model.__dict__ and hasattr(method, "__code__")
-                 and str(Path(method.__code__.co_filename).resolve()) == code_path
-                 and method.__qualname__ == "_model.<locals>.ProjectedContextDecoder." + name,
-                 "actual repeated-context numerical method differs: " + name)
-    expected = {"projection_down": torch.nn.Linear, "projection_up": torch.nn.Linear,
-                "condition": torch.nn.Linear, "target_embedding": torch.nn.Embedding,
-                "decoder": torch.nn.GRU, "output": torch.nn.Linear}
-    children = dict(model.named_children())
-    _require(set(children) == set(expected)
-             and all(type(children[name]) is expected[name] for name in expected),
-             "actual repeated-context layer inventory differs")
-    for module in model.modules():
-        _require(not module._forward_hooks and not module._forward_pre_hooks
-                 and not module._backward_hooks and not module._backward_pre_hooks,
-                 "numerical hooks cannot alter the executing decoder")
-    decoder = model.decoder
-    _require(decoder.input_size == 400 and decoder.hidden_size == 32
-             and decoder.num_layers == 1 and decoder.batch_first and decoder.bias
-             and not decoder.bidirectional and decoder.dropout == 0,
-             "actual recurrent context dimensions differ")
-    _require(model.target_embedding.num_embeddings == vocabulary_size
-             and model.target_embedding.embedding_dim == 16
-             and model.target_embedding.padding_idx == 0,
-             "actual target embedding dimensions differ")
+    _bridge.require_module("context_initialization", parity_module)
+    return parity_module._model_interface(torch, model, vocabulary_size)
 
 
 def _actual_state(torch, source, parity_module, model, vocabulary_size):
@@ -319,6 +310,10 @@ def load_trained_with_real_parent(torch, source, parity_module, parent_cp,
     """Validate trained schema and load only into the genuine expanded model."""
     tensors = _validate(torch, source, parity_module, parent_cp, initial_parity_cp,
                         trained_cp, parent_file_sha256, initial_file_sha256)
+    return _load_validated_tensors(torch, source, parity_module, trained_cp, tensors)
+
+
+def _load_validated_tensors(torch, source, parity_module, trained_cp, tensors):
     with source.native._cpu() as cpu_torch:
         _require(cpu_torch is torch, "genuine native CPU context must use supplied Torch")
         model = parity_module._model(torch, len(trained_cp["codec"]["target_vocabulary"]),
@@ -346,6 +341,10 @@ def infer_trained(torch, source, parity_module, parent_cp, initial_parity_cp,
     """
     _validate(torch, source, parity_module, parent_cp, initial_parity_cp, trained_cp,
               parent_file_sha256, initial_file_sha256)
+    return _infer_validated(torch, source, parity_module, trained_cp, model, rows, batch_size=batch_size)
+
+
+def _infer_validated(torch, source, parity_module, trained_cp, model, rows, *, batch_size):
     rows = source._rows("legal_ir", rows, training=False)
     requested = trained_cp["config"]["batch_size"] if batch_size is None else batch_size
     _require(type(requested) is int and 1 <= requested <= 256, "invalid trained inference batch size")
@@ -392,3 +391,62 @@ def source_profile_bridge():
     """Describe this experimental port without loading checkpoints or Torch."""
     _bridge.require_source('context_trained', _PORTED_SOURCE_SHA256)
     return _bridge.profile_bridge('context_trained')
+
+
+
+def _retained_inputs(source, parity_module, parent, initial, trained, *, parent_file_sha256,
+                     initial_file_sha256, trained_file_sha256):
+    _bridge.require_shared_source(source)
+    _bridge.require_source("context_trained", _PORTED_SOURCE_SHA256)
+    _bridge.require_module("context_initialization", parity_module)
+    _require(type(trained) is dict, "retained trained checkpoint required before numerical access")
+    return parity_module._retained_context150_inputs(source, parent, initial, trained,
+        parent_file_sha256=parent_file_sha256, initial_file_sha256=initial_file_sha256,
+        trained_file_sha256=trained_file_sha256)
+
+
+def load_retained_context150_trained(torch, source, parity_module, parent_cp,
+                                    initial_parity_cp, trained_cp, *, parent_file_sha256,
+                                    initial_file_sha256, trained_file_sha256):
+    """Restore the exact retained step150 state with a separate immutable receipt."""
+    parent, initial, trained = _retained_inputs(source, parity_module, parent_cp, initial_parity_cp, trained_cp,
+        parent_file_sha256=parent_file_sha256, initial_file_sha256=initial_file_sha256,
+        trained_file_sha256=trained_file_sha256)
+    with source.native._cpu() as cpu_torch:
+        _require(cpu_torch is torch, "genuine native CPU context must use supplied Torch")
+        tensors = _validate_core(torch, source, parity_module, parent, initial, trained,
+            parent_file_sha256, initial_file_sha256, profile=parity_module._RETAINED_CONTEXT150_PROFILE)
+        model = _load_validated_tensors(torch, source, parity_module, trained, tensors)
+        _retained_inputs(source, parity_module, parent_cp, initial_parity_cp, trained_cp,
+            parent_file_sha256=parent_file_sha256, initial_file_sha256=initial_file_sha256,
+            trained_file_sha256=trained_file_sha256)
+        _, digest = _actual_state(torch, source, parity_module, model, len(trained["codec"]["target_vocabulary"]))
+        receipt = parity_module._retained_context150_receipt(source, parent, initial, trained,
+            operation="trained_checkpoint_restore", details={"actual_weights_sha256": digest})
+        return model, receipt
+
+
+def infer_retained_context150_trained(torch, source, parity_module, parent_cp, initial_parity_cp,
+                                     trained_cp, model, rows, *, parent_file_sha256,
+                                     initial_file_sha256, trained_file_sha256, batch_size=None):
+    """Reauthenticate all three anchors before target-free retained inference."""
+    parent, initial, trained = _retained_inputs(source, parity_module, parent_cp, initial_parity_cp, trained_cp,
+        parent_file_sha256=parent_file_sha256, initial_file_sha256=initial_file_sha256,
+        trained_file_sha256=trained_file_sha256)
+    rows = source._rows("legal_ir", rows, training=False)
+    input_rows_sha256 = _digest(source, rows)
+    with source.native._cpu() as cpu_torch:
+        _require(cpu_torch is torch, "genuine native CPU context must use supplied Torch")
+        _validate_core(torch, source, parity_module, parent, initial, trained,
+            parent_file_sha256, initial_file_sha256, profile=parity_module._RETAINED_CONTEXT150_PROFILE)
+        report = _infer_validated(torch, source, parity_module, trained, model, rows, batch_size=batch_size)
+        _retained_inputs(source, parity_module, parent_cp, initial_parity_cp, trained_cp,
+            parent_file_sha256=parent_file_sha256, initial_file_sha256=initial_file_sha256,
+            trained_file_sha256=trained_file_sha256)
+        _, digest = _actual_state(torch, source, parity_module, model, len(trained["codec"]["target_vocabulary"]))
+        receipt = parity_module._retained_context150_receipt(source, parent, initial, trained,
+            operation="trained_target_free_inference", details={"output_sha256": _digest(source, report), "input_rows_sha256": input_rows_sha256,
+                "batch_size": trained["config"]["batch_size"] if batch_size is None else batch_size,
+                "max_target_tokens": trained["config"]["max_target_tokens"],
+                "actual_weights_sha256": digest, "rows": len(report["rows"])})
+        return report, receipt

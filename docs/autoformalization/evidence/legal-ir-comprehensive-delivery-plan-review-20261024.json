@@ -1,0 +1,509 @@
+{
+  "authority": {
+    "Lean_corpus_admission": false,
+    "governing_application": false,
+    "legal_meaning": false,
+    "semantic_graph_admission": false,
+    "source_correspondence": false,
+    "training_gold": false
+  },
+  "dataset_role_limits": [
+    "ipfs_uscode declares publicus-ir-graphrag/v2, us/pl/119/102, source revision006dd603185b283c54648dd4aef3c2cbe650981a, GTE-small384 mean/L2 and entry_cid. Its Parquet families require explicit wire/config selection.",
+    "Legacy span-cache mock SHA8 guidance/compiler observations are not learned formula decoder supervision by default. Storage split, compiler agreement and fallback flags do not grant gold status.",
+    "Entity index availability does not establish scoped sense identity, governing definitions or complete physical correspondence. No entity-table scan or row-count verification was performed.",
+    "Retained2024Title10 is the user-selected pilot, separate from the source card release; no legal-as-of, review/trust identity or evaluation clock is invented."
+  ],
+  "delivery_stage_gates": [
+    {
+      "completion_gate": [
+        "Immutable edition/source hash and exact physical source unit; distinct original UTF-8, extracted/normalized view and coordinate namespaces",
+        "Declared complete hierarchy/context and meaning-unit coverage; source order follows physical geometry",
+        "For each claimed three-cache observation, immutable dataset/file/row identities, exact text/view hashes, producer/configuration and segmentation/ID witness; no legal-ID or similar-text substitute",
+        "Missing joins/producer lineage remain explicit and excluded from source-bound cache/gold claims"
+      ],
+      "contingency": "A manually curated retained-official-source component can advance after its own source/geometry/meaning gates while legacy cache links remain explicit and unclaimed. If legacy producer bodies are unavailable, a separately versioned fresh pilot producer/cohort can later supply new witnesses; never alias it to an unrecovered legacy row.",
+      "reuse_owners": [
+        "uscode_ingest.inventory_uscode_documents / inventory_uscode_source_coordinates",
+        "uscode_dataset.USCodeParquetRecord.from_row; span_cache.SpanCache.enqueue",
+        "legal_source_span_entity_join_v1.prepare_source_span_entity_join_manifest_v3",
+        "legal_compact_source_context_cache_intake_v1.prepare_source_context_cache_intake_v2",
+        "legal_span_cache_intake.prepare_coordinate_source_graph_intake_v3"
+      ],
+      "stage": "1. Source component and correspondence",
+      "tasks": [
+        "LIR-02",
+        "LIR-05"
+      ]
+    },
+    {
+      "completion_gate": [
+        "One complete target retains ordered predicates/roles/arguments, binders, modalities/polarity, restrictions, conditions/exceptions, attachments, counts and time; no simplification to fit a codec",
+        "Every source meaning unit is interpreted or explicitly pending/unsupported; alternatives remain alternative groups",
+        "Exact response bodies, legal/formal reviewer evidence, process/exposure, trust/policy/revocations and separate clocks replay against the selected subject",
+        "Meaning and each use\u2019s governing definition/application are affirmatively reviewed under the declared policy; authenticated custody alone is insufficient",
+        "Lossless roundtrip or explicit unsupported disposition for each selected target"
+      ],
+      "manual_work_possible_now": "Curate complete proposed ASTs and coverage/omission lists from the existing source packets, preserving all unresolved decisions. Substantive acceptance waits for actual authorized review inputs; no learned decoder is a prerequisite.",
+      "reuse_owners": [
+        "corpus_source_review; corpus_source_review_packets",
+        "legal_source_sampling_review.record_sampling_review_response",
+        "legal_norm_content_responses_v1.build_norm_content_response_v1 / assess_norm_content_responses_v1",
+        "legal_norm_content_adjudication_v1",
+        "legal_norm_interpretation_review_v1.assess_norm_reviews_v1",
+        "legal_norm_definition_applicability_v1.assess_norm_definition_applicability_v1"
+      ],
+      "stage": "2. Complete typed interpretation and substantive review",
+      "tasks": [
+        "LIR-06",
+        "LIR-07",
+        "LIR-10"
+      ]
+    },
+    {
+      "completion_gate": [
+        "Document versions/physical occurrences, span observations, mentions, scoped senses, denoted entities, definition bodies, complete norms, review decisions and formal modules retain distinct identities",
+        "Every edge endpoint is present or bound to a pinned import; entity companions and complete ordered typed assertions replay",
+        "A semantic USES_DEFINITION edge follows a reviewed exact mention/typed role/governing definition/applicability decision, never a repeated name or candidate nomination",
+        "Retain candidates/exclusions, ambiguity/cycles/frontiers, negative lookups and searched scope/version/index partitions even for resolved uses",
+        "All semantic assertions trace exact source and accepted interpretation; node/edge/assertion/root counts reconcile included/excluded/unresolved populations"
+      ],
+      "existing_boundary": "Candidate custody and ordered AST roundtrip already exist. The missing real-pilot work is semantic binding and component assembly, not a second generic graph builder.",
+      "reuse_owners": [
+        "scoped_definition_resolution.build_parent_definition_lookup_registry_v1 / resolve_parent_definition_lookup_v1",
+        "corpus_definition_use_v2.prepare_parent_definition_use_v1",
+        "corpus_definition_use_review_v2.assess_parent_definition_use_reviews_v1",
+        "legal_norm_definition_evidence_v1",
+        "corpus_norm_definition_adapter.build_norm_definition_graph_v1",
+        "legal_semantic_graph; corpus_graph; corpus_graph_exchange; legal_graph_dependencies",
+        "corpus_proposed_graph_adapter.prepare_coordinate_graph_corpus_v2 / validate_coordinate_graph_corpus_v2 / export_coordinate_graph_corpus_output_v2"
+      ],
+      "stage": "3. Scoped semantic graph and dependency closure",
+      "tasks": [
+        "LIR-04",
+        "LIR-08",
+        "LIR-09",
+        "LIR-11"
+      ]
+    },
+    {
+      "completion_gate": [
+        "Generate only from the immutable validated reviewed graph; share definition symbols/imports with explicit typed O/P/F semantics and supported profile",
+        "Preserve the complete source-bound norm AST, ordered binding/arguments/counts/restrictions and exact source/declaration trace; unsupported constructors refuse instead of silently reducing the norm",
+        "Build every declared module under the pinned actual toolchain/imports; retain module/declaration/artifact hashes, native receipts and complete assumption/axiom/theorem lineage",
+        "Keep compilation, AST preservation, source correspondence and actual theorem discharge separate; include non-vacuity and negative controls",
+        "Any hDefinition, hMembership, alias or donor/consumer premise stays an assumption until independently discharged; conditional theorem and alias identity do not establish statutory meaning"
+      ],
+      "implementation_boundary_to_extend_only_after_review": "Existing authored bound-norm profile preserves a complete quantified/modal norm unchanged beside conditional definition instances in nine files/six modules. The complete reviewed statutory source-bound projection/shared composition remains missing. legal_relational_norm_v1 still requires null source binding; legal_full_norm_consequences_v1 is an exact authored profile. Extend existing owners only for demonstrated missing reviewed structure, not another renderer.",
+      "reuse_owners": [
+        "legal_bound_variable_definition_v1.prepare_bound_variable_definition_v1",
+        "legal_corpus_definition_use_lake_v2.prepare_bound_norm_definition_corpus_v1",
+        "legal_corpus_definition_use_native_v2.validate_bound_norm_definition_native_v1 / build_bound_norm_definition_native_v1",
+        "legal_corpus_shared_lake.prepare_parent_shared_definition_use_corpus_v1",
+        "legal_corpus_definition_use_native_v2.build_parent_shared_definition_use_native_v1",
+        "legal_native_ast_preservation; legal_corpus_definition_use_preservation_packet_v2; legal_corpus_definition_use_preservation_index_v2"
+      ],
+      "stage": "4. Complete-norm Lean component",
+      "tasks": [
+        "LIR-12",
+        "LIR-13",
+        "LIR-14"
+      ]
+    },
+    {
+      "completion_gate": [
+        "Dependency keys include source/occurrence/view, producer/schema/codec, reviewed interpretation/context/scope, governing definitions, searched index partitions, review trust/revocations and toolchain/import/library/profile",
+        "Changed definition invalidates actual consumers and unresolved lookups; a new competing definition reopens resolved mentions via searched-index dependencies",
+        "Selected statutory component\u2019s cold/warm/affected/clean outputs agree with a clean build under the actual compatible profile",
+        "Verify every immutable span/entity/graph/review/Lean artifact and completed commit before switching a coherent release pointer; interruption preserves the prior usable release and coordinator avoids self-commit circularity",
+        "Typed repair records separate source/binding/translation/proof/resource failures; build success or proof failure never manufactures semantic gold",
+        "Report all enrolled failures/abstentions/pending/unsupported with stage costs and denominators; reviewed, graph-closed and kernel-checked counts remain distinct"
+      ],
+      "reuse_owners": [
+        "legal_corpus_incremental.build_incremental_parent_shared_corpus_v1",
+        "legal_graph_dependencies",
+        "Existing span/entity publication, immutable release, model/proof stores and source/resource operations owners"
+      ],
+      "stage": "5. Incremental integrity, release and feedback",
+      "tasks": [
+        "LIR-15",
+        "LIR-21",
+        "LIR-22",
+        "LIR-23"
+      ]
+    },
+    {
+      "completion_gate": [
+        "Expand to 20\u201340 actual provisions in reviewed dependency components with definitions and users",
+        "Freeze source/exposure/split manifests, grouping shared occurrences, A/B alternatives, near duplicates, amendments and definition families to prevent leakage",
+        "Carry every review/source/graph/build/release gate and unresolved history forward; capacity follows review throughput",
+        "A small integration component supplies no held-out or population-wide quality estimate; corpus and model promotion are reported independently"
+      ],
+      "stage": "6. Expand the actual statutory pilot",
+      "tasks": [
+        "LIR-05",
+        "LIR-24"
+      ]
+    }
+  ],
+  "documentation": {
+    "archive_root": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01",
+    "incoming_anchors_preserved": [
+      "bound-norm-corpus-engineering-profile-2026-10-23",
+      "cache-producer-and-offsets",
+      "evaluation-release-and-immediate-queue",
+      "four-source-widths",
+      "latest-transport-delivery-and-remaining-graph-boundary",
+      "selected-pilot-and-replay-input-follow-up"
+    ],
+    "indexed_review_inputs": [
+      {
+        "bytes": 20344,
+        "path": "training/training-reuse-findings-v01.json",
+        "sha256": "125b8e33c1806f3b88391fd538469da54ee5c433eb1b5d7785b59a15013a32cf"
+      },
+      {
+        "bytes": 1412,
+        "path": "training/private-handoff-numerical-review-v02.json",
+        "sha256": "af70b7651d2cbc705d36ded1eb40b659d202b1fae437175a24c96a67316ef454"
+      },
+      {
+        "bytes": 18089,
+        "path": "graph-lean/graph-lean-plan-findings-v01.json",
+        "sha256": "d767e600b43737d293be53ba0d9a0c44586ccb75df8afd6ff9f80b1577838c0f"
+      },
+      {
+        "bytes": 9190,
+        "path": "migration/current-anchor-and-public-api-audit-v01.json",
+        "sha256": "2e7e24dd753c2567967c785d848d49784ee0f5ef7e8084c3458a8cb886b95cf5"
+      },
+      {
+        "bytes": 31755,
+        "path": "migration/public-owner-presence-v01.json",
+        "sha256": "514667cf347558a8a4de6e72b0b1dd9d78bd91a55f22c1378ea8bea1112e227b"
+      },
+      {
+        "bytes": 3822,
+        "path": "migration/three-named-interface-deltas-v01.json",
+        "sha256": "2ea2893d104bdca0b2ef484292c85e62e0f7dd562748eb0ce582442c927b58b2"
+      },
+      {
+        "bytes": 12566,
+        "path": "migration/existing-unpublished-qualifications-index-v01.json",
+        "sha256": "ea0b06a3daf11f5f55c07ac8145e8a1d9c1b04bbb3e07e75f819b41d96c4b784"
+      },
+      {
+        "bytes": 2412,
+        "path": "hub/card-observations-v01.json",
+        "sha256": "daff932836f868c93fe60c31f2aebb9c4eaff65469e1d4d67951e1a1ef0819bd"
+      }
+    ],
+    "maintained_plan": "ipfs_datasets_py/logic/autoformal/docs/HANDOFF.md",
+    "preserved_old_handoff": {
+      "bytes": 201584,
+      "immutable_url": "https://github.com/endomorphosis/ipfs_datasets_py/blob/943e85c247cfc31cdb990518c6ae3bfedf210ceb/ipfs_datasets_py/logic/autoformal/docs/HANDOFF.md",
+      "path": "baseline/ipfs_datasets_py/logic/autoformal/docs/HANDOFF.md",
+      "sha256": "b6c41a6ae3c264e24827faf955812374fd677337c8bb9f424fa5ec200402adc9"
+    },
+    "refreshed_handoff": {
+      "bytes": 32751,
+      "path": "candidates/HANDOFF.md",
+      "sha256": "25b4f716b56c301e1c879169e17b5e661935727011559da41b43681feb5e19b6"
+    }
+  },
+  "existing_unpublished_interfaces": {
+    "indexed_qualifications": [
+      {
+        "cases": 64,
+        "evidence": {
+          "bytes": 11851,
+          "path": "docs/autoformalization/evidence/legal-ir-hf-wire-coordinate-entity-census-20261024.json",
+          "root": "datasets_repository",
+          "sha256": "2578fbd5450b8e6d052ade4917d9542ce648cc4a3f1ece0f927de735c919039b"
+        },
+        "phase_passes": 192,
+        "scope": "Explicit wire census v3 binds genuine join-v3/source-intake-v2 and a pinned prior entity census. 64 cases/192 phases (62 new,2 existingv2); no entity rescan or semantic association, false authority, null binding count and plain0 masks. Original41/corpus90/parent42 cohorts remain separate."
+      },
+      {
+        "cases": 103,
+        "evidence": {
+          "bytes": 10468,
+          "path": "docs/autoformalization/evidence/legal-ir-hf-wire-coordinate-source-correspondence-20261024.json",
+          "root": "datasets_repository",
+          "sha256": "e513c1dfcb5a697a12b3a3ecce6e9ef8875b0d36bba5e544135937e366197c59"
+        },
+        "phase_passes": 309,
+        "scope": "Authored selected unsigned source-review request custody only. Complete original wire metadata and exact ordered row projections retain genuine source-bank nominations and unresolved questions through closing/final serialization. No source/meaning review, corpus export, model training, numerical convergence or Lean qualification is claimed."
+      }
+    ],
+    "selection_rule": "Already implemented and qualified in primary canonical owners, not public at this baseline. Selectively adopt only a named consumer dependency; do not reimplement or repeat qualifications by default.",
+    "shared_replay_file_transport": {
+      "APIs": [
+        "read_parent_shared_replay_inputs_file_v1",
+        "write_parent_shared_replay_inputs_file_v1"
+      ],
+      "existing_original_cases": 25,
+      "later_physical_fixture_controls_separate": true
+    },
+    "source_deltas": [
+      {
+        "bytes_equal": false,
+        "path": "ipfs_datasets_py/logic/autoformal/legal_corpus_shared_lake.py",
+        "primary": {
+          "bytes": 52537,
+          "sha256": "d3f3546671fd7f60c50164d0925fd3ecd24e0986af3e3c29fbd8e4b4bb12653a"
+        },
+        "primary_only_top_level_symbols": [
+          "_parent_replay_file_guard",
+          "_parent_replay_file_identity",
+          "_parent_replay_file_parent",
+          "_parent_replay_file_pins",
+          "_parent_replay_file_regular",
+          "_read_parent_shared_replay_file",
+          "read_parent_shared_replay_inputs_file_v1",
+          "write_parent_shared_replay_inputs_file_v1"
+        ],
+        "public": {
+          "bytes": 44210,
+          "sha256": "6bc1370952487a09bba3c5f963eb6d744e1f6fcf6edc15bb442a93f829267c99"
+        },
+        "public_only_top_level_symbols": [],
+        "shared_changed_top_level_symbols": []
+      },
+      {
+        "bytes_equal": false,
+        "path": "ipfs_datasets_py/logic/autoformal/legal_source_correspondence_requests_v1.py",
+        "primary": {
+          "bytes": 76717,
+          "sha256": "8fccd02c6a596a06f6d3d0105a9bdffb040f11266cd4e835dbff5f74ad066aed"
+        },
+        "primary_only_top_level_symbols": [
+          "_coordinate_correspondence_callbacks",
+          "_coordinate_correspondence_owners",
+          "_coordinate_correspondence_setup",
+          "_prepare_source_correspondence_requests",
+          "_validate_source_correspondence_requests",
+          "_wire_correspondence_rows",
+          "_wire_correspondence_unprivileged",
+          "prepare_source_correspondence_requests_v3",
+          "source_correspondence_requests_v3_sha256",
+          "validate_source_correspondence_requests_v3"
+        ],
+        "public": {
+          "bytes": 56589,
+          "sha256": "b81e00313689a305cb87e039051b20cc8e8bf763c1f5e69f7507620300c113de"
+        },
+        "public_only_top_level_symbols": [],
+        "shared_changed_top_level_symbols": [
+          "prepare_source_correspondence_requests_v2",
+          "validate_source_correspondence_requests_v2"
+        ]
+      },
+      {
+        "bytes_equal": false,
+        "path": "ipfs_datasets_py/logic/autoformal/legal_source_span_entity_census_v1.py",
+        "primary": {
+          "bytes": 58976,
+          "sha256": "21d9a7514092c80b2f7bcf79d75f57669c6b62c8ed536c72a240879b1856adb4"
+        },
+        "primary_only_top_level_symbols": [
+          "_wire_census_fingerprint",
+          "_wire_census_metadata",
+          "_wire_census_operation",
+          "_wire_census_owners",
+          "_wire_census_unqualified",
+          "prepare_source_span_entity_census_v3",
+          "validate_source_span_entity_census_v3"
+        ],
+        "public": {
+          "bytes": 38608,
+          "sha256": "1c589c1713fdd946869b69745ab43938df5d85e91c16ae525ef22dfd75824f7e"
+        },
+        "public_only_top_level_symbols": [],
+        "shared_changed_top_level_symbols": [
+          "_coordinate_preflight"
+        ]
+      }
+    ]
+  },
+  "first_scientific_deliverable": "One complete reviewed source-bound norm, governing definition and two genuinely distinct uses, then20-40connected provisions; manual reviewed targets may precede learned success.",
+  "implemented_public_inventory": {
+    "declared_static_API_names_present": 368,
+    "distinct_paths": 80,
+    "guides_at_baseline": 165,
+    "owner_rows": 81,
+    "source_presence_is_runtime_or_legal_qualification": false
+  },
+  "lineage_contingency": "Recover named original producer/configuration bodies if possible. Otherwise retain unavailable/null legacy joins and capture a separately versioned fresh official-source cohort; never alias new witnesses to old rows.",
+  "new_execution": {
+    "Hub_write": false,
+    "Lean": false,
+    "dataset_table_scan": false,
+    "encoder": false,
+    "model": false,
+    "pytest": false,
+    "training": false
+  },
+  "public_baseline": {
+    "datasets_commit": "943e85c247cfc31cdb990518c6ae3bfedf210ceb",
+    "parent_commit": "1bafa22125d547a8caebe664f0c1bde425f7669d"
+  },
+  "recorded_at_utc": "2026-10-24T17:35:39.865238+00:00",
+  "schema": "legal-ir-comprehensive-delivery-plan-review/v1",
+  "scope": "Bounded indexed metadata and primary dataset-card review; documentation and work-order refresh, not a new training, source-port, graph-meaning or Lean qualification.",
+  "three_dataset_card_observations": [
+    {
+      "bytes": 3476,
+      "immutable_card_url": "https://huggingface.co/datasets/justicedao/ipfs_uscode/blob/91ca1838853ac82d7a12dd4ab47d9686f47667f9/README.md",
+      "repo": "justicedao/ipfs_uscode",
+      "repo_commit": "91ca1838853ac82d7a12dd4ab47d9686f47667f9",
+      "sha256": "a3b0aaa50d3274d4dc18c7ea24989c7eaf69b78b9e085b8b2ce6019fd5eb312e"
+    },
+    {
+      "bytes": 13863,
+      "immutable_card_url": "https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/blob/60501f3e920f6c9050cfc452e0d9fcc2b7c184f3/README.md",
+      "repo": "justicedao/uscode-autoformal-span-cache",
+      "repo_commit": "60501f3e920f6c9050cfc452e0d9fcc2b7c184f3",
+      "sha256": "12baa9ccf9038e7799fdd0dd59991dbb202b80617f00a636f0f7963e6b2336a6"
+    },
+    {
+      "bytes": 581,
+      "immutable_card_url": "https://huggingface.co/datasets/justicedao/uscode-autoformal-entity-cache/blob/79d54378c5d6a89ab56e7a27e0f0ba867e800e19/README.md",
+      "repo": "justicedao/uscode-autoformal-entity-cache",
+      "repo_commit": "79d54378c5d6a89ab56e7a27e0f0ba867e800e19",
+      "sha256": "5ef5c8cb742e67cdbafa91315ddec88a38fc6d803467629a493b7148bbab6bd4"
+    }
+  ],
+  "training_reuse": {
+    "CP128_warmstart": {
+      "partial_failed_wrapper_step0_outputs": {
+        "enrolled": 4,
+        "exact_AST": 0,
+        "exact_ID": 0,
+        "original_zero_pipeline_qualified": false,
+        "typed": 4
+      },
+      "persistent_branch_consumer_separate": {
+        "enrolled": 4,
+        "exact_ID_AST": 0,
+        "typed": 0
+      },
+      "quality_conclusion": "Typed completion is not full semantic reconstruction; these exposed authored observations do not estimate statutory generalization.",
+      "successful_trained_outputs": {
+        "enrolled": 8,
+        "exact_AST": 0,
+        "exact_ID": 0,
+        "typed": 8
+      },
+      "unique_exposed_authored_sources": 2
+    },
+    "before_fitting_stop_conditions": [
+      "Stop if source/edition/legal-as-of/meaning/applicability, independently permitted context or complete target reviews missing. Training/evaluation masks remain0 until required reviews.",
+      "Stop if complete norm/definition/ordered roles/binders/counts/scopes/exceptions/negation/temporal conditions not losslessly representable or over selected codec/output cap. Larger source encoder does not fix unsupported targets.",
+      "Stop if producer/revision/vector role/pooling/normalization/context/transform or checkpoint/schema/task/codec/bypass lineage incompatible. No silent vector conversion or fresh sourcehash relabel.",
+      "Freeze exposure-aware source/dependency groups before train/dev/finaltest. Already exposed48/60/2row panels remain regression fixtures, not fresh heldout. No target-derived context/vocabulary used as independently available inference inputs.",
+      "Require independent retained reload/parity and explicit optimizer capability. Inference-only wording states need declared fresh optimizer; Context150 source deltas need explicit migration. Do not repeat original fitting to prove loading.",
+      "C1 remains one parameter-matched every_step vsfirst_step intervention with fixeddata/objective/optimizer/initialization/selector/outputcap; zero adapter alone does not show efficacy. Predicateweight1->4/denominator67->70, selectorchanges, longcontext and bottleneckwidth are separate ablations.",
+      "Existing proposed32updates/arm64total1200seconds/arm and8train4devgroups are feasibility bounds only, not admitted run or statistical promotion standard; stop if insufficient independent reviewedgroups/originalresourceenvelope."
+    ],
+    "checkpoint_payloads_loaded": false,
+    "four_lanes": [
+      {
+        "next_reuse_boundary": "Use limited-feature baseline; missing edge is compatible source producer/transfer for learned formula donor and new reviewed statutory task, not another broad asset search. No genuine text->donor8D compatibility established.",
+        "numerical_results": "Historical feature-conditioned final comparisons1/48 development and0/48 exposedR6. Identity/covariance170-update arms both retain epoch0,1/48 dev and12/48 train. Genuine spaCy target-aware feature reconstruction cosine1/MSE0 does not evaluate legal formulas.",
+        "producer": "spaCy3.8.14/en_core_web_sm3.8.0 legacy-linguistic-features-8d/v1 for completed born-alive capture; historical feature hash for separate authored formula-sidecar fits.",
+        "producer_and_task": "Keep genuine spaCy feature reconstruction, historical linguistic feature hash/teacher, mock SHA8 compiler guidance and learned modal-formula donor separate. Feature oracle has no formula head.",
+        "selected_formula_donor": {
+          "cohort": "2 synthetic parser-derived inputs; not selected Title10 source-text encoder",
+          "output_cap": 64,
+          "parameters": 1918,
+          "path": "workspace/test-logs/modal-joint-e2e-20261001-final/legacy_v1/formula-head.json",
+          "sha256": "ffca84492b81ab94fa291ae6ddbe52cfc84318f3516a22f901d468de255b6cbe",
+          "tensors": 13,
+          "vocabulary": 18
+        },
+        "width": 8
+      },
+      {
+        "bottleneck": "Residual down8/up384 still transmits384D via bypass; not8D-only inference.",
+        "compatible_parents": [
+          {
+            "sha256": "6e3f4d731d798aa2732afc37bd74fec34da3267a323844975d2dab78f59f9c61",
+            "task": "raw typed-JSON donor; identity normalization,32-token vocabulary,512output cap,13tensors25224parameters"
+          },
+          {
+            "sha256": "36b6b3a5a31ce88748a7ff69f1ab55f16dae79a78bfb635436a7b13a34c9cbf2",
+            "task": "original semantic donor; center/RMS input"
+          },
+          {
+            "control_sha256": "82f326a83a2d00cc1628ff2e9baf3096aa887348bd07e49883ed3e7c0234014e",
+            "sha256": "6cab6fe31ef7c98db1508001bc64926b7ff176ef2a9bd385473d8e05f5f8c266",
+            "task": "later normative wording CE selected state; fixed32output profile, optimizer_resumable=false"
+          }
+        ],
+        "next_reuse_boundary": "Choose task-compatible strongest retained state, not a universal best checkpoint. Context150 current replay blocked on tree_pin.py and ui_ux_ir/decoder.py identities; declare compatibility/migration before replay. Later wording weights require fresh declared optimizer for new training.",
+        "numerical_results": "Wording55/60->60/60; exposedV3 exact20/48->31/48. Context150 raises field accuracy96/240->142/240 but worsens full exact2/60->0/60. Initial fixed comparison dev47/48->48/48, exposedR6 exact30/48->28/48 despite lower CE.",
+        "producer_and_task": "thenlper/gte-small revision17e1f347d17fe144873b1201da91788898c639cd mean/L2 CPUfloat32,512token input. Raw/core/trained, semantic, normative wording and compact CP128 remain different tasks/codecs.",
+        "width": 384
+      },
+      {
+        "bottleneck_and_transfer": "Existing first dual-donor initialization has768->384 affine boundary and32->8 connector;27142copied +295560new interface parameters, initially0updates/unaligned. Stronger compatible fitted768 states precede creating new initialization. Raw/PCA/AE reconstruction into frozen full768decoder is not reduced-latent runtime.",
+        "compatible_parent": {
+          "control_sha256": "c8beca3ef5ea2d477ebc9a1564c8922404b245098a0b56083197cd6185c3083f",
+          "sha256": "aa2f75cad0ade34a3965a4f0b71bdc2fe962f5b863b38133927978ea2673aeb3",
+          "task": "later normative wording CE selected state; optimizer_resumable=false"
+        },
+        "next_reuse_boundary": "Require matched target/source/profile, exact cache/preprocessing and explicit new optimizer. Long-context qualification and output-budget expansion separate; no inherited512teacher authority for unseen8192context.",
+        "numerical_results": "Wording60/60 in both arms; exposedV3 ordered exact46/48->48/48. Native context boundary endpoint final42/48 but selection retained epoch0 with0valid docs; not promoted. Initial auxiliary comparison dev46/48->44/48 despite exposedR647/48->48/48.",
+        "producer_and_task": "Alibaba-NLP/gte-multilingual-base revision9bbca17d9273fd0d03d5725c7a4b0f6b45142062, CLS/L2 CPUfloat32, code revision40ced75c3017eb27626c9d4ea981bde21a2662f4. Model supports8192input tokens; retained legal experiments512.",
+        "width": 768
+      },
+      {
+        "bottleneck": "Retained bound source-span pilot4096->4projection->16bidirectional condition(hidden8),tokenembedding4,requiredsource text; not vector-only and not learned4096compression bottleneck.",
+        "next_reuse_boundary": "Reuse published3checkpoint files, retained native captures and lifecycle receipts. Loader/ModelManager publication is metadata/restoration engineering, not teacher/statutory/runtime quality. Live native capability is process/thread bound; do not reconstruct from JSON or pad/slice into another lane.",
+        "numerical_results": "Three separate200-update conditioning arms fit2/2toyTRAIN. Broader two200-update arms fit7/12 vs1/12TRAIN, both0/12 exposedDEV exact. October17 integration2actualnativevectors,4physicaldecoderupdates,exact model/namedAdam/progressresume;0/2decoded,2overlapabstentions.",
+        "producer_and_task": "Frozen Leanstral-1.5-119B-A6B-NVFP4.gguf SHA4668fd2a6d2764de250489852230e96238eb5c0d7495866eb3b9c6c4fac5c7da; native full causal forward,CPU1,last/L2,single-sequence512,layer-reclaim:v3. Separate learned decoder; native encoder untrained.",
+        "width": 4096
+      }
+    ],
+    "initial_campaign_count_is_global_training_total": false,
+    "initial_campaign_physical_updates": 3060,
+    "promotion_metrics": [
+      "Persist autonomous BOS outputs before reference scoring; report exact supported complete typedAST/orderedtokenIDs separately from syntax/typedcompletion, semantic field accuracy, CE and vectorMSE.",
+      "Report coverage over all enrolledsources, abstentions/OOV/unsupported/incomplete/truncation and severe role/modality/negation/scope/binder/cardinality/exception/temporal errors. Exact and severeerror floor predetermined before fit; no lowerCE override.",
+      "Show source dependence against zero/shuffled/source-only and unchanged compatible donor controls; equalcapacityfirst_step comparator distinct from original initialhiddenonly donor.",
+      "Select on development only; independently grouped finaltest and multiseed/group uncertainty after feasibility, no tinyfixture quality claims. Do not propose universal numericlegalquality threshold without reviewed population/risk choice.",
+      "Track physical vsunique updates/replays, model/Adam/forwards, end-to-end encoder/hash/I/O/decoder/review/Leanwalltime,memory,acceptedoutputs. Zeroacceptedthroughput=0; costperacceptedundefined.",
+      "Graph/source fidelity, reviewed governingdefinition/everyuse decisions and actual Lean meaning/proof admission remain independent release gates; compiler success underpremises is not legaltruth."
+    ],
+    "same_source_coverage": {
+      "complete_existing_panel": "2completeborn-alive literal slices x4widths=8retainedvectors;10USC1059(n)1326UTF8B and1USC8(b)560B. Use raw384/768native_embedding, not transformeddecoderinputs.",
+      "feature_quality_limit": "Cosine1/MSE0feature reconstruction or repeat native vectors is repeatability/construction evidence, not learned formula fidelity.",
+      "missing_cells_boundary": "No missing vector cells in this retained intersection. Different selected Title10 heading-prefixed7213/7214vectors are another source profile, not automatically joined. No matched original learned-formula8D statutory producer/current reference-cell coverage established. Keep explicit missing-cell ledger for chosen future task and request only exact missing receipt/producer; do not regenerate existing panel.",
+      "token_counts_source_order": {
+        "384": [
+          304,
+          120
+        ],
+        "4096": [
+          299,
+          111
+        ],
+        "768": [
+          335,
+          139
+        ],
+        "8": [
+          289,
+          109
+        ]
+      }
+    }
+  },
+  "unchanged_original_backlog": {
+    "bytes": 926521,
+    "path": "baseline/ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json",
+    "sha256": "76d9bdefe19b5cf75acba4bbb4857f613f410c80326762a7a4cd19ee63d4c96c",
+    "task_count": 24,
+    "whole_bytes_order_dependencies_statuses_preserved": true
+  }
+}

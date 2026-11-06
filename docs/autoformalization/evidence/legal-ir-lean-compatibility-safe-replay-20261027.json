@@ -1,0 +1,133 @@
+{
+  "controls": [
+    "Five-route exact metadata import/premise/axiom/artifact closure, request/report pinning, stable ordered serialization and detached index projection.",
+    "Independent warmed parent calls reject transitive producer changes, mid-call correspondence callable mutation, same-byte file replacement and late in-place writes.",
+    "Independent parent/preservation calls regenerate after a prior returned object is mutated; preservation also rejects transitive producer drift.",
+    "Unhashable routes fail as ValueError; new test temp directories use unique per-node paths without convenience aliases."
+  ],
+  "evidence_id": "lean-compatibility-safe-replay-qualified-20261027-01",
+  "full_receipt": {
+    "bytes": 14176,
+    "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/lean-safe-replay-v01/qualification-source-closure-v01.json",
+    "root": "datasets_repository",
+    "sha256": "e6ad3a996ccc44cc4c470e4994f726546431a3bd1bfabc11f4a652d86723b61a"
+  },
+  "independent_fixture_and_qualification_review": {
+    "bytes": 10531,
+    "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/legal-ir-supervisor-watchdog-safe-LEAN-fixture-final-binding-20261027.json",
+    "root": "datasets_repository",
+    "sha256": "3320025bf73310b530ed16fb20009a1636eabb65ad77ef89a146a9c9625684c5"
+  },
+  "integrated_cherry_pick": "94298eff3055173cebdb57e7c2c46b8374e88288",
+  "limits": [
+    "Finite selected pure scope only; the original full256 pass remains native62a historical evidence and is not transferred.",
+    "No cached-success performance claim; original lake/preservation guard owners are unchanged.",
+    "No actual Lean/compiler/model/checkpoint execution, corpus admission, statutory-meaning review, proof, or lake build.",
+    "Metadata AST digests remain caller-selected opaque digests, not newly parsed or authenticated statutory ASTs."
+  ],
+  "observed_at_utc": "2026-10-27T05:58:59.152625+00:00",
+  "old_named_definitions_unchanged": 182,
+  "original_guard_owners": [
+    {
+      "byte_identical_public_owner": true,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_lake_v2.py",
+      "sha256": "5c98152db328b75583f6c0cd181e2724ca5f7392870ec0faf1e4d870cbb76b32",
+      "unsafe_cross_operation_cache_not_ported": true
+    },
+    {
+      "byte_identical_public_owner": true,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_v2.py",
+      "sha256": "10548fae4cc2a2eb1c762103119ae21fa606057bbc45d57c95424e11286e9418",
+      "unsafe_cross_operation_cache_not_ported": true
+    }
+  ],
+  "peer_release_adoption_preserved": "0802333ae1afc907441244aa14b83477dba0af59",
+  "qualification": {
+    "errors": 0,
+    "external_process_attempts": [],
+    "failed": 0,
+    "junit_suite_seconds": 122.697,
+    "live_processes": 0,
+    "namespace_bypass": false,
+    "native_released": true,
+    "numerical_import_attempts": [],
+    "ordinary_worktree_lazy_package_initializers_pinned": true,
+    "original_owner_execution_seconds": 178.1519612427801,
+    "passed": 28,
+    "pytest_seconds_rounded": 122.7,
+    "resources": {
+      "child_process_slots": 2,
+      "cpu_slots": 1,
+      "memory_mb": 2048,
+      "storage_bytes": 134217728,
+      "timeout_seconds": 300
+    },
+    "selected_function_count": 17,
+    "selected_pins_not_complete_import_closure": true,
+    "skipped": 0,
+    "source_READ_closed": true,
+    "source_pins_verified_before_after": 54,
+    "storage_released": true
+  },
+  "qualification_base": "26bbfdc092f66869ecd5874e9fac376b0d5586e5",
+  "retained_failures": {
+    "alias_disposition": "Only the exact pytest convenience alias was unlinked after durable descriptor capture; all target files/logs retained.",
+    "attempts": [
+      "v01",
+      "v02"
+    ],
+    "original_exact_record_storage_recoveries": [
+      {
+        "attempt": "v01",
+        "descriptor": {
+          "bytes": 5625,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/lean-safe-replay-v01/failed-storage-recovery-descriptor-v01.json",
+          "sha256": "ca80b53c07ae56f027d7fb815bd85f5e92185fbe3aef51a257ac6002b30cde17"
+        },
+        "original_API_result": {
+          "bytes": 3940,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/lean-safe-replay-v01/failed-storage-recovery-result-v01.json",
+          "sha256": "9ce34a16a15d561e15ceef56f504d2f751b7230578bc3b46e7a0e36e9665969e"
+        },
+        "original_failed_outcome_unchanged": true,
+        "reservation_id": "b03901811f704e2d9d47ace49b0c2deb",
+        "status_observed": "released"
+      },
+      {
+        "attempt": "v02",
+        "descriptor": {
+          "bytes": 7772,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/lean-safe-replay-v01/failed-storage-recovery-descriptor-v02.json",
+          "sha256": "264ec3966fcaac1d4f6a4e917123f6d7535a31ac5bd03b0a4058b4c0ca3bd306"
+        },
+        "original_API_result": {
+          "bytes": 2922,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/lean-safe-replay-v01/failed-storage-recovery-result-v02.json",
+          "sha256": "c3fbe769d8cb19b03b06f867466fae0fc8e2cf3b4783f464792b52fc2c213b02"
+        },
+        "original_failed_outcome_unchanged": true,
+        "reservation_id": "baac0ad72ed9435ebdbb40a3630e82b5",
+        "status_observed": "released"
+      }
+    ],
+    "original_failed_outcomes_unchanged": true,
+    "partial_suite_credit": false
+  },
+  "schema": "legal-ir-lean-compatibility-safe-replay-qualification/v1",
+  "scientific_authority": {
+    "actual_Lake_build": false,
+    "graph_or_corpus_admission": false,
+    "model_or_checkpoint_execution": false,
+    "native_task_rearm": false,
+    "new_weights": false,
+    "statutory_meaning_review": false,
+    "training": false
+  },
+  "selected_source_pins": {
+    "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_index_v2.py": "1af258b4957c79bee02fade6024c7e4faf528121c11fcde14cefec43da23f201",
+    "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_packet_v2.py": "4c79f2aa5881c727c8d1eb053f8fdef171cc7828332cbb0192bfe943b9bdc821",
+    "tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_index_v2.py": "f7c3094936a3f3bb013152f5d5a62937647dd38f8f8814cd050b4466cedbab80",
+    "tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_packet_v2.py": "1a390f5957803db4778ade28acc3be358384d5c52a4a2fc4b160462fad27e8d0"
+  },
+  "source_commit": "eb1aeb9988e62b2bcd41c84f78dfc90704a8aa1b"
+}

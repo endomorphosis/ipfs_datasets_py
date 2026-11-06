@@ -1,0 +1,94 @@
+{
+  "authority": {
+    "complete_statutory_norm_qualified": false,
+    "evaluation_gold_mask": 0,
+    "graph_or_Lean_admitted": false,
+    "independent_legal_review_supplied": false,
+    "model_quality_or_convergence_established": false,
+    "permitted_inference_context_verified": false,
+    "source_edition_or_meaning_adopted": false,
+    "source_to_model_equivalence_verified": false,
+    "training_mask": 0,
+    "training_qualified": false
+  },
+  "case_groups": {
+    "counted_v2": 60,
+    "legacy": 98
+  },
+  "cases": {
+    "errors": 0,
+    "failed": 0,
+    "passed": 158,
+    "skipped": 0
+  },
+  "evidence_id": "counted-source-correspondence-qualified-20261021-01",
+  "frozen_counted_frame_owner_sha256": "72501580048e73be95638c4d2d291ceaa5e026516b2d09ba8d747d5d356ccc31",
+  "limits": [
+    "158 authored cases comprise98 preceding relational/source-only controls and60 additive counted correspondence controls. This was not an actual statutory-source proposal campaign.",
+    "The complete fixed counted request, scope report and original producer/input commitments were genuinely replayed. The result preserves49 typed nodes, six binders and55 ordered provenance rows; it is an unreviewed partial hypothesis.",
+    "The frozen counted owner72501580 generation is distinct from the later df91798d compact extension used by the249-case companion campaign. Its preserved prefix is source reuse evidence, not a fresh158-case rerun.",
+    "The prior109 counted migration cases and original Lean build were reused as historical evidence, not rerun or pooled.",
+    "Source/edition/meaning, complete modality and duties, counting scope and legal object identity, governing definition and genuinely distinct uses, physical span/entity binding, review, graph and Lean admission remain unresolved."
+  ],
+  "new_operations": {
+    "Lean_builds": 0,
+    "canonical_writes": 0,
+    "model_or_encoder_calls": 0,
+    "native_validation": 0,
+    "tests": 0,
+    "training_calls": 0
+  },
+  "original_execution": {
+    "closeout": {
+      "bytes": 1372,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-counted-source-correspondence-20261021-01/validation-01/closeout.json",
+      "root": "datasets_repository",
+      "sha256": "c7daa1585a2524264d3daf551da014cd976691f2d6b0daa538c32c25998213ef"
+    },
+    "junit": {
+      "bytes": 30889,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-counted-source-correspondence-20261021-01/validation-01/attempt/exports/tests.xml",
+      "root": "datasets_repository",
+      "sha256": "5b121591c7d6c722689b815b7d5467aa1cf85fbae563155c3a7f43b3aad77940"
+    },
+    "native_released": true,
+    "process_scope": "sampled_birth_bound_descendants",
+    "source_READ_closed": true,
+    "source_pins": 254,
+    "source_snapshot_files": 252,
+    "storage_released": true
+  },
+  "original_qualification": {
+    "bytes": 6434,
+    "path": "workspace/test-logs/federal-corpus-audits/legal-ir-counted-source-correspondence-20261021-01/qualification-summary.json",
+    "root": "datasets_repository",
+    "sha256": "c0adb2fe5da3c6029e636351acbe22b98d57b4e7efd4ce86a5cfc0899b58b00c"
+  },
+  "phase_count_claimed": false,
+  "phase_passes": null,
+  "profile": "whole-source-partial-counted-frame-correspondence/v1",
+  "provenance_inventory": {
+    "Member_occurrences": 4,
+    "binders": 6,
+    "equality_occurrences": 6,
+    "ledger_rows": 55,
+    "native_AST_paths_invented": false,
+    "nodes": 49,
+    "variable_occurrences": 24
+  },
+  "recorded_at_utc": "2026-10-24T19:29:49.787075+00:00",
+  "schema": "legal-ir-counted-source-correspondence-portable-qualification/v1",
+  "scope": "Portable metadata summary of the original independently reviewed158-case authored counted correspondence qualification; no new execution or whole-current-generation qualification.",
+  "selected_source_and_owning_test": [
+    {
+      "bytes": 45716,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_source_typed_norm_join_v1.py",
+      "sha256": "f51377e4c2446d464cd6cbbc97f6838f591e652e50c460e8084771944e937976"
+    },
+    {
+      "bytes": 65641,
+      "path": "tests/unit/logic/autoformal/test_legal_source_typed_norm_join_v1.py",
+      "sha256": "81a5614a3a1be569e346407fd9189e60cb47c87775ed80cdddbd2fff7c0d539e"
+    }
+  ]
+}

@@ -1006,3 +1006,68 @@ def load_paired_census_bundle(manifest_path: str | Path, *, max_bytes: int = MAX
     if coordinates is not None:
         loaded["source_coordinates"] = coordinates
     return loaded
+
+def project_constitution_inventory(shard: Mapping[str, Any]) -> dict[str, Any]:
+    """Project spans already taken from the constitution inventory. No admission and no roundtrip_ok."""
+
+    if not isinstance(shard, Mapping) or shard.get("source") != "constitution_inventory":
+        raise PairedCensusError("spans must come from the constitution inventory")
+    for name in ("roundtrip_ok", "admitted", "formalized", "enqueued"):
+        if shard.get(name) is True:
+            raise PairedCensusError("constitution inventory cannot grant authority")
+    spans_in = shard.get("spans")
+    if not isinstance(spans_in, list):
+        raise PairedCensusError("constitution inventory spans required")
+    rows: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for span in spans_in:
+        if not isinstance(span, Mapping):
+            raise PairedCensusError("constitution span must come from the inventory")
+        for name in ("roundtrip_ok", "admitted", "formalized", "enqueued"):
+            if span.get(name) is True:
+                raise PairedCensusError("constitution span cannot grant authority")
+        if str(span.get("status") or "") == "roundtrip_ok":
+            raise PairedCensusError("Constitution cannot be marked roundtrip_ok")
+        span_id = str(span.get("id") or "")
+        text = str(span.get("text") or "")
+        if not span_id or not text.strip() or span_id in seen:
+            raise PairedCensusError("constitution inventory span identity required")
+        seen.add(span_id)
+        rows.append({
+            "source": {
+                "span_id": span_id,
+                "text": text,
+                "text_sha256": _sha(text.encode()),
+                "legal_id": str(span.get("legal_id") or ""),
+                "revision": "us-constitution",
+                "constitution": True,
+            },
+            "unit_id": str(span.get("unit_id") or ""),
+            "compiler": {
+                "status": str(span.get("status") or ""),
+                "reason": str(span.get("reason") or ""),
+                "roundtrip_ok": False,
+            },
+            "roundtrip_ok": False,
+            "admitted": False,
+            "formalized": False,
+        })
+    return {
+        "schema_version": SCHEMA,
+        "source": "constitution_inventory",
+        "unit": str(shard.get("unit") or ""),
+        "spans": rows,
+        "span_count": len(rows),
+        "roundtrip_ok": False,
+        "admitted": False,
+        "formalized": False,
+        "enqueued": False,
+    }
+
+
+def article_1_span_inventory(source: str | Mapping[str, Any]) -> dict[str, Any]:
+    """Article 1 rows from inventory_constitution. roundtrip_ok, admitted, and formalized stay false."""
+
+    from .constitution_inventory import inventory_article_1
+
+    return project_constitution_inventory(inventory_article_1(source))

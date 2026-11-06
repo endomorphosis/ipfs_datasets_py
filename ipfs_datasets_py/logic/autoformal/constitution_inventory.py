@@ -1,6 +1,7 @@
 """Span inventory for the Constitution text. Does not compile and does not call a model."""
 from __future__ import annotations
 
+import copy
 import re
 from typing import Any
 
@@ -294,3 +295,94 @@ def _amendment_number(words: str) -> int | None:
         if left in _TENS and right in _ORDINAL:
             return _TENS[left] + _ORDINAL[right]
     return None
+
+
+_SHARD_PREFIXES = {"PREAMBLE": "preamble"}
+_SHARD_PREFIXES.update({f"A{number}": f"art-{number}" for number in range(1, 8)})
+_SHARD_PREFIXES.update({f"AM{number:02d}": f"amend-{number}" for number in range(1, 28)})
+_AUTHORITY_FLAGS = {"admitted", "enqueued", "formalized", "proof_authority", "qualified", "roundtrip", "roundtrip_ok"}
+
+
+def _shard_prefix(unit: str) -> str:
+    prefix = _SHARD_PREFIXES.get(str(unit or "").strip().upper())
+    if prefix is None:
+        raise ValueError("unknown constitution shard")
+    return prefix
+
+
+def _matches_shard(unit_id: str, prefix: str) -> bool:
+    if prefix == "preamble":
+        return unit_id == "preamble"
+    return unit_id == prefix or unit_id.startswith(prefix + ".")
+
+
+def constitution_shard_inventory(ledger: dict[str, Any], unit: str) -> dict[str, Any]:
+    """Copy one shard from an inventory_constitution ledger. Does not parse or admit."""
+
+    spans_in = ledger.get("spans") if isinstance(ledger, dict) else None
+    if not isinstance(spans_in, list):
+        raise ValueError("constitution shard requires an inventory ledger")
+    prefix = _shard_prefix(unit)
+    spans: list[dict[str, Any]] = []
+    selected: set[str] = set()
+    for span in spans_in:
+        if not isinstance(span, dict):
+            raise ValueError("constitution inventory span is missing")
+        unit_id = str(span.get("unit_id") or "")
+        if not _matches_shard(unit_id, prefix):
+            continue
+        span_id = str(span.get("id") or "")
+        text = str(span.get("text") or "")
+        if not span_id or not text.strip():
+            raise ValueError("constitution inventory span is missing id or text")
+        status = str(span.get("status") or "")
+        if status == "roundtrip_ok":
+            status = "compiled"
+        copied = copy.deepcopy({key: value for key, value in span.items() if key not in _AUTHORITY_FLAGS})
+        copied["id"] = span_id
+        copied["unit_id"] = unit_id
+        copied["text"] = text
+        copied["status"] = status
+        copied["reason"] = str(span.get("reason") or "")
+        copied["roundtrip_ok"] = False
+        copied["admitted"] = False
+        copied["formalized"] = False
+        spans.append(copied)
+        selected.add(span_id)
+    edges_in = ledger.get("edges") or []
+    if not isinstance(edges_in, list):
+        raise ValueError("constitution inventory edges must be a list")
+    edges: list[dict[str, str]] = []
+    for edge in edges_in:
+        if not isinstance(edge, dict):
+            continue
+        source = str(edge.get("source") or "")
+        if source not in selected:
+            continue
+        edges.append({
+            "kind": str(edge.get("kind") or ""),
+            "source": source,
+            "target": str(edge.get("target") or ""),
+        })
+    return {
+        "source": "constitution_inventory",
+        "unit": str(unit or "").strip().upper(),
+        "spans": spans,
+        "edges": edges,
+        "compiled": False,
+        "roundtrip_ok": False,
+        "admitted": False,
+        "formalized": False,
+    }
+
+
+def inventory_article_1(source: str | dict[str, Any]) -> dict[str, Any]:
+    """Article 1 spans from the existing inventory. roundtrip_ok, admitted, and formalized stay false."""
+
+    if isinstance(source, str):
+        ledger = inventory_constitution(source)
+    elif isinstance(source, dict):
+        ledger = source
+    else:
+        raise TypeError("Article 1 inventory requires constitution text or an inventory ledger")
+    return constitution_shard_inventory(ledger, "A1")

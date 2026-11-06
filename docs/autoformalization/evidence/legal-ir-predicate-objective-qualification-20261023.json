@@ -1,0 +1,74 @@
+{
+  "actual_compiled_product_source_count": 87,
+  "authority": {
+    "Lean": false,
+    "convergence": false,
+    "graph": false,
+    "source_semantics": false,
+    "training": false
+  },
+  "evaluation_gold_mask": 0,
+  "fixed_formula": "(67*legacy_loss+3*predicate_cross_entropy)/70",
+  "independently_checked_logit_gradient_coordinates": 49404,
+  "limitations": [
+    "Historical source-pinned qualification only; no new test collection, current public initializer/helper integration, numerical/model/native/test/SQL execution or publication performed by this candidate preparation.",
+    "Exposed fictional authored384 CP128 rows; source/context and retained reference labels remain declared. No native-GTE compatibility, independent inference permission, reviewed statutory targets, held-out accuracy, convergence, reconstruction gain, graph or Lean authority.",
+    "All old warm-start policy/trainer/runtime/checkpoint bytes are preserved. New predicate training checkpoints are a separate schema and are rejected by the old serving runtime.",
+    "Raw original requests, traces, source archives, tensors and checkpoint bodies remain in their original enclosing-workspace custody and are not bundled by this portable metadata summary."
+  ],
+  "new_public_collection_or_execution_performed": false,
+  "new_serving_profile_enrolled": false,
+  "original_counters": {
+    "allowed_rng_draws": 2,
+    "allowed_rng_restores": 2,
+    "backward_completed": 2,
+    "backward_entered": 2,
+    "database": 0,
+    "external_write": 0,
+    "forbidden_lifecycle": 0,
+    "network": 0,
+    "payload_read": 0,
+    "process": 0
+  },
+  "original_executed_source_archive": {
+    "bytes": 3410784,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-predicate-objective-20261023-03/exports/executed-source-archive.json",
+    "sha256": "7f5e61ea34d3ee88749edf03e4b3454f1ddb2a8760649d0a92041fdd9391edbf"
+  },
+  "original_failure_attempts_preserved_and_not_counted": true,
+  "original_model_or_optimizer_lifecycle_calls": 0,
+  "original_native_cleanup_proven": true,
+  "original_passed_cases": 75,
+  "original_passed_phases": 225,
+  "original_runtime_torch_version": "2.13.0+cu130",
+  "original_same_backward_calls": 2,
+  "original_source": {
+    "bytes": 23388,
+    "path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_predicate_objective_v1.py",
+    "sha256": "72ea1156b49f44bb7b5fb7fd0f3bf5bdb8bd9a8b607f8f971f2af4c9af9384a9"
+  },
+  "original_source_READ_closed": true,
+  "original_storage_terminal_status": "released",
+  "original_summary": {
+    "bytes": 6176,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/predicate-objective-01/qualification-summary-v01.json",
+    "sha256": "489b42dcfb43ae7c095716e6d79b92cc28033e02abc94660d3b478e5bada1120"
+  },
+  "original_test": {
+    "bytes": 22840,
+    "path": "tests/unit/logic/autoformal/test_legal_compact_content_predicate_objective_v1.py",
+    "sha256": "a30c32bbb2c3d8f5095efe6ea3ace36e679df20df45b64b24af43ba4cf648e05"
+  },
+  "public_comparison_base": "0c842013d3457b3bb131c0915852eb93a187e824",
+  "public_different_product_sources": {},
+  "public_exact_matching_product_source_count": 86,
+  "public_missing_product_sources": [
+    "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_predicate_objective_v1.py"
+  ],
+  "public_validation_pytest_preserved": true,
+  "recorded_at_utc": "2026-10-23T16:42:58.857855+00:00",
+  "schema": "legal-ir-predicate-objective-portable-qualification/v1",
+  "scope": "unchanged source publication reusing one original closed qualification; no current-public execution qualification",
+  "standalone_training_or_checkpoint_API": false,
+  "training_mask": 0
+}

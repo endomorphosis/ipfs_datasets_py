@@ -331,6 +331,28 @@ def _io(value):
         _require(type(value["optional"]) is bool, "IO optional must be boolean")
 
 
+def _decoder_identity_witness(binding, identity, value, maximum):
+    _require(type(binding) is dict and set(binding) == {"schema", "registry_pin", "record_id", "target_format_schema_version"}
+             and binding["schema"] == "ir-decoder-identity-witness/v1"
+             and type(binding["record_id"]) is str and binding["record_id"] == identity["record_id"]
+             and identity["record_id"].startswith("ir-decoder-checkpoint-record/v1:")
+             and identity.get("asset_binding_schema") is None,
+             "strict decoder witness requires the explicit original decoder record branch")
+    _text(binding["target_format_schema_version"], "target format schema version", 512)
+    registry_pin = _pin(binding["registry_pin"], min(maximum, MAX_MANIFEST_BYTES))
+    from .ir_decoder_profile_inventory import (DecoderProfileInventoryError,
+        select_ir_decoder_identity_witness_v1)
+    try:
+        select_ir_decoder_identity_witness_v1(_json(registry_pin), record_id=binding["record_id"], expected_identity={
+            **{key: identity[key] for key in ("ir_family_id", "dimension", "dimension_role", "task_id", "profile_id", "format_id")},
+            "checkpoint_schema": identity["schema_version"],
+            "target_format_schema_version": binding["target_format_schema_version"],
+            "original_checkpoint_pin": identity["original_checkpoint_pin"], "architecture": value["architecture"]})
+    except DecoderProfileInventoryError as error:
+        raise ModelManagerImportError("invalid strict decoder identity witness") from error
+    return registry_pin
+
+
 def _metadata(value, checkpoint, *, max_reference_bytes=MAX_REFERENCE_BYTES, source_v2=False):
     _require(type(value) is dict and _REQUIRED_MODEL_FIELDS <= set(value) and set(value) <= _MODEL_FIELDS,
              "closed genuine ModelMetadata fields required; serving_config is forbidden")
@@ -526,8 +548,9 @@ def _prepare(manifest_pin, release_receipts, maximum, *, schema=SCHEMA, metadata
         pins.extend(files)
     ids = set()
     for record in plan["models"]:
-        _require(type(record) is dict and set(record) == {"model_metadata", "checkpoint_pin", "release"},
-                 "closed model/checkpoint/release record required")
+        _require(type(record) is dict and {"model_metadata", "checkpoint_pin", "release"} <= set(record)
+                 <= {"model_metadata", "checkpoint_pin", "release", "decoder_identity_witness"},
+                 "closed model/checkpoint/release with optional decoder witness required")
         checkpoint = _pin(record["checkpoint_pin"], maximum)
         original = metadata_validator(record["model_metadata"], checkpoint, max_reference_bytes=maximum)
         identity = record["model_metadata"]["huggingface_config"]["ir_checkpoint"]
@@ -537,6 +560,9 @@ def _prepare(manifest_pin, release_receipts, maximum, *, schema=SCHEMA, metadata
         if identity.get("asset_binding_schema") == SOURCE_BINDING_SCHEMA:
             _, evidence = _source_representation(identity["source_representation"])
             pins.extend(_pin(pin, min(maximum, MAX_MANIFEST_BYTES)) for pin in evidence)
+        if "decoder_identity_witness" in record:
+            pins.append(_decoder_identity_witness(record["decoder_identity_witness"], identity,
+                                                 record["model_metadata"], maximum))
         model_id = record["model_metadata"]["model_id"]
         _require(model_id not in ids, "duplicate model_id forbidden")
         ids.add(model_id)
@@ -613,9 +639,11 @@ def _stable_metadata(value):
     return stable
 
 
-def _matches(actual, expected):
+def _matches(actual, expected, *, strict=False):
     actual = _stable_metadata(actual)
     expected = _stable_metadata(expected)
+    if strict:
+        return _raw(actual) == _raw(expected)
     return actual == expected
 
 
@@ -678,25 +706,28 @@ def _import_prepared(plan, pins, manifest, releases, manager, readback, metadata
         for record in plan["models"]:
             metadata = record["model_metadata"]
             existing = manager.get_model(metadata["model_id"])
-            _require(existing is None or _matches(existing, metadata), "existing model_id has conflicting metadata")
+            _require(existing is None or _matches(existing, metadata, strict="decoder_identity_witness" in record), "existing model_id has conflicting metadata")
         _fence(pins)
         for record in plan["models"]:
             metadata = record["model_metadata"]
             model_id = metadata["model_id"]
             existing = manager.get_model(model_id)
-            _require(existing is None or _matches(existing, metadata), "model_id changed to conflicting metadata")
+            _require(existing is None or _matches(existing, metadata, strict="decoder_identity_witness" in record), "model_id changed to conflicting metadata")
             outcome = {"model_id": model_id, "checkpoint_sha256": record["checkpoint_pin"]["sha256"],
                 "status": "pending", "already_present": existing is not None,
                 "add_model_started": False, "add_model_returned": False, "add_model_result": None,
                 "persisted_readback_started": False, "persisted_readback_returned": False,
                 "persisted_metadata_matched": False}
+            if "decoder_identity_witness" in record:
+                outcome["decoder_identity_witness"] = _detached(record["decoder_identity_witness"])
+                outcome["decoder_identity_witness_scope"] = "selected_registry_metadata_identity_consistency_only"
             outcomes.append(outcome)
             if existing is None:
                 materialized = factory(_detached(metadata))
-                _require(_matches(materialized, metadata), "metadata factory changed declared fields")
+                _require(_matches(materialized, metadata, strict="decoder_identity_witness" in record), "metadata factory changed declared fields")
                 _fence(pins)
                 current = manager.get_model(model_id)
-                _require(current is None or _matches(current, metadata),
+                _require(current is None or _matches(current, metadata, strict="decoder_identity_witness" in record),
                          "model_id changed to conflicting metadata during factory")
                 if current is None:
                     outcome["add_model_started"] = True
@@ -710,7 +741,7 @@ def _import_prepared(plan, pins, manifest, releases, manager, readback, metadata
             outcome["persisted_readback_started"] = True
             persisted = readback(model_id)
             outcome["persisted_readback_returned"] = True
-            _require(persisted is not None and _matches(persisted, metadata), "fresh persisted metadata differs or is missing")
+            _require(persisted is not None and _matches(persisted, metadata, strict="decoder_identity_witness" in record), "fresh persisted metadata differs or is missing")
             outcome["persisted_metadata_matched"] = True
             outcome["status"] = "already_present_verified" if existing is not None else "registered_verified"
             _fence(pins)

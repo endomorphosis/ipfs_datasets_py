@@ -1,0 +1,714 @@
+{
+  "actual_function_entries": 88,
+  "api": "prepare_handoff_execution_packet_v1",
+  "artifact_report": {
+    "bytes": 82700,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-handoff-v01/execution-packet-preflight-v01/native-handoff-followup-v01/validation-01/attempt/exports/unit-results.json",
+    "sha256": "918ae7d243aa588f25ff7f35d867b8551333572687842d5ec594dca443718c8d"
+  },
+  "audit": {
+    "denied": [],
+    "forbidden_imports": [],
+    "reads": 5,
+    "writes": 1
+  },
+  "cases": [
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_all_four_existing_handoff_aliases_and_widths_are_metadata_only",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_budgets_and_independent_acceptance_are_explicit",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_complete_metadata_is_detached_and_never_execution_authority",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_control_metadata_only_needs_no_decoder_profile_or_model_assets",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_control_metadata_only_rejects_profiles_model_assets_and_uses",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_cross_input_target_content_cannot_be_laundered_by_role_or_path",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_distinct_source_and_checkpoint_provenance_remain_preparable",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_exact_argv_preserves_repeated_arguments_and_malformed_roles_block",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_exact_identity_revision_and_dependency_bindings_are_required",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_execution_kind_defaults_to_model_and_invalid_kinds_block",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_exhausted_history_requires_original_owner_review_disposition_never_rearm",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_no_callable_or_nonfinite_metadata_is_invoked_or_accepted",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_profile_dimensions_schema_and_decoder_task_cannot_be_relabelled",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_target_or_target_derived_context_cannot_be_inference_input",
+      "status": "passed"
+    }
+  ],
+  "control_metadata_contract": {
+    "allowed_uses": [
+      "verification",
+      "provenance"
+    ],
+    "default_execution_kind": "model",
+    "execution_kind": "control_metadata_only",
+    "forbidden_per_input_fields": [
+      "profile"
+    ],
+    "forbidden_roles": [
+      "representation",
+      "checkpoint"
+    ],
+    "profile": "absent_or_null"
+  },
+  "entry_lines": [
+    44
+  ],
+  "function_source_sha256": "b1d9d5cd5aefc03a6720e94ab4d4a273cf857470db666bed2e08b738290d059d",
+  "id": "legal-ir-control-metadata-preflight-qualified-20261026-01",
+  "limitations": {
+    "actual_argv_effects_attested": false,
+    "current_native_status_authenticated": false,
+    "default_package_integration_qualified": false,
+    "descriptor_content_authenticated": false,
+    "graph_Lean_or_legal_meaning_admission": false,
+    "historical_task_rearmed_or_amended": false,
+    "model_or_reconstruction_quality_measured": false,
+    "new_task_population_created": false,
+    "provider_UNKNOWN_resolved": false,
+    "training_or_evaluation_gold": false
+  },
+  "methods_run": 14,
+  "native_closeout": {
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-handoff-v01/execution-packet-preflight-v01/native-handoff-followup-v01/validation-01/closeout.json",
+    "sha256": "d29f6ecb0cebb27d5b010cf2601c3ce0a14c968457fe092e7eef3ef8c5793200"
+  },
+  "native_provider_gap": "Retained LIR-9001 revision 13 is blocked after spent attempt 2 of 2 with UNKNOWN outcome. Local invocation/attempt IDs are not remote Grok job IDs. The retained factual analysis is not provider outcome evidence. Native mutation and exact amendment/rearm ordering remain with the original owner; no old command is selected here.",
+  "owner": "ipfs_datasets_py/logic/autoformal/supervisor_loop.py",
+  "owner_source_sha256": "e16237562c8e854c3eb4ab7cfdf33e46999bfe4aaaf4309257346ef883fb15db",
+  "prior_11_method_44_subcase_qualification": "legal-ir-handoff-execution-preflight-qualified-20261026-01",
+  "prior_qualification_preserved_separately": true,
+  "profile": "canonical-supervisor-handoff-pure-function-ast/v1",
+  "qualification_errors": [],
+  "request_sha256": "2ac6ad1421c746d6601143b6185138598eb5ed3d647c3840e838414efa4046fb",
+  "retained_metadata_previews": [
+    {
+      "completion_authority": false,
+      "dispatch_authorized": false,
+      "execution_kind": "control_metadata_only",
+      "independent_verification_gates": [
+        "original_owner_current_revision_dependencies_and_scope_verification_required",
+        "independent_input_bytes_profile_permissions_and_acceptance_verification_required"
+      ],
+      "metadata_blockers": [
+        "directive_ids_required",
+        "attempt_history_required",
+        "exact_argv_required",
+        "absolute_cwd_required",
+        "explicit_paths_required:test_allowlist",
+        "finite_positive_budgets_required",
+        "worker_role_required",
+        "independent_verifier_required"
+      ],
+      "metadata_complete": false,
+      "native_status_verified": false,
+      "rearm_authorized": false,
+      "snapshot_revision": 13,
+      "supervision_masks": {
+        "evaluation_gold": 0,
+        "training": 0
+      },
+      "task_alias": "LIR-9001",
+      "unbound_fields": [
+        {
+          "field": "current_directives",
+          "reason": "No reviewed directive-ID mapping matching legal-ir-existing-task-directive/v1 is selected."
+        },
+        {
+          "field": "execution_envelope.directive_ids",
+          "reason": "No current reviewed directive IDs selected; preserve empty list."
+        },
+        {
+          "field": "current_task_metadata.attempt_history",
+          "reason": "No complete attempt-history structure is reconstructed from these projection rows."
+        },
+        {
+          "field": "current_task_metadata.original_owner_disposition",
+          "reason": "No original-owner review_preview_only disposition receipt is supplied; never manufacture one."
+        },
+        {
+          "field": "execution_envelope.argv",
+          "reason": "No new operation or command is selected. Historical commands remain evidence rather than launch defaults."
+        },
+        {
+          "field": "execution_envelope.cwd",
+          "reason": "No selected operation cwd is bound."
+        },
+        {
+          "field": "execution_envelope.code_allowlist",
+          "reason": "Empty no-edit planning declaration only; no actual worker operation is admitted."
+        },
+        {
+          "field": "execution_envelope.test_allowlist",
+          "reason": "No exact selected independent verifier test path set is bound."
+        },
+        {
+          "field": "execution_envelope.budgets",
+          "reason": "No new finite CPU/memory/storage/child/token/deadline/attempt envelope is selected."
+        },
+        {
+          "field": "execution_envelope.worker",
+          "reason": "No operation-specific worker role/principal is selected."
+        },
+        {
+          "field": "execution_envelope.verifier",
+          "reason": "No distinct independent_acceptance principal or exact verifier argv is selected."
+        },
+        {
+          "field": "native_admission",
+          "reason": "Frozen revision/dependency metadata requires current original-owner verification, capability/purpose and complete packet admission; not a field provided by this preview."
+        },
+        {
+          "field": "original_owner_unknown_outcome_and_spent_budget_disposition",
+          "reason": "Provider outcome remains UNKNOWN after spent ordinal2/max2; preserve terminal and exact revision13/rearm14 ordering. No retry, successor, remote cancellation or success is inferred."
+        }
+      ]
+    },
+    {
+      "completion_authority": false,
+      "dispatch_authorized": false,
+      "execution_kind": "control_metadata_only",
+      "independent_verification_gates": [
+        "original_owner_current_revision_dependencies_and_scope_verification_required",
+        "independent_input_bytes_profile_permissions_and_acceptance_verification_required"
+      ],
+      "metadata_blockers": [
+        "directive_ids_required",
+        "attempt_history_required",
+        "exact_argv_required",
+        "absolute_cwd_required",
+        "explicit_paths_required:test_allowlist",
+        "finite_positive_budgets_required",
+        "worker_role_required",
+        "independent_verifier_required"
+      ],
+      "metadata_complete": false,
+      "native_status_verified": false,
+      "rearm_authorized": false,
+      "snapshot_revision": 2,
+      "supervision_masks": {
+        "evaluation_gold": 0,
+        "training": 0
+      },
+      "task_alias": "LIR-9002",
+      "unbound_fields": [
+        {
+          "field": "current_directives",
+          "reason": "No reviewed directive-ID mapping matching legal-ir-existing-task-directive/v1 is selected."
+        },
+        {
+          "field": "execution_envelope.directive_ids",
+          "reason": "No current reviewed directive IDs selected; preserve empty list."
+        },
+        {
+          "field": "current_task_metadata.attempt_history",
+          "reason": "No complete attempt-history structure is reconstructed from these projection rows."
+        },
+        {
+          "field": "current_task_metadata.original_owner_disposition",
+          "reason": "No original-owner review_preview_only disposition receipt is supplied; never manufacture one."
+        },
+        {
+          "field": "execution_envelope.argv",
+          "reason": "No new operation or command is selected. Historical commands remain evidence rather than launch defaults."
+        },
+        {
+          "field": "execution_envelope.cwd",
+          "reason": "No selected operation cwd is bound."
+        },
+        {
+          "field": "execution_envelope.code_allowlist",
+          "reason": "Empty no-edit planning declaration only; no actual worker operation is admitted."
+        },
+        {
+          "field": "execution_envelope.test_allowlist",
+          "reason": "No exact selected independent verifier test path set is bound."
+        },
+        {
+          "field": "execution_envelope.budgets",
+          "reason": "No new finite CPU/memory/storage/child/token/deadline/attempt envelope is selected."
+        },
+        {
+          "field": "execution_envelope.worker",
+          "reason": "No operation-specific worker role/principal is selected."
+        },
+        {
+          "field": "execution_envelope.verifier",
+          "reason": "No distinct independent_acceptance principal or exact verifier argv is selected."
+        },
+        {
+          "field": "native_admission",
+          "reason": "Frozen revision/dependency metadata requires current original-owner verification, capability/purpose and complete packet admission; not a field provided by this preview."
+        }
+      ]
+    },
+    {
+      "completion_authority": false,
+      "dispatch_authorized": false,
+      "execution_kind": "control_metadata_only",
+      "independent_verification_gates": [
+        "original_owner_current_revision_dependencies_and_scope_verification_required",
+        "independent_input_bytes_profile_permissions_and_acceptance_verification_required"
+      ],
+      "metadata_blockers": [
+        "directive_ids_required",
+        "attempt_history_required",
+        "exact_argv_required",
+        "absolute_cwd_required",
+        "explicit_paths_required:test_allowlist",
+        "finite_positive_budgets_required",
+        "worker_role_required",
+        "independent_verifier_required"
+      ],
+      "metadata_complete": false,
+      "native_status_verified": false,
+      "rearm_authorized": false,
+      "snapshot_revision": 2,
+      "supervision_masks": {
+        "evaluation_gold": 0,
+        "training": 0
+      },
+      "task_alias": "LIR-9003",
+      "unbound_fields": [
+        {
+          "field": "current_directives",
+          "reason": "No reviewed directive-ID mapping matching legal-ir-existing-task-directive/v1 is selected."
+        },
+        {
+          "field": "execution_envelope.directive_ids",
+          "reason": "No current reviewed directive IDs selected; preserve empty list."
+        },
+        {
+          "field": "current_task_metadata.attempt_history",
+          "reason": "No complete attempt-history structure is reconstructed from these projection rows."
+        },
+        {
+          "field": "current_task_metadata.original_owner_disposition",
+          "reason": "No original-owner review_preview_only disposition receipt is supplied; never manufacture one."
+        },
+        {
+          "field": "execution_envelope.argv",
+          "reason": "No new operation or command is selected. Historical commands remain evidence rather than launch defaults."
+        },
+        {
+          "field": "execution_envelope.cwd",
+          "reason": "No selected operation cwd is bound."
+        },
+        {
+          "field": "execution_envelope.code_allowlist",
+          "reason": "Empty no-edit planning declaration only; no actual worker operation is admitted."
+        },
+        {
+          "field": "execution_envelope.test_allowlist",
+          "reason": "No exact selected independent verifier test path set is bound."
+        },
+        {
+          "field": "execution_envelope.budgets",
+          "reason": "No new finite CPU/memory/storage/child/token/deadline/attempt envelope is selected."
+        },
+        {
+          "field": "execution_envelope.worker",
+          "reason": "No operation-specific worker role/principal is selected."
+        },
+        {
+          "field": "execution_envelope.verifier",
+          "reason": "No distinct independent_acceptance principal or exact verifier argv is selected."
+        },
+        {
+          "field": "native_admission",
+          "reason": "Frozen revision/dependency metadata requires current original-owner verification, capability/purpose and complete packet admission; not a field provided by this preview."
+        }
+      ]
+    },
+    {
+      "completion_authority": false,
+      "dispatch_authorized": false,
+      "execution_kind": "control_metadata_only",
+      "independent_verification_gates": [
+        "original_owner_current_revision_dependencies_and_scope_verification_required",
+        "independent_input_bytes_profile_permissions_and_acceptance_verification_required"
+      ],
+      "metadata_blockers": [
+        "directive_ids_required",
+        "attempt_history_required",
+        "exact_argv_required",
+        "absolute_cwd_required",
+        "explicit_paths_required:test_allowlist",
+        "finite_positive_budgets_required",
+        "worker_role_required",
+        "independent_verifier_required"
+      ],
+      "metadata_complete": false,
+      "native_status_verified": false,
+      "rearm_authorized": false,
+      "snapshot_revision": 2,
+      "supervision_masks": {
+        "evaluation_gold": 0,
+        "training": 0
+      },
+      "task_alias": "LIR-9004",
+      "unbound_fields": [
+        {
+          "field": "current_directives",
+          "reason": "No reviewed directive-ID mapping matching legal-ir-existing-task-directive/v1 is selected."
+        },
+        {
+          "field": "execution_envelope.directive_ids",
+          "reason": "No current reviewed directive IDs selected; preserve empty list."
+        },
+        {
+          "field": "current_task_metadata.attempt_history",
+          "reason": "No complete attempt-history structure is reconstructed from these projection rows."
+        },
+        {
+          "field": "current_task_metadata.original_owner_disposition",
+          "reason": "No original-owner review_preview_only disposition receipt is supplied; never manufacture one."
+        },
+        {
+          "field": "execution_envelope.argv",
+          "reason": "No new operation or command is selected. Historical commands remain evidence rather than launch defaults."
+        },
+        {
+          "field": "execution_envelope.cwd",
+          "reason": "No selected operation cwd is bound."
+        },
+        {
+          "field": "execution_envelope.code_allowlist",
+          "reason": "Empty no-edit planning declaration only; no actual worker operation is admitted."
+        },
+        {
+          "field": "execution_envelope.test_allowlist",
+          "reason": "No exact selected independent verifier test path set is bound."
+        },
+        {
+          "field": "execution_envelope.budgets",
+          "reason": "No new finite CPU/memory/storage/child/token/deadline/attempt envelope is selected."
+        },
+        {
+          "field": "execution_envelope.worker",
+          "reason": "No operation-specific worker role/principal is selected."
+        },
+        {
+          "field": "execution_envelope.verifier",
+          "reason": "No distinct independent_acceptance principal or exact verifier argv is selected."
+        },
+        {
+          "field": "native_admission",
+          "reason": "Frozen revision/dependency metadata requires current original-owner verification, capability/purpose and complete packet admission; not a field provided by this preview."
+        }
+      ]
+    }
+  ],
+  "schema": "legal-ir-control-metadata-preflight-evidence/v1",
+  "scope": "Opt-in control_metadata_only preparation in the existing handoff owner; default model profile checks preserved. Selected-function AST only: 14 methods / 67 subcases and four retained incomplete metadata previews. Snapshot joins are not fresh authenticated status or provider outcome proof. No native admission, rearm, task settlement, model/DB/provider/Lean execution or semantic/training/gold authority.",
+  "source_and_resource_custody_closed": true,
+  "source_pin_count": 21,
+  "subcases": [
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_all_four_existing_handoff_aliases_and_widths_are_metadata_only (alias='LIR-9001', width=8)",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_all_four_existing_handoff_aliases_and_widths_are_metadata_only (alias='LIR-9002', width=384)",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_all_four_existing_handoff_aliases_and_widths_are_metadata_only (alias='LIR-9003', width=768)",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_all_four_existing_handoff_aliases_and_widths_are_metadata_only (alias='LIR-9004', width=4096)",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_budgets_and_independent_acceptance_are_explicit (value=0)",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_budgets_and_independent_acceptance_are_explicit (value=-1)",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_budgets_and_independent_acceptance_are_explicit (value=True)",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_budgets_and_independent_acceptance_are_explicit (value='unbounded')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_budgets_and_independent_acceptance_are_explicit (value=None)",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_budgets_and_independent_acceptance_are_explicit (missing='inputs')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_budgets_and_independent_acceptance_are_explicit (missing='argv')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_budgets_and_independent_acceptance_are_explicit (missing='cwd')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_budgets_and_independent_acceptance_are_explicit (missing='outputs')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_budgets_and_independent_acceptance_are_explicit (missing='code_allowlist')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_budgets_and_independent_acceptance_are_explicit (missing='test_allowlist')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_budgets_and_independent_acceptance_are_explicit (missing='exclusive_keys')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_budgets_and_independent_acceptance_are_explicit (missing='verifier')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_budgets_and_independent_acceptance_are_explicit (missing='directive_ids')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_control_metadata_only_needs_no_decoder_profile_or_model_assets (null_profile=False)",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_control_metadata_only_needs_no_decoder_profile_or_model_assets (null_profile=True)",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_control_metadata_only_rejects_profiles_model_assets_and_uses (case='nonnull_profile')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_control_metadata_only_rejects_profiles_model_assets_and_uses (case='empty_profile')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_control_metadata_only_rejects_profiles_model_assets_and_uses (case='input_null_profile')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_control_metadata_only_rejects_profiles_model_assets_and_uses (case='input_model_profile')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_control_metadata_only_rejects_profiles_model_assets_and_uses (case='representation')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_control_metadata_only_rejects_profiles_model_assets_and_uses (case='checkpoint')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_control_metadata_only_rejects_profiles_model_assets_and_uses (case='inference')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_control_metadata_only_rejects_profiles_model_assets_and_uses (case='supervision')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_control_metadata_only_rejects_profiles_model_assets_and_uses (case='model_role_alias')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_control_metadata_only_rejects_profiles_model_assets_and_uses (case='training_use_alias')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_control_metadata_only_rejects_profiles_model_assets_and_uses (case='mixedcase_use_alias')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_control_metadata_only_rejects_profiles_model_assets_and_uses (case='malformed_role')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_cross_input_target_content_cannot_be_laundered_by_role_or_path (role='target', alias=False, reversed=False)",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_cross_input_target_content_cannot_be_laundered_by_role_or_path (role='target', alias=False, reversed=True)",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_cross_input_target_content_cannot_be_laundered_by_role_or_path (role='target', alias=True, reversed=False)",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_cross_input_target_content_cannot_be_laundered_by_role_or_path (role='target', alias=True, reversed=True)",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_cross_input_target_content_cannot_be_laundered_by_role_or_path (role='review', alias=False, reversed=False)",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_cross_input_target_content_cannot_be_laundered_by_role_or_path (role='review', alias=False, reversed=True)",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_cross_input_target_content_cannot_be_laundered_by_role_or_path (role='review', alias=True, reversed=False)",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_cross_input_target_content_cannot_be_laundered_by_role_or_path (role='review', alias=True, reversed=True)",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_cross_input_target_content_cannot_be_laundered_by_role_or_path (role='target_derived_source', alias=False, reversed=False)",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_cross_input_target_content_cannot_be_laundered_by_role_or_path (role='target_derived_source', alias=False, reversed=True)",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_cross_input_target_content_cannot_be_laundered_by_role_or_path (role='target_derived_source', alias=True, reversed=False)",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_cross_input_target_content_cannot_be_laundered_by_role_or_path (role='target_derived_source', alias=True, reversed=True)",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_exact_identity_revision_and_dependency_bindings_are_required (key='task_alias')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_exact_identity_revision_and_dependency_bindings_are_required (key='task_cid')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_exact_identity_revision_and_dependency_bindings_are_required (key='goal_cid')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_exact_identity_revision_and_dependency_bindings_are_required (key='plan_cid')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_exact_identity_revision_and_dependency_bindings_are_required (key='repository_tree_id')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_exact_identity_revision_and_dependency_bindings_are_required (key='revision')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_execution_kind_defaults_to_model_and_invalid_kinds_block (kind='metadata_only')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_execution_kind_defaults_to_model_and_invalid_kinds_block (kind='control')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_execution_kind_defaults_to_model_and_invalid_kinds_block (kind='')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_execution_kind_defaults_to_model_and_invalid_kinds_block (kind=None)",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_execution_kind_defaults_to_model_and_invalid_kinds_block (kind=True)",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_execution_kind_defaults_to_model_and_invalid_kinds_block (kind=7)",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_execution_kind_defaults_to_model_and_invalid_kinds_block (kind=[])",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_execution_kind_defaults_to_model_and_invalid_kinds_block (kind={})",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_execution_kind_defaults_to_model_and_invalid_kinds_block (kind=['model'])",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_profile_dimensions_schema_and_decoder_task_cannot_be_relabelled (key='source_dimension')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_profile_dimensions_schema_and_decoder_task_cannot_be_relabelled (key='schema_version')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_profile_dimensions_schema_and_decoder_task_cannot_be_relabelled (key='decoder_task')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_profile_dimensions_schema_and_decoder_task_cannot_be_relabelled (key='actual_bottleneck_dimension')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_profile_dimensions_schema_and_decoder_task_cannot_be_relabelled (key='sidecars')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_target_or_target_derived_context_cannot_be_inference_input (role='target')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_target_or_target_derived_context_cannot_be_inference_input (role='context')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_target_or_target_derived_context_cannot_be_inference_input (role='representation')",
+      "status": "passed"
+    }
+  ],
+  "subcases_run": 67,
+  "test": "tests/unit/logic/test_supervisor_handoff_execution_packet.py",
+  "test_source_sha256": "2925e7e7cbd448ff26e0a028e258cf5a5bcfaac06129e52c5d394358d330828b"
+}

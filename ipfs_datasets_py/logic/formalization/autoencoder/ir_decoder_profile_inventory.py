@@ -435,9 +435,162 @@ def resolve_ir_decoder_profile_route(registry_pin, request, *, format_request,
         raise DecoderProfileInventoryError("invalid decoder profile route binding") from error
 
 
+def select_ir_decoder_identity_witness_v1(registry, *, record_id, expected_identity):
+    """Check selected original registry metadata without rebuilding any runtime.
+
+    ``checkpoint_schema`` names the serialized checkpoint payload declaration;
+    ``target_format_schema_version`` names the output IR format. The pinned
+    registry's declarations are not native execution or checkpoint-schema proof.
+    """
+    try:
+        nodes, text_bytes = [0], [0]
+        def plain(value, depth=0):
+            nodes[0] += 1
+            _require(nodes[0] <= 150000 and depth <= 32, "witness metadata nesting/population bound")
+            kind = type(value)
+            if kind is dict:
+                _require(all(type(key) is str for key in value), "plain witness JSON keys required")
+                return {plain(key, depth + 1): plain(item, depth + 1) for key, item in value.items()}
+            if kind is list:
+                return [plain(item, depth + 1) for item in value]
+            if kind is str:
+                size = len(value.encode("utf-8"))
+                text_bytes[0] += size
+                _require(size <= 1024 * 1024 and text_bytes[0] <= 8 * 1024 * 1024, "witness text bound")
+                return value
+            if value is None or kind is bool or kind is int and -(2**63) <= value < 2**63:
+                return value
+            _require(kind is float and math.isfinite(value), "finite plain witness JSON required")
+            return value
+        def same(left, right):
+            return cached._raw(left) == cached._raw(right)
+        def pin(value):
+            return routing._pin(value, MAX_REFERENCE_BYTES)
+        def index(rows, key, prefix):
+            _require(type(rows) is list and 1 <= len(rows) <= MAX_BINDINGS, "bounded witness records required")
+            found = {}
+            for row in rows:
+                _require(type(row) is dict and type(row.get(key)) is str
+                         and re.fullmatch(re.escape(prefix) + r"[0-9a-f]{64}", row[key])
+                         and row[key] not in found, "unique canonical witness record IDs required")
+                found[row[key]] = row
+            return found
+        supplied = plain({"registry": registry, "expected": expected_identity, "record_id": record_id})
+        _require(len(cached._raw(supplied)) <= 8 * 1024 * 1024, "witness metadata byte bound")
+        registry, expected, record_id = (supplied[key] for key in ("registry", "expected", "record_id"))
+        _require(type(registry) is dict and set(registry) == _REGISTRY_FIELDS and registry["schema"] == SCHEMA,
+                 "original closed decoder profile inventory required")
+        _require(type(expected) is dict and set(expected) == {"ir_family_id", "dimension", "dimension_role",
+                 "task_id", "checkpoint_schema", "target_format_schema_version", "profile_id", "format_id",
+                 "original_checkpoint_pin", "architecture"}, "closed expected decoder identity required")
+        _require(same(registry["authority"], _AUTHORITY) and same(registry["consistency_scope"], cached._SCOPE),
+                 "original witness authority and consistency scope required")
+        formats_by_id = index(registry["formats"], "format_id", "ir-decoder-format/v1:")
+        profiles = index(registry["profiles"], "profile_id", "ir-decoder-profile/v1:")
+        records = index(registry["checkpoints"], "record_id", "ir-decoder-checkpoint-record/v1:")
+        _require(type(record_id) is str and record_id in records, "selected decoder record is unavailable")
+        record = records[record_id]
+        record_fields = {"record_id", "profile_id", "format_id", "run_id", "checkpoint_receipt",
+            "package_manifest_receipt", "corpus_receipt", "run_id_provenance", "request", "format_request",
+            "format_contract", "full_checkpoint_configuration", "package_file_receipts", "codec_source_receipts",
+            "training_manifest_sha256", "validation_manifest_sha256", "declared_weights_sha256",
+            "replay_binding_options", "authority"}
+        _require(set(record) == record_fields, "closed original checkpoint record required")
+        identity_keys = ("profile_id", "format_id", "run_id", "checkpoint_receipt", "package_manifest_receipt", "corpus_receipt")
+        material = {key: record[key] for key in identity_keys}
+        _require(record_id == _id("ir-decoder-checkpoint-record/v1:", material), "checkpoint record ID differs")
+        for key in ("checkpoint_receipt", "package_manifest_receipt", "corpus_receipt"):
+            pin(record[key])
+        _run(record["run_id"])
+        _require(record["run_id_provenance"] == "operator_assigned_inventory_alias"
+                 and same(record["authority"], _AUTHORITY), "original checkpoint metadata scope required")
+        request = _request(record["request"])
+        format_request = formats._format_request(record["format_request"], request)
+        _require(request["checkpoint_sha256"] == record["checkpoint_receipt"]["sha256"], "checkpoint/request digest differs")
+        _require(record["format_id"] in formats_by_id and record["profile_id"] in profiles,
+                 "selected profile/format links unavailable")
+        selected_format, profile = formats_by_id[record["format_id"]], profiles[record["profile_id"]]
+        _require(set(selected_format) == {"format_id", "identity"} and type(selected_format["identity"]) is dict
+                 and selected_format["format_id"] == _id("ir-decoder-format/v1:", selected_format["identity"]),
+                 "format identity differs")
+        _require(set(profile) == {"profile_id", "format_id", "identity"} and type(profile["identity"]) is dict
+                 and profile["profile_id"] == _id("ir-decoder-profile/v1:", profile["identity"])
+                 and profile["format_id"] == record["format_id"], "profile identity/link differs")
+        contract = record["format_contract"]
+        contract_fields = {"schema", "format_request", "ir_family_id", "dimension", "dimension_role",
+            "target_kind", "output_scope", "schema_version_binding", "checkpoint_receipt", "checkpoint_schema",
+            "architecture", "codec_schema", "canonical_codec_sha256", "decoder_configuration_sha256",
+            "implementation_declaration_sha256", "format_implementation_module", "format_implementation_receipt",
+            "corpus_receipt", "training_manifest_sha256", "validation_manifest_sha256",
+            "all_original_targets_structurally_match", "all_original_targets_checked", "fitted_constructor_coverage",
+            "original_constructor_coverage_by_split", "selected_output_contract_only", "candidate_output_check",
+            "native_grammar_verified", "contract_sha256", "contract_id"}
+        _require(type(contract) is dict and set(contract) == contract_fields
+                 and contract["schema"] == formats.CONTRACT_SCHEMA, "original closed format contract required")
+        _require(contract["native_grammar_verified"] is False and contract["selected_output_contract_only"] is False
+                 and contract["all_original_targets_structurally_match"] is True,
+                 "retained structural declarations grant no native grammar authority")
+        _require(all(cached._hash(contract[key]) for key in ("canonical_codec_sha256", "decoder_configuration_sha256",
+                 "implementation_declaration_sha256", "training_manifest_sha256", "validation_manifest_sha256")),
+                 "original format digest declarations required")
+        pin(contract["format_implementation_receipt"])
+        contract_body = {key: value for key, value in contract.items() if key not in {"contract_sha256", "contract_id"}}
+        contract_sha = hashlib.sha256(cached._raw(contract_body)).hexdigest()
+        _require(contract.get("contract_sha256") == contract_sha
+                 and contract.get("contract_id") == formats.CONTRACT_SCHEMA + ":" + contract_sha,
+                 "format contract identity differs")
+        _require(same(contract.get("format_request"), format_request)
+                 and same({key: contract.get(key) for key in ("ir_family_id", "dimension", "dimension_role")},
+                          {key: request[key] for key in ("ir_family_id", "dimension", "dimension_role")})
+                 and contract.get("target_kind") == formats._FORMATS[request["ir_family_id"]]["target_kind"]
+                 and contract.get("output_scope") == "serialized_native_fragment"
+                 and same(contract.get("checkpoint_receipt"), record["checkpoint_receipt"])
+                 and same(contract.get("corpus_receipt"), record["corpus_receipt"]), "format contract cross-links differ")
+        _require(same(selected_format["identity"], _format_identity({"format_contract": contract,
+                     "format_request": format_request})), "format labels differ from selected request")
+        config = record["full_checkpoint_configuration"]
+        _require(type(config) is dict and contract.get("decoder_configuration_sha256") == hashlib.sha256(cached._raw(config)).hexdigest(),
+                 "checkpoint configuration commitment differs")
+        profile_identity = profile["identity"]
+        producer = profile_identity.get("source_producer")
+        _require(type(producer) is dict and type(profile_identity.get("source_budget_policy")) is dict,
+                 "complete original profile declarations required")
+        rebuilt_profile = _profile_identity({"format_contract": contract, "route": {"cell_declaration": {
+            "dimension_profile": profile_identity["source_budget_policy"]}}},
+            {"config": config, "architecture": contract["architecture"]},
+            {"embedding_model": producer["corpus_embedding_model"], "embedding_revision": producer["corpus_embedding_revision"]},
+            record["format_id"])
+        _require(same(profile_identity, rebuilt_profile), "profile declarations differ from checkpoint contract")
+        _require(all(record[key] == contract.get(key) for key in ("training_manifest_sha256", "validation_manifest_sha256")),
+                 "checkpoint manifest links differ")
+        binding = {"request": request, "format_request": format_request, "run_id": record["run_id"],
+            "package_manifest_pin": record["package_manifest_receipt"], "corpus_pin": record["corpus_receipt"]}
+        _require(type(registry["bindings"]) is list and 1 <= len(registry["bindings"]) <= MAX_BINDINGS
+                 and sum(same(row, binding) for row in registry["bindings"]) == 1, "unique original registry binding required")
+        replay = {"directory_plan_pin": registry["directory_plan_receipt"], "inventory_pins": registry["inventory_receipts"],
+            **{key: binding[key] for key in ("request", "format_request", "package_manifest_pin", "corpus_pin")}}
+        _require(same(record["replay_binding_options"], replay), "original registry replay links differ")
+        labels = {**{key: request[key] for key in ("ir_family_id", "dimension", "dimension_role", "task_id")},
+            "checkpoint_schema": contract["checkpoint_schema"], "target_format_schema_version": format_request["schema_version"],
+            "profile_id": record["profile_id"], "format_id": record["format_id"],
+            "original_checkpoint_pin": record["checkpoint_receipt"], "architecture": contract["architecture"]}
+        _require(type(labels["checkpoint_schema"]) is str and bool(labels["checkpoint_schema"])
+                 and same(expected, labels), "expected family/schema/task/checkpoint identity differs")
+        return {"schema": "ir-decoder-identity-witness-selection/v1", "record_id": record_id,
+            "selected_format": selected_format, "selected_profile": profile, "selected_checkpoint": record,
+            "checkpoint_schema": labels["checkpoint_schema"], "target_format_schema_version": labels["target_format_schema_version"],
+            "authority": dict(_AUTHORITY), "scope": "selected_registry_metadata_identity_consistency_only",
+            "registry_rebuilt": False, "descriptor_files_authenticated": False, "checkpoint_payload_schema_verified": False}
+    except DecoderProfileInventoryError:
+        raise
+    except (routing.RoutingError, cached.IRCellRuntimeError, TypeError, ValueError, KeyError, OverflowError, RecursionError) as error:
+        raise DecoderProfileInventoryError("invalid decoder identity witness") from error
+
+
 __all__ = ["SCHEMA", "SOURCE_REPRESENTATION_SCHEMA", "DecoderProfileInventoryError",
            "build_ir_source_representation_profile", "validate_ir_source_representation_profile",
-           "build_ir_decoder_profile_inventory", "resolve_ir_decoder_profile_route"]
+           "build_ir_decoder_profile_inventory", "resolve_ir_decoder_profile_route",
+           "select_ir_decoder_identity_witness_v1"]
 
 
 # An independent declared shape contract. It does not enter the twelve-cell

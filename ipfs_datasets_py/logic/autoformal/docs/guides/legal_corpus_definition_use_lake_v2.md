@@ -341,3 +341,298 @@ genuine rendering boundaries; exact closed no-overwrite transport; and refusal
 through official/native entry points. Signed fixtures remain authored test
 credentials and confer no real statutory or Lean authority. This addition
 reports no new model, test or native execution result by itself.
+
+
+## Complete relational norm with a conditional bound definition, version 1
+
+The same owner now implements a distinct authored engineering profile:
+`legal-corpus-bound-norm-definition-lake-preparation/v1`, with profile
+`replayed-bound-norm-definition-conditional-project/v1`. It replays the existing
+[bound-variable definition report](legal_bound_variable_definition_v1.md) and
+its complete original inputs. Official V2 and literal-parent entry points keep
+their existing contracts; changing a schema label does not cross profiles.
+
+```python
+prepare_bound_norm_definition_corpus_v1(
+    bound_report, *, expected_bound_report_sha256,
+    bound_definition_inputs, toolchain)
+validate_bound_norm_definition_corpus_v1(
+    preparation, bound_report, *, expected_preparation_sha256,
+    expected_bound_report_sha256, bound_definition_inputs, toolchain)
+write_bound_norm_definition_corpus_v1(
+    preparation, directory, bound_report, *, expected_preparation_sha256,
+    expected_bound_report_sha256, bound_definition_inputs, toolchain)
+load_bound_norm_definition_corpus_v1(
+    directory, bound_report, *, expected_manifest_sha256,
+    expected_preparation_sha256, expected_bound_report_sha256,
+    bound_definition_inputs, toolchain)
+bound_norm_definition_preparation_sha256(preparation)
+```
+
+`bound_definition_inputs` has exactly `companion`, `request_raw`,
+`expected_companion_sha256`, `expected_request_sha256`, and `companion_inputs`.
+The last field retains the bound owner's complete six-field evidence replay.
+The report pin commits the complete original bound report; the preparation pin
+commits compact sorted UTF8 JSON of the parsed full manifest and every file
+pair. It is distinct from the exact manifest-file SHA required by loading.
+Validation and writing reject a wrong preparation pin before operation-owner
+lookup, then regenerate every output through the original public validators.
+
+The return type remains `DefinitionUseCorpusPreparation`: exactly nine files
+and six modules under `LegalCorpusBoundNormDefinition`. They contain one shared
+`Prelude`, the byte-exact complete original `Norm`, the unchanged definition
+and `headAt`/`bodyAt` prefix, its original conditional theorem suffix in an
+`Occurrence` module, a `Preservation` module, and the root. The other files are
+`lakefile.toml`, `lean-toolchain`, and `bound-norm-input-bindings.json`. Existing
+`FormulaRenderer` and `PRELUDE` supply the native representation.
+
+All fragments share an arbitrary `Entity` carrier and `Interpretation`; the
+conditional instance uses a supplied binder valuation and fixed `Nat` time.
+`instance_only` produces two theorem obligations: the original definition
+instance under `hDefinition`, and `original_norm_preserved`. Membership mode
+adds the original body consequence under both `hDefinition` and
+`hMembership`, for three obligations. Preservation proves only the definitional
+alias identity `originalNormAt i t ↔ Norm.formula_0 i t` by `Iff.rfl`.
+It proves neither the norm nor a connection from the norm to membership.
+Quantifiers, modalities, relations, argument roles and the original norm body
+are unchanged. No witness, predicate bridge, definition substitution or modal
+rewrite is inferred.
+
+The manifest retains every original alternative and nomination, exact selected
+link/binder/argument/source references, native receipts and producer pins. The
+relational fragment still has `source_binding=null` and `source_bound=false`.
+Source meaning, governing definition priority, per-use applicability and actual
+membership remain pending; selections stay null and learning masks stay zero.
+The authored fixture's two typed uses share one physical source anchor and do
+not supply two distinct statutory uses.
+
+This narrower profile retains the existing 48-MiB/1,000,000-value/depth-48
+complete-input fence, one-MiB manifest contract, eight-MiB project bound and
+20-MiB full preparation-wire bound. Original upstream bounds also apply;
+overflow refuses without dropping evidence. Caller, detached-input, offered
+project and producer comparisons close even when an operation fails. Local
+transport reuses the existing exclusive writer and complete readback.
+
+Preparation executes no compiler. Its handoff stays `build_eligible=false`,
+`not_run`/`pending`, even though a distinct [native route](legal_corpus_definition_use_native_v2.md#bound-norm-definition-native-profile-version-1)
+is implemented in the existing executor. Current qualification and the retained
+2024 Title 10 pilot boundary are recorded in the [handoff](../HANDOFF.md#bound-norm-corpus-engineering-profile-2026-10-23).
+
+
+## Complete authored norm from an exact parent occurrence
+
+The explicit `prepare_parent_norm_corpus_v1` profile projects the complete
+supplied relational norm from a genuine parent correspondence-v2 report into a
+modular Lean project. Supply `correspondence`, its independent
+`expected_correspondence_sha256`, the complete original
+`correspondence_inputs`, and an exact version-pinned `toolchain`.
+Use `parent_norm_preparation_sha256` for the full preparation commitment and
+`validate_parent_norm_corpus_v1` with `expected_preparation_sha256` and the same
+original inputs for regeneration.
+
+The four-module/seven-file project retains the exact original norm body,
+quantifiers, ordered arguments, modality and condition placement. The manifest
+retains the complete correspondence, physical parent identity, unresolved issues
+and unavailable context. A separate input-binding record commits the original
+source scope, correspondence and typed/native norm. Original inputs are replayed at opening
+and closing. The preservation statement is a definitional alias identity for
+that unchanged authored formula; it is not a proof of statutory meaning or
+general correctness of the AST lowering.
+
+The selected source is an exact literal occurrence, whose complete legal scope
+and governing edition remain unresolved. Original relational `source_binding`
+stays null and `source_bound` false. Meaning and definition applicability remain
+unselected; authority flags are false and training/gold masks zero. Definition
+composition requires its own explicit compatible profile and substantive review.
+Preparation and validation perform no Lean execution. The existing definition-use
+and bound-norm build receipts do not qualify this new project profile. The separate
+[direct parent-norm native route](legal_corpus_definition_use_native_v2.md#complete-authored-parent-norm-native-observations)
+now supplies explicit validation, build and receipt APIs. Its independently
+accepted [native result](../../../../../docs/autoformalization/evidence/legal-ir-parent-complete-norm-native-20261024.json)
+qualifies its selected authored engineering scope. The preparation and its
+original 68-case qualification retain their no-build scope.
+
+The [focused qualification](../../../../../docs/autoformalization/evidence/legal-ir-parent-complete-norm-project-20261024.json) passed 68 authored cases / 204 phases: 26 new cases and 42 selected bound-norm regressions. Its frozen-source namespace profile retains eight unexecuted initializer paths; whole-package startup and the 150 unselected cases from both owning modules remain outside this result. Original source/native/storage custody closed. No new model, training, statutory meaning or actual Lean compilation qualification is supplied.
+
+
+## Parent-literal norm with a conditional bound definition
+
+The explicit successor owner
+`legal_corpus_parent_bound_norm_lake_v1.py` consumes the
+[parent bound-variable report](legal_bound_variable_definition_v1.md#explicit-parent-literal-conditional-instances)
+and prepares one complete conditional project. It delegates the existing Lake
+renderer, preparation type, bounded input capture, storage checks and full
+preparation hash recipe. Its distinct owner preserves the original Lake source
+`5c98152db328b75583f6c0cd181e2724ca5f7392870ec0faf1e4d870cbb76b32`
+byte-for-byte: existing native and persisted-packet consumers validate that raw
+source pin. Appending to the old owner would change those receipt commitments.
+The successor does not copy the project generator, numerical kernels or native
+executor, and does not widen the old entry points. It delegates the existing
+renderer, then explicitly repackages only its JSON input file for this separate
+consumer profile; the generated Lean bodies and module layout stay unchanged.
+
+Import `ipfs_datasets_py.logic.autoformal.legal_corpus_parent_bound_norm_lake_v1`
+for these APIs:
+
+```python
+prepare_parent_bound_norm_definition_corpus_v1(
+    bound_report, *, expected_bound_report_sha256,
+    bound_definition_inputs, toolchain)
+validate_parent_bound_norm_definition_corpus_v1(
+    preparation, bound_report, *, expected_preparation_sha256,
+    expected_bound_report_sha256, bound_definition_inputs, toolchain)
+parent_bound_norm_definition_preparation_sha256(preparation)
+```
+
+The schema is `legal-corpus-parent-bound-norm-definition-lake-preparation/v1`
+and the profile is
+`replayed-parent-bound-norm-definition-conditional-project/v1`.
+`bound_definition_inputs` has exactly the five original parent-bound arguments:
+`companion`, `request_raw`, `expected_companion_sha256`,
+`expected_request_sha256` and `companion_inputs`. The last retains the complete
+original six-field parent nomination replay: `norm_preparation`, `request_raw`,
+`expected_norm_preparation_sha256`, `expected_request_sha256`, `norm_inputs`
+and every supplied `definitions` entry. Keep the independently pinned outer
+bound request separate from the nomination request inside those original
+inputs. The complete original parent-bound report and full-preparation hashes
+are independent commitments; an offered success flag, selected endpoint or
+renamed legacy schema cannot replace replay.
+
+After finite input and independent-pin preflight, the successor genuinely
+validates the whole parent-bound report before and after project composition.
+That route replays the complete norm nomination, every definition alternative
+and their original physical parent/cache witnesses. Actual opening and closing
+returns, rendered project data, parsed preflight values, caller and detached
+inputs, producer source bytes, callbacks, runtime policy and original physical
+files remain held through final serialized-output checks. Runtime commitments
+distinguish Boolean, integer and floating-point values; a zero learning mask
+cannot be replaced by `false`. These are bounded cooperative source/input
+custody checks, not a full-runtime or atomic-concurrency attestation.
+
+The established outer profile is **48 MiB, one million expanded values and
+depth 48**. It is deliberately narrower than the parent-bound owner's own
+128-MiB input maximum. Complete overflow refuses before operation-owner
+discovery, without dropping alternatives or context. The inherited manifest
+limit is one MiB, the generated project limit is eight MiB, and the full
+preparation commitment wire is bounded by twenty MiB. A valid upstream report
+is not guaranteed to fit this downstream profile. The complete report's JSON
+container and all generated Lean texts must together fit the unchanged project
+limit. The thin manifest avoids a second copy of that report; it does not relax
+the project, source-input or full-preparation contracts. Requests still require
+an exact version-pinned Lean toolchain string; preparation does not probe or
+verify installed tools.
+
+The reused `DefinitionUseCorpusPreparation` contains exactly **nine files and
+six modules** under the existing `LegalCorpusBoundNormDefinition` namespace.
+The complete original norm body and donor definition remain byte-exact. The
+original `headAt`/`bodyAt` prefix and conditional theorem suffix are packaged
+into definition and occurrence modules, with the existing shared prelude,
+preservation module and root. The existing `bound-norm-input-bindings.json`
+project file carries one closed four-field object:
+
+```text
+schema = legal-corpus-parent-bound-norm-original-inputs/v1
+profile = replayed-parent-bound-norm-definition-conditional-project/v1
+review_intake_binding = the sealed small input-binding record
+parent_bound_definition_report = the complete unchanged original report
+```
+
+The whole report is retained once in that file. This ordinary strict canonical
+JSON container has no new CID envelope; the manifest commits its exact UTF8
+file bytes, including the terminal newline. The full report retains the complete
+norm, every definition alternative, nomination, physical source/context record,
+original obligation and producer binding. This packaging supplies no new public
+file transport API.
+
+The small manifest's `parent_bound_definition_report_ref` commits the file hash,
+independent complete report hash, fixed `/parent_bound_definition_report`
+pointer, `/review_intake_binding` pointer and exact container schema/profile.
+`original_parent_context_bindings` carries a canonical hash of the complete
+context projection and explicit field hashes and JSON pointers into that same
+stored report. The norm retains its preparation pin, source identity, original
+parent context, obligations, obligation/context IDs and producer pins. Every
+definition retains its ordinal, alternative ID and preparation pin, with field
+bindings for original producer pins, parent source binding, contexts, context
+slot IDs and expected context population. Full records stay in the stored
+report; the manifest does not duplicate them or replace an original population
+with only a selected endpoint. Pointer components name fixed fields and exact
+array ordinals, and do not derive paths from a caller's alternative spelling.
+
+Review blockers retain references to the complete original norm obligations and
+each definition's context slots. Validation regenerates the whole stored report,
+file bytes and manifest from the independent external originals. Repairing the
+stored report, file hash and its manifest references cannot replace those
+original replay inputs. The sealed input binding's context hash still commits
+the complete original norm-and-every-definition projection, including producer
+bindings; it is not a hash of only the small pointer index.
+
+`instance_only` prepares the original definition-instance statement under
+explicit unverified `hDefinition`, plus the unchanged norm's definitional alias
+identity. `body_with_membership` additionally preserves the original consequence
+under exact matching unverified `hMembership`, for three total obligations.
+No membership follows from the norm. No definition is substituted into its
+predicates, quantifiers or modalities, and no existential witness is extracted.
+The shared carrier, interpretation and fixed formal `Nat` time do not supply
+a civil legal-as-of date or a substantive legal decision.
+
+This consumer prepares and validates in-memory project bytes only. It adds no
+file writer/loader, installed-tool observation, native execution adapter,
+compiler process or kernel result. Its native handoff is explicitly
+`parent_bound_norm_execution_adapter_not_registered`, with `build_eligible=false`,
+zero processes, `not_run` compilation and `pending` proof status. Existing
+legacy bound-norm and parent-norm native/packet profiles retain their own exact
+schemas and qualifications; their receipts do not qualify this successor.
+
+The existing native owner now supplies a separate [explicit parent-bound
+execution API](legal_corpus_definition_use_native_v2.md#parent-bound-definition-native-contract).
+This leaves this pure preparer, its static unregistered handoff and false
+`build_eligible` flag unchanged. Its original R-source native receipts and the
+separate current-public pure compatibility check retain their own generations.
+
+The relational `source_binding` remains null and `source_bound` false.
+Governing use and selected interpretation stay null, all authority remains
+false, and semantic, consumer, training and evaluation-gold masks remain integer
+zero. Authored fixture occurrences and two typed uses sharing a physical source
+anchor are not two distinct statutory uses. The retained **2024 Title 10** pilot
+still needs supported source, meaning, governing-definition and per-use
+applicability decisions. This Object/Bool relational/unary-donor consumer does
+not represent the retained §7214 draft's combined many-sort, built-in equality,
+modal-scope and counted-frame semantics, and does not make that draft a learning
+target or admitted graph/Lean component. Existing 8D/384D/768D/Leanstral4096D
+lanes and checkpoints remain separate.
+
+Two earlier attempts remain separate. The original 32-case selection was
+cancelled without completed-case qualification records; its actual case/phase
+work was not established. A later 12-case selection encountered the absent
+legacy `source_context` field while setting up the new parent consumer. Its
+retained observations contain seven failed setups, seven passed teardowns and
+one additional passed setup, with no completed call phase or generated project
+capture; the diagnostic interrupt and original error remain recorded. Neither
+attempt supplies qualification. Compute/source-READ closure and strict retained
+storage recovery remain separate original-owner operations; their exact
+selected claims and cutoffs belong to the linked evidence.
+
+The corrected consumer's later 13-case run produced two actual
+manifest-plus-nine-file captures and **12 complete passing case records**, but
+its original wrapper still failed. Returning to the new owning test module
+after the selected legacy module recreated a fixture directory with
+`numbered=False`; the final `input-report` case failed during setup with
+`FileExistsError`, before its test body ran. The retained collection contains
+38 phase records: 12 passed setups, 12 passed calls, 13 passed teardowns and one
+failed setup. These observations do not establish a passing 13-case pipeline.
+Preserve the complete original failure, generated captures and its separate
+compute/source/storage closeout records.
+
+The separate isolated check accepted only the missing exact `input-report`
+case under unchanged product/test bytes: one case, three phases and one selector.
+The prior twelve complete case observations were retained without rerunning
+their case functions. This supplies **13 distinct cases across two attempts**,
+with eleven new cases and two legacy positives; twenty other authored new cases
+remain unrun. The original thirteen-case wrapper remains failed.
+
+The [focused observation record](../../../../../docs/autoformalization/evidence/legal-ir-parent-bound-norm-lake-20261025.json)
+records the accepted **12 complete case observations / 36 complete-case phases** retained from failed wrapper v03, and a separately accepted **one-case / three-phase** isolated input-report rejection under the same source. Together they cover 13 distinct cases (11 new, two legacy) and 39 complete-case phases across two attempts; they do not establish one passing 13-case suite. The raw populations contain 41 phase records, including the original setup failure and its passed teardown. Twenty other authored new cases remain unrun. The original v03 manifests and all nine generated files per mode were independently inspected; the isolated negative enrolled no positive captures. Each selected attempt retains its own accepted compute, storage and source-READ closure. Keep each attempt's exact source, fixtures,
+namespace, terminal status and original resource/source custody separate from
+one another and from earlier parent nomination, conditional-instance and
+complete-norm native results. Both saved readers accepted their own original compute/storage/source-READ
+closeout. Their acceptance does not merge the attempts or revise any original failure.

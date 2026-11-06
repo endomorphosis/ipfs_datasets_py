@@ -2,7 +2,7 @@
 
 `legal_source_correspondence_requests_v1` turns an independently pinned ordered
 bank population into the existing source-review preparations and an explicit
-physical cache-reference roster. It performs no file or network reads itself.
+physical cache-reference roster. Those bank APIs perform no file or network reads themselves.
 The existing review owner replays the supplied original join, paired-row,
 producer-receipt and stored-section inputs. All source alternatives and
 unresolved outcomes remain available for actual review.
@@ -463,3 +463,109 @@ bridge.
 ## Current-main compatibility integration
 
 The [current-main integration receipt](../../../../../docs/autoformalization/evidence/legal-ir-coordinate-source-correspondence-main-integration-20261021.json) records59 authored cases /177 phases on the current223-file dependency closure, using the current native owners and strict pytest plugin. Both original native/storage/source-READ owners closed. This is a separate source generation from the original external-plugin capsule above; neither qualification supplies statutory source/edition/meaning decisions or reconstruction accuracy. Public original-v2, retained-v1 and explicit original-v3 APIs remain separate.
+
+
+## Explicit wire-coordinate source-review requests v3
+
+The existing owner now exposes `prepare_source_correspondence_requests_v3`,
+`validate_source_correspondence_requests_v3` and
+`source_correspondence_requests_v3_sha256`. V1 and v2 retain their contracts.
+Prepare and validate retain the v2 arguments; the report remains an ordinary
+dictionary, including after a JSON serialize/parse roundtrip. Native byte-report
+acceptance is not added.
+
+Use request schema `legal-source-correspondence-request/v3`, report schema
+`legal-source-correspondence-requests/v3` and
+`profile="original-input-wire-coordinate-graph-v3-source-review-request-custody/v1"`.
+The route genuinely replays wire graph v3, eligibility v4 and wire join v3 with
+source intake v2 and `metadata_profile="hf-default-parquet-envelope/v1"`.
+Supply every original request/raw report, the independently pinned complete
+seven-field `graph_originals` group and the nonempty independent unchanged v1
+review banks. Nomination text cannot manufacture a bank or original source.
+Full wire metadata retains finite floats without coercion; legacy v1/v2 scalar
+grammars remain unchanged.
+
+The existing corpus owner supplies the unchanged originals commitment and
+physical-file-plan helper; this route neither consumes nor generates a corpus-v2
+report or exports a graph bundle. Opening/closing original replay and final
+input, parsed-request, live-return, callable and physical-file fences preserve
+every source/output alternative and unanswered review question. They are
+sequential custody observations, not an atomic snapshot or arbitrary runtime
+attestation. Existing lower-only bounds still refuse complete overflow.
+
+The [historical local qualification](../../../../../docs/autoformalization/evidence/legal-ir-hf-wire-coordinate-source-correspondence-20261024.json)
+passed **103 cases / 309 phases**: 59 preceding controls and 44 wire controls in
+selected attempt 02. Its earlier failed attempt, source generation, original
+capture and closeouts remain separate. The [focused public dependency check](../../../../../docs/autoformalization/evidence/legal-ir-hf-wire-coordinate-source-correspondence-public-integration-20261024.json)
+passed **three existing cases / nine phases** on public `943e85c2` plus the exact
+qualified source `8fccd02c` and test `830ba4a4` overlays. It covers the object
+roundtrip, complete unsupported-output population and late retained-table
+refusal; the historical 103-case cohort was not rerun or pooled.
+
+The public check preserves all other 236 source/fixture leaves, including public
+span cache `e35f5333` and validation helper `cef7fd00`, and requires all seven
+public review owners. Its 238-file provenance and 256-pin limit retain 14
+explicit unexecuted context exclusions, 15 separate private native/resource
+owners and 17 support inputs. Fourteen namespace parents remain unexecuted;
+ten genuine initializer routes retain only their observed scope. The original
+private orchestration plugin (`dc6ae4f1`), controls and run-specific captures
+remain local evidence and are not bundled by this publication. There is no
+whole-package, tooling or model-width qualification. Descriptor bridge usage
+and graph export were zero; no earlier campaign events are pooled.
+
+All source/edition/as-of choices, intended occurrences, substantive meaning,
+definition applicability and reviewed authority remain unresolved. Requests
+remain unsigned, selections null and training/gold masks integer zero. No model,
+encoder, training, source-law-table processing, convergence or Lean operation ran;
+these fixtures confer no graph/corpus or Lean admission.
+
+
+## Declared source, edition and context dossier
+
+`prepare_source_edition_context_dossier` accepts canonical request bytes with an
+independent SHA256, independently pinned completed coordinate-receipt bytes,
+and optional exactly pinned evidence bytes. The hash and validator companions
+are `source_edition_context_dossier_sha256` and
+`validate_source_edition_context_dossier`. The validator regenerates the complete
+report from those same independent inputs. This API reuses a completed coordinate
+observation; it performs no segmentation, matching, alignment or census.
+
+The request declares source/span/entity revisions, artifact paths/hashes/rows,
+offset namespace and unit, candidate dispositions and any missing crosswalk,
+edition or context. A declared revision pair must match; missing revisions stay
+unresolved. These are caller declarations, not fresh physical artifact custody,
+source authentication or a governing edition. Current repository metadata heads
+are never substituted for absent compatible source bindings. Half-open offsets
+and candidate identities do not manufacture statutory roles or operative uses.
+
+The existing `legal_source_review_handoff.bind_source_dossier_review_questions`
+attaches pending review obligations. It does not replay the full review handoff,
+create review receipts or settle meaning. Operative uses remain empty with an
+exact integer count of zero, authority stays false and training/gold masks stay
+zero. Only the two current product source files are read to record owner hashes;
+no declared artifact path or repository is opened or fetched.
+
+Request, receipt, aggregate evidence and report limits default to 256 KiB,
+1 MiB, 2 MiB and 2 MiB respectively. Lower-only request JSON limits are applied
+before receipt processing, and immutable byte bounds before request hashing.
+Receipt population counts/order use exact integers; booleans cannot alias 0/1.
+The historical coordinate receipt may contain finite timing floats. Its raw-byte
+commitment and selected roster/count validation do not claim a new full receipt
+custody or generic canonical-JSON qualification.
+
+The retained native `e061490f56f21d0f5a36aed4aef30deea82e088d` observation recorded
+225 passed and one deferred original-data case in 490.63 seconds, with validation
+digest `5adae9118289d6958615238f957503f4af23727b89d5aa9b2707539531273217`.
+The public port separately passed 24 focused dossier/binder cases, including the
+exact public 26,420-byte coordinate receipt
+`8193ce3c85c961eb38d8ded7f1be8b35ccc32410b68a895685052ca4aa47c4a3`.
+These counts belong to separate source generations; no original-data replay or
+fresh source custody is inferred from either the skip or the metadata dossier.
+
+The expensive original-data test is selected only with the explicit existing
+`LEGAL_SOURCE_CORRESPONDENCE_ENROLLED` marker. Its original exact-input, hash and
+population assertions remain unchanged. The marker is a test selector, not an
+admission grant; an original-owned admitted run must still satisfy the existing
+input/custody contract. Ordinary metadata tests defer that case. This port sets
+no admission markers, grants no retry or resource permission, and performs no
+original input campaign, model, compiler, graph/corpus admission or legal review.

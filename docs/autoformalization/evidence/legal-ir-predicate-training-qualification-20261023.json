@@ -1,0 +1,134 @@
+{
+  "Adam_first_moment_coordinates": 96606,
+  "Adam_parameter_coordinates": 96606,
+  "Adam_second_moment_coordinates": 96606,
+  "actual_compiled_product_source_count": 94,
+  "authority": {
+    "Lean": false,
+    "convergence": false,
+    "graph": false,
+    "learning_gain": false,
+    "source_semantics": false,
+    "training_gold": false
+  },
+  "bias_gradient_coordinates": 3222,
+  "causal_gradient_history_checkpoint_attested": false,
+  "evaluation_gold_mask": 0,
+  "exact_saved_resume_comparisons": [
+    {
+      "complete_checkpoint_and_observations_exact": true,
+      "objective_kind": "full537",
+      "resumed_checkpoint_sha256": "83b4bcf17fe98fdfc6d8935c0269946e588af385607ed6518dde6d52276d1813",
+      "sequential_checkpoint_sha256": "83b4bcf17fe98fdfc6d8935c0269946e588af385607ed6518dde6d52276d1813"
+    },
+    {
+      "complete_checkpoint_and_observations_exact": true,
+      "objective_kind": "scope_conditional",
+      "resumed_checkpoint_sha256": "8f303d19e1ce9310026dfd41957bafa1365f05c88e4259dc749466e883a7272c",
+      "sequential_checkpoint_sha256": "8f303d19e1ce9310026dfd41957bafa1365f05c88e4259dc749466e883a7272c"
+    }
+  ],
+  "generation_performed": false,
+  "limitations": [
+    "Historical source-pinned qualification only; no new test collection, current public initializer/helper integration, numerical/model/native/test/SQL execution or publication performed by this candidate preparation.",
+    "Exposed fictional authored384 CP128 rows; source/context and retained reference labels remain declared. No native-GTE compatibility, independent inference permission, reviewed statutory targets, held-out accuracy, convergence, reconstruction gain, graph or Lean authority.",
+    "All old warm-start policy/trainer/runtime/checkpoint bytes are preserved. New predicate training checkpoints are a separate schema and are rejected by the old serving runtime.",
+    "Raw original requests, traces, source archives, tensors and checkpoint bodies remain in their original enclosing-workspace custody and are not bundled by this portable metadata summary."
+  ],
+  "logit_gradient_coordinates": 148212,
+  "model_restores": 4,
+  "new_public_collection_or_execution_performed": false,
+  "new_serving_profile_enrolled": false,
+  "old_reference_sidecars_are_current_model_history": false,
+  "original_counters": {
+    "adam_init_completed": 4,
+    "adam_init_entered": 4,
+    "adam_step_completed": 6,
+    "adam_step_entered": 6,
+    "backward_completed": 6,
+    "backward_entered": 6,
+    "clip_completed": 6,
+    "clip_entered": 6,
+    "database": 0,
+    "diagnostic_objective_completed": 8,
+    "diagnostic_objective_entered": 8,
+    "external_write": 0,
+    "factory_rng_restores": 4,
+    "factory_seed_calls": 4,
+    "forbidden_lifecycle": 0,
+    "gru_forward_completed": 6,
+    "gru_forward_entered": 6,
+    "legacy_objective_completed": 8,
+    "legacy_objective_entered": 8,
+    "legacy_restore_completed": 4,
+    "legacy_restore_entered": 4,
+    "legacy_restore_refusals_completed": 2,
+    "legacy_restore_refusals_entered": 2,
+    "model_factory_completed": 4,
+    "model_factory_entered": 4,
+    "model_forward_completed": 6,
+    "model_forward_entered": 6,
+    "module_initializers": 28,
+    "network": 0,
+    "optimizer_init_completed": 4,
+    "optimizer_init_entered": 4,
+    "own_restore_completed": 4,
+    "payload_read": 0,
+    "process": 0,
+    "state_loads": 8
+  },
+  "original_executed_source_archive": {
+    "bytes": 3652413,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-predicate-training-20261023-04/exports/executed-source-archive.json",
+    "sha256": "f83fbfa2802bdb73bf7deb7b47822068c12c6155f4e4ca5a42e0e63db5a4c1e7"
+  },
+  "original_failure_attempts_preserved_and_not_counted": true,
+  "original_native_cleanup_proven": true,
+  "original_passed_cases": 70,
+  "original_passed_phases": 210,
+  "original_runtime_torch_version": "2.13.0+cu130",
+  "original_source": {
+    "bytes": 41478,
+    "path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_predicate_training_v1.py",
+    "sha256": "65458ea546d2384cfae3f57705da0f8d539ada2efef7d4f1a886c325a3ee4860"
+  },
+  "original_source_READ_closed": true,
+  "original_storage_terminal_status": "released",
+  "original_summary": {
+    "bytes": 36682,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/predicate-training-01/qualification-summary-v01.json",
+    "sha256": "89f0c6dc11d3ea044992e1dbd83fd474c6622343210bc7a72eecc47b59a4b2a0"
+  },
+  "original_test": {
+    "bytes": 46061,
+    "path": "tests/unit/logic/autoformal/test_legal_compact_content_predicate_training_v1.py",
+    "sha256": "97aab3cf7eca01b36082de9767f1fef7a5e76aae7473fe3300db709e0dc50be9"
+  },
+  "parameter_gradient_coordinates": 96606,
+  "physical_saved_step_replays_per_normalization": 1,
+  "physical_updates": 6,
+  "public_comparison_base": "0c842013d3457b3bb131c0915852eb93a187e824",
+  "public_different_product_sources": {
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/validation_pytest.py": {
+      "bytes": 15730,
+      "matches_qualified": false,
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.validation_pytest",
+      "original_observed_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/validation_pytest.py",
+      "public_bytes": 1489,
+      "public_present": true,
+      "public_sha256": "cef7fd00277c38ac55ce80ae0e6234eeda36559ab56a9de4e0954d0590327d31",
+      "qualified_sha256": "dc6ae4f1cd27628a56db13fc656156c1b84df8ff999d4158ff25e70fac89f7a6"
+    }
+  },
+  "public_exact_matching_product_source_count": 91,
+  "public_missing_product_sources": [
+    "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_predicate_objective_v1.py",
+    "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_predicate_training_v1.py"
+  ],
+  "public_validation_pytest_preserved": true,
+  "recorded_at_utc": "2026-10-23T16:42:58.857855+00:00",
+  "schema": "legal-ir-predicate-training-portable-qualification/v1",
+  "scope": "unchanged source publication reusing one original closed qualification; no current-public execution qualification",
+  "training_mask": 0,
+  "unique_ordered_steps_per_normalization": 2
+}

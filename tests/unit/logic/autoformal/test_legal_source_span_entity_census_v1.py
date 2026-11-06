@@ -762,3 +762,544 @@ def test_coordinate_census_closing_producer_fence_after_real_join(coordinate_cen
         prepare_coordinate_census(case)
     assert len(case.calls["joins"]) == 1 and case.calls["joins"][0]["passed"] is True
     assert len(case.calls["bindings"]) == 2 and all(row["passed"] for row in case.calls["bindings"])
+
+
+# The wire companion reuses the tiny genuine prior census and the existing
+# original coordinate/metadata fixtures. No retained environmental population
+# or fresh entity rescan is needed by these selected controls.
+from ipfs_datasets_py.logic.autoformal import legal_source_package_intake_v1 as wire_source
+from tests.unit.logic.autoformal.test_legal_source_package_intake_v1 import wire_intake_inputs
+from tests.unit.logic.autoformal.test_legal_source_span_entity_coordinate_join_v2 import prepare_wire_join
+
+
+def materialize_wire_census(directory, prior, *, selected_indices=(1, 3)):
+    source = coordinate_join_fixture.__wrapped__(directory,
+        SimpleNamespace(param={"selected_indices": selected_indices}))
+    source_request, metadata = wire_intake_inputs()
+    source["source_raw"], source["metadata"] = wire(source_request), metadata
+    source["request"]["schema"] = join.REQUEST_SCHEMA_V3
+    source["request"]["source_request_sha256"] = sha(source["source_raw"])
+    info = json.loads(source["info_raw"])
+    info["dataset_info"]["splits"]["train"]["num_examples"] = 16
+    source["info_raw"] = wire(info)
+    source["request"]["entity"]["info_sha256"] = sha(source["info_raw"])
+    joined = prepare_wire_join(source)
+    original_request = wire(source["request"])
+    originals = {"request_raw": original_request, "source_request_raw": source["source_raw"],
+        "source_metadata_bytes": source["metadata"],
+        "paired_inventory_request_raw": wire(source["paired_request"]),
+        "paired_manifest_bytes": source["manifests"], "entity_info_raw": source["info_raw"],
+        "expected_request_sha256": sha(original_request), "legacy_join_inputs": None}
+    census = deepcopy(prior["census"])
+    request = {"schema": "legal-source-span-entity-census-request/v3",
+        "join_report_sha256": join.source_span_entity_join_manifest_sha256(joined),
+        "census_raw_sha256": sha(prior["raw"]), "census_sha256": census["census_sha256"],
+        "join_originals_sha256": subject.source_span_entity_census_join_originals_sha256(originals),
+        "source_coordinate_report_sha256": source["coordinate"]["pin"],
+        "metadata_profile": "hf-default-parquet-envelope/v1",
+        "source_metadata_intake_sha256": joined["source_metadata_intake_sha256"],
+        "entity": {"repository_id": "justicedao/uscode-autoformal-entity-cache", "revision": "c" * 40,
+            "configuration": "autoformal_uscode", "file_sha256": sha(prior["bytes"]),
+            "file_bytes": len(prior["bytes"]), "rows": 16},
+        "census_limits": deepcopy(census["limits"])}
+    return SimpleNamespace(source=source, joined=joined, originals=originals, census=census,
+        census_raw=prior["raw"], entity_path=prior["path"], entity_bytes=prior["bytes"], request=request)
+
+
+@pytest.fixture(scope="module")
+def wire_census_base(tmp_path_factory, coordinate_prior_census):
+    directory = tmp_path_factory.mktemp("wire-coordinate-census", numbered=False)
+    return materialize_wire_census(directory, coordinate_prior_census)
+
+
+@pytest.fixture
+def wire_census(wire_census_base, monkeypatch):
+    case = deepcopy(wire_census_base)
+    case.calls = {"bindings": [], "joins": [], "intakes": [], "intake_validations": [], "forbidden_scans": 0}
+    genuine_binding = entity.validate_census_bindings
+    genuine_join = join.validate_source_span_entity_join_manifest_v3
+    genuine_intake = wire_source.prepare_source_package_intake_v2
+    genuine_intake_validation = wire_source.validate_source_package_intake_v2
+    depth = {"join": 0}
+
+    def no_scan(*args, **kwargs):
+        case.calls["forbidden_scans"] += 1
+        pytest.fail("wire census must retain prior entity-row observations without rescanning")
+
+    def no_legacy(*args, **kwargs):
+        pytest.fail("explicit wire census entered a legacy source or coordinate delegate")
+
+    def binding(*args, **kwargs):
+        result = genuine_binding(*args, **kwargs)
+        case.calls["bindings"].append(result)
+        return result
+
+    def replay(*args, **kwargs):
+        depth["join"] += 1
+        try:
+            result = genuine_join(*args, **kwargs)
+        finally:
+            depth["join"] -= 1
+        case.calls["joins"].append(result)
+        return result
+
+    def intake(*args, **kwargs):
+        result = genuine_intake(*args, **kwargs)
+        case.calls["intakes"].append(result)
+        return result
+
+    def validate_intake(*args, **kwargs):
+        result = genuine_intake_validation(*args, **kwargs)
+        if depth["join"] == 0:
+            case.calls["intake_validations"].append(result)
+        return result
+
+    for name in ("census_parquet", "validate_census", "iter_observed_rows", "_rows"):
+        monkeypatch.setattr(entity, name, no_scan)
+    for name in ("prepare_source_span_entity_join_manifest", "validate_source_span_entity_join_manifest",
+                 "prepare_source_span_entity_join_manifest_v2", "validate_source_span_entity_join_manifest_v2"):
+        monkeypatch.setattr(join, name, no_legacy)
+    for name in ("prepare_source_package_intake", "validate_source_package_intake"):
+        monkeypatch.setattr(wire_source, name, no_legacy)
+    monkeypatch.setattr(entity, "validate_census_bindings", binding)
+    monkeypatch.setattr(join, "validate_source_span_entity_join_manifest_v3", replay)
+    monkeypatch.setattr(wire_source, "prepare_source_package_intake_v2", intake)
+    monkeypatch.setattr(wire_source, "validate_source_package_intake_v2", validate_intake)
+    yield case
+    assert case.calls["forbidden_scans"] == 0
+    assert case.entity_path.read_bytes() == case.entity_bytes
+
+
+def prepare_wire_census(case, *, request=None, joined=None, census_raw=None, originals=None,
+                        entity_path=None, expected=None):
+    raw = wire(case.request if request is None else request)
+    return subject.prepare_source_span_entity_census_v3(raw,
+        case.joined if joined is None else joined, case.census_raw if census_raw is None else census_raw,
+        case.entity_path if entity_path is None else entity_path,
+        expected_request_sha256=sha(raw) if expected is None else expected,
+        join_originals=case.originals if originals is None else originals)
+
+
+def validate_wire_census(case, report, *, expected=None):
+    offered = json.loads(report) if type(report) is bytes else report
+    request = wire(case.request)
+    return subject.validate_source_span_entity_census_v3(report, request, case.joined,
+        case.census_raw, case.entity_path, expected_request_sha256=sha(request),
+        expected_report_sha256=subject.source_span_entity_census_sha256(offered) if expected is None else expected,
+        join_originals=case.originals)
+
+
+def wire_census_recommit(case, joined, originals=None):
+    request = deepcopy(case.request)
+    request["join_report_sha256"] = join.source_span_entity_join_manifest_sha256(joined)
+    request["source_metadata_intake_sha256"] = joined["source_metadata_intake_sha256"]
+    if originals is not None:
+        request["join_originals_sha256"] = subject.source_span_entity_census_join_originals_sha256(originals)
+    return request
+
+
+@pytest.mark.parametrize("transport", ["object", "bytes"], ids=["object", "bytes"])
+def test_wire_census_genuine_roundtrip_retains_originals_and_prior_census_without_rescan(wire_census, transport):
+    case = wire_census
+    original_join, original_inputs = wire(case.joined), deepcopy(case.originals)
+    report = prepare_wire_census(case)
+    assert validate_wire_census(case, wire(report) if transport == "bytes" else report) == report
+    assert report["schema"] == "legal-source-span-entity-census/v3"
+    assert report["source_compatibility_profile"] == "paired-coordinate-hf-wire-entity-census/v1"
+    assert report["metadata_profile"] == "hf-default-parquet-envelope/v1"
+    assert report["source_metadata_request_schema"] == wire_source.REQUEST_SCHEMA_V2
+    assert report["source_metadata_intake_sha256"] == case.joined["source_metadata_intake_sha256"]
+    assert wire(report["join_report"]) == original_join and case.originals == original_inputs
+    assert report["join_report"]["schema"] == join.SCHEMA_V3
+    assert report["join_report"]["entity_metadata"]["verified_file_rows"] == 0
+    intake = report["join_report"]["source_metadata_intake"]
+    assert len(intake["files"]) == 5
+    assert intake["metadata_validation"]["table_bodies_read"] is False
+    assert intake["metadata_validation"]["Arrow_loaded"] is False
+    assert report["join_report"]["paired_bundles"][0]["payload_intake"]["schema"] == "legal-paired-payload-intake/v2"
+    assert report["census"]["raw_utf8"].encode() == case.census_raw
+    assert report["census_binding_validation"]["fresh_row_replay_performed"] is False
+    assert report["counts"]["prior_entity_census_rows"] == 16
+    assert report["counts"]["selected_physical_paired_rows"] == 2
+    assert report["counts"]["selected_paired_row_references"] == 2
+    assert len(case.calls["joins"]) >= 2 and len(case.calls["bindings"]) >= 4
+    assert case.calls["intakes"]
+    assert case.calls["intake_validations"]
+    assert all(row["schema"] == wire_source.SCHEMA_V2 for row in case.calls["intakes"])
+    assert all(row["schema"] == wire_source.SCHEMA_V2 for row in case.calls["intake_validations"])
+    carrier = report["join_report"]["paired_bundles"][0]["payload_intake"]["source_coordinates"]
+    assert wire(report).count(wire(carrier["report_raw_utf8"])) == 1
+    assert [row["source_coordinate_span_index"] for row in report["row_references"]] == [1, 3]
+    assert [row["physical_identity_sha256"] for row in report["row_references"]] == [
+        row["physical_identity_sha256"] for row in case.joined["row_references"]]
+    assert_coordinate_census_unqualified(report)
+
+
+def test_wire_census_duplicate_global_indices_preserve_distinct_physical_order(
+        wire_census, coordinate_prior_census, tmp_path):
+    case = materialize_wire_census(tmp_path, coordinate_prior_census, selected_indices=(3, 1))
+    report = prepare_wire_census(case)
+    assert validate_wire_census(case, report) == report
+    rows = report["row_references"]
+    assert [row["reference_ordinal"] for row in rows] == [0, 1]
+    assert [row["source_coordinate_span_index"] for row in rows] == [3, 1]
+    assert [row["physical_identity"]["row_ordinal"] for row in case.joined["row_references"]] == [0, 1]
+    assert len({row["physical_identity_sha256"] for row in rows}) == 2
+    assert report["counts"]["selected_paired_row_references"] == 2
+    assert_coordinate_census_unqualified(report)
+    # The batch producer rejects duplicate source-span IDs. Exercise repeated
+    # index preservation separately at the shared pure projection boundary;
+    # this synthetic projection is explicitly not a genuine joined artifact.
+    projection = deepcopy(case.joined)
+    for key in ("source_provenance_json", "source_coordinate_report_sha256", "source_coordinate_span_index"):
+        value = projection["row_references"][0][key]
+        projection["row_references"][1][key] = value
+        projection["paired_bundles"][0]["payload_intake"]["rows"][1][key] = value
+    projected = subject._coordinate_references(projection, case.request)
+    assert [row["source_coordinate_span_index"] for row in projected] == [3, 3]
+    assert [row["reference_ordinal"] for row in projected] == [0, 1]
+    assert len({row["physical_identity_sha256"] for row in projected}) == 2
+    request = wire_census_recommit(case, projection)
+    with pytest.raises(ValueError): prepare_wire_census(case, request=request, joined=projection)
+
+
+@pytest.mark.parametrize("damage", ["schema", "join_report_sha256", "census_raw_sha256", "census_sha256",
+    "entity", "census_limits", "join_originals_sha256", "source_coordinate_report_sha256",
+    "metadata_profile", "source_metadata_intake_sha256", "unknown"],
+    ids=["schema", "join_report_sha256", "census_raw_sha256", "census_sha256", "entity", "census_limits",
+         "join_originals_sha256", "source_coordinate_report_sha256", "metadata_profile",
+         "source_metadata_intake_sha256", "unknown"])
+def test_wire_census_requires_the_complete_closed_ten_field_request_before_owners(wire_census, monkeypatch, damage):
+    request = deepcopy(wire_census.request)
+    if damage == "unknown": request["unknown_wire_option"] = True
+    else: request.pop(damage)
+    monkeypatch.setattr(subject, "_owners", lambda: pytest.fail("incomplete wire request reached owners"))
+    with pytest.raises(ValueError): prepare_wire_census(wire_census, request=request)
+
+
+@pytest.mark.parametrize("pin", ["request", "join_report_sha256", "census_raw_sha256", "census_sha256",
+    "join_originals_sha256", "source_coordinate_report_sha256", "source_metadata_intake_sha256"],
+    ids=["request", "join", "census-raw", "census-canonical", "originals", "coordinate", "wire-intake"])
+def test_wire_census_independent_complete_pins_are_required(wire_census, pin):
+    request = deepcopy(wire_census.request)
+    if pin == "request":
+        with pytest.raises(ValueError): prepare_wire_census(wire_census, expected="0" * 64)
+    else:
+        request[pin] = "0" * 64
+        with pytest.raises(ValueError): prepare_wire_census(wire_census, request=request)
+
+
+@pytest.mark.parametrize("damage", ["request-schema", "metadata-profile", "join-schema", "join-profile",
+    "intake-schema", "intake-profile", "nested-request-schema"],
+    ids=["request-schema", "metadata-profile", "join-schema", "join-profile", "intake-schema",
+         "intake-profile", "nested-request-schema"])
+def test_wire_census_rehashed_profile_changes_do_not_alias_older_contracts(wire_census, damage):
+    case = wire_census
+    joined = deepcopy(case.joined)
+    if damage == "join-schema": joined["schema"] = join.SCHEMA_V2
+    elif damage == "join-profile": joined["source_compatibility_profile"] = join.COORDINATE_PROFILE
+    elif damage == "intake-schema": joined["source_metadata_intake"]["schema"] = wire_source.SCHEMA
+    elif damage == "intake-profile": joined["source_metadata_intake"]["metadata_profile"] = "legacy-info/v1"
+    elif damage == "nested-request-schema": joined["source_metadata_request_schema"] = wire_source.REQUEST_SCHEMA
+    if damage in ("intake-schema", "intake-profile"):
+        joined["source_metadata_intake_sha256"] = wire_source.source_package_intake_sha256(joined["source_metadata_intake"])
+    request = wire_census_recommit(case, joined)
+    if damage == "request-schema": request["schema"] = subject.REQUEST_SCHEMA_V2
+    elif damage == "metadata-profile": request["metadata_profile"] = "legacy-info/v1"
+    with pytest.raises(ValueError): prepare_wire_census(case, request=request, joined=joined)
+
+
+def test_wire_census_nested_original_source_request_must_remain_explicit_wire_v2(wire_census):
+    case = wire_census
+    originals = deepcopy(case.originals)
+    source_request = json.loads(originals["source_request_raw"])
+    source_request["schema"] = wire_source.REQUEST_SCHEMA
+    originals["source_request_raw"] = wire(source_request)
+    outer = json.loads(originals["request_raw"])
+    outer["source_request_sha256"] = sha(originals["source_request_raw"])
+    originals["request_raw"] = wire(outer)
+    originals["expected_request_sha256"] = sha(originals["request_raw"])
+    request = wire_census_recommit(case, case.joined, originals)
+    with pytest.raises(ValueError): prepare_wire_census(case, request=request, originals=originals)
+
+
+@pytest.mark.parametrize("damage", ["schema", "profile", "source-request-schema", "intake-pin",
+    "coordinate-index", "row-order", "mask", "semantic-binding"],
+    ids=["schema", "profile", "source-request-schema", "intake-pin", "coordinate-index", "row-order",
+         "mask", "semantic-binding"])
+def test_wire_census_rehashed_output_requires_complete_original_regeneration(wire_census, damage):
+    case = wire_census
+    report = prepare_wire_census(case)
+    if damage == "schema": report["schema"] = subject.SCHEMA_V2
+    elif damage == "profile": report["metadata_profile"] = "legacy-info/v1"
+    elif damage == "source-request-schema": report["source_metadata_request_schema"] = wire_source.REQUEST_SCHEMA
+    elif damage == "intake-pin": report["source_metadata_intake_sha256"] = "0" * 64
+    elif damage == "coordinate-index": report["row_references"][0]["source_coordinate_span_index"] = 0
+    elif damage == "row-order": report["row_references"].reverse()
+    elif damage == "mask": report["training_mask"] = True
+    else: report["row_references"][0]["entity_semantic_binding"] = {"inferred_from_matching_label": True}
+    with pytest.raises(ValueError): validate_wire_census(case, report)
+
+
+def test_wire_census_wrong_independent_output_pin_refuses_before_replay(wire_census, monkeypatch):
+    report = prepare_wire_census(wire_census)
+    counts = {key: len(wire_census.calls[key]) for key in ("bindings", "joins", "intake_validations")}
+    monkeypatch.setattr(subject, "_wire_census_owners",
+        lambda *a, **k: pytest.fail("wrong output pin reached actual wire owners"))
+    with pytest.raises(ValueError): validate_wire_census(wire_census, report, expected="0" * 64)
+    assert {key: len(wire_census.calls[key]) for key in counts} == counts
+
+
+@pytest.mark.parametrize("target", ["original", "detached", "offered-join"],
+    ids=["original", "detached", "offered-join"])
+def test_wire_census_genuine_join_cannot_mutate_original_detached_or_offered_inputs(wire_census, monkeypatch, target):
+    case = wire_census
+    genuine = join.validate_source_span_entity_join_manifest_v3
+    observed = []
+
+    def mutate(*args, **kwargs):
+        result = genuine(*args, **kwargs)
+        if not observed:
+            if target == "original": case.originals["source_metadata_bytes"]["README.md"] += b" late original wire metadata"
+            elif target == "detached":
+                metadata = kwargs.get("source_metadata_bytes") if "source_metadata_bytes" in kwargs else args[3]
+                metadata["README.md"] += b" late detached wire metadata"
+            else: case.joined["source_metadata_profile"] = "late-offered-profile/v9"
+            observed.append(result["schema"])
+        return result
+
+    monkeypatch.setattr(join, "validate_source_span_entity_join_manifest_v3", mutate)
+    with pytest.raises(ValueError): prepare_wire_census(case)
+    assert observed == [join.SCHEMA_V3]
+
+
+@pytest.mark.parametrize("target", ["binding", "join", "intake"], ids=["binding", "join", "intake"])
+def test_wire_census_retained_real_returns_remain_fenced_after_final_entity_callback(wire_census, monkeypatch, target):
+    case = wire_census
+    genuine = entity.validate_census_bindings
+    observed = []
+
+    def mutate_after_closing_binding(*args, **kwargs):
+        result = genuine(*args, **kwargs)
+        if len(case.calls["bindings"]) >= 2 and not observed:
+            if target == "binding": case.calls["bindings"][0]["fresh_row_replay_performed"] = True
+            elif target == "join": case.calls["joins"][0]["authority"]["admitted"] = True
+            else: case.calls["intake_validations"][0]["metadata_profile"] = "late-retained-intake/v9"
+            observed.append(True)
+        return result
+
+    monkeypatch.setattr(entity, "validate_census_bindings", mutate_after_closing_binding)
+    with pytest.raises(ValueError): prepare_wire_census(case)
+    assert observed == [True]
+
+
+@pytest.mark.parametrize("target", ["output", "original", "binding", "join", "intake", "producer"],
+    ids=["output", "original", "binding", "join", "intake", "producer"])
+def test_wire_census_final_encoder_cannot_mutate_any_retained_custody(wire_census, monkeypatch, target):
+    case = wire_census
+    genuine = subject._wire
+    observed = []
+
+    def mutate_after_encoding(value, *args, **kwargs):
+        raw = genuine(value, *args, **kwargs)
+        if type(value) is dict and value.get("schema") == "legal-source-span-entity-census/v3" \
+                and len(case.calls["bindings"]) >= 2 and not observed:
+            if target == "output": value["training_mask"] = True
+            elif target == "original": case.originals["source_metadata_bytes"]["README.md"] += b" final encoder mutation"
+            elif target == "binding": case.calls["bindings"][0]["fresh_row_replay_performed"] = True
+            elif target == "join": case.calls["joins"][0]["authority"]["admitted"] = True
+            elif target == "intake": case.calls["intake_validations"][0]["metadata_profile"] = "encoder-intake/v9"
+            else: monkeypatch.setattr(subject, "_SELF_PIN", "0" * 64)
+            observed.append(True)
+        return raw
+
+    monkeypatch.setattr(subject, "_wire", mutate_after_encoding)
+    with pytest.raises(ValueError): prepare_wire_census(case)
+    assert observed == [True]
+
+
+@pytest.mark.parametrize("source", ["entity", "paired"], ids=["entity", "paired"])
+def test_wire_census_final_original_replay_refuses_physical_file_drift(
+        wire_census, coordinate_prior_census, tmp_path, monkeypatch, source):
+    # Paired witnesses include inode/mtime/ctime. Restoring bytes cannot restore
+    # those identities; a mutation must never poison the shared module bundle.
+    case = materialize_wire_census(tmp_path, coordinate_prior_census)
+    if source == "entity": target = case.entity_path
+    else:
+        selected = case.joined["span_inventory"]["manifests"][0]["manifest"]["tables"]["paired_spans"]
+        target = Path(case.source["request"]["paired_bundles"][0]["repository_root"]) / selected["path_in_repo"]
+    original = target.read_bytes()
+    genuine = join.validate_source_span_entity_join_manifest_v3
+    observed = []
+
+    def drift(*args, **kwargs):
+        result = genuine(*args, **kwargs)
+        if not observed:
+            target.write_bytes(original + b" closing wire-census drift")
+            observed.append(True)
+        return result
+
+    monkeypatch.setattr(join, "validate_source_span_entity_join_manifest_v3", drift)
+    try:
+        with pytest.raises(ValueError): prepare_wire_census(case)
+        assert observed == [True]
+    finally: target.write_bytes(original)
+
+
+def test_wire_census_base_exception_primary_survives_secondary_physical_and_input_failures(wire_census, monkeypatch):
+    case = wire_census
+    class DeliberateWirePrimary(BaseException):
+        pass
+    primary = DeliberateWirePrimary("genuine wire replay followed by authored primary failure")
+    genuine = join.validate_source_span_entity_join_manifest_v3
+    original = case.entity_path.read_bytes()
+    observed = []
+
+    def fail(*args, **kwargs):
+        result = genuine(*args, **kwargs)
+        observed.append(result["schema"])
+        case.entity_path.write_bytes(original + b" secondary entity drift")
+        case.originals["source_metadata_bytes"]["README.md"] += b" secondary original drift"
+        raise primary
+
+    monkeypatch.setattr(join, "validate_source_span_entity_join_manifest_v3", fail)
+    try:
+        with pytest.raises(DeliberateWirePrimary) as caught: prepare_wire_census(case)
+        assert caught.value is primary and observed
+        notes = getattr(primary, "__notes__", [])
+        assert any("entity" in note for note in notes)
+        assert any("original" in note or "input" in note for note in notes)
+    finally: case.entity_path.write_bytes(original)
+
+
+@pytest.mark.parametrize("version", [1, 2], ids=["v1", "v2"])
+def test_wire_census_request_is_refused_by_unchanged_older_public_profiles(wire_census, version):
+    case = wire_census
+    api = subject.prepare_source_span_entity_census_v1 if version == 1 else subject.prepare_source_span_entity_census_v2
+    raw = wire(case.request)
+    with pytest.raises(ValueError):
+        api(raw, case.joined, case.census_raw, case.entity_path,
+            expected_request_sha256=sha(raw), join_originals=case.originals)
+
+
+def test_wire_census_complete_result_is_detached_from_original_inputs_and_returns(wire_census):
+    case = wire_census
+    before = wire(case.joined), deepcopy(case.originals), deepcopy(case.census)
+    report = prepare_wire_census(case)
+    report["join_report"]["source_metadata_intake"]["metadata_profile"] = "caller-mutated-report/v9"
+    report["row_references"][0]["entity_semantic_binding"] = {"caller_mutation": True}
+    report["census_binding_validation"]["fresh_row_replay_performed"] = True
+    assert before == (wire(case.joined), case.originals, case.census)
+    assert all(row["fresh_row_replay_performed"] is False for row in case.calls["bindings"])
+    assert all(row["source_metadata_intake"]["metadata_profile"] == "hf-default-parquet-envelope/v1"
+        for row in case.calls["joins"])
+    assert all(row["metadata_profile"] == "hf-default-parquet-envelope/v1"
+        for row in case.calls["intake_validations"])
+    assert_coordinate_census_unqualified(prepare_wire_census(case))
+
+
+def test_wire_census_parsed_offered_report_cannot_replace_independently_pinned_caller_bytes(wire_census, monkeypatch):
+    case = wire_census
+    correct = prepare_wire_census(case)
+    offered = deepcopy(correct)
+    offered["counts"]["selected_paired_row_references"] = 999
+    bad_pin = subject.source_span_entity_census_sha256(offered)
+    assert bad_pin != subject.source_span_entity_census_sha256(correct)
+    genuine_read = subject._read_json
+    genuine_join = join.validate_source_span_entity_join_manifest_v3
+    parsed, changed = [], []
+
+    def capture_actual_offered_parse(raw, maximum, label):
+        result = genuine_read(raw, maximum, label)
+        if label == "wire census companion report":
+            assert result is not offered and result["schema"] == "legal-source-span-entity-census/v3"
+            assert result["counts"]["selected_paired_row_references"] == 999
+            parsed.append(result)
+        return result
+
+    def correct_only_detached_offered_after_real_join(*args, **kwargs):
+        result = genuine_join(*args, **kwargs)
+        if not changed:
+            assert len(parsed) == 1 and parsed[0] is not offered
+            parsed[0].clear()
+            parsed[0].update(deepcopy(correct))
+            changed.append(True)
+        return result
+
+    monkeypatch.setattr(subject, "_read_json", capture_actual_offered_parse)
+    monkeypatch.setattr(join, "validate_source_span_entity_join_manifest_v3", correct_only_detached_offered_after_real_join)
+    with pytest.raises(ValueError): validate_wire_census(case, offered, expected=bad_pin)
+    assert changed == [True] and len(parsed) == 1
+    assert offered["counts"]["selected_paired_row_references"] == 999
+    assert subject.source_span_entity_census_sha256(offered) == bad_pin
+    assert parsed[0] == correct
+
+
+def test_wire_census_first_preflight_encoder_cannot_rewrite_original_join_before_capture(wire_census, monkeypatch):
+    case = wire_census
+    genuine = subject._wire
+    changed = []
+
+    def mutate_after_original_join_encoding(value, *args, **kwargs):
+        raw = genuine(value, *args, **kwargs)
+        if value is case.joined and not changed:
+            case.joined["counts"]["physical_paired_rows"] += 7
+            changed.append(True)
+        return raw
+
+    monkeypatch.setattr(subject, "_wire", mutate_after_original_join_encoding)
+    with pytest.raises(ValueError): prepare_wire_census(case)
+    assert changed == [True]
+
+
+@pytest.mark.parametrize("damage", ["authority", "census-pin", "extra-field"],
+    ids=["authority", "census-pin", "extra-field"])
+def test_wire_census_consistently_corrupted_real_entity_bindings_cannot_define_a_new_baseline(
+        wire_census, monkeypatch, damage):
+    case = wire_census
+    genuine = entity.validate_census_bindings
+    observed = []
+
+    def corrupt_every_genuine_binding(*args, **kwargs):
+        result = genuine(*args, **kwargs)
+        if damage == "authority":
+            key = next(iter(result["authority"]))
+            result["authority"][key] = True
+        elif damage == "census-pin": result["census_sha256"] = "0" * 64
+        else: result["accepted_semantic_binding"] = True
+        observed.append(result)
+        return result
+
+    monkeypatch.setattr(entity, "validate_census_bindings", corrupt_every_genuine_binding)
+    with pytest.raises(ValueError): prepare_wire_census(case)
+    assert observed
+    for result in observed:
+        if damage == "authority": assert any(value is True for value in result["authority"].values())
+        elif damage == "census-pin": assert result["census_sha256"] == "0" * 64
+        else: assert result["accepted_semantic_binding"] is True
+
+
+def test_wire_census_held_finalizer_refuses_callback_replacement_after_genuine_join(wire_census, monkeypatch):
+    case = wire_census
+    genuine_join = join.validate_source_span_entity_join_manifest_v3
+    genuine_witness = join._coordinate_file_witnesses
+    changed, closing_physical = [], []
+
+    def observe_real_physical_checks(*args, **kwargs):
+        result = genuine_witness(*args, **kwargs)
+        if changed: closing_physical.append(result)
+        return result
+
+    def replace_finalizer_after_real_join(*args, **kwargs):
+        result = genuine_join(*args, **kwargs)
+        if not changed:
+            monkeypatch.setattr(subject, "_finish_coordinate_custody", lambda *a, **k: None)
+            changed.append(True)
+        return result
+
+    monkeypatch.setattr(join, "_coordinate_file_witnesses", observe_real_physical_checks)
+    monkeypatch.setattr(join, "validate_source_span_entity_join_manifest_v3", replace_finalizer_after_real_join)
+    with pytest.raises(ValueError): prepare_wire_census(case)
+    assert changed == [True]
+    assert len(case.calls["bindings"]) >= 2
+    assert closing_physical

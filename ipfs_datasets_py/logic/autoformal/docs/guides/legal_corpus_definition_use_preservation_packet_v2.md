@@ -146,3 +146,81 @@ proof usability, statutory meaning, training/gold, model quality or Lean
 admission. All authority ceilings and zero masks remain unchanged.
 
 At this publication-preparation cutoff, no new test cohort, historical packet/database replay, native or Lean run, or model execution has been performed. The linked portable evidence records the retained 153-case/459-phase primary composition and its declared reasoning namespace profile separately from the original 68-case packet qualification, original 153-case SQL/index qualification and historical two-packet replays. Those qualifications keep their original source/toolchain scopes. Preserved public companion differences do not establish whole-runtime byte identity with the 126 raw-compile observations/119 module origins or qualify the public reasoning initializer/reexports. Original receipts, packet/database exports and raw execution evidence remain unbundled and unavailable in a clean clone; the portable record supplies their immutable descriptors and scope, rather than substituting fresh runtime evidence.
+
+
+## Opt-in direct parent-norm packet reader
+
+`validate_parent_norm_native_packet_v1` is a separate opt-in sibling in this same
+owner. `parent_norm_packet_sha256` commits its exact sorted 23-file inventory;
+`packet_sha256` and `validate_definition_use_preservation_packet_v2` keep their
+original official-V2 49-file contracts. Earlier unsupported-profile statements
+above retain their original profile and publication cutoffs.
+
+The direct reader accepts the original seven-file `DefinitionUseCorpusPreparation`,
+complete parent correspondence and all original correspondence replay inputs.
+It requires independent SHA256 pins for the full preparation and correspondence,
+the exact receipt file and complete bundle, plus the selected versioned toolchain
+and externally pinned sibling `lake`/`lean` binary identities. Computing a digest
+from incoming evidence supplies no independent provenance.
+
+```python
+validate_parent_norm_native_packet_v1(
+    packet_files, preparation, correspondence,
+    expected_preparation_sha256=preparation_pin,
+    expected_correspondence_sha256=correspondence_pin,
+    correspondence_inputs=original_correspondence_inputs,
+    toolchain=versioned_toolchain,
+    expected_receipt_file_sha256=receipt_file_pin,
+    expected_bundle_sha256=bundle_pin,
+    expected_binary_sha256=historical_binary_pins,
+)
+```
+
+The immutable sorted tuple contains eight `project/` files including the full
+manifest, seven matching `executed-inputs/`, four nonempty `compiled/` artifacts,
+and the root receipt plus three complete logs. Genuine
+`validate_parent_norm_native_v1` opening and closing replay binds the complete
+authored norm, original source/context/unresolved commitments and physical
+parent inputs. Full logs must retain the single `original_norm_preserved`
+empty-axiom observation. This theorem has only definitional alias-identity scope;
+the supplied norm remains unreviewed and relational source binding remains null.
+
+The resulting `RetainedDefinitionUsePreservationPacket` uses schema
+`legal-corpus-parent-norm-native-packet-observation/v1` and profile
+`replayed-retained-parent-literal-complete-authored-norm-native-byte-packet/v1`.
+Its observation explicitly records:
+
+- `receipt_consistency_only=true`; `accepted_execution`,
+  `accepted_outer_operation` and `accepted_operation_result_bound` are false.
+- `outer_operation_outcome="unprovided"`. A persisted `build_passed=true` receipt
+  can precede an outer closing-custody refusal. The packet supplies no accepted
+  outer result or closeout; consistency cannot establish accepted execution.
+- The unchanged historical receipt, full inventory and current/historical
+  producer commitments, with all authority flags false and training/gold masks zero.
+
+Historical producer paths and hashes must exactly equal the current genuine
+producer closure. There is no path normalization, resealing, relocation fallback
+or automatic acceptance of the original frozen 23-case native generation.
+Externally trusted raw pins remain provenance premises. Filesystem acquisition
+and link/race custody belong to the external acquirer. The reader checks retained
+lifecycle consistency without inspecting live PIDs or installed compiler bytes,
+running Lean, rechecking oleans or writing a database.
+
+The original preservation-index APIs retain their official-V2 packet profile.
+Separate [direct parent-norm index siblings](legal_corpus_definition_use_preservation_index_v2.md#opt-in-direct-parent-norm-preservation-index)
+now store and retrieve this 23-file profile as UNKNOWN/CANDIDATE/NONE
+receipt-consistency observations. Parent-shared and incremental profiles remain separate. No norm-truth, concrete denotation,
+statutory source/edition/meaning, model-accuracy, proof-cache, graph/corpus,
+training/gold or unified Lean-corpus admission follows from this readback.
+
+### Qualification of the direct parent-norm reader
+
+The [accepted qualification](../../../../../docs/autoformalization/evidence/legal-ir-parent-norm-packet-consistency-20261025.json) passed 123 authored-fixture cases / 369 phases: 54 new reader controls and 69 selected packet/native pure regressions, under 199 frozen source files. Compiler, artifact and historical process claims in these fixtures are synthetic; genuine current parent preparation and physical-source replay remain separate from actual native execution. Original 185/68/23 campaigns keep their own generations and are not pooled or rerun. Receipt consistency grants no accepted execution, legal meaning, model accuracy, proof-cache, graph/corpus or training/gold authority; masks stay zero.
+
+## Compatibility preparation without native execution
+
+`retained_lean_compatibility_request_bytes` supplies a bounded five-route metadata request: parent, direct, conditional, native and preservation. `prepare_lean_compatibility_request_v1` requires its independent raw SHA256 and exact selected route/profile, imports, premises, empty axiom lists and artifact closure. `lean_compatibility_route_contract` returns one detached route contract; `lean_compatibility_request_sha256` and `validate_lean_compatibility_request_v1` pin the complete report and regenerate it independently.
+
+The `ast_sha256` field is an opaque caller-selected digest, not a newly parsed or authenticated statutory AST. Preparation records unresolved questions and false admission fields. It reads no proof artifacts, opens no store and invokes no compiler. The existing packet readers retain their original per-call source, callable, runtime and physical opening/closing replay. Results are fresh JSON values; the native candidate's global success caches are excluded.
+
+The [separate focused qualification](../../../../../docs/autoformalization/evidence/legal-ir-lean-compatibility-safe-replay-20261027.json) passed 28 pure cases in 122.70 seconds, including warm independent-call mutation/refusal and detached-result controls. Its original source, compute and storage custody closed. The historical 256-case native-candidate pass and its cache speedup remain a different generation. This metadata interface supplies no actual Lake build, statutory review or proof admission.

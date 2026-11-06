@@ -5,8 +5,9 @@ No framework is imported here and no asset, provider, optimizer or training API
 exists. The new GRU input has token16 followed by the actual projected384.
 Every saved block is copied exactly; only the added input columns are zero.
 
-The strict loader accepts this untrained initialization profile only. A future
-trained context model needs a separately reviewed/versioned profile and loader.
+The strict loader accepts this untrained initialization profile only. The fixed
+opt-in retained profile authenticates historical parent and initialization state.
+The existing trained context owner supplies the corresponding trained profile.
 Expanded state is never passed to the historical source.Runtime loader.
 """
 
@@ -101,18 +102,7 @@ def _implementation(source):
             "source_profile_bridge_sha256": _bridge.implementation_sha256()}
 
 
-def inspect_parent_source_compatibility(source, parent_checkpoint, *, expected_checkpoint_sha256):
-    """Compare authenticated parent source metadata without loading its model.
-
-    ``expected_checkpoint_sha256`` binds the entire canonical ``source._raw``
-    value, not an arbitrary JSON file encoding. The caller authenticates any
-    physical input file separately. Tensor contents, shapes, weight digests,
-    architecture suitability and training history remain unchecked. A compatible
-    report cannot replace the unchanged strict numerical parent/load validators.
-    """
-    _bridge.require_shared_source(source)
-    _bridge.require_source("context_initialization", _PORTED_SOURCE_SHA256)
-    _sha(expected_checkpoint_sha256, "expected canonical parent checkpoint")
+def _bounded_checkpoint_json(value):
     # Bound ordinary JSON before invoking serializers; never call object hooks.
     active, remaining = set(), [500000, MAX_BYTES]
     def bounded(value, depth=0):
@@ -143,7 +133,22 @@ def inspect_parent_source_compatibility(source, parent_checkpoint, *, expected_c
             _require(kind is not float or math.isfinite(value), "finite parent JSON numbers required")
             remaining[1] -= len(json.dumps(value, ensure_ascii=True, allow_nan=False))
         _require(remaining[1] >= 0, "parent JSON byte bound exceeded")
-    bounded(parent_checkpoint)
+    bounded(value)
+
+
+def inspect_parent_source_compatibility(source, parent_checkpoint, *, expected_checkpoint_sha256):
+    """Compare authenticated parent source metadata without loading its model.
+
+    ``expected_checkpoint_sha256`` binds the entire canonical ``source._raw``
+    value, not an arbitrary JSON file encoding. The caller authenticates any
+    physical input file separately. Tensor contents, shapes, weight digests,
+    architecture suitability and training history remain unchecked. A compatible
+    report cannot replace the unchanged strict numerical parent/load validators.
+    """
+    _bridge.require_shared_source(source)
+    _bridge.require_source("context_initialization", _PORTED_SOURCE_SHA256)
+    _sha(expected_checkpoint_sha256, "expected canonical parent checkpoint")
+    _bounded_checkpoint_json(parent_checkpoint)
     fields = {"schema", "domain_id", "dimension", "architecture", "codec", "config",
               "implementation", "parent_sha256", "parent_binding", "lineage", "model_state",
               "weights_sha256", "input_transform", "semantic_paths", "training_manifest",
@@ -234,13 +239,21 @@ def _tensor(torch, value, shape, label):
 
 
 def _parent(torch, source, checkpoint, parent_file_sha256):
+    return _parent_core(torch, source, checkpoint, parent_file_sha256, profile=None)
+
+
+def _parent_core(torch, source, checkpoint, parent_file_sha256, *, profile):
+    _profile_mode(profile)
     _bridge.require_shared_source(source)
+    if profile is not None:
+        _retained_context150_checkpoint(source, checkpoint, "parent", parent_file_sha256)
     _sha(parent_file_sha256, "authenticated parent file")
     _require(source.FALSE == FALSE and checkpoint["schema"] == source.SCHEMA
              and checkpoint["domain_id"] == "legal_ir" and checkpoint["dimension"] == 384,
              "genuine retained LegalIR384 source parent required")
-    _require(checkpoint["implementation"] == source._implementation(),
-             "parent source implementation differs")
+    if profile is None:
+        _require(checkpoint["implementation"] == source._implementation(),
+                 "parent source implementation differs")
     _require(all(checkpoint.get(key) is False for key in FALSE),
              "parent cannot grant authority")
     _require(checkpoint["architecture"] == source.numerical.ARCHITECTURE,
@@ -348,6 +361,13 @@ def model_state(torch, source, model):
 
 
 def _validate(torch, source, parent_checkpoint, checkpoint, parent_file_sha256):
+    return _validate_core(torch, source, parent_checkpoint, checkpoint, parent_file_sha256, profile=None)
+
+
+def _validate_core(torch, source, parent_checkpoint, checkpoint, parent_file_sha256, *, profile):
+    _profile_mode(profile)
+    if profile is not None:
+        _retained_context150_checkpoint(source, checkpoint, "initial")
     _require(type(checkpoint) is dict and set(checkpoint) == FIELDS, "closed new checkpoint required")
     _require(len(_raw(source, checkpoint)) <= MAX_BYTES, "new checkpoint exceeds8MiB")
     _require(checkpoint["schema"] == SCHEMA and checkpoint["architecture"] == ARCHITECTURE
@@ -355,10 +375,11 @@ def _validate(torch, source, parent_checkpoint, checkpoint, parent_file_sha256):
              and checkpoint["dimension"] == 384 and _same_json(source, checkpoint["binding"], BINDING),
              "new schema, architecture or decoder binding differs")
     _require(all(checkpoint[key] is False for key in FALSE), "new checkpoint cannot grant authority")
-    parent_state, reference = _parent(torch, source, parent_checkpoint, parent_file_sha256)
+    parent_state, reference = _parent_core(torch, source, parent_checkpoint, parent_file_sha256, profile=profile)
     _require(_same_json(source, checkpoint["parent_reference"], reference), "new checkpoint parent identity differs")
-    _require(_bridge.compatible_implementation(checkpoint["implementation"], _implementation(source)),
-             "new decoder/source implementation differs")
+    if profile is None:
+        _require(_bridge.compatible_implementation(checkpoint["implementation"], _implementation(source)),
+                 "new decoder/source implementation differs")
     _require(_same_json(source, checkpoint["config"], _config(parent_checkpoint)),
              "closed new inference config differs")
     for name in ("codec", "input_transform", "semantic_paths"):
@@ -427,6 +448,10 @@ def load_with_real_parent(torch, source, parent_checkpoint, checkpoint, *, paren
     _bridge.require_shared_source(source)
     _require(not torch.cuda.is_initialized(), "CPU-only context parity loader required")
     tensors = _validate(torch, source, parent_checkpoint, checkpoint, parent_file_sha256)
+    return _load_validated_tensors(torch, source, checkpoint, tensors)
+
+
+def _load_validated_tensors(torch, source, checkpoint, tensors):
     model = _model(torch, len(checkpoint["codec"]["target_vocabulary"]), checkpoint["config"]["seed"])
     _require(set(model.state_dict()) == set(tensors), "new numerical tensor names differ")
     model.load_state_dict(tensors, strict=True)
@@ -474,6 +499,10 @@ def infer(torch, source, parent_checkpoint, checkpoint, model, rows, *,
     No gold target, readout predictions, templates or alternate decoder is used.
     """
     _validate(torch, source, parent_checkpoint, checkpoint, parent_file_sha256)
+    return _infer_validated(torch, source, checkpoint, model, rows, batch_size=batch_size)
+
+
+def _infer_validated(torch, source, checkpoint, model, rows, *, batch_size):
     rows = source._rows("legal_ir", rows, training=False)
     requested = checkpoint["config"]["batch_size"] if batch_size is None else batch_size
     _require(type(requested) is int and 1 <= requested <= 256, "invalid inference batch size")
@@ -511,3 +540,209 @@ def source_profile_bridge():
     """Describe this experimental port without loading checkpoints or Torch."""
     _bridge.require_source('context_initialization', _PORTED_SOURCE_SHA256)
     return _bridge.profile_bridge('context_initialization')
+
+
+# One read-only retained lineage. These are complete canonical value, physical
+# file and producer-recipe commitments, not a wildcard source compatibility rule.
+_RETAINED_CONTEXT150_PROFILE = "retained-context150-source-compatibility/v1"
+_RETAINED_CONTEXT150_CONSUMER = "794903b450b650354c25f70649a460cbe33e21f101f8fc06085769169f73e70a"
+_RETAINED_CONTEXT150_PINS = (
+    ("parent", "36b6b3a5a31ce88748a7ff69f1ab55f16dae79a78bfb635436a7b13a34c9cbf2",
+     "36b6b3a5a31ce88748a7ff69f1ab55f16dae79a78bfb635436a7b13a34c9cbf2",
+     "089e67c808189b469ed76c61ce7a41dd144d1caa35fc9869a29b794053e823d2",
+     "fbde4c60f84b14588060264b92bc435d01f07b4ee49010f16162b9b97908c849"),
+    ("initial", "10022551f21a66621b114da7ffff7705d39c606e5138cd39a4150d65e69ac12f",
+     "913af280b5dd361c14d37a15362d2dd196713b1ba9afd9319397a9077a5872df",
+     "11fc8b849896a0f8f3588c113e35ed593d2274516c81b9f99a422e23281b878c",
+     "9143fe32552e75aa9c32707883d464a2d54238db9dcea7a002bb564b4670a5f4"),
+    ("trained", "59df2f43ac4e9c05524100d403f90b901048b1364d57df33c811af648aa409bd",
+     "9f75b3a827ac45a239c66b8a87e942568b8619fd1fee817e0adc450ea93b0f95",
+     "dbc6e73afa9bea81a67c803066d53e35141562f364d72c2aaf2b161f52e1d5a3",
+     "0ed6b90b02d987765cb12c04b8250f19c43aed3a8016c67c68f97edd263d207d"),
+)
+
+
+def _profile_mode(profile):
+    _require(profile is None or (type(profile) is str and profile == _RETAINED_CONTEXT150_PROFILE),
+             "unknown retained Context150 compatibility profile")
+
+
+def _retained_context150_checkpoint(source, checkpoint, role, file_sha256=None):
+    """Authenticate an exact retained value before any numerical access.
+
+    The caller owns physical file authentication. A supplied physical hash is
+    checked against its fixed declaration; this module never opens that asset.
+    """
+    _bridge.require_shared_source(source)
+    _bridge.require_source("context_initialization", _PORTED_SOURCE_SHA256)
+    _require(type(role) is str and role in {"parent", "initial", "trained"}, "unknown retained checkpoint role")
+    pin = next(row for row in _RETAINED_CONTEXT150_PINS if row[0] == role)
+    if file_sha256 is not None:
+        _require(_sha(file_sha256, role + " physical file") == pin[1], "retained " + role + " file identity differs")
+    _bounded_checkpoint_json(checkpoint)
+    _require(type(checkpoint) is dict, "plain retained checkpoint required")
+    raw = _raw(source, checkpoint)
+    _require(len(raw) <= MAX_BYTES and hashlib.sha256(raw).hexdigest() == pin[2],
+             "retained " + role + " canonical checkpoint differs")
+    _require(checkpoint["weights_sha256"] == pin[3]
+             and _digest(source, checkpoint["implementation"]) == pin[4],
+             "retained " + role + " producer or weights identity differs")
+    current = source._implementation()
+    _bridge._bounded(current)
+    _require(_digest(source, current) == _RETAINED_CONTEXT150_CONSUMER,
+             "retained profile current shared-source consumer differs")
+    return raw
+
+
+def _retained_context150_inputs(source, parent, initial, trained, *, parent_file_sha256,
+                                initial_file_sha256, trained_file_sha256):
+    _require(trained is not None or trained_file_sha256 is None,
+             "trained physical identity requires its checkpoint")
+    _require(type(parent_file_sha256) is str and type(initial_file_sha256) is str
+             and (trained is None or type(trained_file_sha256) is str),
+             "all offered retained physical identities required")
+    parent_raw = _retained_context150_checkpoint(source, parent, "parent", parent_file_sha256)
+    initial_raw = _retained_context150_checkpoint(source, initial, "initial", initial_file_sha256)
+    trained_raw = (None if trained is None else
+                   _retained_context150_checkpoint(source, trained, "trained", trained_file_sha256))
+    # Detached snapshots preserve original fields and hashes, without relabeling
+    # the producer or retaining mutable caller dictionaries during execution.
+    return json.loads(parent_raw), json.loads(initial_raw), (None if trained_raw is None else json.loads(trained_raw))
+
+
+def _retained_context150_receipt(source, parent, initial, trained, *, operation, details=None):
+    _require(operation in {"metadata_inspection", "initial_checkpoint_restore", "trained_checkpoint_restore",
+                           "initial_target_free_inference", "trained_target_free_inference"},
+             "closed retained operation required")
+    roles = [("parent", parent), ("initial", initial)] + ([] if trained is None else [("trained", trained)])
+    identities = []
+    for role, checkpoint in roles:
+        _retained_context150_checkpoint(source, checkpoint, role)
+        pin = next(row for row in _RETAINED_CONTEXT150_PINS if row[0] == role)
+        identities.append({"role": role, "owner_declared_physical_file_sha256": pin[1],
+            "canonical_value_sha256": pin[2], "weights_sha256": pin[3],
+            "historical_producer_recipe_sha256": pin[4]})
+    numerical = operation != "metadata_inspection"
+    report = {"schema": "legal-ir-retained-context150-execution-identity/v1",
+        "profile_id": _RETAINED_CONTEXT150_PROFILE, "operation": operation,
+        "checkpoint_identities": identities,
+        "current_shared_consumer_recipe_sha256": _RETAINED_CONTEXT150_CONSUMER,
+        "consumer_sources": {"context_initialization": _bridge.source_reference("context_initialization"),
+                             "context_trained": _bridge.source_reference("context_trained"),
+                             "shared_source": _bridge.require_shared_source(source)},
+        "source_profile_bridge_sha256": _bridge.implementation_sha256(),
+        "physical_files_opened_or_authenticated_here": False,
+        "checkpoint_fields_rewritten": False, "default_loaders_relaxed": False,
+        "tensor_shapes_checked": numerical, "weights_checked": numerical,
+        "numerical_execution_performed": numerical,
+        "checkpoint_load_qualified": False, "numerical_equivalence_qualified": False,
+        "training_performed": False, "training_history_verified": False,
+        "details": {} if details is None else details, **FALSE}
+    # Immutable bytes are an observation, never an input granting load authority.
+    return _raw(source, report)
+
+
+def inspect_retained_context150_profile(source, parent_checkpoint, initial_checkpoint,
+                                      trained_checkpoint=None, *, parent_file_sha256,
+                                      initial_file_sha256, trained_file_sha256=None):
+    """Return immutable exact-lineage metadata; no tensor/model is accessed.
+
+    Physical file digests are declarations authenticated by the calling owner.
+    This authenticates complete canonical values and complete producer/consumer
+    recipes; it grants no numerical, training, statutory or admission authority.
+    """
+    parent, initial, trained = _retained_context150_inputs(
+        source, parent_checkpoint, initial_checkpoint, trained_checkpoint,
+        parent_file_sha256=parent_file_sha256, initial_file_sha256=initial_file_sha256,
+        trained_file_sha256=trained_file_sha256)
+    return _retained_context150_receipt(source, parent, initial, trained, operation="metadata_inspection")
+
+
+def _model_interface(torch, model, vocabulary_size):
+    kind = type(model)
+    _require(kind.__name__ == "ProjectedContextDecoder"
+             and kind.__module__ == __name__,
+             "genuine immutable parity numerical constructor required")
+    code_path = str(Path(__file__).resolve())
+    for name in ("project", "start", "next_logits", "forward"):
+        method = getattr(kind, name, None)
+        _require(name not in model.__dict__ and hasattr(method, "__code__")
+                 and str(Path(method.__code__.co_filename).resolve()) == code_path
+                 and method.__qualname__ == "_model.<locals>.ProjectedContextDecoder." + name,
+                 "actual repeated-context numerical method differs: " + name)
+    expected = {"projection_down": torch.nn.Linear, "projection_up": torch.nn.Linear,
+                "condition": torch.nn.Linear, "target_embedding": torch.nn.Embedding,
+                "decoder": torch.nn.GRU, "output": torch.nn.Linear}
+    children = dict(model.named_children())
+    _require(set(children) == set(expected)
+             and all(type(children[name]) is expected[name] for name in expected),
+             "actual repeated-context layer inventory differs")
+    for module in model.modules():
+        _require(not module._forward_hooks and not module._forward_pre_hooks
+                 and not module._backward_hooks and not module._backward_pre_hooks,
+                 "numerical hooks cannot alter the executing decoder")
+    decoder = model.decoder
+    _require(decoder.input_size == 400 and decoder.hidden_size == 32
+             and decoder.num_layers == 1 and decoder.batch_first and decoder.bias
+             and not decoder.bidirectional and decoder.dropout == 0,
+             "actual recurrent context dimensions differ")
+    _require(model.target_embedding.num_embeddings == vocabulary_size
+             and model.target_embedding.embedding_dim == 16
+             and model.target_embedding.padding_idx == 0,
+             "actual target embedding dimensions differ")
+
+
+
+def load_retained_context150_initial(torch, source, parent_checkpoint, initial_checkpoint, *,
+                                    parent_file_sha256, initial_file_sha256):
+    """Restore the exact retained initial state; return model and immutable receipt.
+
+    The caller supplies resource admission and authenticates physical files.
+    This opt-in lineage does not change the strict loader or create a checkpoint.
+    """
+    parent, initial, _ = _retained_context150_inputs(
+        source, parent_checkpoint, initial_checkpoint, None,
+        parent_file_sha256=parent_file_sha256, initial_file_sha256=initial_file_sha256,
+        trained_file_sha256=None)
+    with source.native._cpu() as cpu_torch:
+        _require(cpu_torch is torch, "genuine native CPU context must use supplied Torch")
+        _require(not torch.cuda.is_initialized(), "CPU-only retained context loader required")
+        tensors = _validate_core(torch, source, parent, initial, parent_file_sha256,
+                                 profile=_RETAINED_CONTEXT150_PROFILE)
+        model = _load_validated_tensors(torch, source, initial, tensors)
+        _model_interface(torch, model, len(initial["codec"]["target_vocabulary"]))
+        # Original caller values and current owners must still identify this lineage.
+        _retained_context150_inputs(source, parent_checkpoint, initial_checkpoint, None,
+            parent_file_sha256=parent_file_sha256, initial_file_sha256=initial_file_sha256,
+            trained_file_sha256=None)
+        receipt = _retained_context150_receipt(source, parent, initial, None,
+            operation="initial_checkpoint_restore", details={"actual_weights_sha256": model_state(torch, source, model)[1]})
+        return model, receipt
+
+
+def infer_retained_context150_initial(torch, source, parent_checkpoint, initial_checkpoint,
+                                     model, rows, *, parent_file_sha256, initial_file_sha256,
+                                     batch_size=None):
+    """Generate with exact retained anchors; return report and immutable receipt."""
+    parent, initial, _ = _retained_context150_inputs(
+        source, parent_checkpoint, initial_checkpoint, None,
+        parent_file_sha256=parent_file_sha256, initial_file_sha256=initial_file_sha256,
+        trained_file_sha256=None)
+    rows = source._rows("legal_ir", rows, training=False)
+    input_rows_sha256 = _digest(source, rows)
+    with source.native._cpu() as cpu_torch:
+        _require(cpu_torch is torch, "genuine native CPU context must use supplied Torch")
+        _validate_core(torch, source, parent, initial, parent_file_sha256,
+                       profile=_RETAINED_CONTEXT150_PROFILE)
+        _model_interface(torch, model, len(initial["codec"]["target_vocabulary"]))
+        report = _infer_validated(torch, source, initial, model, rows, batch_size=batch_size)
+        _model_interface(torch, model, len(initial["codec"]["target_vocabulary"]))
+        _retained_context150_inputs(source, parent_checkpoint, initial_checkpoint, None,
+            parent_file_sha256=parent_file_sha256, initial_file_sha256=initial_file_sha256,
+            trained_file_sha256=None)
+        receipt = _retained_context150_receipt(source, parent, initial, None,
+            operation="initial_target_free_inference", details={"output_sha256": _digest(source, report), "input_rows_sha256": input_rows_sha256,
+                "batch_size": initial["config"]["batch_size"] if batch_size is None else batch_size,
+                "max_target_tokens": initial["config"]["max_target_tokens"],
+                "actual_weights_sha256": model_state(torch, source, model)[1], "rows": len(report["rows"])})
+        return report, receipt

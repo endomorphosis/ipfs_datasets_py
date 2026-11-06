@@ -1,0 +1,98 @@
+{
+  "evidence_id": "native-lean-preparation-completion-cache-review-20261027-01",
+  "evidence_inputs": {
+    "completion_source_safety_addendum": {
+      "bytes": 1601,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/legal-ir-native-LEAN-final-completion-audit-source-safety-addendum-20261027.json",
+      "root": "datasets_repository",
+      "sha256": "2d1139025738d8046120ea1aa735173839b2475b769a7e6fdfb8f7c7a7cbcb33"
+    },
+    "fresh_fleet": {
+      "bytes": 3263,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/legal-ir-supervisor-watchdog-completed-fleet-refresh-before-safe-LEAN-port-20261027.json",
+      "root": "datasets_repository",
+      "sha256": "dc2a4fffa658a8a2f5d69b38b7897d402726aa5c78e76dd5e57d97e90f40faf5"
+    },
+    "implementation_review": {
+      "bytes": 22669,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/legal-ir-LEAN-final-candidate-source-review-20261027.json",
+      "root": "datasets_repository",
+      "sha256": "8ee8e574bf0e490267a9a0f6a34aa2a7f7af7f89d26b81399a4b187a166017cb"
+    },
+    "independent_cache_review": {
+      "bytes": 2173,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/legal-ir-supervisor-watchdog-unsafe-LEAN-cache-independent-findings-20261027.json",
+      "root": "datasets_repository",
+      "sha256": "5c10d716757864e51714c1726441a9dee33551cb7718c8b84169a5ef5960c182"
+    },
+    "original_completion_audit": {
+      "bytes": 21503,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/legal-ir-native-LEAN-final-completion-audit-20261027.json",
+      "root": "datasets_repository",
+      "sha256": "20991245cb36130e1173d55c2cf2828acbfea8a7259c84496ad1faf6b6a8383c"
+    }
+  },
+  "fleet_observation": {
+    "active": 0,
+    "all_four_report_loaded_current": true,
+    "completed": 139,
+    "completed_cards_redispatched": false,
+    "healthy_lanes": 4,
+    "loaded_source_id": "baguqeeramhstsmcxz3sskzphygym7dn6ndecxtwzz3ho7jpzy3quvrikwqwa",
+    "merge_failed": 0,
+    "merge_pending": 0,
+    "operator_restart": false,
+    "ready": 0,
+    "total": 139,
+    "waiting": 0
+  },
+  "limits": {
+    "actual_Lake_build": false,
+    "formalized_provision_count": null,
+    "full_corpus_completion": false,
+    "full_python_import_attestation": false,
+    "new_trained_weights": false,
+    "paired_fit": false,
+    "reviewed_statutory_meaning": false
+  },
+  "native_completion": {
+    "canonical_task_cid": "baguqeeraetedvqina6tkqlkkkw3nt2wag5ah7waailytfzcgfn3zlarc7gta",
+    "canonical_task_key": "task/v1/24c83ac10d07a6a82d4a55b6d9eac037407fd80042f132e4462b77958222f9a6",
+    "completed_at_utc": "2026-10-27T04:18:57.282589+00:00",
+    "completion_commit": "fea1387ab11f2485b34e5f3a4384786b8ade4f4e",
+    "consumed_count_retained": 2,
+    "current_completed_cards": 139,
+    "execution_elapsed_seconds": 336.2292573300656,
+    "failed_prior_attempts_retained": true,
+    "historical_rearm_receipt_retained": true,
+    "implementation_commit": "62a9ee0d0874bf2eab48fbe84f124abcf48754e0",
+    "new_preparation_cards": 4,
+    "normal_merge_commit": "bcbd51d294b9c79881f1c800ae4dfd62a1f94b6d",
+    "original_completed_cards": 135,
+    "passed_cases": 256,
+    "protected_checker_returncode": 0,
+    "provider_timeout_salvaged_by_existing_owner": true,
+    "pytest_seconds": 335.18,
+    "task_id": "LIRAE-LIR12-LEAN-03",
+    "terminal_lifecycle_record": "no_lifecycle_record"
+  },
+  "next_existing_owners": {
+    "lean": "Preserve original source/physical/callable/runtime fences in existing packet/index/lake/preservation owners; qualify safe additive interfaces separately.",
+    "semantic": "Original LIR-02/07/12/17 meaning, edition, applicability, reviewed target and actual build dependencies remain open. Preserve original24/139 task records.",
+    "training": "Authenticate retained F18 donor and nested F15/source/teacher/mask through existing admitted loader before implementing/admitting finite paired fitting and frozen scoring."
+  },
+  "observed_at_utc": "2026-10-27T05:27:07.876552+00:00",
+  "post_completion_review": {
+    "cache_invalidation_qualified_by_256_pass": false,
+    "corrected_public_port_qualification": "separate later observation required",
+    "disposition": "Do not adopt the two public-success caches. Port the additive compatibility interfaces with original per-call validation intact.",
+    "findings": [
+      "Lake cached success bypasses original parent operation opening/closing, physical-file, transitive-source, callable and runtime checks.",
+      "Preservation cache skips expanded producer/native/standalone replay and closing checks.",
+      "Both caches return shared result identities, permitting later caller mutation to contaminate reuse.",
+      "Selected source-derived custom digest does not prove full input identity."
+    ],
+    "original_256_pass_retained": true
+  },
+  "schema": "legal-ir-native-lean-preparation-completion-cache-review/v1"
+}

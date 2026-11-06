@@ -1,0 +1,122 @@
+{
+  "authority": {
+    "Lean_admitted": false,
+    "graph_or_corpus_admitted": false,
+    "legal_meaning_reviewed": false,
+    "paired_fit_authorized": false,
+    "source_or_edition_authenticated": false,
+    "statutory_accuracy_qualified": false,
+    "training_gold_qualified": false
+  },
+  "independent_review": {
+    "bytes": 3077,
+    "path": "/tmp/legal-ir-mixed-graph-independent-domain-review-20261027.json",
+    "sha256": "d868336ef9c0f34038088cdca20ff74ae6dade9fd9f75dcbbb804d2f597f3da3"
+  },
+  "integration_whole_runtime_retested": false,
+  "mixed_only_contract": {
+    "ast_json_depth": 48,
+    "exact_and_plus_one_byte_controls": true,
+    "final_output_bytes_including_graph_id": 2097152,
+    "graph_nodes": 4096,
+    "profile": "mixed_relational_norm_v1"
+  },
+  "model_or_compiler_execution": false,
+  "old_three_profile_byte_controls": {
+    "depth_limits_preserved": [
+      24,
+      24,
+      32
+    ],
+    "legacy_body_before_graph_id_boundary_behavior_preserved": true,
+    "profiles": [
+      {
+        "bytes": 13222,
+        "exact_public_candidate_bytes_equal": true,
+        "profile": "canonical_rules_v1",
+        "sha256": "c595c8d6238bb177de6e7489175aee1ccf52a0f2b51db3267dba94cd0c87d32e"
+      },
+      {
+        "bytes": 39447,
+        "exact_public_candidate_bytes_equal": true,
+        "profile": "normative_scope_v1",
+        "sha256": "d5bc787c95dfec2f11e51efd772db622c2d4c772b116781803f5dcdabf93a66f"
+      },
+      {
+        "bytes": 217699,
+        "exact_public_candidate_bytes_equal": true,
+        "profile": "relational_norm_v1",
+        "sha256": "2ced1f903035dd08430af8db026b613782eb529c0adef00d42ee1412fbb76417"
+      }
+    ],
+    "public_commit": "9eeed0d159d4fb7c2287143d64ec4d9ddbbb04f6",
+    "receipt": {
+      "bytes": 1191,
+      "path": "/tmp/legal-ir-mixed-graph-public-compatibility.json",
+      "sha256": "bfa4df4c142c57f5e88bfd7c70e4cf00db323660048ed3d243cfe3e1c12777b8"
+    },
+    "shared_default_byte_limit": 1048576
+  },
+  "open_gates": [
+    "A direct mixed-codec native TDFOL AST roundtrip is a named interface boundary, not programme-wide parser/equality absence.",
+    "Mixed corpus registration, genuine source/edition/governing-definition/two-use review and actual source-bound lake build require separate admission and qualification."
+  ],
+  "owning_tests": [
+    {
+      "bytes": 65338,
+      "path": "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py",
+      "sha256": "4fe253d89a18a1bd86baf837c7e2f9fd8529b4e78e09daf02a9ad4aedfd7655d"
+    },
+    {
+      "bytes": 59724,
+      "path": "tests/unit/logic/autoformal/test_legal_semantic_graph.py",
+      "sha256": "2ebf5df78d317b4ff330eab2d245efd7c18189425265302fef0e92f0f1fca8c3"
+    }
+  ],
+  "qualification_commit": "ac7d085a34258281ccab0e07df73a0b3d64d50cc",
+  "qualification_public_base": "9eeed0d159d4fb7c2287143d64ec4d9ddbbb04f6",
+  "recorded_at_utc": "2026-10-27",
+  "retained_7214_alternatives": {
+    "binders_each": 12,
+    "count": 2,
+    "equalities_each": 6,
+    "internal_source_binding": null,
+    "ordered_role_records_each": 10,
+    "request_json_depths": [
+      45,
+      42
+    ],
+    "request_sha256": [
+      "957b2011acde34b7fda85d8661061622160316605b03324a7b52c94cc17b6bc7",
+      "20017c7e69b094173ac62810c3c4d146401829f23d9e5d0626260f2227757c58"
+    ],
+    "selected_interpretation": null,
+    "test_source_association": "separately nominated fictional fixture",
+    "typed_nodes_each": 98
+  },
+  "retained_local_receipt": {
+    "bytes": 3633,
+    "path": "/tmp/legal-ir-mixed-graph-20261027/receipt.json",
+    "sha256": "8b7858877d0937f68a2accab0fbcd56f89a7217eb1679902ba69aa225ebe6a48"
+  },
+  "schema": "legal-ir-mixed-graph-public-qualification-summary/v1",
+  "scope": "Pure authored/candidate-interface and complete ordered mixed graph mechanics; no actual compiler in this cohort, statutory meaning or graph/corpus admission.",
+  "sources": [
+    {
+      "bytes": 61444,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_relational_norm_v1.py",
+      "sha256": "e3fb0941e123672f4c280f282b0bce80937dab6cdc56ca607ffd5d3713ae9adf"
+    },
+    {
+      "bytes": 37209,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_semantic_graph.py",
+      "sha256": "b198d58209f5151081588fab914bedc7f15bbbd5d1a1717af98711aed031464c"
+    }
+  ],
+  "tests": {
+    "actual_installed_Lean_case_deselected": 1,
+    "failures": 0,
+    "log_sha256": "f05f867ff6c4780e128d34ed9c6fcdd28cf1874c43fb82a0f30a174424b47921",
+    "passed_pure": 155
+  }
+}

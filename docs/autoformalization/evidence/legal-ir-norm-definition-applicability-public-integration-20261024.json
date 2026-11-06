@@ -1,0 +1,828 @@
+{
+  "acceptance_scope": "Only the selected20 authored cases/60 phases on current public dependencies. Original applicability65, recovered binding67/A_B, original144/64 and the prior current-public21/63 cutoff remain separate. No actual applicability, meaning, graph/Lean or training decision follows.",
+  "accepted": true,
+  "accepted_interpretation": null,
+  "actual_statutory_applicability_supplied": false,
+  "author_operations": "Immutable saved metadata/raw-pin/AST evidence only; no product import, crypto/test/model/native/Lean execution, resource/lease/recovery action or canonical mutation by this evidence author.",
+  "authority": {
+    "Lean_or_proof_admission": false,
+    "actual_statutory_applicability": false,
+    "actual_statutory_review": false,
+    "adjudicated_norm_meaning": false,
+    "crypto_binary_equivalence": false,
+    "current_real_world_registry_freshness": false,
+    "decisions_applied": false,
+    "evaluation_clock_authenticated": false,
+    "every_use_applicability": false,
+    "full_package_environment_equivalence": false,
+    "governing_definition": false,
+    "graph_or_corpus_admission": false,
+    "historical_execution_reconstructed": false,
+    "historical_mapping_raw_bytes_reconstructed": false,
+    "independent_crypto_operation_counts": false,
+    "legal_as_of": false,
+    "model_or_encoder_execution": false,
+    "physical_source_span_entity_join": false,
+    "process_or_exposure_truth": false,
+    "reviewer_competence": false,
+    "reviewer_human_identity": false,
+    "reviewer_human_independence": false,
+    "source_edition_authentication": false,
+    "training_or_evaluation_gold": false,
+    "training_or_optimizer_gain": false,
+    "typed_substitution_or_definition_application": false
+  },
+  "consumer_mask": 0,
+  "contract": {
+    "declarations": "Each supplied use is unresolved or declares one supplied alternative. Positive statements need a canonical civil legal date, authored scope/rationale and exact support bytes; no effective-date truth, priority or substantive adequacy is inferred.",
+    "fences": "Self/direct/inherited producer pins, caller/detached snapshots, complete report regeneration and post-serialization fences retained.",
+    "limits": "Only supplied nominated uses/alternatives/endpoints; no all-terms/global-cohort coverage or human independence. Known canonical structured/common-body aliases are excluded as support; alternate unsupplied raw serializations are not reconstructed.",
+    "original_companion_subject_manifest_independently_pinned_and_fully_replayed": true,
+    "original_norm_slots": "Every original norm question stays open. Common-body authentication and endpoint prerequisites do not supply combined norm meaning, norm reviewer cohort, governing selection or typed substitution.",
+    "signed_custody": "Separate fixed Profile G applicability domain; independent whole-body raw/canonical pins, trust/review populations, endpoint observations and explicit clocks.",
+    "typed_uses": "Whole typed targets retain first-appearance order and every nomination. A selected link must belong to that exact use; repeated symbols do not merge occurrences."
+  },
+  "current_dependency_compatibility": {
+    "changed_source_identities": [
+      {
+        "historical65": {
+          "bytes": 14612,
+          "sha256": "2e0eed594cbfa256f54d229e2c9e006eada04263aae17c5d330c79741047f087"
+        },
+        "path": "ipfs_datasets_py/logic/autoformal/corpus_definition_adapter_v2.py",
+        "public75ef": {
+          "bytes": 19768,
+          "sha256": "17412dc0e246e43ba5a1935f3f053c5312b2868d334d6204ca2801aba9230237"
+        },
+        "status": "changed_existing_dependency"
+      },
+      {
+        "historical65": {
+          "bytes": 29833,
+          "sha256": "db4da5508091729757bea1f64e20fe997c98b0c60069490f0845f856965be190"
+        },
+        "path": "ipfs_datasets_py/logic/autoformal/corpus_definition_review_v2.py",
+        "public75ef": {
+          "bytes": 58374,
+          "sha256": "d121c761c4acc30e9e651c72f77c1adbd4ae190f11ca5f3535c166097ab8d7fe"
+        },
+        "status": "changed_existing_dependency"
+      },
+      {
+        "historical65": {
+          "bytes": 14932,
+          "sha256": "ec83dcda3f6b409f01c57344b9e40760f210d513b35201dc635d48dfe62fd788"
+        },
+        "path": "ipfs_datasets_py/logic/autoformal/legal_paired_manifest_inventory_v1.py",
+        "public75ef": {
+          "bytes": 17742,
+          "sha256": "f5778bbb6f2fef41a45057ce45ca2f409f0f27647c39e538b21909dd38a1990b"
+        },
+        "status": "changed_existing_dependency"
+      },
+      {
+        "historical65": {
+          "bytes": 24042,
+          "sha256": "ebce80cbb7da29029f30866e1ec87b2ae0cb62563b30628621fb434d58adebde"
+        },
+        "path": "ipfs_datasets_py/logic/autoformal/legal_semantic_graph.py",
+        "public75ef": {
+          "bytes": 34676,
+          "sha256": "f929572c71536bc61364cccbf274c8f03e0bbc01655d2c6b0a3435d34d1a70c4"
+        },
+        "status": "changed_existing_dependency"
+      },
+      {
+        "historical65": {
+          "bytes": 25634,
+          "sha256": "dc4448d3cb8dbbc23f7686674bb5b2b56d04cfbdb74b817b9e22b180ee7ee36a"
+        },
+        "path": "ipfs_datasets_py/logic/autoformal/legal_source_definition_bridge_v2.py",
+        "public75ef": {
+          "bytes": 38423,
+          "sha256": "da374789b919212513f9d4403b2bd161783db53982233f4ff2e8273166a8a860"
+        },
+        "status": "changed_existing_dependency"
+      },
+      {
+        "historical65": {
+          "bytes": 8241,
+          "sha256": "2036a97950b744752d19f82eca25142ced957b34c934c1c16e60595db0e2234d"
+        },
+        "path": "ipfs_datasets_py/logic/autoformal/legal_statutory_context_v2.py",
+        "public75ef": {
+          "bytes": 20005,
+          "sha256": "2f4e2895e29d6a7fcefdb240c73b732b8e0504b918af62994a04964bc572a13e"
+        },
+        "status": "changed_existing_dependency"
+      },
+      {
+        "historical65": {
+          "bytes": 29918,
+          "sha256": "e7888beae5486f8efc9feec84f6ab51ceb85e91e2bb6e768c55eb5b1de7563b8"
+        },
+        "path": "tests/unit/logic/autoformal/test_legal_norm_scope_correspondence_v1.py",
+        "public75ef": {
+          "bytes": 29917,
+          "sha256": "0194712dccaedd79a704f104b236185e345290d53675c1cbc16a83b4bb4d6a61"
+        },
+        "status": "changed_existing_dependency"
+      },
+      {
+        "historical65": {
+          "bytes": 22540,
+          "sha256": "8d9b72ba28d61e749a2d08f07890bad289f328e55b26c3b100ace68f84f92e1d"
+        },
+        "path": "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py",
+        "public75ef": {
+          "bytes": 22714,
+          "sha256": "c8b8f7410b697e6d0b047011c4c80eb7e9759f845c5362e7b7c68c2908f94e8a"
+        },
+        "status": "changed_existing_dependency"
+      },
+      {
+        "historical65": {
+          "bytes": 37716,
+          "sha256": "c154ac1f88883248bf2b648e000c6f3f1057bf72c70617b7976b4cefc42c495d"
+        },
+        "path": "tests/unit/logic/autoformal/test_legal_source_sampling_definition_binding_v2.py",
+        "public75ef": {
+          "bytes": 37587,
+          "sha256": "bc7e401a591f53abe666e025daa908542c250d66fe61a5db51e3a13d5c21d009"
+        },
+        "status": "changed_existing_dependency"
+      }
+    ],
+    "coverage_boundary": "Accepted selected20 cases exercise the existing nonparent norm/definition/adapter/bridge/context route against current producer pins. They do not qualify newly added parent-source profiles or establish global dependency behavior.",
+    "current_public_byte_exact": 66,
+    "current_public_preserved_sources": 177,
+    "different_existing_sources_and_fixtures": 9,
+    "missing_applicability_source_tests": 2,
+    "original_executed_population": 77,
+    "prepared_union_sources": 179,
+    "prequalification_static_legacy_surface_findings": [
+      "Corpus_definition_review_v2 retains all17original functions and all common top-level assignments AST-exact;10new parent-profile functions are separate. This is static legacy-surface evidence, not qualification of new parent branches.",
+      "Corpus_definition_adapter_v2 keeps the legacy signature. Its original envelope tail moved to _definition_candidate(is_parent=False). The old caller supplies no parent override; legacy schema, scope field, transport pins, contributor metadata and graph defaults remain selected. _graph adds declared_scope_only=False; the old path retains APPLIES_WITHIN custody edges. New parent paths are not part of this applicability65 source profile.",
+      "Source_definition_bridge_v2 keeps legacy prepare signature and DEFAULT_LIMITS. _limits gains a defaults parameter whose default remains that identical DEFAULT_LIMITS. Unary lowering moved to _encode_unary_definition; the existing caller still validates the head span first, passes the same span checks through atom_span and supplies original family/bounds. This extraction requires fresh integration coverage under current producer pins; old65 is not reassigned to current code.",
+      "Semantic_graph changed4oldfunctions with explicit PARENT_SOURCE_SCHEMA branches/selector variants. Original nonparent selectors retain prior branches. Context_v2 retains all10oldfunctions AST-exact.",
+      "Paired inventory public source is different; consumed _wire/_read_json identity should be retained as a named compatibility check. Definition-binding helper fixture has39/40oldfunctions AST-exact; only an unrelated unselected import-guard test changed. Scopefixture whitespace and relational fixture IDs remain separate nonbehavioral diffs."
+    ],
+    "raw_compatibility_review_durable": true
+  },
+  "current_public_integration": {
+    "accepted": true,
+    "actual_genuine_crypto_observation": {
+      "additional_signature_operations_by_worker": 0,
+      "cryptography_version": "49.0.0",
+      "independent_crypto_operation_counts_attested": false,
+      "private_key_API": {
+        "module": "cryptography.hazmat.primitives.asymmetric.ed25519",
+        "qualified_name": "Ed25519PrivateKey"
+      },
+      "profile": "genuine-ed25519-fixture-signatures/v1",
+      "profile_g_backend_bindings_match_genuine_API": true,
+      "public_key_API": {
+        "module": "cryptography.hazmat.primitives.asymmetric.ed25519",
+        "qualified_name": "Ed25519PublicKey"
+      },
+      "selected_positive_signature_tests_required": true,
+      "third_party_crypto_binary_equivalence_attested": false
+    },
+    "actual_source_observations": {
+      "all_frozen_canonical_and_request_pins_verified": true,
+      "checked_compile_buffers": 131,
+      "checked_exec_filenames": 131,
+      "exact_compile_payload_comparison": true,
+      "exact_expanded_nodes_invoked": true,
+      "explicit_plain_assertions": true,
+      "imported_module_entries": 121,
+      "physical_import_origin_paths": 119,
+      "request_source_pins": 205,
+      "required_genuine_test_modules_observed": 3,
+      "required_physical_execution_paths_observed": 37,
+      "source_bytes": 4621883,
+      "source_files": 179
+    },
+    "applicability_case_scope": "Twenty existing authored controls; pure precision seams and caller/detached outer-context replacements remain explicit. No actual applicability or meaning decision follows.",
+    "blocked_import_attempts": [],
+    "blocked_operations": [],
+    "bypassed_initializer_sources": [
+      "ipfs_datasets_py/logic/__init__.py",
+      "ipfs_datasets_py/logic/bridge/__init__.py",
+      "ipfs_datasets_py/optimizers/__init__.py",
+      "ipfs_datasets_py/optimizers/logic_theorem_optimizer/__init__.py",
+      "ipfs_datasets_py/logic/integration/__init__.py",
+      "ipfs_datasets_py/logic/integration/reasoning/__init__.py"
+    ],
+    "case_disposition": {
+      "errors": 0,
+      "failed": 0,
+      "passed": 20,
+      "skipped": 0
+    },
+    "case_groups": {
+      "existing_applicability_cases": 20
+    },
+    "crypto_functional_scope": "Existing selected positive fixture-signature tests passed; worker records genuine imported Ed25519 API bindings/version. No independent crypto-operation count or binary equivalence proof.",
+    "declared_bypasses_not_instantiated": [
+      "ipfs_datasets_py/logic/bridge/__init__.py",
+      "ipfs_datasets_py/optimizers/__init__.py",
+      "ipfs_datasets_py/optimizers/logic_theorem_optimizer/__init__.py",
+      "ipfs_datasets_py/logic/integration/__init__.py",
+      "ipfs_datasets_py/logic/integration/reasoning/__init__.py"
+    ],
+    "dynamic_helper_scope": "Eleven dynamically loaded definition/norm helpers have checked physical compile/exec evidence; no canonical helper-module origin claim.",
+    "dynamic_helpers_normal_module_origins_claimed": false,
+    "envelope": {
+      "child_process_slots": 1,
+      "cpu_slots": 1,
+      "memory_mb": 4096,
+      "storage_bytes": 134217728,
+      "timeout_seconds": 900
+    },
+    "evidence": {
+      "attempt-definition-applicability-pure-v01/exports/checked-source-buffers.json": {
+        "bytes": 3163206,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/definition-applicability-public-port-v01/attempt-definition-applicability-pure-v01/exports/checked-source-buffers.json",
+        "root": "datasets_repository",
+        "sha256": "904b77343b0f44bdff564107d190c3b21b9519c8c0c4ba30e285dc9d30ed9dc3"
+      },
+      "attempt-definition-applicability-pure-v01/exports/import-origins.json": {
+        "bytes": 56409,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/definition-applicability-public-port-v01/attempt-definition-applicability-pure-v01/exports/import-origins.json",
+        "root": "datasets_repository",
+        "sha256": "bc8add89585a3220cf9b7ecc92a551cb6bf6ecd7fcf2c1cb0524d4ea21d85e76"
+      },
+      "attempt-definition-applicability-pure-v01/exports/test-collection.json": {
+        "bytes": 17885,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/definition-applicability-public-port-v01/attempt-definition-applicability-pure-v01/exports/test-collection.json",
+        "root": "datasets_repository",
+        "sha256": "03bfd3cf5c9b68795321d1e78273052cc9f58af6020ed5f4f4da9ea0d73636b9"
+      },
+      "attempt-definition-applicability-pure-v01/exports/test-result.json": {
+        "bytes": 8231,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/definition-applicability-public-port-v01/attempt-definition-applicability-pure-v01/exports/test-result.json",
+        "root": "datasets_repository",
+        "sha256": "692e88678a22afc48f1b75a4295253ae6610dbc5f66a6dcb26a6f26fcf327b0e"
+      },
+      "attempt-definition-applicability-pure-v01/exports/tests.xml": {
+        "bytes": 4477,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/definition-applicability-public-port-v01/attempt-definition-applicability-pure-v01/exports/tests.xml",
+        "root": "datasets_repository",
+        "sha256": "0e0680a35193e23e87297e6501112d0cb68860c8f4faefd1fab1a89c91bdeaf6"
+      },
+      "attempt-definition-applicability-pure-v01/logs/execution.json": {
+        "bytes": 3283,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/definition-applicability-public-port-v01/attempt-definition-applicability-pure-v01/logs/execution.json",
+        "root": "datasets_repository",
+        "sha256": "7231fec14cd02f22805fe43988ed1411618febb3840d6383c7ca24ccab2bc1ef"
+      },
+      "attempt-definition-applicability-pure-v01/logs/result.json": {
+        "bytes": 3046,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/definition-applicability-public-port-v01/attempt-definition-applicability-pure-v01/logs/result.json",
+        "root": "datasets_repository",
+        "sha256": "324a3f583e5f16096b43e849ef2ef0fc23e7894cef64fa38a3c76eee8d5b2d13"
+      },
+      "attempt-definition-applicability-pure-v01/logs/stderr.log": {
+        "bytes": 0,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/definition-applicability-public-port-v01/attempt-definition-applicability-pure-v01/logs/stderr.log",
+        "root": "datasets_repository",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "attempt-definition-applicability-pure-v01/logs/stdout.log": {
+        "bytes": 110,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/definition-applicability-public-port-v01/attempt-definition-applicability-pure-v01/logs/stdout.log",
+        "root": "datasets_repository",
+        "sha256": "6bce2a16775fc12aea015251206c87fea926e9fd180ccbd79c44076b43b85169"
+      },
+      "attempt-definition-applicability-pure-v01/logs/validation-durability.json": {
+        "bytes": 1826,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/definition-applicability-public-port-v01/attempt-definition-applicability-pure-v01/logs/validation-durability.json",
+        "root": "datasets_repository",
+        "sha256": "0b4c03082dba8d7faff05f141837e574b3ffce5b156dedb5b35cf30d4c91ba71"
+      },
+      "canonical-source-origin-map-v01.json": {
+        "bytes": 51751,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/definition-applicability-public-port-v01/canonical-source-origin-map-v01.json",
+        "root": "datasets_repository",
+        "sha256": "138403d2bf5c8a8821c87c6ed1aa99b0f586544240008278709eacdef9a834ea"
+      },
+      "controls-candidate-manifest-v01.json": {
+        "bytes": 9875,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/definition-applicability-public-port-v01/controls-candidate-manifest-v01.json",
+        "root": "datasets_repository",
+        "sha256": "de64abc1598329c8f50aa5d52270523b543a6966dd4dd57771a53dffc3255a34"
+      },
+      "controls-independent-review-v01.json": {
+        "bytes": 6916,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/definition-applicability-public-port-v01/controls-independent-review-v01.json",
+        "root": "datasets_repository",
+        "sha256": "0a3f869a57f73aade306addb5dd1cfac28dd0ca50e3813991d036a0483261c79"
+      },
+      "controls-installation-v01.json": {
+        "bytes": 4056,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/definition-applicability-public-port-v01/controls-installation-v01.json",
+        "root": "datasets_repository",
+        "sha256": "73dd52df31beef2700f01d61105709b2f55d507c108d1f32f2d77a1c4bdfa8b8"
+      },
+      "definition-applicability-wrapper-complete-v01.json": {
+        "bytes": 292,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/definition-applicability-public-port-v01/definition-applicability-wrapper-complete-v01.json",
+        "root": "datasets_repository",
+        "sha256": "7ae85be02b1e9a6a35fb1f51e9d17a72c1c7e2593ac214161cca6adfbda76c20"
+      },
+      "dependency-compatibility-review-v01.json": {
+        "bytes": 52697,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/definition-applicability-public-port-v01/dependency-compatibility-review-v01.json",
+        "root": "datasets_repository",
+        "sha256": "3a8a4f0c0c7b639bd97dccd0602d78b2297b28ed10769ebb9d4389d08ac23b49"
+      },
+      "indexed-binding67-history-reconciliation-v01.json": {
+        "bytes": 5195,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/definition-applicability-public-port-v01/indexed-binding67-history-reconciliation-v01.json",
+        "root": "datasets_repository",
+        "sha256": "3ff599b4aed93c94d75a1616a5ed7367eb48c195259984755a7bf82f48570ef1"
+      },
+      "launch-definition-applicability-pure-v01.json": {
+        "bytes": 7960,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/definition-applicability-public-port-v01/launch-definition-applicability-pure-v01.json",
+        "root": "datasets_repository",
+        "sha256": "8bca90856723b87f987ff49d74c39bb9944af714396e74b51cef3c5831e3f63e"
+      },
+      "live-source-capture-v01.json": {
+        "bytes": 1262,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/definition-applicability-public-port-v01/live-source-capture-v01.json",
+        "root": "datasets_repository",
+        "sha256": "3fb8e06f41ae48b399f78c38c7bb9b88232de983af75d55d2e7c2caf09cc8667"
+      },
+      "original-applicability-contract-note-v01.json": {
+        "bytes": 9742,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/definition-applicability-public-port-v01/original-applicability-contract-note-v01.json",
+        "root": "datasets_repository",
+        "sha256": "ebe8770a96ae9c119d60cbffb11e5bd292b759c432ee82e019e3e66c8e0e0509"
+      },
+      "prepared-plan-v01.json": {
+        "bytes": 1410,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/definition-applicability-public-port-v01/prepared-plan-v01.json",
+        "root": "datasets_repository",
+        "sha256": "5097d45dd35eae0b4e9db53cedbe6432632dd00aa50ff93e513dea948bf114e0"
+      },
+      "public-base-v01.json": {
+        "bytes": 768,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/definition-applicability-public-port-v01/public-base-v01.json",
+        "root": "datasets_repository",
+        "sha256": "28be847a4adf879c6d16b003be4c1c1ea3a2e73a689cede145af3601d8d50ef3"
+      },
+      "qualification-controller-complete-definition-applicability-pure-v01.json": {
+        "bytes": 277,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/definition-applicability-public-port-v01/qualification-controller-complete-definition-applicability-pure-v01.json",
+        "root": "datasets_repository",
+        "sha256": "c531299fba43c4d2f3dad3c1e6d8ef3b2b59cb23a2efb1c1250adc42d94a98ac"
+      },
+      "qualification-saved-reader-v01.json": {
+        "bytes": 13789,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/definition-applicability-public-port-v01/qualification-saved-reader-v01.json",
+        "root": "datasets_repository",
+        "sha256": "bef8c49914d256c2e257d9450ca3448a0b96afadbe1b1696450fc9d1f8e5a124"
+      },
+      "qualification-spec-v01.json": {
+        "bytes": 9714,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/definition-applicability-public-port-v01/qualification-spec-v01.json",
+        "root": "datasets_repository",
+        "sha256": "ac435c8e1085b7e8207c8a47ebca0e9c6c984c04191c5c14197f7b3ed3eb2b68"
+      },
+      "request-definition-applicability-pure-v01.json": {
+        "bytes": 69065,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/definition-applicability-public-port-v01/request-definition-applicability-pure-v01.json",
+        "root": "datasets_repository",
+        "sha256": "d879ce8792d171b9ea41287e63b880066551f4a46020775aef563fb30a954608"
+      },
+      "selected-cohort-v01.json": {
+        "bytes": 13134,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/definition-applicability-public-port-v01/selected-cohort-v01.json",
+        "root": "datasets_repository",
+        "sha256": "c16a01cdb8529afeda57ca087f322469ca463fd50530eea06294e32110b2a7de"
+      },
+      "source-closure-recommendation-v01.json": {
+        "bytes": 86111,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/definition-applicability-public-port-v01/source-closure-recommendation-v01.json",
+        "root": "datasets_repository",
+        "sha256": "776c7a22cca7f769fd85fe69cd9e3f113719e6812d21b3c63661ed2bfb3e958e"
+      },
+      "source-closure-spec-v01.json": {
+        "bytes": 33336,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/definition-applicability-public-port-v01/source-closure-spec-v01.json",
+        "root": "datasets_repository",
+        "sha256": "70a99a94fa7bb82b43d899097a131b86b37ffd62c63e20cd7e9e44ba81bb8372"
+      },
+      "source-freeze-v01.json": {
+        "bytes": 1407,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/definition-applicability-public-port-v01/source-freeze-v01.json",
+        "root": "datasets_repository",
+        "sha256": "ea0102cbdb05c607d7bd8b281ac136e6b14323b7091ceb4d03f8945d430bdbf8"
+      },
+      "source-generation-review-v01.json": {
+        "bytes": 4283,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/definition-applicability-public-port-v01/source-generation-review-v01.json",
+        "root": "datasets_repository",
+        "sha256": "ba34b244eea5be60c36ac3f71df280a239fdbb5b7b666f7d48c42e8986d0da53"
+      },
+      "source-installation-v01.json": {
+        "bytes": 1420,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/definition-applicability-public-port-v01/source-installation-v01.json",
+        "root": "datasets_repository",
+        "sha256": "32e760cb6e158035e438dd65f8302d1356dcddd14f94f93407636ef278fe2373"
+      },
+      "source-materialization-v01.json": {
+        "bytes": 32656,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/definition-applicability-public-port-v01/source-materialization-v01.json",
+        "root": "datasets_repository",
+        "sha256": "217734551505176347063269ee0f18c1905d2cb49eeac8ce0b9f16d919d2661d"
+      },
+      "validation-manifest-v01.json": {
+        "bytes": 42253,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/definition-applicability-public-port-v01/validation-manifest-v01.json",
+        "root": "datasets_repository",
+        "sha256": "96d885cb8b8abf6389fa242d8344c502e5fd4f5a60d9311be5a9293fe1a39010"
+      }
+    },
+    "expected_cases": 20,
+    "expected_nodes": [
+      "tests/unit/logic/autoformal/test_legal_norm_definition_applicability_v1.py::test_pure_use_inventory_keeps_repeated_symbol_occurrences_and_competing_alternatives",
+      "tests/unit/logic/autoformal/test_legal_norm_definition_applicability_v1.py::test_pure_choices_require_complete_ordered_exact_use_link_date_scope_and_support[foreign_use]",
+      "tests/unit/logic/autoformal/test_legal_norm_definition_applicability_v1.py::test_public_template_and_declaration_replay_complete_inputs_without_promoting_meaning",
+      "tests/unit/logic/autoformal/test_legal_norm_definition_applicability_v1.py::test_public_full_report_regeneration_refuses_rehashed_promotion_and_preserves_inputs",
+      "tests/unit/logic/autoformal/test_legal_norm_definition_applicability_v1.py::test_public_genuine_signed_endpoints_allow_partial_declaration_custody_while_meaning_stays_open",
+      "tests/unit/logic/autoformal/test_legal_norm_definition_applicability_v1.py::test_pure_genuine_current_endpoint_replay_activates_time_dependencies_and_context_intake[expiry]",
+      "tests/unit/logic/autoformal/test_legal_norm_definition_applicability_v1.py::test_pure_genuine_current_endpoint_replay_activates_time_dependencies_and_context_intake[scheduled_revocation]",
+      "tests/unit/logic/autoformal/test_legal_norm_definition_applicability_v1.py::test_pure_genuine_current_endpoint_replay_activates_time_dependencies_and_context_intake[dependency]",
+      "tests/unit/logic/autoformal/test_legal_norm_definition_applicability_v1.py::test_pure_genuine_current_endpoint_replay_activates_time_dependencies_and_context_intake[context_slots]",
+      "tests/unit/logic/autoformal/test_legal_norm_definition_applicability_v1.py::test_pure_genuine_current_endpoint_replay_activates_time_dependencies_and_context_intake[evidence]",
+      "tests/unit/logic/autoformal/test_legal_norm_definition_applicability_v1.py::test_pure_original_norm_signature_domain_cannot_authorize_applicability[action]",
+      "tests/unit/logic/autoformal/test_legal_norm_definition_applicability_v1.py::test_pure_support_must_be_independent_exact_raw_bytes[source_alias]",
+      "tests/unit/logic/autoformal/test_legal_norm_definition_applicability_v1.py::test_pure_source_inventory_keeps_outlier_claimed_and_registered_actors_and_blocks_reuse[public_key]",
+      "tests/unit/logic/autoformal/test_legal_norm_definition_applicability_v1.py::test_pure_incomplete_source_actor_inventory_blocks_partial_custody_independently_of_body_authentication[unknown_key]",
+      "tests/unit/logic/autoformal/test_legal_norm_definition_applicability_v1.py::test_pure_incomplete_source_actor_inventory_blocks_partial_custody_independently_of_body_authentication[unsigned_context]",
+      "tests/unit/logic/autoformal/test_legal_norm_definition_applicability_v1.py::test_pure_context_intake_preserves_explicit_open_scope_and_dissent_without_treating_prose_as_slot_ids",
+      "tests/unit/logic/autoformal/test_legal_norm_definition_applicability_v1.py::test_pure_genuine_signed_endpoint_dissent_stays_authenticated_without_erasing_raw_conflict",
+      "tests/unit/logic/autoformal/test_legal_norm_definition_applicability_v1.py::test_public_input_mutation_fence_rejects_changes_after_genuinely_replayed_context[caller]",
+      "tests/unit/logic/autoformal/test_legal_norm_definition_applicability_v1.py::test_public_input_mutation_fence_rejects_changes_after_genuinely_replayed_context[detached]",
+      "tests/unit/logic/autoformal/test_legal_norm_definition_applicability_v1.py::test_pure_exact_raw_and_complete_canonical_body_pins_are_independent[duplicate_json]"
+    ],
+    "expected_passed_phases": 60,
+    "genuine_executed_public_pytest_helper": {
+      "bytes": 1489,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/validation_pytest.py",
+      "sha256": "cef7fd00277c38ac55ce80ae0e6234eeda36559ab56a9de4e0954d0590327d31"
+    },
+    "historical65_67_AB_21_or_other_cohorts_aggregated": false,
+    "independent_saved_result_defects": [],
+    "independent_saved_result_pending": [],
+    "namespace_profile": "definition-applicability-scoped-unit-namespaces/v1",
+    "observed_bypassed_initializer_sources": [
+      "ipfs_datasets_py/logic/__init__.py"
+    ],
+    "observed_cases": 20,
+    "observed_passed_phases": 60,
+    "original_owner_custody": {
+      "artifacts_durable_asserted": true,
+      "attempt_bytes": 3258473,
+      "attempt_file_count": 10,
+      "compute_lease_id": "082f7be938a84e0587c25268d9b272c5",
+      "compute_released": true,
+      "enforcement": "Cooperative admission and polled usage; sampled birth-bound descendants and named owned attempt. No kernel quota or arbitrary descendant containment claim.",
+      "source_READs_closed_after_original_verified_cleanup": true,
+      "storage_released": true,
+      "storage_reservation_id": "3078cc2a3be14a9ca4c88eed729d1a6e"
+    },
+    "owned_execution_elapsed_seconds": 141.15797701687552,
+    "precision_seams": "Pure-named precision cases use already replayed fixtures; current-endpoint5 use genuine wrappers. Both caller/detached outer fences explicitly replace _context to isolate final serialization; they do not fully replay source context at that outer boundary.",
+    "predicted_request_source_pin_count": 205,
+    "prepared_source_bytes": 4621883,
+    "prepared_source_files": 179,
+    "qualification_limits": {
+      "code_object_identity_attested": false,
+      "full_public_package_or_environment_qualified": false,
+      "kernel_containment_attested": false,
+      "third_party_binary_or_cached_bytecode_attested": false,
+      "worker_initial_loader_compilation_attested": false
+    },
+    "qualification_profile": "definition-applicability-public-port-pure-controls/v1",
+    "required_ordinary_pytest_modules": 3,
+    "required_physical_paths": [
+      "ipfs_datasets_py/__init__.py",
+      "ipfs_datasets_py/logic/autoformal/__init__.py",
+      "ipfs_datasets_py/logic/formalization/__init__.py",
+      "ipfs_datasets_py/logic/formalization/autoencoder/__init__.py",
+      "ipfs_datasets_py/logic/legal_ir/__init__.py",
+      "ipfs_datasets_py/optimizers/logic_theorem_optimizer/validation_pytest.py",
+      "ipfs_datasets_py/logic/autoformal/legal_norm_definition_applicability_v1.py",
+      "ipfs_datasets_py/logic/autoformal/legal_norm_definition_evidence_v1.py",
+      "ipfs_datasets_py/logic/autoformal/legal_norm_interpretation_review_v1.py",
+      "ipfs_datasets_py/logic/autoformal/corpus_definition_review_v2.py",
+      "ipfs_datasets_py/logic/autoformal/corpus_definition_adapter_v2.py",
+      "ipfs_datasets_py/logic/autoformal/legal_source_definition_bridge_v2.py",
+      "ipfs_datasets_py/logic/autoformal/legal_source_sampling_context_definition_binding_v2.py",
+      "ipfs_datasets_py/logic/autoformal/legal_source_sampling_context_definition_review_v2.py",
+      "ipfs_datasets_py/logic/autoformal/legal_source_sampling_definition_binding_v2.py",
+      "ipfs_datasets_py/logic/autoformal/legal_source_sampling_definition_review_v2.py",
+      "ipfs_datasets_py/logic/autoformal/legal_norm_scope_correspondence_v1.py",
+      "ipfs_datasets_py/logic/autoformal/legal_source_norm_scope_v1.py",
+      "ipfs_datasets_py/logic/autoformal/legal_relational_norm_v1.py",
+      "ipfs_datasets_py/logic/autoformal/legal_graph_review.py",
+      "ipfs_datasets_py/logic/autoformal/legal_graph_dependencies.py",
+      "ipfs_datasets_py/logic/autoformal/legal_paired_manifest_inventory_v1.py",
+      "ipfs_datasets_py/logic/profile_g.py",
+      "tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py",
+      "tests/unit/logic/autoformal/test_corpus_definition_review_v2.py",
+      "tests/unit/logic/autoformal/test_legal_norm_definition_evidence_v1.py",
+      "tests/unit/logic/autoformal/test_legal_norm_interpretation_review_v1.py",
+      "tests/unit/logic/autoformal/test_legal_norm_scope_correspondence_v1.py",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py",
+      "tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py",
+      "tests/unit/logic/autoformal/test_legal_source_norm_scope_v1.py",
+      "tests/unit/logic/autoformal/test_legal_source_sampling.py",
+      "tests/unit/logic/autoformal/test_legal_source_sampling_definition_binding_v2.py",
+      "tests/unit/logic/autoformal/test_legal_source_sampling_definition_review_v2.py",
+      "tests/__init__.py",
+      "tests/unit/__init__.py",
+      "tests/unit/logic/autoformal/test_legal_norm_definition_applicability_v1.py"
+    ],
+    "required_physical_source_execution_paths": 37,
+    "status": "passed_current_public_definition_applicability_engineering_qualification",
+    "timings_are_nested_not_additive": true,
+    "worker_elapsed_seconds": 89.78701192792505
+  },
+  "evaluation_gold_mask": 0,
+  "governing_definition_use": null,
+  "id": "norm-definition-applicability-public-integration-20261024-01",
+  "independent_saved_review_pending": false,
+  "legal_as_of_civil_date": null,
+  "next_gate": "Supply exact current compatible statutory norm/definition evidence, competent independent reviews, authorized trust/revocation observations and authenticated clocks. Retained2024Title10 choice remains separate from source-edition/legal-as-of authentication. Obtain complete meaning-unit geometry and another genuine statutory use before reviewed graph composition, typed substitution, shared source-bound Lean generation/build/consequence proof or exposure/split-bound training/gold eligibility. All24tasks and separate8d/384d/768d/4096d producer/task/checkpoint/context/output gates remain unchanged.",
+  "original_applicability65": {
+    "actual_definition_reviews_supplied": false,
+    "actual_statutory_applicability_prepared": false,
+    "attempt": "run-01",
+    "behavioral_retries": 0,
+    "captured_sources_including_driver": 78,
+    "errors": 0,
+    "evidence": {
+      "closing-attempt-01-failure.json": {
+        "bytes": 1263,
+        "path": "artifacts/legal-norm-definition-applicability-20261017-01/closing-attempt-01-failure.json",
+        "root": "superproject_workspace",
+        "sha256": "d00806b9477fc7ec8131f07cf8993a023d09e935829dda59e0e4553d2e9f3447"
+      },
+      "implementation-receipt.json": {
+        "bytes": 22257,
+        "path": "artifacts/legal-norm-definition-applicability-20261017-01/implementation-receipt.json",
+        "root": "superproject_workspace",
+        "sha256": "723f4fa6a5ba2b883da4d4be672f923340ab810ed986b502e7412fa1a42668d7"
+      },
+      "retained-input-feasibility.json": {
+        "bytes": 1467,
+        "path": "artifacts/legal-norm-definition-applicability-20261017-01/retained-input-feasibility.json",
+        "root": "superproject_workspace",
+        "sha256": "8b8f539ded04dc6b17d0c8efa680af407e0e41ae5eb3a244d79b13db53503a0c"
+      },
+      "run-01/execution.json": {
+        "bytes": 2507,
+        "path": "artifacts/legal-norm-definition-applicability-20261017-01/run-01/execution.json",
+        "root": "superproject_workspace",
+        "sha256": "84b2c4c020df88d5d3ea368e2285abb1bef00f2675dcb7a6ab476f616ef7db27"
+      },
+      "run-01/prelaunch-source-pins.json": {
+        "bytes": 2149474,
+        "path": "artifacts/legal-norm-definition-applicability-20261017-01/run-01/prelaunch-source-pins.json",
+        "root": "superproject_workspace",
+        "sha256": "73cb4e0827d854d4513f952ca06a9e62a1a2df01c0c5147d75944931f9eb03b2"
+      },
+      "run-01/result.json": {
+        "bytes": 44901,
+        "path": "artifacts/legal-norm-definition-applicability-20261017-01/run-01/result.json",
+        "root": "superproject_workspace",
+        "sha256": "93356885f05cf0248c807cec1852b087173c662870c8b96261e01cae9a54aad0"
+      },
+      "run-01/tests.xml": {
+        "bytes": 9165,
+        "path": "artifacts/legal-norm-definition-applicability-20261017-01/run-01/tests.xml",
+        "root": "superproject_workspace",
+        "sha256": "24ad0f6770a4517f32411cbc6a4c0ae42d3ecc6b152a219c1f7e62bc6a60af23"
+      },
+      "saved-result-readback.json": {
+        "bytes": 24302,
+        "path": "artifacts/legal-norm-definition-applicability-20261017-01/saved-result-readback.json",
+        "root": "superproject_workspace",
+        "sha256": "601a8c44d15bb3059f9f08f968f0d967d9ce5dc92709d833c15309682bd64108"
+      },
+      "source-test-static-seal.json": {
+        "bytes": 3931,
+        "path": "artifacts/legal-norm-definition-applicability-20261017-01/source-test-static-seal.json",
+        "root": "superproject_workspace",
+        "sha256": "6aae8c320f6315f4bb3f61c3841c1713e8394a39dd1ce44f16f50b602b142585"
+      }
+    },
+    "executed_repository_sources": 77,
+    "failures": 0,
+    "fictional_signers_only": true,
+    "initial_documentation_closeout_failure": "Missing planned final receipt link was a documentation-audit failure, not a behavioral retry; its reader/trace remain separate.",
+    "lease_released_as_recorded": true,
+    "modern_current_READ_storage_namespace_phase_or_environment_scope_claimed": false,
+    "module_origins": 66,
+    "original65_reexecuted_here": false,
+    "original_legacy_envelope": {
+      "address_space_limit_bytes": 8589934592,
+      "aggregate_input_limit_bytes": 134217728,
+      "bounds_or_thresholds_loosened": false,
+      "child_slots": 1,
+      "companion_snapshot_max_nodes": 4000000,
+      "cpu_limit_seconds": 450,
+      "cpu_slots": 1,
+      "exclusive_core_claimed": false,
+      "lease_released": true,
+      "max_original_norm_unresolved_slots": 32,
+      "memory_mib": 8192,
+      "ordinary_norm_snapshot_max_nodes": 1500000,
+      "output_file_limit_bytes": 33554432,
+      "report_and_compact_authority_limit_bytes": 8388608,
+      "scheduler_policy_sha256": "f07cb14289fcb6275e4497dcc36be0dcf8bfc3dc87531ff7a9537eb85fdcc661",
+      "wall_limit_seconds": 600
+    },
+    "original_metrics": {
+      "cpu_seconds": 100.81079100000001,
+      "elapsed_seconds": 100.79267973499373,
+      "max_rss_linux_kib": 101132
+    },
+    "passed_cases": 65,
+    "production_keys_or_actual_reviews_created": false,
+    "profile": "Fictional genuine public norm/source/context/definition/signature fixtures plus explicitly labelled private precision seams",
+    "pytest_assertion_rewriting": false,
+    "retained_feasibility": "Retained A/B carriers had producer drift and absent actual definition-review evidence; old reports do not constitute a current combined statutory replay.",
+    "root_package_initializers_executed": false,
+    "skips": 0,
+    "test_functions": 24
+  },
+  "public_destination": "docs/autoformalization/evidence/legal-ir-norm-definition-applicability-public-integration-20261024.json",
+  "publication_base_compatibility": {
+    "actual_qualification_base_preserved": "75ef50ee3df9ce8fb630bff3f4f182a28758f64b",
+    "all177_existing_public_blobs_match_new_public_base": true,
+    "all179_raw_postimages_equal_qualified_map": true,
+    "checked_compiled_source_count_retained": 131,
+    "peer_changed_paths_disjoint_from_qualified179": true,
+    "publication_base": "ff0c4ff0091cd28d4bb851b1976a1279af9237f7",
+    "publication_tree": "f630b8f76a7ee2e6a00ab7a3a1afdc998fdaf584",
+    "qualification_repeated": false,
+    "qualified_source_count_retained": 179,
+    "scope": "Publication metadata compatibility only. Root advanced the checkout under the original closed source WRITE and verified every qualified source postimage. Eight peer changes are outside the179-source map. Actual20/60 specification, plan, manifest, reader, source_generation.public_base75ef and all execution/legal boundaries remain unchanged; no new behavior, source generation or test result is claimed.",
+    "source_equality_receipt": {
+      "bytes": 42815,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/definition-applicability-public-port-v01/public-base-advance-v01.json",
+      "root": "datasets_repository",
+      "sha256": "e206b508c8249154556c3e7e6a18d48fa1b64e62b8e2fb598548f4a8501b2ec1"
+    },
+    "two_selected_applicability_source_test_postimages_unchanged": true
+  },
+  "recorded_at_utc": "2026-10-24T06:42:49.051432+00:00",
+  "recovered_binding67_history": {
+    "current_failed_reservation_state_or_recovery_claimed": false,
+    "earlier_failed_attempts": {
+      "all_claims_released_at_original_observation": false,
+      "current_ledger_or_cleanup_rechecked": false,
+      "earlier_attempts_receive_qualified_case_credit": false,
+      "retained_failed_disk_bytes_at_original_observation": 40000000,
+      "retained_failed_disk_claim_count_at_original_observation": 2,
+      "scheduler_absence_alone_is_durable_release_proof": false
+    },
+    "evidence": {
+      "combined-failures-independent-readback.json": {
+        "bytes": 9507,
+        "path": "artifacts/legal-ir-norm-binding-serialization-20261016-01/combined-failures-independent-readback.json",
+        "root": "superproject_workspace",
+        "sha256": "f28af9e47e5289d33903ff0f7d45c58b38d0f3f564c6aef1140a92946a79f8cf"
+      },
+      "declaration-independent-readback.json": {
+        "bytes": 30779,
+        "path": "artifacts/legal-ir-norm-binding-serialization-20261016-01/declaration-independent-readback.json",
+        "root": "superproject_workspace",
+        "sha256": "212f93f3f8149516dedc3d66e465997bb1c69643e2a4ee49caf0341f29580504"
+      },
+      "original_native/replay-02/exports/retained-replay.json": {
+        "bytes": 10510,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-norm-binding-serialization-20261016-01/replay-02/exports/retained-replay.json",
+        "root": "datasets_repository",
+        "sha256": "8710d0876381c43a4e57bc247cdbec6ec51041b9afe3805aad1af198a31ffb71"
+      },
+      "original_native/tests-03/exports/unit-test-result.json": {
+        "bytes": 3618,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-norm-binding-serialization-20261016-01/tests-03/exports/unit-test-result.json",
+        "root": "datasets_repository",
+        "sha256": "db55cc54a07f2942316db3965136fb67f836212b20d75697022e3e1e246b9075"
+      },
+      "original_native/tests-03/logs/junit.xml": {
+        "bytes": 9302,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-norm-binding-serialization-20261016-01/tests-03/logs/junit.xml",
+        "root": "datasets_repository",
+        "sha256": "095ad84e6b0ded55c5669742230a34057df166b15b2d5ed081669c049f8541b3"
+      },
+      "qualification-source-resource-readback.json": {
+        "bytes": 662915,
+        "path": "artifacts/legal-ir-norm-binding-serialization-20261016-01/qualification-source-resource-readback.json",
+        "root": "superproject_workspace",
+        "sha256": "d84d54b198561142ea617f4b3a1a914ee7896de376a42ddba3d892d1d98991d2"
+      },
+      "turn-progress.json": {
+        "bytes": 9247,
+        "path": "artifacts/legal-ir-norm-binding-serialization-20261016-01/turn-progress.json",
+        "root": "superproject_workspace",
+        "sha256": "091d729f2a4548b63ab97a7b53cca152d6e05b757428531464938bf6db4edcd8"
+      }
+    },
+    "native_tests": {
+      "attempt": "tests-03",
+      "cases": 67,
+      "compile_observations": 158,
+      "durability_files_as_recorded": 167,
+      "errors": 0,
+      "existing_new_regressions": 3,
+      "failures": 0,
+      "final_attempt_bytes_as_recorded": 4426115,
+      "namespace_records": 2,
+      "original64_preserved": 64,
+      "skips": 0,
+      "source_files": 155,
+      "source_native_disk_successful_releases_as_recorded": true
+    },
+    "owner_sha256": "7fd416b67decb4b5e7422d3c6e9912c3479436d11096ff0d6db97648c9e2da4b",
+    "owning_test_sha256": "63783a8a3005db825fccf01da67ee589508efcb152b4236eff1572a843485d74",
+    "prior21_portable_cutoff_unchanged": true,
+    "profile": "Separately completed original native serialization successor named by applicability background index",
+    "reexecuted_here": false,
+    "relationship": "Original144 declaration, original494a/b18464 binding, later7fd/63767, original applicability65, and fresh current-public21/63 or20/60 remain distinct. Earlier67 is now recovered and credited without pooled cases, reruns or old-cutoff rewrites; no scientific/legal gain follows.",
+    "retained_A_B_replay": {
+      "actual_historical_current_mapping_lengths_differ": false,
+      "actual_signed_or_authenticated_declarations": 0,
+      "attempt": "replay-02",
+      "changed_slot_ids_per_candidate": 13,
+      "definition_endpoint_reexecutions": 0,
+      "differing_raw_lengths_covered_by_fixture_only": true,
+      "durability_files_as_recorded": 157,
+      "final_attempt_bytes_as_recorded": 4796173,
+      "generation_differences_per_candidate": 82,
+      "hypotheses": 2,
+      "meaning_or_definition_applications": 0,
+      "obligation_pairs_per_candidate": 19,
+      "physical_source_uses": 1,
+      "source_files": 141,
+      "source_native_disk_successful_releases_as_recorded": true
+    },
+    "verified_now_by_immutable_saved_readback": true
+  },
+  "schema": "legal-ir-norm-definition-applicability-public-integration-evidence/v1",
+  "scope": "Publication of the unchanged original65 applicability owner/test with a separately accepted current-public20-case/60-phase engineering integration. Exact-use declarations remain unapplied. The accepted saved-result reader verifies the bounded legacy consumer route, source buffers and original cleanup; newer parent-source profiles and substantive statutory applicability remain outside scope.",
+  "selected_interpretation": null,
+  "semantic_mask": 0,
+  "source_generation": {
+    "APIs": [
+      "build_norm_definition_applicability_template_v1",
+      "build_norm_definition_applicability_declaration_v1",
+      "assess_norm_definition_applicability_v1",
+      "validate_norm_definition_applicability_v1",
+      "norm_definition_applicability_sha256"
+    ],
+    "counted_live_norm_successor_substituted": false,
+    "existing_source_and_test_reused_byte_exact": true,
+    "new_implementation_tests_or_framework_authored": false,
+    "newer_public_definition_pipeline_preserved": true,
+    "old_captured_definition_owners_substituted": false,
+    "public_base": "75ef50ee3df9ce8fb630bff3f4f182a28758f64b",
+    "public_tree": "8039bf7a753db9ea756105b09365405a10c4d414",
+    "selected_files": [
+      {
+        "byte_exact_original65_generation": true,
+        "bytes": 42526,
+        "canonical_path": "ipfs_datasets_py/logic/autoformal/legal_norm_definition_applicability_v1.py",
+        "original_capture": {
+          "bytes": 42526,
+          "path": "artifacts/legal-norm-definition-applicability-20261017-01/run-01/captured-source/external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/legal_norm_definition_applicability_v1.py",
+          "root": "superproject_workspace",
+          "sha256": "2d5699246dcfe78d6273728086f2d27130319fe6dcbc170a38618d19387c70e7"
+        },
+        "sha256": "2d5699246dcfe78d6273728086f2d27130319fe6dcbc170a38618d19387c70e7"
+      },
+      {
+        "byte_exact_original65_generation": true,
+        "bytes": 39107,
+        "canonical_path": "tests/unit/logic/autoformal/test_legal_norm_definition_applicability_v1.py",
+        "original_capture": {
+          "bytes": 39107,
+          "path": "artifacts/legal-norm-definition-applicability-20261017-01/run-01/captured-source/external/ipfs_datasets/tests/unit/logic/autoformal/test_legal_norm_definition_applicability_v1.py",
+          "root": "superproject_workspace",
+          "sha256": "c12f6353f84e9c4b0bd676492809531773717033f6915d6e9d665dace61cce9d"
+        },
+        "sha256": "c12f6353f84e9c4b0bd676492809531773717033f6915d6e9d665dace61cce9d"
+      }
+    ]
+  },
+  "status": "accepted_current_public_selected20_applicability_engineering_qualification",
+  "training_mask": 0
+}

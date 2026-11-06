@@ -1,0 +1,307 @@
+{
+  "authority": {
+    "Lean_corpus_admission": false,
+    "authenticated_legal_decision": false,
+    "definition_applicability_review_completed": false,
+    "gold_admission": false,
+    "graph_admission": false,
+    "legal_as_of_or_governing_source_selected_by_this_work": false,
+    "meaning_review_completed": false,
+    "model_training_or_inference_authorized_by_fixture": false,
+    "source_review_completed": false
+  },
+  "canonical_sources": [
+    {
+      "bytes": 31147,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_counted_relation_binding_v1.py",
+      "sha256": "17589872139fa4a9972f9ff8f2c92f1bd2531d1049de33a60167422a5967f075"
+    },
+    {
+      "bytes": 65580,
+      "path": "tests/unit/logic/autoformal/test_legal_counted_frame_v1.py",
+      "sha256": "0807f3f45b0c5ade106caebd2c49a03d04865c61984e2a64c2fc841f6b194346"
+    },
+    {
+      "bytes": 48481,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_counted_frame_v1.py",
+      "sha256": "df91798d11e2b0da36afc75e0bc1a8b6d0a3d08bc255e7362d1c200e5e9baa13"
+    },
+    {
+      "bytes": 14085,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_counted_frame_threshold_v2.py",
+      "sha256": "9e3c4e42d8cfb5ed851461f6cd2562a71c7d5a2c2b8ccd5ab4fdbcf06e168024"
+    },
+    {
+      "bytes": 17913,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_counted_threshold_codec_v2.py",
+      "sha256": "94d6d7f722394c5344152303bc1504c545bcf9f2ef2a47b9b2d7f3360a1d0507"
+    }
+  ],
+  "evaluation_gold_mask": 0,
+  "failed_attempt_preserved": {
+    "attempt": "attempt-v01",
+    "cases": 16,
+    "cause": "Three test monkeypatch hooks still targeted the old counted module after the API moved. Exact three targets corrected to binding; assertions and product source unchanged.",
+    "collection": {
+      "bytes": 12073,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/count-relation-binding-v01/attempt-v01/exports/test-collection.json",
+      "sha256": "75463acacb4cb0c5033fa3fcff0fc5b149eb794e34b858a2faf8d3a8c1a07bcc"
+    },
+    "failed_calls": 3,
+    "failed_nodes": [
+      "tests/unit/logic/autoformal/test_legal_counted_frame_v1.py::test_relation_binding_invalid_json_and_independent_hash_fail_before_owner_discovery",
+      "tests/unit/logic/autoformal/test_legal_counted_frame_v1.py::test_relation_binding_direction_roles_frame_masks_and_inner_bytes_are_closed_before_owners",
+      "tests/unit/logic/autoformal/test_legal_counted_frame_v1.py::test_relation_binding_resealed_reports_and_final_serialization_mutations_are_refused"
+    ],
+    "failed_phases": 3,
+    "final_controller_at_failure_cutoff": {
+      "bytes": 14359,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/count-relation-binding-v01/controller-complete-v01.json",
+      "sha256": "3cf2f50f8400eea874f645414069250c2db0c752c5c86001497eb409f81193e4"
+    },
+    "later_original_owner_recovery": {
+      "actual_closing_witness": {
+        "bytes": 8609,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/count-relation-binding-v01/review/failure-storage-recovery/original-closeout-v01/selected-claim-closing-witness-v01.json",
+        "sha256": "8ac674617a4355452fe58a13ec580851c12265810e977b62a3635d5cfdf33e39"
+      },
+      "failed_qualification_changed": false,
+      "historical_requested_storage_bytes": 33554432,
+      "original_failure_or_payloads_erased": false,
+      "outcome": {
+        "accepted_storage_closeout": true,
+        "artifacts_unchanged": true,
+        "call_count": 1,
+        "closing_status": "released",
+        "failed_test_run_remains_unqualified": true,
+        "original_API": "autoencoder_resource_recovery.reconcile_retained_reservation",
+        "outputs_deleted": false,
+        "reservation_id": "5f9bb042b0064f6aa766c78d2f1ada9d",
+        "retry_performed": false,
+        "source_READ_closed": true,
+        "source_pins_unchanged": true,
+        "storage_released": true
+      },
+      "outstanding_storage_charge_after_release_bytes": 0,
+      "preserved_payload_bytes": 42632,
+      "preserved_payload_files": 6,
+      "receipt": {
+        "bytes": 2637,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/count-relation-binding-v01/review/failure-storage-recovery/original-closeout-v01/recovery-receipt-v01.json",
+        "sha256": "70fa5cf34f7680dcb9fbf9c8fc31465d7e465ad54d05e090dd9128388af93373"
+      }
+    },
+    "later_recovery_not_inferred": true,
+    "native_compute_released_at_cutoff": true,
+    "passed_calls": 13,
+    "passed_phases": 45,
+    "qualification_accepted": false,
+    "recovery_status": "actual_original_owner_outcome_recorded_separately_from_immutable_failed_cutoff",
+    "source_READs_closed_at_cutoff": true,
+    "storage_bytes_retained_at_cutoff": 33554432,
+    "test_only_fix_review": {
+      "bytes": 3071,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/count-relation-binding-v01/review/graph-lean/test-hook-target-fix-independent-review-v01.json",
+      "sha256": "0a32d90bb42ea5a3545f10bbd1a460785e5f947600f3925268af0526590d15bc"
+    },
+    "validation_manifest": {
+      "bytes": 24092,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/count-relation-binding-v01/validation-manifest-v01.json",
+      "sha256": "2e4e354b8629a61cea9ceb8250363178c9386e64ed6184843900605d59301988"
+    }
+  },
+  "four_width_programme": {
+    "changed": false,
+    "dimensions": [
+      8,
+      384,
+      768,
+      4096
+    ],
+    "new_encoder_or_training_runs": 0,
+    "note": "Typed relation binding supplies a separately versioned target for future reviewed lowering. It neither changes existing width-specific profiles nor qualifies learned reconstruction or Leanstral outputs.",
+    "profile_compatibility_claimed": false
+  },
+  "limits": [
+    "Only16selected cases; old67/81/109/170 campaigns are not rerun or pooled.",
+    "No actual law/cache/model/provider/network/fork/Lean work enrolled by this qualification.",
+    "The retained2024Title10 pilot preference does not establish any source, scope, meaning or inclusion premise.",
+    "Permission, obligation and prohibition contexts require separate interpretation and lowering; this pointwise FOL result supplies no modal transport.",
+    "Existing24task programme BACKLOG bytes remain unchanged."
+  ],
+  "mathematical_contract": {
+    "actor_event_time_shared": true,
+    "assertion_observation_scope": "Executed owning assertions under pinned sources; no separately exported report artifact or population-level semantic quality estimate.",
+    "complete_typed_FOL_roundtrip_and_replay_assertions_passed": true,
+    "cross_world_or_modal_lifting": false,
+    "distinctness": "built_in_object_identity",
+    "formula": "forall actor,event,time: (Cap3(Member,event,time) and (forall object: Detail(actor,object,event,time) -> Member(object,event,time))) -> Cap3(Detail(actor,_,event,time))",
+    "inclusion_direction": "Detail -> Member",
+    "inclusion_status": "caller_authored_unreviewed_hypothesis",
+    "maximum": 3,
+    "original_counted_report_core_nodes": 49,
+    "projected_detail_cap_core_nodes": 51,
+    "retained_exact_inner_core_nodes": 47,
+    "standalone_generated_binding_report_exported": false,
+    "whole_typed_binder_rows": 12,
+    "whole_typed_core_nodes": 114
+  },
+  "profile": "explicit-pointwise-actor-frame-subrelation-cap3/v1",
+  "public_apis": [
+    "authored_counted_relation_binding_request_v1",
+    "prepare_counted_relation_binding_v1",
+    "counted_relation_binding_report_sha256",
+    "validate_counted_relation_binding_v1"
+  ],
+  "publication_base": "73290fa97ec4d480a98af3238117340d69ea368e",
+  "qualification": {
+    "JUnit": {
+      "bytes": 3043,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/count-relation-binding-v01/attempt-v02/exports/tests.xml",
+      "sha256": "9d27d0462ffc9adab746d3c6bf78376213b74578348ec9748d626f8b8af1a4e2"
+    },
+    "arbitrary_descendant_containment": false,
+    "artifacts_durable_asserted": true,
+    "cases": 16,
+    "collection": {
+      "bytes": 12073,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/count-relation-binding-v01/attempt-v02/exports/test-collection.json",
+      "sha256": "e7e4f86ad5100de06ecb356278e436245ece795b264067be9f0aea3b353a5117"
+    },
+    "direct_request_pins": 122,
+    "durability": {
+      "bytes": 1654,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/count-relation-binding-v01/attempt-v02/logs/validation-durability.json",
+      "sha256": "22f7e755ae5661580c4c55eb947b9df57d53422ca6b03eae171cf8885ffceeb3"
+    },
+    "envelope": {
+      "child_process_slots": 2,
+      "cpu_slots": 1,
+      "memory_mb": 1024,
+      "storage_bytes": 33554432,
+      "wall_seconds": 180
+    },
+    "final_controller": {
+      "bytes": 8521,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/count-relation-binding-v01/controller-complete-v02.json",
+      "sha256": "dba6536f31bcf4e1f70b5c6dc8cff2838c8bf827dea9687f711a967283c79a1a"
+    },
+    "frozen_files": 108,
+    "imports": {
+      "bytes": 8635,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/count-relation-binding-v01/attempt-v02/exports/import-origins.json",
+      "sha256": "22f5fc831a29ed61335f6fd332743496915bae66e2bd63000da5879b545de167"
+    },
+    "independent_saved_result_review": {
+      "bytes": 8342,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/count-relation-binding-v01/review/graph-lean/saved-result-independent-review-v01.json",
+      "sha256": "91c4bcd0b514011e1e3b1e98f2d4331f2c340401e29c0d94542bc33972690ffe"
+    },
+    "live_processes_at_terminal": 0,
+    "manifest": {
+      "bytes": 24092,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/count-relation-binding-v01/validation-manifest-v02.json",
+      "sha256": "778fcde4c5a05c902ef027e2eb3480038d331cbaa1c3899174a8ed86144eef83"
+    },
+    "module_origin_entries": 24,
+    "namespace_scope_explanation": "Two namespaces observed: logic initializer bypass, families genuinely fileless. Seven namespace declarations exist in the loader, including four potential initializer bypasses; unused declarations are not observed imports. No whole-package, binary, code-object or full-environment attestation.",
+    "native_compute_released": true,
+    "native_lease_id": "cadf7b0eda7c4937ae4b8c3e11eec21d",
+    "native_storage_released": true,
+    "native_terminal_admitted_field_after_release": false,
+    "new_contract_cases": 12,
+    "observed_namespace_scope": {
+      "ipfs_datasets_py.logic": {
+        "genuine_fileless": false,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/logic"
+      },
+      "ipfs_datasets_py.logic.families": {
+        "genuine_fileless": true,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/logic/families"
+      }
+    },
+    "old_codec_regressions": 1,
+    "old_counted_regressions": 2,
+    "old_threshold_regressions": 1,
+    "original_owner_cleanup_proven": true,
+    "passed_call": 16,
+    "passed_phases": 48,
+    "passed_setup": 16,
+    "passed_teardown": 16,
+    "process_scope": "sampled_birth_bound_descendants",
+    "request": {
+      "bytes": 30691,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/count-relation-binding-v01/request-v02.json",
+      "sha256": "e2690526bbc03cd937db05432026024e09025a80f7c8a595b5fc8a749331522c"
+    },
+    "reservation_id": "5ab20df68b564a0ab01dce34d92b6451",
+    "result": {
+      "bytes": 5021,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/count-relation-binding-v01/attempt-v02/exports/test-result.json",
+      "sha256": "64dba6d023e3c11e17b1e7a6af440da9c2986d1b8750d39c76824a795597a775"
+    },
+    "selected_case_nodes": [
+      "tests/unit/logic/autoformal/test_legal_counted_frame_v1.py::test_relation_binding_public_replay_preserves_114_nodes_12_binders_and_cap_lineage",
+      "tests/unit/logic/autoformal/test_legal_counted_frame_v1.py::test_relation_binding_empty_member_exposes_old_loophole_without_asserting_the_premise",
+      "tests/unit/logic/autoformal/test_legal_counted_frame_v1.py::test_relation_binding_nonempty_three_and_four_separate_premises_and_conclusion",
+      "tests/unit/logic/autoformal/test_legal_counted_frame_v1.py::test_relation_binding_reverse_only_has_a_nonempty_four_detail_countermodel",
+      "tests/unit/logic/autoformal/test_legal_counted_frame_v1.py::test_relation_binding_actor_fiber_does_not_substitute_another_actor",
+      "tests/unit/logic/autoformal/test_legal_counted_frame_v1.py::test_relation_binding_event_crossing_does_not_transport_a_local_cap",
+      "tests/unit/logic/autoformal/test_legal_counted_frame_v1.py::test_relation_binding_time_crossing_does_not_transport_a_local_cap",
+      "tests/unit/logic/autoformal/test_legal_counted_frame_v1.py::test_relation_binding_per_frame_cap_does_not_become_a_global_lifetime_cap",
+      "tests/unit/logic/autoformal/test_legal_counted_frame_v1.py::test_relation_binding_has_no_implicit_permission_or_world_transport",
+      "tests/unit/logic/autoformal/test_legal_counted_frame_v1.py::test_relation_binding_invalid_json_and_independent_hash_fail_before_owner_discovery",
+      "tests/unit/logic/autoformal/test_legal_counted_frame_v1.py::test_relation_binding_direction_roles_frame_masks_and_inner_bytes_are_closed_before_owners",
+      "tests/unit/logic/autoformal/test_legal_counted_frame_v1.py::test_relation_binding_resealed_reports_and_final_serialization_mutations_are_refused",
+      "tests/unit/logic/autoformal/test_legal_counted_frame_v1.py::test_public_replay_retains_complete_fixed_ast_and_zero_authority",
+      "tests/unit/logic/autoformal/test_legal_counted_frame_v1.py::test_four_distinct_objects_in_one_explicit_frame_fail",
+      "tests/unit/logic/autoformal/test_legal_counted_frame_threshold_v2.py::test_threshold_constructs_three_real_closed_many_sorted_trees[maximum_three]",
+      "tests/unit/logic/autoformal/test_legal_counted_threshold_codec_v2.py::test_codec_complete_roundtrip_replays_real_typed_factory[maximum_three]"
+    ],
+    "source_READ_roots": [
+      "/home/barberb/lift_coding/external/ipfs_datasets",
+      "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023"
+    ],
+    "source_READs_closed": true,
+    "source_compile_observations": 25,
+    "successful_attempt": "attempt-v02"
+  },
+  "qualification_base": "f7ca2d799555ddde866d877cb775c2a1ee8edca6",
+  "recorded_at_utc": "2026-10-24T20:11:34.944095+00:00",
+  "retained_7214_draft": {
+    "Detail_to_Member_premise_established": false,
+    "binding_automatically_applied": false,
+    "modified": false,
+    "sha256": "dd72e2b92ed5a44a77acfb72dd27ca8614250878400db89742c0437438d59dda"
+  },
+  "reuse": {
+    "checkpoint_optimizer_or_numerical_profile_changed": false,
+    "existing_theorem": "CountedProofs.subrelation_preserves_bound",
+    "historical_definition_source_sha256": "a04b69890be5ab7da8bccaa206b377623ce39a5ebde1f5bbeb92e4e02d7c0cf3",
+    "historical_theorem_source_sha256": "21f90cc1f0e61f52667c871ea2528dd03666dd8137ca459efe11b871e35b12c2",
+    "kernel_application_checked": false,
+    "localization_data": {
+      "member_prime": "member_prime x _ _ = Member(x,event,time)",
+      "smaller_prime": "smaller_prime x _ _ = Detail(actor,x,event,time)"
+    },
+    "new_Lean_source_or_renderer": false,
+    "new_owner_reason": "One versioned semantic consumer preserves five existing raw-pin downstream contracts. It reuses the unchanged counted owner and existing syntax owners rather than copying the counting kernel, finite evaluator or theorem.",
+    "pin_audit": {
+      "bytes": 7365,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/count-relation-binding-v01/review/public-freshness/production-pin-cascade-search-v01.json",
+      "sha256": "199cc5276a6133a290b706a6a19e7d23a083c803137c3d7d3793024d9d214993"
+    },
+    "proof_replayed": false,
+    "unchanged_raw_pin_downstream_owners": [
+      "ipfs_datasets_py/logic/autoformal/legal_counted_frame_threshold_v2.py",
+      "ipfs_datasets_py/logic/formalization/autoencoder/legal_counted_content_head_v1.py",
+      "ipfs_datasets_py/logic/formalization/autoencoder/ir_decoder_profile_inventory.py",
+      "ipfs_datasets_py/logic/autoformal/legal_counted_threshold_codec_v2.py",
+      "ipfs_datasets_py/logic/formalization/autoencoder/legal_counted_threshold_numerical_view_v2.py"
+    ]
+  },
+  "schema": "legal-ir-counted-relation-binding-qualification/v1",
+  "scope": "Explicit same-actor, same-event/time, same-interpretation subrelation-cap conditional; exact16 selected owning cases/48 phases. Caller inclusion is an unreviewed mathematical hypothesis, never a law-derived fact. Existing counted/threshold/codec/numerical profiles and prior7214 drafts remain separate.",
+  "status": "focused_typed_conditional_fixture_qualified",
+  "training_mask": 0
+}

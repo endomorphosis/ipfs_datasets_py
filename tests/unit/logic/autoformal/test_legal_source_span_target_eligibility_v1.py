@@ -2152,3 +2152,357 @@ def test_coordinate_eligibility_supported_target_preserves_source_custody_withou
     assert_coordinate_unqualified(report)
 
 
+# Explicit v4 consumes the qualified wire-coordinate join v3 without converting
+# it into the older v2 carrier. Its five retained source metadata files and
+# small authored coordinate tables are reused; no HF/model/corpus download.
+from tests.unit.logic.autoformal.test_legal_source_span_entity_coordinate_join_v2 import (
+    wire_coordinate_join, prepare_wire_join,
+)
+
+WIRE_ELIGIBILITY_PROFILE = "original-input-wire-coordinate-target-eligibility/v1"
+WIRE_METADATA_PROFILE = "hf-default-parquet-envelope/v1"
+
+
+@pytest.fixture
+def wire_original_replay_v4(wire_coordinate_join):
+    case = wire_coordinate_join
+    raw = wire(case["request"])
+    originals = {"request_raw": raw, "source_request_raw": case["source_raw"],
+        "source_metadata_bytes": case["metadata"],
+        "paired_inventory_request_raw": wire(case["paired_request"]),
+        "paired_manifest_bytes": case["manifests"], "entity_info_raw": case["info_raw"],
+        "expected_request_sha256": sha(raw), "legacy_join_inputs": None}
+    return {"case": case, "join": prepare_wire_join(case), "originals": originals}
+
+
+def wire_original_inputs_v4(case, **changes):
+    raw = case.get("join_raw", wire(case["join"]))
+    request = {"schema": "legal-source-span-target-eligibility-request/v4",
+        "join_manifest_raw_sha256": sha(raw),
+        "join_manifest_sha256": coordinate_join_owner.source_span_entity_join_manifest_sha256(case["join"]),
+        "expected_physical_ids": [row["physical_identity_sha256"] for row in case["join"]["physical_rows"]],
+        "decoder_profile": owner.DECODER_PROFILE, "latent_dimension": 0,
+        "join_originals_sha256": owner.source_span_target_join_originals_sha256(case["originals"]),
+        "source_coordinate_report_sha256": case["case"]["coordinate"]["pin"],
+        "source_compatibility_profile": WIRE_ELIGIBILITY_PROFILE,
+        "metadata_profile": WIRE_METADATA_PROFILE, **changes}
+    return wire(request), raw
+
+
+def prepare_wire_eligibility_v4(case, **changes):
+    request, raw = wire_original_inputs_v4(case, **changes)
+    return owner.prepare_source_span_target_eligibility_v4(request, raw,
+        expected_request_sha256=sha(request), join_originals=case["originals"])
+
+
+def validate_wire_eligibility_v4(case, report, **changes):
+    request, raw = wire_original_inputs_v4(case, **changes)
+    value = json.loads(report) if type(report) is bytes else report
+    return owner.validate_source_span_target_eligibility_v4(report, request, raw,
+        expected_request_sha256=sha(request), expected_report_sha256=owner.source_span_target_eligibility_sha256(value),
+        join_originals=case["originals"])
+
+
+def assert_wire_eligibility_unqualified_v4(report):
+    assert report["schema"] == "legal-source-span-target-eligibility/v4"
+    assert report["source_compatibility_profile"] == WIRE_ELIGIBILITY_PROFILE
+    assert report["metadata_profile"] == WIRE_METADATA_PROFILE
+    assert report["checkpoint_status"] == "not_assessed"
+    assert report["current_source_release_correspondence"] == "unverified_no_independent_crosswalk"
+    assert report["entity_binding"] == "unavailable_semantic_companions_not_supplied"
+    assert_original_replay_unqualified_v3(report)
+    for row in report["physical_rows"]:
+        assert row["meaning_unit_id"] is row["selected_occurrence"] is None
+        assert row["source_unit_status"] == "unestablished"
+        assert row["context_status"] == row["source_review_status"] == row["semantic_review_status"] == "unresolved"
+        assert type(row["context_mask"]) is int and row["context_mask"] == 0
+        assert "latent" not in row
+
+
+@pytest.mark.parametrize("dimension", [0, 384], ids=["zero-latent", "declared-384d"])
+def test_wire_v4_genuine_opening_closing_join_replay_retains_full_unreviewed_population(
+    wire_original_replay_v4, monkeypatch, dimension,
+):
+    case = wire_original_replay_v4; before = deepcopy(case["originals"]), wire(case["join"])
+    genuine = coordinate_join_owner.validate_source_span_entity_join_manifest_v3; calls = []
+    def observed(*args, **kwargs):
+        result = genuine(*args, **kwargs); calls.append(True)
+        assert kwargs["expected_report_sha256"] == coordinate_join_owner.source_span_entity_join_manifest_sha256(case["join"])
+        return result
+    monkeypatch.setattr(coordinate_join_owner, "validate_source_span_entity_join_manifest_v3", observed)
+    report = prepare_wire_eligibility_v4(case, latent_dimension=dimension)
+    assert calls == [True, True]
+    assert report["request"]["latent_dimension"] == dimension
+    assert report["upstream_reexecution_performed"] is True
+    assert report["selection_scope"] == "fully_replayed_wire_coordinate_join_original_inputs"
+    assert report["upstream_reexecution_requirement"] == "opening_and_closing_public_wire_coordinate_join_replay"
+    assert report["coordinate_validation_scope"] == "complete_original_public_wire_coordinate_join_operation"
+    assert report["join_manifest_raw_utf8"].encode() == before[1]
+    assert wire(report).count(wire(report["join_manifest_raw_utf8"])) == 1
+    assert report["source_metadata_intake_sha256"] == case["join"]["source_metadata_intake_sha256"]
+    assert report["counts"]["physical_rows"] == report["counts"]["row_references"] == 2
+    assert report["counts"]["output_occurrences"] == 4
+    assert len(report["duplicate_source_groups"]) == 1
+    assert len(set(report["duplicate_source_groups"][0]["physical_ids"])) == 2
+    rows = report["physical_rows"]
+    assert rows[0]["source_text"] == rows[1]["source_text"]
+    assert [row["source_coordinate_span_index"] for row in rows] == [1, 3]
+    assert [row["source_provenance_json"] for row in rows] == case["case"]["coordinate"]["references"]
+    joined = json.loads(report["join_manifest_raw_utf8"])
+    carrier = joined["paired_bundles"][0]["payload_intake"]["source_coordinates"]
+    assert json.loads(carrier["report_raw_utf8"]) == case["case"]["coordinate"]["report"]
+    assert len(json.loads(carrier["report_raw_utf8"])["spans"]) == 4
+    assert report["source_coordinates_reference"]["container"] == "join_manifest_raw_utf8"
+    assert report["source_coordinates_reference"]["json_pointer"] == "/paired_bundles/0/payload_intake/source_coordinates"
+    assert report["source_coordinates_reference"]["report_sha256"] == carrier["report_sha256"]
+    assert "report_raw_utf8" not in report
+    assert all("report_raw_utf8" not in row for row in report["physical_rows"] + report["output_occurrences"])
+    assert joined["source_metadata_intake"]["source_identity"]["aliases_mapped"] is False
+    assert joined["source_metadata_intake"]["metadata_validation"]["table_rows_read"] is False
+    assert case["originals"] == before[0] and wire(case["join"]) == before[1]
+    assert_wire_eligibility_unqualified_v4(report)
+    calls.clear()
+    assert validate_wire_eligibility_v4(case, report, latent_dimension=dimension) == report
+    assert calls == [True, True]
+
+
+def test_wire_v4_raw_join_transport_and_canonical_identity_remain_separately_pinned(wire_original_replay_v4):
+    case = wire_original_replay_v4
+    case["join_raw"] = (json.dumps(case["join"], ensure_ascii=False, indent=2) + "\n").encode()
+    request_raw, raw = wire_original_inputs_v4(case)
+    request = json.loads(request_raw)
+    assert request["join_manifest_raw_sha256"] != request["join_manifest_sha256"]
+    report = prepare_wire_eligibility_v4(case)
+    assert report["join_manifest_raw_utf8"].encode() == raw
+    assert report["join_manifest_raw_sha256"] == sha(raw)
+    assert report["source_coordinates_reference"]["join_manifest_raw_sha256"] == sha(raw)
+    assert validate_wire_eligibility_v4(case, wire(report)) == report
+    assert_wire_eligibility_unqualified_v4(report)
+
+
+@pytest.mark.parametrize("coordinate_join", [{
+    "documents": [{"z_metadata": "first", "a_metadata": "second", "legal_id": "usc:us:5:551",
+                   "text": "Unselected Ω context. Clerk shall file report."}],
+    "selected_indices": (1,), "compiler_rule": rule(),
+}], ids=["supported-authored-source-span"], indirect=True)
+@pytest.mark.parametrize("dimension", [0, 384], ids=["zero-latent", "declared-384d"])
+def test_wire_v4_supported_typed_target_does_not_create_inference_or_learning_authority(
+    wire_original_replay_v4, monkeypatch, dimension,
+):
+    case = wire_original_replay_v4
+    for name in ("_torch", "_model", "build_checkpoint", "train_decoder", "load_checkpoint"):
+        if hasattr(span, name):
+            def forbidden(*args, _entrypoint=name, **kwargs):
+                pytest.fail("wire metadata eligibility invoked numerical entrypoint " + _entrypoint)
+            monkeypatch.setattr(span, name, forbidden)
+    report = prepare_wire_eligibility_v4(case, latent_dimension=dimension)
+    assert report["counts"]["physical_rows"] == 1
+    assert report["counts"]["output_occurrences"] == report["counts"]["mechanically_supported_outputs"] == 2
+    assert report["counts"]["target_statuses"] == {"mechanically_supported": 2}
+    assert report["physical_rows"][0]["source_text"] == "Clerk shall file report."
+    assert report["physical_rows"][0]["source_coordinate_span_index"] == 1
+    assert [(entry["route"], entry["ordinal"]) for entry in report["output_occurrences"]] == [
+        ("compiler.formal_outputs", 0), ("compiler.canonical_formal_outputs", 0)]
+    for output in report["output_occurrences"]:
+        assert output["canonical_ir"] == {"rules": [rule()]}
+        assert output["decoder_audit"]["all_supported"] is True
+        assert "unsupported_consumer_target_origin" in output["consumer_compatibility_blockers"]
+        assert ("consumer_requires_zero_latent" in output["consumer_compatibility_blockers"]) == (dimension == 384)
+        assert output["consumer_eligible"] is False and output["eligibility_blockers"]
+    joined = json.loads(report["join_manifest_raw_utf8"])
+    assert "Unselected Ω context." in joined["paired_bundles"][0]["payload_intake"]["source_coordinates"]["report_raw_utf8"]
+    assert validate_wire_eligibility_v4(case, report, latent_dimension=dimension) == report
+    assert_wire_eligibility_unqualified_v4(report)
+
+
+@pytest.mark.parametrize("old_profile", ["legacy", "retained", "public_v2", "original_v3"])
+def test_wire_v4_join_cannot_cross_any_of_the_four_old_eligibility_domains(wire_original_replay_v4, monkeypatch, old_profile):
+    case = wire_original_replay_v4; request_raw, raw = wire_original_inputs_v4(case)
+    request = json.loads(request_raw); request.pop("metadata_profile")
+    if old_profile == "legacy":
+        request["schema"] = owner.REQUEST_SCHEMA
+        for field in ("join_originals_sha256", "source_coordinate_report_sha256", "source_compatibility_profile"): request.pop(field)
+        operation = owner.prepare_source_span_target_eligibility; kwargs = {}
+    elif old_profile == "retained":
+        request["schema"] = owner.RETAINED_REQUEST_SCHEMA_V1; request.pop("join_originals_sha256")
+        request["source_compatibility_profile"] = owner.RETAINED_PROFILE_V1
+        operation = owner.prepare_retained_source_span_target_eligibility_v1; kwargs = {}
+    elif old_profile == "public_v2":
+        request["schema"] = owner.REQUEST_SCHEMA_V2; request.pop("source_compatibility_profile")
+        operation = owner.prepare_source_span_target_eligibility_v2; kwargs = {"join_originals": case["originals"]}
+    else:
+        request["schema"] = owner.REQUEST_SCHEMA_V3
+        request["source_compatibility_profile"] = owner.ORIGINAL_REPLAY_PROFILE_V3
+        operation = owner.prepare_source_span_target_eligibility_v3; kwargs = {"join_originals": case["originals"]}
+    request_raw = wire(request)
+    monkeypatch.setattr(owner, "_owners", lambda: pytest.fail("old profile discovered owners for a wire-v3 join"))
+    with pytest.raises(ValueError): operation(request_raw, raw, expected_request_sha256=sha(request_raw), **kwargs)
+
+
+@pytest.mark.parametrize("old_join_schema", ["legal-source-span-entity-join-manifest/v1", "legal-source-span-entity-join-manifest/v2"])
+def test_wire_v4_never_relabels_an_older_join_as_wire_transport(wire_original_replay_v4, monkeypatch, old_join_schema):
+    case = wire_original_replay_v4; case["join"]["schema"] = old_join_schema
+    case["join"]["source_compatibility_profile"] = "paired-coordinate-three-cache-join/v1"
+    monkeypatch.setattr(owner, "_owners", lambda: pytest.fail("old join reached wire eligibility owners"))
+    with pytest.raises(ValueError): prepare_wire_eligibility_v4(case)
+
+
+@pytest.mark.parametrize("damage", ["missing_metadata", "boolean_metadata", "foreign_metadata",
+                                    "missing_compatibility", "boolean_compatibility", "older_compatibility"])
+def test_wire_v4_requires_both_explicit_closed_profile_declarations(wire_original_replay_v4, monkeypatch, damage):
+    case = wire_original_replay_v4; request, raw = wire_original_inputs_v4(case); value = json.loads(request)
+    if damage == "missing_metadata": value.pop("metadata_profile")
+    elif damage == "boolean_metadata": value["metadata_profile"] = True
+    elif damage == "foreign_metadata": value["metadata_profile"] = "foreign-wire/v1"
+    elif damage == "missing_compatibility": value.pop("source_compatibility_profile")
+    elif damage == "boolean_compatibility": value["source_compatibility_profile"] = False
+    else: value["source_compatibility_profile"] = owner.ORIGINAL_REPLAY_PROFILE_V3
+    request = wire(value)
+    monkeypatch.setattr(owner, "_owners", lambda: pytest.fail("malformed profile reached discovery"))
+    with pytest.raises(ValueError):
+        owner.prepare_source_span_target_eligibility_v4(request, raw, expected_request_sha256=sha(request), join_originals=case["originals"])
+
+
+@pytest.mark.parametrize("pin", ["join_manifest_raw_sha256", "join_manifest_sha256", "join_originals_sha256", "source_coordinate_report_sha256"])
+def test_wire_v4_raw_canonical_originals_and_coordinate_pins_are_independent(wire_original_replay_v4, pin):
+    case = wire_original_replay_v4
+    with pytest.raises(ValueError): prepare_wire_eligibility_v4(case, **{pin: "0" * 64})
+
+
+@pytest.mark.parametrize("damage", ["missing", "reverse", "duplicate", "foreign"])
+def test_wire_v4_requires_complete_ordered_physical_population(wire_original_replay_v4, damage):
+    case = wire_original_replay_v4; ids = [row["physical_identity_sha256"] for row in case["join"]["physical_rows"]]
+    if damage == "missing": ids.pop()
+    elif damage == "reverse": ids.reverse()
+    elif damage == "duplicate": ids[1] = ids[0]
+    else: ids[0] = "0" * 64
+    with pytest.raises(ValueError): prepare_wire_eligibility_v4(case, expected_physical_ids=ids)
+
+
+@pytest.mark.parametrize("damage", ["intake_commitment", "metadata_alias", "coordinate_carrier", "source_index", "authority"])
+def test_wire_v4_resealed_join_requires_genuine_original_wire_replay(wire_original_replay_v4, damage):
+    case = wire_original_replay_v4; joined = case["join"]
+    if damage == "intake_commitment": joined["source_metadata_intake_sha256"] = "0" * 64
+    elif damage == "metadata_alias": joined["source_metadata_intake"]["source_identity"]["aliases_mapped"] = True
+    elif damage == "coordinate_carrier": joined["paired_bundles"][0]["payload_intake"]["source_coordinates"]["report_raw_utf8"] = "{}"
+    elif damage == "source_index": joined["row_references"][0]["source_coordinate_span_index"] = 0
+    else: joined["authority"]["training_qualified"] = True
+    with pytest.raises(ValueError): prepare_wire_eligibility_v4(case)
+
+
+@pytest.mark.parametrize("damage", ["metadata_commitment", "coordinate_reference", "physical_order", "field_mask", "crosswalk", "context"])
+def test_wire_v4_resealed_eligibility_still_requires_exact_regeneration(wire_original_replay_v4, damage):
+    case = wire_original_replay_v4; report = prepare_wire_eligibility_v4(case)
+    if damage == "metadata_commitment": report["source_metadata_intake_sha256"] = "0" * 64
+    elif damage == "coordinate_reference": report["source_coordinates_reference"]["report_bytes"] += 1
+    elif damage == "physical_order": report["physical_rows"].reverse()
+    elif damage == "field_mask": report["output_occurrences"][0]["field_masks"]["actor"] = 1
+    elif damage == "crosswalk": report["current_source_release_correspondence"] = "invented_verified_crosswalk"
+    else: report["physical_rows"][0]["context_status"] = "inference_authorized"
+    with pytest.raises(ValueError): validate_wire_eligibility_v4(case, report)
+
+
+def test_wire_v4_original_metadata_drift_after_real_audit_refuses(wire_original_replay_v4, monkeypatch):
+    case = wire_original_replay_v4; genuine = span.audit_examples; called = []
+    def observed(*args, **kwargs):
+        result = genuine(*args, **kwargs); called.append(True)
+        case["originals"]["source_metadata_bytes"]["README.md"] += b"late original metadata drift"; return result
+    monkeypatch.setattr(span, "audit_examples", observed)
+    with pytest.raises(ValueError): prepare_wire_eligibility_v4(case)
+    assert called
+
+
+def test_wire_v4_closing_join_replay_catches_physical_table_drift(wire_original_replay_v4, monkeypatch):
+    case = wire_original_replay_v4; genuine = span.audit_examples; called = []
+    def observed(*args, **kwargs):
+        result = genuine(*args, **kwargs); called.append(True)
+        entry = case["case"]["coordinate"]["written"]["artifacts"]
+        path = Path(case["case"]["coordinate"]["request"]["repository_root"]) / entry["path_in_repo"]
+        path.write_bytes(path.read_bytes() + b"late wire table drift"); return result
+    monkeypatch.setattr(span, "audit_examples", observed)
+    with pytest.raises(ValueError): prepare_wire_eligibility_v4(case)
+    assert called
+
+
+def test_wire_v4_join_callable_replacement_after_real_audit_refuses(wire_original_replay_v4, monkeypatch):
+    case = wire_original_replay_v4; genuine = span.audit_examples; called = []
+    def observed(*args, **kwargs):
+        result = genuine(*args, **kwargs); called.append(True)
+        monkeypatch.setattr(coordinate_join_owner, "validate_source_span_entity_join_manifest_v3", lambda *a, **k: None)
+        return result
+    monkeypatch.setattr(span, "audit_examples", observed)
+    with pytest.raises(ValueError): prepare_wire_eligibility_v4(case)
+    assert called
+
+
+def test_wire_v4_primary_audit_error_preserves_genuine_closing_custody_failure(wire_original_replay_v4, monkeypatch):
+    case = wire_original_replay_v4; genuine = span.audit_examples; actual_join = coordinate_join_owner.validate_source_span_entity_join_manifest_v3
+    calls = []; sentinel = RuntimeError("negative wire eligibility audit boundary")
+    def join_observed(*args, **kwargs):
+        calls.append(True); return actual_join(*args, **kwargs)
+    def audit_observed(*args, **kwargs):
+        genuine(*args, **kwargs)
+        case["originals"]["source_metadata_bytes"]["README.md"] += b"negative closing source drift"
+        raise sentinel
+    monkeypatch.setattr(coordinate_join_owner, "validate_source_span_entity_join_manifest_v3", join_observed)
+    monkeypatch.setattr(span, "audit_examples", audit_observed)
+    with pytest.raises(RuntimeError) as caught: prepare_wire_eligibility_v4(case)
+    assert caught.value is sentinel and len(calls) == 2
+    assert any("original inputs" in note and "originals changed during operation" in note
+               for note in getattr(caught.value, "__notes__", []))
+
+
+def test_wire_v4_validator_retains_offered_report_after_real_audit(wire_original_replay_v4, monkeypatch):
+    case = wire_original_replay_v4; report = prepare_wire_eligibility_v4(case)
+    genuine = span.audit_examples; called = []
+    def observed(*args, **kwargs):
+        result = genuine(*args, **kwargs); called.append(True)
+        report["training_mask"] = True; return result
+    monkeypatch.setattr(span, "audit_examples", observed)
+    with pytest.raises(ValueError): validate_wire_eligibility_v4(case, report)
+    assert called
+
+
+def test_wire_v4_final_serialization_keeps_original_metadata_custody(wire_original_replay_v4, monkeypatch):
+    case = wire_original_replay_v4; genuine = owner._wire; reached = []
+    def observed(value, *args, **kwargs):
+        raw = genuine(value, *args, **kwargs)
+        if type(value) is dict and value.get("schema") == "legal-source-span-target-eligibility/v4":
+            reached.append(True); case["originals"]["source_metadata_bytes"]["README.md"] += b"final wire metadata drift"
+        return raw
+    monkeypatch.setattr(owner, "_wire", observed)
+    with pytest.raises(ValueError): prepare_wire_eligibility_v4(case)
+    assert reached
+
+
+def test_wire_v4_outer_validator_state_cannot_nominate_paths_after_genuine_inner_replay(wire_original_replay_v4, monkeypatch):
+    case = wire_original_replay_v4; report = prepare_wire_eligibility_v4(case)
+    genuine_preflight = owner._replay_preflight_v3
+    genuine_prepare = owner._prepare_original_coordinate_eligibility
+    genuine_files = coordinate_join_owner._coordinate_file_witnesses
+    outer, changed, file_calls = [], [], []
+    sentinel = "unselected/outer-validator-state.parquet"
+    def observed_preflight(*args, **kwargs):
+        result = genuine_preflight(*args, **kwargs)
+        if kwargs.get("wire_source") is True: outer.append(result)
+        return result
+    def observed_prepare(*args, **kwargs):
+        result = genuine_prepare(*args, **kwargs)
+        assert kwargs.get("wire_source") is True and len(outer) >= 2
+        # Change only the validator's outer parsed copy after the complete,
+        # genuine inner operation has closed both upstream join replays.
+        outer[0][1]["span_inventory"]["manifests"][0]["manifest"]["tables"]["paired_spans"]["path_in_repo"] = sentinel
+        changed.append(True)
+        return result
+    def observed_files(location, selected):
+        assert sentinel not in [entry["path_in_repo"] for entry in selected["manifest"]["tables"].values()], \
+            "mutated outer validator state nominated an unselected file path"
+        file_calls.append(True)
+        return genuine_files(location, selected)
+    monkeypatch.setattr(owner, "_replay_preflight_v3", observed_preflight)
+    monkeypatch.setattr(owner, "_prepare_original_coordinate_eligibility", observed_prepare)
+    monkeypatch.setattr(coordinate_join_owner, "_coordinate_file_witnesses", observed_files)
+    with pytest.raises(ValueError): validate_wire_eligibility_v4(case, report)
+    assert changed == [True] and file_calls
+
+

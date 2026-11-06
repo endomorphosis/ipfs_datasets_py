@@ -879,3 +879,401 @@ def test_max_rounds_is_bounded() -> None:
         run_supervisor_loop(lambda: {"rows": []}, max_rounds=0)
     with pytest.raises(SupervisorLoopError, match="max_rounds"):
         run_supervisor_loop(lambda: {"rows": []}, max_rounds=99)
+
+# These controls use normal canonical package imports. The synthetic metadata
+# fixture is authored here; expected observations are not a product oracle.
+def _inventory0101_wire(value):
+    return (json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False) + "\n").encode()
+
+
+def _inventory0101_frame(role, value):
+    import hashlib
+    raw = value.encode() if type(value) is str else _inventory0101_wire(value)
+    pin = {"path": f"/retained/{role}.json", "bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest()}
+    return {"original_descriptor": pin, "descriptor": {**pin, "path": f"/transport/{role}.json"}, "utf8": raw.decode()}
+
+
+def _inventory0101_fixture():
+    # Literal original native acceptance text, not obtained from the preparer.
+    criteria = [
+        "Every selected asset has immutable identity, owner, task, producer and evidence scope.",
+        "F15/F17/F18 registrations and the five-variant replay are reused; published or binding counts are not model/accuracy counts.",
+        "Reuse historical 16-shard/62,931-row inventory, frozen source partitions and 103-file package; original 5016 release provenance survives current 91 manifest equality. Fresh package verification is separately evidenced, not inferred from metadata or a historical receipt.",
+    ]
+    objective = "Inventory main, relevant published branches/worktrees, retained model lineages and exact tasks/codecs; adopt the completed source inventory, frozen partitions and portable package under original release provenance before proposing another run."
+    scope = {"task_alias": "LIR-0101", "task_cid": "baguqeeraty5cz3vfxxx5hxcvvg4o6rivtl746eoq3remdluqc3o4gqnob2ua",
+        "goal_cid": "baguqeerawdzrk72ymyossnu2qifinzljp6s6yqinfgpsfhxm4oehlf5iiizq",
+        "plan_cid": "baguqeeraiddmy4khowkyv37gwstmexmmku3lecsjtnaekhpqnlwx4vuwrhza", "revision": 3, "status": "blocked"}
+    output = "data/legal_ir_span_graph_lean_20261016/LIR-0101/asset-and-contribution-inventory.json"
+    dep_cid = "saved-dependency-9004"
+    completion = {"operation": "independent_native_handoff_metadata_completion_v1", "task_cid": dep_cid,
+                  "evidence_digest": "saved-accepted-9004-evidence"}
+    authored = {"acceptance_criteria": criteria, "objective": objective, "completion": "manual",
+                "requires_product_change_scope": False, "outputs": [output]}
+    task = {**scope, "body": {**authored, "authored_task": authored}, "outputs": [{"path": output}],
+        "acceptance": [{"ordinal": i, "criterion": c} for i, c in enumerate(criteria)],
+        "dependencies": [{"dependency_task_cid": dep_cid, "kind": "depends_on"}]}
+    runtime_root = "/canonical/fixture/workspace/test-logs/LIR-0101"
+    runtime_outputs = {role: f"{runtime_root}/{'verifier-attempt' if role == 'verification' else 'producer-attempt'}/exports/{basename}" for role, basename in zip(
+        ("report", "producer_freeze", "verification"), ("asset-and-contribution-inventory.json",
+        "asset-and-contribution-inventory.freeze.json", "asset-and-contribution-inventory.verification.json"))}
+    task["revision"] = 4  # Authored positive amendment fixture, not a live readback.
+    task["body"].update(constraints={"canonical_logic_root": "/canonical/fixture"},
+        owned_paths=["workspace/test-logs/LIR-0101"], asset_inventory_0101_v1={"runtime_output_binding": {
+            "schema": "legal-ir-0101-runtime-output-binding/v1", "original_output": output,
+            "cwd": "/canonical/fixture", "task_root": runtime_root, "outputs": runtime_outputs}})
+    task["outputs"] = [{"ordinal": i, "path": str(Path(path).relative_to("/canonical/fixture")),
+        "effect": {"path": str(Path(path).relative_to("/canonical/fixture"))}}
+        for i, path in enumerate(runtime_outputs.values())]
+    dependency = {"task_alias": "LIR-9004", "task_cid": dep_cid, "status": "completed", "revision": 5,
+                  "body": {"completion_receipt": completion}}
+    docs = {"current_snapshot": {"schema": "ipfs_accelerate_py/agent-supervisor/intent-plan-projection@1",
+        "tasks": [task, dependency] + [{"task_alias": f"unselected-{i}"} for i in range(62)]},
+        "accepted_dependencies": {"schema": "legal-ir-0101-native-accepted-dependencies/v1",
+            "task_cid": scope["task_cid"], "task_revision": 4,
+            "dependencies": [{"task_cid": dep_cid, "revision": 5, "status": "completed",
+                "authority_spec_cid": "baguqeera" + "a"*52, "completion_receipt_cid": "baguqeera" + "b"*52}]}}
+    assets, registered, checkpoints = [], [], []
+    for i in range(19):
+        identity = {"path_reported": f"/unopened/payload-{i}", "recorded_bytes": i+1,
+            "recorded_sha256": f"{i+1:064x}", "payload_bytes_authenticated_by_candidate": False}
+        ref = {"evidence_id": "registration_inventory", "json_pointer": f"/selected_assets/{i}"}
+        provenance = [{"bytes": 42, "git_path": f"original/source-{i}.json", "git_revision": "b" * 40,
+                       "sha256": f"{i+100:064x}"}] if i < 13 else ([
+                           {"evidence_id": "component_plan", "json_pointer": f"/models/{i-13}/model_metadata/huggingface_config/metadata_provenance"}]
+                           if i < 16 else [{"evidence_id": "embedding_survey", "json_pointer": f"/highest_value_reuse/{i-11}"}])
+        refs = [ref, {"evidence_id": "checkpoint_survey", "json_pointer": f"/selected_assets/{i}"}] if i < 16 else [ref, provenance[0]]
+        assets.append({"inventory_key": f"asset-{i}", "task": f"task-{i}", "immutable_identity": identity,
+            "owner": {"repository": "ipfs_datasets_py", "inventory_metadata_owner": {"evidence_id": "asset_guide", "json_pointer": ""},
+                      "historical_producer_process_or_principal": None},
+            "producer": {"reported_task": f"task-{i}", "metadata_provenance": provenance,
+                         "execution_principal": None, "execution_authenticated_by_candidate": False},
+            "evidence_scope": "retained documentary provenance only", "evidence_refs": refs,
+            "criterion1_satisfied_by_candidate": False, "task_codec_profile": {"codec_identity": None}})
+        registered.append({"inventory_key": f"asset-{i}", "task": f"task-{i}", "path": identity["path_reported"],
+                           "recorded_bytes": i+1, "recorded_sha256": identity["recorded_sha256"]})
+        if i < 16:
+            checkpoints.append({**registered[-1], "recorded_checkpoint_sha256": identity["recorded_sha256"],
+                                "metadata_provenance": provenance})
+    docs.update({"registration_inventory": {"selected_assets": registered}, "checkpoint_survey": {"selected_assets": checkpoints},
+        "embedding_survey": {"highest_value_reuse": [{"reported_task": f"embedding-{i}"} for i in range(8)]},
+        "asset_guide": "Recorded canonical inventory owner.\n", "decoder_guide": "Decoder limitations.\n",
+        "source_guide": "Retained source provenance.\n"})
+    ids = [f"retained-source-record-{i}" for i in range(3)]
+    components = [{"label": label, "source_record_id": ids[i], "dimension_role": "source_tokens",
+        "latent_conditioning_enabled": False, "runtime_ready": False, "teacher_qualified": False,
+        "checkpoint_bytes": i+10, "checkpoint_sha256": f"{i+200:064x}"} for i, label in enumerate(("F15", "F17", "F18"))]
+    docs["component_plan"] = {"models": [{"checkpoint_pin": {"bytes": c["checkpoint_bytes"], "sha256": c["checkpoint_sha256"]},
+        "model_metadata": {"huggingface_config": {"metadata_provenance": {"immutable_source": "a"*64}, "ir_checkpoint": {"record_id": c["source_record_id"],
+            "dimension_role": "source_tokens", "latent_conditioning_enabled": False}}}} for c in components]}
+    docs["component_audit"] = {"status": "pass", "population": {"before_count": 684, "after_count": 687,
+        "baseline_unique_ids": 684, "baseline_records_changed": 0, "baseline_ids_removed": 0,
+        "all_33_stored_fields_equal_for_each_of_684_baseline_records": True, "exact_added_source_record_ids": ids},
+        "import": {"registered_count": 3, "persisted_metadata_matched_count": 3, "all_outcomes_registered_verified": True},
+        "catalog": {"components": components}}
+    variants = ["original_donors", "original_768_initialization", "aligned_768_initialization",
+                "original_start_trained_interfaces", "aligned_start_trained_interfaces"]
+    results = {"correct_source_primary_exact_stored_reference_by_variant": {v: {"matched": 0, "selected": 2} for v in variants},
+        "first_pass_sequences": 60, "first_pass_eos_complete": 60, "first_pass_native_grammar_valid": 60,
+        "fresh_load_sequences": 60, "forward_steps": 3240, "native_tests": 173,
+        "primary_references_exposed": True, "statutory_gold_or_holdout_claimed": False}
+    docs["replay_adoption"] = {"attributed_completed_results": results}
+    docs["replay_native_audit"] = {"status": "PASS"}
+    commitments = {"release": "5016b86a273ce5e4ffd066c5ae9f5fe494dd417e",
+        "selected_manifest_revision": "91ca1838853ac82d7a12dd4ab47d9686f47667f9",
+        "selected_manifest_sha256": "1"*64, "inventory_sha256": "2"*64, "partitions_sha256": "3"*64,
+        "package_manifest_sha256": "4"*64, "ordered_row_digest": "5"*64, "payloads_rehashed_by_this_proposal": False}
+    docs["source_provenance"] = {"manifest_equivalence": {"original_release_commit": commitments["release"],
+        "current_observed_release_commit": commitments["selected_manifest_revision"],
+        "manifest_sha256": commitments["selected_manifest_sha256"], "current_metadata_snapshot_equals_original_manifest_bytes": True}}
+    docs["source_verification"] = {"status": "pass", "all_checks_complete": True,
+        "inventory_summary": {"declared_corpus_shards": 16, "rows_scanned": 62931, "declared_row_count": 62931,
+            "complete": True, "inventory_sha256": "2"*64, "source_authority_authenticated": False, "training_eligible": False},
+        "inventory": {"sha256": "2"*64}, "partitions": {"sha256": "3"*64},
+        "package": {"expected_file_count": 103, "verified_file_count": 103, "expected_total_bytes": 263671066,
+            "verified_total_bytes": 263671066, "manifest": {"sha256": "4"*64}, "row_digest": "5"*64}}
+    source_pin = _inventory0101_frame("source_verification", docs["source_verification"])["original_descriptor"]
+    docs["source_native_audit"] = {"audit_status": "pass", "qualification_passed": True, "six_named_artifact_checks_passed": True,
+        "worker_report": {k: source_pin[k] for k in ("bytes", "sha256")},
+        "retained_source": {"original_repository_revision": commitments["release"], "physical_rows": 62931,
+            "declared_corpus_shards": 16, "verified_package_files": 103, "ordered_row_digest": "5"*64},
+        "native_closeout": {"completed": True, "artifacts_durable_asserted": True, "native_lease_released": True,
+            "reservation_status": "released", "returncode": 0, "cleanup_error": None},
+        "source_custody": {"all_current_hashes_match_frozen_request": True,
+            "input_and_package_custody_fences_passed": True, "public_copied_exports_equal_native_original_bytes": True}}
+    frames = {role: _inventory0101_frame(role, value) for role, value in docs.items()}
+    registry = [{"evidence_id": role, "descriptor": frames[role]["original_descriptor"]} for role in docs
+                if role not in {"current_snapshot", "accepted_dependencies"}]
+    candidate = {"schema": "legal-ir-0101-asset-and-contribution-inventory-candidate/v1", "candidate_only": True,
+        "task_scope": scope, "selected_asset_count": 19, "assets": assets, "evidence_registry": registry,
+        "accepted_dependency": {"task_cid": dep_cid, "completion_operation": completion["operation"],
+                                "completion_evidence_digest": completion["evidence_digest"]},
+        "criterion_assessment": [{"ordinal": i, "criterion": c, "status": "historical_candidate_only"} for i, c in enumerate(criteria)],
+        "F15_F17_F18_adoption": {"source_record_ids": ids, "source_tokens_only": True, "latent_conditioning_enabled": False,
+            "active384D_lane_inferred": False, "native_runtime_or_teacher_qualified": False},
+        "five_variant_replay_adoption": {"variants": [v.replace("_768_", "768_") for v in variants],
+            "attributed_results": results, "published_or_binding_counts_are_accuracy": False, "replay_reexecuted": False},
+        "source_adoption": {"retained_commitments": commitments, "fresh_package_bytes_revalidated_by_candidate": False,
+            "source_meaning_or_training_gold_admitted": False, "whole_release_equivalence_inferred_from_selected_manifest": False},
+        "four_width_roles": [{"width": w, "selected_keys": [], "new_asset_fabricated": False,
+                             "attribution_status": "not_covered_by_selected_retained_evidence"} for w in (8, 384, 768, 4096)],
+        "authority": {"native_admission": False, "model_runtime_admitted": False,
+                      "supervision_masks": {"evaluation_gold": 0, "training": 0}}}
+    frames["candidate"] = _inventory0101_frame("candidate", candidate)
+    main_values = {"D": "d"*40, "A": "a"*40}
+    docs["public_main_receipt"] = {"schema": "legal-ir-selected-public-main-refs/v1", "observed_at_utc": "cutoff",
+        "results": [{"repository": repo, "result": {"content": json.dumps({"ref": "refs/heads/main",
+            "object": {"sha": commit, "type": "commit"}})}} for repo, commit in main_values.items()]}
+    docs["publication_receipts"] = {"receipts": [{"head_repo_full_name": "D", "number": 1451, "merged": True,
+        "head_sha": "b"*40, "merge_commit_sha": "d"*40}, {"head_repo_full_name": "A", "number": 311,
+        "merged": False, "head_sha": "c"*40}]}
+    for role in ("public_main_receipt", "publication_receipts"):
+        frames[role] = _inventory0101_frame(role, docs[role])
+    cutoff = {"schema": "legal-ir-0101-selected-contribution-cutoff-addendum/v1", "candidate_inventory": frames["candidate"]["original_descriptor"],
+        "exact_public_main_ref_receipt": frames["public_main_receipt"]["original_descriptor"],
+        "publication_receipts": frames["publication_receipts"]["original_descriptor"],
+        "selected_verified_public_cutoff_observed_at_utc": "cutoff",
+        "selected_public_main": [{"repository": repo, "commit": commit} for repo, commit in main_values.items()],
+        "selected_public_contributions": [{"repository": "D", "pr": 1451, "merged": True, "head_sha": "b"*40,
+                                           "merge_commit_sha": "d"*40}],
+        "unmerged_selected_A_contribution": {"repository": "A", "pr": 311, "merged": False, "head_sha": "c"*40,
+                                             "runtime_activation_inferred": False},
+        **{key: False for key in ("broader_branch_coverage_claimed", "scientific_or_legal_acceptance_claimed",
+                                 "new_model_or_checkpoint_claimed", "task_completion_claimed")}}
+    frames["publication_cutoff"] = _inventory0101_frame("publication_cutoff", cutoff)
+    review = {"schema": "legal-ir-0101-candidate-criterion-gaps/v2", "candidate": frames["candidate"]["original_descriptor"],
+        "selected_contribution_cutoff_addendum": frames["publication_cutoff"]["original_descriptor"],
+        "static_documentary_attribution_review": {"selected_assets": 19,
+            "demonstrated_missing_task_required_attribution_asset_count": 0,
+            "demonstrated_missing_task_required_attribution_fields": [], "field_coverage": {str(i): 19 for i in range(5)}},
+        "optional_or_presentation_limitations": {"historical_PID_or_DID_recovery_required": False,
+            "complete_numerical_runtime_closure_or_payload_authentication_required_for_this_metadata_inventory": False}}
+    frames["attribution_review"] = _inventory0101_frame("attribution_review", review)
+    return {"documents": frames, "producer_principal": "inventory-producer", "expected_task_revision": 4}
+
+
+def _inventory0101_damage(inputs, role, change):
+    """Re-sign a changed closure to test semantics beyond descriptor fencing."""
+    value = json.loads(inputs["documents"][role]["utf8"])
+    change(value)
+    inputs["documents"][role] = _inventory0101_frame(role, value)
+    frames = inputs["documents"]
+    if role == "source_verification":
+        audit = json.loads(frames["source_native_audit"]["utf8"])
+        audit["worker_report"] = {k: frames[role]["original_descriptor"][k] for k in ("bytes", "sha256")}
+        frames["source_native_audit"] = _inventory0101_frame("source_native_audit", audit)
+    candidate = json.loads(frames["candidate"]["utf8"])
+    for row in candidate["evidence_registry"]:
+        row["descriptor"] = frames[row["evidence_id"]]["original_descriptor"]
+    frames["candidate"] = _inventory0101_frame("candidate", candidate)
+    cutoff = json.loads(frames["publication_cutoff"]["utf8"])
+    cutoff["candidate_inventory"] = frames["candidate"]["original_descriptor"]
+    cutoff["exact_public_main_ref_receipt"] = frames["public_main_receipt"]["original_descriptor"]
+    cutoff["publication_receipts"] = frames["publication_receipts"]["original_descriptor"]
+    frames["publication_cutoff"] = _inventory0101_frame("publication_cutoff", cutoff)
+    review = json.loads(frames["attribution_review"]["utf8"])
+    review["candidate"] = frames["candidate"]["original_descriptor"]
+    review["selected_contribution_cutoff_addendum"] = frames["publication_cutoff"]["original_descriptor"]
+    frames["attribution_review"] = _inventory0101_frame("attribution_review", review)
+
+
+def test_asset_inventory_0101_normal_documentary_inventory_and_distinct_verifier():
+    import hashlib
+    from ipfs_datasets_py.logic.autoformal.supervisor_loop import (
+        prepare_current_asset_contribution_inventory_v1, verify_current_asset_contribution_inventory_v1)
+    inputs = _inventory0101_fixture()
+    report = prepare_current_asset_contribution_inventory_v1(**inputs)
+    expected_runtime_binding = json.loads(inputs["documents"]["current_snapshot"]["utf8"])["tasks"][0]["body"]["asset_inventory_0101_v1"]["runtime_output_binding"]
+    assert report["runtime_output_binding"] == expected_runtime_binding
+    assert report["selected_asset_count"] == 19
+    assert all(not a["criterion1_satisfied_by_candidate"] for a in report["assets"])
+    assert report["documentary_inventory_criteria_satisfied"] is True
+    assert [c["status"] for c in report["criterion_assessment"]] == ["satisfied_for_documentary_inventory_scope"] * 3
+    assert report["five_variant_replay_adoption"]["canonical_variants"] == sorted([
+        "original_donors", "original_768_initialization", "aligned_768_initialization",
+        "original_start_trained_interfaces", "aligned_start_trained_interfaces"])
+    assert report["authority"]["native_admission"] is False
+    raw = _inventory0101_wire(report)
+    freeze = {"schema": "legal-ir-0101-inventory-producer-freeze/v1", "report_sha256": hashlib.sha256(raw).hexdigest(),
+        "report_bytes": len(raw), "producer_principal": "inventory-producer", "frozen_before_verification": True}
+    verified = verify_current_asset_contribution_inventory_v1(report, producer_freeze=freeze,
+        verifier_principal="independent-inventory-verifier", **inputs)
+    assert verified["valid"] is True and verified["original_criteria_verified"] == 3
+    assert verified["native_admission"] is verified["completion_authority"] is False
+
+
+@pytest.mark.parametrize("role,damage", [
+    ("candidate", lambda d: d["assets"].pop()),
+    ("candidate", lambda d: d["assets"].__setitem__(1, d["assets"][0])),
+    ("candidate", lambda d: d["assets"][0]["immutable_identity"].__setitem__("recorded_bytes", True)),
+    ("candidate", lambda d: d["assets"][0]["immutable_identity"].__setitem__("recorded_sha256", "f"*64)),
+    ("candidate", lambda d: d["assets"][0].__setitem__("task", "other-task")),
+    ("candidate", lambda d: d["assets"][0]["owner"].__setitem__("repository", "unbound-owner")),
+    ("candidate", lambda d: d["assets"][0]["producer"]["metadata_provenance"][0].__setitem__("git_revision", "f"*40)),
+    ("candidate", lambda d: d["assets"][0]["evidence_refs"][0].__setitem__("json_pointer", "/selected_assets/99")),
+    ("candidate", lambda d: d["assets"][0].__setitem__("criterion1_satisfied_by_candidate", True)),
+    ("candidate", lambda d: d["five_variant_replay_adoption"]["variants"].pop()),
+    ("candidate", lambda d: d["five_variant_replay_adoption"].__setitem__("published_or_binding_counts_are_accuracy", True)),
+    ("candidate", lambda d: d["F15_F17_F18_adoption"].__setitem__("latent_conditioning_enabled", True)),
+    ("candidate", lambda d: d["authority"]["supervision_masks"].__setitem__("training", False)),
+    ("component_audit", lambda d: d["population"].__setitem__("baseline_records_changed", 1)),
+    ("component_audit", lambda d: d["population"].__setitem__("after_count", 687.0)),
+    ("component_plan", lambda d: d["models"][0]["checkpoint_pin"].__setitem__("sha256", "f"*64)),
+    ("source_verification", lambda d: d["package"].__setitem__("verified_file_count", 102)),
+    ("source_native_audit", lambda d: d["worker_report"].__setitem__("sha256", "f"*64)),
+    ("source_native_audit", lambda d: d["native_closeout"].__setitem__("returncode", False)),
+    ("source_provenance", lambda d: d["manifest_equivalence"].__setitem__("original_release_commit", "f"*40)),
+    ("current_snapshot", lambda d: d["tasks"][0].__setitem__("revision", 3)),
+    ("current_snapshot", lambda d: d["tasks"][0]["acceptance"][0].__setitem__("criterion", "different criterion")),
+    ("current_snapshot", lambda d: d["tasks"][0]["outputs"][0].__setitem__("path", "other.json")),
+    ("current_snapshot", lambda d: d["tasks"][0]["body"].pop("asset_inventory_0101_v1")),
+    ("current_snapshot", lambda d: d["tasks"][0]["body"]["asset_inventory_0101_v1"]["runtime_output_binding"]["outputs"].__setitem__("report", "/outside/report.json")),
+    ("current_snapshot", lambda d: d["tasks"][0]["body"]["asset_inventory_0101_v1"]["runtime_output_binding"]["outputs"].__setitem__("verification",
+        str(Path(d["tasks"][0]["body"]["asset_inventory_0101_v1"]["runtime_output_binding"]["outputs"]["report"]).parent / "asset-and-contribution-inventory.verification.json"))),
+    ("current_snapshot", lambda d: d["tasks"][1].__setitem__("status", "blocked")),
+    ("accepted_dependencies", lambda d: d["dependencies"][0].__setitem__("completion_receipt_cid", None)),
+    ("accepted_dependencies", lambda d: d["dependencies"][0].__setitem__("revision", 5.0)),
+    ("accepted_dependencies", lambda d: d.__setitem__("task_revision", 3)),
+    ("publication_cutoff", lambda d: d["unmerged_selected_A_contribution"].__setitem__("merged", True)),
+    ("publication_cutoff", lambda d: d.__setitem__("broader_branch_coverage_claimed", True)),
+], ids=["missing-asset", "duplicate-asset", "bool-size", "identity-hash", "task", "owner", "producer-pin", "pointer",
+    "rewritten-candidate-history", "variant", "count-as-accuracy", "latent-authority", "bool-zero-mask",
+    "baseline-changed", "float-count", "component-plan", "package-count", "audit-join", "bool-return-code",
+    "release-provenance", "revision", "criterion", "output", "missing-runtime-binding", "outside-runtime-binding", "verifier-writes-producer-attempt",
+    "dependency", "missing-accepted-receipt", "float-dependency-revision", "stale-dependency-export",
+    "unmerged-promoted", "all-branches"])
+def test_asset_inventory_0101_rejects_resigned_metadata_drift(role, damage):
+    from ipfs_datasets_py.logic.autoformal.supervisor_loop import prepare_current_asset_contribution_inventory_v1
+    inputs = _inventory0101_fixture()
+    _inventory0101_damage(inputs, role, damage)
+    # The test helper updates all descriptor joins; refusal must be semantic.
+    with pytest.raises(ValueError):
+        prepare_current_asset_contribution_inventory_v1(**inputs)
+
+
+@pytest.mark.parametrize("failure", ["same-principal", "changed-report", "changed-freeze", "float-report-bytes", "wrong-inputs"])
+def test_asset_inventory_0101_rejects_invalid_verification(failure):
+    import hashlib
+    from ipfs_datasets_py.logic.autoformal.supervisor_loop import (
+        prepare_current_asset_contribution_inventory_v1, verify_current_asset_contribution_inventory_v1)
+    inputs = _inventory0101_fixture()
+    report = prepare_current_asset_contribution_inventory_v1(**inputs)
+    raw = _inventory0101_wire(report)
+    freeze = {"schema": "legal-ir-0101-inventory-producer-freeze/v1", "report_sha256": hashlib.sha256(raw).hexdigest(),
+        "report_bytes": len(raw), "producer_principal": "inventory-producer", "frozen_before_verification": True}
+    principal = "independent-inventory-verifier"
+    if failure == "same-principal":
+        principal = inputs["producer_principal"]
+    elif failure == "changed-report":
+        report["documentary_inventory_criteria_satisfied"] = False
+        changed = _inventory0101_wire(report)
+        freeze.update(report_sha256=hashlib.sha256(changed).hexdigest(), report_bytes=len(changed))
+    elif failure == "changed-freeze":
+        freeze["frozen_before_verification"] = False
+    elif failure == "float-report-bytes":
+        freeze["report_bytes"] = float(freeze["report_bytes"])
+    else:
+        inputs["documents"]["asset_guide"]["descriptor"]["path"] = "/different/durable-owner.json"
+    with pytest.raises(ValueError):
+        verify_current_asset_contribution_inventory_v1(report, producer_freeze=freeze,
+            verifier_principal=principal, **inputs)
+
+
+def test_asset_inventory_0101_rejects_missing_role_and_durable_alias_drift():
+    from ipfs_datasets_py.logic.autoformal.supervisor_loop import prepare_current_asset_contribution_inventory_v1
+    inputs = _inventory0101_fixture()
+    del inputs["documents"]["decoder_guide"]
+    with pytest.raises(ValueError):
+        prepare_current_asset_contribution_inventory_v1(**inputs)
+    inputs = _inventory0101_fixture()
+    inputs["documents"]["asset_guide"]["descriptor"]["sha256"] = "f" * 64
+    with pytest.raises(ValueError):
+        prepare_current_asset_contribution_inventory_v1(**inputs)
+
+
+def _inventory0101_cli_fixture(tmp_path):
+    import hashlib
+    import importlib.util
+    inputs = _inventory0101_fixture()
+    snapshot = json.loads(inputs["documents"]["current_snapshot"]["utf8"])
+    task = snapshot["tasks"][0]
+    binding = task["body"]["asset_inventory_0101_v1"]["runtime_output_binding"]
+    task_root = tmp_path / "workspace/test-logs/LIR-0101"
+    producer_exports, verifier_exports = (task_root / n / "exports" for n in ("producer-attempt", "verifier-attempt"))
+    producer_exports.mkdir(parents=True)
+    verifier_exports.mkdir(parents=True)
+    binding["cwd"] = str(tmp_path)
+    binding["task_root"] = str(task_root)
+    task["body"]["constraints"]["canonical_logic_root"] = str(tmp_path)
+    binding["outputs"] = {role: str((verifier_exports if role == "verification" else producer_exports) / Path(path).name)
+                          for role, path in binding["outputs"].items()}
+    inputs["documents"]["current_snapshot"] = _inventory0101_frame("current_snapshot", snapshot)
+    declarations = {}
+    for role, frame in inputs["documents"].items():
+        path = tmp_path / f"{role}.metadata"
+        path.write_bytes(frame["utf8"].encode())
+        declarations[role] = {"original_descriptor": frame["original_descriptor"],
+                             "descriptor": {**frame["descriptor"], "path": str(path)}}
+    root = Path(__file__).resolve().parents[3]
+    owner = root / "ipfs_datasets_py/logic/autoformal/supervisor_loop.py"
+    raw = owner.read_bytes()
+    spec = {"schema": "legal-ir-0101-asset-contribution-inventory-inputs/v1",
+        "canonical_owner": {"path": str(owner), "bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest()},
+        "documents": declarations, "producer_principal": inputs["producer_principal"],
+        "expected_task_revision": inputs["expected_task_revision"]}
+    input_path = tmp_path / "inputs.json"
+    input_path.write_bytes(_inventory0101_wire(spec))
+    module_spec = importlib.util.spec_from_file_location("_inventory0101_original_cli",
+        root / "scripts/ops/legal_ir/run_autoformal_supervisor.py")
+    module = importlib.util.module_from_spec(module_spec)
+    module_spec.loader.exec_module(module)
+    return module, input_path, spec
+
+
+def test_asset_inventory_0101_actual_early_cli_prepare_and_verify(tmp_path, monkeypatch):
+    cli, inputs, _ = _inventory0101_cli_fixture(tmp_path)
+    monkeypatch.chdir(tmp_path)
+    def forbidden(*args, **kwargs):
+        raise AssertionError("0101 early metadata route reached native setup")
+    monkeypatch.setattr(cli, "pin_accelerate", forbidden)
+    task_root = tmp_path / "workspace/test-logs/LIR-0101"
+    producer_exports, verifier_exports = (task_root / n / "exports" for n in ("producer-attempt", "verifier-attempt"))
+    report, freeze = (producer_exports / name for name in ("asset-and-contribution-inventory.json",
+        "asset-and-contribution-inventory.freeze.json"))
+    verification = verifier_exports / "asset-and-contribution-inventory.verification.json"
+    assert cli.main(["asset-inventory-0101", "prepare", "--inputs", str(inputs), "--output", str(report),
+                     "--freeze-out", str(freeze)]) == 0
+    assert cli.main(["asset-inventory-0101", "verify", "--inputs", str(inputs), "--output", str(verification),
+                     "--report", str(report), "--freeze", str(freeze),
+                     "--verifier-principal", "distinct-cli-verifier"]) == 0
+    observed = json.loads(verification.read_bytes())
+    assert observed["valid"] is True and observed["selected_assets_verified"] == 19
+    assert observed["native_admission"] is observed["completion_authority"] is False
+    assert json.loads(report.read_bytes())["operations"] == {
+        "payloads_read": 0, "models_run": 0, "replays_run": 0, "provider_calls": 0, "native_status_writes": 0}
+    # Original outputs are immutable; a second producer call refuses.
+    before = report.read_bytes()
+    assert cli.main(["asset-inventory-0101", "prepare", "--inputs", str(inputs), "--output", str(report),
+                     "--freeze-out", str(freeze)]) == 2
+    assert report.read_bytes() == before
+
+
+@pytest.mark.parametrize("failure", ["alias-bytes", "owner-pin", "extra-role", "overlap-output"])
+def test_asset_inventory_0101_actual_cli_refuses_invalid_declared_inputs(tmp_path, monkeypatch, failure):
+    cli, inputs, spec = _inventory0101_cli_fixture(tmp_path)
+    monkeypatch.chdir(tmp_path)
+    parent = tmp_path / "workspace/test-logs/LIR-0101/producer-attempt/exports"
+    report, freeze = parent / "asset-and-contribution-inventory.json", parent / "asset-and-contribution-inventory.freeze.json"
+    if failure == "alias-bytes":
+        spec["documents"]["asset_guide"]["original_descriptor"]["sha256"] = "f" * 64
+    elif failure == "owner-pin":
+        spec["canonical_owner"]["sha256"] = "f" * 64
+    elif failure == "extra-role":
+        spec["documents"]["undeclared_payload"] = spec["documents"]["asset_guide"]
+    else:
+        spec["documents"]["asset_guide"]["descriptor"]["path"] = str(report)
+    inputs.write_bytes(_inventory0101_wire(spec))
+    assert cli.main(["asset-inventory-0101", "prepare", "--inputs", str(inputs), "--output", str(report),
+                     "--freeze-out", str(freeze)]) == 2
+    assert not report.exists() and not freeze.exists()
+

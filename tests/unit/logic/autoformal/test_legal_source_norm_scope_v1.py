@@ -146,7 +146,9 @@ spec = importlib.util.spec_from_file_location("_cold_norm_scope", sys.argv[1])
 module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(module)
 assert not attempts
-assert len(module.__all__) == 3
+assert set(module.__all__) == {
+    "prepare_sampled_norm_scope_v1", "sampled_norm_scope_report_sha256", "validate_sampled_norm_scope_v1",
+    "prepare_parent_norm_scope_v1", "parent_norm_scope_report_sha256", "validate_parent_norm_scope_v1"}
 print(json.dumps({"operation_owner_import_attempts": attempts}))
 '''
     result = subprocess.run([sys.executable, "-I", "-S", "-B", "-c", script, subject.__file__],
@@ -458,3 +460,278 @@ def test_raw_caller_byte_hashes_remain_distinct_from_canonical_declaration_hashe
     assert report["input_pins"]["scope_request_raw_sha256"] != report["input_pins"]["scope_request_canonical_sha256"]
     assert report["input_pins"]["scope_declaration_raw_sha256"] != report["input_pins"]["scope_declaration_canonical_sha256"]
     assert report["scope_declaration"] == value["declaration"]
+
+
+# Parent profile fixtures use the original physical Parquet/cache producers.
+# They select a complete literal occurrence, not a complete paragraph or law.
+def _parent_fixture_module():
+    spec = importlib.util.spec_from_file_location(
+        "_parent_norm_plaintext_fixture", Path(__file__).with_name("test_plaintext_graph_custody.py"))
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+_PARENT_TEXT = "Clérk may retain café records only with approval."
+_PARENT_PREFIX = "雪 e\u0301. "
+
+
+def parent_case(tmp_path, *, selected=0):
+    physical = _parent_fixture_module()
+    text = _PARENT_PREFIX + _PARENT_TEXT + " " + _PARENT_TEXT + " fin."
+    data = physical.helper("test_corpus_parent_occurrence_adapter").case(
+        tmp_path, source_text=_PARENT_TEXT, parent_texts=[text, text])
+    bundle = physical.parent_owner.build_parent_occurrence_corpus(**data["arguments"])
+    original = dict(data=data, bundle=bundle,
+        records={record["record_cid"]: record for record in bundle["records"]})
+    matches = physical.companions(original, physical.parent_owner.MATCH_SCHEMA)
+    unique = {}
+    for match in matches:
+        unique.setdefault(match["source_occurrence_cid"], match)
+    companions = sorted(unique.values(), key=lambda item: (
+        original["records"][item["parent_record_cid"]]["source_identity"]["row_ordinal"],
+        original["records"][item["source_occurrence_cid"]]["start_char"], item["record_cid"]))
+    assert len(companions) == 4
+    arguments = physical.binding_arguments(original, companions[selected])
+    source = physical.bind(original, companions[selected])
+    request = {"source_text": _PARENT_TEXT,
+        "context": {"role": "required_unavailable", "text": "", "bindings": {},
+                    "sha256": hashlib.sha256(b"").hexdigest()}}
+    occurrences = []
+    for identity, facet, literal, symbol in (
+        ("actor", "actor", "Clérk", "Clérk"), ("modal", "modality", "may", "P"),
+        ("action", "action", "retain", "retain"), ("object", "object", "café records", "café records")):
+        start = _PARENT_TEXT.index(literal)
+        occurrences.append(dict(occurrence_id=identity, facet=facet, canonical_symbol=symbol,
+            anchor=anchor(_PARENT_TEXT, start, start+len(literal))))
+    declaration = dict(schema=scope.SCHEMA, family="deontic", profile=scope.PROFILE,
+        input=deepcopy(request), input_sha256=digest(request), occurrences=occurrences,
+        rules=[dict(rule_id="r1", body=dict(actor="actor", modality="modal", action="action", object="object"),
+            qualifiers=dict(conditions=None, exceptions=None, temporal=None))],
+        statement_structure=dict(op="rule", rule_id="r1"), binders=[],
+        coverage=dict(declared_status="partial", segments=[dict(span=anchor(_PARENT_TEXT,0,len(_PARENT_TEXT)),
+            disposition="unresolved", rule_ids=["r1"], occurrence_ids=[row["occurrence_id"] for row in occurrences],
+            reason="Whole selected fictional literal retained; meaning is unreviewed.")]),
+        unresolved=[dict(code="approval_necessity_unresolved",
+            span=anchor(_PARENT_TEXT,_PARENT_TEXT.index("only with"),len(_PARENT_TEXT)-1),
+            reason="No implication direction, sufficiency or legal roles are reviewed.")])
+    return dict(physical=physical, original=original, arguments=arguments, source=source,
+        companions=companions, text=text, request=request, declaration=seal(declaration))
+
+
+def parent_arguments(value):
+    request_raw, declaration_raw = wire(value["request"]), wire(value["declaration"])
+    supplied = deepcopy(value["arguments"])
+    bundle = supplied.pop("parent_bundle")
+    return (bundle,request_raw,declaration_raw),dict(**supplied,
+        expected_scope_request_sha256=hashlib.sha256(request_raw).hexdigest(),
+        expected_scope_declaration_sha256=hashlib.sha256(declaration_raw).hexdigest())
+
+
+def parent_prepare(value):
+    args,kwargs = parent_arguments(value)
+    return subject.prepare_parent_norm_scope_v1(*args,**kwargs)
+
+
+def parent_validate(report,value):
+    args,kwargs = parent_arguments(value)
+    return subject.validate_parent_norm_scope_v1(report,*args,
+        expected_report_sha256=subject.parent_norm_scope_report_sha256(report),**kwargs)
+
+
+def _parent_false_authority(value):
+    if type(value) is dict:
+        if "authority" in value:
+            assert value["authority"] and all(flag is False for flag in value["authority"].values())
+        for key,child in value.items():
+            if key in {"training_mask","evaluation_gold_mask"}:
+                assert type(child) is int and child == 0
+            _parent_false_authority(child)
+    elif type(value) is list:
+        for child in value:
+            _parent_false_authority(child)
+
+
+def test_parent_norm_scope_whole_selected_literal_geometry_and_open_context(tmp_path,monkeypatch):
+    value = parent_case(tmp_path)
+    def no_html(*args,**kwargs):
+        pytest.fail("literal parent scope must not transcode text to HTML")
+    monkeypatch.setattr(value["physical"].official_context,"extract_document",no_html)
+    report = parent_prepare(value)
+    assert report["schema"] == subject.PARENT_SCHEMA and report["profile"] == subject.PARENT_PROFILE
+    assert report["source_selector"] == value["source"]["selector"]
+    assert report["scope_request"]["source_text"] == _PARENT_TEXT != value["text"]
+    assert report["parent_source_binding"]["edition"] == value["physical"].parent_owner.UNDECLARED_EDITION
+    context = report["parent_source_binding"]["context"]
+    assert context["availability"] == "required_unavailable"
+    assert context["missing_requirements"] == list(value["physical"].parent_owner.MISSING_CONTEXT)
+    assert len(context["missing_requirements"]) == 6
+    assert report["literal_accounting_complete"] is True and report["declared_semantic_coverage"] == "partial"
+    assert report["source_region_role_verified"] is report["whole_paragraph_verified"] is report["whole_law_verified"] is False
+    base = value["source"]["selector"]["start_char"]
+    assert base == len(_PARENT_PREFIX) > 0
+    for mapped in report["anchor_mappings"]:
+        local,absolute = mapped["local_anchor"],mapped["parent_selector"]
+        start,end = base+local["start"],base+local["end"]
+        assert absolute["schema"] == subject.PARENT_ANCHOR_SCHEMA
+        assert absolute["coordinate_system"] == value["source"]["selector"]["coordinate_system"]
+        assert absolute["normalization_profile"] == "identity/v1"
+        assert (absolute["char_start"],absolute["char_end"]) == (start,end)
+        assert (absolute["utf8_byte_start"],absolute["utf8_byte_end"]) == (
+            len(value["text"][:start].encode()),len(value["text"][:end].encode()))
+        assert absolute["text"] == value["text"][start:end] == local["text"]
+        assert absolute["text_sha256"] == hashlib.sha256(local["text"].encode()).hexdigest()
+        assert absolute["source_occurrence_cid"] == value["source"]["selector"]["record_cid"]
+        assert absolute["source_version_cid"] == value["source"]["source_version"]["record_cid"]
+    assert report["anchor_mappings"][0]["parent_selector"]["utf8_byte_start"] > base
+    _parent_false_authority(report)
+    parent_validate(report,value)
+
+
+def test_parent_norm_scope_equal_physical_rows_and_literal_repetitions_remain_distinct(tmp_path):
+    value = parent_case(tmp_path)
+    reports = []
+    for companion in value["companions"]:
+        other = dict(value)
+        other["arguments"] = value["physical"].binding_arguments(value["original"],companion)
+        reports.append(parent_prepare(other))
+    selectors = [report["source_selector"] for report in reports]
+    assert len({row["record_cid"] for row in selectors}) == 4
+    assert len({row["span_text"] for row in selectors}) == 1
+    assert len({report["parent_source_binding"]["source_version"]["record_cid"] for report in reports}) == 2
+    assert len({subject.parent_norm_scope_report_sha256(report) for report in reports}) == 4
+
+
+@pytest.mark.parametrize("damage",["manifest","occurrence","companion"])
+def test_parent_norm_scope_requires_original_manifest_occurrence_and_companion(tmp_path,damage):
+    value = parent_case(tmp_path)
+    if damage == "manifest": value["arguments"]["expected_manifest_cid"] = value["source"]["parent_record"]["record_cid"]
+    elif damage == "occurrence": value["arguments"]["source_occurrence_cid"] = value["companions"][1]["source_occurrence_cid"]
+    else: value["arguments"]["companion_record_cid"] = value["companions"][1]["record_cid"]
+    with pytest.raises(ValueError): parent_prepare(value)
+
+
+@pytest.mark.parametrize("damage",["shortened","whole_parent_field"])
+def test_parent_norm_scope_resealed_request_must_equal_whole_selected_literal(tmp_path,damage):
+    value = parent_case(tmp_path)
+    value["request"]["source_text"] = _PARENT_TEXT[:-1] if damage == "shortened" else value["text"]
+    value["declaration"]["input"] = deepcopy(value["request"])
+    value["declaration"]["input_sha256"] = digest(value["request"])
+    seal(value["declaration"])
+    with pytest.raises(ValueError): parent_prepare(value)
+
+
+@pytest.mark.parametrize("damage",["anchor_geometry","semantic_promotion"])
+def test_parent_norm_scope_resealed_output_cannot_change_mapping_or_meaning(tmp_path,damage):
+    value = parent_case(tmp_path);report = parent_prepare(value)
+    if damage == "anchor_geometry": report["anchor_mappings"][0]["parent_selector"]["utf8_byte_start"] += 1
+    else: report["authority"]["source_semantics_verified"] = True
+    report["report_sha256"] = digest({key:item for key,item in report.items() if key != "report_sha256"})
+    with pytest.raises(ValueError): parent_validate(report,value)
+
+
+@pytest.mark.parametrize("damage",["nonordinary_bundle","request_hash","oversize_request"])
+def test_parent_norm_scope_bounded_preflight_precedes_operation_loading(tmp_path,monkeypatch,damage):
+    value = parent_case(tmp_path);args,kwargs = parent_arguments(value)
+    if damage == "nonordinary_bundle": args[0]["opaque"] = object()
+    elif damage == "request_hash": kwargs["expected_scope_request_sha256"] = "0"*64
+    else:
+        args = (args[0],b" "*(subject.MAX_SCOPE_BYTES+1),args[2])
+        kwargs["expected_scope_request_sha256"] = hashlib.sha256(args[1]).hexdigest()
+    monkeypatch.setattr(subject,"_parent_owners",lambda:pytest.fail("owner loaded before bounded parent preflight"))
+    with pytest.raises(ValueError): subject.prepare_parent_norm_scope_v1(*args,**kwargs)
+
+
+def test_parent_norm_scope_and_html_v1_profiles_cannot_validate_each_other(tmp_path):
+    parent_value = parent_case(tmp_path);parent_report = parent_prepare(parent_value)
+    html_value = case();html_report = prepare(html_value)
+    args,kwargs = parent_arguments(parent_value)
+    with pytest.raises(ValueError):
+        subject.validate_parent_norm_scope_v1(html_report,*args,
+            expected_report_sha256=subject.sampled_norm_scope_report_sha256(html_report),**kwargs)
+    request_raw,declaration_raw,inputs = preparation_inputs(html_value)
+    with pytest.raises(ValueError):
+        subject.validate_sampled_norm_scope_v1(parent_report,html_value["sampling"],html_value["raw"],request_raw,declaration_raw,
+            expected_report_sha256=subject.parent_norm_scope_report_sha256(parent_report),**inputs)
+
+
+def test_parent_norm_scope_preserves_existing_lower_only_complete_population_limits(tmp_path):
+    value = parent_case(tmp_path)
+    for limits in ({"max_records":8193},{"max_records":True},{"max_records":1}):
+        args,kwargs = parent_arguments(value)
+        kwargs["limits"] = limits
+        with pytest.raises(ValueError): subject.prepare_parent_norm_scope_v1(*args,**kwargs)
+
+
+@pytest.mark.parametrize("location",["caller_bundle","caller_report_bytes","delegate_binding"])
+def test_parent_norm_scope_late_input_or_delegate_mutation_is_refused(tmp_path,monkeypatch,location):
+    value = parent_case(tmp_path);args,kwargs = parent_arguments(value)
+    graph = value["physical"].proposed
+    real = graph.bind_parent_source_occurrence
+    observed = []
+    def changed_after_real_replay(*offered,**options):
+        result = real(*offered,**options)
+        if not observed:
+            observed.append("genuine_parent_replay_completed")
+            if location == "caller_bundle": args[0]["manifest"]["selected_occurrence"] = "changed during replay"
+            elif location == "caller_report_bytes": kwargs["report_bytes"]["parent_text_views"] += b" "
+            else: result["selector"]["span_text"] += " changed"
+        return result
+    monkeypatch.setattr(graph,"bind_parent_source_occurrence",changed_after_real_replay)
+    with pytest.raises(ValueError): subject.prepare_parent_norm_scope_v1(*args,**kwargs)
+    assert observed == ["genuine_parent_replay_completed"]
+
+
+@pytest.mark.parametrize("file_kind",["physical_parent","producer_source"])
+def test_parent_norm_scope_file_changes_after_report_serialization_are_refused(tmp_path,monkeypatch,file_kind):
+    value = parent_case(tmp_path)
+    if file_kind == "physical_parent":
+        path = Path(value["arguments"]["replay_inputs"]["parent_text_views_inputs"]["parent_descriptor"]["local_path"])
+    else:
+        path = tmp_path/"copied_legal_source_norm_scope_v1.py"
+        path.write_bytes(Path(subject.__file__).read_bytes())
+        monkeypatch.setattr(subject,"__file__",str(path))
+        monkeypatch.setattr(subject,"_PARENT_PINS",None)
+    before = path.read_bytes();real = subject._wire;observed = []
+    def changed_after_report_serialization(value,maximum):
+        raw = real(value,maximum)
+        if type(value) is dict and value.get("schema") == subject.PARENT_SCHEMA and "report_sha256" in value and not observed:
+            observed.append("complete_report_serialized")
+            path.write_bytes(before+b"\nchanged after report serialization\n")
+        return raw
+    monkeypatch.setattr(subject,"_wire",changed_after_report_serialization)
+    with pytest.raises(ValueError): parent_prepare(value)
+    assert observed == ["complete_report_serialized"] and path.read_bytes() != before
+
+
+def test_parent_norm_scope_final_detached_report_mutation_is_refused(tmp_path,monkeypatch):
+    value = parent_case(tmp_path);real = subject._wire;completed = [];changed = []
+    def changed_after_final_detached_serialization(report,maximum):
+        raw = real(report,maximum)
+        if type(report) is dict and report.get("schema") == subject.PARENT_SCHEMA and "report_sha256" in report:
+            completed.append(id(report))
+            # The first full report is detached. A distinct second object is the
+            # final returned report inspected by the closing output fence.
+            if len(set(completed)) > 1 and not changed:
+                report["training_mask"] = False
+                changed.append("detached_output_mutated_after_wire")
+        return raw
+    monkeypatch.setattr(subject,"_wire",changed_after_final_detached_serialization)
+    with pytest.raises(ValueError): parent_prepare(value)
+    assert changed == ["detached_output_mutated_after_wire"]
+
+
+def test_parent_norm_scope_secondary_closing_failure_preserves_primary_error(tmp_path,monkeypatch):
+    value = parent_case(tmp_path);args,kwargs = parent_arguments(value)
+    graph = value["physical"].proposed;real = graph.bind_parent_source_occurrence;observed = []
+    def genuine_replay_then_primary(*offered,**options):
+        real(*offered,**options)
+        observed.append("genuine_parent_replay_completed")
+        args[0]["manifest"]["selected_occurrence"] = "late caller mutation"
+        raise ValueError("primary authored parent failure")
+    monkeypatch.setattr(graph,"bind_parent_source_occurrence",genuine_replay_then_primary)
+    with pytest.raises(ValueError) as caught:
+        subject.prepare_parent_norm_scope_v1(*args,**kwargs)
+    assert str(caught.value) == "primary authored parent failure"
+    assert observed
+    assert any("secondary parent custody failure" in note for note in getattr(caught.value,"__notes__",[]))

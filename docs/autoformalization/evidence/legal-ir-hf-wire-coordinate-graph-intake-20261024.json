@@ -1,0 +1,162 @@
+{
+  "IO_timing_qualification_claimed": false,
+  "actual_Arrow_fixture_work": true,
+  "all_previous_public_contracts_and_projection_loop_preserved": true,
+  "authority": {
+    "Lean_admitted": false,
+    "evaluation_gold_qualified": false,
+    "graph_admitted": false,
+    "legal_meaning_reviewed": false,
+    "source_authenticated": false,
+    "source_current": false,
+    "training_qualified": false
+  },
+  "cases": 101,
+  "completed": true,
+  "convergence_claimed": false,
+  "counts": {
+    "canonical_project_inputs": 233,
+    "captured_raw_source_bytes": 5234151,
+    "denied_optional_provider_imports": 0,
+    "durable_progress_records": 304,
+    "executed_product_modules": 123,
+    "frozen_inputs": 14,
+    "legacy_cases": 65,
+    "new_wire_graph_cases": 36,
+    "passed_cases": 101,
+    "phase_passes": 303,
+    "retained_bytes": 17000252,
+    "retained_files": 929,
+    "sealed_files": 928,
+    "selectors": 51,
+    "source_buffer_files": 133,
+    "source_pins": 256
+  },
+  "decoder_profile": "source_span_formula_v1",
+  "downstream_adoption": "Corpus and source-correspondence consumers retain graph-v2/eligibility-v3 contracts; no automatic adoption of graph-v3 or graph/Lean admission.",
+  "durability": {
+    "bytes": 330714,
+    "path": "workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-wire-graph-20261024-01/logs/validation-durability.json",
+    "sha256": "5611e4bcf6e40d308e3da1d273080202fb986c4bbd3f3034b1ecf81fa5aff4f6"
+  },
+  "entity_binding": "unavailable_semantic_companions_not_supplied",
+  "evaluation_gold_mask": 0,
+  "fixtures_latent_dimensions": [
+    0
+  ],
+  "full_owning_cases": 133,
+  "full_owning_functions": 67,
+  "graph_profile": "canonical_rules_v1",
+  "graph_source_correspondence": "unverified_no_independent_crosswalk",
+  "independent_audit": {
+    "bytes": 49289,
+    "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-graph-01/independent-audit-v01.json",
+    "sha256": "8bb89a738dab007030c473584dbcc8cd4ba2e176938deed7a1832e10074e8c9b"
+  },
+  "inherited_latent_dimensions": [
+    0,
+    384
+  ],
+  "input_retention": {
+    "bytes": 20880,
+    "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-graph-01/retained-inputs/native-generation-v01.json",
+    "sha256": "859460311641be2352b80e57ae7086f57f0115cdf66044e4a390d809903db3fa"
+  },
+  "legacy_cases": 65,
+  "limits": [
+    "Declared namespace parent initializer behavior remains unqualified.",
+    "Installed pytest, Arrow, NumPy, CID and stdlib runtime source is not comprehensively attested.",
+    "Pytest input bytes are retained; rewritten test codeobject identity is not asserted.",
+    "This is a saved-output audit, with no product calls, tests, native jobs, database access or recovery calls."
+  ],
+  "manifest": {
+    "bytes": 151428,
+    "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-graph-01/retained-inputs/sha256/5179e135e59eb50d29f6086d9e9e81884be50004461aa497c22498cb4a21f754",
+    "sha256": "5179e135e59eb50d29f6086d9e9e81884be50004461aa497c22498cb4a21f754"
+  },
+  "metadata_profile": "hf-default-parquet-envelope/v1",
+  "model_widths_executed": [],
+  "models_encoders_training_Hub_or_Lean_runs_performed": false,
+  "native_result": {
+    "bytes": 8139,
+    "path": "workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-wire-graph-20261024-01/logs/result.json",
+    "sha256": "e27f43a081bc133d98bec5e5e2645ec9e1fd7962ee4f13b558c2764df800f9e4"
+  },
+  "new_cases": 36,
+  "operation_guards": {
+    "database": 0,
+    "external_write": 0,
+    "forbidden_imports": 0,
+    "network": 0,
+    "payload_read": 0,
+    "process": 0
+  },
+  "original_launch_receipt": {
+    "bytes": 10301,
+    "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-graph-01/launch-receipt-v01.json",
+    "sha256": "94067e50b43298ad5aa70f699b98f71c3a841aa12c307f244d1542a7e352b3e4"
+  },
+  "original_resource_envelope": {
+    "child_process_slots": 2,
+    "cpu_slots": 1,
+    "memory_mb": 2048,
+    "storage_bytes": 134217728,
+    "timeout_seconds": 300
+  },
+  "owning_test": {
+    "bytes": 89828,
+    "path": "tests/unit/logic/autoformal/test_legal_span_cache_intake.py",
+    "sha256": "c8ed369e42651bdad659b0d1b157e3d8017c2e1fc4ffb26e4371cf9f5b8027b3"
+  },
+  "passed": true,
+  "phase_passes": 303,
+  "preserved_old_owning_cases": 97,
+  "qualification_collection_scope": "65 previously selected graph cases plus36 wire-graph cases. All97 old owning cases are retained;32 other legacy cases including actual DuckDB EntityCache are unselected. No upstream318/census/corpus cohort is rerun or pooled.",
+  "recorded_at_utc": "2026-10-24T06:07:53.395230+00:00",
+  "report_schema": "legal-coordinate-source-graph-intake/v3",
+  "request": {
+    "bytes": 56076,
+    "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-graph-01/retained-inputs/sha256/c6851702199392470511d4a0ba6794cde1a77230915271377fed9cc89ec86d1b",
+    "sha256": "c6851702199392470511d4a0ba6794cde1a77230915271377fed9cc89ec86d1b"
+  },
+  "request_schema": "legal-coordinate-source-graph-intake-request/v3",
+  "schema": "legal-ir-wire-coordinate-graph-intake-local-qualification/v1",
+  "scope": "Authored local wire metadata and physical paired-coordinate targets to proposed unreviewed canonical_rules_v1 graphs. Exact ordered AST roundtrips and original/raw/parsed/file/delegate/callable/runtime/result custody are checked through closing and final serialization, including outer validation. Independent authored HTML nominations confer no legal-source, edition, meaning or graph admission.",
+  "selected_attempt_version": "01",
+  "selected_original_compute_storage_and_source_READ_closed": true,
+  "source": {
+    "bytes": 79061,
+    "path": "ipfs_datasets_py/logic/autoformal/legal_span_cache_intake.py",
+    "sha256": "e37cefaf27608856b94bac44135fdcc522f179b2d119dfef7fc7666f982f7743"
+  },
+  "source_capture_index": {
+    "bytes": 88144,
+    "path": "workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-wire-graph-20261024-01/exports/executed-source-buffers.json",
+    "sha256": "47c8f9be6bf4bbc32266a58f94a47966f6bee8ecfc6644048e7a476eae1f40bd"
+  },
+  "source_compatibility_profile": "original-input-wire-coordinate-source-graph-intake/v1",
+  "source_edition_and_legal_as_of": "unresolved",
+  "source_installation": {
+    "bytes": 1282,
+    "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-graph-01/source-installation-v01.json",
+    "sha256": "4917ac92ef7924e80c7688a5963c6bd5a749410b5902728c6636493fc20b629d"
+  },
+  "status": "focused_authored_fixture_tests_qualified",
+  "test_functions": 51,
+  "training_mask": 0,
+  "unselected_old_cases": 32,
+  "upstream_eligibility_audit": {
+    "bytes": 55565,
+    "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-eligibility-01/independent-audit-v03.json",
+    "sha256": "5130264dcf2973b8225f3429eb2e502007a21af1dfaa64b06a8848af5f0b1dcf"
+  },
+  "upstream_eligibility_profile": "original-input-wire-coordinate-target-eligibility/v1",
+  "upstream_eligibility_qualification": {
+    "bytes": 13831,
+    "path": "docs/autoformalization/evidence/legal-ir-hf-wire-coordinate-eligibility-20261024.json",
+    "sha256": "cb78f10af6e8e962e5f714deff465c9094c5a30d7394741e73a5eb5bb006818f"
+  },
+  "upstream_eligibility_schema": "legal-source-span-target-eligibility/v4",
+  "upstream_join_profile": "paired-coordinate-hf-wire-three-cache-join/v1",
+  "upstream_join_schema": "legal-source-span-entity-join-manifest/v3"
+}

@@ -1,0 +1,142 @@
+{
+  "authenticated_roots": {
+    "all42_model_state_sha256": "2ed0ccf633f55fac202e2edb95ea9fa6e390b8d99381a05925f4dd5221925883",
+    "canonical_training_mask_certificate_sha256": "f70ddf0a13f57c88386998df412a4e44aeafd508d3a23b3f8509fec6a04f55c7",
+    "final_F18_whole_sha256": "90031d084f2d86cf860c5fc95d2dae374dc254adec70bd85a90893f98c5a1555",
+    "inactive650_sha256": "1c34e96867e070c60e8d0a3822894e316ffad8a46b65551c12a644b2fcfd68fe",
+    "new_frozen38_sha256_including_modality": "8562a4a944412a0385b26a88469fd669701573803c0eea3f444190f523414778",
+    "raw_training_mask_certificate_sha256": "1aef873043042b6aa155a529c70577e583e36084c44c248c9127384642ca4593"
+  },
+  "durations": {
+    "child_seconds": 7.129792844410986,
+    "command_elapsed_seconds": 110.0396201889962,
+    "scope": "Nested intervals; source/controller includes fresh admission and final cleanup. No speedup comparison."
+  },
+  "effects": {
+    "fit": false,
+    "gradient_calls": 0,
+    "initial632_parity_qualified": false,
+    "model_forward_attempts": 0,
+    "new_delta_model_fresh_four_tensor_Adam_restore_calls": 1,
+    "new_trained_weights": false,
+    "optimizer_updates": 0,
+    "original_F18_loader_legacy_six_tensor_Adam_restore_calls": 1,
+    "parity_receipt_fabricated": false,
+    "scoring": false,
+    "teacher_model_restores": 0
+  },
+  "evidence_id": "f18-retained-zero-step-delta-roundtrip-20261027-01",
+  "evidence_inputs": {
+    "independent_review": {
+      "bytes": 3862,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-retained-delta-roundtrip-v01/independent-zero-step-queue-review-v01.json",
+      "root": "datasets_repository",
+      "sha256": "30ba2b72650535da1a5edce77e3c326f209ffe94094dbe131163ba64f2a39ee2"
+    },
+    "original_terminal": {
+      "bytes": 6299,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-retained-delta-roundtrip-v01/owner-v01.stdout",
+      "root": "datasets_repository",
+      "sha256": "0a8a8691c30bcb020236bda40b53cd140acf50f81eed512a126fa2531cd9f5a2"
+    },
+    "request": {
+      "bytes": 16616,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-retained-delta-roundtrip-v01/request-v03.json",
+      "root": "datasets_repository",
+      "sha256": "cf131a198d55934bd0f2b76d2830d1106edf11f83194118db3fdbf6ae9b0c7b8"
+    },
+    "result_metadata": {
+      "bytes": 8314,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-retained-delta-roundtrip-v01/attempt-v01/exports/roundtrip-result-v01.json",
+      "root": "datasets_repository",
+      "sha256": "4c1e9d313d70827008fa52396be669ba1275aa41b3e9c92cff5b7287accb8792"
+    },
+    "source_closeout": {
+      "bytes": 9366,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-retained-delta-roundtrip-v01/root-source-closeout-v01.json",
+      "root": "datasets_repository",
+      "sha256": "4171980d8e25407dabb1fa9b76b8a0b34d01ab917c7b9ff365316a546a53753f"
+    }
+  },
+  "input_binding_scope": {
+    "conditions_absent": 96,
+    "conditions_present": 72,
+    "independently_expected_fields": 15,
+    "no_statutory_gold_inferred": true,
+    "physical_and_canonical_mask_roots_distinct_and_preserved": true,
+    "prepared_records_sha256": "3e36dc7fa32d3aaec0bb6039107177a30e10decd25d7bbc8bdc66ed22c243dfa",
+    "selected_original_asset_roles_verified": 6,
+    "teacher_capture_sha256": "221fa2ec37fc41298f787d4dfef1d4daf60b07c4c565a1194d2097e7c538fff1",
+    "training_manifest_sha256": "afa0deeebf4052831883c046104a8808342b67a7c8dc2e58de2f9208a9287c34",
+    "training_rows": 168
+  },
+  "limits": {
+    "active8D_384D_768D_4096D_gain": false,
+    "actual_nonzero_retained_four_tensor_training_or_resume": false,
+    "library_admitted_or_formalized_flags": false,
+    "real_paired_trial_or_scoring": false,
+    "semantic_graph_Lean_or_whole_USCode_admission": false,
+    "statutory_accuracy_or_reviewed_gold": false
+  },
+  "observed_at_utc": "2026-10-27T16:42:07.491731+00:00",
+  "original_ownership": {
+    "artifacts_durable": true,
+    "child_process_slots": 2,
+    "cpu_slots": 1,
+    "final_live_processes": 0,
+    "memory_mb": 2048,
+    "original_compute_released": true,
+    "original_source_READ_closed": true,
+    "original_storage_released": true,
+    "source_closed_at_utc": "2026-10-27T16:35:06.088400+00:00",
+    "source_pins": 55,
+    "source_pins_before_after_unchanged": true,
+    "storage_bytes": 134217728,
+    "timeout_seconds": 300
+  },
+  "persisted_delta": {
+    "all42_restore_matches_authenticated_donor": true,
+    "bytes": 122251,
+    "fresh_four_tensor_Adam_state_empty": true,
+    "only_four_selected_tensors_and_named_moments_serialize": true,
+    "payload_not_copied_into_evidence": true,
+    "progress": {
+      "epochs_completed": 0,
+      "optimizer_steps": 0,
+      "row_cursor": 0
+    },
+    "requires_authenticated_donor": true,
+    "schema": "conditions-fullspan-f18-four-tensor-checkpoint/v1",
+    "sha256": "dfe80d3b4c8d1bafb21e1ccbe15dc401a5e9ef1292c8b3228e391f9f365d1e54",
+    "standalone_whole_model_compression": false
+  },
+  "programme": {
+    "all_E1_assets_qualified": false,
+    "contributes_to": [
+      "LIR-9102",
+      "LIR-9103",
+      "LIR-9104"
+    ],
+    "native_task_completed": false,
+    "remaining": [
+      "Separately admitted source-only initial parity across 632 cases against the final trained F18 captures.",
+      "Separate original training-purpose admission and matched 0/0.25 arms of 32 updates each; freeze complete outputs before independent full-IR, per-ID retention and all 32 permission decisions."
+    ]
+  },
+  "runtime_resolution": {
+    "external_process_attempts": 0,
+    "original_resolver_restored": true,
+    "schema": "pinned-libdl-resolution/v1",
+    "scoped_requests": [
+      "dl"
+    ],
+    "selected_runtime_pins_only_not_whole_ABI": true
+  },
+  "schema": "legal-ir-f18-retained-zero-step-delta-roundtrip-qualification/v1",
+  "scope": "Fresh original-owned retained-donor zero-step persistence and restoration, separate from the synthetic 39-case mechanics cohort.",
+  "selected_product_source": {
+    "immutable_original_F18_sha256": "fb7449d4794ca9a279b2df2ea533b89d360344ff786edc0798395ab799db1823",
+    "post_qualification_source_commit": "362650fc688ba34d2de6b95f32e97f7914edae4d",
+    "profile_sha256": "87b9cd547f9fd33b23384a93a290de8d3f2d1a00e2b03dab4d9ef562f0435881"
+  }
+}

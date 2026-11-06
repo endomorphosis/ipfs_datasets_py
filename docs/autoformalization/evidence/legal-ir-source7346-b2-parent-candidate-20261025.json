@@ -1,0 +1,217 @@
+{
+  "actual_independent_review": {
+    "bytes": 12199,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/source7346-parent-scope-01/root-b2-candidate-v01/independent-result-review-v01.json",
+    "sha256": "23c7d4a39fba7f4a7cbf88e4a1642f2cb0d0a396756118f57ebb63e255ad9e36"
+  },
+  "actual_result": {
+    "bytes": 6002,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/source7346-parent-scope-01/root-b2-candidate-v01/attempt-b2-v01/exports/result.json",
+    "sha256": "00bbc0635882f4ad969a27f7fefddcc81abbc5795ec12551b2f9ac314fb6b6ea"
+  },
+  "actual_result_review_source_READ_observation": {
+    "audit_READ_acquired": false,
+    "audit_READ_refusals": [
+      {
+        "error_type": "SourceLeaseTimeout",
+        "exit_code": 1,
+        "stage": "admission",
+        "timeout_seconds": 15,
+        "tool_chunk": "7f711c"
+      },
+      {
+        "error_type": "SourceLeaseTimeout",
+        "exit_code": 1,
+        "stage": "admission",
+        "timeout_seconds": 60,
+        "tool_chunk": "487e99"
+      }
+    ],
+    "current_canonical_reverification": "deferred",
+    "original_run": {
+      "canonical_root": "/home/barberb/lift_coding/external/ipfs_datasets",
+      "cooperative": true,
+      "lock_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/control-plane/source-leases/source.lock",
+      "mode": "read",
+      "schema_version": "autoencoder-source-lease/v1",
+      "waited_seconds": 3.7040095776319504e-05
+    },
+    "original_run_acquired": true,
+    "original_run_closed": true,
+    "saved_artifact_observations": {
+      "actual_product_origins": 42,
+      "captured_checked_buffers": 80,
+      "closing_bind_seconds": 18.714187952922657,
+      "declared_source_origins": 123,
+      "durable_output_seals": 11,
+      "opening_bind_seconds": 19.2214268441312,
+      "original_native_lease_id": "f059b4fa720c43c39480a45826ffc94c",
+      "original_native_reservation_id": "ce10f09339e14c118bf5f8b6ec59c61a",
+      "original_physical_file_witnesses": 39,
+      "original_runtime_seconds": 93.98764804098755,
+      "request_fields": 17,
+      "request_pins": 143
+    },
+    "scope": "original_execution_READ_custody_and_saved_artifact_audit_only"
+  },
+  "b2_existing_parent_segment": {
+    "autoformalization_eligible": false,
+    "cache_row_record": null,
+    "context_availability": "required_unavailable",
+    "context_record_cid": "baguqeerakboq4tbea2utjudz76472xhq4t63mx4iprhrfnnse4ypnxe2yeuq",
+    "external_binding": {
+      "json_pointer": "/rows/0/segments/4",
+      "report_canonical_sha256": "279eb5d3544c9bba93f37b4e7b1d5457bf11deac598eaf8071951dcbff6c9610",
+      "report_key": "parent_sentence_candidates",
+      "report_raw_cid": "bafkreidj6k2nz2b5royuhxj2wiaivvw5arxnq7jvzgjkph7z7paw6uudwu",
+      "report_raw_sha256": "69f2b4dce83d8bb143dd3ab2008ad6dd046ed87d35c992a79ff9fbc16f5283b5",
+      "value_sha256": "317b6c607749398aade8274351d8f5e070b01e72e4fff7a8ff340c81a810aee6"
+    },
+    "geometry": {
+      "end_char": 732,
+      "end_utf8": 735,
+      "start_char": 405,
+      "start_utf8": 406
+    },
+    "missing_context_requirements": [
+      "definition",
+      "authority",
+      "antecedent",
+      "shared_qualifier",
+      "temporal_origin",
+      "referenced_provision"
+    ],
+    "parent_record_cid": "baguqeera3gb3v7defgqnpozldemko2kbngh47kmlunmdn5oigrb5ohuqxuga",
+    "role": "segment",
+    "role_record_cid": "baguqeeraqcldji3bxvw76yrqknhvpjshgo4zjwsxlmbfvmsdhkubekow4frq",
+    "role_schema": "legal-corpus-parent-source-role/v1",
+    "selected_as_legal_sentence": false,
+    "selector_sha256": "29e514c658f4199a21783a337d24810ca135e156738bdd24c701422d68b1c6fd",
+    "sentence_candidate_id": "537e1f9a6095606c23c5f07e3443e16ceabd4911d645bd16a87187819b5fbcff",
+    "source_occurrence_record_cid": "baguqeerapsfsqefap4ckqmvlsjjzfhlmnu3z27tzh6r7nfo3sjvrp2s3sl5q",
+    "source_version_cid": "baguqeerajbuafai33pzzp5rztau5wofekbgoebkk5c3g2kc5mp65bliiubcq",
+    "view_sha256": "41aed8a4ba329324e20150c06cc943174824bd955d33a580470487bca0906bca"
+  },
+  "b2_lexical_anchor": {
+    "end_char": 660,
+    "end_utf8": 663,
+    "start_char": 645,
+    "start_utf8": 648
+  },
+  "binding": {
+    "bytes": 9815,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/source7346-parent-scope-01/root-b2-candidate-v01/attempt-b2-v01/exports/b2-candidate-source-binding.json",
+    "sha256": "38930c984b14b17701ef727a27a4e8322b308b355c50b5e7cda4aedf6efdabce"
+  },
+  "complete_paired_cache_rows_retained": 16,
+  "counts": {
+    "c_requalification_performed": false,
+    "complete_paired_cache_rows": 16,
+    "complete_parent_records": 837,
+    "explicit_public_binder_calls": 2,
+    "model_training_test_Lean_calls": 0,
+    "qualification_cases": 0
+  },
+  "distinct_c_occurrence_geometry_reused_not_requalified": {
+    "autoformalization_eligible": false,
+    "cache_row_record": null,
+    "context_availability": "required_unavailable",
+    "context_record_cid": "baguqeeralymxgu5o2o7c3e43mypzapxutuiewdtppbqqlexsnknsxurap2na",
+    "external_binding": {
+      "json_pointer": "/rows/0/segments/6",
+      "report_canonical_sha256": "279eb5d3544c9bba93f37b4e7b1d5457bf11deac598eaf8071951dcbff6c9610",
+      "report_key": "parent_sentence_candidates",
+      "report_raw_cid": "bafkreidj6k2nz2b5royuhxj2wiaivvw5arxnq7jvzgjkph7z7paw6uudwu",
+      "report_raw_sha256": "69f2b4dce83d8bb143dd3ab2008ad6dd046ed87d35c992a79ff9fbc16f5283b5",
+      "value_sha256": "b1d1dc557259efc22751ffdff70e5e991c98ca7a82232beb3fd756946abc3050"
+    },
+    "geometry": {
+      "end_char": 845,
+      "end_utf8": 848,
+      "start_char": 733,
+      "start_utf8": 736
+    },
+    "missing_context_requirements": [
+      "definition",
+      "authority",
+      "antecedent",
+      "shared_qualifier",
+      "temporal_origin",
+      "referenced_provision"
+    ],
+    "parent_record_cid": "baguqeera3gb3v7defgqnpozldemko2kbngh47kmlunmdn5oigrb5ohuqxuga",
+    "role": "segment",
+    "role_record_cid": "baguqeerarisrddvr45zt4s7kgr7kf4ykuyttbta6dujk77k7la6izivrcfqq",
+    "role_schema": "legal-corpus-parent-source-role/v1",
+    "selected_as_legal_sentence": false,
+    "selector_sha256": "487ba3c045183f9826bad9cd7209d0d3fd860240c9d771e9f02fd349cae9b4f4",
+    "sentence_candidate_id": "65c1d17e93bbc3047f2c347548f3e0a41a6d7ead1373dfaeffcab9a79b062f3b",
+    "source_occurrence_record_cid": "baguqeera62gqtes5vqqzwoatv47bvi4rim4rx354dvqi74ybezwqmuwloyoq",
+    "source_version_cid": "baguqeerajbuafai33pzzp5rztau5wofekbgoebkk5c3g2kc5mp65bliiubcq",
+    "view_sha256": "41aed8a4ba329324e20150c06cc943174824bd955d33a580470487bca0906bca"
+  },
+  "documentation_target_current_product_execution_qualified": false,
+  "documentation_target_repository": "/home/barberb/lift_coding/.worktrees/legal-ir-publication-clone-20261021",
+  "evaluation_gold_mask": 0,
+  "every_use_applicability_reviewed": false,
+  "governing_definition_use": null,
+  "governing_edition": null,
+  "governing_source": null,
+  "independent_saved_geometry_review": {
+    "bytes": 7369,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/source7346-parent-scope-01/root-b2-candidate-v01/independent-parent-role-geometry-review-v01.json",
+    "sha256": "b8e2eefc0c52fe9b4a435b5c4a3f09ce07e7c0c3009054c0266d88d8c2f27006"
+  },
+  "legal_meaning_reviewed": false,
+  "lexical_witness": {
+    "bytes": 3281,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/source7346-parent-scope-01/root-b2-candidate-v01/attempt-b2-v01/exports/b2-candidate-lexical-witness.json",
+    "sha256": "544ecedd2aa2ebba966c02721b408522c1e7f5ab0f6a8777fbe12bb8f100e5e6"
+  },
+  "limitations": [
+    "Accepted scope is this one closed retained-artifact observation of an existing candidate segmentROLE and lexical geometry; no new product API, span/cache row, segmentation, scope AST, typed correspondence, semantic graph or model result is qualified.",
+    "Top-level source_READ_closed and original_closeout.source_READ_closed describe the original execution lease proven closed through original native cleanup. This saved-artifact audit acquired no canonical READ after separate15second and60second admission timeouts; current canonical source/profile/documentation re-verification is DEFERRED. No lock was bypassed and no current-source equivalence is claimed.",
+    "The original143-pin request/captured execution generation retains123 declared source origins. Independently verified80 captured UTF8 buffers with matching admitted/compile/exec hashes and42 product origins,39 original-data physical witness observations and11 durable output seals; this is neither whole-package nor installed Arrow/native-kernel attestation. No original input payloads or mutable canonical source files were opened by this saved-artifact audit.",
+    "The327-character/329-UTF8-byte candidate at405:732/406:735 contains the distinct literal at645:660/648:663. Candidate boundary classification remains unreviewed; exact geometry does not establish a complete governing statutory norm or the required second reviewed typed statutory use.",
+    "cache_row_record remains null. Existing16 paired rows are replay population only; no b2 paired-cache row association, historical150-record occurrence equivalence or embedding/model-width coverage is established.",
+    "The c occurrence is an inert reference to its prior completed scope/correspondence observation and was not requalified or pooled. Source edition, governing definition, legal meaning, context and every-use applicability remain unresolved, with all authority false and semantic/consumer/training/evaluation-gold masks integerzero.",
+    "Two actual top-level binder entries were observed; internal replay entry totals were not measured. The early unqualified checkpoint remains qualification_credit0; the later completed result supplies the separate closing replay observation. No test/model/training/Lean execution or new checkpoint occurred.",
+    "Original native and storage release and sampled birth-bound descendant cleanup are proven by matching original stdout/terminal/durability/execution receipts; no present process absence or global fleet-idle inference is used."
+  ],
+  "new_source_occurrence_or_source_version_created": false,
+  "new_span_or_cache_row_created": false,
+  "original_closeout": {
+    "native_released": true,
+    "observed_live_processes": 0,
+    "source_READ_closed": true,
+    "storage_released": true
+  },
+  "paired_cache_occurrences_overlapping_b2_lexical_anchor": 0,
+  "passed": true,
+  "primary_documentation_integration": "deferred; public-target documentation does not change the primary checkout",
+  "public_source_static_comparison": {
+    "bytes": 18073,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/source7346-parent-scope-01/root-b2-candidate-v01/root-public-source-byte-comparison-v02.json",
+    "sha256": "5898bc53e7ed6f3ba35158d90ed59872c7f824713348ca7fa076297fdfb5fe71"
+  },
+  "public_source_static_comparison_base": "10a3ec1b17e6476a684a8370279514a741e5cb62",
+  "public_source_static_comparison_scope": "42 captured executed product paths:40 same Git blobs; legal_span_section_bridge.py and span_cache.py retain two known private-generation differences. No current-public runtime qualification, source port or retest.",
+  "qualification_kind": "actual_parent_only_candidate_binding_and_literal_geometry",
+  "qualification_source_scope": "Only the actual captured request/source generation; later canonical or public generations are not requalified.",
+  "recorded_at_utc": "2026-10-25T04:17:12.156587+00:00",
+  "request": {
+    "bytes": 29838,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/source7346-parent-scope-01/root-b2-candidate-v01/request-b2-v01.json",
+    "sha256": "a4060eb9ff1d8a559996f5719eb183b94588cec6ed60ff315212b7c831a2988b"
+  },
+  "schema": "legal-ir-source7346-b2-parent-candidate-observation/v1",
+  "scope": "Two genuine public binder entries and explicit literal geometry over one existing unclassified parent segment; no typed norm, selected legal meaning or corpus admission.",
+  "semantic_graph_or_Lean_corpus_admitted": false,
+  "training_mask": 0,
+  "typed_use_interpretation_supplied": false,
+  "worker_proof": {
+    "bytes": 14944,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/source7346-parent-scope-01/root-b2-candidate-v01/attempt-b2-v01/exports/worker-proof.json",
+    "sha256": "542442bc0b07d9e08dd6322f6314a3aa783d1a7828203e57a15bfabf71f27804"
+  }
+}

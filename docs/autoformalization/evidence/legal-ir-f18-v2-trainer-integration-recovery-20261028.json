@@ -1,0 +1,193 @@
+{
+  "actual_native_probe": {
+    "actual_owner_birth": "222588136",
+    "actual_owner_pid": 665192,
+    "administrative_source_close_intent": {
+      "bytes": 2006,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/trainer-integration-v01/native-probe-v01/administrative-source-close-intent-v01.json",
+      "sha256": "00806bf324fce18587318cc860a308fb84ccefa1f7370c8ca216b3a27171966e"
+    },
+    "administrative_source_close_result": {
+      "bytes": 1051,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/trainer-integration-v01/native-probe-v01/administrative-source-close-result-v01.json",
+      "sha256": "256291fa8e16f9e4afa3f44f69502393eee2c7a85509c80677c876f0b64cbaf9"
+    },
+    "inventory_limits_roots_native_budgets_and_retry_state_changed": false,
+    "models_or_checkpoint_payloads_or_updates": 0,
+    "numerical_dispatch_performed": false,
+    "original_classifier_refusal": {
+      "bytes": 4355,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/trainer-integration-v01/native-probe-v01/root-unresolved-custody-v01.json",
+      "sha256": "69c25054225265f98b24b3fdfb1f0f6ed9a6e5ca6fee7ead750a40a71f8b651a"
+    },
+    "outcome": "preentry_inventory_capacity_refusal_no_native_grant_or_child",
+    "qualified": false,
+    "refusal": {
+      "bytes": 2084,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/trainer-integration-v01/native-probe-v01/owner-v01.stdout",
+      "sha256": "39cf036ae14fd7fe3c83e68c491c9ee29df5d03b17dc63315930eaacdfeb1ab6"
+    },
+    "scope": "Historical cf9 request retained. Root independently checked no record/request,50 source pins and owner exit; pidfd SIGINT stopped only its own waiting665081 control so original SourceLease context released. Successor classifier qualification does not rewrite that failure or claim a successful probe."
+  },
+  "authority": {
+    "experiment_rate_selected": null,
+    "legal_graph_corpus_or_Lean_admission": false,
+    "model_gain_or_promotion": false,
+    "native_probe_qualified": false,
+    "new_retained_fit": false,
+    "retained_v2_training_dispatch_qualified": false,
+    "scientific_task_completion_or_retry": false,
+    "trainer_request_worker_contracts_qualified": true,
+    "watchdog_runtime_or_budget_change": false
+  },
+  "evidence_id": "f18-v2-trainer-integration-and-preentry-recovery-qualified-20261028-01",
+  "existing_task": "LIR-17",
+  "observed_at_utc": "2026-10-28T17:38:13.117452+00:00",
+  "prior_source_generations": {
+    "final_first_preparation_refusal": {
+      "closeout": {
+        "bytes": 4002,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/trainer-integration-v01/typed-recovery-qualification-v01/root-source-closeout-v01.json",
+        "sha256": "a68210d7387966f82308bbdb9249f7c2663850670c379962fb9cce893241b0b9"
+      },
+      "request": {
+        "bytes": 142655,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/trainer-integration-v01/typed-recovery-qualification-v01/request-v01.json",
+        "sha256": "2ae26fd724600b7170240e42a2b8f4560f6a50bd2af1392cfc2179de31cabb3d"
+      },
+      "scope": "argv count exceeded original256 bound; no grant/child/check ran. Fixed by function selectors with same241 exact observer nodes; no limit raised."
+    },
+    "first195": {
+      "request": {
+        "bytes": 118623,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/trainer-integration-v01/pure-qualification-v01/request-v01.json",
+        "sha256": "3ee0852fef83c6aa140ecff540583820c49537a544f5185f8c1242dca9df4502"
+      },
+      "result": {
+        "bytes": 2609,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/trainer-integration-v01/pure-qualification-v01/qualification-result-v01.json",
+        "sha256": "e103efab799b52d3e013541a340deeaa3625c7119ab3d9424866d58240bee194"
+      },
+      "scope": "105 original plus90 new pure/fake controls, sourcecf9; separate from final241."
+    },
+    "intermediate224": {
+      "closeout": {
+        "bytes": 10614,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/trainer-integration-v01/pure-recovery-qualification-v01/root-source-closeout-v01.json",
+        "sha256": "e4327eb879a5fd3d6d532ed1434356b008e61d683ac3e7ad7682df2acc7a881a"
+      },
+      "request": {
+        "bytes": 133672,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/trainer-integration-v01/pure-recovery-qualification-v01/request-v01.json",
+        "sha256": "7a078bba825909b28db17c650918fefc4dedb316f1a66a4516bbdfbb447f9687"
+      },
+      "scope": "Intermediate e47 source passed224 but subsequent static review found typed-store gaps; not final qualification."
+    }
+  },
+  "qualification": {
+    "JUnit": {
+      "bytes": 49832,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/trainer-integration-v01/typed-recovery-qualification-v01/attempt-v02/exports/test-results.xml",
+      "sha256": "c112f85f2d0b2b5c88747e5da2eca992a37c122d73621aab9c30bb2c205c193e"
+    },
+    "cases": 241,
+    "external_process_attempts": 0,
+    "models_or_numerical_imports": 0,
+    "native_descendant_storage_source_closed": true,
+    "new_v2_cases": 90,
+    "observer": {
+      "bytes": 450184,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/trainer-integration-v01/typed-recovery-qualification-v01/attempt-v02/exports/phase-observations-v02.json",
+      "sha256": "54ee397af32b71e931780ed92b61d16bb89670fee73c26415cdaa607bee4ff2c"
+    },
+    "original_cases": 105,
+    "original_owner_seconds": 121.4844881221652,
+    "passed": true,
+    "phases": 723,
+    "pytest_seconds": 4.679,
+    "recovery_cases": 46,
+    "request": {
+      "bytes": 97263,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/trainer-integration-v01/typed-recovery-qualification-v01/request-v02.json",
+      "sha256": "9185f0f5cb5fed4d86ed337d16ef22e2876261f4220d9a98d53d20a0c5c939c7"
+    },
+    "retained_fit": false,
+    "schema": "legal-ir-v2-trainer-integration-qualified/v1",
+    "source_closeout": {
+      "bytes": 10619,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/optimizer-recipe-contract-v01/numerical-successor-v01/capture-integration-v01/trainer-integration-v01/typed-recovery-qualification-v01/root-source-closeout-v02.json",
+      "sha256": "c1135b14a7e3c2aba12e37af11a3996d217f6cfb0eda978468020ff38fc63ba8"
+    },
+    "source_pins": 80,
+    "training_rate_selected": null
+  },
+  "recovery_contract": {
+    "effects": "Read-only source-custody classification. No facade/admission/native mutation, storage-release authority or automatic retry. Unknown or conflicting evidence retains original cleanup requirement.",
+    "only_recognized_error": "storage inventory entry bound exceeded",
+    "requirements": [
+      "Original source/request/owner/exit bindings; exact pinned storage owner0cf.",
+      "Nonzero exit, not entered, no record/native lease/child/launch events; available empty group and completed error-free exit handling.",
+      "Closing source guards true; mandatory cleanup fact None.",
+      "Closed original ledger, fixed original limits and record helpers; refused identity absent from all decoded record metadata.",
+      "Original strict scheduler reader/ancestry/schema/record/policy/proof-safety checks and refused identity absent from all decoded keys/values."
+    ],
+    "verdict": "proven_original_trainer_preentry_inventory_refusal_source_closed"
+  },
+  "remaining": [
+    "Resolve the current inventory-capacity refusal through a compatible original resource-owner generation without altering retained evidence, admitted roots, budgets or model-bound source identities implicitly.",
+    "Extend existing formula_generation_metrics saved-output consumer with explicit v2 panel/chunk/inference consistency and refusal tests; do not relabel v2 captures as v1.",
+    "Select and preregister one finite TRAIN-only experiment and obtain fresh original training-purpose admission before retained updates.",
+    "Freeze all outputs before independent full-IR/per-ID,72 conditions-present TRAIN,32 target-P modality and original comparator no-loss gates.",
+    "Public physical-v2 validation frontend support remains separate; preserve existing trainer branch."
+  ],
+  "request_contract": {
+    "added_compute_field": "learning_rate",
+    "donor_config_learning_rate": 0.001,
+    "fixed_margin_weights": [
+      0.0,
+      0.25
+    ],
+    "fixed_seconds_per_arm": 32,
+    "fixed_steps_per_arm": 32,
+    "initial_parity_metadata_sha256": "6d846ed3bab241e26d72aad4d5d1ee6d42310b9a10c66538dd04ae2c3868678e",
+    "original_lifecycle_schema_version": "v1; request-hash bound",
+    "parity_control_learning_rate": 0.001,
+    "probe_semantics": "V2 native_probe uses original zero-model v1 probe; no numerical-dispatch qualification follows.",
+    "recipe_construction": "Both recipes built and validated by pinned existing pure owner from freshly authenticated donor config and15 bindings plus independent request rate before either arm exists. Each is persisted with its arm.",
+    "schema": "owned-f18-conditions-training-request/v2",
+    "v2_numerical_source_sha256": "d80a08844c06daae6466a39b87bc0c395e0dd4a2da01b284704a4e03e44af0f1"
+  },
+  "review": {
+    "execution_and_receipt_review": "/root",
+    "independent_executable_qualification_review_claimed": false,
+    "static_reviewers": [
+      "/root/v2_trainer_admission_review",
+      "/root/v2_trainer_contract_review"
+    ]
+  },
+  "schema": "legal-ir-v2-trainer-integration-and-preentry-recovery/v1",
+  "source": {
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_invocation_worker.py": {
+      "bytes": 67732,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_invocation_worker.py",
+      "sha256": "9eedcfab1627d8aead54ac1e793d98d19b010b36441b981aa25391ab7e0c6192"
+    },
+    "scripts/ops/legal_ir/run_owned_validation.py": {
+      "bytes": 73128,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/scripts/ops/legal_ir/run_owned_validation.py",
+      "sha256": "e7bc127a0f4ac4b054ec9a5af802721a5e0d690a54c135acb250aec771a8e2db"
+    },
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_daemon_invocation_worker.py": {
+      "bytes": 82487,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_daemon_invocation_worker.py",
+      "sha256": "6ceadb44c91f77530e61cb08c0c114b2c118030e6cf154dd55c1ea4d8feefbe1"
+    },
+    "tests/unit/optimizers/logic_theorem_optimizer/test_validation_run_resources.py": {
+      "bytes": 143119,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-f18-optimizer-recipe-20261028/tests/unit/optimizers/logic_theorem_optimizer/test_validation_run_resources.py",
+      "sha256": "6b807b99eb44ed576c2bd9a0cf69dca0aad95cad16a73f463748e7fcc4473da5"
+    }
+  },
+  "source_base_commit": "dd248ef4011d5c8ae6836e62fe4546449bb47d8d",
+  "title": "V2 trainer contracts and narrow pre-entry inventory-refusal recovery"
+}

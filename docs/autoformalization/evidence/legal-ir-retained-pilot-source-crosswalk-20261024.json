@@ -1,0 +1,697 @@
+{
+  "API_selection": "The existing exact occurrence owner supports the complete101field. Historical cache-lineage and all-block alignment routes retain their lower-only65536character limit; neither is truncated, raised or relabelled.",
+  "authority": {
+    "Lean_admitted": false,
+    "definition_applicability_verified": false,
+    "evaluation_gold_qualified": false,
+    "governing_definition_selected": false,
+    "governing_edition_selected": false,
+    "historical_HF_mapping_verified": false,
+    "meaning_review_completed": false,
+    "semantic_graph_admitted": false,
+    "source_authority_authenticated": false,
+    "source_region_roles_verified": false,
+    "training_gold_qualified": false
+  },
+  "backlog_tasks_closed": [],
+  "cohort_id": "retained-official-2024-title10-three-source/v1",
+  "complete_coordinate_span_population": 1649,
+  "distinct_containing_spans": 3,
+  "evaluation_gold_mask": 0,
+  "existing_owners_reused": [
+    "legal_official_document_views.validate_official_document_view",
+    "corpus_source.validate_source_version/validate_source_occurrence",
+    "corpus_contracts.validate_record",
+    "legal_parent_text_views.exact_parent_text_occurrences",
+    "uscode_ingest.validate_uscode_source_coordinates"
+  ],
+  "four_width_profiles_changed": false,
+  "governing_definition_selection": null,
+  "implementation_owner_API_or_model_profile_changed": false,
+  "legacy_HF_source_span_entity_physical_join": null,
+  "legal_as_of_civil_date": null,
+  "limits": [
+    "One four-unit data crosswalk, separate from earlier cohort production, fixture tests and other source populations.",
+    "Literal geometry and record integrity are observations; nominated definition/scope/use roles are unreviewed.",
+    "All matching candidates are retained; exact original offsets select physical geometry without selecting legal meaning.",
+    "Ten selected project source origins/twelve compile observations under four initializer bypasses do not attest full packages, third-party binaries or code objects. Multiformats0.3.1 is observed trusted runtime.",
+    "Cooperative sampled-descendant supervision and Python audit guards are not arbitrary native containment.",
+    "Decoded text offsets do not map encoded Parquet or rawHTML byte locations to characters.",
+    "Existing source/meaning/application/trust decisions, contextual completeness, full-norm representability, vector/model compatibility, graph and Lean release remain open.",
+    "No oldHFcachepopulation is repaired and no newtraining/gold or legal-asof decision is inferred."
+  ],
+  "meaning_review": null,
+  "new_entity_annotations": 0,
+  "new_model_encoder_training_or_Lean_operations": 0,
+  "new_semantic_graph_admissions": 0,
+  "original_semantic_alternatives_rewritten": false,
+  "original_source_context_unit_and_guide_refs_preserved": true,
+  "overlap_link_count": 4,
+  "physical_row_count": 3,
+  "population_scope": "Four source units:101scope48 anddefinition49,7213unit9,7214unit9. Six previously authored interpretation alternatives are distinct from these four physical units. Other selected101units remain outside this crosswalk; complete source rows stay retained.",
+  "publication_base": "779fce9857904305a66da6f4866c8205ac2e1a0d",
+  "qualification": {
+    "artifacts_durable": true,
+    "checked_compile_observations": 12,
+    "controller": {
+      "bytes": 8627,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-pilot-crosswalk-v01/controller-complete-crosswalk-v01.json",
+      "sha256": "3afda62c4486314f75cbb6a981d5218db559a1b41902436f2e4e67c3e9cdf259"
+    },
+    "durability": {
+      "bytes": 1369,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-pilot-crosswalk-v01/attempt-crosswalk-v01/logs/validation-durability.json",
+      "sha256": "99638d8e7fad9b5eed628ebe996ce1f017eac6c22dfbc5ab21124d731c167940"
+    },
+    "envelope": {
+      "child_process_slots": 2,
+      "cpu_slots": 1,
+      "memory_mb": 1024,
+      "storage_bytes": 33554432,
+      "timeout_seconds": 180
+    },
+    "independent_saved_review": {
+      "bytes": 18019,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-pilot-crosswalk-v01/review/graph-lean/crosswalk-independent-saved-review-v01.json",
+      "sha256": "b9572f2c611014906c0dedc8908129db2c3d5e08f56b37b919b454f8fa72fdde"
+    },
+    "namespace_bypasses": {
+      "ipfs_datasets_py": {
+        "initializer": {
+          "bytes": 56829,
+          "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/__init__.py",
+          "sha256": "f258f8eada774251feacd8e2ee2048efe56c89a8ee88efd50e4271ea41d43dc9"
+        },
+        "initializer_body_bypassed": true,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py"
+      },
+      "ipfs_datasets_py.logic": {
+        "initializer": {
+          "bytes": 4434,
+          "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/logic/__init__.py",
+          "sha256": "f25a9702ddc282092dbae1bc1731afdcc35576c10745487dccedaa531ccc9e79"
+        },
+        "initializer_body_bypassed": true,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/logic"
+      },
+      "ipfs_datasets_py.logic.autoformal": {
+        "initializer": {
+          "bytes": 60251,
+          "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/logic/autoformal/__init__.py",
+          "sha256": "9e8b39edd2c9885be6d8eb3765bdf9d93aa5071ccd17f3ebaead3c1c5a191a71"
+        },
+        "initializer_body_bypassed": true,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/logic/autoformal"
+      },
+      "ipfs_datasets_py.utils": {
+        "initializer": {
+          "bytes": 175,
+          "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/utils/__init__.py",
+          "sha256": "78f4cd7f8e14b4fff482c0c91ada5c49f8b9edf707bffd9cd58840b5503e66c2"
+        },
+        "initializer_body_bypassed": true,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/utils"
+      }
+    },
+    "native_compute_released": true,
+    "native_lease_id": "d0cd78cb2274412fa82692b61665e9f5",
+    "native_storage_released": true,
+    "ordinary_project_origins": {
+      "ipfs_datasets_py.logic.autoformal.constitution_inventory": {
+        "bytes": 11156,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/logic/autoformal/constitution_inventory.py",
+        "sha256": "d71e77a88276a5ea5d6db1e7ce09add2784ae53ea6586f9aa51ceeae8a538095"
+      },
+      "ipfs_datasets_py.logic.autoformal.corpus_contracts": {
+        "bytes": 7279,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/logic/autoformal/corpus_contracts.py",
+        "sha256": "b89146e2471b7335f23115222c5a9bc5298a20bb02f02cce5d91496e6563d8aa"
+      },
+      "ipfs_datasets_py.logic.autoformal.corpus_source": {
+        "bytes": 16185,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/logic/autoformal/corpus_source.py",
+        "sha256": "6e4be77cfc27a750b11aa57bb92baa92617c57d5c4a26316e25563aa715ec257"
+      },
+      "ipfs_datasets_py.logic.autoformal.legal_official_document_views": {
+        "bytes": 24944,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/logic/autoformal/legal_official_document_views.py",
+        "sha256": "204e91255e5587a5e79d0de263a035934c811c5f7ab8b780dd28f433f97f95e4"
+      },
+      "ipfs_datasets_py.logic.autoformal.legal_official_source_custody": {
+        "bytes": 19956,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/logic/autoformal/legal_official_source_custody.py",
+        "sha256": "876bb6618fd76f6be33b995e9597796e4a5b4d95fa6689129beb3fb918b796e7"
+      },
+      "ipfs_datasets_py.logic.autoformal.legal_parent_parquet_pages": {
+        "bytes": 71640,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/logic/autoformal/legal_parent_parquet_pages.py",
+        "sha256": "fcf2f111f1b95450caf09e818b2298e8080ad53774944b844ac46d729af767c7"
+      },
+      "ipfs_datasets_py.logic.autoformal.legal_parent_text_views": {
+        "bytes": 13849,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/logic/autoformal/legal_parent_text_views.py",
+        "sha256": "94855a18b9ed466a38382715675052f7cb5952c9c672f28c255e376bd28d76cc"
+      },
+      "ipfs_datasets_py.logic.autoformal.legal_statutory_context": {
+        "bytes": 23949,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/logic/autoformal/legal_statutory_context.py",
+        "sha256": "1f1e607c7c8d1e479ae5b79e17f928571e3da49f0ad4180dfc93e609d0d47dc2"
+      },
+      "ipfs_datasets_py.logic.autoformal.uscode_ingest": {
+        "bytes": 23313,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/logic/autoformal/uscode_ingest.py",
+        "sha256": "a0d79a7459186c19c3a32cc03405acc3e4a4e0e2b33fc7bae9525be7b5246e92"
+      },
+      "ipfs_datasets_py.utils.cid_utils": {
+        "bytes": 4428,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/utils/cid_utils.py",
+        "sha256": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"
+      }
+    },
+    "process_scope": "sampled_birth_bound_descendants",
+    "pytest_cases_or_phases": 0,
+    "request": {
+      "bytes": 16579,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-pilot-crosswalk-v01/request-crosswalk-v01.json",
+      "sha256": "28d9fe376d52ef8979b646b1ee949c2ad4d655d8a768c2c4a5438d23409b541c"
+    },
+    "request_source_pins": 56,
+    "reservation_id": "1b8ebb2df21844fbb3bcd114a3d4f89b",
+    "result": {
+      "bytes": 51585,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-pilot-crosswalk-v01/attempt-crosswalk-v01/exports/pending-physical-source-crosswalk.json",
+      "sha256": "6f2fb93327eeff039e45b40130edbfea4331350e27ab3594d62f111590496d11"
+    },
+    "runtime_observations": {
+      "multiformats": {
+        "path": "/home/barberb/lift_coding/.venv/lib/python3.12/site-packages/multiformats/__init__.py",
+        "version": "0.3.1"
+      },
+      "numpy": null,
+      "pyarrow": null,
+      "pyarrow.parquet": null
+    },
+    "selected_checks": [
+      {
+        "details": {
+          "existing_source_occurrences_validated": 4,
+          "existing_source_versions_validated": 3,
+          "new_source_versions_or_CIDs_created": 0,
+          "original_selected_units": 4,
+          "retained_whole_documents": 3,
+          "source_sampler_or_review_template_regenerated": false
+        },
+        "name": "retained_official_occurrence_records_replayed",
+        "passed": true
+      },
+      {
+        "details": {
+          "all_literal_candidate_counts": [
+            1,
+            1,
+            1,
+            1
+          ],
+          "complete_three_row_physical_replay_by_existing_public_owner": true,
+          "exact_old_four_coordinate_matches": 4,
+          "first_find_or_text_hash_only_selection": false,
+          "original_selected_units": 4
+        },
+        "name": "all_literal_parent_occurrences_and_exact_geometry_bound",
+        "passed": true
+      },
+      {
+        "details": {
+          "all_overlap_counts": [
+            1,
+            1,
+            1,
+            1
+          ],
+          "complete_coordinate_spans_preserved": 1649,
+          "distinct_overlapping_coordinate_spans": 3,
+          "four_unit_to_four_whole_span_one_to_one_identity_claimed": false,
+          "selected_unit_links": 4,
+          "source_coordinate_full_report_sha256": "5b3fc636a5ebe717e5cc9da047359ecd1e18b7b1aa2615b9f612c58f9fa4513b"
+        },
+        "name": "source_coordinate_overlap_population_preserved",
+        "passed": true
+      },
+      {
+        "details": {
+          "Lean_builds": 0,
+          "authority": {
+            "Lean_admitted": false,
+            "definition_applicability_verified": false,
+            "evaluation_gold_qualified": false,
+            "governing_definition_selected": false,
+            "governing_edition_selected": false,
+            "historical_HF_mapping_verified": false,
+            "meaning_review_completed": false,
+            "semantic_graph_admitted": false,
+            "source_authority_authenticated": false,
+            "source_region_roles_verified": false,
+            "training_gold_qualified": false
+          },
+          "crosswalk": {
+            "bytes": 51585,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-pilot-crosswalk-v01/attempt-crosswalk-v01/exports/pending-physical-source-crosswalk.json",
+            "sha256": "6f2fb93327eeff039e45b40130edbfea4331350e27ab3594d62f111590496d11"
+          },
+          "encoder_calls": 0,
+          "entity_rows": 0,
+          "legacy_HF_physical_join": null,
+          "model_calls": 0,
+          "reviewer_identity_or_signature_created": false,
+          "training_updates": 0,
+          "unit_count": 4
+        },
+        "name": "semantic_authority_stays_pending",
+        "passed": true
+      }
+    ],
+    "source_READs_closed": true,
+    "successful_data_checks": 4,
+    "terminal_live_processes": 0,
+    "worker_observation": {
+      "bytes": 14244,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-pilot-crosswalk-v01/attempt-crosswalk-v01/exports/worker-observation.json",
+      "sha256": "dba54067267687f403db8aff4b1621654065690bb83e82a93a13eba813892bec"
+    }
+  },
+  "query": "retained-official-pilot:2024:10:101,7213,7214:v1",
+  "recorded_at_utc": "2026-10-24T21:51:28.097857+00:00",
+  "release_id": "retained-official-pilot/2024-title10/v1",
+  "retained_input_text_reuse_metadata": {
+    "actual_input_to_normalized_span_comparisons": 4,
+    "additional_cross_width_text_equalities": 2,
+    "encoder_or_decoder_profile_compatibility_proven": false,
+    "independent_review": {
+      "bytes": 4863,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-pilot-crosswalk-v01/review/training-reuse/retained-source-text-compatibility-independent-review-v01.json",
+      "sha256": "483364ec4a3e34b0299b61687c13117b376981b5ec3ddebe71e0a993e5211d72"
+    },
+    "model_vector_tensor_checkpoint_cache_database_payload_reads": false,
+    "new_encoding_model_or_native_operation": false,
+    "qualification_scope": "UTF8 text bytes only. Retained384/768 inputs match normalized containing-span text; raw physical source has LF where those inputs have space, despite identical byte lengths. Distinct old/new IDs stay distinct.",
+    "receipt": {
+      "bytes": 6211,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-pilot-crosswalk-v01/review/training-reuse/retained-source-text-compatibility-v01.json",
+      "sha256": "d3d9c01dd0b0ea266c40baa31a5a57222c8f1c72b026bea87c074c1c509b06f1"
+    },
+    "rows": [
+      {
+        "coordinate_pointer": "/spans/1525",
+        "exact_byte_differences_raw_to_normalized": [
+          {
+            "normalized_span_and_retained_input_byte": 32,
+            "physical_source_byte": 10,
+            "relative_utf8_byte_offset": 90
+          }
+        ],
+        "legacy_384_request_pointer": "/0/source_text",
+        "legacy_384_source_bytes_equal_legacy_768": true,
+        "legacy_384_source_bytes_equal_normalized_span": true,
+        "legacy_768_input_pointer": "/rows/0/source_text",
+        "legacy_768_source_bytes_equal_normalized_span": true,
+        "legacy_derived_span_id": "uscode-span-27f63eaefdf3309148d7d4444978e3495e11aa20f4eef3e9c5c1764b8e9755bb",
+        "legacy_id_equal_physical_id": false,
+        "legacy_source_bytes_equal_physical_raw_source_text": false,
+        "normalized_span_and_both_retained_inputs_sha256": "71ca988bfb6fe414997fb329fadae6df2cfde5ed97f19135ef63ad94e468bb66",
+        "physical_raw_source_text_sha256": "bda31d3af448b75fa9675ac673a8599e20f88a14d585cb9494ae91c037c98f4c",
+        "physical_row_ordinal": 1,
+        "physical_source_char_range": [
+          340,
+          624
+        ],
+        "physical_source_span_id": "uscode-span-c39e2bd221405f5d8be36c333402d447903f4d33a9b34eb3f30c4d2ac5527fff",
+        "physical_source_utf8_range": [
+          341,
+          625
+        ],
+        "section": "7213",
+        "utf8_bytes": 284
+      },
+      {
+        "coordinate_pointer": "/spans/1570",
+        "exact_byte_differences_raw_to_normalized": [
+          {
+            "normalized_span_and_retained_input_byte": 32,
+            "physical_source_byte": 10,
+            "relative_utf8_byte_offset": 78
+          }
+        ],
+        "legacy_384_request_pointer": "/1/source_text",
+        "legacy_384_source_bytes_equal_legacy_768": true,
+        "legacy_384_source_bytes_equal_normalized_span": true,
+        "legacy_768_input_pointer": "/rows/1/source_text",
+        "legacy_768_source_bytes_equal_normalized_span": true,
+        "legacy_derived_span_id": "uscode-span-7616d1697e660b6c942bae8832e4aef0c7df16fd1808a5d9df682ed3fa892b1a",
+        "legacy_id_equal_physical_id": false,
+        "legacy_source_bytes_equal_physical_raw_source_text": false,
+        "normalized_span_and_both_retained_inputs_sha256": "0953781d7433ecf37084fd81539db173849d9e14a85b0a9786787ec3b292226c",
+        "physical_raw_source_text_sha256": "9460e5681d56a7079e74d59bfccc77f74192a379da65841ef943e36789f2792e",
+        "physical_row_ordinal": 2,
+        "physical_source_char_range": [
+          328,
+          570
+        ],
+        "physical_source_span_id": "uscode-span-974c743f6e2e4dbcbbaabc310eeb62c432d79170c4aa13ab188e70b760f9e8c8",
+        "physical_source_utf8_range": [
+          329,
+          571
+        ],
+        "section": "7214",
+        "utf8_bytes": 242
+      }
+    ],
+    "source_identity_alias_or_legacy_physical_join_created": false,
+    "source_text_compatibility_proven": true,
+    "vector_or_checkpoint_availability_or_integrity_checked": false
+  },
+  "reused_complete_coordinate_report_sha256": "5b3fc636a5ebe717e5cc9da047359ecd1e18b7b1aa2615b9f612c58f9fa4513b",
+  "reused_local_git_cohort_revision": "79f6f5538747095de6512dcc071e92b025570017",
+  "reused_parent_descriptor_sha256": "03193ab96c495cf7e5d0f3211d6c6fbc63665fdbf66d090bc38ce95974622b8c",
+  "sampler_or_review_templates_regenerated": false,
+  "schema": "legal-ir-retained-pilot-source-crosswalk-qualification/v1",
+  "scope": "One actual ownedDATA operation binds four original retained2024source units to exact interior selectors in three existing local-cohort physical rows and three containing coordinate spans. Separate metadata observations bind two normalized input texts to retained384/768text preparations. No new source acquisition, sampler, source ID, numerical run or semantic admission.",
+  "source_closure": {
+    "bytes": 5771,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-pilot-crosswalk-v01/inputs/source-closure-v01.json",
+    "sha256": "b808b8d916616bd329696d14ad3079debd9e61a05b8a463935fbd3e8c1ebe523"
+  },
+  "source_edition": 2024,
+  "source_population": [
+    {
+      "crosswalk_selected_indices": [
+        0,
+        1
+      ],
+      "official_full_report_sha256": "26ac99daae8452bfa43f799da7f455b6f4f228b3636712dbde203f6705b94192",
+      "official_view_report_pin": {
+        "bytes": 599801,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/inputs/101/view-report.json",
+        "sha256": "26ac99daae8452bfa43f799da7f455b6f4f228b3636712dbde203f6705b94192"
+      },
+      "original_selected_artifact_unit_count": 4,
+      "original_selected_evidence": {
+        "bytes": 59083,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-pilot-crosswalk-v01/inputs/selected-evidence-101.json",
+        "sha256": "c8be609111dd142a15b2181138d7fda5880960686c0bb33c3e0a06f59761bd5d"
+      },
+      "original_selected_indices_outside_declared_crosswalk": [
+        2,
+        3
+      ],
+      "original_source_version_cid": "baguqeerave77xhahqkwfznpcifxg2axl3uesrac7yiuaginwxxvqj7aghmza",
+      "raw_HTML_pin": {
+        "bytes": 98879,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/inputs/101/source.html",
+        "sha256": "4e8d017794220f192668d5313fc537fbb7140652ac4a00faaf93a6c921c2c08b"
+      },
+      "section": "101",
+      "whole_normalized_text_sha256": "e16ca14e06034a08bc1e732cdb790c9ec5bbb96d3ba38ac3bee23367c8481851"
+    },
+    {
+      "crosswalk_selected_indices": [
+        0
+      ],
+      "official_full_report_sha256": "e3359aec9b6d637b1d73e3d7b589640d6878e067424a46ff5d1011030d363c98",
+      "official_view_report_pin": {
+        "bytes": 31140,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/inputs/7213/view-report.json",
+        "sha256": "e3359aec9b6d637b1d73e3d7b589640d6878e067424a46ff5d1011030d363c98"
+      },
+      "original_selected_artifact_unit_count": 1,
+      "original_selected_evidence": {
+        "bytes": 18215,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-pilot-crosswalk-v01/inputs/selected-evidence-7213.json",
+        "sha256": "f7ed1753af645c19cf76fae3a940a1ccd488cae18c6cc268a4307c7c7aa71b05"
+      },
+      "original_selected_indices_outside_declared_crosswalk": [],
+      "original_source_version_cid": "baguqeera3y2krszyd5mqfdh6jfieircvqtzxcib45qamwrs4klhmhwkql5ca",
+      "raw_HTML_pin": {
+        "bytes": 4049,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/inputs/7213/source.html",
+        "sha256": "671925114eada7731a355e33c8076baa6926fed1b7cb35c90a8c4c705c55b0ef"
+      },
+      "section": "7213",
+      "whole_normalized_text_sha256": "6b0c306698da9e5e44262e74e1f14dac151e0f7e84f466b44285bd544cd52963"
+    },
+    {
+      "crosswalk_selected_indices": [
+        0
+      ],
+      "official_full_report_sha256": "59c6d6abd3b93dda95f92b44f8ecbfc30974bd1b85109f328b004cecc7fe290a",
+      "official_view_report_pin": {
+        "bytes": 48483,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/inputs/7214/view-report.json",
+        "sha256": "59c6d6abd3b93dda95f92b44f8ecbfc30974bd1b85109f328b004cecc7fe290a"
+      },
+      "original_selected_artifact_unit_count": 1,
+      "original_selected_evidence": {
+        "bytes": 18225,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-pilot-crosswalk-v01/inputs/selected-evidence-7214.json",
+        "sha256": "2f7b039e2b19384d0210057580e4da61b120a64b723726825d64311840ae6e25"
+      },
+      "original_selected_indices_outside_declared_crosswalk": [],
+      "original_source_version_cid": "baguqeerazs3yvjdtyapov3z5dbwfgpc7sks2lttcphq624tbw3ozrsp3pgba",
+      "raw_HTML_pin": {
+        "bytes": 7017,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/inputs/7214/source.html",
+        "sha256": "9c33986e216e85dbae33e58a3201bf3c02d3c4ff887d48e5ec524f8813c5842e"
+      },
+      "section": "7214",
+      "whole_normalized_text_sha256": "58e446ec84d0d3cf42d4b322f0da06a16620c2621cfa29fab0f0c5ddbe834b64"
+    }
+  ],
+  "source_repository": "https://github.com/endomorphosis/ipfs_datasets_py",
+  "source_revision": "779fce9857904305a66da6f4866c8205ac2e1a0d",
+  "source_unit_count": 4,
+  "source_unit_rows": [
+    {
+      "UTF8_range": [
+        6447,
+        6551
+      ],
+      "all_overlaps": [
+        {
+          "intersection_UTF8_end": 6551,
+          "intersection_UTF8_start": 6447,
+          "intersection_char_end": 6527,
+          "intersection_char_start": 6425,
+          "selected_unit_equals_entire_source_span": false,
+          "semantic_or_entity_binding": null,
+          "source_document_sha256": "e16ca14e06034a08bc1e732cdb790c9ec5bbb96d3ba38ac3bee23367c8481851",
+          "source_span_id": "uscode-span-6055b931eda152c9e98b7c5044b7da2b29463127f22f5c1f6001282628a761c2",
+          "span_contains_whole_selected_unit": true,
+          "span_source_UTF8_end": 6615,
+          "span_source_UTF8_start": 6447,
+          "span_source_char_end": 6591,
+          "span_source_char_start": 6425
+        }
+      ],
+      "character_range": [
+        6425,
+        6527
+      ],
+      "containing_span_ids": [
+        "uscode-span-6055b931eda152c9e98b7c5044b7da2b29463127f22f5c1f6001282628a761c2"
+      ],
+      "governing_definition_selection": null,
+      "literal_candidate_count": 1,
+      "meaning_review": null,
+      "old_blank_guide_ref": {
+        "record_cid": "baguqeeraiyje5ydrrvg6fe3h7r6zxlsf2hy76b5vy6vifcczhmylepwesljq",
+        "schema": "legal-source-sampling-review-blank-guide/v1",
+        "sha256": "bd5c44d5d06496ca5e9f31062d5e9aa6b6a1229e2f402856b8f3363b7d262acd"
+      },
+      "old_context_ref": {
+        "record_cid": "baguqeeralpcglyrjsh555a64ri2zkv7mkr4zsuyx3sjbsgtzcj6mywwhr2dq",
+        "schema": "legal-corpus-context-declaration/v1",
+        "sha256": "e9321b8117f556e23526404f8133ab600acd52dd22132fc51e88a9820325589d"
+      },
+      "old_source_occurrence_cid": "baguqeera2cmwvh2ny35xyhcok4zd7v6lvhdswp3ca3uj4tnoo6lcodlzsl2a",
+      "old_source_unit_ref": {
+        "record_cid": "baguqeerahdfpg6hzil7fbc45vksgjzsqdq7uh4dmch4bwt3oo3cybch7btpa",
+        "schema": "legal-source-structured-sample-unit/v1",
+        "sha256": "8cf40c47c26e77e5721b7bd124740b21c0a81f10239963b7ba5c195de04e7706"
+      },
+      "old_source_version_cid": "baguqeerave77xhahqkwfznpcifxg2axl3uesrac7yiuaginwxxvqj7aghmza",
+      "physical_row_ordinal": 0,
+      "physical_selector_sha256": "390a75d538e6999da106e6811c41974d517542f5418383a32fffaa55cb3a82dc",
+      "role": "title_scope",
+      "section": "101",
+      "unit_equals_whole_inventory_span": false
+    },
+    {
+      "UTF8_range": [
+        6552,
+        6615
+      ],
+      "all_overlaps": [
+        {
+          "intersection_UTF8_end": 6615,
+          "intersection_UTF8_start": 6552,
+          "intersection_char_end": 6591,
+          "intersection_char_start": 6528,
+          "selected_unit_equals_entire_source_span": false,
+          "semantic_or_entity_binding": null,
+          "source_document_sha256": "e16ca14e06034a08bc1e732cdb790c9ec5bbb96d3ba38ac3bee23367c8481851",
+          "source_span_id": "uscode-span-6055b931eda152c9e98b7c5044b7da2b29463127f22f5c1f6001282628a761c2",
+          "span_contains_whole_selected_unit": true,
+          "span_source_UTF8_end": 6615,
+          "span_source_UTF8_start": 6447,
+          "span_source_char_end": 6591,
+          "span_source_char_start": 6425
+        }
+      ],
+      "character_range": [
+        6528,
+        6591
+      ],
+      "containing_span_ids": [
+        "uscode-span-6055b931eda152c9e98b7c5044b7da2b29463127f22f5c1f6001282628a761c2"
+      ],
+      "governing_definition_selection": null,
+      "literal_candidate_count": 1,
+      "meaning_review": null,
+      "old_blank_guide_ref": {
+        "record_cid": "baguqeeranhckaqx2ajyfzlgwd2r32y3qngxaocghgtnonigixbj7ae4bshwa",
+        "schema": "legal-source-sampling-review-blank-guide/v1",
+        "sha256": "2fef48930e492447989e6eff29515c0852d4ab6201eb5ae4a2c89ae49155f1cc"
+      },
+      "old_context_ref": {
+        "record_cid": "baguqeeraxfs35w7bh6ljxu4jw54gk7xysss4frxgm6dzfd6oyz53fmv5nd7a",
+        "schema": "legal-corpus-context-declaration/v1",
+        "sha256": "dfefdabee16e8e3643ea37bc5dbe54e62a35ae091ce391d4d788472f78c7cb08"
+      },
+      "old_source_occurrence_cid": "baguqeeracyfied5gomuscg5pdep44znimi2zdlqjbs4n2jwq4yf6dekbgera",
+      "old_source_unit_ref": {
+        "record_cid": "baguqeeraaa3y5jwjaf2d2jkar6now7eq3vml7do7ytuy7jvkajfcrwzx2dgq",
+        "schema": "legal-source-structured-sample-unit/v1",
+        "sha256": "a15dca5d46ad7783a09b4f6ec69b97cdb45aa393df9a48caa5c328612a6a356a"
+      },
+      "old_source_version_cid": "baguqeerave77xhahqkwfznpcifxg2axl3uesrac7yiuaginwxxvqj7aghmza",
+      "physical_row_ordinal": 0,
+      "physical_selector_sha256": "d3105f69ef22ef4e270e41152b533e50cac707401f7a853d2f7e9d432e21ada3",
+      "role": "officer_definition",
+      "section": "101",
+      "unit_equals_whole_inventory_span": false
+    },
+    {
+      "UTF8_range": [
+        432,
+        625
+      ],
+      "all_overlaps": [
+        {
+          "intersection_UTF8_end": 625,
+          "intersection_UTF8_start": 432,
+          "intersection_char_end": 624,
+          "intersection_char_start": 431,
+          "selected_unit_equals_entire_source_span": false,
+          "semantic_or_entity_binding": null,
+          "source_document_sha256": "6b0c306698da9e5e44262e74e1f14dac151e0f7e84f466b44285bd544cd52963",
+          "source_span_id": "uscode-span-c39e2bd221405f5d8be36c333402d447903f4d33a9b34eb3f30c4d2ac5527fff",
+          "span_contains_whole_selected_unit": true,
+          "span_source_UTF8_end": 625,
+          "span_source_UTF8_start": 341,
+          "span_source_char_end": 624,
+          "span_source_char_start": 340
+        }
+      ],
+      "character_range": [
+        431,
+        624
+      ],
+      "containing_span_ids": [
+        "uscode-span-c39e2bd221405f5d8be36c333402d447903f4d33a9b34eb3f30c4d2ac5527fff"
+      ],
+      "governing_definition_selection": null,
+      "literal_candidate_count": 1,
+      "meaning_review": null,
+      "old_blank_guide_ref": {
+        "record_cid": "baguqeeral7eoxauinqk5t5vesjs33nwcgydqvpzv75kwpm7rvidouvhwjfna",
+        "schema": "legal-source-sampling-review-blank-guide/v1",
+        "sha256": "b18b479107c1644d1d9ea54c283a25b4077f7006d4086094ab7813a676d14e0b"
+      },
+      "old_context_ref": {
+        "record_cid": "baguqeerarwgueicrqclip7qv7vwvnt3gd7mpedlhdmpl2sgxlh4ojg3d76pq",
+        "schema": "legal-corpus-context-declaration/v1",
+        "sha256": "9b957a2c7496cca1ce9768ee764f52da501cb327cdf0d38ed6994c526bb9e51b"
+      },
+      "old_source_occurrence_cid": "baguqeerarbvejvawh23hjqt5b7e7ii5x5zzibekdweepvmi36sqzywkchcda",
+      "old_source_unit_ref": {
+        "record_cid": "baguqeerayiogyiuxpxy2cdjngs6vcu32575lsddffqtbdqjoklbilpe4dfvq",
+        "schema": "legal-source-structured-sample-unit/v1",
+        "sha256": "14510dd173adbb2100c99a76e4a7802e0bbb8f42ea01a0b8e6cf67621125af3e"
+      },
+      "old_source_version_cid": "baguqeera3y2krszyd5mqfdh6jfieircvqtzxcib45qamwrs4klhmhwkql5ca",
+      "physical_row_ordinal": 1,
+      "physical_selector_sha256": "b2c4e35da15642fa7000e140f1608b02c5c5c2f51d87165932b387f6a562224a",
+      "role": "officer_use_7213",
+      "section": "7213",
+      "unit_equals_whole_inventory_span": false
+    },
+    {
+      "UTF8_range": [
+        408,
+        571
+      ],
+      "all_overlaps": [
+        {
+          "intersection_UTF8_end": 571,
+          "intersection_UTF8_start": 408,
+          "intersection_char_end": 570,
+          "intersection_char_start": 407,
+          "selected_unit_equals_entire_source_span": false,
+          "semantic_or_entity_binding": null,
+          "source_document_sha256": "58e446ec84d0d3cf42d4b322f0da06a16620c2621cfa29fab0f0c5ddbe834b64",
+          "source_span_id": "uscode-span-974c743f6e2e4dbcbbaabc310eeb62c432d79170c4aa13ab188e70b760f9e8c8",
+          "span_contains_whole_selected_unit": true,
+          "span_source_UTF8_end": 571,
+          "span_source_UTF8_start": 329,
+          "span_source_char_end": 570,
+          "span_source_char_start": 328
+        }
+      ],
+      "character_range": [
+        407,
+        570
+      ],
+      "containing_span_ids": [
+        "uscode-span-974c743f6e2e4dbcbbaabc310eeb62c432d79170c4aa13ab188e70b760f9e8c8"
+      ],
+      "governing_definition_selection": null,
+      "literal_candidate_count": 1,
+      "meaning_review": null,
+      "old_blank_guide_ref": {
+        "record_cid": "baguqeerahgqe73alfb5ws6zquw534bkirj4gszw3lzdl476dev4limfzzk5a",
+        "schema": "legal-source-sampling-review-blank-guide/v1",
+        "sha256": "e1b2106493813bbcbb2cbabdaf0ba2dcf2e07504a9d66a9c6b43173f2079105c"
+      },
+      "old_context_ref": {
+        "record_cid": "baguqeeravicuner7iijjt7uw3xgjpsgc7j6gzdxm6lfzhvcctvro6c6dmz7a",
+        "schema": "legal-corpus-context-declaration/v1",
+        "sha256": "ebea95a2297c01e2b0482c41d48c22f0f5e6372aaddd68d46f48087b48f17950"
+      },
+      "old_source_occurrence_cid": "baguqeeracdglsquykktyomvkuyrq2xf4ljhzwbdn7kguvnhithregnhhpoja",
+      "old_source_unit_ref": {
+        "record_cid": "baguqeera632lzwmnhvsgkmnw6ydcqxmhepnxg7nssnnq2ayxcihfgevvlbrq",
+        "schema": "legal-source-structured-sample-unit/v1",
+        "sha256": "71d864e39fa5e175eb3af26eb78427418435fb89eb4868a2bb68bc2cc7a4a65c"
+      },
+      "old_source_version_cid": "baguqeerazs3yvjdtyapov3z5dbwfgpc7sks2lttcphq624tbw3ozrsp3pgba",
+      "physical_row_ordinal": 2,
+      "physical_selector_sha256": "cb810520db41bb4ed6ca8ffa1d033b6764fa3d2aec7cde17db4ed1dfffc33870",
+      "role": "officer_use_7214",
+      "section": "7214",
+      "unit_equals_whole_inventory_span": false
+    }
+  ],
+  "source_versions_or_CIDs_created": 0,
+  "status": "four_source_unit_literal_physical_crosswalk_qualified_meaning_pending",
+  "training_mask": 0,
+  "whole_span_equalities": 0
+}

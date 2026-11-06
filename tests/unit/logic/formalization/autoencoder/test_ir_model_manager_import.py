@@ -1064,6 +1064,237 @@ def test_reconciliation_refuses_embedded_v2_declarations_on_other_binding_schema
     assert manager.get_calls == manager.add_calls == factories == []
 
 
+@pytest.fixture
+def decoder_witness_data(tmp_path, monkeypatch):
+    """One genuine original metadata registry; no tensors, Hub or native manager."""
+    from tests.unit.logic.formalization.autoencoder import test_ir_decoder_profile_inventory as original
+    def forbidden(*args, **kwargs):
+        pytest.fail("decoder identity import fixture reached a numerical or Hub owner")
+    for name in ("_instantiate", "default_descriptor", "open_autoencoder", "open_local_autoencoder",
+                 "open_ir_cell_autoencoder", "open_ir_original_corpus_autoencoder",
+                 "open_ir_decoder_format_autoencoder"):
+        monkeypatch.setattr(original.hub, name, forbidden)
+    source_dir, import_dir = tmp_path / "original-metadata", tmp_path / "import-metadata"
+    source_dir.mkdir()
+    import_dir.mkdir()
+    source = original.make_profile_data(source_dir, "security_ir")
+    registry = original.build(source)
+    selected, profile, target = registry["checkpoints"][0], registry["profiles"][0], registry["formats"][0]
+    data = make_data(import_dir)
+    record = data["plan"]["models"][0]
+    metadata = record["model_metadata"]
+    identity = metadata["huggingface_config"]["ir_checkpoint"]
+    checkpoint = deepcopy(selected["checkpoint_receipt"])
+    record["checkpoint_pin"] = checkpoint
+    metadata.update(model_id=selected["record_id"], architecture=profile["identity"]["decoder_architecture_id"],
+                    model_revision=checkpoint["sha256"], revision_id=checkpoint["sha256"])
+    identity.update(record_id=selected["record_id"], ir_family_id="security_ir", dimension=384,
+        dimension_role="input_embedding", task_id=target["identity"]["task_id"],
+        schema_version=selected["format_contract"]["checkpoint_schema"],
+        profile_id=profile["profile_id"], format_id=target["format_id"], original_checkpoint_pin=checkpoint)
+    registry_pin = save(tmp_path / "original-decoder-registry.json", registry)
+    record["decoder_identity_witness"] = {"schema": "ir-decoder-identity-witness/v1",
+        "registry_pin": registry_pin, "record_id": selected["record_id"],
+        "target_format_schema_version": target["identity"]["schema_version"]}
+    record["release"]["checkpoint_sha256"] = checkpoint["sha256"]
+    remote = data["publication"]["files"][0]
+    remote.update(file_pin=deepcopy(checkpoint), bytes=checkpoint["bytes"], sha256=checkpoint["sha256"],
+                  remote_identity={"scheme": "lfs-payload-sha256", "bytes": checkpoint["bytes"],
+                                   "sha256": checkpoint["sha256"]})
+    data.update(decoder_registry=registry, decoder_registry_pin=registry_pin)
+    repin(data)
+    return data
+
+
+def test_decoder_identity_witness_binds_pinned_original_without_enriching_persisted_metadata(decoder_witness_data):
+    data, manager = decoder_witness_data, InertManager()
+    record = data["plan"]["models"][0]
+    before = deepcopy(record["model_metadata"])
+    result = invoke(data, manager)
+    assert result["completed"] is True and result["registered_count"] == 1
+    assert manager.add_calls == [before] and manager.persisted[before["model_id"]] == before
+    assert "decoder_identity_witness" not in before["huggingface_config"]["ir_checkpoint"]
+    outcome = result["outcomes"][0]
+    assert outcome["decoder_identity_witness"] == record["decoder_identity_witness"]
+    assert outcome["decoder_identity_witness_scope"] == "selected_registry_metadata_identity_consistency_only"
+    outcome["decoder_identity_witness"]["registry_pin"]["sha256"] = "0" * 64
+    assert record["decoder_identity_witness"]["registry_pin"]["sha256"] != "0" * 64
+    assert result["authority"]["model_numerically_loaded"] is False
+
+
+def test_decoder_identity_witness_verifies_existing_record_without_migration_or_new_id(decoder_witness_data):
+    data, manager = decoder_witness_data, InertManager()
+    original = deepcopy(data["plan"]["models"][0]["model_metadata"])
+    original.update(inference_count=23, last_run_id="existing-activity")
+    manager.models[original["model_id"]] = deepcopy(original)
+    manager.persisted[original["model_id"]] = deepcopy(original)
+    result = invoke(data, manager)
+    assert result["registered_count"] == 0 and result["already_present_count"] == 1
+    assert manager.add_calls == [] and manager.readback_calls == [original["model_id"]]
+    assert manager.persisted[original["model_id"]] == original
+
+
+@pytest.mark.parametrize("fault", ["family", "task", "checkpoint_schema", "target_schema", "profile_id",
+    "format_id", "record_id", "architecture", "original_checkpoint_alias", "float_dimension"])
+def test_decoder_identity_witness_rejects_relabelled_known_record_before_manager_or_factory(
+        decoder_witness_data, tmp_path, fault):
+    data, manager, factories = decoder_witness_data, InertManager(), []
+    record = data["plan"]["models"][0]
+    metadata, witness = record["model_metadata"], record["decoder_identity_witness"]
+    identity = metadata["huggingface_config"]["ir_checkpoint"]
+    if fault == "family": identity["ir_family_id"] = "intent_ir"
+    elif fault == "task": identity["task_id"] = "legal_text_reconstruction"
+    elif fault == "checkpoint_schema": identity["schema_version"] = witness["target_format_schema_version"]
+    elif fault == "target_schema": witness["target_format_schema_version"] = identity["schema_version"]
+    elif fault == "profile_id": identity["profile_id"] = "ir-decoder-profile/v1:" + "1" * 64
+    elif fault == "format_id": identity["format_id"] = "ir-decoder-format/v1:" + "2" * 64
+    elif fault == "record_id": witness["record_id"] = "ir-decoder-checkpoint-record/v1:" + "3" * 64
+    elif fault == "architecture": metadata["architecture"] = "different-declared-architecture"
+    elif fault == "float_dimension": identity["dimension"] = 384.0
+    else:
+        alias = tmp_path / "same-checkpoint-content.json"
+        alias.write_bytes(Path(record["checkpoint_pin"]["path"]).read_bytes())
+        identity["original_checkpoint_pin"] = pin(alias)
+    repin(data)
+    with pytest.raises(adapter.ModelManagerImportError):
+        invoke(data, manager, factory=lambda value: factories.append(value))
+    assert manager.get_calls == manager.add_calls == manager.readback_calls == factories == []
+
+
+@pytest.mark.parametrize("fault", ["version", "extra", "pin_type", "record_type"])
+def test_decoder_identity_witness_requires_closed_typed_versioned_control_record(decoder_witness_data, fault):
+    data, manager = decoder_witness_data, InertManager()
+    witness = data["plan"]["models"][0]["decoder_identity_witness"]
+    if fault == "version": witness["schema"] = "ir-decoder-identity-witness/v2"
+    elif fault == "extra": witness["runtime_ready"] = False
+    elif fault == "pin_type": witness["registry_pin"]["bytes"] = float(witness["registry_pin"]["bytes"])
+    else: witness["record_id"] = True
+    repin(data)
+    with pytest.raises(adapter.ModelManagerImportError): invoke(data, manager)
+    assert manager.get_calls == manager.add_calls == manager.readback_calls == []
+
+
+def test_decoder_identity_witness_registry_byte_cap_precedes_json_read(decoder_witness_data, monkeypatch):
+    data, manager, seen = decoder_witness_data, InertManager(), []
+    registry_pin = data["decoder_registry_pin"]
+    original = adapter._json
+    def observe(reference):
+        seen.append(reference["path"])
+        return original(reference)
+    monkeypatch.setattr(adapter, "_json", observe)
+    with pytest.raises(adapter.ModelManagerImportError):
+        invoke(data, manager, max_reference_bytes=registry_pin["bytes"] - 1)
+    assert registry_pin["path"] not in seen
+    assert manager.get_calls == manager.add_calls == manager.readback_calls == []
+
+
+def test_decoder_identity_witness_registry_endpoint_drift_precedes_all_manager_calls(
+        decoder_witness_data, monkeypatch):
+    data, manager, factories = decoder_witness_data, InertManager(), []
+    registry_path = data["decoder_registry_pin"]["path"]
+    original = adapter._json
+    def change_after_read(reference):
+        result = original(reference)
+        if reference["path"] == registry_path:
+            path = Path(registry_path)
+            path.write_bytes(path.read_bytes() + b" ")
+        return result
+    monkeypatch.setattr(adapter, "_json", change_after_read)
+    with pytest.raises(adapter.ModelManagerImportError):
+        invoke(data, manager, factory=lambda value: factories.append(value))
+    assert manager.get_calls == manager.add_calls == manager.readback_calls == factories == []
+
+
+@pytest.mark.parametrize("stage", ["factory", "after_add", "existing_readback"])
+def test_decoder_identity_witness_registry_pin_remains_fenced_at_effect_boundaries(decoder_witness_data, stage):
+    data, manager = decoder_witness_data, InertManager()
+    registry_path = Path(data["decoder_registry_pin"]["path"])
+    metadata = data["plan"]["models"][0]["model_metadata"]
+    def change(): registry_path.write_bytes(registry_path.read_bytes() + b" ")
+    def factory(value):
+        change()
+        return value
+    def readback(model_id):
+        value = manager.readback(model_id)
+        change()
+        return value
+    if stage == "after_add": manager.after_add = change
+    if stage == "existing_readback":
+        manager.models[metadata["model_id"]] = deepcopy(metadata)
+        manager.persisted[metadata["model_id"]] = deepcopy(metadata)
+    with pytest.raises(adapter.ModelManagerImportError) as caught:
+        invoke(data, manager, factory=factory if stage == "factory" else deepcopy,
+            readback=readback if stage == "existing_readback" else manager.readback)
+    outcome = caught.value.outcomes[0]
+    if stage == "factory":
+        assert manager.add_calls == manager.readback_calls == []
+        assert outcome["add_model_started"] is False
+    else:
+        assert outcome["persisted_metadata_matched"] is True
+        assert len(manager.add_calls) == (0 if stage == "existing_readback" else 1)
+
+
+@pytest.mark.parametrize("stage", ["factory", "readback"])
+@pytest.mark.parametrize("fault", ["integer_to_float", "boolean_to_integer"])
+def test_decoder_identity_witness_strict_metadata_types_survive_factory_and_persistence(
+        decoder_witness_data, stage, fault):
+    data, manager = decoder_witness_data, InertManager()
+    def erase(value):
+        changed = deepcopy(value)
+        identity = changed["huggingface_config"]["ir_checkpoint"]
+        if fault == "integer_to_float":
+            identity["original_checkpoint_pin"]["bytes"] = float(identity["original_checkpoint_pin"]["bytes"])
+        else: identity["runtime_ready"] = 0
+        return changed
+    def readback(model_id): return erase(manager.readback(model_id))
+    with pytest.raises(adapter.ModelManagerImportError) as caught:
+        invoke(data, manager, factory=erase if stage == "factory" else deepcopy,
+            readback=readback if stage == "readback" else manager.readback)
+    outcome = caught.value.outcomes[0]
+    if stage == "factory":
+        assert manager.add_calls == manager.readback_calls == []
+        assert outcome["add_model_started"] is False
+    else:
+        assert outcome["add_model_returned"] is True
+        assert outcome["persisted_readback_returned"] is True
+        assert outcome["persisted_metadata_matched"] is False
+
+
+@pytest.mark.parametrize("branch", ["legacy", "component", "source_profile", "native_source_v2"])
+def test_decoder_identity_witness_is_not_accepted_by_other_binding_branches(
+        decoder_witness_data, tmp_path, branch):
+    directory = tmp_path / "other-binding"
+    directory.mkdir()
+    if branch == "component": data = make_component_data(directory)
+    elif branch == "source_profile": data = make_source_representation_data(directory)
+    elif branch == "native_source_v2": data = make_source4096_data(directory)
+    else: data = make_data(directory)
+    data["plan"]["models"][0]["decoder_identity_witness"] = deepcopy(
+        decoder_witness_data["plan"]["models"][0]["decoder_identity_witness"])
+    repin(data)
+    manager, factories = InertManager(), []
+    with pytest.raises(adapter.ModelManagerImportError):
+        if branch == "native_source_v2": invoke_v2(data, manager, factory=lambda value: factories.append(value))
+        else: invoke(data, manager, factory=lambda value: factories.append(value))
+    assert manager.get_calls == manager.add_calls == manager.readback_calls == factories == []
+
+
+def test_decoder_identity_witness_opt_in_keeps_legacy_opaque_known_record_compatibility(tmp_path, monkeypatch):
+    from ipfs_datasets_py.logic.formalization.autoencoder import ir_decoder_profile_inventory as inventory
+    data, manager = make_data(tmp_path), InertManager()
+    metadata = data["plan"]["models"][0]["model_metadata"]
+    identity = metadata["huggingface_config"]["ir_checkpoint"]
+    identity.update(record_id="ir-decoder-checkpoint-record/v1:" + "2" * 64,
+        profile_id="ir-decoder-profile/v1:" + "3" * 64, format_id="ir-decoder-format/v1:" + "4" * 64)
+    metadata["model_id"] = identity["record_id"]
+    def forbidden(*args, **kwargs): pytest.fail("legacy opaque record implicitly selected a strict witness")
+    monkeypatch.setattr(inventory, "select_ir_decoder_identity_witness_v1", forbidden)
+    repin(data)
+    result = invoke(data, manager)
+    assert result["registered_count"] == 1
+    assert manager.add_calls[0]["model_id"] == metadata["model_id"]
+
+
 @pytest.mark.parametrize("entrypoint", ["v1", "v2"])
 def test_reconciliation_independent_profile_rejects_embedded_native_source_declaration(tmp_path, entrypoint):
     data, manager = make_source_representation_data(tmp_path), InertManager()

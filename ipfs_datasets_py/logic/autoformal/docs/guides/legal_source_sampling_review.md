@@ -149,3 +149,15 @@ the stated evidence is adequate. The population summary preserves different
 prose declarations but does not decide whether those statements agree or
 contradict one another. `declarations_recorded` denotes retained unverified
 declarations, not agreement, independent reviewers or accepted meanings.
+
+## Contextual source and definition delegation
+
+The original contextual implementations now have canonical source paths in the same module. Reuse these APIs and their existing companions; each call retains complete original evidence and exact occurrence/context references. The [source-port ledger](../../../../../docs/autoformalization/evidence/legal-ir-bound-definition-owner-port-20261023.json) records their source generation and the closed selected52-case /156-phase authored public integration.
+
+| Public facade | Context APIs | Existing implementation |
+| --- | --- | --- |
+| `legal_source_sampling_review` | `prepare_sampling_review_context`, `sampling_review_context_sha256`, `validate_sampling_review_context`, `record_sampling_review_context_response`, `validate_sampling_review_context_response`, `summarize_sampling_review_context_population` | [`legal_source_sampling_review_context`](../../legal_source_sampling_review_context.py) |
+| `legal_source_sampling_definition_binding_v2` | `prepare_contextual_definition_binding_v2`, `contextual_definition_binding_sha256`, `validate_contextual_definition_binding_v2` | [`legal_source_sampling_context_definition_binding_v2`](../../legal_source_sampling_context_definition_binding_v2.py) |
+| `legal_source_sampling_definition_review_v2` | `prepare_contextual_definition_review_correspondence_v2`, `contextual_definition_review_correspondence_sha256`, `validate_contextual_definition_review_correspondence_v2` | [`legal_source_sampling_context_definition_review_v2`](../../legal_source_sampling_context_definition_review_v2.py) |
+
+Context attachments and responses supply custody and explicit nominations. They do not select a governing definition, prove membership or establish source/meaning/applicability review. The relational norm/definition and [bound-variable conditional](legal_bound_variable_definition_v1.md) consumers replay the original inputs; they preserve unresolved alternatives, null selections and zero training/evaluation eligibility masks. The bound-variable consumer emits conditional definition instances without rewriting or compiling the surrounding norm.

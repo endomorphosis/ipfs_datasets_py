@@ -1,0 +1,174 @@
+{
+  "accepted_execution": false,
+  "accepted_operation_result_bound": false,
+  "accepted_outer_operation": false,
+  "actual_compiler_artifacts_in_unit_fixtures": false,
+  "actual_historical_native23_packets_replayed": false,
+  "cases": 123,
+  "checked_compile_buffers": 156,
+  "errors": 0,
+  "evaluation_gold_mask": 0,
+  "execution_manifest_sha256": "fa4b14fa9bf12ac6807f257fd0fbe36be2370ce68cfe797c54dbdbab94c49a54",
+  "execution_request_sha256": "7d58d5b66c8b8a3a14aa76699e1db6dc7ba06e961c2b69ca39006cc93d4889e1",
+  "failed_attempts_preserved": [
+    {
+      "evidence": {
+        "bytes": 1364,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-complete-norm-native-20261024-01/packet-intake-v01/failed-source-capture-pure-v01.json",
+        "sha256": "72068ef046c78a258f1628b6caebbcdd33d9df48facda41801ebff07dd0e4457"
+      },
+      "kind": "pre_execution_source_generation_refusal",
+      "qualification_credit": 0,
+      "validation_executions": 0
+    },
+    {
+      "actual_passing_cases": 119,
+      "actual_phase_events": 367,
+      "all_failed_artifacts_preserved": true,
+      "call_failures": 2,
+      "cases_collected": 123,
+      "independent_result_review": {
+        "bytes": 40054,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-complete-norm-native-20261024-01/packet-intake-v01/independent-result-review-pure-v01.json",
+        "sha256": "016ff076a484e0f72a8fcd07b20b674a4816ae8b0a6ce312c996ca57a0cc030a"
+      },
+      "kind": "first_owned_pure_run",
+      "setup_errors": 2,
+      "storage_closeout": {
+        "bytes": 1543,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-complete-norm-native-20261024-01/packet-intake-v01/failed-storage-closeout-v02/summary.json",
+        "sha256": "08befc41debe33e3d00f9332f97af4d94c7b2b6032952f52c72d2f29e8d17ee9"
+      },
+      "whole_campaign_qualification_credit": 0
+    }
+  ],
+  "failures": 0,
+  "frozen_source_files": 199,
+  "model_accuracy_measured": false,
+  "model_or_Lean_execution": false,
+  "namespace_initializer_sources_pinned_but_unexecuted": [
+    "ipfs_datasets_py/processors/__init__.py",
+    "ipfs_datasets_py/processors/legal_data/__init__.py",
+    "ipfs_datasets_py/logic/__init__.py",
+    "ipfs_datasets_py/logic/bridge/__init__.py",
+    "ipfs_datasets_py/optimizers/__init__.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/__init__.py",
+    "ipfs_datasets_py/logic/integration/__init__.py",
+    "ipfs_datasets_py/logic/integration/reasoning/__init__.py"
+  ],
+  "namespace_profile": "parent-norm-packet-consistency-scoped-unit-namespaces/v1",
+  "new_cases": 54,
+  "old_official_packet_regressions": 67,
+  "old_parent_preparation_regressions": 2,
+  "outer_operation_outcome": "unprovided",
+  "owning_test": {
+    "bytes": 61193,
+    "path": "tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_packet_v2.py",
+    "sha256": "1386ef25d07f4d420bfb50254d42f7f38f8565817aabf0b3ecdac24002706e91"
+  },
+  "packet_contract": {
+    "compiled_modules": 4,
+    "executed_inputs": 7,
+    "files": 23,
+    "original_official49_file_API_preserved": true,
+    "parent_norm_index_supported": false,
+    "preservation_kind": "definitional_alias_identity_only",
+    "producer_path_normalization_or_historical_relocation_contract_added": false,
+    "project_including_manifest": 8,
+    "receipt_and_full_logs": 4,
+    "theorems": 1
+  },
+  "passed": true,
+  "phases": 369,
+  "prior_campaigns_kept_separate": [
+    "185/555 parent literal scope/correspondence",
+    "68/204 direct parent preparation",
+    "23/69 direct parent native observations",
+    "153/459 official packet/index/store",
+    "29/87 peer parent-bound-variable controls"
+  ],
+  "profile": "parent-norm-packet-consistency-pure-controls/v1",
+  "public_current_whole_package_runtime_qualified": false,
+  "qualified": true,
+  "receipt_consistency_only": true,
+  "recorded_at_utc": "2026-10-25T01:41:33.142070+00:00",
+  "regression_cases": 69,
+  "request_source_pins": 229,
+  "required_source_leaves_executed": 29,
+  "resource_closeout": {
+    "capacity_or_resource_policy_changed": false,
+    "observed_live_descendants_at_closeout": 0,
+    "original_compute_lease_released": true,
+    "original_custody_owners_unchanged": 17,
+    "retained_bytes": 5188087,
+    "retained_regular_files": 22,
+    "source_READ_closed_after_original_owner_cleanup": true,
+    "storage_status": "released"
+  },
+  "schema": "legal-ir-parent-norm-packet-consistency-qualification/v1",
+  "selected_inputs": {
+    "actual_independent_result_review": {
+      "bytes": 49571,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-complete-norm-native-20261024-01/packet-intake-v01/independent-result-review-pure-v02.json",
+      "sha256": "863c60d7c82acf1edcfa41516cf7e8612e5d718acf69a445038911192a5f16c9"
+    },
+    "controller_complete": {
+      "bytes": 308,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-complete-norm-native-20261024-01/packet-intake-v01/controller-complete-pure-v02.json",
+      "sha256": "5839cfc749301dc56defd8c5a78fb9d9c56eefa305cb00b2d5b7b2aaf236d279"
+    },
+    "independent_resource_closeout": {
+      "bytes": 11306,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-complete-norm-native-20261024-01/packet-intake-v01/independent-resource-closeout-review-pure-v02.json",
+      "sha256": "61dc54d48238c0dc57616d0e3558a9b97250f955554c340a6eaf20d6a80e5a98"
+    },
+    "manifest": {
+      "bytes": 141812,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-complete-norm-native-20261024-01/packet-intake-v01/manifest-pure-v02.json",
+      "sha256": "fa4b14fa9bf12ac6807f257fd0fbe36be2370ce68cfe797c54dbdbab94c49a54"
+    },
+    "request": {
+      "bytes": 85678,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-complete-norm-native-20261024-01/packet-intake-v01/request-pure-v02.json",
+      "sha256": "7d58d5b66c8b8a3a14aa76699e1db6dc7ba06e961c2b69ca39006cc93d4889e1"
+    },
+    "test_result": {
+      "bytes": 30585,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-complete-norm-native-20261024-01/packet-intake-v01/attempt-pure-v02/exports/test-result.json",
+      "sha256": "8dc2a9d8bbe9af771b9fb88023ac19b9a2aa4befb37d7c8a6af096b66ac010a5"
+    }
+  },
+  "selectors": 40,
+  "skips": 0,
+  "source": {
+    "bytes": 72309,
+    "path": "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_packet_v2.py",
+    "sha256": "0b2e37c12be512dc890a10dbe4f92bd31daeb86bc3e527591c8fd55332fa2307"
+  },
+  "source_origin": {
+    "canonical_owning_test_at_capture": "98a6f988ffea41e7c7a386bc2c619cff21d5f506e32ba836b24dda11781c3e05",
+    "captured_beforeimage_immutable_and_retained": true,
+    "installed_product_and_test_equal_qualified_snapshot": true,
+    "owning_test": "independently_reviewed_candidate_frozen_at_normal_test_path",
+    "post_install_byte_match_review": {
+      "bytes": 3312,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-complete-norm-native-20261024-01/packet-intake-v01/post-install-source-match-review-v01.json",
+      "sha256": "fa2913019aa0d1d33d06cca04fc9cfdd14ad115c82b55de37718cd407da14e33"
+    },
+    "post_run_canonical_CAS": {
+      "bytes": 4490,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-complete-norm-native-20261024-01/packet-intake-v01/test-correction-installation-v03.json",
+      "sha256": "8fa2921879d7ee510139bf56fd7c4dd8b0526af06b9b6ea975aa0f3d16c37ffb"
+    },
+    "product": "canonical_source_frozen_exactly"
+  },
+  "status": "passed",
+  "training_mask": 0,
+  "trust_boundary": [
+    "Genuine current physical-parent/correspondence/preparation replay, complete immutable packet bytes, retained-claim consistency and refusal behavior only. Historical compiler/PID/artifact data in this cohort are authored synthetic fixtures.",
+    "Externally trusted raw receipt and bundle pins remain provenance premises. A successful saved build receipt can precede outer custody refusal; no accepted outer result is supplied or inferred.",
+    "The source-qualified namespace scope pins eight bypassed initializer sources and uses the original private orchestration helper. It is not a whole-package or current public-tree runtime qualification.",
+    "Original actual native23 frozen producer paths/generations are not relabeled, normalized or replayed by this cohort. Current-producer equality remains mandatory in the reader.",
+    "No source/edition/meaning, governing-definition applicability, norm truth, full denotation, model accuracy, training/gold, proof-cache, semantic-graph or Lean-corpus admission is supplied."
+  ]
+}

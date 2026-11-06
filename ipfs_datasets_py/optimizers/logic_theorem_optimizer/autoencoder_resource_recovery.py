@@ -717,3 +717,279 @@ def reconcile_empty_unopened_validation_reservation_v1(ledger_path, *, roots,
             helper._verify_owner_roots()
             helper._write(ledger)
             return recovery
+
+
+# Existing detached recovery inventories are independently bounded; this is not
+# an increase to the original live-ledger or storage-admission limits.
+MAX_RECOVERY_MANIFEST_BYTES = 32 * 1024 * 1024
+_RELEASED_RELOCATION_SCHEMA = "released-reconciliation-artifact-relocation/v1"
+
+
+def _released_metadata_file(path, maximum):
+    path = resources._safe_path(path)
+    info = path.lstat()
+    if (not stat.S_ISREG(info.st_mode) or info.st_nlink != 1
+            or info.st_uid != os.geteuid() or stat.S_IMODE(info.st_mode) & 0o022
+            or info.st_size > maximum):
+        raise resources.DaemonResourceError("owned unaliased bounded released metadata required")
+    return (info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns, info.st_ctime_ns)
+
+
+def _released_artifact_reference(reference, helper, attempt):
+    """Read and fsync an existing descriptor; never create or scan artifacts."""
+    need = _unopened_need
+    need(type(reference) is dict and set(reference) == {"path", "bytes", "sha256"},
+         "closed released metadata descriptor required")
+    path = _unopened_path(reference["path"], "released metadata path")
+    need(str(path) == reference["path"] and type(reference["bytes"]) is int
+         and 0 < reference["bytes"] <= MAX_RECOVERY_MANIFEST_BYTES
+         and type(reference["sha256"]) is str
+         and re.fullmatch(r"[0-9a-f]{64}", reference["sha256"]),
+         "exact bounded released metadata descriptor required")
+    need(any(root in path.parents for root in helper.roots)
+         and path not in (helper.ledger_path, helper.lock_path)
+         and path != attempt and attempt not in path.parents,
+         "released metadata must be a separate named-root descendant")
+    witness = _released_metadata_file(path, MAX_RECOVERY_MANIFEST_BYTES)
+    flags = os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK
+    with os.fdopen(os.open(path, flags), "rb") as stream:
+        before = os.fstat(stream.fileno())
+        identity = lambda value: (value.st_dev, value.st_ino, value.st_size,
+                                  value.st_mtime_ns, value.st_ctime_ns)
+        need(identity(before) == witness and before.st_uid == os.geteuid()
+             and before.st_nlink == 1 and stat.S_ISREG(before.st_mode)
+             and before.st_size == reference["bytes"], "released metadata identity differs")
+        raw = stream.read(reference["bytes"] + 1)
+        os.fsync(stream.fileno())
+        need(identity(os.fstat(stream.fileno())) == witness,
+             "released metadata changed while reading")
+    need(len(raw) == reference["bytes"]
+         and hashlib.sha256(raw).hexdigest() == reference["sha256"]
+         and _released_metadata_file(path, MAX_RECOVERY_MANIFEST_BYTES) == witness,
+         "released metadata bytes or identity differ")
+    directory = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+    try:
+        os.fsync(directory)
+    finally:
+        os.close(directory)
+    need(_released_metadata_file(path, MAX_RECOVERY_MANIFEST_BYTES) == witness,
+         "released metadata changed during durability")
+    return _unopened_json(raw, MAX_RECOVERY_MANIFEST_BYTES, "released metadata"), witness
+
+
+def _released_inline_artifacts(record, reservation_id):
+    need = _unopened_need
+    need(type(record) is dict and record.get("reservation_id") == reservation_id
+         and record.get("status") == "released"
+         and record.get("artifacts_durable_asserted") is True,
+         "exact durable released archive record required")
+    receipt = record.get("explicit_reconciliation")
+    need(type(receipt) is dict and "artifact_metadata_relocation" not in receipt,
+         "original inline released reconciliation required")
+    schema = receipt.get("schema")
+    if schema == "explicit-retained-reservation-batch-reconciliation/v1":
+        owner = receipt.get("selected_claim")
+        need(type(owner) is dict and owner.get("reservation_id") == reservation_id,
+             "batch selected claim identity differs")
+    else:
+        need(schema in {"explicit-retained-reservation-reconciliation/v1",
+                        "explicit-retained-reservation-reconciliation/v2"}
+             and receipt.get("reservation_id") == reservation_id,
+             "unsupported released reconciliation schema or identity")
+        owner = receipt
+    need(not any(name in owner for name in ("artifact_inventory_manifest", "artifact_count",
+                                            "artifact_bytes", "artifact_manifest_schema")),
+         "original inline receipt already has detached inventory fields")
+    artifacts = owner.get("artifacts")
+    need(type(artifacts) is list and 0 < len(artifacts) <= resources.MAX_INVENTORY_ENTRIES,
+         "nonempty bounded original inline artifact inventory required")
+    seen = set()
+    for artifact in artifacts:
+        need(type(artifact) is dict and set(artifact) == {"path", "bytes", "sha256"},
+             "closed original artifact descriptor required")
+        spelling = artifact["path"]
+        need(type(spelling) is str and 0 < len(spelling) <= 4096 and "\x00" not in spelling
+             and not Path(spelling).is_absolute()
+             and not any(part in ("", ".", "..") for part in spelling.split("/"))
+             and spelling not in seen and type(artifact["bytes"]) is int
+             and artifact["bytes"] >= 0 and type(artifact["sha256"]) is str
+             and re.fullmatch(r"[0-9a-f]{64}", artifact["sha256"]),
+             "exact unique typed original artifact rows required")
+        seen.add(spelling)
+    return receipt, artifacts
+
+
+def externalize_released_reconciliation_artifacts_v1(ledger_path, *, roots,
+        reservation_id, expected_record_sha256, artifact_inventory_manifest,
+        released_record_archive, ledger_lock_timeout_seconds=30):
+    """Relocate one already released inline inventory, with no resource release.
+
+    Both descriptors must name preexisting durable ordinary files under the
+    original named roots and outside the original attempt. The manifest uses
+    retained-artifact-inventory/v1; the archive is the complete original released
+    row JSON, including its receipt and literal native/outcome history. Only
+    current original-owner/recorded-group absence is observed; no artifact
+    payloads, scheduler or global inventory are inspected.
+    Ordinary v1/v2 receipts become existing descriptor-backed v3; batch v1
+    receipts become additive batch v2, with only selected_claim.artifacts
+    detached. Their original complete envelopes survive verbatim in the archive.
+
+    Retrying with the same original record digest and accepted references is
+    read-only and idempotent. A write error is never rolled back or retried;
+    independently read back before deciding whether the atomic write completed.
+    """
+    need = _unopened_need
+    need(type(reservation_id) is str and re.fullmatch(r"[0-9a-f]{32}", reservation_id)
+         and type(expected_record_sha256) is str
+         and re.fullmatch(r"[0-9a-f]{64}", expected_record_sha256),
+         "exact released reservation identity required")
+    need(type(roots) in (list, tuple) and 1 <= len(roots) <= 64,
+         "explicit original released metadata roots required")
+    need(type(ledger_lock_timeout_seconds) in (int, float)
+         and math.isfinite(ledger_lock_timeout_seconds) and 0 <= ledger_lock_timeout_seconds <= 30,
+         "bounded released metadata lock timeout required")
+    ledger_path = _unopened_path(os.fspath(ledger_path), "ledger path")
+    roots = [_unopened_path(os.fspath(root), "named root") for root in roots]
+    # Freeze supplied descriptor values, retaining their original primitive types.
+    try:
+        references_sha = _digest([artifact_inventory_manifest, released_record_archive])
+    except (TypeError, ValueError, RecursionError) as error:
+        raise resources.DaemonResourceError("bounded JSON released metadata descriptors required") from error
+    manifest_ref, archive_ref = copy.deepcopy([artifact_inventory_manifest, released_record_archive])
+    need(type(manifest_ref) is dict and type(archive_ref) is dict
+         and manifest_ref.get("path") != archive_ref.get("path"),
+         "distinct manifest and full original row archive required")
+    helper = resources.DaemonResourceReservation(ledger_path, roots=roots,
+        storage_bytes=1, memory_mb=1, ledger_lock_timeout_seconds=ledger_lock_timeout_seconds,
+        require_existing_ledger=True)
+    _released_metadata_file(helper.ledger_path, resources.MAX_LEDGER_BYTES)
+    lock_witness = _released_metadata_file(helper.lock_path, resources.MAX_LEDGER_BYTES)
+    with helper._locked():
+        _released_metadata_file(helper.ledger_path, resources.MAX_LEDGER_BYTES)
+        need(_released_metadata_file(helper.lock_path, resources.MAX_LEDGER_BYTES) == lock_witness,
+             "released metadata lock identity changed")
+        ledger = helper._read()
+        need(_digest(ledger["roots"]) == _digest(helper.root_identities)
+             and type(ledger["limit_bytes"]) is int and ledger["limit_bytes"] == resources.MAX_STORAGE_BYTES,
+             "exact typed original ledger roots and cap required")
+        current = ledger["reservations"].get(reservation_id)
+        need(type(current) is dict and current.get("status") == "released"
+             and current.get("artifacts_durable_asserted") is True,
+             "only durable released reservations may relocate metadata")
+        def currently_stopped():
+            prior = current.get("prior_children", [])
+            need(type(prior) is list and len(prior) <= 64,
+                 "bounded released child history required")
+            need(resources._process(current["owner_pid"]) is None,
+                 "released original owner PID still exists")
+            for child in [current.get("child"), *prior]:
+                need(child is None or (type(child) is dict and type(child.get("pid")) is int
+                     and child["pid"] > 0 and type(child.get("birth")) is str and child["birth"]),
+                     "exact recorded released child identity required")
+                need(not resources._group_usage(child)["live_processes"],
+                     "released recorded child group is still alive")
+        currently_stopped()
+        attempt_identity = current.get("attempt_directory")
+        need(type(attempt_identity) is dict and set(attempt_identity) == {"path", "device", "inode"}
+             and type(attempt_identity["device"]) is int and attempt_identity["device"] >= 0
+             and type(attempt_identity["inode"]) is int and attempt_identity["inode"] > 0,
+             "exact original attempt identity required")
+        attempt = _unopened_path(attempt_identity["path"], "released attempt")
+        need(any(root in attempt.parents for root in helper.roots)
+             and _digest(resources._root_identity(attempt)) == _digest(attempt_identity),
+             "released attempt outside roots or identity changed")
+        initial_ledger_sha = _digest(ledger)
+        archive, archive_witness = _released_artifact_reference(archive_ref, helper, attempt)
+        need(_digest(archive) == expected_record_sha256,
+             "full original released record archive digest differs")
+        receipt, inventory = _released_inline_artifacts(archive, reservation_id)
+        need(_digest(archive.get("attempt_directory")) == _digest(attempt_identity),
+             "archive belongs to another released attempt")
+        manifest, manifest_witness = _released_artifact_reference(manifest_ref, helper, attempt)
+        need(set(manifest) == {"schema", "attempt_directory", "artifacts"}
+             and manifest["schema"] == "retained-artifact-inventory/v1"
+             and _digest(manifest["attempt_directory"]) == _digest(attempt_identity)
+             and _digest(manifest["artifacts"]) == _digest(inventory),
+             "manifest is not the exact old inline inventory")
+        byte_count = sum(row["bytes"] for row in inventory)
+        need(type(archive.get("final_attempt_bytes")) is int
+             and archive["final_attempt_bytes"] == byte_count,
+             "released original attempt byte count differs")
+        projected = copy.deepcopy(archive)
+        projected_receipt = projected["explicit_reconciliation"]
+        batch = receipt["schema"] == "explicit-retained-reservation-batch-reconciliation/v1"
+        target = projected_receipt["selected_claim"] if batch else projected_receipt
+        del target["artifacts"]
+        target.update(artifact_inventory_manifest=manifest_ref, artifact_count=len(inventory),
+            artifact_bytes=byte_count, artifact_manifest_schema="retained-artifact-inventory/v1")
+        projected_receipt["schema"] = ("explicit-retained-reservation-batch-reconciliation/v2"
+            if batch else "explicit-retained-reservation-reconciliation/v3")
+        old_current = _digest(current) == expected_record_sha256
+        if old_current:
+            relocated_at = time.time()
+        else:
+            retained_receipt = current.get("explicit_reconciliation")
+            need(type(retained_receipt) is dict,
+                 "released record identity changed before relocation")
+            retained_provenance = retained_receipt.get("artifact_metadata_relocation")
+            need(type(retained_provenance) is dict,
+                 "released record identity changed before relocation")
+            relocated_at = retained_provenance.get("relocated_at")
+            need(type(relocated_at) in (int, float) and math.isfinite(relocated_at) and relocated_at >= 0,
+                 "invalid retained metadata relocation time")
+        projected_receipt["artifact_metadata_relocation"] = {
+            "schema": _RELEASED_RELOCATION_SCHEMA,
+            "original_released_record_sha256": expected_record_sha256,
+            "original_reconciliation_schema": receipt["schema"],
+            "released_record_archive": archive_ref, "relocated_at": relocated_at}
+        need(old_current or _digest(current) == _digest(projected),
+             "released record or previously accepted references changed")
+        updated = copy.deepcopy(ledger)
+        updated["reservations"][reservation_id] = projected
+        encode = lambda value: (json.dumps(value, sort_keys=True, separators=(",", ":"),
+                                          allow_nan=False) + "\n").encode()
+        before_bytes = len(encode(ledger))
+        after_bytes = len(encode(updated))
+        need(not old_current or after_bytes < before_bytes,
+             "released metadata relocation must reduce hot ledger bytes")
+        # Repeat all external evidence and the exact live ledger CAS immediately
+        # before the single original atomic write; cooperating writers share flock.
+        archive_again, archive_witness_again = _released_artifact_reference(archive_ref, helper, attempt)
+        manifest_again, manifest_witness_again = _released_artifact_reference(manifest_ref, helper, attempt)
+        need(_digest(archive_again) == _digest(archive) and archive_witness_again == archive_witness
+             and _digest(manifest_again) == _digest(manifest) and manifest_witness_again == manifest_witness,
+             "released metadata changed before write")
+        currently_stopped()
+        need(_digest([artifact_inventory_manifest, released_record_archive]) == references_sha,
+             "released metadata descriptors changed during relocation")
+        helper._verify_owner_roots()
+        need(_digest(resources._root_identity(attempt)) == _digest(attempt_identity)
+             and _released_metadata_file(helper.lock_path, resources.MAX_LEDGER_BYTES) == lock_witness,
+             "released metadata roots, attempt or lock changed")
+        need(_released_metadata_file(Path(archive_ref["path"]), MAX_RECOVERY_MANIFEST_BYTES) == archive_witness
+             and _released_metadata_file(Path(manifest_ref["path"]), MAX_RECOVERY_MANIFEST_BYTES) == manifest_witness,
+             "released metadata changed after process observation")
+        _released_metadata_file(helper.ledger_path, resources.MAX_LEDGER_BYTES)
+        need(_digest(helper._read()) == initial_ledger_sha,
+             "on-disk released metadata ledger changed before write")
+        if old_current:
+            helper._write(updated)
+        return {"schema": "released-reconciliation-artifact-externalization/v1",
+            "reservation_id": reservation_id, "relocated_at": relocated_at,
+            "original_released_record_sha256": expected_record_sha256,
+            "current_record_sha256": _digest(projected),
+            "artifact_inventory_manifest": copy.deepcopy(manifest_ref),
+            "released_record_archive": copy.deepcopy(archive_ref),
+            "artifact_count": len(inventory), "artifact_bytes": byte_count,
+            "original_reconciliation_schema": receipt["schema"],
+            "current_reconciliation_schema": projected_receipt["schema"],
+            "ledger_bytes_before": before_bytes, "ledger_bytes_after": after_bytes,
+            "hot_ledger_metadata_bytes_removed": before_bytes - after_bytes,
+            "state_written": old_current, "idempotent_readback": not old_current,
+            "atomic_ledger_write_count": int(old_current), "global_census_performed": False,
+            "disk_promises_released": 0, "status_changed": False,
+            "new_reservation_created": False, "new_resource_lease_acquired": False,
+            "current_process_absence_observed_only": True,
+            "native_cleanup_performed": False, "historical_native_release_established": False,
+            "qualification_claimed": False, "admitted": False,
+            "outputs_deleted": False, "cap_changed": False}

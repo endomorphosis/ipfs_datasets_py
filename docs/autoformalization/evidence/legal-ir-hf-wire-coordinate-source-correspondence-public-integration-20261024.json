@@ -1,0 +1,194 @@
+{
+  "JUnit": {
+    "bytes": 842,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-correspondence-01/public-dependency-integration-v01/attempt-hf-wire-correspondence-public-v01/exports/junit.xml",
+    "sha256": "829c0aa1a8af60b23df5db0e22866d838f2787fec7f29a56857f7ef798904103"
+  },
+  "actual_public_review_bank_origins": 7,
+  "authored_local_Arrow_fixture_work": true,
+  "cases": 3,
+  "checked_import_compile_entries_and_unique_physical_paths": 132,
+  "complete_attempt_bytes": 1213777,
+  "complete_attempt_files": 82,
+  "context_only_numerical_modules": [
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_embedding_production",
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_training_worker",
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_formula_checkpoint",
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_formula_learning",
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder_adaptive_optimizer"
+  ],
+  "context_only_private_missing_modules": 0,
+  "context_only_public_native_tooling_files": 3,
+  "controller_complete": {
+    "bytes": 308,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-correspondence-01/public-dependency-integration-v01/controller-complete-hf-wire-correspondence-public-v01.json",
+    "sha256": "91677578dc1cfd5a1345cdb1bb583b893c7bef09faac572b4ef9463b68923e82"
+  },
+  "convergence_claimed": false,
+  "database_connections": 0,
+  "descriptor_bridge_usage": "unused",
+  "descriptor_relative_call_arguments_preserved": true,
+  "descriptor_relative_open_counts": {
+    "audit_events": 0,
+    "context_errors": 0,
+    "contexts": 0,
+    "failed_syscalls": 0,
+    "successful_pending_writes": 0,
+    "successful_reads": 0,
+    "successful_writes": 0,
+    "validation_refusals": 5
+  },
+  "descriptor_relative_open_evidence": {
+    "bytes": 1082,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-correspondence-01/public-dependency-integration-v01/attempt-hf-wire-correspondence-public-v01/exports/descriptor-relative-opens.json",
+    "sha256": "cc752bfb98967c4f4577992c50b7ccaa52416799f6c90df41edc5593ae7ad605"
+  },
+  "duckdb_version": "1.4.3",
+  "encoder_vectors_models_checkpoints_training_downloads_Hub_or_Lean_work": false,
+  "evaluation_gold_mask": 0,
+  "explicit_namespace_parents_unexecuted": 14,
+  "final_native_source_pins": 256,
+  "fixture_metadata_dimensions": [
+    0
+  ],
+  "flat_transitive_context_files": 14,
+  "frozen_source_and_fixture_files": 238,
+  "genuine_declared_package_initializer_origins": 10,
+  "graph_bundle_export_executed": false,
+  "historical_full_qualification": {
+    "cases": 103,
+    "legacy_cases": 59,
+    "new_wire_cases": 44,
+    "phase_passes": 309,
+    "portable": {
+      "bytes": 10468,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoformalization/evidence/legal-ir-hf-wire-coordinate-source-correspondence-20261024.json",
+      "sha256": "e513c1dfcb5a697a12b3a3ecce6e9ef8875b0d36bba5e544135937e366197c59"
+    },
+    "qualification_scope": "Original local attempt02 with its own private source/namespace/native orchestration profile. Original failed01 and storage closeout remain retained. Not rerun, pooled, regraded or granted public-package equivalence by this three-case check.",
+    "selected_test_functions": 42
+  },
+  "independent_saved_result_acceptance": {
+    "bytes": 12618,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-correspondence-01/public-dependency-integration-v01/independent-saved-result-review-v01.json",
+    "sha256": "764c1c6db252f56e4aa2541ad7b2e60beec3a73c2d66dbc085aa082a95540e6e"
+  },
+  "inference_authorized": false,
+  "inherited_eligibility_declared_latent_dimensions": [
+    0,
+    384
+  ],
+  "legacy_sibling_test_origin_count": 0,
+  "legacy_sibling_tests_frozen_as_provenance_only": true,
+  "loaded_source_entries_and_unique_physical_origins": 142,
+  "manifest": {
+    "bytes": 94464,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-correspondence-01/public-dependency-integration-v01/manifest-hf-wire-correspondence-public-v01.json",
+    "sha256": "0439b3e574a78ed9058f3a4bca35035f8bd87234801bf8f657adbe0acc8654a2"
+  },
+  "measured_public_base": "943e85c247cfc31cdb990518c6ae3bfedf210ceb",
+  "model_widths_executed": [],
+  "namespace_profile": "Original correspondence103 fourteen declared namespace parents remain unexecuted; original ten genuine package initializer routes remain genuine frozen imports. No whole-package claim.",
+  "network_or_external_mutation_operations": 0,
+  "no_historical_output_hash_parity_or_transplanted_source_commitment": true,
+  "original_durability": {
+    "bytes": 31045,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-correspondence-01/public-dependency-integration-v01/attempt-hf-wire-correspondence-public-v01/logs/validation-durability.json",
+    "sha256": "48eb0ab577e2b5aab6d6b966e7500918012132df160437dd3d42ee30b041bb5d"
+  },
+  "original_launch": {
+    "bytes": 8088,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-correspondence-01/public-dependency-integration-v01/launch-hf-wire-correspondence-public-v01.json",
+    "sha256": "b209a0e9a2d9c36664ba7304cd5b4308d4c20306c35ac5e8f8385480d090b5bf"
+  },
+  "original_native_cleanup_proven": true,
+  "original_opaque_file_seals_and_stat_only_payload_readback": true,
+  "original_opaque_owner_hash_and_fsync_seals": 81,
+  "original_resource_envelope": {
+    "child_process_slots": 2,
+    "cpu_slots": 1,
+    "memory_mb": 2048,
+    "storage_bytes": 134217728,
+    "timeout_seconds": 900
+  },
+  "original_resource_lease_released": true,
+  "original_source_READ_closed": true,
+  "original_storage_status": "released",
+  "other_8D_384D_768D_4096D_decoder_compatibility_or_model_quality_claim": false,
+  "owning_test": {
+    "bytes": 90667,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-correspondence-01/public-dependency-integration-v01/source-public-v01/frozen/tests/unit/logic/autoformal/test_legal_source_correspondence_requests_v1.py",
+    "sha256": "830ba4a4c4e29c222ced7522dd9dde0aeb5fb16c766f00145610f5e07165aa02"
+  },
+  "phase_passes": 9,
+  "prior_descriptor_events_pooled": false,
+  "private_P_source_fallback_allowed": false,
+  "private_missing_context_import_attempts": 0,
+  "private_native_owner_source_count": 15,
+  "private_orchestration_plugin": {
+    "bytes": 15730,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-correspondence-01/public-dependency-integration-v01/controls/orchestration_validation_pytest_v01.py",
+    "sha256": "dc6ae4f1cd27628a56db13fc656156c1b84df8ff999d4158ff25e70fac89f7a6"
+  },
+  "private_plugin_or_original_native_resource_tooling_is_not_public_runtime_port": true,
+  "public_dependency_files": 236,
+  "public_review_bank_modules": [
+    "ipfs_datasets_py.logic.autoformal.corpus_legacy_source_review",
+    "ipfs_datasets_py.logic.autoformal.corpus_source_review",
+    "ipfs_datasets_py.logic.autoformal.corpus_source_review_packets",
+    "ipfs_datasets_py.logic.autoformal.corpus_parent_alignment_adapter",
+    "ipfs_datasets_py.logic.autoformal.corpus_parent_occurrence_adapter",
+    "ipfs_datasets_py.logic.autoformal.legal_graph_dependencies",
+    "ipfs_datasets_py.logic.autoformal.legal_graph_review"
+  ],
+  "public_span_cache_sha256": "e35f5333fc4776d5b519ec84a38f42715a76ff7b20a776a35b7e01ea9342b068",
+  "public_validation_pytest_sha256": "cef7fd00277c38ac55ce80ae0e6234eeda36559ab56a9de4e0954d0590327d31",
+  "publication_base": "943e85c247cfc31cdb990518c6ae3bfedf210ceb",
+  "publication_ready": true,
+  "pyarrow_version": "25.0.1",
+  "qualified_source_test_overlays": 2,
+  "raw_authored_table_or_model_payload_reads_by_publication_preparer": false,
+  "recorded_at_utc": "2026-10-24T17:42:23.882390+00:00",
+  "request": {
+    "bytes": 89214,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-correspondence-01/public-dependency-integration-v01/request-hf-wire-correspondence-public-v01.json",
+    "sha256": "379c01f1198688efe4c5ec4b00016093d7dfbb2945def894ec8d521ad2e8969a"
+  },
+  "result": {
+    "bytes": 138722,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-correspondence-01/public-dependency-integration-v01/attempt-hf-wire-correspondence-public-v01/exports/test-result.json",
+    "sha256": "7e80f473106f6d4d1c888d0d51e46ccb9166d48bf6d16368b09d5614e5ac5f06"
+  },
+  "schema": "legal-ir-hf-wire-coordinate-source-correspondence-public-integration/v1",
+  "scope": "Three existing authored current-public-dependency source-correspondence-v3 fixture cases only on frozen943e with exact8fcc/830b overlays. Seven public review owners execute, while namespace bodies, private orchestration, five numerical contexts and legacy sibling tests retain explicit separate scopes. Unsigned/unanswered review custody only; no legal/source/meaning, model, convergence, training/gold, whole-package/tooling, graph or Lean admission.",
+  "selected_case_nodes": [
+    "tests/unit/logic/autoformal/test_legal_source_correspondence_requests_v1.py::test_wire_correspondence_v3_genuine_graph_and_source_owners_roundtrip[object]",
+    "tests/unit/logic/autoformal/test_legal_source_correspondence_requests_v1.py::test_wire_correspondence_v3_unsupported_outputs_keep_full_review_population[coordinate_join0]",
+    "tests/unit/logic/autoformal/test_legal_source_correspondence_requests_v1.py::test_wire_correspondence_v3_late_changes_after_genuine_review_are_refused[retained_table]"
+  ],
+  "separate_excluded_review_seed_modules": 0,
+  "source": {
+    "bytes": 76717,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-correspondence-01/public-dependency-integration-v01/source-public-v01/frozen/ipfs_datasets_py/logic/autoformal/legal_source_correspondence_requests_v1.py",
+    "sha256": "8fccd02c6a596a06f6d3d0105a9bdffb040f11266cd4e835dbff5f74ad066aed"
+  },
+  "source_edition_and_legal_as_of": "unresolved",
+  "source_edition_meaning_definition_training_gold_graph_corpus_or_Lean_admission": false,
+  "source_fixture_manifest": {
+    "bytes": 266669,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-correspondence-01/public-dependency-integration-v01/integration-source-fixture-manifest-v01.json",
+    "sha256": "008ac4648ed38ca2d14599f0f856b1eb60c5974e3ff5cc4fd7100332f7a590be"
+  },
+  "source_freeze": {
+    "bytes": 287298,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-correspondence-01/public-dependency-integration-v01/source-freeze-v01.json",
+    "sha256": "fd720fcce54c3204d1c58c5d1e392e4b50cf1acd54780d18272e3e87fe90e804"
+  },
+  "source_law_cache_table_processing": false,
+  "source_review_completed": false,
+  "status": "three_existing_current_public_dependency_fixture_cases_qualified",
+  "training_mask": 0,
+  "unsigned_source_review": true,
+  "whole_public_package_tooling_or_initializer_qualification": false,
+  "zero_means_latent_disabled_not_8D": true
+}

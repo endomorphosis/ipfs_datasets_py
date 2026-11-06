@@ -1,0 +1,173 @@
+{
+  "Lean_admitted": false,
+  "checked_source_buffers": 124,
+  "controller": {
+    "bytes": 4833,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-norm-scope-20261024-root-932c992e/execution-v03/controller-complete-parent-norm-scope-v03.json",
+    "sha256": "e6161dbb19ce9dfa0dbce4aec39f58cdd5bb7166932729c569cad3d23cc5a0b4"
+  },
+  "declared_bypassed_initializers": 8,
+  "evaluation_gold_mask": 0,
+  "existing_cases": 149,
+  "frozen_sources": 188,
+  "full_package_startup_qualified": false,
+  "governing_legal_as_of_date": null,
+  "graph_admitted": false,
+  "independent_saved_result_review": {
+    "bytes": 71011,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-norm-scope-20261024-root-932c992e/execution-v03/independent-saved-result-audit-v01.json",
+    "sha256": "ee192a17a4789644cfd403533319a96e00219b57bbb397e5c67113e55feacbc8"
+  },
+  "learned_accuracy_improvement_established": false,
+  "legal_edition": "not_declared_in_source_artifact",
+  "limits": [
+    "The complete selected literal occurrence may be a fragment or unclassified region; no whole paragraph, law or source authenticity authority follows.",
+    "All six original required-unavailable context obligations remain open; authored partial scope/correspondence is not a complete or reviewed legal interpretation.",
+    "Relational v1 still requires null source_binding; v2 correspondence source_bound remains false and no new logic constructors were introduced.",
+    "No real-law, learned model, weight, training, grouped holdout, semantic graph or actual lake build legal qualification is supplied.",
+    "Original namespace bypasses and third-party bytecode/C I/O limits remain explicit; this is not general public package startup qualification."
+  ],
+  "model_training_or_Lean_build_executed": false,
+  "namespace_profile": "parent-norm-scope-scoped-unit-namespaces/v2",
+  "native_launch_receipt": {
+    "bytes": 7971,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-norm-scope-20261024-root-932c992e/execution-v03/launch-parent-norm-scope-v03.json",
+    "sha256": "1e5f4399b6fe837d26a38e120e536f48f52e47822218cf6a39b6556810495edf"
+  },
+  "native_owner_sources": 15,
+  "new_parent_cases": 36,
+  "original_attempt_bytes": 4081230,
+  "original_attempt_files": 160,
+  "original_native_source_storage_closed": true,
+  "passed_cases": 185,
+  "passed_phases": 555,
+  "primary_results_scope": "Fictional physical Parquet/cache fixtures, exact literal custody, lexical/typed authored correspondence and mutation refusal only.",
+  "prior_failed_attempts": [
+    {
+      "actual_postwrite_readback": {
+        "bytes": 11126,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-norm-scope-20261024-root-932c992e/storage-closeout-v01/actual-postwrite-readback.json",
+        "sha256": "912dcac98c3f053a2dca85549ed7ca6bfa6bb519dd0df2299a2812a2912d61d6"
+      },
+      "attempt": 1,
+      "audit": {
+        "bytes": 46569,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-norm-scope-20261024-root-932c992e/independent-failed-attempt-audit-v01.json",
+        "sha256": "35eb36a4478f5eae170c5abd5ba715f8adc4ae37ee799115490a000c395ca059"
+      },
+      "controller": {
+        "bytes": 4792,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-norm-scope-20261024-root-932c992e/controller-complete-parent-norm-scope-v01.json",
+        "sha256": "0dfbaa5e135fe22169c1cf9f6103b0a2dc0c6a171fe84dbe0ea6ff82e9070d3a"
+      },
+      "evidence_deleted": false,
+      "original_storage_closeout": {
+        "bytes": 2213,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-norm-scope-20261024-root-932c992e/storage-closeout-v01/summary.json",
+        "sha256": "70b55179fe45419842d16ec5c6092e57f5b8fcded8d1692848013042bdbb76c0"
+      },
+      "qualification_credit": 0,
+      "saved_closeout_review": {
+        "bytes": 1957,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-norm-scope-20261024-root-932c992e/storage-closeout-v01/root-saved-result-review-v01.json",
+        "sha256": "abe91085a94cb08c3fcad6e5afdd8b01f779448ae076f49a68234f7e7a2c8be8"
+      }
+    },
+    {
+      "actual_postwrite_readback": {
+        "bytes": 78123,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-norm-scope-20261024-root-932c992e/storage-closeout-v02/actual-postwrite-readback.json",
+        "sha256": "4ef17bc8ab17f86c2f7c22591476f86908888985bab76662f94866e01e8ef457"
+      },
+      "attempt": 2,
+      "audit": {
+        "bytes": 89068,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-norm-scope-20261024-root-932c992e/execution-v02/independent-failed-attempt-audit-v01.json",
+        "sha256": "f755d9c7033f16db2f8ab2222baed93a77d6b2ce607aa223dad3a676ab1317a9"
+      },
+      "controller": {
+        "bytes": 4834,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-norm-scope-20261024-root-932c992e/execution-v02/controller-complete-parent-norm-scope-v02.json",
+        "sha256": "0a189e6d2b690d849373eb54a418c472641f291efc5503f82235ffe3c56fa45b"
+      },
+      "evidence_deleted": false,
+      "original_storage_closeout": {
+        "bytes": 2219,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-norm-scope-20261024-root-932c992e/storage-closeout-v02/summary.json",
+        "sha256": "fba8862885827f3de6cf78b82c9b18e8c3112b77ed692b9349739c343b392cd1"
+      },
+      "qualification_credit": 0,
+      "saved_closeout_review": {
+        "bytes": 1960,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-norm-scope-20261024-root-932c992e/storage-closeout-v02/root-saved-result-review-v01.json",
+        "sha256": "5d7023747ccf692c765714515e2005bd01b0ca5fb9219a3ab686d1ff0ade8371"
+      }
+    }
+  ],
+  "qualification_profile": "parent-norm-scope-public-port-pure-controls/v2",
+  "qualified": true,
+  "qualified_source_postimages": [
+    {
+      "postimage": {
+        "bytes": 39753,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-norm-scope-20261024-root-932c992e/candidate-v01/ipfs_datasets_py/logic/autoformal/legal_source_norm_scope_v1.py",
+        "sha256": "9131a433da50e564412b73f77b36502fe43c72f46858c21a56f2c57cd178141d"
+      },
+      "target_relative_path": "ipfs_datasets_py/logic/autoformal/legal_source_norm_scope_v1.py"
+    },
+    {
+      "postimage": {
+        "bytes": 37268,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-norm-scope-20261024-root-932c992e/candidate-v01/ipfs_datasets_py/logic/autoformal/legal_norm_scope_correspondence_v1.py",
+        "sha256": "fdde6436f4def5721c7947f06c1ed4bcd69550b1d33943185ef6ddb3c3170493"
+      },
+      "target_relative_path": "ipfs_datasets_py/logic/autoformal/legal_norm_scope_correspondence_v1.py"
+    },
+    {
+      "postimage": {
+        "bytes": 39682,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-norm-scope-20261024-root-932c992e/candidate-v02/tests/unit/logic/autoformal/test_legal_source_norm_scope_v1.py",
+        "sha256": "874ba119e7ca3ec80a6e50eb511283ff6f9e96d792fa80a55a5f94a0a446a46e"
+      },
+      "target_relative_path": "tests/unit/logic/autoformal/test_legal_source_norm_scope_v1.py"
+    },
+    {
+      "postimage": {
+        "bytes": 41923,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-norm-scope-20261024-root-932c992e/candidate-v02/tests/unit/logic/autoformal/test_legal_norm_scope_correspondence_v1.py",
+        "sha256": "3fdbbc399a5d8e31a7fd237e384536992fe43bf64f979d6803400490206f55a5"
+      },
+      "target_relative_path": "tests/unit/logic/autoformal/test_legal_norm_scope_correspondence_v1.py"
+    }
+  ],
+  "recorded_at_utc": "2026-10-24T05:15:57.747193+00:00",
+  "request": {
+    "bytes": 86497,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-norm-scope-20261024-root-932c992e/execution-v03/request-parent-norm-scope-v03.json",
+    "sha256": "7a1a9327850010ef14711da1768c7272eb55185b15c5968b9862fec0f20d3a96"
+  },
+  "required_genuine_sources": 18,
+  "schema": "legal-parent-norm-scope-qualification-summary/v1",
+  "selected_function_count": 56,
+  "selected_interpretation": null,
+  "source_bound_relational_norm_or_complete_law": false,
+  "source_candidate_manifest": {
+    "bytes": 4767,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-norm-scope-20261024-root-932c992e/candidate-manifest-v02.json",
+    "sha256": "aa8f777ca0823a644f96da090dc8655010cc8080a8d78e28c098f600f2c3d5b3"
+  },
+  "source_pin_count": 234,
+  "specification": {
+    "bytes": 46986,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-norm-scope-20261024-root-932c992e/qualification-spec-v02.json",
+    "sha256": "1046f7a438f816ef5a7468e5dbe1c071380bd64453a95c4139f61207d3c00987"
+  },
+  "statutory_meaning_or_fidelity_measured": false,
+  "successful_module_origins": 120,
+  "test_result": {
+    "bytes": 41092,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-norm-scope-20261024-root-932c992e/execution-v03/attempt-parent-norm-scope-v03/exports/test-result.json",
+    "sha256": "cde50107378cb9ce1262c1813fd76a5ae6c004b220babc7e99de02dc04589b96"
+  },
+  "training_mask": 0
+}

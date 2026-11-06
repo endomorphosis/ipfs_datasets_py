@@ -5,8 +5,10 @@ sections describe the historical `73841dee` graph / `c8b9cbe4` original-input
 eligibility-v2 combination. The separately reconciled `43a93776` owner uses v2 for
 a narrower retained-coordinate contract and v3 for original-input replay. Those
 profiles are not interchangeable. The explicit coordinate graph v2 port described
-at the end of this guide uses eligibility v3; its separate original-owner
-qualification passed 43 cases and 129 phases with the scope recorded below.
+below uses eligibility v3; its separate original-owner qualification passed
+43 cases and 129 phases within its original scope. The explicit wire-coordinate
+graph v3 section reuses eligibility v4 and wire join v3; its local qualification
+and current-public compatibility profile remain separate.
 
 `legal_span_cache_intake.py` retains complete, independently pinned cache-row
 populations and builds proposals through the existing `legal_semantic_graph`
@@ -420,3 +422,27 @@ the next integration boundary after this proposal-preparation slice.
 ## Public v2 and explicit v3 compatibility
 
 Graph-v1 retains published original-input eligibility-v2 with mandatory originals. Graph-v2 uses explicit eligibility-v3; the new corpus-custody profile consumes graph-v2. Retained eligibility has distinct retained-v1 APIs and wire identities, and cannot substitute for either original-input route. Source/helper byte pins remain complete across helper-backed and inlined context generations; existing reports retain their original producer pins and do not gain authority from relocation.
+
+## Explicit wire-coordinate graph v3 over eligibility v4
+
+`prepare_coordinate_source_graph_intake_v3` and `validate_coordinate_source_graph_intake_v3` extend this same owner and share its unchanged ordered projection loop. Their positional and keyword arguments match graph v2. The closed twelve-field request uses `legal-coordinate-source-graph-intake-request/v3`; the report uses `legal-coordinate-source-graph-intake/v3`. Both carry `source_compatibility_profile="original-input-wire-coordinate-source-graph-intake/v1"` and `metadata_profile="hf-default-parquet-envelope/v1"`. The request fixes `graph_profile="canonical_rules_v1"`; the report retains that declaration under its `request`. The request preserves graph-v2 independent pins and the complete physical-ID population and adds only `metadata_profile` to that field set. No schema or alias selects a different route.
+
+| Graph route | Required original-input eligibility | Required coordinate join |
+| --- | --- | --- |
+| Graph v1 | Public eligibility v2 | Join v2 |
+| Graph v2 | Explicit eligibility v3 | Join v2 |
+| Wire graph v3 | Eligibility v4, `original-input-wire-coordinate-target-eligibility/v1` | Wire join v3, `paired-coordinate-hf-wire-three-cache-join/v1` |
+
+V3 genuinely validates eligibility v4 at opening and closing against the independently pinned artifact and complete original arguments. That operation replays wire join v3, intake v2 and the existing paired payload/coordinate owners. The graph retains exactly one original eligibility artifact; the typed join reference follows `/join_manifest_raw_utf8`, which retains the original coordinate carrier. Raw and canonical identities, every physical row/reference, output route, ordinal and provenance remain distinct. Original/captured/parsed inputs, actual upstream returns, live graph/build-request objects, runtime descriptions, producer/callable identities, physical files and detached reports remain checked through closing replay and final serialization. Outer validation checks its own input snapshots before deriving file nominations solely from genuinely regenerated original bytes. These are sequential custody checks, not an atomic filesystem snapshot.
+
+The [closed selected authored qualification](../../../../../docs/autoformalization/evidence/legal-ir-hf-wire-coordinate-graph-intake-20261024.json) passed **101 cases / 303 phases across 51 selected functions**: 65 previously selected graph-intake controls and 36 wire-v3 controls. All 97 preceding owning cases remain byte-for-byte preserved; 32 were unselected in this run. The full appended owning file has 133 cases across 67 test functions, not 133 executed cases. Upstream intake, join and eligibility qualifications were reused separately rather than repeated or pooled. Original compute, retained storage and source READ custody closed. Public package initializers and the complete installed third-party runtime remain outside the declared namespace qualification.
+
+Mechanically supported `typed_deontic` / `typed-deontic-rule/v1` outputs become unreviewed `canonical_rules_v1` proposals only when an independent source nomination is accepted. Missing or ambiguous nominations and unsupported outputs remain lossless and unresolved. Independently nominated authored HTML does not establish a source/edition crosswalk or two reviewed statutory uses. Selected occurrences stay null, entity/definition binding stays unavailable, all authority stays false and learning/gold/source-binding masks stay plain integer 0. The inherited eligibility declarations allow 0 or 384 latent dimensions; these graph fixtures exercised only dimension 0. No model width, encoder, embedding, training, convergence or Lean operation ran. Corpus custody/export and entity census retain their older profiles and require their own explicit wire adoption.
+
+## Focused current-public dependency qualification
+
+The [separate current-public dependency check](../../../../../docs/autoformalization/evidence/legal-ir-hf-wire-coordinate-graph-public-integration-20261024.json) passed **three existing cases / nine phases** on public base `bc5f60c576477abcb5667448ee84585d0e387e14` with the exact qualified graph source and owning test. It covers one genuine complete roundtrip, lossless unsupported targets and closing physical-table drift refusal; the historical **101 cases / 303 phases** remain separate and were not repeated or pooled.
+
+The frozen profile retains 224 source/fixture files: 222 current-public files and only two graph source/test overlays. Public `span_cache` (`e35f…`) and the public validation helper (`cef7…`) are preserved. Nine private context owners remain absent and import-denied; three public native-tooling files remain unexecuted context. The unchanged private pytest plugin and original native/resource owners remain qualification orchestration. Fourteen namespace parent bodies stay unexecuted and ten declared genuine initializer routes retain their actual frozen origins; 132 loaded origins and 123 checked import/compile entries do not establish whole-package qualification. Original source READ, compute and retained storage custody closed and independent saved-result review accepted the result.
+
+These authored fixtures exercised metadata dimension 0 only. The inherited 0/384 eligibility declarations establish no encoder/decoder width compatibility, model quality, training or convergence. Census-v2, corpus-v1 and source-correspondence-v2 keep their older contracts. Source/edition/meaning, entity and governing-definition applicability and graph/Lean admission remain open; training and gold masks remain zero.
