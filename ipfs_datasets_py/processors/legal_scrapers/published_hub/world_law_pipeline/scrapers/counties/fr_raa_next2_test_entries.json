@@ -1,0 +1,28 @@
+[
+ {
+  "name": "Ille-et-Vilaine",
+  "iso": "FR-35",
+  "qid": "Q12549",
+  "url": "https://www.ille-et-vilaine.fr/arretes",
+  "issuer": "conseil_departemental",
+  "include_re": null,
+  "block_re": "<li class=\"bloc-border-item",
+  "pager": {
+   "param": "page",
+   "max": 130,
+   "stop_empty": 3
+  },
+  "max_urls": 2500,
+  "note": "Since the 2022 publicity reform the Département publishes each arrêté individually at /arretes (Drupal view, ~13/page, ?page=N); 2026 files only (/sites/iev/files/2026-..); robots allows /sites/ and /arretes. Mostly temporary traffic arrêtés + PR_ (président) arrêtés."
+ },
+ {
+  "name": "Loire-Atlantique",
+  "iso": "FR-44",
+  "qid": "Q3068",
+  "url": "https://www.loire-atlantique.fr/44/tout-savoir-sur-/arretes-et-decisions-du-departement-de-loire-atlantique/c_1279666",
+  "issuer": "conseil_departemental",
+  "include_re": "recueil",
+  "pdf_archive": true,
+  "note": "monthly 'Recueil des arrêtés et décisions' 2026; index page robots-allowed, but PDFs live under /upload/ which robots.txt disallows for * -> Wayback/CC copies only (archive_retry.py)"
+ }
+]

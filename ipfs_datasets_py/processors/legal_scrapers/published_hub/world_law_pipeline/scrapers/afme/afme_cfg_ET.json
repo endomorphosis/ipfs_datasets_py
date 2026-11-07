@@ -1,0 +1,54 @@
+{
+ "cc": "ET",
+ "platform": "et_municipal_cc",
+ "language": "en",
+ "doc_type": "statute",
+ "doc_url_regex": "(?i)(by-?laws?|bye-?laws?|ordinances?|regulations?|resolutions?|legislation|legislative-?instrument|gazette|local-?government-?act|fees?-?fixing|decisions?|proclamation|directives?)",
+ "exclude_regex": "\\.(jpg|jpeg|png|gif|css|js|svg|woff2?|mp4|mp3|ico|zip)(\\?|$)|/(tag|tags|category|author|feed|news|akhbar|event|gallery|photo|video)s?/|[?&](page|replytocom)=",
+ "map": "host,title",
+ "slug_strip": "^(www|portal|web)",
+ "slug_suffix_strip": "(municipality|municipal|baladiya|baladiyeh|baladia|mc|dc|da|ma|mma|cc|council|city|assembly|districtassembly|gov)+$",
+ "label_langs": [
+  "en",
+  "am",
+  "so"
+ ],
+ "title_fetch_cap": 1500,
+ "title_legal_regex": "(?i)(regional|city|addis ababa|dire dawa|amhara|oromia|tigray|sidama|somali|afar|harari|gambela|benishangul|south(ern)? ethiopia|central ethiopia|south west).{0,80}(proclamation|regulation|directive)|(proclamation|regulation|directive).{0,80}(regional|city administration|addis ababa|dire dawa)",
+ "generic_words": [
+  "municipality",
+  "municipal",
+  "city",
+  "district",
+  "assembly",
+  "council",
+  "governorate",
+  "province",
+  "region",
+  "county",
+  "greater",
+  "of",
+  "the",
+  "al",
+  "baladiyat",
+  "بلدية",
+  "محافظة",
+  "منطقة",
+  "مدينة"
+ ],
+ "content_selectors": [
+  ".entry-content",
+  ".post-content",
+  "#content",
+  "article",
+  "main"
+ ],
+ "note": "chilot.me + lawethiopia.com are third-party mirrors: CC captures only, title-mapped to regional/Addis Ababa/Dire Dawa instruments only; lawethiopia rows tagged archived_robots_disallowed",
+ "unofficial_hosts": [
+  "chilot.me",
+  "lawethiopia.com"
+ ],
+ "robots_disallow_hosts": {
+  "lawethiopia.com": "User-agent: CCBot / Disallow: /  (lawethiopia.com/robots.txt, section '# BLOCK AGGRESSIVE AI SCRAPERS & DATA HARVESTERS'; checked 2026-10-17)"
+ }
+}

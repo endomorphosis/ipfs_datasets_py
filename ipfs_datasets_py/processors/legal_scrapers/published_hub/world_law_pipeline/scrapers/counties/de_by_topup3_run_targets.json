@@ -1,0 +1,91 @@
+[
+{
+"name": "Landkreis Landsberg am Lech",
+"qid": "Q10507",
+"index_urls": [
+"https://www.landkreis-landsberg.de/aktuelles/amtsblatt/"
+],
+"link_re": "kxp\\.landkreis-landsberg\\.de/+Dox\\.aspx\\?docid=|\\.pdf",
+"norm": [
+[
+"(kxp\\.landkreis-landsberg\\.de)/+",
+"\\1/"
+]
+]
+},
+{
+"name": "Landkreis Miesbach",
+"qid": "Q10523",
+"index_urls": [
+"https://www.landkreis-miesbach.de/Landratsamt-Verwaltung-Aktuelles/Aktuelles-und-Presse-/Amtsblatt/",
+"https://www.landkreis-miesbach.de/Landratsamt-Verwaltung-Aktuelles/Aktuelles-und-Presse-/Amtliche-Bekanntmachungen/",
+"https://www.landkreis-miesbach.de/Bauen-Sicherheit-Umwelt/Umwelt-und-Naturschutz/Naturschutz/Verordnungen-Naturschutz/",
+"https://www.landkreis-miesbach.de/Bauen-Sicherheit-Umwelt/Umwelt-und-Naturschutz/Ausweisungsverfahren-Landschaftsschutzgebiete/Bisherige-Verordnungen-und-Karten/"
+]
+},
+{
+"name": "Landkreis Regensburg",
+"qid": "Q10429",
+"url": "https://www.landkreis-regensburg.de/Unser-Landkreis/Kreisrecht/"
+},
+{
+"name": "Landkreis Rottal-Inn",
+"qid": "Q10477",
+"index_urls": [
+"https://www.rottal-inn.de/landkreis-region/amtliche-bekanntmachungen/amtsblatt/",
+"https://www.rottal-inn.de/landkreis-region/amtliche-bekanntmachungen/amtsblatt/amtsblatt-2026/"
+]
+},
+{
+"name": "Landkreis Cham",
+"qid": "Q10424",
+"url": "https://www.landkreis-cham.de/landkreis-landratsamt/satzungen-verordnungen/"
+},
+{
+"name": "Landkreis Kulmbach",
+"qid": "Q10436",
+"url": "https://www.landkreis-kulmbach.de/service-verwaltung/buergerservice/rechtssammlung"
+},
+{
+"name": "Landkreis Garmisch-Partenkirchen",
+"qid": "Q10518",
+"url": "https://www.lra-gap.de/de/bekanntmachungen.html",
+"exclude_re": "wirt-tour|Fremdenverkehr|Flyer|Broschuere|Formular|Antrag"
+},
+{
+"name": "Landkreis Neuburg-Schrobenhausen",
+"qid": "Q10493",
+"url": "https://neuburg-schrobenhausen.de/Aktuelles/Amtsbl%C3%A4tter-/"
+},
+{
+"name": "Landkreis Weißenburg-Gunzenhausen",
+"qid": "Q10453",
+"url": "https://www.landkreis-wug.de/veroeffentlichungen/amtsblatt/",
+"pdf_re": "amtsbl|satzung|verordnung|bekanntm|allgemeinverf|ordnung|richtlinie|geb(ü|ue)hr|tarif"
+},
+{
+"name": "Landkreis Fürth",
+"qid": "Q10455",
+"url": "https://www.landkreis-fuerth.de/leben-im-landkreis/landkreis-fuerth/satzungen-verordnungen"
+},
+{
+"name": "Landkreis Eichstätt",
+"qid": "Q10491",
+"url": "https://www.landkreis-eichstaett.de/landratsamt/neuigkeiten/amtsblatt"
+},
+{
+"name": "Landkreis Würzburg",
+"qid": "Q10458",
+"url": "https://www.landkreis-wuerzburg.de/B%C3%BCrger-Politik-Verwaltung/Amtsblatt/"
+},
+{
+"name": "Landkreis Rhön-Grabfeld",
+"qid": "Q10465",
+"url": "https://www.rhoen-grabfeld.de/aktuelles/amtsblatt"
+},
+{
+"name": "Landkreis Ansbach",
+"qid": "Q10454",
+"url": "https://www.landkreis-ansbach.de/Aktuelles/Bekanntmachungen/Satzungen/"
+}
+]

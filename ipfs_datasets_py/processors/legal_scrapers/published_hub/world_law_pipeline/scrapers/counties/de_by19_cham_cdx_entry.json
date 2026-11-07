@@ -1,0 +1,5 @@
+{"name": "Landkreis Cham", "qid": "Q10424", "iso": "DE-BY", "host": "landkreis-cham.de",
+ "index_url": "https://www.landkreis-cham.de/landkreis-landratsamt/satzungen-verordnungen/",
+ "keep_re": "/(landkreis[-_ ]cham|lkr[-_]?cham|kreiswerke|amtsblatt|kreisrecht|kreistag|kreis[-_])[^/]*(satzung|verordnung|amtsblatt|geb(ue|ü)hren|allgemeinverf(ue|ü)gung|bekanntmachung|ordnung|haushalt|richtlinie|vorl(ae|ä)ufige)[^/]*$",
+ "drop_re": "antrag|formular|flyer|merkblatt|broschuere|brosch%C3%BCre|einladung|stellenaus|_processed_|/templates/",
+ "archive_policy": "archived_robots_disallowed"}

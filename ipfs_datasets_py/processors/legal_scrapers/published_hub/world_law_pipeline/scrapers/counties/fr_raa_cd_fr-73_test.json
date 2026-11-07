@@ -1,0 +1,27 @@
+{
+ "country_code": "FR",
+ "place_id": "wd:Q12745",
+ "qid": "Q12745",
+ "place_name": "Savoie",
+ "iso_3166_2": "FR-73",
+ "admin_level": "departement",
+ "language": "fr",
+ "doc_type": "gazette_act",
+ "consolidated": false,
+ "platform": "fr_raa_conseil_departemental",
+ "source_org": "Conseil départemental — Savoie",
+ "issuer": "conseil_departemental",
+ "max_bytes": 52428800,
+ "index_url": "https://www.savoie.fr/web/sw_174380/les-arretes-du-departement-du-01-01-2026-au-18-05-2026",
+ "crawl_delay": 3.0,
+ "urls": [
+  "https://www.savoie.fr/web/sw_176483/2026-05-19-at-0957-bourdeau",
+  "https://www.savoie.fr/web/sw_176484/2026-05-19-at-0945-jongieux",
+  "https://www.savoie.fr/web/sw_176485/2026-05-19-at-0958-rochefort"
+ ],
+ "titles": {
+  "https://www.savoie.fr/web/sw_176483/2026-05-19-at-0957-bourdeau": "Arrêté AT 0957 Bourdeau pdf 87 ko",
+  "https://www.savoie.fr/web/sw_176484/2026-05-19-at-0945-jongieux": "Arrêté AT 0945 Jongieux pdf 85 ko",
+  "https://www.savoie.fr/web/sw_176485/2026-05-19-at-0958-rochefort": "Arrêté AT 0958 Rochefort pdf 85 ko"
+ }
+}

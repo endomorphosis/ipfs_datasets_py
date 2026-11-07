@@ -1,0 +1,7 @@
+[
+ {"name": "Landkreis Deggendorf", "qid": "Q10485", "url": "https://www.landkreis-deggendorf.de/aktuelles/amtsblatt/", "iso": "DE-BY"},
+ {"name": "Landkreis Schwandorf", "qid": "Q10423", "url": "https://www.landkreis-schwandorf.de/Ver%C3%B6ffentlichungen/Amtsblatt-/", "iso": "DE-BY"},
+ {"name": "Landkreis Dillingen an der Donau", "qid": "Q10417", "url": "https://www.landkreis-dillingen.de/aktuelles-kurzinfos/amtsblatt", "iso": "DE-BY"},
+ {"name": "Landkreis Pfaffenhofen an der Ilm", "qid": "Q10496", "url": "https://www.landkreis-pfaffenhofen.de/landratsamt/veroeffentlichungen/amtsblatt/", "iso": "DE-BY"},
+ {"name": "Landkreis Neumarkt in der Oberpfalz", "qid": "Q10427", "url": "https://www.landkreis-neumarkt.de/landkreis-neumarkt/landratsamt/amtsblatt/", "iso": "DE-BY"}
+]

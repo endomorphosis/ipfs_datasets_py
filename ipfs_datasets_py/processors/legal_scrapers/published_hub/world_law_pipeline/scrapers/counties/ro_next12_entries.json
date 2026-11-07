@@ -1,0 +1,12 @@
+[
+ {
+  "name": "Județul Gorj",
+  "qsearch": "Gorj County",
+  "qid": "Q190406",
+  "iso": "RO-GJ",
+  "url": "https://www.cjgorj.ro/monitorul-oficial-local/hotararile-autoritatii-deliberative/",
+  "follow_re": "(?!)",
+  "max_pages": 1,
+  "pdf_re": "/Sedinte Consiliu/[0-9.]*202[4-6] - Adoptate/"
+ }
+]

@@ -1,0 +1,30 @@
+{
+ "country_code": "RO",
+ "place_id": "wd:Q190702",
+ "qid": "Q190702",
+ "place_name": "Județul Harghita",
+ "iso_3166_2": "RO-HR",
+ "admin_level": "judet",
+ "language": "ro",
+ "doc_type": "decision",
+ "consolidated": false,
+ "platform": "ro_cj_hcj",
+ "source_org": "Județul Harghita",
+ "index_url": "https://judetulharghita.ro/category/hotarari/",
+ "max_bytes": 52428800,
+ "urls": [
+  "https://hargitamegye.ro/wp-content/uploads/2026/10/Hot-239-2026.pdf",
+  "https://judetulharghita.ro/wp-content/uploads/2026/08/Hot-188-2026.pdf",
+  "https://judetulharghita.ro/wp-content/uploads/2026/03/Hot-038-2026.pdf",
+  "https://hargitamegye.ro/wp-content/uploads/2025/08/Hot-237-2025.pdf"
+ ],
+ "titles": {
+  "https://hargitamegye.ro/wp-content/uploads/2026/10/Hot-239-2026.pdf": "Hat. 239/12.10.2026",
+  "https://judetulharghita.ro/wp-content/uploads/2026/08/Hot-188-2026.pdf": "Hotărârea nr. 188/11.08.2026",
+  "https://judetulharghita.ro/wp-content/uploads/2026/03/Hot-038-2026.pdf": "Hotărârea nr. 38/26.02.2026",
+  "https://hargitamegye.ro/wp-content/uploads/2025/08/Hot-237-2025.pdf": "Hotărârea nr. 237/22.08.2025",
+  "https://hargitamegye.ro/wp-content/uploads/2025/04/Hot-086-2025.pdf": "Hotărârea nr. 86/28.04.2025",
+  "https://hargitamegye.ro/wp-content/uploads/2024/11/Hot-424-2024.pdf": "Hotărârea nr. 424/08.11.2024",
+  "https://hargitamegye.ro/wp-content/uploads/2024/08/Hot-303-2024.pdf": "Hotărârea nr. 303/13.08.2024"
+ }
+}

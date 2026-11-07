@@ -1,0 +1,45 @@
+{
+ "cc": "LB",
+ "platform": "lb_municipal_cc",
+ "language": "ar",
+ "doc_type": "decision",
+ "doc_url_regex": "(?i)(by-?laws?|bye-?laws?|ordinances?|regulations?|resolutions?|legislation|legislative-?instrument|gazette|local-?government-?act|fees?-?fixing|decisions?|proclamation|directives?|%d9%86%d8%b8%d8%a7%d9%85|%d8%a3%d9%86%d8%b8%d9%85%d8%a9|%d8%a7%d9%86%d8%b8%d9%85%d8%a9|%d8%aa%d8%b9%d9%84%d9%8a%d9%85%d8%a7%d8%aa|%d9%82%d8%b1%d8%a7%d8%b1|%d9%82%d8%b1%d8%a7%d8%b1%d8%a7%d8%aa|%d9%84%d8%a7%d8%a6%d8%ad%d8%a9|%d8%a7%d9%84%d9%84%d9%88%d8%a7%d8%a6%d8%ad|%d8%aa%d8%b4%d8%b1%d9%8a%d8%b9%d8%a7%d8%aa|%d9%82%d9%88%d8%a7%d9%86%d9%8a%d9%86|%d8%a8%d9%84%d8%a7%d8%ba|%d8%aa%d8%b9%d9%85%d9%8a%d9%85|nizam|ta3limat|qarar)",
+ "exclude_regex": "\\.(jpg|jpeg|png|gif|css|js|svg|woff2?|mp4|mp3|ico|zip)(\\?|$)|/(tag|tags|category|author|feed|news|akhbar|event|gallery|photo|video)s?/|[?&](page|replytocom)=",
+ "map": "host,title",
+ "slug_strip": "^(www|portal|web)",
+ "slug_suffix_strip": "(municipality|municipal|baladiya|baladiyeh|baladia|mc|dc|da|ma|mma|cc|council|city|assembly|districtassembly|gov)+$",
+ "label_langs": [
+  "ar",
+  "en"
+ ],
+ "title_fetch_cap": 1500,
+ "title_legal_regex": "(?i)نظام|تعليمات|قرار|لائحة|أنظمة|by-?law|regulation|decision",
+ "generic_words": [
+  "municipality",
+  "municipal",
+  "city",
+  "district",
+  "assembly",
+  "council",
+  "governorate",
+  "province",
+  "region",
+  "county",
+  "greater",
+  "of",
+  "the",
+  "al",
+  "baladiyat",
+  "بلدية",
+  "محافظة",
+  "منطقة",
+  "مدينة"
+ ],
+ "content_selectors": [
+  ".entry-content",
+  ".post-content",
+  "#content",
+  "article",
+  "main"
+ ]
+}

@@ -1,0 +1,8 @@
+[
+ {"name": "Landkreis Würzburg", "qid": "Q10458", "url": "https://www.landkreis-wuerzburg.de/B%C3%BCrger-Politik-Verwaltung/Amtsblatt/", "iso": "DE-BY"},
+ {"name": "Landkreis Rhön-Grabfeld", "qid": "Q10465", "url": "https://www.rhoen-grabfeld.de/aktuelles/amtsblatt", "iso": "DE-BY"},
+ {"name": "Landkreis Kitzingen", "qid": "Q10459", "url": "https://www.kitzingen.de/buergerservice/amtsblatt/", "iso": "DE-BY"},
+ {"name": "Landkreis Tirschenreuth", "qid": "Q10419", "url": "https://www.kreis-tir.de/landkreis/politik/amtsblatt", "iso": "DE-BY"},
+ {"name": "Landkreis Coburg", "qid": "Q10440", "url": "https://www.landkreis-coburg.de/aktuelles/aktuelles-amtsblatt", "iso": "DE-BY"},
+ {"name": "Landkreis Roth", "qid": "Q10451", "url": "https://www.landratsamt-roth.de/aktuelles/bekanntmachungen", "iso": "DE-BY"}
+]

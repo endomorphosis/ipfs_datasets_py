@@ -1,0 +1,25 @@
+{
+ "country_code": "FR",
+ "place_id": "wd:Q12574",
+ "qid": "Q12574",
+ "place_name": "Loiret",
+ "iso_3166_2": "FR-45",
+ "admin_level": "departement",
+ "language": "fr",
+ "doc_type": "gazette_act",
+ "consolidated": false,
+ "platform": "fr_raa_conseil_departemental",
+ "source_org": "Conseil départemental — Loiret",
+ "issuer": "conseil_departemental",
+ "max_bytes": 52428800,
+ "index_url": "https://www.loiret.fr/arretes-administratifs",
+ "crawl_delay": 3.0,
+ "urls": [
+  "https://www.loiret.fr/sites/loiret/files/media/administrative-acts/2026/10/Arr%C3%AAt%C3%A9%20interdiction%20temporaire%20aux%20ENS%20sous%20propri%C3%A9t%C3%A9%20d%C3%A9partementale.pdf",
+  "https://www.loiret.fr/sites/loiret/files/media/administrative-acts/2026/10/2026-10-16_Composition_CLI_Dampierre-en-Burly_signe.PDF"
+ ],
+ "titles": {
+  "https://www.loiret.fr/sites/loiret/files/media/administrative-acts/2026/10/Arr%C3%AAt%C3%A9%20interdiction%20temporaire%20aux%20ENS%20sous%20propri%C3%A9t%C3%A9%20d%C3%A9partementale.pdf": "Arrêté interdiction temporaire aux ENS sous propriété départementale.pdf",
+  "https://www.loiret.fr/sites/loiret/files/media/administrative-acts/2026/10/2026-10-16_Composition_CLI_Dampierre-en-Burly_signe.PDF": "2026-10-16_Composition_CLI_Dampierre-en-Burly_signe.PDF"
+ }
+}

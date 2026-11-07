@@ -1,0 +1,32 @@
+[
+ {
+  "name": "Landkreis München",
+  "qid": "Q10544",
+  "url": "https://www.landkreis-muenchen.de/landratsamt/veroeffentlichungen/bekanntmachungen/",
+  "iso": "DE-BY"
+ },
+ {
+  "name": "Landkreis Rosenheim",
+  "qid": "Q10526",
+  "url": "https://www.landkreis-rosenheim.de/aktuelles/",
+  "iso": "DE-BY"
+ },
+ {
+  "name": "Landkreis Main-Spessart",
+  "qid": "Q10469",
+  "url": "https://www.main-spessart.de/aktuelles/amtsblatt/index.html",
+  "iso": "DE-BY"
+ },
+ {
+  "name": "Landkreis Neustadt an der Waldnaab",
+  "qid": "Q10420",
+  "url": "https://www.neustadt.de/aktuelles/amtsblaetter/",
+  "iso": "DE-BY"
+ },
+ {
+  "name": "Landkreis Dingolfing-Landau",
+  "qid": "Q10480",
+  "url": "https://dingolfing-landau.de/service-und-verwaltung/veroeffentlichungen/amtsblaetter/",
+  "iso": "DE-BY"
+ }
+]

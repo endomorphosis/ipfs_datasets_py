@@ -1,0 +1,34 @@
+[
+ {
+  "name": "Gers",
+  "iso": "FR-32",
+  "qid": "Q12517",
+  "url": "https://cd32-actes.digitechcloud.fr/webdelibplus/jsp/summary_orders.jsp?role=usager&date=10-2026",
+  "extra_urls": [
+   "https://cd32-actes.digitechcloud.fr/webdelibplus/jsp/summary_orders.jsp?role=usager&date=01-2026",
+   "https://cd32-actes.digitechcloud.fr/webdelibplus/jsp/summary_orders.jsp?role=usager&date=02-2026",
+   "https://cd32-actes.digitechcloud.fr/webdelibplus/jsp/summary_orders.jsp?role=usager&date=03-2026",
+   "https://cd32-actes.digitechcloud.fr/webdelibplus/jsp/summary_orders.jsp?role=usager&date=04-2026",
+   "https://cd32-actes.digitechcloud.fr/webdelibplus/jsp/summary_orders.jsp?role=usager&date=05-2026",
+   "https://cd32-actes.digitechcloud.fr/webdelibplus/jsp/summary_orders.jsp?role=usager&date=06-2026",
+   "https://cd32-actes.digitechcloud.fr/webdelibplus/jsp/summary_orders.jsp?role=usager&date=07-2026",
+   "https://cd32-actes.digitechcloud.fr/webdelibplus/jsp/summary_orders.jsp?role=usager&date=08-2026",
+   "https://cd32-actes.digitechcloud.fr/webdelibplus/jsp/summary_orders.jsp?role=usager&date=09-2026",
+   "https://cd32-actes.digitechcloud.fr/webdelibplus/jsp/seance_agenda.jsp?date=23-01-2026&assembly=Conseil%20d%C3%A9partemental&type=apres&role=usager",
+   "https://cd32-actes.digitechcloud.fr/webdelibplus/jsp/seance_agenda.jsp?date=13-03-2026&assembly=Conseil%20d%C3%A9partemental&type=apres&role=usager",
+   "https://cd32-actes.digitechcloud.fr/webdelibplus/jsp/seance_agenda.jsp?date=22-05-2026&assembly=Commission%20permanente&type=apres&role=usager",
+   "https://cd32-actes.digitechcloud.fr/webdelibplus/jsp/seance_agenda.jsp?date=26-06-2026&assembly=Conseil%20d%C3%A9partemental&type=apres&role=usager",
+   "https://cd32-actes.digitechcloud.fr/webdelibplus/jsp/seance_agenda.jsp?date=16-10-2026&assembly=Commission%20permanente&type=apres&role=usager"
+  ],
+  "issuer": "conseil_departemental",
+  "link_re": "[^\"]*openfile\\.jsp\\?[^\"]+",
+  "href_sub": [
+   "openfile\\.jsp\\?.*?&pdf=",
+   "downloadFile.jsp?pdf="
+  ],
+  "block_re": "<tr[ >]",
+  "year_re": ".",
+  "crawl_delay": 3,
+  "note": "gers.fr 'Arrêtés, délibérations et procès-verbaux' -> Webdelib+ cd32-actes.digitechcloud.fr: arrêtés monthly summary_orders &date=MM-2026 (01..10, ~50/month) + délibérations of the 5 2026 séances (seance_agenda.jsp, CD 23-01/13-03/26-06, CP 22-05/16-10). openfile.jsp viewer -> downloadFile.jsp?pdf=<token> (application/pdf, checked 2026-10-30); all index pages are 2026-only so year_re='.'; query-string URLs -> URL-hash doc_id suffix. robots.txt 404 (= allow), 3 s. www.gers.fr itself Disallows /pdf* only. QID Q12517 (P300=FR-32)."
+ }
+]

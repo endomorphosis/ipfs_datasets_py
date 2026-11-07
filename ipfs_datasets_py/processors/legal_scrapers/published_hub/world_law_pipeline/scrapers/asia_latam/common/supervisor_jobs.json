@@ -1,0 +1,386 @@
+[
+ {
+  "name": "es_bocm",
+  "cwd": "/workspace/world_law/pipeline/scrapers/asia_latam/es",
+  "cmd": [
+   "/workspace/world_law/pipeline/venv/bin/python",
+   "-u",
+   "es_bop.py",
+   "--gazettes",
+   "bocm",
+   "--flush-days",
+   "3"
+  ],
+  "sig": "es_bop.py --gazettes bocm ",
+  "log": "es_bop"
+ },
+ {
+  "name": "es_bop4",
+  "cwd": "/workspace/world_law/pipeline/scrapers/asia_latam/es",
+  "cmd": [
+   "/workspace/world_law/pipeline/venv/bin/python",
+   "-u",
+   "es_bop.py",
+   "--gazettes",
+   "borm,gipuzkoa,cordoba,huesca",
+   "--flush-days",
+   "5"
+  ],
+  "sig": "es_bop.py --gazettes borm,gipuzkoa,cordoba,huesca ",
+  "log": "es_bop"
+ },
+ {
+  "name": "es_caceres",
+  "cwd": "/workspace/world_law/pipeline/scrapers/asia_latam/es",
+  "cmd": [
+   "/workspace/world_law/pipeline/venv/bin/python",
+   "-u",
+   "es_bop.py",
+   "--gazettes",
+   "caceres",
+   "--flush-days",
+   "5"
+  ],
+  "sig": "es_bop.py --gazettes caceres ",
+  "log": "es_bop"
+ },
+ {
+  "name": "es_avgulu",
+  "cwd": "/workspace/world_law/pipeline/scrapers/asia_latam/es",
+  "cmd": [
+   "/workspace/world_law/pipeline/venv/bin/python",
+   "-u",
+   "es_bop.py",
+   "--gazettes",
+   "avila,guadalajara,lugo",
+   "--flush-days",
+   "5"
+  ],
+  "sig": "es_bop.py --gazettes avila,guadalajara,lugo ",
+  "log": "es_bop"
+ },
+ {
+  "name": "es_oucad",
+  "cwd": "/workspace/world_law/pipeline/scrapers/asia_latam/es",
+  "cmd": [
+   "/workspace/world_law/pipeline/venv/bin/python",
+   "-u",
+   "es_bop.py",
+   "--gazettes",
+   "ourense,cadiz",
+   "--flush-days",
+   "5"
+  ],
+  "sig": "es_bop.py --gazettes ourense,cadiz ",
+  "log": "es_bop"
+ },
+ {
+  "name": "es_forward",
+  "cwd": "/workspace/world_law/pipeline/scrapers/asia_latam/es",
+  "cmd": [
+   "/workspace/world_law/pipeline/venv/bin/python",
+   "-u",
+   "es_bop.py",
+   "--forward",
+   "--gazettes",
+   "bocm,borm,caceres,gipuzkoa,cordoba,granada,leon,huesca,soria,avila,guadalajara,lugo,ourense,cadiz,castellon,acoruna,alava,bizkaia,barcelona,girona,tarragona,alicante,toledo,pontevedra",
+   "--forward-from",
+   "2026-10-31"
+  ],
+  "sig": "es_bop.py --forward",
+  "log": "es_bop_forward",
+  "rr": true,
+  "slice_min": 45,
+  "rr_repeat_hours": 6
+ },
+ {
+  "name": "jp_full",
+  "cwd": "/workspace/world_law/pipeline/scrapers/asia_latam/jp",
+  "cmd": [
+   "/workspace/world_law/pipeline/venv/bin/python",
+   "-u",
+   "jp_reiki.py",
+   "--vendors",
+   "gyosei,d1w,d1ops,joureikun,unknown",
+   "--workers",
+   "4",
+   "--per-host",
+   "2",
+   "--interval",
+   "1.0",
+   "--retry-errors"
+  ],
+  "sig": "jp_reiki.py --vendors",
+  "log": "jp_full",
+  "rr": true,
+  "slice_min": 60
+ },
+ {
+  "name": "jp_legal_square",
+  "cwd": "/workspace/world_law/pipeline/scrapers/asia_latam/jp",
+  "cmd": [
+   "/workspace/world_law/pipeline/venv/bin/python",
+   "-u",
+   "legal_square.py",
+   "--workers",
+   "2",
+   "--retry-errors",
+   "--first",
+   "jp0605,jp0597"
+  ],
+  "sig": "legal_square.py",
+  "log": "jp_legal_square",
+  "rr": true,
+  "slice_min": 60
+ },
+ {
+  "name": "br_lexml",
+  "cwd": "/workspace/world_law/pipeline/scrapers/asia_latam/br",
+  "cmd": [
+   "/workspace/world_law/pipeline/venv/bin/python",
+   "-u",
+   "lexml.py",
+   "--only",
+   "all"
+  ],
+  "sig": "lexml.py --only",
+  "log": "br_lexml",
+  "rr": true,
+  "slice_min": 60
+ },
+ {
+  "name": "br_sapl",
+  "cwd": "/workspace/world_law/pipeline/scrapers/asia_latam/br",
+  "cmd": [
+   "/workspace/world_law/pipeline/venv/bin/python",
+   "-u",
+   "sapl.py",
+   "--workers",
+   "6",
+   "--slice",
+   "25"
+  ],
+  "sig": "sapl.py --workers",
+  "log": "br_sapl",
+  "rr": true,
+  "slice_min": 60
+ },
+ {
+  "name": "pe_gobpe",
+  "cwd": "/workspace/world_law/pipeline/scrapers/asia_latam/pe",
+  "cmd": [
+   "/workspace/world_law/pipeline/venv/bin/python",
+   "-u",
+   "pe_gobpe.py"
+  ],
+  "sig": "pe_gobpe.py",
+  "log": "pe_gobpe",
+  "disabled": true,
+  "note": "PE parked (No Peru CDN)"
+ },
+ {
+  "name": "mx_municipal",
+  "cwd": "/workspace/world_law/pipeline/scrapers/asia_latam/mx",
+  "cmd": [
+   "/workspace/world_law/pipeline/venv/bin/python",
+   "-u",
+   "mx_municipal.py",
+   "--workers",
+   "1",
+   "--top",
+   "170"
+  ],
+  "sig": "mx_municipal.py",
+  "log": "mx_municipal",
+  "rr": true,
+  "slice_min": 60
+ },
+ {
+  "name": "mx_ojp_puebla",
+  "cwd": "/workspace/world_law/pipeline/scrapers/asia_latam/mx",
+  "cmd": [
+   "/workspace/world_law/pipeline/venv/bin/python",
+   "-u",
+   "ojp_puebla.py"
+  ],
+  "sig": "ojp_puebla.py",
+  "log": "mx_ojp_puebla"
+ },
+ {
+  "name": "gzip_processed",
+  "cwd": "/workspace/world_law/pipeline/scrapers/asia_latam/common",
+  "cmd": [
+   "nice",
+   "-n",
+   "10",
+   "/workspace/world_law/pipeline/venv/bin/python",
+   "-u",
+   "gzip_processed.py",
+   "--apply",
+   "--loop-minutes",
+   "60"
+  ],
+  "sig": "gzip_processed.py",
+  "log": "gzip_processed"
+ },
+ {
+  "name": "es_sede",
+  "cwd": "/workspace/world_law/pipeline/scrapers/asia_latam/es",
+  "cmd": [
+   "/workspace/world_law/pipeline/venv/bin/python",
+   "-u",
+   "es_sede.py",
+   "--workers",
+   "1"
+  ],
+  "sig": "es_sede.py",
+  "log": "es_sede",
+  "rr": true,
+  "slice_min": 60
+ },
+ {
+  "name": "es_bop_robots",
+  "cwd": "/workspace/world_law/pipeline/scrapers/asia_latam/es",
+  "cmd": [
+   "/workspace/world_law/pipeline/venv/bin/python",
+   "-u",
+   "es_bop.py",
+   "--gazettes",
+   "avila,lugo,caceres",
+   "--flush-days",
+   "5"
+  ],
+  "sig": "es_bop.py --gazettes avila,lugo,caceres",
+  "log": "es_bop_robots",
+  "rr": true,
+  "slice_min": 60
+ },
+ {
+  "name": "es_bop_newbop",
+  "cwd": "/workspace/world_law/pipeline/scrapers/asia_latam/es",
+  "cmd": [
+   "/workspace/world_law/pipeline/venv/bin/python",
+   "-u",
+   "es_bop.py",
+   "--gazettes",
+   "acoruna,alava,bizkaia,barcelona,girona,tarragona,alicante,toledo,laspalmas,valencia",
+   "--flush-days",
+   "5"
+  ],
+  "sig": "es_bop.py --gazettes acoruna,alava",
+  "log": "es_bop_newbop",
+  "rr": true,
+  "slice_min": 60,
+  "rr_extra": true
+ },
+ {
+  "name": "za_bylaws",
+  "cwd": "/workspace/world_law/pipeline/scrapers/asia_latam/za",
+  "cmd": [
+   "/workspace/world_law/pipeline/venv/bin/python",
+   "-u",
+   "za_bylaws.py",
+   "--workers",
+   "1"
+  ],
+  "sig": "za_bylaws.py",
+  "log": "za_bylaws",
+  "rr": true,
+  "slice_min": 45
+ },
+ {
+  "name": "au_qld_ll",
+  "cwd": "/workspace/world_law/pipeline/scrapers/asia_latam/au",
+  "cmd": [
+   "/workspace/world_law/pipeline/venv/bin/python",
+   "-u",
+   "qld_local_laws.py",
+   "--workers",
+   "1"
+  ],
+  "sig": "qld_local_laws.py",
+  "log": "au_qld_ll",
+  "rr": true,
+  "slice_min": 30
+ },
+ {
+  "name": "mx_gazettes",
+  "cwd": "/workspace/world_law/pipeline/scrapers/asia_latam/mx",
+  "cmd": [
+   "/workspace/world_law/pipeline/venv/bin/python",
+   "-u",
+   "mx_gazettes.py",
+   "--states",
+   "guanajuato,hidalgo"
+  ],
+  "sig": "mx_gazettes.py --states guanajuato",
+  "log": "mx_gazettes",
+  "rr": true,
+  "slice_min": 60,
+  "rr_extra": true
+ },
+ {
+  "name": "mx_gazettes_b",
+  "cwd": "/workspace/world_law/pipeline/scrapers/asia_latam/mx",
+  "cmd": [
+   "/workspace/world_law/pipeline/venv/bin/python",
+   "-u",
+   "mx_gazettes.py",
+   "--states",
+   "slp,aguascalientes"
+  ],
+  "sig": "mx_gazettes.py --states slp",
+  "log": "mx_gazettes_b",
+  "rr": true,
+  "slice_min": 60,
+  "rr_extra": true
+ },
+ {
+  "name": "mx_gazettes_c",
+  "cwd": "/workspace/world_law/pipeline/scrapers/asia_latam/mx",
+  "cmd": [
+   "/workspace/world_law/pipeline/venv/bin/python",
+   "-u",
+   "mx_gazettes.py",
+   "--states",
+   "morelos,nayarit"
+  ],
+  "sig": "mx_gazettes.py --states morelos",
+  "log": "mx_gazettes_c",
+  "rr": true,
+  "slice_min": 60,
+  "rr_extra": true
+ },
+ {
+  "name": "mx_gazettes_d",
+  "cwd": "/workspace/world_law/pipeline/scrapers/asia_latam/mx",
+  "cmd": [
+   "/workspace/world_law/pipeline/venv/bin/python",
+   "-u",
+   "mx_gazettes.py",
+   "--states",
+   "colima,queretaro"
+  ],
+  "sig": "mx_gazettes.py --states colima",
+  "log": "mx_gazettes_d",
+  "rr": true,
+  "slice_min": 60,
+  "rr_extra": true
+ },
+ {
+  "name": "mx_gazettes_e",
+  "cwd": "/workspace/world_law/pipeline/scrapers/asia_latam/mx",
+  "cmd": [
+   "/workspace/world_law/pipeline/venv/bin/python",
+   "-u",
+   "mx_gazettes.py",
+   "--states",
+   "campeche,yucatan"
+  ],
+  "sig": "mx_gazettes.py --states campeche",
+  "log": "mx_gazettes_e",
+  "rr": true,
+  "slice_min": 60,
+  "rr_extra": true
+ }
+]

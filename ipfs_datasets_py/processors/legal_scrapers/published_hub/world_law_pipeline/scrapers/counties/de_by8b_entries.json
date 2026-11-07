@@ -1,0 +1,5 @@
+[
+ {"name": "Landkreis Weißenburg-Gunzenhausen", "qid": "Q10453", "url": "https://www.landkreis-wug.de/veroeffentlichungen/amtsblatt/", "iso": "DE-BY", "pdf_re": "amtsbl|satzung|verordnung|bekanntm|allgemeinverf|ordnung|richtlinie|geb(ü|ue)hr|tarif"},
+ {"name": "Landkreis Freyung-Grafenau", "qid": "Q10487", "url": "https://www.freyung-grafenau.de/amtsblaetter", "iso": "DE-BY", "pdf_re": "amtsbl|/AB_|satzung|verordnung|bekanntm|allgemeinverf|ordnung|richtlinie|geb(ü|ue)hr|tarif"},
+ {"name": "Landkreis Traunstein", "qid": "Q10528", "url": "https://www.traunstein.com/aktuelles/amtsblaetter", "iso": "DE-BY", "pdf_re": "amtsbl|satzung|verordnung|bekanntm|allgemeinverf|ordnung|richtlinie|geb(ü|ue)hr|tarif"}
+]

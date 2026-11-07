@@ -1,0 +1,36 @@
+[
+ {
+  "name": "Creuse",
+  "iso": "FR-23",
+  "qid": "Q3353",
+  "url": "https://www.creuse.fr/Publication-electronique-des-arretes",
+  "extra_urls": ["https://www.creuse.fr/Publication-electronique-des-deliberations"],
+  "issuer": "conseil_departemental",
+  "year_re": "^(?!.*/ar_2025-).*2026",
+  "crawl_delay": 3,
+  "note": "SPIP pages 'Publication électronique des arrêtés' (ar_2026-NNN) + 'des délibérations' (tampon_tdt_cp2026NNN + annexes), single pages, PDFs /IMG/pdf/. 2025 arrêtés setting 2026 tariffs (ar_2025-*) excluded. robots: only /ecrire/ /lib/ /prive/ disallowed, Crawl-delay 1 (3 s used). QID Q3353 checked via Wikidata P300=FR-23 (Q3349 is Côtes-d'Armor)."
+ },
+ {
+  "name": "Sarthe",
+  "iso": "FR-72",
+  "qid": "Q12740",
+  "url": "https://www.sarthe.fr/departement-sarthe/services-en-ligne/les-arretes-du-conseil-departemental-de-la-sarthe",
+  "issuer": "conseil_departemental",
+  "block_re": "<tr[ >]",
+  "year_re": "/arrete_26_",
+  "pager": {"param": "page", "max": 30, "stop_empty": 2},
+  "crawl_delay": 3,
+  "note": "Drupal view 'Les arrêtés du Conseil Départemental', 50 rows/page (?page=0..8, ~407 rows, all arrete_26_NNNN.pdf); title = objet (<p>). PDFs /sites/default/files/arretes-actes-administratifs/ allowed. NOT taken: délibérations / relevés de décisions under /sites/default/files/documents/ (robots Disallow) - archive-only candidate."
+ },
+ {
+  "name": "Seine-et-Marne",
+  "iso": "FR-77",
+  "qid": "Q12753",
+  "url": "https://www.seine-et-marne.fr/fr/consultation-des-actes-administratifs",
+  "issuer": "conseil_departemental",
+  "include_re": "/media/downloads/publication-",
+  "pager": {"param": "page", "max": 40, "stop_empty": 2},
+  "crawl_delay": 10,
+  "note": "Drupal 'Consultation des actes administratifs': numbered publications 2026 (arrêtés/décisions, CP/CD délibérations), 5 per page ?page=N (~17 pages); robots Crawl-delay 10 honoured. Files >50 MB (some CP publications) skipped by cap."
+ }
+]

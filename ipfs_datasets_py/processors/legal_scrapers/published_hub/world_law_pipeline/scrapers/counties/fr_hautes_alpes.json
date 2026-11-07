@@ -1,0 +1,27 @@
+{
+ "country_code": "FR",
+ "place_id": "wd:Q3125",
+ "qid": "Q3125",
+ "place_name": "Hautes-Alpes",
+ "iso_3166_2": "FR-05",
+ "admin_level": "departement",
+ "language": "fr",
+ "doc_type": "gazette_act",
+ "consolidated": false,
+ "platform": "fr_cd05_raa",
+ "source_org": "Conseil d\u00e9partemental des Hautes-Alpes",
+ "urls": [
+  "https://www.hautes-alpes.fr/app/uploads/1/2023/11/RA-septembre-2026-.pdf",
+  "https://www.hautes-alpes.fr/app/uploads/1/2026/08/RA-17-aout-2026.pdf",
+  "https://www.hautes-alpes.fr/app/uploads/1/2026/07/RA-29-juillet-2026-1.pdf",
+  "https://www.hautes-alpes.fr/app/uploads/1/2023/11/RA-16-juillet-2026.pdf",
+  "https://www.hautes-alpes.fr/app/uploads/1/2026/06/RA-02-juin-2026.pdf",
+  "https://www.hautes-alpes.fr/app/uploads/1/2023/11/RA-Mai-2026.pdf",
+  "https://www.hautes-alpes.fr/app/uploads/1/2026/04/RA-15-avril-2026.pdf",
+  "https://www.hautes-alpes.fr/app/uploads/1/2026/04/RA-avril-2026-.pdf",
+  "https://www.hautes-alpes.fr/app/uploads/1/2026/04/RA-mars-2026.pdf",
+  "https://www.hautes-alpes.fr/app/uploads/1/2026/04/RA-18-fevrier-2026-_.pdf",
+  "https://www.hautes-alpes.fr/app/uploads/1/2026/04/RA-fevrier-2026-_.pdf",
+  "https://www.hautes-alpes.fr/app/uploads/1/2026/04/RA-29-janvier-2026-_.pdf"
+ ]
+}

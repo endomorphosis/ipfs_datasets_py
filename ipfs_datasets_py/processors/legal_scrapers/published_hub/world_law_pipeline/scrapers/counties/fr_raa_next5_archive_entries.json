@@ -1,0 +1,5 @@
+[
+ {"name": "Haute-Garonne", "iso": "FR-31", "qid": "Q12538", "url": "https://actes.haute-garonne.fr/PubliActes/jsp/seances.jsp?role=usager", "issuer": "conseil_departemental",
+  "include_re": null, "archive_only": true, "archive_policy": "archived_robots_disallowed",
+  "note": "PubliActes (Webdelib) délibérations/PV portal; actes.haute-garonne.fr/robots.txt = 'User-agent: * / Disallow: /' (checked 2026-10-25 08:52 PDT) -> archive copies only, never live."}
+]

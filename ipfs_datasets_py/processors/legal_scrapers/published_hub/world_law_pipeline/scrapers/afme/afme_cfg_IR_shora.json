@@ -1,0 +1,45 @@
+{
+ "cc": "IR",
+ "platform": "ir_city_council_cc",
+ "language": "fa",
+ "doc_type": "decision",
+ "batch": "shora",
+ "cdx": "/workspace/world_law/out/afme/_probe/IR_shora/_cdx_IR.jsonl",
+ "doc_url_regex": "(?i)(%d9%85%d8%b5%d9%88%d8%a8%d9%87|%d9%85%d8%b5%d9%88%d8%a8%d8%a7%d8%aa|%d9%85%d8%b5%d9%88%d8%a8%d8%a7%d8%aa-%d8%b4%d9%88%d8%b1%d8%a7|%d8%a2%db%8c%db%8c%d9%86%e2%80%8c%d9%86%d8%a7%d9%85%d9%87|%d8%a2%db%8c%db%8c%d9%86-%d9%86%d8%a7%d9%85%d9%87|%d8%a2%d8%a6%db%8c%d9%86-%d9%86%d8%a7%d9%85%d9%87|%d8%af%d8%b3%d8%aa%d9%88%d8%b1%d8%a7%d9%84%d8%b9%d9%85%d9%84|%d8%b6%d9%88%d8%a7%d8%a8%d8%b7|%d9%82%d8%a7%d9%86%d9%88%d9%86|%d8%b7%d8%b1%d8%ad|mosavab|resolution|bylaw|regulation)",
+ "exclude_regex": "\\.(jpg|jpeg|png|gif|css|js|svg|woff2?|mp4|mp3|ico|zip)(\\?|$)|/(tag|tags|category|author|feed|news|akhbar|event|gallery|photo|video)s?/|[?&](page|replytocom)=",
+ "map": "host",
+ "host_alias": {
+  "tehran.ir": "wd:Q3616",
+  "mashhad.ir": "wd:Q121157",
+  "isfahan.ir": "wd:Q42053",
+  "isfahancouncil.ir": "wd:Q42053",
+  "shiraz.ir": "wd:Q6397066",
+  "tabriz.ir": "wd:Q80053",
+  "yazd.ir": "wd:Q182394"
+ },
+ "only_place_ids": [
+  "wd:Q3616",
+  "wd:Q121157",
+  "wd:Q42053",
+  "wd:Q6397066",
+  "wd:Q80053",
+  "wd:Q182394"
+ ],
+ "allow_ledger_places": true,
+ "exclude_doc_ids_file": "/workspace/world_law/out/afme/_w8/ir_hub_docids.tsv",
+ "host_slug": false,
+ "label_langs": [
+  "fa",
+  "en"
+ ],
+ "title_fetch_cap": 1500,
+ "title_legal_regex": "(?i)مصوب|آیین|آئین|دستورالعمل|ضوابط|شورا",
+ "content_selectors": [
+  ".news-body",
+  ".entry-content",
+  "#content",
+  "article",
+  "main"
+ ],
+ "suffix": "_shora"
+}

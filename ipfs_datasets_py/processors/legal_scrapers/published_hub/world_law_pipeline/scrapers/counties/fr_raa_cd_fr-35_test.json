@@ -1,0 +1,26 @@
+{
+ "country_code": "FR",
+ "place_id": "wd:Q12549",
+ "qid": "Q12549",
+ "place_name": "Ille-et-Vilaine",
+ "iso_3166_2": "FR-35",
+ "admin_level": "departement",
+ "language": "fr",
+ "doc_type": "gazette_act",
+ "consolidated": false,
+ "platform": "fr_raa_conseil_departemental",
+ "source_org": "Conseil départemental — Ille-et-Vilaine",
+ "issuer": "conseil_departemental",
+ "max_bytes": 52428800,
+ "index_url": "https://www.ille-et-vilaine.fr/arretes",
+ "urls": [
+  "https://www.ille-et-vilaine.fr/sites/iev/files/2026-10/05251_Arrete_Temporaire_Availles_sur_Seiche_Moutiers_Gennes_Sur_Seiche.pdf",
+  "https://www.ille-et-vilaine.fr/sites/iev/files/2026-10/05114_Arrete_Temporaire_Poce_les_Bois.pdf",
+  "https://www.ille-et-vilaine.fr/sites/iev/files/2026-10/PR_2026_013_0.pdf"
+ ],
+ "titles": {
+  "https://www.ille-et-vilaine.fr/sites/iev/files/2026-10/05251_Arrete_Temporaire_Availles_sur_Seiche_Moutiers_Gennes_Sur_Seiche.pdf": "Arrêté n°26-A3-T-05251 — Arrêté portant réglementation temporaire de la circulation sur les communes d'Availles-sur-Seiche, Moutiers et Gennes-sur-Seiche",
+  "https://www.ille-et-vilaine.fr/sites/iev/files/2026-10/05114_Arrete_Temporaire_Poce_les_Bois.pdf": "Arrêté n°26-A3-T-05114 — Arrêté portant réglementation temporaire de la circulation à Pocé-les-Bois",
+  "https://www.ille-et-vilaine.fr/sites/iev/files/2026-10/PR_2026_013_0.pdf": "Arrêté n°PR-2026-013 — Arrêté portant modification de la composition du comité social territorial des services du Département"
+ }
+}

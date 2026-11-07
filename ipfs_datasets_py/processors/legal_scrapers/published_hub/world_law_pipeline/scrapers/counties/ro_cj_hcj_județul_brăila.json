@@ -1,0 +1,23 @@
+{
+ "country_code": "RO",
+ "place_id": "wd:Q188503",
+ "qid": "Q188503",
+ "place_name": "Județul Brăila",
+ "iso_3166_2": "RO-BR",
+ "admin_level": "judet",
+ "language": "ro",
+ "doc_type": "decision",
+ "consolidated": false,
+ "platform": "ro_cj_hcj",
+ "source_org": "Județul Brăila",
+ "index_url": "https://www.cjbraila.ro/dm_cj/portal.nsf/AllByUNID/000174A6?OpenDocument",
+ "max_bytes": 52428800,
+ "urls": [
+  "https://www.cjbraila.ro/dm_cj/portal.nsf/7130C5E18029755CC2258C61002CFB8D/$FILE/HOTARAREA%202%20APROBAREA%20RAPORT%20ANUAL%202024.pdf",
+  "https://www.cjbraila.ro/dm_cj/portal.nsf/C2C2A96B969C47CDC2258C61002C9A43/$FILE/HOTARAREA%203%20APROBARE%20PLAN%20STRATEGIC%202025.pdf"
+ ],
+ "titles": {
+  "https://www.cjbraila.ro/dm_cj/portal.nsf/7130C5E18029755CC2258C61002CFB8D/$FILE/HOTARAREA%202%20APROBAREA%20RAPORT%20ANUAL%202024.pdf": "HOTARAREA 2 APROBAREA RAPORT ANUAL 2024.",
+  "https://www.cjbraila.ro/dm_cj/portal.nsf/C2C2A96B969C47CDC2258C61002C9A43/$FILE/HOTARAREA%203%20APROBARE%20PLAN%20STRATEGIC%202025.pdf": "HOTARAREA 3 APROBARE PLAN STRATEGIC 2025."
+ }
+}

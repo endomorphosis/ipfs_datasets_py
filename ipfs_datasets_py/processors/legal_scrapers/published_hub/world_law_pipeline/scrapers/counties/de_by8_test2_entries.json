@@ -1,0 +1,6 @@
+[
+ {"name": "Landkreis Augsburg", "qid": "Q10414", "url": "https://www.landkreis-augsburg.de/landrat-landratsamt/buergerservice/amtsblaetter/", "iso": "DE-BY"},
+ {"name": "Landkreis Freyung-Grafenau", "qid": "Q10487", "url": "https://www.freyung-grafenau.de/amtsblaetter", "iso": "DE-BY"},
+ {"name": "Landkreis Traunstein", "qid": "Q10528", "url": "https://www.traunstein.com/aktuelles/amtsblaetter", "iso": "DE-BY"},
+ {"name": "Landkreis Weißenburg-Gunzenhausen", "qid": "Q10453", "url": "https://www.landkreis-wug.de/veroeffentlichungen/amtsblatt/", "iso": "DE-BY"}
+]

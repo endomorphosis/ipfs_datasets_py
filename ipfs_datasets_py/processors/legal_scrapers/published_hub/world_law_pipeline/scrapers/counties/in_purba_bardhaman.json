@@ -1,0 +1,18 @@
+{
+ "country_code": "IN",
+ "place_id": "wd:Q29257278",
+ "qid": "Q29257278",
+ "place_name": "Purba Bardhaman district",
+ "iso_3166_2": "IN-WB",
+ "admin_level": "district",
+ "language": "en",
+ "doc_type": "ordinance",
+ "platform": "in_wb_zp_byelaws",
+ "source_org": "Purba Bardhaman Zilla Parishad",
+ "urls": [
+  "https://www.burdwanzp.org/images/bye_law/Bye%20Law%202022%20Purba%20Bardhaman%20Zilla%20Parishad.pdf"
+ ],
+ "titles": {
+  "https://www.burdwanzp.org/images/bye_law/Bye%20Law%202022%20Purba%20Bardhaman%20Zilla%20Parishad.pdf": "Purba Bardhaman Zilla Parishad Revised General Bye-Law, 2022"
+ }
+}

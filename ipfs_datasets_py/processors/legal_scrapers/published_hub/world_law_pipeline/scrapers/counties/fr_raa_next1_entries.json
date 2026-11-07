@@ -1,0 +1,33 @@
+[
+ {
+  "name": "Isère",
+  "iso": "FR-38",
+  "qid": "Q12559",
+  "url": "https://www.isere.fr/publications-legales/recueils-des-arretes-du-departement-de-l-isere-radi",
+  "issuer": "conseil_departemental",
+  "include_re": "radi|arr[êe]t",
+  "note": "RADI = Recueil des Arrêtés du Département de l'Isère (2026 parts); 2026-10-24 isere.fr answers all requests (index + PDFs) with a JS cookie 'shield' challenge -> not solved, archive copies only",
+  "archive_only": true,
+  "archive_policy": "archived_live_download_refused"
+ },
+ {
+  "name": "Val-d'Oise",
+  "iso": "FR-95",
+  "qid": "Q12784",
+  "url": "https://www.valdoise.fr/285-consulter-les-actes-et-arretes.htm",
+  "issuer": "conseil_departemental",
+  "include_re": "RAA",
+  "note": "monthly RAA 2026; PV AD (assembly minutes) excluded; cms_viewFile.php?idtf= URLs -> URL-hash doc_id suffix",
+  "archive_only": false
+ },
+ {
+  "name": "Lot",
+  "iso": "FR-46",
+  "qid": "Q12576",
+  "url": "https://lot.fr/arretes",
+  "issuer": "conseil_departemental",
+  "include_re": null,
+  "archive_only": false,
+  "note": "Lot publishes arrêtés online individually since the 2022 RAA reform (lot.fr/arretes, 'Les derniers documents mis en ligne'); 2026 PDFs only"
+ }
+]

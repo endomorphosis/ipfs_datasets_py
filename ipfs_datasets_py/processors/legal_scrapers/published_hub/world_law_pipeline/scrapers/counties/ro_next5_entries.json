@@ -1,0 +1,4 @@
+[
+ {"name": "Județul Vaslui", "qsearch": "Vaslui County", "qid": "Q167199", "url": "https://cjvs.eu/hotarari-2026/", "iso": "RO-VS", "force_https": true, "pdf_re": "hcj|/hot[^/]*\\.pdf|hot[aă]r[aâ]r"},
+ {"name": "Județul Harghita", "qsearch": "Harghita County", "qid": "Q190702", "url": "https://judetulharghita.ro/monitorul-oficial-local/", "iso": "RO-HR", "pdf_re": "hcj|/hot[^/]*\\.pdf|hot[aă]r[aâ]r"}
+]

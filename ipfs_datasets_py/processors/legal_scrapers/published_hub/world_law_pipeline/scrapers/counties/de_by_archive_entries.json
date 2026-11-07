@@ -1,0 +1,44 @@
+[
+ {
+  "name": "Landkreis Kulmbach",
+  "qid": "Q10436",
+  "url": "https://www.landkreis-kulmbach.de/service-verwaltung/buergerservice/rechtssammlung",
+  "iso": "DE-BY",
+  "archive_policy": "archived_robots_unreachable"
+ },
+ {
+  "name": "Landkreis Regensburg",
+  "qid": "Q10429",
+  "url": "https://www.landkreis-regensburg.de/Unser-Landkreis/Kreisrecht/",
+  "iso": "DE-BY",
+  "archive_policy": "archived_robots_unreachable"
+ },
+ {
+  "name": "Landkreis Cham",
+  "qid": "Q10424",
+  "url": "https://www.landkreis-cham.de/landkreis-landratsamt/satzungen-verordnungen/",
+  "iso": "DE-BY",
+  "archive_policy": "archived_robots_disallowed"
+ },
+ {
+  "name": "Landkreis Aschaffenburg",
+  "qid": "Q10471",
+  "url": "https://www.landkreis-aschaffenburg.de/Service-und-Verwaltung/Verwaltung/Satzungen-und-Verordnungen/",
+  "iso": "DE-BY",
+  "archive_policy": "archived_live_pdf_endpoint_timeout"
+ },
+ {
+  "name": "Landkreis Ansbach",
+  "qid": "Q10454",
+  "url": "https://www.landkreis-ansbach.de/Aktuelles/Bekanntmachungen/Satzungen/",
+  "iso": "DE-BY",
+  "archive_policy": "archived_live_pdf_endpoint_timeout"
+ },
+ {
+  "name": "Landkreis Bamberg",
+  "qid": "Q10444",
+  "url": "https://www.landkreis-bamberg.de/Landratsamt/%C3%96ffentlichkeitsarbeit/Mediathek/Amtsblatt/Amtbl%C3%A4tter-digital/",
+  "iso": "DE-BY",
+  "archive_policy": "archived_live_pdf_endpoint_timeout"
+ }
+]

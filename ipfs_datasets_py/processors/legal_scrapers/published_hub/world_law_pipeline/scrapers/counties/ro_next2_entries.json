@@ -1,0 +1,38 @@
+[
+ {
+  "name": "Județul Botoșani",
+  "qsearch": "Botoșani County",
+  "qid": "Q178861",
+  "url": "https://www.cjbotosani.ro/monitorul-oficial/hotararile-autoritatii-deliberative/",
+  "iso": "RO-BT"
+ },
+ {
+  "name": "Județul Giurgiu",
+  "qsearch": "Giurgiu County",
+  "qid": "Q193055",
+  "url": "https://cjgiurgiu.ro/ova_sev/hotarari-2026/",
+  "iso": "RO-GR"
+ },
+ {
+  "name": "Județul Buzău",
+  "qsearch": "Buzău County",
+  "qid": "Q185309",
+  "url": "https://cjbuzau.ro/hotarari-cj-2026/",
+  "iso": "RO-BZ",
+  "force_https": true
+ },
+ {
+  "name": "Județul Teleorman",
+  "qsearch": "Teleorman County",
+  "qid": "Q191653",
+  "url": "https://www.cjteleorman.ro/ro/cjt/cjt/hotarari/hotarari+.htm",
+  "iso": "RO-TR"
+ },
+ {
+  "name": "Județul Mehedinți",
+  "qsearch": "Mehedinți County",
+  "qid": "Q191717",
+  "url": "https://www.cjmehedinti.ro/web/guest/hot%C4%83r%C3%A2ri-2026",
+  "iso": "RO-MH"
+ }
+]

@@ -1,0 +1,42 @@
+[
+ {
+  "name": "Alpes-Maritimes",
+  "iso": "FR-06",
+  "qid": "Q3139",
+  "url": "https://www.departement06.fr/les-arretes",
+  "issuer": "conseil_departemental",
+  "year_re": "^(?!.*/downloads/[a-z_]+[-_]20(1\\d|2[0-5])[-_]).*2026",
+  "crawl_delay": 3,
+  "note": "Drupal (Stratis) page 'Les arrêtés' - single page, ~930 PDFs /sites/default/files/media/downloads/<service>-2026-NNNN.pdf (mda, drit_*, drh, de, dfin_sb, sa ...); title = link text (ARRÊTÉ N° .../2026/NNNN ...). Older-year file names (doms_2025-*, drit_2023-*) excluded. robots: /sites/default/files allowed, no Crawl-delay (3 s). QID Q3139 checked via Wikidata P300=FR-06 + P31 Q6465. Not taken: /bulletins-des-actes-administratifs (only a page-to-PDF render link)."
+ },
+ {
+  "name": "Jura",
+  "iso": "FR-39",
+  "qid": "Q3120",
+  "url": "https://www.jura.fr/vie-de-l-assemblee/publications-officielles/janvier-2026/",
+  "extra_urls": [
+   "https://www.jura.fr/vie-de-l-assemblee/publications-officielles/fevrier-2026/",
+   "https://www.jura.fr/vie-de-l-assemblee/publications-officielles/mars-2026/",
+   "https://www.jura.fr/vie-de-l-assemblee/publications-officielles/avril-2026/",
+   "https://www.jura.fr/vie-de-l-assemblee/publications-officielles/mai-2026/",
+   "https://www.jura.fr/vie-de-l-assemblee/publications-officielles/juin-2026/",
+   "https://www.jura.fr/vie-de-l-assemblee/publications-officielles/juillet-2026/",
+   "https://www.jura.fr/vie-de-l-assemblee/publications-officielles/aout-2026/",
+   "https://www.jura.fr/vie-de-l-assemblee/publications-officielles/septembre-2026/",
+   "https://www.jura.fr/vie-de-l-assemblee/publications-officielles/octobre-2026/"
+  ],
+  "issuer": "conseil_departemental",
+  "crawl_delay": 3,
+  "note": "WordPress 'Arrêtés départementaux - <mois> 2026' monthly pages (janvier..octobre 2026, ~1,300 ARR_2026_NNNN_*.pdf under /wp-content/uploads/sites/23/2026/MM/); title = link text. robots: '*' Disallow only /ressources-humaines/.../wpforms/, no Crawl-delay (3 s). QID Q3120 (P300=FR-39). Not taken: CP/séance pages (no PDF links in HTML). ARR_2025_* acts listed on the janvier-2026 page excluded by year_re (the 3 test docs, staged before this filter, are such 2025 acts published Jan 2026).",
+  "year_re": "^(?!.*/ARR_20(1\\d|2[0-5])_).*2026"
+ },
+ {
+  "name": "Yvelines",
+  "iso": "FR-78",
+  "qid": "Q12820",
+  "url": "https://www.yvelines.fr/mon-departement/decisions-du-conseil/bulletins-officiels/",
+  "issuer": "conseil_departemental",
+  "crawl_delay": 3,
+  "note": "WordPress 'Bulletins officiels' 2026: bi-monthly bulletins officiels (recueils, some in parts) + individual arrêtés AD 2026-NNN, PDFs /app/uploads/sites/2/2026/MM/ (robots: only wp-admin, '/*?', feeds, *.php etc. disallowed - uploads allowed, no query URLs used). ~40 PDFs. QID Q12820 (P300=FR-78)."
+ }
+]

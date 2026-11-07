@@ -1,0 +1,27 @@
+{
+ "country_code": "FR",
+ "place_id": "wd:Q3286",
+ "qid": "Q3286",
+ "place_name": "Cher",
+ "iso_3166_2": "FR-18",
+ "admin_level": "departement",
+ "language": "fr",
+ "doc_type": "gazette_act",
+ "consolidated": false,
+ "platform": "fr_raa_conseil_departemental",
+ "source_org": "Conseil départemental — Cher",
+ "issuer": "conseil_departemental",
+ "max_bytes": 52428800,
+ "index_url": "https://delib.cd18.digitechcloud.fr/webdelibplus/jsp/seance_agenda.jsp?date=26-01-2026&assembly=Assembl%C3%A9e%20d%C3%A9partementale&type=apres&role=usager",
+ "crawl_delay": 3.0,
+ "urls": [
+  "https://delib.cd18.digitechcloud.fr/webdelibplus/jsp/downloadFile.jsp?pdf=hCt0YY9sTqKWJ6h0XhD0bom2TlNMXJD7I3W%2B6UEDxYah40UKXkebP8JtcsTaavof6RbIWdMHZTJVKeD39FHqt5gg1hgyTjKxJnFDqKRZdd%2BHtiJmNmjxcxvIgX0QrBYL5EvMeUjLk86puI38oVMFbEsf2K6gLGmza77MhLHg1ps%3D",
+  "https://delib.cd18.digitechcloud.fr/webdelibplus/jsp/downloadFile.jsp?pdf=hCt0YY9sTqKWJ6h0XhD0bom2TlNMXJD7I3W%2B6UEDxYah40UKXkebP8JtcsTaavof6RbIWdMHZTJVKeD39FHqt2WsqssgB7vXAVt7Rgz%2FeVtxXsLXlq6%2B8%2BPnv8F8O010tVy%2FxWKBMXGr50sAiQz1hEi%2FTcE1UiF0PGcChM1%2Fo28%3D",
+  "https://delib.cd18.digitechcloud.fr/webdelibplus/jsp/downloadFile.jsp?pdf=hCt0YY9sTqKWJ6h0XhD0bom2TlNMXJD7I3W%2B6UEDxYah40UKXkebP8JtcsTaavof6RbIWdMHZTJVKeD39FHqt5gg1hgyTjKxJnFDqKRZdd%2BHtiJmNmjxc8IvCzJ4TNYu783KHdqRoLRWZPtywRIqcnliC4LCGCu8a77MhLHg1ps%3D"
+ ],
+ "titles": {
+  "https://delib.cd18.digitechcloud.fr/webdelibplus/jsp/downloadFile.jsp?pdf=hCt0YY9sTqKWJ6h0XhD0bom2TlNMXJD7I3W%2B6UEDxYah40UKXkebP8JtcsTaavof6RbIWdMHZTJVKeD39FHqt5gg1hgyTjKxJnFDqKRZdd%2BHtiJmNmjxcxvIgX0QrBYL5EvMeUjLk86puI38oVMFbEsf2K6gLGmza77MhLHg1ps%3D": "AD-0001/2026 Rapport annuel de développement durable 2025 - Délibération - Annexe 27/01/2026 28/01/2026",
+  "https://delib.cd18.digitechcloud.fr/webdelibplus/jsp/downloadFile.jsp?pdf=hCt0YY9sTqKWJ6h0XhD0bom2TlNMXJD7I3W%2B6UEDxYah40UKXkebP8JtcsTaavof6RbIWdMHZTJVKeD39FHqt2WsqssgB7vXAVt7Rgz%2FeVtxXsLXlq6%2B8%2BPnv8F8O010tVy%2FxWKBMXGr50sAiQz1hEi%2FTcE1UiF0PGcChM1%2Fo28%3D": "AD-0001/2026 Rapport annuel de développement durable 2025 - Délibération - Annexe 27/01/2026 28/01/2026",
+  "https://delib.cd18.digitechcloud.fr/webdelibplus/jsp/downloadFile.jsp?pdf=hCt0YY9sTqKWJ6h0XhD0bom2TlNMXJD7I3W%2B6UEDxYah40UKXkebP8JtcsTaavof6RbIWdMHZTJVKeD39FHqt5gg1hgyTjKxJnFDqKRZdd%2BHtiJmNmjxc8IvCzJ4TNYu783KHdqRoLRWZPtywRIqcnliC4LCGCu8a77MhLHg1ps%3D": "AD-0002/2026 Présentation du rapport annuel 2024 sur l'égalité entre les femmes et les hommes - Délibération - Annexe - Annexe 27/01/2026 28/01/2026"
+ }
+}
