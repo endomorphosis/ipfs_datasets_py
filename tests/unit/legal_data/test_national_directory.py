@@ -119,6 +119,19 @@ def test_sparse_numbers_and_unfit_rows_stay_out_of_the_listing() -> None:
     unfit = [
         _record(entry_cid="empty", text="  "),
         _record(entry_cid="state", jurisdiction="US-OH"),
+        _record(
+            entry_cid="eu-supranational",
+            jurisdiction="EU",
+            admin_level="supranational",
+            title="Regulation (EU) 2016/679",
+            provenance={"article": "5", "section": "5"},
+        ),
+        _record(
+            entry_cid="fr-as-eu",
+            jurisdiction="FR",
+            admin_level="supranational",
+            provenance={"section": "1"},
+        ),
         _record(entry_cid="page", provenance={"document_role": "informative", "section": "1"}),
         _record(entry_cid="loose", provenance={"document_role": "law"}),
     ]
@@ -135,6 +148,7 @@ def test_sparse_numbers_and_unfit_rows_stay_out_of_the_listing() -> None:
         "sparse-100",
         "sparse-150",
         "kept",
+        "eu-supranational",
     }
     assert next(entry for entry in index.entries if entry.entry_cid == "kept").citation == (
         "Minn. Stat. § 518.17"
@@ -142,6 +156,10 @@ def test_sparse_numbers_and_unfit_rows_stay_out_of_the_listing() -> None:
     reasons = {row["entry_cid"]: row["reason"] for row in index.schema_problems}
     assert reasons["empty"] == "empty_text"
     assert reasons["state"] == "bad_jurisdiction"
+    assert reasons["fr-as-eu"] == "not_national"
+    assert next(entry for entry in index.entries if entry.entry_cid == "eu-supranational").citation == (
+        "Regulation (EU) 2016/679, art. 5"
+    )
     assert reasons["page"] == "not_law"
     assert index.unplaced == [
         {
@@ -245,12 +263,41 @@ def test_headings_left_in_the_text_fill_the_code_listing() -> None:
     )
     assert by_id["annex"].article == "A-147"
     assert by_id["uk-2"].section == "9"
+    austrian = _record(
+        entry_cid="at-1",
+        jurisdiction="AT",
+        title="Einrichtung der Gerichtsbehörden - § 1",
+        text="Die Gerichte werden durch dieses Gesetz eingerichtet.",
+    )
+    austrian_index = index_national_laws([austrian])
+    assert austrian_index.entries[0].section == "1"
+    assert austrian_index.entries[0].instrument == "Einrichtung der Gerichtsbehörden"
+    assert "§ 1" not in austrian_index.entries[0].instrument
     assert by_id["uk-2"].citation == "United Kingdom, § 9"
     assert any(
         row["instrument"] == "CODE CIVIL" and row["missing"] == [3] and row["unit"] == "article"
         for row in index.gaps
     )
     assert {row["entry_cid"] for row in index.unplaced} == {"notes", "pants"}
+
+
+def test_a_labeled_section_keeps_the_act_citation() -> None:
+    row = _record(
+        entry_cid="ie-1",
+        jurisdiction="IE",
+        title="1 1. (1) The Fund shall be kept by the Minister.",
+        text="The Fund shall be kept by the Minister and the Comptroller shall audit it.",
+        provenance={
+            "document_role": "law",
+            "section": "1",
+            "heading_instrument": "ACT 2/1922",
+        },
+    )
+    index = index_national_laws([row])
+    assert index.schema_problems == []
+    assert index.entries[0].section == "1"
+    assert index.entries[0].instrument == "ACT 2/1922"
+    assert index.entries[0].citation == "Ireland, ACT 2/1922, § 1"
 
 
 def test_an_amending_loi_keeps_its_own_name() -> None:
@@ -292,6 +339,62 @@ def test_an_amending_loi_keeps_its_own_name() -> None:
     assert by_id["quoted"].article == "415"
     assert by_id["quoted"].instrument == "Monaco"
     assert "1.423" not in by_id["quoted"].citation
+
+
+def test_a_whole_instrument_is_listed_under_its_law_name() -> None:
+    treaty = (
+        "The High Contracting Parties agree to apply this treaty. "
+        "No article number is stated in this declaration."
+    )
+    first = _record(
+        entry_cid="eu-decl-1",
+        jurisdiction="EU",
+        title="Treaty establishing the European Atomic Energy Community",
+        text=treaty,
+        provenance={
+            "heading_status": "instrument_only",
+            "heading_instrument": "Treaty establishing the European Atomic Energy Community",
+            "heading_placement": "whole_instrument",
+        },
+    )
+    second = _record(
+        entry_cid="eu-decl-2",
+        jurisdiction="EU",
+        title="Treaty establishing the European Atomic Energy Community",
+        text=treaty,
+        provenance={
+            "heading_status": "instrument_only",
+            "heading_instrument": "Treaty establishing the European Atomic Energy Community",
+            "heading_placement": "unsplit_multi",
+        },
+    )
+    missing = _record(
+        entry_cid="eu-missing",
+        jurisdiction="EU",
+        title="Payment terms",
+        text=treaty,
+        provenance={"heading_status": "unresolved", "heading_placement": "unresolved"},
+    )
+    index = index_national_laws([first, second, missing])
+    by_id = {entry.entry_cid: entry for entry in index.entries}
+    assert set(by_id) == {"eu-decl-1", "eu-decl-2"}
+    assert by_id["eu-decl-1"].section == ""
+    assert by_id["eu-decl-1"].article == ""
+    assert by_id["eu-decl-1"].citation == (
+        "European Union, Treaty establishing the European Atomic Energy Community"
+    )
+    assert by_id["eu-decl-1"].placement == "whole_instrument"
+    assert by_id["eu-decl-1"].as_dict()["placement"] == "whole_instrument"
+    assert index.unplaced == [
+        {
+            "entry_cid": "eu-missing",
+            "jurisdiction": "EU",
+            "instrument": "Payment terms",
+            "reason": "no_locator",
+            "placement": "unresolved",
+        }
+    ]
+    assert index.gaps == []
 
 
 def test_a_finished_folder_writes_the_directory_beside_the_corpus(tmp_path: Path) -> None:

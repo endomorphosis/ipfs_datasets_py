@@ -12,8 +12,8 @@ whole-issue PDFs >--max-kb are skipped). Each PDF is fetched from the archive, t
 live es_bop.py criteria (ordenanza/reglamento/normas reguladoras, not padrón/convocatoria/...) and the issuing
 ayuntamiento is resolved with es/es_places.Resolver (name + province -> INE P772 -> wd:Q).
 """
-from __future__ import annotations
 
+from __future__ import annotations
 import argparse, csv, hashlib, json, logging, os, re, sys, time
 from pathlib import Path
 from urllib.parse import unquote, urlparse
@@ -51,6 +51,10 @@ ROBOTS_SPEC = {
     "boib": dict(host="www.caib.es", flt="(?i).*/eboib.*"),
 }
 SET = {"set": "blocked"}
+
+
+# extra hosts per gazette key (redirect targets of the blocked host); listed with the same filters, no path filter
+EXTRA_HOSTS = {"teruel": ["236ws.dpteruel.es"]}
 
 
 def gazettes():
@@ -95,7 +99,8 @@ class Job:
             G = self.G[g]
             caps = []
             if self.a.cc:
-                caps += self.fx.cc_captures(G["host"] + "/", "prefix", filters=["mime:application/pdf"])
+                for h in [G["host"]] + EXTRA_HOSTS.get(g, []):
+                    caps += self.fx.cc_captures(h + "/", "prefix", filters=["mime:application/pdf"])
             flt = ["mimetype:application/pdf"]
             path = G["prefix"][len(G["host"]):].strip("/")
             if G.get("flt"):
@@ -104,6 +109,9 @@ class Job:
                 flt.append("original:.*" + re.split(r"[-/]", path)[0] + ".*")
             try:
                 caps += self.fx.wb_captures(G["host"] + "/", "prefix", collapse="urlkey", max_rows=300000, filters=flt)
+                for h in EXTRA_HOSTS.get(g, []):
+                    caps += self.fx.wb_captures(h + "/", "prefix", collapse="urlkey", max_rows=300000,
+                                                filters=["mimetype:application/pdf"])
             except ArchiveError as e:
                 listing_failed(e, g)
                 per[g] = {"error": str(e)[:100]}

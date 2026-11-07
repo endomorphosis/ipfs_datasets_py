@@ -9,7 +9,7 @@ Vendors (template families):
   joureikun  Joureikun / LegalCRUD             (lg|public.joureikun.jp/<body>/reiki/urllist.txt -> act/*.html)
 Not yet: legal-square (Gyosei JSF app), h-chosonkai (unreachable from box).
 
-Writes SCHEMA.md v1 staged jsonl to /workspace/world_law/staging/asia_latam/JP/<place_key>.<batch>.jsonl
+Writes SCHEMA.md v1 staged jsonl to ~/.ipfs_datasets/world_law/staging/asia_latam/JP/<place_key>.<batch>.jsonl
 (atomic .tmp + fsync + rename, validated with schema.validate_record). State/logs under staging/asia_latam/_*.
 """
 # Harvested collector path injection. Do not collect from /workspace.
@@ -17,6 +17,8 @@ import os as _ipfs_os
 from pathlib import Path as _ipfs_Path
 _CORPORA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_CORPORA_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_corpora")))
 _SCRAPERS = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_COLLECTORS_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_collectors"))) / "shared"
+_WORLD = _ipfs_Path(_ipfs_os.environ.get("WORLD_LAW_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "world_law")))
+_TESSDATA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_TESSDATA", str(_ipfs_Path.home() / ".ipfs_datasets" / "tessdata")))
 _HF_TOKEN_PATH = _ipfs_Path(_ipfs_os.environ.get("HF_TOKEN_PATH", str(_ipfs_Path.home() / ".cache" / "huggingface" / "token")))
 import os as _wl_os  # WORLD_LAW_ROOT / GLOBAL_MUNICIPALITIES_ROOT override the default paths
 import argparse, concurrent.futures as cf, hashlib, html as htmlmod, json, logging, os, re, sys, threading, time
@@ -27,13 +29,14 @@ from urllib.parse import urljoin, urlparse
 import requests
 from bs4 import BeautifulSoup
 
-sys.path.insert(0, (_wl_os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law") + "/pipeline"))
+sys.path.insert(0, (_wl_os.environ.get("WORLD_LAW_ROOT", str(_WORLD)) + "/pipeline"))
 import schema as S  # noqa: E402
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from common.rfc9309 import Robots  # noqa: E402  (urllib.robotparser ignores * and $ wildcards)
+from common import robots_policy as RP  # noqa: E402  (RESPECT_ROBOTS switch, owner policy 2026-11-01)
 
 HERE = Path(__file__).resolve().parent
-STAGE = Path((_wl_os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law") + "/staging/asia_latam"))
+STAGE = Path((_wl_os.environ.get("WORLD_LAW_ROOT", str(_WORLD)) + "/staging/asia_latam"))
 OUT = STAGE / "JP"
 UNMATCHED = STAGE / "_unmatched" / "JP"
 QUAR = STAGE / "_quarantine" / "JP"
@@ -106,7 +109,8 @@ ROBOTS_NOT_SERVED = set()
 ALLOWED_EXACT_HOSTS = {"ops-jg.d1-law.com"}
 HOST_MIN_INTERVAL = {"ops-jg.d1-law.com": 1.0}
 BLOCKED_HOST_SUFFIXES = {
-    "d1-law.com": "robots_unreachable",      # en3-jg/en5-jg drop /robots.txt -> RFC 9309 disallow-all
+    **({"d1-law.com": "robots_unreachable"} if RP.RESPECT else {}),  # en3-jg/en5-jg drop /robots.txt (robots-only block:
+    # lifted by the owner policy 2026-11-01; the hosts' records are tagged robots_policy.TAG)
     "g-reiki.net": "unreachable",            # TLS dropped from box egress; do not work around
     "h-chosonkai.gr.jp": "unreachable",      # connect timeouts from box; do not work around
 }
@@ -191,9 +195,12 @@ class Fetcher:
                     ROBOTS_DIR.mkdir(parents=True, exist_ok=True)
                     (ROBOTS_DIR / f"{host}.txt").write_text(r.text)
             except requests.RequestException as e:
-                GATE.dead[host] = f"robots fetch failed: {type(e).__name__}"
-                GATE.robots[key] = "dead"
-                raise Unreachable(host)
+                if RP.RESPECT:
+                    GATE.dead[host] = f"robots fetch failed: {type(e).__name__}"
+                    GATE.robots[key] = "dead"
+                    raise Unreachable(host)
+                RP.note_host(host, f"robots_unreachable: {type(e).__name__}")   # page requests decide reachability
+                rp = Robots(allow_all=True)
             GATE.robots[key] = rp
         if rp == "dead":
             raise Unreachable(host)
@@ -632,7 +639,7 @@ def make_record(seed, vendor_key, adapter, it, d, meta):
         "country_code": "JP",
         "doc_id": it["doc_id"],
         "source_platform": adapter.platform,
-        "source_url": it["url"],
+        "source_url": it["url"], **RP.fields(it["url"]),
         "doc_type": doc_type_for(d.get("number"), d.get("title") or ""),
         "language": "ja",
         "html_title": d.get("title") or d.get("number"),

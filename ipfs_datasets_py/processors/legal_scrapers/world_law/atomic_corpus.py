@@ -48,6 +48,13 @@ _LOCATOR_KEYS = (
     "subsection",
     "hierarchy_path",
 )
+# Placement names the instrument when no structural locator exists.
+# These keys are not locators and do not make an atom located.
+_PLACEMENT_KEYS = (
+    "heading_status",
+    "heading_instrument",
+    "heading_placement",
+)
 
 
 def expand_legal_record(record: Mapping[str, object]) -> list[dict[str, object]]:
@@ -257,11 +264,20 @@ def _locator_from_provenance(provenance: Mapping[str, object]) -> dict[str, str]
     return locator
 
 
+def _placement_values(provenance: Mapping[str, object]) -> dict[str, str]:
+    found: dict[str, str] = {}
+    for key in _PLACEMENT_KEYS:
+        value = provenance.get(key)
+        if isinstance(value, str) and value.strip():
+            found[key] = value
+    return found
+
+
 def _render_text(record: Mapping[str, object]) -> dict[str, object]:
     provenance = _provenance(record)
     text = record.get("text")
     atomic = provenance.get("atomic")
-    return {
+    rendered: dict[str, object] = {
         "text": text if isinstance(text, str) else None,
         "entry_cid": _string_or_none(record.get("entry_cid")),
         "jurisdiction": _string_or_none(record.get("jurisdiction")),
@@ -272,6 +288,9 @@ def _render_text(record: Mapping[str, object]) -> dict[str, object]:
         "atomic": atomic if isinstance(atomic, bool) else False,
         "document_role": _role(provenance),
     }
+    for key, value in _placement_values(provenance).items():
+        rendered[key] = value
+    return rendered
 
 
 def _render_jsonld(record: Mapping[str, object]) -> dict[str, object]:
@@ -298,6 +317,8 @@ def _render_jsonld(record: Mapping[str, object]) -> dict[str, object]:
     for key, value in _locator_from_provenance(provenance).items():
         properties.append({"@type": "PropertyValue", "propertyID": key, "value": value})
     properties.append({"@type": "PropertyValue", "propertyID": "document_role", "value": role})
+    for key, value in _placement_values(provenance).items():
+        properties.append({"@type": "PropertyValue", "propertyID": key, "value": value})
     reason = provenance.get("document_role_reason")
     if isinstance(reason, str) and reason:
         properties.append(

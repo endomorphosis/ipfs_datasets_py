@@ -6,7 +6,8 @@ Why this is safe: the local data parquet (out*/world_law/data/<CC>[/<b>]/<key>*_
   * prune_processed check 4 (local parquet == Hub sha before a processed/ source is deleted).
 places.parquet, the README card and stats are built from the metadata JSONs only, which are never evicted.
 
-Eviction (evict()) deletes a place's data parquet only when ALL of its files are older than min_age (2h),
+Eviction (evict()) deletes a place's data parquet only when ALL of its files are older than min_age (2h by default;
+min_age_s=0 + only_places is used right after a national commit so verified uploads leave disk immediately),
 each file's sha256+size equals the Hub LFS sha256+size, and the local metadata JSON is byte-identical on the Hub
 (git blob id) and lists exactly those files. Before any unlink a record per file is fsync'ed to
 state/evicted_out.jsonl (repo, rel, sha256, bytes). That record is the expected sha for rehydrate() and the
@@ -257,8 +258,11 @@ def _hub_info(api, repo: str, paths: List[str]) -> Dict[str, Any]:
 
 
 def evict(out_dir: Path, repo: str, state: Path, api, min_age_s: float = MIN_AGE_S, apply: bool = False,
-          now: Optional[float] = None, sha_cache=None, national: Optional[bool] = None, log=print) -> Dict[str, Any]:
-    """Delete local data parquet of places verified identical on the Hub and older than min_age_s."""
+          now: Optional[float] = None, sha_cache=None, national: Optional[bool] = None,
+          only_places: Optional[set] = None, log=print) -> Dict[str, Any]:
+    """Delete local data parquet of places verified identical on the Hub and older than min_age_s.
+    only_places: optional set of (cc, place_key); when set, only those places are considered (used for
+    immediate post-commit eviction of national places with min_age_s=0). Still requires Hub sha/size match."""
     out_dir, state = Path(out_dir), Path(state)
     now = now or time.time()
     st: Dict[str, Any] = {"repo": repo, "out": str(out_dir), "apply": apply, "places_seen": 0, "places_evicted": 0,
@@ -280,6 +284,8 @@ def evict(out_dir: Path, repo: str, state: Path, api, min_age_s: float = MIN_AGE
     cand = []
     for (cc, key), files in places.items():
         st["places_seen"] += 1
+        if only_places is not None and (cc, key) not in only_places:
+            skip("not_selected"); continue
         if national is not None and S.is_national_key(key) != national:
             skip("other_repo"); continue
         rels = sorted(str(f.relative_to(out_dir)) for f in files)

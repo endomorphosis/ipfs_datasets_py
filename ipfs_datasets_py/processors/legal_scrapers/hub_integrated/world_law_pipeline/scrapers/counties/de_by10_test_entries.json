@@ -1,0 +1,20 @@
+[
+ {
+  "name": "Landkreis Erlangen-Höchstadt",
+  "qid": "Q10447",
+  "url": "https://www.erlangen-hoechstadt.de/verwaltung/satzungen-und-verordnungen-des-landkreises-erlangen-hoechstadt/",
+  "iso": "DE-BY"
+ },
+ {
+  "name": "Landkreis Amberg-Sulzbach",
+  "qid": "Q10421",
+  "url": "https://www.kreis-as.de/Verwaltung-Politik/Aktuelles/Gesetze-Kreisamtsblatt/",
+  "iso": "DE-BY"
+ },
+ {
+  "name": "Landkreis Neuburg-Schrobenhausen",
+  "qid": "Q10493",
+  "url": "https://neuburg-schrobenhausen.de/Aktuelles/Amtsbl%C3%A4tter-/",
+  "iso": "DE-BY"
+ }
+]

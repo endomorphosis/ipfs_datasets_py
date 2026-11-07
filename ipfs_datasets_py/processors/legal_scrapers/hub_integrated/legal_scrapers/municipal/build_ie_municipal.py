@@ -208,6 +208,13 @@ def ocr_list(drops, cn):
                 likely_byelaw_count=sum(x["likely_byelaw"] for x in img), per_municipality=cnt(img),
                 per_municipality_likely_byelaw=cnt([x for x in img if x["likely_byelaw"]]), items=img,
                 broken_text_layer=dict(count=len(bad), per_municipality=cnt(bad), items=bad))
+def html_retrieved(B, name):
+    """retrieved_at of an html page: recorded the first time a build reads it and kept from then on (a rebuild does not re-stamp it)"""
+    p = f"{B}/html_retrieved_at.json"; d = json.load(open(p)) if os.path.exists(p) else {}
+    if name not in d:
+        d[name] = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"); json.dump(d, open(p, "w"), indent=1)
+    return d[name]
+
 def main(B="ie_build", OUT="ireland_municipal"):
     cn = {c[0]: c for c in COUNCILS}
     links = [json.loads(l) for l in open(f"{B}/links.jsonl")]
@@ -241,7 +248,8 @@ def main(B="ie_build", OUT="ireland_municipal"):
             if k in docs: continue
             docs[k] = dict(link=dict(code=pg["code"], council=pg["council"], url=pg["url"], link_text=pg.get("title"), page=pg["url"], page_title=pg.get("title")),
                            fetch=dict(url=pg["url"], ok=True, sha256=h, file=os.path.basename(fn), kind="html", bytes=len(t),
-                                      retrieved_at=datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")), alt_urls=[])
+                                      # kept from the first build that read the page (html_retrieved_at.json in the build dir), not re-stamped
+                                      retrieved_at=html_retrieved(B, os.path.basename(fn))), alt_urls=[])
             STATS["html_pages_with_text"] += 1
     STATS["documents"] = len(docs)
     acts = []
@@ -378,7 +386,7 @@ def main(B="ie_build", OUT="ireland_municipal"):
                date_basis_counts=dict(collections.Counter(e.get("date_basis") or "none" for e in ex_all)),
                issuing_organ_counts=dict(collections.Counter(e.get("issuing_organ") for e in ex_all)),
                record_type_counts=dict(collections.Counter(x["record_type"] for x in arts)),
-               build_stats=dict(STATS), fetch_failures=DROPS["fetch_failures"], build_dropped_text_layer=DROPS["text_layer"],
+               build_stats=dict(STATS), schedule_heading_stats=dict(sorted(F.SCHED_STATS.items())), fetch_failures=DROPS["fetch_failures"], build_dropped_text_layer=DROPS["text_layer"],
                build_dropped_not_byelaw=DROPS["not_byelaw"], build_folded_identical_text=DROPS["folded_identical_text"],
                build_folded_near_duplicate=DROPS["folded_near_duplicate"], build_folded_same_act=DROPS["folded_same_act"],
                translation_pairs=STATS["translation_pairs"], sha256=files,

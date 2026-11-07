@@ -18,6 +18,8 @@ import os as _ipfs_os
 from pathlib import Path as _ipfs_Path
 _CORPORA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_CORPORA_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_corpora")))
 _SCRAPERS = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_COLLECTORS_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_collectors"))) / "shared"
+_WORLD = _ipfs_Path(_ipfs_os.environ.get("WORLD_LAW_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "world_law")))
+_TESSDATA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_TESSDATA", str(_ipfs_Path.home() / ".ipfs_datasets" / "tessdata")))
 _HF_TOKEN_PATH = _ipfs_Path(_ipfs_os.environ.get("HF_TOKEN_PATH", str(_ipfs_Path.home() / ".cache" / "huggingface" / "token")))
 import os as _wl_os  # WORLD_LAW_ROOT / GLOBAL_MUNICIPALITIES_ROOT override the default paths
 import argparse, gzip, importlib, json, logging, os, signal, sys, time
@@ -36,7 +38,7 @@ from archive.core import ArchiveTransient  # noqa: E402  (ArchiveDeferred is a s
 from deferq import (DeferQueue, fetch_best_or_defer, not_before_for, breaker_not_before, reset_incomplete,  # noqa: E402
                     incomplete_not_before)
 
-NAT_WORK = Path((_wl_os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law") + "/staging/national/_archive_work"))
+NAT_WORK = Path((_wl_os.environ.get("WORLD_LAW_ROOT", str(_WORLD)) + "/staging/national/_archive_work"))
 WORK = STAGING / "_work"
 log = logging.getLogger("arch_states")
 STOP = False
@@ -164,7 +166,18 @@ class Job:
         nb = nb or not_before_for(e)
         self.dq.defer(r["key"], nb, f"{type(e).__name__}:{e}", r)
         self.stats["deferred"] += 1
-        log.info("deferred %s until %s: %s", r["key"], time.strftime("%H:%M:%S", time.localtime(nb)), str(e)[:160])
+        # 2026-10-31: per-item lines only for the first 20 deferrals and every 500th (breaker-open cycles re-defer the
+        # whole queue every ~30 min: at_ris log had reached 3.6 GB). Counts stay in stats.json / progress lines.
+        nd = self.stats["deferred"]
+        if nd <= 20 or nd % 500 == 0:
+            log.info("deferred %s until %s: %s (deferrals this run: %d)", r["key"],
+                     time.strftime("%H:%M:%S", time.localtime(nb)), str(e)[:160], nd)
+        # 2026-10-28: a short host cool-down applies to every remaining item (all Wayback): wait it out here instead of
+        # spinning the whole deferred queue (de_be_wb test: 309k deferrals + ~80 MB/h of log in 3 h). STOP-aware.
+        if "cooling down" in str(e) or "slot busy" in str(e) or "box-wide wayback slot" in str(e):
+            end = min(float(nb), time.time() + 600)
+            while time.time() < end and not STOP:
+                time.sleep(min(5.0, max(0.1, end - time.time())))
 
     def process(self, r):
         key = r["key"]
@@ -224,7 +237,7 @@ def _oldskip_url(r):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("target", choices=["in_state", "at_ris", "id_bpk_prov", "de_by_cc", "de_sh_wb"])
+    ap.add_argument("target", choices=["in_state", "at_ris", "id_bpk_prov", "de_by_cc", "de_sh_wb", "de_be_wb"])
     ap.add_argument("--limit", type=int, default=0, help="stop after N built rows")
     ap.add_argument("--max-fetch", type=int, default=0)
     ap.add_argument("--review", action="store_true", help="stage into staging/states/_review/<CC>/ (uploader-ignored)")

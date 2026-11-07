@@ -21,6 +21,8 @@ import os as _ipfs_os
 from pathlib import Path as _ipfs_Path
 _CORPORA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_CORPORA_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_corpora")))
 _SCRAPERS = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_COLLECTORS_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_collectors"))) / "shared"
+_WORLD = _ipfs_Path(_ipfs_os.environ.get("WORLD_LAW_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "world_law")))
+_TESSDATA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_TESSDATA", str(_ipfs_Path.home() / ".ipfs_datasets" / "tessdata")))
 _HF_TOKEN_PATH = _ipfs_Path(_ipfs_os.environ.get("HF_TOKEN_PATH", str(_ipfs_Path.home() / ".cache" / "huggingface" / "token")))
 import os as _wl_os  # WORLD_LAW_ROOT / GLOBAL_MUNICIPALITIES_ROOT override the default paths
 
@@ -108,6 +110,45 @@ PROFILES = {
                nav_hint=["/verordnungen", "/Verordnungen"], skip_url=re.compile(r"entwurf", re.I),
                skip=re.compile(r"entwurf|protokoll|niederschrift|stellenausschreib|wahl|bauverhandlung|ediktal", re.I),
                rights="Verordnung des Gemeinderates: amtliches Werk, frei nach § 7 UrhG (AT)"),
+    # 2026-10-30 EU lane: CH / UA / BY / CY communal law from the commune's own official site (live, robots-checked)
+    "ch": dict(cc="CH", source="chgem", lang="de", doc_type="regulation", levels={"municipality"},
+               nav=re.compile(r"reglement|gemeinde(recht|erlasse)|erlasse|rechtssammlung|verordnung|satzung|r[èe]glements?|"
+                              r"r[ée]glementation|regolament|ordinanz|legislaz", re.I),
+               accept=re.compile(r"reglement|erlass|rechtssammlung|verordnung|r[èe]glement|regolament|ordinanz|legislaz", re.I),
+               doc=re.compile(r"reglement|verordnung|ordnung|satzung|gemeindeordnung|r[èe]glement|regolamento|ordinanza", re.I),
+               num=re.compile(r"(?:SRG|sGS|Nr\.|n[°o]\.?)\s*([\d.]{2,12})\s*[/\-]?\s*((?:19|20)\d\d)?", re.I),
+               text_req=re.compile(r"(?i)reglement|verordnung|gemeindeordnung|r[èe]glement|regolamento|ordinanza|Gemeindeversammlung|conseil (g[ée]n[ée]ral|communal)|consiglio comunale"),
+               nav_hint=["/reglemente", "/rechtssammlung", "/reglements"], skip_url=re.compile(r"entwurf|vernehmlassung|projet", re.I),
+               skip=re.compile(r"entwurf|vernehmlassung|protokoll|stellen|wahl|projet|procès-verbal|verbale", re.I),
+               lang_fn="ch",
+               rights="kommunale Erlasse: amtliche Erlasse, nicht urheberrechtlich geschützt (URG Art. 5 Abs. 1 lit. a)"),
+    "ua": dict(cc="UA", source="uarada", lang="uk", doc_type="decision", levels={"municipality"},
+               nav=re.compile(r"регуляторн|рішення|нормативн|положенн|правила благоустр|документ", re.I),
+               accept=re.compile(r"регуляторн|рішення|нормативн|положенн|правила", re.I),
+               doc=re.compile(r"рішення|регуляторн|положенн|правила|порядок|rishennya|rishen|reshen|polozhen|pravyla", re.I),
+               num=re.compile(r"№\s*([\d\-/]{1,15})", re.I),
+               text_req=re.compile(r"(?i)рішення|положення|правила|порядок|регуляторн"),
+               nav_hint=["/regulyatorni-akty", "/rishennya"], skip_url=re.compile(r"proekt|проєкт|проект", re.I),
+               skip=re.compile(r"проєкт|проект|вакансі|конкурс|оголошення|тендер|закупівл|розпорядження про відпуст", re.I),
+               rights="рішення органу місцевого самоврядування: офіційний документ, не є об'єктом авторського права (Закон 2811-IX ст. 8)"),
+    "by": dict(cc="BY", source="byrish", lang="ru", doc_type="decision", levels={"municipality"},
+               nav=re.compile(r"решени|рашэнн|нормативн|правов|документ", re.I),
+               accept=re.compile(r"решени|рашэнн|нормативн|правов", re.I),
+               doc=re.compile(r"решени|рашэнн|положени|правила|порядок|reshen", re.I),
+               num=re.compile(r"№\s*([\d\-/]{1,15})", re.I),
+               text_req=re.compile(r"(?i)решени[ея]|рашэнне|положени[ея]|исполнительн|Совет депутатов"),
+               nav_hint=["/ru/normativnye-pravovye-akty", "/reshenija"], skip_url=re.compile(r"proekt|проект", re.I),
+               skip=re.compile(r"проект|ваканси|аукцион|тендер|закупк", re.I),
+               rights="решения местных Советов/исполкомов: нормативные правовые акты, не объекты авторского права (Закон РБ 262-З ст. 8)"),
+    "cy": dict(cc="CY", source="cydim", lang="el", doc_type="regulation", levels={"municipality"},
+               nav=re.compile(r"κανονισμ|διατάγμ|νομοθεσ|αποφάσεις|regulation|legislation|bye-?law", re.I),
+               accept=re.compile(r"κανονισμ|διατάγμ|νομοθεσ|regulation|legislation|bye-?law", re.I),
+               doc=re.compile(r"κανονισμ|διάταγμα|regulation|bye-?law|kanonism", re.I),
+               num=re.compile(r"(?:Κ\.?Δ\.?Π\.?|ΚΔΠ)\s*(\d{1,4})\s*/\s*((?:19|20)\d\d)", re.I),
+               text_req=re.compile(r"(?i)κανονισμ|διάταγμα|regulation|bye-?law"),
+               nav_hint=["/nomothesia", "/kanonismoi"], skip_url=re.compile(r"proskl|tender", re.I),
+               skip=re.compile(r"πρόσκληση|προσφορ|θέσεις|tender|vacanc", re.I),
+               rights="κανονισμοί δήμων/κοινοτήτων: επίσημα νομοθετικά κείμενα (Ν. 59/1976 άρθρο 2(5)) - official texts"),
 }
 DOC_EXT = re.compile(r"\.(pdf|docx)(\?|$)", re.I)
 
@@ -245,7 +286,7 @@ class Site:
         return f"pages={self.pages} docs={len(docs)}"
 
     def alt_home(self, url, err):
-        if getattr(self, "_alt_tried", False) or self.p["cc"] not in ("SK", "CZ", "AT"):
+        if getattr(self, "_alt_tried", False) or self.p["cc"] not in ("SK", "CZ", "AT", "CH", "UA", "BY", "CY"):
             return None
         self._alt_tried = True
         pu = urlparse(url)
@@ -328,12 +369,12 @@ class Site:
         m = (P.get("num") or re.compile(r"(?:HCL|hot[aă]r[aâ]rea?|nr\.?)\s*(?:nr\.?)?\s*(\d{1,4})\s*[/.\-]\s*((?:19|20)\d\d)", re.I)
              ).search(title + " " + text[:400])
         if m:
-            num = f"{m.group(1)}/{m.group(2)}"
+            num = f"{m.group(1)}/{m.group(2)}" if (m.re.groups >= 2 and m.group(2)) else m.group(1)
         yr = re.search(r"\b(19[5-9]\d|20[0-3]\d)\b", title) or re.search(r"\b(19[5-9]\d|20[0-3]\d)\b", text[:1500])
         return {
             "place_id": r["place_id"], "country_code": P["cc"], "doc_id": f"{P['source']}:{key[4:]}",
             "source_platform": f"council_site_{P['cc'].lower()}", "source_url": src_url, "doc_type": P["doc_type"],
-            "language": P["lang"], "title_native": title or src_url.rsplit("/", 1)[-1], "number": num,
+            "language": _lang(P, title + " " + text[:3000]), "title_native": title or src_url.rsplit("/", 1)[-1], "number": num,
             "adopted_date": None, "published_date": None, "effective_date": None, "in_force": None,
             "consolidated": False, "content_format": fmt, "text": text, "retrieved_at": utcnow(),
             "place_name": r["place_name"], "qid": r["qid"], "iso_3166_2": r.get("iso_3166_2") or None,
@@ -342,6 +383,16 @@ class Site:
             "source_official": True, "rights": P.get("rights") or "official publication of the council (UK: OGL/Crown or council copyright; "
                                               "RO: acte normative, Legea 8/1996 art. 9 exempt from copyright)",
         }
+
+
+def _lang(P, t):
+    if P.get("lang_fn") != "ch":
+        return P["lang"]
+    t = " " + t.lower() + " "
+    sc = {"de": sum(t.count(w) for w in (" der ", " die ", " und ", " gemeinde")),
+          "fr": sum(t.count(w) for w in (" le ", " la ", " les ", " commune", " et ")),
+          "it": sum(t.count(w) for w in (" il ", " della ", " comune", " e "))}
+    return max(sc, key=sc.get)
 
 
 def load_sites(prof, only=None):
@@ -363,7 +414,7 @@ def load_sites(prof, only=None):
 
 
 def _place_key(pid):
-    sys.path.insert(0, (_wl_os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law") + "/pipeline"))
+    sys.path.insert(0, (_wl_os.environ.get("WORLD_LAW_ROOT", str(_WORLD)) + "/pipeline"))
     import schema
     return schema.place_key(pid)
 
@@ -455,6 +506,7 @@ def main():
     ap.add_argument("--workers", type=int, default=8)
     ap.add_argument("--limit-sites", type=int)
     ap.add_argument("--sites")
+    ap.add_argument("--redo-file", help="2026-11-01: file of place_ids to re-crawl even if site:<id> is done (robots re-queue; docs still dedup via done)")
     ap.add_argument("--list-notext", action="store_true", help="ro: list no_text doc URLs (no downloads); see list_notext()")
     a = ap.parse_args()
     P = PROFILES[a.profile]
@@ -477,7 +529,10 @@ def main():
             row, key, why = q.get()
             print(why, row["content_format"], len(row["text"]), row["number"], row["title_native"][:90], "|", row["source_url"][:110])
         return
-    todo = [r for r in sites if not done.has("site:" + r["place_id"])]
+    redo = set(open(a.redo_file).read().split()) if a.redo_file else set()
+    if redo:
+        sites = [r for r in sites if r["place_id"] in redo]
+    todo = [r for r in sites if r["place_id"] in redo or not done.has("site:" + r["place_id"])]
     if a.limit_sites:
         todo = todo[:a.limit_sites]
     log.info("%s: %d sites total, %d to do, workers=%d", a.profile, len(sites), len(todo), a.workers)

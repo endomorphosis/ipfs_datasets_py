@@ -469,8 +469,8 @@ def toc_block(b, lines, later):
     bodies = sorted(len(" ".join(l.strip() for l in lines[x[0] + 1:y[0]])) for x, y in zip(b, b[1:]))
     rep = len({c[2] for c in b} & {c[2] for c in later}) >= 0.5 * len(b)
     return rep and ((d and d[len(d) // 2] <= 2) or _toc_like(b, lines))
-SCHED = re.compile(r"^\s*((FIRST|SECOND|THIRD|FOURTH|FIFTH|SIXTH|SEVENTH|EIGHTH|NINTH|TENTH)\s+SCHEDULE|SCHEDULE\s*([\dIVX]{1,4}|[A-Z])?\b|APPENDIX\s*([\dIVX]{1,4}|[A-Z])?\b|ANNEX\s*([\dIVX]{1,4}|[A-Z])?\b|"
-                   r"(?:AGUISÍN|Aguisín|SCEIDEAL|Sceideal)\s*([\dIVX]{1,4}|[A-Z])?\b|(First|Second|Third|Fourth|Fifth|Sixth|Seventh|Eighth|Ninth|Tenth)\s+Schedule\b|Schedule\s+([\dIVX]{1,4}|[A-Z])\b|Appendix\s+([\dIVX]{1,4}|[A-Z])\b|EXPLANATORY\s+NOTE|Explanatory\s+Note)(?!.*\.{4,})(?!.*(?<![Pp]art)(?<!PART)\s\d{1,3}\s*$)[^\n]{0,120}$")
+SCHED = re.compile(r"^\s*((FIRST|SECOND|THIRD|FOURTH|FIFTH|SIXTH|SEVENTH|EIGHTH|EIGHT|NINTH|TENTH)\s+SCHEDULE|SCHEDULE\s*([\dIVX]{1,4}|[A-Z])?\b|APPENDIX\s*([\dIVX]{1,4}|[A-Z])?\b|ANNEX\s*([\dIVX]{1,4}|[A-Z])?\b|"
+                   r"(?:AGUISÍN|Aguisín|SCEIDEAL|Sceideal)\s*([\dIVX]{1,4}|[A-Z])?\b|(First|Second|Third|Fourth|Fifth|Sixth|Seventh|Eighth|Eight|Ninth|Tenth)\s+Schedule\b|Schedule\s+([\dIVX]{1,4}|[A-Z])\b|Appendix\s+([\dIVX]{1,4}|[A-Z])\b|EXPLANATORY\s+NOTE|Explanatory\s+Note)(?!.*\.{4,})(?!.*(?<![Pp]art)(?<!PART)\s\d{1,3}\s*$)[^\n]{0,120}$")
 PARTHEAD = re.compile(r"^\s*(?:(?:PART|Part|CUID|Cuid)\s+(?P<n>[IVX]{1,6}|\d{1,2})|(?:PART|Part)(?P<n2>[IVX]{1,6}))\b\s*[.:\-–]?\s*(?P<rest>.{0,120})$")
 def _pnum(n):
     n = n or ""
@@ -519,6 +519,93 @@ def exact_cuts(t, recs):
         e = st[j + 1] if j + 1 < len(st) else len(t)
         out.append((r[0], r[1], t[st[j]:e].strip()))
     return out
+_ORD = "FIRST|SECOND|THIRD|FOURTH|FIFTH|SIXTH|SEVENTH|EIGHTH|EIGHT|NINTH|TENTH"
+_ORDT = "|".join(x.title() for x in _ORD.split("|"))
+_NUMW = "One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten"
+# a standalone schedule heading line: the heading, then nothing or a short title after a dash / colon / bracket ('FIRST SCHEDULE',
+# 'SCHEDULE 1: BEACHES', 'Fifth Schedule (60km/h) – Part 1', 'Schedule One', 'Schedules', 'Appendix 3', 'SCEIDEAL 1')
+STANDALONE = re.compile(rf"^\s*(?P<k>(?:{_ORD})\s+SCHEDULE|(?:{_ORDT})\s+[Ss]chedule|SCHEDULE\s+(?:[\dIVX]{{1,4}}|[A-Z])|SCHEDULES|Schedules|"
+                        rf"Schedule\s+(?:{_NUMW}|\d{{1,2}}|[A-Z])|APPENDIX\s+(?:[\dIVX]{{1,4}}|[A-Z])|Appendix\s+(?:[\dIVX]{{1,4}}|[A-Z])|"
+                        rf"(?:SCEIDEAL|Sceideal)\s+(?:[\dIVX]{{1,4}}|[A-Z]))\b\.?\s*(?:[-–—:(]\s*[^\n]{{0,100}})?$")
+# a schedule start that is a reference wrapped onto a new line ('Schedule 1 to these Bye-Laws, each part …', 'Sceideal 1 a ghabhann …',
+# 'Sceideal sin os coinne …', 'Schedule C Part C]')
+REF_START = re.compile(rf"^\s*(?:Schedule|Sceideal|SCHEDULE|SCEIDEAL)\s+(?:[\dIVX]{{1,4}}|[A-Z])\b\.?\s*(?:,|Part\s+[A-Z]\]|[a-záéíóú])|^\s*Sceideal\s+sin\b|"
+                       rf"^\s*(?:{_ORD}|{_ORDT})\s+(?:SCHEDULE|[Ss]chedule)\s*(?:[,;]|[a-z])")   # 'Second Schedule hereto;' (Louth harbour 2007)
+def _tag(k): return re.sub(r"^eight-", "eighth-", re.sub(r"[^a-z0-9]+", "-", k.lower()).strip("-"))
+def _sentence_end(l): return bool(re.search(r"[.:;!?)\]]\s*$", l)) or not l.strip()
+def schedule_heading_pass(lines, starts):
+    """Final pass on the record starts (label, line) for schedules. A: a schedule start that is a wrapped reference is dropped (DCC taxi
+    2015 en / ga, Kells ga, Douglas 'Schedule C Part C]'). C: two bare schedule headings in a row whose first heading comes again right
+    after them (an index of headings, Cork taxi 2020) do not start the second schedule there. B: every standalone schedule heading line
+    after the preamble starts a record (the first line with that heading; a repeated one is a page header), also inside the last article
+    or inside another schedule."""
+    stats = collections.Counter()
+    prevnb = lambda i: next((lines[q] for q in range(i - 1, -1, -1) if lines[q].strip()), "")
+    adjacent = lambda i: i > 0 and lines[i - 1].strip() != ""
+    def is_ref(i):
+        l = lines[i]
+        if REF_START.match(l): return True
+        # a wrapped reference after an open line ('… i gcolún (3) den' / 'Sceideal cuí a bhaineann …', '… sa Chéad' / 'Sceideal a ghabhann
+        # leis seo …', '… as set out in' / 'Appendix 1 of these Bye-Laws.'): Irish 'Sceideal' + a lower-case word, or 'N of / to these'
+        if not _sentence_end(prevnb(i)) and re.match(r"^\s*(?:Sceideal|Schedule|Appendix)\s+(?:(?:[\dIVX]{1,4}|[A-Z])\s+(?:of|to|den|a|leis)\b|[a-záéíóú])", l):
+            return True
+        # a bare 'Sceideal 1.' / 'Appendix 1.' straight after a line that does not end a sentence ('… de' / 'Sceideal 1.')
+        return bool(re.match(r"^\s*(?:Schedule|Sceideal|Appendix)\s+(?:[\dIVX]{1,4}|[A-Z])\.?\s*$", l)) and adjacent(i) and bool(re.search(r"[a-záéíóú]\s*$", lines[i - 1]))
+    sched = lambda lab: re.match(r"(schedule|appendix|annex|first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|sceideal|aguis)", lab) is not None
+    keep = []
+    for i, lab in starts:
+        if sched(lab) and is_ref(i): stats["schedule_start_on_reference_dropped"] += 1; continue
+        keep.append((i, lab))
+    starts = keep
+    free = set()
+    for j in range(len(starts) - 1):
+        (i1, l1), (i2, l2) = starts[j], starts[j + 1]
+        if sched(l1) and sched(l2) and all(not x.strip() for x in lines[i1 + 1:i2]):
+            nxt = [q for q in range(i2 + 1, min(len(lines), i2 + 8)) if lines[q].strip()][:2]
+            m1 = STANDALONE.match(lines[i1])
+            if m1 and any((STANDALONE.match(lines[q]) and _tag(STANDALONE.match(lines[q]).group("k")) == _tag(m1.group("k"))) for q in nxt):
+                free.add(j + 1); stats["schedule_heading_index_freed"] += 1
+    freed = {starts[j][1] for j in free}
+    starts = [x for j, x in enumerate(starts) if j not in free]
+    if not starts: return starts, stats
+    have = {lab.split("#")[0] for _, lab in starts} | {re.sub(r"-part-.*$", "", lab.split("#")[0]) for _, lab in starts}
+    at = {i: lab for i, lab in starts}
+    moved = set()
+    for i in range(starts[0][0] + 1, len(lines)):
+        l = lines[i]
+        m = STANDALONE.match(l)
+        if m and at.get(i, "").startswith("__cont"):           # a continuation of a schedule whose start was a reference: the real start
+            tag = _tag(m.group("k"))
+            if tag not in have or tag in freed:
+                starts = [(q, tag if q == i else lab) for q, lab in starts]; at[i] = tag; have.add(tag); freed.discard(tag); stats["continuation_made_schedule_start"] += 1
+            continue
+        if not m or i in at or len(l.strip()) > 110 or re.search(r"\.{4,}|\s\d{1,3}\s*$", l[m.end("k"):]): continue     # contents line: dot leader / page number after the heading
+        if not _sentence_end(prevnb(i)) and adjacent(i): continue
+        nx = next((x for x in lines[i + 1:i + 4] if x.strip()), "")
+        if nx[:1].islower(): continue
+        tag = _tag(m.group("k"))
+        if tag in have and tag not in freed:
+            # E: the start with this heading is a short entry of a heading index (< 250 characters to the next start, SDCC parking 2021
+            # 'Appendix 3 Parking Control Areas'); the standalone heading later on is the schedule itself
+            old = [(q, lab) for q, lab in starts if lab == tag and q < i and SCHED.match(lines[q])
+                   and _tag(SCHED.match(lines[q]).group(1)) == tag]           # its own line is that heading (not 'IV.' before 'Third Schedule')
+            if old and tag not in moved:
+                q0 = old[0][0]; nxt = min([q for q, _ in starts if q > q0] + [len(lines)])
+                if len("\n".join(lines[q0:nxt])) < 250 and nxt <= i:
+                    starts = [x for x in starts if x != old[0]]; at.pop(q0, None); moved.add(tag)
+                    starts.append((i, tag)); at[i] = tag; stats["index_entry_start_moved_to_heading"] += 1
+            continue
+        have.add(tag); freed.discard(tag); starts.append((i, tag)); at[i] = tag; stats["standalone_schedule_heading_split"] += 1
+    if not any(sched(lab) for _, lab in starts):
+        for i in range(starts[0][0] + 1, len(lines)):
+            if re.fullmatch(r"\s*SCHEDULE\s*", lines[i]) and i not in at and _sentence_end(prevnb(i)):
+                nx = next((x for x in lines[i + 1:i + 4] if x.strip()), "")
+                if nx.strip() and nx.strip() == nx.strip().upper() and re.search(r"[A-Z]{3}", nx):
+                    starts.append((i, "schedule")); at[i] = "schedule"; stats["bare_schedule_heading_split"] += 1
+                    break
+    starts.sort()
+    return starts, stats
+SCHED_STATS = collections.Counter()
 def split_articles(t):
     """[(label, heading, body)], info. '0' = preamble (title, recitals, making clause). Headings: 'Bye-Law 3', 'Article 3', 'Section 3', or a
     numbered paragraph '3. Interpretation' / '3. These Bye-Laws …' (only when no marked headings form a sequence). Schedules / appendices /
@@ -592,7 +679,7 @@ def split_articles(t):
     seen_s = collections.Counter()
     for i, l in enumerate(lines):
         if i > last and SCHED.match(l):
-            m = SCHED.match(l); tag = re.sub(r"[^a-z0-9]+", "-", m.group(1).lower()).strip("-")
+            m = SCHED.match(l); tag = re.sub(r"^eight-", "eighth-", re.sub(r"[^a-z0-9]+", "-", m.group(1).lower()).strip("-"))   # 'EIGHT SCHEDULE' (Kilkenny 2017)
             seen_s[tag] += 1
             if seen_s[tag] == 1: starts.append((i, tag))      # a repeated 'Schedule 1' line is a page header or a reference, not a new record
     starts.sort()
@@ -608,14 +695,14 @@ def split_articles(t):
         for i in range(i0 + 1, e0):
             m = SCHED.match(re.sub(r"^\s*[IVX]{1,5}\.\s+", "", lines[i]))        # 'VII. Sixth Schedule (80km/h)'
             if not m or re.search(r"(?i)explanatory", m.group(1)): continue
-            ordinal = re.match(r"(?i)(first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth)\s+schedule", m.group(1))
+            ordinal = re.match(r"(?i)(first|second|third|fourth|fifth|sixth|seventh|eighth|eight|ninth|tenth)\s+schedule", m.group(1))
             pq_ = next((lines[q] for q in range(i - 1, max(i0, i - 3), -1) if lines[q].strip()), "")
             roman = re.match(r"^\s*[IVX]{1,5}\.\s", lines[i]) or re.fullmatch(r"\s*[IVX]{1,5}\.?\s*", pq_)
             # in a small record only an ordinal schedule heading counts ('VIII. Seventh Schedule' inside a drawing-list item), in any other
             # record only a numbered one ('IV.' / 'Third Schedule (40km/h)' after the last bye-law)
             if not big and not ((small and ordinal) or (ordinal and roman)): continue
             pm = re.search(r"(?i)\bpart\s+(\d{1,2}|[IVX]{1,4})\b", lines[i])
-            tag = re.sub(r"[^a-z0-9]+", "-", m.group(1).lower()).strip("-") + (f"-part-{pm.group(1).lower()}" if pm else "")
+            tag = re.sub(r"^eight-", "eighth-", re.sub(r"[^a-z0-9]+", "-", m.group(1).lower()).strip("-")) + (f"-part-{pm.group(1).lower()}" if pm else "")
             if tag in have:
                 # the schedule's own text after its drawing list ('VII. Sixth Schedule (80km/h)' / '1. …' / … / 'VII. Sixth Schedule' /
                 # 'Roads in respect of which …'): a continuation, folded into that schedule's record below
@@ -633,6 +720,7 @@ def split_articles(t):
             sc = next((i for i in range(seal + 1, e0) if re.match(r"(?i)^\s*schedules?\b[\s,:\-–]", lines[i] + " ") and len(lines[i]) <= 80), None) if seal is not None else None
             if sc is not None and "schedule" not in have: have.add("schedule"); starts.append((sc, "schedule"))
     starts.sort()
+    starts, _st = schedule_heading_pass(lines, starts); SCHED_STATS.update(_st)
     recs = []; pre = "\n".join(lines[:starts[0][0]]).strip()
     if pre: recs.append(("0", "", pre))
     seen = collections.Counter()
@@ -677,6 +765,48 @@ def split_articles(t):
     for j in range(len(recs) - 2, -1, -1):
         if recs[j][0].startswith("part-") and len(recs[j][2]) < 60:
             recs[j + 1] = (recs[j + 1][0], recs[j + 1][1], recs[j][2] + "\n" + recs[j + 1][2]); del recs[j]
+    # a bare schedule heading record ('THIRD SCHEDULE', 'SCHEDULES') straight before an unnumbered 'SCHEDULE …' record (Kilrush parking
+    # 2011 'SCHEDULE for LOADING BAYS', Douglas 2020 'SCHEDULE INDEX') takes that record in; bare headings before another numbered
+    # schedule (Louth 2006 / 2007: Second / Third / Fourth Schedule in a row) stay as they are
+    for j in range(len(recs) - 2, -1, -1):
+        if schedlike(recs[j][0]) and recs[j][2].strip() == recs[j][1].strip() and len(recs[j][2]) < 40 and re.fullmatch(r"schedule(#\d+)?", recs[j + 1][0]):
+            recs[j] = (recs[j][0], recs[j][1], recs[j][2] + "\n" + recs[j + 1][2]); del recs[j + 1]
+    # PART records straight after a schedule are that schedule's parts (Carlow horses: Schedule 2, Part 1 / Part 2 fee tables)
+    cur = None
+    for j, r in enumerate(recs):
+        if schedlike(r[0]) or r[0].startswith("sceideal"): cur = r[0].split("#")[0]
+        elif cur and re.fullmatch(r"part-\d+", r[0]): recs[j] = (f"{cur}-{r[0]}", r[1], r[2]); SCHED_STATS["part_after_schedule_relabelled"] += 1
+        else: cur = None
+    for j in range(len(recs) - 2, -1, -1):           # a bare 'Schedules' line (Cork taxi 2020) goes onto the front of the first schedule
+        if re.fullmatch(r"schedules(#\d+)?", recs[j][0]) and recs[j][2].strip() == recs[j][1].strip() and (schedlike(recs[j + 1][0]) or recs[j + 1][0].startswith("sceideal")):
+            recs[j + 1] = (recs[j + 1][0], recs[j + 1][1], recs[j][2] + "\n" + recs[j + 1][2]); del recs[j]
+    # a PART record whose heading is an Irish ordinal schedule ('CUID III' / 'AN CHÉAD SCEIDEAL', Fingal casual trading 2021 ga) is that schedule
+    _GA_ORD = {"CHÉAD": 1, "CHEAD": 1, "DARA": 2, "TRÍÚ": 3, "TRIU": 3, "CEATHRÚ": 4, "CÚIGIÚ": 5, "SEISIÚ": 6}
+    have_l = {r[0] for r in recs}
+    for j, r in enumerate(recs):
+        if re.fullmatch(r"part-\d+", r[0]):
+            hd = [x.strip() for x in r[2].split("\n")[:4] if x.strip()][:2]
+            m = next((re.fullmatch(r"AN\s+(\S+)\s+SCEIDEAL", x) for x in hd if re.fullmatch(r"AN\s+(\S+)\s+SCEIDEAL", x)), None)
+            if m and m.group(1) in _GA_ORD and f"sceideal-{_GA_ORD[m.group(1)]}" not in have_l:
+                recs[j] = (f"sceideal-{_GA_ORD[m.group(1)]}", r[1], r[2]); have_l.add(recs[j][0]); SCHED_STATS["irish_ordinal_schedule_part_relabelled"] += 1
+    # list items numbered like bye-law sub-items ('b2.16') straight after a schedule record are items of that schedule (Clare beach 2021
+    # items 16-19, Donegal beaches 2009, Kilkenny burial fee item b2.1 between Schedules 2 and 3)
+    isb = lambda lab: re.fullmatch(r"b\d+(\.\d+)+", lab) is not None
+    issch = lambda lab: (schedlike(lab) or lab.startswith("sceideal")) and not isb(lab)
+    out = []; j = 0
+    while j < len(recs):
+        r = recs[j]; out.append(r); j += 1
+        if issch(r[0]):
+            k = j
+            while k < len(recs) and isb(recs[k][0]): k += 1
+            run = recs[j:k]
+            # only a short run (<= 15 items, <= 1,500 chars) that ends at another schedule or at the end of the law; long road lists of
+            # speed-limit schedules stay as their own records
+            own = STANDALONE.match(r[2].split("\n")[0]); own = _tag(own.group("k")) if own else None
+            other = any(STANDALONE.match(x) and _tag(STANDALONE.match(x).group("k")) != own for x in r[2].split("\n")[1:])   # holds another schedule's heading (Kilkenny speed first-schedule)
+            if run and not other and len(run) <= 15 and sum(len(x[2]) for x in run) <= 1500 and (k == len(recs) or issch(recs[k][0])):
+                c = out[-1]; out[-1] = (c[0], c[1], c[2] + "\n" + "\n".join(x[2] for x in run)); SCHED_STATS["list_item_after_schedule_folded"] += len(run); j = k
+    recs = out
     recs = exact_cuts(t, recs)
     if kind in ("part", "schedules"):
         return recs, dict(kind=kind, blocks=1, gaps=[], marker=kind)

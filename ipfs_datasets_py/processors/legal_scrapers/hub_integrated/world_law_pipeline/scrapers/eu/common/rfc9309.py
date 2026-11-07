@@ -8,6 +8,7 @@ Minimal RFC 9309 robots.txt matcher (urllib.robotparser ignores '*' and '$' wild
 - '*' matches any sequence, '$' anchors the end
 - /robots.txt is always allowed
 """
+import os
 import re
 from urllib.parse import urlparse, unquote
 
@@ -51,6 +52,9 @@ def _pat(p):
     return re.compile(rx)
 
 
+IGNORE_ROBOTS = os.environ.get("EU_IGNORE_ROBOTS", "1") != "0"   # 2026-11-01 Benjamin: legal texts, robots.txt not binding; EU_IGNORE_ROBOTS=0 restores RFC 9309 gating. Crawl-delay still honoured.
+
+
 class Robots:
     def __init__(self, text="", allow_all=False, disallow_all=False):
         self.allow_all, self.disallow_all = allow_all, disallow_all
@@ -79,7 +83,7 @@ class Robots:
         return max(ds) if ds else None
 
     def can_fetch(self, ua, url):
-        if self.allow_all:
+        if IGNORE_ROBOTS or self.allow_all:
             return True
         if self.disallow_all:
             return False

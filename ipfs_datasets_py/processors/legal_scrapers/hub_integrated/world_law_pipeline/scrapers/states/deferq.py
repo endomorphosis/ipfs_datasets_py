@@ -9,6 +9,10 @@ e.not_before and puts a box-wide cool-down on the host. Our runners therefore:
   * persist the queue next to the checkpoint (<checkpoint dir>/<name>.deferred.tsv) so it survives restarts;
   * when only deferred items are left, sleep until the earliest not_before (no sleep-and-retry on one URL).
 Queue file: append-only TSV  key \t not_before(epoch) \t count \t reason   ("-1" not_before = cleared); last line wins.
+2026-10-31: the file is re-compacted in place (newest line per key) once appended lines exceed
+max(STATES_DEFER_COMPACT_MIN, 3 x keys): breaker/cool-down cycles re-defer every item each time, which had grown
+au_nsw_archive.deferred.tsv to 789 MB / 4.49M lines for 2,041 keys. Writes and compaction hold a sidecar flock
+(<path>.lock), also taken by deferq_compact.py for offline/online compaction.
 """
 from __future__ import annotations
 # Harvested collector path injection. Do not collect from /workspace.
@@ -16,10 +20,12 @@ import os as _ipfs_os
 from pathlib import Path as _ipfs_Path
 _CORPORA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_CORPORA_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_corpora")))
 _SCRAPERS = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_COLLECTORS_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_collectors"))) / "shared"
+_WORLD = _ipfs_Path(_ipfs_os.environ.get("WORLD_LAW_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "world_law")))
+_TESSDATA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_TESSDATA", str(_ipfs_Path.home() / ".ipfs_datasets" / "tessdata")))
 _HF_TOKEN_PATH = _ipfs_Path(_ipfs_os.environ.get("HF_TOKEN_PATH", str(_ipfs_Path.home() / ".cache" / "huggingface" / "token")))
 import os as _wl_os  # WORLD_LAW_ROOT / GLOBAL_MUNICIPALITIES_ROOT override the default paths
 import os, sys, time
-sys.path.insert(0, (_wl_os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law") + "/pipeline"))
+sys.path.insert(0, (_wl_os.environ.get("WORLD_LAW_ROOT", str(_WORLD)) + "/pipeline"))
 os.environ.setdefault("ARCHIVE_LANE", "states")
 from archive.core import ArchiveTransient, ArchiveDeferred  # noqa: E402,F401
 from archive import ratelimit, deferral  # noqa: E402
@@ -27,6 +33,7 @@ from archive import ratelimit, deferral  # noqa: E402
 FAMILY_HOST = {"wayback": "web.archive.org", "cc_index": "index.commoncrawl.org", "cc_data": "data.commoncrawl.org"}
 DEFAULT_WAIT = float(os.environ.get("STATES_DEFER_DEFAULT_S", "60"))   # transient w/o not_before (timeout, slot busy)
 MAX_DEFERS = int(os.environ.get("STATES_MAX_DEFERS", "60"))            # per item per run; stays queued for next run
+COMPACT_MIN = int(os.environ.get("STATES_DEFER_COMPACT_MIN", "20000"))  # appended lines before an in-place compaction
 
 
 class ItemDeferred(ArchiveTransient):
@@ -44,6 +51,12 @@ def breaker_not_before(now=None):
     except Exception:
         pass
     return 0.0
+
+
+def cooldown_only(exc):
+    """True if the deferral made no request (host cool-down / breaker open only)."""
+    rs = set(getattr(exc, "reasons", None) or ([getattr(exc, "reason", "")] if getattr(exc, "reason", None) else []))
+    return bool(rs) and rs <= {"cooldown", "breaker_open"}
 
 
 def not_before_for(exc=None, families=None, now=None):
@@ -117,6 +130,7 @@ class DeferQueue:
         self.q = {}                   # key -> [not_before, count, reason]
         self.items = {}               # key -> item object (filled when seen / deferred in this run)
         self.run_count = {}
+        self._appended = 0
         if os.path.exists(self.path):
             for line in open(self.path, encoding="utf-8"):
                 p = line.rstrip("\n").split("\t")
@@ -132,20 +146,39 @@ class DeferQueue:
                     self.q[p[0]] = [nb, int(p[2]) if len(p) > 2 and p[2].isdigit() else 1, p[3] if len(p) > 3 else ""]
             self._compact()
 
+    def _lock(self):
+        import fcntl
+        lk = open(self.path + ".lock", "a")
+        fcntl.flock(lk, fcntl.LOCK_EX)
+        return lk
+
     def _write(self, line):
         if self.guard:
             self.guard()
-        with open(self.path, "a", encoding="utf-8") as f:
-            f.write(line)
+        if self._appended >= max(COMPACT_MIN, 3 * len(self.q)):
+            self._compact()                    # in-memory q already holds this line's update
+            return
+        lk = self._lock()
+        try:
+            with open(self.path, "a", encoding="utf-8") as f:
+                f.write(line)
+        finally:
+            lk.close()
+        self._appended += 1
 
     def _compact(self):
         if self.guard:
             self.guard()
-        tmp = self.path + ".tmp"
-        with open(tmp, "w", encoding="utf-8") as f:
-            for k, (nb, n, r) in sorted(self.q.items()):
-                f.write(f"{k}\t{nb:.0f}\t{n}\t{r}\n")
-        os.replace(tmp, self.path)
+        lk = self._lock()
+        try:
+            tmp = self.path + ".tmp"
+            with open(tmp, "w", encoding="utf-8") as f:
+                for k, (nb, n, r) in sorted(self.q.items()):
+                    f.write(f"{k}\t{nb:.0f}\t{n}\t{r}\n")
+            os.replace(tmp, self.path)
+        finally:
+            lk.close()
+        self._appended = 0
 
     def __len__(self):
         return len(self.q)
@@ -156,11 +189,17 @@ class DeferQueue:
     def not_before(self, key):
         return self.q.get(key, [0])[0]
 
-    def defer(self, key, not_before, reason="", item=None):
+    def defer(self, key, not_before, reason="", item=None, count=True):
+        """count=False (2026-11-02): a pure host cool-down / breaker deferral (no request was made for this item)
+        does not count toward MAX_DEFERS, and drain() pauses until the cool-down ends instead of re-deferring every
+        other due item against the same cool-down (that burned all 60 tries/item in ~60 wake-ups: BC/NSW ~0 ok/pass)."""
         nb = max(float(not_before), time.time() + 5)
         n = self.q.get(key, [0, 0, ""])[1] + 1
         self.q[key] = [nb, n, str(reason).replace("\t", " ").replace("\n", " ")[:160]]
-        self.run_count[key] = self.run_count.get(key, 0) + 1
+        if count:
+            self.run_count[key] = self.run_count.get(key, 0) + 1
+        else:
+            self._cool_until = max(getattr(self, "_cool_until", 0.0), nb)
         if item is not None:
             self.items[key] = item
         self._write(f"{key}\t{nb:.0f}\t{n}\t{self.q[key][2]}\n")
@@ -208,3 +247,12 @@ class DeferQueue:
                     yield self.items[k]
                     if k in self.q and self.q[k][0] == nb0:   # caller neither cleared nor re-deferred it
                         self.items.pop(k, None)
+                    cu = getattr(self, "_cool_until", 0.0)
+                    if cu > time.time():                      # host cooling: wait it out, then recompute due
+                        self._cool_until = 0.0
+                        end = time.time() + min(cu - time.time(), nap_max)
+                        while time.time() < end and not stop():
+                            time.sleep(min(5.0, max(0.1, end - time.time())))
+                        if guard:
+                            guard()
+                        break

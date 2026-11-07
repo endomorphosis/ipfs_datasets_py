@@ -13,7 +13,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 os.environ.setdefault("ARCHIVE_LANE", "states")
 from common import PoliteSession, STAGING, stage_place, promote, check_guards, rss_mb, utcnow, GuardError  # noqa: E402
 from adapters import ADAPTERS, PLACES, BOILER  # noqa: E402
-from deferq import DeferQueue, ArchiveTransient, not_before_for  # noqa: E402  (ArchiveDeferred/ItemDeferred subclass it)
+from deferq import DeferQueue, ArchiveTransient, not_before_for, cooldown_only  # noqa: E402  (ArchiveDeferred/ItemDeferred subclass it)
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--source", required=True); ap.add_argument("--max", type=int, default=0)
@@ -98,6 +98,17 @@ if _cov:
         for it in _cov:
             _f.write(f"{it['doc_id']}\t{item_url(it)}\t{OS_.cache.get(item_url(it))}\n")
     todo = [it for it in todo if it["doc_id"] not in _cids]
+if hasattr(A, "cite_keys"):   # 2026-10-25: citation-level skip vs justicedao/ipfs_state_laws (adapter opt-in)
+    _cc = []
+    for it in todo:
+        _r = OS_.covered_cite(A.cc if "-" in str(getattr(A, "cc", "")) else getattr(A, "place", None), A.cite_keys(it), getattr(A, "cite_min_good", 1))
+        if _r: _cc.append((it, _r))
+    if _cc:
+        _cids = {it["doc_id"] for it, _ in _cc}
+        with open(STAGING / "_logs" / f"old_url_skipped_{A.key}.tsv", "a") as _f:
+            for it, _r in _cc:
+                _f.write(f"{it['doc_id']}\t{item_url(it)}\t{_r}\n")
+        todo = [it for it in todo if it["doc_id"] not in _cids]
 log(f"{OS_.summary()}; todo now {len(todo)}")
 log(f"discovered {len(items)}; already done {len(items) - len(todo)}; todo {len(todo)}")
 DQ = DeferQueue(STAGING / "_state" / f"{A.key}.deferred.tsv", guard=check_guards)
@@ -155,7 +166,7 @@ try:
             rec, why = A.fetch(sess, it)
         except ArchiveTransient as e:       # archive throttle/transient: requeue for >= not_before, move on
             nb = not_before_for(e)
-            DQ.defer(it["doc_id"], nb, f"{type(e).__name__}:{e}", it)
+            DQ.defer(it["doc_id"], nb, f"{type(e).__name__}:{e}", it, count=not cooldown_only(e))
             stats["deferred"] = stats.get("deferred", 0) + 1
             if stats["deferred"] <= 20 or stats["deferred"] % 100 == 0:
                 log(f"deferred {it['doc_id']} until {time.strftime('%H:%M:%S', time.localtime(nb))}: {str(e)[:150]}")

@@ -7,7 +7,7 @@ SCHEMA.md §3) go to --national-repo (local state --out-national, default <out>/
 (municipal, county, water board, ...) goes to --repo (local state --out). Each repo gets the same layout: its own
 world_law/data, metadata, manifests, places.parquet and README card.
 
-Scans /workspace/world_law/staging/<bot>/<CC>/<place_key>[.<batch>].(jsonl|parquet) (see SCHEMA.md).
+Scans ~/.ipfs_datasets/world_law/staging/<bot>/<CC>/<place_key>[.<batch>].(jsonl|parquet) (see SCHEMA.md).
 Per place (all bots together), staged files are applied OLDEST -> NEWEST, ordered by the UTC timestamp
 embedded in the batch name (iso_FR.20261011T003234Zp0001, iso_FR.archive<ts>p0001, <key>.full.<ts>,
 <key>.full.archive-policy<ts>, <key>.<src>-p0001-<ts>, ...), falling back to file mtime; ties -> part no.,
@@ -20,7 +20,9 @@ Each row is:
   * quarantined if it fails validation (quarantine/<bot>/<CC>/<file>.<run>.rejects.jsonl),
   * otherwise normalized (incl. optional provenance columns) and spooled to disk.
 Places are written streaming from the spool into out/world_law/data/{CC}[/{b}]/{place_key}_html.parquet (S.html_path), or into
-{place_key}.s0001_html.parquet, .s0002_... when over SHARD_MAX_ROWS rows / ~SHARD_MAX_BYTES. Stale files of a
+{place_key}.s0001_html.parquet, .s0002_... when over SHARD_MAX_ROWS rows / ~SHARD_MAX_BYTES (200 MiB; under the
+500 MiB soft target). US/iso_US: prior local shards are freed after spooling and before .part*.tmp rewrite; cumulative
+tmp bytes are capped at US_NATIONAL_TMP_CAP_BYTES (TMP_CAP skips the place). Stale files of a
 re-sharded or emptied place are deleted locally and CommitOperationDelete'd in the SAME Hub commit.
 Then metadata JSON, places.parquet, the card, a manifest (sha256), one commit per <=500 ops (<=200 when memory is
 low), and RIGHT AFTER EACH COMMIT the staged files of its places are ledgered and
@@ -29,7 +31,8 @@ each place build and each commit; below --mem-low-gb (1.5) it gc's and waits --m
 (MEM_LOW): no new builds/commits, finished commits fully bookkept, the rest stays staged for the next run.
 
 Local data parquet is on demand (out_store.py): after prune, places verified identical on the Hub and >= 2h old
-are evicted from out*/ (record in state/evicted_out.jsonl; metadata JSONs stay); a place that needs merging, or a
+are evicted from out*/ (record in state/evicted_out.jsonl; metadata JSONs stay). National places are also
+evicted immediately after their Hub commit (min_age_s=0, still sha/size verified). A place that needs merging, or a
 country's national index for cross-lane dedupe, re-downloads its evicted files sha-verified first, else is skipped.
 Safe to rerun: a ledger (state/ledger.jsonl) records sha256 of every processed file; a lock prevents
 concurrent runs.
@@ -45,6 +48,8 @@ import os as _ipfs_os
 from pathlib import Path as _ipfs_Path
 _CORPORA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_CORPORA_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_corpora")))
 _SCRAPERS = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_COLLECTORS_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_collectors"))) / "shared"
+_WORLD = _ipfs_Path(_ipfs_os.environ.get("WORLD_LAW_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "world_law")))
+_TESSDATA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_TESSDATA", str(_ipfs_Path.home() / ".ipfs_datasets" / "tessdata")))
 _HF_TOKEN_PATH = _ipfs_Path(_ipfs_os.environ.get("HF_TOKEN_PATH", str(_ipfs_Path.home() / ".cache" / "huggingface" / "token")))
 
 import argparse
@@ -77,7 +82,7 @@ import xdedup as XD  # noqa: E402
 import out_store as OS_  # noqa: E402
 from card import PHASE1_COUNTRIES, build_card  # noqa: E402
 
-BASE = Path(os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law"))
+BASE = Path(os.environ.get("WORLD_LAW_ROOT", str(_WORLD)))
 # network timeouts for huggingface_hub (read at import time); the commit watchdog below is the hard backstop
 os.environ.setdefault("HF_HUB_ETAG_TIMEOUT", "60")
 os.environ.setdefault("HF_HUB_DOWNLOAD_TIMEOUT", "120")
@@ -87,6 +92,14 @@ _TS = re.compile(r"(20\d{2})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})?(?:\d*)Z?")
 # part number: p0001 / b00051 / s0001, also right after the timestamp's "Z" (…T103649Zp0038, …Zp0001)
 _PART = re.compile(r"(?:^|[^A-Za-z]|(?<=\dZ))[pbs](\d{3,6})(?![0-9])")
 MAX_OPS_PER_COMMIT = 500
+# National places share one Hub repo but iso_US alone is multi-GB / dozens of shards; packing it with
+# other national places in one commit held the whole set on disk until the 2h evict age, and an OOM/timeout
+# during the US upload stranded the others. Cap = 1 place per national commit (2026-11-06).
+NATIONAL_MAX_PLACES_PER_COMMIT = 1
+# US federal (iso_US) rewrite: old shards + new .part*.tmp + spool can spike disk by ~10+ GB.
+# Cap cumulative .iso_US.part*.tmp bytes in one build; exceed -> TMP_CAP, place skipped, staged kept.
+US_NATIONAL_TMP_CAP_BYTES = 4 * 1024 ** 3  # 4 GiB
+US_FEDERAL_KEY = "iso_US"
 WRITE_BATCH_ROWS = 500
 WRITE_BATCH_BYTES = 8 * 1024 * 1024
 FORBIDDEN_REPOS = {"endomorphosis/american_municipal_law", "justicedao/american_municipal_law"}
@@ -474,7 +487,7 @@ def _seed_tree(src: Path, dst: Path) -> None:
     shutil.copytree(src, dst, copy_function=link_or_copy)
 
 
-DISK_WARN_GB = 15.0  # below: log + state/disk_alert.json + DISK_LOW line
+DISK_WARN_GB = 10.0  # below: log + state/disk_alert.json + DISK_LOW line
 DISK_STOP_GB = 8.0   # below: build no new places this run (commits of already-built places still finish)
 
 
@@ -1120,49 +1133,96 @@ def build_place(job: Dict[str, Any]) -> Dict[str, Any]:
             order = sorted(index.items(), key=lambda kv: (kv[1][2], kv[0]))
             data_dir.mkdir(parents=True, exist_ok=True)
             tmp_paths: List[Path] = []
+            us_federal = (cc == "US" and key == US_FEDERAL_KEY)
+            # US federal: drop prior local data shards now that rows are in the spool, so old+new .tmp
+            # do not coexist (~3 GB + ~3 GB). Hub still has the previous commit for rehydrate on failure.
+            if us_federal and old_local:
+                freed = 0
+                for rel in sorted(old_local):
+                    fp = out_dir / rel
+                    if fp.is_file():
+                        freed += fp.stat().st_size
+                        fp.unlink()
+                st["us_federal_freed_old_bytes"] = freed
+                if freed:
+                    log(f"US/iso_US: freed {freed} bytes of prior local shards before rewrite "
+                        f"(Hub retains them; avoids old+tmp double footprint)")
             writer, shard_rows, total, batch, batch_bytes = None, 0, 0, [], 0
             sch = S.html_schema()
+            # shard size already <= SHARD_MAX_BYTES (200 MiB) << 500 MiB target; keep the tighter global cap
+            shard_bytes_cap = S.SHARD_MAX_BYTES
+
+            def tmp_bytes() -> int:
+                return sum(tp.stat().st_size for tp in tmp_paths if tp.exists())
+
+            def check_tmp_cap(when: str):
+                if not us_federal:
+                    return
+                cum = tmp_bytes()
+                if cum > US_NATIONAL_TMP_CAP_BYTES:
+                    raise RuntimeError(
+                        f"TMP_CAP US/iso_US cumulative .part*.tmp bytes {cum} > "
+                        f"{US_NATIONAL_TMP_CAP_BYTES} ({when}); refusing to grow further "
+                        f"(staged files stay; Hub still has prior commit)")
 
             def flush():
                 nonlocal writer, shard_rows, batch, batch_bytes
                 if not batch:
                     return
                 if writer is None:
+                    check_tmp_cap("before new part")
                     tp = data_dir / f".{key}.part{len(tmp_paths) + 1:04d}.{run_id}.tmp"
                     tmp_paths.append(tp)
                     writer = pq.ParquetWriter(str(tp), sch, compression="zstd")
-                writer.write_table(rows_to_table(batch))
+                # row_group_size=batch: one row group per flush -> lower peak Arrow RSS on large places
+                writer.write_table(rows_to_table(batch), row_group_size=max(len(batch), 1))
                 shard_rows += len(batch)
                 batch, batch_bytes = [], 0
-                if shard_rows >= S.SHARD_MAX_ROWS or tmp_paths[-1].stat().st_size >= S.SHARD_MAX_BYTES:
+                if shard_rows >= S.SHARD_MAX_ROWS or tmp_paths[-1].stat().st_size >= shard_bytes_cap:
                     writer.close()
                     writer, shard_rows = None, 0
+                check_tmp_cap("after flush")
 
             pdf_refs = load_pdf_refs(Path(job["state"]), cc, key) if job.get("state") else {}
             n_arch = n_restr = n_incomplete = n_unofficial = 0
-            for did, (off, ln, _o) in order:
-                spool.seek(off)
-                row = pickle.loads(spool.read(ln))
-                if did in pdf_refs:  # v1.2.0 pdf_ref (tools/upload_pdfs.py); else keep the published value
-                    if row.get("pdf_ref") != pdf_refs[did]:
-                        st["pdf_ref_set"] += 1
-                    row["pdf_ref"] = pdf_refs[did]
-                batch.append(row)
-                batch_bytes += ln
-                total += 1
-                a, r_, inc, uo = flags.get(did, (False, False, False, False))
-                n_arch += a; n_restr += r_; n_incomplete += inc; n_unofficial += uo
-                if (len(batch) >= WRITE_BATCH_ROWS or batch_bytes >= WRITE_BATCH_BYTES
-                        or shard_rows + len(batch) >= S.SHARD_MAX_ROWS):
-                    flush()
-            flush()
-            if writer is not None:
-                writer.close()
+            try:
+                for did, (off, ln, _o) in order:
+                    spool.seek(off)
+                    row = pickle.loads(spool.read(ln))
+                    if did in pdf_refs:  # v1.2.0 pdf_ref (tools/upload_pdfs.py); else keep the published value
+                        if row.get("pdf_ref") != pdf_refs[did]:
+                            st["pdf_ref_set"] += 1
+                        row["pdf_ref"] = pdf_refs[did]
+                    batch.append(row)
+                    batch_bytes += ln
+                    total += 1
+                    a, r_, inc, uo = flags.get(did, (False, False, False, False))
+                    n_arch += a; n_restr += r_; n_incomplete += inc; n_unofficial += uo
+                    if (len(batch) >= WRITE_BATCH_ROWS or batch_bytes >= WRITE_BATCH_BYTES
+                            or shard_rows + len(batch) >= S.SHARD_MAX_ROWS):
+                        flush()
+                flush()
+                if writer is not None:
+                    writer.close()
+                    writer = None
+            except Exception:
+                if writer is not None:
+                    try:
+                        writer.close()
+                    except Exception:
+                        pass
+                    writer = None
+                for tp in tmp_paths:
+                    tp.unlink(missing_ok=True)
+                raise
+            if us_federal:
+                st["us_federal_tmp_bytes"] = tmp_bytes()
             if len(tmp_paths) == 1:
                 finals = [S.html_path(cc, key)]
             else:
                 finals = [S.shard_path(cc, key, i + 1) for i in range(len(tmp_paths))]
             for tp, rel in zip(tmp_paths, finals):
+                (out_dir / rel).parent.mkdir(parents=True, exist_ok=True)
                 tp.replace(out_dir / rel)
             for rel in sorted(old_local - set(finals)):  # stale local shards of this place
                 (out_dir / rel).unlink(missing_ok=True)
@@ -1399,10 +1459,13 @@ def commit_repo(kind: str, R: Dict[str, Any], args, api, scratch: Path, run_id: 
         max_ops = min(max_ops, getattr(args, "mem_small_chunk_ops", MEM_SMALL_CHUNK_OPS))
         log(f"mem: MemAvailable {avail:.2f} GB -> commit chunks of <= {max_ops} ops")
         stats[pre + "small_commit_chunks"] = 1
+    max_places = NATIONAL_MAX_PLACES_PER_COMMIT if kind == "national" else None
     chunks, cur, cur_places, chunk_places = [], [], set(), []
     for ck in sorted(by_place):
         g = by_place[ck]
-        if cur and len(cur) + len(g) > max_ops - len(tail):
+        over_ops = cur and len(cur) + len(g) > max_ops - len(tail)
+        over_places = max_places is not None and cur and len(cur_places) >= max_places
+        if over_ops or over_places:
             chunks.append(cur)
             chunk_places.append(cur_places)
             cur, cur_places = [], set()
@@ -1839,6 +1902,7 @@ def run_once(args) -> Dict[str, Any]:
 
     def bookkeep_for(kind: str):
         repo = repos[kind]["repo"]
+        out_for_kind = repos[kind]["out"]
 
         def bookkeep(places, ids):
             """Ledger + move the staged files of `places` right after their commit landed (ids so far)."""
@@ -1865,6 +1929,17 @@ def run_once(args) -> Dict[str, Any]:
                                                "repo": repo, "cc": fr["cc"], "place_key": fr.get("place"),
                                                "commit_ids": list(ids)})
                     stats["files_moved_to_processed"] += 1
+            # National out_national cache: after a real Hub commit, verify+evict those places immediately
+            # (min_age_s=0). Keeps the 2h rule for municipal / the end-of-run sweep; never deletes without Hub match.
+            if kind == "national" and places and ids and not dry and api is not None:
+                try:
+                    er = OS_.evict(out_for_kind, repo, state, api, min_age_s=0, apply=True,
+                                   only_places=set(places), national=True, log=log)
+                    stats["national_immediate_evict_places"] = stats.get("national_immediate_evict_places", 0) + er.get("places_evicted", 0)
+                    stats["national_immediate_evict_bytes"] = stats.get("national_immediate_evict_bytes", 0) + er.get("bytes_evicted", 0)
+                except Exception as e:  # noqa: BLE001  (evict never fails a run; end-of-run sweep still runs)
+                    log(f"WARN national immediate evict failed: {e!r}")
+                    stats["national_immediate_evict_failed"] = 1
         return bookkeep
 
     failed_kinds: set = set()

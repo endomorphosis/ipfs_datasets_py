@@ -1,0 +1,27 @@
+{
+ "country_code": "FR",
+ "place_id": "wd:Q12820",
+ "qid": "Q12820",
+ "place_name": "Yvelines",
+ "iso_3166_2": "FR-78",
+ "admin_level": "departement",
+ "language": "fr",
+ "doc_type": "gazette_act",
+ "consolidated": false,
+ "platform": "fr_raa_conseil_departemental",
+ "source_org": "Conseil départemental — Yvelines",
+ "issuer": "conseil_departemental",
+ "max_bytes": 52428800,
+ "index_url": "https://www.yvelines.fr/mon-departement/decisions-du-conseil/bulletins-officiels/",
+ "crawl_delay": 3.0,
+ "urls": [
+  "https://www.yvelines.fr/app/uploads/sites/2/2026/10/ad-2026-585--dgd-rp-n.-ben-ayed-19.10.2026.pdf",
+  "https://www.yvelines.fr/app/uploads/sites/2/2026/10/ad-2026-586---dgs-ts-m.-rabaste-19.10.2026.pdf",
+  "https://www.yvelines.fr/app/uploads/sites/2/2026/10/ad-2026-587---dgs-a.-borotra-19.10.2026.pdf"
+ ],
+ "titles": {
+  "https://www.yvelines.fr/app/uploads/sites/2/2026/10/ad-2026-585--dgd-rp-n.-ben-ayed-19.10.2026.pdf": "Arrêté AD 2026-585 Délégation de signature DGD Ressources et Performances Mme Nadia BEN AYED – Mis en ligne le 21 octobre 2026 PDF – 396 Ko",
+  "https://www.yvelines.fr/app/uploads/sites/2/2026/10/ad-2026-586---dgs-ts-m.-rabaste-19.10.2026.pdf": "Arrêté AD 2026-586 Délégation de signature DGD Territoire et Solidarités M. Maxime RABASTÉ – Mis en ligne le 21 octobre 2026 PDF – 397 Ko",
+  "https://www.yvelines.fr/app/uploads/sites/2/2026/10/ad-2026-587---dgs-a.-borotra-19.10.2026.pdf": "Arrêté AD 2026-586 Délégation de signature Direction Générale des Services M. Alexandre BOROTRA – Mis en ligne le 21 octobre 2026 PDF – 345 Ko"
+ }
+}

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Shared helpers for new-country official gazette collectors."""
-from __future__ import annotations
 
+from __future__ import annotations
 import logging
 import os
 import re
@@ -154,7 +154,7 @@ def live_get(url: str, *, ua: str = DEFAULT_UA, timeout: tuple = (12, 25), verif
             return resp
         except Exception as exc:
             last = exc
-            if verify and ("SSL" in type(exc).__name__ or "SSL" in str(exc)):
+            if verify and os.environ.get("NO_INSECURE_TLS") != "1" and ("SSL" in type(exc).__name__ or "SSL" in str(exc)):   # tip+31zx CoS 14:12 PT: NO_INSECURE_TLS=1 -> never fall back to verify=False
                 try:
                     resp = requests.get(url, timeout=timeout, headers=headers, verify=False, allow_redirects=True)
                     return resp

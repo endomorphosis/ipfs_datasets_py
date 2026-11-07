@@ -1,0 +1,25 @@
+{
+ "country_code": "DE",
+ "place_id": "wd:Q10458",
+ "qid": "Q10458",
+ "place_name": "Landkreis Würzburg",
+ "iso_3166_2": "DE-BY",
+ "admin_level": "landkreis",
+ "language": "de",
+ "doc_type": "ordinance",
+ "platform": "de_by_kreisrecht",
+ "source_org": "Landkreis Würzburg",
+ "index_url": "https://www.landkreis-wuerzburg.de/B%C3%BCrger-Politik-Verwaltung/Amtsblatt/",
+ "archive_policy": "archived_robots_disallowed",
+ "max_bytes": 52428800,
+ "urls": [
+  "https://www.landkreis-wuerzburg.de/output/download.php?file=%2Fmedia%2Fcustom%2F2680_4618_1.PDF%3F1760939941&fn=Anlage_2_zur_Entsch%E4digungssatzung_-_Anwesenheitsliste",
+  "https://www.landkreis-wuerzburg.de/output/download.php?file=%2Fmedia%2Fcustom%2F2680_12907_1.PDF%3F1780035480&fn=Amtsblatt_Nr._21-_29._Mai_-_S._146_-_150_-_Haushaltssatzung_f%C3%BCr_das_Haushaltsjahr_2026",
+  "https://www.landkreis-wuerzburg.de/output/download.php?file=%2Fmedia%2Fcustom%2F2680_9984_1.PDF%3F1697024253&fn=231110_Ex_post_Bekanntmachung_Pellets"
+ ],
+ "titles": {
+  "https://www.landkreis-wuerzburg.de/output/download.php?file=%2Fmedia%2Fcustom%2F2680_4618_1.PDF%3F1760939941&fn=Anlage_2_zur_Entsch%E4digungssatzung_-_Anwesenheitsliste": "Anlage 2 zur Entschädigungssatzung - Anwesenheitsliste",
+  "https://www.landkreis-wuerzburg.de/output/download.php?file=%2Fmedia%2Fcustom%2F2680_12907_1.PDF%3F1780035480&fn=Amtsblatt_Nr._21-_29._Mai_-_S._146_-_150_-_Haushaltssatzung_f%C3%BCr_das_Haushaltsjahr_2026": "Amtsblatt Nr. 21- 29. Mai - S. 146 - 150 - Haushaltssatzung für das Haushaltsjahr 2026",
+  "https://www.landkreis-wuerzburg.de/output/download.php?file=%2Fmedia%2Fcustom%2F2680_9984_1.PDF%3F1697024253&fn=231110_Ex_post_Bekanntmachung_Pellets": "231110 Ex post Bekanntmachung Pellets"
+ }
+}

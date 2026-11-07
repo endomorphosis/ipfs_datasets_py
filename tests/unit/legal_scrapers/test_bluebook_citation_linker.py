@@ -2,8 +2,10 @@ from __future__ import annotations
 
 from pathlib import Path
 import random
+import re
 import sys
 import types
+import unicodedata
 import uuid
 
 import pyarrow as pa
@@ -22,6 +24,10 @@ from ipfs_datasets_py.processors.legal_scrapers import (
     audit_bluebook_citation_resolution_for_documents,
     resolve_bluebook_lookup_result_document,
     resolve_bluebook_citations_in_text,
+)
+from ipfs_datasets_py.processors.legal_data.citation_reporters import (
+    PERIOD_REQUIRED,
+    REPORTERS,
 )
 from ipfs_datasets_py.processors.legal_scrapers.bluebook_citation_linker import _CORPUS_CONFIGS
 
@@ -557,6 +563,126 @@ def test_citation_extractor_extracts_family_code_and_act_state_citations():
     assert by_state["NY"].metadata["code_name"] == "Fam. Ct. Act"
 
 
+def test_citation_extractor_reads_statutes_and_reporters_from_prose():
+    extractor = CitationExtractor()
+    text = (
+        "Jackson v. Virginia, 443 U.S. 307, 99 S. Ct. 2781, 61 L. Ed. 2d 560 (1979), "
+        "and Strickland, 466 U.S. 668, 80 L.Ed.2d 674. "
+        "See also 12 So. 2d 345, 45 S.W.2d 10, 12 N.Y.2d 44, and 23 Mich., 457. "
+        "The statute is 18 U.S.C. §§ 2516, 2517(1), and Title 42, United States Code, Section 1983. "
+        "Michigan charges under MCL 750.227 and M.C.L. § 750.227. "
+        "Also Mass. Gen. Laws ch. 93A, § 11; O.C.G.A. § 16-5-1; RCW 9A.32.030; "
+        "Okla. Stat. tit. 21, § 701.7; and Md. Code Ann., Crim. Law § 2-201. "
+        "Procedure is Fed. R. Civ. P. 12(b)(6). The order is 2010 WL 1234567."
+    )
+    citations = extractor.extract_citations(text)
+    cases = {citation.text for citation in citations if citation.type == "case"}
+    statutes = {citation.text for citation in citations if citation.type in {"usc", "state_statute"}}
+    rules = [citation.text for citation in citations if citation.type == "rule"]
+
+    assert "443 U.S. 307" in cases
+    assert "99 S. Ct. 2781" in cases
+    assert "61 L. Ed. 2d 560" in cases
+    assert "80 L.Ed.2d 674" in cases
+    assert "12 So. 2d 345" in cases
+    assert "45 S.W.2d 10" in cases
+    assert "12 N.Y.2d 44" in cases
+    assert "23 Mich., 457" in cases
+    assert "2010 WL 1234567" in cases
+    sup = extractor.extract_citations("Storti v. Massachusetts, 183 U.S. 138 (22 Sup. Ct. 72, 58 L. R. A. 50).")
+    sup_cases = {citation.text for citation in sup if citation.type == "case"}
+    assert "22 Sup. Ct. 72" in sup_cases
+    assert "58 L. R. A. 50" in sup_cases
+    assert any(item.startswith("18 U.S.C.") and "2516" in item for item in statutes)
+    assert any("2517(1)" in item for item in statutes)
+    assert any(citation.section == "1983" and citation.title == "42" for citation in citations if citation.type == "usc")
+    assert any(citation.jurisdiction == "MI" and citation.section == "750.227" for citation in citations)
+    assert any(citation.jurisdiction == "MA" and citation.section == "11" for citation in citations)
+    assert any(citation.jurisdiction == "GA" and citation.section == "16-5-1" for citation in citations)
+    assert any(citation.jurisdiction == "WA" and citation.section == "9A.32.030" for citation in citations)
+    assert any(citation.jurisdiction == "OK" and citation.section == "701.7" for citation in citations)
+    assert any(citation.jurisdiction == "MD" and citation.section == "2-201" for citation in citations)
+    assert rules == ["Fed. R. Civ. P. 12(b)(6)"]
+    assert not extractor.extract_citations("The 12 men 34 walked past 42 USCX 1983.")
+    assert not extractor.extract_citations("See N.Y. Penal Coder § 125.25 for the typo case.")
+
+
+def test_citation_extractor_accepts_periodless_reporters():
+    extractor = CitationExtractor()
+    plain = extractor.extract_citations(
+        "In Reading v. Waterman, 46 Mich 107, a controlling issue. "
+        "6 Mich App 153. 428 Mich 330; 408 NW2d 783 (1987). "
+        "See 12 So 2d 345 and 408 N.W.2d 783 and 123 F.2d 456."
+    )
+    by_text = {citation.text: citation for citation in plain if citation.type == "case"}
+    assert by_text["46 Mich 107"].court == "Michigan Supreme Court"
+    assert by_text["46 Mich 107"].page == "107"
+    assert by_text["6 Mich App 153"].court == "Michigan Court of Appeals"
+    lower_app = extractor.extract_citations('should be presented at trial." 59 Mich app 471, 490.')
+    lower_app_cases = {citation.text: citation for citation in lower_app if citation.type == "case"}
+    assert lower_app_cases["59 Mich app 471"].court == "Michigan Court of Appeals"
+    assert lower_app_cases["59 Mich app 471"].page == "471"
+    assert "App" in by_text["6 Mich App 153"].reporter
+    assert by_text["428 Mich 330"].page == "330"
+    assert by_text["408 NW2d 783"].page == "783"
+    assert "2d" in by_text["408 NW2d 783"].reporter.lower()
+    assert by_text["12 So 2d 345"].page == "345"
+    assert "2d" in by_text["12 So 2d 345"].reporter.lower()
+    assert by_text["408 N.W.2d 783"].page == "783"
+    assert by_text["123 F.2d 456"].page == "456"
+    dotted = extractor.extract_citations("People v. Smith, 329 Mich. 683, 68 Mich. App. 272, 1 Sandf., 187.")
+    dotted_cases = {citation.text: citation for citation in dotted if citation.type == "case"}
+    assert dotted_cases["329 Mich. 683"].court == "Michigan Supreme Court"
+    assert dotted_cases["68 Mich. App. 272"].court == "Michigan Court of Appeals"
+    assert dotted_cases["1 Sandf., 187"].page == "187"
+    evid = extractor.extract_citations("Fed. R. Evid. 702 and 42 U.S.C. § 1983 and 18 USC § 2516(1).")
+    assert [citation.text for citation in evid if citation.type == "rule"] == ["Fed. R. Evid. 702"]
+    assert {citation.type for citation in evid} >= {"rule", "usc"}
+    assert not any(citation.type == "case" for citation in evid)
+    for negative in (
+        "12 men 34",
+        "12 A 34",
+        "12 F 345",
+        "46 Michigan 107",
+        "the Sup. Ct. held and 12 men 34 walked.",
+        "125.25 Penal Code Avenue",
+    ):
+        assert extractor.extract_citations(negative) == [], negative
+    atlantic = extractor.extract_citations("12 A. 34")
+    assert len(atlantic) == 1 and atlantic[0].type == "case" and atlantic[0].page == "34"
+    pinpoint = extractor.extract_citations("modified 402 Mich 950j (1978); Podolski, 332 Mich 514r-515.")
+    pin_cases = {citation.text: citation for citation in pinpoint if citation.type == "case"}
+    assert pin_cases["402 Mich 950"].page == "950"
+    assert pin_cases["332 Mich 514"].page == "514"
+    assert pin_cases["402 Mich 950"].court == "Michigan Supreme Court"
+    company = extractor.extract_citations(
+        "Van Lierop v. Chesapeake S Ohio R. Co., 335 Mich 702, 713. "
+        "Swartwout v. Mich. Air-line R. Co. 24 Mich. 389."
+    )
+    company_cases = {citation.text for citation in company if citation.type == "case"}
+    assert "335 Mich 702" in company_cases
+    assert "24 Mich. 389" in company_cases
+    assert not any(citation.type == "state_statute" for citation in company)
+    assert not extractor.extract_citations("We discussed the case 2 or 3 times in 1906 or 1907.")
+    prose_states = extractor.extract_citations("tell me. Id. Code Section 8640 and it is ill. See Code, 4371.")
+    assert not any(citation.type == "state_statute" for citation in prose_states)
+    assert not any(
+        citation.type == "case"
+        for citation in extractor.extract_citations("The controlled substance act, 1971 PA 196, replaced 1943 PA 184.")
+    )
+    pennsylvania = extractor.extract_citations("Commonwealth v McCullough, 501 Pa 423; 461 A2d 1229 (1983).")
+    assert any(citation.type == "case" and citation.page == "423" and "Pa" in citation.reporter for citation in pennsylvania)
+    oregon = extractor.extract_citations("See 12 Or. 345 and Or. Court Rules § 5.010 and Ohio Revised Code, § 3109.11.")
+    assert any(citation.type == "case" and citation.page == "345" for citation in oregon)
+    assert any(citation.type == "state_statute" and citation.section == "5.010" for citation in oregon)
+    assert any(citation.type == "state_statute" and citation.section == "3109.11" for citation in oregon)
+    assert not extractor.extract_citations("795 F Supp 2d at 632")
+    supplement = extractor.extract_citations("795 F Supp 2d 624 (ED Mich, 2011).")
+    assert any(citation.type == "case" and citation.page == "624" and "2d" in citation.reporter.lower() for citation in supplement)
+    caps = extractor.extract_citations("329 MICH 683 and 408 NW2D 783.")
+    assert {citation.page for citation in caps if citation.type == "case"} >= {"683", "783"}
+
+
 def test_citation_extractor_extracts_michigan_case_reporters_and_public_law_no():
     extractor = CitationExtractor()
     citations = extractor.extract_citations(
@@ -575,6 +701,227 @@ def test_citation_extractor_extracts_michigan_case_reporters_and_public_law_no()
     public_law_citations = [citation for citation in citations if citation.type == "public_law"]
     assert len(public_law_citations) == 1
     assert public_law_citations[0].text == "Pub. L. No. 117-58"
+
+
+def _fold_reporter(value: str) -> str:
+    return "".join(char.lower() for char in value if char.isalnum())
+
+
+def _cite_key(value: str) -> str:
+    """Same fold as caselaw_ir.normalize_cite_key."""
+    text = unicodedata.normalize("NFKC", value).lower()
+    text = text.replace("§", " s ")
+    text = text.replace("¶", " ")
+    text = re.sub(r"\bart(?:icle|\.)?\b", "art", text)
+    text = re.sub(r"\bsec(?:tion|\.)?\b", "s", text)
+    text = re.sub(r"[^a-z0-9]+", " ", text)
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def _resolved(text: str):
+    extractor = CitationExtractor()
+    resolver = BluebookCitationResolver(allow_hf_fallback=False, materialize_remote_sources=False)
+    rows = []
+    for citation in extractor.extract_citations(text):
+        rows.append(
+            {
+                "type": citation.type,
+                "text": citation.text,
+                "volume": citation.volume,
+                "reporter": citation.reporter,
+                "page": citation.page,
+                "section": citation.section,
+                "year": citation.year,
+                "jurisdiction": citation.jurisdiction,
+                "key": _cite_key(resolver._normalized_citation(citation)),
+                "corpus": (resolver._candidate_corpora(citation) or [None])[0],
+            }
+        )
+    return rows
+
+
+def test_every_indexed_reporter_round_trips_with_and_without_periods():
+    """Every cite-index reporter, including Dallas and the nominatives, round-trips.
+
+    Single-letter A., F., and P. keep the period. Every other reporter still
+    matches after the periods are removed. A reporter string is not a journal.
+    """
+    extractor = CitationExtractor()
+    canonical_misses = []
+    periodless_misses = []
+    journal_hits = []
+    for canonical in REPORTERS:
+        text = f"See 12 {canonical} 345."
+        found = extractor.extract_citations(text)
+        if not any(
+            citation.type == "case"
+            and citation.volume == "12"
+            and citation.page == "345"
+            and _fold_reporter(citation.reporter or "") == _fold_reporter(canonical)
+            for citation in found
+        ):
+            canonical_misses.append(canonical)
+        if any(citation.type == "journal" for citation in found):
+            journal_hits.append(canonical)
+        if canonical in PERIOD_REQUIRED or "." not in canonical:
+            continue
+        bare = canonical.replace(".", "")
+        bare_found = extractor.extract_citations(f"See 12 {bare} 345.")
+        if not any(
+            citation.type == "case"
+            and citation.volume == "12"
+            and citation.page == "345"
+            and _fold_reporter(citation.reporter or "") == _fold_reporter(canonical)
+            for citation in bare_found
+        ):
+            periodless_misses.append(canonical)
+    assert canonical_misses == []
+    assert periodless_misses == []
+    assert journal_hits == []
+    assert len(REPORTERS) >= 350
+    for negative in ("12 A 34", "12 F 345", "12 P 99"):
+        assert extractor.extract_citations(negative) == [], negative
+
+
+def test_dallas_nominatives_parallel_reports_and_law_journals():
+    """Obscure nominatives and journals extract, and their keys join the abbrev."""
+    dallas = _resolved("The Lessee of Hyam is reported at 1 Dall. 1 and 1 Dallas 1 and 1 Dall., 1.")
+    assert {row["key"] for row in dallas} == {"1 dall 1"}
+    assert {row["type"] for row in dallas} == {"case"}
+    assert {row["corpus"] for row in dallas} == {"caselaw_access_project"}
+
+    spelled = {
+        "4 Wheaton 316": "4 wheat 316",
+        "4 Wheat. 316": "4 wheat 316",
+        "5 Wallace 102": "5 wall 102",
+        "3 Peters 102": "3 pet 102",
+        "5 Howard 504": "5 how 504",
+        "2 Cranch 137": "2 cranch 137",
+        "2 Black 635": "2 black 635",
+        "4 Dallas 14": "4 dall 14",
+        "86 N. J. Law, 75": "86 n j l 75",
+    }
+    for text, key in spelled.items():
+        rows = _resolved(text)
+        assert len(rows) == 1, text
+        assert rows[0]["type"] == "case"
+        assert rows[0]["key"] == key
+        assert rows[0]["corpus"] == "caselaw_access_project"
+        assert rows[0]["page"] == key.split()[-1]
+
+    parallel = _resolved("4 U.S. (4 Dall.) 1; 5 U.S. (1 Cranch) 137; 67 U.S. (2 Black) 635.")
+    by_key = {row["key"]: row for row in parallel}
+    assert set(by_key) == {
+        "4 dall 1",
+        "4 u s 1",
+        "1 cranch 137",
+        "5 u s 137",
+        "2 black 635",
+        "67 u s 635",
+    }
+    assert by_key["4 dall 1"]["page"] == "1"
+    assert by_key["4 u s 1"]["page"] == "1"
+    assert by_key["1 cranch 137"]["volume"] == "1"
+    assert by_key["5 u s 137"]["page"] == "137"
+    assert by_key["2 black 635"]["page"] == "635"
+    assert by_key["67 u s 635"]["volume"] == "67"
+    assert all(row["corpus"] == "caselaw_access_project" for row in parallel)
+
+    journals = {
+        "10 Wayne L Rev 381, 402-407 (1964)": ("10 wayne l rev 381", "1964"),
+        "22 Tenn. L. Rev. 728": ("22 tenn l rev 728", None),
+        "68 Mich. L. Rev. 260": ("68 mich l rev 260", None),
+        "53 B.U. L. Rev. 375": ("53 b u l rev 375", None),
+        "53 B U L Rev 375": ("53 b u l rev 375", None),
+        "48 N.Y.U. L. Rev. 339": ("48 n y u l rev 339", None),
+        "48 NY UL Rev 339": ("48 ny ul rev 339", None),
+        "88 Nw. U.L. Rev. 1": ("88 nw u l rev 1", None),
+        "98 Harv. L. Rev. 1": ("98 harv l rev 1", None),
+        "123 Yale L.J. 456": ("123 yale l j 456", None),
+        "7 Geo. L.J. 8": ("7 geo l j 8", None),
+        "98 Cornell L.Q. 12": ("98 cornell l q 12", None),
+        "70 Wash. U. L.Q. 1": ("70 wash u l q 1", None),
+        "50 Am. J. Int'l L. 1": ("50 am j int l l 1", None),
+        "40 Law Q. Rev. 12": ("40 law q rev 12", None),
+        "12 Harvard Law Quarterly 7": ("12 harvard law quarterly 7", None),
+        "98 Harvard Law Review 12": ("98 harvard law review 12", None),
+        "15 Wm. & Mary L. Rev. 9": ("15 wm mary l rev 9", None),
+        "27 Harv. Int'l L.J. 4": ("27 harv int l l j 4", None),
+        "5 Vand. L. Rev. 549": ("5 vand l rev 549", None),
+        "40 Iowa L. Rev. 440": ("40 iowa l rev 440", None),
+    }
+    for text, (key, year) in journals.items():
+        rows = _resolved(text)
+        assert len(rows) == 1, text
+        assert rows[0]["type"] == "journal"
+        assert rows[0]["key"] == key
+        assert rows[0]["corpus"] == "law_journals"
+        assert rows[0]["year"] == year
+        assert rows[0]["page"] == key.split()[-1]
+
+    michigan_review = _resolved("68 Mich. L. Rev. 260")
+    assert [row["type"] for row in michigan_review] == ["journal"]
+    ohio_reports = _resolved("12 Ohio L.R. 345 and 12 Colo. L. Rep. 345 and 12 Lock. Rev. Cas. 345.")
+    assert {row["type"] for row in ohio_reports} == {"case"}
+    assert {row["key"] for row in ohio_reports} == {
+        "12 ohio l r 345",
+        "12 colo l rep 345",
+        "12 lock rev cas 345",
+    }
+
+    for negative in (
+        "15 Blacks, 7",
+        "the Michigan Law Review, in its comments",
+        "Harvard Law Review 98 at 12",
+        "12 The Rev 34",
+        "12 men 34",
+        "2 or 3",
+        "1906 or 1907",
+        "795 F Supp 2d at 632",
+    ):
+        assert _resolved(negative) == [], negative
+
+
+def test_statutes_and_caselaw_extract_from_the_same_paragraph():
+    """One paragraph yields case, statute, regulation, journal, and rule rows."""
+    rows = _resolved(
+        "Jackson, 443 U.S. 307, discussed 18 U.S.C. § 2516(1), 40 C.F.R. § 122.26, "
+        "87 Fed. Reg. 54321, Pub. L. No. 111-148, MCL 750.227, N.J.S.A. 2C:11-3, "
+        "Mich. Comp. Laws § 750.227, and Fed. R. Evid. 702. "
+        "See also 1 Dallas 1, 23 Mich., 457, and 10 Wayne L Rev 381. "
+        "The controlled substance act, 1971 PA 196, replaced 1943 P.A. 184. "
+        "Commonwealth v McCullough, 501 Pa 423, is a Pennsylvania case."
+    )
+    by_key = {row["key"]: row for row in rows}
+    assert by_key["443 u s 307"]["type"] == "case"
+    assert by_key["443 u s 307"]["corpus"] == "caselaw_access_project"
+    assert by_key["1 dall 1"]["text"] == "1 Dall. 1"
+    assert by_key["23 mich 457"]["type"] == "case"
+    assert by_key["18 u s c s 2516 1"]["type"] == "usc"
+    assert by_key["18 u s c s 2516 1"]["corpus"] == "us_code"
+    assert by_key["18 u s c s 2516 1"]["section"] == "2516(1)"
+    assert by_key["40 c f r s 122 26"]["type"] == "cfr"
+    assert by_key["87 fr 54321"]["type"] == "federal_register"
+    assert by_key["pub l no 111 148"]["type"] == "public_law"
+    assert by_key["mcl 750 227"]["jurisdiction"] == "MI"
+    assert by_key["mcl 750 227"]["corpus"] == "state_laws"
+    assert by_key["n j s a 2c 11 3"]["jurisdiction"] == "NJ"
+    assert by_key["n j s a 2c 11 3"]["section"] == "2C:11-3"
+    assert by_key["mich comp laws s 750 227"]["jurisdiction"] == "MI"
+    assert by_key["fed r evid 702"]["type"] == "rule"
+    assert by_key["fed r evid 702"]["corpus"] == "federal_rules"
+    assert by_key["10 wayne l rev 381"]["type"] == "journal"
+    assert by_key["10 wayne l rev 381"]["corpus"] == "law_journals"
+    assert by_key["1971 pa 196"]["type"] == "state_statute"
+    assert by_key["1971 pa 196"]["jurisdiction"] == "MI"
+    assert by_key["1971 pa 196"]["section"] == "196"
+    assert by_key["1943 p a 184"]["section"] == "184"
+    assert by_key["501 pa 423"]["type"] == "case"
+    assert by_key["501 pa 423"]["page"] == "423"
+    assert "case" in {row["type"] for row in rows}
+    assert "state_statute" in {row["type"] for row in rows}
+    assert "journal" in {row["type"] for row in rows}
+    assert not any(row["type"] == "case" and row["key"] in {"1971 pa 196", "1943 p a 184"} for row in rows)
 
 
 def test_bluebook_resolver_matches_caselaw_access_project_citation_field(tmp_path: Path):

@@ -17,6 +17,8 @@ import os as _ipfs_os
 from pathlib import Path as _ipfs_Path
 _CORPORA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_CORPORA_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_corpora")))
 _SCRAPERS = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_COLLECTORS_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_collectors"))) / "shared"
+_WORLD = _ipfs_Path(_ipfs_os.environ.get("WORLD_LAW_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "world_law")))
+_TESSDATA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_TESSDATA", str(_ipfs_Path.home() / ".ipfs_datasets" / "tessdata")))
 _HF_TOKEN_PATH = _ipfs_Path(_ipfs_os.environ.get("HF_TOKEN_PATH", str(_ipfs_Path.home() / ".cache" / "huggingface" / "token")))
 import os as _wl_os  # WORLD_LAW_ROOT / GLOBAL_MUNICIPALITIES_ROOT override the default paths
 
@@ -27,7 +29,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
-sys.path.insert(0, (_wl_os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law") + "/pipeline"))
+sys.path.insert(0, (_wl_os.environ.get("WORLD_LAW_ROOT", str(_WORLD)) + "/pipeline"))
 from archive import ArchiveFetcher, StagedWriter, provenance_fields, canonical_url, good_doc  # noqa: E402
 from archive.core import ArchiveError, ArchiveDeferred, ArchiveTransient, Capture  # noqa: E402
 from archive import deferral  # noqa: E402  (per-host cool-down state, 2026-10-18)
@@ -35,7 +37,7 @@ from archive import ratelimit  # noqa: E402
 from specs import SPECS  # noqa: E402
 from robots_policy import policy_for  # noqa: E402
 
-STAGE = Path((_wl_os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law") + "/staging/national"))
+STAGE = Path((_wl_os.environ.get("WORLD_LAW_ROOT", str(_WORLD)) + "/staging/national"))
 WORK = STAGE / "_archive_work"
 HF_IDS = WORK / "_hf_ids"
 # sort(1) temp files are compressed too (disk pressure); override with ARCHIVE_SORT_COMPRESS="" to disable.
@@ -222,6 +224,13 @@ class Runner:
                     if t:
                         self.hf_titles.add(re.sub(r"\s+", "", t))
         self.inc = re.compile(self.spec["include"])
+        # optional key allow/skip lists (2026-10-23, LII targets): keys matched lower-case after key_fn/group 1
+        self.allow_keys = None
+        if self.spec.get("allow_keys_file"):
+            self.allow_keys = {l.strip().lower() for l in open(self.spec["allow_keys_file"]) if l.strip()}
+        self.skip_keys = set()
+        for fp in self.spec.get("skip_keys_files", ()):
+            self.skip_keys |= {l.strip().lower() for l in open(fp) if l.strip()}
         self.exc = re.compile(self.spec["exclude"]) if self.spec.get("exclude") else None
         rb = self.spec.get("reject_body")   # e.g. SPA shells: try older captures instead
         self.validator = (lambda d, _rx=re.compile(rb.encode()): not _rx.search(d.body[:200000])) if rb else None
@@ -438,6 +447,8 @@ class Runner:
             if not key:
                 return
             k = re.sub(r"[\t\n\r]", " ", key.lower())
+            if (self.allow_keys is not None and k not in self.allow_keys) or k in self.skip_keys:
+                return
             fo.write(f"{k}\t{c.timestamp}\t{int(c.source == 'commoncrawl')}\t"
                      f"{json.dumps(c.to_dict(), ensure_ascii=False)}\n")
             n_rows += 1
@@ -685,6 +696,12 @@ class Runner:
         if "/abro/" in doc.original_url:
             rec["in_force"] = False
         rec.update(provenance_fields(doc, *policy_for(doc.original_url)))
+        if sp.get("policy_tags"):   # extra source_policy tokens (e.g. LII opt-out signal), kept with any existing tag
+            toks = [t for t in str(rec.get("source_policy") or "").split(";") if t] + list(sp["policy_tags"])
+            rec["source_policy"] = ";".join(dict.fromkeys(toks))
+            em = rec.setdefault("extra_metadata", {})
+            em.setdefault("archive", {})["source_policy"] = rec["source_policy"]
+            em.update(sp.get("extra_meta") or {})
         return rec, "ok"
 
     def build_flk(self, r, doc):
@@ -724,6 +741,12 @@ class Runner:
         if d:
             rec["published_date"] = d
         rec.update(provenance_fields(doc, *policy_for(doc.original_url)))
+        if sp.get("policy_tags"):   # extra source_policy tokens (e.g. LII opt-out signal), kept with any existing tag
+            toks = [t for t in str(rec.get("source_policy") or "").split(";") if t] + list(sp["policy_tags"])
+            rec["source_policy"] = ";".join(dict.fromkeys(toks))
+            em = rec.setdefault("extra_metadata", {})
+            em.setdefault("archive", {})["source_policy"] = rec["source_policy"]
+            em.update(sp.get("extra_meta") or {})
         if incomplete:
             rec["extra_metadata"]["archive"]["incomplete_reason"] = incomplete
         return rec, "ok"

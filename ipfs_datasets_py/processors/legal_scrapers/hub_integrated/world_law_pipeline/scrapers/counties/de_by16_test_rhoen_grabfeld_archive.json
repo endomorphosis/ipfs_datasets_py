@@ -1,0 +1,25 @@
+{
+ "country_code": "DE",
+ "place_id": "wd:Q10465",
+ "qid": "Q10465",
+ "place_name": "Landkreis Rhön-Grabfeld",
+ "iso_3166_2": "DE-BY",
+ "admin_level": "landkreis",
+ "language": "de",
+ "doc_type": "ordinance",
+ "platform": "de_by_kreisrecht",
+ "source_org": "Landkreis Rhön-Grabfeld",
+ "index_url": "https://www.rhoen-grabfeld.de/aktuelles/amtsblatt",
+ "archive_policy": "archived_robots_disallowed",
+ "max_bytes": 52428800,
+ "urls": [
+  "https://www.rhoen-grabfeld.de/fileServer/LKRG/1000/15287/Gutachterausschussverordnung-ab2015.pdf",
+  "https://www.rhoen-grabfeld.de/fileServer/LKRG/1000/15492/ENTWURF_-_Verordnung___ber_das_Naturschutzgebiet_Kernzonen_Biosph__renreservat_Rh__n_GESAMT.pdf",
+  "https://www.rhoen-grabfeld.de/fileServer/LKRG/1000/15492/ENTWURF_-_Verordnung___ber_das_Naturschutzgebiet_Kernzonen_Biosph__renreservat_Rh__n_ohne_Karten.1369235182.pdf"
+ ],
+ "titles": {
+  "https://www.rhoen-grabfeld.de/fileServer/LKRG/1000/15287/Gutachterausschussverordnung-ab2015.pdf": "Gutachterausschussverordnung-ab2015",
+  "https://www.rhoen-grabfeld.de/fileServer/LKRG/1000/15492/ENTWURF_-_Verordnung___ber_das_Naturschutzgebiet_Kernzonen_Biosph__renreservat_Rh__n_GESAMT.pdf": "ENTWURF - Verordnung ber das Naturschutzgebiet Kernzonen Biosph renreservat Rh n GESAMT",
+  "https://www.rhoen-grabfeld.de/fileServer/LKRG/1000/15492/ENTWURF_-_Verordnung___ber_das_Naturschutzgebiet_Kernzonen_Biosph__renreservat_Rh__n_ohne_Karten.1369235182.pdf": "ENTWURF - Verordnung ber das Naturschutzgebiet Kernzonen Biosph renreservat Rh n ohne Karten.1369235182"
+ }
+}

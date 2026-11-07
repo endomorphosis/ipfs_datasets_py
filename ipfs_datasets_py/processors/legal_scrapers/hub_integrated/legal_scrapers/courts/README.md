@@ -1,0 +1,3 @@
+# courts/ — World Courts & Courthouses scrapers and normalizer (Endomorphosis world-laws)
+
+Scripts only (no data). `build.py` builds the source inventory, `robots.py` checks robots.txt, `phase1.py`/`phase1b.py`/`phase2.py`/`phase3.py` fetch link-level metadata (courts, rules index, forms index, judges from official rosters) with a polite UA and robots compliance, `normalize.py` writes the pinned `world-courts-raw/v1` parquet schemas. Output data: https://huggingface.co/datasets/endomorphosis/ipfs_court_data. Scripts expect to be run from a working directory laid out as `/workspace/courts` (`data/<phase>/`, `TERMS.md`, `sources.csv`); paths are absolute in `normalize.py`.

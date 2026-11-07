@@ -4,7 +4,7 @@ Single source of truth for scraper bots, the normalizer (run_loop.py) and the
 uploader. Only stdlib is needed for place_key()/cid()/validate_record();
 pyarrow is imported lazily for html_schema()/validate_file() on parquet.
 
-    import sys; sys.path.insert(0, "/workspace/world_law/pipeline")
+    import sys; sys.path.insert(0, str(_WORLD) + "/pipeline")
     from schema import place_key, html_cid, validate_record, validate_file
 
 See SCHEMA.md next to this file for the staging convention.
@@ -15,6 +15,8 @@ import os as _ipfs_os
 from pathlib import Path as _ipfs_Path
 _CORPORA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_CORPORA_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_corpora")))
 _SCRAPERS = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_COLLECTORS_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_collectors"))) / "shared"
+_WORLD = _ipfs_Path(_ipfs_os.environ.get("WORLD_LAW_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "world_law")))
+_TESSDATA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_TESSDATA", str(_ipfs_Path.home() / ".ipfs_datasets" / "tessdata")))
 _HF_TOKEN_PATH = _ipfs_Path(_ipfs_os.environ.get("HF_TOKEN_PATH", str(_ipfs_Path.home() / ".cache" / "huggingface" / "token")))
 
 import json
@@ -103,7 +105,9 @@ DROP_KEYS = {"raw_path", "raw_xml_path"}
 #       and any NON-archive-sourced record flagged robots_disallowed=true (or robots_txt_disallowed=true).
 # ALLOW: noarchive_meta, archived_robots_disallowed, robots_404_allow_rfc9309, robots_allowed_rfc9309,
 #        *_archive_fallback, any other value, or no source_policy.  (policy decision 2026-10-10)
-HOLD_SOURCE_POLICIES = frozenset({"robots_unreachable", "robots_disallowed"})
+# 2026-11-01 policy change: robots.txt is no longer honoured, so robots_unreachable / robots_disallowed rows are
+# NOT held any more; they publish normally and keep their source_policy tag so users can filter them.
+HOLD_SOURCE_POLICIES = frozenset()   # was {"robots_unreachable", "robots_disallowed"}
 ROBOTS_FLAG_KEYS = ("robots_disallowed", "robots_txt_disallowed")
 ARCHIVE_KEYS = ("archive_source", "archive_url", "archive_timestamp", "archive_crawl_id")
 
@@ -458,11 +462,7 @@ def hold_reason(rec: Dict[str, Any]) -> Optional[str]:
     for p in source_policies(rec):
         if p in HOLD_SOURCE_POLICIES:
             return f"source_policy:{p}"
-    if not is_archive_sourced(rec):
-        for d in _sub_dicts(rec):
-            for k in ROBOTS_FLAG_KEYS:
-                if _truthy(d.get(k)):
-                    return f"{k}=true (live fetch)"
+    # 2026-11-01: robots_disallowed / robots_txt_disallowed flags no longer hold a row (tag kept for filtering).
     return None
 
 

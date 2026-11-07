@@ -1,0 +1,43 @@
+[
+ {
+  "name": "Landkreis Nürnberger Land",
+  "qid": "Q10449",
+  "url": "https://www.nuernberger-land.de/landratsamt/oeffentliche-bekanntmachungen",
+  "iso": "DE-BY",
+  "pdf_re": "amtsbl|/AB_|satzung|verordnung|bekanntm|allgemeinverf|ordnung|richtlinie|geb(ü|ue)hr|tarif"
+ },
+ {
+  "name": "Landkreis Ostallgäu",
+  "qid": "Q10405",
+  "url": "https://www.ostallgaeu.de/landkreis-landrat/oeffentliche-bekanntmachungen",
+  "iso": "DE-BY"
+ },
+ {
+  "name": "Landkreis Donau-Ries",
+  "qid": "Q10418",
+  "url": "https://www.donau-ries.de/amtsblatt",
+  "iso": "DE-BY",
+  "pdf_re": "amtsbl|/AB_|satzung|verordnung|bekanntm|allgemeinverf|ordnung|richtlinie|geb(ü|ue)hr|tarif"
+ },
+ {
+  "name": "Landkreis Bad Kissingen",
+  "qid": "Q10466",
+  "url": "https://www.landkreis-badkissingen.de/buerger--politik/oeffentlbekanntmachungen/index.html",
+  "iso": "DE-BY",
+  "pdf_re": "amtsbl|/AB_|satzung|verordnung|bekanntm|allgemeinverf|ordnung|richtlinie|geb(ü|ue)hr|tarif"
+ },
+ {
+  "name": "Landkreis Mühldorf a. Inn",
+  "qid": "Q10537",
+  "url": "https://www.lra-mue.de/buergerservice-und-landratsamt/aktuelles/amtsblaetter",
+  "iso": "DE-BY",
+  "pdf_re": "amtsbl|/AB_|satzung|verordnung|bekanntm|allgemeinverf|ordnung|richtlinie|geb(ü|ue)hr|tarif"
+ },
+ {
+  "name": "Landkreis Weilheim-Schongau",
+  "qid": "Q10516",
+  "url": "https://www.weilheim-schongau.de/aktuelles/amtsblatt/",
+  "iso": "DE-BY",
+  "pdf_re": "amtsbl|/AB_|satzung|verordnung|bekanntm|allgemeinverf|ordnung|richtlinie|geb(ü|ue)hr|tarif"
+ }
+]

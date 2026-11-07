@@ -1,0 +1,27 @@
+{
+ "country_code": "FR",
+ "place_id": "wd:Q12740",
+ "qid": "Q12740",
+ "place_name": "Sarthe",
+ "iso_3166_2": "FR-72",
+ "admin_level": "departement",
+ "language": "fr",
+ "doc_type": "gazette_act",
+ "consolidated": false,
+ "platform": "fr_raa_conseil_departemental",
+ "source_org": "Conseil départemental — Sarthe",
+ "issuer": "conseil_departemental",
+ "max_bytes": 52428800,
+ "index_url": "https://www.sarthe.fr/departement-sarthe/services-en-ligne/les-arretes-du-conseil-departemental-de-la-sarthe",
+ "crawl_delay": 3.0,
+ "urls": [
+  "https://www.sarthe.fr/sites/default/files/arretes-actes-administratifs/arrete_26_6492.pdf",
+  "https://www.sarthe.fr/sites/default/files/arretes-actes-administratifs/arrete_26_6487.pdf",
+  "https://www.sarthe.fr/sites/default/files/arretes-actes-administratifs/arrete_26_6486.pdf"
+ ],
+ "titles": {
+  "https://www.sarthe.fr/sites/default/files/arretes-actes-administratifs/arrete_26_6492.pdf": "Arrêté portant fixation, pour l'année 2026, du montant de la dotation globalisée commune de financement, ainsi que la répartition pour chacune des structures gérées par l'association ADAPEI de la Sarthe",
+  "https://www.sarthe.fr/sites/default/files/arretes-actes-administratifs/arrete_26_6487.pdf": "Délégation de signature de Mme Nathalie ANDRE Attaché principal territorial Chef de service de Régulation des informations préoccupantes et de l'accueil des mineurs Direction adjointe de l'Enfance et de la famille Direction de l'Enfance et de la famille Direction générale adjointe des Solidarités",
+  "https://www.sarthe.fr/sites/default/files/arretes-actes-administratifs/arrete_26_6486.pdf": "Délégation de signature de Mme Annabel CHAMP Assistant socio-éducatif de classe exceptionnelle territorial Service adjoint de l'Aide sociale à l'Enfance Service de l'Aide sociale à l'enfance Direction adjointe de l'Enfance et de la famille Direction de l'Enfance et de la famille Direction générale adjointe des Solidarités"
+ }
+}

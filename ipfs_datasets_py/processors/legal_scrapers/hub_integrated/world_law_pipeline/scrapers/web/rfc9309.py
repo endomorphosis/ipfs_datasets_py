@@ -5,8 +5,32 @@
 - '*' matches any sequence, '$' anchors the end
 - /robots.txt is always allowed
 """
+import os
 import re
 from urllib.parse import urlparse, unquote
+
+# Policy switch (Benjamin, 2026-11-01): IGNORE_ROBOTS=1 makes every crawler skip robots.txt Disallow checks
+# (can_fetch always True, 5xx/unreachable robots no longer disallow-all, no crawl_delay_too_long skips).
+# Crawl-delay is still honoured as a politeness delay, clamped to [floor, CRAWL_DELAY_CAP] seconds.
+CRAWL_DELAY_CAP = 10.0
+
+
+def ignore_robots() -> bool:
+    return os.environ.get("IGNORE_ROBOTS", "").strip().lower() in ("1", "true", "yes", "on")
+
+
+def politeness_delay(crawl_delay, floor=1.0):
+    """Seconds between requests to one host: max(floor, crawl-delay) and, when robots are ignored, never more
+    than CRAWL_DELAY_CAP (a longer Crawl-delay is treated as 10 s). floor is never below 1 s."""
+    d = max(1.0, float(floor))
+    try:
+        if crawl_delay:
+            d = max(d, float(crawl_delay))
+    except (TypeError, ValueError):
+        pass
+    if ignore_robots():
+        d = min(d, max(CRAWL_DELAY_CAP, float(floor)))
+    return d
 
 
 def _parse(text):
@@ -75,6 +99,8 @@ class Robots:
         return max(ds) if ds else None
 
     def can_fetch(self, ua, url):
+        if ignore_robots():
+            return True
         if self.allow_all:
             return True
         if self.disallow_all:

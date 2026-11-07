@@ -16,6 +16,8 @@ import os as _ipfs_os
 from pathlib import Path as _ipfs_Path
 _CORPORA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_CORPORA_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_corpora")))
 _SCRAPERS = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_COLLECTORS_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_collectors"))) / "shared"
+_WORLD = _ipfs_Path(_ipfs_os.environ.get("WORLD_LAW_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "world_law")))
+_TESSDATA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_TESSDATA", str(_ipfs_Path.home() / ".ipfs_datasets" / "tessdata")))
 _HF_TOKEN_PATH = _ipfs_Path(_ipfs_os.environ.get("HF_TOKEN_PATH", str(_ipfs_Path.home() / ".cache" / "huggingface" / "token")))
 import os as _wl_os  # WORLD_LAW_ROOT / GLOBAL_MUNICIPALITIES_ROOT override the default paths
 import argparse, hashlib, json, logging, os, re, subprocess, sys, tempfile, threading, time
@@ -25,13 +27,14 @@ from urllib.parse import urljoin, urlparse
 import requests
 
 HERE = Path(__file__).resolve().parent
-sys.path.insert(0, (_wl_os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law") + "/pipeline"))
+sys.path.insert(0, (_wl_os.environ.get("WORLD_LAW_ROOT", str(_WORLD)) + "/pipeline"))
 sys.path.insert(0, str(HERE.parent))
 sys.path.insert(0, "/workspace/ipfs_datasets_py")
 import schema as S  # noqa: E402
 from common.rfc9309 import Robots  # noqa: E402
+from common import robots_policy as RP  # noqa: E402  (RESPECT_ROBOTS switch, owner policy 2026-11-01)
 
-STAGE = Path((_wl_os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law") + "/staging/asia_latam"))
+STAGE = Path((_wl_os.environ.get("WORLD_LAW_ROOT", str(_WORLD)) + "/staging/asia_latam"))
 OUT, STATE, ROBOTS_DIR, QUAR = STAGE / "ES", STAGE / "_state" / "es", STAGE / "_robots", STAGE / "_quarantine" / "ES"
 UA = "JusticeDAO-WorldLaw/1.0 (+https://github.com/endomorphosis/ipfs_datasets_py; municipal law research crawler; polite)"
 BOARD_ID = "97521486-f59b-11de-b600-00237da12c6a"
@@ -71,9 +74,13 @@ def get_robots(sess, host, interval):
     try:
         r = sess.get(f"https://{host}/robots.txt", timeout=25)
     except requests.RequestException as e:
-        return None, f"robots_unreachable: {type(e).__name__}"
+        if RP.RESPECT:
+            return None, f"robots_unreachable: {type(e).__name__}"
+        RP.note_host(host, f"robots_unreachable: {type(e).__name__}"); return Robots(allow_all=True), None
     if r.status_code >= 500:
-        return None, f"robots_unreachable: HTTP {r.status_code}"
+        if RP.RESPECT:
+            return None, f"robots_unreachable: HTTP {r.status_code}"
+        RP.note_host(host, f"robots_unreachable: HTTP {r.status_code}"); return Robots(allow_all=True), None
     ROBOTS_DIR.mkdir(parents=True, exist_ok=True)
     (ROBOTS_DIR / f"{host}.txt").write_text(r.text if r.status_code == 200 else f"# HTTP {r.status_code}\n")
     if r.status_code >= 400:
@@ -189,13 +196,20 @@ def crawl(seed, a):
                 gate(a.interval)
                 rr = sess.get(d["url"], timeout=60)
                 ct = rr.headers.get("content-type", "")
+                if "pdf" not in ct:   # preview page: follow its session-bound "Descargar una copia" link to the PDF
+                    m = re.search(r'<a href="([^"]+)"[^>]*>\s*<span class="icon-pdf[^"]*"></span>\s*(?:Descar|Deskarg|Download)', rr.text)  # es/gl/ca/eu label
+                    if m:
+                        gate(a.interval)
+                        dl = sess.get(urljoin(d["url"], m.group(1).replace("&amp;", "&")), timeout=90)
+                        if dl.status_code == 200 and dl.content[:5] == b"%PDF-":
+                            rr, ct = dl, "application/pdf"
                 if "pdf" in ct:
                     text, cf = pdf_text(rr.content), "pdf_text"
                 else:
                     from bs4 import BeautifulSoup
                     text, cf = BeautifulSoup(rr.text, "lxml").get_text("\n", strip=True), "html"
                 rows.append({"place_id": seed["place_id"], "country_code": "ES", "doc_id": did, "source_platform": "es_sedelectronica",
-                             "source_url": d["url"], "doc_type": doc_type(d.get("title")), "language": "es",
+                             "source_url": d["url"], **RP.fields(d["url"]), "doc_type": doc_type(d.get("title")), "language": "es",
                              "html_title": d.get("title") or d.get("label"), "title_native": d.get("title") or d.get("label"),
                              "number": d.get("expediente") or None, "published_date": jdate(d.get("published")), "in_force": None,
                              "consolidated": False, "content_format": cf, "text": text, "retrieved_at": now_utc(),

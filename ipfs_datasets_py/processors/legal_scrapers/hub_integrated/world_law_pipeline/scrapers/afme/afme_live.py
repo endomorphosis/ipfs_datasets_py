@@ -1,149 +1,197 @@
-"""afme polite live crawler (rebuilt 2026-10-16). RFC 9309 via pipeline/scrapers/web/rfc9309.py; delay = max(robots Crawl-delay, cfg min_delay>=3 s) per host;
-robots unreachable (non-200/404 or HTML instead of robots) -> host skipped; 404 robots -> allow (RFC 9309 2.3.1.3). No challenge bypass: a page that looks like a
-JS/bot challenge stops the host. Only docs whose title matches cfg title_include and not title_exclude (national-content markers) are kept.
-cfg: {cc, name(batch), platform, language, doc_type, min_delay, threads, sites:[{host, seeds[], place_id | "by_host", follow_regex, doc_regex, depth, max_docs, note}],
-      title_include, title_exclude}
-usage: afme_live.py cfg.json [test]   checkpoint: per place file <key>.<name>2*.jsonl in the outdir -> site skipped."""
+#!~/.ipfs_datasets/world_law/.venv_afme/bin/python
+"""afme generic live crawler, configured per country by out/afme_config/<CC>.json.
+
+Config:
+{"cc": "KE", "source_platform": "ke_kenyalaw", "language": "en", "doc_type": "ordinance",
+ "consolidated": false, "content_format": "html", "source_official": true, "source_org": "...",
+ "host_min_interval": 5.0,
+ "places": [{"place_id": "wd:Q3870", "place_name": "Nairobi", "admin_level": "county",
+             "docs": [{"url": "https://...", "doc_id": "...", "title_native": "...", "number": "..."}],
+             "index_url": "https://...", "link_regex": "href=\"([^\"]+\\.pdf)\""}]}
+Docs can be listed, or discovered from index_url with link_regex (doc_id = URL path unless given).
+Output: out/afme/raw/<CC>/<place_key>.<cc>_live_<UTC>.jsonl ; afme_stage.py validates and stages it.
+robots.txt is NOT enforced (2026-11-01); rows carry source_policy=robots_not_checked.
+Never bypasses Cloudflare/WAF/captcha: a challenge is logged and the URL is skipped. No proxies.
+"""
 # Harvested collector path injection. Do not collect from /workspace.
 import os as _ipfs_os
 from pathlib import Path as _ipfs_Path
 _CORPORA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_CORPORA_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_corpora")))
 _SCRAPERS = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_COLLECTORS_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_collectors"))) / "shared"
+_WORLD = _ipfs_Path(_ipfs_os.environ.get("WORLD_LAW_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "world_law")))
+_TESSDATA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_TESSDATA", str(_ipfs_Path.home() / ".ipfs_datasets" / "tessdata")))
 _HF_TOKEN_PATH = _ipfs_Path(_ipfs_os.environ.get("HF_TOKEN_PATH", str(_ipfs_Path.home() / ".cache" / "huggingface" / "token")))
-import os as _wl_os  # WORLD_LAW_ROOT / GLOBAL_MUNICIPALITIES_ROOT override the default paths
-import csv,json,os,re,sys,time,glob,subprocess,datetime,shutil,threading,urllib.parse,collections
-from concurrent.futures import ThreadPoolExecutor
+import argparse, hashlib, re, sys, time
+from urllib.parse import urljoin, urlparse
+import afme_common as C
 import requests
-from bs4 import BeautifulSoup as B
-sys.path.insert(0,(_wl_os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law") + "/pipeline")); sys.path.insert(0,(_wl_os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law") + "/pipeline/scrapers/web"))
-from schema import place_key, validate_file
-from rfc9309 import Robots
-UA="world-municipal-law-research/1.0 (+https://huggingface.co/datasets/endomorphosis/world_municipal_law)"
-cfg=json.load(open(sys.argv[1])); TEST=len(sys.argv)>2 and sys.argv[2]=="test"
-CC=cfg["cc"]; NAME=cfg["name"]; BASE=(_wl_os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law") + "/out/afme"); OUT=f"{BASE}/_test/{CC}_{NAME}" if TEST else f"{BASE}/{CC}"; os.makedirs(OUT,exist_ok=True)
-LOG=open(f"{BASE}/_live_{NAME}{'_test' if TEST else ''}.events.log","a")
-def ev(*a): LOG.write(datetime.datetime.now().strftime("%H:%M:%S ")+" ".join(map(str,a))+"\n"); LOG.flush()
-places={r["place_id"]:r for r in csv.DictReader(open((_wl_os.environ.get("GLOBAL_MUNICIPALITIES_ROOT", "/workspace/global_municipalities") + "/global_municipalities_candidate.csv"))) if r["country_code"]==CC}
-INC=re.compile(cfg["title_include"],re.I); EXC=re.compile(cfg.get("title_exclude","$^"),re.I)
-CHAL=re.compile(r"(?i)(SHA256_init|cf-chl|challenge-platform|just a moment|checking your browser|captcha|ddos-guard|incapsula)")
-class Host:
-    def __init__(s,host,mind):
-        s.host=host; s.next=0; s.S=requests.Session(); s.S.headers["User-Agent"]=UA
-        r=s.S.get(f"https://{host}/robots.txt",timeout=30,allow_redirects=True)
-        if r.status_code==404 or (r.status_code==200 and "<html" in r.text[:500].lower() and "disallow" not in r.text.lower()): 
-            if r.status_code==200: raise PermissionError("robots.txt served as HTML page (unreachable per policy)")
-            s.rb=Robots(allow_all=True); s.raw="(404)"
-        elif r.status_code==200: s.rb=Robots(r.text); s.raw=r.text[:2000]
-        else: raise PermissionError(f"robots http {r.status_code}")
-        s.delay=max(float(s.rb.crawl_delay(UA) or 0),mind); s.next=time.time()+s.delay
-    def get(s,u):
-        if not s.rb.can_fetch(UA,u): raise PermissionError("robots disallow "+u)
-        d=s.delay
-        for i in range(4):
-            w=s.next-time.time()
-            if w>0: time.sleep(w)
-            s.next=time.time()+s.delay
-            try: r=s.S.get(u,timeout=60)
-            except Exception as e: time.sleep(d); d*=2; continue
-            if r.status_code in (429,503): ra=r.headers.get("Retry-After"); time.sleep(float(ra) if ra and ra.isdigit() else d); d*=2; continue
-            if r.status_code>=400: raise RuntimeError(f"http {r.status_code}")
-            if "html" in r.headers.get("Content-Type","") and CHAL.search(r.text[:20000]): raise PermissionError("challenge page; stop host")
-            return r
-        raise RuntimeError("fetch failed")
-def text_of(r):
-    if r.content[:5]==b"%PDF-":
-        p=f"/tmp/afme_live_{os.getpid()}_{threading.get_ident()}.pdf"; open(p,"wb").write(r.content)
-        return "pdf_text",None,subprocess.run(["pdftotext","-layout",p,"-"],capture_output=True,text=True,timeout=120).stdout
-    s=B(r.content,"html.parser")
-    for t in s(["script","style","nav","header","footer","noscript","form","aside"]): t.decompose()
-    m=None
-    for sel in cfg.get("content_selectors",[])+["article","main","#content",".content","body"]:
-        m=s.select_one(sel)
-        if m and len(m.get_text(strip=True))>200: break
-    m=m or s
-    return "html",f'<div class="chunk-content">{m.decode_contents()}</div>',m.get_text("\n",strip=True)
-ts=datetime.datetime.now(datetime.UTC).strftime("%Y%m%dT%H%M%SZ"); rep=[]; lock=threading.Lock()
-def run_site(site):
-    pid=site["place_id"]; p=places.get(pid)
-    if not p: return {"host":site["host"],"status":"no_place"}
-    key=place_key(pid,p.get("gnis"),CC)
-    if glob.glob(f"{OUT}/{key}.{NAME}2*.jsonl"): return {"host":site["host"],"status":"skip_done"}
-    if shutil.disk_usage("/workspace").free<35*2**30: return {"host":site["host"],"status":"disk_floor"}
-    try: H=Host(site["host"],float(cfg.get("min_delay",3)))
-    except Exception as e: ev(site["host"],"robots",repr(e)[:120]); return {"host":site["host"],"status":"robots_skip","why":repr(e)[:120]}
-    FOL=re.compile(site["follow_regex"]); DOC=re.compile(site["doc_regex"]); seen=set(); q=[(u,0) for u in site["seeds"]]; cands={}
-    maxd=(5 if TEST else site.get("max_docs",300))
-    try:
-        while q and len(seen)<site.get("max_pages",60 if not TEST else 15):
-            u,dep=q.pop(0)
-            if u in seen: continue
-            seen.add(u)
-            try: r=H.get(u)
-            except PermissionError as e:
-                ev(site["host"],"perm",repr(e)[:120])
-                if "challenge" in str(e): raise
-                continue
-            except Exception as e: ev(site["host"],"err",u,repr(e)[:80]); continue
-            s=B(r.content,"html.parser")
-            for a in s.find_all("a",href=True):
-                h=urllib.parse.urljoin(u,a["href"]).split("#")[0]
-                if urllib.parse.urlparse(h).hostname not in (site["host"],"www."+site["host"],site["host"].replace("www.","")): continue
-                lt=a.get_text(" ",strip=True) or a.get("title","")
-                if site.get("card_title") and (not lt or re.fullmatch(site.get("generic_link","الاطلاع|عرض|تحميل|download|view|ver|descargar"),lt,re.I)):
-                    par=a
-                    for _ in range(5):
-                        par=par.parent
-                        if par is None: break
-                        ct=par.get_text(" ",strip=True).replace(lt,"").strip()
-                        if len(ct)>8: lt=re.split(site.get("card_cut","تاريخ النشر|Fecha"),ct)[0].strip()[:300]; break
-                if DOC.search(h):
-                    if h not in cands: cands[h]=lt
-                elif FOL.search(h) and dep<site.get("depth",1): q.append((h,dep+1))
-    except PermissionError as e: return {"host":site["host"],"status":"challenge_stop"}
-    rows=[]; skipped=collections.Counter()
-    for h,lt in list(cands.items()):
-        if len(rows)>=maxd: break
-        title=lt or urllib.parse.unquote(h.rstrip("/").rsplit("/",1)[-1])
-        if not INC.search(title) and not INC.search(urllib.parse.unquote(h)): skipped["not_local_rule"]+=1; continue
-        if EXC.search(title): skipped["national_marker"]+=1; continue
+from schema import place_key, validate_record
+
+MAX_BODY = 25 * 1024 * 1024
+
+
+class Live:
+    def __init__(self, min_interval=5.0, timeout=(10, 40)):
+        self.s = requests.Session()
+        self.s.trust_env = False          # no proxies from env
+        self.s.proxies = {}
+        self.s.headers.update({"User-Agent": C.UA, "Accept-Language": "en,fr;q=0.8,ar;q=0.6"})
+        self.min_interval = min_interval
+        self.timeout = timeout
+        self.last = {}                    # host -> last request end
+        self.cool = {}                    # host -> not_before
+        self.skip_hosts = set()           # hosts that served a challenge (skip for this run)
+
+    def get(self, url):
+        host = urlparse(url).hostname or ""
+        if any(f in host for f in C.FORBIDDEN_FRAGMENTS):
+            return None, "forbidden_host"
+        if host in self.skip_hosts:
+            return None, "host_challenged_earlier"
+        if self.cool.get(host, 0) > time.time():
+            return None, "host_cooling_down"
+        wait = self.last.get(host, 0) + self.min_interval - time.time()
+        if wait > 0:
+            time.sleep(wait)
         try:
-            r=H.get(h); fmt,html,text=text_of(r)
-            if fmt=="html" and site.get("pdf_in_page",True):   # publication node -> attached PDF
-                s=B(r.content,"html.parser"); pdf=next((urllib.parse.urljoin(h,a["href"]) for a in s.find_all("a",href=True) if re.search(r"\.pdf($|\?)",a["href"],re.I)),None)
-                ttl=(s.h1.get_text(" ",strip=True) if s.h1 else "")
-                if ttl: title=ttl
-                if EXC.search(title) or not INC.search(title+" "+h): skipped["title_after_open"]+=1; continue
-                if pdf and len((text or "").strip())<800:
-                    try: r2=H.get(pdf); f2,_,t2=text_of(r2)
-                    except Exception: f2=None
-                    if f2=="pdf_text": fmt,html,text,h=f2,None,t2,pdf
-        except PermissionError as e:
-            if "challenge" in str(e): break
-            skipped["robots"]+=1; continue
-        except Exception as e: skipped["fetch_err"]+=1; continue
-        rec=dict(place_id=pid,country_code=CC,doc_id=re.sub(r"^https?://(www\.)?","",h).rstrip("/"),source_platform=cfg["platform"],source_url=h,
-            doc_type=site.get("doc_type",cfg.get("doc_type","decision")),language=site.get("language",cfg["language"]),title_native=title[:500],consolidated=False,in_force=None,
-            content_format=fmt,retrieved_at=datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),source_policy="robots_allowed_rfc9309",
-            source_official=True,source_org=site.get("org",site["host"]),place_name=p["place_name"],qid=p["qid"],admin_level=p["admin_level"],
-            platform=cfg["platform"],platform_place_id=site["host"],extra_metadata={"crawl_delay_s":H.delay,"site_note":site.get("note","")})
-        if html: rec["html"]=html
-        rec["text"]=text
-        y=re.search(r"(19|20)\d\d",title)
-        if y: rec["adopted_date"]=y.group(0)
-        if len((text or "").strip())<200: rec["content_complete"]=False; rec["extra_metadata"]["note"]="no text layer (scan) -> raw PDF queue"
-        rows.append(rec)
-    if not rows: return {"host":site["host"],"place":p["place_name"],"status":"no_docs","cands":len(cands),"skipped":dict(skipped)}
-    with lock:
-        f=f"{OUT}/{key}.{NAME}{ts}p0001.jsonl"
-        if os.path.exists(f): f=f.replace("p0001",f"p{len(glob.glob(f.replace('p0001','p*'))) +1:04d}")
-        with open(f+".tmp","w") as o:
-            for r in rows: o.write(json.dumps(r,ensure_ascii=False)+"\n")
-            o.flush(); os.fsync(o.fileno())
-        os.rename(f+".tmp",f); v=validate_file(f)
-    return {"host":site["host"],"place_id":pid,"name":p["place_name"],"docs":len(rows),"skipped":dict(skipped),"ok":v["ok"],"errors":v.get("errors",[])[:2]}
-sites=cfg["sites"][: (20 if TEST else None)]
-with ThreadPoolExecutor(int(cfg.get("threads",3))) as ex:
-    for res in ex.map(run_site,sites):
-        rep.append(res); print(json.dumps(res,ensure_ascii=False),flush=True)
-json.dump(rep,open(f"{BASE}/_live_{NAME}_report_{'test' if TEST else 'full'}_{ts}.json","w"),indent=1,ensure_ascii=False)
-print("DONE ok",sum(1 for r in rep if r.get("ok")),"bad",sum(1 for r in rep if r.get("ok") is False),"of",len(rep),flush=True)
+            r = self.s.get(url, timeout=self.timeout, stream=True, allow_redirects=True)
+            body = b""
+            for chunk in r.iter_content(65536):
+                body += chunk
+                if len(body) > MAX_BODY:
+                    r.close(); return None, "too_large"
+        except requests.RequestException as e:
+            self.last[host] = time.time()
+            return None, f"neterr:{type(e).__name__}"
+        self.last[host] = time.time()
+        ch = C.is_challenge(r.status_code, r.headers, body)
+        if ch:
+            self.skip_hosts.add(host)
+            return None, f"skip_challenge:{ch}"
+        if r.status_code == 429 or r.status_code >= 500:
+            ra = r.headers.get("Retry-After", "")
+            self.cool[host] = time.time() + (int(ra) if ra.isdigit() else 300)
+            return None, f"deferred:{r.status_code}"
+        if r.status_code != 200:
+            return None, f"http_{r.status_code}"
+        return r, body
+
+
+def doc_record(cfg, place, d, resp, body):
+    ctype = resp.headers.get("Content-Type", "").lower()
+    is_pdf = "pdf" in ctype or body[:5] == b"%PDF-"
+    rec = {
+        "place_id": place["place_id"], "country_code": cfg["cc"],
+        "doc_id": d.get("doc_id") or urlparse(resp.url).path.strip("/") or hashlib.sha1(resp.url.encode()).hexdigest()[:16],
+        "source_platform": cfg["source_platform"], "source_url": d["url"],
+        "doc_type": d.get("doc_type", cfg.get("doc_type", "ordinance")),
+        "language": d.get("language", cfg.get("language", "en")),
+        "consolidated": bool(d.get("consolidated", cfg.get("consolidated", False))),
+        "content_format": "pdf_text" if is_pdf else cfg.get("content_format", "html"),
+        "retrieved_at": C.utc_iso(), "source_policy": C.LIVE_POLICY,
+        "source_official": cfg.get("source_official", True),
+    }
+    for k in ("title_native", "number", "adopted_date", "published_date", "effective_date", "in_force"):
+        if d.get(k) is not None:
+            rec[k] = d[k]
+    for k in ("place_name", "admin_level", "qid", "iso_3166_2"):
+        if place.get(k):
+            rec[k] = place[k]
+    if cfg.get("source_org"):
+        rec["source_org"] = cfg["source_org"]
+    rec["platform"] = cfg["source_platform"]
+    if is_pdf:
+        txt = pdf_text(body)
+        rec["text"] = txt
+        if not txt.strip():
+            rec["content_complete"] = False   # scanned PDF: metadata-only row, OCR later
+    else:
+        enc = resp.encoding or "utf-8"
+        html = body.decode(enc, errors="replace")
+        rec["html"] = html
+        if "title_native" not in rec:
+            m = re.search(r"<title[^>]*>(.*?)</title>", html, re.I | re.S)
+            rec["title_native"] = re.sub(r"\s+", " ", m.group(1)).strip() if m else rec["doc_id"]
+    if "title_native" not in rec and "number" not in rec:
+        rec["title_native"] = rec["doc_id"]
+    return rec
+
+
+def pdf_text(body):
+    import subprocess
+    try:
+        p = subprocess.run(["pdftotext", "-layout", "-", "-"], input=body, capture_output=True, timeout=120)
+        return p.stdout.decode("utf-8", errors="replace")
+    except Exception:
+        return ""
+
+
+def discover(live, place):
+    if not place.get("index_url"):
+        return []
+    r, body = live.get(place["index_url"])
+    if r is None:
+        C.log(f"index {place['index_url']}: {body}")
+        return []
+    html = body.decode(r.encoding or "utf-8", errors="replace")
+    rx = re.compile(place.get("link_regex", r'href="([^"]+\.pdf)"'), re.I)
+    seen, out = set(), []
+    for m in rx.finditer(html):
+        u = urljoin(r.url, m.group(1))
+        if u not in seen:
+            seen.add(u); out.append({"url": u})
+    return out
+
+
+def run(cc, max_urls=None, places_filter=None, dry=False):
+    C.cap_address_space()
+    cfg = C.load_config(cc); cc = cfg["cc"] = cfg["cc"].upper()
+    live = Live(cfg.get("host_min_interval", 5.0))
+    done = C.load_done("live", cc)
+    n_urls = 0
+    for place in cfg["places"]:
+        if places_filter and place["place_id"] not in places_filter:
+            continue
+        pk = place_key(place["place_id"])
+        C.disk_check(); C.mem_check()
+        docs = list(place.get("docs", [])) + discover(live, place)
+        rows, deferred = [], 0
+        for d in docs:
+            if d["url"] in done:
+                continue
+            if max_urls is not None and n_urls >= max_urls:
+                break
+            n_urls += 1
+            r, info = live.get(d["url"])
+            if r is None:
+                C.log(f"{cc} {pk} {d['url']}: {info}")
+                if info.startswith(("deferred", "neterr", "host_cooling")):
+                    deferred += 1            # not done: retry next run
+                elif not dry:
+                    C.mark_done("live", cc, d["url"], "skip_challenge" if "challenge" in info else "miss", info)
+                continue
+            rec = doc_record(cfg, place, d, r, info)
+            errs = validate_record(rec)
+            if errs:
+                C.log(f"{cc} {pk} invalid {d['url']}: {errs}")
+                continue
+            rows.append(rec)
+            C.mem_check()
+        if rows and not dry:
+            p = C.write_raw(cc, pk, f"{cc.lower()}_live_", rows)
+            for rr in rows:
+                C.mark_done("live", cc, rr["source_url"], "ok", p.name)
+            C.log(f"{cc} {pk}: {len(rows)} rows -> {p}")
+        if max_urls is not None and n_urls >= max_urls:
+            break
+    C.log(f"{cc} done: {n_urls} URLs tried, RSS {C.rss_mb():.0f} MB")
+
+
+if __name__ == "__main__":
+    ap = argparse.ArgumentParser()
+    ap.add_argument("cc")
+    ap.add_argument("--max-urls", type=int)
+    ap.add_argument("--place", action="append")
+    ap.add_argument("--dry-run", action="store_true", help="fetch but write nothing")
+    a = ap.parse_args()
+    run(a.cc, a.max_urls, a.place, a.dry_run)

@@ -14,8 +14,8 @@ Scope     : dt.type = algemeen verbindend voorschrift (verordening) | Verordenin
             gemeenteblad is the as-published text incl. amendment and repeal acts.
 Usage: python3 nl_gmb.py catalog | fetch [--limit N] [--test N] | all | status
 """
-from __future__ import annotations
 
+from __future__ import annotations
 import argparse
 import gc
 import json
@@ -177,8 +177,11 @@ def build(a, xml, pm):
     }
 
 
-def fetch(sess, limit=None, test=None):
+def fetch(sess, limit=None, test=None, redo_robots=False):
     done = Done(STATE / ("done_test.sqlite" if test else "done.sqlite"))
+    redo = {r[0] for r in done.c.execute("select id from done where why='robots_disallowed'")} if redo_robots else set()
+    if redo:
+        log.info("redo-robots: %d ids previously robots_disallowed", len(redo))
     pm = C.PlaceMap()
     stg = Stager("NL", "nlgmb", log, max_docs=500, stage=(STAGE / "_test_nl") if test else STAGE).graceful(done)
     it = random.Random(7).sample(CAT.read_text(encoding="utf-8").splitlines(), test) if test else CAT.open(encoding="utf-8")
@@ -186,7 +189,7 @@ def fetch(sess, limit=None, test=None):
     for ln in it:
         a = json.loads(ln)
         did = a["id"]
-        if did in seen or done.has(did):
+        if did in seen or (redo_robots and did not in redo) or (did not in redo and done.has(did)):
             continue
         seen.add(did)
         if limit and n >= limit:
@@ -233,6 +236,7 @@ def main():
     ap.add_argument("--limit", type=int)
     ap.add_argument("--test", type=int)
     ap.add_argument("--max-months", type=int)
+    ap.add_argument("--redo-robots", action="store_true", help="2026-11-01: re-fetch only ids recorded robots_disallowed (EU_IGNORE_ROBOTS)")
     a = ap.parse_args()
     if a.cmd == "status":
         return status()
@@ -241,7 +245,7 @@ def main():
     if a.cmd == "catalog" or (a.cmd == "all" and not (stp.exists() and json.loads(stp.read_text()).get("complete"))):
         catalog(sess, a.max_months)
     if a.cmd in ("fetch", "all"):
-        fetch(sess, a.limit, a.test)
+        fetch(sess, a.limit, a.test, a.redo_robots)
 
 
 if __name__ == "__main__":

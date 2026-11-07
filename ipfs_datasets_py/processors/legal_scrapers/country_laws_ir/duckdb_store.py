@@ -20,6 +20,7 @@ BODY_WEIGHT = 1.0
 MAX_QUERY_TERMS = 64
 
 VIEWS = (
+    ("citations", "data/citations/*.parquet"),
     ("corpus", "data/corpus/*.parquet"),
     ("bm25_documents", "data/bm25/documents/*.parquet"),
     ("bm25_postings", "data/bm25/postings/*.parquet"),
@@ -83,25 +84,138 @@ def tokenize(text: str) -> list[str]:
     return re.findall(r"[0-9A-Za-z]+", folded)
 
 
+def _parquet_sql(root: Path, relative_paths: list[str]) -> str:
+    quoted = []
+    for rel in relative_paths:
+        path = str(Path(root) / rel).replace("'", "''")
+        quoted.append(f"'{path}'")
+    return "[" + ", ".join(quoted) + "]"
+
+
+def keyword_shard_paths(root: Path, terms: list[str]) -> list[str] | None:
+    """Posting shards for these terms, or None when the release has no keyword index."""
+    path = Path(root) / "indexes" / "bm25_keyword_shards.parquet"
+    if not path.is_file() or not terms:
+        return None
+    frame = pd.read_parquet(path, columns=["relative_path", "first_key", "last_key"])
+    chosen: set[str] = set()
+    for term in terms:
+        hit = frame[(frame["first_key"] <= term) & (frame["last_key"] >= term)]
+        chosen.update(hit["relative_path"].astype(str).tolist())
+    return sorted(chosen)
+
+
+def document_shard_paths(root: Path, document_indexes: list[int]) -> list[str] | None:
+    """Document shards for these indexes, or None when the release has no document index."""
+    root = Path(root)
+    frame = None
+    for name in ("bm25_document_shards.parquet", "bm25_document_chunks.parquet"):
+        path = root / "indexes" / name
+        if path.is_file():
+            frame = pd.read_parquet(path)
+            break
+    if frame is None or frame.empty or not document_indexes:
+        return None if frame is None else []
+    if "first_document_index" in frame.columns:
+        start_col, end_col = "first_document_index", "last_document_index"
+    else:
+        start_col, end_col = "start_document_index", "end_document_index"
+    starts = frame[start_col].astype(int).tolist()
+    ends = frame[end_col].astype(int).tolist()
+    rels = frame["relative_path"].astype(str).tolist()
+    chosen: set[str] = set()
+    for document_index in document_indexes:
+        for start, end, rel in zip(starts, ends, rels):
+            if start <= int(document_index) <= end:
+                chosen.add(rel)
+    return sorted(chosen)
+
+
+def adjacency_shard_paths(root: Path, node_cid: str, direction: str) -> list[str] | None:
+    """Adjacency shards whose CID range contains this node, or None when unindexed."""
+    name = {"in": "incoming", "out": "outgoing"}.get(direction, direction)
+    path = Path(root) / "indexes" / f"graph_{name}_adjacency.parquet"
+    if not path.is_file():
+        return None
+    frame = pd.read_parquet(path, columns=["relative_path", "first_key", "last_key"])
+    hit = frame[(frame["first_key"] <= node_cid) & (frame["last_key"] >= node_cid)]
+    return hit["relative_path"].astype(str).tolist()
+
+
+def _bm25_rows(con: Any, posts_sql: str, docs_sql: str, terms: list[str], avgdl: float, top_k: int) -> list[dict[str, Any]]:
+    placeholders = ", ".join(["?"] * len(terms))
+    sql = f"""
+        WITH exploded AS (
+            SELECT
+                unnest(document_indices) AS document_index,
+                unnest(title_frequencies) AS title_tf,
+                unnest(body_frequencies) AS body_tf,
+                unnest(document_lengths) AS dl,
+                idf
+            FROM {posts_sql}
+            WHERE term IN ({placeholders})
+        ),
+        scored AS (
+            SELECT
+                document_index,
+                SUM(
+                    idf * (
+                        ( {TITLE_WEIGHT} * title_tf + {BODY_WEIGHT} * body_tf )
+                        * ({K1} + 1.0)
+                    ) / (
+                        ( {TITLE_WEIGHT} * title_tf + {BODY_WEIGHT} * body_tf )
+                        + {K1} * (1.0 - {B} + {B} * (dl / {avgdl}))
+                    )
+                ) AS score
+            FROM exploded
+            GROUP BY document_index
+        )
+        SELECT
+            s.document_index,
+            s.score,
+            d.entry_cid,
+            d.title,
+            d.record_type
+        FROM scored s
+        JOIN {docs_sql} d USING (document_index)
+        ORDER BY s.score DESC, s.document_index
+        LIMIT ?
+    """
+    rows = con.execute(sql, [*terms, int(top_k)]).fetchall()
+    cols = ["document_index", "score", "entry_cid", "title", "record_type"]
+    return [dict(zip(cols, row)) for row in rows]
+
+
 def bm25_search(root: Path, query: str, top_k: int = 10) -> list[dict[str, Any]]:
-    """Okapi BM25 over parquet posting shards via DuckDB UNNEST."""
+    """Okapi BM25 over parquet posting shards via DuckDB UNNEST.
+
+    When the keyword and document indexes exist, only those shards are opened.
+    A release without the indexes still reads the parquet views.
+    """
     terms = tokenize(query)[:MAX_QUERY_TERMS]
     if not terms:
         return []
     manifest = load_manifest(root)
     avgdl = float((manifest.get("bm25") or {}).get("average_document_length") or 1.0) or 1.0
+    posting_rels = keyword_shard_paths(root, terms)
     con = connect_release(root)
     try:
-        tables = {
-            r[0]
-            for r in con.execute(
-                "SELECT table_name FROM information_schema.tables WHERE table_schema = 'main'"
-            ).fetchall()
-        }
-        if "bm25_postings" not in tables or "bm25_documents" not in tables:
-            raise DuckDBStoreError("release is missing BM25 parquet shards")
+        if posting_rels is None:
+            tables = {
+                r[0]
+                for r in con.execute(
+                    "SELECT table_name FROM information_schema.tables WHERE table_schema = 'main'"
+                ).fetchall()
+            }
+            if "bm25_postings" not in tables or "bm25_documents" not in tables:
+                raise DuckDBStoreError("release is missing BM25 parquet shards")
+            return _bm25_rows(con, "bm25_postings", "bm25_documents", terms, avgdl, top_k)
+        if not posting_rels:
+            return []
+        posts_sql = f"read_parquet({_parquet_sql(root, posting_rels)})"
         placeholders = ", ".join(["?"] * len(terms))
-        sql = f"""
+        scored = con.execute(
+            f"""
             WITH exploded AS (
                 SELECT
                     unnest(document_indices) AS document_index,
@@ -109,44 +223,60 @@ def bm25_search(root: Path, query: str, top_k: int = 10) -> list[dict[str, Any]]
                     unnest(body_frequencies) AS body_tf,
                     unnest(document_lengths) AS dl,
                     idf
-                FROM bm25_postings
+                FROM {posts_sql}
                 WHERE term IN ({placeholders})
-            ),
-            scored AS (
-                SELECT
-                    document_index,
-                    SUM(
-                        idf * (
-                            ( {TITLE_WEIGHT} * title_tf + {BODY_WEIGHT} * body_tf )
-                            * ({K1} + 1.0)
-                        ) / (
-                            ( {TITLE_WEIGHT} * title_tf + {BODY_WEIGHT} * body_tf )
-                            + {K1} * (1.0 - {B} + {B} * (dl / {avgdl}))
-                        )
-                    ) AS score
-                FROM exploded
-                GROUP BY document_index
             )
             SELECT
-                s.document_index,
-                s.score,
-                d.entry_cid,
-                d.title,
-                d.record_type
-            FROM scored s
-            JOIN bm25_documents d USING (document_index)
-            ORDER BY s.score DESC, s.document_index
+                document_index,
+                SUM(
+                    idf * (
+                        ( {TITLE_WEIGHT} * title_tf + {BODY_WEIGHT} * body_tf )
+                        * ({K1} + 1.0)
+                    ) / (
+                        ( {TITLE_WEIGHT} * title_tf + {BODY_WEIGHT} * body_tf )
+                        + {K1} * (1.0 - {B} + {B} * (dl / {avgdl}))
+                    )
+                ) AS score
+            FROM exploded
+            GROUP BY document_index
+            ORDER BY score DESC, document_index
             LIMIT ?
-        """
-        rows = con.execute(sql, [*terms, int(top_k)]).fetchall()
-        cols = [
-            "document_index",
-            "score",
-            "entry_cid",
-            "title",
-            "record_type",
-        ]
-        return [dict(zip(cols, row)) for row in rows]
+            """,
+            [*terms, int(top_k)],
+        ).fetchall()
+        if not scored:
+            return []
+        doc_rels = document_shard_paths(root, [int(row[0]) for row in scored])
+        docs_sql = (
+            "bm25_documents"
+            if doc_rels is None
+            else f"read_parquet({_parquet_sql(root, doc_rels)})"
+        )
+        indexes = [int(row[0]) for row in scored]
+        found = con.execute(
+            f"""
+            SELECT document_index, entry_cid, title, record_type
+            FROM {docs_sql}
+            WHERE document_index IN ({", ".join("?" for _ in indexes)})
+            """,
+            indexes,
+        ).fetchall()
+        by_index = {int(row[0]): row for row in found}
+        hits = []
+        for document_index, score in scored:
+            row = by_index.get(int(document_index))
+            if row is None:
+                continue
+            hits.append(
+                {
+                    "document_index": int(row[0]),
+                    "score": float(score),
+                    "entry_cid": row[1],
+                    "title": row[2],
+                    "record_type": row[3],
+                }
+            )
+        return hits
     finally:
         con.close()
 
@@ -173,13 +303,15 @@ def cite_search(
                 "SELECT table_name FROM information_schema.tables WHERE table_schema = 'main'"
             ).fetchall()
         }
-        if "corpus" not in tables:
-            raise DuckDBStoreError("release is missing corpus parquet shards")
+        relation = "citations" if "citations" in tables else "corpus" if "corpus" in tables else ""
+        if not relation:
+            raise DuckDBStoreError("release is missing citation parquet shards")
         cols = [
             r[1]
             for r in con.execute(
                 "SELECT table_schema, column_name FROM information_schema.columns "
-                "WHERE table_schema = 'main' AND table_name = 'corpus'"
+                "WHERE table_schema = 'main' AND table_name = ?",
+                [relation],
             ).fetchall()
         ]
         wanted = [
@@ -193,6 +325,12 @@ def cite_search(
             "cite_key",
             "citation_status",
             "source_url",
+            "court",
+            "jurisdiction",
+            "law_cid",
+            "law_id",
+            "corpus_shard",
+            "corpus_row",
         ]
         select = ", ".join(c for c in wanted if c in cols) or "*"
         clauses = []
@@ -209,7 +347,8 @@ def cite_search(
             params.append(key)
         if not clauses:
             return []
-        sql = f"SELECT {select} FROM corpus WHERE {' OR '.join(clauses)} LIMIT ?"
+        order = " ORDER BY law_id, official_citation" if "law_id" in cols and "official_citation" in cols else ""
+        sql = f"SELECT {select} FROM {relation} WHERE {' OR '.join(clauses)}{order} LIMIT ?"
         params.append(int(limit))
         rows = con.execute(sql, params).fetchall()
         names = [c for c in wanted if c in cols] if select != "*" else list(cols)
@@ -244,18 +383,33 @@ def graph_neighbors(
         }
         hits: list[dict[str, Any]] = []
         for d in dirs:
-            view = {
-                "in": "graph_in",
-                "out": "graph_out",
-                "incoming": "graph_incoming",
-                "outgoing": "graph_outgoing",
-            }.get(d, d)
-            if view not in tables:
-                continue
+            indexed = None
+            index_name = {
+                "in": "graph_in_adjacency.parquet",
+                "out": "graph_out_adjacency.parquet",
+                "incoming": "graph_incoming_adjacency.parquet",
+                "outgoing": "graph_outgoing_adjacency.parquet",
+            }.get(d)
+            if index_name and (Path(root) / "indexes" / index_name).is_file():
+                indexed = adjacency_shard_paths(root, node_cid, d)
+            if indexed is not None:
+                if not indexed:
+                    continue
+                source = f"read_parquet({_parquet_sql(root, indexed)})"
+            else:
+                view = {
+                    "in": "graph_in",
+                    "out": "graph_out",
+                    "incoming": "graph_incoming",
+                    "outgoing": "graph_outgoing",
+                }.get(d, d)
+                if view not in tables:
+                    continue
+                source = view
             rows = con.execute(
                 f"""
                 SELECT node_cid, neighbor_cids, edge_types, scores
-                FROM {view}
+                FROM {source}
                 WHERE node_cid = ?
                 """,
                 [node_cid],

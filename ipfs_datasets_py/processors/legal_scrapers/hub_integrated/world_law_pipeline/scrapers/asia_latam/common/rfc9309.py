@@ -79,6 +79,22 @@ class Robots:
         return max(ds) if ds else None
 
     def can_fetch(self, ua, url):
+        """RFC 9309 verdict, subject to the lane's robots policy switch (common/robots_policy.py): with
+        RESPECT_ROBOTS off (default since 2026-11-01) a disallowed URL is recorded (for honest source_policy
+        tagging) and True is returned. Use rfc_allows() for the raw verdict."""
+        ok = self.rfc_allows(ua, url)
+        if ok:
+            return True
+        try:
+            from common import robots_policy as RP
+        except ImportError:  # pragma: no cover
+            import robots_policy as RP
+        if RP.RESPECT:
+            return False
+        RP.note(url, "robots_unreachable_disallow_all" if self.disallow_all else "robots_disallow")
+        return True
+
+    def rfc_allows(self, ua, url):
         if self.allow_all:
             return True
         if self.disallow_all:

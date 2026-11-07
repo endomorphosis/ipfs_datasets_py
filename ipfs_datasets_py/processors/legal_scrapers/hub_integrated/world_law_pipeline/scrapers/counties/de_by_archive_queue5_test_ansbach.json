@@ -1,0 +1,26 @@
+{
+ "country_code": "DE",
+ "place_id": "wd:Q10454",
+ "qid": "Q10454",
+ "place_name": "Landkreis Ansbach",
+ "iso_3166_2": "DE-BY",
+ "admin_level": "landkreis",
+ "language": "de",
+ "doc_type": "ordinance",
+ "platform": "de_by_kreisrecht",
+ "source_org": "Landkreis Ansbach",
+ "index_url": "https://www.landkreis-ansbach.de/Aktuelles/Bekanntmachungen/Satzungen/",
+ "max_bytes": 52428800,
+ "archive_policy": "archived_robots_disallowed",
+ "urls": [
+  "https://www.landkreis-ansbach.de/output/download.php?fid=3797.555.1.PDF",
+  "https://www.landkreis-ansbach.de/output/download.php?fid=3797.565.1.PDF",
+  "https://www.landkreis-ansbach.de/output/download.php?fid=3797.564.1.PDF"
+ ],
+ "titles": {
+  "https://www.landkreis-ansbach.de/output/download.php?fid=3797.555.1.PDF": "Nachträgliche Anordnung vom 14.01.2020",
+  "https://www.landkreis-ansbach.de/output/download.php?fid=3797.565.1.PDF": "Überwachungsbericht",
+  "https://www.landkreis-ansbach.de/output/download.php?fid=3797.564.1.PDF": "Nachträgliche Anordnung vom 10.01.2022"
+ },
+ "_note": "2026-10-24 de_by_archive_queue5 test batch (3 of 47 todo)"
+}

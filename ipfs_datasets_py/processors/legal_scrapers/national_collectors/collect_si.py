@@ -41,7 +41,11 @@ def discover() -> list[dict]:
         if items:
             log.info("resume catalog %s", len(items))
             return items
-    for year in range(1991, 2027):
+    import os
+    y_hi=int(os.environ.get("YEAR_START","2026") or 2026)
+    y_lo=int(os.environ.get("YEAR_END","1991") or 1991)
+    max_cat=int(os.environ.get("MAX_CATALOG","0") or 0)
+    for year in range(y_hi, y_lo-1, -1):
         misses = 0
         for n in range(1, 180):
             kazalo = f"{BASE}/glasilo-uradni-list-rs/celotno-kazalo/{year}{n}"
@@ -62,6 +66,8 @@ def discover() -> list[dict]:
                 rec = {"url": href, "year": year, "issue": n, "kazalo": kazalo}
                 items.append(rec); append_catalog(CC, rec); got += 1
             log.info("year %s issue %s acts=%s catalog=%s", year, n, got, len(items))
+            if max_cat and len(items)>=max_cat:
+                log.info("MAX_CATALOG reached"); return items
     return items
 
 
@@ -99,12 +105,21 @@ def fetch_one(row: dict, done: set[str]) -> str:
 
 
 def main():
+    import os, time as _time
     setup(); t0 = utcnow()
+    max_new = int(os.environ.get("MAX_NEW", "0") or 0)
+    max_seconds = int(os.environ.get("MAX_SECONDS", "0") or 0)
+    t_start = _time.time()
     items = discover()
     done = existing_ids(CC)
     ok = skip = fail = 0
+    pending = [it for it in items if slug_id(CC, re.sub(r"^https?://www\.uradni-list\.si/", "", it["url"])) not in done]
+    skip = len(items) - len(pending)
+    if max_new > 0:
+        pending = pending[:max_new]
+    log.info("pending %s / catalog %s", len(pending), len(items))
     with ThreadPoolExecutor(max_workers=3) as ex:
-        futs = [ex.submit(fetch_one, it, done) for it in items]
+        futs = [ex.submit(fetch_one, it, done) for it in pending]
         n = 0
         for fut in as_completed(futs):
             n += 1
@@ -114,8 +129,10 @@ def main():
                 st = "fail"
                 log_failure(CC, {"status": "failed", "reason": repr(exc)})
             ok += st == "ok"; skip += st == "skip"; fail += st == "fail"
+            if max_seconds and (_time.time() - t_start) > max_seconds:
+                log.info("MAX_SECONDS reached"); break
             if n % 80 == 0:
-                log.info("progress %s/%s ok=%s fail=%s", n, len(items), ok, fail)
+                log.info("progress %s/%s ok=%s fail=%s", n, len(pending), ok, fail)
                 write_summary(CC, country=COUNTRY, source="Uradni list RS",
                               source_urls=["https://www.uradni-list.si/", "https://pisrs.si/"],
                               license_text=LICENSE, discovered=len(items), fetched=ok, skipped=skip, failed=fail,

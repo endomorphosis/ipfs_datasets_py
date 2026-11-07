@@ -52,9 +52,16 @@ class LS:
             try:
                 r = self.s.get(f"https://{self.host}/robots.txt", timeout=60, allow_redirects=True); self.nreq += 1; self.t = time.time()
             except requests.RequestException as e:
-                raise Blocked(f"robots_unreachable: {type(e).__name__}")
-            if r.status_code >= 500:
-                raise Blocked(f"robots_http_{r.status_code}")
+                if J.RP.RESPECT:
+                    raise Blocked(f"robots_unreachable: {type(e).__name__}")
+                r = None; J.RP.note_host(self.host, f"robots_unreachable: {type(e).__name__}")
+            if r is not None and r.status_code >= 500:
+                if J.RP.RESPECT:
+                    raise Blocked(f"robots_http_{r.status_code}")
+                J.RP.note_host(self.host, f"robots_http_{r.status_code}"); r = None
+            if r is None:                      # owner policy 2026-11-01: proceed (1 req/s per host still applies)
+                self.robots = J.Robots(allow_all=True)
+                return
             ok_txt = r.status_code == 200 and "text/plain" in (r.headers.get("content-type") or "")
             self.robots = J.Robots(r.text) if ok_txt else J.Robots(allow_all=True)
         if not self.robots.can_fetch(J.UA, url):
@@ -206,7 +213,7 @@ def make_record(seed, ls, row, cls_label, head, body):
     raw = body
     did = "LS-" + ls.host.split(".")[0] + "-" + hashlib.sha1(f"{title}|{row['number']}|{row['date']}".encode()).hexdigest()[:16]
     rec = {"place_id": seed["place_id"], "country_code": "JP", "doc_id": did, "source_platform": PLATFORM,
-           "source_url": f"https://{ls.host}/HAS-Shohin/jsp/SVDocumentView", "doc_type": J.doc_type_for(row["number"], title),
+           "source_url": f"https://{ls.host}/HAS-Shohin/jsp/SVDocumentView", **J.RP.fields(f"https://{ls.host}/"), "doc_type": J.doc_type_for(row["number"], title),
            "language": "ja", "html_title": title, "title_native": title, "number": row["number"] or None,
            "adopted_date": J.jdate(row["date"]), "published_date": None, "effective_date": None,
            "in_force": not row["mishikou"] and True, "consolidated": True, "content_format": "html", "html": body, "text": text,

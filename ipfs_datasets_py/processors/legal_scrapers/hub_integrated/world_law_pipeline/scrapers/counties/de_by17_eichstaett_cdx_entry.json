@@ -1,0 +1,5 @@
+{"name": "Landkreis Eichstätt", "qid": "Q10491", "iso": "DE-BY", "host": "landkreis-eichstaett.de",
+ "index_url": "https://www.landkreis-eichstaett.de/landratsamt/neuigkeiten/amtsblatt",
+ "keep_re": "satzung|verordnung|amtsblatt|kreisrecht|geb(ue|ü)hren|allgemeinverf(ue|ü)gung|bekanntmachung|ordnung|haushalt",
+ "drop_re": "antrag|formular|flyer|merkblatt|broschuere|brosch%C3%BCre|einladung|stellenaus|_processed_|/templates/",
+ "archive_policy": "archived_robots_disallowed"}

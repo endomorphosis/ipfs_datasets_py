@@ -17,7 +17,7 @@ unit; they are not forced into their own retrieval rows.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from html.parser import HTMLParser
 import html as html_lib
 import json
@@ -94,6 +94,7 @@ _ARTICLE_N = (
     r"(?:"
     r"[0-9٠-٩۰-۹]+(?:\.[0-9]+)?"
     r"(?:er|ère|bis|ter|quater|aad|[A-Za-z]|o)?"
+    r"(?::[0-9]+[A-Za-z]?)?"
     r"(?:/[0-9A-Za-z]+)?"
     r"(?:\s+(?:bis|ter|quater))?"
     r"|(?-i:[IVXLCDM]{1,8})(?:er|ère)?(?![A-Za-z])"
@@ -103,7 +104,8 @@ _ARTICLE_N = (
     r"(?:\([0-9A-Za-z]+\))?"
     r"|premier(?:e)?"
     r"|première"
-    r"|unique|unico|unica|único|única"
+    r"|unique(?![A-Za-z])|unico(?![A-Za-z])|unica(?![A-Za-z])"
+    r"|único(?![A-Za-z])|única(?![A-Za-z])|únic(?![A-Za-z])|unic(?![A-Za-z])"
     r"|primero|primera|primeiro|primeira"
     r"|primo(?![A-Za-z])|secondo(?![A-Za-z])|terzo(?![A-Za-z])|quarto(?![A-Za-z])|quinto(?![A-Za-z])|prima(?![A-Za-z])"
     r"|eerste|första|første"
@@ -172,6 +174,7 @@ _HEADING_RE = re.compile(
     r"|(?P<section_sym>§+)\s*(?P<section_sym_n>[0-9]+(?:[A-Za-z](?![A-Za-z]))?(?:\s+[A-Za-z](?![A-Za-z]))?(?:\s*\([0-9A-Za-z]+\))?)"
     r"|(?P<section_pre_n>[0-9]+(?:\s*[a-z])?)\s*\.?\s*(?P<section_pre>§)"
     r"|(?P<grein_n>[0-9]+[a-z]?)\s*\.\s*(?P<grein>gr|pants)(?![A-Za-z])\.?"
+    r"|(?P<clen_n>[0-9]+[a-z]?)\s*\.\s*(?P<clen>člen)(?![A-Za-z])\.?"
     r"|(?P<straipsnis_n>[0-9]+[a-z]?)\s*[.]?\s*(?P<straipsnis>straipsnis)"
     r"|(?P<artikulua_n>[0-9]+[a-z]?)\s*[.]?\s*(?P<artikulua>artikulua)"
     r"|(?P<ledd_n>[0-9]+)\s*[.]?\s*(?P<ledd>ledd)"
@@ -248,7 +251,8 @@ MIN_UNIT_CHARS = 40
 
 # Markers on the *stored* body (no rewritten newline copy).
 _ZH_ART_RE = re.compile(
-    r"第\s*[一二三四五六七八九十百千万零〇两0-9]+\s*[条條](?:之[一二三四五六七八九十百0-9]+)?"
+    r"第\s*[一二三四五六七八九十百千万零〇两0-9]+\s*(?:[-－]\s*[0-9]+\s*)?"
+    r"[条條](?:之\s*[一二三四五六七八九十百千万零〇两0-9]+)?"
 )
 _AR_ORD = (
     r"(?:الحادية|الثانية|الثالثة|الرابعة|الخامسة|السادسة|السابعة|الثامنة|التاسعة)[\s\u0640]*والعشرون|"
@@ -776,6 +780,25 @@ _CIRCLED_ART_RE = re.compile(r"[①-⑳⑴-⒇❶-❿⓫-⓴]")
 _CJK_ENUM_RE = re.compile(r"(?m)^[ \t]*[一二三四五六七八九十百]+、")
 _CJK_PAREN_RE = re.compile(r"(?m)^[ \t]*[（(][一二三四五六七八九十百]+[）)]")
 _CJK_DIGIT_ENUM_RE = re.compile(r"(?m)^[ \t]*[0-9０-９]+、")
+# 一、 / （一） / 1、 are clauses of 第 N 條. On their own they are the provisions.
+_CJK_CLAUSE_RE = re.compile(
+    r"^(?:[一二三四五六七八九十百]+、|[（(][一二三四五六七八九十百]+[）)]|[0-9０-９]+、)$"
+)
+# "1. Basic course" and "8- Honor Flag." are clauses when an Article already exists.
+_ENUM_LINE_RE = re.compile(r"^[0-9]{1,3}(?:\.\s+|-\s+)")
+_CLAUSE_PREFIX_RE = re.compile(
+    r"^(?:[一二三四五六七八九十百]+、|[（(][一二三四五六七八九十百]+[）)]|"
+    r"[0-9０-９]+、|[0-9]{1,3}(?:\.\s+|-\s+))"
+)
+_SHORT_DELETE_RE = re.compile(
+    r"(?i)^(?:第\s*[0-9一二三四五六七八九十百]+\s*[条條]\s*)?"
+    r"[（(\[]?\s*(?:刪除|删除|delete|deleted|omitted|repealed)\s*[)）\]]?[.]?$"
+)
+_CHAPTER_LINE_RE = re.compile(
+    r"(?i)^(?:chapter|part|title|boek|kapitel|chapitre|capitulo|capítulo|capo)\b"
+    r"|第\s*[0-9一二三四五六七八九十百千]+\s*[章编編节節]"
+)
+_LATIN_ARTICLE_HEADING_RE = re.compile(r"(?i)^(?:article|art\.)\b")
 _KO_GA_RE = re.compile(r"(?m)^[ \t]*[가나다라마바사아자차카타파하]\.")
 _JA_KATA_ENUM_RE = re.compile(r"(?m)^[ \t]*[アイウエオカキクケコ]、")
 _HANGUL_GA = "가나다라마바사아자차카타파하"
@@ -1209,7 +1232,13 @@ def normalize_legal_text(value: Any) -> str:
     text = _SPACED_KEYWORD_RE.sub(_squeeze_spaced_keyword, text)
     text = re.sub(r"(?s)<!--.*?-->", " ", text)
     text = strip_html(text)
-    text = html_lib.unescape(text).replace("\xa0", " ")
+    for _ in range(3):
+        decoded = html_lib.unescape(text).replace("\xa0", " ")
+        if decoded == text:
+            break
+        text = decoded
+        if _HAS_TAG_RE.search(text):
+            text = strip_html(text)
     text = re.sub(r"_{3,}", " ", text)
     text = re.sub(r"\.{4,}", " ", text)
     text = re.sub(r"(?m)^[ \t]*#{1,6}[ \t]+", "", text)
@@ -1840,6 +1869,48 @@ def _in_range_boilerplate(text: str, start: int) -> bool:
     return False
 
 
+# 第 N 條 / 項 / 款 / 章 inside a sentence is a citation (第十九條第一項、本法第二章).
+# A provision heading starts the line. A line that continues 「及第九條」「之規定」
+# is still a citation even when the wrap puts 第 at the start of the line.
+_CJK_LINE_HEADING_RES = frozenset({
+    _ZH_ART_RE, _JA_ART_RE, _JA_KOU_RE, _ZH_KUAN_RE,
+    _CJK_ZHANG_RE, _CJK_JIE_RE, _CJK_BIAN_RE,
+})
+_CJK_ARTICLE_RES = frozenset({_ZH_ART_RE, _JA_ART_RE})
+_CJK_CITE_CONTINUE_RE = re.compile(r"^(?:及|至|、|之|項|款|目|第|規定|所定)")
+
+
+def _at_line_start(text: str, start: int) -> bool:
+    """True when only whitespace sits between *start* and the previous newline."""
+
+    line = text.rfind("\n", 0, start)
+    prefix = text[0 if line < 0 else line + 1 : start]
+    return prefix.strip() == ""
+
+
+def _inside_enum_line(text: str, start: int) -> bool:
+    """True when a heading match sits inside a numbered list line.
+
+    ``2. The Code: Article 49`` and ``Article 2 Paragraph1`` are citations
+    inside the list item. They are not a new article or paragraph.
+    """
+
+    if _at_line_start(text, start):
+        return False
+    line_at = text.rfind("\n", 0, start)
+    prefix = text[0 if line_at < 0 else line_at + 1 : start].lstrip()
+    return _CLAUSE_PREFIX_RE.match(prefix) is not None
+
+
+def _cjk_citation_tail(text: str, end: int) -> bool:
+    """True when the rest of the line continues a citation, not a provision."""
+
+    line_end = text.find("\n", end)
+    if line_end < 0:
+        line_end = len(text)
+    return _CJK_CITE_CONTINUE_RE.match(text[end:line_end].strip()) is not None
+
+
 def _kind_number_from_heading_match(match: re.Match) -> tuple[str, str]:
     for name in ("title", "chapter", "part", "article", "section"):
         if match.group(name):
@@ -1850,6 +1921,8 @@ def _kind_number_from_heading_match(match: re.Match) -> tuple[str, str]:
         return "section", (match.group("section_pre_n") or "").strip()
     if match.group("grein"):
         return "article", (match.group("grein_n") or "").strip()
+    if match.group("clen"):
+        return "article", (match.group("clen_n") or "").strip()
     if match.group("straipsnis"):
         return "article", (match.group("straipsnis_n") or "").strip()
     if match.group("artikulua"):
@@ -1927,6 +2000,7 @@ def _paren_letter_xref(raw: str, number: str, rest: str) -> bool:
 def _collect_hits(text: str, *, language: str, latin: bool) -> list[_Hit]:
     hits: list[_Hit] = []
     folded = _latin_fold(text) if latin else text
+    heading_spans: list[tuple[int, int]] = []
     if latin:
         for match in _HEADING_RE.finditer(folded):
             kind, number = _kind_number_from_heading_match(match)
@@ -1936,9 +2010,12 @@ def _collect_hits(text: str, *, language: str, latin: bool) -> list[_Hit]:
                 continue
             if _paren_letter_xref(match.group(0), number, folded[match.end() : match.end() + 48]):
                 continue
+            if _inside_enum_line(text, match.start()):
+                continue
+            heading_spans.append((match.start(), match.end()))
             for gname in (
                 "title_n", "chapter_n", "part_n", "article_n", "section_n",
-                "section_sym_n", "section_pre_n", "grein_n", "straipsnis_n",
+                "section_sym_n", "section_pre_n", "grein_n", "clen_n", "straipsnis_n",
                 "artikulua_n", "ledd_n", "kap_n", "luku_n",
                 "fejezet_n", "peatukk_n", "skyrius_n", "nodala_n",
                 "kafli_n", "bob_n", "tarau_n", "bolum_n",
@@ -1958,7 +2035,11 @@ def _collect_hits(text: str, *, language: str, latin: bool) -> list[_Hit]:
             heading = re.sub(r"\s+", " ", text[match.start() : line_end]).strip()[:240]
             hits.append(_Hit(match.start(), kind, number, heading))
         for match in _lexicon_heading_re().finditer(folded):
+            if any(span_start <= match.start() < span_end for span_start, span_end in heading_spans):
+                continue
             if _CITE_TAIL_RE.match(folded[match.end() : match.end() + 48]):
+                continue
+            if _inside_enum_line(text, match.start()):
                 continue
             token = (match.group("lex") or "").casefold()
             kind = _LEXICON_KIND.get(token, "article")
@@ -2023,6 +2104,10 @@ def _collect_hits(text: str, *, language: str, latin: bool) -> list[_Hit]:
         hits.append(_Hit(match.start(), "section", number, heading))
     for regex in _detected_script_regexes(text, language):
         for match in regex.finditer(text):
+            if regex in _CJK_LINE_HEADING_RES and not _at_line_start(text, match.start()):
+                continue
+            if regex in _CJK_ARTICLE_RES and _cjk_citation_tail(text, match.end()):
+                continue
             if _in_range_boilerplate(text, match.start()):
                 continue
             if _SCRIPT_CITE_TAIL_RE.match(text[match.end() : match.end() + 48]):
@@ -2053,7 +2138,10 @@ def _collect_hits(text: str, *, language: str, latin: bool) -> list[_Hit]:
             if hit.kind in {"article", "section"} and not _PAREN_SUBSECTION_RE.match(hit.heading.lstrip())
         ]
         if len(keyword_hits) < MIN_SPLIT_HEADINGS and lang in _CW_NUM_LANGS:
+            article_at = min((hit.start for hit in keyword_hits if hit.kind == "article"), default=None)
             for match in _CW_NUM_RE.finditer(text):
+                if article_at is not None and match.start() >= article_at:
+                    continue
                 number = (match.group("cw_n") or "").strip()
                 if not _plausible_cw_number(number):
                     continue
@@ -2075,6 +2163,26 @@ def _collect_hits(text: str, *, language: str, latin: bool) -> list[_Hit]:
             continue
         seen_starts.add(hit.start)
         merged.append(hit)
+    article_starts = [
+        hit.start
+        for hit in merged
+        if hit.kind == "article"
+        and (
+            _ZH_ART_RE.match(hit.heading.strip()) is not None
+            or _LATIN_ARTICLE_HEADING_RE.match(hit.heading.strip()) is not None
+        )
+    ]
+    if article_starts:
+        first_article = min(article_starts)
+        merged = [
+            hit
+            for hit in merged
+            if hit.start < first_article
+            or not (
+                _CJK_CLAUSE_RE.match(hit.heading.strip())
+                or _ENUM_LINE_RE.match(hit.heading.strip())
+            )
+        ]
     return _drop_parenthetical_subsections(merged)
 
 
@@ -2167,6 +2275,105 @@ def split_script_units(text: str, language: str) -> list[StructureUnit]:
     return retrieval if len(retrieval) >= MIN_SPLIT_HEADINGS else []
 
 
+def _short_clause_unit(body: str) -> bool:
+    """A single list line under the usual minimum is still a provision."""
+
+    stripped = body.strip()
+    if not stripped or "\n" in stripped or len(stripped) >= 16:
+        return False
+    if _SHORT_DELETE_RE.match(stripped):
+        return False
+    return _CLAUSE_PREFIX_RE.match(stripped) is not None
+
+
+def _clause_block_number(body: str) -> str:
+    for line in body.splitlines():
+        stripped = line.strip()
+        match = re.match(r"^([0-9]{1,3})(?:\.\s+|-\s+)", stripped)
+        if match:
+            return match.group(1)
+        match = re.match(r"^[（(]([一二三四五六七八九十百]+)[）)]", stripped)
+        if match:
+            return match.group(1)
+        match = re.match(r"^([一二三四五六七八九十百]+)、", stripped)
+        if match:
+            return match.group(1)
+    return "1"
+
+
+def _clause_blocks(text: str, start: int, end: int, *, allow_single: bool) -> list[tuple[int, int]]:
+    """Contiguous list spans between chapter banners.
+
+    A banner stays outside the span, so the span is still a slice of *text*.
+    A deletion shell is not a list. A single numbered line before the first
+    article is left alone; a running header such as ``2. Amendment of section``
+    is not a second provision.
+    """
+
+    gap = text[start:end]
+    blocks: list[tuple[int, int]] = []
+    pos = start
+    block_at: int | None = None
+    clause_count = 0
+    for line in gap.splitlines(keepends=True):
+        stripped = line.strip()
+        is_banner = bool(stripped) and _CHAPTER_LINE_RE.match(stripped) is not None
+        if is_banner:
+            if block_at is not None and (clause_count >= 2 or (allow_single and clause_count >= 1)):
+                blocks.append((block_at, pos))
+            block_at = None
+            clause_count = 0
+        elif stripped:
+            if block_at is None:
+                block_at = pos
+            if _CLAUSE_PREFIX_RE.match(stripped) and not _SHORT_DELETE_RE.match(stripped):
+                clause_count += 1
+        pos += len(line)
+    if block_at is not None and (clause_count >= 2 or (allow_single and clause_count >= 1)):
+        blocks.append((block_at, pos))
+    return blocks
+
+
+def _clause_block_unit(text: str, start: int, end: int) -> StructureUnit:
+    body = text[start:end]
+    number = _clause_block_number(body)
+    return StructureUnit(
+        kind="section",
+        number=number,
+        heading=body.strip().splitlines()[0][:240],
+        body=body,
+        section_number=number,
+        hierarchy_path=f"Section {number}",
+        char_start=start,
+        char_end=end,
+    )
+
+
+def _fold_clause_gaps(text: str, units: list[StructureUnit]) -> list[StructureUnit]:
+    """Keep list lines that sat outside the retrieved articles.
+
+    Each kept list is a contiguous slice. A chapter banner stays outside the
+    article. A deletion shell stays a hole.
+    """
+
+    if len(units) < 2:
+        return units
+    folded: list[StructureUnit] = []
+    cursor = 0
+    for unit in units:
+        if unit.char_start > cursor:
+            for start, end in _clause_blocks(
+                text, cursor, unit.char_start, allow_single=cursor > 0
+            ):
+                folded.append(_clause_block_unit(text, start, end))
+        folded.append(unit)
+        cursor = max(cursor, unit.char_end)
+    if cursor < len(text):
+        for start, end in _clause_blocks(text, cursor, len(text), allow_single=True):
+            folded.append(_clause_block_unit(text, start, end))
+    return folded
+
+
 def split_structured_units(text: str, *, language: str = "") -> list[StructureUnit]:
     """Retrieval units. Empty list means keep the whole instrument.
 
@@ -2187,6 +2394,8 @@ def split_structured_units(text: str, *, language: str = "") -> list[StructureUn
             min_len = 16 if u.number else MIN_UNIT_CHARS
             if language and not latin_split_allowed(language):
                 min_len = 16
+            if _short_clause_unit(u.body):
+                min_len = 1
             if len(u.body.strip()) >= min_len:
                 out.append(u)
         return out
@@ -2199,5 +2408,5 @@ def split_structured_units(text: str, *, language: str = "") -> list[StructureUn
     ):
         retrieval = _take(kinds)
         if len(retrieval) >= MIN_SPLIT_HEADINGS:
-            return retrieval
+            return _fold_clause_gaps(text, retrieval)
     return []

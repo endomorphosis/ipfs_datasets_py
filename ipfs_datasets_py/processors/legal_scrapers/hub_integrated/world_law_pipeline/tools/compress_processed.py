@@ -25,6 +25,8 @@ import os as _ipfs_os
 from pathlib import Path as _ipfs_Path
 _CORPORA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_CORPORA_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_corpora")))
 _SCRAPERS = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_COLLECTORS_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_collectors"))) / "shared"
+_WORLD = _ipfs_Path(_ipfs_os.environ.get("WORLD_LAW_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "world_law")))
+_TESSDATA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_TESSDATA", str(_ipfs_Path.home() / ".ipfs_datasets" / "tessdata")))
 _HF_TOKEN_PATH = _ipfs_Path(_ipfs_os.environ.get("HF_TOKEN_PATH", str(_ipfs_Path.home() / ".cache" / "huggingface" / "token")))
 import argparse
 import gzip
@@ -34,7 +36,7 @@ import sys
 import time
 from pathlib import Path
 
-ROOT = Path(os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law")) / "processed"
+ROOT = Path(os.environ.get("WORLD_LAW_ROOT", str(_WORLD))) / "processed"
 
 
 def sha(path, opener=open):
@@ -50,8 +52,8 @@ def main():
     ap.add_argument("--apply", action="store_true", help="really compress (default: dry run)")
     ap.add_argument("--min-age-hours", type=float, default=2.0)
     ap.add_argument("--min-free-gb", type=float, default=2.0, help="stop if free space drops below this")
-    ap.add_argument("--bots", nargs="+", default=["eu", "national", "web", "id_jdih", "states", "ukie"],
-                    help="bot dirs under processed/ to compress (default: eu national web id_jdih states ukie; see Readers above)")
+    ap.add_argument("--bots", nargs="+", default=["eu", "national", "web", "id_jdih", "states", "ukie", "counties"],
+                    help="bot dirs under processed/ to compress (default: eu national web id_jdih states ukie counties; counties readers accept .jsonl.gz, added 2026-11-04; see Readers above)")
     ap.add_argument("--limit", type=int, default=0, help="max files this run (0 = all)")
     a = ap.parse_args()
     cutoff = time.time() - a.min_age_hours * 3600

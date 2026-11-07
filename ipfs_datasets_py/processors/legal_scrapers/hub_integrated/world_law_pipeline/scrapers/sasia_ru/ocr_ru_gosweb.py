@@ -4,20 +4,24 @@ import os as _ipfs_os
 from pathlib import Path as _ipfs_Path
 _CORPORA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_CORPORA_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_corpora")))
 _SCRAPERS = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_COLLECTORS_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_collectors"))) / "shared"
+_WORLD = _ipfs_Path(_ipfs_os.environ.get("WORLD_LAW_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "world_law")))
+_TESSDATA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_TESSDATA", str(_ipfs_Path.home() / ".ipfs_datasets" / "tessdata")))
 _HF_TOKEN_PATH = _ipfs_Path(_ipfs_os.environ.get("HF_TOKEN_PATH", str(_ipfs_Path.home() / ".cache" / "huggingface" / "token")))
 import os as _wl_os  # WORLD_LAW_ROOT / GLOBAL_MUNICIPALITIES_ROOT override the default paths
 import sys,json,re,html as H
-sys.path.insert(0,(_wl_os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law") + '/pipeline/scrapers/sasia_ru'))
-sys.path.insert(0,(_wl_os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law") + "/pipeline"))
+sys.path.insert(0,(_wl_os.environ.get("WORLD_LAW_ROOT", str(_WORLD)) + '/pipeline/scrapers/sasia_ru'))
+sys.path.insert(0,(_wl_os.environ.get("WORLD_LAW_ROOT", str(_WORLD)) + "/pipeline"))
 import ru_gosweb as G
 from schema import place_key
-N=12; D=(_wl_os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law") + '/staging/sasia_ru/_ru/')
+N=12; D=(_wl_os.environ.get("WORLD_LAW_ROOT", str(_WORLD)) + '/staging/sasia_ru/_ru/')
 hosts=[json.loads(l) for f in ('gosweb_hosts_verified.jsonl','gosweb_hosts_verified2.jsonl') for l in open(D+f)]
-out=open((_wl_os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law") + '/staging/sasia_ru/_ocr/ru_gosweb_notext.jsonl'),'a')
+out=open((_wl_os.environ.get("WORLD_LAW_ROOT", str(_WORLD)) + '/staging/sasia_ru/_ocr/ru_gosweb_notext.jsonl'),'a')
 for h in hosts:
     base='https://'+h['host']
     try:
-        rr=G.S.get(base+'/robots.txt',timeout=(10,30)); rb=G.Robots(rr.text) if rr.status_code==200 else G.Robots(allow_all=True)
+        if not G.RESPECT_ROBOTS: rb=G.Robots(allow_all=True)
+        else:
+         rr=G.S.get(base+'/robots.txt',timeout=(10,30)); rb=G.Robots(rr.text) if rr.status_code==200 else G.Robots(allow_all=True)
         r=G.get(base+'/ofitsialno/dokumenty/',rb)
         if not r or r.status_code!=200: continue
         ITEM=r'href="(/ofitsialno/dokumenty/[^"?#]+?_\d+\.html)"'; SUB=r'href="(/ofitsialno/dokumenty/[^"?#.]+/)"'

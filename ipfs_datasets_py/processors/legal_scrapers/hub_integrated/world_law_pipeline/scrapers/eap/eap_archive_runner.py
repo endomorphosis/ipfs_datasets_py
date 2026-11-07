@@ -6,23 +6,25 @@ staging/eap/<CC>/<place_key>.archive-eap-<stage>-<UTC>pNNNN.jsonl. Checkpoint ar
 written only after its doc's chunk is flushed. Scanned PDFs: content_complete=false row (no OCR), PDF kept in
 _eap_work/_pdf/, line appended to the scanned-PDF manifest (skipped if already in state/pdf_ledger.jsonl).
 Exit 6 = only deferred items left (429/5xx cool-down): retry at min(not_before) in arch_ckpt/<stage>.retry_at;
-Exit 3 = archives unavailable (waiter retries in 30 min); 4 = disk < 35 GB; 5 = RSS > 480 MB."""
+Exit 3 = archives unavailable (waiter retries in 30 min); 4 = disk < 20 GB; 5 = RSS > 480 MB."""
 # Harvested collector path injection. Do not collect from /workspace.
 import os as _ipfs_os
 from pathlib import Path as _ipfs_Path
 _CORPORA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_CORPORA_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_corpora")))
 _SCRAPERS = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_COLLECTORS_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_collectors"))) / "shared"
+_WORLD = _ipfs_Path(_ipfs_os.environ.get("WORLD_LAW_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "world_law")))
+_TESSDATA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_TESSDATA", str(_ipfs_Path.home() / ".ipfs_datasets" / "tessdata")))
 _HF_TOKEN_PATH = _ipfs_Path(_ipfs_os.environ.get("HF_TOKEN_PATH", str(_ipfs_Path.home() / ".cache" / "huggingface" / "token")))
 import os as _wl_os  # WORLD_LAW_ROOT / GLOBAL_MUNICIPALITIES_ROOT override the default paths
 import sys, os, re, json, time, html as H, hashlib, subprocess, tempfile, shutil, resource, csv, datetime
 os.environ.setdefault("ARCHIVE_LANE", "eap")
 if os.environ["ARCHIVE_LANE"] != "eap": os.environ["ARCHIVE_LANE"] = "eap"
-sys.path.insert(0, (_wl_os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law") + "/pipeline"))
+sys.path.insert(0, (_wl_os.environ.get("WORLD_LAW_ROOT", str(_WORLD)) + "/pipeline"))
 from archive import ArchiveFetcher, StagedWriter, provenance_fields
 from archive.core import Capture, ArchiveError, ArchiveDeferred, ArchiveTransient
 from schema import place_key
-STAGE = (_wl_os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law") + "/staging/eap"); W = f"{STAGE}/_eap_work"; CK = f"{W}/arch_ckpt"
-MANS = [(_wl_os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law") + "/out/eap/_scanned_pdfs_manifest.jsonl"), f"{W}/_scanned_pdfs_manifest.jsonl"]
+STAGE = (_wl_os.environ.get("WORLD_LAW_ROOT", str(_WORLD)) + "/staging/eap"); W = f"{STAGE}/_eap_work"; CK = f"{W}/arch_ckpt"
+MANS = [(_wl_os.environ.get("WORLD_LAW_ROOT", str(_WORLD)) + "/out/eap/_scanned_pdfs_manifest.jsonl"), f"{W}/_scanned_pdfs_manifest.jsonl"]
 CAND = (_wl_os.environ.get("GLOBAL_MUNICIPALITIES_ROOT", "/workspace/global_municipalities") + "/global_municipalities_candidate.csv")
 os.makedirs(CK, exist_ok=True)
 fx = ArchiveFetcher(lane="eap")
@@ -30,14 +32,15 @@ def log(*a): print(time.strftime("%F %T"), *a, flush=True)
 def guard():
     free = shutil.disk_usage("/workspace").free / 2**30
     rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024
-    if free < 35: log("STOP disk", round(free, 1), "GB"); sys.exit(4)
+    if free < 23: log("WARN disk", round(free, 1), "GB")
+    if free < 20: log("STOP disk", round(free, 1), "GB"); sys.exit(4)
     if rss > 480: log("STOP rss", round(rss), "MB"); sys.exit(5)
 LED = None
 def ledger():
     global LED
     if LED is None:
         LED = (set(), set())
-        for l in open((_wl_os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law") + "/state/pdf_ledger.jsonl")):
+        for l in open((_wl_os.environ.get("WORLD_LAW_ROOT", str(_WORLD)) + "/state/pdf_ledger.jsonl")):
             try: r = json.loads(l)
             except Exception: continue
             LED[0].add((r.get("place_key"), r.get("doc_id"))); LED[1].add(r.get("sha256"))
@@ -71,12 +74,20 @@ class Run:
         s.done = set(open(s.ckf).read().split("\n")) if os.path.exists(s.ckf) else set()
         s.dff = f"{CK}/{name}.deferred.json"
         s.deferred = json.load(open(s.dff)) if os.path.exists(s.dff) else {}
+        s.rqf = f"{CK}/{name}.requeues.json"
+        s.requeues = json.load(open(s.rqf)) if os.path.exists(s.rqf) else {}
         s.ck = open(s.ckf, "a"); s.writers = {}; s.n = 0; s.scan = 0; s.fails = 0; s.pending = []; s.since = 0
     def due(s, k):
         """False if k is deferred and its not_before is still in the future (skip this pass)."""
         nb = s.deferred.get(k)
         return nb is None or nb <= time.time()
     def defer(s, k, nb):
+        """requeue k; after MAX_REQUEUE deferrals it is closed as done-with-gaps (archive README round 5)."""
+        s.requeues[k] = s.requeues.get(k, 0) + 1
+        with open(s.rqf + ".tmp", "w") as f: json.dump(s.requeues, f)
+        os.replace(s.rqf + ".tmp", s.rqf)
+        if s.requeues[k] > MAX_REQUEUE:
+            log("requeue cap reached; done-with-gaps", k); miss(s, k, f"requeue_cap_{MAX_REQUEUE}"); return
         s.deferred[k] = max(float(nb or 0), time.time() + 5); s.save_deferred()
     def save_deferred(s):
         with open(s.dff + ".tmp", "w") as f: json.dump(s.deferred, f)
@@ -105,6 +116,7 @@ class Run:
         json.dump({"stage": s.name, "deferred": len(live), "docs": s.n, "scanned": s.scan, "places": len(s.writers), "updated": time.strftime("%F %T")},
                   open(f"{CK}/{s.name}.status.json", "w"))
 RUNSTATE = {"down": 0}
+MAX_REQUEUE = int(os.environ.get("EAP_MAX_REQUEUE", "12"))
 class Deferred(Exception):
     def __init__(s, nb): s.nb = nb
 def fetch(cap, validator=None):
@@ -246,10 +258,12 @@ def caps_for(prefix, match="prefix", filters=None, cache=None):
         if RUNSTATE["down"] >= 5: log("archives unavailable; exit 3", e); sys.exit(3)
         raise Deferred(time.time() + 600)
     except ArchiveError as e: log("wb cdx error (treated as empty)", prefix, e); cs = []
-    if getattr(cs, "truncated", False): raise Deferred(cs.deferral.not_before if cs.deferral else time.time() + 600)
+    if getattr(cs, "truncated", False) and getattr(cs, "complete_except_permanent", False):
+        log("wb listing has only permanent gaps; final", prefix, getattr(cs, "truncated_reason", ""))
+    elif getattr(cs, "truncated", False): raise Deferred(cs.deferral.not_before if cs.deferral else time.time() + 600)
     try:
         cc = fx.cc_captures(prefix, match, on_deferred="flag")
-        if getattr(cc, "truncated", False): raise Deferred(cc.deferral.not_before if cc.deferral else time.time() + 600)
+        if getattr(cc, "truncated", False) and not getattr(cc, "complete_except_permanent", False): raise Deferred(cc.deferral.not_before if cc.deferral else time.time() + 600)
         cs = list(cs) + list(cc)
     except Deferred: raise
     except ArchiveDeferred as e: raise Deferred(e.not_before)
@@ -271,6 +285,8 @@ def emit_doc(r, cc, pid, pname, q, c, d, pol, basis, platform, doc_type="ordinan
     rec["source_policy"] = pol
     if basis: rec["robots_basis"] = basis
     if q: rec["qid"] = q
+    if getattr(d, "incomplete", False):  # round 3: doc found while another source failed
+        rec["content_complete"] = False; rec["incomplete_reason"] = "archive fetch incomplete: another source deferred/failed"
     if body[:5] == b"%PDF-":
         txt = pdf_text(body); rec["content_format"] = "pdf_text"
         if len(txt.strip()) < 200:

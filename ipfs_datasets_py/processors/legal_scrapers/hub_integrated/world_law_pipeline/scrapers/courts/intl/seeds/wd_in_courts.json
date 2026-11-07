@@ -1,0 +1,1129 @@
+{
+  "head" : {
+    "vars" : [ "i", "l", "c", "coord" ]
+  },
+  "results" : {
+    "bindings" : [ {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q2443381"
+      },
+      "l" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Karnataka High Court"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(77.592572 12.977836)"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1355"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q502531"
+      },
+      "l" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Madras High Court"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(80.28812 13.08778)"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1352"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q502531"
+      },
+      "l" : {
+        "xml:lang" : "es",
+        "type" : "literal",
+        "value" : "Tribunal Supremo de Madrás"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(80.28812 13.08778)"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1352"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q502531"
+      },
+      "l" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Madras High Court"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(80.28812 13.08778)"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q228405"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q502531"
+      },
+      "l" : {
+        "xml:lang" : "es",
+        "type" : "literal",
+        "value" : "Tribunal Supremo de Madrás"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(80.28812 13.08778)"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q228405"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q6437497"
+      },
+      "l" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Krishna Water Disputes Tribunal"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q213380"
+      },
+      "l" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Supreme Court of India"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(77.239444444 28.6225)"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1353"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q213380"
+      },
+      "l" : {
+        "xml:lang" : "es",
+        "type" : "literal",
+        "value" : "Corte Suprema de la India"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(77.239444444 28.6225)"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1353"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q213380"
+      },
+      "l" : {
+        "xml:lang" : "pt",
+        "type" : "literal",
+        "value" : "Supremo Tribunal da Índia"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(77.239444444 28.6225)"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1353"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q502531"
+      },
+      "l" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Madras High Court"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(80.28812 13.08778)"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1352"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q502531"
+      },
+      "l" : {
+        "xml:lang" : "es",
+        "type" : "literal",
+        "value" : "Tribunal Supremo de Madrás"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(80.28812 13.08778)"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1352"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q502531"
+      },
+      "l" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Madras High Court"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(80.28812 13.08778)"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q228405"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q502531"
+      },
+      "l" : {
+        "xml:lang" : "es",
+        "type" : "literal",
+        "value" : "Tribunal Supremo de Madrás"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(80.28812 13.08778)"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q228405"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q106510374"
+      },
+      "l" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "District Court of Colombo"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q35381"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q117035090"
+      },
+      "l" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "City Civil & Sessions Court"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(72.83014631 18.927593147)"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q2341660"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q124350452"
+      },
+      "l" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Contai Sub divisional Court"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1192104"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q125343633"
+      },
+      "l" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Diamond Harbour Sub-divisional Court"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1264213"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q130551814"
+      },
+      "l" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Telangana High Court building"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(78.472039 17.369181)"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1361"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q130551814"
+      },
+      "l" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Telangana High Court building"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(78.472039 17.369181)"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q677037"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q132888023"
+      },
+      "l" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Siliguri Sub divisional Court"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q5087"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q50322373"
+      },
+      "l" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "District Court, Goalpara, Assam"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q67011212"
+      },
+      "l" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Berhampur Munsif Court"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q633530"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q67011269"
+      },
+      "l" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Berhampur District Judge's Court"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q633530"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q98801459"
+      },
+      "l" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "District and Sessions Court, Pune"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1538"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(73.855134859 18.52741418)"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q137645133"
+      },
+      "l" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Purulia District Court"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q307442"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q140312298"
+      },
+      "l" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Old High Court Building Nagpur"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1797367"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(79.071111111 21.153888888)"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q50322321"
+      },
+      "l" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "District Court, Dhemaji, Assam"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q50348792"
+      },
+      "l" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "District Court, Sivasagar, Assam"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q50348869"
+      },
+      "l" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "District Courts, Nagaon, Assam"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q50348941"
+      },
+      "l" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "District Court,Tinsukia, Assam"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q134384525"
+      },
+      "l" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Kukatpally Court's Complex"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(78.390070592 17.464493568)"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q2237435"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q134384525"
+      },
+      "l" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Kukatpally Court's Complex"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(78.390070592 17.464493568)"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q2237435"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1026391"
+      },
+      "l" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Calcutta High Court"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(88.34333333 22.56833333)"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q19899209"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q3522720"
+      },
+      "l" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Allahabad High Court"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(81.82055556 25.45305556)"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q3612324"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q3532653"
+      },
+      "l" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Rajasthan High Court"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(73.035172 26.292246)"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q200019"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q130502"
+      },
+      "l" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Punjab and Haryana High Court"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(76.8066 30.7573)"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q43433"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q130502"
+      },
+      "l" : {
+        "xml:lang" : "es",
+        "type" : "literal",
+        "value" : "Tribunal Superior de Punjab y Haryana"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(76.8066 30.7573)"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q43433"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q502531"
+      },
+      "l" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Madras High Court"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(80.28812 13.08778)"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1352"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q502531"
+      },
+      "l" : {
+        "xml:lang" : "es",
+        "type" : "literal",
+        "value" : "Tribunal Supremo de Madrás"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(80.28812 13.08778)"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1352"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q502531"
+      },
+      "l" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Madras High Court"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(80.28812 13.08778)"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q228405"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q502531"
+      },
+      "l" : {
+        "xml:lang" : "es",
+        "type" : "literal",
+        "value" : "Tribunal Supremo de Madrás"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(80.28812 13.08778)"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q228405"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q695852"
+      },
+      "l" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Bombay High Court"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(72.830461111 18.931183333)"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q2341660"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1026391"
+      },
+      "l" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Calcutta High Court"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(88.34333333 22.56833333)"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q19899209"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1184183"
+      },
+      "l" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Delhi High Court"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(77.236199 28.608953)"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1353"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1184183"
+      },
+      "l" : {
+        "xml:lang" : "pt",
+        "type" : "literal",
+        "value" : "Suprema Corte de Delhi"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(77.236199 28.608953)"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1353"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1593550"
+      },
+      "l" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Orissa High Court"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(85.8589 20.465)"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q207324"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q2343572"
+      },
+      "l" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Himachal Pradesh High Court"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(77.175 31.1)"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q83786"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q3276107"
+      },
+      "l" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Telangana High Court"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(78.472039 17.369181)"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q15340"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q3349334"
+      },
+      "l" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Gauhati High Court"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(91.7514 26.1913)"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q199605"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q3522623"
+      },
+      "l" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Kerala High Court"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(76.275 9.986111111)"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1800"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q3522720"
+      },
+      "l" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Allahabad High Court"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(81.82055556 25.45305556)"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q3612324"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q3523473"
+      },
+      "l" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Chhattisgarh High Court"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(82.0969 22.0182)"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q860452"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q3532381"
+      },
+      "l" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Uttarakhand High Court"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(79.4477 29.3958)"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q773213"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q3532601"
+      },
+      "l" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Madhya Pradesh High Court"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(79.938611111 23.160555555)"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q200878"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q3532643"
+      },
+      "l" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Patna High Court"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(85.125 25.60888889)"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q80484"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q3532653"
+      },
+      "l" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Rajasthan High Court"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(73.035172 26.292246)"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q200019"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q3532728"
+      },
+      "l" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Sikkim High Court"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(88.6146 27.3319)"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q186141"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q3532946"
+      },
+      "l" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Gujarat High Court"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(72.5244 23.0802)"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1070"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q3533032"
+      },
+      "l" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Jharkhand High Court"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(85.32397 23.33961)"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q174461"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q3536613"
+      },
+      "l" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "High Court of Jammu and Kashmir and Ladakh"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q170115"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q3536613"
+      },
+      "l" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "High Court of Jammu and Kashmir and Ladakh"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q255455"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q12984014"
+      },
+      "l" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Tripura High Court"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q170454"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q12987047"
+      },
+      "l" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Manipur High Court"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q208097"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q12988128"
+      },
+      "l" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Meghalaya High Court"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q207752"
+      }
+    }, {
+      "i" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q60456191"
+      },
+      "l" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Andhra Pradesh High Court"
+      },
+      "coord" : {
+        "datatype" : "http://www.opengis.net/ont/geosparql#wktLiteral",
+        "type" : "literal",
+        "value" : "Point(80.4856 16.5195)"
+      },
+      "c" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q19881964"
+      }
+    } ]
+  }
+}

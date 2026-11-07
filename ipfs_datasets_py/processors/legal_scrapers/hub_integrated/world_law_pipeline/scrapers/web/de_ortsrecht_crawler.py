@@ -15,7 +15,7 @@ Politeness: robots.txt (strict; 401/403/5xx/unreachable => disallow), Crawl-dela
 <= 200 requests per place, depth <= 3. Shared fetch cache (sqlite + content-addressed
 raw store) so Amt / Verbandsgemeinde sites shared by many members are fetched once.
 
-Output (only): /workspace/world_law/staging/web/DE/
+Output (only): ~/.ipfs_datasets/world_law/staging/web/DE/
   places/<place_key>/documents.jsonl   one record per document
   _raw/<sha[:2]>/<sha>.<ext>           raw bytes (content addressed)
   _state/done_place_ids.txt            resumability
@@ -30,6 +30,8 @@ import os as _ipfs_os
 from pathlib import Path as _ipfs_Path
 _CORPORA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_CORPORA_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_corpora")))
 _SCRAPERS = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_COLLECTORS_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_collectors"))) / "shared"
+_WORLD = _ipfs_Path(_ipfs_os.environ.get("WORLD_LAW_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "world_law")))
+_TESSDATA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_TESSDATA", str(_ipfs_Path.home() / ".ipfs_datasets" / "tessdata")))
 _HF_TOKEN_PATH = _ipfs_Path(_ipfs_os.environ.get("HF_TOKEN_PATH", str(_ipfs_Path.home() / ".cache" / "huggingface" / "token")))
 import os as _wl_os  # WORLD_LAW_ROOT / GLOBAL_MUNICIPALITIES_ROOT override the default paths
 
@@ -58,7 +60,7 @@ from pathlib import Path
 
 import requests
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from rfc9309 import Robots  # noqa: E402  (vendored from scrapers/asia_latam/common/rfc9309.py)
+from rfc9309 import Robots, ignore_robots, politeness_delay  # noqa: E402  (vendored from scrapers/asia_latam/common/rfc9309.py)
 ROBOTS_DIR: "Path | None" = None
 from bs4 import BeautifulSoup
 
@@ -76,9 +78,9 @@ if Path("/workspace/ipfs_datasets_py_latest/ipfs_datasets_py/processors/legal_sc
 MUNI = REPO / "ipfs_datasets_py/processors/legal_scrapers/municipal"
 SEED_FILE = MUNI / "seeds/code_hosts/DE.jsonl"
 CANDIDATES = Path((_wl_os.environ.get("GLOBAL_MUNICIPALITIES_ROOT", "/workspace/global_municipalities") + "/global_municipalities_candidate.csv"))
-OUT = Path((_wl_os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law") + "/staging/web/DE"))
-SCHEMA = Path((_wl_os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law") + "/pipeline/SCHEMA.md"))
-sys.path.insert(0, (_wl_os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law") + "/pipeline"))
+OUT = Path((_wl_os.environ.get("WORLD_LAW_ROOT", str(_WORLD)) + "/staging/web/DE"))
+SCHEMA = Path((_wl_os.environ.get("WORLD_LAW_ROOT", str(_WORLD)) + "/pipeline/SCHEMA.md"))
+sys.path.insert(0, (_wl_os.environ.get("WORLD_LAW_ROOT", str(_WORLD)) + "/pipeline"))
 import schema as world_schema  # noqa: E402  (place_key, validate_file, validate_record)
 SOURCE_PLATFORM = "de_municipal_web"
 
@@ -108,7 +110,7 @@ MAX_HTML_BYTES = 2_000_000
 TIMEOUT = (10, 25)
 PLACE_TIME_BUDGET = 30 * 60  # seconds
 MAX_TEXT_CHARS = 1_000_000
-TMP_DIR = Path((_wl_os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law") + "/staging/web/DE/_tmp"))
+TMP_DIR = Path((_wl_os.environ.get("WORLD_LAW_ROOT", str(_WORLD)) + "/staging/web/DE/_tmp"))
 ROBOTS_LRU = 2000
 MAX_FRONTIER = 2500
 REQUEST_DEADLINE = 180  # seconds for a whole response body (slow-drip guard)
@@ -329,15 +331,13 @@ class Politeness:
 
     def delay_for(self, host: str) -> float:
         st = self.robots.get(host)
-        d = MIN_DELAY
+        cd = None
         if st and st[0] == "ok":
             try:
                 cd = st[1].crawl_delay(UA_TOKEN)
-                if cd:
-                    d = max(d, float(cd))
             except Exception:
-                pass
-        return d
+                cd = None
+        return politeness_delay(cd, MIN_DELAY)  # IGNORE_ROBOTS=1: Crawl-delay > 10 s treated as 10 s
 
     def wait_turn(self, host: str) -> None:
         """Caller must hold host lock."""
@@ -403,7 +403,9 @@ class Politeness:
     def allowed(self, url: str, session) -> tuple[bool, str]:
         p = urllib.parse.urlsplit(url)
         host = p.netloc.lower()
-        st = self.robots_state(p.scheme, host, session)
+        st = self.robots_state(p.scheme, host, session)  # still fetched: Crawl-delay + audit record
+        if ignore_robots():
+            return True, ""
         if st[0] == "allow_all":
             return True, ""
         if st[0] == "disallow_all":

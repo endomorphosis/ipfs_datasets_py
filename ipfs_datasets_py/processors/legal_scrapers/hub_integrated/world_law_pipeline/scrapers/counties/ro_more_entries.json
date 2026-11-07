@@ -1,0 +1,20 @@
+[
+ {
+  "name": "Județul Sibiu",
+  "qsearch": "Sibiu County",
+  "url": "https://www.cjsibiu.ro/hotararile-consiliului-judetean/",
+  "iso": "RO-SB"
+ },
+ {
+  "name": "Județul Dolj",
+  "qsearch": "Dolj County",
+  "url": "https://www.cjdolj.ro/dm_dolj/site.nsf/pagini/hotarari-0000147E",
+  "iso": "RO-DJ"
+ },
+ {
+  "name": "Județul Timiș",
+  "qsearch": "Timiș County",
+  "url": "https://www.cjtimis.ro/activitate/hotarari/",
+  "iso": "RO-TM"
+ }
+]

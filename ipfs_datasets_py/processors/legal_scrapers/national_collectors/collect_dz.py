@@ -1,11 +1,18 @@
 #!/usr/bin/env python3
 """Algeria: Journal Officiel (JORADP / SGG) official PDF issues over HTTP."""
 from __future__ import annotations
-import logging, sys, time
+import logging, os, sys, time
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from common import existing_ids, log_failure, utcnow, write_summary
-from world_lib import env_int, fetch_official, save_instrument, setup_log, slug_id
+from world_lib import (
+    env_int,
+    fetch_official,
+    fetch_official_prefer_pdf,
+    save_instrument,
+    setup_log,
+    slug_id,
+)
 
 CC, COUNTRY, LANG = "dz", "Algeria", "fr"
 SOURCE_TYPE = "joradp"
@@ -32,23 +39,29 @@ CODES = [
 
 
 def jo_urls():
-    years = list(range(env_int("YEAR_FROM", 2020), env_int("YEAR_TO", 2027)))
+    years = list(range(env_int("YEAR_FROM", 2015), env_int("YEAR_TO", 2027)))
     years.reverse()
-    maxn = env_int("JO_MAX_NUM", 90)
+    maxn = env_int("JO_MAX_NUM", 100)
+    include_ar = os.environ.get("INCLUDE_AR", "1") not in ("0", "false", "False")
     out = []
     for y in years:
         for n in range(1, maxn + 1):
             ident = f"F{y}{n:03d}"
             url = f"http://www.joradp.dz/FTP/jo-francais/{y}/F{y}{n:03d}.pdf"
             out.append((ident, url, f"Journal Officiel n° {n} ({y}) — édition française"))
+            if include_ar:
+                # Official Arabic edition on same JORADP FTP tree
+                a_ident = f"A{y}{n:03d}"
+                a_url = f"http://www.joradp.dz/FTP/jo-arabe/{y}/A{y}{n:03d}.pdf"
+                out.append((a_ident, a_url, f"الجريدة الرسمية عدد {n} ({y}) — الطبعة العربية"))
     return out
 
 
 def main():
     setup_log(CC)
     t0 = utcnow()
-    max_new = env_int("MAX_NEW", 70)
-    max_seconds = env_int("MAX_SECONDS", 2400)
+    max_new = env_int("MAX_NEW", 40)
+    max_seconds = env_int("MAX_SECONDS", 7200)
     t_start = time.time()
     done = existing_ids(CC)
     items = list(CODES) + jo_urls()
@@ -62,14 +75,15 @@ def main():
         if rid in done:
             skip += 1
             continue
-        got = fetch_official(url, ua=UA, verify=False, min_text=80)
+        # Prefer CDX-backed Wayback PDF for JORADP (live often TLS/EOF; no WAF bypass)
+        got = fetch_official_prefer_pdf(url, ua=UA, verify=False, min_text=80)
         text = got.get("text") or ""
         if got.get("status") != "success":
             fail += 1
             log_failure(CC, {"identifier": ident, "source_url": url, "reason": got.get("error")})
             continue
         year = None
-        if ident.startswith("F") and ident[1:5].isdigit():
+        if len(ident) >= 5 and ident[0] in "FA" and ident[1:5].isdigit():
             year = f"{ident[1:5]}-01-01"
         if save_instrument(
             cc=CC, country=COUNTRY, language=LANG, ident=ident, title=title, text=text,

@@ -20,6 +20,11 @@ UA = "legal-corpora research collector (municipal regulations dataset; read-only
 SLEEP = 1.5
 TYPES = {"PrivateRb": "husholdning", "BusinessRb": "erhverv"}
 
+def utf8_header(v):
+    """requests decodes header values as latin-1; NSTAR sends UTF-8 filenames ('KÃ¸benhavn' -> 'København'). Reversed only if clean."""
+    try: return v.encode("latin-1").decode("utf-8")
+    except (UnicodeEncodeError, UnicodeDecodeError): return v
+
 def hidden(page):
     return {m.group(1): html.unescape(m.group(2)) for m in re.finditer(r'<input type="hidden" name="([^"]+)" id="[^"]*" value="([^"]*)"', page)}
 
@@ -78,7 +83,7 @@ def main(out="dk_build"):
                     tf.write(d.content); tf.flush()
                     info = subprocess.run(["pdfinfo", tf.name], capture_output=True, text=True).stdout
                     txt = subprocess.run(["pdftotext", "-layout", "-enc", "UTF-8", tf.name, "-"], capture_output=True, text=True).stdout
-                rec.update(filename=fn.group(1).strip() if fn else None, pdf_bytes=len(d.content), pdf_sha256=hashlib.sha256(d.content).hexdigest(),
+                rec.update(filename=utf8_header(fn.group(1).strip()) if fn else None, pdf_bytes=len(d.content), pdf_sha256=hashlib.sha256(d.content).hexdigest(),
                            pages=int((re.search(r"Pages:\s+(\d+)", info) or [0, 0])[1]), producer=(re.search(r"Producer:\s+(.*)", info) or [None, None])[1], text=txt)
             except Exception as e:
                 rec["error"] = f"{type(e).__name__}: {e}"[:300]

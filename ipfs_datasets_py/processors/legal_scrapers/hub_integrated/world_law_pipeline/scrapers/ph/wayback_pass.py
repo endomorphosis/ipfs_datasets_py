@@ -12,17 +12,19 @@ A place is marked done (wayback_done[_pass2].jsonl) only when its listing is don
 Checkpoints: wayback_done.jsonl, wayback_docs.jsonl (per doc URL, written after the writer flushes),
 wayback_cand/<pk>.json (CDX candidate list, so a listing is never redone), wayback_capped.jsonl.
 Pass 1: first PH_WB_MAXDOCS (25) docs per place. --second-pass: only capped places, remaining docs (skips URLs in
-wayback_docs and doc_ids in _archive_provenance/PH). SIGTERM: flush, exit 143. Disk < 35 GB free: flush, exit 75."""
+wayback_docs and doc_ids in _archive_provenance/PH). SIGTERM: flush, exit 143. Disk < 10 GB free after dual df/statvfs checks 4s apart (warn < 23 GB): flush, exit 75."""
 # Harvested collector path injection. Do not collect from /workspace.
 import os as _ipfs_os
 from pathlib import Path as _ipfs_Path
 _CORPORA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_CORPORA_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_corpora")))
 _SCRAPERS = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_COLLECTORS_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_collectors"))) / "shared"
+_WORLD = _ipfs_Path(_ipfs_os.environ.get("WORLD_LAW_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "world_law")))
+_TESSDATA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_TESSDATA", str(_ipfs_Path.home() / ".ipfs_datasets" / "tessdata")))
 _HF_TOKEN_PATH = _ipfs_Path(_ipfs_os.environ.get("HF_TOKEN_PATH", str(_ipfs_Path.home() / ".cache" / "huggingface" / "token")))
 import os as _wl_os  # WORLD_LAW_ROOT / GLOBAL_MUNICIPALITIES_ROOT override the default paths
 import os, sys, re, json, time, shutil, hashlib, subprocess, tempfile, datetime, resource, logging, glob, signal, dataclasses
 os.environ.setdefault('ARCHIVE_LANE', 'ph')
-sys.path.insert(0, (_wl_os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law") + '/pipeline')); sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, (_wl_os.environ.get("WORLD_LAW_ROOT", str(_WORLD)) + '/pipeline')); sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 resource.setrlimit(resource.RLIMIT_AS, (1_500_000_000, 1_500_000_000))   # hard guard; RSS target < 500 MB
 from archive import ArchiveFetcher, StagedWriter, provenance_fields
 from archive.core import ArchiveTransient, ArchiveError, ArchiveDeferred, Capture, good_doc
@@ -30,8 +32,8 @@ from archive import ratelimit
 from urllib.parse import urlparse, unquote
 import ph_crawl as C
 logging.basicConfig(level=logging.WARNING)
-ST = os.environ.get('PH_WB_ST', '/workspace/world_law/staging/ph/_state')
-STAGE = os.environ.get('PH_WB_STAGE', '/workspace/world_law/staging/ph')
+ST = os.environ.get('PH_WB_ST', str(_WORLD) + '/staging/ph/_state')
+STAGE = os.environ.get('PH_WB_STAGE', str(_WORLD) + '/staging/ph')
 MAXDOCS = int(os.environ.get('PH_WB_MAXDOCS', '25'))
 BREAKER_WAIT = 300; TRANSIENT_WAIT = 600
 SECOND = '--second-pass' in sys.argv
@@ -41,7 +43,52 @@ STOP = {'flag': False}
 signal.signal(signal.SIGTERM, lambda *a: STOP.update(flag=True))
 now = lambda: datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
 def log(*a): print(now(), *a, flush=True)
-def disk_ok(): return shutil.disk_usage(STAGE).free >= 35 * 2**30
+def _free_bytes():
+    """Independent free-space readings for /workspace (and STAGE mount)."""
+    vals = []
+    try:
+        vals.append(shutil.disk_usage(STAGE).free)
+    except Exception as e:
+        log('disk_ok shutil failed:', e)
+    try:
+        st = os.statvfs('/workspace')
+        vals.append(st.f_bavail * st.f_frsize)
+    except Exception as e:
+        log('disk_ok statvfs failed:', e)
+    try:
+        out = subprocess.check_output(['df', '--output=avail', '-B1', '/workspace'], text=True)
+        # header + one value line
+        line = [l.strip() for l in out.splitlines() if l.strip() and not l.strip().lower().startswith('avail')][-1]
+        vals.append(int(line.split()[0]))
+    except Exception as e:
+        log('disk_ok df failed:', e)
+    return vals
+def disk_ok():
+    """Warn under 23 GB; stop only if free space is still under 10 GB after two
+    multi-source readings spaced at least 4s apart (guards against one-shot false lows)."""
+    FLOOR, WARN = 10 * 2**30, 23 * 2**30
+    samples = _free_bytes()
+    if not samples:
+        log('WARN disk_ok: no free-space readings; treating as OK this tick')
+        return True
+    fmin = min(samples)
+    if fmin < WARN:
+        log(f'WARN disk < 23GB free (min={fmin/2**30:.2f}GB samples={[round(v/2**30,2) for v in samples]})')
+    if fmin >= FLOOR:
+        return True
+    # Apparent floor trip: re-check after >=4s before exiting 75
+    log(f'disk_ok: apparent <10GB (min={fmin/2**30:.2f}GB); rechecking in 4s')
+    time.sleep(4.0)
+    samples2 = _free_bytes()
+    if not samples2:
+        log('WARN disk_ok: second reading empty; not stopping')
+        return True
+    fmin2 = min(samples2)
+    log(f'disk_ok recheck min={fmin2/2**30:.2f}GB samples={[round(v/2**30,2) for v in samples2]}')
+    if fmin2 >= FLOOR:
+        log('disk_ok: false low-disk reading discarded; continuing')
+        return True
+    return False
 def rss_mb(): return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024
 def clean(v): return None if v is None or (isinstance(v, float) and v != v) else v
 def jl(path): return [json.loads(l) for l in open(path)] if os.path.exists(path) else []
@@ -144,7 +191,7 @@ class Task:
         nb_min = None
         for c in t.todo_docs():
             if STOP['flag']: return False
-            if not disk_ok(): t.flush(); ctx.close(); log('DISK < 35GB free: stopping'); sys.exit(75)
+            if not disk_ok(): t.flush(); ctx.close(); log('DISK < 10GB free: stopping'); sys.exit(75)
             nb = ctx.defq.nb(t.pid, 'doc', c.original_url)
             if nb > time.time(): nb_min = min(nb_min or nb, nb); continue      # this doc still deferred: move on
             try:

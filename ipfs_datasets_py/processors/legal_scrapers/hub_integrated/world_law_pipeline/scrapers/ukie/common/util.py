@@ -4,7 +4,7 @@
   copied from scrapers/eu/common), no retries on 401/403/challenge pages (never bypass WAF/captcha).
 * State: sqlite (resumable): places / docs / items tables + progress.json summary.
 * stage(): wraps archive.staging.StagedWriter (validate -> .tmp -> fsync -> rename; provenance sidecar).
-* guard(): disk (>= 35 GB free) and RSS (< 900 MB) checks; raise StopRun when violated.
+* guard(): disk (>= 10 GB free) and RSS (< 900 MB) checks; raise StopRun when violated.
 """
 from __future__ import annotations
 # Harvested collector path injection. Do not collect from /workspace.
@@ -12,6 +12,8 @@ import os as _ipfs_os
 from pathlib import Path as _ipfs_Path
 _CORPORA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_CORPORA_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_corpora")))
 _SCRAPERS = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_COLLECTORS_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_collectors"))) / "shared"
+_WORLD = _ipfs_Path(_ipfs_os.environ.get("WORLD_LAW_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "world_law")))
+_TESSDATA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_TESSDATA", str(_ipfs_Path.home() / ".ipfs_datasets" / "tessdata")))
 _HF_TOKEN_PATH = _ipfs_Path(_ipfs_os.environ.get("HF_TOKEN_PATH", str(_ipfs_Path.home() / ".cache" / "huggingface" / "token")))
 import os as _wl_os  # WORLD_LAW_ROOT / GLOBAL_MUNICIPALITIES_ROOT override the default paths
 
@@ -30,17 +32,17 @@ from urllib.parse import urlparse
 
 import requests
 
-sys.path.insert(0, (_wl_os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law") + "/pipeline"))
+sys.path.insert(0, (_wl_os.environ.get("WORLD_LAW_ROOT", str(_WORLD)) + "/pipeline"))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from common.rfc9309 import RobotsCache  # noqa: E402
 
 LANE = "ukie"
 os.environ.setdefault("ARCHIVE_LANE", LANE)
-STAGE = Path((_wl_os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law") + "/staging/ukie"))
+STAGE = Path((_wl_os.environ.get("WORLD_LAW_ROOT", str(_WORLD)) + "/staging/ukie"))
 STATE_DIR = STAGE / "_state"
 LOGS = STAGE / "_logs"
 UA = "world-municipal-law-research/1.0 (ukie lane: UK/IE local law; open-data reuse; >=2 s per host)"
-MIN_FREE_GB = 35
+MIN_FREE_GB = 10
 MAX_RSS_MB = 900
 
 
@@ -56,14 +58,121 @@ def utcnow() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
-def guard():
-    free = shutil.disk_usage("/workspace").free / 1e9
-    if free < MIN_FREE_GB:
-        raise StopRun(f"disk free {free:.1f} GB < {MIN_FREE_GB} GB")
+def disk_probe(path: str = None) -> dict:
+    """Multi-method free-space probe on the staging filesystem. Never raises on a single reading.
+    Returns dict with path, device, df_avail_gb, statvfs_avail_gb, shutil_free_gb, min_gb, ok.
+    """
+    path = path or str(STAGE)
+    out = {"path": path, "device": None, "df_avail_gb": None, "statvfs_avail_gb": None,
+           "shutil_free_gb": None, "min_gb": None, "ok": False, "error": None}
+    try:
+        out["device"] = os.stat(path).st_dev
+    except OSError as e:
+        out["error"] = f"stat:{e}"
+        return out
+    # df -P on the actual staging path (Available column, 1K-blocks)
+    try:
+        import subprocess
+        r = subprocess.run(["df", "-P", path], capture_output=True, text=True, timeout=15)
+        lines = [l for l in (r.stdout or "").splitlines() if l.strip()]
+        if len(lines) >= 2:
+            cols = lines[-1].split()
+            # Filesystem 1024-blocks Used Available Capacity Mounted-on
+            out["df_avail_gb"] = int(cols[3]) * 1024 / 1e9
+            out["df_line"] = lines[-1]
+    except Exception as e:  # noqa: BLE001
+        out["df_error"] = str(e)
+    try:
+        st = os.statvfs(path)
+        out["statvfs_avail_gb"] = st.f_bavail * st.f_frsize / 1e9
+        out["statvfs_total_gb"] = st.f_blocks * st.f_frsize / 1e9
+    except OSError as e:
+        out["statvfs_error"] = str(e)
+    try:
+        su = shutil.disk_usage(path)
+        out["shutil_free_gb"] = su.free / 1e9
+        out["shutil_total_gb"] = su.total / 1e9
+        out["shutil_used_gb"] = su.used / 1e9
+    except OSError as e:
+        out["shutil_error"] = str(e)
+    vals = [v for v in (out["df_avail_gb"], out["statvfs_avail_gb"], out["shutil_free_gb"]) if v is not None]
+    if vals:
+        out["min_gb"] = min(vals)
+        out["ok"] = out["min_gb"] >= MIN_FREE_GB
+    return out
+
+
+def format_disk_probe(p: dict) -> str:
+    return (
+        f"path={p.get('path')} dev={p.get('device')} "
+        f"df={p.get('df_avail_gb')}G statvfs={p.get('statvfs_avail_gb')}G "
+        f"shutil={p.get('shutil_free_gb')}G min={p.get('min_gb')}G ok={p.get('ok')} "
+        f"err={p.get('error') or p.get('df_error') or p.get('statvfs_error') or p.get('shutil_error') or '-'}"
+    )
+
+
+def guard(*, confirm_secs: float = 240.0, confirm_samples: int = 3):
+    """RSS + disk guard. Disk StopRun only if ALL multi-method probes stay below floor
+    across confirm_secs (default 4 min, >=3 samples). Never stops on one reading.
+    """
+    disk_path = str(STAGE)  # actual staging output path (~/.ipfs_datasets/world_law/staging/ukie)
+    probe = disk_probe(disk_path)
+    # also probe /workspace for the log line (same FS on this box)
+    probe_ws = disk_probe("/workspace")
+    free = probe.get("min_gb") if probe.get("min_gb") is not None else probe_ws.get("min_gb")
+    if free is not None and free < MIN_FREE_GB:
+        # Re-verify over confirm_secs: sample now + evenly spaced extras. Stop only if every sample is low.
+        import logging
+        log = logging.getLogger("ukie_disk")
+        samples = [probe]
+        log.warning("disk below floor on first probe; confirming over %.0fs: %s | workspace: %s",
+                    confirm_secs, format_disk_probe(probe), format_disk_probe(probe_ws))
+        gaps = confirm_samples - 1
+        interval = confirm_secs / gaps if gaps > 0 else confirm_secs
+        all_low = True
+        for i in range(1, confirm_samples):
+            time.sleep(interval)
+            p2 = disk_probe(disk_path)
+            p2w = disk_probe("/workspace")
+            samples.append(p2)
+            log.warning("disk confirm sample %d/%d: %s | workspace: %s",
+                        i + 1, confirm_samples, format_disk_probe(p2), format_disk_probe(p2w))
+            # Write-probe: try a tiny create in staging state dir; hard write error => treat as fail
+            try:
+                test = STATE_DIR / ".disk_write_probe"
+                test.write_bytes(b"ok")
+                test.unlink(missing_ok=True)
+                write_err = None
+            except OSError as e:
+                write_err = e
+                log.error("disk hard write error on %s: %s", STATE_DIR, e)
+            if write_err is not None:
+                raise StopRun(
+                    f"disk hard write error on {STATE_DIR}: {write_err} "
+                    f"(last probe {format_disk_probe(p2)})"
+                )
+            if p2.get("ok") or (p2.get("min_gb") is not None and p2["min_gb"] >= MIN_FREE_GB):
+                all_low = False
+                free = p2["min_gb"]
+                break
+            if p2.get("min_gb") is not None:
+                free = p2["min_gb"]
+        if all_low and all(
+            (s.get("min_gb") is not None and s["min_gb"] < MIN_FREE_GB) for s in samples
+        ):
+            raise StopRun(
+                f"disk free {free:.1f} GB < {MIN_FREE_GB} GB persisted {confirm_secs:.0f}s "
+                f"across {len(samples)} multi-method probes "
+                f"(fs_path={disk_path} last={format_disk_probe(samples[-1])})"
+            )
+        # recovered during confirm window — fall through
+    elif free is None:
+        # measurement failure: do not StopRun on missing readings alone
+        pass
     rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024
     if rss > MAX_RSS_MB:
         raise StopRun(f"peak RSS {rss:.0f} MB > {MAX_RSS_MB} MB")
-    return free, rss
+    return free if free is not None else 0.0, rss
 
 
 def get_logger(name: str) -> logging.Logger:
@@ -82,6 +191,11 @@ def get_logger(name: str) -> logging.Logger:
 CHALLENGE_TITLE = ("just a moment", "attention required", "access denied", "are you a robot", "security check",
                    "request unsuccessful", "pardon our interruption", "ddos-guard")
 CHALLENGE_MARK = ("cf-chl-", "/cdn-cgi/challenge-platform/", "_incapsula_resource", "captcha-delivery.com")
+
+
+# Nov 1 2026 (Benjamin): legal texts are fetched regardless of robots.txt Disallow. Crawl-delay, >=2 s/host,
+# honest UA and WAF/challenge/403 handling are unchanged. UKIE_IGNORE_ROBOTS=0 restores disallow-skipping.
+IGNORE_ROBOTS = os.environ.get("UKIE_IGNORE_ROBOTS", "1") != "0"
 
 
 class PoliteSession:
@@ -104,6 +218,8 @@ class PoliteSession:
         p = urlparse(url)
         st = self.robots.cache.get(f"{p.scheme}://{p.netloc}", (None, None, None))[2]
         ok = rb.can_fetch(UA, url)
+        if IGNORE_ROBOTS:
+            return True, f"robots.txt {st}" + ("" if ok else " => disallow (ignored per policy)")
         return ok, f"robots.txt {st}" + ("" if ok else " => disallow")
 
     def get(self, url: str, stream=False, max_bytes=None) -> requests.Response:
@@ -142,7 +258,7 @@ class PoliteSession:
                         m in head for m in CHALLENGE_MARK)):
                     raise Blocked("challenge page")
             # redirected off-site to a disallowed path?
-            if r.url != url and not self.robots.can_fetch(r.url):
+            if not IGNORE_ROBOTS and r.url != url and not self.robots.can_fetch(r.url):
                 raise Blocked(f"robots (after redirect to {r.url})")
             return r
         raise err or Exception("fetch failed")

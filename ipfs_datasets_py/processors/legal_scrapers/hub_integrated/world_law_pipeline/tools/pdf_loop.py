@@ -24,6 +24,8 @@ import os as _ipfs_os
 from pathlib import Path as _ipfs_Path
 _CORPORA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_CORPORA_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_corpora")))
 _SCRAPERS = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_COLLECTORS_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_collectors"))) / "shared"
+_WORLD = _ipfs_Path(_ipfs_os.environ.get("WORLD_LAW_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "world_law")))
+_TESSDATA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_TESSDATA", str(_ipfs_Path.home() / ".ipfs_datasets" / "tessdata")))
 _HF_TOKEN_PATH = _ipfs_Path(_ipfs_os.environ.get("HF_TOKEN_PATH", str(_ipfs_Path.home() / ".cache" / "huggingface" / "token")))
 
 import argparse
@@ -40,7 +42,10 @@ from typing import Any, Dict, List, Optional
 
 HERE = Path(__file__).resolve().parent
 PIPE = HERE.parent
-BASE = Path(os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law"))
+BASE = Path(os.environ.get("WORLD_LAW_ROOT", str(_WORLD)))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import batch_alloc as BA  # noqa: E402
+
 ALERT_NAME = "pdf_staging_over_6gb.json"
 DEAD_ALERT_NAME = "pdf_loop_dead.json"
 MEM_LOW_GB = 1.5
@@ -106,7 +111,32 @@ def ready_batches(stage: Path) -> List[str]:
         b = p.name[: -len(".ready")]
         if (md / f"{b}.jsonl").exists() and not (md / f"{b}.pushed").exists():
             out.append(b)
+    out.extend(b for b in BA.stale_batches(md) if b not in out)  # collisions: re-pushed by upload_pdfs
     return sorted(out)
+
+
+COLLISION_ALERT_NAME = "pdf_batch_collision.json"
+
+
+def flag_collisions(state: Path, stage: Path) -> Dict[str, Any]:
+    """Log + alert (state/alerts/pdf_batch_collision.json, history in state/pdf_batch_collisions.jsonl) for batches
+    whose .jsonl/.ready is newer than .pushed or whose pushed count != manifest rows. Nothing is deleted; the alert
+    file is left for a human to clear."""
+    bad = BA.stale_batches(stage / "_manifest")
+    if bad:
+        rec = {"at": utc_now(), "batches": bad, "action": "re-push via upload_pdfs (old .pushed -> _manifest/_superseded/)"}
+        ap = state / "alerts" / COLLISION_ALERT_NAME
+        try:
+            prev = json.loads(ap.read_text()).get("batches")
+        except (OSError, ValueError):
+            prev = None
+        if prev == bad:
+            return bad  # already flagged; don't spam the log/history every minute
+        log(f"BATCH_COLLISION {json.dumps(bad)}")
+        atomic_write(state / "alerts" / COLLISION_ALERT_NAME, json.dumps(rec, indent=1) + "\n")
+        with open(state / "pdf_batch_collisions.jsonl", "a", encoding="utf-8") as f:
+            f.write(json.dumps(rec) + "\n")
+    return bad
 
 
 def dir_bytes(p: Path) -> int:
@@ -348,10 +378,16 @@ def main(argv=None) -> int:
     log(f"started (interval {a.interval:.0f}s, poll {a.poll:.0f}s, commit timeout {a.commit_timeout:.0f}s, "
         f"stall {a.stall_min:g} min, stale lock {a.stale_lock_min:g} min, mem floor {a.min_mem_gb:g} GB, "
         f"alert > {a.alert_gb:g} GB)")
-    last_cycle, last_refresh, seen = 0.0, 0.0, set()
+    last_cycle, last_refresh, seen, last_coll = 0.0, 0.0, set(), 0.0
     try:
         while not _STOP["flag"]:
             st = staging_status(stage)
+            if time.time() - last_coll >= 60:
+                last_coll = time.time()
+                try:
+                    flag_collisions(state, stage)
+                except Exception as e:  # noqa: BLE001
+                    log(f"collision check failed: {e}")
             alerting = update_alert(state, st, a.alert_gb)
             heartbeat(phase="idle", staging_gb=st["staging_gb"], ready=st["ready_count"],
                       oldest_ready_age_min=st["oldest_ready_age_min"], alert=alerting)

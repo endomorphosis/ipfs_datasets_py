@@ -1,0 +1,28 @@
+{
+ "country_code": "DE",
+ "place_id": "wd:Q10465",
+ "qid": "Q10465",
+ "place_name": "Landkreis Rhön-Grabfeld",
+ "iso_3166_2": "DE-BY",
+ "admin_level": "landkreis",
+ "language": "de",
+ "doc_type": "ordinance",
+ "platform": "de_by_kreisrecht",
+ "source_org": "Landkreis Rhön-Grabfeld",
+ "archive_policy": "archived_live_404",
+ "max_bytes": 52428800,
+ "urls": [
+  "https://www.rhoen-grabfeld.de/fileadmin/user_upload/LKR/Aktuelles/Allgemeinverf%C3%BCgung_Gefl%C3%BCgel.pdf",
+  "https://www.rhoen-grabfeld.de/fileadmin/user_upload/LKR/Gesundheit/Veterinaerwesen/Geb%C3%BChren%C3%BCbersicht_Fleischbeschau_ab_01.01.2023.pdf",
+  "https://www.rhoen-grabfeld.de/fileadmin/user_upload/LKR/Mobilitaet/OEPNV/Ergaenzendes_Dokument_zur_Vorabbekanntmachung.pdf",
+  "https://www.rhoen-grabfeld.de/fileadmin/user_upload/LKR/Umwelt/Wasser/Bekanntmachung_Festsetzungsverfahren_f%C3%BCr_das_WSG_der_Trinkwasserbrunnen_4_und_5_Am_Dornberg__Gmkg._Unterelsbach.pdf",
+  "https://www.rhoen-grabfeld.de/getMedia.php?file=LKRG/1000/10001/Amtsblatt01_2017.pdf"
+ ],
+ "titles": {
+  "https://www.rhoen-grabfeld.de/fileadmin/user_upload/LKR/Aktuelles/Allgemeinverf%C3%BCgung_Gefl%C3%BCgel.pdf": "Allgemeinverfügung Geflügel",
+  "https://www.rhoen-grabfeld.de/fileadmin/user_upload/LKR/Gesundheit/Veterinaerwesen/Geb%C3%BChren%C3%BCbersicht_Fleischbeschau_ab_01.01.2023.pdf": "Gebührenübersicht Fleischbeschau ab 01.01.2023",
+  "https://www.rhoen-grabfeld.de/fileadmin/user_upload/LKR/Mobilitaet/OEPNV/Ergaenzendes_Dokument_zur_Vorabbekanntmachung.pdf": "Ergaenzendes Dokument zur Vorabbekanntmachung",
+  "https://www.rhoen-grabfeld.de/fileadmin/user_upload/LKR/Umwelt/Wasser/Bekanntmachung_Festsetzungsverfahren_f%C3%BCr_das_WSG_der_Trinkwasserbrunnen_4_und_5_Am_Dornberg__Gmkg._Unterelsbach.pdf": "Bekanntmachung Festsetzungsverfahren für das WSG der Trinkwasserbrunnen 4 und 5 Am Dornberg Gmkg. Unterelsbach",
+  "https://www.rhoen-grabfeld.de/getMedia.php?file=LKRG/1000/10001/Amtsblatt01_2017.pdf": "Amtsblatt01 2017"
+ }
+}

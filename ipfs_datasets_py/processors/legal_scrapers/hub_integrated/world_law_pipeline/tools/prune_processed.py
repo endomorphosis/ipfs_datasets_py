@@ -26,6 +26,8 @@ import os as _ipfs_os
 from pathlib import Path as _ipfs_Path
 _CORPORA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_CORPORA_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_corpora")))
 _SCRAPERS = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_COLLECTORS_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_collectors"))) / "shared"
+_WORLD = _ipfs_Path(_ipfs_os.environ.get("WORLD_LAW_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "world_law")))
+_TESSDATA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_TESSDATA", str(_ipfs_Path.home() / ".ipfs_datasets" / "tessdata")))
 _HF_TOKEN_PATH = _ipfs_Path(_ipfs_os.environ.get("HF_TOKEN_PATH", str(_ipfs_Path.home() / ".cache" / "huggingface" / "token")))
 
 import argparse, collections, fcntl, gzip, hashlib, json, os, re, sys, time
@@ -37,7 +39,7 @@ _HERE = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(_HERE))
 import schema as S  # noqa: E402
 
-BASE = Path(os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law"))
+BASE = Path(os.environ.get("WORLD_LAW_ROOT", str(_WORLD)))
 # fallback only when state/prune_config.json is missing (the config is the source of truth)
 DEFAULT_BOTS = ["eu", "national", "web", "asia_latam", "afme", "sasia_ru", "eap", "ph", "ocr", "id_jdih", "states", "ukie"]
 MIN_AGE_H = 2.0
@@ -407,7 +409,14 @@ def prune(base: Path = BASE, state: Optional[Path] = None, out_dir: Optional[Pat
         st["eligible_bytes"] += nbytes
         if not apply:
             continue
-        rows, dh = rows_and_doc_hash(p)
+        try:
+            rows, dh = rows_and_doc_hash(p)
+        except Exception as ex:  # 2026-11-04: unhashable file (e.g. parquet without doc_id) -> skip, never delete
+            st["eligible"] -= 1
+            st["eligible_bytes"] -= nbytes
+            st["skip_unhashable"] += 1
+            log(f"prune: skip unhashable {p}: {ex!r}")
+            continue
         mrec = {"pruned_at": utc_now_iso(), "bot": bot, "path": str(p), "bytes": nbytes, "sha256": sha,
                 "file_sha256": file_sha256(p) if p.name.endswith(".gz") else sha, "rows": rows,
                 "doc_ids_sha256": dh, "place_key": key, "country_code": cc, "ledger_rel": e["rel"],

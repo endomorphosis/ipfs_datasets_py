@@ -1,0 +1,45 @@
+[
+ {
+  "name": "Cantal",
+  "iso": "FR-15",
+  "qid": "Q3259",
+  "url": "https://www.cantal.fr/le-conseil-departemental/arretes-reglementaires/",
+  "issuer": "conseil_departemental",
+  "block_re": "<div class=\"card ws-acte\">",
+  "include_re": "/acte_pdfs/26-",
+  "pager": {
+   "param": "acte_page",
+   "max": 200,
+   "stop_empty": 2
+  },
+  "max_urls": 4000,
+  "crawl_delay": 3,
+  "note": "WordPress 'Arrêtés réglementaires' listing, 20 cards/page (?acte_page=N), PDFs /wp-content/uploads/acte_pdfs/26-NNNN.pdf; title = card text (n°, date, objet). robots: 'Disallow:' empty, no Crawl-Delay."
+ },
+ {
+  "name": "Haute-Vienne",
+  "iso": "FR-87",
+  "qid": "Q12808",
+  "url": "https://arretes.haute-vienne.fr/webdelibplus/jsp/summary_orders.jsp?role=usager",
+  "issuer": "conseil_departemental",
+  "link_re": "[^\"]*openfile\\.jsp\\?[^\"]+",
+  "extra_urls": [
+   "https://arretes.haute-vienne.fr/webdelibplus/jsp/summary_orders.jsp?role=usager&date=01-2026",
+   "https://arretes.haute-vienne.fr/webdelibplus/jsp/summary_orders.jsp?role=usager&date=02-2026",
+   "https://arretes.haute-vienne.fr/webdelibplus/jsp/summary_orders.jsp?role=usager&date=03-2026",
+   "https://arretes.haute-vienne.fr/webdelibplus/jsp/summary_orders.jsp?role=usager&date=04-2026",
+   "https://arretes.haute-vienne.fr/webdelibplus/jsp/summary_orders.jsp?role=usager&date=05-2026",
+   "https://arretes.haute-vienne.fr/webdelibplus/jsp/summary_orders.jsp?role=usager&date=06-2026",
+   "https://arretes.haute-vienne.fr/webdelibplus/jsp/summary_orders.jsp?role=usager&date=07-2026",
+   "https://arretes.haute-vienne.fr/webdelibplus/jsp/summary_orders.jsp?role=usager&date=08-2026",
+   "https://arretes.haute-vienne.fr/webdelibplus/jsp/summary_orders.jsp?role=usager&date=09-2026"
+  ],
+  "crawl_delay": 10,
+  "note": "Webdelib+ arrêtés (arretes.haute-vienne.fr, since 18/11/2024); monthly summary pages &date=MM-2026; openfile.jsp?name=..&pdf=<token> links have query strings -> ~urlhash8 doc_id suffix. arretes.haute-vienne.fr/robots.txt 404 (= allow all, RFC 9309); www.haute-vienne.fr Crawl-delay 10 honoured here too.",
+  "href_sub": [
+   "openfile\\.jsp\\?name=[^&]*&pdf=",
+   "showFile.jsp?pdf="
+  ],
+  "block_re": "<tr[ >]"
+ }
+]

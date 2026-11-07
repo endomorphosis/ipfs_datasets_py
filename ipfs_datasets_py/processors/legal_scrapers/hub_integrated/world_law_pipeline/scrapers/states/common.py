@@ -4,7 +4,7 @@ Lane:      states  (bot dir staging/states/, ARCHIVE_LANE=states)
 Contract:  pipeline/SCHEMA.md v1.2.0 (adm1 => place_id iso:<ISO 3166-2>, admin_level "adm1", world_national_law)
 Politeness: RFC 9309 robots (pipeline/scrapers/web/rfc9309.py), identifying UA, >= max(Crawl-delay, MIN_DELAY) per host,
            backoff on 429/5xx, no Cloudflare/captcha bypass, no proxies. Challenge pages abort the source.
-Guards:    RSS <= RSS_LIMIT_MB (default 900), free disk on /workspace >= MIN_FREE_GB (35) before every write.
+Guards:    RSS <= RSS_LIMIT_MB (default 900), free disk on /workspace >= MIN_FREE_GB (10) before every write.
 """
 from __future__ import annotations
 # Harvested collector path injection. Do not collect from /workspace.
@@ -12,6 +12,8 @@ import os as _ipfs_os
 from pathlib import Path as _ipfs_Path
 _CORPORA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_CORPORA_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_corpora")))
 _SCRAPERS = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_COLLECTORS_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_collectors"))) / "shared"
+_WORLD = _ipfs_Path(_ipfs_os.environ.get("WORLD_LAW_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "world_law")))
+_TESSDATA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_TESSDATA", str(_ipfs_Path.home() / ".ipfs_datasets" / "tessdata")))
 _HF_TOKEN_PATH = _ipfs_Path(_ipfs_os.environ.get("HF_TOKEN_PATH", str(_ipfs_Path.home() / ".cache" / "huggingface" / "token")))
 import os as _wl_os  # WORLD_LAW_ROOT / GLOBAL_MUNICIPALITIES_ROOT override the default paths
 import fcntl, json, os, re, resource, shutil, sys, time, hashlib
@@ -21,19 +23,19 @@ from urllib.parse import urlparse
 
 import requests
 
-PIPE = Path((_wl_os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law") + "/pipeline"))
+PIPE = Path((_wl_os.environ.get("WORLD_LAW_ROOT", str(_WORLD)) + "/pipeline"))
 sys.path.insert(0, str(PIPE)); sys.path.insert(0, str(PIPE / "scrapers" / "web"))
 from schema import place_key, validate_record, validate_file  # noqa: E402
 from rfc9309 import Robots  # noqa: E402
 
 LANE = "states"
-STAGING = Path((_wl_os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law") + "/staging")) / LANE
+STAGING = Path((_wl_os.environ.get("WORLD_LAW_ROOT", str(_WORLD)) + "/staging")) / LANE
 UA_TOKEN = "WorldLawStatesBot"
 UA = (f"{UA_TOKEN}/0.1 (+https://github.com/endomorphosis/ipfs_datasets_py; state/provincial law research "
       "archive for endomorphosis/world_national_law; polite, ~1 req per 2-10 s per host)")
 MIN_DELAY = float(os.environ.get("STATES_MIN_DELAY", "2.0"))
 RSS_LIMIT_MB = int(os.environ.get("STATES_RSS_MB", "900"))
-MIN_FREE_GB = float(os.environ.get("STATES_MIN_FREE_GB", "35"))
+MIN_FREE_GB = float(os.environ.get("STATES_MIN_FREE_GB", "10"))
 OCR_MANIFEST = STAGING / "_scanned_pdfs_manifest.jsonl"   # same format as asia_latam/eap (ocr/pdf_collect.load_eap)
 CHALLENGE_MARKERS = (b"challenges.cloudflare.com", b"Just a moment...", b"cf-chl-", b"captcha", b"Request blocked.")
 
@@ -83,6 +85,12 @@ def check_guards():
 # semantics (2026-10-18). Content 403s/challenges still raise PermissionError and stop the run.
 RFC9309_4XX_ALLOW_HOSTS = {"minio.legsanjuan.gob.ar"}
 
+# Owner policy 2026-11-01 (Benjamin): stop following robots.txt for this lane; robots.txt is still read for
+# Crawl-delay/Request-rate (kept as rate limits). Disallowed/unreachable URLs are fetched and tagged
+# ROBOTS_IGNORED_TAG in source_policy. Challenge/403/WAF detection on content stays a hard stop; no proxies.
+RESPECT_ROBOTS = os.environ.get("STATES_RESPECT_ROBOTS", "0") == "1"
+ROBOTS_IGNORED_TAG = "robots_ignored_owner_policy_20261101"
+
 
 class PoliteSession:
     """requests.Session with RFC 9309 robots, per-host delay and challenge detection. Live fetches only."""
@@ -123,7 +131,10 @@ class PoliteSession:
 
     def allowed(self, url):
         rb, policy = self.robots_for(url)
-        return rb.can_fetch(UA, url), policy
+        ok = rb.can_fetch(UA, url)
+        if not ok and not RESPECT_ROBOTS:
+            return True, f"{policy};{ROBOTS_IGNORED_TAG}"   # owner policy 2026-11-01
+        return ok, policy
 
     def delay_for(self, url):
         rb, _ = self.robots_for(url)

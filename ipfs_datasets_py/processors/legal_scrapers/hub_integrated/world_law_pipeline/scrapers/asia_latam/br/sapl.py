@@ -14,18 +14,20 @@ import os as _ipfs_os
 from pathlib import Path as _ipfs_Path
 _CORPORA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_CORPORA_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_corpora")))
 _SCRAPERS = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_COLLECTORS_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_collectors"))) / "shared"
+_WORLD = _ipfs_Path(_ipfs_os.environ.get("WORLD_LAW_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "world_law")))
+_TESSDATA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_TESSDATA", str(_ipfs_Path.home() / ".ipfs_datasets" / "tessdata")))
 _HF_TOKEN_PATH = _ipfs_Path(_ipfs_os.environ.get("HF_TOKEN_PATH", str(_ipfs_Path.home() / ".cache" / "huggingface" / "token")))
 import os as _wl_os  # WORLD_LAW_ROOT / GLOBAL_MUNICIPALITIES_ROOT override the default paths
 import argparse, hashlib, json, logging, os, queue, re, sys, threading, time
 from datetime import datetime, timezone
 from pathlib import Path
 HERE = Path(__file__).resolve().parent
-sys.path.insert(0, (_wl_os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law") + "/pipeline")); sys.path.insert(0, str(HERE.parent / "es")); sys.path.insert(0, str(HERE.parent))
+sys.path.insert(0, (_wl_os.environ.get("WORLD_LAW_ROOT", str(_WORLD)) + "/pipeline")); sys.path.insert(0, str(HERE.parent / "es")); sys.path.insert(0, str(HERE.parent))
 import schema as S  # noqa: E402
-from es_bop import Fetcher, Blocked, pdf_text  # noqa: E402
+from es_bop import Fetcher, Blocked, pdf_text, RP  # noqa: E402
 sys.path.insert(0, str(HERE.parent / "common")); import scanned_pdfs as SCANQ  # noqa: E402,E702  scanned-PDF queue (World Law OCR)
 
-STAGE = Path((_wl_os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law") + "/staging/asia_latam"))
+STAGE = Path((_wl_os.environ.get("WORLD_LAW_ROOT", str(_WORLD)) + "/staging/asia_latam"))
 OUT, QUAR, STATE = STAGE / "BR", STAGE / "_quarantine" / "BR", STAGE / "_state" / "br_sapl"
 log = logging.getLogger("br_sapl")
 UF = {"11":"RO","12":"AC","13":"AM","14":"RR","15":"PA","16":"AP","17":"TO","21":"MA","22":"PI","23":"CE","24":"RN","25":"PB","26":"PE","27":"AL","28":"SE","29":"BA","31":"MG","32":"ES","33":"RJ","35":"SP","41":"PR","42":"SC","43":"RS","50":"MS","51":"MT","52":"GO","53":"DF"}
@@ -224,7 +226,7 @@ class Host:
                        "iso_3166_2": f"BR-{ufc}" if ufc else None, "state_code": ufc, "platform": "br_sapl", "platform_place_id": self.h,
                        "ibge_code": st["ibge"], "norma_type": tipo, "summary": it.get("ementa") or None, "pdf_urls": [pu] if pu else None,
                        "publication_vehicle": it.get("veiculo_publicacao") or None, "text_source": ts,
-                       "content_complete": ts == "pdf", "source_policy": "robots_allowed_rfc9309",
+                       "content_complete": ts == "pdf", "source_policy": RP.policy(src, "robots_allowed_rfc9309"),
                        "content_sha256": hashlib.sha256(text.encode()).hexdigest()}
                 rec = {k: v for k, v in rec.items() if v not in (None, "") or k == "place_id"}
                 for k in ("adopted_date", "published_date", "effective_date"):

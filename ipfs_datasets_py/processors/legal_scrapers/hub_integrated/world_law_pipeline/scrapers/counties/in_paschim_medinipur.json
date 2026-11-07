@@ -1,0 +1,18 @@
+{
+ "country_code": "IN",
+ "place_id": "wd:Q1855537",
+ "qid": "Q1855537",
+ "place_name": "Paschim Medinipur district",
+ "iso_3166_2": "IN-WB",
+ "admin_level": "district",
+ "language": "en",
+ "doc_type": "ordinance",
+ "platform": "in_wb_zp_byelaws",
+ "source_org": "Paschim Medinipur Zilla Parishad",
+ "urls": [
+  "https://www.zpmidwest.org/downloads/DraftByLaws2024_1.PDF"
+ ],
+ "titles": {
+  "https://www.zpmidwest.org/downloads/DraftByLaws2024_1.PDF": "Draft By-Laws 2024, Paschim Medinipur Zilla Parishad"
+ }
+}

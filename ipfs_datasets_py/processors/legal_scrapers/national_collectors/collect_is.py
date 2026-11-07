@@ -44,7 +44,7 @@ def discover():
 def main():
     setup_log(CC)
     t0 = utcnow()
-    max_new = env_int("MAX_NEW", 80)
+    max_new = env_int("MAX_NEW", 0)  # 0=no cap; avoid thin tip regressions
     max_seconds = env_int("MAX_SECONDS", 2400)
     t_start = time.time()
     done = existing_ids(CC)

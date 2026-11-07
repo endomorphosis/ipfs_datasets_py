@@ -14,6 +14,8 @@ import os as _ipfs_os
 from pathlib import Path as _ipfs_Path
 _CORPORA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_CORPORA_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_corpora")))
 _SCRAPERS = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_COLLECTORS_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_collectors"))) / "shared"
+_WORLD = _ipfs_Path(_ipfs_os.environ.get("WORLD_LAW_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "world_law")))
+_TESSDATA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_TESSDATA", str(_ipfs_Path.home() / ".ipfs_datasets" / "tessdata")))
 _HF_TOKEN_PATH = _ipfs_Path(_ipfs_os.environ.get("HF_TOKEN_PATH", str(_ipfs_Path.home() / ".cache" / "huggingface" / "token")))
 import os as _wl_os  # WORLD_LAW_ROOT / GLOBAL_MUNICIPALITIES_ROOT override the default paths
 import difflib
@@ -23,11 +25,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 from bs4 import BeautifulSoup
 HERE = Path(__file__).resolve().parent
-sys.path.insert(0, (_wl_os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law") + "/pipeline")); sys.path.insert(0, str(HERE.parent / "es")); sys.path.insert(0, str(HERE.parent))
+sys.path.insert(0, (_wl_os.environ.get("WORLD_LAW_ROOT", str(_WORLD)) + "/pipeline")); sys.path.insert(0, str(HERE.parent / "es")); sys.path.insert(0, str(HERE.parent))
 import schema as S  # noqa: E402
-from es_bop import Fetcher, Blocked  # noqa: E402
+from es_bop import Fetcher, Blocked, RP  # noqa: E402
 
-STAGE = Path((_wl_os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law") + "/staging/asia_latam"))
+STAGE = Path((_wl_os.environ.get("WORLD_LAW_ROOT", str(_WORLD)) + "/staging/asia_latam"))
 OUT, UNM, QUAR, STATE = STAGE / "BR", STAGE / "_unmatched" / "BR", STAGE / "_quarantine" / "BR", STAGE / "_state"
 log = logging.getLogger("br_lexml")
 UFS = {"11": ("RO", "rondonia"), "12": ("AC", "acre"), "13": ("AM", "amazonas"), "14": ("RR", "roraima"), "15": ("PA", "para"),
@@ -258,7 +260,7 @@ def main():
                    "content_format": "html", "text": text, "html": html, "retrieved_at": now_utc(), "summary": ementa,
                    "lexml_localidade": fl.get("Localidade"), "lexml_autoridade": fl.get("Autoridade"),
                    "publication_urls": links or None, "platform": "br_lexml", "platform_place_id": loc,
-                   "text_source": "lexml_metadata", "content_complete": False, "source_policy": "robots_allowed_rfc9309"}
+                   "text_source": "lexml_metadata", "content_complete": False, "source_policy": RP.policy(url, "robots_allowed_rfc9309")}
             if p:
                 rec.update({k: v for k, v in p.items() if k != "place_id"})
             rec = {k: v for k, v in rec.items() if v not in (None, "") or k == "place_id"}

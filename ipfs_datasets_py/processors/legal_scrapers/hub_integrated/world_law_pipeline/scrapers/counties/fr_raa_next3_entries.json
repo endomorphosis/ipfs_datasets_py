@@ -1,0 +1,14 @@
+[
+ {"name": "Pas-de-Calais", "iso": "FR-62", "qid": "Q12689", "max_urls": 2500,
+  "lists": [
+   {"path": "commission-permanente", "stop_empty": 2, "note": "délibérations CP; facet 'CP 2026' = 340"},
+   {"path": "conseil-departemental", "stop_empty": 2, "note": "délibérations séances plénières; 'CD 2026' = 57"},
+   {"path": "voirie-departementale", "stop_empty": 2, "max_pages": 140, "note": "arrêtés du Président, voirie (mostly traffic restrictions); facet 2026 = 1306"},
+   {"path": "designations-et-representations", "stop_empty": 2},
+   {"path": "amenagement-foncier-0", "stop_empty": 3},
+   {"path": "realisation-demprunts", "stop_empty": 2},
+   {"path": "lignes-de-tresorerie", "stop_empty": 2},
+   {"path": "elections-professionnelles", "stop_empty": 2}
+  ],
+  "note": "pasdecalais.fr robots.txt (fetched 2026-10-24 16:11 and 20:10 PDT): User-agent * Crawl-Delay 10; listing paths and /download/file/ allowed. Lists fixation-des-tarifs-et-regies, habilitation-enfance etc. had no 2026 items on page 0 (unsorted / older) -> not taken."}
+]

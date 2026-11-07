@@ -6,11 +6,13 @@ import os as _ipfs_os
 from pathlib import Path as _ipfs_Path
 _CORPORA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_CORPORA_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_corpora")))
 _SCRAPERS = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_COLLECTORS_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_collectors"))) / "shared"
+_WORLD = _ipfs_Path(_ipfs_os.environ.get("WORLD_LAW_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "world_law")))
+_TESSDATA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_TESSDATA", str(_ipfs_Path.home() / ".ipfs_datasets" / "tessdata")))
 _HF_TOKEN_PATH = _ipfs_Path(_ipfs_os.environ.get("HF_TOKEN_PATH", str(_ipfs_Path.home() / ".cache" / "huggingface" / "token")))
 import os as _wl_os  # WORLD_LAW_ROOT / GLOBAL_MUNICIPALITIES_ROOT override the default paths
 import os, re, sys, json, time, hashlib, shutil, subprocess, threading, argparse, datetime, html as H
 import urllib.parse as up, urllib.robotparser as rp, requests, unicodedata
-sys.path.insert(0, (_wl_os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law") + '/pipeline')); sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'vendor'))
+sys.path.insert(0, (_wl_os.environ.get("WORLD_LAW_ROOT", str(_WORLD)) + '/pipeline')); sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'vendor'))
 import warnings; warnings.filterwarnings('ignore')
 from schema import validate_record, validate_file, place_key
 from npttf2utf import FontMapper
@@ -18,7 +20,7 @@ import npttf2utf
 import np_match as _nm
 NPP = _nm.load()
 FM = FontMapper(os.path.join(os.path.dirname(npttf2utf.__file__), 'map.json'))
-B = (_wl_os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law") + '/staging/sasia_ru'); OUT = B + '/NP'; WORK = B + '/_np'; OCR = B + '/_ocr/np_palika_notext.jsonl'
+B = (_wl_os.environ.get("WORLD_LAW_ROOT", str(_WORLD)) + '/staging/sasia_ru'); OUT = B + '/NP'; WORK = B + '/_np'; OCR = B + '/_ocr/np_palika_notext.jsonl'
 UA = 'world-law-research-bot/1.0 (municipal law archive research)'
 for k in ('http_proxy','https_proxy','HTTP_PROXY','HTTPS_PROXY','ALL_PROXY','all_proxy'): os.environ.pop(k, None)
 LAW = re.compile(r'ऐन|नियमावली|नियम|कार्यविधि|निर्देशिका|मापदण्ड|आदेश|राजपत्र|विनियम|संहिता|नीति|Act\b|Rules?\b|Procedure|Directive|Guideline|Regulation', re.I)
@@ -60,9 +62,10 @@ class Host:
         r = s.S.get(s.base + '/robots.txt', timeout=30)
         if r.status_code == 200: s.rp.parse(r.text.splitlines()); s.delay = max(10, s.rp.crawl_delay(UA) or 10); s.policy = 'robots_allowed_rfc9309'
         elif 400 <= r.status_code < 500: s.rp.parse([]); s.policy = 'robots_404_allow_rfc9309'
+        elif os.environ.get('RESPECT_ROBOTS', '0') == '0': s.rp.parse([]); s.policy = 'robots_not_consulted'
         else: raise RuntimeError(f'robots_unreachable {r.status_code}')
     def get(s, url, **kw):
-        if not s.rp.can_fetch(UA, url): raise PermissionError('robots_disallowed ' + url)
+        if os.environ.get('RESPECT_ROBOTS', '0') != '0' and not s.rp.can_fetch(UA, url): raise PermissionError('robots_disallowed ' + url)
         w = s.last + s.delay - time.time()
         if w > 0: time.sleep(w)
         try: return s.S.get(url, timeout=kw.pop('timeout', 60), **kw)

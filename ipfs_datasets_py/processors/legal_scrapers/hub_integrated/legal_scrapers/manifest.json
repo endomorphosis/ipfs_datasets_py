@@ -1,0 +1,4115 @@
+{
+ "meta": {
+  "repo": "endomorphosis/legal_scrapers",
+  "repo_type": "dataset",
+  "generated": "2026-10-30T10:39:15.790142-07:00",
+  "source": "~/.ipfs_datasets/legal_collectors",
+  "file_count": 407,
+  "total_bytes": 3306062,
+  "lane_counts": {
+   "docs": 11,
+   "deepeners": 20,
+   "normalizer": 42,
+   "probes-and-archive-helpers": 23,
+   "countries": 187,
+   "shared-libs": 11,
+   "municipal": 63,
+   "packaging-upload": 50
+  },
+  "lanes_not_present_in_source": [
+   "state/provincial",
+   "county",
+   "courts",
+   "case law"
+  ],
+  "remote_only_paths_not_touched": []
+ },
+ "lanes": {
+  "docs": [
+   {
+    "path": "AFRICA_MENA_BATCH2_STATUS.md",
+    "lane": "docs",
+    "size": 14001,
+    "purpose": "Africa & MENA Batch 2 status",
+    "entry_point": "n/a (documentation)",
+    "ipfs_datasets_py_dependency": "n/a",
+    "sha256": "44687d95ae814e2003d81ff0ac3991803480ee9654069c6bd883826e7f57b1d7",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "AFRICA_MENA_PROGRESS.md",
+    "lane": "docs",
+    "size": 4544,
+    "purpose": "Africa + Middle East lane progress (updated 2026-10-10 16:05 PT)",
+    "entry_point": "n/a (documentation)",
+    "ipfs_datasets_py_dependency": "n/a",
+    "sha256": "c5f84c3e1285429397f130f00fbc56643a501f9afe015d0c16fc2dd6ca11095e",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "MANIFEST.md",
+    "lane": "docs",
+    "size": 88712,
+    "purpose": "legal_scrapers — per-lane manifest",
+    "entry_point": "n/a (documentation)",
+    "ipfs_datasets_py_dependency": "mentioned in docs/comments/strings (optional / output-format target; no import)",
+    "sha256": "96b065fc126d5af8d63c410d6e10904806d05609415b3ac2fa77edeb301cfe78",
+    "remote_status": "new"
+   },
+   {
+    "path": "MUNICIPAL_HANDOFF.md",
+    "lane": "docs",
+    "size": 3006,
+    "purpose": "Municipal handoff spec (Municipal Laws Scraper -> WS-1 normalizer)",
+    "entry_point": "n/a (documentation)",
+    "ipfs_datasets_py_dependency": "n/a",
+    "sha256": "7d14fd451a224f38099e49c0017eab14d9aee15654e175c67b30ec14c44571d5",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "NA_NAMIBLII_STATUS.md",
+    "lane": "docs",
+    "size": 3479,
+    "purpose": "NA NamibLII archive pack status (resume-safe)",
+    "entry_point": "n/a (documentation)",
+    "ipfs_datasets_py_dependency": "n/a",
+    "sha256": "e09ca57b8b78d68f695b3387544c817a1dc0fb063ba5f092343889ebc0368f1e",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "README.md",
+    "lane": "docs",
+    "size": 5507,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "n/a (documentation)",
+    "ipfs_datasets_py_dependency": "mentioned in docs/comments/strings (optional / output-format target; no import)",
+    "sha256": "2d71980d8c8b7e76eabbc7858ce9c616af263072c11336c3424f7aaf31895631",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "STATUS_asia_americas_europe.md",
+    "lane": "docs",
+    "size": 9384,
+    "purpose": "STATUS — Asia/Pacific + Americas/Caribbean + Europe stubs + big systems (executor lane)",
+    "entry_point": "n/a (documentation)",
+    "ipfs_datasets_py_dependency": "n/a",
+    "sha256": "215d6610abaa282e96773d55424eb83eec442238b73c60f7ae187f1282aca2da",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "STATUS_asia_americas_europe_b2.md",
+    "lane": "docs",
+    "size": 5054,
+    "purpose": "STATUS b2 — Asia/Americas/Europe executor (Batch 2 from CoS)",
+    "entry_point": "n/a (documentation)",
+    "ipfs_datasets_py_dependency": "n/a",
+    "sha256": "07c6bb8649e7dece60947ab1cfd8a3fa46e28e3d499e3b9eb32d70e01559a670",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "WORLD_COVERAGE_AUDIT.md",
+    "lane": "docs",
+    "size": 23689,
+    "purpose": "WORLD COVERAGE AUDIT",
+    "entry_point": "n/a (documentation)",
+    "ipfs_datasets_py_dependency": "mentioned in docs/comments/strings (optional / output-format target; no import)",
+    "sha256": "ef6ffe0ad98a28ef2030c5d4332e99139d0f08b1b2f027ba9c48cbb7f0bf5e11",
+    "remote_status": "changed"
+   },
+   {
+    "path": "partial_resume_status.md",
+    "lane": "docs",
+    "size": 8156,
+    "purpose": "Partial resume status — legal corpus scrapers",
+    "entry_point": "n/a (documentation)",
+    "ipfs_datasets_py_dependency": "mentioned in docs/comments/strings (optional / output-format target; no import)",
+    "sha256": "40bf5897398a477086ef65542743e9989dd4d72db065e9da94dfd5efc253ece2",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "world_scrape_status.md",
+    "lane": "docs",
+    "size": 15175,
+    "purpose": "World scrape status",
+    "entry_point": "n/a (documentation)",
+    "ipfs_datasets_py_dependency": "mentioned in docs/comments/strings (optional / output-format target; no import)",
+    "sha256": "69c7ac0efaa1ac56cf3e46a32ce3c68aee0de4bb5d0bd5aae364221341aafe5f",
+    "remote_status": "changed"
+   }
+  ],
+  "deepeners": [
+   {
+    "path": "IT_DEEPEN_STATUS.md",
+    "lane": "deepeners",
+    "size": 2415,
+    "purpose": "Italy Normattiva deepen — 2026-09-04 14:37 PT",
+    "entry_point": "n/a (documentation)",
+    "ipfs_datasets_py_dependency": "n/a",
+    "sha256": "e1b5c77a97315d7c6440d521121c86704ef3b1d7af4231a822fb29ce5889b7bb",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "RESTORE_PACK_DEEPEN_STATUS.md",
+    "lane": "deepeners",
+    "size": 3151,
+    "purpose": "Restore + packaging + deepen — 2026-09-04 12:33 PT",
+    "entry_point": "n/a (documentation)",
+    "ipfs_datasets_py_dependency": "n/a",
+    "sha256": "c73f10fc3d235105d4da7e33e2b28371c43b6d47607ad324b06b7597aed61619",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "na_namiblii_work/hub_base_head_20261027/scrapers/pdf_extract_lib.py",
+    "lane": "deepeners",
+    "size": 12660,
+    "purpose": "PDF text extraction helpers mirroring ipfs_datasets_py IntegratedPDFProcessor.",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "mentioned in docs/comments/strings (optional / output-format target; no import)",
+    "sha256": "bca0424219161baef82f0cc69fc4121b7cda5bf6a74293989b8ae88e0399f36c",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "ocr_pdf_pass_results.md",
+    "lane": "deepeners",
+    "size": 3466,
+    "purpose": "OCR / PDF deepen pass results",
+    "entry_point": "n/a (documentation)",
+    "ipfs_datasets_py_dependency": "n/a",
+    "sha256": "a455e76e320f18784cb139549db3e525ee7ba709839d0bdbbbe550f8af291f5c",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_cm_deepen4.sh",
+    "lane": "deepeners",
+    "size": 390,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_cm_deepen4.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "203a04fbe3d8697d721eaa4034de8131d96661348983d1c8eae8dc043f0aa17c",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_it_deepen.sh",
+    "lane": "deepeners",
+    "size": 206,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_it_deepen.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "652c748a16064c38bbaa7f3944652803978ebc734363e1ff63a6bcce3933c84e",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_it_deepen_api.sh",
+    "lane": "deepeners",
+    "size": 223,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_it_deepen_api.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "15db49dd939c8b6003b74561f0de16b475da61603d5ee418726e5497d5df4951",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_reprocess_priority.sh",
+    "lane": "deepeners",
+    "size": 628,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_reprocess_priority.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "464a94abd0e2714e38cc0b83926ea22e417d751c0d15f5ebd574ac8ed1dc2cfb",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/cy_extract_articles.py",
+    "lane": "deepeners",
+    "size": 8055,
+    "purpose": "Cyprus: honest article/section extraction from GPO gazette texts.",
+    "entry_point": "python scrapers/cy_extract_articles.py",
+    "ipfs_datasets_py_dependency": "mentioned in docs/comments/strings (optional / output-format target; no import)",
+    "sha256": "1ad33d27cf6b3195686b69fe37ab0d23fa3c080192b8debfb6c9b628581a819d",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/deepen_it_articles.py",
+    "lane": "deepeners",
+    "size": 14214,
+    "purpose": "Italy deepen: fill thin bodies via dettaglio-atto + honest Art. articleization.",
+    "entry_point": "python scrapers/deepen_it_articles.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "b4eaab571a63896b7460543bf3bb642b50c78bb19c517b5a931b2f9c82caa7a8",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/deepen_it_idarticolo.py",
+    "lane": "deepeners",
+    "size": 11338,
+    "purpose": "Italy deepen: Normattiva dettaglio-atto idArticolo walk for multi-article acts.",
+    "entry_point": "python scrapers/deepen_it_idarticolo.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "36131b9d9b9ee99c9f3c69cfceaa88032f98b129616fa094ac98486c4eb0ba1b",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/deepen_la_ocr.py",
+    "lane": "deepeners",
+    "size": 7375,
+    "purpose": "Laos deepen: quarantine site-chrome/annex junk; fetch gazette PDFs with OCR.",
+    "entry_point": "python scrapers/deepen_la_ocr.py",
+    "ipfs_datasets_py_dependency": "mentioned in docs/comments/strings (optional / output-format target; no import)",
+    "sha256": "fe7852fe854a59ae60a8a2813180b61fadc6113293e4422bcba7df55cc5654df",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/deepen_md_reprocess.py",
+    "lane": "deepeners",
+    "size": 6345,
+    "purpose": "Re-fetch Moldova legis.md downloadpdf instruments with proper PDF text extract.",
+    "entry_point": "python scrapers/deepen_md_reprocess.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "49ecd650f77df8133dc38afa460f0d4fc0fa17aa2cc4b66740ed443ed7cfe9d9",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/deepen_mz_ocr.py",
+    "lane": "deepeners",
+    "size": 6875,
+    "purpose": "Re-OCR Mozambique image-only / Pandora-watermark PDFs; expand Parlamento harvest.",
+    "entry_point": "python scrapers/deepen_mz_ocr.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "f285f9b9b1275466d49d780bf960cb19c93adacc31b6fa61ab867cd0b95f1347",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/deepen_sv_pdf.py",
+    "lane": "deepeners",
+    "size": 7458,
+    "purpose": "El Salvador deepen: replace 1847 garbage Diario scans with official Asamblea / Diario",
+    "entry_point": "python scrapers/deepen_sv_pdf.py",
+    "ipfs_datasets_py_dependency": "mentioned in docs/comments/strings (optional / output-format target; no import)",
+    "sha256": "31ce463f81c291a08ea854fc5bda08a9eeda3fdc69814b8a222b70099f745d0a",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/ocr_deepen_pass.py",
+    "lane": "deepeners",
+    "size": 13614,
+    "purpose": "Stronger OCR + honest-split deepen for SV/TN/ET/FJ/LA/LK.",
+    "entry_point": "python scrapers/ocr_deepen_pass.py",
+    "ipfs_datasets_py_dependency": "mentioned in docs/comments/strings (optional / output-format target; no import)",
+    "sha256": "00afce6b7b51fcd4621d9796c1ec7a90c7954bb920c88d206004184fb428a93c",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/pdf_extract_lib.py",
+    "lane": "deepeners",
+    "size": 13354,
+    "purpose": "PDF text extraction helpers mirroring ipfs_datasets_py IntegratedPDFProcessor.",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "mentioned in docs/comments/strings (optional / output-format target; no import)",
+    "sha256": "4991173b563e0a0e13c79dc66dc5f50effa52830cd61858d460e7248c50a623a",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/reprocess_iq_ir_articles.py",
+    "lane": "deepeners",
+    "size": 9756,
+    "purpose": "Reprocess Iraq/Iran instruments: RTL-normalize, honest article splits, optional OCR.",
+    "entry_point": "python scrapers/reprocess_iq_ir_articles.py",
+    "ipfs_datasets_py_dependency": "mentioned in docs/comments/strings (optional / output-format target; no import)",
+    "sha256": "fa452d365cdca45204c15f0361df96b1e4c14b2a9bbd2236b9d8a4bf57de2c94",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/reprocess_pdf_articles.py",
+    "lane": "deepeners",
+    "size": 9124,
+    "purpose": "Re-extract PDF text (IntegratedPDFProcessor-style) and honest article splits",
+    "entry_point": "python scrapers/reprocess_pdf_articles.py",
+    "ipfs_datasets_py_dependency": "mentioned in docs/comments/strings (optional / output-format target; no import)",
+    "sha256": "938a1f7653dd3b97c7e5a182293f99cbf98c591b937b000b2df4447f8b9a704b",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "tmp_la_ocr.py",
+    "lane": "deepeners",
+    "size": 1614,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "python tmp_la_ocr.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "07b17024b8943dd650d156c2d5b20b694c07b9f528b80249431715c1a03fd00f",
+    "remote_status": "unchanged"
+   }
+  ],
+  "normalizer": [
+   {
+    "path": "NORMALIZER_STATUS.md",
+    "lane": "normalizer",
+    "size": 86592,
+    "purpose": "NORMALIZER_STATUS (WS-1 lane) — updated 2026-10-10 15:50 PT",
+    "entry_point": "n/a (documentation)",
+    "ipfs_datasets_py_dependency": "mentioned in docs/comments/strings (optional / output-format target; no import)",
+    "sha256": "349ddcaa88b10c5513784dba8b61b631616561a19a13f270ffeda445eab4d237",
+    "remote_status": "changed"
+   },
+   {
+    "path": "SCHEMA.md",
+    "lane": "normalizer",
+    "size": 12655,
+    "purpose": "World-laws dataset schemas (pinned)",
+    "entry_point": "n/a (documentation)",
+    "ipfs_datasets_py_dependency": "n/a",
+    "sha256": "aeeb078493fdd513c7c2f71bd2b799172a24200ef8e9926a5d57fb51db82b62a",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "local_package.py",
+    "lane": "normalizer",
+    "size": 16770,
+    "purpose": "Local-only packager (no huggingface_hub). Mirrors world_package.package().",
+    "entry_point": "python local_package.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "593c75de4fb4387725ad92694a0b7b803b949e8cd7d6b3e2d13139cce242fd49",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "normalizers/NORMALIZER_VERSION.md",
+    "lane": "normalizer",
+    "size": 1271,
+    "purpose": "Normalizer snapshot",
+    "entry_point": "n/a (documentation)",
+    "ipfs_datasets_py_dependency": "mentioned in docs/comments/strings (optional / output-format target; no import)",
+    "sha256": "4ec22aa3db45ec19f494bb4f6dc98f0692678c435840d03859a98763313f8f8a",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "normalizers/country_laws_ir/__init__.py",
+    "lane": "normalizer",
+    "size": 833,
+    "purpose": "Country-law CID-keyed sparse GraphRAG packager (SkillCenter / publicus-ir family).",
+    "entry_point": "python normalizers/country_laws_ir/__init__.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "024c968ed45252063aa8e3b3a006d464429d28591d4096d26b9377b7234df9cf",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "normalizers/country_laws_ir/__main__.py",
+    "lane": "normalizer",
+    "size": 18391,
+    "purpose": "python -m country_laws_ir {build,query,batch,catalog,normalize,package-raw}",
+    "entry_point": "python normalizers/country_laws_ir/__main__.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "6b023c6ef047a0522576cfe37d56e95ee1b54c46d963fe9c3786b31c0c0b1855",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "normalizers/country_laws_ir/auth.py",
+    "lane": "normalizer",
+    "size": 1115,
+    "purpose": "Hugging Face auth helpers.",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "82bd0c07f8f12e3cb751dace2e59a55fe5222c5f54ee59885dfb20aabf3ade11",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "normalizers/country_laws_ir/bm25.py",
+    "lane": "normalizer",
+    "size": 8398,
+    "purpose": "Okapi BM25 (k1=1.2, b=0.75, title_weight=5, body_weight=1) + posting shards.",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "f9393c3f58572e2db13c42d0e258e31384fae32f805539041bd32115c3812610",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "normalizers/country_laws_ir/build.py",
+    "lane": "normalizer",
+    "size": 18418,
+    "purpose": "End-to-end build: normalize → incremental vectors → BM25 → graph → package.",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "mentioned in docs/comments/strings (optional / output-format target; no import)",
+    "sha256": "8f97cdbd446b8b3711787a3ddbab0eaed8372ef9f3591d0429afcb4ace8dc41c",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "normalizers/country_laws_ir/catalog.py",
+    "lane": "normalizer",
+    "size": 14227,
+    "purpose": "Catalog of endomorphosis/ipfs_*_laws corpora.",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "mentioned in docs/comments/strings (optional / output-format target; no import)",
+    "sha256": "f7c346bdc66ac958a175efd73b827e2ac4cd01149f30fdb0b010ee55dd2fe60f",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "normalizers/country_laws_ir/cidutil.py",
+    "lane": "normalizer",
+    "size": 2876,
+    "purpose": "CIDv1 (raw + sha2-256) helpers. Produces bafkrei... identifiers.",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "037dec4d1eb929c52741c63c6fed5b35ce7fd112c2eb8490a0c47ff29521d47d",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "normalizers/country_laws_ir/citations.py",
+    "lane": "normalizer",
+    "size": 4221,
+    "purpose": "Official and Bluebook citations for country-law corpus rows.",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "5b0b0d8d4083ddf9a186b8f27a1d8ad48b85cbe2584ec07119274455a7ea63d3",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "normalizers/country_laws_ir/coverage.py",
+    "lane": "normalizer",
+    "size": 16149,
+    "purpose": "Compare endomorphosis raw sources against justicedao GraphRAG releases.",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "0800eff2b665f20341df33bdc4e82c497a8e860322d7a84bcaddc0c8c7c05813",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "normalizers/country_laws_ir/duckdb_store.py",
+    "lane": "normalizer",
+    "size": 16622,
+    "purpose": "DuckDB views over country-laws sparse GraphRAG parquet shards.",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "4c6bb176ee029559668523467083880a7473db89e7d606f986e98e84799e8093",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "normalizers/country_laws_ir/graph.py",
+    "lane": "normalizer",
+    "size": 13165,
+    "purpose": "Property graph: entry nodes, facet nodes, BM25_NEIGHBOR_OF k=8, ARTICLE_OF, ELI.",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "db7ca5ee87406c2877d936be2b2f9dd4f42424d8a627791e0b01bc21b7c21acd",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "normalizers/country_laws_ir/incremental.py",
+    "lane": "normalizer",
+    "size": 17657,
+    "purpose": "CID-keyed incremental GraphRAG rebuild for country-laws IR.",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "mentioned in docs/comments/strings (optional / output-format target; no import)",
+    "sha256": "080e5cf965371bf55611c76cf4d03c2c383d3efa560b00d51ceb2bbcbe86f6fc",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "normalizers/country_laws_ir/mem.py",
+    "lane": "normalizer",
+    "size": 7879,
+    "purpose": "Process / host memory watchdog for large IR builds (DO OOM lesson).",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "c14fa14a7eb3f50b9262ff674d95d6da837955672e37353270f93f0fe9c8aac1",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "normalizers/country_laws_ir/normalize.py",
+    "lane": "normalizer",
+    "size": 42265,
+    "purpose": "Normalize endomorphosis/ipfs_*_laws into a CID-keyed canonical corpus.",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "mentioned in docs/comments/strings (optional / output-format target; no import)",
+    "sha256": "caee7e74a4b1c22445dd62bfa8a7ad98636dac7b2a983ea029005c2aa7ca21d6",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "normalizers/country_laws_ir/normalize_loop.py",
+    "lane": "normalizer",
+    "size": 22775,
+    "purpose": "Improve the row normalizer, then let that script normalize every row.",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "direct import of ipfs_datasets_py",
+    "sha256": "6b34ff9dba08413bf7a4883ded18dddc8563d6b53624c4c77fb4ded45852cf8f",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "normalizers/country_laws_ir/package.py",
+    "lane": "normalizer",
+    "size": 40525,
+    "purpose": "Write country-laws-ir-graphrag/v1 thin-client layout (SkillCenter / publicus-ir family).",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "35dd7ff6a603271c3ed4192b977542bd33b38b5ccd4dcc93d18106f340ef4f9b",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "normalizers/country_laws_ir/parquet_io.py",
+    "lane": "normalizer",
+    "size": 2541,
+    "purpose": "ZSTD parquet shard writer matching skillcenter-huggingface-release/v3.",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "12e743f86913f0796205979e13d24dce2286739871de6efda8e05c80c02ab794",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "normalizers/country_laws_ir/profiles.py",
+    "lane": "normalizer",
+    "size": 11265,
+    "purpose": "Per-language legal heading lexicons for country-law structure extraction.",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "f5ec69952a75690a645200e994b6a86cb603e6343b76f8add72fc64191b4abc4",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "normalizers/country_laws_ir/query.py",
+    "lane": "normalizer",
+    "size": 8857,
+    "purpose": "Thin-client query for country-laws IR releases (local dir).",
+    "entry_point": "python normalizers/country_laws_ir/query.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "9e8796f96bb6b1daaae91f93f9e064b4f9fba98d8b7fced0dd887a9182e3ebf3",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "normalizers/country_laws_ir/raw_package.py",
+    "lane": "normalizer",
+    "size": 11010,
+    "purpose": "Incrementally package raw collector instruments into laws/articles parquet.",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "mentioned in docs/comments/strings (optional / output-format target; no import)",
+    "sha256": "6d6b1f786b31cfdf8a1b6fdf4139f2113a42f01de8355801ef3cf6718196adfb",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "normalizers/country_laws_ir/reconstruct.py",
+    "lane": "normalizer",
+    "size": 7194,
+    "purpose": "Reconstruct empty parent law bodies from article children.",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "c5f2d7a51503e5c840f1cfd70ed30860d5ef4cdd09b89f59014a63f3a04b4be6",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "normalizers/country_laws_ir/schema.py",
+    "lane": "normalizer",
+    "size": 3963,
+    "purpose": "Fail-closed schema mapping for endomorphosis/ipfs_*_laws parquet tables.",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "9000e130a045fbd218e7e08e1c91a656190f554b34717efe521bc21b16834015",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "normalizers/country_laws_ir/sparse.py",
+    "lane": "normalizer",
+    "size": 5120,
+    "purpose": "Country-law sparse GraphRAG export through the shared HF GraphRAG builders.",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "direct import of ipfs_datasets_py",
+    "sha256": "0bed247a244ca4b8558af238a942a373f0851c26062cdb4bdb932a511aaa23c0",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "normalizers/country_laws_ir/spill.py",
+    "lane": "normalizer",
+    "size": 18739,
+    "purpose": "Disk-spill helpers for large country IR builds (DuckDB + parquet).",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "cb73af8753a506e33acad2f43fcbeaa97e4f57e29fcf4cb26f121be1c90d31b2",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "normalizers/country_laws_ir/structure.py",
+    "lane": "normalizer",
+    "size": 87105,
+    "purpose": "Extract legal hierarchy from country-law text (Oregon-style, multilingual).",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "8c380214c9f8006000de522212bfea70807ee1e5585d4a73e20b687bd69c3ff5",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "normalizers/country_laws_ir/tokenize.py",
+    "lane": "normalizer",
+    "size": 518,
+    "purpose": "FTS5 unicode61 remove_diacritics=2-style tokenizer.",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "c15b8373cce6de282c9240f24a89caa374fc6ac2df2c1b9ced605c44f4878f56",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "normalizers/country_laws_ir/upload.py",
+    "lane": "normalizer",
+    "size": 6859,
+    "purpose": "Publish a local country-laws-ir release to the JusticeDAO Hugging Face org.",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "direct import of ipfs_datasets_py",
+    "sha256": "d9654da398d8d2ff06fd3deb59f306885139e0cb0628a4959519c90aff5ffe60",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "normalizers/country_laws_ir/vectors.py",
+    "lane": "normalizer",
+    "size": 18885,
+    "purpose": "thenlper/gte-small 384-d embeddings + centroid-sorted shards.",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "direct import of ipfs_datasets_py",
+    "sha256": "1d2191d0c63f7eda1acb21775c688feffc84719f6f1ced70fcf808588343ee30",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "normalizers/country_laws_ir/verify.py",
+    "lane": "normalizer",
+    "size": 14152,
+    "purpose": "Admission verifiers for country-law normalization, before GraphRAG.",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "1aa303902c6a18f5a3b030e4769b02c9c047a5ad23a01ae40aec545688cedc0d",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "normalizers/country_laws_ir_scripts/build_country_laws_ir.py",
+    "lane": "normalizer",
+    "size": 2477,
+    "purpose": "CLI: build a country-laws IR release (local; does not upload).",
+    "entry_point": "python normalizers/country_laws_ir_scripts/build_country_laws_ir.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "2c1d2142f28fb60cc07e1cc4ed0686507be11d5d7ed2a4058817df3847b09eb7",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "normalizers/country_laws_ir_scripts/generate_country_laws_ir.py",
+    "lane": "normalizer",
+    "size": 329,
+    "purpose": "Generation entrypoint copied into Hub dataset repos.",
+    "entry_point": "python normalizers/country_laws_ir_scripts/generate_country_laws_ir.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "59d0c47c545ac6521144356c249f07ac58825758fa38458e33c9ed5128d5789d",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "normalizers/country_laws_ir_scripts/normalize_country_laws.py",
+    "lane": "normalizer",
+    "size": 1628,
+    "purpose": "Normalize a country-law source into a CID-keyed corpus report (no GraphRAG, no upload).",
+    "entry_point": "python normalizers/country_laws_ir_scripts/normalize_country_laws.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "deb05d006e4a119ed38afcc955152bf337476a5f31f198d6290405f895bd6ef6",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "normalizers/country_laws_ir_scripts/query_country_laws_hf.py",
+    "lane": "normalizer",
+    "size": 229,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "python normalizers/country_laws_ir_scripts/query_country_laws_hf.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "672f28924b59c7c8598363ecaabd838d692f5a97b50b46804fef75e4ccddfe78",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "normalizers/country_laws_ir_scripts/query_country_laws_ir.py",
+    "lane": "normalizer",
+    "size": 364,
+    "purpose": "CLI wrapper for country_laws_ir.query.",
+    "entry_point": "python normalizers/country_laws_ir_scripts/query_country_laws_ir.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "d26d9bd20423ed968b1d9d3edcbaa77d5d55d9184f22a51ecdf54d9da1835b81",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "normalizers/pack_raw_for_ir.py",
+    "lane": "normalizer",
+    "size": 4051,
+    "purpose": "Merge a (possibly sharded) raw ``endomorphosis/ipfs_<slug>_laws`` repo into ONE pinned-schema local pack.",
+    "entry_point": "python normalizers/pack_raw_for_ir.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "2d710c882493e395cd2571daed66cc87148932a07dd9dbe8e455028fa2c283f8",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "normalizers/schema.py",
+    "lane": "normalizer",
+    "size": 21185,
+    "purpose": "Pinned Arrow schemas + cast/validate helpers for the world-laws datasets.",
+    "entry_point": "python normalizers/schema.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "05d3ce09a94cff19632842cf87f9a59017274538d0c2acebfaaa2a9eb6d8958e",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "schema.py",
+    "lane": "normalizer",
+    "size": 21185,
+    "purpose": "Pinned Arrow schemas + cast/validate helpers for the world-laws datasets.",
+    "entry_point": "python schema.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "05d3ce09a94cff19632842cf87f9a59017274538d0c2acebfaaa2a9eb6d8958e",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "world_package.py",
+    "lane": "normalizer",
+    "size": 15564,
+    "purpose": "Package instruments -> parquet + README and upload ipfs_<slug>_laws datasets.",
+    "entry_point": "python world_package.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "5051500995e2e70bcc04473ec7197e4a6233e14a74b96ef121fdb6bfc0fc64c6",
+    "remote_status": "changed"
+   }
+  ],
+  "probes-and-archive-helpers": [
+   {
+    "path": "README_COMMON_CRAWL_HELPER.md",
+    "lane": "probes-and-archive-helpers",
+    "size": 2910,
+    "purpose": "common_crawl_helper.py — ranged Common Crawl harvest for official-gazette domains",
+    "entry_point": "n/a (documentation)",
+    "ipfs_datasets_py_dependency": "mentioned in docs/comments/strings (optional / output-format target; no import)",
+    "sha256": "35375aa9cf244cad01772a560e85368e9ac0c1e728e23023517ac842723d9b7c",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "archive_fallbacks.py",
+    "lane": "probes-and-archive-helpers",
+    "size": 49931,
+    "purpose": "Public Wayback CDX + Common Crawl CDX/WARC fetch (ipfs_datasets_py fallback intent).",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "mentioned in docs/comments/strings (optional / output-format target; no import)",
+    "sha256": "c7f97bd056b8774a43fdaa0aa22f5df9105927ab5f0833459b2e74faac2fe5f3",
+    "remote_status": "changed"
+   },
+   {
+    "path": "check_it.py",
+    "lane": "probes-and-archive-helpers",
+    "size": 764,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "python check_it.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "3734555fc442fc120bbb43405b925ccd9caf660938043c5d19fa70802d7d5f7d",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "common_crawl_helper.py",
+    "lane": "probes-and-archive-helpers",
+    "size": 23200,
+    "purpose": "Shared Common Crawl helper: S3 cluster.idx -> CDXJ block -> ranged WARC fetch.",
+    "entry_point": "python common_crawl_helper.py",
+    "ipfs_datasets_py_dependency": "direct import of ipfs_datasets_py",
+    "sha256": "935e64f969c34750b64a5a82cde72a167ea6c6a25e4c6528756b97e402fbe0b2",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "data_bg/scrapers/archive_fallbacks.py",
+    "lane": "probes-and-archive-helpers",
+    "size": 21361,
+    "purpose": "Public Wayback CDX + Common Crawl CDX/WARC fetch (ipfs_datasets_py fallback intent).",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "mentioned in docs/comments/strings (optional / output-format target; no import)",
+    "sha256": "855ba4b2bd62bfe2a349c145f243c6b32bb77098c90d4227266d9a1a2ee932cd",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "data_cy/scrapers/archive_fallbacks.py",
+    "lane": "probes-and-archive-helpers",
+    "size": 21361,
+    "purpose": "Public Wayback CDX + Common Crawl CDX/WARC fetch (ipfs_datasets_py fallback intent).",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "mentioned in docs/comments/strings (optional / output-format target; no import)",
+    "sha256": "855ba4b2bd62bfe2a349c145f243c6b32bb77098c90d4227266d9a1a2ee932cd",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "data_it/scrapers/archive_fallbacks.py",
+    "lane": "probes-and-archive-helpers",
+    "size": 21361,
+    "purpose": "Public Wayback CDX + Common Crawl CDX/WARC fetch (ipfs_datasets_py fallback intent).",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "mentioned in docs/comments/strings (optional / output-format target; no import)",
+    "sha256": "855ba4b2bd62bfe2a349c145f243c6b32bb77098c90d4227266d9a1a2ee932cd",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "data_ro/scrapers/archive_fallbacks.py",
+    "lane": "probes-and-archive-helpers",
+    "size": 21361,
+    "purpose": "Public Wayback CDX + Common Crawl CDX/WARC fetch (ipfs_datasets_py fallback intent).",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "mentioned in docs/comments/strings (optional / output-format target; no import)",
+    "sha256": "855ba4b2bd62bfe2a349c145f243c6b32bb77098c90d4227266d9a1a2ee932cd",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "data_si/scrapers/archive_fallbacks.py",
+    "lane": "probes-and-archive-helpers",
+    "size": 21361,
+    "purpose": "Public Wayback CDX + Common Crawl CDX/WARC fetch (ipfs_datasets_py fallback intent).",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "mentioned in docs/comments/strings (optional / output-format target; no import)",
+    "sha256": "855ba4b2bd62bfe2a349c145f243c6b32bb77098c90d4227266d9a1a2ee932cd",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "na_namiblii_work/hub_base_head_20261027/scrapers/archive_fallbacks.py",
+    "lane": "probes-and-archive-helpers",
+    "size": 27151,
+    "purpose": "Public Wayback CDX + Common Crawl CDX/WARC fetch (ipfs_datasets_py fallback intent).",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "mentioned in docs/comments/strings (optional / output-format target; no import)",
+    "sha256": "c539a29fe5862564058756adb7a6c45f57efe97e7b6f9a0ba8eab8c708d9300c",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/archive_fallbacks.py",
+    "lane": "probes-and-archive-helpers",
+    "size": 50070,
+    "purpose": "Public Wayback CDX + Common Crawl CDX/WARC fetch (ipfs_datasets_py fallback intent).",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "mentioned in docs/comments/strings (optional / output-format target; no import)",
+    "sha256": "423dcf91d6c4b6d1dee7ea66a01d9c8d36727ba93d9c1d72706a174060745a34",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/probe_it_api.py",
+    "lane": "probes-and-archive-helpers",
+    "size": 4068,
+    "purpose": "Probe official Normattiva dettaglio-atto / caricaAKN for multi-article structure.",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "53a18827c1880879e34cec7c8aebab406fdcf253f6ab7cc3874aab288c7c871f",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/probe_it_art_heads.py",
+    "lane": "probes-and-archive-helpers",
+    "size": 1852,
+    "purpose": "several patterns",
+    "entry_point": "python scrapers/probe_it_art_heads.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "62dec1f7cd90951ce42a0b322ab29faee73c8c5e23ce9a9443f2261763c936b8",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/probe_it_bodies.py",
+    "lane": "probes-and-archive-helpers",
+    "size": 1976,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "python scrapers/probe_it_bodies.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "a19f206d294d5d55bd3854a52d1bb0643cffa3214219c0f60d57b420b1e08355",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/probe_it_formato_o.py",
+    "lane": "probes-and-archive-helpers",
+    "size": 2179,
+    "purpose": "Legge with many articles - Codice civile? or known multi-art legge",
+    "entry_point": "python scrapers/probe_it_formato_o.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "589395342b17d34746b9578d18d2d762ce78e7a88f59e366dcd4bff2dc0c2533",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/probe_it_html_arts.py",
+    "lane": "probes-and-archive-helpers",
+    "size": 1940,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "python scrapers/probe_it_html_arts.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "2c07cade3f21dcb47977354aec27f36fbcdec4afa5b4285b31f007d7143f651f",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/probe_it_idart_small.py",
+    "lane": "probes-and-archive-helpers",
+    "size": 1392,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "python scrapers/probe_it_idart_small.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "eb946ea4fad410c6263caa48b0f4c4501bb265041393bf44f3693fc77ee9a77a",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/probe_it_idarticolo.py",
+    "lane": "probes-and-archive-helpers",
+    "size": 3213,
+    "purpose": "Multi-article law already known locally",
+    "entry_point": "python scrapers/probe_it_idarticolo.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "c0c17e37e2e9e8c890c41be29fb1e5d1dc3105d2e12619c8007d8e52a2a9f2cc",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/probe_it_multi_endpoint.py",
+    "lane": "probes-and-archive-helpers",
+    "size": 3001,
+    "purpose": "also a classic multi-article law: Legge 241/1990",
+    "entry_point": "python scrapers/probe_it_multi_endpoint.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "fa4d6c556a759e10c5ff439c76e57cdd3e80dff52af38442737acdc3555d017e",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/probe_it_multiart.py",
+    "lane": "probes-and-archive-helpers",
+    "size": 3376,
+    "purpose": "Law that already has 8 article docs",
+    "entry_point": "python scrapers/probe_it_multiart.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "622d346598714451fe30c95cafc92ef391e8660f675f49e2403fb8acd554f84a",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/probe_it_split_potential.py",
+    "lane": "probes-and-archive-helpers",
+    "size": 2498,
+    "purpose": "Broader IT-specific pattern: line-start Art. N optionally with title in parens",
+    "entry_point": "python scrapers/probe_it_split_potential.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "0ea982f6d754e300b658d5b64b3885f23dff811b15a0c66b9d3a86be96714f7c",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/run_cc_probe_r4.py",
+    "lane": "probes-and-archive-helpers",
+    "size": 1379,
+    "purpose": "Small CC CDX probes for BG/CY — index only, no WARC.",
+    "entry_point": "python scrapers/run_cc_probe_r4.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "1bd691256161e8417c4ac758f07d970412943ec1f51a3d681b8b9192619637da",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/sample_it_instruments.py",
+    "lane": "probes-and-archive-helpers",
+    "size": 2491,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "python scrapers/sample_it_instruments.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "8133517867c1b8465f289c20911969e528997a1c68566a3ee073cee176a3f7c1",
+    "remote_status": "unchanged"
+   }
+  ],
+  "countries": [
+   {
+    "path": "al_alfresco_tip26b.py",
+    "lane": "countries",
+    "size": 36,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "python al_alfresco_tip26b.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "cb4a7dc5716ee2d4b37987c6e2c8abe0577d6b8af5f5f84b4cdc33ca0adddc71",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "al_close_tip26b.py",
+    "lane": "countries",
+    "size": 33,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "python al_close_tip26b.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "4aef26ca8b361a0a263ceabfbbedfc5c878514f5acfc5bdb09ca2568e87b6232",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "az_cdx_extra_tip26f.py",
+    "lane": "countries",
+    "size": 37,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "python az_cdx_extra_tip26f.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "05f2f1c16aba4fa9463ddbc9ea618773af2ebcdc06f8df7422432595191a7687",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "az_live_gap_tip24o.py",
+    "lane": "countries",
+    "size": 36,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "python az_live_gap_tip24o.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "e3e68a9e827574f2f7715191f1f54504a05e0d7a0cd7cf5f6153248796f3d4bc",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "az_live_gap_tip26f.py",
+    "lane": "countries",
+    "size": 36,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "python az_live_gap_tip26f.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "ccdf5515594ff378bba396b4d3ffbc1aa77d4d3c68d3ebcdf0ce598526ebe7bc",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "bo_live_cdx_miss_tip26m.py",
+    "lane": "countries",
+    "size": 41,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "python bo_live_cdx_miss_tip26m.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "952bad09f15e0a2be050fcaeb9a36fdaf606e084d9ed87e5be219c5b15d4dd05",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "bo_live_failures_tip26a.py",
+    "lane": "countries",
+    "size": 41,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "python bo_live_failures_tip26a.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "0e826a069e32682810dc9cde8c9708ba546d6099b9b196431fd56d6cd08cae18",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "bo_live_failures_tip26b.py",
+    "lane": "countries",
+    "size": 41,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "python bo_live_failures_tip26b.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "4b47048e7320672358f02544ec18f479511117650a1638a8bd92fb62b10a4e83",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "data_bg/MANIFEST.md",
+    "lane": "countries",
+    "size": 835,
+    "purpose": "ipfs_bulgaria_laws manifest",
+    "entry_point": "n/a (documentation)",
+    "ipfs_datasets_py_dependency": "n/a",
+    "sha256": "03fde23c20394531e9c2b3eb057794f0b5c2e24b5fa2ab30e02a1e84176c6e36",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "data_bg/README.md",
+    "lane": "countries",
+    "size": 1845,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "n/a (documentation)",
+    "ipfs_datasets_py_dependency": "n/a",
+    "sha256": "8be69dbaf3069562523b683334bb4959ccc4fa059750b426e51e8c5157037465",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "data_bg/scrapers/collect_bg.py",
+    "lane": "countries",
+    "size": 6879,
+    "purpose": "Bulgaria: State Gazette (dv.parliament.bg) RSS + materiali.faces issue HTML.",
+    "entry_point": "python data_bg/scrapers/collect_bg.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "9dddb88b9f07c1c2cf9e281306186b7ee5d5b76b03b07072fa1dbda8441a1827",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "data_cy/MANIFEST.md",
+    "lane": "countries",
+    "size": 852,
+    "purpose": "ipfs_cyprus_laws manifest",
+    "entry_point": "n/a (documentation)",
+    "ipfs_datasets_py_dependency": "n/a",
+    "sha256": "71f1e2cc162cc2c25c75d6cee3e1b40835f2d4a2c922f30975eb659c9a46a564",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "data_cy/README.md",
+    "lane": "countries",
+    "size": 1842,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "n/a (documentation)",
+    "ipfs_datasets_py_dependency": "n/a",
+    "sha256": "428a9b2dd91b021041e07887d619babcaf2ab69124beb8779a1cc46566ba66eb",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "data_cy/scrapers/collect_cy.py",
+    "lane": "countries",
+    "size": 4930,
+    "purpose": "Cyprus: official GPO gazette (mof.gov.cy). legislation.gov.cy does not resolve. Not cylaw.org.",
+    "entry_point": "python data_cy/scrapers/collect_cy.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "311a9b56c627c57a011e7b716b73626cea127de19554b2df2cf3d3d0dba1f46f",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "data_it/MANIFEST.md",
+    "lane": "countries",
+    "size": 847,
+    "purpose": "ipfs_italy_laws manifest",
+    "entry_point": "n/a (documentation)",
+    "ipfs_datasets_py_dependency": "n/a",
+    "sha256": "9c00e72385573d56f2aeaa9bbd286b1a858aa2aa0cd3c73bdcf4056f846ca177",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "data_it/README.md",
+    "lane": "countries",
+    "size": 1883,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "n/a (documentation)",
+    "ipfs_datasets_py_dependency": "n/a",
+    "sha256": "ea6f256a6d256f77c2f1f61f4fd5775ecc9444e8cd54b52945427e6a7ac34d73",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "data_it/scrapers/collect_it.py",
+    "lane": "countries",
+    "size": 9437,
+    "purpose": "Italy: Normattiva OpenData ricerca/avanzata + dettaglio-atto (official BFF).",
+    "entry_point": "python data_it/scrapers/collect_it.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "139815bd23635158fdf469ad8109d1c2b01b3d694d80de31329eedc3bc322084",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "data_ro/MANIFEST.md",
+    "lane": "countries",
+    "size": 861,
+    "purpose": "ipfs_romania_laws manifest",
+    "entry_point": "n/a (documentation)",
+    "ipfs_datasets_py_dependency": "n/a",
+    "sha256": "31d477d8c2a2e4c9a582c0959f20b31f61264c881ca8632709ebd33400af9cef",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "data_ro/README.md",
+    "lane": "countries",
+    "size": 1886,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "n/a (documentation)",
+    "ipfs_datasets_py_dependency": "n/a",
+    "sha256": "55d74d4bbf5f62fb3d180117a69ef6be6eefcc03fda47275261dcaa7c445b671",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "data_ro/scrapers/collect_ro.py",
+    "lane": "countries",
+    "size": 9085,
+    "purpose": "Romania: official Portal Legislativ SOAP API (http FreeWebService.svc/SOAP).",
+    "entry_point": "python data_ro/scrapers/collect_ro.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "fc7882578b8dd45710a88829d13867b7f0071dffe97006eb1a709c089fe77510",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "data_si/MANIFEST.md",
+    "lane": "countries",
+    "size": 820,
+    "purpose": "ipfs_slovenia_laws manifest",
+    "entry_point": "n/a (documentation)",
+    "ipfs_datasets_py_dependency": "n/a",
+    "sha256": "8b34620cae8ab3252a35675e376dc7bbc73d5e92a935dd0ae761fab452d14947",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "data_si/README.md",
+    "lane": "countries",
+    "size": 1821,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "n/a (documentation)",
+    "ipfs_datasets_py_dependency": "n/a",
+    "sha256": "e7427b8d7f3b1a645d027e198ccda235a072928b86e0ca2f26e12f9e9609b47d",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "data_si/scrapers/collect_si.py",
+    "lane": "countries",
+    "size": 5947,
+    "purpose": "Slovenia: Uradni list RS official issue TOCs + act HTML (pisrs API is token-gated).",
+    "entry_point": "python data_si/scrapers/collect_si.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "f6b19092acaf0885b63466091e4374a3a6edac8734d252fd4c05284a11c1eb1f",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "fix_iceland_gap.py",
+    "lane": "countries",
+    "size": 615,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "python fix_iceland_gap.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "edf748c61942e3eef24f1855eba697297059269257d64ea25c214a6d5deebc6a",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "ir_media_recent_tip25q.py",
+    "lane": "countries",
+    "size": 40,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "python ir_media_recent_tip25q.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "bcca0585efaf97283210ae99b0ec61838238c3d9f566c8ac45d9cd5b7b1b7d59",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "ir_media_recent_tip26b.py",
+    "lane": "countries",
+    "size": 40,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "python ir_media_recent_tip26b.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "d15610f4f56ec062196d2f86bc7aae28aad022cc935d8a92a7d7e7e1fee8dca5",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "ir_media_recent_tip26n.py",
+    "lane": "countries",
+    "size": 40,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "python ir_media_recent_tip26n.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "1a2c65e30645b6b3160b41ef4b5a535b0debef0bc6da5376da5c2e9a1d97672d",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "manifest.json",
+    "lane": "countries",
+    "size": 189454,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "n/a (documentation)",
+    "ipfs_datasets_py_dependency": "mentioned in docs/comments/strings (optional / output-format target; no import)",
+    "sha256": "89756dd0ab1baca79ef8a76f74f5557dc8d6da4cc7a67ed1354068246fd0e2cd",
+    "remote_status": "new"
+   },
+   {
+    "path": "mw_akn_miss_tip25m.py",
+    "lane": "countries",
+    "size": 36,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "python mw_akn_miss_tip25m.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "59ed1ac5c16fe29c8657206010930da30aa762a9943e745c7e1ea95cfe7caa92",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "mw_akn_miss_tip26b.py",
+    "lane": "countries",
+    "size": 36,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "python mw_akn_miss_tip26b.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "921bc20054921827f3d1d559b113f2440f4088d6ae8b4ce6d229d3f759090ba7",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "mw_akn_miss_tip26n.py",
+    "lane": "countries",
+    "size": 36,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "python mw_akn_miss_tip26n.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "4e18ebd77db341850dceeb29766715766888db99d5498287e05da7142df7cee9",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "mw_extra_akn_tip25p.py",
+    "lane": "countries",
+    "size": 37,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "python mw_extra_akn_tip25p.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "54d81e433fa25aafad57c54a03a79e4a269bbf7fa0ce6f218de2b740c82bc188",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "mw_extra_akn_tip26b.py",
+    "lane": "countries",
+    "size": 37,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "python mw_extra_akn_tip26b.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "32b54d9e262a49b1fbeb3d7db41eee38884441462b5d38eb2a0e39d21d02f4eb",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "mw_extra_akn_tip26m.py",
+    "lane": "countries",
+    "size": 37,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "python mw_extra_akn_tip26m.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "ba6228d72d78195396d78b2b0bd642b563c2f841bca76257f6b0ee6766246a58",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "na_namiblii_work/build.py",
+    "lane": "countries",
+    "size": 6536,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "python na_namiblii_work/build.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "f2dc530124df1e6e5910ea7133f8611d3ac9416dff10be74e1f2b81d3975296b",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "na_namiblii_work/fetch.py",
+    "lane": "countries",
+    "size": 5505,
+    "purpose": "NA NamibLII archive fetcher: Wayback id_ snapshots (<=1 req/s, sequential, backoff), archived source.pdf fallback,",
+    "entry_point": "python na_namiblii_work/fetch.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "d0a1e4f9fd7972313c0d421140452c7602bf790f3a7879589cdc9935fea49aa2",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "na_namiblii_work/hub_base/README.md",
+    "lane": "countries",
+    "size": 632,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "n/a (documentation)",
+    "ipfs_datasets_py_dependency": "mentioned in docs/comments/strings (optional / output-format target; no import)",
+    "sha256": "c82f1fcbd08188c79158e9cadfb687d15e4c6d29250a098c63e6eab20ab25873",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "na_namiblii_work/hub_base_head_20261027/MANIFEST.md",
+    "lane": "countries",
+    "size": 357,
+    "purpose": "ipfs_namibia_laws manifest",
+    "entry_point": "n/a (documentation)",
+    "ipfs_datasets_py_dependency": "n/a",
+    "sha256": "0f4b3618ef02546abe1662d3d824701c8edffb85574a0f7f0c3c17cd4ff0568a",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "na_namiblii_work/hub_base_head_20261027/README.md",
+    "lane": "countries",
+    "size": 632,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "n/a (documentation)",
+    "ipfs_datasets_py_dependency": "mentioned in docs/comments/strings (optional / output-format target; no import)",
+    "sha256": "c82f1fcbd08188c79158e9cadfb687d15e4c6d29250a098c63e6eab20ab25873",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "na_namiblii_work/hub_base_head_20261027/scrapers/collect_na.py",
+    "lane": "countries",
+    "size": 19912,
+    "purpose": "Namibia: official Acts / Bills / Gazette PDFs via *.gov.na + parliament.na.",
+    "entry_point": "python na_namiblii_work/hub_base_head_20261027/scrapers/collect_na.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "df198e165a111f813e3ce6aedbb017c5573a45cad407382f522b3b8064e5de3c",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "na_namiblii_work/runner.sh",
+    "lane": "countries",
+    "size": 1854,
+    "purpose": "nohup runner: fetch.py waits for >=30G disk / >=4.5G mem before every request (recheck 3 min); resumes from results.jsonl.",
+    "entry_point": "bash na_namiblii_work/runner.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "805de347cb3da530582c7f3f3a5310a79d5ca0014cb77b3a8393478c426b2175",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "rebuild_20261027/build_baseline_from_hub.py",
+    "lane": "countries",
+    "size": 1832,
+    "purpose": "Same TSV format as countries-laws-verifier/tip31zm_save_baseline.py, built from Hub-downloaded staging_<cc>.",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "9866f7f9253e7b5e9d428b647d5cf7a8a0f9a20abad294288047ea22dfd64cef",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "rebuild_20261027/rebuild_from_hub.py",
+    "lane": "countries",
+    "size": 2464,
+    "purpose": "Read-only against the Hub. Rebuild staging_<cc> for the 13 CCs. No uploads/deletes.",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "14be7b11b45c1c1bd55974af9c21a72f42a1f2b74f809b8bdb8b674618ab84c5",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "rebuild_20261027/write_handoffs.py",
+    "lane": "countries",
+    "size": 2206,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "python rebuild_20261027/write_handoffs.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "1be12d72cd347731c885f40722001186aa8899e57de9c041418ae2488a769a96",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_al.sh",
+    "lane": "countries",
+    "size": 174,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_al.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "877809d601ef739d7e39724afae584151240e8aa814d1ba8a83802cd67b9d0e9",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_al_create.sh",
+    "lane": "countries",
+    "size": 167,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_al_create.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "13db504320c80c92154bb61646cec9a3c77e331c80664f4436c0c6ff4b185ab1",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_ao.sh",
+    "lane": "countries",
+    "size": 679,
+    "purpose": "Angola deepen: digital PDFs + OCR of official scans when ALLOW_OCR=1.",
+    "entry_point": "bash run_ao.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "7137e5b1df39af947dc4c7fdfc43016c9d9ce03fe3d01b4c9013428e57d1047d",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_az.sh",
+    "lane": "countries",
+    "size": 164,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_az.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "59b3c1b1c26e50d56ce2f388cbbc826a0a9b554ebb0724ecc4ae4a35b335ad84",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_ba.sh",
+    "lane": "countries",
+    "size": 174,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_ba.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "a32d981e8f1120d46ef6f9926f68594d72f5b807a721d21a6ab8ad48f5bf47d1",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_bg.sh",
+    "lane": "countries",
+    "size": 154,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_bg.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "315c12f30fc88ea0de7abf1b09aaba88857062c085c6c33da7f68f732a7854c4",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_bg2.sh",
+    "lane": "countries",
+    "size": 150,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_bg2.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "357369d41f3883a755ddea02d25ad77752d4ef4c758e0c5535b2bcea2b26bfc1",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_bg3.sh",
+    "lane": "countries",
+    "size": 151,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_bg3.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "8ed752e7e7fb2aede38178bea38fadb80662f054b7364fde5a59be70b8e46963",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_bg4.sh",
+    "lane": "countries",
+    "size": 183,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_bg4.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "db3fa116c55d5b3cbc3d84d335cd68ee8f9de47414eed6d5aa9a9306f0950d0b",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_bg5.sh",
+    "lane": "countries",
+    "size": 183,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_bg5.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "db3fa116c55d5b3cbc3d84d335cd68ee8f9de47414eed6d5aa9a9306f0950d0b",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_bo.sh",
+    "lane": "countries",
+    "size": 174,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_bo.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "98fe431266c318c3a2ba98442ae3a9443c8ef14c1a0b703c89493916ac4ddd1b",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_by.sh",
+    "lane": "countries",
+    "size": 131,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_by.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "a3fb49404e7a0dbd4ec018bbb14f04a39be4473af38372c49cfc8b217fcae49c",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_cu.sh",
+    "lane": "countries",
+    "size": 174,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_cu.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "81fc64c5c047df441d066690fc6c890c680a007a2c365461ffb8331d39a108b6",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_cy.sh",
+    "lane": "countries",
+    "size": 137,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_cy.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "727a2e308d9a5f00719d68f3d07ff26fc9c8d138ae48a21d979a7d4a3f56216d",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_cy2.sh",
+    "lane": "countries",
+    "size": 138,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_cy2.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "a181c1421b1f5460c95597de704a7466e8cb2ec912e733a1bbb7b8e439097eaf",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_cy4.sh",
+    "lane": "countries",
+    "size": 154,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_cy4.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "a21e2eed95d06dc39ec886deaf93b1c57c6c391376917abacc8bb4443d4f8d4b",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_cy5.sh",
+    "lane": "countries",
+    "size": 154,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_cy5.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "a21e2eed95d06dc39ec886deaf93b1c57c6c391376917abacc8bb4443d4f8d4b",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_cy_upload.sh",
+    "lane": "countries",
+    "size": 206,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_cy_upload.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "2f66a460b8e093fc0378122f16bbf11e1cb62b5809ee5a6c57122341cbf58108",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_do.sh",
+    "lane": "countries",
+    "size": 174,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_do.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "be072616845d09955c9231a4872dc5627dac44a31d44ed99b9773924ba991976",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_dz.sh",
+    "lane": "countries",
+    "size": 202,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_dz.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "52898d9eaba2f6349b0dffdc58d4b7aa5a6177166629557d47934497006075f2",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_et.sh",
+    "lane": "countries",
+    "size": 174,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_et.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "28b2af79a2766ef59464a239b2835cf8a592d8f48e7fa865cdfc85580403ec46",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_fj.sh",
+    "lane": "countries",
+    "size": 174,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_fj.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "571be079afc72c8fc06d5097c457e131a887f7abaa813f44f33ec6ca61c48cb0",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_ge.sh",
+    "lane": "countries",
+    "size": 174,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_ge.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "d43bb0504bb10f93eec85a743a36319f757eb81ef2b1f09c8054de1d5927b756",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_ge_create.sh",
+    "lane": "countries",
+    "size": 167,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_ge_create.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "3113ecfa42c56f67ec97020087272e1ad116121b14478e931e21bded430d8a24",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_gt.sh",
+    "lane": "countries",
+    "size": 174,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_gt.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "86bd7e9c3447d74bffc526d6a6a22e99f611ab5dc2d4a57ca257f01e52c0791d",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_it2.sh",
+    "lane": "countries",
+    "size": 168,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_it2.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "bc173be6be4193c3f11e5079479ac5bf8fa4da23f34d573d3055785f5e7f6d12",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_it3.sh",
+    "lane": "countries",
+    "size": 170,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_it3.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "f3ba73aa016f3ad9cc39f4b83a6d3161db69950c97f171009bb5f76d15a62fe0",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_it4.sh",
+    "lane": "countries",
+    "size": 170,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_it4.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "f3ba73aa016f3ad9cc39f4b83a6d3161db69950c97f171009bb5f76d15a62fe0",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_it5.sh",
+    "lane": "countries",
+    "size": 170,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_it5.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "f3ba73aa016f3ad9cc39f4b83a6d3161db69950c97f171009bb5f76d15a62fe0",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_jm.sh",
+    "lane": "countries",
+    "size": 168,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_jm.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "116e28a6c31edabafeb2ba8057eef19a69d4949f23abfac9aafc6c144fcb11a2",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_kh.sh",
+    "lane": "countries",
+    "size": 174,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_kh.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "134d5c0ec5884a3dc08ac7f4bc02f17dee200ac4d7a30b2a1ce83da0259b7b38",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_la.sh",
+    "lane": "countries",
+    "size": 174,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_la.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "e06e2dbf70ad2d1a05dee84e5beeacc7b3956ca70fdeecb04678ffd513b6fc19",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_md.sh",
+    "lane": "countries",
+    "size": 316,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_md.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "e44d2f581e3a9e053ff648cbd0e33f8eb3c283ffb5bd54a58d6c9998722db01b",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_md_create.sh",
+    "lane": "countries",
+    "size": 167,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_md_create.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "1303b521c0f37451bdc3998916bcfcdbf13c24f3f71a23ef2cec18cb59d2ecb0",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_me.sh",
+    "lane": "countries",
+    "size": 164,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_me.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "75853e2def20fec148e03fd911aaea3a286abe48d553c6635d6babbea238e560",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_mk.sh",
+    "lane": "countries",
+    "size": 174,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_mk.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "a67099ba164075289de4dde5e2b5140561a63820a6548d5dfe29668f234dd99a",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_mn.sh",
+    "lane": "countries",
+    "size": 131,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_mn.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "0c47bfe8796d6366107ed179275c78f06242dfec59f727fab772b42f6a831415",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_mz.sh",
+    "lane": "countries",
+    "size": 410,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_mz.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "cd7eab06c61da0a6ac6e938ce2007285b7e7a50a5ba67d5711a3027553c18b35",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_na.sh",
+    "lane": "countries",
+    "size": 224,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_na.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "cfb6759f9803f16f320f6f3c1b86b468ddbb7aedcde6643388a5e2eadfe95c4c",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_ni.sh",
+    "lane": "countries",
+    "size": 174,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_ni.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "cf7f050b6b044401a5b612f24f225752543317a85bab8a0be1b47eedda80490e",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_np.sh",
+    "lane": "countries",
+    "size": 131,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_np.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "70251e911cad1bd07cccc26d2a82e93dcc1d8e68e05b75feda0a61e7557e7a22",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_pa.sh",
+    "lane": "countries",
+    "size": 174,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_pa.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "53ac85054a3be93ac68924ed93c952f8c440e4cba023b1ac4a5e89a2ff192705",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_ro.sh",
+    "lane": "countries",
+    "size": 168,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_ro.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "6cbb2db3106f26332172c400d34d73df1bd1a32c5c317a6e3c9738234bb78003",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_ro2.sh",
+    "lane": "countries",
+    "size": 168,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_ro2.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "57806628be7af94322b5e2527be4a01a6bb15dabf5592321c2f51b6459f35b87",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_ro3.sh",
+    "lane": "countries",
+    "size": 168,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_ro3.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "4635f435b9552ffeb5693694df8b416a5c4e0a8bee3bc06d1d1386855ad71551",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_ro4.sh",
+    "lane": "countries",
+    "size": 170,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_ro4.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "510094a1e2025c052f41326bc29f07effe2338af63ca7c64ebaf293a1a034335",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_ro5.sh",
+    "lane": "countries",
+    "size": 170,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_ro5.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "ca70999e199d1a7f6e4a45f70ebd03be72dbe3f88e9288ad07941a1450f2b04f",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_ro6.sh",
+    "lane": "countries",
+    "size": 170,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_ro6.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "11e2dcf117ec56371d241b1609b040f38216a7aedd6e19a3b33e1549220b9b5a",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_rs.sh",
+    "lane": "countries",
+    "size": 174,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_rs.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "10f82c40457addac3ea2d36f516e6066ddbc0cae2a0d1c3cf233108e16ff5537",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_rs_create.sh",
+    "lane": "countries",
+    "size": 167,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_rs_create.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "c40e8ecb94bd45ff31e00d72fce2705bb6146aee2cfa8a14c0bb7928e6c0bc1c",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_rw.sh",
+    "lane": "countries",
+    "size": 131,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_rw.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "8377c62d816f1204b06717483a27cd886c0676a4c2539b5a37d8123ed090ef65",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_si.sh",
+    "lane": "countries",
+    "size": 185,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_si.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "52adf486a341c7303226b0d7297b6953e46e571362a4a0b57e94d870c0adde84",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_si2.sh",
+    "lane": "countries",
+    "size": 187,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_si2.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "b42b32c61e5b2c1df04bc5bb0f4df066fceb0057a4f8532fd67eff7f0e1d89ca",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_si3.sh",
+    "lane": "countries",
+    "size": 208,
+    "purpose": "Resume remaining from existing 8015 catalog first (no rediscover)",
+    "entry_point": "bash run_si3.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "b01e1de78a8744a086d47c3b834c72733a40f9591ee87c24c058210e9569dae0",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_si4.sh",
+    "lane": "countries",
+    "size": 187,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_si4.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "3c3f247197d5e66036079343a266bc6a70f97481a47ef598bc7f207e2d01584e",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_sn.sh",
+    "lane": "countries",
+    "size": 131,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_sn.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "eec3feec421cd90ef67f364841846c62e169592c5bd2161a02caf362d66bf182",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_sn_pilot.sh",
+    "lane": "countries",
+    "size": 161,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_sn_pilot.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "ea6981fde6503ed2fee1441e6bd505432f37b42fec832422ed940310d0fd54cc",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_sv.sh",
+    "lane": "countries",
+    "size": 174,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_sv.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "b32aba09712fec8957b8bdb9b84981f5d4d2a6c761e7a3f387e739b40f6382ad",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_tn.sh",
+    "lane": "countries",
+    "size": 174,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_tn.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "d57f37625092e028e802a75aca73149286c3f10fe57229350cd4c5ad3de06ebf",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_tn2.sh",
+    "lane": "countries",
+    "size": 164,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_tn2.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "4e665071c79f73af8ae59d5bcc66a0ed0f1287371c3e18df6a273f9ab6894a69",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_tz.sh",
+    "lane": "countries",
+    "size": 174,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_tz.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "e4765f426cd3e58a51ec1c78c50108d9737dd6889952ace95c53a58b708b19ab",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_ug.sh",
+    "lane": "countries",
+    "size": 131,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_ug.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "3c9e83601b8daa8cdfce8e5a7c5e165bb6113d224a8a480cfdbe2f212dfc0173",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_uz.sh",
+    "lane": "countries",
+    "size": 131,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_uz.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "62a8e21c4b5ad844684151c4861bf898ab8efc2625a6ff3eb5768485acd4371d",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_verify.sh",
+    "lane": "countries",
+    "size": 90,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_verify.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "c1a525a6862cd8cf60bd7278f06fa77d1f01b2b5cc5d8dcc248290bac00e16bf",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_xk.sh",
+    "lane": "countries",
+    "size": 199,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_xk.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "10b1475c220c0c4b96c033827fc74b4e56e0908ce4b61efb86fbc54beaa2c3c7",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_zw.sh",
+    "lane": "countries",
+    "size": 195,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_zw.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "80aa12ecfcf0f3949d303a508fb1ecc7c70648178322e0285ccaecb615979e49",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/collect_af.py",
+    "lane": "countries",
+    "size": 9238,
+    "purpose": "Afghanistan: MoJ Official Gazette PDFs + laws.moj.gov.af (Dari/fa primary).",
+    "entry_point": "python scrapers/collect_af.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "c807aa4654bebdfa07b2bf126214ec56bd25fb20ed799f7a1d7559a2dc8bd06a",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/collect_al.py",
+    "lane": "countries",
+    "size": 5517,
+    "purpose": "Albania: Official Fletorja Zyrtare PDFs from QPZ (predecessor of QBZ) + QBZ Alfresco content via Wayback.",
+    "entry_point": "python scrapers/collect_al.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "53de8be9071370415292043a7494542ace8506f494200532bfaa29e1610fa6a3",
+    "remote_status": "changed"
+   },
+   {
+    "path": "scrapers/collect_am.py",
+    "lane": "countries",
+    "size": 4926,
+    "purpose": "Armenia: official ARLIS (Pashtonakan teghekagir / Ministry of Justice).",
+    "entry_point": "python scrapers/collect_am.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "f263837c0855ea5b7b1289a542ba2cf4e8471fe7f87ea4279ea96b56866f7fdf",
+    "remote_status": "changed"
+   },
+   {
+    "path": "scrapers/collect_ao.py",
+    "lane": "countries",
+    "size": 25463,
+    "purpose": "Angola: Diário da República / official legislation PDFs.",
+    "entry_point": "python scrapers/collect_ao.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "c42e8c0ff9ae3573321ace0dbc3ba14a7fd1f89a0ba0a5842e8b53e39f4435e1",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/collect_az.py",
+    "lane": "countries",
+    "size": 5710,
+    "purpose": "Azerbaijan: e-qanun.az downloadDetailPdf (non-SPA PDF path) + Wayback + ID probe.",
+    "entry_point": "python scrapers/collect_az.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "aaf3697bb4e0515da10f42911e6dcdb0e75709c849f2a241de7f522177b893b5",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/collect_ba.py",
+    "lane": "countries",
+    "size": 7327,
+    "purpose": "Bosnia: Sluzbeni list BiH PdfDownload gazette issues (live + Wayback of official URLs).",
+    "entry_point": "python scrapers/collect_ba.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "fd53f538621a8f3a0bd3610760dcf22111a42f244207a5cf07a5a594d5ca3f7d",
+    "remote_status": "changed"
+   },
+   {
+    "path": "scrapers/collect_bg.py",
+    "lane": "countries",
+    "size": 8551,
+    "purpose": "Bulgaria: State Gazette via Wayback of official URLs (live TLS fails).",
+    "entry_point": "python scrapers/collect_bg.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "c8891a9084674d1c4e311f1a6f314f8beb1b137438c07ba6a4a18735e87a1fe1",
+    "remote_status": "changed"
+   },
+   {
+    "path": "scrapers/collect_blocked_archives.py",
+    "lane": "countries",
+    "size": 48695,
+    "purpose": "Collect blocked EU gazettes via archive fallbacks (Wayback / Common Crawl / archive.is / HTTP).",
+    "entry_point": "python scrapers/collect_blocked_archives.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "6f14478b962f8d16448baef34e18becdb9182c6bdda1eaeb3f94734136ccb8f6",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/collect_bn.py",
+    "lane": "countries",
+    "size": 4026,
+    "purpose": "Brunei: AGC Laws of Brunei ACT_PDF (agc.gov.bn/AGC Images/LAWS).",
+    "entry_point": "python scrapers/collect_bn.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "08e8f2556991b74dfa39345f0c2a9e2c12b8ac1a3c39df37d7347cec6f443c30",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/collect_bo.py",
+    "lane": "countries",
+    "size": 8685,
+    "purpose": "Bolivia: Gaceta Oficial de Bolivia (HTTP; HTTPS TLS often fails) + Wayback.",
+    "entry_point": "python scrapers/collect_bo.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "fcb0b637258a563fa3799cc31f2b10824d635be2ed13d8d46a1a901de9e093b8",
+    "remote_status": "changed"
+   },
+   {
+    "path": "scrapers/collect_bw.py",
+    "lane": "countries",
+    "size": 16320,
+    "purpose": "Botswana: official Acts / Bills / Gazette / SI PDFs from government portals.",
+    "entry_point": "python scrapers/collect_bw.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "d178fd1bfbba0f9ae544b517bb54ccfad19b9fb9d87bb705cf9879f06f4f0b04",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/collect_by.py",
+    "lane": "countries",
+    "size": 4660,
+    "purpose": "Belarus: pravo.by official normative documents / codes.",
+    "entry_point": "python scrapers/collect_by.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "7f62c3362b4a6b23456d005210eaa2a83c5bf0763bade13565f5d4b39f3be3a6",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/collect_cm.py",
+    "lane": "countries",
+    "size": 21487,
+    "purpose": "Cameroon: official acts from Présidence (prc.cm) + Lois et Règlements SPM (spm.gov.cm).",
+    "entry_point": "python scrapers/collect_cm.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "6ec9f92dfae50706cec50b83b3e6fc9deb0946f4745689821fbbd7d78f68b735",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/collect_cu.py",
+    "lane": "countries",
+    "size": 3832,
+    "purpose": "Cuba: Gaceta Oficial (gacetaoficial.gob.cu) PDF issues + Wayback.",
+    "entry_point": "python scrapers/collect_cu.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "4b72db558f1943abea72a96440c493e2654d65cee19231c35ce30fdd91cad548",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/collect_cy.py",
+    "lane": "countries",
+    "size": 13511,
+    "purpose": "Cyprus: official GPO gazette (mof.gov.cy). PDF body extraction. Not cylaw.org.",
+    "entry_point": "python scrapers/collect_cy.py",
+    "ipfs_datasets_py_dependency": "mentioned in docs/comments/strings (optional / output-format target; no import)",
+    "sha256": "3f35ecb2c658c64fe3cb8a6d4080885d96e5d504990790d06edbc40b4fc92cc0",
+    "remote_status": "changed"
+   },
+   {
+    "path": "scrapers/collect_do.py",
+    "lane": "countries",
+    "size": 10128,
+    "purpose": "Dominican Republic: Consultoría Jurídica API + Congreso Biblioteca gacetas/leyes.",
+    "entry_point": "python scrapers/collect_do.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "1bd49f0d483bdf3b941798bc22c70afd834067726de07170c06ab89d9525fb3f",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/collect_documents_gov_lk.py",
+    "lane": "countries",
+    "size": 196,
+    "purpose": "Official Sri Lanka Acts from documents.gov.lk (alias entrypoint).",
+    "entry_point": "python scrapers/collect_documents_gov_lk.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "93df4bcafff64653252e97b52baaf36d0333cdc16cdb58db75239001ce91403d",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/collect_dz.py",
+    "lane": "countries",
+    "size": 4589,
+    "purpose": "Algeria: Journal Officiel (JORADP / SGG) official PDF issues over HTTP.",
+    "entry_point": "python scrapers/collect_dz.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "b657ca3712ed8289dbb3d587283b3ec74a0bd2d888ed61b6d42faaf18202ba1e",
+    "remote_status": "changed"
+   },
+   {
+    "path": "scrapers/collect_ec.py",
+    "lane": "countries",
+    "size": 5157,
+    "purpose": "Ecuador: official gob.ec regulaciones API + Registro Oficial PDFs.",
+    "entry_point": "python scrapers/collect_ec.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "42f4c0a82278ebf2fd746db2a2fd7e9e0daa00eea9b1fadf925da67c8f804047",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/collect_et.py",
+    "lane": "countries",
+    "size": 10841,
+    "purpose": "Ethiopia: Federal Negarit Gazette / MoJ proclamation & regulation PDFs.",
+    "entry_point": "python scrapers/collect_et.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "245e16bcf033d9ad84d7164f87c4d42f0182614a73b2076229577686e6e050c0",
+    "remote_status": "changed"
+   },
+   {
+    "path": "scrapers/collect_fj.py",
+    "lane": "countries",
+    "size": 4138,
+    "purpose": "Fiji: laws.gov.fj LawsAsMade PDF downloads + Wayback of official URLs.",
+    "entry_point": "python scrapers/collect_fj.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "fae5fdaabbda076e7cf33a91db041bc1baf21c8c26db371973d7c5377cfd8892",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/collect_ge.py",
+    "lane": "countries",
+    "size": 7648,
+    "purpose": "Georgia: matsne.gov.ge (Wayback PDFs) + parliament.ge/_special/kan/files (CDX PDF snapshots).",
+    "entry_point": "python scrapers/collect_ge.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "925d843e92de1bbf16416e64bd9e921fcaffd6fcd4d6e1f3e6ed705004f12bdf",
+    "remote_status": "changed"
+   },
+   {
+    "path": "scrapers/collect_gh.py",
+    "lane": "countries",
+    "size": 20627,
+    "purpose": "Ghana: Constitution + Acts of Parliament from official hosts only.",
+    "entry_point": "python scrapers/collect_gh.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "3ca334ccb3d862e4908320f01752546dbf97171944edcdd871fd3697d1beb2a7",
+    "remote_status": "changed"
+   },
+   {
+    "path": "scrapers/collect_gt.py",
+    "lane": "countries",
+    "size": 3706,
+    "purpose": "Guatemala: Congreso de la República (congreso.gob.gt) official PDF acuerdos/leyes + Wayback.",
+    "entry_point": "python scrapers/collect_gt.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "3ed0e989e4f908be08658f80e32e6f6d25cdb0a3a2ef380ef992429aaebb38fc",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/collect_hn.py",
+    "lane": "countries",
+    "size": 3808,
+    "purpose": "Honduras: Tribunal Superior de Cuentas La Gaceta / leyes PDFs (tsc.gob.hn/web/leyes).",
+    "entry_point": "python scrapers/collect_hn.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "96e9a5ab1acc71675e2e8e35ef066beb3e131661b3bf3becfb60587b799fa5a0",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/collect_iq.py",
+    "lane": "countries",
+    "size": 5633,
+    "purpose": "Iraq: Ministry of Justice uploaded gazette/law PDFs (moj.gov.iq/uploaded).",
+    "entry_point": "python scrapers/collect_iq.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "b5f7a21cc2b57b5b870d913090b9b8664987b223ddfa9b4c31cceb98a72756a1",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/collect_ir.py",
+    "lane": "countries",
+    "size": 5477,
+    "purpose": "Iran: National System of Laws / DOTIC (dotic.ir) official PDFs + Wayback.",
+    "entry_point": "python scrapers/collect_ir.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "ad7a2e182df020cb7fc434e2208a3f6168d5cb7d223fc6401c2986f53c84573b",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/collect_is.py",
+    "lane": "countries",
+    "size": 3912,
+    "purpose": "Iceland: Alþingi Lagasafn consolidated HTML laws (althingi.is).",
+    "entry_point": "python scrapers/collect_is.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "21dc9199bb38fdbfe41e50ed5590f4b73baa9aee842959f9c2e9b8e04c420816",
+    "remote_status": "changed"
+   },
+   {
+    "path": "scrapers/collect_it.py",
+    "lane": "countries",
+    "size": 11595,
+    "purpose": "Italy: Normattiva OpenData ricerca/avanzata + dettaglio-atto (official BFF).",
+    "entry_point": "python scrapers/collect_it.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "d15eac31a78ada8926884d241831abab68b6087049555649ff55c98a8b09874a",
+    "remote_status": "changed"
+   },
+   {
+    "path": "scrapers/collect_jm.py",
+    "lane": "countries",
+    "size": 7226,
+    "purpose": "Jamaica: Laws of Jamaica official PDFs (MOJ laws/ + laws.moj.gov.jm).",
+    "entry_point": "python scrapers/collect_jm.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "441e4fec3bf3039df24126b380a7478d7c1d43a84a90b5a8e24d2a2dd53d25c5",
+    "remote_status": "changed"
+   },
+   {
+    "path": "scrapers/collect_kh.py",
+    "lane": "countries",
+    "size": 3667,
+    "purpose": "Cambodia: Ministry of Justice (moj.gov.kh) official document PDFs + Wayback.",
+    "entry_point": "python scrapers/collect_kh.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "3caa14540f6dae4eb45214b385c2af22032726f03b4316ed9b6fb892332111b5",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/collect_la.py",
+    "lane": "countries",
+    "size": 4666,
+    "purpose": "Laos: Lao Official Gazette (laoofficialgazette.gov.la) kcfinder PDF uploads + Wayback.",
+    "entry_point": "python scrapers/collect_la.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "21d09cfa8fa4605fb5a02a9eb7d7974a3c3e390bfa203021669c912f3f790c8d",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/collect_lb.py",
+    "lane": "countries",
+    "size": 4424,
+    "purpose": "Lebanon: Official Gazette (jo.pcm.gov.lb) PDFs + pcm.gov.lb DynamicFile docs.",
+    "entry_point": "python scrapers/collect_lb.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "3e5a955ca68b49fb33493b845dbf4cd6a7a8799269e7e1785da751911e6ca852",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/collect_lk.py",
+    "lane": "countries",
+    "size": 17863,
+    "purpose": "Sri Lanka: Constitution + Acts from official government hosts.",
+    "entry_point": "python scrapers/collect_lk.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "5a1fe8935b0383ea22dda70299bbc1dc5ccd786c11efeccf082f8d16c28f1338",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/collect_md.py",
+    "lane": "countries",
+    "size": 18821,
+    "purpose": "Moldova legislation collector.",
+    "entry_point": "python scrapers/collect_md.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "17b8c542f72f6661f34a1da540ad5f667cf9ae86ae2e6d00b74512c45ddfd3fc",
+    "remote_status": "changed"
+   },
+   {
+    "path": "scrapers/collect_me.py",
+    "lane": "countries",
+    "size": 4094,
+    "purpose": "Montenegro: Sluzbeni list Crne Gore (sluzbenilist.me) + Wayback of official URLs.",
+    "entry_point": "python scrapers/collect_me.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "db0d79202b8f64e498c65c2931e92e3bf2865ed860f34d3686a12ec371ef33ac",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/collect_mg.py",
+    "lane": "countries",
+    "size": 357,
+    "purpose": "Stub collector metadata for mg (CC S3 CDXJ ingest primary).",
+    "entry_point": "python scrapers/collect_mg.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "25e0bde14a9bc0940c0c93e751fff90f866fe76612c5104f831b2d98b6bbb563",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/collect_mk.py",
+    "lane": "countries",
+    "size": 3647,
+    "purpose": "North Macedonia: Sluzben vesnik (slvesnik.com.mk) PDFs. Live TLS often fails; HTTP/Wayback.",
+    "entry_point": "python scrapers/collect_mk.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "1cfa224219608ca0bef31338c831af1db252dca83757ff4cc70d75dd18c79ef1",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/collect_mn.py",
+    "lane": "countries",
+    "size": 5325,
+    "purpose": "Mongolia: legalinfo.mn official legal acts (HTML detail pages + CDX PDFs).",
+    "entry_point": "python scrapers/collect_mn.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "40787f6cbc12b29b3e2b79034690267244204b8b79a5116b53d097aa51d0675f",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/collect_mw.py",
+    "lane": "countries",
+    "size": 357,
+    "purpose": "Stub collector metadata for mw (CC S3 CDXJ ingest primary).",
+    "entry_point": "python scrapers/collect_mw.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "333879f232716af3a4090e55f2a8fab931d8f2c9311e530755734ad6616ff1d8",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/collect_mz.py",
+    "lane": "countries",
+    "size": 22994,
+    "purpose": "Mozambique: Boletim da República / official legislation PDFs.",
+    "entry_point": "python scrapers/collect_mz.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "ce3531a3c0fe3a6dde5aa2150a69920e3f6f8e6c298895e3101a1d7215ae6ea6",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/collect_na.py",
+    "lane": "countries",
+    "size": 24171,
+    "purpose": "Namibia: official Bills / Acts / Gazette instruments from Parliament + BoN.",
+    "entry_point": "python scrapers/collect_na.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "713c98ee343ad43df06a428d7308df6a8eee6c239235c1d644acbdb3a5da26fe",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/collect_ni.py",
+    "lane": "countries",
+    "size": 4038,
+    "purpose": "Nicaragua: Asamblea Nacional legislación / Gaceta (legislacion.asamblea.gob.ni) PDFs + Wayback.",
+    "entry_point": "python scrapers/collect_ni.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "8aaf69fa41d183d0c2d6de5c53b6dde401e075dc200d26633db411de04603e75",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/collect_np.py",
+    "lane": "countries",
+    "size": 4579,
+    "purpose": "Nepal: lawcommission.gov.np / Nepal Law Commission official acts (HTML/PDF).",
+    "entry_point": "python scrapers/collect_np.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "f7dcd374652fda3032ce16743d23eba05198480139ddcf364f244022ed956f2c",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/collect_pa.py",
+    "lane": "countries",
+    "size": 3520,
+    "purpose": "Panama: Gaceta Oficial (gacetaoficial.gob.pa) PDFs via live/Wayback.",
+    "entry_point": "python scrapers/collect_pa.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "9ee030dda0e8d3f5c34c40c4e786c4760a850390806f7aad161f09016578dfe4",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/collect_pg.py",
+    "lane": "countries",
+    "size": 3847,
+    "purpose": "Papua New Guinea: Parliament Acts PDFs (parliament.gov.pg/uploads/acts).",
+    "entry_point": "python scrapers/collect_pg.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "819d5e7b586de6409e831e7fe24b3155d31b5ed37f697eda7629312f48c22aa5",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/collect_py.py",
+    "lane": "countries",
+    "size": 8209,
+    "purpose": "Paraguay: BACN leyes HTML (.entry-content full text; descarga PDFs are CF HTML shells).",
+    "entry_point": "python scrapers/collect_py.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "6175f23ebe00c35c5c6d47c9e89329ea76533fc9620d560529eb09a8358b17ba",
+    "remote_status": "changed"
+   },
+   {
+    "path": "scrapers/collect_remaining.py",
+    "lane": "countries",
+    "size": 8767,
+    "purpose": "Best-effort remaining EU gazettes: HR SI RO HU PT GR BG CY HU.",
+    "entry_point": "python scrapers/collect_remaining.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "2a1ac26a0777cd27a774ee61ca4daeae70e8c51b84f787bee26acb9dd8f59962",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/collect_ro.py",
+    "lane": "countries",
+    "size": 9699,
+    "purpose": "Romania: official Portal Legislativ SOAP API (http FreeWebService.svc/SOAP).",
+    "entry_point": "python scrapers/collect_ro.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "a9cad289f4ed246e4603f4268ae6326ceecf0277799e3ad7b3043842f79aa717",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/collect_rs.py",
+    "lane": "countries",
+    "size": 18399,
+    "purpose": "Serbia: Constitution + закони from Pravno-informacioni sistem / Službeni glasnik.",
+    "entry_point": "python scrapers/collect_rs.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "1caf3519c9d57df78bd6bc9e58eec2208f4f0efb138a13a62b638715b84d91b7",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/collect_rw.py",
+    "lane": "countries",
+    "size": 5564,
+    "purpose": "Rwanda: Official Gazette PDFs from minijust.gov.rw file list.",
+    "entry_point": "python scrapers/collect_rw.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "ffadf5c08c7a601280f396e8557c29ea0fdedce0bc2db212b4bbe4536b86655c",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/collect_si.py",
+    "lane": "countries",
+    "size": 6831,
+    "purpose": "Slovenia: Uradni list RS official issue TOCs + act HTML (pisrs API is token-gated).",
+    "entry_point": "python scrapers/collect_si.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "4bfe1d8cc5a59cbb089e0ef94d137c1ea613b1f8194ce87b5f54080c2412eaf6",
+    "remote_status": "changed"
+   },
+   {
+    "path": "scrapers/collect_sn.py",
+    "lane": "countries",
+    "size": 8260,
+    "purpose": "Senegal: Journal Officiel — jo.gouv.sn (primary, live+Wayback) + archives.sn official JO PDFs.",
+    "entry_point": "python scrapers/collect_sn.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "97551f279d93b5fbb22fd4d6cf47c1da8b042c0abbc410b12788b5267c1f0957",
+    "remote_status": "changed"
+   },
+   {
+    "path": "scrapers/collect_ss.py",
+    "lane": "countries",
+    "size": 10096,
+    "purpose": "South Sudan: MoJCA laws PDFs (mojca.gov.ss) via CDX/Wayback + live list pages.",
+    "entry_point": "python scrapers/collect_ss.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "805718c1010cb3c31f366ce9955e45b4f309875d2700409376db5fcc04cf5464",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/collect_sv.py",
+    "lane": "countries",
+    "size": 11306,
+    "purpose": "El Salvador: Asamblea Legislativa decree PDFs + Diario Oficial API gazettes.",
+    "entry_point": "python scrapers/collect_sv.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "fe9d174e13c91a9e0cfc97bedf370330362f164a9725fe04bfbbc03bc284cb38",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/collect_tn.py",
+    "lane": "countries",
+    "size": 9558,
+    "purpose": "Tunisia: Journal Officiel (IORT / JORT).",
+    "entry_point": "python scrapers/collect_tn.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "d98015277cc7c1baa705299248afaa1c02f3588fda79b86991334af3e70192f5",
+    "remote_status": "changed"
+   },
+   {
+    "path": "scrapers/collect_tt.py",
+    "lane": "countries",
+    "size": 3914,
+    "purpose": "Trinidad and Tobago: Parliament Acts PDFs + laws.gov.tt Digital Legislative Library PDFs.",
+    "entry_point": "python scrapers/collect_tt.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "f285794da6a8e4efea61228a93a712c6545a778f5775ce31bb0044f4c358a597",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/collect_tz.py",
+    "lane": "countries",
+    "size": 6114,
+    "purpose": "Tanzania: OAG MIS portal acts (acts-ajax catalog + /portal/acts/{id}/download PDFs).",
+    "entry_point": "python scrapers/collect_tz.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "dd7d9f694a79d8c448e322ef7dfbfa3ba16230ff1e495eda871c0a159eb11e5d",
+    "remote_status": "changed"
+   },
+   {
+    "path": "scrapers/collect_ug.py",
+    "lane": "countries",
+    "size": 3454,
+    "purpose": "Uganda: Parliament of Uganda official act PDFs.",
+    "entry_point": "python scrapers/collect_ug.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "8a287fcc72831e75779eec1ec39ccf063e8295733f10b15bbf937ac247e20faa",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/collect_uz.py",
+    "lane": "countries",
+    "size": 4952,
+    "purpose": "Uzbekistan: lex.uz official legislation HTML documents.",
+    "entry_point": "python scrapers/collect_uz.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "50ac98f8f873da3bd14d77d564b9bcd2f8678b5f0ccf33f73e41bac17ab456b0",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/collect_ve.py",
+    "lane": "countries",
+    "size": 3790,
+    "purpose": "Venezuela: Gaceta Oficial (gacetaoficial.gob.ve/storage) PDFs + Wayback.",
+    "entry_point": "python scrapers/collect_ve.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "3ee599fee2d1c9e213ed078f0fd05646f10fddd9ac279bd5afd3677c96b7896f",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/collect_xk.py",
+    "lane": "countries",
+    "size": 9850,
+    "purpose": "Kosovo: Gazeta Zyrtare (gzk.rks-gov.net) official act PDFs via ASP.NET download.",
+    "entry_point": "python scrapers/collect_xk.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "76eb37c358f82bca3aa4c95c025b8e7b09b71d8c7f1c63482efde0ce49f0ba94",
+    "remote_status": "changed"
+   },
+   {
+    "path": "scrapers/collect_zm.py",
+    "lane": "countries",
+    "size": 357,
+    "purpose": "Stub collector metadata for zm (CC S3 CDXJ ingest primary).",
+    "entry_point": "python scrapers/collect_zm.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "61a8b30fe3720c97ef6491767092c6d67a5f1409fbcdedfb84b249ef78881b15",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/collect_zw.py",
+    "lane": "countries",
+    "size": 14332,
+    "purpose": "Zimbabwe: Parliament of Zimbabwe official Act PDFs (parlzim.gov.zw).",
+    "entry_point": "python scrapers/collect_zw.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "cb9d7c0c59a93029d79b87282309ceeed34854b6bc6221f7531ee417bcd0c35a",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/ingest_ao_cc_live.py",
+    "lane": "countries",
+    "size": 9341,
+    "purpose": "Live-ingest AO PDFs discovered via Common Crawl URL list.",
+    "entry_point": "python scrapers/ingest_ao_cc_live.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "e7d6887adc46997b7f23365cef722f53015c2c1a3c3c9f7561285bc5001374ce",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/ingest_ao_cc_warc.py",
+    "lane": "countries",
+    "size": 19511,
+    "purpose": "Ingest Angola official PDFs from Common Crawl WARC byte-ranges.",
+    "entry_point": "python scrapers/ingest_ao_cc_warc.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "7d37282391164d852c62141734e93c7007a7aae19a5cfcbd876990e7a25fdd33",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/ingest_do_getdocument.py",
+    "lane": "countries",
+    "size": 5112,
+    "purpose": "Ingest consultoria.gov.do Documents/GetDocument PDFs discovered via Wayback CDX.",
+    "entry_point": "python scrapers/ingest_do_getdocument.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "3d83a1cfd900208f1c820d34bdb7ff1b42c7adb96e60666f9ebe301ff976ead9",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/ingest_et_hopr.py",
+    "lane": "countries",
+    "size": 4585,
+    "purpose": "Ingest hopr.gov.et proclamation/regulation PDFs from Wayback CDX list.",
+    "entry_point": "python scrapers/ingest_et_hopr.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "30a6915181f0d8068912dbecaea6b7b2f750cb4f342a844d57577baf8bee3c52",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/ingest_gh_cc_warc.py",
+    "lane": "countries",
+    "size": 18256,
+    "purpose": "Ingest Ghana Act PDFs from Common Crawl WARC byte-ranges.",
+    "entry_point": "python scrapers/ingest_gh_cc_warc.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "a2f152a051add066110b096de20bd6c1b85df6fdc0e554f16e35317876fdf587",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/ingest_ir_cc_warc.py",
+    "lane": "countries",
+    "size": 20787,
+    "purpose": "Ingest Iran DOTIC laws from Common Crawl WARC byte-ranges.",
+    "entry_point": "python scrapers/ingest_ir_cc_warc.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "76749900685e338d824888839683077c1064221a92d2c83da6637f745f518b09",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/ingest_thin_cc_live.py",
+    "lane": "countries",
+    "size": 12895,
+    "purpose": "Live-ingest official PDFs discovered via S3 CC harvest (*_cc_urls.jsonl).",
+    "entry_point": "python scrapers/ingest_thin_cc_live.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "5ffed5ee1642e73c7b29b304a1844827e2e226147138f566dea92b21c34fe665",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers_collect_remaining.py",
+    "lane": "countries",
+    "size": 8767,
+    "purpose": "Best-effort remaining EU gazettes: HR SI RO HU PT GR BG CY HU.",
+    "entry_point": "python scrapers_collect_remaining.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "2a1ac26a0777cd27a774ee61ca4daeae70e8c51b84f787bee26acb9dd8f59962",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "tmp_fj_rights.py",
+    "lane": "countries",
+    "size": 520,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "python tmp_fj_rights.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "deb23f3f3b901d5c0a3ea29356d850ff0248d0cda8736db5739a45699eb2993a",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "tmp_fj_struct.py",
+    "lane": "countries",
+    "size": 616,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "python tmp_fj_struct.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "a2f22b29589a89ce311121406a5c2b4533990be652945195e30f5503e37a6d26",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "tmp_fj_struct2.py",
+    "lane": "countries",
+    "size": 740,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "python tmp_fj_struct2.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "e0c0700fce62a19a471054940e23a6bc8858fe37e14edd869bd3671919c6395e",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "tmp_sv_cdx3.py",
+    "lane": "countries",
+    "size": 682,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "python tmp_sv_cdx3.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "610462e15328199727d94ba5e8dc8645c71f62a148eca00722c2e6372fd82d93",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "world_gap_scan.py",
+    "lane": "countries",
+    "size": 2191,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "python world_gap_scan.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "e1d1d9436879021dd421d9e62286fc8c8f7f7376d597da44fccf088dfedfde02",
+    "remote_status": "changed"
+   }
+  ],
+  "shared-libs": [
+   {
+    "path": "common.py",
+    "lane": "shared-libs",
+    "size": 18594,
+    "purpose": "Shared helpers for national legislation collectors.",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "d8c009a2abe568b1746dca8ca0f228a911422ad75974ccb4ee211917461d05d7",
+    "remote_status": "changed"
+   },
+   {
+    "path": "data_bg/scrapers/common.py",
+    "lane": "shared-libs",
+    "size": 15787,
+    "purpose": "Shared helpers for national legislation collectors.",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "72794f2c5c9061a727a9f9c487dd41070006900f7aba765e44d71ed484df064f",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "data_cy/scrapers/common.py",
+    "lane": "shared-libs",
+    "size": 15787,
+    "purpose": "Shared helpers for national legislation collectors.",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "72794f2c5c9061a727a9f9c487dd41070006900f7aba765e44d71ed484df064f",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "data_it/scrapers/common.py",
+    "lane": "shared-libs",
+    "size": 15787,
+    "purpose": "Shared helpers for national legislation collectors.",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "72794f2c5c9061a727a9f9c487dd41070006900f7aba765e44d71ed484df064f",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "data_ro/scrapers/common.py",
+    "lane": "shared-libs",
+    "size": 15787,
+    "purpose": "Shared helpers for national legislation collectors.",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "72794f2c5c9061a727a9f9c487dd41070006900f7aba765e44d71ed484df064f",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "data_si/scrapers/common.py",
+    "lane": "shared-libs",
+    "size": 15787,
+    "purpose": "Shared helpers for national legislation collectors.",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "72794f2c5c9061a727a9f9c487dd41070006900f7aba765e44d71ed484df064f",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "na_namiblii_work/hub_base_head_20261027/scrapers/common.py",
+    "lane": "shared-libs",
+    "size": 16608,
+    "purpose": "Shared helpers for national legislation collectors.",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "7d0582952769133f749edb1afae628b3e9d3493a1904a725fd0e3aa2c7e37a83",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "na_namiblii_work/hub_base_head_20261027/scrapers/world_lib.py",
+    "lane": "shared-libs",
+    "size": 12443,
+    "purpose": "Shared helpers for new-country official gazette collectors.",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "ac38cc9c9045e303336ae6d6022e2f84e233312f7734c704c9be05ae9a9ef9f4",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/collector.py",
+    "lane": "shared-libs",
+    "size": 33896,
+    "purpose": "Collect current Swiss federal classified compilation (SR) from Fedlex.",
+    "entry_point": "python scrapers/collector.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "e4d233a6fdac4eccba5e9aa563eae000d5f849ca20081e356c7966e575e2157d",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/common.py",
+    "lane": "shared-libs",
+    "size": 18655,
+    "purpose": "Shared helpers for national legislation collectors.",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "703b263a4160cd817f5bfefb3417b02c3566cdc8a9ca3a229f6a20bf5acebdda",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "scrapers/world_lib.py",
+    "lane": "shared-libs",
+    "size": 17563,
+    "purpose": "Shared helpers for new-country official gazette collectors.",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "4b2fb8a3554b59a58e0fff7625d8210538af34cf506e7c28ddfc32c6714f025f",
+    "remote_status": "changed"
+   }
+  ],
+  "municipal": [
+   {
+    "path": "municipal/build_ch_municipal.py",
+    "lane": "municipal",
+    "size": 18997,
+    "purpose": "Turn collect_ch_municipal.py raw docs.jsonl into the MUNICIPAL_HANDOFF layout.",
+    "entry_point": "python municipal/build_ch_municipal.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "c5816fb0b91b3660cd96008773b675bbe646973b46a98c939dccd6c043771f2d",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/build_dk_municipal.py",
+    "lane": "municipal",
+    "size": 30655,
+    "purpose": "Build denmark_municipal from the NSTAR texts fetched by collect_dk_nstar.py (offline).",
+    "entry_point": "python municipal/build_dk_municipal.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "611645504b3cc9d9da1450219b15f30a333de85118d597859062fc4e9c634624",
+    "remote_status": "changed"
+   },
+   {
+    "path": "municipal/build_fi_municipal.py",
+    "lane": "municipal",
+    "size": 15217,
+    "purpose": "collect_fi_municipal.py raw docs_fi.jsonl -> MUNICIPAL_HANDOFF layout (finland_municipal).",
+    "entry_point": "python municipal/build_fi_municipal.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "136d7e49502b761a91b22520d444d8be4489df688559c9208cae399d15f80264",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/build_gr_municipal.py",
+    "lane": "municipal",
+    "size": 30332,
+    "purpose": "Build the Greek municipal regulatory-acts corpus (Diavgeia) into OUT (MUNICIPAL_HANDOFF layout).",
+    "entry_point": "python municipal/build_gr_municipal.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "69d784f501094b96c1ea9a8d2ec49e6c7c3685c1833a6b172134a6ad4c979a3e",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/build_hu_municipal.py",
+    "lane": "municipal",
+    "size": 43047,
+    "purpose": "Build hungary_municipal from the Common Crawl captures fetched by collect_hu_cc.py (offline).",
+    "entry_point": "python municipal/build_hu_municipal.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "ac14c9a13ac311f88192b1bdd6cbad48b712f9823d97299f0f5c7a52df344b9f",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/build_ie_municipal.py",
+    "lane": "municipal",
+    "size": 34442,
+    "purpose": "Build the Ireland municipal corpus (local-authority bye-laws) from the collector output.",
+    "entry_point": "python municipal/build_ie_municipal.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "567f4e160581ba4a55c0bb5b1e34c47a61076f257c5427df503bb382af71cbc7",
+    "remote_status": "changed"
+   },
+   {
+    "path": "municipal/build_jo_municipal.py",
+    "lane": "municipal",
+    "size": 17095,
+    "purpose": "Build the JO municipal supplement (add-only vs endomorphosis/ipfs_jordan_municipal_laws) from the collected state.",
+    "entry_point": "python municipal/build_jo_municipal.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "2723e831b339c46b35508eabf442ac652b41483621102e9461549cd3472993d5",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/build_lu_municipal.py",
+    "lane": "municipal",
+    "size": 30547,
+    "purpose": "Build the Luxembourg municipal corpus (communal regulations) from the collector output.",
+    "entry_point": "python municipal/build_lu_municipal.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "25298d0c53f0bad91425e3c0342530f48c08672f7d66f35be69c6e69f3bdb376",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/build_sk_municipal.py",
+    "lane": "municipal",
+    "size": 27393,
+    "purpose": "Build the Slovak municipal VZN corpus from the collectors' JSONL (RAW/raw/*.jsonl) into OUT (MUNICIPAL_HANDOFF layout).",
+    "entry_point": "python municipal/build_sk_municipal.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "b81e3ab92375d21a29208ce264dbde6b55a24a32156d08f82f95c2d182159ee6",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/build_za_municipal_supplement.py",
+    "lane": "municipal",
+    "size": 26182,
+    "purpose": "Build the South Africa municipal SUPPLEMENT pack (never replaces endomorphosis/ipfs_south_africa_municipal_laws).",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "e781f4a890a9b2ad974743007b1609d835e9e941ac11c1df444d0e750309ccd2",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/cc_dryrun.py",
+    "lane": "municipal",
+    "size": 3918,
+    "purpose": "Count-only Common Crawl dry run + HEAD reachability for municipal portals.",
+    "entry_point": "python municipal/cc_dryrun.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "e81feca3edd765e58aedce3c82a1ce79afb8db98bfc3c847a328a3dc74f4d775",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/collect_ch_municipal.py",
+    "lane": "municipal",
+    "size": 7094,
+    "purpose": "Switzerland municipal law collector (polite live fetches, no OCR).",
+    "entry_point": "python municipal/collect_ch_municipal.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "81aa5c21a967a7c82311bc394c9248bc3267cc5b8a9207c30d6dc901c9768f3c",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/collect_ch_zurich.py",
+    "lane": "municipal",
+    "size": 2772,
+    "purpose": "Stadt Zuerich (BFS 261) Amtliche Sammlung collector - polite live fetches, official PDFs, pdftotext (no OCR).",
+    "entry_point": "python municipal/collect_ch_zurich.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "4c6fe630d2cd5a2f57e2e17c5f5055f03412874aa147ae12375c845b2b77f2eb",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/collect_dk_kommune_pdfs.py",
+    "lane": "municipal",
+    "size": 13033,
+    "purpose": "Currency check of the pre-2021 NSTAR rows + replacement texts from the kommuner's own websites.",
+    "entry_point": "python municipal/collect_dk_kommune_pdfs.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "bb3c0656a6b04133d787c5289e6fb62aaec829778a27e2d04e634c5a2750579b",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/collect_dk_nstar.py",
+    "lane": "municipal",
+    "size": 6658,
+    "purpose": "Denmark municipal waste regulations (affaldsregulativer) from NSTAR, Energistyrelsen's national regulation database (nstar.ens.dk).",
+    "entry_point": "python municipal/collect_dk_nstar.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "b1423e26c8745998e028dbf0e9062f3e6916915d0718f004d2933e2c28d32beb",
+    "remote_status": "changed"
+   },
+   {
+    "path": "municipal/collect_fi_municipal.py",
+    "lane": "municipal",
+    "size": 12437,
+    "purpose": "Finland municipal rules collector (polite live fetches + Common Crawl index pointers; no OCR).",
+    "entry_point": "python municipal/collect_fi_municipal.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "11659293c1392e42c112c400d51e01e07656070ea1c61641a10840aa71d36abf",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/collect_gr_diavgeia.py",
+    "lane": "municipal",
+    "size": 5800,
+    "purpose": "Greek municipal regulatory acts from Diavgeia (diavgeia.gov.gr open-data API).",
+    "entry_point": "python municipal/collect_gr_diavgeia.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "714c08dc293833f6c90d1f8743f6d145d8388ab1c8b4e7c488cb21a6aaa3a0d8",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/collect_hu_cc.py",
+    "lane": "municipal",
+    "size": 18574,
+    "purpose": "Hungarian local-government decrees (önkormányzati rendeletek) from Common Crawl captures of the Önkormányzati Rendeletek Tára",
+    "entry_point": "python municipal/collect_hu_cc.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "3af59a8ac1324ba74649045db97c995dfe06fe86cd39e76a8ccbd041ed01f353",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/collect_hu_njt.py",
+    "lane": "municipal",
+    "size": 6942,
+    "purpose": "Hungarian local-government decrees fetched directly from the official Nemzeti Jogszabálytár, njt.jog.gov.hu (the successor of",
+    "entry_point": "python municipal/collect_hu_njt.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "5911bb5c5c6df2ebe1f91c87b14ffd6b4415166392f4536d0b71b6191f4093ab",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/collect_ie_municipal.py",
+    "lane": "municipal",
+    "size": 12755,
+    "purpose": "Ireland local-authority bye-laws — collector.",
+    "entry_point": "python municipal/collect_ie_municipal.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "f265ed4e14a97c8c914db48da4d4648e51d8b34fb3d809adf0fa4afad61f2ca9",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/collect_jo_gazette.py",
+    "lane": "municipal",
+    "size": 13365,
+    "purpose": "Jordan Official Gazette (الجريدة الرسمية, www.pm.gov.jo) -> municipal regulations / instructions (أنظمة / تعليمات).",
+    "entry_point": "python municipal/collect_jo_gazette.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "d51ffa5db56458fe80a6e4f9f5177b06fd2294c70ff93a68bf966d235310c9ba",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/collect_jo_lists.py",
+    "lane": "municipal",
+    "size": 7555,
+    "purpose": "Greater Amman Municipality (media.ammancity.gov.jo, 'التشريعات') and Ministry of Local Administration",
+    "entry_point": "python municipal/collect_jo_lists.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "5398bf259e6f37b90d5789452fb1ff7ff6ecaadbb20ef10873e86be93f9500c0",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/collect_jo_terms.py",
+    "lane": "municipal",
+    "size": 3345,
+    "purpose": "Fetch the publishers' terms / copyright / disclaimer pages and robots.txt status for every JO host used",
+    "entry_point": "python municipal/collect_jo_terms.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "a5a252066d4f97d0709145b3f3d28e5f4ba7298c0c9547278b82f17a3523d183",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/collect_lu_communes.py",
+    "lane": "municipal",
+    "size": 13155,
+    "purpose": "Luxembourg communal regulations (règlements communaux) — collector.",
+    "entry_point": "python municipal/collect_lu_communes.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "bb2c0fadda38b4eba20ca4e4935d6485ee7c6c0f87fb07a925ef4aac787a8a2f",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/collect_na_munisites.py",
+    "lane": "municipal",
+    "size": 12769,
+    "purpose": "NA municipal supplement: collector for official Namibian local-authority websites (adapted from collect_za_munisites.py;",
+    "entry_point": "python municipal/collect_na_munisites.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "56427a0dd1ebfce9fafee3894cfe51cdcfc00fe620355d910d874a6156056ac3",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/collect_sk_bratislava.py",
+    "lane": "municipal",
+    "size": 2744,
+    "purpose": "Bratislava (hlavné mesto, obec code 582000) VZN: URL list from bratislava.sk sitemaps (/vzn/<n>-<yyyy>), metadata from each page's",
+    "entry_point": "python municipal/collect_sk_bratislava.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "da2cc4a30bb45c45bceaccc9377a80d845a78ba598e2f5114731c9a3ff4ac982",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/collect_sk_cc_karlovaves.py",
+    "lane": "municipal",
+    "size": 4059,
+    "purpose": "Bratislava-Karlova Ves (obec code 529397) from Common Crawl only (www.karlovaves.sk times out for us).",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "078274586f5c5cb61e2fd06fe4575960d5acb0384b9281473ecfbf635aa56c98",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/collect_sk_kosice.py",
+    "lane": "municipal",
+    "size": 4473,
+    "purpose": "Košice (obec code 599981) VZN: register www.kosice.sk/vzn (all terms; repealed acts marked 'ZRUŠENÉ'), detail page /vzn/<n>",
+    "entry_point": "python municipal/collect_sk_kosice.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "0cfeec770794007c27a430acd1780af514fdd28817e399d159744a81b59cb816",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/collect_sk_petrzalka.py",
+    "lane": "municipal",
+    "size": 3348,
+    "purpose": "Bratislava-Petržalka (obec code 529460): archive www.petrzalka.sk/vseobecne-zavazne-nariadenia/page/N/; each <figure class=\"vzn\">",
+    "entry_point": "python municipal/collect_sk_petrzalka.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "4b07a6088864f85b247d4800bb32d48c0d6ba0673b6c5bbc9cba50982640f287",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/collect_sk_trencin.py",
+    "lane": "municipal",
+    "size": 2765,
+    "purpose": "Trenčín (obec code 505820): register trencin.sk/samosprava/transparentny-trencin/vseobecne-zavazne-nariadenia/ (current acts;",
+    "entry_point": "python municipal/collect_sk_trencin.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "652affbe6c7675d5baf96ea5f9880ea3c6bd7e5d9be9a22b4e85829ba3e0b267",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/collect_sk_wp.py",
+    "lane": "municipal",
+    "size": 5739,
+    "purpose": "WordPress city sites with a VZN post type, read through the public WP REST API (wp-json):",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "1774832df4e7d1238f403b5d4ffff53efa98d4952877dd8d47d7f350a415b8c0",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/collect_sk_zoznamvzn.py",
+    "lane": "municipal",
+    "size": 4356,
+    "purpose": "Cities on the shared 'zoznam-vzn' CMS (Trnava, Poprad, ...): register /zoznam-vzn filtered by status (valid = 'Platné znenie',",
+    "entry_point": "python municipal/collect_sk_zoznamvzn.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "1cfb458d2971ca0c9c89ced824b39749bf1ad0e877ee1f7679f72369a8768a2e",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/collect_za_munisites.py",
+    "lane": "municipal",
+    "size": 12427,
+    "purpose": "ZA municipal supplement: collector for official municipal websites.",
+    "entry_point": "python municipal/collect_za_munisites.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "bab52f2fa3612fecc41930b0f13d8ad5138188a96722958229dd9bdde23fbb63",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/collect_za_openbylaws.py",
+    "lane": "municipal",
+    "size": 2936,
+    "purpose": "ZA municipal supplement: Open By-laws (openbylaws.org.za) gap fetch.",
+    "entry_point": "python municipal/collect_za_openbylaws.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "0780519c9c3db145ffea10f30a320e70ec742aeef53eb3231448467634b23f64",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/collect_za_terms.py",
+    "lane": "municipal",
+    "size": 3220,
+    "purpose": "Record each source host's stated terms (terms of use / disclaimer / copyright page) for the README and row licence field.",
+    "entry_point": "python municipal/collect_za_terms.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "33479073a92a0b3155e693499c3af692b6b500a15462c989c3484043bc68fe97",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/fetch_zh_pdfs.py",
+    "lane": "municipal",
+    "size": 851,
+    "purpose": "Re-download the Zürich AS PDFs listed in docs_zh.jsonl (polite, 1 req/s) into a cache dir for re-extraction.",
+    "entry_point": "python municipal/fetch_zh_pdfs.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "fc084a5d48c238b004493793bf6217810c5153506c5a8dee4818768cdbee2ff7",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/fi_fixes.py",
+    "lane": "municipal",
+    "size": 16823,
+    "purpose": "Verifier-driven fixes for the FI municipal build: text repair, non-normative filtering, titles, language,",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "37d4e46071065115e51432cb3e56211025da73cade7fe466d36d09331dd9f88c",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/fi_pointers.py",
+    "lane": "municipal",
+    "size": 2062,
+    "purpose": "Find FI municipal rule-collection documents via Common Crawl index (ranged reads only, no WARC).",
+    "entry_point": "python municipal/fi_pointers.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "2c6b7b0e74e7fc981d267a7b447f768e18cc30753af9ea2c5c4e0a6e75b007f8",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/finalize_jo_municipal.py",
+    "lane": "municipal",
+    "size": 12620,
+    "purpose": "Finalize the JO municipal supplement: scrapers/, report.json, MANIFEST.json, README.md, then HANDOFF_READY LAST",
+    "entry_point": "python municipal/finalize_jo_municipal.py",
+    "ipfs_datasets_py_dependency": "mentioned in docs/comments/strings (optional / output-format target; no import)",
+    "sha256": "965b4bf7aacb4696a9e027e8abb7d542459c1b076be83faf735fc781f650337a",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/finalize_za_supplement.py",
+    "lane": "municipal",
+    "size": 28810,
+    "purpose": "Self-check + MANIFEST / README / scrapers for the ZA municipal supplement pack; HANDOFF_READY is written LAST and only",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "fde27d9ba5e8a38c3b6953bdcaddb0e29d2458826f8b43ec035d7bc8a0cca0e5",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/fix_za_verifier_20261023.py",
+    "lane": "municipal",
+    "size": 14972,
+    "purpose": "Verifier FIX pass (audit 2026-10-18) on the built ZA supplement. Usage: ZA_STATE PACK_DIR VERIFIER_HUB_DIR",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "9dbbb7b79312fa1301427e644c415462c780235da1e4c6588d61b0a926f6985b",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/gr_common.py",
+    "lane": "municipal",
+    "size": 5880,
+    "purpose": "Shared helpers for the Greek municipal collectors (copy of sk_common.py with its own cache): polite session (robots.txt via urllib.robotparser, 1 req/s per host",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "8cb0c23addea4468a669882d87792a0ecaf5cdd1544f87985e143ec540728fb0",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/gr_fixes.py",
+    "lane": "municipal",
+    "size": 44624,
+    "purpose": "Greek-specific rules: subject classifier (real regulations vs. decisions that merely mention one),",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "0de03f96117e3d6952dcc3b4a0412415a6cdd2dd82152d667f2dc0bfbc2d1373",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/gr_fonts.py",
+    "lane": "municipal",
+    "size": 17015,
+    "purpose": "Broken Greek font maps (no OCR). Diavgeia PDFs typed in non-embedded Greek TrueType fonts often carry a glyph->Unicode",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "c80ab387b008e10249c1b8105ab465ada046f83984044afe6fda929c3f84f44a",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/hu_fixes.py",
+    "lane": "municipal",
+    "size": 23697,
+    "purpose": "Hungarian local decrees (or.njt.hu pages from Common Crawl): heading parse, issuer -> KSH code, text, § split, quality checks.",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "89cba33ae58685694b542847480218ab6e53fd00c37a34d3dd1cf766c17ec909",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/ie_common.py",
+    "lane": "municipal",
+    "size": 6428,
+    "purpose": "Polite HTTP for the Ireland municipal collector: robots.txt (own matcher: '*' and '$' wildcards, longest match wins,",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "3aa77589a1e6b67f80e708c6c19f389b02f28bfc9dd4fd99c60fe723288cc489",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/ie_fixes.py",
+    "lane": "municipal",
+    "size": 66400,
+    "purpose": "Ireland bye-laws: text layer, cleaning, classification, dates, issuing organ, article splitter. Self-contained; the generic text-layer and",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "c13bd27fbe083e4e981b261e672143b1b73fdab74e9869da80d37303ac3cc5ec",
+    "remote_status": "changed"
+   },
+   {
+    "path": "municipal/jo_common.py",
+    "lane": "municipal",
+    "size": 12901,
+    "purpose": "Polite HTTP + resource guard for the Jordan (JO) municipal collectors (adapted from za_common.py).",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "ff5b3a8621c1fd37a76e752b82c2ee396d4a16d9c00c7cc57ac49c0737bceb0d",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/lu_common.py",
+    "lane": "municipal",
+    "size": 5682,
+    "purpose": "Polite HTTP for the Luxembourg municipal collector: robots.txt (own matcher: '*' and '$' wildcards, longest match wins,",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "24f520de089dfd8480d59064525d223e1b5143aede0b8351ebd32fbf73133d6c",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/lu_fixes.py",
+    "lane": "municipal",
+    "size": 52572,
+    "purpose": "Text helpers for the Luxembourg communal regulations (no OCR): text layer, cleaning, signature / page-furniture stripping,",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "ab389b6b57164f99391c63240e21dfbd73d3503ddf272941d1a3854be27eda14",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/ocr_candidates.py",
+    "lane": "municipal",
+    "size": 6576,
+    "purpose": "Image-only PDF lists for an OCR pass (not run: OCR is not approved). Adds MANIFEST['excluded_image_only_pdfs'] to packs whose build",
+    "entry_point": "python municipal/ocr_candidates.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "3aa5768fb6a27d1569f6ff2156eb69136e6369e71b64b31d320641722f8b1e8e",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/patch_za_terms_rows.py",
+    "lane": "municipal",
+    "size": 1325,
+    "purpose": "Targeted row-terms patch (CoS ruling 2026-10-18 14:27 PT): rewrite only the 'Site terms:' part of `license` and",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "14f2c89e99b0372e4ebbbfdbb30f3677592bd6de5259ee2560fe97ef91cc7135",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/pdf_columns.py",
+    "lane": "municipal",
+    "size": 4696,
+    "purpose": "Column-aware text extraction for law PDFs with marginal notes (Randtitel), e.g. Stadt Zürich AS.",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "ad300d9f067a901304cc437e257da07cd28fc7be07b032288fa0c1eb07e298f7",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/reextract_zh.py",
+    "lane": "municipal",
+    "size": 1161,
+    "purpose": "Re-extract Stadt Zürich AS texts with the column-aware extractor (pdf_columns.layout_text) from the PDF cache filled by",
+    "entry_point": "python municipal/reextract_zh.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "c370f52d9ef99bf24b713df077b8423f22f4ab55c40daac15fa84612c036874f",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/run_za_collect.sh",
+    "lane": "municipal",
+    "size": 671,
+    "purpose": "ZA municipal supplement: one detached job, steps in sequence (resumable; re-run to continue).",
+    "entry_point": "bash municipal/run_za_collect.sh",
+    "ipfs_datasets_py_dependency": "mentioned in docs/comments/strings (optional / output-format target; no import)",
+    "sha256": "affa2e8eedb3b89b2f1003a1884c5cc6173c08f676ec1b37af7d19ce8e2af43e",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/sk_common.py",
+    "lane": "municipal",
+    "size": 5603,
+    "purpose": "Shared helpers for the Slovak municipal VZN collectors: polite session (robots.txt via urllib.robotparser, 1 req/s per host),",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "f6d819f402032183a8795493cf1f740ed1c4c117781aad70cff7494f1db1d0c5",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/sk_fixes.py",
+    "lane": "municipal",
+    "size": 24114,
+    "purpose": "Slovak VZN helpers: exclusions, dates, status, article splitting (§ / Článok / Čl. with arabic or roman numbers).",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "880197db48aee5c752b3a962772670becc1d90eeab082077dfd5443bc80338de",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/sk_ligature_fix.py",
+    "lane": "municipal",
+    "size": 1545,
+    "purpose": "Repair 'fi'/'fl' ligatures that pdftotext dropped (e.g. 'identi kačné' for 'identifikačné'): re-read the same cached PDF with",
+    "entry_point": "python municipal/sk_ligature_fix.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "6bb6a5b8312a767ab9b7d8613fe91db8606a0b94dea334803e8547f5c47df157",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/sk_reextract.py",
+    "lane": "municipal",
+    "size": 1136,
+    "purpose": "Re-extract raw records whose document was RTF or legacy .doc (collected before LibreOffice support) or HTML (re-decoded with the page charset, e.g. windows-1250",
+    "entry_point": "python municipal/sk_reextract.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "94d225c323f98a41e8434b71994d750406fcb244719ba2b2ed48a5a0bae6272f",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/za_cc_list.py",
+    "lane": "municipal",
+    "size": 2635,
+    "purpose": "Selective Common Crawl index listing for ZA municipal sources (cluster.idx binary search + the few cdx blocks that",
+    "entry_point": "python municipal/za_cc_list.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "d3eba402c8c4c1d273644636019ab614345c5f67fb6b372dbbe9a0ac9b243a2b",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/za_common.py",
+    "lane": "municipal",
+    "size": 10228,
+    "purpose": "Polite HTTP + resource guard for the South Africa municipal supplement collectors.",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "227143f7d5bf2d4bcec7ec2c5040196e5f344a7ce69e10f9dfb666ed08104c6f",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/za_split.py",
+    "lane": "municipal",
+    "size": 3057,
+    "purpose": "Section splitter for ZA by-law texts. split(text) -> list of (start, end, label, record_type) covering text exactly",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "f387c13295056786bd13f92b9a01c2f9843276d0e5cd58d4d06b1838ff7c1447",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "municipal/zh_pointers.py",
+    "lane": "municipal",
+    "size": 1122,
+    "purpose": "Stadt Zuerich Amtliche Sammlung PDFs via Common Crawl index (ranged reads only).",
+    "entry_point": "python municipal/zh_pointers.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "453b9f0bb50f7f3ce473f2e146f608cf99ab543246ede4125b21a1bc7d2ec744",
+    "remote_status": "unchanged"
+   }
+  ],
+  "packaging-upload": [
+   {
+    "path": "pack_raw_for_ir.py",
+    "lane": "packaging-upload",
+    "size": 4051,
+    "purpose": "Merge a (possibly sharded) raw ``endomorphosis/ipfs_<slug>_laws`` repo into ONE pinned-schema local pack.",
+    "entry_point": "python pack_raw_for_ir.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "2d710c882493e395cd2571daed66cc87148932a07dd9dbe8e455028fa2c283f8",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "package_cm_local.py",
+    "lane": "packaging-upload",
+    "size": 6676,
+    "purpose": "Local-only CM package (no Hugging Face upload). Mirrors world_package.package.",
+    "entry_point": "python package_cm_local.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "c6a51c17f2d5ddc16e8aa3fc06a87b9688aadfa102e5b9a3c0d36e9f18e8bcd9",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "package_it_local.py",
+    "lane": "packaging-upload",
+    "size": 5662,
+    "purpose": "Package Italy instruments -> staging_it (no HF upload).",
+    "entry_point": "python package_it_local.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "9baf16f1cd07b617a66b4b58f702b881ac0b5c4aa3ffe84c3f2f6362a4f84ef8",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "package_mz_local.py",
+    "lane": "packaging-upload",
+    "size": 6728,
+    "purpose": "Local-only MZ package (no Hugging Face upload). Mirrors world_package.package.",
+    "entry_point": "python package_mz_local.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "b1682390248bb4ad60c5fca110da7b989fc8524bc9d726a4bd72d23f2be59b54",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "package_na_local.py",
+    "lane": "packaging-upload",
+    "size": 7150,
+    "purpose": "Local-only NA package (no Hugging Face upload). Mirrors world_package.package.",
+    "entry_point": "python package_na_local.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "598d64784f1b405bdf744fad67049b0b4b3c1fa8498a125e56c26d0affe873c1",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "package_sn.sh",
+    "lane": "packaging-upload",
+    "size": 252,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash package_sn.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "66a4a47ad59b8fbc47b5f2d2df8d2bf5e00b01d456eaeb7171d0cde6ce922f50",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "package_sn_local.py",
+    "lane": "packaging-upload",
+    "size": 6622,
+    "purpose": "Local-only SN package (no Hugging Face upload). Mirrors world_package.package.",
+    "entry_point": "python package_sn_local.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "8aeb7228b6ee46faacbc21c06f50e125f8075ceadb8e9aed92db82a9ef03e5ac",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "package_zw_local.py",
+    "lane": "packaging-upload",
+    "size": 7144,
+    "purpose": "Local-only ZW package (no Hugging Face upload). Mirrors world_package.package.",
+    "entry_point": "python package_zw_local.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "e884da684812145d61fe1756d99ac2fbb42bbcf7051b7e2f5be69dbe3f234a93",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "pkg_na.sh",
+    "lane": "packaging-upload",
+    "size": 320,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash pkg_na.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "0f004a140e191748e7751004443342b96c944b762013f3ee07e9a5994ac3dcda",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "restore_and_package.py",
+    "lane": "packaging-upload",
+    "size": 12408,
+    "purpose": "Restore instruments from HF parquet; package instruments -> parquet; upload.",
+    "entry_point": "python restore_and_package.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "4493e74894bc53a0b788a98dbe4b7dfc5ffa9982455a17130d1301cb81fac2ab",
+    "remote_status": "changed"
+   },
+   {
+    "path": "run_pkg_by.sh",
+    "lane": "packaging-upload",
+    "size": 135,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_pkg_by.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "7fbcc595a11d40e7cb43ce312aadd29877e84256580cfa2e551193b1ca7c424f",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_pkg_is.sh",
+    "lane": "packaging-upload",
+    "size": 135,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_pkg_is.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "859b2bae7db4714b70ca3d3e92fa8d314bba540269760ede4c63466e1a7d379a",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_pkg_jm.sh",
+    "lane": "packaging-upload",
+    "size": 144,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_pkg_jm.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "ee7b555274dd1ff55ea40962e44fc4761ea47a60f77c005ef697734037abee57",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_pkg_lk.sh",
+    "lane": "packaging-upload",
+    "size": 229,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_pkg_lk.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "90a19e99b9faee288dec47ec02a46e1af4221dbada9d0b99cb17619a130be58f",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_pkg_mn.sh",
+    "lane": "packaging-upload",
+    "size": 135,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_pkg_mn.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "e29af9517fe8cf25ae59436efdbbb94ec725144ec4955b18b005d8b0b2d5f8a3",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_pkg_np.sh",
+    "lane": "packaging-upload",
+    "size": 150,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_pkg_np.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "90c4107d6273ebef98f9538df308f5ffb00d5403e60f9617875ebf2ab966d8e0",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_pkg_rw.sh",
+    "lane": "packaging-upload",
+    "size": 135,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_pkg_rw.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "69a62539110d234dffbcd1049549f19da83e7002d312a6f9b9a3a3e800aca256",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_pkg_sn.sh",
+    "lane": "packaging-upload",
+    "size": 147,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_pkg_sn.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "f1e816b43fecea1859faec8126c0d06599fdafc32b025a3df00cdb1d836276a1",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_pkg_ug.sh",
+    "lane": "packaging-upload",
+    "size": 135,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_pkg_ug.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "aabf1ac8938691ede866f5985a3af517ebdcdbdfc5473d24d6a3cc4a7a8ec224",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_pkg_upload_pdf.sh",
+    "lane": "packaging-upload",
+    "size": 947,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_pkg_upload_pdf.sh",
+    "ipfs_datasets_py_dependency": "mentioned in docs/comments/strings (optional / output-format target; no import)",
+    "sha256": "1312a864b31f4a2a85791cf6b20791df48e743ad35242d5274aaa8fa40cdaa80",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_pkg_uz.sh",
+    "lane": "packaging-upload",
+    "size": 135,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_pkg_uz.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "24b2c046ebf65b7acb4bdcf83fd2187c40ea24289aef23a940e2b6b8c8781431",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_pkg_xk.sh",
+    "lane": "packaging-upload",
+    "size": 144,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_pkg_xk.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "6c3a1c813113184483c506a3709b72ad617f00bf5cf89d8a3ba2fe9c16734b20",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_up_by.sh",
+    "lane": "packaging-upload",
+    "size": 100,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_up_by.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "1dbf06311530392f156be8100187b6dab3e9b610b1e0c2183e86b3d588c4b8e3",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_up_is.sh",
+    "lane": "packaging-upload",
+    "size": 100,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_up_is.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "1b6f936f9a1ceda7085306341fe6a8dc1ab5156425e90b4ca917669e4eec6950",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_up_jm.sh",
+    "lane": "packaging-upload",
+    "size": 100,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_up_jm.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "54e348c29481d9987c30236b96b2304d84e88c8cb6bfe896ffbb72d92eb57c15",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_up_mn.sh",
+    "lane": "packaging-upload",
+    "size": 100,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_up_mn.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "89b87ef1031843caabb89efdf314384da1b4565d4f1c5cfc50f771a1afaf8e3f",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_up_np.sh",
+    "lane": "packaging-upload",
+    "size": 100,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_up_np.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "0623b409b841471f82fe197cf365f317f0fe6ea929490f425562ed330ba86cea",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_up_rw.sh",
+    "lane": "packaging-upload",
+    "size": 100,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_up_rw.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "e956bb556eb0b4237b10c02b80c712688407587289e7736f622601503f533670",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_up_sn.sh",
+    "lane": "packaging-upload",
+    "size": 100,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_up_sn.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "7674875751b227d4bfa65f59b0441c40b644d7a6e8927c6bb975671fbb54ef43",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_up_ug.sh",
+    "lane": "packaging-upload",
+    "size": 100,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_up_ug.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "878f13ec904f102d50b4ebfa5d97a42a904f83a5277eac1a488cb36700f62ada",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_up_uz.sh",
+    "lane": "packaging-upload",
+    "size": 100,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_up_uz.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "0c500a59214de8638cd5f63143c1006eca5422ea73f12c850dedc9112e863ecb",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "run_up_xk.sh",
+    "lane": "packaging-upload",
+    "size": 100,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "bash run_up_xk.sh",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "edf4b2990925f54415e3a3283049f6e30413660158e8cf0e30ce46d52e1cfd47",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "sync_gap.py",
+    "lane": "packaging-upload",
+    "size": 701,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "python sync_gap.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "9eeafcbc085984ec357f5f35e83cca5611312f23d31b3d6428628faa2e0d9e2f",
+    "remote_status": "changed"
+   },
+   {
+    "path": "upload_ao.py",
+    "lane": "packaging-upload",
+    "size": 655,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "python upload_ao.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "943c87450393a7574eab22231ab08d57b5da8abe02ee699b4f60b67cc01ba122",
+    "remote_status": "changed"
+   },
+   {
+    "path": "upload_ao_mz.py",
+    "lane": "packaging-upload",
+    "size": 809,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "python upload_ao_mz.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "7154d0eb66a0f04cd10400b69de86f3502fe17f01c4cfefa95545a3ebd3c9386",
+    "remote_status": "changed"
+   },
+   {
+    "path": "upload_az2.py",
+    "lane": "packaging-upload",
+    "size": 663,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "python upload_az2.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "a55d5e308fc4d1b61e3bdd4728f481e27aaf3c1cdafbcf9fbff425d8b9389f12",
+    "remote_status": "changed"
+   },
+   {
+    "path": "upload_backlog.py",
+    "lane": "packaging-upload",
+    "size": 5426,
+    "purpose": "Upload staging packages to Hugging Face datasets. Never prints token.",
+    "entry_point": "python upload_backlog.py",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "04a26b14c0ae41ab0e866d0a84a02ec78a39949aa1f8ea9d1cd7fac7bf37e891",
+    "remote_status": "changed"
+   },
+   {
+    "path": "upload_backlog_results.md",
+    "lane": "packaging-upload",
+    "size": 2337,
+    "purpose": "Upload backlog results",
+    "entry_point": "n/a (documentation)",
+    "ipfs_datasets_py_dependency": "n/a",
+    "sha256": "29c914dc615d544389b63e3ac350a1e0f5c5529f37c62d9d024e8310f689d8e3",
+    "remote_status": "unchanged"
+   },
+   {
+    "path": "upload_batch.py",
+    "lane": "packaging-upload",
+    "size": 1939,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "python upload_batch.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "b609213034d711c83274365d52324294909f60445fa385a56ade31d5657d05e7",
+    "remote_status": "changed"
+   },
+   {
+    "path": "upload_cm.py",
+    "lane": "packaging-upload",
+    "size": 425,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "python upload_cm.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "9ef4c048ea2479c6f5a838e1b295d8c1401862d2d78508841fc1e517e1b19598",
+    "remote_status": "changed"
+   },
+   {
+    "path": "upload_do_sv.py",
+    "lane": "packaging-upload",
+    "size": 2210,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "cf1c13b7efbdd747d6e19af13705ff5bc86984af049264f976fcf45a93344fbe",
+    "remote_status": "changed"
+   },
+   {
+    "path": "upload_it.py",
+    "lane": "packaging-upload",
+    "size": 1572,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "python upload_it.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "9c6194d677e8005f3c80e3486eb95d54e7b634b320af876c814b00d062f3d18b",
+    "remote_status": "changed"
+   },
+   {
+    "path": "upload_rw.py",
+    "lane": "packaging-upload",
+    "size": 481,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "python upload_rw.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "7ac50cd78a47a4914d160c0acad3b4815300286ee42220697b3ad67341f3a2eb",
+    "remote_status": "changed"
+   },
+   {
+    "path": "upload_sn.py",
+    "lane": "packaging-upload",
+    "size": 467,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "python upload_sn.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "43412cb26dac42a175b3ba8812bb2997a805b00166bdc1dd5ccecc7c5e088bc1",
+    "remote_status": "changed"
+   },
+   {
+    "path": "upload_sn2.py",
+    "lane": "packaging-upload",
+    "size": 328,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "python upload_sn2.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "0d8e656f1dfd024799b2fb84a1bc43dd0f08d00d4c0bc70aa0dc9c4afa81511d",
+    "remote_status": "changed"
+   },
+   {
+    "path": "upload_tn.py",
+    "lane": "packaging-upload",
+    "size": 651,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "python upload_tn.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "bd2a3e1832cd2c8ece8f2e3d145ef7b2d3c4f8defeb39bdea07e06706bcd2bc2",
+    "remote_status": "changed"
+   },
+   {
+    "path": "upload_tn_zw.py",
+    "lane": "packaging-upload",
+    "size": 1266,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "python upload_tn_zw.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "dd32777686a6313889a067a481f6a22dbddad9a87f33e81aa13590cc1636ed1b",
+    "remote_status": "changed"
+   },
+   {
+    "path": "upload_ug.py",
+    "lane": "packaging-upload",
+    "size": 460,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "python upload_ug.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "7776bbf8b18c7fd68f4f64dd6994700f74540c129b98636d43867163e25b213a",
+    "remote_status": "changed"
+   },
+   {
+    "path": "upload_zw.py",
+    "lane": "packaging-upload",
+    "size": 653,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "python upload_zw.py (top-level script)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "104b2002188314d70fcb8f80967c659cddf7c6b4ae70dbb72c530eba2937a9d3",
+    "remote_status": "changed"
+   },
+   {
+    "path": "upload_zw_tn.py",
+    "lane": "packaging-upload",
+    "size": 2416,
+    "purpose": "(no docstring; inferred from filename)",
+    "entry_point": "library (import)",
+    "ipfs_datasets_py_dependency": "none detected (stdlib/third-party only; outputs feed ipfs_datasets_py-style IR datasets)",
+    "sha256": "e1591e4274d605a8a3694b2fd760baf188f8aee5fd1fc0d6128245fddfe10cc6",
+    "remote_status": "changed"
+   }
+  ]
+ }
+}

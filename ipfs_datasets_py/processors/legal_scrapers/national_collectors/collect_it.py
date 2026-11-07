@@ -26,11 +26,11 @@ def setup():
                                   logging.StreamHandler(sys.stdout)])
 
 
-def api_post(path: str, payload: dict, retries: int = 4):
+def api_post(path: str, payload: dict, retries: int = 6):
     last = None
     for attempt in range(1, retries + 1):
         try:
-            time.sleep(0.35)
+            time.sleep(float(__import__("os").environ.get("API_SLEEP","0.6") or 0.6))
             r = get_session(UA).post(API + path, json=payload, timeout=(20, 90), headers=HDR)
             if r.status_code in (429, 500, 502, 503, 504) and attempt < retries:
                 time.sleep(min(30, 2 ** attempt))
@@ -46,9 +46,12 @@ def api_post(path: str, payload: dict, retries: int = 4):
 
 
 def discover() -> list[dict]:
+    import os
     catp = ROOT / CC / "raw" / "catalog.jsonl"
     items, seen = [], set()
-    if catp.exists() and catp.stat().st_size > 500:
+    force = os.environ.get("FORCE_REDISCOVER", "").strip() in ("1", "true", "yes")
+    append_only = os.environ.get("APPEND_CATALOG", "").strip() in ("1", "true", "yes")
+    if catp.exists() and catp.stat().st_size > 500 and not force:
         for line in catp.open(encoding="utf-8"):
             try:
                 row = json.loads(line)
@@ -57,11 +60,16 @@ def discover() -> list[dict]:
             key = (row.get("dataGU"), row.get("codiceRedazionale"))
             if key[1] and key not in seen:
                 seen.add(key); items.append(row)
-        if items:
+        if items and not append_only:
             log.info("resume catalog %s", len(items))
             return items
-    # Republic-era full years; Kingdom years sampled via same loop (empty years skip quickly)
-    for year in range(1861, 2027):
+        if items and append_only:
+            log.info("append catalog base %s; discovering more years", len(items))
+    # Newest-first; YEAR_START/YEAR_END/MAX_CATALOG env bound a resume slice.
+    y_hi = int(os.environ.get("YEAR_START", "2026") or 2026)  # highest year (start)
+    y_lo = int(os.environ.get("YEAR_END", "1861") or 1861)    # lowest year (stop)
+    max_cat = int(os.environ.get("MAX_CATALOG", "0") or 0)
+    for year in range(y_hi, y_lo - 1, -1):
         page = 1
         pages = 1
         while page <= pages and page <= 400:
@@ -107,6 +115,9 @@ def discover() -> list[dict]:
             if not rows:
                 break
             page += 1
+            if max_cat and len(items) >= max_cat:
+                log.info("MAX_CATALOG=%s reached", max_cat)
+                return items
     return items
 
 
@@ -146,9 +157,11 @@ def fetch_one(row: dict, done: set[str]) -> str:
     if rid in done:
         return "skip"
     text, src, title = fetch_text(row)
-    if not text or len(text) < 40:
+    if not text or len(text) < 20:
         log_failure(CC, {"identifier": ident, "source_url": src, "status": "failed", "reason": "empty_text"})
         return "fail"
+    # Short abrogated notices (~Art.1 PROVVEDIMENTO ABROGATO) are honest; save them.
+    # Packaging filters text>=80 so they do not inflate the Hub corpus.
     dtype = (row.get("denominazioneAtto") or "statute").lower()
     rec = base_record(
         cc=CC, country=COUNTRY, language="it", ident=ident, title=title or ident, text=text,
@@ -163,11 +176,15 @@ def fetch_one(row: dict, done: set[str]) -> str:
 
 
 def main():
+    import os
     setup(); t0 = utcnow()
+    max_new = int(os.environ.get("MAX_NEW", "0") or 0)
+    max_seconds = int(os.environ.get("MAX_SECONDS", "0") or 0)
+    t_start = time.time()
     items = discover()
     done = existing_ids(CC)
     ok = skip = fail = 0
-    notes = "Official OpenAPI paths: POST /api/v1/ricerca/avanzata (catalog) and POST /api/v1/atto/dettaglio-atto (HTML). The old /api/v1/ricerca path 404s."
+    notes = "Official OpenAPI paths: POST /api/v1/ricerca/avanzata (catalog) and POST /api/v1/atto/dettaglio-atto (HTML). Years newest-first 2026→1861. MAX_NEW/MAX_SECONDS supported. The old /api/v1/ricerca path 404s."
     if not items:
         write_summary(CC, country=COUNTRY, source="Normattiva OpenData",
                       source_urls=["https://www.normattiva.it/", "https://dati.normattiva.it/", API],
@@ -175,8 +192,23 @@ def main():
                       coverage="catalog-backed incomplete",
                       notes="ricerca/avanzata returned no rows this run. " + notes, last_run=utcnow())
         return
-    with ThreadPoolExecutor(max_workers=3) as ex:
-        futs = [ex.submit(fetch_one, it, done) for it in items]
+    pending = []
+    for it in items:
+        data_gu = str(it.get("dataGU") or "")
+        codice = str(it.get("codiceRedazionale") or "")
+        ident = f"{data_gu}-{codice}" if codice else ""
+        if ident and slug_id(CC, ident) in done:
+            skip += 1
+            continue
+        pending.append(it)
+    # Prefer newest GU dates among not-yet-fetched (API more reliable on recent)
+    pending.sort(key=lambda r: str(r.get("dataGU") or ""), reverse=True)
+    if max_new > 0:
+        pending = pending[:max_new]
+    log.info("pending fetch %s (max_new=%s max_seconds=%s) newest=%s", len(pending), max_new, max_seconds, (pending[0].get("dataGU") if pending else None))
+    workers = int(os.environ.get("MAX_WORKERS", "2") or 2)
+    with ThreadPoolExecutor(max_workers=max(1, workers)) as ex:
+        futs = [ex.submit(fetch_one, it, done) for it in pending]
         n = 0
         for fut in as_completed(futs):
             n += 1
@@ -186,8 +218,13 @@ def main():
                 st = "fail"
                 log_failure(CC, {"status": "failed", "reason": repr(exc)})
             ok += st == "ok"; skip += st == "skip"; fail += st == "fail"
-            if n % 80 == 0:
-                log.info("progress %s/%s ok=%s fail=%s", n, len(items), ok, fail)
+            if max_seconds and (time.time() - t_start) > max_seconds:
+                log.info("MAX_SECONDS reached; cancelling remaining")
+                for f in futs:
+                    f.cancel()
+                break
+            if n % 40 == 0:
+                log.info("progress %s/%s ok=%s fail=%s", n, len(pending), ok, fail)
                 write_summary(CC, country=COUNTRY, source="Normattiva OpenData API",
                               source_urls=["https://www.normattiva.it/", "https://dati.normattiva.it/"],
                               license_text=LICENSE, discovered=len(items), fetched=ok, skipped=skip, failed=fail,
@@ -197,7 +234,7 @@ def main():
                                API + "/api/v1/ricerca/avanzata", API + "/api/v1/atto/dettaglio-atto"],
                   license_text=LICENSE, discovered=len(items), fetched=ok, skipped=skip, failed=fail,
                   coverage="full" if items and fail == 0 else "catalog-backed incomplete",
-                  notes=notes + " Catalog is year-paged emanazione dates 1861–2026.",
+                  notes=notes + " Catalog is year-paged emanazione dates newest-first 2026–1861. MAX_NEW/MAX_SECONDS env supported.",
                   last_run=utcnow(), extra=f"started {t0}")
     log.info("done disc=%s ok=%s skip=%s fail=%s", len(items), ok, skip, fail)
 

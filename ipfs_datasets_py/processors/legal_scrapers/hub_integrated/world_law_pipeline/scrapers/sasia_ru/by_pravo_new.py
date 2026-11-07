@@ -10,23 +10,26 @@ import os as _ipfs_os
 from pathlib import Path as _ipfs_Path
 _CORPORA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_CORPORA_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_corpora")))
 _SCRAPERS = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_COLLECTORS_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_collectors"))) / "shared"
+_WORLD = _ipfs_Path(_ipfs_os.environ.get("WORLD_LAW_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "world_law")))
+_TESSDATA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_TESSDATA", str(_ipfs_Path.home() / ".ipfs_datasets" / "tessdata")))
 _HF_TOKEN_PATH = _ipfs_Path(_ipfs_os.environ.get("HF_TOKEN_PATH", str(_ipfs_Path.home() / ".cache" / "huggingface" / "token")))
 import os as _wl_os  # WORLD_LAW_ROOT / GLOBAL_MUNICIPALITIES_ROOT override the default paths
 import os, sys, re, json, time, html as H, datetime, argparse, csv, collections, shutil, subprocess, tempfile, resource
-sys.path.insert(0, (_wl_os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law") + '/pipeline')); sys.path.insert(0, (_wl_os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law") + '/pipeline/scrapers/web'))
+sys.path.insert(0, (_wl_os.environ.get("WORLD_LAW_ROOT", str(_WORLD)) + '/pipeline')); sys.path.insert(0, (_wl_os.environ.get("WORLD_LAW_ROOT", str(_WORLD)) + '/pipeline/scrapers/web'))
 from archive.staging import StagedWriter
 from schema import place_key
 from rfc9309 import Robots
 for k in ('http_proxy','https_proxy','HTTP_PROXY','HTTPS_PROXY','ALL_PROXY','all_proxy'): os.environ.pop(k, None)
 import requests
-BASE = 'https://pravo.by'; ST = (_wl_os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law") + '/staging/sasia_ru'); W = ST + '/_by'
+BASE = 'https://pravo.by'; ST = (_wl_os.environ.get("WORLD_LAW_ROOT", str(_WORLD)) + '/staging/sasia_ru'); W = ST + '/_by'
 UA = 'world-law-research-bot/1.0 (municipal law archive research)'
 S = requests.Session(); S.trust_env = False; S.headers['User-Agent'] = UA
 LISTS = ['/ofitsialnoe-opublikovanie/novye-postupleniya/', '/natsionalnyy-reestr/novye-postupleniya/']
 last = [0.0]; RB = [None]
+RESPECT_ROBOTS = os.environ.get('RESPECT_ROBOTS', '0') != '0'  # 2026-11-01: default off (user decision; set RESPECT_ROBOTS=1 to restore)
 def get(path, binary=False):
     url = path if path.startswith('http') else BASE + path
-    if not RB[0].can_fetch(UA, url): return None
+    if RESPECT_ROBOTS and not RB[0].can_fetch(UA, url): return None
     for a in range(4):
         w = last[0] + 2.0 - time.time()
         if w > 0: time.sleep(w)
@@ -104,8 +107,10 @@ def doc_text(pid):
 def iso_date(d): return f'{d[6:]}-{d[3:5]}-{d[:2]}' if d else None
 def main():
     ap = argparse.ArgumentParser(); ap.add_argument('--places', type=int, default=20); ap.add_argument('--log-tag', default='run'); ap.add_argument('--collect-only', action='store_true'); a = ap.parse_args()
-    rr = requests.get(BASE + '/robots.txt', timeout=30, headers={'User-Agent': UA})
-    RB[0] = Robots(rr.text) if rr.status_code == 200 else Robots(allow_all=True) if 400 <= rr.status_code < 500 else Robots(disallow_all=True)
+    if not RESPECT_ROBOTS: RB[0] = Robots(allow_all=True)
+    else:
+     rr = requests.get(BASE + '/robots.txt', timeout=30, headers={'User-Agent': UA})
+     RB[0] = Robots(rr.text) if rr.status_code == 200 else Robots(allow_all=True) if 400 <= rr.status_code < 500 else Robots(disallow_all=True)
     P = load_places(); seenf = W + '/by_seen.jsonl'
     seen = {json.loads(l)['p0'] for l in open(seenf)} if os.path.exists(seenf) else set()
     if a.collect_only:
@@ -128,7 +133,7 @@ def main():
             with open(W + '/by_unmapped.jsonl', 'a') as f: f.write(json.dumps(r, ensure_ascii=False) + '\n')
     print('listing', len(rows), dict(st), 'places', len(by), flush=True)
     for q in list(by)[:a.places]:
-        if shutil.disk_usage('/workspace').free < 35e9: print('DISK LOW', flush=True); break
+        if shutil.disk_usage('/workspace').free < 10e9: print('DISK LOW', flush=True); break
         w = StagedWriter(ST, 'BY', q, batch_prefix='pravobynew', chunk=200); c = collections.Counter()
         for r in by[q]:
             text, pdf = doc_text(r['p0'])
@@ -139,7 +144,7 @@ def main():
                    'content_format': 'pdf_text', 'text': text, 'title_native': r['title'][:1000], 'number': num.group(1) if num else None,
                    'published_date': iso_date(r['pub']), 'consolidated': False, 'in_force': None,
                    'retrieved_at': datetime.datetime.now(datetime.UTC).strftime('%Y-%m-%dT%H:%M:%SZ'), 'source_official': True,
-                   'source_org': 'Национальный правовой Интернет-портал Республики Беларусь (НЦПИ)', 'source_policy': 'robots_allowed_rfc9309',
+                   'source_org': 'Национальный правовой Интернет-портал Республики Беларусь (НЦПИ)', 'source_policy': ('robots_allowed_rfc9309' if RESPECT_ROBOTS else 'robots_not_consulted'),
                    'issuing_body': r['body'], 'act_line': r['act'], 'national_register_number': r['reg'], 'pdf_url': pdf,
                    'body_kind': r['match'], 'qid': q[3:], 'place_name': P[3].get(q)}
             if re.search(r'[іўІЎ]', text[:3000]) and not re.search(r'[ыъЫЪ]', text[:3000]): rec['language'] = 'be'

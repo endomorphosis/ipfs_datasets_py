@@ -64,7 +64,6 @@ class Release:
             ignore_index=True,
         )
         postings = postings[postings["term"].isin(q_terms)]
-        docs = self._read("data/bm25/documents")
         avgdl = float(self.manifest["bm25"]["average_document_length"]) or 1.0
         scores: dict[int, float] = defaultdict(float)
         for rec in postings.itertuples(index=False):
@@ -77,6 +76,18 @@ class Release:
                 if denom:
                     scores[int(di)] += idf * (tf * (K1 + 1.0)) / denom
         ranked = sorted(scores.items(), key=lambda kv: kv[1], reverse=True)[:top_k]
+        from .duckdb_store import document_shard_paths
+
+        doc_rels = document_shard_paths(self.root, [int(di) for di, _score in ranked])
+        if doc_rels is None:
+            docs = self._read("data/bm25/documents")
+        elif not doc_rels:
+            docs = pd.DataFrame()
+        else:
+            docs = pd.concat(
+                [pd.read_parquet(self.root / rel) for rel in doc_rels],
+                ignore_index=True,
+            )
         by_idx = docs.set_index("document_index")
         out = []
         for di, score in ranked:
@@ -138,9 +149,15 @@ class Release:
             pass
         dirs = ["incoming", "outgoing"] if direction == "both" else [direction]
         hits = []
+        from .duckdb_store import adjacency_shard_paths
+
         for d in dirs:
-            path = self.root / "data" / "graph" / "adjacency" / d
-            files = sorted(path.glob("*.parquet"))
+            indexed = adjacency_shard_paths(self.root, node_cid, d)
+            if indexed is None:
+                path = self.root / "data" / "graph" / "adjacency" / d
+                files = sorted(path.glob("*.parquet"))
+            else:
+                files = [self.root / rel for rel in indexed]
             for f in files:
                 df = pd.read_parquet(f)
                 sub = df[df["node_cid"] == node_cid]

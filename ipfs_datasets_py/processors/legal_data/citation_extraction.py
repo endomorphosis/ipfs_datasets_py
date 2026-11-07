@@ -4,19 +4,65 @@ This module provides comprehensive citation extraction capabilities for legal te
 including case law, statutes, regulations, and cross-references.
 """
 
+from __future__ import annotations
+
 import re
 import logging
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field
 
+from ipfs_datasets_py.processors.legal_data.citation_forms import (
+    iter_journal_spans,
+    iter_parallel_reporter_spans,
+    iter_spelled_reporter_spans,
+)
+from ipfs_datasets_py.processors.legal_data.citation_reporters import iter_case_spans
+
 logger = logging.getLogger(__name__)
+
+
+def _overlaps(left: Citation, right: Citation) -> bool:
+    return left.start_pos < right.end_pos and right.start_pos < left.end_pos
+
+
+def _contained(inner: Citation, outer: Citation) -> bool:
+    return (
+        inner.start_pos >= outer.start_pos
+        and inner.end_pos <= outer.end_pos
+        and (inner.end_pos - inner.start_pos) < (outer.end_pos - outer.start_pos)
+    )
+
+
+def _prefer_longer(citations: List[Citation]) -> List[Citation]:
+    """Drop a citation that sits inside a longer one.
+
+    A parallel cite such as ``4 U.S. (4 Dall.) 1`` is two citations on the
+    same span, so equal spans are kept. A shorter cite inside a longer one
+    is not.
+    """
+    ordered = sorted(citations, key=lambda item: (item.end_pos - item.start_pos, item.start_pos), reverse=True)
+    kept: List[Citation] = []
+    for citation in ordered:
+        if any(_contained(citation, previous) for previous in kept):
+            continue
+        if any(
+            citation.start_pos == previous.start_pos
+            and citation.end_pos == previous.end_pos
+            and citation.type == previous.type
+            and citation.text == previous.text
+            for previous in kept
+        ):
+            continue
+        kept.append(citation)
+    kept.sort(key=lambda item: (item.start_pos, item.end_pos, item.text))
+    return kept
 
 
 @dataclass
 class Citation:
     """Represents a legal citation."""
 
-    type: str  # "case", "statute", "regulation", "cfr", "usc", "federal_register"
+    type: str  # "case", "journal", "usc", "state_statute", "cfr", "federal_register", "rule"
     text: str  # Full citation text as it appears
     reporter: Optional[str] = None  # e.g., "F.3d", "U.S."
     volume: Optional[str] = None
@@ -47,8 +93,25 @@ CASE_CITATION_PATTERNS = [
 ]
 
 USC_CITATION_PATTERNS = [
-    # U.S. Code: e.g., "42 U.S.C. § 1983", "18 USC 2251"
-    r"(\d+)\s+U\.?S\.?C\.?(?:A\.?)?\s+(?:§|section|sec\.?)?\s*(\d+[\w\-]*(?:\([a-z0-9]+\))?)",
+    # U.S. Code: "42 U.S.C. § 1983", "18 USC 2251", "18 U.S.C. §§ 2516"
+    r"(\d+)\s+U\.?\s*S\.?\s*C\.?\s*(?:A\.?)?\s*(?:§§|§|sections|section|sec\.?)?\s*(\d[\w.\-]*(?:\([^)]+\))*)",
+]
+
+# "Title 18, United States Code, Section 2516" and the reverse prose order.
+USC_PROSE_PATTERNS = [
+    (
+        "title-first",
+        r"title\s+(\d+)\s*,?\s*(?:of\s+the\s+)?united\s+states\s+code\s*,?\s*(?:section|sec\.?)\s+(\d[\w.\-]*(?:\([^)]+\))*)",
+    ),
+    (
+        "section-first",
+        r"(?:section|sec\.?)\s+(\d[\w.\-]*(?:\([^)]+\))*)\s+of\s+title\s+(\d+)\s*,?\s*(?:of\s+the\s+)?united\s+states\s+code",
+    ),
+]
+
+FEDERAL_RULE_PATTERNS = [
+    # Civ., Crim., App., and Bankr. use "P."; Evidence does not.
+    r"\b(Fed\.?\s+R\.?\s+(?:(?:Civ|Crim|App|Bankr)\.?\s+P|Evid)\.?\s+\d+(?:\([a-z0-9]+\))*)",
 ]
 
 CFR_CITATION_PATTERNS = [
@@ -67,6 +130,12 @@ PUBLIC_LAW_PATTERNS = [
     # Public Law with "No.": e.g., "Pub. L. No. 117-58", "P.L. No. 117-58"
     r"(?:Pub\.?\s+L\.?|P\.L\.?|Public\s+Law)\s+(?:No\.?\s*)?(\d+)-(\d+)",
 ]
+
+# Michigan session laws: "1971 PA 196" and "1943 P.A. 184".
+# All-caps PA with a four-digit year. "501 Pa 423" stays Pennsylvania Reports.
+_PUBLIC_ACT = re.compile(
+    r"(?<![A-Za-z0-9])((?:18|19|20)\d{2})\s+(?:PA|P\.A\.)\s+(?:No\.?\s*)?(\d{1,5})(?!\d)"
+)
 
 BLUEBOOK_STATE_TO_CODE = {
     "Ala.": "AL",
@@ -127,26 +196,39 @@ BLUEBOOK_STATE_TO_CODE = {
 _STATE_ABBREV_PATTERN = "|".join(
     sorted((re.escape(value) for value in BLUEBOOK_STATE_TO_CODE), key=len, reverse=True)
 )
+# Lowercase "me." / "ill." are English words. A real state abbrev starts with a capital.
+_LOWERCASE_STATE_WORDS = frozenset({"me", "ill", "or", "la", "pa", "va"})
 STATE_STATUTE_PATTERNS = [
     rf"(?P<text>(?P<titled_state>{_STATE_ABBREV_PATTERN})\s+"
     r"(?P<titled_code_name>"
     r"(?:[A-Z][A-Za-z&.\'/-]*\s+){0,5}"
     r"(?:Code(?:\s+Ann\.)?|Stat(?:\.|utes)?(?:\s+Ann\.)?|"
-    r"Rev\.\s+Stat\.?|Gen\.\s+(?:Laws|Stat\.?)|Comp\.\s+Laws|Cent\.\s+Code)"
-    r")\s+tit\.?\s+(?P<titled_title>\d+)\s+"
+    r"Rev\.\s+Stat\.?(?:\s+Ann\.)?|Gen\.\s+(?:Laws|Stat\.?)(?:\s+Ann\.)?|Comp\.\s+Laws|Cent\.\s+Code)"
+    r")\s+tit\.?\s+(?P<titled_title>\d+(?:-[A-Za-z0-9]+)?)\s*,?\s*"
     r"(?:§|sec\.?|section)?\s*(?P<titled_section>\d[\w.:\-]*(?:\([a-z0-9]+\))*))",
     rf"(?P<text>(?P<state>{_STATE_ABBREV_PATTERN})\s+"
     r"(?P<code_name>"
     r"(?:[A-Z][A-Za-z&.\'/-]*\s+){0,5}"
     r"(?:Code(?:\s+Ann\.)?|Stat(?:\.|utes)?(?:\s+Ann\.)?|"
-    r"Rev\.\s+Stat\.?|Gen\.\s+(?:Laws|Stat\.?)|Comp\.\s+Laws|Cent\.\s+Code|"
+    r"Rev\.\s+Stat\.?(?:\s+Ann\.)?|Gen\.\s+(?:Laws|Stat\.?)(?:\s+Ann\.)?|Comp\.\s+Laws|Cent\.\s+Code|"
     r"Codified\s+Laws|Fam\.\s+Code|Civ\.\s+Code|Penal\s+Code|"
     r"Admin\.\s+Code|Court\s+Rules?|Fam\.\s+Ct\.\s+Act|[A-Z][A-Za-z.\'/-]*\s+Law|"
-    r"R\.\s+[A-Za-z.\s]+)"
-    r")\s+(?:§|sec\.?|section)?\s*(?P<section>\d[\w.:\-]*(?:\([a-z0-9]+\))*))",
+    r"R\.\s+(?:Civ|Crim|App|Evid|Prof|Jud|Ct|Proc|Gov|Juv|Prob|Adm|Bankr|Sup)\.?(?:\s+[A-Z][A-Za-z.]*){0,3})"
+    r")\s*,?\s*(?:§|sec\.?|section)?\s*(?P<section>\d[\w.:\-]*(?:\([a-z0-9]+\))*))",
     r"(?P<text>(?P<state_shorthand>ORS)\s+(?:§|sec\.?|section)?\s*(?P<section_shorthand>\d[\w.:\-]*(?:\([a-z0-9]+\))*))",
     r"(?P<text>(?P<il_title>\d+)\s+ILCS\s+(?P<il_act>\d+)/(?P<il_section>\d[\w.:\-]*(?:\([a-z0-9]+\))*))",
     r"(?P<text>(?P<pa_title>\d+)\s+Pa\.?\s*C\.?S\.?(?:A\.?)?\s+(?:§|sec\.?|section)?\s*(?P<pa_section>\d[\w.:\-]*(?:\([a-z0-9]+\))*))",
+    r"(?P<text>\b(?P<mcl>M\.?\s*C\.?\s*L\.?)\s*(?:Ann\.?)?\s*§?\s*(?P<mcl_section>\d+\.\d+[A-Za-z0-9.\-]*))",
+    r"(?P<text>\b(?P<rcw>RCW)\s*§?\s*(?P<rcw_section>\d+[A-Za-z]?(?:\.\d+)+))",
+    r"(?P<text>\b(?P<ocga>O\.?\s*C\.?\s*G\.?\s*A\.?)\s*§?\s*(?P<ocga_section>\d[\d.\-]*(?:\([a-z0-9]+\))*))",
+    r"(?P<text>\b(?P<krs>K\.?\s*R\.?\s*S\.?)\s*§?\s*(?P<krs_section>\d[\d.\-]*(?:\([a-z0-9]+\))*))",
+    r"(?P<text>\b(?P<ars>A\.?\s*R\.?\s*S\.?)\s*§?\s*(?P<ars_section>\d[\d.\-]*(?:\([a-z0-9]+\))*))",
+    r"(?P<text>\b(?P<nrs>NRS)\s*§?\s*(?P<nrs_section>\d[\d.\-]*(?:\([a-z0-9]+\))*))",
+    r"(?P<text>\b(?P<crs>C\.?\s*R\.?\s*S\.?)\s*§?\s*(?P<crs_section>\d[\d.\-]*(?:\([a-z0-9]+\))*))",
+    r"(?P<text>\b(?P<njsa>N\.?\s*J\.?\s*S\.?\s*A\.?)\s*§?\s*(?P<njsa_section>\d[\w:.\-]*(?:\([a-z0-9]+\))*))",
+    r"(?P<text>(?P<del_title>\d+)\s+Del\.?\s+C\.?\s*§?\s*(?P<del_section>\d[\w.\-]*))",
+    r"(?P<text>(?P<mass>Mass\.)\s+Gen\.?\s+Laws(?:\s+Ann\.?)?\s+(?:ch\.?|chapter)\s+(?P<mass_ch>\d+[A-Za-z]?)\s*,?\s*§§?\s*(?P<mass_section>\d[\w.\-]*))",
+    r"(?P<text>(?P<md>Md\.)\s+Code(?:\s+Ann\.)?\s*,\s*(?P<md_article>[A-Z][A-Za-z. ]{0,40}?)\s+§§?\s*(?P<md_section>\d[\w.\-]*))",
 ]
 
 
@@ -155,12 +237,19 @@ class CitationExtractor:
 
     def __init__(self):
         """Initialize citation extractor."""
-        self.case_patterns = [re.compile(p, re.IGNORECASE) for p in CASE_CITATION_PATTERNS]
         self.usc_patterns = [re.compile(p, re.IGNORECASE) for p in USC_CITATION_PATTERNS]
+        self.usc_prose_patterns = [
+            (kind, re.compile(pattern, re.IGNORECASE)) for kind, pattern in USC_PROSE_PATTERNS
+        ]
         self.cfr_patterns = [re.compile(p, re.IGNORECASE) for p in CFR_CITATION_PATTERNS]
         self.fr_patterns = [re.compile(p, re.IGNORECASE) for p in FEDERAL_REGISTER_PATTERNS]
         self.pl_patterns = [re.compile(p, re.IGNORECASE) for p in PUBLIC_LAW_PATTERNS]
+        self.rule_patterns = [re.compile(p, re.IGNORECASE) for p in FEDERAL_RULE_PATTERNS]
         self.state_statute_patterns = [re.compile(p, re.IGNORECASE) for p in STATE_STATUTE_PATTERNS]
+        self._usc_more = re.compile(
+            r"\s*,\s*(?:and\s+|or\s+)?(?:§§?\s*)?(\d[\w.\-]*(?:\([^)]+\))*)",
+            re.IGNORECASE,
+        )
 
     def extract_citations(self, text: str) -> List[Citation]:
         """Extract all citations from a text.
@@ -188,71 +277,138 @@ class CitationExtractor:
         # Extract Public Law citations
         citations.extend(self._extract_pl_citations(text))
 
-        # Extract state statute citations
+        # Extract state statute citations, including Michigan public acts
         citations.extend(self._extract_state_statute_citations(text))
+        citations.extend(self._extract_public_act_citations(text))
 
-        # Sort by position in text
-        citations.sort(key=lambda c: c.start_pos)
+        # Extract federal rules of procedure and evidence
+        citations.extend(self._extract_rule_citations(text))
 
-        return citations
+        # Law journals are not case reporters. "68 Mich. L. Rev. 260" is a journal.
+        citations.extend(self._extract_journal_citations(text))
+
+        return _prefer_longer(citations)
 
     def _extract_case_citations(self, text: str) -> List[Citation]:
         """Extract case law citations."""
         citations = []
 
-        for pattern in self.case_patterns:
-            for match in pattern.finditer(text):
-                volume = match.group(1)
-                reporter = match.group(2)
-                page = match.group(3)
-
-                # Extract year if present nearby
-                year_match = re.search(r"\((\d{4})\)", text[match.end() : match.end() + 20])
-                year = year_match.group(1) if year_match else None
-
-                citation = Citation(
-                    type="case",
-                    text=match.group(0),
-                    reporter=reporter,
-                    volume=volume,
-                    page=page,
-                    year=year,
-                    start_pos=match.start(),
-                    end_pos=match.end(),
-                )
-
-                # Try to determine court from reporter
-                citation.court = self._determine_court(reporter)
-
-                # Try to generate URL
-                citation.url = self._generate_case_url(citation)
-
-                citations.append(citation)
-
+        for start, end, volume, reporter, page in iter_case_spans(text):
+            citations.append(self._case_citation(text, start, end, volume, reporter, page))
+        for start, end, volume, reporter, page in iter_spelled_reporter_spans(text):
+            citations.append(
+                self._case_citation(text, start, end, volume, reporter, page, text_override=f"{volume} {reporter} {page}")
+            )
+        for start, end, volume, reporter, page in iter_parallel_reporter_spans(text):
+            citations.append(
+                self._case_citation(text, start, end, volume, reporter, page, text_override=f"{volume} {reporter} {page}")
+            )
         return citations
 
+    def _case_citation(
+        self,
+        text: str,
+        start: int,
+        end: int,
+        volume: str,
+        reporter: str,
+        page: str,
+        text_override: str | None = None,
+    ) -> Citation:
+        year_match = re.search(r"\((\d{4})\)", text[end : end + 20])
+        citation = Citation(
+            type="case",
+            text=text_override if text_override is not None else text[start:end],
+            reporter=reporter,
+            volume=volume,
+            page=page,
+            year=year_match.group(1) if year_match else None,
+            start_pos=start,
+            end_pos=end,
+        )
+        citation.court = self._determine_court(reporter)
+        citation.url = self._generate_case_url(citation)
+        return citation
+
+    def _extract_journal_citations(self, text: str) -> List[Citation]:
+        """Extract law-journal citations. They are not resolved against the case index."""
+        citations = []
+        for start, end, volume, journal, page in iter_journal_spans(text):
+            year_match = re.search(r"\((\d{4})\)", text[end : end + 20])
+            citations.append(
+                Citation(
+                    type="journal",
+                    text=text[start:end],
+                    reporter=journal,
+                    volume=volume,
+                    page=page,
+                    year=year_match.group(1) if year_match else None,
+                    start_pos=start,
+                    end_pos=end,
+                )
+            )
+        return citations
+
+    def _usc_citation(self, text: str, title: str, section: str, start: int, end: int) -> Citation:
+        section = section.rstrip(".,;:")
+        citation = Citation(
+            type="usc",
+            text=text,
+            title=title,
+            section=section,
+            start_pos=start,
+            end_pos=end,
+        )
+        citation.url = (
+            "https://uscode.house.gov/view.xhtml?req=granuleid:"
+            f"USC-prelim-title{title}-section{section}"
+        )
+        return citation
+
     def _extract_usc_citations(self, text: str) -> List[Citation]:
-        """Extract U.S. Code citations."""
+        """Extract U.S. Code citations, including plural sections and prose forms."""
         citations = []
 
         for pattern in self.usc_patterns:
             for match in pattern.finditer(text):
                 title = match.group(1)
-                section = match.group(2)
+                section = match.group(2).rstrip(".,;:")
+                end = match.end() - (len(match.group(2)) - len(section))
+                plural = bool(re.search(r"§§|\bsections\b", match.group(0), re.IGNORECASE))
+                citations.append(self._usc_citation(text[match.start() : end], title, section, match.start(), end))
+                cursor = end
+                while True:
+                    more = self._usc_more.match(text, cursor)
+                    if more is None:
+                        break
+                    extra = more.group(1).rstrip(".,;:")
+                    if not extra:
+                        break
+                    bare_year = bool(re.fullmatch(r"(?:17|18|19|20)\d{2}", extra))
+                    if bare_year and not plural:
+                        break
+                    extra_end = more.end() - (len(more.group(1)) - len(extra))
+                    citations.append(
+                        self._usc_citation(
+                            f"{title} U.S.C. § {extra}",
+                            title,
+                            extra,
+                            more.start(1),
+                            extra_end,
+                        )
+                    )
+                    cursor = extra_end
 
-                citation = Citation(
-                    type="usc",
-                    text=match.group(0),
-                    title=title,
-                    section=section,
-                    start_pos=match.start(),
-                    end_pos=match.end(),
+        for kind, pattern in self.usc_prose_patterns:
+            for match in pattern.finditer(text):
+                if kind == "title-first":
+                    title, section = match.group(1), match.group(2)
+                else:
+                    section, title = match.group(1), match.group(2)
+                section = section.rstrip(".,;:")
+                citations.append(
+                    self._usc_citation(match.group(0).rstrip(".,;:"), title, section, match.start(), match.end())
                 )
-
-                # Generate URL
-                citation.url = f"https://uscode.house.gov/view.xhtml?req=granuleid:USC-prelim-title{title}-section{section}"
-
-                citations.append(citation)
 
         return citations
 
@@ -306,6 +462,22 @@ class CitationExtractor:
 
         return citations
 
+    def _extract_rule_citations(self, text: str) -> List[Citation]:
+        """Extract federal rules such as Fed. R. Civ. P. 12(b)(6)."""
+        citations = []
+        for pattern in self.rule_patterns:
+            for match in pattern.finditer(text):
+                citations.append(
+                    Citation(
+                        type="rule",
+                        text=match.group(1),
+                        title=match.group(1),
+                        start_pos=match.start(1),
+                        end_pos=match.end(1),
+                    )
+                )
+        return citations
+
     def _extract_pl_citations(self, text: str) -> List[Citation]:
         """Extract Public Law citations."""
         citations = []
@@ -342,7 +514,58 @@ class CitationExtractor:
             for match in pattern.finditer(text):
                 citation_text = match.group("text")
                 groupdict = match.groupdict()
-                if groupdict.get("state_shorthand"):
+                raw_state = groupdict.get("state") or groupdict.get("titled_state") or ""
+                if (
+                    raw_state[:1].islower()
+                    and raw_state.lower().rstrip(".") in _LOWERCASE_STATE_WORDS
+                ):
+                    continue
+                if groupdict.get("mcl"):
+                    state_abbrev = "Mich."
+                    code_name = "MCL"
+                    section = str(match.group("mcl_section") or "")
+                elif groupdict.get("rcw"):
+                    state_abbrev = "Wash."
+                    code_name = "RCW"
+                    section = str(match.group("rcw_section") or "")
+                elif groupdict.get("ocga"):
+                    state_abbrev = "Ga."
+                    code_name = "O.C.G.A."
+                    section = str(match.group("ocga_section") or "")
+                elif groupdict.get("krs"):
+                    state_abbrev = "Ky."
+                    code_name = "K.R.S."
+                    section = str(match.group("krs_section") or "")
+                elif groupdict.get("ars"):
+                    state_abbrev = "Ariz."
+                    code_name = "A.R.S."
+                    section = str(match.group("ars_section") or "")
+                elif groupdict.get("nrs"):
+                    state_abbrev = "Nev."
+                    code_name = "NRS"
+                    section = str(match.group("nrs_section") or "")
+                elif groupdict.get("crs"):
+                    state_abbrev = "Colo."
+                    code_name = "C.R.S."
+                    section = str(match.group("crs_section") or "")
+                elif groupdict.get("njsa"):
+                    state_abbrev = "N.J."
+                    code_name = "N.J.S.A."
+                    section = str(match.group("njsa_section") or "")
+                elif groupdict.get("del_title"):
+                    state_abbrev = "Del."
+                    code_name = f"{match.group('del_title')} Del. C."
+                    section = str(match.group("del_section") or "")
+                elif groupdict.get("mass"):
+                    state_abbrev = "Mass."
+                    code_name = f"Gen. Laws ch. {match.group('mass_ch')}"
+                    section = str(match.group("mass_section") or "")
+                elif groupdict.get("md"):
+                    state_abbrev = "Md."
+                    article = " ".join(str(match.group("md_article") or "").split())
+                    code_name = f"Code Ann., {article}" if article else "Code Ann."
+                    section = str(match.group("md_section") or "")
+                elif groupdict.get("state_shorthand"):
                     state_abbrev = "Or."
                     code_name = str(match.group("state_shorthand") or "").strip()
                     section = str(match.group("section_shorthand") or "")
@@ -387,13 +610,38 @@ class CitationExtractor:
 
         return citations
 
+    def _extract_public_act_citations(self, text: str) -> List[Citation]:
+        """Extract Michigan public acts printed as ``1971 PA 196``."""
+        citations = []
+        for match in _PUBLIC_ACT.finditer(text):
+            year, number = match.group(1), match.group(2)
+            citations.append(
+                Citation(
+                    type="state_statute",
+                    text=match.group(0),
+                    title=year,
+                    section=number,
+                    year=year,
+                    jurisdiction="MI",
+                    start_pos=match.start(),
+                    end_pos=match.end(),
+                    metadata={
+                        "bluebook_state_abbrev": "Mich.",
+                        "code_name": "Public Act",
+                    },
+                )
+            )
+        return citations
+
     def _determine_court(self, reporter: str) -> Optional[str]:
         """Determine court from reporter abbreviation."""
-        reporter_lower = reporter.lower().replace(" ", "").replace(".", "")
+        reporter_lower = reporter.lower().replace(" ", "").replace(".", "").replace("'", "").replace("’", "")
 
         court_mapping = {
             "us": "U.S. Supreme Court",
             "sct": "U.S. Supreme Court",
+            "led": "U.S. Supreme Court",
+            "led2d": "U.S. Supreme Court",
             "f3d": "U.S. Court of Appeals",
             "f2d": "U.S. Court of Appeals",
             "f4th": "U.S. Court of Appeals",

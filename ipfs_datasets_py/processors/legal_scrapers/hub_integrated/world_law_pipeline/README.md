@@ -42,10 +42,10 @@ builder's xlsx inputs; `tesseract` for the OCR collectors.
 ### Paths / environment variables
 | variable | default | used by |
 |---|---|---|
-| `WORLD_LAW_ROOT` | `/workspace/world_law` | `run_loop.py` (staging/, out/, processed/, quarantine/, held/, state/), scrapers (staging + pipeline paths), `codes/` |
+| `WORLD_LAW_ROOT` | `~/.ipfs_datasets/world_law` | `run_loop.py` (staging/, out/, processed/, quarantine/, held/, state/), scrapers (staging + pipeline paths), `codes/` |
 | `GLOBAL_MUNICIPALITIES_ROOT` | `/workspace/global_municipalities` | scrapers that read `global_municipalities_candidate.csv` |
 | `GLOBAL_MUNICIPALITIES_CSV` | `/workspace/global_municipalities/global_municipalities_candidate.csv` | `codes/build_place_codes.py` |
-| `TESSDATA_PREFIX` | `/home/box/tessdata` (set via `os.environ.setdefault`, so an existing value wins) | OCR collectors in `scrapers/national/shared/` (`collect_sr.py` and `collect_ht.py` also probe `/home/box/tessdata/*.traineddata` for the language choice) |
+| `TESSDATA_PREFIX` | `~/.ipfs_datasets/tessdata` (set via `os.environ.setdefault`, so an existing value wins) | OCR collectors in `scrapers/national/shared/` (`collect_sr.py` and `collect_ht.py` also probe `~/.ipfs_datasets/tessdata/*.traineddata` for the language choice) |
 
 Still hard-coded (documented, not env-ified): `/workspace/ipfs_datasets_py[_latest]` (the upstream
 `ipfs_datasets_py` checkout used by some collectors, `cvdr.py`, `es_sede.py`, `de_ortsrecht_crawler.py` and
@@ -78,7 +78,7 @@ is never changed, so a re-staged identical file is still skipped. `--no-prune` d
 Secret scan (2026-10-10): no tokens, keys, cookies files, `.env` or credentials-in-URL in this bundle. See
 the report given to the maintainer for details. Collectors read `HF_TOKEN` / `~/.cache/huggingface/token` from the
 environment only. `collect_td.py` fetches a public Supabase anon key at runtime (not stored). Several
-OCR collectors hard-code `/home/box/tessdata`.
+OCR collectors hard-code `~/.ipfs_datasets/tessdata`.
 
 <!-- lane-scrapers:start (tools/sync_code.py) -->
 ## Datasets
@@ -97,24 +97,25 @@ Synced hourly by `tools/sync_code.py` (only new/changed files; secret scan must 
 
 | path | files | lane |
 |---|---:|---|
-| `scrapers/eu/` | 69 | EU member states (NL CVDR/GMB, PL e-dzienniki, BE, EE, ES BOE autonómico, GR Diavgeia, IT statuti, LV, PT DRE, SI, UK LA) |
-| `scrapers/web/` | 31 | Web crawlers for municipal by-laws (DE Ortsrecht + archive pass, FR actes, IT, CH, CA) |
-| `scrapers/national/` | 306 | National/subnational collectors (`shared/collect_*.py`, ~230 jurisdictions), archive emitters |
-| `scrapers/asia_latam/` | 91 | JP reiki, ES BOP/sede, BR LexML/SAPL, PE, MX, CL, ID, ZA, AU, archive jobs (`arch/`) |
-| `scrapers/afme/` | 20 | Africa & Middle East gazettes/LII/live sites, Common Crawl index jobs (`afme_cfg_*.json` source lists) |
-| `scrapers/sasia_ru/` | 53 | South Asia & Russia/CIS: RU gosweb, BY pravo, KG CBD, NP palika, PK Sindh, IN MCGM, UZ lex, VN VBPL |
-| `scrapers/eap/` | 4 | East Asia & Pacific archive runner (KR, TW, NZ, PG, SB, TO, VU, WS) |
-| `scrapers/ph/` | 11 | Philippines LGU sites + Wayback pass |
+| `scrapers/eu/` | 74 | EU member states (NL CVDR/GMB, PL e-dzienniki, BE, EE, ES BOE autonómico, GR Diavgeia, IT statuti, LV, PT DRE, SI, UK LA) |
+| `scrapers/web/` | 37 | Web crawlers for municipal by-laws (DE Ortsrecht + archive pass, FR actes, IT, CH, CA) |
+| `scrapers/national/` | 316 | National/subnational collectors (`shared/collect_*.py`, ~230 jurisdictions), archive emitters |
+| `scrapers/asia_latam/` | 99 | JP reiki, ES BOP/sede, BR LexML/SAPL, PE, MX, CL, ID, ZA, AU, archive jobs (`arch/`) |
+| `scrapers/afme/` | 11 | Africa & Middle East gazettes/LII/live sites, Common Crawl index jobs (`afme_cfg_*.json` source lists) |
+| `scrapers/sasia_ru/` | 11267 | South Asia & Russia/CIS: RU gosweb, BY pravo, KG CBD, NP palika, PK Sindh, IN MCGM, UZ lex, VN VBPL |
+| `scrapers/eap/` | 12 | East Asia & Pacific archive runner (KR, TW, NZ, PG, SB, TO, VU, WS) |
+| `scrapers/ph/` | 12 | Philippines LGU sites + Wayback pass |
 | `scrapers/id_jdih/` | 5 | Indonesia JDIH (regional legal documentation networks) |
-| `scrapers/ocr/` | 23 | OCR passes for scanned PDFs (afme, GB, PH, RO, South Asia) + sweep tools |
-| `scrapers/states/` | 40 | States & provinces lane (staging/states/) |
-| `scrapers/ukie/` | 31 | UK & Ireland lane (staging/ukie/) |
+| `scrapers/ocr/` | 24 | OCR passes for scanned PDFs (afme, GB, PH, RO, South Asia) + sweep tools |
+| `scrapers/states/` | 86 | States & provinces lane (staging/states/) |
+| `scrapers/ukie/` | 33 | UK & Ireland lane (staging/ukie/) |
+| `scrapers/counties/` | 448 |  |
 
 How to run a lane scraper:
 * Python 3.13 in a virtualenv: `python3.13 -m venv venv && venv/bin/pip install requests pyarrow beautifulsoup4 lxml huggingface_hub`
   (+ `tesseract` / `pdftotext` for OCR lanes, `playwright` for `collect_spa_playwright.py`). On the build box the
-  interpreter is `/workspace/world_law/pipeline/venv/bin/python`.
-* Set `WORLD_LAW_ROOT` (default `/workspace/world_law`) and, for scrapers that read the candidate list,
+  interpreter is `~/.ipfs_datasets/world_law/pipeline/venv/bin/python`.
+* Set `WORLD_LAW_ROOT` (default `~/.ipfs_datasets/world_law`) and, for scrapers that read the candidate list,
   `GLOBAL_MUNICIPALITIES_ROOT`. Lane scripts are run from their own directory, e.g.
   `cd scrapers/eu && ../../venv/bin/python cvdr.py --help`, or via the lane's `run_*.sh`.
 * Staging contract ([`SCHEMA.md`](SCHEMA.md) §1): a lane writes only `staging/<lane>/<CC>/<place_key>[.<batch>].jsonl`

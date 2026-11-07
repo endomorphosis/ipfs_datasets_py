@@ -6,6 +6,8 @@ import os as _ipfs_os
 from pathlib import Path as _ipfs_Path
 _CORPORA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_CORPORA_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_corpora")))
 _SCRAPERS = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_COLLECTORS_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_collectors"))) / "shared"
+_WORLD = _ipfs_Path(_ipfs_os.environ.get("WORLD_LAW_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "world_law")))
+_TESSDATA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_TESSDATA", str(_ipfs_Path.home() / ".ipfs_datasets" / "tessdata")))
 _HF_TOKEN_PATH = _ipfs_Path(_ipfs_os.environ.get("HF_TOKEN_PATH", str(_ipfs_Path.home() / ".cache" / "huggingface" / "token")))
 import os as _wl_os  # WORLD_LAW_ROOT / GLOBAL_MUNICIPALITIES_ROOT override the default paths
 
@@ -14,7 +16,7 @@ from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 
-sys.path.insert(0, (_wl_os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law") + "/pipeline"))
+sys.path.insert(0, (_wl_os.environ.get("WORLD_LAW_ROOT", str(_WORLD)) + "/pipeline"))
 # fair-share lane for the box-wide archive limiter (archive/README.md "Lanes and fair sharing")
 os.environ.setdefault("ARCHIVE_LANE", "asia_latam")
 from archive import ArchiveFetcher, StagedWriter, provenance_fields  # noqa: E402,F401
@@ -147,7 +149,7 @@ def wb_deferred(fx, doc=None, exc=None):
     return exc is not None and (isinstance(exc, (WaybackDown, WBDeferred)) or "breaker" in str(exc).lower()
                                 or "cooling" in str(exc).lower())
 
-STAGE = Path((_wl_os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law") + "/staging/asia_latam"))
+STAGE = Path((_wl_os.environ.get("WORLD_LAW_ROOT", str(_WORLD)) + "/staging/asia_latam"))
 WORK = STAGE / "_archive_work"
 LOGS = STAGE / "_logs" / "archive"
 STOP = {"flag": False}
@@ -306,6 +308,13 @@ class State:
             f.write(f"{key}\t{outcome}\t{utc()}\n")
         self.done[key] = outcome
         self._consec_defer = 0
+        fx = _FETCHERS[-1] if _FETCHERS else None
+        if fx is not None and getattr(fx, "last_doc_incomplete", 0):
+            # staged from one source while another failed transiently: flagged in the record (archive_fetch_incomplete)
+            # and listed here for a later revisit pass; not requeued now (that would stage a duplicate)
+            with (self.dir / "incomplete_docs.tsv").open("a", encoding="utf-8") as f:
+                f.write(f"{key}\t{outcome}\t{utc()}\t{fx.last_doc_incomplete:.0f}\n")
+            fx.last_doc_incomplete = 0
 
     def defer(self, key, why="wayback_breaker", not_before=None):
         """Requeue: not marked done/failed, so a later run retries it, but not before `not_before` (epoch s; default:
@@ -446,6 +455,7 @@ class CheckedFetcher(ArchiveFetcher):
         k.setdefault("lane", os.environ.get("ARCHIVE_LANE") or "asia_latam")
         super().__init__(*a, **k)
         self.robots_flagged = {}
+        self.last_doc_incomplete = 0.0  # fetcher round 3: last returned doc had doc.incomplete
         self.deferred_nb = 0.0         # set when a capture fetch raised ArchiveDeferred; consumed by wb_deferred()
         self.last_deferral_nb = 0.0    # not_before of the last deferral wb_deferred() reported; used by State.defer()
         self.cache_keys = {}      # archive_url -> body cache key (for evict_staged_bodies)
@@ -453,7 +463,11 @@ class CheckedFetcher(ArchiveFetcher):
 
     def fetch_best(self, caps, *a, **k):
         try:
-            return super().fetch_best(caps, *a, **k)
+            doc = super().fetch_best(caps, *a, **k)
+            if doc is not None and getattr(doc, "incomplete", False):
+                self.last_doc_incomplete = getattr(getattr(doc, "deferral", None), "not_before", 0.0) or time.time()
+                self.stats["asia_incomplete_docs"] = self.stats.get("asia_incomplete_docs", 0) + 1
+            return doc
         except ArchiveDeferred as e:   # nothing usable + CC/Wayback throttled: remember even if the caller swallows it
             self.deferred_nb = max(getattr(self, "deferred_nb", 0.0), e.not_before or cooling_nb())
             raise
@@ -461,13 +475,15 @@ class CheckedFetcher(ArchiveFetcher):
     def cc_captures(self, *a, **k):
         caps = super().cc_captures(*a, **k)
         if getattr(caps, "truncated", False):   # deferred mid-listing: discovery incomplete (never kept as final)
-            listing_failed(caps.deferral or ArchiveDeferred("cc listing truncated"), "cc:" + str(a[0] if a else k.get("url")))
+            listing_failed(caps.deferral or ArchiveDeferred("cc listing truncated: %s" % getattr(caps, "truncated_reason", "?")),
+                           "cc:" + str(a[0] if a else k.get("url")))
         return caps
 
     def list_captures(self, *a, **k):
         caps = super().list_captures(*a, **k)
         if getattr(caps, "truncated", False):
-            listing_failed(caps.deferral or ArchiveDeferred("listing truncated"), "list:" + str(a[0] if a else k.get("url")))
+            listing_failed(caps.deferral or ArchiveDeferred("listing truncated: %s" % getattr(caps, "truncated_reason", "?")),
+                           "list:" + str(a[0] if a else k.get("url")))
         return caps
 
     def fetch_capture(self, cap):
@@ -492,6 +508,10 @@ class CheckedFetcher(ArchiveFetcher):
 
 def provenance_fields(doc):  # noqa: F811  (wraps archive.provenance_fields; carries the robots meta flags)
     out = _prov(doc)
+    if getattr(doc, "incomplete", False):   # fetcher round 3: found while another source failed transiently
+        d = getattr(doc, "deferral", None)
+        out["archive_fetch_incomplete"] = True
+        out["archive_fetch_incomplete_reasons"] = sorted(set(getattr(d, "reasons", None) or [getattr(d, "reason", None) or "transient"]))
     flags = getattr(doc, "robots_flags", None)
     if flags:
         out["robots_meta"] = list(flags)

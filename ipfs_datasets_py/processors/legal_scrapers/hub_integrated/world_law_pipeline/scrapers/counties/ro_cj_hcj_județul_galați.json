@@ -1,0 +1,43 @@
+{
+ "country_code": "RO",
+ "place_id": "wd:Q188796",
+ "qid": "Q188796",
+ "place_name": "Județul Galați",
+ "iso_3166_2": "RO-GL",
+ "admin_level": "judet",
+ "language": "ro",
+ "doc_type": "decision",
+ "consolidated": false,
+ "platform": "ro_cj_hcj",
+ "source_org": "Județul Galați",
+ "index_url": "https://cjgalati.ro/category/sp-632/hotarari/",
+ "max_bytes": 52428800,
+ "urls": [
+  "https://cjgalati.ro/wp-content/uploads/2026/09/hot279-290926.pdf",
+  "https://cjgalati.ro/wp-content/uploads/2026/09/hot278-290926.pdf",
+  "https://cjgalati.ro/wp-content/uploads/2026/09/hot277-290926.pdf",
+  "https://cjgalati.ro/wp-content/uploads/2026/09/hot276-290926.pdf",
+  "https://cjgalati.ro/wp-content/uploads/2026/09/hot275-290926.pdf",
+  "https://cjgalati.ro/wp-content/uploads/2026/09/hot274-290926.pdf",
+  "https://cjgalati.ro/wp-content/uploads/2026/09/hot272-290926.pdf",
+  "https://cjgalati.ro/wp-content/uploads/2026/09/hot271-290926.pdf",
+  "https://cjgalati.ro/wp-content/uploads/2026/09/hot269-290926.pdf",
+  "https://cjgalati.ro/wp-content/uploads/2026/09/hot268-290926.pdf",
+  "https://cjgalati.ro/wp-content/uploads/2026/09/hot265-290926.pdf",
+  "https://cjgalati.ro/wp-content/uploads/2026/09/hot264-290926.pdf"
+ ],
+ "titles": {
+  "https://cjgalati.ro/wp-content/uploads/2026/09/hot279-290926.pdf": "Citeste",
+  "https://cjgalati.ro/wp-content/uploads/2026/09/hot278-290926.pdf": "Citeste",
+  "https://cjgalati.ro/wp-content/uploads/2026/09/hot277-290926.pdf": "Citeste",
+  "https://cjgalati.ro/wp-content/uploads/2026/09/hot276-290926.pdf": "Citeste",
+  "https://cjgalati.ro/wp-content/uploads/2026/09/hot275-290926.pdf": "Citeste",
+  "https://cjgalati.ro/wp-content/uploads/2026/09/hot274-290926.pdf": "Citeste",
+  "https://cjgalati.ro/wp-content/uploads/2026/09/hot272-290926.pdf": "Citeste",
+  "https://cjgalati.ro/wp-content/uploads/2026/09/hot271-290926.pdf": "Citeste",
+  "https://cjgalati.ro/wp-content/uploads/2026/09/hot269-290926.pdf": "Citeste",
+  "https://cjgalati.ro/wp-content/uploads/2026/09/hot268-290926.pdf": "Citeste",
+  "https://cjgalati.ro/wp-content/uploads/2026/09/hot265-290926.pdf": "Citeste",
+  "https://cjgalati.ro/wp-content/uploads/2026/09/hot264-290926.pdf": "Citeste"
+ }
+}

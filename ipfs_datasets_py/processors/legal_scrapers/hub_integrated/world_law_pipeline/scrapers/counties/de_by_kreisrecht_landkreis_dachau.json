@@ -1,0 +1,34 @@
+{
+ "country_code": "DE",
+ "place_id": "wd:Q10500",
+ "qid": "Q10500",
+ "place_name": "Landkreis Dachau",
+ "iso_3166_2": "DE-BY",
+ "admin_level": "landkreis",
+ "language": "de",
+ "doc_type": "ordinance",
+ "platform": "de_by_kreisrecht",
+ "source_org": "Landkreis Dachau",
+ "index_url": "https://www.landratsamt-dachau.de/Aktuelles/Amtsbl%C3%A4tter/",
+ "max_bytes": 52428800,
+ "urls": [
+  "https://www.landratsamt-dachau.de/loadDocument.phtml?FID=4225.9860.1&Ext=PDF",
+  "https://www.landratsamt-dachau.de/loadDocument.phtml?FID=4225.9668.1&Ext=PDF",
+  "https://www.landratsamt-dachau.de/loadDocument.phtml?FID=4225.10077.1&Ext=PDF",
+  "https://www.landratsamt-dachau.de/loadDocument.phtml?FID=4225.9749.1&Ext=PDF",
+  "https://www.landratsamt-dachau.de/loadDocument.phtml?FID=4225.10307.1&Ext=PDF",
+  "https://www.landratsamt-dachau.de/loadDocument.phtml?FID=4225.9525.1&Ext=PDF",
+  "https://www.landratsamt-dachau.de/loadDocument.phtml?FID=4225.9498.1&Ext=PDF",
+  "https://www.landratsamt-dachau.de/loadDocument.phtml?FID=4225.9485.1&Ext=PDF"
+ ],
+ "titles": {
+  "https://www.landratsamt-dachau.de/loadDocument.phtml?FID=4225.9860.1&Ext=PDF": "‌ Allgemeinverfügung des Landratsamts Dachau vom 15.06.2020 : Datei in neuem Fenster öffnen ( PDF, 236 kB ) Beschreibung: ‌ über die Verwendung von Schalldämpfern zur Jagdausübung",
+  "https://www.landratsamt-dachau.de/loadDocument.phtml?FID=4225.9668.1&Ext=PDF": "‌ Merkblatt: Tonnengrößen, Maße und Gebühren : Datei in neuem Fenster öffnen ( PDF, 139 kB ) Beschreibung: ‌ (die Datei ist nicht barrierefrei)",
+  "https://www.landratsamt-dachau.de/loadDocument.phtml?FID=4225.10077.1&Ext=PDF": "‌ Merkblatt: Tonnengrößen, Maße und Gebühren : Datei in neuem Fenster öffnen ( PDF, 139 kB ) Beschreibung: ‌ (die Datei ist nicht barrierefrei)",
+  "https://www.landratsamt-dachau.de/loadDocument.phtml?FID=4225.9749.1&Ext=PDF": "‌ Flyer: Recyclinghöfe - das können Sie abgeben (Infos zu Menge und Gebühren) : Datei in neuem Fenster öffnen ( PDF, 1.2 MB ) Beschreibung: ‌ (die Datei ist nicht barrierefrei)",
+  "https://www.landratsamt-dachau.de/loadDocument.phtml?FID=4225.10307.1&Ext=PDF": "‌ Änderung der Abfallwirtschaftssatzung zum 01.08.2023 : Datei in neuem Fenster öffnen ( PDF, 95 kB ) © ‌ Landratsamt Dachau",
+  "https://www.landratsamt-dachau.de/loadDocument.phtml?FID=4225.9525.1&Ext=PDF": "‌ Abfallgebührensatzung ab 01.01.2023 : Datei in neuem Fenster öffnen ( PDF, 138 kB ) © ‌ Landratsamt Dachau",
+  "https://www.landratsamt-dachau.de/loadDocument.phtml?FID=4225.9498.1&Ext=PDF": "‌ Änderung der Abfallwirtschaftssatzung ab 01.11.2003 : Datei in neuem Fenster öffnen ( PDF, 62 kB ) © ‌ Landratsamt Dachau",
+  "https://www.landratsamt-dachau.de/loadDocument.phtml?FID=4225.9485.1&Ext=PDF": "‌ Abfallwirtschaftssatzung ab 01.01.2002 : Datei in neuem Fenster öffnen ( PDF, 244 kB ) © ‌ Landratsamt Dachau"
+ }
+}

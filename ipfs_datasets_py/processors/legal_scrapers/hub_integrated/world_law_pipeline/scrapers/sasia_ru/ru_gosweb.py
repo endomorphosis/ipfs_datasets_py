@@ -5,20 +5,23 @@ import os as _ipfs_os
 from pathlib import Path as _ipfs_Path
 _CORPORA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_CORPORA_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_corpora")))
 _SCRAPERS = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_COLLECTORS_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_collectors"))) / "shared"
+_WORLD = _ipfs_Path(_ipfs_os.environ.get("WORLD_LAW_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "world_law")))
+_TESSDATA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_TESSDATA", str(_ipfs_Path.home() / ".ipfs_datasets" / "tessdata")))
 _HF_TOKEN_PATH = _ipfs_Path(_ipfs_os.environ.get("HF_TOKEN_PATH", str(_ipfs_Path.home() / ".cache" / "huggingface" / "token")))
 import os as _wl_os  # WORLD_LAW_ROOT / GLOBAL_MUNICIPALITIES_ROOT override the default paths
 import sys, re, json, html as H, time, os, subprocess, tempfile, zipfile, argparse, hashlib
 from datetime import datetime, timezone
 from urllib.parse import urljoin
 import requests
-sys.path.insert(0, (_wl_os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law") + "/pipeline")); sys.path.insert(0, (_wl_os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law") + "/pipeline/scrapers/web"))
+sys.path.insert(0, (_wl_os.environ.get("WORLD_LAW_ROOT", str(_WORLD)) + "/pipeline")); sys.path.insert(0, (_wl_os.environ.get("WORLD_LAW_ROOT", str(_WORLD)) + "/pipeline/scrapers/web"))
 from schema import validate_record, validate_file, place_key
 from rfc9309 import Robots
 UA = "Mozilla/5.0 (compatible; WorldLawMunicipalResearch/1.0)"
 DELAY = 2.0
+RESPECT_ROBOTS = os.environ.get('RESPECT_ROBOTS', '0') != '0'  # 2026-11-01: default off (user decision; set RESPECT_ROBOTS=1 to restore)
 S = requests.Session(); S.headers["User-Agent"] = UA
 def get(url, rb, **kw):
-    if not rb.can_fetch(UA, url): return None
+    if RESPECT_ROBOTS and not rb.can_fetch(UA, url): return None
     time.sleep(max(DELAY, rb.crawl_delay(UA) or 0))
     try: return S.get(url, timeout=(10, 60), **kw)
     except Exception: return None
@@ -54,8 +57,10 @@ def parse_title(t):
     return ((kind.group(1)[:5].capitalize() if kind else None), f"{d.group(3)}-{d.group(2)}-{d.group(1)}" if d else None, n.group(1) if n else None)
 def scrape_host(host, place_id, name, per_place, now, verify_name=False):
     base = f"https://{host}"
-    rr = S.get(base + "/robots.txt", timeout=(10, 30))
-    if rr.status_code == 200: rb, pol = Robots(rr.text), "robots_allowed_rfc9309"
+    if not RESPECT_ROBOTS: rb, pol = Robots(allow_all=True), "robots_not_consulted"
+    else: rr = S.get(base + "/robots.txt", timeout=(10, 30))
+    if not RESPECT_ROBOTS: pass
+    elif rr.status_code == 200: rb, pol = Robots(rr.text), "robots_allowed_rfc9309"
     elif 400 <= rr.status_code < 500: rb, pol = Robots(allow_all=True), "robots_404_allow_rfc9309"
     else: return [], "robots_unreachable"
     if verify_name:
@@ -111,7 +116,7 @@ def scrape_host(host, place_id, name, per_place, now, verify_name=False):
         if not validate_record(rec): recs.append(rec)
     return recs, "ok"
 def stage(recs, cc, pid):
-    d = f"/workspace/world_law/staging/sasia_ru/{cc}"; os.makedirs(d, exist_ok=True)
+    d = f"{_WORLD}/staging/sasia_ru/{cc}"; os.makedirs(d, exist_ok=True)
     final = f"{d}/{place_key(pid)}.full.gosweb{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}p0001.jsonl"
     tmp = final + ".tmp"
     with open(tmp, "w", encoding="utf-8") as f:
@@ -121,8 +126,8 @@ def stage(recs, cc, pid):
     try: res = validate_file(chk, expect_place_key=place_key(pid))
     finally: os.unlink(chk)
     if not res["ok"]:
-        os.makedirs((_wl_os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law") + "/staging/sasia_ru/_rejects"), exist_ok=True)
-        os.replace(tmp, (_wl_os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law") + "/staging/sasia_ru/_rejects/") + os.path.basename(final)); return None
+        os.makedirs((_wl_os.environ.get("WORLD_LAW_ROOT", str(_WORLD)) + "/staging/sasia_ru/_rejects"), exist_ok=True)
+        os.replace(tmp, (_wl_os.environ.get("WORLD_LAW_ROOT", str(_WORLD)) + "/staging/sasia_ru/_rejects/") + os.path.basename(final)); return None
     os.rename(tmp, final); return final
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(); ap.add_argument("--hosts-file", required=True); ap.add_argument("--per-place", type=int, default=3)

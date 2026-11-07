@@ -1,0 +1,38 @@
+{
+ "country_code": "DE",
+ "place_id": "wd:Q10544",
+ "qid": "Q10544",
+ "place_name": "Landkreis München",
+ "iso_3166_2": "DE-BY",
+ "admin_level": "landkreis",
+ "language": "de",
+ "doc_type": "ordinance",
+ "platform": "de_by_kreisrecht",
+ "source_org": "Landkreis München",
+ "index_url": "https://www.landkreis-muenchen.de/landratsamt/veroeffentlichungen/bekanntmachungen/",
+ "max_bytes": 52428800,
+ "urls": [
+  "https://www.landkreis-muenchen.de/fileadmin/files/amtsblatt/Amtsblatt_36_2026.pdf",
+  "https://www.landkreis-muenchen.de/fileadmin/files/amtsblatt/Amtsblatt_35_2026.pdf",
+  "https://www.landkreis-muenchen.de/fileadmin/files/amtsblatt/Amtsblatt_34_2026.pdf",
+  "https://www.landkreis-muenchen.de/fileadmin/files/amtsblatt/Amtsblatt_33_2026.pdf",
+  "https://www.landkreis-muenchen.de/fileadmin/files/amtsblatt/Amtsblatt_32_2026.pdf",
+  "https://www.landkreis-muenchen.de/fileadmin/files/amtsblatt/Amtsblatt_31_2026.pdf",
+  "https://www.landkreis-muenchen.de/fileadmin/files/amtsblatt/Amtsblatt_30_2026.pdf",
+  "https://www.landkreis-muenchen.de/fileadmin/files/amtsblatt/Amtsblatt_29_2026.pdf",
+  "https://www.landkreis-muenchen.de/fileadmin/files/amtsblatt/Amtsblatt_28_2026.pdf",
+  "https://www.landkreis-muenchen.de/fileadmin/files/amtsblatt/Amtsblatt_27_2026.pdf"
+ ],
+ "titles": {
+  "https://www.landkreis-muenchen.de/fileadmin/files/amtsblatt/Amtsblatt_36_2026.pdf": "Amtsblatt 36 / 2026 Landkreis München",
+  "https://www.landkreis-muenchen.de/fileadmin/files/amtsblatt/Amtsblatt_35_2026.pdf": "Amtsblatt 35 / 2026",
+  "https://www.landkreis-muenchen.de/fileadmin/files/amtsblatt/Amtsblatt_34_2026.pdf": "Amtsblatt Nr. 34 / 2026 Landkreis München",
+  "https://www.landkreis-muenchen.de/fileadmin/files/amtsblatt/Amtsblatt_33_2026.pdf": "Amtsblatt Nr. 33 / 2026 Landkreis München",
+  "https://www.landkreis-muenchen.de/fileadmin/files/amtsblatt/Amtsblatt_32_2026.pdf": "Amtsblatt_32_2026.",
+  "https://www.landkreis-muenchen.de/fileadmin/files/amtsblatt/Amtsblatt_31_2026.pdf": "Amtsblatt Nr. 31 / 2026 Landkreis München",
+  "https://www.landkreis-muenchen.de/fileadmin/files/amtsblatt/Amtsblatt_30_2026.pdf": "Amtsblatt_30_2026.",
+  "https://www.landkreis-muenchen.de/fileadmin/files/amtsblatt/Amtsblatt_29_2026.pdf": "Amtsblatt 29 / 2026 Landkreis München",
+  "https://www.landkreis-muenchen.de/fileadmin/files/amtsblatt/Amtsblatt_28_2026.pdf": "Amtsblatt 28 / 2026 Landkreis München",
+  "https://www.landkreis-muenchen.de/fileadmin/files/amtsblatt/Amtsblatt_27_2026.pdf": "Amtsblatt_27_2026."
+ }
+}

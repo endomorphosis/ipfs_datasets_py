@@ -4,6 +4,15 @@ Each spec: cc, platform, language, queries [(url, matchType, wayback_filters)], 
 group 1 = stable key), exclude, place(url, key, text, title) -> (place_id, place_name, iso_3166_2, admin_level)
 or None (skip), doc_type, consolidated, hf_key (regex applied to HF source_urls for dedupe), selectors.
 """
+# Harvested collector path injection. Do not collect from /workspace.
+import os as _ipfs_os
+from pathlib import Path as _ipfs_Path
+_CORPORA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_CORPORA_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_corpora")))
+_SCRAPERS = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_COLLECTORS_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_collectors"))) / "shared"
+_WORLD = _ipfs_Path(_ipfs_os.environ.get("WORLD_LAW_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "world_law")))
+_TESSDATA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_TESSDATA", str(_ipfs_Path.home() / ".ipfs_datasets" / "tessdata")))
+_HF_TOKEN_PATH = _ipfs_Path(_ipfs_os.environ.get("HF_TOKEN_PATH", str(_ipfs_Path.home() / ".cache" / "huggingface" / "token")))
+import os as _wl_os  # WORLD_LAW_ROOT / GLOBAL_MUNICIPALITIES_ROOT override the default paths
 import re
 from places import (AT_ABFRAGE, AT_DOCPREFIX, VN, ke_county, id_province_from_slug, in_state, norm, ru_place as _ru,
                     kz_place)
@@ -102,6 +111,20 @@ def in_place(url, key, text, title):
         return ("iso:IN", "India", None, "country")  # central act (beyond HF's 849 if not de-duplicated)
     return None
 
+
+
+LII_DIR = (_wl_os.environ.get("WORLD_LAW_ROOT", str(_WORLD)) + "/staging/national/_work/LII")
+LII_SIGNAL = "Content-Signal: ai-train=no, search=yes, ai-input=no"   # raw line, User-agent: * group (all 3 sites)
+# group 1 = AKN work URI '<cc>/act/[<subtype>/]<year>/<num>' (expression @date, /eng, /source.pdf stripped)
+LII_INC = r"(?i){host}(?::\d+)?/(?:en/|sw/|fr/)?akn/({cc}/act/(?:[a-z]+/)?\d{{4}}/[^/@?#]+)(?:/[a-z]{{3}}@[\d-]*)?(?:/source(?:\.pdf)?)?/?$"
+LII_COMMON = dict(language="en", doc_type="statute", consolidated=True, keep_caps=3,
+    follow_pdf=r"(?i)(/source(\.pdf)?|\.pdf)$",
+    selectors=["la-akoma-ntoso", "div.akn-akomaNtoso", "div.document-content", "#document-content"],
+    reject_body=r"(?i)<title>Just a moment|cf-chl|challenge-platform", min_chars=200,
+    policy_tags=["archived_blocked_live", "content_signal_ai_train_no"],
+    extra_meta={"content_signal": LII_SIGNAL, "content_signal_ai_train": "no",
+                "live_status": "HTTP 403 Cloudflare challenge to honest UA (2026-10-23); archive-only",
+                "source_official": False, "source_org": "Laws.Africa / AfricanLII (Peachjam)"})
 
 SPECS = {
     "MX_leyesbiblio": dict(cc="MX", platform="mx_diputados_leyesbiblio", language="es", doc_type="statute", consolidated=True,
@@ -231,4 +254,25 @@ SPECS = {
         include=r"(?i)bo\.io\.gov\.mo(?::\d+)?/bo/(i/\d{4}/\d{2}/[\w.-]+\.asp)",
         exclude=r"(?i)/(?:index|bo)\.asp|_cn\.asp",
         place=NAT("MO"), min_chars=300),
+    # ---- African LIIs (Laws.Africa/Peachjam). Approved by Benjamin 2026-10-23: include with the sites' opt-out
+    # signal on every row. Live document pages return a Cloudflare challenge (HTTP 403, cf-mitigated) to our UA,
+    # so archive-only (Common Crawl first, then Wayback). Keys = AKN work URIs from the saved legislation sitemaps
+    # (staging/national/_work/LII/build_keys.py), only URLs the live robots.txt allows, national scope only
+    # (no regional aa-* instruments, no case law). TZ government notices are a separate target listed last.
+    "TZ_lii": dict(LII_COMMON, cc="TZ", platform="tz_tanzlii",
+        queries=[("tanzlii.org/akn/tz/act/", "prefix", None), ("tanzlii.org/en/akn/tz/act/", "prefix", None)],
+        include=LII_INC.format(host=r"tanzlii\.org", cc="tz"), place=NAT("TZ"),
+        allow_keys_file=LII_DIR + "/keys_tz_main.txt", skip_keys_files=[LII_DIR + "/skip_tz_polis.txt"]),
+    "GH_lii": dict(LII_COMMON, cc="GH", platform="gh_ghalii",
+        queries=[("ghalii.org/akn/gh/act/", "prefix", None), ("ghalii.org/en/akn/gh/act/", "prefix", None)],
+        include=LII_INC.format(host=r"ghalii\.org", cc="gh"), place=NAT("GH"),
+        allow_keys_file=LII_DIR + "/keys_gh_main.txt"),
+    "UG_lii": dict(LII_COMMON, cc="UG", platform="ug_ulii",
+        queries=[("ulii.org/akn/ug/act/", "prefix", None), ("ulii.org/en/akn/ug/act/", "prefix", None)],
+        include=LII_INC.format(host=r"ulii\.org", cc="ug"), place=NAT("UG"),
+        allow_keys_file=LII_DIR + "/keys_ug_main.txt"),
+    "TZ_lii_gn": dict(LII_COMMON, cc="TZ", platform="tz_tanzlii", doc_type="regulation",
+        queries=[("tanzlii.org/akn/tz/act/gn/", "prefix", None), ("tanzlii.org/en/akn/tz/act/gn/", "prefix", None)],
+        include=LII_INC.format(host=r"tanzlii\.org", cc="tz"), place=NAT("TZ"),
+        allow_keys_file=LII_DIR + "/keys_tz_gn.txt"),
 }

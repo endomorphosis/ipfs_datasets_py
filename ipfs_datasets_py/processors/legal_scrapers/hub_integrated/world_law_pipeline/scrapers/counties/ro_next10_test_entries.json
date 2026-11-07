@@ -1,0 +1,24 @@
+[
+ {
+  "name": "Județul Covasna",
+  "qsearch": "Covasna County",
+  "qid": "Q188959",
+  "url": "https://www.covasna.info.ro/ro/hotararile-consiliului-judetean-covasna-monitorul-oficial-local.html",
+  "iso": "RO-CV",
+  "follow_re": "/ro/hotarari-(anul-202[4-6]|nr-)",
+  "max_pages": 8,
+  "pdf_re": "/03_hatarozatok/20(2[4-6])/\\d+/ro/",
+  "slug": "județul_covasna_test"
+ },
+ {
+  "name": "Județul Satu Mare",
+  "slug": "județul_satu_mare_2026_deep_test",
+  "qsearch": "Satu Mare County",
+  "qid": "Q165459",
+  "url": "https://www.cjsm.ro/anul-2026-3",
+  "iso": "RO-SM",
+  "follow_re": "anul-2026-3\\?|/hotararea-nr\\d+2026",
+  "max_pages": 8,
+  "pdf_re": "/hcj\\d+-202[4-6]\\.pdf"
+ }
+]

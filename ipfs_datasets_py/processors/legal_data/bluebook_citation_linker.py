@@ -22,6 +22,7 @@ from ipfs_datasets_py.processors.legal_data.citation_extraction import (
     Citation,
     CitationExtractor,
 )
+from ipfs_datasets_py.processors.legal_data.citation_forms import canonical_reporter
 from ipfs_datasets_py.processors.legal_data.legal_source_recovery import (
     build_missing_citation_recovery_query,
 )
@@ -1284,6 +1285,10 @@ class BluebookCitationResolver:
                 if "No." in citation.text
                 else f"Pub. L. {citation.volume}-{citation.page}"
             )
+        if citation.type == "case" and citation.volume and citation.page and citation.reporter:
+            canonical = canonical_reporter(citation.reporter)
+            if canonical is not None:
+                return f"{citation.volume} {canonical} {citation.page}"
         return citation.text
 
     def _candidate_corpora(self, citation: Citation) -> List[str]:
@@ -1297,6 +1302,10 @@ class BluebookCitationResolver:
             return ["federal_register"]
         if citation.type == "public_law":
             return ["us_code", "federal_register", "caselaw_access_project"]
+        if citation.type == "rule":
+            return ["federal_rules"]
+        if citation.type == "journal":
+            return ["law_journals"]
         if citation.type == "state_statute":
             code_name = _normalize_text(citation.metadata.get("code_name"))
             if "court" in code_name or "rule" in code_name:

@@ -1,0 +1,24 @@
+{
+ "country_code": "DE",
+ "place_id": "wd:Q10523",
+ "qid": "Q10523",
+ "place_name": "Landkreis Miesbach",
+ "iso_3166_2": "DE-BY",
+ "admin_level": "landkreis",
+ "language": "de",
+ "doc_type": "ordinance",
+ "platform": "de_by_kreisrecht",
+ "source_org": "Landkreis Miesbach",
+ "archive_policy": "archived_live_404",
+ "max_bytes": 52428800,
+ "urls": [
+  "https://www.landkreis-miesbach.de/index.php?La=1&NavID=2823.768&object=med,2823.6890.1.PDF&kuo=1&call=0&sub=0",
+  "https://www.landkreis-miesbach.de/index.php?La=1&NavID=2823.768&object=med,2823.6871.1.PDF&kuo=1&call=0&sub=0",
+  "https://www.landkreis-miesbach.de/index.php?La=1&NavID=2823.155&object=med,2823.1698.1.PDF&kat=&kuo=1&call=0&sub=0"
+ ],
+ "titles": {
+  "https://www.landkreis-miesbach.de/index.php?La=1&NavID=2823.768&object=med,2823.6890.1.PDF&kuo=1&call=0&sub=0": "Wahlvorschläge",
+  "https://www.landkreis-miesbach.de/index.php?La=1&NavID=2823.768&object=med,2823.6871.1.PDF&kuo=1&call=0&sub=0": "Amtsblatt",
+  "https://www.landkreis-miesbach.de/index.php?La=1&NavID=2823.155&object=med,2823.1698.1.PDF&kat=&kuo=1&call=0&sub=0": "Anzeige (2020 NEU) - Besitz Magazine"
+ }
+}

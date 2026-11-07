@@ -1,0 +1,27 @@
+{
+ "country_code": "FR",
+ "place_id": "wd:Q12626",
+ "qid": "Q12626",
+ "place_name": "Meurthe-et-Moselle",
+ "iso_3166_2": "FR-54",
+ "admin_level": "departement",
+ "language": "fr",
+ "doc_type": "gazette_act",
+ "consolidated": false,
+ "platform": "fr_raa_conseil_departemental",
+ "source_org": "Conseil départemental — Meurthe-et-Moselle",
+ "issuer": "conseil_departemental",
+ "max_bytes": 52428800,
+ "index_url": "https://delib.meurthe-et-moselle.fr/webdelibplus/jsp/seance_agenda.jsp?date=30-03-2026&assembly=Session&type=apres&role=usager",
+ "crawl_delay": 3.0,
+ "urls": [
+  "https://delib.meurthe-et-moselle.fr/webdelibplus/jsp/downloadFile.jsp?pdf=%2BJWvjYrd%2FsZhNFDFjWHHVcJKjGD4RQ3XW5PiSAkzmYlWVuW6r7O1INPWm6HFUZQhVSng9%2FRR6reYINYYMk4ysa55VFyaJwEuqU%2FOzl2xP1%2Byrb%2FCvHl7D%2Bwq7vLpv%2Fl5BgSSMeDB1Uktx46lyE0aeA%3D%3D",
+  "https://delib.meurthe-et-moselle.fr/webdelibplus/jsp/downloadFile.jsp?pdf=%2BJWvjYrd%2FsZhNFDFjWHHVcJKjGD4RQ3XW5PiSAkzmYlWVuW6r7O1INPWm6HFUZQhVSng9%2FRR6reYINYYMk4ysa55VFyaJwEuqU%2FOzl2xP1%2Byrb%2FCvHl7D88Y2OUu8xpnQCRHSE%2FDRgEtx46lyE0aeA%3D%3D",
+  "https://delib.meurthe-et-moselle.fr/webdelibplus/jsp/downloadFile.jsp?pdf=%2BJWvjYrd%2FsZhNFDFjWHHVcJKjGD4RQ3XW5PiSAkzmYlWVuW6r7O1INPWm6HFUZQhVSng9%2FRR6reYINYYMk4ysa55VFyaJwEuqU%2FOzl2xP1%2Byrb%2FCvHl7D%2Btvt26UQqkwqsLtVKEe0kEtx46lyE0aeA%3D%3D"
+ ],
+ "titles": {
+  "https://delib.meurthe-et-moselle.fr/webdelibplus/jsp/downloadFile.jsp?pdf=%2BJWvjYrd%2FsZhNFDFjWHHVcJKjGD4RQ3XW5PiSAkzmYlWVuW6r7O1INPWm6HFUZQhVSng9%2FRR6reYINYYMk4ysa55VFyaJwEuqU%2FOzl2xP1%2Byrb%2FCvHl7D%2Bwq7vLpv%2Fl5BgSSMeDB1Uktx46lyE0aeA%3D%3D": "2026-136 4 - Mission Développement et Attractivité 41 - Attractivité, Développement, Économie solidaire - Délibération - (sans annexe) 03/04/2026 03/04/2026",
+  "https://delib.meurthe-et-moselle.fr/webdelibplus/jsp/downloadFile.jsp?pdf=%2BJWvjYrd%2FsZhNFDFjWHHVcJKjGD4RQ3XW5PiSAkzmYlWVuW6r7O1INPWm6HFUZQhVSng9%2FRR6reYINYYMk4ysa55VFyaJwEuqU%2FOzl2xP1%2Byrb%2FCvHl7D88Y2OUu8xpnQCRHSE%2FDRgEtx46lyE0aeA%3D%3D": "2026-137 4 - Mission Développement et Attractivité 42 - Agriculture - Délibération - (sans annexe) 03/04/2026 03/04/2026",
+  "https://delib.meurthe-et-moselle.fr/webdelibplus/jsp/downloadFile.jsp?pdf=%2BJWvjYrd%2FsZhNFDFjWHHVcJKjGD4RQ3XW5PiSAkzmYlWVuW6r7O1INPWm6HFUZQhVSng9%2FRR6reYINYYMk4ysa55VFyaJwEuqU%2FOzl2xP1%2Byrb%2FCvHl7D%2Btvt26UQqkwqsLtVKEe0kEtx46lyE0aeA%3D%3D": "2026-138 4 - Mission Développement et Attractivité 44 - Tourisme - Délibération - (sans annexe) 03/04/2026 03/04/2026"
+ }
+}

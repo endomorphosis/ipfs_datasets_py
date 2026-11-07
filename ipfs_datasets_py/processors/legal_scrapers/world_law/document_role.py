@@ -122,12 +122,66 @@ def _compact(value: str) -> str:
     return _WS.sub(" ", value).strip().casefold()
 
 
+_NUMBERED_SECTION = re.compile(r"^[0-9]{1,4}(?:\s+[a-z])?\s*§(?![:a-z])")
+_KO_COMMENCEMENT = re.compile(
+    r"^제([0-9]+)조(?:의([0-9]+))?(?:\([^)]{1,30}\))?\s+"
+    r"이 (?:법|영|규칙)은 .+부터 시행한다\.?$"
+)
+_CHAPTER_BANNER = re.compile(r"(?i)^[0-9]+\s+(?:luku|kapitel|kap)\b\.?")
+_SECTION_LABEL = re.compile(r"^[0-9]{1,4}(?:\s+[a-z])?\s*§\s*")
+_REPEAL_REST = re.compile(r"(?i)^(?:on kumottu|har upphävts)\b")
+
+
+def section_repeal_note(text: str) -> bool:
+    """True when the remaining lines are only a Finnish or Swedish repeal note."""
+
+    kept: list[str] = []
+    for raw in text.splitlines():
+        line = raw.strip()
+        if not line or _CHAPTER_BANNER.match(line):
+            continue
+        kept.append(line)
+    body = " ".join(kept).strip()
+    if not body or len(body) > 220:
+        return False
+    rest = _SECTION_LABEL.sub("", body, count=1).strip()
+    return _REPEAL_REST.match(rest) is not None
+
+
+def _opens_numbered_section(text: str) -> bool:
+    return _NUMBERED_SECTION.match(text) is not None
+
+
+def korean_commencement_line(text: str) -> re.Match[str] | None:
+    """A sole Korean effective-date article, not an omission or a deletion.
+
+    ``제1조(시행일) 이 법은 공포한 날부터 시행한다.`` is that article.
+    ``제7조 생략`` and ``제14조 삭제`` are not.
+    """
+
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    if len(lines) != 1:
+        return None
+    if any(word in lines[0] for word in ("생략", "삭제", "부칙", "단서")):
+        return None
+    return _KO_COMMENCEMENT.match(lines[0])
+
+
 def _title_shell(text: str, title: str) -> bool:
     folded_title = _compact(title)
     folded_text = _compact(text)
     if len(folded_title) < 24 or not folded_text:
         return False
-    return folded_text == folded_title or folded_text == f"{folded_title} {folded_title}"
+    if folded_text != folded_title and folded_text != f"{folded_title} {folded_title}":
+        return False
+    # The country row stored the section itself in the title. That is the
+    # statute, not a catalog card. A repeal note stays a card.
+    if _opens_numbered_section(folded_text) and not section_repeal_note(text):
+        return False
+    # The country row stored the effective-date article in the title.
+    if korean_commencement_line(text) is not None:
+        return False
+    return True
 
 
 def _structural_headings(text: str, language: str) -> int:

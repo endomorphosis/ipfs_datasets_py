@@ -34,6 +34,8 @@ import os as _ipfs_os
 from pathlib import Path as _ipfs_Path
 _CORPORA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_CORPORA_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_corpora")))
 _SCRAPERS = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_COLLECTORS_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_collectors"))) / "shared"
+_WORLD = _ipfs_Path(_ipfs_os.environ.get("WORLD_LAW_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "world_law")))
+_TESSDATA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_TESSDATA", str(_ipfs_Path.home() / ".ipfs_datasets" / "tessdata")))
 _HF_TOKEN_PATH = _ipfs_Path(_ipfs_os.environ.get("HF_TOKEN_PATH", str(_ipfs_Path.home() / ".cache" / "huggingface" / "token")))
 import os as _wl_os  # WORLD_LAW_ROOT / GLOBAL_MUNICIPALITIES_ROOT override the default paths
 import argparse, glob, hashlib, json, os, re, shutil, sys, threading, time, urllib.robotparser
@@ -43,10 +45,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import urlparse
 import requests
-sys.path.insert(0, (_wl_os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law") + "/pipeline")); sys.path.insert(0, (_wl_os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law") + "/ocr"))
+sys.path.insert(0, (_wl_os.environ.get("WORLD_LAW_ROOT", str(_WORLD)) + "/pipeline")); sys.path.insert(0, (_wl_os.environ.get("WORLD_LAW_ROOT", str(_WORLD)) + "/ocr"))
 from schema import place_key as _place_key  # noqa: E402
+sys.path.insert(0, (_wl_os.environ.get("WORLD_LAW_ROOT", str(_WORLD)) + "/pipeline/tools"))
+import batch_alloc as BA  # noqa: E402  shared collision-safe batch numbering (Normalizer)
 
-WL = Path(_wl_os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law"))
+WL = Path(_wl_os.environ.get("WORLD_LAW_ROOT", str(_WORLD)))
 ROOT = WL / "staging/pdf"; MAN, STATE, LOGS = ROOT / "_manifest", ROOT / "_state", ROOT / "_logs"
 UA = "world-municipal-law-research/1.0 (PDF collection; open-data reuse; ~1 req/s per host)"
 UA_TOKEN = "world-municipal-law-research"
@@ -459,10 +463,29 @@ def _chain_sweep():
         if it["doc_id"] in seen: continue
         seen.add(it["doc_id"]); yield it
 
+NATIONAL_TZ = WL / "staging/national/_work/TZ/ocr_candidates.tsv"
+NAT_STATS = Counter()
+def load_national():
+    """Lane 'national': National scraper's no-text-layer national Acts (TSV doc_id,url,title_en,act_no,year,reason).
+    TZ (polis.bunge.go.tz): place_id iso:TZ -> place_key iso_TZ (SCHEMA.md §3 national level); doc_id kept verbatim
+    so it lines up with staging/national/TZ. Policy derived from live robots at fetch time."""
+    import csv
+    NAT_STATS.clear(); seen = set()
+    if not NATIONAL_TZ.exists(): return
+    with open(NATIONAL_TZ, encoding="utf-8", newline="") as f:
+        for e in csv.DictReader(f, delimiter="\t"):
+            did, u = (e.get("doc_id") or "").strip(), (e.get("url") or "").strip()
+            if not did: NAT_STATS["no_doc_id"] += 1; continue
+            if not u.lower().startswith(("http://", "https://")): NAT_STATS["bad_url"] += 1; continue
+            if did in seen: NAT_STATS["dup_doc_id"] += 1; continue
+            seen.add(did); NAT_STATS["ok"] += 1
+            yield item("national", did, "iso:TZ", "TZ", u, None, [("live", u)], derive_policy=True,
+                       extra_row={k: e[k] for k in ("title_en", "act_no", "year") if e.get(k)})
+
 LOADERS = {"ro": lambda: load_council("ro"), "gb": lambda: load_council("gb"), "afme": load_afme,
            "afme_lane": load_afme_lane, "sasia": load_sasia, "ph": load_ph, "pk_sd": load_pk_sd,
            "sasia_np": load_sasia_np, "eap": load_eap, "sweep": lambda: _chain_sweep(),
-           "asia_latam": load_asia_latam, "states": load_states, "ukie": load_ukie}
+           "asia_latam": load_asia_latam, "states": load_states, "ukie": load_ukie, "national": load_national}
 OLD_LOADERS = {"my_kedah": load_my_kedah, "eap_odm": load_eap_odm}   # superseded by 'eap' (kept for --lanes)
 
 OCR = WL / "staging/ocr"
@@ -707,15 +730,34 @@ def main():
             for k in keys: f.write(k + "\n"); done.add(k)
     def key(it): return f"{it['lane']}|{it['place_id'] or ''}|{it['doc_id']}" + (f"|{it['key_extra']}" if it.get("key_extra") else "")
 
-    # recover a batch left open by a crash (rows were fsynced): seal it as-is
+    # recover a batch left open by a crash (rows were fsynced): seal it via the shared allocator. Only our own tmps:
+    # every row from one of our lanes and no other live process holding the file open (other writers' open batches).
+    def held_by_other(path):
+        rp = str(path.resolve())
+        for d in glob.glob("/proc/[0-9]*/fd"):
+            if d.split("/")[2] == str(os.getpid()): continue
+            try:
+                for fd in os.listdir(d):
+                    try:
+                        if os.readlink(f"{d}/{fd}") == rp: return True
+                    except OSError: pass
+            except OSError: pass
+        return False
+    our_lanes = set(LOADERS) | set(OLD_LOADERS)
     for t in sorted(MAN.glob("batch_*.jsonl.tmp")):
-        rows = [r for r in jl(t) if (ROOT / (r.get("pdf_file") or f"{r['country_code']}/{r['place_key']}/{safe(r['doc_id'])}.pdf")).exists()]
-        fin = t.with_name(t.name[:-4])
-        with open(t.with_name(t.name + ".rec"), "w") as f:
+        allrows = list(jl(t))
+        if not allrows or held_by_other(t) or any(r.get("lane") not in our_lanes for r in allrows):
+            ev(f"recovery: leaving {t.name} alone (empty, open elsewhere, or another lane's)"); continue
+        rows = [r for r in allrows if (ROOT / (r.get("pdf_file") or f"{r['country_code']}/{r['place_key']}/{safe(r['doc_id'])}.pdf")).exists()]
+        if not rows: ev(f"recovery: {t.name} has no rows with files on disk; left in place"); continue
+        n0 = int(re.match(r"batch_(\d+)", t.name).group(1))
+        rec = t.with_name(t.name + ".rec")
+        with open(rec, "w", encoding="utf-8") as f:
             for r in rows: f.write(json.dumps(r, ensure_ascii=False) + "\n")
             f.flush(); os.fsync(f.fileno())
-        os.rename(t.with_name(t.name + ".rec"), fin); t.unlink(); fin.with_suffix(".ready").write_text("")
-        mark(f"{r['lane']}|{r['place_id'] or ''}|{r['doc_id']}" for r in rows); ev(f"recovered {fin.name} rows={len(rows)}")
+        os.replace(rec, t)                                      # tmp now holds only rows whose PDFs exist
+        n = BA.seal_batch(MAN, n0, t)                           # link (no overwrite) -> .ready O_EXCL last
+        mark(f"{r['lane']}|{r['place_id'] or ''}|{r['doc_id']}" for r in rows); ev(f"recovered batch_{n:04d}.jsonl (from {t.name}) rows={len(rows)}")
 
     queued = set()
     def is_done(it):
@@ -782,18 +824,18 @@ def main():
     skipf = open(LOGS / "skipped.jsonl", "a", encoding="utf-8"); fetf = open(LOGS / "fetched.jsonl", "a", encoding="utf-8")
     reserved = [0]
     def open_batch():
-        cur["f"] = open(MAN / f"batch_{bn[0]:04d}.jsonl.tmp", "a", encoding="utf-8")
+        bn[0], cur["tmp"], cur["f"] = BA.open_new_batch(MAN)
+        ev(f"opened batch_{bn[0]:04d}.jsonl.tmp")
     def seal():
         if not cur["rows"]: return
         cur["f"].flush(); os.fsync(cur["f"].fileno()); cur["f"].close()
-        t = MAN / f"batch_{bn[0]:04d}.jsonl.tmp"; fin = MAN / f"batch_{bn[0]:04d}.jsonl"
-        os.rename(t, fin)
-        rd = MAN / f"batch_{bn[0]:04d}.ready"; rdt = rd.with_name(rd.name + ".tmp")
+        n0 = bn[0]; bn[0] = BA.seal_batch(MAN, n0, cur["tmp"])           # never overwrites; .ready written LAST
+        if bn[0] != n0: ev(f"batch_{n0:04d} taken by another writer; sealed as batch_{bn[0]:04d}")
+        fin = MAN / f"batch_{bn[0]:04d}.jsonl"
         ev(f"batch {fin.name} lanes={dict(Counter(r['lane'] for r in cur['rows']))}")
-        rdt.write_text(""); os.rename(rdt, rd)        # empty marker, written LAST (PDF_STAGING.md §3)
         mark(cur["keys"])
         ev(f"sealed {fin.name} rows={len(cur['rows'])} bytes={cur['bytes']}"); sealed[0] += 1
-        bn[0] += 1; cur.update(rows=[], keys=[], bytes=0, f=None)
+        cur.update(rows=[], keys=[], bytes=0, f=None, tmp=None)
     def skip(it, reason, detail="", terminal=True):
         stats["skip_" + reason] += 1; skipped_b[(it["lane"], reason)] += 1
         skipf.write(json.dumps({"ts": utcnow(), "lane": it["lane"], "doc_id": it["doc_id"], "place_id": it["place_id"],

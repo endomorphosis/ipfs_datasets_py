@@ -12,6 +12,8 @@ import os as _ipfs_os
 from pathlib import Path as _ipfs_Path
 _CORPORA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_CORPORA_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_corpora")))
 _SCRAPERS = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_COLLECTORS_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_collectors"))) / "shared"
+_WORLD = _ipfs_Path(_ipfs_os.environ.get("WORLD_LAW_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "world_law")))
+_TESSDATA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_TESSDATA", str(_ipfs_Path.home() / ".ipfs_datasets" / "tessdata")))
 _HF_TOKEN_PATH = _ipfs_Path(_ipfs_os.environ.get("HF_TOKEN_PATH", str(_ipfs_Path.home() / ".cache" / "huggingface" / "token")))
 import os as _wl_os  # WORLD_LAW_ROOT / GLOBAL_MUNICIPALITIES_ROOT override the default paths
 import argparse, csv, hashlib, json, logging, os, re, sys, unicodedata
@@ -20,12 +22,12 @@ from pathlib import Path
 from urllib.parse import urljoin
 from bs4 import BeautifulSoup
 HERE = Path(__file__).resolve().parent
-sys.path.insert(0, (_wl_os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law") + "/pipeline")); sys.path.insert(0, str(HERE.parent / "es"))
+sys.path.insert(0, (_wl_os.environ.get("WORLD_LAW_ROOT", str(_WORLD)) + "/pipeline")); sys.path.insert(0, str(HERE.parent / "es"))
 import schema as S  # noqa: E402
-from es_bop import Fetcher, Blocked, pdf_text  # noqa: E402
+from es_bop import Fetcher, Blocked, pdf_text, RP  # noqa: E402
 
 BASE = "https://ojp.puebla.gob.mx"
-STAGE = Path((_wl_os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law") + "/staging/asia_latam"))
+STAGE = Path((_wl_os.environ.get("WORLD_LAW_ROOT", str(_WORLD)) + "/staging/asia_latam"))
 OUT, QUAR, UNM, STATE = STAGE / "MX", STAGE / "_quarantine" / "MX", STAGE / "_unmatched" / "MX", STAGE / "_state" / "mx_ojp_puebla"
 BOT = "ojp_puebla"
 log = logging.getLogger(BOT)
@@ -184,7 +186,7 @@ def run_muni(f, catid, mname, place, a):
                "retrieved_at": now_utc(), "summary": it["intro"] or None, "publication_note": it["note"][:500],
                "repealed": bool(re.search(r"abrogad", it["note"], re.I)) or None,
                "platform": "ojp_puebla", "platform_place_id": f"catid={catid}", "issuer_name": mname,
-               "text_source": "pdf_text", "content_complete": True, "source_policy": "robots_allowed_rfc9309",
+               "text_source": "pdf_text", "content_complete": True, "source_policy": RP.policy(u, "robots_allowed_rfc9309"),
                "content_sha256": hashlib.sha256(text.encode()).hexdigest()}
         if place:
             rec.update({"place_name": place["place_name"], "qid": place["qid"], "admin_level": "municipality",

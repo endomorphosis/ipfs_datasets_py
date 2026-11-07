@@ -22,6 +22,12 @@ from ipfs_datasets_py.processors.legal_data.iso_slug_crosswalk import (
     _DEFAULT_NAMES,
     resolve_jurisdiction,
 )
+from ipfs_datasets_py.processors.legal_scrapers.country_laws_ir.heading_assignment import (
+    locators_from_marked_title,
+)
+from ipfs_datasets_py.processors.legal_scrapers.country_laws_ir.placement import (
+    LISTED_PLACEMENTS,
+)
 from ipfs_datasets_py.processors.legal_scrapers.world_law.schema import (
     LEGAL_RECORD_FIELDS,
     _INSTRUMENTS,
@@ -72,9 +78,10 @@ class DirectoryEntry:
     citation_form: str
     path: str
     entry_cid: str
+    placement: str = ""
 
     def as_dict(self) -> dict[str, str]:
-        return {
+        row = {
             "jurisdiction": self.jurisdiction,
             "instrument": self.instrument,
             "title": self.title,
@@ -88,6 +95,9 @@ class DirectoryEntry:
             "path": self.path,
             "entry_cid": self.entry_cid,
         }
+        if self.placement:
+            row["placement"] = self.placement
+        return row
 
 
 @dataclass
@@ -252,14 +262,17 @@ def _schema_problems(record: Mapping[str, object]) -> list[dict[str, str]]:
     if not isinstance(text, str) or not text.strip():
         add("empty_text")
     admin = _text(record.get("admin_level"))
-    if admin != "country":
-        add("not_national")
     instrument = _text(record.get("instrument_type"))
     if instrument not in _INSTRUMENTS:
         add("bad_instrument")
     resolved = resolve_jurisdiction(_text(record.get("jurisdiction")))
     if resolved is None or resolved.admin_level not in {"country", "supranational"}:
         add("bad_jurisdiction")
+    elif admin == "supranational":
+        if resolved.admin_level != "supranational":
+            add("not_national")
+    elif admin != "country":
+        add("not_national")
     digest = record.get("content_sha256")
     if not isinstance(digest, str) or _SHA.fullmatch(digest) is None:
         add("bad_hash")
@@ -406,20 +419,36 @@ def _entry(record: Mapping[str, object]) -> DirectoryEntry | None:
         return None
     locators = {name: _text(provenance.get(name)) for name in _LOCATORS}
     raw_title = _text(record.get("title"))
+    placement = _text(provenance.get("heading_placement"))
+    if placement not in LISTED_PLACEMENTS:
+        placement = ""
+    marked: dict[str, str] = {}
+    marked_instrument = ""
     recovered: dict[str, str] = {}
-    if _generic_instrument(raw_title) or not any(locators.values()):
-        recovered = recover_placement(raw_title, _text(record.get("text")))
+    if not placement:
+        marked, marked_instrument = locators_from_marked_title(raw_title)
+        if _generic_instrument(raw_title) or not any(locators.values()):
+            recovered = recover_placement(raw_title, _text(record.get("text")))
     for name in _LOCATORS:
         if not locators[name]:
-            locators[name] = recovered.get(name, "")
+            locators[name] = marked.get(name) or recovered.get(name, "")
     book = _text(provenance.get("book")) or recovered.get("book", "")
-    if not any(locators.values()) and not book:
+    if not any(locators.values()) and not book and not placement:
         return None
     jurisdiction = _text(record.get("jurisdiction")).upper()
-    if _generic_instrument(raw_title):
+    if marked_instrument:
+        instrument = marked_instrument
+    elif _text(provenance.get("heading_instrument")):
+        instrument = _text(provenance.get("heading_instrument"))
+    elif _generic_instrument(raw_title):
         instrument = recovered.get("instrument") or _country_label(jurisdiction)
     else:
         instrument = raw_title
+    if not any(locators.values()) and not book:
+        if not instrument or _generic_instrument(instrument):
+            return None
+    else:
+        placement = ""
     placed = {**locators, "book": book}
     citation, form = _citation(
         jurisdiction=jurisdiction,
@@ -440,6 +469,7 @@ def _entry(record: Mapping[str, object]) -> DirectoryEntry | None:
         citation_form=form,
         path=_path(instrument, placed),
         entry_cid=_text(record.get("entry_cid")),
+        placement=placement,
     )
 
 
@@ -591,16 +621,22 @@ def _gaps(numbers: Mapping[tuple[str, ...], tuple[str, set[int]]]) -> list[dict[
 
 
 def _unplaced(record: Mapping[str, object]) -> dict[str, str]:
-    return {
+    row = {
         "entry_cid": _text(record.get("entry_cid")),
         "jurisdiction": _text(record.get("jurisdiction")),
         "instrument": _text(record.get("title")),
         "reason": "no_locator",
     }
+    provenance = _provenance(record.get("provenance"))
+    if provenance is not None:
+        placement = _text(provenance.get("heading_placement"))
+        if placement:
+            row["placement"] = placement
+    return row
 
 
 def _entry_key(entry: DirectoryEntry) -> tuple[str, ...]:
-    return (
+    key = (
         entry.jurisdiction,
         _fold(entry.instrument),
         entry.part,
@@ -610,6 +646,9 @@ def _entry_key(entry: DirectoryEntry) -> tuple[str, ...]:
         entry.article,
         entry.section,
     )
+    if entry.placement:
+        return (*key, entry.entry_cid)
+    return key
 
 
 def _sort_key(entry: DirectoryEntry) -> tuple[object, ...]:

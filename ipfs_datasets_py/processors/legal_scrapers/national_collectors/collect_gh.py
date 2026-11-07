@@ -1,18 +1,21 @@
 #!/usr/bin/env python3
-"""Ghana: Constitution + Acts of Parliament from official hosts.
+"""Ghana: Constitution + Acts of Parliament from official hosts only.
 
 Official only:
   - Parliament of Ghana https://www.parliament.gh/docs?type=Acts  (public catalog)
   - Judicial Service constitution HTML https://judicial.gov.gh/index.php/the-constitution
-  - Act PDFs are served from https://www.parliament.gh/epanel/docs/bills/...
+  - Act PDFs under https://www.parliament.gh/epanel/docs/bills/...
     robots.txt Disallow: /epanel/ — live fetch of that path is skipped.
-    archive_fallbacks (Wayback / Common Crawl) of those official PDF URLs only.
+    archive_fallbacks (Wayback) of those official PDF URLs only.
 
-Not GhanaLII as primary. Not commercial databases. No WAF bypass.
-glc.gov.gh is the General Legal Council (profession regulator), not a general Acts host.
+ir.parliament.gh / repository.parliament.gh bitstream URLs currently redirect to
+the DSpace SPA home page (identical ~2.3k "DSpace Repository :: Home" shell).
+Those hosts are NOT used for discovery/fetch until they serve real PDFs.
+
+Not GhanaLII. Not commercial databases. No WAF bypass.
 """
-from __future__ import annotations
 
+from __future__ import annotations
 import json
 import logging
 import re
@@ -21,7 +24,7 @@ import sys
 import tempfile
 from pathlib import Path
 from typing import Optional
-from urllib.parse import quote, urljoin
+from urllib.parse import urljoin
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from common import *
@@ -51,6 +54,21 @@ ART_GH = re.compile(
     r"(?im)^\s*((?:Article|Section|CHAPTER)\s+[\dIVXLCDM]+[A-Za-z]?)\b"
 )
 
+# Reject DSpace / repository SPA shells that previously polluted instruments/
+DSPACE_SHELL_MARKERS = (
+    "DSpace Repository :: Home",
+    "Welcome to the Institutional Repository of the Parliament of Ghana",
+    "Parliament of Ghana Library Repository",
+)
+ACT_LIKE = re.compile(
+    r"(?is)\b(AN\s+ACT\b|ACT\s*,?\s*\d{4}\b|BILL\s*,?\s*\d{4}\b|"
+    r"CONSTITUTION\b|SECTION\s+\d+|ARTICLE\s+\d+|CHAPTER\s+\d+)\b"
+)
+JUNK_URL_PARTS = (
+    "order-paper", "hansard", "brochure", "logo", "finance-com",
+    "loans-treaties", "record-of-bills", "gnpc-", "l-.i.-s",
+)
+
 
 def setup():
     ensure_dirs(CC)
@@ -61,6 +79,34 @@ def setup():
             logging.StreamHandler(sys.stdout),
         ],
     )
+
+
+def is_dspace_shell(text: str, html: str = "") -> bool:
+    head = (text or "")[:800]
+    if any(m in head for m in DSPACE_SHELL_MARKERS):
+        return True
+    if "DSpace Repository" in (text or "")[:400] and len(text or "") < 4000:
+        return True
+    # Angular/SPA home redirects from bitstream URLs
+    raw = (html or "")[:2000]
+    if "data-critters-container" in raw and "bitstream" not in raw.lower():
+        if len(text or "") < 4000 and "AN ACT" not in (text or "")[:2000].upper():
+            return True
+    return False
+
+
+def is_act_like(text: str, title: str = "") -> bool:
+    blob = f"{title}\n{(text or '')[:8000]}"
+    if is_dspace_shell(text):
+        return False
+    if len(text or "") < 800:
+        return False
+    if ACT_LIKE.search(blob):
+        return True
+    # long statute bodies without the phrase still OK if many sections
+    if len(ART_GH.findall(text or "")) >= 3 and len(text) >= 5000:
+        return True
+    return False
 
 
 def pdf_to_text(raw: bytes) -> str:
@@ -82,6 +128,13 @@ def pdf_to_text(raw: bytes) -> str:
 
 
 def get_official(url: str, *, timeout=(20, 120), retries: int = 3, allow_epanel_live: bool = False) -> dict:
+    low = (url or "").lower()
+    # Never live-hit IR bitstream hosts — they redirect to DSpace home SPA
+    if any(h in low for h in ("ir.parliament.gh/bitstream", "repository.parliament.gh/bitstream")):
+        log.info("skip live IR bitstream (known DSpace redirect): %s", url)
+        res = af.fetch_with_fallbacks(url, try_http=False, try_cc=False)
+        res.setdefault("retrieval", "archive")
+        return res
     if "/epanel/" in url and not allow_epanel_live:
         log.info("robots Disallow /epanel/ — wayback of official URL %s", url)
         res = af.fetch_with_fallbacks(url, try_http=False, try_cc=False)
@@ -209,7 +262,6 @@ def fetch_constitution_text() -> tuple[str, str, list[str]]:
         parts.append((order, text))
         used.append(href)
     parts.sort(key=lambda x: x[0])
-    # de-dupe identical chapter numbers keeping longest
     best: dict[int, str] = {}
     for order, text in parts:
         if order not in best or len(text) > len(best[order]):
@@ -240,6 +292,14 @@ def parse_acts_page(html: str) -> list[dict]:
 
 def discover() -> list[dict]:
     existing = load_catalog()
+    # Force rebuild if old catalog was IR-bitstream junk
+    if existing:
+        bad = sum(1 for it in existing if "bitstream" in (it.get("url") or "").lower()
+                  or "ir.parliament.gh" in (it.get("url") or "").lower()
+                  or "repository.parliament.gh" in (it.get("url") or "").lower())
+        if bad and bad >= max(3, len(existing) // 2):
+            log.info("discarding junk IR catalog n=%s bad=%s", len(existing), bad)
+            existing = []
     if existing and len(existing) >= 5:
         log.info("resume catalog n=%s", len(existing))
         return existing
@@ -258,7 +318,7 @@ def discover() -> list[dict]:
             continue
         seen.add(it["url"])
         items.append(it)
-    # Wayback of official parliament Act PDFs (not live /epanel/)
+    # Wayback of official parliament Act PDFs (not live /epanel/; not IR DSpace)
     recs = af.search_wayback_machine(
         "https://www.parliament.gh/epanel/docs/bills/",
         match_type="prefix", limit=400,
@@ -268,6 +328,8 @@ def discover() -> list[dict]:
     for rec in recs:
         orig = rec.get("original") or ""
         if "/epanel/docs/bills/" not in orig.lower():
+            continue
+        if any(j in orig.lower() for j in JUNK_URL_PARTS):
             continue
         if orig in seen:
             continue
@@ -320,7 +382,7 @@ def fetch_one(it: dict, done: set[str]) -> str:
         if rid in done:
             return "skip"
         text, retrieval, used_urls = fetch_constitution_text()
-        if len(text) < 20000:
+        if len(text) < 20000 or is_dspace_shell(text) or not is_act_like(text, "Constitution"):
             log_failure(CC, {"id": ident, "url": url, "status": "failed", "reason": "constitution_incomplete", "chars": len(text)})
             return "fail"
         rec = base_record(
@@ -346,23 +408,40 @@ def fetch_one(it: dict, done: set[str]) -> str:
     rid = slug_id(CC, ident)
     if rid in done:
         return "skip"
+    # Reject known-bad hosts at fetch time
+    if any(h in url.lower() for h in ("ir.parliament.gh/bitstream", "repository.parliament.gh/bitstream")):
+        log_failure(CC, {"id": ident, "url": url, "status": "failed", "reason": "ir_bitstream_dspace_redirect"})
+        return "fail"
     res = get_official(url)
     body = res.get("content") or b""
     retrieval = res.get("retrieval") or res.get("method") or "archive"
     used = res.get("final_url") or res.get("wayback_url") or url
     text = ""
+    html_raw = ""
     if body[:4] == b"%PDF":
         text = pdf_to_text(body)
     elif res.get("text"):
-        text = html_to_text(res.get("text") or "")
-    if len(text) < 120:
-        log_failure(CC, {"id": ident, "url": url, "status": "failed", "reason": "empty_pdf"})
+        html_raw = res.get("text") or ""
+        text = html_to_text(html_raw)
+    if is_dspace_shell(text, html_raw):
+        log_failure(CC, {"id": ident, "url": url, "status": "failed", "reason": "dspace_home_shell", "chars": len(text)})
+        return "fail"
+    if body and body[:4] != b"%PDF" and url.lower().endswith(".pdf"):
+        # PDF URL that did not yield PDF bytes — do not save HTML shell
+        log_failure(CC, {"id": ident, "url": url, "status": "failed", "reason": "pdf_url_not_pdf",
+                         "ctype": res.get("content_type"), "chars": len(text)})
+        return "fail"
+    if len(text) < 800 or not is_act_like(text, it.get("title") or ""):
+        log_failure(CC, {"id": ident, "url": url, "status": "failed", "reason": "not_act_like_or_short", "chars": len(text)})
         return "fail"
     title = it.get("title") or ident
     head = text[:2000]
     m = re.search(r"(?im)^(AN ACT[^\n]+|[A-Z][A-Za-z0-9 ,.'()]{8,140} ACT,?\s+\d{4})", head)
     if m:
         title = re.sub(r"\s+", " ", m.group(1)).strip()[:240]
+    if title.strip() in ("DSpace Repository :: Home", "Home") or is_dspace_shell(title):
+        log_failure(CC, {"id": ident, "url": url, "status": "failed", "reason": "bad_title"})
+        return "fail"
     rec = base_record(
         cc=CC, country=COUNTRY, language="en", ident=ident, title=title, text=text,
         source_url=url, source_type=SOURCE_TYPE, license_text=LICENSE,
@@ -385,10 +464,10 @@ def write_progress(items, counters, coverage, extra=""):
     notes = (
         "Constitution from Judicial Service of Ghana official HTML. Acts catalog from "
         "parliament.gh/docs?type=Acts (robots allow /docs; Disallow /epanel/). Act PDF "
-        "bodies via Wayback/Common Crawl of official parliament.gh/epanel/docs/bills/ URLs "
-        "only (no live /epanel/ crawl). Not GhanaLII. Gazette authentic text (Ghana "
-        "Publishing Company) prevails. glc.gov.gh is the General Legal Council, not used "
-        "as a general Acts host. " + extra
+        "bodies via Wayback of official parliament.gh/epanel/docs/bills/ URLs only "
+        "(no live /epanel/; no ir.parliament.gh bitstream — those redirect to DSpace home). "
+        "Rejects short identical DSpace shells and non-Act-like text. Not GhanaLII. "
+        "Gazette authentic text prevails. " + extra
     )
     write_summary(
         CC, country=COUNTRY,
@@ -406,7 +485,15 @@ def main():
     counters = {"ok": 0, "skip": 0, "fail": 0}
     done = existing_ids(CC)
     log.info("queue n=%s already=%s", len(items), len(done))
+    max_new = int(__import__("os").environ.get("MAX_NEW", "450") or 450)
+    max_seconds = int(__import__("os").environ.get("MAX_SECONDS", "7200") or 7200)
+    import time
+    t_start = time.time()
     for n, it in enumerate(items, 1):
+        if counters["ok"] >= max_new:
+            break
+        if time.time() - t_start > max_seconds:
+            break
         try:
             st = fetch_one(it, done)
         except Exception as exc:

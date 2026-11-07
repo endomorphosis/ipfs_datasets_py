@@ -1,9 +1,3 @@
-# Harvested collector path injection. Do not collect from /workspace.
-import os as _ipfs_os
-from pathlib import Path as _ipfs_Path
-_CORPORA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_CORPORA_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_corpora")))
-_SCRAPERS = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_COLLECTORS_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_collectors"))) / "shared"
-_HF_TOKEN_PATH = _ipfs_Path(_ipfs_os.environ.get("HF_TOKEN_PATH", str(_ipfs_Path.home() / ".cache" / "huggingface" / "token")))
 # EU lane scrapers
 
 ## `cvdr.py` — Netherlands CVDR (lokaleregelgeving.overheid.nl)
@@ -28,7 +22,7 @@ UA `world-municipal-law-research/1.0 (...)`.
 **Scope:** only current (in-force) versions, pass 1. **TODO, later pass:** historical versions (`overheidrg.datumGeldendOp` dropped,
 ~240k more versions). Use a new `--valid-on` or a separate query, with new batch names.
 
-**Output** (follows `/workspace/world_law/pipeline/SCHEMA.md` v1.0.0)
+**Output** (follows `~/.ipfs_datasets/world_law/pipeline/SCHEMA.md` v1.0.0)
 - `staging/eu/<CC>/<place_key>.cvdr<YYYYMMDD>_bNNNN.jsonl`: one place per file. Files are written as a dot-tmp, then fsync,
   `schema.validate_file`, and `os.rename`, and are never rewritten. CC is `NL`, plus `CW`/`SX` for Curaçao and Sint Maarten (`iso:CW`/`iso:SX`, admin_level `country`).
 - `staging/eu/_unmatched/cvdr_unmatched_<YYYYMMDD>_bNNNN.jsonl`: same record shape with `place_id: null`
@@ -51,9 +45,9 @@ and from there to the candidate CSV qid, which gives `wd:Q…`. `platform_place_
 
 **Run / resume**
 ```
-cd /workspace/world_law/pipeline/scrapers/eu
-nohup python3 cvdr.py discover >> /workspace/world_law/staging/eu/_logs/discover.nohup.out 2>&1 &   # done; idempotent
-nohup python3 cvdr.py fetch    >> /workspace/world_law/staging/eu/_logs/fetch.nohup.out 2>&1 &      # resumes from _state/done_*.txt
+cd ~/.ipfs_datasets/world_law/pipeline/scrapers/eu
+nohup python3 cvdr.py discover >> ~/.ipfs_datasets/world_law/staging/eu/_logs/discover.nohup.out 2>&1 &   # done; idempotent
+nohup python3 cvdr.py fetch    >> ~/.ipfs_datasets/world_law/staging/eu/_logs/fetch.nohup.out 2>&1 &      # resumes from _state/done_*.txt
 python3 cvdr.py status
 python3 cvdr.py fetch --test 40   # random sample into staging/eu/_test/
 ```
@@ -103,9 +97,9 @@ Reuses `text_of()` from `ipfs_datasets_py/processors/legal_scrapers/national_col
 
 **Run / resume:**
 ```
-cd /workspace/world_law/pipeline/scrapers/eu
+cd ~/.ipfs_datasets/world_law/pipeline/scrapers/eu
 # ONE low-memory process (2026-10-10 22:33 PT; replaces the 3 `pl_dzienniki.py all` workers):
-MALLOC_ARENA_MAX=2 setsid nohup python3 -u pl_run.py --workers 6 >> /workspace/world_law/staging/eu/_logs/pl_run.nohup.out 2>&1 < /dev/null &
+MALLOC_ARENA_MAX=2 setsid nohup python3 -u pl_run.py --workers 6 >> ~/.ipfs_datasets/world_law/staging/eu/_logs/pl_run.nohup.out 2>&1 < /dev/null &
 # stop gracefully with `kill -TERM <pid>` (finishes current docs, flushes all buffers). Never run pl_run.py twice.
 # 6 worker threads round-robin over the 13 reachable hosts; a host is used by one worker at a time and Host.get keeps
 # >= 0.7 s (or robots Crawl-delay) between its requests. Queue on disk: _state/pl/queue_<WOJ>.jsonl (built once by
@@ -137,8 +131,8 @@ All EU-lane fetchers gate requests through `common/rfc9309.py`. It's vendored fr
 
 Approved by Benjamin on 2026-10-10: public web archives (Common Crawl first, then Wayback Machine; never archive.today)
 for hosts that are **network-blocked/unreachable from the box**, never to get around a robots.txt Disallow.
-Uses ONLY the shared fetcher `/workspace/world_law/pipeline/archive/` (`ArchiveFetcher`, box-wide limiter,
-`StagedWriter`, `provenance_fields`); no private Wayback/CC client. Interpreter: `/workspace/world_law/pipeline/venv/bin/python`.
+Uses ONLY the shared fetcher `~/.ipfs_datasets/world_law/pipeline/archive/` (`ArchiveFetcher`, box-wide limiter,
+`StagedWriter`, `provenance_fields`); no private Wayback/CC client. Interpreter: `~/.ipfs_datasets/world_law/pipeline/venv/bin/python`.
 
 Robots: the live robots.txt of these hosts is unreachable, so the newest **archived** robots.txt is fetched through
 the same fetcher and every original URL is checked with `common/rfc9309.py` before it is fetched from the archive.
@@ -169,9 +163,9 @@ problem, so a CA bundle cannot help.
   `doc_id = POL_WOJ_<KP|LB|WP>/<year>/<pos>` (same form as the live ELI ids).
 - Resumable: `done.txt` per target; archive errors (`ArchiveError giving up`) are not marked done and are retried.
 ```bash
-cd /workspace/world_law/pipeline/scrapers/eu; PY=/workspace/world_law/pipeline/venv/bin/python
-ARCHIVE_LANE=eu MALLOC_ARENA_MAX=2 setsid nohup $PY -u archive_jobs.py all at --no-cc >> /workspace/world_law/staging/eu/_logs/archive_at.nohup.out 2>&1 < /dev/null &
-ARCHIVE_LANE=eu MALLOC_ARENA_MAX=2 setsid nohup $PY -u archive_jobs.py all pl --no-cc >> /workspace/world_law/staging/eu/_logs/archive_pl.nohup.out 2>&1 < /dev/null &
+cd ~/.ipfs_datasets/world_law/pipeline/scrapers/eu; PY=~/.ipfs_datasets/world_law/pipeline/venv/bin/python
+ARCHIVE_LANE=eu MALLOC_ARENA_MAX=2 setsid nohup $PY -u archive_jobs.py all at --no-cc >> ~/.ipfs_datasets/world_law/staging/eu/_logs/archive_at.nohup.out 2>&1 < /dev/null &
+ARCHIVE_LANE=eu MALLOC_ARENA_MAX=2 setsid nohup $PY -u archive_jobs.py all pl --no-cc >> ~/.ipfs_datasets/world_law/staging/eu/_logs/archive_pl.nohup.out 2>&1 < /dev/null &
 # batches: 50 docs or 15 min; SIGTERM flushes then exits; fetched bodies are in archive/_cache so a restart replays them without network
 $PY archive_jobs.py status
 ```
@@ -213,12 +207,12 @@ Never invent place_ids. Unmatched CCAA (if any) → `_unmatched/esboe_ac_unmatch
 
 **Run / resume**
 ```bash
-cd /workspace/world_law/pipeline/scrapers/eu
+cd ~/.ipfs_datasets/world_law/pipeline/scrapers/eu
 # discover once (idempotent rewrite of catalog):
 python3 es_boe_ac.py discover
 # ONE low-memory live fetch (resumes from _state/es_boe_ac/done.txt):
 MALLOC_ARENA_MAX=2 setsid nohup python3 -u es_boe_ac.py fetch \
-  >> /workspace/world_law/staging/eu/_logs/es_boe_ac.nohup.out 2>&1 < /dev/null &
+  >> ~/.ipfs_datasets/world_law/staging/eu/_logs/es_boe_ac.nohup.out 2>&1 < /dev/null &
 python3 es_boe_ac.py status
 python3 es_boe_ac.py fetch --test 5   # sample into staging/eu/_test_es/
 ```
@@ -226,7 +220,7 @@ Politeness: ≥0.75 s between requests, UA `world-municipal-law-research/1.0`, f
 RSS target < 500 MB (`MALLOC_ARENA_MAX=2`). Do not run two fetch processes.
 
 ## Place-code crosswalk
-EU scrapers prefer `/workspace/world_law/pipeline/codes/place_codes.parquet` (fallback CSV) via `common/xwalk.py` (lazy per
+EU scrapers prefer `~/.ipfs_datasets/world_law/pipeline/codes/place_codes.parquet` (fallback CSV) via `common/xwalk.py` (lazy per
 country, ambiguous codes dropped): PL `pl_teryt_terc`/`pl_nts` (TERYT, also tried with type digit 3/1/2), NL `nl_cbs_gemeente`,
 AT `at_gkz`, ES `es_ine`. AC BOE uses SCHEMA `iso:ES-XX` for adm1 (not INE). Own tables (wd_pl_teryt.csv, wd_nl_*.csv, at_gkz_2026.csv + names) are the fallback.
 `tools/remap_unmatched.py` re-maps `_unmatched/` (streaming, idempotent via `_state/remap_done.txt`). First run
@@ -249,7 +243,7 @@ List API `https://www.riigiteataja.ee/api/oigusakt_otsing/1/otsi?kov=true&kehtiv
 (huge_tree parser; embedded base64 blobs dropped). Places: issuer → candidate "X Rural Municipality"; the 15 current
 cities and pre-2017 municipalities are not in the candidate CSV → `_unmatched`.
 ```
-cd /workspace/world_law/pipeline/scrapers/eu && MALLOC_ARENA_MAX=2 setsid nohup python3 -u ee_rt.py all >> /workspace/world_law/staging/eu/_logs/ee_rt.nohup.out 2>&1 < /dev/null &
+cd ~/.ipfs_datasets/world_law/pipeline/scrapers/eu && MALLOC_ARENA_MAX=2 setsid nohup python3 -u ee_rt.py all >> ~/.ipfs_datasets/world_law/staging/eu/_logs/ee_rt.nohup.out 2>&1 < /dev/null &
 python3 ee_rt.py status
 ```
 Logs `_logs/ee_rt.log`; state `_state/ee/` (catalog.jsonl, done.sqlite, failed.jsonl).
@@ -260,7 +254,7 @@ Logs `_logs/ee_rt.log`; state `_state/ee/` (catalog.jsonl, done.sqlite, failed.j
 current consolidated text). Never uses `/search.php`, `/doc.php`, `/rss/`, `/*/redakcijas-datums/` (robots). Places: fixed
 slug → candidate table (7 state cities + 35 novadi); Varakļāni novads not in candidate CSV → unmatched.
 ```
-cd /workspace/world_law/pipeline/scrapers/eu && MALLOC_ARENA_MAX=2 setsid nohup python3 -u lv_likumi.py all >> /workspace/world_law/staging/eu/_logs/lv_likumi.nohup.out 2>&1 < /dev/null &
+cd ~/.ipfs_datasets/world_law/pipeline/scrapers/eu && MALLOC_ARENA_MAX=2 setsid nohup python3 -u lv_likumi.py all >> ~/.ipfs_datasets/world_law/staging/eu/_logs/lv_likumi.nohup.out 2>&1 < /dev/null &
 python3 lv_likumi.py status
 ```
 
@@ -270,7 +264,7 @@ act text `/glasilo-uradni-list-rs/vsebina/<SOP>/<slug>` (div#divSection). Terms 
 only the razglasni del (not touched). Places: gazette municipality header → candidate base name (212/212 current
 municipalities matched). Issues after 28.2.2026 live on PISRS, whose API needs a permit → not used.
 ```
-cd /workspace/world_law/pipeline/scrapers/eu && MALLOC_ARENA_MAX=2 setsid nohup python3 -u si_ul.py all >> /workspace/world_law/staging/eu/_logs/si_ul.nohup.out 2>&1 < /dev/null &
+cd ~/.ipfs_datasets/world_law/pipeline/scrapers/eu && MALLOC_ARENA_MAX=2 setsid nohup python3 -u si_ul.py all >> ~/.ipfs_datasets/world_law/staging/eu/_logs/si_ul.nohup.out 2>&1 < /dev/null &
 python3 si_ul.py status
 ```
 
@@ -284,7 +278,7 @@ python3 si_ul.py status
 - Only municipal council decisions are kept: the text must start with "<STEM> SAVIVALDYBĖS TARYBA SPRENDIMAS". Everything else is marked done `not_municipal_council`. `doc_type` is decision. Places: genitive stem goes through `LT_GEN` to the 53 candidate municipalities. The 7 city municipalities (Vilniaus/Kauno/Klaipėdos/Šiaulių/Panevėžio/Alytaus/Palangos miesto) aren't in the candidate CSV, so they go to `_unmatched` as `city_municipality_not_in_candidate` until place_additions covers them.
 - Queued after `czfirst` (cz, then at/pl resume, then be). A waiter shell polls pid 1907758 every 10 min, then runs the command below. If the waiter is gone and czfirst has finished, run it by hand (check `ps` first):
 ```
-cd /workspace/world_law/pipeline/scrapers/eu && ARCHIVE_LANE=eu MALLOC_ARENA_MAX=2 setsid nohup /workspace/world_law/pipeline/venv/bin/python -u archive_q2.py all lt >> /workspace/world_law/staging/eu/_logs/archive_lt.nohup.out 2>&1 < /dev/null &
+cd ~/.ipfs_datasets/world_law/pipeline/scrapers/eu && ARCHIVE_LANE=eu MALLOC_ARENA_MAX=2 setsid nohup ~/.ipfs_datasets/world_law/pipeline/venv/bin/python -u archive_q2.py all lt >> ~/.ipfs_datasets/world_law/staging/eu/_logs/archive_lt.nohup.out 2>&1 < /dev/null &
 ```
 
 ### `be_lokaalbeslist.py` — Flanders, Lokaal Beslist harvester SPARQL, source tag `belb`
@@ -293,21 +287,21 @@ cd /workspace/world_law/pipeline/scrapers/eu && ARCHIVE_LANE=eu MALLOC_ARENA_MAX
 (VALUES batches of 40, ≥3 s between queries). Place: passed_by → eenheid (Gemeente/OCMW) → candidate, else publication
 host → candidate. Fine type in `regulation_kind` (traffic/police/tax/regulation); `doc_type` = regulation.
 ```
-cd /workspace/world_law/pipeline/scrapers/eu && MALLOC_ARENA_MAX=2 setsid nohup python3 -u be_lokaalbeslist.py all >> /workspace/world_law/staging/eu/_logs/be_lokaalbeslist.nohup.out 2>&1 < /dev/null &
+cd ~/.ipfs_datasets/world_law/pipeline/scrapers/eu && MALLOC_ARENA_MAX=2 setsid nohup python3 -u be_lokaalbeslist.py all >> ~/.ipfs_datasets/world_law/staging/eu/_logs/be_lokaalbeslist.nohup.out 2>&1 < /dev/null &
 ```
 
 ### `uk_ukla.py` — UK Local Acts (legislation.gov.uk Atom feed + CLML), source tag `ukla`, Crawl-delay 5 honoured
 Only council/corporation acts are fetched; company/harbour/railway acts → done `non_municipal`; pre-1991 acts carry
 no digitised text → done `no_digitised_text`. `doc_type` = statute (`act_kind` "UK Local Act").
 ```
-cd /workspace/world_law/pipeline/scrapers/eu && MALLOC_ARENA_MAX=2 setsid nohup python3 -u uk_ukla.py all >> /workspace/world_law/staging/eu/_logs/uk_ukla.nohup.out 2>&1 < /dev/null &
+cd ~/.ipfs_datasets/world_law/pipeline/scrapers/eu && MALLOC_ARENA_MAX=2 setsid nohup python3 -u uk_ukla.py all >> ~/.ipfs_datasets/world_law/staging/eu/_logs/uk_ukla.nohup.out 2>&1 < /dev/null &
 ```
 
 ### `it_statuti.py` — Italy, Ministero dell'Interno raccolta statuti comunali/provinciali, source tag `itstat`
 List `/territorio-e-autonomie-locali/statuti?page=0..414`, detail page → PDF (`/documenti/statuti/...`, ≤40 MB,
 streamed to a temp file → pdftotext). Places: unique comune name → candidate; ambiguous names and province statutes → unmatched.
 ```
-cd /workspace/world_law/pipeline/scrapers/eu && MALLOC_ARENA_MAX=2 setsid nohup python3 -u it_statuti.py all >> /workspace/world_law/staging/eu/_logs/it_statuti.nohup.out 2>&1 < /dev/null &
+cd ~/.ipfs_datasets/world_law/pipeline/scrapers/eu && MALLOC_ARENA_MAX=2 setsid nohup python3 -u it_statuti.py all >> ~/.ipfs_datasets/world_law/staging/eu/_logs/it_statuti.nohup.out 2>&1 < /dev/null &
 ```
 
 ### `chain_after.sh <pid> <script.py> <log>`
@@ -321,8 +315,8 @@ Waits until a catalog process exits, then runs `<script.py> all` (used for si_ul
 * `hu` or.njt.hu: NOT built — archived ELI pages hold title/metadata only (text is loaded by JavaScript) and NJT
   reserves all rights on its texts ("minden jogot fenntart"): needs a decision.
 ```
-cd /workspace/world_law/pipeline/scrapers/eu && ARCHIVE_LANE=eu MALLOC_ARENA_MAX=2 setsid nohup /workspace/world_law/pipeline/venv/bin/python -u archive_q2.py queue >> /workspace/world_law/staging/eu/_logs/archive_q2_queue.nohup.out 2>&1 < /dev/null &
-/workspace/world_law/pipeline/venv/bin/python archive_q2.py status
+cd ~/.ipfs_datasets/world_law/pipeline/scrapers/eu && ARCHIVE_LANE=eu MALLOC_ARENA_MAX=2 setsid nohup ~/.ipfs_datasets/world_law/pipeline/venv/bin/python -u archive_q2.py queue >> ~/.ipfs_datasets/world_law/staging/eu/_logs/archive_q2_queue.nohup.out 2>&1 < /dev/null &
+~/.ipfs_datasets/world_law/pipeline/venv/bin/python archive_q2.py status
 ```
 (`queue` polls every 10 min until no `archive_jobs.py all|fetch at|pl` process is alive, then runs cz, then be.)
 
@@ -362,7 +356,7 @@ A backfill would need issue-PDF splitting by act; the app's internal API was not
 - Test: `python3 pt_dre.py test 2026/10/196` (prints parsed acts, writes nothing). Status: `python3 pt_dre.py status`.
 - Resume:
 ```
-cd /workspace/world_law/pipeline/scrapers/eu && MALLOC_ARENA_MAX=2 setsid nohup python3 -u pt_dre.py all >> /workspace/world_law/staging/eu/_logs/pt_dre.nohup.out 2>&1 < /dev/null &
+cd ~/.ipfs_datasets/world_law/pipeline/scrapers/eu && MALLOC_ARENA_MAX=2 setsid nohup python3 -u pt_dre.py all >> ~/.ipfs_datasets/world_law/staging/eu/_logs/pt_dre.nohup.out 2>&1 < /dev/null &
 ```
 
 ## 2026-10-12 15:xx PT — CZ, Bornem, Opole 403 breaker, UK/RO council sites, HU
@@ -371,7 +365,7 @@ cd /workspace/world_law/pipeline/scrapers/eu && MALLOC_ARENA_MAX=2 setsid nohup 
 - No official SPP open data: NKOD (data.gov.cz SPARQL) only lists e-Sbírka datasets, which are national law, not SPP. The e-Sbírka REST API needs MV registration via a datová schránka (not used).
 - `archive_q2.py czfirst` runs the CZ Wayback pass now. It then resumes `archive_jobs.py all at|pl --no-cc` (stopped gracefully from their checkpoints at 15:01 PT) and waits for them, then runs be. The old `queue` process was stopped.
 ```
-cd /workspace/world_law/pipeline/scrapers/eu && ARCHIVE_LANE=eu MALLOC_ARENA_MAX=2 setsid nohup /workspace/world_law/pipeline/venv/bin/python -u archive_q2.py czfirst >> /workspace/world_law/staging/eu/_logs/archive_q2_queue.nohup.out 2>&1 < /dev/null &
+cd ~/.ipfs_datasets/world_law/pipeline/scrapers/eu && ARCHIVE_LANE=eu MALLOC_ARENA_MAX=2 setsid nohup ~/.ipfs_datasets/world_law/pipeline/venv/bin/python -u archive_q2.py czfirst >> ~/.ipfs_datasets/world_law/staging/eu/_logs/archive_q2_queue.nohup.out 2>&1 < /dev/null &
 ```
   If czfirst dies after cz has finished, resume at/pl with the two `archive_jobs.py all at|pl --no-cc` commands above, then run `archive_q2.py all be`.
 
@@ -389,8 +383,8 @@ cd /workspace/world_law/pipeline/scrapers/eu && ARCHIVE_LANE=eu MALLOC_ARENA_MAX
 - Places: candidate rows with a `source_url` (GB: principal councils first, then parish/town/community; 2,634 sites. RO: 2,436 primării). Done keys: `site:<place_id>` and `doc:<sha1(url)>`, in `_state/council_<cc>/done.sqlite`.
 - Test: `python3 council_docs.py gb test wd:Q774015` (Leeds: 12 byelaw docs). Status: `python3 council_docs.py gb status`.
 ```
-cd /workspace/world_law/pipeline/scrapers/eu && MALLOC_ARENA_MAX=2 setsid nohup python3 -u council_docs.py gb run --workers 8 >> /workspace/world_law/staging/eu/_logs/council_gb.nohup.out 2>&1 < /dev/null &
-cd /workspace/world_law/pipeline/scrapers/eu && MALLOC_ARENA_MAX=2 setsid nohup python3 -u council_docs.py ro run --workers 6 >> /workspace/world_law/staging/eu/_logs/council_ro.nohup.out 2>&1 < /dev/null &
+cd ~/.ipfs_datasets/world_law/pipeline/scrapers/eu && MALLOC_ARENA_MAX=2 setsid nohup python3 -u council_docs.py gb run --workers 8 >> ~/.ipfs_datasets/world_law/staging/eu/_logs/council_gb.nohup.out 2>&1 < /dev/null &
+cd ~/.ipfs_datasets/world_law/pipeline/scrapers/eu && MALLOC_ARENA_MAX=2 setsid nohup python3 -u council_docs.py ro run --workers 6 >> ~/.ipfs_datasets/world_law/staging/eu/_logs/council_ro.nohup.out 2>&1 < /dev/null &
 ```
 - RO caveats: many HCL PDFs are scanned with no text layer and there is no OCR on the box, so these are marked `no_text` and not staged. Many communes host MOL on third-party portals, which are not followed.
 
@@ -409,7 +403,7 @@ cd /workspace/world_law/pipeline/scrapers/eu && MALLOC_ARENA_MAX=2 setsid nohup 
   - It waits up to 30 min between rounds (wakes early on close) and exits when nothing is remaining or deferred. Status: `_state/archive/runner.json`.
   - `czfirst`, `queue` and the old waiter are retired; never run them together with `run`.
 ```
-cd /workspace/world_law/pipeline/scrapers/eu && ARCHIVE_LANE=eu MALLOC_ARENA_MAX=2 setsid nohup /workspace/world_law/pipeline/venv/bin/python -u archive_q2.py run >> /workspace/world_law/staging/eu/_logs/archive_runner.nohup.out 2>&1 < /dev/null &
+cd ~/.ipfs_datasets/world_law/pipeline/scrapers/eu && ARCHIVE_LANE=eu MALLOC_ARENA_MAX=2 setsid nohup ~/.ipfs_datasets/world_law/pipeline/venv/bin/python -u archive_q2.py run >> ~/.ipfs_datasets/world_law/staging/eu/_logs/archive_runner.nohup.out 2>&1 < /dev/null &
 ```
   (`--order cz,at` etc. to restrict; SIGTERM flushes and exits at the next item.)
 - **Opole archive target (`op`):** `AJ.op_candidates()` rebuilds `_state/archive/pl/candidates_OP.jsonl` before each OP pass, from the live pass-1 queue (`_state/pl/queue_OP.jsonl`) minus live done (`done_OP.txt` plus `pl_done.sqlite`): 1,941 acts at 10:00 PT. Each candidate is the `api/eli/acts/<eli>/text.pdf` URL, with captures looked up per item (CC plus Wayback). `pl_record` is unchanged (`pdf_capture_kind=api/eli/text.pdf`, doc_id = ELI, the same as the live `pldz`). PL prefix discovery stays KP/LB/WP (`PL_DISCOVER`).
@@ -427,7 +421,7 @@ cd /workspace/world_law/pipeline/scrapers/eu && ARCHIVE_LANE=eu MALLOC_ARENA_MAX
   - Sites whose previous pass logged `docs=0` or `home_failed` (in `_logs/council_ro.log`) are skipped: 1,594 of 2,435. That leaves 841 sites.
 - It never writes done.sqlite or staged RO files. Run with 4 workers: 6 workers peaked at about 430 MB RSS (large sitemaps). The final log line reports `listed N of M no_text keys; unmatched K`.
 ```
-cd /workspace/world_law/pipeline/scrapers/eu && MALLOC_ARENA_MAX=2 setsid nohup python3 -u council_docs.py ro run --list-notext --workers 4 >> /workspace/world_law/staging/eu/_logs/council_ro_notext.nohup.out 2>&1 < /dev/null &
+cd ~/.ipfs_datasets/world_law/pipeline/scrapers/eu && MALLOC_ARENA_MAX=2 setsid nohup python3 -u council_docs.py ro run --list-notext --workers 4 >> ~/.ipfs_datasets/world_law/staging/eu/_logs/council_ro_notext.nohup.out 2>&1 < /dev/null &
 ```
 
 ## 2026-10-17 status: PL pass 1 finished
@@ -450,13 +444,13 @@ cd /workspace/world_law/pipeline/scrapers/eu && MALLOC_ARENA_MAX=2 setsid nohup 
 - Discovery uses KOOP SRU `https://repository.overheid.nl/sru`. Its robots.txt is `Disallow: /`; we use it on the same documented-reuse basis as the CVDR SRU, about 1 request per 1,000 records, and fetch nothing else from that host. Full text comes from `https://zoek.officielebekendmakingen.nl/<gmb-id>.xml` (robots allows it), 1 req/s.
 - Types: AVV (verordening), Verordeningen, beleidsregel(s), delegatie-/mandaatbesluit, gemeenschappelijke regeling. That is 2013 to today, about 173.5k publications. Pass 2 (not started) is "(ander/overige) besluit van algemene strekking" (about 187k). Places come from `cvdr.PlaceMap` (creator + scheme).
 - State is in `_state/nl_gmb/` (`catalog.jsonl`, `catalog.state.json` per month, `done.sqlite`, `failed.jsonl`). The test batch of 15 went to `_test_nl/`.
-- Resume (SIGTERM-safe): `cd /workspace/world_law/pipeline/scrapers/eu && MALLOC_ARENA_MAX=2 setsid nohup python3 -u nl_gmb.py all >> /workspace/world_law/staging/eu/_logs/nl_gmb.nohup.out 2>&1 < /dev/null &`
+- Resume (SIGTERM-safe): `cd ~/.ipfs_datasets/world_law/pipeline/scrapers/eu && MALLOC_ARENA_MAX=2 setsid nohup python3 -u nl_gmb.py all >> ~/.ipfs_datasets/world_law/staging/eu/_logs/nl_gmb.nohup.out 2>&1 < /dev/null &`
 
 ### `gr_diavgeia.py` — Greece, Diavgeia OpenData API, municipal regulatory decisions, source tag `grdiav`
 - Uses `/opendata/organizations?category=MUNICIPALITY` (336), `/opendata/search?subject={κανονισμ,κανονιστικ}` in half-year windows from 2010-10 (the server caps a window at about 6 months), and `/opendata/decisions/<ADA>/document` (PDF → pdftotext). robots.txt only disallows `/decision/view`, `/doc/*`, `/luminapi/api/decisions/*` and `/f/all/ada/*`, none of which are fetched.
 - Kept: municipal orgs, types Α.2 and 2.4.7.1, minus the NOISE regex. Places: `common/gr_names.py` (Greek genitive label → transliteration → English candidate names, one org per place) matches 312 of 336 orgs. The rest go to `_unmatched` with the Diavgeia org uid and label.
 - PDFs without a text layer go to `_state/gr/failed.jsonl` (reason no_text_layer, with pdf_url) for OCR.
-- Resume: `cd /workspace/world_law/pipeline/scrapers/eu && MALLOC_ARENA_MAX=2 setsid nohup python3 -u gr_diavgeia.py all >> /workspace/world_law/staging/eu/_logs/gr_diavgeia.nohup.out 2>&1 < /dev/null &`
+- Resume: `cd ~/.ipfs_datasets/world_law/pipeline/scrapers/eu && MALLOC_ARENA_MAX=2 setsid nohup python3 -u gr_diavgeia.py all >> ~/.ipfs_datasets/world_law/staging/eu/_logs/gr_diavgeia.nohup.out 2>&1 < /dev/null &`
 
 ### Ops
 - `_logs/archive_runner.nohup.out` had reached 2.3 GB (Common Crawl index retry spam printed by the shared archive module). On 2026-10-17 at 14:54 PT the last 30 MB were saved to `archive_runner.nohup.tail_20261017.gz`, then the file was truncated in place (the runner writes it O_APPEND, so this is safe). It grows about 150 MB/h while the CC index is failing, so truncate it again the same way if needed.
@@ -483,8 +477,8 @@ Pre-~2012 (and some later) e-Dziennik acts have no per-act PDF behind the ELI AP
 The job fetches each issue once (polite PoliteSession, robots), splits act segments by "Poz." headers, stages text acts,
 marks scanned/garbled/missing in `_state/pl/issue_refetch_done.sqlite` (resumable). Place mapping = pl_dzienniki.PlaceMap
 (TERYT via place_codes crosswalk + PL_gmina_fill_reviewed.csv).
-  cd /workspace/world_law/pipeline/scrapers/eu && MALLOC_ARENA_MAX=2 setsid nohup python3 -u tools/pl_issue_refetch.py \
-      >> /workspace/world_law/staging/eu/_logs/pl_issue_refetch.nohup.out 2>&1 &      # resume = same command
+  cd ~/.ipfs_datasets/world_law/pipeline/scrapers/eu && MALLOC_ARENA_MAX=2 setsid nohup python3 -u tools/pl_issue_refetch.py \
+      >> ~/.ipfs_datasets/world_law/staging/eu/_logs/pl_issue_refetch.nohup.out 2>&1 &      # resume = same command
   python3 tools/pl_issue_refetch.py --retry-why split_failed     # re-try one done reason
   python3 tools/pl_ocr_queue_fix.py                               # then rewrite _state/pl/ocr_queue_pl.jsonl (atomic, pdf_url_old kept)
   python3 tools/restage_fill_rejects.py --dry-run && python3 tools/restage_fill_rejects.py
@@ -499,8 +493,8 @@ marks scanned/garbled/missing in `_state/pl/issue_refetch_done.sqlite` (resumabl
   first 3,000 chars are `not_act` (not staged). Charset from <meta> when the header has none. Unusable sites
   (TLS reset / name mismatch / robots disallow) are `site_home_failed` -> archive target `cee`.
 ```
-cd /workspace/world_law/pipeline/scrapers/eu && L=/workspace/world_law/staging/eu/_logs && MALLOC_ARENA_MAX=2 setsid nohup bash -c "python3 -u council_docs.py sk run --workers 10 >> $L/council_sk.nohup.out 2>&1; python3 -u council_docs.py at run --workers 8 >> $L/council_at.nohup.out 2>&1" > /dev/null 2>&1 < /dev/null &
-cd /workspace/world_law/pipeline/scrapers/eu && MALLOC_ARENA_MAX=2 setsid nohup python3 -u council_docs.py cz run --workers 12 >> /workspace/world_law/staging/eu/_logs/council_cz.nohup.out 2>&1 < /dev/null &
+cd ~/.ipfs_datasets/world_law/pipeline/scrapers/eu && L=~/.ipfs_datasets/world_law/staging/eu/_logs && MALLOC_ARENA_MAX=2 setsid nohup bash -c "python3 -u council_docs.py sk run --workers 10 >> $L/council_sk.nohup.out 2>&1; python3 -u council_docs.py at run --workers 8 >> $L/council_at.nohup.out 2>&1" > /dev/null 2>&1 < /dev/null &
+cd ~/.ipfs_datasets/world_law/pipeline/scrapers/eu && MALLOC_ARENA_MAX=2 setsid nohup python3 -u council_docs.py cz run --workers 12 >> ~/.ipfs_datasets/world_law/staging/eu/_logs/council_cz.nohup.out 2>&1 < /dev/null &
 python3 council_docs.py sk status      # resume = same commands (done.sqlite per profile; SIGTERM flushes)
 ```
 - `tools/restage_cee_titles.py`: fixed titles of the first sk/cz run (latin-1 mojibake, "Stiahnuť" link text) as
@@ -629,3 +623,68 @@ python3 council_docs.py sk status      # resume = same commands (done.sqlite per
 - Offline test: `_state/archive/tests/test_defer_r3_20261018.py` (28 checks). Backups: `_state/archive/bak_20261018_defer3/`.
 - Restarted 14:54:25 PT for round 3: runner PID 275561 (old 143859 exited on SIGTERM; see `_logs/runner_restart.log`).
 - Watchdog 16:46 PT: nl_gmb 28059 (done 75,992), ONE archive runner 275561 (breaker closed, opens 50; lt 848/30,361 with CC cooldown deferrals). Disk 73G free. Newest 40 staged files valid (57 rows, 0 bad); 0 new unmatched since 14:47.
+
+## 2026-10-30 — CH / XK / CY / BY / UA (EU lane)
+| CC | source | script | output |
+|---|---|---|---|
+| CH | commune official sites (candidate `source_url`, 2,121 sites), Reglemente/règlements/regolamenti | `council_docs.py ch` (profile added; lang de/fr/it per doc) | `CH/<place_key>.chgem_*.jsonl` |
+| CY | municipal sites (248), κανονισμοί | `council_docs.py cy` | `CY/*.cydim_*` |
+| UA | council sites (1,037), рішення/регуляторні акти | `council_docs.py ua` (many sites 403/geo-blocked) | `UA/*.uarada_*` |
+| BY | (a) pravo.by new local acts (R9*/D9*), metadata-only (official PDFs under /upload/ are robots-disallowed); (b) gov.by sites (mostly robots unreachable) | `by_pravo.py poll --loop 12`, `council_docs.py by` | `BY/*.bypravo_*`, `BY/*.byrish_*` |
+| XK | gzk.rks-gov.net LocalInstActsList (1,063 municipal acts), PDF text via read-only download postback | `xk_gzk.py catalog|fetch` | `XK/*.xkgzk_*` |
+Place mapping: council_docs = candidate row of the site (always matched). XK: "Komuna e X" -> Wikidata municipality (P31 Q2989682,
+`data/wd_xk_municipalities.csv`) -> candidate QID or its seat (P36); only 6/38 municipalities have a candidate row, the rest go to
+`_unmatched` with `muni_qid`. BY: issuer genitive + type vs ru labels of candidate rows (`data/wd_by_labels.csv`, SOATO P1667 kept).
+RSS guard: `tools/council_rss_guard2.sh` (ch/ua/by/cy, 460 MB). Resume (from staging/eu; all resumable via done.sqlite):
+```
+cd ~/.ipfs_datasets/world_law/staging/eu; S=~/.ipfs_datasets/world_law/pipeline/scrapers/eu
+setsid nohup python3 $S/council_docs.py ch run --workers 6 >> _logs/council_ch.nohup.out 2>&1 < /dev/null &   # also ua 6, by 4, cy 4
+setsid nohup python3 $S/xk_gzk.py fetch >> _logs/xk_gzk.nohup.out 2>&1 < /dev/null &
+setsid nohup python3 $S/by_pravo.py poll --loop 12 >> _logs/by_pravo.nohup.out 2>&1 < /dev/null &
+setsid nohup $S/tools/council_rss_guard2.sh > /dev/null 2>&1 < /dev/null &
+```
+
+### 2026-10-30 ~12:55 PT watchdog: CY, XK, BY sites finished
+- CY `council_docs.py cy` finished 11:13 PT: 248 sites, ~154 crawled, ~94 home unreachable; 10 docs matched (done.sqlite ok=10), 0 unmatched.
+- XK `xk_gzk.py fetch` finished 12:14 PT: 1,063 acts, 123 matched, 940 to `_unmatched` (candidate CSV lacks most Kosovo municipalities; `muni_qid` kept for remap).
+- BY `council_docs.py by` finished 12:42 PT: 304 sites, 31 reachable, 273 home unreachable; 366 docs matched from 12 sites. The `by_pravo.py poll` poller keeps running (open-ended, doesn't count as unfinished).
+- Still running: CH (271/2,121 sites), UA (215/1,037 sites), archive runner 804515. Do not restart CY/XK/BY.
+
+### 2026-10-30 ~12:57 PT XK remap (`tools/remap_xk.py`)
+- Candidate CSV now has all 38 Kosovo municipalities (32 rows `seed_file=wikidata/Q2989682` + the original 6, which are keyed to the town QID).
+- `xk_gzk.py` Places (backup `xk_gzk.py.bak_20261030_xkremap`): matches only those 38 rows (never the ~1,161 Serbian cadastral-village XK rows that are also `municipality`); `XK_ALIAS` municipality->town QID (Q2507287->Q112657 Peja, Q860157->Q963121 Klina, Q860171->Q1527566 Klokot, Q794063->Q59089 Malisheva, Q6081267->Q994263 Novo Brdo, Q2605602->Q2054378 Parteš); `XK_NAMES` gazette spellings (Istogut, Hani i Elezit, Drenasit, Suharekës, Novobërdës, Kllokot, Mitrovicës së Jugut/Veriut, Opština Štrpce/Parteš/Ranilug/Leposavić/Orahovac/Klina); fixed stem fallback that sent "Komuna Kllokot/Ranillug/Partesh" to Istog; unmatched rows now keep `muni_qid`.
+- Staged `muni_qid` was null on all 940 rows, so the remap re-resolved `issuing_body_name` (fallback `qid`). Result: 940/940 matched to 34 municipalities, 0 still unmatched, 0 schema-invalid. XK total = 1,063 matched (123 + 940).
+- Output: `XK/wd_<Q>.xkgzkremap_20261030T195708Zp0001..0034.jsonl`; doc_ids appended to `_state/remap_done.txt`; the 11 old `_unmatched/xkgzk_unmatched_*.jsonl` moved to `_unmatched/_remapped/` (not deleted). No new _unmatched file (none left).
+
+### 2026-10-31 ~02:47 PT watchdog: UA finished
+- UA `council_docs.py ua` finished 01:55 PT: 1,043 sites (660 crawled, 382 home unreachable/blocked, 1 crash); 25,635 docs matched (done.sqlite ok), 0 unmatched; 4,067 docs had no text and 945 were not acts. Do not restart UA.
+- Still running: CH (PID 1854520, done.sqlite 18,181), archive runner 804515 (Wayback breaker open, opens 234, by design), guard2 1854522, BY poller 1513969. Disk 43.1e9 free.
+
+### 2026-10-31 ~18:50 PT watchdog: CH finished
+- CH `council_docs.py ch` finished 17:35 PT: 2,125 sites (2,019 crawled, 106 home unreachable/robots-blocked, 0 crashes); 16,346 docs matched (done.sqlite ok), 0 unmatched; 10,150 docs had no text and 3,212 were not acts. Do not restart CH.
+- All gap-country jobs (CH, XK, CY, BY sites, UA) are now finished. guard2 exited on its own at 18:08 PT (no runs for 30 min), as designed. BY poller 1513969 keeps running (open-ended).
+- Still running: archive runner 804515 (Wayback breaker open, opens 237, by design). Disk 46.4e9 free.
+
+### 2026-11-01 ~12:14 PT restart after box reboot (~10:20 PT)
+- Box reboot killed the EU lane and the venv's python. Waited for HF restore (restore_out_20261101) to exit (~12:13 PT), then rebuilt pipeline/venv (`python3 -m venv --system-site-packages venv` + pip install local /workspace/ipfs_datasets_py_latest); `from archive import ratelimit` ok.
+- State checked: 20 done.sqlite under _state, runner_queue.txt = cee, hu; RUN_ORDER includes hu.
+- Started archive runner PID 116984 (`archive_q2.py run`; Wayback breaker open at start, by design) and BY poller PID 116985 (`by_pravo.py poll --loop 12`). CH/UA/CY/BY sites/XK not restarted (finished).
+
+### 2026-11-01 ~12:30 PT EU_IGNORE_ROBOTS (Benjamin, 12:14 PT: robots.txt no longer respected for legal texts)
+- Flag: `EU_IGNORE_ROBOTS` (default **1** = ignore). Set `EU_IGNORE_ROBOTS=0` to restore RFC 9309 gating. Implemented centrally in `common/rfc9309.py` (`IGNORE_ROBOTS`; `Robots.can_fetch` returns True), so every caller is covered: common/live.py PoliteSession, council_docs, xk_gzk, by_pravo, archive_jobs/archive_q2 archived-robots gates (hu_njt now tags `network_blocked` instead of `archived_robots_disallowed`), gr_diavgeia, nl_gmb, cvdr, es_boe_ac, pt_dre. Crawl-delay, per-host rate limits, honest UA and backoff unchanged. WAF/Cloudflare/captcha/403 still not bypassed; no proxies.
+- Backups: `*.bak_20261101_ignorerobots` for common/rfc9309.py, common/live.py, archive_jobs.py, archive_q2.py, hu_njt.py, council_docs.py, by_pravo.py, xk_gzk.py, nl_gmb.py.
+- New options: `council_docs.py <cc> run --redo-file F` (re-crawl listed place_ids even if site:<id> done; docs still dedup); `nl_gmb.py fetch --redo-robots` (only ids with why=robots_disallowed); `by_pravo.py pdftext` (re-fetch done acts with /upload/ PDF text, done key `pdf2:<id>`; first try `pdf:` 34 rows went to `_invalid` because content_format "pdf" is not in schema -> now `pdf_text`). by_pravo poll now fetches the PDF text for new acts.
+- Re-queue lists: `_state/council_{ch,cy,by,ua}/robots_redo_20261101.txt` (CH 106, CY 77, BY 270, UA 323 sites: home failed on robots incl. unreachable/5xx robots.txt e.g. Limassol, Odesa, plus sites with page-level robots doc fails), NL gmb 55,354 ids, BY pravo 51 acts. Archive targets: 0 robots-held (9 PL `robots_login` URLs are login pages, not re-queued). gr/cvdr/es/pt/xk: 0 recorded robots skips.
+- Chain (one job at a time, nice, 2 workers): `tools/robots_requeue_20261101.sh` -> by_pravo pdftext, council cy, by, ua, ch, nl_gmb --redo-robots; log `_logs/robots_requeue_20261101.out` (+ per-job `_logs/*_robots.nohup.out`). Resumable: rerun the script.
+- PIDs: archive runner 141132 (restarted via runner_restart.sh to load flag), BY poller 146666, chain 140801. pravo.by /search/ backfill not started (needs form analysis).
+
+### 2026-11-01 ~14:55 PT restart after second box reboot (~13:27 PT)
+- Reboot killed runner 141132, BY poller 146666 and chain 140801 (CY re-queue had reached site 76/77 at 12:52 PT). venv intact; 20 done.sqlite pass quick_check. EU staging restore had stopped writing; the running restore_out_20261101b only writes out/world_law metadata (not our lane).
+- Started archive runner PID 193937, BY poller PID 193938, re-queue chain PID 193939 (reruns from step 1; steps dedup via done.sqlite).
+
+## Disk pause 2026-11-03 06:45 PT
+- Free space hit 20.04e9 (the 20 GB pause line), so the watchdog SIGTERMed the archive runner 193937, the robots re-queue chain 193939 and its last step nl_gmb --redo-robots 1490156 (nl_gmb done counter 173,501, flushed its buffer on SIGTERM). BY poller 193938 left running (tiny).
+- Resume once free > 23e9: from this dir, `cd ~/.ipfs_datasets/world_law/pipeline/scrapers/eu && setsid nohup bash tools/robots_requeue_20261101.sh >> ~/.ipfs_datasets/world_law/staging/eu/_logs/robots_requeue_20261101.out 2>&1 < /dev/null &` (earlier steps dedup via done.sqlite) and ONE archive runner (`archive_q2.py run`, venv python, check no other runner first; see runner_restart.sh section).
+
+## Disk floor 10 GB 2026-11-03
+- Benjamin approved in chat 09:56 PT: pause below 10 GB free, warn ~12 GB, resume above 12 GB. Restarted runner 462162 and chain 462163.

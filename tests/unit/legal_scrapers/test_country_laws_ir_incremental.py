@@ -1626,6 +1626,159 @@ def test_multilingual_heading_syntaxes_and_chrome() -> None:
     )
     assert _split(spaced_zh, "zh") == ["1", "2"]
 
+    hyphen_zh = (
+        "第 44-1 條 地方軍事法院置國防法務官若干人，掌理軍人復審及再申訴事件。\n"
+        "第 45 條 本準則自公布日施行。"
+    )
+    assert _split(hyphen_zh, "zh-Hant") == ["44-1", "45"]
+
+    listed_zh = (
+        "第 4 條 本校依學校特性及發展方向，辦理下列層次之教育：\n"
+        "一、基礎教育。\n"
+        "二、進修教育。\n"
+        "第 5 條 本校置校長一人，綜理校務。"
+    )
+    listed_units = split_structured_units(listed_zh, language="zh-Hant")
+    assert [unit.number for unit in listed_units] == ["4", "5"]
+    assert "一、基礎教育" in listed_units[0].body
+    assert "第 5 條" not in listed_units[0].body
+
+    cited_zh = (
+        "第 1 條 本規程依軍事教育條例第十九條第一項規定訂定之。\n"
+        "第 2 條 本校置校長一人，綜理校務，並指揮所屬單位。"
+    )
+    cited_units = split_structured_units(cited_zh, language="zh-Hant")
+    assert [unit.number for unit in cited_units] == ["1", "2"]
+    assert "第十九條第一項規定訂定之" in cited_units[0].body
+
+    cross_zh = (
+        "第 5 條 作業程序：\n"
+        "一、第三條所定事項，由主計單位辦理。\n"
+        "二、第四條所定事項，由人事單位辦理。\n"
+        "第 6 條 本辦法自發布日施行，並送立法院備查。"
+    )
+    cross_units = split_structured_units(cross_zh, language="zh-Hant")
+    assert [unit.number for unit in cross_units] == ["5", "6"]
+    assert "一、第三條所定事項" in cross_units[0].body
+    assert "二、第四條所定事項" in cross_units[0].body
+    assert "第 6 條" not in cross_units[0].body
+
+    wrapped_cite = (
+        "第 12 條\n"
+        "第八條及第九條所定列有官等職等之文職人員，其職務所適用之職系，依公務人員任用法選用之。\n"
+        "第 13 條\n"
+        "本局為應業務需要，得聘請顧問及進用國軍聘雇人員。"
+    )
+    wrapped_units = split_structured_units(wrapped_cite, language="zh-Hant")
+    assert [unit.number for unit in wrapped_units] == ["12", "13"]
+    assert "第八條及第九條所定" in wrapped_units[0].body
+    assert "第 13 條" not in wrapped_units[0].body
+
+    chapter_cite = (
+        "第 8 條 前條審查程序不受本法第二章相關規定之限制，仍應記載評估事項。\n"
+        "第 9 條 本辦法自發布日施行，並送立法院備查。"
+    )
+    chapter_units = split_structured_units(chapter_cite, language="zh-Hant")
+    assert [unit.number for unit in chapter_units] == ["8", "9"]
+    assert "第二章相關規定之限制" in chapter_units[0].body
+
+    english_list = (
+        "Article 4\n"
+        "The college has the following educational courses:\n"
+        "1. Basic course\n"
+        "2. Refresh course\n"
+        "3. Advanced course\n"
+        "Article 5\n"
+        "The college appoints a president who supervises the college."
+    )
+    english_units = split_structured_units(english_list, language="en")
+    assert [unit.number for unit in english_units] == ["4", "5"]
+    assert "1. Basic course" in english_units[0].body
+    assert "3. Advanced course" in english_units[0].body
+
+    short_paren = (
+        "（一）關於國民大會之組織，國民大會代表之選舉、罷免。\n"
+        "（二）關於總統、副總統之選舉、罷免。\n"
+        "（三）關於立法委員之選舉、罷免。\n"
+        "（四）關於監察委員之選舉、罷免。\n"
+        "（五）關於五院之組織。\n"
+        "三、依照憲法應由各省市議會選出之首屆監察委員，其任期至正式議會選出之日為止。\n"
+    )
+    short_units = split_structured_units(short_paren, language="zh-Hant")
+    short_text = "\n".join(unit.body for unit in short_units)
+    assert "（五）關於五院之組織" in short_text
+    assert "三、依照憲法應由各省市議會選出之首屆監察委員" in short_text
+
+    cite_list = (
+        "Article 131\n"
+        "The following provisions apply to the preparatory proceedings:\n"
+        "2. The Code of Civil Procedure: Article 49, Paragraph 1 of Article 75.\n"
+        "Article 132\n"
+        "This Act takes effect on the date of promulgation."
+    )
+    cite_units = split_structured_units(cite_list, language="en")
+    assert [unit.number for unit in cite_units] == ["131", "132"]
+    assert "Article 49, Paragraph 1 of Article 75." in cite_units[0].body
+
+    glued_paragraph = (
+        "Article 27\n"
+        "An officer executes the following duties under this Act:\n"
+        "1. Investigation of instances as delineated in Article 2 Paragraph1 Subparagraphs 1 through 9.\n"
+        "Article 28\n"
+        "This Act takes effect on the date of promulgation."
+    )
+    glued_units = split_structured_units(glued_paragraph, language="en")
+    assert [unit.number for unit in glued_units] == ["27", "28"]
+    assert "Paragraph1 Subparagraphs 1 through 9." in glued_units[0].body
+
+    defined_terms = (
+        "Enforcement Rule of the Example Act\n"
+        "This Rule is prescribed in accordance with Article 19 of the Act.\n"
+        "1. Separated: means there is no land connection to the main island.\n"
+        "2. Island: means land naturally formed and surrounded by water.\n"
+        "Article 3\n"
+        "The competent authority shall publish the list of islands each year.\n"
+        "Article 4\n"
+        "This Rule takes effect on the date of promulgation."
+    )
+    defined_units = split_structured_units(defined_terms, language="en")
+    defined_text = "\n".join(unit.body for unit in defined_units)
+    assert [unit.number for unit in defined_units if unit.kind == "article"] == ["3", "4"]
+    assert "1. Separated: means there is no land connection" in defined_text
+
+    chapter_gap = (
+        "Chapter 1 General\n"
+        "1. A listed note stays with the article that follows the banner.\n"
+        "2. A second listed note stays outside the chapter banner.\n"
+        "Article 1\n"
+        "The minister shall keep the register of appointments for this Act.\n"
+        "Article 2\n"
+        "This Act takes effect on the date of promulgation and publication."
+    )
+    chapter_gap_units = split_structured_units(chapter_gap, language="en")
+    chapter_gap_text = "\n".join(unit.body for unit in chapter_gap_units)
+    assert "1" in [unit.number for unit in chapter_gap_units]
+    assert "2" in [unit.number for unit in chapter_gap_units]
+    assert "Chapter 1" not in chapter_gap_text
+    assert "1. A listed note stays with the article" in chapter_gap_text
+
+    between_chapters = (
+        "Article 15\n"
+        "An entity may not entreat a procurement officer under this Act.\n"
+        "Chapter 1 General Principles\n"
+        "The term entreating means any of the following requests:\n"
+        "1. a request raised prior to tender solicitation for a planned procurement;\n"
+        "2. a request raised after tender solicitation to change the tender documents;\n"
+        "Chapter 1 General Principles\n"
+        "Article 16\n"
+        "The competent authority shall record each request in the procurement file.\n"
+    )
+    between_units = split_structured_units(between_chapters, language="en")
+    between_text = "\n".join(unit.body for unit in between_units)
+    assert "a request raised prior to tender solicitation" in between_text
+    assert "Chapter 1" not in between_text
+    assert [unit.number for unit in between_units if unit.kind == "article"] == ["15", "16"]
+
     circled = (
         "① この法律は、裁判所の独立を保障することを目的とする。公開の法廷で行う。\n"
         "② 裁判は公開の法廷で行う。ただし法律に特別の定めがある場合はこの限りでない。"
@@ -3779,6 +3932,34 @@ def test_icelandic_grein_does_not_match_the_following_word() -> None:
         "2. pantsuit Buttons stay on the garment and the clerk records them."
     )
     assert split_structured_units(tailor, language="lv") == []
+    slovenian = (
+        "1. člen Prihodki občinskega proračuna za leto 1993 znašajo skupaj.\n"
+        "2. člen Od prihodkov pripada rezervnemu skladu določen odstotek."
+    )
+    assert [unit.number for unit in split_structured_units(slovenian, language="sl")] == ["1", "2"]
+    assert [unit.kind for unit in split_structured_units(slovenian, language="sl")] == ["article", "article"]
+    declined = (
+        "1. členu zakona se doda nov stavek o pristojnosti ministrstva.\n"
+        "2. členu zakona se črta beseda proračun."
+    )
+    assert split_structured_units(declined, language="sl") == []
+    sentence = (
+        "3. člen\n"
+        "V neposredni vojni nevarnosti, se gradijo zaklonišča dopolnilne zaščite.\n"
+        "4. člen\n"
+        "Upravne zadeve v zvezi z graditvijo zaklonišč vodi pristojni organ."
+    )
+    assert [unit.number for unit in split_structured_units(sentence, language="sl")] == ["3", "4"]
+    one = (
+        "3. člen\n"
+        "V neposredni vojni nevarnosti, se gradijo zaklonišča dopolnilne zaščite, "
+        "kot so zaklonilniki."
+    )
+    assert [
+        unit.number
+        for unit in segment_exclusive(one, language="sl")
+        if unit.kind == "article"
+    ] == ["3"]
     assert check_exclusive_cover(job, segment_exclusive(job, language="sq"))
 
 

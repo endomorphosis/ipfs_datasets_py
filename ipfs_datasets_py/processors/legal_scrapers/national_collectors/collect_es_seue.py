@@ -1,0 +1,7 @@
+"""Spain seu-e municipal collector. Importing this module does not run it."""
+from pathlib import Path
+
+VENDORED = Path(__file__).resolve().parents[1] / "hub_integrated" / Path("justicedao_world_law_scrapers/collectors/es_seue_collect.py")
+
+def vendored_path() -> Path:
+    return VENDORED

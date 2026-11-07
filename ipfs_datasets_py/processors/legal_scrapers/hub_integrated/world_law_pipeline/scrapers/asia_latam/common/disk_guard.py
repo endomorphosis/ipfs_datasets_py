@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """asia_latam disk guard (2026-10-18, HF uploads stalled): every 30 s check free space on /workspace.
-free < --pause-gb (37)  -> SIGSTOP every asia_latam writer process (python, cwd under pipeline/scrapers/asia_latam),
-free > --resume-gb (40) -> SIGCONT the ones this guard stopped.  Logs to staging/asia_latam/_logs/disk_guard.log;
+free < --pause-gb (10)  -> SIGSTOP every asia_latam writer process (python, cwd under pipeline/scrapers/asia_latam),
+free > --resume-gb (13) -> SIGCONT the ones this guard stopped.  Logs to staging/asia_latam/_logs/disk_guard.log;
 state + pause flag in staging/asia_latam/_state/supervisor/DISK_PAUSED (json: since, free_gb, pids).
 Never stopped: supervisor.py, gzip_processed.py (it frees space), wb_wait.py, this guard, and any process that at that
 moment holds an fd on a shared lock (pipeline/archive/_ratelimit/*, the scanned-PDF queue lock) -> retried next tick,
@@ -12,14 +12,16 @@ import os as _ipfs_os
 from pathlib import Path as _ipfs_Path
 _CORPORA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_CORPORA_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_corpora")))
 _SCRAPERS = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_COLLECTORS_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_collectors"))) / "shared"
+_WORLD = _ipfs_Path(_ipfs_os.environ.get("WORLD_LAW_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "world_law")))
+_TESSDATA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_TESSDATA", str(_ipfs_Path.home() / ".ipfs_datasets" / "tessdata")))
 _HF_TOKEN_PATH = _ipfs_Path(_ipfs_os.environ.get("HF_TOKEN_PATH", str(_ipfs_Path.home() / ".cache" / "huggingface" / "token")))
 import os as _wl_os  # WORLD_LAW_ROOT / GLOBAL_MUNICIPALITIES_ROOT override the default paths
 import fcntl, json, os, signal, sys, time
 from datetime import datetime
 from pathlib import Path
 
-ROOT = Path((_wl_os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law") + "/pipeline/scrapers/asia_latam"))
-STAGE = Path((_wl_os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law") + "/staging/asia_latam"))
+ROOT = Path((_wl_os.environ.get("WORLD_LAW_ROOT", str(_WORLD)) + "/pipeline/scrapers/asia_latam"))
+STAGE = Path((_wl_os.environ.get("WORLD_LAW_ROOT", str(_WORLD)) + "/staging/asia_latam"))
 SV = STAGE / "_state" / "supervisor"
 FLAG, STOPF, LOG = SV / "DISK_PAUSED", SV / "DISK_GUARD_STOP", STAGE / "_logs" / "disk_guard.log"
 SKIP = ("supervisor.py", "gzip_processed.py", "wb_wait.py", "disk_guard.py")
@@ -51,7 +53,7 @@ def writers():
 
 def _lock_inodes():
     ino = set()
-    for d in ((_wl_os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law") + "/pipeline/archive/_ratelimit"), str(STAGE)):
+    for d in ((_wl_os.environ.get("WORLD_LAW_ROOT", str(_WORLD)) + "/pipeline/archive/_ratelimit"), str(STAGE)):
         try:
             for n in os.listdir(d):
                 if n.endswith((".lock", ".qlock")):
@@ -77,8 +79,8 @@ def holds_lock(pid):
 
 
 def main():
-    pause_gb = float(sys.argv[sys.argv.index("--pause-gb") + 1]) if "--pause-gb" in sys.argv else 37.0
-    resume_gb = float(sys.argv[sys.argv.index("--resume-gb") + 1]) if "--resume-gb" in sys.argv else 40.0
+    pause_gb = float(sys.argv[sys.argv.index("--pause-gb") + 1]) if "--pause-gb" in sys.argv else 10.0
+    resume_gb = float(sys.argv[sys.argv.index("--resume-gb") + 1]) if "--resume-gb" in sys.argv else 13.0
     lk = open(SV / "disk_guard.lock", "w")
     try:
         fcntl.flock(lk, fcntl.LOCK_EX | fcntl.LOCK_NB)

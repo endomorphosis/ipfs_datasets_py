@@ -1,0 +1,36 @@
+{
+ "country_code": "DE",
+ "place_id": "wd:Q10415",
+ "qid": "Q10415",
+ "place_name": "Landkreis Aichach-Friedberg",
+ "iso_3166_2": "DE-BY",
+ "admin_level": "landkreis",
+ "language": "de",
+ "doc_type": "ordinance",
+ "platform": "de_by_kreisrecht",
+ "source_org": "Landkreis Aichach-Friedberg",
+ "index_url": "https://www.lra-aic-fdb.de/amtsblatt/",
+ "max_bytes": 52428800,
+ "urls": [
+  "https://www.lra-aic-fdb.de/wp-content/uploads/2026/10/Amtsblatt-10a-2026Jahrg.-81-Nr.-10a.pdf",
+  "https://www.lra-aic-fdb.de/wp-content/uploads/2026/10/Amtsblatt-10-TEST.pdf",
+  "https://www.lra-aic-fdb.de/wp-content/uploads/2026/09/Amtsblatt-09a-2026Jahrg.-81-Nr.-09a.pdf",
+  "https://www.lra-aic-fdb.de/wp-content/uploads/2026/09/Sitzungsamtsblatt-9b-202681-Nr.9b-2.pdf",
+  "https://www.lra-aic-fdb.de/wp-content/uploads/2026/09/Amtsblatt-09-2026Jahrg.-81-Nr.-09.pdf",
+  "https://www.lra-aic-fdb.de/wp-content/uploads/2026/08/Amtsblatt-08a-2026Jahrg.-81-Nr.-08a.pdf",
+  "https://www.lra-aic-fdb.de/wp-content/uploads/2026/08/Amtsblatt-08-2026Jahrg.-81-Nr.-08.pdf",
+  "https://www.lra-aic-fdb.de/wp-content/uploads/2026/07/Amtsblatt-07a-2026Jahrg.-81-Nr.-07a.pdf",
+  "https://www.lra-aic-fdb.de/antraege-formulare-und-downloads"
+ ],
+ "titles": {
+  "https://www.lra-aic-fdb.de/wp-content/uploads/2026/10/Amtsblatt-10a-2026Jahrg.-81-Nr.-10a.pdf": "Mehr lesen",
+  "https://www.lra-aic-fdb.de/wp-content/uploads/2026/10/Amtsblatt-10-TEST.pdf": "Mehr lesen",
+  "https://www.lra-aic-fdb.de/wp-content/uploads/2026/09/Amtsblatt-09a-2026Jahrg.-81-Nr.-09a.pdf": "Mehr lesen",
+  "https://www.lra-aic-fdb.de/wp-content/uploads/2026/09/Sitzungsamtsblatt-9b-202681-Nr.9b-2.pdf": "Mehr lesen",
+  "https://www.lra-aic-fdb.de/wp-content/uploads/2026/09/Amtsblatt-09-2026Jahrg.-81-Nr.-09.pdf": "Mehr lesen",
+  "https://www.lra-aic-fdb.de/wp-content/uploads/2026/08/Amtsblatt-08a-2026Jahrg.-81-Nr.-08a.pdf": "Mehr lesen",
+  "https://www.lra-aic-fdb.de/wp-content/uploads/2026/08/Amtsblatt-08-2026Jahrg.-81-Nr.-08.pdf": "Mehr lesen",
+  "https://www.lra-aic-fdb.de/wp-content/uploads/2026/07/Amtsblatt-07a-2026Jahrg.-81-Nr.-07a.pdf": "Mehr lesen",
+  "https://www.lra-aic-fdb.de/antraege-formulare-und-downloads": "Anträge, Formulare & Downloads"
+ }
+}

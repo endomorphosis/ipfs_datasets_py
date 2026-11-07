@@ -16,24 +16,28 @@ import os as _ipfs_os
 from pathlib import Path as _ipfs_Path
 _CORPORA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_CORPORA_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_corpora")))
 _SCRAPERS = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_COLLECTORS_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_collectors"))) / "shared"
+_WORLD = _ipfs_Path(_ipfs_os.environ.get("WORLD_LAW_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "world_law")))
+_TESSDATA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_TESSDATA", str(_ipfs_Path.home() / ".ipfs_datasets" / "tessdata")))
 _HF_TOKEN_PATH = _ipfs_Path(_ipfs_os.environ.get("HF_TOKEN_PATH", str(_ipfs_Path.home() / ".cache" / "huggingface" / "token")))
 import os as _wl_os  # WORLD_LAW_ROOT / GLOBAL_MUNICIPALITIES_ROOT override the default paths
 import argparse, csv, hashlib, json, logging, os, re, subprocess, sys, tempfile, threading, time
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import urljoin, urlparse
+import html as html_lib
 import requests
 from bs4 import BeautifulSoup
 
 HERE = Path(__file__).resolve().parent
-sys.path.insert(0, (_wl_os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law") + "/pipeline"))
+sys.path.insert(0, (_wl_os.environ.get("WORLD_LAW_ROOT", str(_WORLD)) + "/pipeline"))
 sys.path.insert(0, str(HERE.parent))
 sys.path.insert(0, str(HERE))
 import schema as S  # noqa: E402
 from common.rfc9309 import Robots  # noqa: E402
+from common import robots_policy as RP  # noqa: E402  (RESPECT_ROBOTS switch, owner policy 2026-11-01)
 from es_places import Resolver  # noqa: E402
 
-STAGE = Path((_wl_os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law") + "/staging/asia_latam"))
+STAGE = Path((_wl_os.environ.get("WORLD_LAW_ROOT", str(_WORLD)) + "/staging/asia_latam"))
 OUT, UNM, QUAR = STAGE / "ES", STAGE / "_unmatched" / "ES", STAGE / "_quarantine" / "ES"
 STATE, ROBOTS_DIR = STAGE / "_state" / "es_bop", STAGE / "_robots"
 UA = "JusticeDAO-WorldLaw/1.0 (+https://github.com/endomorphosis/ipfs_datasets_py; municipal law research crawler; polite)"
@@ -87,10 +91,10 @@ class Fetcher:
                 r = self.s.get(key + "/robots.txt", timeout=25)
                 self.nreq += 1
             except requests.RequestException as e:
-                self.robots[key] = ("unreachable", f"robots_unreachable: {type(e).__name__}")
+                self.robots[key] = self._unreach(p.netloc, f"robots_unreachable: {type(e).__name__}")
                 return self.robots[key]
             if r.status_code >= 500:
-                self.robots[key] = ("unreachable", f"robots_unreachable: HTTP {r.status_code}")
+                self.robots[key] = self._unreach(p.netloc, f"robots_unreachable: HTTP {r.status_code}")
             elif r.status_code >= 400 or "<html" in r.text[:600].lower():
                 self.robots[key] = (Robots(allow_all=True), None)
             else:
@@ -98,6 +102,15 @@ class Fetcher:
                 (ROBOTS_DIR / f"{p.netloc}.txt").write_text(r.text)
                 self.robots[key] = (Robots(r.text), None)
         return self.robots[key]
+
+    @staticmethod
+    def _unreach(host, err):
+        """robots.txt unreachable/5xx: skip under RESPECT_ROBOTS; otherwise (owner policy) proceed - min interval
+        still applies - and tag the host's records (robots_policy.TAG)."""
+        if RP.RESPECT:
+            return ("unreachable", err)
+        RP.note_host(host, err)
+        return (Robots(allow_all=True), None)
 
     def allowed(self, url):
         rb, err = self._robots(url)
@@ -139,6 +152,8 @@ class Fetcher:
                 ok, why = self.allowed(nxt)
                 if not ok:
                     raise Blocked(f"redirect to {nxt}: {why}")
+                if RP.ignored(nxt) and not RP.ignored(url):      # disallowed redirect target -> tag the record URL too
+                    RP.note(url, "robots_disallow_redirect_target")
                 cur = nxt
                 continue
             return r
@@ -240,7 +255,7 @@ def base_record(g, place, doc_id, url, title, text, fmt, pub, extra):
            "text": text, "retrieved_at": now_utc(),
            "place_name": place.get("place_name"), "qid": place.get("qid"), "admin_level": place.get("admin_level") or "municipality",
            "platform": f"es_bop_{g}", "platform_place_id": place.get("ine"), "ine_code": place.get("ine"),
-           "approval_stage": stage, "source_policy": "robots_allowed_rfc9309", "match": place.get("match"),
+           "approval_stage": stage, "source_policy": RP.policy(url, "robots_allowed_rfc9309"), "match": place.get("match"),
            "content_sha256": hashlib.sha256((text or "").encode()).hexdigest()}
     rec.update(extra)
     return {k: v for k, v in rec.items() if v is not None or k == "place_id"}
@@ -1310,7 +1325,755 @@ def run_forward(g, a):
     log.info("%s forward pass: head=%s new_docs=%d total=%s", g, st.get("head"), n_new, st.get("n_docs"))
 
 
-ADAPTERS = {"bocm": BOCM(), "soria": Soria(), "borm": BORM(), "caceres": Caceres(), "gipuzkoa": Gipuzkoa(), "cordoba": Cordoba(),
+MESES_GL = {m: i + 1 for i, m in enumerate("xaneiro febreiro marzo abril maio xuño xullo agosto setembro outubro novembro decembro".split())}
+
+
+class ACoruna(DayWalker):
+    """BOP A Coruña (bop.dacoruna.gal): /bopportal/cambioBoletin?fechaInput=DD/MM/YYYY renders the day's sumario
+    (HTTP 500 when there is no bulletin that day); sections h1 Administración Local > Municipal; issuer = h3;
+    per-anuncio HTML (gl original + machine es translation) and signed PDF under /bopportal/publicado/YYYY/MM/DD/.
+    robots.txt disallows /bopportal/publicado/ -> fetched under the owner policy 2026-11-01 (records tagged)."""
+    key, prov, home = "acoruna", "15", "https://bop.dacoruna.gal/bopportal/"
+    min_interval = 1.5
+    B = "https://bop.dacoruna.gal/bopportal"
+
+    def day(self, f, d):
+        u = f"{self.B}/cambioBoletin?fechaInput={d:%d}%2f{d:%m}%2f{d:%Y}"
+        r = f.get(u)
+        if r.status_code == 500 and "bloqueAnuncio" not in r.text:
+            f.last_status = 404; return None, []            # no bulletin that day
+        if r.status_code != 200:
+            return None, []
+        t = r.content.decode("utf-8", "replace")
+        if re.search(r"captcha|cf-chl|challenge-platform", t[:5000], re.I):
+            raise CaptchaChallenge(f"challenge page for {d}")
+        m = re.search(r"Bolet[ií]n N&ordm;\s*(\d+)\s*-\s*\w+,\s*(\d+) de (\w+) de (\d{4})", t)
+        if not m or (int(m.group(2)), MESES_GL.get(m.group(3).lower()), int(m.group(4))) != (d.day, d.month, d.year):
+            return None, []                                  # page shows another day's bulletin
+        meta = {"number": m.group(1), "url": u}
+        base = f"{self.B}/publicado/{d:%Y/%m/%d}/"
+        out, local, h1 = [], False, ""
+        for tok in re.finditer(r'<h1 class = "(\w+)">([^<]*)|<div id ="(\d+)" class = "bloqueAnuncio">(.*?)</div>', t, re.S):
+            if tok.group(1):
+                if tok.group(1) == "administracion":
+                    local = "Local" in tok.group(2)
+                else:
+                    h1 = tok.group(2).strip()
+                continue
+            b = tok.group(4)
+            h3 = re.search(r'<h3 class = "tituloEdicto">([^<]*)', b)
+            pdf = re.search(r'href = "(\d{4}_\d+)\.pdf"', b)
+            tt = re.findall(r'title = "Ver texto completo">([^<]*)</a>', b)
+            if not (h3 and pdf and tt):
+                continue
+            fn = pdf.group(1); y, n = fn.split("_")
+            out.append({"doc_id": f"BOPC-{y}-{int(n)}", "issuer": html_lib.unescape(h3.group(1).strip()),
+                        "title": html_lib.unescape(" ".join(tt[-1].split())), "local": local and h1 == "Municipal",
+                        "html": base + fn + ".html", "pdf": base + fn + ".pdf", "html_url": base + fn + ".html",
+                        "subsection": h1, "language": "gl"})
+        return meta, out
+
+    def text(self, f, it):
+        r = f.get(it["html"])
+        if r.status_code == 200 and "text/html" in (r.headers.get("content-type") or ""):
+            raw = r.content.decode("utf-8", "replace")
+            t = html_text(raw)
+            if len(t) > 200:
+                return t, "html", it["html"], {"pdf_url": it["pdf"], "subsection": it.get("subsection")}
+        r = f.get(it["pdf"])
+        if r.status_code == 200 and r.content[:4] == b"%PDF":
+            return pdf_text(r.content), "pdf_text", it["pdf"], {"subsection": it.get("subsection")}
+        return None, None, None, {}
+
+
+class Pontevedra(DayWalker):
+    """BOP Pontevedra (boppo.depo.gal, Liferay), FORWARD-ONLY: the home page carries the latest bulletin's sumario
+    (h2 numero + span fecha 'venres 30 de outubro de 2026'; h4 section > p.Org (Provincial/Municipal/...) > li: span.pub
+    issuer, PDF + /web/boppo/detalle/-/boppo/YYYY/MM/DD/ID). The calendar has no per-day links and the search form
+    answers 'erro interno' -> no date listing; history is left to the Wayback archive step (es_arch robots set)."""
+    key, prov, home = "pontevedra", "36", "https://boppo.depo.gal/"
+    floor = "2026-10-01"
+    forward_only = True
+    max_misses = 10
+    min_interval = 1.5
+    B = "https://boppo.depo.gal"
+
+    def day(self, f, d):
+        r = f.get(self.home)
+        if r.status_code != 200:
+            return None, []
+        t = r.content.decode("utf-8", "replace")
+        if re.search(r"captcha|cf-chl|challenge-platform", t[:5000], re.I):
+            raise CaptchaChallenge(f"challenge page for {d}")
+        m = re.search(r'class="numero">.*?n[uú]mero\s*(\d+)</span>.*?class="fecha">\s*\w+\s+(\d+) de (\w+) de (\d{4})', t, re.S)
+        if not m or (int(m.group(2)), MESES_GL.get(m.group(3).lower()), int(m.group(4))) != (d.day, d.month, d.year):
+            return None, []
+        meta = {"number": m.group(1), "url": self.home}
+        i = t.find('id="contSumario"'); j = t.find('class="masCalendarios"', i)
+        body = t[i:j if j > i else None]
+        out, sec, org = [], "", ""
+        for tok in re.finditer(r'<h4 class="tit">([^<]*)</h4>|<p class="Org">([^<]*)</p>|<li[^>]*><span class="pub">([^<]*)</span>(.*?)</li>', body, re.S):
+            if tok.group(1) is not None:
+                sec = html_lib.unescape(tok.group(1)); continue
+            if tok.group(2) is not None:
+                org = html_lib.unescape(tok.group(2)).strip(); continue
+            a = re.search(r'<p class="sumario"><a href="(/web/boppo/detalle/-/boppo/(\d{4})/\d\d/\d\d/(\d+))">(.*?)</a>', tok.group(4), re.S)
+            pdf = re.search(r'href="([^"]+\.pdf)"', tok.group(4))
+            if not a:
+                continue
+            out.append({"doc_id": f"BOPPO-{a.group(2)}-{a.group(3)}", "issuer": html_lib.unescape(tok.group(3).strip()),
+                        "title": html_lib.unescape(" ".join(re.sub(r"<[^>]+>", " ", a.group(4)).split())),
+                        "local": "LOCAL" in sec.upper() and org == "Municipal", "html": self.B + a.group(1),
+                        "pdf": self.B + pdf.group(1) if pdf else None, "html_url": self.B + a.group(1), "subsection": org, "language": "gl"})
+        return (meta, out) if out else (None, [])
+
+    def text(self, f, it):
+        r = f.get(it["html"])
+        if r.status_code == 200 and "text/html" in (r.headers.get("content-type") or ""):
+            raw = r.content.decode("utf-8", "replace")
+            k = raw.find('class="contDetalle"')
+            t = html_text(raw[raw.rfind("<", 0, k):] if k > 0 else raw)
+            if len(t) > 200:
+                return t, "html", it["html"], {"pdf_url": it["pdf"], "subsection": it.get("subsection")}
+        if it.get("pdf"):
+            r = f.get(it["pdf"])
+            if r.status_code == 200 and r.content[:4] == b"%PDF":
+                return pdf_text(r.content), "pdf_text", it["pdf"], {"subsection": it.get("subsection")}
+        return None, None, None, {}
+
+
+class Alava(DayWalker):
+    """BOTHA Álava (www.araba.eus/botha): /Inicio/SGBO5001.aspx?FechaBotha=DD/MM/YYYY renders that day's sumario
+    ('Sumario del Boletin nº N del <weekday>, D de mes de YYYY'; '1 de enero de 0001' when there is none). Bilingual rows
+    (eu td then es td); section titles TitSeccion1/2/3 printed on change; es anuncio = Hyperlink1 -> 
+    /Busquedas/Resultado.aspx?File=Boletines/YYYY/NNN/YYYY_NNN_NNNNN_C.xml (HTML) + same-name .pdf."""
+    key, prov, home = "alava", "01", "https://www.araba.eus/botha/Inicio/SGBO5001.aspx"
+    min_interval = 1.5
+    B = "https://www.araba.eus/botha"
+
+    def day(self, f, d):
+        u = f"{self.B}/Inicio/SGBO5001.aspx?FechaBotha={d:%d/%m/%Y}"
+        r = f.get(u)
+        if r.status_code != 200:
+            return None, []
+        t = r.content.decode("utf-8", "replace")
+        if re.search(r"captcha|cf-chl|challenge-platform", t[:5000], re.I):
+            raise CaptchaChallenge(f"challenge page for {d}")
+        m = re.search(r"Sumario del Boletin n\S*\s*(\d+) del \w+, (\d+) de (\w+) de (\d{4})", t)
+        if not m or (int(m.group(2)), MESES.get(m.group(3).lower()), int(m.group(4))) != (d.day, d.month, d.year):
+            return None, []
+        meta = {"number": m.group(1), "url": u}
+        out, sec = [], {}
+        for tok in re.finditer(r"id='TitSeccion(\d)'>(?:<a[^>]*></a>)?([^<]*)|id=\"[^\"]*_Hyperlink1\" href=\"\.\./Busquedas/Resultado\.aspx\?File=(Boletines/(\d{4})/\d+/\d+_\d+_(\d+)_C)\.xml[^\"]*\"[^>]*>([^<]*)</a>", t):
+            if tok.group(1):
+                lv = int(tok.group(1)); sec[lv] = html_lib.unescape(tok.group(2)).strip()
+                for k in [k for k in sec if k > lv]:
+                    sec.pop(k)
+                continue
+            fb, y, n = tok.group(3), tok.group(4), tok.group(5)
+            s1, s2, s3 = sec.get(1, ""), sec.get(2, ""), sec.get(3, "")
+            out.append({"doc_id": f"BOTHA-{y}-{int(n)}", "issuer": s3 or s2, "title": html_lib.unescape(" ".join(tok.group(6).split())),
+                        "local": s1.startswith("Administración Local") and s2 in ("Municipios", "Concejos"),
+                        "html": f"{self.B}/Busquedas/Resultado.aspx?File={fb}.xml", "pdf": f"{self.B}/{fb}.pdf",
+                        "html_url": f"{self.B}/Busquedas/Resultado.aspx?File={fb}.xml", "subsection": s2})
+        return meta, out
+
+    def text(self, f, it):
+        r = f.get(it["html"])
+        if r.status_code == 200 and "text/html" in (r.headers.get("content-type") or ""):
+            t = html_text(r.content.decode("utf-8", "replace"))
+            if len(t) > 400:
+                return t, "html", it["html"], {"pdf_url": it["pdf"], "subsection": it.get("subsection")}
+        r = f.get(it["pdf"])
+        if r.status_code == 200 and r.content[:4] == b"%PDF":
+            return pdf_text(r.content), "pdf_text", it["pdf"], {"subsection": it.get("subsection")}
+        return None, None, None, {}
+
+
+class Bizkaia(DayWalker):
+    """BOB Bizkaia (www.bizkaia.eus/es/bob, Liferay portlet IYBIWBCC): the calendar resource (POST year/month, the
+    portal's own read-only AJAX call) lists that month's bulletins {fechaBoletin, numeroBoletin}; the day sumario is
+    /es/bob/resultados?...mvcRenderCommandName=/detail&bdate=YYYYMMDD&bnum=N: li.row > h4 issuer (carried over when
+    absent) + p summary + PDF /lehendakaritza/Bao_bob/YYYY/MM/DD/<SEC>-<n>_cas.pdf (SEC II = Administración Local)."""
+    key, prov, home = "bizkaia", "48", "https://www.bizkaia.eus/es/bob"
+    min_interval = 1.5
+    CAL = ("https://www.bizkaia.eus/es/bob?p_p_id=IYBIWBCC&p_p_lifecycle=2&p_p_state=normal&p_p_mode=view"
+           "&p_p_resource_id=%2Fiybiwbcc%2FresourceBoletin&p_p_cacheability=cacheLevelPage")
+    DET = ("https://www.bizkaia.eus/es/bob/resultados?p_p_id=IYBIWBCC&p_p_lifecycle=0&p_p_state=normal&p_p_mode=view"
+           "&_IYBIWBCC_mvcRenderCommandName=%2Fdetail&_IYBIWBCC_bdate={}&_IYBIWBCC_bnum={}")
+
+    def __init__(self):
+        self._cal = {}
+
+    def month(self, f, y, m):
+        k = (y, m)
+        if k not in self._cal:
+            f.allowed(self.CAL)
+            dl = f.next.get("www.bizkaia.eus", 0) - time.time()
+            if dl > 0:
+                time.sleep(dl)
+            f.next["www.bizkaia.eus"] = time.time() + f.min
+            r = f.s.post(self.CAL, data={"_IYBIWBCC_year": str(y), "_IYBIWBCC_month": str(m)}, timeout=60); f.nreq += 1
+            f.last_status = r.status_code
+            if r.status_code != 200:
+                raise DayUnavailable(f"calendar HTTP {r.status_code}")
+            try:
+                ev = json.loads(r.text) if r.text.strip() else []
+            except ValueError:
+                raise DayUnavailable("calendar: non-JSON answer")
+            if len(self._cal) > 24:
+                self._cal.clear()
+            self._cal[k] = {e["fechaBoletin"]: e for e in ev if e.get("fechaBoletin")}
+        return self._cal[k]
+
+    def day(self, f, d):
+        e = self.month(f, d.year, d.month).get(f"{d:%Y%m%d}")
+        if not e:
+            f.last_status = 404; return None, []
+        u = self.DET.format(f"{d:%Y%m%d}", e.get("numeroBoletin"))
+        r = f.get(u)
+        if r.status_code != 200:
+            return None, []
+        t = r.content.decode("utf-8", "replace")
+        if re.search(r"captcha|cf-chl|challenge-platform", t[:5000], re.I):
+            raise CaptchaChallenge(f"challenge page for {d}")
+        meta = {"number": str(e.get("numeroBoletin")), "url": u}
+        out, iss = [], ""
+        for li in re.finditer(r'<li class="row">(.*?)</li>', t, re.S):
+            b = li.group(1)
+            h4 = re.search(r'<h4 id="emisorEntidad[^"]*">([^<]*)</h4>', b)
+            if h4:
+                iss = html_lib.unescape(h4.group(1).strip())
+            pr = re.search(r'<p id="emisorResumen[^"]*">(.*?)</p>', b, re.S)
+            pdf = re.search(r'href="(https?://www\.bizkaia\.eus/lehendakaritza/Bao_bob/[^"]*?/([IVX]+)-(\d+)_cas\.pdf)"', b)
+            oldp = None if pdf else re.search(r'href="(https?://www\.bizkaia\.eus/lehendakaritza/Bao_bob/\d{4}/\d\d/\d{8}a\d+\.pdf)#page=(\d+)"', b)
+            if pr and oldp:              # pre-2015 format: one bulletin PDF, anuncio = #page=N (until the next anuncio's page)
+                out.append({"doc_id": f"BOB-{d.year}-{int(meta['number'])}-{len(out) + 1:03d}", "issuer": iss,
+                            "title": html_lib.unescape(" ".join(re.sub(r"<[^>]+>", " ", pr.group(1)).split())),
+                            "local": bool(re.match(r"(Ayuntamiento|Udala|Concejo|Junta Administrativa)", iss, re.I)),
+                            "bulletin_pdf": oldp.group(1).replace("http://", "https://"), "page": int(oldp.group(2)),
+                            "pdf": f"{oldp.group(1).replace('http://', 'https://')}#page={oldp.group(2)}", "html_url": u})
+                continue
+            if not (pr and pdf):
+                continue
+            sec = pdf.group(2)
+            out.append({"doc_id": f"BOB-{d.year}-{sec}-{int(pdf.group(3))}", "issuer": iss,
+                        "title": html_lib.unescape(" ".join(re.sub(r"<[^>]+>", " ", pr.group(1)).split())),
+                        "local": sec == "II" and bool(re.match(r"(Ayuntamiento|Udala|Concejo|Junta Administrativa)", iss, re.I)),
+                        "pdf": pdf.group(1).replace("http://", "https://"), "html_url": u, "subsection": sec})
+        if not out:
+            raise DayUnavailable(f"bulletin {meta['number']} listed but sumario empty")
+        pages = [x for x in out if x.get("page")]
+        for a_, b_ in zip(pages, pages[1:] + [None]):
+            a_["last_page"] = max(a_["page"], b_["page"]) if b_ else a_["page"] + 3
+        return meta, out
+
+    def text(self, f, it):
+        if it.get("bulletin_pdf"):
+            bu = it["bulletin_pdf"]
+            if getattr(self, "_bpdf", (None,))[0] != bu:
+                r = f.get(bu)
+                if r.status_code != 200 or r.content[:4] != b"%PDF":
+                    raise IOError(f"HTTP {r.status_code}")
+                self._bpdf = (bu, r.content)
+            t = pdf_pages_text(self._bpdf[1], it["page"], it["last_page"])
+            return t, "pdf_text", it["pdf"], {"pdf_pages": [it["page"], it["last_page"]], "page_range_approx": True}
+        r = f.get(it["pdf"])
+        if r.status_code == 200 and r.content[:4] == b"%PDF":
+            return pdf_text(r.content), "pdf_text", it["pdf"], {"subsection": it.get("subsection")}
+        raise IOError(f"HTTP {r.status_code}")
+
+
+class Barcelona(DayWalker):
+    """BOP Barcelona (bop.diba.cat): /anteriors/YYYY-MM-DD[/page]?bopb_dia[tipologiaAnunciant]=177 lists that day's
+    anuncis of 'Ajuntaments Província de Barcelona' (20 per page, "S'han trobat N resultats ... mostrant del a al b");
+    card: h3 > a /anunci/<id>/<slug> (issuer) + p summary + Registre; text = /anunci/descarrega-pdf/<id> (PDF).
+    robots.txt disallows /anteriors/ -> fetched under the owner policy 2026-11-01 (records tagged)."""
+    key, prov, home = "barcelona", "08", "https://bop.diba.cat/"
+    min_interval = 2.0
+    B = "https://bop.diba.cat"
+    TIP, PFX = ("177",), "BOPB"            # Ajuntaments Província de Barcelona
+
+    def __init__(self, key=None, prov=None, base=None, tip=None, pfx=None):
+        if key:                            # same Drupal 'bopb' platform reused by other provinces (e.g. Tarragona)
+            self.key, self.prov, self.B, self.home, self.TIP, self.PFX = key, prov, base, base + "/", tip, pfx
+
+    def day(self, f, d):
+        out = []
+        for tip in self.TIP:
+            meta, o = self.day_tip(f, d, tip)
+            if meta is None and f.last_status not in (None, 200, 404):
+                return None, []
+            out += o
+        return (meta, out) if meta else (None, [])
+
+    def day_tip(self, f, d, tip):
+        out, page, meta = [], 1, None
+        while page < 60:
+            u = f"{self.B}/anteriors/{d:%Y-%m-%d}" + (f"/{page}" if page > 1 else "") + f"?bopb_dia%5BtipologiaAnunciant%5D={tip}"
+            r = f.get(u)
+            if r.status_code == 500 and page == 1:
+                f.last_status = 404; return None, []        # the portal answers 500 for days without a bulletin
+            if r.status_code != 200:
+                return (meta, out) if out else (None, [])
+            t = r.content.decode("utf-8", "replace")
+            if re.search(r"captcha|cf-chl|challenge-platform", t[:5000], re.I):
+                raise CaptchaChallenge(f"challenge page for {d}")
+            if page == 1:
+                if f"{d:%d/%m/%Y}" not in t[:3000] and "Data de publicaci" not in t:
+                    return None, []
+                meta = {"number": None, "url": u}
+            for c in re.finditer(r'<h3 class="card-title h6">\s*<a href="([^"]*/anunci/(\d+)/[^"]*)"[^>]*>([^<]*)</a>\s*</h3>\s*<p>(.*?)</p>(.*?)</ul>', t, re.S):
+                if f"{d:%d/%m/%Y}" not in c.group(5):
+                    continue
+                reg = re.search(r"Registre</span>:\s*(\d+)", c.group(5))
+                iss = html_lib.unescape(c.group(3).strip())
+                iss = re.sub(r"^(.*?)\s+([^,]+),\s*(EL|LA|LES|ELS|L')$", lambda m_: m_.group(1) + " " + m_.group(3) + ("" if m_.group(3).endswith("'") else " ") + m_.group(2), iss, flags=re.I)   # 'AJUNTAMENT MASROIG, EL' -> 'AJUNTAMENT EL MASROIG' 
+                out.append({"doc_id": f"{self.PFX}-{c.group(2)}", "issuer": iss,
+                            "title": html_lib.unescape(" ".join(re.sub(r"<[^>]+>", " ", c.group(4)).split())), "local": True,
+                            "pdf": f"{self.B}/anunci/descarrega-pdf/{c.group(2)}", "html_url": urljoin(self.B + "/", c.group(1)),
+                            "registre": reg.group(1) if reg else None, "language": "ca"})
+            m = re.search(r"trobat (\d+) resultats.*?mostrant del \d+ al (\d+)", t)
+            if not m or int(m.group(2)) >= int(m.group(1)):
+                break
+            page += 1
+        if meta is None or not out:
+            return (None, []) if meta is None else (meta, [])
+        return meta, out
+
+    def text(self, f, it):
+        r = f.get(it["pdf"])
+        if r.status_code == 200 and r.content[:4] == b"%PDF":
+            return pdf_text(r.content), "pdf_text", it["pdf"], {"registre": it.get("registre")}
+        r = f.get(it["html_url"])
+        if r.status_code == 200:
+            t = html_text(r.content.decode("utf-8", "replace"))
+            if len(t) > 400:
+                return t, "html", it["html_url"], {"registre": it.get("registre")}
+        raise IOError(f"HTTP {r.status_code}")
+
+
+class Girona(DayWalker):
+    """BOP Girona (www.ddgi.cat/bop): bulletins are addressed by year + number only (/bop/mostra-bop/<any-date>/YYYY/N;
+    the date segment is ignored, no per-date listing) -> day(d) locates N by a local search around an estimate (cache
+    year/N -> date read from 'Bop número: N/x - DD/MM/YYYY'). Sumario: h2.seccioTau section > li.edicte >
+    a PDF ssl4.ddgi.cat/bopV1/pdf/YYYY/N/<id>.pdf 'NNNN - <span>ISSUER</span> - title'."""
+    key, prov, home = "girona", "17", "https://www.ddgi.cat/bop/"
+    min_interval = 2.0
+    B = "https://www.ddgi.cat/bop/mostra-bop"
+
+    def __init__(self):
+        self._nd, self._ptr, self._html = {}, {}, {}
+
+    def bul(self, f, y, n):
+        k = (y, n)
+        if k not in self._nd:
+            if n < 1:
+                self._nd[k] = None; return None
+            u = f"{self.B}/{y}-01-01/{y}/{n}"
+            try:
+                r = f.get(u)
+            except IOError as e:
+                if "too many redirects" not in str(e):
+                    raise
+                self._nd[k] = None; return None
+            t = r.content.decode("utf-8", "replace") if r.status_code == 200 else ""
+            if re.search(r"captcha|cf-chl|challenge-platform", t[:5000], re.I):
+                raise CaptchaChallenge(f"challenge page for {y}/{n}")
+            m = re.search(r"Bop n[uú]mero:\s*(\d+)/\d+\s*-\s*(\d\d)/(\d\d)/(\d{4})", t)
+            if r.status_code >= 500:
+                raise DayUnavailable(f"HTTP {r.status_code} for {y}/{n}")
+            self._nd[k] = date(int(m.group(4)), int(m.group(3)), int(m.group(2))) if m and int(m.group(1)) == n else None
+            if self._nd[k]:
+                if len(self._html) > 8:
+                    self._html.clear()
+                self._html[k] = (u, t)
+            if len(self._nd) > 5000:
+                self._nd.clear()
+        return self._nd[k]
+
+    def day(self, f, d):
+        y = d.year
+        n = self._ptr.get(y) or max(1, int(sum(1 for i in range((d - date(y, 1, 1)).days + 1)
+                                               if (date(y, 1, 1) + timedelta(days=i)).weekday() < 5) * 0.97))
+        for _ in range(60):
+            dn = self.bul(f, y, n)
+            if dn is None:                       # past the year's last number (or a gap): step down
+                if n <= 1:
+                    f.last_status = 404; return None, []
+                n -= 1; continue
+            if dn > d:
+                n -= 1; continue
+            if dn == d:
+                break
+            nx = self.bul(f, y, n + 1)           # dn < d: is there a bulletin between?
+            if nx is None or nx > d:
+                self._ptr[y] = n; f.last_status = 404; return None, []
+            n += 1
+        else:
+            raise DayUnavailable(f"could not locate bulletin for {d}")
+        self._ptr[y] = n
+        u, t = self._html.get((y, n)) or (None, None)
+        if t is None:
+            self._nd.pop((y, n), None); self.bul(f, y, n); u, t = self._html[(y, n)]
+        meta = {"number": str(n), "url": u}
+        out, sec = [], ""
+        for tok in re.finditer(r'<h2 class="seccioTau">\s*([^<]*?)\s*</h2>|<li class="edicte">\s*<a href="(https://ssl4\.ddgi\.cat/bopV1/pdf/[^"]*/(\d+)\.pdf)"[^>]*>(.*?)</a>', t, re.S):
+            if tok.group(1) is not None:
+                sec = html_lib.unescape(tok.group(1)); continue
+            body = tok.group(4)
+            iss = re.search(r"<span>([^<]*)</span>", body)
+            title = re.sub(r"^\s*\d+\s*-\s*<span>[^<]*</span>\s*-\s*", "", body, flags=re.S)
+            out.append({"doc_id": f"BOPG-{tok.group(3)}", "issuer": html_lib.unescape(iss.group(1).strip()) if iss else "",
+                        "title": html_lib.unescape(" ".join(re.sub(r"<[^>]+>", " ", title).split())),
+                        "local": bool(re.search(r"Ajuntament", sec, re.I)), "pdf": tok.group(2), "html_url": u,
+                        "subsection": sec, "language": "ca"})
+        return meta, out
+
+    def text(self, f, it):
+        r = f.get(it["pdf"])
+        if r.status_code == 200 and r.content[:4] == b"%PDF":
+            return pdf_text(r.content), "pdf_text", it["pdf"], {"subsection": it.get("subsection")}
+        raise IOError(f"HTTP {r.status_code}")
+
+
+class Alicante(DayWalker):
+    """BOP Alicante: the sede's own read-only JSON service (wseConsultaAjax.php, nemo BOP_CON, fechaPub DD/MM/YYYY,
+    tipoorganismo 4 = III. Administración Local) lists that day's edictos {nBop, ampliacion, denominacion, extracto,
+    edicto, ubicacion}. ubicacion = per-edicto PDF (www.dip-alicante.es/bop2/pdftotal/...) or, for older bulletins,
+    the full bulletin PDF '#page=N' (page range up to the next edicto's page)."""
+    key, prov, home = "alicante", "03", "https://sede.diputacionalicante.es/consultas-bop/"
+    min_interval = 1.5
+    WS = "https://sede.diputacionalicante.es/wp-content/themes/Desarrollo-Diputacion/webservices/wseConsultaAjax.php"
+
+    def day(self, f, d):
+        from urllib.parse import urlencode
+        u = self.WS + "?" + urlencode({"nemo": "BOP_CON", "usuario": "-", "param": "<raiz><entrada><registro><fechaPub>"
+                                       f"{d:%d/%m/%Y}</fechaPub><tipoorganismo>4</tipoorganismo></registro></entrada></raiz>"})
+        r = f.get(u)
+        if r.status_code != 200:
+            return None, []
+        try:
+            j = json.loads(r.text)
+        except ValueError:
+            if re.search(r"captcha|cf-chl|challenge-platform", r.text[:5000], re.I):
+                raise CaptchaChallenge(f"challenge page for {d}")
+            raise DayUnavailable("non-JSON answer")
+        bj = j.get("boletin") if isinstance(j.get("boletin"), dict) else j
+        regs = [x for b in (bj.get("bop") or j.get("bop") or []) for x in (b.get("registro") or [])]
+        if not regs:
+            return None, []
+        g = lambda x, k: (x.get(k) or [""])[0]
+        meta = {"number": g(regs[0], "nBop"), "url": u}
+        out = []
+        for x in regs:
+            if g(x, "fechaPublica") != f"{d:%d/%m/%Y}":
+                continue
+            loc = g(x, "ubicacion")
+            m = re.search(r"#page=(\d+)", loc)
+            out.append({"doc_id": f"BOPA-{d.year}-{int(g(x, 'edicto') or 0)}", "issuer": g(x, "ampliacion") or g(x, "denominacion"),
+                        "place_hint": g(x, "denominacion"), "title": " ".join(g(x, "extracto").split()),
+                        "local": g(x, "csecun") == "1000" or g(x, "abreviatura").upper() == "AYUNTAMIENTO",
+                        "pdf": loc, "bulletin_pdf": loc.split("#")[0] if m else None, "page": int(m.group(1)) if m else None,
+                        "html_url": loc, "subsection": g(x, "desecun")})
+        pages = sorted({x["page"] for x in out if x["page"]})
+        for x in out:
+            if x["page"]:
+                nxt = [p_ for p_ in pages if p_ > x["page"]]
+                x["last_page"] = nxt[0] if nxt else x["page"] + 3
+        return meta, out
+
+    def text(self, f, it):
+        if it.get("bulletin_pdf"):
+            bu = it["bulletin_pdf"]
+            if getattr(self, "_bpdf", (None,))[0] != bu:
+                r = f.get(bu)
+                if r.status_code != 200 or r.content[:4] != b"%PDF":
+                    raise IOError(f"HTTP {r.status_code}")
+                self._bpdf = (bu, r.content)
+            return (pdf_pages_text(self._bpdf[1], it["page"], it["last_page"]), "pdf_text", it["pdf"],
+                    {"pdf_pages": [it["page"], it["last_page"]], "page_range_approx": True})
+        r = f.get(it["pdf"])
+        if r.status_code == 200 and r.content[:4] == b"%PDF":
+            return pdf_text(r.content), "pdf_text", it["pdf"], {"subsection": it.get("subsection")}
+        raise IOError(f"HTTP {r.status_code}")
+
+
+class Toledo(DayWalker):
+    """BOP Toledo (bop.diputoledo.es/webEbop): ebopResumen.jsp?publication_date=DD/MM/YYYY&publication_date_to=same
+    ('Boletín número N publicado el día DD/MM/YYYY'); h2 'Tipo Anunciante : X' > h3 publisherBlock 'Anunciante : ISSUER'
+    > div.announce: DocGet?id=...&insert_number=N&insert_year=Y (PDF) + 'Resumen/Asunto'. Publishes on weekends too.
+    robots.txt Disallow: / -> fetched under the owner policy 2026-11-01 (records tagged)."""
+    key, prov, home = "toledo", "45", "https://bop.diputoledo.es/webEbop/"
+    min_interval = 1.5
+    skip_weekdays = ()
+    B = "https://bop.diputoledo.es/webEbop/"
+
+    def day(self, f, d):
+        u = f"{self.B}ebopResumen.jsp?publication_date={d:%d/%m/%Y}&publication_date_to={d:%d/%m/%Y}"
+        r = f.get(u)
+        if r.status_code != 200:
+            return None, []
+        t = r.content.decode("utf-8", "replace")
+        if re.search(r"captcha|cf-chl|challenge-platform", t[:5000], re.I):
+            raise CaptchaChallenge(f"challenge page for {d}")
+        m = re.search(r"Bolet[ií]n n[uú]mero\s*(\d+)\s*publicado el d[ií]a\s*(\d\d/\d\d/\d{4})", t)
+        if not m or m.group(2) != f"{d:%d/%m/%Y}":
+            return None, []
+        meta = {"number": m.group(1), "url": u}
+        out, typ, iss = [], "", ""
+        for tok in re.finditer(r"<h2>Tipo Anunciante\s*:\s*([^<]*)</h2>|<h3 class=\"publisherBlock\">Anunciante\s*:\s*([^<]*)</h3>|class=\"announce\">(.*?)</ul>", t, re.S):
+            if tok.group(1) is not None:
+                typ = html_lib.unescape(tok.group(1)).strip(); continue
+            if tok.group(2) is not None:
+                iss = html_lib.unescape(tok.group(2)).strip(); continue
+            b = tok.group(3)
+            a = re.search(r'href="(DocGet\?id=[^"]*insert_number=(\d+)&(?:amp;)?insert_year=(\d{4}))"', b)
+            ra = re.search(r"Resumen/Asunto\s*:\s*</strong>(.*?)</li>", b, re.S)
+            if not (a and ra):
+                continue
+            out.append({"doc_id": f"BOPTO-{a.group(3)}-{int(a.group(2))}", "issuer": iss,
+                        "title": html_lib.unescape(" ".join(re.sub(r"<[^>]+>", " ", ra.group(1)).split())),
+                        "local": typ.lower().startswith("ayuntamiento") or iss.upper().startswith("AYUNTAMIENTO"),
+                        "pdf": self.B + html_lib.unescape(a.group(1)), "html_url": u, "subsection": typ})
+        return meta, out
+
+    def text(self, f, it):
+        r = f.get(it["pdf"])
+        if r.status_code == 200 and r.content[:4] == b"%PDF":
+            return pdf_text(r.content), "pdf_text", it["pdf"], {"subsection": it.get("subsection")}
+        raise IOError(f"HTTP {r.status_code}")
+
+
+class LasPalmas(DayWalker):
+    """BOP Las Palmas (www.boplaspalmas.net/nbop2): sumario.php?codigopub=1&fecha_mas_reciente=YYYY-MM-DD (empty
+    'Nº' -> no bulletin that day) -> whole-bulletin PDF boletines/YYYY/D-M-YY/D-M-YY.pdf. The PDF's own sumario lists
+    '<id> <title>....<printed page>' under issuer headings; section III = Administración Local. Each anuncio is cut out
+    of the whole PDF by printed-page range (printed page -> PDF page via the running header). The PDF is only
+    downloaded when the HTML sumario has a target title. robots.txt Disallow: / -> fetched under owner policy 2026-11-01."""
+    key, prov, home = "laspalmas", "35", "https://www.boplaspalmas.net/nbop2/index.php"
+    B = "https://www.boplaspalmas.net/"
+    min_interval = 1.5
+    skip_weekdays = (5, 6)
+
+    def __init__(self):
+        self._pdf = (None, None, None)
+
+    def _load_pdf(self, f, u):
+        if self._pdf[0] != u:
+            r = f.get(u)
+            if r.status_code != 200 or r.content[:4] != b"%PDF":
+                raise DayUnavailable(f"pdf HTTP {r.status_code}")
+            pages = pdf_text(r.content).split("\f")
+            if len("".join(pages).strip()) < 200:
+                from common import scanned_pdfs as SP
+                SP.append([SP.record(f"BOPLP-{u.rsplit('/', 1)[-1]}", "es_bop_laspalmas", "ES", u, RP.policy(u, "robots_allowed_rfc9309"))])
+                raise DayUnavailable(f"scanned pdf (no text layer) {u} -> _scanned_pdfs_manifest")
+            pmap = {}
+            for i, pg in enumerate(pages):
+                head = pg.strip()[:300]
+                m = (re.match(r"^(\d{1,6})\s+Bolet[ií]n Oficial de la Provincia", head)
+                     or re.match(r"^Bolet[ií]n Oficial de la Provincia[^\n]*?de \d{4}\s+(\d{1,6})\s*\n", head))
+                if m:
+                    pmap.setdefault(int(m.group(1)), i + 1)
+            full = "\f".join(pages)
+            marks = [m.start() for m in re.finditer(r"(?m)^\s*\d{1,2}\.\d{3}\s*$", full)]
+            self._pdf = (u, r.content, (pages, pmap, full, marks))
+        return self._pdf
+
+    def day(self, f, d):
+        u = f"{self.B}nbop2/sumario.php?codigopub=1&fecha_mas_reciente={d:%Y-%m-%d}"
+        r = f.get(u)
+        if r.status_code != 200:
+            return None, []
+        t = r.content.decode("utf-8", "replace")
+        if re.search(r"captcha|cf-chl|challenge-platform", t[:5000], re.I):
+            raise CaptchaChallenge(f"challenge page for {d}")
+        plain = html_lib.unescape(re.sub(r"<[^>]+>", " ", t))
+        m = re.search(r"SUMARIO DEL BOLET[ÍI]N\s+Nº\s*(\d+)\s*,", plain)
+        pm = re.search(r'href="\.\./(boletines/[^"]+\.pdf)"', t)
+        if not m or not pm:
+            return None, []
+        pdfu = self.B + pm.group(1)
+        meta = {"number": m.group(1), "url": u}
+        if not TARGET_RE.search(plain):
+            return meta, []
+        _, _, (pages, pmap, full, marks) = self._load_pdf(f, pdfu)
+        head = "\n".join(pages[:6])
+        rows, sec, iss = [], "", ""
+        lines = head.split("\n")
+        i = 0
+        while i < len(lines):
+            ln = lines[i]
+            s = ln.strip()
+            ms = re.match(r"^([IVX]+)\.\s+([A-ZÁÉÍÓÚÑ ,]+)$", s)
+            mi = re.match(r"^(\d{3,8}(?:-?[A-Z])?)\s+(.+)$", s)
+            if ms:
+                sec = ms.group(1)
+            elif mi:
+                title = mi.group(2)
+                while not re.search(r"\s(\d{2,6})$", title) and i + 1 < len(lines) and lines[i + 1].strip() and not re.match(r"^\d{3,8}(?:-?[A-Z])?\s", lines[i + 1].strip()):
+                    i += 1; title += " " + lines[i].strip()
+                mp = re.search(r"[\s.…]*\s(\d{2,6})$", title)
+                if mp:
+                    rows.append((mi.group(1), re.sub(r"[.…\s]+$", "", title[:mp.start()]), int(mp.group(1)), sec, iss))
+            elif s and s == s.upper() and re.search(r"[A-ZÁÉÍÓÚÑ]{4}", s) and len(s) < 120 and not re.search(r"\d{3,}", s):
+                iss = s
+            i += 1
+        if not rows:
+            raise DayUnavailable(f"no sumario rows parsed in {pdfu}")
+        out, exact = [], len(marks) == len(rows)
+        for k, (rid, title, pg, sec_, iss_) in enumerate(rows):
+            nxt = next((p for (_, _, p, _, _) in rows[k + 1:] if p >= pg), None)
+            out.append({"doc_id": f"BOPLP-{d:%Y}-{rid}", "issuer": re.sub(r"^(ILUSTRE|ILTRE\.?|M\.\s*I\.)\s+", "", iss_), "issuer_raw": iss_, "title": " ".join(title.split()), "local": sec_ == "III",
+                        "pdf": pdfu, "page": pg, "page_to": nxt or pg + 3, "html_url": u, "subsection": sec_, "seq": k if exact else None})
+        return meta, out
+
+    def text(self, f, it):
+        _, _, (pages, pmap, full, marks) = self._load_pdf(f, it["pdf"])
+        if it.get("seq") is not None:
+            k = it["seq"]
+            seg = full[marks[k]:marks[k + 1] if k + 1 < len(marks) else len(full)]
+            seg = re.sub(r"(?m)^\s*Bolet[ií]n Oficial de la Provincia de Las Palmas\. N[uú]mero.*$|^\s*\d{1,6}\s+Bolet[ií]n Oficial de la Provincia de Las Palmas.*$", "", seg)
+            rid = re.sub(r"^BOPLP-\d{4}-", "", it["doc_id"])
+            fid = re.sub(r"(\d)(?=(\d{3})+(?!\d))", r"\1.", re.match(r"\d+", rid).group(0)) + (("-" + rid[-1]) if rid[-1].isalpha() else "") if len(re.match(r"\d+", rid).group(0)) > 3 else re.match(r"\d+", rid).group(0)
+            j = seg.rfind(fid)
+            if j > 0:
+                seg = seg[:j + len(fid)]
+            a = pmap.get(it["page"])
+            return (f"{it['issuer']}\n{it['title']}\n{seg.replace(chr(12), chr(10)).strip()}", "pdf_text", f"{it['pdf']}#page={a}" if a else it["pdf"],
+                    {"anuncio_number": seg.strip().split()[0], "printed_page": it["page"], "split_method": "anuncio_seq_marker(sumario_count==marker_count)", "id_footer_matched": j > 0})
+        a, b = pmap.get(it["page"]), pmap.get(it["page_to"])
+        if not a:
+            raise IOError(f"printed page {it['page']} not found in pdf")
+        b = b or min(a + 3, len(pages))
+        t = "\n".join(pages[a - 1:b]).strip()
+        k = _norm_txt(t).find(_norm_txt(it["issuer"])) if it.get("issuer") else -1
+        if k > 0:              # drop the tail of the previous anuncio on the first page (offset on normalized text ~ raw)
+            j = t.upper().find(it["issuer"].split()[-1].upper(), max(0, k - 200))
+            t = t[max(0, t.rfind("\n", 0, j)):].strip() if j >= 0 else t
+        return t, "pdf_text", f"{it['pdf']}#page={a}", {"pdf_pages": f"{a}-{b}", "printed_pages": f"{it['page']}-{it['page_to']}", "split_method": "printed_page_range"}
+
+
+class Valencia(DayWalker):
+    """BOP València (bop.dival.es, JSF 2 / PrimeFaces 8). No GET listing: the portal's own AJAX postbacks are replayed
+    politely (same requests the browser makes, one session, >= min_interval between requests, no captcha/WAF):
+      1. GET /bop/ (session + ViewState)
+      2. DatePicker 'calen' viewChange (calen_month 0-based, calen_year) when the month changes, then dateSelect
+         (calen_input=DD/MM/YYYY) -> 'boletines3' (Butlletí Núm. N of that day) + 'edictos' (DataGrid 'list')
+      3. DataGrid 'list' page event (list_first=0, list_rows=100, further pages if >100)
+      4. per target anuncio: commandLink 'list:i:j_idtNNN' -> 'dlgPDF' with a PrimeFaces dynamiccontent URL -> GET PDF.
+    Items: seccion 'Municipis' (+ 'Mancomunitats Municipals') whose title matches TARGET_RE. doc_id = BOPV-<núm. registre>."""
+    key, prov, home = "valencia", "46", "https://bop.dival.es/bop/"
+    B = "https://bop.dival.es/bop/xhtml/portal.xhtml"
+    min_interval = 1.5
+    skip_weekdays = (5, 6)
+    floor = "2002-01-01"
+
+    def __init__(self):
+        self.vs, self.month, self.cur_items = None, None, {}
+
+    def _ajax(self, f, form, src, ev=None, execute=None, render=None, extra=None):
+        d = {"javax.faces.partial.ajax": "true", "javax.faces.source": src, "javax.faces.partial.execute": execute or src,
+             form: form, "javax.faces.ViewState": self.vs}
+        if render:
+            d["javax.faces.partial.render"] = render
+        if ev:
+            d["javax.faces.behavior.event"] = ev; d["javax.faces.partial.event"] = ev
+        d.update(extra or {})
+        host = "bop.dival.es"
+        w = f.next.get(host, 0) - time.time()
+        if w > 0:
+            time.sleep(w)
+        f.next[host] = time.time() + max(f.min, self.min_interval)
+        r = f.s.post(self.B, data=d, timeout=120, headers={"Faces-Request": "partial/ajax", "X-Requested-With": "XMLHttpRequest"})
+        f.nreq += 1
+        if r.status_code != 200 or "<partial-response" not in r.text[:300]:
+            if re.search(r"captcha|cf-chl|challenge-platform", r.text[:5000], re.I):
+                raise CaptchaChallenge("challenge on postback")
+            self.vs = None
+            raise DayUnavailable(f"postback HTTP {r.status_code}")
+        if "ViewExpiredException" in r.text[:3000]:
+            self.vs = None; raise DayUnavailable("view expired")
+        m = re.search(r'<update id="[^"]*ViewState[^"]*"><!\[CDATA\[([^\]]+)\]\]>', r.text)
+        if m:
+            self.vs = m.group(1)
+        return r.text
+
+    def _session(self, f):
+        r = f.get(self.home)
+        m = re.search(r'name="javax.faces.ViewState"[^>]*value="([^"]+)"', r.text)
+        if not m:
+            raise DayUnavailable("no ViewState")
+        self.vs, self.month = m.group(1), None
+
+    @staticmethod
+    def _txt(h):
+        return " ".join(html_lib.unescape(re.sub(r"<[^>]+>", " ", re.sub(r"<script.*?</script>", "", h, flags=re.S))).split())
+
+    def _parse(self, x):
+        out = []
+        for blk in re.split(r'<div class="ui-datagrid-column', x)[1:]:
+            sec = re.search(r'corner-all seccion[^"]*"[^>]*><div[^>]*>(.*?)</div></div>', blk, re.S)
+            ent = re.search(r'corner-all entidad[^"]*"[^>]*><div[^>]*>(.*?)</div></div>', blk, re.S)
+            a = re.search(r'id="(list:\d+:j_idt\d+)" href="#" class="ui-commandlink ui-widget enlace" aria-label="Anunci en PDF"[^>]*>(.*?)</a>', blk, re.S)
+            reg = re.search(r'N[úu]m\. registre:\s*</span>\s*([\d/]+)', blk)
+            if a:
+                out.append({"sec": self._txt(sec.group(1)) if sec else "", "issuer": self._txt(ent.group(1)) if ent else "",
+                            "title": self._txt(a.group(2)), "cmd": a.group(1), "reg": reg.group(1) if reg else None})
+        return out
+
+    def day(self, f, d):
+        if not self.vs:
+            self._session(f)
+        if self.month != (d.year, d.month):
+            self._ajax(f, "j_idt128", "calen", "viewChange", extra={"calen_month": str(d.month - 1), "calen_year": str(d.year), "calen_view": "date"})
+            self.month = (d.year, d.month)
+        x = self._ajax(f, "j_idt128", "calen", "dateSelect", render="busqueda boletines3 edictos", extra={"calen_input": f"{d:%d/%m/%Y}"})
+        b = re.search(r'<update id="boletines3"><!\[CDATA\[(.*?)\]\]>', x, re.S)
+        bt = self._txt(b.group(1)) if b else ""
+        n = re.search(r"Butllet[ií] N[úu]m\.\s*(\d+)", bt)
+        dm = re.search(r"\b(\d{1,2}) (?:de |d’|d')(\w+) de (\d{4})", bt)
+        MES = {m: i + 1 for i, m in enumerate("gener febrer març abril maig juny juliol agost setembre octubre novembre desembre".split())}
+        if not n or not dm or (int(dm.group(1)), MES.get(dm.group(2).lower()), int(dm.group(3))) != (d.day, d.month, d.year):
+            return None, []                                   # no bulletin that day (portal falls back to latest)
+        tot = re.search(r"Mostrant del \d+ al \d+ de (\d+)", x)
+        total = int(tot.group(1)) if tot else 0
+        items, first = [], 0
+        while first < max(total, 1):
+            y = self._ajax(f, "j_idt235", "list", "page", render="list",
+                           extra={"list_pagination": "true", "list_first": str(first), "list_rows": "100", "list_encodeFeature": "true"})
+            items += self._parse(y); first += 100
+        out = []
+        for it in items:
+            local = it["sec"].startswith("Municipis") or it["sec"].startswith("Mancomunitats")
+            out.append({"doc_id": f"BOPV-{(it['reg'] or '').replace('/', '-') or it['cmd']}", "issuer": it["issuer"].split(" / ")[0],
+                        "issuer_raw": it["issuer"], "title": it["title"], "local": local, "cmd": it["cmd"], "subsection": it["sec"],
+                        "ref": it["reg"], "html_url": self.home, "day": d.isoformat()})
+        self._cur = d
+        return {"number": n.group(1), "url": f"{self.home}#{d:%d/%m/%Y}"}, out
+
+    def text(self, f, it):
+        x = self._ajax(f, "j_idt235", it["cmd"], render="dlgPDF", execute="j_idt235", extra={it["cmd"]: it["cmd"]})
+        m = re.search(r"file=([^&\"']+?)(?:#|&amp;|\")", x)
+        if "Document no trobat" in x or not m:
+            raise IOError("document not found")
+        from urllib.parse import unquote
+        u = urljoin(self.B, unquote(html_lib.unescape(m.group(1))))
+        r = f.get(u)
+        if r.status_code != 200 or r.content[:4] != b"%PDF":
+            raise IOError(f"pdf HTTP {r.status_code}")
+        t = pdf_text(r.content)
+        if len(t.strip()) < 200:
+            from common import scanned_pdfs as SP
+            SP.append([SP.record(it["doc_id"], "es_bop_valencia", "ES", u, RP.policy(self.home, "robots_allowed_rfc9309"))])
+        fn = re.search(r"download=([^&]+)", u)
+        return t, "pdf_text", f"{self.home}#registre={it.get('ref')}", {"pdf_filename": fn.group(1) if fn else None,
+                                                                      "fetch_method": "jsf_postback_replay"}
+
+
+ADAPTERS = {"valencia": Valencia(), "laspalmas": LasPalmas(), "acoruna": ACoruna(), "alicante": Alicante(), "toledo": Toledo(), "pontevedra": Pontevedra(), "alava": Alava(), "bizkaia": Bizkaia(), "barcelona": Barcelona(),
+            "tarragona": Barcelona("tarragona", "43", "https://www.dipta.cat/bopt/web", ("418", "428"), "BOPT"), "girona": Girona(), "bocm": BOCM(), "soria": Soria(), "borm": BORM(), "caceres": Caceres(), "gipuzkoa": Gipuzkoa(), "cordoba": Cordoba(),
             "granada": Saga("granada", "18", "https://bop.dipgra.es"), "leon": Saga("leon", "24", "https://bop.dipuleon.es"),
             "huesca": Saga("huesca", "22", "https://bop.dphuesca.es"),
             "avila": Avila(), "guadalajara": Guadalajara(), "lugo": Lugo(), "ourense": Ourense(), "cadiz": Cadiz(), "castellon": Castellon()}

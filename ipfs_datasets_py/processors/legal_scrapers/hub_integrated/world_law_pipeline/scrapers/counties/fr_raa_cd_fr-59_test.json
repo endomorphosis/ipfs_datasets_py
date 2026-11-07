@@ -1,0 +1,29 @@
+{
+ "country_code": "FR",
+ "place_id": "wd:Q12661",
+ "qid": "Q12661",
+ "place_name": "Nord",
+ "iso_3166_2": "FR-59",
+ "admin_level": "departement",
+ "language": "fr",
+ "doc_type": "gazette_act",
+ "consolidated": false,
+ "platform": "fr_raa_conseil_departemental",
+ "source_org": "Conseil départemental — Nord",
+ "issuer": "conseil_departemental",
+ "max_bytes": 52428800,
+ "index_url": "https://lenord.fr/espace-documentaire?_items_per_page=24",
+ "crawl_delay": 3.0,
+ "urls": [
+  "https://documents.lenord.fr/files/6adf5709a5045/ARR_DSC_2026_1050_ACTE.pdf",
+  "https://documents.lenord.fr/files/6adf5707424c6/ARR_DSC_2026_821_ACTE.pdf",
+  "https://documents.lenord.fr/files/6adf3aee94241/DEL_DV_2026_342430_ACTE.pdf",
+  "https://documents.lenord.fr/files/6adf3aee94241/DEL_DV_2026_342430_ANNEXE.pdf"
+ ],
+ "titles": {
+  "https://documents.lenord.fr/files/6adf5709a5045/ARR_DSC_2026_1050_ACTE.pdf": "Arrêté - DSC_2026_1050 - 26 octobre 2026",
+  "https://documents.lenord.fr/files/6adf5707424c6/ARR_DSC_2026_821_ACTE.pdf": "Arrêté - DSC_2026_821 - 26 octobre 2026",
+  "https://documents.lenord.fr/files/6adf3aee94241/DEL_DV_2026_342430_ACTE.pdf": "Délibération - DV_2026_305 - Réunion du 12 octobre 2026",
+  "https://documents.lenord.fr/files/6adf3aee94241/DEL_DV_2026_342430_ANNEXE.pdf": "Délibération - DV_2026_305 - Réunion du 12 octobre 2026 — DEL_DV_2026_342430_ANNEXE.pdf"
+ }
+}

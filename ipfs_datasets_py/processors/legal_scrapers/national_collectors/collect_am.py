@@ -18,30 +18,49 @@ UA = "legal-corpora-collector/1.0 (research; source=https://www.arlis.am/)"
 ART = re.compile(r"(?m)^\s*((?:Հոդված|ՀՈԴՎԱԾ|Article|Статья)\s+[0-9]+[A-Za-zԱ-Ֆա-ֆ]?)\b")
 log = logging.getLogger("am")
 SEED = [20, 29, 39, 41, 49, 51, 105967, 143723, 145009, 152139]
+HOME_URLS = [
+    "https://www.arlis.am/hy/",
+    "https://www.arlis.am/",
+    "https://www.arlis.am/en/",
+    "https://www.arlis.am/ru/",
+]
 
 
 def discover() -> list[tuple[str, str, str]]:
     items, seen = [], set()
+
     def add(i, url):
         i = str(i)
         if i in seen:
             return
         seen.add(i)
         items.append((i, url, None))
-    try:
-        r = http_get("https://www.arlis.am/hy/", ua=UA, sleep=0.2)
-        if r.status_code == 200:
-            for i in re.findall(r"/acts/(\d+)", r.text or ""):
-                add(i, f"https://www.arlis.am/hy/acts/{i}/latest")
-    except Exception as exc:
-        log.info("home err %s", exc)
+
+    for home in HOME_URLS:
+        try:
+            r = http_get(home, ua=UA, sleep=0.2)
+            if r.status_code == 200:
+                for i in re.findall(r"/acts/(\d+)", r.text or ""):
+                    add(i, f"https://www.arlis.am/hy/acts/{i}/latest")
+        except Exception as exc:
+            log.info("home err %s %s", home, exc)
     for i in SEED:
         add(i, f"https://www.arlis.am/hy/acts/{i}/latest")
-    for h in cdx_urls("arlis.am/hy/acts/", limit=env_int("CDX_LIMIT", 250), match_type="prefix"):
-        orig = h.get("original") or ""
-        m = re.search(r"/acts/(\d+)", orig)
-        if m:
-            add(m.group(1), f"https://www.arlis.am/hy/acts/{m.group(1)}/latest")
+    # Expand ARLIS catalog via CDX of official act paths (small limit; no WARC)
+    cdx_limit = env_int("CDX_LIMIT", 500)
+    for prefix in (
+        "arlis.am/hy/acts/",
+        "www.arlis.am/hy/acts/",
+        "arlis.am/en/acts/",
+        "arlis.am/ru/acts/",
+    ):
+        for h in cdx_urls(prefix, limit=cdx_limit, match_type="prefix"):
+            orig = h.get("original") or ""
+            m = re.search(r"/acts/(\d+)", orig)
+            if m:
+                add(m.group(1), f"https://www.arlis.am/hy/acts/{m.group(1)}/latest")
+    # Prefer numeric order for stable deepen; recent high IDs first after seeds
+    items.sort(key=lambda x: (0 if int(x[0]) in SEED else 1, -int(x[0]) if x[0].isdigit() else 0))
     log.info("catalog %s", len(items))
     return items
 
@@ -49,8 +68,8 @@ def discover() -> list[tuple[str, str, str]]:
 def main():
     setup_log(CC)
     t0 = utcnow()
-    max_new = env_int("MAX_NEW", 80)
-    max_seconds = env_int("MAX_SECONDS", 2400)
+    max_new = env_int("MAX_NEW", 120)
+    max_seconds = env_int("MAX_SECONDS", 3600)
     t_start = time.time()
     done = existing_ids(CC)
     ok = skip = fail = 0
@@ -67,6 +86,13 @@ def main():
             continue
         got = fetch_official(url, ua=UA, min_text=120)
         text = got.get("text") or ""
+        if got.get("status") != "success":
+            # fallback: try without /latest
+            alt = f"https://www.arlis.am/hy/acts/{ident}"
+            if alt != url:
+                got = fetch_official(alt, ua=UA, min_text=120)
+                text = got.get("text") or ""
+                url = alt
         if got.get("status") != "success":
             fail += 1
             log_failure(CC, {"identifier": ident, "source_url": url, "reason": got.get("error")})
@@ -93,7 +119,7 @@ def main():
         source_urls=["https://www.arlis.am/"], license_text=LICENSE,
         discovered=len(items), fetched=ok, skipped=skip, failed=fail,
         coverage="catalog-backed incomplete",
-        notes="Official ARLIS HTML (live; Wayback of official URLs on failure). Codes + recent acts. Not legal advice.",
+        notes="Official ARLIS HTML (live; Wayback of official URLs on failure). Deepen expand catalog. Not legal advice.",
         last_run=t0,
     )
     log.info("done ok=%s skip=%s fail=%s", ok, skip, fail)

@@ -20,6 +20,8 @@ import os as _ipfs_os
 from pathlib import Path as _ipfs_Path
 _CORPORA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_CORPORA_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_corpora")))
 _SCRAPERS = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_COLLECTORS_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_collectors"))) / "shared"
+_WORLD = _ipfs_Path(_ipfs_os.environ.get("WORLD_LAW_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "world_law")))
+_TESSDATA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_TESSDATA", str(_ipfs_Path.home() / ".ipfs_datasets" / "tessdata")))
 _HF_TOKEN_PATH = _ipfs_Path(_ipfs_os.environ.get("HF_TOKEN_PATH", str(_ipfs_Path.home() / ".cache" / "huggingface" / "token")))
 import os as _wl_os  # WORLD_LAW_ROOT / GLOBAL_MUNICIPALITIES_ROOT override the default paths
 
@@ -40,7 +42,7 @@ from pathlib import Path
 from typing import Optional
 
 HERE = Path(__file__).resolve().parent
-sys.path.insert(0, (_wl_os.environ.get("WORLD_LAW_ROOT", "/workspace/world_law") + "/pipeline"))
+sys.path.insert(0, (_wl_os.environ.get("WORLD_LAW_ROOT", str(_WORLD)) + "/pipeline"))
 sys.path.insert(0, str(HERE))
 os.environ.setdefault("ARCHIVE_LANE", "eu")
 import archive_jobs as AJ  # noqa: E402  (helpers: pdf_to_text, html_to_text, atomic_write, robots_for, utcnow)
@@ -559,7 +561,7 @@ def czfirst(args):
 
 
 _RUNNER_LOCK = None
-RUN_ORDER = ["lt", "cz", "at", "pl", "be", "op", "cee"]   # hu (hu_njt.py) is NOT queued: rights decision pending (2026-10-18)   # op = Opole (archive_request_OP.json); cee = SK/CZ/AT
+RUN_ORDER = ["lt", "cz", "at", "pl", "be", "op", "cee", "hu"]   # hu added 2026-10-29: Benjamin approved; op = Opole; cee = SK/CZ/AT
 # municipal sites the live council_docs.py runs could not use (cee_archive.py, 2026-10-18), last
 
 

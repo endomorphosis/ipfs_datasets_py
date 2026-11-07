@@ -1,0 +1,6 @@
+[
+ {"name": "Landkreis Augsburg", "qid": "Q10414", "url": "https://www.landkreis-augsburg.de/landrat-landratsamt/buergerservice/amtsblaetter/", "iso": "DE-BY", "pdf_re": "amtsbl|satzung|verordnung|bekanntm|allgemeinverf|ordnung|richtlinie|geb(ü|ue)hr|tarif"},
+ {"name": "Landkreis Roth", "qid": "Q10451", "url": "https://www.landratsamt-roth.de/aktuelles/bekanntmachungen", "iso": "DE-BY", "exclude_re": "\\?dl=1$", "pdf_re": "amtsbl|satzung|verordnung|bekanntm|allgemeinverf|ordnung|richtlinie|geb(ü|ue)hr|tarif"},
+ {"name": "Landkreis Tirschenreuth", "qid": "Q10419", "url": "https://www.kreis-tir.de/landkreis/politik/amtsblatt", "iso": "DE-BY", "pdf_re": "amtsbl|satzung|verordnung|bekanntm|allgemeinverf|ordnung|richtlinie|geb(ü|ue)hr|tarif"},
+ {"name": "Landkreis Coburg", "qid": "Q10440", "url": "https://www.landkreis-coburg.de/aktuelles/aktuelles-amtsblatt", "iso": "DE-BY", "pdf_re": "amtsbl|satzung|verordnung|bekanntm|allgemeinverf|ordnung|richtlinie|geb(ü|ue)hr|tarif"}
+]

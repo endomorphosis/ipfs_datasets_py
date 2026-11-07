@@ -1,0 +1,11 @@
+[
+ {"name": "Landkreis Miesbach", "qid": "Q10523", "iso": "DE-BY", "archive_policy": "archived_robots_disallowed",
+  "index_urls": ["https://www.landkreis-miesbach.de/Landratsamt-Verwaltung-Aktuelles/Aktuelles-und-Presse-/Amtsblatt/",
+                 "https://www.landkreis-miesbach.de/Landratsamt-Verwaltung-Aktuelles/Aktuelles-und-Presse-/Amtliche-Bekanntmachungen/",
+                 "https://www.landkreis-miesbach.de/Bauen-Sicherheit-Umwelt/Umwelt-und-Naturschutz/Naturschutz/Verordnungen-Naturschutz/",
+                 "https://www.landkreis-miesbach.de/Bauen-Sicherheit-Umwelt/Umwelt-und-Naturschutz/Ausweisungsverfahren-Landschaftsschutzgebiete/Bisherige-Verordnungen-und-Karten/"],
+  "link_re": "(/output/download\\.php\\?|\\.pdf($|\\?)|loadDocument\\.phtml\\?[^\"]*Ext=PDF)"},
+ {"name": "Landkreis Landsberg am Lech", "qid": "Q10507", "iso": "DE-BY", "archive_policy": "archived_robots_disallowed",
+  "index_urls": ["https://www.landkreis-landsberg.de/aktuelles/amtsblatt/"],
+  "link_re": "kxp\\.landkreis-landsberg\\.de/+Dox\\.aspx\\?docid=", "norm": [["(kxp\\.landkreis-landsberg\\.de)/+", "\\1/"]]}
+]

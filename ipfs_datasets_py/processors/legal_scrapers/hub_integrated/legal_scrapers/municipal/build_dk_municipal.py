@@ -55,6 +55,34 @@ WM = re.compile(r"Created with EO\.Pdf(?: for \.NET trial version\. http://www\.
 
 PAGEOF = re.compile(r"^(?:\d{2}-\d{2}-\d{4}\s.*?)?\d{1,3}\s+af\s+\d{1,3}$")  # 'N af M' / 'DD-MM-YYYY ... N af M' page footers
 
+LONE_NUM = re.compile(r"^\s*(\d{1,3})\s*$")
+def strip_page_numbers(t):
+    """Bare page numbers (a line that is only 1-3 digits) at the top or bottom of a pdftotext page ('\f'-separated). The edge is found
+    ignoring 'Side N' / 'N af M' footer lines. Removed: the first or last line of the page; or the second / second-to-last line when its
+    value continues a +1 run with the next or previous page (appendices with their own page numbering, a footer line below it).
+    Mid-page lone numbers (figure markers, wrapped table-of-contents page references) are kept."""
+    pages = [p.split("\n") for p in t.split("\f")]
+    cand = {}                                                    # (page, line index) -> (value, strict)
+    for pi, L in enumerate(pages):
+        nb = [i for i, l in enumerate(L) if l.strip() and not FOOTER.match(l) and not PAGEOF.match(l.strip())]
+        for n, i in enumerate(nb):
+            m = LONE_NUM.match(L[i])
+            if m and (n < 2 or n >= len(nb) - 2): cand[(pi, i)] = (int(m.group(1)), n == 0 or n == len(nb) - 1)
+    pv = {(pi, v) for (pi, i), (v, _) in cand.items()}
+    drop = {k for k, (v, strict) in cand.items() if strict or (k[0] - 1, v - 1) in pv or (k[0] + 1, v + 1) in pv}
+    STATS["bare_page_number_lines_removed"] += len(drop)
+    if drop: STATS["laws_with_bare_page_numbers_removed"] += 1
+    return "\f".join("\n".join(l for i, l in enumerate(L) if (pi, i) not in drop) for pi, L in enumerate(pages))
+
+def unmojibake(s):
+    """A filename from NSTAR's Content-Disposition header is UTF-8 that requests decoded as latin-1 ('KÃ¸benhavn'). Reversed only where the
+    latin-1 -> utf-8 round-trip is clean and changes the text; anything else is kept as is."""
+    if not s: return s
+    try: t = s.encode("latin-1").decode("utf-8")
+    except (UnicodeEncodeError, UnicodeDecodeError): return s
+    if t != s: STATS["pdf_filename_mojibake_fixed"] += 1
+    return t
+
 def clean(t):
     n = len(WM.findall(t))
     if n:  # EO.Pdf trial watermark (generator artefact, one per page); on p. 1 it interleaves with 'Gældende fra d.'
@@ -66,9 +94,16 @@ def clean(t):
         if n: SYM_STATS[f"U+{ord(k):04X}->{v}"] += n; t = t.replace(k, v)
     def _bul(m): SYM_STATS[f"U+{ord(m.group(2)):04X}->• (line-initial list marker)"] += 1; return m.group(1) + "•"
     t = re.sub(r"(?m)^(\s*)([\uf020-\uf0ff])(?=\s)", _bul, t)
+    t = strip_page_numbers(t)
     t = unicodedata.normalize("NFC", t.replace("\f", "\n").replace("\u00a0", " "))
+    # 'N/M' page counters on their own line ('3/20'): at least 3 such lines in the document with one total M and N <= M (a lone fraction
+    # such as '1/2' is not a page counter)
+    nm = [re.fullmatch(r"\s*(\d{1,3})\s*/\s*(\d{1,3})\s*", l) for l in t.split("\n")]
+    tot = collections.Counter(int(m.group(2)) for m in nm if m and 0 < int(m.group(1)) <= int(m.group(2)))
+    ctr_total = {M for M, k in tot.items() if k >= 3 and M >= 3}
     out, prev_blank = [], True
-    for l in t.split("\n"):
+    for l, m in zip(t.split("\n"), nm):
+        if m and int(m.group(2)) in ctr_total and 0 < int(m.group(1)) <= int(m.group(2)): STATS["page_counter_n_of_m_lines_removed"] += 1; continue
         if FOOTER.match(l): STATS["footer_lines_removed"] += 1; continue
         l = l.strip()
         if PAGEOF.match(l): STATS["page_of_footer_lines_removed"] += 1; continue
@@ -174,7 +209,7 @@ def main(B="dk_build", OUT="denmark_municipal"):
         code = codes.get(norm_kommune(r["kommune"])); assert code, r["kommune"]
         chars_pp = len(re.sub(r"\s", "", r["text"])) / max(1, r["pages"])
         if chars_pp < 200:
-            excluded.append(dict(kommune=r["kommune"], kommunekode=code, type=typ, document_id=did, filename=r["filename"], pages=r["pages"], chars_per_page=round(chars_pp, 1))); continue
+            excluded.append(dict(kommune=r["kommune"], kommunekode=code, type=typ, document_id=did, filename=unmojibake(r["filename"]), pages=r["pages"], chars_per_page=round(chars_pp, 1))); continue
         text = clean(r["text"]); recs, sinfo = split(text)
         native = did if src["kind"] == "nstar" else src["native"]
         lid = municipal_law_id("dk", code, native); mname = OFFICIAL.get(r["kommune"], f"{r['kommune']} Kommune")
@@ -184,9 +219,9 @@ def main(B="dk_build", OUT="denmark_municipal"):
             eff = f"{eff.group(3)}-{eff.group(2)}-{eff.group(1)}" if eff else None
             date = ddmmyy(r["approved"]); src_url = BASE
             ex = dict(nstar_document_id=did, paradigm_id=r.get("paradigm_id"), regulation_type=typ, nstar_approved=r["approved"], effective_from=eff,
-                      pdf_filename=r["filename"], pdf_sha256=r["pdf_sha256"], pdf_bytes=r["pdf_bytes"], pages=r["pages"], pdf_producer=r.get("producer"),
+                      pdf_filename=unmojibake(r["filename"]), pdf_sha256=r["pdf_sha256"], pdf_bytes=r["pdf_bytes"], pages=r["pages"], pdf_producer=r.get("producer"),
                       nstar_status_note=r.get("status_note"), split=sinfo, region=region.get(code),
-                      text_extraction="pdftotext -layout (poppler); lines left/right-stripped, 'Side N' page footers and EO.Pdf trial watermarks removed, blank-line runs collapsed, Symbol-font PUA bullets mapped (U+F0B7 -> •), NFC",
+                      text_extraction="pdftotext -layout (poppler); lines left/right-stripped, 'Side N', 'N/M' and bare page-number footers and EO.Pdf trial watermarks removed, blank-line runs collapsed, Symbol-font PUA bullets mapped (U+F0B7 -> •), NFC",
                       download="POST " + BASE + " (ASP.NET postback of the row's 'PDF' button; DocumentId = nstar_document_id)")
             status = "in_force" if not eff or eff <= today else "adopted_not_yet_in_force"
             cur = src["cur"]
@@ -200,9 +235,9 @@ def main(B="dk_build", OUT="denmark_municipal"):
             eff, date, src_url = src["eff"], src["date"], src["source_url"]
             ex = dict(regulation_type=typ, effective_from=eff, adopted=src.get("adopted"),
                       source="kommune website PDF" + (" (Wayback Machine replay of the kommune's URL)" if "web.archive.org" in src_url else ""),
-                      original_url=src.get("original_url"), pdf_filename=r["filename"], pdf_sha256=r["pdf_sha256"], pdf_bytes=r["pdf_bytes"], pages=r["pages"],
+                      original_url=src.get("original_url"), pdf_filename=unmojibake(r["filename"]), pdf_sha256=r["pdf_sha256"], pdf_bytes=r["pdf_bytes"], pages=r["pages"],
                       pdf_producer=r.get("producer"), split=sinfo, region=region.get(code),
-                      text_extraction="pdftotext -layout (poppler) of a born-digital PDF; lines left/right-stripped, 'Side N' page footers removed, blank-line runs collapsed, Symbol-font PUA bullets mapped, NFC",
+                      text_extraction="pdftotext -layout (poppler) of a born-digital PDF; lines left/right-stripped, 'Side N', 'N/M' and bare page-number footers removed, blank-line runs collapsed, Symbol-font PUA bullets mapped, NFC",
                       download="GET source_url (robots.txt checked, 1.5 s spacing)")
             if src["kind"] == "kommune":
                 st = src["stale_nstar"]

@@ -1,0 +1,12 @@
+[
+ {
+  "name": "Lot",
+  "iso": "FR-46",
+  "qid": "Q12576",
+  "url": "https://lot.fr/arretes",
+  "issuer": "conseil_departemental",
+  "include_re": null,
+  "archive_only": false,
+  "note": "Lot publishes arrêtés online individually since the 2022 RAA reform (lot.fr/arretes, 'Les derniers documents mis en ligne'); 2026 PDFs only"
+ }
+]

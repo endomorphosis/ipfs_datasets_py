@@ -1,14 +1,14 @@
 # States & Provinces lane (`states`)
 
 Adm1 law (state / province / territory / Land / canton / region) -> `endomorphosis/world_national_law` via run_loop.
-* Code: `pipeline/scrapers/states/` (this dir). Venv: `/workspace/world_law/pipeline/venv`.
+* Code: `pipeline/scrapers/states/` (this dir). Venv: `~/.ipfs_datasets/world_law/pipeline/venv`.
 * Staging: `staging/states/<CC>/iso_<ISO3166-2>.<source>-<UTC>.jsonl` (SCHEMA.md v1.2.0, `place_id iso:CA-ON`,
   `admin_level adm1`, atomic dot-file -> `validate_file` -> rename; never rewritten). Rejected files: `staging/states/_rejected/`.
 * Logs/reports: `staging/states/_logs/`. Archive lane name: `ARCHIVE_LANE=states` (shared pipeline/archive limiter + breaker).
 * Scanned (image-only) PDFs: NOT OCR'd. Queued in `staging/states/_scanned_pdfs_manifest.jsonl` (same format as
   asia_latam/eap manifests read by `ocr/pdf_collect.py`), for World Law OCR to pick up.
 * UA: `WorldLawStatesBot/0.1 (+https://github.com/endomorphosis/ipfs_datasets_py; ...)`; RFC 9309 robots; >= max(2 s, Crawl-delay)
-  per host; challenge pages (Cloudflare/CloudFront) stop the source, never bypassed. Guards: RSS <= 900 MB, free disk >= 35 GB.
+  per host; challenge pages (Cloudflare/CloudFront) stop the source, never bypassed. Guards: RSS <= 900 MB, free disk >= 10 GB (lane_ramgate start gate 11 GB; lowered from 35 GB by Benjamin 2026-11-01 16:48 PST).
 
 ## Sources prepared (test batch, not yet run)
 | key | jurisdiction | host | robots | licence | discovery |
@@ -158,3 +158,69 @@ per item per run; then left queued for the next run), STATES_DEFER_DEFAULT_S (60
 * **DE-SH** `de_sh_wb.py` (arch_states target): Wayback copies of the old juris portal, Gesamtausgabe pages only; listing flags (truncated/retry) are read per listing before merging.
 
 **2026-10-19 review-hold fix.** Holds that are by design or in progress now go in `staging/states/_state/review_holds.tsv`, which status.sh prints. Nothing in `_review` is promoted automatically, and the routine checks never ran a promote, so these files sat there untouched. AU-NSW: the r1 test rows were only the JS frame of `/view/html/inforce/current/<id>` (about 220 chars, no provisions). The adapter now takes the archived `/view/whole/html/inforce/<date>/<id>` page, falling back to `/view/xml/...`, and the r1 file is in `_review/AU/_superseded/`. DE-SH: the old per-prefix `timestamp:4` listing returned 2 rows. A `urlkey` listing returns 16 Gesamtausgabe laws, and those 16 are all the archive holds. SH coverage is therefore 16 laws (an archive limit), and they're being run in full.
+
+**2026-10-24: US states (iso:US-XX, adm1).** The existing `justicedao/ipfs_state_laws` import is mostly stubs or citation shells. CA has 10 rows and none carries a full text; TX has 3,701 rows that repeat a site banner ("Texas Constitution and Statutes"); WA has 1 row. Official full codes now come from the legislatures' own bulk or HTML sources, with old-URL skip on:
+* US-TX `us_tx_statutes`: Texas Legislative Council per-code HTML zips at `tcss.legis.texas.gov/resources/Zips/<CODE>.htm.zip` (robots 404 => allow). One record per chapter.
+* US-CA `us_ca_codes`: the public bulk DB at `downloads.leginfo.legislature.ca.gov/pubinfo_2025.zip` (LAW_SECTION_TBL plus CAML .lob files; robots 404). One record per code section. The zip was downloaded once, rate-limited, and deleted after extraction. leginfo.legislature.ca.gov sits behind a Cloudflare challenge and is not touched.
+* US-WA `us_wa_rcw`: app.leg.wa.gov RCW chapter `full=true` pages (robots 404). One record per chapter.
+* US-NC `us_nc_gs`: ncleg.gov per-chapter General Statutes HTML (robots allow, Crawl-delay 2). One record per chapter; repealed-only chapters get in_force=None.
+* Skipped: OH (codes.ohio.gov Disallow: /), SC/TN/ID (Disallow: /), OK OSCN (Disallow plus challenge), AL (challenge), MI (403), and NY (the Open Legislation API needs a registered key).
+
+**DE-BE `de_be_wb`** (arch_states target): Wayback 2019/2020 captures of the retired gesetze.berlin.de jportal, whole-norm pages only (doc.part G/X/blank). Each row carries `archive_copy_date` and `extra_metadata.possibly_outdated=true` with a version_note, plus in_force=None and consolidated=True. The live host does not answer from the box.
+
+### US states batch 2 (2026-10-24/25)
+- us_nj_statutes: pub.njleg.gov STATUTES-TEXT.zip + NJCONST-TEXT.zip; one row per Title:chapter (source txt, content_format html).
+- us_va_code: key-less LIS JSON listing + /vacodefull/ chapter pages; 1 row/chapter. Heading/text join fixed 2026-10-24 23:45 PDT (rows before ~400 lack the break).
+- us_mn_statutes: revisor.mn.gov part pages -> /statutes/cite/<ch>/full; 1 row/chapter.
+- us_wi_statutes: docs.legis.wisconsin.gov chapter PDFs (pdf_text; scans -> manifest).
+- us_ma_gl: key-less malegislature.gov/api (Parts>Chapters>Sections); 1 row/chapter; slow (1 call/section).
+- us_ut_code: le.utah.gov whole-title XML (Crawl-delay 10 honored); 1 row/chapter; cache _work/us_ut_xml.
+- us_nv_nrs: leg.state.nv.us/NRS chapter HTML (cp1252). us_ia_code: legis.iowa.gov chapter PDFs (2026 code).
+- us_or_ors: oregonlegislature.gov ors/orsNNN.html, chapters 1..838 enumerated (index is JS; 404s = unused numbers).
+- Held/blocked: CO (C.R.S. 2-5-115 state-copyright claim, pending Benjamin); WV (ajax-loaded text); IN (PDF/zip URLs return SPA HTML; API needs key);
+  CT (cga.ct.gov unreachable from box); MO (per-section pages only, deferred); GA (official code hosted by LexisNexis, terms) ;
+  OH/SC/TN/ID robots Disallow /; OK/AL challenge; MI 403; NY key API.
+
+### US states batch 3 (2026-10-25)
+- us_mo_rsmo: revisor.mo.gov Home.aspx chapter list -> ViewChapter.aspx?chapter=N (whole chapter; earlier "per-section only" note was wrong). 1 row/chapter. Footer "(c) Missouri Legislature, all rights reserved" (site notice only; flagged to Benjamin).
+- us_ne_statutes: nebraskalegislature.gov /laws/display-chapters.php?chapter=N print view (Crawl-delay 3). 1 row/chapter; all-repealed chapters in_force=None.
+- us_pa_consolidated: palegis.us view-statute?txtType=HTM&ttl=NN&iFrame=true whole-title HTML (ttl=0 Constitution). 1 row/title; unimplemented/repealed titles in_force=None. Unconsolidated statutes not collected.
+- us_md_code: mgaleg.maryland.gov key-less /mgawebsite/api/Laws/GetArticles + GetSections, then Laws/StatuteText pages. 1 row/section (~40k), Constitution included.
+- us_la_laws: legis.la.gov Laws_Toc.aspx folders (RS, Constitution + ancillaries, Children's/Civil/CCP/CCrP/Evidence codes); RS titles need a read-only ASP.NET navigation postback (PoliteSession.post); Law.aspx?d=ID per section (~52.7k). TITLE/CHAPTER heading-only docs skipped (heading_only).
+- Full runs sequenced by us_batch3_chain.sh (NE -> PA -> MD + LA) to stay under the lane RAM budget.
+- Not collected: AZ (azleg.gov Crawl-delay 120, ~40k section pages => deferred); KY (site terms: KRS 61.874 commercial-purpose restriction => held for Benjamin).
+
+## Terms-restricted sources: "Collect live where reachable, tagged" (Benjamin, 2026-10-25 08:05 PT)
+Every row from these sources carries `source_policy` token `terms_restrict_reuse`, a `license_note` suffix
+"TERMS RESTRICT REUSE: <summary> Terms: <url>", and `extra_metadata.terms_policy` {restricts_reuse, decision, terms_url,
+summary, quote, checked}. Implemented in `terms_tags.py` (TERMS dict; `wrap()` applied to matching ADAPTERS keys at the
+end of adapters.py; keys starting with "_" match by suffix, e.g. `_kenyalaw`). Schema-valid (provenance columns v1.1.0).
+Robots, crawl-delays, and the no-challenge/no-VPN rules still apply. Mpumalanga (keys from page code) stays OUT.
+- CA-NL `ca_nl_assembly`: held 20-row batch tagged + promoted (hold row removed; pre-tag copy in _work/pretag/); full run.
+- US-CO `us_co_crs`: olls.info/crs/crs2025-title-NN.htm (OLLS downloads "for personal use"; C.R.S. 2-5-115), 1 row/article.
+- MY-13 `my_13_lawnet`: Sarawak LawNet public ordinance list (no login; read-only POST paging) -> reprint PDFs (ord + subsidiary).
+- PK-BA `pk_ba_code`: balochistancode.gob.pk alphabetical list (1,783 docs) -> lawdir PDFs (many scans -> manifest).
+- AE-DU `ae_du_dlp`: Dubai Legislation Portal English PDFs via read-only year search (214 docs).
+- AE-AZ `ae_az_gazette`: Abu Dhabi Official Gazette English editions (abudhabi.gov.ae), doc_type gazette_act.
+- CA-NS `ca_ns_regs`: novascotia.ca/just/regulations consolidated regs. Statutes (nslegislature.ca) refuse TLS from this box => blocked.
+- CA-SK `ca_sk_freelaw`: Publications Centre key-less JSON (/api/v1/freelaw/acts, /products/<id>) -> free DIGITAL PDF.
+- CA-PE `ca_pe_pdf`: legislation PDFs fetched live (HTML is behind Radware => not used); URL list from Wayback CDX.
+- KE counties `ke_cNN_kenyalaw` (47 adapters, KE-01..47 ISO order): Kenya Law AKN works; old-URL skip shows the sampled
+  counties are already fully in the dataset (other lane), so only uncovered works are fetched. Terms prohibit scraping/bulk
+  download and robots has Content-Signal ai-train=no (recorded in extra_metadata); Crawl-delay 5 honoured.
+- US-KY `us_ky_krs`: apps.legislature.ky.gov chapter pages -> per-section PDFs, 1 row/chapter (KRS 61.874 notice).
+- Blocked: AU-VIC text host content.legislation.vic.gov.au robots `Disallow: /` (robots honoured); AE-SH Sharjah
+  (slpc.sharjah.ae / gazette.sharjah.ae refuse TLS from this box); US-GA official code is the LexisNexis JS app (no static
+  text; content only through Lexis internal APIs => not used); CA-NS statutes (TLS refused).
+- US-AZ (not terms): `us_az_ars_archive` (Wayback copies via cdx_list -> data/archive/az_ars.txt; possibly_stale) and
+  `us_az_ars` live (Crawl-delay 120, ~2 months; start when lane RSS allows). Same doc ids, so old-URL skip/dedupe apply.
+
+## 2026-10-31 disk/regrowth fixes
+- `deferq.py`: deferred.tsv is still append-only/last-line-wins, but now auto-compacts in place once appended lines exceed
+  max(STATES_DEFER_COMPACT_MIN=20000, 3 x keys); writes/compaction hold `<path>.lock` (flock). Breaker cycles re-defer
+  every item, which had grown au_nsw_archive.deferred.tsv to 789 MB for 2,041 keys (at_ris: 1.27 GB / 3,320 keys).
+- `deferq_compact.py PATH...`: safe online compaction (same lock; re-reads bytes appended during the scan).
+  `deferq_compact_loop.sh` runs it every 2 h on files > 20 MB until no pre-fix lane process is left.
+- `arch_states.py`: per-item "deferred ..." log lines only for the first 20 and every 500th deferral per run.
+- Launch long runners with `>>` (O_APPEND) so copytruncate rotation is safe; a `>` fd leaves sparse logs after truncation
+  (and the box store sync then snapshots them densely).

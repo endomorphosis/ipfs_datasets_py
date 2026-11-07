@@ -1,0 +1,3340 @@
+{
+ "name": "IT_MFR_PAGE2",
+ "base": "~/.ipfs_datasets/legal_corpora/it_normattiva_mfr_page2",
+ "licence": "Normattiva terms not recorded (verifier); public legal texts",
+ "min_delay_s": 10,
+ "note": "page-2+ for 271 truncated region-years (CoS GO 2026-10-23 13:18 PT); probe r1/1975 p2 passed (21 rows = 71-50)",
+ "jobs": [
+  {
+   "job": "p2_r01",
+   "kind": "files",
+   "route": "MFR_SEARCH_POST_PAGE_N",
+   "attribution": {
+    "publisher": "Normattiva Regioni (MFR), Presidenza del Consiglio / IPZS",
+    "licence_id": "terms_unrecorded",
+    "licence": "Normattiva terms not recorded (verifier); public legal texts",
+    "regione": "ABRUZZO"
+   },
+   "urls": [
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "1",
+      "annoProvvedimento": "1975"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "1",
+      "annoProvvedimento": "1976"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "1",
+      "annoProvvedimento": "1977"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "1",
+      "annoProvvedimento": "1984"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "1",
+      "annoProvvedimento": "1988"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/3",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "1",
+      "annoProvvedimento": "1988"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "1",
+      "annoProvvedimento": "1989"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/3",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "1",
+      "annoProvvedimento": "1989"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "1",
+      "annoProvvedimento": "1990"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/3",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "1",
+      "annoProvvedimento": "1990"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "1",
+      "annoProvvedimento": "1991"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "1",
+      "annoProvvedimento": "1992"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/3",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "1",
+      "annoProvvedimento": "1992"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "1",
+      "annoProvvedimento": "1993"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "1",
+      "annoProvvedimento": "1994"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/3",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "1",
+      "annoProvvedimento": "1994"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "1",
+      "annoProvvedimento": "1995"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/3",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "1",
+      "annoProvvedimento": "1995"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/4",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "1",
+      "annoProvvedimento": "1995"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "1",
+      "annoProvvedimento": "1996"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/3",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "1",
+      "annoProvvedimento": "1996"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/4",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "1",
+      "annoProvvedimento": "1996"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "1",
+      "annoProvvedimento": "1997"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/3",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "1",
+      "annoProvvedimento": "1997"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/4",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "1",
+      "annoProvvedimento": "1997"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "1",
+      "annoProvvedimento": "1998"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/3",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "1",
+      "annoProvvedimento": "1998"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/4",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "1",
+      "annoProvvedimento": "1998"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "1",
+      "annoProvvedimento": "1999"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/3",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "1",
+      "annoProvvedimento": "1999"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/4",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "1",
+      "annoProvvedimento": "1999"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "1",
+      "annoProvvedimento": "2000"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/3",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "1",
+      "annoProvvedimento": "2000"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "1",
+      "annoProvvedimento": "2017"
+     }
+    }
+   ]
+  },
+  {
+   "job": "p2_r02",
+   "kind": "files",
+   "route": "MFR_SEARCH_POST_PAGE_N",
+   "attribution": {
+    "publisher": "Normattiva Regioni (MFR), Presidenza del Consiglio / IPZS",
+    "licence_id": "terms_unrecorded",
+    "licence": "Normattiva terms not recorded (verifier); public legal texts",
+    "regione": "BASILICATA"
+   },
+   "urls": [
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "2",
+      "annoProvvedimento": "1975"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "2",
+      "annoProvvedimento": "1978"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "2",
+      "annoProvvedimento": "1993"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "2",
+      "annoProvvedimento": "1995"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "2",
+      "annoProvvedimento": "2000"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "2",
+      "annoProvvedimento": "2015"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "2",
+      "annoProvvedimento": "2018"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "2",
+      "annoProvvedimento": "2021"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "2",
+      "annoProvvedimento": "2023"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "2",
+      "annoProvvedimento": "2025"
+     }
+    }
+   ]
+  },
+  {
+   "job": "p2_r04",
+   "kind": "files",
+   "route": "MFR_SEARCH_POST_PAGE_N",
+   "attribution": {
+    "publisher": "Normattiva Regioni (MFR), Presidenza del Consiglio / IPZS",
+    "licence_id": "terms_unrecorded",
+    "licence": "Normattiva terms not recorded (verifier); public legal texts",
+    "regione": "CALABRIA"
+   },
+   "urls": [
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "4",
+      "annoProvvedimento": "1990"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "4",
+      "annoProvvedimento": "2009"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "4",
+      "annoProvvedimento": "2011"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "4",
+      "annoProvvedimento": "2012"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "4",
+      "annoProvvedimento": "2013"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "4",
+      "annoProvvedimento": "2017"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "4",
+      "annoProvvedimento": "2018"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "4",
+      "annoProvvedimento": "2019"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "4",
+      "annoProvvedimento": "2022"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "4",
+      "annoProvvedimento": "2023"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "4",
+      "annoProvvedimento": "2025"
+     }
+    }
+   ]
+  },
+  {
+   "job": "p2_r06",
+   "kind": "files",
+   "route": "MFR_SEARCH_POST_PAGE_N",
+   "attribution": {
+    "publisher": "Normattiva Regioni (MFR), Presidenza del Consiglio / IPZS",
+    "licence_id": "terms_unrecorded",
+    "licence": "Normattiva terms not recorded (verifier); public legal texts",
+    "regione": "EMILIA-ROMAGNA"
+   },
+   "urls": [
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "6",
+      "annoProvvedimento": "1973"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "6",
+      "annoProvvedimento": "1974"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "6",
+      "annoProvvedimento": "1976"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "6",
+      "annoProvvedimento": "1978"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "6",
+      "annoProvvedimento": "1980"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "6",
+      "annoProvvedimento": "1981"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "6",
+      "annoProvvedimento": "1982"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "6",
+      "annoProvvedimento": "1988"
+     }
+    }
+   ]
+  },
+  {
+   "job": "p2_r07",
+   "kind": "files",
+   "route": "MFR_SEARCH_POST_PAGE_N",
+   "attribution": {
+    "publisher": "Normattiva Regioni (MFR), Presidenza del Consiglio / IPZS",
+    "licence_id": "terms_unrecorded",
+    "licence": "Normattiva terms not recorded (verifier); public legal texts",
+    "regione": "FRIULI-VENEZIA-GIULIA"
+   },
+   "urls": [
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "7",
+      "annoProvvedimento": "1970"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "7",
+      "annoProvvedimento": "1971"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "7",
+      "annoProvvedimento": "1972"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "7",
+      "annoProvvedimento": "1973"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "7",
+      "annoProvvedimento": "1974"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "7",
+      "annoProvvedimento": "1975"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "7",
+      "annoProvvedimento": "1976"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "7",
+      "annoProvvedimento": "1977"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "7",
+      "annoProvvedimento": "1978"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "7",
+      "annoProvvedimento": "1979"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "7",
+      "annoProvvedimento": "1980"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "7",
+      "annoProvvedimento": "1981"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "7",
+      "annoProvvedimento": "1982"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "7",
+      "annoProvvedimento": "1983"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "7",
+      "annoProvvedimento": "1984"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "7",
+      "annoProvvedimento": "1985"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "7",
+      "annoProvvedimento": "1986"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "7",
+      "annoProvvedimento": "1991"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "7",
+      "annoProvvedimento": "1993"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "7",
+      "annoProvvedimento": "2000"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "7",
+      "annoProvvedimento": "2001"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/3",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "7",
+      "annoProvvedimento": "2001"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "7",
+      "annoProvvedimento": "2002"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/3",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "7",
+      "annoProvvedimento": "2002"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "7",
+      "annoProvvedimento": "2003"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/3",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "7",
+      "annoProvvedimento": "2003"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "7",
+      "annoProvvedimento": "2011"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "7",
+      "annoProvvedimento": "2012"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "7",
+      "annoProvvedimento": "2013"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "7",
+      "annoProvvedimento": "2014"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "7",
+      "annoProvvedimento": "2015"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/3",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "7",
+      "annoProvvedimento": "2015"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "7",
+      "annoProvvedimento": "2016"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "7",
+      "annoProvvedimento": "2017"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/3",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "7",
+      "annoProvvedimento": "2017"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "7",
+      "annoProvvedimento": "2018"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "7",
+      "annoProvvedimento": "2019"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/3",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "7",
+      "annoProvvedimento": "2019"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "7",
+      "annoProvvedimento": "2020"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/3",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "7",
+      "annoProvvedimento": "2020"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "7",
+      "annoProvvedimento": "2021"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/3",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "7",
+      "annoProvvedimento": "2021"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "7",
+      "annoProvvedimento": "2022"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/3",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "7",
+      "annoProvvedimento": "2022"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "7",
+      "annoProvvedimento": "2023"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "7",
+      "annoProvvedimento": "2024"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/3",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "7",
+      "annoProvvedimento": "2024"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "7",
+      "annoProvvedimento": "2025"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "7",
+      "annoProvvedimento": "2026"
+     }
+    }
+   ]
+  },
+  {
+   "job": "p2_r08",
+   "kind": "files",
+   "route": "MFR_SEARCH_POST_PAGE_N",
+   "attribution": {
+    "publisher": "Normattiva Regioni (MFR), Presidenza del Consiglio / IPZS",
+    "licence_id": "terms_unrecorded",
+    "licence": "Normattiva terms not recorded (verifier); public legal texts",
+    "regione": "LAZIO"
+   },
+   "urls": [
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "8",
+      "annoProvvedimento": "1974"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "8",
+      "annoProvvedimento": "1975"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "8",
+      "annoProvvedimento": "1976"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "8",
+      "annoProvvedimento": "1978"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "8",
+      "annoProvvedimento": "1979"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/3",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "8",
+      "annoProvvedimento": "1979"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "8",
+      "annoProvvedimento": "1980"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "8",
+      "annoProvvedimento": "1982"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "8",
+      "annoProvvedimento": "1983"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "8",
+      "annoProvvedimento": "1984"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "8",
+      "annoProvvedimento": "1985"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/3",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "8",
+      "annoProvvedimento": "1985"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "8",
+      "annoProvvedimento": "1986"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "8",
+      "annoProvvedimento": "1987"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "8",
+      "annoProvvedimento": "1988"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "8",
+      "annoProvvedimento": "1989"
+     }
+    }
+   ]
+  },
+  {
+   "job": "p2_r09",
+   "kind": "files",
+   "route": "MFR_SEARCH_POST_PAGE_N",
+   "attribution": {
+    "publisher": "Normattiva Regioni (MFR), Presidenza del Consiglio / IPZS",
+    "licence_id": "terms_unrecorded",
+    "licence": "Normattiva terms not recorded (verifier); public legal texts",
+    "regione": "LIGURIA"
+   },
+   "urls": [
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "9",
+      "annoProvvedimento": "1988"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "9",
+      "annoProvvedimento": "1989"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "9",
+      "annoProvvedimento": "2006"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "9",
+      "annoProvvedimento": "2007"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "9",
+      "annoProvvedimento": "2008"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "9",
+      "annoProvvedimento": "2009"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "9",
+      "annoProvvedimento": "2012"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "9",
+      "annoProvvedimento": "2013"
+     }
+    }
+   ]
+  },
+  {
+   "job": "p2_r10",
+   "kind": "files",
+   "route": "MFR_SEARCH_POST_PAGE_N",
+   "attribution": {
+    "publisher": "Normattiva Regioni (MFR), Presidenza del Consiglio / IPZS",
+    "licence_id": "terms_unrecorded",
+    "licence": "Normattiva terms not recorded (verifier); public legal texts",
+    "regione": "LOMBARDIA"
+   },
+   "urls": [
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "10",
+      "annoProvvedimento": "1973"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "10",
+      "annoProvvedimento": "1974"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "10",
+      "annoProvvedimento": "1975"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/3",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "10",
+      "annoProvvedimento": "1975"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "10",
+      "annoProvvedimento": "1976"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "10",
+      "annoProvvedimento": "1977"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "10",
+      "annoProvvedimento": "1978"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "10",
+      "annoProvvedimento": "1979"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "10",
+      "annoProvvedimento": "1980"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/3",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "10",
+      "annoProvvedimento": "1980"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "10",
+      "annoProvvedimento": "1981"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "10",
+      "annoProvvedimento": "1982"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "10",
+      "annoProvvedimento": "1983"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/3",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "10",
+      "annoProvvedimento": "1983"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "10",
+      "annoProvvedimento": "1984"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "10",
+      "annoProvvedimento": "1985"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "10",
+      "annoProvvedimento": "1986"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "10",
+      "annoProvvedimento": "1988"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "10",
+      "annoProvvedimento": "1989"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "10",
+      "annoProvvedimento": "1990"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "10",
+      "annoProvvedimento": "1995"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "10",
+      "annoProvvedimento": "1997"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "10",
+      "annoProvvedimento": "2003"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "10",
+      "annoProvvedimento": "2004"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "10",
+      "annoProvvedimento": "2015"
+     }
+    }
+   ]
+  },
+  {
+   "job": "p2_r11",
+   "kind": "files",
+   "route": "MFR_SEARCH_POST_PAGE_N",
+   "attribution": {
+    "publisher": "Normattiva Regioni (MFR), Presidenza del Consiglio / IPZS",
+    "licence_id": "terms_unrecorded",
+    "licence": "Normattiva terms not recorded (verifier); public legal texts",
+    "regione": "MARCHE"
+   },
+   "urls": [
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "11",
+      "annoProvvedimento": "1974"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "11",
+      "annoProvvedimento": "1977"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "11",
+      "annoProvvedimento": "1980"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "11",
+      "annoProvvedimento": "1990"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "11",
+      "annoProvvedimento": "1992"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "11",
+      "annoProvvedimento": "1994"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "11",
+      "annoProvvedimento": "1995"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "11",
+      "annoProvvedimento": "1996"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "11",
+      "annoProvvedimento": "1997"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "11",
+      "annoProvvedimento": "1998"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "11",
+      "annoProvvedimento": "2012"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "11",
+      "annoProvvedimento": "2013"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "11",
+      "annoProvvedimento": "2018"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "11",
+      "annoProvvedimento": "2020"
+     }
+    }
+   ]
+  },
+  {
+   "job": "p2_r12",
+   "kind": "files",
+   "route": "MFR_SEARCH_POST_PAGE_N",
+   "attribution": {
+    "publisher": "Normattiva Regioni (MFR), Presidenza del Consiglio / IPZS",
+    "licence_id": "terms_unrecorded",
+    "licence": "Normattiva terms not recorded (verifier); public legal texts",
+    "regione": "MOLISE"
+   },
+   "urls": [
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "12",
+      "annoProvvedimento": "1977"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "12",
+      "annoProvvedimento": "2005"
+     }
+    }
+   ]
+  },
+  {
+   "job": "p2_r13",
+   "kind": "files",
+   "route": "MFR_SEARCH_POST_PAGE_N",
+   "attribution": {
+    "publisher": "Normattiva Regioni (MFR), Presidenza del Consiglio / IPZS",
+    "licence_id": "terms_unrecorded",
+    "licence": "Normattiva terms not recorded (verifier); public legal texts",
+    "regione": "PIEMONTE"
+   },
+   "urls": [
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "13",
+      "annoProvvedimento": "1975"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "13",
+      "annoProvvedimento": "1976"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "13",
+      "annoProvvedimento": "1977"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "13",
+      "annoProvvedimento": "1978"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "13",
+      "annoProvvedimento": "1979"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "13",
+      "annoProvvedimento": "1980"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "13",
+      "annoProvvedimento": "1981"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "13",
+      "annoProvvedimento": "1984"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "13",
+      "annoProvvedimento": "1985"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "13",
+      "annoProvvedimento": "1986"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "13",
+      "annoProvvedimento": "1987"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "13",
+      "annoProvvedimento": "1988"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "13",
+      "annoProvvedimento": "1989"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "13",
+      "annoProvvedimento": "1990"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "13",
+      "annoProvvedimento": "1991"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "13",
+      "annoProvvedimento": "1992"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "13",
+      "annoProvvedimento": "1994"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "13",
+      "annoProvvedimento": "1995"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/3",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "13",
+      "annoProvvedimento": "1995"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "13",
+      "annoProvvedimento": "1996"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "13",
+      "annoProvvedimento": "1997"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "13",
+      "annoProvvedimento": "2000"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "13",
+      "annoProvvedimento": "2001"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "13",
+      "annoProvvedimento": "2004"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "13",
+      "annoProvvedimento": "2006"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "13",
+      "annoProvvedimento": "2008"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "13",
+      "annoProvvedimento": "2009"
+     }
+    }
+   ]
+  },
+  {
+   "job": "p2_r14",
+   "kind": "files",
+   "route": "MFR_SEARCH_POST_PAGE_N",
+   "attribution": {
+    "publisher": "Normattiva Regioni (MFR), Presidenza del Consiglio / IPZS",
+    "licence_id": "terms_unrecorded",
+    "licence": "Normattiva terms not recorded (verifier); public legal texts",
+    "regione": "PUGLIA"
+   },
+   "urls": [
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "14",
+      "annoProvvedimento": "1975"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "14",
+      "annoProvvedimento": "1978"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "14",
+      "annoProvvedimento": "1979"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "14",
+      "annoProvvedimento": "1980"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "14",
+      "annoProvvedimento": "1981"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "14",
+      "annoProvvedimento": "1984"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "14",
+      "annoProvvedimento": "1985"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "14",
+      "annoProvvedimento": "2006"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "14",
+      "annoProvvedimento": "2007"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "14",
+      "annoProvvedimento": "2008"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "14",
+      "annoProvvedimento": "2009"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "14",
+      "annoProvvedimento": "2011"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "14",
+      "annoProvvedimento": "2012"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "14",
+      "annoProvvedimento": "2013"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "14",
+      "annoProvvedimento": "2014"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "14",
+      "annoProvvedimento": "2015"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "14",
+      "annoProvvedimento": "2016"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "14",
+      "annoProvvedimento": "2017"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "14",
+      "annoProvvedimento": "2018"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "14",
+      "annoProvvedimento": "2019"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "14",
+      "annoProvvedimento": "2020"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "14",
+      "annoProvvedimento": "2021"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "14",
+      "annoProvvedimento": "2023"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "14",
+      "annoProvvedimento": "2024"
+     }
+    }
+   ]
+  },
+  {
+   "job": "p2_r17",
+   "kind": "files",
+   "route": "MFR_SEARCH_POST_PAGE_N",
+   "attribution": {
+    "publisher": "Normattiva Regioni (MFR), Presidenza del Consiglio / IPZS",
+    "licence_id": "terms_unrecorded",
+    "licence": "Normattiva terms not recorded (verifier); public legal texts",
+    "regione": "TOSCANA"
+   },
+   "urls": [
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "17",
+      "annoProvvedimento": "1973"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "17",
+      "annoProvvedimento": "1974"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "17",
+      "annoProvvedimento": "1975"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "17",
+      "annoProvvedimento": "1976"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "17",
+      "annoProvvedimento": "1977"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "17",
+      "annoProvvedimento": "1978"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "17",
+      "annoProvvedimento": "1979"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "17",
+      "annoProvvedimento": "1980"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/3",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "17",
+      "annoProvvedimento": "1980"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "17",
+      "annoProvvedimento": "1981"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "17",
+      "annoProvvedimento": "1982"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "17",
+      "annoProvvedimento": "1983"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "17",
+      "annoProvvedimento": "1984"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "17",
+      "annoProvvedimento": "1985"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "17",
+      "annoProvvedimento": "1995"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/3",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "17",
+      "annoProvvedimento": "1995"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "17",
+      "annoProvvedimento": "1996"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/3",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "17",
+      "annoProvvedimento": "1996"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "17",
+      "annoProvvedimento": "1997"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/3",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "17",
+      "annoProvvedimento": "1997"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "17",
+      "annoProvvedimento": "1998"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/3",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "17",
+      "annoProvvedimento": "1998"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "17",
+      "annoProvvedimento": "1999"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "17",
+      "annoProvvedimento": "2000"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "17",
+      "annoProvvedimento": "2001"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "17",
+      "annoProvvedimento": "2003"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "17",
+      "annoProvvedimento": "2004"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "17",
+      "annoProvvedimento": "2005"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "17",
+      "annoProvvedimento": "2006"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "17",
+      "annoProvvedimento": "2007"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "17",
+      "annoProvvedimento": "2008"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "17",
+      "annoProvvedimento": "2009"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "17",
+      "annoProvvedimento": "2010"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "17",
+      "annoProvvedimento": "2011"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "17",
+      "annoProvvedimento": "2012"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "17",
+      "annoProvvedimento": "2013"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "17",
+      "annoProvvedimento": "2014"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "17",
+      "annoProvvedimento": "2015"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "17",
+      "annoProvvedimento": "2016"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "17",
+      "annoProvvedimento": "2017"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "17",
+      "annoProvvedimento": "2018"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "17",
+      "annoProvvedimento": "2019"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "17",
+      "annoProvvedimento": "2020"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/3",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "17",
+      "annoProvvedimento": "2020"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "17",
+      "annoProvvedimento": "2021"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "17",
+      "annoProvvedimento": "2023"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "17",
+      "annoProvvedimento": "2024"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "17",
+      "annoProvvedimento": "2025"
+     }
+    }
+   ]
+  },
+  {
+   "job": "p2_r19",
+   "kind": "files",
+   "route": "MFR_SEARCH_POST_PAGE_N",
+   "attribution": {
+    "publisher": "Normattiva Regioni (MFR), Presidenza del Consiglio / IPZS",
+    "licence_id": "terms_unrecorded",
+    "licence": "Normattiva terms not recorded (verifier); public legal texts",
+    "regione": "TRENTO"
+   },
+   "urls": [
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "19",
+      "annoProvvedimento": "1972"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "19",
+      "annoProvvedimento": "1973"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "19",
+      "annoProvvedimento": "1974"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "19",
+      "annoProvvedimento": "1975"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "19",
+      "annoProvvedimento": "1976"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "19",
+      "annoProvvedimento": "1977"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "19",
+      "annoProvvedimento": "1978"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "19",
+      "annoProvvedimento": "1980"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "19",
+      "annoProvvedimento": "1983"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "19",
+      "annoProvvedimento": "1988"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "19",
+      "annoProvvedimento": "1993"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "19",
+      "annoProvvedimento": "2012"
+     }
+    }
+   ]
+  },
+  {
+   "job": "p2_r20",
+   "kind": "files",
+   "route": "MFR_SEARCH_POST_PAGE_N",
+   "attribution": {
+    "publisher": "Normattiva Regioni (MFR), Presidenza del Consiglio / IPZS",
+    "licence_id": "terms_unrecorded",
+    "licence": "Normattiva terms not recorded (verifier); public legal texts",
+    "regione": "UMBRIA"
+   },
+   "urls": [
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "20",
+      "annoProvvedimento": "1974"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "20",
+      "annoProvvedimento": "1981"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "20",
+      "annoProvvedimento": "1982"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "20",
+      "annoProvvedimento": "1984"
+     }
+    }
+   ]
+  },
+  {
+   "job": "p2_r21",
+   "kind": "files",
+   "route": "MFR_SEARCH_POST_PAGE_N",
+   "attribution": {
+    "publisher": "Normattiva Regioni (MFR), Presidenza del Consiglio / IPZS",
+    "licence_id": "terms_unrecorded",
+    "licence": "Normattiva terms not recorded (verifier); public legal texts",
+    "regione": "VALLE D'AOSTA"
+   },
+   "urls": [
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "21",
+      "annoProvvedimento": "1977"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "21",
+      "annoProvvedimento": "1979"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "21",
+      "annoProvvedimento": "1981"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "21",
+      "annoProvvedimento": "1983"
+     }
+    }
+   ]
+  },
+  {
+   "job": "p2_r22",
+   "kind": "files",
+   "route": "MFR_SEARCH_POST_PAGE_N",
+   "attribution": {
+    "publisher": "Normattiva Regioni (MFR), Presidenza del Consiglio / IPZS",
+    "licence_id": "terms_unrecorded",
+    "licence": "Normattiva terms not recorded (verifier); public legal texts",
+    "regione": "VENETO"
+   },
+   "urls": [
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "22",
+      "annoProvvedimento": "1974"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "22",
+      "annoProvvedimento": "1975"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "22",
+      "annoProvvedimento": "1977"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "22",
+      "annoProvvedimento": "1978"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "22",
+      "annoProvvedimento": "1979"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/3",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "22",
+      "annoProvvedimento": "1979"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "22",
+      "annoProvvedimento": "1980"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/3",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "22",
+      "annoProvvedimento": "1980"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "22",
+      "annoProvvedimento": "1981"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "22",
+      "annoProvvedimento": "1993"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "22",
+      "annoProvvedimento": "1994"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "22",
+      "annoProvvedimento": "1999"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "22",
+      "annoProvvedimento": "2018"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "22",
+      "annoProvvedimento": "2019"
+     }
+    },
+    {
+     "url": "https://www.normattiva.it/mfr/ricerca/semplice/2",
+     "form": {
+      "tipoLeggeList": "LEGGEP,LEGGES,LEGGER,REGO",
+      "containsType": "ALL_WORDS",
+      "ricerca": "",
+      "regioneList": "22",
+      "annoProvvedimento": "2020"
+     }
+    }
+   ]
+  }
+ ]
+}

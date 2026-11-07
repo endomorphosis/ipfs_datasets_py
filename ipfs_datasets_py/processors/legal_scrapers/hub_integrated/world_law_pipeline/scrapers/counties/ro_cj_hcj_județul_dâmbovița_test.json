@@ -1,0 +1,25 @@
+{
+ "country_code": "RO",
+ "place_id": "wd:Q188797",
+ "qid": "Q188797",
+ "place_name": "Județul Dâmbovița",
+ "iso_3166_2": "RO-DB",
+ "admin_level": "judet",
+ "language": "ro",
+ "doc_type": "decision",
+ "consolidated": false,
+ "platform": "ro_cj_hcj",
+ "source_org": "Județul Dâmbovița",
+ "index_url": "https://hotariri.cjd.ro/hotaririle-consiliului-judetean-dambovita/",
+ "max_bytes": 52428800,
+ "urls": [
+  "https://sinteserv.cjd.ro/bld/files/HCJ/2026/380-2026.pdf",
+  "https://sinteserv.cjd.ro/bld/files/HCJ/2026/379-2026.pdf",
+  "https://sinteserv.cjd.ro/bld/files/HCJ/2026/378-2026.pdf"
+ ],
+ "titles": {
+  "https://sinteserv.cjd.ro/bld/files/HCJ/2026/380-2026.pdf": "Hotărârea nr. 380/2026 (08/10/2026): Hotărâre 08.10.2026 privind rectificarea bugetului propriu al județului, pe anul 2026",
+  "https://sinteserv.cjd.ro/bld/files/HCJ/2026/379-2026.pdf": "Hotărârea nr. 379/2026 (08/10/2026): Hotărâre 08.10.2026 pentru modificarea și completarea Hotărârii Consiliului Județean Dâmbovița nr. 143/30.04.2026 privind aprobarea Notei de Fundamentare în vederea includerii în lista de investiții, pe anul 2026, a sumelor necesare promovării și implementării proiectelor cu finanțare externă / națională ce urmează să fie contractate sau promovate de către Consiliul Județean Dâmbovița",
+  "https://sinteserv.cjd.ro/bld/files/HCJ/2026/378-2026.pdf": "Hotărârea nr. 378/2026 (08/10/2026): Hotărâre privind aprobarea documentației tehnico-economice, a principalilor indicatori tehnico-economici și a devizului general faza Studiu de fezabilitate pentru obiectivul de investiții „Construire centrală electrică Fotovoltaică (Cef) pentru autoconsum cu capacitate de stocare integrată la nivelul Unității Administrativ-Teritoriale, Județul Dâmbovița”"
+ }
+}

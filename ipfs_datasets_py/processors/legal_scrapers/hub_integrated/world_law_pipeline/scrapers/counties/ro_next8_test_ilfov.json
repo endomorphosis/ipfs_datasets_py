@@ -1,0 +1,25 @@
+{
+ "country_code": "RO",
+ "place_id": "wd:Q191670",
+ "qid": "Q191670",
+ "place_name": "Județul Ilfov",
+ "iso_3166_2": "RO-IF",
+ "admin_level": "judet",
+ "language": "ro",
+ "doc_type": "decision",
+ "consolidated": false,
+ "platform": "ro_cj_hcj",
+ "source_org": "Județul Ilfov",
+ "index_url": "https://cjilfov.ro/consiliul-judetean/hotarari/an-2026/",
+ "max_bytes": 52428800,
+ "urls": [
+  "https://cjilfov.ro/wp-content/uploads/MONITORUL_OFICIAL/Statutul_Judetului_IF/HCJILFOV-nr.-235-din-07.08.2024.pdf",
+  "https://cjilfov.ro/wp-content/uploads/hotarari/2025/287.pdf",
+  "https://cjilfov.ro/wp-content/uploads/hotarari/2025/286.pdf"
+ ],
+ "titles": {
+  "https://cjilfov.ro/wp-content/uploads/MONITORUL_OFICIAL/Statutul_Judetului_IF/HCJILFOV-nr.-235-din-07.08.2024.pdf": "Hotărârea Consiliului Județean Ilfov nr. 235/07.08.2024",
+  "https://cjilfov.ro/wp-content/uploads/hotarari/2025/287.pdf": "Hotărâre",
+  "https://cjilfov.ro/wp-content/uploads/hotarari/2025/286.pdf": "Hotărâre"
+ }
+}

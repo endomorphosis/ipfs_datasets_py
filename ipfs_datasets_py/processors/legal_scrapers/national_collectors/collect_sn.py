@@ -159,7 +159,9 @@ def main():
         if rid in done:
             skip += 1
             continue
-        got = fetch_official(url, ua=UA, verify=False, min_text=150)
+        # archives.sn fichiers are live-only; jo.gouv.sn keeps live+Wayback
+        use_wb = (meta.get("portal") or "").startswith("jo.gouv")
+        got = fetch_official(url, ua=UA, verify=False, min_text=150, wayback=use_wb)
         text = got.get("text") or ""
         if got.get("status") != "success":
             fail += 1
