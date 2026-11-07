@@ -1,0 +1,11 @@
+[
+ {"name": "Nièvre", "iso": "FR-58", "qid": "Q12657", "url": "https://nievre.fr/kiosque/arretes/", "issuer": "conseil_departemental",
+  "include_re": "D-2026-|_ART_2026", "crawl_delay": 3,
+  "note": "Since the 2022 publicity reform the Département publishes each arrêté/décision individually in the 'kiosque/arretes' shared-files list (one page, ~6.4k PDF links all years). Only acts numbered D-2026-* or published _ART_2026MMDD. URLs /shared-files/<id>/?<name>.pdf carry a query string -> URL-hash doc_id suffix (us_pdf_list). robots.txt: Disallow empty."},
+ {"name": "Corrèze", "iso": "FR-19", "qid": "Q3326", "url": "https://www.correze.fr/la-publication-des-actes", "issuer": "conseil_departemental",
+  "include_re": null, "crawl_delay": 3,
+  "note": "'La publication des actes': per-session compilations (CP/CD délibérations, arrêtés du Président) as PDFs under /sites/default/files/; 2026 only. robots.txt has no Disallow."},
+ {"name": "Loiret", "iso": "FR-45", "qid": "Q12574", "url": "https://www.loiret.fr/arretes-administratifs", "issuer": "conseil_departemental",
+  "include_re": null, "pager": {"param": "page", "max": 120, "stop_empty": 2}, "max_urls": 3000, "crawl_delay": 3,
+  "note": "'Les arrêtés administratifs du Département' (Drupal view, 20/page, ?page=N, newest first); files /sites/loiret/files/media/administrative-acts/2026/MM/. Link text is 'Téléchargement' -> file name used as title. robots: only /core/ /profiles/ README disallowed."}
+]

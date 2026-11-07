@@ -1,0 +1,25 @@
+{
+ "country_code": "DE",
+ "place_id": "wd:Q10455",
+ "qid": "Q10455",
+ "place_name": "Landkreis Fürth",
+ "iso_3166_2": "DE-BY",
+ "admin_level": "landkreis",
+ "language": "de",
+ "doc_type": "ordinance",
+ "platform": "de_by_kreisrecht",
+ "source_org": "Landkreis Fürth",
+ "index_url": "https://www.landkreis-fuerth.de/leben-im-landkreis/landkreis-fuerth/satzungen-verordnungen",
+ "archive_policy": "archived_robots_unreachable",
+ "max_bytes": 52428800,
+ "urls": [
+  "https://www.landkreis-fuerth.de/fileadmin/redakteure/AB114/Landkreishaushalt/2020/Haushaltssatzung_2020.pdf",
+  "https://www.landkreis-fuerth.de/fileadmin/redakteure/SG01/Amtsblatt_2024/Amtsblatt_0324.pdf",
+  "https://www.landkreis-fuerth.de/fileadmin/user_upload/landkreis_fuerth/dokumente/Mein_Landratsamt/B%C3%BCrgerservice/Amtsblatt_und_Bekanntmachungen/2025/Nr._08_044_Haushaltssatzung_2025.pdf"
+ ],
+ "titles": {
+  "https://www.landkreis-fuerth.de/fileadmin/redakteure/AB114/Landkreishaushalt/2020/Haushaltssatzung_2020.pdf": "Haushaltssatzung 2020",
+  "https://www.landkreis-fuerth.de/fileadmin/redakteure/SG01/Amtsblatt_2024/Amtsblatt_0324.pdf": "Amtsblatt 0324",
+  "https://www.landkreis-fuerth.de/fileadmin/user_upload/landkreis_fuerth/dokumente/Mein_Landratsamt/B%C3%BCrgerservice/Amtsblatt_und_Bekanntmachungen/2025/Nr._08_044_Haushaltssatzung_2025.pdf": "Nr. 08 044 Haushaltssatzung 2025"
+ }
+}

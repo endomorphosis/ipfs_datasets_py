@@ -1,0 +1,68 @@
+[
+ {
+  "name": "Landkreis Straubing-Bogen",
+  "qid": "Q10482",
+  "url": "https://www.landkreis-straubing-bogen.de/politik-verwaltung/amtsblatt/",
+  "iso": "DE-BY"
+ },
+ {
+  "name": "Landkreis Passau",
+  "qid": "Q10489",
+  "url": "https://www.landkreis-passau.de/landkreis-verwaltung-politik/aktuelles/amtsblatt/amtsblatt-2026/",
+  "iso": "DE-BY"
+ },
+ {
+  "name": "Landkreis Kronach",
+  "qid": "Q10434",
+  "url": "https://www.landkreis-kronach.de/landkreis-und-gemeinden/kreisrechtssammlung/",
+  "iso": "DE-BY"
+ },
+ {
+  "name": "Landkreis Neu-Ulm",
+  "qid": "Q10410",
+  "url": "https://www.landkreis-nu.de/Rechtssammlung",
+  "iso": "DE-BY"
+ },
+ {
+  "name": "Landkreis Landshut",
+  "qid": "Q10475",
+  "url": "https://www.landkreis-landshut.de/aktuelles/amtsblatt/",
+  "iso": "DE-BY"
+ },
+ {
+  "name": "Landkreis Deggendorf",
+  "qid": "Q10485",
+  "url": "https://www.landkreis-deggendorf.de/aktuelles/amtsblatt/",
+  "iso": "DE-BY"
+ },
+ {
+  "name": "Landkreis Kelheim",
+  "qid": "Q10474",
+  "url": "https://www.landkreis-kelheim.de/landratsamt/kreisamtsblatt/",
+  "iso": "DE-BY"
+ },
+ {
+  "name": "Landkreis Altötting",
+  "qid": "Q10533",
+  "url": "https://www.lra-aoe.de/aktuelles/amtsblatt/",
+  "iso": "DE-BY"
+ },
+ {
+  "name": "Landkreis Freising",
+  "qid": "Q10497",
+  "url": "https://www.kreis-freising.de/landratsamt/buergerinformation/oeffentliche-bekanntmachungen/satzungen.html",
+  "iso": "DE-BY"
+ },
+ {
+  "name": "Landkreis Wunsiedel im Fichtelgebirge",
+  "qid": "Q10432",
+  "url": "https://www.landkreis-wunsiedel.de/landkreis/kreisrechtssammlung",
+  "iso": "DE-BY"
+ },
+ {
+  "name": "Landkreis Kitzingen",
+  "qid": "Q10459",
+  "url": "https://www.kitzingen.de/buergerservice/amtsblatt/",
+  "iso": "DE-BY"
+ }
+]

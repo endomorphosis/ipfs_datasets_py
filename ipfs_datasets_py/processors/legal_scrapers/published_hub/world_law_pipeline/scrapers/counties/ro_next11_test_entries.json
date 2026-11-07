@@ -1,0 +1,34 @@
+[
+ {
+  "name": "Județul Hunedoara",
+  "slug": "județul_hunedoara_test",
+  "qsearch": "Hunedoara County",
+  "qid": "Q191071",
+  "iso": "RO-HD",
+  "url": "https://www.cjhunedoara.ro/index.php/monitorul-oficial-local/9-uncategorised/916-hotarari-2026",
+  "seeds": [],
+  "follow_re": "(?!)",
+  "max_pages": 1,
+  "pdf_re": "/documente/202[4-6]/Hotarari/.*HCJH"
+ },
+ {
+  "name": "Județul Harghita",
+  "slug": "județul_harghita_test",
+  "qsearch": "Harghita County",
+  "qid": "Q190702",
+  "iso": "RO-HR",
+  "url": "https://judetulharghita.ro/category/hotarari/",
+  "seeds": [
+   "https://judetulharghita.ro/hotararea-nr-239-12-10-2026/",
+   "https://judetulharghita.ro/hotararea-nr-188-11-08-2026/",
+   "https://judetulharghita.ro/hotararea-nr-38-26-02-2026/",
+   "https://judetulharghita.ro/hotararea-nr-237-22-08-2025/",
+   "https://judetulharghita.ro/hotararea-nr-86-28-04-2025/",
+   "https://judetulharghita.ro/hotararea-nr-424-08-11-2024/",
+   "https://judetulharghita.ro/hotararea-nr-303-13-08-2024/"
+  ],
+  "follow_re": "(?!)",
+  "max_pages": 8,
+  "pdf_re": "/wp-content/uploads/202[4-6]/\\d\\d/Hot"
+ }
+]

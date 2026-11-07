@@ -1,0 +1,21 @@
+[
+ {
+  "name": "Județul Bacău",
+  "qsearch": "Bacău County",
+  "url": "https://www.csjbacau.ro/dm_cj/2026/hotarari.nsf/HotarariPortalDesc?OpenView&Count=-1",
+  "iso": "RO-BC"
+ },
+ {
+  "name": "Județul Sălaj",
+  "qsearch": "Sălaj County",
+  "url": "https://www.cjsj.ro/index.php/consiliul-judetean/hotarari-ale-consiliului-judetean",
+  "iso": "RO-SJ"
+ },
+ {
+  "name": "Județul Ilfov",
+  "qsearch": "Ilfov County",
+  "url": "https://cjilfov.ro/consiliul-judetean/hotarari/an-2026/",
+  "iso": "RO-IF",
+  "force_https": true
+ }
+]

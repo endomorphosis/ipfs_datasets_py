@@ -1,0 +1,27 @@
+{
+ "country_code": "FR",
+ "place_id": "wd:Q12517",
+ "qid": "Q12517",
+ "place_name": "Gers",
+ "iso_3166_2": "FR-32",
+ "admin_level": "departement",
+ "language": "fr",
+ "doc_type": "gazette_act",
+ "consolidated": false,
+ "platform": "fr_raa_conseil_departemental",
+ "source_org": "Conseil départemental — Gers",
+ "issuer": "conseil_departemental",
+ "max_bytes": 52428800,
+ "index_url": "https://cd32-actes.digitechcloud.fr/webdelibplus/jsp/summary_orders.jsp?role=usager&date=10-2026",
+ "crawl_delay": 3.0,
+ "urls": [
+  "https://cd32-actes.digitechcloud.fr/webdelibplus/jsp/downloadFile.jsp?pdf=Ppz9oxFIMSAUf5i6vmXy51%2BKyPA8idJZEYE4p9aCApqRyzGpHtR%2F8jOavM7mte0m7FundQhO8HP8sihre1PoNjKtxX%2Fg7m7uXhrfvPPV5lQMLIMQTKLnkM%2FBHpo%2FzIv5T%2Fs6Q8cRueJR788yjbuiDGu%2BzISx4Nab",
+  "https://cd32-actes.digitechcloud.fr/webdelibplus/jsp/downloadFile.jsp?pdf=Ppz9oxFIMSAUf5i6vmXy51%2BKyPA8idJZEYE4p9aCApqRyzGpHtR%2F8jOavM7mte0m7FundQhO8HP8sihre1PoNjKtxX%2Fg7m7uXhrfvPPV5lQMLIMQTKLnkBDHJnfRyk%2BuT%2Fs6Q8cRueJR788yjbuiDGu%2BzISx4Nab",
+  "https://cd32-actes.digitechcloud.fr/webdelibplus/jsp/downloadFile.jsp?pdf=Ppz9oxFIMSAUf5i6vmXy51%2BKyPA8idJZEYE4p9aCApqRyzGpHtR%2F8jOavM7mte0m7FundQhO8HP8sihre1PoNjKtxX%2Fg7m7uXhrfvPPV5lQMLIMQTKLnkBfnagFrjBt3T%2Fs6Q8cRueJR788yjbuiDGu%2BzISx4Nab"
+ ],
+ "titles": {
+  "https://cd32-actes.digitechcloud.fr/webdelibplus/jsp/downloadFile.jsp?pdf=Ppz9oxFIMSAUf5i6vmXy51%2BKyPA8idJZEYE4p9aCApqRyzGpHtR%2F8jOavM7mte0m7FundQhO8HP8sihre1PoNjKtxX%2Fg7m7uXhrfvPPV5lQMLIMQTKLnkM%2FBHpo%2FzIv5T%2Fs6Q8cRueJR788yjbuiDGu%2BzISx4Nab": "CD32_Arr_3J022_Signature_20261005 Arrêté portant délégation de signature aux fonctionnaires des Archives Départementales, de la Médiathèque Départementale et de la Conservation du Patrimoine - Arrêté 05/10/2026 06/10/2026",
+  "https://cd32-actes.digitechcloud.fr/webdelibplus/jsp/downloadFile.jsp?pdf=Ppz9oxFIMSAUf5i6vmXy51%2BKyPA8idJZEYE4p9aCApqRyzGpHtR%2F8jOavM7mte0m7FundQhO8HP8sihre1PoNjKtxX%2Fg7m7uXhrfvPPV5lQMLIMQTKLnkBDHJnfRyk%2BuT%2Fs6Q8cRueJR788yjbuiDGu%2BzISx4Nab": "CD32_Arr_3J023_Signature_20261005 Arrêté portant délégation de signature à certains fonctionnaires de la Direction Enfance et Famille - Arrêté 05/10/2026 06/10/2026",
+  "https://cd32-actes.digitechcloud.fr/webdelibplus/jsp/downloadFile.jsp?pdf=Ppz9oxFIMSAUf5i6vmXy51%2BKyPA8idJZEYE4p9aCApqRyzGpHtR%2F8jOavM7mte0m7FundQhO8HP8sihre1PoNjKtxX%2Fg7m7uXhrfvPPV5lQMLIMQTKLnkBfnagFrjBt3T%2Fs6Q8cRueJR788yjbuiDGu%2BzISx4Nab": "CD32_Arr_3J024_Signature_20261005 Arrêté portant délégation de signature à certains personnels de la Direction Ingenierie et Transition des Territoires - Arrêté 05/10/2026 06/10/2026"
+ }
+}

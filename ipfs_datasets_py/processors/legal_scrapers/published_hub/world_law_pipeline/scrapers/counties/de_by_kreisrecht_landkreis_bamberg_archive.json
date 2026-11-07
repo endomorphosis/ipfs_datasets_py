@@ -1,0 +1,23 @@
+{
+ "country_code": "DE",
+ "place_id": "wd:Q10444",
+ "qid": "Q10444",
+ "place_name": "Landkreis Bamberg",
+ "iso_3166_2": "DE-BY",
+ "admin_level": "landkreis",
+ "language": "de",
+ "doc_type": "ordinance",
+ "platform": "de_by_kreisrecht",
+ "source_org": "Landkreis Bamberg",
+ "index_url": "https://www.landkreis-bamberg.de/Landratsamt/%C3%96ffentlichkeitsarbeit/Mediathek/Amtsblatt/Amtbl%C3%A4tter-digital/",
+ "max_bytes": 52428800,
+ "urls": [
+  "https://www.landkreis-bamberg.de/output/download.php?fid=2892.850.1.PDF",
+  "https://www.landkreis-bamberg.de/output/download.php?fid=2976.5143.1.PDF"
+ ],
+ "titles": {
+  "https://www.landkreis-bamberg.de/output/download.php?fid=2892.850.1.PDF": "Telefonnummern zur Terminvereinbarung im Überblick",
+  "https://www.landkreis-bamberg.de/output/download.php?fid=2976.5143.1.PDF": "Telefonverzeichnis Landratsamt Bamberg - komplett"
+ },
+ "archive_policy": "archived_live_fetch_failed"
+}

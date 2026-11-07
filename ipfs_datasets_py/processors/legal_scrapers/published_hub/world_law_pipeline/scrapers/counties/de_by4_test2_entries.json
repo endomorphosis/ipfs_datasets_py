@@ -1,0 +1,20 @@
+[
+ {
+  "name": "Landkreis Passau",
+  "qid": "Q10489",
+  "url": "https://www.landkreis-passau.de/landkreis-verwaltung-politik/aktuelles/amtsblatt/amtsblatt-2026/",
+  "iso": "DE-BY"
+ },
+ {
+  "name": "Landkreis Erding",
+  "qid": "Q10539",
+  "url": "https://www.landkreis-erding.de/buerger-verwaltung/umwelt-und-natur/naturschutz/schutzgebietsverordnungen/",
+  "iso": "DE-BY"
+ },
+ {
+  "name": "Landkreis Hof",
+  "qid": "Q10431",
+  "url": "https://www.landkreis-hof.de/service/ansprechpartner-downloads/amtsblatt/",
+  "iso": "DE-BY"
+ }
+]

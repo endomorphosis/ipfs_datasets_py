@@ -1,0 +1,33 @@
+{
+ "country_code": "FR",
+ "place_id": "wd:Q12808",
+ "qid": "Q12808",
+ "place_name": "Haute-Vienne",
+ "iso_3166_2": "FR-87",
+ "admin_level": "departement",
+ "language": "fr",
+ "doc_type": "gazette_act",
+ "consolidated": false,
+ "platform": "fr_raa_conseil_departemental",
+ "source_org": "Conseil départemental — Haute-Vienne",
+ "issuer": "conseil_departemental",
+ "max_bytes": 52428800,
+ "index_url": "https://arretes.haute-vienne.fr/webdelibplus/jsp/summary_orders.jsp?role=usager",
+ "crawl_delay": 10.0,
+ "urls": [
+  "https://arretes.haute-vienne.fr/webdelibplus/jsp/showFile.jsp?pdf=hN8xGwsq5s2WCCIFTxwXmt2cEeNjw9O1omFlzZKPYFl7zvAY%2BJSjWMz5FpfJQnvLu18ZhZNmMXZEm5Yhna3haexbp3UITvBz%2FLIoa3tT6DYyrcV%2F4O5u7vuz7sn1Y4kQKFKdCBSSc6NhXiHhecA%2FVTmyU5kKiCHV0UCa7OjhaRz3teFscWRusS3qbN6QLSwhfzzzH0otTX0PrZG39ZLggZLbL55Qjz%2B0",
+  "https://arretes.haute-vienne.fr/webdelibplus/jsp/showFile.jsp?pdf=hN8xGwsq5s2WCCIFTxwXmt2cEeNjw9O1omFlzZKPYFl7zvAY%2BJSjWMz5FpfJQnvLu18ZhZNmMXZEm5Yhna3haexbp3UITvBz%2FLIoa3tT6DZfwVcHKLXNQfpmeUccik4VrkJbc1a5Ar%2BQzyMsd0tyfQcduYfXLOFUwoBYv4XwToU%3D",
+  "https://arretes.haute-vienne.fr/webdelibplus/jsp/showFile.jsp?pdf=hN8xGwsq5s2WCCIFTxwXmt2cEeNjw9O1omFlzZKPYFl7zvAY%2BJSjWMz5FpfJQnvLu18ZhZNmMXZEm5Yhna3haexbp3UITvBz%2FLIoa3tT6DZfwVcHKLXNQWPdG29fIuJmzx%2BfHtCH3SCRlLMs%2F%2BF7yDMw8Wd2O3CKcpUHVj6QEP0%3D",
+  "https://arretes.haute-vienne.fr/webdelibplus/jsp/showFile.jsp?pdf=hN8xGwsq5s2WCCIFTxwXmt2cEeNjw9O1omFlzZKPYFl7zvAY%2BJSjWMz5FpfJQnvLu18ZhZNmMXZEm5Yhna3haexbp3UITvBz%2FLIoa3tT6DZfwVcHKLXNQVI1e4gS2IFiENcnmd1nEeUDLluUxL8uW5LtC00lp9onrDukR7M3r7k%3D",
+  "https://arretes.haute-vienne.fr/webdelibplus/jsp/showFile.jsp?pdf=hN8xGwsq5s2WCCIFTxwXmt2cEeNjw9O1omFlzZKPYFl7zvAY%2BJSjWMz5FpfJQnvLu18ZhZNmMXZEm5Yhna3haexbp3UITvBz%2FLIoa3tT6DZfwVcHKLXNQe1ziYzXDd6e5RzK0t2PjQ0VV0nkwyXMzY3v3BugTzITthbj2HTfYsM%3D",
+  "https://arretes.haute-vienne.fr/webdelibplus/jsp/showFile.jsp?pdf=hN8xGwsq5s2WCCIFTxwXmt2cEeNjw9O1omFlzZKPYFl7zvAY%2BJSjWMz5FpfJQnvLu18ZhZNmMXZEm5Yhna3haexbp3UITvBz%2FLIoa3tT6DZfwVcHKLXNQe1ziYzXDd6e5RzK0t2PjQ2hig9ZTBqjAGUJldpXsHpcthbj2HTfYsM%3D"
+ ],
+ "titles": {
+  "https://arretes.haute-vienne.fr/webdelibplus/jsp/showFile.jsp?pdf=hN8xGwsq5s2WCCIFTxwXmt2cEeNjw9O1omFlzZKPYFl7zvAY%2BJSjWMz5FpfJQnvLu18ZhZNmMXZEm5Yhna3haexbp3UITvBz%2FLIoa3tT6DYyrcV%2F4O5u7vuz7sn1Y4kQKFKdCBSSc6NhXiHhecA%2FVTmyU5kKiCHV0UCa7OjhaRz3teFscWRusS3qbN6QLSwhfzzzH0otTX0PrZG39ZLggZLbL55Qjz%2B0": "style=\"width:100%\"> ARRETE 2026RD_783 ALTERNAT RD 941 COMMUNE DE SAINT-LEONARD-DE-NOBLAT - Arrêté - (sans annexe) 06/10/2026 06/10/2026",
+  "https://arretes.haute-vienne.fr/webdelibplus/jsp/showFile.jsp?pdf=hN8xGwsq5s2WCCIFTxwXmt2cEeNjw9O1omFlzZKPYFl7zvAY%2BJSjWMz5FpfJQnvLu18ZhZNmMXZEm5Yhna3haexbp3UITvBz%2FLIoa3tT6DZfwVcHKLXNQfpmeUccik4VrkJbc1a5Ar%2BQzyMsd0tyfQcduYfXLOFUwoBYv4XwToU%3D": "style=\"width:100%\"> 2026-176 Arrêté de tarification 2026 ALSEA : frais de siège et services inclus dans le périmètre du CPOM - Arrêté - (sans annexe) 22/09/2026 13/10/2026",
+  "https://arretes.haute-vienne.fr/webdelibplus/jsp/showFile.jsp?pdf=hN8xGwsq5s2WCCIFTxwXmt2cEeNjw9O1omFlzZKPYFl7zvAY%2BJSjWMz5FpfJQnvLu18ZhZNmMXZEm5Yhna3haexbp3UITvBz%2FLIoa3tT6DZfwVcHKLXNQWPdG29fIuJmzx%2BfHtCH3SCRlLMs%2F%2BF7yDMw8Wd2O3CKcpUHVj6QEP0%3D": "style=\"width:100%\"> 2026-187 Arrêté portant modification du fonctionnement de la micro-crèche \"Le chemin d'Emmi\" à BEAUNE-LES-MINES (87280 LIMOGES) - Arrêté - (sans annexe) 30/09/2026 13/10/2026",
+  "https://arretes.haute-vienne.fr/webdelibplus/jsp/showFile.jsp?pdf=hN8xGwsq5s2WCCIFTxwXmt2cEeNjw9O1omFlzZKPYFl7zvAY%2BJSjWMz5FpfJQnvLu18ZhZNmMXZEm5Yhna3haexbp3UITvBz%2FLIoa3tT6DZfwVcHKLXNQVI1e4gS2IFiENcnmd1nEeUDLluUxL8uW5LtC00lp9onrDukR7M3r7k%3D": "style=\"width:100%\"> 2026-188 Programme départemental de logements adaptés aux personnes âgées et/ou handicapées sur la commune de Saint-Mathieu - Arrêté - (sans annexe) 09/10/2026 12/10/2026",
+  "https://arretes.haute-vienne.fr/webdelibplus/jsp/showFile.jsp?pdf=hN8xGwsq5s2WCCIFTxwXmt2cEeNjw9O1omFlzZKPYFl7zvAY%2BJSjWMz5FpfJQnvLu18ZhZNmMXZEm5Yhna3haexbp3UITvBz%2FLIoa3tT6DZfwVcHKLXNQe1ziYzXDd6e5RzK0t2PjQ0VV0nkwyXMzY3v3BugTzITthbj2HTfYsM%3D": "style=\"width:100%\"> 2026-189 Arrêté portant modification du fonctionnement de la micro-crèche \"La Marmaille\" à CHÂTEAUPONSAC (87290) - Arrêté - (sans annexe) 30/09/2026 19/10/2026",
+  "https://arretes.haute-vienne.fr/webdelibplus/jsp/showFile.jsp?pdf=hN8xGwsq5s2WCCIFTxwXmt2cEeNjw9O1omFlzZKPYFl7zvAY%2BJSjWMz5FpfJQnvLu18ZhZNmMXZEm5Yhna3haexbp3UITvBz%2FLIoa3tT6DZfwVcHKLXNQe1ziYzXDd6e5RzK0t2PjQ2hig9ZTBqjAGUJldpXsHpcthbj2HTfYsM%3D": "style=\"width:100%\"> 2026-190 Arrêté portant modification du fonctionnement de la micro-crèche \"Les P'tits loups\" à VAYRES (87600) - Arrêté - (sans annexe) 30/09/2026 19/10/2026"
+ }
+}

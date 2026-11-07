@@ -1,0 +1,6 @@
+[
+ {"name": "Landkreis Ebersberg", "qid": "Q10541", "url": "https://www.lra-ebe.de/aktuelles/amtsblatt/", "iso": "DE-BY", "archive_policy": "archived_robots_unreachable"},
+ {"name": "Landkreis Rottal-Inn", "qid": "Q10477", "url": "https://www.rottal-inn.de/landkreis-region/amtliche-bekanntmachungen/amtsblatt/amtsblatt-2026/", "iso": "DE-BY", "archive_policy": "archived_robots_unreachable"},
+ {"name": "Landkreis Fürth", "qid": "Q10455", "url": "https://www.landkreis-fuerth.de/leben-im-landkreis/landkreis-fuerth/satzungen-verordnungen", "iso": "DE-BY", "archive_policy": "archived_robots_unreachable"},
+ {"name": "Landkreis Forchheim", "qid": "Q10445", "url": "https://www.lra-fo.de/Landratsamt/Amtsblatt/", "iso": "DE-BY", "archive_policy": "archived_robots_unreachable"}
+]

@@ -1,0 +1,5 @@
+{"name": "Landkreis Fürth", "qid": "Q10455", "iso": "DE-BY", "host": "landkreis-fuerth.de",
+ "index_url": "https://www.landkreis-fuerth.de/leben-im-landkreis/landkreis-fuerth/satzungen-verordnungen",
+ "keep_re": "satzung|verordnung|amtsblatt|kreisrecht|artikel_27a|geb(ue|ü)hren|allgemeinverf(ue|ü)gung|bekanntmachung|ordnung",
+ "drop_re": "antrag|formular|flyer|merkblatt|broschuere|einladung|stellenaus|_processed_",
+ "archive_policy": "archived_robots_unreachable"}

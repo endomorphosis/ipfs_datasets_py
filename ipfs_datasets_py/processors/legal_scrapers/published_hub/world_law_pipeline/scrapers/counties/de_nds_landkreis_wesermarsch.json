@@ -1,0 +1,31 @@
+{
+ "country_code": "DE",
+ "place_id": "wd:Q5948",
+ "qid": "Q5948",
+ "place_name": "Landkreis Wesermarsch",
+ "iso_3166_2": "DE-NI",
+ "admin_level": "landkreis",
+ "language": "de",
+ "doc_type": "ordinance",
+ "platform": "de_nds_kreisrecht",
+ "source_org": "Landkreis Wesermarsch",
+ "index_url": "https://wesermarsch.de/landkreis/verwaltung/#kreisrecht",
+ "urls": [
+  "https://wesermarsch.de/wp-content/uploads/2026/08/2026_08_11-Verwaltungsgliederungsplan-Stand-08_2026.pdf",
+  "https://wesermarsch.de/wp-content/uploads/2026/10/Geschaeftsordnung-2021-2026.pdf",
+  "https://wesermarsch.de/wp-content/uploads/2024/05/Schulbezirkssatzung-ab-2023-24.pdf",
+  "https://wesermarsch.de/wp-content/uploads/2022/11/verordnung_taxentarif_2022.pdf",
+  "https://wesermarsch.de/wp-content/uploads/2026/10/HAUPTSATZUNG-LK-Wsrm_ab-07_10_2025.pdf",
+  "https://wesermarsch.de/wp-content/uploads/2026/01/SchBefSatzung_22-04-16.pdf",
+  "https://wesermarsch.de/wp-content/uploads/2026/01/Kreistag_Entschaedigungssatzung.pdf"
+ ],
+ "titles": {
+  "https://wesermarsch.de/wp-content/uploads/2026/08/2026_08_11-Verwaltungsgliederungsplan-Stand-08_2026.pdf": "zum Download [pdf]",
+  "https://wesermarsch.de/wp-content/uploads/2026/10/Geschaeftsordnung-2021-2026.pdf": "Geschaeftsordnung-2021-2026.pdf",
+  "https://wesermarsch.de/wp-content/uploads/2024/05/Schulbezirkssatzung-ab-2023-24.pdf": "Schulbezirkssatzung-ab-2023-24.pdf",
+  "https://wesermarsch.de/wp-content/uploads/2022/11/verordnung_taxentarif_2022.pdf": "verordnung_taxentarif_2022.pdf",
+  "https://wesermarsch.de/wp-content/uploads/2026/10/HAUPTSATZUNG-LK-Wsrm_ab-07_10_2025.pdf": "HAUPTSATZUNG-LK-Wsrm_ab-07_10_2025.pdf",
+  "https://wesermarsch.de/wp-content/uploads/2026/01/SchBefSatzung_22-04-16.pdf": "SchBefSatzung_22-04-16.pdf",
+  "https://wesermarsch.de/wp-content/uploads/2026/01/Kreistag_Entschaedigungssatzung.pdf": "Kreistag_Entschaedigungssatzung.pdf"
+ }
+}

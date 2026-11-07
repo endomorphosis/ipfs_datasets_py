@@ -1,0 +1,49 @@
+{
+ "cc": "GT",
+ "platform": "gt_municipal_cc",
+ "language": "es",
+ "doc_type": "ordinance",
+ "doc_url_regex": "(?i)(ordenanza|acuerdo[s]?-?municipal|acuerdos?_municipal|reglamento|gaceta-?municipal|resoluci[o\u00f3]n-?municipal|decreto-?municipal|concejo|normativa|ley-?municipal|acta-?de-?sesi|transparencia/.*(acuerdo|ordenanza|reglament))",
+ "exclude_regex": "\\.(jpg|jpeg|png|gif|css|js|svg|woff2?|mp4|ico)(\\?|$)|/(tag|category|author|feed|noticias?|news|eventos?|galeria)/|[?&]page=",
+ "map": "host,title",
+ "slug_strip": "^(www|muni|municipalidad|munide|municipalidadde)+",
+ "slug_suffix_strip": "(gob|gt|hn|sv|ni|cr|pa|bo|uy)?$",
+ "label_langs": [
+  "es",
+  "en"
+ ],
+ "title_fetch_cap": 1500,
+ "title_legal_regex": "(?i)ordenanza|acuerdo municipal|reglamento municipal|decreto municipal|resoluci[o\u00f3]n municipal|gaceta municipal",
+ "generic_words": [
+  "municipio",
+  "municipalidad",
+  "alcaldia",
+  "departamento",
+  "provincia",
+  "canton",
+  "distrito",
+  "de",
+  "del",
+  "la",
+  "el",
+  "los",
+  "las",
+  "san",
+  "santa",
+  "municipal",
+  "gobierno",
+  "autonomo",
+  "city",
+  "municipality",
+  "department",
+  "province",
+  "district"
+ ],
+ "content_selectors": [
+  ".entry-content",
+  ".post-content",
+  "#content",
+  "article",
+  "main"
+ ]
+}

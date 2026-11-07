@@ -1,0 +1,12 @@
+[
+ {
+  "name": "Loire-Atlantique",
+  "iso": "FR-44",
+  "qid": "Q3068",
+  "url": "https://www.loire-atlantique.fr/44/tout-savoir-sur-/arretes-et-decisions-du-departement-de-loire-atlantique/c_1279666",
+  "issuer": "conseil_departemental",
+  "include_re": "recueil",
+  "pdf_archive": true,
+  "note": "monthly 'Recueil des arrêtés et décisions' 2026; index page robots-allowed, but PDFs live under /upload/ which robots.txt disallows for * -> Wayback/CC copies only (archive_retry.py)"
+ }
+]

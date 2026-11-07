@@ -1,0 +1,37 @@
+[
+ {
+  "name": "Județul Arad",
+  "qsearch": "Arad County",
+  "qid": "Q179559",
+  "url": "https://www.cjarad.ro/activitate/hotarari/",
+  "iso": "RO-AR"
+ },
+ {
+  "name": "Județul Maramureș",
+  "qsearch": "Maramureș County",
+  "qid": "Q188813",
+  "url": "https://www.cjmaramures.ro/monitorul-oficial-local/hotararile-autoritatii-deliberative",
+  "iso": "RO-MM"
+ },
+ {
+  "name": "Județul Călărași",
+  "qsearch": "Călărași County",
+  "qid": "Q188948",
+  "url": "https://www.calarasi.ro/hotararile-deliberative/",
+  "iso": "RO-CL"
+ },
+ {
+  "name": "Județul Caraș-Severin",
+  "qsearch": "Caraș-Severin County",
+  "qid": "Q187925",
+  "url": "https://www.cjcs.ro/dm_cjcs/portal.nsf/pagini/hotararile+consiliului+judetean+carasseverin-000021D6",
+  "iso": "RO-CS"
+ },
+ {
+  "name": "Județul Ialomița",
+  "qsearch": "Ialomița County",
+  "qid": "Q193044",
+  "url": "https://cjialomita.ro/monitorul-oficial-al-judetului/registrul-pentru-evidenta-hotararilor-adoptate/",
+  "iso": "RO-IL"
+ }
+]

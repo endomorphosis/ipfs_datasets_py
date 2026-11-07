@@ -1,0 +1,18 @@
+{
+ "country_code": "IN",
+ "place_id": "wd:Q1478937",
+ "qid": "Q1478937",
+ "place_name": "Howrah district",
+ "iso_3166_2": "IN-WB",
+ "admin_level": "district",
+ "language": "en",
+ "doc_type": "ordinance",
+ "platform": "in_wb_zp_byelaws",
+ "source_org": "Howrah Zilla Parishad",
+ "urls": [
+  "https://howrahzillaparishad.in/assets/uploads/bye-laws_document/ammendment_of_byelaw_2019_publish_11-12-2020.pdf"
+ ],
+ "titles": {
+  "https://howrahzillaparishad.in/assets/uploads/bye-laws_document/ammendment_of_byelaw_2019_publish_11-12-2020.pdf": "Howrah Zilla Parishad Bye-Law 2005 with Amendment 2019"
+ }
+}

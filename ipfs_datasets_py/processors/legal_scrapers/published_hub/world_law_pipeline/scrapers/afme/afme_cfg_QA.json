@@ -1,0 +1,26 @@
+{
+ "cc": "QA",
+ "platform": "qa_municipal_cc",
+ "language": "ar",
+ "doc_type": "decision",
+ "doc_url_regex": "(?i)(\u0642\u0631\u0627\u0631|\u0644\u0627\u0626\u062d\u0629|\u0646\u0638\u0627\u0645|\u062a\u0639\u0645\u064a\u0645|regulation|decree|resolution|law|legislation|circular|bylaw|by-law|policy)",
+ "exclude_regex": "\\.(jpg|jpeg|png|gif|css|js|svg|woff2?|mp4|ico)(\\?|$)|/(tag|category|author|feed)/|/(new|news|habari|events?|dept|departments|gallery|tenders?|jobs|vacanc)/|statutory-bodies|[?&]page=",
+ "map": "host,title",
+ "slug_strip": "^(www)",
+ "slug_suffix_strip": "(mun|municipality)+$",
+ "label_langs": [
+  "en",
+  "ar",
+  "fr",
+  "sw"
+ ],
+ "title_fetch_cap": 1500,
+ "title_legal_regex": "(?i)by-?laws?|bylaw|ordinance|regulations?|sheria ndogo|arr[e\u00ea]t[e\u00e9]|d[e\u00e9]lib[e\u00e9]ration|\u0642\u0631\u0627\u0631|\u0644\u0627\u0626\u062d\u0629",
+ "content_selectors": [
+  ".entry-content",
+  ".post-content",
+  "#content",
+  "article",
+  "main"
+ ]
+}

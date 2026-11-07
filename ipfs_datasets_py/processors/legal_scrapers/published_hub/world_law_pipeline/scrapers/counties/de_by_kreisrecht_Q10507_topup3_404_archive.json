@@ -1,0 +1,22 @@
+{
+ "country_code": "DE",
+ "place_id": "wd:Q10507",
+ "qid": "Q10507",
+ "place_name": "Landkreis Landsberg am Lech",
+ "iso_3166_2": "DE-BY",
+ "admin_level": "landkreis",
+ "language": "de",
+ "doc_type": "ordinance",
+ "platform": "de_by_kreisrecht",
+ "source_org": "Landkreis Landsberg am Lech",
+ "archive_policy": "archived_live_404",
+ "max_bytes": 52428800,
+ "urls": [
+  "https://kxp.landkreis-landsberg.de/Dox.aspx?docid=cc609267-b7f6-4607-8318-31298374cb52&mode=direct&orgid=ccb60a17-5dc9-4779-a74a-a9f19e79d575",
+  "https://kxp.landkreis-landsberg.de/Dox.aspx?docid=b94c1457-2164-45a2-9db8-0430e231dea5"
+ ],
+ "titles": {
+  "https://kxp.landkreis-landsberg.de/Dox.aspx?docid=cc609267-b7f6-4607-8318-31298374cb52&mode=direct&orgid=ccb60a17-5dc9-4779-a74a-a9f19e79d575": "Wasserrecht - www.wwa-wm.bayern.de/abwasser/landkreis_ll/index.htm",
+  "https://kxp.landkreis-landsberg.de/Dox.aspx?docid=b94c1457-2164-45a2-9db8-0430e231dea5": "hier"
+ }
+}

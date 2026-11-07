@@ -1,0 +1,40 @@
+{
+ "country_code": "DE",
+ "place_id": "wd:Q10518",
+ "qid": "Q10518",
+ "place_name": "Landkreis Garmisch-Partenkirchen",
+ "iso_3166_2": "DE-BY",
+ "admin_level": "landkreis",
+ "language": "de",
+ "doc_type": "ordinance",
+ "platform": "de_by_kreisrecht",
+ "source_org": "Landkreis Garmisch-Partenkirchen",
+ "archive_policy": "archived_live_404",
+ "max_bytes": 52428800,
+ "urls": [
+  "https://www.lra-gap.de/media/files/lra_abfall_wertstoffhoefe/info_BadKohlgrub11-2024.pdf",
+  "https://www.lra-gap.de/media/files/lra_abfall_wertstoffhoefe/info_Mittenwald11-2024.pdf",
+  "https://www.lra-gap.de/media/files/lra_abfall_wertstoffhoefe/info_Murnau11-2024.pdf",
+  "https://www.lra-gap.de/media/files/lra_abfall_wertstoffhoefe/info_Ohlstadt11-2024.pdf",
+  "https://www.lra-gap.de/media/files/lra_abfall_wertstoffhoefe/info_Saulgrub11-2024.pdf",
+  "https://www.lra-gap.de/media/files/lra_abfall_wertstoffhoefe/info_Schwaigen11-2024.pdf",
+  "https://www.lra-gap.de/media/files/lra_abfall_wertstoffhoefe/info_Uffing11-2024.pdf",
+  "https://www.lra-gap.de/media/files/lra_abfall_wertstoffhoefe/info_Unterammergau11-2024.pdf",
+  "https://www.lra-gap.de/media/files/lra_abfall_wertstoffhoefe/info_Wallgau11-2024.pdf",
+  "https://www.lra-gap.de/media/files/lra_abfall_entsorgung/Schadstoff_MobPS_23.pdf",
+  "https://www.lra-gap.de/media/files/lra_abfall_entsorgung/Tipps_kompostierbare_Biotueten_2023.pdf"
+ ],
+ "titles": {
+  "https://www.lra-gap.de/media/files/lra_abfall_wertstoffhoefe/info_BadKohlgrub11-2024.pdf": "info_BadKohlgrub11-2024.pdf",
+  "https://www.lra-gap.de/media/files/lra_abfall_wertstoffhoefe/info_Mittenwald11-2024.pdf": "info_Mittenwald11-2024.pdf",
+  "https://www.lra-gap.de/media/files/lra_abfall_wertstoffhoefe/info_Murnau11-2024.pdf": "info_Murnau11-2024.pdf",
+  "https://www.lra-gap.de/media/files/lra_abfall_wertstoffhoefe/info_Ohlstadt11-2024.pdf": "info_Ohlstadt11-2024.pdf",
+  "https://www.lra-gap.de/media/files/lra_abfall_wertstoffhoefe/info_Saulgrub11-2024.pdf": "info_Saulgrub11-2024.pdf",
+  "https://www.lra-gap.de/media/files/lra_abfall_wertstoffhoefe/info_Schwaigen11-2024.pdf": "info_Schwaigen11-2024.pdf",
+  "https://www.lra-gap.de/media/files/lra_abfall_wertstoffhoefe/info_Uffing11-2024.pdf": "info_Uffing11-2024.pdf",
+  "https://www.lra-gap.de/media/files/lra_abfall_wertstoffhoefe/info_Unterammergau11-2024.pdf": "info_Unterammergau11-2024.pdf",
+  "https://www.lra-gap.de/media/files/lra_abfall_wertstoffhoefe/info_Wallgau11-2024.pdf": "info_Wallgau11-2024.pdf",
+  "https://www.lra-gap.de/media/files/lra_abfall_entsorgung/Schadstoff_MobPS_23.pdf": "Schadstoff_MobPS_23.pdf",
+  "https://www.lra-gap.de/media/files/lra_abfall_entsorgung/Tipps_kompostierbare_Biotueten_2023.pdf": "Tipps_kompostierbare_Biotueten_2023.pdf"
+ }
+}

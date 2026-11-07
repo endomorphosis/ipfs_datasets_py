@@ -1,0 +1,25 @@
+{
+ "country_code": "FR",
+ "place_id": "wd:Q12657",
+ "qid": "Q12657",
+ "place_name": "Nièvre",
+ "iso_3166_2": "FR-58",
+ "admin_level": "departement",
+ "language": "fr",
+ "doc_type": "gazette_act",
+ "consolidated": false,
+ "platform": "fr_raa_conseil_departemental",
+ "source_org": "Conseil départemental — Nièvre",
+ "issuer": "conseil_departemental",
+ "max_bytes": 52428800,
+ "index_url": "https://nievre.fr/kiosque/arretes/",
+ "crawl_delay": 3.0,
+ "urls": [
+  "https://nievre.fr/shared-files/59787/?D-2026-747_ART_20261021.pdf",
+  "https://nievre.fr/shared-files/59767/?D-2026-646_ART_20261020.pdf"
+ ],
+ "titles": {
+  "https://nievre.fr/shared-files/59787/?D-2026-747_ART_20261021.pdf": "Arrêté D-2026-747 portant fixation, pour l’exercice 2026, des tarifs journaliers applicables à la structure d’hébergement pour mineurs et jeunes majeurs non accompagnés», gérée par l’association Habitat et Humanisme, Oeuvre du Bon Pasteur à Nevers",
+  "https://nievre.fr/shared-files/59767/?D-2026-646_ART_20261020.pdf": "ARRÊTÉ D-2026-646 portant modification du barème de remise de dettes d’indus de Revenu de Solidarité Active (RSA)"
+ }
+}

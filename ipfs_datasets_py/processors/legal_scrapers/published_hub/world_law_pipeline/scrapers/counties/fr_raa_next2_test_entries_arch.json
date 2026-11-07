@@ -1,0 +1,24 @@
+[
+ {
+  "name": "Oise",
+  "iso": "FR-60",
+  "qid": "Q12675",
+  "url": "https://oise.fr/conseil-departemental-de-loise/fonctionnement/publications-legales/recueil-des-actes-administratifs/2026",
+  "issuer": "conseil_departemental",
+  "include_re": "RAA|recueil",
+  "archive_only": true,
+  "archive_policy": "archived_live_fetch_refused",
+  "note": "oise.fr answers robots.txt and pages with a Cloudflare 'Attention Required' 403 -> not bypassed; archived copies only. Many 2026 RAA PDFs exceed 50 MB."
+ },
+ {
+  "name": "Meuse",
+  "iso": "FR-55",
+  "qid": "Q12631",
+  "url": "https://www.meuse.fr/information-transversale/kiosque",
+  "issuer": "conseil_departemental",
+  "include_re": "RAA|recueil",
+  "archive_only": true,
+  "archive_policy": "archived_live_fetch_refused",
+  "note": "meuse.fr answers with an anti-DDoS 418 challenge page (robots.txt too) -> not bypassed; archived copies only. RAA PDFs under /fileadmin/medias/Publications/RAA/2026/"
+ }
+]

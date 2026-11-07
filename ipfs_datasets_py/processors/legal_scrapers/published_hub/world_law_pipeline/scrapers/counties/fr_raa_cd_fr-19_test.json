@@ -1,0 +1,25 @@
+{
+ "country_code": "FR",
+ "place_id": "wd:Q3326",
+ "qid": "Q3326",
+ "place_name": "Corrèze",
+ "iso_3166_2": "FR-19",
+ "admin_level": "departement",
+ "language": "fr",
+ "doc_type": "gazette_act",
+ "consolidated": false,
+ "platform": "fr_raa_conseil_departemental",
+ "source_org": "Conseil départemental — Corrèze",
+ "issuer": "conseil_departemental",
+ "max_bytes": 52428800,
+ "index_url": "https://www.correze.fr/la-publication-des-actes",
+ "crawl_delay": 3.0,
+ "urls": [
+  "https://www.correze.fr/sites/default/files/cp_2026_01_30_deliberations_v3_0.pdf",
+  "https://www.correze.fr/sites/default/files/arretes_2_fevrier_2026_finances_0.pdf"
+ ],
+ "titles": {
+  "https://www.correze.fr/sites/default/files/cp_2026_01_30_deliberations_v3_0.pdf": "CP du 30 janvier 2026",
+  "https://www.correze.fr/sites/default/files/arretes_2_fevrier_2026_finances_0.pdf": "Arrêtés du 2 février 2026"
+ }
+}

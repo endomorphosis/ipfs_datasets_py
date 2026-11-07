@@ -1,0 +1,864 @@
+{
+ "cc": "UG",
+ "name": "live",
+ "platform": "ug_district_live",
+ "language": "en",
+ "doc_type": "ordinance",
+ "min_delay": 3,
+ "threads": 3,
+ "title_include": "ordinance|bye-?laws?|by-?laws?|byelaws?",
+ "title_exclude": "\\bAct\\b|Statutory Instrument|\\bS\\.?I\\.?\\s*\\d|Constitution|Public Service Commission|\\bNational\\b|guideline|procedure for formulation|step[- ]by[- ]step|PPDA",
+ "content_selectors": [
+  ".field--name-body",
+  ".node__content",
+  "article",
+  "main"
+ ],
+ "sites": [
+  {
+   "host": "amolatar.go.ug",
+   "seeds": [
+    "https://amolatar.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q1318822",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Amolatar District Local Government"
+  },
+  {
+   "host": "amuria.go.ug",
+   "seeds": [
+    "https://amuria.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q1375762",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Amuria District Local Government"
+  },
+  {
+   "host": "amuru.go.ug",
+   "seeds": [
+    "https://amuru.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q1375771",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Amuru District Local Government"
+  },
+  {
+   "host": "budaka.go.ug",
+   "seeds": [
+    "https://budaka.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q1362085",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Budaka District Local Government"
+  },
+  {
+   "host": "bukomansimbi.go.ug",
+   "seeds": [
+    "https://bukomansimbi.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q3321599",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Bukomansimbi District Local Government"
+  },
+  {
+   "host": "bulambuli.go.ug",
+   "seeds": [
+    "https://bulambuli.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q1114868",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Bulambuli District Local Government"
+  },
+  {
+   "host": "buliisa.go.ug",
+   "seeds": [
+    "https://buliisa.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q1229793",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Buliisa District Local Government"
+  },
+  {
+   "host": "bunyangabu.go.ug",
+   "seeds": [
+    "https://bunyangabu.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q38249629",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Bunyangabu District Local Government"
+  },
+  {
+   "host": "bushenyi.go.ug",
+   "seeds": [
+    "https://bushenyi.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q1229797",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Bushenyi District Local Government"
+  },
+  {
+   "host": "entebbe.go.ug",
+   "seeds": [
+    "https://entebbe.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q49298126",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Entebbe Municipality Local Government"
+  },
+  {
+   "host": "gomba.go.ug",
+   "seeds": [
+    "https://gomba.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q3321637",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Gomba District Local Government"
+  },
+  {
+   "host": "hoima.go.ug",
+   "seeds": [
+    "https://hoima.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q1186535",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Hoima District Local Government"
+  },
+  {
+   "host": "igangamc.go.ug",
+   "seeds": [
+    "https://igangamc.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q49298141",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Iganga Municipality Local Government"
+  },
+  {
+   "host": "isingiro.go.ug",
+   "seeds": [
+    "https://isingiro.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q1318887",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Isingiro District Local Government"
+  },
+  {
+   "host": "jinja.go.ug",
+   "seeds": [
+    "https://jinja.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q983748",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Jinja District Local Government"
+  },
+  {
+   "host": "kagadi.go.ug",
+   "seeds": [
+    "https://kagadi.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q38249484",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Kagadi District Local Government"
+  },
+  {
+   "host": "kakumiro.go.ug",
+   "seeds": [
+    "https://kakumiro.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q38249480",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Kakumiro District Local Government"
+  },
+  {
+   "host": "kalangala.go.ug",
+   "seeds": [
+    "https://kalangala.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q867219",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Kalangala District Local Government"
+  },
+  {
+   "host": "kaliro.go.ug",
+   "seeds": [
+    "https://kaliro.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q1375859",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Kaliro District Local Government"
+  },
+  {
+   "host": "kalungu.go.ug",
+   "seeds": [
+    "https://kalungu.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q3321614",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Kalungu District Local Government"
+  },
+  {
+   "host": "kamuli.go.ug",
+   "seeds": [
+    "https://kamuli.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q164474",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Kamuli District Local Government"
+  },
+  {
+   "host": "kanungu.go.ug",
+   "seeds": [
+    "https://kanungu.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q1032245",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Kanungu District Local Government"
+  },
+  {
+   "host": "kapchorwa.go.ug",
+   "seeds": [
+    "https://kapchorwa.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q1229921",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Kapchorwa District Local Government"
+  },
+  {
+   "host": "karenga.go.ug",
+   "seeds": [
+    "https://karenga.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q97487774",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Karenga District Local Government"
+  },
+  {
+   "host": "kasese.go.ug",
+   "seeds": [
+    "https://kasese.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q1229919",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Kasese District Local Government"
+  },
+  {
+   "host": "kasesemc.go.ug",
+   "seeds": [
+    "https://kasesemc.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q49298162",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Kasese Municipality Local Government"
+  },
+  {
+   "host": "kazo.go.ug",
+   "seeds": [
+    "https://kazo.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q97487775",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Kazo District Local Government"
+  },
+  {
+   "host": "kiboga.go.ug",
+   "seeds": [
+    "https://kiboga.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q892064",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Kiboga District Local Government"
+  },
+  {
+   "host": "kiramc.go.ug",
+   "seeds": [
+    "https://kiramc.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q966819",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Kira Town Local Government"
+  },
+  {
+   "host": "kiruhura.go.ug",
+   "seeds": [
+    "https://kiruhura.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q1318865",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Kiruhura District Local Government"
+  },
+  {
+   "host": "kisoro.go.ug",
+   "seeds": [
+    "https://kisoro.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q580538",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Kisoro District Local Government"
+  },
+  {
+   "host": "kisoromc.go.ug",
+   "seeds": [
+    "https://kisoromc.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q140932913",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Kisoro Municipality Local Government"
+  },
+  {
+   "host": "kitgum.go.ug",
+   "seeds": [
+    "https://kitgum.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q500162",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Kitgum District Local Government"
+  },
+  {
+   "host": "kotido.go.ug",
+   "seeds": [
+    "https://kotido.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q1318843",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Kotido District Local Government"
+  },
+  {
+   "host": "kumi.go.ug",
+   "seeds": [
+    "https://kumi.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q1151062",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Kumi District Local Government"
+  },
+  {
+   "host": "kyenjojo.go.ug",
+   "seeds": [
+    "https://kyenjojo.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q1318815",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Kyenjojo District Local Government"
+  },
+  {
+   "host": "luwero.go.ug",
+   "seeds": [
+    "https://luwero.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q1364817",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Luwero District Local Government"
+  },
+  {
+   "host": "manafwa.go.ug",
+   "seeds": [
+    "https://manafwa.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q1375789",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Manafwa District Local Government"
+  },
+  {
+   "host": "maracha.go.ug",
+   "seeds": [
+    "https://maracha.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q588927",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Maracha District Local Government"
+  },
+  {
+   "host": "masindi.go.ug",
+   "seeds": [
+    "https://masindi.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q1032238",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Masindi District Local Government"
+  },
+  {
+   "host": "mbale.go.ug",
+   "seeds": [
+    "https://mbale.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q581822",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Mbale District Local Government"
+  },
+  {
+   "host": "mbarara.go.ug",
+   "seeds": [
+    "https://mbarara.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q1091595",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Mbarara District Local Government"
+  },
+  {
+   "host": "mitooma.go.ug",
+   "seeds": [
+    "https://mitooma.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q3539414",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Mitooma District Local Government"
+  },
+  {
+   "host": "mityana.go.ug",
+   "seeds": [
+    "https://mityana.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q1230005",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Mityana District Local Government"
+  },
+  {
+   "host": "mlhud.go.ug",
+   "seeds": [
+    "https://mlhud.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q1229910",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Kabarole District Local Government"
+  },
+  {
+   "host": "mpigi.go.ug",
+   "seeds": [
+    "https://mpigi.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q1362109",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Mpigi District Local Government"
+  },
+  {
+   "host": "mubendemc.go.ug",
+   "seeds": [
+    "https://mubendemc.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q140932921",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Mubende Municipality Local Government"
+  },
+  {
+   "host": "mukono.go.ug",
+   "seeds": [
+    "https://mukono.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q1151066",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Mukono District Local Government"
+  },
+  {
+   "host": "nabilatuk.go.ug",
+   "seeds": [
+    "https://nabilatuk.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q60766910",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Nabilatuk District Local Government"
+  },
+  {
+   "host": "nakasongola.go.ug",
+   "seeds": [
+    "https://nakasongola.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q976859",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Nakasongola District Local Government"
+  },
+  {
+   "host": "namayingo.go.ug",
+   "seeds": [
+    "https://namayingo.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q1114915",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Namayingo District Local Government"
+  },
+  {
+   "host": "nebbimc.go.ug",
+   "seeds": [
+    "https://nebbimc.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q140932926",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Nebbi Municipality Local Government"
+  },
+  {
+   "host": "ngora.go.ug",
+   "seeds": [
+    "https://ngora.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q1114903",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Ngora District Local Government"
+  },
+  {
+   "host": "nwoya.go.ug",
+   "seeds": [
+    "https://nwoya.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q3539572",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Nwoya District Local Government"
+  },
+  {
+   "host": "omoro.go.ug",
+   "seeds": [
+    "https://omoro.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q38249597",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Omoro District Local Government"
+  },
+  {
+   "host": "pakwach.go.ug",
+   "seeds": [
+    "https://pakwach.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q38249567",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Pakwach District Local Government"
+  },
+  {
+   "host": "pallisa.go.ug",
+   "seeds": [
+    "https://pallisa.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q1375843",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Pallisa District Local Government"
+  },
+  {
+   "host": "rubanda.go.ug",
+   "seeds": [
+    "https://rubanda.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q38249602",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Rubanda District Local Government"
+  },
+  {
+   "host": "rubirizi.go.ug",
+   "seeds": [
+    "https://rubirizi.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q3539648",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Rubirizi District Local Government"
+  },
+  {
+   "host": "rukiga.go.ug",
+   "seeds": [
+    "https://rukiga.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q38249615",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Rukiga District Local Government"
+  },
+  {
+   "host": "sheema.go.ug",
+   "seeds": [
+    "https://sheema.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q3539711",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Sheema District Local Government"
+  },
+  {
+   "host": "soroti.go.ug",
+   "seeds": [
+    "https://soroti.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q1091337",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Soroti District Local Government"
+  },
+  {
+   "host": "tororo.go.ug",
+   "seeds": [
+    "https://tororo.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q1186541",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Tororo District Local Government"
+  },
+  {
+   "host": "wakiso.go.ug",
+   "seeds": [
+    "https://wakiso.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q976848",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Wakiso District Local Government"
+  },
+  {
+   "host": "zombo.go.ug",
+   "seeds": [
+    "https://zombo.go.ug/publications/laws-regulations"
+   ],
+   "place_id": "wd:Q3539730",
+   "follow_regex": "/publications/laws-regulations\\?page=\\d+$",
+   "doc_regex": "/publications/(?!laws-regulations)[a-z0-9-]+$|\\.pdf$",
+   "depth": 2,
+   "max_pages": 20,
+   "doc_type": "ordinance",
+   "org": "Zombo District Local Government"
+  }
+ ]
+}

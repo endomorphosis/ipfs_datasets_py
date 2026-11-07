@@ -1,0 +1,18 @@
+{
+ "country_code": "IN",
+ "place_id": "wd:Q307474",
+ "qid": "Q307474",
+ "place_name": "Purulia district",
+ "iso_3166_2": "IN-WB",
+ "admin_level": "district",
+ "language": "en",
+ "doc_type": "ordinance",
+ "platform": "in_wb_zp_byelaws",
+ "source_org": "Purulia Zilla Parishad",
+ "urls": [
+  "https://www.puruliazillaparishad.in/wp-content/uploads/2022/12/English.pdf"
+ ],
+ "titles": {
+  "https://www.puruliazillaparishad.in/wp-content/uploads/2022/12/English.pdf": "Purulia Zilla Parishad Bye-Law"
+ }
+}

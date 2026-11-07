@@ -1,0 +1,25 @@
+{
+ "country_code": "RO",
+ "place_id": "wd:Q178861",
+ "qid": "Q178861",
+ "place_name": "Județul Botoșani",
+ "iso_3166_2": "RO-BT",
+ "admin_level": "judet",
+ "language": "ro",
+ "doc_type": "decision",
+ "consolidated": false,
+ "platform": "ro_cj_hcj",
+ "source_org": "Județul Botoșani",
+ "index_url": "https://www.cjbotosani.ro/monitorul-oficial/hotararile-autoritatii-deliberative/",
+ "max_bytes": 52428800,
+ "urls": [
+  "https://www.cjbotosani.ro/files/H088_20250326.pdf",
+  "https://www.cjbotosani.ro/files/H087_20250326.pdf",
+  "https://www.cjbotosani.ro/files/H086_20250326.pdf"
+ ],
+ "titles": {
+  "https://www.cjbotosani.ro/files/H088_20250326.pdf": "Hotărâre privind aprobarea listei solicitanţilor care au acces la locuinţele destinate închirierii pentru specialişti din domeniul sănătăţii şi a listei de prioritate pentru acordarea locuințelor destinate închirierii pentru specialişti din domeniul sănătăţii, construite de Agenţia Naţională pentru Locuinţe",
+  "https://www.cjbotosani.ro/files/H087_20250326.pdf": "Hotărâre privind modificarea, în fază de propunere, a Criteriilor pentru stabilirea ordinii de prioritate în soluţionarea cererilor de locuinţe şi în repartizarea locuinţelor destinate închirierii, pentru specialişti din sănătate, din Blocul de locuinţe realizat prin Agenția Națională pentru Locuințe, situat în municipiul Botoșani, str. Ștefan cel Mare, nr. 39 (20 apartamente), aprobate prin Hotărârea Consiliului Județean Botoșani nr. 73 din 31.03.2021",
+  "https://www.cjbotosani.ro/files/H086_20250326.pdf": "Hotărâre privind aprobarea închirierii prin licitație publică a unui spațiu amplasat în imobilul „Centrul Stomatologic Botoșani”, situat în municipiul Botoșani, str. Marchian, nr. 9, precum și a documentației de atribuire aferentă licitației"
+ }
+}

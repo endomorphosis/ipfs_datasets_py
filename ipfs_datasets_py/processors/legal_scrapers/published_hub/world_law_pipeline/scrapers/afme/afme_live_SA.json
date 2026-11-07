@@ -1,0 +1,7 @@
+{"cc":"SA","name":"live","platform":"sa_amana_live","language":"ar","doc_type":"decision","min_delay":3,"threads":1,
+ "title_include":"دليل|اشتراط|ضوابط|لائحة|قواعد|تنظيم|معايير",
+ "title_exclude":"الأسئلة الشائعة|خبر|أخبار|وزارة|الوزارة",
+ "sites":[{"host":"www.amana-md.gov.sa","place_id":"wd:Q236027","org":"أمانة منطقة المدينة المنورة (Al-Madinah Region Municipality)",
+  "note":"amana-issued guides/conditions for Al-Madinah; /Evidence listing; Riyadh/Makkah/others not crawled (see afme_sources.md)",
+  "seeds":["https://www.amana-md.gov.sa/Evidence"],"follow_regex":"/Evidence\\?(page|p)=\\d+$","doc_regex":"/NewExternalWebsiteFileStore/.*\\.pdf$",
+  "card_title":true,"depth":1,"max_pages":10,"max_docs":50,"pdf_in_page":false}]}

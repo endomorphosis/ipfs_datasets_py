@@ -1,0 +1,26 @@
+{
+ "cc": "NA",
+ "platform": "na_municipal_cc",
+ "language": "en",
+ "doc_type": "ordinance",
+ "doc_url_regex": "(?i)(by-?laws?|bye-?laws?|byelaws?|ordinances?|regulations?|sheria-?ndogo|sheria_ndogo|statutory-instrument)",
+ "exclude_regex": "\\.(jpg|jpeg|png|gif|css|js|svg|woff2?|mp4|ico)(\\?|$)|/(tag|category|author|feed)/|/(new|news|habari|events?|dept|departments|gallery|tenders?|jobs|vacanc)/|statutory-bodies|[?&]page=",
+ "map": "host,title",
+ "slug_strip": "^(www)",
+ "slug_suffix_strip": "(municipality|towncouncil|villagecouncil|regionalcouncil|rc|council|city)+$",
+ "label_langs": [
+  "en",
+  "ar",
+  "fr",
+  "sw"
+ ],
+ "title_fetch_cap": 1500,
+ "title_legal_regex": "(?i)by-?laws?|bylaw|ordinance|regulations?|sheria ndogo|arr[e\u00ea]t[e\u00e9]|d[e\u00e9]lib[e\u00e9]ration|\u0642\u0631\u0627\u0631|\u0644\u0627\u0626\u062d\u0629",
+ "content_selectors": [
+  ".entry-content",
+  ".post-content",
+  "#content",
+  "article",
+  "main"
+ ]
+}

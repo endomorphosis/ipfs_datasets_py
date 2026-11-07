@@ -1,0 +1,37 @@
+{
+ "country_code": "DE",
+ "place_id": "wd:Q5963",
+ "qid": "Q5963",
+ "place_name": "Region Hannover",
+ "iso_3166_2": "DE-NI",
+ "admin_level": "landkreis",
+ "language": "de",
+ "doc_type": "ordinance",
+ "platform": "de_nds_kreisrecht",
+ "source_org": "Region Hannover",
+ "index_url": "https://www.hannover.de/Leben-in-der-Region-Hannover/Verwaltungen-Kommunen/Die-Verwaltung-der-Region-Hannover/Regionsrechtssammlung",
+ "urls": [
+  "https://www.hannover.de/content/download/605645/file/0%20-%20Allg.%20Hinweise.pdf",
+  "https://www.hannover.de/content/download/500577/file/0%20-Gesamtinhalt.pdf",
+  "https://www.hannover.de/content/download/500619/file/0%20-Stichwortverzeichnis%20.pdf",
+  "https://www.hannover.de/content/download/500615/file/10-01%20Hauptsatzung%20ab%2001.07.2025.pdf",
+  "https://www.hannover.de/content/download/500624/file/10-02%20Weitere%20allgemeine%20Vertretung%20des%20Regionspr%C3%A4sidenten.pdf",
+  "https://www.hannover.de/content/download/500589/file/10-03%20Gesch%C3%A4ftsordnung.pdf",
+  "https://www.hannover.de/content/download/500622/file/10-04%20Mitgliedschaften%20der%20Region%20Hannover.pdf",
+  "https://www.hannover.de/content/download/500584/file/10-05%20Entsch%C3%A4digungssatzung.pdf",
+  "https://www.hannover.de/content/download/500604/file/10-06%20Satzung%20%C3%BCber%20die%20Entsch%C3%A4digung%20der%20Ehrenbeamten%20und%20sonstigen%20Inhaber%20ei.pdf",
+  "https://www.hannover.de/content/download/500627/file/10-07%20%C3%9Cbertragung%20von%20Befugnissen%20f%C3%BCr%20die%20Ernennung,%20Versetzung%20sowie%20die%20Gew%C3%A4hrung%20von%20Sonderurlaub.pdf"
+ ],
+ "titles": {
+  "https://www.hannover.de/content/download/605645/file/0%20-%20Allg.%20Hinweise.pdf": "© RH",
+  "https://www.hannover.de/content/download/500577/file/0%20-Gesamtinhalt.pdf": "© RH",
+  "https://www.hannover.de/content/download/500619/file/0%20-Stichwortverzeichnis%20.pdf": "© RH",
+  "https://www.hannover.de/content/download/500615/file/10-01%20Hauptsatzung%20ab%2001.07.2025.pdf": "© RH",
+  "https://www.hannover.de/content/download/500624/file/10-02%20Weitere%20allgemeine%20Vertretung%20des%20Regionspr%C3%A4sidenten.pdf": "© RH",
+  "https://www.hannover.de/content/download/500589/file/10-03%20Gesch%C3%A4ftsordnung.pdf": "© RH",
+  "https://www.hannover.de/content/download/500622/file/10-04%20Mitgliedschaften%20der%20Region%20Hannover.pdf": "© RH",
+  "https://www.hannover.de/content/download/500584/file/10-05%20Entsch%C3%A4digungssatzung.pdf": "© RH",
+  "https://www.hannover.de/content/download/500604/file/10-06%20Satzung%20%C3%BCber%20die%20Entsch%C3%A4digung%20der%20Ehrenbeamten%20und%20sonstigen%20Inhaber%20ei.pdf": "© RH",
+  "https://www.hannover.de/content/download/500627/file/10-07%20%C3%9Cbertragung%20von%20Befugnissen%20f%C3%BCr%20die%20Ernennung,%20Versetzung%20sowie%20die%20Gew%C3%A4hrung%20von%20Sonderurlaub.pdf": "© RH"
+ }
+}

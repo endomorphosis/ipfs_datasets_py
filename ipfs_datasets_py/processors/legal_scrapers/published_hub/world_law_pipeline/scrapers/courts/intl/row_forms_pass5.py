@@ -1,0 +1,17 @@
+"""Depth-pass-5 national court-form crawler configs (reuses eu_forms_generic.main): SG CZ NO HU HK PT. python row_forms_pass5.py <CC> [maxpages] [maxdocs]"""
+import sys
+sys.path.insert(0, "/workspace/world_courts/scrapers/courts/intl")
+import eu_forms_generic as g
+DOC = r"\.(pdf|docx?|xlsx?|rtf|odt)(\?|$)"
+g.CFG.update({
+ "SG": dict(host="www.judiciary.gov.sg", seeds=["https://www.judiciary.gov.sg/forms", "https://www.judiciary.gov.sg/forms-and-fees/forms", "https://www.judiciary.gov.sg/miscellaneousforms", "https://www.judiciary.gov.sg/family/fjc-quick-guide/resources/others/commonly-used-forms-at-the-fjc", "https://www.judiciary.gov.sg/singapore-international-commercial-court/forms-and-services/list-of-commonly-used-forms"] + [l.strip() for l in open("/tmp/sg_seeds.txt") if l.strip()],
+        page_re=r"forms-details|/forms", doc_re=r"/docs/default-source/forms-docs/|" + DOC, lang="en", lic="Singapore Courts (judiciary.gov.sg) published forms; official court forms, no licence stated"),
+ "CZ": dict(host="msp.gov.cz", seeds=["https://msp.gov.cz/web/okresni-soud-v-karvine/formulare", "https://msp.gov.cz/web/okresni-soud-v-usti-nad-orlici/formulare", "https://msp.gov.cz/web/okresni-soud-v-domazlicich/formulare"], page_re=r"^$-never", doc_re=r"/documents/\d+/\d+/[^?]*\.(pdf|docx?|xlsx?|odt|rtf)/", lang="cs", lic="Czech Ministry of Justice portal (msp.gov.cz) court forms; official documents are not protected by copyright (Autorský zákon § 3)"),
+ "NO": dict(host="www.domstol.no", seeds=["https://www.domstol.no/no/skjema/", "https://www.domstol.no/no/skjema/stevning/"], page_re=r"/no/skjema/", doc_re=DOC, lang="no", lic="Domstolene i Norge (domstol.no) forms; official forms, Åndsverkloven § 14 excludes official texts"),
+ "HU": dict(host="birosag.hu", seeds=["https://birosag.hu/ugyfeleknek/urlapok-nyomtatvanyok", "https://birosag.hu/ugyfeleknek/urlapok-nyomtatvanyok/eljarasok-urlapjai-nyomtatvanyai"], page_re=r"urlapok-nyomtatvanyok|nyomtatvany", doc_re=DOC + r"|/sites/default/files/|/download", lang="hu", lic="Magyarország Bíróságai (birosag.hu) forms; Szjt. § 1(7) excludes official documents from copyright"),
+ "HK": dict(host="www.judiciary.hk", seeds=["https://www.judiciary.hk/en/court_services_facilities/dcf.html", "https://www.judiciary.hk/en/court%5Fservices%5Ffacilities/fcf.html", "https://www.judiciary.hk/en/court_services_facilities/forms.html"], page_re=r"court(_|%5F)services(_|%5F)facilities/[a-z0-9]*f\.html|forms\.html", doc_re=r"/doc/.*\.(pdf|docx?|xlsx?|rtf)", lang="en", lic="Hong Kong Judiciary (judiciary.hk) court forms; official forms, no licence stated"),
+ "PT": dict(host="dgaj.justica.gov.pt", seeds=["https://dgaj.justica.gov.pt/Documentos/Formularios-manuais-orientacoes"], page_re=r"Formularios|Documentos", doc_re=DOC + r"|/Portals/", lang="pt", lic="DGAJ (Direção-Geral da Administração da Justiça, Portugal) forms; official documents, no licence stated"),
+
+ "LU": dict(host="justice.public.lu", seeds=["https://justice.public.lu/fr/formulaires.html"], page_re=r"/fr/formulaires", doc_re=r"/content/dam/.*\.(pdf|docx?|xlsx?|odt)(\?|$)|" + DOC, lang="fr", lic="La Justice - Luxembourg (justice.public.lu) forms; official forms of the Ministry of Justice, no licence stated"),
+})
+if __name__ == "__main__": g.main(sys.argv[1], maxpages=int(sys.argv[2]) if len(sys.argv) > 2 else 40, maxdocs=int(sys.argv[3]) if len(sys.argv) > 3 else 200)

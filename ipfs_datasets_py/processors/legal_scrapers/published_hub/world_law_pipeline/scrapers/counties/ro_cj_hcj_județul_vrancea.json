@@ -1,0 +1,21 @@
+{
+ "country_code": "RO",
+ "place_id": "wd:Q182778",
+ "qid": "Q182778",
+ "place_name": "Județul Vrancea",
+ "iso_3166_2": "RO-VN",
+ "admin_level": "judet",
+ "language": "ro",
+ "doc_type": "decision",
+ "consolidated": false,
+ "platform": "ro_cj_hcj",
+ "source_org": "Județul Vrancea",
+ "index_url": "https://www.cjvrancea.ro/hotarari/",
+ "max_bytes": 52428800,
+ "urls": [
+  "https://cjvrancea.ro/wp-content/uploads/2026/05/calendar-2026.pdf"
+ ],
+ "titles": {
+  "https://cjvrancea.ro/wp-content/uploads/2026/05/calendar-2026.pdf": "Calendar evenimente"
+ }
+}

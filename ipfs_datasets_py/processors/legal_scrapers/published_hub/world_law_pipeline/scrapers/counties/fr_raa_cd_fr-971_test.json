@@ -1,0 +1,27 @@
+{
+ "country_code": "FR",
+ "place_id": "wd:Q17012",
+ "qid": "Q17012",
+ "place_name": "Guadeloupe",
+ "iso_3166_2": "FR-971",
+ "admin_level": "departement",
+ "language": "fr",
+ "doc_type": "gazette_act",
+ "consolidated": false,
+ "platform": "fr_raa_conseil_departemental",
+ "source_org": "Conseil départemental — Guadeloupe",
+ "issuer": "conseil_departemental",
+ "max_bytes": 52428800,
+ "index_url": "https://www.cg971.fr/documents-reglementaires/",
+ "crawl_delay": 3.0,
+ "urls": [
+  "https://www.cg971.fr/wp-content/uploads/2025/09/Budget_CD971_01_CFU_2024_CL.pdf",
+  "https://www.cg971.fr/wp-content/uploads/2025/09/Budget_CD971_01_BS_2025_CL.pdf",
+  "https://www.cg971.fr/wp-content/uploads/2026/10/20261020_PDF_BS_2026.pdf"
+ ],
+ "titles": {
+  "https://www.cg971.fr/wp-content/uploads/2025/09/Budget_CD971_01_CFU_2024_CL.pdf": "Compte financier unique 2024",
+  "https://www.cg971.fr/wp-content/uploads/2025/09/Budget_CD971_01_BS_2025_CL.pdf": "Budget Supplémentaire 2025",
+  "https://www.cg971.fr/wp-content/uploads/2026/10/20261020_PDF_BS_2026.pdf": "Budget supplémentaire 2026"
+ }
+}

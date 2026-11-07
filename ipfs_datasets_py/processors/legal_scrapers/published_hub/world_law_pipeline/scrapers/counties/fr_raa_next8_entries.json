@@ -1,0 +1,44 @@
+[
+ {
+  "name": "Loire",
+  "iso": "FR-42",
+  "qid": "Q12569",
+  "url": "https://webdelib-citoyens.loire.fr/webdelibplus/jsp/summary_orders.jsp?role=usager",
+  "extra_urls": [
+   "https://webdelib-citoyens.loire.fr/webdelibplus/jsp/summary_orders.jsp?role=usager&date=01-2026",
+   "https://webdelib-citoyens.loire.fr/webdelibplus/jsp/summary_orders.jsp?role=usager&date=02-2026",
+   "https://webdelib-citoyens.loire.fr/webdelibplus/jsp/summary_orders.jsp?role=usager&date=03-2026",
+   "https://webdelib-citoyens.loire.fr/webdelibplus/jsp/summary_orders.jsp?role=usager&date=04-2026",
+   "https://webdelib-citoyens.loire.fr/webdelibplus/jsp/summary_orders.jsp?role=usager&date=05-2026",
+   "https://webdelib-citoyens.loire.fr/webdelibplus/jsp/summary_orders.jsp?role=usager&date=06-2026",
+   "https://webdelib-citoyens.loire.fr/webdelibplus/jsp/summary_orders.jsp?role=usager&date=07-2026",
+   "https://webdelib-citoyens.loire.fr/webdelibplus/jsp/summary_orders.jsp?role=usager&date=08-2026",
+   "https://webdelib-citoyens.loire.fr/webdelibplus/jsp/summary_orders.jsp?role=usager&date=09-2026",
+   "https://webdelib-citoyens.loire.fr/webdelibplus/jsp/summary_orders.jsp?role=usager&date=10-2026"
+  ],
+  "issuer": "conseil_departemental",
+  "link_re": "[^\"]*openfile\\.jsp\\?[^\"]+",
+  "href_sub": [
+   "openfile\\.jsp\\?datePub=[^&]*&name=[^&]*&pdf=",
+   "showFile.jsp?pdf="
+  ],
+  "block_re": "<tr[ >]",
+  "crawl_delay": 3,
+  "note": "Webdelib+ arrêtés (webdelib-citoyens.loire.fr, linked from loire.fr 'Délibérations et arrêtés administratifs'); monthly summary pages &date=MM-2026 (01..10, ~1,500 acts); openfile.jsp?datePub=..&name=..&pdf=<token> -> showFile.jsp?pdf=<token> (application/pdf, checked 2026-10-26); query-string URLs -> URL-hash doc_id suffix. robots.txt 404 (= allow, RFC 9309); www.loire.fr no Crawl-delay (3 s). QID Q12569 (P300=FR-42, P31 Q6465)."
+ },
+ {
+  "name": "Savoie",
+  "iso": "FR-73",
+  "qid": "Q12745",
+  "url": "https://www.savoie.fr/web/sw_174380/les-arretes-du-departement-du-01-01-2026-au-18-05-2026",
+  "extra_urls": [
+   "https://www.savoie.fr/web/sw_92129/les-arretes-du-departement-de-2022-au-24-mars-2026",
+   "https://www.savoie.fr/web/sw_176498/les-arretes-du-departement"
+  ],
+  "issuer": "conseil_departemental",
+  "link_re": "web/sw_[0-9]+/[^\"]*2026[^\"]*",
+  "crawl_delay": 3,
+  "note": "Jalios 'Les arrêtés du Département' pages (01.01-18.05/06.2026 list ~750 + 2022-24.03.2026 list); each act link web/sw_NNN/<date>-<type>-<num>-<commune> 301-redirects to /upload/docs/application/pdf/YYYY-MM/<same>.pdf; <base href=https://www.savoie.fr/>. robots: only /*printView=true disallowed, no Crawl-delay (3 s). QID Q12745 (P300=FR-73). year_re drops the list pages themselves and older-dated acts.",
+  "year_re": "^(?!.*les-arretes-du-departement)(?!.*/sw_[0-9]+/20(1\\d|2[0-5])-).*2026"
+ }
+]

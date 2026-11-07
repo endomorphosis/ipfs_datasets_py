@@ -1,0 +1,18 @@
+{
+ "country_code": "FR",
+ "place_id": "wd:Q12559",
+ "qid": "Q12559",
+ "place_name": "Isère",
+ "iso_3166_2": "FR-38",
+ "admin_level": "departement",
+ "language": "fr",
+ "doc_type": "gazette_act",
+ "consolidated": false,
+ "platform": "fr_raa_conseil_departemental",
+ "source_org": "Conseil départemental — Isère",
+ "issuer": "conseil_departemental",
+ "max_bytes": 52428800,
+ "index_url": "https://www.isere.fr/publications-legales/recueils-des-arretes-du-departement-de-l-isere-radi",
+ "urls": [],
+ "titles": {}
+}
