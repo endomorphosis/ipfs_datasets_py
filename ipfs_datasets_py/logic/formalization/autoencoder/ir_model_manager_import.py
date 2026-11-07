@@ -17,9 +17,12 @@ Their internal feature/hidden widths do not create an 8D/384D/768D lane binding.
 LegalIR4096 source representations use a separate, pinned expected-producer
 profile; registration does not authenticate that producer's native execution.
 
-The separate v2 entrypoint also reads the already published historical
-source/span declaration contract. Its record IDs and path-sensitive native
-library declarations remain distinct from the independent expected-producer
+The separate v2 entrypoint admits explicit LegalIR4096 source/span metadata,
+including pinned historical producer declarations, and reads that already
+published historical source/span declaration contract. It preserves v1 IDs and
+the existing twelve-cell inventory, without authenticating native execution or
+restoring a process/thread-bound capability. Its record IDs and path-sensitive
+native library declarations remain distinct from the independent expected-producer
 profile above. Neither schema is converted into the other.
 """
 from __future__ import annotations
