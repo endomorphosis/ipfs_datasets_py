@@ -833,3 +833,42 @@ def test_hammer_key_lifts_to_unified_proof_key() -> None:
     assert normalized.trust_level is ProofTrustLevel.INDEPENDENTLY_CHECKABLE
     dims = normalized.key.dimension_map()
     assert "ir" in dims and "solver" in dims and "toolchain" in dims
+
+
+# Legal legacy headers are archival associations, never theorem authority.
+# These normalization controls execute no DuckDB or proof backend.
+@pytest.mark.parametrize("status", ["proved", "attested", "reconstructed"])
+def test_legal_ir_unbound_receipt_status_cannot_grant_theorem_authority(status: str) -> None:
+    payload = _legal_record(proved=False)
+    payload["theorem_receipts"] = [{"status": status}]
+    entry = normalize_legacy_record(RawLegacyRecord(record_index=0, line_number=0, payload=payload),
+                                    family=ProofCacheFamily.LEGAL_IR)
+    assert entry.status is ResultStatus.CANDIDATE
+    assert entry.trust_level is ProofTrustLevel.NONE
+    assert entry.evidence_authority.value == "none"
+    assert entry.result_payload["theorem_receipts"] == [{"status": status}]
+    assert entry.result_payload["proof_reuse_requires_explicit_expected_context"] is True
+    assert entry.result_payload["legal_or_statutory_admission_claimed"] is False
+
+
+def test_legacy_legal_record_remains_advisory_with_original_identities_and_headers() -> None:
+    payload = _legal_record()
+    before = json.dumps(payload, sort_keys=True)
+    entry = normalize_legacy_record(RawLegacyRecord(record_index=1, line_number=0, payload=payload),
+                                    family=ProofCacheFamily.LEGAL_IR)
+    assert entry.status is ResultStatus.CANDIDATE
+    assert entry.trust_level is ProofTrustLevel.NONE
+    assert entry.result_id == payload["content_cid"]
+    assert entry.result_payload["source_digest"] == payload["source_digest"]
+    assert entry.result_payload["theorem_receipts"] == payload["theorem_receipts"]
+    assert json.dumps(payload, sort_keys=True) == before
+
+
+def test_bound_v2_legal_record_requires_the_canonical_record_validator() -> None:
+    payload = _legal_record()
+    payload["schema_version"] = "legal-proof-record/v2"
+    # A changed version label cannot launder the incomplete legacy header and
+    # artificial artifact digests into a bound formal proof.
+    with pytest.raises(ProofMigrationQuarantineError, match="bound legal proof"):
+        normalize_legacy_record(RawLegacyRecord(record_index=2, line_number=0, payload=payload),
+                                family=ProofCacheFamily.LEGAL_IR)

@@ -776,3 +776,39 @@ def test_premises_digest_changes_with_premise_set() -> None:
     b = _unified_key(selected_premises=("p1",))
     assert a.premises_digest != b.premises_digest
     assert a.dimension_map()["premises"] != b.dimension_map()["premises"]
+
+
+@pytest.mark.parametrize("status, protocol_polarity", [
+    (ResultStatus.CANDIDATE, CachePolarity.POSITIVE),
+    (ResultStatus.UNKNOWN, CachePolarity.NEGATIVE),
+])
+def test_advisory_verification_projection_uses_target_status_polarity(status, protocol_polarity):
+    entry = UnifiedProofEntry(key=_unified_key(), outcome=ProofOutcomeKind.UNKNOWN,
+        trust_level=ProofTrustLevel.NONE, status=status, result_authority=ResultAuthority.CANDIDATE,
+        evidence_authority=EvidenceAuthority.NONE, result_payload={"legacy_status": "attested"},
+        polarity=CachePolarity.NEGATIVE, created_at=1.0)
+    before = entry.to_dict()
+    projected = entry.to_verification_cache_entry()
+    assert projected.verify_integrity().status is status
+    assert projected.polarity is protocol_polarity
+    assert projected.evidence_authority is EvidenceAuthority.NONE
+    assert projected.result_authority is ResultAuthority.CANDIDATE
+    assert entry.to_dict() == before
+    assert entry.outcome is ProofOutcomeKind.UNKNOWN and entry.polarity is CachePolarity.NEGATIVE
+
+
+def test_store_put_retains_advisory_candidate_without_proof_authority():
+    entry = UnifiedProofEntry(key=_unified_key(), outcome=ProofOutcomeKind.UNKNOWN,
+        trust_level=ProofTrustLevel.NONE, status=ResultStatus.CANDIDATE,
+        result_authority=ResultAuthority.CANDIDATE, evidence_authority=EvidenceAuthority.NONE,
+        result_payload={"legacy_status": "attested", "legal_admission": False},
+        polarity=CachePolarity.NEGATIVE, created_at=1.0)
+    store = DuckDBProofStore()
+    stored = store.put(entry, now=1.0)
+    assert stored.entry is not None and stored.entry.status is ResultStatus.CANDIDATE
+    persisted = store.get(entry.key, now=1.0)
+    assert persisted is not None and persisted.trust_level is ProofTrustLevel.NONE
+    assert stored.entry.evidence_authority is EvidenceAuthority.NONE
+    assert stored.entry.result_payload["legacy_status"] == "attested"
+    assert stored.entry.status is not ResultStatus.PROVED
+    assert not store.lookup(entry.key, require_result_authority=ResultAuthority.THEOREM_PROOF, now=1.0).usable
