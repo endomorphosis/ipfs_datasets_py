@@ -382,12 +382,55 @@ def cc_indexes(n: int = 6) -> list[str]:
     return _cc_indexes[:n]
 
 
+def _load_government_shard_index():
+    """Load the regional shard lookup without importing the legal_scrapers package."""
+    cached = getattr(_load_government_shard_index, "_module", None)
+    if cached is not None:
+        return cached
+    import importlib.util
+    from pathlib import Path
+
+    path = Path(__file__).resolve().parents[2] / "regions" / "shard_index.py"
+    spec = importlib.util.spec_from_file_location("government_cc_shard_index", path)
+    if spec is None or spec.loader is None:
+        return None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    _load_government_shard_index._module = module
+    return module
+
+
+def _government_shard_indexes(url: str, n: int) -> list[str]:
+    """CDX URLs for collections the regional government shard index names for this host."""
+    try:
+        module = _load_government_shard_index()
+        if module is None:
+            return []
+        collections = module.shard_collections(
+            url,
+            limit=max(1, int(n or 1)),
+            download=True,
+        )
+    except Exception as exc:
+        log.info("government shard index unavailable: %s", exc)
+        return []
+    return [
+        f"https://index.commoncrawl.org/{collection}-index"
+        for collection in collections
+        if collection
+    ]
+
+
 def search_common_crawl(url: str, *, limit: int = 80, indexes: Optional[list[str]] = None) -> list[dict]:
     """Query public CC CDX (https://index.commoncrawl.org/).
 
     Prefer S3 cluster.idx+CDXJ harvest (harvest_thin_s3_cc / *_cc_urls.jsonl)
     over this HTTP index — it often returns 0 hits or stalls. Short timeouts;
     never blocks on cdx_toolkit.
+
+    When ``indexes`` is omitted, collections named in the regional government
+    shard index (Publicus/government_cc_shard_indexes) are tried first. This
+    still does not import the full ipfs_datasets_py package.
 
     Do not send filter=status:200 — on some shards that returns a false
     404 "No Captures found". Filter status client-side instead.
@@ -396,7 +439,8 @@ def search_common_crawl(url: str, *, limit: int = 80, indexes: Optional[list[str
     out = []
     seen = set()
     empty = 0
-    for idx in (indexes or cc_indexes(int(os.environ.get('CC_INDEX_N', '4') or 4))):
+    index_limit = int(os.environ.get("CC_INDEX_N", "4") or 4)
+    for idx in (indexes or _government_shard_indexes(url, index_limit) or cc_indexes(index_limit)):
         if idx in _cc_dead:
             continue
         params = {

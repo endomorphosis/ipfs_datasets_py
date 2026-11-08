@@ -114,6 +114,12 @@ class LegalRegion:
     def sync(self, jurisdiction: str, **kwargs: Any) -> dict[str, Any]:
         return self.scrape(jurisdiction, mode="sync", **kwargs)
 
+    def common_crawl_shards(self, host: str, **kwargs: Any) -> list[dict[str, Any]]:
+        """Pointer-parquet ranges for a host in this region's shard index."""
+        from .shard_index import query_government_shards
+
+        return query_government_shards(host, region=self.region_id, **kwargs)
+
 
 def region_from_id(region_id: str) -> LegalRegion:
     normalized = normalize_region_id(region_id)

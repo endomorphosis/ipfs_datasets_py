@@ -12,6 +12,7 @@ The loader supports jurisdiction-specific indexes:
 - Municipal: endomorphosis/common_crawl_municipal_index
 - Pointers: endomorphosis/common_crawl_pointers_by_collection
 - Meta Indexes: endomorphosis/common_crawl_meta_indexes
+- Government shards: Publicus/government_cc_shard_indexes
 
 Example:
     >>> from ipfs_datasets_py.processors.legal_scrapers import CommonCrawlIndexLoader
@@ -46,10 +47,17 @@ try:
         huggingface_authorization_headers,
     )
 except ImportError:  # pragma: no cover - nested package import path
-    from common_crawl_search_engine.ccindex.hf_datasets_adapter import (  # type: ignore
-        configure_duckdb_huggingface_auth,
-        huggingface_authorization_headers,
-    )
+    try:
+        from common_crawl_search_engine.ccindex.hf_datasets_adapter import (  # type: ignore
+            configure_duckdb_huggingface_auth,
+            huggingface_authorization_headers,
+        )
+    except ImportError:
+        def huggingface_authorization_headers() -> Dict[str, str]:
+            return {}
+
+        def configure_duckdb_huggingface_auth(_connection: Any) -> bool:
+            return False
 
 
 def _admin_rules_force_state_hf_index() -> bool:
@@ -68,6 +76,7 @@ DATASET_REPOS = {
     "municipal": "endomorphosis/common_crawl_municipal_index",
     "pointers": "endomorphosis/common_crawl_pointers_by_collection",
     "meta": "endomorphosis/common_crawl_meta_indexes",
+    "government_shards": "Publicus/government_cc_shard_indexes",
 }
 
 DATASET_REPO_CANDIDATES = {
@@ -1049,7 +1058,140 @@ class CommonCrawlIndexLoader:
                 "loaded": index_type in self._loaded_indexes,
             }
 
+        shard_regions: Dict[str, Any] = {}
+        try:
+            from ipfs_datasets_py.processors.legal_scrapers.regions.shard_index import (
+                GOVERNMENT_SHARD_REGIONS,
+                shard_db_path,
+            )
+
+            extra = [self.local_base_dir / "government_shards"]
+            for region in GOVERNMENT_SHARD_REGIONS:
+                path = shard_db_path(region, download=False, extra_dirs=extra)
+                shard_regions[region] = {
+                    "local_available": path is not None,
+                    "local_path": str(path) if path else None,
+                }
+        except Exception as exc:
+            logger.debug("Government shard index info unavailable: %s", exc)
+        info["indexes"]["government_shards"] = {
+            "hf_repo": DATASET_REPOS["government_shards"],
+            "regions": shard_regions,
+            "loaded": "government_shards" in self._loaded_indexes,
+        }
+
         return info
+
+    def government_shard_db(self, region: str) -> Optional[Path]:
+        """Local path of one regional government shard DuckDB.
+
+        Checks ``GOVERNMENT_CC_SHARD_DIR``, the built-in index directory, then
+        ``local_base_dir/government_shards``. The Hugging Face dataset stores
+        ZSTD Parquet, so a missing DuckDB is not downloaded.
+        """
+        from ipfs_datasets_py.processors.legal_scrapers.regions.shard_index import shard_db_path
+
+        return shard_db_path(
+            region,
+            extra_dirs=[self.local_base_dir / "government_shards"],
+        )
+
+    def load_government_shards(
+        self,
+        table: str = "cc_domain_shards",
+        split: str = "americas",
+        force_refresh: bool = False,
+    ) -> Optional[Any]:
+        """Load one government shard table with the Hugging Face datasets API.
+
+        Args:
+            table: ``cc_domain_shards``, ``query_domains``, ``domain_coverage``,
+                or ``build_info``.
+            split: Region split: americas, europe, mena, africa, asia_pacific,
+                or unassigned.
+            force_refresh: Reload from Hugging Face even when a local Parquet
+                file is already present.
+
+        Returns:
+            A ``datasets.Dataset`` for that config and split, or None.
+        """
+        cache_key = f"government_shards:{table}:{split}"
+        if cache_key in self._loaded_indexes and not force_refresh:
+            return self._loaded_indexes[cache_key]
+        try:
+            from datasets import load_dataset
+        except ImportError as exc:
+            self.last_query_error = f"datasets is required to load government shards: {exc}"
+            logger.warning("%s", self.last_query_error)
+            return None
+        from ipfs_datasets_py.processors.legal_scrapers.regions.shard_index import (
+            GOVERNMENT_SHARD_REPO,
+            shard_parquet_path,
+        )
+
+        if not force_refresh:
+            local_path = shard_parquet_path(
+                split,
+                table,
+                extra_dirs=[self.local_base_dir / "government_shards"],
+            )
+            if local_path is not None:
+                dataset = load_dataset(
+                    "parquet",
+                    data_files={split: str(local_path)},
+                    split=split,
+                )
+                self._loaded_indexes[cache_key] = dataset
+                return dataset
+        if not self.use_hf_fallback:
+            return None
+        try:
+            dataset = load_dataset(
+                GOVERNMENT_SHARD_REPO,
+                table,
+                split=split,
+                cache_dir=str(self.cache_dir),
+            )
+        except Exception as exc:
+            self.last_query_error = str(exc)
+            logger.warning("Failed to load government shard dataset: %s", exc)
+            return None
+        self._loaded_indexes[cache_key] = dataset
+        return dataset
+
+    def query_government_shards(
+        self,
+        host: str,
+        *,
+        region: Optional[str] = None,
+        country_code: Optional[str] = None,
+        collection: Optional[str] = None,
+        max_segments: int = 50,
+    ) -> List[Dict[str, Any]]:
+        """Return pointer-parquet ranges for a government host.
+
+        A stored registrable domain covers its subdomains. ``dom_row_start``
+        and ``dom_row_end`` are inclusive-exclusive row offsets in the sorted
+        pointer parquet. Local DuckDB is preferred. Otherwise the ZSTD Parquet
+        published on ``Publicus/government_cc_shard_indexes`` is read through
+        the Hugging Face datasets API. An unrecognized host such as
+        ``example.com`` does not download every regional file.
+        """
+        from ipfs_datasets_py.processors.legal_scrapers.regions.shard_index import (
+            query_government_shards,
+        )
+
+        rows = query_government_shards(
+            host,
+            region=region,
+            country_code=country_code,
+            collection=collection,
+            max_segments=max_segments,
+            download=bool(self.use_hf_fallback),
+            cache_dir=self.cache_dir,
+            extra_dirs=[self.local_base_dir / "government_shards"],
+        )
+        return [dict(row) for row in rows]
 
     def clear_cache(self):
         """Clear loaded index cache to free memory."""
