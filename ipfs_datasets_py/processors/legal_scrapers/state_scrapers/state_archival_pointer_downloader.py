@@ -33,7 +33,7 @@ from .state_archival_fetch import FetchResult as FetchResult
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_HF_REPO = "endomorphosis/common_crawl_state_index"
+DEFAULT_HF_REPO = "Publicus/common_crawl_state_index"
 
 
 @dataclass

@@ -35,23 +35,23 @@ Complete guide covering:
 
 ## Supported HuggingFace Repositories
 
-1. **endomorphosis/common_crawl_federal_index**
+1. **Publicus/common_crawl_federal_index**
    - Federal .gov domains (EPA, FDA, etc.)
    - ~50-100 MB estimated
 
-2. **endomorphosis/common_crawl_state_index**
+2. **Publicus/common_crawl_state_index**
    - State government domains (.state.XX.us, .XX.gov)
    - ~200-500 MB full, ~10-30 MB per state
 
-3. **endomorphosis/common_crawl_municipal_index**
+3. **Publicus/common_crawl_municipal_index**
    - Municipal and county websites
    - ~100-300 MB estimated
 
-4. **endomorphosis/common_crawl_pointers_by_collection**
+4. **Publicus/common_crawl_pointers_by_collection**
    - WARC file pointers for content retrieval
    - ~500 MB - 2 GB estimated
 
-5. **endomorphosis/common_crawl_meta_indexes**
+5. **Publicus/common_crawl_meta_indexes**
    - Metadata about Common Crawl collections
    - ~10-50 MB estimated
 

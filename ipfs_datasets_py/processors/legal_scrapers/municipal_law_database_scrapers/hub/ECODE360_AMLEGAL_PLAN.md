@@ -44,7 +44,7 @@ GET /api/sec-info/{slug}/{version}/{code_slug}/{doc_id}/
 - eCode360 ToS: content for personal use; copyright asserted by General Code/municipalities; commercial exploitation restricted; informational only / not official.
 - AmLegal: codes are municipal law published for public access; review amlegal.com terms before bulk commercial redistribution.
 - Treat as public-law text with publisher copyright in compilation/markup; prefer attribution, rate limits, no login bypass, no HF upload until policy review.
-- Common Crawl index (`endomorphosis/common_crawl_municipal_index`) is a polite fallback/mirror for historical snapshots when live hosts throttle.
+- Common Crawl index (`Publicus/common_crawl_municipal_index`) is a polite fallback/mirror for historical snapshots when live hosts throttle.
 
 ## Batch integration next steps
 1. Extend `run_batch.py` (or sibling) to dispatch `publisher` → ecode360/amlegal `scrape_jurisdiction`

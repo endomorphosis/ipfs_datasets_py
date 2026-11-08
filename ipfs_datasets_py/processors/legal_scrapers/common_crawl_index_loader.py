@@ -7,11 +7,11 @@ This module provides a smart loader for Common Crawl indexes that:
 4. Handles partial uploads gracefully
 
 The loader supports jurisdiction-specific indexes:
-- Federal: endomorphosis/common_crawl_federal_index
-- State: endomorphosis/common_crawl_state_index
-- Municipal: endomorphosis/common_crawl_municipal_index
-- Pointers: endomorphosis/common_crawl_pointers_by_collection
-- Meta Indexes: endomorphosis/common_crawl_meta_indexes
+- Federal: Publicus/common_crawl_federal_index
+- State: Publicus/common_crawl_state_index
+- Municipal: Publicus/common_crawl_municipal_index
+- Pointers: Publicus/common_crawl_pointers_by_collection
+- Meta Indexes: Publicus/common_crawl_meta_indexes
 - Government shards: Publicus/government_cc_shard_indexes
 
 Example:
@@ -71,27 +71,24 @@ def _admin_rules_force_state_hf_index() -> bool:
 
 # HuggingFace dataset names
 DATASET_REPOS = {
-    "federal": "endomorphosis/common_crawl_federal_index",
-    "state": "endomorphosis/common_crawl_state_index",
-    "municipal": "endomorphosis/common_crawl_municipal_index",
-    "pointers": "endomorphosis/common_crawl_pointers_by_collection",
-    "meta": "endomorphosis/common_crawl_meta_indexes",
+    "federal": "Publicus/common_crawl_federal_index",
+    "state": "Publicus/common_crawl_state_index",
+    "municipal": "Publicus/common_crawl_municipal_index",
+    "pointers": "Publicus/common_crawl_pointers_by_collection",
+    "meta": "Publicus/common_crawl_meta_indexes",
     "government_shards": "Publicus/government_cc_shard_indexes",
 }
 
 DATASET_REPO_CANDIDATES = {
-    "federal": ["endomorphosis/common_crawl_federal_index"],
-    "state": ["endomorphosis/common_crawl_state_index"],
+    "federal": ["Publicus/common_crawl_federal_index"],
+    "state": ["Publicus/common_crawl_state_index"],
     "municipal": [
-        "endomorphosis/common_crawl_municipal_index",
         "Publicus/common_crawl_municipal_index",
     ],
     "pointers": [
-        "endomorphosis/common_crawl_pointers_by_collection",
         "Publicus/common_crawl_pointers_by_collection",
     ],
     "meta": [
-        "endomorphosis/common_crawl_meta_indexes",
         "Publicus/common_crawl_meta_indexes",
     ],
 }

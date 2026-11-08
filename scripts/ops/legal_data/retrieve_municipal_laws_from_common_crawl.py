@@ -10,7 +10,7 @@ import sys
 from typing import Any, Dict, List, Optional
 
 
-DEFAULT_REPO_ID = "endomorphosis/common_crawl_municipal_index"
+DEFAULT_REPO_ID = "Publicus/common_crawl_municipal_index"
 DEFAULT_INDEX_FILE = "slice_indexes/uncapped_parquet_20260215_101154/pointers.parquet"
 
 

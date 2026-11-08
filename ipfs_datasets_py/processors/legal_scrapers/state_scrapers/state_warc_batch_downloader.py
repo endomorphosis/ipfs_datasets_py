@@ -27,7 +27,7 @@ from .state_archival_pointer_downloader import STATE_CONFIGS, _resolve_parquet_p
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_HF_REPO = "endomorphosis/common_crawl_state_index"
+DEFAULT_HF_REPO = "Publicus/common_crawl_state_index"
 DEFAULT_ARCHIVE_DIR = Path("/home/barberb/municipal_scrape_workspace/archive")
 
 

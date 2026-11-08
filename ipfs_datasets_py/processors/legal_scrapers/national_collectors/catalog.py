@@ -111,11 +111,11 @@ IN_TREE_SCRAPERS: tuple[dict[str, Any], ...] = (
         "module": "ipfs_datasets_py.processors.legal_scrapers.common_crawl_index_loader",
         "summary": "Common Crawl legal indexes (federal/state/municipal).",
         "hf_datasets": (
-            "endomorphosis/common_crawl_federal_index",
-            "endomorphosis/common_crawl_state_index",
-            "endomorphosis/common_crawl_municipal_index",
-            "endomorphosis/common_crawl_meta_indexes",
-            "endomorphosis/common_crawl_pointers_by_collection",
+            "Publicus/common_crawl_federal_index",
+            "Publicus/common_crawl_state_index",
+            "Publicus/common_crawl_municipal_index",
+            "Publicus/common_crawl_meta_indexes",
+            "Publicus/common_crawl_pointers_by_collection",
         ),
     },
 )
