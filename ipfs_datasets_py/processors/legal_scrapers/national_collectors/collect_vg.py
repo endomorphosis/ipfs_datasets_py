@@ -117,7 +117,7 @@ PDF_HREF_RE = re.compile(
     re.I,
 )
 PDF_FILES_RE = re.compile(
-    r'(https?://(?:(?:www\.)?laws\.gov\.vg|(?:www\.)?gov\.vg|eservices\.gov\.vg)' 
+    r'(https?://(?:(?:www\.)?laws\.gov\.vg|(?:www\.)?gov\.vg|eservices\.gov\.vg)'
     r'/[^\s"\'<>]+\.pdf)',
     re.I,
 )

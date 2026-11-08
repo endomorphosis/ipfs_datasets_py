@@ -2874,7 +2874,7 @@ class UnifiedWebScraper:
         return anyio.run(_runner)
 
     async def scrape_multiple(
-        self, urls: List[str], max_concurrent: int = 5, **kwargs
+        self, urls: List[str], max_concurrent: int = 8, **kwargs
     ) -> List[ScraperResult]:
         """Scrape multiple URLs concurrently."""
         semaphore = anyio.Semaphore(max_concurrent)

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Guatemala: Congreso de la República (congreso.gob.gt) official PDF acuerdos/leyes + Wayback."""
+"""Guatemala: Congreso assets/uploads decretos/acuerdos PDFs. Prefer assets path; archivos/ is challenge-gated. Cap/Artículo densify regex (mid-line PDF columns)."""
 from __future__ import annotations
 import logging, re, sys, time
 from pathlib import Path
@@ -13,34 +13,61 @@ LICENSE = (
     "Congreso de la República de Guatemala (congreso.gob.gt). "
     "Official legislative texts. Authentic official text prevails. Not legal advice."
 )
-UA = "legal-corpora-collector/1.0 (research; source=https://www.congreso.gob.gt/)"
-ART = re.compile(r"(?im)^\s*((?:Art(?:[íi]culo|\.|iculo)?|ART[IÍ]CULO)\s+[\d]+[º°o.]?)\b")
+UA = (
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 "
+    "legal-corpora-collector/1.0 (research; source=https://www.congreso.gob.gt/)"
+)
+ART = re.compile(
+    r"(?m)(?:^|(?<=\n)|(?<=[ \t]{2}))"
+    r"((?:ART[IÍ]CULO|ARTICULO|Art[íi]culo|Articulo|Artlculo|Artculo|ArtIculo|Art\.)\s*"
+    r"(?:[\d]+|[IVXLC]{1,6}|[Uu]nico|[Pp]rimero|[Ss]egundo|[Tt]ercero|"
+    r"[Cc]uarto|[Qq]uinto|[Ss]exto|[Ss][eé]ptimo|[Oo]ctavo|[Nn]oveno|[Dd][eé]cimo)"
+    r"[A-Za-zº°o.\-]*(?:\s*(?:bis|ter|qu[aá]ter|quinquies|sexies|transitori[oa]))?"
+    r"|"
+    r"(?:CAP[IÍ]TULO|CAPITULO|Cap[ií]tulo|Capitulo|T[IÍ]TULO|TITULO|T[ií]tulo|Titulo|"
+    r"SECCI[OÓ]N|SECCION|Secci[oó]n|Seccion|TiTULO)\s+"
+    r"(?:[IVXLC]{1,8}|\d+[º°o.]?|[Pp]rimero|[Ss]egundo|[Uu]nico))"
+    r"(?=\s*[.\-–:]|\s|$)"
+)
 log = logging.getLogger("gt")
+SKIP_SUB = ("/actas_de_sesiones/", "/iniciativas/", "/dictamen/")
 
 
 def discover():
     items, seen = [], set()
     def add(url):
-        url = url.split("#")[0]
+        url = url.split("#")[0].replace("http://", "https://").replace(":80/", "/")
         if "congreso.gob.gt" not in url.lower():
             return
         if ".pdf" not in url.lower():
+            return
+        low = url.lower()
+        if any(s in low for s in SKIP_SUB):
+            return
+        if "/assets/uploads/" not in low:
             return
         if url in seen:
             return
         ident = Path(url.split("?")[0]).stem[:160]
         seen.add(url)
-        items.append((ident, url.replace("http://", "https://").replace(":80/", "/")))
+        items.append((ident, url))
     for prefix in (
-        "www.congreso.gob.gt/archivos/",
-        "congreso.gob.gt/archivos/",
-        "www.congreso.gob.gt/",
+        "www.congreso.gob.gt/assets/uploads/info_legislativo/decretos/",
+        "www.congreso.gob.gt/assets/uploads/info_legislativo/acuerdos/",
+        "congreso.gob.gt/assets/uploads/info_legislativo/decretos/",
+        "congreso.gob.gt/assets/uploads/info_legislativo/acuerdos/",
     ):
-        for h in cdx_urls(prefix, limit=env_int("CDX_LIMIT", 220), match_type="prefix",
-                          extra_filters=["mimetype:application/pdf"]):
+        for h in cdx_urls(
+            prefix,
+            limit=env_int("CDX_LIMIT", 2000),
+            match_type="prefix",
+            extra_filters=["mimetype:application/pdf"],
+        ):
             orig = h.get("original") or ""
             if orig:
                 add(orig)
+    items.sort(key=lambda it: (0 if "/decretos/" in it[1].lower() else 1, it[1]))
     log.info("catalog %s", len(items))
     return items
 
@@ -48,8 +75,8 @@ def discover():
 def main():
     setup_log(CC)
     t0 = utcnow()
-    max_new = env_int("MAX_NEW", 40)
-    max_seconds = env_int("MAX_SECONDS", 2400)
+    max_new = env_int("MAX_NEW", 200)
+    max_seconds = env_int("MAX_SECONDS", 3600)
     t_start = time.time()
     done = existing_ids(CC)
     ok = skip = fail = 0
@@ -88,8 +115,8 @@ def main():
         CC, country=COUNTRY, source="Congreso de la República de Guatemala",
         source_urls=["https://www.congreso.gob.gt/"],
         license_text=LICENSE, discovered=ok + skip + fail, fetched=ok, skipped=skip, failed=fail,
-        coverage="catalog-backed incomplete (Wayback of official congreso PDFs)",
-        notes="Official Congreso PDFs (archivos/acuerdos etc.). Not legal advice.",
+        coverage="catalog-backed incomplete (assets/uploads decretos+acuerdos; live browser-UA)",
+        notes="Prefer assets/uploads; archivos/ challenge-gated. Not vLex. Not legal advice.",
         last_run=t0,
     )
     log.info("done ok=%s skip=%s fail=%s", ok, skip, fail)

@@ -2,16 +2,15 @@
 """Botswana: official Acts / Bills / Gazette / SI PDFs from government portals.
 
 Primary: gov.bw, parliament.gov.bw / botswanaspeaks.gov.bw (Parliament Bills &
-Extraordinary Gazettes), BURS tax Acts, Attorney-General-linked portal PDFs,
-and statutory agency hosts that publish official Acts/Regulations/SIs
-(Bank of Botswana, BOCRA, BERA, CAAB, NBFIRA, PPADB, Competition Authority,
-HRDC, justice.gov.bw).
+Extraordinary Gazettes), BURS tax Acts, Bank of Botswana / BOCRA / CAAB / CCA /
+NBFIRA / HRDC statutory Acts & Regulations, justice.gov.bw-linked material.
 
-Skips: botswanalaws.com, SAFLII, laws.co.bw (private), drafts, order/notice
-papers, press releases. elaws.gov.bw is preferred by gov.bw but unreachable
-from this collector environment (recorded as a coverage gap).
-Live official URL first; Wayback of the same official URL on failure.
-No WAF bypass.
+AGC e-Laws (elaws.gov.bw) is preferred by gov.bw but live TLS fails from this
+collector host; Wayback/CDX of official elaws.gov.bw statute PDFs is used.
+
+Skips: botswanalaws.com, SAFLII, AfricanLII, laws.co.bw (private), drafts,
+order/notice papers, press releases. Live official URL first; Wayback of the
+same official URL on failure. No WAF bypass.
 """
 from __future__ import annotations
 
@@ -31,8 +30,9 @@ SOURCE_TYPE = "botswana_official_gazettes_acts"
 LICENSE = (
     "Laws / Bills / Gazette instruments of Botswana as published on official "
     "government and statutory-agency portals (gov.bw, parliament.gov.bw, "
-    "botswanaspeaks.gov.bw, burs.org.bw, and related .gov.bw / statutory hosts). "
-    "Authentic Government Printer / e-Laws text prevails. Not legal advice."
+    "botswanaspeaks.gov.bw, burs.org.bw, elaws.gov.bw via Wayback, and related "
+    ".gov.bw / statutory hosts). Authentic Government Printer / e-Laws text "
+    "prevails. Not legal advice."
 )
 UA = "legal-corpora-collector/1.0 (research; source=https://www.gov.bw/)"
 ART = re.compile(
@@ -61,7 +61,10 @@ SKIP_NAME = re.compile(
     r"audit[_\-\s]?of[_\-\s]?billing|broadcaster.?s[_\-\s]?code|"
     r"interactive\.pdf|corrigendum[_\-\s]?-[_\-\s]?ordpap|"
     r"addendum[_\-\s]?-[_\-\s]?ordpap|addendum[_\-\s]?-[_\-\s]?notpap|"
-    r"winter[_\-\s]?session|parliament[_\-\s]?business[_\-\s]?update)",
+    r"winter[_\-\s]?session|parliament[_\-\s]?business[_\-\s]?update|"
+    r"strategic[_\-\s]?plan|consumer[_\-\s]?alert|auction[_\-\s]?result|"
+    r"budget[_\-\s]?speech|guideline|framework\.pdf|"
+    r"qos|state[_\-\s]?of[_\-\s]?ict)",
     re.I,
 )
 LAWISH_NAME = re.compile(
@@ -71,7 +74,8 @@ LAWISH_NAME = re.compile(
     r"regulation|regulations|"
     r"gazette|statutory[_\-\s]?instrument|\bsi[_\-\s]?\d|"
     r"chapter[_\-\s]?\d|cap[_\-\s\.]?\d|"
-    r"enacted|supplement[_\-\s]?[abc]\b"
+    r"enacted|supplement[_\-\s]?[abc]\b|"
+    r"proclamation|statute"
     r")",
     re.I,
 )
@@ -79,16 +83,21 @@ LAW_MARK = re.compile(
     r"(ENACTED by the Parliament of Botswana|AN ACT\b|A BILL\b|"
     r"Short title|This Act may be cited|GOVERNMENT GAZETTE|"
     r"ARRANGEMENT OF SECTIONS|Statutory Instrument|supplement [ABC]\b|"
-    r"Date of Assent|No\.\s*\d+\s+of\s+20\d{2})",
+    r"Date of Assent|No\.\s*\d+\s+of\s+20\d{2}|"
+    r"BE IT ENACTED|Proclamation|HIGH COMMISSIONER)",
     re.I,
 )
 
 CDX_PREFIXES = [
+    "www.elaws.gov.bw/docs/statutes/",
+    "elaws.gov.bw/docs/statutes/",
+    "www.elaws.gov.bw/",
     "www.gov.bw/sites/default/files/",
     "gov.bw/sites/default/files/",
     "botswanaspeaks.gov.bw/media/BILLS/",
     "www.botswanaspeaks.gov.bw/media/BILLS/",
     "www.burs.org.bw/",
+    "www.bankofbotswana.bw/sites/default/files/",
     "www.bankofbotswana.bw/assets/",
     "www.bocra.org.bw/sites/default/files/",
     "www.bera.co.bw/downloads/",
@@ -96,9 +105,11 @@ CDX_PREFIXES = [
     "www.nbfira.org.bw/sites/default/files/",
     "www.ppadb.co.bw/Act_Reg/",
     "www.competitionauthority.co.bw/sites/default/files/",
+    "www.cca.co.bw/sites/default/files/",
     "www.hrdc.org.bw/sites/default/files/",
     "www.justice.gov.bw/sites/default/files/",
-    "www.parliament.gov.bw/documents/",
+    "www.parliament.gov.bw/",
+    "parliament.gov.bw/bills/",
 ]
 
 LIVE_SEEDS = [
@@ -108,10 +119,14 @@ LIVE_SEEDS = [
     "https://www.burs.org.bw/index.php/tax/tax-downloads",
     "https://www.bocra.org.bw/legislation",
     "https://www.caab.co.bw/regulations/",
-    "https://www.bankofbotswana.bw/",
-    "https://www.competitionauthority.co.bw/",
+    "https://www.bankofbotswana.bw/content/legislation-and-laws",
+    "https://www.bankofbotswana.bw/content/legislation",
+    "https://www.bankofbotswana.bw/content/regulations",
+    "https://www.bankofbotswana.bw/content/legislation-and-regulations",
+    "https://www.cca.co.bw/competition-act-2018",
+    "https://www.cca.co.bw/competition-regulations-2019-consumer-protection-regulations-2019",
+    "https://www.cca.co.bw/",
     "https://www.hrdc.org.bw/",
-    "https://www.ppadb.co.bw/",
     "https://www.nbfira.org.bw/",
     "https://www.justice.gov.bw/",
     "https://www.parliament.gov.bw/",
@@ -124,22 +139,26 @@ BURS_ACT_PAGES = [
 
 
 def _norm(url: str) -> str:
-    u = (url or "").split("#")[0]
+    u = (url or "").split("#")[0].strip()
+    if not u or u.lower().startswith("file:"):
+        return ""
     u = u.replace("http://", "https://")
     u = re.sub(r":80/", "/", u)
     u = re.sub(r"https://gov\.bw/", "https://www.gov.bw/", u)
     u = re.sub(r"https://parliament\.gov\.bw/", "https://www.parliament.gov.bw/", u)
     u = re.sub(r"https://botswanaspeaks\.gov\.bw/", "https://www.botswanaspeaks.gov.bw/", u)
+    u = re.sub(r"https://elaws\.gov\.bw/", "https://www.elaws.gov.bw/", u)
+    u = re.sub(r"https://competitionauthority\.co\.bw/", "https://www.cca.co.bw/", u)
     parts = urlparse(u)
-    # Keep only download= query params (BURS phocadownload); drop tracking junk
     q = parts.query or ""
     if "download=" in q:
         m = re.search(r"(download=\d+:[a-z0-9\-]+)", q, re.I)
         q = m.group(1) if m else ""
     else:
         q = ""
-    path = quote_path(unquote(parts.path)) if (" " in unquote(parts.path) or "%" in parts.path) else parts.path
-    # Prefer percent-encoded spaces for fetch reliability
+    path = unquote(parts.path)
+    if " " in path or "%" in parts.path:
+        path = quote_path(path)
     if " " in path:
         path = quote_path(path)
     u = parts._replace(path=path, query=q, params="", fragment="").geturl()
@@ -171,7 +190,6 @@ def _host_ok(url: str) -> bool:
     if BLOCK_HOST.search(url):
         return False
     host = (urlparse(url).hostname or "").lower()
-    # official / statutory agency hosts only
     ok_suffixes = (
         ".gov.bw",
         "gov.bw",
@@ -183,6 +201,7 @@ def _host_ok(url: str) -> bool:
         "nbfira.org.bw",
         "ppadb.co.bw",
         "competitionauthority.co.bw",
+        "cca.co.bw",
         "hrdc.org.bw",
         "botswanaspeaks.gov.bw",
     )
@@ -191,24 +210,33 @@ def _host_ok(url: str) -> bool:
 
 def _is_law_url(url: str) -> bool:
     u = _norm(url)
-    if not _host_ok(u):
+    if not u or not _host_ok(u):
         return False
     low = unquote(u).lower()
     if SKIP_NAME.search(low):
-        return False
-    # BURS phocadownload acts
+        # still allow /BILLS/ and /docs/statutes/ even if "statement" substring
+        if "/bills/" not in low and "/docs/statutes/" not in low and "act" not in Path(urlparse(u).path).name.lower():
+            return False
+        # if SKIP matched but name clearly an Act/Bill, keep
+        name_only = unquote(urlparse(u.split("?")[0]).path).split("/")[-1]
+        if not LAWISH_NAME.search(name_only) and "/docs/statutes/" not in low and "/bills/" not in low:
+            return False
     if "burs.org.bw" in low and "download=" in low:
-        if re.search(r"(act|bill|regulation|gazette|cap[-_ ]?\d|statutory)", low):
+        if re.search(r"(act|bill|regulation|gazette|cap[-_ ]?\d|statutory|order)", low):
+            if re.search(r"(form|faq|guidance|guideline|table|certificate|application)", low):
+                return False
             return True
         return False
     if ".pdf" not in low and "download=" not in low:
         return False
     name = unquote(urlparse(u.split("?")[0]).path).split("/")[-1]
-    if SKIP_NAME.search(name):
+    if SKIP_NAME.search(name) and not LAWISH_NAME.search(name):
         return False
-    # Prefer explicit lawish filenames; allow /BILLS/ folder and Act_Reg/
-    if "/bills/" in low or "/act_reg/" in low or "extraordinary" in low and "gazette" in low:
-        return not SKIP_NAME.search(name)
+    # elaws statute shelf + Bills folder + Act_Reg
+    if "/docs/statutes/" in low or "/bills/" in low or "/act_reg/" in low:
+        return True
+    if "extraordinary" in low and "gazette" in low:
+        return True
     if LAWISH_NAME.search(name) or LAWISH_NAME.search(low):
         return True
     return False
@@ -217,7 +245,7 @@ def _is_law_url(url: str) -> bool:
 def _title_from_text(text: str, fallback: str) -> str:
     lines = [ln.strip() for ln in (text or "").splitlines() if ln.strip()]
     for ln in lines[:50]:
-        if re.search(r"\b(ACT|BILL|REGULATIONS?|GAZETTE)\b", ln) and 8 <= len(ln) <= 180:
+        if re.search(r"\b(ACT|BILL|REGULATIONS?|GAZETTE|PROCLAMATION)\b", ln) and 8 <= len(ln) <= 180:
             if not re.match(r"^(TITLE|PREVIOUS|NEXT|CONTENTS)\b", ln, re.I):
                 return ln[:240]
     for ln in lines:
@@ -232,17 +260,16 @@ def _looks_like_law(text: str) -> bool:
     head = text[:8000]
     if LAW_MARK.search(head):
         return True
-    # section-dense statutes without classic preamble
     secs = len(re.findall(r"(?im)^\s*Section\s+\d+", text[:20000]))
     return secs >= 5
 
 
-def _add(items: list, seen: set, url: str, ident: str | None = None) -> None:
+def _add(items: list, seen: set, url: str, ident: str | None = None, priority: int = 50) -> None:
     url = _norm(url)
     if not url or url in seen or not _is_law_url(url):
         return
     seen.add(url)
-    items.append((ident or _ident_from_url(url), url))
+    items.append((priority, ident or _ident_from_url(url), url))
 
 
 def _harvest_html(url: str) -> list[str]:
@@ -255,6 +282,8 @@ def _harvest_html(url: str) -> list[str]:
     text = r.text or ""
     for href in re.findall(r'href=["\']([^"\']+)["\']', text, re.I):
         full = urljoin(url, href)
+        if full.lower().startswith("file:"):
+            continue
         if ".pdf" in full.lower() or "download=" in full.lower():
             out.append(full)
     for m in re.findall(r'(https?://[^"\'\s>]+\.pdf)', text, re.I):
@@ -262,10 +291,16 @@ def _harvest_html(url: str) -> list[str]:
     return out
 
 
-def _botswanaspeaks_bills() -> list[tuple[str, str]]:
+def _botswanaspeaks_bills() -> list[tuple[int, str, str]]:
     """Crawl Parliament Business articles for Bill / Gazette PDFs only."""
     items, seen_u, seen_a = [], set(), set()
     seeds = ["https://www.botswanaspeaks.gov.bw/category/4/parliament-business"]
+    # paginate category if present
+    for page in range(0, env_int("SPEAKS_PAGES", 5)):
+        if page:
+            seeds.append(
+                f"https://www.botswanaspeaks.gov.bw/category/4/parliament-business?page={page}"
+            )
     articles = []
     for su in seeds:
         try:
@@ -279,15 +314,16 @@ def _botswanaspeaks_bills() -> list[tuple[str, str]]:
                 seen_a.add(full)
                 articles.append(full)
     log.info("speaks articles %s", len(articles))
-    for au in articles[: env_int("SPEAKS_ARTICLES", 120)]:
+    for au in articles[: env_int("SPEAKS_ARTICLES", 200)]:
         try:
             r = live_get(au, ua=UA, verify=False, timeout=(15, 40))
         except Exception:
             continue
         for href in re.findall(r'href=["\']([^"\']+\.pdf[^"\']*)["\']', r.text or "", re.I):
             full = _norm(urljoin(au, href))
+            if not full:
+                continue
             low = unquote(full).lower()
-            # only BILLS / gazette paths — skip order/notice papers
             if "/bills/" not in low and "gazette" not in low and "extraordinary" not in low:
                 continue
             if full in seen_u:
@@ -295,12 +331,12 @@ def _botswanaspeaks_bills() -> list[tuple[str, str]]:
             if not _is_law_url(full):
                 continue
             seen_u.add(full)
-            items.append((_ident_from_url(full), full))
+            items.append((10, _ident_from_url(full), full))
     log.info("speaks bill/gazette pdfs %s", len(items))
     return items
 
 
-def _burs_downloads() -> list[tuple[str, str]]:
+def _burs_downloads() -> list[tuple[int, str, str]]:
     items, seen = [], set()
     for page in BURS_ACT_PAGES:
         try:
@@ -314,8 +350,6 @@ def _burs_downloads() -> list[tuple[str, str]]:
                 continue
             if re.search(r"(form|faq|guidance|guideline|table|certificate|application)", slug, re.I):
                 continue
-            url = urljoin(page, f"?{m}" if "?" not in page else f"&{m}")
-            # Prefer clean absolute download URLs on same path
             if "tax-laws-2026" in page:
                 url = f"https://www.burs.org.bw/index.php/tax/tax-laws-2026?{m}"
             elif "tax-downloads" in page:
@@ -327,7 +361,7 @@ def _burs_downloads() -> list[tuple[str, str]]:
             if not _is_law_url(url):
                 continue
             seen.add(url)
-            items.append((_ident_from_url(url), url))
+            items.append((15, _ident_from_url(url), url))
     log.info("burs act downloads %s", len(items))
     return items
 
@@ -336,29 +370,46 @@ def discover():
     items, seen = [], set()
 
     # 1) Parliament Bills / Extraordinary Gazettes (botswanaspeaks)
-    for ident, url in _botswanaspeaks_bills():
-        _add(items, seen, url, ident)
+    for priority, ident, url in _botswanaspeaks_bills():
+        _add(items, seen, url, ident, priority=priority)
 
     # 2) BURS official tax Acts
-    for ident, url in _burs_downloads():
-        _add(items, seen, url, ident)
+    for priority, ident, url in _burs_downloads():
+        _add(items, seen, url, ident, priority=priority)
 
-    # 3) Live seed page PDF harvest
+    # 3) Live seed page PDF harvest (BoB, CCA, BOCRA, CAAB, …)
     for su in LIVE_SEEDS:
         for href in _harvest_html(su):
-            _add(items, seen, href)
+            pri = 20
+            if "bankofbotswana" in su or "cca.co.bw" in su or "bocra" in su or "caab" in su:
+                pri = 12
+            _add(items, seen, href, priority=pri)
 
     # 4) CDX of official hosts (Wayback index of live official URLs)
-    limit = env_int("CDX_LIMIT", 180)
+    # Prefer elaws statutes + gov.bw Acts first
+    limit = env_int("CDX_LIMIT", 250)
     for prefix in CDX_PREFIXES:
         for h in cdx_urls(prefix, limit=limit, match_type="prefix", extra_filters=["mimetype:application/pdf"]):
             orig = (h.get("original") or "").replace("http://", "https://")
-            _add(items, seen, orig)
-        if len(items) >= env_int("CATALOG_CAP", 400):
+            orig = re.sub(r":80/", "/", orig)
+            pri = 30
+            low = unquote(orig).lower()
+            if "elaws.gov.bw" in low:
+                pri = 18
+            elif "/bills/" in low:
+                pri = 16
+            elif "gov.bw" in low and LAWISH_NAME.search(low):
+                pri = 22
+            _add(items, seen, orig, priority=pri)
+        if len(items) >= env_int("CATALOG_CAP", 600):
             break
 
-    log.info("catalog %s", len(items))
-    return items
+    # sort by priority then stable
+    items.sort(key=lambda t: (t[0], t[1]))
+    # strip priority for caller
+    out = [(ident, url) for _, ident, url in items]
+    log.info("catalog %s", len(out))
+    return out
 
 
 def main():
@@ -411,25 +462,29 @@ def main():
     write_summary(
         CC,
         country=COUNTRY,
-        source="Botswana official portals (gov.bw / Parliament / BURS / statutory agencies)",
+        source="Botswana official portals (gov.bw / Parliament / BURS / elaws Wayback / statutory agencies)",
         source_urls=[
             "https://www.gov.bw/",
             "https://www.parliament.gov.bw/",
             "https://www.botswanaspeaks.gov.bw/",
             "https://www.burs.org.bw/",
             "https://www.elaws.gov.bw/",
+            "https://www.bankofbotswana.bw/",
+            "https://www.bocra.org.bw/",
+            "https://www.caab.co.bw/",
+            "https://www.cca.co.bw/",
         ],
         license_text=LICENSE,
         discovered=ok + skip + fail,
         fetched=ok,
         skipped=skip,
         failed=fail,
-        coverage="catalog-backed incomplete; elaws.gov.bw unreachable from collector host",
+        coverage="catalog-backed incomplete; elaws.gov.bw live TLS unreachable — Wayback of official elaws URLs used",
         notes=(
             "Official Acts/Bills/Gazette/SI PDFs from gov.bw, Parliament Speaks, "
-            "BURS, and statutory agency hosts. Skipped botswanalaws.com / SAFLII / "
-            "laws.co.bw. elaws.gov.bw (AGC e-Laws) preferred by gov.bw but not "
-            "reachable here. Not legal advice."
+            "BURS, Bank of Botswana, BOCRA, CAAB, CCA, and CDX/Wayback of official "
+            "elaws.gov.bw statute PDFs. Skipped botswanalaws.com / SAFLII / "
+            "AfricanLII / laws.co.bw. No WAF bypass. Not legal advice."
         ),
         last_run=t0,
     )

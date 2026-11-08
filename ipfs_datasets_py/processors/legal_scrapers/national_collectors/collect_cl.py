@@ -25,6 +25,8 @@ from xml.etree import ElementTree as ET
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from common import *
 import archive_fallbacks as af
+from world_lib import env_int
+import time
 
 CC = "cl"
 COUNTRY = "Chile"
@@ -45,9 +47,26 @@ log = logging.getLogger("cl")
 _wb_fail = 0
 
 ART_CL = re.compile(
-    r"(?im)^\s*((?:Art[íi]culo|ART[IÍ]CULO|Art\.?)\s+"
-    r"[\d]+[ºo°]?[A-Za-z]?(?:\s*(?:bis|ter|qu[aá]ter|transitori[oa]s?))?)\b"
+    r"(?im)^\s*[\"\']?((?:Art[íi]culo|ART[IÍ]CULO|Art\.?)\s+"
+    r"(?:[\d]+[ºo°]?[A-Za-z]?|único|unico|primero|segundo|tercero)"
+    r"(?:\s*(?:bis|ter|qu[aá]ter|quinquies|sexies|transitori[oa]s?))?)\b"
 )
+MAX_XML_BYTES = 8_000_000  # skip oversized XML shells (e.g. Código de Comercio ~12MB)
+SEED_CODIGOS = [
+    {"id_norma": "172986", "numero": "1", "title": "Código Civil (texto refundido)",
+     "kind": "codigo", "priority": 0, "ident": "codigo-civil", "source": "seed_codigo"},
+    {"id_norma": "1984", "numero": "", "title": "Código Penal",
+     "kind": "codigo", "priority": 0, "ident": "codigo-penal", "source": "seed_codigo"},
+    # 1974 Código de Comercio ~12.7MB XML — skipped as oversized
+    {"id_norma": "207436", "numero": "1", "title": "Código del Trabajo (texto refundido)",
+     "kind": "codigo", "priority": 0, "ident": "codigo-trabajo", "source": "seed_codigo"},
+    {"id_norma": "6374", "numero": "830", "title": "Código Tributario",
+     "kind": "codigo", "priority": 0, "ident": "codigo-tributario", "source": "seed_codigo"},
+    {"id_norma": "5605", "numero": "1122", "title": "Código de Aguas",
+     "kind": "codigo", "priority": 0, "ident": "codigo-aguas", "source": "seed_codigo"},
+    {"id_norma": "5595", "numero": "725", "title": "Código Sanitario",
+     "kind": "codigo", "priority": 0, "ident": "codigo-sanitario", "source": "seed_codigo"},
+]
 
 
 def setup():
@@ -192,6 +211,9 @@ def fetch_xml_bytes(url: str) -> tuple[bytes, str, str]:
         if r.status_code in (404, 410):
             return b"", url, "404"
         if r.status_code == 200 and is_xml_payload(body):
+            if len(body) > MAX_XML_BYTES:
+                log.info("skip oversized xml bytes=%s %s", len(body), url)
+                return b"", url, "oversized"
             return body, r.url or url, "live"
         log.info("live xml status=%s bytes=%s %s", r.status_code, len(body), url)
     return b"", url, "fail"
@@ -371,11 +393,50 @@ def latest_ley_number() -> int:
     return best
 
 
+def discover_latest() -> list[dict]:
+    """Recent leyes from obtxml opt=3 (últimas normas). Prefer Ley over gazette shells."""
+    url = f"{OBTXML}?opt=3"
+    raw, _, method = fetch_xml_bytes(url)
+    if not raw:
+        return []
+    items = []
+    try:
+        root = ET.fromstring(raw)
+    except ET.ParseError:
+        return []
+    for norma in root.iter():
+        if norma.tag.rsplit("}", 1)[-1] != "NORMA":
+            continue
+        nid = norma.attrib.get("idNorma") or ""
+        title = ""
+        num = ""
+        desc = ""
+        for child in list(norma):
+            t = child.tag.rsplit("}", 1)[-1]
+            if t == "TITULO" and (child.text or "").strip():
+                title = child.text.strip()
+            elif t == "TIPOS_NUMEROS":
+                for tn in child.iter():
+                    tt = tn.tag.rsplit("}", 1)[-1]
+                    if tt == "DESCRIPCION" and (tn.text or "").strip():
+                        desc = tn.text.strip()
+                    if tt == "NUMERO" and (tn.text or "").strip():
+                        num = tn.text.strip()
+        if (desc or "").lower() not in ("ley", "ley "):
+            continue
+        if not nid or not num:
+            continue
+        items.append({
+            "numero": num, "id_norma": nid, "title": title, "kind": "ley",
+            "priority": 0, "ident": f"ley-{num}", "source": "opt3_latest",
+        })
+    log.info("opt3 latest leyes n=%s method=%s", len(items), method)
+    return items
+
+
 def discover() -> list[dict]:
     existing = load_catalog()
-    if existing and len(existing) >= 500:
-        log.info("resume catalog n=%s", len(existing))
-        return existing
+    deepen = bool(env_int("CL_DEEPEN", 0))
     items: dict[str, dict] = {}
 
     def add(it: dict):
@@ -388,13 +449,41 @@ def discover() -> list[dict]:
                 prev["title"] = it["title"]
             if it.get("id_norma") and not prev.get("id_norma"):
                 prev["id_norma"] = it["id_norma"]
+            if it.get("ident") and not prev.get("ident"):
+                prev["ident"] = it["ident"]
+            if it.get("kind") and prev.get("kind") == "ley" and it.get("kind") == "codigo":
+                prev["kind"] = "codigo"
+                prev["ident"] = it.get("ident") or prev.get("ident")
+                prev["priority"] = min(prev.get("priority", 9), it.get("priority", 9))
             return
         items[key] = it
 
+    # Prefer códigos / constitución / latest leyes first
     add({
         "id_norma": CONST_IDNORMA, "numero": "100", "title": "Constitución Política de la República de Chile",
         "kind": "constitution", "priority": 0, "ident": "cn-1980",
     })
+    for it in SEED_CODIGOS:
+        add(dict(it))
+    try:
+        for it in discover_latest():
+            add(it)
+    except Exception as exc:
+        log.warning("opt3 latest failed: %s", exc)
+
+    if existing and len(existing) >= 500 and not deepen:
+        log.info("resume catalog n=%s (set CL_DEEPEN=1 to merge seeds/latest)", len(existing))
+        # still merge seeds/latest onto resume so deepen targets exist
+        for it in existing:
+            add(it)
+        out = list(items.values())
+        out.sort(key=lambda x: (x.get("priority", 9), int(re.sub(r"\D", "", x.get("numero") or "0") or 0)))
+        atomic_write(catalog_path(), "".join(json.dumps(it, ensure_ascii=False) + "\n" for it in out))
+        log.info("discovered n=%s", len(out))
+        return out
+
+    for it in existing:
+        add(it)
     for it in discover_category():
         add(it)
     try:
@@ -418,7 +507,14 @@ def discover() -> list[dict]:
 def fetch_one(it: dict, done: set[str]) -> str:
     nid = (it.get("id_norma") or "").strip()
     num = (it.get("numero") or "").strip()
-    ident = it.get("ident") or (f"cn-1980" if it.get("kind") == "constitution" else f"ley-{num or nid}")
+    if it.get("ident"):
+        ident = it["ident"]
+    elif it.get("kind") == "constitution":
+        ident = "cn-1980"
+    elif it.get("kind") == "codigo":
+        ident = f"codigo-{nid or num}"
+    else:
+        ident = f"ley-{num or nid}"
     rid = slug_id(CC, ident)
     if rid in done:
         return "skip"
@@ -430,8 +526,12 @@ def fetch_one(it: dict, done: set[str]) -> str:
     parsed = {}
     used = ""
     method = "fail"
+    oversized = False
     for u in urls:
         raw, used, method = fetch_xml_bytes(u)
+        if method == "oversized":
+            oversized = True
+            continue
         if not raw:
             continue
         parsed = parse_xml(raw)
@@ -439,6 +539,10 @@ def fetch_one(it: dict, done: set[str]) -> str:
             break
         parsed = {}
     if not parsed or not parsed.get("text") or len(parsed["text"]) < 40:
+        if oversized:
+            log_failure(CC, {"identifier": ident, "source_url": urls[0] if urls else "",
+                             "status": "skipped_oversized", "reason": f">{MAX_XML_BYTES}"})
+            return "skip"
         log_failure(CC, {"identifier": ident, "source_url": urls[0] if urls else "",
                          "status": "failed", "reason": "empty_xml"})
         return "fail"
@@ -454,6 +558,8 @@ def fetch_one(it: dict, done: set[str]) -> str:
     if it.get("kind") == "constitution" or "constituci" in title.lower():
         title = parsed.get("title") or "Constitución Política de la República de Chile"
         doc_type = "constitution"
+    elif it.get("kind") == "codigo" or (title.upper().startswith("CODIGO") or title.upper().startswith("CÓDIGO")):
+        doc_type = "code"
     else:
         doc_type = "statute"
     docs = []
@@ -506,9 +612,38 @@ def fetch_one(it: dict, done: set[str]) -> str:
     return "ok"
 
 
+def densify_thin(limit: int = 80) -> int:
+    """Re-split articles on instruments with text but <2 article docs (Artículo único etc.)."""
+    from pathlib import Path as _P
+    n = 0
+    for path in sorted((_P(ROOT) / CC / "instruments").glob("*.json")):
+        if n >= limit:
+            break
+        try:
+            rec = json.loads(path.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        docs = rec.get("documents") or []
+        text = rec.get("text") or ""
+        if len(docs) >= 2 or len(text) < 80:
+            continue
+        rid = rec.get("id") or path.stem
+        new_docs = split_es(text, rid, rec.get("source_url") or "", rec.get("date_filed") or rec.get("publication_date"))
+        if len(new_docs) < 1:
+            continue
+        rec["documents"] = new_docs
+        # write_instrument expects full base_record shape; overwrite file directly
+        path.write_text(json.dumps(rec, ensure_ascii=False, indent=2), encoding="utf-8")
+        n += 1
+    log.info("densified thin instruments n=%s", n)
+    return n
+
+
 def main():
     setup()
     t0 = utcnow()
+    t_deadline = time.time() + env_int("MAX_SECONDS", 4200)
+    max_new = env_int("MAX_NEW", 80)
     items = discover()
     done = existing_ids(CC)
     ok = skip = fail = 0
@@ -518,16 +653,16 @@ def main():
         "https://www.leychile.cl/Consulta/obtxml?opt=7",
         "https://datos.bcn.cl/sparql",
     ]
-    log.info("queue %s already_done=%s", len(items), len(done))
+    log.info("queue %s already_done=%s max_new=%s", len(items), len(done), max_new)
+    densify_thin(limit=env_int("CL_DENSIFY", 100))
 
     def write_progress(cov: str):
         notes = (
-            f"Constitución (idNorma {CONST_IDNORMA}, Decreto 100 texto refundido) plus "
-            f"national Leyes from BCN SPARQL (/recurso/cl/ley/) and Ley Chile obtxml. "
-            f"Fully repealed XML (derogado) skipped. Live XML 429 uses archive_fallbacks "
-            f"on the official obtxml URL (no WAF bypass; Navegar is an SPA shell and is "
-            f"not scraped). Ceiling: SPARQL/XML service limits and Wayback coverage of "
-            f"official URLs. Started {t0}."
+            f"Constitución (idNorma {CONST_IDNORMA}) + códigos (Civil/Penal/Trabajo/"
+            f"Tributario/Aguas/Sanitario; Comercio XML skipped >{MAX_XML_BYTES}B) + "
+            f"national Leyes from BCN SPARQL/obtxml/opt3. Fully repealed XML skipped. "
+            f"Live XML 429 uses archive_fallbacks on official obtxml (no WAF bypass). "
+            f"Lean deepen MAX_NEW={max_new}. Started {t0}."
         )
         write_summary(
             CC, country=COUNTRY,
@@ -550,8 +685,29 @@ def main():
             log.info("constitution %s", st)
         else:
             rest.append(it)
+    # Cap queue: códigos/latest already priority 0; take only unfinished up to max_new*3
+    pending = []
+    for it in rest:
+        nid = (it.get("id_norma") or "").strip()
+        num = (it.get("numero") or "").strip()
+        if it.get("ident"):
+            ident = it["ident"]
+        elif it.get("kind") == "codigo":
+            ident = f"codigo-{nid or num}"
+        else:
+            ident = f"ley-{num or nid}"
+        rid = slug_id(CC, ident)
+        if rid in done:
+            continue
+        pending.append(it)
+    pending = pending[: max(max_new * 3, max_new)]
+    log.info("pending after done-filter %s (capped)", len(pending))
     with ThreadPoolExecutor(max_workers=WORKERS) as ex:
-        futs = [ex.submit(fetch_one, it, done) for it in rest]
+        futs = {}
+        for it in pending:
+            if ok >= max_new or time.time() >= t_deadline:
+                break
+            futs[ex.submit(fetch_one, it, done)] = it
         n = 0
         for fut in as_completed(futs):
             n += 1
@@ -561,8 +717,13 @@ def main():
                 st = "fail"
                 log_failure(CC, {"status": "failed", "reason": repr(exc)})
             ok += st == "ok"; skip += st == "skip"; fail += st == "fail"
-            if n % 25 == 0 or n == len(rest):
-                log.info("progress %s/%s ok=%s skip=%s fail=%s", n, len(rest), ok, skip, fail)
+            if ok >= max_new or time.time() >= t_deadline:
+                for f in futs:
+                    f.cancel()
+                log.info("cap hit ok=%s elapsed_cap=%s", ok, time.time() >= t_deadline)
+                break
+            if n % 25 == 0 or n == len(futs):
+                log.info("progress %s/%s ok=%s skip=%s fail=%s", n, len(futs), ok, skip, fail)
                 write_progress("catalog-backed incomplete")
     cov = "full" if fail == 0 and ok + skip >= len(items) and items else "catalog-backed incomplete"
     write_progress(cov)
