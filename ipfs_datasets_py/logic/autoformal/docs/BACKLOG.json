@@ -1,4 +1,535 @@
 {
+  "programme_goal_hierarchy": {
+    "schema": "legal-ir-whole-uscode-goal-hierarchy/v1",
+    "recorded_at_utc": "2026-10-26",
+    "canonical_plan": "ipfs_datasets_py/logic/autoformal/docs/HANDOFF.md#whole-us-code-goal-and-supervised-delivery",
+    "task_authority": {
+      "path": "ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json",
+      "records": "tasks",
+      "original_task_ids": [
+        "LIR-01",
+        "LIR-02",
+        "LIR-03",
+        "LIR-04",
+        "LIR-05",
+        "LIR-06",
+        "LIR-07",
+        "LIR-08",
+        "LIR-09",
+        "LIR-10",
+        "LIR-11",
+        "LIR-12",
+        "LIR-13",
+        "LIR-14",
+        "LIR-15",
+        "LIR-16",
+        "LIR-17",
+        "LIR-18",
+        "LIR-19",
+        "LIR-20",
+        "LIR-21",
+        "LIR-22",
+        "LIR-23",
+        "LIR-24"
+      ],
+      "original_ids_statuses_dependencies_claims_and_history_unchanged": true,
+      "dependency_rule": "Original task dependencies govern acceptance; phase order is thematic. Preparation may proceed while semantic dependencies remain unresolved.",
+      "current_directives_rule": "Read this goal hierarchy with current_programme_directive before retained historical next_actions; none authorizes bypassing review/resource gates."
+    },
+    "goal": {
+      "id": "LIR-WHOLE-USCODE",
+      "title": "Formalize the entire explicitly selected United States Code source release into source-bound scoped LegalIR graphs and a preserved modular Lean4 corpus",
+      "status": "in_progress",
+      "completion": "qualified_manual_release",
+      "scope_boundary": "The exact finite source release manifest, including all titles and its provision/subunit/source-occurrence inventory; not Viewer counts, mixed index rows, fixture cards or an assumed current legal edition.",
+      "completion_gate": "Every manifest occurrence and dependency has a reconciled disposition. Every in-scope normative provision has independently reviewed meaning and definition applicability, lossless complete typed representation, closed reviewed graph and supported pinned Lean preservation/build. All approved non-normative/out-of-scope exclusions have witnesses; no in-scope unsupported/unresolved/failed normative unit is silently excluded or counted complete.",
+      "independent_tracks": [
+        "Reviewed manual/compiler targets may advance corpus release without a successful learned decoder.",
+        "Model-produced proposals re-enter source/meaning/applicability review; model promotion uses its separate frozen quality contract."
+      ]
+    },
+    "source_selection": {
+      "repository": "justicedao/ipfs_uscode",
+      "observed_source_revision": "91ca1838853ac82d7a12dd4ab47d9686f47667f9",
+      "declared_profile": "publicus-ir-graphrag/v2",
+      "declared_upstream_revision": "006dd603185b283c54648dd4aef3c2cbe650981a",
+      "declared_release_point": "us/pl/119/102",
+      "span_repository": "justicedao/uscode-autoformal-span-cache",
+      "observed_span_revision": "60501f3e920f6c9050cfc452e0d9fcc2b7c184f3",
+      "entity_repository": "justicedao/uscode-autoformal-entity-cache",
+      "observed_entity_revision": "79d54378c5d6a89ab56e7a27e0f0ba867e800e19",
+      "governing_edition": null,
+      "legal_as_of": null,
+      "selected_physical_manifest": null,
+      "adoption_rule": "Repository, upstream revision, release point, physical manifest, legal edition and legal-as-of are separate commitments. Refresh selected metadata/manifest and pin exact files/config/schema before enrollment; declarations and a storage split train do not supply legal or training authority.",
+      "viewer_rule": "Slash-containing configuration is rejected by the observed Viewer. Reuse explicit file/config/manifest intake and qualified uscode_hf_release compatibility; do not infer physical absence, change logical source identity, broad-glob tables or assume legacy default Parquet schema.",
+      "legacy_generations": "Retain named legacy compatibility, older monolith/USCODE-2024-title10/source 5016b86a and span 7651 generations and current-v2 source occurrences as separate populations; never substitute latest head into an old qualification.",
+      "latest_metadata_observation": {
+        "observed_at_utc": "2026-10-26T22:30:00Z",
+        "observation_scope": "public metadata only; no table/model payload, census, schema compatibility or source/semantic admission",
+        "repositories": [
+          {
+            "repository": "justicedao/ipfs_uscode",
+            "revision": "91ca1838853ac82d7a12dd4ab47d9686f47667f9",
+            "reported_files": 2802,
+            "last_modified_date": "2026-10-14",
+            "public": true,
+            "gated": false
+          },
+          {
+            "repository": "justicedao/uscode-autoformal-span-cache",
+            "revision": "60501f3e920f6c9050cfc452e0d9fcc2b7c184f3",
+            "reported_files": 7962,
+            "last_modified_date": "2026-10-15",
+            "public": true,
+            "gated": false
+          },
+          {
+            "repository": "justicedao/uscode-autoformal-entity-cache",
+            "revision": "79d54378c5d6a89ab56e7a27e0f0ba867e800e19",
+            "reported_files": 3,
+            "last_modified_date": "2026-10-15",
+            "public": true,
+            "gated": false
+          }
+        ],
+        "qualification_rule": "An unchanged/latest Hub head or file count does not requalify an older producer, request, dataset schema, source edition or receipt. Keep original immutable generations."
+      }
+    },
+    "phases": [
+      {
+        "id": "LIR-PHASE-01",
+        "parent_goal_id": "LIR-WHOLE-USCODE",
+        "title": "Preserve source, state and qualification lineage",
+        "task_ids": [
+          "LIR-01",
+          "LIR-03",
+          "LIR-16"
+        ],
+        "acceptance": "Bind exact producers, revisions, checkpoints, transforms, codecs, optimizer capabilities and qualification scopes; reuse the completed temporal comparison."
+      },
+      {
+        "id": "LIR-PHASE-02",
+        "parent_goal_id": "LIR-WHOLE-USCODE",
+        "title": "Authenticate a connected source component and its interpretation",
+        "task_ids": [
+          "LIR-02",
+          "LIR-05",
+          "LIR-06"
+        ],
+        "acceptance": "Bind one complete norm, governing definition and two distinct operative source uses, exact physical custody, governing edition/context and independent meaning/applicability decisions."
+      },
+      {
+        "id": "LIR-PHASE-03",
+        "parent_goal_id": "LIR-WHOLE-USCODE",
+        "title": "Represent complete norms and scoped definitions losslessly",
+        "task_ids": [
+          "LIR-07",
+          "LIR-09",
+          "LIR-10"
+        ],
+        "acceptance": "Complete target census, full input consumption and lossless codec/projection; preserve modality, polarity, ordered roles, binders, counting, conditions, exceptions and time; resolve each physical use independently."
+      },
+      {
+        "id": "LIR-PHASE-04",
+        "parent_goal_id": "LIR-WHOLE-USCODE",
+        "title": "Close reconstructable semantic graph components",
+        "task_ids": [
+          "LIR-04",
+          "LIR-08",
+          "LIR-11"
+        ],
+        "acceptance": "Distinct occurrence/mention/sense/entity/definition/norm identities, reviewed semantic edges and closed endpoints; source-AST-graph round-trip with surface sidecars, alternatives and unresolved frontiers."
+      },
+      {
+        "id": "LIR-PHASE-05",
+        "parent_goal_id": "LIR-WHOLE-USCODE",
+        "title": "Produce preserved modular Lean4 components",
+        "task_ids": [
+          "LIR-12",
+          "LIR-13",
+          "LIR-14",
+          "LIR-15"
+        ],
+        "acceptance": "Explicit interpretation, sorts, premises and axiom policy; exact modules/imports/artifacts and pinned actual build; preservation, non-vacuity, negative controls and affected-versus-clean invalidation."
+      },
+      {
+        "id": "LIR-PHASE-06",
+        "parent_goal_id": "LIR-WHOLE-USCODE",
+        "title": "Measure and improve compatible representations and decoders",
+        "task_ids": [
+          "LIR-17",
+          "LIR-18",
+          "LIR-19",
+          "LIR-20",
+          "LIR-23"
+        ],
+        "acceptance": "Freeze reviewed grouped data, compatible conditioning, objectives, controls, selection and resource budgets; measure autonomous complete semantic outputs and whole-session cost over every enrolled disposition."
+      },
+      {
+        "id": "LIR-PHASE-07",
+        "parent_goal_id": "LIR-WHOLE-USCODE",
+        "title": "Seal releases, classify repairs and expand to the selected whole corpus",
+        "task_ids": [
+          "LIR-21",
+          "LIR-22",
+          "LIR-24"
+        ],
+        "acceptance": "Immutable dependency-complete readback, classified repair admission and staged expansion; account for the entire selected source manifest and retain every exclusion, unresolved item and failed descendant."
+      }
+    ],
+    "coverage_contract": {
+      "population": {
+        "N_manifest_occurrences": null,
+        "N_normative_provisions": null,
+        "N_dependency_components": null,
+        "rule": "Populate from the authenticated pinned finite release inventory through existing intake/census owners; this planning refresh performs no corpus download or census."
+      },
+      "identity_fields": [
+        "repository_revision",
+        "physical_manifest_hash",
+        "file_hash",
+        "physical_row",
+        "source_occurrence_id",
+        "original_text_hash",
+        "extracted_view_hash",
+        "original_and_view_unicode_utf8_offsets",
+        "edition",
+        "legal_as_of",
+        "profile_and_producer",
+        "dependency_component",
+        "review_and_revocation_refs"
+      ],
+      "stage_dimensions": [
+        "source_custody",
+        "source_edition_context_review",
+        "meaning_and_every_use_applicability",
+        "complete_typed_ir_and_codec",
+        "semantic_graph_dependency_closure",
+        "lean_render_preservation_build",
+        "training_gold_eligibility",
+        "release_admission"
+      ],
+      "dispositions": [
+        "enrolled",
+        "proposed",
+        "review_required",
+        "unresolved",
+        "unsupported",
+        "reviewed",
+        "graph_closed",
+        "compiled",
+        "admitted",
+        "failed",
+        "excluded_non_normative",
+        "excluded_out_of_scope"
+      ],
+      "disposition_rule": "Dispositions are stage-specific ledger values with reason/evidence/owner and attempt history, not a single authority ladder. Compiled is not reviewed/admitted; failed/unresolved/unsupported remain visible. Exclusions require independent scope/classification evidence and do not hide eligible normative units.",
+      "denominators": [
+        "N_enrolled",
+        "N_source_bound",
+        "N_reviewed",
+        "N_representable",
+        "N_attempted",
+        "N_complete",
+        "N_exact",
+        "N_meaning_reviewed",
+        "N_graph_closed",
+        "N_kernel_checked",
+        "N_admitted",
+        "N_unresolved",
+        "N_unsupported",
+        "N_failed",
+        "N_excluded_non_normative",
+        "N_excluded_out_of_scope"
+      ],
+      "accounting_rule": "Reconcile each stage population without double counting observations, alternatives or dependency reuse. Unknown labels stay unscored; exactness over reviewed representable targets and yield over all enrolled sources are separate. Mixed Viewer/cache tables are not additive unique-provision counts.",
+      "whole_corpus_completion_requires": [
+        "All pinned-manifest members and import/dependency frontiers accounted with complete reconstruction/readback",
+        "All in-scope normative provisions meet source, independent meaning/applicability, complete IR, graph and pinned Lean gates",
+        "Every exclusion has an accepted reason and source witness; all unresolved/unsupported/failed in-scope normative units remain incomplete",
+        "Clean and affected builds agree for the selected invalidation profile, with complete review/revocation and toolchain closure",
+        "Immutable release and coverage/cost ledgers reconstruct from retained inputs; no pilot/fixture/engineering-card extrapolation"
+      ]
+    },
+    "staged_delivery": [
+      {
+        "id": "component",
+        "scope": "One complete supported norm, governing definition and two genuinely distinct operative physical uses",
+        "gate": "Exact source/edition/manifest/offset custody plus independent complete meaning and every-use definition review; alternatives from one occurrence are not two uses."
+      },
+      {
+        "id": "connected_pilot",
+        "scope": "20-40 connected provisions",
+        "gate": "Component acceptance repeated with explicit dependency, amendment, near-duplicate and exposure-group handling, complete graph and pinned Lean coverage."
+      },
+      {
+        "id": "dependency_shards",
+        "scope": "Budgeted closed dependency components across titles",
+        "gate": "Existing idempotent queue/store/exchange/release owners; finite source/profile/resource budgets, resumable custody and every disposition retained; cycles have explicit semantic/import contracts."
+      },
+      {
+        "id": "whole_manifest",
+        "scope": "Entire selected US Code release inventory",
+        "gate": "Whole-corpus completion conditions, immutable global reconciliation, exact cross-shard dependencies and declared amendment/edition boundaries; no blanket success from pilot metrics."
+      }
+    ],
+    "representation_contract": {
+      "common_rule": "Record producer/tokenizer/pooling/normalization/source-view pin, native width, actual bottleneck, residual/text/token bypasses, decoder input/hidden size/vocabulary/codec/output cap, checkpoint and optimizer lineage separately.",
+      "lanes": [
+        {
+          "width": 8,
+          "reuse": "Retained spaCy frozen features, separate historical learned 8D formula donor and separate mock:stable-sha256/8 cache guidance",
+          "gate": "Target-aware feature reconstruction is not formula fidelity; feature-to-donor transfer needs an explicit compatible profile."
+        },
+        {
+          "width": 384,
+          "reuse": "GTE-small mean/L2 native caches and compatible retained wording/contextual/persistent heads",
+          "gate": "512-token producer contract. Raw/native, transformed/residual and fictional sparse 384D inputs are distinct; residual projection_width8 still transmits384 coordinates."
+        },
+        {
+          "width": 768,
+          "reuse": "Native multilingual GTE CLS/L2 source captures and compatible retained wording/contextual heads",
+          "gate": "Producer8192-token capability does not extend retained 512-token comparisons; qualify1024/2048/4096/8192 bands separately. Authored60/60 wording is not statutory fidelity."
+        },
+        {
+          "width": 4096,
+          "reuse": "Leanstral full-causal last/L2 retained native features and existing separate source-span decoder/model-only loader",
+          "gate": "4096 is causal hidden/source width, not a trained legal bottleneck or teacher authority. Retained profile 512 tokens; source-text and full-vector bypasses remain declared."
+        }
+      ],
+      "retained_panel": "Reuse two complete born-alive source occurrences/eight vectors and existing captures; missing original384/768 operation packets and selected-worktree replayer publication retain their own gaps. No recapture solely to rebuild this panel.",
+      "systems_comparison": "Four distinct native producers on identical reviewed source/dependency groups, complete targets, permitted context, objective/selector/output budget and exposed-resource accounting; report compute/capacity differences.",
+      "bottleneck_study": "Separate selected experiment: one frozen encoder and compatible decoder family, declared8/384/768/4096 bottleneck-only route, no raw-vector/text/token/residual bypass. No padding, relabeling checkpoints or comparison of unrelated latent coordinates.",
+      "source_text_cycle": "Score text-to-complete-IR, IR-to-generated-prose and exact original-UTF8 restoration separately. Existing scorer/surface sidecars preserve archival recovery; learned source-free legal text reconstruction remains separately measured."
+    },
+    "quality_contract": {
+      "before_fitting": [
+        "Independent complete reviewed targets and inference-permitted source/definition context",
+        "Constructor/vocabulary/arity/binder/depth/codec/projection and input/output-budget census; zero silent truncation",
+        "Source-occurrence/definition/dependency/near-duplicate/amendment grouped TRAIN/DEV/held-out partitions with exposure ledger",
+        "Fixed objective, seed groups, update/resource budget, checkpoint selector, success/retention/refusal thresholds and independent scoring"
+      ],
+      "controls": [
+        "source_only",
+        "latent_disabled_or_zero",
+        "shuffled_source",
+        "shuffled_retrieval_when_used",
+        "matched_first_step_vs_every_step",
+        "unchanged_no_margin_comparator_for_margin_trial"
+      ],
+      "measurements": [
+        "Durable autonomous BOS-to-EOS complete outputs before reference parsing",
+        "Exact typed AST plus ordered roles/binders/scope/modality/polarity/counting/conditions/exceptions/time/definition applicability",
+        "Completion, abstention, failures and unsupported/OOV/budget/unknown-label denominators",
+        "Teacher-forced loss, native-space MSE/cosine and original-byte copying as separate diagnostics",
+        "At least three independent seed groups and fresh grouped holdout before generalization claims",
+        "Whole-session hashing/tokenization/locks/cache/model/grammar/validation/checkpoint/Lean/review/storage costs and resource closeout"
+      ],
+      "no_promotion_from": [
+        "finite loss decrease or plateau",
+        "authored 60/60 restricted wording",
+        "forced singleton/teacher-prefix agreement",
+        "engineering fixture/capture/board completion",
+        "vector similarity or successful Lean compilation alone"
+      ]
+    },
+    "parallel_preparation": {
+      "existing_namespace": "legal-ir-autoencoder-v1",
+      "existing_board": "ipfs_datasets_py/logic/autoformal/LIRAE-TODO.md in the deployed linked worktree",
+      "existing_completed_cards": 135,
+      "inventory_rule": "135 completed LIRAE cards are engineering inventory, not 135 formalized provisions or completion of original 24 scientific tasks. Never repurpose completed IDs/title/output/acceptance/CID.",
+      "protected_plan_owner": "ipfs_datasets_py/logic/autoformal/legal_ir_autoencoder_supervisor_plan.json",
+      "protected_contract_owner": "scripts/ops/legal_ir/legal_ir_supervisor_contract.py",
+      "children": [
+        {
+          "task_id": "LIRAE-LIR02-SOURCE-01",
+          "goal_id": "LIR-02.source-review-preparation-v1",
+          "parent_goal_id": "LIR-02",
+          "lane": 0,
+          "role": "source_review_preparation",
+          "outputs": [
+            "Original-input source/span/entity dossier request and immutable references",
+            "Physical occurrence/offset and edition/context/crosswalk issue inventory",
+            "Candidate dispositions and independent meaning/every-use questions"
+          ],
+          "acceptance": "Use the existing complete parent bank and retained definition/norm/use owners; no invented edition, meaning, second use, endpoint or eligibility. Preserve unresolved decisions and all masks; preparation alone satisfies no semantic parent dependency.",
+          "provider_role": "grok-implement",
+          "context_budget_tokens": 48000,
+          "completion_scope": "engineering_preparation_only",
+          "dispatch_authority": "existing protected supervisor plan and current claim/resource admission",
+          "satisfies_parent_semantic_dependencies": false,
+          "completion_outcomes": {
+            "qualified_reuse": "Authenticated current existing API/owner/test/source identities and exact candidate/request/evidence closure meet the requested preparation contract; preserve the original qualification scope. No code or owning-test change is required merely to complete this child.",
+            "implemented": "Only a demonstrated missing compatible interface justifies a change to its existing owner and meaningful owning tests; no second exporter, graph/codec builder or historical cohort rerun."
+          }
+        },
+        {
+          "task_id": "LIRAE-LIR07-IR-02",
+          "goal_id": "LIR-07.typed-ir-interface-preparation-v1",
+          "parent_goal_id": "LIR-07",
+          "lane": 1,
+          "role": "typed_ir_graph_preparation",
+          "outputs": [
+            "Selected complete-candidate constructor/vocabulary/binder/role census",
+            "Lossless codec, selected logic-family, graph and finite output-budget compatibility matrix",
+            "Minimal demonstrated missing-interface recipe or explicit reuse-only finding"
+          ],
+          "acceptance": "Use existing typed/relational/compact/counted and semantic graph owners; retain source correspondence, alternatives and unsupported/ambiguous dispositions. Do not create legal labels, a second codec/graph owner or repeat completed fixtures.",
+          "provider_role": "grok-implement",
+          "context_budget_tokens": 48000,
+          "completion_scope": "engineering_preparation_only",
+          "dispatch_authority": "existing protected supervisor plan and current claim/resource admission",
+          "satisfies_parent_semantic_dependencies": false,
+          "completion_outcomes": {
+            "qualified_reuse": "Authenticated current existing API/owner/test/source identities and exact candidate/request/evidence closure meet the requested preparation contract; preserve the original qualification scope. No code or owning-test change is required merely to complete this child.",
+            "implemented": "Only a demonstrated missing compatible interface justifies a change to its existing owner and meaningful owning tests; no second exporter, graph/codec builder or historical cohort rerun."
+          }
+        },
+        {
+          "task_id": "LIRAE-LIR12-LEAN-03",
+          "goal_id": "LIR-12.lean-compatibility-preparation-v1",
+          "parent_goal_id": "LIR-12",
+          "lane": 2,
+          "role": "lean_preservation_preparation",
+          "outputs": [
+            "Selected AST to current direct/conditional parent Lean profile compatibility matrix",
+            "Exact preparation/import/premise/axiom/artifact and preservation closure request",
+            "Named missing profile or invalidation edge with finite proposed acceptance"
+          ],
+          "acceptance": "Reuse qualified existing preparers/native/preservation/shared/incremental owners and their separate generations; no compiler rerun, source relabeling or statutory admission. Missing meaning/applicability decisions remain explicit premises or unresolved gates.",
+          "provider_role": "grok-implement",
+          "context_budget_tokens": 48000,
+          "completion_scope": "engineering_preparation_only",
+          "dispatch_authority": "existing protected supervisor plan and current claim/resource admission",
+          "satisfies_parent_semantic_dependencies": false,
+          "completion_outcomes": {
+            "qualified_reuse": "Authenticated current existing API/owner/test/source identities and exact candidate/request/evidence closure meet the requested preparation contract; preserve the original qualification scope. No code or owning-test change is required merely to complete this child.",
+            "implemented": "Only a demonstrated missing compatible interface justifies a change to its existing owner and meaningful owning tests; no second exporter, graph/codec builder or historical cohort rerun."
+          }
+        },
+        {
+          "task_id": "LIRAE-LIR17-PROFILE-03",
+          "goal_id": "LIR-17.conditions-fullspan-training-preparation-v1",
+          "parent_goal_id": "LIR-17",
+          "lane": 3,
+          "role": "conditions_model_optimizer_interface_preparation",
+          "outputs": [
+            "Versioned opt-in F18-derived four-tensor model/optimizer wiring in the existing optimizer package with meaningful owning tests",
+            "Exact F18 donor/F15 teacher/source/checkpoint/partition provenance and unchanged kernel/objective source pins",
+            "Finite separately admitted gradient/parity/resume qualification and coefficient 0/0.25 training/scoring/resource contracts"
+          ],
+          "acceptance": "Implement the actual open model/optimizer interface, reusing F18 and the published margin kernel rather than adding another recipe/preflight exporter. Copy all 42 authenticated F18 tensors; freeze 38 including modality; select start.weight,start.bias,end.weight,end.bias in that order and train only conditions row 3 (130 active/780 stored/650 inactive scalars). Fresh ordered four-tensor Adam; unchanged CE/F15 KL/full-B normalization and all 72 gold-present TRAIN rows remain eligible. Preserve old F18, margin, structured objective and checkpoint pins. Any genuine model/optimizer validation uses original finite source/resource admission; the matched coefficient 0/0.25, seed 1729, batch 12, 32-update fits require separate admission and produce no statutory/width promotion by default.",
+          "provider_role": "grok-implement",
+          "context_budget_tokens": 48000,
+          "completion_scope": "engineering_preparation_only",
+          "dispatch_authority": "existing protected supervisor plan and current claim/resource admission",
+          "satisfies_parent_semantic_dependencies": false,
+          "numerical_partition": {
+            "donor_tensor_count": 42,
+            "frozen_tensor_count": 38,
+            "inactive_scalar_count": 650,
+            "trainable_tensors": [
+              "start.weight",
+              "start.bias",
+              "end.weight",
+              "end.bias"
+            ],
+            "only_trainable_head_row": 3,
+            "optimizer": "fresh ordered four-tensor Adam",
+            "future_matched_coefficients": [
+              0,
+              0.25
+            ],
+            "future_updates_per_arm": 32,
+            "seed": 1729,
+            "batch_size": 12,
+            "gold_present_train_rows": 72,
+            "old_default_objective_source_pins_unchanged": true,
+            "active_scalar_count": 130,
+            "stored_scalar_count": 780,
+            "frozen_includes_modality": true,
+            "donor": "authenticated F18 final states",
+            "teacher": "F15 masked retention; not an F16/F17 donor combination",
+            "frozen38_identity": "Derive the new frozen38 identity from authenticated F18 states; old F15/F18 frozen36 identities are not reusable as a new partition seal."
+          },
+          "implementation_owner": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_fullspan_training_v1.py",
+          "readonly_reuse_owners": [
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_modality_conditions_retention.py",
+            "ipfs_datasets_py/logic/legal_ir/conditions_fullspan_margin_v1.py",
+            "ipfs_datasets_py/logic/legal_ir/structured_span_objective.py"
+          ],
+          "owning_test": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_conditions_fullspan_training_v1.py",
+          "readonly_reuse_owner_sha256": {
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_modality_conditions_retention.py": "fb7449d4794ca9a279b2df2ea533b89d360344ff786edc0798395ab799db1823",
+            "ipfs_datasets_py/logic/legal_ir/conditions_fullspan_margin_v1.py": "e4f16146cf6f64b16e979e5ee0803a41ee41a8377bfa7833918b0a25dd7d1160",
+            "ipfs_datasets_py/logic/legal_ir/structured_span_objective.py": "68a459fe5271248ee478ae05767396842c1e1b83e33971b980c77b1afd3f8c84"
+          }
+        }
+      ],
+      "provider_route": "grok-implement; sealed Grok4.7 to Codex6.1Sol high on primary_quota_exhausted, through the existing protected route",
+      "concurrency_rule": "Existing four strict-shard supervisors, claims, shared merge queue/landing branch and ipfs_accelerate resource admission control dispatch; lane balance does not grant native/model/meaning authority. Root owns actual deployment and publication.",
+      "reuse_completion_rule": "The source/IR/Lean children may complete through authenticated qualified reuse with exact candidate/evidence closure. Do not force owner/test changes or new exporters when existing APIs meet the request. The numerical child addresses the demonstrated missing versioned F18 four-tensor model/optimizer wiring; paired fitting is separately admitted."
+    },
+    "storage_and_release": {
+      "canonical_code": "Reusable source/span/review/graph/Lean code stays in external/ipfs_datasets canonical owners; numerical code remains with existing autoencoder/legal_ir/optimizer owners. Supervisor machinery remains with existing external/ipfs_accelerate owners. Product code never imports artifacts/workspace history.",
+      "cas_reuse": "Use existing content-addressed HF/IPFS/ModelManager stores and immutable references. Reuse identical weights/vectors/captures by digest; do not duplicate large payloads in plan, board, repository or a new checkpoint tree. Preserve original states, failed attempts and receipts.",
+      "run_evidence": "Run-specific requests/reports/logs belong in the existing workspace evidence hierarchy; no dated implementation/plan tree or duplicate queue.",
+      "release_manifest_fields": [
+        "selected_source_span_entity_revisions_and_physical_manifests",
+        "source_edition_context_and_review_revocation",
+        "complete_ir_graph_definitions_and_dependency_frontiers",
+        "model_producer_codec_conditioning_and_surface_sidecars_if_used",
+        "lean_sources_imports_toolchain_modules_artifact_hashes_preservation_and_assumptions",
+        "coverage_dispositions_costs_exclusions_failures_and_resource_closeout"
+      ],
+      "publication_gate": "Dependency-complete external delivery and immutable artifact readback precede the selected-release/superproject pointer change. Preserve the previous release on interruption; update selected pointers through existing atomic/compare-and-swap owner semantics."
+    },
+    "watchdog_and_incidents": {
+      "existing_units": [
+        "legal-ir-autoencoder-v1-monitor.timer",
+        "legal-ir-autoencoder-v1-monitor.service",
+        "legal-ir-validation-input-recovery.timer",
+        "legal-ir-validation-input-recovery.service",
+        "ipfs-taskboard-legal-ir-watchdog.service",
+        "ipfs-taskboard-legal-ir-repair.service"
+      ],
+      "no_duplicate_control_plane": true,
+      "pending_restart_race_hardening": {
+        "reported_focused_engineering_checks": 160,
+        "status": "live_verified",
+        "claim_limit": "The 160 focused engineering checks and live recovery verification do not qualify model accuracy, statutory meaning or corpus admission.",
+        "publication": {
+          "repository": "endomorphosis/ipfs_accelerate_py",
+          "PR": 298,
+          "merge": "4852f419e93f620963708a0b327951d64f5de66f"
+        }
+      },
+      "incident_classes": [
+        "stale_projection_or_receipt",
+        "missing_or_drifted_input",
+        "native_resource_pressure",
+        "legal_source_meaning_or_applicability_block",
+        "source_lease_or_merge_conflict",
+        "restart_or_service_generation_race",
+        "compiler_or_model_failure"
+      ],
+      "bounded_recovery": "Use existing configured retry/backoff/deadline and admission bounds. Refresh exact generation/input/claim evidence and preserve attempt history; avoid overlapping old/new service writers. Repeated identical incidents require explicit escalation instead of retry loops.",
+      "non_automatic_gates": "No watchdog supplies missing legal meaning, edition, independent review, eligibility or native resource permission; no automatic budget/cap increase, forced claim completion, lease bypass, weight recapture or semantic promotion.",
+      "restart_gate": "Root verifies prior worker/child drain, claim/source/native/storage custody and new service-generation provenance before accepting successor results. Accept successor results only for the verified deployed source and service generation; preserve controlled quiescence and restart custody."
+    },
+    "refresh_scope": {
+      "documentation_only": true,
+      "native_model_training_census_or_Lean_execution": false,
+      "live_board_or_service_change": false,
+      "original_tasks_unchanged": true,
+      "preimages_sha256": {
+        "HANDOFF.md": "1902a0b19ad89fe2941b0c57cb1e08d0c0db61905ac7444388e3984ba97d050b",
+        "TRAINING_HISTORY.md": "9b315a3bad57a61cba8b3a47d1fc594f1453c3ae40566c11f9745240b80f7480",
+        "BACKLOG.json": "af5d43473d7eee417d001d9dcc2e1764f52d351396ecb0514a7f8a3be44a3d5f"
+      }
+    }
+  },
   "migration": {
     "active_task_home": "ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json",
     "historical_metadata_home": "history/pre-consolidation.zip",

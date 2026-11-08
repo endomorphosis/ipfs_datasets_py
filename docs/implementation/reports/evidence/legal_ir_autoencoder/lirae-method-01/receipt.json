@@ -1,0 +1,23 @@
+{
+  "schema": "legal-ir-supervisor-task-receipt/v1",
+  "task_id": "LIRAE-METHOD-01",
+  "task_kind": "method",
+  "status": "implemented",
+  "authority": {
+    "admitted": false,
+    "formalized": false
+  },
+  "evidence": {
+    "source_hashes": [
+      "6e1086c76b41205ed5caafe80a80ff240b68f6c89484b9d6b3d78f8db8c67bf2",
+      "fb6eb7e04f50bdba72b954864e4cdc9dcf0a0857e6cc9a5b6e1544b234c64c2a"
+    ]
+  },
+  "artifacts": [
+    {
+      "kind": "lean_source",
+      "path": "docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-method-01/born_alive_term.lean",
+      "sha256": "50c1d9a7a5cfb20e5c664313cc2be0e4102393842e0e97be89486cfff619d4e8"
+    }
+  ]
+}
