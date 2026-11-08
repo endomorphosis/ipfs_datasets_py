@@ -697,3 +697,195 @@ def export_parent_norm_definition_graph_v1(record, output_directory, report, *ar
 
 __all__ += ["PARENT_SCHEMA", "PARENT_PROFILE", "build_parent_norm_definition_graph_v1",
     "validate_parent_norm_definition_graph_v1", "export_parent_norm_definition_graph_v1"]
+
+
+# This fixed profile projects fully replayed reviewed relational units through
+# the existing candidate graph vocabulary. Review eligibility is retained as an
+# upstream result; neither a graph seal nor this projection grants admission.
+REVIEWED_GRAPH_SCHEMA = "legal-corpus-reviewed-norm-candidate-graph/v2"
+REVIEWED_GRAPH_PROFILE = "complete-reviewed-relational-candidate-graph/v2"
+REVIEWED_GRAPH_FIELDS = {"profile", "admission_record", "scope_record", "interpretation_record",
+    "source_versions", "source_occurrences", "unit_records", "ast_records", "definition_use_records",
+    "term_records", "cross_reference_records", "graph", "counts", "producer_pins", "view", "authority",
+    "semantic_use_eligible", "training_mask", "evaluation_gold_mask", "external_complete_inputs_required"}
+
+
+def _reviewed_graph_owner():
+    from . import legal_norm_content_adjudication_v1
+    return legal_norm_content_adjudication_v1
+
+
+def _reviewed_graph_pins(owner):
+    pins = _check_pure()
+    for path, digest in owner._reviewed_pins().items():
+        _need(path not in pins or pins[path] == digest, "reviewed graph producer observations disagree")
+        pins[path] = digest
+    return pins
+
+
+def _reviewed_graph_project(admission, assessment_inputs, admission_sha256, pins):
+    """Lossless bounded candidate projection; complete replay precedes this seam."""
+    owner = _reviewed_graph_owner()
+    declaration = assessment_inputs["preparation_inputs"]["declaration"]
+    _need(admission["semantic_use_eligible"] is True
+          and "formalization" in admission["permitted_uses"],
+          "reviewed meaning must be currently eligible for explicit formalization use")
+    _need(admission["declaration_sha256"] == owner.norm_content_adjudication_sha256(declaration),
+          "reviewed graph declaration differs from exact admission")
+    seal = contracts.seal_record
+    admission_record = seal({"schema": "legal-corpus-reviewed-norm-admission-reference/v2",
+        "assessment_sha256": admission_sha256, "declaration_sha256": admission["declaration_sha256"],
+        "preparation_sha256": admission["preparation_sha256"], "provenance_kind": admission["provenance_kind"],
+        "upstream_semantic_use_eligible": True, "permitted_uses": admission["permitted_uses"],
+        "review_authority_sha256": owner.norm_content_adjudication_sha256(admission["review_authority"]),
+        "external_complete_inputs_required": True})
+    scope = seal({"schema": "legal-corpus-reviewed-norm-scope/v2", **declaration["governing_context"],
+        "interpretation_id": declaration["interpretation_id"],
+        "admission_record_cid": admission_record["record_cid"]})
+    interpretation = seal({"schema": "legal-corpus-reviewed-norm-interpretation/v2",
+        "interpretation_id": declaration["interpretation_id"], "component_id": declaration["component_id"],
+        "declaration_sha256": admission["declaration_sha256"], "scope_record_cid": scope["record_cid"],
+        "admission_record_cid": admission_record["record_cid"], "assumptions": declaration["assumptions"]})
+    source_versions, source_occurrences, unit_records, ast_records = [], [], [], []
+    use_records, term_records, cross_records, nodes, edges = [], [], [], {}, []
+    assertions, declarations, admitted_units = {}, {}, {row["unit_id"]: row for row in admission["units"]}
+
+    def node(kind, identity, record, *, occurrences=(), interpreted=False):
+        result = graphs.build_node(node_type=kind, stable_id=identity, content_cid=record["record_cid"],
+            scope_cid=scope["record_cid"], source_occurrence_cids=list(occurrences),
+            interpretation_cids=[interpretation["record_cid"]] if interpreted else [])
+        nodes[result["record_cid"]] = result
+        return result
+
+    def edge(left, right, relation, evidence, ordinal=None):
+        edges.append(graphs.build_edge(src_cid=left["record_cid"], dst_cid=right["record_cid"],
+            relation=relation, ordinal=ordinal, evidence_cids=[record["record_cid"] for record in evidence]))
+
+    scope_node = node("scope", scope["record_cid"], scope)
+    interpretation_node = node("interpretation", declaration["interpretation_id"], interpretation)
+    for unit in declaration["units"]:
+        identity, version, occurrence = unit["unit_id"], unit["source_version"], unit["occurrence"]
+        declarations[identity] = unit
+        current = admitted_units[identity]
+        ir = current["canonical_ir"]
+        # Rich typed ASTs remain in their existing canonical JSON companion
+        # pattern: no nesting-limit increase or unary/flat-rule conversion.
+        ast_raw = cid_utils.canonical_dag_json_bytes(ir)
+        ast_record = seal({"schema": "legal-corpus-reviewed-relational-ast-custody/v2",
+            "unit_id": identity, "profile": current["relational_profile"],
+            "ast_json": ast_raw.decode("utf-8"), "ast_sha256": hashlib.sha256(ast_raw).hexdigest(),
+            "ast_cid": cid_utils.cid_for_dag_json(ir), "source_occurrence_cid": occurrence["record_cid"],
+            "admission_record_cid": admission_record["record_cid"],
+            "projection_status": "complete_ordered_reviewed_IR_candidate_custody"})
+        unit_record = seal({"schema": "legal-corpus-reviewed-norm-unit/v2", "unit_id": identity,
+            "kind": unit["kind"], "document_revision": unit["document_revision"],
+            "parent_unit_ids": unit["parent_unit_ids"], "source_version_cid": version["record_cid"],
+            "source_occurrence_cid": occurrence["record_cid"], "ast_record_cid": ast_record["record_cid"],
+            "relational_request_sha256": unit["relational_request_sha256"], "coverage": unit["coverage"],
+            "scope_record_cid": scope["record_cid"], "interpretation_record_cid": interpretation["record_cid"],
+            "admission_record_cid": admission_record["record_cid"]})
+        version_node = node("source_version", version["record_cid"], version)
+        occurrence_node = node("occurrence", occurrence["record_cid"], occurrence)
+        expression_node = node("expression", identity + ":complete-IR", ast_record,
+            occurrences=[occurrence["record_cid"]], interpreted=True)
+        assertion = node("definition_assertion" if unit["kind"] == "definition" else "norm_assertion",
+            identity, unit_record, occurrences=[occurrence["record_cid"]], interpreted=True)
+        assertions[identity] = assertion
+        source_versions.append(version); source_occurrences.append(occurrence)
+        unit_records.append(unit_record); ast_records.append(ast_record)
+        edge(version_node, occurrence_node, "CONTAINS", [unit_record])
+        edge(assertion, occurrence_node, "HAS_SOURCE", [unit_record])
+        edge(assertion, expression_node, "DERIVED_FROM", [unit_record])
+        edge(assertion, scope_node, "APPLIES_WITHIN", [unit_record])
+        edge(interpretation_node, assertion, "CONTAINS", [admission_record])
+    _need(len(admitted_units) == len(unit_records), "reviewed graph cannot omit or duplicate an admitted unit")
+    defined_terms = {}
+    for ordinal, use in enumerate(declaration["definition_uses"]):
+        record = seal({"schema": "legal-corpus-reviewed-norm-definition-use/v2", "ordinal": ordinal,
+            **use, "admission_record_cid": admission_record["record_cid"],
+            "definition_unit_record_cid": next(row["record_cid"] for row in unit_records
+                if row["unit_id"] == use["definition_unit_id"]),
+            "use_unit_record_cid": next(row["record_cid"] for row in unit_records
+                if row["unit_id"] == use["use_unit_id"])})
+        use_records.append(record)
+        key = (use["definition_unit_id"], use["defined_predicate"])
+        if key not in defined_terms:
+            term = seal({"schema": "legal-corpus-reviewed-defined-predicate/v2",
+                "definition_unit_id": key[0], "defined_predicate": key[1],
+                "scope_record_cid": scope["record_cid"], "interpretation_record_cid": interpretation["record_cid"],
+                "admission_record_cid": admission_record["record_cid"]})
+            defined_terms[key] = node("term_sense", key[0] + ":" + key[1], term, interpreted=True)
+            term_records.append(term)
+            edge(assertions[key[0]], defined_terms[key], "DEFINES", [record])
+        edge(assertions[use["use_unit_id"]], assertions[use["definition_unit_id"]],
+            "USES_DEFINITION", [record, admission_record], ordinal)
+    for ordinal, ref in enumerate(declaration["cross_references"]):
+        record = seal({"schema": "legal-corpus-reviewed-norm-cross-reference/v2", "ordinal": ordinal,
+            **ref, "admission_record_cid": admission_record["record_cid"]})
+        cross_records.append(record)
+        target = node("expression", declaration["component_id"] + ":cross-reference:" + str(ordinal), record,
+                      interpreted=True)
+        edge(assertions[ref["from_unit_id"]], target, "CITES", [record, admission_record], ordinal)
+    for unit in declaration["units"]:
+        for parent in unit["parent_unit_ids"]:
+            edge(assertions[parent], assertions[unit["unit_id"]], "CONTAINS", [admission_record])
+    snapshot = graphs.build_graph_snapshot(list(nodes.values()), edges)
+    return seal({"schema": REVIEWED_GRAPH_SCHEMA, "profile": REVIEWED_GRAPH_PROFILE,
+        "admission_record": admission_record, "scope_record": scope, "interpretation_record": interpretation,
+        "source_versions": source_versions, "source_occurrences": source_occurrences,
+        "unit_records": unit_records, "ast_records": ast_records, "definition_use_records": use_records,
+        "term_records": term_records, "cross_reference_records": cross_records,
+        "graph": snapshot, "counts": {"units": len(unit_records), "definitions": len(term_records),
+            "norms": sum(row["kind"] == "norm" for row in unit_records), "definition_uses": len(use_records),
+            "cross_references": len(cross_records), "nodes": len(nodes), "edges": len(edges)},
+        "producer_pins": pins, "view": "candidate", "authority": dict(FALSE_FLAGS),
+        "semantic_use_eligible": False, "training_mask": 0, "evaluation_gold_mask": 0,
+        "external_complete_inputs_required": True})
+
+
+def _reviewed_graph_operation(admission, args, kwargs, expected_admission_sha256, offered=None):
+    owner = _reviewed_graph_owner()
+    contracts.require_sha256(expected_admission_sha256, "expected_admission_sha256")
+    original = {"admission": admission, "args": list(args), "kwargs": kwargs, "offered": offered}
+    detached, commitment = owner.norm._snapshot(original)
+    pins = _reviewed_graph_pins(owner)
+    _need(owner.norm_content_adjudication_sha256(detached["admission"]) == expected_admission_sha256,
+          "independent complete reviewed admission pin differs")
+    signature = inspect.signature(owner.assess_reviewed_norm_admission_v2)
+    bound = signature.bind(*detached["args"], **detached["kwargs"])
+    _need(set(bound.arguments) == set(signature.parameters), "complete reviewed admission replay inputs required")
+    checked = owner.validate_reviewed_norm_admission_v2(detached["admission"], *detached["args"],
+        expected_report_sha256=expected_admission_sha256, **detached["kwargs"])
+    _need(owner.norm._snapshot(original)[1] == commitment and owner.norm._snapshot(detached)[1] == commitment,
+          "reviewed graph inputs changed during admission replay")
+    result = _reviewed_graph_project(checked, bound.arguments, expected_admission_sha256, pins)
+    if offered is not None:
+        _need(cid_utils.canonical_dag_json_bytes(detached["offered"]) == cid_utils.canonical_dag_json_bytes(result),
+              "reviewed graph differs from complete source, IR, review and dependency regeneration")
+    _need(owner.norm._snapshot(original)[1] == commitment and owner.norm._snapshot(detached)[1] == commitment,
+          "reviewed graph inputs changed during projection")
+    _need(_reviewed_graph_pins(owner) == pins, "reviewed graph producers changed during operation")
+    return result
+
+
+def build_reviewed_norm_graph_v2(admission, *args, expected_admission_sha256, **kwargs):
+    """Replay reviewed meaning and project all units as candidate graph custody."""
+    return _reviewed_graph_operation(admission, args, kwargs, expected_admission_sha256)
+
+
+def validate_reviewed_norm_graph_v2(record, admission, *args, expected_graph_sha256,
+                                    expected_admission_sha256, **kwargs):
+    """Require exact independent graph identity and regenerate every companion."""
+    _check_pure()
+    contracts.require_sha256(expected_graph_sha256, "expected_graph_sha256")
+    checked = contracts.validate_record(record, schema=REVIEWED_GRAPH_SCHEMA, fields=REVIEWED_GRAPH_FIELDS)
+    _need(norm_definition_graph_sha256(checked) == expected_graph_sha256,
+          "independent complete reviewed candidate graph pin differs")
+    result = _reviewed_graph_operation(admission, args, kwargs, expected_admission_sha256, checked)
+    _need(norm_definition_graph_sha256(record) == expected_graph_sha256,
+          "offered reviewed candidate graph changed during validation")
+    return result
+
+
+__all__ += ["REVIEWED_GRAPH_SCHEMA", "REVIEWED_GRAPH_PROFILE", "build_reviewed_norm_graph_v2",
+    "validate_reviewed_norm_graph_v2"]

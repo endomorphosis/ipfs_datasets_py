@@ -1,0 +1,102 @@
+{
+  "Lean_admitted": false,
+  "acceptance_scope": "Exact clean-base captured authored-fixture software source generation only",
+  "accepted": true,
+  "actual_statutory_reviews": 0,
+  "base_commit": "cc8392f32eb2cac901d04ad7cc0480da4e9d8b02",
+  "corpus_admitted": false,
+  "delivery_head_before_graph_commit": "2392e490f454b64f9ee24c474ed3fc2ae96f08bd",
+  "evaluation_gold_mask": 0,
+  "existing_task_ids": [
+    "LIR-06",
+    "LIR-07",
+    "LIR-09",
+    "LIR-10",
+    "LIR-17",
+    "LIR-20",
+    "LIR-22"
+  ],
+  "graph_schema": "legal-corpus-reviewed-norm-candidate-graph/v2",
+  "id": "reviewed-norm-graph-v2-main-source-qualification-20261108-01",
+  "independent_review_metadata_assertions": 3662,
+  "kernel_proof_qualified": false,
+  "limits": [
+    "This focused22-case cohort does not qualify the whole owning test module or package.",
+    "Recorded software source qualification supplies no source-law accuracy, native Lean proof, model gain or corpus admission.",
+    "Earlier admission242, Core243/Native8 and historical graph cohorts remain separate; no credit is pooled.",
+    "The unlaunched primary233-pin/200-source proposal supplies no execution credit."
+  ],
+  "metadata_assertions_are_tests": false,
+  "model_training_executed": false,
+  "profile": "complete-reviewed-relational-candidate-graph/v2",
+  "published_admission_evidence_preserved": {
+    "bytes": 6589,
+    "path": "docs/autoformalization/evidence/legal-reviewed-semantic-admission-v2-main-source-port-20261108.json",
+    "sha256": "580f7b3cf7f89726323574964b09fae28b558db81960aa6a9ebc459fdfb731f6"
+  },
+  "qualification": {
+    "JUnit": {
+      "bytes": 4611,
+      "path": "/tmp/pytest-of-barberb/legal-ir-clean-base-reviewed-norm-graph-20261108-v01/attempt-v01/exports/test-results.xml",
+      "sha256": "c223dc9bbe51ed42c302a57ca66e55f8f9c9e38aa627a93ad44038103b1b9d9a"
+    },
+    "actual_cases": 22,
+    "actually_compiled_and_executed_source_buffers": 134,
+    "all_pinned_sources_executed_claimed": false,
+    "child_plugin_or_natural_phase_credit": false,
+    "errors": 0,
+    "executed": true,
+    "failures": 0,
+    "genuine_namespace_modules": 2,
+    "historical_case_credit_transferred": 0,
+    "independent_acceptance": {
+      "bytes": 8502,
+      "path": "/tmp/legal-ir-clean-base-graph22-independent-actual-acceptance-20261108-v01.json",
+      "sha256": "208b4c1ffb3195358cb3209588d92bb12a34cff133c33db62e8c303850768d83"
+    },
+    "installed_dependency_DATA_refs": 2405,
+    "legacy_smoke_cases": 2,
+    "new_reviewed_graph_cases": 20,
+    "normal_file_backed_modules": 118,
+    "original_closeout": {
+      "bytes": 9951,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-clean-base-reviewed-norm-graph-20261108-v01/actual-owner-closeout.json",
+      "sha256": "1d7c9463986cdec6277980a23a1d609f507cdc6eed9c6210c36abee97f113843"
+    },
+    "original_independent_acceptance": {
+      "bytes": 8502,
+      "path": "/tmp/legal-ir-clean-base-graph22-independent-actual-acceptance-20261108-v01.json",
+      "sha256": "208b4c1ffb3195358cb3209588d92bb12a34cff133c33db62e8c303850768d83"
+    },
+    "original_source_process_compute_and_durable_storage_closed": true,
+    "product_files_pinned": 189,
+    "pytest_seconds": 38.58,
+    "runtime_DATA_refs": 2,
+    "selected_functions": 6,
+    "skips": 0,
+    "source_observation": {
+      "bytes": 121196,
+      "path": "/tmp/pytest-of-barberb/legal-ir-clean-base-reviewed-norm-graph-20261108-v01/attempt-v01/exports/clean-base-reviewed-norm-graph-source-observation.json",
+      "sha256": "98e2c7ba15cfa473d365430ea7129e2985c42965730883841b7870b0a099c4f4"
+    },
+    "source_pins": 222,
+    "strict_project_origins": 5
+  },
+  "schema": "legal-reviewed-norm-graph-main-source-qualification/v1",
+  "semantic_graph_admitted": false,
+  "semantics": "Complete admitted declaration/source/IR/context/definition-use/review/dependency commitments are replayed; fictional engineering reviews establish no statutory meaning. The output remains a candidate graph with false authorities and zero masks.",
+  "source_postimages": [
+    {
+      "bytes": 53441,
+      "path": "ipfs_datasets_py/logic/autoformal/corpus_norm_definition_adapter.py",
+      "sha256": "f3403692a1c8cf510f9e86821d6614eb7089495a9c0efbde4782c73c15cb40c4"
+    },
+    {
+      "bytes": 45848,
+      "path": "tests/unit/logic/autoformal/test_corpus_norm_definition_adapter.py",
+      "sha256": "1f99ac3265626af15285099e0df471012e8f1141e0330aa2e74932401af260fe"
+    }
+  ],
+  "status": "focused_tests_qualified",
+  "training_mask": 0
+}
