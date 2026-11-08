@@ -253,3 +253,41 @@ the exhausted paired rosters, progress lookup or census. Legal-as-of,
 meaning and every-use applicability remain independent decisions. The published
 selector's compatible persistent consumer remains separate work; numerical
 baseline accuracy stays 0/4 typed or exact ID/AST matches.
+
+
+## Explicit reviewed relational candidate graph V2
+
+`build_reviewed_norm_graph_v2(admission, *assessment_args,
+expected_admission_sha256=..., **assessment_kwargs)` and
+`validate_reviewed_norm_graph_v2(candidate, admission, *assessment_args,
+expected_graph_sha256=..., expected_admission_sha256=...,
+**assessment_kwargs)` use the complete existing reviewed-admission assessment
+arguments, including original source bytes, relational request/report inputs,
+review registry/policy/evidence, dependency observations and evaluation time.
+Supply independent complete assessment and candidate hashes.
+`norm_definition_graph_sha256` hashes this complete candidate profile.
+
+The operation validates the current admission before rebuilding every ordered
+unit, source version/occurrence, complete IR JSON companion, governing context,
+selected interpretation and declared definition-use/cross-reference relation.
+The reviewed declaration must be eligible for its explicit formalization use.
+Resealing altered records cannot replace that replay. Whole context-bearing IR
+and ordered argument roles remain intact; overflow refuses the operation.
+The V1 profiles and their earlier qualification generations retain their scope.
+
+The output profile is `complete-reviewed-relational-candidate-graph/v2`, schema
+`legal-corpus-reviewed-norm-candidate-graph/v2`. Declared definition-use edges
+record the reviewed input commitments. Output authority flags remain false,
+`semantic_use_eligible` is false, and training/evaluation-gold masks are integer
+zero. This projection establishes no statutory meaning or proof that a selected
+definition applies. Complete external replay inputs remain required; V2 adds no
+export, corpus-admission or Lean-build API.
+
+[Focused clean-base evidence](../../../../../docs/autoformalization/evidence/legal-reviewed-norm-graph-v2-main-source-qualification-20261108.json)
+records 22 passing authored-fixture cases across six functions (20 reviewed and
+two existing smoke cases), with zero failures/errors/skips. Independent review
+binds 189 pinned product buffers and 134 actual compiled/executed source buffers,
+222 request pins and closed original custody. Its 3,662 metadata assertions are
+not additional tests. Older admission/graph/native cohorts remain separate.
+No actual statutory reviews, training/model gain, native Lean proof or accepted
+semantic graph/corpus follows from this software qualification.

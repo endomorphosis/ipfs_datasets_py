@@ -3052,12 +3052,15 @@
         "export_norm_definition_graph_v1",
         "build_parent_norm_definition_graph_v1",
         "validate_parent_norm_definition_graph_v1",
-        "export_parent_norm_definition_graph_v1"
+        "export_parent_norm_definition_graph_v1",
+        "build_reviewed_norm_graph_v2",
+        "validate_reviewed_norm_graph_v2"
       ],
       "compatibility_dependency": false,
       "evidence_ids": [
         "graph-companion-public-integration-20261024-01",
-        "parent-norm-definition-graph-20261025-01"
+        "parent-norm-definition-graph-20261025-01",
+        "reviewed-norm-graph-v2-main-source-qualification-20261108-01"
       ],
       "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_corpus_norm_definition_adapter.md",
       "id": "norm-definition-graph-adapter",
@@ -3077,7 +3080,7 @@
         },
         "scope": "Retained original81-case and separate33-case graph/selector observations at their original source generations; not pooled into the new15-case cohort. Original17169/20881-byte source/test prefixes are unchanged."
       },
-      "notes": "Existing custody-only norm/definition graph projection; original81-case historical graph cohort is reused distinctly, not aggregated. Fresh current-public qualification passed33cases/99phases:26graph adapter/shared-companion handoff,2legacy graph/exchange and5existing selector cases. Two real Parquet bundles/four payloads retain the candidate and upstream companions; the authored candidate has13nodes/24custody edges,2typed uses/4nominations and one physical norm target, with0accepted semantic USES_DEFINITION edges. Namespace-scoped checked raw compile/exec-filename observations; no whole-package or code-object attestation. No new Lean/model/training or statutory meaning/applicability/admission; masks0. The explicit parent-literal nomination graph route has its separate15-case/45-phase/11-selector qualification (14new/1legacy) on195 actual public dependency origins plus2 candidate overlays. Its saved55-node/160-edge graph preserves2alternatives,3typeduses,6orderednominations,18definition-occurrence and18context population members (9each/alternative),42opaque source references and6pending normcontexts. Population counts do not establish distinct statutory uses. Genuine selected Parquet roundtrip and saved-artifact readback remain separate; original compute/storage/bothREADs closed. No mixed lowering, statutory meaning/applicability, model/training or Lean/corpus admission; four masks0. The15/45 qualification remains on a9c8fbfd; the laterfc3d8bbd delivery has194 unchanged dependency origins and one changed previously executed module with accepted source-only compatibility review. The combined delivery generation was not executed or requalified.",
+      "notes": "Existing custody-only norm/definition graph projection; original81-case historical graph cohort is reused distinctly, not aggregated. Fresh current-public qualification passed33cases/99phases:26graph adapter/shared-companion handoff,2legacy graph/exchange and5existing selector cases. Two real Parquet bundles/four payloads retain the candidate and upstream companions; the authored candidate has13nodes/24custody edges,2typed uses/4nominations and one physical norm target, with0accepted semantic USES_DEFINITION edges. Namespace-scoped checked raw compile/exec-filename observations; no whole-package or code-object attestation. No new Lean/model/training or statutory meaning/applicability/admission; masks0. The explicit parent-literal nomination graph route has its separate15-case/45-phase/11-selector qualification (14new/1legacy) on195 actual public dependency origins plus2 candidate overlays. Its saved55-node/160-edge graph preserves2alternatives,3typeduses,6orderednominations,18definition-occurrence and18context population members (9each/alternative),42opaque source references and6pending normcontexts. Population counts do not establish distinct statutory uses. Genuine selected Parquet roundtrip and saved-artifact readback remain separate; original compute/storage/bothREADs closed. No mixed lowering, statutory meaning/applicability, model/training or Lean/corpus admission; four masks0. The15/45 qualification remains on a9c8fbfd; the laterfc3d8bbd delivery has194 unchanged dependency origins and one changed previously executed module with accepted source-only compatibility review. The combined delivery generation was not executed or requalified. The additive reviewed V2 candidate route has a separate 22-case clean-base source qualification (20 reviewed cases and two legacy smoke cases, six functions). It replays complete admission/source/IR/context/reviews/dependencies and preserves every unit/role/definition-use record. All graph authorities remain false and training/evaluation-gold masks zero; source-law truth, applied-definition proof, model and Lean-corpus admission remain separate.",
       "owner_module": "ipfs_datasets_py.logic.autoformal.corpus_norm_definition_adapter",
       "ownership_role": "existing_single_owner",
       "owning_test": {
@@ -3151,6 +3154,36 @@
         "sha256": "e3633ea05bbcd0599472ec26ac35e4cdc616ea7332a2e8e923133449bac8258b"
       },
       "required": true,
+      "reviewed_candidate_graph_v2": {
+        "Lean_admitted": false,
+        "actual_cases": 22,
+        "actual_compiled_and_executed_sources": 134,
+        "corpus_admitted": false,
+        "default_adoption": false,
+        "evaluation_gold_mask": 0,
+        "evidence_id": "reviewed-norm-graph-v2-main-source-qualification-20261108-01",
+        "legacy_smoke_cases": 2,
+        "new_reviewed_graph_cases": 20,
+        "owning_test": {
+          "bytes": 45848,
+          "path": "tests/unit/logic/autoformal/test_corpus_norm_definition_adapter.py",
+          "sha256": "1f99ac3265626af15285099e0df471012e8f1141e0330aa2e74932401af260fe"
+        },
+        "profile": "complete-reviewed-relational-candidate-graph/v2",
+        "request_source_pins": 222,
+        "schema": "legal-corpus-reviewed-norm-candidate-graph/v2",
+        "selected_functions": 6,
+        "semantic_graph_admitted": false,
+        "source": {
+          "bytes": 53441,
+          "path": "ipfs_datasets_py/logic/autoformal/corpus_norm_definition_adapter.py",
+          "sha256": "f3403692a1c8cf510f9e86821d6614eb7089495a9c0efbde4782c73c15cb40c4"
+        },
+        "source_snapshot_files": 189,
+        "status": "focused_tests_qualified",
+        "training_mask": 0,
+        "whole_owning_module_qualified": false
+      },
       "status": "focused_tests_qualified"
     },
     {
@@ -3205,11 +3238,15 @@
         "build_norm_content_adjudication_template_v1",
         "build_norm_content_adjudication_declaration_v1",
         "assess_norm_content_adjudication_v1",
-        "validate_norm_content_adjudication_v1"
+        "validate_norm_content_adjudication_v1",
+        "prepare_reviewed_norm_admission_v2",
+        "assess_reviewed_norm_admission_v2",
+        "validate_reviewed_norm_admission_v2"
       ],
       "compatibility_dependency": true,
       "evidence_ids": [
-        "norm-content-adjudication-public-integration-20261024-01"
+        "norm-content-adjudication-public-integration-20261024-01",
+        "reviewed-semantic-admission-v2-main-source-port-20261108-01"
       ],
       "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_norm_content_adjudication_v1.md",
       "id": "norm-content-adjudication-v1",
@@ -3221,6 +3258,20 @@
       ],
       "path": "ipfs_datasets_py/logic/autoformal/legal_norm_content_adjudication_v1.py",
       "required": true,
+      "reviewed_semantic_admission_v2": {
+        "Lean_admitted": false,
+        "actual_statutory_reviews": 0,
+        "evidence_id": "reviewed-semantic-admission-v2-main-source-port-20261108-01",
+        "fixture_evaluation_gold_mask": 0,
+        "fixture_training_mask": 0,
+        "fresh_adjudication_cases": 112,
+        "fresh_clean_base_cases": 242,
+        "historical_V03_cases": 242,
+        "historical_cases_transfer_to_clean_base": false,
+        "legacy_v1_unapplied_profile_preserved": true,
+        "profile": "complete-reviewed-norm-admission/v2",
+        "status": "focused_tests_qualified"
+      },
       "status": "focused_tests_qualified"
     },
     {
@@ -4440,6 +4491,20 @@
         "trainer_cases": 242,
         "trainer_phases": 726
       },
+      "current_synthetic_numerical_trainer_probe": {
+        "actual_post_RUN_numerical_probe": true,
+        "capture_forwards": 2,
+        "captures_abstained": 2,
+        "contract_cases_disjoint": 299,
+        "contract_phases": 897,
+        "evidence_id": "f18-v2-synthetic-native-numerical-probe-qualified-20261030-01",
+        "native_source_pins": 76,
+        "optimizer_updates": 1,
+        "retained_fit_or_experiment_rate_selected": false,
+        "source_native_process_storage_closed": true,
+        "training_forwards": 1,
+        "worker_api": "autoencoder_daemon_invocation_worker.run_f18_numerical_probe"
+      },
       "evidence_ids": [
         "f18-v2-recipe-bound-numerical-qualified-20261028-01",
         "f18-v2-source-capture-and-initial632-parity-qualified-20261028-01",
@@ -4546,21 +4611,32 @@
         "pure_cases": 241,
         "selected_experiment_rate": null,
         "worker": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_invocation_worker.py"
-      },
-      "current_synthetic_numerical_trainer_probe": {
-        "evidence_id": "f18-v2-synthetic-native-numerical-probe-qualified-20261030-01",
-        "worker_api": "autoencoder_daemon_invocation_worker.run_f18_numerical_probe",
-        "contract_cases_disjoint": 299,
-        "contract_phases": 897,
-        "actual_post_RUN_numerical_probe": true,
-        "native_source_pins": 76,
-        "optimizer_updates": 1,
-        "training_forwards": 1,
-        "capture_forwards": 2,
-        "captures_abstained": 2,
-        "retained_fit_or_experiment_rate_selected": false,
-        "source_native_process_storage_closed": true
       }
+    },
+    {
+      "apis": [
+        "prepare_source_span_consumer_binding",
+        "validate_source_span_consumer_binding",
+        "consume_source_span_binding",
+        "prepare_reviewed_source_span_consumer_binding_v2",
+        "validate_reviewed_source_span_consumer_binding_v2",
+        "consume_reviewed_source_span_binding_v2",
+        "reviewed_admission_inputs_sha256"
+      ],
+      "compatibility_dependency": true,
+      "evidence_ids": [
+        "reviewed-semantic-admission-v2-main-source-port-20261108-01"
+      ],
+      "id": "source-span-consumer-binding",
+      "notes": "Existing engineering V1 remains unchanged. The additive reviewed V2 consumer replays current admission, retains complete typed targets, pins registry/policy identities, enforces permitted operations/splits/exposure and blocks compact-codec projection. Fresh clean-base qualification passed all 130 consumer cases within the 242-case cohort; historical V03 remains a separate generation with zero transferred credit. Fictional fixture gold masks stay zero, with no statutory, model, graph or Lean admission.",
+      "owner_module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_consumer_binding",
+      "ownership_role": "existing_single_owner",
+      "owning_tests": [
+        "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_consumer_binding.py"
+      ],
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_consumer_binding.py",
+      "required": true,
+      "status": "focused_tests_qualified"
     }
   ],
   "entry_point": "ipfs_datasets_py/logic/autoformal/README.md",
@@ -7014,6 +7090,26 @@
       "root": "datasets_repository",
       "scope": "299 disjoint pure contracts and actual synthetic native one-step/two-capture dispatch, with complete custody. Both captures abstained. No retained-data fit, new TRAIN rate, task activation or statutory/Lean gain.",
       "status": "synthetic_post_RUN_numerical_dispatch_qualified_retained_producer_and_science_gates_open"
+    },
+    {
+      "id": "reviewed-semantic-admission-v2-main-source-port-20261108-01",
+      "observed_bytes": 6589,
+      "observed_sha256": "580f7b3cf7f89726323574964b09fae28b558db81960aa6a9ebc459fdfb731f6",
+      "path": "docs/autoformalization/evidence/legal-reviewed-semantic-admission-v2-main-source-port-20261108.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Only four additive Main source/test files: fresh clean-base 242 authored-fixture cases with original custody and durable storage closure. Historical V03 and failed cohorts remain separate. Graph, Core, statutory meaning, model and Lean-corpus qualification are separate.",
+      "status": "focused_tests_qualified"
+    },
+    {
+      "id": "reviewed-norm-graph-v2-main-source-qualification-20261108-01",
+      "observed_bytes": 4586,
+      "observed_sha256": "7fd4bab54b91c2d9ca1aaee48090c84c375cab7f8d98e06a83a6f5cc82004797",
+      "path": "docs/autoformalization/evidence/legal-reviewed-norm-graph-v2-main-source-qualification-20261108.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Separate22 authored-fixture source cases on exact clean-base graph2 bytes; complete current admission replay and lossless candidate graph custody. No statutory, semantic graph, corpus, native Lean or model admission. Earlier cohorts retain zero transferred credit.",
+      "status": "focused_tests_qualified"
     }
   ]
 }

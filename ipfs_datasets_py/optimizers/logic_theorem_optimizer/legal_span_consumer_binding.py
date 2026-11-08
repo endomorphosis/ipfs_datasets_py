@@ -1,9 +1,11 @@
-"""Opt-in, zero-latent source-span argument custody for engineering consumers.
+"""Opt-in, zero-latent source-span argument custody for explicit consumers.
 
 Eligibility and exposure are explicit declarations, not reviewed gold. This
 module does not invoke a trainer, model, signature verifier or native compiler.
 It leaves existing trainers unchanged. Its frozen snapshots protect ordinary
 caller mutations; they are not a security boundary against malicious Python.
+The separate v2 path replays complete reviewed admission and retains full typed
+targets; review eligibility is separate from decoder support and proof validity.
 """
 from __future__ import annotations
 
@@ -348,3 +350,297 @@ def consume_source_span_binding(binding, rows, *, split_manifest, eligibility_re
 __all__ = ["SourceSpanConsumerBinding", "SourceSpanConsumerBindingError",
            "prepare_source_span_consumer_binding", "validate_source_span_consumer_binding",
            "consume_source_span_binding", "SCHEMA", "PROFILE", "MAX_ROWS", "MAX_BYTES", "MAX_DEPTH", "MAX_NODES"]
+
+
+REVIEWED_SCHEMA = "reviewed-source-span-consumer-binding/v2"
+REVIEWED_PROFILE = "complete-reviewed-source-span-supervision/v2"
+REVIEWED_TARGET_CODEC = "complete-relational-typed-ast/v1"
+_REVIEWED_ROW_FIELDS = {"id", "unit_id", "source_text", "canonical_ir"}
+
+
+def _reviewed_admission_owner():
+    from ipfs_datasets_py.logic.autoformal import legal_norm_content_adjudication_v1
+    return legal_norm_content_adjudication_v1
+
+
+def _reviewed_snapshot(value):
+    # Admission replay contains exact source/request bytes. Never JSON-coerce
+    # these to text, base64 or caller-supplied summaries.
+    try:
+        return _reviewed_admission_owner().norm._snapshot(value)
+    except (ValueError, TypeError, KeyError, OverflowError, RecursionError) as error:
+        raise SourceSpanConsumerBindingError("invalid complete admission replay inputs: " + str(error)) from error
+
+
+def reviewed_admission_inputs_sha256(admission_inputs):
+    """Bounded type-separated JSON/bytes commitment from the norm-review owner."""
+    return _reviewed_snapshot(admission_inputs)[1]
+
+
+def _reviewed_implementation():
+    _require(hashlib.sha256(Path(__file__).read_bytes()).hexdigest() == _SOURCE_AT_IMPORT,
+             "consumer binding source changed since import")
+    _require(hashlib.sha256(_SPLIT_SOURCE_PATH.read_bytes()).hexdigest() == _SPLIT_SOURCE_AT_IMPORT,
+             "split implementation changed since import")
+    return {"adapter_sha256": _SOURCE_AT_IMPORT,
+            "legal_ir_eval_splits_sha256": _SPLIT_SOURCE_AT_IMPORT,
+            "content_guard": CheckpointContentGuard({}).inference_implementation,
+            "target_codec": REVIEWED_TARGET_CODEC}
+
+
+def _reviewed_assessment(admission_inputs):
+    _require(type(admission_inputs) is dict, "complete admission replay mapping required")
+    try:
+        report = _reviewed_admission_owner().assess_reviewed_norm_admission_v2(**admission_inputs)
+    except (ValueError, TypeError, KeyError, OverflowError, RecursionError) as error:
+        raise SourceSpanConsumerBindingError("reviewed admission replay failed: " + str(error)) from error
+    _preflight(report)
+    _require(type(report) is dict
+             and report.get("schema") == "legal-reviewed-norm-admission-assessment/v2"
+             and report.get("profile") == "complete-reviewed-norm-admission/v2",
+             "complete reviewed admission assessment profile required")
+    _sha256(report.get("declaration_sha256"), "reviewed declaration SHA256")
+    _sha256(admission_inputs.get("expected_preparation_sha256"), "reviewed preparation SHA256")
+    _sha256(admission_inputs.get("expected_registry_sha256"), "reviewed trust registry SHA256")
+    _sha256(admission_inputs.get("expected_policy_sha256"), "reviewed trust policy SHA256")
+    _require(type(report.get("semantic_use_eligible")) is bool
+             and type(report.get("blockers")) is list, "explicit admission disposition required")
+    _require(report.get("provenance_kind") in ("fictional_fixture", "statutory"),
+             "explicit reviewed provenance required")
+    permitted = report.get("permitted_uses")
+    _require(type(permitted) is list and all(type(item) is str for item in permitted)
+             and len(permitted) == len(set(permitted)), "distinct reviewed permitted uses required")
+    _require(type(report.get("producer_pins")) is dict, "reviewed producer pins required")
+    units = report.get("units")
+    _require(type(units) is list and 1 <= len(units) <= MAX_ROWS,
+             "complete bounded reviewed unit population required")
+    identifiers = set()
+    for unit in units:
+        _require(type(unit) is dict, "reviewed unit mapping required")
+        _text(unit.get("unit_id"), "reviewed unit id", 512)
+        _require(unit["unit_id"] not in identifiers, "unique reviewed unit IDs required")
+        identifiers.add(unit["unit_id"])
+        _text(unit.get("source_text"), "reviewed source text", MAX_BYTES)
+        _text(unit.get("occurrence_cid"), "reviewed occurrence CID", 1024)
+        _require("canonical_ir" in unit and "argument_roles" in unit and "relational_profile" in unit,
+                 "complete reviewed typed target and roles required")
+    for field in ("proof_authority", "Lean_admitted", "semantic_graph_admitted",
+                  "lean_corpus_authority", "corpus_admitted"):
+        _require(report.get(field, False) is False, "semantic review cannot confer proof/corpus authority")
+    if report["provenance_kind"] == "fictional_fixture":
+        for field in ("training_mask", "evaluation_gold_mask"):
+            _require(type(report.get(field)) is int and report[field] == 0,
+                     "fictional fixtures require zero production/gold masks")
+    return report
+
+
+def _reviewed_stable_identity(report, admission_inputs):
+    # Trust observations and the explicit evaluation time may advance. A new
+    # registry/policy root requires a freshly prepared consumer binding, even
+    # when that different authority would support the same target.
+    return {"profile": report["profile"], "declaration_sha256": report["declaration_sha256"],
+            "preparation_sha256": admission_inputs["expected_preparation_sha256"],
+            "registry_sha256": admission_inputs["expected_registry_sha256"],
+            "policy_sha256": admission_inputs["expected_policy_sha256"],
+            "provenance_kind": report["provenance_kind"], "producer_pins": report["producer_pins"],
+            "units": report["units"]}
+
+
+@dataclass(frozen=True, slots=True, init=False)
+class ReviewedSourceSpanConsumerBinding:
+    """Exact complete targets and replay-bound admission for one consumer batch."""
+    _guards: tuple
+    _implementation_guard: CheckpointContentGuard
+    _admission_identity_guard: CheckpointContentGuard
+    _operation: str
+    _target_codec: str
+    _allow_fictional_fixture: bool
+    _rows_json: bytes
+    _receipt_json: bytes
+
+    def __init__(self):
+        raise TypeError("use prepare_reviewed_source_span_consumer_binding_v2")
+
+    def receipt(self):
+        """Detached preparation-time receipt; consume always replays admission."""
+        return json.loads(self._receipt_json)
+
+
+def prepare_reviewed_source_span_consumer_binding_v2(rows, *, expected_rows_sha256,
+        split_manifest, expected_split_manifest_sha256, admission_inputs,
+        expected_admission_inputs_sha256, exposure_records, expected_exposure_sha256,
+        operation, target_codec=REVIEWED_TARGET_CODEC, allow_fictional_fixture=False):
+    """Bind complete reviewed typed targets without projecting or training them.
+
+    JSON commitments use CheckpointContentGuard. The admission-input commitment
+    uses the norm owner's type-separated JSON/bytes snapshot recipe, exposed by
+    reviewed_admission_inputs_sha256. Review eligibility is an explicit policy
+    outcome, not machine proof of legal truth or a Lean/corpus acceptance.
+    """
+    _require(type(operation) is str and operation in OPERATIONS, "unsupported reviewed consumer operation")
+    _require(type(target_codec) is str, "explicit target codec required")
+    _require(type(allow_fictional_fixture) is bool, "explicit boolean fixture permission required")
+    expected = (expected_rows_sha256, expected_split_manifest_sha256, expected_exposure_sha256)
+    for name, digest in zip(("rows", "split manifest", "exposure"), expected):
+        _sha256(digest, "expected " + name + " SHA256")
+    _sha256(expected_admission_inputs_sha256, "expected admission input SHA256")
+    originals = (rows, split_manifest, exposure_records)
+    copies = json.loads(_preflight(list(originals)))
+    guards = tuple(_guard(value, digest) for value, digest in zip(copies, expected))
+    rows_copy, manifest_copy, exposure = copies
+    admission_copy, admission_sha = _reviewed_snapshot(admission_inputs)
+    _require(admission_sha == expected_admission_inputs_sha256, "complete admission replay input commitment differs")
+    report = _reviewed_assessment(admission_copy)
+    _require(type(rows_copy) is list and 1 <= len(rows_copy) <= MAX_ROWS,
+             "row count bound requires one through 4096 rows")
+    _require(type(exposure) is list and len(exposure) == len(rows_copy),
+             "complete ordered exposure population required")
+    manifest, examples = _manifest(manifest_copy, guards[1])
+    global_blockers = []
+    if report["semantic_use_eligible"] is not True or report["blockers"]:
+        global_blockers.append({"reason": "semantic_admission_not_eligible", "details": report["blockers"]})
+    if operation not in report["permitted_uses"]:
+        global_blockers.append({"reason": "operation_not_reviewed_permitted"})
+    if report["provenance_kind"] == "fictional_fixture" and not allow_fictional_fixture:
+        global_blockers.append({"reason": "fictional_fixture_requires_explicit_opt_in"})
+    if target_codec != REVIEWED_TARGET_CODEC:
+        global_blockers.append({"reason": "complete_typed_target_codec_required", "offered_codec": target_codec})
+    units = {unit["unit_id"]: unit for unit in report["units"]}
+    records, identifiers, unit_ids = [], set(), set()
+    for index, (row, exposure_row) in enumerate(zip(rows_copy, exposure)):
+        _closed(row, _REVIEWED_ROW_FIELDS, "reviewed complete typed row")
+        _text(row["id"], "row id", 512)
+        _text(row["unit_id"], "row unit id", 512)
+        _require(row["id"] not in identifiers and row["unit_id"] not in unit_ids,
+                 "unique row and reviewed unit IDs required")
+        identifiers.add(row["id"])
+        unit_ids.add(row["unit_id"])
+        unit = units.get(row["unit_id"])
+        _require(unit is not None, "row unit is absent from reviewed admission")
+        _require(type(row["source_text"]) is str and row["source_text"] == unit["source_text"],
+                 "row source differs from exact reviewed source")
+        target_sha = _guard(row["canonical_ir"]).sha256
+        _require(target_sha == _guard(unit["canonical_ir"]).sha256,
+                 "complete row target differs from reviewed typed target")
+        source_sha = hashlib.sha256(row["source_text"].encode("utf-8")).hexdigest()
+        _closed(exposure_row, _EXPOSURE_FIELDS, "reviewed exposure record")
+        _require(exposure_row["id"] == row["id"]
+                 and exposure_row["source_text_sha256"] == source_sha
+                 and exposure_row["canonical_ir_sha256"] == target_sha,
+                 "exposure does not bind this exact ordered reviewed source/target row")
+        _text(exposure_row["provenance_ref"], "exposure provenance_ref", 8192)
+        _require(type(exposure_row["target_exposure"]) is str and exposure_row["target_exposure"] in
+                 ("declared_supervised_training", "declared_validation_scoring", "unknown"),
+                 "explicit target_exposure required")
+        example = examples.get(row["id"])
+        if example is not None:
+            _require(example.content_hash == splits._content_hash(row["source_text"]),
+                     "reviewed source content differs from split manifest example")
+        blockers = []
+        if exposure_row["target_exposure"] != _REQUIRED_EXPOSURE[operation]:
+            blockers.append({"reason": "exposure_declaration_does_not_match_operation"})
+        records.append({"row_index": index, "id": row["id"], "unit_id": row["unit_id"],
+                        "occurrence_cid": unit["occurrence_cid"], "source_text_sha256": source_sha,
+                        "canonical_ir_sha256": target_sha, "exposure": exposure_row, "blockers": blockers})
+    try:
+        splits.authorize_legal_ir_split_use(manifest, operation=operation,
+                                          items=[{"sample_id": row["id"]} for row in rows_copy])
+    except splits.LegalIRSplitPolicyError as error:
+        for diagnostic in error.disallowed:
+            matches = [record for record in records if record["id"] == diagnostic.get("sample_id")]
+            blocker = {"reason": "split_policy_disallowed", "diagnostic": diagnostic}
+            if matches:
+                for record in matches:
+                    record["blockers"].append(blocker)
+            else:
+                global_blockers.append(blocker)
+    except splits.LegalIRSplitLeakageError as error:
+        global_blockers.append({"reason": "split_guard_failed", "details": error.result.to_dict()})
+    blockers = list(global_blockers)
+    for record in records:
+        record["status"] = "blocked" if global_blockers or record["blockers"] else "ready"
+        blockers.extend({"row_index": record["row_index"], "id": record["id"], **item}
+                        for item in record["blockers"])
+    blocked = sum(record["status"] == "blocked" for record in records)
+    implementation = _reviewed_implementation()
+    identity_guard = _guard(_reviewed_stable_identity(report, admission_copy))
+    receipt = {"schema": REVIEWED_SCHEMA, "profile": REVIEWED_PROFILE, "operation": operation,
+        "target_codec": target_codec, "status": "blocked" if blockers else "ready",
+        "row_count": len(records), "ready_row_count": len(records) - blocked,
+        "blocked_row_count": blocked, "rows_discarded": 0, "rows": records, "blockers": blockers,
+        "declaration_sha256": report["declaration_sha256"], "admission_identity_sha256": identity_guard.sha256,
+        "admission_assessment_sha256": _reviewed_admission_owner().norm_content_adjudication_sha256(report),
+        "admission_inputs_sha256": admission_sha,
+        "admission_input_digest_recipe": "norm_review_type_separated_bounded_JSON_bytes_snapshot/v1",
+        "input_sha256s": dict(zip(("rows", "split_manifest", "exposure"), expected)),
+        "provenance_kind": report["provenance_kind"], "permitted_uses": report["permitted_uses"],
+        "semantic_admission_replayed": True, "semantic_use_eligible": report["semantic_use_eligible"],
+        "fictional_fixture_allowed": allow_fictional_fixture,
+        "training_mask": report.get("training_mask", 0), "evaluation_gold_mask": report.get("evaluation_gold_mask", 0),
+        "proof_authority": False, "lean_corpus_authority": False, "corpus_admitted": False,
+        "training_executed": False, "implementation": implementation,
+        "exposure_declaration_only": True,
+        "receipt_scope": "exact_complete_typed_targets_and_replayed_review_policy_eligibility",
+        "consumer_scope": "opt_in_callback_arguments_only_not_all_process_reads"}
+    receipt_raw = _preflight(receipt)
+    implementation_guard = _guard(implementation)
+    _check(implementation_guard, _reviewed_implementation(), "reviewed implementation")
+    for guard, value, label in zip(guards, originals, ("rows", "split manifest", "exposure")):
+        _check(guard, value, label)
+    _require(_reviewed_snapshot(admission_inputs)[1] == admission_sha
+             and _reviewed_snapshot(admission_copy)[1] == admission_sha,
+             "admission replay inputs changed during preparation")
+    binding = object.__new__(ReviewedSourceSpanConsumerBinding)
+    for name, value in (("_guards", guards), ("_implementation_guard", implementation_guard),
+            ("_admission_identity_guard", identity_guard), ("_operation", operation),
+            ("_target_codec", target_codec), ("_allow_fictional_fixture", allow_fictional_fixture),
+            ("_rows_json", _wire(rows_copy)), ("_receipt_json", receipt_raw)):
+        object.__setattr__(binding, name, value)
+    return binding
+
+
+def validate_reviewed_source_span_consumer_binding_v2(binding, rows, *, split_manifest,
+        admission_inputs, exposure_records):
+    """Replay current admission; unchanged old receipts cannot authorize reuse."""
+    _require(type(binding) is ReviewedSourceSpanConsumerBinding, "prepared reviewed consumer binding required")
+    inputs = (rows, split_manifest, exposure_records)
+    _preflight(list(inputs))
+    for guard, value, label in zip(binding._guards, inputs, ("rows", "split manifest", "exposure")):
+        _check(guard, value, label)
+    _check(binding._implementation_guard, _reviewed_implementation(), "reviewed implementation")
+    fresh = prepare_reviewed_source_span_consumer_binding_v2(rows,
+        expected_rows_sha256=binding._guards[0].sha256, split_manifest=split_manifest,
+        expected_split_manifest_sha256=binding._guards[1].sha256, admission_inputs=admission_inputs,
+        expected_admission_inputs_sha256=reviewed_admission_inputs_sha256(admission_inputs),
+        exposure_records=exposure_records, expected_exposure_sha256=binding._guards[2].sha256,
+        operation=binding._operation, target_codec=binding._target_codec,
+        allow_fictional_fixture=binding._allow_fictional_fixture)
+    receipt = fresh.receipt()
+    if receipt["admission_identity_sha256"] != binding._admission_identity_guard.sha256:
+        receipt["status"] = "blocked"
+        receipt["ready_row_count"] = 0
+        receipt["blocked_row_count"] = receipt["row_count"]
+        receipt["blockers"].append({"reason": "reviewed_admission_identity_changed"})
+        for record in receipt["rows"]:
+            record["status"] = "blocked"
+        raise SourceSpanConsumerBindingError(
+            "reviewed source/target/declaration/preparation/producer/trust identity changed", receipt=receipt)
+    return receipt
+
+
+def consume_reviewed_source_span_binding_v2(binding, rows, *, split_manifest, admission_inputs,
+        exposure_records, consumer):
+    """Dispatch once only after replaying present review/dependency inputs."""
+    receipt = validate_reviewed_source_span_consumer_binding_v2(binding, rows,
+        split_manifest=split_manifest, admission_inputs=admission_inputs, exposure_records=exposure_records)
+    if receipt["status"] != "ready":
+        raise SourceSpanConsumerBindingError("reviewed source-span consumer batch is blocked", receipt=receipt)
+    _require(callable(consumer), "explicit callable consumer required")
+    consumed_rows = json.loads(binding._rows_json)
+    _check(binding._guards[0], consumed_rows, "detached complete reviewed consumer rows")
+    return consumer(consumed_rows)
+
+
+__all__ += ["ReviewedSourceSpanConsumerBinding", "prepare_reviewed_source_span_consumer_binding_v2",
+            "validate_reviewed_source_span_consumer_binding_v2", "consume_reviewed_source_span_binding_v2",
+            "reviewed_admission_inputs_sha256", "REVIEWED_SCHEMA", "REVIEWED_PROFILE", "REVIEWED_TARGET_CODEC"]
