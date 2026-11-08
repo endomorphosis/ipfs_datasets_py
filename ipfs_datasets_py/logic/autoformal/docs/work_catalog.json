@@ -3205,11 +3205,15 @@
         "build_norm_content_adjudication_template_v1",
         "build_norm_content_adjudication_declaration_v1",
         "assess_norm_content_adjudication_v1",
-        "validate_norm_content_adjudication_v1"
+        "validate_norm_content_adjudication_v1",
+        "prepare_reviewed_norm_admission_v2",
+        "assess_reviewed_norm_admission_v2",
+        "validate_reviewed_norm_admission_v2"
       ],
       "compatibility_dependency": true,
       "evidence_ids": [
-        "norm-content-adjudication-public-integration-20261024-01"
+        "norm-content-adjudication-public-integration-20261024-01",
+        "reviewed-semantic-admission-v2-main-source-port-20261108-01"
       ],
       "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_norm_content_adjudication_v1.md",
       "id": "norm-content-adjudication-v1",
@@ -3221,6 +3225,20 @@
       ],
       "path": "ipfs_datasets_py/logic/autoformal/legal_norm_content_adjudication_v1.py",
       "required": true,
+      "reviewed_semantic_admission_v2": {
+        "Lean_admitted": false,
+        "actual_statutory_reviews": 0,
+        "evidence_id": "reviewed-semantic-admission-v2-main-source-port-20261108-01",
+        "fixture_evaluation_gold_mask": 0,
+        "fixture_training_mask": 0,
+        "fresh_adjudication_cases": 112,
+        "fresh_clean_base_cases": 242,
+        "historical_V03_cases": 242,
+        "historical_cases_transfer_to_clean_base": false,
+        "legacy_v1_unapplied_profile_preserved": true,
+        "profile": "complete-reviewed-norm-admission/v2",
+        "status": "focused_tests_qualified"
+      },
       "status": "focused_tests_qualified"
     },
     {
@@ -4440,6 +4458,20 @@
         "trainer_cases": 242,
         "trainer_phases": 726
       },
+      "current_synthetic_numerical_trainer_probe": {
+        "actual_post_RUN_numerical_probe": true,
+        "capture_forwards": 2,
+        "captures_abstained": 2,
+        "contract_cases_disjoint": 299,
+        "contract_phases": 897,
+        "evidence_id": "f18-v2-synthetic-native-numerical-probe-qualified-20261030-01",
+        "native_source_pins": 76,
+        "optimizer_updates": 1,
+        "retained_fit_or_experiment_rate_selected": false,
+        "source_native_process_storage_closed": true,
+        "training_forwards": 1,
+        "worker_api": "autoencoder_daemon_invocation_worker.run_f18_numerical_probe"
+      },
       "evidence_ids": [
         "f18-v2-recipe-bound-numerical-qualified-20261028-01",
         "f18-v2-source-capture-and-initial632-parity-qualified-20261028-01",
@@ -4546,21 +4578,32 @@
         "pure_cases": 241,
         "selected_experiment_rate": null,
         "worker": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_invocation_worker.py"
-      },
-      "current_synthetic_numerical_trainer_probe": {
-        "evidence_id": "f18-v2-synthetic-native-numerical-probe-qualified-20261030-01",
-        "worker_api": "autoencoder_daemon_invocation_worker.run_f18_numerical_probe",
-        "contract_cases_disjoint": 299,
-        "contract_phases": 897,
-        "actual_post_RUN_numerical_probe": true,
-        "native_source_pins": 76,
-        "optimizer_updates": 1,
-        "training_forwards": 1,
-        "capture_forwards": 2,
-        "captures_abstained": 2,
-        "retained_fit_or_experiment_rate_selected": false,
-        "source_native_process_storage_closed": true
       }
+    },
+    {
+      "apis": [
+        "prepare_source_span_consumer_binding",
+        "validate_source_span_consumer_binding",
+        "consume_source_span_binding",
+        "prepare_reviewed_source_span_consumer_binding_v2",
+        "validate_reviewed_source_span_consumer_binding_v2",
+        "consume_reviewed_source_span_binding_v2",
+        "reviewed_admission_inputs_sha256"
+      ],
+      "compatibility_dependency": true,
+      "evidence_ids": [
+        "reviewed-semantic-admission-v2-main-source-port-20261108-01"
+      ],
+      "id": "source-span-consumer-binding",
+      "notes": "Existing engineering V1 remains unchanged. The additive reviewed V2 consumer replays current admission, retains complete typed targets, pins registry/policy identities, enforces permitted operations/splits/exposure and blocks compact-codec projection. Fresh clean-base qualification passed all 130 consumer cases within the 242-case cohort; historical V03 remains a separate generation with zero transferred credit. Fictional fixture gold masks stay zero, with no statutory, model, graph or Lean admission.",
+      "owner_module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_consumer_binding",
+      "ownership_role": "existing_single_owner",
+      "owning_tests": [
+        "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_consumer_binding.py"
+      ],
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_consumer_binding.py",
+      "required": true,
+      "status": "focused_tests_qualified"
     }
   ],
   "entry_point": "ipfs_datasets_py/logic/autoformal/README.md",
@@ -7014,6 +7057,16 @@
       "root": "datasets_repository",
       "scope": "299 disjoint pure contracts and actual synthetic native one-step/two-capture dispatch, with complete custody. Both captures abstained. No retained-data fit, new TRAIN rate, task activation or statutory/Lean gain.",
       "status": "synthetic_post_RUN_numerical_dispatch_qualified_retained_producer_and_science_gates_open"
+    },
+    {
+      "id": "reviewed-semantic-admission-v2-main-source-port-20261108-01",
+      "observed_bytes": 6589,
+      "observed_sha256": "580f7b3cf7f89726323574964b09fae28b558db81960aa6a9ebc459fdfb731f6",
+      "path": "docs/autoformalization/evidence/legal-reviewed-semantic-admission-v2-main-source-port-20261108.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Only four additive Main source/test files: fresh clean-base 242 authored-fixture cases with original custody and durable storage closure. Historical V03 and failed cohorts remain separate. Graph, Core, statutory meaning, model and Lean-corpus qualification are separate.",
+      "status": "focused_tests_qualified"
     }
   ]
 }
