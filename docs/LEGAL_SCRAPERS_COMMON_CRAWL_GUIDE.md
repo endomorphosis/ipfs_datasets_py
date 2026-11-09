@@ -270,7 +270,7 @@ playwright install chromium
 # No authentication needed for public datasets
 from datasets import load_dataset
 
-federal_index = load_dataset("endomorphosis/common_crawl_federal_index", split="train")
+federal_index = load_dataset("Publicus/common_crawl_federal_index", split="train")
 ```
 
 ### Step 3: Create Custom Scraper

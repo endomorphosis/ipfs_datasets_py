@@ -13,9 +13,9 @@ Phase 11 enhances the legal scrapers infrastructure to integrate with Common Cra
 ### Key Integration Points
 
 1. **HuggingFace Datasets** - Common Crawl URL indexes
-   - `endomorphosis/common_crawl_federal_index`
-   - `endomorphosis/common_crawl_municipal_index`
-   - `endomorphosis/common_crawl_state_index`
+   - `Publicus/common_crawl_federal_index`
+   - `Publicus/common_crawl_municipal_index`
+   - `Publicus/common_crawl_state_index`
 
 2. **Existing Infrastructure**
    - Common Crawl integration: `web_archiving/common_crawl_integration.py` (433 lines)
@@ -263,7 +263,7 @@ content = await cc_engine.fetch_warc_content(
 from datasets import load_dataset
 
 # Load federal Common Crawl index
-federal_index = load_dataset("endomorphosis/common_crawl_federal_index", split="train")
+federal_index = load_dataset("Publicus/common_crawl_federal_index", split="train")
 
 # Query for specific URL
 matches = federal_index.filter(lambda x: "www.govinfo.gov" in x["url"])
