@@ -13,6 +13,8 @@ on:
       - "ipfs_datasets_py/logic/autoformal/**"
       - "ipfs_datasets_py/logic/legal_ir/**"
       - "ipfs_datasets_py/logic/formalization/autoencoder/**"
+      - "ipfs_datasets_py/optimizers/logic_theorem_optimizer/**"
+      - "tests/unit/optimizers/logic_theorem_optimizer/test_legal_*.py"
       - "ipfs_datasets_py/logic/backends/**"
       - "ipfs_datasets_py/logic/ir_core/**"
       - "ipfs_datasets_py/logic/common/duckdb_proof_*.py"
@@ -41,6 +43,8 @@ on:
       - "ipfs_datasets_py/logic/autoformal/**"
       - "ipfs_datasets_py/logic/legal_ir/**"
       - "ipfs_datasets_py/logic/formalization/autoencoder/**"
+      - "ipfs_datasets_py/optimizers/logic_theorem_optimizer/**"
+      - "tests/unit/optimizers/logic_theorem_optimizer/test_legal_*.py"
       - "ipfs_datasets_py/logic/backends/**"
       - "ipfs_datasets_py/logic/ir_core/**"
       - "ipfs_datasets_py/logic/common/duckdb_proof_*.py"
@@ -258,7 +262,7 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
       - name: Install focused Python test dependencies
-        run: python -m pip install pytest beartype duckdb
+        run: python -m pip install pytest beartype duckdb multiformats cryptography requests rich huggingface_hub
       - name: Restore pinned Lean toolchain
         id: lean-cache
         uses: actions/cache@v4
@@ -320,9 +324,20 @@ jobs:
             tests/unit/logic/autoformal/test_legal_native_ast_preservation_native.py \
             -k 'not installed_lean' \
             -q --tb=short --junitxml=legal-preservation-contracts-junit.xml
+      - name: Run reviewed retrieval and semantic admission controls
+        env:
+          IPFS_DATASETS_RUN_NATIVE_LEAN: "0"
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          python -m pytest -c /dev/null --noconftest \
+            tests/unit/optimizers/logic_theorem_optimizer/test_legal_structured_retrieval.py \
+            tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_consumer_binding.py \
+            tests/unit/logic/autoformal/test_legal_norm_content_adjudication_v1.py \
+            --deselect tests/unit/optimizers/logic_theorem_optimizer/test_legal_structured_retrieval.py::test_native_retriever_records_are_accepted_without_query_reference_access \
+            -q --tb=short --junitxml=legal-reviewed-retrieval-junit.xml
       # The same canonical executor retains real compiler output, source readback,
       # finite process bounds and exact empty-dependency theorem reports.
-      - name: Run actual relational and counted preservation
+      - name: Run actual unary, relational and counted preservation
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: |
@@ -343,5 +358,7 @@ jobs:
             legal-autoformal-contracts-junit.xml
             legal-preservation-contracts-junit.xml
             native-preservation-junit.xml
+            legal-reviewed-retrieval-junit.xml
+            native-preservation-cases/**/installed-legacy-unary/**
             native-preservation-cases/**/installed-relational-*/**
             native-preservation-cases/**/installed-counted-three/**

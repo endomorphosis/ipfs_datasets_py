@@ -267,3 +267,143 @@ def test_hashed_order_breaks_repeated_template_alignment_across_families():
     result = structured.permute_contexts_across_families(queries, contexts)
     assert any(before["context"] != after["context"] for before, after in zip(contexts, result))
     assert all(query["family_group"] != after["donor_family_group"] for query, after in zip(queries, result))
+
+
+def _reviewed_rich_case(*, query_family="query-family", query_lineage="query-component"):
+    """Use the existing actual fictional source/AST/signature admission fixture."""
+    import importlib.util
+    from pathlib import Path
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_span_consumer_binding as bound
+    path = Path(__file__).with_name("test_legal_span_consumer_binding.py")
+    spec = importlib.util.spec_from_file_location("_rich_context_reviewed_consumer_fixture", path)
+    helper = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(helper)
+    admission_helper, admission, case, rows, options = helper.reviewed_public_consumer_case()
+    queries = [{"id": "unseen-query", "source_text": "Unseen lighthouse operators may archive weather messages after a storm."}]
+    manifest = helper.splits.LegalIRSplitManifest(
+        examples=tuple(helper.splits.LegalIRSplitExample.from_sample({"sample_id": r["id"], "text": r["source_text"],
+            "statute_family": query_family if r in queries else "example-family",
+            "lineage_group_id": query_lineage if r in queries else "training-component"}) for r in [*rows, *queries]),
+        assignments={r["id"]: "holdout" if r in queries else "train" for r in [*rows, *queries]},
+        config_digest=helper.source_digest("fictional rich context split policy"))
+    options["split_manifest"] = manifest.to_dict()
+    options["expected_split_manifest_sha256"] = helper.digest(options["split_manifest"])
+    binding = bound.prepare_reviewed_source_span_consumer_binding_v2(rows, **options)
+    norm = next(r for r in rows if any(u["use_unit_id"] == r["unit_id"] for u in r["canonical_ir"]["definition_uses"]))
+    selections = [{"id": queries[0]["id"], "source_sha256": helper.source_digest(queries[0]["source_text"]),
+                   "index_sha256": helper.digest(rows), "retrieved_ids": [norm["id"]]}]
+    return helper, admission_helper, admission, case, rows, options, binding, queries, selections
+
+
+def _consume_rich(case, callback, *, queries=None, selections=None, **overrides):
+    helper, _, _, _, rows, options, binding, original_queries, original_selections = case
+    queries = original_queries if queries is None else queries
+    selections = original_selections if selections is None else selections
+    return structured.consume_reviewed_contexts_v2(binding, rows,
+        **{k: options[k] for k in ("split_manifest", "admission_inputs", "exposure_records")},
+        query_rows=queries, retrieval_rows=selections,
+        expected_query_rows_sha256=helper.digest(queries), expected_retrieval_rows_sha256=helper.digest(selections),
+        consumer=callback, **overrides)
+
+
+def test_rich_context_retains_full_reviewed_ast_sources_roles_and_governing_definition():
+    case = _reviewed_rich_case()
+    helper, _, _, _, rows, _, _, queries, selected = case
+    original = copy.deepcopy(rows)
+    payload = _consume_rich(case, lambda p: p)
+    context = payload["rows"][0]
+    exposed = {r["id"]: r for r in context["examples"]}
+    norm = next(r for r in rows if r["id"] == selected[0]["retrieved_ids"][0])
+    definition_id = norm["canonical_ir"]["definition_uses"][0]["definition_unit_id"]
+    definition = next(r for r in rows if r["unit_id"] == definition_id)
+    assert set(exposed) == {norm["id"], definition["id"]}
+    for row in (norm, definition):
+        assert exposed[row["id"]]["source_text"] == row["source_text"]
+        assert exposed[row["id"]]["canonical_ir"] == row["canonical_ir"]
+        assert exposed[row["id"]]["source_link"] == row["canonical_ir"]["source_binding"]
+    assert context["source_text"] == queries[0]["source_text"]
+    assert payload["binding_receipt"]["training_mask"] == payload["binding_receipt"]["evaluation_gold_mask"] == 0
+    assert payload["retrieval_role"] == structured.REVIEWED_CONTEXT_ROLE
+    for key in ("query_target_access", "inference_context_permission_verified", "ranking_authenticated",
+                "legal_applicability_established", "training_executed", "proof_authority", "corpus_admitted"):
+        assert payload[key] is False
+    exposed[norm["id"]]["canonical_ir"].clear()
+    assert rows == original
+
+
+@pytest.mark.parametrize("field", ["canonical_ir", "target_hint", "reference", "source_spans", "formal_embedding"])
+def test_rich_query_cannot_carry_a_reference_target(field):
+    case = _reviewed_rich_case()
+    queries = copy.deepcopy(case[-2])
+    queries[0][field] = "hidden reference"
+    calls = []
+    with pytest.raises(ValueError):
+        _consume_rich(case, calls.append, queries=queries)
+    assert calls == []
+
+
+@pytest.mark.parametrize("damage", ["unknown_neighbor", "duplicate_neighbor", "source_pin", "index_pin", "extra_authority"])
+def test_rich_retrieval_cannot_replace_source_index_or_neighbor_population(damage):
+    case = _reviewed_rich_case()
+    selected = copy.deepcopy(case[-1])
+    if damage == "unknown_neighbor": selected[0]["retrieved_ids"] = ["heldout-reference"]
+    elif damage == "duplicate_neighbor": selected[0]["retrieved_ids"] *= 2
+    elif damage == "source_pin": selected[0]["source_sha256"] = "0" * 64
+    elif damage == "index_pin": selected[0]["index_sha256"] = "0" * 64
+    else: selected[0]["proof_authority"] = True
+    calls = []
+    with pytest.raises(ValueError):
+        _consume_rich(case, calls.append, selections=selected)
+    assert calls == []
+
+
+def test_rich_context_refuses_whole_dispatch_instead_of_truncating_ast_or_definition():
+    case = _reviewed_rich_case()
+    calls = []
+    with pytest.raises(ValueError, match="truncation refused"):
+        _consume_rich(case, calls.append, max_context_bytes=256)
+    assert calls == []
+
+
+def test_rich_context_replays_current_review_revocation_before_dispatch():
+    case = _reviewed_rich_case()
+    helper, admission_helper, admission, original, _, options, _, _, _ = case
+    original["registry"]["keys"][0]["revoked_at_utc"] = admission_helper.EVALUATED
+    original["registry"]["revocation_generation"] += 1
+    admission_helper.reviewed_resign_v2(original)
+    options["admission_inputs"] = helper.reviewed_public_admission_inputs(admission_helper, admission, original)
+    calls = []
+    with pytest.raises(ValueError):
+        _consume_rich(case, calls.append)
+    assert calls == []
+
+
+def test_rich_context_requires_complete_permitted_governing_definition():
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_span_consumer_binding as bound
+    original = list(_reviewed_rich_case())
+    helper, _, _, _, rows, options, _, _, selected = original
+    norm = next(r for r in rows if r["id"] == selected[0]["retrieved_ids"][0])
+    definition_id = norm["canonical_ir"]["definition_uses"][0]["definition_unit_id"]
+    subset = [r for r in rows if r["unit_id"] != definition_id]
+    options = dict(options, expected_rows_sha256=helper.digest(subset),
+        exposure_records=[e for e in options["exposure_records"] if e["id"] in {r["id"] for r in subset}])
+    options["expected_exposure_sha256"] = helper.digest(options["exposure_records"])
+    binding = bound.prepare_reviewed_source_span_consumer_binding_v2(subset, **options)
+    selected = copy.deepcopy(selected)
+    selected[0]["index_sha256"] = helper.digest(subset)
+    original[4:7] = [subset, options, binding]
+    calls = []
+    with pytest.raises(ValueError, match="governing definition missing"):
+        _consume_rich(tuple(original), calls.append, selections=selected)
+    assert calls == []
+
+
+@pytest.mark.parametrize("query_family,query_lineage", [
+    ("example-family", "query-component"), ("query-family", "training-component"),
+])
+def test_rich_context_excludes_shared_family_and_dependency_lineage(query_family, query_lineage):
+    case = _reviewed_rich_case(query_family=query_family, query_lineage=query_lineage)
+    calls = []
+    with pytest.raises(ValueError):
+        _consume_rich(case, calls.append)
+    assert calls == []

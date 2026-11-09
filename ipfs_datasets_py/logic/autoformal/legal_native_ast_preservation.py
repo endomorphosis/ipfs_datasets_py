@@ -989,9 +989,9 @@ def countedNodeValue (nodeId kind symbol : String) (sort : NativeValue)
     ("schema_version", .string "syntax-logic-node/v1"),
     ("sort", sort), ("symbol", .string symbol)]
 
-def countedVariableValue (variable : CountedVariable) : NativeValue :=
-  countedNodeValue variable.nodeId "variable" variable.name
-    (countedAtomicSortValue variable.sort) [] []
+def countedVariableValue (boundVariable : CountedVariable) : NativeValue :=
+  countedNodeValue boundVariable.nodeId "variable" boundVariable.name
+    (countedAtomicSortValue boundVariable.sort) [] []
 
 def countedToTypedNodeValue : CountedFormula → NativeValue
   | .member nodeId object event time =>
@@ -1044,8 +1044,8 @@ def countedTypedExpressionValue (expressionId signatureId contentDigest : String
     ("signature", countedSignatureValue signatureId)]
 
 def countedVariableClosed (bound : List (CountedSort × String))
-    (variable : CountedVariable) : Bool :=
-  bound.contains (variable.sort, variable.name)
+    (boundVariable : CountedVariable) : Bool :=
+  bound.contains (boundVariable.sort, boundVariable.name)
 
 def countedClosed (bound : List (CountedSort × String)) : CountedFormula → Bool
   | .member _ object event time =>
@@ -1071,55 +1071,54 @@ def emptyCountedEnvironment {Object EventFrame TimeFrame : Type} :
 
 def countedObjectValue {Object EventFrame TimeFrame : Type}
     (environment : CountedEnvironment Object EventFrame TimeFrame)
-    (variable : CountedVariable) : Option Object :=
-  match variable.sort with
-  | .object => environment.objects variable.name
-  | _ => none
+    (boundVariable : CountedVariable) : Option Object :=
+  CountedSort.casesOn boundVariable.sort (environment.objects boundVariable.name) none none
 
 def countedEventValue {Object EventFrame TimeFrame : Type}
     (environment : CountedEnvironment Object EventFrame TimeFrame)
-    (variable : CountedVariable) : Option EventFrame :=
-  match variable.sort with
-  | .event => environment.events variable.name
-  | _ => none
+    (boundVariable : CountedVariable) : Option EventFrame :=
+  CountedSort.casesOn boundVariable.sort none (environment.events boundVariable.name) none
 
 def countedTimeValue {Object EventFrame TimeFrame : Type}
     (environment : CountedEnvironment Object EventFrame TimeFrame)
-    (variable : CountedVariable) : Option TimeFrame :=
-  match variable.sort with
-  | .time => environment.times variable.name
-  | _ => none
+    (boundVariable : CountedVariable) : Option TimeFrame :=
+  CountedSort.casesOn boundVariable.sort none none (environment.times boundVariable.name)
+
+def updateCountedObject {Object EventFrame TimeFrame : Type}
+    (environment : CountedEnvironment Object EventFrame TimeFrame) (name : String)
+    (entity : Object) : CountedEnvironment Object EventFrame TimeFrame :=
+  { environment with objects := fun queried =>
+      if queried = name then .some entity else environment.objects queried }
+def updateCountedEvent {Object EventFrame TimeFrame : Type}
+    (environment : CountedEnvironment Object EventFrame TimeFrame) (name : String)
+    (frame : EventFrame) : CountedEnvironment Object EventFrame TimeFrame :=
+  { environment with events := fun queried =>
+      if queried = name then .some frame else environment.events queried }
+def updateCountedTime {Object EventFrame TimeFrame : Type}
+    (environment : CountedEnvironment Object EventFrame TimeFrame) (name : String)
+    (instant : TimeFrame) : CountedEnvironment Object EventFrame TimeFrame :=
+  { environment with times := fun queried =>
+      if queried = name then .some instant else environment.times queried }
 
 def countedDenote {Object EventFrame TimeFrame : Type}
-    (member : Object → EventFrame → TimeFrame → Prop) :
-    CountedFormula → CountedEnvironment Object EventFrame TimeFrame → Prop
-  | .member _ object event time, environment =>
-      match countedObjectValue environment object, countedEventValue environment event,
-          countedTimeValue environment time with
-      | some object, some event, some time => member object event time
-      | _, _, _ => False
-  | .equality _ left right, environment =>
-      match countedObjectValue environment left, countedObjectValue environment right with
-      | some left, some right => left = right
-      | _, _ => False
-  | .conjunction _ left right, environment =>
-      countedDenote member left environment ∧ countedDenote member right environment
-  | .disjunction _ left right, environment =>
-      countedDenote member left environment ∨ countedDenote member right environment
-  | .implication _ left right, environment =>
-      countedDenote member left environment → countedDenote member right environment
-  | .universal _ name .object body, environment =>
-      ∀ object : Object, countedDenote member body
-        { environment with objects := fun queried =>
-            if queried = name then some object else environment.objects queried }
-  | .universal _ name .event body, environment =>
-      ∀ event : EventFrame, countedDenote member body
-        { environment with events := fun queried =>
-            if queried = name then some event else environment.events queried }
-  | .universal _ name .time body, environment =>
-      ∀ time : TimeFrame, countedDenote member body
-        { environment with times := fun queried =>
-            if queried = name then some time else environment.times queried }
+    (member : Object → EventFrame → TimeFrame → Prop) (ast : CountedFormula) :
+    CountedEnvironment Object EventFrame TimeFrame → Prop :=
+  CountedFormula.rec
+    (fun _ object event time environment =>
+      Option.casesOn (countedObjectValue environment object) False (fun o =>
+        Option.casesOn (countedEventValue environment event) False (fun e =>
+          Option.casesOn (countedTimeValue environment time) False (fun t => member o e t))))
+    (fun _ left right environment =>
+      Option.casesOn (countedObjectValue environment left) False (fun l =>
+        Option.casesOn (countedObjectValue environment right) False (fun r => l = r)))
+    (fun _ _ _ left right environment => left environment ∧ right environment)
+    (fun _ _ _ left right environment => left environment ∨ right environment)
+    (fun _ _ _ left right environment => left environment → right environment)
+    (fun _ name sort _ child environment =>
+      CountedSort.casesOn sort
+        (∀ entity : Object, child (updateCountedObject environment name entity))
+        (∀ frame : EventFrame, child (updateCountedEvent environment name frame))
+        (∀ instant : TimeFrame, child (updateCountedTime environment name instant))) ast
 
 -- Counterfactual proof specifications only: neither is a production counted API.
 def counterfactualAtMostTwo {Object EventFrame TimeFrame : Type}
@@ -1270,6 +1269,125 @@ def _counted_pins(owners, counted, checked):
     return pins
 
 
+
+
+_COUNTED_BOUNDARY_PROOF_TEMPLATE = r'''def threeObjectMembers (_ : Fin 3) (_ : Unit) (_ : Unit) : Prop := True
+def fourObjectMembers (_ : Fin 4) (_ : Unit) (_ : Unit) : Prop := True
+@[elab_as_elim] def countedThreeObjectCases.{u} {motive : Fin 3 → Sort u} (h0 : motive (⟨0, (Nat.le.step (Nat.le.step Nat.le.refl))⟩ : Fin 3)) (h1 : motive (⟨1, (Nat.le.step Nat.le.refl)⟩ : Fin 3)) (h2 : motive (⟨2, Nat.le.refl⟩ : Fin 3)) : ∀ x, motive x := by
+  intro x
+  cases x with
+  | mk v0 bound =>
+    cases v0 with
+    | zero => exact h0
+    | succ v1 =>
+      cases v1 with
+      | zero => exact h1
+      | succ v2 =>
+        cases v2 with
+        | zero => exact h2
+        | succ v3 =>
+          exact False.elim ((Nat.not_lt_zero v3) (Nat.lt_of_succ_lt_succ (Nat.lt_of_succ_lt_succ (Nat.lt_of_succ_lt_succ bound))))
+
+@[elab_as_elim] def countedFourObjectCases.{u} {motive : Fin 4 → Sort u} (h0 : motive (⟨0, (Nat.le.step (Nat.le.step (Nat.le.step Nat.le.refl)))⟩ : Fin 4)) (h1 : motive (⟨1, (Nat.le.step (Nat.le.step Nat.le.refl))⟩ : Fin 4)) (h2 : motive (⟨2, (Nat.le.step Nat.le.refl)⟩ : Fin 4)) (h3 : motive (⟨3, Nat.le.refl⟩ : Fin 4)) : ∀ x, motive x := by
+  intro x
+  cases x with
+  | mk v0 bound =>
+    cases v0 with
+    | zero => exact h0
+    | succ v1 =>
+      cases v1 with
+      | zero => exact h1
+      | succ v2 =>
+        cases v2 with
+        | zero => exact h2
+        | succ v3 =>
+          cases v3 with
+          | zero => exact h3
+          | succ v4 =>
+            exact False.elim ((Nat.not_lt_zero v4) (Nat.lt_of_succ_lt_succ (Nat.lt_of_succ_lt_succ (Nat.lt_of_succ_lt_succ (Nat.lt_of_succ_lt_succ bound)))))
+
+
+__COUNTED_FINITE_PIGEONHOLE_PROOFS__
+theorem countedThreeObjectsViolateCapTwo : ¬ counterfactualAtMostTwo threeObjectMembers :=
+  fun bound =>
+    let bad := bound () () (⟨0, (Nat.le.step (Nat.le.step Nat.le.refl))⟩ : Fin 3) (⟨1, (Nat.le.step Nat.le.refl)⟩ : Fin 3) (⟨2, Nat.le.refl⟩ : Fin 3) (And.intro (And.intro (True.intro) True.intro) True.intro)
+    Or.elim bad (fun leftDisjunction0 => Or.elim leftDisjunction0 (fun leftDisjunction1 => Nat.noConfusion (congrArg Fin.val leftDisjunction1)) (fun unequalPair1 => Nat.noConfusion (congrArg Fin.val unequalPair1))) (fun unequalPair0 => Nat.noConfusion (congrArg Fin.val unequalPair0) (fun innerEq0 => Nat.noConfusion (innerEq0)))
+
+theorem countedFourObjectsViolateCapThree : ¬ countedAtMostThree fourObjectMembers :=
+  fun bound =>
+    let bad := bound () () (⟨0, (Nat.le.step (Nat.le.step (Nat.le.step Nat.le.refl)))⟩ : Fin 4) (⟨1, (Nat.le.step (Nat.le.step Nat.le.refl))⟩ : Fin 4) (⟨2, (Nat.le.step Nat.le.refl)⟩ : Fin 4) (⟨3, Nat.le.refl⟩ : Fin 4) (And.intro (And.intro (And.intro (True.intro) True.intro) True.intro) True.intro)
+    Or.elim bad (fun leftDisjunction0 => Or.elim leftDisjunction0 (fun leftDisjunction1 => Or.elim leftDisjunction1 (fun leftDisjunction2 => Or.elim leftDisjunction2 (fun leftDisjunction3 => Or.elim leftDisjunction3 (fun leftDisjunction4 => Nat.noConfusion (congrArg Fin.val leftDisjunction4)) (fun unequalPair4 => Nat.noConfusion (congrArg Fin.val unequalPair4))) (fun unequalPair3 => Nat.noConfusion (congrArg Fin.val unequalPair3))) (fun unequalPair2 => Nat.noConfusion (congrArg Fin.val unequalPair2) (fun innerEq0 => Nat.noConfusion (innerEq0)))) (fun unequalPair1 => Nat.noConfusion (congrArg Fin.val unequalPair1) (fun innerEq0 => Nat.noConfusion (innerEq0)))) (fun unequalPair0 => Nat.noConfusion (congrArg Fin.val unequalPair0) (fun innerEq0 => Nat.noConfusion (innerEq0) (fun innerEq1 => Nat.noConfusion (innerEq1))))
+
+theorem cap_two_counterexample :
+    countedDenote threeObjectMembers typedCountedAst emptyCountedEnvironment ∧
+      ¬ counterfactualAtMostTwo threeObjectMembers :=
+  And.intro (fun _ _ a b c d _ => countedThreeObjectPigeonhole a b c d) countedThreeObjectsViolateCapTwo
+#print axioms cap_two_counterexample
+theorem cap_four_counterexample :
+    ¬ countedDenote fourObjectMembers typedCountedAst emptyCountedEnvironment ∧
+      counterfactualAtMostFour fourObjectMembers :=
+  And.intro countedFourObjectsViolateCapThree (fun _ _ a b c d e _ => countedFourObjectPigeonhole a b c d e)
+#print axioms cap_four_counterexample
+'''
+
+def _counted_boundary_proofs():
+    """Emit closed Fin3/Fin4 certificates, checked by the unchanged Lean gate.
+
+    Direct eliminators and proof terms avoid transitive propext in convenience
+    case/decision procedures. The domains and original cap definitions remain
+    unchanged. This constructs finite witnesses, never a premise asserting the
+    desired bound or a replacement production counting compiler.
+    """
+    def value(n, i):
+        proof = "Nat.le.refl"
+        for _ in range(n - i - 1):
+            proof = "(Nat.le.step " + proof + ")"
+        return "(⟨" + str(i) + ", " + proof + "⟩ : Fin " + str(n) + ")"
+
+    def disjunction(variables):
+        pairs = [a + " = " + b for i, a in enumerate(variables) for b in variables[i + 1:]]
+        result = pairs[0]
+        for pair in pairs[1:]:
+            result = "(" + result + " ∨ " + pair + ")"
+        return result
+
+    def leaf(n, values):
+        pairs = [(i, j) for i in range(n + 1) for j in range(i + 1, n + 1)]
+        index = next(k for k, (i, j) in enumerate(pairs)
+                     if j < len(values) and values[i] == values[j])
+        term = "Eq.refl " + value(n, values[pairs[index][0]])
+        if index:
+            term = "Or.inr (" + term + ")"
+            left_count = len(pairs) - 1 - index
+        else:
+            left_count = len(pairs) - 1
+        for _ in range(left_count):
+            term = "Or.inl (" + term + ")"
+        return term
+
+    def tree(n, values=()):
+        # A witnessed equal pair proves the full disjunction regardless of
+        # remaining objects. Keep those universal binders, but avoid expanding
+        # their irrelevant finite cases into a large compiled proof artifact.
+        if len(set(values)) < len(values):
+            remaining = "abcde"[len(values):n + 1]
+            term = leaf(n, values)
+            return ("fun " + " ".join(remaining) + " => " + term) if remaining else term
+        name = "countedThreeObjectCases" if n == 3 else "countedFourObjectCases"
+        return name + "\n" + "".join("  " * (len(values) + 2) + "(" + tree(n, values + (i,)) + ")\n"
+                                      for i in range(n))
+
+    proofs = []
+    for n, name in ((3, "countedThreeObjectPigeonhole"), (4, "countedFourObjectPigeonhole")):
+        variables = list("abcde"[:n + 1])
+        proofs.append("set_option maxRecDepth 8192 in\nset_option maxHeartbeats 2000000 in\n"
+            + "theorem " + name + " : ∀ " + " ".join(variables) + " : Fin " + str(n) + ", "
+            + disjunction(variables) + " :=\n  " + tree(n).rstrip() + "\n")
+    marker = "__COUNTED_FINITE_PIGEONHOLE_PROOFS__"
+    _need(_COUNTED_BOUNDARY_PROOF_TEMPLATE.count(marker) == 1, "exact finite-proof template marker required")
+    return _COUNTED_BOUNDARY_PROOF_TEMPLATE.replace(marker, "\n".join(proofs))
+
+
 def prepare_counted_ast_preservation(report, request_raw: bytes, *,
         expected_report_sha256, expected_request_sha256, toolchain):
     """Prepare exact fixed-cap3 AST interpretation obligations, without a build.
@@ -1330,18 +1448,7 @@ def prepare_counted_ast_preservation(report, request_raw: bytes, *,
         + "    (member : Object → EventFrame → TimeFrame → Prop) :\n"
         + "    countedDenote member typedCountedAst emptyCountedEnvironment ↔ countedAtMostThree member := by\n"
         + "  exact Iff.intro (fun h => h) (fun h => h)\n#print axioms counted_denotation_matches_lowering\n"
-        + "def threeObjectMembers (_ : Fin 3) (_ : Unit) (_ : Unit) : Prop := True\n"
-        + "def fourObjectMembers (_ : Fin 4) (_ : Unit) (_ : Unit) : Prop := True\n"
-        + "theorem cap_two_counterexample :\n"
-        + "    countedDenote threeObjectMembers typedCountedAst emptyCountedEnvironment ∧\n"
-        + "      ¬ counterfactualAtMostTwo threeObjectMembers := by\n"
-        + "  change countedAtMostThree threeObjectMembers ∧ ¬ counterfactualAtMostTwo threeObjectMembers\n"
-        + "  decide\n#print axioms cap_two_counterexample\n"
-        + "theorem cap_four_counterexample :\n"
-        + "    ¬ countedDenote fourObjectMembers typedCountedAst emptyCountedEnvironment ∧\n"
-        + "      counterfactualAtMostFour fourObjectMembers := by\n"
-        + "  change ¬ countedAtMostThree fourObjectMembers ∧ counterfactualAtMostFour fourObjectMembers\n"
-        + "  decide\n#print axioms cap_four_counterexample\n")
+        + _counted_boundary_proofs())
     inputs = {"schema": COUNTED_INPUT_SCHEMA, "profile": COUNTED_PROFILE,
         "counted_report": checked, "counted_report_sha256": expected_report_sha256,
         "original_request_raw_utf8": request_raw.decode("utf-8"),

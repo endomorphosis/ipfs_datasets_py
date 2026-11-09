@@ -4667,6 +4667,74 @@
       ],
       "required": true,
       "status": "focused_tests_qualified"
+    },
+    {
+      "id": "native-ast-preservation",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_native_ast_preservation.py",
+      "owner_module": "ipfs_datasets_py.logic.autoformal.legal_native_ast_preservation",
+      "ownership_role": "existing_single_owner",
+      "required": true,
+      "compatibility_dependency": false,
+      "apis": [
+        "prepare_native_ast_preservation",
+        "validate_native_ast_preservation",
+        "prepare_relational_ast_preservation",
+        "validate_relational_ast_preservation",
+        "prepare_counted_ast_preservation",
+        "validate_counted_ast_preservation"
+      ],
+      "evidence_ids": [
+        "relational-counted-preservation-20261109"
+      ],
+      "status": "implementation_present",
+      "notes": "Five actual native witnesses passed; 291 ordinary cases passed but final storage census failed. Exact source/evidence scope only; general compiler and statutory interpretation remain unproved.",
+      "existing_tasks": [
+        "LIR-07",
+        "LIR-12",
+        "LIR-14"
+      ]
+    },
+    {
+      "id": "native-ast-preservation-executor",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_native_ast_preservation_native.py",
+      "owner_module": "ipfs_datasets_py.logic.autoformal.legal_native_ast_preservation_native",
+      "ownership_role": "existing_single_owner",
+      "required": true,
+      "compatibility_dependency": false,
+      "apis": [
+        "build_native_ast_preservation",
+        "build_relational_ast_preservation",
+        "build_counted_ast_preservation"
+      ],
+      "evidence_ids": [
+        "relational-counted-preservation-20261109"
+      ],
+      "status": "focused_tests_qualified",
+      "notes": "Five real builds, 23 exact empty-axiom theorem reports, complete project/artifact readback and original sampled custody closeout. No statutory admission or qualification transfer to changed runtime.",
+      "existing_tasks": [
+        "LIR-12",
+        "LIR-14"
+      ]
+    },
+    {
+      "id": "reviewed-rich-retrieval-context",
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_structured_retrieval.py",
+      "owner_module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_structured_retrieval",
+      "ownership_role": "existing_single_owner",
+      "required": true,
+      "compatibility_dependency": false,
+      "apis": [
+        "reviewed_context_inputs_sha256",
+        "consume_reviewed_contexts_v2"
+      ],
+      "evidence_ids": [
+        "reviewed-rich-context-20261109"
+      ],
+      "status": "focused_tests_qualified",
+      "notes": "287 fictional-fixture cases passed including 16 rich-context controls; source/process/storage custody closed. Complete reviewed training examples with leakage/budget refusal; ranking, inference permission and legal applicability unverified.",
+      "existing_tasks": [
+        "LIR-20"
+      ]
     }
   ],
   "entry_point": "ipfs_datasets_py/logic/autoformal/README.md",
@@ -4727,7 +4795,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-11-09T03:43:24.588533+00:00",
+  "last_updated_at_utc": "2026-11-09T06:15:52.453526+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -7149,6 +7217,26 @@
       "required_for_catalog_check": true,
       "root": "datasets_repository",
       "scope": "Captured 243-case ordinary cohort and 11 actual Lean commands, including exact proof-to-disk-cache reuse and adversarial context refusals on fictional source. Original custody closed. Later shared-SDK drift, standalone wrapper, hosted CI, statutory meaning and model/corpus admission are unqualified.",
+      "status": "focused_tests_qualified"
+    },
+    {
+      "id": "relational-counted-preservation-20261109",
+      "path": "docs/autoformalization/evidence/legal-ir-relational-counted-preservation-20261109.json",
+      "root": "datasets_repository",
+      "required_for_catalog_check": true,
+      "observed_bytes": 32744,
+      "observed_sha256": "244c386b2a8f93181dd42d78d5e05e5d66e7c3cabb43bfab3a3e437e990d53db",
+      "scope": "291 ordinary passes with retained capacity-failed closeout; five closed actual Lean builds and 23 empty-axiom reports on exact fictional witnesses. No universal or statutory preservation claim.",
+      "status": "native_qualified_ordinary_passed_storage_closeout_failed"
+    },
+    {
+      "id": "reviewed-rich-context-20261109",
+      "path": "docs/autoformalization/evidence/legal-ir-reviewed-rich-context-20261109.json",
+      "root": "datasets_repository",
+      "required_for_catalog_check": true,
+      "observed_bytes": 5526,
+      "observed_sha256": "a1b14353202f8f4dd203c20b349f2d18b6d11427dce809c311d0913bde904554",
+      "scope": "287 fictional reviewed-context/consumer/adjudication cases, zero skips; original owner closed and released. No model update, real legal review or corpus admission.",
       "status": "focused_tests_qualified"
     }
   ]

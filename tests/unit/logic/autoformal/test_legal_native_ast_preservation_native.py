@@ -982,7 +982,7 @@ def _assert_installed_lean_preservation(receipt, preparation, executable, binari
     assert observed["compiled_modules"] == manifest["expected_modules"]
     assert len(observed["artifact_sha256"]) == 4 and all(observed["artifact_bytes"].values())
     assert len(observed["executed_project_sha256"]) == 7
-    assert len(manifest["theorems"]) == 5
+    assert len(manifest["theorems"]) == (3 if profile == native.PROFILE else 5)
     assert observed["theorem_axiom_dependencies"] == {name: [] for name in manifest["theorems"]}
     assert observed["axiom_observations_passed"] is True
     assert observed["axiom_observation_errors"] == []
@@ -1026,3 +1026,13 @@ def test_installed_lean_counted_preservation(counted_base, tmp_path):
     assert receipt["counted_boundary_counterexamples_checked"] is True
     assert receipt["native_ast_value_preservation_proved"] is False
     assert receipt["native_TDFOL_route_used"] is False
+
+
+def test_installed_lean_legacy_unary_preservation(base, tmp_path):
+    """Shared native dispatch still checks the existing retained unary AST."""
+    executable, binaries = _installed_lean_campaign_binaries()
+    captured, preparation = base
+    receipt = build(captured, preparation, executable,
+        tmp_path / "installed-legacy-unary", timeout_seconds=45)
+    _assert_installed_lean_preservation(receipt, preparation, executable, binaries, native.PROFILE)
+    assert receipt["native_ast_value_preservation_proved"] is True

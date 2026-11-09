@@ -240,3 +240,143 @@ def permute_contexts_across_families(query_rows, context_rows):
             context_provenance="donor_query_training_retrieval; receiving_source_remains_original")
         result.append(record)
     return result
+
+
+# This complete-example profile is separate from the 384D histogram baseline.
+REVIEWED_CONTEXT_SCHEMA = "legal-reviewed-retrieval-context/v2"
+REVIEWED_CONTEXT_ROLE = "structural_examples_not_controlling_authorities"
+MAX_REVIEWED_CONTEXT_BYTES = 1024 * 1024
+
+
+def reviewed_context_inputs_sha256(value):
+    """Use the existing consumer's bounded canonical JSON commitment recipe."""
+    from . import legal_span_consumer_binding as binding_owner
+    return binding_owner._guard(value).sha256
+
+
+def consume_reviewed_contexts_v2(binding, training_rows, *, split_manifest,
+        admission_inputs, exposure_records, query_rows, retrieval_rows,
+        expected_query_rows_sha256, expected_retrieval_rows_sha256,
+        consumer, max_context_bytes=262144):
+    """Dispatch full source/typed-AST examples through present review replay.
+
+    The supplied binding must authorize TRAIN targets via the existing reviewed
+    consumer. Queries contain only enrolled source IDs and text. Selection order
+    is caller-supplied, not an authenticated ranking. Governing definitions are
+    expanded from that same reviewed training component; no query target enters
+    the interface. Every exposed example passes source/family/lineage exclusion.
+
+    This is an opt-in callback-argument contract, not a capability controlling
+    all process reads or certification of inference-context permission. Review,
+    split and exposure declarations keep their original authority and limits.
+    No model, numerical projection, training, Lean or statutory truth is proved.
+    Contexts are never truncated to a byte budget: the whole dispatch refuses.
+    """
+    import json
+    from . import legal_span_consumer_binding as bound
+    _require(type(binding) is bound.ReviewedSourceSpanConsumerBinding,
+             "existing complete reviewed consumer binding required")
+    _require(binding.receipt()["operation"] == "training",
+             "rich example index requires a training binding")
+    _require(callable(consumer), "explicit rich-context consumer required")
+    _require(type(max_context_bytes) is int and 1 <= max_context_bytes <= MAX_REVIEWED_CONTEXT_BYTES,
+             "bounded complete context byte allowance required")
+    pins = implementation_pin()
+    bound._sha256(expected_query_rows_sha256, "expected query rows SHA256")
+    bound._sha256(expected_retrieval_rows_sha256, "expected retrieval rows SHA256")
+    originals = (query_rows, retrieval_rows)
+    copies = json.loads(bound._preflight(list(originals)))
+    queries, retrieval = copies
+    guards = tuple(bound._guard(v, h) for v, h in zip(copies,
+        (expected_query_rows_sha256, expected_retrieval_rows_sha256)))
+    _require(type(queries) is list and 1 <= len(queries) <= 32
+             and type(retrieval) is list and len(retrieval) == len(queries),
+             "complete bounded query and retrieval populations required")
+    manifest, examples = bound._manifest(split_manifest, bound._guard(split_manifest))
+    try:
+        bound.splits.require_legal_ir_split_guard(manifest)
+    except bound.splits.LegalIRSplitError as error:
+        raise ValueError("rich context split leakage blocks dispatch") from error
+    seen = set()
+    for query in queries:
+        bound._closed(query, {"id", "source_text"}, "target-free rich query")
+        bound._text(query["id"], "rich query ID", 512)
+        bound._text(query["source_text"], "rich query source", 65536)
+        _require(query["id"] not in seen, "unique rich query IDs required")
+        seen.add(query["id"])
+        enrolled = examples.get(query["id"])
+        _require(enrolled is not None and enrolled.content_hash == bound.splits._content_hash(query["source_text"]),
+                 "query source differs from enrolled split source")
+
+    def construct(rows):
+        # Only the existing consumer supplies these detached, revalidated rows.
+        index_sha = bound._guard(rows).sha256
+        known = {row["id"]: row for row in rows}
+        units = {row["unit_id"]: row for row in rows}
+        result = []
+        for query, selected in zip(queries, retrieval):
+            bound._closed(selected, {"id", "source_sha256", "index_sha256", "retrieved_ids"},
+                          "rich retrieval selection")
+            source_sha = hashlib.sha256(query["source_text"].encode("utf-8")).hexdigest()
+            _require(selected["id"] == query["id"] and selected["source_sha256"] == source_sha
+                     and selected["index_sha256"] == index_sha,
+                     "rich retrieval source or complete training index differs")
+            ids = selected["retrieved_ids"]
+            _require(type(ids) is list and 1 <= len(ids) <= 16
+                     and all(type(key) is str and key in known for key in ids)
+                     and len(set(ids)) == len(ids), "distinct training-only retrieved IDs required")
+            queue, exposed, expanded = list(ids), [], set()
+            while queue:
+                key = queue.pop(0)
+                if key in expanded:
+                    continue
+                expanded.add(key)
+                row = known[key]
+                enrolled = examples[key]
+                query_example = examples[query["id"]]
+                _require(key != query["id"] and enrolled.content_hash != query_example.content_hash,
+                         "rich example shares query identity or source")
+                for field in ("statute_family", "lineage_group_id", "amendment_key", "near_duplicate_key", "source_span_key"):
+                    left, right = getattr(enrolled, field), getattr(query_example, field)
+                    _require(not (left and left == right), "rich example shares query " + field)
+                _require(not set(enrolled.citation_clusters).intersection(query_example.citation_clusters)
+                         and not set(enrolled.sibling_keys).intersection(query_example.sibling_keys),
+                         "rich example shares query citation or dependency group")
+                ir = row["canonical_ir"]
+                for use in ir["definition_uses"]:
+                    if use["use_unit_id"] == row["unit_id"]:
+                        definition = units.get(use["definition_unit_id"])
+                        _require(definition is not None, "complete governing definition missing from permitted training rows")
+                        queue.append(definition["id"])
+                exposed.append({"id": key, "unit_id": row["unit_id"],
+                    "source_text": row["source_text"], "canonical_ir": row["canonical_ir"],
+                    "source_link": ir["source_binding"],
+                    "selection_role": "retrieved_example" if key in ids else "governing_definition_of_training_example"})
+            context = {"id": query["id"], "source_sha256": source_sha,
+                "source_text": query["source_text"], "retrieved_ids": list(ids), "examples": exposed,
+                "index_sha256": index_sha, "selection_sha256": bound._guard(selected).sha256,
+                "selection_origin": "caller_supplied_ordered_selection",
+                "retrieval_role": REVIEWED_CONTEXT_ROLE,
+                "query_target_access": False, "teacher_forcing": False}
+            context["context_sha256"] = bound._guard(context).sha256
+            raw = bound._preflight(context)
+            _require(len(raw) <= max_context_bytes, "complete rich context exceeds byte allowance; truncation refused")
+            result.append(context)
+        receipt = bound.validate_reviewed_source_span_consumer_binding_v2(binding, training_rows,
+            split_manifest=split_manifest, admission_inputs=admission_inputs, exposure_records=exposure_records)
+        _require(receipt["status"] == "ready", "present reviewed training admission is blocked")
+        for guard, value, label in zip(guards, originals, ("queries", "retrieval selections")):
+            bound._check(guard, value, label)
+        _require(pins == implementation_pin(), "rich-context implementation changed during construction")
+        payload = {"schema": REVIEWED_CONTEXT_SCHEMA, "rows": result,
+            "training_index_sha256": index_sha, "binding_receipt": receipt,
+            "implementation": pins, "retrieval_role": REVIEWED_CONTEXT_ROLE,
+            "examples_are_complete": True, "query_target_access": False,
+            "inference_context_permission_verified": False, "ranking_authenticated": False,
+            "legal_applicability_established": False, "training_executed": False,
+            "proof_authority": False, "corpus_admitted": False}
+        return consumer(json.loads(bound._preflight(payload)))
+
+    return bound.consume_reviewed_source_span_binding_v2(binding, training_rows,
+        split_manifest=split_manifest, admission_inputs=admission_inputs,
+        exposure_records=exposure_records, consumer=construct)

@@ -909,3 +909,29 @@ def test_equivalence_proof_replay_rejects_resealed_legacy_or_axiomatic_replaceme
                  else _validate_counted_preservation)
     with pytest.raises(ValueError):
         validator(captured, changed)
+
+
+@pytest.mark.parametrize("declaration", ["countedVariableValue", "countedVariableClosed",
+    "countedObjectValue", "countedEventValue", "countedTimeValue"])
+def test_counted_reserved_lean_binders_cannot_reenter_a_resealed_preparation(
+        counted_preservation_base, declaration):
+    # Actual Lean rejected `variable` as a binder in the retained native v01.
+    # Replay must also reject reintroduction into any one of the five functions.
+    captured, preparation = counted_preservation_base
+    meta, files = manifest(preparation), dict(preparation.files)
+    path = owner.COUNTED_PROJECT_ROOT + "/Semantics.lean"
+    semantics = owner.COUNTED_SEMANTICS
+    start = semantics.index("def " + declaration + " ")
+    end = semantics.index("\ndef ", start + 1)
+    definition = semantics[start:end]
+    assert "(boundVariable : CountedVariable)" in definition
+    legacy = definition.replace("boundVariable", "variable")
+    changed_semantics = semantics[:start] + legacy + semantics[end:]
+    files[path] = files[path].replace(semantics, changed_semantics, 1)
+    meta["semantics_sha256"] = sha(changed_semantics.encode())
+    meta["file_sha256"] = {name: sha(body.encode()) for name, body in sorted(files.items())}
+    meta = corpus_contracts.seal_record({key: value for key, value in meta.items()
+                                       if key not in {"record_cid", "cid_scope"}})
+    changed = replace(preparation, manifest_json=canonical(meta).decode(), files=tuple(sorted(files.items())))
+    with pytest.raises(ValueError):
+        _validate_counted_preservation(captured, changed)

@@ -1,0 +1,128 @@
+{
+  "schema": "legal-reviewed-rich-context-qualification/v1",
+  "observed_utc": "2026-11-09T06:09:55.948524+00:00",
+  "existing_tasks": [
+    "LIR-20"
+  ],
+  "status": "fictional_reviewed_rich_context_contracts_qualified",
+  "source_files": [
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_structured_retrieval.py",
+      "bytes": 22504,
+      "sha256": "f9b3747a66d51b8d50d61a75c7c9987d416299c14a7612847c5fe6dc381f8c06"
+    },
+    {
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_structured_retrieval.py",
+      "bytes": 21698,
+      "sha256": "c2ab4187de6248930466c5712262c28743b8b9961e92a257acfaac45ebb85d39"
+    }
+  ],
+  "ordinary_tests": {
+    "passed": 287,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "new_rich_context_cases": 16,
+    "structured_retrieval_total": 45,
+    "reviewed_consumer_total": 130,
+    "meaning_adjudication_total": 112,
+    "pytest_elapsed_seconds": 74.35
+  },
+  "source_execution": {
+    "declared_pins": 205,
+    "distinct_product_files_compiled": 133,
+    "raw_compile_bytes_pinned": true,
+    "fresh_python_cache_prefix": true,
+    "vendor_sources_attested": false,
+    "source_drift": [],
+    "source_closed": true
+  },
+  "resource_closeout": {
+    "reservation_id": "20dcf2c6df9b4432b129a93a5893f9ab",
+    "status": "released",
+    "storage_bytes": 12582912,
+    "observed_live_processes": 0,
+    "scope": "sampled_birth_bound_descendants",
+    "kernel_containment_attested": false,
+    "parent_waited": true
+  },
+  "features": [
+    "Full permitted source, typed AST, argument roles and qualifier values retained",
+    "Governing definitions expanded from same admitted training rows",
+    "Current independent-review admission replayed immediately before consumer dispatch",
+    "Closed source-only query schema and source/index/selection pins",
+    "Whole-context budget refusal without truncation",
+    "Query identity/content/family/lineage/amendment/near-duplicate/span/citation/sibling exclusion",
+    "Compact histogram/vector baseline retained"
+  ],
+  "limits": [
+    "Fictional reviewed fixtures; no real statutory review or corpus admission",
+    "Caller-supplied ordered retrieval selections; ranking unauthenticated",
+    "Callback-argument contract, not a sandbox for all consumer reads",
+    "Inference-context permission and controlling-authority applicability not established",
+    "No pretrained decoder comparison, learned improvement or cost-per-accepted-law result",
+    "Existing baseline includes zero-step numerical retriever initialization; no optimizer update claimed"
+  ],
+  "evidence": [
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-rich-context-20261109-v01/qualification-controls-v03/request.json",
+      "bytes": 39352,
+      "sha256": "9efc46d7b7b7416dcfdd1c4ed946e5ae8fb7631ba91087170f055a958cf838dc"
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-rich-context-20261109-v01/qualification-controls-v03/plan.json",
+      "bytes": 37705,
+      "sha256": "3d30481a3b8c1c5c83c4779be6d807aec4fb06a4b5400827b00ce433730ceeb4"
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-rich-context-20261109-v01/qualification-controls-v03/captured-source-manifest.json",
+      "bytes": 49541,
+      "sha256": "e8bf4fadf997b1e54a29a9bb9756d6b7019ee5e5e8935f90bddede29f1eed7e4"
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-rich-context-20261109-v01/qualification-controls-v03/captured-source-buffers.tar.gz",
+      "bytes": 1296697,
+      "sha256": "661408cea7094c93a9e7ec6fe6e5f39e0acaf4e586cc1196a235e9aa89323a7a"
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-rich-context-20261109-v01/qualification-controls-v03/owner.stdout",
+      "bytes": 5162,
+      "sha256": "949eb74336e41b9fbf8b784d76303bd400672a2e9af84e4ae7974a35ba7cd88f"
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-rich-context-20261109-v01/qualification-controls-v03/parent-closeout.json",
+      "bytes": 77,
+      "sha256": "b2e85cb18bf58e26c26bff37172054556afc0b0faa827ab5889965ae71dd6358"
+    },
+    {
+      "path": "/tmp/pytest-of-barberb/legal-ir-reviewed-rich-context-20261109-v03/attempt/logs/result.json",
+      "bytes": 828,
+      "sha256": "5ff0b52a1a5578324f37504c8b3e853074e7f75fe9d33155a27050fa380e2572"
+    },
+    {
+      "path": "/tmp/pytest-of-barberb/legal-ir-reviewed-rich-context-20261109-v03/attempt/logs/execution.json",
+      "bytes": 1339,
+      "sha256": "666e859ae15dd91e145afb263beabb9ed0dac4e992f37458ec2fa8a735782e0f"
+    },
+    {
+      "path": "/tmp/pytest-of-barberb/legal-ir-reviewed-rich-context-20261109-v03/attempt/logs/stdout.log",
+      "bytes": 468,
+      "sha256": "420a554b72891cdac0554dd69b3187a527c8c2fa64fb1932fd27c70be8055e73"
+    },
+    {
+      "path": "/tmp/pytest-of-barberb/legal-ir-reviewed-rich-context-20261109-v03/attempt/exports/junit.xml",
+      "bytes": 58554,
+      "sha256": "baf03c6407fdf15c68baca59505dcaf77d4274bf6ff40ca593368971def718c3"
+    },
+    {
+      "path": "/tmp/pytest-of-barberb/legal-ir-reviewed-rich-context-20261109-v03/attempt/exports/source-observation.json",
+      "bytes": 23944,
+      "sha256": "e0c6c57be466fb5d6dfe8133d8d1d12b79217bc178f4e126c36ed50fe645b5f2"
+    }
+  ],
+  "training_gold_mask": 0,
+  "evaluation_gold_mask": 0,
+  "legal_meaning_admitted": false,
+  "corpus_admitted": false,
+  "proof_authority": false
+}
