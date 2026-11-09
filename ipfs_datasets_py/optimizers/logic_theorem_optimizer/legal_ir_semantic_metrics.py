@@ -2072,3 +2072,168 @@ __all__ = [
     "synthetic_orthogonal_fixture",
     "synthetic_unknown_denominator_fixture",
 ]
+
+
+# Additive complete-nine payload diagnostics. Legacy gates above are unchanged.
+COMPLETE_NORM_PAYLOAD_METRICS_SCHEMA: Final = "complete-nine-norm-payload-metrics/v1"
+_COMPLETE_NORM_PAYLOAD_FIELDS = frozenset({
+    "profile", "typed_expression", "argument_roles", "assumptions", "governing_context",
+    "interpretation_id", "source_binding", "definition_uses", "cross_references",
+})
+_COMPLETE_NORM_DEFINITION_FIELDS = frozenset({
+    "definition_unit_id", "defined_predicate", "use_unit_id", "use_occurrence_cid",
+    "target_typed_paths", "applicability", "interpretation_id", "evidence_refs",
+})
+_COMPLETE_NORM_LOCAL_DEFINITION_FIELDS = ("defined_predicate", "target_typed_paths", "applicability")
+_COMPLETE_NORM_OUTCOMES = ("complete", "incomplete", "abstained", "unsupported", "invalid", "error")
+
+
+def _complete_norm_payload_wire(value: Any) -> bytes:
+    return json.dumps(value, sort_keys=True, ensure_ascii=True, separators=(",", ":"),
+                      allow_nan=False).encode("utf-8")
+
+
+def _complete_norm_payload_copy(value: Any) -> Any:
+    nodes = 0
+    def visit(item: Any, depth: int = 0) -> None:
+        nonlocal nodes
+        nodes += 1
+        if depth > 64 or nodes > 1_000_000:
+            raise ValueError("bounded ordinary complete-norm JSON required")
+        if type(item) is dict:
+            if any(type(key) is not str for key in item):
+                raise ValueError("ordinary string JSON keys required")
+            for child in item.values():
+                visit(child, depth + 1)
+        elif type(item) is list:
+            for child in item:
+                visit(child, depth + 1)
+        elif item is None or type(item) in (str, int, bool):
+            return
+        elif type(item) is float and math.isfinite(item):
+            return
+        else:
+            raise ValueError("lossless ordinary JSON values required")
+    visit(value)
+    raw = _complete_norm_payload_wire(value)
+    if len(raw) > 32 * 1024**2:
+        raise ValueError("complete-norm payload evaluation exceeds byte bound")
+    return json.loads(raw)
+
+
+def _complete_norm_payload_shape(value: Any) -> bool:
+    if type(value) is not dict or set(value) != _COMPLETE_NORM_PAYLOAD_FIELDS:
+        return False
+    if (type(value["profile"]) is not str or not value["profile"] or
+            type(value["interpretation_id"]) is not str or not value["interpretation_id"] or
+            type(value["typed_expression"]) is not dict or
+            type(value["typed_expression"].get("root")) is not dict or
+            type(value["typed_expression"]["root"].get("kind")) is not str or
+            not value["typed_expression"]["root"]["kind"] or
+            type(value["argument_roles"]) is not list or type(value["assumptions"]) is not list):
+        return False
+    for role in value["argument_roles"]:
+        if (type(role) is not dict or set(role) != {"symbol", "roles"} or
+                type(role["symbol"]) is not str or not role["symbol"] or type(role["roles"]) is not list or
+                any(type(item) is not str or not item for item in role["roles"])):
+            return False
+    for key, fields in (("governing_context", {"jurisdiction", "instrument_id", "governing_edition",
+                            "legal_as_of_utc", "valid_from_utc", "valid_until_utc"}),
+                        ("source_binding", {"source_version_cid", "occurrence_cid", "document_revision"})):
+        if type(value[key]) is not dict or set(value[key]) != fields:
+            return False
+        for name, item in value[key].items():
+            if item is None and name == "valid_until_utc":
+                continue  # Open interval shape only; applicability is not proved.
+            if type(item) is not str or not item:
+                return False
+    for key, fields in (("definition_uses", _COMPLETE_NORM_DEFINITION_FIELDS),
+                        ("cross_references", {"from_unit_id", "dependency_artifact_id", "dependency_sha256", "version", "evidence_refs"})):
+        if type(value[key]) is not list:
+            return False
+        for row in value[key]:
+            if type(row) is not dict or set(row) != fields or type(row["evidence_refs"]) is not list:
+                return False
+            for name, item in row.items():
+                if name not in {"evidence_refs", "target_typed_paths"} and (type(item) is not str or not item):
+                    return False
+            if key == "definition_uses" and (type(row["target_typed_paths"]) is not list or
+                    not row["target_typed_paths"] or
+                    any(type(path) is not str or not path for path in row["target_typed_paths"])):
+                return False
+            for evidence in row["evidence_refs"]:
+                if (type(evidence) is not dict or set(evidence) != {"artifact_id", "sha256"} or
+                        any(type(item) is not str or not item for item in evidence.values())):
+                    return False
+    return True
+
+
+def evaluate_complete_norm_payloads(examples: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    """Compare exact ordered full-nine payloads; confer no semantic authority.
+
+    Each item has exactly case_id/reference/candidate/outcome. Invalid reference
+    shape or non-ordinary JSON refuses the complete evaluation. Every ordinary
+    malformed/non-complete candidate stays zero in the original denominator.
+    Local definition facets exclude governing-unit/custody IDs; matching them
+    does not establish governing-definition meaning or source fidelity. This
+    function neither invokes a generator nor authenticates producers/references.
+    Existing snapshot/family owners may carry this explicitly scoped report.
+    """
+    if type(examples) not in (list, tuple) or not 0 < len(examples) <= 4096:
+        raise ValueError("bounded nonempty ordinary example sequence required")
+    rows = _complete_norm_payload_copy(list(examples))
+    seen = set()
+    for row in rows:
+        if (type(row) is not dict or set(row) != {"case_id", "reference", "candidate", "outcome"} or
+                type(row["case_id"]) is not str or not 0 < len(row["case_id"]) <= 512 or
+                row["case_id"] in seen or row["outcome"] not in _COMPLETE_NORM_OUTCOMES or
+                type(row["outcome"]) is not str):
+            raise ValueError("closed unique-case complete-norm example required")
+        seen.add(row["case_id"])
+        if not _complete_norm_payload_shape(row["reference"]):
+            raise ValueError("complete reference payload shape required; denominator cannot shrink")
+    metric_names = ("profile_exact", "typed_expression_exact", "ordered_argument_roles_exact", "assumptions_exact",
+        "definition_use_local_facets_exact", "local_structural_payload_exact", "interpretation_identity_exact",
+        "definition_use_custody_exact", "cross_reference_custody_exact", "source_binding_exact",
+        "governing_context_exact", "full_nine_payload_exact")
+    totals = dict.fromkeys(metric_names, 0)
+    counts = dict.fromkeys(_COMPLETE_NORM_OUTCOMES, 0)
+    details = []
+    for row in rows:
+        left, right = row["reference"], row["candidate"]
+        counts[row["outcome"]] += 1
+        shaped = _complete_norm_payload_shape(right)
+        scores = dict.fromkeys(metric_names, 0)
+        if row["outcome"] == "complete" and shaped:
+            equal = lambda a, b: int(_complete_norm_payload_wire(a) == _complete_norm_payload_wire(b))
+            for metric, key in (("profile_exact", "profile"), ("typed_expression_exact", "typed_expression"),
+                    ("ordered_argument_roles_exact", "argument_roles"), ("assumptions_exact", "assumptions"),
+                    ("interpretation_identity_exact", "interpretation_id"), ("source_binding_exact", "source_binding"),
+                    ("governing_context_exact", "governing_context"), ("cross_reference_custody_exact", "cross_references")):
+                scores[metric] = equal(left[key], right[key])
+            local = lambda target: [{key: use[key] for key in _COMPLETE_NORM_LOCAL_DEFINITION_FIELDS}
+                                    for use in target["definition_uses"]]
+            custody = lambda target: [{key: use[key] for key in sorted(_COMPLETE_NORM_DEFINITION_FIELDS -
+                                        set(_COMPLETE_NORM_LOCAL_DEFINITION_FIELDS))} for use in target["definition_uses"]]
+            scores["definition_use_local_facets_exact"] = equal(local(left), local(right))
+            scores["definition_use_custody_exact"] = equal(custody(left), custody(right))
+            scores["local_structural_payload_exact"] = int(all(scores[name] for name in metric_names[:5]))
+            scores["full_nine_payload_exact"] = equal(left, right)
+        for name in metric_names:
+            totals[name] += scores[name]
+        details.append({"case_id": row["case_id"], "outcome": row["outcome"],
+                        "candidate_payload_shape_supported": shaped, "scores": scores})
+    return {"schema": COMPLETE_NORM_PAYLOAD_METRICS_SCHEMA, "scope": "exact_structural_and_local_facet_payload_comparison_only",
+        "example_count": len(rows), "denominator": len(rows), "outcome_counts": counts,
+        "malformed_complete_candidate_count": sum(row["outcome"] == "complete" and
+            not row["candidate_payload_shape_supported"] for row in details),
+        "metric_numerators": totals, "metric_denominators": dict.fromkeys(metric_names, len(rows)),
+        "rates": {name: total / len(rows) for name, total in totals.items()}, "cases": details,
+        "reference_and_prediction_payload_sha256": hashlib.sha256(_complete_norm_payload_wire(rows)).hexdigest(),
+        "producer_authenticity_verified": False, "reference_authenticity_verified": False,
+        "syntax_or_logic_family_validity_verified": False, "semantic_equivalence_proved": False,
+        "governing_definition_meaning_verified": False, "source_fidelity_proved": False,
+        "legal_admission_or_proof_authority": False, "generator_invoked_by_scorer": False}
+
+
+__all__ += ["COMPLETE_NORM_PAYLOAD_METRICS_SCHEMA", "evaluate_complete_norm_payloads"]
