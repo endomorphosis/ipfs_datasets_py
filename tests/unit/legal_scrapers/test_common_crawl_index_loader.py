@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import hashlib
+import io
 import json
+import os
 from pathlib import Path
 from urllib.request import Request
 
@@ -564,3 +567,199 @@ def test_connect_duckdb_attaches_huggingface_secret_when_token_available(monkeyp
     assert any(kind == "huggingface" for _name, kind in rows)
     dumped = str(connection.execute("SELECT * FROM duckdb_secrets()").fetchall())
     assert _UNIT_TOKEN not in dumped
+
+
+# These tests use tiny real Parquet files and mocked HTTP streams only.
+class _ShardResponse(io.BytesIO):
+    def __init__(self, body, *, length=None, failure=None):
+        super().__init__(body)
+        self.headers = {} if length is None else {"Content-Length": str(length)}
+        self.failure = failure
+
+    def read(self, size=-1):
+        if self.failure is not None:
+            if self.tell():
+                raise self.failure
+            size = 8
+        return super().read(size)
+
+
+def _materialization_fixture(tmp_path, monkeypatch, *, verify=False, value="new"):
+    sink = pa.BufferOutputStream()
+    pq.write_table(pa.Table.from_pylist([{"value": value}]), sink)
+    body = sink.getvalue().to_pybytes()
+    loader = CommonCrawlIndexLoader(local_base_dir=tmp_path, verify_integrity=verify)
+    url = "https://example.invalid/shard.parquet"
+    monkeypatch.setattr(loader, "_get_hf_parquet_urls", lambda kind: [url])
+    monkeypatch.setattr(loader, "_hf_urlopen", lambda *a, **k: _ShardResponse(body))
+    target = tmp_path / "state" / "shard.parquet"
+    return loader, body, target, url
+
+
+def test_materialization_publishes_validated_file_atomically(tmp_path, monkeypatch):
+    loader, body, target, _ = _materialization_fixture(tmp_path, monkeypatch, verify=True)
+    target.parent.mkdir()
+    target.write_bytes(b"old file")
+    replace = os.replace
+    publications = []
+
+    def publish(source, destination):
+        assert Path(source).parent == target.parent
+        assert Path(source).name.endswith(".part")
+        assert target.read_bytes() == b"old file"
+        assert pq.read_metadata(source).num_rows == 1
+        publications.append(destination)
+        replace(source, destination)
+
+    monkeypatch.setattr(os, "replace", publish)
+    assert loader.materialize_state_index_locally(force_refresh=True) == [target]
+    assert publications == [target]
+    assert target.read_bytes() == body
+    assert list(target.parent.glob("*.part")) == []
+
+
+def test_materialization_interrupted_download_cleans_partial(tmp_path, monkeypatch):
+    loader, body, target, _ = _materialization_fixture(tmp_path, monkeypatch)
+    monkeypatch.setattr(loader, "_hf_urlopen", lambda *a, **k: _ShardResponse(
+        body, failure=ConnectionResetError("interrupted")))
+    assert loader.materialize_state_index_locally() == []
+    assert not target.exists()
+    assert list(target.parent.iterdir()) == []
+
+
+def test_materialization_failed_refresh_preserves_previous_file(tmp_path, monkeypatch):
+    loader, body, target, _ = _materialization_fixture(tmp_path, monkeypatch)
+    target.parent.mkdir()
+    target.write_bytes(body)
+    monkeypatch.setattr(loader, "_hf_urlopen", lambda *a, **k: _ShardResponse(
+        body, failure=OSError("interrupted")))
+    assert loader.materialize_state_index_locally(force_refresh=True) == []
+    assert target.read_bytes() == body
+    assert list(target.parent.iterdir()) == [target]
+
+
+def test_materialization_replaces_nonempty_corrupt_cache(tmp_path, monkeypatch):
+    loader, body, target, _ = _materialization_fixture(tmp_path, monkeypatch)
+    target.parent.mkdir()
+    target.write_bytes(b"PAR1partial")
+    assert loader.materialize_state_index_locally() == [target]
+    assert target.read_bytes() == body
+
+
+def test_materialization_rejects_truncated_footer(tmp_path, monkeypatch):
+    loader, body, target, _ = _materialization_fixture(tmp_path, monkeypatch)
+    monkeypatch.setattr(loader, "_hf_urlopen", lambda *a, **k: _ShardResponse(body[:-3]))
+    assert loader.materialize_state_index_locally() == []
+    assert list(target.parent.iterdir()) == []
+
+
+def test_materialization_checks_http_length_even_without_integrity(tmp_path, monkeypatch):
+    loader, body, target, _ = _materialization_fixture(tmp_path, monkeypatch)
+    for length in (len(body) - 1, len(body) + 1):
+        monkeypatch.setattr(loader, "_hf_urlopen", lambda *a, **k: _ShardResponse(body, length=length))
+        assert loader.materialize_state_index_locally() == []
+        assert list(target.parent.iterdir()) == []
+
+
+def test_materialization_integrity_checks_manifest_size(tmp_path, monkeypatch):
+    loader, body, target, url = _materialization_fixture(tmp_path, monkeypatch, verify=True)
+    loader._hf_parquet_metadata[url] = {"size": len(body) + 1}
+    assert loader.materialize_state_index_locally() == []
+    assert not target.exists()
+    loader.verify_integrity = False
+    assert loader.materialize_state_index_locally() == [target]
+
+
+def test_materialization_integrity_checks_manifest_checksum(tmp_path, monkeypatch):
+    loader, body, target, url = _materialization_fixture(tmp_path, monkeypatch, verify=True)
+    loader._hf_parquet_metadata[url] = {"sha256": "0" * 64}
+    assert loader.materialize_state_index_locally() == []
+    assert list(target.parent.iterdir()) == []
+    loader._hf_parquet_metadata[url] = {"size": len(body), "sha256": hashlib.sha256(body).hexdigest()}
+    assert loader.materialize_state_index_locally() == [target]
+
+
+def test_materialization_disabled_integrity_does_not_claim_checksum_verification(tmp_path, monkeypatch):
+    loader, _, target, url = _materialization_fixture(tmp_path, monkeypatch)
+    loader._hf_parquet_metadata[url] = {"sha256": "0" * 64}
+    assert loader.materialize_state_index_locally() == [target]
+
+
+def test_materialization_refreshes_stale_cache_against_source_manifest(tmp_path, monkeypatch):
+    loader, body, target, url = _materialization_fixture(tmp_path, monkeypatch, verify=True)
+    target.parent.mkdir()
+    sink = pa.BufferOutputStream()
+    pq.write_table(pa.Table.from_pylist([{"value": "old"}]), sink)
+    target.write_bytes(sink.getvalue().to_pybytes())
+    loader._hf_parquet_metadata[url] = {"sha256": hashlib.sha256(body).hexdigest()}
+    assert loader.materialize_state_index_locally() == [target]
+    assert target.read_bytes() == body
+
+
+def test_materialization_integrity_parses_metadata_without_source_checksum(tmp_path, monkeypatch):
+    loader, _, target, _ = _materialization_fixture(tmp_path, monkeypatch, verify=True)
+    malformed = b"PAR1" + b"broken metadata" + (15).to_bytes(4, "little") + b"PAR1"
+    monkeypatch.setattr(loader, "_hf_urlopen", lambda *a, **k: _ShardResponse(malformed))
+    assert loader.materialize_state_index_locally() == []
+    assert not target.exists()
+    loader.verify_integrity = False
+    assert loader.materialize_state_index_locally() == [target]
+
+
+def test_materialization_offline_cache_is_validated(tmp_path, monkeypatch):
+    loader, body, target, _ = _materialization_fixture(tmp_path, monkeypatch)
+    target.parent.mkdir()
+    target.write_bytes(body)
+    corrupt = target.parent / "partial.parquet"
+    corrupt.write_bytes(b"partial")
+    monkeypatch.setattr(loader, "_get_hf_parquet_urls", lambda kind: [])
+    assert loader.materialize_state_index_locally() == [target]
+    assert corrupt.read_bytes() == b"partial"  # No deletion of existing user files.
+
+
+def test_materialization_keyboard_interrupt_propagates_and_cleans(tmp_path, monkeypatch):
+    loader, body, target, _ = _materialization_fixture(tmp_path, monkeypatch)
+    monkeypatch.setattr(loader, "_hf_urlopen", lambda *a, **k: _ShardResponse(
+        body, failure=KeyboardInterrupt()))
+    try:
+        loader.materialize_state_index_locally()
+    except KeyboardInterrupt:
+        pass
+    else:
+        raise AssertionError("KeyboardInterrupt must propagate")
+    assert list(target.parent.iterdir()) == []
+
+
+def test_materialization_publication_failure_keeps_prior_file(tmp_path, monkeypatch):
+    loader, body, target, _ = _materialization_fixture(tmp_path, monkeypatch)
+    target.parent.mkdir()
+    target.write_bytes(body)
+
+    def fail_replace(*args):
+        raise OSError("publication failed")
+
+    monkeypatch.setattr(os, "replace", fail_replace)
+    assert loader.materialize_state_index_locally(force_refresh=True) == []
+    assert target.read_bytes() == body
+    assert list(target.parent.iterdir()) == [target]
+
+
+def test_parquet_manifest_preserves_real_integrity_metadata(tmp_path, monkeypatch):
+    loader = CommonCrawlIndexLoader(local_base_dir=tmp_path)
+    url = "https://example.invalid/shard.parquet"
+    payload = {"parquet_files": [{"url": url, "size": 123, "sha256": "a" * 64}]}
+    monkeypatch.setattr(loader, "_hf_urlopen", lambda *a, **k: io.BytesIO(json.dumps(payload).encode()))
+    assert loader._get_hf_parquet_urls("state") == [url]
+    assert loader._hf_parquet_metadata[url] == {"size": 123, "sha256": "a" * 64}
+
+
+def test_materialization_valid_default_cache_keeps_offline_fast_path(tmp_path, monkeypatch):
+    loader, body, target, _ = _materialization_fixture(tmp_path, monkeypatch)
+    target.parent.mkdir()
+    target.write_bytes(body)
+
+    def unexpected_network(*args):
+        raise AssertionError("Valid default cache must not need remote discovery")
+
+    monkeypatch.setattr(loader, "_get_hf_parquet_urls", unexpected_network)
+    assert loader.materialize_state_index_locally() == [target]
