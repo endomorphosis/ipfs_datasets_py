@@ -1,0 +1,145 @@
+{
+  "census_performed": false,
+  "corpus_admitted": false,
+  "evaluation_gold_mask": 0,
+  "existing_tasks": [
+    "LIR-17",
+    "LIR-20"
+  ],
+  "historical_287_evidence": {
+    "bytes": 5526,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoformalization/evidence/legal-ir-reviewed-rich-context-20261109.json",
+    "sha256": "a1b14353202f8f4dd203c20b349f2d18b6d11427dce809c311d0913bde904554"
+  },
+  "historical_287_qualification_transferred": false,
+  "historical_287_source_generation": [
+    {
+      "bytes": 22504,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_structured_retrieval.py",
+      "sha256": "f9b3747a66d51b8d50d61a75c7c9987d416299c14a7612847c5fe6dc381f8c06"
+    },
+    {
+      "bytes": 21698,
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_structured_retrieval.py",
+      "sha256": "c2ab4187de6248930466c5712262c28743b8b9961e92a257acfaac45ebb85d39"
+    }
+  ],
+  "installation_receipt": {
+    "bytes": 16012,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-retrieval-source-port-20261108-v01/current-compatible-reconciliation-20261109-v01/installation.json",
+    "sha256": "27fc55cb5c62580c76064c9f94573a84902797e457643262a5a6af8189caa0bd"
+  },
+  "later_control_generation_observation": {
+    "archive_sha256_verified": true,
+    "current_owners_reverted": false,
+    "files": [
+      {
+        "archive_member": "DATA/3b0f1d047041e63c7761a01f44784b08fb492ca00051e6d383f404422b95eb37.txt",
+        "current_observed_bytes": 56261,
+        "current_observed_sha256": "c99d78004e6ce6b8a861f15e2c0b7009bbb6f45a37a89daabc8894ac440b282d",
+        "executed_bytes": 51106,
+        "executed_sha256": "3b0f1d047041e63c7761a01f44784b08fb492ca00051e6d383f404422b95eb37",
+        "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py"
+      },
+      {
+        "archive_member": "DATA/ff22f10a712e000e5ecd9ac22f314d94918cf0160abd3be1d3b1d75210239b70.txt",
+        "current_observed_bytes": 69338,
+        "current_observed_sha256": "e8603f40aa19f7c8aef54409a2573c44d45a6e53203ad81bf276f35fd78373e3",
+        "executed_bytes": 68529,
+        "executed_sha256": "ff22f10a712e000e5ecd9ac22f314d94918cf0160abd3be1d3b1d75210239b70",
+        "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/validation_run_resources.py"
+      },
+      {
+        "archive_member": "DATA/07b57d067461d0ca6334e667db5c913cd5fe30739731e16e162c3c861051a997.txt",
+        "current_observed_bytes": 121648,
+        "current_observed_sha256": "eb5f77b3ce9ed953f1ae249ad56d867dbfe5f6d7ef5eba5ffb164a2b77f68f5a",
+        "executed_bytes": 108076,
+        "executed_sha256": "07b57d067461d0ca6334e667db5c913cd5fe30739731e16e162c3c861051a997",
+        "path": "scripts/ops/legal_ir/run_owned_validation.py"
+      }
+    ],
+    "native_and_80_recovery_qualification_transferred_to_later_controls": false,
+    "native_v05_captured_source_archive": {
+      "bytes": 1066814,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-relational-counted-preservation-20261109-v01/native-controls-v05/captured-source-buffers.tar.gz",
+      "sha256": "5b1ead4a9e43a11c06b3ce26c0039900689067dde88300ef6ce85f4a22f9fbd8"
+    },
+    "native_v05_captured_source_manifest": {
+      "bytes": 40743,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-relational-counted-preservation-20261109-v01/native-controls-v05/captured-source-manifest.json",
+      "sha256": "4542f60ac653970dbdc38b81a7237976129b3a85e51c784ce19aec34efcd5650"
+    },
+    "observed_at_utc": "2026-11-09T06:25:13.468391+00:00",
+    "selected_executed_bodies_verified_without_new_copies": true
+  },
+  "legal_meaning_admitted": false,
+  "limits": [
+    "The 287-case rich-context result remains attributed to its exact f9b3747a/c2ab4187 source generation.",
+    "The installed byte-exact legacy_source_577698.py fixture is an explicit historical oracle; canonical current-source imports remain current.",
+    "Native preservation source 240d14e2 is unchanged. No preservation test or resource recovery was repeated.",
+    "Protected-buffer equality is scoped to source-port installation; later genuine concurrent control changes remain unqualified and are not reverted."
+  ],
+  "model_execution": false,
+  "native_execution": false,
+  "numerical_execution": false,
+  "proof_authority": false,
+  "protected_native_preservation_sha256": "240d14e28f1ac3426af2ca4e3d8fd1693653cbeb730112ec93bea33ebb2622ac",
+  "protected_pre_post_bytes_and_identities_equal_at_installation": true,
+  "protected_source_count": 165,
+  "qualification_172_or_173_transferred": false,
+  "recorded_at_utc": "2026-11-09T06:23:40.002433+00:00",
+  "resource_admission_or_claim_changes": false,
+  "schema": "legal-ir-reviewed-retrieval-current-compatible-source-port/v1",
+  "scope": "Nine-file compatible reconciliation in the existing declaration, mask, joint-retrieval and structured-retrieval owners. Current APIs and authored controls are installed; exact postimages and protected buffers were read back. This source port establishes no current runtime, numerical, legal or corpus qualification.",
+  "source_WRITE_closed": true,
+  "source_files": [
+    {
+      "bytes": 28878,
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/alignment_relation_declarations.py",
+      "sha256": "fe3f0b9f90e189f00a97b111949e4b825110ae9c8883aea3dad3b75ff4888f5f"
+    },
+    {
+      "bytes": 36177,
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/alignment_relation_mask_handoff.py",
+      "sha256": "8f67306567dc431fec871bdb4234e1959c83a191b153f9ba8d96d1a66552fe68"
+    },
+    {
+      "bytes": 60963,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_joint_retrieval.py",
+      "sha256": "eed4fc3258301c76df9e108194b5c073398e032ab06d82a029b9ce3f5acea114"
+    },
+    {
+      "bytes": 41385,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_structured_retrieval.py",
+      "sha256": "bc78bbe3abdb39dc42aa566f5b5e8aa15ef39cde1432d8035097d0d38f219faa"
+    },
+    {
+      "bytes": 20198,
+      "path": "tests/fixtures/legal_ir/joint_retrieval/legacy_source_577698.py",
+      "sha256": "577698c99d0cdd2209bdaaee01b40778f46251e9e1256d7537312d6655cdcb9d"
+    },
+    {
+      "bytes": 33846,
+      "path": "tests/unit/logic/formalization/autoencoder/test_alignment_relation_declarations.py",
+      "sha256": "2462660a7726191d15910312cad4e65958541ea9d34251b1987ed09fd0b2b014"
+    },
+    {
+      "bytes": 42113,
+      "path": "tests/unit/logic/formalization/autoencoder/test_alignment_relation_mask_handoff.py",
+      "sha256": "226c95187e6c49b65148e7c813bc800470e73c8d2f9719953fcd477b05dd090a"
+    },
+    {
+      "bytes": 39886,
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_joint_retrieval.py",
+      "sha256": "413ac0faf6174317da90d13ab8273b534080e528f54433ab40db3194dfa939b2"
+    },
+    {
+      "bytes": 39327,
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_structured_retrieval.py",
+      "sha256": "02b7ce41e8b25af9457482e8f9cf67c811bb039af3f068ae4fd3bcdc537ab32e"
+    }
+  ],
+  "status": "implementation_present_runtime_unqualified",
+  "tests_executed": 0,
+  "training_gold_mask": 0
+}

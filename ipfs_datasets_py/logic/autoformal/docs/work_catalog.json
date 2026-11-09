@@ -4717,24 +4717,38 @@
       ]
     },
     {
-      "id": "reviewed-rich-retrieval-context",
-      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_structured_retrieval.py",
-      "owner_module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_structured_retrieval",
-      "ownership_role": "existing_single_owner",
-      "required": true,
-      "compatibility_dependency": false,
       "apis": [
         "reviewed_context_inputs_sha256",
-        "consume_reviewed_contexts_v2"
+        "consume_reviewed_contexts_v2",
+        "build_reviewed_rich_context_candidates",
+        "validate_reviewed_rich_context_candidates"
       ],
+      "compatibility_dependency": false,
       "evidence_ids": [
-        "reviewed-rich-context-20261109"
+        "reviewed-rich-context-20261109",
+        "reviewed-retrieval-current-compatible-source-port-20261109",
+        "reviewed-retrieval-full-current-worktree-qualification-20261109",
+        "reviewed-retrieval-qualified-source-delivery-20261109",
+        "reviewed-retrieval-public-tree-qualification-20261109"
       ],
-      "status": "focused_tests_qualified",
-      "notes": "287 fictional-fixture cases passed including 16 rich-context controls; source/process/storage custody closed. Complete reviewed training examples with leakage/budget refusal; ranking, inference permission and legal applicability unverified.",
       "existing_tasks": [
         "LIR-20"
-      ]
+      ],
+      "id": "reviewed-rich-retrieval-context",
+      "notes": "Exact nine-file source delivery matches the complete 294-case qualification. Unknown pairs/analogies do not become automatic negatives; candidate context grants no decoder or legal authority. Historical 225/287 cohorts, failed requests and unrelated runtime changes retain their own scopes. All137 executed clean-checkout product buffers match selected public index; three private dependency deltas were excluded and freshly qualified separately.",
+      "owner_module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_structured_retrieval",
+      "ownership_role": "existing_single_owner",
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_structured_retrieval.py",
+      "required": true,
+      "status": "focused_tests_qualified",
+      "selected_qualification": {
+        "cohort": "clean-public-source-invocation-v05",
+        "cohort_cases": 294,
+        "evidence_id": "reviewed-retrieval-public-tree-qualification-20261109",
+        "owner_source_sha256": "bc78bbe3abdb39dc42aa566f5b5e8aa15ef39cde1432d8035097d0d38f219faa",
+        "owning_file_cases": 68,
+        "whole_package_qualified": false
+      }
     },
     {
       "id": "extended-source-withheld-decompiler",
@@ -4777,6 +4791,100 @@
         "extended-source-withheld-renderer-qualified-20261109"
       ],
       "notes": "Fresh original-owned 79-case literal-cycle/canonical-regression cohort passed with no skips; 97 pins unchanged, 80 compiled product buffers match d6c77b737, source/native/process/storage custody closed. No legal semantic interpretation, full relational renderer, model or corpus admission."
+    },
+    {
+      "apis": [
+        "prepare_reviewed_relation_declaration_v2"
+      ],
+      "compatibility_dependency": false,
+      "evidence_ids": [
+        "reviewed-retrieval-current-compatible-source-port-20261109",
+        "reviewed-retrieval-full-current-worktree-qualification-20261109",
+        "reviewed-retrieval-qualified-source-delivery-20261109",
+        "reviewed-retrieval-public-tree-qualification-20261109"
+      ],
+      "existing_tasks": [
+        "LIR-17",
+        "LIR-20"
+      ],
+      "id": "reviewed-relation-declarations",
+      "notes": "Exact nine-file source delivery matches the complete 294-case qualification. Unknown pairs/analogies do not become automatic negatives; candidate context grants no decoder or legal authority. Historical 225/287 cohorts, failed requests and unrelated runtime changes retain their own scopes. All137 executed clean-checkout product buffers match selected public index; three private dependency deltas were excluded and freshly qualified separately.",
+      "owner_module": "ipfs_datasets_py.logic.formalization.autoencoder.alignment_relation_declarations",
+      "ownership_role": "existing_single_owner",
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/alignment_relation_declarations.py",
+      "required": true,
+      "selected_qualification": {
+        "cohort": "clean-public-source-invocation-v05",
+        "cohort_cases": 294,
+        "evidence_id": "reviewed-retrieval-public-tree-qualification-20261109",
+        "owner_source_sha256": "fe3f0b9f90e189f00a97b111949e4b825110ae9c8883aea3dad3b75ff4888f5f",
+        "owning_file_cases": 62,
+        "whole_package_qualified": false
+      },
+      "status": "focused_tests_qualified"
+    },
+    {
+      "apis": [
+        "compile_reviewed_train_relation_masks_v2"
+      ],
+      "compatibility_dependency": false,
+      "evidence_ids": [
+        "reviewed-retrieval-current-compatible-source-port-20261109",
+        "reviewed-retrieval-full-current-worktree-qualification-20261109",
+        "reviewed-retrieval-qualified-source-delivery-20261109",
+        "reviewed-retrieval-public-tree-qualification-20261109"
+      ],
+      "existing_tasks": [
+        "LIR-17",
+        "LIR-20"
+      ],
+      "id": "reviewed-train-relation-masks",
+      "notes": "Exact nine-file source delivery matches the complete 294-case qualification. Unknown pairs/analogies do not become automatic negatives; candidate context grants no decoder or legal authority. Historical 225/287 cohorts, failed requests and unrelated runtime changes retain their own scopes. All137 executed clean-checkout product buffers match selected public index; three private dependency deltas were excluded and freshly qualified separately.",
+      "owner_module": "ipfs_datasets_py.logic.formalization.autoencoder.alignment_relation_mask_handoff",
+      "ownership_role": "existing_single_owner",
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/alignment_relation_mask_handoff.py",
+      "required": true,
+      "selected_qualification": {
+        "cohort": "clean-public-source-invocation-v05",
+        "cohort_cases": 294,
+        "evidence_id": "reviewed-retrieval-public-tree-qualification-20261109",
+        "owner_source_sha256": "8f67306567dc431fec871bdb4234e1959c83a191b153f9ba8d96d1a66552fe68",
+        "owning_file_cases": 105,
+        "whole_package_qualified": false
+      },
+      "status": "focused_tests_qualified"
+    },
+    {
+      "apis": [
+        "train_reviewed_retriever",
+        "ReviewedLegalJointRetriever"
+      ],
+      "compatibility_dependency": false,
+      "evidence_ids": [
+        "reviewed-retrieval-current-compatible-source-port-20261109",
+        "reviewed-retrieval-full-current-worktree-qualification-20261109",
+        "reviewed-retrieval-qualified-source-delivery-20261109",
+        "reviewed-retrieval-public-tree-qualification-20261109"
+      ],
+      "existing_tasks": [
+        "LIR-17",
+        "LIR-20"
+      ],
+      "id": "reviewed-joint-retriever",
+      "notes": "Exact nine-file source delivery matches the complete 294-case qualification. Unknown pairs/analogies do not become automatic negatives; candidate context grants no decoder or legal authority. Historical 225/287 cohorts, failed requests and unrelated runtime changes retain their own scopes. All137 executed clean-checkout product buffers match selected public index; three private dependency deltas were excluded and freshly qualified separately.",
+      "owner_module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_joint_retrieval",
+      "ownership_role": "existing_single_owner",
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_joint_retrieval.py",
+      "required": true,
+      "selected_qualification": {
+        "cohort": "clean-public-source-invocation-v05",
+        "cohort_cases": 294,
+        "evidence_id": "reviewed-retrieval-public-tree-qualification-20261109",
+        "owner_source_sha256": "eed4fc3258301c76df9e108194b5c073398e032ab06d82a029b9ce3f5acea114",
+        "owning_file_cases": 59,
+        "whole_package_qualified": false
+      },
+      "status": "focused_tests_qualified"
     }
   ],
   "entry_point": "ipfs_datasets_py/logic/autoformal/README.md",
@@ -7320,6 +7428,36 @@
       "root": "datasets_repository",
       "status": "current_worktree_runtime_qualified_shared_extensions_not_published",
       "scope": "LIR-17/20:294 complete cases including previously omitted security case;256 pins/137 compiled sources, original custody closed and2MiB released. Shared nine-file source generation remains separately unpublished; no legal or pretrained-model grant."
+    },
+    {
+      "id": "reviewed-retrieval-current-compatible-source-port-20261109",
+      "observed_bytes": 7401,
+      "observed_sha256": "b4f4e630817c31c5324ab4624d19fa3dd724a6caeb18e739c2ded5b7c42d63c0",
+      "path": "docs/autoformalization/evidence/legal-ir-reviewed-retrieval-current-compatible-source-port-20261109.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Nine compatible source/test postimages, original source WRITE/CAS closed and 165 protected buffers unchanged at installation. Zero tests, native commands or model execution; historical 287/172/173 qualification and later shared-control changes remain separate.",
+      "status": "implementation_present"
+    },
+    {
+      "id": "reviewed-retrieval-qualified-source-delivery-20261109",
+      "path": "docs/autoformalization/evidence/legal-ir-reviewed-retrieval-qualified-source-delivery-20261109.json",
+      "observed_bytes": 7928,
+      "observed_sha256": "99ef5bd9d484cf211a82af7d57cc646a4f85a3cb018e578ee2107bfbeaf99e74",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "status": "qualified_source_generation_selected_for_delivery_hosted_unverified",
+      "scope": "Exact nine-file 294-case source delivery, all owning suites included. No decoder-context, legal, pretrained-model or corpus authority."
+    },
+    {
+      "id": "reviewed-retrieval-public-tree-qualification-20261109",
+      "path": "docs/autoformalization/evidence/legal-ir-reviewed-retrieval-public-tree-qualification-20261109.json",
+      "observed_bytes": 51472,
+      "observed_sha256": "e6c4862a0c265c9239b84fab62d4a1d8f06b08039bfc05493125f16410b1609c",
+      "root": "datasets_repository",
+      "required_for_catalog_check": true,
+      "status": "selected_public_tree_runtime_qualified_hosted_ci_unverified",
+      "scope": "Clean public-dependency294 full cases;204pins/137compiled product buffers match selectedindex; original custody closed/2MiB released. No private dependencies or primary product imports; no legal/model/corpus grant."
     }
   ]
 }

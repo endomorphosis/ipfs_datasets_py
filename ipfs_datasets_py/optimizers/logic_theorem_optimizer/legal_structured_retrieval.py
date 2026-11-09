@@ -380,3 +380,273 @@ def consume_reviewed_contexts_v2(binding, training_rows, *, split_manifest,
     return bound.consume_reviewed_source_span_binding_v2(binding, training_rows,
         split_manifest=split_manifest, admission_inputs=admission_inputs,
         exposure_records=exposure_records, consumer=construct)
+
+
+RICH_SCHEMA = "legal-reviewed-full-example-context-candidate/v1"
+RICH_PROFILE = "complete-reviewed-training-examples/v1"
+RICH_MAX_BYTES = joint.MAX_BYTES  # Same existing16MiB bound, independent of numerical-input checks.
+_RICH_CONSUMER_FIELDS = {"rows", "expected_rows_sha256", "exposure_records",
+                         "expected_exposure_sha256", "allow_fictional_fixture"}
+_RICH_FALSE = {"decoder_context_admitted": False, "arbitrary_context_permission": False,
+    "proof_authority": False, "kernel_checked": False, "corpus_admitted": False,
+    "legal_applicability_verified": False, "controlling_authority_selected": False,
+    "heldout_evaluation_performed": False, "training_executed": False,
+    "query_target_access": False, "inference_reference_content_forwarded": False,
+    "governing_definition_bodies_supplied": False, "proof_dependency_bodies_supplied": False}
+
+
+def _rich_owners():
+    from . import legal_span_consumer_binding as consumer
+    _, handoff, _, admission = joint._reviewed_owners()
+    _require(callable(getattr(consumer, "prepare_reviewed_source_span_consumer_binding_v2", None)),
+             "the existing complete reviewed source-span consumer v2 is required")
+    return handoff, admission, consumer
+
+
+def _rich_implementation():
+    handoff, admission, consumer = _rich_owners()
+    return {"structured_owner": implementation_pin(), "reviewed_retrieval": joint._reviewed_implementation(),
+            "complete_example_owners": {str(Path(owner.__file__).resolve()):
+                hashlib.sha256(Path(owner.__file__).read_bytes()).hexdigest()
+                for owner in (handoff, admission, consumer)}}
+
+
+def _rich_profile_identity(identity, expected_sha256):
+    if identity is None:
+        _require(expected_sha256 is None, "an absent context identity cannot have a supplied digest")
+        return None
+    _require(type(identity) is dict and set(identity) == {"decoder_profile_sha256", "kernel_profile_sha256"},
+             "only opaque decoder/kernel profile identity commitments are accepted")
+    _require(all(value is None or type(value) is str and joint._SHA.fullmatch(value)
+                 for value in identity.values()), "context profile commitments must be SHA256 values or absent")
+    _require(type(expected_sha256) is str and joint.checkpoint_digest(identity) == expected_sha256,
+             "independently pinned context profile identity differs")
+    return copy.deepcopy(identity)
+
+
+def _rich_current_assessment(identity, entry, inputs, admission):
+    observations = inputs["current_endpoint_observations"][identity]
+    arguments = dict(entry["kwargs"], at_time_utc=inputs["at_time_utc"],
+        observed_artifact_sha256s=observations["observed_artifact_sha256s"],
+        observed_pins=observations["observed_pins"])
+    report = admission.assess_reviewed_norm_admission_v2(*entry["args"], **arguments)
+    # The canonical consumer takes the same full replay as keyword arguments.
+    _require(type(entry["args"]) is list and len(entry["args"]) == 4,
+             "exact original complete admission arguments required")
+    arguments.update(zip(("preparation", "registry", "policy", "reviews"), entry["args"]))
+    return report, arguments
+
+
+
+def _rich_bounded_candidate(value):
+    _require(len(joint._raw(value)) <= RICH_MAX_BYTES, "complete rich candidate byte budget exceeded")
+    return value
+
+
+def _rich_charge_candidate(budget, value, *, overhead=0):
+    # Charge serialized selected material before deep-copying it into any query
+    # result. The final complete wire check independently enforces the limit.
+    budget[0] += len(joint._raw(value)) + overhead
+    _require(budget[0] <= RICH_MAX_BYTES, "complete rich candidate byte budget exceeded before selected copy")
+
+
+def build_reviewed_rich_context_candidates(retriever, query_rows, preparation, registry, policy, reviews, *,
+        retrieval_inputs, example_consumer_inputs, context_profile_identity=None,
+        expected_context_profile_identity_sha256=None):
+    """Retain complete selected TRAIN examples under existing review custody.
+
+    This is a candidate artifact, not permission to feed targets into a decoder.
+    The v2 consumer independently binds every offered TRAIN source/IR row and
+    explicit exposure declaration. Current-index ranking, query exclusions and
+    current legal reviews are replayed. Optional profile hashes are commitments
+    only. No query target, full source document, sibling norm, governing-definition
+    body or proof body is forwarded. The dense v1 context contract is unchanged.
+    Caller-owned model/resource admission remains necessary for ranking.
+    """
+    _require(type(retriever) is joint.ReviewedLegalJointRetriever,
+             "the canonical reviewed current-index retriever is required")
+    handoff, admission, consumer = _rich_owners()
+    original = dict(query_rows=query_rows, preparation=preparation, registry=registry, policy=policy,
+        reviews=reviews, retrieval_inputs=retrieval_inputs, example_consumer_inputs=example_consumer_inputs,
+        context_profile_identity=context_profile_identity,
+        expected_context_profile_identity_sha256=expected_context_profile_identity_sha256)
+    frozen, input_sha256 = admission.norm._snapshot(original)
+    _require(type(frozen["retrieval_inputs"]) is dict, "complete current retrieval inputs required")
+    implementation = _rich_implementation()
+    identity = _rich_profile_identity(frozen["context_profile_identity"],
+                                     frozen["expected_context_profile_identity_sha256"])
+    inputs = frozen["retrieval_inputs"]
+    replay_fields = ("expected_preparation_sha256", "preparation_inputs", "expected_registry_sha256",
+        "expected_policy_sha256", "expected_reviews_sha256", "at_time_utc", "observed_artifact_sha256s",
+        "observed_pins", "evidence_artifacts", "current_endpoint_observations")
+    replay = {key: inputs[key] for key in replay_fields}
+    args = tuple(frozen[key] for key in ("preparation", "registry", "policy", "reviews"))
+    current = handoff.compile_reviewed_train_relation_masks_v2(*args, **replay)
+    current_sha256 = joint.checkpoint_digest(current)
+    common = dict(schema=RICH_SCHEMA, profile=RICH_PROFILE, status="candidate_only",
+        representation_role="complete_selected_source_and_typed_ast_examples",
+        input_sha256=input_sha256, implementation=implementation,
+        current_index_handoff_sha256=current_sha256, context_profile_identity=identity,
+        context_profile_identity_scope="opaque_identity_commitment_only_no_permission_or_compatibility_claim",
+        example_scope="existing_complete_reviewed_TRAIN_consumer_arguments_only",
+        context_policy_status="no_existing_full_ast_inference_context_permission_contract",
+        decoder_integration_status="unavailable_P5_context_profile_remains_none",
+        original_raw_source_documents_forwarded=False,
+        source_byte_scope="exact_selected_extracted_span_UTF8_only",
+        supplemental_context_status="governing_definition_and_proof_bodies_unavailable_refs_only",
+        model_use_and_resource_admission_scope="caller_owned_not_validated_here", **_RICH_FALSE)
+    if current.get("reviewed_objective_mask_ready") is not True:
+        return _rich_bounded_candidate({**common, "status": "abstained_current_index_unavailable", "rows": [],
+            "candidate_count": 0, "abstention_count": len(frozen["query_rows"]),
+            "blockers": current.get("objective_blockers", []), "model_forward_executed": False})
+    endpoints = current["formal_endpoints"]
+    by_admission = {}
+    for endpoint in endpoints:
+        by_admission.setdefault(endpoint["admission_id"], {}).setdefault(endpoint["unit_id"], []).append(endpoint)
+    offered = frozen["example_consumer_inputs"]
+    _require(type(offered) is dict and set(offered) == set(by_admission),
+             "exact complete formal-index admission population required")
+    original_admissions = inputs["preparation_inputs"]["endpoint_admissions"]
+    material, bindings, blockers = {}, {}, []
+    for admission_id, index_units in by_admission.items():
+        entry = original_admissions[admission_id]
+        report, admission_inputs = _rich_current_assessment(admission_id, entry, inputs, admission)
+        _require(admission.norm_content_adjudication_sha256(report)
+                 == current["current_endpoint_assessment_sha256s"][admission_id],
+                 "current full-unit assessment differs from current index")
+        supplied = offered[admission_id]
+        _require(type(supplied) is dict and set(supplied) == _RICH_CONSUMER_FIELDS,
+                 "exact existing reviewed-consumer row/exposure inputs required")
+        rows = supplied["rows"]
+        _require(type(rows) is list and {row["unit_id"] for row in rows} == set(index_units)
+                 and len(rows) == len(index_units), "one complete row per current formal-index unit required")
+        for row in rows:
+            aliases = index_units[row["unit_id"]]
+            _require(any(row["id"] == endpoint["split_sample_id"] for endpoint in aliases),
+                     "consumer row must use an actual TRAIN endpoint split identity")
+        binding = consumer.prepare_reviewed_source_span_consumer_binding_v2(rows,
+            expected_rows_sha256=supplied["expected_rows_sha256"],
+            split_manifest=inputs["preparation_inputs"]["split_manifest"],
+            expected_split_manifest_sha256=inputs["preparation_inputs"]["expected_split_manifest_sha256"],
+            admission_inputs=admission_inputs,
+            expected_admission_inputs_sha256=consumer.reviewed_admission_inputs_sha256(admission_inputs),
+            exposure_records=supplied["exposure_records"],
+            expected_exposure_sha256=supplied["expected_exposure_sha256"], operation="training",
+            allow_fictional_fixture=supplied["allow_fictional_fixture"])
+        receipt = consumer.validate_reviewed_source_span_consumer_binding_v2(binding, rows,
+            split_manifest=inputs["preparation_inputs"]["split_manifest"],
+            admission_inputs=admission_inputs, exposure_records=supplied["exposure_records"])
+        if receipt["status"] != "ready":
+            blockers.append({"admission_id": admission_id, "reason": "complete_TRAIN_example_binding_unavailable",
+                             "details": receipt["blockers"]})
+        if "formalization" not in report["permitted_uses"]:
+            blockers.append({"admission_id": admission_id, "reason": "formalization_use_not_explicitly_reviewed"})
+        units = {unit["unit_id"]: unit for unit in report["units"]}
+        declared_units = {unit["unit_id"]: unit for unit in entry["kwargs"]["preparation_inputs"]["declaration"]["units"]}
+        for unit_id in index_units:
+            unit, declared = units[unit_id], declared_units[unit_id]
+            utf8 = unit["source_text"].encode("utf-8")
+            material[(admission_id, unit_id)] = {"unit_id": unit_id, "unit_kind": unit["kind"], "admission_id": admission_id,
+                "source_text": unit["source_text"], "source_utf8_hex": utf8.hex(),
+                "source_sha256": hashlib.sha256(utf8).hexdigest(),
+                "canonical_ir": copy.deepcopy(unit["canonical_ir"]),
+                "canonical_ir_sha256": joint.checkpoint_digest(unit["canonical_ir"]),
+                "argument_roles": copy.deepcopy(unit["argument_roles"]),
+                "relational_profile": unit["relational_profile"],
+                "source_version": copy.deepcopy(declared["source_version"]),
+                "source_occurrence": copy.deepcopy(declared["occurrence"]),
+                "document_revision": declared["document_revision"],
+                "source_artifact_id": declared["source_artifact_id"], "ir_artifact_id": declared["ir_artifact_id"],
+                "source_correspondence_coverage": copy.deepcopy(declared["coverage"]),
+                "reviewed_declaration_sha256": report["declaration_sha256"],
+                "current_admission_assessment_sha256": admission.norm_content_adjudication_sha256(report),
+                "TRAIN_consumer_receipt_sha256": joint.checkpoint_digest(receipt),
+                "TRAIN_consumer_custody": {
+                    "schema": receipt["schema"], "profile": receipt["profile"], "operation": receipt["operation"],
+                    "status": receipt["status"], "scope": "selected_row_identity_only_no_exposure_prose",
+                    "row_identity_sha256": joint.checkpoint_digest({key: next(
+                        row for row in receipt["rows"] if row["unit_id"] == unit_id)[key]
+                        for key in ("id", "unit_id", "occurrence_cid", "source_text_sha256", "canonical_ir_sha256")}),
+                    "exposure_kind": next(row for row in receipt["rows"] if row["unit_id"] == unit_id)["exposure"]["target_exposure"],
+                    "provenance_ref_sha256": hashlib.sha256(next(row for row in receipt["rows"]
+                        if row["unit_id"] == unit_id)["exposure"]["provenance_ref"].encode("utf-8")).hexdigest()},
+                "reviewed_semantic_uses": copy.deepcopy(report["permitted_uses"]),
+                "provenance_kind": report["provenance_kind"],
+                "training_mask": report["training_mask"], "evaluation_gold_mask": 0}
+        bindings[admission_id] = (binding, rows, admission_inputs, supplied["exposure_records"])
+    if blockers:
+        return _rich_bounded_candidate({**common, "status": "abstained_example_custody_unavailable", "rows": [],
+            "candidate_count": 0, "abstention_count": len(frozen["query_rows"]),
+            "blockers": blockers, "model_forward_executed": False})
+    retrieval = retriever.retrieve(frozen["query_rows"], *args, **inputs)
+    _require(retrieval["current_index_handoff_sha256"] == current_sha256,
+             "ranking used another current index")
+    endpoint_map = {endpoint["id"]: endpoint for endpoint in endpoints}
+    result_rows = []
+    budget = [len(joint._raw(common)) + 1024]  # Top-level completion fields and delimiters.
+    _require(budget[0] <= RICH_MAX_BYTES, "complete rich candidate byte budget exceeded")
+    for row in retrieval["rows"]:
+        if row["status"] != "retrieved":
+            abstention = {"id": row["id"], "status": "abstained", "examples": [],
+                "abstention_reasons": row.get("abstention_reasons", []), "query_target_access": False}
+            _rich_charge_candidate(budget, abstention, overhead=2)
+            result_rows.append(abstention)
+            continue
+        examples, groups = [], {}
+        row_identity = {"id": row["id"], "status": "candidate_only", "source_sha256": row["source_sha256"],
+            "split_sample_id": row["split_sample_id"], "source_exposure_group": row["source_exposure_group"],
+            "query_input_sha256": row["query_input_sha256"], "examples": [],
+            "abstention_reasons": [], "query_target_access": False}
+        _rich_charge_candidate(budget, row_identity, overhead=128)
+        _require(len(row["retrieved_endpoint_refs"]) == len(row["retrieved_ids"]) == len(row["weights"]),
+                 "complete ordered selected endpoint identities and weights required")
+        for endpoint, endpoint_id, weight in zip(row["retrieved_endpoint_refs"], row["retrieved_ids"], row["weights"], strict=True):
+            _require(endpoint == endpoint_map[endpoint_id] and endpoint["split"] == "train",
+                     "selected full example differs from independently replayed TRAIN endpoint")
+            key = (endpoint["admission_id"], endpoint["unit_id"])
+            _rich_charge_candidate(budget, endpoint, overhead=64)
+            _rich_charge_candidate(budget, weight, overhead=2)
+            if key not in groups:
+                _rich_charge_candidate(budget, material[key], overhead=96)
+                example = copy.deepcopy(material[key])
+                _require(example["source_sha256"] == endpoint["source_sha256"], "selected complete source differs")
+                example["selected_endpoint_refs"], example["ranking_weights"] = [], []
+                groups[key] = example
+                examples.append(example)
+            groups[key]["selected_endpoint_refs"].append(copy.deepcopy(endpoint))
+            groups[key]["ranking_weights"].append(weight)
+        result_rows.append({**row_identity, "examples": examples,
+            "distinct_source_unit_count": len(examples), "selected_representation_count": len(row["retrieved_ids"])})
+    after = handoff.compile_reviewed_train_relation_masks_v2(*args, **replay)
+    _require(joint.checkpoint_digest(after) == current_sha256, "current admission changed while building full examples")
+    for binding, rows, admission_inputs, exposure_records in bindings.values():
+        checked = consumer.validate_reviewed_source_span_consumer_binding_v2(binding, rows,
+            split_manifest=inputs["preparation_inputs"]["split_manifest"], admission_inputs=admission_inputs,
+            exposure_records=exposure_records)
+        _require(checked["status"] == "ready", "complete TRAIN example custody changed during construction")
+    _require(admission.norm._snapshot(original)[1] == input_sha256
+             and admission.norm._snapshot(frozen)[1] == input_sha256,
+             "complete rich candidate inputs changed during construction")
+    _require(_rich_implementation() == implementation, "full-example implementation changed during construction")
+    return _rich_bounded_candidate({**common, "rows": result_rows, "blockers": [],
+        "retrieval_result_sha256": joint.checkpoint_digest(retrieval),
+        "checkpoint_sha256": retrieval["checkpoint_sha256"],
+        "candidate_count": sum(row["status"] == "candidate_only" for row in result_rows),
+        "abstention_count": sum(row["status"] == "abstained" for row in result_rows),
+        "model_forward_executed": retrieval["model_forward_executed"]})
+
+
+def validate_reviewed_rich_context_candidates(candidate, *args, expected_candidate_sha256, **kwargs):
+    """Recompute complete current custody and ranking; never trust ready flags.
+
+    Validation qualifies this candidate profile only. It provides no permission
+    for any decoder, no proof of the current query and no legal applicability
+    judgment. Model/resource permission for replay remains caller owned.
+    """
+    _require(type(candidate) is dict and joint.checkpoint_digest(candidate) == expected_candidate_sha256,
+             "independently pinned full-example candidate differs")
+    before = joint.checkpoint_digest(candidate)
+    replayed = build_reviewed_rich_context_candidates(*args, **kwargs)
+    _require(joint._raw(candidate) == joint._raw(replayed), "full-example candidate differs from fresh replay")
+    _require(joint.checkpoint_digest(candidate) == before, "candidate changed during full replay")
+    return copy.deepcopy(replayed)
