@@ -1465,3 +1465,230 @@ __all__ = [
     "legal_ir_evaluation_artifact_from_compilation",
     "materialize_latent_diagnostic_report",
 ]
+
+
+def evaluate_reviewed_source_span_producer_artifact(*, binding, rows, split_manifest,
+        admission_inputs, exposure_records, compiler_commit, input_profile,
+        checkpoint_declarations, permitted_context, retrieved_examples, producer,
+        allow_heldout_evaluation=False):
+    """Evaluate one opt-in validation callback against replayed reviewed targets.
+
+    Default hparam_selection never relabels heldout/training use. Explicit
+    allow_heldout_evaluation requires the consumer's frozen complete-component
+    heldout receipt and empty supplied context/retrieval; it does not establish
+    external/model exposure exclusion or generalization. Producer
+    arguments contain detached id/source_text/context, never reviewed targets.
+    Context records are closed {id, content} declarations and must name examples
+    authorized for training by the same split owner. That establishes split
+    eligibility, not source/licensing/definition authority. Exact target-ID and
+    target-subtree screening is limited, not encoded-leak prevention or a process
+    sandbox. Profile budgets and checkpoint identities are declarations only.
+    No model loading, token-budget enforcement, native proof or corpus authority
+    is inferred from a callback or a successful structural comparison.
+    Malformed/missing/duplicate producer rows refuse the whole batch; callers
+    must preserve that failure rather than drop cases or award partial credit.
+    Stored artifacts are historical observations. Generic cache retrieval does
+    not replay current admission: any later eligibility use requires another
+    canonical reviewed-consumer validation against current review inputs.
+    """
+    import json
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_ir_eval_splits as splits
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_consumer_binding import (
+        consume_reviewed_source_span_binding_v2,
+        validate_reviewed_source_span_consumer_binding_v2,
+    )
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_semantic_metrics import (
+        COMPLETE_NORM_PAYLOAD_METRICS_SCHEMA, evaluate_complete_norm_payloads,
+    )
+
+    def require(condition, message):
+        if not condition:
+            raise InvalidEvaluationArtifactError(message)
+
+    def snapshot(value):
+        # The generic legacy JSON helper coerces custom objects; this opt-in
+        # boundary instead accepts bounded, lossless ordinary JSON only.
+        count = 0
+        def visit(item, depth=0):
+            nonlocal count
+            count += 1
+            require(depth <= 64 and count <= 1_000_000, "bounded evaluation JSON required")
+            if type(item) is dict:
+                require(all(type(key) is str for key in item), "ordinary string JSON keys required")
+                for child in item.values():
+                    visit(child, depth + 1)
+            elif type(item) is list:
+                for child in item:
+                    visit(child, depth + 1)
+            else:
+                require(item is None or type(item) in (str, int, bool)
+                        or type(item) is float and math.isfinite(item), "lossless ordinary JSON required")
+        visit(value)
+        raw = json.dumps(value, ensure_ascii=True, allow_nan=False,
+                         sort_keys=True, separators=(",", ":")).encode("utf-8")
+        require(len(raw) <= 32 * 1024**2, "evaluation JSON exceeds existing 32MiB comparison bound")
+        return json.loads(raw)
+
+    def closed(value, fields, label):
+        require(type(value) is dict and set(value) == set(fields), "closed " + label + " required")
+
+    def text(value):
+        return type(value) is str and 0 < len(value) <= 512 and not any(c in value for c in "\r\n\0")
+
+    require(callable(producer), "explicit producer callback required")
+    require(type(allow_heldout_evaluation) is bool, "explicit boolean heldout opt-in required")
+    operation = "heldout_evaluation" if allow_heldout_evaluation else "hparam_selection"
+    originals = [rows, split_manifest, exposure_records, input_profile,
+                 checkpoint_declarations, permitted_context, retrieved_examples]
+    frozen = snapshot(originals)
+    row_copy, manifest_copy, exposure_copy, profile, checkpoints, context, retrieval = frozen
+    require(type(row_copy) is list and 1 <= len(row_copy) <= 4096, "complete bounded rows required")
+    closed(profile, ("profile_id", "max_source_tokens", "max_context_tokens", "max_output_tokens"), "input profile")
+    require(text(profile["profile_id"]) and all(type(profile[name]) is int and profile[name] > 0
+            for name in ("max_source_tokens", "max_context_tokens", "max_output_tokens")), "declared input profile required")
+    closed(checkpoints, ("encoder", "decoder"), "checkpoint declarations")
+    for declaration in checkpoints.values():
+        closed(declaration, ("id", "sha256"), "checkpoint declaration")
+        require(text(declaration["id"]) and type(declaration["sha256"]) is str
+                and re.fullmatch(r"[0-9a-f]{64}", declaration["sha256"]) is not None,
+                "explicit checkpoint identity and SHA256 declaration required")
+    require(text(compiler_commit), "explicit compiler identity declaration required")
+    before = validate_reviewed_source_span_consumer_binding_v2(binding, rows,
+        split_manifest=split_manifest, admission_inputs=admission_inputs, exposure_records=exposure_records)
+    require(before["operation"] == operation and before["status"] == "ready",
+            "ready reviewed binding for the explicit operation required; no relabelling")
+    heldout = None
+    if allow_heldout_evaluation:
+        heldout = snapshot(before.get("heldout_evaluation"))
+        require(type(heldout) is dict
+                and heldout.get("schema") == "reviewed-single-component-heldout/v1"
+                and heldout.get("purpose") == "frozen-single-component-final-scoring/v1"
+                and heldout.get("population_scope") == "exact_complete_admitted_component_only"
+                and heldout.get("partition") == "holdout"
+                and heldout.get("split_manifest_sha256") == before["input_sha256s"]["split_manifest"]
+                and type(heldout.get("dependency_group")) is dict
+                and type(heldout.get("dependency_group_sha256")) is str
+                and re.fullmatch(r"[0-9a-f]{64}", heldout["dependency_group_sha256"]) is not None,
+                "replayed complete-component frozen heldout contract required")
+        require(context == [], "heldout callback requires empty supplied context")
+    identifiers = [row["id"] for row in row_copy]
+    require(type(retrieval) is dict and set(retrieval) == set(identifiers), "exact retrieval case population required")
+    if allow_heldout_evaluation:
+        require(all(records == [] for records in retrieval.values()), "heldout callback requires empty retrieval")
+    # Validate all references using the public scorer before any producer call.
+    evaluate_complete_norm_payloads([dict(case_id=row["id"], reference=row["canonical_ir"],
+        candidate=None, outcome="incomplete") for row in row_copy])
+    manifest = splits.LegalIRSplitManifest.from_mapping(manifest_copy)
+    target_ids = set(identifiers) | {row["unit_id"] for row in row_copy}
+    target_digests = {stable_digest(row["canonical_ir"]) for row in row_copy}
+    target_digests.update(stable_digest(row["canonical_ir"]["typed_expression"]) for row in row_copy)
+
+    def screen(value):
+        if type(value) is str:
+            require(value not in target_ids, "reference target ID in producer context")
+        elif type(value) in (dict, list):
+            require(stable_digest(value) not in target_digests, "reference target subtree in producer context")
+            for child in (list(value) + list(value.values()) if type(value) is dict else value):
+                screen(child)
+
+    def context_records(records):
+        require(type(records) is list and len(records) <= 4096, "bounded ordered context records required")
+        for record in records:
+            closed(record, ("id", "content"), "context record")
+            require(text(record["id"]) and record["id"] not in target_ids, "non-target context ID required")
+            try:
+                splits.authorize_legal_ir_split_use(manifest, operation="training",
+                                                   items=[{"sample_id": record["id"]}])
+            except splits.LegalIRSplitPolicyError as error:
+                raise InvalidEvaluationArtifactError(
+                    "producer context is not authorized for training") from error
+            screen(record)
+    context_records(context)
+    for records in retrieval.values():
+        context_records(records)
+    arguments = [dict(id=row["id"], source_text=row["source_text"],
+        context=dict(permitted=context, retrieved=retrieval[row["id"]])) for row in row_copy]
+    arguments = snapshot(arguments)
+    output_holder = {}
+
+    def dispatch(consumed_rows):
+        require(stable_digest(snapshot(consumed_rows)) == stable_digest(row_copy), "consumed reference population differs")
+        offered = snapshot(arguments)
+        started = time.monotonic()
+        try:
+            output_holder["outputs"] = producer(tuple(offered))
+        except Exception as error:
+            output_holder["outputs"] = [dict(id=row["id"], outcome="error", candidate=None) for row in row_copy]
+            output_holder["exception_type"] = type(error).__name__
+        finally:
+            output_holder["producer_seconds"] = max(0.0, time.monotonic() - started)
+            require(stable_digest(snapshot(offered)) == stable_digest(arguments), "producer mutated its detached arguments")
+
+    # The canonical consumer itself replays admission before dispatching once.
+    # Replay again on every callback exit, including a refused output/mutation.
+    try:
+        consume_reviewed_source_span_binding_v2(binding, rows, split_manifest=split_manifest,
+            admission_inputs=admission_inputs, exposure_records=exposure_records, consumer=dispatch)
+    finally:
+        after = validate_reviewed_source_span_consumer_binding_v2(binding, rows,
+            split_manifest=split_manifest, admission_inputs=admission_inputs, exposure_records=exposure_records)
+        require(after["operation"] == operation and after["status"] == "ready",
+                "reviewed operation admission no longer ready after callback")
+        if allow_heldout_evaluation:
+            require(stable_digest(snapshot(after.get("heldout_evaluation"))) == stable_digest(heldout),
+                    "frozen heldout purpose/split/dependency group changed during callback")
+        require(stable_digest(snapshot(originals)) == stable_digest(frozen), "bound source/context/profile inputs changed during callback")
+    outputs = snapshot(output_holder["outputs"])
+    require(type(outputs) is list and len(outputs) == len(row_copy), "complete ordered producer population required")
+    for row, output in zip(row_copy, outputs):
+        closed(output, ("id", "outcome", "candidate"), "producer result")
+        require(output["id"] == row["id"], "producer IDs/order differ from fixed reference population")
+    started = time.monotonic()
+    report = evaluate_complete_norm_payloads([dict(case_id=row["id"], reference=row["canonical_ir"],
+        candidate=output["candidate"], outcome=output["outcome"]) for row, output in zip(row_copy, outputs)])
+    metric_seconds = max(0.0, time.monotonic() - started)
+    configuration = dict(profile="reviewed-source-span-producer-validation/v1",
+        admission_identity_sha256=before["admission_identity_sha256"],
+        declaration_sha256=before["declaration_sha256"], input_sha256s=before["input_sha256s"],
+        operation=operation, target_codec=before["target_codec"],
+        input_profile=profile, checkpoint_declarations=checkpoints,
+        permitted_context=context, retrieved_examples=retrieval,
+        producer_arguments_sha256=stable_digest(arguments), producer_outputs_sha256=stable_digest(outputs),
+        admission_before_sha256=stable_digest(before), admission_after_sha256=stable_digest(after))
+    if allow_heldout_evaluation:
+        configuration.update(profile="reviewed-source-span-producer-heldout/v1", heldout_evaluation=heldout)
+    # A bare list falls through the legacy object hash; wrap rows explicitly.
+    key = LegalIREvaluationCacheKey.for_sample({"rows": row_copy}, compiler_commit=compiler_commit,
+        state_hash=stable_digest(checkpoints), metric_schema=COMPLETE_NORM_PAYLOAD_METRICS_SCHEMA,
+        configuration=configuration)
+    payload = dict(configuration=configuration, reference_population=row_copy,
+        producer_arguments=arguments, producer_outputs=outputs, admission_before=before,
+        admission_after=after, comparison=report, producer_callback_count=1,
+        producer_exception_type=output_holder.get("exception_type"),
+        producer_callback_seconds=output_holder["producer_seconds"], comparison_seconds=metric_seconds,
+        producer_authenticity_verified=False, loaded_checkpoint_identity_verified=False,
+        declared_compiler_identity=compiler_commit, actual_toolchain_identity_verified=False,
+        native_proof_verified=False, formal_checks_status="not_performed",
+        source_fidelity_proved=False, semantic_equivalence_proved=False, corpus_admitted=False,
+        accepted_semantic_count=None,
+        compute_and_cost=dict(status="callback_and_comparison_wall_clock_only",
+            training_compute=None, model_cpu_compute=None, model_gpu_compute=None,
+            inference_tokens=None, total_monetary_cost=None,
+            cost_per_correctly_accepted_formalization=None),
+        artifact_observation_scope="historical_at_callback_time",
+        cache_retrieval_replays_admission=False, current_review_replay_required_for_later_eligibility=True,
+        heldout_evaluation=heldout, empty_context_enforced_at_argument_boundary=allow_heldout_evaluation,
+        external_training_exposure_verified=False, model_pretraining_exposure_verified=False,
+        heldout_generalization_established=False,
+        token_budget_enforced=False, context_authority_scope=("empty_supplied_context_at_callback_argument_boundary"
+            if allow_heldout_evaluation else "training_split_eligibility_declaration_only"),
+        context_screen_scope="exact_target_ID_and_subtree_only_not_encoded_leaks_or_process_sandbox",
+        reference_authority_scope="replayed_review_policy_eligibility_not_legal_truth_or_proof")
+    return LegalIREvaluationArtifact(key=key,
+        compiler_artifact={"reviewed_source_span_producer_evaluation": payload},
+        metrics={"complete_norm_payload": report},
+        metadata={"profile": configuration["profile"], "content_sha256": stable_digest(payload)},
+        metric_seconds=output_holder["producer_seconds"] + metric_seconds)
+
+
+__all__ += ["evaluate_reviewed_source_span_producer_artifact"]

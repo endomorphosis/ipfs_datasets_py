@@ -841,3 +841,181 @@ def test_reviewed_public_replaced_supporting_trust_cannot_reuse_old_consumer_bin
     assert captured.value.receipt["status"] == "blocked"
     assert any(item["reason"] == "reviewed_admission_identity_changed"
                for item in captured.value.receipt["blockers"])
+
+
+def reviewed_public_heldout_case():
+    """Existing signed fictional component; no real statutory review or model."""
+    helper, admission, current, rows, options = reviewed_public_consumer_case()
+    options.update(operation="heldout_evaluation", allow_heldout_evaluation=True,
+                   heldout_evaluation_purpose=owner.REVIEWED_HELDOUT_PURPOSE)
+    options["split_manifest"] = manifest_for(rows, "holdout")
+    options["expected_split_manifest_sha256"] = digest(options["split_manifest"])
+    for exposure in options["exposure_records"]:
+        exposure["target_exposure"] = owner.REVIEWED_HELDOUT_EXPOSURE
+    options["expected_exposure_sha256"] = digest(options["exposure_records"])
+    return helper, admission, current, rows, options
+
+
+def test_reviewed_explicit_heldout_complete_component_retains_actual_dependency_closure():
+    _, _, current, rows, options = reviewed_public_heldout_case()
+    binding = owner.prepare_reviewed_source_span_consumer_binding_v2(rows, **options)
+    receipt = binding.receipt()
+    assert receipt["status"] == "ready"
+    heldout = receipt["heldout_evaluation"]
+    group = heldout["dependency_group"]
+    assert group["required_dependency_ids"] == current["preparation"]["subject"]["required_dependency_ids"]
+    assert group["dependency_manifest_sha256"] == current["manifest"]["manifest_sha256"]
+    assert group["dependencies"] == [{"artifact_id": row["artifact_id"],
+        "artifact_sha256": row["artifact_sha256"]} for row in current["manifest"]["artifacts"]]
+    assert heldout["dependency_group_sha256"] == digest(group)
+    assert {row["unit_id"] for row in group["source_units"]} == {row["unit_id"] for row in rows}
+    assert heldout["split_manifest_sha256"] == options["expected_split_manifest_sha256"]
+    assert heldout["partition"] == "holdout"
+    assert heldout["purpose"] == owner.REVIEWED_HELDOUT_PURPOSE
+    assert heldout["training_example_ids"] == heldout["retrieved_example_ids"] == []
+    for flag in ("external_training_exposure_verified", "model_pretraining_exposure_verified",
+                 "external_retrieval_exclusion_verified", "global_dependency_grouping_verified",
+                 "preregistration_time_authenticated", "producer_authenticity_verified",
+                 "inference_context_enforced", "generalization_established", "proof_authority"):
+        assert heldout[flag] is False
+    assert receipt["training_mask"] == receipt["evaluation_gold_mask"] == 0
+    calls = []
+    reviewed_consume(binding, rows, options, lambda received: calls.append(deepcopy(received)))
+    assert calls == [rows]
+
+
+@pytest.mark.parametrize("damage", ["no_opt_in", "integer_opt_in", "missing_purpose", "wrong_purpose",
+                                    "purpose_for_training", "opt_in_for_training"])
+def test_reviewed_heldout_requires_distinct_opt_in_and_purpose(damage):
+    _, _, _, rows, options = reviewed_public_heldout_case()
+    if damage == "no_opt_in":
+        options["allow_heldout_evaluation"] = False
+    elif damage == "integer_opt_in":
+        options["allow_heldout_evaluation"] = 1
+    elif damage == "missing_purpose":
+        options["heldout_evaluation_purpose"] = None
+    elif damage == "wrong_purpose":
+        options["heldout_evaluation_purpose"] = "hparam_selection"
+    elif damage == "purpose_for_training":
+        options.update(operation="training", allow_heldout_evaluation=False)
+    else:
+        options["operation"] = "training"
+    with pytest.raises(owner.SourceSpanConsumerBindingError):
+        owner.prepare_reviewed_source_span_consumer_binding_v2(rows, **options)
+
+
+@pytest.mark.parametrize("partition", ["train", "validation", "canary", "external_test"])
+def test_reviewed_explicit_heldout_does_not_authorize_other_partitions(partition):
+    _, _, _, rows, options = reviewed_public_heldout_case()
+    options["split_manifest"] = manifest_for(rows, partition)
+    options["expected_split_manifest_sha256"] = digest(options["split_manifest"])
+    with pytest.raises(owner.SourceSpanConsumerBindingError, match="must remain in holdout"):
+        owner.prepare_reviewed_source_span_consumer_binding_v2(rows, **options)
+
+
+@pytest.mark.parametrize("damage", ["partial_component", "missing_manifest_member", "extra_manifest_member"])
+def test_reviewed_heldout_manifest_cannot_drop_or_add_component_members(damage):
+    _, _, _, rows, options = reviewed_public_heldout_case()
+    if damage == "partial_component":
+        rows.pop()
+        options["exposure_records"].pop()
+        options["expected_rows_sha256"] = digest(rows)
+        options["expected_exposure_sha256"] = digest(options["exposure_records"])
+        options["split_manifest"] = manifest_for(rows, "holdout")
+    elif damage == "missing_manifest_member":
+        options["split_manifest"] = manifest_for(rows[:-1], "holdout")
+    else:
+        unrelated = {"id": "fictional-unrelated-component", "source_text": "A distinct fictional matter."}
+        options["split_manifest"] = manifest_for([*rows, unrelated], "holdout")
+    options["expected_split_manifest_sha256"] = digest(options["split_manifest"])
+    with pytest.raises(owner.SourceSpanConsumerBindingError, match="complete admitted component"):
+        owner.prepare_reviewed_source_span_consumer_binding_v2(rows, **options)
+
+
+@pytest.mark.parametrize("exposure", ["unknown", "declared_supervised_training", "declared_validation_scoring"])
+def test_reviewed_heldout_cannot_reuse_supervision_or_validation_exposure(exposure):
+    _, _, _, rows, options = reviewed_public_heldout_case()
+    for record in options["exposure_records"]:
+        record["target_exposure"] = exposure
+    options["expected_exposure_sha256"] = digest(options["exposure_records"])
+    if exposure != "unknown":
+        with pytest.raises(owner.SourceSpanConsumerBindingError, match="explicit target_exposure"):
+            owner.prepare_reviewed_source_span_consumer_binding_v2(rows, **options)
+    else:
+        binding = owner.prepare_reviewed_source_span_consumer_binding_v2(rows, **options)
+        assert binding.receipt()["blocked_row_count"] == len(rows)
+        calls = []
+        with pytest.raises(owner.SourceSpanConsumerBindingError, match="batch is blocked"):
+            reviewed_consume(binding, rows, options, calls.append)
+        assert calls == []
+
+
+@pytest.mark.parametrize("damage", ["split_manifest", "dependency_manifest"])
+def test_reviewed_heldout_rechecks_frozen_split_and_actual_dependencies_at_dispatch(damage):
+    _, _, _, rows, options = reviewed_public_heldout_case()
+    binding = owner.prepare_reviewed_source_span_consumer_binding_v2(rows, **options)
+    if damage == "split_manifest":
+        options["split_manifest"]["config_digest"] = "0" * 64
+    else:
+        options["admission_inputs"]["preparation_inputs"]["dependency_manifest"]["artifacts"][0]["artifact_sha256"] = "0" * 64
+    calls = []
+    with pytest.raises(owner.SourceSpanConsumerBindingError):
+        reviewed_consume(binding, rows, options, calls.append)
+    assert calls == []
+
+
+def test_reviewed_heldout_current_revocation_blocks_old_ready_binding():
+    helper, admission, current, rows, options = reviewed_public_heldout_case()
+    binding = owner.prepare_reviewed_source_span_consumer_binding_v2(rows, **options)
+    current["registry"]["keys"][0]["revoked_at_utc"] = helper.EVALUATED
+    current["registry"]["revocation_generation"] += 1
+    helper.reviewed_resign_v2(current)
+    options["admission_inputs"] = reviewed_public_admission_inputs(helper, admission, current)
+    calls = []
+    with pytest.raises(owner.SourceSpanConsumerBindingError) as captured:
+        reviewed_consume(binding, rows, options, calls.append)
+    assert calls == []
+    assert captured.value.receipt["status"] == "blocked"
+    assert any(item["reason"] == "semantic_admission_not_eligible"
+               for item in captured.value.receipt["blockers"])
+
+
+def test_split_explicit_heldout_policy_preserves_existing_supervised_permissions():
+    rows = examples()
+    manifest = manifest_for(rows, "holdout")
+    assert splits.authorize_legal_ir_split_use(manifest, operation="heldout_evaluation",
+                                              items=[{"sample_id": rows[0]["id"]}]).passed is True
+    for operation in ("training", "hparam_selection", "representation_promotion", "codex_todo_projection"):
+        with pytest.raises(splits.LegalIRSplitPolicyError):
+            splits.authorize_legal_ir_split_use(manifest, operation=operation,
+                                               items=[{"sample_id": rows[0]["id"]}])
+    assert owner.OPERATIONS == ("training", "hparam_selection")
+    assert splits.LEGAL_IR_SPLIT_OPERATION_ALLOWED_SPLITS["training"] == frozenset({"train"})
+    assert splits.LEGAL_IR_SPLIT_OPERATION_ALLOWED_SPLITS["hparam_selection"] == frozenset({"validation"})
+
+
+@pytest.mark.parametrize("overlap", ["source_span", "lineage_group", "citation_cluster"])
+def test_split_known_cross_partition_leakage_lists_and_blocks_heldout_evaluation(overlap):
+    left = {"sample_id": "fictional-exposed", "text": "A hypothetical agency releases notices."}
+    right = {"sample_id": "fictional-heldout", "text": "An imagined council retains permits."}
+    if overlap == "source_span":
+        left.update(source_document_id="fictional:shared-document", char_start=0, char_end=30)
+        right.update(source_document_id="fictional:shared-document", char_start=10, char_end=40)
+    elif overlap == "lineage_group":
+        left["lineage_group_id"] = right["lineage_group_id"] = "fictional:shared-component"
+    else:
+        left["citation"] = right["citation"] = "10 USC 101"
+    manifest = splits.LegalIRSplitManifest(
+        examples=tuple(splits.LegalIRSplitExample.from_sample(item) for item in (left, right)),
+        assignments={left["sample_id"]: "train", right["sample_id"]: "holdout"},
+        config_digest=source_digest("fictional intentionally contaminated heldout manifest"))
+    guard = splits.validate_legal_ir_eval_splits(manifest)
+    assert guard.passed is False
+    assert "heldout_evaluation" in guard.blocked_operations
+    assert overlap in {item.kind for item in guard.violations}
+    assert splits.split_guard_blocks_operation(guard.to_dict(), "heldout_evaluation") is True
+    assert splits.split_guard_blocks_operation({"legal_ir_split_guard": guard.to_dict()},
+                                              "heldout_evaluation") is True
+    with pytest.raises(splits.LegalIRSplitLeakageError):
+        splits.authorize_legal_ir_split_use(manifest, operation="heldout_evaluation",
+                                          items=[{"sample_id": right["sample_id"]}])

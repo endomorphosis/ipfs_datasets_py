@@ -355,6 +355,8 @@ __all__ = ["SourceSpanConsumerBinding", "SourceSpanConsumerBindingError",
 REVIEWED_SCHEMA = "reviewed-source-span-consumer-binding/v2"
 REVIEWED_PROFILE = "complete-reviewed-source-span-supervision/v2"
 REVIEWED_TARGET_CODEC = "complete-relational-typed-ast/v1"
+REVIEWED_HELDOUT_PURPOSE = "frozen-single-component-final-scoring/v1"
+REVIEWED_HELDOUT_EXPOSURE = "declared_frozen_heldout_scoring"
 _REVIEWED_ROW_FIELDS = {"id", "unit_id", "source_text", "canonical_ir"}
 
 
@@ -455,6 +457,8 @@ class ReviewedSourceSpanConsumerBinding:
     _operation: str
     _target_codec: str
     _allow_fictional_fixture: bool
+    _allow_heldout_evaluation: bool
+    _heldout_evaluation_purpose: str | None
     _rows_json: bytes
     _receipt_json: bytes
 
@@ -469,7 +473,8 @@ class ReviewedSourceSpanConsumerBinding:
 def prepare_reviewed_source_span_consumer_binding_v2(rows, *, expected_rows_sha256,
         split_manifest, expected_split_manifest_sha256, admission_inputs,
         expected_admission_inputs_sha256, exposure_records, expected_exposure_sha256,
-        operation, target_codec=REVIEWED_TARGET_CODEC, allow_fictional_fixture=False):
+        operation, target_codec=REVIEWED_TARGET_CODEC, allow_fictional_fixture=False,
+        allow_heldout_evaluation=False, heldout_evaluation_purpose=None):
     """Bind complete reviewed typed targets without projecting or training them.
 
     JSON commitments use CheckpointContentGuard. The admission-input commitment
@@ -477,7 +482,16 @@ def prepare_reviewed_source_span_consumer_binding_v2(rows, *, expected_rows_sha2
     reviewed_admission_inputs_sha256. Review eligibility is an explicit policy
     outcome, not machine proof of legal truth or a Lean/corpus acceptance.
     """
-    _require(type(operation) is str and operation in OPERATIONS, "unsupported reviewed consumer operation")
+    _require(type(allow_heldout_evaluation) is bool, "explicit boolean heldout opt-in required")
+    heldout = type(operation) is str and operation == "heldout_evaluation" and allow_heldout_evaluation
+    _require(type(operation) is str and (operation in OPERATIONS or heldout),
+             "unsupported reviewed consumer operation")
+    _require(not allow_heldout_evaluation or heldout,
+             "heldout opt-in cannot change training or hparam permissions")
+    _require((heldout and heldout_evaluation_purpose == REVIEWED_HELDOUT_PURPOSE
+              and type(heldout_evaluation_purpose) is str)
+             or (not heldout and heldout_evaluation_purpose is None),
+             "explicit supported frozen heldout purpose required")
     _require(type(target_codec) is str, "explicit target codec required")
     _require(type(allow_fictional_fixture) is bool, "explicit boolean fixture permission required")
     expected = (expected_rows_sha256, expected_split_manifest_sha256, expected_exposure_sha256)
@@ -529,15 +543,18 @@ def prepare_reviewed_source_span_consumer_binding_v2(rows, *, expected_rows_sha2
                  and exposure_row["canonical_ir_sha256"] == target_sha,
                  "exposure does not bind this exact ordered reviewed source/target row")
         _text(exposure_row["provenance_ref"], "exposure provenance_ref", 8192)
+        allowed_exposures = ((REVIEWED_HELDOUT_EXPOSURE, "unknown") if heldout else
+                             ("declared_supervised_training", "declared_validation_scoring", "unknown"))
         _require(type(exposure_row["target_exposure"]) is str and exposure_row["target_exposure"] in
-                 ("declared_supervised_training", "declared_validation_scoring", "unknown"),
+                 allowed_exposures,
                  "explicit target_exposure required")
         example = examples.get(row["id"])
         if example is not None:
             _require(example.content_hash == splits._content_hash(row["source_text"]),
                      "reviewed source content differs from split manifest example")
         blockers = []
-        if exposure_row["target_exposure"] != _REQUIRED_EXPOSURE[operation]:
+        required_exposure = REVIEWED_HELDOUT_EXPOSURE if heldout else _REQUIRED_EXPOSURE[operation]
+        if exposure_row["target_exposure"] != required_exposure:
             blockers.append({"reason": "exposure_declaration_does_not_match_operation"})
         records.append({"row_index": index, "id": row["id"], "unit_id": row["unit_id"],
                         "occurrence_cid": unit["occurrence_cid"], "source_text_sha256": source_sha,
@@ -582,6 +599,12 @@ def prepare_reviewed_source_span_consumer_binding_v2(rows, *, expected_rows_sha2
         "exposure_declaration_only": True,
         "receipt_scope": "exact_complete_typed_targets_and_replayed_review_policy_eligibility",
         "consumer_scope": "opt_in_callback_arguments_only_not_all_process_reads"}
+    if heldout:
+        # This callback purpose never grants a training operation, even when
+        # the separately replayed review also permits a training use.
+        receipt["training_mask"] = 0
+        receipt["heldout_evaluation"] = _reviewed_heldout_component(
+            report, admission_copy, rows_copy, manifest, expected_split_manifest_sha256)
     receipt_raw = _preflight(receipt)
     implementation_guard = _guard(implementation)
     _check(implementation_guard, _reviewed_implementation(), "reviewed implementation")
@@ -594,6 +617,8 @@ def prepare_reviewed_source_span_consumer_binding_v2(rows, *, expected_rows_sha2
     for name, value in (("_guards", guards), ("_implementation_guard", implementation_guard),
             ("_admission_identity_guard", identity_guard), ("_operation", operation),
             ("_target_codec", target_codec), ("_allow_fictional_fixture", allow_fictional_fixture),
+            ("_allow_heldout_evaluation", allow_heldout_evaluation),
+            ("_heldout_evaluation_purpose", heldout_evaluation_purpose),
             ("_rows_json", _wire(rows_copy)), ("_receipt_json", receipt_raw)):
         object.__setattr__(binding, name, value)
     return binding
@@ -614,7 +639,9 @@ def validate_reviewed_source_span_consumer_binding_v2(binding, rows, *, split_ma
         expected_admission_inputs_sha256=reviewed_admission_inputs_sha256(admission_inputs),
         exposure_records=exposure_records, expected_exposure_sha256=binding._guards[2].sha256,
         operation=binding._operation, target_codec=binding._target_codec,
-        allow_fictional_fixture=binding._allow_fictional_fixture)
+        allow_fictional_fixture=binding._allow_fictional_fixture,
+        allow_heldout_evaluation=binding._allow_heldout_evaluation,
+        heldout_evaluation_purpose=binding._heldout_evaluation_purpose)
     receipt = fresh.receipt()
     if receipt["admission_identity_sha256"] != binding._admission_identity_guard.sha256:
         receipt["status"] = "blocked"
@@ -643,4 +670,63 @@ def consume_reviewed_source_span_binding_v2(binding, rows, *, split_manifest, ad
 
 __all__ += ["ReviewedSourceSpanConsumerBinding", "prepare_reviewed_source_span_consumer_binding_v2",
             "validate_reviewed_source_span_consumer_binding_v2", "consume_reviewed_source_span_binding_v2",
-            "reviewed_admission_inputs_sha256", "REVIEWED_SCHEMA", "REVIEWED_PROFILE", "REVIEWED_TARGET_CODEC"]
+            "reviewed_admission_inputs_sha256", "REVIEWED_SCHEMA", "REVIEWED_PROFILE", "REVIEWED_TARGET_CODEC",
+            "REVIEWED_HELDOUT_PURPOSE", "REVIEWED_HELDOUT_EXPOSURE"]
+
+
+def _reviewed_heldout_component(report, admission_inputs, rows, manifest, manifest_sha256):
+    """Describe the complete replayed component, not global training exclusion.
+
+    Full admission replay has already validated the preparation, dependency
+    manifest and root reachability. This intentionally narrow profile has no
+    external training or retrieval population: the frozen split manifest must
+    contain exactly this complete component and place every member in holdout.
+    Supplied exposure declarations do not authenticate external/model history.
+    """
+    _require({row["unit_id"] for row in rows} == {unit["unit_id"] for unit in report["units"]},
+             "heldout evaluation requires the complete admitted component")
+    _require(set(manifest.assignments) == {row["id"] for row in rows}
+             and {example.sample_id for example in manifest.examples} == {row["id"] for row in rows},
+             "heldout manifest population must exactly equal the complete admitted component")
+    _require(all(partition == splits.HOLDOUT_SPLIT for partition in manifest.assignments.values()),
+             "complete admitted dependency component must remain in holdout")
+    prepared = admission_inputs.get("preparation")
+    original = admission_inputs.get("preparation_inputs")
+    _require(type(prepared) is dict and type(original) is dict,
+             "complete replayed preparation required for heldout dependencies")
+    subject = prepared.get("subject")
+    _require(type(subject) is dict, "replayed dependency signing subject required")
+    dependency_owner = _reviewed_admission_owner()._reviewed_owners()[-1]
+    try:
+        dependency_manifest = dependency_owner.validate_dependency_manifest(
+            original["dependency_manifest"], expected_manifest_sha256=original["expected_manifest_sha256"])
+    except (ValueError, TypeError, KeyError, OverflowError, RecursionError) as error:
+        raise SourceSpanConsumerBindingError("invalid heldout dependency manifest: " + str(error)) from error
+    dependencies = [{"artifact_id": item["artifact_id"], "artifact_sha256": item["artifact_sha256"]}
+                    for item in dependency_manifest["artifacts"]]
+    required = subject.get("required_dependency_ids")
+    _require(type(required) is list and len(required) == len(set(required))
+             and set(required) == {item["artifact_id"] for item in dependencies}
+             and subject.get("dependency_manifest_sha256") == original["expected_manifest_sha256"],
+             "heldout dependencies must equal the full reviewed root closure")
+    declaration_units = {unit["unit_id"]: unit for unit in prepared["declaration"]["units"]}
+    admitted_units = {unit["unit_id"]: unit for unit in report["units"]}
+    source_units = [{"id": row["id"], "unit_id": row["unit_id"],
+        "source_version_cid": admitted_units[row["unit_id"]]["source_version_cid"],
+        "occurrence_cid": admitted_units[row["unit_id"]]["occurrence_cid"],
+        "source_artifact_id": declaration_units[row["unit_id"]]["source_artifact_id"],
+        "ir_artifact_id": declaration_units[row["unit_id"]]["ir_artifact_id"]} for row in rows]
+    group = {"component_id": subject["graph_id"], "declaration_sha256": report["declaration_sha256"],
+        "dependency_manifest_sha256": original["expected_manifest_sha256"],
+        "required_dependency_ids": required, "dependencies": dependencies, "source_units": source_units}
+    return {"schema": "reviewed-single-component-heldout/v1", "purpose": REVIEWED_HELDOUT_PURPOSE,
+        "split_manifest_sha256": manifest_sha256, "partition": splits.HOLDOUT_SPLIT,
+        "dependency_group": group, "dependency_group_sha256": _guard(group).sha256,
+        "population_scope": "exact_complete_admitted_component_only",
+        "inference_context_profile": "declared_source_only_empty_retrieval_context",
+        "inference_context_enforced": False,
+        "retrieved_example_ids": [], "training_example_ids": [],
+        "external_training_exposure_verified": False, "model_pretraining_exposure_verified": False,
+        "external_retrieval_exclusion_verified": False, "global_dependency_grouping_verified": False,
+        "preregistration_time_authenticated": False, "producer_authenticity_verified": False,
+        "generalization_established": False, "proof_authority": False}
