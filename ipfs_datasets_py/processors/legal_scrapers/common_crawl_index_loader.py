@@ -34,7 +34,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Any, Union
 import json
 import time
-import shutil
+import tempfile
 import hashlib
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
@@ -141,7 +141,9 @@ class CommonCrawlIndexLoader:
             local_base_dir: Base directory for local indexes (checks this first)
             cache_dir: Directory for caching HuggingFace downloads
             use_hf_fallback: Whether to fall back to HuggingFace if local not found
-            verify_integrity: Whether to verify downloaded index integrity
+            verify_integrity: Also parse Parquet metadata and check advertised manifest
+                size/SHA-256, when supplied. Without a source checksum this is not
+                cryptographic verification of the data pages. Requires pyarrow.
         """
         env_local_base_dir = str(
             os.getenv("IPFS_DATASETS_PY_COMMON_CRAWL_INDEX_ROOT", "") or ""
@@ -155,6 +157,7 @@ class CommonCrawlIndexLoader:
         )
         self.use_hf_fallback = use_hf_fallback
         self.verify_integrity = verify_integrity
+        self._hf_parquet_metadata: Dict[str, Dict[str, Any]] = {}
 
         # Track what's been loaded to avoid redundant operations
         self._loaded_indexes: Dict[str, Any] = {}
@@ -287,6 +290,7 @@ class CommonCrawlIndexLoader:
 
     def _get_hf_parquet_urls(self, index_type: str) -> List[str]:
         """Return converted parquet URLs for a hosted Common Crawl index."""
+        self._hf_parquet_metadata = {}
         if not self.use_hf_fallback:
             return []
         candidates = DATASET_REPO_CANDIDATES.get(index_type) or [DATASET_REPOS[index_type]]
@@ -304,6 +308,12 @@ class CommonCrawlIndexLoader:
                     if item.get("url")
                 ]
                 if urls:
+                    self._hf_parquet_metadata = {
+                        str(item["url"]): {
+                            key: item[key] for key in ("size", "sha256") if key in item
+                        }
+                        for item in payload.get("parquet_files", []) if item.get("url")
+                    }
                     return urls
             except Exception as exc:
                 last_error = exc
@@ -312,21 +322,74 @@ class CommonCrawlIndexLoader:
             logger.warning("Failed to resolve HF parquet URLs for %s: %s", index_type, last_error)
         return []
 
-    def materialize_index_locally(self, index_type: str, force_refresh: bool = False) -> List[Path]:
-        """Download hosted parquet shards into the local index directory.
+    def _validate_materialized_shard(
+        self, path: Path, metadata: Optional[Dict[str, Any]] = None
+    ) -> None:
+        """Reject incomplete files without loading their rows into memory.
 
-        This makes subsequent DuckDB queries hit the local fast-path instead of
-        remote HF parquet URLs.
+        Every mode checks the Parquet envelope. Integrity mode additionally parses
+        the footer and checks source manifest metadata when available; it does not
+        manufacture a trusted digest for manifests that provide none.
+        """
+        size = path.stat().st_size
+        with path.open("rb") as fh:
+            if size < 12 or fh.read(4) != b"PAR1":
+                raise ValueError("Invalid Parquet header or truncated file")
+            fh.seek(-8, os.SEEK_END)
+            footer = fh.read(8)
+            footer_size = int.from_bytes(footer[:4], "little")
+            if footer[4:] != b"PAR1" or not 0 < footer_size <= size - 12:
+                raise ValueError("Invalid or truncated Parquet footer")
+        if not self.verify_integrity:
+            return
+        metadata = metadata or {}
+        expected_size = metadata.get("size")
+        if expected_size is not None and size != int(expected_size):
+            raise ValueError("Parquet size does not match source manifest")
+        expected_hash = metadata.get("sha256")
+        if expected_hash is not None:
+            expected_hash = str(expected_hash).lower()
+            if len(expected_hash) != 64 or any(c not in "0123456789abcdef" for c in expected_hash):
+                raise ValueError("Invalid source manifest SHA-256")
+            digest = hashlib.sha256()
+            with path.open("rb") as fh:
+                for block in iter(lambda: fh.read(1024 * 1024), b""):
+                    digest.update(block)
+            if digest.hexdigest() != expected_hash:
+                raise ValueError("Parquet SHA-256 does not match source manifest")
+        import pyarrow.parquet as pq
+
+        pq.read_metadata(path)
+
+    def _usable_materialized_shard(self, path: Path, metadata=None) -> bool:
+        try:
+            self._validate_materialized_shard(path, metadata)
+            return True
+        except Exception as exc:
+            logger.warning("Ignoring invalid parquet shard %s: %s", path.name, exc)
+            return False
+
+    def materialize_index_locally(self, index_type: str, force_refresh: bool = False) -> List[Path]:
+        """Download shards atomically, leaving previous files intact on failure.
+
+        Temporary files are unique and on the destination filesystem. Incomplete
+        HTTP bodies and invalid Parquet envelopes are rejected in every mode.
+        Integrity mode also checks available source size/checksum metadata and
+        parses the footer (not all data pages). Valid local files remain usable
+        offline. With fallback enabled, a remote manifest is consulted for
+        integrity checks or repairs; ordinary valid caches keep their fast-path.
+        Failed shards are logged and omitted, preserving the existing list API.
         """
         local_path = self._get_local_path(index_type)
-        if local_path.exists() and not force_refresh:
+        if local_path.exists() and not force_refresh and not self.verify_integrity:
             existing = sorted(local_path.rglob("*.parquet"))
-            if existing:
-                logger.info("Using existing local %s parquet shards at %s", index_type, local_path)
+            if existing and all(self._usable_materialized_shard(path) for path in existing):
                 return existing
-
         urls = self._get_hf_parquet_urls(index_type)
         if not urls:
+            if local_path.exists() and not force_refresh:
+                return [path for path in sorted(local_path.rglob("*.parquet"))
+                        if self._usable_materialized_shard(path)]
             logger.warning("No Hugging Face parquet URLs were available for %s", index_type)
             return []
 
@@ -335,15 +398,39 @@ class CommonCrawlIndexLoader:
         for index, url in enumerate(urls, start=1):
             filename = Path(str(url).split("?", 1)[0]).name or f"{index_type}_{index:04d}.parquet"
             target = local_path / filename
-            if target.exists() and not force_refresh and target.stat().st_size > 0:
+            metadata = self._hf_parquet_metadata.get(url, {})
+            if not force_refresh and target.exists() and self._usable_materialized_shard(target, metadata):
                 downloaded.append(target)
                 continue
+            temporary: Optional[Path] = None
             try:
-                with self._hf_urlopen(url, timeout=120) as response, target.open("wb") as fh:
-                    shutil.copyfileobj(response, fh)
+                with self._hf_urlopen(url, timeout=120) as response:
+                    with tempfile.NamedTemporaryFile(
+                        mode="wb", dir=local_path, prefix=f".{filename}.", suffix=".part", delete=False
+                    ) as fh:
+                        temporary = Path(fh.name)
+                        headers = getattr(response, "headers", {})
+                        content_length = headers.get("Content-Length")
+                        expected_bytes = int(content_length) if content_length is not None else None
+                        while True:
+                            block = response.read(1024 * 1024)
+                            if not block:
+                                break
+                            if expected_bytes is not None and fh.tell() + len(block) > expected_bytes:
+                                raise ValueError("HTTP body exceeds Content-Length")
+                            fh.write(block)
+                        if expected_bytes is not None and fh.tell() != expected_bytes:
+                            raise ValueError("Incomplete HTTP body (Content-Length mismatch)")
+                        fh.flush()
+                        os.fsync(fh.fileno())
+                self._validate_materialized_shard(temporary, metadata)
+                os.replace(temporary, target)
                 downloaded.append(target)
             except Exception as exc:
-                logger.warning("Failed to download %s parquet shard %s: %s", index_type, url, exc)
+                logger.warning("Failed to download %s parquet shard %s: %s", index_type, filename, exc)
+            finally:
+                if temporary is not None:
+                    temporary.unlink(missing_ok=True)
         return downloaded
 
     def materialize_state_index_locally(self, force_refresh: bool = False) -> List[Path]:
