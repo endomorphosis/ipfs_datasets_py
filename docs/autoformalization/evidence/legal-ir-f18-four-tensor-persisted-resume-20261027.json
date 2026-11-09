@@ -1,0 +1,158 @@
+{
+  "effect_counts": {
+    "actual_retained_input_fitting": false,
+    "historical_payload_loads": 0,
+    "real32_update_matched_arms": false,
+    "source_inferred_upper_bounds_not_instrumented": {
+      "F18_forwards": 20,
+      "optimizer_updates": 20,
+      "synthetic_model_constructions": 33
+    }
+  },
+  "evidence_id": "f18-four-tensor-persisted-resume-20261027-01",
+  "evidence_inputs": {
+    "JUnit": {
+      "bytes": 8306,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-persisted-resume-qualification-v01/attempt-v03/exports/test-results.xml",
+      "root": "datasets_repository",
+      "sha256": "c20b3ba7517e626b04a10efac5491c164c60824ad8a7216b14a44cbb354cad74"
+    },
+    "independent_review": {
+      "bytes": 13201,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-persisted-resume-qualification-v01/independent-39case-queue-review-v01.json",
+      "root": "datasets_repository",
+      "sha256": "fb95c72e1bd98ea18e5ff844d308b9dce761d8df1b85534a92684944d7fc5311"
+    },
+    "original_terminal": {
+      "bytes": 6846,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-persisted-resume-qualification-v01/owner-v03.stdout",
+      "root": "datasets_repository",
+      "sha256": "2389fbc2f6287474dd97924533318d67714e5bef51307d053c9ed2b0f2f4af60"
+    },
+    "phase_observation": {
+      "bytes": 87322,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-persisted-resume-qualification-v01/attempt-v03/exports/phase-observations-v03.json",
+      "root": "datasets_repository",
+      "sha256": "10721f8ee670f7905ed0d2c40b96089a4de7073dfe2c7431dc7c3e4f4e455a59"
+    },
+    "request": {
+      "bytes": 31283,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-persisted-resume-qualification-v01/request-v03.json",
+      "root": "datasets_repository",
+      "sha256": "6f5d796573c40db5b09fcbe4dd0ac9f5ee795207bf423a85b49330d981fcf8b8"
+    },
+    "source_closeout": {
+      "bytes": 9979,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-persisted-resume-qualification-v01/root-source-closeout-v03.json",
+      "root": "datasets_repository",
+      "sha256": "b80c3cdb4a21021c5c8bac47b14ea038091763e2a474aa1874e6e2fb6aef7fa3"
+    }
+  },
+  "failed_generations": {
+    "v01": {
+      "exact_record_CAS": true,
+      "four_artifacts_preserved": true,
+      "new_grant_or_cap_change_or_output_deletion": false,
+      "original_failed_storage_recovered": true,
+      "other_records_preserved_by_original_API": true,
+      "recovery": {
+        "bytes": 2594,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-persisted-resume-qualification-v01/root-failed-v01-storage-recovery-v01.json",
+        "root": "datasets_repository",
+        "sha256": "a40727ac0f06de472998272585554b0d3ad2113ef01c4dab95d331681a606bb1"
+      },
+      "scope": "Torch bootstrap refused ldconfig before collection;0cases/0phases, no suite credit."
+    },
+    "v02": {
+      "failure_and_root_controller_closeout_preserved": true,
+      "scope": "Stale nested physical root refused by constructor before native/storage open or child;0cases, no claim/recovery/suite credit."
+    }
+  },
+  "limits": {
+    "actual632_parity": false,
+    "authentic_retained_zero_step_roundtrip": "Separate evidence f18-retained-zero-step-delta-roundtrip-20261027-01.",
+    "frozen_output_scoring": false,
+    "new_scientific_trained_weights_or_accuracy": false,
+    "real_training_purpose_admission_or_paired_fit": false,
+    "reviewed_statutory_gold_or_whole_corpus_or_Lean_admission": false
+  },
+  "observed_at_utc": "2026-10-27T16:42:07.491731+00:00",
+  "original_ownership": {
+    "artifacts_durable": true,
+    "child_process_slots": 2,
+    "cpu_slots": 1,
+    "final_live_processes": 0,
+    "memory_mb": 2048,
+    "original_compute_released": true,
+    "original_source_READ_closed": true,
+    "original_storage_released": true,
+    "source_closed_at_utc": "2026-10-27T16:27:26.836555+00:00",
+    "source_pins": 70,
+    "source_pins_before_after_unchanged": true,
+    "storage_bytes": 134217728,
+    "timeout_seconds": 300
+  },
+  "physical_fixtures": {
+    "declared_slots": [
+      "checkpoint-link.json\u2192checkpoint.json/file",
+      "parent-link\u2192real-parent/directory",
+      "checkpoint.pipe/fifo"
+    ],
+    "no_hardlink_scope_added": true,
+    "ordinary_targets_retained": true,
+    "original_owner_v2_declared_cases": 3,
+    "special_slots_absent_after_teardown": true
+  },
+  "programme": {
+    "all_E1_assets_qualified": false,
+    "contributes_to": [
+      "LIR-9103",
+      "LIR-9104",
+      "LIR-9105"
+    ],
+    "native_task_completed": false
+  },
+  "qualified_mechanics": [
+    "Four selected tensor deltas reconstruct all 42 states against the supplied donor; 38 frozen tensors including modality and 650 inactive scalars are preserved.",
+    "Fresh ordered four-tensor Adam reuses full-batch CE, F15 masked KL and the opt-in margin. Bounded synthetic disk-resumed updates match uninterrupted and independent manual controls.",
+    "Independent input, source, policy, arm, progress, moment and state tamper refusals; 4 MiB checkpoint limit and strict regular-file, symlink and FIFO controls."
+  ],
+  "result": {
+    "JUnit_suite_seconds": 19.412,
+    "command_elapsed_seconds": 75.01731444103643,
+    "errors": 0,
+    "exact_ordered_absolute_nodeids_matched": true,
+    "failures": 0,
+    "passed_cases": 39,
+    "phase_reports": 117,
+    "pytest_seconds": 19.41,
+    "setup_call_teardown_passes_each": 39,
+    "skipped": 0
+  },
+  "runtime_projection": {
+    "allowed_lookup": "dl",
+    "external_process_attempts": 0,
+    "lookup_count": 1,
+    "normal_W_product_and_primary_v2_plugin": true,
+    "original_resolver_restored_after_Torch_import": true,
+    "pinned_libdl_resolution_schema": "pinned-libdl-resolution/v1",
+    "resolved_library": {
+      "bytes": 67440,
+      "path": "/usr/lib/aarch64-linux-gnu/libdl.so.2",
+      "sha256": "97387fb55ccfc0cc109dfe99b81de2b7bbaac723d1c215107dc69a068c4b1fae"
+    },
+    "selected_normal_runtime_module_origins_verified": 18,
+    "whole_ABI_or_import_closure_qualified": false
+  },
+  "schema": "legal-ir-f18-four-tensor-persisted-resume-qualification/v1",
+  "scope": "Fresh original-owned synthetic numerical/checkpoint generation: 26 existing and 13 new cases executed together as 39, separate from the earlier 26-case cohorts.",
+  "selected_product_source": {
+    "owning_test_bytes": 70853,
+    "owning_test_sha256": "a7d0278fe57487abbfe1cc67cd73fc6cc3e8f28cc8caa73d6b3378f384ca091e",
+    "post_qualification_source_commit": "362650fc688ba34d2de6b95f32e97f7914edae4d",
+    "postimage_identity_preserved": true,
+    "product_bytes": 73807,
+    "product_sha256": "87b9cd547f9fd33b23384a93a290de8d3f2d1a00e2b03dab4d9ef562f0435881",
+    "public_base_commit": "2c34992ba9b511f6994d1398e4c1eba9d0440ba0"
+  }
+}

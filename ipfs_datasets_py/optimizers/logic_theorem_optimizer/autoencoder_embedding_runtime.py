@@ -329,6 +329,10 @@ def produce_native_embedding_receipt(inputs: Sequence, *, resolver,
                 model = sentence_transformers.SentenceTransformer(
                     str(snapshot), local_files_only=True, trust_remote_code=False, device="cpu")
                 model.eval()
+                # The pinned safetensors file stores float16 weights. The qualified
+                # execution profile is CPU float32, so the loaded module is cast
+                # before the parameter check and the forward.
+                model.float()
                 _validate_model(model, torch)
                 results = _produce_results(selected, model, torch, batch_size=batch_size,
                                            token_input_digest=codec.token_input_digest)

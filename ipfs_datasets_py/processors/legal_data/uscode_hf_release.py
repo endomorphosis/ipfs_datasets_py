@@ -114,6 +114,14 @@ RECOVERY_CONFIG_NAME: Final = "recovery-quarantine/v1"
 DEFAULT_CONFIG_NAME: Final = DEFAULT_CONFIG_V2
 LEGACY_CONFIG_NAME: Final = COMPAT_CONFIG_LEGACY_USCODE_PARQUET
 
+# HF wire names are distinct from the versioned logical release identities.
+# None retains the original packaging bytes and metadata contract.
+HF_WIRE_PROFILE: Final = "hf-default-parquet-envelope/v1"
+HF_DEFAULT_CONFIG_NAME: Final = "publicus-ir-graphrag-v2"
+_WIRE_COLUMNS: Final = (
+    "entry_cid", "legal_id", "family", "record_sha256", "record_json",
+)
+
 DEFAULT_SOURCE_REVISION: Final = "75cfc5982dc3a6808614cd4eb9b4238f8f9308b8"
 DEFAULT_TOKENIZER_ID: Final = "uscode-legal-tokenizer/v1"
 DEFAULT_GRAPH_ONTOLOGY_VERSION: Final = "uscode-legal-graph-ontology/v1"
@@ -905,11 +913,19 @@ def render_dataset_card(
     model_revision: str = DEFAULT_MODEL_REVISION,
     limitations: Sequence[str] | None = None,
     currentness_disclaimer: str = CURRENTNESS_DISCLAIMER,
+    wire_metadata_profile: str | None = None,
+    wire_data_files: Sequence[str] | None = None,
+    wire_num_examples: int | None = None,
+    wire_num_bytes: int | None = None,
 ) -> str:
     """Render the sealed Dataset card (README.md) with YAML frontmatter."""
 
     viewer_configs = tuple(configs or advertised_viewer_configs())
     assert_configs_schema_coherent(viewer_configs)
+    wire = _wire_metadata_declaration(
+        viewer_configs, wire_metadata_profile, wire_data_files,
+        wire_num_examples, wire_num_bytes,
+    )
     space = vector_space_id or build_vector_space_id(
         model_id=model_id,
         model_revision=model_revision,
@@ -930,6 +946,24 @@ def render_dataset_card(
             "explicit compatibility configuration for one deprecation cycle.",
         )
     )
+    config_description = (
+        "The **default** configuration is viewer-safe v2 only. Recovery JSON "
+        "and legacy monoliths are advertised as separate named configs and "
+        "never contaminate the default Dataset Viewer schema."
+    )
+    if wire is not None:
+        config_description = (
+            "The Hugging Face default is `" + HF_DEFAULT_CONFIG_NAME + "`, an alias "
+            "for logical configuration `" + DEFAULT_CONFIG_NAME + "`. Only its "
+            "listed homogeneous Parquet envelopes are advertised. Legacy and "
+            "recovery files remain available as retained artifacts; their "
+            "separate streaming configurations are not advertised by this profile. "
+            "The following inventory describes logical release configurations."
+        )
+        if not limitations:
+            safe_limitations = (*safe_limitations[:3],
+                "Legacy and recovery files require direct artifact access until "
+                "their separate wire schemas/loaders are qualified.")
 
     lines: list[str] = [
         "---",
@@ -941,10 +975,15 @@ def render_dataset_card(
         "  - graphrag",
         "  - justicedao",
         "  - public-domain-us-government",
-        "configs:",
     ]
-    for cfg in viewer_configs:
-        lines.extend(cfg.yaml_block())
+    if wire is not None:
+        lines.extend(_wire_dataset_info_yaml(wire))
+    lines.append("configs:")
+    if wire is None:
+        for cfg in viewer_configs:
+            lines.extend(cfg.yaml_block())
+    else:
+        lines.extend(_wire_yaml(wire))
     lines.extend(
         [
             "---",
@@ -964,9 +1003,7 @@ def render_dataset_card(
             "",
             "## Dataset configurations",
             "",
-            "The **default** configuration is viewer-safe v2 only. Recovery JSON "
-            "and legacy monoliths are advertised as separate named configs and "
-            "never contaminate the default Dataset Viewer schema.",
+            config_description,
             "",
         ]
     )
@@ -1064,8 +1101,10 @@ class UscodeHFReleaseBuilder:
     determinism_seed: int = DEFAULT_DETERMINISM_SEED
     include_legacy_config: bool = True
     include_recovery_config: bool = True
+    wire_metadata_profile: str | None = None
 
     def __post_init__(self) -> None:
+        _check_wire_profile(self.wire_metadata_profile)
         if not _DATASET_ID_RE.fullmatch(self.dataset_id):
             raise UscodeHFReleaseError("dataset_id must be owner/name")
         if (
@@ -1127,21 +1166,22 @@ class UscodeHFReleaseBuilder:
             normalization=DEFAULT_NORMALIZATION,
             dimension=DEFAULT_DIMENSION,
         )
-        build_config_cid = digest_mapping(
-            {
-                "dataset_id": self.dataset_id,
-                "determinism_seed": self.determinism_seed,
-                "graph_ontology_version": self.graph_ontology_version,
-                "max_rows_per_shard": self.max_rows_per_shard,
-                "model_id": self.model_id,
-                "model_revision": self.model_revision,
-                "release_point": self.release_point,
-                "schema_version": SCHEMA_VERSION,
-                "source_revision": self.source_revision,
-                "tokenizer_id": self.tokenizer_id,
-                "vector_space_id": vector_space,
-            }
-        )
+        build_settings = {
+            "dataset_id": self.dataset_id,
+            "determinism_seed": self.determinism_seed,
+            "graph_ontology_version": self.graph_ontology_version,
+            "max_rows_per_shard": self.max_rows_per_shard,
+            "model_id": self.model_id,
+            "model_revision": self.model_revision,
+            "release_point": self.release_point,
+            "schema_version": SCHEMA_VERSION,
+            "source_revision": self.source_revision,
+            "tokenizer_id": self.tokenizer_id,
+            "vector_space_id": vector_space,
+        }
+        if self.wire_metadata_profile is not None:
+            build_settings["wire_metadata_profile"] = self.wire_metadata_profile
+        build_config_cid = digest_mapping(build_settings)
 
         data_artifacts = self._build_data_artifacts(family_rows)
         legacy_artifacts = self._build_legacy_artifacts(legacy_files or {})
@@ -1170,6 +1210,18 @@ class UscodeHFReleaseBuilder:
         )
         assert_configs_schema_coherent(configs)
 
+        wire_paths = None
+        wire_statistics = None
+        if self.wire_metadata_profile is not None:
+            selected = _wire_parquet_population(data_artifacts)
+            wire_paths = [item.relative_path for item in selected]
+            wire_statistics = _wire_statistics(selected)
+        wire = _wire_metadata_declaration(
+            configs, self.wire_metadata_profile, wire_paths,
+            wire_statistics["num_examples"] if wire_statistics is not None else None,
+            wire_statistics["num_bytes"] if wire_statistics is not None else None,
+        )
+
         reports = self._build_reports(
             data_artifacts=data_artifacts,
             legacy_artifacts=legacy_artifacts,
@@ -1187,6 +1239,10 @@ class UscodeHFReleaseBuilder:
             vector_space_id=vector_space,
             model_id=self.model_id,
             model_revision=self.model_revision,
+            wire_metadata_profile=self.wire_metadata_profile,
+            wire_data_files=wire_paths,
+            wire_num_examples=wire_statistics["num_examples"] if wire_statistics is not None else None,
+            wire_num_bytes=wire_statistics["num_bytes"] if wire_statistics is not None else None,
         )
         card_artifact = ReleaseArtifact(
             relative_path=README_FILENAME,
@@ -1203,6 +1259,8 @@ class UscodeHFReleaseBuilder:
             "schema_version": SCHEMA_VERSION,
             "task_id": TASK_ID,
         }
+        if wire is not None:
+            configs_payload["wire_metadata"] = wire
         reject_identity_contamination(configs_payload, label="dataset-configs")
         configs_artifact = ReleaseArtifact(
             relative_path=DATASET_CONFIGS_FILENAME,
@@ -1212,11 +1270,14 @@ class UscodeHFReleaseBuilder:
             row_count=0,
             schema_id=SCHEMA_VERSION,
         )
-        infos_payload = _dataset_infos(
-            dataset_id=self.dataset_id,
-            data_artifacts=data_artifacts,
-            configs=configs,
-        )
+        if wire is None:
+            infos_payload = _dataset_infos(
+                dataset_id=self.dataset_id,
+                data_artifacts=data_artifacts,
+                configs=configs,
+            )
+        else:
+            infos_payload = _wire_dataset_infos(wire_statistics)
         reject_identity_contamination(infos_payload, label="dataset-infos")
         infos_artifact = ReleaseArtifact(
             relative_path=DATASET_INFOS_FILENAME,
@@ -1256,6 +1317,8 @@ class UscodeHFReleaseBuilder:
             configs=configs,
             dry_run=dry_run,
         )
+        if wire is not None:
+            metadata_payload["wire_metadata"] = wire
         reject_identity_contamination(metadata_payload, label="release-metadata")
         metadata_artifact = ReleaseArtifact(
             relative_path=RELEASE_METADATA_FILENAME,
@@ -1305,6 +1368,8 @@ class UscodeHFReleaseBuilder:
         manifest_body["hf_release_schema_version"] = SCHEMA_VERSION
         manifest_body["additive_packaging"] = True
         manifest_body["legacy_files_deleted"] = False
+        if wire is not None:
+            manifest_body["wire_metadata"] = wire
         reject_identity_contamination(manifest_body, label="manifest")
         manifest_digest = digest_mapping(manifest_body)
         manifest_body["manifest_digest"] = manifest_digest
@@ -1651,6 +1716,7 @@ def build_uscode_hf_release(
     preserve_existing: Sequence[str] | None = None,
     include_legacy_config: bool = True,
     include_recovery_config: bool = True,
+    wire_metadata_profile: str | None = None,
 ) -> UscodeHuggingFaceRelease:
     """Build a deterministic additive US Code HF release (default dry-run)."""
 
@@ -1663,6 +1729,7 @@ def build_uscode_hf_release(
         model_revision=model_revision,
         include_legacy_config=include_legacy_config,
         include_recovery_config=include_recovery_config,
+        wire_metadata_profile=wire_metadata_profile,
     )
     return builder.build(
         family_rows,
@@ -1925,6 +1992,21 @@ def validate_uscode_hf_release(
             "manifest must declare default_excludes_recovery=true"
         )
 
+    companion_configs = json.loads(release.artifact(DATASET_CONFIGS_FILENAME).content)
+    companion_metadata = release.release_metadata_dict()
+    companion_infos = json.loads(release.artifact(DATASET_INFOS_FILENAME).content)
+    card_front = release.dataset_card_text().split("---", 2)
+    wire_marked = any(
+        isinstance(body, Mapping) and "wire_metadata" in body
+        for body in (manifest, companion_configs, companion_metadata)
+    )
+    wire_layout = (
+        not isinstance(companion_infos, Mapping) or "configs" not in companion_infos
+        or (len(card_front) == 3 and HF_DEFAULT_CONFIG_NAME in card_front[1])
+    )
+    if wire_marked or wire_layout:
+        _validate_wire_metadata(release, manifest)
+
     # 6. Dataset card documents configs and recovery exclusion.
     card = release.dataset_card_text()
     if "configs:" not in card:
@@ -2171,6 +2253,175 @@ def load_fixture_dataset_card(path: str | Path | None = None) -> str:
 # ---------------------------------------------------------------------------
 
 
+def _check_wire_profile(profile: str | None) -> None:
+    if profile is not None and (type(profile) is not str or profile != HF_WIRE_PROFILE):
+        raise UscodeHFReleaseConfigError("unsupported HF wire metadata profile")
+
+
+def _wire_metadata_declaration(
+    configs: Sequence[ViewerConfig],
+    profile: str | None,
+    paths: Sequence[str] | None,
+    num_examples: int | None,
+    num_bytes: int | None,
+) -> dict[str, Any] | None:
+    _check_wire_profile(profile)
+    if profile is None:
+        if paths is not None or num_examples is not None or num_bytes is not None:
+            raise UscodeHFReleaseConfigError("wire data files and counts require an explicit wire profile")
+        return None
+    if any(type(number) is not int or number < 0 for number in (num_examples, num_bytes)):
+        raise UscodeHFReleaseConfigError("wire profile requires measured nonnegative row and Arrow byte counts")
+    if (not isinstance(paths, (list, tuple)) or not paths
+            or any(type(path) is not str for path in paths)
+            or list(paths) != sorted(set(paths))):
+        raise UscodeHFReleaseConfigError("wire profile requires sorted distinct Parquet paths")
+    for path in paths:
+        if (normalize_relative_artifact_path(path) != path
+                or not path.startswith("data/") or not path.endswith(".parquet")
+                or any(character in path for character in "*?[]{}")):
+            raise UscodeHFReleaseConfigError("unsupported wire Parquet path: " + path)
+    return {
+        "schema": "uscode-hf-wire-metadata/v1",
+        "profile": HF_WIRE_PROFILE,
+        "default_config": HF_DEFAULT_CONFIG_NAME,
+        "logical_default_config": DEFAULT_CONFIG_NAME,
+        "aliases": {DEFAULT_CONFIG_NAME: HF_DEFAULT_CONFIG_NAME},
+        "data_files": [{"split": "train", "path": list(paths)}],
+        "num_examples": num_examples,
+        "num_bytes": num_bytes,
+        "unadvertised_configs": [cfg.config_name for cfg in configs if not cfg.is_default],
+    }
+
+
+def _wire_yaml(wire: Mapping[str, Any]) -> list[str]:
+    return [
+        f"- config_name: {json.dumps(wire['default_config'])}",
+        "  default: true",
+        "  data_files:",
+        '  - split: "train"',
+        "    path: " + json.dumps(wire["data_files"][0]["path"]),
+    ]
+
+
+def _wire_dataset_info_yaml(wire: Mapping[str, Any]) -> list[str]:
+    # Named card infos are authoritative for the selected config. datasets5.1
+    # renames a sole legacy dataset_infos.json key to "default" before merging
+    # the card, so the JSON sidecar alone does not supply this alias's counts.
+    lines = ["dataset_info:", f"- config_name: {json.dumps(wire['default_config'])}", "  features:"]
+    for column in _WIRE_COLUMNS:
+        lines.extend([f"  - name: {json.dumps(column)}", "    dtype: string"])
+    lines.extend(["  splits:", '  - name: "train"',
+        f"    num_examples: {wire['num_examples']}", f"    num_bytes: {wire['num_bytes']}"])
+    return lines
+
+
+def _wire_parquet_population(
+    artifacts: Sequence[ReleaseArtifact],
+) -> tuple[ReleaseArtifact, ...]:
+    """Validate exactly the advertised transport tables without reading rows."""
+    selected = tuple(sorted(
+        (item for item in artifacts
+         if item.relative_path.startswith("data/") and item.relative_path.endswith(".parquet")),
+        key=lambda item: item.relative_path,
+    ))
+    if not selected:
+        raise UscodeHFReleaseConfigError("wire profile requires nonempty default Parquet data")
+    paths = [item.relative_path for item in selected]
+    if len(paths) != len(set(paths)):
+        raise UscodeHFReleaseIntegrityError("duplicate wire Parquet artifact")
+    try:
+        import pyarrow as pa
+        import pyarrow.parquet as pq
+    except ImportError as exc:  # pragma: no cover
+        raise UscodeHFReleaseError("wire schema verification requires pyarrow") from exc
+    for item in selected:
+        if (item.media_type != PARQUET_MEDIA_TYPE or item.family not in DEFAULT_CONFIG_FAMILIES
+                or item.config_name != DEFAULT_CONFIG_NAME
+                or type(item.row_count) is not int or item.row_count < 0):
+            raise UscodeHFReleaseConfigError("wire Parquet artifact has an incompatible logical binding")
+        try:
+            footer = pq.ParquetFile(io.BytesIO(item.content))
+            schema = footer.schema_arrow
+            if (tuple(schema.names) != _WIRE_COLUMNS
+                    or any(field.type != pa.string() for field in schema)):
+                raise UscodeHFReleaseConfigError("wire Parquet schema must contain five string envelope columns")
+            if footer.metadata.num_rows != item.row_count:
+                raise UscodeHFReleaseIntegrityError("wire Parquet row count differs from its descriptor")
+        except (UscodeHFReleaseConfigError, UscodeHFReleaseIntegrityError):
+            raise
+        except Exception as exc:
+            raise UscodeHFReleaseIntegrityError("invalid wire Parquet footer: " + item.relative_path) from exc
+    return selected
+
+
+def _wire_statistics(selected: Sequence[ReleaseArtifact]) -> dict[str, int]:
+    """Measure decoded Arrow bytes, distinct from compressed Parquet sizes."""
+    import pyarrow.parquet as pq
+
+    rows = arrow_bytes = 0
+    for item in selected:
+        table = pq.read_table(io.BytesIO(item.content))
+        if table.num_rows != item.row_count:
+            raise UscodeHFReleaseIntegrityError("decoded wire Parquet row count differs")
+        rows += table.num_rows
+        arrow_bytes += table.nbytes
+    return {"num_examples": rows, "num_bytes": arrow_bytes}
+
+
+def _wire_dataset_infos(statistics: Mapping[str, int]) -> dict[str, Any]:
+    return {HF_DEFAULT_CONFIG_NAME: {
+        "config_name": HF_DEFAULT_CONFIG_NAME,
+        "features": {column: {"dtype": "string", "_type": "Value"} for column in _WIRE_COLUMNS},
+        "splits": {"train": {"name": "train", **statistics}},
+    }}
+
+
+def _validate_wire_metadata(
+    release: UscodeHuggingFaceRelease, manifest: Mapping[str, Any],
+) -> None:
+    selected = _wire_parquet_population(release.artifacts)
+    statistics = _wire_statistics(selected)
+    declared = manifest.get("wire_metadata")
+    if type(declared) is not dict:
+        raise UscodeHFReleaseConfigError("wire metadata declaration must be an object")
+    expected = _wire_metadata_declaration(
+        release.configs, declared.get("profile"), [item.relative_path for item in selected],
+        statistics["num_examples"], statistics["num_bytes"],
+    )
+    if expected is None:
+        raise UscodeHFReleaseConfigError("wire metadata requires its explicit profile")
+    configs = json.loads(release.artifact(DATASET_CONFIGS_FILENAME).content)
+    metadata = release.release_metadata_dict()
+    for body in (manifest, configs, metadata):
+        if canonical_json_bytes(body.get("wire_metadata")) != canonical_json_bytes(expected):
+            raise UscodeHFReleaseIntegrityError("wire metadata declarations disagree")
+        if body.get("default_config") != DEFAULT_CONFIG_NAME:
+            raise UscodeHFReleaseConfigError("wire alias must preserve the logical default config")
+    logical_configs = [cfg.to_dict() for cfg in release.configs]
+    if (canonical_json_bytes(manifest.get("configs")) != canonical_json_bytes(logical_configs)
+            or canonical_json_bytes(configs.get("configs")) != canonical_json_bytes(logical_configs)):
+        raise UscodeHFReleaseConfigError("logical config inventory differs from the wire release")
+    infos = json.loads(release.artifact(DATASET_INFOS_FILENAME).content)
+    if canonical_json_bytes(infos) != canonical_json_bytes(_wire_dataset_infos(statistics)):
+        raise UscodeHFReleaseIntegrityError("wire DatasetInfosDict features or row population differ")
+    front = release.dataset_card_text().split("---", 2)
+    if (len(front) != 3 or front[1].count("\nconfigs:\n") != 1
+            or front[1].split("\nconfigs:\n", 1)[1] != "\n".join(_wire_yaml(expected)) + "\n"):
+        raise UscodeHFReleaseConfigError("wire card alias, default or exact data files differ")
+    if (front[1].count("\ndataset_info:\n") != 1
+            or front[1].split("\ndataset_info:\n", 1)[1].split("\nconfigs:\n", 1)[0]
+            != "\n".join(_wire_dataset_info_yaml(expected)[1:])):
+        raise UscodeHFReleaseConfigError("wire card dataset_info features or counts differ")
+    by_path = {item.relative_path: item for item in release.artifacts}
+    descriptors = {item["relative_path"]: item for item in manifest["artifacts"]}
+    for path in (README_FILENAME, DATASET_CONFIGS_FILENAME, DATASET_INFOS_FILENAME, RELEASE_METADATA_FILENAME):
+        item, descriptor = by_path[path], descriptors.get(path)
+        if (descriptor is None or descriptor["sha256"] != item.sha256
+                or descriptor["size_bytes"] != item.size_bytes):
+            raise UscodeHFReleaseIntegrityError("wire metadata descriptor differs: " + path)
+
+
 def _dataset_infos(
     *,
     dataset_id: str,
@@ -2320,6 +2571,8 @@ __all__ = [
     "DATASET_CONFIGS_FILENAME",
     "DATASET_INFOS_FILENAME",
     "DEFAULT_CONFIG_NAME",
+    "HF_WIRE_PROFILE",
+    "HF_DEFAULT_CONFIG_NAME",
     "DEFAULT_DATASET_REPO_ID",
     "DEFAULT_SOURCE_REVISION",
     "GOAL_ID",

@@ -1,0 +1,167 @@
+{
+  "admitted": false,
+  "api": "captured_inference",
+  "artifact_paths_relative_to_root": true,
+  "artifact_root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-initial-parity-v01/profile-capture-qualification-v01",
+  "artifacts": {
+    "JUnit": {
+      "bytes": 9509,
+      "path": "attempt-v02/exports/test-results.xml",
+      "sha256": "3a4f03146264c789a9c76fa16878d5132f3067edc16628b3efc80d39c39df014"
+    },
+    "execution": {
+      "bytes": 12042,
+      "path": "attempt-v02/logs/execution.json",
+      "sha256": "2aab6221d539261dfb5906acf20f75221783e1c1185ce23fdc9a36fadd67b89f"
+    },
+    "independent_final_binding": {
+      "bytes": 9068,
+      "path": "supervisor-watchdog-45case-final-binding-v02.json",
+      "sha256": "8fda00822379a81fd3b134cc4e7afa88db02b1e1ce19d14c91d1cc5d28d5a487"
+    },
+    "original_root_closeout": {
+      "bytes": 10174,
+      "path": "root-source-closeout-v02.json",
+      "sha256": "1504963065d2b7037eb8121a4411bde1051670884d574d2b47ed16039b6f60c2"
+    },
+    "phase_observations": {
+      "bytes": 97461,
+      "path": "attempt-v02/exports/phase-observations-v02.json",
+      "sha256": "8d9c4e35e154a3a0c0dbac3530a9b2871ea3bb839a626714a3ee18c14ec8c2ec"
+    },
+    "prior_failed_observation": {
+      "bytes": 4272,
+      "path": "supervisor-watchdog-failed-generation-observation-v01.json",
+      "sha256": "728dbe8980ceeb116ac0306e0330933c2050e811654ce7b96fffec3798840be4"
+    },
+    "prior_failed_root_closeout": {
+      "bytes": 25385,
+      "path": "root-source-closeout-v01.json",
+      "sha256": "608d952ff7ec179bf13b9a12f6cbdba9097fae3b7336a655351e3dbfdf12fc97"
+    },
+    "request": {
+      "bytes": 33210,
+      "path": "request-v02.json",
+      "sha256": "d923663f3b641b4f6aa77b439558be30361585310a3eabcdc9f1239ecf702f0c"
+    },
+    "scope": {
+      "bytes": 21806,
+      "path": "scope-v02.json",
+      "sha256": "e3a8dd2cec6ad024e8caf2a592812fa7611367f8ee7d2838104b3eec4fed1a31"
+    },
+    "source_freeze": {
+      "bytes": 2505,
+      "path": "author-source-freeze-v04.json",
+      "sha256": "b5fe237fc462e4653c2db1ac82e6786476eef72bef03b5b460e7acfdfdfedf82"
+    }
+  },
+  "evidence_id": "f18-source-capture-qualified-20261027-01",
+  "formalized": false,
+  "id": "f18-source-capture-qualified-20261027-01",
+  "limits": [
+    "Synthetic mechanics qualification is separate from authentic retained-donor632 initial parity.",
+    "No paired32-arm fit, reference-label scoring, accuracy gain, statutory meaning, Lean proof or whole-corpus lake qualification.",
+    "No task rearm, model promotion, source-custody substitution or execution authority is granted."
+  ],
+  "new_trained_weights": false,
+  "numeric_work_scope": {
+    "counting": "source-inferred upper bounds; no numeric method instrumentation",
+    "historical_payloads_opened": false,
+    "observed_aggregate_method_counts_claimed": false,
+    "real_input_fit_steps": 0,
+    "retained_donor_authentication_or_632_parity_in_this_run": false,
+    "source_inferred_upper_bounds": {
+      "new_capture_model_constructions": 13,
+      "new_capture_optimizer_updates": 0,
+      "new_capture_top_level_F18_forwards": 15,
+      "whole45_model_constructions_conservative": 46,
+      "whole45_optimizer_updates": 20,
+      "whole45_top_level_F18_forwards": 35
+    },
+    "teacher_model_forwards": 0
+  },
+  "original_custody": {
+    "child_process_slots": 2,
+    "cpu_slots": 1,
+    "ctypes_resolver_restored": true,
+    "descendants_live": 0,
+    "enforcement": "cooperative_admission_and_polled_usage_not_kernel_quota",
+    "external_process_attempts": [],
+    "memory_mb": 2048,
+    "native_released": true,
+    "out_of_group_live_identities": [],
+    "physical_fixture_cases": 3,
+    "pinned_libdl_resolutions": 1,
+    "request_sha256": "d923663f3b641b4f6aa77b439558be30361585310a3eabcdc9f1239ecf702f0c",
+    "reservation_id": "077f23bc0ab243c1a9691744a0a5ccbc",
+    "runtime_origins_verified": 18,
+    "source_READ_closed": true,
+    "source_pins_verified_before_and_after": 73,
+    "storage_bytes": 134217728,
+    "storage_status": "released",
+    "timeout_seconds": 300
+  },
+  "owner": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_fullspan_training_v1.py",
+  "preserved_failed_generation": {
+    "cause": "Only the new long-source negative test expected a different refusal message; the product refused before forward. The corrected assertion matches bounded complete capture source tokens required. Product56bd was unchanged.",
+    "failed": 1,
+    "failed_test_sha256": "54f105dd393cbe1487c3c9d54c93935305021887fe0c95c901883aa510305061",
+    "original_failure_retained": true,
+    "passed": 44,
+    "passed_credit_transferred": false,
+    "request_sha256": "dbf4e64288c4d44aa3ab92a1451f31617db07f226430c2a40f3c3990c1110972",
+    "source_READ_native_and_descendants_closed": true,
+    "storage_recovery_receipt": {
+      "bytes": 11666,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-initial-parity-v01/profile-capture-qualification-v01/root-failed-v01-storage-recovery-v01.json",
+      "root": "datasets_repository",
+      "sha256": "49520ee7184823d1778035e467c4d3eeee4a7473c284ae8b41ce3aa5d2bc23d8"
+    },
+    "storage_recovery_status": "Released by the original exact-record API after successful45/source and failed632-v01 cleanup. Failure artifacts remain preserved; no new admission or qualification credit.",
+    "storage_reservation_id": "46032633d2de4016998a2a08b836a5b8",
+    "storage_status_at_original_closeout": "retained",
+    "tests": 45
+  },
+  "promoted": false,
+  "qualified_at_utc": "2026-10-27T17:37:34.614783+00:00",
+  "result": {
+    "JUnit_seconds": 28.716,
+    "errors": 0,
+    "failed": 0,
+    "original_execution_seconds": 85.31503564026207,
+    "passed": 45,
+    "passed_pytest_phases": 135,
+    "scope": "Fresh execution of the prior39 cases plus6 new capture cases on synthetic CPU float32 F18 architecture/state. No historical checkpoint, input export or retained capture payload was opened.",
+    "skipped": 0,
+    "tests": 45,
+    "validated": [
+      "Original greedy/readout and all-head capture equivalence; one opened runtime reused with native counter deltas.",
+      "Source-only triple and control refusals before forwards; callable, local/global hook, config and state refusals.",
+      "Late state/source drift refused after serialization; detached results and caller RNG/gradient mode preserved.",
+      "Prior mixed168/72 scheduling, full-batch CE/KL, frozen38/inactive650, four-tensor Adam and persisted resume controls rerun in this generation."
+    ]
+  },
+  "schema": "legal-ir-bounded-qualification-evidence/v1",
+  "source_delivery_commit": "23c77272121af10bbc1728cc5776087d24e1f583",
+  "source_generation": {
+    "base_commit": "ea20dd5e86bfcbacd2ac8bb38eda569ddbb9aeca",
+    "files": [
+      {
+        "bytes": 88600,
+        "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_fullspan_training_v1.py",
+        "sha256": "56bd0a248a07de09519f95e5c4bae02ab9d8eb1134b483c257c1f7e7bcb07147"
+      },
+      {
+        "bytes": 81897,
+        "path": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_conditions_fullspan_training_v1.py",
+        "sha256": "bbed34c8d81ecac7ecf020e682e37dc550fc29a8839775107eacb43496b7d50a"
+      }
+    ],
+    "immutable_F18_F15_margin_objective_owners_changed": false,
+    "prior_test_prefix_bytes": 70853,
+    "prior_test_prefix_sha256": "a7d0278fe57487abbfe1cc67cd73fc6cc3e8f28cc8caa73d6b3378f384ca091e",
+    "prior_top_level_definitions_unchanged": 45
+  },
+  "statutory_accuracy_qualified": false,
+  "title": "Four-tensor F18 source-only capture: fresh 45-case numerical qualification"
+}

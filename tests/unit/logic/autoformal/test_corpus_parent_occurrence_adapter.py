@@ -56,10 +56,10 @@ def incoming_fixture():
     return module
 
 
-def case(tmp_path, **options):
+def case(tmp_path, *, source_profile=None, **options):
     provenance, lineage, views, old_arguments = incoming_fixture().fixture(tmp_path, **options)
     occurrences = occurrence_owner.prepare_cache_parent_occurrences(
-        provenance, lineage, views, **old_arguments
+        provenance, lineage, views, source_profile=source_profile, **old_arguments
     )
     sentences = sentence_owner.prepare_parent_sentence_candidates(
         views,
@@ -67,6 +67,7 @@ def case(tmp_path, **options):
             "expected_parent_text_views_report_sha256"
         ],
         parent_text_views_inputs=old_arguments["parent_text_views_inputs"],
+        source_profile=source_profile,
     )
     reports = {
         "parent_text_views": views,
@@ -87,6 +88,8 @@ def case(tmp_path, **options):
         "expected_record_sha256s": old_arguments["expected_record_sha256s"],
         "expected_provenance_report_sha256s": old_arguments["expected_provenance_report_sha256s"],
     }
+    if source_profile is not None:
+        replay["source_profile"] = source_profile
     return {
         "reports": reports,
         "arguments": {
@@ -934,3 +937,277 @@ def test_JSON_escaping_counts_toward_replay_budget_before_bulk_serialization(
     with pytest.raises(contracts.CorpusContractError):
         build(owner, data, limits=limits)
     assert bulk_target_seen is False
+
+
+def test_complete_parent_128k_corpus_replays_complete_unicode_field(owner, tmp_path):
+    characters = 71_688
+    text = "雪" + "a" * (characters - 3) + "é."
+    data = case(tmp_path, parent_texts=[text], source_text="é", source_profile="complete-parent-128k/v1")
+    bundle = build(owner, data)
+    assert validate(owner, bundle, data) == bundle
+    manifest = bundle["manifest"]
+    assert manifest["profile"] == owner.COMPLETE_PARENT_128K_MANIFEST_PROFILE
+    assert manifest["replay_bindings"]["source_profile"] == "complete-parent-128k/v1"
+    assert manifest["counts"]["source_characters"] == characters
+    assert manifest["counts"]["source_utf8_bytes"] == len(text.encode())
+    assert manifest["limits"] == owner.DEFAULT_LIMITS
+    assert manifest["counts"]["physical_parent_rows"] == manifest["counts"]["physical_cache_rows"] == 1
+    occurrences = by_schema(bundle, corpus_source.SOURCE_OCCURRENCE_SCHEMA)
+    whole = [row for row in occurrences if row["start_char"] == 0 and row["end_char"] == characters]
+    assert len(whole) == 1 and whole[0]["span_text"] == text and whole[0]["end_utf8"] == len(text.encode())
+    matched = [row for row in occurrences if row["span_text"] == "é"]
+    assert len(matched) == 1 and matched[0]["start_utf8"] == len(text[:-2].encode())
+    assert all(manifest[key] is False for key in owner.FALSE_FLAGS)
+    assert all(manifest[key] is None for key in owner.UNSELECTED)
+
+
+@pytest.mark.parametrize("damage", ["missing_selector", "unknown_selector", "boolean_selector",
+    "legacy_occurrence_report", "legacy_sentence_report", "manifest_profile"])
+def test_complete_parent_profile_cannot_be_transplanted_between_replay_and_reports(owner, tmp_path, damage):
+    data = case(tmp_path, source_profile="complete-parent-128k/v1")
+    replay = data["arguments"]["replay_inputs"]
+    if damage == "manifest_profile":
+        bundle = build(owner, data)
+        bundle["manifest"]["profile"] = owner.PROFILE
+        bundle["manifest"] = reseal(bundle["manifest"])
+        with pytest.raises(ValueError, match="independent regeneration"):
+            validate(owner, bundle, data)
+        return
+    if damage == "missing_selector":
+        replay.pop("source_profile")
+    elif damage == "unknown_selector":
+        replay["source_profile"] = "unknown"
+    elif damage == "boolean_selector":
+        replay["source_profile"] = True
+    else:
+        key, seal = ("cache_parent_occurrences", "occurrences_sha256") if damage == "legacy_occurrence_report" else ("parent_sentence_candidates", "sentence_candidates_sha256")
+        def downgrade(report):
+            report.pop("source_profile")
+            report["limits"]["max_source_characters"] = 65_536
+            report.pop(seal)
+            report[seal] = sha(canonical(report))
+        repin_report(data, key, downgrade)
+    with pytest.raises(ValueError, match="source profile"):
+        build(owner, data)
+
+
+def test_default_parent_profile_preserves_legacy_replay_and_manifest_shape(owner, tmp_path):
+    data = case(tmp_path)
+    assert set(data["arguments"]["replay_inputs"]) == owner.REPLAY_FIELDS
+    assert all("source_profile" not in data["reports"][key]
+        and data["reports"][key]["limits"]["max_source_characters"] == 65_536
+        for key in ("cache_parent_occurrences", "parent_sentence_candidates"))
+    bundle = build(owner, data)
+    assert bundle["manifest"]["profile"] == owner.PROFILE
+    assert "source_profile" not in bundle["manifest"]["replay_bindings"]
+    assert validate(owner, bundle, data) == bundle
+
+
+def paged_case(owner, tmp_path, *, duplicate_parent=False):
+    texts = ["Café. \t" * 24] * (2 if duplicate_parent else 1)
+    data = case(tmp_path, parent_texts=texts, source_text="unmatched cache literal")
+    data["arguments"]["replay_inputs"]["inventory_profile"] = owner.PAGED_INVENTORY_PROFILE
+    return data
+
+
+def inventory_pages(owner, bundle):
+    return by_schema(bundle, owner.INVENTORY_PAGE_SCHEMA)
+
+
+def repair_inventory_page_seals(owner, bundle, *, repair_offsets=True):
+    leaves = [row for row in bundle["records"] if row["schema"] != owner.INVENTORY_PAGE_SCHEMA]
+    pages = inventory_pages(owner, bundle)
+    repaired, refs, first = [], [], 0
+    for number, page in enumerate(pages):
+        if repair_offsets:
+            page["page_ordinal"] = number
+            page["first_record_ordinal"] = first
+        page = reseal(page)
+        repaired.append(page)
+        entries = page["entries"]
+        refs.append({"page_cid": page["record_cid"], "sha256": sha(canonical_dag_json_bytes(page)),
+            "page_ordinal": page["page_ordinal"], "first_record_ordinal": page["first_record_ordinal"],
+            "record_count": len(entries), "first_record_cid": entries[0]["record_cid"],
+            "last_record_cid": entries[-1]["record_cid"]})
+        first += len(entries)
+    bundle["records"] = leaves + repaired
+    bundle["manifest"]["page_refs"] = refs
+    bundle["manifest"]["counts"]["records"] = len(bundle["records"])
+    bundle["manifest"]["counts"]["record_kinds"]["inventory_page"] = len(repaired)
+    bundle["manifest"] = reseal(bundle["manifest"])
+
+
+def test_paged_record_refs_keep_complete_leaf_records_reports_and_populations(owner, tmp_path):
+    data = paged_case(owner, tmp_path, duplicate_parent=True)
+    legacy_data = deepcopy(data)
+    legacy_data["arguments"]["replay_inputs"].pop("inventory_profile")
+    legacy = build(owner, legacy_data)
+    before = deepcopy(data)
+    bundle = build(owner, data)
+    pages = inventory_pages(owner, bundle)
+    assert set(bundle) == {"manifest", "records"}
+    assert len(pages) >= 2
+    assert bundle["records"][:-len(pages)] == legacy["records"]
+    assert bundle["manifest"]["populations"] == legacy["manifest"]["populations"]
+    assert [entry for page in pages for entry in page["entries"]] == legacy["manifest"]["record_refs"]
+    assert bundle["manifest"]["profile"] == owner.PAGED_MANIFEST_PROFILE
+    assert "record_refs" not in bundle["manifest"]
+    assert bundle["manifest"]["replay_bindings"]["inventory_profile"] == owner.PAGED_INVENTORY_PROFILE
+    assert bundle["manifest"]["counts"]["records"] == len(bundle["records"])
+    assert bundle["manifest"]["counts"]["record_kinds"]["inventory_page"] == len(pages)
+    versions = by_schema(bundle, corpus_source.SOURCE_VERSION_SCHEMA)
+    assert len(versions) == len({version["record_cid"] for version in versions}) == 2
+    assert len({version["extracted_view"]["sha256"] for version in versions}) == 1
+    assert all(0 < len(page["entries"]) <= 256 for page in pages)
+    assert all(len(canonical_dag_json_bytes(page)) <= contracts.MAX_RECORD_BYTES for page in pages)
+    assert all(page[key] is False for page in pages for key in owner.FALSE_FLAGS)
+    assert all(page[key] is None for page in pages for key in owner.UNSELECTED)
+    assert validate(owner, bundle, data) == bundle
+    assert data == before
+
+
+def test_paged_record_refs_bind_genuine_parent_consumer_without_governing_selection(owner, tmp_path):
+    from ipfs_datasets_py.logic.autoformal import legal_semantic_graph
+
+    data = paged_case(owner, tmp_path)
+    bundle = build(owner, data)
+    companion = next(row for row in bundle["records"]
+        if row["schema"] == owner.ROLE_SCHEMA and row["role"] == "segment")
+    bound = legal_semantic_graph.bind_parent_source_occurrence(bundle,
+        expected_manifest_cid=bundle["manifest"]["record_cid"],
+        source_occurrence_cid=companion["source_occurrence_cid"],
+        companion_record_cid=companion["record_cid"], **data["arguments"])
+    assert bound["selector"]["record_cid"] == companion["source_occurrence_cid"]
+    assert bound["companion_record"] == companion
+    assert bound["context"]["availability"] == "required_unavailable"
+    assert bound["context"]["missing_requirements"] == list(owner.MISSING_CONTEXT)
+    assert bound["edition"] == owner.UNDECLARED_EDITION
+    assert bound["parent_manifest_cid"] == bundle["manifest"]["record_cid"]
+
+
+def test_paged_record_refs_combine_with_complete_parent_source_profile(owner, tmp_path):
+    text = "雪" + "a" * 71_685 + "é."
+    data = case(tmp_path, parent_texts=[text], source_text="é", source_profile="complete-parent-128k/v1")
+    data["arguments"]["replay_inputs"]["inventory_profile"] = owner.PAGED_INVENTORY_PROFILE
+    original_reports = deepcopy(data["arguments"]["report_bytes"])
+    bundle = build(owner, data)
+    assert len(data["arguments"]["replay_inputs"]) == 9
+    assert bundle["manifest"]["profile"] == owner.PAGED_COMPLETE_PARENT_128K_MANIFEST_PROFILE
+    assert bundle["manifest"]["replay_bindings"]["source_profile"] == "complete-parent-128k/v1"
+    assert bundle["manifest"]["replay_bindings"]["inventory_profile"] == owner.PAGED_INVENTORY_PROFILE
+    assert data["arguments"]["report_bytes"] == original_reports
+    assert all("inventory_profile" not in report for report in data["reports"].values())
+    assert validate(owner, bundle, data) == bundle
+
+
+def test_omitted_and_none_inventory_profiles_keep_identical_current_legacy_bytes(owner, tmp_path):
+    data = case(tmp_path)
+    legacy = build(owner, data)
+    explicit_none = deepcopy(data)
+    explicit_none["arguments"]["replay_inputs"]["inventory_profile"] = None
+    same = build(owner, explicit_none)
+    assert canonical_dag_json_bytes(same) == canonical_dag_json_bytes(legacy)
+    assert same["manifest"]["profile"] == owner.PROFILE
+    assert set(same) == {"manifest", "records"}
+    assert "record_refs" in same["manifest"] and "page_refs" not in same["manifest"]
+    assert "inventory_profile" not in same["manifest"]["replay_bindings"]
+    assert not inventory_pages(owner, same)
+    assert set(owner.REPLAY_FIELDS) == {"provenance_reports", "lineage_report",
+        "expected_lineage_report_sha256", "lineage_inputs", "parent_text_views_inputs",
+        "expected_record_sha256s", "expected_provenance_report_sha256s"}
+    assert validate(owner, same, explicit_none) == same
+    assert explicit_none["arguments"]["replay_inputs"]["inventory_profile"] is None
+
+
+@pytest.mark.parametrize("selector", ["unknown", True, 1, {}, []],
+    ids=["unknown", "boolean", "integer", "object", "array"])
+def test_inventory_profile_selector_refuses_before_operation_owner_import(owner, tmp_path, monkeypatch, selector):
+    data = case(tmp_path)
+    data["arguments"]["replay_inputs"]["inventory_profile"] = selector
+    def forbidden():
+        raise AssertionError("operation owners must not import for an invalid inventory selector")
+    monkeypatch.setattr(owner, "_owners", forbidden)
+    with pytest.raises(ValueError, match="inventory profile"):
+        build(owner, data)
+
+
+def test_paged_inventory_permission_is_never_inferred_from_offered_manifest(owner, tmp_path):
+    data = paged_case(owner, tmp_path)
+    bundle = build(owner, data)
+    legacy_data = deepcopy(data)
+    legacy_data["arguments"]["replay_inputs"].pop("inventory_profile")
+    with pytest.raises(ValueError):
+        validate(owner, bundle, legacy_data)
+    legacy = build(owner, legacy_data)
+    with pytest.raises(ValueError):
+        validate(owner, legacy, data)
+    bundle["manifest"]["profile"] = owner.PROFILE
+    bundle["manifest"] = reseal(bundle["manifest"])
+    with pytest.raises(ValueError, match="independent regeneration"):
+        validate(owner, bundle, data)
+
+
+@pytest.mark.parametrize("damage", ["missing_page", "page_order", "missing_entry", "entry_order",
+    "forged_hash", "duplicate_entry", "wrong_offset", "page_authority", "root_ref_hash"])
+def test_resealed_paged_inventory_cannot_replace_complete_original_population(owner, tmp_path, damage):
+    data = paged_case(owner, tmp_path)
+    bundle = build(owner, data)
+    pages = inventory_pages(owner, bundle)
+    assert len(pages) >= 2
+    if damage == "missing_page":
+        bundle["records"].remove(pages[-1])
+    elif damage == "page_order":
+        leaves = [row for row in bundle["records"] if row["schema"] != owner.INVENTORY_PAGE_SCHEMA]
+        bundle["records"] = leaves + list(reversed(pages))
+    elif damage == "missing_entry":
+        pages[0]["entries"].pop()
+    elif damage == "entry_order":
+        pages[0]["entries"][0], pages[0]["entries"][1] = pages[0]["entries"][1], pages[0]["entries"][0]
+    elif damage == "forged_hash":
+        pages[0]["entries"][0]["sha256"] = "0" * 64
+    elif damage == "duplicate_entry":
+        pages[0]["entries"][1] = deepcopy(pages[0]["entries"][0])
+    elif damage == "wrong_offset":
+        pages[0]["first_record_ordinal"] = 1
+    elif damage == "page_authority":
+        pages[0]["admitted"] = True
+    repair_inventory_page_seals(owner, bundle, repair_offsets=damage != "wrong_offset")
+    if damage == "root_ref_hash":
+        bundle["manifest"]["page_refs"][0]["sha256"] = "0" * 64
+        bundle["manifest"] = reseal(bundle["manifest"])
+    with pytest.raises(ValueError):
+        validate(owner, bundle, data)
+
+
+def test_inventory_page_256_and_257_reference_boundaries_use_existing_sealed_records(owner):
+    references = []
+    for number in range(257):
+        record = contracts.seal_record({"schema": "authored-inventory-boundary-fixture/v1", "ordinal": number})
+        references.append({"record_cid": record["record_cid"], "sha256": sha(canonical_dag_json_bytes(record))})
+    at_limit = owner._inventory_pages(references[:256])
+    after_limit = owner._inventory_pages(references)
+    assert [len(page["entries"]) for page in at_limit] == [256]
+    assert [len(page["entries"]) for page in after_limit] == [256, 1]
+    assert [page["first_record_ordinal"] for page in after_limit] == [0, 256]
+    assert [entry for page in after_limit for entry in page["entries"]] == references
+    assert all(len(canonical_dag_json_bytes(page)) <= contracts.MAX_RECORD_BYTES for page in after_limit)
+
+
+def test_inventory_pages_consume_existing_record_and_whole_collection_budgets(owner, tmp_path):
+    data = paged_case(owner, tmp_path)
+    legacy_data = deepcopy(data)
+    legacy_data["arguments"]["replay_inputs"].pop("inventory_profile")
+    legacy = build(owner, legacy_data)
+    count_limit = {"max_records": len(legacy["records"])}
+    assert build(owner, legacy_data, limits=count_limit)["manifest"]["counts"]["records"] == len(legacy["records"])
+    with pytest.raises(ValueError, match="record population exceeds bound"):
+        build(owner, data, limits=count_limit)
+    # The representation is counted inside the same finite detached collection.
+    paged = build(owner, data)
+    assert len(canonical_dag_json_bytes(paged)) > len(canonical_dag_json_bytes(legacy))
+    byte_limit = {"max_collection_bytes": len(canonical_dag_json_bytes(legacy))}
+    with pytest.raises(ValueError, match="bound"):
+        build(owner, data, limits=byte_limit)
+    assert owner.DEFAULT_LIMITS["max_records"] == 8192
+    assert owner.DEFAULT_LIMITS["max_collection_bytes"] == 16 * 1024**2
+    assert contracts.MAX_RECORD_BYTES == 1024**2

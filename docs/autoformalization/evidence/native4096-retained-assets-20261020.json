@@ -1,0 +1,112 @@
+{
+  "assets": [
+    {
+      "bytes": 738723,
+      "filename": "split-first-checkpoint.json",
+      "path_in_repo": "releases/retained-native4096-20261017-v1/split-first-checkpoint.json",
+      "sha256": "656ca15e7622ac6f5cac622c523251fe14d8cd1994876bfc3585922bb81a18c1"
+    },
+    {
+      "bytes": 1347377,
+      "filename": "uninterrupted-final-checkpoint.json",
+      "path_in_repo": "releases/retained-native4096-20261017-v1/uninterrupted-final-checkpoint.json",
+      "sha256": "f2f1123a2173e180056f051818041e732a0b01da2466b4c92d4d208d7827038c"
+    },
+    {
+      "bytes": 1347377,
+      "filename": "resumed-final-checkpoint.json",
+      "path_in_repo": "releases/retained-native4096-20261017-v1/resumed-final-checkpoint.json",
+      "sha256": "cd8b95882b289837f75152e040161ef951bce3dd232af6db22e7d67836ca5ad0"
+    }
+  ],
+  "authority": {
+    "legal_accuracy_qualified": false,
+    "live_native_capability_restored": false,
+    "model_runtime_ready": false,
+    "proof_authority": false,
+    "teacher_qualified": false
+  },
+  "checkpoint_schema": "bound-native4096-source-span-checkpoint/v1",
+  "completed": true,
+  "decoder_task": "source_text_and_representation_to_legal_ir",
+  "dimension": 4096,
+  "dimension_role": "source_input_representation_width",
+  "engineering_qualification": {
+    "8D_384D_teacher_distillation_demonstrated": false,
+    "authored_training_examples": 2,
+    "bidirectional_state_width": 16,
+    "context_tokens": 512,
+    "decoded_examples": 0,
+    "held_out_statutory_sources": 0,
+    "hidden_size": 8,
+    "native_encoder_frozen": true,
+    "new_training_performed_for_delivery": false,
+    "overlap_abstentions": 2,
+    "source_projection_width": 4,
+    "source_text_required": true,
+    "trained_decoder_artifacts_reused": true
+  },
+  "evidence_sha256": {
+    "publication-run-02/exports/anonymous-readback.json": "27213aa8769752a9cdd80f2ebecaa1e7b5f2dcbeea40acda48a9af01069d1d57",
+    "publication-run-02/exports/publication-receipt.json": "0cf879b496c2af3bf071619fd78454766b9f12434dc566d960d9306b57d16045",
+    "registration-controls-run-01/exports/tests.xml": "9372382df1dcdf3c53a0c9dd276a718a3dad1ba71a127bfe4cab1d9288526ebc",
+    "registration-run-01/exports/registration-result.json": "a7651402b7e9daad28257c1100a75b256ce32746bc61855bac4f57504594f042",
+    "registration-source-custody.json": "1dcccab066efbd35bab93ace1185b6eae11d9987bce4a7469b244fc1efcf23c7",
+    "typed-catalog-run-01/exports/tests.xml": "be10c1663de4d7a5a3e52f7ebb6553368ee2adca59b8945f0dd305034a22670b"
+  },
+  "implementation": {
+    "accelerate_catalog_merge": "edc9242d58035fba32eda3bf44087c03a3b71b18",
+    "catalog_cases_deselected": 2,
+    "catalog_control_cases_passed": 94,
+    "datasets_importer_merge": "90455f48b4f69366ea2804f1c9122f13f82a357a",
+    "hosted_CI_passed": false,
+    "hosted_CI_sampled_failure_reason": "Account billing lock prevented job start.",
+    "registration_safety_controls_passed": 42
+  },
+  "ir_family_id": "legal_ir",
+  "model_manager": {
+    "JSON_fallback_absent": true,
+    "MCP_service_store_changed": false,
+    "active_other_manager_process_refreshed": false,
+    "after_count": 690,
+    "all_baseline_metadata_and_activity_exactly_preserved": true,
+    "before_count": 687,
+    "cold_genuine_manager_catalog_count": 3,
+    "cold_native_readback_completed": true,
+    "cold_typed_catalog_resolutions": 3,
+    "fresh_per_insert_persisted_readbacks": 3,
+    "record_ids": [
+      "ir-model-source-binding/v2:2c9f1ec6063027af9652e2885dd6bbbec510c50259a05dc57e028fa1e0b809d5",
+      "ir-model-source-binding/v2:59ce9e0140a9284f6c6b7a15134497aea03b2acd6b97b11693a2fe12a5dfa559",
+      "ir-model-source-binding/v2:a0f207df7ec2cc47799717cbbb747f3b7a275e089a9eddcda690eb24b1a17367"
+    ],
+    "registered_count": 3,
+    "schema_and_indexes_unchanged": true,
+    "selected_store": "external/ipfs_accelerate/model_manager.duckdb"
+  },
+  "ownership": {
+    "no_automatic_replay_or_rollback": true,
+    "original_native_finalization_verified": true,
+    "original_writer_lock_released": true,
+    "preserved_foreign_dirty_tracked_files": 110,
+    "registration_profile": "model-manager-in-process-metadata-registration/v1",
+    "source_reads_released": true
+  },
+  "publication": {
+    "anonymous_all_payload_hashes_verified": true,
+    "checkpoint_count": 3,
+    "checkpoint_payload_bytes": 3433477,
+    "files_verified": true,
+    "public": true,
+    "repository_id": "Publicus/legal-ir-autoencoder-4096d",
+    "revision": "7f1621e79eef7592d0cfdb06cbc2f11370e24dc5"
+  },
+  "remaining_gates": [
+    "Separate4096inventory/routing contract",
+    "Compatible decoder runtime delivery and newly admitted native capability",
+    "Active supervisor/MCP discovery synchronization",
+    "Held-out legal semantic reconstruction and source fidelity",
+    "Entity-graph and Lean meaning/proof admission"
+  ],
+  "schema": "legal-ir-retained-native4096-delivery/v1"
+}

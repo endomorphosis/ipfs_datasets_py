@@ -221,7 +221,10 @@ def verify_child_report(transport, spec, reservation_id):
     return ref
 
 
-def _ledger(path):
+def _ledger(path, *, lock_timeout_seconds=5):
+    """Read existing native metadata with a finite, explicit lock wait budget."""
+    need(type(lock_timeout_seconds) in (int, float) and 0 < lock_timeout_seconds <= 60
+         and math.isfinite(lock_timeout_seconds), "finite positive disk metadata lock timeout at most 60 seconds required")
     path = resources._safe_path(path)
     lock = path.with_name(path.name+".lock")
     resources._safe_path(lock, missing=True)
@@ -229,7 +232,7 @@ def _ledger(path):
     try:
         info = os.fstat(descriptor)
         need(stat.S_ISREG(info.st_mode) and info.st_nlink == 1, "unaliased native disk lock required")
-        deadline = time.monotonic()+5
+        deadline = time.monotonic()+lock_timeout_seconds
         while True:
             try:
                 resources.fcntl.flock(descriptor, resources.fcntl.LOCK_SH | resources.fcntl.LOCK_NB)

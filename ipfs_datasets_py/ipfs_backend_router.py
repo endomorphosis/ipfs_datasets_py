@@ -24,10 +24,37 @@ import subprocess
 import tempfile
 from shutil import which
 from dataclasses import dataclass
+from contextlib import contextmanager
 from functools import lru_cache
 from typing import Callable, Dict, Optional, Protocol, runtime_checkable
 
 from .router_deps import RouterDeps, get_default_router_deps
+
+
+@contextmanager
+def _temporary_staging_file():
+    """Remove only our temporary input, after synchronous consumers finish."""
+    path = None
+    primary_error = None
+    try:
+        with tempfile.NamedTemporaryFile(delete=False) as handle:
+            path = handle.name
+            yield handle
+    except BaseException as error:
+        primary_error = error
+        raise
+    finally:
+        if path is not None:
+            try:
+                os.unlink(path)
+            except FileNotFoundError:
+                pass
+            except OSError as cleanup_error:
+                if primary_error is None:
+                    raise
+                note = getattr(primary_error, "add_note", None)
+                if callable(note):
+                    note(f"Temporary IPFS staging cleanup failed: {cleanup_error}")
 
 
 def _truthy(value: Optional[str]) -> bool:
@@ -187,7 +214,7 @@ class KuboCLIBackend:
 
     def block_put(self, data: bytes, *, codec: str = "raw") -> str:
         # `ipfs block put` reads from a file.
-        with tempfile.NamedTemporaryFile(delete=False) as handle:
+        with _temporary_staging_file() as handle:
             handle.write(data)
             handle.flush()
             try:
@@ -400,7 +427,7 @@ def _get_accelerate_backend() -> Optional[IPFSBackend]:
 
         class _AccelerateBackend:
             def add_bytes(self, data: bytes, *, pin: bool = True) -> str:
-                with tempfile.NamedTemporaryFile(delete=False) as handle:
+                with _temporary_staging_file() as handle:
                     handle.write(data)
                     handle.flush()
                     cid = handler.add_file(handle.name, pin=pin)
@@ -577,7 +604,7 @@ def _get_ipfs_kit_backend() -> Optional[IPFSBackend]:
         class _IPFSKitBackend:
             def add_bytes(self, data: bytes, *, pin: bool = True) -> str:
                 # ipfs_kit commonly exposes file-oriented add operations.
-                with tempfile.NamedTemporaryFile(delete=False) as handle:
+                with _temporary_staging_file() as handle:
                     handle.write(data)
                     handle.flush()
                     if hasattr(kit, "ipfs_add"):

@@ -182,3 +182,58 @@ def test_model_configuration_is_closed_typed_and_bounded(kwargs):
         span.SpanDecoderConfig.from_dict({**config().to_dict(), 'target_request': {}})
     with pytest.raises(FrozenInstanceError):
         config().seed = 4
+
+
+def test_fresh_head_keeps_encoder_weights_and_restores_seeded_heads():
+    model = span.GroupedSpanDecoder(config())
+    encoder = {name: parameter.detach().clone()
+               for name, parameter in model.named_parameters()
+               if not name.startswith(span._HEAD_PREFIXES)}
+    with torch.no_grad():
+        model.count_head.weight.fill_(3.0)
+        model.scope_head.bias.fill_(-2.0)
+    fresh = span.GroupedSpanDecoder(config())
+    report = span.fresh_head_parameters(model)
+    assert report["encoder_parameters_retained"] is True
+    assert "count_head.weight" in report["fresh_head"]
+    for name, parameter in model.named_parameters():
+        if name.startswith(span._HEAD_PREFIXES):
+            assert torch.equal(parameter, fresh.state_dict()[name])
+        else:
+            assert torch.equal(parameter, encoder[name])
+    assert not torch.equal(model.count_head.weight, torch.full_like(model.count_head.weight, 3.0))
+
+
+def test_compatible_warm_start_refreshes_heads_and_refuses_cross_codec_kl():
+    model = span.GroupedSpanDecoder(config())
+    optimizer = span.make_grouped_span_optimizer(model)
+    checkpoint = span.save_grouped_span_checkpoint(model, optimizer, steps=0)
+    with torch.no_grad():
+        model.byte_embedding.weight.add_(0.25)
+        model.count_head.weight.fill_(4.0)
+    changed = span.save_grouped_span_checkpoint(model, optimizer, steps=0)
+    warm, warm_optimizer, report = span.compatible_warm_start(changed, codec_id="codec-a")
+    assert report["direct_kl"] is False
+    assert report["reference_codec_id"] is None
+    assert "byte_embedding.weight" in report["compatible_parameters"]
+    assert "count_head.weight" not in report["compatible_parameters"]
+    assert torch.equal(warm.byte_embedding.weight, model.byte_embedding.weight)
+    fresh = span.GroupedSpanDecoder(config())
+    assert torch.equal(warm.count_head.weight, fresh.count_head.weight)
+    assert not torch.equal(warm.count_head.weight, model.count_head.weight)
+    assert not warm_optimizer.state
+    mismatched = deepcopy(changed)
+    mismatched["model_state"]["byte_embedding.weight"] = {
+        "shape": [1], "dtype": "float32", "values": [0.0],
+    }
+    skipped, _, skipped_report = span.compatible_warm_start(mismatched, codec_id="codec-a", reference_codec_id="codec-a")
+    assert "byte_embedding.weight" not in skipped_report["compatible_parameters"]
+    assert torch.equal(skipped.byte_embedding.weight, fresh.byte_embedding.weight)
+    with pytest.raises(ValueError, match="direct KL across incompatible codecs is refused"):
+        span.compatible_warm_start(checkpoint, codec_id="codec-a", reference_codec_id="codec-b")
+    with pytest.raises(ValueError, match="direct KL across incompatible codecs is refused"):
+        span.train_grouped_span_step(
+            model, optimizer, [example()], codec_id="codec-a", reference_codec_id="codec-b",
+        )
+    span.refuse_direct_kl("codec-a", "codec-a")
+    assert "kl_div" not in span.train_grouped_span_step.__code__.co_names

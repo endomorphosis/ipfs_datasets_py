@@ -25,6 +25,16 @@ class LegacySpanResourceError(host.DaemonResourceError):
     """A resource observation or the declared envelope could not be verified."""
 
 
+class CudaHeadroomPressure(LegacySpanResourceError):
+    """Valid CUDA telemetry observed too little free memory for safe work.
+
+    ``observation`` is attached as a plain dictionary on each raised instance.
+    Keep the inherited exception constructor and ``args`` so process-pool
+    exception serialization preserves both its message and observed sample.
+    Unknown telemetry and ownership or allocator violations use the base error.
+    """
+
+
 def _positive(value, name):
     if type(value) is not int or value <= 0:
         raise LegacySpanResourceError(f"{name} must be a positive integer")
@@ -79,20 +89,26 @@ def admit_cuda_device(cuda_device=0, *, budget_bytes=2 * GIB, safety_bytes=2 * G
     observed = cuda_memory_snapshot(cuda_device, torch_module=torch_module)
     if observed["reserved_bytes"] > budget_bytes:
         raise LegacySpanResourceError("CUDA allocator budget exceeded before admission")
-    if observed["free_bytes"] < max(0, budget_bytes - observed["reserved_bytes"]) + safety_bytes:
-        raise LegacySpanResourceError("insufficient observed CUDA memory headroom")
     fraction = budget_bytes / observed["total_bytes"]
     if not 0 < fraction <= 1:
         raise LegacySpanResourceError("CUDA budget exceeds observed device capacity")
+    required = max(0, budget_bytes - observed["reserved_bytes"]) + safety_bytes
+    headroom = {**observed, "budget_bytes": budget_bytes, "safety_bytes": safety_bytes,
+                "required_free_bytes": required,
+                "headroom_ok": observed["free_bytes"] >= required, "admission": True,
+                "allocator_fraction": fraction, "allocator_fraction_set": False,
+                "scope": "resident_worker_pytorch_allocator_and_observed_device_memory",
+                "host_global_gpu_reservation": False,
+                "other_cuda_allocators_limited": False}
+    if not headroom["headroom_ok"]:
+        error = CudaHeadroomPressure("insufficient observed CUDA memory headroom")
+        error.observation = dict(headroom)
+        raise error
     try:
         torch_module.cuda.set_per_process_memory_fraction(fraction, device=cuda_device)
     except Exception as exc:
         raise LegacySpanResourceError("CUDA allocator fraction could not be configured") from exc
-    return {**observed, "budget_bytes": budget_bytes, "safety_bytes": safety_bytes,
-            "allocator_fraction": fraction, "allocator_fraction_set": True,
-            "scope": "resident_worker_pytorch_allocator_and_observed_device_memory",
-            "host_global_gpu_reservation": False,
-            "other_cuda_allocators_limited": False}
+    return {**headroom, "allocator_fraction_set": True}
 
 
 def _validate_cuda_snapshot(value):
@@ -165,15 +181,19 @@ class CudaDeviceBudget:
         required = self.safety_bytes
         if admission:
             required += max(0, self.budget_bytes - observed["reserved_bytes"])
-        if observed["free_bytes"] < required:
-            raise LegacySpanResourceError("insufficient observed CUDA memory headroom")
         self.last_observation = {
             **observed, "budget_bytes": self.budget_bytes,
             "safety_bytes": self.safety_bytes, "admission": admission,
+            "required_free_bytes": required,
+            "headroom_ok": observed["free_bytes"] >= required,
             "scope": "campaign_owner_allocator_and_observed_device_free_memory",
             "host_global_gpu_reservation": False,
             "enforcement": "cooperative_lock_and_polled_telemetry_not_device_quota",
         }
+        if not self.last_observation["headroom_ok"]:
+            error = CudaHeadroomPressure("insufficient observed CUDA memory headroom")
+            error.observation = dict(self.last_observation)
+            raise error
         return dict(self.last_observation)
 
     def close(self):

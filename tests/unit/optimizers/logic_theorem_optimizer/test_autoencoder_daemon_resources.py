@@ -31,19 +31,19 @@ def setup(tmp_path, monkeypatch):
     return factory, roots, ledger, scheduler
 
 
-def test_production_storage_cap_is_one_hundred_forty_five_gb_without_admission(tmp_path):
+def test_production_storage_cap_is_two_hundred_twenty_gb_without_admission(tmp_path):
     root = tmp_path / "outputs"
     root.mkdir()
     ledger = tmp_path / "disk.json"
     reservation = resources.DaemonResourceReservation(
         ledger, roots=[root], storage_bytes=7, memory_mb=1)
-    assert resources.MAX_STORAGE_BYTES == 145_000_000_000
-    assert resources.MAX_INVENTORY_ENTRIES == 2_000_000
+    assert resources.MAX_STORAGE_BYTES == 220_000_000_000
+    assert resources.MAX_INVENTORY_ENTRIES == 4_000_000
     assert reservation._read() == {
         "schema": resources.SCHEMA, "roots": reservation.root_identities,
-        "limit_bytes": 145_000_000_000, "reservations": {},
+        "limit_bytes": 220_000_000_000, "reservations": {},
     }
-    assert reservation.to_dict()["storage_limit_bytes"] == 145_000_000_000
+    assert reservation.to_dict()["storage_limit_bytes"] == 220_000_000_000
     assert reservation.to_dict()["status"] == "not_entered"
     assert reservation.to_dict()["resource_lease"] is None
     assert not ledger.exists()
@@ -80,11 +80,11 @@ def test_raised_campaign_boundary_still_counts_all_nonreleased_claims(tmp_path, 
     monkeypatch.setattr(resources, "_inventory", lambda roots: {
         "apparent_bytes": 100_203_148_222, "entry_count": 1_359_805,
         "symlink_count": 4_557, "special_file_count": 28})
-    monkeypatch.setattr(resources.shutil, "disk_usage", lambda root: SimpleNamespace(free=80_000_000_000))
-    headroom = 13_331_851_778
+    monkeypatch.setattr(resources.shutil, "disk_usage", lambda root: SimpleNamespace(free=120_000_000_000))
+    headroom = 88_331_851_778
     usage = reservation._account(ledger, additional=headroom)
     assert usage["outstanding_full_reservations_bytes"] == 31_465_000_000
-    assert usage["charged_bytes"] == usage["limit_bytes"] == 145_000_000_000
+    assert usage["charged_bytes"] == usage["limit_bytes"] == 220_000_000_000
     with pytest.raises(resources.DaemonResourceError, match="capacity"):
         reservation._account(ledger, additional=headroom + 1)
     # Accounting headroom never substitutes for physically free storage.
@@ -139,8 +139,8 @@ def test_process_envelope_cannot_exceed_authoritative_scheduler_slots(setup):
         active.release(artifacts_durable=True)
 
 
-@pytest.fixture(params=[50_000_000_000, 60_000_000_000, 62_000_000_000, 75_000_000_000, 80_000_000_000, 85_000_000_000, 87_000_000_000, 90_000_000_000],
-                ids=["fifty-gb", "sixty-gb", "sixty-two-gb", "seventy-five-gb", "eighty-gb", "eighty-five-gb", "eighty-seven-gb", "ninety-gb"])
+@pytest.fixture(params=[50_000_000_000, 60_000_000_000, 62_000_000_000, 75_000_000_000, 80_000_000_000, 85_000_000_000, 87_000_000_000, 90_000_000_000, 145_000_000_000, 160_000_000_000, 200_000_000_000],
+                ids=["fifty-gb", "sixty-gb", "sixty-two-gb", "seventy-five-gb", "eighty-gb", "eighty-five-gb", "eighty-seven-gb", "ninety-gb", "one-hundred-forty-five-gb", "one-hundred-sixty-gb", "two-hundred-gb"])
 def historical_storage_ledger(tmp_path, request):
     previous_limit = request.param
     root = tmp_path / "outputs"
@@ -185,7 +185,7 @@ def test_historical_ledger_fails_closed_without_implicit_migration(historical_st
 def test_explicit_top_level_cap_migration_preserves_history_and_full_accounting(historical_storage_ledger):
     reservation, ledger, historical, raw = historical_storage_ledger
     old_prefix = ('{"limit_bytes":' + str(historical["limit_bytes"]) + ',').encode()
-    new_prefix = b'{"limit_bytes":145000000000,'
+    new_prefix = b'{"limit_bytes":220000000000,'
     assert raw.startswith(old_prefix)
     # Model the explicit one-time edit on a tiny, test-owned fixture. This
     # neither introduces an implicit migration API nor acquires a reservation.
@@ -194,13 +194,13 @@ def test_explicit_top_level_cap_migration_preserves_history_and_full_accounting(
     backup.write_bytes(raw)
     with reservation._locked():
         assert ledger.read_bytes() == raw
-        reservation._write({**historical, "limit_bytes": 145_000_000_000})
+        reservation._write({**historical, "limit_bytes": 220_000_000_000})
     current = reservation._read()
-    assert current == {**historical, "limit_bytes": 145_000_000_000}
+    assert current == {**historical, "limit_bytes": 220_000_000_000}
     assert current["reservations"] == historical["reservations"]
     assert migrated[len(new_prefix):] == raw[len(old_prefix):]
     usage = reservation._account(current, additional=13)
-    assert usage["limit_bytes"] == 145_000_000_000
+    assert usage["limit_bytes"] == 220_000_000_000
     assert usage["observed_apparent_bytes"] == 3
     assert usage["outstanding_full_reservations_bytes"] == 4_000
     assert usage["additional_requested_bytes"] == 13
@@ -798,3 +798,384 @@ def test_finalization_preserves_rss_failure_usage(setup, monkeypatch):
         assert row["status"] == "active" and "released_at" not in row
         monkeypatch.setattr(resources, "_group_usage", lambda child: {"available": True, "live_processes": 0, "rss_bytes": 0})
         reservation.finalize(roots[0], artifacts_durable=True)
+
+
+# Opt-in owned live census controls. These fixtures coordinate real filesystem
+# publication at exact scanner boundaries; they do not model the scanner.
+
+
+class _OwnedLiveScandirProxy:
+    """Keep the real immediate-open scandir iterator and context protocol."""
+    def __init__(self, actual, *, transform=None, after_complete=None, prefetched=()):
+        self.actual = actual
+        self.transform = transform
+        self.after_complete = after_complete
+        self.prefetched = list(prefetched)
+    def __iter__(self):
+        return self
+    def __next__(self):
+        entry = self.prefetched.pop(0) if self.prefetched else next(self.actual)
+        return self.transform(entry) if self.transform is not None else entry
+    def __enter__(self):
+        self.actual.__enter__()
+        return self
+    def close(self):
+        self.actual.close()
+    def __exit__(self, exc_type, exc, traceback):
+        result = self.actual.__exit__(exc_type, exc, traceback)
+        if exc_type is None and self.after_complete is not None:
+            self.after_complete()
+        return result
+
+
+def _atomic_census_publication(monkeypatch, module, directory, boundary, *,
+                               before_publish=None, publications=1):
+    directory = Path(directory)
+    staging, published = directory / ".capsule-staging", directory / "published"
+    (staging / "nested").mkdir(parents=True)
+    payload = b"formal source payload\n" * 5
+    metadata = b'{"schema":"fixture"}\n'
+    (staging / "nested" / "payload.txt").write_bytes(payload)
+    (staging / "metadata.json").write_bytes(metadata)
+    state = {"current": staging, "other": published, "publications": 0,
+             "payload_bytes": len(payload) + len(metadata)}
+    actual_scandir = module.os.scandir
+
+    def publish():
+        if state["publications"] >= publications:
+            return
+        if before_publish is not None:
+            before_publish()
+        os.rename(state["current"], state["other"])
+        state["current"], state["other"] = state["other"], state["current"]
+        state["publications"] += 1
+
+    class Entry:
+        def __init__(self, entry, target):
+            self.path = entry.path
+            self._entry, self._target = entry, target
+        def __getattr__(self, name):
+            return getattr(self._entry, name)
+        def stat(self, *, follow_symlinks):
+            assert follow_symlinks is False
+            if Path(self.path) == self._target:
+                publish()
+            return self._entry.stat(follow_symlinks=False)
+
+    def scan(path):
+        named = Path(path)
+        if boundary == "scandir" and named == state["current"]:
+            publish()
+        # Open at the os.scandir call boundary, not delayed __enter__ time.
+        actual = actual_scandir(path)
+        target = state["current"] / "nested" / "payload.txt"
+        transform = (lambda entry: Entry(entry, target)) if boundary == "entry-stat" else None
+        after = publish if boundary == "pending" and named == directory else None
+        return _OwnedLiveScandirProxy(actual, transform=transform, after_complete=after)
+
+    monkeypatch.setattr(module.os, "scandir", scan)
+    return state
+
+
+
+@pytest.mark.parametrize("boundary", ["pending", "scandir"])
+def test_owned_live_census_reports_real_atomic_publication(setup, monkeypatch, boundary):
+    _, roots, _, _ = setup
+    root = roots[0]
+    frozen = resources._root_identity(root)
+    state = _atomic_census_publication(monkeypatch, resources, root, boundary)
+    with pytest.raises(resources.OwnedInventoryDisappearance) as caught:
+        resources._inventory([root], strict=True, report_owned_disappearance=True)
+    event = caught.value
+    assert type(event) is resources.OwnedInventoryDisappearance
+    assert event.frozen_root == frozen
+    assert root in Path(event.vanished_path).parents
+    partial = event.partial_inventory
+    assert set(partial) == {"apparent_bytes", "entry_count", "symlink_count", "special_file_count"}
+    assert partial["entry_count"] > 0
+    assert partial["symlink_count"] == partial["special_file_count"] == 0
+    assert state["publications"] == 1
+    # Detached metadata cannot be rewritten by a consumer.
+    event.frozen_root["path"] = "/foreign"
+    event.partial_inventory["apparent_bytes"] = 999_999
+    assert event.frozen_root == frozen and event.partial_inventory == partial
+    with pytest.raises(AttributeError):
+        event.vanished_path = "/foreign"
+    completed = resources._inventory([root], strict=True)
+    assert completed == {"apparent_bytes": state["payload_bytes"], "entry_count": 4,
+                         "symlink_count": 0, "special_file_count": 0}
+    assert (state["current"] / "nested/payload.txt").read_bytes() == b"formal source payload\n" * 5
+
+
+@pytest.mark.parametrize("flag", [None, 0, 1, "yes"], ids=["none", "zero", "one", "text"])
+def test_owned_live_census_flag_requires_exact_boolean(tmp_path, flag):
+    root = tmp_path / "root"
+    root.mkdir()
+    with pytest.raises(resources.DaemonResourceError, match="boolean"):
+        resources._inventory([root], strict=True, report_owned_disappearance=flag)
+
+
+def test_owned_live_census_reporting_requires_strict_true(tmp_path):
+    root = tmp_path / "root"
+    root.mkdir()
+    with pytest.raises(resources.DaemonResourceError, match="strict=True"):
+        resources._inventory([root], strict=False, report_owned_disappearance=True)
+
+
+def test_owned_live_census_default_does_not_reclassify_strict_failure(setup, monkeypatch):
+    _, roots, _, _ = setup
+    _atomic_census_publication(monkeypatch, resources, roots[0], "entry-stat")
+    with pytest.raises((FileNotFoundError, resources.DaemonResourceError)) as caught:
+        resources._inventory([roots[0]], strict=True)
+    assert not isinstance(caught.value, resources.OwnedInventoryDisappearance)
+
+
+def test_owned_live_census_false_missing_file_is_not_a_typed_disappearance(setup, monkeypatch):
+    _, roots, _, _ = setup
+    root = roots[0]
+    target = root / "present"
+    target.write_bytes(b"must remain accounted")
+    actual = resources.os.scandir
+    failure = FileNotFoundError(2, "injected stale stat", str(target))
+    class Entry:
+        def __init__(self, entry):
+            self.path, self._entry = entry.path, entry
+        def stat(self, *, follow_symlinks):
+            assert follow_symlinks is False
+            if Path(self.path) == target:
+                raise failure
+            return self._entry.stat(follow_symlinks=False)
+    def scan(path):
+        return _OwnedLiveScandirProxy(actual(path), transform=Entry)
+    monkeypatch.setattr(resources.os, "scandir", scan)
+    with pytest.raises(FileNotFoundError) as caught:
+        resources._inventory([root], strict=True, report_owned_disappearance=True)
+    assert caught.value is failure and target.read_bytes() == b"must remain accounted"
+
+
+@pytest.mark.parametrize("replacement", ["root", "ancestor"])
+def test_owned_live_census_root_or_ancestor_replacement_never_becomes_retry(tmp_path, monkeypatch, replacement):
+    parent = tmp_path / "ancestor"
+    root = parent / "owned"
+    root.mkdir(parents=True)
+    queued = root / "queued"
+    queued.mkdir()
+    (queued / "kept").write_bytes(b"retained")
+    actual = resources.os.scandir
+    changed = []
+    def scan(path):
+        actual_entries = actual(path)
+        def after_complete():
+            if Path(path) == root and not changed:
+                selected = root if replacement == "root" else parent
+                backup = selected.with_name(selected.name + "-retained")
+                selected.rename(backup)
+                selected.mkdir()
+                changed.append(backup)
+        return _OwnedLiveScandirProxy(actual_entries, after_complete=after_complete)
+    monkeypatch.setattr(resources.os, "scandir", scan)
+    with pytest.raises(resources.DaemonResourceError) as caught:
+        resources._inventory([root], strict=True, report_owned_disappearance=True)
+    assert not isinstance(caught.value, resources.OwnedInventoryDisappearance)
+    kept = changed[0] / ("queued/kept" if replacement == "root" else "owned/queued/kept")
+    assert kept.read_bytes() == b"retained"
+
+
+
+def _owned_live_fail_entry_stat(monkeypatch, target):
+    actual = resources.os.scandir
+    failure = FileNotFoundError(2, "injected leaf stat disappearance", str(target))
+    class Entry:
+        def __init__(self, entry):
+            self.path, self._entry = entry.path, entry
+        def stat(self, *, follow_symlinks):
+            assert follow_symlinks is False
+            if Path(self.path) == target:
+                raise failure
+            return self._entry.stat(follow_symlinks=False)
+    def scan(path):
+        return _OwnedLiveScandirProxy(actual(path), transform=Entry)
+    monkeypatch.setattr(resources.os, "scandir", scan)
+
+
+def test_owned_live_census_rechecks_internal_ancestor_before_typing_loss(setup, monkeypatch):
+    _, roots, _, _ = setup
+    root, branch = roots[0], roots[0] / "branch"
+    target = branch / "queued"
+    target.mkdir(parents=True)
+    (target / "payload").write_bytes(b"retained original")
+    original_lstat = Path.lstat
+    replacements = []
+    def lstat(path):
+        # This is reached only after the real queued DIR stat observed its
+        # UID/kind/inode; replace its already checked surviving ancestor.
+        if path == target and not replacements:
+            backup = root / "branch-retained"
+            branch.rename(backup)
+            branch.mkdir()
+            replacements.append(backup)
+            raise FileNotFoundError(2, "lost queued directory after checked ancestor", str(path))
+        return original_lstat(path)
+    monkeypatch.setattr(Path, "lstat", lstat)
+    with pytest.raises(resources.DaemonResourceError) as caught:
+        resources._inventory([root], strict=True, report_owned_disappearance=True)
+    assert not isinstance(caught.value, resources.OwnedInventoryDisappearance)
+    assert (replacements[0] / "queued/payload").read_bytes() == b"retained original"
+
+
+def test_owned_live_census_missing_then_present_leaf_is_not_retry_authority(setup, monkeypatch):
+    _, roots, _, _ = setup
+    root, target = roots[0], roots[0] / "queued"
+    target.mkdir()
+    (target / "payload").write_bytes(b"retained original")
+    retained = root / "retained-queued"
+    actual_scandir, actual_lstat = resources.os.scandir, Path.lstat
+    moved, republished = [], []
+    def scan(path):
+        def after_complete():
+            if Path(path) == root and not moved:
+                target.rename(retained)
+                moved.append(True)
+        return _OwnedLiveScandirProxy(actual_scandir(path), after_complete=after_complete)
+    def lstat(path):
+        if path == target and moved and not republished:
+            try:
+                actual_lstat(path)
+            except FileNotFoundError as missing:
+                target.mkdir()
+                (target / "new-payload").write_bytes(b"new directory must not become retry authority")
+                republished.append(True)
+                raise missing
+        return actual_lstat(path)
+    monkeypatch.setattr(resources.os, "scandir", scan)
+    monkeypatch.setattr(Path, "lstat", lstat)
+    with pytest.raises(resources.DaemonResourceError, match="reappeared") as caught:
+        resources._inventory([root], strict=True, report_owned_disappearance=True)
+    assert not isinstance(caught.value, resources.OwnedInventoryDisappearance)
+    assert moved == republished == [True]
+    assert (retained / "payload").read_bytes() == b"retained original"
+
+
+
+@pytest.mark.parametrize("kind", ["symlink-file", "symlink-directory", "fifo"])
+def test_owned_live_census_rejects_declared_unsafe_leaf(tmp_path, monkeypatch, kind):
+    root = tmp_path / "scan"
+    root.mkdir(mode=0o700)
+    leaf = root / "unsafe-leaf"
+    payload = b"retained ordinary payload\n"
+    if kind == "symlink-directory":
+        target = root / "retained-target-directory"
+        target.mkdir(mode=0o700)
+        retained = target / "payload.txt"
+    else:
+        target = root / ("retained-target-file" if kind == "symlink-file" else "retained-payload.txt")
+        retained = target
+    retained.write_bytes(payload)
+    assert not os.path.lexists(leaf)
+    actual_inventory = resources._inventory
+    calls, partials = [], []
+    def inventory(roots, **kwargs):
+        calls.append({"roots": list(roots), **kwargs})
+        try:
+            return actual_inventory(roots, **kwargs)
+        except resources.OwnedInventoryDisappearance as event:
+            partials.append(event.partial_inventory)
+            raise
+    monkeypatch.setattr(resources, "_inventory", inventory)
+    try:
+        if kind == "fifo":
+            os.mkfifo(leaf, 0o600)
+        else:
+            leaf.symlink_to(target.absolute(), target_is_directory=kind == "symlink-directory")
+        with pytest.raises(resources.DaemonResourceError, match="symlink|nonregular") as caught:
+            resources._inventory([root], strict=True, report_owned_disappearance=True)
+        assert not isinstance(caught.value, resources.OwnedInventoryDisappearance)
+        assert calls == [{"roots": [root], "strict": True, "report_owned_disappearance": True}]
+        assert partials == []
+        assert retained.read_bytes() == payload
+    finally:
+        leaf.unlink(missing_ok=True)
+    assert not os.path.lexists(leaf) and retained.read_bytes() == payload
+
+
+# Refinement of the historical prototype: only a previously owned queued DIR
+# may supply typed retry authority. These controls add no new alias permission.
+def _owned_live_unobserved_leaf_disappearance(monkeypatch, module, root):
+    target = Path(root) / "first-stat-unknown-leaf"
+    target.write_bytes(b"the scanner has not observed this leaf UID or kind")
+    actual, removed = module.os.scandir, []
+    class Entry:
+        def __init__(self, entry):
+            self.path, self._entry = entry.path, entry
+        def __getattr__(self, name):
+            return getattr(self._entry, name)
+        def stat(self, *, follow_symlinks):
+            assert follow_symlinks is False
+            if Path(self.path) == target and not removed:
+                target.unlink()
+                removed.append(True)
+            return self._entry.stat(follow_symlinks=False)
+    def scan(path):
+        return _OwnedLiveScandirProxy(actual(path), transform=Entry)
+    monkeypatch.setattr(module.os, "scandir", scan)
+    return target, removed
+
+
+def test_owned_live_census_first_stat_unknown_leaf_disappearance_is_fatal(setup, monkeypatch):
+    _, roots, _, _ = setup
+    target, removed = _owned_live_unobserved_leaf_disappearance(monkeypatch, resources, roots[0])
+    with pytest.raises(FileNotFoundError) as caught:
+        resources._inventory([roots[0]], strict=True, report_owned_disappearance=True)
+    assert not isinstance(caught.value, resources.OwnedInventoryDisappearance)
+    assert removed == [True] and not target.exists()
+
+
+def test_owned_live_census_missing_ancestor_of_known_queued_directory_is_fatal(setup, monkeypatch):
+    _, roots, _, _ = setup
+    root = roots[0]
+    branch, retained = root / "branch", root / "retained-branch"
+    target = branch / "queued"
+    target.mkdir(parents=True)
+    (target / "payload").write_bytes(b"retain ancestor evidence")
+    actual, moved = resources.os.scandir, []
+    def scan(path):
+        def after_complete():
+            if Path(path) == branch and not moved:
+                branch.rename(retained)
+                moved.append(True)
+        return _OwnedLiveScandirProxy(actual(path), after_complete=after_complete)
+    monkeypatch.setattr(resources.os, "scandir", scan)
+    with pytest.raises(FileNotFoundError) as caught:
+        resources._inventory([root], strict=True, report_owned_disappearance=True)
+    assert not isinstance(caught.value, resources.OwnedInventoryDisappearance)
+    assert moved == [True] and (retained / "queued/payload").read_bytes() == b"retain ancestor evidence"
+
+
+@pytest.mark.parametrize("observation", ["permission", "symlink", "fifo", "file", "uid"])
+def test_owned_live_census_known_queued_directory_nonmissing_faults_never_become_retry(setup, monkeypatch, observation):
+    import stat
+    _, roots, _, _ = setup
+    root, target = roots[0], roots[0] / "queued"
+    target.mkdir()
+    (target / "payload").write_bytes(b"unchanged ordinary fixture")
+    actual_lstat, seen = Path.lstat, []
+    def lstat(path):
+        current = actual_lstat(path)
+        if path == target and not seen:
+            seen.append(True)
+            if observation == "permission":
+                raise PermissionError(13, "synthetic queued-leaf permission refusal", str(path))
+            # Deliberately synthetic stat observations. Real static alias/FIFO
+            # fixtures remain in the separate original physical6 profile.
+            fields = list(current)
+            if observation == "uid":
+                fields[4] = os.geteuid() + 1
+            else:
+                fields[0] = {"symlink": stat.S_IFLNK, "fifo": stat.S_IFIFO, "file": stat.S_IFREG}[observation] | 0o600
+            return os.stat_result(fields)
+        return current
+    monkeypatch.setattr(Path, "lstat", lstat)
+    with pytest.raises((PermissionError, resources.DaemonResourceError)) as caught:
+        resources._inventory([root], strict=True, report_owned_disappearance=True)
+    assert not isinstance(caught.value, resources.OwnedInventoryDisappearance)
+    assert seen == [True] and (target / "payload").read_bytes() == b"unchanged ordinary fixture"

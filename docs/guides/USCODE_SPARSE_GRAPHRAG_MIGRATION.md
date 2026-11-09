@@ -28,14 +28,67 @@ Publication of the public dataset still requires a human seal. This guide covers
 
 ## 2. Profile and configuration map
 
-| Config name | Role | Primary key | Default viewer? |
+| Logical config name | Role | Primary key | Logical default? |
 |---|---|---|---|
 | `publicus-ir-graphrag/v2` | Sparse GraphRAG release | `entry_cid` | **Yes** |
 | `legacy-uscode-parquet/v1` | Compatibility with monolith parquet | `ipfs_cid` | No |
 | `recovery-quarantine/v1` | Quarantined recovery JSON | `recovery_id` | No |
 
-Default Dataset Viewer must never include recovery paths or legacy monoliths.
-Legacy and recovery remain **named** configs only.
+These versioned names identify logical release configurations. Their slash-containing
+names are not valid Hugging Face builder configuration names. The opt-in wire
+profile below supplies a separate HF alias and default; the logical IDs stay intact.
+
+### Opt-in Hugging Face wire metadata
+
+Use the explicit `hf-default-parquet-envelope/v1` profile for new local release
+candidates that need Hugging Face default and streaming loaders:
+
+```python
+from ipfs_datasets_py.processors.legal_data.uscode_hf_release import (
+    HF_WIRE_PROFILE, build_uscode_hf_release, stage_uscode_hf_release,
+)
+
+release = build_uscode_hf_release(
+    family_rows,  # Existing admitted/declared family records, with their own provenance.
+    source_revision=pinned_source_revision,
+    release_point=selected_release_point,
+    wire_metadata_profile=HF_WIRE_PROFILE,
+)
+stage_uscode_hf_release(release, "/path/to/new-candidate", dry_run=False)
+```
+
+The wire default is `publicus-ir-graphrag-v2`; it maps to the logical
+`publicus-ir-graphrag/v2` ID. The card advertises one explicit default with an
+exact inventory of homogeneous `data/` Parquet files. Index, recovery, legacy
+and unlisted files are excluded. Legacy and recovery artifacts remain retained
+for direct access; this profile does not advertise them as HF streams.
+
+The standard `dataset_infos.json` and named README `dataset_info` agree on the
+five string envelope features, exact train row count and measured decoded Arrow
+bytes. The named card info supplies statistics to the actual HF config; a JSON
+sidecar alone can be renamed to `default` by datasets5.1. These are corpus,
+retrieval, vector and graph transport rows, rather than a unique-law count.
+Compressed Parquet sizes are not used as Arrow byte counts. The profile
+declaration is bound across the manifest, config and release metadata; the
+builder verifies physical schemas/counts and measures selected tables.
+
+Omitting `wire_metadata_profile`, or passing `None`, retains the original
+packaging generation. The selected wire profile changes the build/release
+identities; it does not rewrite prior manifests, logical IDs or data bytes.
+A local candidate does not publish or update the hosted dataset.
+
+The legacy five-file source-intake API retains its legacy infos interpretation.
+Use the explicit `prepare_source_package_intake_v2` /
+`validate_source_package_intake_v2` APIs with a pinned v2 request and
+`metadata_profile="hf-default-parquet-envelope/v1"` for these standard infos.
+They reconcile metadata declarations without reading tables or measuring Arrow bytes.
+For coordinate composition, explicitly select `prepare_source_span_entity_join_manifest_v3`
+/ `validate_source_span_entity_join_manifest_v3` with its pinned v3 outer request.
+It selects wire intake v2 and preserves the complete paired-v3 transport.
+Join v1/v2 retain legacy intake. Census, eligibility, crosswalk, graph and native
+consumers require separately qualified adoption; this local join profile grants
+no reviewed source, legal meaning, remote publication or graph/Lean admission.
+See the [wire-coordinate join guide](../../ipfs_datasets_py/logic/autoformal/docs/guides/legal_source_span_entity_join_v1.md#explicit-hf-wire-coordinate-join-v3).
 
 ### 2.1 Artifact layout (v2)
 

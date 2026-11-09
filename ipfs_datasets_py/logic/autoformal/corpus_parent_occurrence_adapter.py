@@ -27,6 +27,12 @@ CACHE_ROW_SCHEMA = "legal-corpus-parent-cache-row/v1"
 MATCH_SCHEMA = "legal-corpus-parent-cache-match/v1"
 ROLE_SCHEMA = "legal-corpus-parent-source-role/v1"
 PROFILE = "exact-decoded-parent-field-candidate-records/v1"
+COMPLETE_PARENT_128K_MANIFEST_PROFILE = "exact-decoded-parent-field-candidate-records-complete-parent-128k/v1"
+PAGED_INVENTORY_PROFILE = "ordered-record-refs-pages/v1"
+PAGED_MANIFEST_PROFILE = "exact-decoded-parent-field-candidate-records-paged-inventory/v1"
+PAGED_COMPLETE_PARENT_128K_MANIFEST_PROFILE = "exact-decoded-parent-field-candidate-records-complete-parent-128k-paged-inventory/v1"
+INVENTORY_PAGE_SCHEMA = "legal-corpus-parent-occurrence-inventory-page/v1"
+MAX_INVENTORY_REFS_PER_PAGE = 256
 UNDECLARED_EDITION = "not_declared_in_source_artifact"
 REPORT_KEYS = ("parent_text_views", "cache_parent_occurrences", "parent_sentence_candidates")
 REPLAY_FIELDS = {
@@ -61,6 +67,10 @@ MANIFEST_FIELDS = {
     "profile", "limits", "report_bindings", "replay_bindings", "producer_pins", "record_refs",
     "populations", "counts", "hash_recipes", "population_complete", "coverage_scope", "view",
     *FALSE_FLAGS, *UNSELECTED,
+}
+PAGED_MANIFEST_FIELDS = MANIFEST_FIELDS - {"record_refs"} | {"page_refs"}
+INVENTORY_PAGE_FIELDS = {
+    "page_ordinal", "first_record_ordinal", "entries", "view", *FALSE_FLAGS, *UNSELECTED,
 }
 PARENT_FIELDS = {
     "ordinal", "source_identity", "source_identity_sha256", "source_version_cid", "view_sha256",
@@ -110,6 +120,12 @@ def _limits(value):
             _fail("unknown or raised parent occurrence adapter limit")
         result[key] = bound
     return result
+
+
+def _inventory_profile(value):
+    if value is not None and (type(value) is not str or value != PAGED_INVENTORY_PROFILE):
+        _fail("unknown parent occurrence inventory profile")
+    return value
 
 
 def _plain(value, maximum):
@@ -269,7 +285,12 @@ def _inputs(report_bytes, expected_report_pins, replay_inputs, bounds):
         if _sha(raw) != pins[key]["raw_sha256"]:
             _fail("original report differs from independently expected raw SHA256")
         total += len(raw)
-    contracts.require_keys(replay_inputs, REPLAY_FIELDS, "complete fixed-owner replay inputs")
+    if type(replay_inputs) is not dict or not (REPLAY_FIELDS <= set(replay_inputs)
+            <= REPLAY_FIELDS | {"source_profile", "inventory_profile"}):
+        _fail("complete fixed-owner replay inputs with optional source and inventory profiles required")
+    if _inventory_profile(replay_inputs.get("inventory_profile")) is None and "inventory_profile" in replay_inputs:
+        # An explicit None selects the unchanged legacy layout and commitment.
+        replay_inputs = {key: value for key, value in replay_inputs.items() if key != "inventory_profile"}
     residual = bounds["max_total_input_bytes"] - total
     if residual <= 0:
         _fail("aggregate complete original input bound exceeded before replay serialization")
@@ -281,6 +302,12 @@ def _inputs(report_bytes, expected_report_pins, replay_inputs, bounds):
     producer_pins = _pins(owners)
     reports = {key: _load(report_bytes[key], bounds["max_report_bytes"]) for key in REPORT_KEYS}
     views, occurrences, sentences = owners
+    source_profile = replay.get("source_profile")
+    occurrences._source_profile_limits(source_profile)
+    for key in ("cache_parent_occurrences", "parent_sentence_candidates"):
+        if reports[key].get("source_profile") != source_profile or (
+                source_profile is None and "source_profile" in reports[key]):
+            _fail("original reports differ from independently selected source profile")
     hashers = (views.parent_text_views_report_sha256, occurrences.cache_parent_occurrences_report_sha256,
                sentences.parent_sentence_candidates_report_sha256)
     for key, hasher in zip(REPORT_KEYS, hashers, strict=True):
@@ -300,12 +327,12 @@ def _inputs(report_bytes, expected_report_pins, replay_inputs, bounds):
             expected_lineage_report_sha256=replay["expected_lineage_report_sha256"],
             lineage_inputs=replay["lineage_inputs"],
             expected_parent_text_views_report_sha256=pins["parent_text_views"]["canonical_sha256"],
-            parent_text_views_inputs=replay["parent_text_views_inputs"])
+            parent_text_views_inputs=replay["parent_text_views_inputs"], source_profile=source_profile)
         sentences.validate_parent_sentence_candidates(reports["parent_sentence_candidates"],
             reports["parent_text_views"],
             expected_report_sha256=pins["parent_sentence_candidates"]["canonical_sha256"],
             expected_parent_text_views_report_sha256=pins["parent_text_views"]["canonical_sha256"],
-            parent_text_views_inputs=replay["parent_text_views_inputs"])
+            parent_text_views_inputs=replay["parent_text_views_inputs"], source_profile=source_profile)
     except (ValueError, TypeError, KeyError, IndexError, UnicodeError, RecursionError) as error:
         raise contracts.CorpusContractError("original reports refused complete fixed-owner regeneration") from error
     if _pins(owners) != producer_pins:
@@ -346,14 +373,48 @@ def _identity(physical, descriptor):
     }
 
 
+def _inventory_pages(record_refs):
+    """Bound ordered leaf references using the existing alignment-page policy.
+
+    Pages are ordinary sealed records. The caller adds them through its same
+    record/byte accounting path; page references in the root bind the pages.
+    """
+    pages, pending = [], []
+    first_ordinal = 0
+
+    def value(entries, start):
+        return contracts.seal_record({"schema": INVENTORY_PAGE_SCHEMA,
+            "page_ordinal": len(pages), "first_record_ordinal": start, "entries": entries,
+            "view": "candidate", **FALSE_FLAGS, **UNSELECTED})
+
+    empty_bytes = len(canonical_dag_json_bytes(value([], first_ordinal)))
+    pending_bytes = 0
+    for entry in record_refs:
+        size = len(canonical_dag_json_bytes(entry))
+        trial_bytes = empty_bytes + pending_bytes + size + len(pending)
+        if pending and (len(pending) >= MAX_INVENTORY_REFS_PER_PAGE
+                        or trial_bytes > contracts.MAX_RECORD_BYTES):
+            pages.append(value(pending, first_ordinal))
+            first_ordinal += len(pending)
+            pending, pending_bytes = [entry], size
+            empty_bytes = len(canonical_dag_json_bytes(value([], first_ordinal)))
+        else:
+            pending.append(entry)
+            pending_bytes += size
+    if pending:
+        pages.append(value(pending, first_ordinal))
+    return pages
+
+
 def build_parent_occurrence_corpus(report_bytes, *, expected_report_pins, replay_inputs, limits=None):
     """Replay complete parent/cache/sentence populations and project every role.
 
     ``report_bytes`` and ``expected_report_pins`` have exactly ``REPORT_KEYS``;
     each pin is ``{raw_sha256, canonical_sha256}``. Replay inputs have exactly
-    ``REPLAY_FIELDS`` and delegate to the existing fixed owners. Each record and
-    the root manifest retain common 1MiB limits. The detached collection has a
-    separate finite aggregate bound; its source originals remain external.
+    ``REPLAY_FIELDS`` plus optional independently selected source/inventory
+    profiles and delegate to the existing fixed owners. Each record and the
+    root manifest retain common 1MiB limits. Opt-in inventory pages append to
+    the same records list and consume its existing count/byte budgets.
     """
     bounds = _limits(limits)
     reports, replay, report_bindings, owners, producer_pins = _inputs(
@@ -531,10 +592,28 @@ def build_parent_occurrence_corpus(report_bytes, *, expected_report_pins, replay
 
     parent_inputs = replay["parent_text_views_inputs"]
     lineage_inputs = replay["lineage_inputs"]
+    inventory_profile = _inventory_profile(replay.get("inventory_profile"))
+    inventory = {"record_refs": refs}
+    profile = COMPLETE_PARENT_128K_MANIFEST_PROFILE if replay.get("source_profile") is not None else PROFILE
+    if inventory_profile is not None:
+        page_refs = []
+        # Snapshot leaf references: appended page records do not index themselves.
+        for page in _inventory_pages(list(refs)):
+            page = put("inventory_page", page)
+            entries = page["entries"]
+            page_refs.append({"page_cid": page["record_cid"], "sha256": _sha(canonical_dag_json_bytes(page)),
+                "page_ordinal": page["page_ordinal"], "first_record_ordinal": page["first_record_ordinal"],
+                "record_count": len(entries), "first_record_cid": entries[0]["record_cid"],
+                "last_record_cid": entries[-1]["record_cid"]})
+        inventory = {"page_refs": page_refs}
+        profile = PAGED_COMPLETE_PARENT_128K_MANIFEST_PROFILE if replay.get("source_profile") is not None else PAGED_MANIFEST_PROFILE
     manifest = contracts.seal_record({
-        "schema": SCHEMA, "profile": PROFILE, "limits": bounds, "report_bindings": report_bindings,
+        "schema": SCHEMA, "profile": profile,
+        "limits": bounds, "report_bindings": report_bindings,
         "replay_bindings": {
             "replay_inputs_canonical_sha256": _digest(replay),
+            **({"source_profile": replay["source_profile"]} if replay.get("source_profile") is not None else {}),
+            **({"inventory_profile": inventory_profile} if inventory_profile is not None else {}),
             "expected_lineage_report_sha256": replay["expected_lineage_report_sha256"],
             "expected_record_sha256s": replay["expected_record_sha256s"],
             "expected_provenance_report_sha256s": replay["expected_provenance_report_sha256s"],
@@ -543,7 +622,7 @@ def build_parent_occurrence_corpus(report_bytes, *, expected_report_pins, replay
             **{field: parent_inputs[field] for field in ("expected_selected_rows_report_sha256",
                 "expected_parent_descriptor_sha256", "expected_preflight_sha256", "row_ordinals", "expected_row_sha256s")},
         },
-        "producer_pins": producer_pins, "record_refs": refs, "populations": populations,
+        "producer_pins": producer_pins, **inventory, "populations": populations,
         "counts": {
             "records": len(records), "record_kinds": dict(count), "physical_parent_rows": len(parents),
             "physical_cache_rows": len(populations["cache_rows"]),
@@ -569,12 +648,16 @@ def build_parent_occurrence_corpus(report_bytes, *, expected_report_pins, replay
 def validate_parent_occurrence_corpus(bundle, *, report_bytes, expected_report_pins, replay_inputs, limits=None):
     """Validate every seal/order/reference and replay all original owner inputs."""
     bounds = _limits(limits)
+    if type(replay_inputs) is not dict:
+        _fail("complete independently selected replay inputs required")
+    paged = _inventory_profile(replay_inputs.get("inventory_profile")) is not None
     contracts.require_keys(bundle, {"manifest", "records"}, "detached parent occurrence bundle")
     if type(bundle["records"]) is not list or len(bundle["records"]) > bounds["max_records"]:
         _fail("bounded complete record collection required")
     raw = _plain(bundle, bounds["max_collection_bytes"])
     detached = json.loads(raw)
-    manifest = contracts.validate_record(detached["manifest"], schema=SCHEMA, fields=MANIFEST_FIELDS)
+    manifest = contracts.validate_record(detached["manifest"], schema=SCHEMA,
+        fields=PAGED_MANIFEST_FIELDS if paged else MANIFEST_FIELDS)
     schemas = {
         PARENT_SCHEMA: PARENT_FIELDS, CACHE_ROW_SCHEMA: CACHE_ROW_FIELDS,
         MATCH_SCHEMA: MATCH_FIELDS, ROLE_SCHEMA: ROLE_FIELDS,
@@ -582,7 +665,9 @@ def validate_parent_occurrence_corpus(bundle, *, report_bytes, expected_report_p
         source.SOURCE_OCCURRENCE_SCHEMA: source._OCCURRENCE_FIELDS,
         source.CONTEXT_DECLARATION_SCHEMA: source._CONTEXT_FIELDS,
     }
-    refs, seen = [], set()
+    if paged:
+        schemas[INVENTORY_PAGE_SCHEMA] = INVENTORY_PAGE_FIELDS
+    refs, seen, pages = [], set(), []
     for record in detached["records"]:
         schema = record.get("schema") if type(record) is dict else None
         if type(schema) is not str or schema not in schemas:
@@ -592,8 +677,42 @@ def validate_parent_occurrence_corpus(bundle, *, report_bytes, expected_report_p
         if cid in seen:
             _fail("duplicate projected record identity")
         seen.add(cid)
-        refs.append({"record_cid": cid, "sha256": _sha(canonical_dag_json_bytes(checked))})
-    if manifest["record_refs"] != refs:
+        if paged and schema == INVENTORY_PAGE_SCHEMA:
+            pages.append(checked)
+        else:
+            if pages:
+                _fail("inventory page records must follow the complete leaf record population")
+            refs.append({"record_cid": cid, "sha256": _sha(canonical_dag_json_bytes(checked))})
+    if paged:
+        if not pages:
+            _fail("complete ordered inventory pages required")
+        inventory, page_refs, indexed = [], [], set()
+        for number, page in enumerate(pages):
+            contracts.require_int(page["page_ordinal"], "inventory page ordinal", maximum=bounds["max_records"])
+            contracts.require_int(page["first_record_ordinal"], "first record ordinal", maximum=bounds["max_records"])
+            if page["page_ordinal"] != number or page["first_record_ordinal"] != len(inventory):
+                _fail("ordered complete inventory page offsets differ")
+            if (page["view"] != "candidate" or any(page[key] is not False for key in FALSE_FLAGS)
+                    or any(page[key] is not None for key in UNSELECTED)):
+                _fail("inventory pages retain candidate-only unavailable authority")
+            entries = page["entries"]
+            if type(entries) is not list or not 0 < len(entries) <= MAX_INVENTORY_REFS_PER_PAGE:
+                _fail("complete bounded inventory page entries required")
+            for entry in entries:
+                contracts.require_keys(entry, {"record_cid", "sha256"}, "ordered inventory reference")
+                contracts.require_cid(entry["record_cid"], "inventory record CID", codecs=("dag-json",))
+                contracts.require_sha256(entry["sha256"], "whole sealed inventory record hash")
+                if entry["record_cid"] in indexed:
+                    _fail("duplicate inventory leaf reference")
+                indexed.add(entry["record_cid"])
+                inventory.append(entry)
+            page_refs.append({"page_cid": page["record_cid"], "sha256": _sha(canonical_dag_json_bytes(page)),
+                "page_ordinal": number, "first_record_ordinal": page["first_record_ordinal"],
+                "record_count": len(entries), "first_record_cid": entries[0]["record_cid"],
+                "last_record_cid": entries[-1]["record_cid"]})
+        if manifest["page_refs"] != page_refs or inventory != refs:
+            _fail("paged inventory differs in membership, order, or complete record hashes")
+    elif manifest["record_refs"] != refs:
         _fail("root record population differs in membership, order, or complete record hashes")
     expected = build_parent_occurrence_corpus(report_bytes, expected_report_pins=expected_report_pins,
         replay_inputs=replay_inputs, limits=limits)

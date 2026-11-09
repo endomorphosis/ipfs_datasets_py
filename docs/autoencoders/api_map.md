@@ -1,5 +1,7 @@
 # API and command map
 
+**Current LegalIR handoff:** [autoformalization guide](../autoformalization/README.md) and [current state](../autoformalization/CURRENT_STATE.md). Source, review, graph and Lean documentation is maintained there; this document retains its existing model guidance and dated research history.
+
 [Handbook](README.md) · [Inputs](artifacts_and_inputs.md)
 
 This maps tasks to public entrypoints. Start with the linked guide rather than

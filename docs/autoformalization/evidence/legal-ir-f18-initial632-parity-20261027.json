@@ -1,0 +1,285 @@
+{
+  "authenticated_roots": {
+    "all42_model_state_sha256": "2ed0ccf633f55fac202e2edb95ea9fa6e390b8d99381a05925f4dd5221925883",
+    "final_F18_canonical_checkpoint_sha256": "90031d084f2d86cf860c5fc95d2dae374dc254adec70bd85a90893f98c5a1555",
+    "final_F18_physical_sha256": "90031d084f2d86cf860c5fc95d2dae374dc254adec70bd85a90893f98c5a1555",
+    "frozen38_sha256_including_modality": "8562a4a944412a0385b26a88469fd669701573803c0eea3f444190f523414778",
+    "inactive650_sha256": "1c34e96867e070c60e8d0a3822894e316ffad8a46b65551c12a644b2fcfd68fe",
+    "prepared_TRAIN168_records_sha256": "3e36dc7fa32d3aaec0bb6039107177a30e10decd25d7bbc8bdc66ed22c243dfa",
+    "raw_TRAIN168_manifest_sha256": "afa0deeebf4052831883c046104a8808342b67a7c8dc2e58de2f9208a9287c34"
+  },
+  "durations": {
+    "child_seconds": 25.43108967412263,
+    "scope": "Fresh measured child interval includes authentication, restoration,632 captures, pure joint selection and comparison; no benchmark or speedup credit."
+  },
+  "effects": {
+    "canonical_source_model_forwards": 632,
+    "extra_capture_forwards": 0,
+    "feature_paths_per_source_forward": 3,
+    "fit": false,
+    "full42_frozen38_inactive650_Adam_CPU_RNG_preserved": true,
+    "gradient_calls": 0,
+    "native_counter_values_each": 632,
+    "new_current_source_delta_fresh_four_tensor_Adam_restore_calls": 1,
+    "optimizer_updates": 0,
+    "original_F18_loader_legacy_six_tensor_Adam_restore_calls": 1,
+    "refusal_window_forward_attempts": 0,
+    "scoring": false,
+    "teacher_model_restores": 0
+  },
+  "evidence_id": "f18-initial632-parity-qualified-20261027-01",
+  "evidence_inputs": {
+    "capture_freeze_metadata": {
+      "bytes": 9252,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-initial-parity-v01/attempt-v02/exports/new-captures-freeze-v02.json",
+      "root": "datasets_repository",
+      "sha256": "d79eb58970f179bda1b3e8be18ad31efc423125e52960393ce210cb0abc9ed08"
+    },
+    "control": {
+      "bytes": 39868,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-initial-parity-v01/initial_f18_632_parity_control-v02.py",
+      "root": "datasets_repository",
+      "sha256": "617a3e8449c4767079f3022dbac29ea874534efd7a7f30732bb02c705017b303"
+    },
+    "failed_v01_original_recovery": {
+      "bytes": 2718,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-initial-parity-v01/root-failed-v01-storage-recovery-v01.json",
+      "root": "datasets_repository",
+      "sha256": "b194d85c84890946d2f8f2b6033315d711666fa417d8a24121ea8ebdc4dc76fe"
+    },
+    "independent_review": {
+      "bytes": 4400,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-initial-parity-v01/independent-actual632-success-v02-queue-review.json",
+      "root": "datasets_repository",
+      "sha256": "509afff1537acdd4c47e6853fef41e00628a045e9352fe147d58977385a87456"
+    },
+    "original_terminal": {
+      "bytes": 6228,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-initial-parity-v01/owner-v02.stdout",
+      "root": "datasets_repository",
+      "sha256": "ce1c91578921c493b83cea01d2e679b14514361ba49737fa7687322294172150"
+    },
+    "original_validation_result": {
+      "bytes": 1247,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-initial-parity-v01/attempt-v02/logs/result.json",
+      "root": "datasets_repository",
+      "sha256": "2c5bf26cddacf2ba43d73f2c237e8995e21f87a09b3e4c0f7cf672b5b22729c2"
+    },
+    "post_recovery_independent_review": {
+      "bytes": 1942,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-initial-parity-v01/independent-actual632-post-recovery-v01-queue-review.json",
+      "root": "datasets_repository",
+      "sha256": "1a1411b13b500e8a93eb3fdda2c4ccc888c945de3b35dad067de19b031748992"
+    },
+    "request": {
+      "bytes": 18001,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-initial-parity-v01/request-v02.json",
+      "root": "datasets_repository",
+      "sha256": "99d66099388ee657771c8382a7032f7ac4f6a4d760ef7f8833567d4e1a0fbd80"
+    },
+    "result_metadata": {
+      "bytes": 28023,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-initial-parity-v01/attempt-v02/exports/initial-parity-result-v02.json",
+      "root": "datasets_repository",
+      "sha256": "de6c6f821bffabdd6015db0ff392d9dc961f9c412edd21e08104bc9649399843"
+    },
+    "scope": {
+      "bytes": 11350,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-initial-parity-v01/scope-v02.json",
+      "root": "datasets_repository",
+      "sha256": "8a543dc4a892b928a0acb18e17e3969bc9e7ae0aaed403545a784a7fe83c7be8"
+    },
+    "separate45case_source_closeout": {
+      "bytes": 10174,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-initial-parity-v01/profile-capture-qualification-v01/root-source-closeout-v02.json",
+      "root": "datasets_repository",
+      "sha256": "1504963065d2b7037eb8121a4411bde1051670884d574d2b47ed16039b6f60c2"
+    },
+    "source_closeout": {
+      "bytes": 9268,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-initial-parity-v01/root-source-closeout-v02.json",
+      "root": "datasets_repository",
+      "sha256": "eefff7c78e7467473041774591ea8f2a531f89dbf73668f5553a313a32cdd5dd"
+    },
+    "source_population_manifest": {
+      "bytes": 19987,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-initial-parity-v01/retained-final-f18-632-manifest-v02.json",
+      "root": "datasets_repository",
+      "sha256": "ceecf57281f20f3cfde0129047552ebfcb4b05cef2ea03f80e6c3a0e3eeea7b7"
+    }
+  },
+  "limits": {
+    "Lean_or_whole_USCode_admission": false,
+    "actual_retained_nonzero_training_or_resume": false,
+    "library_admitted_formalized_or_promoted_flags": false,
+    "new_accuracy_or_width_gain": false,
+    "paired_trial_or_scoring": false,
+    "reviewed_statutory_gold_or_semantics": false
+  },
+  "observed_at_utc": "2026-10-27T17:53:02.024835+00:00",
+  "original_ownership": {
+    "artifacts_durable": true,
+    "child_process_slots": 2,
+    "cpu_slots": 1,
+    "final_live_processes": 0,
+    "memory_mb": 2048,
+    "original_compute_released": true,
+    "original_source_READ_closed": true,
+    "original_storage_released": true,
+    "source_closed_at_utc": "2026-10-27T17:47:53.391261+00:00",
+    "source_pins": 62,
+    "source_pins_before_after_and_independent_recheck_unchanged": true,
+    "storage_bytes": 134217728,
+    "timeout_seconds": 300
+  },
+  "parity": {
+    "all_heads_binary32_bits_including_signed_zero_equal": true,
+    "baseline_closing_reparse_operations": 0,
+    "compared_head_scalars": 194812,
+    "complete_original_greedy_formal_decoded_rows_equal": true,
+    "complete_pure_joint_result_records_equal": true,
+    "new_raw_and_joint_capture_files_frozen_before20retained_capture_bodies": 20,
+    "no_model_forward_after_freeze": true,
+    "pure_joint_max_search_nodes": 50000,
+    "pure_joint_top_k": 8,
+    "qualified": true,
+    "retained_distinct_files": 20,
+    "retained_verification_operations_including_closing": 40
+  },
+  "persisted_initial_delta": {
+    "bytes": 122251,
+    "checkpoint_or_capture_payload_copied_into_evidence": false,
+    "current_source_bound": true,
+    "margin_weight": 0.25,
+    "old87b_dfe80_checkpoint_reused_or_relabelled": false,
+    "progress": {
+      "epochs_completed": 0,
+      "optimizer_steps": 0,
+      "row_cursor": 0
+    },
+    "schema": "conditions-fullspan-f18-four-tensor-checkpoint/v1",
+    "sha256": "a62b8d2a7ebad3d993cefbfb0069f63aa46ab8ec71524ca4bc9b6d9f65a3d4e1"
+  },
+  "population": {
+    "additional_evaluation_gold_reference_or_teacher_model_access": false,
+    "all_capture_chunks": 11,
+    "conditions_absent_TRAIN": 96,
+    "conditions_present_TRAIN": 72,
+    "global_latents": "Original finite384 vectors unchanged; exactzero only fresh_dev/test; latent_enabledFalse.",
+    "panels": [
+      {
+        "panel": "training168",
+        "rows": 168
+      },
+      {
+        "panel": "old_tune",
+        "rows": 96
+      },
+      {
+        "panel": "fresh_tune",
+        "rows": 36
+      },
+      {
+        "panel": "fresh_challenge",
+        "rows": 36
+      },
+      {
+        "panel": "old_authored_eval",
+        "rows": 72
+      },
+      {
+        "panel": "authored_dev",
+        "rows": 72
+      },
+      {
+        "panel": "authored_eval",
+        "rows": 72
+      },
+      {
+        "panel": "law",
+        "rows": 8
+      },
+      {
+        "panel": "fresh_dev",
+        "rows": 36
+      },
+      {
+        "panel": "fresh_test",
+        "rows": 36
+      }
+    ],
+    "raw_original_export_TRAIN168_join_to_authenticated_donor_and_manifest": true,
+    "source_fields": [
+      "id",
+      "source_text",
+      "latent"
+    ],
+    "total_rows": 632,
+    "training_chunks": [
+      128,
+      40
+    ]
+  },
+  "programme": {
+    "all_E1_assets_qualified": false,
+    "contributes_to": [
+      "LIR-17",
+      "LIR-9106"
+    ],
+    "native_task_completed": false,
+    "remaining": [
+      "Separate original training-purpose admission and matched0/0.25 arms of32 updates each.",
+      "Freeze trained outputs before independent full-IR/per-ID retention and all32 permission decisions."
+    ]
+  },
+  "retained_failure": {
+    "independent_review": {
+      "bytes": 4551,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-initial-parity-v01/independent-actual632-failed-v01-queue-review.json",
+      "root": "datasets_repository",
+      "sha256": "62e21a394c3d87600edca6e7b040851678211d0be4987775b06fec0fd72e19ea"
+    },
+    "original_v01_artifacts_preserved": true,
+    "original_v01_request": {
+      "bytes": 17822,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-initial-parity-v01/request-v01.json",
+      "root": "datasets_repository",
+      "sha256": "8bba450848b12ef2f064f2c9113c3e18688dd9dd6eadc21c8d729f5fd0dcf703"
+    },
+    "result": "Failed before capture on run-specific allzero latent overconstraint; zero parity credit. V02 changed only finite384/fresh-onlyzero and explicit original export/TRAIN join.",
+    "storage_at_failed_original_closeout": "retained; exact original recovery documented separately",
+    "subsequent_storage_original_recovery": {
+      "artifacts_preserved": 4,
+      "exact_record_CAS": "c2186ec52cd80dd225b474f65f410bbaafb9935ce28c1e50450f3c6527c2be64",
+      "no_new_native_grant_or_parity_credit": true,
+      "opaque_delta_hash_by_original_administrative_owner_without_parse": true,
+      "original_owner_sha256": "770216300812c8fa86c155b0d538e734e90f7e2c8d1f15d00a9f3d992594fc1a",
+      "status": "released"
+    }
+  },
+  "reviewer_effects": {
+    "checkpoint_capture_export_or_delta_payload_opens": 0,
+    "payload_hash_recomputations": 0,
+    "test_model_or_native_API_execution": 0
+  },
+  "runtime_resolution": {
+    "Torch_threads": 1,
+    "external_process_attempts": 0,
+    "original_resolver_restored": true,
+    "schema": "pinned-libdl-resolution/v1",
+    "scoped_requests": [
+      "dl"
+    ],
+    "selected_runtime_pins_not_whole_ABI": true
+  },
+  "schema": "legal-ir-f18-source-only-initial632-parity-qualification/v1",
+  "scope": "Fresh original-owned source-only initial parity of one current-source zero-step four-tensor runtime against the final trained F18, separate from the synthetic45-case cohort and actual paired training.",
+  "selected_product_source": {
+    "exact_selected_source_pins_not_full_runtime_ABI": true,
+    "immutable_original_F18_sha256": "fb7449d4794ca9a279b2df2ea533b89d360344ff786edc0798395ab799db1823",
+    "owning_test_sha256": "bbed34c8d81ecac7ecf020e682e37dc550fc29a8839775107eacb43496b7d50a",
+    "post_qualification_source_commit": "23c77272121af10bbc1728cc5776087d24e1f583",
+    "profile_sha256": "56bd0a248a07de09519f95e5c4bae02ab9d8eb1134b483c257c1f7e7bcb07147",
+    "pure_joint_owner_sha256": "791c283f625ae7d8841e7afa697b34cbfa5c74361d0c0129b66af31fb5e13679"
+  }
+}

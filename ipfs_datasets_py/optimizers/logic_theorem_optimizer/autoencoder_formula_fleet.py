@@ -356,7 +356,7 @@ def run_fleet(args):
     from ...duckdb_control.autoencoder_registry import AutoencoderRegistry
     from ...duckdb_control.autoencoder_quack import WorkerScope
     from . import autoencoder_capacity as sizing
-    from .autoencoder_daemon_resources import DaemonResourceReservation
+    from .autoencoder_daemon_resources import DaemonResourceReservation, MAX_LEDGER_BYTES
     from scripts.ops.legal_ir.run_autoencoder_fleet import (
         storage_capacity, _path, process_snapshot, collect_owned, stop_owned, _write)
     require_workspace_logic_tree()
@@ -365,7 +365,7 @@ def run_fleet(args):
     plan = load_plan(args.plan_file)
     state = _path(args.state_directory)
     ledger = _path(args.resource_ledger)
-    ledger_data = read(ledger, 8 * 1024 * 1024)
+    ledger_data = read(ledger, MAX_LEDGER_BYTES)
     roots = [row['path'] for row in ledger_data['roots']]
     require(any(state == Path(p) or Path(p) in state.parents for p in roots), 'state outside existing resource roots')
     for path in (args.registry, args.artifact_root):

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections import Counter
 import inspect
 
 import pytest
@@ -33,6 +34,7 @@ from ipfs_datasets_py.logic.bridge.decompiler import (
 )
 from ipfs_datasets_py.logic.legal_ir.canonical_decompiler import (
     SourceWithheldCanonicalDecompiler,
+    decompile_rule,
 )
 from ipfs_datasets_py.utils.cid_utils import cid_for_dag_json
 
@@ -172,6 +174,182 @@ def test_surface_detector_finds_polarity_and_dropped_facets() -> None:
     kinds_dropped = {item["kind"] for item in dropped}
     assert "changed_polarity" in kinds_flipped
     assert "dropped_facet" in kinds_dropped
+
+
+def _association_ir() -> CanonicalRoundTripIR:
+    return CanonicalRoundTripIR((
+        CanonicalRule("O", "agency", "file", "notice", conditions=("consent",),
+                      exceptions=("emergency",), temporal=("within_5_days",)),
+        CanonicalRule("O", "court", "publish", "report", conditions=("review",),
+                      exceptions=("appeal",), temporal=("within_7_days",)),
+    ))
+
+
+def _render_association_ir(ir: CanonicalRoundTripIR) -> str:
+    result = SourceWithheldCanonicalDecompiler().decompile(
+        DecompilerRequest(canonical_ir=ir, request_id="surface-association-control")
+    )
+    assert result.status is OperationStatus.SUCCESS
+    return result.text
+
+
+def _unresolved_association(ir: CanonicalRoundTripIR, text: str) -> dict[str, object]:
+    differences = detect_surface_semantic_differences(ir, text)
+    unresolved = [item for item in differences if item["kind"] == "unresolved_rule_association"]
+    assert len(unresolved) == 1, differences
+    assert unresolved[0]["scope"] == "frozen_surface_heuristic"
+    return unresolved[0]
+
+
+@pytest.mark.parametrize("changed", [
+    "Court must file notice within 5 days if consent unless emergency. "
+    "Agency must publish report within 7 days if review unless appeal.",
+    "Agency must file notice within 5 days if consent unless appeal. "
+    "Court must publish report within 7 days if review unless emergency.",
+    "Agency must file notice within 5 days if review unless emergency. "
+    "Court must publish report within 7 days if consent unless appeal.",
+], ids=("actor", "exception", "condition"))
+def test_surface_detector_reports_unresolved_cross_rule_associations(changed: str) -> None:
+    ir = _association_ir()
+    clean = _render_association_ir(ir)
+    assert Counter(clean.casefold().split()) == Counter(changed.casefold().split())
+    assert changed != clean
+    unresolved = _unresolved_association(ir, changed)
+    assert unresolved["unmatched_rule_indices"] == [0, 1]
+    assert unresolved["unmatched_unit_indices"] == [0, 1]
+
+
+@pytest.mark.parametrize("reverse", (False, True))
+def test_known_whole_rule_surfaces_allow_permutation_and_case_whitespace(reverse: bool) -> None:
+    ir = _association_ir()
+    units = [decompile_rule(rule) for rule in ir.rules]
+    if reverse:
+        units.reverse()
+    text = "\n  ".join(units).swapcase()
+    assert detect_surface_semantic_differences(ir, text) == ()
+
+
+def test_surface_association_counts_duplicate_occurrences() -> None:
+    first = CanonicalRule("O", "agency", "file", "notice")
+    second = CanonicalRule("O", "court", "publish", "report")
+    ir = CanonicalRoundTripIR((first, first, second))
+    assert len(ir.rules) == 3
+    assert detect_surface_semantic_differences(ir,
+        " ".join(decompile_rule(rule) for rule in (second, first, first))) == ()
+    changed = " ".join(decompile_rule(rule) for rule in (first, second, second))
+    unresolved = _unresolved_association(ir, changed)
+    assert len(unresolved["unmatched_rule_indices"]) == 1
+    assert len(unresolved["unmatched_unit_indices"]) == 1
+
+
+@pytest.mark.parametrize("tail", ("", " if alpha consents", " unless alpha objects"))
+def test_foreign_actor_mentions_cannot_satisfy_the_subject(tail: str) -> None:
+    ir = CanonicalRoundTripIR((CanonicalRule("O", "alpha", "notify", "beta"),))
+    changed = "Beta must notify alpha" + tail + "."
+    assert all(word in changed.casefold() for word in ("alpha", "notify", "beta"))
+    _unresolved_association(ir, changed)
+
+
+@pytest.mark.parametrize("changed", (
+    "Subagency must file notice if consent unless flood.",
+    "Agency must profile notice if consent unless flood.",
+    "Agency must file notice if nonconsent unless flood.",
+    "Agency must file notice if consent unless flooding.",
+))
+def test_facet_substrings_do_not_establish_frozen_rule_association(changed: str) -> None:
+    ir = CanonicalRoundTripIR((CanonicalRule("O", "agency", "file", "notice",
+        conditions=("consent",), exceptions=("flood",)),))
+    _unresolved_association(ir, changed)
+
+
+def test_condition_and_exception_mentions_cannot_exchange_positions() -> None:
+    ir = CanonicalRoundTripIR((CanonicalRule("O", "agency", "file", "notice",
+        conditions=("licensed",), exceptions=("flood",)),))
+    _unresolved_association(ir, "Agency must file notice if flood unless licensed.")
+
+
+def test_repeated_actor_and_action_allow_whole_rules_but_not_object_guard_exchange() -> None:
+    first = CanonicalRule("O", "agency", "file", "audit", conditions=("licensed",))
+    second = CanonicalRule("O", "agency", "file", "ledger", conditions=("reviewed",))
+    ir = CanonicalRoundTripIR((first, second))
+    assert detect_surface_semantic_differences(ir,
+        decompile_rule(second) + " " + decompile_rule(first)) == ()
+    _unresolved_association(ir,
+        "Agency must file audit if reviewed. Agency must file ledger if licensed.")
+
+
+@pytest.mark.parametrize("facets", (
+    {"actor": "agency_a.b"},
+    {"action": "file_v.2"},
+    {"object": "u.s._code_notice"},
+    {"conditions": ("within_1.5_days",)},
+    {"exceptions": ("supervisor_must_not_approve",)},
+    {"conditions": ("supervisor_may_approve",)},
+    {"object": "memo_that_must_not_circulate"},
+))
+def test_exact_canonical_atoms_with_periods_or_modal_words_remain_positive(facets) -> None:
+    fields = {"modality": "P", "actor": "clerk", "action": "file", "object": "notice"}
+    fields.update(facets)
+    ir = CanonicalRoundTripIR((CanonicalRule(**fields),))
+    assert detect_surface_semantic_differences(ir, _render_association_ir(ir)) == ()
+
+
+def test_interior_period_reordering_is_unresolved_without_guessing_sentence_boundaries() -> None:
+    ir = CanonicalRoundTripIR((
+        CanonicalRule("O", "agency", "file", "u.s._code_notice"),
+        CanonicalRule("P", "court", "review", "notice"),
+    ))
+    assert detect_surface_semantic_differences(ir, _render_association_ir(ir)) == ()
+    reordered = " ".join(decompile_rule(rule) for rule in reversed(ir.rules))
+    differences = detect_surface_semantic_differences(ir, reordered)
+    assert differences == ({"kind": "unresolved_rule_association",
+        "reason": "ambiguous_period_boundaries", "expected_rule_count": 2,
+        "scope": "frozen_surface_heuristic"},)
+
+
+def test_missing_rule_explanations_use_empty_surface_not_the_remaining_paragraph() -> None:
+    first = CanonicalRule("O", "agency", "file", "notice")
+    second = CanonicalRule("O", "agency", "file", "report", exceptions=("emergency",))
+    ir = CanonicalRoundTripIR((first, second))
+    differences = detect_surface_semantic_differences(ir, decompile_rule(first))
+    missing = [item for item in differences if item["kind"] == "dropped_facet"]
+    assert {item["facet"] for item in missing} == {"actor", "action", "object", "exception"}
+    assert all(item["association_unresolved"] is True for item in missing)
+    assert all(item["rule_cid"] == second.rule_cid for item in missing)
+
+
+@pytest.mark.parametrize("text", ("Agency must file notice..", "Agency must file notice"))
+def test_unrecognized_separators_do_not_become_a_known_frozen_surface(text: str) -> None:
+    ir = CanonicalRoundTripIR((CanonicalRule("O", "agency", "file", "notice"),))
+    unresolved = _unresolved_association(ir, text)
+    assert unresolved["reason"] == "noncanonical_rule_separators"
+
+
+def test_single_rule_negative_explanations_keep_existing_kinds_and_heuristic_scope() -> None:
+    differences = detect_surface_semantic_differences(
+        CanonicalRoundTripIR((_rule(),)), "Company a must not file annual report."
+    )
+    assert {item["kind"] for item in differences} >= {
+        "changed_polarity", "dropped_facet", "unresolved_rule_association"}
+    assert all(item["association_unresolved"] is True for item in differences
+               if item["kind"] in {"changed_polarity", "dropped_facet"})
+
+
+@pytest.mark.parametrize("replace_one", (False, True))
+def test_surface_association_handles_existing_ten_thousand_rule_bound(replace_one: bool) -> None:
+    first = CanonicalRule("O", "agency", "file", "notice")
+    second = CanonicalRule("O", "court", "publish", "report")
+    ir = CanonicalRoundTripIR((first,) * 5000 + (second,) * 5000)
+    first_count = 4999 if replace_one else 5000
+    units = [decompile_rule(second)] * (10000 - first_count) + [decompile_rule(first)] * first_count
+    text = " ".join(units)
+    assert len(ir.rules) == len(units) == 10000
+    if replace_one:
+        unresolved = _unresolved_association(ir, text)
+        assert len(unresolved["unmatched_rule_indices"]) == 1
+        assert len(unresolved["unmatched_unit_indices"]) == 1
+    else:
+        assert detect_surface_semantic_differences(ir, text) == ()
 
 
 def test_production_decompiler_still_has_no_benchmark_dependency() -> None:

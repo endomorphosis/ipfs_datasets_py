@@ -1,0 +1,106 @@
+{
+  "candidates": {
+    "docs/autoformalization/legal_full_norm_consequences_v1.md": {
+      "bytes": 2925,
+      "path": "/tmp/legal-ir-consolidation-20261019T201000Z/candidates/docs/autoformalization/legal_full_norm_consequences_v1.md",
+      "sha256": "7759fdbfe7ae411caea43ea18c9de4a39ecbd6a51e55808224795af65431f159"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_full_norm_consequences_v1.py": {
+      "bytes": 13184,
+      "path": "/tmp/legal-ir-consolidation-20261019T201000Z/candidates/ipfs_datasets_py/logic/autoformal/legal_full_norm_consequences_v1.py",
+      "sha256": "22d89447536ccbf1350cf039888531a07a0144c04e0d2bea821ffb392503fe81"
+    },
+    "tests/unit/logic/autoformal/fixtures/legal_full_norm_consequences_v1/LegalFullNorms.lean": {
+      "bytes": 3503,
+      "path": "/tmp/legal-ir-consolidation-20261019T201000Z/candidates/tests/unit/logic/autoformal/fixtures/legal_full_norm_consequences_v1/LegalFullNorms.lean",
+      "sha256": "30e70c9ea780e0bc5f2e3a17be9ad21447dbaf42e102e47e74c5fb99a9c755ba"
+    },
+    "tests/unit/logic/autoformal/fixtures/legal_full_norm_consequences_v1/provenance.json": {
+      "bytes": 1727,
+      "path": "/tmp/legal-ir-consolidation-20261019T201000Z/candidates/tests/unit/logic/autoformal/fixtures/legal_full_norm_consequences_v1/provenance.json",
+      "sha256": "d07214133e8ffb7bc67f28c6a702f8d49c89acdc896199bc1eca4fc282b5f8ed"
+    },
+    "tests/unit/logic/autoformal/test_legal_full_norm_consequences_v1.py": {
+      "bytes": 7665,
+      "path": "/tmp/legal-ir-consolidation-20261019T201000Z/candidates/tests/unit/logic/autoformal/test_legal_full_norm_consequences_v1.py",
+      "sha256": "58c79293049e43cea70464e59a3d268ce8f83f578bd2621f8a09b771c1118b60"
+    }
+  },
+  "cost": {
+    "cpu_seconds": null,
+    "missing_reason": "No measured peak RSS, CPU time or provider token accounting in this fixture profile.",
+    "native_elapsed_seconds": 46.50964249810204,
+    "peak_rss_bytes": null,
+    "provider_tokens": null,
+    "pytest_collection_elapsed_seconds": 0.6099841920658946,
+    "pytest_wrapper_elapsed_seconds": 1.0675796309951693,
+    "timing_relation": "nested intervals; do not add"
+  },
+  "evidence_kind": "independent_saved_recount_of_newly_executed_tests",
+  "exact_nodes": [
+    "tests/unit/logic/autoformal/test_legal_full_norm_consequences_v1.py::test_closed_candidate_mapping_and_ordinary_inputs",
+    "tests/unit/logic/autoformal/test_legal_full_norm_consequences_v1.py::test_exact_retained_source_and_conditional_metadata",
+    "tests/unit/logic/autoformal/test_legal_full_norm_consequences_v1.py::test_independent_pins_are_required[report-A]",
+    "tests/unit/logic/autoformal/test_legal_full_norm_consequences_v1.py::test_independent_pins_are_required[report-B]",
+    "tests/unit/logic/autoformal/test_legal_full_norm_consequences_v1.py::test_independent_pins_are_required[request-A]",
+    "tests/unit/logic/autoformal/test_legal_full_norm_consequences_v1.py::test_independent_pins_are_required[request-B]",
+    "tests/unit/logic/autoformal/test_legal_full_norm_consequences_v1.py::test_resealed_report_still_requires_full_owner_replay[lean_body]",
+    "tests/unit/logic/autoformal/test_legal_full_norm_consequences_v1.py::test_resealed_report_still_requires_full_owner_replay[producer_pin]",
+    "tests/unit/logic/autoformal/test_legal_full_norm_consequences_v1.py::test_resealed_report_still_requires_full_owner_replay[unknown_field]",
+    "tests/unit/logic/autoformal/test_legal_full_norm_consequences_v1.py::test_semantic_changes_are_refused_before_composition[argument_order]",
+    "tests/unit/logic/autoformal/test_legal_full_norm_consequences_v1.py::test_semantic_changes_are_refused_before_composition[authority]",
+    "tests/unit/logic/autoformal/test_legal_full_norm_consequences_v1.py::test_semantic_changes_are_refused_before_composition[modal_placement]",
+    "tests/unit/logic/autoformal/test_legal_full_norm_consequences_v1.py::test_unknown_request_fields_are_rejected",
+    "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_full_public_replay_retains_existing_ast_ledger_and_no_authority"
+  ],
+  "external_publication": false,
+  "genuine_human_review": false,
+  "launch": {
+    "bytes": 2858,
+    "path": "/tmp/legal-ir-consolidation-20261019T201000Z/request-01.launch.json",
+    "sha256": "79698f09afa695f4661efbd1f5f8ea9351462be943d7b56c66e037bfdf443300"
+  },
+  "legal_meaning_verified": false,
+  "manifest": {
+    "bytes": 232131,
+    "path": "/tmp/legal-ir-consolidation-20261019T201000Z/manifest-01.json",
+    "sha256": "de379f92e009ff22457e896501e4e379c7238f61df0a2cd60c34ff045d44b46a"
+  },
+  "model_or_training_executed": false,
+  "native_lean_executed": false,
+  "native_release": {
+    "authority": "saved existing native terminal and source-wrapper exports; no live state inspection",
+    "native_lease_id": "e03c525f301d4762af0215f492c103f3",
+    "native_lease_released": true,
+    "reservation_id": "364bb299dfd54b1d921de504c16e3ff1",
+    "source_read_released": true,
+    "storage_status": "released"
+  },
+  "observed_imports": 93,
+  "private_source_and_fixture_files": 378,
+  "recorded_at_utc": "2026-10-19T20:22:23.157181+00:00",
+  "recount_script": {
+    "bytes": 18753,
+    "path": "/tmp/legal-ir-consolidation-20261019T201000Z/recount_validation.py",
+    "sha256": "fd498d62866314b8a29c76d8a59231f2e95b68bb2c6d2d5da4374bb3da981bd7"
+  },
+  "request": {
+    "bytes": 7547,
+    "path": "/tmp/legal-ir-consolidation-20261019T201000Z/request-01.json",
+    "sha256": "c2b48b6496564284516dc6b0404f39960ff22e2971769f9ebb238df936550ea7"
+  },
+  "schema": "legal-full-norm-consequences-independent-qualification/v1",
+  "sealed_bytes_hash_checked": 13017415,
+  "sealed_files_hash_checked": 390,
+  "source_installed": false,
+  "status": "passed",
+  "tests": {
+    "errors": 0,
+    "existing": 1,
+    "failed": 0,
+    "new": 13,
+    "passed": 14,
+    "phase_passes": 42,
+    "skipped": 0
+  }
+}

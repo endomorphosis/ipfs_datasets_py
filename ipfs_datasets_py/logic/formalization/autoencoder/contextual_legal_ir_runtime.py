@@ -536,6 +536,7 @@ class _ContextualLegalAutoencoder:
         self._options_bytes, self._plan_bytes = _raw(options), _raw(plan)
         self._witnesses = witnesses
         self._inference_started = self._inferred = False
+        self._last_inference_call = dict(started=False, returned=False, model_execution=False)
 
     def _recheck(self):
         options = json.loads(self._options_bytes)
@@ -556,29 +557,48 @@ class _ContextualLegalAutoencoder:
             "model_inference_started": self._inference_started, "cached_inference_executed": self._inferred,
             "authority": dict(_AUTHORITY), "budgets": plan["budgets"], "consistency_scope": _SCOPE}
 
+    def _infer_source_packet(self, plan, source_inputs):
+        return self._owner.infer_contextual_legal_model(self._model, source_inputs,
+            output_cap=512, deadline_seconds=plan["budgets"]["deadline_seconds"], batch_size=8)
+
+    def _model_execution_observed(self, result):
+        # Preserve the historical v1 meaning of a returned numerical call.
+        return True
+
+    def _model_execution_failure_observed(self, error, *, started, returned, result):
+        return started, returned
+
     def infer_cached(self):
         """Generate ordered candidates using only the selected original source packets."""
         result = None
         started = returned = False
+        observed = False
+        self._last_inference_call = dict(started=False, returned=False, model_execution=False)
         try:
             plan = self._recheck()
             source_inputs = json.loads(_raw(plan["source_inputs"]))
             before = _raw(source_inputs)
             self._inference_started = started = True
-            result = self._owner.infer_contextual_legal_model(self._model, source_inputs,
-                output_cap=512, deadline_seconds=plan["budgets"]["deadline_seconds"], batch_size=8)
-            self._inferred = returned = True
+            self._last_inference_call["started"] = True
+            result = self._infer_source_packet(plan, source_inputs)
+            returned = True
+            self._last_inference_call["returned"] = True
+            observed = self._model_execution_observed(result)
+            self._last_inference_call["model_execution"] = observed
+            self._inferred = observed
             _require(_raw(source_inputs) == before, "numerical owner mutated source-only call packet")
             detached = json.loads(_raw(result))
             self._recheck()
             return {"schema": "contextual-legal-ir-cached-inference/v1", "runtime_selection": self.describe(),
                 "row_receipts": plan["row_receipts"], "raw_candidate_report": detached,
-                "model_inference_executed": True, "original_targets_accessed": False,
+                "model_inference_executed": observed, "original_targets_accessed": False,
                 "authority": dict(_AUTHORITY), "budgets": plan["budgets"], "consistency_scope": _SCOPE}
         except Exception as error:
             refused = error if isinstance(error, ContextualLegalRuntimeError) else ContextualLegalRuntimeError(str(error))
             refused.model_load_started = refused.model_load_performed = True
-            refused.model_inference_started, refused.model_inference_executed = started, returned
+            model_started, observed = self._model_execution_failure_observed(refused, started=started, returned=returned, result=result)
+            self._last_inference_call = dict(started=started, returned=returned, model_execution=observed)
+            refused.model_inference_started, refused.model_inference_executed = model_started, observed
             if returned:
                 try:
                     refused.raw_candidate_report = json.loads(_raw(result))

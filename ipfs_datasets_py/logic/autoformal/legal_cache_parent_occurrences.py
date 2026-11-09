@@ -18,6 +18,7 @@ LINEAGE_FIELDS = {"expected_provenance_report_sha256s", "expected_record_sha256s
     "expected_witness_manifest_sha256", "parent_page_inputs", "expected_parent_page_inputs_sha256"}
 VIEW_FIELDS = {"expected_selected_rows_report_sha256", "parent_descriptor", "expected_parent_descriptor_sha256",
     "preflight_report", "expected_preflight_sha256", "row_ordinals", "expected_row_sha256s"}
+COMPLETE_PARENT_128K_PROFILE = "complete-parent-128k/v1"
 DEFAULT_LIMITS = {"max_records": 128, "max_parent_views": 32, "max_source_characters": 65_536,
     "max_total_source_characters": 1024**2, "max_occurrences": 4096, "max_report_bytes": 8 * 1024**2}
 AUTHORITY = {**legacy.AUTHORITY, **dict.fromkeys(("producer_original_character_mapping_verified",
@@ -44,9 +45,18 @@ def _sha(value):
     _need(type(value) is str and legacy._SHA.fullmatch(value), "independent lowercase FULL SHA256 required")
 
 
-def _limits(value):
-    _need(value is None or type(value) is dict, "closed lower-only occurrence limits required")
+def _source_profile_limits(source_profile):
+    _need(source_profile is None or (type(source_profile) is str
+        and source_profile == COMPLETE_PARENT_128K_PROFILE), "unknown complete-parent source profile")
     bounds = dict(DEFAULT_LIMITS)
+    if source_profile is not None:
+        bounds["max_source_characters"] = 131_072
+    return bounds
+
+
+def _limits(value, source_profile=None):
+    _need(value is None or type(value) is dict, "closed lower-only occurrence limits required")
+    bounds = _source_profile_limits(source_profile)
     for key, limit in (value or {}).items():
         _need(key in bounds and type(limit) is int and 0 < limit <= bounds[key], "unknown or raised occurrence bound")
         bounds[key] = limit
@@ -99,7 +109,7 @@ def _literal_parent_legal_id(raw_row):
 
 def prepare_cache_parent_occurrences(provenance_reports, lineage_report, parent_text_views_report, *,
         expected_provenance_report_sha256s, expected_record_sha256s, expected_lineage_report_sha256,
-        lineage_inputs, expected_parent_text_views_report_sha256, parent_text_views_inputs, limits=None):
+        lineage_inputs, expected_parent_text_views_report_sha256, parent_text_views_inputs, source_profile=None, limits=None):
     """Replay custody and retain all literal overlapping candidates for every row.
 
     Every valid cache text is compared against every supplied parent view.
@@ -107,7 +117,7 @@ def prepare_cache_parent_occurrences(provenance_reports, lineage_report, parent_
     mapping. Local producer chain statuses are retained without reinterpretation.
     """
     from . import legal_parent_text_views as views
-    bounds = _limits(limits); _sha(expected_lineage_report_sha256)
+    bounds = _limits(limits, source_profile); _sha(expected_lineage_report_sha256)
     _need(type(lineage_inputs) is dict and set(lineage_inputs) == LINEAGE_FIELDS,
         "closed independently pinned complete v2 lineage replay inputs required")
     _need(type(expected_record_sha256s) is list and 0 < len(expected_record_sha256s) <= bounds["max_records"]
@@ -141,7 +151,8 @@ def prepare_cache_parent_occurrences(provenance_reports, lineage_report, parent_
     for original in checked_lineage["rows"]:
         raw = original["raw_row"]; identity = original["source_identity"]
         text = identity.get("source_text"); declared_sha = identity.get("source_sha256_observation")
-        valid_text = type(text) is str and bool(text) and len(text) <= bounds["max_source_characters"]
+        valid_text = type(text) is str and bool(text) and len(text) <= min(
+            DEFAULT_LIMITS["max_source_characters"], bounds["max_source_characters"])
         actual_sha = hashlib.sha256(text.encode("utf-8")).hexdigest() if valid_text else None
         source_hash_matches = valid_text and type(declared_sha) is str and declared_sha == actual_sha
         candidate_views = []; reference_views = []; total = 0; issues = []
@@ -211,6 +222,8 @@ def prepare_cache_parent_occurrences(provenance_reports, lineage_report, parent_
         "coverage_scope": "all_independently_pinned_supplied_cache_rows_bounded_observed_raw_text_against_all_supplied_parent_literal_fields_no_legal_id_or_legacy_hash_filter",
         "original_source_character_mapping_attested": False, "whole_cache_coverage_verified": False,
         "authority": dict(AUTHORITY)}
+    if source_profile is not None:
+        report["source_profile"] = source_profile
     report["occurrences_sha256"] = _digest(report); _wire(report, bounds["max_report_bytes"])
     return report
 

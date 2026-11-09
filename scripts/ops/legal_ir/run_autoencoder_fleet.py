@@ -138,7 +138,7 @@ def read_campaign(row):
 def storage_capacity(ledger_path, state_directory):
     """Observe existing shared roots and retained claims without modifying them."""
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_daemon_resources as resources
-    raw = _read(ledger_path)
+    raw = _read(ledger_path, resources.MAX_LEDGER_BYTES)
     roots = [row["path"] for row in raw["roots"]]
     state = _path(state_directory)
     if not any(state == _path(root) or _path(root) in state.parents for root in roots):

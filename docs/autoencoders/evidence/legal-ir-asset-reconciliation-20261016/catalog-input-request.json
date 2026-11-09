@@ -1,0 +1,147 @@
+{
+  "accelerate_root": "/home/barberb/lift_coding/external/ipfs_accelerate",
+  "max_records": 1000,
+  "output_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-current-catalog-20261016-a-01/exports/current-legal-ir-catalog.json",
+  "queries": [
+    {
+      "checkpoint_sha256": "0ac5c21656187d1d8040a02bcc0b4716a8093db17f05adc9a22e99d5b6b2cc00",
+      "dimension": 384,
+      "dimension_role": "input_embedding",
+      "format_id": null,
+      "ir_family_id": "legal_ir",
+      "profile_id": null,
+      "record_id": "ir-model-asset-binding/v1:10485c538f0f4a64e9ec0b6fa1c62e06af1f368446cd2c0e8e342e127e9055d9",
+      "role": "selected_contextual_semantic_decoder_state",
+      "schema_version": null,
+      "task_id": "semantic_IR_reconstruction"
+    },
+    {
+      "checkpoint_sha256": "8892a3261c0750a6247ba5400069ed18cad3354426e2095ed1d295287e3559b4",
+      "dimension": 768,
+      "dimension_role": "input_embedding",
+      "format_id": null,
+      "ir_family_id": "legal_ir",
+      "profile_id": null,
+      "record_id": "ir-model-asset-binding/v1:c992440d87ae57cffb689aa37fe2f3b63e9ae4c251a9ad65697148e576f840e2",
+      "role": "selected_contextual_semantic_decoder_state",
+      "schema_version": null,
+      "task_id": "semantic_IR_reconstruction"
+    },
+    {
+      "checkpoint_sha256": "6c7609b8f2f54afefbb832157b5f8a7590a77df4393feb9f3c61d8bf9be6caff",
+      "dimension": 384,
+      "dimension_role": "input_embedding",
+      "format_id": null,
+      "ir_family_id": "legal_ir",
+      "profile_id": null,
+      "record_id": "ir-model-asset-binding/v1:f758fb82fd2041d57af0b60a7dcf6d3cb27154315bd74a72c0c132645e5fabff",
+      "role": "control_wording_ce_selected_semantic_decoder_state",
+      "schema_version": null,
+      "task_id": "semantic_IR_reconstruction"
+    },
+    {
+      "checkpoint_sha256": "cf2d10df31f8cb1145369aeef3cfc717629dd7f14c69b5ba62ba956b5eaa4f26",
+      "dimension": 384,
+      "dimension_role": "input_embedding",
+      "format_id": null,
+      "ir_family_id": "legal_ir",
+      "profile_id": null,
+      "record_id": "ir-model-asset-binding/v1:48c8077b2266bb1972652f7517643d664dc166429df63bf0b687df441b12e787",
+      "role": "control_wording_ce_last_attempt_semantic_decoder_state",
+      "schema_version": null,
+      "task_id": "semantic_IR_reconstruction"
+    },
+    {
+      "checkpoint_sha256": "d2439394a7827b55c363a8f9b7f5ad74c4a9cf6875e869886c6840ba74088b05",
+      "dimension": 384,
+      "dimension_role": "input_embedding",
+      "format_id": null,
+      "ir_family_id": "legal_ir",
+      "profile_id": null,
+      "record_id": "ir-model-asset-binding/v1:8a90a70566137b0a0eccb89bb5c922bf323eadc9637b1a4a28f0c97117bab580",
+      "role": "balanced_wording_ce_selected_semantic_decoder_state",
+      "schema_version": null,
+      "task_id": "semantic_IR_reconstruction"
+    },
+    {
+      "checkpoint_sha256": "c7af74bd4dc8ab10b54692f665c2561b83a1417ed117d071f7c984be67611aa1",
+      "dimension": 384,
+      "dimension_role": "input_embedding",
+      "format_id": null,
+      "ir_family_id": "legal_ir",
+      "profile_id": null,
+      "record_id": "ir-model-asset-binding/v1:ba797ef100d2132650683b2cd80709a563bad78fa21b2563de9aaba16326efab",
+      "role": "balanced_wording_ce_last_attempt_semantic_decoder_state",
+      "schema_version": null,
+      "task_id": "semantic_IR_reconstruction"
+    },
+    {
+      "checkpoint_sha256": "c51cbb51150cb16de2e4617f7c1d03b53cf5f65d430ebadc0923ba199284405e",
+      "dimension": 384,
+      "dimension_role": "input_embedding",
+      "format_id": null,
+      "ir_family_id": "legal_ir",
+      "profile_id": null,
+      "record_id": "ir-model-asset-binding/v1:6ad44e541dabf272b043ee6545551164aced8886fa14fe5b21d3cef28dd16c3c",
+      "role": "dual_bank_retention_ce_selected_semantic_decoder_state",
+      "schema_version": null,
+      "task_id": "semantic_IR_reconstruction"
+    },
+    {
+      "checkpoint_sha256": "4269e6d957f9a31d2d9b09b0d90f345f5da00a003c0c898a59d7fcb3220ff61f",
+      "dimension": 384,
+      "dimension_role": "input_embedding",
+      "format_id": null,
+      "ir_family_id": "legal_ir",
+      "profile_id": null,
+      "record_id": "ir-model-asset-binding/v1:c743be38f98deb5e5c6c6348a9a573d84111f062c820f3689a50afde6e703b16",
+      "role": "dual_bank_retention_ce_last_attempt_semantic_decoder_state",
+      "schema_version": null,
+      "task_id": "semantic_IR_reconstruction"
+    }
+  ],
+  "schema": "legal-ir-current-catalog-read-request/v1",
+  "source_pins": [
+    {
+      "bytes": 40208,
+      "path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/__init__.py",
+      "sha256": "5083369f823be18cd467346f6f3b955925ec65bedafe9eb28a61ca8897997c03"
+    },
+    {
+      "bytes": 1596,
+      "path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/model_catalog/__init__.py",
+      "sha256": "ecd4d6099e267ee2b65284691a298285f44d5443da4a1142e8bb260ae530ffd0"
+    },
+    {
+      "bytes": 8918,
+      "path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/model_catalog/identity.py",
+      "sha256": "fbaf013ad8dd3035cfe04e9bfbb841aa72f8581ed04eb6a543abcd3d579caf44"
+    },
+    {
+      "bytes": 36178,
+      "path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/model_catalog/schema.py",
+      "sha256": "e1fa8ec5f8e9f856f626b40aa896df0bde490055978bddea0e4b8a9885b89f49"
+    },
+    {
+      "bytes": 1043,
+      "path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/model_catalog/sources/__init__.py",
+      "sha256": "b771d4d00b5cf8f167e9bb7aa3951e25a8d5a225b78b0e872c1a21eabf5672f4"
+    },
+    {
+      "bytes": 37159,
+      "path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/model_catalog/sources/static.py",
+      "sha256": "4f9b658aecc00820e2d87866445f298c248e6d9a39161b1499a884f6451281cf"
+    },
+    {
+      "bytes": 3331,
+      "path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/model_catalog/sources/persistent.py",
+      "sha256": "be262df4374f2fdcb08e8e517b7e05570bc524e94d79bcb47201bedff12edfa8"
+    },
+    {
+      "bytes": 19952,
+      "path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/model_catalog/sources/ir_persistent.py",
+      "sha256": "2cfdb2ad61c9bb1f2fe1c64cf6c70ca45c932d0ec53ccdd08640600d5730beed"
+    }
+  ],
+  "store_path": "/home/barberb/lift_coding/external/ipfs_accelerate/model_manager.duckdb"
+}

@@ -1,0 +1,360 @@
+{
+  "schema": "legal-ir-compact-persistent-conditioning-qualification/v1",
+  "recorded_at_utc": "2026-10-23T07:26:41.255840+00:00",
+  "provenance_root": "datasets_repository",
+  "scope": "Two authored384 mode cases qualify the explicit compact persistent checkpoint/training/model-only-prefix-score profile; no statutory or autonomous-generation quality result.",
+  "product": {
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_persistent_v1.py",
+    "bytes": 26676,
+    "sha256": "1fedac1842d9118603c46065eafc7ff47dfc4f72802c0c575a1b38969e1173d8"
+  },
+  "owning_test": {
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/autoformal/test_legal_compact_content_persistent_v1.py",
+    "bytes": 22626,
+    "sha256": "13dc80bedc14b8ba2eaa4f598a31aaa882229747d49e9a0a6ebef33b21229b82"
+  },
+  "cases_passed": 2,
+  "phases_passed": 6,
+  "physical_optimizer_updates": 20,
+  "unique_trajectory_steps_per_mode": 5,
+  "independently_observed_torch_counts": {
+    "adam_constructions": 8,
+    "autograd_grad_calls": 20,
+    "backward_calls": 20,
+    "clip_calls": 20,
+    "cross_entropy_calls": 20,
+    "gru_forwards": 38,
+    "model_constructions": 24,
+    "optimizer_updates": 20,
+    "state_restores": 40
+  },
+  "complete_artifact_count": 46,
+  "complete_artifact_bytes": 26337263,
+  "per_mode": {
+    "every_step": {
+      "actual_row_label_counts": {
+        "varied-fictional-conditional-prohibition": 64,
+        "varied-fictional-negated-obligation": 50,
+        "varied-fictional-permission": 46,
+        "varied-fictional-reversed-obligation": 46
+      },
+      "adapter_updated": true,
+      "counts": {
+        "adam_constructions": 4,
+        "autograd_grad_calls": 10,
+        "backward_calls": 10,
+        "clip_calls": 10,
+        "cross_entropy_calls": 10,
+        "gru_constructions": 12,
+        "gru_forwards": 19,
+        "optimizer_updates": 10,
+        "state_restores": 20
+      },
+      "equal_except_immediate_parent": true,
+      "final_progress": {
+        "epochs_completed": 1,
+        "optimizer_steps": 5,
+        "row_cursor": 1
+      },
+      "full_incremental_max_absolute_error": 1.1920928955078125e-07,
+      "panel": {
+        "bytes": 11504,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/compact-persistent-conditioning-v01/attempt-persistent-v01/pytest/cases/test_persistent_compact_zero_adapter_update_resu-wbkw9icy/authored-compact-persistent-mechanics-panel-v1.json",
+        "sha256": "f64b0d18311cf0759524920958a532a77026df97ebfd4885259b4e8784e50944"
+      },
+      "source_control_max_absolute_differences": {
+        "original_vs_shifted": 0.017285846173763275,
+        "original_vs_zero": 0.01091148192062974
+      },
+      "stages": [
+        {
+          "losses": [
+            6.204408168792725,
+            6.198418140411377,
+            6.131126880645752,
+            6.136614799499512,
+            6.11234712600708
+          ],
+          "row_ids": [
+            "varied-fictional-permission",
+            "varied-fictional-reversed-obligation",
+            "varied-fictional-conditional-prohibition",
+            "varied-fictional-negated-obligation",
+            "varied-fictional-permission"
+          ],
+          "stage": "uninterrupted",
+          "updates": 5
+        },
+        {
+          "losses": [
+            6.204408168792725,
+            6.198418140411377,
+            6.131126880645752
+          ],
+          "row_ids": [
+            "varied-fictional-permission",
+            "varied-fictional-reversed-obligation",
+            "varied-fictional-conditional-prohibition"
+          ],
+          "stage": "split_first",
+          "updates": 3
+        },
+        {
+          "losses": [
+            6.136614799499512,
+            6.11234712600708
+          ],
+          "row_ids": [
+            "varied-fictional-negated-obligation",
+            "varied-fictional-permission"
+          ],
+          "stage": "resumed",
+          "updates": 2
+        }
+      ],
+      "whole_checkpoint_equal": false,
+      "zero_adapter_exact_donor_parity": true
+    },
+    "first_step": {
+      "actual_row_label_counts": {
+        "varied-fictional-conditional-prohibition": 64,
+        "varied-fictional-negated-obligation": 50,
+        "varied-fictional-permission": 46,
+        "varied-fictional-reversed-obligation": 46
+      },
+      "adapter_updated": true,
+      "counts": {
+        "adam_constructions": 4,
+        "autograd_grad_calls": 10,
+        "backward_calls": 10,
+        "clip_calls": 10,
+        "cross_entropy_calls": 10,
+        "gru_constructions": 12,
+        "gru_forwards": 19,
+        "optimizer_updates": 10,
+        "state_restores": 20
+      },
+      "equal_except_immediate_parent": true,
+      "final_progress": {
+        "epochs_completed": 1,
+        "optimizer_steps": 5,
+        "row_cursor": 1
+      },
+      "full_incremental_max_absolute_error": 1.1920928955078125e-07,
+      "panel": {
+        "bytes": 11505,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/compact-persistent-conditioning-v01/attempt-persistent-v01/pytest/cases/test_persistent_compact_zero_adapter_update_resu-ezh7mzhs/authored-compact-persistent-mechanics-panel-v1.json",
+        "sha256": "99bac1ee6f21caf21f964c7cca6b0e160bf82c25545023f2cb57cecbd5e66bfc"
+      },
+      "source_control_max_absolute_differences": {
+        "original_vs_shifted": 0.017609477043151855,
+        "original_vs_zero": 0.011773407459259033
+      },
+      "stages": [
+        {
+          "losses": [
+            6.204408168792725,
+            6.212770462036133,
+            6.167697429656982,
+            6.175116539001465,
+            6.160856246948242
+          ],
+          "row_ids": [
+            "varied-fictional-permission",
+            "varied-fictional-reversed-obligation",
+            "varied-fictional-conditional-prohibition",
+            "varied-fictional-negated-obligation",
+            "varied-fictional-permission"
+          ],
+          "stage": "uninterrupted",
+          "updates": 5
+        },
+        {
+          "losses": [
+            6.204408168792725,
+            6.212770462036133,
+            6.167697429656982
+          ],
+          "row_ids": [
+            "varied-fictional-permission",
+            "varied-fictional-reversed-obligation",
+            "varied-fictional-conditional-prohibition"
+          ],
+          "stage": "split_first",
+          "updates": 3
+        },
+        {
+          "losses": [
+            6.175116539001465,
+            6.160856246948242
+          ],
+          "row_ids": [
+            "varied-fictional-negated-obligation",
+            "varied-fictional-permission"
+          ],
+          "stage": "resumed",
+          "updates": 2
+        }
+      ],
+      "whole_checkpoint_equal": false,
+      "zero_adapter_exact_donor_parity": true
+    }
+  },
+  "independent_CE_max_absolute_error": 9.095453519236685e-07,
+  "exposed_teacher_forced_observation": {
+    "row_id": "varied-fictional-permission",
+    "labels_including_EOS": 46,
+    "observation_point": "Before the fifth update, after four prior optimizer updates; not after five updates.",
+    "initial_pre_update_CE": 6.204408168792725,
+    "fifth_pre_update_CE": {
+      "every_step": 6.11234712600708,
+      "first_step": 6.160856246948242
+    },
+    "independent_validation_or_model_selection": false,
+    "scope": "One exposed training row and one seeded trajectory per mode; not held-out/autonomous accuracy or an architecture promotion."
+  },
+  "same_donor_population_and_initial_parameters_across_modes": true,
+  "parameter_inventory": "13 inherited body.* tensors plus source_to_embedding.weight; fresh14 parameter named Adam",
+  "source_space": "caller-declared unverified identity; fixed384 conditioning, fixed537codec and512 total target IDs",
+  "checkpoint_transport": "Complete structural/runtime validation without model or Adam restoration; train restores named state, score restores model only.",
+  "training_mask": 0,
+  "evaluation_gold_mask": 0,
+  "source_encoder_executed": false,
+  "generation_executed": false,
+  "legal_or_holdout_accuracy_established": false,
+  "training_gain_established": false,
+  "Lean_executed": false,
+  "source_READ_closed": true,
+  "native_resources_and_storage_released": true,
+  "canonical_installation": {
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/compact-persistent-conditioning-v01/installation-v02.json",
+    "bytes": 8310,
+    "sha256": "2937762c4f9fe5d7405412e6b2b29c9ab0c2c85e95d43875288d5b7f47e5d526"
+  },
+  "failed_first_installation": {
+    "receipt": {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/compact-persistent-conditioning-v01/installation-v01.json",
+      "bytes": 927,
+      "sha256": "0052439c2bfd456b9ba2a29d73653bd5560faed19fc9f7ced82833e553829968"
+    },
+    "disposition": "Original300second WRITE wait expired before grant; no source/test changes or numerical execution. Preserved separately with zero test credit."
+  },
+  "separate_peer_invocation": {
+    "receipt": {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/predicate-training-01/launch-receipt-v02.json",
+      "bytes": 13927,
+      "sha256": "19365bc56b71dad89fab42889cf0a78d6d6e6668abf54a2589d5e007ce0c81d7"
+    },
+    "returncode": 1,
+    "completed": false,
+    "native_cleanup_proven": true,
+    "source_READ_closed": true,
+    "storage_disposition": "retained",
+    "qualification_claimed": false,
+    "numerical_updates_recounted_for_this_review": false,
+    "scope": "Separate failed predicate-training invocation remains failed; retained positive artifacts are not reexecuted or added to persistent counts. Any later qualification keeps its separate receipt."
+  },
+  "limitations": [
+    "Both modes are exposed authored engineering populations; no independently selected validation/held-out comparison.",
+    "first_step includes a learned residual at BOS and is not the original initial-hidden-only donor.",
+    "Zero/shifted vector observations change inherited and new conditioning paths together; they do not isolate the adapter or measure legal fidelity.",
+    "Source-space labels are declarations, not authenticated native GTE compatibility or permitted inference context.",
+    "Existing compactv2/CP128 contracts remain separate; no cross-profile checkpoint relabeling or optimizer inheritance.",
+    "A compatible autonomous typed consumer and reviewed complete source/context/AST population remain separate requirements."
+  ],
+  "selected_inputs": [
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/compact-persistent-conditioning-v01/attempt-persistent-v01/exports/test-result.json",
+      "bytes": 32780,
+      "sha256": "aedec4805026d397ec75ec75d460115d879411ebbb30dcd1fbc828d087feb490"
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/compact-persistent-conditioning-v01/controller-complete-persistent-v01.json",
+      "bytes": 508,
+      "sha256": "f1352ebd526b128865676e53ea435938ed8d823a185a30c6aec66d642211349f"
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/compact-persistent-conditioning-v01/launch-persistent-v01.json",
+      "bytes": 7846,
+      "sha256": "9cce988b6b9a5461117a62c71d4e30cca09e8ed7aa0ee1607b7157b35927388f"
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/compact-persistent-conditioning-v01/candidate-manifest-v01.json",
+      "bytes": 47204,
+      "sha256": "0c0b7fbfb0c3ff8060fba195f521b52d32d87d26b4bd3d60b2a98c1e631a6aa7"
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/compact-persistent-conditioning-v01/test-static-contract-v01.json",
+      "bytes": 4270,
+      "sha256": "5822f8bdc40c5744e65aa80d61f3cfc270b05b0081cf3172f92d7ef036a873bd"
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/compact-persistent-conditioning-v01/source-freeze-receipt-v01.json",
+      "bytes": 145243,
+      "sha256": "6dbf980c9cdae2e1404007d618b1404657ceb684ec4d9d4a1897823ed9d4e9c3"
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/compact-persistent-conditioning-v01/installation-v02.json",
+      "bytes": 8310,
+      "sha256": "2937762c4f9fe5d7405412e6b2b29c9ab0c2c85e95d43875288d5b7f47e5d526"
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/compact-persistent-conditioning-v01/installation-v01.json",
+      "bytes": 927,
+      "sha256": "0052439c2bfd456b9ba2a29d73653bd5560faed19fc9f7ced82833e553829968"
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/compact-persistent-conditioning-v01/control-root-review-v02.json",
+      "bytes": 5139,
+      "sha256": "635cdac71efc76644e3f821344ac7be1ceb3ea7da33f9ff59c55295b63a37eaf"
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/compact-persistent-conditioning-v01/control-independent-review-v02.json",
+      "bytes": 11004,
+      "sha256": "b937068bb5192e41145944d9a5cd5c9c98a2afda883efde48b7c4d24ed492371"
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/compact-persistent-conditioning-v01/final-request-preflight-v01.json",
+      "bytes": 4563,
+      "sha256": "33473475009d96bf400d3e00cc1434323d0ca7cd80669ce3252a07bd3b3ca489"
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/compact-persistent-conditioning-v01/independent-saved-result-review-v01.json",
+      "bytes": 30102,
+      "sha256": "fdef6dc0591ec6b72b4607cb135d4d5ab31e2c64e45af78867db9467de341e0c"
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/compact-persistent-conditioning-v01/canonical-source-dependency-origin-map-v01.json",
+      "bytes": 48622,
+      "sha256": "c745956519844b12411d7974a33bc0175b3c225d2f4a0df2f8628c9427b502fb"
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/compact-persistent-conditioning-v01/documentation-v01/controls/prepare_documents_v01.py",
+      "bytes": 25803,
+      "sha256": "70f1a8b1c1ba37b0e2e29209060a0f0e3244b356681bb0d841fa82ba41ded82f"
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-normative-target-binding-20261021-01/controls/install_product_v02.py",
+      "bytes": 14517,
+      "sha256": "733d651fb88f08fd1f09c4075e0b6d2b496509c1dcac04926f9e00d373d85671"
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-counted-threshold-language-20261022-01/controls/catalog_append_wire_v01.py",
+      "bytes": 3733,
+      "sha256": "b6d7fc1f8d63d24f342e5801114de14ae9799486e9676a0eb251f84093197e8c"
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-refresh-20261022-03/review-02/prepare_refresh.py",
+      "bytes": 40037,
+      "sha256": "669b1b532f5600f9643fc2c072dff1fb8d335663fe3fb31e67a01ddfad8a6fa3"
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/predicate-training-01/launch-receipt-v02.json",
+      "bytes": 13927,
+      "sha256": "19365bc56b71dad89fab42889cf0a78d6d6e6668abf54a2589d5e007ce0c81d7"
+    }
+  ],
+  "new_execution_for_documentation": false,
+  "GitHub_qualification_performed": false,
+  "original_24_task_statuses_and_history_preserved": true
+}

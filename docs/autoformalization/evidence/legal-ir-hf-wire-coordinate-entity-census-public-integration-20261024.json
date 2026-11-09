@@ -1,0 +1,269 @@
+{
+  "JUnit": {
+    "bytes": 824,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-census-01/publication-v01/public-dependency-integration-v01/attempt-hf-wire-census-public-v02/exports/tests.xml",
+    "sha256": "780c9fac8263fcf3f6fa1f0c61a3cfc3a2a1bd73e38d0668abd7bd83428d7e58"
+  },
+  "actual_fileless_test_namespaces": 2,
+  "actual_genuine_initializer_aliases": {
+    "frozen": {
+      "path": "__init__.py",
+      "sha256": "bd518ec0f37a0a5c4c0b35e7cf36504716a1fe4dbe4f0a803629a965a9fdeeb1"
+    },
+    "frozen.tests": {
+      "path": "tests/__init__.py",
+      "sha256": "89588b0c2be9d872060e78aa68ccf95f94ca27ea6bcb79a43509d66c296c73ce"
+    },
+    "frozen.tests.unit": {
+      "path": "tests/unit/__init__.py",
+      "sha256": "9d566025eaa21543b52722147774afc45981154f677dcc38078a2632e5b52947"
+    },
+    "ipfs_datasets_py": {
+      "path": "ipfs_datasets_py/__init__.py",
+      "sha256": "f258f8eada774251feacd8e2ee2048efe56c89a8ee88efd50e4271ea41d43dc9"
+    },
+    "ipfs_datasets_py.logic.autoformal": {
+      "path": "ipfs_datasets_py/logic/autoformal/__init__.py",
+      "sha256": "9e8b39edd2c9885be6d8eb3765bdf9d93aa5071ccd17f3ebaead3c1c5a191a71"
+    },
+    "ipfs_datasets_py.utils": {
+      "path": "ipfs_datasets_py/utils/__init__.py",
+      "sha256": "78f4cd7f8e14b4fff482c0c91ada5c49f8b9edf707bffd9cd58840b5503e66c2"
+    },
+    "tests": {
+      "path": "tests/__init__.py",
+      "sha256": "89588b0c2be9d872060e78aa68ccf95f94ca27ea6bcb79a43509d66c296c73ce"
+    },
+    "tests.unit": {
+      "path": "tests/unit/__init__.py",
+      "sha256": "9d566025eaa21543b52722147774afc45981154f677dcc38078a2632e5b52947"
+    }
+  },
+  "actual_initializer_bypasses": 1,
+  "actual_namespace_observations": {
+    "ipfs_datasets_py.logic": {
+      "bypassed_initializer_source": {
+        "bytes": 4434,
+        "path": "ipfs_datasets_py/logic/__init__.py",
+        "sha256": "f25a9702ddc282092dbae1bc1731afdcc35576c10745487dccedaa531ccc9e79"
+      },
+      "genuine_fileless": false,
+      "initializer_execution": "bypassed_for_namespace_scoped_unit_qualification",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-census-01/publication-v01/public-dependency-integration-v01/source-hf-wire-census-public-v02/frozen/ipfs_datasets_py/logic"
+    },
+    "tests.unit.logic": {
+      "genuine_fileless": true,
+      "initializer_execution": "genuine_fileless_namespace",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-census-01/publication-v01/public-dependency-integration-v01/source-hf-wire-census-public-v02/frozen/tests/unit/logic"
+    },
+    "tests.unit.logic.autoformal": {
+      "genuine_fileless": true,
+      "initializer_execution": "genuine_fileless_namespace",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-census-01/publication-v01/public-dependency-integration-v01/source-hf-wire-census-public-v02/frozen/tests/unit/logic/autoformal"
+    }
+  },
+  "all224_source_leaves_Git_present": true,
+  "audit_limits": {
+    "Python_audit_scope_only": true,
+    "no_comprehensive_network_API_or_DB_connection_or_global_readonly_payload_observer_claim": true,
+    "original_audit_branches_after_compile_exec_AST_identical": true,
+    "original_owned_write_directory_fd_functions_AST_identical": true,
+    "socket_events": [
+      "socket.connect",
+      "socket.connect_ex",
+      "socket.getaddrinfo",
+      "socket.sendto"
+    ],
+    "third_party_C_IO_kernel_attested": false,
+    "third_party_cached_bytecode_attested": false,
+    "worker_initial_loader_compile_attested": false
+  },
+  "blocked_audited_operations": [],
+  "bypass_eligible_sources": 8,
+  "cases": 3,
+  "checked_public_product_source_files": 45,
+  "checked_source_buffers": {
+    "bytes": 1397379,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-census-01/publication-v01/public-dependency-integration-v01/attempt-hf-wire-census-public-v02/exports/checked-source-buffers.json",
+    "sha256": "21674a269ead8173ccf004172b151f47135889400a05e177d56705e6f7c99988"
+  },
+  "complete_attempt_bytes": 1799027,
+  "complete_attempt_files": 37,
+  "comprehensive_network_API_claim": false,
+  "control_independent_review": {
+    "bytes": 8634,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-census-01/publication-v01/public-dependency-integration-v01/control-independent-review-hf-wire-census-public-v02.json",
+    "sha256": "c9b1e53f8250371b76e18804e1325a735a6daebb981f6ff7f18ceef5731157bd"
+  },
+  "controller_complete": {
+    "bytes": 308,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-census-01/publication-v01/public-dependency-integration-v01/controller-complete-hf-wire-census-public-v02.json",
+    "sha256": "0bb0da217bb98ca6b9e6a9dd91e760f5868fd979598752ac5c0fa02db74337d1"
+  },
+  "current_public_required_product_sources": 22,
+  "database_observer_enrolled": false,
+  "evaluation_gold_mask": 0,
+  "fresh_entity_row_replay_enrolled": false,
+  "frozen_source_and_fixture_files": 224,
+  "genuine_initializer_aliases": 8,
+  "genuine_initializer_physical_paths": 6,
+  "global_readonly_payload_observer_claim": false,
+  "historical_full_qualification": {
+    "cases": 64,
+    "existing_v2_cases": 2,
+    "independent_saved_reuse_acceptance": {
+      "bytes": 9359,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-census-01/publication-v01/independent-original64-saved-reuse-review-v01.json",
+      "sha256": "490feda1132a5748df13a3ab605a2bea8c3e192a0263043b4a63d765ffa626b1"
+    },
+    "independent_source_classification": {
+      "bytes": 9495,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-census-01/publication-v01/independent-original64-source-classification-v01.json",
+      "sha256": "a86537289c2021dec4fb2417a0c7a3416f6c924de06a743234a36cef4cc02e73"
+    },
+    "new_wire_cases": 62,
+    "phase_passes": 192,
+    "portable": {
+      "bytes": 11851,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-census-01/publication-v01/candidate-v01/assets/docs/autoformalization/evidence/legal-ir-hf-wire-coordinate-entity-census-20261024.json",
+      "sha256": "2578fbd5450b8e6d052ade4917d9542ce648cc4a3f1ece0f927de735c919039b"
+    },
+    "scope": "Original namespace-scoped census64 qualification; retained unchanged with earlier failed generation and original closeouts, not rerun or pooled.",
+    "selectors": 20
+  },
+  "historical_required_sources": 23,
+  "import_origins": {
+    "bytes": 24653,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-census-01/publication-v01/public-dependency-integration-v01/attempt-hf-wire-census-public-v02/exports/import-origins.json",
+    "sha256": "0765e71027e5f5870d78166bf77fb557aa000c0a8e6187ee74d355c3e9a88ff3"
+  },
+  "independent_saved_result_acceptance": {
+    "bytes": 11103,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-census-01/publication-v01/public-dependency-integration-v01/independent-saved-result-review-v01.json",
+    "sha256": "ded78f06019282f2dd4a3cf4efd3e6edcd5d73cc3fb22354fbcd0e8ed9e0341c"
+  },
+  "limits": [
+    "Only the three selected existing census cases; original64/192 and earlier41/corpus90/correspondence103/parent42 cohorts remain separate.",
+    "The eight eligible bypass sources, one observed logic bypass, two fileless namespaces, eight initializer aliases and six initializer source paths are distinct populations.",
+    "The original four socket events and process/owned-write Python audits remain scoped observations. No comprehensive network API, DB-connection or global readonly-payload observer is claimed.",
+    "Third-party cached bytecode/C I/O and initial worker loader are outside attestation. The private dc6 plugin has its separate truthful control filename/alias; the public cef7 helper stays unexecuted context.",
+    "The public3 run measured943; publication base2b32 contains six peer documentation changes with identical224 runtime leaf bytes and unchanged two overlays. No qualification was rerun.",
+    "Prior census custody and ordered physical joins do not establish semantic entity bindings, governing source/edition/meaning, model width compatibility, training/gold or graph/Lean admission."
+  ],
+  "loaded_module_alias_count": 47,
+  "manifest": {
+    "bytes": 161787,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-census-01/publication-v01/public-dependency-integration-v01/manifest-hf-wire-census-public-v02.json",
+    "sha256": "6aaeda3e753e9d51c9e6de99fa76f6cbe1ed397eafeafe1d5ecd164b8632bc53"
+  },
+  "measured_public_base": "943e85c247cfc31cdb990518c6ae3bfedf210ceb",
+  "model_training_encoder_or_Lean_work_enrolled": false,
+  "model_widths_executed": [],
+  "namespace_profile": "wire-census-scoped-unit-namespaces/v1",
+  "nine_sparse_only_source_leaves": [
+    "ipfs_datasets_py/logic/bridge/__init__.py",
+    "ipfs_datasets_py/logic/integration/reasoning/__init__.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_production.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_adaptive_optimizer.py",
+    "ipfs_datasets_py/processors/__init__.py",
+    "ipfs_datasets_py/processors/legal_data/__init__.py",
+    "ipfs_datasets_py/processors/legal_data/uscode_release_schema.py",
+    "tests/unit/optimizers/__init__.py"
+  ],
+  "no_historical_output_hash_parity_or_relocated_producer_commitment_claim": true,
+  "original_durability": {
+    "bytes": 11451,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-census-01/publication-v01/public-dependency-integration-v01/attempt-hf-wire-census-public-v02/logs/validation-durability.json",
+    "sha256": "8bee91b1a37ff264547bb82582bd1f7b03e6e284d4bd4a8548e22ee9c5626cf6"
+  },
+  "original_launch": {
+    "bytes": 8089,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-census-01/publication-v01/public-dependency-integration-v01/launch-hf-wire-census-public-v02.json",
+    "sha256": "cca1c44979ade11cde34d35980d1c8d612e2016082e39bc78beb345bc281e23b"
+  },
+  "original_native_cleanup_proven": true,
+  "original_native_resource_released": true,
+  "original_opaque_owner_seals_stat_only": 36,
+  "original_source_READ_closed": true,
+  "original_storage_status": "released",
+  "owning_test": {
+    "bytes": 72509,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-census-01/publication-v01/candidate-v01/assets/tests/unit/logic/autoformal/test_legal_source_span_entity_census_v1.py",
+    "sha256": "83dcb4a78a7bef04c5a0e7b5a8c1e4348a97c5f92fbd5f4c9af6b77692b3125e"
+  },
+  "phase_passes": 9,
+  "private_orchestration": {
+    "alias": "_legal_ir_candidate_owned_tmp",
+    "compiled": true,
+    "executed": true,
+    "load_completed": true,
+    "product_module": false,
+    "source": {
+      "bytes": 15730,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-census-01/publication-v01/public-dependency-integration-v01/controls/orchestration_validation_pytest_v01.py",
+      "sha256": "dc6ae4f1cd27628a56db13fc656156c1b84df8ff999d4158ff25e70fac89f7a6"
+    }
+  },
+  "private_plugin_and_original_native_tooling_are_not_public_runtime_ports": true,
+  "public_dependency_files": 222,
+  "public_span_cache_sha256": "e35f5333fc4776d5b519ec84a38f42715a76ff7b20a776a35b7e01ea9342b068",
+  "public_validation_helper_executed": false,
+  "public_validation_pytest_sha256": "cef7fd00277c38ac55ce80ae0e6234eeda36559ab56a9de4e0954d0590327d31",
+  "publication_base": "2b32d87bcaae678c479a521d3289aa22dee060d4",
+  "publication_preparer_raw_payload_read_or_hash": false,
+  "publication_ready": true,
+  "publication_runtime_source_equivalence": {
+    "bytes": 47392,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-census-01/publication-v01/publication-runtime-source-equivalence-v01.json",
+    "sha256": "f97f88add36cc9115954e8fcc3b80db13bbca5198a69fb33e6f6cd21b74247c5"
+  },
+  "qualified_public_closure_map": {
+    "bytes": 476890,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-census-01/publication-v01/qualified-public-closure-v01.json",
+    "sha256": "1fd199098e44fe27da727b9f7bd433a62c39a81959696ee7ce83bc787f7dfce1"
+  },
+  "qualified_source_test_overlays": 2,
+  "recorded_at_utc": "2026-10-24T17:50:42.812089+00:00",
+  "request": {
+    "bytes": 92161,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-census-01/publication-v01/public-dependency-integration-v01/request-hf-wire-census-public-v02.json",
+    "sha256": "d1ab383f04160e1d4e6d64f6a2b6393ca29183abf9eabe2120e54164216ba7b2"
+  },
+  "result": {
+    "bytes": 3524,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-census-01/publication-v01/public-dependency-integration-v01/attempt-hf-wire-census-public-v02/exports/test-result.json",
+    "sha256": "07c6f8f6270f25f1a8e73441b83ce708e9c81966ce8287fa4f6658031201a826"
+  },
+  "root_saved_result_summary": {
+    "bytes": 7148,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-census-01/publication-v01/public-dependency-integration-v01/root-saved-result-summary-v01.json",
+    "sha256": "893e8a9c2f4344c6666ec6e36321a70c265cbde632e49a3e52b63a18202d51ab"
+  },
+  "schema": "legal-ir-hf-wire-coordinate-entity-census-public-integration/v1",
+  "selected_case_nodes": [
+    "tests/unit/logic/autoformal/test_legal_source_span_entity_census_v1.py::test_wire_census_genuine_roundtrip_retains_originals_and_prior_census_without_rescan[bytes]",
+    "tests/unit/logic/autoformal/test_legal_source_span_entity_census_v1.py::test_wire_census_final_original_replay_refuses_physical_file_drift[entity]",
+    "tests/unit/logic/autoformal/test_legal_source_span_entity_census_v1.py::test_wire_census_final_original_replay_refuses_physical_file_drift[paired]"
+  ],
+  "semantic_entity_bindings": null,
+  "source": {
+    "bytes": 58976,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-census-01/publication-v01/candidate-v01/assets/ipfs_datasets_py/logic/autoformal/legal_source_span_entity_census_v1.py",
+    "sha256": "21d9a7514092c80b2f7bcf79d75f57669c6b62c8ed536c72a240879b1856adb4"
+  },
+  "source_correspondence_or_graph_Lean_admission": false,
+  "source_fixture_manifest": {
+    "bytes": 434483,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-census-01/publication-v01/integration-source-fixture-manifest-v01.json",
+    "sha256": "1fa5f29252fa692c6b2e8353b12980b30a034e15d0a8b275a8657e04e1854c6b"
+  },
+  "source_law_cache_table_processing": false,
+  "sparse_worktree_absence_is_not_Git_absence": true,
+  "status": "three_existing_current_public_dependency_fixture_cases_qualified",
+  "statutory_source_edition_or_meaning_decided": false,
+  "third_party_C_IO_kernel_attested": false,
+  "training_mask": 0,
+  "whole_public_package_or_tooling_qualification": false,
+  "worker_initial_loader_compile_attested": false
+}

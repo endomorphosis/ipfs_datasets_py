@@ -353,3 +353,101 @@ except Exception as error:
                     if stream is not None: stream.close()
         owned.check_usage(attempt)
         owned.finalize(attempt,artifacts_durable=True)
+
+
+@pytest.mark.parametrize("timeout", [True, False, 0, -1, 60.001, float("nan"),
+    float("inf"), float("-inf"), "60", None, 10**1000])
+def test_disk_metadata_timeout_refuses_invalid_budget_before_path_or_lock(timeout, monkeypatch):
+    monkeypatch.setattr(runtime.resources, "_safe_path", lambda *a, **k: pytest.fail("invalid timeout touched a path"))
+    with pytest.raises(runtime.SpanIngestRuntimeError, match="disk metadata lock timeout"):
+        runtime._ledger("/never-opened", lock_timeout_seconds=timeout)
+
+
+def _metadata_ledger(tmp_path):
+    root = tmp_path / "owned"
+    root.mkdir()
+    ledger = tmp_path / "native-disk.json"
+    value = dict(schema=runtime.resources.SCHEMA,
+        roots=[runtime.resources._root_identity(root)],
+        limit_bytes=runtime.resources.MAX_STORAGE_BYTES, reservations={})
+    ledger.write_text(json.dumps(value))
+    return ledger, value
+
+
+@pytest.mark.parametrize("kind", ["release", "expiry", "replace_lock", "replace_root"])
+def test_disk_metadata_reader_obeys_actual_native_lock_and_fresh_identity(tmp_path, monkeypatch, kind):
+    """Real flock with a bounded thread; no DB, lease grant or semantic result."""
+    from concurrent.futures import ThreadPoolExecutor
+    from threading import Event
+    ledger, value = _metadata_ledger(tmp_path)
+    before = ledger.read_bytes()
+    lock = ledger.with_name(ledger.name + ".lock")
+    descriptor = os.open(lock, os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600)
+    actual_flock = runtime.resources.fcntl.flock
+    actual_flock(descriptor, runtime.resources.fcntl.LOCK_EX | runtime.resources.fcntl.LOCK_NB)
+    blocked = Event()
+    def observed_flock(fd, operation):
+        try:
+            return actual_flock(fd, operation)
+        except BlockingIOError:
+            blocked.set()
+            raise
+    monkeypatch.setattr(runtime.resources.fcntl, "flock", observed_flock)
+    timeout = 0.2 if kind == "expiry" else 2
+    pool = ThreadPoolExecutor(max_workers=1)
+    try:
+        result = pool.submit(runtime._ledger, ledger, lock_timeout_seconds=timeout)
+        assert blocked.wait(2), "reader did not encounter the actual held exclusive lock"
+        if kind == "expiry":
+            with pytest.raises(runtime.SpanIngestRuntimeError, match="metadata read lock unavailable"):
+                result.result(timeout=2)
+        else:
+            assert not result.done()
+            if kind == "replace_lock":
+                lock.rename(lock.with_name("retained-original.lock"))
+                lock.write_bytes(b"")
+            elif kind == "replace_root":
+                root = Path(value["roots"][0]["path"])
+                root.rename(tmp_path / "retained-original-root")
+                root.mkdir()
+            actual_flock(descriptor, runtime.resources.fcntl.LOCK_UN)
+            if kind == "release":
+                assert result.result(timeout=3) == value
+            else:
+                message = "lock identity changed" if kind == "replace_lock" else "root identity changed"
+                with pytest.raises(runtime.SpanIngestRuntimeError, match=message):
+                    result.result(timeout=3)
+        assert ledger.read_bytes() == before
+    finally:
+        actual_flock(descriptor, runtime.resources.fcntl.LOCK_UN)
+        os.close(descriptor)
+        pool.shutdown(wait=True)
+
+
+@pytest.mark.parametrize("kind", ["ledger_symlink", "lock_symlink", "lock_hardlink", "lock_directory"])
+def test_disk_metadata_extended_wait_never_bypasses_path_or_lock_custody(tmp_path, kind):
+    ledger, value = _metadata_ledger(tmp_path)
+    before = ledger.read_bytes()
+    lock = ledger.with_name(ledger.name + ".lock")
+    retained = tmp_path / "retained-object"
+    if kind == "ledger_symlink":
+        ledger.rename(retained)
+        ledger.symlink_to(retained)
+    elif kind == "lock_symlink":
+        retained.write_bytes(b"retained lock fixture")
+        lock.symlink_to(retained)
+    elif kind == "lock_hardlink":
+        retained.write_bytes(b"retained lock fixture")
+        os.link(retained, lock)
+    else:
+        lock.mkdir()
+    with pytest.raises((runtime.SpanIngestRuntimeError, runtime.resources.DaemonResourceError)):
+        runtime._ledger(ledger, lock_timeout_seconds=60)
+    assert ledger.read_bytes() == before
+
+
+def test_existing_metadata_callers_keep_the_five_second_default(tmp_path):
+    import inspect
+    ledger, value = _metadata_ledger(tmp_path)
+    assert inspect.signature(runtime._ledger).parameters["lock_timeout_seconds"].default == 5
+    assert runtime._ledger(ledger) == value

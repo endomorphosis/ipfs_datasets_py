@@ -77,7 +77,7 @@ def test_router_bootstraps_ipfs_kit_when_kubo_cli_missing(monkeypatch):
     monkeypatch.setenv("IPFS_DATASETS_PY_MINIMAL_IMPORTS", "1")
     monkeypatch.setenv("IPFS_DATASETS_PY_ROUTER_CACHE", "0")
     monkeypatch.delenv("IPFS_DATASETS_PY_ENABLE_IPFS_KIT", raising=False)
-    monkeypatch.delenv("IPFS_DATASETS_AUTO_INSTALL", raising=False)
+    monkeypatch.setenv("IPFS_DATASETS_AUTO_INSTALL", "1")
     monkeypatch.delenv("IPFS_AUTO_INSTALL", raising=False)
 
     _purge_modules("ipfs_datasets_py")

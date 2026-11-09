@@ -1,0 +1,58 @@
+{
+  "method": "Exact decoded original receipt with only native reservation_id omitted; original whole-byte SHA256 retained. No new durability or admission assertion.",
+  "omitted_fields": [
+    "reservation_id"
+  ],
+  "original_receipt": {
+    "bytes": 1193,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-current-catalog-20261016-a-01/logs/validation-durability.json",
+    "sha256": "0fb8a415d553011ca0ca9ff0de15a940b7ad99d7ed474aac7838a1ab5c364809"
+  },
+  "projection": {
+    "admitted": false,
+    "arbitrary_descendant_containment": false,
+    "files": [
+      {
+        "bytes": 740075,
+        "device": 66306,
+        "inode": 73161460,
+        "path": "exports/current-legal-ir-catalog.json",
+        "sha256": "c3aef6d860c3bcedb3154af13dcdc844fb0f48e8fa4d5aa2dfdcc2a761d7b235"
+      },
+      {
+        "bytes": 571,
+        "device": 66306,
+        "inode": 73161461,
+        "path": "logs/execution.json",
+        "sha256": "50a94339d70ed3573e7ccb69671a886aea0fef5c153c22d7d063641fd72e8226"
+      },
+      {
+        "bytes": 545,
+        "device": 66306,
+        "inode": 73161462,
+        "path": "logs/result.json",
+        "sha256": "140d862e3071992e8cd339dc5ba48722d44ce494018a2675803fb6f811470fd8"
+      },
+      {
+        "bytes": 0,
+        "device": 66306,
+        "inode": 73161459,
+        "path": "logs/stderr.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "bytes": 0,
+        "device": 66306,
+        "inode": 73161458,
+        "path": "logs/stdout.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ],
+    "request_sha256": "fcc0b0d26dd4848b14329f727449e0240abdac3be2eccd844727a9653abae2e0",
+    "result_path": "logs/result.json",
+    "result_sha256": "140d862e3071992e8cd339dc5ba48722d44ce494018a2675803fb6f811470fd8",
+    "schema": "owned-validation-durability/v1",
+    "scope": "owned_files_fsynced_after_recorded_group_observed_stopped"
+  },
+  "schema": "legal-ir-catalog-native-durability-public-projection/v1"
+}

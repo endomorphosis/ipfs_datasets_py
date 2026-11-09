@@ -1,0 +1,826 @@
+{
+  "Lean_export_and_trust": {
+    "conditional_theorem": "Shared consequence_of_definition assumes hDef, hNorm and hBody at one evaluation time under the same Interpretation, deriving modalActionAt. O/P/F and atomic predicates remain interpretation parameters. It does not prove actual action truth, statute truth or compliance.",
+    "conflict_boundary": "typed_adapter.detect_norm_conflicts compares explicit actor/action and selected flags and may mark unresolved false when priority/exception metadata exists. Treat it as a diagnostic only. Actual applicability/precedence/contradiction closure must use reviewed typed identities and constraint_query/temporal-authority evidence; empty diagnostics do not prove global consistency.",
+    "existing_extension_reuse": "legal_canonical_qualified and legal_canonical_calendar already lower explicit richer qualifier/calendar interpretations through existing native owners; reuse their exact contracts where adequate before inventing another lowerer. They do not infer source meaning or automatically join a definition graph.",
+    "implemented_native_connected_profile": "section-local-defined-category-unary-norm/v1",
+    "native_build_effects": "Existing builders capture toolchain/binary/source/import/artifact/owner pins, run bounded native compilers, verify full expected artifacts and post-run inputs, then write retained evidence. This survey ran none.",
+    "no_placeholder_gate": "Complete generated module/import population, no sorry/admit/axiom fallback, exact native AST reparsing and actual pinned Lean execution are required. Incremental qualification checks each theorem axiom-dependency list is empty; do not relabel a fingerprint-only lean_units build as a norm proof.",
+    "orthogonal_outcomes": [
+      "source byte custody",
+      "source/version/applicability decision",
+      "independently reviewed interpretation",
+      "complete supported representation",
+      "definition/dependency closure",
+      "native family translation",
+      "Lean compilation",
+      "exact conditional theorem/axiom verification",
+      "training-label admission"
+    ],
+    "review_crypto_reuse": "Reuse legal_graph_review and corpus_definition_review Profile G detached Ed25519 verification with distinct action/audience. Pin selected trust registry/policy, exact evidence bodies, reviewers/roles/principals, revocation/time and dependencies. Synthetic keys/signature success do not establish legal competence, independence, truth or admission.",
+    "scale": "Current corpus preparation is bounded to64 candidates/8MiB inputs+project; legacy lean_units caps24 clauses/16 term-statutes and records overflow. Scaling requires complete partition/root accounting and dependency-connected modules, never capped-prefix success.",
+    "supported_shape": "Explicit caller-declared section-local means/unary Boolean definition, followed in the same exact section/version by a complete leaf Each <category> shall|may|shall not <one-word-action>.",
+    "unsupported_by_that_profile": [
+      "cross-section/title-wide definition use",
+      "inclusion/exclusion as equivalence",
+      "typed ground persons/offices/organizations/events",
+      "object or relation arguments",
+      "conditions and exceptions",
+      "numerical bounds",
+      "temporal origins or calendars",
+      "counterfactual entitlement",
+      "external definition or legal-sort resolution"
+    ]
+  },
+  "current_retained_pilot_observations": {
+    "authority": "Facts quoted from bound local pilot specification, not an independently rerun dataset census or native/model result.",
+    "cache_match_operative_unit_intersections": 0,
+    "candidate_operative_units": 9,
+    "definition_candidate": "Retained2024 10USC101 acquisition is a candidate dependency; canonical extraction, cross-source scope/applicability, source correspondence and meaning still require review.",
+    "interpretation": "Current engineering seed is largely heading/citation/history fragments; notes are not presumed inoperative. Preserve zero/ambiguous matches and every original physical occurrence.",
+    "literal_matches": 96,
+    "next_connected_target": "One actual independently reviewed definition and one complete real norm user, then a second real user to test exact sharing; later expand toward20-40 provisions by connected dependency component.",
+    "retained_cache_observations": 20,
+    "training_boundary": "Local plans report completed but scientifically rejected/unpromoted F18 and retained qualified F17 archive at their dated cutoff. This survey verifies no numerical outputs, checkpoint publication or newer training state.",
+    "whole_cache_prevalence_established": false
+  },
+  "effects": {
+    "git_mutations": false,
+    "model_or_proof_promotion": false,
+    "native_lean_execution": false,
+    "network_requests": false,
+    "new_cryptography": false,
+    "numerical_inference": false,
+    "runtime_imports": false,
+    "source_dataset_replay": false,
+    "source_edits": false,
+    "tests_executed": 0,
+    "training": false
+  },
+  "existing_24_task_DAG": {
+    "critical_edges": [
+      "LIR-04 before LIR-08",
+      "LIR-09 before LIR-10",
+      "LIR-11 and LIR-14 before LIR-15"
+    ],
+    "path": "artifacts/autoencoder-comprehensive-review-20261013/implementation-backlog.json",
+    "pilot_specification": "implementation_plan/docs/legal-ir-connected-statutory-pilot-spec-2026-10-15.md",
+    "reuse": "Keep existing LIR-01 through LIR-24 IDs/dependencies; this survey adds no competing task graph."
+  },
+  "existing_local_roadmap_inputs": [
+    {
+      "bytes": 141770,
+      "custody": "local parent working bytes observed; source-only plan/backlog, not assumed published production",
+      "path": "implementation_plan/docs/legal-ir-training-review-and-corpus-plan-2026-10-13.md",
+      "sha256": "ce5867d595d5ad50806cf63ba4b32de1587da77f92a786db19b026005592e080"
+    },
+    {
+      "bytes": 170799,
+      "custody": "local parent working bytes observed; source-only plan/backlog, not assumed published production",
+      "path": "implementation_plan/docs/legal-ir-span-graph-lean4-implementation-plan-2026-10-13.md",
+      "sha256": "35c6d99446b4bc63f828ca6733f2016a73afb555974f2d5267aaa9a58deee509"
+    },
+    {
+      "bytes": 16255,
+      "custody": "local parent working bytes observed; source-only plan/backlog, not assumed published production",
+      "path": "implementation_plan/docs/legal-ir-connected-statutory-pilot-spec-2026-10-15.md",
+      "sha256": "944f0d9e48249dc06dfc9d37ceb0563194ae2471c86c8753cfdc236b1e2bc5a8"
+    },
+    {
+      "bytes": 1209878,
+      "custody": "local parent working bytes observed; source-only plan/backlog, not assumed published production",
+      "path": "artifacts/autoencoder-comprehensive-review-20261013/implementation-backlog.json",
+      "sha256": "b59135ae5bbe84efe712cd206f2f9339bbae8cb4c12998fad1408f92b3e26224"
+    }
+  ],
+  "graph_and_definition_contract": {
+    "candidate_graph_schema": "legal-corpus-candidate-graph/v1",
+    "closed_local_graph_bounds": {
+      "edges": 8192,
+      "external_endpoints_supported": false,
+      "nodes": 4096
+    },
+    "companion_namespace": "Node content_cid points at the source/version/occurrence/interpretation/scope/term/definition/norm/AST companion payload. Carry complete companions and source/ref closure alongside reconstructable graph transport.",
+    "identity_layers": [
+      "spelling occurrence",
+      "scoped lexical sense",
+      "denoted entity",
+      "definition assertion",
+      "norm assertion",
+      "source edition and applicability scope"
+    ],
+    "invalidation": "Bind all supplied lookup partitions including negative/unavailable states. A new definition, changed scope/edition/policy or formerly empty partition can invalidate lookup users and every reverse-reachable dependent. This is conservative supplied closure, not exhaustive legal dependency discovery.",
+    "node_endpoint_namespace": "Every edge src_cid/dst_cid addresses the graph NODE ENVELOPE record_cid, not its content_cid, companion payload CID, stable_id, a primary-graph entry_cid or a label.",
+    "resolver_profile": "declared-partition-existing-scoped-symbol-resolution/v1",
+    "resolver_scale_bounds": {
+      "lookups": 128,
+      "partitions": 32,
+      "scopes": 128,
+      "table_items": 256
+    },
+    "resolver_truth_boundary": "Supplied complete partition tables, explicit query route and declared release/edition/applicability must match. Keep empty tables and unavailable placeholders. A successful lookup does not prove scope governs the source or create a native definition-use binding.",
+    "typed_edges": [
+      "DEFINES: definition_assertion -> term_sense",
+      "USES_DEFINITION: norm/definition assertion -> definition_assertion",
+      "DENOTES: occurrence -> entity/term_sense",
+      "HAS_ACTOR/HAS_ACTION/HAS_OBJECT/HAS_CONDITION/HAS_EXCEPTION/HAS_TEMPORAL_CONSTRAINT: norm_assertion -> supported typed destination with explicit ordinal"
+    ]
+  },
+  "limitations": "Read-only static owner/plan survey only. No complete remote dataset census, actual original source replay, production trust registry assessment, numerical checkpoint reload, scientific result qualification, native Lean build, trained-model improvement, legal conclusion, deployed UID/worker handoff or token saving is established.",
+  "meaningful_failure_controls": [
+    "Alter raw source, extractor/view revision, Unicode/UTF8 boundary or physical occurrence while preserving text; refuse custody joins rather than re-searching a convenient match.",
+    "Same label in different section/title/edition/applicability, repeated identical paragraphs, includes/excludes versus means, unavailable/empty/competing definition partitions, aliases and explicit external target mismatch.",
+    "Dangling typed endpoints, payload CID used as node endpoint, missing interpretation/source companions, cross-alternative edges, duplicate role ordinal, extra unsupported AST/source residue and source-unit omission/reordering.",
+    "Actor/recipient/object reversal, approval as omitted condition, quantifier/numerical limit loss, non-entitlement collapsed to prohibition, exception attachment drift, duration vs absolute date vs law-effective window conflation.",
+    "Changed definition/negative lookup partition propagates invalidation; unchanged unrelated component remains reusable. Changed source/import/toolchain/binary/owner/policy prevents stale .olean/proof-cache reuse.",
+    "Build-only identity fingerprints, fake runner, missing .olean, admitted placeholders or nonempty forbidden axiom dependency must not count as reviewed statutory formalization.",
+    "Review-domain replay, unknown/revoked key, missing legal/formal role or evidence, reused source-only signature as semantic/training/Lean authority; refuse through existing verifier and downstream admission policy.",
+    "Budget/resource/currentness/lease failure, interrupted export, duplicate/replayed completion and stale compiler producer must retain explicit non-success and cleanup/resume evidence without starting a second database owner."
+  ],
+  "published_owner_bindings": [
+    {
+      "bytes": 109257,
+      "implemented_role": "Measured immutable seven-facet semantic payload, separate source maps and unsupported-construct records; typed bridge composes existing representations without flattening family identities.",
+      "path": "ipfs_datasets_py/logic/legal_ir/canonical_contracts.py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b",
+      "symbols": {
+        "CanonicalRoundTripIR": 571,
+        "CanonicalRule": 363,
+        "CanonicalTypedBridge": 2338,
+        "CompilerRequest": 786,
+        "DecompilerRequest": 894
+      }
+    },
+    {
+      "bytes": 37034,
+      "implemented_role": "Deterministic, caller-vocabulary-bound projection around existing DeonticConverter; no model or inferred repair fallback.",
+      "path": "ipfs_datasets_py/logic/legal_ir/canonical_compiler.py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "daa148e076ebfd0e61f5a06a915bb924023873bcad5b41923976a33e2693ebdd",
+      "symbols": {
+        "TypedDeonticCanonicalCompiler": 755,
+        "project_legal_norms": 555
+      }
+    },
+    {
+      "bytes": 13437,
+      "implemented_role": "Selected deterministic source-withheld realization; does not recover original legal text and is not a learned decoder.",
+      "path": "ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "79eeb9072e74e68dc5fab7640b5ad49e82131d0f35232ff473c7f2dfbe232c64",
+      "symbols": {}
+    },
+    {
+      "bytes": 27010,
+      "implemented_role": "Text to L1, source-withheld text realization, then recompilation to L2; pipeline success is separate from semantic parity/noninferiority admission.",
+      "path": "ipfs_datasets_py/logic/legal_ir/canonical_roundtrip.py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "7ab374e2f40b2ded4f3a0612fea03532a40cd03d43798a6585a2ddae4c537c6e",
+      "symbols": {
+        "CanonicalSemanticRoundTrip": 448,
+        "CanonicalSemanticRoundTripResult": 163
+      }
+    },
+    {
+      "bytes": 5961,
+      "implemented_role": "legal-surface-ir/v2 distinguishes means/includes/excludes definitions, policies and O/P/F norms; atoms still require semantic interpretation.",
+      "path": "ipfs_datasets_py/logic/legal_ir/extended_contracts.py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "f3b0b4870f013bd7bb7657a522c7f2d11bde705e586a17cdd73daf18387d8509",
+      "symbols": {
+        "DefinitionV2": 33,
+        "ExtendedLegalIR": 98,
+        "NormV2": 73,
+        "PolicyV2": 53
+      }
+    },
+    {
+      "bytes": 580,
+      "implemented_role": "Published implementation validates nonempty input and returns None for every source; richer contracts do not imply an implemented compiler.",
+      "path": "ipfs_datasets_py/logic/legal_ir/extended_compiler.py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "cfc93cda333f0f9fa7795c8db262588114b599a34a59012be2d93642dde7e2dd",
+      "symbols": {
+        "compile_extended": 11
+      }
+    },
+    {
+      "bytes": 1208,
+      "implemented_role": "Legal-domain checkpoint_hub facade; experimental learned candidates can abstain and never replace deterministic compiler or grant proof authority.",
+      "path": "ipfs_datasets_py/logic/legal_ir/autoencoder.py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "ae4d2e31191261b2ed2ff235ea549c3d988bbc243ac8519550adb56d9bfe4a90",
+      "symbols": {
+        "formalize_with_autoencoder": 16,
+        "open_autoencoder": 5
+      }
+    },
+    {
+      "bytes": 21764,
+      "implemented_role": "Joins independently supplied source/context and retained vectors before dimensional inference; preserves checkpoint/lineage/context/latent-control identities and unaccepted outputs.",
+      "path": "ipfs_datasets_py/logic/legal_ir/canonical_span_decoder.py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "c25044aeb63d66b73feac95de0ca6d49339774edb7611b1b956cf6307db438ec",
+      "symbols": {
+        "decode_with_preflight": 329,
+        "validate_preflight_decoding": 355
+      }
+    },
+    {
+      "bytes": 12983,
+      "implemented_role": "Exact bounded UTF8 transport of source-anchored candidate records, not semantic accuracy or original-source reconstruction from latent vectors.",
+      "path": "ipfs_datasets_py/logic/legal_ir/canonical_byte_codec.py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "e2e1859fb2c71c2c2b758516dc35149e7a742d39f6950be76b0962e226d7cafb",
+      "symbols": {}
+    },
+    {
+      "bytes": 7279,
+      "implemented_role": "Bounded canonical content-addressed record envelopes; integrity alone is not authenticity, review, law or proof.",
+      "path": "ipfs_datasets_py/logic/autoformal/corpus_contracts.py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "b89146e2471b7335f23115222c5a9bc5298a20bb02f02cce5d91496e6563d8aa",
+      "symbols": {
+        "load_json_bytes": 150,
+        "seal_record": 124,
+        "validate_record": 137
+      }
+    },
+    {
+      "bytes": 16185,
+      "implemented_role": "Raw artifact and exact extracted view identities, separate Unicode-codepoint/UTF8 occurrence geometry and declared open context.",
+      "path": "ipfs_datasets_py/logic/autoformal/corpus_source.py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "6e4be77cfc27a750b11aa57bb92baa92617c57d5c4a26316e25563aa715ec257",
+      "symbols": {
+        "build_context_declaration": 280,
+        "build_source_occurrence": 199,
+        "build_source_version": 111
+      }
+    },
+    {
+      "bytes": 19956,
+      "implemented_role": "Independent acquisition/content pins and all exact comparison occurrences; does not choose cache correspondence or governing edition.",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_official_source_custody.py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "876bb6618fd76f6be33b995e9597796e4a5b4d95fa6689129beb3fb918b796e7",
+      "symbols": {
+        "prepare_official_document": 123,
+        "prepare_source_occurrence_inventory": 231
+      }
+    },
+    {
+      "bytes": 24944,
+      "implemented_role": "Complete distinct V2 markup view with exact blocks/geometry; markup classes are not reviewed legal roles and do not replace V1/Parquet coordinates.",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_official_document_views.py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "204e91255e5587a5e79d0de263a035934c811c5f7ab8b780dd28f433f97f95e4",
+      "symbols": {
+        "exact_view_occurrences": 380,
+        "occurrence_region_intersections": 397,
+        "prepare_official_document_view": 318
+      }
+    },
+    {
+      "bytes": 23949,
+      "implemented_role": "Existing official-shaped paragraph extraction, exact physical selectors and open context/dependency packets; notes may carry legal effect.",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_statutory_context.py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "1f1e607c7c8d1e479ae5b79e17f928571e3da49f0ad4180dfc93e609d0d47dc2",
+      "symbols": {
+        "build_context_packet": 398,
+        "extract_document": 107,
+        "source_selector": 318
+      }
+    },
+    {
+      "bytes": 79343,
+      "implemented_role": "Durable DuckDB span queue/compiler cache, term-based invalidation and raw exports; legacy helper defaults and grouping are not legal admission.",
+      "path": "ipfs_datasets_py/logic/autoformal/span_cache.py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "491c545f38a26c76a1448864d186fa6c4addef3cda51b1fad26e8350287df234",
+      "symbols": {
+        "SpanCache": 448,
+        "group_span_rows": 280,
+        "span_groups_from_parquet": 381
+      }
+    },
+    {
+      "bytes": 21835,
+      "implemented_role": "Complete bounded raw-row intake retaining unknown fields, statuses, malformed rules, zero/ambiguous occurrences and whole-row/physical-ordinal custody.",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_span_cache_intake.py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "9fa6d8e84886de82e75a2b741803b26ba5d8aff572fd9e20644075ca1f337aba",
+      "symbols": {
+        "prepare_entity_cache_graphs": 339,
+        "prepare_span_cache_intake": 261,
+        "record_sha256": 103,
+        "row_sha256": 97
+      }
+    },
+    {
+      "bytes": 29820,
+      "implemented_role": "Opt-in native single-connection fenced claim/completion control; legacy claim helpers remain unqualified.",
+      "path": "ipfs_datasets_py/logic/autoformal/span_cache_claims.py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "026b5105880cb6675820e79463087101cfa9cf97195cd3659d72248220c206cf",
+      "symbols": {
+        "SpanCacheClaims": 101
+      }
+    },
+    {
+      "bytes": 25976,
+      "implemented_role": "Drain only explicit source-manifest-bound prepared spans, stage complete worker outputs, bounded resume; does not open a replacement database or publish.",
+      "path": "ipfs_datasets_py/logic/autoformal/span_cache_fenced_ingest.py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "d54ce7654f5ae4abfbbb420c7899b09ff8d39111d4ec0a91857eabaa974f68f5",
+      "symbols": {
+        "drain_fenced_manifest": 241,
+        "stage_complete_observation": 117
+      }
+    },
+    {
+      "bytes": 35388,
+      "implemented_role": "Existing native-resource-owned runtime with one sole cache owner and complete report custody; resource admission is separate from source meaning.",
+      "path": "ipfs_datasets_py/logic/autoformal/span_ingest_runtime.py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "6bc6fbf151b0b6d995349425a3fe3e925f714475d358d8a9b99d01391cb17e6e",
+      "symbols": {
+        "FencedIngestChildVerifier": 365,
+        "run_fenced_ingest_runtime": 441
+      }
+    },
+    {
+      "bytes": 88424,
+      "implemented_role": "Separate DuckDB entity/section work queue and section context/proposed-graph adapters; queued entities and lexical ontology mappings are not semantic assertions.",
+      "path": "ipfs_datasets_py/logic/autoformal/entity_cache.py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "552091318e59718c6111eeaad26e4b03185929558dad3c75fe00b8845d8bc2cd",
+      "symbols": {
+        "EntityCache": 668,
+        "inconsistencies_for_section": 145,
+        "proof_sources_for_section": 288
+      }
+    },
+    {
+      "bytes": 23966,
+      "implemented_role": "Bounded complete materialized legacy-index observations with original physical rows; same labels do not merge records or prove primary-graph lineage.",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_entity_index_intake.py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "a5f9b0fcf3ba06743ca2fe3e1c10b7f3817811702b9db45ee0ac142b44351aeb",
+      "symbols": {
+        "census_parquet": 237,
+        "iter_observed_rows": 204
+      }
+    },
+    {
+      "bytes": 25730,
+      "implemented_role": "Exact manifest-selected primary graph files/populations and bounded transport; extra retained files stay distinct.",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_primary_graph_manifest.py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "c1e86ab52371730d52cf582d2b60fbe282ae52608dcb462ec2c59cdf24738d38",
+      "symbols": {
+        "iter_verified_graph_rows": 391,
+        "select_primary_graph_manifest": 125,
+        "verify_primary_graph_files": 371
+      }
+    },
+    {
+      "bytes": 13932,
+      "implemented_role": "Lossless wrapped primary records preserve original entry and endpoint identity namespace; not interchangeable with candidate graph nodes.",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_primary_graph_records.py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "0d07aae6e54cbb44685201333992054817fa7b481ba64cc6dee52b7d5c743cbf",
+      "symbols": {
+        "decode_primary_graph_record": 168
+      }
+    },
+    {
+      "bytes": 23445,
+      "implemented_role": "Ordered AST roundtrip plus explicitly supplied scoped entity/assertion proposals and ambiguity; every authority flag remains false.",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_semantic_graph.py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "4baaba35b1f1615bb37a42e542fd28c58996919eb24f4662f374428b181933be",
+      "symbols": {
+        "bind_scope": 113,
+        "bind_source_occurrence": 99,
+        "build_graph": 288,
+        "graph_to_ast": 307
+      }
+    },
+    {
+      "bytes": 9325,
+      "implemented_role": "Closed typed candidate graph with complete local endpoints, evidence refs, ordinal argument roles and interpretation alternatives.",
+      "path": "ipfs_datasets_py/logic/autoformal/corpus_graph.py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "da2bef54beca29d0d613d46a81241f6f1b7f049e1c9bf9cf1c118d9942374061",
+      "symbols": {
+        "build_edge": 93,
+        "build_graph_snapshot": 163,
+        "build_node": 60
+      }
+    },
+    {
+      "bytes": 17454,
+      "implemented_role": "Lossless local nodes.parquet/edges.parquet/snapshot.json with external manifest pins and reconstructed sealed records; no upload or external-reference authentication.",
+      "path": "ipfs_datasets_py/logic/autoformal/corpus_graph_exchange.py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "32800bca0662830409de0622e16902bd458cf6d47c821fc7079cdf4ba9ddc9ad",
+      "symbols": {}
+    },
+    {
+      "bytes": 20947,
+      "implemented_role": "Regenerates complete typed native report/request/source companions, scoped term/definition/norm records and DEFINES/USES_DEFINITION candidate edges.",
+      "path": "ipfs_datasets_py/logic/autoformal/corpus_definition_norm_adapter.py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "82fc3590e7c606905cf0cf8d4984e779309c5f9620380e061910eb014b523af0",
+      "symbols": {
+        "adapt_definition_norm_bytes": 176,
+        "validate_definition_norm_candidate": 352
+      }
+    },
+    {
+      "bytes": 24846,
+      "implemented_role": "Complete supplied scoped symbol-table partitions, explicit lookup routes and negative/unavailable outcomes; conservative reverse dependency commitments.",
+      "path": "ipfs_datasets_py/logic/autoformal/scoped_definition_resolution.py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "fdd0f53f66cef06a2b16d24cfbe65e15721dd568d3c76ac3ddde3e133243152a",
+      "symbols": {
+        "build_definition_lookup_dependencies": 490,
+        "build_definition_lookup_registry": 228,
+        "resolve_definition_lookup": 333
+      }
+    },
+    {
+      "bytes": 12974,
+      "implemented_role": "Explicit bound dependency population and reverse invalidation including cycles; no inferred exhaustive legal closure.",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_graph_dependencies.py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "86cb7c3b09102a94237d0455d610d437e558cca4250242201becd06c775ca2e8",
+      "symbols": {
+        "build_dependency_manifest": 121,
+        "invalidate_dependencies": 182
+      }
+    },
+    {
+      "bytes": 47062,
+      "implemented_role": "Source-only complete review requests/evidence-domain authentication through shared verifier; pending semantics and original contexts retained.",
+      "path": "ipfs_datasets_py/logic/autoformal/corpus_source_review.py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "308a1955f4d8705369c1a4d25e4b02cc308a4c3d1032085122d7801a9d30f53e",
+      "symbols": {
+        "assess_source_review_groups": 616,
+        "prepare_source_review_requests": 298
+      }
+    },
+    {
+      "bytes": 30521,
+      "implemented_role": "Existing Profile G Ed25519 review verifier with independently pinned registry/policy/roles/evidence/revocation/time and explicit downstream admission blockers.",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_graph_review.py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "32abecbf17bc3d10b59d1bd08fde3e8b6bfa58f73b17e31e817fe0f4e910af9e",
+      "symbols": {
+        "assess_graph_reviews": 439,
+        "build_review_subject": 138
+      }
+    },
+    {
+      "bytes": 23810,
+      "implemented_role": "Native definition/norm and every occurrence context replay, then distinct review-domain authentication using existing verifier.",
+      "path": "ipfs_datasets_py/logic/autoformal/corpus_definition_review.py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "03da9d41741d176a1d305ce3a256213ca981bc98ea9f83721dee3fed10d12833",
+      "symbols": {
+        "assess_definition_reviews": 325,
+        "build_definition_review_subject": 306,
+        "prepare_definition_review_evidence": 174
+      }
+    },
+    {
+      "bytes": 12405,
+      "implemented_role": "Orthogonal declared processing/integrity/interpretation/representation/dependency/translation/Lean/proof statuses; derived views are declared-evidence-only and never admissions.",
+      "path": "ipfs_datasets_py/logic/autoformal/corpus_qualification.py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "e1a8540a6dd2889803138c510aa1f297316b64329e6e155eee4d90c250a12eae",
+      "symbols": {
+        "derive_eligibility": 151,
+        "prepare_qualification": 113
+      }
+    },
+    {
+      "bytes": 10069,
+      "implemented_role": "Explicit caller-declared section-local unary predicate definition, native FOL biconditional and lossless reparse; not extraction or reviewed definition meaning.",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_source_definition_bridge.py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "2956a408cf767243f16944e4eb5dad425d26e1b09fd1979fbbbfa8fb4701a812",
+      "symbols": {
+        "prepare_definition": 70
+      }
+    },
+    {
+      "bytes": 11020,
+      "implemented_role": "Exact section-local definition followed by complete quantified unary O/P/F norm; same source/version, definition before use, unsupported qualifiers/refinements refuse.",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_source_definition_norm_bridge.py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "fc658de41226117e096a7e003ffd73edcf32b7ee7ead141c9804db8064a2b18c",
+      "symbols": {
+        "prepare_definition_norm": 40
+      }
+    },
+    {
+      "bytes": 19295,
+      "implemented_role": "Existing richer seven-facet lowering requires explicit caller scope, qualifier and clock interpretation; no inferred qualifier meaning.",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_canonical_qualified.py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "580544f2bf329c54832eee9b66042794bab2e6938bad142952aca9f4438f5902",
+      "symbols": {}
+    },
+    {
+      "bytes": 16905,
+      "implemented_role": "Explicit absolute Gregorian date interpretation kept separate from duration and evaluation-date authority.",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_canonical_calendar.py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "6e5275dbd1f15d58bc7c0e1480b2af68fae11b08c03a8fe6a1c0e3d97c959501",
+      "symbols": {
+        "parse_calendar_literal": 46
+      }
+    },
+    {
+      "bytes": 29000,
+      "implemented_role": "Actual native AST reparse and structural Lean lowering; predicates/modal interpretations are parameters, discrete Nat temporal operators explicit, unsupported opaque/sorted forms refuse.",
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/native_family_lean_emitters.py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "6da3dc9981ad7eb805894be5a0822f1ae2cae3572b80d73a7eb691250fe5c1fe",
+      "symbols": {
+        "FormulaRenderer": 50,
+        "emit_projection": 351,
+        "supplied_formula": 266
+      }
+    },
+    {
+      "bytes": 20116,
+      "implemented_role": "Exact complete independently pinned definition/norm candidate population to a bounded version-pinned Lean project; no automatic external definition binding.",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_corpus_lake.py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "b9ea921769b6dbfd33b237eef3335df76e5592c9087317f4f19b3cd71cb44c5b",
+      "symbols": {
+        "prepare_definition_norm_corpus": 132,
+        "validate_definition_norm_corpus": 255
+      }
+    },
+    {
+      "bytes": 20213,
+      "implemented_role": "Share only exact source/scope/physical-origin definition identities, preserve each norm and build explicit conditional composition theorems under supplied assumptions.",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_corpus_shared_lake.py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "e4bb92e23878ed081f891fdb05eb69bfa17b9d850ae93a298555e209c64eb413",
+      "symbols": {
+        "build_shared_definition_corpus": 231,
+        "prepare_shared_definition_corpus": 86
+      }
+    },
+    {
+      "bytes": 24836,
+      "implemented_role": "Regenerate current interpretations; reuse only exact checked .olean outputs with source/import/toolchain-closure/recipe/owner pins and native dependency invalidation.",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_corpus_incremental.py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "976e8cddcafc274b3c90b48c932bcce6a5026964d8c000958aa0d7f066712b83",
+      "symbols": {
+        "build_incremental_shared_corpus": 243
+      }
+    },
+    {
+      "bytes": 8159,
+      "implemented_role": "Legacy statute/term identity fingerprints, with explicit 24-clause/16-statute overflow; compilation is not proof of clause semantics.",
+      "path": "ipfs_datasets_py/logic/autoformal/lean_units.py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "fd22c6f66edde6688e59d1df581694c9d4c788cdc1b674d3cb25e6bf1bb1e037",
+      "symbols": {
+        "statute_lean_unit": 98,
+        "term_lean_unit": 119
+      }
+    },
+    {
+      "bytes": 66185,
+      "implemented_role": "Family-preserving routes, explicit ambiguity/conflicts and natural-language authority ceilings; current conflict detector is a bounded syntactic diagnostic, not global consistency proof.",
+      "path": "ipfs_datasets_py/logic/legal_ir/typed_adapter.py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "80204883247be10831b6d2c3f831336a80bab2a00f427f6dc35f363edd96fbb2",
+      "symbols": {
+        "LegalFormalizationAdapter": 1532,
+        "detect_norm_conflicts": 1307,
+        "enforce_authority_ceiling": 1474
+      }
+    },
+    {
+      "bytes": 108896,
+      "implemented_role": "Hard legal applicability/authority/time/relationship/taint/coverage filters before ranking; contradictions and review/abstention preserved, no Security or execution grant.",
+      "path": "ipfs_datasets_py/logic/legal_ir/constraint_query.py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "e402c61a72fd833974b36bf93b15492ac46637aa2a7bd690a73817e07f337e4e",
+      "symbols": {
+        "LegalConstraintQuery": 909,
+        "select_applicable_legal_constraints": 2382
+      }
+    },
+    {
+      "bytes": 80724,
+      "implemented_role": "Declared version/authority lifecycle graph and proof-safe applicability gate; not automatic verification that source metadata is true.",
+      "path": "ipfs_datasets_py/logic/integration/reasoning/legal_ir_temporal_authority.py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "a4e14b94f03df2df56625840c75ec0dddf760f43d541f8ee8d2efa85e054ebe5",
+      "symbols": {
+        "assert_legal_ir_temporal_authority_applicable": 1129,
+        "query_legal_ir_temporal_applicability": 967
+      }
+    },
+    {
+      "bytes": 17393,
+      "implemented_role": "Single replayable pipeline delegates measured L1 authority to canonical compiler and preserves explicit stage identities.",
+      "path": "ipfs_datasets_py/logic/integration/reasoning/legal_ir_canonical_pipeline.py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "715638c2f245f5055f8f5077bc03be62e7d27b3c9796edc9d687e25f8bdfa0b8",
+      "symbols": {
+        "compile_canonical_pipeline": 413
+      }
+    },
+    {
+      "bytes": 73458,
+      "implemented_role": "Exact output, obligation, translation, reconstruction, source-map, build-manifest and verification-policy bindings; consumer must verify independent proof evidence.",
+      "path": "ipfs_datasets_py/logic/integration/reasoning/legal_ir_proof_carrying_artifacts.py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "9dc3760742ebee2e9230844aa6b6d840837b000d349cd89df19aa2dfdcbe9d1a",
+      "symbols": {
+        "build_legal_ir_proof_carrying_artifact": 581,
+        "validate_legal_ir_proof_carrying_artifact": 692
+      }
+    },
+    {
+      "bytes": 45313,
+      "implemented_role": "Rehashed content-addressed formal artifacts and optional theorem receipts; cache integrity alone grants no fresh source/review/proof authority.",
+      "path": "ipfs_datasets_py/logic/legal_ir/proof_cache.py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "7a9d277e02a089f9956b711f481b75710c15d52785ac72560adc173c8fec693f",
+      "symbols": {
+        "LegalProofCache": 484,
+        "get_legal_proof": 1088,
+        "put_legal_proof": 1066
+      }
+    },
+    {
+      "bytes": 18254,
+      "implemented_role": "Published dataset/local-root lookup registry; dataset labels and retrieval are distinct from scoped semantic-definition registry.",
+      "path": "ipfs_datasets_py/processors/legal_data/canonical_legal_corpora.py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "f667606ee6e371075f49f5c609a8d5b600acdb73614f512240aeceeeb62df942",
+      "symbols": {
+        "CanonicalLegalCorpus": 29,
+        "get_canonical_legal_corpus": 227
+      }
+    },
+    {
+      "bytes": 41791,
+      "implemented_role": "Single-owner source-export catalog registration and verified version/row retrieval; row labels/retrieval claims are declarations.",
+      "path": "ipfs_datasets_py/duckdb_control/source_corpus_catalog.py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "014ccabff3d5adc6e87b2ddd947ade8f85fa7902a44a704445f3cebe5a965322",
+      "symbols": {
+        "SourceCorpusCatalog": 155
+      }
+    },
+    {
+      "bytes": 11705,
+      "implemented_role": "Operation-local exact captured package/version custody without reopening historic catalog paths; not durable source-authority capability.",
+      "path": "ipfs_datasets_py/duckdb_control/source_corpus_binding.py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "c647a5341d3607fc2b10311e76bf4ea3be8f1dba81667bc7ba72ae686c8f5315",
+      "symbols": {
+        "SourceCorpusBinding": 81
+      }
+    },
+    {
+      "bytes": 5494,
+      "implemented_role": "Legacy first-matching-norm regex actor/action/object/remedy graph; label-derived IDs and missing source geometry are unsuitable for authoritative cross-statute sense resolution.",
+      "path": "ipfs_datasets_py/logic/knowledge_graphs/legal_roles.py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "0d0a32552db4a6bd0be67ba1183ea717d16c8008cf271409267d1c743fbf69ec",
+      "symbols": {
+        "compile_legal_role_graph": 48
+      }
+    }
+  ],
+  "recommended_phases": [
+    {
+      "acceptance": "Independent dataset revision, exact file manifest/hash/rows/schema; raw row+ordinal identities; raw/extracted/normalized/markup views and original coordinates distinct; one disposition per selected input; no silent filtering, duplicate merging or whole-cache inference from sample.",
+      "deliverable": "Pinned complete span/source/entity/primary-graph inventories and structured source sampler; reconcile unpublished owners and existing drafts first.",
+      "gate": "P0 / LIR-01,02,03,05"
+    },
+    {
+      "acceptance": "Real legal/formal reviewer evidence, exact occurrence and edition/applicability bindings. Unknown/disputed/unresolved records have zero training/evaluation-gold masks; signatures and declared eligibility do not themselves admit meanings.",
+      "deliverable": "Candidate-blind source and meaning review packets plus independently selected trust inputs, explicit disputes/context gaps and exact definition/use source selection.",
+      "gate": "P1 / LIR-02,05,06"
+    },
+    {
+      "acceptance": "Preserve definition operator, arity/sorts, binders, conditions, exceptions, temporal owners, numerical/approval/recipient force and complete source coverage or explicit unsupported residue. Never shorten legislation to fit unary grammar; typed graph endpoints and companions fully resolve.",
+      "deliverable": "Minimal versioned complete profile for one reviewed real definition/use pair, using existing source/native/qualifier owners where applicable.",
+      "gate": "P2 / LIR-04,07,08"
+    },
+    {
+      "acceptance": "Definition-site/use-site versions, symbols, interpretation IDs and lookup evidence join exactly; negative/unavailable partitions retained; unresolved/cyclic/external frontier blocks dependent inclusion; spelling equality is insufficient.",
+      "deliverable": "Pinned scoped lookup registry+routes, explicit selected and competing definition decisions, complete local candidate/reviewed graph component and reconstructable Parquet bundle.",
+      "gate": "P3 / LIR-09,10,11"
+    },
+    {
+      "acceptance": "Every expected module and import compiles under pinned toolchain/dependency closure, no placeholders, exact source/graph/native/Lean traceability; cold/warm/definition-changed/negative-partition-changed builds and clean rebuild artifact roots agree under stated cache contract.",
+      "deliverable": "Dependency-ordered versioned Lean package with shared definitions, explicit interpretation parameters/assumptions and actual compiler/proof receipts.",
+      "gate": "P4 / LIR-12,13,14 then15"
+    },
+    {
+      "acceptance": "Keep source-only vs source+latent vs true bottleneck tasks separate; matched budgets/real producer vectors; full-rule and named case/facet/permission/abstention floors; active/disabled/shuffled controls; candidate coverage before selection; no exposed diagnostics relabelled untouched evaluation.",
+      "deliverable": "Separately admitted reviewed training targets, dependency-cluster split/exposure ledger and changed-hypothesis model/context ablations reusing existing assets.",
+      "gate": "P5 / LIR-17,18,19,20,22,23"
+    },
+    {
+      "acceptance": "Single DuckDB/Quack owner per existing store, resource reservation and stale-claim refusal, interruption-safe staging/readback, exact population/root/count accounting, independent reviewed fidelity and separate measured processing/build/model costs.",
+      "deliverable": "Immutable cross-dataset manifest and complete graph/Lean/model lineage, then bounded fenced all-span expansion by qualified dependency components.",
+      "gate": "Release / LIR-21,24"
+    }
+  ],
+  "representation_and_reconstruction_boundaries": [
+    "CanonicalRule/v1 contains modality, actor, action, object, conditions, exceptions and temporal. New semantic facets require a versioned contract, not extra unvalidated strings or a silent schema rewrite.",
+    "Semantic text realization and L1-to-realized-text-to-L2 parity are distinct from exact original UTF8 reconstruction; retain immutable source bytes/selectors as a separate custody channel. A source-bearing LegalIRDocument or byte transport must not leak original text into source-withheld decoder evaluation.",
+    "legal-surface-ir/v2 represents definitions/policies/norms but compile_extended currently always abstains. A schema is not a functioning legal extractor.",
+    "Keep source text, scoped semantic IR, native family AST, graph envelope, Lean declaration and proof receipt identities separate. Similar spelling, identical source text and equal vectors are not identity resolution.",
+    "Reuse prior source/vector/checkpoint assets with family x dimension x schema/version x decoder-task x context/producer pins. LegalIR, IntentIR, CodebaseIR, SecurityIR and UI/UX IR stay separate; 8D/384D/768D paths and original token profiles remain distinguishable. Latent-off results do not establish representation benefit."
+  ],
+  "reviewed_repository": "/home/barberb/lift_coding/.worktrees/legal-ir-uscode-plan-20261015",
+  "reviewed_revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+  "schema": "legal-ir-uscode-pipeline-integration-survey@1",
+  "source_selection": "Canonical external/ipfs_datasets working tree is dirty; source facts and hashes come from exact published origin/main Git objects at the reviewed revision, not its working files. New owned checkout was created by root at that same revision.",
+  "status": "read_only_architecture_survey",
+  "unpublished_contract_reuse": {
+    "files": [
+      {
+        "absent_from_reviewed_published_tree": true,
+        "bytes": 31940,
+        "path": "ipfs_datasets_py/logic/autoformal/corpus_source_review_responses.py",
+        "revision": "11a5d50dc04cc57d029f4556d49ef4ccea98df64",
+        "sha256": "519f91a39f0f6f3fb0b7226042fe75642833588f31af8eeea9c5a488d603c7e9"
+      },
+      {
+        "absent_from_reviewed_published_tree": true,
+        "bytes": 32429,
+        "path": "ipfs_datasets_py/logic/autoformal/corpus_source_adjudication.py",
+        "revision": "11a5d50dc04cc57d029f4556d49ef4ccea98df64",
+        "sha256": "0d658081521bc737ff17ec38f82d34122863b7b2b3094e8d1fabf4eef0caf2b9"
+      },
+      {
+        "absent_from_reviewed_published_tree": true,
+        "bytes": 32104,
+        "path": "ipfs_datasets_py/logic/autoformal/corpus_source_application.py",
+        "revision": "11a5d50dc04cc57d029f4556d49ef4ccea98df64",
+        "sha256": "2e11ca5f1f8c23b7d399e72c529432f611a94dcc4599c6f69025884e8219dc86"
+      },
+      {
+        "absent_from_reviewed_published_tree": true,
+        "bytes": 45788,
+        "path": "ipfs_datasets_py/logic/autoformal/corpus_source_history.py",
+        "revision": "11a5d50dc04cc57d029f4556d49ef4ccea98df64",
+        "sha256": "88a652a0c10569723a9f278562c5c0bb7a2001515615661a2767fbe0881659d4"
+      },
+      {
+        "absent_from_reviewed_published_tree": true,
+        "bytes": 38723,
+        "path": "ipfs_datasets_py/logic/autoformal/corpus_source_bindings.py",
+        "revision": "11a5d50dc04cc57d029f4556d49ef4ccea98df64",
+        "sha256": "9a84a8c7354495d2d9dc69e3ef7141d3bb10429aa56c08700c33b64e34f320f5"
+      }
+    ],
+    "integration_gate": "Reconcile/review exact local contract stack and its dependency/test/guide commits against published main, preserve existing source owners, qualify composed imports and fixtures before calling these production APIs. Presence in local reports or Git objects is not publication.",
+    "parallel_sampler_draft": [
+      {
+        "bytes": 13827,
+        "custody": "untracked parallel draft at observation; not executed, qualified, committed or published by this survey",
+        "path": "ipfs_datasets_py/logic/autoformal/legal_source_sampling.py",
+        "sha256": "bdf8a76c13e5e3dd67e5cd2b18230726063d65a97c6db5a018c26dcadefc2489"
+      },
+      {
+        "bytes": 4888,
+        "custody": "untracked parallel draft at observation; not executed, qualified, committed or published by this survey",
+        "path": "docs/autoencoders/legal_source_sampling.md",
+        "sha256": "290a6320bd0522109df593af4fd4a6e0a52b80c375a6cde1511c27c6c5ae0f62"
+      },
+      {
+        "bytes": 15837,
+        "custody": "untracked parallel draft at observation; not executed, qualified, committed or published by this survey",
+        "path": "tests/unit/logic/autoformal/test_legal_source_sampling.py",
+        "sha256": "961ea149d94d155b402884a9857e24e5255690301ea1891017f0b0fb2707aeec"
+      }
+    ],
+    "retained_checkout": "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets",
+    "revision": "11a5d50dc04cc57d029f4556d49ef4ccea98df64",
+    "sampler_reuse_gate": "Coordinate current author and retain original draft/evidence before selecting or changing it. Existing draft inventories all whole V2 markup blocks with zero masks/open context; it does not parse definitions or join old cache rows.",
+    "semantics": "Response/adjudication/history and structured-binding declarations retain candidate status; binding-effect is record_exact_declared_version_occurrence_applicability_tuple_only, not governing-law adoption, semantic admission, training gold or Lean admission."
+  }
+}

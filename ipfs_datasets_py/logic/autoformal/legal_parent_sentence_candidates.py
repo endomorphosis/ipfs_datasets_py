@@ -38,9 +38,10 @@ def _need(ok, message):
     if not ok: raise ParentSentenceCandidatesError(message)
 
 
-def _limits(value):
+def _limits(value, source_profile=None):
     _need(value is None or type(value) is dict, "closed lower-only sentence limits required")
     result = dict(DEFAULT_LIMITS)
+    result["max_source_characters"] = custody._source_profile_limits(source_profile)["max_source_characters"]
     for key, bound in (value or {}).items():
         _need(key in result and type(bound) is int and 0 < bound <= result[key], "unknown or raised sentence bound")
         result[key] = bound
@@ -140,10 +141,10 @@ def _context(view, lo, hi, bounds, view_bounds, coordinates):
 
 
 def prepare_parent_sentence_candidates(parent_text_views_report, *, expected_parent_text_views_report_sha256,
-        parent_text_views_inputs, limits=None):
+        parent_text_views_inputs, source_profile=None, limits=None):
     """Partition all supplied parent text; never use cache fragments as sentence gold."""
     from . import legal_parent_text_views as views
-    bounds = _limits(limits)
+    bounds = _limits(limits, source_profile)
     parent_views = custody._trusted_parent_views(parent_text_views_report, expected_parent_text_views_report_sha256,
         parent_text_views_inputs, bounds)
     rows = []; total_segments = 0; total_boundaries = 0; total_dependencies = 0; total_characters = 0; retained = 0
@@ -226,6 +227,8 @@ def prepare_parent_sentence_candidates(parent_text_views_report, *, expected_par
         "coverage_scope": "all_independently_pinned_supplied_original_parent_string_fields_only",
         "diagnostic_cache_fragments_used_as_gold": False, "producer_segmentation_fields_used_as_gold": False,
         "all_candidates_autoformalization_ineligible": True, "authority": dict(AUTHORITY)}
+    if source_profile is not None:
+        report["source_profile"] = source_profile
     report["sentence_candidates_sha256"] = custody._digest(report); custody._wire(report, bounds["max_report_bytes"])
     return report
 

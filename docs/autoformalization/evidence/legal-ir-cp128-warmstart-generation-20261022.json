@@ -1,0 +1,1134 @@
+{
+  "IR_family": "legal_ir",
+  "adopted_peer_guide_findings": {
+    "local_receipt_descriptors": [
+      {
+        "bytes": 63660,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/warmstart-bos-consumer-v01/adoption-review-v01.json",
+        "required_for_catalog_check": true,
+        "root": "datasets_repository",
+        "sha256": "df3efc5c19300e50d16f76f7ee467c4f75362979f0e6b7b046f8ea861a9f860d",
+        "status": "qualified_peer_runtime_adopted_saved_BOS_parity"
+      },
+      {
+        "bytes": 13105,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/warmstart-bos-consumer-v01/failed-inference-archive-diagnostic-v01.json",
+        "required_for_catalog_check": true,
+        "root": "datasets_repository",
+        "sha256": "fe4a71d77f05a3b88eb16eb21184425fc9bbebe699d45d4d41fd0338e01ba35a",
+        "status": "unqualified_closed_zero_state_archival_failure_diagnostic"
+      }
+    ],
+    "local_workspace_link_scope": "Historical local evidence; exact descriptors and statuses are recorded here without publishing raw workspace files or registering missing required public catalog targets.",
+    "public_catalog_rows_adopted": false,
+    "public_training_guide_preimage": {
+      "bytes": 8245,
+      "path": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_compact_content_role_warmstart_training_v1.md",
+      "sha256": "8504da21e394fbad6e63cb713ce16b3ac3191648b5f5ad608d65900cd4949daa"
+    },
+    "raw_workspace_files_published": false,
+    "selected_evidence_rows": [
+      {
+        "id": "cp128-warmstart-peer-bos-score-adoption-20261022-01",
+        "observed_bytes": 63660,
+        "observed_sha256": "df3efc5c19300e50d16f76f7ee467c4f75362979f0e6b7b046f8ea861a9f860d",
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/warmstart-bos-consumer-v01/adoption-review-v01.json",
+        "required_for_catalog_check": true,
+        "root": "datasets_repository",
+        "scope": "Reuse canonical warmstart runtime6711203/testfa306694:20authored controls and4actual BOS scores/2148 teacher coordinates; exact537 same-shape initial-arm parity is saved-only. Original source/native/storage closed. No real generation, new training, legal/heldout accuracy, graph or Lean admission. Competing private drafts remain uninstalled/superseded.",
+        "status": "qualified_peer_runtime_adopted_saved_BOS_parity"
+      },
+      {
+        "id": "cp128-warmstart-zero-state-archive-failure-diagnostic-20261022-01",
+        "observed_bytes": 13105,
+        "observed_sha256": "fe4a71d77f05a3b88eb16eb21184425fc9bbebe699d45d4d41fd0338e01ba35a",
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/warmstart-bos-consumer-v01/failed-inference-archive-diagnostic-v01.json",
+        "required_for_catalog_check": true,
+        "root": "datasets_repository",
+        "scope": "Both original zero-step jobs exited1 at late private source-archive NameError; source READ/custody and native leases closed. Storage remains retained without seal/release; generation reports, physical model counts, zero-parity and quality remain unaccepted. Separate archive proposal is unapplied; no retry, later-stage request, retraining or cleanup authorized.",
+        "status": "unqualified_closed_zero_state_archival_failure_diagnostic"
+      }
+    ],
+    "selected_section_suffix": {
+      "bytes": 7929,
+      "headings": [
+        "Peer model-only BOS consumer",
+        "Closed zero-state archival failure"
+      ],
+      "sha256": "ff0566193a45e1b5f5ec1f79ef2fcb77d74b67bfb30bf7bd4251880698aed543"
+    },
+    "source_primary_training_guide": {
+      "bytes": 15683,
+      "path": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_compact_content_role_warmstart_training_v1.md",
+      "sha256": "d9866b04a721803b452c7376e63c7f6cc07da03105900efae3d562d98c464382"
+    }
+  },
+  "authority": {
+    "Lean_admission": false,
+    "convergence": false,
+    "full_norm_meaning": false,
+    "graph_admission": false,
+    "legal_prose_reconstruction": false,
+    "native_GTE_conditioning": false,
+    "saturation": false,
+    "statutory_or_heldout_gold": false,
+    "training_gold": false
+  },
+  "checkpoint_schema": "legal-compact-role-warmstart-training-checkpoint/v1",
+  "closed_summary_and_independent_reviews": [
+    {
+      "bytes": 247966,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-warmstart-trained-inference-v01/audit/cohort-summary-v01.json",
+      "sha256": "1c52712317a0f4e0c7ed4a3cec62661c6a58aaeba10f2234746d2af9dadc7ada"
+    },
+    {
+      "bytes": 16867,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-warmstart-trained-inference-v01/audit/independent-cohort-review-v01.json",
+      "sha256": "8808c3c927b614687ec988148f42d2aa1f1e4acd53720e0da2e0f9abd1c6496b"
+    },
+    {
+      "bytes": 131027,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-warmstart-inference-v01/audit/failed-zero-posthoc-summary-v01.json",
+      "sha256": "911c33ffb2bd2a5b9d0bba3344600cc2a6ca5d4391b49c8c2a332d45e8137d9b"
+    },
+    {
+      "bytes": 10311,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-warmstart-inference-v01/audit/zero-partial-custody-compatibility-review-v01.json",
+      "sha256": "186f8a0cb19a9ec86d8e3b945d93eb4bf69655d0c70b71353c2b23b3093631e0"
+    }
+  ],
+  "combined_observed_counts": {
+    "adam_allocations": 0,
+    "autograd_grad_calls": 0,
+    "backward_calls": 0,
+    "forbidden_calls": 0,
+    "gradient_clip_calls": 0,
+    "gru_completed": 1200,
+    "gru_entered": 1200,
+    "model_allocations": 12,
+    "model_constructor_completed": 12,
+    "model_forward_completed": 1200,
+    "model_forward_entered": 1200,
+    "optimizer_base_allocations": 0,
+    "optimizer_updates": 0,
+    "prepared_model_close_calls": 12,
+    "prepared_model_closes_completed": 12,
+    "prepared_model_constructor_calls": 12,
+    "prepared_model_constructor_completed": 12
+  },
+  "conditioning_dimension": 384,
+  "decoder_task": "compact semantic IR reconstruction",
+  "metrics": {
+    "blocked_count": 0,
+    "budget_infeasible_count": 0,
+    "exact_canonical_compact_content_AST_count": 0,
+    "exact_canonical_compact_content_AST_denominator": 12,
+    "exact_token_ID_reconstruction_count": 0,
+    "exact_token_ID_reconstruction_denominator": 12,
+    "full_norm_LegalIR_semantic_fidelity": null,
+    "full_norm_LegalIR_semantic_fidelity_status": "NOT_MEASURED",
+    "heldout_gold_denominator": 0,
+    "incomplete_or_invalid_typed_candidate_count": 0,
+    "independent_gold_or_heldout_sources": 0,
+    "legal_text_byte_reconstruction": null,
+    "legal_text_prose_reconstruction": null,
+    "legal_text_reconstruction_status": "NOT_MEASURED",
+    "malformed_classification": "Preserve each exact typed-decoder status; incomplete candidates are not silently classified as malformed.",
+    "raw_generation_status_counts": {
+      "blocked": 0,
+      "complete": 12,
+      "unfinished": 0
+    },
+    "raw_typed_decoder_status_counts": {
+      "valid_candidate": 12
+    },
+    "reached100_new_ID_limit_count": 12,
+    "score_and_scripted_controls_reconstruction_denominator": 0,
+    "statutory_gold_denominator": 0,
+    "typed_complete_count": 12,
+    "typed_complete_denominator": 12,
+    "unfinished_count": 0,
+    "unique_exposed_authored_source_rows": 2
+  },
+  "metrics_by_checkpoint": {
+    "cp128-warmstart-full537-step-0": {
+      "blocked_count": 0,
+      "budget_infeasible_count": 0,
+      "exact_canonical_compact_content_AST_count": 0,
+      "exact_canonical_compact_content_AST_denominator": 2,
+      "exact_token_ID_reconstruction_count": 0,
+      "exact_token_ID_reconstruction_denominator": 2,
+      "full_norm_LegalIR_semantic_fidelity": null,
+      "full_norm_LegalIR_semantic_fidelity_status": "NOT_MEASURED",
+      "heldout_gold_denominator": 0,
+      "incomplete_or_invalid_typed_candidate_count": 0,
+      "independent_gold_or_heldout_sources": 0,
+      "legal_text_byte_reconstruction": null,
+      "legal_text_prose_reconstruction": null,
+      "legal_text_reconstruction_status": "NOT_MEASURED",
+      "malformed_classification": "Preserve each exact typed-decoder status; incomplete candidates are not silently classified as malformed.",
+      "raw_generation_status_counts": {
+        "blocked": 0,
+        "complete": 2,
+        "unfinished": 0
+      },
+      "raw_typed_decoder_status_counts": {
+        "valid_candidate": 2
+      },
+      "reached100_new_ID_limit_count": 2,
+      "score_and_scripted_controls_reconstruction_denominator": 0,
+      "statutory_gold_denominator": 0,
+      "typed_complete_count": 2,
+      "typed_complete_denominator": 2,
+      "unfinished_count": 0,
+      "unique_exposed_authored_source_rows": 2
+    },
+    "cp128-warmstart-full537-step-1": {
+      "blocked_count": 0,
+      "budget_infeasible_count": 0,
+      "exact_canonical_compact_content_AST_count": 0,
+      "exact_canonical_compact_content_AST_denominator": 2,
+      "exact_token_ID_reconstruction_count": 0,
+      "exact_token_ID_reconstruction_denominator": 2,
+      "full_norm_LegalIR_semantic_fidelity": null,
+      "full_norm_LegalIR_semantic_fidelity_status": "NOT_MEASURED",
+      "heldout_gold_denominator": 0,
+      "incomplete_or_invalid_typed_candidate_count": 0,
+      "independent_gold_or_heldout_sources": 0,
+      "legal_text_byte_reconstruction": null,
+      "legal_text_prose_reconstruction": null,
+      "legal_text_reconstruction_status": "NOT_MEASURED",
+      "malformed_classification": "Preserve each exact typed-decoder status; incomplete candidates are not silently classified as malformed.",
+      "raw_generation_status_counts": {
+        "blocked": 0,
+        "complete": 2,
+        "unfinished": 0
+      },
+      "raw_typed_decoder_status_counts": {
+        "valid_candidate": 2
+      },
+      "reached100_new_ID_limit_count": 2,
+      "score_and_scripted_controls_reconstruction_denominator": 0,
+      "statutory_gold_denominator": 0,
+      "typed_complete_count": 2,
+      "typed_complete_denominator": 2,
+      "unfinished_count": 0,
+      "unique_exposed_authored_source_rows": 2
+    },
+    "cp128-warmstart-full537-step-2": {
+      "blocked_count": 0,
+      "budget_infeasible_count": 0,
+      "exact_canonical_compact_content_AST_count": 0,
+      "exact_canonical_compact_content_AST_denominator": 2,
+      "exact_token_ID_reconstruction_count": 0,
+      "exact_token_ID_reconstruction_denominator": 2,
+      "full_norm_LegalIR_semantic_fidelity": null,
+      "full_norm_LegalIR_semantic_fidelity_status": "NOT_MEASURED",
+      "heldout_gold_denominator": 0,
+      "incomplete_or_invalid_typed_candidate_count": 0,
+      "independent_gold_or_heldout_sources": 0,
+      "legal_text_byte_reconstruction": null,
+      "legal_text_prose_reconstruction": null,
+      "legal_text_reconstruction_status": "NOT_MEASURED",
+      "malformed_classification": "Preserve each exact typed-decoder status; incomplete candidates are not silently classified as malformed.",
+      "raw_generation_status_counts": {
+        "blocked": 0,
+        "complete": 2,
+        "unfinished": 0
+      },
+      "raw_typed_decoder_status_counts": {
+        "valid_candidate": 2
+      },
+      "reached100_new_ID_limit_count": 2,
+      "score_and_scripted_controls_reconstruction_denominator": 0,
+      "statutory_gold_denominator": 0,
+      "typed_complete_count": 2,
+      "typed_complete_denominator": 2,
+      "unfinished_count": 0,
+      "unique_exposed_authored_source_rows": 2
+    },
+    "cp128-warmstart-scope-conditional-step-0": {
+      "blocked_count": 0,
+      "budget_infeasible_count": 0,
+      "exact_canonical_compact_content_AST_count": 0,
+      "exact_canonical_compact_content_AST_denominator": 2,
+      "exact_token_ID_reconstruction_count": 0,
+      "exact_token_ID_reconstruction_denominator": 2,
+      "full_norm_LegalIR_semantic_fidelity": null,
+      "full_norm_LegalIR_semantic_fidelity_status": "NOT_MEASURED",
+      "heldout_gold_denominator": 0,
+      "incomplete_or_invalid_typed_candidate_count": 0,
+      "independent_gold_or_heldout_sources": 0,
+      "legal_text_byte_reconstruction": null,
+      "legal_text_prose_reconstruction": null,
+      "legal_text_reconstruction_status": "NOT_MEASURED",
+      "malformed_classification": "Preserve each exact typed-decoder status; incomplete candidates are not silently classified as malformed.",
+      "raw_generation_status_counts": {
+        "blocked": 0,
+        "complete": 2,
+        "unfinished": 0
+      },
+      "raw_typed_decoder_status_counts": {
+        "valid_candidate": 2
+      },
+      "reached100_new_ID_limit_count": 2,
+      "score_and_scripted_controls_reconstruction_denominator": 0,
+      "statutory_gold_denominator": 0,
+      "typed_complete_count": 2,
+      "typed_complete_denominator": 2,
+      "unfinished_count": 0,
+      "unique_exposed_authored_source_rows": 2
+    },
+    "cp128-warmstart-scope-conditional-step-1": {
+      "blocked_count": 0,
+      "budget_infeasible_count": 0,
+      "exact_canonical_compact_content_AST_count": 0,
+      "exact_canonical_compact_content_AST_denominator": 2,
+      "exact_token_ID_reconstruction_count": 0,
+      "exact_token_ID_reconstruction_denominator": 2,
+      "full_norm_LegalIR_semantic_fidelity": null,
+      "full_norm_LegalIR_semantic_fidelity_status": "NOT_MEASURED",
+      "heldout_gold_denominator": 0,
+      "incomplete_or_invalid_typed_candidate_count": 0,
+      "independent_gold_or_heldout_sources": 0,
+      "legal_text_byte_reconstruction": null,
+      "legal_text_prose_reconstruction": null,
+      "legal_text_reconstruction_status": "NOT_MEASURED",
+      "malformed_classification": "Preserve each exact typed-decoder status; incomplete candidates are not silently classified as malformed.",
+      "raw_generation_status_counts": {
+        "blocked": 0,
+        "complete": 2,
+        "unfinished": 0
+      },
+      "raw_typed_decoder_status_counts": {
+        "valid_candidate": 2
+      },
+      "reached100_new_ID_limit_count": 2,
+      "score_and_scripted_controls_reconstruction_denominator": 0,
+      "statutory_gold_denominator": 0,
+      "typed_complete_count": 2,
+      "typed_complete_denominator": 2,
+      "unfinished_count": 0,
+      "unique_exposed_authored_source_rows": 2
+    },
+    "cp128-warmstart-scope-conditional-step-2": {
+      "blocked_count": 0,
+      "budget_infeasible_count": 0,
+      "exact_canonical_compact_content_AST_count": 0,
+      "exact_canonical_compact_content_AST_denominator": 2,
+      "exact_token_ID_reconstruction_count": 0,
+      "exact_token_ID_reconstruction_denominator": 2,
+      "full_norm_LegalIR_semantic_fidelity": null,
+      "full_norm_LegalIR_semantic_fidelity_status": "NOT_MEASURED",
+      "heldout_gold_denominator": 0,
+      "incomplete_or_invalid_typed_candidate_count": 0,
+      "independent_gold_or_heldout_sources": 0,
+      "legal_text_byte_reconstruction": null,
+      "legal_text_prose_reconstruction": null,
+      "legal_text_reconstruction_status": "NOT_MEASURED",
+      "malformed_classification": "Preserve each exact typed-decoder status; incomplete candidates are not silently classified as malformed.",
+      "raw_generation_status_counts": {
+        "blocked": 0,
+        "complete": 2,
+        "unfinished": 0
+      },
+      "raw_typed_decoder_status_counts": {
+        "valid_candidate": 2
+      },
+      "reached100_new_ID_limit_count": 2,
+      "score_and_scripted_controls_reconstruction_denominator": 0,
+      "statutory_gold_denominator": 0,
+      "typed_complete_count": 2,
+      "typed_complete_denominator": 2,
+      "unfinished_count": 0,
+      "unique_exposed_authored_source_rows": 2
+    }
+  },
+  "metrics_by_evidence_scope": {
+    "partial_failed_wrapper_with_posthoc_original_storage_recovery": {
+      "blocked_count": 0,
+      "budget_infeasible_count": 0,
+      "exact_canonical_compact_content_AST_count": 0,
+      "exact_canonical_compact_content_AST_denominator": 4,
+      "exact_token_ID_reconstruction_count": 0,
+      "exact_token_ID_reconstruction_denominator": 4,
+      "full_norm_LegalIR_semantic_fidelity": null,
+      "full_norm_LegalIR_semantic_fidelity_status": "NOT_MEASURED",
+      "heldout_gold_denominator": 0,
+      "incomplete_or_invalid_typed_candidate_count": 0,
+      "independent_gold_or_heldout_sources": 0,
+      "legal_text_byte_reconstruction": null,
+      "legal_text_prose_reconstruction": null,
+      "legal_text_reconstruction_status": "NOT_MEASURED",
+      "malformed_classification": "Preserve each exact typed-decoder status; incomplete candidates are not silently classified as malformed.",
+      "raw_generation_status_counts": {
+        "blocked": 0,
+        "complete": 4,
+        "unfinished": 0
+      },
+      "raw_typed_decoder_status_counts": {
+        "valid_candidate": 4
+      },
+      "reached100_new_ID_limit_count": 4,
+      "score_and_scripted_controls_reconstruction_denominator": 0,
+      "statutory_gold_denominator": 0,
+      "typed_complete_count": 4,
+      "typed_complete_denominator": 4,
+      "unfinished_count": 0,
+      "unique_exposed_authored_source_rows": 2
+    },
+    "successful_original_trained_native_pipeline": {
+      "blocked_count": 0,
+      "budget_infeasible_count": 0,
+      "exact_canonical_compact_content_AST_count": 0,
+      "exact_canonical_compact_content_AST_denominator": 8,
+      "exact_token_ID_reconstruction_count": 0,
+      "exact_token_ID_reconstruction_denominator": 8,
+      "full_norm_LegalIR_semantic_fidelity": null,
+      "full_norm_LegalIR_semantic_fidelity_status": "NOT_MEASURED",
+      "heldout_gold_denominator": 0,
+      "incomplete_or_invalid_typed_candidate_count": 0,
+      "independent_gold_or_heldout_sources": 0,
+      "legal_text_byte_reconstruction": null,
+      "legal_text_prose_reconstruction": null,
+      "legal_text_reconstruction_status": "NOT_MEASURED",
+      "malformed_classification": "Preserve each exact typed-decoder status; incomplete candidates are not silently classified as malformed.",
+      "raw_generation_status_counts": {
+        "blocked": 0,
+        "complete": 8,
+        "unfinished": 0
+      },
+      "raw_typed_decoder_status_counts": {
+        "valid_candidate": 8
+      },
+      "reached100_new_ID_limit_count": 8,
+      "score_and_scripted_controls_reconstruction_denominator": 0,
+      "statutory_gold_denominator": 0,
+      "typed_complete_count": 8,
+      "typed_complete_denominator": 8,
+      "unfinished_count": 0,
+      "unique_exposed_authored_source_rows": 2
+    }
+  },
+  "native_closed": true,
+  "new_score_calls": 0,
+  "new_scripted_controls": 0,
+  "new_successful_native_actual_counts": {
+    "adam_allocations": 0,
+    "autograd_grad_calls": 0,
+    "backward_calls": 0,
+    "forbidden_calls": 0,
+    "gradient_clip_calls": 0,
+    "gru_completed": 800,
+    "gru_entered": 800,
+    "model_allocations": 8,
+    "model_constructor_completed": 8,
+    "model_forward_completed": 800,
+    "model_forward_entered": 800,
+    "optimizer_base_allocations": 0,
+    "optimizer_updates": 0,
+    "prepared_model_close_calls": 8,
+    "prepared_model_closes_completed": 8,
+    "prepared_model_constructor_calls": 8,
+    "prepared_model_constructor_completed": 8
+  },
+  "new_training_or_embeddings": false,
+  "original_zero_exit_codes": [
+    1,
+    1
+  ],
+  "original_zero_pipeline_qualified": false,
+  "output_diversity": {
+    "distinct_generated_canonical_content_hash_count": 1,
+    "distinct_target_canonical_content_hash_count": 2,
+    "generation_row_denominator": 12,
+    "missing_generated_canonical_content_hash_count": 0,
+    "missing_target_canonical_content_hash_count": 0
+  },
+  "paired_saved_state_comparisons": [
+    {
+      "baseline_checkpoint": "1ef7d777554bea20aa1d77209f55f1eb987598e44a18b737a1d3541e2683ab12",
+      "baseline_content_sha256": "1e9dc4e96142d0363b957070c870334a83facd988cf4ae793e771a8baa433fde",
+      "baseline_evidence_scope": "partial_failed_wrapper_with_posthoc_original_storage_recovery",
+      "baseline_exact_canonical_compact_content_AST": false,
+      "baseline_exact_token_ID_reconstruction": false,
+      "baseline_status": "complete",
+      "baseline_typed_complete": true,
+      "causal_training_gain_established": false,
+      "generated_full_ID_sequence_unchanged": true,
+      "legal_prose_or_full_norm_fidelity": "NOT_MEASURED",
+      "objective_kind": "full537",
+      "progress": {
+        "epochs_completed": 0,
+        "optimizer_steps": 1,
+        "row_cursor": 1
+      },
+      "row_id": "fictional-retention",
+      "row_index": 0,
+      "selected_checkpoint": "e69ea83a93cade5898578841b864311cae90643afda5a7eb9a220cb2e6120a11",
+      "selected_content_sha256": "1e9dc4e96142d0363b957070c870334a83facd988cf4ae793e771a8baa433fde",
+      "selected_evidence_scope": "successful_original_trained_native_pipeline",
+      "selected_exact_canonical_compact_content_AST": false,
+      "selected_exact_token_ID_reconstruction": false,
+      "selected_status": "complete",
+      "selected_typed_complete": true
+    },
+    {
+      "baseline_checkpoint": "1ef7d777554bea20aa1d77209f55f1eb987598e44a18b737a1d3541e2683ab12",
+      "baseline_content_sha256": "1e9dc4e96142d0363b957070c870334a83facd988cf4ae793e771a8baa433fde",
+      "baseline_evidence_scope": "partial_failed_wrapper_with_posthoc_original_storage_recovery",
+      "baseline_exact_canonical_compact_content_AST": false,
+      "baseline_exact_token_ID_reconstruction": false,
+      "baseline_status": "complete",
+      "baseline_typed_complete": true,
+      "causal_training_gain_established": false,
+      "generated_full_ID_sequence_unchanged": true,
+      "legal_prose_or_full_norm_fidelity": "NOT_MEASURED",
+      "objective_kind": "full537",
+      "progress": {
+        "epochs_completed": 0,
+        "optimizer_steps": 1,
+        "row_cursor": 1
+      },
+      "row_id": "fictional-inspection",
+      "row_index": 1,
+      "selected_checkpoint": "e69ea83a93cade5898578841b864311cae90643afda5a7eb9a220cb2e6120a11",
+      "selected_content_sha256": "1e9dc4e96142d0363b957070c870334a83facd988cf4ae793e771a8baa433fde",
+      "selected_evidence_scope": "successful_original_trained_native_pipeline",
+      "selected_exact_canonical_compact_content_AST": false,
+      "selected_exact_token_ID_reconstruction": false,
+      "selected_status": "complete",
+      "selected_typed_complete": true
+    },
+    {
+      "baseline_checkpoint": "a6b6b0cd589a74d59598c6984040676baf6f27a24a7b61f0ba0a6a5f38d5f64e",
+      "baseline_content_sha256": "1e9dc4e96142d0363b957070c870334a83facd988cf4ae793e771a8baa433fde",
+      "baseline_evidence_scope": "partial_failed_wrapper_with_posthoc_original_storage_recovery",
+      "baseline_exact_canonical_compact_content_AST": false,
+      "baseline_exact_token_ID_reconstruction": false,
+      "baseline_status": "complete",
+      "baseline_typed_complete": true,
+      "causal_training_gain_established": false,
+      "generated_full_ID_sequence_unchanged": true,
+      "legal_prose_or_full_norm_fidelity": "NOT_MEASURED",
+      "objective_kind": "scope_conditional",
+      "progress": {
+        "epochs_completed": 0,
+        "optimizer_steps": 1,
+        "row_cursor": 1
+      },
+      "row_id": "fictional-retention",
+      "row_index": 0,
+      "selected_checkpoint": "9d93601d35dc371ea6895e1deca175b7b41b6279a05400c695edfaa2c8e96116",
+      "selected_content_sha256": "1e9dc4e96142d0363b957070c870334a83facd988cf4ae793e771a8baa433fde",
+      "selected_evidence_scope": "successful_original_trained_native_pipeline",
+      "selected_exact_canonical_compact_content_AST": false,
+      "selected_exact_token_ID_reconstruction": false,
+      "selected_status": "complete",
+      "selected_typed_complete": true
+    },
+    {
+      "baseline_checkpoint": "a6b6b0cd589a74d59598c6984040676baf6f27a24a7b61f0ba0a6a5f38d5f64e",
+      "baseline_content_sha256": "1e9dc4e96142d0363b957070c870334a83facd988cf4ae793e771a8baa433fde",
+      "baseline_evidence_scope": "partial_failed_wrapper_with_posthoc_original_storage_recovery",
+      "baseline_exact_canonical_compact_content_AST": false,
+      "baseline_exact_token_ID_reconstruction": false,
+      "baseline_status": "complete",
+      "baseline_typed_complete": true,
+      "causal_training_gain_established": false,
+      "generated_full_ID_sequence_unchanged": true,
+      "legal_prose_or_full_norm_fidelity": "NOT_MEASURED",
+      "objective_kind": "scope_conditional",
+      "progress": {
+        "epochs_completed": 0,
+        "optimizer_steps": 1,
+        "row_cursor": 1
+      },
+      "row_id": "fictional-inspection",
+      "row_index": 1,
+      "selected_checkpoint": "9d93601d35dc371ea6895e1deca175b7b41b6279a05400c695edfaa2c8e96116",
+      "selected_content_sha256": "1e9dc4e96142d0363b957070c870334a83facd988cf4ae793e771a8baa433fde",
+      "selected_evidence_scope": "successful_original_trained_native_pipeline",
+      "selected_exact_canonical_compact_content_AST": false,
+      "selected_exact_token_ID_reconstruction": false,
+      "selected_status": "complete",
+      "selected_typed_complete": true
+    },
+    {
+      "baseline_checkpoint": "1ef7d777554bea20aa1d77209f55f1eb987598e44a18b737a1d3541e2683ab12",
+      "baseline_content_sha256": "1e9dc4e96142d0363b957070c870334a83facd988cf4ae793e771a8baa433fde",
+      "baseline_evidence_scope": "partial_failed_wrapper_with_posthoc_original_storage_recovery",
+      "baseline_exact_canonical_compact_content_AST": false,
+      "baseline_exact_token_ID_reconstruction": false,
+      "baseline_status": "complete",
+      "baseline_typed_complete": true,
+      "causal_training_gain_established": false,
+      "generated_full_ID_sequence_unchanged": true,
+      "legal_prose_or_full_norm_fidelity": "NOT_MEASURED",
+      "objective_kind": "full537",
+      "progress": {
+        "epochs_completed": 1,
+        "optimizer_steps": 2,
+        "row_cursor": 0
+      },
+      "row_id": "fictional-retention",
+      "row_index": 0,
+      "selected_checkpoint": "3e1e528d0009b37f7608928f0af4a177f1ba3b43e08ef97e55d95c9de252fd8d",
+      "selected_content_sha256": "1e9dc4e96142d0363b957070c870334a83facd988cf4ae793e771a8baa433fde",
+      "selected_evidence_scope": "successful_original_trained_native_pipeline",
+      "selected_exact_canonical_compact_content_AST": false,
+      "selected_exact_token_ID_reconstruction": false,
+      "selected_status": "complete",
+      "selected_typed_complete": true
+    },
+    {
+      "baseline_checkpoint": "1ef7d777554bea20aa1d77209f55f1eb987598e44a18b737a1d3541e2683ab12",
+      "baseline_content_sha256": "1e9dc4e96142d0363b957070c870334a83facd988cf4ae793e771a8baa433fde",
+      "baseline_evidence_scope": "partial_failed_wrapper_with_posthoc_original_storage_recovery",
+      "baseline_exact_canonical_compact_content_AST": false,
+      "baseline_exact_token_ID_reconstruction": false,
+      "baseline_status": "complete",
+      "baseline_typed_complete": true,
+      "causal_training_gain_established": false,
+      "generated_full_ID_sequence_unchanged": true,
+      "legal_prose_or_full_norm_fidelity": "NOT_MEASURED",
+      "objective_kind": "full537",
+      "progress": {
+        "epochs_completed": 1,
+        "optimizer_steps": 2,
+        "row_cursor": 0
+      },
+      "row_id": "fictional-inspection",
+      "row_index": 1,
+      "selected_checkpoint": "3e1e528d0009b37f7608928f0af4a177f1ba3b43e08ef97e55d95c9de252fd8d",
+      "selected_content_sha256": "1e9dc4e96142d0363b957070c870334a83facd988cf4ae793e771a8baa433fde",
+      "selected_evidence_scope": "successful_original_trained_native_pipeline",
+      "selected_exact_canonical_compact_content_AST": false,
+      "selected_exact_token_ID_reconstruction": false,
+      "selected_status": "complete",
+      "selected_typed_complete": true
+    },
+    {
+      "baseline_checkpoint": "a6b6b0cd589a74d59598c6984040676baf6f27a24a7b61f0ba0a6a5f38d5f64e",
+      "baseline_content_sha256": "1e9dc4e96142d0363b957070c870334a83facd988cf4ae793e771a8baa433fde",
+      "baseline_evidence_scope": "partial_failed_wrapper_with_posthoc_original_storage_recovery",
+      "baseline_exact_canonical_compact_content_AST": false,
+      "baseline_exact_token_ID_reconstruction": false,
+      "baseline_status": "complete",
+      "baseline_typed_complete": true,
+      "causal_training_gain_established": false,
+      "generated_full_ID_sequence_unchanged": true,
+      "legal_prose_or_full_norm_fidelity": "NOT_MEASURED",
+      "objective_kind": "scope_conditional",
+      "progress": {
+        "epochs_completed": 1,
+        "optimizer_steps": 2,
+        "row_cursor": 0
+      },
+      "row_id": "fictional-retention",
+      "row_index": 0,
+      "selected_checkpoint": "afcf33352fd849ca95c70a893ccb7b9e9cf76638fb1a6a75b9402f37db47786a",
+      "selected_content_sha256": "1e9dc4e96142d0363b957070c870334a83facd988cf4ae793e771a8baa433fde",
+      "selected_evidence_scope": "successful_original_trained_native_pipeline",
+      "selected_exact_canonical_compact_content_AST": false,
+      "selected_exact_token_ID_reconstruction": false,
+      "selected_status": "complete",
+      "selected_typed_complete": true
+    },
+    {
+      "baseline_checkpoint": "a6b6b0cd589a74d59598c6984040676baf6f27a24a7b61f0ba0a6a5f38d5f64e",
+      "baseline_content_sha256": "1e9dc4e96142d0363b957070c870334a83facd988cf4ae793e771a8baa433fde",
+      "baseline_evidence_scope": "partial_failed_wrapper_with_posthoc_original_storage_recovery",
+      "baseline_exact_canonical_compact_content_AST": false,
+      "baseline_exact_token_ID_reconstruction": false,
+      "baseline_status": "complete",
+      "baseline_typed_complete": true,
+      "causal_training_gain_established": false,
+      "generated_full_ID_sequence_unchanged": true,
+      "legal_prose_or_full_norm_fidelity": "NOT_MEASURED",
+      "objective_kind": "scope_conditional",
+      "progress": {
+        "epochs_completed": 1,
+        "optimizer_steps": 2,
+        "row_cursor": 0
+      },
+      "row_id": "fictional-inspection",
+      "row_index": 1,
+      "selected_checkpoint": "afcf33352fd849ca95c70a893ccb7b9e9cf76638fb1a6a75b9402f37db47786a",
+      "selected_content_sha256": "1e9dc4e96142d0363b957070c870334a83facd988cf4ae793e771a8baa433fde",
+      "selected_evidence_scope": "successful_original_trained_native_pipeline",
+      "selected_exact_canonical_compact_content_AST": false,
+      "selected_exact_token_ID_reconstruction": false,
+      "selected_status": "complete",
+      "selected_typed_complete": true
+    }
+  ],
+  "protocol": {
+    "bytes": 62003,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-warmstart-trained-inference-v01/protocol.json",
+    "sha256": "0dac1b6694073cf749b1ef58d867efe0a5c12c97a1e52449311c5be792abb845"
+  },
+  "qualified_peer_evidence": {
+    "component": {
+      "apis": [
+        "inspect",
+        "score_from_bos",
+        "generate_from_bos"
+      ],
+      "compatibility_dependency": false,
+      "evidence_ids": [
+        "cp128-warmstart-runtime-qualified-20261022-01"
+      ],
+      "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_compact_content_role_warmstart_runtime_v1.md",
+      "id": "compact-role-warmstart-runtime",
+      "notes": "Intact new-schema model-only BOS consumer; twenty authored controls and four genuine BOS forwards. Step0/row0 and step1/row1 per objective,2148 score comparisons at fixed2e-6 relative/absolute tolerance; zero Adam/backward/update. Full numerical generation, step2, reconstruction gain and legal/native-GTE/graph/Lean authority remain unmeasured.",
+      "owner_module": "ipfs_datasets_py.logic.formalization.autoencoder.legal_compact_content_role_warmstart_runtime_v1",
+      "ownership_role": "existing_single_owner",
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_role_warmstart_runtime_v1.py",
+      "required": true,
+      "status": "focused_tests_qualified"
+    },
+    "portable": {
+      "bytes": 4663,
+      "path": "docs/autoformalization/evidence/legal-ir-cp128-warmstart-runtime-20261022.json",
+      "sha256": "22ddf7bddf9e7bcd2cf20e253ccb10ab04bf3b0e64220ce1c3a47ad9c0312c21"
+    },
+    "row": {
+      "id": "cp128-warmstart-runtime-qualified-20261022-01",
+      "observed_bytes": 4663,
+      "observed_sha256": "22ddf7bddf9e7bcd2cf20e253ccb10ab04bf3b0e64220ce1c3a47ad9c0312c21",
+      "path": "docs/autoformalization/evidence/legal-ir-cp128-warmstart-runtime-20261022.json",
+      "required_for_catalog_check": false,
+      "root": "datasets_repository",
+      "scope": "20 authored controls plus4 genuine fixed-BOS forwards;2148 scores within preregistered math.isclose2e-6,780 exact-value equal,maxerror1.1920928955078125e-07. Full sealed15files/3863942B and source/native/storage closed. No training, real autonomous generation, all-six-state scoring, efficacy or legal/native-GTE/graph/Lean admission.",
+      "status": "closed_authored_serving_controls_and_four_real_BOS_scores"
+    }
+  },
+  "recorded_at_utc": "2026-10-23T00:48:47.764937+00:00",
+  "retained_failed_wrapper_observed_counts": {
+    "adam_allocations": 0,
+    "autograd_grad_calls": 0,
+    "backward_calls": 0,
+    "forbidden_calls": 0,
+    "gradient_clip_calls": 0,
+    "gru_completed": 400,
+    "gru_entered": 400,
+    "model_allocations": 4,
+    "model_constructor_completed": 4,
+    "model_forward_completed": 400,
+    "model_forward_entered": 400,
+    "optimizer_base_allocations": 0,
+    "optimizer_updates": 0,
+    "prepared_model_close_calls": 4,
+    "prepared_model_closes_completed": 4,
+    "prepared_model_constructor_calls": 4,
+    "prepared_model_constructor_completed": 4
+  },
+  "runtime_owner": {
+    "path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_role_warmstart_runtime_v1.py",
+    "sha256": "6711203ecbc0b063afaed3a51e35940f61c05cee80f6240f937e0f394e36b771"
+  },
+  "schema": "legal-ir-cp128-warmstart-generation-evidence/v1",
+  "source_READ_closed": true,
+  "states": [
+    {
+      "checkpoint": {
+        "canonical_checkpoint_sha256": "1ef7d777554bea20aa1d77209f55f1eb987598e44a18b737a1d3541e2683ab12",
+        "initial_checkpoint_sha256": null,
+        "objective_kind": "full537",
+        "objective_policy_sha256": "0ed591ba2aa4eb4e12fa82766cd1436054438540e64a338ab5177cf77e946c6f",
+        "optimizer_state_sha256": "dcd9918ea721ae54a43ed27d279f46e85542f61dc0d77e20f275b94f2ddee3a3",
+        "parent_checkpoint_sha256": null,
+        "progress": {
+          "epochs_completed": 0,
+          "optimizer_steps": 0,
+          "row_cursor": 0
+        },
+        "raw_artifact": {
+          "bytes": 2704855,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/cp128-warmstart-qualification-v01-cp128-warmstart-mechanics/exports/full537-step-0.json",
+          "sha256": "599da742ac6bb76c59ae38ac3274fbe37e8064bfa22be5eb3493baea5916fbf3"
+        },
+        "warmstart_parent_checkpoint_sha256": "2c6b5201e1223c3c25adc07b11062180fbaf5f46ce3c078c5b96395f8d87225a",
+        "weights_sha256": "d4e7c710a8aba4462aab575d9bbfb4278c1870fadaf304f80d0f341af4912c34"
+      },
+      "job_id": "cp128-warmstart-full537-step-0",
+      "objective_kind": "full537",
+      "progress": {
+        "epochs_completed": 0,
+        "optimizer_steps": 0,
+        "row_cursor": 0
+      }
+    },
+    {
+      "checkpoint": {
+        "canonical_checkpoint_sha256": "a6b6b0cd589a74d59598c6984040676baf6f27a24a7b61f0ba0a6a5f38d5f64e",
+        "initial_checkpoint_sha256": null,
+        "objective_kind": "scope_conditional",
+        "objective_policy_sha256": "701807e4e15652321efe70c29ffa894e6626776ef5df872447cb270ca0dd1c3a",
+        "optimizer_state_sha256": "dcd9918ea721ae54a43ed27d279f46e85542f61dc0d77e20f275b94f2ddee3a3",
+        "parent_checkpoint_sha256": null,
+        "progress": {
+          "epochs_completed": 0,
+          "optimizer_steps": 0,
+          "row_cursor": 0
+        },
+        "raw_artifact": {
+          "bytes": 2704885,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/cp128-warmstart-qualification-v01-cp128-warmstart-mechanics/exports/scope_conditional-step-0.json",
+          "sha256": "5458464a4ebadef9820247d9dd025e255d498c508b3c039c2afdff8e03d7fc23"
+        },
+        "warmstart_parent_checkpoint_sha256": "2c6b5201e1223c3c25adc07b11062180fbaf5f46ce3c078c5b96395f8d87225a",
+        "weights_sha256": "d4e7c710a8aba4462aab575d9bbfb4278c1870fadaf304f80d0f341af4912c34"
+      },
+      "job_id": "cp128-warmstart-scope-conditional-step-0",
+      "objective_kind": "scope_conditional",
+      "progress": {
+        "epochs_completed": 0,
+        "optimizer_steps": 0,
+        "row_cursor": 0
+      }
+    },
+    {
+      "checkpoint": {
+        "canonical_checkpoint_sha256": "e69ea83a93cade5898578841b864311cae90643afda5a7eb9a220cb2e6120a11",
+        "initial_checkpoint_sha256": "1ef7d777554bea20aa1d77209f55f1eb987598e44a18b737a1d3541e2683ab12",
+        "objective_kind": "full537",
+        "objective_policy_sha256": "0ed591ba2aa4eb4e12fa82766cd1436054438540e64a338ab5177cf77e946c6f",
+        "optimizer_state_sha256": "7623a491449f926715567a7908d95beb9b1d2e07f0bcc84bc594d42f14f2d6c9",
+        "parent_checkpoint_sha256": "1ef7d777554bea20aa1d77209f55f1eb987598e44a18b737a1d3541e2683ab12",
+        "progress": {
+          "epochs_completed": 0,
+          "optimizer_steps": 1,
+          "row_cursor": 1
+        },
+        "raw_artifact": {
+          "bytes": 3228182,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/cp128-warmstart-qualification-v01-cp128-warmstart-mechanics/exports/full537-step-1.json",
+          "sha256": "155497cfafe703c7c99b44df7d44a525099655a76000ed6dd75f24fe7f386b25"
+        },
+        "warmstart_parent_checkpoint_sha256": "2c6b5201e1223c3c25adc07b11062180fbaf5f46ce3c078c5b96395f8d87225a",
+        "weights_sha256": "3f2a4da3ecf0d74197a7ccfac7c6d68370cc66025ea21c1010a73ecac22ff6d5"
+      },
+      "job_id": "cp128-warmstart-full537-step-1",
+      "objective_kind": "full537",
+      "progress": {
+        "epochs_completed": 0,
+        "optimizer_steps": 1,
+        "row_cursor": 1
+      }
+    },
+    {
+      "checkpoint": {
+        "canonical_checkpoint_sha256": "9d93601d35dc371ea6895e1deca175b7b41b6279a05400c695edfaa2c8e96116",
+        "initial_checkpoint_sha256": "a6b6b0cd589a74d59598c6984040676baf6f27a24a7b61f0ba0a6a5f38d5f64e",
+        "objective_kind": "scope_conditional",
+        "objective_policy_sha256": "701807e4e15652321efe70c29ffa894e6626776ef5df872447cb270ca0dd1c3a",
+        "optimizer_state_sha256": "531dd03220ebbfaf89743ad87cf32f29c2fe2578b07a8c68a08d1bc6a4844319",
+        "parent_checkpoint_sha256": "a6b6b0cd589a74d59598c6984040676baf6f27a24a7b61f0ba0a6a5f38d5f64e",
+        "progress": {
+          "epochs_completed": 0,
+          "optimizer_steps": 1,
+          "row_cursor": 1
+        },
+        "raw_artifact": {
+          "bytes": 3052648,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/cp128-warmstart-qualification-v01-cp128-warmstart-mechanics/exports/scope_conditional-step-1.json",
+          "sha256": "2823d625237dda8d51e57a7d370fd0baac45a5e0085482a4aa92fa4a85b8f398"
+        },
+        "warmstart_parent_checkpoint_sha256": "2c6b5201e1223c3c25adc07b11062180fbaf5f46ce3c078c5b96395f8d87225a",
+        "weights_sha256": "222ee93f65e03b6a9653fe252090cb26b4a8a515ffb830f31bbab73357cd608e"
+      },
+      "job_id": "cp128-warmstart-scope-conditional-step-1",
+      "objective_kind": "scope_conditional",
+      "progress": {
+        "epochs_completed": 0,
+        "optimizer_steps": 1,
+        "row_cursor": 1
+      }
+    },
+    {
+      "checkpoint": {
+        "canonical_checkpoint_sha256": "3e1e528d0009b37f7608928f0af4a177f1ba3b43e08ef97e55d95c9de252fd8d",
+        "initial_checkpoint_sha256": "1ef7d777554bea20aa1d77209f55f1eb987598e44a18b737a1d3541e2683ab12",
+        "objective_kind": "full537",
+        "objective_policy_sha256": "0ed591ba2aa4eb4e12fa82766cd1436054438540e64a338ab5177cf77e946c6f",
+        "optimizer_state_sha256": "ad5aff891b4e5b6801569264a63357db4078b368870a3cc03ff8c8e01137dd97",
+        "parent_checkpoint_sha256": "e69ea83a93cade5898578841b864311cae90643afda5a7eb9a220cb2e6120a11",
+        "progress": {
+          "epochs_completed": 1,
+          "optimizer_steps": 2,
+          "row_cursor": 0
+        },
+        "raw_artifact": {
+          "bytes": 3228626,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/cp128-warmstart-qualification-v01-cp128-warmstart-mechanics/exports/full537-step-2.json",
+          "sha256": "fbd3538c7d45471f7f694eb9d7917dc19c9259044466ed6450d3bd3d3a3ba8c1"
+        },
+        "warmstart_parent_checkpoint_sha256": "2c6b5201e1223c3c25adc07b11062180fbaf5f46ce3c078c5b96395f8d87225a",
+        "weights_sha256": "fefc883569ffe9280d80a818ab8bb71b7b76c869f159698ef58b7f11441460eb"
+      },
+      "job_id": "cp128-warmstart-full537-step-2",
+      "objective_kind": "full537",
+      "progress": {
+        "epochs_completed": 1,
+        "optimizer_steps": 2,
+        "row_cursor": 0
+      }
+    },
+    {
+      "checkpoint": {
+        "canonical_checkpoint_sha256": "afcf33352fd849ca95c70a893ccb7b9e9cf76638fb1a6a75b9402f37db47786a",
+        "initial_checkpoint_sha256": "a6b6b0cd589a74d59598c6984040676baf6f27a24a7b61f0ba0a6a5f38d5f64e",
+        "objective_kind": "scope_conditional",
+        "objective_policy_sha256": "701807e4e15652321efe70c29ffa894e6626776ef5df872447cb270ca0dd1c3a",
+        "optimizer_state_sha256": "bb1041b50490063d0e1bd7b145fac50502f736fed70195987058b9b22243315a",
+        "parent_checkpoint_sha256": "9d93601d35dc371ea6895e1deca175b7b41b6279a05400c695edfaa2c8e96116",
+        "progress": {
+          "epochs_completed": 1,
+          "optimizer_steps": 2,
+          "row_cursor": 0
+        },
+        "raw_artifact": {
+          "bytes": 3053279,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/cp128-warmstart-qualification-v01-cp128-warmstart-mechanics/exports/scope_conditional-step-2.json",
+          "sha256": "9ddb49f81ffd526c43363717813264765e4752ba28fb83ec92f303b0c7c22191"
+        },
+        "warmstart_parent_checkpoint_sha256": "2c6b5201e1223c3c25adc07b11062180fbaf5f46ce3c078c5b96395f8d87225a",
+        "weights_sha256": "d4541c1dfab86a7602a10bffde356cf643ed48b8f3be66c0d4c7e3567f1d2630"
+      },
+      "job_id": "cp128-warmstart-scope-conditional-step-2",
+      "objective_kind": "scope_conditional",
+      "progress": {
+        "epochs_completed": 1,
+        "optimizer_steps": 2,
+        "row_cursor": 0
+      }
+    }
+  ],
+  "status": "closed_authored384_eight_successful_trained_plus_four_retained_partial_zero_generation_diagnostic",
+  "storage_released": true,
+  "unchanged_paired_full_ID_sequence_count": 8,
+  "unchanged_paired_full_ID_sequence_denominator": 8,
+  "zero_executed_source_archive_missing": true,
+  "zero_late_wrapper_guards_completed": false,
+  "zero_state_parity": {
+    "baseline_model_rerun": false,
+    "comparisons": [
+      {
+        "all_generated_prefixes_last537_vectors_and_selector_reports_exact": true,
+        "compared_forward_vectors": 100,
+        "emitted_EOS_exact": true,
+        "full_prefix_matrix_hashes_equal": true,
+        "generated_full_ID_sequence_exact": true,
+        "job_id": "cp128-warmstart-full537-step-0",
+        "long_full_matrices_independently_recomputed": false,
+        "original_report": {
+          "bytes": 19481084,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/cp128-bos100-v01-cp128-BOS-v2-100/exports/case-cp128-BOS-v2-100-row-0.json",
+          "sha256": "9ea031c66190ba494477aa7e0b8d9ce01eaae42a9d794beae9415034c52948d3"
+        },
+        "row_index": 0,
+        "typed_decoder_output_exact": true
+      },
+      {
+        "all_generated_prefixes_last537_vectors_and_selector_reports_exact": true,
+        "compared_forward_vectors": 100,
+        "emitted_EOS_exact": true,
+        "full_prefix_matrix_hashes_equal": true,
+        "generated_full_ID_sequence_exact": true,
+        "job_id": "cp128-warmstart-full537-step-0",
+        "long_full_matrices_independently_recomputed": false,
+        "original_report": {
+          "bytes": 19480611,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/cp128-bos100-v01-cp128-BOS-v2-100/exports/case-cp128-BOS-v2-100-row-1.json",
+          "sha256": "414b2637bd252837b343201adfa441975da0a6ccabf0e9315d3c484f0e5f935e"
+        },
+        "row_index": 1,
+        "typed_decoder_output_exact": true
+      },
+      {
+        "all_generated_prefixes_last537_vectors_and_selector_reports_exact": true,
+        "compared_forward_vectors": 100,
+        "emitted_EOS_exact": true,
+        "full_prefix_matrix_hashes_equal": true,
+        "generated_full_ID_sequence_exact": true,
+        "job_id": "cp128-warmstart-scope-conditional-step-0",
+        "long_full_matrices_independently_recomputed": false,
+        "original_report": {
+          "bytes": 19481084,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/cp128-bos100-v01-cp128-BOS-v2-100/exports/case-cp128-BOS-v2-100-row-0.json",
+          "sha256": "9ea031c66190ba494477aa7e0b8d9ce01eaae42a9d794beae9415034c52948d3"
+        },
+        "row_index": 0,
+        "typed_decoder_output_exact": true
+      },
+      {
+        "all_generated_prefixes_last537_vectors_and_selector_reports_exact": true,
+        "compared_forward_vectors": 100,
+        "emitted_EOS_exact": true,
+        "full_prefix_matrix_hashes_equal": true,
+        "generated_full_ID_sequence_exact": true,
+        "job_id": "cp128-warmstart-scope-conditional-step-0",
+        "long_full_matrices_independently_recomputed": false,
+        "original_report": {
+          "bytes": 19480611,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/cp128-bos100-v01-cp128-BOS-v2-100/exports/case-cp128-BOS-v2-100-row-1.json",
+          "sha256": "414b2637bd252837b343201adfa441975da0a6ccabf0e9315d3c484f0e5f935e"
+        },
+        "row_index": 1,
+        "typed_decoder_output_exact": true
+      }
+    ],
+    "distinct_new_BOS_vectors_compared": 4,
+    "full_prefix_matrix_hashes_compared": 400,
+    "full_zero_trajectory_parity": true,
+    "long_full_matrices_independently_recomputed": false,
+    "maximum_absolute_BOS_logit_difference": 0.0,
+    "new_native_score_forwards": 0,
+    "old_qualified_selector_grammar_transferred_by_exact_trajectory": true,
+    "oracle_opened_only_after_both_failed_wrappers_native_source_and_recovered_storage_closed": true,
+    "oracle_used_as_model_input": false,
+    "original1074_BOS_oracle_coordinates_compared": 2148,
+    "original_BOS100_independent_review": {
+      "bytes": 13542,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-bos100-v01/audit/independent-BOS100-qualification-review-v01.json",
+      "sha256": "1288ac530b42c436713aaeab20ba30e5d5f4d52d3ee69b42f9465679be62dce8"
+    },
+    "original_BOS100_inventory": {
+      "bytes": 5311,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-bos100-v01/audit/closed-native-full-inventory-v01.json",
+      "sha256": "9656fc87cc398f9e69fd5b4c240b8a548b7194fc3a65ad8c7f71739a61dc4a1d"
+    },
+    "original_BOS100_raw_reports": [
+      {
+        "bytes": 19481084,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/cp128-bos100-v01-cp128-BOS-v2-100/exports/case-cp128-BOS-v2-100-row-0.json",
+        "sha256": "9ea031c66190ba494477aa7e0b8d9ce01eaae42a9d794beae9415034c52948d3"
+      },
+      {
+        "bytes": 19480611,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/cp128-bos100-v01-cp128-BOS-v2-100/exports/case-cp128-BOS-v2-100-row-1.json",
+        "sha256": "414b2637bd252837b343201adfa441975da0a6ccabf0e9315d3c484f0e5f935e"
+      }
+    ],
+    "original_BOS100_saved_audit": {
+      "bytes": 129767,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-bos100-v01/audits/cp128-BOS-v2-100.json",
+      "sha256": "79ba198d5e2107e875eed64eb762e50d0921587ca808e3bd4d337965d6422b89"
+    },
+    "original_zero_successful_validation_seal": false,
+    "pairwise_comparisons_are_additional_observations": false,
+    "retained_BOS_score_audit": {
+      "bytes": 110778,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-score-parity-v01/audits/cp128-BOS-score-parity-v02.json",
+      "sha256": "ae36bb31ba9de010a9c37cf3ca1ec2519cdc7d1043f696eeb3ffc092840c718f"
+    },
+    "retained_BOS_score_independent_review": {
+      "bytes": 11462,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-score-parity-v01/audit/independent-score-parity-qualification-review-v02.json",
+      "sha256": "3c4fd315697c134de1b27dff5efc007dfa5512529e7c113884dee34c2b3b03ed"
+    },
+    "reused_peer_qualification": {
+      "accepted_original_full_inventory_reference": {
+        "bytes": 4757,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-cp128-warmstart-runtime-20261022-01/audit/closed-native-full-inventory-v01.json",
+        "sha256": "8de04f5f7de26c11cd90c15cce454746118ec32ffe38b8e6cbd9e496d5293718"
+      },
+      "comparisons": [
+        {
+          "autonomous_reconstruction_denominator": 0,
+          "checkpoint_sha256": "1ef7d777554bea20aa1d77209f55f1eb987598e44a18b737a1d3541e2683ab12",
+          "envelope_producer_function": "run_qualification",
+          "envelope_producer_source": {
+            "bytes": 39077,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/autoformal/test_legal_compact_content_role_warmstart_runtime_v1.py",
+            "sha256": "fa3066942161fc8d5d284acdb99f40eba3e5150eff609391f6cdacff45453549"
+          },
+          "exact_retained_envelope_verified": true,
+          "exact_same_shape_score_generation_parity": true,
+          "fixture_row_index": 0,
+          "job_id": "cp128-warmstart-full537-step-0",
+          "maximum_absolute_difference": 0.0,
+          "nested_product_schema": "legal-role-warmstart-bos-scores/v1",
+          "new_score_forward_executed": false,
+          "objective_kind": "full537",
+          "same_shape_BOS537_coordinates_compared": 537,
+          "saved_peer_score_report": {
+            "bytes": 39898,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-cp128-warmstart-runtime-20261022-01-cp128-warmstart-model-only-bos/exports/full537-step-0-row-0-bos.json",
+            "sha256": "3dda880896692bef1d8a5f865d2c3a44da8f69a85873ec4653c994c8a6898f03"
+          },
+          "scores_sha256": "d63e87b664b7b3d74d81d9c79d8b2505ccf946b16d833d98bcdcc32a19aa391f"
+        },
+        {
+          "autonomous_reconstruction_denominator": 0,
+          "checkpoint_sha256": "a6b6b0cd589a74d59598c6984040676baf6f27a24a7b61f0ba0a6a5f38d5f64e",
+          "envelope_producer_function": "run_qualification",
+          "envelope_producer_source": {
+            "bytes": 39077,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/autoformal/test_legal_compact_content_role_warmstart_runtime_v1.py",
+            "sha256": "fa3066942161fc8d5d284acdb99f40eba3e5150eff609391f6cdacff45453549"
+          },
+          "exact_retained_envelope_verified": true,
+          "exact_same_shape_score_generation_parity": true,
+          "fixture_row_index": 0,
+          "job_id": "cp128-warmstart-scope-conditional-step-0",
+          "maximum_absolute_difference": 0.0,
+          "nested_product_schema": "legal-role-warmstart-bos-scores/v1",
+          "new_score_forward_executed": false,
+          "objective_kind": "scope_conditional",
+          "same_shape_BOS537_coordinates_compared": 537,
+          "saved_peer_score_report": {
+            "bytes": 39938,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-cp128-warmstart-runtime-20261022-01-cp128-warmstart-model-only-bos/exports/scope_conditional-step-0-row-0-bos.json",
+            "sha256": "15b3821bb0eaf99d07af3a48cd6347fbe1481516fad1fe8670bb78e0cb0fc271"
+          },
+          "scores_sha256": "d63e87b664b7b3d74d81d9c79d8b2505ccf946b16d833d98bcdcc32a19aa391f"
+        }
+      ],
+      "current_source_reuse_review": {
+        "bytes": 8062,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-warmstart-peer-completed-qualification-reuse-review-v01.json",
+        "sha256": "b03aab30de51df2620873975695ad56f239802ee77cf2c819c3c31a80e88b394"
+      },
+      "historical_teacher_forced_comparison": {
+        "abs_tol": 2e-06,
+        "checked_coordinates": 2148,
+        "exact_value_equal_coordinates": 780,
+        "is_exact_singleton_qualification": false,
+        "maximum_absolute_error": 1.1920928955078125e-07,
+        "rel_tol": 2e-06
+      },
+      "independent_selected_review": {
+        "bytes": 16975,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-cp128-warmstart-runtime-20261022-01/reviews/warmstart-runtime-independent-selected-saved-review-v01.json",
+        "sha256": "49930a27ab210e4a80e631c2458deb37a9dd4ad96bedca8838ec95a1a0ded18a"
+      },
+      "new_score_forwards_executed": 0,
+      "new_scripted_controls_executed": 0,
+      "pairwise_comparisons_are_new_observations": false,
+      "peer_checkpoint_or_teacher_forced_reference_payloads_reopened": false,
+      "peer_full_census_repeated": false,
+      "previously_completed_real_BOS_forwards": 4,
+      "previously_completed_scripted_controls": 20,
+      "retained_score_payload_kind": "run_qualification envelope with nested report",
+      "reused_peer_zero_row0_score_vectors": 2,
+      "same_shape_pairwise_coordinates_compared": 1074,
+      "score_product_schema_relabelled": false,
+      "summary": {
+        "bytes": 9813,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-cp128-warmstart-runtime-20261022-01/qualification-summary-v01.json",
+        "sha256": "88f056e24e0c882bf8a7b25adcb6d540eea3bfa72ed783a5d402b86e79e75b3c"
+      }
+    },
+    "saved1074_BOS_oracle": {
+      "bytes": 33795,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-bos-first-score-oracle-v01.json",
+      "sha256": "860e13399d2501784d484d72a7c88be9499edb6b5ddf1143391b592029d6b8ba"
+    },
+    "singleton_BOS_matrices_independently_recomputed": true,
+    "trajectory_last537_coordinates_compared": 214800,
+    "unchanged_CFG_costs_recomputed": false
+  }
+}

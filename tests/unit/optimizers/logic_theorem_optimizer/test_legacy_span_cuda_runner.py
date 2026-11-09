@@ -730,3 +730,345 @@ def test_publish_only_does_not_claim_completion_with_schema_migration_pending(tm
         assert db.execute("SELECT status,publication,receipt_sha256 FROM batches").fetchone() == ("needs_schema_migration", None, "retained-digest")
     finally:
         db.close()
+
+
+def _headroom_observation(*, healthy, admission=False):
+    """Typed, internally consistent synthetic telemetry; never touches CUDA."""
+    gib = 1024 ** 3
+    return {"device": 0, "device_name": "unit-test-device",
+            "free_bytes": (5 if healthy else 1) * gib, "total_bytes": 8 * gib,
+            "allocated_bytes": gib // 4, "reserved_bytes": gib // 2,
+            "torch_version": "synthetic", "cuda_version": "synthetic",
+            "observed_at": 1700000000.0, "budget_bytes": 2 * gib,
+            "safety_bytes": 2 * gib, "admission": admission,
+            "required_free_bytes": (7 * gib // 2 if admission else 2 * gib),
+            "headroom_ok": healthy, "host_global_gpu_reservation": False,
+            "scope": "unit_test_valid_observed_headroom"}
+
+
+def _headroom_pressure(*, admission=False):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legacy_span_campaign_resources import CudaHeadroomPressure
+    error = CudaHeadroomPressure("insufficient observed CUDA memory headroom")
+    error.observation = _headroom_observation(healthy=False, admission=admission)
+    return error
+
+
+def _headroom_harness(monkeypatch, tmp_path):
+    """Real atomic private-file writes with a deterministic, nonblocking clock."""
+    clock = SimpleNamespace(now=0.0)
+    calls, states = [], []
+    original_atomic, original_verify = runner.atomic, runner._verify_cuda_wait_source
+
+    def sleep(seconds):
+        calls.append(("sleep", seconds))
+        clock.now += seconds
+
+    def atomic(path, value):
+        assert path == tmp_path / "cuda-headroom.json"
+        original_atomic(path, value)
+        assert json.loads(path.read_bytes()) == value
+        assert not path.with_name(path.name + ".tmp").exists()
+        states.append(copy.deepcopy(value))
+        calls.append(("state", value["status"]))
+
+    monkeypatch.setattr(runner, "STOP", False)
+    monkeypatch.setattr(runner, "CUDA_RUNTIME", tmp_path)
+    monkeypatch.setattr(runner, "time", SimpleNamespace(monotonic=lambda: clock.now,
+        time=lambda: 1700000000.0 + clock.now, sleep=sleep))
+    monkeypatch.setattr(runner, "atomic", atomic)
+    monkeypatch.setattr(runner, "event", lambda kind, **value: calls.append(("event", kind)))
+    monkeypatch.setattr(runner, "_verify_cuda_wait_source", lambda: calls.append(("verify",)))
+    return SimpleNamespace(clock=clock, calls=calls, states=states,
+        original_verify=original_verify)
+
+
+def test_cuda_headroom_pressure_writes_waiting_then_ready_without_admission(tmp_path, monkeypatch):
+    harness = _headroom_harness(monkeypatch, tmp_path)
+    healthy = _headroom_observation(healthy=True)
+    attempts = []
+
+    def probe():
+        attempts.append(len(attempts))
+        if len(attempts) == 1:
+            raise _headroom_pressure()
+        assert json.loads((tmp_path / "cuda-headroom.json").read_bytes())["status"] == "waiting"
+        return healthy
+
+    result, wait = runner._cuda_with_headroom(probe, "before_batch")
+    assert result is healthy
+    assert wait == {"stage": "before_batch", "pressure_probes": 1, "waited_seconds": 2.0}
+    assert len(attempts) == 2
+    assert [state["status"] for state in harness.states] == ["waiting", "ready"]
+    assert harness.states[0]["cuda"] == _headroom_observation(healthy=False)
+    assert harness.states[1]["cuda"] == healthy
+    assert all(state["stage"] == "before_batch" and state["admitted"] is False
+               and state["training_executed"] is False for state in harness.states)
+    assert harness.calls == [("verify",), ("state", "waiting"), ("event", "cuda_headroom_wait"),
+        ("sleep", 2.0), ("verify",), ("state", "ready"), ("event", "cuda_headroom_resumed")]
+
+
+def test_cuda_headroom_repeated_pressure_retries_without_logging_every_probe(tmp_path, monkeypatch):
+    harness = _headroom_harness(monkeypatch, tmp_path)
+    attempts = []
+
+    def probe():
+        attempts.append(len(attempts))
+        if len(attempts) <= 3:
+            raise _headroom_pressure()
+        return _headroom_observation(healthy=True)
+
+    _, wait = runner._cuda_with_headroom(probe, "after_batch")
+    assert wait == {"stage": "after_batch", "pressure_probes": 3, "waited_seconds": 6.0}
+    assert len(attempts) == 4
+    assert [state["status"] for state in harness.states] == ["waiting", "ready"]
+    assert harness.states[0]["pressure_probes"] == 1
+    assert harness.states[1]["pressure_probes"] == 3
+    assert harness.calls.count(("sleep", 2.0)) == 3
+    assert harness.calls.count(("verify",)) == 2
+
+
+@pytest.mark.parametrize("message", ["invalid CUDA memory telemetry", "campaign CUDA lock identity changed",
+                                     "CUDA allocator budget exceeded"])
+def test_cuda_headroom_base_resource_errors_are_fatal_without_retry(tmp_path, monkeypatch, message):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legacy_span_campaign_resources import LegacySpanResourceError
+    harness = _headroom_harness(monkeypatch, tmp_path)
+    attempts, failure = [], LegacySpanResourceError(message)
+
+    def probe():
+        attempts.append(True)
+        raise failure
+
+    with pytest.raises(LegacySpanResourceError) as raised:
+        runner._cuda_with_headroom(probe, "before_batch")
+    assert raised.value is failure
+    assert attempts == [True]
+    assert harness.calls == [] and harness.states == []
+    assert not (tmp_path / "cuda-headroom.json").exists()
+
+
+def test_cuda_headroom_base_error_after_pressure_is_not_retried(tmp_path, monkeypatch):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legacy_span_campaign_resources import LegacySpanResourceError
+    harness = _headroom_harness(monkeypatch, tmp_path)
+    attempts, failure = [], LegacySpanResourceError("CUDA allocator budget exceeded")
+
+    def probe():
+        attempts.append(True)
+        if len(attempts) == 1:
+            raise _headroom_pressure()
+        raise failure
+
+    with pytest.raises(LegacySpanResourceError) as raised:
+        runner._cuda_with_headroom(probe, "after_batch")
+    assert raised.value is failure
+    assert len(attempts) == 2 and harness.calls.count(("sleep", 2.0)) == 1
+    assert [state["status"] for state in harness.states] == ["waiting"]
+
+
+def test_cuda_headroom_stop_cancels_before_any_probe_or_model_work(tmp_path, monkeypatch):
+    harness = _headroom_harness(monkeypatch, tmp_path)
+    monkeypatch.setattr(runner, "STOP", True)
+    with pytest.raises(RuntimeError, match="headroom wait cancelled"):
+        runner._cuda_with_headroom(lambda: pytest.fail("cancelled worker probed CUDA"), "before_batch")
+    assert harness.calls == [] and harness.states == []
+
+
+def test_cuda_headroom_stop_during_pressure_prevents_another_probe(tmp_path, monkeypatch):
+    harness = _headroom_harness(monkeypatch, tmp_path)
+    attempts = []
+
+    def probe():
+        attempts.append(True)
+        raise _headroom_pressure()
+
+    def sleep(seconds):
+        assert seconds == 2.0
+        monkeypatch.setattr(runner, "STOP", True)
+
+    monkeypatch.setattr(runner.time, "sleep", sleep)
+    with pytest.raises(RuntimeError, match="headroom wait cancelled"):
+        runner._cuda_with_headroom(probe, "before_batch")
+    assert attempts == [True]
+    assert [state["status"] for state in harness.states] == ["waiting"]
+
+
+@pytest.mark.parametrize("changed", ["package", "runner"])
+def test_cuda_headroom_source_generation_change_after_pause_fails_closed(tmp_path, monkeypatch, changed):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legacy_span_cuda as cuda
+    harness = _headroom_harness(monkeypatch, tmp_path)
+    identity = {"sha256": "a" * 64, "file_count": 3}
+    generation = {"package": identity, "runner": runner.RUNNER_SHA256}
+    attempts = []
+    monkeypatch.setattr(runner, "GPU", None)
+    monkeypatch.setattr(runner, "CUDA_SOURCE_IDENTITY", identity)
+    monkeypatch.setattr(cuda, "_source_snapshot", lambda: generation["package"])
+    monkeypatch.setattr(runner, "digest_file", lambda path: generation["runner"])
+    monkeypatch.setattr(runner, "_verify_cuda_wait_source", harness.original_verify)
+
+    def probe():
+        attempts.append(True)
+        if len(attempts) == 1:
+            raise _headroom_pressure()
+        return _headroom_observation(healthy=True)
+
+    def sleep(seconds):
+        harness.clock.now += seconds
+        generation[changed] = {"sha256": "b" * 64} if changed == "package" else "b" * 64
+
+    monkeypatch.setattr(runner.time, "sleep", sleep)
+    with pytest.raises(RuntimeError, match="producer source changed.*restart required"):
+        runner._cuda_with_headroom(probe, "after_batch")
+    assert len(attempts) == 2
+    assert [state["status"] for state in harness.states] == ["waiting"]
+    assert json.loads((tmp_path / "cuda-headroom.json").read_bytes())["status"] == "waiting"
+
+
+def test_cuda_headroom_healthy_fast_path_avoids_source_snapshot_state_and_sleep(tmp_path, monkeypatch):
+    harness = _headroom_harness(monkeypatch, tmp_path)
+    healthy, attempts = _headroom_observation(healthy=True), []
+    def probe():
+        attempts.append(True)
+        return healthy
+    result, wait = runner._cuda_with_headroom(probe, "before_batch")
+    assert result is healthy and attempts == [True]
+    assert wait == {"stage": "before_batch", "pressure_probes": 0, "waited_seconds": 0.0}
+    assert harness.calls == [] and harness.states == []
+    assert not (tmp_path / "cuda-headroom.json").exists()
+
+
+def test_gpu_evaluate_waits_for_headroom_before_calling_model(tmp_path, monkeypatch):
+    harness = _headroom_harness(monkeypatch, tmp_path)
+    healthy, order = _headroom_observation(healthy=True), []
+    rows, compiled, result = [source()], {"fixture": True}, {"timings": {"existing": 1.0}}
+
+    def check():
+        order.append("probe")
+        if order == ["probe"]:
+            raise _headroom_pressure()
+        return healthy
+
+    def evaluate(batch, *, compiler_results):
+        assert batch is rows and compiler_results is compiled
+        assert order == ["probe", "probe"]
+        assert [state["status"] for state in harness.states] == ["waiting", "ready"]
+        order.append("model")
+        return result
+
+    monkeypatch.setattr(runner, "DEVICE", SimpleNamespace(check=check))
+    monkeypatch.setattr(runner, "GPU", SimpleNamespace(evaluate_batch=evaluate))
+    monkeypatch.setattr(runner, "ALLOCATOR_ADMISSION", {"allocator_fraction_set": True})
+    captured = runner._gpu_evaluate(rows, compiled)
+    assert captured is result
+    assert order == ["probe", "probe", "model", "probe"]
+    assert result["device_budget"] is healthy
+    assert result["cuda_headroom_waits"]["before"]["pressure_probes"] == 1
+    assert result["cuda_headroom_waits"]["after"]["pressure_probes"] == 0
+    assert result["timings"] == {"existing": 1.0, "cuda_headroom_wait_seconds": 2.0}
+
+
+def test_gpu_evaluate_retains_computed_result_through_post_batch_pressure(tmp_path, monkeypatch):
+    harness = _headroom_harness(monkeypatch, tmp_path)
+    healthy, order = _headroom_observation(healthy=True), []
+    result = {"raw_evaluation": {"legal_ir_target_count": 1}, "rows": [source()]}
+    rows, compiled = [source()], {"fixture": True}
+
+    def check():
+        order.append("probe")
+        if order == ["probe", "model", "probe"]:
+            raise _headroom_pressure()
+        return healthy
+
+    def evaluate(batch, *, compiler_results):
+        assert batch is rows and compiler_results is compiled
+        order.append("model")
+        return result
+
+    monkeypatch.setattr(runner, "DEVICE", SimpleNamespace(check=check))
+    monkeypatch.setattr(runner, "GPU", SimpleNamespace(evaluate_batch=evaluate))
+    monkeypatch.setattr(runner, "ALLOCATOR_ADMISSION", {"allocator_fraction_set": True})
+    captured = runner._gpu_evaluate(rows, compiled)
+    assert captured is result
+    assert order == ["probe", "model", "probe", "probe"]
+    assert order.count("model") == 1
+    assert captured["rows"] is result["rows"]
+    assert captured["raw_evaluation"] == {"legal_ir_target_count": 1}
+    assert result["cuda_allocator_admission"] == {"allocator_fraction_set": True}
+    assert result["cuda_headroom_waits"]["before"]["pressure_probes"] == 0
+    assert result["cuda_headroom_waits"]["after"]["pressure_probes"] == 1
+    assert result["timings"]["cuda_headroom_wait_seconds"] == 2.0
+    assert [state["status"] for state in harness.states] == ["waiting", "ready"]
+
+
+def test_gpu_model_error_is_fatal_and_does_not_repeat_evaluation(tmp_path, monkeypatch):
+    harness = _headroom_harness(monkeypatch, tmp_path)
+    order, failure = [], RuntimeError("synthetic model failure")
+    def check():
+        order.append("probe")
+        return _headroom_observation(healthy=True)
+    def evaluate(*args, **kwargs):
+        order.append("model")
+        raise failure
+    monkeypatch.setattr(runner, "DEVICE", SimpleNamespace(check=check))
+    monkeypatch.setattr(runner, "GPU", SimpleNamespace(evaluate_batch=evaluate))
+    with pytest.raises(RuntimeError) as raised:
+        runner._gpu_evaluate([source()], {})
+    assert raised.value is failure
+    assert order == ["probe", "model"]
+    assert harness.calls == [] and harness.states == []
+
+
+def test_gpu_startup_requires_device_and_allocator_headroom_before_model_load(tmp_path, monkeypatch):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legacy_span_campaign_resources as work
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legacy_span_cuda as cuda
+    harness = _headroom_harness(monkeypatch, tmp_path)
+    order, attempts = [], {"device": 0, "allocator": 0}
+    allocator, identity = {"allocator_fraction_set": True}, {"sha256": "c" * 64}
+
+    class Device:
+        def __init__(self, runtime):
+            assert runtime == tmp_path
+            self.last_observation = None
+        def __enter__(self):
+            attempts["device"] += 1
+            order.append("device_probe")
+            if attempts["device"] == 1:
+                raise _headroom_pressure(admission=True)
+            self.last_observation = _headroom_observation(healthy=True, admission=True)
+            order.append("device_ready")
+            return self
+
+    def admit():
+        assert "device_ready" in order
+        attempts["allocator"] += 1
+        order.append("allocator_probe")
+        if attempts["allocator"] == 1:
+            raise _headroom_pressure(admission=True)
+        order.append("allocator_ready")
+        return allocator
+
+    def load(checkpoint, **kwargs):
+        assert checkpoint == "synthetic-checkpoint-no-weights-read"
+        assert order[-1] == "allocator_ready"
+        assert kwargs == {"mode": "legacy_mock_diagnostic", "max_batch_size": 8,
+                          "legal_ir_parallel_workers": 1, "guided_compiler": True}
+        order.append("model_load")
+        return SimpleNamespace(source_identity=identity)
+
+    monkeypatch.setattr(runner, "GPU", None)
+    monkeypatch.setattr(runner, "environment", lambda: None)
+    monkeypatch.setattr(runner, "DEVICE", None)
+    monkeypatch.setattr(runner, "ALLOCATOR_ADMISSION", None)
+    monkeypatch.setattr(runner, "CUDA_SOURCE_IDENTITY", None)
+    monkeypatch.setattr(runner, "CUDA_STARTUP_WAITS", None)
+    monkeypatch.setattr(work, "CudaDeviceBudget", Device)
+    monkeypatch.setattr(work, "admit_cuda_device", admit)
+    monkeypatch.setattr(cuda, "_source_snapshot", lambda: identity)
+    monkeypatch.setattr(cuda, "LegacySpanCUDAWorker", load)
+    runner._gpu_init("synthetic-checkpoint-no-weights-read", tmp_path, 8, 1, guided_compiler=True)
+    assert order == ["device_probe", "device_probe", "device_ready",
+                     "allocator_probe", "allocator_probe", "allocator_ready", "model_load"]
+    assert runner.ALLOCATOR_ADMISSION is allocator
+    assert runner.GPU.source_identity is identity
+    assert runner.CUDA_STARTUP_WAITS["device"]["pressure_probes"] == 1
+    assert runner.CUDA_STARTUP_WAITS["allocator"]["pressure_probes"] == 1
+    assert [state["status"] for state in harness.states] == ["waiting", "ready", "waiting", "ready"]
+

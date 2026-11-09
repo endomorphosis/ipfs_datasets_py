@@ -1,0 +1,124 @@
+{
+  "cases": {
+    "errors": 0,
+    "failures": 0,
+    "passed": 36,
+    "scalar_and_guard": 29,
+    "skipped": 0,
+    "supplied_logit_torch": 7
+  },
+  "independent_reviews": {
+    "actual_result": {
+      "bytes": 6458,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-fullspan-margin-01/independent-actual-result-review-v01.json",
+      "sha256": "23150d6d4478a12acd422a2042a09aec86c983b101ad12980a10ccb011e9072b"
+    },
+    "mathematical_source_and_tests": {
+      "bytes": 6487,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-fullspan-margin-01/independent-mathematical-review-v01.json",
+      "sha256": "e846cb969f6558d8573001c1f13228c6e84d1bda81950a151a6af0fffe78b686"
+    }
+  },
+  "limits": {
+    "Adam_or_optimizer_created": false,
+    "F18_four_tensor_graph_or_freezing_qualified": false,
+    "Lean_build_executed": false,
+    "decoder_model_or_checkpoint_loaded": false,
+    "decoder_training_or_updates_performed": false,
+    "default_promoted": false,
+    "encoder_run": false,
+    "independent_statutory_meaning_or_gold_supplied": false,
+    "trained_accuracy_gain_measured": false,
+    "whole_package_or_third_party_runtime_attested": false
+  },
+  "loss_contract": {
+    "caller_owned": "Unchanged weighted CE, masked teacher KL, labels, model partition and optimizer",
+    "coefficient_arms": [
+      0.0,
+      0.25
+    ],
+    "domain": "All actual unpadded upper-triangle pairs excluding exact gold; no overlap or top-k filtering",
+    "hinge": "relu((1 + wrong_score) - gold_score), finite raw intermediates required",
+    "margin": 1.0,
+    "normalization": "Full batch including absent and empty-competitor graph-connected zeros",
+    "selection": "Detached float32 pair scores; earliest exact tied row-major coordinate"
+  },
+  "next_training_subgoals": [
+    {
+      "completion_gate": "Copy all42 authenticated F18 tensors; train only conditions row3 of start/end weights and biases; preserve38 frozen tensors and650 inactive scalars; fresh ordered four-tensor Adam; no old source/pin rewrite",
+      "task": "Integrate the opt-in term into a separate F18-derived four-tensor conditions profile"
+    },
+    {
+      "completion_gate": "Identical donor, partition, data, teacher, masks, batch schedule, seed1729, batch12 and bounded32 updates per arm; all72 gold-present TRAIN rows eligible; preserve F18 CE/F15 masked KL and full-B normalization",
+      "task": "Preregister and execute matched coefficient0 and0.25 arms"
+    },
+    {
+      "completion_gate": "Score raw and joint separately against F18/F15/N11 and preserve F16/F17 diagnostics, all32 permission decisions and all known loss IDs; exposed authored panels are not new statutory gold",
+      "task": "Freeze outputs and compare complete IR plus casewise retention"
+    }
+  ],
+  "original_execution": {
+    "both_source_READs_closed": true,
+    "final_observed_live_processes": 0,
+    "junit": {
+      "bytes": 7465,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/f19-margin-mechanics-v01/attempt-margin-mechanics-v01/exports/test-results.xml",
+      "sha256": "5fa23883ec1a3b4f737cbaffaa5f72d748a5e5c6887cdd6cb802e9e949ada5ac"
+    },
+    "kernel_quota_claimed": false,
+    "launch": {
+      "bytes": 2584,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/f19-margin-mechanics-v01/root-original-owner-launch-v01.json",
+      "sha256": "474ea7dd975846cbd954b7b2b01012dbe73f2dbb3fe094706bb3ffdb00f0f56f"
+    },
+    "native_lease_id": "5f1ec9d084a04c48bfa483a41f0e5c22",
+    "native_terminal": {
+      "bytes": 6262,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/f19-margin-mechanics-v01/owner-margin-mechanics-v01.stdout",
+      "sha256": "981841e1eef7c299f1129eb17cae7e9dad6b6148feab1fff44aad49a6057ff3f"
+    },
+    "original_CLI_and_pytest_returncode": 0,
+    "original_compute_and_storage_released": true,
+    "original_owner_result": {
+      "bytes": 856,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/f19-margin-mechanics-v01/attempt-margin-mechanics-v01/logs/result.json",
+      "sha256": "ecea332a2daea58bc5ff14ea995c598412fc69555c0e665eb345cc8918269a16"
+    },
+    "request": {
+      "bytes": 7639,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/f19-margin-mechanics-v01/request-margin-mechanics-v01.json",
+      "sha256": "a1daeae87770c41a3018ff1273a2d994aa48962346dda94809e7ba3c2808f287"
+    },
+    "retained_attempt_bytes": 17952,
+    "source_pins_checked_before_and_after": 17,
+    "storage_reservation_id": "d3d1983d0dd348768af47039862b79b5"
+  },
+  "owning_test": {
+    "bytes": 8372,
+    "path": "/home/barberb/lift_coding/.worktrees/legal-ir-lexical-closing-publication-20261026/tests/unit/logic/legal_ir/test_conditions_fullspan_margin_v1.py",
+    "sha256": "461877c74b2b5661778fc853352db4e90c10f5b8127f9adb457cbf760b70bb27"
+  },
+  "qualified": true,
+  "recorded_at": "2026-10-26T16:18:41.367803+00:00",
+  "retained_checkpoint_compatibility": {
+    "default_import_or_runtime_registration_changed": false,
+    "old_checkpoint_pins_rewritten": false,
+    "old_objective_bytes_changed": false,
+    "old_owning_tests_changed": false,
+    "private_R_continuation_bytes_changed": false,
+    "reason": "Retained private continuation hashes the complete old objective file; the new numerical profile is adjacent and opt-in"
+  },
+  "schema": "legal-ir-conditions-fullspan-margin-qualification/v1",
+  "scope": "Detached opt-in conditions margin kernel mechanics on synthetic supplied logits only",
+  "source": {
+    "bytes": 9433,
+    "path": "/home/barberb/lift_coding/.worktrees/legal-ir-lexical-closing-publication-20261026/ipfs_datasets_py/logic/legal_ir/conditions_fullspan_margin_v1.py",
+    "sha256": "e4f16146cf6f64b16e979e5ee0803a41ee41a8377bfa7833918b0a25dd7d1160"
+  },
+  "tested_source_generation": {
+    "checkout_HEAD": "c685a11caa996e35d8c79753e509195d50d3e3cb",
+    "new_kernel_and_tests_were_untracked_candidates": true,
+    "peer_merge": "Mixed-sort parent correspondence PR1412; six unrelated paths, neither candidate changed",
+    "subsequent_delivery_base": "bf800d839cc8c24803e584e4ca3406d5cd4b4a60"
+  }
+}

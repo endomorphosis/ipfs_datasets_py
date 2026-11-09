@@ -1,0 +1,23 @@
+# Receipt-bound trained source generation
+
+This adapter composes the existing native receipt conditioner, source-context nominator and trained compact decoder. It reuses an existing receipt; the encoder producer runs separately. Every selected occurrence stays in the outer report, including unavailable vectors and ambiguous or unavailable source contexts.
+
+The module is `ipfs_datasets_py.logic.formalization.autoencoder.legal_compact_receipt_bound_source_generation_v1`. Its public functions are:
+
+- `prepare_receipt_bound_trained_source_generation_v1(population_raw, rows, checkpoint, *, expected_population_sha256, expected_checkpoint_sha256, max_new_tokens, source_resolver)`
+- `receipt_bound_trained_source_generation_sha256(report)`
+- `validate_receipt_bound_trained_source_generation_v1(report, population_raw, rows, checkpoint, *, expected_report_sha256, expected_population_sha256, expected_checkpoint_sha256, max_new_tokens, source_resolver)`
+
+`population_raw` is the independently pinned UTF-8 JSON bytes of a `legal-relational-batch-population/v1` object. It has `partition`, `selection_sha256`, and ordered `rows`, each containing `id`, `source_sha256` and `context_sha256`. Here `context_sha256` commits the original catalog bytes. IDs are unique; the complete selected population contains 1–16 rows.
+
+Each corresponding input row has exactly `id`, `source_raw`, `catalog_raw`, `expected_source_sha256`, `expected_catalog_sha256`, `source_request`, `expected_source_request_sha256`, `input_id`, and `receipt_ref`. Source and catalog inputs are bytes. A source request has `occurrence_id` and the exact original receipt `input`, including its physical source descriptor/span and text. A receipt reference has absolute `path`, raw `bytes`, and `sha256`. The resolver maps an original source artifact descriptor to its retained physical artifact. There is no caller-supplied conditioning vector.
+
+The adapter verifies the original physical source/input/receipt joins through the public conditioner. Source text bytes must equal the original source bytes. Catalog identity, source-context identity and compact model-context identity remain distinct. Source inputs must be nonempty strict UTF-8, at most 65,536 bytes; catalogs must be nonempty strict UTF-8, at most 524,288 bytes. Empty or invalid inputs refuse the entire operation before numerical dispatch. Unique receipt files total at most 64 MiB. The aggregate input/report bounds are 192/96 MiB; outputs refuse rather than truncate.
+
+All outer receipt and context dispositions are frozen before the decoder runs. `mapping.outer_to_inner` retains every original index; unavailable vectors map to null. `mapping.inner_to_outer` lists only embedded originals, in order. `receipt_inventory` separately retains the complete producer receipt input order and status/token/vector commitments, including inputs outside this selected window. Equal text or equal vector bits never merge physical source occurrences.
+
+Each embedded row passes its exact retained native float32 vector into the unchanged trained source caller. Ambiguous and unavailable contexts remain inner abstentions. Nominated embedded rows use BOS generation with 1–12 new tokens and the caller's mandatory original-input adapter replay. An entirely unavailable population performs pure trained-checkpoint inspection with no model or optimizer. `source_conditionings`, `source_reports` and `trained_source_report` preserve their existing public report contracts.
+
+The report hash function performs no numerical replay. Positive public validation reconstructs the full report from the same original inputs and compares it to the independently pinned report. It therefore performs a second complete trained-source operation, including mandatory replay. Original and validation counters must be accounted separately. A changed receipt is a changed input; validation never reruns the encoder to manufacture a replacement receipt.
+
+This is a custody and composition contract. The retained checkpoint was trained on authored sparse 384-dimensional conditioning; matching the width of genuine native GTE vectors does not establish training-space compatibility or useful reconstruction. The nested decoder retains `encoder_sha256: null`. Training/evaluation masks and comparison credit remain zero, and source meaning, context permission, legal accuracy and Lean admission remain unverified. Catalogs are caller-supplied and unverified. Native-space fitting requires a separately frozen population and new training qualification; the existing exact-resume trainer requires unchanged population and conditioning hashes.

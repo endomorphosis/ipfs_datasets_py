@@ -1,0 +1,134 @@
+{
+  "authenticated_live_owner": "unknown_missing_nonsecret_queue_scope_binding",
+  "cached_public_head": "6477402ca03d4efb61448fe5ce5354cdf1f29442",
+  "cached_public_scope": "Local cached commit and selected publication receipts; no fresh GitHub qualification or remote-head claim.",
+  "catalog_before": {
+    "components": 51,
+    "selected_evidence": 176
+  },
+  "decisions": [
+    "Reuse published counted, context, preservation and compact training/runtime owners; preserve distinct eligibility/context generations.",
+    "Generic compactv2 is already variable-population; the four-row candidate extends its owning test, not its production API.",
+    "Two historical7346 relational requests are unvalidated interpretation data; source and scope alternatives stay unselected.",
+    "Use existing graph/source/definition/Lean owners; no generic parser, graph builder or scheduler is demonstrated.",
+    "Four widths are distinct systems with producer/codec/space/bypass contracts; compare common reviewed tasks before isolated bottlenecks.",
+    "Complete one reviewed norm/definition/two-use component, then20–40 provisions. Do not repeat completed training, captures, source lookups or saved arithmetic."
+  ],
+  "hub_readme_hashes": {
+    "justicedao/ipfs_uscode": "a3b0aaa50d3274d4dc18c7ea24989c7eaf69b78b9e085b8b2ce6019fd5eb312e",
+    "justicedao/uscode-autoformal-entity-cache": "5ef5c8cb742e67cdbafa91315ddec88a38fc6d803467629a493b7148bbab6bd4",
+    "justicedao/uscode-autoformal-span-cache": "12baa9ccf9038e7799fdd0dd59991dbb202b80617f00a636f0f7963e6b2336a6"
+  },
+  "hub_revisions": {
+    "justicedao/ipfs_uscode": "91ca1838853ac82d7a12dd4ab47d9686f47667f9",
+    "justicedao/uscode-autoformal-entity-cache": "79d54378c5d6a89ab56e7a27e0f0ba867e800e19",
+    "justicedao/uscode-autoformal-span-cache": "60501f3e920f6c9050cfc452e0d9fcc2b7c184f3"
+  },
+  "operations": {
+    "GitHub_qualification": false,
+    "Lean_builds": 0,
+    "dataset_payload_reads": 0,
+    "model_calls": 0,
+    "native_jobs": 0,
+    "project_owner_imports": 0,
+    "training_updates": 0
+  },
+  "provenance_root": "datasets_repository",
+  "qualification_or_legal_or_proof_authority": false,
+  "recorded_at_utc": "2026-10-23T05:14:26.985729+00:00",
+  "schema": "legal-ir-programme-next-tasks-reconciliation/v1",
+  "scope": "In-place planning/navigation refresh, preserving the maintained seven goals and24 original tasks. No new production owner, task registry, corpus scan, model or Lean run.",
+  "selected_branch_only_delivery": {
+    "accelerate_commit": "732d60e0356b9ae16dc998769a89e80b5d813d12",
+    "datasets_commit": "00edc35f330563f22c40b8c7a2421ff841d50431",
+    "historical_cases": 120,
+    "newer_monitor_successors_must_be_preserved": true,
+    "qualification": "Reuse historical scope; changed integration boundaries need their own focused qualification. No new run or merge here.",
+    "scope": "Existing WIDTH prerequisite diagnostics, six paths across two owners; needed only if these supervisor diagnostics are selected."
+  },
+  "selected_inputs": [
+    {
+      "bytes": 20366,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hub-card-refresh-20261023-v02.json",
+      "sha256": "653f79a097d4c459cbb12dd787259c6378594913a4b1914d95227c9cc13246c5"
+    },
+    {
+      "bytes": 10087,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/root-continuation-preparation-review-20261023-v01.json",
+      "sha256": "82a3f0f4f684e573c05ae5bcf6d918debe82c9f8bcbfe1884b7c1d87a493b33d"
+    },
+    {
+      "bytes": 8875,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/7346-relational-interpretation-candidate-v01/manifest.json",
+      "sha256": "fcd52c5ec80bd0ddcdd4dbd1e7f03f717e57f48c115d7b351e993fde17564955"
+    },
+    {
+      "bytes": 14753,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/7346-relational-interpretation-candidate-v01/independent-static-review-v01.json",
+      "sha256": "ab8244f88f31d582b0fb9ab23f31182d5889894327cb331de9a94f2ba9d82cc4"
+    },
+    {
+      "bytes": 4543,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/7346-relational-interpretation-candidate-v01/review-notes.json",
+      "sha256": "79026fb61c83e66a2df2c32a47e9a6fe8215e0fb34d8b1768d0e6cc13d6ba24f"
+    },
+    {
+      "bytes": 8672,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/compact-varied-population-candidate-v01/candidate-manifest-v01.json",
+      "sha256": "074fd93112c7e2e742ffb53f834e430fb19f73298647ea1bf746380ead935fdd"
+    },
+    {
+      "bytes": 12754,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/compact-varied-population-candidate-v01/independent-static-review-v01.json",
+      "sha256": "2867ac004780e3125d50d9035008a314c3dee4d8fedde0efbe19a2a5f1b21ec0"
+    },
+    {
+      "bytes": 9579,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/compact-varied-population-candidate-v01/finite-protocol-v01.json",
+      "sha256": "e6bbc88021ae3a4096afec6a4d9bc95fefb08b7ad4f309f7d62ae69391530315"
+    },
+    {
+      "bytes": 8885,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-counted-threshold-publication-20261023-01/publication-closeout-v01.json",
+      "sha256": "7b1a2d7cc1fd606a851dc73a39f16f706788d57c17556dd70a858d8c59d926d6"
+    },
+    {
+      "bytes": 7117,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-counted-numerical-publication-20261023-01/publication-closeout-v01.json",
+      "sha256": "131438e001d272fe681e69176f733e5d6c68a6a0185bd05fc8761ee36dc2b208"
+    },
+    {
+      "bytes": 4725,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-context-public-closure-20261023-01/publication-closeout-v01.json",
+      "sha256": "fba3ba26fa96b738ba75a99a9144d2dfd7aaceb04dc1a6d291ff47a90f39baa5"
+    },
+    {
+      "bytes": 12621,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-preservation-publication-20261023-01/publication-closeout-v01.json",
+      "sha256": "274efb771945de1d7943112b27db7237dbbd7946d768f6d81a034b077d2509d1"
+    },
+    {
+      "bytes": 14900,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-width-prerequisite-diagnostics-20261021-01/git-delivery-receipt-v01.json",
+      "sha256": "25b1a3f3ec6734973921c17afae196f4aca2f3933ecc4721c5c9e0a80a04767d"
+    },
+    {
+      "bytes": 5525,
+      "path": "docs/autoformalization/evidence/legal-ir-programme-plan-reconciliation-20261023.json",
+      "sha256": "6b89ca6de7f4bdd60ec804de65191f035b7fa4367ea8aa63fff18441532d526a"
+    },
+    {
+      "bytes": 31821,
+      "path": "docs/autoformalization/evidence/legal-ir-cp128-saved-predicate-reweight-20261023.json",
+      "sha256": "1b8ff0b1f6c42ef0792b7b2cf9cc62ea8351f9843097e12d94a58d7ee5f184be"
+    }
+  ],
+  "task_ids_statuses_dependencies_acceptance_history_and_other_fields_preserved": true,
+  "updated_next_action_tasks": [
+    "LIR-01",
+    "LIR-05",
+    "LIR-07",
+    "LIR-17"
+  ],
+  "user_authorization_for_continued_work_persists": true
+}

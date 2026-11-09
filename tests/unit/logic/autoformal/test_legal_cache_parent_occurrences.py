@@ -207,3 +207,102 @@ def test_resealed_output_cannot_replace_fixed_full_regeneration(tmp_path, damage
     report["occurrences_sha256"] = digest({k: v for k, v in report.items() if k != "occurrences_sha256"})
     with pytest.raises(ValueError): owner.validate_cache_parent_occurrences(report, *inputs[:3], expected_report_sha256=original_pin, **inputs[3])
     with pytest.raises(ValueError): owner.validate_cache_parent_occurrences(report, *inputs[:3], expected_report_sha256=digest(report), **inputs[3])
+
+
+@pytest.mark.parametrize("characters,source_profile,accepted", [
+    (65_536, None, True), (65_537, None, False),
+    (65_537, "complete-parent-128k/v1", True),
+    (131_072, "complete-parent-128k/v1", True),
+    (131_073, "complete-parent-128k/v1", False),
+])
+def test_complete_parent_source_size_boundaries_preserve_unicode_originals(
+        tmp_path, characters, source_profile, accepted):
+    from ipfs_datasets_py.logic.autoformal import legal_parent_sentence_candidates as sentences
+    text = "雪" + "a" * (characters - 3) + "é."
+    inputs = fixture(tmp_path, source_text="é", parent_texts=[text])
+    arguments = dict(inputs[3], source_profile=source_profile)
+    sentence_arguments = {
+        "expected_parent_text_views_report_sha256": arguments["expected_parent_text_views_report_sha256"],
+        "parent_text_views_inputs": arguments["parent_text_views_inputs"],
+        "source_profile": source_profile,
+    }
+    if not accepted:
+        with pytest.raises(ValueError, match="complete source-local text bound exceeded"):
+            owner.prepare_cache_parent_occurrences(*inputs[:3], **arguments)
+        with pytest.raises(ValueError, match="complete source-local text bound exceeded"):
+            sentences.prepare_parent_sentence_candidates(inputs[2], **sentence_arguments)
+        return
+    report = owner.prepare_cache_parent_occurrences(*inputs[:3], **arguments)
+    partition = sentences.prepare_parent_sentence_candidates(inputs[2], **sentence_arguments)
+    limit = 65_536 if source_profile is None else 131_072
+    assert report["limits"]["max_source_characters"] == partition["limits"]["max_source_characters"] == limit
+    assert ("source_profile" in report) == ("source_profile" in partition) == (source_profile is not None)
+    assert report["limits"]["max_total_source_characters"] == 1024**2
+    assert report["limits"]["max_report_bytes"] == partition["limits"]["max_report_bytes"] == 8 * 1024**2
+    selector = report["rows"][0]["comparison_views"][0]["occurrences"][0]["selector"]
+    assert selector["char_start"] == characters - 2 and selector["char_end"] == characters - 1
+    assert selector["utf8byte_start"] == len(text[:-2].encode())
+    assert text.encode()[selector["utf8byte_start"]:selector["utf8byte_end"]].decode() == "é"
+    assert "".join(row["selector"]["text"] for row in partition["rows"][0]["segments"]) == text
+    assert partition["total_source_characters"] == characters
+    assert all(value is False for value in report["authority"].values())
+    assert owner.validate_cache_parent_occurrences(report, *inputs[:3],
+        expected_report_sha256=digest(report), **arguments)["valid"]
+    assert sentences.validate_parent_sentence_candidates(partition, inputs[2],
+        expected_report_sha256=digest(partition), **sentence_arguments)["valid"]
+
+
+def test_complete_parent_profile_selector_and_lower_only_limits_refuse_before_replay(tmp_path, monkeypatch):
+    from ipfs_datasets_py.logic.autoformal import legal_parent_sentence_candidates as sentences
+    inputs = fixture(tmp_path)
+    monkeypatch.setattr(lineage, "validate_producer_page_lineage",
+        lambda *args, **kwargs: pytest.fail("invalid selector/raised limits must refuse before original replay"))
+    for selector in (True, False, 0, "unknown", "legacy", {}, []):
+        with pytest.raises(ValueError, match="source profile"):
+            owner.prepare_cache_parent_occurrences(*inputs[:3], **inputs[3], source_profile=selector)
+        with pytest.raises(ValueError, match="source profile"):
+            sentences.prepare_parent_sentence_candidates(inputs[2],
+                expected_parent_text_views_report_sha256=inputs[3]["expected_parent_text_views_report_sha256"],
+                parent_text_views_inputs=inputs[3]["parent_text_views_inputs"], source_profile=selector)
+    for limits in ({"max_source_characters": 131_073}, {"max_total_source_characters": 1024**2 + 1},
+                   {"max_report_bytes": 8 * 1024**2 + 1}):
+        with pytest.raises(ValueError, match="raised"):
+            owner.prepare_cache_parent_occurrences(*inputs[:3], **inputs[3],
+                source_profile="complete-parent-128k/v1", limits=limits)
+        with pytest.raises(ValueError, match="raised"):
+            sentences.prepare_parent_sentence_candidates(inputs[2],
+                expected_parent_text_views_report_sha256=inputs[3]["expected_parent_text_views_report_sha256"],
+                parent_text_views_inputs=inputs[3]["parent_text_views_inputs"],
+                source_profile="complete-parent-128k/v1", limits=limits)
+
+
+def test_complete_parent_profile_is_not_inferred_from_resealed_reports(tmp_path):
+    inputs = fixture(tmp_path)
+    legacy_report = run(inputs)
+    assert wire(owner.prepare_cache_parent_occurrences(*inputs[:3], **inputs[3], source_profile=None)) == wire(legacy_report)
+    assert "source_profile" not in legacy_report and legacy_report["limits"]["max_source_characters"] == 65_536
+    selected = owner.prepare_cache_parent_occurrences(*inputs[:3], **inputs[3], source_profile="complete-parent-128k/v1")
+    with pytest.raises(ValueError, match="regeneration"):
+        owner.validate_cache_parent_occurrences(selected, *inputs[:3], expected_report_sha256=digest(selected), **inputs[3])
+    with pytest.raises(ValueError, match="regeneration"):
+        owner.validate_cache_parent_occurrences(legacy_report, *inputs[:3],
+            expected_report_sha256=digest(legacy_report), **inputs[3], source_profile="complete-parent-128k/v1")
+    lowered = dict(inputs[3], source_profile="complete-parent-128k/v1", limits={"max_source_characters": 20})
+    with pytest.raises(ValueError, match="complete source-local text bound exceeded"):
+        owner.prepare_cache_parent_occurrences(*inputs[:3], **lowered)
+
+
+def test_complete_parent_profile_keeps_original_cache_text_bound(tmp_path):
+    text = "b" * 65_537
+    inputs = fixture(tmp_path, source_text=text, parent_texts=["Body."])
+    for source_profile in (None, "complete-parent-128k/v1"):
+        report = owner.prepare_cache_parent_occurrences(*inputs[:3], **inputs[3], source_profile=source_profile)
+        row = report["rows"][0]
+        assert row["status"] == "unsupported_or_missing_source_text"
+        assert row["source_identity"]["source_text"] == text
+        assert row["exact_occurrence_count"] == 0
+        assert row["source_text_sha256_matches_raw_declaration"] is False
+        assert row["selected_occurrence"] is row["governing_source_binding"] is None
+        assert all(flag is False for flag in row["authority"].values())
+        assert owner.validate_cache_parent_occurrences(report, *inputs[:3],
+            expected_report_sha256=digest(report), **inputs[3], source_profile=source_profile)["valid"]

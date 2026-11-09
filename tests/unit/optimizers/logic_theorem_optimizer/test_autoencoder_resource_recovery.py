@@ -1,4 +1,5 @@
 """Explicit one-record recovery; original resource ownership is never adopted."""
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -8,6 +9,268 @@ import pytest
 
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_resource_recovery as recovery
 from tests.unit.optimizers.logic_theorem_optimizer.test_autoencoder_daemon_resources import setup
+
+
+def disposition_case(setup, monkeypatch, scope="isolated_process_group_only"):
+    """Private real ledger/recovery API; custody labels are explicit test data.
+
+    These tests qualify storage-history inspection, never a real native lease
+    release. The existing fixture supplies its own real private scheduler.
+    """
+    _, roots, _, scheduler = setup
+    ledger = roots[1] / 'control' / 'disk.json'
+    ledger.parent.mkdir()
+    def factory(**kwargs):
+        return recovery.resources.DaemonResourceReservation(ledger, roots=roots,
+            storage_bytes=kwargs.pop('storage_bytes', 10_000),
+            memory_mb=kwargs.pop('memory_mb', 128), **kwargs)
+    ledger, args, before = retained((factory, roots, ledger, scheduler), monkeypatch)
+    row = before['reservations'][args['reservation_id']]
+    row.update(validation_request_sha256='a' * 64, scheduler_lane='validation',
+        workload='canonical_validation', owner_birth='123', native_lease_id='b' * 32,
+        scheduler_policy_sha256='c' * 64,
+        scheduler_state_path=str(roots[1] / 'never-opened-native-state.json'),
+        process_scope=scope, child=None, prior_children=[],
+        outputs={name: str(args['attempt_directory'] / name)
+                 for name in ('pytest', 'tmp', 'cache', 'db', 'exports', 'logs')})
+    ledger.write_text(json.dumps(before))
+    args['expected_record_sha256'] = recovery._digest(row)
+    previous = args['expected_record_sha256']
+    recovery.reconcile_retained_reservation(ledger, **args)
+    current = json.loads(ledger.read_bytes())['reservations'][args['reservation_id']]
+    call = dict(roots=roots, reservation_id=args['reservation_id'],
+        expected_request_sha256='a' * 64, attempt_directory=args['attempt_directory'],
+        expected_record_sha256=recovery._digest(current),
+        expected_previous_record_sha256=previous, process_scope=scope)
+    return ledger, call, current
+
+
+def inspection_only(monkeypatch):
+    def forbidden(*args, **kwargs):
+        raise AssertionError('inspection attempted allocation, recovery, inventory, or write')
+    monkeypatch.setattr(recovery.resources.DaemonResourceReservation, '_write', forbidden)
+    monkeypatch.setattr(recovery.resources.DaemonResourceReservation, '_account', forbidden)
+    monkeypatch.setattr(recovery.resources, 'get_global_resource_scheduler', forbidden)
+    monkeypatch.setattr(recovery, '_administrative_census', forbidden)
+    monkeypatch.setattr(recovery, '_durable_inventory', forbidden)
+    monkeypatch.setattr(recovery, 'reconcile_retained_reservation', forbidden)
+
+
+@pytest.mark.parametrize('scope', ['isolated_process_group_only', 'sampled_birth_bound_descendants'])
+def test_storage_disposition_authenticates_original_release_without_native_authority(setup, monkeypatch, scope):
+    ledger, call, _ = disposition_case(setup, monkeypatch, scope)
+    before = ledger.read_bytes()
+    inspection_only(monkeypatch)
+    result = recovery.inspect_validation_disposition(ledger, **call)
+    assert result['storage_release_established'] is True
+    assert result['native_release_established'] is result['admitted'] is False
+    assert result['state_written'] is result['recovery_performed'] is False
+    assert result['native_lease_disposition'] is None
+    assert result['release_evidence']['previous_record_sha256'] == call['expected_previous_record_sha256']
+    assert result['release_evidence']['artifacts_reinventoried'] is False
+    assert ledger.read_bytes() == before
+
+
+def test_validation_inspection_default_stays_group_only(setup, monkeypatch):
+    ledger, call, _ = disposition_case(setup, monkeypatch, 'sampled_birth_bound_descendants')
+    selected = {key: call[key] for key in ('roots', 'reservation_id', 'expected_request_sha256', 'attempt_directory')}
+    before = ledger.read_bytes()
+    with pytest.raises(recovery.resources.DaemonResourceError, match='native lease custody'):
+        recovery.inspect_validation_reservation(ledger, **selected)
+    result = recovery.inspect_validation_reservation(ledger, **selected,
+        process_scope='sampled_birth_bound_descendants')
+    assert result['binding_verified'] is True and result['historical_release_established'] is False
+    assert ledger.read_bytes() == before
+
+
+@pytest.mark.parametrize('scope', [None, True, 1, 'tracked', 'isolated_process_group'])
+def test_validation_inspection_rejects_undeclared_scope_before_path_access(monkeypatch, scope):
+    def forbidden(*args, **kwargs):
+        raise AssertionError('invalid scalar accessed state')
+    monkeypatch.setattr(recovery.resources, 'DaemonResourceReservation', forbidden)
+    with pytest.raises(recovery.resources.DaemonResourceError, match='process scope'):
+        recovery.inspect_validation_reservation('/not-accessed/ledger', roots=['/not-accessed/root'],
+            reservation_id='a' * 32, expected_request_sha256='b' * 64,
+            attempt_directory='/not-accessed/root/attempt', process_scope=scope)
+
+
+@pytest.mark.parametrize('fault', ['retained', 'status-only', 'unknown-schema', 'previous-hash',
+    'current-hash', 'request-hash', 'wrong-scope', 'deleted-outputs', 'admission', 'boolean-release-time'])
+def test_storage_disposition_refuses_ambiguous_or_foreign_history(setup, monkeypatch, fault):
+    ledger, call, row = disposition_case(setup, monkeypatch)
+    data = json.loads(ledger.read_bytes())
+    row = data['reservations'][call['reservation_id']]
+    if fault == 'retained': row['status'] = 'retained'
+    elif fault == 'status-only': del row['explicit_reconciliation']
+    elif fault == 'unknown-schema': row['explicit_reconciliation']['schema'] = 'unreviewed/v1'
+    elif fault == 'previous-hash': call['expected_previous_record_sha256'] = '0' * 64
+    elif fault == 'current-hash': call['expected_record_sha256'] = '0' * 64
+    elif fault == 'request-hash': call['expected_request_sha256'] = '0' * 64
+    elif fault == 'wrong-scope': call['process_scope'] = 'sampled_birth_bound_descendants'
+    elif fault == 'deleted-outputs': row['explicit_reconciliation']['outputs_deleted'] = True
+    elif fault == 'admission': row['explicit_reconciliation']['admitted'] = True
+    elif fault == 'boolean-release-time': row['released_at'] = True
+    ledger.write_text(json.dumps(data))
+    if fault != 'current-hash': call['expected_record_sha256'] = recovery._digest(row)
+    before = ledger.read_bytes()
+    inspection_only(monkeypatch)
+    try:
+        result = recovery.inspect_validation_disposition(ledger, **call)
+    except recovery.resources.DaemonResourceError:
+        pass
+    else:
+        assert result['storage_release_established'] is False
+    assert ledger.read_bytes() == before
+
+
+def archive_disposition(ledger, call, *, historical_limit=None):
+    data = json.loads(ledger.read_bytes())
+    original = data['reservations'][call['reservation_id']]
+    snapshot = json.loads(json.dumps(data))
+    if historical_limit is not None: snapshot['limit_bytes'] = historical_limit
+    directory = ledger.parent / 'ledger-archives' / 'private-test'
+    directory.mkdir(parents=True)
+    path = directory / 'ledger-before.private.json'
+    raw = json.dumps(snapshot, sort_keys=True, separators=(',', ':'), allow_nan=False).encode()
+    path.write_bytes(raw)
+    field = original['explicit_reconciliation']
+    original['explicit_reconciliation'] = {
+        'schema': 'released-reconciliation-archive-pointer/v1',
+        'reservation_id': call['reservation_id'], 'snapshot_path': str(path),
+        'snapshot_sha256': hashlib.sha256(raw).hexdigest(),
+        'original_record_sha256': recovery._digest(snapshot['reservations'][call['reservation_id']]),
+        'original_field_sha256': recovery._digest(field)}
+    ledger.write_text(json.dumps(data))
+    call['expected_record_sha256'] = recovery._digest(original)
+    return path
+
+
+@pytest.mark.parametrize('historical_limit', [None, 80_000])
+def test_storage_disposition_reconstructs_archived_history_without_reusing_old_cap(setup, monkeypatch, historical_limit):
+    ledger, call, _ = disposition_case(setup, monkeypatch)
+    path = archive_disposition(ledger, call, historical_limit=historical_limit)
+    before, snapshot = ledger.read_bytes(), path.read_bytes()
+    inspection_only(monkeypatch)
+    result = recovery.inspect_validation_disposition(ledger, **call)
+    assert result['storage_release_established'] is True
+    assert result['release_evidence']['archive']['path'] == str(path)
+    assert result['release_evidence']['historical_capacity_is_admission_authority'] is False
+    assert ledger.read_bytes() == before and path.read_bytes() == snapshot
+
+
+@pytest.mark.parametrize('fault', ['snapshot-hash', 'field-hash', 'record-hash', 'schema', 'roots',
+    'nested-pointer', 'symlink', 'hardlink', 'fifo', 'oversize'])
+def test_storage_disposition_refuses_unsafe_or_different_archive(setup, monkeypatch, fault):
+    import hashlib
+    ledger, call, _ = disposition_case(setup, monkeypatch)
+    path = archive_disposition(ledger, call)
+    data = json.loads(ledger.read_bytes())
+    row = data['reservations'][call['reservation_id']]
+    ref = row['explicit_reconciliation']
+    if fault in {'snapshot-hash', 'field-hash', 'record-hash'}:
+        key = {'snapshot-hash': 'snapshot_sha256', 'field-hash': 'original_field_sha256',
+               'record-hash': 'original_record_sha256'}[fault]
+        ref[key] = '0' * 64
+    elif fault in {'schema', 'roots', 'nested-pointer'}:
+        snapshot = json.loads(path.read_bytes())
+        if fault == 'schema': snapshot['schema_version'] = 'foreign'
+        elif fault == 'roots': snapshot['roots'] = []
+        else:
+            nested = snapshot['reservations'][call['reservation_id']]
+            nested['explicit_reconciliation'] = dict(ref)
+            ref['original_record_sha256'] = recovery._digest(nested)
+            ref['original_field_sha256'] = recovery._digest(nested['explicit_reconciliation'])
+        raw = json.dumps(snapshot).encode(); path.write_bytes(raw)
+        ref['snapshot_sha256'] = hashlib.sha256(raw).hexdigest()
+    elif fault == 'symlink':
+        target = path.with_name('target.json'); path.rename(target); path.symlink_to(target)
+    elif fault == 'hardlink': os.link(path, path.with_name('alias.json'))
+    elif fault == 'fifo': path.unlink(); os.mkfifo(path)
+    elif fault == 'oversize':
+        with path.open('r+b') as stream: stream.truncate(16 * 1024 * 1024 + 1)
+    ledger.write_text(json.dumps(data)); call['expected_record_sha256'] = recovery._digest(row)
+    before = ledger.read_bytes()
+    inspection_only(monkeypatch)
+    with pytest.raises((recovery.resources.DaemonResourceError, OSError)):
+        recovery.inspect_validation_disposition(ledger, **call)
+    assert ledger.read_bytes() == before
+
+
+@pytest.mark.parametrize('failed_filesystem', [False, True])
+@pytest.mark.parametrize('scope', ['isolated_process_group_only', 'sampled_birth_bound_descendants'])
+def test_storage_disposition_recognizes_selected_batch_history_only(setup, monkeypatch, failed_filesystem, scope):
+    """Producer-shaped private history; no current native absence is asserted."""
+    import hashlib
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_external_resource_recovery as failed
+    ledger, call, _ = disposition_case(setup, monkeypatch, scope)
+    data = json.loads(ledger.read_bytes()); row = data['reservations'][call['reservation_id']]
+    selected = dict(reservation_id=call['reservation_id'],
+        previous_record_sha256=call['expected_previous_record_sha256'], preserved_external_charges={})
+    schema = 'explicit-retained-reservation-batch-reconciliation/v1'
+    if failed_filesystem:
+        document = failed.failed_filesystem_manifest(call['attempt_directory'])
+        path = ledger.parent / 'failed-filesystem.json'
+        raw = json.dumps(document, sort_keys=True, separators=(',', ':')).encode(); path.write_bytes(raw)
+        pin = dict(path=str(path), bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
+        preserved = failed._failed_manifest(pin, call['attempt_directory'], call['roots'])
+        schema = 'retained-failed-filesystem-batch-disposition/v1'
+        selected.update(failed_filesystem_disposition=preserved,
+            ordinary_artifact_durability_asserted=False, test_or_task_acceptance_asserted=False,
+            native_absence=dict(current_policy_sha256='d' * 64, lease_id=row['native_lease_id'],
+                request_id='validation:' + call['reservation_id'], status='absent',
+                descendant_count=0, historical_release_established=False))
+        row.update(artifacts_durable_asserted=False, final_attempt_bytes=preserved['apparent_bytes'],
+            final_external_charged_bytes=0, final_total_charged_bytes=preserved['apparent_bytes'],
+            attempt_exceeded_reservation=False)
+    else:
+        selected['artifacts'] = row['explicit_reconciliation']['artifacts']
+    row['explicit_reconciliation'] = dict(schema=schema, selected_claim=selected, claim_count=1,
+        batch_request_sha256='e' * 64, fresh_global_inventory_count=2,
+        final_accounting_is_prewrite_projection=True, actual_postwrite_census_required=True,
+        admitted=False, cap_changed=False, outputs_deleted=False)
+    ledger.write_text(json.dumps(data)); call['expected_record_sha256'] = recovery._digest(row)
+    before = ledger.read_bytes(); inspection_only(monkeypatch)
+    result = recovery.inspect_validation_disposition(ledger, **call)
+    assert result['storage_release_established'] is True
+    assert result['release_evidence']['schema'] == schema
+    assert result['native_release_established'] is result['admitted'] is False
+    assert result['release_evidence']['test_or_task_acceptance_asserted'] is False
+    assert ledger.read_bytes() == before
+
+
+def test_storage_disposition_rechecks_row_after_original_binding_inspection(setup, monkeypatch):
+    ledger, call, _ = disposition_case(setup, monkeypatch)
+    original = recovery.inspect_validation_reservation
+    observed = {}
+    def concurrent_change(*args, **kwargs):
+        report = original(*args, **kwargs)
+        data = json.loads(ledger.read_bytes())
+        data['reservations'][call['reservation_id']]['retention_reason'] = 'external fixture writer'
+        ledger.write_text(json.dumps(data)); observed['bytes'] = ledger.read_bytes()
+        return report
+    monkeypatch.setattr(recovery, 'inspect_validation_reservation', concurrent_change)
+    inspection_only(monkeypatch)
+    with pytest.raises(recovery.resources.DaemonResourceError, match='between inspections'):
+        recovery.inspect_validation_disposition(ledger, **call)
+    assert ledger.read_bytes() == observed['bytes']
+
+
+def test_storage_archive_parent_replacement_cannot_authenticate_history(setup, monkeypatch):
+    ledger, call, _ = disposition_case(setup, monkeypatch)
+    path = archive_disposition(ledger, call)
+    real_open = recovery.os.open
+    moved = path.parent.with_name('moved-private-test')
+    changed = []
+    def replace_after_open(name, flags, *args, **kwargs):
+        descriptor = real_open(name, flags, *args, **kwargs)
+        if name == path.parent.name and 'dir_fd' in kwargs and not changed:
+            path.parent.rename(moved); path.parent.mkdir(); changed.append(True)
+        return descriptor
+    monkeypatch.setattr(recovery.os, 'open', replace_after_open)
+    before = ledger.read_bytes(); inspection_only(monkeypatch)
+    with pytest.raises(recovery.resources.DaemonResourceError, match='directory changed'):
+        recovery.inspect_validation_disposition(ledger, **call)
+    assert changed == [True] and ledger.read_bytes() == before
 
 
 def retained(setup, monkeypatch):
@@ -441,3 +704,166 @@ def test_administrative_atomic_write_error_is_not_rolled_back_or_retried(setup, 
         assert json.loads(ledger.read_bytes())['reservations'][args['reservation_id']]['status'] == 'released'
     else:
         assert ledger.read_bytes() == unchanged
+
+
+# The opt-in manifest keeps full durability checks while bounding live metadata.
+import hashlib
+
+
+def inventory_manifest(args, path):
+    body = dict(schema='retained-artifact-inventory/v1',
+        attempt_directory=recovery.resources._root_identity(args['attempt_directory']),
+        artifacts=args['expected_artifacts'])
+    raw = (json.dumps(body, sort_keys=True, separators=(',', ':')) + '\n').encode()
+    path.write_bytes(raw)
+    return dict(path=str(path), bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
+
+
+def test_manifest_recovery_closes_large_inventory_without_raising_ledger_or_storage_caps(setup, monkeypatch):
+    ledger, args, _ = retained(setup, monkeypatch)
+    for index in range(40):
+        (args['attempt_directory'] / (str(index).zfill(3) + '-' + 'receipt' * 20 + '.json')).write_text('{}\n')
+    args['expected_artifacts'] = recovery._durable_inventory(args['attempt_directory'])
+    _, roots, _, scheduler = setup
+    manifest = inventory_manifest(args, roots[1] / 'complete-inventory.json')
+    before = ledger.read_bytes()
+    limit = len(before) + 4096
+    monkeypatch.setattr(recovery.resources, 'MAX_LEDGER_BYTES', limit)
+    with pytest.raises(recovery.resources.DaemonResourceError, match='ledger byte bound exceeded'):
+        recovery.reconcile_retained_reservation(ledger, **args)
+    assert ledger.read_bytes() == before
+    scheduler_before = scheduler.snapshot()
+    receipt = recovery.reconcile_retained_reservation(ledger, **args,
+        artifact_inventory_manifest=manifest)
+    assert receipt['schema'] == 'explicit-retained-reservation-reconciliation/v3'
+    assert 'artifacts' not in receipt
+    assert receipt['artifact_inventory_manifest'] == manifest
+    assert receipt['artifact_manifest_schema'] == 'retained-artifact-inventory/v1'
+    assert receipt['artifact_count'] == 41
+    assert receipt['artifact_bytes'] == sum(row['bytes'] for row in args['expected_artifacts'])
+    assert json.loads(Path(manifest['path']).read_bytes())['artifacts'] == args['expected_artifacts']
+    after = json.loads(ledger.read_bytes())
+    selected = after['reservations'][args['reservation_id']]
+    assert selected['status'] == 'released' and selected['explicit_reconciliation'] == receipt
+    assert len(ledger.read_bytes()) <= limit == recovery.resources.MAX_LEDGER_BYTES
+    assert after['limit_bytes'] == 100_000 == recovery.resources.MAX_STORAGE_BYTES
+    assert recovery._durable_inventory(args['attempt_directory']) == args['expected_artifacts']
+    assert receipt['outputs_deleted'] is receipt['automatic_expiry'] is receipt['admitted'] is False
+    assert scheduler.snapshot() == scheduler_before
+
+
+@pytest.mark.parametrize('capacity_policy', ['require_capacity', 'administrative_closeout'],
+                         ids=['ordinary-capacity', 'administrative-closeout'])
+def test_manifest_recovery_retains_original_claim_accounting_and_other_reservations(setup, monkeypatch, capacity_policy):
+    ledger, args, _ = retained(setup, monkeypatch)
+    prior_id, previous = foreign_claim(setup)
+    _, roots, _, scheduler = setup
+    manifest = inventory_manifest(args, roots[1] / 'complete-inventory.json')
+    before = json.loads(ledger.read_bytes()); scheduler_before = scheduler.snapshot()
+    receipt = recovery.reconcile_retained_reservation(ledger, **args,
+        capacity_policy=capacity_policy, artifact_inventory_manifest=manifest)
+    after = json.loads(ledger.read_bytes())
+    assert after['reservations'][prior_id] == previous
+    assert set(after['reservations']) == set(before['reservations'])
+    assert after['limit_bytes'] == before['limit_bytes']
+    assert receipt['full_claim_accounting']['outstanding_full_reservations_bytes'] == 30_000
+    assert receipt['final_accounting']['outstanding_full_reservations_bytes'] == 20_000
+    if capacity_policy == 'administrative_closeout':
+        assert receipt['capacity_policy'] == capacity_policy and receipt['cap_changed'] is False
+        assert receipt['actual_postwrite_census_required'] is True
+        assert receipt['fresh_global_inventory_count'] == 2
+    assert scheduler.snapshot() == scheduler_before
+
+
+@pytest.mark.parametrize('fault', ['extra-field', 'boolean-bytes', 'wrong-size', 'wrong-hash',
+    'uppercase-hash', 'inside-attempt', 'outside-roots', 'wrong-inventory', 'duplicate-key'],
+    ids=['extra-field', 'boolean-bytes', 'wrong-size', 'wrong-hash', 'uppercase-hash',
+         'inside-attempt', 'outside-roots', 'wrong-inventory', 'duplicate-key'])
+def test_manifest_recovery_refuses_ambiguous_or_incomplete_manifest(setup, monkeypatch, tmp_path, fault):
+    ledger, args, _ = retained(setup, monkeypatch)
+    _, roots, _, _ = setup
+    manifest = inventory_manifest(args, roots[1] / 'complete-inventory.json')
+    if fault == 'extra-field': manifest['grant'] = True
+    elif fault == 'boolean-bytes': manifest['bytes'] = True
+    elif fault == 'wrong-size': manifest['bytes'] += 1
+    elif fault == 'wrong-hash': manifest['sha256'] = '0' * 64
+    elif fault == 'uppercase-hash': manifest['sha256'] = 'A' * 64
+    elif fault == 'inside-attempt':
+        path = args['attempt_directory'] / 'failure.json'; raw = path.read_bytes()
+        manifest = dict(path=str(path), bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
+    elif fault == 'outside-roots': manifest = inventory_manifest(args, tmp_path / 'outside-inventory.json')
+    else:
+        path = Path(manifest['path']); raw = path.read_bytes()
+        if fault == 'wrong-inventory':
+            value = json.loads(raw); value['artifacts'][0]['sha256'] = '0' * 64
+            raw = json.dumps(value).encode()
+        else: raw = b'{"schema":"retained-artifact-inventory/v1","schema":"duplicate"}'
+        path.write_bytes(raw)
+        manifest.update(bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
+    unchanged = ledger.read_bytes()
+    with pytest.raises(recovery.resources.DaemonResourceError, match='inventory manifest'):
+        recovery.reconcile_retained_reservation(ledger, **args, artifact_inventory_manifest=manifest)
+    assert ledger.read_bytes() == unchanged
+
+
+@pytest.mark.parametrize('capacity_policy', ['require_capacity', 'administrative_closeout'],
+                         ids=['ordinary-capacity', 'administrative-closeout'])
+@pytest.mark.parametrize('mutation', ['different-bytes', 'equal-bytes-new-inode'],
+                         ids=['different-bytes', 'equal-bytes-new-inode'])
+def test_manifest_recovery_rechecks_durable_manifest_after_original_census(setup, monkeypatch,
+        capacity_policy, mutation):
+    ledger, args, _ = retained(setup, monkeypatch)
+    _, roots, _, _ = setup
+    manifest = inventory_manifest(args, roots[1] / 'complete-inventory.json')
+    path = Path(manifest['path']); raw = path.read_bytes()
+    name = '_account' if capacity_policy == 'require_capacity' else '_administrative_census'
+    owner = recovery.resources.DaemonResourceReservation if name == '_account' else recovery
+    original = getattr(owner, name); changed = False
+    def mutate(*values, **kwargs):
+        nonlocal changed
+        result = original(*values, **kwargs)
+        if not changed:
+            changed = True
+            if mutation == 'different-bytes': path.write_bytes(raw + b' ')
+            else:
+                replacement = path.with_suffix('.replacement'); replacement.write_bytes(raw)
+                os.replace(replacement, path)
+        return result
+    monkeypatch.setattr(owner, name, mutate)
+    unchanged = ledger.read_bytes()
+    with pytest.raises(recovery.resources.DaemonResourceError, match='inventory manifest'):
+        recovery.reconcile_retained_reservation(ledger, **args,
+            capacity_policy=capacity_policy, artifact_inventory_manifest=manifest)
+    assert ledger.read_bytes() == unchanged and changed
+
+
+def test_manifest_recovery_preserves_default_capacity_refusal(setup, monkeypatch):
+    ledger, args, _ = retained(setup, monkeypatch)
+    _, roots, _, _ = setup
+    manifest = inventory_manifest(args, roots[1] / 'complete-inventory.json')
+    observed_storage(setup, args, 95_000)
+    unchanged = ledger.read_bytes()
+    with pytest.raises(recovery.resources.DaemonResourceError, match='capacity'):
+        recovery.reconcile_retained_reservation(ledger, **args, artifact_inventory_manifest=manifest)
+    assert ledger.read_bytes() == unchanged
+
+
+@pytest.mark.parametrize('fault', ['live-owner', 'live-child', 'wrong-record', 'external-charge'],
+                         ids=['live-owner', 'live-child', 'wrong-record', 'external-charge'])
+def test_manifest_recovery_keeps_original_custody_and_record_gates(setup, monkeypatch, fault):
+    ledger, args, data = retained(setup, monkeypatch)
+    _, roots, _, _ = setup
+    manifest = inventory_manifest(args, roots[1] / 'complete-inventory.json')
+    row = data['reservations'][args['reservation_id']]
+    if fault == 'live-owner': row['owner_pid'] = os.getpid()
+    elif fault == 'live-child':
+        child = dict(pid=99999998, birth='123');row['child'] = child
+        original = recovery.resources._group_usage
+        monkeypatch.setattr(recovery.resources, '_group_usage',
+            lambda value: dict(live_processes=1) if value == child else original(value))
+    elif fault == 'external-charge': row['external_charges'] = dict(external=10)
+    args['expected_record_sha256'] = '0' * 64 if fault == 'wrong-record' else recovery._digest(row)
+    ledger.write_text(json.dumps(data)); unchanged = ledger.read_bytes()
+    with pytest.raises(recovery.resources.DaemonResourceError):
+        recovery.reconcile_retained_reservation(ledger, **args, artifact_inventory_manifest=manifest)
+    assert ledger.read_bytes() == unchanged

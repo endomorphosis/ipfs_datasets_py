@@ -55,6 +55,11 @@ from .modal_autoencoder_adaptive_optimizer import (
     parameter_step_report,
     validate_optimizer_options,
 )
+from .modal_autoencoder_view_diagnostic import (
+    FixedViewVocabulary,
+    score_fixed_view_vocabulary,
+    validate_fixed_view_targets,
+)
 
 _LEGAL_IR_TARGET_CACHE_MAX = 2048
 _LEGAL_IR_TARGET_CACHE_LOCK = threading.Lock()
@@ -6608,6 +6613,8 @@ class AdaptiveModalAutoencoder:
         projection_profiler: Optional[ProjectionProfiler] = None,
         projection_update_backend: str = "auto",
         projection_reconstruction_objective: str = "safety_projected",
+        projection_view_vocabulary_diagnostic: Optional[FixedViewVocabulary] = None,
+        projection_view_diagnostic_targets: Optional[Mapping[str, Mapping[str, float]]] = None,
         accepted_patch_sink: Optional[
             Callable[[ModalAutoencoderStatePatch, Mapping[str, Any]], None]
         ] = None,
@@ -6640,6 +6647,13 @@ class AdaptiveModalAutoencoder:
         incomplete durable chain. Opting in computes existing logical state
         identities, which can scan changed components; it does not copy/diff
         the full state, and the no-sink path performs no additional hashing.
+
+        The optional fixed-view diagnostic requires a declared vocabulary and
+        explicit target distributions for every validation row. It records
+        baseline, proposed and final numeric-head scores without changing any
+        acceptance metric. Targets are copied and validated before updates;
+        they are not inferred from sparse keys, model priors or stale caches.
+        The caller binds their provenance to the experiment receipt.
         """
         started_at = time.time()
         monotonic_started_at = time.perf_counter()
@@ -6648,6 +6662,28 @@ class AdaptiveModalAutoencoder:
         sample_list = list(samples)
         validation_list = list(validation_samples or [])
         target_samples = validation_list or sample_list
+        diagnostic_vocabulary = projection_view_vocabulary_diagnostic
+        diagnostic_targets = None
+        if diagnostic_vocabulary is not None:
+            if projection_view_diagnostic_targets is None:
+                raise ValueError("fixed-view diagnostic requires explicit target distributions")
+            diagnostic_targets = validate_fixed_view_targets(
+                self, target_samples, projection_view_diagnostic_targets, diagnostic_vocabulary,
+            )
+        elif projection_view_diagnostic_targets is not None:
+            raise ValueError("fixed-view diagnostic targets require an explicit vocabulary")
+
+        def observe_fixed_views() -> Dict[str, Any]:
+            # A nonfinite proposal remains subject to the ordinary native
+            # rejection/rollback path. Its diagnostic is visibly unavailable.
+            try:
+                return score_fixed_view_vocabulary(
+                    self, target_samples, diagnostic_targets, diagnostic_vocabulary,
+                )
+            except ValueError as exc:
+                return {"status": "invalid", "reason": str(exc),
+                        "changes_acceptance": False, "admitted": False}
+
         if projection_reconstruction_objective not in {"safety_projected", "raw_decoder"}:
             raise ValueError("projection_reconstruction_objective must be safety_projected or raw_decoder")
         raw_objective = projection_reconstruction_objective == "raw_decoder"
@@ -6980,6 +7016,11 @@ class AdaptiveModalAutoencoder:
                     "training_cache_prime_reused",
                     sample_count=len(sample_list),
                 )
+        fixed_view_before = None
+        if diagnostic_vocabulary is not None:
+            fixed_view_before = observe_fixed_views()
+            if fixed_view_before["status"] != "scored":
+                raise ValueError("invalid fixed-view diagnostic baseline: " + fixed_view_before["reason"])
         emit_progress("initial_state_snapshot")
         best = before
         accepted_epochs = 0
@@ -7303,6 +7344,8 @@ class AdaptiveModalAutoencoder:
                             target_samples,
                             stage="line_search_evaluation",
                         )
+                        if diagnostic_vocabulary is not None:
+                            attempt_report["fixed_view_diagnostic"] = observe_fixed_views()
                     finally:
                         if evaluation_transaction.active:
                             rollback_projection_transaction(evaluation_transaction)
@@ -8057,6 +8100,8 @@ class AdaptiveModalAutoencoder:
                                     refinement_validation = evaluate_projection_rows(
                                         target_samples, stage="composed_refinement_validation",
                                     )
+                                    if diagnostic_vocabulary is not None:
+                                        refinement_report["fixed_view_diagnostic"] = observe_fixed_views()
                                     refinement_report["holdout_evaluated"] = True
                                     invalid_metrics = nonfinite_evaluation_fields(refinement_validation)
                                     if invalid_metrics:
@@ -8257,6 +8302,12 @@ class AdaptiveModalAutoencoder:
             "before": before.to_dict(),
             "compute_backend": self.compute_backend_metadata(),
             "candidate_update_order": [name for name, _targets in candidate_updates],
+            **({"fixed_view_diagnostic": {
+                "before": fixed_view_before,
+                "after": observe_fixed_views(),
+                "changes_acceptance": False,
+                "target_scope": "explicit_caller_supplied_validation_distributions",
+            }} if diagnostic_vocabulary is not None else {}),
             **({"projection_reconstruction_objective": "raw_decoder",
                 "reconstruction_objective_scope": "input_embedding_conditioned_residual_features",
                 "formalization_qualification": False} if raw_objective else {}),

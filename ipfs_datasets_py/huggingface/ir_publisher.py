@@ -15,6 +15,7 @@ Published versions are never deleted; rollback emits a supersession record.
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
+from copy import deepcopy
 from dataclasses import dataclass
 from hashlib import sha256
 from pathlib import Path
@@ -30,6 +31,7 @@ from .ir_release import (
     validate_ir_release_package,
 )
 from .publisher import (
+    DEFAULT_TARGET_REVISION,
     HuggingFacePublicationError,
     HuggingFaceReleasePublisher,
     PublicationApproval,
@@ -48,8 +50,28 @@ IR_REVOCATION_SCHEMA: Final = "IRReleaseRevocation@1"
 IR_UPLOAD_ATTEMPT_SCHEMA: Final = "IRPublicationUploadAttempt@1"
 
 
+def _publication_failure_category(error: Exception) -> str:
+    """Return bounded local categories, never a provider-controlled class name."""
+
+    if isinstance(error, TimeoutError):
+        return "timeout_error"
+    if isinstance(error, OSError):
+        return "storage_error"
+    if isinstance(error, HuggingFacePublicationError):
+        return "publication_validation_error"
+    if isinstance(error, ValueError):
+        return "validation_error"
+    return "external_error"
+
+
 class IRPublicationError(HuggingFacePublicationError):
     """Raised when IR publication planning or upload fails closed."""
+
+    def __init__(self, *args: Any, receipt: Mapping[str, Any] | None = None) -> None:
+        super().__init__(*args)
+        self.receipt = deepcopy(dict(receipt)) if receipt is not None else None
+        if self.receipt is not None:
+            _reject_secrets(self.receipt, label="ir_publication_error_receipt")
 
 
 @dataclass(frozen=True, slots=True)
@@ -133,6 +155,8 @@ def plan_ir_dry_run(
     policy: IRPublicationPolicy | None = None,
     existing_remote_paths: Sequence[str] = (),
     existing_remote_digests: Mapping[str, str] | None = None,
+    audited_parent_commit: str = "",
+    target_revision: str = DEFAULT_TARGET_REVISION,
     publisher: HuggingFaceReleasePublisher | None = None,
 ) -> tuple[PublicationPlan, dict[str, Any]]:
     """Deterministic dry-run: operation list, cost, no write-endpoint contact."""
@@ -148,6 +172,8 @@ def plan_ir_dry_run(
             local_root=package.output_dir,
             existing_remote_paths=existing_remote_paths,
             existing_remote_digests=existing_remote_digests,
+            audited_parent_commit=audited_parent_commit,
+            target_revision=target_revision,
         )
     except HuggingFacePublicationError as exc:
         if "at least one add" not in str(exc):
@@ -192,6 +218,8 @@ def publish_ir_release(
     api: Any | None = None,
     existing_remote_paths: Sequence[str] = (),
     existing_remote_digests: Mapping[str, str] | None = None,
+    audited_parent_commit: str = "",
+    target_revision: str = DEFAULT_TARGET_REVISION,
     receipt_path: str | Path | None = None,
     remote_objects: Mapping[str, Mapping[str, Any]] | None = None,
     remote_payloads: Mapping[str, bytes] | None = None,
@@ -201,7 +229,11 @@ def publish_ir_release(
 ) -> dict[str, Any]:
     """Plan, and optionally upload, an IR release package.
 
-    Default mode is dry-run only.  The remote revision is captured on upload.
+    Default mode is dry-run only. Live approval binds the audited parent and
+    target revision. Inventory comes from the returned immutable commit unless
+    explicitly supplied; supplied inventory/payloads remain fixture observations.
+    A requested pinned cache uses the existing downloader, never local package
+    bytes. Readback failure retains the returned commit and cannot promote it.
     """
 
     pub_policy = policy or IRPublicationPolicy(repository_id=package.repository_id)
@@ -213,6 +245,8 @@ def publish_ir_release(
             policy=pub_policy,
             existing_remote_paths=existing_remote_paths,
             existing_remote_digests=existing_remote_digests,
+            audited_parent_commit=audited_parent_commit,
+            target_revision=target_revision,
             publisher=publisher,
         )
     except IRPublicationError as exc:
@@ -288,6 +322,17 @@ def publish_ir_release(
             _write_receipt(receipt_path, receipt)
         return receipt
 
+    if not plan.audited_parent_commit:
+        raise IRPublicationError(
+            "live publication requires audited_parent_commit in the approved plan"
+        )
+    if plan.skipped_exact_matches:
+        # The generic live owner also refuses these plans. Caller digest
+        # observations authorize residual planning only, never a live resume.
+        raise IRPublicationError(
+            "live publication requires a fresh release prefix; skipped caller observations "
+            "do not authorize resuming an immutable release"
+        )
     assert approval is not None  # gated by _require_authority
     try:
         commit = publisher.publish_append_only(
@@ -296,59 +341,99 @@ def publish_ir_release(
             local_root=package.output_dir,
             commit_message=commit_message,
         )
-    except HuggingFacePublicationError as exc:
-        raise IRPublicationError(str(exc)) from exc
+    except HuggingFacePublicationError:
+        # A provider failure can contain credentials, and a transport error
+        # does not prove whether the remote write took effect. Do not replay it
+        # or expose its message/traceback as publication evidence.
+        raise IRPublicationError(
+            "append-only publication refused or failed before a verified commit receipt; "
+            "write outcome unverified and automatic retry not authorized"
+        ) from None
 
-    post = publisher.verify_post_publication(
-        commit_receipt=commit,
-        plan=plan,
-        remote_objects=remote_objects
-        or {
-            item.remote_path: {
-                "sha256": item.sha256,
-                "size_bytes": item.size_bytes,
-                "commit_sha": commit.commit_sha,
-            }
-            for item in plan.operations
-        },
-    )
-    pinned = None
-    if remote_payloads is not None or fetch_bytes is not None or verified_cache_root is not None:
-        cache = Path(verified_cache_root) if verified_cache_root is not None else Path(
-            package.output_dir
-        ).with_name(Path(package.output_dir).name + ".pinned-cache")
-        if cache.exists() and any(cache.iterdir()):
-            # Retry path: reuse an empty sibling rather than fail a second call.
-            cache = cache.with_name(cache.name + f".{commit.commit_sha[:8]}")
-        payloads = remote_payloads
-        if payloads is None and fetch_bytes is None:
-            root = Path(package.output_dir)
-            payloads = {
-                item.remote_path: root.joinpath(*item.relative_path.split("/")).read_bytes()
-                for item in plan.operations
-            }
-        pinned = publisher.redownload_and_validate_pinned(
-            commit_sha=commit.commit_sha,
+    post = pinned = None
+    post_payload = pinned_payload = None
+    readback_stage = "inventory"
+    readback_sources = {
+        "inventory": "supplied_observations" if remote_objects is not None else "publisher_adapter",
+        "pinned_payloads": ("supplied_observations" if remote_payloads is not None else "publisher_adapter")
+            if remote_payloads is not None or fetch_bytes is not None or verified_cache_root is not None
+            else "not_requested",
+    }
+    try:
+        inventory = remote_objects
+        if inventory is None:
+            inventory = publisher.inventory_remote_objects_at_commit(
+                commit_receipt=commit,
+                plan=plan,
+            )
+        readback_stage = "post_publication_verification"
+        post = publisher.verify_post_publication(
+            commit_receipt=commit,
             plan=plan,
-            cache_root=cache,
-            remote_payloads=payloads,
+            remote_objects=inventory,
         )
-
-    receipt = _build_ir_receipt(
-        package=package,
-        policy=pub_policy,
-        plan=plan,
-        wrapped_plan=wrapped_plan,
-        commit=commit,
-        approval=approval,
-        lease=lease,
-        post_publication=post.to_dict(),
-        pinned_redownload=pinned.to_dict() if pinned is not None else None,
-        status="published_pending_promotion",
-    )
-    if receipt_path is not None:
-        _write_receipt(receipt_path, receipt)
-    return receipt
+        checked_post = post.to_dict()
+        _reject_secrets(checked_post, label="ir_post_publication_verification")
+        post_payload = checked_post
+        if remote_payloads is not None or fetch_bytes is not None or verified_cache_root is not None:
+            readback_stage = "pinned_redownload"
+            cache = Path(verified_cache_root) if verified_cache_root is not None else Path(
+                package.output_dir
+            ).with_name(Path(package.output_dir).name + ".pinned-cache")
+            if cache.exists() and any(cache.iterdir()):
+                # Retain an earlier cache; the generic owner still requires
+                # the selected new cache to be empty and verifies every byte.
+                cache = cache.with_name(cache.name + f".{commit.commit_sha[:8]}")
+            pinned = publisher.redownload_and_validate_pinned(
+                commit_sha=commit.commit_sha,
+                plan=plan,
+                cache_root=cache,
+                remote_payloads=remote_payloads,
+            )
+            checked_pinned = pinned.to_dict()
+            _reject_secrets(checked_pinned, label="ir_pinned_redownload_validation")
+            pinned_payload = checked_pinned
+        readback_stage = "receipt_construction"
+        receipt = _build_ir_receipt(
+            package=package, policy=pub_policy, plan=plan, wrapped_plan=wrapped_plan,
+            commit=commit, approval=approval, lease=lease,
+            post_publication=post_payload, pinned_redownload=pinned_payload,
+            readback_sources=readback_sources, status="published_pending_promotion",
+        )
+        if receipt_path is not None:
+            readback_stage = "receipt_storage"
+            _write_receipt(receipt_path, receipt)
+        return receipt
+    except Exception as error:
+        blocked = _build_ir_receipt(
+            package=package, policy=pub_policy, plan=plan, wrapped_plan=wrapped_plan,
+            commit=commit, approval=approval, lease=lease,
+            post_publication=post_payload, pinned_redownload=pinned_payload,
+            readback_sources=readback_sources, status="blocked_remote_write_gate",
+        )
+        # Failure metadata is fixed-size local vocabulary. Provider messages
+        # and exception class names may contain credentials or unbounded text.
+        blocked["readback_failure"] = {
+            "stage": readback_stage, "error_type": _publication_failure_category(error),
+            "automatic_retry_authorized": False, "pointer_advanced": False,
+        }
+        if readback_stage == "receipt_storage":
+            # Do not attempt a second replacement after storage failure. The
+            # existing writer leaves any earlier receipt in place if its final
+            # atomic replacement fails; the carried receipt retains this commit.
+            blocked["readback_failure"]["receipt_write_error_type"] = _publication_failure_category(error)
+        _reject_secrets(blocked, label="ir_blocked_publication_receipt")
+        if receipt_path is not None and readback_stage != "receipt_storage":
+            try:
+                _write_receipt(receipt_path, blocked)
+            except Exception as receipt_error:
+                blocked["readback_failure"]["receipt_write_error_type"] = _publication_failure_category(receipt_error)
+        _reject_secrets(blocked, label="ir_blocked_publication_receipt")
+        raise IRPublicationError(
+            "publication commit returned but readback or receipt finalization failed; "
+            "retain the immutable commit for review",
+            receipt=blocked,
+        ) from None
 
 
 def retry_partial_upload(
@@ -360,11 +445,20 @@ def retry_partial_upload(
     policy: IRPublicationPolicy | None = None,
     api: Any | None = None,
     remote_digests: Mapping[str, str] | None = None,
+    audited_parent_commit: str = "",
+    target_revision: str = DEFAULT_TARGET_REVISION,
+    receipt_path: str | Path | None = None,
+    remote_objects: Mapping[str, Mapping[str, Any]] | None = None,
+    remote_payloads: Mapping[str, bytes] | None = None,
+    verified_cache_root: str | Path | None = None,
+    fetch_bytes: Callable[[str, str, str], bytes] | None = None,
 ) -> dict[str, Any]:
-    """Resume a partial upload by skipping exact path+digest matches.
+    """Plan a residual upload from explicit path+digest observations.
 
-    Already-written objects with a matching digest are treated as complete.
-    Objects with a mismatched digest are refused (append-only, no overwrite).
+    Matching observations are omitted from the residual plan; mismatches are
+    refused. The existing generic write boundary still refuses any actual
+    pre-existing release prefix. This helper grants no prefix-resume exception
+    and its residual readback does not qualify skipped bodies as a full release.
     """
 
     pub_policy = policy or IRPublicationPolicy(repository_id=package.repository_id)
@@ -384,6 +478,13 @@ def retry_partial_upload(
         lease=lease,
         api=api,
         existing_remote_digests=existing,
+        audited_parent_commit=audited_parent_commit,
+        target_revision=target_revision,
+        receipt_path=receipt_path,
+        remote_objects=remote_objects,
+        remote_payloads=remote_payloads,
+        verified_cache_root=verified_cache_root,
+        fetch_bytes=fetch_bytes,
     )
 
 
@@ -470,6 +571,7 @@ def _build_ir_receipt(
     lease: PublicationLease | None = None,
     post_publication: Mapping[str, Any] | None = None,
     pinned_redownload: Mapping[str, Any] | None = None,
+    readback_sources: Mapping[str, str] | None = None,
 ) -> dict[str, Any]:
     remote_revision = commit.commit_sha if commit is not None else ""
     receipt = {
@@ -504,6 +606,8 @@ def _build_ir_receipt(
         "status": status,
         "tokens_persisted": False,
     }
+    if readback_sources is not None:
+        receipt["readback_sources"] = dict(readback_sources)
     _reject_secrets(receipt, label="ir_publication_receipt")
     return receipt
 
@@ -518,6 +622,12 @@ def package_and_publish(
     lease: PublicationLease | None = None,
     api: Any | None = None,
     receipt_path: str | Path | None = None,
+    audited_parent_commit: str = "",
+    target_revision: str = DEFAULT_TARGET_REVISION,
+    remote_objects: Mapping[str, Mapping[str, Any]] | None = None,
+    remote_payloads: Mapping[str, bytes] | None = None,
+    verified_cache_root: str | Path | None = None,
+    fetch_bytes: Callable[[str, str, str], bytes] | None = None,
 ) -> dict[str, Any]:
     """One-shot local package plus dry-run (or approved append-only upload)."""
 
@@ -537,6 +647,12 @@ def package_and_publish(
         lease=lease,
         api=api,
         receipt_path=receipt_path,
+        audited_parent_commit=audited_parent_commit,
+        target_revision=target_revision,
+        remote_objects=remote_objects,
+        remote_payloads=remote_payloads,
+        verified_cache_root=verified_cache_root,
+        fetch_bytes=fetch_bytes,
     )
 
 

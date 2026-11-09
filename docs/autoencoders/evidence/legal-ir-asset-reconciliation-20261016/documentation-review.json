@@ -1,0 +1,137 @@
+{
+  "authority": {
+    "legal_gold": false,
+    "native_closeout_qualified_by_this_review": false,
+    "payload_bytes_freshly_authenticated": false,
+    "proof_authority": false,
+    "registration_mutated": false,
+    "runtime_ready": false,
+    "teacher_qualified": false
+  },
+  "catalog_metadata_observation": {
+    "all_legal_runtime_teacher_proof_declarations_false": true,
+    "bytes": 740075,
+    "declared_dimensions": {
+      "384": 101,
+      "768": 15,
+      "8": 17,
+      "detached_components": 388
+    },
+    "exact_queries_found": 8,
+    "legal_IR_declarations": 521,
+    "native_closeout_independently_reaudited_by_this_review": false,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-current-catalog-20261016-a-01/exports/current-legal-ir-catalog.json",
+    "sha256": "c3aef6d860c3bcedb3154af13dcdc844fb0f48e8fa4d5aa2dfdcc2a761d7b235",
+    "status": "pass",
+    "strict_IR_bindings": 684
+  },
+  "checks": {
+    "8D_384D_768D_family_schema_task_and_encoder_output_capabilities_separate": true,
+    "advertised_LFS_matches": 2,
+    "aligned_and_original_start_interfaces_keep_actual_unknown_task_schema_profile_format_selectors": true,
+    "exact_reported_SHA_catalog_matches": 14,
+    "fitted_bridge_remains_null_dimension_unbound_component": true,
+    "later_native_fit_and_saved_interface_metadata_distinguished_from_initial_preparation_generation": true,
+    "matches_copied_exactly_from_current_catalog_metadata": true,
+    "no_measured_semantic_KD_teacher_or_native_768_statutory_benefit_claim": true,
+    "nonmatches": {
+      "bundle_manifest_not_checkpoint_key": 1,
+      "historical_full_8D_checkpoint": 1,
+      "source_token_F15_F17_F18_checkpoints": 3
+    },
+    "ordinary_Git_checkpoint_publication_not_inferred_absent_from_LFS_nonmatch": true,
+    "outer_precise_clipping_runtime_provenance_kept_required": true,
+    "proposed_component_ids": [
+      {
+        "inventory_key": "legal_ir:source_conditioned:F15_actor_parent",
+        "record_id": "ir-model-component-binding/v1:a71cd3e104aa489008e1fd66d79fc488bfc03c09f2c0c2ea213375b9ca7ed9b6"
+      },
+      {
+        "inventory_key": "legal_ir:source_conditioned:F17",
+        "record_id": "ir-model-component-binding/v1:4b8174d50a374971020dd0c58cec951a3a37ff824bd12fb9204ba60c14d04880"
+      },
+      {
+        "inventory_key": "legal_ir:source_conditioned:F18",
+        "record_id": "ir-model-component-binding/v1:0b4dd36d92e5e99d01b45d32f5ddbdf872e8370702c3325209e8ba7d0a1ba9ad"
+      }
+    ],
+    "public_descriptor_join_entries": 16,
+    "public_repository_descriptor_counts_not_model_counts": true,
+    "reported_payload_SHA_namespaces_do_not_claim_fresh_payload_authentication": true,
+    "selected_asset_entries": 19,
+    "worklist_is_offline_proposal_not_executable_import_plan_or_registration": true,
+    "worklist_matches_existing_importer_identity_rules": true
+  },
+  "concrete_blockers": [],
+  "importer_source": {
+    "bytes": 29300,
+    "git_path": "ipfs_datasets_py/logic/formalization/autoencoder/ir_model_manager_import.py",
+    "git_revision": "a46500b82c37a82888ac87af1df123f1fc797bf4",
+    "method": "Read exact Git object and inspect AST/source; do not import or call importer.",
+    "sha256": "5d50f879d6e1e80fc68a29060680fcac9e234f62a3732f7c697f31360ca9506b"
+  },
+  "limits": [
+    "Registry observations concern this one successful bounded strict IR declaration catalog, not total generic database rows, other stores or active manager processes.",
+    "This review read completed catalog metadata but did not open DuckDB or independently repeat the separately owned native closeout/durability audit.",
+    "Checkpoint/embedding bodies were not opened, parsed, freshly hashed, numerically loaded or generated; historical execution and reload claims retain original receipt scope.",
+    "Hub descriptor observations and retained inventory metadata do not authenticate remote checkpoint payloads or qualify teacher, runtime, legal meaning or proof authority.",
+    "The proposed missing registrations require a separately admitted missing-only importer plan and cold resolver/numerical qualification; no registry or public model was mutated."
+  ],
+  "observed_at_utc": "2026-10-16T02:45:06.633531+00:00",
+  "review_scope": "Complete new guide and selected inventory/worklist/public metadata joins; master-plan sections 6 and 9. Read-only source/metadata inspection only, with no new catalog or model execution.",
+  "reviewed_files": [
+    {
+      "bytes": 9045,
+      "path": "docs/autoencoders/legal_ir_asset_reconciliation_20261016.md",
+      "sha256": "a11219f4cf99cefc6390ef8eaeaa7ef820160ada0383da59f8e7690e5c653c00"
+    },
+    {
+      "bytes": 95428,
+      "path": "docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
+      "sha256": "08f646d2112bfc21685ce947284cbaec1b06c197ab783daa9e9b3c4a899e7958"
+    },
+    {
+      "bytes": 47748,
+      "path": "docs/autoencoders/evidence/legal-ir-asset-reconciliation-20261016/asset-registration-inventory.json",
+      "sha256": "c629ee4f55d381d65f574490b8e3ec4613e2ebdde50846b701770726952931a2"
+    },
+    {
+      "bytes": 6636,
+      "path": "docs/autoencoders/evidence/legal-ir-asset-reconciliation-20261016/missing-registration-worklist.json",
+      "sha256": "ad7cf6097fa2f5cfc90d8d2133cc10b440b7e928b1e09bf43a5b8c1c12c5a18a"
+    },
+    {
+      "bytes": 43706,
+      "path": "docs/autoencoders/evidence/legal-ir-asset-reconciliation-20261016/public-model-availability.json",
+      "sha256": "c3db2013e83e5d1aa5a17424a40cc784650b834f978af19f63f5b294096de8a8"
+    },
+    {
+      "bytes": 15893,
+      "path": "docs/autoencoders/evidence/legal-ir-asset-reconciliation-20261016/selected-assets-public-join.json",
+      "sha256": "71c5d43b034bc06944b53f34e41ded7a307bae3b2fa541ea0cfb498f1eb04c7b"
+    },
+    {
+      "bytes": 72170,
+      "path": "docs/autoencoders/evidence/legal-ir-asset-reconciliation-20261016/embedding-asset-survey.json",
+      "sha256": "e65031db088c2a7f713af53d49696c8eb48d234513f29a4453e2e6f040a2e742"
+    },
+    {
+      "bytes": 71465,
+      "path": "docs/autoencoders/evidence/legal-ir-asset-reconciliation-20261016/checkpoint-asset-survey.json",
+      "sha256": "410e979608202840d032f1a932c27095ffaf1cf2c00ff57afd72b0b2fbb541d2"
+    }
+  ],
+  "reviewer_execution": {
+    "catalog_or_DB_opens": 0,
+    "git_mutations": 0,
+    "models_loaded": 0,
+    "native_admissions": 0,
+    "network_requests": 0,
+    "product_imports": 0,
+    "tests": 0,
+    "training_runs": 0,
+    "weights_or_embedding_payload_loads": 0
+  },
+  "schema": "legal-ir-asset-reconciliation-documentation-independent-review/v1",
+  "status": "pass_static_and_metadata_review"
+}

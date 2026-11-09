@@ -332,6 +332,9 @@ def score_legal_original_text_roundtrip(corpus_pin, captured_inputs, candidate_r
                                 whitespace_token_edit=_distance(text.split(), target.split(), budget))
                     except Exception as error:
                         result["rendering"].update(status="refused", reason=type(error).__name__)
+        result["joint_ir_original_utf8_exact"] = (
+            result["exact_ir"] and result["rendering"]["exact_original_utf8"] is True
+        ) if render_canonical else None
         results.append(result)
     # Reread the complete corpus after optional caller-owned rendering. This
     # observes endpoint stability; no atomic multi-file/current-model claim.
@@ -342,7 +345,15 @@ def score_legal_original_text_roundtrip(corpus_pin, captured_inputs, candidate_r
         rendered=sum(row["rendering"]["status"] == "rendered" for row in results) if render_canonical else None,
         rendering_refused=sum(row["rendering"]["status"] == "refused" for row in results) if render_canonical else None,
         exact_original_utf8=sum(row["rendering"]["exact_original_utf8"] is True for row in results) if render_canonical else None,
-        whitespace_collapsed_exact=sum(row["rendering"]["whitespace_collapsed_exact"] is True for row in results) if render_canonical else None)
+        whitespace_collapsed_exact=sum(row["rendering"]["whitespace_collapsed_exact"] is True for row in results) if render_canonical else None,
+        joint_ir_original_utf8_exact=sum(row["joint_ir_original_utf8_exact"] is True for row in results) if render_canonical else None)
+    ir_text_joint_counts = None
+    if render_canonical:
+        ir_text_joint_counts = {"denominator": "all_captured_input_rows", "total": total,
+            "both_exact": counts["joint_ir_original_utf8_exact"],
+            "ir_only_exact": sum(row["exact_ir"] and row["rendering"]["exact_original_utf8"] is not True for row in results),
+            "text_only_exact": sum(not row["exact_ir"] and row["rendering"]["exact_original_utf8"] is True for row in results),
+            "neither_exact": sum(not row["exact_ir"] and row["rendering"]["exact_original_utf8"] is not True for row in results)}
     provenance_ok = not any(row["reason"] == "invalid_prediction_schema_or_source_provenance" for row in results)
     edits = {}
     for name in ("character_edit", "whitespace_token_edit"):
@@ -362,7 +373,9 @@ def score_legal_original_text_roundtrip(corpus_pin, captured_inputs, candidate_r
             and (not render_canonical or counts["rendered"] == total),
         "counts": counts, "rates": {"denominator": "all_captured_input_rows", "exact_ir": counts["exact_ir"] / total,
             "exact_original_utf8": counts["exact_original_utf8"] / total if render_canonical else None,
-            "whitespace_collapsed_exact": counts["whitespace_collapsed_exact"] / total if render_canonical else None},
+            "whitespace_collapsed_exact": counts["whitespace_collapsed_exact"] / total if render_canonical else None,
+            "joint_ir_original_utf8_exact": counts["joint_ir_original_utf8_exact"] / total if render_canonical else None},
+        "ir_text_joint_counts": ir_text_joint_counts,
         "facets": {key: {"matched": sum(row["facets"][key] for row in results), "total": total} for key in _FACETS},
         "edit_budget": {"maximum_cells": max_edit_cells, "used_cells": max_edit_cells - budget[0],
             "scope": "global character and whitespace-token Levenshtein cells; exhausted distances stay null"},

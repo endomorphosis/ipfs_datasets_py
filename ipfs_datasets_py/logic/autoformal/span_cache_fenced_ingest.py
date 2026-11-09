@@ -365,13 +365,17 @@ def drain_fenced_manifest(cache, manifest, *, worker_pool, compile_worker: Calla
             for claim in claimed["claims"]:
                 source = owner.read_claim_source_fenced(claim)
                 need(claim["source_revision"] == manifest["source_revision"], "claimed source revision differs from manifest")
-                source_bytes += len(source["text"].encode("utf-8"))
+                item = {"source_span_id": claim["source_span_id"], "legal_id": source["legal_id"],
+                        "text": source["text"], "source_revision": claim["source_revision"],
+                        "source_sha256": claim["source_sha256"]}
+                if "source_provenance_json" in source:
+                    item["source_provenance_json"] = source["source_provenance_json"]
+                source_bytes += len(encoded(item, MAX_SOURCE_BATCH_BYTES))
                 need(source_bytes <= MAX_SOURCE_BATCH_BYTES, "source batch exceeds the existing bounded exchange input size")
-                inputs.append({"source_span_id": claim["source_span_id"], "legal_id": source["legal_id"],
-                               "text": source["text"], "source_revision": claim["source_revision"],
-                               "source_sha256": claim["source_sha256"]})
+                inputs.append(item)
             observed = set()
-            for output in worker_pool.map(compile_worker, inputs):
+            # Preserve owner observations even when an in-process worker mutates its input.
+            for output in worker_pool.map(compile_worker, [dict(item) for item in inputs]):
                 need(type(output) is dict, "worker returned no complete observation")
                 span_id = output.get("source_span_id")
                 need(span_id in pending and span_id not in observed, "worker output population differs")
@@ -390,6 +394,16 @@ def drain_fenced_manifest(cache, manifest, *, worker_pool, compile_worker: Calla
                     "legal_id": claim["legal_id"], **_FALSE}
                 need("fenced_source_binding" not in output or output["fenced_source_binding"] == binding_evidence,
                      "worker conflicts with owner-bound source provenance")
+                # Coordinate metadata is an observation supplied by the live
+                # owner, separate from the unchanged closed authority envelope.
+                expected_provenance = source.get("source_provenance_json")
+                for echo in (output, output.get("source_provenance")):
+                    if isinstance(echo, dict) and "source_provenance_json" in echo:
+                        need(expected_provenance is not None
+                             and echo["source_provenance_json"] == expected_provenance,
+                             "worker source coordinate provenance differs from owner")
+                if expected_provenance is not None:
+                    output = {**output, "source_provenance_json": expected_provenance}
                 # Some existing workers omit their immutable input binding.
                 # Retain every observation field, add the owner's verified
                 # identity, and label its origin; never replace a conflict.

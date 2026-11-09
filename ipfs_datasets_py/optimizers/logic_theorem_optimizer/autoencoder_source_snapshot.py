@@ -24,6 +24,7 @@ import time
 import uuid
 
 SCHEMA = "autoencoder-frozen-source/v1"
+RUNTIME_PROTOCOL = "autoencoder-frozen-source-run/v2"
 MANIFEST_ENV = "IPFS_DATASETS_FROZEN_SOURCE_MANIFEST"
 DIGEST_ENV = "IPFS_DATASETS_FROZEN_SOURCE_SHA256"
 SCHEDULER_ENV = "IPFS_DATASETS_RESOURCE_SCHEDULER_PATH"
@@ -201,6 +202,68 @@ def _inventory(bindings, max_bytes):
             "materialized_font_aliases": aliases, "bytes": total}
 
 
+def _runtime_producers(root):
+    """Only these two fixed capsule paths can implement the run handshake."""
+    return {
+        "sources/package/optimizers/logic_theorem_optimizer/autoencoder_source_snapshot.py":
+            Path(root) / "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_source_snapshot.py",
+        "sources/scripts/run_frozen_autoencoder_source.py":
+            Path(root) / "scripts/ops/legal_ir/run_frozen_autoencoder_source.py",
+    }
+
+
+def _current_runtime_contract():
+    # Bind the implementations actually selected by this module's location,
+    # never a capsule-provided path or a mutable canonical_root override.
+    root = Path(__file__).absolute().parents[3]
+    producers = {}
+    for relative, path in _runtime_producers(root).items():
+        raw = _read(path, 4 * 1024 * 1024)
+        producers[relative] = {"sha256": _sha(raw), "bytes": len(raw)}
+    return {"protocol": RUNTIME_PROTOCOL, "producers": producers}
+
+
+def _require_runtime_contract(data):
+    """Require exact host-reviewed runtime bytes without scanning the capsule."""
+    expected = _current_runtime_contract()
+    if data.get("runtime_contract") != expected:
+        raise SourceSnapshotError("incompatible frozen runtime contract; preserve and recapture the capsule")
+    entries = data.get("inventory", {}).get("entries")
+    if not isinstance(entries, list) or not 1 <= len(entries) <= MAX_FILES:
+        raise SourceSnapshotError("invalid runtime producer inventory")
+    capsule = Path(data["capsule"])
+    for relative, source in _runtime_producers(data["canonical_root"]).items():
+        selected = [row for row in entries if isinstance(row, dict) and row.get("snapshot") == relative]
+        if len(selected) != 1 or selected[0].get("source") != str(source):
+            raise SourceSnapshotError("runtime producer mapping differs")
+        producer = expected["producers"][relative]
+        if any(selected[0].get(key) != value for key, value in producer.items()):
+            raise SourceSnapshotError("runtime producer inventory differs")
+        # The path comes from this implementation, not the supplied manifest.
+        raw = _read(capsule / relative, 4 * 1024 * 1024)
+        if len(raw) != producer["bytes"] or _sha(raw) != producer["sha256"]:
+            raise SourceSnapshotError("captured runtime producer bytes differ")
+    return expected
+
+
+def _runtime_acknowledgment(configuration):
+    """The same explicit binding is acknowledged by container and host."""
+    policy = configuration.get("expected_scheduler_policy_sha256")
+    path = configuration.get("scheduler_path")
+    if (configuration.get("runtime_protocol") != RUNTIME_PROTOCOL
+            or type(policy) is not str or not re.fullmatch(r"[0-9a-f]{64}", policy)
+            or type(path) is not str or not Path(path).is_absolute()):
+        raise SourceSnapshotError("unsupported runtime protocol or scheduler acknowledgment")
+    return {"protocol": RUNTIME_PROTOCOL, "scheduler_path": path,
+            "expected_scheduler_policy_sha256": policy}
+
+
+def _require_preflight_acknowledgment(preflight, configuration, configuration_sha256):
+    if (preflight.get("runtime_acknowledgment") != _runtime_acknowledgment(configuration)
+            or preflight.get("configuration_sha256") != configuration_sha256):
+        raise SourceSnapshotError("container runtime/policy acknowledgment differs")
+
+
 def capture_snapshot(root, directory, *, extra_files=(), max_bytes=DEFAULT_MAX_BYTES):
     """Capture under the caller's source lease and resource reservation."""
     root, directory = _path(root), _path(directory)
@@ -227,10 +290,13 @@ def capture_snapshot(root, directory, *, extra_files=(), max_bytes=DEFAULT_MAX_B
     after_git = {"datasets": _git(root), "jevops": _git(root.parents[1] / "JevOps")}
     if before != after or before_git != after_git:
         raise SourceSnapshotError("source/Git provenance changed while capturing; failed capsule retained")
+    runtime_contract = _current_runtime_contract()
     manifest = {"schema": SCHEMA, "canonical_root": str(root), "capsule": str(directory),
                 "bindings": bindings, "inventory": before, "git": before_git,
+                "runtime_contract": runtime_contract,
                 "max_source_bytes": max_bytes, "admitted": False,
                 "scope": "Complete package resources, legal IR scripts and JevOps package; explicit Python harness files; no model weights"}
+    _require_runtime_contract(manifest)
     path = directory / "manifest.json"
     _write(path, manifest)
     path.chmod(0o444)
@@ -241,11 +307,28 @@ def capture_snapshot(root, directory, *, extra_files=(), max_bytes=DEFAULT_MAX_B
             "source_bytes": before["bytes"], "file_count": len(before["entries"]), "admitted": False}
 
 
-def prepare_snapshot(directory, *, resource_ledger, extra_files=(), max_bytes=DEFAULT_MAX_BYTES,
+def _existing_scheduler_binding(state_path, expected_policy_sha256):
+    """Observe exactly one existing policy before any reservation or writes."""
+    from .existing_resource_scheduler import open_existing_scheduler
+    state = _path(state_path)
+    scheduler = open_existing_scheduler(state, expected_policy_sha256)
+    if Path(scheduler.state_path) != state:
+        raise SourceSnapshotError("existing scheduler path differs")
+    return state, expected_policy_sha256
+
+
+def prepare_snapshot(directory, *, resource_ledger, scheduler_state_path,
+                     expected_scheduler_policy_sha256, extra_files=(), max_bytes=DEFAULT_MAX_BYTES,
                      storage_bytes=1_000_000_000, source_timeout_seconds=300):
-    """Bounded canonical capture; failures preserve their artifacts and claim."""
+    """Own a strict existing native root; preserve failed capture artifacts.
+
+    Already-owned validation callers use ``capture_snapshot`` under their
+    existing reservation and source read lease, without another native grant.
+    """
     from .autoencoder_daemon_resources import DaemonResourceReservation
     from .autoencoder_source_lease import source_lease
+    scheduler, policy_sha256 = _existing_scheduler_binding(
+        scheduler_state_path, expected_scheduler_policy_sha256)
     root = canonical_root()
     directory = _path(directory, missing=True)
     ledger = _path(resource_ledger)
@@ -257,7 +340,10 @@ def prepare_snapshot(directory, *, resource_ledger, extra_files=(), max_bytes=DE
         raise SourceSnapshotError("snapshot reservation must cover source ceiling and metadata")
     owner = DaemonResourceReservation(ledger, roots=roots, storage_bytes=storage_bytes,
                                      memory_mb=1024, cpu_slots=1, child_process_slots=1,
-                                     timeout_seconds=0, ledger_lock_timeout_seconds=60)
+                                     timeout_seconds=0, ledger_lock_timeout_seconds=60,
+                                     scheduler_state_path=scheduler,
+                                     expected_scheduler_policy_sha256=policy_sha256,
+                                     require_existing_ledger=True)
     with owner:
         directory.mkdir(exist_ok=False)
         owner.check_usage(directory)
@@ -281,7 +367,7 @@ def prepare_snapshot(directory, *, resource_ledger, extra_files=(), max_bytes=DE
             raise
 
 
-def verify_snapshot(manifest_path, expected_sha256):
+def _read_snapshot_manifest(manifest_path, expected_sha256):
     if not isinstance(expected_sha256, str) or not re.fullmatch(r"[0-9a-f]{64}", expected_sha256):
         raise SourceSnapshotError("expected manifest SHA256 required")
     manifest_path = _path(manifest_path)
@@ -294,6 +380,13 @@ def verify_snapshot(manifest_path, expected_sha256):
             or data.get("capsule") != str(capsule) or manifest_path.name != "manifest.json"
             or data.get("admitted") is not False):
         raise SourceSnapshotError("manifest schema or canonical path mismatch")
+    return manifest_path, data
+
+
+def verify_snapshot(manifest_path, expected_sha256):
+    """Verify archived bytes, including legacy capsules without a run contract."""
+    manifest_path, data = _read_snapshot_manifest(manifest_path, expected_sha256)
+    capsule = manifest_path.parent
     bindings = data.get("bindings", [])
     if not isinstance(bindings, list) or not 3 <= len(bindings) <= 3 + MAX_EXTRA_FILES:
         raise SourceSnapshotError("invalid snapshot bindings")
@@ -555,6 +648,7 @@ def _container_entry(configuration, configuration_sha):
     if _sha(raw) != configuration_sha:
         raise SourceSnapshotError("runtime configuration changed")
     config = json.loads(raw)
+    runtime_acknowledgment = _runtime_acknowledgment(config)
     def interrupted(signum, frame):
         raise KeyboardInterrupt(f"container interrupted by signal {signum}")
     signal.signal(signal.SIGTERM, interrupted)
@@ -566,14 +660,15 @@ def _container_entry(configuration, configuration_sha):
         raise SourceSnapshotError("Python environment or home changed in container")
     if os.environ.get(SCHEDULER_ENV) != config["scheduler_path"]:
         raise SourceSnapshotError("shared scheduler path changed")
+    scheduler, _ = _existing_scheduler_binding(
+        config["scheduler_path"], config["expected_scheduler_policy_sha256"])
+    if str(scheduler) != config["scheduler_path"]:
+        raise SourceSnapshotError("explicit resource scheduler differs from host")
     shared_memory = _private_shared_memory(config["host_shared_memory"])
     spawn_probe = _spawn_semaphore_probe()
     for identity in config["identities"]:
         if _identity(identity["path"]) != identity:
             raise SourceSnapshotError("host control/runtime inode changed")
-    from .resource_scheduler import default_scheduler_state_path
-    if str(default_scheduler_state_path()) != config["scheduler_path"]:
-        raise SourceSnapshotError("resource scheduler default differs from host")
     from ...logic.autoformal.tree_pin import require_workspace_logic_tree
     pinned = require_workspace_logic_tree()
     lake = Path.home() / ".elan/toolchains/leanprover--lean4---v4.26.0/bin/lake"
@@ -583,6 +678,8 @@ def _container_entry(configuration, configuration_sha):
     try:
         with _control_observation_locks(config["control_locks"]):
             preflight = {"frozen": frozen, "process": _process(os.getpid()), "child": _process(child.pid),
+                         "runtime_acknowledgment": runtime_acknowledgment,
+                         "configuration_sha256": configuration_sha,
                          "tree_pin": pinned, "identities": config["identities"], "scheduler_path": config["scheduler_path"],
                          "state_identities": [_identity(path) for path in config["control_state_paths"]],
                          "python_prefix": sys.prefix, "home": str(Path.home()),
@@ -597,7 +694,9 @@ def _container_entry(configuration, configuration_sha):
                     raise SourceSnapshotError("host did not acknowledge namespace preflight")
                 time.sleep(.05)
             acknowledgment = json.loads(_read(run / "host-verified.json"))
-            if acknowledgment != {"configuration_sha256": configuration_sha, "preflight_sha256": _sha(_read(run / "preflight.json"))}:
+            if acknowledgment != {"configuration_sha256": configuration_sha,
+                                  "preflight_sha256": _sha(_read(run / "preflight.json")),
+                                  "runtime_acknowledgment": runtime_acknowledgment}:
                 raise SourceSnapshotError("host preflight acknowledgment differs")
     finally:
         child.terminate()
@@ -633,9 +732,20 @@ def _container_entry(configuration, configuration_sha):
 
 
 def run_snapshot(manifest_path, expected_sha256, *, run_directory, writable_directories,
-                 resource_ledger, argv, timeout_seconds, tmp_directory, image=IMAGE):
-    """Launch only after both host and container agree on frozen paths/PIDs."""
+                 resource_ledger, scheduler_state_path, expected_scheduler_policy_sha256,
+                 argv, timeout_seconds, tmp_directory, image=IMAGE):
+    """Own a strict existing root for the finite CPU/offline Docker profile.
+
+    This is not the continuous online CUDA census or a qualification of the
+    Docker daemon's container processes under the wrapper's CLI-group budget.
+    """
     from .autoencoder_daemon_resources import DaemonResourceReservation
+    scheduler, policy_sha256 = _existing_scheduler_binding(
+        scheduler_state_path, expected_scheduler_policy_sha256)
+    # Cheap compatibility refusal happens before a native run claim. Full
+    # capsule verification remains under the actual owner below.
+    _, launch_manifest = _read_snapshot_manifest(manifest_path, expected_sha256)
+    _require_runtime_contract(launch_manifest)
     ledger = _path(resource_ledger)
     state = json.loads(_read(ledger, 8 * 1024 * 1024))
     roots = [_path(row["path"]) for row in state["roots"]]
@@ -644,13 +754,17 @@ def run_snapshot(manifest_path, expected_sha256, *, run_directory, writable_dire
         raise SourceSnapshotError("launcher attempt must be inside existing charged roots")
     owner = DaemonResourceReservation(ledger, roots=roots, storage_bytes=16 * 1024 * 1024,
                                      memory_mb=1024, cpu_slots=1, child_process_slots=4,
-                                     timeout_seconds=0, ledger_lock_timeout_seconds=60)
+                                     timeout_seconds=0, ledger_lock_timeout_seconds=60,
+                                     scheduler_state_path=scheduler,
+                                     expected_scheduler_policy_sha256=policy_sha256,
+                                     require_existing_ledger=True)
     with _host_interruptions():
         with owner:
             result = _run_snapshot(manifest_path, expected_sha256, run_directory=run_directory,
                                    writable_directories=writable_directories, resource_ledger=resource_ledger,
                                    argv=argv, timeout_seconds=timeout_seconds, tmp_directory=tmp_directory,
-                                   image=image, owner=owner)
+                                   image=image, owner=owner, scheduler_state_path=scheduler,
+                                   expected_scheduler_policy_sha256=policy_sha256)
             _sync(directory)
             resources = owner.finalize(directory, artifacts_durable=True)
             _write(directory / "resources.json", resources)
@@ -658,9 +772,10 @@ def run_snapshot(manifest_path, expected_sha256, *, run_directory, writable_dire
 
 
 def _run_snapshot(manifest_path, expected_sha256, *, run_directory, writable_directories,
-                  resource_ledger, argv, timeout_seconds, tmp_directory, image, owner):
-    from .resource_scheduler import default_scheduler_state_path
+                  resource_ledger, argv, timeout_seconds, tmp_directory, image, owner,
+                  scheduler_state_path, expected_scheduler_policy_sha256):
     data = verify_snapshot(manifest_path, expected_sha256)
+    _require_runtime_contract(data)
     if not re.fullmatch(r"sha256:[0-9a-f]{64}", image):
         raise SourceSnapshotError("cached image must be pinned by exact SHA256")
     if type(timeout_seconds) not in (float, int) or not math.isfinite(timeout_seconds) or not 1 <= timeout_seconds <= 86_400:
@@ -675,7 +790,7 @@ def _run_snapshot(manifest_path, expected_sha256, *, run_directory, writable_dir
         raise SourceSnapshotError("run directory already exists; use a new owned attempt")
     if not any(path in run.parents for path in paths):
         raise SourceSnapshotError("run receipts must be within explicit writable runtime")
-    ledger, scheduler, temporary = _path(resource_ledger), _path(default_scheduler_state_path()), _path(tmp_directory)
+    ledger, scheduler, temporary = _path(resource_ledger), _path(scheduler_state_path), _path(tmp_directory)
     scheduler_lock = _path(scheduler.with_name(scheduler.name + ".lock"))
     ledger_lock = _path(ledger.with_name(ledger.name + ".lock"))
     for path in (ledger.parent, scheduler.parent, temporary):
@@ -688,8 +803,10 @@ def _run_snapshot(manifest_path, expected_sha256, *, run_directory, writable_dir
     run.mkdir()
     owner.check_usage(run)
     config = {"manifest_sha256": expected_sha256, "canonical_root": data["canonical_root"],
+              "runtime_protocol": RUNTIME_PROTOCOL,
               "argv": list(argv), "timeout_seconds": float(timeout_seconds), "python_prefix": sys.prefix,
               "home": str(Path.home()), "scheduler_path": str(scheduler),
+              "expected_scheduler_policy_sha256": expected_scheduler_policy_sha256,
               "identities": [_identity(path) for path in (*paths, ledger_lock, scheduler_lock)],
               "control_locks": [str(ledger_lock), str(scheduler_lock)],
               "control_state_paths": [str(ledger), str(scheduler)],
@@ -727,7 +844,9 @@ def _run_snapshot(manifest_path, expected_sha256, *, run_directory, writable_dir
                                  "wrapper_process_observation": "Docker CLI group; coordinator/training retain their own reservations",
                                  "private_shared_memory_bytes": SHARED_MEMORY_BYTES,
                                  "shared_memory_charged_to": "wrapper_memory_mb=1024",
-                                 "scheduler_path": str(scheduler), "admitted": False})
+                                 "scheduler_path": str(scheduler),
+                                 "expected_scheduler_policy_sha256": expected_scheduler_policy_sha256,
+                                 "admitted": False})
     started = time.monotonic()
     process = None
     tails = {"stdout": bytearray(), "stderr": bytearray()}
@@ -751,7 +870,9 @@ def _run_snapshot(manifest_path, expected_sha256, *, run_directory, writable_dir
             if process.poll() is not None or time.monotonic() >= deadline:
                 raise SourceSnapshotError("frozen container preflight failed or timed out")
             time.sleep(.05)
-        preflight = json.loads(_read(run / "preflight.json"))
+        preflight_raw = _read(run / "preflight.json")
+        preflight = json.loads(preflight_raw)
+        _require_preflight_acknowledgment(preflight, config, configuration_sha)
         _check_process_pair(preflight["process"], _process(preflight["process"]["pid"]))
         _check_process_pair(preflight["child"], _process(preflight["child"]["pid"]))
         if preflight["child"]["parent_pid"] != preflight["process"]["pid"] or preflight["child"]["group_pid"] != preflight["child"]["pid"]:
@@ -762,7 +883,8 @@ def _run_snapshot(manifest_path, expected_sha256, *, run_directory, writable_dir
         if preflight["state_identities"] != [_identity(path) for path in config["control_state_paths"]]:
             raise SourceSnapshotError("current host/container control state identities differ")
         _write(run / "host-verified.json", {"configuration_sha256": configuration_sha,
-                                             "preflight_sha256": _sha(_read(run / "preflight.json"))})
+                                             "preflight_sha256": _sha(preflight_raw),
+                                             "runtime_acknowledgment": _runtime_acknowledgment(config)})
         # The container releases its brief state-observation locks after this
         # acknowledgment. Never request the disk ledger while it awaits us.
         owner.check_usage(run, child_pid=process.pid)

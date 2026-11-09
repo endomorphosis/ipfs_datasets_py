@@ -519,7 +519,9 @@ class TrainingJobSpec:
         object.__setattr__(self, "expected_source_sha256", _freeze(expected or {}))
 
     @classmethod
-    def from_dict(cls, value: Any) -> "TrainingJobSpec":
+    def from_dict(cls, value: Any) -> "TrainingJobSpec | ReviewedDecoderTrainingJobSpec":
+        if isinstance(value, Mapping) and value.get("schema_version") == REVIEWED_DECODER_SCHEMA_VERSION:
+            return ReviewedDecoderTrainingJobSpec.from_dict(value)
         data = _object(value, {field.name for field in fields(cls)}, "job")
         # Previously schema-less JSON meant v2; do not silently change its
         # canonical identity when reading an archived job specification.
@@ -634,6 +636,467 @@ class TrainingJobSpec:
         # MappingProxyType freezes configuration but is not itself picklable.
         # Reconstruct through validation when multiprocessing uses spawn.
         return (type(self).from_dict, (self.to_dict(),))
+
+
+# This separate profile keeps the historical v1-v8 projection and checkpoint
+# formats intact. Backend objects are trusted, caller-owned execution providers;
+# selecting this schema is never resource admission or a model download.
+REVIEWED_DECODER_SCHEMA_VERSION = "autoencoder-training-job-v9-reviewed-legal-ir"
+REVIEWED_DECODER_CHECKPOINT_SCHEMA = "reviewed-legal-ir-decoder-checkpoint/v1"
+REVIEWED_DECODER_RECEIPT_SCHEMA = "reviewed-legal-ir-decoder-worker-receipt/v1"
+REVIEWED_DECODER_SOURCE_NAMES = frozenset({"worker", "inputs", "consumer", "admission", "splits"})
+MAX_REVIEWED_DECODER_STATE_BYTES = MAX_CHECKPOINT_BYTES
+
+
+@dataclass(frozen=True)
+class ReviewedDecoderTrainingJobSpec:
+    """Closed, explicitly selected complete-target job; never a legacy sample."""
+    job_id: str
+    run_id: str
+    base_version_id: str
+    checkpoint_lineage_id: str
+    output_directory: str
+    code_identity: str
+    stage_artifact: CheckpointArtifact
+    exposure_artifact: CheckpointArtifact
+    source_contexts_artifact: CheckpointArtifact
+    model_artifact: CheckpointArtifact
+    tokenizer_artifact: CheckpointArtifact
+    license_artifact: CheckpointArtifact
+    base_model_checkpoint: CheckpointArtifact
+    base_optimizer_checkpoint: CheckpointArtifact
+    parent_checkpoint_artifact: CheckpointArtifact
+    expected_admission_inputs_sha256: str
+    split_config: Mapping[str, Any]
+    expected_split_config_sha256: str
+    backend_identity: Mapping[str, Any]
+    expected_source_sha256: Mapping[str, str]
+    backend_artifacts: tuple[CheckpointArtifact, ...] = ()
+    max_source_tokens: int = 8192
+    max_target_tokens: int = 8192
+    batch_size: int = 1
+    max_steps: int = 1
+    max_seconds: float = 60
+    seed: int = 1729
+    allow_fictional_fixture: bool = False
+    schema_version: str = REVIEWED_DECODER_SCHEMA_VERSION
+
+    def __post_init__(self) -> None:
+        for name in ("job_id", "run_id", "base_version_id", "checkpoint_lineage_id", "output_directory", "code_identity"):
+            _text(getattr(self, name), "reviewed_decoder." + name)
+        output = Path(self.output_directory)
+        if not output.is_absolute() or ".." in output.parts:
+            raise TrainingJobValidationError("reviewed decoder output must be a plain absolute path")
+        if self.schema_version != REVIEWED_DECODER_SCHEMA_VERSION:
+            raise TrainingJobValidationError("explicit complete reviewed decoder schema required")
+        for name in ("stage_artifact", "exposure_artifact", "source_contexts_artifact", "model_artifact",
+                     "tokenizer_artifact", "license_artifact", "base_model_checkpoint", "base_optimizer_checkpoint"):
+            if type(getattr(self, name)) is not CheckpointArtifact:
+                raise TrainingJobValidationError("reviewed decoder " + name + " must be an exact artifact")
+        if type(self.parent_checkpoint_artifact) is not CheckpointArtifact:
+            raise TrainingJobValidationError("reviewed decoder parent checkpoint must be an exact artifact")
+        if type(self.backend_artifacts) is not tuple or len(self.backend_artifacts) > MAX_BASE_DEPENDENCIES or any(
+                type(item) is not CheckpointArtifact for item in self.backend_artifacts):
+            raise TrainingJobValidationError("bounded explicit backend artifact tuple required")
+        assets = (self.model_artifact, self.tokenizer_artifact, self.license_artifact, *self.backend_artifacts)
+        if len({item.path for item in assets}) != len(assets) or sum(item.bytes for item in assets) > MAX_BASE_DEPENDENCY_BYTES:
+            raise TrainingJobValidationError("unique bounded pretrained asset population required")
+        for value, name in ((self.expected_admission_inputs_sha256, "admission"),
+                            (self.expected_split_config_sha256, "split config")):
+            if type(value) is not str or re.fullmatch(r"[0-9a-f]{64}", value) is None:
+                raise TrainingJobValidationError("exact reviewed decoder " + name + " SHA256 required")
+        if not isinstance(self.split_config, Mapping) or _digest(_json_bytes(_thaw(self.split_config))) != self.expected_split_config_sha256:
+            raise TrainingJobValidationError("reviewed decoder split configuration commitment differs")
+        identity = _object(self.backend_identity,
+            {"backend_id", "implementation_sha256", "checkpoint_format", "target_codec", "source_conditioned", "pretrained"},
+            "reviewed decoder backend identity")
+        if set(identity) != {"backend_id", "implementation_sha256", "checkpoint_format", "target_codec", "source_conditioned", "pretrained"}:
+            raise TrainingJobValidationError("complete declared decoder backend identity required")
+        for name in ("backend_id", "checkpoint_format"):
+            _text(identity[name], "reviewed_decoder.backend_identity." + name)
+        if (type(identity["implementation_sha256"]) is not str or
+                re.fullmatch(r"[0-9a-f]{64}", identity["implementation_sha256"]) is None or
+                identity["target_codec"] != "complete-reviewed-norm-json/v2" or identity["source_conditioned"] is not True or
+                type(identity["pretrained"]) is not bool):
+            raise TrainingJobValidationError("complete source-conditioned target backend required")
+        if type(self.allow_fictional_fixture) is not bool or not identity["pretrained"] and not self.allow_fictional_fixture:
+            raise TrainingJobValidationError("non-pretrained backend requires explicit fictional fixture scope")
+        pins = dict(self.expected_source_sha256) if isinstance(self.expected_source_sha256, Mapping) else {}
+        if set(pins) != REVIEWED_DECODER_SOURCE_NAMES or any(type(value) is not str or
+                re.fullmatch(r"[0-9a-f]{64}", value) is None for value in pins.values()):
+            raise TrainingJobValidationError("exact complete reviewed decoder producer pins required")
+        for value, low, high, name in ((self.max_source_tokens, 2, 65536, "max_source_tokens"),
+                (self.max_target_tokens, 3, 65536, "max_target_tokens"), (self.batch_size, 1, 32, "batch_size"),
+                (self.max_steps, 1, 10000, "max_steps"), (self.seed, 0, 2**31 - 1, "seed")):
+            if type(value) is not int or not low <= value <= high:
+                raise TrainingJobValidationError("invalid reviewed decoder " + name)
+        if type(self.max_seconds) not in (int, float) or not math.isfinite(self.max_seconds) or not 0 < self.max_seconds <= 3600:
+            raise TrainingJobValidationError("reviewed decoder max_seconds must be in (0,3600]")
+        object.__setattr__(self, "split_config", _freeze(self.split_config))
+        object.__setattr__(self, "backend_identity", _freeze(identity))
+        object.__setattr__(self, "expected_source_sha256", _freeze(pins))
+
+    @classmethod
+    def from_dict(cls, value: Any) -> "ReviewedDecoderTrainingJobSpec":
+        data = _object(value, {field.name for field in fields(cls)}, "reviewed decoder job")
+        if data.get("schema_version") != REVIEWED_DECODER_SCHEMA_VERSION:
+            raise TrainingJobValidationError("explicit reviewed decoder schema required")
+        for name in ("stage_artifact", "exposure_artifact", "source_contexts_artifact", "model_artifact",
+                "tokenizer_artifact", "license_artifact", "base_model_checkpoint", "base_optimizer_checkpoint",
+                "parent_checkpoint_artifact"):
+            if data.get(name) is not None:
+                data[name] = CheckpointArtifact.from_dict(data[name])
+        if "backend_artifacts" in data:
+            if type(data["backend_artifacts"]) not in (list, tuple):
+                raise TrainingJobValidationError("backend artifacts must be an array")
+            data["backend_artifacts"] = tuple(CheckpointArtifact.from_dict(item) for item in data["backend_artifacts"])
+        return cls(**data)
+
+    def to_dict(self) -> dict[str, Any]:
+        value = {field.name: getattr(self, field.name) for field in fields(self)}
+        for name in ("stage_artifact", "exposure_artifact", "source_contexts_artifact", "model_artifact",
+                "tokenizer_artifact", "license_artifact", "base_model_checkpoint", "base_optimizer_checkpoint",
+                "parent_checkpoint_artifact"):
+            if value[name] is not None:
+                value[name] = asdict(value[name])
+        value["backend_artifacts"] = [asdict(item) for item in self.backend_artifacts]
+        for name in ("split_config", "backend_identity", "expected_source_sha256"):
+            value[name] = _thaw(value[name])
+        return value
+
+    @property
+    def canonical_sha256(self) -> str:
+        return _digest(_json_bytes(self.to_dict()))
+
+    def __reduce__(self):
+        return (type(self).from_dict, (self.to_dict(),))
+
+
+@dataclass(frozen=True)
+class ReviewedDecoderRuntime:
+    """Trusted application injection, not a portable grant or serialized job.
+
+    The existing admitted owner supplies both guards. This boundary records
+    that they were called; it cannot independently prove a grant or license.
+    The backend owns numerical execution/checkpoint format and must implement
+    identity(), inspect_checkpoint(), restore_checkpoint(), train_batch() and
+    snapshot_checkpoint(). No default model/provider is installed or fetched.
+    """
+    registry: Any
+    backend: Any
+    tokenizer: Any
+    current_admission_provider: Callable[[], Mapping[str, Any]]
+    execution_guard: Callable[[], Any]
+    asset_policy_guard: Callable[[Mapping[str, Any]], Any]
+
+    def __post_init__(self) -> None:
+        for name in ("current_admission_provider", "execution_guard", "asset_policy_guard"):
+            if not callable(getattr(self, name)):
+                raise TrainingJobValidationError("caller-owned reviewed decoder " + name + " required")
+        for name in ("identity", "validate_training_records", "inspect_checkpoint", "restore_checkpoint", "restored_checkpoint_matches", "train_batch", "snapshot_checkpoint"):
+            if not callable(getattr(self.backend, name, None)):
+                raise TrainingJobValidationError("explicit reviewed decoder backend." + name + " required")
+        for name in ("read_artifact", "artifact_path"):
+            if not callable(getattr(self.registry, name, None)):
+                raise TrainingJobValidationError("read-only existing artifact registry protocol required")
+
+
+def _reviewed_decoder_source_pins() -> dict[str, str]:
+    from ...logic.autoformal import training_cycle_inputs, legal_norm_content_adjudication_v1
+    from . import legal_span_consumer_binding, legal_ir_eval_splits
+    modules = {"worker": Path(__file__), "inputs": Path(training_cycle_inputs.__file__),
+        "consumer": Path(legal_span_consumer_binding.__file__), "admission": Path(legal_norm_content_adjudication_v1.__file__),
+        "splits": Path(legal_ir_eval_splits.__file__)}
+    return {name: _digest(path.read_bytes()) for name, path in modules.items()}
+
+
+def _reviewed_decoder_artifact(reference: CheckpointArtifact, *, limit: int = MAX_REVIEWED_DECODER_STATE_BYTES,
+                               load: bool = True) -> bytes | None:
+    """Authenticate ordinary immutable inputs without materializing large assets."""
+    import stat
+    path = Path(reference.path)
+    if not path.is_absolute() or path.resolve(strict=True) != path or reference.bytes > limit:
+        raise TrainingJobValidationError("reviewed decoder artifact path/byte bound differs")
+    for directory in path.parents:
+        if not stat.S_ISDIR(directory.lstat().st_mode):
+            raise TrainingJobValidationError("reviewed decoder artifact ancestry is not ordinary")
+    descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+    try:
+        first = os.fstat(descriptor)
+        if not stat.S_ISREG(first.st_mode) or first.st_nlink != 1 or first.st_size != reference.bytes:
+            raise TrainingJobValidationError("reviewed decoder artifact identity differs")
+        digest, total, pieces = hashlib.sha256(), 0, []
+        while part := os.read(descriptor, 1024**2):
+            total += len(part)
+            if total > reference.bytes:
+                raise TrainingJobValidationError("reviewed decoder artifact grew")
+            digest.update(part)
+            if load:
+                pieces.append(part)
+        stamp = lambda value: (value.st_dev, value.st_ino, value.st_mode, value.st_nlink,
+            value.st_size, value.st_mtime_ns, value.st_ctime_ns)
+        if (total != reference.bytes or digest.hexdigest() != reference.sha256 or
+                stamp(first) != stamp(os.fstat(descriptor)) or stamp(first) != stamp(path.lstat())):
+            raise TrainingJobValidationError("reviewed decoder artifact changed")
+        return b"".join(pieces) if load else None
+    finally:
+        os.close(descriptor)
+
+
+def _execute_reviewed_decoder_job(spec: ReviewedDecoderTrainingJobSpec, runtime: ReviewedDecoderRuntime,
+                                  job_file_sha256: str | None) -> dict[str, Any]:
+    """Consume full current-reviewed targets via one declared numerical backend.
+
+    This is a software execution/checkpoint boundary. Backend reports and opaque
+    state bytes do not prove pretrained quality, semantic fidelity or convergence.
+    There is no corpus promotion, registry write, network loader or proof claim.
+    """
+    import random
+    import stat
+    from ...logic.autoformal import training_cycle_inputs as inputs
+    if type(runtime) is not ReviewedDecoderRuntime:
+        raise TrainingJobValidationError("explicit reviewed decoder runtime required before model work")
+    prepared = None
+    guard_calls = {"execution": 0, "asset_policy": 0, "current_admission": 0}
+    identity = _thaw(spec.backend_identity)
+    assets = (spec.model_artifact, spec.tokenizer_artifact, spec.license_artifact, *spec.backend_artifacts)
+    source_pins = _thaw(spec.expected_source_sha256)
+    exposure_raw = _reviewed_decoder_artifact(spec.exposure_artifact)
+    contexts_raw = _reviewed_decoder_artifact(spec.source_contexts_artifact)
+    exposure, contexts = _parse_json(exposure_raw), _parse_json(contexts_raw)
+    if _json_bytes(exposure) != exposure_raw or _json_bytes(contexts) != contexts_raw:
+        raise TrainingJobValidationError("exact canonical reviewed exposure/context artifacts required")
+
+    def current():
+        nonlocal prepared
+        runtime.execution_guard()
+        guard_calls["execution"] += 1
+        if _reviewed_decoder_source_pins() != source_pins:
+            raise TrainingJobValidationError("reviewed decoder producer changed")
+        # Caller-owned model/license policy is required, not inferred from a
+        # manifest flag, backend return value or a fictional review fixture.
+        runtime.asset_policy_guard(spec.to_dict())
+        guard_calls["asset_policy"] += 1
+        if _parse_json(_json_bytes(runtime.backend.identity())) != identity:
+            raise TrainingJobValidationError("declared reviewed decoder backend identity differs")
+        for item in assets:
+            _reviewed_decoder_artifact(item, limit=MAX_CHECKPOINT_BYTES, load=False)
+        if (_reviewed_decoder_artifact(spec.exposure_artifact) != exposure_raw or
+                _reviewed_decoder_artifact(spec.source_contexts_artifact) != contexts_raw):
+            raise TrainingJobValidationError("reviewed decoder context/exposure changed")
+        admission = runtime.current_admission_provider()
+        guard_calls["current_admission"] += 1
+        try:
+            value = inputs.prepare_reviewed_decoder_training_inputs(runtime.registry,
+                stage_artifact=asdict(spec.stage_artifact), expected_stage_sha256=spec.stage_artifact.sha256,
+                current_admission_inputs=admission,
+                expected_admission_inputs_sha256=spec.expected_admission_inputs_sha256,
+                exposure_records=exposure, expected_exposure_sha256=spec.exposure_artifact.sha256,
+                source_contexts=contexts, expected_source_contexts_sha256=spec.source_contexts_artifact.sha256,
+                split_config=_thaw(spec.split_config), expected_split_config_sha256=spec.expected_split_config_sha256,
+                tokenizer=runtime.tokenizer, max_source_tokens=spec.max_source_tokens,
+                max_target_tokens=spec.max_target_tokens, allow_fictional_fixture=spec.allow_fictional_fixture)
+        except inputs.ReviewedDecoderInputValidationError as error:
+            # Only the input owner's explicit decoder validation type crosses
+            # this boundary. Foreign callback/registry errors retain identity.
+            raise TrainingJobValidationError("current reviewed decoder inputs changed or unsupported") from error
+        if (value.get("schema") != "reviewed-decoder-training-inputs/v2" or
+                value.get("receipt", {}).get("profile") != "complete-reviewed-decoder-training-inputs/v2" or
+                value["receipt"].get("target_codec") != "complete-reviewed-norm-json/v2" or
+                value["receipt"].get("source_profile") != "reviewed-source-selection-context/v2" or
+                value["receipt"].get("semantic_selection_supported") is not False):
+            raise TrainingJobValidationError("explicit caller-known selection-context v2 training inputs required")
+        if prepared is None:
+            prepared = value
+        elif _json_bytes(value) != _json_bytes(prepared):
+            raise TrainingJobValidationError("current reviewed decoder inputs changed before publication")
+        return value
+
+    # All rows, legal-use/split/context/codec/budget constraints are checked
+    # before loading or restoring either model or optimizer state.
+    data = current()
+    records = data["records"]
+    if type(records) is not list or not records:
+        raise TrainingJobValidationError("nonempty complete reviewed training records required")
+    validation_rows = _parse_json(_json_bytes(records))
+    validation_sha = _digest(_json_bytes(validation_rows))
+    runtime.backend.validate_training_records(validation_rows, max_source_tokens=spec.max_source_tokens,
+                                             max_target_tokens=spec.max_target_tokens)
+    if _digest(_json_bytes(validation_rows)) != validation_sha:
+        raise TrainingJobValidationError("backend mutated complete preflight records")
+    current()
+    model_raw = _reviewed_decoder_artifact(spec.base_model_checkpoint)
+    optimizer_raw = _reviewed_decoder_artifact(spec.base_optimizer_checkpoint)
+    parent = None
+    progress = {"epochs_completed": 0, "row_cursor": 0, "optimizer_steps": 0}
+    if spec.parent_checkpoint_artifact is not None:
+        parent = _parse_json(_reviewed_decoder_artifact(spec.parent_checkpoint_artifact))
+        expected_fields = {"schema", "checkpoint_lineage_id", "base_version_id", "backend_identity", "assets",
+            "training_binding", "model_state", "optimizer_state", "progress", "batch_size", "seed",
+            "parent_checkpoint_sha256", "producer_pins", "token_budgets", "qualified", "promotion_performed"}
+        if type(parent) is not dict or set(parent) != expected_fields or parent["schema"] != REVIEWED_DECODER_CHECKPOINT_SCHEMA:
+            raise TrainingJobValidationError("closed complete reviewed decoder parent checkpoint required")
+        if (parent["checkpoint_lineage_id"] != spec.checkpoint_lineage_id or parent["base_version_id"] != spec.base_version_id or
+                parent["backend_identity"] != identity or parent["assets"] != [asdict(item) for item in assets] or
+                parent["model_state"] != asdict(spec.base_model_checkpoint) or
+                parent["optimizer_state"] != asdict(spec.base_optimizer_checkpoint) or
+                (parent["training_binding"] != data["receipt"] and not (parent["training_binding"] is None and
+                    parent["progress"] == {"epochs_completed": 0, "row_cursor": 0, "optimizer_steps": 0})) or
+                parent["token_budgets"] != {"max_source_tokens": spec.max_source_tokens, "max_target_tokens": spec.max_target_tokens,
+                    "tokenizer_contract": data["receipt"]["tokenizer_contract"]} or parent["batch_size"] != spec.batch_size or
+                parent["seed"] != spec.seed or parent["producer_pins"] != source_pins or
+                parent["qualified"] is not False or parent["promotion_performed"] is not False):
+            raise TrainingJobValidationError("reviewed decoder exact-resume identities differ")
+        progress = dict(parent["progress"])
+    if (set(progress) != {"epochs_completed", "row_cursor", "optimizer_steps"} or
+            any(type(value) is not int or not 0 <= value <= 10**9 for value in progress.values()) or
+            progress["row_cursor"] >= len(records) or progress["row_cursor"] % spec.batch_size or
+            progress["optimizer_steps"] != progress["epochs_completed"] * math.ceil(len(records) / spec.batch_size) +
+                progress["row_cursor"] // spec.batch_size):
+        raise TrainingJobValidationError("reviewed decoder step/cursor identity differs")
+    # Reserve capacity for the complete requested update window before any
+    # restore or fitting. A timed early stop does not authorize an unresumable
+    # successor whose counters exceed the checkpoint contract.
+    if progress["optimizer_steps"] + spec.max_steps > 10**9:
+        raise TrainingJobValidationError("reviewed decoder progress capacity exhausted before update")
+    initial_progress = dict(progress)
+    current()
+    checkpoint_info = runtime.backend.inspect_checkpoint(model_raw, optimizer_raw)
+    if type(checkpoint_info) is not dict or set(checkpoint_info) != {"optimizer_steps"} or checkpoint_info["optimizer_steps"] != progress["optimizer_steps"] or type(checkpoint_info["optimizer_steps"]) is not int:
+        raise TrainingJobValidationError("backend checkpoint optimizer step differs")
+    output = Path(spec.output_directory)
+    if os.path.lexists(output) or output.parent.resolve(strict=True) != output.parent:
+        raise TrainingJobValidationError("fresh ordinary reviewed decoder output required")
+    for directory in output.parents:
+        if not stat.S_ISDIR(directory.lstat().st_mode):
+            raise TrainingJobValidationError("ordinary reviewed decoder output ancestry required")
+    output.mkdir(mode=0o700, exist_ok=False)
+    reports, restore_calls, restore_attempts = [], 0, 0
+    started, stop_reason = time.monotonic(), "step_limit"
+    try:
+        current()
+        if time.monotonic() - started >= spec.max_seconds:
+            raise TrainingJobValidationError("deadline before checkpoint restore")
+        # Restoration can change model state before an optimizer/RNG failure.
+        # Record the attempt before entering the caller-owned mutating hook.
+        restore_attempts += 1
+        runtime.backend.restore_checkpoint(model_raw, optimizer_raw)
+        restore_calls += 1
+        if runtime.backend.restored_checkpoint_matches(model_raw, optimizer_raw) is not True:
+            raise TrainingJobValidationError("restored model/optimizer pair did not roundtrip exactly")
+        current()
+        for _ in range(spec.max_steps):
+            if time.monotonic() - started >= spec.max_seconds:
+                stop_reason = "deadline_before_batch"
+                break
+            current()
+            if time.monotonic() - started >= spec.max_seconds:
+                stop_reason = "deadline_after_current_guard_before_batch"
+                break
+            order = list(range(len(records)))
+            random.Random(spec.seed + progress["epochs_completed"]).shuffle(order)
+            indices = order[progress["row_cursor"]:progress["row_cursor"] + spec.batch_size]
+            # Only complete current-admitted training records reach this hook;
+            # no history, assessment transport, heldout targets or model lookup.
+            batch = _parse_json(_json_bytes([records[index] for index in indices]))
+            before_batch = _digest(_json_bytes(batch))
+            report = runtime.backend.train_batch(batch)
+            if _digest(_json_bytes(batch)) != before_batch:
+                raise TrainingJobValidationError("backend mutated detached reviewed training records")
+            if type(report) is not dict or set(report) - {"loss", "gradient_norm", "optimizer_steps",
+                    "trainable_parameter_count", "gradient_parameter_count"}:
+                raise TrainingJobValidationError("bounded numeric backend report required")
+            for value in report.values():
+                if type(value) not in (int, float) or not math.isfinite(value):
+                    raise TrainingJobValidationError("finite numeric backend report required")
+            reports.append(_parse_json(_json_bytes(report)))
+            progress["optimizer_steps"] += 1
+            progress["row_cursor"] += len(indices)
+            if progress["row_cursor"] == len(records):
+                progress["epochs_completed"] += 1
+                progress["row_cursor"] = 0
+            current()
+        if not reports:
+            raise TrainingJobValidationError("no decoder update call completed within declared boundary")
+        current()
+        snapshot = runtime.backend.snapshot_checkpoint()
+        if type(snapshot) is not dict or set(snapshot) != {"model_state", "optimizer_state"} or any(
+                type(snapshot[key]) is not bytes or not 0 < len(snapshot[key]) <= MAX_REVIEWED_DECODER_STATE_BYTES
+                for key in snapshot):
+            raise TrainingJobValidationError("bounded actual model and optimizer checkpoint bytes required")
+        snapshot_info = runtime.backend.inspect_checkpoint(snapshot["model_state"], snapshot["optimizer_state"])
+        if snapshot_info != {"optimizer_steps": progress["optimizer_steps"]} or type(snapshot_info.get("optimizer_steps")) is not int:
+            raise TrainingJobValidationError("exported backend optimizer step differs")
+        current()
+        if (_reviewed_decoder_artifact(spec.base_model_checkpoint) != model_raw or
+                _reviewed_decoder_artifact(spec.base_optimizer_checkpoint) != optimizer_raw):
+            raise TrainingJobValidationError("base model/optimizer checkpoint changed during update")
+        if spec.parent_checkpoint_artifact is not None:
+            _reviewed_decoder_artifact(spec.parent_checkpoint_artifact)
+        model = _write_exclusive(output / "model.checkpoint", snapshot["model_state"])
+        optimizer = _write_exclusive(output / "optimizer.checkpoint", snapshot["optimizer_state"])
+        for item in (model, optimizer):
+            _reviewed_decoder_artifact(CheckpointArtifact.from_dict(item))
+        checkpoint = {"schema": REVIEWED_DECODER_CHECKPOINT_SCHEMA, "checkpoint_lineage_id": spec.checkpoint_lineage_id,
+            "base_version_id": spec.base_version_id, "backend_identity": identity,
+            "assets": [asdict(item) for item in assets], "training_binding": data["receipt"],
+            "model_state": model, "optimizer_state": optimizer, "progress": progress,
+            "batch_size": spec.batch_size, "seed": spec.seed,
+            "token_budgets": {"max_source_tokens": spec.max_source_tokens, "max_target_tokens": spec.max_target_tokens,
+                "tokenizer_contract": data["receipt"]["tokenizer_contract"]},
+            "parent_checkpoint_sha256": spec.parent_checkpoint_artifact.sha256 if spec.parent_checkpoint_artifact else None,
+            "producer_pins": source_pins, "qualified": False, "promotion_performed": False}
+        current()
+        checkpoint_ref = _write_exclusive(output / "reviewed-decoder-checkpoint.json", _json_bytes(checkpoint))
+        _reviewed_decoder_artifact(CheckpointArtifact.from_dict(checkpoint_ref))
+        current()
+        receipt = {"schema_version": REVIEWED_DECODER_RECEIPT_SCHEMA, "job_id": spec.job_id, "run_id": spec.run_id,
+            "job_spec_sha256": spec.canonical_sha256, "job_file_sha256": job_file_sha256,
+            "code_identity": spec.code_identity, "base_version_id": spec.base_version_id,
+            "base_model_checkpoint": asdict(spec.base_model_checkpoint),
+            "base_optimizer_checkpoint": asdict(spec.base_optimizer_checkpoint), "candidate": checkpoint_ref,
+            "model_checkpoint": model, "optimizer_checkpoint": optimizer, "complete_training_binding": data["receipt"],
+            "prepared_inputs_sha256": data["prepared_sha256"], "backend_identity_declared": identity,
+            "backend_train_batch_calls": len(reports), "backend_restore_calls": restore_calls,
+            "backend_restore_attempts": restore_attempts,
+            "backend_reported_metrics": reports, "backend_reported_optimizer_steps": snapshot_info["optimizer_steps"],
+            "worker_progress": progress, "initial_progress": initial_progress,
+            "model_bytes_changed": snapshot["model_state"] != model_raw,
+            "optimizer_bytes_changed": snapshot["optimizer_state"] != optimizer_raw,
+            "guard_call_counts": guard_calls, "stopped_reason": stop_reason,
+            "elapsed_seconds": time.monotonic() - started, "producer_pins": source_pins,
+            "checkpoint_resume_contract": "exact_input_and_backend_state_comparison_not_deterministic_reserialization_or_independent_numeric_proof",
+            "deadline_scope": "soft_restore_update_boundaries_after_preflight_not_an_interrupt_or_resource_grant",
+            "guard_scope": "trusted_caller_supplied_existing_execution_and_asset_policy_guards",
+            "backend_trust_scope": "caller_owns_numeric_execution_tokenizer_assets_license_and_checkpoint_format",
+            "physical_model_assets_verified": False, "pretrained_quality_verified": False,
+            "numerical_update_independently_verified": False, "optimizer_resume_independently_verified": False,
+            "legal_meaning_verified": False, "source_fidelity_proved": False, "convergence_proved": False,
+            "semantic_selection_supported": False, "competing_meaning_policy": "unprovided",
+            "qualified": False, "admitted": False, "promotion_performed": False,
+            "corpus_admitted": False, "registry_modified": False, "downloads_performed": False,
+            "legacy_projection_sample_conversion_performed": False}
+        _write_exclusive(output / "receipt.json", _json_bytes(receipt))
+        directory_fd = os.open(output, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+        try:
+            os.fsync(directory_fd)
+        finally:
+            os.close(directory_fd)
+        return receipt
+    except BaseException as error:
+        # Preserve partial files/state; no retry, rollback or promotion. The
+        # injected backend object remains caller-owned when its update fails.
+        failure = {"schema": "reviewed-decoder-worker-failure/v1", "job_id": spec.job_id,
+            "error_type": type(error).__name__, "completed_backend_calls": len(reports),
+            "worker_progress": progress, "partial_output_preserved": True,
+            "backend_restore_attempts": restore_attempts, "completed_backend_restore_calls": restore_calls,
+            "caller_owned_backend_may_have_changed": restore_attempts > 0,
+            "qualified": False, "promotion_performed": False}
+        try:
+            _write_exclusive(output / "failure.json", _json_bytes(failure))
+        except BaseException as publication_error:
+            error.add_note("failed to retain failure metadata: " + type(publication_error).__name__)
+        raise
 
 
 def _require_tree_pin() -> dict[str, str]:
@@ -1062,8 +1525,15 @@ def _verify_corpus_job_inputs(spec: TrainingJobSpec, resources: ExitStack) -> tu
 def _execute(spec: TrainingJobSpec, trainer: Callable[..., Mapping[str, Any]] | None,
              job_file_sha256: str | None, resources: ExitStack, *,
              defer_target_hydration_gc: bool = False,
-             reduce_native_targets: bool = False) -> dict[str, Any]:
+             reduce_native_targets: bool = False,
+             reviewed_runtime: ReviewedDecoderRuntime | None = None) -> dict[str, Any]:
     global _PROCESS_SOURCE_HASHES
+    if type(spec) is ReviewedDecoderTrainingJobSpec:
+        if trainer is not None or defer_target_hydration_gc or reduce_native_targets:
+            raise TrainingJobValidationError("legacy trainer/hydration flags cannot select complete reviewed decoder execution")
+        return _execute_reviewed_decoder_job(spec, reviewed_runtime, job_file_sha256)
+    if reviewed_runtime is not None:
+        raise TrainingJobValidationError("reviewed runtime requires the explicit complete-target job profile")
     started = time.perf_counter()
     tree_paths = _require_tree_pin()
     from . import legal_samples
@@ -1560,15 +2030,17 @@ def _execute(spec: TrainingJobSpec, trainer: Callable[..., Mapping[str, Any]] | 
     return receipt
 
 
-def execute_training_job(spec: TrainingJobSpec, *,
+def execute_training_job(spec: TrainingJobSpec | ReviewedDecoderTrainingJobSpec, *,
                          trainer: Callable[..., Mapping[str, Any]] | None = None,
-                         job_file_sha256: str | None = None) -> dict[str, Any]:
+                         job_file_sha256: str | None = None,
+                         reviewed_runtime: ReviewedDecoderRuntime | None = None) -> dict[str, Any]:
     """Run one private candidate job; ``trainer`` is a local test injection.
 
     Start concurrent jobs in independent processes. The model's existing
     optimizer owns its transactions; this adapter does not nest an outer one.
     """
-    return _execute_training_job(spec, trainer=trainer, job_file_sha256=job_file_sha256)
+    return _execute_training_job(spec, trainer=trainer, job_file_sha256=job_file_sha256,
+                                 reviewed_runtime=reviewed_runtime)
 
 
 def _execute_native_training_job_with_deferred_gc(spec: TrainingJobSpec) -> dict[str, Any]:
@@ -1592,34 +2064,720 @@ def _execute_native_training_job_with_deferred_gc_and_reduced_targets(spec: Trai
 def _execute_training_job(spec: TrainingJobSpec, *, trainer: Callable[..., Mapping[str, Any]] | None,
                           job_file_sha256: str | None,
                           defer_target_hydration_gc: bool = False,
-                          reduce_native_targets: bool = False) -> dict[str, Any]:
+                          reduce_native_targets: bool = False,
+                          reviewed_runtime: ReviewedDecoderRuntime | None = None) -> dict[str, Any]:
+    if type(spec) is ReviewedDecoderTrainingJobSpec:
+        if trainer is not None or defer_target_hydration_gc or reduce_native_targets:
+            raise TrainingJobValidationError("legacy trainer/hydration flags cannot select complete reviewed decoder execution")
+        if type(reviewed_runtime) is not ReviewedDecoderRuntime:
+            raise TrainingJobValidationError("explicit reviewed decoder runtime required before model work")
+    elif reviewed_runtime is not None:
+        raise TrainingJobValidationError("reviewed runtime requires the explicit complete-target job profile")
     if type(reduce_native_targets) is not bool:
         raise TrainingJobValidationError("reduce_native_targets must be boolean")
     if reduce_native_targets and trainer is not None:
         raise TrainingJobValidationError("target reduction requires the native spawned worker without an injected trainer")
-    if not isinstance(spec, TrainingJobSpec):
-        raise TrainingJobValidationError("spec must be a TrainingJobSpec")
+    if not isinstance(spec, TrainingJobSpec) and type(spec) is not ReviewedDecoderTrainingJobSpec:
+        raise TrainingJobValidationError("spec must be a TrainingJobSpec or explicit reviewed decoder spec")
     if not _JOB_LOCK.acquire(blocking=False):
         raise TrainingJobValidationError("only one training job may run per worker process")
     try:
         with ExitStack() as resources, _worker_environment():
             return _execute(spec, trainer, job_file_sha256, resources,
                             defer_target_hydration_gc=defer_target_hydration_gc,
-                            reduce_native_targets=reduce_native_targets)
+                            reduce_native_targets=reduce_native_targets,
+                            reviewed_runtime=reviewed_runtime)
     finally:
         _JOB_LOCK.release()
 
 
 def execute_training_job_file(path: str | Path, expected_sha256: str, *,
-                              trainer: Callable[..., Mapping[str, Any]] | None = None) -> dict[str, Any]:
+                              trainer: Callable[..., Mapping[str, Any]] | None = None,
+                              reviewed_runtime: ReviewedDecoderRuntime | None = None) -> dict[str, Any]:
     """Verify a job artifact and execute those same JSON bytes in this process."""
     raw = Path(path).read_bytes()
     if _digest(raw) != expected_sha256:
         raise TrainingJobValidationError("job file SHA-256 mismatch")
     spec = TrainingJobSpec.from_dict(_parse_json(raw))
-    return execute_training_job(spec, trainer=trainer, job_file_sha256=expected_sha256)
+    return execute_training_job(spec, trainer=trainer, job_file_sha256=expected_sha256,
+                                reviewed_runtime=reviewed_runtime)
 
 
-__all__ = ["BRIDGE_NAMES", "CheckpointArtifact", "ModelVariant", "SampleRecord", "TrainingConfig",
+__all__ = ["ReviewedDecoderTrainingJobSpec", "ReviewedDecoderRuntime", "REVIEWED_DECODER_SCHEMA_VERSION", "BRIDGE_NAMES", "CheckpointArtifact", "ModelVariant", "SampleRecord", "TrainingConfig",
            "TrainingJobSpec", "TrainingJobValidationError", "execute_training_job", "execute_training_job_file",
            "verify_corpus_job_inputs"]
+
+
+MAX_REVIEWED_TOKENIZER_PIPELINE_BYTES = 32 * 1024 * 1024
+
+
+def _reviewed_tokenizer_implementation_file(path):
+    """Derive an exact ordinary source/native file identity, never a label."""
+    import stat
+    path = Path(path)
+    if not path.is_absolute() or path.resolve(strict=True) != path:
+        raise TrainingJobValidationError("ordinary actual tokenizer implementation file required")
+    for parent in path.parents:
+        if not stat.S_ISDIR(parent.lstat().st_mode):
+            raise TrainingJobValidationError("ordinary tokenizer implementation ancestry required")
+    descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+    try:
+        before = os.fstat(descriptor)
+        if not stat.S_ISREG(before.st_mode) or before.st_nlink != 1 or not 0 < before.st_size <= MAX_CHECKPOINT_BYTES:
+            raise TrainingJobValidationError("bounded single-link tokenizer implementation file required")
+        digest, total = hashlib.sha256(), 0
+        while piece := os.read(descriptor, 1024**2):
+            total += len(piece)
+            if total > before.st_size:
+                raise TrainingJobValidationError("tokenizer implementation grew during hashing")
+            digest.update(piece)
+        stamp = lambda info: (info.st_dev, info.st_ino, info.st_mode, info.st_uid, info.st_nlink,
+                              info.st_size, info.st_mtime_ns, info.st_ctime_ns)
+        if total != before.st_size or stamp(before) != stamp(os.fstat(descriptor)) or stamp(before) != stamp(path.lstat()):
+            raise TrainingJobValidationError("tokenizer implementation changed during hashing")
+        return {"path": str(path), "bytes": total, "sha256": digest.hexdigest()}
+    finally:
+        os.close(descriptor)
+
+
+def _reviewed_tokenizer_configuration(value, *, added_token_type=None):
+    """Lossless typed config tree; unknown objects never become repr strings."""
+    count = 0
+    active = set()
+    def visit(item, depth=0):
+        nonlocal count
+        count += 1
+        if count > 1_000_000 or depth > 64:
+            raise TrainingJobValidationError("tokenizer frontend configuration bound exceeded")
+        kind = type(item)
+        if item is None or kind in (str, int, bool):
+            if kind is str:
+                item.encode("utf-8")
+            return {"type": "NoneType" if item is None else kind.__name__, "value": item}
+        if kind is float:
+            if not math.isfinite(item):
+                raise TrainingJobValidationError("finite tokenizer frontend configuration required")
+            return {"type": "float", "value": item}
+        if added_token_type is not None and kind is added_token_type:
+            fields = {name: getattr(item, name) for name in ("content", "single_word", "lstrip", "rstrip", "normalized", "special")}
+            if type(fields["content"]) is not str or any(type(fields[key]) is not bool for key in fields if key != "content"):
+                raise TrainingJobValidationError("complete actual AddedToken configuration required")
+            return {"type": "tokenizers.AddedToken", "fields": fields}
+        if kind not in (dict, list, tuple):
+            raise TrainingJobValidationError("unsupported non-JSON tokenizer frontend configuration")
+        identity = id(item)
+        if identity in active:
+            raise TrainingJobValidationError("cyclic tokenizer frontend configuration unsupported")
+        active.add(identity)
+        try:
+            if kind is dict:
+                if any(type(key) not in (str, int) for key in item):
+                    raise TrainingJobValidationError("typed tokenizer config dictionary keys required")
+                return {"type": "dict", "items": [[visit(key, depth + 1), visit(child, depth + 1)]
+                                                    for key, child in item.items()]}
+            return {"type": kind.__name__, "items": [visit(child, depth + 1) for child in item]}
+        finally:
+            active.remove(identity)
+    return visit(value)
+
+
+def _reviewed_tokenizer_method(method):
+    """Bind actual Python function code/defaults, or a pinned native method."""
+    import marshal
+    function = getattr(method, "__func__", method)
+    code = getattr(function, "__code__", None)
+    identity = {"module": getattr(function, "__module__", type(function).__module__),
+                "qualname": getattr(function, "__qualname__", getattr(function, "__name__", type(function).__qualname__)),
+                "kind": "python_code" if code is not None else "native_method"}
+    if code is not None:
+        identity.update(code_sha256=_digest(marshal.dumps(code)),
+            defaults=_reviewed_tokenizer_configuration(getattr(function, "__defaults__", None)),
+            keyword_defaults=_reviewed_tokenizer_configuration(getattr(function, "__kwdefaults__", None)),
+            closure=_reviewed_tokenizer_configuration(tuple(cell.cell_contents for cell in (getattr(function, "__closure__", None) or ()))))
+    return identity
+
+
+class ReviewedPretrainedTokenizer:
+    """Body-only transport with a complete actual-pipeline identity.
+
+    Production uses an actual fast tokenizer's Rust backend directly. The
+    backend serialization, live frontend configuration, method implementations
+    and ordinary Python/native assets are retained without dropping vocabulary
+    or normalization rules. This is not a claim about all loaded dependencies.
+    Slow/opaque frontends are explicitly unsupported. Fixed-byte fixtures need
+    a separate explicit opt-in and never attest production tokenizer assets.
+    """
+
+    def __init__(self, tokenizer, *, bos_token_id, eos_token_id, vocab_size,
+                 allow_fictional_fixture=False):
+        if (type(vocab_size) is not int or not 3 <= vocab_size <= 2**31 or
+                any(type(value) is not int or not 0 <= value < vocab_size
+                    for value in (bos_token_id, eos_token_id)) or bos_token_id == eos_token_id or
+                type(allow_fictional_fixture) is not bool):
+            raise TrainingJobValidationError("explicit tokenizer special IDs, vocabulary and fixture scope required")
+        self.tokenizer = tokenizer
+        self.bos_token_id, self.eos_token_id, self.vocab_size = bos_token_id, eos_token_id, vocab_size
+        self.allow_fictional_fixture = allow_fictional_fixture
+        if allow_fictional_fixture:
+            if any(not callable(getattr(tokenizer, name, None)) for name in ("encode", "decode", "pipeline_serialization")):
+                raise TrainingJobValidationError("explicit complete fixed-byte fixture pipeline required")
+        else:
+            self._fast_backend()
+
+    def _fast_backend(self):
+        # No model/tokenizer loader or network call exists here. These imports
+        # validate an already loaded production object only on the real path.
+        from transformers import PreTrainedTokenizerFast
+        from tokenizers import Tokenizer
+        if (not isinstance(self.tokenizer, PreTrainedTokenizerFast) or
+                not type(self.tokenizer).__module__.startswith("transformers.") or
+                getattr(self.tokenizer, "is_fast", None) is not True):
+            raise TrainingJobValidationError("actual supported Hugging Face fast tokenizer required")
+        backend = self.tokenizer.backend_tokenizer
+        if type(backend) is not Tokenizer:
+            raise TrainingJobValidationError("actual tokenizers.Tokenizer backend required")
+        if backend.get_vocab_size(with_added_tokens=True) != self.vocab_size:
+            raise TrainingJobValidationError("declared vocabulary must equal the full actual backend vocabulary")
+        if getattr(backend, "encode_special_tokens", None) is not False:
+            raise TrainingJobValidationError("split-special-token transport is unsupported")
+        serialized = backend.to_str()
+        if type(serialized) is not str or not 0 < len(serialized.encode("utf-8")) <= MAX_REVIEWED_TOKENIZER_PIPELINE_BYTES:
+            raise TrainingJobValidationError("complete actual backend exceeds pipeline serialization capacity")
+        body = _parse_json(serialized)
+        required = {"model", "normalizer", "pre_tokenizer", "added_tokens", "post_processor", "decoder", "truncation", "padding"}
+        if (type(body) is not dict or not required <= set(body) or
+                body["truncation"] is not None or body["padding"] is not None):
+            raise TrainingJobValidationError("complete backend without truncation or padding required")
+        return backend, body
+
+    def encode(self, text):
+        if self.allow_fictional_fixture:
+            return self.tokenizer.encode(text, add_special_tokens=False, truncation=False)
+        backend, _ = self._fast_backend()
+        return backend.encode(text, add_special_tokens=False).ids
+
+    def decode(self, token_ids):
+        if self.allow_fictional_fixture:
+            return self.tokenizer.decode(token_ids, skip_special_tokens=False, clean_up_tokenization_spaces=False)
+        backend, _ = self._fast_backend()
+        return backend.decode(token_ids, skip_special_tokens=False)
+
+    def pipeline_serialization(self):
+        import sys
+        if type(self) is not ReviewedPretrainedTokenizer or any(name in self.__dict__ for name in ("encode", "decode", "pipeline_serialization", "binding_metadata", "_fast_backend")):
+            raise TrainingJobValidationError("exact unshadowed reviewed tokenizer wrapper required")
+        descriptors = {}
+        def module_file(module):
+            path = getattr(module, "__file__", None)
+            if type(path) is not str:
+                raise TrainingJobValidationError("actual tokenizer module asset identity required")
+            row = _reviewed_tokenizer_implementation_file(path)
+            descriptors[row["path"]] = row
+        module_file(sys.modules[__name__])
+        fixed = {"encode": {"add_special_tokens": False, "truncation": False, "padding": False},
+                 "decode": {"skip_special_tokens": False, "clean_up_tokenization_spaces": False}}
+        methods = {name: _reviewed_tokenizer_method(getattr(self, name))
+                   for name in ("encode", "decode", "pipeline_serialization", "binding_metadata", "_fast_backend")}
+        if self.allow_fictional_fixture:
+            raw = self.tokenizer.pipeline_serialization()
+            if type(raw) is not bytes or not 0 < len(raw) <= MAX_REVIEWED_TOKENIZER_PIPELINE_BYTES:
+                raise TrainingJobValidationError("bounded canonical fixed-byte fixture pipeline bytes required")
+            payload = _parse_json(raw)
+            if (type(payload) is not dict or set(payload) != {"schema", "kind", "backend", "frontend", "implementation", "transport"} or
+                    payload["schema"] != "reviewed-decoder-tokenizer-pipeline/v1" or
+                    payload["kind"] != "fictional_fixed_byte" or _json_bytes(payload) != raw or
+                    payload["transport"] != {"body_only": True, "truncation": False, "padding": False} or
+                    type(payload["backend"]) is not dict or type(payload["frontend"]) is not dict or
+                    type(payload["implementation"]) is not list):
+                raise TrainingJobValidationError("complete explicit fictional fixed-byte pipeline required")
+            for row in payload["implementation"]:
+                if type(row) is not dict or set(row) != {"path", "bytes", "sha256"} or _reviewed_tokenizer_implementation_file(row["path"]) != row:
+                    raise TrainingJobValidationError("actual fixed-byte fixture implementation bytes differ")
+                descriptors[row["path"]] = row
+            for name in ("encode", "decode", "pipeline_serialization"):
+                function = getattr(self.tokenizer, name)
+                module = sys.modules.get(getattr(getattr(function, "__func__", function), "__module__", ""))
+                if module is None:
+                    raise TrainingJobValidationError("actual fixed-byte fixture method module required")
+                module_file(module)
+            payload = {**payload, "frontend": {"fixture": payload["frontend"], "wrapper_options": fixed,
+                "wrapper_special_ids": {"bos_token_id": self.bos_token_id, "eos_token_id": self.eos_token_id, "vocab_size": self.vocab_size},
+                "wrapper_methods": methods, "delegate_methods": {name: _reviewed_tokenizer_method(getattr(self.tokenizer, name))
+                    for name in ("encode", "decode", "pipeline_serialization")}},
+                "implementation": [descriptors[key] for key in sorted(descriptors)]}
+        else:
+            from tokenizers import AddedToken
+            import tokenizers
+            import tokenizers.tokenizers as native_tokenizers
+            backend, backend_json = self._fast_backend()
+            module_file(tokenizers)
+            module_file(native_tokenizers)
+            for cls in type(self.tokenizer).__mro__:
+                if cls is object:
+                    continue
+                module = sys.modules.get(cls.__module__)
+                if module is None:
+                    raise TrainingJobValidationError("actual fast tokenizer class module unavailable")
+                module_file(module)
+            options = {name: getattr(self.tokenizer, name) for name in (
+                "init_kwargs", "special_tokens_map_extended", "added_tokens_decoder", "model_max_length",
+                "padding_side", "truncation_side", "clean_up_tokenization_spaces", "split_special_tokens",
+                "chat_template", "name_or_path") if hasattr(self.tokenizer, name)}
+            for name in ("add_prefix_space", "legacy", "add_bos_token", "add_eos_token", "spaces_between_special_tokens"):
+                if hasattr(self.tokenizer, name):
+                    options[name] = getattr(self.tokenizer, name)
+            if type(getattr(self.tokenizer, "__dict__", None)) is not dict or self.tokenizer.__dict__.get("_tokenizer") is not backend:
+                raise TrainingJobValidationError("actual supported fast tokenizer instance configuration required")
+            # Bind all Python instance settings, including options not listed
+            # above. Only the actual backend object is replaced by its complete
+            # serialization elsewhere; unknown opaque frontend state refuses.
+            instance_options = {key: value for key, value in self.tokenizer.__dict__.items() if key != "_tokenizer"}
+            complete_instance = _reviewed_tokenizer_configuration(instance_options, added_token_type=AddedToken)
+            front_methods = {name: _reviewed_tokenizer_method(getattr(self.tokenizer, name)) for name in ("encode", "decode")}
+            for name in ("encode", "decode"):
+                method = getattr(self.tokenizer, name)
+                module = sys.modules.get(getattr(getattr(method, "__func__", method), "__module__", ""))
+                if module is None:
+                    raise TrainingJobValidationError("actual frontend method module unavailable")
+                module_file(module)
+            payload = {"schema": "reviewed-decoder-tokenizer-pipeline/v1", "kind": "huggingface_fast",
+                "backend": {"serialization": backend_json, "encode_special_tokens": backend.encode_special_tokens,
+                            "tokenizers_version": tokenizers.__version__,
+                            "native_methods": {name: _reviewed_tokenizer_method(getattr(backend, name)) for name in ("encode", "decode")}},
+                "frontend": {"transport_path": "direct_actual_tokenizers_Rust_backend/v2",
+                    "python_frontend_not_used_for_mapping": True,
+                    "class": type(self.tokenizer).__module__ + "." + type(self.tokenizer).__qualname__,
+                    "configuration": _reviewed_tokenizer_configuration(options, added_token_type=AddedToken),
+                    "instance_configuration": complete_instance,
+                    "fixed_options": fixed,
+                    "wrapper_special_ids": {"bos_token_id": self.bos_token_id, "eos_token_id": self.eos_token_id, "vocab_size": self.vocab_size},
+                    "wrapper_methods": methods, "frontend_methods": front_methods},
+                "implementation": [descriptors[key] for key in sorted(descriptors)],
+                "transport": {"body_only": True, "truncation": False, "padding": False}}
+        result = _json_bytes(payload)
+        if not 0 < len(result) <= MAX_REVIEWED_TOKENIZER_PIPELINE_BYTES:
+            raise TrainingJobValidationError("complete tokenizer pipeline exceeds explicit byte capacity")
+        return result
+
+    def binding_metadata(self):
+        """P5-compatible metadata derived from the actual complete pipeline.
+
+        The whole-pipeline configuration digest is deliberately not embedded
+        inside the pipeline itself: its underlying inputs and this method's
+        code are already bound there, avoiding a recursive self-hash.
+        """
+        raw = self.pipeline_serialization()
+        pipeline = _parse_json(raw)
+        if pipeline["kind"] == "huggingface_fast":
+            backend = pipeline["backend"]["serialization"]
+            model = backend["model"]
+            if type(model) is not dict or "vocab" not in model or type(model["vocab"]) not in (dict, list):
+                raise TrainingJobValidationError("complete actual model vocabulary required for binding")
+            vocabulary = {"model_type": model.get("type"), "vocab": model["vocab"],
+                          "added_tokens": backend["added_tokens"]}
+        else:
+            backend = pipeline["backend"]
+            if (type(backend.get("byte_to_id")) is not list or len(backend["byte_to_id"]) != 256 or
+                    len(set(backend["byte_to_id"])) != 256 or
+                    any(type(value) is not int or not 0 <= value < self.vocab_size for value in backend["byte_to_id"])):
+                raise TrainingJobValidationError("complete fixed-byte vocabulary required for fixture binding")
+            vocabulary = {"byte_to_id": backend["byte_to_id"], "added_tokens": backend.get("added_tokens", [])}
+        metadata = {"tokenizer_id": "reviewed-tokenizer:" + pipeline["kind"] + ":" +
+                _digest(_json_bytes({"kind": pipeline["kind"], "implementation": pipeline["implementation"],
+                                    "transport": pipeline["transport"]})),
+            "vocabulary_sha256": "sha256:" + _digest(_json_bytes(vocabulary)),
+            "configuration_sha256": "sha256:" + _digest(raw),
+            "bos_token_id": self.bos_token_id, "eos_token_id": self.eos_token_id, "vocab_size": self.vocab_size}
+        if self.pipeline_serialization() != raw:
+            raise TrainingJobValidationError("tokenizer pipeline changed during binding derivation")
+        return metadata
+
+
+class TorchReviewedDecoderBackend:
+    """Normal teacher-forced Torch updates for an injected pretrained model.
+
+    Model, optimizer and tokenizer are supplied by the admitted caller. This
+    class never calls from_pretrained, downloads weights or grants resources.
+    It supports one already-owned CPU or CUDA device; sharded/meta models are
+    refused. Checkpoint state includes optimizer progress and CPU/device RNG.
+    Exact resumption and physical assets remain matters for actual validation,
+    rather than conclusions inferred from this interface or checkpoint bytes.
+    """
+
+    def __init__(self, model, optimizer, tokenizer, *, architecture,
+                 max_sequence_tokens, pretrained, gradient_clip=1.0):
+        if architecture not in {"encoder_decoder", "causal_lm"}:
+            raise TrainingJobValidationError("explicit supported pretrained decoder architecture required")
+        if type(max_sequence_tokens) is not int or not 3 <= max_sequence_tokens <= 262144:
+            raise TrainingJobValidationError("explicit finite pretrained model context bound required")
+        if type(pretrained) is not bool or type(gradient_clip) not in (int, float) or not math.isfinite(gradient_clip) or gradient_clip <= 0:
+            raise TrainingJobValidationError("explicit pretrained declaration and finite gradient bound required")
+        for value, methods in ((model, ("parameters", "named_parameters", "state_dict", "load_state_dict", "train", "get_input_embeddings", "get_output_embeddings", "named_buffers")),
+                               (optimizer, ("zero_grad", "step", "state_dict", "load_state_dict"))):
+            if any(not callable(getattr(value, name, None)) for name in methods):
+                raise TrainingJobValidationError("injected Torch model/optimizer interface incomplete")
+        if type(getattr(optimizer, "param_groups", None)) is not list:
+            raise TrainingJobValidationError("injected Torch optimizer parameter groups required")
+        self.model, self.optimizer, self.tokenizer = model, optimizer, tokenizer
+        self.architecture, self.max_sequence_tokens = architecture, max_sequence_tokens
+        self.pretrained, self.gradient_clip = pretrained, float(gradient_clip)
+        self._optimizer_steps = 0
+        self._tokenizer_pipeline_contract_raw = None
+
+    def _torch(self):
+        import torch
+        return torch
+
+    def _pipeline_contract(self):
+        # Reuse the independently checked input-owner recipe. It derives the
+        # complete pipeline identity and authenticates real implementation files.
+        from ...logic.autoformal.training_cycle_inputs import (
+            ReviewedDecoderInputValidationError, _reviewed_decoder_tokenizer_contract)
+        try:
+            contract = _reviewed_decoder_tokenizer_contract(self.tokenizer)
+        except ReviewedDecoderInputValidationError as error:
+            raise TrainingJobValidationError("tokenizer pipeline changed or unsupported") from error
+        raw = _json_bytes(contract)
+        if self._tokenizer_pipeline_contract_raw is None:
+            self._tokenizer_pipeline_contract_raw = raw
+        elif raw != self._tokenizer_pipeline_contract_raw:
+            raise TrainingJobValidationError("tokenizer pipeline changed after decoder configuration")
+        return contract
+
+    def _assert_pipeline(self, expected):
+        if self._pipeline_contract() != expected:
+            raise TrainingJobValidationError("tokenizer pipeline changed during decoder callback")
+
+    def _configuration(self):
+        contract = self._pipeline_contract()
+        if type(self.tokenizer) is not ReviewedPretrainedTokenizer:
+            raise TrainingJobValidationError("exact reviewed tokenizer transport required by Torch backend")
+        binding = self.tokenizer.binding_metadata()
+        if binding["configuration_sha256"] != "sha256:" + contract["pipeline_sha256"]:
+            raise TrainingJobValidationError("tokenizer pipeline differs from independently derived binding")
+        parameters = list(self.model.parameters())
+        names = {id(value): name for name, value in self.model.named_parameters()}
+        if not parameters or len({value.device for value in parameters}) != 1:
+            raise TrainingJobValidationError("one owned model device and nonempty parameters required")
+        device = parameters[0].device
+        if any(value.device != device for _, value in self.model.named_buffers()):
+            raise TrainingJobValidationError("all model buffers must share the owned model device")
+        if device.type not in {"cpu", "cuda"}:
+            raise TrainingJobValidationError("meta or unsupported pretrained model device")
+        groups, seen = [], set()
+        for group in self.optimizer.param_groups:
+            ids = [id(value) for value in group["params"]]
+            if any(value not in names or value in seen for value in ids) or len(ids) != len(set(ids)):
+                raise TrainingJobValidationError("optimizer contains foreign or duplicate model parameters")
+            seen.update(ids)
+            groups.append({**{key: value for key, value in group.items() if key != "params"},
+                           "parameter_names": [names[value] for value in ids]})
+        if not {id(value) for value in parameters if value.requires_grad} <= seen or not any(value.requires_grad for value in parameters):
+            raise TrainingJobValidationError("all trainable model parameters must belong to the optimizer")
+        config = getattr(self.model, "config", None)
+        model_config = config.to_dict() if callable(getattr(config, "to_dict", None)) else None
+        if type(model_config) is not dict or type(getattr(config, "is_encoder_decoder", None)) is not bool:
+            raise TrainingJobValidationError("explicit pretrained model configuration required")
+        if config.is_encoder_decoder != (self.architecture == "encoder_decoder"):
+            raise TrainingJobValidationError("pretrained architecture differs from model configuration")
+        declared_limit = model_config.get("max_position_embeddings", model_config.get("n_positions"))
+        if type(declared_limit) is int and self.max_sequence_tokens > declared_limit:
+            raise TrainingJobValidationError("declared context exceeds the model position limit")
+        configuration = {"schema": "torch-complete-reviewed-decoder-configuration/v2",
+                "architecture": self.architecture, "max_sequence_tokens": self.max_sequence_tokens,
+                "gradient_clip": self.gradient_clip, "pretrained_declaration": self.pretrained,
+                "source_profile": "reviewed-source-selection-context/v2",
+                "target_codec": "complete-reviewed-norm-json/v2", "semantic_selection_supported": False,
+                "model_class": type(self.model).__module__ + "." + type(self.model).__qualname__,
+                "optimizer_class": type(self.optimizer).__module__ + "." + type(self.optimizer).__qualname__,
+                "device": str(device), "tokenizer": contract, "tokenizer_binding": binding, "model_config": model_config,
+                "parameter_schema": [{"name": name, "shape": list(value.shape), "dtype": str(value.dtype),
+                                      "requires_grad": value.requires_grad}
+                                     for name, value in self.model.named_parameters()],
+                "state_dict_metadata": self._model_state()["state_metadata"],
+                "buffer_schema": [{"name": name, "shape": list(value.shape), "dtype": str(value.dtype),
+                                   "device": str(value.device)} for name, value in self.model.named_buffers()],
+                "optimizer_groups": groups, "torch_version": str(self._torch().__version__)}
+        self._assert_pipeline(contract)
+        return configuration
+
+    def identity(self):
+        signature = _digest(_json_bytes(self._configuration()))
+        return {"backend_id": "torch-complete-reviewed-decoder/v2:" + signature,
+                "implementation_sha256": _digest(Path(__file__).read_bytes()),
+                "checkpoint_format": "torch-weights-only-complete-reviewed-state-pair/v2",
+                "target_codec": "complete-reviewed-norm-json/v2", "source_conditioned": True,
+                "pretrained": self.pretrained}
+
+    def _model_state(self):
+        # PyTorch passes each module's state_dict metadata to its versioned
+        # load hooks. Converting only tensor entries to dict loses that data.
+        state = self.model.state_dict()
+        metadata = getattr(state, "_metadata", {})
+        from collections import OrderedDict
+        nodes = 0
+        def require_json(value, depth=0):
+            nonlocal nodes
+            nodes += 1
+            if depth > 64 or nodes > 65536:
+                raise TrainingJobValidationError("bounded JSON model state-dict metadata required")
+            if type(value) in (dict, OrderedDict):
+                if any(type(key) is not str for key in value):
+                    raise TrainingJobValidationError("JSON model state-dict metadata requires string keys")
+                for child in value.values():
+                    require_json(child, depth + 1)
+            elif type(value) is list:
+                for child in value:
+                    require_json(child, depth + 1)
+            elif value is None or type(value) in (str, int, bool):
+                pass
+            elif type(value) is float and math.isfinite(value):
+                pass
+            else:
+                raise TrainingJobValidationError("lossless JSON model state-dict metadata values required")
+        # Do not silently coerce Python tuples to lists or non-string keys to
+        # strings: custom versioned load hooks may distinguish those types.
+        require_json(metadata)
+        try:
+            metadata_raw = _json_bytes(metadata)
+            metadata_copy = _parse_json(metadata_raw)
+        except (TypeError, ValueError) as error:
+            raise TrainingJobValidationError("JSON model state-dict metadata required") from error
+        if type(metadata_copy) is not dict or len(metadata_raw) > 1024**2:
+            raise TrainingJobValidationError("bounded model state-dict metadata required")
+        return {"state": dict(state), "state_metadata": metadata_copy}
+
+    def _finite_state(self, value):
+        torch = self._torch()
+        total = 0
+        def visit(item, depth=0):
+            nonlocal total
+            if depth > 64:
+                raise TrainingJobValidationError("Torch checkpoint nesting bound exceeded")
+            if torch.is_tensor(item):
+                total += item.numel() * item.element_size()
+                if total > MAX_REVIEWED_DECODER_STATE_BYTES or not bool(torch.isfinite(item).all()):
+                    raise TrainingJobValidationError("nonfinite or oversized Torch checkpoint tensors")
+            elif type(item) is dict:
+                if any(type(key) not in (str, int) for key in item):
+                    raise TrainingJobValidationError("unsupported Torch checkpoint dictionary key")
+                for child in item.values():
+                    visit(child, depth + 1)
+            elif type(item) in (list, tuple):
+                for child in item:
+                    visit(child, depth + 1)
+            elif item is not None and type(item) not in (str, int, float, bool):
+                raise TrainingJobValidationError("unsupported Torch checkpoint value")
+            elif type(item) is float and not math.isfinite(item):
+                raise TrainingJobValidationError("nonfinite Torch checkpoint scalar")
+        visit(value)
+
+    def validate_training_records(self, records, *, max_source_tokens, max_target_tokens):
+        torch = self._torch()
+        config = self._configuration()
+        vocab = config["tokenizer"]["vocab_size"]
+        if type(vocab) is not int or vocab < 3:
+            raise TrainingJobValidationError("invalid pretrained tokenizer vocabulary")
+        for embedding in (self.model.get_input_embeddings(), self.model.get_output_embeddings()):
+            if embedding is None or embedding.weight.shape[0] < vocab:
+                raise TrainingJobValidationError("model embeddings do not cover declared tokenizer IDs")
+        self._finite_state(self._model_state())
+        if type(records) is not list or not records:
+            raise TrainingJobValidationError("nonempty complete reviewed records required")
+        for row in records:
+            if type(row) is not dict or set(row) != {"id", "unit_id", "source_wire", "target_json", "source_token_ids", "target_token_ids"}:
+                raise TrainingJobValidationError("closed complete reviewed Torch record required")
+            for key, limit in (("source_token_ids", max_source_tokens), ("target_token_ids", max_target_tokens)):
+                tokens = row[key]
+                if (type(tokens) is not list or not 3 <= len(tokens) <= limit or
+                        any(type(value) is not int or not 0 <= value < vocab for value in tokens) or
+                        tokens[0] != self.tokenizer.bos_token_id or tokens[-1] != self.tokenizer.eos_token_id or
+                        any(value in (self.tokenizer.bos_token_id, self.tokenizer.eos_token_id) for value in tokens[1:-1])):
+                    raise TrainingJobValidationError("complete untruncated Torch input and output tokens required")
+                if self.tokenizer.decode(tokens[1:-1]) != row["source_wire" if key == "source_token_ids" else "target_json"]:
+                    raise TrainingJobValidationError("Torch token transport differs from full source/target")
+            lengths = (len(row["source_token_ids"]), len(row["target_token_ids"]))
+            used = sum(lengths) if self.architecture == "causal_lm" else max(lengths)
+            if used > self.max_sequence_tokens:
+                raise TrainingJobValidationError("full source and target exceed actual decoder context; truncation forbidden")
+        # Merely validating representability does not construct a model or fit.
+        if not callable(getattr(torch, "save", None)) or not callable(getattr(torch, "load", None)):
+            raise TrainingJobValidationError("Torch checkpoint support unavailable")
+        self._assert_pipeline(config["tokenizer"])
+
+    def _load_pair(self, model_bytes, optimizer_bytes):
+        import io
+        torch = self._torch()
+        for raw in (model_bytes, optimizer_bytes):
+            if type(raw) is not bytes or not 0 < len(raw) <= MAX_REVIEWED_DECODER_STATE_BYTES:
+                raise TrainingJobValidationError("bounded model and optimizer Torch checkpoint bytes required")
+        try:
+            model = torch.load(io.BytesIO(model_bytes), map_location="cpu", weights_only=True)
+            optimizer = torch.load(io.BytesIO(optimizer_bytes), map_location="cpu", weights_only=True)
+        except Exception as error:
+            raise TrainingJobValidationError("weights-only Torch checkpoint load failed") from error
+        try:
+            config = self._configuration()
+        except TrainingJobValidationError as error:
+            # Live model/optimizer restoration occurs only after this stage;
+            # operational callback exceptions are not converted or swallowed.
+            raise TrainingJobValidationError("Torch checkpoint configuration or paired state schema differs") from error
+        signature = _digest(_json_bytes(config))
+        if (type(model) is not dict or set(model) != {"schema", "configuration_sha256", "state", "state_metadata"} or
+                model["schema"] != "torch-reviewed-model-state/v2" or model["configuration_sha256"] != signature or
+                type(model["state"]) is not dict or type(model["state_metadata"]) is not dict or
+                model["state_metadata"] != self._model_state()["state_metadata"] or
+                type(optimizer) is not dict or set(optimizer) != {"schema", "configuration_sha256", "state", "optimizer_steps", "cpu_rng", "device_rng"} or
+                optimizer["schema"] != "torch-reviewed-optimizer-state/v1" or optimizer["configuration_sha256"] != signature or
+                type(optimizer["optimizer_steps"]) is not int or not 0 <= optimizer["optimizer_steps"] <= 10**9):
+            raise TrainingJobValidationError("Torch checkpoint configuration or paired state schema differs")
+        self._finite_state(model)
+        self._finite_state(optimizer)
+        def rng_state(value):
+            return (torch.is_tensor(value) and value.dtype == torch.uint8 and value.ndim == 1
+                    and 0 < value.numel() <= 1024 * 1024)
+        device = next(self.model.parameters()).device
+        if (not rng_state(optimizer["cpu_rng"]) or
+                (device.type == "cuda" and not rng_state(optimizer["device_rng"])) or
+                (device.type != "cuda" and optimizer["device_rng"] is not None)):
+            raise TrainingJobValidationError("complete owned Torch RNG state required before restore")
+        self._assert_pipeline(config["tokenizer"])
+        return model, optimizer
+
+    def inspect_checkpoint(self, model_bytes, optimizer_bytes):
+        _, optimizer = self._load_pair(model_bytes, optimizer_bytes)
+        return {"optimizer_steps": optimizer["optimizer_steps"]}
+
+    def restore_checkpoint(self, model_bytes, optimizer_bytes):
+        torch = self._torch()
+        model, optimizer = self._load_pair(model_bytes, optimizer_bytes)
+        from collections import OrderedDict
+        state = OrderedDict(model["state"])
+        state._metadata = model["state_metadata"]
+        contract = self._pipeline_contract()
+        self._assert_pipeline(contract)
+        self.model.load_state_dict(state, strict=True)
+        self._assert_pipeline(contract)
+        self.optimizer.load_state_dict(optimizer["state"])
+        self._assert_pipeline(contract)
+        torch.set_rng_state(optimizer["cpu_rng"])
+        device = next(self.model.parameters()).device
+        if device.type == "cuda":
+            if optimizer["device_rng"] is None:
+                raise TrainingJobValidationError("owned CUDA RNG checkpoint missing")
+            torch.cuda.set_rng_state(optimizer["device_rng"], device=device)
+        elif optimizer["device_rng"] is not None:
+            raise TrainingJobValidationError("unexpected device RNG for CPU checkpoint")
+        self._optimizer_steps = optimizer["optimizer_steps"]
+        self._assert_pipeline(contract)
+        if not self.restored_checkpoint_matches(model_bytes, optimizer_bytes):
+            raise TrainingJobValidationError("Torch model/optimizer state did not restore exactly")
+
+    def _same(self, left, right):
+        torch = self._torch()
+        if torch.is_tensor(left) or torch.is_tensor(right):
+            return (torch.is_tensor(left) and torch.is_tensor(right) and left.dtype == right.dtype and
+                    tuple(left.shape) == tuple(right.shape) and torch.equal(left.detach().cpu(), right.detach().cpu()))
+        if type(left) is dict and type(right) is dict:
+            return set(left) == set(right) and all(self._same(left[key], right[key]) for key in left)
+        if type(left) in (list, tuple) and type(right) is type(left):
+            return len(left) == len(right) and all(self._same(a, b) for a, b in zip(left, right))
+        return type(left) is type(right) and left == right
+
+    def restored_checkpoint_matches(self, model_bytes, optimizer_bytes):
+        torch = self._torch()
+        model, optimizer = self._load_pair(model_bytes, optimizer_bytes)
+        contract = self._pipeline_contract()
+        device = next(self.model.parameters()).device
+        device_rng = torch.cuda.get_rng_state(device) if device.type == "cuda" else None
+        current_model = self._model_state()
+        matches = (self._same(current_model["state"], model["state"]) and
+                self._same(current_model["state_metadata"], model["state_metadata"]) and
+                self._same(self.optimizer.state_dict(), optimizer["state"]) and
+                self._optimizer_steps == optimizer["optimizer_steps"] and
+                self._same(torch.get_rng_state(), optimizer["cpu_rng"]) and
+                self._same(device_rng, optimizer["device_rng"]))
+        self._assert_pipeline(contract)
+        return matches
+
+    def snapshot_checkpoint(self):
+        import io
+        torch = self._torch()
+        config = self._configuration()
+        contract = config["tokenizer"]
+        signature = _digest(_json_bytes(config))
+        device = next(self.model.parameters()).device
+        model = {"schema": "torch-reviewed-model-state/v2", "configuration_sha256": signature,
+                 **self._model_state()}
+        optimizer = {"schema": "torch-reviewed-optimizer-state/v1", "configuration_sha256": signature,
+                     "state": self.optimizer.state_dict(), "optimizer_steps": self._optimizer_steps,
+                     "cpu_rng": torch.get_rng_state(),
+                     "device_rng": torch.cuda.get_rng_state(device) if device.type == "cuda" else None}
+        result = {}
+        for name, value in (("model_state", model), ("optimizer_state", optimizer)):
+            self._finite_state(value)
+            stream = io.BytesIO()
+            torch.save(value, stream)
+            raw = stream.getvalue()
+            if not 0 < len(raw) <= MAX_REVIEWED_DECODER_STATE_BYTES:
+                raise TrainingJobValidationError("Torch checkpoint exceeds declared state byte limit")
+            result[name] = raw
+            self._assert_pipeline(contract)
+        return result
+
+    def train_batch(self, records):
+        if type(self._optimizer_steps) is not int or not 0 <= self._optimizer_steps < 10**9:
+            raise TrainingJobValidationError("Torch optimizer progress capacity exhausted before update")
+        torch = self._torch()
+        self.validate_training_records(records, max_source_tokens=self.max_sequence_tokens,
+                                       max_target_tokens=self.max_sequence_tokens)
+        contract = self._pipeline_contract()
+        device = next(self.model.parameters()).device
+        self.model.train()
+        self._assert_pipeline(contract)
+        self.optimizer.zero_grad(set_to_none=True)
+        self._assert_pipeline(contract)
+        losses = []
+        for row in records:
+            self._assert_pipeline(contract)
+            source, target = row["source_token_ids"], row["target_token_ids"]
+            if self.architecture == "encoder_decoder":
+                inputs = torch.tensor([source], dtype=torch.long, device=device)
+                output = self.model(input_ids=inputs, attention_mask=torch.ones_like(inputs),
+                    decoder_input_ids=torch.tensor([target[:-1]], dtype=torch.long, device=device),
+                    labels=torch.tensor([target[1:]], dtype=torch.long, device=device))
+            else:
+                # The decoder model performs its own causal one-position shift.
+                # The known target BOS is a prefix; only body and EOS are labels.
+                inputs = torch.tensor([source + target], dtype=torch.long, device=device)
+                labels = torch.tensor([[-100] * (len(source) + 1) + target[1:]], dtype=torch.long, device=device)
+                output = self.model(input_ids=inputs, attention_mask=torch.ones_like(inputs), labels=labels)
+            self._assert_pipeline(contract)
+            loss = getattr(output, "loss", None)
+            if not torch.is_tensor(loss) or loss.ndim != 0 or not bool(torch.isfinite(loss)):
+                raise TrainingJobValidationError("pretrained model must return a finite scalar teacher-forced loss")
+            losses.append(loss)
+        loss = torch.stack(losses).mean()
+        self._assert_pipeline(contract)
+        loss.backward()
+        self._assert_pipeline(contract)
+        parameters = [value for value in self.model.parameters() if value.requires_grad]
+        gradients = [value.grad for value in parameters if value.grad is not None]
+        if not gradients or any(not bool(torch.isfinite(value).all()) for value in gradients):
+            raise TrainingJobValidationError("pretrained loss produced missing or nonfinite gradients")
+        norm = torch.nn.utils.clip_grad_norm_(parameters, self.gradient_clip, error_if_nonfinite=True)
+        self._assert_pipeline(contract)
+        self.optimizer.step()
+        self._optimizer_steps += 1
+        self._assert_pipeline(contract)
+        self._finite_state(self._model_state())
+        self._finite_state(self.optimizer.state_dict())
+        self._assert_pipeline(contract)
+        result = {"loss": float(loss.detach().cpu()), "gradient_norm": float(norm.detach().cpu()),
+                  "optimizer_steps": self._optimizer_steps,
+                  "trainable_parameter_count": len(parameters), "gradient_parameter_count": len(gradients)}
+        self._assert_pipeline(contract)
+        return result
+
+
+__all__ += ["ReviewedPretrainedTokenizer", "TorchReviewedDecoderBackend"]

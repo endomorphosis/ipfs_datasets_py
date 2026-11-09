@@ -182,3 +182,6 @@ ipfs_datasets_py.egg-info/SOURCES.txt
 # Local prover/tool installations and generated release archives are retained on disk.
 /workspace/
 /docs/implementation/reports/evidence/**/*.tar.xz
+
+# Native taskboard CAS keeps this sidecar inode durable across board replacements.
+/ipfs_datasets_py/logic/autoformal/.LIRAE-TODO.md.materialization.lock

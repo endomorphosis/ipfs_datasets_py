@@ -281,9 +281,93 @@ def _optimizer_settings(model, optimizer):
     return {"learning_rate": group["lr"], "weight_decay": group["weight_decay"]}
 
 
+_HEAD_PREFIXES = ("count_head.", "scope_head.", "modality_head.", "pointer_keys.", "pointer_queries.")
+
+
+def head_parameter_names(model: GroupedSpanDecoder) -> tuple[str, ...]:
+    """Span-head parameter names. Encoder and token weights are not heads."""
+    _require(type(model) is GroupedSpanDecoder, "typed grouped span model required")
+    names = tuple(name for name, _parameter in model.named_parameters() if name.startswith(_HEAD_PREFIXES))
+    _require(any(name.startswith("count_head.") for name in names)
+             and any(name.startswith("scope_head.") for name in names)
+             and any(name.startswith("modality_head.") for name in names),
+             "count, scope, and modality heads required")
+    return names
+
+
+def fresh_head_parameters(model: GroupedSpanDecoder) -> dict[str, Any]:
+    """Replace span heads with the same-seed fresh initialization.
+
+    Encoder, token, and scope-embedding weights stay at their current values.
+    """
+    names = head_parameter_names(model)
+    retained = {name: parameter.detach().clone() for name, parameter in model.named_parameters() if name not in names}
+    donor = GroupedSpanDecoder(model.config)
+    state = model.state_dict()
+    donor_state = donor.state_dict()
+    for name in names:
+        state[name] = donor_state[name].detach().clone()
+    model.load_state_dict(state, strict=True)
+    for name, parameter in model.named_parameters():
+        if name not in names:
+            _require(torch.equal(parameter, retained[name]), "fresh head changed a non-head parameter")
+    return {"fresh_head": list(names), "encoder_parameters_retained": True}
+
+
+def refuse_direct_kl(codec_id: str | None, reference_codec_id: str | None) -> None:
+    """Keep training on cross-entropy. Refuse direct KL across codecs."""
+    if reference_codec_id is None and codec_id is None:
+        return
+    _require(type(codec_id) is str and bool(codec_id), "typed source codec identity required")
+    if reference_codec_id is None:
+        return
+    _require(type(reference_codec_id) is str and bool(reference_codec_id), "typed reference codec identity required")
+    _require(codec_id == reference_codec_id, "direct KL across incompatible codecs is refused")
+
+
+def compatible_warm_start(checkpoint: dict[str, Any], *, codec_id: str,
+                          reference_codec_id: str | None = None) -> tuple[GroupedSpanDecoder, torch.optim.AdamW, dict[str, Any]]:
+    """Restore shape-compatible non-head tensors and keep a fresh head.
+
+    A different reference codec is refused before any parameter copy. The
+    returned optimizer is a fresh AdamW. This is not a strict checkpoint
+    resume and does not run a training step.
+    """
+    refuse_direct_kl(codec_id, reference_codec_id)
+    _require(type(checkpoint) is dict and checkpoint.get("schema") == CHECKPOINT_SCHEMA,
+             "closed span checkpoint required")
+    _require(type(checkpoint.get("config")) is dict, "checkpoint config required")
+    model = GroupedSpanDecoder(SpanDecoderConfig.from_dict(checkpoint["config"]))
+    records = checkpoint.get("model_state")
+    _require(type(records) is dict, "checkpoint parameter inventory required")
+    heads = set(head_parameter_names(model))
+    state = model.state_dict()
+    restored_names: list[str] = []
+    for name, tensor in state.items():
+        if name in heads or name not in records:
+            continue
+        record = records[name]
+        if type(record) is not dict or record.get("shape") != list(tensor.shape) or record.get("dtype") != "float32":
+            continue
+        state[name] = _restore_tensor(record, tensor.shape)
+        restored_names.append(name)
+    model.load_state_dict(state, strict=True)
+    fresh = fresh_head_parameters(model)
+    optimizer = make_grouped_span_optimizer(model)
+    return model, optimizer, {
+        "compatible_parameters": restored_names,
+        "fresh_head": fresh["fresh_head"],
+        "direct_kl": False,
+        "codec_id": codec_id,
+        "reference_codec_id": reference_codec_id,
+    }
+
+
 def train_grouped_span_step(model: GroupedSpanDecoder, optimizer: torch.optim.AdamW,
-                            examples: list[GroupedSpanExample], gradient_clip: float = 5.0) -> dict[str, float]:
+                            examples: list[GroupedSpanExample], gradient_clip: float = 5.0,
+                            codec_id: str | None = None, reference_codec_id: str | None = None) -> dict[str, float]:
     """Perform one actual optimizer step; split/selection policy belongs to caller."""
+    refuse_direct_kl(codec_id, reference_codec_id)
     before = producer_pins()
     _require(type(model) is GroupedSpanDecoder and type(examples) is list and 1 <= len(examples) <= _MAX_BATCH
              and all(type(example) is GroupedSpanExample for example in examples), "bounded typed training examples required")
@@ -484,3 +568,12 @@ def restore_grouped_span_checkpoint(checkpoint: dict[str, Any]) -> tuple[Grouped
     optimizer.load_state_dict(state)
     _require(save_grouped_span_checkpoint(model, optimizer, steps=steps) == checkpoint, "checkpoint differs after strict restoration")
     return model, optimizer, steps
+
+
+TRAINING_METRIC_BOUNDARY = (
+    "ordinary generation, full rules, argument/attachment/modality and protected retention "
+    "metrics are separate engineering records; "
+    "teacher-forced CE and compiler weak-label scores stay separate from reviewed statutory fidelity; "
+    "outputs freeze before scoring; "
+    "producer packet grants no evaluation reference"
+)

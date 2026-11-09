@@ -1,0 +1,205 @@
+{
+  "schema": "legal-ir-compact-decoder-example-current-main-delivery/v1",
+  "recorded_at_utc": "2026-10-22T02:55:37.760074+00:00",
+  "scope": "Selected source/test reuse and fresh current-main authored-fixture integration; qualified candidate at capture, awaiting root publication.",
+  "baseline_public_main": "c8cc3e81058466cc2cdf53c573baf55450923358",
+  "selected_source_postimages": [
+    {
+      "path": "ipfs_datasets_py/logic/autoformal/legal_compact_decoder_example_v1.py",
+      "bytes": 20423,
+      "sha256": "5de4bf91a3f93e405606f4c042f342d52736ad7588586005a84493feaf7b76a0"
+    },
+    {
+      "path": "tests/unit/logic/autoformal/test_legal_compact_decoder_example_v1.py",
+      "bytes": 23742,
+      "sha256": "414269560e268ab3ccdbbabf49f3c8a062615a453a3eddc3bfc5c6e1bd269f9f"
+    }
+  ],
+  "unchanged_direct_owners": [
+    {
+      "bytes": 22837,
+      "original_executed_capture_equals_current_P_equals_current_public": true,
+      "relative_path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_relational_decoder_example_v1.py",
+      "sha256": "4aed1fde35efce9cdd6579be83be6901143003e996611850f6b35f0cce3f705c"
+    },
+    {
+      "bytes": 30504,
+      "original_executed_capture_equals_current_P_equals_current_public": true,
+      "relative_path": "ipfs_datasets_py/logic/autoformal/legal_compact_content_v1.py",
+      "sha256": "de6495ed91d6842071d0892c4410dfb9243fab658eb22d19635a8db599b4b25e"
+    }
+  ],
+  "unchanged_guide": {
+    "path": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_compact_decoder_example_v1.md",
+    "public": {
+      "bytes": 8948,
+      "sha256": "c1f80ff4c3479a9edfe9588dad06c7353ea6e652cc51497e0a70c9a02538f31b"
+    },
+    "primary": {
+      "bytes": 9744,
+      "sha256": "ddda86a68c08ae326cf896921557b8d56fcedd390a2ae46720d368d2a16b482a"
+    }
+  },
+  "historical_qualification": {
+    "scope": "Original2026-10-17 generation, separate from fresh03.",
+    "cases": 275,
+    "new_companion_cases": 59,
+    "existing_regressions": 216,
+    "compiled_executed_first_party_files": 113,
+    "receipt": {
+      "root": "artifact_workspace",
+      "path": "legal-ir-compact-example-20261017-01/qualification-summary.json",
+      "bytes": 13627,
+      "sha256": "7eaef5db078f8588d4fb81c05bf9b683f40202ee40a7dc0df86ee020d7fa17ca"
+    }
+  },
+  "fresh_current_main_qualification": {
+    "attempt": "03",
+    "status": "passed",
+    "cases": 275,
+    "passed_setup_call_teardown_phases": 825,
+    "selectors": 82,
+    "guarded_current_python_files": 131,
+    "outer_source_pins": 173,
+    "loaded_module_aliases": 110,
+    "compiled_sources": 114,
+    "executed_sources": 114,
+    "blocked_import_attempts": 0,
+    "blocked_operations": 0,
+    "elapsed_test_seconds": 131.44910193397664,
+    "ten_parameter_ids_renamed_without_value_or_body_changes": true,
+    "node_id_mapping": {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/merge-05/qualification-v01/current-public-node-id-mapping-v01.json",
+      "bytes": 8993,
+      "sha256": "54b752c57a026ab877e4b3dea3a6b764f6582d7a65c4f2b4666714955e331590"
+    },
+    "router_presence_is_not_compilation_or_execution": true,
+    "request": {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/merge-05/qualification-v03/request-compact-decoder-example-main-03.json",
+      "bytes": 52058,
+      "sha256": "d918af5b9965fa1d79b5b9ee66dc842dfa20ffdfc4ca0339825b914d0130b38a"
+    },
+    "manifest": {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/merge-05/qualification-v03/manifest-compact-decoder-example-main-03.json",
+      "bytes": 76691,
+      "sha256": "2a7ac32974066ee9e521e71adb77fa83330162752a8d5461e176210e74a94f0d"
+    },
+    "test_result": {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/merge-05/qualification-v03/attempt-compact-decoder-example-main-03/exports/test-result.json",
+      "bytes": 53805,
+      "sha256": "20b3d86e210b8d6281f7ccf93621abb952040105a3bb12ac2c7886d107e98f65"
+    },
+    "import_compile_exec_observations": {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/merge-05/qualification-v03/attempt-compact-decoder-example-main-03/exports/import-origins.json",
+      "bytes": 53732,
+      "sha256": "8113169a7008a672153f3d188304b8f084b59103517f172e480d3eeb2e8fc73a"
+    },
+    "independent_result_review": {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/merge-05/qualification-v03/independent-qualification-review-v03.json",
+      "bytes": 12247,
+      "sha256": "92ab7ba142b8e900cc81345798a5955e212835d038811ed83a003e49ea0da99e"
+    }
+  },
+  "closed_failed_attempts": [
+    {
+      "attempt": "01",
+      "status": "failed_unqualified",
+      "collected_cases": 0,
+      "executed_phases": 0,
+      "collection_errors": 0,
+      "reason": "Pytest logging attempted its default external writable path before collection; retry02 only routed pytest logging into the owned attempt.",
+      "all_original_files_preserved": true,
+      "later_original_native_source_storage_closeout_verified": true,
+      "launch": {
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/merge-05/qualification-v01/launch-compact-decoder-example-main-01.json",
+        "bytes": 23560,
+        "sha256": "737733ace431a5d7c0d014218713bac9a5915fc9a822f880f04e86eb9899d147"
+      },
+      "storage_closeout": {
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/merge-05/qualification-v01/failed-compact01-storage-closeout-v01.json",
+        "bytes": 5582,
+        "sha256": "cb79943598504c50eec68a86b3dce41e121f6c2f7d659fca69bcfb36c85db690"
+      },
+      "independent_closeout_review": {
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/merge-05/qualification-v01/failed01-closeout-independent-review-v01.json",
+        "bytes": 10850,
+        "sha256": "fe12f4f6cffb978cbeb8fbc26c49826d771c0ffb223e7ec395f60400730258e7"
+      }
+    },
+    {
+      "attempt": "02",
+      "status": "failed_unqualified",
+      "collected_cases": 0,
+      "executed_phases": 0,
+      "collection_errors": 4,
+      "reason": "Four collection errors from a missing genuine router availability-probe source pin; retry03 added only that current public source pin.",
+      "all_original_files_preserved": true,
+      "later_original_native_source_storage_closeout_verified": true,
+      "launch": {
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/merge-05/qualification-v02/launch-compact-decoder-example-main-02.json",
+        "bytes": 23559,
+        "sha256": "5b27cd9d3749243d0111c798a381873e52237ca4664bfe3aca885f505afecd60"
+      },
+      "storage_closeout": {
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/merge-05/qualification-v02/failed-compact02-storage-closeout-v01.json",
+        "bytes": 5943,
+        "sha256": "7169d3ddba52a8328b8151d467d9433b7fa7506a4e7670215a31b792a838321c"
+      },
+      "independent_closeout_review": {
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/merge-05/qualification-v02/failed02-closeout-independent-review-v01.json",
+        "bytes": 11578,
+        "sha256": "9bef7997f15e0255a01624616b6e33b86b8d183f902cde2bc819bde513314397"
+      }
+    }
+  ],
+  "original03_closeout": {
+    "source_READ_closed_after_original_cleanup": true,
+    "native_and_storage_released": true,
+    "reservation_id": "386287903af741e6bfb953c325daff20",
+    "files_retained": 11,
+    "bytes_retained": 419826,
+    "storage_promise_bytes": 134217728,
+    "live_processes": 0,
+    "rss_bytes": 0,
+    "owner_terminal_admitted": false,
+    "process_scope": "sampled_birth_bound_descendants",
+    "arbitrary_descendant_containment": false,
+    "controller_complete": {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/merge-05/qualification-v03/qualification-controller-complete-03.json",
+      "bytes": 184,
+      "sha256": "54500f1f288d42c60b1fa34d8c676c029af4dae2b3e7649373d8e7ef1777a41e"
+    },
+    "launch": {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/merge-05/qualification-v03/launch-compact-decoder-example-main-03.json",
+      "bytes": 7821,
+      "sha256": "241fdb018a7065adc11b38b384d6dcca09ea6c5dedd224b6c1c9d13bd64848f4"
+    },
+    "durability": {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/merge-05/qualification-v03/attempt-compact-decoder-example-main-03/logs/validation-durability.json",
+      "bytes": 2037,
+      "sha256": "3f5a415144152b1fa650285d187d72499a41e1c0779b9c850c673c04adde12bc"
+    },
+    "independent_closeout_review": {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/merge-05/qualification-v03/original-closeout-independent-review-v01.json",
+      "bytes": 11725,
+      "sha256": "bd298713d6ac56d143cb1274dcd86af360c883f2d4ce0b6e1f8d793976a1710f"
+    }
+  },
+  "limits": [
+    "All cases are authored custody/label fixtures, not new statutory reconstruction samples. Original source_example.model_input remains the sole source/context input; target-derived compact context and archival identity remain separate label data.",
+    "Both earlier failed generations retain zero executed cases and their separate later administrative closeouts. Retry fixes changed only owned logging and one genuine availability-probe source pin; product/test bodies and audit policy were not relaxed.",
+    "Fresh03 qualifies this selected public-source generation. Newer primary counted-profile work and other dependency generations retain their own qualifications.",
+    "Source pin/compile/exec observations and cooperative sampled process custody do not establish a fully hermetic interpreter or arbitrary-descendant containment.",
+    "No permitted inference context, learned decoder/head, checkpoint runtime, model or encoder inference, optimizer/training, token savings, reviewed legal meaning, training/gold eligibility, service adoption or Lean authority is established."
+  ],
+  "authority": {
+    "owner_terminal_admitted": false,
+    "training_mask": 0,
+    "evaluation_gold_mask": 0,
+    "model_or_encoder_executed": false,
+    "training_executed": false,
+    "reviewed_legal_meaning_qualified": false,
+    "proof_authority": false,
+    "Lean_admitted": false
+  }
+}

@@ -275,6 +275,20 @@ def preflight_ir_cell_cached_targets(directory_plan_pin, inventory_pins, request
         row_ids=row_ids, max_reference_bytes=max_reference_bytes)
 
 
+def inspect_normative_legal_ir_targets(request_raw: bytes, *, expected_request_sha256: str):
+    """Inspect declared normative labels in memory, without runtime/asset replay."""
+    from .ir_cell_target_compatibility import inspect_normative_legal_ir_targets as inspect
+    return inspect(request_raw, expected_request_sha256=expected_request_sha256)
+
+
+def preflight_normative_legal_ir_targets(request_raw: bytes, *, expected_request_sha256: str,
+        runtime_options, expected_runtime_options_sha256: str):
+    """Bind evaluation-only labels to existing source-only runtime preparation."""
+    from .ir_cell_target_compatibility import preflight_normative_legal_ir_targets as preflight
+    return preflight(request_raw, expected_request_sha256=expected_request_sha256,
+        runtime_options=runtime_options, expected_runtime_options_sha256=expected_runtime_options_sha256)
+
+
 def open_ir_original_corpus_autoencoder(directory_plan_pin, inventory_pins, request, *, package_manifest_pin,
         corpus_pin, corpus_split, row_ids, max_reference_bytes=512 * 1024 * 1024):
     """Opt in to exact original Intent/Security package corpus replay.
@@ -326,3 +340,12 @@ def open_normative_cached_legal_ir_autoencoder(request, **kwargs):
     """Restore a normative decoder with independently bound retained input caches."""
     from .normative_cached_legal_ir_runtime import open_normative_cached_legal_ir_autoencoder as open_runtime
     return open_runtime(request, **kwargs)
+
+
+def preflight_compact_role_bos_sources(request_raw, checkpoint, *, expected_request_sha256,
+        expected_checkpoint_sha256, expected_policy_sha256, source_resolver):
+    """Bind source receipts and intact role/BOS metadata without numerical dispatch."""
+    from .ir_cell_target_compatibility import preflight_compact_role_bos_sources as preflight
+    return preflight(request_raw, checkpoint, expected_request_sha256=expected_request_sha256,
+        expected_checkpoint_sha256=expected_checkpoint_sha256, expected_policy_sha256=expected_policy_sha256,
+        source_resolver=source_resolver)

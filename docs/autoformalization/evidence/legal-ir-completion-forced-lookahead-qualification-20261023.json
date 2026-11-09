@@ -1,0 +1,133 @@
+{
+  "Torch_model_weights_checkpoint_vectors_rawmatrices_provider_SQL_Lean_or_training_executed": false,
+  "actual_cases": 41,
+  "actual_function_selectors": 25,
+  "actual_nonproduct_module_scope": "One frozen-root bootstrap module and the selected v2 owning-test module; not two observed test helpers.",
+  "actual_passed_phases": 123,
+  "authority": {
+    "Lean": false,
+    "global_completion_proven": false,
+    "graph": false,
+    "heldout_accuracy": false,
+    "learning_gain": false,
+    "source_meaning": false
+  },
+  "canonical_source_pins_reverified": 215,
+  "current_model_replay_performed": false,
+  "evaluation_gold_mask": 0,
+  "excluded_initializer_and_full_public_package_behavior_qualified": false,
+  "genuine_tests_root_unit_initializers_qualified": false,
+  "independent_saved_result_acceptance": {
+    "bytes": 9351,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/execution-v01/independent-saved-result-review-v02.json",
+    "sha256": "b92c6f3d110b59ed57c1b0d27306e316b7094df96806e6953ce9f2593764cf45"
+  },
+  "initializer_scope_clarification": {
+    "bytes": 3900,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/execution-v01/initializer-scope-clarification-v02.json",
+    "sha256": "7858178b1b9b74f449ebce9322f5d6619a1f09bf0474bb469204b3b6b6d9a8a2"
+  },
+  "limitations": [
+    "Finite forced-singleton lookahead only; branch/horizon exhaustion remain unknown, not globally completable.",
+    "Old v1 policy/runtime/checkpoints and saved failed prefixes remain unchanged.",
+    "Pure metadata path-only namespace profile; excluded initializers/full public-package behavior unqualified.",
+    "Accepted independent saved review and explicit scope clarification preserve all original manifest/results and41/123 counts. No rerun or extra case credit.",
+    "Only declared pure leaf/API grammar/selection behavior qualifies. Test-root/unit initialization, old helper execution-origin/body attestation and full public-package behavior do not.",
+    "No consumer/model replay, reconstruction gain, source/meaning/context permission, training/gold, global-completion, graph or Lean authority."
+  ],
+  "namespace_scope_clarification": {
+    "bytes": 3900,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/execution-v01/initializer-scope-clarification-v02.json",
+    "sha256": "7858178b1b9b74f449ebce9322f5d6619a1f09bf0474bb469204b3b6b6d9a8a2"
+  },
+  "new_execution_for_this_portable": false,
+  "no_original_output_changed_no_rerun_or_extra_case_credit": true,
+  "observed_compiled_buffers": 23,
+  "observed_module_entries": 22,
+  "observed_namespace_entries": 2,
+  "observed_namespaces": 2,
+  "observed_product_modules": 20,
+  "observed_total_modules": 22,
+  "old_helper_import_origin_and_compile_buffer_separately_attested": false,
+  "old_v1_test_helper_source_declared_pinned": {
+    "bytes": 15521,
+    "repository_path": "tests/unit/logic/autoformal/test_legal_compact_content_completion_budget_v1.py",
+    "sha256": "5f31d2c05057167a1b3aac624c9f87fc36ebea6987a00d96af159279679747ab"
+  },
+  "original_closeout_evidence": [
+    {
+      "bytes": 7955,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/execution-v01/launch-forced-lookahead-v02.json",
+      "sha256": "4df1070184f4b586711857764213d3491f2744ee481b0f3f6f21d55d9eb3f150"
+    },
+    {
+      "bytes": 516,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/execution-v01/controller-complete-forced-lookahead-v02.json",
+      "sha256": "130c56ec1b5a8382dd55cb7656856f41953e50e6eb44e52f716c8844add3faae"
+    },
+    {
+      "bytes": 4475,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/execution-v01/attempt-forced-lookahead-v01/logs/result.json",
+      "sha256": "770e26e6de9d7eccbd6a7d49a73e5b1b5ac6e9c3e603e82121285075d69e6515"
+    },
+    {
+      "bytes": 1655,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/execution-v01/attempt-forced-lookahead-v01/logs/validation-durability.json",
+      "sha256": "95d633ba7d3004fb13ee70938617742760fc36b4f3da611372d95a0a9aff7ad5"
+    }
+  ],
+  "original_native_cleanup_proven": true,
+  "original_phase_outcomes": {
+    "call": {
+      "passed": 41
+    },
+    "setup": {
+      "passed": 41
+    },
+    "teardown": {
+      "passed": 41
+    }
+  },
+  "original_resource_lease_released": true,
+  "original_source_READ_closed": true,
+  "original_storage_terminal_status": "released",
+  "original_summary": {
+    "bytes": 14462,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/execution-v01/qualification-summary-v01.json",
+    "sha256": "66bd3fb5821b097688b141a02bd1b22146b3db44cf3dcd571c0b4e1b01a68fb6"
+  },
+  "outer_source_pins_reverified": 239,
+  "owning_test": {
+    "bytes": 17402,
+    "repository_path": "tests/unit/logic/autoformal/test_legal_compact_content_completion_budget_v2.py",
+    "sha256": "c31ba9dea223bc1d0e4c74d40379f9027e7e1d2cd32704105206c5fe6793c984"
+  },
+  "policy": {
+    "branch_horizon_unknown_retained": true,
+    "default": 8,
+    "forced_suffix_only": true,
+    "global_completability_proven": false,
+    "horizon0_old_mask_passthrough": true,
+    "max_forced_tokens": 16
+  },
+  "publication_ready": true,
+  "publication_scope": "This pure historical qualification record only. The combined source publication bundle remains pending actual consumer result and separate final review.",
+  "recorded_at_utc": "2026-10-23T20:46:38.098044+00:00",
+  "retained_attempt_bytes": 71473,
+  "retained_attempt_files": 9,
+  "retained_unready_draft": {
+    "bytes": 3906,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/public-staging-v01/draft-metadata/docs/autoformalization/evidence/legal-ir-completion-forced-lookahead-qualification-20261023.json",
+    "sha256": "e944aa2e91ea1b1ea313a96d4ead8db19f25987212b90982d2e591b4f720314a"
+  },
+  "schema": "legal-ir-completion-forced-lookahead-portable-qualification/v1",
+  "scope": "Historical exact-source authored pure grammar qualification only. No consumer/model or current public package/initializer qualification.",
+  "source": {
+    "bytes": 12629,
+    "repository_path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_completion_budget_v2.py",
+    "sha256": "e04e214be49eb17e87544b250b0308ca2b7adf35c01957afeb56b7e300b6db14"
+  },
+  "test_package_initializer_scope": "The pure217 frozen tree omits tests/__init__.py and tests/unit/__init__.py (and fileless logic/autoformal initializer paths). The old v1 owning-test helper source is declared/pinned, but its import origin and compile buffer are not separately observed. No test-root/unit initializer, helper body-attestation or full-package execution qualification follows.",
+  "training_mask": 0,
+  "whole_publication_bundle_ready": false
+}

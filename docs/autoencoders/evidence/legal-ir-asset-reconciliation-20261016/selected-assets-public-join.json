@@ -1,0 +1,301 @@
+{
+  "asset_record_count": 16,
+  "asset_records": [
+    {
+      "current_public_lfs_descriptor_matches": [],
+      "inventory_key": "legal_ir:legacy8:historical_sparse_core",
+      "local_leaf_observed": {
+        "bytes": 398209746,
+        "checkpoint_body_sha256_recomputed": false,
+        "exists": true,
+        "leaf_regular_file": true,
+        "leaf_symlink": false,
+        "method": "lstat only; checkpoint body not opened, parsed, loaded or hashed",
+        "runtime_admission_performed": false
+      },
+      "match_scope": "Current advertised LFS digest/length against retained recorded asset pin; local payload not rehashed and remote payload not downloaded.",
+      "no_match_interpretation": "Unknown outside selected filename/repository scope; not a universal unpublished or unavailable claim.",
+      "reported_bytes": 398209746,
+      "reported_checkpoint_sha256": "7236de26bd3d7f8414ffa04805f1b6e8a8849f9e0103cec6edb4985b911658be"
+    },
+    {
+      "current_public_lfs_descriptor_matches": [],
+      "inventory_key": "legal_ir:legacy8:small_linguistic_bundle",
+      "local_leaf_observed": {
+        "bytes": 5112,
+        "checkpoint_body_sha256_recomputed": false,
+        "exists": true,
+        "leaf_regular_file": true,
+        "leaf_symlink": false,
+        "method": "lstat only; checkpoint body not opened, parsed, loaded or hashed",
+        "runtime_admission_performed": false
+      },
+      "match_scope": "Current advertised LFS digest/length against retained recorded asset pin; local payload not rehashed and remote payload not downloaded.",
+      "no_match_interpretation": "Unknown outside selected filename/repository scope; not a universal unpublished or unavailable claim.",
+      "reported_bytes": 5112,
+      "reported_checkpoint_sha256": "f0fca433cbe8cfc4a8700c9e7325b79bc6e3d5ec73f067260b9ac61920f72bb1"
+    },
+    {
+      "current_public_lfs_descriptor_matches": [],
+      "inventory_key": "legal_ir:legacy8:learned_formula_sidecar",
+      "local_leaf_observed": {
+        "bytes": 128924,
+        "checkpoint_body_sha256_recomputed": false,
+        "exists": true,
+        "leaf_regular_file": true,
+        "leaf_symlink": false,
+        "method": "lstat only; checkpoint body not opened, parsed, loaded or hashed",
+        "runtime_admission_performed": false
+      },
+      "match_scope": "Current advertised LFS digest/length against retained recorded asset pin; local payload not rehashed and remote payload not downloaded.",
+      "no_match_interpretation": "Unknown outside selected filename/repository scope; not a universal unpublished or unavailable claim.",
+      "reported_bytes": 128924,
+      "reported_checkpoint_sha256": "ffca84492b81ab94fa291ae6ddbe52cfc84318f3516a22f901d468de255b6cbe"
+    },
+    {
+      "current_public_lfs_descriptor_matches": [],
+      "inventory_key": "legal_ir:source_v2:raw384_donor",
+      "local_leaf_observed": {
+        "bytes": 614534,
+        "checkpoint_body_sha256_recomputed": false,
+        "exists": true,
+        "leaf_regular_file": true,
+        "leaf_symlink": false,
+        "method": "lstat only; checkpoint body not opened, parsed, loaded or hashed",
+        "runtime_admission_performed": false
+      },
+      "match_scope": "Current advertised LFS digest/length against retained recorded asset pin; local payload not rehashed and remote payload not downloaded.",
+      "no_match_interpretation": "Unknown outside selected filename/repository scope; not a universal unpublished or unavailable claim.",
+      "reported_bytes": 614534,
+      "reported_checkpoint_sha256": "6e3f4d731d798aa2732afc37bd74fec34da3267a323844975d2dab78f59f9c61"
+    },
+    {
+      "current_public_lfs_descriptor_matches": [],
+      "inventory_key": "legal_ir:contextual:384:selected_followup",
+      "local_leaf_observed": {
+        "bytes": 2799098,
+        "checkpoint_body_sha256_recomputed": false,
+        "exists": true,
+        "leaf_regular_file": true,
+        "leaf_symlink": false,
+        "method": "lstat only; checkpoint body not opened, parsed, loaded or hashed",
+        "runtime_admission_performed": false
+      },
+      "match_scope": "Current advertised LFS digest/length against retained recorded asset pin; local payload not rehashed and remote payload not downloaded.",
+      "no_match_interpretation": "Unknown outside selected filename/repository scope; not a universal unpublished or unavailable claim.",
+      "reported_bytes": 2799098,
+      "reported_checkpoint_sha256": "0ac5c21656187d1d8040a02bcc0b4716a8093db17f05adc9a22e99d5b6b2cc00"
+    },
+    {
+      "current_public_lfs_descriptor_matches": [],
+      "inventory_key": "legal_ir:contextual:768:selected_followup",
+      "local_leaf_observed": {
+        "bytes": 4781613,
+        "checkpoint_body_sha256_recomputed": false,
+        "exists": true,
+        "leaf_regular_file": true,
+        "leaf_symlink": false,
+        "method": "lstat only; checkpoint body not opened, parsed, loaded or hashed",
+        "runtime_admission_performed": false
+      },
+      "match_scope": "Current advertised LFS digest/length against retained recorded asset pin; local payload not rehashed and remote payload not downloaded.",
+      "no_match_interpretation": "Unknown outside selected filename/repository scope; not a universal unpublished or unavailable claim.",
+      "reported_bytes": 4781613,
+      "reported_checkpoint_sha256": "8892a3261c0750a6247ba5400069ed18cad3354426e2095ed1d295287e3559b4"
+    },
+    {
+      "current_public_lfs_descriptor_matches": [],
+      "inventory_key": "legal_ir:dual_donor768:initialized_unaligned",
+      "local_leaf_observed": {
+        "bytes": 6873498,
+        "checkpoint_body_sha256_recomputed": false,
+        "exists": true,
+        "leaf_regular_file": true,
+        "leaf_symlink": false,
+        "method": "lstat only; checkpoint body not opened, parsed, loaded or hashed",
+        "runtime_admission_performed": false
+      },
+      "match_scope": "Current advertised LFS digest/length against retained recorded asset pin; local payload not rehashed and remote payload not downloaded.",
+      "no_match_interpretation": "Unknown outside selected filename/repository scope; not a universal unpublished or unavailable claim.",
+      "reported_bytes": 6873498,
+      "reported_checkpoint_sha256": "7443c8a60cb1f95e9a35017edcd394c0f47fd457c3733e0863d37bfc09a09a12"
+    },
+    {
+      "current_public_lfs_descriptor_matches": [],
+      "inventory_key": "legal_ir:retained_wording384:control_wording_ce_selected_semantic_decoder_state",
+      "local_leaf_observed": {
+        "bytes": 2797024,
+        "checkpoint_body_sha256_recomputed": false,
+        "exists": true,
+        "leaf_regular_file": true,
+        "leaf_symlink": false,
+        "method": "lstat only; checkpoint body not opened, parsed, loaded or hashed",
+        "runtime_admission_performed": false
+      },
+      "match_scope": "Current advertised LFS digest/length against retained recorded asset pin; local payload not rehashed and remote payload not downloaded.",
+      "no_match_interpretation": "Unknown outside selected filename/repository scope; not a universal unpublished or unavailable claim.",
+      "reported_bytes": 2797024,
+      "reported_checkpoint_sha256": "6c7609b8f2f54afefbb832157b5f8a7590a77df4393feb9f3c61d8bf9be6caff"
+    },
+    {
+      "current_public_lfs_descriptor_matches": [],
+      "inventory_key": "legal_ir:retained_wording384:control_wording_ce_last_attempt_semantic_decoder_state",
+      "local_leaf_observed": {
+        "bytes": 2797028,
+        "checkpoint_body_sha256_recomputed": false,
+        "exists": true,
+        "leaf_regular_file": true,
+        "leaf_symlink": false,
+        "method": "lstat only; checkpoint body not opened, parsed, loaded or hashed",
+        "runtime_admission_performed": false
+      },
+      "match_scope": "Current advertised LFS digest/length against retained recorded asset pin; local payload not rehashed and remote payload not downloaded.",
+      "no_match_interpretation": "Unknown outside selected filename/repository scope; not a universal unpublished or unavailable claim.",
+      "reported_bytes": 2797028,
+      "reported_checkpoint_sha256": "cf2d10df31f8cb1145369aeef3cfc717629dd7f14c69b5ba62ba956b5eaa4f26"
+    },
+    {
+      "current_public_lfs_descriptor_matches": [],
+      "inventory_key": "legal_ir:retained_wording384:balanced_wording_ce_selected_semantic_decoder_state",
+      "local_leaf_observed": {
+        "bytes": 2797399,
+        "checkpoint_body_sha256_recomputed": false,
+        "exists": true,
+        "leaf_regular_file": true,
+        "leaf_symlink": false,
+        "method": "lstat only; checkpoint body not opened, parsed, loaded or hashed",
+        "runtime_admission_performed": false
+      },
+      "match_scope": "Current advertised LFS digest/length against retained recorded asset pin; local payload not rehashed and remote payload not downloaded.",
+      "no_match_interpretation": "Unknown outside selected filename/repository scope; not a universal unpublished or unavailable claim.",
+      "reported_bytes": 2797399,
+      "reported_checkpoint_sha256": "d2439394a7827b55c363a8f9b7f5ad74c4a9cf6875e869886c6840ba74088b05"
+    },
+    {
+      "current_public_lfs_descriptor_matches": [],
+      "inventory_key": "legal_ir:retained_wording384:balanced_wording_ce_last_attempt_semantic_decoder_state",
+      "local_leaf_observed": {
+        "bytes": 2797403,
+        "checkpoint_body_sha256_recomputed": false,
+        "exists": true,
+        "leaf_regular_file": true,
+        "leaf_symlink": false,
+        "method": "lstat only; checkpoint body not opened, parsed, loaded or hashed",
+        "runtime_admission_performed": false
+      },
+      "match_scope": "Current advertised LFS digest/length against retained recorded asset pin; local payload not rehashed and remote payload not downloaded.",
+      "no_match_interpretation": "Unknown outside selected filename/repository scope; not a universal unpublished or unavailable claim.",
+      "reported_bytes": 2797403,
+      "reported_checkpoint_sha256": "c7af74bd4dc8ab10b54692f665c2561b83a1417ed117d071f7c984be67611aa1"
+    },
+    {
+      "current_public_lfs_descriptor_matches": [],
+      "inventory_key": "legal_ir:retained_wording384:dual_bank_retention_ce_selected_semantic_decoder_state",
+      "local_leaf_observed": {
+        "bytes": 2797164,
+        "checkpoint_body_sha256_recomputed": false,
+        "exists": true,
+        "leaf_regular_file": true,
+        "leaf_symlink": false,
+        "method": "lstat only; checkpoint body not opened, parsed, loaded or hashed",
+        "runtime_admission_performed": false
+      },
+      "match_scope": "Current advertised LFS digest/length against retained recorded asset pin; local payload not rehashed and remote payload not downloaded.",
+      "no_match_interpretation": "Unknown outside selected filename/repository scope; not a universal unpublished or unavailable claim.",
+      "reported_bytes": 2797164,
+      "reported_checkpoint_sha256": "c51cbb51150cb16de2e4617f7c1d03b53cf5f65d430ebadc0923ba199284405e"
+    },
+    {
+      "current_public_lfs_descriptor_matches": [],
+      "inventory_key": "legal_ir:retained_wording384:dual_bank_retention_ce_last_attempt_semantic_decoder_state",
+      "local_leaf_observed": {
+        "bytes": 2797168,
+        "checkpoint_body_sha256_recomputed": false,
+        "exists": true,
+        "leaf_regular_file": true,
+        "leaf_symlink": false,
+        "method": "lstat only; checkpoint body not opened, parsed, loaded or hashed",
+        "runtime_admission_performed": false
+      },
+      "match_scope": "Current advertised LFS digest/length against retained recorded asset pin; local payload not rehashed and remote payload not downloaded.",
+      "no_match_interpretation": "Unknown outside selected filename/repository scope; not a universal unpublished or unavailable claim.",
+      "reported_bytes": 2797168,
+      "reported_checkpoint_sha256": "4269e6d957f9a31d2d9b09b0d90f345f5da00a003c0c898a59d7fcb3220ff61f"
+    },
+    {
+      "current_public_lfs_descriptor_matches": [],
+      "inventory_key": "legal_ir:source_conditioned:F15_actor_parent",
+      "local_leaf_observed": {
+        "bytes": 12230969,
+        "checkpoint_body_sha256_recomputed": false,
+        "exists": true,
+        "leaf_regular_file": true,
+        "leaf_symlink": false,
+        "method": "lstat only; checkpoint body not opened, parsed, loaded or hashed",
+        "runtime_admission_performed": false
+      },
+      "match_scope": "Current advertised LFS digest/length against retained recorded asset pin; local payload not rehashed and remote payload not downloaded.",
+      "no_match_interpretation": "Unknown outside selected filename/repository scope; not a universal unpublished or unavailable claim.",
+      "reported_bytes": 12230969,
+      "reported_checkpoint_sha256": "f421514dc02cb3542e7587767191aa99bd32551f145e0af4d01c47595d4d73c4"
+    },
+    {
+      "current_public_lfs_descriptor_matches": [
+        {
+          "bytes": 20467217,
+          "git_blob": "c30d42745d0231cfad59824c03afb3df92d4f9b7",
+          "lfs_sha256": "d38f6481f8cdb35d996d5231d15331855043f20a258180b0af9b1143d477d42e",
+          "path": "releases/20261014-joint-readout-retention-v1/cells/joint-readout-retention-hinge/results/cell-checkpoint.json",
+          "repo": "Publicus/legal-ir-autoencoder",
+          "revision": "c9cce4586dd96518088662fb12831173e98e36cc"
+        }
+      ],
+      "inventory_key": "legal_ir:source_conditioned:F17",
+      "local_leaf_observed": {
+        "bytes": 20467217,
+        "checkpoint_body_sha256_recomputed": false,
+        "exists": true,
+        "leaf_regular_file": true,
+        "leaf_symlink": false,
+        "method": "lstat only; checkpoint body not opened, parsed, loaded or hashed",
+        "runtime_admission_performed": false
+      },
+      "match_scope": "Current advertised LFS digest/length against retained recorded asset pin; local payload not rehashed and remote payload not downloaded.",
+      "no_match_interpretation": null,
+      "reported_bytes": 20467217,
+      "reported_checkpoint_sha256": "d38f6481f8cdb35d996d5231d15331855043f20a258180b0af9b1143d477d42e"
+    },
+    {
+      "current_public_lfs_descriptor_matches": [
+        {
+          "bytes": 21058430,
+          "git_blob": "9732a8f75bf1239bc9365b4dce4f074896c28313",
+          "lfs_sha256": "90031d084f2d86cf860c5fc95d2dae374dc254adec70bd85a90893f98c5a1555",
+          "path": "releases/20261015-modality-conditions-retention-v1/cells/modality-conditions-retention-ce/results/cell-checkpoint.json",
+          "repo": "Publicus/legal-ir-autoencoder",
+          "revision": "c9cce4586dd96518088662fb12831173e98e36cc"
+        }
+      ],
+      "inventory_key": "legal_ir:source_conditioned:F18",
+      "local_leaf_observed": {
+        "bytes": 21058430,
+        "checkpoint_body_sha256_recomputed": false,
+        "exists": true,
+        "leaf_regular_file": true,
+        "leaf_symlink": false,
+        "method": "lstat only; checkpoint body not opened, parsed, loaded or hashed",
+        "runtime_admission_performed": false
+      },
+      "match_scope": "Current advertised LFS digest/length against retained recorded asset pin; local payload not rehashed and remote payload not downloaded.",
+      "no_match_interpretation": null,
+      "reported_bytes": 21058430,
+      "reported_checkpoint_sha256": "90031d084f2d86cf860c5fc95d2dae374dc254adec70bd85a90893f98c5a1555"
+    }
+  ],
+  "byte_exact_payload_verification_executed": false,
+  "checkpoint_survey_sha256": "410e979608202840d032f1a932c27095ffaf1cf2c00ff57afd72b0b2fbb541d2",
+  "model_or_training_executed": false,
+  "public_metadata_sha256": "c3db2013e83e5d1aa5a17424a40cc784650b834f978af19f63f5b294096de8a8",
+  "records_with_current_advertised_lfs_match": 2,
+  "schema": "legal-ir-selected-assets-public-descriptor-join/v1"
+}

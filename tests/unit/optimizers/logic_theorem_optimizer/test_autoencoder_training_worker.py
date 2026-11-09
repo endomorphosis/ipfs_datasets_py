@@ -1640,3 +1640,1079 @@ def test_productive_optimizer_is_a_distinct_resume_identity(tmp_path):
     assert productive.canonical_sha256 != guarded.canonical_sha256
     assert worker.TrainingJobSpec.from_dict(productive.to_dict()).canonical_sha256 == productive.canonical_sha256
     assert productive.training_config.projection_kwargs()["projection_momentum"] == 0.0
+
+
+def _reviewed_fixed_byte_pipeline(tokenizer):
+    """Actual complete byte/config/code fixture identity, with no asset claim."""
+    mapping = list(tokenizer.byte_to_id)
+    if len(mapping) != 256 or len(set(mapping)) != 256 or any(type(value) is not int for value in mapping):
+        raise ValueError("fixed fixture requires complete actual byte mapping")
+    payload = {"schema": "reviewed-decoder-tokenizer-pipeline/v1", "kind": "fictional_fixed_byte",
+        "backend": {"type": "fixed_utf8_byte", "byte_to_id": mapping, "added_tokens": []},
+        "frontend": {"encoding": "utf-8", "errors": "strict", "configuration": dict(tokenizer.frontend_config),
+            "bos_token_id": tokenizer.bos_token_id, "eos_token_id": tokenizer.eos_token_id,
+            "vocab_size": tokenizer.vocab_size,
+            "methods": {name: worker._reviewed_tokenizer_method(getattr(tokenizer, name))
+                        for name in ("encode", "decode", "pipeline_serialization")}},
+        "implementation": [worker._reviewed_tokenizer_implementation_file(Path(__file__).resolve())],
+        "transport": {"body_only": True, "truncation": False, "padding": False}}
+    return worker._json_bytes(payload)
+
+
+class _CompleteReviewedByteTokenizer:
+    """Fixed byte transport fixture, never a pretrained tokenizer claim."""
+    bos_token_id = 256
+    eos_token_id = 257
+    vocab_size = 258
+
+    def __init__(self):
+        self.byte_to_id = list(range(256))
+        self.frontend_config = {"normalizer": "identity", "cleanup": False}
+
+    def encode(self, value):
+        if self.frontend_config["normalizer"] == "lowercase":
+            value = value.lower()
+        return [self.byte_to_id[item] for item in value.encode("utf-8")]
+
+    def decode(self, token_ids):
+        inverse = {value: index for index, value in enumerate(self.byte_to_id)}
+        return bytes(inverse[value] for value in token_ids).decode("utf-8")
+
+    def pipeline_serialization(self):
+        return _reviewed_fixed_byte_pipeline(self)
+
+
+class _CompleteReviewedSGDBackend:
+    """Real analytic softmax updates over every target token; fixture only.
+
+    This tiny source-conditioned unigram cannot establish formalization quality.
+    It exercises numerical calls, state transport and exact interruption/resume.
+    The new worker is not tested by returning an opaque 'trained=True' flag.
+    """
+    def __init__(self):
+        self.weights = [0.0] * 258
+        self.velocity = [0.0] * 258
+        self.steps = 0
+        self.calls = 0
+        self.restores = 0
+        self.validations = 0
+        self.seen = []
+        self.after_update = None
+
+    def identity(self):
+        return {"backend_id": "fixture:complete-reviewed-analytic-softmax-sgd/v1",
+            "implementation_sha256": "3" * 64, "checkpoint_format": "fixture:finite-softmax-and-momentum-json/v1",
+            "target_codec": "complete-reviewed-norm-json/v2", "source_conditioned": True, "pretrained": False}
+
+    def validate_training_records(self, records, *, max_source_tokens, max_target_tokens):
+        self.validations += 1
+        assert records and all(0 < len(row["source_token_ids"]) <= max_source_tokens and
+            0 < len(row["target_token_ids"]) <= max_target_tokens for row in records)
+        assert all(set(json.loads(row["target_json"])) == {
+            "profile", "typed_expression", "argument_roles", "assumptions", "governing_context",
+            "interpretation_id", "source_binding", "definition_uses", "cross_references"} for row in records)
+
+    def inspect_checkpoint(self, model_state, optimizer_state):
+        import math
+        model, optimizer = json.loads(model_state), json.loads(optimizer_state)
+        assert set(model) == {"weights"} and set(optimizer) == {"velocity", "steps"}
+        assert len(model["weights"]) == len(optimizer["velocity"]) == 258
+        assert all(type(value) in (int, float) and math.isfinite(value)
+                   for value in [*model["weights"], *optimizer["velocity"]])
+        assert type(optimizer["steps"]) is int and optimizer["steps"] >= 0
+        return {"optimizer_steps": optimizer["steps"]}
+
+    def restore_checkpoint(self, model_state, optimizer_state):
+        self.inspect_checkpoint(model_state, optimizer_state)
+        self.weights = json.loads(model_state)["weights"]
+        optimizer = json.loads(optimizer_state)
+        self.velocity, self.steps = optimizer["velocity"], optimizer["steps"]
+        self.restores += 1
+
+    def restored_checkpoint_matches(self, model_state, optimizer_state):
+        return (json.loads(model_state) == {"weights": self.weights} and
+                json.loads(optimizer_state) == {"velocity": self.velocity, "steps": self.steps})
+
+    def train_batch(self, records):
+        import copy
+        import math
+        self.seen.append(copy.deepcopy(records))
+        gradient = [0.0] * 258
+        loss = 0.0
+        for row in records:
+            # Every byte of all nine target fields contributes to the objective.
+            scale = (sum(row["source_token_ids"]) % 11 + 1) / 11
+            scores = [value * scale for value in self.weights]
+            largest = max(scores)
+            masses = [math.exp(value - largest) for value in scores]
+            denominator = sum(masses)
+            probabilities = [value / denominator for value in masses]
+            target_ids = row["target_token_ids"]
+            counts = [target_ids.count(index) / len(target_ids) for index in range(258)]
+            loss -= sum(count * math.log(probability) for count, probability in zip(counts, probabilities)) / len(records)
+            for index in range(258):
+                gradient[index] += scale * (probabilities[index] - counts[index]) / len(records)
+        for index in range(258):
+            self.velocity[index] = 0.5 * self.velocity[index] + gradient[index]
+            self.weights[index] -= 0.01 * self.velocity[index]
+        self.steps += 1
+        self.calls += 1
+        if self.after_update:
+            self.after_update()
+        return {"loss": loss, "gradient_norm": math.sqrt(sum(value * value for value in gradient)),
+                "optimizer_steps": self.steps}
+
+    def snapshot_checkpoint(self):
+        return {"model_state": worker._json_bytes({"weights": self.weights}),
+                "optimizer_state": worker._json_bytes({"velocity": self.velocity, "steps": self.steps})}
+
+
+def _complete_reviewed_artifact(path, raw):
+    with path.open("xb") as stream:
+        stream.write(raw)
+    return {"path": str(path), "sha256": hashlib.sha256(raw).hexdigest(), "bytes": len(raw)}
+
+
+def _complete_reviewed_worker_fixture(tmp_path, *, known_interpretation_id="fixture:act-v1/selected-interpretation"):
+    from copy import deepcopy
+    from types import SimpleNamespace
+    from tests.unit.logic import test_autoformal_campaign_training_inputs as fixtures
+    from ipfs_datasets_py.logic.autoformal import training_cycle_inputs as cycle_inputs
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_ir_eval_splits as splits
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_span_consumer_binding as consumer
+    data = fixtures._reviewed_transition_fixture(tmp_path)
+    registry = fixtures._ReviewedArtifactRegistry(tmp_path / "reviewed-registry")
+    stage_options = fixtures._reviewed_stage_options(data, tmp_path / "reviewed-stage")
+    # Preserve an independent heldout history without offering its labels to fit.
+    heldout = {"id": "fixture:independent-heldout", "source_text": "A ceramicist decorates an azure vase."}
+    example = splits.LegalIRSplitExample.from_sample(heldout)
+    frozen = splits.LegalIRSplitManifest(examples=(example,), assignments={example.sample_id: "holdout"},
+        config_digest=splits.LegalIREvalSplitConfig(**data.config).digest).to_dict()
+    stage_options["history"]["scope_kind"] = "complete_declared_history"
+    stage_options["history"]["split_manifests"].append({"manifest": frozen, "sha256": data.fixtures.digest(frozen)})
+    stage_options["history"]["records"].append({"id": heldout["id"], "source_text": heldout["source_text"],
+        "source_sha256": data.fixtures.source_digest(heldout["source_text"]),
+        "split_example": example.to_dict(), "assignment": "holdout"})
+    stage_options["expected_history_sha256"] = data.fixtures.digest(stage_options["history"])
+    stage = cycle_inputs.stage_reviewed_cycle_inputs(registry, **stage_options)
+    exposure = _complete_reviewed_artifact(tmp_path / "reviewed-exposure.json", worker._json_bytes(data.options["exposure_records"]))
+    contexts = {"profile": "reviewed-source-selection-context/v2",
+        "selection_context": {"schema": "caller-known-interpretation-selection/v1",
+            "interpretation_id": known_interpretation_id, "selection_mode": "identifier_only"}, "rows": [{"id": row["id"], "unit_id": row["unit_id"],
+        "governing_context": deepcopy(row["canonical_ir"]["governing_context"]),
+        "source_binding": deepcopy(row["canonical_ir"]["source_binding"])} for row in data.rows]}
+    context_ref = _complete_reviewed_artifact(tmp_path / "reviewed-source-contexts.json", worker._json_bytes(contexts))
+    backend = _CompleteReviewedSGDBackend()
+    snapshot = backend.snapshot_checkpoint()
+    model = _complete_reviewed_artifact(tmp_path / "initial-model.json", snapshot["model_state"])
+    optimizer = _complete_reviewed_artifact(tmp_path / "initial-optimizer.json", snapshot["optimizer_state"])
+    tokenizer_asset = _complete_reviewed_artifact(tmp_path / "fixture-tokenizer.json",
+        worker._json_bytes({"fixture": "fixed-UTF8-byte-alphabet", "pretrained": False}))
+    license_asset = _complete_reviewed_artifact(tmp_path / "fixture-license.json",
+        worker._json_bytes({"fixture_only": True, "real_model_license_verification": "unprovided"}))
+    pins = worker._reviewed_decoder_source_pins()
+    tokenizer = _CompleteReviewedByteTokenizer()
+    budget = {"max_source_tokens": 8192, "max_target_tokens": 32768,
+        "tokenizer_contract": cycle_inputs._reviewed_decoder_tokenizer_contract(tokenizer)}
+    parent = {"schema": worker.REVIEWED_DECODER_CHECKPOINT_SCHEMA, "checkpoint_lineage_id": "fixture:complete-ir-model-lineage",
+        "base_version_id": "fixture:initial-model-version", "backend_identity": backend.identity(),
+        "assets": [model, tokenizer_asset, license_asset], "training_binding": None,
+        "model_state": model, "optimizer_state": optimizer,
+        "progress": {"epochs_completed": 0, "row_cursor": 0, "optimizer_steps": 0},
+        "batch_size": 1, "seed": 1729, "token_budgets": budget,
+        "parent_checkpoint_sha256": None, "producer_pins": pins, "qualified": False, "promotion_performed": False}
+    parent_ref = _complete_reviewed_artifact(tmp_path / "initial-paired-manifest.json", worker._json_bytes(parent))
+    payload = {"schema_version": worker.REVIEWED_DECODER_SCHEMA_VERSION, "job_id": "fixture:reviewed-job",
+        "run_id": "fixture:reviewed-run", "base_version_id": parent["base_version_id"],
+        "checkpoint_lineage_id": parent["checkpoint_lineage_id"], "output_directory": str(tmp_path / "reviewed-output"),
+        "code_identity": "fixture:independently-supplied-current-source-set", "stage_artifact": stage,
+        "exposure_artifact": exposure, "source_contexts_artifact": context_ref,
+        "model_artifact": model, "tokenizer_artifact": tokenizer_asset, "license_artifact": license_asset,
+        "base_model_checkpoint": model, "base_optimizer_checkpoint": optimizer, "parent_checkpoint_artifact": parent_ref,
+        "expected_admission_inputs_sha256": consumer.reviewed_admission_inputs_sha256(data.options["admission_inputs"]),
+        "split_config": data.config, "expected_split_config_sha256": data.fixtures.digest(data.config),
+        "backend_identity": backend.identity(), "expected_source_sha256": pins,
+        "max_source_tokens": 8192, "max_target_tokens": 32768, "batch_size": 1,
+        "max_steps": 1, "max_seconds": 30, "seed": 1729, "allow_fictional_fixture": True}
+    guards = []
+    def current_admission():
+        return data.fixtures.reviewed_public_admission_inputs(data.helper, data.admission, data.case)
+    def execution_guard():
+        guards.append("fixture existing owner check only; not a genuine resource grant")
+    def asset_guard(spec):
+        assert spec["backend_identity"]["pretrained"] is False and spec["allow_fictional_fixture"] is True
+        guards.append("fictional asset policy fixture; no real model license approval")
+    runtime = worker.ReviewedDecoderRuntime(registry, backend, tokenizer,
+        current_admission, execution_guard, asset_guard)
+    return SimpleNamespace(payload=payload, runtime=runtime, backend=backend, registry=registry,
+        data=data, inputs=cycle_inputs, fixtures=fixtures, guards=guards, heldout=heldout, contexts=contexts)
+
+
+def test_reviewed_decoder_job_file_dispatch_preserves_complete_target_and_updates_checkpoint_pair(tmp_path, monkeypatch):
+    fixture = _complete_reviewed_worker_fixture(tmp_path)
+    spec = worker.TrainingJobSpec.from_dict(fixture.payload)
+    assert type(spec) is worker.ReviewedDecoderTrainingJobSpec
+    assert worker.TrainingJobSpec.from_dict(spec.to_dict()).canonical_sha256 == spec.canonical_sha256
+    # The maintained _execute entry must choose the new branch before legacy
+    # tree/model/sample conversion, not through a separate unreachable path.
+    monkeypatch.setattr(worker, "_require_tree_pin", lambda: pytest.fail("legacy model path reached"))
+    path = tmp_path / "complete-reviewed-job.json"
+    raw = worker._json_bytes(spec.to_dict())
+    path.write_bytes(raw)
+    receipt = worker.execute_training_job_file(path, hashlib.sha256(raw).hexdigest(), reviewed_runtime=fixture.runtime)
+    assert receipt["backend_train_batch_calls"] == receipt["backend_restore_calls"] == 1
+    assert fixture.backend.validations == fixture.backend.calls == fixture.backend.restores == 1
+    assert receipt["model_bytes_changed"] is receipt["optimizer_bytes_changed"] is True
+    assert all(value is False for key, value in receipt.items() if key in {
+        "qualified", "admitted", "promotion_performed", "corpus_admitted", "legal_meaning_verified",
+        "source_fidelity_proved", "convergence_proved", "physical_model_assets_verified",
+        "numerical_update_independently_verified", "optimizer_resume_independently_verified"})
+    rows = {row["id"]: row for row in fixture.data.rows}
+    for batch in fixture.backend.seen:
+        for record in batch:
+            assert json.loads(record["target_json"]) == rows[record["id"]]["canonical_ir"]
+            assert fixture.heldout["id"] != record["id"]
+            assert fixture.heldout["source_text"] not in json.dumps(record)
+            source = json.loads(record["source_wire"])
+            assert set(source) == {"profile", "source_text", "governing_context", "source_binding", "selection_context"}
+            assert "typed_expression" not in source and "definition_uses" not in source
+    manifest = json.loads(Path(receipt["candidate"]["path"]).read_bytes())
+    assert manifest["model_state"] == receipt["model_checkpoint"]
+    assert manifest["optimizer_state"] == receipt["optimizer_checkpoint"]
+    assert manifest["parent_checkpoint_sha256"] == fixture.payload["parent_checkpoint_artifact"]["sha256"]
+    assert receipt["complete_training_binding"]["fixture_only"] is True
+    assert receipt["complete_training_binding"]["production_training_eligible"] is False
+
+
+def test_reviewed_decoder_exact_resume_matches_uninterrupted_numeric_fixture(tmp_path):
+    fixture = _complete_reviewed_worker_fixture(tmp_path)
+    whole = worker.TrainingJobSpec.from_dict({**fixture.payload, "max_steps": 2,
+        "output_directory": str(tmp_path / "uninterrupted")})
+    a = worker.execute_training_job(whole, reviewed_runtime=fixture.runtime)
+    first_backend = _CompleteReviewedSGDBackend()
+    first_runtime = replace(fixture.runtime, backend=first_backend)
+    first = worker.execute_training_job(worker.TrainingJobSpec.from_dict({**fixture.payload,
+        "output_directory": str(tmp_path / "interrupted")}), reviewed_runtime=first_runtime)
+    second_backend = _CompleteReviewedSGDBackend()
+    second_runtime = replace(fixture.runtime, backend=second_backend)
+    resumed = worker.TrainingJobSpec.from_dict({**fixture.payload, "job_id": "fixture:resume-job",
+        "output_directory": str(tmp_path / "resumed"), "base_model_checkpoint": first["model_checkpoint"],
+        "base_optimizer_checkpoint": first["optimizer_checkpoint"], "parent_checkpoint_artifact": first["candidate"]})
+    b = worker.execute_training_job(resumed, reviewed_runtime=second_runtime)
+    assert Path(a["model_checkpoint"]["path"]).read_bytes() == Path(b["model_checkpoint"]["path"]).read_bytes()
+    assert Path(a["optimizer_checkpoint"]["path"]).read_bytes() == Path(b["optimizer_checkpoint"]["path"]).read_bytes()
+    assert b["worker_progress"] == a["worker_progress"]
+    assert b["initial_progress"]["optimizer_steps"] == 1
+    assert b["optimizer_resume_independently_verified"] is False  # fixture is not a pretrained result
+
+
+@pytest.mark.parametrize("damage", ["no_runtime", "legacy_trainer", "budget", "truncating_tokenizer",
+    "source_context_loss", "paired_model_swap", "wrong_backend", "resource_guard", "asset_policy"])
+def test_reviewed_decoder_refuses_before_backend_restore_or_fit(tmp_path, damage):
+    fixture = _complete_reviewed_worker_fixture(tmp_path)
+    payload, runtime = dict(fixture.payload), fixture.runtime
+    extra = {}
+    if damage == "no_runtime": runtime = None
+    elif damage == "legacy_trainer": extra["trainer"] = lambda *args, **kwargs: pytest.fail("legacy fit")
+    elif damage == "budget": payload["max_target_tokens"] = 3
+    elif damage == "truncating_tokenizer":
+        class Truncating(_CompleteReviewedByteTokenizer):
+            def encode(self, value): return super().encode(value)[:-1]
+        runtime = replace(runtime, tokenizer=Truncating())
+    elif damage == "source_context_loss":
+        value = json.loads(Path(payload["source_contexts_artifact"]["path"]).read_bytes())
+        value["rows"][0]["governing_context"].pop("legal_as_of_utc")
+        payload["source_contexts_artifact"] = _complete_reviewed_artifact(tmp_path / "damaged-context.json", worker._json_bytes(value))
+    elif damage == "paired_model_swap":
+        value = {"weights": [0.25] * 258}
+        payload["base_model_checkpoint"] = _complete_reviewed_artifact(tmp_path / "other-model.json", worker._json_bytes(value))
+    elif damage == "wrong_backend":
+        payload["backend_identity"] = {**payload["backend_identity"], "backend_id": "fixture:another-backend"}
+    elif damage == "resource_guard":
+        def refused(): raise ValueError("existing owner refused")
+        runtime = replace(runtime, execution_guard=refused)
+    else:
+        def denied(spec): raise ValueError("model use not licensed by supplied policy")
+        runtime = replace(runtime, asset_policy_guard=denied)
+    spec = worker.TrainingJobSpec.from_dict(payload)
+    with pytest.raises(ValueError):
+        worker.execute_training_job(spec, reviewed_runtime=runtime, **extra)
+    assert fixture.backend.calls == fixture.backend.restores == 0
+    assert not Path(spec.output_directory).exists()
+
+
+def test_reviewed_decoder_current_revocation_after_update_preserves_unpromoted_failure(tmp_path):
+    fixture = _complete_reviewed_worker_fixture(tmp_path)
+    def revoke():
+        fixture.data.case["registry"]["keys"][0]["revoked_at_utc"] = fixture.data.helper.EVALUATED
+        fixture.data.helper.reviewed_resign_v2(fixture.data.case)
+    fixture.backend.after_update = revoke
+    spec = worker.TrainingJobSpec.from_dict(fixture.payload)
+    with pytest.raises(ValueError):
+        worker.execute_training_job(spec, reviewed_runtime=fixture.runtime)
+    assert fixture.backend.calls == 1 and fixture.backend.steps == 1
+    failure = json.loads((Path(spec.output_directory) / "failure.json").read_bytes())
+    assert failure["caller_owned_backend_may_have_changed"] is True
+    assert failure["qualified"] is failure["promotion_performed"] is False
+    assert not (Path(spec.output_directory) / "receipt.json").exists()
+    assert not (Path(spec.output_directory) / "reviewed-decoder-checkpoint.json").exists()
+
+
+def test_reviewed_decoder_complete_schema_and_explicit_backend_are_closed(tmp_path):
+    fixture = _complete_reviewed_worker_fixture(tmp_path)
+    with pytest.raises(worker.TrainingJobValidationError, match="unknown"):
+        worker.TrainingJobSpec.from_dict({**fixture.payload, "samples": []})
+    with pytest.raises(worker.TrainingJobValidationError, match="explicit reviewed"):
+        worker.ReviewedDecoderTrainingJobSpec.from_dict({**fixture.payload, "schema_version": worker.SCHEMA_VERSION})
+    with pytest.raises(worker.TrainingJobValidationError, match="execution_guard"):
+        replace(fixture.runtime, execution_guard=None)
+
+
+def test_legacy_job_parser_identity_is_unchanged_and_old_worker_pin_cannot_train_new_generation(tmp_path):
+    payload = _job(tmp_path)
+    spec = worker.TrainingJobSpec.from_dict(payload)
+    assert type(spec) is worker.TrainingJobSpec
+    assert worker.TrainingJobSpec.from_dict(spec.to_dict()).to_dict() == spec.to_dict()
+    expected = {**_source_manifest(), "worker": "bde3bd327df59f2e7557eac8aa2e0989ceb1128bc39918bf8cf46011e7bd9415"}
+    old_source_job = worker.TrainingJobSpec.from_dict({**payload, "expected_source_sha256": expected})
+    with pytest.raises(worker.TrainingJobValidationError, match="source manifest"):
+        worker.execute_training_job(old_source_job, trainer=lambda *args, **kwargs: pytest.fail("old source trained"))
+    assert not Path(old_source_job.output_directory).exists()
+
+
+# These tests require an explicitly admitted Torch installed-DATA profile.
+# They use a tiny fictional model initialized in-process, never downloaded
+# weights. Numeric updates exercise the real adapter; they do not qualify a
+# pretrained model, a statutory interpretation, semantic fidelity or convergence.
+
+def _torch_reviewed_backend_fixture(architecture="encoder_decoder", *, context_limit=4096):
+    import json
+    from types import SimpleNamespace
+    import torch
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_training_worker import (
+        ReviewedPretrainedTokenizer, TorchReviewedDecoderBackend)
+
+    class LoadedTokenizer:
+        bos_token_id, eos_token_id, vocab_size = 257, 258, 259
+        def __init__(self):
+            self.byte_to_id = list(range(1, 257))
+            self.frontend_config = {"normalizer": "identity", "cleanup": False}
+        def encode(self, text, *, add_special_tokens, truncation):
+            assert add_special_tokens is False and truncation is False
+            if self.frontend_config["normalizer"] == "lowercase":
+                text = text.lower()
+            return [self.byte_to_id[value] for value in text.encode("utf-8")]
+        def decode(self, values, *, skip_special_tokens, clean_up_tokenization_spaces):
+            assert skip_special_tokens is False and clean_up_tokenization_spaces is False
+            inverse = {value: index for index, value in enumerate(self.byte_to_id)}
+            return bytes(inverse[value] for value in values).decode("utf-8")
+        def pipeline_serialization(self):
+            return _reviewed_fixed_byte_pipeline(self)
+
+    class Config:
+        is_encoder_decoder = architecture == "encoder_decoder"
+        def to_dict(self):
+            return {"is_encoder_decoder": self.is_encoder_decoder, "max_position_embeddings": 65536,
+                    "fixture": "tiny_owned_gru_not_pretrained"}
+
+    class TinyOwnedModel(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.config = Config()
+            self.embedding = torch.nn.Embedding(259, 8)
+            if self.config.is_encoder_decoder:
+                self.encoder = torch.nn.GRU(8, 8, batch_first=True)
+            self.decoder = torch.nn.GRU(8, 8, batch_first=True)
+            self.dropout = torch.nn.Dropout(.1)
+            self.head = torch.nn.Linear(8, 259)
+            self.calls = []
+        def get_input_embeddings(self):
+            return self.embedding
+        def get_output_embeddings(self):
+            return self.head
+        def forward(self, *, input_ids, attention_mask, labels, decoder_input_ids=None):
+            assert bool(attention_mask.all())
+            self.calls.append({"input_ids": input_ids.detach().cpu().tolist(),
+                               "labels": labels.detach().cpu().tolist(),
+                               "decoder_input_ids": None if decoder_input_ids is None else decoder_input_ids.detach().cpu().tolist()})
+            if self.config.is_encoder_decoder:
+                _, hidden = self.encoder(self.embedding(input_ids))
+                decoded, _ = self.decoder(self.embedding(decoder_input_ids), hidden)
+                logits = self.head(self.dropout(decoded))
+                loss = torch.nn.functional.cross_entropy(logits.reshape(-1, 259), labels.reshape(-1))
+            else:
+                decoded, _ = self.decoder(self.embedding(input_ids))
+                logits = self.head(self.dropout(decoded))
+                loss = torch.nn.functional.cross_entropy(logits[:, :-1].reshape(-1, 259), labels[:, 1:].reshape(-1))
+            return SimpleNamespace(loss=loss)
+
+    torch.manual_seed(11)
+    model = TinyOwnedModel()
+    optimizer = torch.optim.Adam(model.parameters(), lr=.01, foreach=False)
+    tokenizer = ReviewedPretrainedTokenizer(LoadedTokenizer(), bos_token_id=257, eos_token_id=258, vocab_size=259,
+        allow_fictional_fixture=True)
+    backend = TorchReviewedDecoderBackend(model, optimizer, tokenizer, architecture=architecture,
+        max_sequence_tokens=context_limit, pretrained=False)
+    # The input-owner tests separately use the real fictional V2 admission.
+    # This low-level numerical test only transports a full-shaped fixture;
+    # it makes no assertion that a fabricated AST has statutory authority.
+    target = {"profile": "fixture:v2", "typed_expression": {"fixture_predicate": "file"},
+        "argument_roles": ["actor"], "assumptions": [],
+        "governing_context": {"jurisdiction": "fixture:us"}, "interpretation_id": "fixture:one",
+        "source_binding": {"source_version_cid": "fixture:source", "occurrence_cid": "fixture:occurrence",
+                           "document_revision": "fixture:revision"},
+        "definition_uses": [{"fixture_definition": "clerk"}], "cross_references": []}
+    source_wire = json.dumps({"profile": "reviewed-source-selection-context/v2",
+        "source_text": "A fixture clerk must file.", "governing_context": {"jurisdiction": "fixture:us"},
+        "source_binding": {"source_version_cid": "fixture:source", "occurrence_cid": "fixture:occurrence",
+                           "document_revision": "fixture:revision"},
+        "selection_context": {"schema": "caller-known-interpretation-selection/v1",
+            "interpretation_id": "fixture:one", "selection_mode": "identifier_only"}}, sort_keys=True, separators=(",", ":"))
+    target_json = json.dumps(target, sort_keys=True, separators=(",", ":"))
+    wrap = lambda value: [257, *tokenizer.encode(value), 258]
+    records = [{"id": "fixture:train", "unit_id": "fixture:norm", "source_wire": source_wire,
+                "target_json": target_json, "source_token_ids": wrap(source_wire), "target_token_ids": wrap(target_json)}]
+    return torch, backend, records
+
+
+@pytest.mark.parametrize("architecture", ["encoder_decoder", "causal_lm"])
+def test_reviewed_torch_backend_real_teacher_forcing_updates_model_and_adam_state(architecture):
+    torch, backend, records = _torch_reviewed_backend_fixture(architecture)
+    backend.validate_training_records(records, max_source_tokens=4096, max_target_tokens=4096)
+    before = {name: value.detach().clone() for name, value in backend.model.state_dict().items()}
+    initial = backend.snapshot_checkpoint()
+    assert backend.inspect_checkpoint(initial["model_state"], initial["optimizer_state"]) == {"optimizer_steps": 0}
+    result = backend.train_batch(records)
+    assert result["optimizer_steps"] == 1 and result["loss"] > 0 and result["gradient_norm"] > 0
+    assert result["gradient_parameter_count"] == result["trainable_parameter_count"] > 0
+    assert any(not torch.equal(value, backend.model.state_dict()[name]) for name, value in before.items())
+    assert backend.optimizer.state_dict()["state"]
+    snapshot = backend.snapshot_checkpoint()
+    assert backend.inspect_checkpoint(snapshot["model_state"], snapshot["optimizer_state"]) == {"optimizer_steps": 1}
+    assert backend.identity()["pretrained"] is False
+    call = backend.model.calls[-1]
+    source, target = records[0]["source_token_ids"], records[0]["target_token_ids"]
+    if architecture == "encoder_decoder":
+        assert call["input_ids"] == [source]
+        assert call["decoder_input_ids"] == [target[:-1]] and call["labels"] == [target[1:]]
+    else:
+        assert call["input_ids"] == [source + target]
+        assert call["labels"] == [[-100] * (len(source) + 1) + target[1:]]
+
+
+@pytest.mark.parametrize("architecture", ["encoder_decoder", "causal_lm"])
+def test_reviewed_torch_checkpoint_restores_adam_and_dropout_rng_for_next_update(architecture):
+    _, uninterrupted, records = _torch_reviewed_backend_fixture(architecture)
+    uninterrupted.train_batch(records)
+    intermediate = uninterrupted.snapshot_checkpoint()
+    expected_loss = uninterrupted.train_batch(records)["loss"]
+    expected = uninterrupted.snapshot_checkpoint()
+    _, resumed, resumed_records = _torch_reviewed_backend_fixture(architecture)
+    resumed.restore_checkpoint(intermediate["model_state"], intermediate["optimizer_state"])
+    assert resumed.restored_checkpoint_matches(intermediate["model_state"], intermediate["optimizer_state"])
+    assert resumed.train_batch(resumed_records)["loss"] == expected_loss
+    assert resumed.restored_checkpoint_matches(expected["model_state"], expected["optimizer_state"])
+
+
+def test_reviewed_torch_joint_causal_budget_refuses_before_forward_or_optimizer_update():
+    _, probe, records = _torch_reviewed_backend_fixture("causal_lm")
+    individual = max(len(records[0]["source_token_ids"]), len(records[0]["target_token_ids"]))
+    _, backend, records = _torch_reviewed_backend_fixture("causal_lm", context_limit=individual)
+    with pytest.raises(worker.TrainingJobValidationError, match="full source and target exceed"):
+        backend.validate_training_records(records, max_source_tokens=4096, max_target_tokens=4096)
+    assert backend.model.calls == [] and backend.optimizer.state_dict()["state"] == {}
+    snapshot = backend.snapshot_checkpoint()
+    assert backend.inspect_checkpoint(snapshot["model_state"], snapshot["optimizer_state"]) == {"optimizer_steps": 0}
+
+
+def test_reviewed_torch_foreign_optimizer_parameter_refuses_before_forward():
+    torch, backend, records = _torch_reviewed_backend_fixture()
+    backend.optimizer = torch.optim.Adam([torch.nn.Parameter(torch.tensor(1.0))], lr=.01)
+    with pytest.raises(worker.TrainingJobValidationError, match="foreign or duplicate"):
+        backend.validate_training_records(records, max_source_tokens=4096, max_target_tokens=4096)
+    assert backend.model.calls == []
+
+
+def test_reviewed_torch_nonfinite_pretrained_parameter_refuses_before_forward():
+    torch, backend, records = _torch_reviewed_backend_fixture()
+    with torch.no_grad():
+        backend.model.embedding.weight[0, 0] = float("nan")
+    with pytest.raises(worker.TrainingJobValidationError, match="nonfinite"):
+        backend.validate_training_records(records, max_source_tokens=4096, max_target_tokens=4096)
+    assert backend.model.calls == [] and backend.optimizer.state_dict()["state"] == {}
+
+
+def test_reviewed_torch_paired_checkpoint_rejects_another_architecture_before_restore():
+    _, first, _ = _torch_reviewed_backend_fixture("encoder_decoder")
+    checkpoint = first.snapshot_checkpoint()
+    _, other, _ = _torch_reviewed_backend_fixture("causal_lm")
+    with pytest.raises(worker.TrainingJobValidationError, match="configuration or paired state"):
+        other.inspect_checkpoint(checkpoint["model_state"], checkpoint["optimizer_state"])
+    assert other.model.calls == [] and other.optimizer.state_dict()["state"] == {}
+
+
+def test_reviewed_torch_backend_public_job_file_reaches_full_reviewed_forward_and_checkpoint(tmp_path):
+    from dataclasses import replace
+    from copy import deepcopy
+    import random
+    fixture = _complete_reviewed_worker_fixture(tmp_path)
+    _, backend, _ = _torch_reviewed_backend_fixture(context_limit=65536)
+    state = backend.snapshot_checkpoint()
+    model = _complete_reviewed_artifact(tmp_path / "torch-initial-model.checkpoint", state["model_state"])
+    optimizer = _complete_reviewed_artifact(tmp_path / "torch-initial-optimizer.checkpoint", state["optimizer_state"])
+    tokenizer_asset = _complete_reviewed_artifact(tmp_path / "torch-fixture-tokenizer.json",
+        worker._json_bytes({"fixture_only": True, "bos_token_id": 257, "eos_token_id": 258, "vocab_size": 259}))
+    old_parent = json.loads(Path(fixture.payload["parent_checkpoint_artifact"]["path"]).read_bytes())
+    parent = deepcopy(old_parent)
+    parent.update(backend_identity=backend.identity(),
+        assets=[model, tokenizer_asset, fixture.payload["license_artifact"]], model_state=model,
+        optimizer_state=optimizer, token_budgets={"max_source_tokens": 8192, "max_target_tokens": 32768,
+            "tokenizer_contract": fixture.inputs._reviewed_decoder_tokenizer_contract(backend.tokenizer)})
+    parent_ref = _complete_reviewed_artifact(tmp_path / "torch-initial-paired-manifest.json", worker._json_bytes(parent))
+    payload = dict(fixture.payload, backend_identity=backend.identity(), model_artifact=model,
+        tokenizer_artifact=tokenizer_asset, base_model_checkpoint=model, base_optimizer_checkpoint=optimizer,
+        parent_checkpoint_artifact=parent_ref, output_directory=str(tmp_path / "torch-reviewed-output"))
+    runtime = replace(fixture.runtime, backend=backend, tokenizer=backend.tokenizer)
+    job = _complete_reviewed_artifact(tmp_path / "torch-reviewed-job.json", worker._json_bytes(payload))
+    spec = worker.TrainingJobSpec.from_dict(payload)
+    assert type(spec) is worker.ReviewedDecoderTrainingJobSpec
+    assert worker.TrainingJobSpec.from_dict(spec.to_dict()).canonical_sha256 == spec.canonical_sha256
+    result = worker.execute_training_job_file(job["path"], job["sha256"], reviewed_runtime=runtime)
+    assert backend.model.calls and backend._optimizer_steps == 1
+    assert result["backend_train_batch_calls"] == 1
+    assert result["qualified"] is False and result["promotion_performed"] is False
+    # The independently admitted full target is supplied to teacher forcing;
+    # no {rules} projection or post-generation metadata fill is used.
+    labels = backend.model.calls[0]["labels"][0]
+    assert labels[-1] == backend.tokenizer.eos_token_id
+    target = json.loads(backend.tokenizer.decode(labels[:-1]))
+    assert set(target) == {"profile", "typed_expression", "argument_roles", "assumptions", "governing_context",
+        "interpretation_id", "source_binding", "definition_uses", "cross_references"}
+    order = list(range(len(fixture.data.rows)))
+    random.Random(payload["seed"]).shuffle(order)
+    assert target == fixture.data.rows[order[0]]["canonical_ir"]
+
+
+@pytest.mark.parametrize("remaining_steps", [0, 1])
+def test_reviewed_decoder_reserves_progress_capacity_before_checkpoint_inspection_or_fit(tmp_path, remaining_steps, monkeypatch):
+    fixture = _complete_reviewed_worker_fixture(tmp_path)
+    payload = dict(fixture.payload)
+    prepared = fixture.inputs.prepare_reviewed_decoder_training_inputs(fixture.registry,
+        stage_artifact=payload["stage_artifact"], expected_stage_sha256=payload["stage_artifact"]["sha256"],
+        current_admission_inputs=fixture.runtime.current_admission_provider(),
+        expected_admission_inputs_sha256=payload["expected_admission_inputs_sha256"],
+        exposure_records=fixture.data.options["exposure_records"], expected_exposure_sha256=payload["exposure_artifact"]["sha256"],
+        source_contexts=fixture.contexts, expected_source_contexts_sha256=payload["source_contexts_artifact"]["sha256"],
+        split_config=payload["split_config"], expected_split_config_sha256=payload["expected_split_config_sha256"],
+        tokenizer=fixture.runtime.tokenizer, max_source_tokens=payload["max_source_tokens"],
+        max_target_tokens=payload["max_target_tokens"], allow_fictional_fixture=True)
+    # These are valid parent counters, including a nonzero row cursor. The
+    # requested two-update window must be refused before inspecting/restoring
+    # state because it cannot produce a resumable bounded successor.
+    steps = 10**9 - remaining_steps
+    epochs, cursor = divmod(steps, len(prepared["records"]))
+    optimizer = fixture.backend.snapshot_checkpoint()["optimizer_state"]
+    optimizer_value = json.loads(optimizer)
+    optimizer_value["steps"] = steps
+    optimizer_ref = _complete_reviewed_artifact(tmp_path / "terminal-optimizer.json", worker._json_bytes(optimizer_value))
+    parent = json.loads(Path(payload["parent_checkpoint_artifact"]["path"]).read_bytes())
+    parent.update(training_binding=prepared["receipt"], optimizer_state=optimizer_ref,
+        progress={"epochs_completed": epochs, "row_cursor": cursor, "optimizer_steps": steps})
+    parent_ref = _complete_reviewed_artifact(tmp_path / "terminal-parent.json", worker._json_bytes(parent))
+    payload.update(base_optimizer_checkpoint=optimizer_ref, parent_checkpoint_artifact=parent_ref, max_steps=2)
+    def forbidden_inspect(*args):
+        pytest.fail("checkpoint inspection reached after progress capacity exhaustion")
+    monkeypatch.setattr(fixture.backend, "inspect_checkpoint", forbidden_inspect)
+    spec = worker.TrainingJobSpec.from_dict(payload)
+    with pytest.raises(worker.TrainingJobValidationError, match="progress capacity exhausted before update"):
+        worker.execute_training_job(spec, reviewed_runtime=fixture.runtime)
+    assert fixture.backend.calls == fixture.backend.restores == 0
+    assert not Path(spec.output_directory).exists()
+
+
+def test_reviewed_decoder_partial_restore_failure_records_mutation_attempt(tmp_path, monkeypatch):
+    fixture = _complete_reviewed_worker_fixture(tmp_path)
+    def partial_restore(model_state, optimizer_state):
+        fixture.backend.weights[0] = 123.0
+        raise RuntimeError("fictional optimizer restoration failed after model mutation")
+    monkeypatch.setattr(fixture.backend, "restore_checkpoint", partial_restore)
+    spec = worker.TrainingJobSpec.from_dict(fixture.payload)
+    with pytest.raises(RuntimeError, match="after model mutation"):
+        worker.execute_training_job(spec, reviewed_runtime=fixture.runtime)
+    failure = json.loads((Path(spec.output_directory) / "failure.json").read_bytes())
+    assert fixture.backend.weights[0] == 123.0
+    assert fixture.backend.calls == fixture.backend.restores == 0
+    assert failure["backend_restore_attempts"] == 1
+    assert failure["completed_backend_restore_calls"] == 0
+    assert failure["caller_owned_backend_may_have_changed"] is True
+    assert failure["qualified"] is failure["promotion_performed"] is False
+    assert not (Path(spec.output_directory) / "receipt.json").exists()
+    assert not (Path(spec.output_directory) / "reviewed-decoder-checkpoint.json").exists()
+
+
+@pytest.mark.parametrize("architecture", ["encoder_decoder", "causal_lm"])
+def test_reviewed_torch_terminal_progress_refuses_before_forward_or_parameter_change(architecture):
+    torch, backend, records = _torch_reviewed_backend_fixture(architecture)
+    backend._optimizer_steps = 10**9
+    before = backend.snapshot_checkpoint()
+    with pytest.raises(worker.TrainingJobValidationError, match="progress capacity exhausted before update"):
+        backend.train_batch(records)
+    assert backend.model.calls == []
+    assert backend.optimizer.state_dict()["state"] == {}
+    assert backend.restored_checkpoint_matches(before["model_state"], before["optimizer_state"])
+
+
+def test_reviewed_torch_versioned_module_metadata_survives_own_checkpoint_restore():
+    torch, backend, _ = _torch_reviewed_backend_fixture()
+    class VersionedProjection(torch.nn.Linear):
+        _version = 7
+        def _load_from_state_dict(self, state_dict, prefix, local_metadata, strict,
+                                  missing_keys, unexpected_keys, error_msgs):
+            if local_metadata.get("version") != self._version:
+                raise ValueError("required versioned projection metadata was lost")
+            return super()._load_from_state_dict(state_dict, prefix, local_metadata, strict,
+                missing_keys, unexpected_keys, error_msgs)
+    backend.model.head = VersionedProjection(8, 259)
+    backend.optimizer = torch.optim.Adam(backend.model.parameters(), lr=.01, foreach=False)
+    before = backend.snapshot_checkpoint()
+    model_payload, _ = backend._load_pair(before["model_state"], before["optimizer_state"])
+    assert model_payload["state_metadata"]["head"]["version"] == 7
+    with torch.no_grad():
+        backend.model.head.weight.add_(3.0)
+    backend.restore_checkpoint(before["model_state"], before["optimizer_state"])
+    assert backend.restored_checkpoint_matches(before["model_state"], before["optimizer_state"])
+    assert backend.model.calls == [] and backend.optimizer.state_dict()["state"] == {}
+
+
+def test_reviewed_torch_changed_state_metadata_refuses_before_model_restore():
+    import io
+    torch, backend, _ = _torch_reviewed_backend_fixture()
+    before = backend.snapshot_checkpoint()
+    model_payload, _ = backend._load_pair(before["model_state"], before["optimizer_state"])
+    model_payload["state_metadata"]["head"]["version"] += 1
+    stream = io.BytesIO()
+    torch.save(model_payload, stream)
+    with pytest.raises(worker.TrainingJobValidationError, match="configuration or paired state schema differs"):
+        backend.restore_checkpoint(stream.getvalue(), before["optimizer_state"])
+    assert backend.restored_checkpoint_matches(before["model_state"], before["optimizer_state"])
+    assert backend.model.calls == []
+
+
+def test_reviewed_torch_foreign_buffer_device_refuses_before_forward_or_fit():
+    torch, backend, records = _torch_reviewed_backend_fixture()
+    backend.model.register_buffer("foreign_fixture_buffer", torch.empty(1, device="meta"))
+    with pytest.raises(worker.TrainingJobValidationError, match="buffers must share the owned model device"):
+        backend.validate_training_records(records, max_source_tokens=4096, max_target_tokens=4096)
+    assert backend.model.calls == [] and backend.optimizer.state_dict()["state"] == {}
+
+
+@pytest.mark.parametrize("metadata_value", [(1, 2), {1: "non-string-key"}])
+def test_reviewed_torch_lossy_state_metadata_refuses_before_snapshot_or_forward(metadata_value, monkeypatch):
+    _, backend, _ = _torch_reviewed_backend_fixture()
+    original = backend.model.state_dict
+    def state_with_lossy_metadata(*args, **kwargs):
+        state = original(*args, **kwargs)
+        state._metadata["head"]["unsupported_fixture_value"] = metadata_value
+        return state
+    monkeypatch.setattr(backend.model, "state_dict", state_with_lossy_metadata)
+    with pytest.raises(worker.TrainingJobValidationError, match="JSON model state-dict metadata"):
+        backend.snapshot_checkpoint()
+    assert backend.model.calls == [] and backend.optimizer.state_dict()["state"] == {}
+
+
+# Source-authored v05 tokenizer/checkpoint contracts. UNRUN in the private
+# drafting window. These fixtures claim no pretrained, legal or convergence
+# qualification; the byte mapping is an explicit fictional transport only.
+def _change_reviewed_fixture_pipeline(tokenizer, change):
+    delegate = tokenizer.tokenizer if type(tokenizer) is worker.ReviewedPretrainedTokenizer else tokenizer
+    if change == "mapping":
+        delegate.byte_to_id[0], delegate.byte_to_id[1] = delegate.byte_to_id[1], delegate.byte_to_id[0]
+    elif change == "normalizer":
+        delegate.frontend_config["normalizer"] = "lowercase"
+    elif change == "frontend_configuration":
+        delegate.frontend_config["cleanup"] = True
+    else:
+        raise AssertionError(change)
+
+
+@pytest.mark.parametrize("change", ["mapping", "normalizer", "frontend_configuration"])
+def test_reviewed_torch_same_three_ids_different_pipeline_refuses_paired_restore_before_model_mutation(change):
+    _, first, _ = _torch_reviewed_backend_fixture()
+    parent = first.snapshot_checkpoint()
+    torch, other, _ = _torch_reviewed_backend_fixture()
+    _change_reviewed_fixture_pipeline(other.tokenizer, change)
+    assert (first.tokenizer.bos_token_id, first.tokenizer.eos_token_id, first.tokenizer.vocab_size) == (
+        other.tokenizer.bos_token_id, other.tokenizer.eos_token_id, other.tokenizer.vocab_size)
+    before = {name: value.detach().clone() for name, value in other.model.state_dict().items()}
+    with pytest.raises(worker.TrainingJobValidationError, match="configuration or paired state"):
+        other.restore_checkpoint(parent["model_state"], parent["optimizer_state"])
+    assert all(torch.equal(before[name], value) for name, value in other.model.state_dict().items())
+    assert other.model.calls == [] and other.optimizer.state_dict()["state"] == {} and other._optimizer_steps == 0
+
+
+@pytest.mark.parametrize("change", ["mapping", "normalizer", "frontend_configuration"])
+def test_reviewed_torch_same_object_pipeline_drift_refuses_fit_before_forward(change):
+    _, backend, records = _torch_reviewed_backend_fixture()
+    before = backend.identity()
+    _change_reviewed_fixture_pipeline(backend.tokenizer, change)
+    with pytest.raises(worker.TrainingJobValidationError, match="tokenizer pipeline changed"):
+        backend.train_batch(records)
+    assert before["backend_id"].startswith("torch-complete-reviewed-decoder/v2:")
+    assert backend.model.calls == [] and backend.optimizer.state_dict()["state"] == {} and backend._optimizer_steps == 0
+
+
+def test_reviewed_tokenizer_binding_metadata_derives_six_fields_from_full_actual_fixture_pipeline():
+    _, backend, _ = _torch_reviewed_backend_fixture()
+    tokenizer = backend.tokenizer
+    raw = tokenizer.pipeline_serialization()
+    payload = worker._parse_json(raw)
+    binding = tokenizer.binding_metadata()
+    contract = backend._pipeline_contract()
+    assert set(binding) == {"tokenizer_id", "vocabulary_sha256", "configuration_sha256",
+                            "bos_token_id", "eos_token_id", "vocab_size"}
+    assert binding["configuration_sha256"] == "sha256:" + hashlib.sha256(raw).hexdigest()
+    assert binding["vocabulary_sha256"] == "sha256:" + hashlib.sha256(worker._json_bytes({
+        "byte_to_id": payload["backend"]["byte_to_id"], "added_tokens": []})).hexdigest()
+    assert contract["pipeline_sha256"] == hashlib.sha256(raw).hexdigest() and contract["pipeline_bytes"] == len(raw)
+    assert contract["schema"] == "reviewed-decoder-tokenizer-contract/v2" and contract["pipeline_kind"] == "fictional_fixed_byte"
+    assert backend._configuration()["tokenizer_binding"] == binding
+    assert payload["transport"] == {"body_only": True, "truncation": False, "padding": False}
+    assert len(payload["backend"]["byte_to_id"]) == 256 and payload["kind"] == "fictional_fixed_byte"
+
+
+@pytest.mark.parametrize("callback", ["configuration", "train", "zero_grad"])
+def test_reviewed_torch_pipeline_change_in_pre_forward_callbacks_never_reaches_model_forward(callback, monkeypatch):
+    _, backend, records = _torch_reviewed_backend_fixture()
+    backend.identity()
+    owner, name = (backend.model, "get_input_embeddings") if callback == "configuration" else (
+        (backend.model, "train") if callback == "train" else (backend.optimizer, "zero_grad"))
+    original = getattr(owner, name)
+    def change_during_callback(*args, **kwargs):
+        result = original(*args, **kwargs)
+        _change_reviewed_fixture_pipeline(backend.tokenizer, "frontend_configuration")
+        return result
+    monkeypatch.setattr(owner, name, change_during_callback)
+    with pytest.raises(worker.TrainingJobValidationError, match="tokenizer pipeline changed"):
+        backend.train_batch(records)
+    assert backend.model.calls == [] and backend._optimizer_steps == 0 and backend.optimizer.state_dict()["state"] == {}
+
+
+@pytest.mark.parametrize("callback", ["forward", "backward"])
+def test_reviewed_torch_pipeline_change_during_loss_or_backward_refuses_before_optimizer_step(callback, monkeypatch):
+    _, backend, records = _torch_reviewed_backend_fixture()
+    backend.identity()
+    if callback == "forward":
+        original = backend.model.forward
+        def forward_with_drift(*args, **kwargs):
+            output = original(*args, **kwargs)
+            _change_reviewed_fixture_pipeline(backend.tokenizer, "normalizer")
+            return output
+        monkeypatch.setattr(backend.model, "forward", forward_with_drift)
+    else:
+        def gradient_with_drift(gradient):
+            _change_reviewed_fixture_pipeline(backend.tokenizer, "normalizer")
+            return gradient
+        backend.model.head.weight.register_hook(gradient_with_drift)
+    with pytest.raises(worker.TrainingJobValidationError, match="tokenizer pipeline changed"):
+        backend.train_batch(records)
+    assert len(backend.model.calls) == 1 and backend._optimizer_steps == 0
+    assert backend.optimizer.state_dict()["state"] == {}
+
+
+def test_reviewed_torch_pipeline_change_during_optimizer_step_is_retained_as_failed_update(monkeypatch):
+    _, backend, records = _torch_reviewed_backend_fixture()
+    original = backend.optimizer.step
+    def step_with_drift(*args, **kwargs):
+        result = original(*args, **kwargs)
+        _change_reviewed_fixture_pipeline(backend.tokenizer, "frontend_configuration")
+        return result
+    monkeypatch.setattr(backend.optimizer, "step", step_with_drift)
+    with pytest.raises(worker.TrainingJobValidationError, match="tokenizer pipeline changed"):
+        backend.train_batch(records)
+    assert backend._optimizer_steps == 1 and backend.optimizer.state_dict()["state"]
+    with pytest.raises(worker.TrainingJobValidationError, match="tokenizer pipeline changed"):
+        backend.snapshot_checkpoint()
+
+
+@pytest.mark.parametrize("callback", ["model_restore", "optimizer_restore", "snapshot"])
+def test_reviewed_torch_pipeline_drift_during_state_callbacks_is_rejected(callback, monkeypatch):
+    _, backend, _ = _torch_reviewed_backend_fixture()
+    before = backend.snapshot_checkpoint()
+    if callback == "snapshot":
+        owner, name = backend.optimizer, "state_dict"
+    else:
+        owner, name = ((backend.model, "load_state_dict") if callback == "model_restore" else
+                       (backend.optimizer, "load_state_dict"))
+    original = getattr(owner, name)
+    def change_during_state_callback(*args, **kwargs):
+        result = original(*args, **kwargs)
+        _change_reviewed_fixture_pipeline(backend.tokenizer, "frontend_configuration")
+        return result
+    monkeypatch.setattr(owner, name, change_during_state_callback)
+    with pytest.raises(worker.TrainingJobValidationError, match="tokenizer pipeline changed"):
+        if callback == "snapshot":
+            backend.snapshot_checkpoint()
+        else:
+            backend.restore_checkpoint(before["model_state"], before["optimizer_state"])
+    assert backend.model.calls == [] and backend._optimizer_steps == 0
+
+
+def test_reviewed_decoder_post_update_pipeline_drift_leaves_unpromoted_failure_not_success(tmp_path, monkeypatch):
+    fixture = _complete_reviewed_worker_fixture(tmp_path)
+    original = fixture.backend.train_batch
+    def update_then_change_pipeline(records):
+        result = original(records)
+        _change_reviewed_fixture_pipeline(fixture.runtime.tokenizer, "frontend_configuration")
+        return result
+    monkeypatch.setattr(fixture.backend, "train_batch", update_then_change_pipeline)
+    with pytest.raises((worker.TrainingJobValidationError, ValueError), match="changed"):
+        worker.execute_training_job(worker.TrainingJobSpec.from_dict(fixture.payload), reviewed_runtime=fixture.runtime)
+    output = Path(fixture.payload["output_directory"])
+    failure = json.loads((output / "failure.json").read_bytes())
+    assert fixture.backend.calls == 1 and failure["completed_backend_calls"] == 1
+    assert failure["qualified"] is False and failure["promotion_performed"] is False
+    assert not (output / "receipt.json").exists() and not (output / "reviewed-decoder-checkpoint.json").exists()
+
+
+@pytest.mark.parametrize("value", [object(), {"unknown": object()}, float("nan")])
+def test_reviewed_tokenizer_frontend_configuration_refuses_lossy_unknown_or_nonfinite_values(value):
+    with pytest.raises(worker.TrainingJobValidationError, match="unsupported|finite"):
+        worker._reviewed_tokenizer_configuration(value)
+
+
+def test_reviewed_tokenizer_typed_frontend_configuration_preserves_integer_keys_tuples_and_nonascii():
+    value = {1: ("é", False), "1": ["é", False]}
+    encoded = worker._reviewed_tokenizer_configuration(value)
+    assert encoded["items"][0][0] == {"type": "int", "value": 1}
+    assert encoded["items"][0][1]["type"] == "tuple" and encoded["items"][1][1]["type"] == "list"
+    assert b"\\u00e9" in worker._json_bytes(encoded)
+
+
+def test_reviewed_torch_legacy_three_integer_configuration_pair_cannot_be_silently_upgraded():
+    import io
+    torch, backend, _ = _torch_reviewed_backend_fixture()
+    before = backend.snapshot_checkpoint()
+    model, optimizer = backend._load_pair(before["model_state"], before["optimizer_state"])
+    old_config = dict(backend._configuration(), schema="torch-complete-reviewed-decoder-configuration/v1",
+        tokenizer={"bos_token_id": 257, "eos_token_id": 258, "vocab_size": 259})
+    old_config.pop("tokenizer_binding")
+    old_signature = worker._digest(worker._json_bytes(old_config))
+    model["configuration_sha256"] = optimizer["configuration_sha256"] = old_signature
+    model_stream, optimizer_stream = io.BytesIO(), io.BytesIO()
+    torch.save(model, model_stream)
+    torch.save(optimizer, optimizer_stream)
+    with pytest.raises(worker.TrainingJobValidationError, match="configuration or paired state"):
+        backend.restore_checkpoint(model_stream.getvalue(), optimizer_stream.getvalue())
+    assert backend.restored_checkpoint_matches(before["model_state"], before["optimizer_state"])
+    assert backend.model.calls == [] and backend._optimizer_steps == 0
+
+
+def _actual_fast_reviewed_backend_fixture():
+    """Construct actual local Rust/HF objects; no fitting/loading/download.
+
+    These tests deliberately require the admitted Tokenizers, Transformers and
+    Torch installation. A missing/unsupported installation is not a passing skip.
+    The model remains a tiny fictional GRU and makes no pretrained claim.
+    """
+    from tokenizers import Tokenizer, AddedToken, models, pre_tokenizers, decoders
+    from transformers import PreTrainedTokenizerFast
+    torch, backend, records = _torch_reviewed_backend_fixture()
+    alphabet = sorted(pre_tokenizers.ByteLevel.alphabet())
+    vocabulary = {"[UNK]": 0, **{value: index + 1 for index, value in enumerate(alphabet)}, "[BOS]": 257, "[EOS]": 258}
+    native = Tokenizer(models.BPE(vocab=vocabulary, merges=[], unk_token="[UNK]"))
+    native.pre_tokenizer = pre_tokenizers.ByteLevel(add_prefix_space=False, use_regex=False)
+    native.decoder = decoders.ByteLevel()
+    native.add_special_tokens([AddedToken("[BOS]", normalized=False, special=True), AddedToken("[EOS]", normalized=False, special=True)])
+    loaded = PreTrainedTokenizerFast(tokenizer_object=native, bos_token="[BOS]", eos_token="[EOS]", unk_token="[UNK]",
+        clean_up_tokenization_spaces=False, model_max_length=65536)
+    tokenizer = worker.ReviewedPretrainedTokenizer(loaded, bos_token_id=257, eos_token_id=258, vocab_size=259)
+    backend.tokenizer = tokenizer
+    for row in records:
+        row["source_token_ids"] = [257, *tokenizer.encode(row["source_wire"]), 258]
+        row["target_token_ids"] = [257, *tokenizer.encode(row["target_json"]), 258]
+    return torch, backend, records
+
+
+def _change_actual_fast_reviewed_pipeline(tokenizer, change):
+    from tokenizers import models, normalizers
+    loaded = tokenizer.tokenizer
+    if change == "mapping":
+        vocabulary = loaded.backend_tokenizer.get_vocab(with_added_tokens=False)
+        ordinary = sorted(key for key in vocabulary if not key.startswith("["))
+        left, right = ordinary[:2]
+        vocabulary[left], vocabulary[right] = vocabulary[right], vocabulary[left]
+        loaded.backend_tokenizer.model = models.BPE(vocab=vocabulary, merges=[], unk_token="[UNK]")
+    elif change == "normalizer":
+        loaded.backend_tokenizer.normalizer = normalizers.Lowercase()
+    elif change == "frontend_configuration":
+        loaded.clean_up_tokenization_spaces = True
+    else:
+        raise AssertionError(change)
+
+
+def test_reviewed_actual_fast_pipeline_retains_full_vocab_normalizer_native_assets_and_fixed_transport():
+    _, backend, records = _actual_fast_reviewed_backend_fixture()
+    tokenizer = backend.tokenizer
+    pipeline = json.loads(tokenizer.pipeline_serialization())
+    assert pipeline["kind"] == "huggingface_fast"
+    assert pipeline["frontend"]["transport_path"] == "direct_actual_tokenizers_Rust_backend/v2"
+    assert pipeline["backend"]["serialization"] == json.loads(tokenizer.tokenizer.backend_tokenizer.to_str())
+    assert pipeline["backend"]["serialization"]["model"]["vocab"]
+    assert {"normalizer", "pre_tokenizer", "post_processor", "decoder", "added_tokens", "truncation", "padding"} <= set(pipeline["backend"]["serialization"])
+    assert any(row["path"].endswith((".so", ".pyd")) for row in pipeline["implementation"])
+    assert pipeline["transport"] == {"body_only": True, "truncation": False, "padding": False}
+    for row in records:
+        assert tokenizer.decode(tokenizer.encode(row["source_wire"])) == row["source_wire"]
+        assert tokenizer.decode(tokenizer.encode(row["target_json"])) == row["target_json"]
+    backend.validate_training_records(records, max_source_tokens=4096, max_target_tokens=4096)
+    assert backend.model.calls == [] and backend._optimizer_steps == 0
+
+
+@pytest.mark.parametrize("change", ["mapping", "normalizer", "frontend_configuration"])
+def test_reviewed_actual_fast_same_three_ids_changed_pipeline_refuses_parent_pair_before_model_load(change):
+    _, first, _ = _actual_fast_reviewed_backend_fixture()
+    parent = first.snapshot_checkpoint()
+    torch, other, _ = _actual_fast_reviewed_backend_fixture()
+    _change_actual_fast_reviewed_pipeline(other.tokenizer, change)
+    assert (first.tokenizer.bos_token_id, first.tokenizer.eos_token_id, first.tokenizer.vocab_size) == (
+        other.tokenizer.bos_token_id, other.tokenizer.eos_token_id, other.tokenizer.vocab_size)
+    assert first.tokenizer.binding_metadata()["configuration_sha256"] != other.tokenizer.binding_metadata()["configuration_sha256"]
+    before = {name: value.detach().clone() for name, value in other.model.state_dict().items()}
+    with pytest.raises(worker.TrainingJobValidationError, match="configuration or paired state"):
+        other.restore_checkpoint(parent["model_state"], parent["optimizer_state"])
+    assert all(torch.equal(before[name], value) for name, value in other.model.state_dict().items())
+    assert other.model.calls == [] and other._optimizer_steps == 0 and other.optimizer.state_dict()["state"] == {}
+
+
+@pytest.mark.parametrize("change", ["mapping", "normalizer", "frontend_configuration"])
+def test_reviewed_actual_fast_same_object_pipeline_change_refuses_fit_before_forward(change):
+    _, backend, records = _actual_fast_reviewed_backend_fixture()
+    backend.identity()
+    _change_actual_fast_reviewed_pipeline(backend.tokenizer, change)
+    with pytest.raises(worker.TrainingJobValidationError, match="tokenizer pipeline changed"):
+        backend.train_batch(records)
+    assert backend.model.calls == [] and backend._optimizer_steps == 0 and backend.optimizer.state_dict()["state"] == {}
+
+
+@pytest.mark.parametrize("phase", ["validation", "train", "restore", "forward"])
+def test_reviewed_actual_fast_pipeline_drift_inside_callbacks_refuses_at_next_boundary(phase, monkeypatch):
+    _, backend, records = _actual_fast_reviewed_backend_fixture()
+    checkpoint = backend.snapshot_checkpoint()
+    if phase == "validation":
+        owner, name = backend.model, "get_input_embeddings"
+    elif phase == "train":
+        owner, name = backend.model, "train"
+    elif phase == "restore":
+        owner, name = backend.model, "load_state_dict"
+    else:
+        owner, name = backend.model, "forward"
+    original = getattr(owner, name)
+    def callback_with_real_pipeline_change(*args, **kwargs):
+        result = original(*args, **kwargs)
+        _change_actual_fast_reviewed_pipeline(backend.tokenizer, "frontend_configuration")
+        return result
+    monkeypatch.setattr(owner, name, callback_with_real_pipeline_change)
+    with pytest.raises(worker.TrainingJobValidationError, match="tokenizer pipeline changed"):
+        if phase == "restore":
+            backend.restore_checkpoint(checkpoint["model_state"], checkpoint["optimizer_state"])
+        else:
+            backend.train_batch(records)
+    assert len(backend.model.calls) == (1 if phase == "forward" else 0)
+    assert backend._optimizer_steps == 0 and backend.optimizer.state_dict()["state"] == {}
+
+
+def test_reviewed_actual_fast_active_truncation_padding_or_split_special_transport_is_unsupported():
+    from tokenizers import Tokenizer, models
+    from transformers import PreTrainedTokenizerFast
+    native = Tokenizer(models.WordLevel({"[UNK]": 0, "[BOS]": 1, "[EOS]": 2}, unk_token="[UNK]"))
+    native.enable_truncation(max_length=3)
+    loaded = PreTrainedTokenizerFast(tokenizer_object=native, unk_token="[UNK]", bos_token="[BOS]", eos_token="[EOS]")
+    with pytest.raises(worker.TrainingJobValidationError, match="without truncation or padding"):
+        worker.ReviewedPretrainedTokenizer(loaded, bos_token_id=1, eos_token_id=2, vocab_size=3)
+
+
+def test_reviewed_actual_fast_hidden_opaque_frontend_setting_is_explicitly_unsupported_before_fit():
+    _, backend, records = _actual_fast_reviewed_backend_fixture()
+    backend.tokenizer.tokenizer.unrecognized_mutable_frontend_state = object()
+    with pytest.raises(worker.TrainingJobValidationError, match="unsupported non-JSON tokenizer frontend configuration"):
+        backend.train_batch(records)
+    assert backend.model.calls == [] and backend.optimizer.state_dict()["state"] == {} and backend._optimizer_steps == 0
+
+
+def test_reviewed_production_wrapper_refuses_unbacked_fixed_byte_object_without_fixture_opt_in():
+    # Real production class imports are required in the admitted test profile;
+    # a custom encode/decode callback is never silently treated as a fast asset.
+    from transformers import PreTrainedTokenizerFast
+    assert PreTrainedTokenizerFast is not None
+    with pytest.raises(worker.TrainingJobValidationError, match="actual supported Hugging Face fast tokenizer"):
+        worker.ReviewedPretrainedTokenizer(_CompleteReviewedByteTokenizer(), bos_token_id=256, eos_token_id=257, vocab_size=258)
+
+
+# Source-only v06 error-boundary controls; UNRUN. Explicit input validation is
+# translated with its cause. Operational callback failures remain the original
+# exception objects and never become a readiness/abstention result.
+def test_reviewed_torch_foreign_serializer_value_error_propagates_unchanged(monkeypatch):
+    _, backend, _ = _torch_reviewed_backend_fixture()
+    failure = ValueError("fictional operational serializer failure")
+    def failing_serializer():
+        raise failure
+    monkeypatch.setattr(backend.tokenizer.tokenizer, "pipeline_serialization", failing_serializer)
+    with pytest.raises(ValueError) as captured:
+        backend.identity()
+    assert captured.value is failure and type(captured.value) is ValueError
+    assert backend.model.calls == [] and backend._optimizer_steps == 0 and backend.optimizer.state_dict()["state"] == {}
+
+
+def test_reviewed_decoder_current_prepare_foreign_serializer_value_error_propagates_unchanged(tmp_path, monkeypatch):
+    fixture = _complete_reviewed_worker_fixture(tmp_path)
+    failure = ValueError("fictional operational current-input serializer failure")
+    def failing_serializer():
+        raise failure
+    monkeypatch.setattr(fixture.runtime.tokenizer, "pipeline_serialization", failing_serializer)
+    with pytest.raises(ValueError) as captured:
+        worker.execute_training_job(worker.TrainingJobSpec.from_dict(fixture.payload), reviewed_runtime=fixture.runtime)
+    assert captured.value is failure and type(captured.value) is ValueError
+    assert fixture.backend.calls == fixture.backend.restores == 0
+    assert not (Path(fixture.payload["output_directory"]) / "receipt.json").exists()
+
+
+@pytest.mark.parametrize("phase", ["configuration", "training", "paired_configuration", "restore"])
+def test_reviewed_torch_foreign_model_value_error_is_not_reclassified_at_validation_boundaries(phase, monkeypatch):
+    _, backend, records = _torch_reviewed_backend_fixture()
+    before = backend.snapshot_checkpoint()
+    failure = ValueError("fictional operational model callback failure")
+    name = "parameters" if phase in {"configuration", "paired_configuration"} else (
+        "train" if phase == "training" else "load_state_dict")
+    def failing_model_callback(*args, **kwargs):
+        raise failure
+    monkeypatch.setattr(backend.model, name, failing_model_callback)
+    with pytest.raises(ValueError) as captured:
+        if phase == "configuration":
+            backend.identity()
+        elif phase == "training":
+            backend.train_batch(records)
+        else:
+            backend.restore_checkpoint(before["model_state"], before["optimizer_state"])
+    assert captured.value is failure and type(captured.value) is ValueError
+    assert backend.model.calls == [] and backend._optimizer_steps == 0 and backend.optimizer.state_dict()["state"] == {}
+
+
+@pytest.mark.parametrize("phase", ["configuration", "paired_configuration"])
+def test_reviewed_torch_typed_input_refusal_preserves_explicit_cause_and_phase_diagnostic(phase):
+    from ipfs_datasets_py.logic.autoformal.training_cycle_inputs import ReviewedDecoderInputValidationError
+    _, backend, _ = _torch_reviewed_backend_fixture()
+    before = backend.snapshot_checkpoint()
+    _change_reviewed_fixture_pipeline(backend.tokenizer, "frontend_configuration")
+    pattern = "tokenizer pipeline changed or unsupported" if phase == "configuration" else "configuration or paired state"
+    with pytest.raises(worker.TrainingJobValidationError, match=pattern) as captured:
+        if phase == "configuration":
+            backend.identity()
+        else:
+            backend.restore_checkpoint(before["model_state"], before["optimizer_state"])
+    cause = captured.value.__cause__
+    if phase == "paired_configuration":
+        assert type(cause) is worker.TrainingJobValidationError
+        cause = cause.__cause__
+    assert type(cause) is ReviewedDecoderInputValidationError
+    assert "normalization/cleanup" in str(cause)
+    assert backend.model.calls == [] and backend._optimizer_steps == 0 and backend.optimizer.state_dict()["state"] == {}

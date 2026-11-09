@@ -456,3 +456,67 @@ def replay_packet(packet: Mapping[str, Any], *, census: Callable[..., Mapping[st
             "failures": [{"id": row.get("id"), "reason": row.get("reason")}
                          for row in checked if not row.get("agrees") or row.get("skipped")],
             "admitted": False, "formalized": False, "gate": "source_replay_not_legal_equivalence"}
+
+
+def repair_target_identities(target: Mapping[str, Any]) -> dict[str, Any]:
+    """Invalidate split, experiment, and teacher identities when the target changes.
+
+    Semantic distillation scope is supplied only when independently_qualified
+    is true. Engineering retention stays its own label and is not part of
+    the identity hash. This function does not name a teacher, run training,
+    or admit a repair.
+    """
+
+    required = (
+        "target_id",
+        "target_text",
+        "split_label",
+        "experiment_label",
+        "teacher_label",
+        "engineering_retention",
+    )
+    if not isinstance(target, Mapping):
+        raise RepairQueueError("repair target identity requires a mapping")
+    for key in required:
+        value = target.get(key)
+        if not isinstance(value, str) or not value or value.strip() != value:
+            raise RepairQueueError("repair target identity field is empty")
+    qualified = target.get("independently_qualified")
+    if qualified is not True and qualified is not False:
+        raise RepairQueueError("teacher qualification stays a boolean")
+    labels = (
+        target["split_label"],
+        target["experiment_label"],
+        target["teacher_label"],
+        target["engineering_retention"],
+    )
+    if len(set(labels)) != 4:
+        raise RepairQueueError("engineering retention is not a separate label")
+    if target["engineering_retention"] == "semantic-distillation-scope":
+        raise RepairQueueError("engineering retention supplied distillation scope")
+    payload = {
+        "target_id": target["target_id"],
+        "target_text": target["target_text"],
+    }
+
+    def role_identity(role: str) -> str:
+        return hashlib.sha256(
+            canonical_bytes({"role": role, "target": payload})
+        ).hexdigest()
+
+    return {
+        "split_identity": role_identity("split"),
+        "experiment_identity": role_identity("experiment"),
+        "teacher_identity": role_identity("teacher"),
+        "semantic_distillation_scope_supplied": qualified is True,
+        "engineering_retention": target["engineering_retention"],
+        "independently_qualified": qualified,
+        "target_sha256": hashlib.sha256(canonical_bytes(payload)).hexdigest(),
+    }
+
+
+TEACHER_IDENTITY_BOUNDARY = """Changed targets invalidate split, experiment and teacher identities.
+Only an independently qualified teacher supplies semantic distillation scope.
+Engineering retention stays a separate label.
+No independently qualified teacher was supplied.
+"""

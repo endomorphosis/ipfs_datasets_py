@@ -1,0 +1,39 @@
+{
+  "golden_descriptor": {
+    "bytes": 8348,
+    "field": "lean_source",
+    "path": "external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-full-norm-native-20261017-01/prepare-01/exports/preparation-summary.json",
+    "sha256": "da75ecaaed2b8099d7d599b775d628773d6d63438d56a97b4192dd1f8fc18d07"
+  },
+  "historical_golden": {
+    "bytes": 3503,
+    "path": "external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-full-norm-native-20261017-01/prepare-01/exports/LegalFullNorms.lean",
+    "sha256": "30e70c9ea780e0bc5f2e3a17be9ad21447dbaf42e102e47e74c5fb99a9c755ba"
+  },
+  "meaning_review_performed": false,
+  "native_execution_performed": false,
+  "original_driver": {
+    "bytes": 58614,
+    "path": "artifacts/legal-ir-full-norm-native-20261017-01/full_norm_native_replay.py",
+    "sha256": "16c9690ef1cf8c219d00a9ac1ab4c373ba018515a4ab1bc596f78a749655689e"
+  },
+  "original_functions": {
+    "actual_shape": {
+      "bytes": 2762,
+      "line_end": 443,
+      "line_start": 412,
+      "sha256": "2fdb88355038b8ad5fa89b4fd9478362b80ea4e2f6822fd836dbd6c608c19428",
+      "slice_convention": "complete source lines including terminating newline"
+    },
+    "joint_source": {
+      "bytes": 2808,
+      "line_end": 473,
+      "line_start": 446,
+      "sha256": "aa3b74865db69aabb64a4d8a2b635cbadeb0b1170d3311fd2a448d3e37792641",
+      "slice_convention": "complete source lines including terminating newline"
+    }
+  },
+  "qualification": "not_started",
+  "schema": "legal-full-norm-consequences-extraction-provenance/v1",
+  "source_text_changes": "private helper names; same authored shape, recursive all-false authority/integer-zero mask guard, literal Lean emission strings retained"
+}

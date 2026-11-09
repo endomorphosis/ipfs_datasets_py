@@ -1,0 +1,351 @@
+{
+  "admitted": false,
+  "evidence_id": "conditions-fullspan-existing-owner-adoption-20261027-01",
+  "existing_delivery": {
+    "commit": "dfd869ecd4e54d7143249a307466f073c880f263",
+    "engineering_completion_is_publication": false,
+    "local_merge": "65765e4317cf703748bc811cc4dd1839756b5239",
+    "merge_queue_receipt": {
+      "bytes": 24002,
+      "sha256": "b97016ff995f85671d0cce4d2c9cb17b6e2419b0a0bc880e5d1aec5005b4acfb"
+    },
+    "target_branch": "legal-ir-plaintext-definition-landing",
+    "task_id": "LIRAE-LIR17-PROFILE-03"
+  },
+  "formalized": false,
+  "kind": "source_and_preparation_evidence",
+  "model_gain_claimed": false,
+  "new_numerical_model_training_Lean_provider_nativeDB_operations": 0,
+  "owning_test": {
+    "assertions_preserved": 120,
+    "bytes": 29075,
+    "original_worker_sha256": "db3a1f979868e11acede796237a90d6a9f658e8fc0dd776a0db1ac1c9a3ecd4e",
+    "path": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_conditions_fullspan_training_v1.py",
+    "portability": "Read retained_preparation below instead of an untracked workspace file; defer Torch to numerical tests/helpers; move the existing three-line NaN-gradient guard intact into the existing Adam test.",
+    "sha256": "80d1e08b5c88a87e81f4df7ce50f05a0add56dc0dd5096df5a1c8dd0da26eb6b",
+    "test_names_preserved": 7
+  },
+  "product_owner": {
+    "bytes": 35100,
+    "existing_worker_bytes_reused_verbatim": true,
+    "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_fullspan_training_v1.py",
+    "sha256": "5a58364c47b14936bf726f6ca14d115607935014ccb8dc00f402e32c267f729a"
+  },
+  "published_source_base": "c8ec1b9f4288614c422e68c2e0e4a8a772c6ab2f",
+  "pure_metadata_validation_contract": {
+    "excluded_numerical_tests": [
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_conditions_fullspan_training_v1.py::test_zero_and_quarter_arms_keep_full_batch_ce_and_kl",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_conditions_fullspan_training_v1.py::test_fresh_adam_updates_only_conditions_row_of_the_four_tensors"
+    ],
+    "results_location": "Canonical handoff and existing workspace execution receipts; this immutable file supplies the retained preparation oracle.",
+    "selected_tests": [
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_conditions_fullspan_training_v1.py::test_retained_owners_and_published_kernel_identity_stay_pinned",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_conditions_fullspan_training_v1.py::test_preparation_document_is_closed_and_claims_no_fit",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_conditions_fullspan_training_v1.py::test_frozen38_seal_comes_from_the_f18_donor_and_includes_modality",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_conditions_fullspan_training_v1.py::test_rejects_wrong_shapes_rows_counts_partition_provenance_and_nonfinite_controls",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_conditions_fullspan_training_v1.py::test_scoring_preflight_freezes_caller_ids_and_does_not_score"
+    ]
+  },
+  "qualification_limits": [
+    "No historical checkpoint, real F18 donor state, F15 teacher capture or training data is opened by this source adoption.",
+    "Caller-supplied state provenance does not authenticate physical F18 checkpoint bytes. Preserve the original checkpoint loader/source checks.",
+    "The existing margin kernel36-case supplied-logit result, retained7-case report and any new pure metadata checks are distinct.",
+    "Actual model-forward/composed-objective gradient connectivity, parity, resume and matched0/.25fits remain separately admitted work.",
+    "The product intentionally refuses run_admitted_updates and score_frozen_cases; no paired fitting or scoring is supplied.",
+    "All original LIR-17 legal-review dependencies, four-width conditioning and statutory accuracy gates remain open."
+  ],
+  "recorded_date_utc": "2026-10-27",
+  "retained_preparation": {
+    "admitted": false,
+    "formalized": false,
+    "model_gain_claimed": false,
+    "parent_reference": {
+      "path": "ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json",
+      "repository": "ipfs_datasets_py",
+      "revision": "eb023a439a23c59acdfaf485c66127f5202ecc8f",
+      "task_id": "LIR-17",
+      "task_sha256": "1866c540278ad4270adc7c6b5ee938fec8128a0501cf6388161ce12a5c38a612"
+    },
+    "result": {
+      "acceptance_controls": {
+        "checkpoint_mutated": false,
+        "encoder_executed": false,
+        "fits_real_inputs": false,
+        "rejects_f15_as_donor": true,
+        "rejects_missing_provenance": true,
+        "rejects_non_TRAIN_partition": true,
+        "rejects_nonfinite_controls": true,
+        "rejects_wrong_conditions_row": true,
+        "rejects_wrong_tensor_and_row_counts": true,
+        "rejects_wrong_tensor_shapes": true,
+        "training_executed": false,
+        "verifies_margin_arms": [
+          0.0,
+          0.25
+        ],
+        "verifies_unchanged_ce_kl_full_batch": true
+      },
+      "frozen_full_ir_casewise_scoring": {
+        "casewise_retention_computed_by_this_profile": false,
+        "comparators_not_rerun": [
+          "F18",
+          "F15",
+          "N11",
+          "F16",
+          "F17",
+          "F19"
+        ],
+        "permission_decisions": 32,
+        "population": "all 72 gold-present TRAIN rows",
+        "raw_and_joint_outputs_frozen_before_scoring": true,
+        "schema": "conditions-fullspan-frozen-full-ir-scoring-preflight/v1",
+        "scoring_executed": false
+      },
+      "model_optimizer_wiring": {
+        "batch_size": 12,
+        "ce_batch_denominator": 12,
+        "ce_outer_denominator": 8,
+        "kl_coefficient": 1.0,
+        "kl_denominator": 72,
+        "kl_temperature": 1.0,
+        "latent_enabled": false,
+        "loss_owner": "legal_span_modality_conditions_retention._loss",
+        "margin_arms": [
+          0.0,
+          0.25
+        ],
+        "margin_owner": "conditions_fullspan_margin_from_logits",
+        "margin_schema": "conditions-fullspan-margin/v1",
+        "model_owner": "legal_span_modality_conditions_retention._model",
+        "optimizer": {
+          "betas": [
+            0.9,
+            0.999
+          ],
+          "eps": 1e-08,
+          "foreach": false,
+          "gradient_clip_norm": 5.0,
+          "inherited_moments": false,
+          "learning_rate": 0.001,
+          "max_updates": 32,
+          "name": "Adam",
+          "parameter_order": [
+            "start.weight",
+            "start.bias",
+            "end.weight",
+            "end.bias"
+          ],
+          "weight_decay": 0.0
+        },
+        "optimizer_steps_executed": 0,
+        "seed": 1729,
+        "structured_objective_invoked": false
+      },
+      "reuse_owners": [
+        {
+          "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_modality_conditions_retention.py",
+          "role": "F18 model and authenticated donor state",
+          "sha256": "fb7449d4794ca9a279b2df2ea533b89d360344ff786edc0798395ab799db1823"
+        },
+        {
+          "path": "ipfs_datasets_py/logic/legal_ir/conditions_fullspan_margin_v1.py",
+          "role": "published conditions full-span margin kernel",
+          "sha256": "e4f16146cf6f64b16e979e5ee0803a41ee41a8377bfa7833918b0a25dd7d1160"
+        },
+        {
+          "path": "ipfs_datasets_py/logic/legal_ir/structured_span_objective.py",
+          "role": "unchanged structured-span objective",
+          "sha256": "68a459fe5271248ee478ae05767396842c1e1b83e33971b980c77b1afd3f8c84"
+        },
+        {
+          "path": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_modality_conditions_retention_contracts.py",
+          "role": "unchanged F18 contract tests",
+          "sha256": "3094d9fd2bd7f409a913d4096557e9a342c8c79214c5810f7a6980b33f204c58"
+        },
+        {
+          "path": "tests/unit/logic/legal_ir/test_conditions_fullspan_margin_v1.py",
+          "role": "unchanged margin-kernel tests",
+          "sha256": "461877c74b2b5661778fc853352db4e90c10f5b8127f9adb457cbf760b70bb27"
+        }
+      ],
+      "selection_mask_contract": {
+        "active_rows": {
+          "end.bias": [
+            3
+          ],
+          "end.weight": [
+            3
+          ],
+          "start.bias": [
+            3
+          ],
+          "start.weight": [
+            3
+          ]
+        },
+        "active_scalar_count": 130,
+        "conditions_row": 3,
+        "donor_tensor_count": 42,
+        "frozen_parameter_names": [
+          "byte_embedding.weight",
+          "token_projection.weight",
+          "token_projection.bias",
+          "encoder.weight_ih_l0",
+          "encoder.weight_hh_l0",
+          "encoder.bias_ih_l0",
+          "encoder.bias_hh_l0",
+          "encoder.weight_ih_l0_reverse",
+          "encoder.weight_hh_l0_reverse",
+          "encoder.bias_ih_l0_reverse",
+          "encoder.bias_hh_l0_reverse",
+          "modality.weight",
+          "modality.bias",
+          "presence.weight",
+          "presence.bias",
+          "latent_down.weight",
+          "latent_down.bias",
+          "latent_up.weight",
+          "latent_up.bias",
+          "span_byte_embedding.weight",
+          "span_token_projection.weight",
+          "span_token_projection.bias",
+          "span_encoder.weight_ih_l0",
+          "span_encoder.weight_hh_l0",
+          "span_encoder.bias_ih_l0",
+          "span_encoder.bias_hh_l0",
+          "span_encoder.weight_ih_l0_reverse",
+          "span_encoder.weight_hh_l0_reverse",
+          "span_encoder.bias_ih_l0_reverse",
+          "span_encoder.bias_hh_l0_reverse",
+          "actor_start.weight",
+          "actor_start.bias",
+          "actor_end.weight",
+          "actor_end.bias",
+          "actor_attention.query",
+          "actor_context.gate",
+          "conditions_presence.weight",
+          "conditions_presence.bias"
+        ],
+        "frozen_tensor_count": 38,
+        "inactive_rows": {
+          "end.bias": [
+            0,
+            1,
+            2,
+            4,
+            5
+          ],
+          "end.weight": [
+            0,
+            1,
+            2,
+            4,
+            5
+          ],
+          "start.bias": [
+            0,
+            1,
+            2,
+            4,
+            5
+          ],
+          "start.weight": [
+            0,
+            1,
+            2,
+            4,
+            5
+          ]
+        },
+        "inactive_scalar_count": 650,
+        "modality_frozen": true,
+        "optimizer_parameter_order": [
+          "start.weight",
+          "start.bias",
+          "end.weight",
+          "end.bias"
+        ],
+        "schema": "conditions-fullspan-f18-row3-selection/v1",
+        "stored_scalar_count": 780
+      },
+      "state_provenance": {
+        "donor": "authenticated 42-tensor F18 state",
+        "donor_lineage_id": "bounded_modality_conditions_retention_adapter_v1",
+        "donor_schema": "bounded-modality-conditions-retention-adapter-checkpoint/v1",
+        "donor_tensor_count": 42,
+        "frozen36_reused_as_seal": false,
+        "frozen38_seal": "sha256 of the 38 F18 donor tensors outside start/end weight and bias, including modality",
+        "gold_present_train_rows": 72,
+        "old_frozen36_identity": "F15-origin BASE_PARAMETER_NAMES digest recorded only to prove it is not the seal",
+        "partition": "TRAIN",
+        "teacher": "F15 masked retention; not a donor",
+        "teacher_checkpoint_sha256": "f421514dc02cb3542e7587767191aa99bd32551f145e0af4d01c47595d4d73c4",
+        "teacher_is_donor": false,
+        "teacher_model_state_sha256": "a1bb3158f19c7b619b7d15ee7ba4887046cc7d22eebecad7b04e8a8111ac3d42"
+      },
+      "unresolved_questions": [
+        "Matched coefficient 0 and 0.25 arms still need separate resource admission before the 32-update fit.",
+        "Frozen raw and joint complete-IR scoring against retained comparators, casewise retention and the 32 permission decisions is preflight only.",
+        "Statutory gold, governing meaning, latent-width comparison and parent LIR-17 semantic dependencies remain unresolved.",
+        "Historical F17, F18 and F19 checkpoints are not opened or rewritten by this preparation."
+      ]
+    },
+    "schema": "legal-ir-programme-engineering-preparation/v1",
+    "semantic_review_performed": false,
+    "source_binding": {
+      "backlog_path": "ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json",
+      "backlog_sha256": "d1f74b427c3a7b27988a1d174f258fa6e867b681178978b90c611f4088ff401a",
+      "public_main_commit": "eb023a439a23c59acdfaf485c66127f5202ecc8f",
+      "repository": "ipfs_datasets_py"
+    },
+    "task_id": "LIRAE-LIR17-PROFILE-03",
+    "training_executed": false
+  },
+  "retained_preparation_identity": {
+    "bytes": 8234,
+    "path": "workspace/legal_ir/programme_engineering/lirae-lir17-profile-03/preparation.json",
+    "sha256": "a4e69371d82d4ef03fd35d11081573526e5432e20d802909cf172c122a26fb61",
+    "source_commit": "dfd869ecd4e54d7143249a307466f073c880f263"
+  },
+  "retained_validation_report": {
+    "original_source_resource_process_closure_qualified": false,
+    "reported_passes": 7,
+    "reported_seconds": 4.22,
+    "scope": "A retained worker-log pass report; no original resource-closed numerical qualification is supplied by this source adoption."
+  },
+  "schema": "legal-ir-conditions-fullspan-existing-owner-adoption/v1",
+  "scientific_task_rearm_or_budget_reset": false,
+  "semantic_review_performed": false,
+  "unchanged_dependency_pins": [
+    {
+      "bytes": 83852,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_modality_conditions_retention.py",
+      "role": "F18 model and authenticated donor state",
+      "sha256": "fb7449d4794ca9a279b2df2ea533b89d360344ff786edc0798395ab799db1823"
+    },
+    {
+      "bytes": 9433,
+      "path": "ipfs_datasets_py/logic/legal_ir/conditions_fullspan_margin_v1.py",
+      "role": "published conditions full-span margin kernel",
+      "sha256": "e4f16146cf6f64b16e979e5ee0803a41ee41a8377bfa7833918b0a25dd7d1160"
+    },
+    {
+      "bytes": 17622,
+      "path": "ipfs_datasets_py/logic/legal_ir/structured_span_objective.py",
+      "role": "unchanged structured-span objective",
+      "sha256": "68a459fe5271248ee478ae05767396842c1e1b83e33971b980c77b1afd3f8c84"
+    },
+    {
+      "bytes": 22122,
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_modality_conditions_retention_contracts.py",
+      "role": "unchanged F18 contract tests",
+      "sha256": "3094d9fd2bd7f409a913d4096557e9a342c8c79214c5810f7a6980b33f204c58"
+    },
+    {
+      "bytes": 8372,
+      "path": "tests/unit/logic/legal_ir/test_conditions_fullspan_margin_v1.py",
+      "role": "unchanged margin-kernel tests",
+      "sha256": "461877c74b2b5661778fc853352db4e90c10f5b8127f9adb457cbf760b70bb27"
+    }
+  ]
+}

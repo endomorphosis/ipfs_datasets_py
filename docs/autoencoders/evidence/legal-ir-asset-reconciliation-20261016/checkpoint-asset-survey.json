@@ -1,0 +1,1229 @@
+{
+  "F19_saved_score_diagnostic": {
+    "composed_F17_F18_checkpoint_qualified": false,
+    "default_promotion": false,
+    "metadata": {
+      "bytes": 5361,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/phase-completion-v01.json",
+      "scope": "metadata/source bytes, not checkpoint tensors",
+      "sha256": "6fa3d768b47f1489167a8b51be81f5ef3c9ddafe8d83ece48e6954e6621577d0"
+    },
+    "new_checkpoint_created": false,
+    "new_training_executed": false,
+    "scope": "Retained saved-score combinations and ranking analysis; not an additional trained/native-GTE decoder endpoint.",
+    "status": "COMPLETE_SAVED_SCORE_DIAGNOSTIC_AND_REVIEWED_GITHUB_INTEGRATION"
+  },
+  "all_selected_leaf_paths_regular_and_stable_during_survey": true,
+  "authority": {
+    "checkpoint_promoted": false,
+    "completion_authority": false,
+    "execution_authority": false,
+    "proof_authority": false,
+    "runtime_ready": false,
+    "source_semantics_verified": false,
+    "teacher_qualified": false,
+    "training_gold_eligible": false
+  },
+  "compatible_reuse_routes": [
+    {
+      "existing_owner": "ipfs_datasets_py/logic/formalization/autoencoder/source_checkpoint_continuation_v1.py",
+      "requirements": "Exact source-v2 body,13 tensors, original codec/normalization, source implementations and ordered training/validation manifests. New optimizer state; no implicit schema/task/dimension conversion.",
+      "route": "same384 source-v2 continuation"
+    },
+    {
+      "existing_owner": "ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_runtime.py",
+      "requirements": "Exact dimension-specific selected state plus original paragraph/clause vectors, raw384 donor, frozen input transforms and source closure. Unknown native schema/profile/format remains unknown.",
+      "route": "retained contextual384 or768 inference/continuation investigation"
+    },
+    {
+      "existing_owner": "ipfs_datasets_py/logic/formalization/autoencoder/gte_decoder_reuse.py",
+      "requirements": "Existing authenticated donor pins/source convention; two separate codebooks/heads. Missing aligned native inputs must not be fabricated or padded; fitting/teacher-KD eligibility require separate gates.",
+      "route": "32/18-entry dual-donor768 initialization"
+    },
+    {
+      "existing_owner": "Original donor-bound source/span/readout owners and checkpoint loaders",
+      "requirements": "Treat as text-conditioned source occurrence/readout experiments with latent conditioning disabled. Preserve protected regressions and incompatible branch policy metadata; do not relabel them as8/384/768 latent decoder teachers.",
+      "route": "source-conditioned F15/F17/F18 reuse"
+    }
+  ],
+  "execution": {
+    "checkpoint_payload_reads": 0,
+    "database_opens": 0,
+    "embedding_generation_calls": 0,
+    "git_mutations": 0,
+    "http_requests": 0,
+    "inference_calls": 0,
+    "model_loads": 0,
+    "payload_downloads": 0,
+    "product_imports": 0,
+    "training_runs": 0
+  },
+  "latest_published_changes": {
+    "custody_scope": "Controller/worker admission separation is a resource/lifecycle owner; it does not authenticate checkpoint semantic quality or create new trained weights.",
+    "custody_split_commit": "1695c2afd",
+    "effect": "Adds exact/declared/alpha typed pair diagnostics and retained authored-hypothesis comparisons, not model predictions, checkpoints or training. Batch missing/invalid/abstention coverage remains a separately scoped gap.",
+    "guide": "docs/autoencoders/legal_relational_reconstruction_v1.md",
+    "typed_reconstruction_feature": "9872fc054",
+    "typed_reconstruction_merge": "1b7be0c601ec3373c2726e4022737e9bc20827e1"
+  },
+  "limits": [
+    "Selected named assets only; not an exhaustive checkpoint or repository/worktree census.",
+    "Leaf lstat regular-file/stability observations are not full physical custody or runtime admission.",
+    "All checkpoint, tensor and codec digests are retained reported identities unless expressly identified as small metadata hashes.",
+    "No live registry database or other active process was opened/refreshed. No current remote availability/visibility claim is made here.",
+    "No independent statutory fidelity, fresh holdout, latent causality, original-text reconstruction, long-context coverage, teacher qualification or proof authority is established."
+  ],
+  "metadata_provenance_files": [
+    {
+      "bytes": 9002,
+      "path": "/home/barberb/lift_coding/artifacts/gte-decoder-reuse-20261001/run-01/manifest.json",
+      "scope": "metadata/source bytes, not checkpoint tensors",
+      "sha256": "2b8017707f5619262b6cdf1d86f73035322fa6f3a9e5a521c2a42c029bf55cde"
+    },
+    {
+      "bytes": 565,
+      "path": "/home/barberb/lift_coding/artifacts/gte-decoder-reuse-20261001/run-01/donor-pins.json",
+      "scope": "metadata/source bytes, not checkpoint tensors",
+      "sha256": "8284f3dda68384de197c71f38a641bfc71cc036cdb8497b464e9a511337bb965"
+    },
+    {
+      "bytes": 1236,
+      "path": "/home/barberb/lift_coding/artifacts/gte-decoder-reuse-20261001/run-01/summary.json",
+      "scope": "metadata/source bytes, not checkpoint tensors",
+      "sha256": "d42ae4124d1e30a25f1f89ff1dbe133f4c64059bd7c6b1e5e054d5a4272cbb74"
+    },
+    {
+      "bytes": 1359,
+      "path": "/home/barberb/lift_coding/artifacts/gte-decoder-native-preparation-20261002/run-01/summary.json",
+      "scope": "metadata/source bytes, not checkpoint tensors",
+      "sha256": "a34992deb788b6b821929c7c3eaa82023fff832704bce98eca24fe86cc9bc894"
+    },
+    {
+      "bytes": 996,
+      "path": "/home/barberb/lift_coding/artifacts/gte-aligned-decoder-preparation-20261002/run-01/summary.json",
+      "scope": "metadata/source bytes, not checkpoint tensors",
+      "sha256": "a602762fee0c33213781bf10733ab5d8e6782d11f7b8ffd2d74d29830a2e52a5"
+    },
+    {
+      "bytes": 1112,
+      "path": "/home/barberb/lift_coding/artifacts/gte-decoder-interface-training-preparation-20261002/run-01/summary.json",
+      "scope": "metadata/source bytes, not checkpoint tensors",
+      "sha256": "223664c2bd3b818deabd825d4b885698b4cad4048ded5ea303da9a8092c0ba44"
+    },
+    {
+      "bytes": 4567,
+      "path": "/home/barberb/lift_coding/artifacts/gte-decoder-source-evaluation-preparation-20261002/run-01/summary.json",
+      "scope": "metadata/source bytes, not checkpoint tensors",
+      "sha256": "c200d0c5e498999048010f20a963556f14ccf58ec64ebad33a9832341cb82d6a"
+    },
+    {
+      "bytes": 88025,
+      "path": "/home/barberb/lift_coding/artifacts/gte-migration-preparation-20261001/run-02/checkpoint-inventory.json",
+      "scope": "metadata/source bytes, not checkpoint tensors",
+      "sha256": "66a91a45b81c4cebfddea3a4f0a8b64e070c2472a46bd831f66a4daef4f4c555"
+    },
+    {
+      "bytes": 16223,
+      "git_path": "docs/autoencoders/evidence/retained-wording-20261007/checkpoint-availability.json",
+      "git_revision": "1b7be0c601ec3373c2726e4022737e9bc20827e1",
+      "matches_git_object": true,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-asset-reconciliation-20261016/docs/autoencoders/evidence/retained-wording-20261007/checkpoint-availability.json",
+      "scope": "metadata/source bytes, not checkpoint tensors",
+      "sha256": "551ce13fe7a1d1956383a71abb145adab67afaab6d0b96aa316345d0aba20fce"
+    },
+    {
+      "bytes": 38006,
+      "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/model-manager-live-r1/registration-result.json",
+      "scope": "metadata/source bytes, not checkpoint tensors",
+      "sha256": "103e95512c83d894bf0a432cc44debbcf57cb589fb3077288d90832737b99320"
+    },
+    {
+      "bytes": 10081,
+      "git_path": "docs/autoencoders/evidence/retained-wording-20261007/model-manager-registration-result-independent-check.json",
+      "git_revision": "1b7be0c601ec3373c2726e4022737e9bc20827e1",
+      "matches_git_object": true,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-asset-reconciliation-20261016/docs/autoencoders/evidence/retained-wording-20261007/model-manager-registration-result-independent-check.json",
+      "scope": "metadata/source bytes, not checkpoint tensors",
+      "sha256": "32cdadd25bd575818121c8fb80c105f45e6d12714a7b637da0811c92ff9ad1c3"
+    },
+    {
+      "bytes": 43214,
+      "git_path": "docs/autoencoders/evidence/contextual-legal-runtime-20261006/384-metadata-plan.json",
+      "git_revision": "1b7be0c601ec3373c2726e4022737e9bc20827e1",
+      "matches_git_object": true,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-asset-reconciliation-20261016/docs/autoencoders/evidence/contextual-legal-runtime-20261006/384-metadata-plan.json",
+      "scope": "metadata/source bytes, not checkpoint tensors",
+      "sha256": "a8ae1307d14c38327d776281bb534b8fc2bac3119cb92da9ab2584f5a99c1d79"
+    },
+    {
+      "bytes": 43215,
+      "git_path": "docs/autoencoders/evidence/contextual-legal-runtime-20261006/768-metadata-plan.json",
+      "git_revision": "1b7be0c601ec3373c2726e4022737e9bc20827e1",
+      "matches_git_object": true,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-asset-reconciliation-20261016/docs/autoencoders/evidence/contextual-legal-runtime-20261006/768-metadata-plan.json",
+      "scope": "metadata/source bytes, not checkpoint tensors",
+      "sha256": "d54e0935cd343d21bd02f3f6caad930799c29d804dcb5d5b36d971456b24fa65"
+    },
+    {
+      "bytes": 18599,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-retention-20261014-01/public-result-summary-v01.json",
+      "scope": "metadata/source bytes, not checkpoint tensors",
+      "sha256": "795bfd54bdc416650fbe97cf403e83fa4dde4fd87a338ef23ed64afcc6b8c512"
+    },
+    {
+      "bytes": 15638,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/public-result-summary-v01.json",
+      "scope": "metadata/source bytes, not checkpoint tensors",
+      "sha256": "2cbb3f6ea668bdfa86680ac627840b7515d5a63620486b4d842d190547582490"
+    },
+    {
+      "bytes": 4199,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/phase-completion-v01.json",
+      "scope": "metadata/source bytes, not checkpoint tensors",
+      "sha256": "84fc8495140b4a0ff0e5b8654add9df9731a7cbce717b2eeb6e3f97f4e1be32f"
+    },
+    {
+      "bytes": 5361,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/phase-completion-v01.json",
+      "scope": "metadata/source bytes, not checkpoint tensors",
+      "sha256": "6fa3d768b47f1489167a8b51be81f5ef3c9ddafe8d83ece48e6954e6621577d0"
+    },
+    {
+      "bytes": 106363,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-retention-20261014-01/joint-readout-retention-hinge-plan-v01.json",
+      "scope": "metadata/source bytes, not checkpoint tensors",
+      "sha256": "059f4128a83ab2ffe63b72a2aed127c4061f2c7cefa6013eb3e03b5b8a3d6d96"
+    },
+    {
+      "bytes": 98083,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/modality-conditions-retention-ce-plan-v01.json",
+      "scope": "metadata/source bytes, not checkpoint tensors",
+      "sha256": "7b797b0d68903b411de4e46a8f4ba99772f1ef5390356e480b6777bdac4f4e59"
+    },
+    {
+      "bytes": 874823,
+      "git_path": "docs/implementation/reports/evidence/legacy-teacher-20261001/release-report.json",
+      "git_revision": "1b7be0c601ec3373c2726e4022737e9bc20827e1",
+      "scope": "retained historical release metadata; no checkpoint body access",
+      "sha256": "1c7ccac323eddcb1599c55f63e17ec6c47e38f9876ccb0f5075fe151457e360b"
+    },
+    {
+      "bytes": 5112,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legacy-teacher-release-20261001/integrated/historical_blank_en/trained-checkpoint/manifest.json",
+      "scope": "metadata/source bytes, not checkpoint tensors",
+      "sha256": "f0fca433cbe8cfc4a8700c9e7325b79bc6e3d5ec73f067260b9ac61920f72bb1"
+    }
+  ],
+  "method": "Read-only bounded receipt/source/Git-object inspection plus opening/closing lstat observations of explicitly named checkpoint files. No checkpoint JSON/tensor payload was opened, parsed, loaded or hashed. Recorded checkpoint/weight/codec hashes are attributed to original metadata, not freshly verified payload digests.",
+  "minimal_followup": [
+    "Use this bounded asset list and original metadata references for the joined compatibility inventory; retain family, dimension role, schema/version, decoder task, codec/profile/format, producer, actual run, state role and donor pins separately.",
+    "Before any numerical reload, independently verify selected checkpoint bytes and exact source/asset custody under the existing admitted bounded worker; a stat and an attributed old hash are not current byte authentication.",
+    "Read current genuine ModelManager/catalog bindings for each independently authenticated modelID/checkpointSHA and full selector tuple through the existing manager. Do not replace unknown selectors with guessed native schema labels or infer current F18 registration from its Hub archive.",
+    "Keep exact prose reconstruction, seven-facet semantic generation, typed relational structural comparison, fixed-view CE and embedding reconstruction as different decoder/evaluation tasks.",
+    "Reuse existing same-source embeddings and cache manifests under their original representations. Do not regenerate legacy assets for this inventory or treat a padded384 vector as native multilingual768."
+  ],
+  "observed_at_utc": "2026-10-16T02:27:53.807974+00:00",
+  "parallel_ownership": {
+    "branch_reported_by_root": "codex/legal-paired-manifest-inventory-20261016-01",
+    "foreign_author_head_reported_by_root": "06e387eb447d4d5cf21049a7df17e20b3879a023",
+    "scope": "Existing stateless paired-manifest inventory contribution; preserve and reconcile separately. This survey creates no competing cache/paired-manifest owner. Foreign files were not changed."
+  },
+  "registration": {
+    "current_manager_or_catalog_api_query_performed": false,
+    "historical_six_wording_bindings": {
+      "after_count": 684,
+      "before_count": 678,
+      "receipts": [
+        {
+          "bytes": 38006,
+          "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/model-manager-live-r1/registration-result.json",
+          "scope": "metadata/source bytes, not checkpoint tensors",
+          "sha256": "103e95512c83d894bf0a432cc44debbcf57cb589fb3077288d90832737b99320"
+        },
+        {
+          "bytes": 10081,
+          "git_path": "docs/autoencoders/evidence/retained-wording-20261007/model-manager-registration-result-independent-check.json",
+          "git_revision": "1b7be0c601ec3373c2726e4022737e9bc20827e1",
+          "matches_git_object": true,
+          "path": "/home/barberb/lift_coding/.worktrees/legal-ir-asset-reconciliation-20261016/docs/autoencoders/evidence/retained-wording-20261007/model-manager-registration-result-independent-check.json",
+          "scope": "metadata/source bytes, not checkpoint tensors",
+          "sha256": "32cdadd25bd575818121c8fb80c105f45e6d12714a7b637da0811c92ff9ad1c3"
+        }
+      ],
+      "registered_verified": 6,
+      "scope": "Original genuine import and reopened catalog observations only. Current process state, current persisted presence and F15/F17/F18 registration remain unverified."
+    },
+    "published_hub_metadata_refresh": "Root owns the separate latest public-repository observations; no HTTP requests or publication were performed by this survey.",
+    "selected_store": "/home/barberb/lift_coding/external/ipfs_accelerate/model_manager.duckdb",
+    "store_hashed": false,
+    "store_observation": {
+      "bytes": 2980851712,
+      "checkpoint_body_sha256_recomputed": false,
+      "exists": true,
+      "leaf_regular_file": true,
+      "leaf_symlink": false,
+      "method": "lstat only; checkpoint body not opened, parsed, loaded or hashed",
+      "runtime_admission_performed": false
+    },
+    "store_opened": false
+  },
+  "schema": "legal-ir-selected-checkpoint-asset-survey/v1",
+  "selected_asset_count": 16,
+  "selected_assets": [
+    {
+      "checkpoint_serialization_schema": null,
+      "codec_identity": null,
+      "current_observation": {
+        "bytes": 398209746,
+        "checkpoint_body_sha256_recomputed": false,
+        "exists": true,
+        "leaf_regular_file": true,
+        "leaf_symlink": false,
+        "method": "lstat only; checkpoint body not opened, parsed, loaded or hashed",
+        "runtime_admission_performed": false
+      },
+      "decoder_profile_id": null,
+      "dimension": 8,
+      "dimension_role": "historical_numerical_vector",
+      "encoder_provenance": "Original producer and original codec configuration not independently authenticated by the retained release receipt.",
+      "family": "legal_ir",
+      "inventory_key": "legal_ir:legacy8:historical_sparse_core",
+      "limitations": [
+        "Historical release records target-aware safety reconstruction; that is not neural formula fidelity.",
+        "The original 398MB state was only statted in this survey."
+      ],
+      "metadata_provenance": [
+        {
+          "bytes": 874823,
+          "git_path": "docs/implementation/reports/evidence/legacy-teacher-20261001/release-report.json",
+          "git_revision": "1b7be0c601ec3373c2726e4022737e9bc20827e1",
+          "scope": "retained historical release metadata; no checkpoint body access",
+          "sha256": "1c7ccac323eddcb1599c55f63e17ec6c47e38f9876ccb0f5075fe151457e360b"
+        }
+      ],
+      "native_ir_schema_version": null,
+      "path": "/home/barberb/portland-laws.github.io/ipfs_datasets_py/workspace/todo-queues/legal-ir-autoencoder-canonical.state.json",
+      "promoted_by_this_inventory": false,
+      "recorded_bytes": 398209746,
+      "recorded_checkpoint_sha256": "7236de26bd3d7f8414ffa04805f1b6e8a8849f9e0103cec6edb4985b911658be",
+      "task": "historical_sparse_feature_and_family_reconstruction",
+      "teacher_qualified_by_this_inventory": false,
+      "warm_start_scope": "Preserve learned sparse feature/family/view state with its original source/codec assumptions. This is not the learned formula sidecar or a source-text decoder."
+    },
+    {
+      "core_state_observation": {
+        "bytes": 452140,
+        "checkpoint_body_sha256_recomputed": false,
+        "exists": true,
+        "leaf_regular_file": true,
+        "leaf_symlink": false,
+        "method": "lstat only; checkpoint body not opened, parsed, loaded or hashed",
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legacy-teacher-release-20261001/integrated/historical_blank_en/trained-checkpoint/core.state.json",
+        "runtime_admission_performed": false
+      },
+      "current_observation": {
+        "bytes": 5112,
+        "checkpoint_body_sha256_recomputed": false,
+        "exists": true,
+        "leaf_regular_file": true,
+        "leaf_symlink": false,
+        "method": "lstat only; checkpoint body not opened, parsed, loaded or hashed",
+        "runtime_admission_performed": false
+      },
+      "dimension": 8,
+      "dimension_role": "linguistic_feature_hash",
+      "family": "legal_ir",
+      "inventory_key": "legal_ir:legacy8:small_linguistic_bundle",
+      "metadata_provenance": [
+        {
+          "bytes": 5112,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legacy-teacher-release-20261001/integrated/historical_blank_en/trained-checkpoint/manifest.json",
+          "scope": "metadata/source bytes, not checkpoint tensors",
+          "sha256": "f0fca433cbe8cfc4a8700c9e7325b79bc6e3d5ec73f067260b9ac61920f72bb1"
+        },
+        {
+          "git_path": "docs/autoencoders/gte_parallel_model_workers.md",
+          "git_revision": "1b7be0c601ec3373c2726e4022737e9bc20827e1"
+        }
+      ],
+      "native_ir_schema_version": null,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legacy-teacher-release-20261001/integrated/historical_blank_en/trained-checkpoint/manifest.json",
+      "promoted_by_this_inventory": false,
+      "recorded_bytes": 5112,
+      "recorded_checkpoint_sha256": "f0fca433cbe8cfc4a8700c9e7325b79bc6e3d5ec73f067260b9ac61920f72bb1",
+      "task": "linguistic_feature_family_classification",
+      "teacher_qualified_by_this_inventory": false,
+      "warm_start_scope": "Separate small linguistic/classifier bundle; compiler-derived formulas remain weak labels rather than learned-head generations."
+    },
+    {
+      "checkpoint_serialization_schema": "modal-latent-formula-checkpoint/v1",
+      "codec_schema": "legal-source-formula-codec/v1",
+      "codec_sha256": "25d32d252ce8ef0fab2b6315068898fa3205246bc5f8abfad1ffbce8a1bfd6e1",
+      "core_binding_sha256": "5d750c7d9142f590770a9123c5a68fde0ceb1e6ba5cb1dd0574faeb452f4d36b",
+      "current_observation": {
+        "bytes": 128924,
+        "checkpoint_body_sha256_recomputed": false,
+        "exists": true,
+        "leaf_regular_file": true,
+        "leaf_symlink": false,
+        "method": "lstat only; checkpoint body not opened, parsed, loaded or hashed",
+        "runtime_admission_performed": false
+      },
+      "dimension": 8,
+      "dimension_role": "original_sparse_core_latent",
+      "family": "legal_ir",
+      "inventory_key": "legal_ir:legacy8:learned_formula_sidecar",
+      "max_decoder_output_tokens": 64,
+      "max_encoder_input_tokens": null,
+      "metadata_provenance": [
+        {
+          "bytes": 9002,
+          "path": "/home/barberb/lift_coding/artifacts/gte-decoder-reuse-20261001/run-01/manifest.json",
+          "scope": "metadata/source bytes, not checkpoint tensors",
+          "sha256": "2b8017707f5619262b6cdf1d86f73035322fa6f3a9e5a521c2a42c029bf55cde"
+        },
+        {
+          "bytes": 565,
+          "path": "/home/barberb/lift_coding/artifacts/gte-decoder-reuse-20261001/run-01/donor-pins.json",
+          "scope": "metadata/source bytes, not checkpoint tensors",
+          "sha256": "8284f3dda68384de197c71f38a641bfc71cc036cdb8497b464e9a511337bb965"
+        }
+      ],
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/modal-joint-e2e-20261001-final/legacy_v1/formula-head.json",
+      "promoted_by_this_inventory": false,
+      "quality_scope": {
+        "independent_holdout": false,
+        "kd_supervision_admitted": false,
+        "recorded_exact": "2/2 authored synthetic TRAIN examples"
+      },
+      "recorded_bytes": 128924,
+      "recorded_checkpoint_sha256": "ffca84492b81ab94fa291ae6ddbe52cfc84318f3516a22f901d468de255b6cbe",
+      "recorded_weights_sha256": "e96a6e3ff5771b9227aa98919aee2745d42cd3361e0f85d5d2771ed88e9d1995",
+      "task": "single_rule_formula_generation",
+      "teacher_qualified_by_this_inventory": false,
+      "vocabulary_entries": 18,
+      "warm_start_scope": "Existing faithful private Torch port copies all13 learned tensors; preserve original raw-latent convention and18-entry grammar. This is not the complete historical8D core."
+    },
+    {
+      "checkpoint_serialization_schema": "shared-source-384-autoencoder/v2",
+      "codec_schema": "typed-json-lexical/v1",
+      "codec_sha256": "cba3e5384e2bee12e709ccc8e9ee430e51cf09a8fc2e8abdd57143fdaa38dba2",
+      "current_observation": {
+        "bytes": 614534,
+        "checkpoint_body_sha256_recomputed": false,
+        "exists": true,
+        "leaf_regular_file": true,
+        "leaf_symlink": false,
+        "method": "lstat only; checkpoint body not opened, parsed, loaded or hashed",
+        "runtime_admission_performed": false
+      },
+      "dimension": 384,
+      "dimension_role": "input_embedding",
+      "encoder_model_id": "thenlper/gte-small",
+      "encoder_revision": "17e1f347d17fe144873b1201da91788898c639cd",
+      "family": "legal_ir",
+      "input_transform": "Saved identity normalization; original source embedding then residual projector/conditioner/GRU.",
+      "inventory_key": "legal_ir:source_v2:raw384_donor",
+      "max_decoder_output_tokens": 512,
+      "max_encoder_input_tokens": 512,
+      "metadata_provenance": [
+        {
+          "bytes": 88025,
+          "path": "/home/barberb/lift_coding/artifacts/gte-migration-preparation-20261001/run-02/checkpoint-inventory.json",
+          "scope": "metadata/source bytes, not checkpoint tensors",
+          "sha256": "66a91a45b81c4cebfddea3a4f0a8b64e070c2472a46bd831f66a4daef4f4c555"
+        },
+        {
+          "bytes": 565,
+          "path": "/home/barberb/lift_coding/artifacts/gte-decoder-reuse-20261001/run-01/donor-pins.json",
+          "scope": "metadata/source bytes, not checkpoint tensors",
+          "sha256": "8284f3dda68384de197c71f38a641bfc71cc036cdb8497b464e9a511337bb965"
+        }
+      ],
+      "native_ir_schema_version": null,
+      "optimizer_state": "Absent in retained source-v2 checkpoint; warm-start continuation creates fresh Adam, not exact optimizer resume.",
+      "output_format": "semantic_json",
+      "path": "/home/barberb/lift_coding/artifacts/source-reconstruction-v2-20261001/run-01/legal_ir/raw_ce-1729-checkpoint.json",
+      "promoted_by_this_inventory": false,
+      "quality_scope": {
+        "independent_holdout": false,
+        "kd_supervision_admitted": false,
+        "recorded_exact": "0/60 exposed V2 validation targets; valid and terminating outputs"
+      },
+      "recorded_bytes": 614534,
+      "recorded_checkpoint_sha256": "6e3f4d731d798aa2732afc37bd74fec34da3267a323844975d2dab78f59f9c61",
+      "recorded_weights_sha256": "17ddd2026a72eda808e5223cc32c5c6fd0b523fc2ec771f620c9b3179793a05a",
+      "task": "typed_ir_reconstruction",
+      "teacher_qualified_by_this_inventory": false,
+      "vocabulary_entries": 32,
+      "warm_start_scope": "Use existing source_checkpoint_continuation_v1 for same384D family/codec/preprocessing/manifest contract, or the existing dual-donor initializer for768D interfaces."
+    },
+    {
+      "checkpoint_serialization_schema": "private-native-dimension-source-state/v1",
+      "codec_schema": "typed-json-lexical/v1",
+      "codec_sha256": "cba3e5384e2bee12e709ccc8e9ee430e51cf09a8fc2e8abdd57143fdaa38dba2",
+      "current_observation": {
+        "bytes": 2799098,
+        "checkpoint_body_sha256_recomputed": false,
+        "exists": true,
+        "leaf_regular_file": true,
+        "leaf_symlink": false,
+        "method": "lstat only; checkpoint body not opened, parsed, loaded or hashed",
+        "runtime_admission_performed": false
+      },
+      "decoder_format_id": null,
+      "decoder_profile_id": null,
+      "dimension": 384,
+      "dimension_role": "input_embedding",
+      "donor_checkpoint": {
+        "bytes": 614534,
+        "path": "/home/barberb/lift_coding/artifacts/source-reconstruction-v2-20261001/run-01/legal_ir/raw_ce-1729-checkpoint.json",
+        "sha256": "6e3f4d731d798aa2732afc37bd74fec34da3267a323844975d2dab78f59f9c61"
+      },
+      "family": "legal_ir",
+      "input_contract": {
+        "clause_vectors": "original_raw_cached_vectors",
+        "clause_width": 384,
+        "decoder_feature_normalizations": "saved_separate_paragraph_and_clause_stages_once",
+        "max_source_clauses": 8,
+        "paragraph_width": 384,
+        "source_only": true,
+        "transform_order": "saved_TRAIN_input_transform_then_zero_pad_to_eight"
+      },
+      "input_transform_sha256": "aaa6c0bfd041e4ddd6ec4d18d35ef5ea8efca8f2b7408e4a467cea64bb0ec8d2",
+      "inventory_key": "legal_ir:contextual:384:selected_followup",
+      "max_encoder_input_tokens": null,
+      "metadata_provenance": [
+        {
+          "bytes": 43214,
+          "git_path": "docs/autoencoders/evidence/contextual-legal-runtime-20261006/384-metadata-plan.json",
+          "git_revision": "1b7be0c601ec3373c2726e4022737e9bc20827e1",
+          "matches_git_object": true,
+          "path": "/home/barberb/lift_coding/.worktrees/legal-ir-asset-reconciliation-20261016/docs/autoencoders/evidence/contextual-legal-runtime-20261006/384-metadata-plan.json",
+          "scope": "metadata/source bytes, not checkpoint tensors",
+          "sha256": "a8ae1307d14c38327d776281bb534b8fc2bac3119cb92da9ab2584f5a99c1d79"
+        }
+      ],
+      "native_ir_schema_version": null,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-selected-continuation-20261004/training-r1/results/384-selected-followup-lr0001-1729/selected-state.json",
+      "promoted_by_this_inventory": false,
+      "quality_scope": {
+        "independent_holdout": false,
+        "native_profile_qualified": false,
+        "qualifier_fields": "All reference qualifiers empty",
+        "recorded_exact_semantic_ir": "48/48 exposed authored paragraphs;180/180 rules",
+        "recorded_original_text_utf8_exact": "0/48",
+        "registration_verified_current": false
+      },
+      "recorded_bytes": 2799098,
+      "recorded_checkpoint_sha256": "0ac5c21656187d1d8040a02bcc0b4716a8093db17f05adc9a22e99d5b6b2cc00",
+      "recorded_weights_sha256": "6a527b568c1ec834fc6704a9d12a17532840076432a93dc1390c59c92d483ec3",
+      "saved_preprocessing_sha256": "a995684218a0236f95517059f8360dacac726cc0cca7764a84a1feab9cf7f418",
+      "source_input_current_observation": {
+        "bytes": 532522,
+        "checkpoint_body_sha256_recomputed": false,
+        "exists": true,
+        "leaf_regular_file": true,
+        "leaf_symlink": false,
+        "method": "lstat only; checkpoint body not opened, parsed, loaded or hashed",
+        "runtime_admission_performed": false
+      },
+      "source_inputs": {
+        "bytes": 532522,
+        "path": "/home/barberb/lift_coding/artifacts/ir-semantic-reconstruction-replay-20261004/contextual384-768-v1/384-source-only-inputs.json",
+        "sha256": "722f9909868d545b54d5a1fe5a19880ccefa8e21d1d7f9b6fd1548d78494e7da"
+      },
+      "task": "semantic_IR_reconstruction",
+      "teacher_qualified_by_this_inventory": false,
+      "vocabulary_entries": 32,
+      "warm_start_scope": "Existing contextual_legal_runtime restores this dimension-specific selected state plus original paragraph/clause cache, donor and saved transforms. This is a fitted768D lineage distinct from the unaligned dual-donor migration initialization."
+    },
+    {
+      "checkpoint_serialization_schema": "private-native-dimension-source-state/v1",
+      "codec_schema": "typed-json-lexical/v1",
+      "codec_sha256": "cba3e5384e2bee12e709ccc8e9ee430e51cf09a8fc2e8abdd57143fdaa38dba2",
+      "current_observation": {
+        "bytes": 4781613,
+        "checkpoint_body_sha256_recomputed": false,
+        "exists": true,
+        "leaf_regular_file": true,
+        "leaf_symlink": false,
+        "method": "lstat only; checkpoint body not opened, parsed, loaded or hashed",
+        "runtime_admission_performed": false
+      },
+      "decoder_format_id": null,
+      "decoder_profile_id": null,
+      "dimension": 768,
+      "dimension_role": "input_embedding",
+      "donor_checkpoint": {
+        "bytes": 614534,
+        "path": "/home/barberb/lift_coding/artifacts/source-reconstruction-v2-20261001/run-01/legal_ir/raw_ce-1729-checkpoint.json",
+        "sha256": "6e3f4d731d798aa2732afc37bd74fec34da3267a323844975d2dab78f59f9c61"
+      },
+      "family": "legal_ir",
+      "input_contract": {
+        "clause_vectors": "original_raw_cached_vectors",
+        "clause_width": 768,
+        "decoder_feature_normalizations": "saved_separate_paragraph_and_clause_stages_once",
+        "max_source_clauses": 8,
+        "paragraph_width": 768,
+        "source_only": true,
+        "transform_order": "saved_TRAIN_input_transform_then_zero_pad_to_eight"
+      },
+      "input_transform_sha256": "8d218aed3e20cc94ae7a561f551c8374b23164c947cbb0db3ef364d5e8ff7bc9",
+      "inventory_key": "legal_ir:contextual:768:selected_followup",
+      "max_encoder_input_tokens": null,
+      "metadata_provenance": [
+        {
+          "bytes": 43215,
+          "git_path": "docs/autoencoders/evidence/contextual-legal-runtime-20261006/768-metadata-plan.json",
+          "git_revision": "1b7be0c601ec3373c2726e4022737e9bc20827e1",
+          "matches_git_object": true,
+          "path": "/home/barberb/lift_coding/.worktrees/legal-ir-asset-reconciliation-20261016/docs/autoencoders/evidence/contextual-legal-runtime-20261006/768-metadata-plan.json",
+          "scope": "metadata/source bytes, not checkpoint tensors",
+          "sha256": "d54e0935cd343d21bd02f3f6caad930799c29d804dcb5d5b36d971456b24fa65"
+        }
+      ],
+      "native_ir_schema_version": null,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-selected-continuation-20261004/training-r1/results/768-selected-followup-lr0001-1729/selected-state.json",
+      "promoted_by_this_inventory": false,
+      "quality_scope": {
+        "independent_holdout": false,
+        "native_profile_qualified": false,
+        "qualifier_fields": "All reference qualifiers empty",
+        "recorded_exact_semantic_ir": "48/48 exposed authored paragraphs;180/180 rules",
+        "recorded_original_text_utf8_exact": "0/48",
+        "registration_verified_current": false
+      },
+      "recorded_bytes": 4781613,
+      "recorded_checkpoint_sha256": "8892a3261c0750a6247ba5400069ed18cad3354426e2095ed1d295287e3559b4",
+      "recorded_weights_sha256": "8900d69fb00c17a54b7d3cbe6fbd2c24651b614839ad57c588d0f04dc308fada",
+      "saved_preprocessing_sha256": "751a9966db5d5bca7af55f8d4c8cc6b77a16bd63601b09757b843a56970159a3",
+      "source_input_current_observation": {
+        "bytes": 1051554,
+        "checkpoint_body_sha256_recomputed": false,
+        "exists": true,
+        "leaf_regular_file": true,
+        "leaf_symlink": false,
+        "method": "lstat only; checkpoint body not opened, parsed, loaded or hashed",
+        "runtime_admission_performed": false
+      },
+      "source_inputs": {
+        "bytes": 1051554,
+        "path": "/home/barberb/lift_coding/artifacts/ir-semantic-reconstruction-replay-20261004/contextual384-768-v1/768-source-only-inputs.json",
+        "sha256": "e44720b13acb52306bb951ff500aa067a3c4ebe4a060139367e1d465e6511bd4"
+      },
+      "task": "semantic_IR_reconstruction",
+      "teacher_qualified_by_this_inventory": false,
+      "vocabulary_entries": 32,
+      "warm_start_scope": "Existing contextual_legal_runtime restores this dimension-specific selected state plus original paragraph/clause cache, donor and saved transforms. This is a fitted768D lineage distinct from the unaligned dual-donor migration initialization."
+    },
+    {
+      "auxiliary_codec_sha256": "25d32d252ce8ef0fab2b6315068898fa3205246bc5f8abfad1ffbce8a1bfd6e1",
+      "auxiliary_vocabulary_entries": 18,
+      "checkpoint_serialization_schema": "gte-dual-donor-decoder-warm-start/v1",
+      "current_observation": {
+        "bytes": 6873498,
+        "checkpoint_body_sha256_recomputed": false,
+        "exists": true,
+        "leaf_regular_file": true,
+        "leaf_symlink": false,
+        "method": "lstat only; checkpoint body not opened, parsed, loaded or hashed",
+        "runtime_admission_performed": false
+      },
+      "dimension": 768,
+      "dimension_role": "declared_multilingual_input_adapter",
+      "donor_pins": {
+        "legacy8_checkpoint_sha256": "ffca84492b81ab94fa291ae6ddbe52cfc84318f3516a22f901d468de255b6cbe",
+        "legacy8_codec_sha256": "25d32d252ce8ef0fab2b6315068898fa3205246bc5f8abfad1ffbce8a1bfd6e1",
+        "legacy8_weights_sha256": "e96a6e3ff5771b9227aa98919aee2745d42cd3361e0f85d5d2771ed88e9d1995",
+        "teacher384_checkpoint_sha256": "6e3f4d731d798aa2732afc37bd74fec34da3267a323844975d2dab78f59f9c61",
+        "teacher384_codec_sha256": "cba3e5384e2bee12e709ccc8e9ee430e51cf09a8fc2e8abdd57143fdaa38dba2",
+        "teacher384_weights_sha256": "17ddd2026a72eda808e5223cc32c5c6fd0b523fc2ec771f620c9b3179793a05a"
+      },
+      "family": "legal_ir",
+      "inventory_key": "legal_ir:dual_donor768:initialized_unaligned",
+      "metadata_provenance": [
+        {
+          "bytes": 9002,
+          "path": "/home/barberb/lift_coding/artifacts/gte-decoder-reuse-20261001/run-01/manifest.json",
+          "scope": "metadata/source bytes, not checkpoint tensors",
+          "sha256": "2b8017707f5619262b6cdf1d86f73035322fa6f3a9e5a521c2a42c029bf55cde"
+        },
+        {
+          "bytes": 1236,
+          "path": "/home/barberb/lift_coding/artifacts/gte-decoder-reuse-20261001/run-01/summary.json",
+          "scope": "metadata/source bytes, not checkpoint tensors",
+          "sha256": "d42ae4124d1e30a25f1f89ff1dbe133f4c64059bd7c6b1e5e054d5a4272cbb74"
+        },
+        {
+          "bytes": 565,
+          "path": "/home/barberb/lift_coding/artifacts/gte-decoder-reuse-20261001/run-01/donor-pins.json",
+          "scope": "metadata/source bytes, not checkpoint tensors",
+          "sha256": "8284f3dda68384de197c71f38a641bfc71cc036cdb8497b464e9a511337bb965"
+        }
+      ],
+      "native_input_and_fit_status": {
+        "aligned_checkpoints": 0,
+        "cached_native_receipts": 0,
+        "ready_native_rows": 0,
+        "scope": "These are this migration lineage's historical receipts, not a statement that all768D work is absent.",
+        "trained_interface_checkpoints": 0
+      },
+      "new_interface_parameters": 295560,
+      "optimizer_steps": 0,
+      "path": "/home/barberb/lift_coding/artifacts/gte-decoder-reuse-20261001/run-01/student-initialization.json",
+      "primary_codec_sha256": "cba3e5384e2bee12e709ccc8e9ee430e51cf09a8fc2e8abdd57143fdaa38dba2",
+      "primary_vocabulary_entries": 32,
+      "promoted_by_this_inventory": false,
+      "quality_scope": {
+        "encoder_loaded_or_numerically_qualified_for_this_initialization": false,
+        "source_fidelity_qualified": false,
+        "teacher_qualified": false
+      },
+      "recorded_bytes": 6873498,
+      "recorded_checkpoint_sha256": "7443c8a60cb1f95e9a35017edcd394c0f47fd457c3733e0863d37bfc09a09a12",
+      "recorded_copied_parameters": 27142,
+      "recorded_copied_tensors": 26,
+      "representation_id": "legal_ir:dual_donor_768_decoder:e7effa4359407382e4b984e6b777f77f53428e728151466276c5501ce5ad70ce",
+      "status": "initialized_unaligned",
+      "task": "dual_typed_json_and_grammar_decoder_initialization",
+      "teacher_qualified_by_this_inventory": false,
+      "warm_start_scope": "The two learned donor bodies are preserved; new768-to384 and32-to8 interfaces require independently authenticated matching inputs and fitting. Keep both codec/output tasks separate."
+    },
+    {
+      "checkpoint_serialization_schema": "private-native-dimension-source-state/v1",
+      "codec_family": "lexical32 authored seven-facet rule codec; explicit profile/schema selectors remain unknown",
+      "current_model_manager_api_query_performed": false,
+      "current_observation": {
+        "bytes": 2797024,
+        "checkpoint_body_sha256_recomputed": false,
+        "exists": true,
+        "leaf_regular_file": true,
+        "leaf_symlink": false,
+        "method": "lstat only; checkpoint body not opened, parsed, loaded or hashed",
+        "runtime_admission_performed": false
+      },
+      "decoder_format_id": null,
+      "decoder_profile_id": null,
+      "dimension": 384,
+      "dimension_role": "input_embedding",
+      "family": "legal_ir",
+      "historical_registration_status": "registered_verified in prior genuine manager/catalog readback",
+      "immutable_primary_release": {
+        "checkpoint_sha256": "6c7609b8f2f54afefbb832157b5f8a7590a77df4393feb9f3c61d8bf9be6caff",
+        "path_in_repo": "experiments/retained-wording-recipes-20261007/run-01-dual-6e47fc6d5452/checkpoints/384d/control-wording-ce/selected-state.json",
+        "repository_id": "Publicus/legal-ir-autoencoder-384d",
+        "revision": "ac8f3439bfd2409797dfdab245c120b93b3d0747"
+      },
+      "inventory_key": "legal_ir:retained_wording384:control_wording_ce_selected_semantic_decoder_state",
+      "metadata_provenance": [
+        {
+          "bytes": 16223,
+          "git_path": "docs/autoencoders/evidence/retained-wording-20261007/checkpoint-availability.json",
+          "git_revision": "1b7be0c601ec3373c2726e4022737e9bc20827e1",
+          "matches_git_object": true,
+          "path": "/home/barberb/lift_coding/.worktrees/legal-ir-asset-reconciliation-20261016/docs/autoencoders/evidence/retained-wording-20261007/checkpoint-availability.json",
+          "scope": "metadata/source bytes, not checkpoint tensors",
+          "sha256": "551ce13fe7a1d1956383a71abb145adab67afaab6d0b96aa316345d0aba20fce"
+        },
+        {
+          "bytes": 38006,
+          "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/model-manager-live-r1/registration-result.json",
+          "scope": "metadata/source bytes, not checkpoint tensors",
+          "sha256": "103e95512c83d894bf0a432cc44debbcf57cb589fb3077288d90832737b99320"
+        },
+        {
+          "bytes": 10081,
+          "git_path": "docs/autoencoders/evidence/retained-wording-20261007/model-manager-registration-result-independent-check.json",
+          "git_revision": "1b7be0c601ec3373c2726e4022737e9bc20827e1",
+          "matches_git_object": true,
+          "path": "/home/barberb/lift_coding/.worktrees/legal-ir-asset-reconciliation-20261016/docs/autoencoders/evidence/retained-wording-20261007/model-manager-registration-result-independent-check.json",
+          "scope": "metadata/source bytes, not checkpoint tensors",
+          "sha256": "32cdadd25bd575818121c8fb80c105f45e6d12714a7b637da0811c92ff9ad1c3"
+        }
+      ],
+      "model_manager_model_id": "ir-model-asset-binding/v1:f758fb82fd2041d57af0b60a7dcf6d3cb27154315bd74a72c0c132645e5fabff",
+      "native_ir_schema_version": null,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/training-384-r2/results/control-wording-ce/selected-state.json",
+      "promoted_by_this_inventory": false,
+      "recorded_bytes": 2797024,
+      "recorded_checkpoint_sha256": "6c7609b8f2f54afefbb832157b5f8a7590a77df4393feb9f3c61d8bf9be6caff",
+      "runtime_ready": false,
+      "selected_and_last_tensor_alias_scope": "Within each recipe the selected/last serialized containers differ, but prior numerical evidence records the same tensor endpoint. This pass does not recompare tensors.",
+      "task": "semantic_IR_reconstruction",
+      "teacher_qualified": false,
+      "teacher_qualified_by_this_inventory": false,
+      "warm_start_scope": "Reuse only with the exact contextual/source preprocessing, codec, recipe and state role. Three fitted recipes/six role records are three distinct tensor endpoints, not six independent fits."
+    },
+    {
+      "checkpoint_serialization_schema": "private-native-dimension-source-state/v1",
+      "codec_family": "lexical32 authored seven-facet rule codec; explicit profile/schema selectors remain unknown",
+      "current_model_manager_api_query_performed": false,
+      "current_observation": {
+        "bytes": 2797028,
+        "checkpoint_body_sha256_recomputed": false,
+        "exists": true,
+        "leaf_regular_file": true,
+        "leaf_symlink": false,
+        "method": "lstat only; checkpoint body not opened, parsed, loaded or hashed",
+        "runtime_admission_performed": false
+      },
+      "decoder_format_id": null,
+      "decoder_profile_id": null,
+      "dimension": 384,
+      "dimension_role": "input_embedding",
+      "family": "legal_ir",
+      "historical_registration_status": "registered_verified in prior genuine manager/catalog readback",
+      "immutable_primary_release": {
+        "checkpoint_sha256": "cf2d10df31f8cb1145369aeef3cfc717629dd7f14c69b5ba62ba956b5eaa4f26",
+        "path_in_repo": "experiments/retained-wording-recipes-20261007/run-01-dual-6e47fc6d5452/checkpoints/384d/control-wording-ce/last-attempt-state.json",
+        "repository_id": "Publicus/legal-ir-autoencoder-384d",
+        "revision": "ac8f3439bfd2409797dfdab245c120b93b3d0747"
+      },
+      "inventory_key": "legal_ir:retained_wording384:control_wording_ce_last_attempt_semantic_decoder_state",
+      "metadata_provenance": [
+        {
+          "bytes": 16223,
+          "git_path": "docs/autoencoders/evidence/retained-wording-20261007/checkpoint-availability.json",
+          "git_revision": "1b7be0c601ec3373c2726e4022737e9bc20827e1",
+          "matches_git_object": true,
+          "path": "/home/barberb/lift_coding/.worktrees/legal-ir-asset-reconciliation-20261016/docs/autoencoders/evidence/retained-wording-20261007/checkpoint-availability.json",
+          "scope": "metadata/source bytes, not checkpoint tensors",
+          "sha256": "551ce13fe7a1d1956383a71abb145adab67afaab6d0b96aa316345d0aba20fce"
+        },
+        {
+          "bytes": 38006,
+          "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/model-manager-live-r1/registration-result.json",
+          "scope": "metadata/source bytes, not checkpoint tensors",
+          "sha256": "103e95512c83d894bf0a432cc44debbcf57cb589fb3077288d90832737b99320"
+        },
+        {
+          "bytes": 10081,
+          "git_path": "docs/autoencoders/evidence/retained-wording-20261007/model-manager-registration-result-independent-check.json",
+          "git_revision": "1b7be0c601ec3373c2726e4022737e9bc20827e1",
+          "matches_git_object": true,
+          "path": "/home/barberb/lift_coding/.worktrees/legal-ir-asset-reconciliation-20261016/docs/autoencoders/evidence/retained-wording-20261007/model-manager-registration-result-independent-check.json",
+          "scope": "metadata/source bytes, not checkpoint tensors",
+          "sha256": "32cdadd25bd575818121c8fb80c105f45e6d12714a7b637da0811c92ff9ad1c3"
+        }
+      ],
+      "model_manager_model_id": "ir-model-asset-binding/v1:48c8077b2266bb1972652f7517643d664dc166429df63bf0b687df441b12e787",
+      "native_ir_schema_version": null,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/training-384-r2/results/control-wording-ce/last-attempt-state.json",
+      "promoted_by_this_inventory": false,
+      "recorded_bytes": 2797028,
+      "recorded_checkpoint_sha256": "cf2d10df31f8cb1145369aeef3cfc717629dd7f14c69b5ba62ba956b5eaa4f26",
+      "runtime_ready": false,
+      "selected_and_last_tensor_alias_scope": "Within each recipe the selected/last serialized containers differ, but prior numerical evidence records the same tensor endpoint. This pass does not recompare tensors.",
+      "task": "semantic_IR_reconstruction",
+      "teacher_qualified": false,
+      "teacher_qualified_by_this_inventory": false,
+      "warm_start_scope": "Reuse only with the exact contextual/source preprocessing, codec, recipe and state role. Three fitted recipes/six role records are three distinct tensor endpoints, not six independent fits."
+    },
+    {
+      "checkpoint_serialization_schema": "private-native-dimension-source-state/v1",
+      "codec_family": "lexical32 authored seven-facet rule codec; explicit profile/schema selectors remain unknown",
+      "current_model_manager_api_query_performed": false,
+      "current_observation": {
+        "bytes": 2797399,
+        "checkpoint_body_sha256_recomputed": false,
+        "exists": true,
+        "leaf_regular_file": true,
+        "leaf_symlink": false,
+        "method": "lstat only; checkpoint body not opened, parsed, loaded or hashed",
+        "runtime_admission_performed": false
+      },
+      "decoder_format_id": null,
+      "decoder_profile_id": null,
+      "dimension": 384,
+      "dimension_role": "input_embedding",
+      "family": "legal_ir",
+      "historical_registration_status": "registered_verified in prior genuine manager/catalog readback",
+      "immutable_primary_release": {
+        "checkpoint_sha256": "d2439394a7827b55c363a8f9b7f5ad74c4a9cf6875e869886c6840ba74088b05",
+        "path_in_repo": "experiments/retained-wording-recipes-20261007/run-01-dual-6e47fc6d5452/checkpoints/384d/balanced-wording-ce/selected-state.json",
+        "repository_id": "Publicus/legal-ir-autoencoder-384d",
+        "revision": "ac8f3439bfd2409797dfdab245c120b93b3d0747"
+      },
+      "inventory_key": "legal_ir:retained_wording384:balanced_wording_ce_selected_semantic_decoder_state",
+      "metadata_provenance": [
+        {
+          "bytes": 16223,
+          "git_path": "docs/autoencoders/evidence/retained-wording-20261007/checkpoint-availability.json",
+          "git_revision": "1b7be0c601ec3373c2726e4022737e9bc20827e1",
+          "matches_git_object": true,
+          "path": "/home/barberb/lift_coding/.worktrees/legal-ir-asset-reconciliation-20261016/docs/autoencoders/evidence/retained-wording-20261007/checkpoint-availability.json",
+          "scope": "metadata/source bytes, not checkpoint tensors",
+          "sha256": "551ce13fe7a1d1956383a71abb145adab67afaab6d0b96aa316345d0aba20fce"
+        },
+        {
+          "bytes": 38006,
+          "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/model-manager-live-r1/registration-result.json",
+          "scope": "metadata/source bytes, not checkpoint tensors",
+          "sha256": "103e95512c83d894bf0a432cc44debbcf57cb589fb3077288d90832737b99320"
+        },
+        {
+          "bytes": 10081,
+          "git_path": "docs/autoencoders/evidence/retained-wording-20261007/model-manager-registration-result-independent-check.json",
+          "git_revision": "1b7be0c601ec3373c2726e4022737e9bc20827e1",
+          "matches_git_object": true,
+          "path": "/home/barberb/lift_coding/.worktrees/legal-ir-asset-reconciliation-20261016/docs/autoencoders/evidence/retained-wording-20261007/model-manager-registration-result-independent-check.json",
+          "scope": "metadata/source bytes, not checkpoint tensors",
+          "sha256": "32cdadd25bd575818121c8fb80c105f45e6d12714a7b637da0811c92ff9ad1c3"
+        }
+      ],
+      "model_manager_model_id": "ir-model-asset-binding/v1:8a90a70566137b0a0eccb89bb5c922bf323eadc9637b1a4a28f0c97117bab580",
+      "native_ir_schema_version": null,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/training-384-r2/results/balanced-wording-ce/selected-state.json",
+      "promoted_by_this_inventory": false,
+      "recorded_bytes": 2797399,
+      "recorded_checkpoint_sha256": "d2439394a7827b55c363a8f9b7f5ad74c4a9cf6875e869886c6840ba74088b05",
+      "runtime_ready": false,
+      "selected_and_last_tensor_alias_scope": "Within each recipe the selected/last serialized containers differ, but prior numerical evidence records the same tensor endpoint. This pass does not recompare tensors.",
+      "task": "semantic_IR_reconstruction",
+      "teacher_qualified": false,
+      "teacher_qualified_by_this_inventory": false,
+      "warm_start_scope": "Reuse only with the exact contextual/source preprocessing, codec, recipe and state role. Three fitted recipes/six role records are three distinct tensor endpoints, not six independent fits."
+    },
+    {
+      "checkpoint_serialization_schema": "private-native-dimension-source-state/v1",
+      "codec_family": "lexical32 authored seven-facet rule codec; explicit profile/schema selectors remain unknown",
+      "current_model_manager_api_query_performed": false,
+      "current_observation": {
+        "bytes": 2797403,
+        "checkpoint_body_sha256_recomputed": false,
+        "exists": true,
+        "leaf_regular_file": true,
+        "leaf_symlink": false,
+        "method": "lstat only; checkpoint body not opened, parsed, loaded or hashed",
+        "runtime_admission_performed": false
+      },
+      "decoder_format_id": null,
+      "decoder_profile_id": null,
+      "dimension": 384,
+      "dimension_role": "input_embedding",
+      "family": "legal_ir",
+      "historical_registration_status": "registered_verified in prior genuine manager/catalog readback",
+      "immutable_primary_release": {
+        "checkpoint_sha256": "c7af74bd4dc8ab10b54692f665c2561b83a1417ed117d071f7c984be67611aa1",
+        "path_in_repo": "experiments/retained-wording-recipes-20261007/run-01-dual-6e47fc6d5452/checkpoints/384d/balanced-wording-ce/last-attempt-state.json",
+        "repository_id": "Publicus/legal-ir-autoencoder-384d",
+        "revision": "ac8f3439bfd2409797dfdab245c120b93b3d0747"
+      },
+      "inventory_key": "legal_ir:retained_wording384:balanced_wording_ce_last_attempt_semantic_decoder_state",
+      "metadata_provenance": [
+        {
+          "bytes": 16223,
+          "git_path": "docs/autoencoders/evidence/retained-wording-20261007/checkpoint-availability.json",
+          "git_revision": "1b7be0c601ec3373c2726e4022737e9bc20827e1",
+          "matches_git_object": true,
+          "path": "/home/barberb/lift_coding/.worktrees/legal-ir-asset-reconciliation-20261016/docs/autoencoders/evidence/retained-wording-20261007/checkpoint-availability.json",
+          "scope": "metadata/source bytes, not checkpoint tensors",
+          "sha256": "551ce13fe7a1d1956383a71abb145adab67afaab6d0b96aa316345d0aba20fce"
+        },
+        {
+          "bytes": 38006,
+          "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/model-manager-live-r1/registration-result.json",
+          "scope": "metadata/source bytes, not checkpoint tensors",
+          "sha256": "103e95512c83d894bf0a432cc44debbcf57cb589fb3077288d90832737b99320"
+        },
+        {
+          "bytes": 10081,
+          "git_path": "docs/autoencoders/evidence/retained-wording-20261007/model-manager-registration-result-independent-check.json",
+          "git_revision": "1b7be0c601ec3373c2726e4022737e9bc20827e1",
+          "matches_git_object": true,
+          "path": "/home/barberb/lift_coding/.worktrees/legal-ir-asset-reconciliation-20261016/docs/autoencoders/evidence/retained-wording-20261007/model-manager-registration-result-independent-check.json",
+          "scope": "metadata/source bytes, not checkpoint tensors",
+          "sha256": "32cdadd25bd575818121c8fb80c105f45e6d12714a7b637da0811c92ff9ad1c3"
+        }
+      ],
+      "model_manager_model_id": "ir-model-asset-binding/v1:ba797ef100d2132650683b2cd80709a563bad78fa21b2563de9aaba16326efab",
+      "native_ir_schema_version": null,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/training-384-r2/results/balanced-wording-ce/last-attempt-state.json",
+      "promoted_by_this_inventory": false,
+      "recorded_bytes": 2797403,
+      "recorded_checkpoint_sha256": "c7af74bd4dc8ab10b54692f665c2561b83a1417ed117d071f7c984be67611aa1",
+      "runtime_ready": false,
+      "selected_and_last_tensor_alias_scope": "Within each recipe the selected/last serialized containers differ, but prior numerical evidence records the same tensor endpoint. This pass does not recompare tensors.",
+      "task": "semantic_IR_reconstruction",
+      "teacher_qualified": false,
+      "teacher_qualified_by_this_inventory": false,
+      "warm_start_scope": "Reuse only with the exact contextual/source preprocessing, codec, recipe and state role. Three fitted recipes/six role records are three distinct tensor endpoints, not six independent fits."
+    },
+    {
+      "checkpoint_serialization_schema": "private-native-dimension-source-state/v1",
+      "codec_family": "lexical32 authored seven-facet rule codec; explicit profile/schema selectors remain unknown",
+      "current_model_manager_api_query_performed": false,
+      "current_observation": {
+        "bytes": 2797164,
+        "checkpoint_body_sha256_recomputed": false,
+        "exists": true,
+        "leaf_regular_file": true,
+        "leaf_symlink": false,
+        "method": "lstat only; checkpoint body not opened, parsed, loaded or hashed",
+        "runtime_admission_performed": false
+      },
+      "decoder_format_id": null,
+      "decoder_profile_id": null,
+      "dimension": 384,
+      "dimension_role": "input_embedding",
+      "family": "legal_ir",
+      "historical_registration_status": "registered_verified in prior genuine manager/catalog readback",
+      "immutable_primary_release": {
+        "checkpoint_sha256": "c51cbb51150cb16de2e4617f7c1d03b53cf5f65d430ebadc0923ba199284405e",
+        "path_in_repo": "experiments/retained-wording-recipes-20261007/run-01-dual-6e47fc6d5452/checkpoints/384d/dual-bank-retention-ce/selected-state.json",
+        "repository_id": "Publicus/legal-ir-autoencoder-384d",
+        "revision": "ac8f3439bfd2409797dfdab245c120b93b3d0747"
+      },
+      "inventory_key": "legal_ir:retained_wording384:dual_bank_retention_ce_selected_semantic_decoder_state",
+      "metadata_provenance": [
+        {
+          "bytes": 16223,
+          "git_path": "docs/autoencoders/evidence/retained-wording-20261007/checkpoint-availability.json",
+          "git_revision": "1b7be0c601ec3373c2726e4022737e9bc20827e1",
+          "matches_git_object": true,
+          "path": "/home/barberb/lift_coding/.worktrees/legal-ir-asset-reconciliation-20261016/docs/autoencoders/evidence/retained-wording-20261007/checkpoint-availability.json",
+          "scope": "metadata/source bytes, not checkpoint tensors",
+          "sha256": "551ce13fe7a1d1956383a71abb145adab67afaab6d0b96aa316345d0aba20fce"
+        },
+        {
+          "bytes": 38006,
+          "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/model-manager-live-r1/registration-result.json",
+          "scope": "metadata/source bytes, not checkpoint tensors",
+          "sha256": "103e95512c83d894bf0a432cc44debbcf57cb589fb3077288d90832737b99320"
+        },
+        {
+          "bytes": 10081,
+          "git_path": "docs/autoencoders/evidence/retained-wording-20261007/model-manager-registration-result-independent-check.json",
+          "git_revision": "1b7be0c601ec3373c2726e4022737e9bc20827e1",
+          "matches_git_object": true,
+          "path": "/home/barberb/lift_coding/.worktrees/legal-ir-asset-reconciliation-20261016/docs/autoencoders/evidence/retained-wording-20261007/model-manager-registration-result-independent-check.json",
+          "scope": "metadata/source bytes, not checkpoint tensors",
+          "sha256": "32cdadd25bd575818121c8fb80c105f45e6d12714a7b637da0811c92ff9ad1c3"
+        }
+      ],
+      "model_manager_model_id": "ir-model-asset-binding/v1:6ad44e541dabf272b043ee6545551164aced8886fa14fe5b21d3cef28dd16c3c",
+      "native_ir_schema_version": null,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/training-384-r1/results/dual-bank-retention-ce/selected-state.json",
+      "promoted_by_this_inventory": false,
+      "recorded_bytes": 2797164,
+      "recorded_checkpoint_sha256": "c51cbb51150cb16de2e4617f7c1d03b53cf5f65d430ebadc0923ba199284405e",
+      "runtime_ready": false,
+      "selected_and_last_tensor_alias_scope": "Within each recipe the selected/last serialized containers differ, but prior numerical evidence records the same tensor endpoint. This pass does not recompare tensors.",
+      "task": "semantic_IR_reconstruction",
+      "teacher_qualified": false,
+      "teacher_qualified_by_this_inventory": false,
+      "warm_start_scope": "Reuse only with the exact contextual/source preprocessing, codec, recipe and state role. Three fitted recipes/six role records are three distinct tensor endpoints, not six independent fits."
+    },
+    {
+      "checkpoint_serialization_schema": "private-native-dimension-source-state/v1",
+      "codec_family": "lexical32 authored seven-facet rule codec; explicit profile/schema selectors remain unknown",
+      "current_model_manager_api_query_performed": false,
+      "current_observation": {
+        "bytes": 2797168,
+        "checkpoint_body_sha256_recomputed": false,
+        "exists": true,
+        "leaf_regular_file": true,
+        "leaf_symlink": false,
+        "method": "lstat only; checkpoint body not opened, parsed, loaded or hashed",
+        "runtime_admission_performed": false
+      },
+      "decoder_format_id": null,
+      "decoder_profile_id": null,
+      "dimension": 384,
+      "dimension_role": "input_embedding",
+      "family": "legal_ir",
+      "historical_registration_status": "registered_verified in prior genuine manager/catalog readback",
+      "immutable_primary_release": {
+        "checkpoint_sha256": "4269e6d957f9a31d2d9b09b0d90f345f5da00a003c0c898a59d7fcb3220ff61f",
+        "path_in_repo": "experiments/retained-wording-recipes-20261007/run-01-dual-6e47fc6d5452/checkpoints/384d/dual-bank-retention-ce/last-attempt-state.json",
+        "repository_id": "Publicus/legal-ir-autoencoder-384d",
+        "revision": "ac8f3439bfd2409797dfdab245c120b93b3d0747"
+      },
+      "inventory_key": "legal_ir:retained_wording384:dual_bank_retention_ce_last_attempt_semantic_decoder_state",
+      "metadata_provenance": [
+        {
+          "bytes": 16223,
+          "git_path": "docs/autoencoders/evidence/retained-wording-20261007/checkpoint-availability.json",
+          "git_revision": "1b7be0c601ec3373c2726e4022737e9bc20827e1",
+          "matches_git_object": true,
+          "path": "/home/barberb/lift_coding/.worktrees/legal-ir-asset-reconciliation-20261016/docs/autoencoders/evidence/retained-wording-20261007/checkpoint-availability.json",
+          "scope": "metadata/source bytes, not checkpoint tensors",
+          "sha256": "551ce13fe7a1d1956383a71abb145adab67afaab6d0b96aa316345d0aba20fce"
+        },
+        {
+          "bytes": 38006,
+          "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/model-manager-live-r1/registration-result.json",
+          "scope": "metadata/source bytes, not checkpoint tensors",
+          "sha256": "103e95512c83d894bf0a432cc44debbcf57cb589fb3077288d90832737b99320"
+        },
+        {
+          "bytes": 10081,
+          "git_path": "docs/autoencoders/evidence/retained-wording-20261007/model-manager-registration-result-independent-check.json",
+          "git_revision": "1b7be0c601ec3373c2726e4022737e9bc20827e1",
+          "matches_git_object": true,
+          "path": "/home/barberb/lift_coding/.worktrees/legal-ir-asset-reconciliation-20261016/docs/autoencoders/evidence/retained-wording-20261007/model-manager-registration-result-independent-check.json",
+          "scope": "metadata/source bytes, not checkpoint tensors",
+          "sha256": "32cdadd25bd575818121c8fb80c105f45e6d12714a7b637da0811c92ff9ad1c3"
+        }
+      ],
+      "model_manager_model_id": "ir-model-asset-binding/v1:c743be38f98deb5e5c6c6348a9a573d84111f062c820f3689a50afde6e703b16",
+      "native_ir_schema_version": null,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/training-384-r1/results/dual-bank-retention-ce/last-attempt-state.json",
+      "promoted_by_this_inventory": false,
+      "recorded_bytes": 2797168,
+      "recorded_checkpoint_sha256": "4269e6d957f9a31d2d9b09b0d90f345f5da00a003c0c898a59d7fcb3220ff61f",
+      "runtime_ready": false,
+      "selected_and_last_tensor_alias_scope": "Within each recipe the selected/last serialized containers differ, but prior numerical evidence records the same tensor endpoint. This pass does not recompare tensors.",
+      "task": "semantic_IR_reconstruction",
+      "teacher_qualified": false,
+      "teacher_qualified_by_this_inventory": false,
+      "warm_start_scope": "Reuse only with the exact contextual/source preprocessing, codec, recipe and state role. Three fitted recipes/six role records are three distinct tensor endpoints, not six independent fits."
+    },
+    {
+      "checkpoint_serialization_schema": null,
+      "codec_identity": null,
+      "current_model_manager_registration_verified": false,
+      "current_observation": {
+        "bytes": 12230969,
+        "checkpoint_body_sha256_recomputed": false,
+        "exists": true,
+        "leaf_regular_file": true,
+        "leaf_symlink": false,
+        "method": "lstat only; checkpoint body not opened, parsed, loaded or hashed",
+        "runtime_admission_performed": false
+      },
+      "dimension_declared": 384,
+      "dimension_role": "disabled_placeholder",
+      "encoder_calls_recorded": 0,
+      "family": "legal_ir",
+      "inventory_key": "legal_ir:source_conditioned:F15_actor_parent",
+      "latent_conditioning_enabled": false,
+      "metadata_provenance": [
+        {
+          "bytes": 106363,
+          "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-retention-20261014-01/joint-readout-retention-hinge-plan-v01.json",
+          "scope": "metadata/source bytes, not checkpoint tensors",
+          "sha256": "059f4128a83ab2ffe63b72a2aed127c4061f2c7cefa6013eb3e03b5b8a3d6d96"
+        },
+        {
+          "bytes": 98083,
+          "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/modality-conditions-retention-ce-plan-v01.json",
+          "scope": "metadata/source bytes, not checkpoint tensors",
+          "sha256": "7b797b0d68903b411de4e46a8f4ba99772f1ef5390356e480b6777bdac4f4e59"
+        }
+      ],
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-refinement-20261014-actor-refinement-ce-01/results/cell-checkpoint.json",
+      "promoted_by_this_inventory": false,
+      "recorded_bytes": 12230969,
+      "recorded_checkpoint_sha256": "f421514dc02cb3542e7587767191aa99bd32551f145e0af4d01c47595d4d73c4",
+      "recorded_source_model_state_sha256": "a1bb3158f19c7b619b7d15ee7ba4887046cc7d22eebecad7b04e8a8111ac3d42",
+      "task": "source_text_conditioned_readout_and_span_generation",
+      "teacher_qualified_by_this_inventory": false,
+      "warm_start_scope": "Exact all42 trained F15 states are parent to separateF17/F18 adapters; this does not provide a native GTE latent decoder or authorize cross-lineage composition."
+    },
+    {
+      "checkpoint_serialization_schema": null,
+      "codec_identity": null,
+      "current_model_manager_registration_verified": false,
+      "current_observation": {
+        "bytes": 20467217,
+        "checkpoint_body_sha256_recomputed": false,
+        "exists": true,
+        "leaf_regular_file": true,
+        "leaf_symlink": false,
+        "method": "lstat only; checkpoint body not opened, parsed, loaded or hashed",
+        "runtime_admission_performed": false
+      },
+      "default_promotion": false,
+      "dimension_declared": 384,
+      "dimension_role": "disabled_placeholder",
+      "external_encoder_calls_recorded": 0,
+      "family": "legal_ir",
+      "inventory_key": "legal_ir:source_conditioned:F17",
+      "latent_conditioning_enabled": false,
+      "metadata_provenance": [
+        {
+          "bytes": 18599,
+          "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-retention-20261014-01/public-result-summary-v01.json",
+          "scope": "metadata/source bytes, not checkpoint tensors",
+          "sha256": "795bfd54bdc416650fbe97cf403e83fa4dde4fd87a338ef23ed64afcc6b8c512"
+        },
+        {
+          "bytes": 106363,
+          "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-retention-20261014-01/joint-readout-retention-hinge-plan-v01.json",
+          "scope": "metadata/source bytes, not checkpoint tensors",
+          "sha256": "059f4128a83ab2ffe63b72a2aed127c4061f2c7cefa6013eb3e03b5b8a3d6d96"
+        }
+      ],
+      "parent_checkpoint": {
+        "bytes": 12230969,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-refinement-20261014-actor-refinement-ce-01/results/cell-checkpoint.json",
+        "sha256": "f421514dc02cb3542e7587767191aa99bd32551f145e0af4d01c47595d4d73c4"
+      },
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/joint-readout-retention-20261014-joint-readout-retention-hinge-01/results/cell-checkpoint.json",
+      "portable_numerical_reload_qualified": false,
+      "promoted_by_this_inventory": false,
+      "recorded_bytes": 20467217,
+      "recorded_checkpoint_sha256": "d38f6481f8cdb35d996d5231d15331855043f20a258180b0af9b1143d477d42e",
+      "task": "source_text_conditioned_readout_and_span_generation",
+      "teacher_qualified_by_this_inventory": false,
+      "warm_start_scope": "Reuse source-conditioned architecture/tensors only within exact donor, policy, source/span and loader contracts. F17 andF18 are distinct clean-F15 branches; no composed checkpoint is qualified."
+    },
+    {
+      "checkpoint_serialization_schema": null,
+      "codec_identity": null,
+      "current_model_manager_registration_verified": false,
+      "current_observation": {
+        "bytes": 21058430,
+        "checkpoint_body_sha256_recomputed": false,
+        "exists": true,
+        "leaf_regular_file": true,
+        "leaf_symlink": false,
+        "method": "lstat only; checkpoint body not opened, parsed, loaded or hashed",
+        "runtime_admission_performed": false
+      },
+      "default_promotion": false,
+      "dimension_declared": 384,
+      "dimension_role": "disabled_placeholder",
+      "external_encoder_calls_recorded": 0,
+      "family": "legal_ir",
+      "inventory_key": "legal_ir:source_conditioned:F18",
+      "latent_conditioning_enabled": false,
+      "metadata_provenance": [
+        {
+          "bytes": 15638,
+          "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/public-result-summary-v01.json",
+          "scope": "metadata/source bytes, not checkpoint tensors",
+          "sha256": "2cbb3f6ea668bdfa86680ac627840b7515d5a63620486b4d842d190547582490"
+        },
+        {
+          "bytes": 98083,
+          "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/modality-conditions-retention-ce-plan-v01.json",
+          "scope": "metadata/source bytes, not checkpoint tensors",
+          "sha256": "7b797b0d68903b411de4e46a8f4ba99772f1ef5390356e480b6777bdac4f4e59"
+        }
+      ],
+      "parent_checkpoint": {
+        "bytes": 12230969,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-refinement-20261014-actor-refinement-ce-01/results/cell-checkpoint.json",
+        "sha256": "f421514dc02cb3542e7587767191aa99bd32551f145e0af4d01c47595d4d73c4"
+      },
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/modality-conditions-retention-20261014-modality-conditions-retention-ce-01/results/cell-checkpoint.json",
+      "portable_numerical_reload_qualified": false,
+      "promoted_by_this_inventory": false,
+      "recorded_bytes": 21058430,
+      "recorded_checkpoint_sha256": "90031d084f2d86cf860c5fc95d2dae374dc254adec70bd85a90893f98c5a1555",
+      "task": "source_text_conditioned_readout_and_span_generation",
+      "teacher_qualified_by_this_inventory": false,
+      "warm_start_scope": "Reuse source-conditioned architecture/tensors only within exact donor, policy, source/span and loader contracts. F17 andF18 are distinct clean-F15 branches; no composed checkpoint is qualified."
+    }
+  ],
+  "source_baseline": {
+    "cached_origin_main": "1b7be0c601ec3373c2726e4022737e9bc20827e1",
+    "checkout": "/home/barberb/lift_coding/.worktrees/legal-ir-asset-reconciliation-20261016",
+    "head": "1b7be0c601ec3373c2726e4022737e9bc20827e1"
+  },
+  "status": "complete_bounded_metadata_survey"
+}

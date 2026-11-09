@@ -1,0 +1,697 @@
+{
+  "authority": {
+    "Lean_admitted": false,
+    "autonomous_reconstruction": false,
+    "graph_admitted": false,
+    "source_fidelity": false,
+    "statutory_or_heldout_accuracy": false,
+    "training_gain": false
+  },
+  "cells": [
+    {
+      "added_predicate_term": 0.2853062047832446,
+      "analytic_logit_gradients": {
+        "counterfactual": {
+          "other": {
+            "L1": 1.8799608969859667,
+            "L2": 0.18060902872467352,
+            "Linf": 0.0641833451115686,
+            "coordinates": 24165,
+            "nonzero_coordinates": 24165,
+            "zero_coordinates": 0
+          },
+          "predicate": {
+            "L1": 0.11413887890806336,
+            "L2": 0.057132462367148334,
+            "Linf": 0.05706943945403168,
+            "coordinates": 537,
+            "nonzero_coordinates": 537,
+            "zero_coordinates": 0
+          }
+        },
+        "original": {
+          "other": {
+            "L1": 1.9641382505823533,
+            "L2": 0.18869600016010665,
+            "Linf": 0.06705722623596719,
+            "coordinates": 24165,
+            "nonzero_coordinates": 24165,
+            "zero_coordinates": 0
+          },
+          "predicate": {
+            "L1": 0.029812393744643412,
+            "L2": 0.014922658080971579,
+            "Linf": 0.014906196872321706,
+            "coordinates": 537,
+            "nonzero_coordinates": 537,
+            "zero_coordinates": 0
+          }
+        }
+      },
+      "before_checkpoint_sha256": "1ef7d777554bea20aa1d77209f55f1eb987598e44a18b737a1d3541e2683ab12",
+      "before_weights_sha256": "d4e7c710a8aba4462aab575d9bbfb4278c1870fadaf304f80d0f341af4912c34",
+      "by_role": {
+        "modal_constructor": {
+          "counterfactual_weighted_loss_contribution": 0.3499518110292464,
+          "original_weighted_loss_contribution": 0.36562129510518276,
+          "positions": 1,
+          "unweighted_CE_sum": 5.443694838232721
+        },
+        "modal_letter": {
+          "counterfactual_weighted_loss_contribution": 0.36887521270489076,
+          "original_weighted_loss_contribution": 0.38539201327376643,
+          "positions": 1,
+          "unweighted_CE_sum": 5.7380588642983
+        },
+        "predicate_constructor": {
+          "counterfactual_weighted_loss_contribution": 0.3804082730443262,
+          "original_weighted_loss_contribution": 0.09936036982501056,
+          "positions": 1,
+          "unweighted_CE_sum": 6.657144778275708
+        },
+        "quantifier_constructor": {
+          "counterfactual_weighted_loss_contribution": 0.698574891167566,
+          "original_weighted_loss_contribution": 0.7298543639064121,
+          "positions": 2,
+          "unweighted_CE_sum": 10.866720529273248
+        },
+        "singleton": {
+          "counterfactual_weighted_loss_contribution": 3.296642488904229,
+          "original_weighted_loss_contribution": 3.4442533466163585,
+          "positions": 39,
+          "unweighted_CE_sum": 230.76497422329606
+        },
+        "variable_reference": {
+          "counterfactual_weighted_loss_contribution": 0.827539892860935,
+          "original_weighted_loss_contribution": 0.8645939179144096,
+          "positions": 2,
+          "unweighted_CE_sum": 12.872842777836766
+        }
+      },
+      "common_denominator_only_control": 5.636686364927948,
+      "conditional_singletons_remain_zero": false,
+      "conditioning_sha256": "8580d6fd40155b911362eb2b53d47eb66121d1f18af83b14cd86f354a545140b",
+      "counterfactual_weight_sum": 70,
+      "counterfactual_weighted_CE": 5.921992569711193,
+      "fixed_logits_rank_winner_observation": {
+        "positions": 46,
+        "production_selector_invoked": false,
+        "target_ranks_sha256": "bc5a90c913abe84c068be1d494eae68f0558ee9c43a5d32bf8583b42d3356d9f",
+        "unchanged_by_reweighting": true,
+        "winner_ids_sha256": "746948a6e22e710c8a41053328a67ed93293a0a4a4f05b259dd8d294c66784ee",
+        "winner_target_matches": 0
+      },
+      "full_sequence_logits_sha256": "ee0e24c358aa308c70a20ef5e921b8ed4db9a0c5399f244b063e035542e2a3da",
+      "independent_loss_formula_value": 5.921992569711192,
+      "loss_formula_absolute_error": 8.881784197001252e-16,
+      "maximum_counterfactual_gradient_identity_absolute_error": 1.3877787807814457e-17,
+      "maximum_original_saved_logit_gradient_absolute_error": 7.3417638080108816e-09,
+      "normalization_domain": "all537",
+      "objective_kind": "full537",
+      "observed_preupdate_step": 0,
+      "original_saved_loss_absolute_error": 2.7405300251359677e-08,
+      "original_weight_sum": 67,
+      "original_weighted_CE": 5.88907530664114,
+      "predicate_position": 24,
+      "predicate_unweighted_CE": 6.657144778275708,
+      "report": {
+        "bytes": 2400401,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/cp128-warmstart-qualification-v01-cp128-warmstart-mechanics/exports/full537-step-1-report.json",
+        "sha256": "f3ba3713904d0b49a9fb4c23a9fbf9ba01c9010fb0d677684b685fc3c0d78ac1"
+      },
+      "role_inventory_sha256": "0edfce6de36c5b62e5a336d048de1cca20bd9561893ee9c5fd09cc5d14f3c1a4",
+      "row_id": "fictional-retention",
+      "row_index": 0,
+      "supervised_positions": 46,
+      "weighted_CE_delta": 0.03291726307005316
+    },
+    {
+      "added_predicate_term": 0.10143283694393873,
+      "analytic_logit_gradients": {
+        "counterfactual": {
+          "other": {
+            "L1": 0.4515588776074433,
+            "L2": 0.11312053361062145,
+            "Linf": 0.04440291842547402,
+            "coordinates": 24165,
+            "nonzero_coordinates": 33,
+            "zero_coordinates": 24132
+          },
+          "predicate": {
+            "L1": 0.1035675984001277,
+            "L2": 0.05758580584613833,
+            "Linf": 0.05178379920006385,
+            "coordinates": 537,
+            "nonzero_coordinates": 9,
+            "zero_coordinates": 528
+          }
+        },
+        "original": {
+          "other": {
+            "L1": 0.47177793182867206,
+            "L2": 0.11818563213050003,
+            "Linf": 0.046391108802734046,
+            "coordinates": 24165,
+            "nonzero_coordinates": 33,
+            "zero_coordinates": 24132
+          },
+          "predicate": {
+            "L1": 0.02705123838809306,
+            "L2": 0.015041068691155535,
+            "Linf": 0.01352561919404653,
+            "coordinates": 537,
+            "nonzero_coordinates": 9,
+            "zero_coordinates": 528
+          }
+        }
+      },
+      "before_checkpoint_sha256": "a6b6b0cd589a74d59598c6984040676baf6f27a24a7b61f0ba0a6a5f38d5f64e",
+      "before_weights_sha256": "d4e7c710a8aba4462aab575d9bbfb4278c1870fadaf304f80d0f341af4912c34",
+      "by_role": {
+        "modal_constructor": {
+          "counterfactual_weighted_loss_contribution": 0.07543816749874578,
+          "original_weighted_loss_contribution": 0.07881599589421201,
+          "positions": 1,
+          "unweighted_CE_sum": 1.1734826055360454
+        },
+        "modal_letter": {
+          "counterfactual_weighted_loss_contribution": 0.04306505399810353,
+          "original_weighted_loss_contribution": 0.04499333999801861,
+          "positions": 1,
+          "unweighted_CE_sum": 0.6699008399704993
+        },
+        "predicate_constructor": {
+          "counterfactual_weighted_loss_contribution": 0.1352437825919183,
+          "original_weighted_loss_contribution": 0.03532486858744135,
+          "positions": 1,
+          "unweighted_CE_sum": 2.3667661953585704
+        },
+        "quantifier_constructor": {
+          "counterfactual_weighted_loss_contribution": 0.14272657549287346,
+          "original_weighted_loss_contribution": 0.14911731767912154,
+          "positions": 2,
+          "unweighted_CE_sum": 2.2201911743335874
+        },
+        "singleton": {
+          "counterfactual_weighted_loss_contribution": 0.0,
+          "original_weighted_loss_contribution": 0.0,
+          "positions": 39,
+          "unweighted_CE_sum": 0.0
+        },
+        "variable_reference": {
+          "counterfactual_weighted_loss_contribution": 0.0881804389860695,
+          "original_weighted_loss_contribution": 0.0921288168511174,
+          "positions": 2,
+          "unweighted_CE_sum": 1.371695717561081
+        }
+      },
+      "common_denominator_only_control": 0.38322118162377183,
+      "conditional_singletons_remain_zero": true,
+      "conditioning_sha256": "8580d6fd40155b911362eb2b53d47eb66121d1f18af83b14cd86f354a545140b",
+      "counterfactual_weight_sum": 70,
+      "counterfactual_weighted_CE": 0.48465401856771056,
+      "fixed_logits_rank_winner_observation": {
+        "positions": 46,
+        "production_selector_invoked": false,
+        "target_ranks_sha256": "44f1836ed14eaeb3635e866aad4095b9770a54adbff73f7f3247ccb70f72d6a6",
+        "unchanged_by_reweighting": true,
+        "winner_ids_sha256": "2a3c6d5da100a1e81a706dfbeb3956a80034bb9b1dbfce01bb7d6fb4cafac2c9",
+        "winner_target_matches": 43
+      },
+      "full_sequence_logits_sha256": "ee0e24c358aa308c70a20ef5e921b8ed4db9a0c5399f244b063e035542e2a3da",
+      "independent_loss_formula_value": 0.48465401856771056,
+      "loss_formula_absolute_error": 0.0,
+      "maximum_counterfactual_gradient_identity_absolute_error": 6.938893903907228e-18,
+      "maximum_original_saved_logit_gradient_absolute_error": 5.1237737733189626e-09,
+      "normalization_domain": "original_recorded_scope_allowed_ids",
+      "objective_kind": "scope_conditional",
+      "observed_preupdate_step": 0,
+      "original_saved_loss_absolute_error": 3.399118775337939e-08,
+      "original_weight_sum": 67,
+      "original_weighted_CE": 0.4003803390099109,
+      "predicate_position": 24,
+      "predicate_unweighted_CE": 2.3667661953585704,
+      "report": {
+        "bytes": 1769295,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/cp128-warmstart-qualification-v01-cp128-warmstart-mechanics/exports/scope_conditional-step-1-report.json",
+        "sha256": "d0f3756a7d6a428be4f379d0c2bd62f400bb5bbe2bf11c5591522922b2830720"
+      },
+      "role_inventory_sha256": "0edfce6de36c5b62e5a336d048de1cca20bd9561893ee9c5fd09cc5d14f3c1a4",
+      "row_id": "fictional-retention",
+      "row_index": 0,
+      "supervised_positions": 46,
+      "weighted_CE_delta": 0.08427367955779969
+    },
+    {
+      "added_predicate_term": 0.2847303919913846,
+      "analytic_logit_gradients": {
+        "counterfactual": {
+          "other": {
+            "L1": 1.88005093194372,
+            "L2": 0.1806262327430641,
+            "Linf": 0.06418233938416452,
+            "coordinates": 24165,
+            "nonzero_coordinates": 24165,
+            "zero_coordinates": 0
+          },
+          "predicate": {
+            "L1": 0.11413689276935578,
+            "L2": 0.05713142576164387,
+            "Linf": 0.05706844638467789,
+            "coordinates": 537,
+            "nonzero_coordinates": 537,
+            "zero_coordinates": 0
+          }
+        },
+        "original": {
+          "other": {
+            "L1": 1.9642323169561253,
+            "L2": 0.1887139745076789,
+            "Linf": 0.06705617547599278,
+            "coordinates": 24165,
+            "nonzero_coordinates": 24165,
+            "zero_coordinates": 0
+          },
+          "predicate": {
+            "L1": 0.029811874977070538,
+            "L2": 0.014922387325802502,
+            "Linf": 0.014905937488535269,
+            "coordinates": 537,
+            "nonzero_coordinates": 537,
+            "zero_coordinates": 0
+          }
+        }
+      },
+      "before_checkpoint_sha256": "e69ea83a93cade5898578841b864311cae90643afda5a7eb9a220cb2e6120a11",
+      "before_weights_sha256": "3f2a4da3ecf0d74197a7ccfac7c6d68370cc66025ea21c1010a73ecac22ff6d5",
+      "by_role": {
+        "modal_constructor": {
+          "counterfactual_weighted_loss_contribution": 0.3491013584989637,
+          "original_weighted_loss_contribution": 0.3647327626108576,
+          "positions": 1,
+          "unweighted_CE_sum": 5.430465576650546
+        },
+        "modal_letter": {
+          "counterfactual_weighted_loss_contribution": 0.3924438293799362,
+          "original_weighted_loss_contribution": 0.41001594114321693,
+          "positions": 1,
+          "unweighted_CE_sum": 6.104681790354563
+        },
+        "predicate_constructor": {
+          "counterfactual_weighted_loss_contribution": 0.3796405226551795,
+          "original_weighted_loss_contribution": 0.09915983800694986,
+          "positions": 1,
+          "unweighted_CE_sum": 6.643709146465641
+        },
+        "quantifier_constructor": {
+          "counterfactual_weighted_loss_contribution": 0.6964228598782514,
+          "original_weighted_loss_contribution": 0.7276059730071283,
+          "positions": 2,
+          "unweighted_CE_sum": 10.83324448699502
+        },
+        "singleton": {
+          "counterfactual_weighted_loss_contribution": 3.295041563760783,
+          "original_weighted_loss_contribution": 3.442580738257534,
+          "positions": 39,
+          "unweighted_CE_sum": 230.65290946325482
+        },
+        "variable_reference": {
+          "counterfactual_weighted_loss_contribution": 0.82639461273155,
+          "original_weighted_loss_contribution": 0.8633973565852014,
+          "positions": 2,
+          "unweighted_CE_sum": 12.855027309157444
+        }
+      },
+      "common_denominator_only_control": 5.654314354913279,
+      "conditional_singletons_remain_zero": false,
+      "conditioning_sha256": "53fa6c194264d11fdd3021c4af82ddf8893d9efc78fd7ab19a714f4a29ad19ad",
+      "counterfactual_weight_sum": 70,
+      "counterfactual_weighted_CE": 5.939044746904663,
+      "fixed_logits_rank_winner_observation": {
+        "positions": 46,
+        "production_selector_invoked": false,
+        "target_ranks_sha256": "bc0bc3ec7103ae5fbab685fd0758d936cee781714a35acae9521cd8a8c82c927",
+        "unchanged_by_reweighting": true,
+        "winner_ids_sha256": "1a96cd43378d3afbcf84e15a10699b97f667438c7bc48e6d50ddb2f8e2cd3784",
+        "winner_target_matches": 0
+      },
+      "full_sequence_logits_sha256": "8bccbcd218767e2dc843afc26cd318960c8f9fdc541eaec3ebd04ba4e0113f2d",
+      "independent_loss_formula_value": 5.939044746904663,
+      "loss_formula_absolute_error": 0.0,
+      "maximum_counterfactual_gradient_identity_absolute_error": 5.421010862427522e-20,
+      "maximum_original_saved_logit_gradient_absolute_error": 7.118493863811359e-09,
+      "normalization_domain": "all537",
+      "objective_kind": "full537",
+      "observed_preupdate_step": 1,
+      "original_saved_loss_absolute_error": 2.8023388942699512e-08,
+      "original_weight_sum": 67,
+      "original_weighted_CE": 5.907492609610888,
+      "predicate_position": 24,
+      "predicate_unweighted_CE": 6.643709146465641,
+      "report": {
+        "bytes": 2400325,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/cp128-warmstart-qualification-v01-cp128-warmstart-mechanics/exports/full537-step-2-report.json",
+        "sha256": "a979d8e6e150e6bb2a46938ce5bcbdd55fc6019f0c64317cbe5203653e66960c"
+      },
+      "role_inventory_sha256": "ad64db0a5f5f7b144e5ed7a652e3641bc19ec9e334bc04848110c8d8acc91691",
+      "row_id": "fictional-inspection",
+      "row_index": 1,
+      "supervised_positions": 46,
+      "weighted_CE_delta": 0.03155213729377504
+    },
+    {
+      "added_predicate_term": 0.10138933319481239,
+      "analytic_logit_gradients": {
+        "counterfactual": {
+          "other": {
+            "L1": 0.4708669405575287,
+            "L2": 0.11864177327743254,
+            "Linf": 0.044357119777844595,
+            "coordinates": 24165,
+            "nonzero_coordinates": 33,
+            "zero_coordinates": 24132
+          },
+          "predicate": {
+            "L1": 0.10355671305103109,
+            "L2": 0.05753684687674061,
+            "Linf": 0.051778356525515545,
+            "coordinates": 537,
+            "nonzero_coordinates": 9,
+            "zero_coordinates": 528
+          }
+        },
+        "original": {
+          "other": {
+            "L1": 0.4919505349108509,
+            "L2": 0.12395409148388474,
+            "Linf": 0.04634325946938987,
+            "coordinates": 24165,
+            "nonzero_coordinates": 33,
+            "zero_coordinates": 24132
+          },
+          "predicate": {
+            "L1": 0.02704839519989618,
+            "L2": 0.015028280900641207,
+            "Linf": 0.013524197599948091,
+            "coordinates": 537,
+            "nonzero_coordinates": 9,
+            "zero_coordinates": 528
+          }
+        }
+      },
+      "before_checkpoint_sha256": "9d93601d35dc371ea6895e1deca175b7b41b6279a05400c695edfaa2c8e96116",
+      "before_weights_sha256": "222ee93f65e03b6a9653fe252090cb26b4a8a515ffb830f31bbab73357cd608e",
+      "by_role": {
+        "modal_constructor": {
+          "counterfactual_weighted_loss_contribution": 0.07529026007588319,
+          "original_weighted_loss_contribution": 0.07866146575092274,
+          "positions": 1,
+          "unweighted_CE_sum": 1.1711818234026274
+        },
+        "modal_letter": {
+          "counterfactual_weighted_loss_contribution": 0.06694967572521628,
+          "original_weighted_loss_contribution": 0.06994742239947968,
+          "positions": 1,
+          "unweighted_CE_sum": 1.041439400170031
+        },
+        "predicate_constructor": {
+          "counterfactual_weighted_loss_contribution": 0.13518577759308317,
+          "original_weighted_loss_contribution": 0.03530971802804411,
+          "positions": 1,
+          "unweighted_CE_sum": 2.3657511078789555
+        },
+        "quantifier_constructor": {
+          "counterfactual_weighted_loss_contribution": 0.14128894355505894,
+          "original_weighted_loss_contribution": 0.1476153141620019,
+          "positions": 2,
+          "unweighted_CE_sum": 2.1978280108564725
+        },
+        "singleton": {
+          "counterfactual_weighted_loss_contribution": 0.0,
+          "original_weighted_loss_contribution": 0.0,
+          "positions": 39,
+          "unweighted_CE_sum": 0.0
+        },
+        "variable_reference": {
+          "counterfactual_weighted_loss_contribution": 0.08811143296778125,
+          "original_weighted_loss_contribution": 0.09205672101111473,
+          "positions": 2,
+          "unweighted_CE_sum": 1.3706222906099303
+        }
+      },
+      "common_denominator_only_control": 0.4054367567222104,
+      "conditional_singletons_remain_zero": true,
+      "conditioning_sha256": "53fa6c194264d11fdd3021c4af82ddf8893d9efc78fd7ab19a714f4a29ad19ad",
+      "counterfactual_weight_sum": 70,
+      "counterfactual_weighted_CE": 0.5068260899170228,
+      "fixed_logits_rank_winner_observation": {
+        "positions": 46,
+        "production_selector_invoked": false,
+        "target_ranks_sha256": "1e566783919cc7c8ed77ca5bd55ec464e7c6e8c020b0474d32658dd9ff7b2804",
+        "unchanged_by_reweighting": true,
+        "winner_ids_sha256": "41fea9c624419cf4d2b5f7a8c4c2359611896e5bb889223a21011cfaf3b6e875",
+        "winner_target_matches": 42
+      },
+      "full_sequence_logits_sha256": "f106e31bc8a12e78821c360b90d0f0c898cbf3b5a958d249dfa3cdd790e29410",
+      "independent_loss_formula_value": 0.5068260899170228,
+      "loss_formula_absolute_error": 0.0,
+      "maximum_counterfactual_gradient_identity_absolute_error": 8.673617379884035e-19,
+      "maximum_original_saved_logit_gradient_absolute_error": 5.995906021682984e-09,
+      "normalization_domain": "original_recorded_scope_allowed_ids",
+      "objective_kind": "scope_conditional",
+      "observed_preupdate_step": 1,
+      "original_saved_loss_absolute_error": 1.8743651686303764e-08,
+      "original_weight_sum": 67,
+      "original_weighted_CE": 0.42359064135156316,
+      "predicate_position": 24,
+      "predicate_unweighted_CE": 2.3657511078789555,
+      "report": {
+        "bytes": 1769010,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/cp128-warmstart-qualification-v01-cp128-warmstart-mechanics/exports/scope_conditional-step-2-report.json",
+        "sha256": "cba8e3e65de033b889d8037e107ceb0c2df05b017d7f15f55ede408ea54b069d"
+      },
+      "role_inventory_sha256": "ad64db0a5f5f7b144e5ed7a652e3641bc19ec9e334bc04848110c8d8acc91691",
+      "row_id": "fictional-inspection",
+      "row_index": 1,
+      "supervised_positions": 46,
+      "weighted_CE_delta": 0.08323544856545967
+    }
+  ],
+  "comparison_tolerances": {
+    "independent_algebra": {
+      "absolute": 1e-13,
+      "relative": 1e-11
+    },
+    "original_saved_logit_gradient": {
+      "absolute": 2e-08,
+      "relative": 3e-05
+    },
+    "original_saved_loss": {
+      "absolute": 2e-06,
+      "relative": 3e-06
+    }
+  },
+  "distinct_score_matrices": 3,
+  "evaluation_gold_mask": 0,
+  "exposed_fictional_authored384_rows": 2,
+  "formula": {
+    "conditional_singletons": "39 singleton positions retain exactly zero conditional logit gradients; their weights remain in the normalization.",
+    "delta": "L70-L67=3*(CE_predicate-L67)/70",
+    "interpretation": "New gradient equals a common67/70 scaling plus a predicate-only residual term; it is not a uniform gradient rescale.",
+    "loss": "L70=(67*L67+3*CE_predicate)/70",
+    "other_position_logit_gradient_scale": {
+      "denominator": 70,
+      "numerator": 67,
+      "value": 0.9571428571428572
+    },
+    "predicate_logit_gradient_scale": {
+      "denominator": 70,
+      "numerator": 268,
+      "value": 3.8285714285714287
+    }
+  },
+  "inherited_custody_scope": "Exact prior accepted historical metadata; no native or storage reinspection.",
+  "inherited_original_custody": {
+    "captured_source_buffers_hashed": 88,
+    "checkpoint_bodies_opened": false,
+    "current_canonical_source_equivalence_claimed": false,
+    "original_files_stat_checked": 30,
+    "original_input_pins": 228,
+    "original_source_native_storage_closed": true,
+    "sealed_files": 29
+  },
+  "input_byte_and_identity_closing_recheck": true,
+  "input_files": 10,
+  "input_manifest": {
+    "bytes": 11850,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/controls/predicate-reweight-inputs-v01.json",
+    "sha256": "446757e3f86e5b103d21786d85a29069ea4f020c879753cd81cbae5f1e92d352"
+  },
+  "missing_state_row_cells": [
+    {
+      "objective_kind": "full537",
+      "observed_preupdate_step": 0,
+      "row_index": 1,
+      "status": "unobserved_reference_prefix_scores"
+    },
+    {
+      "objective_kind": "full537",
+      "observed_preupdate_step": 1,
+      "row_index": 0,
+      "status": "unobserved_reference_prefix_scores"
+    },
+    {
+      "objective_kind": "full537",
+      "observed_preupdate_step": 2,
+      "row_index": 0,
+      "status": "unobserved_reference_prefix_scores"
+    },
+    {
+      "objective_kind": "full537",
+      "observed_preupdate_step": 2,
+      "row_index": 1,
+      "status": "unobserved_reference_prefix_scores"
+    },
+    {
+      "objective_kind": "scope_conditional",
+      "observed_preupdate_step": 0,
+      "row_index": 1,
+      "status": "unobserved_reference_prefix_scores"
+    },
+    {
+      "objective_kind": "scope_conditional",
+      "observed_preupdate_step": 1,
+      "row_index": 0,
+      "status": "unobserved_reference_prefix_scores"
+    },
+    {
+      "objective_kind": "scope_conditional",
+      "observed_preupdate_step": 2,
+      "row_index": 0,
+      "status": "unobserved_reference_prefix_scores"
+    },
+    {
+      "objective_kind": "scope_conditional",
+      "observed_preupdate_step": 2,
+      "row_index": 1,
+      "status": "unobserved_reference_prefix_scores"
+    }
+  ],
+  "operations": {
+    "DB_calls": 0,
+    "checkpoint_bodies_opened": false,
+    "grammar_calls": 0,
+    "model_or_Torch_imported": false,
+    "network_calls": 0,
+    "new_backward_calls": 0,
+    "new_forwards": 0,
+    "new_training_updates": 0,
+    "optimizer_calls": 0,
+    "original_228_pin_88_buffer_scan_repeated": false,
+    "original_source_archive_reopened": false,
+    "production_selector_calls": 0,
+    "saved_arithmetic_only": true
+  },
+  "original_reports": 4,
+  "original_state0_row0_matrix_shared": true,
+  "passed": true,
+  "policies": {
+    "counterfactual": {
+      "complete_weight_sum": 70,
+      "name": "predicate_only_weight_four",
+      "predicate_constructor_weight": 4,
+      "singleton_weight": 1,
+      "structural_choice_weight": 4.5
+    },
+    "original": {
+      "complete_weight_sum": 67,
+      "name": "semantic_priority",
+      "predicate_constructor_weight": 1,
+      "singleton_weight": 1,
+      "structural_choice_weight": 4.5
+    }
+  },
+  "portable_provenance": {
+    "independent_result_review": {
+      "bytes": 5999,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/predicate-reweight-result-review-v01.json",
+      "sha256": "902b85e664f1917b4e7bd353d1054c87ab6661a03b280adb5a54d16c3fb15347"
+    },
+    "invocation": {
+      "bytes": 2919,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/predicate-reweight-invocation-v01.json",
+      "sha256": "e681a58614f6d15ae2d4d863984c1dc9f4c2dffa482b54379ce6a8b96998d9db"
+    },
+    "original_private_references": "Absolute descriptors inside the retained result identify local original evidence, which is not bundled by this portable summary. Replay requires the exact original bytes and commitments.",
+    "result": {
+      "bytes": 24080,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/predicate-reweight-result-v01.json",
+      "sha256": "3b6c491300456d1af89c3cc5782eb490c9a9fdb5251865df7f43d36b7e0939ec"
+    },
+    "root": "datasets_repository",
+    "scope": "Saved arithmetic acceptance only. No executable objective/profile, model execution, training efficacy or legal/corpus admission.",
+    "static_review": {
+      "bytes": 4913,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/predicate-reweight-static-review-v01.json",
+      "sha256": "3d86d5eae778b2ed56d286038c5b9f488b02c4aff73a2ca2d5f59a8c13f85fe0"
+    }
+  },
+  "prior_acceptance": {
+    "prior_independent_review": {
+      "bytes": 19971,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/reference-semantic-score-audit-v01/independent-result-review-v01.json",
+      "sha256": "fb03d258ee8fc34bec4430d06618d13b96dc72782e43797e0a9279640935acf5"
+    },
+    "prior_input_manifest": {
+      "bytes": 15381,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/reference-semantic-score-audit-v01/candidate-input-manifest-v03.json",
+      "sha256": "fe22c13eb3f7fbc72460391fd4e5057f7df783dec735150dad3e8cb5ba1c6c28"
+    },
+    "prior_result": {
+      "bytes": 184937,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/reference-semantic-score-audit-v01/reference-semantic-score-audit-result-v01.json",
+      "sha256": "67f202b657b0ee2b982a29ba2956c79fc49921d47b3f6d206dee6a0204af06b4"
+    }
+  },
+  "recorded_at_utc": "2026-10-23T04:46:16.900935+00:00",
+  "resume_duplicates_included": false,
+  "schema": "legal-ir-cp128-saved-predicate-reweight-diagnostic/v1",
+  "scientific_limits": [
+    "Four report files are observed training mechanics oracles, not four independently reviewed source examples. All remain two exposed fictional authored sparse384 rows, with training/evaluation masks zero.",
+    "Filename step1 reports score BEFORE update at state0/row0; filename step2 reports score BEFORE update at state1/row1. checkpoint_progress describes the successor, never the scored state.",
+    "The two initial policy-specific checkpoints differ in lineage/hash but share identical weights and row0 scores; count this matched observation explicitly, not as two independent score matrices.",
+    "Comparing preupdate step0/row0 with step1/row1 confounds both state and row changes; it is not within-row learning progress. The available later row1 arm comparison has different trained weights and objective history, not same-checkpoint objective causality.",
+    "Only the modal letter varies between the authored reference targets: row0 P and row1 O. Quantifier/constructor/ordered-argument reference labels are identical. No fixed-weight cross-row teacher-score pair is present.",
+    "Full537 and recorded-scoped ranks/margins use the same observed vector and original saved allowed sets. No production selector, grammar or target inventory is rerun. Singleton scoped correctness follows the recorded singleton constraint and is not learned accuracy.",
+    "Margins are signed target score minus best other candidate. A tie can have zero margin and deterministic rank greater than one due to lower-ID equal scores. Singleton competitor margins are null.",
+    "Resume-step2 duplicates are excluded. Eight of twelve objective-by-step-by-row teacher-score cells are missing. No post-step2 score matrix or missing cell is inferred.",
+    "Teacher-prefix diagnostics do not establish autonomous reconstruction, source dependence, legal meaning, a winning objective, training gain, statutory/heldout accuracy, graph or Lean admission.",
+    "Original source/native/storage closure and source-capture validation refer to the original qualified generation only. No current canonical equivalence, binary authenticity or new native/model qualification is claimed.",
+    "Reweighting fixed saved logits changes only the algebraic objective and analytic logit-gradient allocation. It changes no score, rank, winner, checkpoint, optimizer or autonomous trajectory.",
+    "Only each report's own full537 or original scope_conditional domain is compared with itself; their losses are not interchangeable accuracy.",
+    "Predicate gradient scales268/70 and every other position67/70. Conditional singleton gradients stay exactly zero although singleton weights contribute to normalization.",
+    "Analytic logit gradients are not parameter gradients, optimizer steps or evidence of the direction or magnitude of an Adam update. No convergence, reconstruction gain or causal learning result is inferred.",
+    "All original source/native/storage closure claims are reused from exact accepted prior metadata, without reopening228sourcepins,88sourcebuffers,checkpoints,sourcearchives or native/DB/resource state.",
+    "The retained v1 trainer59e5294e and model-only runtime6711203e remain byte-frozen; this run-specific arithmetic descriptor is not a production objective/profile or compatible new trained checkpoint."
+  ],
+  "score_and_analytic_gradient_coordinates": 98808,
+  "scored_positions": 184,
+  "script": {
+    "bytes": 27224,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/controls/audit_predicate_reweight_v01.py",
+    "sha256": "922eb98de2519622d7ec05348b2320617810ff226484dd21620c13360124685a"
+  },
+  "source_READ": {
+    "acquired": true,
+    "closed": true,
+    "owner": {
+      "bytes": 10375,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_source_lease.py",
+      "sha256": "42e9f07d0d458177079269d9f495f0b70512180c1adc2f7fe0bfdb05518a12f9"
+    },
+    "wait_profile": "original_default_300_seconds"
+  },
+  "status": "accepted_saved_only_authored384_objective_reweight_diagnostic",
+  "training_mask": 0,
+  "unique_input_bytes": 8608769
+}

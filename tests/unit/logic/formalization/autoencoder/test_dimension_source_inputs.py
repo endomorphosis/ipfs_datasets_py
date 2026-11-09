@@ -319,3 +319,160 @@ def test_assembly_rejects_mutated_production_evidence(tmp_path,monkeypatch,kind)
     elif kind=="vector":report768["receipts"][0]["embedding"]=[0.]*768
     else:report8["validated_rows"][0]["source_sha256"]="a"*64
     with pytest.raises(ValueError):subject.assemble_inputs(prepared,report8,report768)
+
+
+# These dynamic-source controls reuse the existing inert native backend. They
+# exercise actual bounded token/forward capture, not published model weights.
+def arbitrary_sources():
+    texts=["  Agency α files.\n", "Officer retains."]
+    return [dict(id="source:"+subject._text_sha(text),source_text=text) for text in texts]
+
+
+def arbitrary_produce(rows, **overrides):
+    arguments = dict(manifest_path="/synthetic/manifest.json", expected_manifest_sha256="a"*64,
+        model_directory="/synthetic/model", code_directory="/synthetic/code",
+        batch_size=1, max_seconds=60)
+    if "expected_source_rows_sha256" not in overrides:
+        arguments["expected_source_rows_sha256"]=complete.reference._digest(rows)
+    arguments.update(overrides)
+    return subject.produce_native768_sources(rows, **arguments)
+
+
+def arbitrary_backend(tmp_path, monkeypatch, **kwargs):
+    calls, tokenizer, model = install_backend(monkeypatch, plan(tmp_path), **kwargs)
+    monkeypatch.setattr(torch, "get_num_threads", lambda: 1)
+    return calls, tokenizer, model
+
+
+def test_arbitrary768_preserves_exact_sources_without_splits_and_captures_each_forward(tmp_path, monkeypatch):
+    rows=arbitrary_sources(); original=deepcopy(rows)
+    calls,tokenizer,_=arbitrary_backend(tmp_path,monkeypatch)
+    report=arbitrary_produce(rows)
+    assert rows == original == report["source_rows"]
+    assert tokenizer.encoded == [row["source_text"] for row in original]
+    assert all(set(row)=={"id","source_text"} for row in report["source_rows"])
+    assert calls == ["complete","encoder","complete","complete"]
+    assert len(report["vectors"]) == 2
+    assert report["schema"] == "fresh-bounded-native768-production/v1"
+    assert report["implementation"] == complete._implementation()
+    assert report["experiment_token_limit"] == 512 and report["historical_profile_token_limit"] == 8192
+    assert report["cached_profile_relabelled"] is False
+    assert report["execution_profile"] == dict(batch_size=1, device="cpu", dtype="float32",
+        pooling="cls", normalization="l2", max_tokens_including_special_tokens=512,
+        attention_implementation="eager")
+    assert report["forward_validation"] == subject.validate_forward_observations(report)
+    for row,token in zip(original,report["token_rows"]):
+        assert token["attention_mask"] == [1]*len(token["input_ids"])
+        assert token["input_ids"] == [1]+[4+ord(c)%50 for c in row["source_text"]]+[2]
+
+
+def test_arbitrary768_detaches_caller_rows_before_delegate(tmp_path, monkeypatch):
+    rows=arbitrary_sources(); original=deepcopy(rows)
+    calls,tokenizer,model=arbitrary_backend(tmp_path,monkeypatch)
+    admitted=complete._load_backend
+    def change_caller(assets):
+        rows[0]["source_text"]="Caller changed during backend load."
+        return admitted(assets)
+    monkeypatch.setattr(complete,"_load_backend",change_caller)
+    report=arbitrary_produce(rows)
+    assert report["source_rows"] == original and tokenizer.encoded == [r["source_text"] for r in original]
+    assert rows != original and len(calls)==4
+
+
+def test_arbitrary768_external_ids_and_duplicate_text_aliases_refuse_before_backend(monkeypatch):
+    calls=[]
+    monkeypatch.setattr(complete,"_load_backend",lambda *a:calls.append(True))
+    for kind in ("external_id","same_text_different_id"):
+        rows=arbitrary_sources()
+        if kind=="external_id":rows[0]["id"]="external-physical-occurrence"
+        else:rows[1]["source_text"]=rows[0]["source_text"]
+        with pytest.raises(ValueError,match="source IDs"):
+            arbitrary_produce(rows)
+    assert calls==[]
+
+
+@pytest.mark.parametrize("kind",["empty","too_many","target","duplicate_id","blank","nul",
+    "surrogate","row_chars","total_bytes","wrong_hash"])
+def test_arbitrary768_invalid_sources_refuse_before_asset_or_backend(monkeypatch,kind):
+    messages={"empty":"one to64","too_many":"one to64","target":"only id and source_text",
+        "duplicate_id":"duplicate source identifier","blank":"bounded nonempty",
+        "nul":"bounded nonempty","surrogate":"valid UTF8","row_chars":"bounded nonempty",
+        "total_bytes":"exceed1MiB","wrong_hash":"hash differs"}
+    rows=arbitrary_sources();valid_hash=complete.reference._digest(rows)
+    if kind=="empty":rows=[]
+    elif kind=="too_many":rows=[dict(id=str(i),source_text="Text") for i in range(65)]
+    elif kind=="target":rows[0]["target"]="Forbidden"
+    elif kind=="duplicate_id":rows[1]["id"]=rows[0]["id"]
+    elif kind=="blank":rows[0]["source_text"]="  "
+    elif kind=="nul":rows[0]["source_text"]="Text\x00"
+    elif kind=="surrogate":rows[0]["source_text"]="\ud800"
+    elif kind=="row_chars":rows[0]["source_text"]="x"*65537
+    elif kind=="total_bytes":
+        texts=["x"*65535+chr(65+i) for i in range(17)]
+        rows=[dict(id="source:"+subject._text_sha(text),source_text=text) for text in texts]
+    # Pin all serializable invalid rows truthfully. For an unexpected target,
+    # pin the original closed source projection so hash mismatch cannot mask
+    # failure to reject that extra field. UTF8 refusal precedes hash admission.
+    expected=valid_hash if kind=="target" else "0"*64 if kind in ("wrong_hash","surrogate") else complete.reference._digest(rows)
+    calls=[]
+    def denied(*args,**kwargs):calls.append(True);raise AssertionError("backend must not run")
+    monkeypatch.setattr(complete.reference._PROFILE,"inspect_local_assets",denied)
+    monkeypatch.setattr(complete,"_load_backend",denied)
+    with pytest.raises(ValueError,match=messages[kind]):
+        arbitrary_produce(rows,expected_source_rows_sha256=expected)
+    assert calls==[]
+
+
+@pytest.mark.parametrize("kind",["batch_bool","batch_zero","batch_large","seconds_bool",
+    "seconds_zero","seconds_large","seconds_nan","source_hash","relative_manifest","asset_hash"])
+def test_arbitrary768_invalid_execution_and_asset_config_refuse_before_backend(monkeypatch,kind):
+    overrides={"batch_bool":{"batch_size":True},"batch_zero":{"batch_size":0},
+        "batch_large":{"batch_size":17},"seconds_bool":{"max_seconds":True},
+        "seconds_zero":{"max_seconds":0},"seconds_large":{"max_seconds":601},
+        "seconds_nan":{"max_seconds":float("nan")},"source_hash":{"expected_source_rows_sha256":"bad"},
+        "relative_manifest":{"manifest_path":"relative"},"asset_hash":{"expected_manifest_sha256":"bad"}}[kind]
+    calls=[]
+    def denied(*args,**kwargs):calls.append(True);raise AssertionError("backend must not run")
+    monkeypatch.setattr(complete.reference._PROFILE,"inspect_local_assets",denied)
+    monkeypatch.setattr(complete,"_load_backend",denied)
+    with pytest.raises(ValueError):arbitrary_produce(arbitrary_sources(),**overrides)
+    assert calls==[]
+
+
+def test_arbitrary768_requires_one_torch_thread_before_backend(monkeypatch):
+    calls=[]
+    monkeypatch.setattr(torch,"get_num_threads",lambda:2)
+    monkeypatch.setattr(complete,"_load_backend",lambda *a:calls.append(True))
+    with pytest.raises(ValueError,match="CPU1"):arbitrary_produce(arbitrary_sources())
+    assert calls==[]
+
+
+def test_arbitrary768_overlength_refuses_all_rows_before_any_forward(tmp_path,monkeypatch):
+    calls,_,_=arbitrary_backend(tmp_path,monkeypatch,tokenizer=Tokenizer(overlong=True))
+    with pytest.raises(ValueError,match="512"):arbitrary_produce(arbitrary_sources())
+    assert calls==[]
+
+
+def test_arbitrary768_backend_deadline_prevents_any_forward(tmp_path,monkeypatch):
+    calls,_,_=arbitrary_backend(tmp_path,monkeypatch)
+    clock=[100.];admitted=complete._load_backend
+    monkeypatch.setattr(subject.time,"monotonic",lambda:clock[0])
+    def overdue(assets):
+        result=admitted(assets);clock[0]=161.;return result
+    monkeypatch.setattr(complete,"_load_backend",overdue)
+    with pytest.raises(TimeoutError):arbitrary_produce(arbitrary_sources(),max_seconds=60)
+    assert calls==[]
+
+
+def test_arbitrary768_wrapper_owner_drift_refuses_completed_result(tmp_path,monkeypatch):
+    calls,_,_=arbitrary_backend(tmp_path,monkeypatch)
+    original=subject._file_pin;observed=[]
+    def drift(path):
+        result=original(path)
+        if path==subject.__file__:
+            observed.append(True)
+            if len(observed)>1:result["sha256"]="0"*64
+        return result
+    monkeypatch.setattr(subject,"_file_pin",drift)
+    with pytest.raises(ValueError,match="owner changed"):arbitrary_produce(arbitrary_sources())
+    assert len(calls)==4

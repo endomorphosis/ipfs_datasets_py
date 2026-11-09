@@ -1,0 +1,157 @@
+{
+  "base_upstream": "a46500b82c37a82888ac87af1df123f1fc797bf4",
+  "current_native_catalog_read_executed": true,
+  "exclusions": [
+    "publication-manifest.json self",
+    "final publication commit hash self-reference",
+    "private raw parent captures and native resource identifiers",
+    "full private Hub API responses (exact commitments retained in public observations)",
+    "unselected checkpoints, embeddings and source corpora"
+  ],
+  "file_count": 22,
+  "files": [
+    {
+      "bytes": 17331,
+      "git_blob": "4f41d124353ebe5b2835053de66f43e997078ccc",
+      "path": "docs/autoencoders/README.md",
+      "sha256": "71b5cd2c09f8ede7580414f97f69c90333c37029a4ab0da79b8d1d2ae08c14a9"
+    },
+    {
+      "bytes": 3873,
+      "git_blob": "df2c5fed640d8d80845a0ab555d8403f5969e9b8",
+      "path": "docs/autoencoders/evidence/legal-ir-asset-reconciliation-20261016/README.md",
+      "sha256": "8ea647e7d99345ea5d98c29be742cf535c6ac104f2a05591746ba6ee702a32b5"
+    },
+    {
+      "bytes": 47748,
+      "git_blob": "a159fd199d516eb8ea36d30813ad4b681092821b",
+      "path": "docs/autoencoders/evidence/legal-ir-asset-reconciliation-20261016/asset-registration-inventory.json",
+      "sha256": "c629ee4f55d381d65f574490b8e3ec4613e2ebdde50846b701770726952931a2"
+    },
+    {
+      "bytes": 13332,
+      "git_blob": "12b5dd4392489f482b6cfb3b872f4d7bd0401141",
+      "path": "docs/autoencoders/evidence/legal-ir-asset-reconciliation-20261016/catalog-driver-independent-review.json",
+      "sha256": "c644e88e4688cc76541232e671a5b6149fdd36a7ef6f7195f9f64f988eb37247"
+    },
+    {
+      "bytes": 6507,
+      "git_blob": "978fca1defdee6a6446ba56f67be614be33aedec",
+      "path": "docs/autoencoders/evidence/legal-ir-asset-reconciliation-20261016/catalog-input-request.json",
+      "sha256": "19eeaab68a6349fa024791f831b45c20017df3a113f0b6edce4e231511b0754c"
+    },
+    {
+      "bytes": 2150,
+      "git_blob": "e61dbeb4b60c3eff1ef9962ccb93d58e73ef65dd",
+      "path": "docs/autoencoders/evidence/legal-ir-asset-reconciliation-20261016/catalog-native-durability-public.json",
+      "sha256": "3924ca965ad2c624c3e65901e67faf9a89ab312920b6d9a238e3519054424ceb"
+    },
+    {
+      "bytes": 19065,
+      "git_blob": "f6820f87dc1fd13dd9d7bc55fa0c73a1890b7a7d",
+      "path": "docs/autoencoders/evidence/legal-ir-asset-reconciliation-20261016/catalog-native-independent-audit.json",
+      "sha256": "3279dc387916877749671c6bb5320390286f40b9feeca3cc5e58b62679275713"
+    },
+    {
+      "bytes": 7228,
+      "git_blob": "352c9f39811b2bd846cb683c24a1f53bb2290ba4",
+      "path": "docs/autoencoders/evidence/legal-ir-asset-reconciliation-20261016/catalog-validation-request.json",
+      "sha256": "fcc0b0d26dd4848b14329f727449e0240abdac3be2eccd844727a9653abae2e0"
+    },
+    {
+      "bytes": 71465,
+      "git_blob": "797335eea245dd39bfc35d3808d89b7fe6607598",
+      "path": "docs/autoencoders/evidence/legal-ir-asset-reconciliation-20261016/checkpoint-asset-survey.json",
+      "sha256": "410e979608202840d032f1a932c27095ffaf1cf2c00ff57afd72b0b2fbb541d2"
+    },
+    {
+      "bytes": 740075,
+      "git_blob": "16307089b28203bdb6ad637b7059775516105ad2",
+      "path": "docs/autoencoders/evidence/legal-ir-asset-reconciliation-20261016/current-legal-ir-catalog.json",
+      "sha256": "c3aef6d860c3bcedb3154af13dcdc844fb0f48e8fa4d5aa2dfdcc2a761d7b235"
+    },
+    {
+      "bytes": 6725,
+      "git_blob": "16401f721db4a659b84fff8a02952a27fa6a263a",
+      "path": "docs/autoencoders/evidence/legal-ir-asset-reconciliation-20261016/documentation-review.json",
+      "sha256": "8192b04589db15801bbfa0eb3c3d6e303e430db6e5a76cca0c5c5d19f1b45275"
+    },
+    {
+      "bytes": 72170,
+      "git_blob": "04691c3ba8e35e8fa8246bcc4a10991c2cd2d0d4",
+      "path": "docs/autoencoders/evidence/legal-ir-asset-reconciliation-20261016/embedding-asset-survey.json",
+      "sha256": "e65031db088c2a7f713af53d49696c8eb48d234513f29a4453e2e6f040a2e742"
+    },
+    {
+      "bytes": 22384,
+      "git_blob": "984b8d41602631b43879d48e48cc5411c679ae5c",
+      "path": "docs/autoencoders/evidence/legal-ir-asset-reconciliation-20261016/historical-registration-survey.json",
+      "sha256": "267d8756c4a0d587bcda3f0bb0cb0411bbf8d4aee2e62ef1b665d4767a1f0e5b"
+    },
+    {
+      "bytes": 10568,
+      "git_blob": "cd7530ffb378efef10f3016da1a74d78bec4611f",
+      "path": "docs/autoencoders/evidence/legal-ir-asset-reconciliation-20261016/legal-ir-autoencoder-384d-lane-inventory.json",
+      "sha256": "77492b849bd2fa75a55a5d4f79de8eb5a3f6059346ab931df9ed5ccda75e1776"
+    },
+    {
+      "bytes": 7577,
+      "git_blob": "1ebfc87dca257b213157aa46119d510c2646b585",
+      "path": "docs/autoencoders/evidence/legal-ir-asset-reconciliation-20261016/legal-ir-autoencoder-768d-lane-inventory.json",
+      "sha256": "7c48396a3d0332b0dacbb248fdd5c6ab037080475ebde137aa2217973d514595"
+    },
+    {
+      "bytes": 7495,
+      "git_blob": "6d97bc18f186aa91cecd1f6d85fc121a8ce6bb6e",
+      "path": "docs/autoencoders/evidence/legal-ir-asset-reconciliation-20261016/legal-ir-autoencoder-8d-lane-inventory.json",
+      "sha256": "6c5515387d1280ff0dbe55270bd655b612cc6ae2c76293f1c7bc3e77f4f49b0f"
+    },
+    {
+      "bytes": 6636,
+      "git_blob": "54ecd6950227bc2398b761ae34519ce94083ca85",
+      "path": "docs/autoencoders/evidence/legal-ir-asset-reconciliation-20261016/missing-registration-worklist.json",
+      "sha256": "ad7cf6097fa2f5cfc90d8d2133cc10b440b7e928b1e09bf43a5b8c1c12c5a18a"
+    },
+    {
+      "bytes": 43706,
+      "git_blob": "507cd8d375d92cb3cb006ae65757d9da9acf599c",
+      "path": "docs/autoencoders/evidence/legal-ir-asset-reconciliation-20261016/public-model-availability.json",
+      "sha256": "c3db2013e83e5d1aa5a17424a40cc784650b834f978af19f63f5b294096de8a8"
+    },
+    {
+      "bytes": 22151,
+      "git_blob": "e2e773318abfccbe52291dc154015eb97aa610b6",
+      "path": "docs/autoencoders/evidence/legal-ir-asset-reconciliation-20261016/read_current_ir_catalog.py",
+      "sha256": "7ff80387e1674c0b94416af3e1a9d59ff58dedd73620755cec342aaefe2aa278"
+    },
+    {
+      "bytes": 15893,
+      "git_blob": "f9e5346960c0537fd5ae2fd8da3704d0bbb389ac",
+      "path": "docs/autoencoders/evidence/legal-ir-asset-reconciliation-20261016/selected-assets-public-join.json",
+      "sha256": "71c5d43b034bc06944b53f34e41ded7a307bae3b2fa541ea0cfb498f1eb04c7b"
+    },
+    {
+      "bytes": 9045,
+      "git_blob": "3970627b70eba75b0db54b6fcbaa9479ce191d2b",
+      "path": "docs/autoencoders/legal_ir_asset_reconciliation_20261016.md",
+      "sha256": "a11219f4cf99cefc6390ef8eaeaa7ef820160ada0383da59f8e7690e5c653c00"
+    },
+    {
+      "bytes": 95428,
+      "git_blob": "04afb62ce3c3a311f3841b8c6450569b901a4e9b",
+      "path": "docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
+      "sha256": "08f646d2112bfc21685ce947284cbaec1b06c197ab783daa9e9b3c4a899e7958"
+    }
+  ],
+  "method": "Exact staged Git bodies equal working bytes. One source-pinned public read-only IR catalog observation with independent native closeout; metadata-only retained asset and public Hub surveys.",
+  "model_or_weight_load_executed": false,
+  "models_uploaded": false,
+  "native_job_reviewed_baseline": "1b7be0c601ec3373c2726e4022737e9bc20827e1",
+  "native_request_sha256": "fcc0b0d26dd4848b14329f727449e0240abdac3be2eccd844727a9653abae2e0",
+  "new_model_weights": false,
+  "new_training": false,
+  "registry_mutated": false,
+  "schema": "legal-ir-asset-reconciliation-publication-manifest/v1",
+  "semantic_gold_or_teacher_promotion": false,
+  "total_bytes": 1248552
+}

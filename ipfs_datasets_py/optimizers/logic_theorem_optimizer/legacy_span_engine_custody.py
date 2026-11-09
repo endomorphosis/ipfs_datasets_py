@@ -286,6 +286,18 @@ class LegacySpanEngineVerifier:
         _need(bytecode == launch["bytecode"] and os.environ.get("PYTHONPYCACHEPREFIX") == bytecode["path"]
               and sys.pycache_prefix == bytecode["path"] and sys.dont_write_bytecode,
               "fresh engine bytecode environment differs")
+        # Match the external owner's bounded disk-lock allowance. Native
+        # administrative censuses may hold this lock longer than five seconds.
+        # Read before sampling process/lease state so a blocked read cannot
+        # authorize execution from stale owner, birth or expiration observations.
+        from ipfs_datasets_py.logic.autoformal.span_ingest_runtime import _ledger
+        ledger = _ledger(spec["resource_ledger_path"], lock_timeout_seconds=60)
+        _need(launch["producer_sources"] == _producer_sources(), "engine source generation changed while reading disk metadata")
+        current_bytecode = _bytecode_identity(launch["bytecode"]["path"], spec["runtime_directory"])
+        _need(current_bytecode == launch["bytecode"]
+              and os.environ.get("PYTHONPYCACHEPREFIX") == current_bytecode["path"]
+              and sys.pycache_prefix == current_bytecode["path"] and sys.dont_write_bytecode,
+              "fresh engine bytecode environment changed while reading disk metadata")
         child = host._process(os.getpid())
         owner = host._process(launch["owner"]["pid"])
         _need(child is not None and {key: child[key] for key in ("pid", "birth")} == launch["child"]
@@ -305,10 +317,6 @@ class LegacySpanEngineVerifier:
               and lease["request_id"] == "daemon:" + launch["reservation_id"]
               and all(lease[key] == spec[key] for key in ("cpu_slots", "memory_mb", "child_process_slots")),
               "native engine owner lease scope differs")
-        # Reuse the fenced runtime's bounded, shared-lock native metadata read.
-        # This never opens the span cache or copies an active catalog.
-        from ipfs_datasets_py.logic.autoformal.span_ingest_runtime import _ledger
-        ledger = _ledger(spec["resource_ledger_path"])
         row = ledger["reservations"].get(launch["reservation_id"])
         _need(ledger["roots"] == launch["roots"] and type(row) is dict and row.get("status") == "active"
               and row.get("owner_pid") == owner["pid"] and row.get("child") == launch["child"]

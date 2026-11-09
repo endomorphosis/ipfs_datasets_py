@@ -42,6 +42,79 @@ def _admit_loading(loading, actual_keys, stored_keys):
                      for key in actual_keys), "expected complete encoder/classifier architecture required")
 
 
+def _restore_published_nonpersistent_buffers(torch, model):
+    """Rebuild constructor buffers that meta-device loading leaves uninitialized.
+
+    ``position_ids`` and the RoPE frequency cache are ``persistent=False``.
+    They are not checkpoint weights. Transformers 5 builds the module on the
+    meta device and does not rerun those constructors, so the published
+    position arange and the published NTK cache method are applied again.
+    Model bytes, classifier tensors, and the 8192-token profile stay unchanged.
+    """
+    embeddings = model.new.embeddings
+    config = model.config
+    embeddings.register_buffer(
+        "position_ids",
+        torch.arange(config.max_position_embeddings),
+        persistent=False,
+    )
+    _require(embeddings.position_embedding_type == "rope",
+             "published encoder position embedding is not rope")
+    rotary = embeddings.rotary_emb
+    scaling = config.rope_scaling
+    _require(isinstance(scaling, dict) and scaling.get("type") == "ntk"
+             and scaling.get("mixed_b", None) is None
+             and getattr(rotary, "scaling_factor", None) == scaling.get("factor")
+             and getattr(rotary, "mixed_b", None) is None,
+             "published NTK rope settings differ")
+    rotary._set_cos_sin_cache(
+        config.max_position_embeddings * rotary.scaling_factor,
+        torch.device("cpu"),
+        torch.float32,
+    )
+    dimension = int(rotary.dim)
+    base = float(rotary.base) * float(rotary.scaling_factor)
+    expected = 1.0 / (base ** (torch.arange(0, dimension, 2).float() / dimension))
+    expected = expected / (float(rotary.scaling_factor) ** (2 / dimension))
+    _require(torch.allclose(rotary.inv_freq.detach().cpu(), expected),
+             "published NTK frequencies differ")
+    cache_length = int(config.max_position_embeddings * rotary.scaling_factor)
+    _require(int(rotary.cos_cached.shape[0]) == cache_length
+             and int(rotary.sin_cached.shape[0]) == cache_length
+             and bool(torch.isfinite(rotary.cos_cached).all())
+             and bool(torch.isfinite(rotary.sin_cached).all()),
+             "published rope cache is not finite")
+    _require(torch.equal(embeddings.position_ids.detach().cpu(),
+                         torch.arange(config.max_position_embeddings)),
+             "published position ids are not the constructor arange")
+
+
+def _published_encoder_attention_bias(self, attention_mask, input_shape, dtype=None):
+    """Additive token-padding bias the published encoder forward still calls.
+
+    Transformers 5 removed ``PreTrainedModel.get_extended_attention_mask``.
+    The published non-decoder path expands a 1/0 token mask and turns padding
+    positions into the dtype minimum before softmax. An all-ones mask stays
+    zero. This does not manufacture 768 coordinates or change model bytes.
+    """
+    import torch
+
+    _require(not getattr(self.config, "is_decoder", False),
+             "published 768D encoder is not a decoder mask")
+    if attention_mask.dim() == 3:
+        extended = attention_mask[:, None, :, :]
+    elif attention_mask.dim() == 2:
+        extended = attention_mask[:, None, None, :]
+    else:
+        raise ValueError(
+            "published attention mask rank differs: " + str(tuple(attention_mask.shape))
+        )
+    if dtype is None:
+        dtype = next(self.parameters()).dtype
+    extended = extended.to(dtype=dtype)
+    return (1.0 - extended) * torch.finfo(dtype).min
+
+
 def _load_backend(assets):
     import torch
     from safetensors import safe_open
@@ -95,6 +168,9 @@ def _load_backend(assets):
         model.eval()
         _require(all(parameter.device.type == "cpu" and parameter.dtype == torch.float32
                      for parameter in model.parameters()), "complete model must be CPU float32")
+        _restore_published_nonpersistent_buffers(torch, model)
+        model.new.get_extended_attention_mask = types.MethodType(
+            _published_encoder_attention_bias, model.new)
         return torch, tokenizer, model, {"architecture": "NewForTokenClassification", "tensor_count": len(stored_keys),
             "tensor_names": sorted(stored_keys), "missing_keys": [], "unexpected_keys": [], "mismatched_keys": [],
             "error_msgs": [], "classifier_loaded": True, "classifier_logits_used_for_dense_embedding": False}

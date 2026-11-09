@@ -13,6 +13,7 @@ import importlib.util
 import json
 import os
 from pathlib import Path
+import re
 import sys
 import time
 
@@ -54,7 +55,24 @@ def main(argv=None):
     parser.add_argument("--manifest-sha256", required=True)
     parser.add_argument("--output-directory", type=Path, required=True)
     parser.add_argument("--select-entry-cid", action="append", default=[])
+    parser.add_argument("--reuse-inventory", type=Path,
+                        help="Load this exact retained inventory; never rebuild it.")
+    parser.add_argument("--inventory-sha256")
+    parser.add_argument("--inventory-bytes", type=int)
     args = parser.parse_args(argv)
+    reuse_requested = any(value is not None for value in
+                          (args.reuse_inventory, args.inventory_sha256, args.inventory_bytes))
+    if reuse_requested:
+        if (args.reuse_inventory is None or args.inventory_sha256 is None
+                or args.inventory_bytes is None):
+            parser.error("retained inventory requires --reuse-inventory, --inventory-sha256 and --inventory-bytes")
+        if not re.fullmatch(r"[0-9a-f]{64}", args.inventory_sha256):
+            parser.error("--inventory-sha256 requires a lowercase SHA-256")
+        if not 1 <= args.inventory_bytes <= 64 * 1024**2:
+            parser.error("--inventory-bytes must be between 1 byte and 64 MiB")
+        if (not 1 <= len(args.select_entry_cid) <= 256
+                or len(set(args.select_entry_cid)) != len(args.select_entry_cid)):
+            parser.error("retained inventory requires 1 to 256 unique explicit --select-entry-cid values")
     sys.path.insert(0, str(ROOT))
     sys.dont_write_bytecode = True
     for key, value in {
@@ -77,7 +95,7 @@ def main(argv=None):
     from ipfs_datasets_py.logic.autoformal.tree_pin import require_workspace_logic_tree
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_uscode_import import load_uscode_release
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_uscode_inventory import (
-        build_uscode_source_inventory, materialize_uscode_inventory_inputs,
+        build_uscode_source_inventory, load_uscode_source_inventory, materialize_uscode_inventory_inputs,
     )
 
     pin = require_workspace_logic_tree()
@@ -110,10 +128,21 @@ def main(argv=None):
     started = time.perf_counter()
     _write(output / "sources-before.json", before)
     try:
-        inventory = build_uscode_source_inventory(release, resolver=resolver)
-        report["inventory"] = inventory.save(output / "inventory.json")
+        if reuse_requested:
+            inventory = load_uscode_source_inventory(args.reuse_inventory,
+                expected_sha256=args.inventory_sha256, expected_size_bytes=args.inventory_bytes)
+            report["inventory"] = {"path": str(args.reuse_inventory.absolute()),
+                "sha256": inventory.sha256, "bytes": len(inventory.to_bytes())}
+            report["retained_inventory_reused"] = True
+            report["source_inventory_rebuilt"] = False
+        else:
+            inventory = build_uscode_source_inventory(release, resolver=resolver)
+            report["inventory"] = inventory.save(output / "inventory.json")
         report["summary"] = inventory.summary()
-        report["source_inventory_seconds"] = time.perf_counter() - started
+        if reuse_requested:
+            report["inventory_validation_seconds"] = time.perf_counter() - started
+        else:
+            report["source_inventory_seconds"] = time.perf_counter() - started
         if args.select_entry_cid:
             selected = materialize_uscode_inventory_inputs(
                 inventory, args.select_entry_cid, output / "selected-inputs",
