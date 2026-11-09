@@ -1,0 +1,6 @@
+[
+ {"name": "Județul Olt", "qsearch": "Olt County", "qid": "Q188945", "url": "https://cjolt.ro/mol/hotararile-consiliului-judetean-olt/hotararile-consiliului-judetean/hotararile-consiliului-judetean-2026/", "iso": "RO-OT", "pdf_re": "hcj|/hot[^/]*\\.pdf|hot[aă]r[aâ]r"},
+ {"name": "Județul Vâlcea", "qsearch": "Vâlcea County", "qid": "Q186838", "url": "https://cjvalcea.ro/monitorul-oficial-local/hotararile-autoritatii-deliberative/2026-hotararile-autoritatii-deliberative/", "iso": "RO-VL", "pdf_re": "hcj|/hot[^/]*\\.pdf|hot[aă]r[aâ]r"},
+ {"name": "Județul Prahova", "qsearch": "Prahova County", "qid": "Q188665", "url": "https://cjph.ro/consiliul-judetean-prahova/consiliul-judetean/sedinte/hotararile-consiliului-judetean-prahova/hotarari-2026/", "iso": "RO-PH", "pdf_re": "hcj|/hot[^/]*\\.pdf|hot[aă]r[aâ]r"},
+ {"name": "Județul Neamț", "qsearch": "Neamț County", "qid": "Q188661", "url": "https://cjneamt.ro/ro/servicii-si-autorizatii-online/monitorul-oficial-local-hotarari-ale-consiliului-judetean-2026/", "iso": "RO-NT", "pdf_re": "hcj|/hot[^/]*\\.pdf|hot[aă]r[aâ]r"}
+]

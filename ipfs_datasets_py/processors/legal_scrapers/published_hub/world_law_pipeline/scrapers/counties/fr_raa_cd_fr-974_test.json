@@ -1,0 +1,27 @@
+{
+ "country_code": "FR",
+ "place_id": "wd:Q17070",
+ "qid": "Q17070",
+ "place_name": "La Réunion",
+ "iso_3166_2": "FR-974",
+ "admin_level": "departement",
+ "language": "fr",
+ "doc_type": "gazette_act",
+ "consolidated": false,
+ "platform": "fr_raa_conseil_departemental",
+ "source_org": "Conseil départemental — La Réunion",
+ "issuer": "conseil_departemental",
+ "max_bytes": 52428800,
+ "index_url": "https://actes.departement974.fr/webdelibplus/jsp/summary_orders.jsp?role=usager",
+ "crawl_delay": 3.0,
+ "urls": [
+  "https://actes.departement974.fr/webdelibplus/jsp/downloadFile.jsp?pdf=EYxm5hbUgmkUf5i6vmXy51%2BKyPA8idJZEYE4p9aCApqRyzGpHtR%2F8jOavM7mte0m7FundQhO8HP8sihre1PoNjKtxX%2Fg7m7ugzFAm%2FV5Hne%2FOcLtf3ox9RoWtHfFUHiXAsPEZmDVcK77x2Fy3nB%2B523fLRRZGkoQ3ArL4qOspxhrvsyEseDWmw%3D%3D",
+  "https://actes.departement974.fr/webdelibplus/jsp/downloadFile.jsp?pdf=EYxm5hbUgmkUf5i6vmXy51%2BKyPA8idJZEYE4p9aCApqRyzGpHtR%2F8jOavM7mte0m7FundQhO8HP8sihre1PoNjKtxX%2Fg7m7uUmk61v%2BDwai%2FOcLtf3ox9RoWtHfFUHiXGK0YZZjmLBNjU%2FflKY9MkE3Z3HA0EZxGZxoJjuJjhqc%3D",
+  "https://actes.departement974.fr/webdelibplus/jsp/downloadFile.jsp?pdf=EYxm5hbUgmkUf5i6vmXy51%2BKyPA8idJZEYE4p9aCApqRyzGpHtR%2F8jOavM7mte0m7FundQhO8HP8sihre1PoNjKtxX%2Fg7m7ukbP2hsX23NKa7ujYrGrAGoQfKmAn29kI7a4tm5kLw3j1prWUm4vjVZAhkQnRDOLt10V5PFbs%2B7jJokXnOqNLI5qzrjBjrNNI"
+ ],
+ "titles": {
+  "https://actes.departement974.fr/webdelibplus/jsp/downloadFile.jsp?pdf=EYxm5hbUgmkUf5i6vmXy51%2BKyPA8idJZEYE4p9aCApqRyzGpHtR%2F8jOavM7mte0m7FundQhO8HP8sihre1PoNjKtxX%2Fg7m7ugzFAm%2FV5Hne%2FOcLtf3ox9RoWtHfFUHiXAsPEZmDVcK77x2Fy3nB%2B523fLRRZGkoQ3ArL4qOspxhrvsyEseDWmw%3D%3D": "ARRETE CIRC N° 2026 SRT 44 - RD 1 - POSSESSION - Arrêté - (sans annexe) 05/10/2026 06/10/2026",
+  "https://actes.departement974.fr/webdelibplus/jsp/downloadFile.jsp?pdf=EYxm5hbUgmkUf5i6vmXy51%2BKyPA8idJZEYE4p9aCApqRyzGpHtR%2F8jOavM7mte0m7FundQhO8HP8sihre1PoNjKtxX%2Fg7m7uUmk61v%2BDwai%2FOcLtf3ox9RoWtHfFUHiXGK0YZZjmLBNjU%2FflKY9MkE3Z3HA0EZxGZxoJjuJjhqc%3D": "ARRETE CIRC N° 2026SRT42 RD 5 - St Paul - Arrêté - (sans annexe) 28/09/2026 01/10/2026",
+  "https://actes.departement974.fr/webdelibplus/jsp/downloadFile.jsp?pdf=EYxm5hbUgmkUf5i6vmXy51%2BKyPA8idJZEYE4p9aCApqRyzGpHtR%2F8jOavM7mte0m7FundQhO8HP8sihre1PoNjKtxX%2Fg7m7ukbP2hsX23NKa7ujYrGrAGoQfKmAn29kI7a4tm5kLw3j1prWUm4vjVZAhkQnRDOLt10V5PFbs%2B7jJokXnOqNLI5qzrjBjrNNI": "ADS 592 MME L. ROBERT RSPI secteur St Denis 1 TAS NORD - Arrêté - (sans annexe) 21/10/2026 22/10/2026"
+ }
+}

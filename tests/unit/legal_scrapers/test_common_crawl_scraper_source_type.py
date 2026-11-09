@@ -43,3 +43,5 @@ async def test_fetch_common_crawl_passes_state_jurisdiction() -> None:
     assert observed["domain"] == "texreg.sos.state.tx.us"
     assert observed["jurisdiction"] == "state"
     assert observed["state_code"] == "TX"
+    assert observed["country_code"] == "US"
+    assert observed["government_shard_download"] is True

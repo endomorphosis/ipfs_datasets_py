@@ -1,0 +1,60 @@
+[
+ {
+  "name": "Guadeloupe",
+  "iso": "FR-971",
+  "qid": "Q17012",
+  "url": "https://www.cg971.fr/documents-reglementaires/",
+  "issuer": "conseil_departemental",
+  "year_re": "uploads/202[56]/",
+  "include_re": "\\A(?!.*(remuneration|egalite-professionnelle))",
+  "crawl_delay": 3,
+  "note": "cg971.fr 'Documents réglementaires' (WordPress): BAA (bulletins des actes administratifs) 2025-2026, délibérations, budgets uploaded 2025-2026 (~50 PDFs; year_re on /uploads/2025|2026/ as BAA file names carry the act year). robots.txt allows all except /wp-content/uploads/wpforms/. No Crawl-delay (3 s). QID Q17012 (P300=FR-971)."
+ },
+ {
+  "name": "La Réunion",
+  "iso": "FR-974",
+  "qid": "Q17070",
+  "url": "https://actes.departement974.fr/webdelibplus/jsp/summary_orders.jsp?role=usager",
+  "extra_urls": [
+   "https://actes.departement974.fr/webdelibplus/jsp/summary_orders.jsp?role=usager&date=01-2026",
+   "https://actes.departement974.fr/webdelibplus/jsp/summary_orders.jsp?role=usager&date=02-2026",
+   "https://actes.departement974.fr/webdelibplus/jsp/summary_orders.jsp?role=usager&date=03-2026",
+   "https://actes.departement974.fr/webdelibplus/jsp/summary_orders.jsp?role=usager&date=04-2026",
+   "https://actes.departement974.fr/webdelibplus/jsp/summary_orders.jsp?role=usager&date=05-2026",
+   "https://actes.departement974.fr/webdelibplus/jsp/summary_orders.jsp?role=usager&date=06-2026",
+   "https://actes.departement974.fr/webdelibplus/jsp/summary_orders.jsp?role=usager&date=07-2026",
+   "https://actes.departement974.fr/webdelibplus/jsp/summary_orders.jsp?role=usager&date=08-2026",
+   "https://actes.departement974.fr/webdelibplus/jsp/summary_orders.jsp?role=usager&date=09-2026",
+   "https://actes.departement974.fr/webdelibplus/jsp/summary_orders.jsp?role=usager&date=10-2026"
+  ],
+  "issuer": "conseil_departemental",
+  "link_re": "[^\"]*openfile\\.jsp\\?[^\"]+",
+  "href_sub": [
+   "openfile\\.jsp\\?datePub=[^&]*&name=[^&]*&pdf=",
+   "downloadFile.jsp?pdf="
+  ],
+  "block_re": "<tr[ >]",
+  "crawl_delay": 3,
+  "note": "Webdelib+ arrêtés (actes.departement974.fr, linked from departement974.fr 'Les Actes Administratifs'); monthly summary_orders &date=MM-2026 (01..10, ~500 acts); openfile.jsp viewer -> downloadFile.jsp?pdf=<token> (application/pdf, checked 2026-10-26); query-string URLs -> URL-hash doc_id suffix. robots.txt 301 -> HTML (no rules = allow). 3 s. QID Q17070 (P300=FR-974)."
+ },
+ {
+  "name": "Nord",
+  "iso": "FR-59",
+  "qid": "Q12661",
+  "url": "https://lenord.fr/espace-documentaire?_items_per_page=24",
+  "issuer": "conseil_departemental",
+  "detail_re": "/espace-documentaire/(?:arrete|deliberation)-[^\"]+",
+  "pdf_hosts": [
+   "documents.lenord.fr"
+  ],
+  "link_re": "https://documents\\.lenord\\.fr/files/[^\"]+?\\.pdf",
+  "pager": {
+   "param": "page",
+   "max": 160,
+   "stop_empty": 3
+  },
+  "crawl_delay": 3,
+  "note": "lenord.fr 'Espace documentaire' (arrêtés + délibérations, newest first, 24/page; 2026 ~ pages 0-105, ~2,500 acts); each item -> detail page -> PDF on documents.lenord.fr/files/<id>/<name>.pdf. robots lenord.fr 'Allow: /'; documents.lenord.fr/robots.txt 302 -> HTML (no rules = allow). 3 s. QID Q12661 (P300=FR-59).",
+  "title_re": "class=\"__title\"[^>]*>(.*?)</p>"
+ }
+]

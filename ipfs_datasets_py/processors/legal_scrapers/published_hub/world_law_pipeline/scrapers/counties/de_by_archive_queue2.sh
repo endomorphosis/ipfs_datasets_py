@@ -1,0 +1,15 @@
+#!/bin/sh
+# 2026-10-23 14:10: archive-only queue for de_by10 robots-blocked URLs (modeled on de_by_archive_queue.sh):
+#   Garmisch-Partenkirchen 139 (robots Disallow: /media/files/; de_by10 run hit an open archive breaker),
+#   Neuburg-Schrobenhausen 663 = 382 failed + 281 past the 400 cap (robots Disallow: /output/ download.php?fid=...).
+# Idempotent rounds (archive_retry skips already staged source_urls; query URLs get URL-hash doc_id suffix), 30 min apart, disk guard 45 GB.
+cd /workspace/world_law/pipeline/scrapers/counties
+PY=/workspace/world_law/pipeline/venv/bin/python
+for round in 1 2 3 4 5 6 7 8; do
+  for c in de_by_kreisrecht_landkreis_garmisch_partenkirchen_archive.json de_by_kreisrecht_landkreis_neuburg_schrobenhausen_archive.json; do
+    df -P /workspace | awk 'NR==2{exit ($4/1048576<45)}' || { echo "STOP disk"; exit 0; }
+    echo "== round $round $c $(date)"; timeout 3000 $PY -u archive_retry.py $c 45 2>&1 | grep --line-buffered -E '^(todo|OK|MISS|INVALID|SKIP_NOTPDF|written)'
+  done
+  sleep 1800
+done
+echo "done $(date)"

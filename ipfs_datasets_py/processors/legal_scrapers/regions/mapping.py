@@ -307,6 +307,7 @@ def normalize_region_id(value: str) -> str:
         "asia": "asia_pacific",
         "asia_pac": "asia_pacific",
         "asiapacific": "asia_pacific",
+        "apac": "asia_pacific",
         "oceania": "asia_pacific",
         "pacific": "asia_pacific",
         "ap": "asia_pacific",

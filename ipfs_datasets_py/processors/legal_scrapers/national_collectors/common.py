@@ -27,7 +27,84 @@ from xml.etree import ElementTree as ET
 import requests
 from requests.adapters import HTTPAdapter
 
-ROOT = _CORPORA
+# --- robots.txt guard wiring (CoS-approved 2026-10-01) ----------------------------------------
+# Every request sent through get_session() / http_get() is checked against the host's robots.txt first
+# (robots_guard: fetched once per scheme+host and cached for the run, RFC 9309 matching, dated
+# snapshot under <cc>/logs/robots/) and spaced by the host's Crawl-delay (per-host sleep).
+# Policy is robots_guard's documented one: robots.txt 404/410/other 4xx = no rules = allow;
+# 5xx/429/401/403/WAF page/timeout/network error = fail CLOSED (RobotsUnavailable).
+# A refused URL is never requested: the guard logs it (logger "robots_guard", message
+# "RobotsBlocked ...", plus a row in <cc>/logs/robots_blocked.jsonl) and RobotsBlockedFetch is
+# raised inside the send; it subclasses robots_guard.RobotsBlocked (PermissionError),
+# requests.RequestException and RuntimeError, so the existing `except` clauses around these
+# helpers turn it into their usual error value (error dict / [] / None / failure) unchanged.
+import logging as _rg_logging
+from urllib.parse import urlsplit as _rg_urlsplit
+try:
+    import robots_guard as _rg
+except ImportError:  # package-style import (ipfs_datasets_py)
+    try:
+        from . import robots_guard as _rg  # type: ignore
+        import sys as _rg_sys
+        _rg_sys.modules.setdefault("robots_guard", _rg)  # one guard + one robots cache per process
+    except Exception:  # pragma: no cover
+        _rg = None
+_rg_log = _rg_logging.getLogger("robots_guard")
+if _rg is None:  # pragma: no cover
+    _rg_log.warning("robots_guard module not importable: common fetches will fail closed")
+    _RG_BASE = PermissionError
+else:
+    _RG_BASE = _rg.RobotsBlocked
+
+
+class RobotsBlockedFetch(_RG_BASE, requests.exceptions.RequestException, RuntimeError):
+    """robots.txt disallows the URL (or robots.txt is unavailable: fail closed); not fetched."""
+
+    def __init__(self, msg, decision=None):
+        PermissionError.__init__(self, msg)
+        self.decision = decision
+        self.response = None
+        self.request = None
+
+
+def _robots_blocked(url, caller=""):
+    """None if the URL may be fetched (after the per-host Crawl-delay wait); else the refusing
+    robots_guard.Decision (already logged)."""
+    if _rg is None:
+        raise RobotsBlockedFetch("robots_guard unavailable; refusing unguarded request")
+    if not url:
+        return None
+    sp = _rg_urlsplit(str(url))
+    if (sp.scheme or "").lower() not in ("http", "https"):
+        return None
+    d = _rg.check(str(url))
+    if not d.allowed:
+        _rg.report_blocked(d, caller)
+        _rg_log.warning("RobotsBlocked %s: %s (%s) caller=%s", d.reason, url, d.rule, caller)
+        return d
+    # shared per-host clock in robots_guard: waits Crawl-delay once per request, measured from the
+    # last request to the host; a pre-flight robots_guard.guard()/wait() of this request is not repeated
+    (getattr(_rg, "wait_send", None) or _rg.wait)(str(url))
+    return None
+
+
+def _robots_gate(url, caller=""):
+    d = _robots_blocked(url, caller)
+    if d is not None:
+        raise RobotsBlockedFetch(f"RobotsBlocked: robots guard {d.reason} {url} ({d.rule})", d)
+
+
+class _RobotsSession(requests.Session):
+    """requests.Session whose every send() (each redirect hop too) passes the robots gate."""
+
+    robots_caller = "common"
+
+    def send(self, request, **kwargs):
+        _robots_gate(request.url, self.robots_caller)
+        return super().send(request, **kwargs)
+# --- end robots.txt guard wiring --------------------------------------------------------------
+
+ROOT = Path(os.environ.get("IPFS_DATASETS_LEGAL_CORPORA_ROOT", os.environ.get("LEGAL_CORPORA_ROOT", str(Path.home() / ".ipfs_datasets" / "legal_corpora"))))
 SCHEMA_PATH = ROOT / "_templates" / "collection_record.schema.json"
 PT = timezone(timedelta(hours=-7))
 DEFAULT_UA = (
@@ -40,6 +117,28 @@ INDEX_FIELDS = (
     "jurisdiction", "language", "law_status", "date", "retrieved_at",
     "article_count", "bytes",
 )
+
+# Per-scraper page-fetch concurrency (Cap/thin/deepen harvest).
+# Env: PAGE_FETCH_WORKERS or WORKERS. Conservative default 8 (was typically 3–4
+# hardcoded, or 1 for sequential Cap collectors). Prefer <=8 against a single
+# host; raise SLEEP / back off on 429. CDX/Wayback remain separately rate-limited
+# in archive_fallbacks (~1 req/s Wayback, ~0.35s CC).
+def _env_workers(default: int = 8) -> int:
+    for key in ("PAGE_FETCH_WORKERS", "WORKERS"):
+        raw = (os.environ.get(key) or "").strip()
+        if not raw:
+            continue
+        try:
+            return max(1, int(raw))
+        except Exception:
+            continue
+    return max(1, int(default))
+
+
+DEFAULT_PAGE_FETCH_WORKERS = _env_workers(8)
+PAGE_FETCH_WORKERS = DEFAULT_PAGE_FETCH_WORKERS
+# Alias used by ThreadPool collectors that `from common import DEFAULT_WORKERS`.
+DEFAULT_WORKERS = DEFAULT_PAGE_FETCH_WORKERS
 
 _tls = threading.local()
 _index_lock = threading.Lock()
@@ -100,10 +199,12 @@ def sha256_text(s: str) -> str:
     return hashlib.sha256(s.encode("utf-8", "replace")).hexdigest()
 
 
-def get_session(ua: str = DEFAULT_UA, pool: int = 8) -> requests.Session:
+def get_session(ua: str = DEFAULT_UA, pool: int | None = None) -> requests.Session:
+    if pool is None:
+        pool = max(8, min(32, int(PAGE_FETCH_WORKERS) * 2))
     s = getattr(_tls, "session", None)
-    if s is None or getattr(_tls, "ua", None) != ua:
-        s = requests.Session()
+    if s is None or getattr(_tls, "ua", None) != ua or getattr(_tls, "pool", None) != pool:
+        s = _RobotsSession()  # robots-gated (see robots.txt guard wiring above)
         s.headers.update({
             "User-Agent": ua,
             "Accept": "application/json, application/xml, text/xml, text/html, */*",
@@ -114,7 +215,30 @@ def get_session(ua: str = DEFAULT_UA, pool: int = 8) -> requests.Session:
         s.mount("http://", ad)
         _tls.session = s
         _tls.ua = ua
+        _tls.pool = pool
     return s
+
+
+def map_parallel(fn, items, *, workers: int | None = None):
+    """Run fn over items with a ThreadPool (order-preserving).
+
+    workers defaults to PAGE_FETCH_WORKERS. Used by Cap/thin/deepen harvest
+    paths and ThreadPool collectors for page-fetch concurrency.
+    """
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+
+    seq = list(items)
+    if not seq:
+        return []
+    n = max(1, int(workers if workers is not None else PAGE_FETCH_WORKERS))
+    if n == 1 or len(seq) == 1:
+        return [fn(x) for x in seq]
+    out: list = [None] * len(seq)
+    with ThreadPoolExecutor(max_workers=n) as ex:
+        futs = {ex.submit(fn, item): i for i, item in enumerate(seq)}
+        for fut in as_completed(futs):
+            out[futs[fut]] = fut.result()
+    return out
 
 
 def http_get(
@@ -148,6 +272,8 @@ def http_get(
                 time.sleep(min(20, 1.5 * attempt))
                 continue
             return resp
+        except RobotsBlockedFetch:
+            raise  # robots.txt refused the URL (logged); not fetched, no retries
         except requests.RequestException as exc:
             last = exc
             time.sleep(min(20, 1.5 * attempt))
@@ -309,7 +435,7 @@ def _quality_reject(cc: str, record: dict):
         return None
     try:
         import sys as _sys
-        _lp = "{_SCRAPERS.parent}/logs"
+        _lp = str(_SCRAPERS.parent / "logs")
         if _lp not in _sys.path:
             _sys.path.append(_lp)
         import importlib as _il
@@ -323,7 +449,7 @@ def _quality_reject(cc: str, record: dict):
 # Active for the tip-pipeline CCs always (and for any CC when WRITE_ONCE=1). If the target exists, the record is written
 # under a NEW unique id (<id>-wN) instead; the quality filter then judges the new row (dup_url/dup_content -> quarantine).
 _WRITE_ONCE_CCS = {"bo", "az", "al", "ao", "do", "et", "ir", "mw", "zm", "la", "lk", "tn", "rs"}
-_WRITE_ONCE_LOG = "{_SCRAPERS.parent}/logs/write_once_guard.log"
+_WRITE_ONCE_LOG = str(_SCRAPERS.parent / "logs" / "write_once_guard.log")
 
 
 def _write_once_ident(cc: str, ident: str) -> str:
@@ -358,7 +484,7 @@ def write_instrument(cc: str, record: dict) -> Path:
         qdest.parent.mkdir(parents=True, exist_ok=True)
         atomic_write(qdest, json.dumps(record, ensure_ascii=False, indent=2) + "\n")
         try:
-            with open(os.environ.get("QUALITY_REJECT_LOG", "{_SCRAPERS.parent}/logs/quality_reject_tip29q.log"), "a", encoding="utf-8") as _fh:
+            with open(os.environ.get("QUALITY_REJECT_LOG", str(_SCRAPERS.parent / "logs" / "quality_reject_tip29q.log")), "a", encoding="utf-8") as _fh:
                 _fh.write(json.dumps({"cc": cc, "id": ident, "reason": _qr, "url": record.get("source_url")}, ensure_ascii=False) + "\n")
         except Exception:
             pass

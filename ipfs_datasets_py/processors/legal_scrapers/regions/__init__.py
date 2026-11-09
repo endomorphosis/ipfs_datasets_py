@@ -33,7 +33,7 @@ Africa = LegalRegion(
 AsiaPacific = LegalRegion(
     region_id="asia_pacific",
     display_name="Asia-Pacific",
-    aliases=("asia", "oceania", "pacific"),
+    aliases=("asia", "apac", "oceania", "pacific"),
 )
 
 _REGIONS = {

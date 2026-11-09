@@ -1,0 +1,25 @@
+{
+ "country_code": "DE",
+ "place_id": "wd:Q10424",
+ "qid": "Q10424",
+ "place_name": "Landkreis Cham",
+ "iso_3166_2": "DE-BY",
+ "admin_level": "landkreis",
+ "language": "de",
+ "doc_type": "ordinance",
+ "platform": "de_by_kreisrecht",
+ "source_org": "Landkreis Cham",
+ "index_url": "https://www.landkreis-cham.de/landkreis-landratsamt/satzungen-verordnungen/",
+ "archive_policy": "archived_robots_disallowed",
+ "max_bytes": 52428800,
+ "urls": [
+  "https://www.landkreis-cham.de/media/26981/kreiswerke_wasserversorgung_beitrags_und_gebuehrensatzung_2017.pdf",
+  "https://www.landkreis-cham.de/media/26984/kreiswerke_wasserversorgung_wasserabgabesatzung_2018.pdf",
+  "https://www.landkreis-cham.de/media/26985/kreiswerke_abfallwirtschaftssatzung_05-2015.pdf"
+ ],
+ "titles": {
+  "https://www.landkreis-cham.de/media/26981/kreiswerke_wasserversorgung_beitrags_und_gebuehrensatzung_2017.pdf": "kreiswerke wasserversorgung beitrags und gebuehrensatzung 2017",
+  "https://www.landkreis-cham.de/media/26984/kreiswerke_wasserversorgung_wasserabgabesatzung_2018.pdf": "kreiswerke wasserversorgung wasserabgabesatzung 2018",
+  "https://www.landkreis-cham.de/media/26985/kreiswerke_abfallwirtschaftssatzung_05-2015.pdf": "kreiswerke abfallwirtschaftssatzung 05-2015"
+ }
+}

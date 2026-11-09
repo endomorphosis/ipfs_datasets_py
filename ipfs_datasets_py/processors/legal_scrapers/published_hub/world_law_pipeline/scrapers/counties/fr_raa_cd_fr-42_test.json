@@ -1,0 +1,27 @@
+{
+ "country_code": "FR",
+ "place_id": "wd:Q12569",
+ "qid": "Q12569",
+ "place_name": "Loire",
+ "iso_3166_2": "FR-42",
+ "admin_level": "departement",
+ "language": "fr",
+ "doc_type": "gazette_act",
+ "consolidated": false,
+ "platform": "fr_raa_conseil_departemental",
+ "source_org": "Conseil départemental — Loire",
+ "issuer": "conseil_departemental",
+ "max_bytes": 52428800,
+ "index_url": "https://webdelib-citoyens.loire.fr/webdelibplus/jsp/seance_agenda.jsp?date=20261012&assembly=Commission%20Permanente&type=apres&role=usager",
+ "crawl_delay": 3.0,
+ "urls": [
+  "https://webdelib-citoyens.loire.fr/webdelibplus/jsp/showFile.jsp?pdf=O%2BovOpNiDXn2cUe79OY8sEsmIfBC6XTvX4rI8DyJ0lkRgTin1oICmpHLMake1H%2FyM5q8zua17SbsW6d1CE7wc%2FyyKGt7U%2Bg21sXNZXAVb%2BB%2BXf530r5xu5nbWK5I2PD7z%2Fd0j0szhfTpZKExAnVGS0z66srVIh8U%2BMgTKdLwlbhq2Re4Q6djW%2BnlPZg%2FlCIU",
+  "https://webdelib-citoyens.loire.fr/webdelibplus/jsp/showFile.jsp?pdf=O%2BovOpNiDXn2cUe79OY8sEsmIfBC6XTvX4rI8DyJ0lkRgTin1oICmpHLMake1H%2FyM5q8zua17SbsW6d1CE7wc6Y4wP0G7%2Fb9ny6JhzoDEcD6Inf9YnWKE%2BX2T5nXJbCJLRsK6dRqaO2W2m1eNWtsqr5d1KmJqeoT65vKg8qNU5iFSabBXAu%2BHw%3D%3D",
+  "https://webdelib-citoyens.loire.fr/webdelibplus/jsp/showFile.jsp?pdf=O%2BovOpNiDXn2cUe79OY8sEsmIfBC6XTvX4rI8DyJ0lkRgTin1oICmpHLMake1H%2FyM5q8zua17SbsW6d1CE7wc6Y4wP0G7%2Fb9ny6JhzoDEcD6Inf9YnWKE%2BX2T5nXJbCJDYiufSunU9iQZN4sBPbLxdqQGRT1zS3Ga77MhLHg1ps%3D"
+ ],
+ "titles": {
+  "https://webdelib-citoyens.loire.fr/webdelibplus/jsp/showFile.jsp?pdf=O%2BovOpNiDXn2cUe79OY8sEsmIfBC6XTvX4rI8DyJ0lkRgTin1oICmpHLMake1H%2FyM5q8zua17SbsW6d1CE7wc%2FyyKGt7U%2Bg21sXNZXAVb%2BB%2BXf530r5xu5nbWK5I2PD7z%2Fd0j0szhfTpZKExAnVGS0z66srVIh8U%2BMgTKdLwlbhq2Re4Q6djW%2BnlPZg%2FlCIU": "21667 Solidarités territoriales - Enveloppe territorialisée 2026 - Attribution de subventions pour les cantons de Boën-sur-Lignon, Feurs et Montbrison - Délibération - Annexe - Annexe - Annexe 16/10/2026 16/10/2026",
+  "https://webdelib-citoyens.loire.fr/webdelibplus/jsp/showFile.jsp?pdf=O%2BovOpNiDXn2cUe79OY8sEsmIfBC6XTvX4rI8DyJ0lkRgTin1oICmpHLMake1H%2FyM5q8zua17SbsW6d1CE7wc6Y4wP0G7%2Fb9ny6JhzoDEcD6Inf9YnWKE%2BX2T5nXJbCJLRsK6dRqaO2W2m1eNWtsqr5d1KmJqeoT65vKg8qNU5iFSabBXAu%2BHw%3D%3D": "21667 Solidarités territoriales - Enveloppe territorialisée 2026 - Attribution de subventions pour les cantons de Boën-sur-Lignon, Feurs et Montbrison - Délibération - Annexe - Annexe - Annexe 16/10/2026 16/10/2026",
+  "https://webdelib-citoyens.loire.fr/webdelibplus/jsp/showFile.jsp?pdf=O%2BovOpNiDXn2cUe79OY8sEsmIfBC6XTvX4rI8DyJ0lkRgTin1oICmpHLMake1H%2FyM5q8zua17SbsW6d1CE7wc6Y4wP0G7%2Fb9ny6JhzoDEcD6Inf9YnWKE%2BX2T5nXJbCJDYiufSunU9iQZN4sBPbLxdqQGRT1zS3Ga77MhLHg1ps%3D": "21667 Solidarités territoriales - Enveloppe territorialisée 2026 - Attribution de subventions pour les cantons de Boën-sur-Lignon, Feurs et Montbrison - Délibération - Annexe - Annexe - Annexe 16/10/2026 16/10/2026"
+ }
+}

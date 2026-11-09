@@ -1,0 +1,55 @@
+{
+ "wuhan": {
+  "qid": "Q11746",
+  "name": "Wuhan",
+  "host": "www.wuhan.gov.cn",
+  "lists": [
+   "https://www.wuhan.gov.cn/zwgk/xxgk/zfgz_new/"
+  ],
+  "link": "var dUrl = '(https://www\\.wuhan\\.gov\\.cn/zwgk/xxgk/zfgz_new/\\d{6}/t\\d+_\\d+\\.shtml)'"
+ },
+ "shenyang": {
+  "qid": "Q11720",
+  "name": "Shenyang",
+  "host": "www.shenyang.gov.cn",
+  "lists": [
+   "https://www.shenyang.gov.cn/zwgk/zcwj/fggz/szfgzzl/index_{n}.html"
+  ],
+  "first": "https://www.shenyang.gov.cn/zwgk/zcwj/fggz/szfgzzl/",
+  "pages": 5,
+  "link": "href=\"(\\./\\d{6}/t\\d+_\\d+\\.html)\""
+ },
+ "yinchuan": {
+  "qid": "Q211243",
+  "name": "Yinchuan",
+  "host": "www.yinchuan.gov.cn",
+  "lists": [
+   "https://www.yinchuan.gov.cn/xxgk/zcwj/zfgzk/index_{n}.html"
+  ],
+  "first": "https://www.yinchuan.gov.cn/xxgk/zcwj/zfgzk/",
+  "pages": 3,
+  "link": "href=\"(\\./\\d{6}/t\\d+_\\d+\\.html)\""
+ },
+ "lasa": {
+  "qid": "Q5869",
+  "name": "Lhasa",
+  "host": "www.lasa.gov.cn",
+  "lists": [
+   "https://www.lasa.gov.cn/lasa/fggz/gfxwj_list_{n}.shtml"
+  ],
+  "first": "https://www.lasa.gov.cn/lasa/fggz/gfxwj_list.shtml",
+  "pages": 7,
+  "link": "href=\"(/lasa/fggz/\\d{6}/[0-9a-f]{32}\\.shtml)\"",
+  "start": 2
+ },
+ "wuxi": {
+  "qid": "Q42651",
+  "name": "Wuxi",
+  "host": "www.wuxi.gov.cn",
+  "lists": [
+   "https://www.wuxi.gov.cn/zfxxgk/szfxxgkml/fgwjjjd/zfwj/zfgz/index.shtml"
+  ],
+  "link": "href=\"(/doc/\\d{4}/\\d{2}/\\d{2}/\\d+\\.shtml)\"",
+  "note": "added 2026-11-01 (robots requeue); static first page only (~21 rules), later pages via ajax titleCx not adapted"
+ }
+}

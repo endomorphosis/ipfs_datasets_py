@@ -1,0 +1,29 @@
+{
+ "cc": "NA",
+ "suffix": "_lii",
+ "platform": "lii_namiblii",
+ "language": "en",
+ "doc_type": "ordinance",
+ "cdx": "/workspace/world_law/out/afme/_probe/LII/_cdx_LII.jsonl",
+ "doc_url_regex": "namiblii\\.org",
+ "exclude_regex": "/provision/",
+ "map": "title",
+ "host_slug": false,
+ "title_fetch_cap": 2000,
+ "title_legal_regex": "(?i)by-?laws?|bylaw|regulations?|order|ordinance",
+ "label_langs": [
+  "en",
+  "sw"
+ ],
+ "content_signal_hosts": [
+  "namiblii.org"
+ ],
+ "content_selectors": [
+  ".akn-akomaNtoso",
+  "#document-content",
+  ".document-content",
+  "article",
+  "main"
+ ],
+ "batch": "lii"
+}

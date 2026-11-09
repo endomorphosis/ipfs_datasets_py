@@ -143,6 +143,89 @@ For factual work reconciliation, capability inventories and review/dispatch prep
 
 The [separate follow-up qualification](../../../../../docs/autoformalization/evidence/legal-ir-control-metadata-preflight-20261026.json) passed 14 methods / 67 subcases and prepared four actual previews from retained LIR-9001–9004 snapshot metadata. These remain incomplete: no operation commands/cwd, budgets, principals, verifier, reviewed directive mapping, complete attempt histories or exhausted-attempt disposition were invented. Snapshot revisions are 13 for LIR-9001 and 2 for LIR-9002–9004; these observations do not establish current native status. Retained LIR-9001 spent its budget of two attempts and has UNKNOWN provider outcome. Its old factual reconciliation output is reused as prior evidence, never as a provider-success receipt; the old revision-11 command is not a revision-13 launch default. Preserve original-owner amendment/rearm ordering (the retained recovery review identifies exact revision 14), all failures and the existing dependency frontier. Do not query a remote provider with a local native attempt/invocation ID or infer outcome from another status read.
 
+## Current job packet inventory preparation
+
+`supervisor_loop.prepare_current_job_packet_index_v1` and
+`verify_current_job_packet_index_v1` extend the existing metadata owner for
+`LIR-9003`. Its implementation and owning test are already integrated in main. This
+history reconciliation restores the guide section and claims no new product
+or native execution. Historical qualifications retain their original scope. Supply the complete current 64-task native
+projection, the accepted `LIR-9002` capability report and its separate verifier
+result, explicit packet proposals and a producer principal. The report joins
+completed9002 revision4 to its revision3 verification commitment and preserves
+completed9001 revision15 with its unresolved historical provider outcome.
+
+Every existing task receives a revision/dependency/record commitment and an
+explicit disposition. Missing packets remain `packet_missing`; completed scopes
+remain retained. Supplied metadata needs source-bound operation, validation and
+verifier argv, exact native output/exclusive keys, role-bound inputs, finite
+resources, distinct acceptance principal and retry/invalidation keys. The first
+profile supports model-free control metadata with zero model tokens and no code
+edits. Scientific purposes retain their unavailable or unbound capability facts.
+The preparer opens no descriptor, database or provider and does not execute argv.
+
+`full_index_coverage` includes negative dispositions. It does **not** mean all
+productive tasks have reviewed executable packets. Both preparation and frozen
+independent reconstruction explicitly return
+`productive_runnable_coverage_complete=false`, `task_acceptance_satisfied=false`
+and no completion, admission or dispatch authority. A metadata inventory cannot
+complete `LIR-9003` or activate productive work. Existing native task owners must
+separately bind current source/input bytes, purpose grants, review and lifecycle
+before any task becomes runnable. Caller principal strings and supplied source
+hashes remain unauthenticated by this pure API.
+
+### Concrete metadata CLI
+
+The existing `scripts/ops/legal_ir/run_autoformal_supervisor.py` adds the early
+`job-packet-index prepare|verify` route before repair/native-store setup. This
+history reconciliation preserves the already integrated implementation and
+claims no new execution or qualification. Descriptor byte counts remain
+strictly positive under the current owner. It calls the existing
+pure owner directly; it does not claim a task or launch a supervisor.
+
+A frozen `legal-ir-job-packet-index-cli-inputs/v1` object supplies exactly
+`canonical_owner`, `inputs` (current_snapshot, capability_report and
+capability_verification file descriptors), `reuse_audit`,
+`primary_snapshot_root`, `packet_proposals`, `producer_principal` and
+`expected_task_revision`, plus its schema. Use the single existing completed
+engineering reuse capsule. The CLI checks its four packet/receipt pairs,
+13 source and11 evidence snapshots, matches the13 current PRIMARY owners and
+joins49 current child CID/revision records through22 parent contexts. Historical
+W-only generation differences stay context. Captured sources are read as data;
+the four completed materializers are never rerun or given native bindings.
+
+The first concrete profile requires a metadata-complete9003 self packet;
+9004 may retain its pending metadata qualification packet. Both remain subject
+to current dependency acceptance. Shared prior-evidence descriptors bind the
+three external metadata files and reuse capsule once. The inputs file's own
+hash belongs only in the original outer request, avoiding a self-reference.
+Actual commands, principals, output ownership and declared file bytes must
+match the self packet. All-negative inventories remain pure API previews.
+
+Run `job-packet-index prepare --inputs <absolute-inputs> --output <index>
+--freeze-out <freeze>` under the existing original source/native/storage owner.
+After that producer closes, a distinct original verifier runs
+`job-packet-index verify --inputs <same-inputs> --report <index> --freeze <freeze>
+--verifier-principal <distinct-principal> --output <verification>`. Every path
+is absolute; output files are created exclusively. Bind exact argv to the
+self packet rather than substituting these documentation placeholders.
+
+Descriptor checks and reuse counts are emitted separately in CLI evidence.
+The canonical report and verifier retain their existing false admission,
+completion, runnable-coverage and task-acceptance flags. Actual independent
+review, current original task authority and purpose-specific admission remain
+required before unblocking. No scientific/model/Lean or whole-corpus acceptance
+follows from this metadata route.
+
+
+The CLI reconstructs the shared review context from actual retained files and
+current primary source bytes, and requires that exact context in the LIR-9003
+self proposal. Its producer freeze therefore covers the four retained packets
+and receipts, 13 source comparisons, 11 evidence snapshots, 49 current child
+bindings and seven explicit implementation scope gaps. The independent verifier
+reconstructs these facts again. Historical private-worktree comparisons remain
+context only; this metadata route grants no code or task admission.
+
 ## Representation-cell amendment preparation
 
 The existing `supervisor_loop` owner now provides the opt-in pure function

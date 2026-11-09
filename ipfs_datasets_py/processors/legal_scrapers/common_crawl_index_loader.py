@@ -7,11 +7,12 @@ This module provides a smart loader for Common Crawl indexes that:
 4. Handles partial uploads gracefully
 
 The loader supports jurisdiction-specific indexes:
-- Federal: endomorphosis/common_crawl_federal_index
-- State: endomorphosis/common_crawl_state_index
-- Municipal: endomorphosis/common_crawl_municipal_index
-- Pointers: endomorphosis/common_crawl_pointers_by_collection
-- Meta Indexes: endomorphosis/common_crawl_meta_indexes
+- Federal: Publicus/common_crawl_federal_index
+- State: Publicus/common_crawl_state_index
+- Municipal: Publicus/common_crawl_municipal_index
+- Pointers: Publicus/common_crawl_pointers_by_collection
+- Meta Indexes: Publicus/common_crawl_meta_indexes
+- Government shards: Publicus/government_cc_shard_indexes
 
 Example:
     >>> from ipfs_datasets_py.processors.legal_scrapers import CommonCrawlIndexLoader
@@ -33,7 +34,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Any, Union
 import json
 import time
-import shutil
+import tempfile
 import hashlib
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
@@ -46,10 +47,17 @@ try:
         huggingface_authorization_headers,
     )
 except ImportError:  # pragma: no cover - nested package import path
-    from common_crawl_search_engine.ccindex.hf_datasets_adapter import (  # type: ignore
-        configure_duckdb_huggingface_auth,
-        huggingface_authorization_headers,
-    )
+    try:
+        from common_crawl_search_engine.ccindex.hf_datasets_adapter import (  # type: ignore
+            configure_duckdb_huggingface_auth,
+            huggingface_authorization_headers,
+        )
+    except ImportError:
+        def huggingface_authorization_headers() -> Dict[str, str]:
+            return {}
+
+        def configure_duckdb_huggingface_auth(_connection: Any) -> bool:
+            return False
 
 
 def _admin_rules_force_state_hf_index() -> bool:
@@ -63,26 +71,24 @@ def _admin_rules_force_state_hf_index() -> bool:
 
 # HuggingFace dataset names
 DATASET_REPOS = {
-    "federal": "endomorphosis/common_crawl_federal_index",
-    "state": "endomorphosis/common_crawl_state_index",
-    "municipal": "endomorphosis/common_crawl_municipal_index",
-    "pointers": "endomorphosis/common_crawl_pointers_by_collection",
-    "meta": "endomorphosis/common_crawl_meta_indexes",
+    "federal": "Publicus/common_crawl_federal_index",
+    "state": "Publicus/common_crawl_state_index",
+    "municipal": "Publicus/common_crawl_municipal_index",
+    "pointers": "Publicus/common_crawl_pointers_by_collection",
+    "meta": "Publicus/common_crawl_meta_indexes",
+    "government_shards": "Publicus/government_cc_shard_indexes",
 }
 
 DATASET_REPO_CANDIDATES = {
-    "federal": ["endomorphosis/common_crawl_federal_index"],
-    "state": ["endomorphosis/common_crawl_state_index"],
+    "federal": ["Publicus/common_crawl_federal_index"],
+    "state": ["Publicus/common_crawl_state_index"],
     "municipal": [
-        "endomorphosis/common_crawl_municipal_index",
         "Publicus/common_crawl_municipal_index",
     ],
     "pointers": [
-        "endomorphosis/common_crawl_pointers_by_collection",
         "Publicus/common_crawl_pointers_by_collection",
     ],
     "meta": [
-        "endomorphosis/common_crawl_meta_indexes",
         "Publicus/common_crawl_meta_indexes",
     ],
 }
@@ -135,7 +141,9 @@ class CommonCrawlIndexLoader:
             local_base_dir: Base directory for local indexes (checks this first)
             cache_dir: Directory for caching HuggingFace downloads
             use_hf_fallback: Whether to fall back to HuggingFace if local not found
-            verify_integrity: Whether to verify downloaded index integrity
+            verify_integrity: Also parse Parquet metadata and check advertised manifest
+                size/SHA-256, when supplied. Without a source checksum this is not
+                cryptographic verification of the data pages. Requires pyarrow.
         """
         env_local_base_dir = str(
             os.getenv("IPFS_DATASETS_PY_COMMON_CRAWL_INDEX_ROOT", "") or ""
@@ -149,6 +157,7 @@ class CommonCrawlIndexLoader:
         )
         self.use_hf_fallback = use_hf_fallback
         self.verify_integrity = verify_integrity
+        self._hf_parquet_metadata: Dict[str, Dict[str, Any]] = {}
 
         # Track what's been loaded to avoid redundant operations
         self._loaded_indexes: Dict[str, Any] = {}
@@ -281,6 +290,7 @@ class CommonCrawlIndexLoader:
 
     def _get_hf_parquet_urls(self, index_type: str) -> List[str]:
         """Return converted parquet URLs for a hosted Common Crawl index."""
+        self._hf_parquet_metadata = {}
         if not self.use_hf_fallback:
             return []
         candidates = DATASET_REPO_CANDIDATES.get(index_type) or [DATASET_REPOS[index_type]]
@@ -298,6 +308,12 @@ class CommonCrawlIndexLoader:
                     if item.get("url")
                 ]
                 if urls:
+                    self._hf_parquet_metadata = {
+                        str(item["url"]): {
+                            key: item[key] for key in ("size", "sha256") if key in item
+                        }
+                        for item in payload.get("parquet_files", []) if item.get("url")
+                    }
                     return urls
             except Exception as exc:
                 last_error = exc
@@ -306,21 +322,74 @@ class CommonCrawlIndexLoader:
             logger.warning("Failed to resolve HF parquet URLs for %s: %s", index_type, last_error)
         return []
 
-    def materialize_index_locally(self, index_type: str, force_refresh: bool = False) -> List[Path]:
-        """Download hosted parquet shards into the local index directory.
+    def _validate_materialized_shard(
+        self, path: Path, metadata: Optional[Dict[str, Any]] = None
+    ) -> None:
+        """Reject incomplete files without loading their rows into memory.
 
-        This makes subsequent DuckDB queries hit the local fast-path instead of
-        remote HF parquet URLs.
+        Every mode checks the Parquet envelope. Integrity mode additionally parses
+        the footer and checks source manifest metadata when available; it does not
+        manufacture a trusted digest for manifests that provide none.
+        """
+        size = path.stat().st_size
+        with path.open("rb") as fh:
+            if size < 12 or fh.read(4) != b"PAR1":
+                raise ValueError("Invalid Parquet header or truncated file")
+            fh.seek(-8, os.SEEK_END)
+            footer = fh.read(8)
+            footer_size = int.from_bytes(footer[:4], "little")
+            if footer[4:] != b"PAR1" or not 0 < footer_size <= size - 12:
+                raise ValueError("Invalid or truncated Parquet footer")
+        if not self.verify_integrity:
+            return
+        metadata = metadata or {}
+        expected_size = metadata.get("size")
+        if expected_size is not None and size != int(expected_size):
+            raise ValueError("Parquet size does not match source manifest")
+        expected_hash = metadata.get("sha256")
+        if expected_hash is not None:
+            expected_hash = str(expected_hash).lower()
+            if len(expected_hash) != 64 or any(c not in "0123456789abcdef" for c in expected_hash):
+                raise ValueError("Invalid source manifest SHA-256")
+            digest = hashlib.sha256()
+            with path.open("rb") as fh:
+                for block in iter(lambda: fh.read(1024 * 1024), b""):
+                    digest.update(block)
+            if digest.hexdigest() != expected_hash:
+                raise ValueError("Parquet SHA-256 does not match source manifest")
+        import pyarrow.parquet as pq
+
+        pq.read_metadata(path)
+
+    def _usable_materialized_shard(self, path: Path, metadata=None) -> bool:
+        try:
+            self._validate_materialized_shard(path, metadata)
+            return True
+        except Exception as exc:
+            logger.warning("Ignoring invalid parquet shard %s: %s", path.name, exc)
+            return False
+
+    def materialize_index_locally(self, index_type: str, force_refresh: bool = False) -> List[Path]:
+        """Download shards atomically, leaving previous files intact on failure.
+
+        Temporary files are unique and on the destination filesystem. Incomplete
+        HTTP bodies and invalid Parquet envelopes are rejected in every mode.
+        Integrity mode also checks available source size/checksum metadata and
+        parses the footer (not all data pages). Valid local files remain usable
+        offline. With fallback enabled, a remote manifest is consulted for
+        integrity checks or repairs; ordinary valid caches keep their fast-path.
+        Failed shards are logged and omitted, preserving the existing list API.
         """
         local_path = self._get_local_path(index_type)
-        if local_path.exists() and not force_refresh:
+        if local_path.exists() and not force_refresh and not self.verify_integrity:
             existing = sorted(local_path.rglob("*.parquet"))
-            if existing:
-                logger.info("Using existing local %s parquet shards at %s", index_type, local_path)
+            if existing and all(self._usable_materialized_shard(path) for path in existing):
                 return existing
-
         urls = self._get_hf_parquet_urls(index_type)
         if not urls:
+            if local_path.exists() and not force_refresh:
+                return [path for path in sorted(local_path.rglob("*.parquet"))
+                        if self._usable_materialized_shard(path)]
             logger.warning("No Hugging Face parquet URLs were available for %s", index_type)
             return []
 
@@ -329,15 +398,39 @@ class CommonCrawlIndexLoader:
         for index, url in enumerate(urls, start=1):
             filename = Path(str(url).split("?", 1)[0]).name or f"{index_type}_{index:04d}.parquet"
             target = local_path / filename
-            if target.exists() and not force_refresh and target.stat().st_size > 0:
+            metadata = self._hf_parquet_metadata.get(url, {})
+            if not force_refresh and target.exists() and self._usable_materialized_shard(target, metadata):
                 downloaded.append(target)
                 continue
+            temporary: Optional[Path] = None
             try:
-                with self._hf_urlopen(url, timeout=120) as response, target.open("wb") as fh:
-                    shutil.copyfileobj(response, fh)
+                with self._hf_urlopen(url, timeout=120) as response:
+                    with tempfile.NamedTemporaryFile(
+                        mode="wb", dir=local_path, prefix=f".{filename}.", suffix=".part", delete=False
+                    ) as fh:
+                        temporary = Path(fh.name)
+                        headers = getattr(response, "headers", {})
+                        content_length = headers.get("Content-Length")
+                        expected_bytes = int(content_length) if content_length is not None else None
+                        while True:
+                            block = response.read(1024 * 1024)
+                            if not block:
+                                break
+                            if expected_bytes is not None and fh.tell() + len(block) > expected_bytes:
+                                raise ValueError("HTTP body exceeds Content-Length")
+                            fh.write(block)
+                        if expected_bytes is not None and fh.tell() != expected_bytes:
+                            raise ValueError("Incomplete HTTP body (Content-Length mismatch)")
+                        fh.flush()
+                        os.fsync(fh.fileno())
+                self._validate_materialized_shard(temporary, metadata)
+                os.replace(temporary, target)
                 downloaded.append(target)
             except Exception as exc:
-                logger.warning("Failed to download %s parquet shard %s: %s", index_type, url, exc)
+                logger.warning("Failed to download %s parquet shard %s: %s", index_type, filename, exc)
+            finally:
+                if temporary is not None:
+                    temporary.unlink(missing_ok=True)
         return downloaded
 
     def materialize_state_index_locally(self, force_refresh: bool = False) -> List[Path]:
@@ -1049,7 +1142,140 @@ class CommonCrawlIndexLoader:
                 "loaded": index_type in self._loaded_indexes,
             }
 
+        shard_regions: Dict[str, Any] = {}
+        try:
+            from ipfs_datasets_py.processors.legal_scrapers.regions.shard_index import (
+                GOVERNMENT_SHARD_REGIONS,
+                shard_db_path,
+            )
+
+            extra = [self.local_base_dir / "government_shards"]
+            for region in GOVERNMENT_SHARD_REGIONS:
+                path = shard_db_path(region, download=False, extra_dirs=extra)
+                shard_regions[region] = {
+                    "local_available": path is not None,
+                    "local_path": str(path) if path else None,
+                }
+        except Exception as exc:
+            logger.debug("Government shard index info unavailable: %s", exc)
+        info["indexes"]["government_shards"] = {
+            "hf_repo": DATASET_REPOS["government_shards"],
+            "regions": shard_regions,
+            "loaded": "government_shards" in self._loaded_indexes,
+        }
+
         return info
+
+    def government_shard_db(self, region: str) -> Optional[Path]:
+        """Local path of one regional government shard DuckDB.
+
+        Checks ``GOVERNMENT_CC_SHARD_DIR``, the built-in index directory, then
+        ``local_base_dir/government_shards``. The Hugging Face dataset stores
+        ZSTD Parquet, so a missing DuckDB is not downloaded.
+        """
+        from ipfs_datasets_py.processors.legal_scrapers.regions.shard_index import shard_db_path
+
+        return shard_db_path(
+            region,
+            extra_dirs=[self.local_base_dir / "government_shards"],
+        )
+
+    def load_government_shards(
+        self,
+        table: str = "cc_domain_shards",
+        split: str = "americas",
+        force_refresh: bool = False,
+    ) -> Optional[Any]:
+        """Load one government shard table with the Hugging Face datasets API.
+
+        Args:
+            table: ``cc_domain_shards``, ``query_domains``, ``domain_coverage``,
+                or ``build_info``.
+            split: Region split: americas, europe, mena, africa, asia_pacific,
+                or unassigned.
+            force_refresh: Reload from Hugging Face even when a local Parquet
+                file is already present.
+
+        Returns:
+            A ``datasets.Dataset`` for that config and split, or None.
+        """
+        cache_key = f"government_shards:{table}:{split}"
+        if cache_key in self._loaded_indexes and not force_refresh:
+            return self._loaded_indexes[cache_key]
+        try:
+            from datasets import load_dataset
+        except ImportError as exc:
+            self.last_query_error = f"datasets is required to load government shards: {exc}"
+            logger.warning("%s", self.last_query_error)
+            return None
+        from ipfs_datasets_py.processors.legal_scrapers.regions.shard_index import (
+            GOVERNMENT_SHARD_REPO,
+            shard_parquet_path,
+        )
+
+        if not force_refresh:
+            local_path = shard_parquet_path(
+                split,
+                table,
+                extra_dirs=[self.local_base_dir / "government_shards"],
+            )
+            if local_path is not None:
+                dataset = load_dataset(
+                    "parquet",
+                    data_files={split: str(local_path)},
+                    split=split,
+                )
+                self._loaded_indexes[cache_key] = dataset
+                return dataset
+        if not self.use_hf_fallback:
+            return None
+        try:
+            dataset = load_dataset(
+                GOVERNMENT_SHARD_REPO,
+                table,
+                split=split,
+                cache_dir=str(self.cache_dir),
+            )
+        except Exception as exc:
+            self.last_query_error = str(exc)
+            logger.warning("Failed to load government shard dataset: %s", exc)
+            return None
+        self._loaded_indexes[cache_key] = dataset
+        return dataset
+
+    def query_government_shards(
+        self,
+        host: str,
+        *,
+        region: Optional[str] = None,
+        country_code: Optional[str] = None,
+        collection: Optional[str] = None,
+        max_segments: int = 50,
+    ) -> List[Dict[str, Any]]:
+        """Return pointer-parquet ranges for a government host.
+
+        A stored registrable domain covers its subdomains. ``dom_row_start``
+        and ``dom_row_end`` are inclusive-exclusive row offsets in the sorted
+        pointer parquet. Local DuckDB is preferred. Otherwise the ZSTD Parquet
+        published on ``Publicus/government_cc_shard_indexes`` is read through
+        the Hugging Face datasets API. An unrecognized host such as
+        ``example.com`` does not download every regional file.
+        """
+        from ipfs_datasets_py.processors.legal_scrapers.regions.shard_index import (
+            query_government_shards,
+        )
+
+        rows = query_government_shards(
+            host,
+            region=region,
+            country_code=country_code,
+            collection=collection,
+            max_segments=max_segments,
+            download=bool(self.use_hf_fallback),
+            cache_dir=self.cache_dir,
+            extra_dirs=[self.local_base_dir / "government_shards"],
+        )
+        return [dict(row) for row in rows]
 
     def clear_cache(self):
         """Clear loaded index cache to free memory."""

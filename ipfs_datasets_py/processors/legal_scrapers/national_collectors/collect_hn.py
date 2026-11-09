@@ -38,7 +38,7 @@ def discover():
         "tsc.gob.hn/web/leyes/",
         "www.tsc.gob.hn/leyes/",
     ):
-        for h in cdx_urls(prefix, limit=env_int("CDX_LIMIT", 250), match_type="prefix",
+        for h in cdx_urls(prefix, limit=env_int("CDX_LIMIT", 2000), match_type="prefix",
                           extra_filters=["mimetype:application/pdf"]):
             orig = h.get("original") or ""
             if orig:
@@ -50,8 +50,8 @@ def discover():
 def main():
     setup_log(CC)
     t0 = utcnow()
-    max_new = env_int("MAX_NEW", 40)
-    max_seconds = env_int("MAX_SECONDS", 2400)
+    max_new = env_int("MAX_NEW", 200)
+    max_seconds = env_int("MAX_SECONDS", 3600)
     t_start = time.time()
     done = existing_ids(CC)
     ok = skip = fail = 0

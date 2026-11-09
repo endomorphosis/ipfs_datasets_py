@@ -1,0 +1,841 @@
+{
+  "schema": "legal-ir-programme-engineering-preparation/v1",
+  "task_id": "LIRAE-LIR12-LEAN-03",
+  "parent_reference": {
+    "repository": "ipfs_datasets_py",
+    "revision": "eb023a439a23c59acdfaf485c66127f5202ecc8f",
+    "path": "ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json",
+    "task_id": "LIR-12",
+    "task_sha256": "a8a01f70597884aecc2a7e8fc9d34be2cbbd7d6c8131495e23de2da1c81d6fb2"
+  },
+  "source_binding": {
+    "repository": "ipfs_datasets_py",
+    "public_main_commit": "eb023a439a23c59acdfaf485c66127f5202ecc8f",
+    "backlog_path": "ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json",
+    "backlog_sha256": "d1f74b427c3a7b27988a1d174f258fa6e867b681178978b90c611f4088ff401a"
+  },
+  "admitted": false,
+  "formalized": false,
+  "semantic_review_performed": false,
+  "model_gain_claimed": false,
+  "training_executed": false,
+  "result": {
+    "artifact_closure": {
+      "compiler_invoked": false,
+      "rows": [
+        {
+          "candidate_id": "retained:parent",
+          "closure": {
+            "actual_native_cases": 2,
+            "actual_native_phases": 6,
+            "compiled_modules": 6,
+            "modules": 6,
+            "pure_cases": 32,
+            "pure_phases": 96,
+            "retained_files": 29,
+            "source_files": 9
+          },
+          "missing_packet_index_profile": "replayed-parent-bound-norm-definition-conditional-native-build/v1",
+          "packet_index_admitted": false,
+          "packet_index_reader": null,
+          "profile": "replayed-parent-bound-norm-definition-conditional-native-build/v1",
+          "route": "parent"
+        },
+        {
+          "candidate_id": "retained:direct",
+          "closure": {
+            "compiled_modules": 4,
+            "executed_inputs": 7,
+            "index_profile": "retained-parent-norm-receipt-consistency-index/v1",
+            "packet_files": 23,
+            "packet_profile": "replayed-retained-parent-literal-complete-authored-norm-native-byte-packet/v1",
+            "project_including_manifest": 8,
+            "receipt_and_logs": 4,
+            "theorems": 1
+          },
+          "missing_packet_index_profile": null,
+          "packet_index_admitted": false,
+          "packet_index_reader": "validate_parent_norm_native_packet_v1",
+          "profile": "replayed-parent-literal-complete-authored-norm-project/v1",
+          "route": "direct"
+        },
+        {
+          "candidate_id": "retained:conditional",
+          "closure": {
+            "modules": 6,
+            "project_files": 9,
+            "theorems": 3
+          },
+          "missing_packet_index_profile": null,
+          "packet_index_admitted": false,
+          "packet_index_reader": null,
+          "profile": "replayed-v2-definition-use-conditional-project/v1",
+          "route": "conditional"
+        },
+        {
+          "candidate_id": "retained:native",
+          "closure": {
+            "compiled_modules": 4,
+            "executed_source_files": 7,
+            "nonempty_oleans": 4,
+            "theorems": 1,
+            "toolchain": "leanprover/lean4:v4.34.1"
+          },
+          "missing_packet_index_profile": null,
+          "packet_index_admitted": false,
+          "packet_index_reader": null,
+          "profile": "replayed-parent-literal-complete-authored-norm-native-build/v1",
+          "route": "native"
+        },
+        {
+          "candidate_id": "retained:preservation",
+          "closure": {
+            "index_profile": "retained-corpus-preservation-observation-index/v1",
+            "modules": 12,
+            "packet_files": 49,
+            "packet_profile": "replayed-retained-v2-corpus-preservation-byte-packet/v1",
+            "preparation_profile": "replayed-v2-corpus-four-fragment-concrete-preservation/v1",
+            "project_files": 16,
+            "theorems": 15
+          },
+          "missing_packet_index_profile": null,
+          "packet_index_admitted": false,
+          "packet_index_reader": "validate_definition_use_preservation_packet_v2",
+          "profile": "replayed-retained-v2-corpus-preservation-byte-packet/v1",
+          "route": "preservation"
+        }
+      ]
+    },
+    "compatibility_matrix": [
+      {
+        "admitted": false,
+        "artifact_closure": {
+          "actual_native_cases": 2,
+          "actual_native_phases": 6,
+          "compiled_modules": 6,
+          "modules": 6,
+          "pure_cases": 32,
+          "pure_phases": 96,
+          "retained_files": 29,
+          "source_files": 9
+        },
+        "ast_sha256": "769fbf8717177e2a2c42f6abc7cb54fc95a6342665340d16ffc14dcf6362f655",
+        "ast_sha256_matches_primary_evidence": true,
+        "ast_sha256_scope": "caller_selected_digest_not_a_parsed_statutory_ast",
+        "axioms": {
+          "definition_instance": [],
+          "original_norm_preserved": []
+        },
+        "candidate_id": "retained:parent",
+        "compiler_invoked": false,
+        "evidence": [
+          {
+            "actual_native_cases": 2,
+            "actual_native_phases": 6,
+            "counts_pooled": false,
+            "path": "docs/autoformalization/evidence/legal-ir-parent-bound-norm-definition-native-integration-20261025.json",
+            "profile": "replayed-parent-bound-norm-definition-conditional-native-build/v1",
+            "pure_cases": 32,
+            "pure_phases": 96,
+            "retained_files": 29,
+            "schema": "legal-ir-parent-bound-norm-definition-native-integration-qualification/v1",
+            "sha256": "769fbf8717177e2a2c42f6abc7cb54fc95a6342665340d16ffc14dcf6362f655"
+          }
+        ],
+        "formalized": false,
+        "imports": {
+          "definition": [
+            "prelude"
+          ],
+          "namespace": [
+            "preservation"
+          ],
+          "norm": [
+            "prelude"
+          ],
+          "occurrence": [
+            "norm",
+            "definition"
+          ],
+          "prelude": [],
+          "preservation": [
+            "norm",
+            "occurrence"
+          ]
+        },
+        "introduced_axioms": [],
+        "lean_admitted": false,
+        "legal_admitted": false,
+        "missing_packet_index_profile": "replayed-parent-bound-norm-definition-conditional-native-build/v1",
+        "packet_index_admitted": false,
+        "packet_index_reader": null,
+        "premises": [
+          "One arbitrary Entity carrier, Interpretation and fixed Nat time are shared by the exact original norm and definition modules.",
+          "The conditional definition instance assumes hDefinition; deriving its body additionally assumes hMembership at the same supplied entity valuation.",
+          "No existential witness, actual membership, governing applicability, source meaning or norm truth is inferred.",
+          "The complete supplied norm AST and native body are unchanged. The preservation obligation is only a definitional alias identity, not a source-meaning theorem.",
+          "No definition is substituted into a predicate, quantifier or modality of the norm; all original alternatives and nominations remain retained."
+        ],
+        "profile": "replayed-parent-bound-norm-definition-conditional-native-build/v1",
+        "route": "parent"
+      },
+      {
+        "admitted": false,
+        "artifact_closure": {
+          "compiled_modules": 4,
+          "executed_inputs": 7,
+          "index_profile": "retained-parent-norm-receipt-consistency-index/v1",
+          "packet_files": 23,
+          "packet_profile": "replayed-retained-parent-literal-complete-authored-norm-native-byte-packet/v1",
+          "project_including_manifest": 8,
+          "receipt_and_logs": 4,
+          "theorems": 1
+        },
+        "ast_sha256": "8499e4abcaf01888bdc43be10537f09c7c951ec59a45c481c0d05a8cdff52491",
+        "ast_sha256_matches_primary_evidence": true,
+        "ast_sha256_scope": "caller_selected_digest_not_a_parsed_statutory_ast",
+        "axioms": {
+          "original_norm_preserved": []
+        },
+        "candidate_id": "retained:direct",
+        "compiler_invoked": false,
+        "evidence": [
+          {
+            "cases": 68,
+            "counts_pooled": false,
+            "path": "docs/autoformalization/evidence/legal-ir-parent-complete-norm-project-20261024.json",
+            "phases": 204,
+            "profile": "replayed-parent-literal-complete-authored-norm-project/v1",
+            "schema": "legal-ir-parent-complete-norm-project-qualification/v1",
+            "sha256": "8499e4abcaf01888bdc43be10537f09c7c951ec59a45c481c0d05a8cdff52491"
+          },
+          {
+            "counts_pooled": false,
+            "packet_files": 23,
+            "path": "docs/autoformalization/evidence/legal-ir-parent-norm-packet-consistency-20261025.json",
+            "profile": "parent-norm-packet-consistency-pure-controls/v1",
+            "schema": "legal-ir-parent-norm-packet-consistency-qualification/v1",
+            "sha256": "74b8bd7027eec60bfa87e42ce6039c40d2ab00998f2fb4da58ff00b815c72e8f"
+          },
+          {
+            "cases": 114,
+            "counts_pooled": false,
+            "path": "docs/autoformalization/evidence/legal-ir-parent-norm-preservation-index-20261025.json",
+            "phases": 342,
+            "profile": "parent-norm-preservation-index-source-audit-reconciled-controls/v2",
+            "schema": "legal-ir-parent-norm-preservation-index-qualification/v2",
+            "sha256": "7ef2fc6fac35c7254e818b0af31e82d2840625ab0d7de11bed2fe6b657f6e706"
+          }
+        ],
+        "formalized": false,
+        "imports": {
+          "namespace": [
+            "preservation"
+          ],
+          "norm": [
+            "prelude"
+          ],
+          "prelude": [],
+          "preservation": [
+            "norm"
+          ]
+        },
+        "introduced_axioms": [],
+        "lean_admitted": false,
+        "legal_admitted": false,
+        "missing_packet_index_profile": null,
+        "packet_index_admitted": false,
+        "packet_index_reader": "validate_parent_norm_native_packet_v1",
+        "premises": [
+          "Only original_norm_preserved, a definitional alias identity under explicit Entity, Agent, Interpretation and time. No norm truth, source meaning, governing edition, definition applicability, graph/corpus admission, model equivalence or convergence claim."
+        ],
+        "profile": "replayed-parent-literal-complete-authored-norm-project/v1",
+        "route": "direct"
+      },
+      {
+        "admitted": false,
+        "artifact_closure": {
+          "modules": 6,
+          "project_files": 9,
+          "theorems": 3
+        },
+        "ast_sha256": "c9d9ca2da7412a76903c0482ce44a7a9306fae59a6b6c0ecbf1245cdab8d85c0",
+        "ast_sha256_matches_primary_evidence": false,
+        "ast_sha256_scope": "caller_selected_digest_not_a_parsed_statutory_ast",
+        "axioms": {
+          "consumer_predicate_iff_donor_body": [],
+          "joint_matches_original": [],
+          "joint_of_components": []
+        },
+        "candidate_id": "retained:conditional",
+        "compiler_invoked": false,
+        "evidence": [
+          {
+            "case_count_rerun": false,
+            "counts_pooled": false,
+            "owner": "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_lake_v2.py",
+            "profile": "replayed-v2-definition-use-conditional-project/v1",
+            "schema": "legal-corpus-v2-definition-use-lake-preparation/v1"
+          }
+        ],
+        "formalized": false,
+        "imports": {
+          "alias": [
+            "donor",
+            "consumer"
+          ],
+          "consumer": [
+            "prelude"
+          ],
+          "donor": [
+            "prelude"
+          ],
+          "joint": [
+            "donor",
+            "consumer",
+            "alias"
+          ],
+          "namespace": [
+            "joint"
+          ],
+          "prelude": []
+        },
+        "introduced_axioms": [],
+        "lean_admitted": false,
+        "legal_admitted": false,
+        "missing_packet_index_profile": null,
+        "packet_index_admitted": false,
+        "packet_index_reader": null,
+        "premises": [
+          "One supplied Interpretation, Entity carrier and Nat evaluation time are shared by all fragments.",
+          "Predicate-to-donor-body equivalence assumes the exact donor definition and explicit alias; neither is proved as a fact.",
+          "Joint assembly assumes the exact donor definition, consumer definition and alias.",
+          "Modular joint equivalence is a generated definitional obligation; native kernel checking has not run.",
+          "No conclusion about the consumer head follows from the donor body without its separate complete Boolean body obligations."
+        ],
+        "profile": "replayed-v2-definition-use-conditional-project/v1",
+        "route": "conditional"
+      },
+      {
+        "admitted": false,
+        "artifact_closure": {
+          "compiled_modules": 4,
+          "executed_source_files": 7,
+          "nonempty_oleans": 4,
+          "theorems": 1,
+          "toolchain": "leanprover/lean4:v4.34.1"
+        },
+        "ast_sha256": "a9d416fe89e5d499bf59964a82e0e6aa554ef8e8dade814ef842a8a34ec3e10c",
+        "ast_sha256_matches_primary_evidence": true,
+        "ast_sha256_scope": "caller_selected_digest_not_a_parsed_statutory_ast",
+        "axioms": {
+          "original_norm_preserved": []
+        },
+        "candidate_id": "retained:native",
+        "compiler_invoked": false,
+        "evidence": [
+          {
+            "cases": 23,
+            "counts_pooled": false,
+            "path": "docs/autoformalization/evidence/legal-ir-parent-complete-norm-native-20261024.json",
+            "phases": 69,
+            "profile": "replayed-parent-literal-complete-authored-norm-native-build/v1",
+            "schema": "legal-ir-parent-complete-norm-native-qualification/v1",
+            "sha256": "a9d416fe89e5d499bf59964a82e0e6aa554ef8e8dade814ef842a8a34ec3e10c"
+          }
+        ],
+        "formalized": false,
+        "imports": {
+          "namespace": [
+            "preservation"
+          ],
+          "norm": [
+            "prelude"
+          ],
+          "prelude": [],
+          "preservation": [
+            "norm"
+          ]
+        },
+        "introduced_axioms": [],
+        "lean_admitted": false,
+        "legal_admitted": false,
+        "missing_packet_index_profile": null,
+        "packet_index_admitted": false,
+        "packet_index_reader": null,
+        "premises": [
+          "Only original_norm_preserved, a definitional alias identity under explicit Entity, Agent, Interpretation and time. No norm truth, source meaning, governing edition, definition applicability, graph/corpus admission, model equivalence or convergence claim.",
+          "The checked theorem is an unchanged authored formula alias identity, not statutory meaning or norm truth."
+        ],
+        "profile": "replayed-parent-literal-complete-authored-norm-native-build/v1",
+        "route": "native"
+      },
+      {
+        "admitted": false,
+        "artifact_closure": {
+          "index_profile": "retained-corpus-preservation-observation-index/v1",
+          "modules": 12,
+          "packet_files": 49,
+          "packet_profile": "replayed-retained-v2-corpus-preservation-byte-packet/v1",
+          "preparation_profile": "replayed-v2-corpus-four-fragment-concrete-preservation/v1",
+          "project_files": 16,
+          "theorems": 15
+        },
+        "ast_sha256": "4df6b8621516f30fef6b402bd3da741029a3612fdbc811ec3bb1b44648302039",
+        "ast_sha256_matches_primary_evidence": false,
+        "ast_sha256_scope": "caller_selected_digest_not_a_parsed_statutory_ast",
+        "axioms": {
+          "conditional:consumer_predicate_iff_donor_body": [],
+          "conditional:joint_matches_original": [],
+          "conditional:joint_of_components": [],
+          "preservation:alias:denotation_matches_native": [],
+          "preservation:alias:native_ast_closed": [],
+          "preservation:alias:native_value_exact": [],
+          "preservation:consumer:denotation_matches_native": [],
+          "preservation:consumer:native_ast_closed": [],
+          "preservation:consumer:native_value_exact": [],
+          "preservation:donor:denotation_matches_native": [],
+          "preservation:donor:native_ast_closed": [],
+          "preservation:donor:native_value_exact": [],
+          "preservation:joint:denotation_matches_native": [],
+          "preservation:joint:native_ast_closed": [],
+          "preservation:joint:native_value_exact": []
+        },
+        "candidate_id": "retained:preservation",
+        "compiler_invoked": false,
+        "evidence": [
+          {
+            "counts_pooled": false,
+            "historical_cohort_label": "153/459 official packet/index/store",
+            "historical_cohort_rerun": false,
+            "label_source_path": "docs/autoformalization/evidence/legal-ir-parent-norm-packet-consistency-20261025.json",
+            "label_source_sha256": "74b8bd7027eec60bfa87e42ce6039c40d2ab00998f2fb4da58ff00b815c72e8f",
+            "modules": 12,
+            "owner": "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_packet_v2.py",
+            "packet_files": 49,
+            "profile": "replayed-retained-v2-corpus-preservation-byte-packet/v1",
+            "symbol": "validate_definition_use_preservation_packet_v2",
+            "theorems": 15
+          }
+        ],
+        "formalized": false,
+        "imports": {
+          "alias": [
+            "donor",
+            "consumer"
+          ],
+          "consumer": [
+            "prelude"
+          ],
+          "donor": [
+            "prelude"
+          ],
+          "joint": [
+            "donor",
+            "consumer",
+            "alias"
+          ],
+          "namespace": [
+            "joint"
+          ],
+          "prelude": [],
+          "preservation_alias": [
+            "alias",
+            "semantics"
+          ],
+          "preservation_consumer": [
+            "consumer",
+            "semantics"
+          ],
+          "preservation_donor": [
+            "donor",
+            "semantics"
+          ],
+          "preservation_joint": [
+            "joint",
+            "semantics"
+          ],
+          "project": [
+            "namespace",
+            "preservation_donor",
+            "preservation_consumer",
+            "preservation_alias",
+            "preservation_joint"
+          ],
+          "semantics": [
+            "prelude"
+          ]
+        },
+        "introduced_axioms": [],
+        "lean_admitted": false,
+        "legal_admitted": false,
+        "missing_packet_index_profile": null,
+        "packet_index_admitted": false,
+        "packet_index_reader": "validate_definition_use_preservation_packet_v2",
+        "premises": [
+          "All four certificates use the original LegalCorpusV2.Interpretation and target the original module formula_0 directly.",
+          "Concrete AST value reconstruction, closedness and denotation do not establish statutory source meaning or the alias premise.",
+          "Python JSON parsing, reification and cryptographic commitments remain outside the kernel theorem.",
+          "All fifteen generated theorem obligations require separate native kernel execution."
+        ],
+        "profile": "replayed-retained-v2-corpus-preservation-byte-packet/v1",
+        "route": "preservation"
+      }
+    ],
+    "request_import_premise_axiom_closure": {
+      "candidates": [
+        {
+          "ast_sha256": "769fbf8717177e2a2c42f6abc7cb54fc95a6342665340d16ffc14dcf6362f655",
+          "axioms": {
+            "definition_instance": [],
+            "original_norm_preserved": []
+          },
+          "candidate_id": "retained:parent",
+          "imports": {
+            "definition": [
+              "prelude"
+            ],
+            "namespace": [
+              "preservation"
+            ],
+            "norm": [
+              "prelude"
+            ],
+            "occurrence": [
+              "norm",
+              "definition"
+            ],
+            "prelude": [],
+            "preservation": [
+              "norm",
+              "occurrence"
+            ]
+          },
+          "premises": [
+            "One arbitrary Entity carrier, Interpretation and fixed Nat time are shared by the exact original norm and definition modules.",
+            "The conditional definition instance assumes hDefinition; deriving its body additionally assumes hMembership at the same supplied entity valuation.",
+            "No existential witness, actual membership, governing applicability, source meaning or norm truth is inferred.",
+            "The complete supplied norm AST and native body are unchanged. The preservation obligation is only a definitional alias identity, not a source-meaning theorem.",
+            "No definition is substituted into a predicate, quantifier or modality of the norm; all original alternatives and nominations remain retained."
+          ],
+          "profile": "replayed-parent-bound-norm-definition-conditional-native-build/v1",
+          "route": "parent"
+        },
+        {
+          "ast_sha256": "8499e4abcaf01888bdc43be10537f09c7c951ec59a45c481c0d05a8cdff52491",
+          "axioms": {
+            "original_norm_preserved": []
+          },
+          "candidate_id": "retained:direct",
+          "imports": {
+            "namespace": [
+              "preservation"
+            ],
+            "norm": [
+              "prelude"
+            ],
+            "prelude": [],
+            "preservation": [
+              "norm"
+            ]
+          },
+          "premises": [
+            "Only original_norm_preserved, a definitional alias identity under explicit Entity, Agent, Interpretation and time. No norm truth, source meaning, governing edition, definition applicability, graph/corpus admission, model equivalence or convergence claim."
+          ],
+          "profile": "replayed-parent-literal-complete-authored-norm-project/v1",
+          "route": "direct"
+        },
+        {
+          "ast_sha256": "c9d9ca2da7412a76903c0482ce44a7a9306fae59a6b6c0ecbf1245cdab8d85c0",
+          "axioms": {
+            "consumer_predicate_iff_donor_body": [],
+            "joint_matches_original": [],
+            "joint_of_components": []
+          },
+          "candidate_id": "retained:conditional",
+          "imports": {
+            "alias": [
+              "donor",
+              "consumer"
+            ],
+            "consumer": [
+              "prelude"
+            ],
+            "donor": [
+              "prelude"
+            ],
+            "joint": [
+              "donor",
+              "consumer",
+              "alias"
+            ],
+            "namespace": [
+              "joint"
+            ],
+            "prelude": []
+          },
+          "premises": [
+            "One supplied Interpretation, Entity carrier and Nat evaluation time are shared by all fragments.",
+            "Predicate-to-donor-body equivalence assumes the exact donor definition and explicit alias; neither is proved as a fact.",
+            "Joint assembly assumes the exact donor definition, consumer definition and alias.",
+            "Modular joint equivalence is a generated definitional obligation; native kernel checking has not run.",
+            "No conclusion about the consumer head follows from the donor body without its separate complete Boolean body obligations."
+          ],
+          "profile": "replayed-v2-definition-use-conditional-project/v1",
+          "route": "conditional"
+        },
+        {
+          "ast_sha256": "a9d416fe89e5d499bf59964a82e0e6aa554ef8e8dade814ef842a8a34ec3e10c",
+          "axioms": {
+            "original_norm_preserved": []
+          },
+          "candidate_id": "retained:native",
+          "imports": {
+            "namespace": [
+              "preservation"
+            ],
+            "norm": [
+              "prelude"
+            ],
+            "prelude": [],
+            "preservation": [
+              "norm"
+            ]
+          },
+          "premises": [
+            "Only original_norm_preserved, a definitional alias identity under explicit Entity, Agent, Interpretation and time. No norm truth, source meaning, governing edition, definition applicability, graph/corpus admission, model equivalence or convergence claim.",
+            "The checked theorem is an unchanged authored formula alias identity, not statutory meaning or norm truth."
+          ],
+          "profile": "replayed-parent-literal-complete-authored-norm-native-build/v1",
+          "route": "native"
+        },
+        {
+          "ast_sha256": "4df6b8621516f30fef6b402bd3da741029a3612fdbc811ec3bb1b44648302039",
+          "axioms": {
+            "conditional:consumer_predicate_iff_donor_body": [],
+            "conditional:joint_matches_original": [],
+            "conditional:joint_of_components": [],
+            "preservation:alias:denotation_matches_native": [],
+            "preservation:alias:native_ast_closed": [],
+            "preservation:alias:native_value_exact": [],
+            "preservation:consumer:denotation_matches_native": [],
+            "preservation:consumer:native_ast_closed": [],
+            "preservation:consumer:native_value_exact": [],
+            "preservation:donor:denotation_matches_native": [],
+            "preservation:donor:native_ast_closed": [],
+            "preservation:donor:native_value_exact": [],
+            "preservation:joint:denotation_matches_native": [],
+            "preservation:joint:native_ast_closed": [],
+            "preservation:joint:native_value_exact": []
+          },
+          "candidate_id": "retained:preservation",
+          "imports": {
+            "alias": [
+              "donor",
+              "consumer"
+            ],
+            "consumer": [
+              "prelude"
+            ],
+            "donor": [
+              "prelude"
+            ],
+            "joint": [
+              "donor",
+              "consumer",
+              "alias"
+            ],
+            "namespace": [
+              "joint"
+            ],
+            "prelude": [],
+            "preservation_alias": [
+              "alias",
+              "semantics"
+            ],
+            "preservation_consumer": [
+              "consumer",
+              "semantics"
+            ],
+            "preservation_donor": [
+              "donor",
+              "semantics"
+            ],
+            "preservation_joint": [
+              "joint",
+              "semantics"
+            ],
+            "project": [
+              "namespace",
+              "preservation_donor",
+              "preservation_consumer",
+              "preservation_alias",
+              "preservation_joint"
+            ],
+            "semantics": [
+              "prelude"
+            ]
+          },
+          "premises": [
+            "All four certificates use the original LegalCorpusV2.Interpretation and target the original module formula_0 directly.",
+            "Concrete AST value reconstruction, closedness and denotation do not establish statutory source meaning or the alias premise.",
+            "Python JSON parsing, reification and cryptographic commitments remain outside the kernel theorem.",
+            "All fifteen generated theorem obligations require separate native kernel execution."
+          ],
+          "profile": "replayed-retained-v2-corpus-preservation-byte-packet/v1",
+          "route": "preservation"
+        }
+      ],
+      "compiler_invoked": false,
+      "schema": "legal-corpus-lean-compatibility-request/v1"
+    },
+    "reuse_owners": [
+      {
+        "path": "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_packet_v2.py",
+        "route": "preservation",
+        "symbol": "validate_definition_use_preservation_packet_v2"
+      },
+      {
+        "path": "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_index_v2.py",
+        "route": "preservation",
+        "symbol": "prepare_definition_use_preservation_index_v2"
+      },
+      {
+        "path": "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_packet_v2.py",
+        "route": "direct",
+        "symbol": "validate_parent_norm_native_packet_v1"
+      },
+      {
+        "path": "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_index_v2.py",
+        "route": "direct",
+        "symbol": "prepare_parent_norm_preservation_index_v1"
+      },
+      {
+        "missing_profile": "replayed-parent-bound-norm-definition-conditional-native-build/v1",
+        "packet_index_api_registered": false,
+        "path": "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_packet_v2.py",
+        "route": "parent",
+        "symbol": "not_registered"
+      }
+    ],
+    "unresolved_questions": [
+      {
+        "blocks": [
+          "Lean_admitted",
+          "legal_admitted"
+        ],
+        "candidate_ids": [
+          "retained:parent",
+          "retained:direct",
+          "retained:conditional",
+          "retained:native",
+          "retained:preservation"
+        ],
+        "id": "governing_edition_unselected",
+        "status": "unanswered"
+      },
+      {
+        "blocks": [
+          "Lean_admitted",
+          "legal_admitted"
+        ],
+        "candidate_ids": [
+          "retained:parent",
+          "retained:direct",
+          "retained:conditional",
+          "retained:native",
+          "retained:preservation"
+        ],
+        "id": "source_meaning_unreviewed",
+        "status": "unanswered"
+      },
+      {
+        "blocks": [
+          "Lean_admitted",
+          "legal_admitted"
+        ],
+        "candidate_ids": [
+          "retained:parent",
+          "retained:direct",
+          "retained:conditional",
+          "retained:native",
+          "retained:preservation"
+        ],
+        "id": "definition_applicability_unreviewed",
+        "status": "unanswered"
+      },
+      {
+        "blocks": [
+          "Lean_admitted",
+          "legal_admitted"
+        ],
+        "candidate_ids": [
+          "retained:parent",
+          "retained:direct",
+          "retained:conditional",
+          "retained:native",
+          "retained:preservation"
+        ],
+        "id": "explicit_premises_unproved",
+        "status": "unanswered"
+      },
+      {
+        "blocks": [
+          "Lean_admitted",
+          "legal_admitted"
+        ],
+        "candidate_ids": [
+          "retained:parent",
+          "retained:direct",
+          "retained:conditional",
+          "retained:native",
+          "retained:preservation"
+        ],
+        "id": "historical_compiler_qualification_not_rerun",
+        "status": "unanswered"
+      },
+      {
+        "blocks": [
+          "Lean_admitted",
+          "legal_admitted",
+          "packet_index_admission"
+        ],
+        "candidate_ids": [
+          "retained:parent"
+        ],
+        "id": "parent_bound_29_file_packet_index_unadmitted",
+        "missing_profile": "replayed-parent-bound-norm-definition-conditional-native-build/v1",
+        "required_retained_files": 29,
+        "status": "unanswered"
+      },
+      {
+        "blocks": [
+          "Lean_admitted"
+        ],
+        "candidate_ids": [
+          "retained:parent",
+          "retained:direct",
+          "retained:conditional",
+          "retained:native",
+          "retained:preservation"
+        ],
+        "id": "lean_admission_blocked",
+        "status": "unanswered"
+      },
+      {
+        "blocks": [
+          "legal_admitted"
+        ],
+        "candidate_ids": [
+          "retained:parent",
+          "retained:direct",
+          "retained:conditional",
+          "retained:native",
+          "retained:preservation"
+        ],
+        "id": "legal_admission_blocked",
+        "status": "unanswered"
+      }
+    ]
+  }
+}

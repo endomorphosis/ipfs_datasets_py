@@ -24,8 +24,92 @@ from requests.adapters import HTTPAdapter
 
 log = logging.getLogger("archive_fallbacks")
 
+# --- robots.txt guard wiring (CoS-approved 2026-10-01) ----------------------------------------
+# Every request sent through session() (Wayback CDX, Common Crawl, archive.is, direct HTTP) and the Wayback curl replay is checked against the host's robots.txt first
+# (robots_guard: fetched once per scheme+host and cached for the run, RFC 9309 matching, dated
+# snapshot under <cc>/logs/robots/) and spaced by the host's Crawl-delay (per-host sleep).
+# Policy is robots_guard's documented one: robots.txt 404/410/other 4xx = no rules = allow;
+# 5xx/429/401/403/WAF page/timeout/network error = fail CLOSED (RobotsUnavailable).
+# A refused URL is never requested: the guard logs it (logger "robots_guard", message
+# "RobotsBlocked ...", plus a row in <cc>/logs/robots_blocked.jsonl) and RobotsBlockedFetch is
+# raised inside the send; it subclasses robots_guard.RobotsBlocked (PermissionError),
+# requests.RequestException and RuntimeError, so the existing `except` clauses around these
+# helpers turn it into their usual error value (error dict / [] / None / failure) unchanged.
+# Archive copies (CoS ruling 2026-10-01): a Wayback/archive.is replay of <orig> is refused when the
+# ORIGIN's robots.txt disallows <orig> (reason origin_disallow; origin robots.txt unavailable =
+# origin_robots_unavailable, fail closed) -- robots_guard.check() parses the replay URL; Common
+# Crawl WARC records are checked with robots_guard.check_archived_copy(). CDX searches (discovery,
+# no document download) are judged by the archive host's own robots.txt only.
+import logging as _rg_logging
+from urllib.parse import urlsplit as _rg_urlsplit
+try:
+    import robots_guard as _rg
+except ImportError:  # package-style import (ipfs_datasets_py)
+    try:
+        from . import robots_guard as _rg  # type: ignore
+        import sys as _rg_sys
+        _rg_sys.modules.setdefault("robots_guard", _rg)  # one guard + one robots cache per process
+    except Exception:  # pragma: no cover
+        _rg = None
+_rg_log = _rg_logging.getLogger("robots_guard")
+if _rg is None:  # pragma: no cover
+    _rg_log.warning("robots_guard module not importable: archive_fallbacks fetches will fail closed")
+    _RG_BASE = PermissionError
+else:
+    _RG_BASE = _rg.RobotsBlocked
+
+
+class RobotsBlockedFetch(_RG_BASE, requests.exceptions.RequestException, RuntimeError):
+    """robots.txt disallows the URL (or robots.txt is unavailable: fail closed); not fetched."""
+
+    def __init__(self, msg, decision=None):
+        PermissionError.__init__(self, msg)
+        self.decision = decision
+        self.response = None
+        self.request = None
+
+
+def _robots_blocked(url, caller=""):
+    """None if the URL may be fetched (after the per-host Crawl-delay wait); else the refusing
+    robots_guard.Decision (already logged)."""
+    if _rg is None:
+        raise RobotsBlockedFetch("robots_guard unavailable; refusing unguarded request")
+    if not url:
+        return None
+    sp = _rg_urlsplit(str(url))
+    if (sp.scheme or "").lower() not in ("http", "https"):
+        return None
+    d = _rg.check(str(url))
+    if not d.allowed:
+        _rg.report_blocked(d, caller)
+        _rg_log.warning("RobotsBlocked %s: %s (%s) caller=%s", d.reason, url, d.rule, caller)
+        return d
+    # shared per-host clock in robots_guard: waits Crawl-delay once per request, measured from the
+    # last request to the host; a pre-flight robots_guard.guard()/wait() of this request is not repeated
+    (getattr(_rg, "wait_send", None) or _rg.wait)(str(url))
+    return None
+
+
+def _robots_gate(url, caller=""):
+    d = _robots_blocked(url, caller)
+    if d is not None:
+        raise RobotsBlockedFetch(f"RobotsBlocked: robots guard {d.reason} {url} ({d.rule})", d)
+
+
+class _RobotsSession(requests.Session):
+    """requests.Session whose every send() (each redirect hop too) passes the robots gate."""
+
+    robots_caller = "archive_fallbacks"
+
+    def send(self, request, **kwargs):
+        _robots_gate(request.url, self.robots_caller)
+        return super().send(request, **kwargs)
+# --- end robots.txt guard wiring --------------------------------------------------------------
+
 WAYBACK_CDX = os.environ.get("WAYBACK_CDX", "https://web.archive.org/cdx/search/cdx")   # tip+30o 23:2x PT Oct 1: port 80 to web.archive.org times out; https OK
 WAYBACK_WEB = os.environ.get("WAYBACK_WEB", "https://web.archive.org/web")
+WAYBACK_CDX_HTTP = "http://web.archive.org/cdx/search/cdx"
+WAYBACK_WEB_HTTP = "http://web.archive.org/web"
 CC_COLLINFO = "https://index.commoncrawl.org/collinfo.json"
 CC_DATA = "https://data.commoncrawl.org"
 CC_DATA_HOSTS = (
@@ -64,9 +148,9 @@ _last_cc = 0.0
 def session() -> requests.Session:
     global _session
     if _session is None:
-        s = requests.Session()
+        s = _RobotsSession()  # robots-gated (see robots.txt guard wiring above)
         s.headers.update({"User-Agent": UA, "Accept": "*/*"})
-        ad = HTTPAdapter(pool_connections=8, pool_maxsize=8, max_retries=0)
+        ad = HTTPAdapter(pool_connections=16, pool_maxsize=16, max_retries=0)
         s.mount("https://", ad)
         s.mount("http://", ad)
         _session = s
@@ -211,7 +295,17 @@ def _wayback_cdx_page(
             items = [(k, psz if k == "limit" else v) for k, v in items]
             _sleep_wayback(1.5)
         try:
-            r = session().get(WAYBACK_CDX, params=items, timeout=(20, 90))
+            try:
+                # Honor the portable configured endpoint; legacy HTTP is a transport fallback only.
+                r = session().get(WAYBACK_CDX, params=items, timeout=(20, 90))
+            except RobotsBlockedFetch:
+                raise  # A policy refusal is not a transport failure: never change schemes to retry it.
+            except requests.RequestException:
+                if WAYBACK_CDX == WAYBACK_CDX_HTTP:
+                    raise
+                r = session().get(WAYBACK_CDX_HTTP, params=items, timeout=(20, 90))
+        except RobotsBlockedFetch:
+            return [], None  # robots.txt refused the CDX URL (logged)
         except requests.RequestException as exc:
             last_err = exc
             log.warning("wayback cdx fail %s: %s", url, exc)
@@ -286,55 +380,161 @@ def search_wayback_machine(
     return out[:target]
 
 
+
 def get_wayback_content(url: str, timestamp: Optional[str] = None) -> dict:
-    """Fetch a snapshot; id_ modifier skips Wayback chrome. No CDX search."""
+    """Fetch a snapshot; id_ modifier skips Wayback chrome. No CDX search.
+
+    Use the configured Wayback endpoint (HTTPS by default).
+    Check robots rules separately for every bounded redirect hop.
+    Redirect hops do not consume the HTTP retry budget.
+    """
+    import subprocess
+    from urllib.parse import urljoin, urlparse
+
     if timestamp:
-        wb = f"{WAYBACK_WEB}/{timestamp}id_/{url}"
+        path = f"/{timestamp}id_/{url}"
     else:
-        wb = f"{WAYBACK_WEB}/2id_/{url}"
-    r = None
+        path = f"/2id_/{url}"
+    target = WAYBACK_WEB + path
     last_err = None
-    for attempt in range(1, 5):
-        _sleep_wayback(1.2 if attempt == 1 else min(20.0, 2.5 * attempt))
+    body = b""
+    ctype = ""
+    final_url = target
+    status = 0
+    redirects_left = 8
+    attempts_left = 5
+    first = True
+    while attempts_left > 0:
+        _sleep_wayback(0.35 if not first and redirects_left < 8 else (0.8 if first else min(8.0, 1.8 * (6 - attempts_left))))
+        first = False
+        _blk = _robots_blocked(target, "archive_fallbacks.get_wayback_content")  # each hop; Crawl-delay
+        if _blk is not None:
+            return {"status": "error", "error": "robots_blocked", "url": url, "wayback_url": target,
+                    "robots": {"reason": _blk.reason, "rule": _blk.rule}}
         try:
-            r = session().get(wb, timeout=(20, 90), allow_redirects=True)
-        except requests.RequestException as exc:
+            # No -L: guard each redirect hop explicitly before requesting it.
+            proc = subprocess.run(
+                [
+                    "curl", "-sS", "--max-time", "90",
+                    "-A", UA,
+                    "-w", "\n__HTTP_STATUS__%{http_code}\n__CONTENT_TYPE__%{content_type}\n__URL_EFFECTIVE__%{url_effective}\n__REDIRECT_URL__%{redirect_url}",
+                    "--output", "-",
+                    target,
+                ],
+                capture_output=True,
+                timeout=100,
+            )
+            raw = proc.stdout or b""
+            marker = b"\n__HTTP_STATUS__"
+            redirect_url = ""
+            if marker in raw:
+                body, rest = raw.rsplit(marker, 1)
+                trailer = (b"__HTTP_STATUS__" + rest).decode("utf-8", "replace")
+                mstat = re.search(r"__HTTP_STATUS__(\d+)", trailer)
+                mctype = re.search(r"__CONTENT_TYPE__([^\n]*)", trailer)
+                murl = re.search(r"__URL_EFFECTIVE__([^\n]*)", trailer)
+                mredir = re.search(r"__REDIRECT_URL__([^\n]*)", trailer)
+                status = int(mstat.group(1)) if mstat else 0
+                ctype = (mctype.group(1) if mctype else "") or ""
+                final_url = (murl.group(1) if murl else target) or target
+                redirect_url = (mredir.group(1) if mredir else "") or ""
+            else:
+                body = raw
+                status = 200 if proc.returncode == 0 and raw else 0
+            if status in (301, 302, 303, 307, 308):
+                loc = (redirect_url or "").strip()
+                if loc.startswith("/"):
+                    loc = urljoin(target, loc)
+                if urlparse(loc).hostname == "web.archive.org" and urlparse(loc).scheme in ("http", "https") and redirects_left > 0:
+                    log.info("wayback replay follow HTTP redirect %s -> %s", status, loc[:120])
+                    target = loc
+                    final_url = loc
+                    redirects_left -= 1
+                    continue  # redirect hop: do not consume attempts_left
+                last_err = f"http_{status}_bad_redirect"
+                log.info("wayback replay HTTP %s bad redirect %s", status, (loc or "")[:160])
+                attempts_left -= 1
+                continue
+            if proc.returncode != 0 and not body:
+                last_err = (proc.stderr or b"").decode("utf-8", "replace")[:300] or f"curl_rc_{proc.returncode}"
+                log.info("wayback replay curl fail %s: %s", url, last_err)
+                attempts_left -= 1
+                continue
+            if status in (403, 429, 503, 502, 504) and attempts_left > 1:
+                log.info("wayback replay HTTP %s %s attempts_left=%s", status, url, attempts_left)
+                attempts_left -= 1
+                continue
+            break
+        except Exception as exc:
             last_err = str(exc)
             log.info("wayback replay fail %s: %s", url, exc)
+            attempts_left -= 1
             continue
-        if r.status_code in (403, 429, 503, 502, 504) and attempt < 4:
-            log.info("wayback replay HTTP %s %s attempt=%s", r.status_code, url, attempt)
-            continue
-        break
-    if r is None:
-        return {"status": "error", "error": last_err or "no_response", "url": url}
+    else:
+        # fallback: requests without following redirects to https
+        try:
+            hops = 0
+            while hops < 8:
+                r = session().get(target, timeout=(20, 90), allow_redirects=False)
+                status = r.status_code
+                body = r.content or b""
+                ctype = r.headers.get("content-type") or ""
+                final_url = r.url or target
+                if status not in (301, 302, 303, 307, 308):
+                    break
+                loc = (r.headers.get("Location") or "").strip()
+                if loc.startswith("/"):
+                    loc = urljoin(target, loc)
+                if urlparse(loc).hostname != "web.archive.org" or urlparse(loc).scheme not in ("http", "https"):
+                    last_err = f"http_{status}_bad_redirect"
+                    break
+                target = loc
+                final_url = loc
+                hops += 1
+        except requests.RequestException as exc:
+            return {"status": "error", "error": last_err or str(exc), "url": url}
+
+    if (not body and status != 200) or status == 404:
+        # /2id_/ sometimes lands on a missing capture; pick an explicit CDX 200 snapshot.
+        if not timestamp:
+            try:
+                hits = search_wayback_machine(url, limit=5, filter_status="200", collapse="digest")
+                for hit in hits:
+                    ts = hit.get("timestamp") or ""
+                    orig = hit.get("original") or url
+                    if not ts:
+                        continue
+                    alt = get_wayback_content(orig, timestamp=ts)
+                    if alt.get("status") == "success" and (alt.get("content") or b""):
+                        return alt
+                    # also try original host/path casing from CDX
+            except Exception as exc:
+                log.info("wayback cdx retry after http_%s: %s", status, exc)
+        return {"status": "error", "error": last_err or f"http_{status}", "url": url}
     cap_ts = timestamp or ""
-    m = re.search(r"/web/(\d{14})", r.url or "")
+    m = re.search(r"/web/(\d{14})", final_url or "")
     if m:
         cap_ts = m.group(1)
-    ctype = r.headers.get("content-type") or ""
-    body = r.content or b""
     text = ""
     if "html" in ctype or "xml" in ctype or "text/" in ctype or not ctype:
-        enc = r.encoding or "utf-8"
         try:
-            text = body.decode(enc, "replace")
-        except Exception:
             text = body.decode("utf-8", "replace")
-    if r.status_code != 200 or not body:
+        except Exception:
+            text = ""
+    if status != 200 or not body:
         return {
             "status": "error",
-            "error": f"http_{r.status_code}",
-            "http_status": r.status_code,
-            "wayback_url": r.url,
+            "error": f"http_{status}",
+            "http_status": status,
+            "wayback_url": final_url,
             "original_url": url,
         }
-    if text and is_challenge(text, r.status_code):
+    if text and is_challenge(text, status):
         return {
             "status": "error",
             "error": "challenge_or_shell",
-            "http_status": r.status_code,
-            "wayback_url": r.url,
+            "http_status": status,
+            "wayback_url": final_url,
             "original_url": url,
             "content": text[:2000],
         }
@@ -343,43 +543,90 @@ def get_wayback_content(url: str, timestamp: Optional[str] = None) -> dict:
         "content": body,
         "text": text,
         "content_type": ctype,
-        "wayback_url": r.url,
+        "wayback_url": final_url,
         "capture_timestamp": cap_ts,
         "original_url": url,
-        "http_status": r.status_code,
-        "method": "wayback",
+        "http_status": status,
+        "method": "wayback_curl",
     }
 
 
 # --- Common Crawl ---
 
+def _http_cc_index(url: str) -> str:
+    if url.startswith("https://index.commoncrawl.org"):
+        return "http://" + url[len("https://"):]
+    return url
+
+
 def cc_indexes(n: int = 6) -> list[str]:
     global _cc_indexes
     if _cc_indexes is None:
-        try:
-            r = session().get(CC_COLLINFO, timeout=30)
-            cols = r.json() if r.status_code == 200 else []
-            ids = []
-            for c in cols:
-                cid = c.get("id") or ""
-                cdx = c.get("cdx-api") or c.get("cdx_api") or ""
-                if cid:
-                    ids.append(cdx or f"https://index.commoncrawl.org/{cid}-index")
-            # collinfo is newest-first. Do not drop crawls that 404 a
-            # specific URL (that means "no captures", not a dead index).
-            _cc_indexes = ids or [
-                "https://index.commoncrawl.org/CC-MAIN-2025-18-index",
-                "https://index.commoncrawl.org/CC-MAIN-2024-33-index",
-            ]
-        except Exception as exc:
-            log.warning("cc collinfo: %s", exc)
-            _cc_indexes = [
-                "https://index.commoncrawl.org/CC-MAIN-2026-34-index",
-                "https://index.commoncrawl.org/CC-MAIN-2026-30-index",
-                "https://index.commoncrawl.org/CC-MAIN-2026-25-index",
-                "https://index.commoncrawl.org/CC-MAIN-2024-33-index",
-            ]
+        cols = []
+        last_exc = None
+        for coll in (CC_COLLINFO, CC_COLLINFO.replace("https://", "http://", 1)):
+            try:
+                r = session().get(coll, timeout=30)
+                if r.status_code == 200:
+                    cols = r.json() or []
+                    break
+            except Exception as exc:
+                last_exc = exc
+                log.warning("cc collinfo %s: %s", coll, exc)
+        ids = []
+        for c in cols:
+            cid = c.get("id") or ""
+            cdx = c.get("cdx-api") or c.get("cdx_api") or ""
+            if cid:
+                ids.append(_http_cc_index(cdx or f"http://index.commoncrawl.org/{cid}-index"))
+        # collinfo is newest-first. Do not drop crawls that 404 a
+        # specific URL (that means "no captures", not a dead index).
+        _cc_indexes = ids or [
+            "http://index.commoncrawl.org/CC-MAIN-2026-34-index",
+            "http://index.commoncrawl.org/CC-MAIN-2024-33-index",
+        ]
+        if last_exc and not ids:
+            log.warning("cc collinfo fallback indexes after %s", last_exc)
     return _cc_indexes[:n]
+
+
+def _load_government_shard_index():
+    """Load the regional shard lookup without importing the legal_scrapers package."""
+    cached = getattr(_load_government_shard_index, "_module", None)
+    if cached is not None:
+        return cached
+    import importlib.util
+    from pathlib import Path
+
+    path = Path(__file__).resolve().parents[1] / "regions" / "shard_index.py"
+    spec = importlib.util.spec_from_file_location("government_cc_shard_index_collectors", path)
+    if spec is None or spec.loader is None:
+        return None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    _load_government_shard_index._module = module
+    return module
+
+
+def _government_shard_indexes(url: str, n: int) -> list[str]:
+    """CDX URLs for collections the regional government shard index names for this host."""
+    try:
+        module = _load_government_shard_index()
+        if module is None:
+            return []
+        collections = module.shard_collections(
+            url,
+            limit=max(1, int(n or 1)),
+            download=True,
+        )
+    except Exception as exc:
+        log.info("government shard index unavailable: %s", exc)
+        return []
+    return [
+        f"https://index.commoncrawl.org/{collection}-index"
+        for collection in collections
+        if collection
+    ]
 
 
 def search_common_crawl(url: str, *, limit: int = 80, indexes: Optional[list[str]] = None) -> list[dict]:
@@ -389,6 +636,10 @@ def search_common_crawl(url: str, *, limit: int = 80, indexes: Optional[list[str
     over this HTTP index — it often returns 0 hits or stalls. Short timeouts;
     never blocks on cdx_toolkit.
 
+    When ``indexes`` is omitted, collections named in the regional government
+    shard index (Publicus/government_cc_shard_indexes) are tried first. This
+    still does not import the full ipfs_datasets_py package.
+
     Do not send filter=status:200 — on some shards that returns a false
     404 "No Captures found". Filter status client-side instead.
     HTTP 404 with that message means no hits in this crawl, not a dead index.
@@ -396,7 +647,8 @@ def search_common_crawl(url: str, *, limit: int = 80, indexes: Optional[list[str
     out = []
     seen = set()
     empty = 0
-    for idx in (indexes or cc_indexes(int(os.environ.get('CC_INDEX_N', '4') or 4))):
+    index_limit = int(os.environ.get("CC_INDEX_N", "4") or 4)
+    for idx in (indexes or _government_shard_indexes(url, index_limit) or cc_indexes(index_limit)):
         if idx in _cc_dead:
             continue
         params = {
@@ -408,8 +660,12 @@ def search_common_crawl(url: str, *, limit: int = 80, indexes: Optional[list[str
         try:
             r = session().get(idx, params=params, timeout=(8, 15))
         except requests.RequestException as exc:
-            log.info("cc cdx %s fail %s", idx, exc)
-            continue
+            alt = _http_cc_index(idx) if idx.startswith("https://") else idx.replace("http://", "https://", 1)
+            try:
+                r = session().get(alt, params=params, timeout=(12, 25))
+            except requests.RequestException as exc2:
+                log.info("cc cdx %s fail %s / %s", idx, exc, exc2)
+                continue
         if r.status_code == 404:
             msg = (r.text or "")[:80]
             log.info("cc cdx no-captures %s %s", idx.split("/")[-1], msg)
@@ -509,14 +765,26 @@ def fetch_common_crawl_warc(rec: dict, max_bytes: int = 4_000_000) -> dict:
     body_raw = b""
     used_url = ""
     for url in candidates:
+        _orig = rec.get("original") or rec.get("url") or ""
+        if not _orig:
+            return {"status": "error", "error": "missing_original_url"}
+        if _rg is None:
+            return {"status": "error", "error": "robots_guard_unavailable"}
+        _od = _rg.check_archived_copy(str(_orig), url)
+        if not _od.allowed:
+            _rg.report_blocked(_od, "archive_fallbacks.fetch_common_crawl_warc")
+            return {"status": "error", "error": "robots_blocked", "original_url": _orig,
+                    "robots": {"reason": _od.reason, "rule": _od.rule}}
         for attempt in range(3):
-            _sleep_cc(0.2 if attempt == 0 else min(8.0, 1.5 * (2 ** attempt)))
+            _sleep_cc(0.35 if attempt == 0 else min(8.0, 1.5 * (2 ** attempt)))
             try:
                 r = session().get(
                     url,
                     headers={**headers_base, "Range": f"bytes={off}-{off + ln - 1}"},
                     timeout=(12, 60),
                 )
+            except RobotsBlockedFetch as exc:
+                return {"status": "error", "error": "robots_blocked", "original_url": _orig}
             except requests.RequestException as exc:
                 last_err = str(exc)
                 continue
@@ -843,6 +1111,7 @@ def get_playwright_content(url: str, *, timeout_ms: int = 45000) -> dict:
     """Optional Playwright for allowlisted JS portals. Skip if package/browser missing."""
     if not playwright_host_ok(url):
         return {"status": "error", "error": "playwright_host_not_allowlisted", "original_url": url}
+    _robots_gate(url, "archive_fallbacks.get_playwright_content")
     try:
         from playwright.sync_api import sync_playwright
     except Exception as exc:
@@ -852,6 +1121,16 @@ def get_playwright_content(url: str, *, timeout_ms: int = 45000) -> dict:
             browser = p.chromium.launch(headless=True)
             try:
                 page = browser.new_page()
+                blocked_requests = []
+                def guarded_route(route):
+                    try:
+                        _robots_gate(route.request.url, "archive_fallbacks.playwright_route")
+                    except RobotsBlockedFetch:
+                        blocked_requests.append(route.request.url)
+                        route.abort()
+                    else:
+                        route.continue_()
+                page.route("**/*", guarded_route)
                 page.goto(url, wait_until="networkidle", timeout=timeout_ms)
                 page.wait_for_timeout(1500)
                 html = page.content() or ""

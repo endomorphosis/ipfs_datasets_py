@@ -1,0 +1,27 @@
+{
+ "cc": "AE",
+ "name": "live",
+ "platform": "ae_dmt_live",
+ "language": "ar",
+ "doc_type": "decision",
+ "min_delay": 3,
+ "threads": 1,
+ "title_include": "تعميم|قرار|لائحة|نظام|اشتراط|دليل|معايير|ضوابط|circular|regulation|decision|policy|standard|code|guideline",
+ "title_exclude": "خبر|أخبار|news|اتحادي|federal",
+ "sites": [
+  {
+   "host": "www.dmt.gov.ae",
+   "place_id": "wd:Q187712",
+   "org": "Abu Dhabi DMT (ADM / Al Ain / Al Dhafra municipalities)",
+   "note": "emirate-level municipal rules; ADM/AAM/DRM municipalities -> Emirate of Abu Dhabi",
+   "seeds": [
+    "https://www.dmt.gov.ae/ar-AE/adm/Environment-Healthy-Safty/Circulars"
+   ],
+   "follow_regex": "/ar-AE/(adm|aam|drm)/[^?#]*(Circular|Regulation|Legislation|Policies|Polic|Standard|Guideline|Manual|Codes?)[^?#]*$",
+   "doc_regex": "\\.pdf($|\\?)|/-/media/",
+   "depth": 2,
+   "max_pages": 80,
+   "max_docs": 400
+  }
+ ]
+}

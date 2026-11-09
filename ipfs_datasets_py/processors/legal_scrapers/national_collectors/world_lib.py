@@ -17,6 +17,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from common import (
     ROOT,
     DEFAULT_UA,
+    DEFAULT_PAGE_FETCH_WORKERS,
+    PAGE_FETCH_WORKERS,
     base_record,
     ensure_dirs,
     existing_ids,
@@ -24,6 +26,7 @@ from common import (
     http_get,
     iso_date,
     log_failure,
+    map_parallel,
     slug_id,
     split_articles,
     utcnow,
@@ -31,6 +34,26 @@ from common import (
     write_summary,
 )
 import archive_fallbacks as af
+
+# robots.txt guard wiring (CoS-approved 2026-10-01): live_get() sends through common._RobotsSession
+try:
+    from common import _RobotsSession, RobotsBlockedFetch
+except ImportError:  # pragma: no cover - a foreign `common` was imported first in this process
+    import requests as _rq
+    logging.getLogger("robots_guard").warning("world_lib: common._RobotsSession unavailable; live_get is NOT robots-checked")
+    class _RobotsSession(_rq.Session):
+        def send(self, request, **kwargs):
+            raise RobotsBlockedFetch("guarded common unavailable")
+
+    class RobotsBlockedFetch(PermissionError):
+        pass
+
+
+def _robots_get(url, **kwargs):
+    """requests.get() equivalent (fresh session per call) whose request and redirect hops are robots-gated."""
+    with _RobotsSession() as s:
+        s.robots_caller = "world_lib.live_get"
+        return s.request("GET", url, **kwargs)
 
 log = logging.getLogger("world_lib")
 
@@ -141,7 +164,33 @@ def split_custom(text: str, law_id: str, source_url: str, date: Optional[str], p
     return out if len(out) >= 2 else docs
 
 
-def live_get(url: str, *, ua: str = DEFAULT_UA, timeout: tuple = (12, 25), verify: bool = True, retries: int = 2):
+
+def normalize_official_url(url: str) -> str:
+    """Fix CDX quirks: https://host:80/... breaks TLS (WRONG_VERSION_NUMBER)."""
+    if not url:
+        return url
+    url = url.replace("http://", "https://", 1) if "lawcommission.gov.np" in url and url.startswith("http://") else url
+    url = url.replace("https://www.lawcommission.gov.np:80/", "https://www.lawcommission.gov.np/")
+    url = url.replace("https://lawcommission.gov.np:80/", "https://lawcommission.gov.np/")
+    url = url.replace(":80/", "/") if url.startswith("https://") and ":80/" in url else url
+    url = url.replace(":80?", "?") if url.startswith("https://") and ":80?" in url else url
+    return url
+
+def _bounded_int(name: str, default: int, upper: int) -> int:
+    try:
+        return min(upper, max(1, int(os.environ.get(name, str(default)))))
+    except (ValueError, TypeError):
+        return default
+
+
+def live_get(url: str, *, ua: str = DEFAULT_UA, timeout: tuple | None = None, verify: bool = True, retries: int | None = None):
+    url = normalize_official_url(url)
+    timeout = timeout or (_bounded_int("LEGAL_CONNECT_TIMEOUT", 12, 60),
+                          _bounded_int("LEGAL_READ_TIMEOUT", 25, 180))
+    timeout = (min(60, max(1, float(timeout[0]))), min(180, max(1, float(timeout[1]))))
+    retries = min(5, max(1, int(retries if retries is not None else _bounded_int("LEGAL_HTTP_RETRIES", 2, 5))))
+    if os.environ.get("NO_INSECURE_TLS") == "1":
+        verify = True
     import requests
     from requests.packages.urllib3.exceptions import InsecureRequestWarning
     requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
@@ -150,14 +199,18 @@ def live_get(url: str, *, ua: str = DEFAULT_UA, timeout: tuple = (12, 25), verif
     for attempt in range(1, retries + 1):
         try:
             time.sleep(0.2)
-            resp = requests.get(url, timeout=timeout, headers=headers, verify=verify, allow_redirects=True)
+            resp = _robots_get(url, timeout=timeout, headers=headers, verify=verify, allow_redirects=True)
             return resp
+        except RobotsBlockedFetch:
+            raise  # robots.txt refused the URL (logged); callers already handle live_get exceptions
         except Exception as exc:
             last = exc
             if verify and os.environ.get("NO_INSECURE_TLS") != "1" and ("SSL" in type(exc).__name__ or "SSL" in str(exc)):   # tip+31zx CoS 14:12 PT: NO_INSECURE_TLS=1 -> never fall back to verify=False
                 try:
-                    resp = requests.get(url, timeout=timeout, headers=headers, verify=False, allow_redirects=True)
+                    resp = _robots_get(url, timeout=timeout, headers=headers, verify=False, allow_redirects=True)
                     return resp
+                except RobotsBlockedFetch:
+                    raise
                 except Exception as exc2:
                     last = exc2
             time.sleep(min(8, 1.5 * attempt))
@@ -172,8 +225,11 @@ def fetch_official(
     wayback: bool = True,
     wayback_ts: Optional[str] = None,
     min_text: int = MIN_TEXT,
+    live_timeout: tuple | None = None,
+    live_retries: int | None = None,
 ) -> dict:
     """Live official URL first; Wayback of the same official URL on failure. No WAF bypass."""
+    url = normalize_official_url(url)
     out = {
         "status": "error",
         "text": "",
@@ -189,7 +245,7 @@ def fetch_official(
     try:
         if skip_live:
             raise RuntimeError("skip_live")
-        r = live_get(url, ua=ua, verify=verify)
+        r = live_get(url, ua=ua, verify=verify, timeout=live_timeout, retries=live_retries)
         body = r.content or b""
         ctype = r.headers.get("content-type") or ""
         if r.status_code == 200 and body:
@@ -233,6 +289,9 @@ def fetch_official(
                     pass
         else:
             out["error"] = f"http_{getattr(r, 'status_code', '?')}"
+    except RobotsBlockedFetch as exc:
+        out["error"] = f"robots_blocked:{exc}"
+        return out
     except Exception as exc:
         out["error"] = f"live:{exc}"
 
@@ -272,7 +331,13 @@ def fetch_official(
                             content_type="application/pdf",
                         )
                         return out
-                    # Keep PDF bytes so callers (OCR) can work without a second download
+                    # Keep PDF bytes so caller can OCR (image-only / bad text layer)
+                    out.update(
+                        content=pdf_bytes,
+                        content_type="application/pdf",
+                        method="wayback_pdf_bytes",
+                        source_url=w.get("wayback_url") or w.get("url") or url,
+                    )
                     out["error"] = (out.get("error") or "") + ";pdf_extract_failed"
                     out["content"] = pdf_bytes
                     out["content_type"] = "application/pdf"
@@ -281,6 +346,12 @@ def fetch_official(
                 if not raw_t and isinstance(raw_b, bytes):
                     raw_t = raw_b.decode("utf-8", "replace")
                 if raw_t.lstrip().startswith("%PDF") or "endobj" in raw_t[:400] or "startxref" in raw_t[:800]:
+                    # Treat as PDF bytes for OCR upstream
+                    pdf_bytes = raw_b if isinstance(raw_b, bytes) else raw_t.encode("latin-1", "replace")
+                    if isinstance(pdf_bytes, bytes) and b"%PDF" in pdf_bytes[:8192]:
+                        if pdf_bytes[:4] != b"%PDF":
+                            pdf_bytes = pdf_bytes[pdf_bytes.find(b"%PDF"):]
+                        out.update(content=pdf_bytes, content_type="application/pdf", method="wayback_pdf_bytes")
                     out["error"] = (out.get("error") or "") + ";raw_pdf_bytes"
                     return out
                 text = html_to_text(raw_t) if "<" in (raw_t[:400] or "") else raw_t
@@ -445,3 +516,69 @@ def env_int(name: str, default: int) -> int:
         return int(os.environ.get(name, str(default)) or default)
     except Exception:
         return default
+
+
+def page_fetch_workers(default: int | None = None) -> int:
+    """Resolved page-fetch concurrency for Cap/thin/deepen harvest.
+
+    Prefers PAGE_FETCH_WORKERS, then WORKERS, else DEFAULT_PAGE_FETCH_WORKERS (8).
+    Per-host: keep SLEEP/live_get delay; Wayback ~1 req/s; back off on 429.
+    """
+    if default is None:
+        default = DEFAULT_PAGE_FETCH_WORKERS
+    return max(1, env_int("PAGE_FETCH_WORKERS", env_int("WORKERS", int(default))))
+
+
+def fetch_official_many(
+    urls: list[str],
+    *,
+    ua: str = DEFAULT_UA,
+    verify: bool = True,
+    wayback: bool = True,
+    wayback_ts: Optional[str] = None,
+    min_text: int = MIN_TEXT,
+    workers: int | None = None,
+) -> list[dict]:
+    """Parallel fetch_official over urls (order-preserving). Cap/thin harvest helper."""
+    n = page_fetch_workers() if workers is None else max(1, int(workers))
+
+    def _one(url: str) -> dict:
+        return fetch_official(
+            url,
+            ua=ua,
+            verify=verify,
+            wayback=wayback,
+            wayback_ts=wayback_ts,
+            min_text=min_text,
+        )
+
+    return map_parallel(_one, urls, workers=n)
+
+def harvest_parallel(jobs, fetch_fn, process_fn, *, workers=None):
+    """Fetch jobs in parallel, then process results in submit order.
+
+    jobs: sequence of opaque job objects
+    fetch_fn(job) -> got dict (or any payload)
+    process_fn(job, got) -> None (caller mutates counters)
+    workers: defaults to page_fetch_workers() (PAGE_FETCH_WORKERS/WORKERS, default 8)
+
+    Cap/thin deepen harvest: prefer this over sequential fetch_official loops.
+    Per-host: live_get still sleeps ~0.2s/attempt; Wayback ~1 req/s global;
+    back off on 429. Keep workers <=8 for single-host gazettes.
+    """
+    jobs = list(jobs)
+    if not jobs:
+        return
+    n = page_fetch_workers() if workers is None else max(1, int(workers))
+    if n == 1 or len(jobs) == 1:
+        for job in jobs:
+            process_fn(job, fetch_fn(job))
+        return
+    from concurrent.futures import ThreadPoolExecutor
+
+    def _fetch(job):
+        return job, fetch_fn(job)
+
+    with ThreadPoolExecutor(max_workers=n) as pool:
+        for job, got in pool.map(_fetch, jobs):
+            process_fn(job, got)

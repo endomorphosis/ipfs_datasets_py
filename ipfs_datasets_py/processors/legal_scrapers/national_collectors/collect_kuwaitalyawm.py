@@ -51,6 +51,41 @@ EGOV_PDFS = [
     "https://www.e.gov.kw/sites/kgoArabic/Forms/DastoorKuwaity.pdf",
 ]
 
+# Administrative form stubs (نموذج) — not legislation; drop from harvest.
+FORM_RE = re.compile(
+    r"(?i)(%D9%86%D9%85%D8%A7%D8%B0%D8%AC|%D9%86%D9%85%D9%88%D8%B0%D8%AC|"
+    r"namothaj|namothage|namothg|estimara|talab|form[_-]?0|awqaf-form|"
+    r"student_support|authorizeda|bulletinlabour|annualextern|"
+    r"caitauthorized|/Forms/[^/]*form)"
+)
+
+LAWISH_RE = re.compile(
+    r"(?i)(dastoor|dastor|cma|qawan|qanun|law|tashree|tashrea|jamarek|"
+    r"monadham|khass|amateurradio|constitution|مرسوم|قانون|دستور)"
+)
+
+
+def is_form_stub(url: str) -> bool:
+    from urllib.parse import unquote
+    u = unquote(url or "")
+    if FORM_RE.search(url or "") or FORM_RE.search(u):
+        # keep if clearly a law compilation despite form-ish tokens
+        if LAWISH_RE.search(url or "") or LAWISH_RE.search(u):
+            return False
+        return True
+    # Arabic نموذج / نماذج in path
+    if "نموذج" in u or "نماذج" in u:
+        return True
+    return False
+
+
+def env_int(name: str, default: int) -> int:
+    import os
+    try:
+        return int(os.environ.get(name, str(default)) or default)
+    except Exception:
+        return default
+
 
 def setup():
     ensure_dirs(CC)
@@ -218,30 +253,49 @@ def write_law(ident, title, text, source_url, date, extra_meta, doc_type="statut
 def add_egov_pdfs() -> tuple[int, int]:
     ok = fail = 0
     urls = list(EGOV_PDFS)
+    cdx_lim = env_int("CDX_LIMIT", 400)
     extra = search_wayback_machine(
         "https://www.e.gov.kw/sites/kgoArabic/Forms/", match_type="prefix",
-        limit=80, extra_filters=["mimetype:application/pdf"],
+        limit=cdx_lim, extra_filters=["mimetype:application/pdf"],
     )
     extra += search_wayback_machine(
         "https://e.gov.kw/sites/kgoEnglish/Forms/", match_type="prefix",
-        limit=80, extra_filters=["mimetype:application/pdf"],
+        limit=cdx_lim, extra_filters=["mimetype:application/pdf"],
+    )
+    extra += search_wayback_machine(
+        "https://www.e.gov.kw/sites/kgoarabic/Forms/", match_type="prefix",
+        limit=cdx_lim, extra_filters=["mimetype:application/pdf"],
     )
     log.info("egov wayback pdf cdx=%s", len(extra))
     seen = set()
     jobs = []
     for u in urls:
         jobs.append({"original": u, "timestamp": None, "source": "live-or-wayback"})
+    skipped_forms = 0
     for rec in extra:
         orig = rec.get("original") or ""
         if not orig.lower().endswith(".pdf"):
+            continue
+        if is_form_stub(orig):
+            skipped_forms += 1
             continue
         if orig in seen:
             continue
         seen.add(orig)
         jobs.append({"original": orig, "timestamp": rec.get("timestamp"), "source": "wayback"})
+    log.info("egov jobs=%s skipped_forms=%s", len(jobs), skipped_forms)
+    jobs.sort(key=lambda j: (0 if LAWISH_RE.search(j["original"] or "") else 1, j["original"]))
+    max_new = env_int("MAX_NEW", 120)
+    got = 0
+    known = existing_ids(CC)
     for job in jobs:
+        if max_new and got >= max_new:
+            break
         orig = job["original"]
         ident = Path(orig.split("?")[0]).stem[:80] or "egov-pdf"
+        rid = slug_id(CC, ident)
+        if rid in known:
+            continue
         text = ""
         src = orig
         # live
@@ -272,10 +326,14 @@ def add_egov_pdfs() -> tuple[int, int]:
         }, doc_type=doc_type)
         if st == "ok":
             ok += 1
+            got += 1
+            known.add(rid)
             log.info("egov pdf ok %s chars=%s", ident, len(text))
         elif st == "fail":
             fail += 1
             log_failure(CC, {"identifier": ident, "source_url": orig, "status": "failed", "reason": "empty_pdf"})
+        elif st == "skip":
+            pass
     return ok, fail
 
 
@@ -298,7 +356,8 @@ def add_wayback_gazette_html() -> tuple[int, int]:
             if ln >= 8000:
                 keep.append(rec)
     seen = set()
-    for rec in keep[:80]:
+    max_wb = env_int("MAX_WAYBACK_HTML", 40)
+    for rec in keep[:max_wb]:
         orig = rec.get("original")
         if orig in seen:
             continue

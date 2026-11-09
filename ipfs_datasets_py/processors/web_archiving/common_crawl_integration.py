@@ -29,6 +29,58 @@ _MODULE_SOURCE_PATH = Path(__file__).resolve()
 MODULE_IMPORT_SOURCE_SHA256 = hashlib.sha256(_MODULE_SOURCE_PATH.read_bytes()).hexdigest()
 
 
+def _government_shard_matches(
+    domain: str,
+    max_matches: int,
+    collection: Optional[str],
+    kwargs: Dict[str, Any],
+    *,
+    download: bool,
+) -> Optional[List[Dict[str, Any]]]:
+    """Read local pointer rows from the regional government shard index.
+
+    Returns None when the host is not covered or the pointer parquet is not
+    on disk, so the caller can keep its existing meta-index path. A host with
+    no government ccTLD and no country code does not open every regional file.
+    An inferred foreign ccTLD wins over a default US country code.
+    """
+    from ipfs_datasets_py.processors.legal_scrapers.regions.shard_index import (
+        query_government_shards,
+        read_pointer_records,
+        region_for_country_code,
+        region_for_host,
+        shard_index_enabled,
+    )
+
+    if not shard_index_enabled():
+        return None
+    region = kwargs.get("region") or None
+    country_code = kwargs.get("country_code") or None
+    if region is None and country_code:
+        inferred = region_for_host(domain)
+        if inferred and region_for_country_code(str(country_code)) != inferred:
+            country_code = None
+    rows = query_government_shards(
+        domain,
+        region=str(region) if region else None,
+        country_code=str(country_code) if country_code else None,
+        collection=str(collection) if collection else None,
+        max_segments=min(8, max(1, int(max_matches or 1))),
+        download=download,
+        extra_dirs=kwargs.get("government_shard_dirs"),
+    )
+    if not rows:
+        return None
+    records = read_pointer_records(
+        rows,
+        max_matches=max(1, int(max_matches or 1)),
+        parquet_root=kwargs.get("parquet_root"),
+    )
+    if not records:
+        return None
+    return [dict(record) for record in records]
+
+
 def assert_module_source_unchanged() -> str:
     """Fail if this producer's source bytes changed after module import."""
 
@@ -590,6 +642,18 @@ class CommonCrawlSearchEngine:
         logger.info(f"Searching Common Crawl for domain: {domain} (mode: {self.mode})")
 
         try:
+            try:
+                shard_records = _government_shard_matches(
+                    domain,
+                    int(max_matches),
+                    collection,
+                    kwargs,
+                    download=bool(kwargs.get("government_shard_download", False)),
+                )
+                if shard_records:
+                    return self._normalize_records(shard_records)[: int(max_matches)]
+            except Exception as exc:
+                logger.warning("Government shard index lookup failed: %s", exc)
             if self.mode == "local":
                 if self._hf_fallback_enabled:
                     return self._search_domain_hf(domain, max_matches, collection, **kwargs)

@@ -1,0 +1,25 @@
+{
+ "country_code": "DE",
+ "place_id": "wd:Q10491",
+ "qid": "Q10491",
+ "place_name": "Landkreis Eichstätt",
+ "iso_3166_2": "DE-BY",
+ "admin_level": "landkreis",
+ "language": "de",
+ "doc_type": "ordinance",
+ "platform": "de_by_kreisrecht",
+ "source_org": "Landkreis Eichstätt",
+ "index_url": "https://www.landkreis-eichstaett.de/landratsamt/neuigkeiten/amtsblatt",
+ "archive_policy": "archived_robots_disallowed",
+ "max_bytes": 52428800,
+ "urls": [
+  "https://www.landkreis-eichstaett.de/fileadmin/Dateien/Website/Dateien/Abfallwirtschaft/Gebu__hrensatzung_des_Landkreises_Eichsta__tt_vom_24.11.2021__gu__ltig_ab_01.01.2022_.pdf",
+  "https://www.landkreis-eichstaett.de/fileadmin/Dateien/Website/Dateien/Amtsblatt/2026/A18-_2026.pdf",
+  "https://www.landkreis-eichstaett.de/fileadmin/Dateien/Website/Dateien/Amtsblatt/2023/A53-2023.pdf"
+ ],
+ "titles": {
+  "https://www.landkreis-eichstaett.de/fileadmin/Dateien/Website/Dateien/Abfallwirtschaft/Gebu__hrensatzung_des_Landkreises_Eichsta__tt_vom_24.11.2021__gu__ltig_ab_01.01.2022_.pdf": "Gebu hrensatzung des Landkreises Eichsta tt vom 24.11.2021 gu ltig ab 01.01.2022",
+  "https://www.landkreis-eichstaett.de/fileadmin/Dateien/Website/Dateien/Amtsblatt/2026/A18-_2026.pdf": "A18- 2026",
+  "https://www.landkreis-eichstaett.de/fileadmin/Dateien/Website/Dateien/Amtsblatt/2023/A53-2023.pdf": "A53-2023"
+ }
+}

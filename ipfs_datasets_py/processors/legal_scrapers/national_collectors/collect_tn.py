@@ -10,6 +10,9 @@ No WAF bypass. Not legal advice.
 from __future__ import annotations
 import json, logging, re, shutil, sys, time
 from pathlib import Path
+from urllib.parse import unquote, urlparse
+import archive_fallbacks as af
+import world_lib as wl
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from common import ROOT, existing_ids, log_failure, utcnow, write_summary
 from world_lib import cdx_urls, env_int, fetch_official, live_get, save_instrument, setup_log, slug_id
@@ -30,6 +33,78 @@ JUNK_HTML = re.compile(
 )
 log = logging.getLogger("tn")
 
+
+SKIP = ("wd120", "awp.exe", ".png", ".jpg", ".gif", ".css", ".js", "imageconstitution")
+
+def _norm(url: str) -> str:
+    url = (url or "").split("#")[0].replace(":80/", "/")
+    if url.startswith("https://"):
+        url = "http://" + url[len("https://"):]
+    return url
+
+def discover_official_cdx():
+    items, seen = [], set()
+
+    def add(url, ts=None):
+        url = _norm(url)
+        low = url.lower()
+        if "legislation.tn" not in low and "iort.gov.tn" not in low:
+            return
+        if ".pdf" not in low:
+            return
+        if any(s in low for s in SKIP):
+            return
+        if "legislation.tn" in low and "/sites/default/files/" not in low:
+            return
+        key = url.lower()
+        if key in seen:
+            return
+        seen.add(key)
+        stem = Path(unquote(urlparse(url).path)).stem
+        ident = re.sub(r"[^\w.\-]+", "-", stem).strip("-")[:160] or "tn-jo"
+        items.append((ident, url, ts))
+
+    lim = env_int("CDX_LIMIT", 500)
+    for prefix in (
+        "www.legislation.tn/sites/default/files/",
+        "legislation.tn/sites/default/files/",
+        "www.iort.gov.tn/",
+        "iort.gov.tn/",
+    ):
+        for h in cdx_urls(
+            prefix, limit=lim, match_type="prefix",
+            extra_filters=["mimetype:application/pdf", "statuscode:200"],
+        ):
+            orig = h.get("original") or ""
+            if orig:
+                add(orig, ts=h.get("timestamp"))
+    log.info("catalog %s", len(items))
+    return items
+
+def fetch_tn(url: str, ts: str | None = None) -> dict:
+    url = _norm(url)
+    errors = []
+    try:
+        w = af.get_wayback_content(url, timestamp=ts)
+        if w.get("status") == "success":
+            raw = w.get("content") or b""
+            if isinstance(raw, str):
+                raw = raw.encode("latin-1", "replace")
+            if raw[:4] == b"%PDF" or b"%PDF" in raw[:8192]:
+                if raw[:4] != b"%PDF":
+                    raw = raw[raw.find(b"%PDF"):]
+                text = wl.pdf_to_text(raw)
+                if len(text) >= 120 and not text.lstrip().startswith("%PDF"):
+                    return {
+                        "status": "success", "text": text, "content": raw,
+                        "method": "wayback_pdf", "error": "",
+                    }
+            errors.append("wb_short_or_nonpdf")
+        else:
+            errors.append(f"wb:{w.get('error')}")
+    except Exception as exc:
+        errors.append(f"wb_exc:{exc}")
+    return {"status": "error", "text": "", "content": b"", "method": "", "error": ";".join(errors)[:500]}
 
 def quarantine_junk() -> int:
     instr = ROOT / CC / "instruments"
@@ -143,17 +218,20 @@ def discover():
     cdx = discover_legislation_cdx()
     seen = set()
     out = []
-    for ident, url, kind in lake + cdx:
+    official = [(ident, url, "official_cdx", ts) for ident, url, ts in discover_official_cdx()]
+    for ident, url, kind, ts in [(i, u, k, None) for i, u, k in lake] + official + [(i, u, k, None) for i, u, k in cdx]:
         key = url.lower().split("#")[0]
         if key in seen:
             continue
         seen.add(key)
-        out.append((ident, url, kind))
+        out.append((ident, url, kind, ts))
     log.info("catalog %s", len(out))
     return out
 
 
-def fetch_item(url: str, kind: str) -> dict:
+def fetch_item(url: str, kind: str, timestamp: str | None = None) -> dict:
+    if kind == "official_cdx":
+        return fetch_tn(url, ts=timestamp)
     if kind == "ocr_md" or url.endswith(".md"):
         try:
             r = live_get(url, ua=UA, verify=False, retries=2)
@@ -189,7 +267,7 @@ def main():
     t_start = time.time()
     done = existing_ids(CC)
     ok = skip = fail = 0
-    for ident, url, kind in discover():
+    for ident, url, kind, ts in discover():
         if max_new and ok >= max_new:
             break
         if time.time() - t_start > max_seconds:
@@ -199,7 +277,7 @@ def main():
             skip += 1
             continue
         # Prefer OCR md: if PDF twin already saved for same issue, still allow md
-        got = fetch_item(url, kind)
+        got = fetch_item(url, kind, timestamp=ts)
         text = got.get("text") or ""
         if got.get("status") != "success" or is_junk_text(text):
             fail += 1

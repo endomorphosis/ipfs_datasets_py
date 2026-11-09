@@ -92,12 +92,15 @@ TRAINING_OPERATION: Final = "training"
 HPARAM_SELECTION_OPERATION: Final = "hparam_selection"
 REPRESENTATION_PROMOTION_OPERATION: Final = "representation_promotion"
 CODEX_TODO_PROJECTION_OPERATION: Final = "codex_todo_projection"
+HELDOUT_EVALUATION_OPERATION: Final = "heldout_evaluation"
 
 LEGAL_IR_SPLIT_OPERATION_ALLOWED_SPLITS: Final = {
     TRAINING_OPERATION: frozenset({TRAIN_SPLIT}),
     HPARAM_SELECTION_OPERATION: frozenset({VALIDATION_SPLIT}),
     REPRESENTATION_PROMOTION_OPERATION: frozenset({CANARY_SPLIT}),
     CODEX_TODO_PROJECTION_OPERATION: frozenset({TRAIN_SPLIT, VALIDATION_SPLIT}),
+    # Explicit final scoring never inherits validation/hparam permissions.
+    HELDOUT_EVALUATION_OPERATION: frozenset({HOLDOUT_SPLIT}),
 }
 
 LEAKAGE_KEY_KINDS: Final = (
@@ -1004,6 +1007,7 @@ def validate_legal_ir_eval_splits(
             HPARAM_SELECTION_OPERATION,
             REPRESENTATION_PROMOTION_OPERATION,
             CODEX_TODO_PROJECTION_OPERATION,
+            HELDOUT_EVALUATION_OPERATION,
         )
         if violations
         else ()
@@ -1482,6 +1486,7 @@ __all__ = [
     "RARE_OPERATOR_SPLIT",
     "TYPE_SPLIT",
     "HOLDOUT_SPLIT",
+    "HELDOUT_EVALUATION_OPERATION",
     "HPARAM_SELECTION_OPERATION",
     "JURISDICTION_SPLIT",
     "LEGAL_IR_EVAL_SPLIT_SCHEMA_VERSION",

@@ -1,0 +1,27 @@
+{
+ "country_code": "FR",
+ "place_id": "wd:Q3139",
+ "qid": "Q3139",
+ "place_name": "Alpes-Maritimes",
+ "iso_3166_2": "FR-06",
+ "admin_level": "departement",
+ "language": "fr",
+ "doc_type": "gazette_act",
+ "consolidated": false,
+ "platform": "fr_raa_conseil_departemental",
+ "source_org": "Conseil départemental — Alpes-Maritimes",
+ "issuer": "conseil_departemental",
+ "max_bytes": 52428800,
+ "index_url": "https://www.departement06.fr/les-arretes",
+ "crawl_delay": 3.0,
+ "urls": [
+  "https://www.departement06.fr/sites/default/files/media/downloads/sa-2026-0845.pdf",
+  "https://www.departement06.fr/sites/default/files/media/downloads/sa-2026-0858.pdf",
+  "https://www.departement06.fr/sites/default/files/media/downloads/sa-2026-0822.pdf"
+ ],
+ "titles": {
+  "https://www.departement06.fr/sites/default/files/media/downloads/sa-2026-0845.pdf": "ARRÊTÉ N° SA/2026/0845 portant désignation du représentant du Conseil départemental des Alpes-Maritimes pour siéger au sein de la commission départementale d'aménagement commercial appelée à statuer sur la demande d'autorisation d'exploitation commerciale",
+  "https://www.departement06.fr/sites/default/files/media/downloads/sa-2026-0858.pdf": "ARRÊTÉ N° SA/2026/0858 portant désignation du représentant du Président du Conseil départemental des Alpes-Maritimes pour siéger au sein du conseil local de sécurité et de la prévention de la délinquance",
+  "https://www.departement06.fr/sites/default/files/media/downloads/sa-2026-0822.pdf": "ARRÊTÉ N° SA/2026/0822 portant désignation des représentants du Département désignés par le Président du Conseil départemental pour siéger au sein de la Conférence régionale de la santé et de l'autonomie (CRSA)"
+ }
+}

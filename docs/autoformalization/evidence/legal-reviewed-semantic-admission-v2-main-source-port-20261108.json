@@ -1,0 +1,140 @@
+{
+  "Lean_admitted": false,
+  "acceptance_scope": "fresh clean-base authored-fixture source qualification only",
+  "accepted": true,
+  "actual_statutory_reviews": 0,
+  "base_commit": "cc8392f32eb2cac901d04ad7cc0480da4e9d8b02",
+  "clean_base_qualification": {
+    "JUnit": {
+      "bytes": 49852,
+      "path": "/tmp/pytest-of-barberb/legal-ir-main4-clean-base-qualification-20261108-v01/attempt-v01/exports/test-results.xml",
+      "sha256": "32a4075354e24222c5ef8b2006a1339a9c88931759446ac0eafefbe896d5014f"
+    },
+    "accepted": true,
+    "actual_cases": 242,
+    "adjudication_cases": 112,
+    "all_pinned_sources_executed_claimed": false,
+    "child_plugin_or_natural_phase_credit": false,
+    "consumer_cases": 130,
+    "errors": 0,
+    "executed": true,
+    "failed": 0,
+    "genuine_namespace_modules": 2,
+    "historical_case_credit_transferred": 0,
+    "independent_acceptance": {
+      "bytes": 19348,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-main4-clean-base-qualification-20261108-v01/independent-actual-acceptance-v01.json",
+      "sha256": "20d827500e57c54ce15db52d47afe29f3ee4a85fe674f45187e16d94a9109432"
+    },
+    "metadata_preflight": {
+      "bytes": 2581,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/delivery-preparation/clean-base-qualification-controls-v01/original-metadata-preflight.json",
+      "sha256": "ed3893c1ccf1447a59e9c7d3c1965b6a1079b845d31a71e0d82fbb18e186758e"
+    },
+    "normal_project_modules": 117,
+    "original_closeout": {
+      "bytes": 9931,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-main4-clean-base-qualification-20261108-v01/actual-owner-closeout.json",
+      "sha256": "e0099b57c4ee947aef1dae0231c807e4053c459d66fb8abedde1c202cbec18f1"
+    },
+    "peer_base_differences_preserved": 20,
+    "peer_differences_in_child_product_closure": 13,
+    "peer_runtime_control_paths_excluded_from_child": 7,
+    "product_files_pinned": 178,
+    "pytest_seconds": 58.041,
+    "raw_sources_compiled_and_executed": 129,
+    "run_bound_documentation_preimages": "Preserved in the exact local Source-only documentation outcome; later current-path changes add no execution credit.",
+    "skipped": 0,
+    "source_observation": {
+      "bytes": 183830,
+      "path": "/tmp/pytest-of-barberb/legal-ir-main4-clean-base-qualification-20261108-v01/attempt-v01/exports/clean-base-reviewed-norm-admission-source-observation.json",
+      "sha256": "75242f47c1a2ddc20187ef6e9e28a217c8283d3da16d7a938407b83d2be821f1"
+    },
+    "source_pins": 213,
+    "strict_project_origins": 5
+  },
+  "corpus_admitted": false,
+  "existing_task_ids": [
+    "LIR-06",
+    "LIR-07",
+    "LIR-09",
+    "LIR-10",
+    "LIR-17",
+    "LIR-20",
+    "LIR-22"
+  ],
+  "historical_source_generation": {
+    "adjudication_cases": 112,
+    "all_original_custody_closed": true,
+    "cases": 242,
+    "consumer_cases": 130,
+    "qualification": {
+      "bytes": 6942,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-phase2-reviewed-admission-20261108-v03/independent-actual-acceptance-v01.json",
+      "sha256": "5aac84fddf781d3bb4c9ede2a57b257823ae7bbeaac18c8e05f51ef62e6982f2"
+    },
+    "scope": "The original V03 captured dependency generation only; not a qualification of this clean Git base."
+  },
+  "id": "reviewed-semantic-admission-v2-main-source-port-20261108-01",
+  "model_training_executed": false,
+  "peer_richer_relational_and_mixed_scope_implementations_preserved": true,
+  "portable_qualification_or_relocation_implies_new_execution": false,
+  "preserved_failed_predecessor": {
+    "cases": 242,
+    "failed": 1,
+    "passed": 241,
+    "review": {
+      "bytes": 7671,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-phase2-reviewed-admission-20261108-v02/independent-failed-cohort-review-v01.json",
+      "sha256": "de9f14d97590b07eebf328211caeeb05e6cf8f8cbb55df174126af486b2599fe"
+    },
+    "transferred_passing_case_credit": 0
+  },
+  "reviewed_fixture_evaluation_gold_mask": 0,
+  "reviewed_fixture_training_mask": 0,
+  "schema": "legal-reviewed-semantic-admission-main-source-port/v1",
+  "semantic_graph_admitted": false,
+  "semantics": "This software authenticates complete source/IR/context/dependency/reviewer/allowed-use commitments. Signatures and tests do not establish legal truth; substantive statutory inputs remain pending.",
+  "separate_deliveries": [
+    "The two graph-bridge source/test changes remain separate until their own qualification.",
+    "Root7 owns the separate proof-correctness Core source/test delivery."
+  ],
+  "source_postimages": [
+    {
+      "bytes": 60977,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_norm_content_adjudication_v1.py",
+      "sha256": "1e4d8674851d03ee9b7e8f770a8925f22c50358375a934f42ec34d0d8ffef3d2"
+    },
+    {
+      "bytes": 37208,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_consumer_binding.py",
+      "sha256": "e2654f498a1c911d962a4e19873344e0ef2da75e906983e6acea8ba97206a47d"
+    },
+    {
+      "bytes": 66299,
+      "path": "tests/unit/logic/autoformal/test_legal_norm_content_adjudication_v1.py",
+      "sha256": "f765c46cadc10c8371df689f4f4b9acead3fb7d559e18d6accb827e4b81b78f9"
+    },
+    {
+      "bytes": 42516,
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_consumer_binding.py",
+      "sha256": "10afa2d4de9296e56de1367a7338fa483b85f483ca8194837cce4ccea00f4902"
+    }
+  ],
+  "status": "focused_tests_qualified",
+  "upstream_backlog_duplicate_correction": {
+    "after_sha256": "b8db5136f0ef539b8f8d637dc68f1a0691606b98873a7ad074c7b1ff13841963",
+    "all_24_original_task_ids_preserved": true,
+    "all_effective_values_unchanged": true,
+    "before_sha256": "3b5a3b0257ab3d850a68b447e3eb2c77165ae4d93672d040bb29837f024f3f11",
+    "change": "Remove earlier duplicate programme_goal_hierarchy key; retain expanded later hierarchy.",
+    "later_hierarchy_strictly_preserves_earlier": true
+  },
+  "whitespace_cleanup": {
+    "AST_unchanged": true,
+    "current_source_sha256": "10afa2d4de9296e56de1367a7338fa483b85f483ca8194837cce4ccea00f4902",
+    "historical_source_sha256": "5858f113ee7f0798db91c62715d7c724a41743538bfee8e334efd937646a3d44",
+    "path": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_consumer_binding.py",
+    "reason": "Remove one new blank line at EOF reported by git diff --check."
+  }
+}

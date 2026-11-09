@@ -1,0 +1,33 @@
+{
+ "country_code": "FR",
+ "place_id": "wd:Q3259",
+ "qid": "Q3259",
+ "place_name": "Cantal",
+ "iso_3166_2": "FR-15",
+ "admin_level": "departement",
+ "language": "fr",
+ "doc_type": "gazette_act",
+ "consolidated": false,
+ "platform": "fr_raa_conseil_departemental",
+ "source_org": "Conseil départemental — Cantal",
+ "issuer": "conseil_departemental",
+ "max_bytes": 52428800,
+ "index_url": "https://www.cantal.fr/le-conseil-departemental/arretes-reglementaires/",
+ "crawl_delay": 3.0,
+ "urls": [
+  "https://www.cantal.fr/wp-content/uploads/acte_pdfs/26-3030.pdf",
+  "https://www.cantal.fr/wp-content/uploads/acte_pdfs/26-3031.pdf",
+  "https://www.cantal.fr/wp-content/uploads/acte_pdfs/26-3032.pdf",
+  "https://www.cantal.fr/wp-content/uploads/acte_pdfs/26-3033.pdf",
+  "https://www.cantal.fr/wp-content/uploads/acte_pdfs/26-3034.pdf",
+  "https://www.cantal.fr/wp-content/uploads/acte_pdfs/26-3022.pdf"
+ ],
+ "titles": {
+  "https://www.cantal.fr/wp-content/uploads/acte_pdfs/26-3030.pdf": "Arrêté n°26-3030 23/10/2026 Arrêté de circulation – RD 678 – Saint-Amandin – sécurisation au droit d’une maison sinistrée – Réglementation du 23/10/2026 au 27/11/2026 – Antenne de Riom-ès-Montagnes",
+  "https://www.cantal.fr/wp-content/uploads/acte_pdfs/26-3031.pdf": "Arrêté n°26-3031 23/10/2026 Portant autorisation des dépenses et recettes prévisionnelles pour l’exercice 2026, fixant la dotation en prix de journée globalisé 2026 et la dotation mensuelle applicable en 2026 ainsi que le prix de journée applicable à compter de 1er octobre 2026 pour les enfants dont",
+  "https://www.cantal.fr/wp-content/uploads/acte_pdfs/26-3032.pdf": "Arrêté n°26-3032 23/10/2026 Portant autorisation des dépenses et recettes prévisionnelles pour l’exercice 2026 et fixant le prix de journée applicable à compter du 1er octobre 2026 à la Maison d’Enfants à Caractère Social (MECS) de QUEZAC",
+  "https://www.cantal.fr/wp-content/uploads/acte_pdfs/26-3033.pdf": "Arrêté n°26-3033 23/10/2026 Portant autorisation des dépenses et recettes prévisionnelles pour l’exercice 2026 et fixant le prix de journée applicable au 1er octobre 2026 du Service Accueil Jeunes géré par l’ANEF du Cantal",
+  "https://www.cantal.fr/wp-content/uploads/acte_pdfs/26-3034.pdf": "Arrêté n°26-3034 23/10/2026 Portant autorisation des dépenses et recettes prévisionnelles pour l’exercice 2026 et fixant le prix de journée applicable au 1er octobre 2026 du Service d’Adaptation Progressive en Milieu Naturel (APMN), géré par l’ANEF du Cantal",
+  "https://www.cantal.fr/wp-content/uploads/acte_pdfs/26-3022.pdf": "Arrêté n°26-3022 23/10/2026 Arrêté de déviation – RD 601 – Lacapelle Del Fraisse – Réfection de chaussée – Réglementation du 26/10 au 28/10/2026 – Entreprise Colas pour le Cd 15"
+ }
+}

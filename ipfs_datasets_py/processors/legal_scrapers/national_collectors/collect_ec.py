@@ -25,7 +25,7 @@ log = logging.getLogger("ec")
 def discover() -> list[dict]:
     sess = get_session(UA)
     items, seen = [], set()
-    max_pages = env_int("MAX_PAGES", 16)
+    max_pages = env_int("MAX_PAGES", 40)
     for page in range(0, max_pages):
         try:
             time.sleep(0.25)
@@ -71,8 +71,8 @@ def archivo_url(row: dict) -> str:
 def main():
     setup_log(CC)
     t0 = utcnow()
-    max_new = env_int("MAX_NEW", 90)
-    max_seconds = env_int("MAX_SECONDS", 2400)
+    max_new = env_int("MAX_NEW", 200)
+    max_seconds = env_int("MAX_SECONDS", 3600)
     t_start = time.time()
     done = existing_ids(CC)
     items = discover()

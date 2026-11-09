@@ -1,0 +1,6 @@
+[
+ {"name": "Județul Mureș", "qsearch": "Mureș County", "qid": "Q190711", "url": "https://ro.cjmures.ro/consiliul-judetean/hotarari", "iso": "RO-MS", "pdf_re": "hcj|/hot[^/]*\\.pdf|hot[aă]r[aâ]r"},
+ {"name": "Județul Hunedoara", "qsearch": "Hunedoara County", "qid": "Q191071", "url": "https://www.cjhunedoara.ro/index.php/monitorul-oficial-local", "iso": "RO-HD", "pdf_re": "hcj|/hot[^/]*\\.pdf|hot[aă]r[aâ]r"},
+ {"name": "Județul Satu Mare", "qsearch": "Satu Mare County", "qid": "Q165459", "url": "https://www.cjsm.ro/anul-2026-3", "iso": "RO-SM", "pdf_re": "hcj|/hot[^/]*\\.pdf|hot[aă]r[aâ]r"},
+ {"name": "Județul Galați", "qsearch": "Galați County", "qid": "Q188796", "url": "https://cjgalati.ro/category/sp-632/hotarari/", "iso": "RO-GL", "pdf_re": "hcj|/hot[^/]*\\.pdf|hot[aă]r[aâ]r"}
+]

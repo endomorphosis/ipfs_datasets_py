@@ -1,0 +1,44 @@
+{
+ "cc": "GM",
+ "platform": "gm_municipal_cc",
+ "language": "en",
+ "doc_type": "ordinance",
+ "doc_url_regex": "(?i)(by-?laws?|bye-?laws?|ordinances?|regulations?|resolutions?|legislation|legislative-?instrument|gazette|local-?government-?act|fees?-?fixing|decisions?|proclamation|directives?)",
+ "exclude_regex": "\\.(jpg|jpeg|png|gif|css|js|svg|woff2?|mp4|mp3|ico|zip)(\\?|$)|/(tag|tags|category|author|feed|news|akhbar|event|gallery|photo|video)s?/|[?&](page|replytocom)=",
+ "map": "host,title",
+ "slug_strip": "^(www|portal|web)",
+ "slug_suffix_strip": "(municipality|municipal|baladiya|baladiyeh|baladia|mc|dc|da|ma|mma|cc|council|city|assembly|districtassembly|gov)+$",
+ "label_langs": [
+  "en"
+ ],
+ "title_fetch_cap": 1500,
+ "title_legal_regex": "(?i)by-?laws?|bye-?laws?|ordinance|regulations?|resolution|proclamation|directive|legislative instrument|fee[s]? fixing|local government",
+ "generic_words": [
+  "municipality",
+  "municipal",
+  "city",
+  "district",
+  "assembly",
+  "council",
+  "governorate",
+  "province",
+  "region",
+  "county",
+  "greater",
+  "of",
+  "the",
+  "al",
+  "baladiyat",
+  "بلدية",
+  "محافظة",
+  "منطقة",
+  "مدينة"
+ ],
+ "content_selectors": [
+  ".entry-content",
+  ".post-content",
+  "#content",
+  "article",
+  "main"
+ ]
+}

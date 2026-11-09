@@ -1,0 +1,27 @@
+{
+ "country_code": "FR",
+ "place_id": "wd:Q3353",
+ "qid": "Q3353",
+ "place_name": "Creuse",
+ "iso_3166_2": "FR-23",
+ "admin_level": "departement",
+ "language": "fr",
+ "doc_type": "gazette_act",
+ "consolidated": false,
+ "platform": "fr_raa_conseil_departemental",
+ "source_org": "Conseil départemental — Creuse",
+ "issuer": "conseil_departemental",
+ "max_bytes": 52428800,
+ "index_url": "https://www.creuse.fr/Publication-electronique-des-arretes",
+ "crawl_delay": 3.0,
+ "urls": [
+  "https://www.creuse.fr/IMG/pdf/ar_2026-148_modif_tarif_2026_heb_temporaire_benevent.pdf",
+  "https://www.creuse.fr/IMG/pdf/ar_2026-147_tarif_01_sept_2026_ch_dbles_auzances.pdf",
+  "https://www.creuse.fr/IMG/pdf/ar_2026-136_habilitation_inspections_f__lefort.pdf"
+ ],
+ "titles": {
+  "https://www.creuse.fr/IMG/pdf/ar_2026-148_modif_tarif_2026_heb_temporaire_benevent.pdf": "Ar 2026-148 Modif TARIF 2026 Heb Temporaire BENEVENT Fichier pdf - 250.36 Ko Mis en ligne le 19 octobre 2026",
+  "https://www.creuse.fr/IMG/pdf/ar_2026-147_tarif_01_sept_2026_ch_dbles_auzances.pdf": "Ar 2026-147 TARIF 01 SEPT 2026 Ch dbles AUZANCES Fichier pdf - 262.71 Ko Mis en ligne le 19 octobre 2026",
+  "https://www.creuse.fr/IMG/pdf/ar_2026-136_habilitation_inspections_f__lefort.pdf": "Ar 2026-136 Habilitation inspections F. LEFORT Fichier pdf - 229.39 Ko Mis en ligne le 19 octobre 2026"
+ }
+}

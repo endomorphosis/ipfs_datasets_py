@@ -742,17 +742,24 @@ class CommonCrawlLegalScraper:
             effective_source_type = source_type or self._detect_source_type(url)
             jurisdiction = "federal"
             state_code = None
+            country_code = None
             if effective_source_type == SourceType.STATE:
                 jurisdiction = "state"
                 state_code = self._infer_state_code_from_url(url)
+                country_code = "US"
             elif effective_source_type == SourceType.MUNICIPAL:
                 jurisdiction = "municipal"
+                country_code = "US"
+            elif effective_source_type == SourceType.FEDERAL:
+                country_code = "US"
 
             results = self.cc_engine.search_domain(
                 domain,
                 max_matches=10,
                 jurisdiction=jurisdiction,
                 state_code=state_code,
+                country_code=country_code,
+                government_shard_download=True,
             )
 
             if not results:

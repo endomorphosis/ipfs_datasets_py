@@ -1,0 +1,18 @@
+[
+ {
+  "name": "Județul Olt",
+  "qsearch": "Olt County",
+  "qid": "Q188945",
+  "url": "https://cjolt.ro/mol/hotararile-consiliului-judetean-olt/hotararile-consiliului-judetean/hotararile-consiliului-judetean-2026/",
+  "iso": "RO-OT",
+  "pdf_re": "hcj|/hot[^/]*\\.pdf|hot[aă]r[aâ]r"
+ },
+ {
+  "name": "Județul Vâlcea",
+  "qsearch": "Vâlcea County",
+  "qid": "Q186838",
+  "url": "https://cjvalcea.ro/monitorul-oficial-local/hotararile-autoritatii-deliberative/2026-hotararile-autoritatii-deliberative/",
+  "iso": "RO-VL",
+  "pdf_re": "hcj|/hot[^/]*\\.pdf|hot[aă]r[aâ]r"
+ }
+]

@@ -1,0 +1,38 @@
+{
+ "country_code": "DE",
+ "place_id": "wd:Q10458",
+ "qid": "Q10458",
+ "place_name": "Landkreis Würzburg",
+ "iso_3166_2": "DE-BY",
+ "admin_level": "landkreis",
+ "language": "de",
+ "doc_type": "ordinance",
+ "platform": "de_by_kreisrecht",
+ "source_org": "Landkreis Würzburg",
+ "archive_policy": "archived_live_404",
+ "max_bytes": 52428800,
+ "urls": [
+  "https://www.landkreis-wuerzburg.de/index.php?La=1&NavID=2680.424&object=med,2680.12424.1.PDF&kuo=1&call=0&sub=0&mt=2",
+  "https://www.landkreis-wuerzburg.de/index.php?La=1&NavID=2680.424&object=med,2680.12425.1.PDF&kuo=1&call=0&sub=0",
+  "https://www.landkreis-wuerzburg.de/PDF/Beitragssatzung.PDF?ObjSvrID=1755&ObjID=6456&ObjLa=1&Ext=PDF&WTR=1&_ts=1469716668",
+  "https://www.landkreis-wuerzburg.de/media/custom/2680_9996_1.PDF?1697542003",
+  "https://www.landkreis-wuerzburg.de/media/custom/2680_9992_1.PDF?1697450127",
+  "https://www.landkreis-wuerzburg.de/media/custom/2680_9983_1.PDF?1697024159",
+  "https://www.landkreis-wuerzburg.de/media/custom/2680_8848_1.PDF?1679037496",
+  "https://www.landkreis-wuerzburg.de/media/custom/2680_8729_1.PDF?1677142671",
+  "https://www.landkreis-wuerzburg.de/media/custom/2680_8359_1.PDF?1667917469",
+  "https://www.landkreis-wuerzburg.de/media/custom/2680_3311_1.PDF?1550496157"
+ ],
+ "titles": {
+  "https://www.landkreis-wuerzburg.de/index.php?La=1&NavID=2680.424&object=med,2680.12424.1.PDF&kuo=1&call=0&sub=0&mt=2": "Bekanntmachung der Fa. enerlogo GmbH & Co. KG, Tauberrettersheim",
+  "https://www.landkreis-wuerzburg.de/index.php?La=1&NavID=2680.424&object=med,2680.12425.1.PDF&kuo=1&call=0&sub=0": "Genehmigung der Fa. enerlogo GmbH & Co. KG, Tauberrettersheim",
+  "https://www.landkreis-wuerzburg.de/PDF/Beitragssatzung.PDF?ObjSvrID=1755&ObjID=6456&ObjLa=1&Ext=PDF&WTR=1&_ts=1469716668": "Beitragssatzung",
+  "https://www.landkreis-wuerzburg.de/media/custom/2680_9996_1.PDF?1697542003": "231017 Ex Post Bekanntmachung",
+  "https://www.landkreis-wuerzburg.de/media/custom/2680_9992_1.PDF?1697450127": "231016 Ex Post Bekanntmachung Security",
+  "https://www.landkreis-wuerzburg.de/media/custom/2680_9983_1.PDF?1697024159": "231011 Ex Post Bekanntmachung Gr",
+  "https://www.landkreis-wuerzburg.de/media/custom/2680_8848_1.PDF?1679037496": "Gesch",
+  "https://www.landkreis-wuerzburg.de/media/custom/2680_8729_1.PDF?1677142671": "Beitragsordnung LAG Süd-West-Dreieck e.V.",
+  "https://www.landkreis-wuerzburg.de/media/custom/2680_8359_1.PDF?1667917469": "Bekanntmachung vorl",
+  "https://www.landkreis-wuerzburg.de/media/custom/2680_3311_1.PDF?1550496157": "Verwendungsnachweis über die gewährte Zuwendung aus Mitteln des Kreishaushalts"
+ }
+}

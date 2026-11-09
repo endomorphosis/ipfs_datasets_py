@@ -1,0 +1,38 @@
+{
+ "country_code": "DE",
+ "place_id": "wd:Q10466",
+ "qid": "Q10466",
+ "place_name": "Landkreis Bad Kissingen",
+ "iso_3166_2": "DE-BY",
+ "admin_level": "landkreis",
+ "language": "de",
+ "doc_type": "ordinance",
+ "platform": "de_by_kreisrecht",
+ "source_org": "Landkreis Bad Kissingen",
+ "index_url": "https://www.landkreis-badkissingen.de/buerger--politik/oeffentlbekanntmachungen/index.html",
+ "max_bytes": 52428800,
+ "urls": [
+  "https://www.landkreis-badkissingen.de/media/www.landkreis-badkissingen.de/org/med_4067/41423_max_solar_gmbh-oeffentliche_bekanntmachung_-_amtsblatt.pdf",
+  "https://www.landkreis-badkissingen.de/media/www.landkreis-badkissingen.de/org/med_5957/37183_2025-01-14_verordnung_veraenderungssperre.pdf",
+  "https://www.landkreis-badkissingen.de/media/www.landkreis-badkissingen.de/org/med_10101/42692_bekanntmachung_auslegung_stadtwerke_kg_talgrund_muennerstadt.pdf",
+  "https://www.landkreis-badkissingen.de/media/www.landkreis-badkissingen.de/org/med_9990/40839_verordnungsentwurf_hqs_brk_qualitativ.pdf",
+  "https://www.landkreis-badkissingen.de/media/www.landkreis-badkissingen.de/org/med_9990/40838_verordnungsentwurf_hqs_brk_quantitativ.pdf",
+  "https://www.landkreis-badkissingen.de/media/www.landkreis-badkissingen.de/org/med_9988/40848_entwurf_verordnung.pdf",
+  "https://www.landkreis-badkissingen.de/media/www.landkreis-badkissingen.de/org/med_9989/40853_entwurf_verordnung.pdf",
+  "https://www.landkreis-badkissingen.de/media/www.landkreis-badkissingen.de/org/med_8702/30225_bekanntmachung_vorlaeufige_sicherung.pdf",
+  "https://www.landkreis-badkissingen.de/media/www.landkreis-badkissingen.de/org/med_8703/30231_bekanntmachung_vorlaeufige_sicherung.pdf",
+  "https://www.landkreis-badkissingen.de/media/www.landkreis-badkissingen.de/org/med_8704/30235_bekanntmachung_vorlaeufige_sicherung.pdf"
+ ],
+ "titles": {
+  "https://www.landkreis-badkissingen.de/media/www.landkreis-badkissingen.de/org/med_4067/41423_max_solar_gmbh-oeffentliche_bekanntmachung_-_amtsblatt.pdf": "Öffentliche Bekanntmachung der erteilten Genehmigung",
+  "https://www.landkreis-badkissingen.de/media/www.landkreis-badkissingen.de/org/med_5957/37183_2025-01-14_verordnung_veraenderungssperre.pdf": "Verordnung Veränderungssperre Brunnen III, Markt Schondra",
+  "https://www.landkreis-badkissingen.de/media/www.landkreis-badkissingen.de/org/med_10101/42692_bekanntmachung_auslegung_stadtwerke_kg_talgrund_muennerstadt.pdf": "Bekanntmachung öffentliche Auslegung",
+  "https://www.landkreis-badkissingen.de/media/www.landkreis-badkissingen.de/org/med_9990/40839_verordnungsentwurf_hqs_brk_qualitativ.pdf": "Verordnungsentwurf HQS BRK qualitativ",
+  "https://www.landkreis-badkissingen.de/media/www.landkreis-badkissingen.de/org/med_9990/40838_verordnungsentwurf_hqs_brk_quantitativ.pdf": "Verordnungsentwurf HQS BRK quantitativ",
+  "https://www.landkreis-badkissingen.de/media/www.landkreis-badkissingen.de/org/med_9988/40848_entwurf_verordnung.pdf": "Entwurf_Verordnung",
+  "https://www.landkreis-badkissingen.de/media/www.landkreis-badkissingen.de/org/med_9989/40853_entwurf_verordnung.pdf": "Entwurf_Verordnung",
+  "https://www.landkreis-badkissingen.de/media/www.landkreis-badkissingen.de/org/med_8702/30225_bekanntmachung_vorlaeufige_sicherung.pdf": "Bekanntmachung vorläufige Sicherung",
+  "https://www.landkreis-badkissingen.de/media/www.landkreis-badkissingen.de/org/med_8703/30231_bekanntmachung_vorlaeufige_sicherung.pdf": "Bekanntmachung vorläufige Sicherung",
+  "https://www.landkreis-badkissingen.de/media/www.landkreis-badkissingen.de/org/med_8704/30235_bekanntmachung_vorlaeufige_sicherung.pdf": "Bekanntmachung vorläufige Sicherung"
+ }
+}

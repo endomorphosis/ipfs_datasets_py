@@ -237,3 +237,137 @@ def test_raw_family_payload_can_drive_hard_promotion_gate() -> None:
     assert gate["hard_promotion_gate"] is True
     assert gate["failed_families"] == ["deontic"]
     assert "deontic:semantic_equivalence_regressed" in gate["block_reasons"]
+
+
+# Additive exact-payload diagnostics; no model, prover or runtime is invoked.
+from copy import deepcopy
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_semantic_metrics import (
+    evaluate_complete_norm_payloads,
+)
+
+
+def _complete_norm_payload_fixture():
+    return {"profile": "fictional-payload/v1", "typed_expression": {"root": {"kind": "forall",
+        "binders": [{"name": "actor", "sort": "person"}], "arguments": [{"kind": "obligation",
+        "predicate": "file", "arguments": ["agency", "report"], "exception": "emergency",
+        "cardinality": 1, "time": "30days"}]}}, "argument_roles": [{"symbol": "file", "roles": ["actor", "object"]}],
+        "assumptions": [], "governing_context": {"jurisdiction": "fictional", "instrument_id": "act",
+        "governing_edition": "v1", "legal_as_of_utc": "2026-01-01", "valid_from_utc": "2025-01-01", "valid_until_utc": "2027-01-01"},
+        "interpretation_id": "fixture:one", "source_binding": {"source_version_cid": "source-one",
+        "occurrence_cid": "span-one", "document_revision": "v1"}, "definition_uses": [{"definition_unit_id": "definition",
+        "defined_predicate": "file", "use_unit_id": "norm", "use_occurrence_cid": "span-one", "target_typed_paths": ["/root/arguments/0"],
+        "applicability": "governing", "interpretation_id": "fixture:one", "evidence_refs": []}],
+        "cross_references": [{"from_unit_id": "norm", "dependency_artifact_id": "external-one",
+        "dependency_sha256": "a" * 64, "version": "v1", "evidence_refs": []}]}
+
+
+def _complete_norm_case(candidate=None, *, outcome="complete", case_id="case-one"):
+    target = _complete_norm_payload_fixture()
+    return {"case_id": case_id, "reference": target,
+            "candidate": deepcopy(target) if candidate is None else candidate, "outcome": outcome}
+
+
+def test_complete_norm_payload_exact_positive_has_only_payload_comparison_authority():
+    report = evaluate_complete_norm_payloads([_complete_norm_case()])
+    assert report["denominator"] == 1
+    assert all(value == 1 for value in report["metric_numerators"].values())
+    assert report["scope"] == "exact_structural_and_local_facet_payload_comparison_only"
+    assert all(report[key] is False for key in ("producer_authenticity_verified", "reference_authenticity_verified",
+        "syntax_or_logic_family_validity_verified", "semantic_equivalence_proved", "governing_definition_meaning_verified",
+        "source_fidelity_proved", "legal_admission_or_proof_authority"))
+
+
+@pytest.mark.parametrize("change", ["actor", "role_order", "argument_order", "binder", "quantifier", "modality",
+                                   "exception", "cardinality", "time", "assumption", "definition_path", "definition_applicability"])
+def test_complete_norm_payload_preserves_ordered_structure_and_local_facets(change):
+    candidate = _complete_norm_payload_fixture()
+    root = candidate["typed_expression"]["root"]
+    node = root["arguments"][0]
+    if change == "actor": node["arguments"][0] = "court"
+    elif change == "role_order": candidate["argument_roles"][0]["roles"].reverse()
+    elif change == "argument_order": node["arguments"].reverse()
+    elif change == "binder": root["binders"][0]["sort"] = "organization"
+    elif change == "quantifier": root["kind"] = "exists"
+    elif change == "modality": node["kind"] = "permission"
+    elif change == "exception": node["exception"] = "different-exception"
+    elif change == "cardinality": node["cardinality"] = 2
+    elif change == "time": node["time"] = "60days"
+    elif change == "assumption": candidate["assumptions"] = ["new premise"]
+    elif change == "definition_path": candidate["definition_uses"][0]["target_typed_paths"] = ["/other"]
+    else: candidate["definition_uses"][0]["applicability"] = "non-governing"
+    scores = evaluate_complete_norm_payloads([_complete_norm_case(candidate)])["cases"][0]["scores"]
+    assert scores["local_structural_payload_exact"] == scores["full_nine_payload_exact"] == 0
+    assert scores["interpretation_identity_exact"] == scores["source_binding_exact"] == 1
+
+
+@pytest.mark.parametrize("change", ["interpretation", "definition_id", "xref_id", "xref_version", "source", "context"])
+def test_complete_norm_payload_separates_custody_source_context_from_local_structure(change):
+    candidate = _complete_norm_payload_fixture()
+    if change == "interpretation": candidate["interpretation_id"] = "fixture:two"
+    elif change == "definition_id": candidate["definition_uses"][0]["definition_unit_id"] = "other-definition"
+    elif change == "xref_id": candidate["cross_references"][0]["dependency_artifact_id"] = "other-external"
+    elif change == "xref_version": candidate["cross_references"][0]["version"] = "v2"
+    elif change == "source": candidate["source_binding"]["source_version_cid"] = "other-source"
+    else: candidate["governing_context"]["governing_edition"] = "v2"
+    scores = evaluate_complete_norm_payloads([_complete_norm_case(candidate)])["cases"][0]["scores"]
+    assert scores["local_structural_payload_exact"] == 1
+    assert scores["full_nine_payload_exact"] == 0
+
+
+def test_complete_norm_payload_retains_every_noncomplete_outcome_in_denominator():
+    rows = [_complete_norm_case()]
+    for outcome in ("incomplete", "abstained", "unsupported", "invalid", "error"):
+        rows.append(_complete_norm_case(outcome=outcome, case_id=outcome))
+    malformed = _complete_norm_case(case_id="missing-field")
+    malformed["candidate"].pop("typed_expression")
+    rows.append(malformed)
+    report = evaluate_complete_norm_payloads(rows)
+    assert report["denominator"] == 7
+    assert report["outcome_counts"] == {"complete": 2, "incomplete": 1, "abstained": 1, "unsupported": 1, "invalid": 1, "error": 1}
+    assert report["metric_numerators"]["full_nine_payload_exact"] == 1
+    assert report["metric_denominators"]["full_nine_payload_exact"] == 7
+    assert report["rates"]["full_nine_payload_exact"] == pytest.approx(1/7)
+    assert all(sum(row["scores"].values()) == 0 for row in report["cases"][1:])
+
+
+@pytest.mark.parametrize("fault", ["duplicate_ids", "bad_reference", "extra_reference", "nonfinite", "nonstring_key", "nested_tuple", "extra_example", "bad_source", "bad_context", "bad_definition", "bad_xref", "bad_root"])
+def test_complete_norm_payload_refuses_invalid_reference_or_nonlossless_evaluation(fault):
+    rows = [_complete_norm_case()]
+    if fault == "duplicate_ids": rows.append(deepcopy(rows[0]))
+    elif fault == "bad_reference": rows[0]["reference"]["argument_roles"] = "not a list"
+    elif fault == "extra_reference": rows[0]["reference"]["hidden"] = "not silently ignored"
+    elif fault == "nonfinite": rows[0]["candidate"]["typed_expression"]["root"]["value"] = float("nan")
+    elif fault == "nonstring_key": rows[0]["candidate"]["typed_expression"][1] = "not coerced"
+    elif fault == "nested_tuple": rows[0]["reference"]["assumptions"] = ("not silently converted",)
+    elif fault == "bad_source": rows[0]["reference"]["source_binding"]["source_version_cid"] = 7
+    elif fault == "bad_context": rows[0]["reference"]["governing_context"]["governing_edition"] = []
+    elif fault == "bad_definition": rows[0]["reference"]["definition_uses"][0]["defined_predicate"] = None
+    elif fault == "bad_xref": rows[0]["reference"]["cross_references"][0]["evidence_refs"] = ["not a reference"]
+    elif fault == "bad_root": rows[0]["reference"]["typed_expression"]["root"] = {}
+    else: rows[0]["hidden"] = "not accepted"
+    with pytest.raises(ValueError): evaluate_complete_norm_payloads(rows)
+
+
+@pytest.mark.parametrize("value", [True, 1.0])
+def test_complete_norm_payload_does_not_round_or_coerce_bool_numeric_identity(value):
+    candidate = _complete_norm_payload_fixture()
+    candidate["typed_expression"]["root"]["arguments"][0]["cardinality"] = value
+    report = evaluate_complete_norm_payloads([_complete_norm_case(candidate)])
+    assert report["metric_numerators"]["typed_expression_exact"] == 0
+
+
+def test_complete_norm_payload_snapshot_does_not_return_reference_or_prediction_labels():
+    row = _complete_norm_case()
+    report = evaluate_complete_norm_payloads([row])
+    row["candidate"]["typed_expression"]["root"]["kind"] = "changed later"
+    assert report["metric_numerators"]["full_nine_payload_exact"] == 1
+    assert all("reference" not in case and "candidate" not in case for case in report["cases"])
+
+
+
+def test_complete_norm_payload_absent_candidate_keeps_original_denominator():
+    row = _complete_norm_case()
+    row["candidate"] = None
+    report = evaluate_complete_norm_payloads([row])
+    assert report["denominator"] == report["malformed_complete_candidate_count"] == 1
+    assert all(value == 0 for value in report["metric_numerators"].values())

@@ -1,0 +1,5 @@
+{"name": "Landkreis Rhön-Grabfeld", "qid": "Q10465", "iso": "DE-BY", "host": "rhoen-grabfeld.de",
+ "index_url": "https://www.rhoen-grabfeld.de/aktuelles/amtsblatt",
+ "keep_re": "satzung|verordnung|amtsblatt|kreisrecht|geb(ue|ü)hren|allgemeinverf(ue|ü)gung|bekanntmachung|ordnung|haushalt",
+ "drop_re": "antrag|formular|flyer|merkblatt|broschuere|brosch%C3%BCre|einladung|stellenaus|_processed_|/templates/",
+ "archive_policy": "archived_robots_disallowed"}

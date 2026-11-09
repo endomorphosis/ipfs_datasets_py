@@ -129,7 +129,9 @@ class _CpuFactoryTorch:
 
 
 def _fresh_model(torch, config):
-    _require(torch.get_default_dtype() == torch.float32 and str(torch.get_default_device()) == "cpu",
+    # An empty factory result observes the effective default device without
+    # consuming RNG state. Torch 2.2 supports it but lacks get_default_device.
+    _require(torch.get_default_dtype() == torch.float32 and str(torch.empty(0).device) == "cpu",
              "native4096 factory requires CPU float32 defaults")
     return _FACTORY_AT_IMPORT(_CpuFactoryTorch(torch), deepcopy(config))
 

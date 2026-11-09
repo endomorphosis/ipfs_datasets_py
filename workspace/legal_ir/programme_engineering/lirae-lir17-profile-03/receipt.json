@@ -1,0 +1,49 @@
+{
+  "schema": "legal-ir-supervisor-task-receipt/v1",
+  "task_id": "LIRAE-LIR17-PROFILE-03",
+  "task_kind": "programme_engineering",
+  "status": "implemented",
+  "outcome": "implemented",
+  "authority": {
+    "admitted": false,
+    "formalized": false
+  },
+  "parent_reference": {
+    "repository": "ipfs_datasets_py",
+    "revision": "eb023a439a23c59acdfaf485c66127f5202ecc8f",
+    "path": "ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json",
+    "task_id": "LIR-17",
+    "task_sha256": "1866c540278ad4270adc7c6b5ee938fec8128a0501cf6388161ce12a5c38a612"
+  },
+  "source_binding": {
+    "repository": "ipfs_datasets_py",
+    "public_main_commit": "eb023a439a23c59acdfaf485c66127f5202ecc8f",
+    "backlog_path": "ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json",
+    "backlog_sha256": "d1f74b427c3a7b27988a1d174f258fa6e867b681178978b90c611f4088ff401a"
+  },
+  "implementation_route": {
+    "primary_provider_id": "grok_cli",
+    "primary_model_id": "grok-4.7",
+    "fallback_provider_id": "codex",
+    "fallback_model_id": "gpt-6.1-sol",
+    "fallback_trigger": "primary_quota_exhausted",
+    "fallback_reasoning_effort": "high"
+  },
+  "artifacts": [
+    {
+      "kind": "preparation",
+      "path": "workspace/legal_ir/programme_engineering/lirae-lir17-profile-03/preparation.json",
+      "sha256": "a4e69371d82d4ef03fd35d11081573526e5432e20d802909cf172c122a26fb61"
+    }
+  ],
+  "code_changes": [
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_fullspan_training_v1.py",
+      "sha256": "5a58364c47b14936bf726f6ca14d115607935014ccb8dc00f402e32c267f729a"
+    },
+    {
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_conditions_fullspan_training_v1.py",
+      "sha256": "db3a1f979868e11acede796237a90d6a9f658e8fc0dd776a0db1ac1c9a3ecd4e"
+    }
+  ]
+}

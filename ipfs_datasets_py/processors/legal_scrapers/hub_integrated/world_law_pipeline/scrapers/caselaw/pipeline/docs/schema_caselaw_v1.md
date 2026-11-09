@@ -1,0 +1,242 @@
+# caselaw-raw/v0 (revision r3, 2026-10-29) -- Endomorphosis world-laws case law
+
+File name `schema_caselaw_v1.md` = **second review round** of the Laws Normalizer (`$IPFS_DATASETS_LEGAL_WORKSPACE/normalizer/caselaw_review/recheck_v0.md`).
+The schema identifier is **unchanged and unfrozen**: row column `schema_version` and kv `schema` stay `caselaw-raw/v0`; the doc revision is
+`caselaw-raw/v0-r3` (kv `schema_doc_version`). Supersedes `schema_caselaw_v0.md` (r2, kept on disk). Code: `$CASE_LAW_ROOT/pipeline/caselaw_schema.py`
+(`SCHEMAS`, `make_id`, `dedupe_id`, `provisional_key`, `cast_rows`, `validate_caselaw_table`, `validate_id_uniqueness`, `validate_cross`,
+`validate_tombstone(s_file)`, `write_shard`; smoke + negative tests: `python caselaw_schema.py`), `court_matcher.py`, `validate_out.py <source>`.
+Conforms to world-laws-raw/v1 and world-courts-raw/v1. No shard is published to the Hub under v0. Courts dataset revision pinned:
+`ipfs_court_data@ef54093beb695b17e8a2676d287717b19aedc274`. The CAP exclusion is unchanged (no static.case.law, no CAP-derived data, no CourtListener Harvard/`U` records).
+
+## Changes r2 -> r3 (recheck_v0 fixes)
+1. **Privacy keys** (fix 1): `RE_PARTY_KEY` = `case_name|casename|title|caption|party|parties|plaintiff(s)|defendant(s)|appellant(s)|respondent(s)|applicant(s)|petitioner(s)|claimant(s)|litigant(s)|accused|versus|vs`
+   as whole word tokens, case-insensitive. Applied to (a) column names and (b) **every key at any depth of `metadata_json`** (incl. `extras`). `cast_rows` DROPS such keys
+   (recording the dropped key paths, never values, in `metadata_json.privacy_dropped_keys`); the validator REJECTS any that remain. `parties_redaction_status` is the only allowed match.
+   Case-name-free citations: `other_citations`, `canonical_key`, `court_name_raw`, `docket_number`, `neutral_citation` are rejected when a value looks like `A v. B` / `A vs B`
+   (heuristic, ` v. `/` vs `/` versus ` between words). Citation-only forms (ECLI, CELEX, `[2020] UKSC 1`, `410 U.S. 113`) pass. No exception is taken: case names are not stored anywhere.
+2. **`restricted_ai_training` fail-safe** (fix 2): NOT NULL; `cast_rows` defaults a missing value to **TRUE**. `false` is accepted only with evidence in
+   `metadata_json.terms = {"basis": <non-empty text>, "evidence_url": <url or list>, "checked": "YYYY-MM-DD"}` (validated on every false row). Robots `Content-Signal: ai-train=no`
+   or a licence/NC restriction => true. Jobs record `terms` on decision and opinion rows.
+3. **`parties_redaction_status`** (fix 3): defaults to `unknown` in `cast_rows` when missing (no more raise). Vocabulary `source_pseudonymised | source_anonymised | as_published | unknown`.
+4. **Unnamed courts** (fix 4): `court_key_provisional = wcc1:<ISO>:<admin1|->:<sha256(basis)[:16]>`. Named court: basis = normalised name (same key across sources for the same
+   (ISO, admin1, name)). **Unnamed court: basis = `unnamed|<source_name>|<discriminator>`** (discriminator = source-specific court code, e.g. CELEX court letter or ECLI court code),
+   so unnamed courts of different sources/courts no longer collapse. If a collector supplies no discriminator the key falls back to `unknown` and is **non-unique** (documented fallback; do not join on it).
+5. **Vocabularies** (fix 5), all validated: `opinion_type` = `lead | majority | concurrence | dissent | per_curiam | plurality | judgment | other`
+   (`lead` = principal text where the source has no finer typing; `judgment` = the court's judgment text where the source types it (CJEU, NL uitspraak); `other` = e.g. NL *conclusie* of the Advocate General;
+   decision-level `decision_type=advocate_general_opinion` carries that meaning). `text_format` = `plain | html | xhtml | xml | akn_xml | pdf` (`xml` kept: Rechtspraak XML;
+   the stored `text` is always plain text). `decision_type` = `judgment | order | decree | ruling | advocate_general_opinion | other`. `licence_class` = `open | NC | gated | unknown`.
+   `treatment` (citation_edge) = `cites | follows | applies | distinguishes | criticizes | overrules | other`. `sensitivity_flags` items = `criminal | family | juvenile | immigration | mental_health | tax`
+   (`sealed` is not a valid flag: sealed records are never ingested).
+6. **Tombstones** (fix 6): see "Tombstones" below; validator `validate_tombstone` / `validate_tombstones_file`.
+7. **kv metadata** (fix 7): validator now checks `schema`, `record_type`, `schema_doc_version == caselaw-raw/v0-r3`, `layer == raw_caselaw`, `courts_dataset_revision == pinned full hash`.
+8. **Canonical court key** (fix 8): `min(entity_key)` over a (country, admin1, normalised name) group is **revision-scoped**: it is only stable within one `courts_dataset_revision`
+   (recorded in kv + `metadata_json`). A new Courts revision can add a lower key and change the canonical key; consumers must re-match (or map old->new via `court_entity_key_candidates`) after each Courts revision.
+9. **Misc** (fix 9): `licence_class` is now NOT NULL (default `unknown`) on decision, opinion and docket; `decision.text_sha256` added (= `text_sha256` of the lead opinion; `validate_cross` checks it);
+   `retrieval_date` stays nullable but is **required for live/wayback/commoncrawl** (validated) and always set by collectors; language rule: ISO-639-1 required, 3-letter ISO-639-3 only when no
+   2-letter code exists (`eng`, `nld`, `deu`... rejected); single judge-key name: **`judge_entity_keys`** (list aligned by index with `judges_raw`, elements `wc1e:judge:<24hex>` or null);
+   `judges_raw` entries are exactly `{"name","role"}` (no per-entry key).
+
+## Global rules
+- One schema per record type: `decision`, `opinion`, `docket`, `citation_edge`. The raw layer does NOT split to paragraphs.
+- All text columns `pa.string()`; `int64` for integers; dates/times strings.
+- zstd, row groups <= 4096 rows. Common 20-column prefix in courts order, type-specific columns, `metadata_json` last (NOT NULL).
+- Parquet kv metadata: `schema=caselaw-raw/v0`, `record_type=<type>`, `schema_doc_version=caselaw-raw/v0-r3`, `layer=raw_caselaw`, `courts_dataset_revision=<full hash>`.
+- Unknown/source-specific fields are never widened into columns: folded into `metadata_json.extras` (after the privacy scrub).
+- Never invent ids or text: a missing NOT NULL value with no documented default => `cast_rows` raises. Documented defaults: `restricted_ai_training=true`, `parties_redaction_status=unknown`, `licence_class=unknown`.
+
+## Ids
+- `id = wc1:<record_type>:<sha256("<source_name>|<source_record_id>")[:24]>`. `source_name` = stable source key (`nl_rechtspraak`, `cjeu_cellar`); `source_type` = collector tag; `source_record_id` = native id (ECLI, CELEX...).
+- Duplicate rule `repo_unique_v1`: ids unique across shards (`validate_id_uniqueness`); later duplicate gets `dedupe_id` + `metadata_json.id_original`/`id_rule`.
+- opinion `decision_id` = FK to `decision.id` (`validate_cross` checks orphans). Edge `citing_id`/`cited_id` = deterministic ids.
+- `canonical_key` (decision, optional): normalised ECLI / neutral citation (citation form only, no case name).
+
+## Court join
+- `court_entity_key`: only `^wc1e:court:[0-9a-f]{24}$` or null. `court_key_provisional`: `wcc1:...` (see fix 4), set iff `court_match_status != matched`. `court_match_status` in `matched | ambiguous | unmatched`.
+- Matching to a deduped court dimension (country, admin1, normalised name) -> canonical key `min(entity_key)` (revision-scoped, fix 8) -> candidates in `metadata_json.court_entity_key_candidates`. Order: exact, website host, fuzzy >= 0.92 (never lower => matched).
+- The Courts table has no EU/NL/CH/BR/DE rows at the pinned revision: every Phase-A row is `unmatched` with a provisional key; `out/<source>/unmatched_courts.json` is the gap list for the Courts agent.
+
+## Shared-field conventions
+- `licence` = licence text as published; `licence_class` = `open|NC|gated|unknown`. `retrieval_date` string `YYYY-MM-DD`. `country_iso` upper-case alpha-2 (`EU`, `ZZ`). `jurisdiction_level` in `national|state|regional|municipal|local`; `admin_level` int64 nullable; `admin1` ISO 3166-2 or null.
+- `fetch_mode` in `live, wayback, commoncrawl, bulk, api, hf_dataset`; `source_url` required for live/wayback/commoncrawl. Archive convention: `source_url` = original URL, replay URL in `found_on`.
+- Dates `YYYY`, `YYYY-MM`, `YYYY-MM-DD`; `decision_year` int64 derived. `language` per fix 9. `ecli` regex-validated.
+- Text: opinion `text` always plain text; `text_format` = SOURCE format; `text_sha256` = sha256 of stored UTF-8 `text`; raw-file hash in `metadata_json.source_sha256`.
+
+## Compliance, privacy, terms
+- `restricted_ai_training` (decision AND opinion, NOT NULL), `ocr`, `text_backend` first-class. `metadata_json.terms` = evidence object (fix 2).
+- Phase A terms evidence recorded: **NL Rechtspraak** -> data.overheid.nl dataset page: licence "Publiek domein", "XML CC-0 (1.0)", owner Raad voor de Rechtspraak (checked 2026-10-29), restricted_ai_training=false.
+  **CJEU/EU Cellar** -> no CC licence verified for case-law; reuse basis = CURIA copyright notice ("You may reproduce the judicial decisions found in the case-law database", third-party caveat) + Commission Decision 2011/833/EU;
+  no AI-training reservation found; `licence_class=open`, restricted_ai_training=false **pending human legal review of the third-party caveat** (flip to true if the reviewer disagrees). The earlier "CC-BY-4.0" label was never verified and is removed.
+- Never ingest sealed / segredo-de-justica records. Never de-anonymise or re-link pseudonymised parties. Judges (public officials) may appear in `judges_raw`.
+- CURIA robots.txt lists specific cases/dockets as disallowed: the CJEU job also skips CELEX `62014FJ0050`, `62014FJ0051` (denylist in code) and honours robots for all hosts.
+
+## Tombstones
+`$CASE_LAW_ROOT/out/<source>/tombstones.jsonl`, one JSON object per line. Required keys: `id` (`wc1:<type>:<24hex>`), `record_type` (== the type in `id`), `source_name`,
+`action` (`drop` | `purge_text`), `reason` (`takedown_request | sealed | redaction_failure | source_withdrawn | licence_change | other`), `requested_date`, `tombstoned_date` (`YYYY-MM-DD`).
+Optional: `requester_ref` (opaque ticket/ref, no personal data), `note`. No other keys. `drop` = consumers delete the row (and its opinions/edges); `purge_text` = keep metadata, null `text`
+and set `metadata_json.text_missing=true`. Consumers must apply tombstones before use; files are append-only. None exist yet for Phase A.
+
+
+## Tables
+### decision (case-level metadata, no text)
+| # | column | type | null? |
+|---|---|---|---|
+| 1 | `id` | `string` | **no** |
+| 2 | `record_type` | `string` | **no** |
+| 3 | `schema_version` | `string` | **no** |
+| 4 | `country_iso` | `string` | **no** |
+| 5 | `jurisdiction_level` | `string` | **no** |
+| 6 | `admin_level` | `int64` | yes |
+| 7 | `admin1` | `string` | yes |
+| 8 | `municipality` | `string` | yes |
+| 9 | `municipality_code` | `string` | yes |
+| 10 | `jurisdiction_raw` | `string` | **no** |
+| 11 | `source_name` | `string` | **no** |
+| 12 | `source_type` | `string` | **no** |
+| 13 | `source_record_id` | `string` | **no** |
+| 14 | `source_url` | `string` | yes |
+| 15 | `found_on` | `string` | yes |
+| 16 | `fetch_mode` | `string` | **no** |
+| 17 | `retrieval_date` | `string` | yes |
+| 18 | `licence` | `string` | yes |
+| 19 | `phase` | `string` | **no** |
+| 20 | `source_file` | `string` | **no** |
+| 21 | `court_entity_key` | `string` | yes |
+| 22 | `court_key_provisional` | `string` | yes |
+| 23 | `court_match_status` | `string` | **no** |
+| 24 | `court_name_raw` | `string` | yes |
+| 25 | `docket_number` | `string` | yes |
+| 26 | `decision_date` | `string` | yes |
+| 27 | `filing_date` | `string` | yes |
+| 28 | `decision_year` | `int64` | yes |
+| 29 | `ecli` | `string` | yes |
+| 30 | `neutral_citation` | `string` | yes |
+| 31 | `other_citations` | `string` | yes |
+| 32 | `canonical_key` | `string` | yes |
+| 33 | `decision_type` | `string` | yes |
+| 34 | `language` | `string` | yes |
+| 35 | `judges_raw` | `string` | yes |
+| 36 | `judge_entity_keys` | `string` | yes |
+| 37 | `opinion_count` | `int64` | yes |
+| 38 | `text_sha256` | `string` | yes |
+| 39 | `restricted_ai_training` | `bool` | **no** |
+| 40 | `ocr` | `bool` | yes |
+| 41 | `sensitivity_flags` | `string` | yes |
+| 42 | `licence_class` | `string` | **no** |
+| 43 | `parties_redaction_status` | `string` | **no** |
+| 44 | `metadata_json` | `string` | **no** |
+
+### opinion (text units; FK first among type-specific columns)
+| # | column | type | null? |
+|---|---|---|---|
+| 1 | `id` | `string` | **no** |
+| 2 | `record_type` | `string` | **no** |
+| 3 | `schema_version` | `string` | **no** |
+| 4 | `country_iso` | `string` | **no** |
+| 5 | `jurisdiction_level` | `string` | **no** |
+| 6 | `admin_level` | `int64` | yes |
+| 7 | `admin1` | `string` | yes |
+| 8 | `municipality` | `string` | yes |
+| 9 | `municipality_code` | `string` | yes |
+| 10 | `jurisdiction_raw` | `string` | **no** |
+| 11 | `source_name` | `string` | **no** |
+| 12 | `source_type` | `string` | **no** |
+| 13 | `source_record_id` | `string` | **no** |
+| 14 | `source_url` | `string` | yes |
+| 15 | `found_on` | `string` | yes |
+| 16 | `fetch_mode` | `string` | **no** |
+| 17 | `retrieval_date` | `string` | yes |
+| 18 | `licence` | `string` | yes |
+| 19 | `phase` | `string` | **no** |
+| 20 | `source_file` | `string` | **no** |
+| 21 | `decision_id` | `string` | **no** |
+| 22 | `opinion_type` | `string` | yes |
+| 23 | `author_raw` | `string` | yes |
+| 24 | `text` | `string` | yes |
+| 25 | `text_format` | `string` | yes |
+| 26 | `page_count` | `int64` | yes |
+| 27 | `language` | `string` | yes |
+| 28 | `ocr` | `bool` | **no** |
+| 29 | `text_backend` | `string` | yes |
+| 30 | `text_sha256` | `string` | yes |
+| 31 | `restricted_ai_training` | `bool` | **no** |
+| 32 | `licence_class` | `string` | **no** |
+| 33 | `parties_redaction_status` | `string` | **no** |
+| 34 | `metadata_json` | `string` | **no** |
+
+### docket
+| # | column | type | null? |
+|---|---|---|---|
+| 1 | `id` | `string` | **no** |
+| 2 | `record_type` | `string` | **no** |
+| 3 | `schema_version` | `string` | **no** |
+| 4 | `country_iso` | `string` | **no** |
+| 5 | `jurisdiction_level` | `string` | **no** |
+| 6 | `admin_level` | `int64` | yes |
+| 7 | `admin1` | `string` | yes |
+| 8 | `municipality` | `string` | yes |
+| 9 | `municipality_code` | `string` | yes |
+| 10 | `jurisdiction_raw` | `string` | **no** |
+| 11 | `source_name` | `string` | **no** |
+| 12 | `source_type` | `string` | **no** |
+| 13 | `source_record_id` | `string` | **no** |
+| 14 | `source_url` | `string` | yes |
+| 15 | `found_on` | `string` | yes |
+| 16 | `fetch_mode` | `string` | **no** |
+| 17 | `retrieval_date` | `string` | yes |
+| 18 | `licence` | `string` | yes |
+| 19 | `phase` | `string` | **no** |
+| 20 | `source_file` | `string` | **no** |
+| 21 | `court_entity_key` | `string` | yes |
+| 22 | `court_key_provisional` | `string` | yes |
+| 23 | `court_match_status` | `string` | **no** |
+| 24 | `court_name_raw` | `string` | yes |
+| 25 | `docket_number` | `string` | **no** |
+| 26 | `filing_date` | `string` | yes |
+| 27 | `termination_date` | `string` | yes |
+| 28 | `licence_class` | `string` | **no** |
+| 29 | `parties_redaction_status` | `string` | **no** |
+| 30 | `metadata_json` | `string` | **no** |
+
+### citation_edge
+| # | column | type | null? |
+|---|---|---|---|
+| 1 | `id` | `string` | **no** |
+| 2 | `record_type` | `string` | **no** |
+| 3 | `schema_version` | `string` | **no** |
+| 4 | `country_iso` | `string` | **no** |
+| 5 | `jurisdiction_level` | `string` | **no** |
+| 6 | `admin_level` | `int64` | yes |
+| 7 | `admin1` | `string` | yes |
+| 8 | `municipality` | `string` | yes |
+| 9 | `municipality_code` | `string` | yes |
+| 10 | `jurisdiction_raw` | `string` | **no** |
+| 11 | `source_name` | `string` | **no** |
+| 12 | `source_type` | `string` | **no** |
+| 13 | `source_record_id` | `string` | **no** |
+| 14 | `source_url` | `string` | yes |
+| 15 | `found_on` | `string` | yes |
+| 16 | `fetch_mode` | `string` | **no** |
+| 17 | `retrieval_date` | `string` | yes |
+| 18 | `licence` | `string` | yes |
+| 19 | `phase` | `string` | **no** |
+| 20 | `source_file` | `string` | **no** |
+| 21 | `citing_id` | `string` | **no** |
+| 22 | `cited_id` | `string` | **no** |
+| 23 | `depth` | `int64` | yes |
+| 24 | `treatment` | `string` | yes |
+| 25 | `metadata_json` | `string` | **no** |
+
+## Validator (`validate_caselaw_table(t, kind)` -> problems)
+Exact column set/order and dtypes; NOT NULL; kv keys (5, values checked); id format/uniqueness; record_type/schema_version; country_iso; jurisdiction_level; fetch_mode; admin1; retrieval_date
+(format; required for live/wayback/commoncrawl); source_url requirement; metadata_json object; **no party-name keys anywhere in metadata_json; no `A v. B` in citation-like columns; `restricted_ai_training=false` needs terms**;
+court key regex + status consistency; redaction vocab; **licence_class, decision_type, treatment, sensitivity_flags, opinion_type, text_format vocabularies**; date regexes; ecli; **language (ISO-639-1)**; JSON-list columns;
+**judge_entity_keys (aligned, null-able)**, **judges_raw shape**; opinion `decision_id`, recomputed `text_sha256`, non-empty text unless `text_missing`; **decision `text_sha256` format**; `decision_year`; edge ids; no party-name column names.
+Separate: `validate_id_uniqueness(paths)`, `validate_cross(decision_paths, opinion_paths)` (orphans; decision.text_sha256 vs opinion), `validate_tombstones_file(path)`.
+
+## Output layout
+`$CASE_LAW_ROOT/out/<source>/<record_type>/part-NNNN.parquet` (+ `manifest.jsonl`, `unmatched_courts.json`, `summary.json`, optional `tombstones.jsonl`). Superseded shards live under
+`out/<source>/superseded/<rev>/` with a `SUPERSEDED.md`; nothing is deleted. Resumable state: shard-based (`SourceOut`) + `$CASE_LAW_ROOT/pipeline/state/<source>.json`.
+
+## Judgement calls for the Normalizer to confirm
+(a) File named v1 but identifier kept `caselaw-raw/v0` (unfrozen), doc revision r3. (b) Case-name detection is a heuristic on citation-like columns, not on free text. (c) Unnamed-court provisional keys are
+source-scoped (not shared across sources) by design. (d) `retrieval_date` stays nullable for bulk/api/hf_dataset rows. (e) CJEU `restricted_ai_training=false` rests on the CURIA reproduction notice + Decision 2011/833/EU; flagged for legal review.

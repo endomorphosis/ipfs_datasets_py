@@ -95,6 +95,25 @@ def test_public_builder_is_untrusted_and_has_own_fresh_adam():
         decoder.decode_formal_logic([examples()[0]["source_text"]], [examples()[0]["latent"]])
 
 
+def test_torch22_factory_keeps_cpu_float32_policy_without_default_device_api(monkeypatch):
+    monkeypatch.delattr(torch, "get_default_device", raising=False)
+    config = head._config(**SETTINGS)
+    model = head._fresh_model(torch, config)
+    assert all(parameter.device.type == "cpu" and parameter.dtype == torch.float32
+               for parameter in model.parameters())
+    # Meta exercises a non-CPU default without requiring or initializing CUDA.
+    with torch.device("meta"):
+        with pytest.raises(ValueError, match="CPU float32 defaults"):
+            head._fresh_model(torch, config)
+    original_dtype = torch.get_default_dtype()
+    try:
+        torch.set_default_dtype(torch.float64)
+        with pytest.raises(ValueError, match="CPU float32 defaults"):
+            head._fresh_model(torch, config)
+    finally:
+        torch.set_default_dtype(original_dtype)
+
+
 def test_private_loader_has_no_optimizer_no_cuda_seed_and_preserves_rng(checkpoint, monkeypatch):
     before, rng = span._raw(checkpoint), torch.get_rng_state().clone()
     def forbidden(*args, **kwargs):

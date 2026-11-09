@@ -1,0 +1,31 @@
+{
+  "artifacts": [
+    {
+      "kind": "source",
+      "path": "docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-const-a2/source.json",
+      "sha256": "a07771f8cee4a265aedf3b15635d28211b761d7a244d24cac31edfe26265a041"
+    },
+    {
+      "kind": "spans",
+      "path": "docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-const-a2/spans.json",
+      "sha256": "dcc25f1ef5977af0899baa98e8535a0617555a738f486700838cdf207949f080"
+    }
+  ],
+  "authority": {
+    "admitted": false,
+    "formalized": false,
+    "roundtrip_ok": false
+  },
+  "evidence": {
+    "repeal_treated_as_obligation": false,
+    "unit_id": "art-2"
+  },
+  "schema": "legal-ir-supervisor-task-receipt/v1",
+  "source": {
+    "sha256": "9dd8624bf0ef83dd135772f7c19aeef0496c3164d04d4bc0d6d8f1de91746e4b",
+    "source_id": "national-archives-retained-20260923"
+  },
+  "status": "inventory",
+  "task_id": "LIRAE-CONST-A2",
+  "task_kind": "constitution"
+}

@@ -1,0 +1,33 @@
+{
+ "country_code": "FR",
+ "place_id": "wd:Q12689",
+ "qid": "Q12689",
+ "place_name": "Pas-de-Calais",
+ "iso_3166_2": "FR-62",
+ "admin_level": "departement",
+ "language": "fr",
+ "doc_type": "gazette_act",
+ "consolidated": false,
+ "platform": "fr_raa_conseil_departemental",
+ "source_org": "Conseil départemental — Pas-de-Calais",
+ "issuer": "conseil_departemental",
+ "max_bytes": 52428800,
+ "crawl_delay": 10,
+ "index_url": "https://www.pasdecalais.fr/publicite-des-actes-administratifs",
+ "urls": [
+  "https://www.pasdecalais.fr/download/file/26864?key=t6q7hEpaO16Z/1c6E1O29g%3D%3D",
+  "https://www.pasdecalais.fr/download/file/26865?key=JBhWuavL8tV6sTU09PeQzA%3D%3D",
+  "https://www.pasdecalais.fr/download/file/26831?key=lpQsBw6%2BTH42840/SxxuKQ%3D%3D",
+  "https://www.pasdecalais.fr/download/file/26835?key=dI4rkuOfVYLmXaKPFwjpOw%3D%3D",
+  "https://www.pasdecalais.fr/download/file/26836?key=5I4jmLG%2BUoI1JZpNMYZ8wA%3D%3D",
+  "https://www.pasdecalais.fr/download/file/26837?key=h91PEtOzySl%2B7/oUTN/WZw%3D%3D"
+ ],
+ "titles": {
+  "https://www.pasdecalais.fr/download/file/26864?key=t6q7hEpaO16Z/1c6E1O29g%3D%3D": "2026-410 Convention de financement FEDER pour l'installation géothermique dans le cadre de la reconstruction du collège Jean Rostand à Marquise (publié le 23 Oct. 2026)",
+  "https://www.pasdecalais.fr/download/file/26865?key=JBhWuavL8tV6sTU09PeQzA%3D%3D": "2026-395 Mise à disposition de locaux au profit du Département pour l'organisation du spectacle Belle époque à l'occasion des semaines bleues (publié le 23 Oct. 2026)",
+  "https://www.pasdecalais.fr/download/file/26831?key=lpQsBw6%2BTH42840/SxxuKQ%3D%3D": "2026-446 Répartition du produit des amendes de police relatives à la circulation routière (publié le 23 Oct. 2026)",
+  "https://www.pasdecalais.fr/download/file/26835?key=dI4rkuOfVYLmXaKPFwjpOw%3D%3D": "103- RD204 Commune de LONGFOSSE - Restriction de Circulation - Renouvellement de vanne eau potable vétuste (publié le 23 Oct. 2026)",
+  "https://www.pasdecalais.fr/download/file/26836?key=5I4jmLG%2BUoI1JZpNMYZ8wA%3D%3D": "102- RD237 Communes d'AMBLETEUSE et BAZINGHEN - Interruption de Circulation - Rebouchage de fissure (publié le 23 Oct. 2026)",
+  "https://www.pasdecalais.fr/download/file/26837?key=h91PEtOzySl%2B7/oUTN/WZw%3D%3D": "101- RD238 Communes de BELLE-ET-HOULLEFORT et WIERRE-EFFROY - Interruption de Circulation - Rebouchage de fissure (publié le 23 Oct. 2026)"
+ }
+}

@@ -1,0 +1,19 @@
+[
+ {
+  "name": "Mayotte",
+  "iso": "FR-976",
+  "qid": "Q17063",
+  "url": "https://www.mayotte.fr/publications-et-medias/publications-officielles/actes-administratifs",
+  "issuer": "conseil_departemental",
+  "year_re": "/ressources/actes/2026/",
+  "include_re": null,
+  "pager": {
+   "param": "page",
+   "max": 60,
+   "stop_empty": 3
+  },
+  "max_urls": 1200,
+  "crawl_delay": 3,
+  "note": "Département de Mayotte 'Actes administratifs' / 'Publicité des actes' (arrêtés + délibérations since the 07/2022 publicity reform, 10 cards/page, ?page=N newest first, ~110 pages); 2026 files under /ressources/actes/2026/MM/ (~25 pages). robots.txt 'Disallow:' (empty = allow all), no Crawl-delay (3 s). Link text 'Télécharger' -> title from file name. QID Q17063 (P300=FR-976). Probed 2026-10-30 ~08:20 PDT."
+ }
+]

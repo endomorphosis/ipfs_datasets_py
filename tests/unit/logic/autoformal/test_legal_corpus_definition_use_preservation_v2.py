@@ -304,3 +304,24 @@ def test_preparation_does_not_execute_native_or_duckdb_engines(base):
     ):
         preparation = prepare(data)
         assert validate(data, preparation) == preparation
+
+
+def test_warm_preservation_cache_rechecks_non_direct_native_producer(base, monkeypatch):
+    data, _ = base
+    prepared = prepare(data)
+    from ipfs_datasets_py.logic.autoformal import legal_pilot_lake
+    target = Path(legal_pilot_lake.__file__).resolve()
+    assert target not in {Path(module.__file__).resolve() for module in owner._owners()}
+    original = Path.read_bytes
+    observed = []
+    def changed(path):
+        raw = original(path)
+        if path.resolve() == target:
+            observed.append(str(target))
+            return raw + b"\n# changed transitive producer fixture\n"
+        return raw
+    monkeypatch.setattr(Path, "read_bytes", changed)
+    with pytest.raises(ValueError):
+        prepare(data)
+    assert observed
+    assert type(prepared) is owner.DefinitionUsePreservationPreparation

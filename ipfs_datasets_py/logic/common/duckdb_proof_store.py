@@ -55,6 +55,7 @@ from ..backends.cache_protocol import (
     VerificationCacheProtocol,
     content_digest,
     identity_digest,
+    polarity_for_status,
 )
 from ..backends.results import ResultAuthority, ResultStatus, TypedBackendResult
 from ..families.models import EvidenceAuthority
@@ -484,8 +485,8 @@ def polarity_for_outcome(outcome: ProofOutcomeKind | str) -> CachePolarity:
 
     ``proof`` and ``counterexample`` are conclusive results and use the
     positive TTL.  ``unknown`` and ``error`` are non-conclusive and use the
-    negative TTL — matching :func:`polarity_for_status` on the verification
-    cache protocol.
+    negative TTL. The verification-cache protocol separately classifies
+    candidate observations by status when projecting between the schemas.
     """
 
     resolved = _enum(outcome, ProofOutcomeKind, "outcome")
@@ -1459,7 +1460,10 @@ class UnifiedProofEntry:
             status=verified.status,
             evidence_authority=verified.evidence_authority,
             result_payload=verified.result_payload,
-            polarity=verified.polarity,
+            # Candidate observations are advisory positive records in the
+            # verification protocol; the unified unknown outcome retains its
+            # own negative TTL polarity. Project through the target owner.
+            polarity=polarity_for_status(verified.status),
             created_at=verified.created_at,
             result_id=verified.result_id,
             diagnostics=verified.diagnostics,

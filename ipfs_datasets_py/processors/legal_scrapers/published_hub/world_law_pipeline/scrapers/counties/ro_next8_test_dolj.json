@@ -1,0 +1,25 @@
+{
+ "country_code": "RO",
+ "place_id": "wd:Q191065",
+ "qid": "Q191065",
+ "place_name": "Județul Dolj",
+ "iso_3166_2": "RO-DJ",
+ "admin_level": "judet",
+ "language": "ro",
+ "doc_type": "decision",
+ "consolidated": false,
+ "platform": "ro_cj_hcj",
+ "source_org": "Județul Dolj",
+ "index_url": "https://www.cjdolj.ro/dm_dolj/site.nsf/pagini/hotarari-0000147E",
+ "max_bytes": 52428800,
+ "urls": [
+  "https://www.cjdolj.ro/dm_dolj/site.nsf/atasament/A5540A1F17884EDE42258AC800269370/$FILE/HOT 37.pdf?Open",
+  "https://www.cjdolj.ro/dm_dolj/site.nsf/atasament/0B27FFCADE02B64242258AC800266B18/$FILE/HOT 36.pdf?Open",
+  "https://www.cjdolj.ro/dm_dolj/site.nsf/atasament/A492C7239C71332542258AC800264217/$FILE/HOT 35.pdf?Open"
+ ],
+ "titles": {
+  "https://www.cjdolj.ro/dm_dolj/site.nsf/atasament/A5540A1F17884EDE42258AC800269370/$FILE/HOT 37.pdf?Open": "Hotărâre privind aprobarea bugetului de venituri și cheltuieli al Centrului Județean pentru Conservarea și Promovarea Culturii Tradiționale Dolj, pe anul 2024 și estimările pe anii 2025-2027",
+  "https://www.cjdolj.ro/dm_dolj/site.nsf/atasament/0B27FFCADE02B64242258AC800266B18/$FILE/HOT 36.pdf?Open": "Hotărâre privind aprobarea bugetului de venituri și cheltuieli al Clubului Sportiv Județean Știința ”U” Craiova pe anul 2024 și estimările pe anii 2025-2027",
+  "https://www.cjdolj.ro/dm_dolj/site.nsf/atasament/A492C7239C71332542258AC800264217/$FILE/HOT 35.pdf?Open": "Hotărâre privind aprobarea bugetului de venituri și cheltuieli al Școlii Populare de Arte și Meserii ”Cornetti”, pe anul 2024 și estimările pe anii 2025-2027"
+ }
+}

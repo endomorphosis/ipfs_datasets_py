@@ -1,0 +1,32 @@
+[
+ {
+  "name": "Landkreis Schweinfurt",
+  "qid": "Q10461",
+  "url": "https://www.landkreis-schweinfurt.de/landkreis/kreisrecht",
+  "iso": "DE-BY"
+ },
+ {
+  "name": "Landkreis Bayreuth",
+  "qid": "Q10439",
+  "url": "https://www.landkreis-bayreuth.de/der-landkreis/bekanntmachungen-und-ausschreibungen/amtsblaetter",
+  "iso": "DE-BY"
+ },
+ {
+  "name": "Landkreis Landshut",
+  "qid": "Q10475",
+  "url": "https://www.landkreis-landshut.de/aktuelles/amtsblatt/",
+  "iso": "DE-BY"
+ },
+ {
+  "name": "Landkreis Altötting",
+  "qid": "Q10533",
+  "url": "https://www.lra-aoe.de/aktuelles/amtsblatt/",
+  "iso": "DE-BY"
+ },
+ {
+  "name": "Landkreis Miltenberg",
+  "qid": "Q10472",
+  "url": "https://www.landkreis-miltenberg.de/aktuell/veroeffentlichungen/amtsblatt.html",
+  "iso": "DE-BY"
+ }
+]
