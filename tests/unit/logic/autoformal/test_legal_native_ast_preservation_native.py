@@ -219,7 +219,7 @@ spec=importlib.util.spec_from_file_location('_native_ast_cold',sys.argv[1])
 module=importlib.util.module_from_spec(spec)
 sys.modules[spec.name]=module
 spec.loader.exec_module(module)
-for name in ('validate_native_ast_preservation','build_native_ast_preservation','compilation_receipt_sha256'):
+for name in ('validate_native_ast_preservation','build_native_ast_preservation','validate_relational_ast_preservation','build_relational_ast_preservation','validate_counted_ast_preservation','build_counted_ast_preservation','compilation_receipt_sha256'):
     assert callable(getattr(module,name))
 assert not any(any(name==prefix or name.startswith(prefix+'.') for prefix in blocked) for name in sys.modules)
 """
@@ -560,3 +560,469 @@ def test_unresolved_native_cleanup_preserves_same_exception_and_handle(base, syn
     for name, text in preparation.files:
         assert (output / "project" / name).read_bytes() == text.encode()
     assert_no_authority(receipt)
+
+
+# Reuse the original relational builder and pure preparation fixture; these
+# synthetic compiler controls establish no native proof or legal authority.
+relational_preservation_fixtures = _FIXTURE.relational_preservation_fixtures
+
+
+@pytest.fixture(scope="module")
+def relational_base(relational_preservation_fixtures):
+    fixtures = relational_preservation_fixtures
+    captured = _FIXTURE._relational_preservation_capture(fixtures, fixtures.approval_request())
+    return captured, _FIXTURE._prepare_relational_preservation(captured)
+
+
+def relational_arguments(captured, preparation):
+    report, request_raw = captured
+    return {
+        "expected_preparation_sha256": preparer.preparation_sha256(preparation),
+        "expected_report_sha256": sha(canonical(report)),
+        "expected_request_sha256": sha(request_raw),
+        "toolchain": TOOLCHAIN,
+    }
+
+
+def validate_relational(captured, preparation, **overrides):
+    report, request_raw = captured
+    return native.validate_relational_ast_preservation(
+        preparation, report, request_raw,
+        **(relational_arguments(captured, preparation) | overrides),
+    )
+
+
+def build_relational(captured, preparation, executable, output, **overrides):
+    report, request_raw = captured
+    return native.build_relational_ast_preservation(
+        preparation, report, request_raw,
+        **(relational_arguments(captured, preparation) | {
+            "lake_executable": str(executable), "output_directory": output,
+            "timeout_seconds": 12,
+        } | overrides),
+    )
+
+
+def test_relational_native_profile_reuses_four_modules_seven_inputs_and_five_obligations(
+        relational_base, synthetic_compiler, tmp_path):
+    captured, preparation = relational_base
+    before = deepcopy(captured)
+    assert validate_relational(captured, preparation) == preparation
+    executable, calls = synthetic_compiler(preparation)
+    output = tmp_path / "relational-native"
+    receipt = build_relational(captured, preparation, executable, output)
+    observed, manifest = receipt["native_observations"], meta(preparation)
+    assert len(calls) == 1
+    assert receipt["profile"] == native.RELATIONAL_PROFILE != native.PROFILE
+    assert receipt["original_preparation_state"]["preparation_only"] is True
+    assert receipt["build_passed"] is receipt["kernel_proofs_checked"] is True
+    assert len(observed["compiled_modules"]) == len(observed["artifact_sha256"]) == 4
+    assert len(observed["executed_project_sha256"]) == 7
+    assert observed["theorems"] == manifest["theorems"]
+    assert len(observed["theorem_axiom_dependencies"]) == 5
+    assert observed["theorem_axiom_dependencies"] == {name: [] for name in manifest["theorems"]}
+    for field in ("relational_report_sha256", "original_request_sha256",
+                  "typed_expression_sha256", "argument_roles_sha256"):
+        assert receipt[field] == manifest[field]
+    assert "Five exact concrete checks" in receipt["proof_scope"]
+    assert observed["cleanup_confirmed"] is observed["observed_process_scope_passed"] is True
+    assert_no_authority(receipt)
+    assert captured == before
+    assert json.loads((output / "build-receipt.json").read_bytes()) == receipt
+
+
+@pytest.mark.parametrize("index", range(5))
+def test_each_relational_theorem_requires_its_own_exact_observation(
+        relational_base, synthetic_compiler, tmp_path, index):
+    captured, preparation = relational_base
+    lines = axiom_stdout(preparation).splitlines()
+    missing = lines.pop(index)
+    executable, _ = synthetic_compiler(preparation, stdout="\n".join(lines) + "\n")
+    receipt = build_relational(captured, preparation, executable, tmp_path / "missing-relational-theorem")
+    observed = receipt["native_observations"]
+    assert receipt["build_passed"] is receipt["kernel_proofs_checked"] is False
+    assert len(observed["theorem_axiom_dependencies"]) == 4
+    assert observed["axiom_observations_passed"] is False
+    assert missing.split("'", 2)[1] not in observed["theorem_axiom_dependencies"]
+    assert_no_authority(receipt)
+
+
+@pytest.mark.parametrize("damage", ["duplicate", "unknown", "renamed", "reordered", "legacy_profile"])
+def test_relational_theorem_allowlist_cannot_be_replaced_by_five_arbitrary_reports(relational_base, damage):
+    _, preparation = relational_base
+    manifest = deepcopy(meta(preparation))
+    lines = axiom_stdout(preparation).splitlines()
+    if damage == "duplicate":
+        lines.append(lines[-1])
+    elif damage == "unknown":
+        lines.append("'Foreign.role_denotation_matches_native' does not depend on any axioms")
+    else:
+        if damage == "renamed":
+            manifest["theorems"][-1] = manifest["expected_modules"][2] + ".arbitrary_proof"
+        elif damage == "reordered":
+            manifest["theorems"][-2:] = list(reversed(manifest["theorems"][-2:]))
+        else:
+            manifest["profile"] = preparer.PROFILE
+        with pytest.raises(ValueError):
+            native._axiom_observations("\n".join(lines) + "\n", "", manifest)
+        return
+    _, errors, passed = native._axiom_observations("\n".join(lines) + "\n", "", manifest)
+    assert errors and passed is False
+
+
+@pytest.mark.parametrize("field", [
+    "expected_preparation_sha256", "expected_report_sha256", "expected_request_sha256",
+])
+def test_relational_independent_commitments_refuse_before_lazy_owners(relational_base, field):
+    captured, preparation = relational_base
+    with patch.object(native, "_owners", side_effect=AssertionError("operation owners reached")):
+        with pytest.raises(ValueError):
+            validate_relational(captured, preparation, **{field: "0" * 64})
+
+
+@pytest.mark.parametrize("damage", [
+    "report_nonfinite", "report_not_dict", "request_mutable",
+    "request_duplicate", "request_nonfinite", "request_oversize",
+])
+def test_relational_ordinary_input_bounds_precede_lazy_owners(relational_base, damage):
+    captured, preparation = relational_base
+    report, request_raw = captured
+    kwargs = relational_arguments(captured, preparation)
+    if damage == "report_nonfinite":
+        report = {"bad": float("nan")}
+    elif damage == "report_not_dict":
+        report = []
+    elif damage == "request_mutable":
+        request_raw = bytearray(request_raw)
+    else:
+        if damage == "request_oversize":
+            request_raw = b" " * (native.MAX_RELATIONAL_REQUEST_BYTES + 1)
+        else:
+            request_raw = (b'{"x":0,"x":0}' if damage == "request_duplicate" else b'{"x":NaN}')
+        kwargs["expected_request_sha256"] = sha(request_raw)
+    with patch.object(native, "_owners", side_effect=AssertionError("operation owners reached")):
+        with pytest.raises(ValueError):
+            native.validate_relational_ast_preservation(preparation, report, request_raw, **kwargs)
+
+
+@pytest.mark.parametrize("route", ["legacy", "relational"])
+def test_profiles_require_their_explicit_native_validation_route(base, relational_base, route):
+    captured, relational = relational_base
+    data, legacy = base
+    with patch.object(native, "_owners", side_effect=AssertionError("operation owners reached")):
+        with pytest.raises(ValueError):
+            if route == "legacy":
+                validate(data, relational)
+            else:
+                validate_relational(captured, legacy)
+
+
+@pytest.mark.parametrize("damage", ["roles", "request", "profile"])
+def test_relational_original_replay_refuses_before_compiler_probe(
+        relational_base, monkeypatch, tmp_path, damage):
+    original, preparation = relational_base
+    report, request_raw = deepcopy(original)
+    if damage == "roles":
+        report["argument_roles"][0]["roles"].reverse()
+    elif damage == "request":
+        request = json.loads(request_raw)
+        request["argument_roles"][0]["roles"].reverse()
+        request_raw = canonical(request)
+    else:
+        manifest = meta(preparation)
+        manifest["profile"] = preparer.PROFILE
+        preparation = reseal_manifest(preparation, manifest)
+    monkeypatch.setattr(native, "_installed_toolchain", lambda *a, **k: pytest.fail("probe reached before replay"))
+    monkeypatch.setattr(process.BoundedToolRunner, "run", lambda *a, **k: pytest.fail("runner reached before replay"))
+    output = tmp_path / "must-not-export-relational"
+    with pytest.raises(ValueError):
+        build_relational((report, request_raw), preparation, tmp_path / "never-executed", output)
+    assert not output.exists()
+
+
+@pytest.mark.parametrize("field", ["report", "request"])
+def test_relational_inputs_are_replayed_after_the_original_runner(
+        relational_base, synthetic_compiler, tmp_path, field):
+    original, preparation = relational_base
+    captured = deepcopy(original)
+    report, request_raw = captured
+    if field == "report":
+        def mutate():
+            report["argument_roles"][0]["roles"].reverse()
+    else:
+        def mutate():
+            report["request_raw_utf8"] = request_raw.decode() + " "
+    executable, _ = synthetic_compiler(preparation, after=mutate)
+    receipt = build_relational(captured, preparation, executable, tmp_path / "changed-relational-input")
+    assert receipt["build_passed"] is False
+    assert receipt["native_observations"]["post_run_validation_passed"] is False
+    assert receipt["relational_report_sha256"] == meta(preparation)["relational_report_sha256"]
+    assert_no_authority(receipt)
+
+
+def test_legacy_and_relational_operation_pins_have_separate_stable_profiles(
+        base, relational_base, monkeypatch):
+    data, legacy = base
+    captured, relational = relational_base
+    monkeypatch.setattr(native, "_OPERATION_PINS", {})
+    assert validate(data, legacy) == legacy
+    original = deepcopy(native._OPERATION_PINS[preparer.PROFILE])
+    assert validate_relational(captured, relational) == relational
+    assert validate(data, legacy) == legacy
+    assert set(native._OPERATION_PINS) == {preparer.PROFILE, preparer.RELATIONAL_PROFILE}
+    assert native._OPERATION_PINS[preparer.PROFILE] == original
+
+
+def test_relational_cleanup_exception_retains_original_handle_and_profile(
+        relational_base, synthetic_compiler, monkeypatch, tmp_path):
+    captured, preparation = relational_base
+    executable, _ = synthetic_compiler(preparation)
+    handle = object()
+    original = process.OwnedToolCleanupError(handle, "synthetic unresolved relational cleanup")
+    def fail(self, request, *, cancellation=None):
+        assert request.owned_process_observation is True
+        raise original
+    monkeypatch.setattr(process.BoundedToolRunner, "run", fail)
+    output = tmp_path / "retained-relational-cleanup"
+    with pytest.raises(process.OwnedToolCleanupError) as caught:
+        build_relational(captured, preparation, executable, output)
+    assert caught.value is original and caught.value.cleanup_handle is handle
+    receipt = json.loads((output / "build-receipt.json").read_bytes())
+    assert receipt["profile"] == native.RELATIONAL_PROFILE
+    assert receipt["native_observations"]["cleanup_owner_retained_on_exception"] is True
+    assert receipt["build_passed"] is False
+    assert receipt["original_request_sha256"] == meta(preparation)["original_request_sha256"]
+    assert_no_authority(receipt)
+
+
+@pytest.fixture(scope="module")
+def counted_base():
+    from ipfs_datasets_py.logic.autoformal import legal_counted_frame_v1 as counted
+    request_raw = canonical(counted.authored_counted_frame_request())
+    report = counted.prepare_counted_frame(request_raw, expected_request_sha256=sha(request_raw))
+    preparation = preparer.prepare_counted_ast_preservation(
+        report, request_raw, expected_report_sha256=sha(canonical(report)),
+        expected_request_sha256=sha(request_raw), toolchain=TOOLCHAIN)
+    return (report, request_raw), preparation
+
+
+def validate_counted(captured, preparation, **overrides):
+    report, request_raw = captured
+    return native.validate_counted_ast_preservation(
+        preparation, report, request_raw,
+        **(relational_arguments(captured, preparation) | overrides))
+
+
+def build_counted(captured, preparation, executable, output, **overrides):
+    report, request_raw = captured
+    return native.build_counted_ast_preservation(
+        preparation, report, request_raw,
+        **(relational_arguments(captured, preparation) | {
+            "lake_executable": str(executable), "output_directory": output,
+            "timeout_seconds": 12,
+        } | overrides))
+
+
+def test_counted_native_profile_retains_sorted_AST_and_boundary_evidence_without_native_fragment(
+        counted_base, synthetic_compiler, tmp_path):
+    captured, preparation = counted_base
+    before = deepcopy(captured)
+    assert validate_counted(captured, preparation) == preparation
+    executable, calls = synthetic_compiler(preparation)
+    receipt = build_counted(captured, preparation, executable, tmp_path / "counted-native")
+    manifest, observed = meta(preparation), receipt["native_observations"]
+    assert len(calls) == 1
+    assert receipt["profile"] == native.COUNTED_PROFILE
+    assert receipt["profile"] not in {native.PROFILE, native.RELATIONAL_PROFILE}
+    assert len(observed["compiled_modules"]) == 4
+    assert len(observed["executed_project_sha256"]) == 7
+    assert observed["theorem_axiom_dependencies"] == {name: [] for name in manifest["theorems"]}
+    assert len(observed["theorem_axiom_dependencies"]) == 5
+    assert receipt["typed_ast_value_preservation_proved"] is True
+    assert receipt["counted_ast_denotation_preservation_proved"] is True
+    assert receipt["counted_boundary_counterexamples_checked"] is True
+    assert receipt["native_ast_value_preservation_proved"] is False
+    assert receipt["native_TDFOL_route_used"] is False
+    for field in ("counted_report_sha256", "original_request_sha256", "typed_expression_sha256",
+                  "typed_expression_content_digest", "lean_body_sha256", "typed_ast_node_count"):
+        assert receipt[field] == manifest[field]
+    for field in ("original_fragment_file_sha256", "original_fragment_canonical_sha256", "native_ast_sha256"):
+        assert field not in receipt
+    assert captured == before
+    assert_no_authority(receipt)
+
+
+@pytest.mark.parametrize("index", range(5))
+def test_each_counted_obligation_including_both_cap_witnesses_requires_its_own_report(
+        counted_base, synthetic_compiler, tmp_path, index):
+    captured, preparation = counted_base
+    lines = axiom_stdout(preparation).splitlines()
+    lines.pop(index)
+    executable, _ = synthetic_compiler(preparation, stdout="\n".join(lines) + "\n")
+    receipt = build_counted(captured, preparation, executable, tmp_path / "missing-counted-theorem")
+    assert receipt["build_passed"] is False
+    assert receipt["typed_ast_value_preservation_proved"] is False
+    assert receipt["counted_ast_denotation_preservation_proved"] is False
+    assert receipt["counted_boundary_counterexamples_checked"] is False
+    assert_no_authority(receipt)
+
+
+@pytest.mark.parametrize("field", [
+    "expected_preparation_sha256", "expected_report_sha256", "expected_request_sha256",
+])
+def test_counted_independent_commitments_precede_lazy_owners(counted_base, field):
+    captured, preparation = counted_base
+    with patch.object(native, "_owners", side_effect=AssertionError("operation owners reached")):
+        with pytest.raises(ValueError):
+            validate_counted(captured, preparation, **{field: "0" * 64})
+
+
+def test_counted_profile_cannot_reuse_relational_theorem_names(counted_base):
+    _, preparation = counted_base
+    manifest = meta(preparation)
+    manifest["theorems"] = [manifest["expected_modules"][2] + "." + suffix for suffix in (
+        "native_value_exact", "native_ast_closed", "denotation_matches_native",
+        "typed_source_lowering_exact", "role_denotation_matches_native")]
+    with pytest.raises(ValueError):
+        native._axiom_observations("", "", manifest)
+
+
+def test_counted_report_is_replayed_after_the_original_runner(counted_base, synthetic_compiler, tmp_path):
+    original, preparation = counted_base
+    captured = deepcopy(original)
+    def mutate():
+        captured[0]["maximum"] = 4
+    executable, _ = synthetic_compiler(preparation, after=mutate)
+    receipt = build_counted(captured, preparation, executable, tmp_path / "changed-counted-report")
+    assert receipt["native_observations"]["post_run_validation_passed"] is False
+    assert receipt["typed_ast_value_preservation_proved"] is False
+    assert receipt["counted_boundary_counterexamples_checked"] is False
+    assert_no_authority(receipt)
+
+
+def test_three_preservation_profiles_have_separate_pin_caches(base, relational_base, counted_base, monkeypatch):
+    data, legacy = base
+    relational_data, relational = relational_base
+    counted_data, counted = counted_base
+    monkeypatch.setattr(native, "_OPERATION_PINS", {})
+    assert validate(data, legacy) == legacy
+    assert validate_relational(relational_data, relational) == relational
+    assert validate_counted(counted_data, counted) == counted
+    assert validate(data, legacy) == legacy
+    assert validate_relational(relational_data, relational) == relational
+    assert set(native._OPERATION_PINS) == {preparer.PROFILE, preparer.RELATIONAL_PROFILE, preparer.COUNTED_PROFILE}
+
+
+def test_counted_cleanup_preserves_exception_without_fabricated_native_fragment(
+        counted_base, synthetic_compiler, monkeypatch, tmp_path):
+    captured, preparation = counted_base
+    executable, _ = synthetic_compiler(preparation)
+    handle = object()
+    original = process.OwnedToolCleanupError(handle, "synthetic unresolved counted cleanup")
+    def fail(self, request, *, cancellation=None):
+        raise original
+    monkeypatch.setattr(process.BoundedToolRunner, "run", fail)
+    output = tmp_path / "retained-counted-cleanup"
+    with pytest.raises(process.OwnedToolCleanupError) as caught:
+        build_counted(captured, preparation, executable, output)
+    assert caught.value is original and caught.value.cleanup_handle is handle
+    receipt = json.loads((output / "build-receipt.json").read_bytes())
+    assert receipt["profile"] == native.COUNTED_PROFILE
+    assert receipt["native_observations"]["cleanup_owner_retained_on_exception"] is True
+    assert receipt["typed_ast_value_preservation_proved"] is False
+    assert receipt["counted_ast_denotation_preservation_proved"] is False
+    assert receipt["counted_boundary_counterexamples_checked"] is False
+    assert "original_fragment_file_sha256" not in receipt and "native_ast_sha256" not in receipt
+    assert_no_authority(receipt)
+
+
+def _installed_lean_campaign_binaries():
+    """Explicit opt-in: missing/mismatched tools are failures when enabled."""
+    if os.environ.get("IPFS_DATASETS_RUN_NATIVE_LEAN") != "1":
+        pytest.skip("set IPFS_DATASETS_RUN_NATIVE_LEAN=1 for actual Lean checks")
+    spelling = os.environ.get("IPFS_DATASETS_NATIVE_LAKE_TEST_EXECUTABLE")
+    assert type(spelling) is str and spelling, "explicit installed native Lake ELF path required"
+    executable = Path(spelling)
+    assert executable.is_absolute() and executable.resolve(strict=True) == executable
+    lean = executable.with_name("lean")
+    assert lean.resolve(strict=True) == lean
+    assert TOOLCHAIN == "leanprover/lean4:v4.34.1"
+    pins = {}
+    for path in (executable, lean):
+        assert path.is_file() and not path.is_symlink(), "real sibling native ELF tools required"
+        raw = path.read_bytes()
+        assert raw[:4] == b"\x7fELF", "elan wrappers are not native Lean tools"
+        pins[str(path)] = sha(raw)
+    return executable, pins
+
+
+def _assert_installed_lean_preservation(receipt, preparation, executable, binaries, profile):
+    """Check genuine owner observations; no compiler/process stubs are used."""
+    manifest, observed = meta(preparation), receipt["native_observations"]
+    assert receipt["profile"] == profile
+    assert receipt["build_passed"] is receipt["kernel_proofs_checked"] is True
+    assert observed["native_runtime_verified"] is True
+    assert observed["runtime"] == "native"
+    assert type(observed["pid"]) is int and observed["pid"] > 0
+    assert observed["command"] == [str(executable), "--offline", "--no-cache", "build", "legal"]
+    assert observed["binary_sha256"] == binaries
+    assert observed["binaries_unchanged"] is True
+    for name, path in (("lake", executable), ("lean", executable.with_name("lean"))):
+        probe = observed["version_probes"][name]
+        assert probe["command"] == [str(path), "--version"] and probe["returncode"] == 0
+        assert "4.34.1" in probe["stdout"]
+        assert sha(path.read_bytes()) == binaries[str(path)]
+    assert observed["cleanup_confirmed"] is observed["observed_process_scope_passed"] is True
+    assert observed["native_lifecycle"]["parent"]["pid"] == os.getpid()
+    assert observed["native_lifecycle"]["leader"]["pid"] == observed["pid"]
+    assert observed["native_lifecycle"]["leader_reaped"] is True
+    assert observed["manifest_coverage_passed"] is True
+    assert observed["executed_project_readback_passed"] is True
+    assert observed["post_run_validation_passed"] is True
+    assert observed["compiled_modules"] == manifest["expected_modules"]
+    assert len(observed["artifact_sha256"]) == 4 and all(observed["artifact_bytes"].values())
+    assert len(observed["executed_project_sha256"]) == 7
+    assert len(manifest["theorems"]) == 5
+    assert observed["theorem_axiom_dependencies"] == {name: [] for name in manifest["theorems"]}
+    assert observed["axiom_observations_passed"] is True
+    assert observed["axiom_observation_errors"] == []
+    assert_no_authority(receipt)
+
+
+@pytest.mark.parametrize("operator", ["O", "P", "F"])
+def test_installed_lean_relational_preservation(operator, relational_preservation_fixtures, tmp_path):
+    """Actual O/P/F builds retain multiargument roles, exists and an exception."""
+    executable, binaries = _installed_lean_campaign_binaries()
+    fixtures = relational_preservation_fixtures
+    builder = fixtures.Builder()
+    approval = builder.atom("Approved", "approver", "actor", "recipient")
+    exception = fixtures.ast.mk_not(builder.nid(), builder.atom("Exempt", "actor"))
+    guard = builder.binary("and", approval, exception)
+    action = builder.atom("Assign", "actor", "recipient")
+    body = builder.binary("implies", guard, builder.modal(operator, action))
+    request = fixtures.request_for(builder, body, [
+        ("Approved", ("approver", "actor", "recipient")),
+        ("Exempt", ("actor",)), ("Assign", ("actor", "recipient")),
+    ], [("actor", "forall"), ("recipient", "exists"), ("approver", "forall")])
+    captured = _FIXTURE._relational_preservation_capture(fixtures, request)
+    preparation = _FIXTURE._prepare_relational_preservation(captured)
+    receipt = build_relational(captured, preparation, executable,
+        tmp_path / ("installed-relational-" + operator), timeout_seconds=45)
+    _assert_installed_lean_preservation(receipt, preparation, executable, binaries, native.RELATIONAL_PROFILE)
+    assert receipt["native_ast_value_preservation_proved"] is True
+
+
+def test_installed_lean_counted_preservation(counted_base, tmp_path):
+    """Actual sorted cap-three denotation and genuine Fin3/Fin4 witnesses."""
+    executable, binaries = _installed_lean_campaign_binaries()
+    captured, preparation = counted_base
+    receipt = build_counted(captured, preparation, executable,
+        tmp_path / "installed-counted-three", timeout_seconds=45)
+    _assert_installed_lean_preservation(receipt, preparation, executable, binaries, native.COUNTED_PROFILE)
+    suffixes = [name.rsplit(".", 1)[1] for name in meta(preparation)["theorems"]]
+    assert suffixes[-2:] == ["cap_two_counterexample", "cap_four_counterexample"]
+    assert receipt["typed_ast_value_preservation_proved"] is True
+    assert receipt["counted_ast_denotation_preservation_proved"] is True
+    assert receipt["counted_boundary_counterexamples_checked"] is True
+    assert receipt["native_ast_value_preservation_proved"] is False
+    assert receipt["native_TDFOL_route_used"] is False

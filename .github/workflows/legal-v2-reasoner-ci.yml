@@ -281,6 +281,7 @@ jobs:
         shell: bash
         run: |
           printf '%s\n' "IPFS_DATASETS_LEAN_EXECUTABLE=$HOME/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lean" >> "$GITHUB_ENV"
+          printf '%s\n' "IPFS_DATASETS_NATIVE_LAKE_TEST_EXECUTABLE=$HOME/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake" >> "$GITHUB_ENV"
       - name: Run focused proof and cache contracts
         env:
           IPFS_DATASETS_RUN_NATIVE_LEAN: "0"
@@ -309,6 +310,26 @@ jobs:
             tests/integration/logic/backends/test_kernel_backends.py::test_lean_native_v3_proof_cache_round_trip_and_exact_reuse_context \
             --basetemp=native-lean-cases \
             -v --tb=short --junitxml=native-lean-v3-junit.xml
+      - name: Run preservation mutation and custody contracts
+        env:
+          IPFS_DATASETS_RUN_NATIVE_LEAN: "0"
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          python -m pytest -c /dev/null --noconftest \
+            tests/unit/logic/autoformal/test_legal_native_ast_preservation.py \
+            tests/unit/logic/autoformal/test_legal_native_ast_preservation_native.py \
+            -k 'not installed_lean' \
+            -q --tb=short --junitxml=legal-preservation-contracts-junit.xml
+      # The same canonical executor retains real compiler output, source readback,
+      # finite process bounds and exact empty-dependency theorem reports.
+      - name: Run actual relational and counted preservation
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          python -m pytest -c /dev/null --noconftest \
+            tests/unit/logic/autoformal/test_legal_native_ast_preservation_native.py \
+            -k installed_lean --basetemp=native-preservation-cases \
+            -v --tb=short --junitxml=native-preservation-junit.xml
       - name: Retain actual native proof-check evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -320,3 +341,7 @@ jobs:
             native-lean-cases/**/native-lean-proof-cache-v3.json
             native-lean-v3-junit.xml
             legal-autoformal-contracts-junit.xml
+            legal-preservation-contracts-junit.xml
+            native-preservation-junit.xml
+            native-preservation-cases/**/installed-relational-*/**
+            native-preservation-cases/**/installed-counted-three/**

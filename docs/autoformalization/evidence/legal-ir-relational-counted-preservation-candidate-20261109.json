@@ -1,0 +1,578 @@
+{
+  "schema": "legal-ir-preservation-candidate-status/v1",
+  "status": "installed_unqualified_candidate",
+  "task_ids": [
+    "LIR-07",
+    "LIR-12",
+    "LIR-14"
+  ],
+  "source_files": {
+    "ipfs_datasets_py/logic/autoformal/legal_native_ast_preservation.py": "ac2f8be75689603bd8fcfad74d2e42c46b52250df7fa438960657e0ae69dad96",
+    "tests/unit/logic/autoformal/test_legal_native_ast_preservation.py": "a1ce874a2870ac2247701bb7f4dce9c43337a6f3648f29801579cdc17318b05d",
+    "ipfs_datasets_py/logic/autoformal/legal_native_ast_preservation_native.py": "103ce87027b00c9806e6320f74648cca18f370b65b1dfbe7b6360cb3a3b4b721",
+    "tests/unit/logic/autoformal/test_legal_native_ast_preservation_native.py": "faa458143015d291b61aa44d030458a245d53830542c8667a1dc2afe170e138f",
+    ".github/workflows/legal-v2-reasoner-ci.yml": "d0b2f2a15cf51f64084eeb532f51b523ff9625da7c6e171bc7c3574db7332b8e"
+  },
+  "ordinary_tests_executed": 0,
+  "native_Lean_processes_executed": 0,
+  "qualification_passed": false,
+  "Python_AST_parse_passed": true,
+  "git_diff_whitespace_check_passed": true,
+  "local_test_attempts": [
+    {
+      "controls": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-relational-counted-preservation-20261109-v01/ordinary-controls",
+      "request_sha256": "e94bbcd1d71d5919f3fa32e0d4ef830146f40700e928560cf7f3f99496a1afb5",
+      "terminal": {
+        "schema": "owned-validation-failure-terminal/v1",
+        "request_sha256": "e94bbcd1d71d5919f3fa32e0d4ef830146f40700e928560cf7f3f99496a1afb5",
+        "completed": false,
+        "admitted": false,
+        "Lean_admitted": false,
+        "reservation": {},
+        "process_cleanup_error": null,
+        "owner_exit_error": null,
+        "source_custody_lifecycle": {
+          "schema": "owned-validation-pre-owner-refusal/v1",
+          "request_sha256": "e94bbcd1d71d5919f3fa32e0d4ef830146f40700e928560cf7f3f99496a1afb5",
+          "producer": {
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/run_owned_validation.py",
+            "sha256": "98436ba653e0d0e79bc805f38211d5b8a28fddc0d18a1ea9e4a2a2ce3e32546a"
+          },
+          "owner": {
+            "pid": 179455,
+            "birth": "321492905"
+          },
+          "ledger_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+          "stage": "owner_construction_refused",
+          "events": {
+            "owner_construction_returned": false,
+            "owner_open_attempted": false,
+            "child_launch_attempted": false,
+            "child_created": false,
+            "barrier_released": false,
+            "owner_open_returned": false,
+            "owner_exit_handling_completed": false,
+            "owner_construction_attempted": true,
+            "barrier_release_attempted": false
+          },
+          "native_grant": {
+            "status": "not_requested"
+          },
+          "storage": {
+            "status": "not_requested",
+            "release_authorized": false
+          },
+          "source_guards": {
+            "request_unchanged": true,
+            "source_pins_unchanged": true,
+            "owner_identity_unchanged": true,
+            "errors": []
+          }
+        },
+        "failure": {
+          "error_type": "ValidationResourceError",
+          "error": "nonempty validation source pins required",
+          "completed": false,
+          "executed_checks": [],
+          "returncode": null,
+          "admitted": false,
+          "Lean_admitted": false,
+          "authority_granted": false,
+          "model_weights_downloaded": false
+        }
+      },
+      "parent_closeout": {
+        "returncode": 1,
+        "source_drift": [],
+        "source_closed": true,
+        "waited": true
+      },
+      "storage_released": false
+    },
+    {
+      "controls": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-relational-counted-preservation-20261109-v01/ordinary-controls-v02",
+      "request_sha256": "87ebaa461f39532c7d4b5d30bfe09ecd95cb8b6238b09bb99863bcdab494f362",
+      "terminal": {
+        "schema": "owned-validation-failure-terminal/v1",
+        "request_sha256": "87ebaa461f39532c7d4b5d30bfe09ecd95cb8b6238b09bb99863bcdab494f362",
+        "completed": false,
+        "admitted": false,
+        "Lean_admitted": false,
+        "failure": {
+          "schema": "owned-validation-result/v1",
+          "request_sha256": "87ebaa461f39532c7d4b5d30bfe09ecd95cb8b6238b09bb99863bcdab494f362",
+          "executed_checks": [],
+          "returncode": null,
+          "completed": false,
+          "admitted": false,
+          "Lean_admitted": false,
+          "resource_scope": "cooperative_sampled_birth_bound_descendants_and_owned_attempt",
+          "model_weights_downloaded": false,
+          "authority_granted": false,
+          "error_type": "LeaseTimeoutError",
+          "error": "timed out waiting for a resource lease",
+          "elapsed_seconds": 42.61188841005787,
+          "watchdog_errors": [],
+          "received_signals": [],
+          "process_observation": null,
+          "process_cleanup_error": null
+        },
+        "reservation": {
+          "schema": "daemon-resource-reservations-v1",
+          "reservation_id": "e447f39037c04fd3bd94079d0e8913d1",
+          "scheduler_lane": "validation",
+          "workload": "canonical_validation",
+          "status": "retained",
+          "ledger_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+          "roots": [
+            {
+              "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs",
+              "device": 66306,
+              "inode": 66764317
+            },
+            {
+              "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues",
+              "device": 66306,
+              "inode": 58092485
+            },
+            {
+              "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence",
+              "device": 66306,
+              "inode": 51016937
+            },
+            {
+              "path": "/tmp/pytest-of-barberb",
+              "device": 66306,
+              "inode": 524344
+            }
+          ],
+          "storage_limit_bytes": 220000000000,
+          "record": {
+            "artifacts_durable_asserted": false,
+            "attempt_directory": {
+              "device": 66306,
+              "inode": 38148703,
+              "path": "/tmp/pytest-of-barberb/legal-ir-relational-counted-20261109-v02/attempt"
+            },
+            "child": null,
+            "child_process_slots": 2,
+            "cpu_slots": 1,
+            "created_at": 1794196918.0742874,
+            "external_charges": {},
+            "last_usage": {
+              "additional_requested_bytes": 33554432,
+              "charged_bytes": 219974916683,
+              "inventory": {
+                "apparent_bytes": 175218083595,
+                "entry_count": 2563686,
+                "special_file_count": 303,
+                "symlink_count": 8548
+              },
+              "limit_bytes": 220000000000,
+              "minimum_filesystem_free_bytes": 509208985600,
+              "observed_apparent_bytes": 175218083595,
+              "outstanding_full_reservations_bytes": 44723278656,
+              "scope": "named_roots_only_apparent_bytes"
+            },
+            "memory_mb": 1536,
+            "owner_pid": 183028,
+            "prior_children": [],
+            "reservation_id": "e447f39037c04fd3bd94079d0e8913d1",
+            "scheduler_lane": "validation",
+            "status": "retained",
+            "storage_bytes": 33554432,
+            "workload": "canonical_validation",
+            "retention_reason": "scheduler_admission_failed"
+          },
+          "resource_lease": null,
+          "cleanup_error": null,
+          "enforcement": "cooperative_admission_and_polled_usage_not_kernel_quota",
+          "process_observation": null
+        },
+        "source_custody_lifecycle": {
+          "schema": "owned-validation-source-custody-lifecycle/v1",
+          "request_sha256": "87ebaa461f39532c7d4b5d30bfe09ecd95cb8b6238b09bb99863bcdab494f362",
+          "producer": {
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/run_owned_validation.py",
+            "sha256": "98436ba653e0d0e79bc805f38211d5b8a28fddc0d18a1ea9e4a2a2ce3e32546a"
+          },
+          "owner": {
+            "pid": 183028,
+            "birth": "321494893"
+          },
+          "reservation_id": "e447f39037c04fd3bd94079d0e8913d1",
+          "resource_request_id": "validation:e447f39037c04fd3bd94079d0e8913d1",
+          "ledger_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+          "scheduler": {
+            "state_path": "/tmp/ipfs-datasets-resource-scheduler-1000.json",
+            "policy_sha256": "f07cb14289fcb6275e4497dcc36be0dcf8bfc3dc87531ff7a9537eb85fdcc661",
+            "lane": "validation",
+            "workload": "canonical_validation"
+          },
+          "attempt_directory": "/tmp/pytest-of-barberb/legal-ir-relational-counted-20261109-v02/attempt",
+          "outputs": {
+            "cache": "/tmp/pytest-of-barberb/legal-ir-relational-counted-20261109-v02/attempt/cache",
+            "db": "/tmp/pytest-of-barberb/legal-ir-relational-counted-20261109-v02/attempt/db",
+            "exports": "/tmp/pytest-of-barberb/legal-ir-relational-counted-20261109-v02/attempt/exports",
+            "logs": "/tmp/pytest-of-barberb/legal-ir-relational-counted-20261109-v02/attempt/logs",
+            "pytest": "/tmp/pytest-of-barberb/legal-ir-relational-counted-20261109-v02/attempt/pytest",
+            "tmp": "/tmp/pytest-of-barberb/legal-ir-relational-counted-20261109-v02/attempt/tmp"
+          },
+          "budgets": {
+            "cpu_slots": 1,
+            "memory_mb": 1536,
+            "child_process_slots": 2,
+            "storage_bytes": 33554432
+          },
+          "process_scope": "sampled_birth_bound_descendants",
+          "events": {
+            "owner_open_attempted": true,
+            "owner_open_returned": false,
+            "child_launch_attempted": false,
+            "child_created": false,
+            "barrier_release_attempted": false,
+            "barrier_released": false,
+            "owner_exit_handling_completed": true
+          },
+          "owner_child_attached": false,
+          "native_grant": {
+            "status": "not_acquired_terminal_timeout",
+            "exact_native_timeout": true,
+            "timeout_decision": {
+              "schema": "resource-lease-timeout-decision@1",
+              "decision_scope": "actual_terminal_timeout_branch",
+              "cycle_wall_time": 1794196918.1712418,
+              "cycle_monotonic_time": 3214991.570114373,
+              "deadline_monotonic": 3214991.570112565,
+              "elapsed_seconds": 1.8081627786159515e-06,
+              "clock_scope": "acquire_process_local_monotonic_clock",
+              "waiter_id": "08b187698a7d4705900de1b5bbe59923",
+              "sequence": 194,
+              "request_id": "validation:e447f39037c04fd3bd94079d0e8913d1",
+              "lane": "validation",
+              "lane_truncated": false,
+              "parent_lease_id": null,
+              "timed_out": true,
+              "can_grant_now": false,
+              "externally_cancelled": false,
+              "parent_cancelled": false,
+              "proof_safety_enabled": true,
+              "exact_blocking_predicate": null,
+              "exact_blocking_cause": null
+            }
+          },
+          "source_guards": {
+            "request_unchanged": true,
+            "source_pins_unchanged": true,
+            "owner_identity_unchanged": true,
+            "errors": []
+          },
+          "storage": {
+            "status": "retained",
+            "cleanup_error": null,
+            "release_authorized": false
+          }
+        },
+        "process_cleanup_error": null,
+        "owner_exit_error": null
+      },
+      "parent_closeout": {
+        "returncode": 1,
+        "source_drift": [],
+        "source_closed": true,
+        "waited": true
+      },
+      "storage_released": true
+    },
+    {
+      "controls": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-relational-counted-preservation-20261109-v01/ordinary-controls-v03",
+      "request_sha256": "f0a189d0a7ca09814722fbb28f3edb833ae0380eef1004491f2f7c2e7fbea53f",
+      "terminal": {
+        "schema": "owned-validation-failure-terminal/v1",
+        "request_sha256": "f0a189d0a7ca09814722fbb28f3edb833ae0380eef1004491f2f7c2e7fbea53f",
+        "completed": false,
+        "admitted": false,
+        "Lean_admitted": false,
+        "failure": {
+          "schema": "owned-validation-result/v1",
+          "request_sha256": "f0a189d0a7ca09814722fbb28f3edb833ae0380eef1004491f2f7c2e7fbea53f",
+          "executed_checks": [],
+          "returncode": null,
+          "completed": false,
+          "admitted": false,
+          "Lean_admitted": false,
+          "resource_scope": "cooperative_sampled_birth_bound_descendants_and_owned_attempt",
+          "model_weights_downloaded": false,
+          "authority_granted": false,
+          "error_type": "LeaseTimeoutError",
+          "error": "timed out waiting for a resource lease",
+          "elapsed_seconds": 42.46383227780461,
+          "watchdog_errors": [],
+          "received_signals": [],
+          "process_observation": null,
+          "process_cleanup_error": null
+        },
+        "reservation": {
+          "schema": "daemon-resource-reservations-v1",
+          "reservation_id": "12f803ce05c04660b65392ca13d519df",
+          "scheduler_lane": "validation",
+          "workload": "canonical_validation",
+          "status": "retained",
+          "ledger_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+          "roots": [
+            {
+              "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs",
+              "device": 66306,
+              "inode": 66764317
+            },
+            {
+              "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues",
+              "device": 66306,
+              "inode": 58092485
+            },
+            {
+              "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence",
+              "device": 66306,
+              "inode": 51016937
+            },
+            {
+              "path": "/tmp/pytest-of-barberb",
+              "device": 66306,
+              "inode": 524344
+            }
+          ],
+          "storage_limit_bytes": 220000000000,
+          "record": {
+            "artifacts_durable_asserted": false,
+            "attempt_directory": {
+              "device": 66306,
+              "inode": 38148716,
+              "path": "/tmp/pytest-of-barberb/legal-ir-relational-counted-20261109-v03/attempt"
+            },
+            "child": null,
+            "child_process_slots": 2,
+            "cpu_slots": 1,
+            "created_at": 1794197097.3364103,
+            "external_charges": {},
+            "last_usage": {
+              "additional_requested_bytes": 33554432,
+              "charged_bytes": 219975216388,
+              "inventory": {
+                "apparent_bytes": 175218383300,
+                "entry_count": 2563702,
+                "special_file_count": 303,
+                "symlink_count": 8548
+              },
+              "limit_bytes": 220000000000,
+              "minimum_filesystem_free_bytes": 509203247104,
+              "observed_apparent_bytes": 175218383300,
+              "outstanding_full_reservations_bytes": 44723278656,
+              "scope": "named_roots_only_apparent_bytes"
+            },
+            "memory_mb": 1536,
+            "owner_pid": 216973,
+            "prior_children": [],
+            "reservation_id": "12f803ce05c04660b65392ca13d519df",
+            "scheduler_lane": "validation",
+            "status": "retained",
+            "storage_bytes": 33554432,
+            "workload": "canonical_validation",
+            "retention_reason": "scheduler_admission_failed"
+          },
+          "resource_lease": null,
+          "cleanup_error": null,
+          "enforcement": "cooperative_admission_and_polled_usage_not_kernel_quota",
+          "process_observation": null
+        },
+        "source_custody_lifecycle": {
+          "schema": "owned-validation-source-custody-lifecycle/v1",
+          "request_sha256": "f0a189d0a7ca09814722fbb28f3edb833ae0380eef1004491f2f7c2e7fbea53f",
+          "producer": {
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/run_owned_validation.py",
+            "sha256": "98436ba653e0d0e79bc805f38211d5b8a28fddc0d18a1ea9e4a2a2ce3e32546a"
+          },
+          "owner": {
+            "pid": 216973,
+            "birth": "321512835"
+          },
+          "reservation_id": "12f803ce05c04660b65392ca13d519df",
+          "resource_request_id": "validation:12f803ce05c04660b65392ca13d519df",
+          "ledger_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+          "scheduler": {
+            "state_path": "/tmp/ipfs-datasets-resource-scheduler-1000.json",
+            "policy_sha256": "f07cb14289fcb6275e4497dcc36be0dcf8bfc3dc87531ff7a9537eb85fdcc661",
+            "lane": "validation",
+            "workload": "canonical_validation"
+          },
+          "attempt_directory": "/tmp/pytest-of-barberb/legal-ir-relational-counted-20261109-v03/attempt",
+          "outputs": {
+            "cache": "/tmp/pytest-of-barberb/legal-ir-relational-counted-20261109-v03/attempt/cache",
+            "db": "/tmp/pytest-of-barberb/legal-ir-relational-counted-20261109-v03/attempt/db",
+            "exports": "/tmp/pytest-of-barberb/legal-ir-relational-counted-20261109-v03/attempt/exports",
+            "logs": "/tmp/pytest-of-barberb/legal-ir-relational-counted-20261109-v03/attempt/logs",
+            "pytest": "/tmp/pytest-of-barberb/legal-ir-relational-counted-20261109-v03/attempt/pytest",
+            "tmp": "/tmp/pytest-of-barberb/legal-ir-relational-counted-20261109-v03/attempt/tmp"
+          },
+          "budgets": {
+            "cpu_slots": 1,
+            "memory_mb": 1536,
+            "child_process_slots": 2,
+            "storage_bytes": 33554432
+          },
+          "process_scope": "sampled_birth_bound_descendants",
+          "events": {
+            "owner_open_attempted": true,
+            "owner_open_returned": false,
+            "child_launch_attempted": false,
+            "child_created": false,
+            "barrier_release_attempted": false,
+            "barrier_released": false,
+            "owner_exit_handling_completed": true
+          },
+          "owner_child_attached": false,
+          "native_grant": {
+            "status": "not_acquired_terminal_timeout",
+            "exact_native_timeout": true,
+            "timeout_decision": {
+              "schema": "resource-lease-timeout-decision@1",
+              "decision_scope": "actual_terminal_timeout_branch",
+              "cycle_wall_time": 1794197097.4362862,
+              "cycle_monotonic_time": 3215170.835158993,
+              "deadline_monotonic": 3215170.835157217,
+              "elapsed_seconds": 1.7760321497917175e-06,
+              "clock_scope": "acquire_process_local_monotonic_clock",
+              "waiter_id": "13d141d173574101ba58a236dbf21d1e",
+              "sequence": 195,
+              "request_id": "validation:12f803ce05c04660b65392ca13d519df",
+              "lane": "validation",
+              "lane_truncated": false,
+              "parent_lease_id": null,
+              "timed_out": true,
+              "can_grant_now": false,
+              "externally_cancelled": false,
+              "parent_cancelled": false,
+              "proof_safety_enabled": true,
+              "exact_blocking_predicate": null,
+              "exact_blocking_cause": null
+            }
+          },
+          "source_guards": {
+            "request_unchanged": true,
+            "source_pins_unchanged": true,
+            "owner_identity_unchanged": true,
+            "errors": []
+          },
+          "storage": {
+            "status": "retained",
+            "cleanup_error": null,
+            "release_authorized": false
+          }
+        },
+        "process_cleanup_error": null,
+        "owner_exit_error": null
+      },
+      "parent_closeout": {
+        "returncode": 1,
+        "source_drift": [],
+        "source_closed": true,
+        "waited": true
+      },
+      "storage_released": true
+    }
+  ],
+  "source_compatibility": {
+    "schema": "legal-ir-preservation-static-compatibility/v1",
+    "qualification": false,
+    "rows": [
+      {
+        "path": "ipfs_datasets_py/logic/autoformal/legal_native_ast_preservation.py",
+        "current_sha256": "ac2f8be75689603bd8fcfad74d2e42c46b52250df7fa438960657e0ae69dad96",
+        "existing_definitions_unchanged": [
+          "NativeAstPreservationPreparation",
+          "_enum",
+          "_file",
+          "_keys",
+          "_name",
+          "_native_value",
+          "_need",
+          "_owners",
+          "_parse",
+          "_pin",
+          "_pins",
+          "_preflight",
+          "_sha",
+          "_string",
+          "_typed_ast",
+          "_variable",
+          "_wire",
+          "preparation_sha256",
+          "prepare_native_ast_preservation",
+          "validate_native_ast_preservation"
+        ],
+        "existing_definitions_modified_or_removed": [],
+        "added_definitions": [
+          "_counted_json_value",
+          "_counted_pins",
+          "_counted_source_syntax",
+          "_counted_string",
+          "_lean_list",
+          "_relational_native_syntax",
+          "_relational_pins",
+          "_relational_source_syntax",
+          "prepare_counted_ast_preservation",
+          "prepare_relational_ast_preservation",
+          "validate_counted_ast_preservation",
+          "validate_relational_ast_preservation"
+        ]
+      },
+      {
+        "path": "ipfs_datasets_py/logic/autoformal/legal_native_ast_preservation_native.py",
+        "current_sha256": "103ce87027b00c9806e6320f74648cca18f370b65b1dfbe7b6360cb3a3b4b721",
+        "existing_definitions_unchanged": [
+          "_binary_recheck",
+          "_bound_tree",
+          "_installed_toolchain",
+          "_need",
+          "_observed_process_scope",
+          "_original_preparation_state",
+          "_owners",
+          "_parse",
+          "_persist_build",
+          "_pin",
+          "_preparation_document",
+          "_sha",
+          "_wire",
+          "compilation_receipt_sha256",
+          "preparation_sha256",
+          "validate_native_ast_preservation"
+        ],
+        "existing_definitions_modified_or_removed": [
+          "_axiom_observations",
+          "_pins",
+          "_preflight",
+          "build_native_ast_preservation"
+        ],
+        "added_definitions": [
+          "_build_ast_preservation",
+          "_expected_theorems",
+          "_preparation_preflight",
+          "_profile",
+          "_relational_preflight",
+          "_report_preflight",
+          "build_counted_ast_preservation",
+          "build_relational_ast_preservation",
+          "validate_counted_ast_preservation",
+          "validate_relational_ast_preservation"
+        ]
+      }
+    ]
+  },
+  "existing_failing_native_campaign_repaired_but_not_requalified": true,
+  "new_axioms_approved": false,
+  "CI_selection_installed": true,
+  "CI_execution_qualified": false,
+  "legal_review_or_corpus_admission": false,
+  "model_or_training_executed": false,
+  "retained_evidence_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-relational-counted-preservation-20261109-v01",
+  "next_action": "Fresh full ordinary preservation cohort through existing owner when proof I/O pressure admits, followed by four actual Lean cases; no policy change."
+}
