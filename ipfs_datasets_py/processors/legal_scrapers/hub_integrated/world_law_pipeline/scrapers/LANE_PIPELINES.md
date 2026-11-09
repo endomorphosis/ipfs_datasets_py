@@ -37,3 +37,14 @@ versioned superseded runs, vendored third-party libraries, and fixtures derived 
 Datasets are published on Hugging Face, not here.
 
 Tests: `tests/unit/legal_scrapers/test_lane_pipelines_portability.py`.
+
+## Follow-up (2026-11-08 p1)
+
+Additional reusable pieces landed after the initial lane commit:
+
+- `caselaw/pipeline/docs/` — schema_caselaw_v0..v6 + doc_v6_head/tail; `gen_schema_doc.py` reads these first
+- `municipal_lanes/gr/` — Diavgeia OCR fetch/ocr/row-build (helpers in `hub_integrated/legal_scrapers/municipal/`)
+- `counties/lanes/us_city_codes/{collect,build,probe}.py` — open municipal-code collector (excludes `t.py`)
+- `packaging/africa_me/` — Africa/MENA pack builder, gates, merge_b2, quality filters, domains
+- `hub_dataset_scripts/endomorphosis__legal_scrapers/scrapers/world_package.py` — expanded META catalog + `MIN_PACKAGE_TEXT`
+- `hub_dataset_scripts/endomorphosis__legal_scrapers/docs/` — curated operational READMEs / coverage status (not live NORMALIZER_STATUS)
