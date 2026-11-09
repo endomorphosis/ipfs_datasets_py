@@ -1,5 +1,9 @@
 # Training and experiment history
 
+## 2026-11-09 — Proof/cache engineering, no model experiment
+
+The [fresh proof-cache qualification](../../../../docs/autoformalization/evidence/legal-ir-native-proof-cache-roundtrip-20261109.json) records 243 ordinary passes and 11 actual Lean commands, with exact disk reuse and adversarial context refusals. No model initialization, inference, update, gold-label admission or numerical gain was performed. Failed capacity/collection attempts remain separate; three later shared-SDK source changes inherit no qualification. See the handoff for the frozen executed generation and original custody closeout.
+
 ## 2026-10-30 — Actual synthetic numerical dispatch through the original trainer
 
 The [qualified route](../../../../docs/autoformalization/evidence/legal-ir-f18-v2-native-numerical-probe-20261030.json) performed one genuine synthetic optimizer update and three model forwards: one training batch and two source-only captures, after original READY/RUN. All 130 active scalars changed while38 frozen tensors and 650 inactive scalars stayed byte-equal. Both captures abstained (copied_spans_overlap); no learned reconstruction gain is claimed. The worker took 5.544 seconds; original custody closed in 188.066 seconds with 76 unchanged pins. A separate original-owned fixture sealer initialized one model and performed zero forwards/updates.

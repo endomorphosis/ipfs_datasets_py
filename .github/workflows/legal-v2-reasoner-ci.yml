@@ -295,6 +295,7 @@ jobs:
             tests/unit/logic/test_duckdb_proof_store.py::test_advisory_verification_projection_uses_target_status_polarity \
             tests/unit/logic/test_duckdb_proof_store.py::test_store_put_retains_advisory_candidate_without_proof_authority \
             --deselect tests/integration/logic/backends/test_kernel_backends.py::test_lean_native_v2_expected_type_and_dependency_policy \
+            --deselect tests/integration/logic/backends/test_kernel_backends.py::test_lean_native_v3_proof_cache_round_trip_and_exact_reuse_context \
             -q --tb=short --junitxml=legal-autoformal-contracts-junit.xml
       # This canonical opt-in uses the existing ResourceAdmittedToolRunner with
       # one CPU/child, a finite AS ceiling and a 512 MiB RSS bound per tool.
@@ -305,6 +306,8 @@ jobs:
         run: |
           python -m pytest -c /dev/null --noconftest \
             tests/integration/logic/backends/test_kernel_backends.py::test_lean_native_v2_expected_type_and_dependency_policy \
+            tests/integration/logic/backends/test_kernel_backends.py::test_lean_native_v3_proof_cache_round_trip_and_exact_reuse_context \
+            --basetemp=native-lean-cases \
             -v --tb=short --junitxml=native-lean-v3-junit.xml
       - name: Retain actual native proof-check evidence
         if: always()
@@ -314,5 +317,6 @@ jobs:
           if-no-files-found: error
           path: |
             native-lean-v3-result.json
+            native-lean-cases/**/native-lean-proof-cache-v3.json
             native-lean-v3-junit.xml
             legal-autoformal-contracts-junit.xml
