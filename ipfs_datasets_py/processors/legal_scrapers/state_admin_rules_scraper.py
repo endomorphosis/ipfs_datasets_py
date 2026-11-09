@@ -1025,7 +1025,8 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://rules.iowa.gov/info/track-proposed-rules",
     ],
     "IN": [
-        "http://web.archive.org/web/20260120094721/https://iar.iga.in.gov/iac/irtoc.htm",
+        "https://iga.in.gov/laws/iac",
+        "https://iar.iga.in.gov/iac/irtoc.htm",
         "https://iar.iga.in.gov/code/current",
         "https://iar.iga.in.gov/code",
         "https://iar.iga.in.gov/code/2024",
@@ -1038,6 +1039,7 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://iar.iga.in.gov/code/current/25/7",
         "https://iar.iga.in.gov/code/current/31/1",
         "https://iar.iga.in.gov/code/current/35/1.1",
+        "http://web.archive.org/web/20260120094721/https://iar.iga.in.gov/iac/irtoc.htm",
         "https://iar.iga.in.gov/code/current/35/1.3",
         "https://iar.iga.in.gov/code/current/35/14.1",
         "https://iar.iga.in.gov/code/current/45/1.1",
@@ -1356,7 +1358,6 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://apps.sos.wv.gov/adlaw/registers/",
     ],
     "TN": [
-        "http://web.archive.org/web/20250819093146/https://publications.tnsosfiles.com/rules/",
         "https://publications.tnsosfiles.com/rules/",
         "https://sos.tn.gov/publications/services/effective-rules-and-regulations-of-the-state-of-tennessee",
         "https://sos.tn.gov/publications/services/administrative-register",
@@ -1365,12 +1366,15 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://sharetngov.tnsosfiles.com/sos/rules/0020/0020-01.20170126.pdf",
         "https://sharetngov.tnsosfiles.com/sos/pub/tar/index.htm",
         "https://www.tn.gov/sos/rules-and-regulations.html",
+        "http://web.archive.org/web/20250819093146/https://publications.tnsosfiles.com/rules/",
     ],
     "WY": [
-        "http://web.archive.org/web/20260207213344/https://rules.wyo.gov/",
-        "http://web.archive.org/web/20250917082256/https://rules.wyo.gov/Search.aspx",
+        "https://rules.wyo.gov/",
+        "https://rules.wyo.gov/Search.aspx",
         "https://rules.wyo.gov/Search.aspx?mode=7",
         "https://rules.wyo.gov/Help/Public/wyoming-administrative-rules-h.html",
+        "http://web.archive.org/web/20260207213344/https://rules.wyo.gov/",
+        "http://web.archive.org/web/20250917082256/https://rules.wyo.gov/Search.aspx",
     ],
 }
 
