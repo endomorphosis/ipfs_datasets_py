@@ -7310,6 +7310,16 @@
       "scope": "LIR-22: strict boolean trust and unrevoked positive receipt projection; 135 passed/one unavailable Z3 skip with original custody closed; no statutory or training grant.",
       "sha256": "6153df9dfaaddacca557f75c140f3c2c863173843cc74a0d02ffce958e5d7b72",
       "status": "local_software_qualified_hosted_ci_unverified"
+    },
+    {
+      "id": "reviewed-retrieval-full-current-worktree-qualification-20261109",
+      "path": "docs/autoformalization/evidence/legal-ir-reviewed-retrieval-full-qualification-20261109.json",
+      "observed_bytes": 10858,
+      "observed_sha256": "255ab70220003f1d1bbd00ce831fd28eca09a29f3c77a8a51a1859ef5bb27fee",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "status": "current_worktree_runtime_qualified_shared_extensions_not_published",
+      "scope": "LIR-17/20:294 complete cases including previously omitted security case;256 pins/137 compiled sources, original custody closed and2MiB released. Shared nine-file source generation remains separately unpublished; no legal or pretrained-model grant."
     }
   ]
 }

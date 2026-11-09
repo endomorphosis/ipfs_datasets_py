@@ -192,5 +192,8 @@ def test_duplicate_json_keys_and_symlinks_are_rejected(tmp_path):
         retrieval.load_checkpoint(path)
     link = tmp_path / "link.json"
     link.symlink_to(path)
-    with pytest.raises(ValueError, match="regular"):
-        retrieval.load_checkpoint(link)
+    try:
+        with pytest.raises(ValueError, match="regular"):
+            retrieval.load_checkpoint(link)
+    finally:
+        link.unlink(missing_ok=True)

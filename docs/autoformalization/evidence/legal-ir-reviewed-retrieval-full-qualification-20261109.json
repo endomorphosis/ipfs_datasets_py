@@ -1,0 +1,215 @@
+{
+  "schema": "reviewed-retrieval-full-qualification/v1",
+  "recorded_utc": "2026-11-09T08:41:41.109012+00:00",
+  "tasks": [
+    "LIR-17",
+    "LIR-20"
+  ],
+  "status": "current_worktree_runtime_qualified_shared_extensions_not_published",
+  "source_files": [
+    {
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/alignment_relation_declarations.py",
+      "bytes": 28878,
+      "sha256": "fe3f0b9f90e189f00a97b111949e4b825110ae9c8883aea3dad3b75ff4888f5f"
+    },
+    {
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/alignment_relation_mask_handoff.py",
+      "bytes": 36177,
+      "sha256": "8f67306567dc431fec871bdb4234e1959c83a191b153f9ba8d96d1a66552fe68"
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_joint_retrieval.py",
+      "bytes": 60963,
+      "sha256": "eed4fc3258301c76df9e108194b5c073398e032ab06d82a029b9ce3f5acea114"
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_structured_retrieval.py",
+      "bytes": 41385,
+      "sha256": "bc78bbe3abdb39dc42aa566f5b5e8aa15ef39cde1432d8035097d0d38f219faa"
+    },
+    {
+      "path": "tests/fixtures/legal_ir/joint_retrieval/legacy_source_577698.py",
+      "bytes": 20198,
+      "sha256": "577698c99d0cdd2209bdaaee01b40778f46251e9e1256d7537312d6655cdcb9d"
+    },
+    {
+      "path": "tests/unit/logic/formalization/autoencoder/test_alignment_relation_declarations.py",
+      "bytes": 33846,
+      "sha256": "2462660a7726191d15910312cad4e65958541ea9d34251b1987ed09fd0b2b014"
+    },
+    {
+      "path": "tests/unit/logic/formalization/autoencoder/test_alignment_relation_mask_handoff.py",
+      "bytes": 42113,
+      "sha256": "226c95187e6c49b65148e7c813bc800470e73c8d2f9719953fcd477b05dd090a"
+    },
+    {
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_joint_retrieval.py",
+      "bytes": 39953,
+      "sha256": "ebab685ec9c33e1b3f90db8a06b4cac0614ae442d0697cc0ff346be376c9ad63"
+    },
+    {
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_structured_retrieval.py",
+      "bytes": 39894,
+      "sha256": "1c16001cc7e6e7ee2689c4c25e05b5816833ac7fa7fcd24378d5e3eca6aab0b6"
+    }
+  ],
+  "source_port_parent": {
+    "path": "docs/autoformalization/evidence/legal-ir-reviewed-retrieval-current-compatible-source-port-20261109.json",
+    "bytes": 7401,
+    "sha256": "b4f4e630817c31c5324ab4624d19fa3dd724a6caeb18e739c2ded5b7c42d63c0"
+  },
+  "fixture_cleanup": {
+    "path": "workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-retrieval-full-qualification-20261109-v01/fixture-cleanup-installation.json",
+    "bytes": 797,
+    "sha256": "47b8a89c9670d5c8ccfe16baa30dc923824a694e2e62fc9bc30766c44d41cb06"
+  },
+  "fixture_input_setup": {
+    "path": "workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-retrieval-full-qualification-20261109-v01/fixture-setup-installation.json",
+    "bytes": 1657,
+    "sha256": "e844c18dd88e6207359abc5d99ad7b6e873e260f69245fbb762b5af4b43e4ec5"
+  },
+  "qualification": {
+    "tests": 294,
+    "passed": 294,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "deselected": 0,
+    "case_classes": {
+      "tests.unit.logic.formalization.autoencoder.test_alignment_relation_declarations": 62,
+      "tests.unit.logic.formalization.autoencoder.test_alignment_relation_mask_handoff": 105,
+      "tests.unit.optimizers.logic_theorem_optimizer.test_legal_joint_retrieval": 59,
+      "tests.unit.optimizers.logic_theorem_optimizer.test_legal_structured_retrieval": 68
+    },
+    "pytest_seconds": 215.983,
+    "warnings": 29,
+    "warning_scope": "preserved frozen legacy fixture __package__/__spec__ deprecation warnings",
+    "owned_execution_seconds": 304.1884634150192,
+    "source_pins": 256,
+    "compiled_product_source_buffers": 137,
+    "pins_unchanged": true,
+    "source_closed": true,
+    "parent_waited": true,
+    "process_and_scheduler_closed": true,
+    "storage_claim": "a5c04f778b364fe98fec9e84268e0a5f",
+    "storage_status": "released",
+    "reserved_storage_bytes": 2097152,
+    "retained_attempt_bytes": 914116,
+    "selected_checks": [
+      "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_alignment_relation_declarations.py",
+      "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_alignment_relation_mask_handoff.py",
+      "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_joint_retrieval.py",
+      "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_structured_retrieval.py"
+    ]
+  },
+  "reproduction": {
+    "controls": "workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-retrieval-full-qualification-20261109-v01/red-controls-v01",
+    "pytest": "one security test passed both existing refusal assertions",
+    "owner": "cancelled because its deliberately created symlink remained in the owned attempt inventory",
+    "source_closed_without_drift": true,
+    "claim": "88701de51d9c4b6e8afe068793217f7c",
+    "claim_status": "retained_fully_charged",
+    "artifacts_preserved": true,
+    "product_security_policy_changed": false
+  },
+  "earlier_full_attempt": {
+    "controls": "workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-retrieval-full-qualification-20261109-v01/green-controls-v01",
+    "result": "deadline_exceeded_before_final_junit_no_qualification",
+    "claim": "d540a02e517c44308d4eac33433e4711",
+    "claim_status": "retained_fully_charged",
+    "source_and_process_custody_closed": true,
+    "request_limits_not_extended": true
+  },
+  "prior_225_passes": "Separate source-bound partial cohort; its excluded security case is now included in this fresh full run. Counts are not added.",
+  "artifacts": [
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-retrieval-full-qualification-20261109-v01/green-controls-v02/request.json",
+      "bytes": 48817,
+      "sha256": "eb3aa1b49b29c8afaa171dc14e9146b9450d5ffd1f7965098e4189587ce5bbdb"
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-retrieval-full-qualification-20261109-v01/green-controls-v02/plan.json",
+      "bytes": 47063,
+      "sha256": "300fd141bcf4bfa99cb8696be8f1ef9154a291fa33d3d283cb0657895429c085"
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-retrieval-full-qualification-20261109-v01/green-controls-v02/captured-source-manifest.json",
+      "bytes": 61777,
+      "sha256": "cbe37bda59fa7e321e5e6d5e7d4504a63c576d6982fbbc795b1f83c10a0d76f6"
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-retrieval-full-qualification-20261109-v01/green-controls-v02/captured-source-buffers.tar.gz",
+      "bytes": 1502672,
+      "sha256": "efaf72df9a9d37ac4360fb1e0612ec72dabe5409d55b8b3f10e343d3886c0992"
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-retrieval-full-qualification-20261109-v01/green-controls-v02/owner.stdout",
+      "bytes": 5448,
+      "sha256": "8faa2b68b1ed2eaa8d9c94ee85b172b4df0cebfac2d344685d6c2717f80e0695"
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-retrieval-full-qualification-20261109-v01/green-controls-v02/owner.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-retrieval-full-qualification-20261109-v01/green-controls-v02/parent-closeout.json",
+      "bytes": 77,
+      "sha256": "b2e85cb18bf58e26c26bff37172054556afc0b0faa827ab5889965ae71dd6358"
+    },
+    {
+      "path": "/tmp/pytest-of-barberb/legal-ir-reviewed-retrieval-full-20261109-v01/green-controls-v02/attempt/exports/junit.xml",
+      "bytes": 65744,
+      "sha256": "9470994a4f9f748db33c755745eaf271bc9200fca6a84f520d841493dcfb0e81"
+    },
+    {
+      "path": "/tmp/pytest-of-barberb/legal-ir-reviewed-retrieval-full-20261109-v01/green-controls-v02/attempt/exports/source-observation.json",
+      "bytes": 24799,
+      "sha256": "5a5e072d731670e09c0253893f541de46736e56aec7b194a1d0fc968db09a4e3"
+    },
+    {
+      "path": "/tmp/pytest-of-barberb/legal-ir-reviewed-retrieval-full-20261109-v01/green-controls-v02/attempt/logs/stdout.log",
+      "bytes": 1717,
+      "sha256": "4c1407a112ca3fa2526ba85346a77a1041ba8fe36ba233dfd4e274e1198b9139"
+    },
+    {
+      "path": "/tmp/pytest-of-barberb/legal-ir-reviewed-retrieval-full-20261109-v01/green-controls-v02/attempt/logs/stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/pytest-of-barberb/legal-ir-reviewed-retrieval-full-20261109-v01/green-controls-v02/attempt/logs/execution.json",
+      "bytes": 1656,
+      "sha256": "b3230e657e6e01e17e2c361c6b0c74be598885eaa43efb91cc1da7f57ae19811"
+    },
+    {
+      "path": "/tmp/pytest-of-barberb/legal-ir-reviewed-retrieval-full-20261109-v01/green-controls-v02/attempt/logs/result.json",
+      "bytes": 1015,
+      "sha256": "4fa0ffc592737a42cc0e8d39b9a54962e5e5fc5978d4ddb077fcce5e12c2fedb"
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-retrieval-full-qualification-20261109-v01/red-controls-v01/owner.stdout",
+      "bytes": 8281,
+      "sha256": "88cc5ee79b4c46db15b56f4850869a37a2bd6423d1a6a23e9c86eb45c34ff42e"
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-retrieval-full-qualification-20261109-v01/red-controls-v01/parent-closeout.json",
+      "bytes": 77,
+      "sha256": "85802c8f4762091d9b8f75b8324f023490a2380e9c5f84ccee618c3ed64d989f"
+    }
+  ],
+  "limits": [
+    "The nine-file compatible source generation is qualified only at its captured current-worktree hashes; shared implementation/test extensions remain separately unpublished",
+    "Any fixture-only publication does not transfer this complete qualification to the older public owner/test generation",
+    "Finite fictional numerical fixture updates establish no held-out legal gain, actual statutory review, pretrained decoder qualification, or admitted corpus",
+    "No actual Lean process or downloaded model asset was used",
+    "Original failures, retained claims, cap, source guards, process scope and scientific budgets remain unchanged"
+  ],
+  "publication_scope": {
+    "standalone_fixture_cleanup_only": true,
+    "staged_test_file_sha256": "2222bc23e248904363b2148fc6ad23cdda5f6148f80e2f2ef4548f4f009ff562",
+    "current_test_file_sha256": "ebab685ec9c33e1b3f90db8a06b4cac0614ae442d0697cc0ff346be376c9ad63",
+    "complete_current_source_postimages_published": false,
+    "shared_retrieval_extensions_and_fixture_setup_remain_unstaged": true
+  }
+}
