@@ -6,7 +6,7 @@ Content:   CELLAR REST  (https://publications.europa.eu/resource/celex/{CELEX}.{
 Fallback:  EUR-Lex official HTML (legal-content/EN/TXT/HTML)
 
 Does not use the EU-Login data dump (datadump.publications.europa.eu).
-Does not git-clone. Does not touch /workspace/legal-corpora/{de,es,fr,nl,ch}.
+Does not git-clone. Does not touch the sibling {de,es,fr,nl,ch} corpora under the legal corpora root.
 """
 from __future__ import annotations
 
@@ -38,8 +38,9 @@ except ImportError:
     jsonschema = None  # type: ignore
 
 
-ROOT = Path("/workspace/legal-corpora/eu")
-SCHEMA_PATH = Path("/workspace/legal-corpora/_templates/collection_record.schema.json")
+_LEGAL_CORPORA_ROOT = Path(os.environ.get("IPFS_DATASETS_LEGAL_CORPORA_ROOT", os.environ.get("LEGAL_CORPORA_ROOT", str(Path.home() / ".ipfs_datasets" / "legal_corpora"))))
+ROOT = _LEGAL_CORPORA_ROOT / "eu"
+SCHEMA_PATH = _LEGAL_CORPORA_ROOT / "_templates" / "collection_record.schema.json"
 INSTRUMENTS = ROOT / "instruments"
 LOGS = ROOT / "logs"
 INDEX_PATH = ROOT / "index.jsonl"
@@ -896,7 +897,7 @@ In-force **CELEX sector 3** legal acts (regulations, directives, decisions and o
 - Data dump of in-force acts (FMX/HTML per language) requires EU Login; collector used public CELLAR SPARQL + REST instead.
 - Dataset is not legal advice (`metadata.rights.not_legal_advice: true`).
 - Only the Official Journal text is authentic.
-- Do not disturb sibling corpora under `/workspace/legal-corpora/{{de,es,fr,nl,ch}}`.
+- Do not disturb sibling corpora under `{_LEGAL_CORPORA_ROOT}/{{de,es,fr,nl,ch}}`.
 
 ## Failures
 

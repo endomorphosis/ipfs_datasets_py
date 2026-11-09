@@ -1240,10 +1240,13 @@ def write_summary(
     log.info("wrote %s files=%s bytes=%.1fMB", summary, n_files, inst_bytes / 1e6)
 
 
+_LEGAL_CORPORA_ROOT = Path(os.environ.get("IPFS_DATASETS_LEGAL_CORPORA_ROOT", os.environ.get("LEGAL_CORPORA_ROOT", str(Path.home() / ".ipfs_datasets" / "legal_corpora"))))
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("tars", nargs="+", type=Path)
-    ap.add_argument("--root", type=Path, default=Path("/workspace/legal-corpora/fr"))
+    ap.add_argument("--root", type=Path, default=_LEGAL_CORPORA_ROOT / "fr")
     ap.add_argument("--overlay", action="store_true", help="Merge into existing JSON (incrementals)")
     ap.add_argument("--include-non-vigueur", action="store_true")
     ap.add_argument("--max-gb", type=float, default=24.0)
@@ -1287,7 +1290,7 @@ def main() -> int:
         ],
         "incrementals": [],
     }
-    inc_list = Path("/workspace/legal-corpora/fr/tmp/incrementals.txt")
+    inc_list = _LEGAL_CORPORA_ROOT / "fr" / "tmp" / "incrementals.txt"
     if inc_list.exists():
         extra["incrementals"] = [ln.strip() for ln in inc_list.read_text().splitlines() if ln.strip()][:20]
         extra["incrementals"].append(f"… {sum(1 for ln in inc_list.read_text().splitlines() if ln.strip())} incremental dumps listed, none applied")

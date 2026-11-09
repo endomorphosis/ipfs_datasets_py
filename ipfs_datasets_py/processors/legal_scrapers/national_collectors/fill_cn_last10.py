@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import re
 import sys
 import threading
@@ -15,8 +16,9 @@ import time
 from pathlib import Path
 from urllib.parse import urljoin, quote
 
+_LEGAL_CORPORA_ROOT = Path(os.environ.get("IPFS_DATASETS_LEGAL_CORPORA_ROOT", os.environ.get("LEGAL_CORPORA_ROOT", str(Path.home() / ".ipfs_datasets" / "legal_corpora"))))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-sys.path.insert(0, "/workspace/legal-corpora/hf-staging/ipfs_china_laws/scrapers")
+sys.path.insert(0, str(_LEGAL_CORPORA_ROOT / "hf-staging" / "ipfs_china_laws" / "scrapers"))
 
 from collect_cn import (  # noqa: E402
     CC,
