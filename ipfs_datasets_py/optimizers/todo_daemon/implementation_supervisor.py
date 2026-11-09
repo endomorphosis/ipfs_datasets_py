@@ -16,6 +16,13 @@ from typing import Any
 REPO_ROOT = Path.cwd()
 
 from .core import ManagedDaemonSpec
+from .external_resolution import (
+    OBSERVATION_FILENAME,
+    RECEIPT_FILENAME,
+    correct_completion_claims,
+    read_owned_json,
+    resolve_external_frontier,
+)
 from .implementation_daemon import (
     DEFAULT_TRACKS,
     TASK_HEADER_PREFIX,
@@ -113,6 +120,7 @@ class PortalImplementationSupervisor:
 
     def run_once(self) -> dict[str, Any]:
         state = PortalTaskState.load(self.config.state_path)
+        receipt = self.classify_external_resolution()
         if self.config.until_complete and self._state_is_complete(state):
             self._record_event(
                 "supervisor_check",
@@ -130,6 +138,7 @@ class PortalImplementationSupervisor:
                 "active_task_id": state.active_task_id,
                 "completed_count": state.completed_count,
                 "task_count": state.task_count,
+                "completion_authority": False,
             }
         stuck, reason = self.is_stuck(state, now_ts=time.time())
         if stuck:
@@ -139,6 +148,17 @@ class PortalImplementationSupervisor:
                 "reason": reason,
                 "strategy_generation": int(strategy.get("generation", 0)),
                 "active_task_id": state.active_task_id,
+                "completion_authority": False,
+            }
+        if self._receipt_retains_frontier(receipt):
+            return {
+                "stuck": False,
+                "retained": True,
+                "reason": str(receipt.get("reason") or ""),
+                "active_task_id": state.active_task_id,
+                "completed_count": state.completed_count,
+                "completion_authority": False,
+                "work_complete": False,
             }
         self._record_event(
             "supervisor_check",
@@ -285,6 +305,99 @@ class PortalImplementationSupervisor:
             f"{age_seconds:.0f}s without output in {log_path}"
         )
 
+    @staticmethod
+    def _unresolved_merge_reason(state: PortalTaskState) -> str:
+        if (
+            state.active_task_id
+            and state.last_implementation_task_id == state.active_task_id
+            and state.last_implementation_commit
+            and state.last_merge_returncode not in (None, 0)
+            and not state.last_merge_commit
+        ):
+            detail = state.last_merge_error or "merge failed without a merge commit"
+            return f"unresolved merge failure on active task {state.active_task_id}: {detail}"
+        return ""
+
+    def classify_external_resolution(self) -> dict[str, Any] | None:
+        """Retain an owned external-gate observation. Never grants completion.
+
+        The observation is ``external_resolution_observation.json`` in the
+        supervisor state directory. A closed lineage, a truncated spent phase,
+        and a missing official release are recorded on the receipt and are not
+        stalls. A completion claim on a phase result stays reviewable. This
+        does not edit a campaign result, a board, or a file outside that
+        directory.
+        """
+
+        path = self._external_observation_path()
+        document = read_owned_json(path)
+        if document is None:
+            self._correct_existing_resolution_receipt()
+            return None
+        receipt = resolve_external_frontier(document)
+        self._store_resolution_receipt(receipt)
+        return receipt if isinstance(receipt, dict) else None
+
+    def _external_observation_path(self) -> Path:
+        return self.config.state_dir / OBSERVATION_FILENAME
+
+    def _external_receipt_path(self) -> Path:
+        return self.config.state_dir / RECEIPT_FILENAME
+
+    def _store_resolution_receipt(self, receipt: dict[str, Any]) -> None:
+        path = self._external_receipt_path()
+        try:
+            if path.is_symlink():
+                return
+            if read_owned_json(path) == receipt:
+                return
+            write_json_atomic(path, receipt)
+        except OSError:
+            return
+        self._record_event(
+            "external_resolution",
+            {
+                "retained": receipt.get("retained") is True,
+                "reason": str(receipt.get("reason") or ""),
+                "completion_authority": False,
+                "work_complete": receipt.get("work_complete") is True,
+                "actions": [
+                    str(item.get("action") or "")
+                    for item in receipt.get("decisions", [])
+                    if isinstance(item, dict)
+                ],
+            },
+        )
+
+    def _correct_existing_resolution_receipt(self) -> int:
+        path = self._external_receipt_path()
+        document = read_owned_json(path)
+        if document is None:
+            return 0
+        corrected, count = correct_completion_claims(document)
+        if count == 0 or not isinstance(corrected, dict):
+            return 0
+        try:
+            if path.is_symlink():
+                return 0
+            write_json_atomic(path, corrected)
+        except OSError:
+            return 0
+        self._record_event(
+            "completion_claim_cleared",
+            {"claims_cleared": count, "completion_authority": False},
+        )
+        return count
+
+    @staticmethod
+    def _receipt_retains_frontier(receipt: dict[str, Any] | None) -> bool:
+        return bool(
+            isinstance(receipt, dict)
+            and receipt.get("retained") is True
+            and receipt.get("completion_authority") is False
+            and receipt.get("work_complete") is False
+        )
+
     def is_stuck(
         self,
         state: PortalTaskState,
@@ -292,10 +405,16 @@ class PortalImplementationSupervisor:
         now_ts: float,
         ignore_progress_until_ts: float | None = None,
     ) -> tuple[bool, str]:
+        receipt = self.classify_external_resolution()
         log_stall_reason = self._implementation_log_stall_reason(state, now_ts=now_ts)
         if log_stall_reason:
             return True, log_stall_reason
         if self._implementation_attempt_is_active(state, now_ts=now_ts):
+            return False, ""
+        merge_reason = self._unresolved_merge_reason(state)
+        if merge_reason:
+            return True, merge_reason
+        if self._receipt_retains_frontier(receipt):
             return False, ""
         heartbeat_age = self._age_seconds(state.heartbeat_at, now_ts)
         progress_age = self._age_seconds(state.last_progress_at, now_ts)
@@ -306,15 +425,6 @@ class PortalImplementationSupervisor:
             return False, ""
         if state.active_task_id and state.ready_count > 0 and progress_age > stale:
             return True, f"no progress on active task {state.active_task_id}"
-        if (
-            state.active_task_id
-            and state.last_implementation_task_id == state.active_task_id
-            and state.last_implementation_commit
-            and state.last_merge_returncode not in (None, 0)
-            and not state.last_merge_commit
-        ):
-            detail = state.last_merge_error or "merge failed without a merge commit"
-            return True, f"unresolved merge failure on active task {state.active_task_id}: {detail}"
         return False, ""
 
     def rewrite_strategy(self, state: PortalTaskState, reason: str) -> dict[str, Any]:

@@ -3,7 +3,9 @@
 ``LEGAL_QUERY_NORMALIZED`` defaults on. Set it to ``0`` to stop before
 jurisdiction resolution. This module does not download a corpus. A caller
 may pass ``corpus_opener`` to hydrate rows after the pin is chosen. World
-and norm repos are opened only when ``pin_readable`` is true.
+and norm repos are opened only when ``pin_readable`` is true. A latitude
+and longitude name the requested municipality. They are not the caller's
+location. A world point is read from the local place table.
 """
 
 from __future__ import annotations
@@ -148,6 +150,9 @@ def query_legal_records(
     ``place`` is a municipality name. ``latitude`` and ``longitude`` are
     decimal-degree strings for that same place, not the caller's location.
     On the US municipal route they resolve through the primary GNIS seed.
+    On the world municipal route they resolve to the nearest stored
+    municipality in that country, within 25 km, and do not select another
+    country. A current per-country municipal index does not take coordinates.
     A name that matches several cities needs a state suffix or a coordinate
     within 25 km of one of those cities. ``as_of`` is ``YYYY-MM-DD`` and
     keeps rows whose ``effective_date`` is on or before that day. A row
@@ -299,6 +304,8 @@ def query_legal_records(
         if not missed:
             if corpus_opener is not None:
                 opened = tuple(corpus_opener(route.open_repo))
+            elif route.open_repo == _WORLD_MUNICIPAL_REPO:
+                opened = _open_world_municipal(route.jurisdiction, constraint)
             elif retrieval_text and route.open_repo == "justicedao/american_municipal_law_norm":
                 opened = _open_municipal_section(constraint)
             if opened or retrieval_text:
@@ -412,6 +419,8 @@ def _routed_admin_level(
     statute_like = instrument_type in {None, "", "statute"}
     if resolved.code == "US" and resolved.admin_level != "adm1" and statute_like:
         return "us-municipal"
+    if resolved.code != "US" and resolved.admin_level != "adm1" and statute_like:
+        return "municipality"
     return admin_level
 
 
@@ -489,6 +498,7 @@ def _place_constraint(
         authority_constraint,
         constraint_from_place,
         resolve_municipal_place,
+        resolve_world_municipal_place,
     )
 
     if _us_municipal(route):
@@ -501,6 +511,16 @@ def _place_constraint(
         if place_text and not latitude_text:
             return authority_constraint(place_text)
         return None
+    if latitude_text and route.open_repo == _WORLD_MUNICIPAL_REPO:
+        try:
+            return resolve_world_municipal_place(
+                route.jurisdiction,
+                place_text,
+                latitude_text,
+                longitude_text,
+            )
+        except PlaceQueryError as exc:
+            raise LegalQueryInputError(exc.code) from exc
     if latitude_text:
         raise LegalQueryInputError("coordinates")
     if place_text:
@@ -514,7 +534,9 @@ def _coordinates_missed(
     latitude_text: str | None,
     constraint: object,
 ) -> bool:
-    return bool(latitude_text) and constraint is None and _us_municipal(route)
+    if not latitude_text or constraint is not None:
+        return False
+    return _us_municipal(route) or route.open_repo == _WORLD_MUNICIPAL_REPO
 
 
 def _route(
@@ -592,6 +614,10 @@ def _route_national(
     )
 
 
+_WORLD_MUNICIPAL_ID = "world_municipal_law_norm"
+_WORLD_MUNICIPAL_REPO = "justicedao/world_municipal_law_norm"
+
+
 def _route_municipal(
     resolved: ResolvedJurisdiction,
     *,
@@ -600,7 +626,7 @@ def _route_municipal(
 ) -> _Route:
     municipal = resolved.municipal_slug
     if not municipal:
-        return _closed(resolved.echo)
+        return _world_municipal_route(resolved.echo, coverage="current")
     ir_repo = f"justicedao/ipfs_{municipal}_laws_ir"
     norm_id = f"ipfs_{municipal}_laws_norm"
     if gap_status in {None, "current", "stub_vectors"}:
@@ -614,9 +640,21 @@ def _route_municipal(
     return _with_gap(
         echo=resolved.echo,
         ir_repo=ir_repo,
-        world_id="world_municipal_law",
+        world_id=_WORLD_MUNICIPAL_ID,
         allow_stale=allow_stale,
         gap_status=gap_status,
+    )
+
+
+def _world_municipal_route(echo: str, *, coverage: str) -> _Route:
+    if not pin_readable(_WORLD_MUNICIPAL_ID):
+        return _closed(echo)
+    return _Route(
+        echo,
+        coverage,
+        _WORLD_MUNICIPAL_REPO,
+        pin_revision(_WORLD_MUNICIPAL_REPO),
+        _WORLD_MUNICIPAL_REPO,
     )
 
 
@@ -678,6 +716,76 @@ def _retrieval_request(value: object) -> str | None:
     if stripped not in {"keyword", "vector"}:
         raise LegalQueryInputError("retrieval")
     return stripped
+
+
+def _world_municipal_root():
+    from pathlib import Path
+
+    configured = os.environ.get("MUNICIPAL_NORM_ROOT", "").strip()
+    if configured:
+        return Path(configured)
+    return Path("/storage/hf_cache/municipal-collection/e1bdd7b0")
+
+
+def _open_world_municipal(code: str, constraint: object) -> tuple[dict[str, object], ...]:
+    """Read one municipality from the local norm tree. Does not contact the Hub."""
+
+    from ipfs_datasets_py.processors.legal_data.municipal_place_query import (
+        PlaceConstraint,
+        fold_place,
+    )
+
+    if not isinstance(constraint, PlaceConstraint) or not constraint.name:
+        return ()
+    if constraint.state_code:
+        return ()
+    root = _world_municipal_root()
+    index_path = root / "place-parts.sqlite"
+    if not index_path.is_file():
+        return ()
+    import sqlite3
+
+    fold = fold_place(constraint.name)
+    with sqlite3.connect(f"file:{index_path}?mode=ro", uri=True) as db:
+        parts = [
+            int(row[0])
+            for row in db.execute(
+                "select part from place_part where jurisdiction = ? and authority_fold = ? order by part",
+                (code, fold),
+            )
+        ]
+    if not parts:
+        return ()
+    import pyarrow.parquet as pq
+
+    matched: list[dict[str, object]] = []
+    for part in parts:
+        path = root / "data" / f"part-{part:04d}" / "laws.parquet"
+        if not path.is_file():
+            continue
+        table = pq.read_table(path)
+        names = table.schema.names
+        columns = [table.column(name).to_pylist() for name in names]
+        for row_number in range(table.num_rows):
+            record = {
+                name: columns[name_index][row_number]
+                for name_index, name in enumerate(names)
+            }
+            authority = record.get("authority")
+            jurisdiction = record.get("jurisdiction")
+            if jurisdiction != code or not isinstance(authority, str):
+                continue
+            if fold_place(authority) != fold:
+                continue
+            raw = record.get("provenance")
+            if isinstance(raw, str):
+                try:
+                    parsed = json.loads(raw)
+                except json.JSONDecodeError:
+                    parsed = {}
+                record["provenance"] = parsed if isinstance(parsed, dict) else {}
+            matched.append(record)
+    return tuple(matched)
 
 
 def _open_municipal_section(constraint: object) -> tuple[dict[str, object], ...]:

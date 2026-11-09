@@ -6,6 +6,13 @@ import inspect
 
 import pytest
 
+from ipfs_datasets_py.processors.legal_data.municipal_place_query import (
+    PlaceQueryError,
+    WorldMunicipalPlace,
+    load_world_municipal_places,
+    microdegrees,
+    resolve_world_municipal_place,
+)
 from ipfs_datasets_py.processors.legal_data.query_legal_records import (
     LegalQueryDisabled,
     LegalQueryInputError,
@@ -274,13 +281,15 @@ def test_subdivision_code_is_not_the_parent_statute(monkeypatch) -> None:
 
 def test_missing_municipal_slug_does_not_invent_a_repo(monkeypatch) -> None:
     monkeypatch.setenv("LEGAL_QUERY_NORMALIZED", "1")
-    closed = query_legal_records(
+    opened = query_legal_records(
         jurisdiction="CL",
         text_query="ordenanza",
         admin_level="municipality",
     )
-    assert closed.coverage == "not_published"
-    assert closed.source_repo is None
+    assert opened.coverage == "current"
+    assert opened.source_repo == "justicedao/world_municipal_law_norm"
+    assert opened.source_revision == "6b89d5f27aac836be64ad7908329308d70ed66ed"
+    assert opened.records == ()
     named = query_legal_records(jurisdiction="chile_municipal", text_query="ordenanza")
     assert named.coverage == "not_published"
     assert named.source_repo is None
@@ -289,6 +298,33 @@ def test_missing_municipal_slug_does_not_invent_a_repo(monkeypatch) -> None:
     spain = query_legal_records(jurisdiction="spain_municipal", text_query="ordenanza")
     assert spain.jurisdiction == "ES"
     assert spain.source_repo == "justicedao/ipfs_spain_municipal_laws_ir"
+
+
+def test_municipal_place_query_opens_world_norm(monkeypatch) -> None:
+    monkeypatch.setenv("LEGAL_QUERY_NORMALIZED", "1")
+    calls: list[str] = []
+    result = query_legal_records(
+        jurisdiction="BR",
+        text_query="decreto",
+        place="Montenegro",
+        corpus_opener=_opened(calls),
+    )
+    assert result.jurisdiction == "BR"
+    assert result.coverage == "current"
+    assert result.source_repo == "justicedao/world_municipal_law_norm"
+    assert result.source_revision == "6b89d5f27aac836be64ad7908329308d70ed66ed"
+    assert calls == ["justicedao/world_municipal_law_norm"]
+    stale = query_legal_records(
+        jurisdiction="spain_municipal",
+        text_query="ordenanza",
+        gap_status="stale",
+        corpus_opener=_opened(calls),
+    )
+    assert stale.coverage == "partial"
+    assert stale.source_repo == "justicedao/world_municipal_law_norm"
+    assert calls[-1] == "justicedao/world_municipal_law_norm"
+    national = query_legal_records(jurisdiction="BR", text_query="codigo")
+    assert national.source_repo == "justicedao/ipfs_brazil_laws_ir"
 
 
 _MATCH = "a" * 40
@@ -912,19 +948,179 @@ def test_place_arguments_do_not_change_an_omitted_query_id(monkeypatch) -> None:
     assert dated.query_id != bare.query_id
 
 
-def test_coordinates_do_not_open_another_country_or_a_state_route(monkeypatch) -> None:
+def _world_point(name: str, jurisdiction: str, latitude: str, longitude: str, qid: str) -> WorldMunicipalPlace:
+    lat_micro = microdegrees(latitude)
+    lon_micro = microdegrees(longitude)
+    assert lat_micro is not None and lon_micro is not None
+    return WorldMunicipalPlace(
+        name=name,
+        jurisdiction=jurisdiction,
+        latitude=latitude,
+        longitude=longitude,
+        lat_micro=lat_micro,
+        lon_micro=lon_micro,
+        qid=qid,
+    )
+
+
+_WORLD_PLACES = (
+    _world_point("Paris", "FR", "48.8566", "2.3522", "Q90"),
+    _world_point("Lyon", "FR", "45.75", "4.85", "Q456"),
+    _world_point("Nantes", "FR", "47.2184", "-1.5536", "Q12191"),
+    _world_point("Rennes", "FR", "47.2184", "-1.5536", "Q647"),
+    _world_point("Not Spain", "FR", "40.42", "-3.70", "Q1"),
+    _world_point("Berlin", "DE", "48.80", "2.30", "Q64"),
+    _world_point("Madrid", "ES", "40.4168", "-3.7038", "Q2807"),
+)
+
+
+def _install_world_places(monkeypatch: pytest.MonkeyPatch, seen: list[str] | None = None) -> None:
+    def load(jurisdiction: str) -> tuple[WorldMunicipalPlace, ...]:
+        if seen is not None:
+            seen.append(jurisdiction)
+        return _WORLD_PLACES
+
+    monkeypatch.setattr(
+        "ipfs_datasets_py.processors.legal_data.municipal_place_query.load_world_municipal_places",
+        load,
+    )
+
+
+def _place_rows(calls: list[str]) -> object:
+    def opener(repo: str) -> tuple[dict[str, object], ...]:
+        calls.append(repo)
+        return (
+            {"entry_cid": "paris", "authority": "Paris", "text": "paris", "provenance": {}, "jurisdiction": "FR"},
+            {"entry_cid": "lyon", "authority": "Lyon", "text": "lyon", "provenance": {}, "jurisdiction": "FR"},
+            {"entry_cid": "berlin", "authority": "Berlin", "text": "berlin", "provenance": {}, "jurisdiction": "DE"},
+            {"entry_cid": "madrid", "authority": "Madrid", "text": "madrid", "provenance": {}, "jurisdiction": "ES"},
+        )
+
+    return opener
+
+
+def test_world_coordinates_stay_in_the_named_country(monkeypatch) -> None:
     monkeypatch.setenv("LEGAL_QUERY_NORMALIZED", "1")
+    seen: list[str] = []
+    _install_world_places(monkeypatch, seen)
     calls: list[str] = []
-    with pytest.raises(LegalQueryInputError) as raised:
+    paris = query_legal_records(
+        jurisdiction="FR",
+        text_query="code",
+        latitude="48.8",
+        longitude="2.3",
+        corpus_opener=_place_rows(calls),
+    )
+    assert paris.place_name == "Paris"
+    assert paris.place_state is None
+    assert paris.place_latitude == "48.8566"
+    assert paris.place_longitude == "2.3522"
+    assert paris.coverage == "current"
+    assert paris.source_repo == "justicedao/world_municipal_law_norm"
+    assert paris.source_revision == "6b89d5f27aac836be64ad7908329308d70ed66ed"
+    assert [row["entry_cid"] for row in paris.records] == ["paris"]
+    assert calls == ["justicedao/world_municipal_law_norm"]
+    assert seen == ["FR"]
+    missed: list[str] = []
+    ocean = query_legal_records(
+        jurisdiction="FR",
+        text_query="code",
+        latitude="0",
+        longitude="0",
+        corpus_opener=_place_rows(missed),
+    )
+    assert ocean.records == ()
+    assert ocean.place_name is None
+    assert ocean.place_ambiguous is False
+    assert ocean.coverage == "current"
+    assert ocean.source_repo == "justicedao/world_municipal_law_norm"
+    assert missed == []
+    switched: list[str] = []
+    other_name = query_legal_records(
+        jurisdiction="FR",
+        text_query="code",
+        place="Lyon",
+        latitude="48.8",
+        longitude="2.3",
+        corpus_opener=_place_rows(switched),
+    )
+    assert other_name.records == ()
+    assert other_name.place_name is None
+    assert switched == []
+    with pytest.raises(LegalQueryInputError) as tied:
         query_legal_records(
             jurisdiction="FR",
             text_query="code",
+            latitude="47.2184",
+            longitude="-1.5536",
+            corpus_opener=_place_rows(switched),
+        )
+    assert tied.value.code == "ambiguous_place"
+    assert switched == []
+
+
+def test_coordinates_do_not_open_another_country_or_a_state_route(monkeypatch) -> None:
+    monkeypatch.setenv("LEGAL_QUERY_NORMALIZED", "1")
+    seen: list[str] = []
+    _install_world_places(monkeypatch, seen)
+    calls: list[str] = []
+    with pytest.raises(LegalQueryInputError) as national:
+        query_legal_records(
+            jurisdiction="FR",
+            text_query="code",
+            admin_level="country",
             latitude="48.8",
             longitude="2.3",
             corpus_opener=_opened(calls),
         )
-    assert raised.value.code == "coordinates"
+    assert national.value.code == "coordinates"
     assert calls == []
+    with pytest.raises(LegalQueryInputError) as spain:
+        query_legal_records(
+            jurisdiction="spain_municipal",
+            text_query="ordenanza",
+            latitude="40.42",
+            longitude="-3.70",
+            corpus_opener=_opened(calls),
+        )
+    assert spain.value.code == "coordinates"
+    with pytest.raises(LegalQueryInputError) as czech:
+        query_legal_records(
+            jurisdiction="CZ",
+            text_query="zakon",
+            latitude="50.08",
+            longitude="14.42",
+            corpus_opener=_opened(calls),
+        )
+    assert czech.value.code == "coordinates"
+    us_calls: list[str] = []
+    hamilton = query_legal_records(
+        jurisdiction="US",
+        latitude="39.40",
+        longitude="-84.565",
+        corpus_opener=_municipal_opener(us_calls),
+    )
+    assert hamilton.place_name == "City of Hamilton"
+    assert hamilton.place_state == "OH"
+    assert hamilton.source_repo == "justicedao/american_municipal_law_norm"
+    assert us_calls == ["justicedao/american_municipal_law_norm"]
+    assert seen == []
+    assert calls == []
+    stale_calls: list[str] = []
+    stale = query_legal_records(
+        jurisdiction="spain_municipal",
+        text_query="ordenanza",
+        gap_status="stale",
+        latitude="40.42",
+        longitude="-3.70",
+        corpus_opener=_place_rows(stale_calls),
+    )
+    assert stale.coverage == "partial"
+    assert stale.place_name == "Madrid"
+    assert stale.place_state is None
+    assert stale.source_repo == "justicedao/world_municipal_law_norm"
+    assert [row["entry_cid"] for row in stale.records] == ["madrid"]
+    assert stale_calls == ["justicedao/world_municipal_law_norm"]
     subdivision = query_legal_records(
         jurisdiction="US-CA",
         place="Ventura",
@@ -948,6 +1144,51 @@ def test_coordinates_do_not_open_another_country_or_a_state_route(monkeypatch) -
             corpus_opener=_opened(calls),
         )
     assert calls == []
+
+
+def test_world_coordinate_table_is_one_country(monkeypatch, tmp_path) -> None:
+    monkeypatch.setenv("MUNICIPAL_NORM_ROOT", str(tmp_path))
+    assert load_world_municipal_places("FR") == ()
+    import sqlite3
+
+    database = sqlite3.connect(tmp_path / "place-coords.sqlite")
+    database.execute(
+        "create table place_coord ("
+        "jurisdiction text not null, qid text not null, authority text not null, "
+        "authority_fold text not null, latitude text not null, longitude text not null, "
+        "lat_micro integer not null, lon_micro integer not null, "
+        "primary key (jurisdiction, qid))"
+    )
+    paris = _WORLD_PLACES[0]
+    berlin = _WORLD_PLACES[5]
+    for place in (paris, berlin):
+        database.execute(
+            "insert into place_coord values (?, ?, ?, ?, ?, ?, ?, ?)",
+            (
+                place.jurisdiction,
+                place.qid,
+                place.name,
+                place.name.casefold(),
+                place.latitude,
+                place.longitude,
+                place.lat_micro,
+                place.lon_micro,
+            ),
+        )
+    database.commit()
+    database.close()
+    loaded = load_world_municipal_places("fr")
+    assert [place.name for place in loaded] == ["Paris"]
+    assert loaded[0].jurisdiction == "FR"
+    found = resolve_world_municipal_place("FR", None, "48.8", "2.3")
+    assert found is not None
+    assert found.name == "Paris"
+    assert found.state_code is None
+    other = resolve_world_municipal_place("FR", "Lyon", "48.8", "2.3", places=_WORLD_PLACES)
+    assert other is None
+    with pytest.raises(PlaceQueryError) as tied:
+        resolve_world_municipal_place("FR", None, "47.2184", "-1.5536", places=_WORLD_PLACES)
+    assert tied.value.code == "ambiguous_place"
 
 
 def test_bad_place_date_and_coordinates_are_rejected(monkeypatch) -> None:

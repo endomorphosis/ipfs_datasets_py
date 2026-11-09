@@ -1533,6 +1533,69 @@ def _lexicon_heading_re() -> re.Pattern[str]:
     return _LEXICON_HEADING_RE
 
 
+# Instrument names are not provision labels. "Odluka o", "CONSIDERANDO o",
+# and "BY-LAW No. o" were storing the word "o" as a section number.
+_INSTRUMENT_SECTION_WORDS = frozenset({
+    "acuerdo",
+    "arrete",
+    "aviso",
+    "avis",
+    "bekanntmachung",
+    "beschikking",
+    "besluit",
+    "bylaw",
+    "circular",
+    "circulaire",
+    "comunicado",
+    "considerando",
+    "decision",
+    "decizie",
+    "decree",
+    "decret",
+    "decretloi",
+    "decreto",
+    "decretolei",
+    "deliberacao",
+    "deliberation",
+    "directive",
+    "erlass",
+    "guideline",
+    "hotarare",
+    "hotarire",
+    "instruction",
+    "meddelande",
+    "medidaprovisoria",
+    "memorandum",
+    "norma",
+    "odluka",
+    "ordin",
+    "ordinance",
+    "ordonnance",
+    "ordonanta",
+    "portaria",
+    "pravilnik",
+    "presidentialdecree",
+    "proclamation",
+    "proklamation",
+    "regeling",
+    "reglement",
+    "resolucao",
+    "resolucion",
+    "verordnung",
+})
+
+
+def _false_instrument_section(keyword: str, number: str) -> bool:
+    """A preposition after an instrument name is not that instrument's section."""
+
+    if not keyword or number.casefold() != "o":
+        return False
+    folded = unicodedata.normalize("NFKD", keyword)
+    token = "".join(char for char in folded if not unicodedata.combining(char))
+    token = token.casefold().replace("-", "").replace(" ", "")
+    return token in _INSTRUMENT_SECTION_WORDS
+
+
 def _plausible_cw_number(raw: str) -> bool:
     """Drop year-like '1902. Amendment' titles from keyword-less numbering."""
     digits = re.sub(r"\D", "", raw or "")
@@ -2029,6 +2092,8 @@ def _collect_hits(text: str, *, language: str, latin: bool) -> list[_Hit]:
                     number = text[start:end]
                     break
             number = _fold_digits_in_number(number.strip().rstrip(".-:–—"))
+            if _false_instrument_section(match.group("section") or "", number):
+                continue
             line_end = text.find("\n", match.start())
             if line_end < 0:
                 line_end = len(text)

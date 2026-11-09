@@ -290,6 +290,9 @@ def _render_text(record: Mapping[str, object]) -> dict[str, object]:
     }
     for key, value in _placement_values(provenance).items():
         rendered[key] = value
+    context = provenance.get("source_context")
+    if isinstance(context, str) and context.strip():
+        rendered["source_context"] = context
     return rendered
 
 
@@ -319,6 +322,11 @@ def _render_jsonld(record: Mapping[str, object]) -> dict[str, object]:
     properties.append({"@type": "PropertyValue", "propertyID": "document_role", "value": role})
     for key, value in _placement_values(provenance).items():
         properties.append({"@type": "PropertyValue", "propertyID": key, "value": value})
+    context = provenance.get("source_context")
+    if isinstance(context, str) and context.strip():
+        properties.append(
+            {"@type": "PropertyValue", "propertyID": "source_context", "value": context}
+        )
     reason = provenance.get("document_role_reason")
     if isinstance(reason, str) and reason:
         properties.append(

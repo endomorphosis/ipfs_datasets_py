@@ -2,8 +2,10 @@
 
 The coordinates are the place whose ordinance is requested. They are not
 the caller's location. The primary GNIS seed supplies the point for each
-US municipal place. Alternate GNIS ids are not used. Nothing in this module
-reads an address, an IP, a locale, or a timezone.
+US municipal place. A world municipal point is the nearest stored place
+in the named country, read from the local coordinate table. Alternate
+GNIS ids are not used. Nothing in this module reads an address, an IP,
+a locale, or a timezone.
 
 Distances are integer meters. Seed latitudes and longitudes stay decimal
 strings, so a legal record does not gain a float column.
@@ -13,11 +15,12 @@ from __future__ import annotations
 
 import json
 import math
+import os
 import re
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
-from typing import Sequence
+from typing import Any, Callable, Sequence
 
 from ipfs_datasets_py.processors.legal_scrapers.municipal_law_database_scrapers.hub.parquet_writer import (
     STATE_NAME,
@@ -80,6 +83,19 @@ class PlaceConstraint:
     state_code: str | None
     latitude: str | None = None
     longitude: str | None = None
+
+
+@dataclass(frozen=True)
+class WorldMunicipalPlace:
+    """One stored world place. ``jurisdiction`` is the country code."""
+
+    name: str
+    jurisdiction: str
+    latitude: str
+    longitude: str
+    lat_micro: int
+    lon_micro: int
+    qid: str
 
 
 def _seed_path() -> Path:
@@ -263,33 +279,40 @@ def _named_candidates(
     return prefixed
 
 
+def _closest(
+    candidates: Sequence[Any],
+    lat_micro: int,
+    lon_micro: int,
+    tie: Callable[[Any], tuple[str, ...]],
+) -> Any:
+    """Nearest place within ``MAX_PLACE_METERS``. An equal distance is ambiguous."""
+
+    def meters(item: Any) -> int:
+        return distance_meters(item.lat_micro, item.lon_micro, lat_micro, lon_micro)
+
+    close = [item for item in candidates if meters(item) <= MAX_PLACE_METERS]
+    if not close:
+        return None
+    ranked = sorted(close, key=lambda item: (meters(item),) + tie(item))
+    if len(ranked) > 1 and meters(ranked[0]) == meters(ranked[1]):
+        raise PlaceQueryError("ambiguous_place")
+    return ranked[0]
+
+
 def _nearest(
     candidates: Sequence[MunicipalPlace],
     lat_micro: int,
     lon_micro: int,
 ) -> MunicipalPlace | None:
-    close = [
-        item
-        for item in candidates
-        if distance_meters(item.lat_micro, item.lon_micro, lat_micro, lon_micro) <= MAX_PLACE_METERS
-    ]
-    if not close:
-        return None
-    ranked = sorted(
-        close,
-        key=lambda item: (
-            distance_meters(item.lat_micro, item.lon_micro, lat_micro, lon_micro),
-            item.state_code,
-            item.name,
-            item.gnis,
-        ),
+    found = _closest(
+        candidates,
+        lat_micro,
+        lon_micro,
+        tie=lambda item: (item.state_code, item.name, item.gnis),
     )
-    if len(ranked) > 1:
-        first = distance_meters(ranked[0].lat_micro, ranked[0].lon_micro, lat_micro, lon_micro)
-        second = distance_meters(ranked[1].lat_micro, ranked[1].lon_micro, lat_micro, lon_micro)
-        if first == second:
-            raise PlaceQueryError("ambiguous_place")
-    return ranked[0]
+    if not isinstance(found, MunicipalPlace):
+        return None
+    return found
 
 
 def resolve_municipal_place(
@@ -320,6 +343,106 @@ def resolve_municipal_place(
     if lat_micro is None or lon_micro is None:
         return None
     return _nearest(table, lat_micro, lon_micro)
+
+
+def _world_coord_path() -> Path:
+    configured = os.environ.get("MUNICIPAL_NORM_ROOT", "").strip()
+    root = Path(configured) if configured else Path("/storage/hf_cache/municipal-collection/e1bdd7b0")
+    return root / "place-coords.sqlite"
+
+
+def load_world_municipal_places(jurisdiction: str) -> tuple[WorldMunicipalPlace, ...]:
+    """Places for one country from the local coordinate table.
+
+    The table is built offline. This read does not contact Wikidata or the
+    Hub. A missing table is an empty country, the same as a seed file that
+    is not on disk.
+    """
+
+    path = _world_coord_path()
+    if not path.is_file():
+        return ()
+    code = jurisdiction.strip().upper()
+    import sqlite3
+
+    try:
+        db = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+    except sqlite3.Error:
+        return ()
+    try:
+        rows = db.execute(
+            "select authority, latitude, longitude, lat_micro, lon_micro, qid "
+            "from place_coord where jurisdiction = ?",
+            (code,),
+        ).fetchall()
+    except sqlite3.Error:
+        return ()
+    finally:
+        db.close()
+    found: list[WorldMunicipalPlace] = []
+    for name, latitude, longitude, lat_micro, lon_micro, qid in rows:
+        if not isinstance(name, str) or not name.strip():
+            continue
+        if lat_micro is None or lon_micro is None or not qid:
+            continue
+        found.append(
+            WorldMunicipalPlace(
+                name=name,
+                jurisdiction=code,
+                latitude=str(latitude),
+                longitude=str(longitude),
+                lat_micro=int(lat_micro),
+                lon_micro=int(lon_micro),
+                qid=str(qid),
+            )
+        )
+    return tuple(found)
+
+
+def resolve_world_municipal_place(
+    jurisdiction: str,
+    place: str | None,
+    latitude: str | None,
+    longitude: str | None,
+    places: Sequence[WorldMunicipalPlace] | None = None,
+) -> PlaceConstraint | None:
+    """Nearest stored municipality in ``jurisdiction`` within 25 km.
+
+    Coordinates never select another country and never switch the request
+    to a different name. The constraint carries that place's own point and
+    leaves ``state_code`` unset, so a world row is not filtered as a US state.
+    """
+
+    code = jurisdiction.strip().upper()
+    table = load_world_municipal_places(code) if places is None else places
+    in_country = [item for item in table if item.jurisdiction == code]
+    if place:
+        folded = fold_place(place)
+        if not folded:
+            return None
+        candidates = [item for item in in_country if fold_place(item.name) == folded]
+        if not candidates:
+            return None
+    else:
+        candidates = in_country
+    lat_micro = microdegrees(latitude) if latitude else None
+    lon_micro = microdegrees(longitude) if longitude else None
+    if lat_micro is None or lon_micro is None:
+        return None
+    found = _closest(
+        candidates,
+        lat_micro,
+        lon_micro,
+        tie=lambda item: (item.name, item.qid),
+    )
+    if not isinstance(found, WorldMunicipalPlace):
+        return None
+    return PlaceConstraint(
+        name=found.name,
+        state_code=None,
+        latitude=found.latitude,
+        longitude=found.longitude,
+    )
 
 
 def authority_constraint(place: str) -> PlaceConstraint:

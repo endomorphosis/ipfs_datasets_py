@@ -195,6 +195,18 @@ def _classify_one(name: str) -> CorpusRelease:
             searchable=False,
             text_corpus=True,
         )
+    if name == "world_municipal_law_norm":
+        return _row(
+            corpus_id="world:municipal-norm",
+            hf_repo=repo,
+            layout_profile="legal-record/v1",
+            coverage="snapshot",
+            primary_key="entry_cid",
+            instrument_kind="ordinance",
+            selected=False,
+            searchable=False,
+            text_corpus=True,
+        )
     if name == "world_law_scrapers":
         return _row(
             corpus_id="artifact:world-law-scrapers",

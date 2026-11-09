@@ -9,6 +9,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 
 from ipfs_datasets_py.processors.legal_scrapers.country_laws_ir.admit import (
+    _sk_commencement,
     admit_source_law,
     fill_country_corpus,
     fill_country_parquet,
@@ -2801,3 +2802,149 @@ def test_a_dutch_article_keeps_its_text_and_its_colon_number() -> None:
         source_revision=_SHA,
     )
     assert citation.admitted is False
+
+
+def test_a_slovak_commencement_clause_stays_one_article() -> None:
+    clause = (
+        "Čl. II\n"
+        "Tento zákon nadobúda účinnosť 1. májom 1993.\n"
+        "Michal Kováč v. r.\n"
+        "Ivan Gašparovič v. r.\n"
+        "Vladimír Mečiar v. r."
+    )
+    decision = admit_source_law(
+        _row(
+            id="sk-106",
+            title="106/1993 Z. z.",
+            language="sk",
+            jurisdiction="SK",
+            country="Slovakia",
+            text=clause,
+        ),
+        source_dataset="endomorphosis/ipfs_slovakia_laws",
+        source_revision=_SHA,
+    )
+    assert decision.admitted is True
+    assert len(decision.records) == 1
+    assert decision.records[0]["text"] == normalize_legal_text(clause)
+    provenance = decision.records[0]["provenance"]
+    assert provenance.get("article") == "II"
+    assert provenance.get("section") in (None, "")
+    assert "v. r." in decision.records[0]["text"]
+
+    longer = (
+        "Čl. II\n"
+        "Tento zákon nadobúda účinnosť 1. májom 1993.\n"
+        "Ministerstvo vedie register."
+    )
+    kept = admit_source_law(
+        _row(
+            id="sk-longer",
+            title="106/1993 Z. z.",
+            language="sk",
+            jurisdiction="SK",
+            country="Slovakia",
+            text=longer,
+        ),
+        source_dataset="endomorphosis/ipfs_slovakia_laws",
+        source_revision=_SHA,
+    )
+    if kept.admitted:
+        assert all("Ministerstvo vedie register." in record["text"] for record in kept.records)
+        assert all(record["provenance"].get("article") != "II" for record in kept.records)
+
+    form = (
+        "Čl. III\n"
+        "Toto opatrenie nadobúda záväznosť 12. májom 1993.\n"
+        "Rudolf Krč v. r.\n"
+        "Pol P 5-01"
+    )
+    bled = admit_source_law(
+        _row(
+            id="sk-form",
+            title="101/1993 Z. z.",
+            language="sk",
+            jurisdiction="SK",
+            country="Slovakia",
+            text=form,
+        ),
+        source_dataset="endomorphosis/ipfs_slovakia_laws",
+        source_revision=_SHA,
+    )
+    if bled.admitted:
+        assert all("Pol P 5-01" in record["text"] for record in bled.records)
+
+    cited = (
+        "Čl. XIV\n"
+        "Tento zákon nadobúda účinnosť 1. januára 2004 okrem čl. I § 4 "
+        "ods. 1 až 5, ktoré nadobúdajú účinnosť dňom vyhlásenia v Zbierke zákonov.\n"
+        "Pavol Hrušovský v. r."
+    )
+    assert _sk_commencement(cited) == ""
+    cited_decision = admit_source_law(
+        _row(
+            id="sk-cited",
+            title="1/2004 Z. z.",
+            language="sk",
+            jurisdiction="SK",
+            country="Slovakia",
+            text=cited,
+        ),
+        source_dataset="endomorphosis/ipfs_slovakia_laws",
+        source_revision=_SHA,
+    )
+    # The append keeps a row only when the helper returns the article and
+    # the admitted text is the whole cleaned clause. A citation inside the
+    # sentence must not take that path.
+    assert not (
+        cited_decision.admitted
+        and len(cited_decision.records) == 1
+        and cited_decision.records[0]["text"] == normalize_legal_text(cited)
+        and cited_decision.records[0]["provenance"].get("section") in (None, "")
+    )
+
+    split = (
+        "Čl. II\n"
+        "Tento zákon nadobúda účinnosť 1. januára 2016. Čl. II stráca účinnosť 1. júla 2016.\n"
+        "Peter Pellegrini v. r."
+    )
+    assert _sk_commencement(split) == ""
+    split_decision = admit_source_law(
+        _row(
+            id="sk-split",
+            title="1/2016 Z. z.",
+            language="sk",
+            jurisdiction="SK",
+            country="Slovakia",
+            text=split,
+        ),
+        source_dataset="endomorphosis/ipfs_slovakia_laws",
+        source_revision=_SHA,
+    )
+    assert not (
+        split_decision.admitted
+        and len(split_decision.records) == 1
+        and split_decision.records[0]["text"] == normalize_legal_text(split)
+        and split_decision.records[0]["provenance"].get("article") == "II"
+        and split_decision.records[0]["provenance"].get("section") in (None, "")
+    )
+
+    czech = (
+        "Čl. II\n"
+        "Tento zákon nabývá účinnosti dnem 1. ledna 2020.\n"
+        "Podepsáno v. r."
+    )
+    other = admit_source_law(
+        _row(
+            id="cz-effect",
+            title="1/2020 Sb.",
+            language="cs",
+            jurisdiction="CZ",
+            country="Czechia",
+            text=czech,
+        ),
+        source_dataset="endomorphosis/ipfs_czechia_laws",
+        source_revision=_SHA,
+    )
+    if other.admitted:
+        assert all(record["text"] == normalize_legal_text(czech) for record in other.records)

@@ -345,7 +345,8 @@ def admit_source_law(
         return _refuse(role)
     prose = _provision_prose(cleaned)
     am_section = _am_closed_section(cleaned)
-    if not prose and not am_section:
+    sk_article = _sk_commencement(cleaned)
+    if not prose and not am_section and not sk_article:
         return _refuse("not_queryable")
     citation = _record_citation(row)
     jurisdiction = _jurisdiction_code(row)
@@ -368,6 +369,8 @@ def admit_source_law(
     # citations. Keep the cleaned row whole.
     if am_section and not prose:
         atoms = (_am_whole_section(record, cleaned, am_section),)
+    elif sk_article:
+        atoms = (_sk_whole_article(record, cleaned, sk_article),)
     kept = tuple(
         atom
         for atom in atoms
@@ -1449,6 +1452,76 @@ def _am_whole_section(
         "section": number,
         "statute": number,
         "hierarchy_path": f"Section {number}",
+    }
+    return atom
+
+
+_SK_HEAD = re.compile(r"(?i)^čl\.\s+([IVXLCDM]+|\d+[a-z]?)$")
+_SK_EFFECT = re.compile(
+    r"(?i)^(?:tento|táto|toto)\s+\S+\s+nadobúda\s+(?:účinnosť|platnosť|záväznosť)\b.+\.$"
+)
+_SK_SIGN = re.compile(r"(?i)\bv\.\s*r\.\s*$")
+_SK_BAD = re.compile(r"(?i)[ÃÅ]|â€|Â|\.{3,}|…|portál|slov-lex|prevziať")
+
+
+def _sk_commencement(text: str) -> str:
+    """Article token of one Slovak commencement clause, or empty.
+
+    The row is ``Čl. N``, one sentence that the act takes effect, and
+    optional ``v. r.`` signature lines. A second sentence, a citation,
+    a form title, and broken encoding stay out.
+    """
+
+    if _SK_BAD.search(text):
+        return ""
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    if len(lines) < 2:
+        return ""
+    match = _SK_HEAD.fullmatch(lines[0])
+    if match is None:
+        return ""
+    body = [line for line in lines[1:] if _SK_SIGN.search(line) is None]
+    if len(body) != 1:
+        return ""
+    sentence = body[0]
+    if _SK_EFFECT.fullmatch(sentence) is None:
+        return ""
+    # A period is not a word character, so a boundary after "čl." never fires.
+    # The same is true around "§". An internal citation or a second sentence
+    # stays out; the date form "1. januára" has no capital after the period.
+    if re.search(r"(?i)čl\.|§", sentence):
+        return ""
+    if re.search(r"\.\s+[A-ZÁÄČĎÉÍĹĽŇÓÔŔŠŤÚÝŽ]", sentence):
+        return ""
+    if len(re.findall(r"[^\W\d_]", sentence)) < 25:
+        return ""
+    return match.group(1)
+
+
+def _sk_whole_article(
+    record: Mapping[str, object],
+    cleaned: str,
+    number: str,
+) -> dict[str, object]:
+    """One atom whose text is the cleaned clause and whose article is ``Čl. N``."""
+
+    atom = dict(record)
+    atom["text"] = cleaned
+    atom["content_sha256"] = sha256_text(cleaned)
+    role, reason = classify_document_role(
+        {
+            "title": atom.get("title"),
+            "language": atom.get("language"),
+            "source_url": atom.get("source_url"),
+            "text": cleaned,
+        }
+    )
+    atom["provenance"] = {
+        "atomic": True,
+        "document_role": role,
+        "document_role_reason": reason,
+        "article": number,
+        "hierarchy_path": f"Article {number}",
     }
     return atom
 
