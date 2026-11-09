@@ -254,3 +254,103 @@ def test_legal_ir_report_persists_records_and_receipts_without_source_payloads()
     assert payload["reconstruction_receipts"][0]["trusted"] is False
     assert report.artifacts[0].trusted is False
     assert "external_route_preserves_types(f1)" not in encoded
+
+import pytest
+from types import SimpleNamespace
+from ipfs_datasets_py.logic.integration.reasoning.hammer import (
+    HammerReconstruction, HammerResult, PremiseSelection, HammerProofReconstructor)
+
+_TRUST_RECEIPT_FLAGS = ("translation_succeeded", "translation_failed", "backend_proved",
+    "native_reconstruction", "native_reconstruction_verified", "trusted")
+
+
+def _trust_receipt_values():
+    return dict(receipt_id="authored-receipt", obligation_id="authored-obligation",
+        input_formula_id="authored-formula", outcome=HammerReconstructionOutcome.NATIVE_RECONSTRUCTION,
+        translation_succeeded=True, translation_failed=False, backend_proved=True,
+        native_reconstruction=True, native_reconstruction_verified=True, trusted=True,
+        trust_status=HammerTrustStatus.TRUSTED, trust_reason="authored-native-check")
+
+
+def _trust_result():
+    return HammerResult(status=HammerStatus.PROVED, goal=_goal(),
+        premise_selection=PremiseSelection([], {}, 0, 0), translations={},
+        backend_results=[HammerBackendResult("authored", HammerBackendStatus.PROVED, True, 0., "lean")],
+        reconstruction=HammerReconstruction("lean", "by trivial", "authored", True, "verified"))
+
+
+@pytest.mark.parametrize("value", ["false", "true", 1])
+@pytest.mark.parametrize("field", _TRUST_RECEIPT_FLAGS)
+def test_proof_trust_flags_reject_untyped_hammer_receipt_wire(field, value):
+    wire = HammerReconstructionReceipt(**_trust_receipt_values()).to_dict()
+    wire[field] = value
+    with pytest.raises(ValueError):
+        HammerReconstructionReceipt.from_dict(wire)
+
+
+@pytest.mark.parametrize("value", ["false", "true", 1])
+@pytest.mark.parametrize("field", _TRUST_RECEIPT_FLAGS)
+def test_proof_trust_flags_reject_untyped_hammer_receipt_constructor(field, value):
+    values = _trust_receipt_values()
+    values[field] = value
+    with pytest.raises(ValueError):
+        HammerReconstructionReceipt(**values)
+
+
+@pytest.mark.parametrize("value", ["false", "true", 1])
+@pytest.mark.parametrize("field", _TRUST_RECEIPT_FLAGS)
+def test_proof_trust_flags_do_not_serialize_forged_hammer_flags_as_booleans(field, value):
+    receipt = HammerReconstructionReceipt(**_trust_receipt_values())
+    object.__setattr__(receipt, field, value)
+    with pytest.raises(ValueError):
+        receipt.to_dict()
+
+
+@pytest.mark.parametrize("value", ["false", "true", 1])
+def test_proof_trust_flags_require_typed_hammer_verification(value):
+    with pytest.raises(ValueError):
+        HammerVerification(verified=value)
+
+
+@pytest.mark.parametrize("value", ["false", "true", 1])
+def test_proof_trust_flags_require_typed_backend_proof(value):
+    with pytest.raises(ValueError):
+        HammerBackendResult("authored", HammerBackendStatus.PROVED, value, 0., "lean")
+
+
+@pytest.mark.parametrize("value", ["false", "true", 1])
+def test_proof_trust_flags_require_typed_hammer_reconstruction(value):
+    with pytest.raises(ValueError):
+        HammerReconstruction("lean", "by trivial", "authored", value, "verified")
+
+
+@pytest.mark.parametrize("value", ["false", "true", 1])
+@pytest.mark.parametrize("field", ["trusted", "trusted_requires_reconstruction"])
+def test_proof_trust_flags_do_not_coerce_policy_or_revocation_override(field, value):
+    with pytest.raises(ValueError):
+        reconstruction_receipt_from_hammer_result(_trust_result(), **{field: value})
+
+
+@pytest.mark.parametrize("value", ["false", "true", 1])
+def test_proof_trust_flags_receipt_factory_rechecks_mutated_reconstruction(value):
+    result = _trust_result()
+    result.reconstruction.verified = value
+    with pytest.raises(ValueError):
+        reconstruction_receipt_from_hammer_result(result)
+
+
+@pytest.mark.parametrize("value", ["false", "true", 1])
+def test_proof_trust_flags_receipt_factory_rechecks_mutated_backend(value):
+    result = _trust_result()
+    result.backend_results[0].proved = value
+    with pytest.raises(ValueError):
+        reconstruction_receipt_from_hammer_result(result)
+
+
+@pytest.mark.parametrize("value", ["false", "true", 1])
+def test_proof_trust_flags_verifier_callback_is_not_normalized_before_check(value):
+    result = _trust_result()
+    callback = lambda *args: SimpleNamespace(verified=value, error="", output="")
+    with pytest.raises(ValueError):
+        HammerProofReconstructor().reconstruct(goal=result.goal, selected_premises=[],
+            backend_result=result.backend_results[0], verify=True, verifier=callback)

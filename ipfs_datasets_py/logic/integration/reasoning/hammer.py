@@ -28,6 +28,13 @@ from ipfs_datasets_py.logic.hammers.process_lifecycle import (
 )
 
 
+def _strict_proof_bool(value: object, field: str) -> bool:
+    """Trust and execution switches require booleans, never truthy values."""
+    if type(value) is not bool:
+        raise ValueError(f"{field} must be a boolean")
+    return value
+
+
 _TOKEN_RE = re.compile(r"[A-Za-z][A-Za-z0-9_']*")
 _IDENT_RE = re.compile(r"[^A-Za-z0-9_]+")
 _STOPWORDS = {
@@ -124,6 +131,10 @@ class HammerTranslation:
     metadata: Dict[str, Any] = field(default_factory=dict)
 
 
+    def __post_init__(self) -> None:
+        _strict_proof_bool(self.success, "translation.success")
+
+
 @dataclass(slots=True)
 class HammerBackendResult:
     """Result from one ATP/SMT backend."""
@@ -140,6 +151,11 @@ class HammerBackendResult:
     metadata: Dict[str, Any] = field(default_factory=dict)
 
 
+    def __post_init__(self) -> None:
+        _strict_proof_bool(self.proved, "backend.proved")
+        _strict_proof_bool(self.timed_out, "backend.timed_out")
+
+
 @dataclass(slots=True)
 class HammerVerification:
     """Trusted-kernel reconstruction check."""
@@ -149,6 +165,10 @@ class HammerVerification:
     elapsed_seconds: float = 0.0
     output: str = ""
     error: str = ""
+
+
+    def __post_init__(self) -> None:
+        _strict_proof_bool(self.verified, "verification.verified")
 
 
 @dataclass(slots=True)
@@ -164,6 +184,10 @@ class HammerReconstruction:
     used_premises: List[str] = field(default_factory=list)
     error: str = ""
     metadata: Dict[str, Any] = field(default_factory=dict)
+
+
+    def __post_init__(self) -> None:
+        _strict_proof_bool(self.verified, "reconstruction.verified")
 
 
 @dataclass(slots=True)
@@ -728,6 +752,7 @@ class HammerProofReconstructor:
         verify: bool = False,
         verifier: Optional[KernelVerifier] = None,
     ) -> HammerReconstruction:
+        _strict_proof_bool(verify, "verify")
         script = self._proof_script(goal, selected_premises, backend_result)
         verification: Optional[HammerVerification] = None
         verified = False
@@ -737,7 +762,7 @@ class HammerProofReconstructor:
             if verifier is None:
                 verifier = NativeKernelVerifier().verify
             verification = verifier(goal.itp_system, script, goal, selected_premises)
-            verified = bool(verification.verified)
+            verified = _strict_proof_bool(verification.verified, "verification.verified")
             status = "verified" if verified else "kernel_rejected"
             error = verification.error
         return HammerReconstruction(
@@ -966,7 +991,7 @@ class HammerPipeline:
         self.max_premises = int(max_premises)
         self.timeout_seconds = float(timeout_seconds)
         self.parallel_workers = parallel_workers
-        self.verify_reconstruction = bool(verify_reconstruction)
+        self.verify_reconstruction = _strict_proof_bool(verify_reconstruction, "verify_reconstruction")
         self.kernel_verifier = kernel_verifier
 
     def prove(

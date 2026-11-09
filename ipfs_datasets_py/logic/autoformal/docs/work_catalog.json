@@ -7300,6 +7300,16 @@
       "observed_sha256": "83c3b3e05dc25615dd613986a790e549ad5adb3cb86cff50274355350eb42fcf",
       "status": "focused_tests_qualified",
       "scope": "79 literal-cycle and canonical regression passes, zero skips; original custody closed and 512 KiB claim released. Earlier refusals, strict-source guard failures and retained claims remain distinct; no statutory, model or Lean qualification."
+    },
+    {
+      "bytes": 13989,
+      "id": "proof-feedback-trust-flags-qualification-20261109",
+      "path": "docs/autoformalization/evidence/legal-ir-proof-feedback-trust-flags-qualification-20261109.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "LIR-22: strict boolean trust and unrevoked positive receipt projection; 135 passed/one unavailable Z3 skip with original custody closed; no statutory or training grant.",
+      "sha256": "6153df9dfaaddacca557f75c140f3c2c863173843cc74a0d02ffce958e5d7b72",
+      "status": "local_software_qualified_hosted_ci_unverified"
     }
   ]
 }
