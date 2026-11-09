@@ -1,0 +1,258 @@
+{
+  "schema": "extended-source-withheld-renderer-candidate/v1",
+  "recorded_utc": "2026-11-09T06:39:53.436310+00:00",
+  "status": "installed_candidate_runtime_qualification_unrun",
+  "existing_tasks": [
+    "LIR-07",
+    "LIR-23"
+  ],
+  "source_files": [
+    {
+      "path": "ipfs_datasets_py/logic/legal_ir/extended_compiler.py",
+      "bytes": 4122,
+      "sha256": "6c978653653eea33459af89311bf43fa11357ce5e0648cf0e56549790e8cfa73"
+    },
+    {
+      "path": "ipfs_datasets_py/logic/legal_ir/extended_decompiler.py",
+      "bytes": 3101,
+      "sha256": "04d8fbb3d6dde70fca9a849cc115dddb504643f76e6ddf9da4eb6d9d364d6b07"
+    },
+    {
+      "path": "tests/unit/logic/legal_ir/test_extended_decompiler.py",
+      "bytes": 9841,
+      "sha256": "5d056c07c581ade70e89bc88b1720fbe0fe078fc70768140b40ebf37accf586e"
+    }
+  ],
+  "profile": "source-withheld-quoted-legal-clauses/v2",
+  "typed_ir": "existing legal-surface-ir/v2, unchanged",
+  "implemented": [
+    "Deterministic source-withheld realization for all existing definition, policy and O/P/F norm kinds",
+    "Complete literal scope/condition/exception/temporal and policy objective inventories, preserving order and duplicates",
+    "Bounded parser for complete generated controlled language; unsupported prose, partial matches, unknown clauses and mixed residue abstain",
+    "Quoted UTF-8 literal escaping and whole-output 1 MiB budget refusal without truncation",
+    "Typed-value revalidation; original source, receipts, caches and untyped/source-bearing inputs are not accepted by the renderer"
+  ],
+  "authored_tests": {
+    "scope": "static syntax only; no collection or test execution",
+    "authored_cases": 60,
+    "test_functions": [
+      {
+        "test": "test_extended_statement_kinds_have_source_withheld_realizations",
+        "authored_cases": 3
+      },
+      {
+        "test": "test_modalities_remain_distinct_without_claiming_observed_compliance",
+        "authored_cases": 3
+      },
+      {
+        "test": "test_definition_relations_do_not_become_norms",
+        "authored_cases": 3
+      },
+      {
+        "test": "test_policy_objectives_and_stance_remain_policy",
+        "authored_cases": 2
+      },
+      {
+        "test": "test_complete_mixed_value_roundtrip_retains_all_ordered_literal_facets",
+        "authored_cases": 1
+      },
+      {
+        "test": "test_quoted_literals_cannot_escape_their_slots",
+        "authored_cases": 6
+      },
+      {
+        "test": "test_authored_literal_facet_mutations_cannot_roundtrip_as_original",
+        "authored_cases": 11
+      },
+      {
+        "test": "test_condition_and_exception_placement_is_preserved_without_interpreting_atom",
+        "authored_cases": 1
+      },
+      {
+        "test": "test_conflicting_definitions_are_retained_without_selecting_governing_meaning",
+        "authored_cases": 1
+      },
+      {
+        "test": "test_collection_order_and_duplicate_atoms_are_not_repaired_or_deduplicated",
+        "authored_cases": 1
+      },
+      {
+        "test": "test_unsupported_or_partially_parsed_span_abstains_as_a_whole",
+        "authored_cases": 14
+      },
+      {
+        "test": "test_original_empty_and_non_text_request_refusals_remain_explicit",
+        "authored_cases": 5
+      },
+      {
+        "test": "test_renderer_rejects_source_bearing_or_other_untyped_inputs",
+        "authored_cases": 4
+      },
+      {
+        "test": "test_source_bearing_extra_fields_cannot_become_renderer_input",
+        "authored_cases": 1
+      },
+      {
+        "test": "test_forged_frozen_discriminator_is_revalidated_before_rendering",
+        "authored_cases": 1
+      },
+      {
+        "test": "test_output_budget_refuses_complete_value_without_emitting_truncated_prose",
+        "authored_cases": 1
+      },
+      {
+        "test": "test_utf8_byte_budget_and_invalid_unicode_are_explicit_not_character_counts",
+        "authored_cases": 1
+      },
+      {
+        "test": "test_collection_and_statement_bounds_refuse_without_dropping_extra_material",
+        "authored_cases": 1
+      }
+    ],
+    "source_sha256": "5d056c07c581ade70e89bc88b1720fbe0fe078fc70768140b40ebf37accf586e"
+  },
+  "tests_run": 0,
+  "static_python_parse_passed": true,
+  "runtime_red_reproduction_completed": false,
+  "baseline_source_observation": "existing decompile_extended ended in unconditional NotImplementedError; compile_extended always abstained",
+  "admission_refusals": [
+    {
+      "controls": "workspace/test-logs/federal-corpus-audits/legal-ir-extended-source-withheld-renderer-20261109-v01/red-controls-v01",
+      "request": {
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-extended-source-withheld-renderer-20261109-v01/red-controls-v01/request.json",
+        "bytes": 39603,
+        "sha256": "3824248d1692afb3b3a7dcf6c8e19de6cd4e1ef38c4435aa2e7d7ac2b787e02c"
+      },
+      "terminal": {
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-extended-source-withheld-renderer-20261109-v01/red-controls-v01/owner.stdout",
+        "bytes": 3582,
+        "sha256": "f3bb0154b691cf93c1a5786f2c3960589bbcca19212659a8b0ca969b3457e41c"
+      },
+      "parent_closeout": {
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-extended-source-withheld-renderer-20261109-v01/red-controls-v01/parent-closeout.json",
+        "bytes": 77,
+        "sha256": "85802c8f4762091d9b8f75b8324f023490a2380e9c5f84ccee618c3ed64d989f"
+      },
+      "capacity": {
+        "schema": "daemon-resource-capacity-observation/v1",
+        "observed_apparent_bytes": 175296823080,
+        "outstanding_full_reservations_bytes": 44719084352,
+        "additional_requested_bytes": 12582912,
+        "charged_bytes": 220028490344,
+        "limit_bytes": 220000000000,
+        "minimum_filesystem_free_bytes": 508942041088,
+        "scope": "named_roots_only_apparent_bytes",
+        "storage_capacity_exceeded": true,
+        "filesystem_free_insufficient": false,
+        "storage_capacity_deficit_bytes": 28490344,
+        "filesystem_free_deficit_bytes": 0
+      },
+      "new_claim_created": false,
+      "native_grant_created": false,
+      "tests_run": 0
+    },
+    {
+      "controls": "workspace/test-logs/federal-corpus-audits/legal-ir-extended-source-withheld-renderer-20261109-v01/red-controls-v02",
+      "request": {
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-extended-source-withheld-renderer-20261109-v01/red-controls-v02/request.json",
+        "bytes": 39602,
+        "sha256": "e4eaa40e58942d682cb9d63b68967176fbbc03708eee88ed707edd6ffc3a0baa"
+      },
+      "terminal": {
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-extended-source-withheld-renderer-20261109-v01/red-controls-v02/owner.stdout",
+        "bytes": 3578,
+        "sha256": "53ef2c07eec7f9bea6fb1653824652669f81f9a489e6c038dddd46a4502ebf70"
+      },
+      "parent_closeout": {
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-extended-source-withheld-renderer-20261109-v01/red-controls-v02/parent-closeout.json",
+        "bytes": 77,
+        "sha256": "85802c8f4762091d9b8f75b8324f023490a2380e9c5f84ccee618c3ed64d989f"
+      },
+      "capacity": {
+        "schema": "daemon-resource-capacity-observation/v1",
+        "observed_apparent_bytes": 175279900460,
+        "outstanding_full_reservations_bytes": 44719084352,
+        "additional_requested_bytes": 2097152,
+        "charged_bytes": 220001081964,
+        "limit_bytes": 220000000000,
+        "minimum_filesystem_free_bytes": 508965552128,
+        "scope": "named_roots_only_apparent_bytes",
+        "storage_capacity_exceeded": true,
+        "filesystem_free_insufficient": false,
+        "storage_capacity_deficit_bytes": 1081964,
+        "filesystem_free_deficit_bytes": 0
+      },
+      "new_claim_created": false,
+      "native_grant_created": false,
+      "tests_run": 0
+    },
+    {
+      "controls": "workspace/test-logs/federal-corpus-audits/legal-ir-extended-source-withheld-renderer-20261109-v01/red-controls-v03",
+      "request": {
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-extended-source-withheld-renderer-20261109-v01/red-controls-v03/request.json",
+        "bytes": 39601,
+        "sha256": "b97598e8a0e16cce2e8aca12e7328533cf0139decde4998f2428a7478bf150c5"
+      },
+      "terminal": {
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-extended-source-withheld-renderer-20261109-v01/red-controls-v03/owner.stdout",
+        "bytes": 3580,
+        "sha256": "1d03a197566d728a04f85b78a6d784f36bc65ea1c8a41260546a6737b55cfa01"
+      },
+      "parent_closeout": {
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-extended-source-withheld-renderer-20261109-v01/red-controls-v03/parent-closeout.json",
+        "bytes": 77,
+        "sha256": "85802c8f4762091d9b8f75b8324f023490a2380e9c5f84ccee618c3ed64d989f"
+      },
+      "capacity": {
+        "schema": "daemon-resource-capacity-observation/v1",
+        "observed_apparent_bytes": 175284222182,
+        "outstanding_full_reservations_bytes": 44719084352,
+        "additional_requested_bytes": 524288,
+        "charged_bytes": 220003830822,
+        "limit_bytes": 220000000000,
+        "minimum_filesystem_free_bytes": 508952104960,
+        "scope": "named_roots_only_apparent_bytes",
+        "storage_capacity_exceeded": true,
+        "filesystem_free_insufficient": false,
+        "storage_capacity_deficit_bytes": 3830822,
+        "filesystem_free_deficit_bytes": 0
+      },
+      "new_claim_created": false,
+      "native_grant_created": false,
+      "tests_run": 0
+    }
+  ],
+  "preserved_prior_case_tree_archives": [
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-relational-counted-preservation-20261109-v01/archived-closed-synthetic-cases/ordinary-controls-v09-cases-migration.json",
+      "bytes": 983278,
+      "sha256": "a48f4b2aa0d651ff9310e0a3295303432f58d84bacaf46d4453fef10a495947d"
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-relational-counted-preservation-20261109-v01/archived-closed-synthetic-cases/native-controls-v03-cases-migration.json",
+      "bytes": 54446,
+      "sha256": "b8e5c0a73027e9ef90ce736aeaa0830b6afbf6ca733f01a5261a8848666ee195"
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-relational-counted-preservation-20261109-v01/archived-closed-synthetic-cases/native-controls-v05-cases-migration.json",
+      "bytes": 54444,
+      "sha256": "a536114b3b67dea561d1a666c42cc53ab5bf2717860cef877ae749b5e04e9f3c"
+    }
+  ],
+  "archival_scope": "Only stopped own case trees; every original file byte, mode and mtime retained and verified; original case-root inodes retained; ledger and full charged reservations unchanged",
+  "limits": [
+    "Controlled-language literal-slot cycle only; neither a general statutory parser nor a full relational LegalIR renderer",
+    "Opaque quantifier/count/calendar/date/definition phrases are retained, not logically interpreted",
+    "No legal semantic-equivalence, governing-definition resolution or source-correspondence judgment",
+    "Authored tests remain uncollected/unexecuted because admission refused; no passing result claimed",
+    "Existing measured canonical v1 compiler/decompiler and IR contracts remain unchanged",
+    "No model, optimizer, Lean command, semantic review, gold label or corpus admission"
+  ],
+  "next_action": "After genuine capacity is available, run the complete authored owning test file and existing canonical decompiler regressions through the existing owned validation route; retain both red-capacity failures and exact fresh green evidence",
+  "new_ir_or_supervisor": false,
+  "training_gold_mask": 0,
+  "evaluation_gold_mask": 0,
+  "proof_authority": false,
+  "qualified": false,
+  "corpus_admitted": false
+}

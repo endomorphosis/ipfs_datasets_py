@@ -4735,6 +4735,46 @@
       "existing_tasks": [
         "LIR-20"
       ]
+    },
+    {
+      "id": "extended-source-withheld-decompiler",
+      "path": "ipfs_datasets_py/logic/legal_ir/extended_decompiler.py",
+      "owner_module": "ipfs_datasets_py.logic.legal_ir.extended_decompiler",
+      "apis": [
+        "decompile_extended"
+      ],
+      "status": "implementation_present",
+      "required": true,
+      "compatibility_dependency": false,
+      "ownership_role": "existing_single_owner",
+      "existing_tasks": [
+        "LIR-07",
+        "LIR-23"
+      ],
+      "evidence_ids": [
+        "extended-source-withheld-renderer-candidate-20261109"
+      ],
+      "notes": "Installed opt-in literal-slot surface cycle; 60 authored cases unrun after pregrant capacity refusals. No statutory interpretation, full relational renderer or proof/learning/corpus qualification."
+    },
+    {
+      "id": "extended-controlled-language-compiler",
+      "path": "ipfs_datasets_py/logic/legal_ir/extended_compiler.py",
+      "owner_module": "ipfs_datasets_py.logic.legal_ir.extended_compiler",
+      "apis": [
+        "compile_extended"
+      ],
+      "status": "implementation_present",
+      "required": true,
+      "compatibility_dependency": false,
+      "ownership_role": "existing_single_owner",
+      "existing_tasks": [
+        "LIR-07",
+        "LIR-23"
+      ],
+      "evidence_ids": [
+        "extended-source-withheld-renderer-candidate-20261109"
+      ],
+      "notes": "Installed opt-in literal-slot surface cycle; 60 authored cases unrun after pregrant capacity refusals. No statutory interpretation, full relational renderer or proof/learning/corpus qualification."
     }
   ],
   "entry_point": "ipfs_datasets_py/logic/autoformal/README.md",
@@ -4795,7 +4835,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-11-09T06:15:52.453526+00:00",
+  "last_updated_at_utc": "2026-11-09T06:39:53.436310+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -7238,6 +7278,16 @@
       "observed_sha256": "a1b14353202f8f4dd203c20b349f2d18b6d11427dce809c311d0913bde904554",
       "scope": "287 fictional reviewed-context/consumer/adjudication cases, zero skips; original owner closed and released. No model update, real legal review or corpus admission.",
       "status": "focused_tests_qualified"
+    },
+    {
+      "id": "extended-source-withheld-renderer-candidate-20261109",
+      "path": "docs/autoformalization/evidence/legal-ir-extended-source-withheld-renderer-candidate-20261109.json",
+      "root": "datasets_repository",
+      "required_for_catalog_check": true,
+      "observed_bytes": 11797,
+      "observed_sha256": "aa5d048683d616ce9aa270bf82ca7cd43a6ac827cc6be938c1d52b034356a5b0",
+      "status": "installed_candidate_runtime_qualification_unrun",
+      "scope": "Existing surface owners extended with bounded source-withheld rendering/controlled parsing; 60 authored tests unrun. Three pregrant capacity refusals, zero new claims/tests; preserved byte-exact case-tree archival with no ledger/cap change."
     }
   ]
 }
