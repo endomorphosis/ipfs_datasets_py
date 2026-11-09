@@ -55,9 +55,66 @@ class RateLimitError(RuntimeError):
         self.retry_after = retry_after
 
 
-def parse_amlegal_url(url: str) -> Optional[str]:
+def parse_amlegal_url(url: str, *, preserve_case: bool = True) -> Optional[str]:
+    """Extract the /codes/{slug}/ segment.
+
+    Preserve URL case by default: AmLegal client slugs are case-sensitive
+    (``HudsonNC`` ≠ ``hudsonnc``). Callers that need a normalized key can
+    pass ``preserve_case=False``.
+    """
     m = AMLEGAL_URL_RE.search(url or "")
-    return m.group(1).lower() if m else None
+    if not m:
+        return None
+    slug = m.group(1)
+    return slug if preserve_case else slug.lower()
+
+
+def _slug_candidates(slug: str) -> list[str]:
+    """Ordered unique client-slug lookup candidates.
+
+    Some libraries keep underscores in the public URL while the API client
+    slug drops them (e.g. URL ``man_wv`` → client ``manwv``; the TOC product
+    slug may still be ``man_wv``).
+    """
+    out: list[str] = []
+    for s in (
+        slug,
+        slug.lower(),
+        slug.replace("_", ""),
+        slug.lower().replace("_", ""),
+        slug.replace("-", ""),
+        slug.lower().replace("-", ""),
+    ):
+        if s and s not in out:
+            out.append(s)
+    return out
+
+
+def resolve_amlegal_client(
+    source_url: str,
+    *,
+    sleep: float = 0.5,
+) -> tuple[Optional[str], dict[str, Any]]:
+    """Resolve a source URL (or bare slug) to the live AmLegal client.
+
+    Returns ``(canonical_slug_or_None, client_dict)``. ``client_dict`` may be
+    empty when no candidate resolves.
+    """
+    slug = parse_amlegal_url(source_url)
+    if not slug:
+        if re.fullmatch(r"[A-Za-z0-9_\-]+", (source_url or "")):
+            slug = source_url
+        else:
+            return None, {}
+    last: dict[str, Any] = {}
+    for cand in _slug_candidates(slug):
+        client = polite_get_json(f"{API}/clients/{cand}/", sleep=sleep) or {}
+        if not isinstance(client, dict):
+            continue
+        if client.get("id") is not None or client.get("slug"):
+            return str(client.get("slug") or cand), client
+        last = client
+    return None, last
 
 
 def polite_get_json(
@@ -216,22 +273,29 @@ def scrape_jurisdiction(
 
     max_nodes caps how many TOC nodes we expand/render (smoke-test friendly).
     """
-    slug = parse_amlegal_url(source_url)
+    slug, client = resolve_amlegal_client(source_url, sleep=sleep)
     if not slug:
-        # allow bare slug
-        if re.fullmatch(r"[a-z0-9_\-]+", (source_url or "").lower()):
-            slug = source_url.lower()
-        else:
-            return {"ok": False, "error": f"not an amlegal url: {source_url}", "docs": []}
+        return {"ok": False, "error": f"not an amlegal url / unknown client: {source_url}", "docs": [], "client": client}
 
     try:
-        client = polite_get_json(f"{API}/clients/{slug}/", sleep=sleep) or {}
-        cv = polite_get_json(f"{API}/client-version/{slug}/{urllib.parse.quote(version)}/", sleep=sleep)
+        # Re-fetch is unnecessary when resolve already loaded client; only need version/toc.
+        # If the client has no published versions, short-circuit with a clear error.
+        versions = list(client.get("versions") or []) if isinstance(client, dict) else []
+        cv = polite_get_json(
+            f"{API}/client-version/{urllib.parse.quote(slug)}/{urllib.parse.quote(version)}/",
+            sleep=sleep,
+        )
     except Exception as e:
-        return {"ok": False, "error": f"client/version fetch failed: {e}", "docs": []}
+        return {"ok": False, "error": f"client/version fetch failed: {e}", "docs": [], "client": client}
 
     if not cv or not cv.get("toc"):
-        return {"ok": False, "error": f"no version/toc for {slug}/{version}", "docs": [], "client": client}
+        hint = " (client has empty versions — minutes-only / no code product)" if not versions else ""
+        return {
+            "ok": False,
+            "error": f"no version/toc for {slug}/{version}{hint}",
+            "docs": [],
+            "client": client,
+        }
 
     toc = list(cv.get("toc") or [])
     if code_slug:
