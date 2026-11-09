@@ -1180,3 +1180,193 @@ def test_lean_v3_version_output_charge_preserves_complete_source_input_capacity(
     assert calls[0].limits.max_input_bytes==cap
     assert calls[0].limits.max_output_bytes==cap-version_cost
     assert outcome.receipt.submitted_source==source
+
+
+def _assert_lean_native_v3_proof_cache_round_trip(
+    tmp_path, *, runner, processes, executable, version, bounds
+):
+    """Real Native3/cache checks; caller owns admission and process observation."""
+    from dataclasses import replace
+
+    from ipfs_datasets_py.logic.backends.process import SubprocessExecutor
+    from ipfs_datasets_py.logic.ir_core.claims import Assumption, IRClaim, ProofObligation
+    from ipfs_datasets_py.logic.ir_core.protocols import (
+        AttemptStatus, AuthorityKind, BackendAttempt, ProofReceipt, ProofResult,
+        ResultAuthority as ProtocolResultAuthority,
+    )
+    from ipfs_datasets_py.logic.legal_ir.proof_cache import (
+        LEGAL_BOUND_PROOF_RECORD_SCHEMA_VERSION, LEGAL_PROOF_CONTEXT_SCHEMA_VERSION,
+        LegalProofCache, LegalProofCacheError, LegalProofIntegrityError,
+        build_legal_proof_binding,
+    )
+    # Reuse the existing pure fixture constructors by their exact owning file,
+    # without depending on tests/unit/logic package or namespace discovery.
+    # This distinct fixture-only module never claims canonical package identity.
+    # Its authored kernel/native-identity helpers are defined but never called.
+    import hashlib
+    import importlib.util
+    fixture_path = Path(__file__).resolve().parents[3] / "unit/logic/legal_ir/test_proof_cache.py"
+    fixture_sha256 = "72cbb04c69fe3065b1029ed4394406bd55972191b6a8872f4dacf7d7d5434bb4"
+    assert hashlib.sha256(fixture_path.read_bytes()).hexdigest() == fixture_sha256
+    fixture_spec = importlib.util.spec_from_file_location("_native_lean_cache_fixture_owner", fixture_path)
+    assert fixture_spec is not None and fixture_spec.loader is not None
+    fixture_owner = importlib.util.module_from_spec(fixture_spec)
+    fixture_spec.loader.exec_module(fixture_owner)
+    assert fixture_owner.__file__ == fixture_owner.__spec__.origin == str(fixture_path)
+    assert hashlib.sha256(fixture_path.read_bytes()).hexdigest() == fixture_sha256
+
+    # The local SDK controller supplies the already-admitted ordinary runner;
+    # the standalone wrapper below supplies the existing admitted runner. This
+    # helper never creates a lease, adapts a foreign parent, or fakes execution.
+    assert isinstance(runner, BoundedToolRunner)
+    assert type(runner._executor) is SubprocessExecutor
+    assert type(processes) is list and not processes
+    assert executable and Path(executable).is_absolute() and Path(executable).is_file()
+    assert isinstance(bounds, ExecutionBounds)
+    assert 0 < bounds.timeout_ms <= 30000 and 0 < bounds.max_memory_bytes <= 4 * 1024**3
+    assert 0 < bounds.max_output_bytes <= 65536 and 0 < bounds.max_steps <= 100
+    backend = LeanKernelBackend(executable=executable, backend_version=version, runner=runner)
+    source = "theorem cache_native_fixture : True := by trivial\n"
+    # Discover the actual canonical toolchain profile before binding it into
+    # the request. This is a real positive compile, not an injected identity
+    # or a hand-built copy of the backend's resource/toolchain machinery.
+    profile_outcome = backend.run(_request(family="lean4", encoding="lean4", source=source,
+        expected_declaration="cache_native_fixture", expected_proposition="True", bounds=bounds))
+    assert profile_outcome.result.status is ResultStatus.PROVED and profile_outcome.receipt.accepted
+    assert profile_outcome.receipt.native_identity.actual_version == version
+
+    artifact = fixture_owner._legal_artifact(fixture_owner._reviewed_fixture(
+        sample_id="fictional-native-cache-provision", citation="FICTIONAL Test Act 1", section="1",
+        text="A fictional agency shall publish a fictional notice."))
+    source_ref = artifact.source_map.sources[0].ref_id
+    assumption = Assumption("assumption:fictional-native-cache", "True", source_refs=(source_ref,))
+    obligation = ProofObligation("obligation:fictional-native-cache", "True",
+        assumption_ids=(assumption.assumption_id,), logic_family="lean4", source_refs=(source_ref,),
+        metadata={"fixture_only": True, "statutory_meaning_claimed": False})
+    artifact = replace(artifact, assumptions=(assumption,), proof_obligations=(obligation,))
+    context = dict(schema_version=LEGAL_PROOF_CONTEXT_SCHEMA_VERSION, jurisdiction="fictional",
+        interpretation_digest=stable_digest({"fictional_interpretation": 1}),
+        dependency_versions={"fictional-definition": stable_digest({"definition": 1})},
+        backend_id="lean", backend_version=version, toolchain=profile_outcome.receipt.toolchain.to_dict(),
+        expected_declaration="cache_native_fixture", expected_proposition="True",
+        axiom_policy_digest=profile_outcome.receipt.axiom_policy_digest)
+    claim = IRClaim(claim_id="claim:fictional-native-cache", declaration_id=artifact.declaration_id,
+        statement="True", assumptions=artifact.assumptions, obligations=(obligation,), domain="legal",
+        source_refs=(source_ref,), metadata={"artifact_digest": artifact.digest,
+            "source_digest": artifact.declaration_digest, "proof_context_digest": stable_digest(context)})
+    request = BackendRequest.for_claim(claim, obligation.obligation_id,
+        request_id="request:fictional-native-cache", requested_backend_id="lean", bounds=bounds,
+        payload={"encoding": "lean4", "source": source, "expected_declaration": "cache_native_fixture",
+            "expected_proposition": "True", "legal_proof_context": context})
+    outcome = backend.run(request)
+    assert outcome.result.status is ResultStatus.PROVED and outcome.receipt.accepted
+    assert outcome.receipt.toolchain.to_dict() == context["toolchain"]
+    assert outcome.receipt.request_digest == request.digest
+    assert outcome.receipt.native_identity_checked_after_compile
+    assert outcome.receipt.axiom_report.axioms == ()
+    attempt = BackendAttempt(attempt_id="attempt:fictional-native-cache", request_digest=request.digest,
+        backend_id="lean", backend_version=version, status=AttemptStatus.SUCCEEDED,
+        bounds=request.bounds, usage=outcome.result.usage, output_digest=stable_digest(outcome.to_dict()))
+    result = ProofResult.for_attempt(request, attempt, result_id="result:fictional-native-cache",
+        authority=ProtocolResultAuthority(kind=AuthorityKind.THEOREM_PROOF, issuer="native-cache-integration",
+            method="actual-Lean-kernel/v3", scope_digest=request.digest,
+            configuration_digest=stable_digest(context)), status=outcome.result.status,
+        payload={"kernel_receipt": outcome.receipt.to_dict(), "fictional_source_fixture_only": True})
+    receipt = ProofReceipt.issue(claim, request, attempt, result,
+        receipt_id="receipt:fictional-native-cache", verifier="native-cache-integration")
+    binding = build_legal_proof_binding(artifact, receipt, claim=claim, request=request,
+        attempt=attempt, result=result, context=context)
+
+    assert len(processes) == 3
+    assert sum(row["command"][-1:] == ["--version"] for row in processes) == 1
+    assert sum(row["command"][-2:] == ["--json", "Main.lean"] for row in processes) == 2
+    before_reuse = len(processes)
+    profile = "fictional-native-cache-v3"
+    cache_root = tmp_path / "native-proof-cache"
+    record = LegalProofCache(root=cache_root).put(artifact, profile=profile, jurisdiction="fictional",
+        theorem_receipts=(receipt,), proof_bindings=(binding,))
+    assert record.schema_version == LEGAL_BOUND_PROOF_RECORD_SCHEMA_VERSION
+    assert (cache_root / "records" / (record.content_cid + ".json")).is_file()
+    disk = LegalProofCache(root=cache_root)
+    loaded = disk.get(record.content_cid)
+    assert loaded.to_dict() == record.to_dict()
+    assert disk.get_by_source_digest(artifact.declaration_digest, profile=profile).content_cid == record.content_cid
+    assert loaded.theorem_receipt_results(expected_context=context,
+        obligation_id=obligation.obligation_id) == (receipt,)
+    with pytest.raises(LegalProofCacheError, match="expected_context"):
+        loaded.theorem_receipt_results()
+    with pytest.raises(LegalProofIntegrityError, match="expected reuse context"):
+        loaded.theorem_receipt_results(expected_context=context, obligation_id="obligation:another")
+    with pytest.raises(LegalProofCacheError):
+        disk.get_by_source_digest("sha256:" + "fa" * 32, profile=profile)
+    with pytest.raises(LegalProofCacheError):
+        disk.get_by_source_digest(artifact.declaration_digest, profile="another-profile")
+    with pytest.raises(LegalProofCacheError):
+        disk.put(loaded, profile="another-profile")
+
+    rejected_artifact_facets = []
+    for facet, changed in (
+        ("source", replace(artifact, declaration_digest="sha256:" + "fa" * 32)),
+        ("obligation", replace(artifact, proof_obligations=(replace(obligation, statement="False"),))),
+        ("assumptions", replace(artifact, assumptions=(replace(assumption, statement="False"),))),
+    ):
+        with pytest.raises(LegalProofIntegrityError):
+            disk.put(changed, profile=profile, jurisdiction="fictional",
+                theorem_receipts=(receipt,), proof_bindings=(binding,))
+        rejected_artifact_facets.append(facet)
+    rejected_context_facets = []
+    for facet in ("declaration", "proposition", "toolchain", "backend-profile", "interpretation", "dependency"):
+        changed = copy.deepcopy(context)
+        if facet == "declaration": changed["expected_declaration"] = "another_theorem"
+        elif facet == "proposition": changed["expected_proposition"] = "False"
+        elif facet == "toolchain": changed["toolchain"]["version"] = "another-native-version"
+        elif facet == "backend-profile": changed["backend_version"] = "another-backend-profile"
+        elif facet == "interpretation": changed["interpretation_digest"] = stable_digest({"fictional_interpretation": 2})
+        else: changed["dependency_versions"]["fictional-definition"] = stable_digest({"definition": 2})
+        with pytest.raises(LegalProofIntegrityError, match="expected reuse context"):
+            loaded.theorem_receipt_results(expected_context=changed, obligation_id=obligation.obligation_id)
+        rejected_context_facets.append(facet)
+    assert loaded.theorem_receipt_results(expected_context=context, obligation_id=obligation.obligation_id) == (receipt,)
+    assert disk.cids() == (record.content_cid,)
+    assert len(processes) == before_reuse
+    report = {"schema": "native-lean-v3-proof-cache-integration/v1", "native_Lean_executed": True,
+        "compiler_output_mocked": False, "actual_process_results": processes,
+        "profile_discovery_outcome": profile_outcome.to_dict(), "bound_outcome": outcome.to_dict(),
+        "claim": claim.to_dict(), "request": request.to_dict(), "attempt": attempt.to_dict(),
+        "result": result.to_dict(), "receipt": receipt.to_dict(), "proof_binding": binding,
+        "cache_record_cid": record.content_cid, "disk_round_trip_and_exact_reuse_passed": True,
+        "rejected_artifact_facets": rejected_artifact_facets, "rejected_context_facets": rejected_context_facets,
+        "cache_source_profile_and_obligation_mismatches_rejected": True,
+        "native_processes_during_reuse_or_mismatch_checks": len(processes) - before_reuse,
+        "fictional_source_fixture_only": True, "statutory_meaning_or_corpus_admission": False,
+        "resource_admission_scope": "caller_owned_not_established_by_this_helper",
+        "outer_resource_closure_asserted": False, "pytest_case_credit_claimed_by_helper": 0}
+    (tmp_path / "native-lean-proof-cache-v3.json").write_text(
+        json.dumps(report, sort_keys=True, indent=2) + "\n", encoding="utf-8")
+    return report
+
+
+@pytest.mark.skipif(
+    os.environ.get("IPFS_DATASETS_RUN_NATIVE_LEAN") != "1",
+    reason="explicit native Lean resource authorization required",
+)
+def test_lean_native_v3_proof_cache_round_trip_and_exact_reuse_context(tmp_path):
+    """Standalone opt-in CI route; separate from the local SDK caller-owned route."""
+    from ipfs_datasets_py.logic.backends.resource_admission import ResourceAdmittedToolRunner
+
+    processes = []
+
+    class ObservedNativeRunner(ResourceAdmittedToolRunner):
+        def run(self, request, **kwargs):
+            result = super().run(request, **kwargs)
+            assert result.native_lifecycle is not None
+            processes.append(result.to_dict())
+            return result
+
+    runner = ObservedNativeRunner(cpu_slots=1, child_process_slots=1,
+        workspace_root=tmp_path / "standalone-native-workspaces")
+    _assert_lean_native_v3_proof_cache_round_trip(tmp_path, runner=runner, processes=processes,
+        executable=os.environ.get("IPFS_DATASETS_LEAN_EXECUTABLE", ""),
+        version=os.environ.get("IPFS_DATASETS_LEAN_VERSION", "4.34.1"),
+        bounds=ExecutionBounds(timeout_ms=30000, max_steps=100,
+            max_memory_bytes=512 * 1024**2, max_output_bytes=65536))
