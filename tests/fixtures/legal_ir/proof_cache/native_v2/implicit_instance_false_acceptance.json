@@ -1,0 +1,111 @@
+{
+  "case": "implicit_instance_dependency_false_acceptance",
+  "current_proof_validation_qualification_claimed": false,
+  "historical_failure_reproduced": true,
+  "no_upgrade_performed": true,
+  "original_observation": {
+    "bytes": 89453,
+    "json_pointer": "/native_controls/cases/3",
+    "path": "/tmp/pytest-of-barberb/legal-ir-generic-lean-native-v2-20261108-v04/attempt-v01/exports/native-observation.json",
+    "sha256": "a80c792a2dc9ae899a783a71c62b925bb6a941205b90cf2040a80d16e96cded2"
+  },
+  "original_receipt_id": "lean-kernel-receipt:fc8ae60de02f024aeabb9db279dc97ff8749f63c02312a6eeb8e46261efff733",
+  "original_result_status": "proved",
+  "receipt": {
+    "accepted": true,
+    "approved_axioms": [],
+    "approved_imports": [
+      "Init",
+      "Init.Classical",
+      "Init.Prelude"
+    ],
+    "authority_disposition": "reject",
+    "axiom_policy_digest": "2b85825f9ddb6d40b55c22df20c9fcf9da9056c3bd89db235c15bfbb550d61e2",
+    "axiom_report": {
+      "axioms": [],
+      "contains_sorry_ax": false,
+      "declaration": "wanted",
+      "report_text": "'wanted' does not depend on any axioms",
+      "schema_version": "lean-axiom-report/v2",
+      "source_column": 0,
+      "source_line": 8,
+      "source_path": "Main.lean"
+    },
+    "compiled_source_digest": "386bc3b120e7d28c2c0d5f48ad580c703d79e311b4efb7062ee59c4eff77bc43",
+    "diagnostics": [],
+    "expected_proposition": "Nonempty (Decidable (\u2200 p : Prop, p \u2228 \u00acp))",
+    "expected_proposition_checked": true,
+    "expected_proposition_digest": "330644cadd29bb7e1d8d3d527257baa173674cec01f2f8c913af73031ee8a187",
+    "generated_proof": "theorem wanted {p : Prop} [h : Nonempty (Decidable p)] : Nonempty (Decidable p) := h",
+    "generated_proof_digest": "23a6d6d037ad5be63e4712bf40940ba3d113de5cd91dff7e670de98759d75883",
+    "imports": [
+      "Init.Classical"
+    ],
+    "plane": "native",
+    "receipt_id": "lean-kernel-receipt:fc8ae60de02f024aeabb9db279dc97ff8749f63c02312a6eeb8e46261efff733",
+    "request_digest": "be9d860acf1a7dc23f91a723dc72c27e4e73df903a4d2213887d2634769672c6",
+    "schema_version": "lean-kernel-receipt/v2",
+    "source_binding": {
+      "request_digest": "be9d860acf1a7dc23f91a723dc72c27e4e73df903a4d2213887d2634769672c6",
+      "schema_version": "lean-source-binding/v1",
+      "source_digest": "287c988227037e0329d832c4e64400b5886bce000466932de4d2e34293ed0452",
+      "source_format": "lean4"
+    },
+    "source_tree": {
+      "files": {
+        "Main.lean": "287c988227037e0329d832c4e64400b5886bce000466932de4d2e34293ed0452"
+      },
+      "primary_path": "Main.lean",
+      "root_digest": "a1af15895dc7ce68672af9ca3e9ed8026e6d8e62844a55097e6ba4883a09b1a5",
+      "tree_id": "source-tree:a1af15895dc7ce68672af9ca"
+    },
+    "submitted_source": "import Init.Classical\ntheorem wanted {p : Prop} [h : Nonempty (Decidable p)] : Nonempty (Decidable p) := h\n",
+    "theorem_digest": "287c988227037e0329d832c4e64400b5886bce000466932de4d2e34293ed0452",
+    "theorem_name": "wanted",
+    "toolchain": {
+      "command_template": "{lean} --json {source_file}",
+      "executable": "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lean",
+      "kernel_id": "lean",
+      "metadata": {
+        "approved_axioms": [],
+        "approved_imports": [
+          "Init",
+          "Init.Classical",
+          "Init.Prelude"
+        ],
+        "axiom_policy_digest": "2b85825f9ddb6d40b55c22df20c9fcf9da9056c3bd89db235c15bfbb550d61e2"
+      },
+      "module_id": "",
+      "plane": "native",
+      "toolchain_id": "toolchain:lean:native:4.34.1",
+      "version": "4.34.1"
+    },
+    "translation": null
+  },
+  "request": {
+    "assumption_ids": [],
+    "bounds": {
+      "max_memory_bytes": 4294967296,
+      "max_output_bytes": 65536,
+      "max_steps": 100,
+      "timeout_ms": 20000
+    },
+    "claim_digest": "4444444444444444444444444444444444444444444444444444444444444444",
+    "claim_id": "claim:native-v2:implicit_instance_dependency_false_acceptance",
+    "declaration_id": "declaration:native-v2:implicit_instance_dependency_false_acceptance",
+    "logic_family": "lean4",
+    "obligation_digest": "7777777777777777777777777777777777777777777777777777777777777777",
+    "obligation_id": "obligation:native-v2:implicit_instance_dependency_false_acceptance",
+    "payload": {
+      "encoding": "lean4",
+      "expected_declaration": "wanted",
+      "expected_proposition": "Nonempty (Decidable (\u2200 p : Prop, p \u2228 \u00acp))",
+      "source": "import Init.Classical\ntheorem wanted {p : Prop} [h : Nonempty (Decidable p)] : Nonempty (Decidable p) := h\n"
+    },
+    "query_kind": "theorem_proof",
+    "request_id": "request:native-v2:implicit_instance_dependency_false_acceptance",
+    "requested_backend_id": "",
+    "schema_version": "proof-backend-request/v1"
+  },
+  "schema": "archived-native-v2-false-acceptance-fixture/v1"
+}

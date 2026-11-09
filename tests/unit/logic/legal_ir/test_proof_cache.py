@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+from copy import deepcopy
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
@@ -32,6 +34,9 @@ from ipfs_datasets_py.logic.ir_core.protocols import (
 from ipfs_datasets_py.logic.legal_ir.adapter import LegalIRFormalizationAdapter
 from ipfs_datasets_py.logic.legal_ir.proof_cache import (
     LEGAL_PROOF_CACHE_INTERFACE,
+    LEGAL_BOUND_PROOF_RECORD_SCHEMA_VERSION,
+    LEGAL_PROOF_CONTEXT_SCHEMA_VERSION,
+    build_legal_proof_binding,
     LEGAL_PROOF_CACHE_SCHEMA_VERSION,
     LEGAL_PROOF_INDEX_SCHEMA_VERSION,
     LEGAL_PROOF_RECORD_SCHEMA_VERSION,
@@ -398,19 +403,21 @@ def test_corruption_of_artifact_payload_fails_closed(tmp_path: Path) -> None:
 def test_put_get_functional_wrappers_and_theorem_receipt(
     tmp_path: Path,
 ) -> None:
-    artifact = _legal_artifact()
-    receipt = _theorem_receipt_for(artifact)
+    # The old fixture attached an unrelated obligation to an artifact declaring
+    # no obligations. That historical association is no longer a positive proof.
+    artifact, receipt, binding, context = _bound_fixture()
     cache = LegalProofCache(root=tmp_path / "receipt-cache")
 
     record = put_legal_proof(
         cache,
         artifact,
         profile="legal-with-receipt",
-        jurisdiction="us-federal",
+        jurisdiction="fictional",
         theorem_receipts=(receipt,),
+        proof_bindings=(binding,),
     )
     loaded = get_legal_proof(cache, record.content_cid)
-    receipts = loaded.theorem_receipt_results()
+    receipts = loaded.theorem_receipt_results(expected_context=context)
     assert len(receipts) == 1
     assert receipts[0].proof_authority is AuthorityKind.THEOREM_PROOF
     assert receipts[0].status is ResultStatus.PROVED
@@ -500,3 +507,362 @@ def test_non_legal_domain_artifact_rejected(tmp_path: Path) -> None:
     cache = LegalProofCache(root=tmp_path / "domain")
     with pytest.raises(LegalProofCacheError, match="legal-domain"):
         cache.put(payload, profile="legal-strict")
+
+
+
+# These v2 fixtures model binding consistency only. No compiler process or
+# actual statutory review is executed or represented by any helper below.
+def _fictional_native_identity(*, executable="/fictional/lean", version="test"):
+    from ipfs_datasets_py.logic.backends.kernel import lean
+    stats=lean.FrozenMap(dict(device=1,inode=1,size=1,mtime_ns=1,ctime_ns=1))
+    return lean.LeanNativeIdentity(resolved_executable=executable,executable_sha256="d"*64,executable_bytes=1,
+        executable_stat_before=stats,executable_stat_after=stats,actual_version=version,
+        version_stdout="Lean (version "+version+")",version_stderr="",version_command=(executable,"--version"),
+        version_returncode=0,observation_kind="trusted_fictional_identity_fixture")
+
+
+def _fictional_kernel_receipt(request):
+    from ipfs_datasets_py.logic.backends.kernel import lean
+    from ipfs_datasets_py.logic.backends.kernel.wasm import CapabilityPlane,KernelSourceTreeBinding,KernelToolchainBinding
+    payload=request.payload.to_dict()
+    source=payload.get("lean")or payload.get("source")or payload.get("checked_source")
+    name=payload["expected_declaration"];proposition=payload["expected_proposition"]
+    guard=lean.lean_expected_obligation_declaration(source,name,proposition)
+    compiled=lean.instrument_lean_source_for_axioms(source,name,expected_proposition=proposition)
+    proof=lean.extract_generated_proof(source,name);policy=lean.lean_axiom_policy_digest(())
+    identity=_fictional_native_identity(version="fictional")
+    return lean.LeanKernelReceipt(request_digest=request.digest,source_binding=lean.LeanSourceBinding.bind(request,source),
+        theorem_name=name,theorem_digest=lean.content_digest(source),imports=lean.extract_lean_imports(source),
+        generated_proof=proof,generated_proof_digest=lean.content_digest(proof),
+        toolchain=KernelToolchainBinding(toolchain_id="fictional:lean-v3",kernel_id="lean",plane=CapabilityPlane.NATIVE,
+            executable=identity.resolved_executable,version=identity.actual_version,metadata=lean.FrozenMap({
+                "approved_axioms":[],"approved_imports":list(lean.LEAN_DEFAULT_APPROVED_IMPORTS),"axiom_policy_digest":policy,
+                "native_identity_digest":identity.identity_digest,"native_library_scope":identity.library_scope})),
+        source_tree=KernelSourceTreeBinding.from_files({"Main.lean":source},primary_path="Main.lean"),translation=None,
+        axiom_report=lean.LeanAxiomReport(declaration=guard,report_text="'"+guard+"' does not depend on any axioms",axioms=(),
+            contains_sorry_ax=False,source_path="Main.lean",source_line=compiled[:compiled.rfind("#print axioms")].count("\n")+1,source_column=0),
+        plane=CapabilityPlane.NATIVE,accepted=True,authority_disposition=lean.LeanAuthorityDisposition.REJECT,
+        submitted_source=source,expected_obligation_declaration=guard,native_identity=identity,native_identity_checked_after_compile=True,
+        expected_proposition=proposition,expected_proposition_digest=lean.content_digest(proposition),expected_proposition_checked=True,
+        compiled_source_digest=lean.content_digest(compiled),approved_axioms=(),approved_imports=lean.LEAN_DEFAULT_APPROVED_IMPORTS,axiom_policy_digest=policy)
+
+
+def _bound_fixture(*, extra_obligation: bool = False):
+    from ipfs_datasets_py.logic.backends.kernel import lean
+    from ipfs_datasets_py.logic.backends.kernel.wasm import CapabilityPlane, KernelToolchainBinding
+    from ipfs_datasets_py.logic.ir_core.claims import FrozenMap
+
+    sample = _reviewed_fixture(sample_id="fictional-cache-provision", citation="FICTIONAL Test Act 1", section="1")
+    artifact = _legal_artifact(sample)
+    source_ref = artifact.source_map.sources[0].ref_id
+    assumption = Assumption("assumption:fictional-premise", "An explicitly fictional premise.", source_refs=(source_ref,))
+    obligation = ProofObligation("obligation:fictional-cache", "True", assumption_ids=(assumption.assumption_id,),
+                                 logic_family="lean4", source_refs=(source_ref,), metadata={"fixture_only": True})
+    obligations = (obligation,)
+    if extra_obligation:
+        obligations += (replace(obligation, obligation_id="obligation:unproved-second"),)
+    artifact = replace(artifact, assumptions=(assumption,), proof_obligations=obligations)
+    policy = lean.lean_axiom_policy_digest(())
+    identity = _fictional_native_identity(version="fictional")
+    toolchain = KernelToolchainBinding(toolchain_id="fictional:lean-v3", kernel_id="lean", plane=CapabilityPlane.NATIVE,
+        executable=identity.resolved_executable, version=identity.actual_version,
+        metadata=FrozenMap({"approved_axioms": [], "approved_imports": list(lean.LEAN_DEFAULT_APPROVED_IMPORTS),
+            "axiom_policy_digest": policy, "native_identity_digest": identity.identity_digest,
+            "native_library_scope": identity.library_scope}))
+    context = dict(schema_version=LEGAL_PROOF_CONTEXT_SCHEMA_VERSION, jurisdiction="fictional",
+        interpretation_digest=stable_digest({"fictional_interpretation": 1}),
+        dependency_versions={"fictional-definition": stable_digest({"definition": 1})},
+        backend_id="lean", backend_version="fictional", toolchain=toolchain.to_dict(),
+        expected_declaration="cache_fixture", expected_proposition="True", axiom_policy_digest=policy)
+    claim = IRClaim(claim_id="claim:fictional-cache", declaration_id=artifact.declaration_id, statement="True",
+        assumptions=artifact.assumptions, obligations=(obligation,), domain="legal", source_refs=(source_ref,),
+        metadata={"artifact_digest": artifact.digest, "source_digest": artifact.declaration_digest,
+                  "proof_context_digest": stable_digest(context)})
+    request = BackendRequest.for_claim(claim, obligation.obligation_id, request_id="request:fictional-cache",
+        requested_backend_id="lean", bounds=ExecutionBounds(timeout_ms=1000, max_steps=1000,
+            max_memory_bytes=1000000, max_output_bytes=4096),
+        payload={"lean": "theorem cache_fixture : True := by trivial\n", "expected_declaration": "cache_fixture",
+                 "expected_proposition": "True", "legal_proof_context": context})
+    kernel = _fictional_kernel_receipt(request)
+    attempt = BackendAttempt(attempt_id="attempt:fictional-cache", request_digest=request.digest, backend_id="lean",
+        backend_version="fictional", status=AttemptStatus.SUCCEEDED, bounds=request.bounds,
+        usage=ResourceUsage(elapsed_ms=1, steps=1, peak_memory_bytes=1024, output_bytes=40),
+        output_digest=stable_digest({"authored_kernel_fixture": kernel.to_dict()}))
+    result = ProofResult.for_attempt(request, attempt, result_id="result:fictional-cache",
+        authority=ResultAuthority(kind=AuthorityKind.THEOREM_PROOF, issuer="fictional-test",
+            method="authored-fixture-only", scope_digest=request.digest,
+            configuration_digest=stable_digest(context)), status=ResultStatus.PROVED,
+        payload={"kernel_receipt": kernel.to_dict(), "fixture_only": True})
+    receipt = ProofReceipt.issue(claim, request, attempt, result, receipt_id="receipt:fictional-cache", verifier="fictional-test")
+    binding = build_legal_proof_binding(artifact, receipt, claim=claim, request=request, attempt=attempt,
+                                      result=result, context=context)
+    return artifact, receipt, binding, context
+
+
+def _bound_record(*, extra_obligation: bool = False):
+    artifact, receipt, binding, context = _bound_fixture(extra_obligation=extra_obligation)
+    record = LegalProofRecord.build(artifact, profile="fictional-bound", jurisdiction="fictional",
+                                    theorem_receipts=(receipt,), proof_bindings=(binding,))
+    return record, artifact, receipt, binding, context
+
+
+class _ShadowObservation:
+    def __init__(self):
+        self.writes = []
+    def register_backend(self, backend):
+        pass
+    def project_key(self, *args, **kwargs):
+        return kwargs
+    def write(self, *args, **kwargs):
+        self.writes.append(kwargs)
+
+
+def test_new_unbound_receipt_association_is_rejected() -> None:
+    artifact = _legal_artifact()
+    assert artifact.proof_obligations == ()
+    with pytest.raises(LegalProofCacheError, match="proof_bindings"):
+        LegalProofRecord.build(artifact, profile="unbound", theorem_receipts=(_theorem_receipt_for(artifact),))
+
+
+def test_legacy_receipts_remain_archival_without_shadow_authority() -> None:
+    artifact = _legal_artifact()
+    header = _theorem_receipt_for(artifact)
+    record = LegalProofRecord(source_id=artifact.declaration_id, source_digest=artifact.declaration_digest,
+        profile="historical-unbound", artifact=artifact.to_dict(), theorem_receipts=(header.to_dict(),))
+    restored = LegalProofRecord.from_dict(record.to_dict())
+    assert restored.content_cid == record.content_cid
+    assert restored.schema_version == LEGAL_PROOF_RECORD_SCHEMA_VERSION
+    assert restored.theorem_receipts[0]["obligation_id"] == header.obligation_id
+    with pytest.raises(LegalProofIntegrityError, match="archival"):
+        restored.theorem_receipt_results()
+    spy = _ShadowObservation()
+    cache = LegalProofCache()
+    cache.bind_shadow_repository(spy)
+    cache.put(restored)
+    assert spy.writes[-1]["status"] == "unknown"
+    assert spy.writes[-1]["kernel_accepted"] is False
+
+
+def test_archival_envelope_mutation_cannot_keep_old_content_identity() -> None:
+    artifact = _legal_artifact()
+    record = LegalProofRecord(source_id=artifact.declaration_id, source_digest=artifact.declaration_digest,
+        profile="historical-mutation", artifact=artifact.to_dict(),
+        theorem_receipts=(_theorem_receipt_for(artifact).to_dict(),))
+    record.theorem_receipts[0]["assumption_ids"].append("assumption:tampered")
+    with pytest.raises(LegalProofIntegrityError, match="envelope mutated"):
+        record.verify_integrity()
+
+
+def test_bound_record_v2_disk_round_trip_and_explicit_context(tmp_path: Path) -> None:
+    record, artifact, receipt, _, context = _bound_record()
+    assert record.schema_version == LEGAL_BOUND_PROOF_RECORD_SCHEMA_VERSION
+    cache = LegalProofCache(root=tmp_path / "bound")
+    cache.put(record)
+    restored = LegalProofCache(root=tmp_path / "bound").get(record.content_cid)
+    assert restored.theorem_receipt_results(expected_context=context, obligation_id=receipt.obligation_id) == (receipt,)
+    assert restored.artifact_digest == artifact.digest
+    with pytest.raises(LegalProofCacheError, match="expected_context"):
+        restored.theorem_receipt_results()
+
+
+@pytest.mark.parametrize("facet", ["toolchain", "backend", "interpretation", "dependencies", "declaration", "proposition", "axiom-policy", "jurisdiction"])
+def test_proof_reuse_rejects_changed_expected_context(facet: str) -> None:
+    record, _, _, _, context = _bound_record()
+    changed = deepcopy(context)
+    if facet == "toolchain":
+        changed["toolchain"]["version"] = "other"
+    elif facet == "backend":
+        changed["backend_version"] = "other"
+    elif facet == "interpretation":
+        changed["interpretation_digest"] = stable_digest({"fictional_interpretation": 2})
+    elif facet == "dependencies":
+        changed["dependency_versions"]["fictional-definition"] = stable_digest({"definition": 2})
+    elif facet == "declaration":
+        changed["expected_declaration"] = "another_theorem"
+    elif facet == "proposition":
+        changed["expected_proposition"] = "False"
+    elif facet == "axiom-policy":
+        changed["axiom_policy_digest"] = stable_digest({"approved_axioms": ["foreign"]})
+    else:
+        changed["jurisdiction"] = "different"
+    with pytest.raises(LegalProofIntegrityError, match="expected reuse context"):
+        record.theorem_receipt_results(expected_context=changed)
+
+
+@pytest.mark.parametrize(("field", "value"), [
+    ("claim_digest", "ab" * 32), ("obligation_digest", "cd" * 32),
+    ("assumption_ids", ("assumption:unprovided",)), ("backend_id", "other-kernel"),
+    ("backend_version", "other-version"), ("declaration_id", "another-declaration"),
+])
+def test_bound_receipt_header_changes_fail_chain_replay(field: str, value: Any) -> None:
+    _, artifact, receipt, binding, _ = _bound_record()
+    changed = replace(receipt, **{field: value})
+    binding = deepcopy(binding)
+    binding["receipt_digest"] = changed.digest
+    with pytest.raises(LegalProofCacheError):
+        LegalProofRecord.build(artifact, profile="changed-header", jurisdiction="fictional",
+                              theorem_receipts=(changed,), proof_bindings=(binding,))
+
+
+@pytest.mark.parametrize("facet", ["source", "obligation", "assumptions"])
+def test_bound_proof_cannot_follow_changed_formal_artifact(facet: str) -> None:
+    _, artifact, receipt, binding, _ = _bound_record()
+    if facet == "source":
+        changed = replace(artifact, declaration_digest="sha256:" + "fa" * 32)
+    elif facet == "obligation":
+        changed = replace(artifact, proof_obligations=(replace(artifact.proof_obligations[0], statement="False"),))
+    else:
+        changed = replace(artifact, assumptions=(replace(artifact.assumptions[0], statement="Different fictional premise."),))
+    assert changed.digest != artifact.digest
+    with pytest.raises(LegalProofIntegrityError):
+        LegalProofRecord.build(changed, profile="changed-artifact", jurisdiction="fictional",
+                              theorem_receipts=(receipt,), proof_bindings=(binding,))
+
+
+def test_current_bound_context_is_recursively_immutable() -> None:
+    record, _, _, _, _ = _bound_record()
+    with pytest.raises(TypeError):
+        record.proof_bindings[0]["context"]["toolchain"]["version"] = "tampered"
+
+
+def test_partial_obligation_coverage_does_not_grant_whole_artifact_shadow_proof() -> None:
+    record, _, _, _, _ = _bound_record(extra_obligation=True)
+    spy = _ShadowObservation()
+    cache = LegalProofCache()
+    cache.bind_shadow_repository(spy)
+    cache.put(record)
+    assert spy.writes[-1]["status"] == "unknown"
+    assert spy.writes[-1]["kernel_accepted"] is False
+
+
+@pytest.mark.parametrize("facet", ["legacy-schema", "legacy-native-v2", "unchecked-proposition", "wrong-compiled-source", "missing-native-identity", "wrong-guard-declaration"])
+def test_reissued_header_cannot_launder_invalid_kernel_evidence(facet: str) -> None:
+    _, artifact, _, binding, context = _bound_record()
+    claim = IRClaim.from_dict(binding["claim"])
+    request = BackendRequest.from_dict(binding["request"])
+    attempt = BackendAttempt.from_dict(binding["attempt"])
+    result = ProofResult.from_dict(binding["result"])
+    payload = result.payload.to_dict()
+    if facet == "legacy-schema":
+        payload["kernel_receipt"]["schema_version"] = "lean-kernel-receipt/v1"
+    elif facet == "legacy-native-v2":
+        payload["kernel_receipt"]["schema_version"] = "lean-kernel-receipt/v2"
+    elif facet == "missing-native-identity":
+        payload["kernel_receipt"]["native_identity"] = None
+    elif facet == "wrong-guard-declaration":
+        payload["kernel_receipt"]["expected_obligation_declaration"] = "unrelated_guard"
+    elif facet == "unchecked-proposition":
+        payload["kernel_receipt"]["expected_proposition_checked"] = False
+    else:
+        payload["kernel_receipt"]["compiled_source_digest"] = "ab" * 32
+    result = replace(result, payload=payload)
+    receipt = ProofReceipt.issue(claim, request, attempt, result, receipt_id="receipt:altered-kernel", verifier="fictional-test")
+    changed = deepcopy(binding)
+    changed.update(receipt_digest=receipt.digest, result=result.to_dict())
+    with pytest.raises(LegalProofIntegrityError):
+        LegalProofRecord.build(artifact, profile="invalid-kernel", jurisdiction="fictional",
+                              theorem_receipts=(receipt,), proof_bindings=(changed,))
+
+
+def test_v1_positional_constructor_arguments_keep_their_original_meaning() -> None:
+    artifact = _legal_artifact()
+    record = LegalProofRecord(artifact.declaration_id, artifact.declaration_digest,
+                              "positional-v1", artifact.to_dict(), "", "", (), "us-federal")
+    assert record.jurisdiction == "us-federal"
+    assert record.proof_bindings == ()
+    assert record.schema_version == LEGAL_PROOF_RECORD_SCHEMA_VERSION
+
+
+def test_bound_shadow_proof_scope_is_formal_obligations_only() -> None:
+    record, _, _, _, _ = _bound_record()
+    spy = _ShadowObservation()
+    cache = LegalProofCache()
+    cache.bind_shadow_repository(spy)
+    cache.put(record)
+    row = spy.writes[-1]
+    assert row["status"] == "proved" and row["kernel_accepted"] is True
+    assert row["result_payload"]["property"] == "declared_formal_obligation_coverage"
+    assert row["result_payload"]["required_obligation_ids"] == ["obligation:fictional-cache"]
+    assert all(row["result_payload"][name] is False for name in ("source_admission", "legal_admission", "corpus_admission"))
+    assert row["key"]["property_value"]["property"] == "declared_formal_obligation_coverage"
+
+
+def test_v1_artifact_shadow_key_keeps_its_existing_dimensions() -> None:
+    artifact = _legal_artifact()
+    spy = _ShadowObservation()
+    cache = LegalProofCache()
+    cache.bind_shadow_repository(spy)
+    record = cache.put(artifact, profile="artifact-v1", jurisdiction="us-federal")
+    key = spy.writes[-1]["key"]
+    assert key["toolchain"] == {"legal_ir": True}
+    assert key["ir"] == {"source_id": record.source_id, "source_digest": record.source_digest,
+                         "artifact_cid": record.artifact_cid}
+    assert key["policy"] == {"profile": "artifact-v1", "jurisdiction": "us-federal"}
+    assert "property_value" not in key
+
+
+@pytest.mark.parametrize("facet", ["artifact", "receipt"])
+def test_shadow_writer_rechecks_a_detached_snapshot_after_nested_mutation(facet: str) -> None:
+    record, _, _, _, _ = _bound_record()
+    record.verify_integrity()
+    if facet == "artifact":
+        record.artifact["metadata"]["post_verify_mutation"] = True
+    else:
+        record.theorem_receipts[0]["assumption_ids"].append("assumption:post-verify")
+    spy = _ShadowObservation()
+    cache = LegalProofCache()
+    cache.bind_shadow_repository(spy)
+    cache._shadow_write(record)
+    assert spy.writes == []
+
+
+def test_bound_proof_binding_normalizes_protocol_frozen_kernel_payload_to_canonical_wire():
+    """FrozenMap tuples are internal protocol storage, not serialized Lean wire."""
+    from ipfs_datasets_py.logic.backends.kernel import lean
+
+    artifact, receipt, binding, context = _bound_fixture()
+    result = ProofResult.from_dict(binding["result"])
+    frozen = result.payload["kernel_receipt"]
+    assert type(frozen["approved_axioms"]) is tuple
+    assert type(result.to_dict()["payload"]["kernel_receipt"]["approved_axioms"]) is list
+    with pytest.raises((lean.LeanKernelError, ValueError)):
+        lean.LeanKernelReceipt.from_dict(frozen)
+    rebuilt = build_legal_proof_binding(artifact, receipt,
+        claim=IRClaim.from_dict(binding["claim"]), request=BackendRequest.from_dict(binding["request"]),
+        attempt=BackendAttempt.from_dict(binding["attempt"]), result=result, context=context)
+    assert rebuilt == binding
+
+
+def test_genuine_archived_native_v2_false_acceptance_is_not_upgraded_or_reused():
+    """The preserved native run is a reproduced failure, never a v3 proof."""
+    from ipfs_datasets_py.logic.backends.kernel import lean
+    data = json.loads((FIXTURES / "native_v2" / "implicit_instance_false_acceptance.json").read_text())
+    archived = data["receipt"]
+    before = deepcopy(archived)
+    request = BackendRequest.from_dict(data["request"])
+    assert data["original_observation"]["sha256"] == "a80c792a2dc9ae899a783a71c62b925bb6a941205b90cf2040a80d16e96cded2"
+    assert archived["schema_version"] == "lean-kernel-receipt/v2" and archived["accepted"] is True
+    assert archived["request_digest"] == request.digest
+    source = request.payload.get("lean") or request.payload.get("source") or request.payload.get("checked_source")
+    assert archived["source_binding"]["source_digest"] == lean.content_digest(source)
+    assert archived["receipt_id"] == data["original_receipt_id"]
+    with pytest.raises((lean.LeanKernelError, ValueError)):
+        lean.LeanKernelReceipt.from_dict(archived)
+    assert archived == before
+
+
+def test_bound_proof_reuse_refuses_an_installed_older_kernel_profile(monkeypatch):
+    from ipfs_datasets_py.logic.backends.kernel import lean
+    artifact, receipt, binding, _ = _bound_fixture()
+    calls = []
+    class OlderParser:
+        @staticmethod
+        def from_dict(value):
+            calls.append(value)
+            raise AssertionError("known-bad older verification profile must not run")
+    monkeypatch.setattr(lean, "LEAN_KERNEL_RECEIPT_VERSION", "lean-kernel-receipt/v2")
+    monkeypatch.setattr(lean, "LeanKernelReceipt", OlderParser)
+    with pytest.raises(LegalProofIntegrityError, match="v3"):
+        LegalProofRecord.build(artifact, profile="older-owner", jurisdiction="fictional",
+            theorem_receipts=(receipt,), proof_bindings=(binding,))
+    assert calls == []

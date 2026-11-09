@@ -10,6 +10,18 @@ on:
       - develop
     paths:
       - "ipfs_datasets_py/processors/legal_data/reasoner/**"
+      - "ipfs_datasets_py/logic/autoformal/**"
+      - "ipfs_datasets_py/logic/legal_ir/**"
+      - "ipfs_datasets_py/logic/formalization/autoencoder/**"
+      - "ipfs_datasets_py/logic/backends/**"
+      - "ipfs_datasets_py/logic/ir_core/**"
+      - "ipfs_datasets_py/logic/common/duckdb_proof_*.py"
+      - "tests/fixtures/legal_ir/proof_cache/**"
+      - "tests/unit/logic/legal_ir/test_proof_cache.py"
+      - "tests/unit/logic/test_duckdb_proof_migration.py"
+      - "tests/unit/logic/test_duckdb_proof_store.py"
+      - "tests/unit/logic/autoformal/**"
+      - "tests/integration/logic/backends/test_kernel_backends.py"
       - "tests/reasoner/test_hybrid_v2_*.py"
       - "tests/reasoner/test_kg_enrichment_adapter.py"
       - "tests/reasoner/test_prover_backend_registry.py"
@@ -26,6 +38,18 @@ on:
       - develop
     paths:
       - "ipfs_datasets_py/processors/legal_data/reasoner/**"
+      - "ipfs_datasets_py/logic/autoformal/**"
+      - "ipfs_datasets_py/logic/legal_ir/**"
+      - "ipfs_datasets_py/logic/formalization/autoencoder/**"
+      - "ipfs_datasets_py/logic/backends/**"
+      - "ipfs_datasets_py/logic/ir_core/**"
+      - "ipfs_datasets_py/logic/common/duckdb_proof_*.py"
+      - "tests/fixtures/legal_ir/proof_cache/**"
+      - "tests/unit/logic/legal_ir/test_proof_cache.py"
+      - "tests/unit/logic/test_duckdb_proof_migration.py"
+      - "tests/unit/logic/test_duckdb_proof_store.py"
+      - "tests/unit/logic/autoformal/**"
+      - "tests/integration/logic/backends/test_kernel_backends.py"
       - "tests/reasoner/test_hybrid_v2_*.py"
       - "tests/reasoner/test_kg_enrichment_adapter.py"
       - "tests/reasoner/test_prover_backend_registry.py"
@@ -174,24 +198,24 @@ jobs:
         run: |
           set +e
           PYTHONPATH=src:${GITHUB_WORKSPACE} python - <<'PY' 2>&1 | tee legal-v2-backend-smoke-${{ matrix.backend_id }}.log
-from ipfs_datasets_py.processors.legal_data.reasoner.v2_cli import run_v2_cli
+          from ipfs_datasets_py.processors.legal_data.reasoner.v2_cli import run_v2_cli
 
-payload = run_v2_cli(
-    sentences=["Controller shall report breach within 24 hours."],
-    jurisdiction="us/federal",
-    enable_optimizer=True,
-    enable_kg=True,
-    enable_prover=True,
-    prover_backend_id="${{ matrix.backend_id }}",
-)
+          payload = run_v2_cli(
+              sentences=["Controller shall report breach within 24 hours."],
+              jurisdiction="us/federal",
+              enable_optimizer=True,
+              enable_kg=True,
+              enable_prover=True,
+              prover_backend_id="${{ matrix.backend_id }}",
+          )
 
-summary = payload.get("summary") or {}
-assert summary.get("total") == 1, summary
-assert summary.get("ok") == 1, summary
-assert summary.get("error") == 0, summary
-assert summary.get("prover_backend_id") == "${{ matrix.backend_id }}", summary
-assert summary.get("schema_version") == "1.0", summary
-PY
+          summary = payload.get("summary") or {}
+          assert summary.get("total") == 1, summary
+          assert summary.get("ok") == 1, summary
+          assert summary.get("error") == 0, summary
+          assert summary.get("prover_backend_id") == "${{ matrix.backend_id }}", summary
+          assert summary.get("schema_version") == "1.0", summary
+          PY
           status=${PIPESTATUS[0]}
           echo "exit_code=${status}" >> "$GITHUB_OUTPUT"
           exit 0
@@ -209,3 +233,86 @@ PY
         run: |
           echo "Backend smoke failed for ${{ matrix.backend_id }}. See uploaded log artifact."
           exit 1
+
+  legal-autoformal-native-lean:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      IPFS_DATASETS_PY_MINIMAL_IMPORTS: "1"
+      IPFS_DATASETS_PY_ENABLE_MCP_IMPORTS: "0"
+      IPFS_DATASETS_PY_ENABLE_FASTAPI_IMPORTS: "0"
+      IPFS_DATASETS_PY_ENABLE_FINANCE_DASHBOARD_IMPORTS: "0"
+      IPFS_DATASETS_PY_ENABLE_LLM_IMPORTS: "0"
+      IPFS_DATASETS_PY_WARN_OPTIONAL_IMPORTS: "0"
+      HF_HUB_OFFLINE: "1"
+      TRANSFORMERS_OFFLINE: "1"
+      IPFS_DATASETS_AUTO_INSTALL: "0"
+      IPFS_KIT_AUTO_INSTALL_DEPS: "0"
+      PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
+      IPFS_DATASETS_RUN_NATIVE_LEAN: "1"
+      IPFS_DATASETS_LEAN_VERSION: "4.34.1"
+      IPFS_DATASETS_NATIVE_LEAN_REPORT: native-lean-v3-result.json
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install focused Python test dependencies
+        run: python -m pip install pytest beartype duckdb
+      - name: Restore pinned Lean toolchain
+        id: lean-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.elan/toolchains/leanprover--lean4---v4.34.1
+          key: legal-autoformal-lean-4.34.1-${{ runner.os }}-${{ runner.arch }}
+      - name: Install the pinned Lean toolchain
+        if: steps.lean-cache.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/legal-ir-elan"
+          curl --fail --location --retry 2 \
+            https://github.com/leanprover/elan/releases/download/v4.1.2/elan-x86_64-unknown-linux-gnu.tar.gz \
+            --output "$RUNNER_TEMP/legal-ir-elan/elan.tar.gz"
+          tar -xzf "$RUNNER_TEMP/legal-ir-elan/elan.tar.gz" -C "$RUNNER_TEMP/legal-ir-elan"
+          "$RUNNER_TEMP/legal-ir-elan/elan-init" -y --no-modify-path \
+            --default-toolchain leanprover/lean4:v4.34.1
+      - name: Select the pinned executable
+        shell: bash
+        run: |
+          printf '%s\n' "IPFS_DATASETS_LEAN_EXECUTABLE=$HOME/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lean" >> "$GITHUB_ENV"
+      - name: Run focused proof and cache contracts
+        env:
+          IPFS_DATASETS_RUN_NATIVE_LEAN: "0"
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          python -m pytest -c /dev/null --noconftest \
+            tests/integration/logic/backends/test_kernel_backends.py \
+            tests/unit/logic/legal_ir/test_proof_cache.py \
+            tests/unit/logic/test_duckdb_proof_migration.py \
+            tests/unit/logic/test_duckdb_proof_store.py::test_exact_verification_cache_interop_bridge \
+            tests/unit/logic/test_duckdb_proof_store.py::test_verification_cache_entry_can_be_put_directly \
+            tests/unit/logic/test_duckdb_proof_store.py::test_advisory_verification_projection_uses_target_status_polarity \
+            tests/unit/logic/test_duckdb_proof_store.py::test_store_put_retains_advisory_candidate_without_proof_authority \
+            --deselect tests/integration/logic/backends/test_kernel_backends.py::test_lean_native_v2_expected_type_and_dependency_policy \
+            -q --tb=short --junitxml=legal-autoformal-contracts-junit.xml
+      # This canonical opt-in uses the existing ResourceAdmittedToolRunner with
+      # one CPU/child, a finite AS ceiling and a 512 MiB RSS bound per tool.
+      # CI is an isolated runner; no retained host policy or budget is reset.
+      - name: Run actual Lean declaration, type and dependency controls
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          python -m pytest -c /dev/null --noconftest \
+            tests/integration/logic/backends/test_kernel_backends.py::test_lean_native_v2_expected_type_and_dependency_policy \
+            -v --tb=short --junitxml=native-lean-v3-junit.xml
+      - name: Retain actual native proof-check evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: legal-autoformal-native-lean-v3
+          if-no-files-found: error
+          path: |
+            native-lean-v3-result.json
+            native-lean-v3-junit.xml
+            legal-autoformal-contracts-junit.xml

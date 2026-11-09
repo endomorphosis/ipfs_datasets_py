@@ -1788,16 +1788,24 @@ def _normalize_legal_ir(
                 )
 
     theorem_receipts = payload.get("theorem_receipts") or ()
+    # V1 headers preserve historical associations only. A status string, even
+    # "proved", "attested" or "reconstructed", is never proof of an artifact.
+    # New v2 records use the same canonical validator as the legal cache; no
+    # parallel migration proof validator or inferred legal approval is added.
     proved = False
-    if isinstance(theorem_receipts, Sequence) and not isinstance(
-        theorem_receipts, (str, bytes, bytearray)
-    ):
-        for receipt in theorem_receipts:
-            if isinstance(receipt, Mapping):
-                status_text = str(receipt.get("status") or "").lower()
-                if status_text in {"proved", "attested", "reconstructed"}:
-                    proved = True
-                    break
+    bound_record = None
+    bound_contexts = []
+    if schema == "legal-proof-record/v2":
+        try:
+            from ..legal_ir.proof_cache import LegalProofRecord
+
+            bound_record = LegalProofRecord.from_dict(payload)
+            required = {item.obligation_id for item in bound_record.formalization_artifact().proof_obligations}
+            covered = {item["obligation_id"] for item in bound_record.theorem_receipts}
+            proved = bool(required) and required <= covered
+            bound_contexts = [item["context"] for item in bound_record.to_dict()["proof_bindings"]]
+        except (TypeError, ValueError, KeyError, AttributeError) as exc:
+            raise ProofMigrationQuarantineError("invalid bound legal proof record") from exc
 
     if proved:
         status = ResultStatus.PROVED
@@ -1820,17 +1828,30 @@ def _normalize_legal_ir(
         "content_digest": content_digest,
         "content_cid": content_cid,
     }
-    key = UnifiedProofKey.build(
-        ir=ir_value,
-        property_value={"family": family.value, "profile": profile},
-        backend_id="legal_ir",
-        backend_version="legacy",
+    key_values = dict(
+        ir=ir_value, property_value={"family": family.value, "profile": profile},
+        backend_id="legal_ir", backend_version="legacy",
         backend_config={"jurisdiction": payload.get("jurisdiction") or ""},
         solver_identities={"family": "legal_ir"},
         theorem_registry=f"legacy:legal_ir:{profile}",
         policy={"migration": PROOF_MIGRATION_SCHEMA_VERSION, "profile": profile},
         resources={"theorem_receipts": len(list(theorem_receipts))},
     )
+    # The old safe artifact-only projection remains unchanged. Unbound receipt
+    # associations get a new policy key rather than hitting an old unsafe
+    # PROVED row; every bound v2 key contains its full historical context.
+    if theorem_receipts or bound_record is not None:
+        key_values["policy"]["legal_receipt_binding_policy"] = "bound-record-v2-only"
+    formal_scope = {}
+    if bound_record is not None:
+        formal_scope = dict(property="declared_formal_obligation_coverage",
+                            required_obligation_ids=sorted(required), source_admission=False,
+                            legal_admission=False, corpus_admission=False)
+        key_values["property_value"].update(formal_scope)
+        key_values["backend_version"] = "bound-v2"
+        key_values["solver_identities"]["bound_contexts"] = bound_contexts
+        key_values["toolchain"] = {"bound_contexts": bound_contexts}
+    key = UnifiedProofKey.build(**key_values)
 
     created_at = 0.0
     if "created_at" in payload:
@@ -1858,10 +1879,15 @@ def _normalize_legal_ir(
             if isinstance(theorem_receipts, Sequence)
             and not isinstance(theorem_receipts, (str, bytes, bytearray))
             else [],
+            "proof_bindings": bound_record.to_dict()["proof_bindings"] if bound_record is not None else [],
+            "proof_reuse_requires_explicit_expected_context": True,
+            "legal_or_statutory_admission_claimed": False,
+            **formal_scope,
         },
         created_at=created_at,
         result_id=content_cid or content_digest or key.digest,
-        diagnostics=(f"migrated_from:{family.value}", f"profile:{profile}"),
+        diagnostics=(f"migrated_from:{family.value}", f"profile:{profile}",
+                     "bound_formal_proof_history" if proved else "unbound_or_incomplete_legal_evidence_advisory"),
         source_record_index=record.record_index,
         source_line_number=record.line_number,
         original_bytes_digest=record.original_bytes_digest,
