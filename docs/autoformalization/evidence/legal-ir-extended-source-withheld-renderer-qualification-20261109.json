@@ -1,0 +1,428 @@
+{
+  "schema": "extended-source-withheld-renderer-qualification/v1",
+  "recorded_utc": "2026-11-09T07:27:54.431548+00:00",
+  "status": "controlled_literal_cycle_and_canonical_regressions_qualified",
+  "existing_tasks": [
+    "LIR-07",
+    "LIR-23"
+  ],
+  "candidate_commit": "d6c77b737be96f446162b7d9ac1202baa0120647",
+  "source_files": [
+    {
+      "path": "ipfs_datasets_py/logic/legal_ir/extended_compiler.py",
+      "sha256": "6c978653653eea33459af89311bf43fa11357ce5e0648cf0e56549790e8cfa73",
+      "bytes": 4122
+    },
+    {
+      "path": "ipfs_datasets_py/logic/legal_ir/extended_decompiler.py",
+      "sha256": "04d8fbb3d6dde70fca9a849cc115dddb504643f76e6ddf9da4eb6d9d364d6b07",
+      "bytes": 3101
+    },
+    {
+      "path": "ipfs_datasets_py/logic/legal_ir/extended_contracts.py",
+      "sha256": "f3b0b4870f013bd7bb7657a522c7f2d11bde705e586a17cdd73daf18387d8509",
+      "bytes": 5961
+    },
+    {
+      "path": "tests/unit/logic/legal_ir/test_extended_decompiler.py",
+      "sha256": "5d056c07c581ade70e89bc88b1720fbe0fe078fc70768140b40ebf37accf586e",
+      "bytes": 9841
+    },
+    {
+      "path": "ipfs_datasets_py/logic/legal_ir/canonical_compiler.py",
+      "sha256": "daa148e076ebfd0e61f5a06a915bb924023873bcad5b41923976a33e2693ebdd",
+      "bytes": 37034
+    },
+    {
+      "path": "ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+      "sha256": "79eeb9072e74e68dc5fab7640b5ad49e82131d0f35232ff473c7f2dfbe232c64",
+      "bytes": 13437
+    },
+    {
+      "path": "tests/unit/logic/legal_ir/test_canonical_decompiler.py",
+      "sha256": "e90ca3ac4359057220f60bb398235b27feec7a3cdce03a2ad9dda76515031684",
+      "bytes": 11500
+    },
+    {
+      "path": "tests/unit/logic/legal_ir/test_canonical_decompiler_reconstruction.py",
+      "sha256": "afe11b1fcfc5003df40e136cc2de095f7d6ba708c6ee3f06a09cd6f7f4c8c0b0",
+      "bytes": 7496
+    }
+  ],
+  "tests": {
+    "passed": 79,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "extended_surface_cycle": 60,
+    "canonical_decompiler": 9,
+    "canonical_reconstruction": 10,
+    "pytest_seconds": 0.9
+  },
+  "source_scope": {
+    "declared_pins": 97,
+    "distinct_product_files_compiled": 80,
+    "fresh_python_cache_prefix": true,
+    "raw_compile_source_bytes_pinned": true,
+    "vendor_sources_attested": false,
+    "compiled_sources_different_from_candidate_commit": [],
+    "parent_source_drift": [],
+    "source_closed": true
+  },
+  "original_closeout": {
+    "reservation_id": "e739864b6a4a404098dd2fc7b0f4cf45",
+    "reservation_status": "released",
+    "storage_bytes": 524288,
+    "attempt_bytes": 31972,
+    "operation_seconds": 86.9580202838406,
+    "parent_waited": true,
+    "observed_live_processes": 0,
+    "process_scope": "sampled_birth_bound_descendants",
+    "kernel_containment_attested": false
+  },
+  "features": [
+    "Complete existing definition/policy/O-P-F norm literal slots and all qualifier/objective inventories",
+    "Order/duplicate/UTF-8 literal custody and explicit no-truncation output budget",
+    "Whole-span controlled-language parsing and mixed-residue refusal",
+    "No original-source, receipt, cache, model or query-reference channel in the reverse renderer",
+    "Measured canonical v1 parity/regressions retained"
+  ],
+  "limits": [
+    "The existing surface IR remains a literal-slot baseline, not complete relational LegalIR",
+    "Quantifier/count/calendar/date/definition phrases are retained rather than legally or logically interpreted",
+    "No original UTF-8 restoration of arbitrary source prose, independent semantic-equivalence review or statutory correspondence proved",
+    "No model, optimizer, pretrained decoder, Lean command, real legal review or admitted corpus",
+    "Current original outer SDK source is separately captured and receives no qualification transfer after later changes",
+    "Hosted CI remains separately unverified; earlier billing refusal supplied zero executed steps"
+  ],
+  "history": [
+    {
+      "controls": "workspace/test-logs/federal-corpus-audits/legal-ir-extended-source-withheld-renderer-20261109-v01/red-controls-v01",
+      "terminal": {
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-extended-source-withheld-renderer-20261109-v01/red-controls-v01/owner.stdout",
+        "sha256": "f3bb0154b691cf93c1a5786f2c3960589bbcca19212659a8b0ca969b3457e41c",
+        "bytes": 3582
+      },
+      "parent_closeout": {
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-extended-source-withheld-renderer-20261109-v01/red-controls-v01/parent-closeout.json",
+        "sha256": "85802c8f4762091d9b8f75b8324f023490a2380e9c5f84ccee618c3ed64d989f",
+        "bytes": 77
+      },
+      "failure_type": "DaemonResourceError",
+      "failure": "storage reservation capacity exceeded",
+      "new_claim_created": false,
+      "reservation_id": null,
+      "reservation_status": "not_entered"
+    },
+    {
+      "controls": "workspace/test-logs/federal-corpus-audits/legal-ir-extended-source-withheld-renderer-20261109-v01/red-controls-v02",
+      "terminal": {
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-extended-source-withheld-renderer-20261109-v01/red-controls-v02/owner.stdout",
+        "sha256": "53ef2c07eec7f9bea6fb1653824652669f81f9a489e6c038dddd46a4502ebf70",
+        "bytes": 3578
+      },
+      "parent_closeout": {
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-extended-source-withheld-renderer-20261109-v01/red-controls-v02/parent-closeout.json",
+        "sha256": "85802c8f4762091d9b8f75b8324f023490a2380e9c5f84ccee618c3ed64d989f",
+        "bytes": 77
+      },
+      "failure_type": "DaemonResourceError",
+      "failure": "storage reservation capacity exceeded",
+      "new_claim_created": false,
+      "reservation_id": null,
+      "reservation_status": "not_entered"
+    },
+    {
+      "controls": "workspace/test-logs/federal-corpus-audits/legal-ir-extended-source-withheld-renderer-20261109-v01/red-controls-v03",
+      "terminal": {
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-extended-source-withheld-renderer-20261109-v01/red-controls-v03/owner.stdout",
+        "sha256": "1d03a197566d728a04f85b78a6d784f36bc65ea1c8a41260546a6737b55cfa01",
+        "bytes": 3580
+      },
+      "parent_closeout": {
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-extended-source-withheld-renderer-20261109-v01/red-controls-v03/parent-closeout.json",
+        "sha256": "85802c8f4762091d9b8f75b8324f023490a2380e9c5f84ccee618c3ed64d989f",
+        "bytes": 77
+      },
+      "failure_type": "DaemonResourceError",
+      "failure": "storage reservation capacity exceeded",
+      "new_claim_created": false,
+      "reservation_id": null,
+      "reservation_status": "not_entered"
+    },
+    {
+      "controls": "workspace/test-logs/federal-corpus-audits/legal-ir-extended-source-withheld-renderer-20261109-v01/green-controls-v01",
+      "terminal": {
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-extended-source-withheld-renderer-20261109-v01/green-controls-v01/owner.stdout",
+        "sha256": "9fad5e20727b039c14837aaafcb9fff322875f1efbac9bb22ddad85c15eab326",
+        "bytes": 3580
+      },
+      "parent_closeout": {
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-extended-source-withheld-renderer-20261109-v01/green-controls-v01/parent-closeout.json",
+        "sha256": "85802c8f4762091d9b8f75b8324f023490a2380e9c5f84ccee618c3ed64d989f",
+        "bytes": 77
+      },
+      "failure_type": "DaemonResourceError",
+      "failure": "storage reservation capacity exceeded",
+      "new_claim_created": false,
+      "reservation_id": null,
+      "reservation_status": "not_entered"
+    },
+    {
+      "controls": "workspace/test-logs/federal-corpus-audits/legal-ir-extended-source-withheld-renderer-20261109-v01/green-controls-v02",
+      "terminal": {
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-extended-source-withheld-renderer-20261109-v01/green-controls-v02/owner.stdout",
+        "sha256": "769c0630478f0a61d6a19c7afea6bc4bb0e1f7bb31c6e3e045cb7731e2cbe825",
+        "bytes": 7937
+      },
+      "parent_closeout": {
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-extended-source-withheld-renderer-20261109-v01/green-controls-v02/parent-closeout.json",
+        "sha256": "85802c8f4762091d9b8f75b8324f023490a2380e9c5f84ccee618c3ed64d989f",
+        "bytes": 77
+      },
+      "failure_type": "RuntimeError",
+      "failure": "validation command failed with returncode 2",
+      "new_claim_created": true,
+      "reservation_id": "aa17e23209cf4705bc2598ae5cdda263",
+      "reservation_status": "retained",
+      "passed": 0,
+      "failures": 0,
+      "collection_errors": 1,
+      "junit": {
+        "path": "/tmp/pytest-of-barberb/legal-ir-extended-renderer-green-20261109-v01/attempt/exports/junit.xml",
+        "sha256": "1a8f852a3c23f93e059e6719803a9fc70bb268a620a71005a275ed9f270e2600",
+        "bytes": 983
+      }
+    },
+    {
+      "controls": "workspace/test-logs/federal-corpus-audits/legal-ir-extended-source-withheld-renderer-20261109-v01/green-controls-v03",
+      "terminal": {
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-extended-source-withheld-renderer-20261109-v01/green-controls-v03/owner.stdout",
+        "sha256": "171e87a8070fb4375e51bfd7a2c9c469d5f3b7de794355439b9611ebf8869e20",
+        "bytes": 3779
+      },
+      "parent_closeout": {
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-extended-source-withheld-renderer-20261109-v01/green-controls-v03/parent-closeout.json",
+        "sha256": "85802c8f4762091d9b8f75b8324f023490a2380e9c5f84ccee618c3ed64d989f",
+        "bytes": 77
+      },
+      "failure_type": "DaemonResourceError",
+      "failure": "disk ledger lock unavailable",
+      "new_claim_created": false,
+      "reservation_id": null,
+      "reservation_status": "not_entered"
+    },
+    {
+      "controls": "workspace/test-logs/federal-corpus-audits/legal-ir-extended-source-withheld-renderer-20261109-v01/green-controls-v04",
+      "terminal": {
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-extended-source-withheld-renderer-20261109-v01/green-controls-v04/owner.stdout",
+        "sha256": "aad436d98323f392c9f409d5438c9479fb2dd1ea7c7a985e18522323dea0e804",
+        "bytes": 7937
+      },
+      "parent_closeout": {
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-extended-source-withheld-renderer-20261109-v01/green-controls-v04/parent-closeout.json",
+        "sha256": "85802c8f4762091d9b8f75b8324f023490a2380e9c5f84ccee618c3ed64d989f",
+        "bytes": 77
+      },
+      "failure_type": "RuntimeError",
+      "failure": "validation command failed with returncode 2",
+      "new_claim_created": true,
+      "reservation_id": "7774350a8af245b5a13316078ea018fc",
+      "reservation_status": "retained",
+      "passed": 0,
+      "failures": 0,
+      "collection_errors": 1,
+      "junit": {
+        "path": "/tmp/pytest-of-barberb/legal-ir-extended-renderer-green-20261109-v03/attempt/exports/junit.xml",
+        "sha256": "422bb14783702a9cb64a38af9ee9f1069c2c5b5880b01abdb9ab7b3ba0c9e134",
+        "bytes": 1284
+      }
+    },
+    {
+      "controls": "workspace/test-logs/federal-corpus-audits/legal-ir-extended-source-withheld-renderer-20261109-v01/green-controls-v05",
+      "terminal": {
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-extended-source-withheld-renderer-20261109-v01/green-controls-v05/owner.stdout",
+        "sha256": "e4a4fbe5953a57a92b56882f1390eeb847cc0dd505e53c6799a0686c19da9554",
+        "bytes": 7937
+      },
+      "parent_closeout": {
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-extended-source-withheld-renderer-20261109-v01/green-controls-v05/parent-closeout.json",
+        "sha256": "85802c8f4762091d9b8f75b8324f023490a2380e9c5f84ccee618c3ed64d989f",
+        "bytes": 77
+      },
+      "failure_type": "RuntimeError",
+      "failure": "validation command failed with returncode 1",
+      "new_claim_created": true,
+      "reservation_id": "9fdc9e0db7a34b7a826a3ab36dbf3d7a",
+      "reservation_status": "retained",
+      "passed": 78,
+      "failures": 1,
+      "collection_errors": 0,
+      "junit": {
+        "path": "/tmp/pytest-of-barberb/legal-ir-extended-renderer-green-20261109-v05/attempt/exports/junit.xml",
+        "sha256": "3e91446a134de3d4c31a051a6d47b0f455604c53e08557d68c1acdd9b070e5d1",
+        "bytes": 15353
+      }
+    },
+    {
+      "controls": "workspace/test-logs/federal-corpus-audits/legal-ir-extended-source-withheld-renderer-20261109-v01/green-controls-v06",
+      "terminal": {
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-extended-source-withheld-renderer-20261109-v01/green-controls-v06/owner.stdout",
+        "sha256": "69e9c4a018a2cee31d4a648cad95beba200de6984fbb323e93d9b10c09780b23",
+        "bytes": 7936
+      },
+      "parent_closeout": {
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-extended-source-withheld-renderer-20261109-v01/green-controls-v06/parent-closeout.json",
+        "sha256": "85802c8f4762091d9b8f75b8324f023490a2380e9c5f84ccee618c3ed64d989f",
+        "bytes": 77
+      },
+      "failure_type": "RuntimeError",
+      "failure": "validation command failed with returncode 1",
+      "new_claim_created": true,
+      "reservation_id": "8f7430ee2c204af0a71f6321ac7e0c1a",
+      "reservation_status": "retained",
+      "passed": 78,
+      "failures": 1,
+      "collection_errors": 0,
+      "junit": {
+        "path": "/tmp/pytest-of-barberb/legal-ir-extended-renderer-green-20261109-v06/attempt/exports/junit.xml",
+        "sha256": "924cf19feca80d6bc770277ef2115824ee4a8cc1a959054cccf6db3a8e706d44",
+        "bytes": 15681
+      }
+    },
+    {
+      "controls": "workspace/test-logs/federal-corpus-audits/legal-ir-extended-source-withheld-renderer-20261109-v01/green-controls-v07",
+      "terminal": {
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-extended-source-withheld-renderer-20261109-v01/green-controls-v07/owner.stdout",
+        "sha256": "1d86c0d93480e28715e2ebcbdfcc8036c4c8b13716ae078d8357f901586b7397",
+        "bytes": 7937
+      },
+      "parent_closeout": {
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-extended-source-withheld-renderer-20261109-v01/green-controls-v07/parent-closeout.json",
+        "sha256": "85802c8f4762091d9b8f75b8324f023490a2380e9c5f84ccee618c3ed64d989f",
+        "bytes": 77
+      },
+      "failure_type": "RuntimeError",
+      "failure": "validation command failed with returncode 1",
+      "new_claim_created": true,
+      "reservation_id": "2220f7d7d68e49d486de8c684017fb81",
+      "reservation_status": "retained",
+      "passed": 78,
+      "failures": 1,
+      "collection_errors": 0,
+      "junit": {
+        "path": "/tmp/pytest-of-barberb/legal-ir-extended-renderer-green-20261109-v07/attempt/exports/junit.xml",
+        "sha256": "0f091f1772a5aeae5e5499f976df2bf63548b321d0cd2fa754c3708507a7b427",
+        "bytes": 15678
+      }
+    }
+  ],
+  "earlier_claims_still_retained": [
+    {
+      "reservation_id": "aa17e23209cf4705bc2598ae5cdda263",
+      "status": "retained",
+      "fully_charged_bytes": 524288
+    },
+    {
+      "reservation_id": "7774350a8af245b5a13316078ea018fc",
+      "status": "retained",
+      "fully_charged_bytes": 524288
+    },
+    {
+      "reservation_id": "9fdc9e0db7a34b7a826a3ab36dbf3d7a",
+      "status": "retained",
+      "fully_charged_bytes": 524288
+    },
+    {
+      "reservation_id": "8f7430ee2c204af0a71f6321ac7e0c1a",
+      "status": "retained",
+      "fully_charged_bytes": 524288
+    },
+    {
+      "reservation_id": "2220f7d7d68e49d486de8c684017fb81",
+      "status": "retained",
+      "fully_charged_bytes": 524288
+    }
+  ],
+  "historical_storage_migrations": [
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-relational-counted-preservation-20261109-v01/CONTROL_METADATA_ARCHIVE.json",
+      "sha256": "434a34dba24cd135912bbf379d493040cefe3a0e582c5299bec62523d3093ec3",
+      "bytes": 64605
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-relational-counted-preservation-20261109-v01/OLD_MIGRATION_RECEIPT_ARCHIVE.json",
+      "sha256": "339ce17f9ef08ca3794b4ff83b8ac1fe9e6f7b3a7674c63b307190194247bbba",
+      "bytes": 1659
+    }
+  ],
+  "historical_storage_policy": "All original bytes retained in verified archives with locators. No ledger row, full charged reservation, cap or budget changed; archived receipts must be read through their locator, not treated as missing evidence.",
+  "evidence": [
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-extended-source-withheld-renderer-20261109-v01/green-controls-v08/request.json",
+      "sha256": "3e2edb18f2b068763a136acb5ab4a6796a5cb504085c5188a805af1a1114c893",
+      "bytes": 19057
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-extended-source-withheld-renderer-20261109-v01/green-controls-v08/plan.json",
+      "sha256": "a04d3940616ed17e181374c75d8703961a5d49c226ba1cfea8bd45306571eeaa",
+      "bytes": 17392
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-extended-source-withheld-renderer-20261109-v01/green-controls-v08/captured-source-manifest.json",
+      "sha256": "ec72a3819e0ea62597cdca26d9322344ad93dc8e14905039c1f7825e376ff4ee",
+      "bytes": 22887
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-extended-source-withheld-renderer-20261109-v01/green-controls-v08/captured-source-buffers.tar.gz",
+      "sha256": "71b2a9499469262f48ff6cb84c135d8e1eef72ca212594b4182e53830b6ef415",
+      "bytes": 1000971
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-extended-source-withheld-renderer-20261109-v01/green-controls-v08/owner.stdout",
+      "sha256": "caee7b4779b095bc3891b8e717b091175345f8f6fd68f20c7c6cd7aafd20dda3",
+      "bytes": 5173
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-extended-source-withheld-renderer-20261109-v01/green-controls-v08/parent-closeout.json",
+      "sha256": "b2e85cb18bf58e26c26bff37172054556afc0b0faa827ab5889965ae71dd6358",
+      "bytes": 77
+    },
+    {
+      "path": "/tmp/pytest-of-barberb/legal-ir-extended-renderer-green-20261109-v08/attempt/logs/result.json",
+      "sha256": "fcf1a2140cbaa2aef5f9c227b779a7212aba83bf9a17318844ea0cd741be4eec",
+      "bytes": 777
+    },
+    {
+      "path": "/tmp/pytest-of-barberb/legal-ir-extended-renderer-green-20261109-v08/attempt/logs/execution.json",
+      "sha256": "a1285157f3c63756a9ae09f72debdf254ff891240b846d447fe8fbe3289387de",
+      "bytes": 1282
+    },
+    {
+      "path": "/tmp/pytest-of-barberb/legal-ir-extended-renderer-green-20261109-v08/attempt/logs/stdout.log",
+      "sha256": "985616bbc8c60688e6b92da1426b67ae53077a04ae9edb53c4943080a7956b81",
+      "bytes": 298
+    },
+    {
+      "path": "/tmp/pytest-of-barberb/legal-ir-extended-renderer-green-20261109-v08/attempt/exports/junit.xml",
+      "sha256": "569b4ec157b7a4fa0848a0c1bbc496336061e18cd5b5f67e14fe97530c60c74b",
+      "bytes": 14702
+    },
+    {
+      "path": "/tmp/pytest-of-barberb/legal-ir-extended-renderer-green-20261109-v08/attempt/exports/source-observation.json",
+      "sha256": "5b256fba04f0f88d67fef65f14628437ec517ea658813721b7a8f76524c9769f",
+      "bytes": 13573
+    }
+  ],
+  "candidate_capsule_preserved": "docs/autoformalization/evidence/legal-ir-extended-source-withheld-renderer-candidate-20261109.json",
+  "proof_feedback_followup": {
+    "path": "workspace/test-logs/federal-corpus-audits/legal-ir-extended-source-withheld-renderer-20261109-v01/proof-feedback-followup/review.json",
+    "sha256": "ec7c40688757909a86882044a81918857d4976230e40814b50f93fe9dd107f2a",
+    "bytes": 3053
+  },
+  "training_gold_mask": 0,
+  "evaluation_gold_mask": 0,
+  "proof_authority": false,
+  "legal_meaning_admitted": false,
+  "corpus_admitted": false
+}

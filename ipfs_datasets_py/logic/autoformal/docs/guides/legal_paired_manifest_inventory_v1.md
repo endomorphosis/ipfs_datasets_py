@@ -54,3 +54,35 @@ This operation reads no tables or report/index artifacts, performs no source
 replay and grants no source or context authority. Use the explicit v2 payload
 intake to replay the full report. These source changes require fresh engineering
 qualification; historical receipts remain tied to their original source pins.
+
+## Historical paired-manifest branch reconciliation
+
+The historical `codex/legal-paired-manifest-inventory-20261016-01` tip
+`06e387eb447d4d5cf21049a7df17e20b3879a023` is retained as a merge parent, including all
+original source, tests and pre-migration guide bytes. Current product source is
+preserved from main `7e860a5fa1a0bd1c0f940ac141665461b332de29`; the old guide entry points
+continue to redirect to the maintained module guides.
+
+Static review of the historical delta found 55 Python files, 31 byte-identical
+to main, no missing historical top-level function/class, and 37 changed
+definitions. The legacy manifest prepare, validate and analysis function bodies
+match the current shared helpers after explicitly specializing their declared
+legacy defaults (`coordinate=False`, `versions=(1, 2)`), folding constant-only
+branches, excluding docstrings and normalizing the compared prepare-call name.
+The public legacy wrappers retain those defaults. The explicit coordinate route
+adds its own namespace and independent source-coordinate report pins.
+
+Other reviewed changes retain separately selected parent/context profiles,
+source-span-specific unary lowering, shared typed-correspondence validators,
+bounded Boolean definitions and the newer relational producer closing check.
+Current tests retain the historical assertions while extending supported API
+rosters, relation fixtures and explicit test IDs. The six-kind open context
+obligations remain open, with no verified semantic attachments. None of this
+selects governing law, resolves meaning or grants training, gold or Lean use.
+
+This merge changes only this guide relative to its first parent. It does not
+reinstall old implementations or transfer old receipts to newer producer pins.
+The static history/source/body comparisons are not fresh runtime tests, a
+whole-branch equivalence proof, model quality evidence or native qualification.
+Use each maintained owner's versioned contract and exact qualification record
+before execution; all unsupported or unreviewed scientific gates remain open.

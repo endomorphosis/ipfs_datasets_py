@@ -275,3 +275,273 @@ def prepare_unavailable_relation_handoff(declaration, *, expected_declaration_bi
 
 
 __all__ = ["compile_train_relation_masks", "validate_train_relation_mask_handoff", "prepare_unavailable_relation_handoff"]
+
+
+REVIEWED_SCHEMA = "alignment-reviewed-train-relation-mask-handoff/v2"
+REVIEWED_MODE = "authenticated_reviewed_pair_purpose/v2"
+
+from pathlib import Path as _ReviewedPath
+import hashlib as _reviewed_hashlib
+_REVIEWED_IMPORTED_RAW_PINS = {
+    str(_ReviewedPath(path).resolve()): _reviewed_hashlib.sha256(_ReviewedPath(path).read_bytes()).hexdigest()
+    for path in (__file__, relations.__file__)
+}
+
+
+def _reviewed_imported_pins():
+    observed = {path: _reviewed_hashlib.sha256(_ReviewedPath(path).read_bytes()).hexdigest()
+                for path in _REVIEWED_IMPORTED_RAW_PINS}
+    _require(observed == _REVIEWED_IMPORTED_RAW_PINS,
+             "reviewed pair mask self or direct relation source changed since import")
+    return dict(_REVIEWED_IMPORTED_RAW_PINS)
+
+
+def _reviewed_pins():
+    from pathlib import Path
+    import hashlib
+    imported = _reviewed_imported_pins()
+    pins = relations._reviewed_pins()
+    for path, digest in imported.items():
+        _require(path not in pins or pins[path] == digest, "reviewed pair mask imported producer identity differs")
+        pins[path] = digest
+    _require(_reviewed_imported_pins() == imported, "reviewed pair mask sources changed during pin capture")
+    return pins
+
+
+def _reviewed_process_exclusions(prepared, original_inputs, registry, policy, reviews, current_endpoint_reports):
+    """Inventory bounded known custody bytes before accepting independent evidence.
+
+    Hash complete ordinary JSON records and exact bytes/text, plus declared
+    producer/content pins. Pair process references themselves are nominations,
+    so their hashes/IDs are not treated as known evidence bodies. Original
+    endpoint closures and both vector lanes remain entirely ineligible witnesses.
+    """
+    admission = relations._reviewed_owners()[0]
+    ids, hashes = set(), set()
+    remaining_nodes, remaining_bytes = 1500000, admission.norm.MAX_INPUT_BYTES
+
+    def known(raw):
+        nonlocal remaining_bytes
+        remaining_bytes -= len(raw)
+        _require(remaining_bytes >= 0, "pair process exclusion byte bound exceeded")
+        hashes.add(_reviewed_hashlib.sha256(raw).hexdigest())
+
+    def visit(value, harvest_pins, depth=0):
+        nonlocal remaining_nodes
+        remaining_nodes -= 1
+        _require(remaining_nodes >= 0 and depth <= 96, "pair process exclusion structure bound exceeded")
+        if type(value) is bytes:
+            known(value)
+            return
+        try:
+            raw = admission.norm._wire(value)
+        except (ValueError, TypeError):
+            # A compound replay may contain raw bytes; those are visited below.
+            if type(value) not in (dict, list):
+                raise
+            raw = None
+        if raw is not None:
+            known(raw)
+        if type(value) is dict:
+            for key, child in value.items():
+                if harvest_pins and type(child) is str:
+                    if (key.endswith("_id") or key.endswith("_cid") or key == "id"):
+                        ids.add(child)
+                    if len(child) == 64 and all(letter in "0123456789abcdef" for letter in child):
+                        hashes.add(child)
+                visit(child, harvest_pins, depth + 1)
+        elif type(value) is list:
+            for child in value:
+                visit(child, harvest_pins, depth + 1)
+        elif type(value) is str:
+            known(value.encode("utf-8"))
+            if harvest_pins and len(value) == 64 and all(letter in "0123456789abcdef" for letter in value):
+                hashes.add(value)
+
+    for value in (original_inputs["endpoint_admissions"], original_inputs["source_lane"], original_inputs["formal_lane"],
+                  original_inputs["expected_source_lane_bindings"], original_inputs["expected_formal_lane_bindings"],
+                  original_inputs["split_manifest"], original_inputs["dependency_manifest"], current_endpoint_reports):
+        visit(value, True)
+    # These hashes catch aliases of the whole preparation/registry/policy or a
+    # signed pair claim without excluding the nominated process-reference pins.
+    for value in (prepared, registry, policy, reviews):
+        visit(value, False)
+    return ids, hashes
+
+
+def compile_reviewed_train_relation_masks_v2(preparation, registry, policy, reviews, *,
+        expected_preparation_sha256, preparation_inputs, expected_registry_sha256,
+        expected_policy_sha256, expected_reviews_sha256, at_time_utc,
+        observed_artifact_sha256s, observed_pins, evidence_artifacts, current_endpoint_observations):
+    """Authenticate a separately reviewed directed ledger and explicit purpose.
+
+    Endpoint training permission never supplies pair labels. Unknown relations
+    and analogies are absent from this objective. Vector checks establish
+    custody under supplied producer declarations, not runtime computation.
+    No fit, model allocation, producer qualification or resource grant occurs.
+    """
+    _reviewed_imported_pins()
+    relations._reviewed_imported_pins()
+    import hashlib
+    admission, auth, _, _, lanes = relations._reviewed_owners()
+    original = dict(preparation=preparation, registry=registry, policy=policy, reviews=reviews,
+        expected_preparation_sha256=expected_preparation_sha256, preparation_inputs=preparation_inputs,
+        expected_registry_sha256=expected_registry_sha256, expected_policy_sha256=expected_policy_sha256,
+        expected_reviews_sha256=expected_reviews_sha256, at_time_utc=at_time_utc,
+        observed_artifact_sha256s=observed_artifact_sha256s, observed_pins=observed_pins,
+        evidence_artifacts=evidence_artifacts, current_endpoint_observations=current_endpoint_observations)
+    copied, commitment = admission.norm._snapshot(original)
+    pins = _reviewed_pins()
+    checked = relations.validate_reviewed_relation_declaration_v2(copied["preparation"],
+        expected_preparation_sha256=expected_preparation_sha256, **copied["preparation_inputs"])
+    body, subject = checked["body"], checked["subject"]
+    domain = auth._ReviewDomain(relations.REVIEWED_SUBJECT_SCHEMA, relations.REVIEWED_CLAIM_SCHEMA,
+        relations.REVIEWED_ACTION, relations.REVIEWED_AUDIENCE,
+        "alignment-reviewed-pair-authority-assessment/v2", relations._reviewed_subject, len(relations.REVIEWED_SLOTS))
+    authority = auth._assess_reviews(subject, copied["registry"], copied["policy"], copied["reviews"],
+        copied["preparation_inputs"]["dependency_manifest"], domain=domain,
+        expected_subject_sha256=auth.digest(subject), expected_manifest_sha256=subject["dependency_manifest_sha256"],
+        **{key: copied[key] for key in ("expected_registry_sha256", "expected_policy_sha256", "expected_reviews_sha256",
+            "at_time_utc", "observed_artifact_sha256s", "observed_pins", "evidence_artifacts")})
+    blockers = [] if authority["review_prerequisites_satisfied_under_selected_trust"] else [reason for reason in
+        authority["blockers"] if reason not in ("downstream_semantic_validation_required", "downstream_Lean_kernel_admission_required")]
+    if auth._time(at_time_utc) < auth._time(checked["endpoint_assessment_time_utc"]):
+        blockers.append("pair_evaluation_predates_original_endpoint_snapshot")
+    # The original signed snapshots remain exact commitments. Their selected
+    # trust roots/reviews are separately replayed at the current pair clock;
+    # endpoint manifests never borrow the unrelated pair-manifest observations.
+    original_endpoints = copied["preparation_inputs"]["endpoint_admissions"]
+    current_observations = copied["current_endpoint_observations"]
+    _require(type(current_observations) is dict and set(current_observations) == set(original_endpoints),
+             "complete explicit current observations for every original endpoint admission required")
+    current_endpoint_digests, current_endpoint_blockers, current_endpoint_reports = {}, {}, {}
+    for identity, entry in original_endpoints.items():
+        observations = current_observations[identity]
+        _closed(observations, {"observed_artifact_sha256s", "observed_pins"}, "current endpoint dependency observations")
+        current_inputs = dict(entry["kwargs"], at_time_utc=at_time_utc,
+            observed_artifact_sha256s=observations["observed_artifact_sha256s"], observed_pins=observations["observed_pins"])
+        current = admission.assess_reviewed_norm_admission_v2(*entry["args"], **current_inputs)
+        current_endpoint_reports[identity] = current
+        current_endpoint_digests[identity] = admission.norm_content_adjudication_sha256(current)
+        current_endpoint_blockers[identity] = list(current["blockers"])
+        if current["semantic_use_eligible"] is not True or "training" not in current["permitted_uses"]:
+            blockers.append("endpoint_current_training_admission_unavailable:" + identity)
+    declared = auth._time(body["declared_at_utc"])
+    if declared > auth._time(at_time_utc) or any(auth._time(row["issued_at_utc"]) < declared for row in copied["reviews"]):
+        blockers.append("pair_review_or_evaluation_predates_ledger_declaration")
+    keys = {row["key_id"]: row for row in copied["registry"]["keys"]}
+    authenticated_ids = {row["review_id"] for row in authority["reviews"] if row["status"] == "authenticated"}
+    authenticated = [row for row in copied["reviews"] if row["review_id"] in authenticated_ids]
+    if not admission._distinct_pair(authenticated, keys):
+        blockers.append("distinct_independent_legal_and_formal_pair_review_roles_missing")
+    for claim in copied["reviews"]:
+        key = keys.get(claim["key_id"])
+        if any(claim["principal_id"] == actor["principal_id"] or claim["signer_did"] == actor["signer_did"]
+            or key is not None and (key["principal_id"] == actor["principal_id"]
+                or key["signer_did"] == actor["signer_did"] or key["public_key_hex"] == actor["public_key_hex"])
+            for actor in checked["author_exclusions"]):
+            blockers.append("pair_reviewer_reuses_declared_source_IR_or_ledger_author")
+    evidence = copied["evidence_artifacts"]
+    body_ref = {"artifact_id": body["ledger_id"], "sha256": checked["body_sha256"]}
+    if evidence.get(body["ledger_id"]) != admission.norm._wire(body):
+        blockers.append("exact_whole_pair_ledger_evidence_missing_or_changed")
+    forbidden_ids, forbidden_sha = _reviewed_process_exclusions(checked, copied["preparation_inputs"],
+        copied["registry"], copied["policy"], copied["reviews"], current_endpoint_reports)
+
+    def independent(ref):
+        raw = evidence.get(ref["artifact_id"])
+        return (ref["artifact_id"] not in forbidden_ids and ref["sha256"] not in forbidden_sha
+            and type(raw) is bytes and hashlib.sha256(raw).hexdigest() == ref["sha256"])
+
+    for claim in copied["reviews"]:
+        for obligation in claim["context_closure"]["obligations"]:
+            if obligation["disposition"] != "resolved_by_evidence":
+                blockers.append("every_fixed_pair_review_obligation_requires_resolved_by_evidence")
+            if body_ref not in obligation["evidence_refs"] or not any(independent(ref) for ref in obligation["evidence_refs"]):
+                blockers.append("every_pair_review_obligation_needs_whole_ledger_and_independent_process_evidence")
+    for pair in checked["pairs"]:
+        if pair["relation"] in ("corresponding", "equivalent", "incompatible"):
+            if not pair["evidence_refs"] or not all(independent(ref) for ref in pair["evidence_refs"]):
+                blockers.append("reviewed_relationship_independent_process_evidence_missing_or_changed")
+    if checked["unavailable_vector_ids"]:
+        blockers.append("endpoint_vector_declarations_unavailable")
+    verified = not blockers
+    source, formal = checked["source_endpoints"], checked["formal_endpoints"]
+    n, m = len(source), len(formal)
+    positive, negative, diagnostics = [[False] * m for _ in range(n)], [[False] * m for _ in range(n)], []
+    for index, pair in enumerate(checked["pairs"]):
+        i, j = divmod(index, m)
+        positive[i][j] = verified and pair["relation"] in ("corresponding", "equivalent")
+        negative[i][j] = verified and pair["relation"] == "incompatible"
+        diagnostics.append({**pair, "objective_positive": positive[i][j], "objective_permitted_negative": negative[i][j],
+            "disposition": "unknown_excluded" if pair["relation"] == "unknown" else "analogy_retrieval_only"
+                if pair["relation"] == "analogy" else "reviewed_objective_label" if verified else "verification_unavailable"})
+    row_counts = [sum(row) for row in positive]
+    col_counts = [sum(row[j] for row in positive) for j in range(m)]
+    missing_rows = [row["id"] for row, count in zip(source, row_counts) if not count]
+    missing_columns = [row["id"] for row, count in zip(formal, col_counts) if not count]
+    objective_blockers = list(blockers)
+    if missing_rows: objective_blockers.append("missing_positive_rows")
+    if missing_columns: objective_blockers.append("missing_positive_columns")
+    ready = verified and not missing_rows and not missing_columns
+    fixture = body["provenance_kind"] == "fictional_fixture"
+    report = {"schema": REVIEWED_SCHEMA, "profile": relations.REVIEWED_PROFILE,
+        "mode": REVIEWED_MODE if verified else UNAVAILABLE, "status": "reviewed_objective_mask_ready" if ready else "mask_preflight_blocked",
+        "preparation_sha256": expected_preparation_sha256, "body_sha256": checked["body_sha256"],
+        "ordered_endpoint_sha256": checked["ordered_endpoint_sha256"],
+        "source_endpoints": source, "formal_endpoints": formal,
+        "representation_dimension": 384, "pair_order": "source_row_major_formal_column/v2",
+        "source_representation_profile": checked["source_representation_profile"],
+        "formal_representation_profile": checked["formal_representation_profile"],
+        "source_profile_sha256": checked["source_profile_sha256"], "formal_profile_sha256": checked["formal_profile_sha256"],
+        "source_producer_receipt_sha256": checked["source_producer_receipt_sha256"],
+        "formal_producer_receipt_sha256": checked["formal_producer_receipt_sha256"],
+        "vector_custody_scope": "exact externally pinned native384 producer declarations; runtime computation unproved",
+        "source_vectors": checked["source_vectors"], "formal_vectors": checked["formal_vectors"],
+        "source_vector_sha256": checked["source_vector_sha256"], "formal_vector_sha256": checked["formal_vector_sha256"],
+        "objective_positive_mask": positive, "objective_permitted_negative_mask": negative,
+        "objective_positive_mask_sha256": lanes._digest(positive), "objective_permitted_negative_mask_sha256": lanes._digest(negative),
+        "source_row_count": n, "formal_row_count": m, "pair_count": n * m, "pair_rows": diagnostics,
+        "unknown_pair_count": sum(pair["relation"] == "unknown" for pair in checked["pairs"]),
+        "analogy_retrieval_only_pair_count": sum(pair["relation"] == "analogy" for pair in checked["pairs"]),
+        "objective_positive_pair_count": sum(row_counts), "objective_permitted_negative_pair_count": sum(sum(row) for row in negative),
+        "row_positive_counts": row_counts, "column_positive_counts": col_counts,
+        "missing_positive_row_ids": missing_rows, "missing_positive_column_ids": missing_columns,
+        "reviewed_pair_labels_authenticated": verified, "reviewed_objective_mask_ready": ready,
+        "objective_blockers": sorted(set(objective_blockers)), "review_authority": authority,
+        "original_endpoint_snapshot_time_utc": checked["endpoint_assessment_time_utc"],
+        "current_endpoint_assessment_sha256s": current_endpoint_digests,
+        "current_endpoint_blockers": current_endpoint_blockers,
+        "provenance_kind": body["provenance_kind"], "fixture_only": fixture,
+        "production_contrastive_mask": int(ready and not fixture), "training_gold_mask": 0, "evaluation_gold_mask": 0,
+        "producer_pins": pins, "runtime_computation_proven": False, "actual_fit_authorized": False,
+        "human_identity_and_competence_verified": False, "evaluation_clock_authenticated": False,
+        "registry_freshness_authenticated": False, "graph_admitted": False, "Lean_admitted": False,
+        "proof_authority": False, "training_executed": False, "model_executed": False}
+    report["content_sha256"] = admission.norm_content_adjudication_sha256(report)
+    _require(admission.norm._snapshot(original)[1] == commitment and admission.norm._snapshot(copied)[1] == commitment,
+             "reviewed pair mask inputs changed during operation")
+    _require(_reviewed_pins() == pins, "reviewed pair mask source owners changed during operation")
+    return json.loads(admission.norm._wire(report))
+
+
+def validate_reviewed_train_relation_masks_v2(receipt, *args, expected_receipt_sha256, **kwargs):
+    """Recompute whole-ledger authority and all masks; saved flags confer none."""
+    _reviewed_imported_pins()
+    relations._reviewed_imported_pins()
+    admission = relations._reviewed_owners()[0]
+    original = {"receipt": receipt, "args": list(args), "kwargs": kwargs}
+    copied, commitment = admission.norm._snapshot(original)
+    pins = _reviewed_pins()
+    _sha(expected_receipt_sha256, "reviewed pair mask receipt")
+    _require(admission.norm_content_adjudication_sha256(copied["receipt"]) == expected_receipt_sha256,
+             "independent complete reviewed pair mask receipt differs")
+    expected = compile_reviewed_train_relation_masks_v2(*copied["args"], **copied["kwargs"])
+    _require(admission.norm._same(copied["receipt"], expected), "reviewed pair mask receipt differs from complete replay")
+    _require(admission.norm._snapshot(original)[1] == commitment and admission.norm._snapshot(copied)[1] == commitment,
+             "reviewed pair mask validation inputs changed during operation")
+    _require(_reviewed_pins() == pins, "reviewed pair mask source owners changed during validation")
+    return expected
+
+
+__all__ += ["compile_reviewed_train_relation_masks_v2", "validate_reviewed_train_relation_masks_v2", "REVIEWED_SCHEMA"]

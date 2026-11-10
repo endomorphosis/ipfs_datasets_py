@@ -569,3 +569,25 @@ admission grant; an original-owned admitted run must still satisfy the existing
 input/custody contract. Ordinary metadata tests defer that case. This port sets
 no admission markers, grants no retry or resource permission, and performs no
 original input campaign, model, compiler, graph/corpus admission or legal review.
+
+## Historical source-correspondence branch reconciliation
+
+The historical `agent/legal-ir-coordinate-source-correspondence-20261021` tip
+`2186b38351bab840c9c85a5055a947d81d673c69` is retained as a merge parent. Its original
+[receipt](https://github.com/endomorphosis/ipfs_datasets_py/blob/2186b38351bab840c9c85a5055a947d81d673c69/docs/autoformalization/evidence/legal-ir-coordinate-source-correspondence-20261021.json),
+legacy review owner and legacy owning tests already match main `7e860a5fa1a0bd1c0f940ac141665461b332de29`
+byte-for-byte. All historical top-level owner/test definitions remain present.
+The two v2 prepare/validate entry points now forward explicitly to the shared
+implementation with `profile_version=2`; original graph-v2 schema/profile gates,
+independent raw pins, bank capture, opening/closing replay, unprivileged output
+and final input/source/callback fences remain in that route. Wire-v3 behavior
+retains its separately selected route. The maintained guide also corrects older
+profile terminology and records later source generations.
+
+The retained two-bank/sixteen-request/150-candidate test body is unchanged;
+its added enrollment selector defers it unless explicitly enrolled. A deferred
+case is not an original-data replay or a pass. This reconciliation changes only
+documentation relative to its first parent. Static tree/AST/call-forwarding and
+exact historical-byte checks do not constitute a fresh execution, behavioral
+equivalence proof, source custody, native or statutory qualification. Historical
+59-case and later controls retain only their original exact source generations.

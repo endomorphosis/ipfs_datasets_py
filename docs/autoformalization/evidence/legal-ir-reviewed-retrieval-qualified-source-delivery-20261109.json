@@ -1,0 +1,167 @@
+{
+  "schema": "reviewed-retrieval-qualified-source-delivery/v1",
+  "recorded_utc": "2026-11-09T08:59:01.535882+00:00",
+  "tasks": [
+    "LIR-17",
+    "LIR-20"
+  ],
+  "parent_commit": "657328343ebcc934566657df64cb692aba6678ea",
+  "branch": "feat/legal-relational-counted-preservation-20261109",
+  "delivery_scope": "All nine exact qualified owner/test/frozen-fixture postimages; no source rewriting or source relocation",
+  "source_files": [
+    {
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/alignment_relation_declarations.py",
+      "bytes": 28878,
+      "sha256": "fe3f0b9f90e189f00a97b111949e4b825110ae9c8883aea3dad3b75ff4888f5f"
+    },
+    {
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/alignment_relation_mask_handoff.py",
+      "bytes": 36177,
+      "sha256": "8f67306567dc431fec871bdb4234e1959c83a191b153f9ba8d96d1a66552fe68"
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_joint_retrieval.py",
+      "bytes": 60963,
+      "sha256": "eed4fc3258301c76df9e108194b5c073398e032ab06d82a029b9ce3f5acea114"
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_structured_retrieval.py",
+      "bytes": 41385,
+      "sha256": "bc78bbe3abdb39dc42aa566f5b5e8aa15ef39cde1432d8035097d0d38f219faa"
+    },
+    {
+      "path": "tests/fixtures/legal_ir/joint_retrieval/legacy_source_577698.py",
+      "bytes": 20198,
+      "sha256": "577698c99d0cdd2209bdaaee01b40778f46251e9e1256d7537312d6655cdcb9d"
+    },
+    {
+      "path": "tests/unit/logic/formalization/autoencoder/test_alignment_relation_declarations.py",
+      "bytes": 33846,
+      "sha256": "2462660a7726191d15910312cad4e65958541ea9d34251b1987ed09fd0b2b014"
+    },
+    {
+      "path": "tests/unit/logic/formalization/autoencoder/test_alignment_relation_mask_handoff.py",
+      "bytes": 42113,
+      "sha256": "226c95187e6c49b65148e7c813bc800470e73c8d2f9719953fcd477b05dd090a"
+    },
+    {
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_joint_retrieval.py",
+      "bytes": 39953,
+      "sha256": "ebab685ec9c33e1b3f90db8a06b4cac0614ae442d0697cc0ff346be376c9ad63"
+    },
+    {
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_structured_retrieval.py",
+      "bytes": 39894,
+      "sha256": "1c16001cc7e6e7ee2689c4c25e05b5816833ac7fa7fcd24378d5e3eca6aab0b6"
+    }
+  ],
+  "qualification": {
+    "path": "docs/autoformalization/evidence/legal-ir-reviewed-retrieval-full-qualification-20261109.json",
+    "bytes": 10858,
+    "sha256": "255ab70220003f1d1bbd00ce831fd28eca09a29f3c77a8a51a1859ef5bb27fee"
+  },
+  "source_port_candidate": {
+    "path": "docs/autoformalization/evidence/legal-ir-reviewed-retrieval-current-compatible-source-port-20261109.json",
+    "bytes": 7401,
+    "sha256": "b4f4e630817c31c5324ab4624d19fa3dd724a6caeb18e739c2ded5b7c42d63c0"
+  },
+  "qualification_result": {
+    "tests": 294,
+    "passed": 294,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "deselected": 0,
+    "warnings": 29,
+    "case_classes": {
+      "tests.unit.logic.formalization.autoencoder.test_alignment_relation_declarations": 62,
+      "tests.unit.logic.formalization.autoencoder.test_alignment_relation_mask_handoff": 105,
+      "tests.unit.optimizers.logic_theorem_optimizer.test_legal_joint_retrieval": 59,
+      "tests.unit.optimizers.logic_theorem_optimizer.test_legal_structured_retrieval": 68
+    },
+    "pytest_seconds": 209.389,
+    "owned_seconds": 381.5564594292082,
+    "source_pins": 204,
+    "compiled_product_sources": 137,
+    "compiled_product_sources_match_selected_public_index": true,
+    "primary_product_compile_forbidden": true,
+    "vendor_sources_attested": false,
+    "source_pins_unchanged": true,
+    "parent_waited": true,
+    "source_process_scheduler_custody_closed": true,
+    "storage_claim": "334b84ddd9f14f398f87149c02a89c4a",
+    "storage_status": "released",
+    "reserved_storage_bytes": 2097152,
+    "retained_attempt_bytes": 916146
+  },
+  "selected_evidence_id": "reviewed-retrieval-qualified-source-delivery-20261109",
+  "canonical_owners": [
+    "ipfs_datasets_py/logic/formalization/autoencoder/alignment_relation_declarations.py",
+    "ipfs_datasets_py/logic/formalization/autoencoder/alignment_relation_mask_handoff.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_joint_retrieval.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_structured_retrieval.py"
+  ],
+  "legacy_fixture_sha256": "577698c99d0cdd2209bdaaee01b40778f46251e9e1256d7537312d6655cdcb9d",
+  "source_bytes_identical_to_executed_capture": true,
+  "new_runtime_tests_for_unchanged_source_needed": false,
+  "ci": {
+    "workflow": ".github/workflows/legal-v2-reasoner-ci.yml",
+    "selected_complete_four_suite_cohort": true,
+    "native_zero_step_deselection_removed": true,
+    "pinned_torch": "2.9.1",
+    "pinned_numpy": "2.1.3",
+    "pinned_pytest": "8.3.4",
+    "cpu_index": "https://download.pytorch.org/whl/cpu",
+    "official_install_reference": "https://pytorch.org/get-started/previous-versions/#v291",
+    "native_lean_pin": "4.34.1",
+    "job_timeout_minutes_unchanged": 10,
+    "hosted_execution_qualified": false
+  },
+  "limits": [
+    "Qualification binds the recorded source and executed dependency/control generations only; unrelated unpublished worker/SDK changes are not delivered or newly qualified",
+    "Directed reviewed pair labels and TRAIN examples do not establish legal applicability for a new query",
+    "Complete example candidates still lack decoder-context permission and supplemental governing-definition/proof bodies",
+    "Fictional fixture numerical updates establish no retained GTE/lexical/alignment benchmark gain, pretrained decoder fit, actual statutory review or admitted corpus",
+    "Failed requests, retained claims, old receipts, checkpoint identities and earlier fixture-only publication remain unchanged"
+  ],
+  "prior_primary_worktree_qualification_result": {
+    "tests": 294,
+    "passed": 294,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "deselected": 0,
+    "case_classes": {
+      "tests.unit.logic.formalization.autoencoder.test_alignment_relation_declarations": 62,
+      "tests.unit.logic.formalization.autoencoder.test_alignment_relation_mask_handoff": 105,
+      "tests.unit.optimizers.logic_theorem_optimizer.test_legal_joint_retrieval": 59,
+      "tests.unit.optimizers.logic_theorem_optimizer.test_legal_structured_retrieval": 68
+    },
+    "pytest_seconds": 215.983,
+    "warnings": 29,
+    "warning_scope": "preserved frozen legacy fixture __package__/__spec__ deprecation warnings",
+    "owned_execution_seconds": 304.1884634150192,
+    "source_pins": 256,
+    "compiled_product_source_buffers": 137,
+    "pins_unchanged": true,
+    "source_closed": true,
+    "parent_waited": true,
+    "process_and_scheduler_closed": true,
+    "storage_claim": "a5c04f778b364fe98fec9e84268e0a5f",
+    "storage_status": "released",
+    "reserved_storage_bytes": 2097152,
+    "retained_attempt_bytes": 914116,
+    "selected_checks": [
+      "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_alignment_relation_declarations.py",
+      "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_alignment_relation_mask_handoff.py",
+      "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_joint_retrieval.py",
+      "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_structured_retrieval.py"
+    ]
+  },
+  "public_tree_qualification": {
+    "path": "docs/autoformalization/evidence/legal-ir-reviewed-retrieval-public-tree-qualification-20261109.json",
+    "bytes": 51472,
+    "sha256": "e6c4862a0c265c9239b84fab62d4a1d8f06b08039bfc05493125f16410b1609c"
+  },
+  "fresh_public_dependency_generation_qualified": true
+}

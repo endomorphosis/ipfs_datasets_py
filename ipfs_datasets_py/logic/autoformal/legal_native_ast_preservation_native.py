@@ -6,7 +6,9 @@ unchanged native emitter. This adapter replays that owner before and after one
 offline Lake build and retains a separate engineering observation. Its three
 concrete kernel checks establish no universal emitter theorem, JSON byte-parser
 theorem, legal-source fidelity, reviewed meaning, training authority or corpus
-admission. Callers retain their established owned validation resources.
+admission. The explicit relational profile reuses the same runner and adds two
+concrete typed-source/argument-role checks. Callers retain their established
+owned validation resources.
 """
 
 from __future__ import annotations
@@ -20,10 +22,27 @@ import re
 
 BUILD_SCHEMA = "legal-native-ast-preservation-native-build/v1"
 PROFILE = "replayed-unary-definition-native-ast-concrete-preservation/v1"
+RELATIONAL_PROFILE = "replayed-typed-relational-deontic-native-ast-concrete-preservation/v1"
+COUNTED_PROFILE = "replayed-typed-many-sorted-fixed-three-counted-preservation/v1"
+_PREPARATION_PROFILE = "native-unary-boolean-fol-json-value-preservation/v1"
+_RELATIONAL_PREPARATION_PROFILE = "typed-relational-deontic-native-preservation/v1"
+_COUNTED_PREPARATION_PROFILE = "typed-many-sorted-fixed-three-counted-preservation/v1"
+_THEOREM_SUFFIXES = (
+    "native_value_exact", "native_ast_closed", "denotation_matches_native",
+)
+_RELATIONAL_THEOREM_SUFFIXES = _THEOREM_SUFFIXES + (
+    "typed_source_lowering_exact", "role_denotation_matches_native",
+)
+_COUNTED_THEOREM_SUFFIXES = (
+    "counted_value_exact", "counted_ast_closed", "counted_denotation_matches_lowering",
+    "cap_two_counterexample", "cap_four_counterexample",
+)
 MAX_RECORD_BYTES = 1024 * 1024
 MAX_FRAGMENT_BYTES = MAX_RECORD_BYTES
 MAX_PROJECT_BYTES = 8 * MAX_RECORD_BYTES
 MAX_PREPARATION_BYTES = 20 * MAX_RECORD_BYTES
+MAX_RELATIONAL_REPORT_BYTES = 8 * MAX_RECORD_BYTES
+MAX_RELATIONAL_REQUEST_BYTES = MAX_RECORD_BYTES // 2
 MAX_CAPTURE_BYTES = 2 * MAX_RECORD_BYTES
 MAX_LOG_PREVIEW_BYTES = 32768
 MAX_RECEIPT_BYTES = MAX_RECORD_BYTES
@@ -58,7 +77,7 @@ AUTHORITY = dict.fromkeys(
     False,
 )
 _SELF_PIN = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
-_OPERATION_PINS = None
+_OPERATION_PINS = {}
 
 
 def _need(condition, message):
@@ -193,19 +212,64 @@ def preparation_sha256(preparation):
     return _sha(_wire(_preparation_document(preparation), MAX_PREPARATION_BYTES))
 
 
-def _preflight(preparation, fragment_raw, expected_preparation_sha256,
-               expected_fragment_file_sha256, toolchain):
+def _preparation_preflight(preparation, expected_preparation_sha256,
+                           toolchain, expected_profile):
     _pin(expected_preparation_sha256, "complete native AST preservation preparation")
-    _pin(expected_fragment_file_sha256, "original native fragment file")
     _need(type(toolchain) is str and len(toolchain) <= 128 and _TOOLCHAIN.fullmatch(toolchain),
           "explicit version-pinned Lean toolchain required")
     _need(preparation_sha256(preparation) == expected_preparation_sha256,
           "independent complete preservation preparation pin differs")
+    manifest = _preparation_document(preparation)["manifest"]
+    _need(manifest.get("profile") == expected_profile,
+          "explicit native preservation preparation profile differs")
+    _need(_sha(Path(__file__).read_bytes()) == _SELF_PIN,
+          "native AST preservation executor changed since import")
+
+
+def _preflight(preparation, fragment_raw, expected_preparation_sha256,
+               expected_fragment_file_sha256, toolchain):
+    _preparation_preflight(preparation, expected_preparation_sha256,
+                           toolchain, _PREPARATION_PROFILE)
+    _pin(expected_fragment_file_sha256, "original native fragment file")
     _parse(fragment_raw, MAX_FRAGMENT_BYTES)
     _need(_sha(fragment_raw) == expected_fragment_file_sha256,
           "original native fragment file pin differs")
-    _need(_sha(Path(__file__).read_bytes()) == _SELF_PIN,
-          "native AST preservation executor changed since import")
+
+
+def _relational_preflight(preparation, report, request_raw,
+                          expected_preparation_sha256, expected_report_sha256,
+                          expected_request_sha256, toolchain):
+    _report_preflight(preparation, report, request_raw,
+        expected_preparation_sha256, expected_report_sha256, expected_request_sha256,
+        toolchain, _RELATIONAL_PREPARATION_PROFILE,
+        MAX_RELATIONAL_REPORT_BYTES, MAX_RELATIONAL_REQUEST_BYTES)
+
+
+def _report_preflight(preparation, report, request_raw,
+                      expected_preparation_sha256, expected_report_sha256,
+                      expected_request_sha256, toolchain, profile,
+                      report_limit, request_limit):
+    _preparation_preflight(preparation, expected_preparation_sha256, toolchain, profile)
+    _pin(expected_report_sha256, "complete semantic report")
+    _pin(expected_request_sha256, "original semantic request")
+    _need(type(report) is dict, "ordinary semantic report required")
+    report_raw = _wire(report, report_limit)
+    _need(_sha(report_raw) == expected_report_sha256,
+          "independent complete semantic report pin differs")
+    _parse(request_raw, request_limit)
+    _need(_sha(request_raw) == expected_request_sha256,
+          "original semantic request pin differs")
+
+
+def _profile(manifest):
+    selected = manifest.get("profile")
+    if selected == _PREPARATION_PROFILE:
+        return PROFILE, _THEOREM_SUFFIXES
+    if selected == _RELATIONAL_PREPARATION_PROFILE:
+        return RELATIONAL_PROFILE, _RELATIONAL_THEOREM_SUFFIXES
+    _need(selected == _COUNTED_PREPARATION_PROFILE,
+          "unsupported native AST preservation preparation profile")
+    return COUNTED_PROFILE, _COUNTED_THEOREM_SUFFIXES
 
 
 def _owners():
@@ -218,11 +282,12 @@ def _owners():
 
 
 def _pins(owners, manifest):
-    global _OPERATION_PINS
     _need(_sha(Path(__file__).read_bytes()) == _SELF_PIN,
           "native AST preservation executor changed since import")
+    _profile(manifest)
     pins = dict(manifest["producer_pins"])
-    pins.update(manifest["native_producer_pins"])
+    pins.update(manifest["counted_producer_pins"] if manifest["profile"] ==
+                _COUNTED_PREPARATION_PROFILE else manifest["native_producer_pins"])
     pins.update(owners[1]._pins())
     pins.update({str(Path(module.__file__).resolve()): _sha(Path(module.__file__).read_bytes())
                  for module in owners})
@@ -231,9 +296,10 @@ def _pins(owners, manifest):
         _pin(expected, "native preservation producer")
         _need(_sha(Path(path).read_bytes()) == expected,
               "native preservation producer changed: " + path)
-    if _OPERATION_PINS is None:
-        _OPERATION_PINS = dict(pins)
-    _need(pins == _OPERATION_PINS,
+    profile = manifest["profile"]
+    if profile not in _OPERATION_PINS:
+        _OPERATION_PINS[profile] = dict(pins)
+    _need(pins == _OPERATION_PINS[profile],
           "native preservation operation owners changed since first use")
     return pins
 
@@ -256,6 +322,48 @@ def validate_native_ast_preservation(preparation, fragment_raw, *,
     return checked
 
 
+def validate_relational_ast_preservation(preparation, report, request_raw, *,
+        expected_preparation_sha256, expected_report_sha256,
+        expected_request_sha256, toolchain):
+    """Replay the complete typed relational report/request without compiling."""
+    _relational_preflight(preparation, report, request_raw,
+        expected_preparation_sha256, expected_report_sha256,
+        expected_request_sha256, toolchain)
+    owners = _owners()
+    preparer = owners[0]
+    _need(type(preparation) is preparer.NativeAstPreservationPreparation,
+          "exact existing native AST preservation preparation type required")
+    checked = preparer.validate_relational_ast_preservation(
+        preparation, report, request_raw,
+        expected_preparation_sha256=expected_preparation_sha256,
+        expected_report_sha256=expected_report_sha256,
+        expected_request_sha256=expected_request_sha256,
+        toolchain=toolchain)
+    _pins(owners, checked.to_dict())
+    return checked
+
+
+def validate_counted_ast_preservation(preparation, report, request_raw, *,
+        expected_preparation_sha256, expected_report_sha256,
+        expected_request_sha256, toolchain):
+    """Replay the original fixed-three counted report and sorted typed AST."""
+    _report_preflight(preparation, report, request_raw,
+        expected_preparation_sha256, expected_report_sha256, expected_request_sha256,
+        toolchain, _COUNTED_PREPARATION_PROFILE, MAX_RECORD_BYTES, MAX_RECORD_BYTES // 8)
+    owners = _owners()
+    preparer = owners[0]
+    _need(type(preparation) is preparer.NativeAstPreservationPreparation,
+          "exact existing native AST preservation preparation type required")
+    checked = preparer.validate_counted_ast_preservation(
+        preparation, report, request_raw,
+        expected_preparation_sha256=expected_preparation_sha256,
+        expected_report_sha256=expected_report_sha256,
+        expected_request_sha256=expected_request_sha256,
+        toolchain=toolchain)
+    _pins(owners, checked.to_dict())
+    return checked
+
+
 def _installed_toolchain(lake_executable, toolchain):
     """Reuse the installed sibling ELF compiler and version-probe owner."""
     return _owners()[2]._installed_toolchain(lake_executable, toolchain)
@@ -271,15 +379,26 @@ def _binary_recheck(binaries):
     return True
 
 
-def _axiom_observations(stdout, stderr, manifest):
-    """Require one exact empty-axiom stdout observation per qualified theorem."""
+def _expected_theorems(manifest):
+    """Keep each explicit profile's theorem names, order and module closed."""
+    _, suffixes = _profile(manifest)
     expected = manifest["theorems"]
-    _need(type(expected) is list and len(expected) == MAX_THEOREMS
+    modules = manifest["expected_modules"]
+    _need(type(modules) is list and len(modules) == MAX_MODULES
+          and all(type(name) is str for name in modules),
+          "exact native preservation module population required")
+    _need(type(expected) is list and len(expected) == len(suffixes)
           and all(type(name) is str and len(name) <= 256
                   and re.fullmatch(r"[A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z][A-Za-z0-9_]*)+", name)
                   for name in expected)
-          and len(set(expected)) == MAX_THEOREMS,
-          "exact three qualified preservation theorem obligations required")
+          and expected == [modules[2] + "." + suffix for suffix in suffixes],
+          "exact profile-specific qualified preservation theorem obligations required")
+    return expected
+
+
+def _axiom_observations(stdout, stderr, manifest):
+    """Require one exact empty-axiom stdout observation per qualified theorem."""
+    expected = _expected_theorems(manifest)
     dependencies, errors = {}, []
     marker = re.compile(r"\b(?:axiom|axioms|sorry|sorryAx)\b")
     for number, line in enumerate(stdout.splitlines(), 1):
@@ -396,18 +515,107 @@ def build_native_ast_preservation(preparation, fragment_raw, *,
     durable output disposition. The original preparation and native fragment are
     never upgraded. Unresolved cleanup re-raises its original exception/owner.
     """
+    def replay():
+        return validate_native_ast_preservation(
+            preparation, fragment_raw,
+            expected_preparation_sha256=expected_preparation_sha256,
+            expected_fragment_file_sha256=expected_fragment_file_sha256,
+            toolchain=toolchain)
+    return _build_ast_preservation(
+        preparation, replay,
+        expected_preparation_sha256=expected_preparation_sha256,
+        toolchain=toolchain, lake_executable=lake_executable,
+        output_directory=output_directory, timeout_seconds=timeout_seconds,
+        cancellation=cancellation)
+
+
+def build_relational_ast_preservation(preparation, report, request_raw, *,
+        expected_preparation_sha256, expected_report_sha256,
+        expected_request_sha256, toolchain, lake_executable, output_directory,
+        timeout_seconds=60, cancellation=None):
+    """Run five exact relational obligations through the original native owner.
+
+    Report/request replay remains mandatory before and after the same bounded
+    build, artifact readback and observed process cleanup. This does not admit
+    legal meaning or prove a universal compiler/source-preservation theorem.
+    """
+    def replay():
+        return validate_relational_ast_preservation(
+            preparation, report, request_raw,
+            expected_preparation_sha256=expected_preparation_sha256,
+            expected_report_sha256=expected_report_sha256,
+            expected_request_sha256=expected_request_sha256,
+            toolchain=toolchain)
+    return _build_ast_preservation(
+        preparation, replay,
+        expected_preparation_sha256=expected_preparation_sha256,
+        toolchain=toolchain, lake_executable=lake_executable,
+        output_directory=output_directory, timeout_seconds=timeout_seconds,
+        cancellation=cancellation)
+
+
+def build_counted_ast_preservation(preparation, report, request_raw, *,
+        expected_preparation_sha256, expected_report_sha256,
+        expected_request_sha256, toolchain, lake_executable, output_directory,
+        timeout_seconds=60, cancellation=None):
+    """Run fixed-three typed denotation and finite boundary obligations.
+
+    This uses the same native compiler/lifecycle owner without fabricating a
+    native-family fragment or assigning TDFOL authority to counted syntax.
+    """
+    def replay():
+        return validate_counted_ast_preservation(
+            preparation, report, request_raw,
+            expected_preparation_sha256=expected_preparation_sha256,
+            expected_report_sha256=expected_report_sha256,
+            expected_request_sha256=expected_request_sha256,
+            toolchain=toolchain)
+    return _build_ast_preservation(
+        preparation, replay,
+        expected_preparation_sha256=expected_preparation_sha256,
+        toolchain=toolchain, lake_executable=lake_executable,
+        output_directory=output_directory, timeout_seconds=timeout_seconds,
+        cancellation=cancellation)
+
+
+def _build_ast_preservation(preparation, replay, *,
+        expected_preparation_sha256, toolchain, lake_executable,
+        output_directory, timeout_seconds, cancellation):
+    """One existing compiler/lifecycle path shared by explicit profiles."""
     _need(type(timeout_seconds) in (int, float) and math.isfinite(timeout_seconds)
           and 0 < timeout_seconds <= 60, "finite compiler timeout in (0,60] required")
-    validated = validate_native_ast_preservation(
-        preparation, fragment_raw,
-        expected_preparation_sha256=expected_preparation_sha256,
-        expected_fragment_file_sha256=expected_fragment_file_sha256,
-        toolchain=toolchain)
+    validated = replay()
     owners = _owners()
     preparer, transport, _, process, _ = owners
     checked = preparer.NativeAstPreservationPreparation(
         validated.manifest_json, tuple(validated.files))
     manifest = checked.to_dict()
+    profile, suffixes = _profile(manifest)
+    if profile == COUNTED_PROFILE:
+        source_bindings = {name: manifest[name] for name in (
+            "counted_report_sha256", "original_request_sha256", "typed_expression_sha256",
+            "typed_expression_content_digest", "lean_body_sha256", "typed_ast_node_count",
+        )}
+        refusal_bindings = dict(source_bindings)
+        counted_flags = {"typed_ast_value_preservation_proved": False,
+                         "counted_ast_denotation_preservation_proved": False,
+                         "counted_boundary_counterexamples_checked": False,
+                         "native_TDFOL_route_used": False}
+    else:
+        source_bindings = {name: manifest[name] for name in (
+            "original_fragment_file_sha256", "original_fragment_canonical_sha256",
+            "native_ast_sha256", "lean_body_sha256",
+        )}
+        refusal_bindings = {"original_fragment_file_sha256": manifest["original_fragment_file_sha256"]}
+        counted_flags = {}
+        if profile == RELATIONAL_PROFILE:
+            relational_bindings = {name: manifest[name] for name in (
+                "relational_report_sha256", "original_request_sha256",
+                "typed_expression_sha256", "argument_roles_sha256",
+            )}
+            source_bindings.update(relational_bindings)
+            refusal_bindings.update(relational_bindings)
+    _expected_theorems(manifest)
     producers = _pins(owners, manifest)
     original_state = _original_preparation_state(manifest)
     output = transport._path(output_directory)
@@ -439,11 +647,11 @@ def build_native_ast_preservation(preparation, fragment_raw, *,
     except process.OwnedToolCleanupError as error:
         try:
             refusal = transport.contracts.seal_record({
-                "schema": BUILD_SCHEMA, "profile": PROFILE,
+                "schema": BUILD_SCHEMA, "profile": profile,
                 "preparation_cid": manifest["record_cid"],
                 "preparation_full_canonical_sha256": expected_preparation_sha256,
-                "original_fragment_file_sha256": expected_fragment_file_sha256,
                 "toolchain": toolchain, "original_preparation_state": original_state,
+                **refusal_bindings,
                 "native_observations": {
                     "expected_command": list(command),
                     "execution_status": "no_complete_native_result_returned",
@@ -455,7 +663,7 @@ def build_native_ast_preservation(preparation, fragment_raw, *,
                 },
                 "build_passed": False, "status": "owned_native_cleanup_unresolved",
                 "authority": dict(AUTHORITY), "training_mask": 0, "evaluation_gold_mask": 0,
-                **FALSE_FLAGS,
+                **FALSE_FLAGS, **counted_flags,
             })
             _persist_build(checked, output, owners, {}, {}, {}, refusal)
             error.add_note("Unqualified frozen preservation project/cleanup refusal retained at " + str(output))
@@ -464,11 +672,7 @@ def build_native_ast_preservation(preparation, fragment_raw, *,
         raise
     post_error, binary_error = None, None
     try:
-        validate_native_ast_preservation(
-            preparation, fragment_raw,
-            expected_preparation_sha256=expected_preparation_sha256,
-            expected_fragment_file_sha256=expected_fragment_file_sha256,
-            toolchain=toolchain)
+        replay()
         _need(preparation == checked, "original preservation preparation changed during compilation")
         _need(_pins(owners, manifest) == producers, "native preservation producers changed during compilation")
     except (ValueError, TypeError, KeyError, IndexError, OSError, UnicodeError, RecursionError) as error:
@@ -547,26 +751,33 @@ def build_native_ast_preservation(preparation, fragment_raw, *,
         "native_runtime_verified": native_runtime,
     }
     receipt = transport.contracts.seal_record({
-        "schema": BUILD_SCHEMA, "profile": PROFILE,
+        "schema": BUILD_SCHEMA, "profile": profile,
         "preparation_cid": manifest["record_cid"],
         "preparation_full_canonical_sha256": expected_preparation_sha256,
         "preparation_manifest_sha256": _sha(checked.manifest_json.encode("utf-8")),
-        "original_fragment_file_sha256": expected_fragment_file_sha256,
-        "original_fragment_canonical_sha256": manifest["original_fragment_canonical_sha256"],
-        "native_ast_sha256": manifest["native_ast_sha256"],
-        "lean_body_sha256": manifest["lean_body_sha256"],
+        **source_bindings,
         "toolchain": toolchain,
         "original_preparation_state": original_state,
         "native_observations": observations,
         "build_passed": passed,
         "status": "concrete_native_preservation_checks_passed" if passed else "concrete_native_preservation_checks_failed",
         "authority": dict(AUTHORITY), "training_mask": 0, "evaluation_gold_mask": 0,
-        "proof_scope": "Three exact concrete checks: complete native JSON value mirror, typed AST closedness, and independent AST denotation versus the unchanged existing native formula_0. Python JSON parsing/reification and original source interpretation remain outside the theorem.",
+        "proof_scope": (
+            "Five exact concrete typed counted checks: complete serialized typed-expression value, sorted AST closedness, independent counted AST denotation versus the unchanged fixed-three lowering, and genuine finite cap-two/cap-four counterexamples. No native TDFOL fragment, universal compiler correctness or statutory counting interpretation is established."
+            if profile == COUNTED_PROFILE else
+            "Five exact concrete checks: complete native JSON value mirror, typed AST closedness, independent AST denotation versus the unchanged native formula_0, exact typed-source lowering, and independent ordered-role denotation versus the unchanged native formula_0. Python JSON parsing/reification, original source interpretation and universal compiler correctness remain outside the theorems."
+            if profile == RELATIONAL_PROFILE else
+            "Three exact concrete checks: complete native JSON value mirror, typed AST closedness, and independent AST denotation versus the unchanged existing native formula_0. Python JSON parsing/reification and original source interpretation remain outside the theorem."
+        ),
         **(FALSE_FLAGS | {
             "backend_executed": native_runtime, "lean_compilation_verified": passed,
             "proof_checked": passed, "kernel_proofs_checked": passed,
-            "native_ast_value_preservation_proved": passed,
+            "native_ast_value_preservation_proved": passed and profile != COUNTED_PROFILE,
         }),
+        **(dict(counted_flags, typed_ast_value_preservation_proved=passed,
+                counted_ast_denotation_preservation_proved=passed,
+                counted_boundary_counterexamples_checked=passed)
+           if profile == COUNTED_PROFILE else {}),
     })
     executed_sources = {name: run.output_files[name] for name in source_files if name in run.output_files}
     _persist_build(checked, output, owners, artifacts, executed_sources, logs, receipt)
@@ -574,4 +785,6 @@ def build_native_ast_preservation(preparation, fragment_raw, *,
 
 
 __all__ = ["preparation_sha256", "validate_native_ast_preservation",
-           "build_native_ast_preservation", "compilation_receipt_sha256"]
+           "build_native_ast_preservation", "validate_relational_ast_preservation",
+           "build_relational_ast_preservation", "validate_counted_ast_preservation",
+           "build_counted_ast_preservation", "compilation_receipt_sha256"]
