@@ -54,7 +54,55 @@ def is_inside_package(path: str | Path) -> bool:
     return True
 
 
+WORK_ROOT_ENV = "IPFS_DATASETS_LEGAL_WORK_ROOT"
+
+
+def legal_work_root() -> Path:
+    """Writable root that mirrors the legal_scrapers tree for script-local outputs."""
+
+    return user_data_dir("legal_scrapers_work", env=WORK_ROOT_ENV)
+
+
+def _relative_to_legal_scrapers(path: Path) -> Path:
+    try:
+        return path.relative_to(LEGAL_SCRAPERS_PACKAGE_DIR)
+    except ValueError:
+        parts = path.parts
+        idx = max((i for i, part in enumerate(parts) if part == "legal_scrapers"), default=None)
+        return Path(*parts[idx + 1 :]) if idx is not None else Path(path.name)
+
+
+def work_mirror_path(src: str | Path) -> Path:
+    """Mirror of a package script path under ``legal_work_root()``.
+
+    Campaign scripts used ``Path(__file__).parent / "out"`` (and similar) for
+    generated files; mapping ``__file__`` through this keeps their relative
+    layout (including sibling-campaign references) while moving every
+    generated file out of the package.
+    """
+
+    return legal_work_root() / _relative_to_legal_scrapers(Path(src).resolve())
+
+
+def source_path_for_mirror(path: str | Path, src: str | Path) -> Path:
+    """Inverse of ``work_mirror_path`` relative to script ``src`` (for code files)."""
+
+    path = Path(path)
+    mirror = work_mirror_path(src)
+    source = Path(src).resolve()
+    for _ in range(len(mirror.parts)):
+        try:
+            return source.joinpath(path.relative_to(mirror)).resolve()
+        except ValueError:
+            mirror, source = mirror.parent, source.parent
+    return path
+
+
 __all__ = [
+    "WORK_ROOT_ENV",
+    "legal_work_root",
+    "source_path_for_mirror",
+    "work_mirror_path",
     "DATA_DIR_NAME",
     "IPFS_DATASETS_PACKAGE_DIR",
     "LEGAL_SCRAPERS_PACKAGE_DIR",

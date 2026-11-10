@@ -27,7 +27,23 @@ from ipfs_datasets_py.processors.legal_scrapers.world_municipal import (  # noqa
 )
 
 REPO = "endomorphosis/ipfs_germany_municipal_laws"
-HERE = Path(__file__).resolve().parent.parent
+
+# Generated campaign files live outside the installed package; the mapping is
+# legal_scrapers/user_data_paths.py (IPFS_DATASETS_LEGAL_WORK_ROOT).
+import importlib.util as _udp_util
+from pathlib import Path as _udp_Path
+_udp_spec = _udp_util.spec_from_file_location(
+    "_legal_scrapers_user_data_paths",
+    next(p for p in _udp_Path(__file__).resolve().parents if p.name == "legal_scrapers") / "user_data_paths.py",
+)
+_udp = _udp_util.module_from_spec(_udp_spec)
+_udp_spec.loader.exec_module(_udp)
+_campaign_data_file = _udp.work_mirror_path
+def _campaign_source_path(path):
+    return _udp.source_path_for_mirror(path, __file__)
+
+
+HERE = _campaign_data_file(__file__).parent.parent
 DATA = HERE / "data"
 OUT = HERE / "out"
 NAMES = {"01051011": "Brunsbüttel, Stadt", "01051044": "Heide, Stadt",
@@ -48,7 +64,7 @@ def main():
     expected["data/jurisdictions.jsonl"] = (DATA / "jurisdictions.jsonl").stat().st_size
     expected["coverage_report.md"] = (OUT / "coverage_report.md").stat().st_size
     expected["README.md"] = (OUT / "README.md").stat().st_size
-    for s in sorted((HERE / "scripts").glob("*.py")):
+    for s in sorted((_campaign_source_path(HERE) / "scripts").glob("*.py")):
         expected[f"scrapers/{s.name}"] = s.stat().st_size
     problems = []
     for path, size in sorted(expected.items()):

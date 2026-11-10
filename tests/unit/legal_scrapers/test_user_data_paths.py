@@ -117,3 +117,32 @@ def test_shipped_collectors_have_no_plain_string_root_placeholders() -> None:
                 ):
                     offenders.append(f"{path.name}:{node.lineno}")
     assert offenders == []
+
+
+def test_work_mirror_round_trips_and_stays_outside_package(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.user_data_paths import (
+        WORK_ROOT_ENV,
+        source_path_for_mirror,
+        work_mirror_path,
+    )
+
+    monkeypatch.setenv(WORK_ROOT_ENV, str(tmp_path / "work"))
+    script = user_data_paths.LEGAL_SCRAPERS_PACKAGE_DIR / "world_municipal_campaigns" / "au_tranche1" / "driver.py"
+    mirror = work_mirror_path(script)
+    assert mirror == (tmp_path / "work").resolve() / "world_municipal_campaigns" / "au_tranche1" / "driver.py"
+    assert not is_inside_package(mirror.parent / "out")
+    sibling = source_path_for_mirror(mirror.parent.parent / "au_pilot", script)
+    assert sibling == script.parent.parent / "au_pilot"
+
+
+def test_campaign_scripts_do_not_root_generated_files_in_the_package() -> None:
+    import re
+
+    campaigns = user_data_paths.LEGAL_SCRAPERS_PACKAGE_DIR / "world_municipal_campaigns"
+    root_def = re.compile(r"^[A-Za-z_][A-Za-z_0-9]*\s*=\s*.*Path\(__file__\)")
+    offenders = []
+    for path in sorted(campaigns.rglob("*.py")):
+        for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+            if root_def.match(line) and ".py" not in line:
+                offenders.append(f"{path.relative_to(campaigns)}:{lineno}")
+    assert offenders == []

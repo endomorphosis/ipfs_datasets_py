@@ -26,7 +26,23 @@ os.environ["HF_HUB_DISABLE_XET"] = "1"  # xet transfers stall via this proxy
 sys.path.insert(0, "/opt/hatch/skills/skill-creator/bin")
 from dynamic_credentials import dynamic_credential_entry  # noqa: E402
 
-HERE = Path(__file__).resolve().parent
+
+# Generated campaign files live outside the installed package; the mapping is
+# legal_scrapers/user_data_paths.py (IPFS_DATASETS_LEGAL_WORK_ROOT).
+import importlib.util as _udp_util
+from pathlib import Path as _udp_Path
+_udp_spec = _udp_util.spec_from_file_location(
+    "_legal_scrapers_user_data_paths",
+    next(p for p in _udp_Path(__file__).resolve().parents if p.name == "legal_scrapers") / "user_data_paths.py",
+)
+_udp = _udp_util.module_from_spec(_udp_spec)
+_udp_spec.loader.exec_module(_udp)
+_campaign_data_file = _udp.work_mirror_path
+def _campaign_source_path(path):
+    return _udp.source_path_for_mirror(path, __file__)
+
+
+HERE = _campaign_data_file(__file__).parent
 T1 = HERE.parent
 PILOT = T1.parent / "it_pilot"
 OUT = T1 / "out"
@@ -194,8 +210,8 @@ for c in sorted(to_ship):
     uploads.append((OUT / f"{c}_validation.json", f"data/{c}_validation.json"))
 for s in ("harvest_it.py", "net.py", "build_registry.py", "probe_sites.py"):
     uploads.append((PILOT / "scripts" / s, f"scrapers/{s}"))
-uploads.append((HERE / "harvest_t1.py", "scrapers/harvest_t1.py"))
-uploads.append((HERE / "publish_t1.py", "scrapers/publish_t1.py"))
+uploads.append((_campaign_source_path(HERE) / "harvest_t1.py", "scrapers/harvest_t1.py"))
+uploads.append((_campaign_source_path(HERE) / "publish_t1.py", "scrapers/publish_t1.py"))
 
 REFRESHABLE = {"coverage_report.md", "README.md"}
 SUPERSEDE_OK = {f"data/{c}_html.parquet" for c in to_ship if c in prior}
