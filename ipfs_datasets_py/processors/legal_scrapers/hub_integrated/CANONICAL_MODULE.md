@@ -77,7 +77,7 @@ SCHEMA_VERSION = "country-laws-ir-graphrag/v1"
 LAYOUT_FAMILY = "skillcenter-huggingface-release/v3"
 ```
 
-That pair repeats the schema home. The statute binding authority is `legal_corpus/kinds/law_v1.py`, which reads `country_laws_ir/__init__.py`, not this copy. The tree also repeats collectors, including the nested catalog under `ipfs_datasets_py_legal/`. It was not deleted.
+That pair repeats the schema home. The statute binding authority is `legal_corpus/kinds/law_v1.py`, which reads `country_laws_ir/__init__.py`, not this copy. The tree also repeats collectors. The nested stale package copy under `ipfs_datasets_py_legal/` (1,495 files) was removed in legal_scrapers phase 1; `MANIFEST.json` records it under `excluded`. The rest of this tree was not deleted.
 
 ## `legal_scrapers`
 
