@@ -45,6 +45,12 @@ def save_cached_clients(cache_dir: str, state: str, clients) -> None:
         json.dump(clients, f)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# Inside the installed package, ROOT is package source; generated maps and
+# caches go to a user-data dir instead (standalone scrapers/ checkouts keep ROOT).
+if os.path.basename(os.path.dirname(os.path.abspath(__file__))) != "scrapers":
+    ROOT = os.environ.get("IPFS_DATASETS_MUNICIPAL_HUB_DIR") or os.path.join(
+        os.path.expanduser("~"), ".ipfs_datasets", "municipal_hub"
+    )
 DEFAULT_JURIS = os.path.join(ROOT, "jurisdictions.json")
 DEFAULT_OUT = os.path.join(ROOT, "publisher_map.json")
 DEFAULT_CACHE = os.path.join(ROOT, "cache")

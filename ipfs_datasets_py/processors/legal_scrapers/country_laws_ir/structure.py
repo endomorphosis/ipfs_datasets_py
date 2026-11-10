@@ -1101,11 +1101,27 @@ def _is_page_of_line(line: str) -> bool:
     return 1 <= left <= right <= 30
 
 
-def learned_patterns_path() -> Path:
+PACKAGED_LEARNED_PATTERNS_PATH = Path(__file__).resolve().parent / "data" / "learned_line_patterns.json"
+
+
+def learned_patterns_write_path() -> Path:
+    """Where the normalize loop saves learned rules: never inside the package."""
     override = os.environ.get("COUNTRY_LAWS_LEARNED_PATTERNS")
     if override:
         return Path(override)
-    return Path(__file__).resolve().parent / "data" / "learned_line_patterns.json"
+    try:
+        from ..user_data_paths import user_data_dir
+    except ImportError:  # country_laws_ir imported as a top-level package by scripts
+        return Path.home() / ".ipfs_datasets" / "country_laws_ir" / "learned_line_patterns.json"
+    return user_data_dir("country_laws_ir") / "learned_line_patterns.json"
+
+
+def learned_patterns_path() -> Path:
+    """Learned rules to read: the user copy once saved, else the packaged seed."""
+    path = learned_patterns_write_path()
+    if os.environ.get("COUNTRY_LAWS_LEARNED_PATTERNS") or path.is_file():
+        return path
+    return PACKAGED_LEARNED_PATTERNS_PATH
 
 
 _LEARNED: tuple[float, re.Pattern[str] | None] | None = None

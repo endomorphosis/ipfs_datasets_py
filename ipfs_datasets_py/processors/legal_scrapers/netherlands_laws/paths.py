@@ -4,10 +4,15 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from ..user_data_paths import user_data_dir
+
 
 PACKAGE_DIR = Path(__file__).resolve().parent
 NETHERLANDS_LAWS_DIR = PACKAGE_DIR
-DATASETS_DIR = PACKAGE_DIR / "datasets"
+DATASETS_DIR_ENV = "IPFS_DATASETS_NETHERLANDS_LAWS_DIR"
+# Generated raw downloads, HF packages and catalogs are written here, never
+# inside the installed package.  Set IPFS_DATASETS_NETHERLANDS_LAWS_DIR to move it.
+DATASETS_DIR = user_data_dir("netherlands_laws", "datasets", env=DATASETS_DIR_ENV)
 RAW_DATA_DIR = DATASETS_DIR / "raw"
 HF_DATA_DIR = DATASETS_DIR / "huggingface"
 DOCS_DIR = PACKAGE_DIR / "docs"
@@ -51,5 +56,6 @@ def repo_id_for(target: str, namespace: str = DEFAULT_HF_NAMESPACE) -> str:
 
 
 def ensure_package_dirs() -> None:
-    for path in [DATASETS_DIR, RAW_DATA_DIR, HF_DATA_DIR, DOCS_DIR]:
+    """Create the writable dataset directories (outside the package)."""
+    for path in [DATASETS_DIR, RAW_DATA_DIR, HF_DATA_DIR]:
         path.mkdir(parents=True, exist_ok=True)

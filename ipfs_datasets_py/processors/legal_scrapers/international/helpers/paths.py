@@ -5,14 +5,12 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
+from ...user_data_paths import default_data_root
+
 CORPORA_ROOT_ENV = "IPFS_DATASETS_LEGAL_CORPORA_ROOT"
 COLLECTORS_ROOT_ENV = "IPFS_DATASETS_LEGAL_COLLECTORS_ROOT"
 HF_TOKEN_PATH_ENV = "HF_TOKEN_PATH"
 HF_TOKEN_ENV = "HF_TOKEN"
-
-
-def default_data_root() -> Path:
-    return (Path.home() / ".ipfs_datasets").resolve()
 
 
 def corpora_root(override: str | Path | None = None) -> Path:
