@@ -27,6 +27,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Final, Iterable, Iterator, Mapping, Optional, Sequence
 
+from .hammer import _strict_proof_bool
 from .legal_ir_hammer_translation import (
     LEGAL_IR_HAMMER_RECONSTRUCTION_RECEIPT_SCHEMA_VERSION,
     LEGAL_IR_HAMMER_TRANSLATION_SCHEMA_VERSION,
@@ -82,6 +83,19 @@ class ProofFeedbackTrustError(ProofFeedbackError):
 
 class ProofFeedbackPartitionError(ProofFeedbackError):
     """Raised for invalid train/holdout policies or assignments."""
+
+
+def _trust_boolean(value: Any, field: str) -> bool:
+    try:
+        return _strict_proof_bool(value, field)
+    except ValueError as error:
+        raise ProofFeedbackTrustError(str(error)) from error
+
+
+def _attested_boolean(value: Mapping[str, Any], *fields: str) -> bool:
+    # Check every supplied alias; a true field cannot hide a malformed peer.
+    signals = [_trust_boolean(value[name], name) for name in fields if name in value]
+    return any(signals)
 
 
 class ProofFeedbackPartition(str, Enum):
@@ -347,6 +361,8 @@ class KernelReconstructionFeedback:
     receipt_id: str = ""
 
     def __post_init__(self) -> None:
+        _trust_boolean(self.attempted, "kernel.attempted")
+        _trust_boolean(self.verified, "kernel.verified")
         _require_safe_identifier(self.status, "kernel_reconstruction.status")
         _require_safe_identifier(self.checker, "kernel_reconstruction.checker", allow_empty=True)
         _require_safe_identifier(
@@ -356,20 +372,21 @@ class KernelReconstructionFeedback:
             raise ProofFeedbackTrustError("verified reconstruction requires an attempted receipt")
 
     def to_dict(self) -> dict[str, Any]:
+        self.__post_init__()
         return {
-            "attempted": bool(self.attempted),
+            "attempted": self.attempted,
             "checker": self.checker,
             "receipt_id": self.receipt_id,
             "status": self.status,
-            "verified": bool(self.verified),
+            "verified": self.verified,
         }
 
     @classmethod
     def from_dict(cls, value: Mapping[str, Any]) -> "KernelReconstructionFeedback":
         return cls(
             status=_safe_identifier(value.get("status") or "not_attempted"),
-            attempted=bool(value.get("attempted")),
-            verified=bool(value.get("verified")),
+            attempted=_trust_boolean(value.get("attempted", False), "kernel.attempted"),
+            verified=_trust_boolean(value.get("verified", False), "kernel.verified"),
             checker=_safe_identifier(value.get("checker"), fallback="")
             if value.get("checker")
             else "",
@@ -386,7 +403,19 @@ class KernelReconstructionFeedback:
         if receipt is None:
             return cls()
         value = _mapping(receipt)
-        attempted = bool(value.get("native_reconstruction")) or bool(
+        verified = _trust_boolean(value.get("native_reconstruction_verified", False),
+                                  "receipt.native_reconstruction_verified")
+        trusted = _trust_boolean(value.get("trusted", False), "receipt.trusted")
+        translation_failed = _trust_boolean(value.get("translation_failed", False),
+                                           "receipt.translation_failed")
+        # A kernel proof does not reinstate a translation or source-trust
+        # decision revoked upstream. Refuse the positive projection rather
+        # than relabel a successfully checked proof as a reconstruction failure.
+        if verified and (not trusted or translation_failed):
+            raise ProofFeedbackTrustError(
+                "positive reconstruction feedback requires unrevoked receipt trust "
+                "and no translation failure")
+        attempted = _trust_boolean(value.get("native_reconstruction", False), "receipt.native_reconstruction") or bool(
             value.get("reconstruction_status")
         )
         return cls(
@@ -394,7 +423,7 @@ class KernelReconstructionFeedback:
                 value.get("reconstruction_status") or value.get("outcome") or "not_attempted"
             ),
             attempted=attempted,
-            verified=bool(value.get("native_reconstruction_verified")),
+            verified=verified,
             checker=_safe_identifier(value.get("checker"), fallback="")
             if value.get("checker")
             else "",
@@ -420,7 +449,7 @@ class VerifiedCounterexampleFeedback:
         _require_safe_identifier(self.verifier, "counterexample.verifier")
         if not _SHA256_RE.fullmatch(self.witness_digest):
             raise ProofFeedbackError("counterexample witness_digest must be a SHA-256 digest")
-        if not self.verified:
+        if _trust_boolean(self.verified, "verified") is not True:
             raise ProofFeedbackTrustError(
                 "unverified counterexamples cannot enter a training record"
             )
@@ -428,6 +457,7 @@ class VerifiedCounterexampleFeedback:
             _require_safe_identifier(item, "counterexample identifier")
 
     def to_dict(self) -> dict[str, Any]:
+        self.__post_init__()
         return {
             "counterexample_type": self.counterexample_type,
             "evidence_ids": list(self.evidence_ids),
@@ -439,7 +469,7 @@ class VerifiedCounterexampleFeedback:
 
     @classmethod
     def from_verified(cls, value: Mapping[str, Any]) -> Optional["VerifiedCounterexampleFeedback"]:
-        if not bool(value.get("verified") or value.get("verifier_attested")):
+        if not _attested_boolean(value, "verified", "verifier_attested"):
             return None
         witness = value.get("witness_digest") or value.get("counterexample_digest")
         if not witness:
@@ -485,10 +515,11 @@ class MinimalFailingContractFeedback:
             _require_safe_identifier(item, "minimal_failing_contract.failing_fields")
         if self.contract_digest and not _SHA256_RE.fullmatch(self.contract_digest):
             raise ProofFeedbackError("contract_digest must be empty or a SHA-256 digest")
-        if not self.verified:
+        if _trust_boolean(self.verified, "verified") is not True:
             raise ProofFeedbackTrustError("an unverified contract failure is not a training target")
 
     def to_dict(self) -> dict[str, Any]:
+        self.__post_init__()
         return {
             "contract_digest": self.contract_digest,
             "contract_id": self.contract_id,
@@ -502,7 +533,7 @@ class MinimalFailingContractFeedback:
 
     @classmethod
     def from_verified(cls, value: Mapping[str, Any]) -> Optional["MinimalFailingContractFeedback"]:
-        if not bool(value.get("verified") or value.get("deterministic")):
+        if not _attested_boolean(value, "verified", "deterministic"):
             return None
         return cls(
             contract_id=_safe_identifier(value.get("contract_id") or "unknown_contract"),
@@ -592,6 +623,7 @@ class LegalIRProofFeedbackRecord:
     schema_version: str = LEGAL_IR_PROOF_FEEDBACK_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
+        _trust_boolean(self.deterministic_trusted, "deterministic_trusted")
         if self.schema_version != LEGAL_IR_PROOF_FEEDBACK_SCHEMA_VERSION:
             raise ProofFeedbackError(f"unsupported proof-feedback schema: {self.schema_version!r}")
         for name in (
@@ -677,7 +709,7 @@ class LegalIRProofFeedbackRecord:
         return {
             "backend_outcomes": dict(sorted(self.backend_outcomes.items())),
             "counterexample": self.counterexample.to_dict() if self.counterexample else None,
-            "deterministic_trusted": bool(self.deterministic_trusted),
+            "deterministic_trusted": _trust_boolean(self.deterministic_trusted, "deterministic_trusted"),
             "evidence_ids": list(self.evidence_ids),
             "kernel_reconstruction": self.kernel_reconstruction.to_dict(),
             "legal_ir_view": self.legal_ir_view,
@@ -783,7 +815,7 @@ class LegalIRProofFeedbackRecord:
             else MinimalFailingContractFeedback.from_verified(minimal_failing_contract or {})
         )
         label = _training_label(
-            deterministic_trusted=bool(deterministic_trusted),
+            deterministic_trusted=_trust_boolean(deterministic_trusted, "deterministic_trusted"),
             kernel=kernel,
             counterexample=verified_counterexample,
             contract=verified_contract,
@@ -828,7 +860,7 @@ class LegalIRProofFeedbackRecord:
             kernel_reconstruction=kernel,
             counterexample=verified_counterexample,
             minimal_failing_contract=verified_contract,
-            deterministic_trusted=bool(deterministic_trusted),
+            deterministic_trusted=_trust_boolean(deterministic_trusted, "deterministic_trusted"),
             training_label=label,
             repair_label=_safe_identifier(repair_label or "none"),
             trust_status=trust,
@@ -924,7 +956,7 @@ class LegalIRProofFeedbackRecord:
                 if isinstance(contract, Mapping)
                 else None
             ),
-            deterministic_trusted=bool(value.get("deterministic_trusted")),
+            deterministic_trusted=_trust_boolean(value.get("deterministic_trusted", False), "deterministic_trusted"),
             training_label=ProofFeedbackLabel(str(value.get("training_label") or "")),
             repair_label=str(value.get("repair_label") or ""),
             trust_status=ProofFeedbackTrustStatus(str(value.get("trust_status") or "")),

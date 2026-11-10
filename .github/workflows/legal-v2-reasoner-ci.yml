@@ -13,11 +13,19 @@ on:
       - "ipfs_datasets_py/logic/autoformal/**"
       - "ipfs_datasets_py/logic/legal_ir/**"
       - "ipfs_datasets_py/logic/formalization/autoencoder/**"
+      - "ipfs_datasets_py/optimizers/logic_theorem_optimizer/**"
+      - "tests/unit/optimizers/logic_theorem_optimizer/test_legal_*.py"
+      - "tests/unit/logic/formalization/autoencoder/test_alignment_relation_*.py"
+      - "tests/fixtures/legal_ir/joint_retrieval/**"
+      - "ipfs_datasets_py/logic/integration/reasoning/**"
+      - "tests/unit/logic/integration/test_hammer.py"
+      - "tests/unit/logic/integration/test_legal_ir_*.py"
       - "ipfs_datasets_py/logic/backends/**"
       - "ipfs_datasets_py/logic/ir_core/**"
       - "ipfs_datasets_py/logic/common/duckdb_proof_*.py"
       - "tests/fixtures/legal_ir/proof_cache/**"
       - "tests/unit/logic/legal_ir/test_proof_cache.py"
+      - "tests/unit/logic/legal_ir/test_extended_decompiler.py"
       - "tests/unit/logic/test_duckdb_proof_migration.py"
       - "tests/unit/logic/test_duckdb_proof_store.py"
       - "tests/unit/logic/autoformal/**"
@@ -41,11 +49,19 @@ on:
       - "ipfs_datasets_py/logic/autoformal/**"
       - "ipfs_datasets_py/logic/legal_ir/**"
       - "ipfs_datasets_py/logic/formalization/autoencoder/**"
+      - "ipfs_datasets_py/optimizers/logic_theorem_optimizer/**"
+      - "tests/unit/optimizers/logic_theorem_optimizer/test_legal_*.py"
+      - "tests/unit/logic/formalization/autoencoder/test_alignment_relation_*.py"
+      - "tests/fixtures/legal_ir/joint_retrieval/**"
+      - "ipfs_datasets_py/logic/integration/reasoning/**"
+      - "tests/unit/logic/integration/test_hammer.py"
+      - "tests/unit/logic/integration/test_legal_ir_*.py"
       - "ipfs_datasets_py/logic/backends/**"
       - "ipfs_datasets_py/logic/ir_core/**"
       - "ipfs_datasets_py/logic/common/duckdb_proof_*.py"
       - "tests/fixtures/legal_ir/proof_cache/**"
       - "tests/unit/logic/legal_ir/test_proof_cache.py"
+      - "tests/unit/logic/legal_ir/test_extended_decompiler.py"
       - "tests/unit/logic/test_duckdb_proof_migration.py"
       - "tests/unit/logic/test_duckdb_proof_store.py"
       - "tests/unit/logic/autoformal/**"
@@ -252,13 +268,19 @@ jobs:
       IPFS_DATASETS_RUN_NATIVE_LEAN: "1"
       IPFS_DATASETS_LEAN_VERSION: "4.34.1"
       IPFS_DATASETS_NATIVE_LEAN_REPORT: native-lean-v3-result.json
+      OMP_NUM_THREADS: "1"
+      OPENBLAS_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      CUDA_VISIBLE_DEVICES: ""
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
       - name: Install focused Python test dependencies
-        run: python -m pip install pytest beartype duckdb
+        run: python -m pip install pytest==8.3.4 numpy==2.1.3 beartype duckdb multiformats cryptography requests rich huggingface_hub z3-solver
+      - name: Install pinned CPU retrieval test dependency
+        run: python -m pip install torch==2.9.1 --index-url https://download.pytorch.org/whl/cpu
       - name: Restore pinned Lean toolchain
         id: lean-cache
         uses: actions/cache@v4
@@ -281,6 +303,7 @@ jobs:
         shell: bash
         run: |
           printf '%s\n' "IPFS_DATASETS_LEAN_EXECUTABLE=$HOME/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lean" >> "$GITHUB_ENV"
+          printf '%s\n' "IPFS_DATASETS_NATIVE_LAKE_TEST_EXECUTABLE=$HOME/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake" >> "$GITHUB_ENV"
       - name: Run focused proof and cache contracts
         env:
           IPFS_DATASETS_RUN_NATIVE_LEAN: "0"
@@ -309,6 +332,66 @@ jobs:
             tests/integration/logic/backends/test_kernel_backends.py::test_lean_native_v3_proof_cache_round_trip_and_exact_reuse_context \
             --basetemp=native-lean-cases \
             -v --tb=short --junitxml=native-lean-v3-junit.xml
+      - name: Run preservation mutation and custody contracts
+        env:
+          IPFS_DATASETS_RUN_NATIVE_LEAN: "0"
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          python -m pytest -c /dev/null --noconftest \
+            tests/unit/logic/autoformal/test_legal_native_ast_preservation.py \
+            tests/unit/logic/autoformal/test_legal_native_ast_preservation_native.py \
+            -k 'not installed_lean' \
+            -q --tb=short --junitxml=legal-preservation-contracts-junit.xml
+      - name: Run Hammer and proof-feedback trust boundaries
+        env:
+          IPFS_DATASETS_RUN_NATIVE_LEAN: "0"
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          python -m pytest -c /dev/null --noconftest \
+            tests/unit/logic/integration/test_hammer.py \
+            tests/unit/logic/integration/test_legal_ir_hammer_translation.py \
+            tests/unit/logic/integration/test_legal_ir_proof_feedback.py \
+            -q --tb=short --junitxml=legal-proof-feedback-trust-junit.xml
+      - name: Run source-withheld surface cycle and canonical regressions
+        env:
+          IPFS_DATASETS_RUN_NATIVE_LEAN: "0"
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          python -m pytest -c /dev/null --noconftest \
+            tests/unit/logic/legal_ir/test_extended_decompiler.py \
+            tests/unit/logic/legal_ir/test_canonical_decompiler.py \
+            tests/unit/logic/legal_ir/test_canonical_decompiler_reconstruction.py \
+            -q --tb=short --junitxml=legal-source-withheld-cycle-junit.xml
+      - name: Run complete reviewed retrieval controls
+        env:
+          IPFS_DATASETS_RUN_NATIVE_LEAN: "0"
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          python -m pytest -c /dev/null --noconftest \
+            tests/unit/logic/formalization/autoencoder/test_alignment_relation_declarations.py \
+            tests/unit/logic/formalization/autoencoder/test_alignment_relation_mask_handoff.py \
+            tests/unit/optimizers/logic_theorem_optimizer/test_legal_joint_retrieval.py \
+            tests/unit/optimizers/logic_theorem_optimizer/test_legal_structured_retrieval.py \
+            -q --tb=short --junitxml=legal-reviewed-retrieval-junit.xml
+      - name: Run reviewed semantic admission controls
+        env:
+          IPFS_DATASETS_RUN_NATIVE_LEAN: "0"
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          python -m pytest -c /dev/null --noconftest \
+            tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_consumer_binding.py \
+            tests/unit/logic/autoformal/test_legal_norm_content_adjudication_v1.py \
+            -q --tb=short --junitxml=legal-reviewed-admission-junit.xml
+      # The same canonical executor retains real compiler output, source readback,
+      # finite process bounds and exact empty-dependency theorem reports.
+      - name: Run actual unary, relational and counted preservation
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          python -m pytest -c /dev/null --noconftest \
+            tests/unit/logic/autoformal/test_legal_native_ast_preservation_native.py \
+            -k installed_lean --basetemp=native-preservation-cases \
+            -v --tb=short --junitxml=native-preservation-junit.xml
       - name: Retain actual native proof-check evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -320,3 +403,12 @@ jobs:
             native-lean-cases/**/native-lean-proof-cache-v3.json
             native-lean-v3-junit.xml
             legal-autoformal-contracts-junit.xml
+            legal-preservation-contracts-junit.xml
+            native-preservation-junit.xml
+            legal-reviewed-retrieval-junit.xml
+            legal-reviewed-admission-junit.xml
+            legal-source-withheld-cycle-junit.xml
+            legal-proof-feedback-trust-junit.xml
+            native-preservation-cases/**/installed-legacy-unary/**
+            native-preservation-cases/**/installed-relational-*/**
+            native-preservation-cases/**/installed-counted-three/**

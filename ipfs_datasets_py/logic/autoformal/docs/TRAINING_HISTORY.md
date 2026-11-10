@@ -1,5 +1,14 @@
 # Training and experiment history
 
+The [fresh clean-public-tree qualification](../../../../docs/autoformalization/evidence/legal-ir-reviewed-retrieval-public-tree-qualification-20261109.json) independently passed294 cases with no skips/deselections,204pins and137 compiled product buffers matching the selected public index. Original custody closed and2MiB released with916146bytes retained. Earlier config/capacity failures and byte-exact stopped-evidence archival remain separate; no private dependency postimages were delivered.
+
+## 2026-11-09 — reviewed retrieval source delivery after the complete 294-case qualification
+
+The [exact nine-file source delivery](../../../../docs/autoformalization/evidence/legal-ir-reviewed-retrieval-qualified-source-delivery-20261109.json) publishes the unchanged product/test generation captured by the [294-case full qualification](../../../../docs/autoformalization/evidence/legal-ir-reviewed-retrieval-full-qualification-20261109.json). All 62 declaration, 105 mask, 59 joint and 68 structured cases passed, with no skip/deselection; 256 pins and 137 compiled product buffers matched, and original source/process/scheduler/storage custody closed. The 2 MiB claim released with 914,116 bytes retained. The 29 frozen-fixture import warnings remain preserved.
+
+Both security assertions remain; their temporary symlink now closes in `finally`. Shared authored rich input setup uses per-case deep copies; product admission/revocation still replays freshly, and changed-registry inputs rebuild. The earlier one-pass/owner-cancelled reproduction and timed-out full attempt retain their original claims and sources. The 225-case partial cohort is not added to this result. Numerical updates are small fictional fixture checks, with no new model asset, approved statutory target, held-out gain, pretrained decoder fit or corpus result. CPU CI configuration and hosted execution remain separate from the measured local result.
+
+
 ## 2026-11-09 — Proof/cache engineering, no model experiment
 
 The [fresh proof-cache qualification](../../../../docs/autoformalization/evidence/legal-ir-native-proof-cache-roundtrip-20261109.json) records 243 ordinary passes and 11 actual Lean commands, with exact disk reuse and adversarial context refusals. No model initialization, inference, update, gold-label admission or numerical gain was performed. Failed capacity/collection attempts remain separate; three later shared-SDK source changes inherit no qualification. See the handoff for the frozen executed generation and original custody closeout.

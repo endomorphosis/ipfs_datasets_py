@@ -1,0 +1,283 @@
+{
+  "schema": "legal-ir-proof-feedback-trust-flags-qualification/v1",
+  "recorded_utc": "2026-11-09T08:12:08.632638+00:00",
+  "tasks": [
+    "LIR-22"
+  ],
+  "status": "local_software_qualified_hosted_ci_unverified",
+  "canonical_files": [
+    {
+      "path": "ipfs_datasets_py/logic/integration/reasoning/hammer.py",
+      "bytes": 44974,
+      "sha256": "c7561ac3f4833dddf11a6bb4a2b045fc132f95248a40a144a97b3b3ac44d5fbd"
+    },
+    {
+      "path": "ipfs_datasets_py/logic/integration/reasoning/legal_ir_hammer_translation.py",
+      "bytes": 30916,
+      "sha256": "b1058c253091447f69e708c4ef3dd879a0357849fb0e742efecfa7a3d14af83f"
+    },
+    {
+      "path": "ipfs_datasets_py/logic/integration/reasoning/legal_ir_proof_feedback.py",
+      "bytes": 59394,
+      "sha256": "27e102c61bd93a93202c3f2e10757ebc9506a19bc784719a8ea253c9523849fa"
+    },
+    {
+      "path": "tests/unit/logic/integration/test_legal_ir_hammer_translation.py",
+      "bytes": 14420,
+      "sha256": "c7a3a961f8a3c4ec40c99d3705acf6ecf85a1cdf1998760e90a4996c9f27a79b"
+    },
+    {
+      "path": "tests/unit/logic/integration/test_legal_ir_proof_feedback.py",
+      "bytes": 21127,
+      "sha256": "2d62a2773a2ecfbb54f4663f7ee7cd1cc0a203a94b4dfa1a9cfb114d74cbebfd"
+    }
+  ],
+  "changes": [
+    "Exact boolean validation at Hammer typed execution, callback, receipt, override and feedback boundaries; strings and integers refuse rather than become truthy",
+    "A positive reconstruction projection requires explicit unrevoked receipt trust and no translation failure; refusal preserves upstream receipts and does not relabel a checked proof as a failed reconstruction"
+  ],
+  "historical_attempts": [
+    {
+      "controls": "workspace/test-logs/federal-corpus-audits/legal-ir-proof-feedback-trust-flags-20261109-v01/red-controls-v01",
+      "result": "ledger_lock_timeout_no_grant_or_tests",
+      "receipts": [
+        {
+          "path": "workspace/test-logs/federal-corpus-audits/legal-ir-proof-feedback-trust-flags-20261109-v01/red-controls-v01/owner.stdout",
+          "bytes": 3779,
+          "sha256": "e61e89b14ceda767a1c87d5132dda4652531bd563c35aa0fdcff2e9aaafe45a2"
+        },
+        {
+          "path": "workspace/test-logs/federal-corpus-audits/legal-ir-proof-feedback-trust-flags-20261109-v01/red-controls-v01/owner.stderr",
+          "bytes": 1366,
+          "sha256": "c1b256daf526d1ec43f5007dedacc22bc89f529dcd7806057542ecc1009eb6c7"
+        },
+        {
+          "path": "workspace/test-logs/federal-corpus-audits/legal-ir-proof-feedback-trust-flags-20261109-v01/red-controls-v01/parent-closeout.json",
+          "bytes": 77,
+          "sha256": "85802c8f4762091d9b8f75b8324f023490a2380e9c5f84ccee618c3ed64d989f"
+        },
+        {
+          "path": "workspace/test-logs/federal-corpus-audits/legal-ir-proof-feedback-trust-flags-20261109-v01/red-controls-v01/captured-source-manifest.json",
+          "bytes": 23868,
+          "sha256": "d810743b2bb389872d36cbead8c91127a95779a5d572d51a621f9b5ab80f6b90"
+        }
+      ]
+    },
+    {
+      "controls": "workspace/test-logs/federal-corpus-audits/legal-ir-proof-feedback-trust-flags-20261109-v01/red-controls-v02",
+      "result": "102_setup_errors_18_deselected_missing_root_init_guard",
+      "retained_claim": "9d653013bbfc4e5a975f887c542c7204",
+      "receipts": [
+        {
+          "path": "workspace/test-logs/federal-corpus-audits/legal-ir-proof-feedback-trust-flags-20261109-v01/red-controls-v02/owner.stdout",
+          "bytes": 7765,
+          "sha256": "1c5433d89b046e3c31cb55fd3e7d0e1010034346336cd38d44fe224415c784c7"
+        },
+        {
+          "path": "workspace/test-logs/federal-corpus-audits/legal-ir-proof-feedback-trust-flags-20261109-v01/red-controls-v02/owner.stderr",
+          "bytes": 686,
+          "sha256": "a46544f34187adf62b2b1fcce9c6a61bb8891220c6b34bff00e9738f56509993"
+        },
+        {
+          "path": "workspace/test-logs/federal-corpus-audits/legal-ir-proof-feedback-trust-flags-20261109-v01/red-controls-v02/parent-closeout.json",
+          "bytes": 77,
+          "sha256": "85802c8f4762091d9b8f75b8324f023490a2380e9c5f84ccee618c3ed64d989f"
+        },
+        {
+          "path": "workspace/test-logs/federal-corpus-audits/legal-ir-proof-feedback-trust-flags-20261109-v01/red-controls-v02/captured-source-manifest.json",
+          "bytes": 25637,
+          "sha256": "a13f470dff3f9f4a8efc662ff0bcb5a681f83512acb46a7c3bfd4476d498340f"
+        }
+      ]
+    },
+    {
+      "controls": "workspace/test-logs/federal-corpus-audits/legal-ir-proof-feedback-trust-flags-20261109-v01/red-controls-v03",
+      "result": "102_failed_18_deselected_genuine_bool_coercion_reproduction",
+      "retained_claim": "ad243be336e74edb98cb8bcb9b92fc33",
+      "receipts": [
+        {
+          "path": "workspace/test-logs/federal-corpus-audits/legal-ir-proof-feedback-trust-flags-20261109-v01/red-controls-v03/owner.stdout",
+          "bytes": 7765,
+          "sha256": "1d04367cf6b3a46445c9e07c05a33633fab8d9b9f8be7bc89521b79d17783d8b"
+        },
+        {
+          "path": "workspace/test-logs/federal-corpus-audits/legal-ir-proof-feedback-trust-flags-20261109-v01/red-controls-v03/owner.stderr",
+          "bytes": 686,
+          "sha256": "a46544f34187adf62b2b1fcce9c6a61bb8891220c6b34bff00e9738f56509993"
+        },
+        {
+          "path": "workspace/test-logs/federal-corpus-audits/legal-ir-proof-feedback-trust-flags-20261109-v01/red-controls-v03/parent-closeout.json",
+          "bytes": 77,
+          "sha256": "85802c8f4762091d9b8f75b8324f023490a2380e9c5f84ccee618c3ed64d989f"
+        },
+        {
+          "path": "workspace/test-logs/federal-corpus-audits/legal-ir-proof-feedback-trust-flags-20261109-v01/red-controls-v03/captured-source-manifest.json",
+          "bytes": 25831,
+          "sha256": "f11232b3118989d1d7121ce2c495a5a126735f73d6203ce5f2fc0b698d78bcc9"
+        }
+      ]
+    },
+    {
+      "controls": "workspace/test-logs/federal-corpus-audits/legal-ir-proof-feedback-trust-flags-20261109-v01/green-controls-v01",
+      "result": "127_passed_1_skipped_full_primary_and_core_suites_before_revocation_fix",
+      "released_claim": "64e1b006c50f4e799651147893ca237b",
+      "receipts": [
+        {
+          "path": "workspace/test-logs/federal-corpus-audits/legal-ir-proof-feedback-trust-flags-20261109-v01/green-controls-v01/owner.stdout",
+          "bytes": 5270,
+          "sha256": "fd7c22055e873fe9915a390b28a12821adbdcdb742a40a87020e6f5a80ec8d2e"
+        },
+        {
+          "path": "workspace/test-logs/federal-corpus-audits/legal-ir-proof-feedback-trust-flags-20261109-v01/green-controls-v01/owner.stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "workspace/test-logs/federal-corpus-audits/legal-ir-proof-feedback-trust-flags-20261109-v01/green-controls-v01/parent-closeout.json",
+          "bytes": 77,
+          "sha256": "b2e85cb18bf58e26c26bff37172054556afc0b0faa827ab5889965ae71dd6358"
+        },
+        {
+          "path": "workspace/test-logs/federal-corpus-audits/legal-ir-proof-feedback-trust-flags-20261109-v01/green-controls-v01/captured-source-manifest.json",
+          "bytes": 26064,
+          "sha256": "f764c1b8f498772396df4c5fda3691b22b4608e22a8deec38d8a3e5ac824e315"
+        }
+      ]
+    },
+    {
+      "controls": "workspace/test-logs/federal-corpus-audits/legal-ir-proof-feedback-trust-flags-20261109-v01/red-controls-v04",
+      "result": "7_failed_1_passed_128_deselected_genuine_revocation_reproduction",
+      "retained_claim": "e383f8e4758d4481b342abf0ab85f4f7",
+      "receipts": [
+        {
+          "path": "workspace/test-logs/federal-corpus-audits/legal-ir-proof-feedback-trust-flags-20261109-v01/red-controls-v04/owner.stdout",
+          "bytes": 7861,
+          "sha256": "276821d3ffa0d407c90a96884da80e84124b3dc5998c7236732aef93ecae5efd"
+        },
+        {
+          "path": "workspace/test-logs/federal-corpus-audits/legal-ir-proof-feedback-trust-flags-20261109-v01/red-controls-v04/owner.stderr",
+          "bytes": 686,
+          "sha256": "a46544f34187adf62b2b1fcce9c6a61bb8891220c6b34bff00e9738f56509993"
+        },
+        {
+          "path": "workspace/test-logs/federal-corpus-audits/legal-ir-proof-feedback-trust-flags-20261109-v01/red-controls-v04/parent-closeout.json",
+          "bytes": 77,
+          "sha256": "85802c8f4762091d9b8f75b8324f023490a2380e9c5f84ccee618c3ed64d989f"
+        },
+        {
+          "path": "workspace/test-logs/federal-corpus-audits/legal-ir-proof-feedback-trust-flags-20261109-v01/red-controls-v04/captured-source-manifest.json",
+          "bytes": 26058,
+          "sha256": "2c83ff03eb1193294b9391fec0806d2e2887a7e259b5b3ebc2333b4c2433520a"
+        }
+      ]
+    }
+  ],
+  "qualification": {
+    "tests": 136,
+    "passed": 135,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 1,
+    "skip_reason": "z3 unavailable; owning test uses pytest.importorskip(\"z3\")",
+    "pytest_seconds": 1.118,
+    "owned_execution_seconds": 87.19421817781404,
+    "source_pins": 108,
+    "compiled_product_source_buffers": 95,
+    "pins_unchanged": true,
+    "original_parent_waited": true,
+    "source_closed": true,
+    "process_closed": true,
+    "scheduler_lease_closed": true,
+    "storage_claim": "cff68a8918784e3baecd5d887e3cb114",
+    "storage_status": "released",
+    "storage_reserved_bytes": 1048576,
+    "retained_attempt_bytes": 63993
+  },
+  "artifacts": [
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-proof-feedback-trust-flags-20261109-v01/green-controls-v02/request.json",
+      "bytes": 21598,
+      "sha256": "4d13a7a539167a62dabc2224ac916d6667d9d721016f16ecd6c432e4da1bc41c"
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-proof-feedback-trust-flags-20261109-v01/green-controls-v02/plan.json",
+      "bytes": 19965,
+      "sha256": "81bdc5eaad48e05cf81a44a66a8f9567c300f8beff2d53c434da0da26fceec6b"
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-proof-feedback-trust-flags-20261109-v01/green-controls-v02/captured-source-manifest.json",
+      "bytes": 26064,
+      "sha256": "2de411ad7b74f4b318fe6ac274e8ee0a8b6d69d47b1c5153db2c16c01342c42a"
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-proof-feedback-trust-flags-20261109-v01/green-controls-v02/captured-source-buffers.tar.gz",
+      "bytes": 664543,
+      "sha256": "eec735178d85d6af1baea17bdf7e5878b72cba78859b80c59ddf8f4504301b42"
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-proof-feedback-trust-flags-20261109-v01/green-controls-v02/owner.stdout",
+      "bytes": 5263,
+      "sha256": "20b8f7f005d802cad81d3e723553b5a66467468af70c47a65d7091a56d026d84"
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-proof-feedback-trust-flags-20261109-v01/green-controls-v02/owner.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-proof-feedback-trust-flags-20261109-v01/green-controls-v02/parent-closeout.json",
+      "bytes": 77,
+      "sha256": "b2e85cb18bf58e26c26bff37172054556afc0b0faa827ab5889965ae71dd6358"
+    },
+    {
+      "path": "/tmp/pytest-of-barberb/legal-ir-proof-feedback-green-20261109-v02/attempt/exports/junit.xml",
+      "bytes": 25429,
+      "sha256": "bf4c82eb7daaee8c7160b054fb6bacba9b5a08404b96190eff644eecd41b705e"
+    },
+    {
+      "path": "/tmp/pytest-of-barberb/legal-ir-proof-feedback-green-20261109-v02/attempt/exports/source-observation.json",
+      "bytes": 16942,
+      "sha256": "388686fe7f3e0706d673f071dd23bc7ccd4715405131f35e61cecdb7e82b3a14"
+    },
+    {
+      "path": "/tmp/pytest-of-barberb/legal-ir-proof-feedback-green-20261109-v02/attempt/logs/stdout.log",
+      "bytes": 307,
+      "sha256": "69229875d3d32c358551a0925739258a5fc54f362cf7b9a3f80668203e72c47d"
+    },
+    {
+      "path": "/tmp/pytest-of-barberb/legal-ir-proof-feedback-green-20261109-v02/attempt/logs/stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/pytest-of-barberb/legal-ir-proof-feedback-green-20261109-v02/attempt/logs/execution.json",
+      "bytes": 1447,
+      "sha256": "af2526092f4efe51ba2becb96c22d0637b86b6939a0884ced224dcef3c31f28c"
+    },
+    {
+      "path": "/tmp/pytest-of-barberb/legal-ir-proof-feedback-green-20261109-v02/attempt/logs/result.json",
+      "bytes": 762,
+      "sha256": "42a933595a1a4335e3a7654ac893e79c9ddd4cb9726a5166e0c818ac2c24e37a"
+    }
+  ],
+  "installation": [
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-proof-feedback-trust-flags-20261109-v01/source-fix/installation.json",
+      "bytes": 1383,
+      "sha256": "873b81e08d0168116e30e310c5e8306d54a9c0ce5dfb51871218d75a31c06408"
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-proof-feedback-trust-flags-20261109-v01/revocation-fix/installation.json",
+      "bytes": 482,
+      "sha256": "26253307ed299ee23191a1e3579395ee64f92d1b3884abef1d012882b4828e1f"
+    }
+  ],
+  "compatibility": "Valid booleans retain their existing wire representation. Missing receipt trust cannot authorize a positive projection. Direct verifier-owned feedback construction remains a distinct caller contract. No receipt authentication is added.",
+  "limits": [
+    "No actual Lean process, model training, model asset download, or statutory review executed",
+    "Proof supervision signals do not authorize legal meaning, gold labels, or corpus admission",
+    "Failed claims remain retained and fully charged; no scope, cap or budget was reset",
+    "Hosted CI remains unverified; existing draft PR billing and other qualification gates remain open",
+    "Earlier results qualify only their captured sources; no credit transfers to subsequent shared runtime or model changes"
+  ]
+}

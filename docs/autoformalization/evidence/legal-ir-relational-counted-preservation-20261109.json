@@ -1,0 +1,665 @@
+{
+  "schema": "legal-relational-counted-preservation-qualification/v1",
+  "observed_utc": "2026-11-09T06:14:47.005504+00:00",
+  "existing_tasks": [
+    "LIR-07",
+    "LIR-12",
+    "LIR-14"
+  ],
+  "status": "native_profiles_qualified_ordinary_tests_passed_storage_closeout_failed",
+  "source_files": [
+    {
+      "path": "ipfs_datasets_py/logic/autoformal/legal_native_ast_preservation.py",
+      "sha256": "240d14e28f1ac3426af2ca4e3d8fd1693653cbeb730112ec93bea33ebb2622ac",
+      "bytes": 87352
+    },
+    {
+      "path": "ipfs_datasets_py/logic/autoformal/legal_native_ast_preservation_native.py",
+      "sha256": "103ce87027b00c9806e6320f74648cca18f370b65b1dfbe7b6360cb3a3b4b721",
+      "bytes": 41284
+    },
+    {
+      "path": "tests/unit/logic/autoformal/test_legal_native_ast_preservation.py",
+      "sha256": "1c85394985beb4c29aa6d0eb833b0aa27d710acf0f6648f7b8554ae0958e6780",
+      "bytes": 47995
+    },
+    {
+      "path": "tests/unit/logic/autoformal/test_legal_native_ast_preservation_native.py",
+      "sha256": "b5af14396df2f040402d06aaef8c5368eda8b541895e17d618baf1d48d18dce5",
+      "bytes": 53015
+    }
+  ],
+  "ordinary": {
+    "passed": 291,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "test_process_returncode": 0,
+    "owner_returncode": 1,
+    "operational_closeout_completed": false,
+    "pins": 171,
+    "distinct_product_files_compiled": 111,
+    "reservation_id": "2b3b9527e7a34b2d82f7741a50f4106a",
+    "reservation_status": "retained",
+    "storage_bytes": 16777216,
+    "source_drift": [],
+    "source_closed": true,
+    "parent_waited": true,
+    "process_scope": "sampled_birth_bound_descendants",
+    "observed_live_processes": 0,
+    "finalization_failure": {
+      "schema": "owned-validation-result/v1",
+      "request_sha256": "03d8ed1dc7668ca33c51efd8584684a047731d0dc07798d6b32a7c1edb269619",
+      "executed_checks": [
+        "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/autoformal/test_legal_native_ast_preservation.py",
+        "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/autoformal/test_legal_native_ast_preservation_native.py"
+      ],
+      "returncode": 0,
+      "completed": false,
+      "admitted": false,
+      "Lean_admitted": false,
+      "resource_scope": "cooperative_sampled_birth_bound_descendants_and_owned_attempt",
+      "model_weights_downloaded": false,
+      "authority_granted": false,
+      "process_observation": {
+        "scope": "sampled_birth_bound_descendants",
+        "group_rss": {
+          "available": true,
+          "live_processes": 0,
+          "rss_bytes": 0
+        },
+        "live_processes": 0,
+        "rss_bytes": 0,
+        "observed_identities": [
+          {
+            "pid": 1575233,
+            "birth_ticks": 322277443,
+            "parent_pid": 1566922,
+            "process_group_id": 1575233,
+            "session_id": 1575233
+          },
+          {
+            "pid": 1581994,
+            "birth_ticks": 322281781,
+            "parent_pid": 1575233,
+            "process_group_id": 1575233,
+            "session_id": 1575233
+          }
+        ],
+        "out_of_group_live_identities": [],
+        "tracking_error": ""
+      },
+      "elapsed_seconds": 145.29246974224225,
+      "error_type": "DaemonResourceError",
+      "error": "storage reservation capacity exceeded",
+      "watchdog_errors": [],
+      "received_signals": [],
+      "process_cleanup_error": null
+    },
+    "evidence": [
+      {
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-relational-counted-preservation-20261109-v01/ordinary-controls-v09/request.json",
+        "sha256": "03d8ed1dc7668ca33c51efd8584684a047731d0dc07798d6b32a7c1edb269619",
+        "bytes": 32431
+      },
+      {
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-relational-counted-preservation-20261109-v01/ordinary-controls-v09/plan.json",
+        "sha256": "e70236d69455eddcc640150ea58e23670734289e1831a5e8fe5d7a565124a228",
+        "bytes": 141651
+      },
+      {
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-relational-counted-preservation-20261109-v01/ordinary-controls-v09/captured-source-manifest.json",
+        "sha256": "389a0cd3174ce15e8f17bd749403f966006d8b2dfd056711436cd8e7112e10c0",
+        "bytes": 41043
+      },
+      {
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-relational-counted-preservation-20261109-v01/ordinary-controls-v09/captured-source-buffers.tar.gz",
+        "sha256": "7dc6532a0c8964ba3e4826913febc080685449f977d8fe2d67b15fa2e85fe9d4",
+        "bytes": 1065733
+      },
+      {
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-relational-counted-preservation-20261109-v01/ordinary-controls-v09/owner.stdout",
+        "sha256": "e3a8a73d2da37596b7a37d0028369193851df89fab738ed471910b96a9221b13",
+        "bytes": 8022
+      },
+      {
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-relational-counted-preservation-20261109-v01/ordinary-controls-v09/parent-closeout.json",
+        "sha256": "85802c8f4762091d9b8f75b8324f023490a2380e9c5f84ccee618c3ed64d989f",
+        "bytes": 77
+      },
+      {
+        "path": "/tmp/pytest-of-barberb/legal-ir-relational-counted-20261109-v09/attempt/logs/result.json",
+        "sha256": "e79aeb4978e633356bdf205b34a17132dfb7b495bb66d4ac7aa7df11adad80b1",
+        "bytes": 671
+      },
+      {
+        "path": "/tmp/pytest-of-barberb/legal-ir-relational-counted-20261109-v09/attempt/logs/execution.json",
+        "sha256": "386d00bf68da85e611220fe165e4e8f6a9742b26a3f0720d285791d9c9705b22",
+        "bytes": 1360
+      },
+      {
+        "path": "/tmp/pytest-of-barberb/legal-ir-relational-counted-20261109-v09/attempt/logs/stdout.log",
+        "sha256": "4d8a8c08f0ca094f6fe87a27b37792f23668c6e76e607a1b24bf79fc3c8dfc22",
+        "bytes": 549
+      },
+      {
+        "path": "/tmp/pytest-of-barberb/legal-ir-relational-counted-20261109-v09/attempt/exports/junit.xml",
+        "sha256": "7c0166b5c85c01d4080ac55ef1a0e922bee012fd71905394f329772806703205",
+        "bytes": 58392
+      },
+      {
+        "path": "/tmp/pytest-of-barberb/legal-ir-relational-counted-20261109-v09/attempt/exports/source-observation.json",
+        "sha256": "30ae0179ca399515809246dceb4cb4587c4de0a890f1369f581fef8597e5a249",
+        "bytes": 19594
+      }
+    ]
+  },
+  "native": {
+    "passed": 5,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "test_process_returncode": 0,
+    "owner_returncode": 0,
+    "operational_closeout_completed": true,
+    "pins": 171,
+    "distinct_product_files_compiled": 109,
+    "reservation_id": "15921cf3cd734f9c8fb7e4bdc8802b7f",
+    "reservation_status": "released",
+    "storage_bytes": 12582912,
+    "source_drift": [],
+    "source_closed": true,
+    "parent_waited": true,
+    "process_scope": "sampled_birth_bound_descendants",
+    "observed_live_processes": 0,
+    "finalization_failure": null,
+    "evidence": [
+      {
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-relational-counted-preservation-20261109-v01/native-controls-v05/request.json",
+        "sha256": "7d4a90b050797f32e7988b4e37aaca7ea3a753ef68e9346445cc98f7e1dcbff8",
+        "bytes": 32350
+      },
+      {
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-relational-counted-preservation-20261109-v01/native-controls-v05/plan.json",
+        "sha256": "8b5aae690b3aa445f86a918213499c4857c9a39a0caf6c4c75c86dc12f59405f",
+        "bytes": 144700
+      },
+      {
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-relational-counted-preservation-20261109-v01/native-controls-v05/captured-source-manifest.json",
+        "sha256": "4542f60ac653970dbdc38b81a7237976129b3a85e51c784ce19aec34efcd5650",
+        "bytes": 40743
+      },
+      {
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-relational-counted-preservation-20261109-v01/native-controls-v05/captured-source-buffers.tar.gz",
+        "sha256": "5b1ead4a9e43a11c06b3ce26c0039900689067dde88300ef6ce85f4a22f9fbd8",
+        "bytes": 1066814
+      },
+      {
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-relational-counted-preservation-20261109-v01/native-controls-v05/owner.stdout",
+        "sha256": "0f43b299a72c3477abc63fd158bd2b1612475ccc0e612e2bc1c86a011ba7955b",
+        "bytes": 8533
+      },
+      {
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-relational-counted-preservation-20261109-v01/native-controls-v05/parent-closeout.json",
+        "sha256": "b2e85cb18bf58e26c26bff37172054556afc0b0faa827ab5889965ae71dd6358",
+        "bytes": 77
+      },
+      {
+        "path": "/tmp/pytest-of-barberb/legal-ir-relational-counted-native-20261109-v05/attempt/logs/result.json",
+        "sha256": "f24f905497317f8eb81ed85d4c5e251672bd39e6d95bda5f0756795a43b6abf4",
+        "bytes": 563
+      },
+      {
+        "path": "/tmp/pytest-of-barberb/legal-ir-relational-counted-native-20261109-v05/attempt/logs/execution.json",
+        "sha256": "4e498f5ed45affa34ac98d4872d319a2bb505922db68bb1c6ff19f824944bd93",
+        "bytes": 5909
+      },
+      {
+        "path": "/tmp/pytest-of-barberb/legal-ir-relational-counted-native-20261109-v05/attempt/logs/stdout.log",
+        "sha256": "b7cf2b9f76c22daec2e73086caa01f4ada23acd9630de7e1dc86ef412d0efa34",
+        "bytes": 235
+      },
+      {
+        "path": "/tmp/pytest-of-barberb/legal-ir-relational-counted-native-20261109-v05/attempt/exports/junit.xml",
+        "sha256": "9dd57368ea6a885381f4bbd74c64a327ad8616b988e4f7f4cb87d747abd724c0",
+        "bytes": 1024
+      },
+      {
+        "path": "/tmp/pytest-of-barberb/legal-ir-relational-counted-native-20261109-v05/attempt/exports/source-observation.json",
+        "sha256": "bf5fc975b9167ad9c973e41d0dfa89dbef1ed706478bef22c82a85e41fa603b4",
+        "bytes": 19216
+      }
+    ]
+  },
+  "native_cases": [
+    {
+      "case": "installed-counted-three",
+      "profile": "replayed-typed-many-sorted-fixed-three-counted-preservation/v1",
+      "typed_ast_node_count": 49,
+      "build_pid": 1556029,
+      "compiled_modules": [
+        "LegalCountedAstPreservation.Prelude",
+        "LegalCountedAstPreservation.Semantics",
+        "LegalCountedAstPreservation.Instance538ae7d384eee1e53d3070f16c009fbb2d787530754de41efdf5a4653b1be7c7",
+        "LegalCountedAstPreservation"
+      ],
+      "artifact_bytes": {
+        ".lake/build/lib/lean/LegalCountedAstPreservation.olean": 1672,
+        ".lake/build/lib/lean/LegalCountedAstPreservation/Instance538ae7d384eee1e53d3070f16c009fbb2d787530754de41efdf5a4653b1be7c7.olean": 1487344,
+        ".lake/build/lib/lean/LegalCountedAstPreservation/Prelude.olean": 106344,
+        ".lake/build/lib/lean/LegalCountedAstPreservation/Semantics.olean": 962632
+      },
+      "artifact_sha256": {
+        ".lake/build/lib/lean/LegalCountedAstPreservation.olean": "dd3c6ed3597dd1642590187d951e85020afce1b65e2e02c0ae9d669d6a3e88cc",
+        ".lake/build/lib/lean/LegalCountedAstPreservation/Instance538ae7d384eee1e53d3070f16c009fbb2d787530754de41efdf5a4653b1be7c7.olean": "c6f7c8750301dbfe7a4bfbbcbf35d99082ebf34939f8fe9256c8072dc6d568c5",
+        ".lake/build/lib/lean/LegalCountedAstPreservation/Prelude.olean": "c0bd1c7b4ea71ad03a34d7b3448e8c456ea0de5a51401f1eb02ff86a0d9b7f4e",
+        ".lake/build/lib/lean/LegalCountedAstPreservation/Semantics.olean": "8623a3e4acc21227303a73145013e16da2c743003ad7ec8d7db31143774d6c56"
+      },
+      "exact_theorem_axiom_dependencies": {
+        "LegalCountedAstPreservation.Instance538ae7d384eee1e53d3070f16c009fbb2d787530754de41efdf5a4653b1be7c7.cap_four_counterexample": [],
+        "LegalCountedAstPreservation.Instance538ae7d384eee1e53d3070f16c009fbb2d787530754de41efdf5a4653b1be7c7.cap_two_counterexample": [],
+        "LegalCountedAstPreservation.Instance538ae7d384eee1e53d3070f16c009fbb2d787530754de41efdf5a4653b1be7c7.counted_ast_closed": [],
+        "LegalCountedAstPreservation.Instance538ae7d384eee1e53d3070f16c009fbb2d787530754de41efdf5a4653b1be7c7.counted_denotation_matches_lowering": [],
+        "LegalCountedAstPreservation.Instance538ae7d384eee1e53d3070f16c009fbb2d787530754de41efdf5a4653b1be7c7.counted_value_exact": []
+      },
+      "version_probes": {
+        "lake": {
+          "command": [
+            "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake",
+            "--version"
+          ],
+          "returncode": 0,
+          "stderr": "",
+          "stdout": "Lake version 5.0.0-src+5045d00 (Lean version 4.34.1)\n"
+        },
+        "lean": {
+          "command": [
+            "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lean",
+            "--version"
+          ],
+          "returncode": 0,
+          "stderr": "",
+          "stdout": "Lean (version 4.34.1, aarch64-unknown-linux-gnu, commit 5045d0056413266e57c625dcd7c365b10e377c52, Release)\n"
+        }
+      },
+      "build_command": [
+        "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake",
+        "--offline",
+        "--no-cache",
+        "build",
+        "legal"
+      ],
+      "output_truncated": false,
+      "source_readback_passed": true,
+      "leader_reaped": true,
+      "cleanup_confirmed": true,
+      "receipt": {
+        "path": "/tmp/pytest-of-barberb/legal-ir-relational-counted-native-20261109-v05/attempt/pytest/cases/test_installed_lean_counted_preservation-lfj8ga4l/installed-counted-three/build-receipt.json",
+        "sha256": "dd965e7af52216086c8774fd9fc573e67ccf09439c9cbd11b26c2af5e15adb67",
+        "bytes": 54292
+      }
+    },
+    {
+      "case": "installed-legacy-unary",
+      "profile": "replayed-unary-definition-native-ast-concrete-preservation/v1",
+      "typed_ast_node_count": null,
+      "build_pid": 1556412,
+      "compiled_modules": [
+        "LegalNativeAstPreservation.Prelude",
+        "LegalNativeAstPreservation.Semantics",
+        "LegalNativeAstPreservation.Instance18c8cd6a1fb41458333f384bc7ae5bc2595b068aeb42ae57d6d3d09febd88df6",
+        "LegalNativeAstPreservation"
+      ],
+      "artifact_bytes": {
+        ".lake/build/lib/lean/LegalNativeAstPreservation.olean": 1672,
+        ".lake/build/lib/lean/LegalNativeAstPreservation/Instance18c8cd6a1fb41458333f384bc7ae5bc2595b068aeb42ae57d6d3d09febd88df6.olean": 121320,
+        ".lake/build/lib/lean/LegalNativeAstPreservation/Prelude.olean": 106344,
+        ".lake/build/lib/lean/LegalNativeAstPreservation/Semantics.olean": 427160
+      },
+      "artifact_sha256": {
+        ".lake/build/lib/lean/LegalNativeAstPreservation.olean": "1c9ff28298c99effd380c86e7a5cc4b95ef3bfe62bdce876887c2d568d56adfb",
+        ".lake/build/lib/lean/LegalNativeAstPreservation/Instance18c8cd6a1fb41458333f384bc7ae5bc2595b068aeb42ae57d6d3d09febd88df6.olean": "3def720a3ab9bd194264182de6597b0089c15d260074992c56b2466def9df1c8",
+        ".lake/build/lib/lean/LegalNativeAstPreservation/Prelude.olean": "290e1f0b437470506db6f707fa7ce9be739b500f5cdb5faf4df9edfbad3e7a87",
+        ".lake/build/lib/lean/LegalNativeAstPreservation/Semantics.olean": "6cd2197d4216ecbba0c86c42dfdd0d2f1d93ccece2e9f53cf922cbf3cc258342"
+      },
+      "exact_theorem_axiom_dependencies": {
+        "LegalNativeAstPreservation.Instance18c8cd6a1fb41458333f384bc7ae5bc2595b068aeb42ae57d6d3d09febd88df6.denotation_matches_native": [],
+        "LegalNativeAstPreservation.Instance18c8cd6a1fb41458333f384bc7ae5bc2595b068aeb42ae57d6d3d09febd88df6.native_ast_closed": [],
+        "LegalNativeAstPreservation.Instance18c8cd6a1fb41458333f384bc7ae5bc2595b068aeb42ae57d6d3d09febd88df6.native_value_exact": []
+      },
+      "version_probes": {
+        "lake": {
+          "command": [
+            "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake",
+            "--version"
+          ],
+          "returncode": 0,
+          "stderr": "",
+          "stdout": "Lake version 5.0.0-src+5045d00 (Lean version 4.34.1)\n"
+        },
+        "lean": {
+          "command": [
+            "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lean",
+            "--version"
+          ],
+          "returncode": 0,
+          "stderr": "",
+          "stdout": "Lean (version 4.34.1, aarch64-unknown-linux-gnu, commit 5045d0056413266e57c625dcd7c365b10e377c52, Release)\n"
+        }
+      },
+      "build_command": [
+        "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake",
+        "--offline",
+        "--no-cache",
+        "build",
+        "legal"
+      ],
+      "output_truncated": false,
+      "source_readback_passed": true,
+      "leader_reaped": true,
+      "cleanup_confirmed": true,
+      "receipt": {
+        "path": "/tmp/pytest-of-barberb/legal-ir-relational-counted-native-20261109-v05/attempt/pytest/cases/test_installed_lean_legacy_unary_preservation-zzkic386/installed-legacy-unary/build-receipt.json",
+        "sha256": "6be19ffef06e385e298120552d2cbeb504730afb92e1fcffbfdbb7127647d120",
+        "bytes": 18602
+      }
+    },
+    {
+      "case": "installed-relational-F",
+      "profile": "replayed-typed-relational-deontic-native-ast-concrete-preservation/v1",
+      "typed_ast_node_count": null,
+      "build_pid": 1554715,
+      "compiled_modules": [
+        "LegalRelationalAstPreservation.Prelude",
+        "LegalRelationalAstPreservation.Semantics",
+        "LegalRelationalAstPreservation.Instanceed22b68ecc955da397b3c3373027b7f005f9f924076882090f609c2c84d26392",
+        "LegalRelationalAstPreservation"
+      ],
+      "artifact_bytes": {
+        ".lake/build/lib/lean/LegalRelationalAstPreservation.olean": 1672,
+        ".lake/build/lib/lean/LegalRelationalAstPreservation/Instanceed22b68ecc955da397b3c3373027b7f005f9f924076882090f609c2c84d26392.olean": 284288,
+        ".lake/build/lib/lean/LegalRelationalAstPreservation/Prelude.olean": 106344,
+        ".lake/build/lib/lean/LegalRelationalAstPreservation/Semantics.olean": 941784
+      },
+      "artifact_sha256": {
+        ".lake/build/lib/lean/LegalRelationalAstPreservation.olean": "017b2304347fd918cb630f8e4bfd6dd8975a315feefcaaa5e3a5ef6326f229c9",
+        ".lake/build/lib/lean/LegalRelationalAstPreservation/Instanceed22b68ecc955da397b3c3373027b7f005f9f924076882090f609c2c84d26392.olean": "53abfc9d1f0d0c7478441ce5d56fb454009bca43d5255e908a6f360500d8e3e1",
+        ".lake/build/lib/lean/LegalRelationalAstPreservation/Prelude.olean": "97a234a70597213780436c73b6fc7cd8d539850f094416451137ba739afa4b01",
+        ".lake/build/lib/lean/LegalRelationalAstPreservation/Semantics.olean": "1bc066773460a9d4ddd0c29d35c12568bd0c3ddb812ae9d71532e9f4884fac1e"
+      },
+      "exact_theorem_axiom_dependencies": {
+        "LegalRelationalAstPreservation.Instanceed22b68ecc955da397b3c3373027b7f005f9f924076882090f609c2c84d26392.denotation_matches_native": [],
+        "LegalRelationalAstPreservation.Instanceed22b68ecc955da397b3c3373027b7f005f9f924076882090f609c2c84d26392.native_ast_closed": [],
+        "LegalRelationalAstPreservation.Instanceed22b68ecc955da397b3c3373027b7f005f9f924076882090f609c2c84d26392.native_value_exact": [],
+        "LegalRelationalAstPreservation.Instanceed22b68ecc955da397b3c3373027b7f005f9f924076882090f609c2c84d26392.role_denotation_matches_native": [],
+        "LegalRelationalAstPreservation.Instanceed22b68ecc955da397b3c3373027b7f005f9f924076882090f609c2c84d26392.typed_source_lowering_exact": []
+      },
+      "version_probes": {
+        "lake": {
+          "command": [
+            "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake",
+            "--version"
+          ],
+          "returncode": 0,
+          "stderr": "",
+          "stdout": "Lake version 5.0.0-src+5045d00 (Lean version 4.34.1)\n"
+        },
+        "lean": {
+          "command": [
+            "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lean",
+            "--version"
+          ],
+          "returncode": 0,
+          "stderr": "",
+          "stdout": "Lean (version 4.34.1, aarch64-unknown-linux-gnu, commit 5045d0056413266e57c625dcd7c365b10e377c52, Release)\n"
+        }
+      },
+      "build_command": [
+        "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake",
+        "--offline",
+        "--no-cache",
+        "build",
+        "legal"
+      ],
+      "output_truncated": false,
+      "source_readback_passed": true,
+      "leader_reaped": true,
+      "cleanup_confirmed": true,
+      "receipt": {
+        "path": "/tmp/pytest-of-barberb/legal-ir-relational-counted-native-20261109-v05/attempt/pytest/cases/test_installed_lean_relational_preservation_F_-uzlxqvz6/installed-relational-F/build-receipt.json",
+        "sha256": "377f59de3e97ad24c39886fc95f61722831443501d7ea96df39bdca7a3c7cc4d",
+        "bytes": 21603
+      }
+    },
+    {
+      "case": "installed-relational-O",
+      "profile": "replayed-typed-relational-deontic-native-ast-concrete-preservation/v1",
+      "typed_ast_node_count": null,
+      "build_pid": 1553886,
+      "compiled_modules": [
+        "LegalRelationalAstPreservation.Prelude",
+        "LegalRelationalAstPreservation.Semantics",
+        "LegalRelationalAstPreservation.Instance409e53cbb7b18e05615b71b9f22bb5d8ad35db69dcf62b3aedd41642a8ad642a",
+        "LegalRelationalAstPreservation"
+      ],
+      "artifact_bytes": {
+        ".lake/build/lib/lean/LegalRelationalAstPreservation.olean": 1672,
+        ".lake/build/lib/lean/LegalRelationalAstPreservation/Instance409e53cbb7b18e05615b71b9f22bb5d8ad35db69dcf62b3aedd41642a8ad642a.olean": 284312,
+        ".lake/build/lib/lean/LegalRelationalAstPreservation/Prelude.olean": 106344,
+        ".lake/build/lib/lean/LegalRelationalAstPreservation/Semantics.olean": 941784
+      },
+      "artifact_sha256": {
+        ".lake/build/lib/lean/LegalRelationalAstPreservation.olean": "46eade157e8630932d63499d62f4f06453a3bc0737826d0fc1f4d47569b60168",
+        ".lake/build/lib/lean/LegalRelationalAstPreservation/Instance409e53cbb7b18e05615b71b9f22bb5d8ad35db69dcf62b3aedd41642a8ad642a.olean": "b03f4604c562fc46efce88b3d363a010faf67a0d8df0b4edb38e6bb1db52ac21",
+        ".lake/build/lib/lean/LegalRelationalAstPreservation/Prelude.olean": "97a234a70597213780436c73b6fc7cd8d539850f094416451137ba739afa4b01",
+        ".lake/build/lib/lean/LegalRelationalAstPreservation/Semantics.olean": "1bc066773460a9d4ddd0c29d35c12568bd0c3ddb812ae9d71532e9f4884fac1e"
+      },
+      "exact_theorem_axiom_dependencies": {
+        "LegalRelationalAstPreservation.Instance409e53cbb7b18e05615b71b9f22bb5d8ad35db69dcf62b3aedd41642a8ad642a.denotation_matches_native": [],
+        "LegalRelationalAstPreservation.Instance409e53cbb7b18e05615b71b9f22bb5d8ad35db69dcf62b3aedd41642a8ad642a.native_ast_closed": [],
+        "LegalRelationalAstPreservation.Instance409e53cbb7b18e05615b71b9f22bb5d8ad35db69dcf62b3aedd41642a8ad642a.native_value_exact": [],
+        "LegalRelationalAstPreservation.Instance409e53cbb7b18e05615b71b9f22bb5d8ad35db69dcf62b3aedd41642a8ad642a.role_denotation_matches_native": [],
+        "LegalRelationalAstPreservation.Instance409e53cbb7b18e05615b71b9f22bb5d8ad35db69dcf62b3aedd41642a8ad642a.typed_source_lowering_exact": []
+      },
+      "version_probes": {
+        "lake": {
+          "command": [
+            "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake",
+            "--version"
+          ],
+          "returncode": 0,
+          "stderr": "",
+          "stdout": "Lake version 5.0.0-src+5045d00 (Lean version 4.34.1)\n"
+        },
+        "lean": {
+          "command": [
+            "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lean",
+            "--version"
+          ],
+          "returncode": 0,
+          "stderr": "",
+          "stdout": "Lean (version 4.34.1, aarch64-unknown-linux-gnu, commit 5045d0056413266e57c625dcd7c365b10e377c52, Release)\n"
+        }
+      },
+      "build_command": [
+        "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake",
+        "--offline",
+        "--no-cache",
+        "build",
+        "legal"
+      ],
+      "output_truncated": false,
+      "source_readback_passed": true,
+      "leader_reaped": true,
+      "cleanup_confirmed": true,
+      "receipt": {
+        "path": "/tmp/pytest-of-barberb/legal-ir-relational-counted-native-20261109-v05/attempt/pytest/cases/test_installed_lean_relational_preservation_O_-xjryq_by/installed-relational-O/build-receipt.json",
+        "sha256": "5312adbc13c12cafd30e000dc39465d3f97123353f783808470d4983f96e9ef1",
+        "bytes": 21603
+      }
+    },
+    {
+      "case": "installed-relational-P",
+      "profile": "replayed-typed-relational-deontic-native-ast-concrete-preservation/v1",
+      "typed_ast_node_count": null,
+      "build_pid": 1553990,
+      "compiled_modules": [
+        "LegalRelationalAstPreservation.Prelude",
+        "LegalRelationalAstPreservation.Semantics",
+        "LegalRelationalAstPreservation.Instanceb274889f88c6afaa5cdbacc8821d7b730f82bdbbeb3dba1eac2b2f23f863057e",
+        "LegalRelationalAstPreservation"
+      ],
+      "artifact_bytes": {
+        ".lake/build/lib/lean/LegalRelationalAstPreservation.olean": 1672,
+        ".lake/build/lib/lean/LegalRelationalAstPreservation/Instanceb274889f88c6afaa5cdbacc8821d7b730f82bdbbeb3dba1eac2b2f23f863057e.olean": 284312,
+        ".lake/build/lib/lean/LegalRelationalAstPreservation/Prelude.olean": 106344,
+        ".lake/build/lib/lean/LegalRelationalAstPreservation/Semantics.olean": 941784
+      },
+      "artifact_sha256": {
+        ".lake/build/lib/lean/LegalRelationalAstPreservation.olean": "39b3f9c4598c33103356da08ac10866b48fd3c567fc1453642981d36b553077d",
+        ".lake/build/lib/lean/LegalRelationalAstPreservation/Instanceb274889f88c6afaa5cdbacc8821d7b730f82bdbbeb3dba1eac2b2f23f863057e.olean": "6b8959dfa010cba65928f016c207e1473c26d1a2805e85b300831c04851ac341",
+        ".lake/build/lib/lean/LegalRelationalAstPreservation/Prelude.olean": "97a234a70597213780436c73b6fc7cd8d539850f094416451137ba739afa4b01",
+        ".lake/build/lib/lean/LegalRelationalAstPreservation/Semantics.olean": "1bc066773460a9d4ddd0c29d35c12568bd0c3ddb812ae9d71532e9f4884fac1e"
+      },
+      "exact_theorem_axiom_dependencies": {
+        "LegalRelationalAstPreservation.Instanceb274889f88c6afaa5cdbacc8821d7b730f82bdbbeb3dba1eac2b2f23f863057e.denotation_matches_native": [],
+        "LegalRelationalAstPreservation.Instanceb274889f88c6afaa5cdbacc8821d7b730f82bdbbeb3dba1eac2b2f23f863057e.native_ast_closed": [],
+        "LegalRelationalAstPreservation.Instanceb274889f88c6afaa5cdbacc8821d7b730f82bdbbeb3dba1eac2b2f23f863057e.native_value_exact": [],
+        "LegalRelationalAstPreservation.Instanceb274889f88c6afaa5cdbacc8821d7b730f82bdbbeb3dba1eac2b2f23f863057e.role_denotation_matches_native": [],
+        "LegalRelationalAstPreservation.Instanceb274889f88c6afaa5cdbacc8821d7b730f82bdbbeb3dba1eac2b2f23f863057e.typed_source_lowering_exact": []
+      },
+      "version_probes": {
+        "lake": {
+          "command": [
+            "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake",
+            "--version"
+          ],
+          "returncode": 0,
+          "stderr": "",
+          "stdout": "Lake version 5.0.0-src+5045d00 (Lean version 4.34.1)\n"
+        },
+        "lean": {
+          "command": [
+            "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lean",
+            "--version"
+          ],
+          "returncode": 0,
+          "stderr": "",
+          "stdout": "Lean (version 4.34.1, aarch64-unknown-linux-gnu, commit 5045d0056413266e57c625dcd7c365b10e377c52, Release)\n"
+        }
+      },
+      "build_command": [
+        "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake",
+        "--offline",
+        "--no-cache",
+        "build",
+        "legal"
+      ],
+      "output_truncated": false,
+      "source_readback_passed": true,
+      "leader_reaped": true,
+      "cleanup_confirmed": true,
+      "receipt": {
+        "path": "/tmp/pytest-of-barberb/legal-ir-relational-counted-native-20261109-v05/attempt/pytest/cases/test_installed_lean_relational_preservation_P_-y2alkxo6/installed-relational-P/build-receipt.json",
+        "sha256": "0de2ea00ec107b96fa9afcb9234d6fc467792ac8d17476a399b912d3b2c2e4e1",
+        "bytes": 21603
+      }
+    }
+  ],
+  "actual_native_counts": {
+    "lake_builds": 5,
+    "version_probes": 10,
+    "empty_axiom_theorems": 23
+  },
+  "toolchain": "leanprover/lean4:v4.34.1",
+  "repairs": [
+    "Primitive sorted lookups and structural CountedFormula.rec avoid implicit propext",
+    "Explicit finite constructor eliminators and direct equality/disjunction proof terms avoid decision/case tactic dependencies",
+    "Reserved Lean binder name replaced by boundVariable",
+    "Stop finite proof expansion at an equal-pair witness while retaining all remaining universal binders; compiled artifact fully captured under unchanged 2097152-byte limit"
+  ],
+  "history": {
+    "initial_published_candidate": "docs/autoformalization/evidence/legal-ir-relational-counted-preservation-candidate-20261109.json",
+    "preserved_attempts_root": "workspace/test-logs/federal-corpus-audits/legal-ir-relational-counted-preservation-20261109-v01",
+    "prior_native_capture_failure": {
+      "directory": "workspace/test-logs/federal-corpus-audits/legal-ir-relational-counted-preservation-20261109-v01/native-controls-v03",
+      "compiler_returncode": 0,
+      "expected_empty_axiom_theorems": 5,
+      "output_truncated": true,
+      "build_accepted": false,
+      "reservation_id": "dc8d07dcbc9f43ab86da596b97f1c32a",
+      "reservation_status": "retained",
+      "claim_bytes": 12582912,
+      "recovery_refusal": {
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-relational-counted-preservation-20261109-v01/native-controls-v03/recovery-refusal.json",
+        "sha256": "b0b1a42d7ed42a5237829352122a8792d32313c74dde4302f3955a9d852532bd",
+        "bytes": 483
+      }
+    },
+    "old_archives_migration_receipts": "workspace/test-logs/federal-corpus-audits/legal-ir-relational-counted-preservation-20261109-v01/archived-failed-attempts",
+    "fresh_controls_do_not_transfer_old_qualification": true,
+    "ordinary_finalization_capacity_failure": {
+      "schema": "owned-validation-result/v1",
+      "request_sha256": "03d8ed1dc7668ca33c51efd8584684a047731d0dc07798d6b32a7c1edb269619",
+      "executed_checks": [
+        "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/autoformal/test_legal_native_ast_preservation.py",
+        "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/autoformal/test_legal_native_ast_preservation_native.py"
+      ],
+      "returncode": 0,
+      "completed": false,
+      "admitted": false,
+      "Lean_admitted": false,
+      "resource_scope": "cooperative_sampled_birth_bound_descendants_and_owned_attempt",
+      "model_weights_downloaded": false,
+      "authority_granted": false,
+      "process_observation": {
+        "scope": "sampled_birth_bound_descendants",
+        "group_rss": {
+          "available": true,
+          "live_processes": 0,
+          "rss_bytes": 0
+        },
+        "live_processes": 0,
+        "rss_bytes": 0,
+        "observed_identities": [
+          {
+            "pid": 1575233,
+            "birth_ticks": 322277443,
+            "parent_pid": 1566922,
+            "process_group_id": 1575233,
+            "session_id": 1575233
+          },
+          {
+            "pid": 1581994,
+            "birth_ticks": 322281781,
+            "parent_pid": 1575233,
+            "process_group_id": 1575233,
+            "session_id": 1575233
+          }
+        ],
+        "out_of_group_live_identities": [],
+        "tracking_error": ""
+      },
+      "elapsed_seconds": 145.29246974224225,
+      "error_type": "DaemonResourceError",
+      "error": "storage reservation capacity exceeded",
+      "watchdog_errors": [],
+      "received_signals": [],
+      "process_cleanup_error": null
+    }
+  },
+  "limits": [
+    "Exact concrete unary, relational O/P/F and fixed-three many-sorted counted witnesses; no universal compiler preservation theorem",
+    "Python JSON reification and original legal interpretation are outside these Lean theorems",
+    "Temporal/deadline, governing-edition and full statutory semantic coverage remain unresolved beyond explicitly supported profiles",
+    "Fictional source engineering; no independent legal review, gold label or statutory corpus admission",
+    "Current captured runtime imports include unpublished shared SDK edits; no qualification transfers to changed or public-main runtime bytes",
+    "Sampled process observation is not kernel-enforced containment",
+    "Hosted CI was previously refused before steps because of GitHub billing; no hosted pass is claimed"
+  ],
+  "training_gold_mask": 0,
+  "evaluation_gold_mask": 0,
+  "legal_meaning_admitted": false,
+  "corpus_admitted": false,
+  "general_compiler_preservation_proved": false
+}

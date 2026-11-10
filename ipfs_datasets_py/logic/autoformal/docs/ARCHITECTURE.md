@@ -2,6 +2,8 @@
 
 The maintained pipeline uses one implementation owner per stage. The [work catalog](work_catalog.json) records canonical owners and selected evidence; it is the maintained machine-readable index for this map. Imports below are relative to `ipfs_datasets_py.logic.autoformal` unless stated otherwise. The existing compiler and legal IR remain outside this package where already owned; adding a new wrapper does not replace them.
 
+The [qualified reviewed-retrieval delivery](../../../../docs/autoformalization/evidence/legal-ir-reviewed-retrieval-qualified-source-delivery-20261109.json) keeps the four existing owners: `alignment_relation_declarations` binds complete reviewed directed pair populations, `alignment_relation_mask_handoff` derives only explicitly reviewed positive/permitted-negative masks, `legal_joint_retrieval` owns numerical fitting and freshly replayed TRAIN-index ranking, and `legal_structured_retrieval` builds complete selected-example candidates. Unknowns and analogies remain unlabelled for the objective; current authority/revocation, grouped splits and source-only query identity are replayed. Candidate examples do not grant decoder-context, controlling-authority, supplemental-definition/proof-body or corpus permission. The 294-case source-specific software qualification and existing legacy checkpoint profile remain distinct from real legal review and learned-quality claims.
+
 ```mermaid
 flowchart LR
   S[Versioned law source] --> I[Source/span/entity correspondence]

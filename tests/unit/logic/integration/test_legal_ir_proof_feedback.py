@@ -424,3 +424,95 @@ def test_verified_artifact_types_round_trip_without_witness_values() -> None:
     assert contract is not None
     assert MinimalFailingContractFeedback.from_dict(contract.to_dict()) == contract
     assert RAW_LEGAL_TEXT not in json.dumps(counterexample.to_dict())
+
+# Trust-bearing JSON fields must not acquire authority through Python truthiness.
+@pytest.mark.parametrize("value", ["false", "true", 1])
+@pytest.mark.parametrize("field", ["attempted", "verified"])
+def test_proof_trust_flags_require_actual_booleans_in_kernel_constructor(field, value):
+    values = dict(status="verified", attempted=True, verified=True,
+                  checker="authored-checker", receipt_id="authored-kernel-receipt")
+    values[field] = value
+    with pytest.raises(ProofFeedbackError):
+        KernelReconstructionFeedback(**values)
+
+
+@pytest.mark.parametrize("value", ["false", "true", 1])
+@pytest.mark.parametrize("field", ["attempted", "verified"])
+def test_proof_trust_flags_require_actual_booleans_in_kernel_wire(field, value):
+    values = dict(status="verified", attempted=True, verified=True,
+                  checker="authored-checker", receipt_id="authored-kernel-receipt")
+    values[field] = value
+    with pytest.raises(ProofFeedbackError):
+        KernelReconstructionFeedback.from_dict(values)
+
+
+@pytest.mark.parametrize("value", ["false", "true", 1])
+def test_proof_trust_flags_cannot_promote_string_kernel_receipt_to_positive(value):
+    with pytest.raises(ProofFeedbackError):
+        KernelReconstructionFeedback.from_receipt({"native_reconstruction": True,
+            "reconstruction_status": "verified", "native_reconstruction_verified": value,
+            "checker": "authored-checker", "receipt_id": "authored-kernel-receipt"})
+
+
+@pytest.mark.parametrize("value", ["false", "true", 1])
+def test_proof_trust_flags_cannot_promote_deterministic_string_to_trusted_record(value):
+    with pytest.raises(ProofFeedbackError):
+        _trusted_record(deterministic_trusted=value)
+
+
+@pytest.mark.parametrize("value", ["false", "true", 1])
+def test_proof_trust_flags_cannot_admit_untyped_counterexample_attestation(value):
+    with pytest.raises(ProofFeedbackError):
+        VerifiedCounterexampleFeedback.from_verified({"verified": value,
+            "kind": "authored-finite-model", "witness": "authored-counterexample"})
+
+
+@pytest.mark.parametrize("value", ["false", "true", 1])
+def test_proof_trust_flags_cannot_admit_untyped_contract_attestation(value):
+    with pytest.raises(ProofFeedbackError):
+        MinimalFailingContractFeedback.from_verified({"verified": value,
+            "contract_id": "authored-contract", "failure_code": "authored-failure"})
+
+
+@pytest.mark.parametrize("damage", ["revoked", "failed_translation", "missing_trust"])
+@pytest.mark.parametrize("typed", [False, True])
+def test_proof_receipt_revocation_cannot_become_positive_feedback(damage, typed):
+    from ipfs_datasets_py.logic.integration.reasoning.legal_ir_hammer_translation import (
+        HammerReconstructionReceipt)
+    from ipfs_datasets_py.logic.integration.reasoning.legal_ir_proof_feedback import (
+        ProofFeedbackTrustError)
+    receipt = dict(receipt_id="authored-revocation-receipt", obligation_id="authored-obligation",
+        input_formula_id="authored-formula", outcome="native_reconstruction",
+        translation_succeeded=True, translation_failed=False, backend_proved=True,
+        native_reconstruction=True, native_reconstruction_verified=True,
+        reconstruction_status="verified", checker="authored-checker", trusted=True,
+        trust_status="trusted", trust_reason="authored-native-check")
+    if damage == "revoked":
+        receipt.update(trusted=False, trust_status="untrusted", trust_reason="source_sanitizer_revoked")
+    elif damage == "failed_translation":
+        receipt.update(translation_failed=True, translation_succeeded=False)
+    else:
+        receipt.pop("trusted")
+    if typed:
+        receipt = HammerReconstructionReceipt.from_dict(receipt)
+    with pytest.raises(ProofFeedbackTrustError):
+        KernelReconstructionFeedback.from_receipt(receipt)
+    with pytest.raises(ProofFeedbackTrustError):
+        build_legal_ir_proof_feedback_record(
+            obligation={"obligation_id": "authored-obligation", "kind": "fixture",
+                        "legal_ir_view": "deontic.ir", "logic_family": "fixture"},
+            reconstruction_receipt=receipt)
+
+
+@pytest.mark.parametrize("trusted", [False, True])
+def test_proof_receipt_positive_requires_explicit_unrevoked_trust(trusted):
+    from ipfs_datasets_py.logic.integration.reasoning.legal_ir_proof_feedback import (
+        ProofFeedbackTrustError)
+    receipt = dict(receipt_id="authored-positive-receipt", native_reconstruction=True,
+        native_reconstruction_verified=True, reconstruction_status="verified",
+        checker="authored-checker", trusted=trusted, translation_failed=False)
+    if trusted:
+        assert KernelReconstructionFeedback.from_receipt(receipt).verified is True
+    else:
+        with pytest.raises(ProofFeedbackTrustError):
+            KernelReconstructionFeedback.from_receipt(receipt)

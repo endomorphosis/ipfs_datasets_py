@@ -15,7 +15,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Final, Mapping, Optional, Sequence
 
-from .hammer import HammerResult, HammerStatus, HammerTranslation
+from .hammer import HammerResult, HammerStatus, HammerTranslation, _strict_proof_bool
 
 
 LEGAL_IR_HAMMER_TRANSLATION_SCHEMA_VERSION: Final = "legal-ir-hammer-translation-v1"
@@ -284,6 +284,11 @@ class HammerReconstructionReceipt:
     metadata: Mapping[str, Any] = field(default_factory=dict)
     schema_version: str = LEGAL_IR_HAMMER_RECONSTRUCTION_RECEIPT_SCHEMA_VERSION
 
+    def __post_init__(self) -> None:
+        for name in ("translation_succeeded", "translation_failed", "backend_proved",
+                     "native_reconstruction", "native_reconstruction_verified", "trusted"):
+            _strict_proof_bool(getattr(self, name), "receipt." + name)
+
     @property
     def native_reconstructed(self) -> bool:
         """Readable alias retained for consumers that use past-tense fields."""
@@ -291,31 +296,36 @@ class HammerReconstructionReceipt:
         return self.native_reconstruction
 
     def to_dict(self) -> dict[str, Any]:
+        self.__post_init__()
         return {
             "backend": self.backend,
-            "backend_proved": bool(self.backend_proved),
+            "backend_proved": self.backend_proved,
             "backend_statuses": dict(sorted(self.backend_statuses.items())),
             "checker": self.checker,
             "errors": list(self.errors),
             "input_formula_id": self.input_formula_id,
             "metadata": dict(sorted(self.metadata.items())),
-            "native_reconstruction": bool(self.native_reconstruction),
-            "native_reconstruction_verified": bool(self.native_reconstruction_verified),
+            "native_reconstruction": self.native_reconstruction,
+            "native_reconstruction_verified": self.native_reconstruction_verified,
             "obligation_id": self.obligation_id,
             "outcome": self.outcome.value,
             "receipt_id": self.receipt_id,
             "reconstruction_status": self.reconstruction_status,
             "schema_version": self.schema_version,
-            "translation_failed": bool(self.translation_failed),
+            "translation_failed": self.translation_failed,
             "translation_record_ids": list(self.translation_record_ids),
-            "translation_succeeded": bool(self.translation_succeeded),
+            "translation_succeeded": self.translation_succeeded,
             "trust_reason": self.trust_reason,
             "trust_status": self.trust_status.value,
-            "trusted": bool(self.trusted),
+            "trusted": self.trusted,
         }
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> "HammerReconstructionReceipt":
+        for name in ("translation_succeeded", "translation_failed", "backend_proved",
+                     "native_reconstruction", "native_reconstructed", "native_reconstruction_verified", "trusted"):
+            if name in data:
+                _strict_proof_bool(data[name], "receipt." + name)
         try:
             outcome = HammerReconstructionOutcome(str(data.get("outcome") or ""))
         except ValueError:
@@ -331,14 +341,15 @@ class HammerReconstructionReceipt:
             obligation_id=str(data.get("obligation_id") or ""),
             input_formula_id=str(data.get("input_formula_id") or ""),
             outcome=outcome,
-            translation_succeeded=bool(data.get("translation_succeeded")),
-            translation_failed=bool(data.get("translation_failed")),
-            backend_proved=bool(data.get("backend_proved")),
-            native_reconstruction=bool(
-                data.get("native_reconstruction", data.get("native_reconstructed", False))
+            translation_succeeded=_strict_proof_bool(data.get("translation_succeeded", False), "receipt.translation_succeeded"),
+            translation_failed=_strict_proof_bool(data.get("translation_failed", False), "receipt.translation_failed"),
+            backend_proved=_strict_proof_bool(data.get("backend_proved", False), "receipt.backend_proved"),
+            native_reconstruction=_strict_proof_bool(
+                data.get("native_reconstruction", data.get("native_reconstructed", False)),
+                "receipt.native_reconstruction",
             ),
-            native_reconstruction_verified=bool(data.get("native_reconstruction_verified")),
-            trusted=bool(data.get("trusted")),
+            native_reconstruction_verified=_strict_proof_bool(data.get("native_reconstruction_verified", False), "receipt.native_reconstruction_verified"),
+            trusted=_strict_proof_bool(data.get("trusted", False), "receipt.trusted"),
             trust_status=trust_status,
             trust_reason=str(data.get("trust_reason") or ""),
             backend=str(data.get("backend") or ""),
@@ -446,7 +457,7 @@ def _translation_record(
         "errors": [str(item) for item in translation.errors],
         "input_formula_id": input_formula_id,
         "obligation_id": obligation_id,
-        "success": bool(translation.success),
+        "success": _strict_proof_bool(translation.success, "translation.success"),
         "surface": surface.value,
         "target_format": translation.target_format,
     }
@@ -456,7 +467,7 @@ def _translation_record(
         input_formula_id=input_formula_id,
         surface=surface,
         target_format=str(translation.target_format),
-        success=bool(translation.success),
+        success=_strict_proof_bool(translation.success, "translation.success"),
         artifact_sha256=record_payload["artifact_sha256"],
         artifact_size_bytes=len(content.encode("utf-8")),
         selected_premises=premise_names,
@@ -519,7 +530,7 @@ def _lean_reconstruction_record(
         metadata={
             "backend": reconstruction.backend,
             "goal_name": result.goal.name,
-            "native_reconstruction_verified": bool(reconstruction.verified),
+            "native_reconstruction_verified": _strict_proof_bool(reconstruction.verified, "reconstruction.verified"),
             "reconstruction_status": reconstruction.status,
         },
     )
@@ -579,6 +590,15 @@ def reconstruction_receipt_from_hammer_result(
     callers must never infer trust from this diagnostic field.
     """
 
+    _strict_proof_bool(trusted_requires_reconstruction, "trusted_requires_reconstruction")
+    if trusted is not None:
+        _strict_proof_bool(trusted, "trusted")
+    for item in result.backend_results:
+        _strict_proof_bool(item.proved, "backend.proved")
+    for item in result.translations.values():
+        _strict_proof_bool(item.success, "translation.success")
+    if result.reconstruction is not None:
+        _strict_proof_bool(result.reconstruction.verified, "reconstruction.verified")
     records = list(
         translation_records
         if translation_records is not None
@@ -602,7 +622,8 @@ def reconstruction_receipt_from_hammer_result(
     backend_proved = winner is not None
     reconstruction = result.reconstruction
     native_reconstruction = reconstruction is not None
-    native_verified = bool(reconstruction and reconstruction.verified)
+    native_verified = (_strict_proof_bool(reconstruction.verified, "reconstruction.verified")
+                       if reconstruction is not None else False)
     translation_failed = result.status == HammerStatus.TRANSLATION_FAILED or (
         bool(result.translations) and not any(item.success for item in result.translations.values())
     )
@@ -629,7 +650,7 @@ def reconstruction_receipt_from_hammer_result(
     # An upstream sanitizer may revoke trust (for example, after detecting a
     # copied source span), but it may never elevate a result beyond this proof
     # and reconstruction policy.
-    trusted_value = policy_trusted if trusted is None else policy_trusted and bool(trusted)
+    trusted_value = policy_trusted if trusted is None else policy_trusted and _strict_proof_bool(trusted, "trusted")
 
     if trusted_value and native_verified:
         trust_reason = "native_reconstruction_verified"

@@ -344,3 +344,594 @@ def test_preparation_never_probes_compiler_or_runs_native_process(base):
     ):
         preparation = prepare(data)
         assert validate(data, preparation) == preparation
+
+
+# Additive relational profile controls. The legacy tests above remain intact.
+# These fixtures are fictional declarations, not reviewed statutory targets.
+@pytest.fixture(scope="module")
+def relational_preservation_fixtures():
+    """Reuse the existing relational builder and independent finite semantics."""
+    import importlib.util
+    from pathlib import Path
+
+    path = Path(__file__).with_name("test_legal_relational_norm_v1.py")
+    spec = importlib.util.spec_from_file_location(
+        "_native_ast_preservation_existing_relational_fixtures", path,
+    )
+    fixtures = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(fixtures)
+    return fixtures
+
+
+def _relational_preservation_capture(fixtures, request):
+    raw = canonical(request)
+    return fixtures.prepare(request), raw
+
+
+def _prepare_relational_preservation(captured, **overrides):
+    report, raw = captured
+    return owner.prepare_relational_ast_preservation(
+        report, raw, **({
+            "expected_report_sha256": sha(canonical(report)),
+            "expected_request_sha256": sha(raw),
+            "toolchain": TOOLCHAIN,
+        } | overrides),
+    )
+
+
+def _validate_relational_preservation(captured, preparation, **overrides):
+    report, raw = captured
+    return owner.validate_relational_ast_preservation(
+        preparation, report, raw, **({
+            "expected_preparation_sha256": owner.preparation_sha256(preparation),
+            "expected_report_sha256": sha(canonical(report)),
+            "expected_request_sha256": sha(raw),
+            "toolchain": TOOLCHAIN,
+        } | overrides),
+    )
+
+
+@pytest.fixture(scope="module")
+def relational_preservation_base(relational_preservation_fixtures):
+    fixtures = relational_preservation_fixtures
+    captured = _relational_preservation_capture(fixtures, fixtures.approval_request())
+    return captured, _prepare_relational_preservation(captured)
+
+
+def test_relational_profile_replays_whole_report_request_and_unchanged_emitted_body(
+        relational_preservation_base):
+    captured, preparation = relational_preservation_base
+    report, raw = captured
+    before = deepcopy(captured)
+    assert _validate_relational_preservation(captured, preparation) == preparation
+    assert captured == before
+    meta = manifest(preparation)
+    assert owner.RELATIONAL_PROFILE == "typed-relational-deontic-native-preservation/v1"
+    assert meta["profile"] == owner.RELATIONAL_PROFILE != owner.PROFILE
+    source = "\n".join(text for _, text in preparation.files)
+    assert report["native_fragment"]["lean_body"] == report["lean_body"]
+    assert report["lean_body"] in source
+    assert report["argument_roles"] == report["request"]["argument_roles"]
+    assert report["request_raw_utf8"].encode() == raw
+    assert not any(meta["authority"].values())
+    assert meta["training_mask"] == meta["evaluation_gold_mask"] == 0
+    assert meta["proof_checked"] is meta["source_semantics_verified"] is False
+
+
+@pytest.mark.parametrize("field", ["expected_report_sha256", "expected_request_sha256"])
+@pytest.mark.parametrize("pin", ["0" * 64, "A" * 64, "short", None, True])
+def test_relational_profile_requires_independent_complete_original_pins(
+        relational_preservation_base, field, pin):
+    captured, _ = relational_preservation_base
+    with pytest.raises(ValueError):
+        _prepare_relational_preservation(captured, **{field: pin})
+
+
+@pytest.mark.parametrize("field", [
+    "expected_preparation_sha256", "expected_report_sha256", "expected_request_sha256",
+])
+def test_relational_validation_retains_all_three_independent_commitments(
+        relational_preservation_base, field):
+    captured, preparation = relational_preservation_base
+    with pytest.raises(ValueError):
+        _validate_relational_preservation(captured, preparation, **{field: "0" * 64})
+
+
+@pytest.mark.parametrize("damage", [
+    "roles", "argument_order", "quantifier", "modality", "body", "typed_tree",
+    "mapping", "authority", "source_binding", "extra_report_field",
+])
+def test_relational_resealed_report_cannot_replace_original_semantics(
+        relational_preservation_base, damage):
+    captured, _ = relational_preservation_base
+    report, raw = deepcopy(captured)
+
+    def native_nodes(node):
+        yield node
+        if type(node) is dict:
+            for child in node.values():
+                if type(child) in (dict, list):
+                    yield from native_nodes(child)
+        elif type(node) is list:
+            for child in node:
+                yield from native_nodes(child)
+
+    if damage == "roles":
+        report["argument_roles"][0]["roles"].reverse()
+    elif damage == "argument_order":
+        predicate = next(node for node in native_nodes(report["native_ast"])
+                         if type(node) is dict and node.get("node_type") == "Predicate"
+                         and len(node["arguments"]) > 1)
+        predicate["arguments"].reverse()
+    elif damage == "quantifier":
+        report["native_ast"]["quantifier"]["value"] = "∃"
+    elif damage == "modality":
+        modal = next(node for node in native_nodes(report["native_ast"])
+                     if type(node) is dict and node.get("node_type") == "DeonticFormula")
+        modal["operator"]["value"] = "O"
+    elif damage == "body":
+        report["lean_body"] = report["lean_body"].replace('"deontic:P"', '"deontic:O"')
+    elif damage == "typed_tree":
+        report["typed_expression"]["root"]["binders"][0]["name"] = "substitute_actor"
+    elif damage == "mapping":
+        report["structural_mapping"].pop()
+    elif damage == "authority":
+        report["authority"]["accepted"] = True
+    elif damage == "source_binding":
+        report["source_binding"] = {"fictional_unreviewed_substitution": True}
+    else:
+        report["unexpected"] = "not part of the original report"
+    with pytest.raises(ValueError):
+        # The helper deliberately recomputes the offered report hash. Replay of
+        # the independently pinned original request must still reject it.
+        _prepare_relational_preservation((report, raw))
+
+
+def test_relational_report_and_different_genuine_request_cannot_be_cross_joined(
+        relational_preservation_base, relational_preservation_fixtures):
+    captured, _ = relational_preservation_base
+    changed_request = relational_preservation_fixtures.approval_request(operator="O")
+    with pytest.raises(ValueError):
+        _prepare_relational_preservation((captured[0], canonical(changed_request)))
+
+
+def test_relational_role_ledger_is_part_of_preserved_subject_even_when_body_is_identical(
+        relational_preservation_fixtures):
+    fixtures = relational_preservation_fixtures
+    request = fixtures.approval_request()
+    changed = deepcopy(request)
+    changed["argument_roles"][0]["roles"].reverse()
+    original = _relational_preservation_capture(fixtures, request)
+    alternate = _relational_preservation_capture(fixtures, changed)
+    assert original[0]["native_ast"] == alternate[0]["native_ast"]
+    assert original[0]["lean_body"] == alternate[0]["lean_body"]
+    original_project = _prepare_relational_preservation(original)
+    alternate_project = _prepare_relational_preservation(alternate)
+    assert owner.preparation_sha256(original_project) != owner.preparation_sha256(alternate_project)
+    assert _validate_relational_preservation(original, original_project) == original_project
+    assert _validate_relational_preservation(alternate, alternate_project) == alternate_project
+    with pytest.raises(ValueError):
+        _validate_relational_preservation(original, alternate_project)
+
+
+@pytest.mark.parametrize("mutation", ["swapped", "reversed_direction"])
+def test_relational_actor_and_direction_mutants_keep_distinct_preservation_subjects(
+        relational_preservation_fixtures, mutation):
+    fixtures = relational_preservation_fixtures
+    original = _relational_preservation_capture(fixtures, fixtures.role_request())
+    changed = _relational_preservation_capture(fixtures, fixtures.role_request(**{mutation: True}))
+
+    def atoms(name, args, at):
+        if name == "Move":
+            return args == (0, 1, 0, 1)
+        return args == ((0,) if name in {"Actor", "Origin"} else (1,))
+
+    assert fixtures.evaluate(original[0]["native_ast"], atoms) is True
+    assert fixtures.evaluate(changed[0]["native_ast"], atoms) is False
+    projects = [_prepare_relational_preservation(item) for item in (original, changed)]
+    assert projects[0] != projects[1]
+    for captured, project in zip((original, changed), projects):
+        assert _validate_relational_preservation(captured, project) == project
+    with pytest.raises(ValueError):
+        _validate_relational_preservation(original, projects[1])
+
+
+def test_relational_forall_exists_order_preserves_independently_distinct_meanings(
+        relational_preservation_fixtures):
+    fixtures = relational_preservation_fixtures
+    captured = []
+    for binders in ([('actor', 'forall'), ('recipient', 'exists')],
+                    [('recipient', 'exists'), ('actor', 'forall')]):
+        builder = fixtures.Builder()
+        request = fixtures.request_for(builder, builder.atom("Match", "actor", "recipient"),
+                                       [("Match", ("actor", "recipient"))], binders)
+        captured.append(_relational_preservation_capture(fixtures, request))
+    atoms = lambda name, args, at: args[0] == args[1]
+    assert [fixtures.evaluate(item[0]["native_ast"], atoms) for item in captured] == [True, False]
+    projects = [_prepare_relational_preservation(item) for item in captured]
+    assert projects[0] != projects[1]
+    for item, project in zip(captured, projects):
+        assert _validate_relational_preservation(item, project) == project
+    with pytest.raises(ValueError):
+        _validate_relational_preservation(captured[0], projects[1])
+
+
+def test_relational_o_p_f_remain_distinct_unconstrained_interpretation_parameters(
+        relational_preservation_fixtures):
+    fixtures = relational_preservation_fixtures
+    captured = {letter: _relational_preservation_capture(fixtures,
+        fixtures.approval_request(sufficient=True, operator=letter)) for letter in ("O", "P", "F")}
+    projects = {letter: _prepare_relational_preservation(item) for letter, item in captured.items()}
+    assert len({owner.preparation_sha256(project) for project in projects.values()}) == 3
+    for selected in ("O", "P", "F"):
+        modal = lambda operator, body, at: operator == selected and body(at)
+        assert {letter: fixtures.evaluate(item[0]["native_ast"], lambda *_: True, modal=modal)
+                for letter, item in captured.items()} == {letter: letter == selected for letter in captured}
+    for letter, item in captured.items():
+        assert _validate_relational_preservation(item, projects[letter]) == projects[letter]
+
+
+def _relational_exception_request(fixtures, *, drop_exception=False, guard_inside=False):
+    builder = fixtures.Builder()
+    guard = builder.atom("Eligible", "actor")
+    declarations = [("Eligible", ("subject",))]
+    if not drop_exception:
+        exception = fixtures.ast.mk_not(builder.nid(), builder.atom("Exempt", "actor"))
+        guard = builder.binary("and", guard, exception)
+        declarations.append(("Exempt", ("subject",)))
+    action = builder.atom("Assign", "actor", "recipient")
+    declarations.append(("Assign", ("actor", "recipient")))
+    body = (builder.modal("O", builder.binary("implies", guard, action)) if guard_inside
+            else builder.binary("implies", guard, builder.modal("O", action)))
+    return fixtures.request_for(builder, body, declarations,
+                                [("actor", "forall"), ("recipient", "forall")])
+
+
+@pytest.mark.parametrize("mutation", ["omitted", "scope"])
+def test_relational_exception_presence_and_modal_scope_have_independent_countermodels(
+        relational_preservation_fixtures, mutation):
+    fixtures = relational_preservation_fixtures
+    original = _relational_preservation_capture(fixtures, _relational_exception_request(fixtures))
+    changed = _relational_preservation_capture(fixtures, _relational_exception_request(
+        fixtures, drop_exception=mutation == "omitted", guard_inside=mutation == "scope"))
+    if mutation == "omitted":
+        atoms = lambda name, args, at: name in {"Eligible", "Exempt"}
+        modal = lambda operator, body, at: body(at)
+    else:
+        atoms = lambda name, args, at: name == "Eligible" and at == 1
+        modal = lambda operator, body, at: body(1)
+    assert fixtures.evaluate(original[0]["native_ast"], atoms, modal=modal) is True
+    assert fixtures.evaluate(changed[0]["native_ast"], atoms, modal=modal) is False
+    projects = [_prepare_relational_preservation(item) for item in (original, changed)]
+    assert projects[0] != projects[1]
+    for item, project in zip((original, changed), projects):
+        assert _validate_relational_preservation(item, project) == project
+    with pytest.raises(ValueError):
+        _validate_relational_preservation(original, projects[1])
+
+
+def test_relational_resealed_generated_body_cannot_replace_whole_project_replay(
+        relational_preservation_base):
+    captured, original = relational_preservation_base
+    meta, files = manifest(original), dict(original.files)
+    path = next(name for name, text in files.items() if captured[0]["lean_body"] in text)
+    changed_body = captured[0]["lean_body"].replace('"deontic:P"', '"deontic:O"')
+    assert changed_body != captured[0]["lean_body"]
+    files[path] = files[path].replace(captured[0]["lean_body"], changed_body, 1)
+    meta["file_sha256"] = {name: sha(text.encode()) for name, text in sorted(files.items())}
+    meta = corpus_contracts.seal_record({
+        key: value for key, value in meta.items() if key not in {"record_cid", "cid_scope"}
+    })
+    changed = replace(original, manifest_json=canonical(meta).decode(), files=tuple(sorted(files.items())))
+    with pytest.raises(ValueError):
+        _validate_relational_preservation(captured, changed)
+
+
+def test_relational_opt_in_does_not_widen_or_rewrite_legacy_unary_profile(
+        base, relational_preservation_base):
+    legacy_data, original = base
+    captured, _ = relational_preservation_base
+    assert owner.PROFILE == "native-unary-boolean-fol-json-value-preservation/v1"
+    assert prepare(legacy_data) == original
+    assert validate(legacy_data, original) == original
+    fragment_raw = canonical(captured[0]["native_fragment"])
+    with pytest.raises(ValueError):
+        owner.prepare_native_ast_preservation(fragment_raw,
+            expected_fragment_file_sha256=sha(fragment_raw), toolchain=TOOLCHAIN)
+
+
+def test_relational_preparation_and_validation_never_run_a_native_process(
+        relational_preservation_base):
+    captured, _ = relational_preservation_base
+    with patch.object(subprocess, "run", side_effect=AssertionError("process reached")), patch.object(
+        subprocess, "Popen", side_effect=AssertionError("process reached")
+    ):
+        project = _prepare_relational_preservation(captured)
+        assert _validate_relational_preservation(captured, project) == project
+
+
+@pytest.fixture(scope="module")
+def counted_preservation_fixtures():
+    import importlib.util
+    from pathlib import Path
+    path = Path(__file__).with_name("test_legal_counted_frame_v1.py")
+    spec = importlib.util.spec_from_file_location("_preservation_existing_counted_fixtures", path)
+    fixtures = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(fixtures)
+    return fixtures
+
+
+def _counted_preservation_capture(fixtures, request=None):
+    request = fixtures.counted.authored_counted_frame_request() if request is None else request
+    return fixtures.prepare(request), canonical(request)
+
+
+def _prepare_counted_preservation(captured, **overrides):
+    report, raw = captured
+    return owner.prepare_counted_ast_preservation(report, raw, **({
+        "expected_report_sha256": sha(canonical(report)),
+        "expected_request_sha256": sha(raw), "toolchain": TOOLCHAIN,
+    } | overrides))
+
+
+def _validate_counted_preservation(captured, preparation, **overrides):
+    report, raw = captured
+    return owner.validate_counted_ast_preservation(preparation, report, raw, **({
+        "expected_preparation_sha256": owner.preparation_sha256(preparation),
+        "expected_report_sha256": sha(canonical(report)),
+        "expected_request_sha256": sha(raw), "toolchain": TOOLCHAIN,
+    } | overrides))
+
+
+@pytest.fixture(scope="module")
+def counted_preservation_base(counted_preservation_fixtures):
+    captured = _counted_preservation_capture(counted_preservation_fixtures)
+    return captured, _prepare_counted_preservation(captured)
+
+
+def test_counted_preservation_replays_full_sorted_ast_and_original_lowering(counted_preservation_base):
+    captured, preparation = counted_preservation_base
+    report, raw = captured
+    before = deepcopy(captured)
+    assert _validate_counted_preservation(captured, preparation) == preparation
+    assert captured == before
+    meta, files = manifest(preparation), dict(preparation.files)
+    assert meta["profile"] == owner.COUNTED_PROFILE
+    assert meta["typed_expression_sha256"] == report["typed_expression_sha256"]
+    assert meta["typed_ast_node_count"] == 49
+    assert meta["support_profile"]["sorts"] == ["Object", "EventFrame", "TimeFrame"]
+    assert meta["support_profile"]["builtin_object_equality"] is True
+    source = "\n".join(files.values())
+    assert report["lean_body"] in source
+    inputs = json.loads(files["preservation-inputs.json"])
+    assert inputs["counted_report"] == report and inputs["original_request_raw_utf8"].encode() == raw
+    assert len(files) == 7 and len(meta["expected_modules"]) == 4
+    assert {name.rsplit(".", 1)[-1] for name in meta["theorems"]} == {
+        "counted_value_exact", "counted_ast_closed", "counted_denotation_matches_lowering",
+        "cap_two_counterexample", "cap_four_counterexample"}
+    assert not any(meta["authority"].values())
+    assert all(meta[field] is False for field in owner.FALSE_FLAGS)
+    assert meta["training_mask"] == meta["evaluation_gold_mask"] == 0
+
+
+@pytest.mark.parametrize("field", ["expected_report_sha256", "expected_request_sha256"])
+@pytest.mark.parametrize("pin", ["0" * 64, "A" * 64, None, True])
+def test_counted_preservation_needs_independent_input_commitments(counted_preservation_base, field, pin):
+    captured, _ = counted_preservation_base
+    with pytest.raises(ValueError):
+        _prepare_counted_preservation(captured, **{field: pin})
+
+
+@pytest.mark.parametrize("damage", ["expression", "body", "maximum", "producer", "authority", "extra"])
+def test_counted_resealed_report_cannot_replace_original_fixed_subject(counted_preservation_base, damage):
+    captured, _ = counted_preservation_base
+    report, raw = deepcopy(captured)
+    if damage == "expression":
+        report["typed_expression"]["root"]["binders"][0]["name"] = "changed_event"
+    elif damage == "body": report["lean_body"] += "\n-- replacement\n"
+    elif damage == "maximum": report["maximum"] = 2
+    elif damage == "producer": report["producer_pins"]["/untrusted/never-open-this.py"] = "0" * 64
+    elif damage == "authority": report["authority"]["accepted"] = True
+    else: report["unrecognized"] = True
+    with pytest.raises(ValueError):
+        _prepare_counted_preservation((report, raw))
+
+
+def test_counted_finite_boundaries_are_semantic_specs_not_schema_refusals(
+        counted_preservation_base, counted_preservation_fixtures):
+    captured, preparation = counted_preservation_base
+    request = json.loads(captured[1])
+    fixtures = counted_preservation_fixtures
+    # Independent existing evaluator interprets the actual sorted AST. The
+    # proposed Lean obligations separately compare cap2 and cap4, without
+    # presenting an unexecuted proof as observed or a schema error as semantics.
+    assert fixtures.truth(request, [(i, "e", "t") for i in range(3)], objects=(0, 1, 2))
+    assert not fixtures.truth(request, [(i, "e", "t") for i in range(4)])
+    specs = manifest(preparation)["counterfactual_boundary_specs"]
+    assert [(r["actual_counted_denotation"], r["counterfactual_cap"], r["counterfactual_denotation"])
+            for r in specs] == [(True, 2, False), (False, 4, True)]
+    assert all(r["proof_observed"] is False for r in specs)
+
+
+def test_counted_preservation_retains_arbitrary_physical_identity_values(counted_preservation_fixtures):
+    fixtures = counted_preservation_fixtures
+    request = fixtures.counted.authored_counted_frame_request()
+    for index, node in enumerate(fixtures.nodes(request["expression"]["root"])):
+        node["node_id"] = "fictional:counted:node:" + str(index)
+    request["expression"]["expression_id"] = "fictional:counted:expression"
+    request["expression"]["signature"]["signature_id"] = "fictional:counted:signature"
+    captured = _counted_preservation_capture(fixtures, fixtures.reseal(request))
+    preparation = _prepare_counted_preservation(captured)
+    assert _validate_counted_preservation(captured, preparation) == preparation
+    assert "fictional:counted:node:" in "\n".join(body for _, body in preparation.files)
+
+
+def test_counted_generated_bound_cannot_be_resealed_as_original_preservation(counted_preservation_base):
+    captured, original = counted_preservation_base
+    meta, files = manifest(original), dict(original.files)
+    path = next(name for name, text in files.items() if captured[0]["lean_body"] in text)
+    files[path] = files[path].replace("x0 = x1", "x0 = x0", 1)
+    assert files[path] != dict(original.files)[path]
+    meta["file_sha256"] = {name: sha(text.encode()) for name, text in sorted(files.items())}
+    meta = corpus_contracts.seal_record({key: value for key, value in meta.items()
+                                       if key not in {"record_cid", "cid_scope"}})
+    changed = replace(original, manifest_json=canonical(meta).decode(), files=tuple(sorted(files.items())))
+    with pytest.raises(ValueError):
+        _validate_counted_preservation(captured, changed)
+
+
+def test_counted_preparation_keeps_compiler_execution_separate(counted_preservation_base):
+    captured, _ = counted_preservation_base
+    with patch.object(subprocess, "run", side_effect=AssertionError("process reached")), patch.object(
+        subprocess, "Popen", side_effect=AssertionError("process reached")):
+        preparation = _prepare_counted_preservation(captured)
+        assert _validate_counted_preservation(captured, preparation) == preparation
+
+
+def test_relational_and_counted_preservation_modules_can_coexist(
+        relational_preservation_base, counted_preservation_base):
+    # Distinct semantic libraries must not reuse one module path with different
+    # bodies when the existing shared corpus owner composes their projects.
+    relational = relational_preservation_base[1]
+    counted = counted_preservation_base[1]
+    left = {name for name, _ in relational.files if name.endswith(".lean")}
+    right = {name for name, _ in counted.files if name.endswith(".lean")}
+    assert not left & right
+    assert manifest(relational)["expected_modules"][0].startswith(owner.RELATIONAL_PROJECT_ROOT + ".")
+    assert manifest(counted)["expected_modules"][0].startswith(owner.COUNTED_PROJECT_ROOT + ".")
+    assert owner.PROJECT_ROOT == "LegalNativeAstPreservation"
+
+
+@pytest.mark.parametrize("operator", ["O", "P", "F"])
+@pytest.mark.parametrize("damage", ["wrong_key", "legacy_concat", "unsupported_default"])
+def test_relational_literal_modal_denotation_cannot_be_replaced_by_resealed_templates(
+        relational_preservation_fixtures, operator, damage):
+    # Actual installed-Lean O/P/F cases separately check axiom dependencies.
+    # Here the existing independent evaluator fixes the meanings; whole replay
+    # refuses even hash-resealed alternate proof-witness templates.
+    fixtures = relational_preservation_fixtures
+    captured = _relational_preservation_capture(fixtures,
+        fixtures.approval_request(sufficient=True, operator=operator))
+    preparation = _prepare_relational_preservation(captured)
+    assert _validate_relational_preservation(captured, preparation) == preparation
+    for selected in ("O", "P", "F"):
+        modal = lambda letter, body, at: letter == selected and body(at)
+        assert fixtures.evaluate(captured[0]["native_ast"], lambda *_: True, modal=modal) is (operator == selected)
+    meta, files = manifest(preparation), dict(preparation.files)
+    assert len(meta["theorems"]) == 5
+    assert captured[0]["lean_body"] in "\n".join(files.values())
+    semantics = owner.RELATIONAL_SEMANTICS
+    if damage == "wrong_key":
+        other = {"O": "P", "P": "F", "F": "O"}[operator]
+        changed_semantics = semantics.replace('some "deontic:' + operator + '"',
+                                              'some "deontic:' + other + '"', 1)
+    elif damage == "legacy_concat":
+        start = semantics.index("def relationalNativeModalKey ")
+        end = semantics.index("\ndef relDenote ", start)
+        changed_semantics = (semantics[:start]
+            + 'def relationalNativeModalKey (operator : String) : Option String :=\n'
+            + '  some ("deontic:" ++ operator)\n' + semantics[end:])
+    else:
+        changed_semantics = semantics.replace('if operator = "F" then some "deontic:F" else none',
+            'if operator = "F" then some "deontic:F" else some "deontic:' + operator + '"', 1)
+    assert changed_semantics != semantics
+    path = owner.RELATIONAL_PROJECT_ROOT + "/Semantics.lean"
+    assert files[path].count(semantics) == 1
+    files[path] = files[path].replace(semantics, changed_semantics, 1)
+    meta["semantics_sha256"] = sha(changed_semantics.encode())
+    meta["file_sha256"] = {name: sha(text.encode()) for name, text in sorted(files.items())}
+    meta = corpus_contracts.seal_record({key: value for key, value in meta.items()
+                                       if key not in {"record_cid", "cid_scope"}})
+    changed = replace(preparation, manifest_json=canonical(meta).decode(), files=tuple(sorted(files.items())))
+    with pytest.raises(ValueError):
+        _validate_relational_preservation(captured, changed)
+
+
+@pytest.mark.parametrize("operator", ["", "o", "X", "OP", "deontic:O", "obligation"])
+def test_unsupported_relational_modal_keys_refuse_before_lazy_operation_owners(
+        relational_preservation_base, relational_preservation_fixtures, operator):
+    report, raw = deepcopy(relational_preservation_base[0])
+    def nodes(value):
+        if type(value) is dict:
+            yield value
+            for child in value.values():
+                yield from nodes(child)
+        elif type(value) is list:
+            for child in value:
+                yield from nodes(child)
+    modal = next(node for node in nodes(report["native_fragment"]["native_ast"])
+                 if node.get("node_type") == "DeonticFormula")
+    modal["operator"]["value"] = operator
+    fixtures = relational_preservation_fixtures
+    with patch.object(owner, "_owners", side_effect=AssertionError("operation owner reached")), \
+            patch.object(fixtures.bridge, "validate_relational_norm_v1",
+                         side_effect=AssertionError("original relational validator reached")):
+        with pytest.raises(ValueError, match="unsupported exact native enum/operator"):
+            _prepare_relational_preservation((report, raw))
+
+
+@pytest.mark.parametrize("profile,theorem", [
+    ("relational", "denotation_matches_native"),
+    ("relational", "role_denotation_matches_native"),
+    ("counted", "counted_denotation_matches_lowering"),
+])
+@pytest.mark.parametrize("proof_replacement", ["legacy_rfl", "propext_cast"])
+def test_equivalence_proof_replay_rejects_resealed_legacy_or_axiomatic_replacement(
+        relational_preservation_base, counted_preservation_base, profile, theorem, proof_replacement):
+    # The installed-Lean tests separately check actual empty axiom reports.
+    # Here even a fully resealed alternate proof cannot substitute for the
+    # exact current project: a logically reflexive propext cast still escapes
+    # the required empty-axiom contract, while the retained legacy generation had nonempty
+    # dependency reports; String.append in the denotation type is repaired separately. No compiler result is manufactured by this test.
+    captured, preparation = (relational_preservation_base if profile == "relational"
+                             else counted_preservation_base)
+    meta, files = manifest(preparation), dict(preparation.files)
+    qualified = next(name for name in meta["theorems"] if name.rsplit(".", 1)[-1] == theorem)
+    path = qualified.rsplit(".", 1)[0].replace(".", "/") + ".lean"
+    source = files[path]
+    start = source.index("theorem " + theorem + " ")
+    end = source.index("#print axioms " + theorem, start)
+    declaration = source[start:end]
+    statement, _ = declaration.rsplit(" := by\n", 1)
+    term = ("  rfl\n" if proof_replacement == "legacy_rfl" else
+            "  exact Iff.of_eq (propext (Iff.intro (fun h => h) (fun h => h)))\n")
+    replacement = statement + " := by\n" + term
+    assert replacement != declaration
+    files[path] = source[:start] + replacement + source[end:]
+    assert "#print axioms " + theorem in files[path]
+    assert manifest(preparation)["theorems"] == meta["theorems"]
+    meta["file_sha256"] = {name: sha(text.encode()) for name, text in sorted(files.items())}
+    meta = corpus_contracts.seal_record({key: value for key, value in meta.items()
+                                       if key not in {"record_cid", "cid_scope"}})
+    changed = replace(preparation, manifest_json=canonical(meta).decode(),
+                      files=tuple(sorted(files.items())))
+    validator = (_validate_relational_preservation if profile == "relational"
+                 else _validate_counted_preservation)
+    with pytest.raises(ValueError):
+        validator(captured, changed)
+
+
+@pytest.mark.parametrize("declaration", ["countedVariableValue", "countedVariableClosed",
+    "countedObjectValue", "countedEventValue", "countedTimeValue"])
+def test_counted_reserved_lean_binders_cannot_reenter_a_resealed_preparation(
+        counted_preservation_base, declaration):
+    # Actual Lean rejected `variable` as a binder in the retained native v01.
+    # Replay must also reject reintroduction into any one of the five functions.
+    captured, preparation = counted_preservation_base
+    meta, files = manifest(preparation), dict(preparation.files)
+    path = owner.COUNTED_PROJECT_ROOT + "/Semantics.lean"
+    semantics = owner.COUNTED_SEMANTICS
+    start = semantics.index("def " + declaration + " ")
+    end = semantics.index("\ndef ", start + 1)
+    definition = semantics[start:end]
+    assert "(boundVariable : CountedVariable)" in definition
+    legacy = definition.replace("boundVariable", "variable")
+    changed_semantics = semantics[:start] + legacy + semantics[end:]
+    files[path] = files[path].replace(semantics, changed_semantics, 1)
+    meta["semantics_sha256"] = sha(changed_semantics.encode())
+    meta["file_sha256"] = {name: sha(body.encode()) for name, body in sorted(files.items())}
+    meta = corpus_contracts.seal_record({key: value for key, value in meta.items()
+                                       if key not in {"record_cid", "cid_scope"}})
+    changed = replace(preparation, manifest_json=canonical(meta).decode(), files=tuple(sorted(files.items())))
+    with pytest.raises(ValueError):
+        _validate_counted_preservation(captured, changed)
