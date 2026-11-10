@@ -13,3 +13,4 @@ repository or HF artifact; that placement still needs owner sign-off.
 | Path | From | Moved in |
 | --- | --- | --- |
 | `hub_dataset_scripts/justicedao__ipfs_*_laws_ir/` (63 kits) | `processors/legal_scrapers/hub_dataset_scripts/` | phase 3a |
+| `published_hub/` (1,603 files) | `processors/legal_scrapers/published_hub/` | phase 3b |
