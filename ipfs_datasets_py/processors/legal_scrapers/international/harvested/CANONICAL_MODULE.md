@@ -1,6 +1,6 @@
 # Canonical module for `international/harvested`
 
-This boundary identifies the harvested copies that repeat the collector stamp `collection_record.v1` and points them at the index. Collector entry points in `national_collectors` stay collectors. They are not a second schema. Harvested scripts were not deleted.
+This boundary identifies the harvested copies that repeat the collector stamp `collection_record.v1` and points them at the index. Collector entry points in `national_collectors` stay collectors. They are not a second schema. Harvested scripts under `shared/` were not deleted. The `datasets/` and `legal_scrapers/` download caches were removed in legal_scrapers phase 2 (no catalog entry resolved into them); `harvest_legal_collectors()` regenerates them under `collectors_root()`. Paths below that start with `datasets/` or `legal_scrapers/` refer to those removed caches.
 
 Datasets `HEAD` when this file was written: `d40ab60649b83781e3849e191c1f2ac8545b042f`.
 
