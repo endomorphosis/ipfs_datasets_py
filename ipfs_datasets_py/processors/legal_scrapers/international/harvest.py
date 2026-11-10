@@ -27,6 +27,16 @@ _WORKSPACE_SCRAPERS_RE = re.compile(r'Path\(\s*"/workspace/legal_scrapers/scrape
 _WORKSPACE_SCRAPERS_ROOT_RE = re.compile(r'Path\(\s*"/workspace/legal_scrapers"\s*\)')
 _WORKSPACE_STAGING_RE = re.compile(r'Path\(\s*f?"/workspace/legal_scrapers/staging_\{cc\}"\s*\)')
 _BOX_TOKEN_RE = re.compile(r'Path\(\s*"/home/box/\.cache/huggingface/token"\s*\)')
+# A whole plain (non-f) string literal holding a sandbox path must become a real
+# path expression; "{_CORPORA}" is only meaningful inside f-strings.
+# No identifier char before the literal (rules out f/b/rf/fr prefixes); an r/R prefix is consumed.
+_PLAIN_STRING_PREFIX = r"(?<![\w'\"])[rR]?"
+_WORKSPACE_CORPORA_PLAIN_RE = re.compile(
+    _PLAIN_STRING_PREFIX + r"""(['"])/workspace/legal-corpora((?:/[^'"\\\n{}]*)?)\1"""
+)
+_WORKSPACE_SCRAPERS_PLAIN_RE = re.compile(
+    _PLAIN_STRING_PREFIX + r"""(['"])/workspace/legal_scrapers((?:/[^'"\\\n{}]*)?)\1"""
+)
 _WORKSPACE_LITERAL_RE = re.compile(r"/workspace/legal-corpora")
 _WORKSPACE_SCRAPERS_LITERAL_RE = re.compile(r"/workspace/legal_scrapers")
 _BOX_TESSDATA_FILE_RE = re.compile(r'Path\(\s*"/home/box/tessdata/([^"]+)"\s*\)')
@@ -93,6 +103,13 @@ def _rewrite_tessdata_paths(text: str) -> str:
     return _BOX_TESSDATA_FILE_RE.sub(_file, text)
 
 
+def _plain_path_expr(root: str, suffix: str) -> str:
+    parts = [part for part in (suffix or "").split("/") if part]
+    if not parts:
+        return f"str({root})"
+    return "str(" + " / ".join([root, *(json.dumps(part) for part in parts)]) + ")"
+
+
 def rewrite_sandbox_source(source: str) -> str:
     """Replace Hugging Face parking-lot sandbox paths with env-configurable roots."""
 
@@ -113,6 +130,8 @@ def rewrite_sandbox_source(source: str) -> str:
     rewritten = _WORKSPACE_STAGING_RE.sub('_SCRAPERS.parent / f"staging_{cc}"', rewritten)
     rewritten = _WORKSPACE_SCRAPERS_ROOT_RE.sub("_SCRAPERS.parent", rewritten)
     rewritten = _BOX_TOKEN_RE.sub("_HF_TOKEN_PATH", rewritten)
+    rewritten = _WORKSPACE_CORPORA_PLAIN_RE.sub(lambda m: _plain_path_expr("_CORPORA", m.group(2)), rewritten)
+    rewritten = _WORKSPACE_SCRAPERS_PLAIN_RE.sub(lambda m: _plain_path_expr("_SCRAPERS.parent", m.group(2)), rewritten)
     rewritten = _WORKSPACE_LITERAL_RE.sub("{_CORPORA}", rewritten)
     rewritten = _WORKSPACE_SCRAPERS_LITERAL_RE.sub("{_SCRAPERS.parent}", rewritten)
     if rewritten == text and "/workspace/" not in text and "/home/box/" not in text:

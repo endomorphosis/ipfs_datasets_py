@@ -31,7 +31,7 @@ from pathlib import Path
 sys.path.insert(0, '/workspace/scripts')
 import strict_mem_guard as SG
 
-ROOT = Path('{_CORPORA}/fr_scdl_deliberations')
+ROOT = _CORPORA / 'fr_scdl_deliberations'
 CFG_PATH = ROOT / 'frscdl_config.json'
 STATE_PATH = ROOT / 'state.json'
 INDEX = ROOT / 'index' / 'laws_shards'
