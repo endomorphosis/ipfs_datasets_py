@@ -67,9 +67,31 @@ class CollectorRunResult:
 PACKAGE_HARVESTED_ROOT = Path(__file__).resolve().parent / "harvested"
 
 
+PACKAGE_COLLECTORS_DIR = Path(__file__).resolve().parents[1] / "national_collectors"
+
+# Top-level helper names harvested collectors import from their sibling dirs
+# (``import common``).  They are isolated per run so one collector never
+# reuses another collector's (or a national collector's) helper module.
+SIBLING_HELPER_MODULES = (
+    "common",
+    "world_lib",
+    "archive_fallbacks",
+    "pdf_extract_lib",
+    "robots_guard",
+    "collector",
+    "world_package",
+)
+
+
 def collector_path_for(entry: SnapshotCorpus, *, dest_root: Path | None = None) -> Path:
+    """Locate a collector: the writable collectors root first, then the package copy.
+
+    Harvested/updated collectors in the collectors root (default
+    ~/.ipfs_datasets/legal_collectors) win; the collectors shipped in the
+    package are a read-only fallback so runs work before any harvest.
+    """
     roots = [collectors_root(dest_root)]
-    if dest_root is None and PACKAGE_HARVESTED_ROOT not in roots:
+    if PACKAGE_HARVESTED_ROOT not in roots:
         roots.append(PACKAGE_HARVESTED_ROOT)
     for root in roots:
         for candidate in (
@@ -123,6 +145,38 @@ def load_instrument_records(country_code: str, *, output_dir: Path | None = None
 
 
 ROBOTS_GUARD_ENV = "IPFS_DATASETS_LEGAL_ROBOTS_GUARD"
+
+
+def _is_under(path: str | None, dirs: list[Path]) -> bool:
+    if not path:
+        return False
+    try:
+        resolved = Path(path).resolve()
+    except (OSError, RuntimeError, ValueError):
+        return False
+    for folder in dirs:
+        try:
+            resolved.relative_to(folder.resolve())
+        except ValueError:
+            continue
+        return True
+    return False
+
+
+def _isolate_sibling_modules() -> dict[str, Any]:
+    """Pop helper modules a previous run left behind; return them for restoring."""
+    return {name: sys.modules.pop(name) for name in SIBLING_HELPER_MODULES if name in sys.modules}
+
+
+def _restore_sibling_modules(before: set[str], saved: Mapping[str, Any], dirs: list[Path]) -> None:
+    """Drop top-level modules this run imported from collector/helper dirs, then restore."""
+    for name in list(sys.modules):
+        if name in before or "." in name:
+            continue
+        module = sys.modules.get(name)
+        if name in SIBLING_HELPER_MODULES or _is_under(getattr(module, "__file__", None), dirs):
+            sys.modules.pop(name, None)
+    sys.modules.update(saved)
 
 
 def _prepare_env(corpora: Path, collectors: Path) -> dict[str, str]:
@@ -208,6 +262,9 @@ def run_harvested_collector(
         if shared.is_dir():
             sys.path.insert(0, str(shared))
             inserted.append(str(shared))
+    saved_modules = _isolate_sibling_modules()
+    modules_before = set(sys.modules)
+    module_dirs = [Path(item) for item in inserted] + [PACKAGE_COLLECTORS_DIR]
     try:
         os.environ.clear()
         os.environ.update(env)
@@ -246,6 +303,7 @@ def run_harvested_collector(
         for item in inserted:
             if item in sys.path:
                 sys.path.remove(item)
+        _restore_sibling_modules(modules_before, saved_modules, module_dirs)
     laws, articles = load_instrument_records(entry.country_code, output_dir=corpora)
     return CollectorRunResult(
         country_code=entry.country_code,
@@ -263,7 +321,9 @@ __all__ = [
     "ARTICLE_FIELDS",
     "CollectorRunResult",
     "LAW_FIELDS",
+    "PACKAGE_COLLECTORS_DIR",
     "PACKAGE_HARVESTED_ROOT",
+    "SIBLING_HELPER_MODULES",
     "collector_path_for",
     "load_instrument_records",
     "run_harvested_collector",
