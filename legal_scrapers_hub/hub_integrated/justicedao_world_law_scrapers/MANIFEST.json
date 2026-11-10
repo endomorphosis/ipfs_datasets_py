@@ -1,0 +1,1440 @@
+{
+ "name": "justicedao/world_law_scrapers",
+ "ipfs_datasets_py_commit": "a1b5c73e5b687d8bd6c3b3051788860fd6e2f07a",
+ "file_count": 400,
+ "files": {
+  "LICENSE": "8486a10c4393cee1c25392769ddd3b2d6c242d6ec7928e1414efff7dfb2f07ef",
+  "README.md": "777d41af89dd399269c89801a627641cc34431ec249dbf0196a94f47763f40d6",
+  "collectors/at_deepen_articles.py": "3fa9167d673edc804dfe4d81b53dca7a110c7f56de798dfc7d16edbbd2282c40",
+  "collectors/at_municipal_collect.py": "da57a028dadd6d464bc3d972a8fc0df7132de869bb99625d6395091460a365f6",
+  "collectors/au_collect.py": "afad0a29f069c84f213f561fabcb837a191765e7f83819e8a895ee2d7791098a",
+  "collectors/au_sa_collect.py": "d1666629469bd0b57f7851f55473fa75ebd7f609e5e591e685ec38feb47acdef",
+  "collectors/be_codex_collect.py": "2be1c3ff56539becb23b03704af6a33e1c683b2515deae6c2ba095940403df6f",
+  "collectors/be_fl_vindplaats_collect.py": "e01ffdad490042ef622b6e0f39b40837c2f49518d7ef6d7d80b76e6e0796790e",
+  "collectors/br_alesp_collect.py": "8452eed01e79b315633708d63aa76394dad188810a0de54986ef55ea34a4f206",
+  "collectors/ca_collect.py": "0f183a3fb116480277c8fc61ac6923fdb3c99763cc1e7603285dbd86858e72a7",
+  "collectors/ch_cantonal_collect_lexwork.py": "bcfd378ee119aeb734c3dc70a5f67f33c46dadd4c3d66262243d9fe0b4bb1247",
+  "collectors/ch_cantonal_collect_lexwork_pdf.py": "361e6041caf6b0c571ef072fa5a6086461975ebab523e44cf0e24e22cc05bab5",
+  "collectors/ch_cantonal_collect_other.py": "779b12d41bbd3f0c955e6364ed6568e213d8ee58152842b11e9b06e59c7c5c31",
+  "collectors/cz_sbirkapp_collect.py": "9c7ec1707006c1c11f32322d2a8b48b861ca59fbb21a1669bf8b00fa3c08f722",
+  "collectors/czp_get.py": "f7115e525daab70b17f03e2b90b85f6b48a808c18a61ba91d918cd9eb4e39e6a",
+  "collectors/czp_probe.py": "880c3b033313969b55bb4a6005d10f41bf8491ea5e07c10652857eb8172dc130",
+  "collectors/de_collect.py": "d0968b71bb1eee9902c849e1ae7bef1ed3ac32ccb5af95968228407e16c65519",
+  "collectors/ee_municipal_t1.py": "2e1445fa47cbea1b577ba41293bc5c43454cb8fb98fb9360b29df548ecc15a8f",
+  "collectors/ee_t2_collect.py": "0a4932cac37cbb3bc076dce06b200c8b3b6492ba72984119e933c7f153f8f930",
+  "collectors/es_collect.py": "e99e1d02efabf70eccb5854460cb541d54aae69e831fe30ecfe146563d05ec8b",
+  "collectors/fi_deepen_articles.py": "c4ebdd198254b32343e5b09fbcc2a34f682e9dc91fb11a70aa3815743bbb6150",
+  "collectors/fr_scdl_collect.py": "5e4931259aca0b7b841dc3b4032aeda374927155e2c95e46003c5c156c3fd6cb",
+  "collectors/gb_ukla_client.py": "3eb298a3095289dea2ec24776c363b7b54af76914bdbdd4f9568394e81957994",
+  "collectors/gb_ukla_collect.py": "7b14a2c468582d384ea74a48e6226420630d60912b5a01b38d71c66fc575e5d6",
+  "collectors/guards/box-ram-guard.sh": "57a16eef36e1fd905c430a60f7e7faa74dbd95f4fa621a5dd7da563e3a3e29da",
+  "collectors/guards/box_shed_collectors.py": "0796756b745df5c71d5fb6041bf29f4da031c2c1e00d33de16aec3ecfd76d970",
+  "collectors/guards/mkvenv.sh": "1631f7b5bc7f813ae71ae9a37b1101c0ab63fef30392f7b3ad5c28107a8d5559",
+  "collectors/guards/pa_exit_guard.py": "22ab41ab8bd54b1ae7ddb611d29610f3d63e077000be59f6a0c5ce4c70ce80ba",
+  "collectors/guards/slot2_common.py": "dbd5d701614d4ddeea5b4edc94583426eafa1c004f1cb46869d33e2c98bddfc4",
+  "collectors/guards/strict_mem_guard.py": "3d339c529360c7aa4ed758e61b0f9c8c03ae02c2dba5a3d9780e31c54495e1c9",
+  "collectors/id_bpk_collect.py": "9755ead0ffe2b685907444ff371499dc3df8fc4f45c92796407b2edf5ca92fc0",
+  "collectors/id_jateng_collect.py": "2e72701d4e1256068a10674425c399e9beac6c9421a14424179f1a6f16e150b8",
+  "collectors/idp_get.py": "350368a757af7123fdbe8cda4a1e57c89a576689ebe768fd890a533710b48d84",
+  "collectors/in_collect.py": "0009f653ddc4a015c610a3c1a7bb5a806efc99d8821fa961315e308359abb560",
+  "collectors/is_bdeild_collect.py": "12aa29a4d8ee2ae1840f5cdcb7df3eb34f1a5a7e2bbf1623e682eced16ccf664",
+  "collectors/it_article_body_deepen.py": "62f6d38154f149f055c26e1a6b9f9b23ed4bc86e6c9886f94ceaf764c012d532",
+  "collectors/it_deepen_1908_2026.py": "de1e9ed61574bcef315b8e3f7129b9675172964c28d93b053a79e1d482390e54",
+  "collectors/it_statuti_collect.py": "d23b295f27296c5abc0092032783e20a2836bb7bacfc907651002f306fd00321",
+  "collectors/it_toscana_collect.py": "8f73e2c48fbb02552585928246a85f2344deef643fe8409946778384555854d6",
+  "collectors/ng_collect.py": "9591cee563f05c1159fd158d62c9bd0ff931c56640f49e52309aaedaa418245f",
+  "collectors/ng_probe.py": "ded2039ed8894a097566cc8a7ca9b018626daf4e4360b20e191f79b73bce97e3",
+  "collectors/nl_collect.py": "1ae41176f0a821233f98192922d01e7b7ab21acbc6704cc9cff1e20c3907e9c3",
+  "collectors/nl_fetch_extra.py": "493aea4c1f3e87222b4a578fe67aa00f0ebe1d27b961ce0e183c704bc4a972d3",
+  "collectors/nl_municipal_collect.py": "d17cd0b47862401571568bb1ad477d94d15e22e7e17634634600c67fc70ec6b3",
+  "collectors/nlm_probe_get.py": "aa8da5a6ae505e400c39994e8028de29172111418ea2949caf1c10593e1cc0f0",
+  "collectors/nlm_raw_persist_check.py": "f9bd8db8b64c89338f0d100a5b21a8d6996f12ca91053cc8b702c7107decbcd8",
+  "collectors/pt_azores_collect.py": "a343278f620c9e91e00f286f6159f4a6d0764a35bee1d057d9c5a0d1bca2c182",
+  "collectors/upstream_legal_scrapers_20261010/REVIEW.md": "7717cad24bca1873d6cc6b534feb3b1a66b01131f9f45c459b82b1d133cdd039",
+  "collectors/upstream_legal_scrapers_20261010/review.json": "bc7a08a25649fd7747667daf3a099ee803594cf71dc386ea23217c051d0ec1aa",
+  "collectors/za_wc_collect.py": "30102ff761e93c08adc26b4d1221df5300e49fab660fba7de1900803df40a839",
+  "coverage/world_coverage_20261010.json": "c97bb9fa0cbc69752fc513faadbad390acaa8a24500bca07fd759d073c598044",
+  "coverage/world_coverage_20261010.md": "c0e5b57e3e3b42807e74901271adb972046fac88bb8f97116dcc5228f558f272",
+  "ir_builder/README.md": "a6fe01a0ed2a3aa61e0d6dd6e79005dfd60b94196816636af6f0d80312d5715d",
+  "ir_builder/catalog/README.md": "8005cbaf52f35970557d468d1b6bdc67e135ad4ffda54955712513869a7326bf",
+  "ir_builder/catalog/batch_slugs.txt": "00b8466f6b425de897cac5d826376cdf6cb5af3c19b14fb76cff9320fbdeccb3",
+  "ir_builder/catalog/countries.json": "079272e8ba4857b1ca35f75446868a45ba1d5beb120fd6b864ad126e1ebce487",
+  "ir_builder/country_laws_ir/__init__.py": "d716e8e3e6325015fade34e60590b7193f9b1e80f0652f90c3ce1ce8bbb1bb05",
+  "ir_builder/country_laws_ir/__main__.py": "49b87d36dd01d0259d4f17d3bfa3d48c7380833235177cdb7a02c77521de1a25",
+  "ir_builder/country_laws_ir/auth.py": "42c1b8a1831c66b3833cc51b2485327ac68fffda0283eebd5b414bb38c0abe57",
+  "ir_builder/country_laws_ir/bm25.py": "f9393c3f58572e2db13c42d0e258e31384fae32f805539041bd32115c3812610",
+  "ir_builder/country_laws_ir/build.py": "2ed2c479289385b1da3f0e9188d5984bde168379481ed2607413fa56f938e3c0",
+  "ir_builder/country_laws_ir/catalog.py": "153a9d3c4a1dfcc653535fb439111d9d361cc0e4fe6607d946064a363962f77d",
+  "ir_builder/country_laws_ir/cidutil.py": "698493fe2df306c664b77643a09aa172400afc7d49806f2493fd3ee921685fcf",
+  "ir_builder/country_laws_ir/graph.py": "6e3fe6919473259ac2951075e80cc098245664b1feb7f99c3e9b31a67051d973",
+  "ir_builder/country_laws_ir/mem.py": "c14fa14a7eb3f50b9262ff674d95d6da837955672e37353270f93f0fe9c8aac1",
+  "ir_builder/country_laws_ir/normalize.py": "ca507beb9297bfe8a2ced40ab195e57d8a0ef054a45a761c6becbb4f2a6fac58",
+  "ir_builder/country_laws_ir/package.py": "1accba705ffdde0a6b4d4d1282688bd34b7ae2b9af05a19f3da8bfddb65ae33e",
+  "ir_builder/country_laws_ir/parquet_io.py": "12e743f86913f0796205979e13d24dce2286739871de6efda8e05c80c02ab794",
+  "ir_builder/country_laws_ir/query.py": "aa825f01b4a08e7953980cd6e7dce03097643ce30ebc059842e2b3ed612d509a",
+  "ir_builder/country_laws_ir/schema.py": "9000e130a045fbd218e7e08e1c91a656190f554b34717efe521bc21b16834015",
+  "ir_builder/country_laws_ir/spill.py": "508a4f99cfcde9c801e6febdcc57b0e505fc98407f410b1066c6a433c019499b",
+  "ir_builder/country_laws_ir/tokenize.py": "c15b8373cce6de282c9240f24a89caa374fc6ac2df2c1b9ced605c44f4878f56",
+  "ir_builder/country_laws_ir/upload.py": "2a7f44ebd25d0459dac3ee3e343b4e68151f01aea15edd00abdd96ce4424a98a",
+  "ir_builder/country_laws_ir/vectors.py": "59ca80d018a24eae4f62f1a5a2195fdfa85a8178d039be1efa498460ba4b25da",
+  "ir_builder/pyproject.toml": "742ebb9c956ffb0e52182bf5ee8a67209df4053d672bc4ddfeffafa32390d948",
+  "ir_builder/refs/query_skillcenter_hf.py": "7d37f62991b90012641725d62f9c361fb3c5c51d60648b1a960937ea8db1e497",
+  "ir_builder/refs/skillcenter_cid_graph.py": "ecab0e31127b7f1843692f9f825b63dc21ecb8fe43d3ac0af3813dbce683de10",
+  "ir_builder/refs/skillcenter_corpus_bm25.py": "245c66be0165647f05a29eee8d16a948bc28419a31c9fce2c0390af29ec4ef91",
+  "ir_builder/refs/skillcenter_hf_release.py": "2d5350e1fe9e14369c0784ed61e6ff5965a939eb155a077091901605d342eaa8",
+  "ir_builder/requirements.txt": "a7a7cbbd449df4591acb749354ccca47b487f6335bce529ac0c0f5eb1335ee0e",
+  "ir_builder/scripts/build_country_laws_ir.py": "1a8b270140f388ba750e324cf9f24debf033e6d70f5d222a9943a72f6f347c70",
+  "ir_builder/scripts/build_remaining.py": "a90852004cf8b0f58c873eba7a7fdb4e4819b0dd0898ae4b6a46fba577b90237",
+  "ir_builder/scripts/build_wave.py": "6d1b478ecc2ef5e5e0802a49c66390f9f21205e90d82aa8c0261a2f0af63101b",
+  "ir_builder/scripts/generate_country_laws_ir.py": "59d0c47c545ac6521144356c249f07ac58825758fa38458e33c9ed5128d5789d",
+  "ir_builder/scripts/normalize_country_laws.py": "deb05d006e4a119ed38afcc955152bf337476a5f31f198d6290405f895bd6ef6",
+  "ir_builder/scripts/query_country_laws_hf.py": "672f28924b59c7c8598363ecaabd838d692f5a97b50b46804fef75e4ccddfe78",
+  "ir_builder/scripts/query_country_laws_ir.py": "d26d9bd20423ed968b1d9d3edcbaa77d5d55d9184f22a51ecdf54d9da1835b81",
+  "ir_builder/scripts/run_batch.sh": "e8843d16cc890349b79816d6b67ea462a995aa989ec8f91c367d129db208f299",
+  "ir_builder/scripts/run_local_batch.py": "f6e58f292bdb5baba29395bab607dce6f5a5066b4fde9015b711737860c6bd1e",
+  "ir_builder/scripts/run_malta.sh": "4ac40874ed741e5f1100c343270bd4d89401f7253752ece24b825e5544f3e970",
+  "ir_builder/scripts/run_srilanka_ir_build.py": "e3255df2b8ac5d663315a0a3f0c7a98c7b8232c8db0293f0882eb8f23a13b614",
+  "ir_builder/scripts/srilanka_build_run.py": "c03d2604a669e1af1d102e43aea4f6b2e9f53be6599a5c878be6d8c7ce7db4e0",
+  "ir_builder/scripts/upload_cyprus_ir.py": "2c8ada2d406410fb404b1246c05d5014056920cbe039d611b8b07cb678747f40",
+  "ir_builder/scripts/upload_qatar_ir.py": "b2e94257b18ac925852e55507fdf29a0b417556910070992753020eb99d0bb18",
+  "ir_builder/scripts/wait_malta_655.sh": "9890279cae0585b698fb495b167368b55c15d071a608dedaa9df46969a815b35",
+  "ir_builder/tests/test_normalize.py": "b5fcf3064d9bbd5166df0858787c23fa742e955e94c3981b2b2309a7649a7a1e",
+  "normalizers/_pkg_de.py": "f1092e452399be33b8cdc5faecf293cc9e023fab3627c8a0cdd4caf3876ecf3c",
+  "normalizers/_pkg_se.py": "8baf8fd97d71186ff5ce597df19c228a8a596778a6f3803bfe2e89ac2e562c50",
+  "normalizers/_upload_de_se_env.py": "44e2e62cb2e2f478a9843312561ed3c69cfb686cecc27df8e0ae3ebba7737b0e",
+  "normalizers/at_municipal_handcheck.py": "ba6e9f6c1862b70ebfa8c4d501006be973bbfb55ceb08b681e4eac724c13b43e",
+  "normalizers/au_build.py": "bb4fd3f446a253176e3e3fb1f5388cf06fcf34dbedccb994884d5f9124635385",
+  "normalizers/au_final.py": "83e3dbe98cb60f4cf7c9051b79c7967e82b4eeff7dd45f57c288ee2139bb4330",
+  "normalizers/au_fix_mixedcase.py": "9c86ae792fec741d98f57b4e2aa5e0fa2c0db4ba25f372556f12502be00322e6",
+  "normalizers/au_handcheck.py": "de921400fa90f80b94c795877eb5c2bf63b83910cf58b93f0e05d0f17b7e172c",
+  "normalizers/au_hub_publish.py": "c9f5582150fc174d73c19cdb48105bf0be30402320e8e3d8d45c8072a312a361",
+  "normalizers/au_index_pco.py": "87515e30252101605a6b71d53302990fe06fec4e44baa3ece48ffb46e6de951c",
+  "normalizers/au_index_pco2.py": "3750ef563110536b6c2020d709c417a3b70e41c60d3565fbbea9ed24cad14991",
+  "normalizers/au_parse.py": "48c03319823212dc243d29a2bd2a8228aae170ee2b7391835aa52ef431671cdf",
+  "normalizers/au_stage_and_check.py": "42d7c3448978cba95cd49fd925d781dc75c764d9c954117176143c37e7164199",
+  "normalizers/ca_build.py": "e1004499979fdb0086eb792bd9f17723a1aa629bd60cf48e501e62df7a397c99",
+  "normalizers/ca_handcheck.py": "5526057cab58b77f62f464c32fb9ccccf87a3fb778ae6ce61de350a0669d992b",
+  "normalizers/ca_handcheck_staged.py": "3c2dc0266fd679b3164d0b3a186d0cfa783654161c4e2f1f0192e2bd8b67713b",
+  "normalizers/ca_hub_publish.py": "a270e2784879aacdc566e39760c19a791fffde7f8ba6646a521961e463da2c07",
+  "normalizers/ca_parse.py": "937b6b3b238d5c7702841211bc3171e8d8ef70063b6538633c4fa537c098b298",
+  "normalizers/ca_readme.py": "358bda95a085f679f9b2452dd2f35cded85f0e4f25af85d685975eade03c9271",
+  "normalizers/ca_stage_and_check.py": "dd7e482ef40d8ec799622c737017caeacd3b3908ebfc1de2ebc85553a96e875e",
+  "normalizers/ca_triage.py": "ebc7d419c18e2022a95d3e33805599f65ecb65eb91ca7d09440a1c89b6c50754",
+  "normalizers/ch_cantonal_checks.py": "3d49b8c1fc2eae05d28dab1b4725946f8db1be4e795484098172d6f21f909460",
+  "normalizers/ch_cantonal_common.py": "c99207fd216d19965ffb07b1d9c4ca171e588d3563c407a4140ac17edf8ca80d",
+  "normalizers/ch_cantonal_hub_recheck.py": "d2e0c45c9a4c7e4f29e1c83ba7699d8e33a3bd525d5e46b825bd07ef96cc7582",
+  "normalizers/ch_cantonal_parse_lexwork.py": "f2457cd0e415af8d1fcf0bcb39147b9bf815d2ac47ab3949fc0cad13655337f2",
+  "normalizers/ch_cantonal_parse_other.py": "a168cda08021a2c0e51b77cf50bc5017797dc688f824587bd36677fa51d27fdd",
+  "normalizers/ch_cantonal_stage_and_check.py": "9de4e6a5cbbc9a247c75404dbecc0b84e467d33027f12feb7ca527218b90d051",
+  "normalizers/ch_cantonal_upload.py": "f4fecabb5ac85808bd62b7716e6ea00289d612495fdeca5f4c0ee73e0cb225d6",
+  "normalizers/cz_t2_review.py": "bab3df41e469e0ee2e32a8668e410874a9c2169ca769cf22c08185bf4f84e7b6",
+  "normalizers/czp_analyze.py": "76c2d1162acf3cda33c0b96c408d0597942e56479293cda87e9883f5fca8b1a0",
+  "normalizers/czp_report.py": "b05c75ee41ccadb21d876d581425381a322754eda7ebe3cfcf21490d1b96b4b9",
+  "normalizers/de_build.py": "0d700033abc24d0ff98309dc5178b33aae3023bb3d9dd73502dc6a62d4f8c479",
+  "normalizers/de_build_guarded.sh": "b6877e5ea6e835c6ca80185fd6c68a6fbdccba90707bb971fbba6212c087319f",
+  "normalizers/de_checks.py": "69f4d06e252423521c35878dddb0448b527f23748dd324f5ec883348a38f05ce",
+  "normalizers/de_finalize.py": "cdd4305cdfe1fd12183a79e4f1eeccd222e93490b095b74d57696cfbf6a27f58",
+  "normalizers/de_finish_report.py": "89e4072a0687ba6b42e87d730c04cae1c0748e1f8edaa9608a2e80e466c4d803",
+  "normalizers/de_handcheck.py": "2abe7897a10cb31949619047d481aca7f64a682251e40c46175f404c1d4fe285",
+  "normalizers/de_handcheck_staged.py": "a78ac5a8dae60cdb253b2a88dab398b6f343bf92323c7d1d942bcae68e7e7583",
+  "normalizers/de_hub_publish.py": "08e19a0b9d19952304b0982655271c7c27224a47727832d0c32066b6315ba700",
+  "normalizers/de_merge_checks.py": "7f333a7eb156a3c07bd26ae2ac45d8fbb418cbb17dd7af26c6eab370b64e2376",
+  "normalizers/de_readme_noHB.py": "6ed1f55090d3c2f3a5d8871087b012bcab89584328858df05ad5515370f00b9d",
+  "normalizers/de_report.py": "6ce3514b01b2e160b79214db88a381c46d556b163afba685fa70619f87958832",
+  "normalizers/de_spotcheck.py": "fab7291423950272798e416cd67ac8ad0fefaa0c06f533f1d26877c8788a1aa9",
+  "normalizers/de_stage_and_check.py": "01bf23ce9fae2418d448274cc0e883f7995449340d1ed82f10acc693f12831c3",
+  "normalizers/de_stage_noHB.py": "5e4e5d22d8b32ee79e003f7b9635c95a480122294da305dffff10bdedeccbc57",
+  "normalizers/dk_arts_reextract.py": "fbf5907cbe6bf3002691b24748acdf64d6035d17c56328c7c947913be542a9c8",
+  "normalizers/ee_t1_fix.py": "750febe5d79defc20323dec67c6774998f0e142a1ddbe4955b9f280dbdf9f514",
+  "normalizers/ee_t1_hf_push.py": "09f8a52bdcf9bdd8fb24aaa62a9b4ac17906162e5445fb73fa95292bf127ffe2",
+  "normalizers/ee_t1_hf_stage.py": "a8942692d345c50a6cd4894a1b4328f836bfa0dba4a4074e763188b762126ad5",
+  "normalizers/ee_t1_review.py": "2e50e05b3df65270a11494551823bf4e9f110638c93195de3864440f7eb2c921",
+  "normalizers/ee_t1_review_v2.py": "05571ff550cb1a12c62a52bd9bf511e0cc377c36ec277ff9e9aaf544810bf6c5",
+  "normalizers/es_build.py": "05c3a876967ad4898f7d540c27d71a858ca95e1161a26aa14a5cc246e93864eb",
+  "normalizers/es_checks.py": "c8855120acd6e1e7955069814a8177ab184462efc58b22138d9f45d05e1869f2",
+  "normalizers/es_gapquant.py": "e6440e1ade6dddebed30f1db434fd7a52e309763b503d2d9dc69390e9c29ea62",
+  "normalizers/es_handcheck.py": "c612999214c89973630e7b98875c1cd2fd3917bb54e467dd883c99ea475c10f5",
+  "normalizers/es_hub_publish.py": "4ef8ed6f0f972499b9a672f8c3c74f347d273d5ffc6122d907450e3a2a50cd09",
+  "normalizers/es_readme.py": "05c78d89c6829037f97489f01399eb5d4d68c9b2c4ec6543b837514aaa0dfccc",
+  "normalizers/es_spotcheck.py": "d6792c27b9f303f78a68cc6604c9983e18ddd6a9222edfc4a73dc878fd35f1f8",
+  "normalizers/es_stage_and_check.py": "e030588192e163e30139fb423b63a665b55b84acd066ff137ce9ea333ba14228",
+  "normalizers/es_triage.py": "f05419192e4357fb6a43e13cf38f9b240f87b48d5be56bd10898da8659449b5d",
+  "normalizers/gb_ukla_handcheck.py": "abb60ec2e429406af89a95f798d9efe3ab5f7eb3f853d7f195c6d5f212d770a7",
+  "normalizers/hr_extract_articles.py": "9b75f8be02fd9f0ecfd56f11238db29682b8883edad94948cc758d8d1635d275",
+  "normalizers/hr_split_hub_text.py": "e03877d7d53cd0a1fa540929c103df9ab205411d07e2e5fe568cca74984d8bfa",
+  "normalizers/hr_spotcheck_split.py": "8b8cc72f75a8d293e9af8e55f8244d515c2a67a0c7c2133948f7f6588ffd8f1f",
+  "normalizers/idp_analyze.py": "1090993f2b001c8973010c302369735740b00da9f8048f33617d55f02bafccfe",
+  "normalizers/idp_report.py": "fc50891f938bd1311528f0d8ccf096df67bdd6e9a1611d38015766369166f7a4",
+  "normalizers/idp_sample.py": "260a1c52e71afaa0894c5a38782b81d9a840a12fa87f3461b2be08b9f60f62a4",
+  "normalizers/il_arts_reextract.py": "98a7b808a50b301ca7f6ce6ae13002c540d9bd1826be0222af622ed309e6d263",
+  "normalizers/ir_adapters/MEM_SPILL_NOTES.md": "9c246de82121260dd905f13699d3d924707f6b5acd22ec77feaecf5d690650f8",
+  "normalizers/ir_adapters/_adapt_albania_af31db850343.py": "fc08feec82e7ff0748bee22bd1320b1e9f048c228ccc54ba5289db8de23aec41",
+  "normalizers/ir_adapters/_adapt_algeria_e01c7f983e00.py": "717ae3b2a8fee5e68aaeb5f9314d8cbfcac8d02b2c8f46b9bdcbf4a6601187de",
+  "normalizers/ir_adapters/_adapt_andorra_f5d83515a911.py": "fdb7143525ac249e6feb16cf0df364b6fd5ae15af81cb90c39cad3833d2d69c2",
+  "normalizers/ir_adapters/_adapt_angola_98bcdcd60620.py": "a88b9636d8c9a0d0a10b2fb6b895fbfbabfcff1cc7f8c59bd09f62f537697fd5",
+  "normalizers/ir_adapters/_adapt_anguilla_be6ea6899994.py": "ab41f3a3e927f4ce3f942c865bee77567d9fbe48bb254554fc934e4e2c40774f",
+  "normalizers/ir_adapters/_adapt_antigua_barbuda_85734f06153d.py": "2f317abf5fda7e1d8d65b76c21c7971deb05ae6d2add4dc11c183a6c3437690d",
+  "normalizers/ir_adapters/_adapt_ao_filter.py": "12d0c568d6908bce5e2da728e2a00a9f77b461f73b0182dec7fcac561004abdc",
+  "normalizers/ir_adapters/_adapt_argentina_0361.py": "fa2a88a5269bbedc2dad8b5bed550770f4d7720a9530f63f9fd987d4562ca1ac",
+  "normalizers/ir_adapters/_adapt_aruba_06c2b343c859.py": "356d42a6f99d7477629eb5c3cd8bcd59cb2e5421d9da7b1a08551877dbc44b94",
+  "normalizers/ir_adapters/_adapt_australia_58732457a228.py": "5a03f7162f1e76a86acf57727b7a88d189c3e117e28f95139ee91955e62e2bf6",
+  "normalizers/ir_adapters/_adapt_australia_c72ad.py": "34340eaba79365431bc7e98a0f620e82b542b623b3c9b2fbca9a7e5666482b64",
+  "normalizers/ir_adapters/_adapt_austria_096bd65e89d3.py": "9cb81238a4caf28bbd58f569e42de55948fcc76b0f6d82e179a2ac3c7aa513f0",
+  "normalizers/ir_adapters/_adapt_azerbaijan_917c9894ee50.py": "1717bde17f952c422b01e0c3d35957dad2f6fef71885c202c191113375f9e9fd",
+  "normalizers/ir_adapters/_adapt_bahamas_4fbb225cc993.py": "50f803cf4f6d2f8a830fda0326f9ccf064fd5e50a9bdad4d8da16bf6ad802cbb",
+  "normalizers/ir_adapters/_adapt_barbados_22af9b2e.py": "c2fef4e38f628a022f4452484eece47f81b834bfa63bdb3bf3083b62e3b2b17b",
+  "normalizers/ir_adapters/_adapt_belize_39442fe69bdc.py": "b48424be3ebe95a45512ede24593dd6b76b27482f054a11e719bb9cc3a42f308",
+  "normalizers/ir_adapters/_adapt_benin_4205c221a681.py": "966837015593fc9a8f49c408ff81c0292adcf33d4f1f0fa9f0bafaec3350d9db",
+  "normalizers/ir_adapters/_adapt_bermuda_b41f1c6c1095.py": "9096ad4578de1822a539c41ce1d36d96b7fafb42ff7bb562f7ecdfeb92d73e68",
+  "normalizers/ir_adapters/_adapt_bhutan_796412e31957.py": "7265de9ddf7df73e2fe90d7190c59d73973f4265a167a391343d7ff062540fa7",
+  "normalizers/ir_adapters/_adapt_bolivia.py": "712adc269e2597773229c8d30b0ffbe04a6bfa11aa8a42a1ea2930f480e17336",
+  "normalizers/ir_adapters/_adapt_bolivia_faf90a460d00.py": "79070b29cf30a7527a0b9514fe94aae5bdc7525045c3b727917abc3057557274",
+  "normalizers/ir_adapters/_adapt_brazil_4da9b.py": "211ec5f840fea70d6f7685842e6d4283dd414a75e0f85598bcdc45f4280c270f",
+  "normalizers/ir_adapters/_adapt_british_virgin_islands_5ebf224393db.py": "c2e844c295d20ff1bb06361c9fc8eb02a64a547941bfa1ab64b819ceaf727f98",
+  "normalizers/ir_adapters/_adapt_brunei_fa649d0d.py": "33b36fced7de2426193915a46dfcb32619195466da17c329952de14ca8874eb4",
+  "normalizers/ir_adapters/_adapt_burkinafaso_397e6ed9.py": "e0a14fd6db60b11abbcf6a5d4af406f0f84f2d67c5f8c12828a41ed27b55719f",
+  "normalizers/ir_adapters/_adapt_burundi_b5768508c9ba.py": "d2d6cc4f387e7257b0154a99ce5626dba7e0567d0ec3dbf39b19a82c1fbaaca2",
+  "normalizers/ir_adapters/_adapt_caboverde_20408347f403.py": "b21fbfce94572b5817b897dcf26d64e6593b967a70d7e5cf2cbb15997bd71591",
+  "normalizers/ir_adapters/_adapt_canada_56377e97d5bd.py": "2d5af7fce6b375ccb6b8d6499e4ebf1aa65692db3575c0b9f1e862c276755603",
+  "normalizers/ir_adapters/_adapt_car_7fd4f3ed940b.py": "ad71f3db12c85c91948e6d745586f3b74e13ea2a1ffe400cb764bbf815b47465",
+  "normalizers/ir_adapters/_adapt_cayman_27056e524990.py": "2174d3cf3f75832ec4b4182dafcff8e14641278e3c48ba807c0923466138713c",
+  "normalizers/ir_adapters/_adapt_chad_cfef0584fb76.py": "f1726675df3ead9893d3ee5e75f4b351134ddac445ba610c0850869bf306e683",
+  "normalizers/ir_adapters/_adapt_comoros_bf29adc28297.py": "96eb8078b903abf1f4c6640c11e61dc8e8e8d23e07a98ded37b6bd68b257fc62",
+  "normalizers/ir_adapters/_adapt_congobrazzaville_79328ea45cb0.py": "bd599105970124d6ded9375b41d9f1e65fa707d6e63b14b61c6cf2028839142c",
+  "normalizers/ir_adapters/_adapt_cookislands_197f309a560b.py": "c266f68c2c76a18325e44a9db96b095d1d8a32d54c6ab2c482ce19b7e5072212",
+  "normalizers/ir_adapters/_adapt_cotedivoire_67ef43d5e4b3.py": "b35da4f70e459ddf5e5f3de68b35669ef4ba44059ebfa6fec60e6c8a188cd019",
+  "normalizers/ir_adapters/_adapt_croatia_42326b74f129.py": "3aaf4830dd6adf94ee21557800f8a38fb7f89c246cad2566e4841ca3551b66c3",
+  "normalizers/ir_adapters/_adapt_croatia_9469c387c221.py": "8d32dc150b6c7a5ad7c911e23fad9a169f298a4a9aa8e93b03a8443715d30bc7",
+  "normalizers/ir_adapters/_adapt_curacao_d8904c4d79de.py": "2fb0772583b09e61a255e6e737e4fe6b337215e82eced8f75cc4f89359a09e32",
+  "normalizers/ir_adapters/_adapt_djibouti_bc8e769bb669.py": "acb048abd78632a30cd86652c0fcb8a69bef0fd67afdfe4122629dabd0173faa",
+  "normalizers/ir_adapters/_adapt_dominica_d071c156bb3c.py": "d52c96a546a0ea5c533d816458ce3f93259d140ead5a734d8d3c3dc9ae4c102e",
+  "normalizers/ir_adapters/_adapt_drc_a72ae6be8813.py": "d52f8fb2078a7a360d0a22ae470a59b81c9c128ab549236b3bb2286add69cb59",
+  "normalizers/ir_adapters/_adapt_equatorialguinea_6d86d0c7e604.py": "8f383d1fb11b6c881c58547a9d56d74a88ecf262eb362dc13d875be2c43c5746",
+  "normalizers/ir_adapters/_adapt_estonia_902b122c.py": "b7838ebdba2c23180ebedda584af57a9261d43269e55495577bcbad3e3b205be",
+  "normalizers/ir_adapters/_adapt_eswatini_7076fc82ba00.py": "d502348deab5c723fedd66136e43fc9d6632fe38a34711f307b07d36b66a4267",
+  "normalizers/ir_adapters/_adapt_eu_9d5021.py": "66bf5a231b205ee7e4a9c19b81b4ddf30c12e024ea6d4308103f21e9c29f3fa5",
+  "normalizers/ir_adapters/_adapt_fsm_aece546f4dbc.py": "58e7737f2cabed4e1e66954800bf242538c512c8f83417462c32a081584dce70",
+  "normalizers/ir_adapters/_adapt_gabon_55ca40a7d28b.py": "5011f9de881b0336d854ad4fd975e7646923c8055df86b5e4fcfd1f55908e7aa",
+  "normalizers/ir_adapters/_adapt_gambia_1bf963a9d18f.py": "ed29e6d17e9ef5fbcab8a8f342be5300146b9f6ce77bd8288e040ad3f32381f7",
+  "normalizers/ir_adapters/_adapt_germany_4911b83beea2.py": "1771a59466215f28624e6c53e3941d91a6987812b5af411d201cbb7e73542674",
+  "normalizers/ir_adapters/_adapt_ghana_c19c1fb59bc2.py": "077bc9e49fdb01ac34b61eee8404259ea227e8d790461651d4552e12fac15891",
+  "normalizers/ir_adapters/_adapt_grenada_50132c510a29.py": "55b9c67cf12faec74e021f13d027dce351b228f9b226fcb79075c36958285abb",
+  "normalizers/ir_adapters/_adapt_guinea_c330b9fc21b5.py": "3d40364ba1b02b6f870b9e4c02e60e767c1bb8d7eab0f240fa6e2d02bf93d897",
+  "normalizers/ir_adapters/_adapt_guineabissau_a8f9cc04584f.py": "d9303639882eb4cbf1dd08331116d88ace4a3114d5117c56107dafb007494aa2",
+  "normalizers/ir_adapters/_adapt_guyana_b0752848c53b.py": "4bff247ba160d6ffd794ad413b6602a4a6a3be3a45c7fa9e6c0eaca328e1eab3",
+  "normalizers/ir_adapters/_adapt_haiti_c938fe61f3cd.py": "961e341ff37012206b07d257458ba81bfe7bbdc197f5292cbe36d4a951a3a5e1",
+  "normalizers/ir_adapters/_adapt_hungary_88ecd571.py": "c40b07ee61ffca9dd20762eedf77fea5a0f1774e7b1162c0d9179f95522effb9",
+  "normalizers/ir_adapters/_adapt_iceland_b4b6f9eefa6e.py": "e149923eb587dfa50cc05def3748084962262d9bf5545fce3d77443851cb18ca",
+  "normalizers/ir_adapters/_adapt_indonesia_796ca.py": "d3f66f7eefd9673690e89f339611e3f64338a7f6872760cf1291046dd99824b6",
+  "normalizers/ir_adapters/_adapt_italy_ef7a.py": "3c3cab4c7546de8c2a3e469b0b400c3e974cfbbaaf95d1c2e57c807cd7c4e485",
+  "normalizers/ir_adapters/_adapt_kiribati_32b6f34aefd1.py": "4a436549674cd573e11ce9b81fa0b718038332c1777809bd995577c3f36a645d",
+  "normalizers/ir_adapters/_adapt_korea_a174ce.py": "3e9913a26cc0a2f7251b3cd3fe71df85287ccd3e520c7d8fd9040e7eedca84c5",
+  "normalizers/ir_adapters/_adapt_kyrgyzstan_3adfd953b02b.py": "48185c2528b8c120e63aa2b0db584ea7dfd0c4155766636242cecd59b9537c35",
+  "normalizers/ir_adapters/_adapt_laos.py": "b7907757fd7750d3f2dc76ec4e765401b247b18c5a47f7807b9c170d8d968616",
+  "normalizers/ir_adapters/_adapt_latvia_047b73ac47dd.py": "c674bb7a2733950eb270917832478419dd45025ecae8f21500bca249a63c433b",
+  "normalizers/ir_adapters/_adapt_lebanon_ea3f4b4af18f.py": "97e7f9be98a15f46e88a718add00bea63b1e4fe2c8bf09d34f25ae7b3d8f6750",
+  "normalizers/ir_adapters/_adapt_lesotho_f92fc7f5c27f.py": "ae4aa278035f2df3a7c5a694139bd5c09a74771938bdf956e5e0190ab8091ee4",
+  "normalizers/ir_adapters/_adapt_liberia_aa4f84dc94fa.py": "cd3da84613bf4b951ba4280a85d1bac878b6ca7e9b2c1d0d8c2065a495aa9e72",
+  "normalizers/ir_adapters/_adapt_liechtenstein_9a0cf396.py": "236d83e0f0f2cc3754c14c0b17e969e90ff98b0f6ce73afc0a2fc9f6dce7e9a7",
+  "normalizers/ir_adapters/_adapt_madagascar_f94916739687.py": "1ed65e26dc6f761dcc3622467059c66b21bb42259755064de84d06c6d2a073ab",
+  "normalizers/ir_adapters/_adapt_maldives_7c8f75f3868a.py": "47fc0a841bc7dc441c231d268496bf51109dd45bd625a5b98fc98c350e9424af",
+  "normalizers/ir_adapters/_adapt_mali_dea9e0d1.py": "61703c21b643028f2d9ae6ccf1dffe5beebef29758a1391c163bf936f9320da9",
+  "normalizers/ir_adapters/_adapt_malta_404a177.py": "bde420f2be5126fa58e3b5a8f28a15bb23b43a01914115c0621b74442f4324a8",
+  "normalizers/ir_adapters/_adapt_marshallislands_74821456297a.py": "f150b393595243f93960f26caeb673b92e02fef77db73231b68cfd58ae3c64e3",
+  "normalizers/ir_adapters/_adapt_mauritania_d97f4556.py": "756008dca14874925e1790ae7b442aa184643187d6a1ac676a664a4e1e1cd6a8",
+  "normalizers/ir_adapters/_adapt_mauritius_94566e522d28.py": "39f792007be912b94422bfc51a64591dc2eddd44d015a607cc6385b030e6c287",
+  "normalizers/ir_adapters/_adapt_montenegro_0923d27e.py": "fca5414f5047f2a531d0976b75f5867ddc5f6b415da169f0f3645d03755b50ba",
+  "normalizers/ir_adapters/_adapt_montserrat_0934a8280dea.py": "5c8ddd7847fcd5b57e26f26208dd39ca579b7ea93cc65223fd43b7326b767c48",
+  "normalizers/ir_adapters/_adapt_myanmar_b744df8f35b0.py": "7d6952321b4c0e278813c60d8e66f768c0389eec98663a50e39df33de16ee985",
+  "normalizers/ir_adapters/_adapt_nauru_41eb38ee2113.py": "f661348b9603c466a38425905a036fdd395dbae0cfebe219f1b5f913889a4192",
+  "normalizers/ir_adapters/_adapt_netherlands_58982353b51d.py": "91f1eebcda90c02ae6369f4dc9db715cf1470f6953d1670a8c53a66b8a3c8a61",
+  "normalizers/ir_adapters/_adapt_newzealand_5054.py": "996e2bf95f8c6acde80b84c8b559896a7fd1d0378aa6e138d64d2b5b1ae26508",
+  "normalizers/ir_adapters/_adapt_niger_e27a3d51e154.py": "79c161b01ccd4a9ef3446f0bac2c97a174fba06726d1eca2526c7c980f20569f",
+  "normalizers/ir_adapters/_adapt_niue_097999244810.py": "d7679b0a8609ff3091dc7c2ca1c616ec68c520d1e2d2ea7252334eb36f7d15b1",
+  "normalizers/ir_adapters/_adapt_norway_6867.py": "0471fa164b3d075bc6b616e35c4ca1b7f9cdc5979425fb55f16e07d96f7ccdf0",
+  "normalizers/ir_adapters/_adapt_palestine_3dfb5eba2ced.py": "9ddf70347e53e21c95b7ed02a60ebeb8062e96da8321fe74d87a72e35a391cc8",
+  "normalizers/ir_adapters/_adapt_poland_fdbce.py": "5b612bef7b2b19a6aaf38e9f9ca43e367564988c4ced97dd77c0ac39e9b8b0c2",
+  "normalizers/ir_adapters/_adapt_portugal_ddf64fdbbf0c.py": "cbb032338d7fdb19e346fea331fb8745a0c02f7c7280f3725d1f658f149469d6",
+  "normalizers/ir_adapters/_adapt_puerto_rico_f50550af2585.py": "1204491f27f583dbf01eeb9523f0aa2c9dfe0a34497e31f75bc026e2f7dedd5a",
+  "normalizers/ir_adapters/_adapt_qatar_238102e09d63.py": "9eb875714089d8ea4c04cf978d3b0b9d953feec4da42c6e07dbe1af1015882a9",
+  "normalizers/ir_adapters/_adapt_saint_kitts_nevis_7debf058.py": "cd491dd3fb9cf5f3c0c5221e7aae3ea091e0c54f04b13b8c355e0290681bac48",
+  "normalizers/ir_adapters/_adapt_saint_lucia_2216d124ae85.py": "c4c9b0868b52f353a3dbf872cb8d41337490cf2b4a6067eb230a021e919ab0f1",
+  "normalizers/ir_adapters/_adapt_saint_vincent_grenadines_6a8f84e3dff4.py": "cc898193078e57a559937457f9df99d799b5147ba59f62fdff786174b86413b7",
+  "normalizers/ir_adapters/_adapt_samoa_1db7f49.py": "ce62ed4a4fad18eb0d48338c937a71effe5bf9449a84bd42c708ce6acab4d2be",
+  "normalizers/ir_adapters/_adapt_sanmarino_f18d1dcc063b.py": "6b1c82e58eeb70662d29b2cb499652a20eb812ba64681a70419a07bffcb4058c",
+  "normalizers/ir_adapters/_adapt_saotome_d7dc8feb75b0.py": "455df0a17d84d134fd5761c3670d99040d771c23dacfe5699eb70d86c4d1dc36",
+  "normalizers/ir_adapters/_adapt_serbia_d8fb5912006c.py": "775b147df6cda41e8b9a7f2f30e4533b478cb9db631f4cc3f04704e895fc5c7a",
+  "normalizers/ir_adapters/_adapt_seychelles_18e49bfef602.py": "59e9b328884b8ba7afb55e3a32f46260fa38a9f68b2e01f18996ab93d18eeef5",
+  "normalizers/ir_adapters/_adapt_sierraleone_4e62de61f623.py": "a9329bbb2bb1c5ec3a0b4ceae316c6908b1111cc41dad928a32783437148c14e",
+  "normalizers/ir_adapters/_adapt_sint_maarten_aef1dc9c3e4c.py": "19455ce746f48e99b2631cfff0b88c359ebb3f32b001688fb2ef0043aa53b7b0",
+  "normalizers/ir_adapters/_adapt_slovakia_22508a5eab4b.py": "cb17f6fd5eb432f73af2017e3d8c0f771b5a23969e9bb9874579205a03a00d62",
+  "normalizers/ir_adapters/_adapt_slovakia_b28c2e913f97.py": "b2c5eb13b312fc948ca705e9e0629498b2357ecc0252c0f38a0731c451cd71e7",
+  "normalizers/ir_adapters/_adapt_slovenia_8ba5be36c89f.py": "791f740cbf277c540e0c0de58c1c0d219ebba56f97e1bea34397c831d34cd723",
+  "normalizers/ir_adapters/_adapt_solomonislands_c921827129d0.py": "ffeaf9dbfcab8a0b0e3b8510e7cdfbdb37b919e191338281dfb143af827c04ed",
+  "normalizers/ir_adapters/_adapt_somalia_ac6aefed0dbe.py": "748db51df3f903f84432797bd252c755c66a678f66afc4e1482b7c3033dca03f",
+  "normalizers/ir_adapters/_adapt_spain_ed0ac217106e.py": "e953de4d9832dce4f7abee4132e920a14a93d73a4004985f29fe5b0629dc2721",
+  "normalizers/ir_adapters/_adapt_srilanka.py": "b7907757fd7750d3f2dc76ec4e765401b247b18c5a47f7807b9c170d8d968616",
+  "normalizers/ir_adapters/_adapt_srilanka_27400df2d125.py": "1f275716251bd43bd6f1eeee377774f7550e492630d00061dcf519efc576027f",
+  "normalizers/ir_adapters/_adapt_srilanka_79ff4e.py": "e7ca7b375bcd48cc086282b245fda4d2908c4e6f0f27e1781b388c2e467b90f5",
+  "normalizers/ir_adapters/_adapt_sudan_6a063943f9df.py": "dd336ba157efe40b2f1b2fc5a1a901937660d87bcaedd767f316b0a2b6dc4e0a",
+  "normalizers/ir_adapters/_adapt_suriname_ca87c3f430c5.py": "b74742d67c548f0d554200fcd2c2a550fde71c359f11613fc4094e194d589e8e",
+  "normalizers/ir_adapters/_adapt_switzerland_7f9da5c86658.py": "5f5240cb82c669c55c1112f8761c3c468d41430bee6d316107686c52714aac00",
+  "normalizers/ir_adapters/_adapt_syria_8d2537ff5585.py": "c1609da7986acbbe236ba8229018d843654eb1600e96288c9845b1a4fab72bea",
+  "normalizers/ir_adapters/_adapt_taiwan_4b2305.py": "d0f069c29cda59b6c83fa87d89614c1156dc222c266d3504858b220b01aa39fb",
+  "normalizers/ir_adapters/_adapt_tajikistan_a65dcc660a43.py": "dece7a65384971ee0eb0ae0dc951daa1f8291e488e755795dbccaf369f6b2a25",
+  "normalizers/ir_adapters/_adapt_thailand_cde9df4f9b72.py": "53a8a927c20eac34f30d5189f9673aa73830eb0dfde6bbf7b4cbcdf6c1028349",
+  "normalizers/ir_adapters/_adapt_timorleste_d9398c2b3567.py": "e7ec6b9d52a83eafee724de8a6099185dd5ec75a7201e0f2f4a3721e44ea0b29",
+  "normalizers/ir_adapters/_adapt_togo_5d6406438adc.py": "61488a60964e3fc061cd771137be3041deff3e587d73e2269ed4865546992f0e",
+  "normalizers/ir_adapters/_adapt_tonga_7a3c6262c6de.py": "db42a88d7a1c42e7b76b4c7ded7ed27ee1c0d353a0d5d7e1bf5664328ed4f4d4",
+  "normalizers/ir_adapters/_adapt_tunisia_5ed74d548da1.py": "c00c7005cd1fdf7fac358388376e1e3d42544c62162aaa249c57e57211476f1d",
+  "normalizers/ir_adapters/_adapt_turkmenistan_ce38a3085e08.py": "2ef66623298bfcae8adc72391d32bbc14a2f6af9c24c898416ae06f1ca3abe79",
+  "normalizers/ir_adapters/_adapt_turks_caicos_aaafe4d3bed9.py": "d3f73504311273f67249b8c64249ced2d9748d2651e7c517f08a3a30a19b1eb7",
+  "normalizers/ir_adapters/_adapt_tuvalu_d7f84a3a4ff7.py": "fb7a133c9455fb0a9fcdf17020ba49f4d9026395188890e94d070148720a4518",
+  "normalizers/ir_adapters/_adapt_uae_400423ae.py": "8d4b3f7676490ef5418283f5fd457429bf32404b62ec91bad4a2b3657c42a55a",
+  "normalizers/ir_adapters/_adapt_uk_cfcff2.py": "3b7457998222ef8fe9ef33646410e6ff8b24b6c609f1a5ffe3d8159e0c6bc6b1",
+  "normalizers/ir_adapters/_adapt_uruguay_5d30cc830c7a.py": "f5a28ffd1b837b0b50a609f8f7724a2103b4e5c6fa6ac924562a0174e80b47e4",
+  "normalizers/ir_adapters/_adapt_vanuatu_755173efca8c.py": "fd182d6a6c4cfa58dfd4d0ff95c607d1d14da7dff0c710c7202ebb1956b424d1",
+  "normalizers/ir_adapters/_adapt_venezuela_fa24f9ef.py": "529106a41052e799abcd5c0a7f804b4a62bc2ceb3032ea0387a51568a1607f15",
+  "normalizers/ir_adapters/_adapt_vietnam_5088d10cf67c.py": "44c2876cfbdba534bce6631f403dca1980b15ef73c9ec86565349207a246f88a",
+  "normalizers/ir_adapters/_adapt_yemen_2a18a87063c1.py": "376ea42e6d9d2a89f9b3fcede50e1d9a11209f57bce6553d377aa96ffc58ce3b",
+  "normalizers/ir_adapters/_adapt_zambia_393c845a2466.py": "f37258a7fcd3ddb8241f4f26d1f7c250d4971de91c1f3cf39ebadf031da05efa",
+  "normalizers/ir_adapters/reference_pipeline_estonia/estonia_bm25_smoke.py": "5121558c0b52a7a9191fdc3b81abccf701d6afca4eea5d737d827ae7badf42d0",
+  "normalizers/ir_adapters/reference_pipeline_estonia/estonia_corpus_stream_902b122cd27e.py": "c7ccffde731a30e23bfaf3684efcf7fba34fbcb4f880ebb119d56af4dd4020ec",
+  "normalizers/ir_adapters/reference_pipeline_estonia/estonia_encode_memsafe_902b122cd27e.py": "2e526bc5e86ace190f36c669c61a1bc2492fb3a72c45f916f4d3e16e40f19338",
+  "normalizers/ir_adapters/reference_pipeline_estonia/estonia_finish_from_emb_902b122cd27e.py": "27d991f4d7a79c0b2ea5c15bbb86b2e7470c1c05d47ae95670ec833fc2ceba49",
+  "normalizers/ir_adapters/reference_pipeline_estonia/estonia_municipal_bm25_smoke_9ef422a2a38a.py": "2385a73f258d2001a3d904ae39e6359db3739f08fd9850bb0aa916dc2f3dc204",
+  "normalizers/ir_adapters/reference_pipeline_estonia/estonia_municipal_build_9ef422a2a38a.py": "255ff6a145ae8ca3830ca9f1e04a5318950e081ff0371f8ce15149cc8f0f45fa",
+  "normalizers/ir_adapters/reference_pipeline_estonia/estonia_municipal_encode_memsafe_9ef422a2a38a.py": "9eecbaafd85100e2a9574c8bd060b883594fad96bbd23ff5c806c91a8cc5b18b",
+  "normalizers/ir_adapters/reference_pipeline_estonia/estonia_municipal_prep_9ef422a2a38a.py": "21ddf0de292580e359b69a3efd5b13033287872eeb354c11fa0657ba71038a58",
+  "normalizers/ir_adapters/reference_pipeline_estonia/estonia_municipal_upload_9ef422a2a38a.py": "69dd77284c38526c0cc5b0ed7a6ceda027a418325fb87c73fbe00af8656e37f1",
+  "normalizers/ir_adapters/reference_pipeline_estonia/estonia_orchestrator_902b122cd27e.py": "2365bd7f2c559abd075512c3cde8e48c2c9cf1441edeaf92d29edb777ccc1149",
+  "normalizers/ir_adapters/reference_pipeline_estonia/estonia_package_memsafe_902b122cd27e.py": "35afdf604a6c0843b99ab38ae19274457d3a93b57d3e316084cb2161b0d6d79b",
+  "normalizers/ir_adapters/reference_pipeline_estonia/estonia_soft_filter.py": "bfdfbeb51b100c1cc2eef9fc993f1cc1940d91a8ee739f9a58cb6b00afc398ac",
+  "normalizers/ir_adapters/reference_pipeline_estonia/estonia_stream_graph_parts_902b122cd27e.py": "0fcf8f1d7ccc79d09a088665f82315493a000bcc328502ba41ca188b73ca6cec",
+  "normalizers/ir_adapters/reference_pipeline_estonia/estonia_upload.py": "ca0c46a2ebec09bb1294762b201bad82935ea28179e447bedbc616b24bca36bd",
+  "normalizers/ir_adapters/reference_pipeline_estonia/estonia_write_publish_report.py": "6c12a9bdd8f5f95d16476d502c97a40e226d38737d2ccd827f16b0a8d1e0ad6d",
+  "normalizers/ir_adapters/spill_build_template.py": "6c2e95b85ec7429945ff85602daaa40f393b9943ae8a06f95a81caa3ceb299f7",
+  "normalizers/lt_extract_articles.py": "bdfe29055c350c98553ff3302558f20eef2d005b501bd788d71d38b5f8506918",
+  "normalizers/lv_split_hub_text.py": "5ff3da6159e6c60898aba4f3bdf6d61912236b8902bed5ece32bb66ea9ad6b88",
+  "normalizers/lv_stage_and_check.py": "eba6fc99fc41b6709ca2daa06aa64cda38ffa4c7672ec8029b55e051c872790f",
+  "normalizers/ng_finalize_expand.py": "f40f40d07f0630419473c2b63484887af41af451105fecf72c847881f8312d94",
+  "normalizers/ng_handcheck_report.py": "80369092f9386e718bdab452ae6bf91e3b624133451a14324a0abb3920c7fc26",
+  "normalizers/ng_review_expand.py": "c6da74eefc82cf7e7b7a17cb17809e4fcb0e62f6a53901df023b45bc43666dc0",
+  "normalizers/ng_review_md.py": "6ffc155ff1740f463b1ecdb04df21079d0973563ddb518dd4d18588aa7a6c7fb",
+  "normalizers/ng_stage_expand.py": "e1fa4a390c32b81c7e683a6a0019622bcef3eeb31a03761e4a93397cfb23ec5e",
+  "normalizers/nl_build_stage.py": "f4e180549cb9689844d82f37664e47854feecae4429a260fff8c736da4c80144",
+  "normalizers/nl_resplit.py": "f66046a9bf23d443a5b93e8fbc4079752cf11151b261ead06b3817e3441ece05",
+  "normalizers/nl_review.py": "4d64b50fd61ee3e81c4df68578f9f1727a7aeb08c8a65c001c42da5ba4e39d63",
+  "normalizers/nl_split.py": "e8b0c8de8da7d6608560a8b290280c9d340c8c1ee329ddd4b9958205ab92c525",
+  "normalizers/nlm_handcheck_live_throttled.py": "cd57195b99692865e5b9ae7528f0aaacdd2ff50d5a21def4a96bc3e23d1da8d1",
+  "normalizers/nlm_hcreport_throttled.py": "f2eea62f7bb3c532bf5324d04275558d9c9aed73acddc5f45b64eecc9d2272c6",
+  "normalizers/nlm_pack_out.py": "b5d9d1eddf4bdd2e1b43a4d044abf6e06f8a51766ce289848f32e908b0c901d9",
+  "normalizers/nlm_rebuild_out_offline.py": "a0bf134473b4286ef325643ccc92cd406c7928ea7a4317003d42aeafaa6194e4",
+  "normalizers/nlm_split.py": "644315f90dd8800b1c6ca6c155123578cd72c9e2e75c60f8ddd500fefbc4b54c",
+  "normalizers/package_and_upload_one.py": "065eed915add7e5b9df2453138f61730b8f4e72c569efb45a55431178291ccc5",
+  "normalizers/package_country_hub.py": "cd713d6252805e086039ba74159999e6acddd25e85d233723a46bfc921b93f73",
+  "normalizers/si_split_hub_text.py": "1adfd692457d4869e72f70a6e576f5f32982b24dee0a4e84c122830cc07912da",
+  "normalizers/si_stage_and_check.py": "48e9951ae9734a835588094bead119425e7f7c29eca1cad8939571b49b5abdca",
+  "normalizers/sk_split_hub_text.py": "4a1dcf6f0da72123135ba9a28872b9877724aff478babb6a35100128e5536443",
+  "normalizers/sk_textfix.py": "4fd735bbd6b6909b8e231b50f9fda4b1a2deacfc7fd6b1a3120bfbf2d3bcbbd9",
+  "normalizers/upload_hf_releases.py": "3e76e4ca0a3f2fef6d1eccb596c721e668ed124a5829ad5801089fd65d3ae1cb",
+  "prep/au_sa/PREP.md": "6657e703b6a2f3cf38670550be02b5ceb6c1145023411cb419b2d8b9c38f8538",
+  "prep/au_sa/ausa_config.json": "1f505fa22787fd375fa36b2e1a5c6cbe6c9543226a046c81e8405c2c3c48e8ee",
+  "prep/be_codex_vlaanderen/PREP.md": "e1862965b357acf9bf57fff56adf7a591f9bdf96c041adc66c6f4e1c08a5d5f2",
+  "prep/be_codex_vlaanderen/becodex_config.json": "1cf04addb792b9ac6d3fba3e88b4313680ea2e2f79c31fa4849ff9eca2cac62f",
+  "prep/be_fl_vindplaats/PREP.md": "833abb8cc28f6f8a6002a819249cf51f7c69d015060f57081a3cd1e34459e2ae",
+  "prep/be_fl_vindplaats/befl_config.json": "b7c1572603b689aa3acbebf9abc3f3f476ae3f9e674b0cc923b95bc579684311",
+  "prep/br_alesp/PREP.md": "a2a04eb98a9eae43195e58972c0ed3a9429ea60ca57240210f0940e017e3d922",
+  "prep/br_alesp/bralesp_config.json": "71228596d8582ffadea44f46b52f9e26b9e6f2e9020bcee6a50aed8e8f5d23dc",
+  "prep/collection_record.schema.json": "61e568843e73d95da3e018d7fb42c3dc4524ac1ed199efff6e84b902ad277deb",
+  "prep/ee_municipal_t2/PREP.md": "5586671c134a75440e23f64e8d848adf3bdb48dd5acde8c4688287d124978f10",
+  "prep/ee_municipal_t2/ee_t2_config.json": "2113d041a45cc98107c6b3aec9b335d903a1e69c160a39a93b4b6a823ed1f334",
+  "prep/fr_scdl_deliberations/PREP.md": "5e4f039f0f8c45411c507026e0afdfe05c1c97db5cb1846e27b1bf0625a4cc6a",
+  "prep/fr_scdl_deliberations/frscdl_config.json": "2c6c705a4d89cbae3ee93a46c103a8e1baae46be6427673bd26b32bef84e0417",
+  "prep/id_jateng_jdih/PREP.md": "674c1958b0a8e402c4ec4d3e900fccebf48c2ad3857aee674394e74f9f6ee2e0",
+  "prep/id_jateng_jdih/idjt_config.json": "159f60f6f7a7d0fdfc23576799d7413017680a63b78096c5c2c785b642df8742",
+  "prep/is_bdeild/PREP.md": "cda471279fb29be097bdf72431ac812541b5832640fe12f2bcd165c91a50f3fc",
+  "prep/is_bdeild/is_config.json": "2575a6a3353490f21dc6b1cc5a1054d462eab3552fa560cc6cc2cf5796daa2fb",
+  "prep/it_statuti/PREP.md": "b7d5f039e02c8d9e7914bb351e3c982157f6eb23580bbda4c489e9ec4ff91246",
+  "prep/it_statuti/itstat_config.json": "44be01727f003564a6fc4c58ae70242b561b989c376ce16725a91564228973cf",
+  "prep/it_toscana/PREP.md": "0b997427df453553eb49becf706542fbad3aa51bda4f97457d602368d6ecb483",
+  "prep/it_toscana/ittos_config.json": "13bb2eec6a038e84332a82291d7d74123a9cf8eadedffa731fb8bc4e9209633a",
+  "prep/pt_azores/PREP.md": "c63324d7af75c7295a49fce013be4cf2643b2f7826bf04a252a8d6cd9bc88170",
+  "prep/pt_azores/ptaz_config.json": "7d82d09776f26078f22b0289ac35192e55d9c41cfe1fc1b6f4a80470cb50d763",
+  "prep/subnational_prep_queue_20261006.json": "7f188937da2fe80295a556e11c294545e59fda3c29d449f43c1a92f0398e262d",
+  "prep/za_western_cape/PREP.md": "15ea229536d655344aeffe7675f9c14976466750b8d833d7f15435f71c716a30",
+  "prep/za_western_cape/zawc_config.json": "84d22a88dea1d6fc88b8973f5ce7b125f073a73c3f332caf231c27c9c44ad798",
+  "requirements.txt": "c07c5e8207eee5020a3b7ffe9105bd242fc22d594991ac67bd8998171361f3e8",
+  "collectors/launchers/nlm_launch_after_crisis5.py": "aa8f29d5fc1ff2f8daec3a78eb3544e326c0c07be62711a91860ad1463f87ac2",
+  "collectors/launchers/cz_t2_launch.sh": "409b809b52a5df78918b511e5d5e421fbdb8e87f2c1a6f92d84a10b17a7e255b",
+  "collectors/launchers/cz_t2_launch_guarded.py": "2f7277b65339d711bb30fc1bcdaff5cf072a38413089be38a4403a6f60491b53",
+  "collectors/launchers/pin_mirror_cz.py": "c8acfaed6b096b305db598c5b420cbcfac738e4b779c988b1c7ba5cda2c36eea",
+  "collectors/launchers/collectors_fallback_check.py": "b937b693b60e9f4a78813c56f60e90e9de04796fab9daebeed096b8782f6503e",
+  "normalizers/normalize_offline.py": "061d51fd041814d1919108d4d35a5ed983815bd7ecc4068b81917fca53a3762b",
+  "normalizers/nlm_t1_build.py": "36cb62193244c8694baa1a8852c9515e1b3fb5215d6aa744f013ad0f5d3b30d3",
+  "normalizers/nlm_t1_inventory.py": "6c0e4fa6738c3a23142dee680c891f7dddbc9efb9f3e7b8594af50ed79416efb",
+  "normalizers/nlm_t1_review.py": "d4dac08dd0e2026f2985cdedab0c7c49af80cea8e3ab9c99e135f25ca8aa5d84",
+  "RELEASE_20261024.md": "812b882cef27f187dc05e1e799bdce97320a43e28b51dc2eae414c2094dc4d7d",
+  "collectors/us_local_collect.py": "e1f71d3fd1e2dba3fc5d2eac052803e16d0c7b10dc655c6c1f5e851467008bb3",
+  "collectors/us_local_seeds.py": "38f8a97bbe150ffdf8b0504bf605a658c631e05dd10cbd874b39147ff98e4898",
+  "collectors/us_local_probe.py": "c14eef17d97106d596162dfc886a1a533b51fcac1525a38bbda4b9b92dd3e31f",
+  "collectors/add_collect.py": "141f22a6a27b79437a1a28a3711e4d39697eb5d984a455545979cc40b8ba01ce",
+  "collectors/es_seue_collect.py": "94b8235a1f5f4bd3fe5476557b085eed613fe0064a9905c9a694243b0de1b813",
+  "collectors/it_dait_collect.py": "e85ad66965c7f34af56effc64c2f71dcaa95ca75faf72de46f6e3d12e9dd7fdf",
+  "collectors/lu_sparql_collect.py": "caba4467c96b759cf84cadaf72c93bfc4dffa37629442e8e672af8a9aa444307",
+  "collectors/ua_zip_collect.py": "ba341cffa1d338aab9038efcde78e80034ebd1519a1dd2852f4a899802239190",
+  "collectors/it_mfr_fulltext_build_jobs.py": "d37d95cb6390729ed25f2468638af3bc1eaa9296a66ae2ebf9a893e669f5740c",
+  "collectors/launchers/us_local_supervise.py": "fd5d026242b288f5098003bcdb49030747c3222fb8432f385801bb52601c98aa",
+  "collectors/launchers/us_local_launch_guarded.py": "f8bf95d9c2da6c4d16c6089964a22ed1fcc751f1f5977744a5188c581930c14f",
+  "collectors/launchers/br_mg_almg_supervise.py": "3c4a15994c68a8eb20a288f1694abb9843ae1545847de8ff83cfaa11a6569e20",
+  "collectors/launchers/br_mg_almg_launch_guarded.py": "31cc7827a22acc93be9737e77d83492c0bade7859566836ff92f2d3ee3a44bf1",
+  "collectors/launchers/it_normattiva_mfr_supervise.py": "7a0fbc04de83c8bfab0bd7386820fa4e4abc60b1415d178803490eee46458a33",
+  "collectors/launchers/it_normattiva_mfr_launch_guarded.py": "4bd4efc2b579dcd783a26382194b9a54de6160001745001a95e25d4a0bbde543",
+  "collectors/launchers/it_mfr_page2_supervise.py": "993eec9ee6ae76eb34689c4dbebd37af8215105bd9bc01e85907b1b70f186fd8",
+  "collectors/launchers/it_mfr_fulltext_supervise.py": "03072f048f138f575d04e959de552a2ca77458ad85bdda960b5b5e9f6af4c487",
+  "collectors/launchers/lu_sparql_supervise.py": "a33523495a7b0fd2bde72b2b6b1ae77e3eafd806a8e3d4ca36fd1c4169d1e86b",
+  "normalizers/pkg_us_county.py": "5223df9371b8971bf27ec801dd5bcfd8a7f85e7a4b1fba7fb0263dc6ce92985d",
+  "normalizers/pkg_it_mfr.py": "35cddb50332434e0f698e83d7890212678d4a1787f16e119e43b3095a7045dcb",
+  "normalizers/pkg_lu_rc2.py": "460949eb83d0a8c9359fe7e4bc769bfa303b79e082847c43782cd0e04c01a7d1",
+  "normalizers/lu_split.py": "526c6f7f5d40e3d850eaec0bbf78320d8d89e2a0420b30adf8b60958e6002bda",
+  "normalizers/pkg_ua_supp.py": "0d112d935fe752a9088a8d00f3cf40863c491f26334b3207d76d80cfb5adc9bf",
+  "normalizers/ua_xml.py": "3ff53ce0a02b692b629a0dff1c73a2e95c51a0e3c12ac44e6929a77db796578d",
+  "jobs/it_normattiva_mfr_index.jobs.json": "c8aa7ccf693f3814a14102aade37b0efdefb04d341dc331ff9be4eb539574c3b",
+  "jobs/it_mfr_page2.jobs.json": "3833d12ac90dea7d0dcfc3447b63f29d9014ecdb60efdc1297e097a1dd8c7d9f",
+  "jobs/br_mg_almg.jobs.json": "57a833b04897bb6ea58e7305f29a8d49a7f3076ee6050577710ebe4bde8e3bcb",
+  "jobs/it_mfr_fulltext.jobs.json": "d0d53b07025860ff418d00c92113017a7a3a002d70c29b12fd5dffefdb47f27a"
+ },
+ "excluded": [
+  {
+   "path": "scripts/__pycache__",
+   "reason": "__pycache__"
+  },
+  {
+   "path": "scripts/_cdx_quality_check.py",
+   "reason": "wayback/commoncrawl (policy)"
+  },
+  {
+   "path": "scripts/_fix_ec_comma.py",
+   "reason": "one-off tmp/probe/verify/patch script"
+  },
+  {
+   "path": "scripts/_patch_de_se_meta.py",
+   "reason": "one-off tmp/probe/verify/patch script"
+  },
+  {
+   "path": "scripts/_patch_sa_cdx.py",
+   "reason": "wayback/commoncrawl (policy)"
+  },
+  {
+   "path": "scripts/_probe_de_hub.py",
+   "reason": "one-off tmp/probe/verify/patch script"
+  },
+  {
+   "path": "scripts/_probe_de_se_commits.py",
+   "reason": "one-off tmp/probe/verify/patch script"
+  },
+  {
+   "path": "scripts/_probe_de_se_hub_counts.py",
+   "reason": "one-off tmp/probe/verify/patch script"
+  },
+  {
+   "path": "scripts/_qa_count.py",
+   "reason": "one-off tmp/probe/verify/patch script"
+  },
+  {
+   "path": "scripts/_qa_diag_arts.py",
+   "reason": "one-off tmp/probe/verify/patch script"
+  },
+  {
+   "path": "scripts/_qa_id_coverage.py",
+   "reason": "one-off tmp/probe/verify/patch script"
+  },
+  {
+   "path": "scripts/_qa_pack_local.py",
+   "reason": "one-off tmp/probe/verify/patch script"
+  },
+  {
+   "path": "scripts/_qa_patch_harness.py",
+   "reason": "wayback/commoncrawl (policy)"
+  },
+  {
+   "path": "scripts/_qa_probe_cc.py",
+   "reason": "wayback/commoncrawl (policy)"
+  },
+  {
+   "path": "scripts/_qa_reextract_only.py",
+   "reason": "one-off tmp/probe/verify/patch script"
+  },
+  {
+   "path": "scripts/_verify_de_se_counts.py",
+   "reason": "one-off tmp/probe/verify/patch script"
+  },
+  {
+   "path": "scripts/_verify_de_se_parquet.py",
+   "reason": "one-off tmp/probe/verify/patch script"
+  },
+  {
+   "path": "scripts/_verify_de_se_parquet.py.bak_pre_exitguard_20261006T035456",
+   "reason": "backup/disabled"
+  },
+  {
+   "path": "scripts/_verify_hub_wave1.py",
+   "reason": "one-off tmp/probe/verify/patch script"
+  },
+  {
+   "path": "scripts/_verify_hub_wave1.py.bak_pre_exitguard_20261006T035456",
+   "reason": "backup/disabled"
+  },
+  {
+   "path": "scripts/au_hub_publish.py.bak_pre_exitguard_20261006T035456",
+   "reason": "backup/disabled"
+  },
+  {
+   "path": "scripts/bg_hub_status.py",
+   "reason": "box-specific ops/watchdog/one-off publish orchestration"
+  },
+  {
+   "path": "scripts/box-health-watchdog.sh",
+   "reason": "box-specific ops/watchdog/one-off publish orchestration"
+  },
+  {
+   "path": "scripts/ca_build.py.bak1",
+   "reason": "backup/disabled"
+  },
+  {
+   "path": "scripts/ca_hub_publish.py.bak_pre_exitguard_20261006T035456",
+   "reason": "backup/disabled"
+  },
+  {
+   "path": "scripts/ca_parse.py.bak1",
+   "reason": "backup/disabled"
+  },
+  {
+   "path": "scripts/ca_stage_and_check.py.bak1",
+   "reason": "backup/disabled"
+  },
+  {
+   "path": "scripts/ca_stage_run.sh",
+   "reason": "box-specific ops/watchdog/one-off publish orchestration"
+  },
+  {
+   "path": "scripts/cdx_parallel_expand.py",
+   "reason": "wayback/commoncrawl (policy)"
+  },
+  {
+   "path": "scripts/cdx_parallel_expand.py.bak",
+   "reason": "backup/disabled"
+  },
+  {
+   "path": "scripts/cdx_parallel_expand.py.sa_fix_bak",
+   "reason": "backup/disabled"
+  },
+  {
+   "path": "scripts/cdx_wave1_publish_supervisor.py",
+   "reason": "wayback/commoncrawl (policy)"
+  },
+  {
+   "path": "scripts/cdx_wave1_publish_supervisor.py.bak_pre_exitguard_20261006T035456",
+   "reason": "backup/disabled"
+  },
+  {
+   "path": "scripts/check_and_upload_five.py",
+   "reason": "box-specific ops/watchdog/one-off publish orchestration"
+  },
+  {
+   "path": "scripts/check_malta_hub.py",
+   "reason": "box-specific ops/watchdog/one-off publish orchestration"
+  },
+  {
+   "path": "scripts/cleanup_ir_uploaded.py",
+   "reason": "box-specific ops/watchdog/one-off publish orchestration"
+  },
+  {
+   "path": "scripts/cy_arts_reextract.py",
+   "reason": "wayback/commoncrawl (policy)"
+  },
+  {
+   "path": "scripts/cy_cdx_more_discovery.py",
+   "reason": "wayback/commoncrawl (policy)"
+  },
+  {
+   "path": "scripts/cy_fetch_discovery.py",
+   "reason": "wayback/commoncrawl (policy)"
+  },
+  {
+   "path": "scripts/cz_sbirkapp_collect.py.bak_pre_exitguard_20261006T035456",
+   "reason": "backup/disabled"
+  },
+  {
+   "path": "scripts/cz_sbirkapp_collect.py.bak_pre_ocrmem_20261006T030037",
+   "reason": "backup/disabled"
+  },
+  {
+   "path": "scripts/cz_sbirkapp_collect.py.bak_pre_subextract_20261006T013708",
+   "reason": "backup/disabled"
+  },
+  {
+   "path": "scripts/cz_sbirkapp_collect.py.bak_pre_t1_20261004T1712",
+   "reason": "backup/disabled"
+  },
+  {
+   "path": "scripts/cz_sbirkapp_collect.py.bak_pre_t2_20261006T0052",
+   "reason": "backup/disabled"
+  },
+  {
+   "path": "scripts/cz_sbirkapp_collect.py.bak_pre_timeout_20261004T2018",
+   "reason": "backup/disabled"
+  },
+  {
+   "path": "scripts/cz_sbirkapp_collect.py.bak_pre_treerss_20261006T013317",
+   "reason": "backup/disabled"
+  },
+  {
+   "path": "scripts/cz_t2_launch.sh",
+   "reason": "box-specific ops/watchdog/one-off publish orchestration"
+  },
+  {
+   "path": "scripts/de_build.py.bak_1700",
+   "reason": "backup/disabled"
+  },
+  {
+   "path": "scripts/de_hub_publish.py.bak_pre_exitguard_20261006T035456",
+   "reason": "backup/disabled"
+  },
+  {
+   "path": "scripts/de_report.py.bak_1654",
+   "reason": "backup/disabled"
+  },
+  {
+   "path": "scripts/de_stage_and_check.py.bak_1717",
+   "reason": "backup/disabled"
+  },
+  {
+   "path": "scripts/disk_cleanup_legal.py",
+   "reason": "box-specific ops/watchdog/one-off publish orchestration"
+  },
+  {
+   "path": "scripts/ee_t1_hf_push.py.bak_pre_exitguard_20261006T035456",
+   "reason": "backup/disabled"
+  },
+  {
+   "path": "scripts/ee_t1_hf_stage.py.bak_pre_exitguard_20261006T035456",
+   "reason": "backup/disabled"
+  },
+  {
+   "path": "scripts/ee_t1_launch.sh",
+   "reason": "box-specific ops/watchdog/one-off publish orchestration"
+  },
+  {
+   "path": "scripts/es_hub_publish.py.bak_pre_exitguard_20261006T035456",
+   "reason": "backup/disabled"
+  },
+  {
+   "path": "scripts/es_stage_run.sh",
+   "reason": "box-specific ops/watchdog/one-off publish orchestration"
+  },
+  {
+   "path": "scripts/gb_ukla_collect.py.bak_20261004T1600",
+   "reason": "backup/disabled"
+  },
+  {
+   "path": "scripts/hub_audit_2026_09_05.py",
+   "reason": "box-specific ops/watchdog/one-off publish orchestration"
+  },
+  {
+   "path": "scripts/iceland_hub_status.py",
+   "reason": "box-specific ops/watchdog/one-off publish orchestration"
+  },
+  {
+   "path": "scripts/iceland_spotcheck.py",
+   "reason": "box-specific ops/watchdog/one-off publish orchestration"
+  },
+  {
+   "path": "scripts/id_bpk_collect.py.bak_pre_drive_20261004T1710",
+   "reason": "backup/disabled"
+  },
+  {
+   "path": "scripts/id_bpk_collect.py.bak_pre_exitguard_20261006T035456",
+   "reason": "backup/disabled"
+  },
+  {
+   "path": "scripts/it_article_body_deepen.py.bak",
+   "reason": "backup/disabled"
+  },
+  {
+   "path": "scripts/ng_collect.py.bak4",
+   "reason": "backup/disabled"
+  },
+  {
+   "path": "scripts/ng_collect.py.bak5",
+   "reason": "backup/disabled"
+  },
+  {
+   "path": "scripts/ng_wb_probe.py",
+   "reason": "wayback/commoncrawl (policy)"
+  },
+  {
+   "path": "scripts/nl_municipal_collect.py.bak_20261004T1417",
+   "reason": "backup/disabled"
+  },
+  {
+   "path": "scripts/nl_municipal_collect.py.bak_pre_debounce_20261005T1749",
+   "reason": "backup/disabled"
+  },
+  {
+   "path": "scripts/nl_municipal_collect.py.bak_pre_exitguard_20261006T035456",
+   "reason": "backup/disabled"
+  },
+  {
+   "path": "scripts/nl_municipal_collect.py.bak_pre_hc_outfilter_20261005T1644",
+   "reason": "backup/disabled"
+  },
+  {
+   "path": "scripts/nl_municipal_collect.py.bak_pre_pause_20261005T1723",
+   "reason": "backup/disabled"
+  },
+  {
+   "path": "scripts/nl_municipal_collect.py.bak_pre_rm_buildsrc_20261006T054738",
+   "reason": "backup/disabled"
+  },
+  {
+   "path": "scripts/nl_municipal_collect.py.bak_pre_thr_20261005T1804",
+   "reason": "backup/disabled"
+  },
+  {
+   "path": "scripts/nl_municipal_collect.py.bak_pre_timeout_20261004T2018",
+   "reason": "backup/disabled"
+  },
+  {
+   "path": "scripts/nl_split.py.bak_20261003T1320",
+   "reason": "backup/disabled"
+  },
+  {
+   "path": "scripts/nlm_hotpatch_restart.py",
+   "reason": "box-specific ops/watchdog/one-off publish orchestration"
+  },
+  {
+   "path": "scripts/nlm_hotpatch_restart.py.bak_pre_thr_20261005T1804",
+   "reason": "backup/disabled"
+  },
+  {
+   "path": "scripts/nlm_launch_after_crisis5.py",
+   "reason": "box-specific ops/watchdog/one-off publish orchestration"
+  },
+  {
+   "path": "scripts/nlm_launch_after_crisis5.py.bak_pre_derive_20261007T154958",
+   "reason": "backup/disabled"
+  },
+  {
+   "path": "scripts/nlm_pack_out.py.bak_pre_incremental_20261005T1749",
+   "reason": "backup/disabled"
+  },
+  {
+   "path": "scripts/nlm_thr_watchdog.py",
+   "reason": "box-specific ops/watchdog/one-off publish orchestration"
+  },
+  {
+   "path": "scripts/package_country_hub.py.bak_pre_exitguard_20261006T035456",
+   "reason": "backup/disabled"
+  },
+  {
+   "path": "scripts/patch_ma_bh_il_gh.py",
+   "reason": "wayback/commoncrawl (policy)"
+  },
+  {
+   "path": "scripts/publish_bulgaria.py",
+   "reason": "box-specific ops/watchdog/one-off publish orchestration"
+  },
+  {
+   "path": "scripts/publish_italy_staging_union.py",
+   "reason": "box-specific ops/watchdog/one-off publish orchestration"
+  },
+  {
+   "path": "scripts/publish_italy_staging_union.py.bak_pre_exitguard_20261006T035456",
+   "reason": "backup/disabled"
+  },
+  {
+   "path": "scripts/qa_cc_expand.py",
+   "reason": "wayback/commoncrawl (policy)"
+  },
+  {
+   "path": "scripts/qa_cdx_more_discovery.py",
+   "reason": "wayback/commoncrawl (policy)"
+  },
+  {
+   "path": "scripts/restore_thick_hubs.py",
+   "reason": "box-specific ops/watchdog/one-off publish orchestration"
+  },
+  {
+   "path": "scripts/routine_check.py",
+   "reason": "box-specific ops/watchdog/one-off publish orchestration"
+  },
+  {
+   "path": "scripts/run_collector_cc.sh",
+   "reason": "wayback/commoncrawl (policy)"
+  },
+  {
+   "path": "scripts/run_ro_upload.sh",
+   "reason": "box-specific ops/watchdog/one-off publish orchestration"
+  },
+  {
+   "path": "scripts/slot2_chain_cz_t1_then_id.sh",
+   "reason": "box-specific ops/watchdog/one-off publish orchestration"
+  },
+  {
+   "path": "scripts/slot2_common.py.bak_pre_t2_20261006T0052",
+   "reason": "backup/disabled"
+  },
+  {
+   "path": "scripts/slot2_common.py.bak_pre_timeout_20261004T2018",
+   "reason": "backup/disabled"
+  },
+  {
+   "path": "scripts/sync_bg_publish_status.py",
+   "reason": "box-specific ops/watchdog/one-off publish orchestration"
+  },
+  {
+   "path": "scripts/sync_bg_publish_status_final.py",
+   "reason": "box-specific ops/watchdog/one-off publish orchestration"
+  },
+  {
+   "path": "scripts/tmp_confirm_manifests.py",
+   "reason": "one-off tmp/probe/verify/patch script"
+  },
+  {
+   "path": "scripts/tmp_cy_docs_force.py",
+   "reason": "one-off tmp/probe/verify/patch script"
+  },
+  {
+   "path": "scripts/tmp_cy_docs_force2.py",
+   "reason": "one-off tmp/probe/verify/patch script"
+  },
+  {
+   "path": "scripts/tmp_cy_hub_check.py",
+   "reason": "one-off tmp/probe/verify/patch script"
+  },
+  {
+   "path": "scripts/tmp_cy_manifest_sa_shape.py",
+   "reason": "one-off tmp/probe/verify/patch script"
+  },
+  {
+   "path": "scripts/tmp_cy_restore.py",
+   "reason": "one-off tmp/probe/verify/patch script"
+  },
+  {
+   "path": "scripts/tmp_cy_sync_local_to_tip.py",
+   "reason": "one-off tmp/probe/verify/patch script"
+  },
+  {
+   "path": "scripts/tmp_cy_tip_check.py",
+   "reason": "one-off tmp/probe/verify/patch script"
+  },
+  {
+   "path": "scripts/tmp_exact_manifests.py",
+   "reason": "one-off tmp/probe/verify/patch script"
+  },
+  {
+   "path": "scripts/tmp_fix_hub_docs.py",
+   "reason": "one-off tmp/probe/verify/patch script"
+  },
+  {
+   "path": "scripts/tmp_sa_cy_manifest.py",
+   "reason": "one-off tmp/probe/verify/patch script"
+  },
+  {
+   "path": "scripts/tmp_sa_fix_docs.py",
+   "reason": "one-off tmp/probe/verify/patch script"
+  },
+  {
+   "path": "scripts/tmp_verify_cy_12768.py",
+   "reason": "one-off tmp/probe/verify/patch script"
+  },
+  {
+   "path": "scripts/tmp_verify_cy_docs.py",
+   "reason": "one-off tmp/probe/verify/patch script"
+  },
+  {
+   "path": "scripts/tmp_verify_cy_pub.py",
+   "reason": "one-off tmp/probe/verify/patch script"
+  },
+  {
+   "path": "scripts/tmp_verify_om_pub.py",
+   "reason": "one-off tmp/probe/verify/patch script"
+  },
+  {
+   "path": "scripts/tmp_verify_oman_hub.py",
+   "reason": "one-off tmp/probe/verify/patch script"
+  },
+  {
+   "path": "scripts/tmp_verify_oman_hub.py.bak_pre_exitguard_20261006T035456",
+   "reason": "backup/disabled"
+  },
+  {
+   "path": "scripts/tmp_verify_sa_623.py",
+   "reason": "one-off tmp/probe/verify/patch script"
+  },
+  {
+   "path": "scripts/upload_bg_publish_status.py",
+   "reason": "box-specific ops/watchdog/one-off publish orchestration"
+  },
+  {
+   "path": "scripts/upload_ir_batch.py",
+   "reason": "box-specific ops/watchdog/one-off publish orchestration"
+  },
+  {
+   "path": "scripts/upload_ir_three.py",
+   "reason": "box-specific ops/watchdog/one-off publish orchestration"
+  },
+  {
+   "path": "scripts/upload_ready_now.py",
+   "reason": "box-specific ops/watchdog/one-off publish orchestration"
+  },
+  {
+   "path": "scripts/upload_three.py",
+   "reason": "box-specific ops/watchdog/one-off publish orchestration"
+  },
+  {
+   "path": "scripts/verify_uploads.py",
+   "reason": "box-specific ops/watchdog/one-off publish orchestration"
+  },
+  {
+   "path": "scripts/watch_cdx_publish.py",
+   "reason": "wayback/commoncrawl (policy)"
+  },
+  {
+   "path": "scripts/watch_parallel_publish.py.DISABLED",
+   "reason": "backup/disabled"
+  },
+  {
+   "path": "scripts/wave1_watchdog.py",
+   "reason": "box-specific ops/watchdog/one-off publish orchestration"
+  },
+  {
+   "path": "scripts/wave_supervisor.py",
+   "reason": "box-specific ops/watchdog/one-off publish orchestration"
+  },
+  {
+   "path": "scripts/write_iceland_publish_status.py",
+   "reason": "box-specific ops/watchdog/one-off publish orchestration"
+  },
+  {
+   "path": "scripts/write_iceland_restore_check.py",
+   "reason": "box-specific ops/watchdog/one-off publish orchestration"
+  },
+  {
+   "path": "do_ir_resume",
+   "reason": "other 2418 per-country/per-tip generated pipeline copies (reproducible via _adapt_*.py), *.bak, *.sh babysitters"
+  },
+  {
+   "path": "country-laws-ir/cache",
+   "reason": "data/logs/caches/state (not code)"
+  },
+  {
+   "path": "country-laws-ir/build",
+   "reason": "data/logs/caches/state (not code)"
+  },
+  {
+   "path": "country-laws-ir/releases",
+   "reason": "data/logs/caches/state (not code)"
+  },
+  {
+   "path": "country-laws-ir/reports",
+   "reason": "data/logs/caches/state (not code)"
+  },
+  {
+   "path": "country-laws-ir/progress.jsonl",
+   "reason": "data/logs/caches/state (not code)"
+  },
+  {
+   "path": "country-laws-ir/batch.log",
+   "reason": "data/logs/caches/state (not code)"
+  },
+  {
+   "path": "country-laws-ir/catalog/countries.json.bak_lt",
+   "reason": "data/logs/caches/state (not code)"
+  },
+  {
+   "path": "country-laws-ir/country_laws_ir",
+   "reason": "*.bak_* and __pycache__"
+  },
+  {
+   "path": "legal-corpora/ee_municipal/t2/build",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/ee_municipal/t2/dist",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/ee_municipal/t2/evidence",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/ee_municipal/t2/index",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/ee_municipal/t2/out",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/ee_municipal/t2/ref",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/ee_municipal/t2/review",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/ee_municipal/t2/state.json",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/ee_municipal/t2/ref",
+   "reason": "prep ref lists (id/exclude lists = data)"
+  },
+  {
+   "path": "legal-corpora/is_bdeild/build",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/is_bdeild/dist",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/is_bdeild/evidence",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/is_bdeild/index",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/is_bdeild/out",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/is_bdeild/ref",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/is_bdeild/review",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/is_bdeild/state.json",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/is_bdeild/ref",
+   "reason": "prep ref lists (id/exclude lists = data)"
+  },
+  {
+   "path": "legal-corpora/be_fl_vindplaats/build",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/be_fl_vindplaats/dist",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/be_fl_vindplaats/evidence",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/be_fl_vindplaats/index",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/be_fl_vindplaats/out",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/be_fl_vindplaats/ref",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/be_fl_vindplaats/review",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/be_fl_vindplaats/state.json",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/be_fl_vindplaats/ref",
+   "reason": "prep ref lists (id/exclude lists = data)"
+  },
+  {
+   "path": "legal-corpora/au_sa/build",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/au_sa/dist",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/au_sa/evidence",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/au_sa/index",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/au_sa/out",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/au_sa/ref",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/au_sa/review",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/au_sa/state.json",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/au_sa/ref",
+   "reason": "prep ref lists (id/exclude lists = data)"
+  },
+  {
+   "path": "legal-corpora/be_codex_vlaanderen/build",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/be_codex_vlaanderen/dist",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/be_codex_vlaanderen/evidence",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/be_codex_vlaanderen/index",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/be_codex_vlaanderen/out",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/be_codex_vlaanderen/ref",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/be_codex_vlaanderen/review",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/be_codex_vlaanderen/state.json",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/be_codex_vlaanderen/ref",
+   "reason": "prep ref lists (id/exclude lists = data)"
+  },
+  {
+   "path": "legal-corpora/it_toscana/build",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/it_toscana/dist",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/it_toscana/evidence",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/it_toscana/index",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/it_toscana/out",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/it_toscana/ref",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/it_toscana/review",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/it_toscana/state.json",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/it_toscana/ref",
+   "reason": "prep ref lists (id/exclude lists = data)"
+  },
+  {
+   "path": "legal-corpora/it_statuti/build",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/it_statuti/dist",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/it_statuti/evidence",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/it_statuti/index",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/it_statuti/out",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/it_statuti/ref",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/it_statuti/review",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/it_statuti/state.json",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/it_statuti/ref",
+   "reason": "prep ref lists (id/exclude lists = data)"
+  },
+  {
+   "path": "legal-corpora/fr_scdl_deliberations/build",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/fr_scdl_deliberations/dist",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/fr_scdl_deliberations/evidence",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/fr_scdl_deliberations/index",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/fr_scdl_deliberations/out",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/fr_scdl_deliberations/ref",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/fr_scdl_deliberations/review",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/fr_scdl_deliberations/state.json",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/fr_scdl_deliberations/ref",
+   "reason": "prep ref lists (id/exclude lists = data)"
+  },
+  {
+   "path": "legal-corpora/id_jateng_jdih/build",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/id_jateng_jdih/dist",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/id_jateng_jdih/evidence",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/id_jateng_jdih/index",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/id_jateng_jdih/out",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/id_jateng_jdih/ref",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/id_jateng_jdih/review",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/id_jateng_jdih/state.json",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/id_jateng_jdih/ref",
+   "reason": "prep ref lists (id/exclude lists = data)"
+  },
+  {
+   "path": "legal-corpora/br_alesp/build",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/br_alesp/dist",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/br_alesp/evidence",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/br_alesp/index",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/br_alesp/out",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/br_alesp/ref",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/br_alesp/review",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/br_alesp/state.json",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/br_alesp/ref",
+   "reason": "prep ref lists (id/exclude lists = data)"
+  },
+  {
+   "path": "legal-corpora/pt_azores/build",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/pt_azores/dist",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/pt_azores/evidence",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/pt_azores/index",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/pt_azores/out",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/pt_azores/ref",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/pt_azores/review",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/pt_azores/state.json",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/pt_azores/ref",
+   "reason": "prep ref lists (id/exclude lists = data)"
+  },
+  {
+   "path": "legal-corpora/za_western_cape/build",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/za_western_cape/dist",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/za_western_cape/evidence",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/za_western_cape/index",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/za_western_cape/out",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/za_western_cape/ref",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/za_western_cape/review",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/za_western_cape/state.json",
+   "reason": "prep dir data/state/large or non-text"
+  },
+  {
+   "path": "legal-corpora/za_western_cape/ref",
+   "reason": "prep ref lists (id/exclude lists = data)"
+  },
+  {
+   "path": "do_ir_resume/_adapt_monaco_1d930b8966ee.py",
+   "reason": "SyntaxError in source (broken, superseded)"
+  },
+  {
+   "path": "ipfs_datasets_py_legal/",
+   "reason": "nested stale copy of ipfs_datasets_py (1513 files); the parent package is the source of truth (removed in legal_scrapers phase 1)"
+  }
+ ],
+ "token_paths_replaced_with_env": "HF_TOKEN_FILE (10 files)",
+ "missing_local_dependency": "package_hf_release (imported by normalizers/_pkg_de.py, _pkg_se.py, package_and_upload_one.py; not present on the build box)",
+ "upstream_reviews": [
+  {
+   "source_repo": "endomorphosis/legal_scrapers",
+   "source_commit": "ec9da93c30e6cdf0577060d770778ad4433c3a8c",
+   "reviewed": "2026-10-10",
+   "path": "collectors/upstream_legal_scrapers_20261010/",
+   "OK": 0,
+   "WAYBACK_EXCLUDE": 21,
+   "NEEDS_REVIEW": 0,
+   "vendored_files": [],
+   "excluded": [
+    "scrapers/collect_af.py",
+    "scrapers/collect_bn.py",
+    "scrapers/collect_bw.py",
+    "scrapers/collect_cm.py",
+    "scrapers/collect_cu.py",
+    "scrapers/collect_fj.py",
+    "scrapers/collect_gt.py",
+    "scrapers/collect_hn.py",
+    "scrapers/collect_iq.py",
+    "scrapers/collect_kh.py",
+    "scrapers/collect_lb.py",
+    "scrapers/collect_mg.py",
+    "scrapers/collect_mz.py",
+    "scrapers/collect_na.py",
+    "scrapers/collect_ni.py",
+    "scrapers/collect_pg.py",
+    "scrapers/collect_ss.py",
+    "scrapers/collect_sv.py",
+    "scrapers/collect_tt.py",
+    "scrapers/collect_ve.py",
+    "scrapers/collect_zw.py"
+   ],
+   "reason": "Wayback CDX discovery + Wayback fallback (world_lib.fetch_official wayback=True); MG = Common Crawl CDXJ stub"
+  }
+ ],
+ "release_20261024": "RELEASE_20261024.md"
+}

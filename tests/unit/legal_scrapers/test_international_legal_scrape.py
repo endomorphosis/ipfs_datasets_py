@@ -126,7 +126,10 @@ def test_all_catalog_collectors_are_harvested():
     ]
     helper = PACKAGE_HARVESTED_ROOT / "shared" / "common.py"
     assert helper.is_file()
-    helper_text = helper.read_text(encoding="utf-8")
+    # shared/common.py is a shim over the canonical national_collectors/common.py.
+    canonical = PACKAGE_HARVESTED_ROOT.parents[1] / "national_collectors" / "common.py"
+    assert canonical.is_file()
+    helper_text = helper.read_text(encoding="utf-8") + canonical.read_text(encoding="utf-8")
     assert "IPFS_DATASETS_LEGAL_CORPORA_ROOT" in helper_text
     assert "/workspace/legal-corpora" not in helper_text
     for path in later:

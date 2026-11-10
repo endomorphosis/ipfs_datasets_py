@@ -44,13 +44,31 @@ import logging as _rg_logging
 from urllib.parse import urlsplit as _rg_urlsplit
 try:
     import robots_guard as _rg
-except ImportError:  # package-style import (ipfs_datasets_py)
+except ImportError:  # package-style import (ipfs_datasets_py) or loaded via a compat shim
     try:
         from . import robots_guard as _rg  # type: ignore
         import sys as _rg_sys
         _rg_sys.modules.setdefault("robots_guard", _rg)  # one guard + one robots cache per process
-    except Exception:  # pragma: no cover
-        _rg = None
+    except Exception:
+        import importlib.util as _rg_ilu
+        import sys as _rg_sys
+        from pathlib import Path as _rg_Path
+        try:  # sibling file next to this canonical module (shims execute it by path)
+            _rg_path = _rg_Path(__file__).resolve().with_name("robots_guard.py")
+            _rg_spec = _rg_ilu.spec_from_file_location("robots_guard", _rg_path)
+            _rg = _rg_ilu.module_from_spec(_rg_spec)
+            _rg_sys.modules["robots_guard"] = _rg
+            _rg_spec.loader.exec_module(_rg)
+        except Exception:  # pragma: no cover
+            _rg_sys.modules.pop("robots_guard", None)
+            _rg = None
+
+
+def _robots_guard_on():
+    """robots_guard.guard_enabled(), honoring the env switch even if the guard failed to import."""
+    if _rg is not None and hasattr(_rg, "guard_enabled"):
+        return _rg.guard_enabled()
+    return (os.environ.get("IPFS_DATASETS_LEGAL_ROBOTS_GUARD") or "").strip().lower() not in {"0", "false", "off", "no"}
 _rg_log = _rg_logging.getLogger("robots_guard")
 if _rg is None:  # pragma: no cover
     _rg_log.warning("robots_guard module not importable: archive_fallbacks fetches will fail closed")
@@ -72,6 +90,8 @@ class RobotsBlockedFetch(_RG_BASE, requests.exceptions.RequestException, Runtime
 def _robots_blocked(url, caller=""):
     """None if the URL may be fetched (after the per-host Crawl-delay wait); else the refusing
     robots_guard.Decision (already logged)."""
+    if not _robots_guard_on():
+        return None
     if _rg is None:
         raise RobotsBlockedFetch("robots_guard unavailable; refusing unguarded request")
     if not url:
@@ -517,10 +537,15 @@ def get_wayback_content(url: str, timestamp: Optional[str] = None) -> dict:
         cap_ts = m.group(1)
     text = ""
     if "html" in ctype or "xml" in ctype or "text/" in ctype or not ctype:
+        # Declared charset wins (harvested-helper behavior); otherwise UTF-8.
+        _cs = re.search(r"charset=[\"']?([A-Za-z0-9._-]+)", ctype or "")
         try:
-            text = body.decode("utf-8", "replace")
+            text = body.decode(_cs.group(1) if _cs else "utf-8", "replace")
         except Exception:
-            text = ""
+            try:
+                text = body.decode("utf-8", "replace")
+            except Exception:
+                text = ""
     if status != 200 or not body:
         return {
             "status": "error",
@@ -583,6 +608,8 @@ def cc_indexes(n: int = 6) -> list[str]:
         # specific URL (that means "no captures", not a dead index).
         _cc_indexes = ids or [
             "http://index.commoncrawl.org/CC-MAIN-2026-34-index",
+            "http://index.commoncrawl.org/CC-MAIN-2026-30-index",
+            "http://index.commoncrawl.org/CC-MAIN-2026-25-index",
             "http://index.commoncrawl.org/CC-MAIN-2024-33-index",
         ]
         if last_exc and not ids:
@@ -768,10 +795,12 @@ def fetch_common_crawl_warc(rec: dict, max_bytes: int = 4_000_000) -> dict:
         _orig = rec.get("original") or rec.get("url") or ""
         if not _orig:
             return {"status": "error", "error": "missing_original_url"}
-        if _rg is None:
-            return {"status": "error", "error": "robots_guard_unavailable"}
-        _od = _rg.check_archived_copy(str(_orig), url)
-        if not _od.allowed:
+        _od = None
+        if _robots_guard_on():
+            if _rg is None:
+                return {"status": "error", "error": "robots_guard_unavailable"}
+            _od = _rg.check_archived_copy(str(_orig), url)
+        if _od is not None and not _od.allowed:
             _rg.report_blocked(_od, "archive_fallbacks.fetch_common_crawl_warc")
             return {"status": "error", "error": "robots_blocked", "original_url": _orig,
                     "robots": {"reason": _od.reason, "rule": _od.rule}}

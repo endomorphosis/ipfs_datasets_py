@@ -1,6 +1,6 @@
 # Canonical module for `hub_dataset_scripts`
 
-This boundary record points the mirrors in this tree at `module_index_v1`. It lists the groups from the duplicate register. This tree was not deleted. No per-country script was moved or rewritten.
+This boundary record points the mirrors in this tree at `module_index_v1`. It lists the groups from the duplicate register. This tree was not deleted. In legal_scrapers phase 3 the 63 unreferenced `justicedao__ipfs_*_laws_ir` mirror kits were moved, unchanged, out of the importable package to `legal_scrapers_hub/hub_dataset_scripts/` at the repository root. No script was rewritten.
 
 Datasets `HEAD` when this file was written: `d40ab60649b83781e3849e191c1f2ac8545b042f`.
 
@@ -37,14 +37,14 @@ This tree's group is `mirror`. The two hyphenated copies inside it are `leave-in
 
 ## `mirror` copies checked in this tree
 
-`hub_dataset_scripts/justicedao__ipfs_germany_laws_ir/country_laws_ir/__init__.py`, last changed in `5f457fb04b1bbc27ccc84451fe6ba7f93700d9cd`, repeats the statute pair:
+`legal_scrapers_hub/hub_dataset_scripts/justicedao__ipfs_germany_laws_ir/country_laws_ir/__init__.py`, last changed in `5f457fb04b1bbc27ccc84451fe6ba7f93700d9cd`, repeats the statute pair:
 
 ```python
 SCHEMA_VERSION = "country-laws-ir-graphrag/v1"
 LAYOUT_FAMILY = "skillcenter-huggingface-release/v3"
 ```
 
-`hub_dataset_scripts/justicedao__ipfs_malta_laws_ir/country_laws_ir/__init__.py`, last changed in `5f457fb04b1bbc27ccc84451fe6ba7f93700d9cd`, assigns the same two strings. That underscore package stays in the `mirror` group. It is not a `leave-in-place` copy.
+`legal_scrapers_hub/hub_dataset_scripts/justicedao__ipfs_malta_laws_ir/country_laws_ir/__init__.py`, last changed in `5f457fb04b1bbc27ccc84451fe6ba7f93700d9cd`, assigns the same two strings. That underscore package stays in the `mirror` group. It is not a `leave-in-place` copy.
 
 `hub_dataset_scripts/endomorphosis__legal_scrapers/scrapers/common.py`, last changed in `af81ba630119ad59022b531294e82421fc4a17cb`, opens `Shared helpers for national legislation collectors.` and sets:
 
@@ -67,4 +67,4 @@ SCHEMA_VERSION = "skillcenter-huggingface-release/v3"
 
 ## This tree was not deleted
 
-This tree was not deleted. No per-country script was moved or rewritten. Bulk retirement needs a later named go-ahead.
+This tree was not deleted. The two `leave-in-place` copies, `endomorphosis__legal_scrapers`, and the other non-kit directories stay here. The 63 `*_laws_ir` kits were moved, not deleted (phase 3); no script was rewritten. Bulk retirement still needs a later named go-ahead.

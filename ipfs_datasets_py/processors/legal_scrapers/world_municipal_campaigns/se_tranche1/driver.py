@@ -53,7 +53,23 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from urllib.parse import quote, unquote, urljoin, urlparse
 
-BASE = Path(__file__).resolve().parent
+
+# Generated campaign files live outside the installed package; the mapping is
+# legal_scrapers/user_data_paths.py (IPFS_DATASETS_LEGAL_WORK_ROOT).
+import importlib.util as _udp_util
+from pathlib import Path as _udp_Path
+_udp_spec = _udp_util.spec_from_file_location(
+    "_legal_scrapers_user_data_paths",
+    next(p for p in _udp_Path(__file__).resolve().parents if p.name == "legal_scrapers") / "user_data_paths.py",
+)
+_udp = _udp_util.module_from_spec(_udp_spec)
+_udp_spec.loader.exec_module(_udp)
+_campaign_data_file = _udp.work_mirror_path
+def _campaign_source_path(path):
+    return _udp.source_path_for_mirror(path, __file__)
+
+
+BASE = _campaign_data_file(__file__).parent
 HIDDEN = BASE.parent
 PILOT = HIDDEN / "se_pilot"
 REPORT = HIDDEN / "sweden_tranche1_2026-10-14.md"
@@ -69,7 +85,7 @@ DOC_CEILING = 120
 HARVEST_N = 12
 CRACK_DEADLINE = 45 * 60  # seconds, for the whole crack phase
 
-sys.path.insert(0, str(PILOT))
+sys.path.insert(0, str(_campaign_source_path(PILOT)))
 sys.path.insert(0, str(Path.home() / "workspace/ipfs_datasets_py/ipfs_datasets_py/processors/legal_scrapers"))
 
 REG = {}
@@ -692,7 +708,7 @@ def publish_census(api):
     cov.write_text("\n".join(lines) + "\n", encoding="utf-8")
     existing = {s.rfilename for s in (api.dataset_info(REPO).siblings or [])}
     for local, remote in [(CENSUS, "census.jsonl"), (cov, "coverage_report.md"),
-                          (BASE / "driver.py", "scrapers/se_tranche1_driver.py")]:
+                          (_campaign_source_path(BASE) / "driver.py", "scrapers/se_tranche1_driver.py")]:
         api.upload_file(path_or_fileobj=str(local), path_in_repo=remote,
                         repo_id=REPO, repo_type="dataset")
         log(f"census publish: uploaded {remote} (was {'present' if remote in existing else 'new'})")

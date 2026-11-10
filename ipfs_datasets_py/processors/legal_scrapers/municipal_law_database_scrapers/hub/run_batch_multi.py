@@ -21,6 +21,12 @@ from urllib.parse import urlparse
 
 _here = Path(__file__).resolve().parent
 ROOT = _here.parent if _here.name == "scrapers" else _here
+# Generated output and inputs live next to a standalone "scrapers/" checkout;
+# when run from inside the installed package they go to a user-data dir instead.
+DATA_ROOT = ROOT if _here.name == "scrapers" else Path(
+    __import__("os").environ.get("IPFS_DATASETS_MUNICIPAL_HUB_DIR")
+    or (Path.home() / ".ipfs_datasets" / "municipal_hub")
+)
 sys.path.insert(0, str(ROOT))
 
 from scrapers.municode import (  # noqa: E402
@@ -126,8 +132,8 @@ def scrape_one(
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Multi-publisher municipal scrape to parquet")
     ap.add_argument("--todo", required=True)
-    ap.add_argument("--out", default=str(ROOT / "out"))
-    ap.add_argument("--sample", default=str(ROOT / "1008538_html.parquet"))
+    ap.add_argument("--out", default=str(DATA_ROOT / "out"))
+    ap.add_argument("--sample", default=str(DATA_ROOT / "1008538_html.parquet"))
     ap.add_argument("--limit", type=int, default=1)
     ap.add_argument("--offset", type=int, default=0)
     ap.add_argument("--delay", type=float, default=0.0, help="0 = publisher default")

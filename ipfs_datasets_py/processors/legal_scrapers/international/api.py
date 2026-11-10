@@ -19,7 +19,7 @@ from .harvest import (
     harvest_result_to_dict,
     missing_catalog_collectors,
 )
-from .helpers.paths import corpora_root
+from .helpers.paths import collectors_root, corpora_root
 from .runtime import PACKAGE_HARVESTED_ROOT, run_harvested_collector
 
 NATIVE_SOURCES: dict[str, dict[str, Any]] = {
@@ -355,7 +355,8 @@ def harvest_legal_collectors(
     missing_only: bool = True,
     max_workers: int = 8,
 ) -> dict[str, Any]:
-    dest = Path(dest_root).expanduser().resolve() if dest_root else PACKAGE_HARVESTED_ROOT
+    # Default to the user collectors root, not the installed package directory.
+    dest = Path(dest_root).expanduser().resolve() if dest_root else collectors_root()
     if jurisdiction:
         source = resolve_legal_source(jurisdiction)
         if source.kind.startswith("native"):

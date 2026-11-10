@@ -42,13 +42,31 @@ import logging as _rg_logging
 from urllib.parse import urlsplit as _rg_urlsplit
 try:
     import robots_guard as _rg
-except ImportError:  # package-style import (ipfs_datasets_py)
+except ImportError:  # package-style import (ipfs_datasets_py) or loaded via a compat shim
     try:
         from . import robots_guard as _rg  # type: ignore
         import sys as _rg_sys
         _rg_sys.modules.setdefault("robots_guard", _rg)  # one guard + one robots cache per process
-    except Exception:  # pragma: no cover
-        _rg = None
+    except Exception:
+        import importlib.util as _rg_ilu
+        import sys as _rg_sys
+        from pathlib import Path as _rg_Path
+        try:  # sibling file next to this canonical module (shims execute it by path)
+            _rg_path = _rg_Path(__file__).resolve().with_name("robots_guard.py")
+            _rg_spec = _rg_ilu.spec_from_file_location("robots_guard", _rg_path)
+            _rg = _rg_ilu.module_from_spec(_rg_spec)
+            _rg_sys.modules["robots_guard"] = _rg
+            _rg_spec.loader.exec_module(_rg)
+        except Exception:  # pragma: no cover
+            _rg_sys.modules.pop("robots_guard", None)
+            _rg = None
+
+
+def _robots_guard_on():
+    """robots_guard.guard_enabled(), honoring the env switch even if the guard failed to import."""
+    if _rg is not None and hasattr(_rg, "guard_enabled"):
+        return _rg.guard_enabled()
+    return (os.environ.get("IPFS_DATASETS_LEGAL_ROBOTS_GUARD") or "").strip().lower() not in {"0", "false", "off", "no"}
 _rg_log = _rg_logging.getLogger("robots_guard")
 if _rg is None:  # pragma: no cover
     _rg_log.warning("robots_guard module not importable: common fetches will fail closed")
@@ -70,6 +88,8 @@ class RobotsBlockedFetch(_RG_BASE, requests.exceptions.RequestException, Runtime
 def _robots_blocked(url, caller=""):
     """None if the URL may be fetched (after the per-host Crawl-delay wait); else the refusing
     robots_guard.Decision (already logged)."""
+    if not _robots_guard_on():
+        return None
     if _rg is None:
         raise RobotsBlockedFetch("robots_guard unavailable; refusing unguarded request")
     if not url:

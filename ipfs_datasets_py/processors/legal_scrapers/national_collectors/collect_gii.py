@@ -30,7 +30,8 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-ROOT = Path("/workspace/legal-corpora/de")
+_LEGAL_CORPORA_ROOT = Path(os.environ.get("IPFS_DATASETS_LEGAL_CORPORA_ROOT", os.environ.get("LEGAL_CORPORA_ROOT", str(Path.home() / ".ipfs_datasets" / "legal_corpora"))))
+ROOT = _LEGAL_CORPORA_ROOT / "de"
 INSTRUMENTS = ROOT / "instruments"
 LOGS = ROOT / "logs"
 INDEX_PATH = ROOT / "index.jsonl"

@@ -265,7 +265,7 @@ def discover():
 
 def reextract_existing() -> int:
     """Re-split articles on existing instruments with improved Cap-style ART."""
-    root = Path(os.environ.get("LEGAL_CORPORA_ROOT", "{_CORPORA}")) / CC / "instruments"
+    root = Path(os.environ.get("LEGAL_CORPORA_ROOT", str(_CORPORA))) / CC / "instruments"
     if not root.is_dir():
         return 0
     improved = 0

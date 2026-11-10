@@ -489,6 +489,10 @@ def test_archive_fallbacks_prefer_shard_collections_without_package_import(
     for path in (_NATIONAL_FALLBACKS, _INTERNATIONAL_FALLBACKS):
         source = path.read_text(encoding="utf-8")
         assert "import ipfs_datasets_py" not in source
+        if path == _INTERNATIONAL_FALLBACKS:
+            # international/helpers/archive_fallbacks.py is a shim over the national module.
+            assert "national_collectors" in source and "exec(compile(" in source
+            source = _NATIONAL_FALLBACKS.read_text(encoding="utf-8")
         assert "regions" in source and "shard_index.py" in source
 
     monkeypatch.setenv("GOVERNMENT_CC_SHARD_DIR", str(tmp_path))

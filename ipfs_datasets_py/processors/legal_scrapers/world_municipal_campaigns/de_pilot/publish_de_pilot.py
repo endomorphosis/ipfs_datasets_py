@@ -22,7 +22,23 @@ from huggingface_hub import HfApi, hf_hub_download  # noqa: E402
 import pyarrow.parquet as pq  # noqa: E402
 
 REPO = "endomorphosis/ipfs_germany_municipal_laws"
-HERE = Path(__file__).resolve().parent.parent
+
+# Generated campaign files live outside the installed package; the mapping is
+# legal_scrapers/user_data_paths.py (IPFS_DATASETS_LEGAL_WORK_ROOT).
+import importlib.util as _udp_util
+from pathlib import Path as _udp_Path
+_udp_spec = _udp_util.spec_from_file_location(
+    "_legal_scrapers_user_data_paths",
+    next(p for p in _udp_Path(__file__).resolve().parents if p.name == "legal_scrapers") / "user_data_paths.py",
+)
+_udp = _udp_util.module_from_spec(_udp_spec)
+_udp_spec.loader.exec_module(_udp)
+_campaign_data_file = _udp.work_mirror_path
+def _campaign_source_path(path):
+    return _udp.source_path_for_mirror(path, __file__)
+
+
+HERE = _campaign_data_file(__file__).parent.parent
 DATA = HERE / "data"
 OUT = HERE / "out"
 SCRIPTS = HERE / "scripts"
@@ -60,7 +76,7 @@ def main():
     uploads.append((DATA / "jurisdictions.jsonl", "data/jurisdictions.jsonl"))
     uploads.append((OUT / "coverage_report.md", "coverage_report.md"))
     uploads.append((OUT / "README.md", "README.md"))
-    for script in sorted(SCRIPTS.glob("*.py")):
+    for script in sorted(_campaign_source_path(SCRIPTS).glob("*.py")):
         uploads.append((script, f"scrapers/{script.name}"))
 
     verify_list, todo = [], []

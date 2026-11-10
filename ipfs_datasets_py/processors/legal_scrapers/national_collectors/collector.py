@@ -25,7 +25,8 @@ from html.parser import HTMLParser
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
-ROOT = Path("/workspace/legal-corpora/ch")
+_LEGAL_CORPORA_ROOT = Path(os.environ.get("IPFS_DATASETS_LEGAL_CORPORA_ROOT", os.environ.get("LEGAL_CORPORA_ROOT", str(Path.home() / ".ipfs_datasets" / "legal_corpora"))))
+ROOT = _LEGAL_CORPORA_ROOT / "ch"
 INSTR = ROOT / "instruments"
 LOGS = ROOT / "logs"
 TMP = ROOT / "tmp"
@@ -493,8 +494,8 @@ as of {TODAY}.
 Required reuse notice: {REUSE_NOTICE}
 
 ## Collector
-- Script: `/workspace/legal-corpora/ch/collector.py`
-- Log: `/workspace/legal-corpora/ch/logs/collector.log`
+- Script: `{ROOT}/collector.py`
+- Log: `{ROOT}/logs/collector.log`
 - Started (UTC): {s.get("started_at")}
 - Workers: {WORKERS}
 - No git clone; no git commit; streamed to disk.

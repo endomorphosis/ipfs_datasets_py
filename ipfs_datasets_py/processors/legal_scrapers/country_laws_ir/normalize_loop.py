@@ -23,7 +23,7 @@ from pathlib import Path
 from typing import Any, Callable, Sequence
 
 from .catalog import EXCLUDED_SLUGS
-from .structure import learned_patterns_path, normalize_legal_text
+from .structure import learned_patterns_path, learned_patterns_write_path, normalize_legal_text
 
 GenerateText = Callable[[str], str]
 
@@ -348,7 +348,7 @@ def load_learned_patterns() -> list[str]:
 
 
 def save_learned_patterns(patterns: Sequence[str]) -> None:
-    path = learned_patterns_path()
+    path = learned_patterns_write_path()
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
         json.dumps({"patterns": list(patterns)}, ensure_ascii=False, indent=2) + "\n",

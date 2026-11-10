@@ -385,9 +385,11 @@ def discover():
     seen = set()
     # avoid re-adding stems already on disk
     try:
-        from common import existing_ids as _eid  # noqa: F401
+        from common import ROOT as _corpora_root, existing_ids as _eid  # noqa: F401
         import json as _json
-        idx = Path(__file__).resolve().parents[1] / "cf" / "index.jsonl"
+        # The collector's own index lives under the corpora root (common.ROOT),
+        # not next to the collector source.
+        idx = Path(_corpora_root) / "cf" / "index.jsonl"
         if idx.exists():
             for line in idx.read_text().splitlines():
                 if not line.strip():

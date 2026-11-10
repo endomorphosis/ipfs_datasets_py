@@ -33,7 +33,23 @@ import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent
+
+# Generated campaign files live outside the installed package; the mapping is
+# legal_scrapers/user_data_paths.py (IPFS_DATASETS_LEGAL_WORK_ROOT).
+import importlib.util as _udp_util
+from pathlib import Path as _udp_Path
+_udp_spec = _udp_util.spec_from_file_location(
+    "_legal_scrapers_user_data_paths",
+    next(p for p in _udp_Path(__file__).resolve().parents if p.name == "legal_scrapers") / "user_data_paths.py",
+)
+_udp = _udp_util.module_from_spec(_udp_spec)
+_udp_spec.loader.exec_module(_udp)
+_campaign_data_file = _udp.work_mirror_path
+def _campaign_source_path(path):
+    return _udp.source_path_for_mirror(path, __file__)
+
+
+ROOT = _campaign_data_file(__file__).parent
 GOAL_HIDDEN = ROOT.parent
 WINDOW = ("2024-10-06", "2026-10-12")
 REPO = "endomorphosis/ipfs_spain_municipal_laws"
@@ -45,7 +61,7 @@ VAL_DIR = ROOT / "validation"
 
 # ---------------------------------------------------------------- pilot reuse
 _spec = importlib.util.spec_from_file_location(
-    "es_pilot", GOAL_HIDDEN / "es_pilot" / "harvest_es_pilot.py")
+    "es_pilot", _campaign_source_path(GOAL_HIDDEN) / "es_pilot" / "harvest_es_pilot.py")
 pilot = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(pilot)
 pilot.WINDOW = WINDOW  # widen the pilot's date window to campaign scope

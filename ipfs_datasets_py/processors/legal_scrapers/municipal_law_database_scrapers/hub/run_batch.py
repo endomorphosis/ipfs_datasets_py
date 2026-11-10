@@ -19,6 +19,12 @@ from pathlib import Path
 
 _here = Path(__file__).resolve().parent
 ROOT = _here.parent if _here.name == "scrapers" else _here
+# Generated output and inputs live next to a standalone "scrapers/" checkout;
+# when run from inside the installed package they go to a user-data dir instead.
+DATA_ROOT = ROOT if _here.name == "scrapers" else Path(
+    __import__("os").environ.get("IPFS_DATASETS_MUNICIPAL_HUB_DIR")
+    or (Path.home() / ".ipfs_datasets" / "municipal_hub")
+)
 SITE = ROOT / ".venv" / "lib" / "python3.13" / "site-packages"
 if SITE.exists():
     sys.path.insert(0, str(SITE))
@@ -66,9 +72,9 @@ def append_log(path: Path, rec: dict) -> None:
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Scrape Municode codes to snappy parquet")
-    ap.add_argument("--todo", default=str(ROOT / "municode_todo.json"))
-    ap.add_argument("--out", default=str(ROOT / "out"))
-    ap.add_argument("--sample", default=str(ROOT / "1008538_html.parquet"))
+    ap.add_argument("--todo", default=str(DATA_ROOT / "municode_todo.json"))
+    ap.add_argument("--out", default=str(DATA_ROOT / "out"))
+    ap.add_argument("--sample", default=str(DATA_ROOT / "1008538_html.parquet"))
     ap.add_argument("--limit", type=int, default=1)
     ap.add_argument("--offset", type=int, default=0)
     ap.add_argument("--delay", type=float, default=1.15)
