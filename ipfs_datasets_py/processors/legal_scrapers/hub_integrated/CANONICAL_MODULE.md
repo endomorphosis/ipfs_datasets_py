@@ -68,9 +68,11 @@ DOC_TYPES = ("code_section", "ordinance", "regulation", "statute", "gazette_act"
 
 ## `justicedao_world_law_scrapers`
 
+In legal_scrapers phase 3c this mirror was moved, unchanged, to `legal_scrapers_hub/hub_integrated/justicedao_world_law_scrapers/` at the repository root, except the seven collectors that the `national_collectors` `vendored_path()` shims run and their sibling imports: `collectors/add_collect.py`, `es_seue_collect.py`, `fr_scdl_collect.py`, `it_dait_collect.py`, `lu_sparql_collect.py`, `ua_zip_collect.py`, `us_local_collect.py`. Those stay at `hub_integrated/justicedao_world_law_scrapers/collectors/`.
+
 `registers/duplicates.md` assigns this directory the group `mirror`.
 
-`hub_integrated/justicedao_world_law_scrapers/ir_builder/country_laws_ir/__init__.py`, last changed in `4cdca488f0bd997e8f7a90438aa90a859cb85c5b`, sets `__version__ = "0.3.0"` and assigns:
+`legal_scrapers_hub/hub_integrated/justicedao_world_law_scrapers/ir_builder/country_laws_ir/__init__.py` (moved out of the package in legal_scrapers phase 3c; formerly `hub_integrated/justicedao_world_law_scrapers/...`), last changed in `4cdca488f0bd997e8f7a90438aa90a859cb85c5b`, sets `__version__ = "0.3.0"` and assigns:
 
 ```python
 SCHEMA_VERSION = "country-laws-ir-graphrag/v1"
@@ -123,4 +125,4 @@ These 17 files are under `hub_integrated/legal_scrapers/`. Each first line was r
 
 ## This tree was not deleted
 
-This tree was not deleted. `world_law_pipeline/schema.py` was not edited and remains the `1.2.0` source of truth until a named go-ahead says otherwise. No scraper under `justicedao_world_law_scrapers`, `legal_scrapers`, or `world_law_pipeline` was moved or rewritten.
+This tree was not deleted. `world_law_pipeline/schema.py` was not edited and remains the `1.2.0` source of truth until a named go-ahead says otherwise. No scraper under `legal_scrapers` or `world_law_pipeline` was moved or rewritten. `justicedao_world_law_scrapers` was moved out of the package in phase 3c (see above); no file was rewritten.
