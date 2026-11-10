@@ -122,10 +122,18 @@ def load_instrument_records(country_code: str, *, output_dir: Path | None = None
     return laws, articles
 
 
+ROBOTS_GUARD_ENV = "IPFS_DATASETS_LEGAL_ROBOTS_GUARD"
+
+
 def _prepare_env(corpora: Path, collectors: Path) -> dict[str, str]:
     env = dict(os.environ)
     env["IPFS_DATASETS_LEGAL_CORPORA_ROOT"] = str(corpora)
     env["IPFS_DATASETS_LEGAL_COLLECTORS_ROOT"] = str(collectors)
+    # Harvested collectors now share national_collectors' helpers, whose
+    # robots.txt gate is on by default.  Harvested runs keep their pre-merge
+    # behavior (no gate) unless the caller opts in with
+    # IPFS_DATASETS_LEGAL_ROBOTS_GUARD=1.
+    env.setdefault(ROBOTS_GUARD_ENV, "0")
     return env
 
 

@@ -538,6 +538,20 @@ def _log_robots_cached(original_url: str, archive_url: str, cd: "Decision", live
         pass
 
 
+GUARD_ENV = "IPFS_DATASETS_LEGAL_ROBOTS_GUARD"
+_GUARD_OFF_VALUES = {"0", "false", "off", "no"}
+
+
+def guard_enabled() -> bool:
+    """robots.txt gating is on unless IPFS_DATASETS_LEGAL_ROBOTS_GUARD is 0/false/off/no.
+
+    National collectors run with the guard on (CoS policy 2026-10-01).  The
+    harvested-collector runtime defaults it off so harvested scrapes keep the
+    behavior they had before the shared helpers were merged.
+    """
+    return (os.environ.get(GUARD_ENV) or "").strip().lower() not in _GUARD_OFF_VALUES
+
+
 def check(url: str) -> Decision:
     """Decide without waiting or raising (does fetch robots.txt on first use)."""
     sp = urlsplit(url)
