@@ -1,3 +1,5 @@
+> Historical. This report describes the tree from before the module boundary. The current map is `docs/legal/legal_corpus_module_map.md`.
+
 # World-laws dataset schemas (pinned)
 
 Status: pinned 2026-10-10 (PT). Code: [`schema.py`](schema.py) (`RAW_LAWS_SCHEMA`, `RAW_ARTICLES_SCHEMA`,

@@ -1,3 +1,5 @@
+> Historical. This report describes the tree from before the module boundary. The current map is `docs/legal/legal_corpus_module_map.md`.
+
 # Brave Legal Search - Natural Language Search for Legal Rules
 
 A comprehensive natural language search system for finding federal, state, and local legal rules and regulations using the Brave Search API.

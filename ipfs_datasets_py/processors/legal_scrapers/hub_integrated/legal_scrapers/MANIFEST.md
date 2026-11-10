@@ -1,3 +1,5 @@
+> Historical. This report describes the tree from before the module boundary. The current map is `docs/legal/legal_corpus_module_map.md`.
+
 # legal_scrapers — per-lane manifest
 
 Generated 2026-10-30T10:39:15.790142-07:00. 407 files, 3228.6 KB. Machine-readable: `manifest.json`.

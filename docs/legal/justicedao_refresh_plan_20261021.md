@@ -1,3 +1,5 @@
+> Historical. This report describes the tree from before the module boundary. The current map is `docs/legal/legal_corpus_module_map.md`.
+
 # JusticeDAO refresh plan, 2026-10-21
 
 Raw law stays on `endomorphosis`. Normalized retrieval stays on `justicedao`. A query names the jurisdiction it wants. It does not read the caller IP, locale, or country, and it does not read `endomorphosis`.

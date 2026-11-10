@@ -98,11 +98,13 @@ _ERROR_TITLE = re.compile(
 # title are not instrument names.
 _MUNICIPAL_INSTRUMENT = re.compile(
     r"(?i)(?:\b(?:lei|leyes?|ordinances?|ordenanzas?|odluk[ae]|odluke|bylaws?|"
-    r"by-laws?|besluit(?:en)?|verordeningen|règlements?|reglements?|arrêtés?|"
-    r"arretes?|decretos?|decrees?|décrets?|decrets?|deliberaç(?:ão|oes|ões)|"
-    r"portarias?|resoluções|resolucione?s|acuerdos?|рішення|токтом)\b)"
+    r"by-laws?|besluit(?:en)?|verordeningen|reglamentos?|règlements?|reglements?|"
+    r"arrêtés?|arretes?|decretos?|decrees?|décrets?|decrets?|"
+    r"deliberaç(?:ão|oes|ões)|portarias?|resoluções|resoluci[oó]n(?:es)?|acuerdos?|"
+    r"рішення|токтом)\b|verordening)"
     r"|条例|條例|規則|規程|要項|要點|辦法|細則|自治條例"
 )
+_DIGIT = re.compile(r"\d")
 _LABELED_LOCATOR = re.compile(
     r"(?i)(?:\b(?:articles?|arts?\.?|sections?|secs?\.?|chapters?|anexa)\b|§)"
     r"|第\s*[0-9一二三四五六七八九十百]+\s*[条條]"
@@ -292,7 +294,15 @@ def _place_instrument_atom(atom: Mapping[str, object]) -> dict[str, object] | No
         provenance["locator_recovery"] = "annex"
         return assign_municipal_citation(copied)
     instrument = assigned.instrument.strip()
-    if assigned.status == "unresolved" or not instrument or instrument.isdigit():
+    # A date or a table cell on the first line is not the section of a numbered act.
+    if (
+        assigned.status == "structural"
+        and _municipal_instrument_name(title)
+        and _DIGIT.search(title) is not None
+    ):
+        instrument = title.strip()
+        assigned_status = "instrument_only"
+    elif assigned.status == "unresolved" or not instrument or instrument.isdigit():
         if _municipal_instrument_name(title):
             instrument = title.strip()
             assigned_status = "instrument_only"

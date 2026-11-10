@@ -425,6 +425,66 @@ def test_a_japanese_ordinance_title_is_the_instrument_when_no_article_is_printed
     assert atom["provenance"].get("heading_status") == "instrument_only"
 
 
+def test_a_date_on_the_first_line_is_not_the_section_of_a_numbered_act() -> None:
+    admission = admit_municipal_row(
+        _row(
+            authority="El Chalten",
+            jurisdiction="AR",
+            language="es",
+            title="Resolución N° 360/HCDCh/2023 – Pase a archivo",
+            source_url="https://www.elchalten.gob.ar/hcd/360",
+            citation_year="",
+            text=(
+                "20 de diciembre del 2023\n"
+                "El Honorable Concejo Deliberante resuelve el pase a archivo del expediente.\n"
+                "Descargar PDF\n"
+            ),
+        )
+    )
+    assert admission.reason == "law"
+    assert len(admission.atoms) == 1
+    atom = admission.atoms[0]
+    assert atom["provenance"].get("section") != "20"
+    assert "360" in str(atom.get("citation"))
+    assert atom["provenance"].get("heading_status") == "instrument_only"
+
+
+def test_a_list_of_ordinances_without_a_number_stays_unlocated() -> None:
+    admission = admit_municipal_row(
+        _row(
+            authority="Tres de Febrero",
+            jurisdiction="AR",
+            language="es",
+            title="Decretos y Ordenanzas – Municipalidad Tres de Febrero",
+            source_url="https://www.tresdefebrero.gov.ar/decretos",
+            citation_year="",
+            text="3 septiembre, 2026 Leer más sobre decretos y ordenanzas del municipio.",
+        )
+    )
+    assert admission.atoms == ()
+
+
+def test_a_dutch_compound_verordening_is_cited_by_its_title() -> None:
+    admission = admit_municipal_row(
+        _row(
+            authority="Deventer",
+            jurisdiction="NL",
+            language="nl",
+            title="Intrekking Brandbeveiligingsverordening 2012, gemeente Deventer",
+            source_url="https://zoek.officielebekendmakingen.nl/gmb-2020-6069.html",
+            citation_year="",
+            text=(
+                "6 december 2019\n"
+                "De raad van de gemeente Deventer besluit de Brandbeveiligingsverordening 2012 in te trekken."
+            ),
+        )
+    )
+    assert admission.reason == "law"
+    atom = admission.atoms[0]
+    assert atom["provenance"].get("section") != "6"
+    assert "Brandbeveiligingsverordening" in str(atom.get("citation"))
+
+
 def test_a_homepage_without_an_instrument_name_is_not_cited() -> None:
     admission = admit_municipal_row(
         _row(

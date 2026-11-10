@@ -1,3 +1,5 @@
+> Historical. This report describes the tree from before the module boundary. The current map is `docs/legal/legal_corpus_module_map.md`.
+
 # WORLD COVERAGE AUDIT
 
 Generated 2026-10-10 (PT) by a read-only audit. Nothing was uploaded and no Hub repo was modified. Hub data came from public parquet footers (HTTP range reads, no dataset downloads) and public repo file listings; no token was used.

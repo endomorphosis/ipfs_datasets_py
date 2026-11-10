@@ -1,3 +1,5 @@
+> Historical. This report describes the tree from before the module boundary. The current map is `docs/legal/legal_corpus_module_map.md`.
+
 # Legal Web Archive Integration - Complete Summary
 
 ## Project Complete! ✅

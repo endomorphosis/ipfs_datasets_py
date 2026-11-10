@@ -1,3 +1,5 @@
+> Historical. This report describes the tree from before the module boundary. The current map is `docs/legal/legal_corpus_module_map.md`.
+
 # world_municipal_law — schema & staging contract (v1.2.0)
 
 Source of truth: `/workspace/world_law/pipeline/schema.py` (import it; don't copy constants).

@@ -1,3 +1,5 @@
+> Historical. This report describes the tree from before the module boundary. The current map is `docs/legal/legal_corpus_module_map.md`.
+
 # State-Specific Law Scrapers
 
 This directory contains individual scrapers for each US state's official legislative website. Each scraper implements state-specific parsing logic while outputting data in a normalized schema.

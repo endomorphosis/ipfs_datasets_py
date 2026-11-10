@@ -1,3 +1,5 @@
+> Historical. This report describes the tree from before the module boundary. The current map is `docs/legal/legal_corpus_module_map.md`.
+
 # JusticeDAO refresh plan, 2026-10-19
 
 The 2026-10-21 plan supersedes the SHA table and git table below. This file stays the record of the 2026-10-19 review.
