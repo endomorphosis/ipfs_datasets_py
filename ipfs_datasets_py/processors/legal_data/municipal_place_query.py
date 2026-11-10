@@ -3,7 +3,7 @@
 The coordinates are the place whose ordinance is requested. They are not
 the caller's location. The primary GNIS seed supplies the point for each
 US municipal place. A world municipal point is the nearest stored place
-in the named country, read from the local coordinate table. Alternate
+in the named country, read from the local coordinate parquet. Alternate
 GNIS ids are not used. Nothing in this module reads an address, an IP,
 a locale, or a timezone.
 
@@ -348,14 +348,14 @@ def resolve_municipal_place(
 def _world_coord_path() -> Path:
     configured = os.environ.get("MUNICIPAL_NORM_ROOT", "").strip()
     root = Path(configured) if configured else Path("/storage/hf_cache/municipal-collection/e1bdd7b0")
-    return root / "place-coords.sqlite"
+    return root / "place-coords.parquet"
 
 
 def load_world_municipal_places(jurisdiction: str) -> tuple[WorldMunicipalPlace, ...]:
-    """Places for one country from the local coordinate table.
+    """Places for one country from the local coordinate parquet.
 
-    The table is built offline. This read does not contact Wikidata or the
-    Hub. A missing table is an empty country, the same as a seed file that
+    The file is built offline. This read does not contact Wikidata or the
+    Hub. A missing file is an empty country, the same as a seed file that
     is not on disk.
     """
 
@@ -363,22 +363,32 @@ def load_world_municipal_places(jurisdiction: str) -> tuple[WorldMunicipalPlace,
     if not path.is_file():
         return ()
     code = jurisdiction.strip().upper()
-    import sqlite3
+    try:
+        import pyarrow.parquet as pq
+        from pyarrow.lib import ArrowException
 
-    try:
-        db = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
-    except sqlite3.Error:
+        table = pq.read_table(
+            path,
+            columns=["authority", "latitude", "longitude", "lat_micro", "lon_micro", "qid"],
+            filters=[("jurisdiction", "=", code)],
+        )
+        rows = list(
+            zip(
+                *(
+                    table.column(name).to_pylist()
+                    for name in (
+                        "authority",
+                        "latitude",
+                        "longitude",
+                        "lat_micro",
+                        "lon_micro",
+                        "qid",
+                    )
+                )
+            )
+        )
+    except (OSError, ArrowException, ValueError):
         return ()
-    try:
-        rows = db.execute(
-            "select authority, latitude, longitude, lat_micro, lon_micro, qid "
-            "from place_coord where jurisdiction = ?",
-            (code,),
-        ).fetchall()
-    except sqlite3.Error:
-        return ()
-    finally:
-        db.close()
     found: list[WorldMunicipalPlace] = []
     for name, latitude, longitude, lat_micro, lon_micro, qid in rows:
         if not isinstance(name, str) or not name.strip():

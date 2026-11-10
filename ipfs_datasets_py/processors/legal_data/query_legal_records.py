@@ -5,7 +5,7 @@ jurisdiction resolution. This module does not download a corpus. A caller
 may pass ``corpus_opener`` to hydrate rows after the pin is chosen. World
 and norm repos are opened only when ``pin_readable`` is true. A latitude
 and longitude name the requested municipality. They are not the caller's
-location. A world point is read from the local place table.
+location. A world point is read from the local place parquet.
 """
 
 from __future__ import annotations
@@ -740,24 +740,27 @@ def _open_world_municipal(code: str, constraint: object) -> tuple[dict[str, obje
     if constraint.state_code:
         return ()
     root = _world_municipal_root()
-    index_path = root / "place-parts.sqlite"
+    index_path = root / "place-parts.parquet"
     if not index_path.is_file():
         return ()
-    import sqlite3
-
     fold = fold_place(constraint.name)
-    with sqlite3.connect(f"file:{index_path}?mode=ro", uri=True) as db:
-        parts = [
-            int(row[0])
-            for row in db.execute(
-                "select part from place_part where jurisdiction = ? and authority_fold = ? order by part",
-                (code, fold),
-            )
-        ]
-    if not parts:
-        return ()
     import pyarrow.parquet as pq
 
+    table = pq.read_table(
+        index_path,
+        columns=["part"],
+        filters=[
+            ("jurisdiction", "=", code),
+            ("authority_fold", "=", fold),
+        ],
+    )
+    parts = sorted(
+        int(value)
+        for value in table.column("part").to_pylist()
+        if value is not None
+    )
+    if not parts:
+        return ()
     matched: list[dict[str, object]] = []
     for part in parts:
         path = root / "data" / f"part-{part:04d}" / "laws.parquet"

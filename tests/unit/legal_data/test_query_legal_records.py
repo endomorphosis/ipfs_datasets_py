@@ -1149,34 +1149,27 @@ def test_coordinates_do_not_open_another_country_or_a_state_route(monkeypatch) -
 def test_world_coordinate_table_is_one_country(monkeypatch, tmp_path) -> None:
     monkeypatch.setenv("MUNICIPAL_NORM_ROOT", str(tmp_path))
     assert load_world_municipal_places("FR") == ()
-    import sqlite3
+    import pyarrow as pa
+    import pyarrow.parquet as pq
 
-    database = sqlite3.connect(tmp_path / "place-coords.sqlite")
-    database.execute(
-        "create table place_coord ("
-        "jurisdiction text not null, qid text not null, authority text not null, "
-        "authority_fold text not null, latitude text not null, longitude text not null, "
-        "lat_micro integer not null, lon_micro integer not null, "
-        "primary key (jurisdiction, qid))"
-    )
     paris = _WORLD_PLACES[0]
     berlin = _WORLD_PLACES[5]
-    for place in (paris, berlin):
-        database.execute(
-            "insert into place_coord values (?, ?, ?, ?, ?, ?, ?, ?)",
-            (
-                place.jurisdiction,
-                place.qid,
-                place.name,
-                place.name.casefold(),
-                place.latitude,
-                place.longitude,
-                place.lat_micro,
-                place.lon_micro,
-            ),
-        )
-    database.commit()
-    database.close()
+    stored = (paris, berlin)
+    pq.write_table(
+        pa.table(
+            {
+                "jurisdiction": [place.jurisdiction for place in stored],
+                "qid": [place.qid for place in stored],
+                "authority": [place.name for place in stored],
+                "authority_fold": [place.name.casefold() for place in stored],
+                "latitude": [place.latitude for place in stored],
+                "longitude": [place.longitude for place in stored],
+                "lat_micro": pa.array([place.lat_micro for place in stored], type=pa.int64()),
+                "lon_micro": pa.array([place.lon_micro for place in stored], type=pa.int64()),
+            }
+        ),
+        tmp_path / "place-coords.parquet",
+    )
     loaded = load_world_municipal_places("fr")
     assert [place.name for place in loaded] == ["Paris"]
     assert loaded[0].jurisdiction == "FR"
@@ -1189,6 +1182,47 @@ def test_world_coordinate_table_is_one_country(monkeypatch, tmp_path) -> None:
     with pytest.raises(PlaceQueryError) as tied:
         resolve_world_municipal_place("FR", None, "47.2184", "-1.5536", places=_WORLD_PLACES)
     assert tied.value.code == "ambiguous_place"
+
+
+def test_world_part_index_reads_parquet(monkeypatch, tmp_path) -> None:
+    monkeypatch.setenv("MUNICIPAL_NORM_ROOT", str(tmp_path))
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+
+    from ipfs_datasets_py.processors.legal_data.municipal_place_query import PlaceConstraint
+    from ipfs_datasets_py.processors.legal_data.query_legal_records import (
+        _open_world_municipal,
+    )
+
+    assert _open_world_municipal("FR", PlaceConstraint(name="Paris", state_code=None)) == ()
+    pq.write_table(
+        pa.table(
+            {
+                "jurisdiction": ["FR", "DE"],
+                "authority_fold": ["paris", "aachen"],
+                "part": pa.array([0, 1], type=pa.int64()),
+            }
+        ),
+        tmp_path / "place-parts.parquet",
+    )
+    part_dir = tmp_path / "data" / "part-0000"
+    part_dir.mkdir(parents=True)
+    pq.write_table(
+        pa.table(
+            {
+                "jurisdiction": ["FR", "DE"],
+                "authority": ["Paris", "Aachen"],
+                "text": ["arrete", "satzung"],
+                "provenance": ["{}", "{}"],
+                "entry_cid": ["fr1", "de1"],
+            }
+        ),
+        part_dir / "laws.parquet",
+    )
+    rows = _open_world_municipal("FR", PlaceConstraint(name="Paris", state_code=None))
+    assert [row["entry_cid"] for row in rows] == ["fr1"]
+    assert rows[0]["provenance"] == {}
+    assert _open_world_municipal("FR", PlaceConstraint(name="Lyon", state_code=None)) == ()
 
 
 def test_bad_place_date_and_coordinates_are_rejected(monkeypatch) -> None:
