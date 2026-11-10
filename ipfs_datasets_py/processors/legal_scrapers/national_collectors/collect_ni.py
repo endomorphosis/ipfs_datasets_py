@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import re
 import sys
 import time
@@ -132,7 +133,8 @@ def discover() -> list[tuple[str, str]]:
 
 def seed_done_from_hub(done: set[str]) -> int:
     """Optionally seed skip-set from Hub identifiers file or parquet path."""
-    seed = Path("/workspace/legal-corpora/ni/_hub_seed_ids.json")
+    root = Path(os.environ.get("IPFS_DATASETS_LEGAL_CORPORA_ROOT", os.environ.get("LEGAL_CORPORA_ROOT", str(Path.home() / ".ipfs_datasets" / "legal_corpora"))))
+    seed = root / "ni" / "_hub_seed_ids.json"
     if not seed.exists():
         return 0
     try:
