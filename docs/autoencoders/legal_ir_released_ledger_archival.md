@@ -4,6 +4,8 @@ The additive public SDK API losslessly folds only explicitly selected, already r
 
 31 archival protocol controls and34 existing orphan recovery cases passed against the deployed source in a real finite test-owner run. They test in-memory protocol and isolated ledger behavior; they do not simulate genuine archival authority. Separately, the supplied pinned public result records the actual successful native archival operation and reclaimed 4937088 ledger metadata bytes. This is metadata headroom, not deletion of historical evidence or a claim that a storage reservation was physically freed.
 
+The current resource owner uses a 16 MiB ledger metadata bound and a 220 GB storage cap. Archival accepts that exact profile and preserves the 8 MiB and 160 GB historical profile for reading earlier snapshots. The administrative operation still verifies the active owner profile, requires genuine orchestration leases and precharges the archive's peak size before writing.
+
 ## Remaining goals and tasks
 
 Cross-repository phases below have their own acceptance evidence and live progress in the accelerator factual-acceptance documentation. This SDK publication establishes only archival and recovery qualification.
