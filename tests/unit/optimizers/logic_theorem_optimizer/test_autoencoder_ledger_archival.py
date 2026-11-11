@@ -99,6 +99,23 @@ class MemoryProtocolTests(unittest.TestCase):
         self.assertEqual(sdk.restore_archived_record(raw, result["ledger"]["reservations"][ID]), ledger["reservations"][ID])
         self.assertGreater(result["reclaimed_ledger_bytes"], 64 * 1024)
 
+    def test_current_profile_archives_ledger_larger_than_legacy_limit(self):
+        ledger, selections, admin = inputs()
+        ledger["limit_bytes"] = 220_000_000_000
+        ledger["reservations"][OTHER]["opaque_authority_free_metadata"] = "x" * (8 * 1024 * 1024)
+        result = plan(ledger, selections, admin)
+        self.assertGreater(len(result["snapshot_bytes"]), 8 * 1024 * 1024)
+        self.assertEqual(result["ledger"]["reservations"][OTHER], ledger["reservations"][OTHER])
+        self.assertEqual(result["ledger"]["limit_bytes"], ledger["limit_bytes"])
+        self.assertEqual(sdk.restore_archived_record(result["snapshot_bytes"],
+            result["ledger"]["reservations"][ID]), ledger["reservations"][ID])
+
+    def test_legacy_profile_refuses_ledger_larger_than_its_limit(self):
+        ledger, selections, admin = inputs()
+        ledger["reservations"][OTHER]["opaque_authority_free_metadata"] = "x" * (8 * 1024 * 1024)
+        with self.assertRaisesRegex(sdk.ArchivalRefusal, "profile metadata bound"):
+            plan(ledger, selections, admin)
+
     def test_foreign_active_row_and_root_policy_are_unchanged(self):
         ledger, selections, admin = inputs()
         before = copy.deepcopy(ledger)
@@ -262,7 +279,8 @@ class MemoryProtocolTests(unittest.TestCase):
     def test_peak_math_includes_snapshot_atomic_temp_journals_and_directory_margin(self):
         self.assertEqual(sdk.required_peak_bytes(8388608, 8388608), 8388608 * 2 + 2097152 + 65536)
         self.assertLess(sdk.required_peak_bytes(8388608, 8388608), sdk.DEFAULT_PEAK_BYTES)
-        for invalid in (0, -1, 8388609, True):
+        self.assertEqual(sdk.required_peak_bytes(16777216, 16777216), 16777216 * 2 + 2097152 + 65536)
+        for invalid in (0, -1, 16777217, True):
             with self.assertRaisesRegex(sdk.ArchivalRefusal, "bounded archival size"):
                 sdk.required_peak_bytes(invalid, 1)
 
