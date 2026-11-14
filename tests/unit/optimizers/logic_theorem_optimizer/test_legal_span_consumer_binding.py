@@ -1019,3 +1019,210 @@ def test_split_known_cross_partition_leakage_lists_and_blocks_heldout_evaluation
     with pytest.raises(splits.LegalIRSplitLeakageError):
         splits.authorize_legal_ir_split_use(manifest, operation="heldout_evaluation",
                                           items=[{"sample_id": right["sample_id"]}])
+
+
+
+def reviewed_public_mixed_consumer_case(*, operation="training"):
+    """Use the canonical V3 owner's complete fixture and independent reviewers."""
+    from ipfs_datasets_py.logic.autoformal import legal_reviewed_norm_admission_v3 as admission
+    from tests.unit.logic.autoformal import test_legal_reviewed_norm_admission_v3 as helper
+    current = helper.mixed_base.__wrapped__(admission, None)
+    if operation == "hparam_selection":
+        # Explicitly review this fictional operation before binding it; the
+        # original fixture permits training/final scoring, not model selection.
+        current["declaration"]["permitted_uses"].append(operation)
+        current["preparation"] = helper.prepare(admission, current)
+        helper.refresh_signed_reviews(current, admission)
+    helper.assert_signatures_valid(current)
+    rows = [{"id": "reviewed:" + unit["unit_id"], "unit_id": unit["unit_id"],
+             "source_text": unit["source_text"], "canonical_ir": deepcopy(unit["canonical_ir"])}
+            for unit in current["preparation"]["units"]]
+    partition = {"training": "train", "hparam_selection": "validation", "heldout_evaluation": "holdout"}[operation]
+    target_exposure = {"training": "declared_supervised_training", "hparam_selection": "declared_validation_scoring",
+                       "heldout_evaluation": owner.REVIEWED_HELDOUT_EXPOSURE}[operation]
+    exposure = [{"id": row["id"], "source_text_sha256": source_digest(row["source_text"]),
+                 "canonical_ir_sha256": digest(row["canonical_ir"]), "target_exposure": target_exposure,
+                 "provenance_ref": "fixture:complete-reviewed-mixed-consumer"} for row in rows]
+    manifest = manifest_for(rows, partition)
+    replay = reviewed_public_admission_inputs(helper.fixture, admission, current)
+    options = {"expected_rows_sha256": digest(rows), "split_manifest": manifest,
+        "expected_split_manifest_sha256": digest(manifest), "admission_inputs": replay,
+        "expected_admission_inputs_sha256": owner.reviewed_admission_inputs_sha256(replay),
+        "exposure_records": exposure, "expected_exposure_sha256": digest(exposure),
+        "operation": operation, "allow_fictional_fixture": True}
+    if operation == "heldout_evaluation":
+        options.update(allow_heldout_evaluation=True, heldout_evaluation_purpose=owner.REVIEWED_HELDOUT_PURPOSE)
+    return helper, admission, current, rows, options
+
+
+def _reviewed_mixed_refresh(helper, admission, current, options):
+    options["admission_inputs"] = reviewed_public_admission_inputs(helper.fixture, admission, current)
+    options["expected_admission_inputs_sha256"] = owner.reviewed_admission_inputs_sha256(options["admission_inputs"])
+
+
+@pytest.mark.parametrize("operation", ["training", "hparam_selection", "heldout_evaluation"])
+def test_reviewed_v3_public_full_nine_field_mixed_targets_reach_same_binding_class(operation):
+    helper, admission, current, rows, options = reviewed_public_mixed_consumer_case(operation=operation)
+    binding = owner.prepare_reviewed_source_span_consumer_binding_v3(rows, **options)
+    receipt = binding.receipt()
+    assert type(binding) is owner.ReviewedSourceSpanConsumerBinding
+    assert receipt["schema"] == owner.REVIEWED_V3_SCHEMA and receipt["profile"] == owner.REVIEWED_V3_PROFILE
+    assert receipt["status"] == "ready" and receipt["semantic_admission_replayed"] is True
+    assert receipt["training_mask"] == receipt["evaluation_gold_mask"] == 0
+    assert all(receipt[key] is False for key in ("proof_authority", "lean_corpus_authority", "corpus_admitted", "training_executed"))
+    assert len(rows) == 3 and rows[2]["canonical_ir"]["profile"] == helper.relational.MIXED_PROFILE
+    assert all(set(row["canonical_ir"]) == {"profile", "typed_expression", "argument_roles", "assumptions",
+        "governing_context", "interpretation_id", "source_binding", "definition_uses", "cross_references"} for row in rows)
+    calls = []
+    sentinel = object()
+    def consume_complete(detached):
+        calls.append(deepcopy(detached))
+        return sentinel
+    assert owner.consume_reviewed_source_span_binding_v3(binding, rows,
+        **reviewed_validation_inputs(options), consumer=consume_complete) is sentinel
+    assert calls == [rows]
+    assert owner.validate_reviewed_source_span_consumer_binding_v3(binding, rows,
+        **reviewed_validation_inputs(options)) == receipt
+    if operation == "heldout_evaluation":
+        assert receipt["heldout_evaluation"]["dependency_group"]["required_dependency_ids"] == current["preparation"]["subject"]["required_dependency_ids"]
+    helper.assert_signatures_valid(current)
+
+
+@pytest.mark.parametrize("offered", ["v2-to-v3", "v3-to-v2"])
+def test_reviewed_v3_explicit_apis_cannot_relabel_other_prepared_contract(offered):
+    if offered == "v2-to-v3":
+        _, _, _, rows, options = reviewed_public_consumer_case()
+        binding = owner.prepare_reviewed_source_span_consumer_binding_v2(rows, **options)
+        validate = owner.validate_reviewed_source_span_consumer_binding_v3
+    else:
+        _, _, _, rows, options = reviewed_public_mixed_consumer_case()
+        binding = owner.prepare_reviewed_source_span_consumer_binding_v3(rows, **options)
+        validate = owner.validate_reviewed_source_span_consumer_binding_v2
+    with pytest.raises(owner.SourceSpanConsumerBindingError, match="admission contract differs"):
+        validate(binding, rows, **reviewed_validation_inputs(options))
+
+
+@pytest.mark.parametrize("damage", ["revoked", "source_bytes", "ordered_roles", "typed_ast"])
+def test_reviewed_v3_current_trust_source_and_resealed_ir_mutations_block_old_ready_binding(damage):
+    helper, admission, current, rows, options = reviewed_public_mixed_consumer_case()
+    binding = owner.prepare_reviewed_source_span_consumer_binding_v3(rows, **options)
+    if damage == "revoked":
+        current["registry"]["keys"][0]["revoked_at_utc"] = helper.fixture.EVALUATED
+        current["registry"]["revocation_generation"] += 1
+        helper.fixture.reviewed_resign_v2(current)
+    elif damage == "source_bytes":
+        unit = current["declaration"]["units"][2]["unit_id"]
+        current["source_inputs"][unit]["raw_bytes"] += b" changed"
+    else:
+        unit = current["declaration"]["units"][2]["unit_id"]
+        inputs = current["relational_inputs"][unit]
+        if damage == "ordered_roles":
+            inputs["report"]["argument_roles"][-1]["roles"].reverse()
+        else:
+            inputs["report"]["typed_expression"]["root"]["kind"] = "exists"
+        inputs["expected_report_sha256"] = helper.relational.mixed_relational_norm_report_sha256(inputs["report"])
+    helper.assert_signatures_valid(current)
+    _reviewed_mixed_refresh(helper, admission, current, options)
+    callbacks = []
+    with pytest.raises(owner.SourceSpanConsumerBindingError):
+        owner.consume_reviewed_source_span_binding_v3(binding, rows,
+            **reviewed_validation_inputs(options), consumer=callbacks.append)
+    assert callbacks == []
+
+
+@pytest.mark.parametrize("damage", ["revoked", "source_bytes", "ordered_roles", "typed_ast", "contract_tag"])
+def test_reviewed_v3_consumer_rechecks_current_inputs_and_detached_rows_on_callback_exit(damage):
+    helper, admission, current, rows, options = reviewed_public_mixed_consumer_case()
+    binding = owner.prepare_reviewed_source_span_consumer_binding_v3(rows, **options)
+    callbacks = []
+    def mutate(detached):
+        callbacks.append(True)
+        if damage == "revoked":
+            current["registry"]["keys"][0]["revoked_at_utc"] = helper.fixture.EVALUATED
+            current["registry"]["revocation_generation"] += 1
+            helper.fixture.reviewed_resign_v2(current)
+            # Update the live mapping already supplied to this invocation.
+            replay = reviewed_public_admission_inputs(helper.fixture, admission, current)
+            options["admission_inputs"].clear()
+            options["admission_inputs"].update(replay)
+        elif damage == "source_bytes":
+            unit = current["declaration"]["units"][2]["unit_id"]
+            options["admission_inputs"]["preparation_inputs"]["source_inputs"][unit]["raw_bytes"] += b" changed"
+        elif damage == "ordered_roles":
+            detached[2]["canonical_ir"]["argument_roles"][-1]["roles"].reverse()
+        elif damage == "typed_ast":
+            detached[2]["canonical_ir"]["typed_expression"]["root"]["kind"] = "exists"
+        else:
+            object.__setattr__(binding, "_admission_version", "v2")
+    with pytest.raises(owner.SourceSpanConsumerBindingError):
+        owner.consume_reviewed_source_span_binding_v3(binding, rows,
+            **reviewed_validation_inputs(options), consumer=mutate)
+    assert callbacks == [True]
+
+
+def test_reviewed_v3_consumer_preserves_original_callback_error_with_unchanged_inputs():
+    _, _, _, rows, options = reviewed_public_mixed_consumer_case()
+    binding = owner.prepare_reviewed_source_span_consumer_binding_v3(rows, **options)
+    error = PermissionError("original caller denied this fictional operation")
+    def deny(_):
+        raise error
+    with pytest.raises(PermissionError) as caught:
+        owner.consume_reviewed_source_span_binding_v3(binding, rows,
+            **reviewed_validation_inputs(options), consumer=deny)
+    assert caught.value is error
+
+
+def test_reviewed_v3_fixture_permission_and_unimplemented_rich_context_stay_closed():
+    _, _, _, rows, options = reviewed_public_mixed_consumer_case()
+    options["allow_fictional_fixture"] = False
+    binding = owner.prepare_reviewed_source_span_consumer_binding_v3(rows, **options)
+    assert binding.receipt()["status"] == "blocked"
+    assert binding.receipt()["training_mask"] == binding.receipt()["evaluation_gold_mask"] == 0
+    options.update(operation="heldout_evaluation", allow_heldout_evaluation=True,
+                   heldout_evaluation_purpose=owner.REVIEWED_HELDOUT_CONTEXT_PURPOSE)
+    with pytest.raises(owner.SourceSpanConsumerBindingError, match="V3 rich TRAIN context"):
+        owner.prepare_reviewed_source_span_consumer_binding_v3(rows, **options)
+
+
+def test_reviewed_v3_saved_v2_reviews_and_receipt_replay_without_resigning(tmp_path):
+    helper, admission, current, rows, options = reviewed_public_consumer_case()
+    original = owner.prepare_reviewed_source_span_consumer_binding_v2(rows, **options)
+    before = original.receipt()
+    from tests.unit.logic.autoformal import test_legal_reviewed_norm_admission_v3 as v3_helper
+    path = tmp_path / "signed-v2-before-v3-consumption.json"
+    v3_helper.save(path, {"case": {key: value for key, value in current.items() if key != "signers"}, "receipt": before})
+    raw = path.read_bytes()
+    _, _, _, mixed_rows, mixed_options = reviewed_public_mixed_consumer_case()
+    mixed = owner.prepare_reviewed_source_span_consumer_binding_v3(mixed_rows, **mixed_options)
+    owner.consume_reviewed_source_span_binding_v3(mixed, mixed_rows,
+        **reviewed_validation_inputs(mixed_options), consumer=lambda detached: detached)
+    saved = v3_helper.decode(json.loads(path.read_bytes()))
+    restored = saved["case"]
+    assert owner.REVIEWED_SCHEMA == "reviewed-source-span-consumer-binding/v2"
+    assert owner.REVIEWED_PROFILE == "complete-reviewed-source-span-supervision/v2"
+    assert "admission_version" not in before and "admission_contract" not in before
+    v3_helper.assert_signatures_valid(restored)
+    options["admission_inputs"] = reviewed_public_admission_inputs(helper, admission, restored)
+    assert owner.validate_reviewed_source_span_consumer_binding_v2(original, rows,
+        **reviewed_validation_inputs(options)) == saved["receipt"] == before
+    assert helper.assess_reviewed_fixture_v2(admission, restored)["semantic_use_eligible"] is True
+    assert path.read_bytes() == raw
+    assert hashlib.sha256(Path(admission.__file__).read_bytes()).hexdigest() == v3_helper.V2_SOURCE_SHA256
+
+
+def test_reviewed_v3_signed_training_permission_cannot_be_relabelled_as_hparam_selection():
+    _, _, _, rows, options = reviewed_public_mixed_consumer_case()
+    options["operation"] = "hparam_selection"
+    options["split_manifest"] = manifest_for(rows, "validation")
+    options["expected_split_manifest_sha256"] = digest(options["split_manifest"])
+    for exposure in options["exposure_records"]:
+        exposure["target_exposure"] = "declared_validation_scoring"
+    options["expected_exposure_sha256"] = digest(options["exposure_records"])
+    binding = owner.prepare_reviewed_source_span_consumer_binding_v3(rows, **options)
+    assert binding.receipt()["status"] == "blocked"
+    assert {row["reason"] for row in binding.receipt()["blockers"]} == {"operation_not_reviewed_permitted"}
+    calls = []
+    with pytest.raises(owner.SourceSpanConsumerBindingError):
+        owner.consume_reviewed_source_span_binding_v3(binding, rows,
+            **reviewed_validation_inputs(options), consumer=calls.append)
+    assert calls == []

@@ -8,6 +8,7 @@ inverses explicit.  It never increases semantic or proof authority.
 
 from __future__ import annotations
 
+from collections import Counter
 from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Final
@@ -193,23 +194,110 @@ def _surface_polarity(text: str) -> str | None:
     return None
 
 
+def _normalized_surface(text: str) -> str:
+    return " ".join(text.lower().split())
+
+
+def _unmatched_surface_explanations(
+    rule: CanonicalRule,
+    surface: str,
+) -> list[dict[str, object]]:
+    """Explain one unmatched pair without asserting its semantic association."""
+
+    differences: list[dict[str, object]] = []
+    polarity = _surface_polarity(surface)
+    rule_cid = rule.rule_cid
+    if polarity is not None and polarity != rule.modality:
+        differences.append(
+            {
+                "action": rule.action,
+                "actor": rule.actor,
+                "kind": "changed_polarity",
+                "left": rule.modality,
+                "right": polarity,
+                "rule_cid": rule_cid,
+                "association_unresolved": True,
+            }
+        )
+    for facet, values in (
+        ("actor", (rule.actor,)),
+        ("action", (rule.action,)),
+        ("object", (rule.object,) if rule.object else ()),
+        ("condition", rule.conditions),
+        ("exception", rule.exceptions),
+        ("temporal", rule.temporal),
+    ):
+        for value in values:
+            phrase = _normalized_surface(_readable_atom(value))
+            if phrase and phrase not in surface:
+                differences.append(
+                    {
+                        "facet": facet,
+                        "kind": "dropped_facet",
+                        "rule_cid": rule_cid,
+                        "value": value,
+                        "association_unresolved": True,
+                    }
+                )
+    return differences
+
+
 def detect_surface_semantic_differences(
     canonical_ir: CanonicalRoundTripIR,
     text: str,
 ) -> tuple[dict[str, object], ...]:
-    """Compare frozen-surface polarity and facet mentions against the IR.
+    """Check frozen rendered units, then explain unresolved surface associations.
 
     This detector is an adversarial check, not a compiler and not a fidelity
-    claim.  A missing mention is declared loss, never treated as zero.
+    claim. Exact known surfaces preserve rule occurrence counts and permit whole
+    rule permutations when periods unambiguously delimit the rendered units.
+    Other prose has unresolved association; its polarity and missing mentions
+    are heuristic explanations, never proof of a legal semantic difference.
     """
 
     if not isinstance(canonical_ir, CanonicalRoundTripIR):
         raise CanonicalContractError("semantic difference requires CanonicalRoundTripIR")
     if not isinstance(text, str):
         raise CanonicalContractError("semantic difference text must be a string")
-    lowered = text.lower()
+    normalized = _normalized_surface(text)
+    rendered = tuple(_normalized_surface(decompile_rule(rule)) for rule in canonical_ir.rules)
+    if normalized == " ".join(rendered):
+        return ()
+    if any("." in unit[:-1] for unit in rendered):
+        # Open-vocabulary atoms can contain periods. Do not guess which periods
+        # separate rules when the complete canonical rendering did not match.
+        return (
+            {
+                "kind": "unresolved_rule_association",
+                "reason": "ambiguous_period_boundaries",
+                "expected_rule_count": len(rendered),
+                "scope": "frozen_surface_heuristic",
+            },
+        )
+
+    sentences = tuple(
+        _normalized_surface(item) + "." for item in text.split(".") if item.strip()
+    )
+    expected, observed = Counter(rendered), Counter(sentences)
+    canonical_separators = normalized == " ".join(sentences)
+    if canonical_separators and expected == observed:
+        return ()
+
+    # Count occurrences, not rule CIDs: identical rules remain distinct entries.
+    # Cancellation is linear in the input size and never recursively matches a
+    # 10,000-rule Cartesian product. Only unmatched units need explanations.
+    missing, extra = expected - observed, observed - expected
+    unmatched_rules, unmatched_sentences = [], []
+    for index, unit in enumerate(rendered):
+        if missing[unit]:
+            unmatched_rules.append(index)
+            missing[unit] -= 1
+    for index, unit in enumerate(sentences):
+        if extra[unit]:
+            unmatched_sentences.append(index)
+            extra[unit] -= 1
+
     differences: list[dict[str, object]] = []
-    sentences = [item.strip() for item in text.split(".") if item.strip()]
     if len(sentences) != len(canonical_ir.rules):
         differences.append(
             {
@@ -218,39 +306,21 @@ def detect_surface_semantic_differences(
                 "right_count": len(sentences),
             }
         )
-    for index, rule in enumerate(canonical_ir.rules):
-        sentence = sentences[index] if index < len(sentences) else text
-        polarity = _surface_polarity(sentence)
-        if polarity is not None and polarity != rule.modality:
-            differences.append(
-                {
-                    "action": rule.action,
-                    "actor": rule.actor,
-                    "kind": "changed_polarity",
-                    "left": rule.modality,
-                    "right": polarity,
-                    "rule_cid": rule.rule_cid,
-                }
-            )
-        for facet, values in (
-            ("actor", (rule.actor,)),
-            ("action", (rule.action,)),
-            ("object", (rule.object,) if rule.object else ()),
-            ("condition", rule.conditions),
-            ("exception", rule.exceptions),
-            ("temporal", rule.temporal),
-        ):
-            for value in values:
-                surface = _readable_atom(value).lower()
-                if surface and surface not in lowered:
-                    differences.append(
-                        {
-                            "facet": facet,
-                            "kind": "dropped_facet",
-                            "rule_cid": rule.rule_cid,
-                            "value": value,
-                        }
-                    )
+    differences.append(
+        {
+            "kind": "unresolved_rule_association",
+            "reason": "frozen_surface_units_do_not_match" if canonical_separators
+                else "noncanonical_rule_separators",
+            "expected_rule_count": len(rendered),
+            "observed_unit_count": len(sentences),
+            "unmatched_rule_indices": unmatched_rules,
+            "unmatched_unit_indices": unmatched_sentences,
+            "scope": "frozen_surface_heuristic",
+        }
+    )
+    for offset, rule_index in enumerate(unmatched_rules):
+        sentence = sentences[unmatched_sentences[offset]] if offset < len(unmatched_sentences) else ""
+        differences.extend(_unmatched_surface_explanations(canonical_ir.rules[rule_index], sentence))
     return tuple(differences)
 
 

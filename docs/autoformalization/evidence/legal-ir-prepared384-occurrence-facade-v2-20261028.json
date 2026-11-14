@@ -1,0 +1,102 @@
+{
+  "APIs": [
+    "prepare_arbitrary_native_legal_ir_runtime_v2",
+    "open_arbitrary_native_legal_ir_autoencoder_v2"
+  ],
+  "IR_valid": null,
+  "actual_48_row_metadata_preparation_qualified": true,
+  "actual_metadata_preparation": {
+    "genuine_prepare_v2_entries": 1,
+    "metadata_prepare_only": true,
+    "numeric_owner_entries": 0,
+    "open_v2_entries": 0,
+    "prepared_clauses": 180,
+    "prepared_rows": 48,
+    "selected_plan_is_unqualified_candidate_metadata": true,
+    "source_kind": "authored diagnostic TRAIN paragraphs"
+  },
+  "actual_retained_generation_or_later_clause_full_sequence_comparison_qualified": false,
+  "candidate_schema": "arbitrary-native-legal-ir-candidate-inference/v2",
+  "canonical_source_and_test": {
+    "ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_legal_ir_runtime.py": {
+      "bytes": 23948,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_legal_ir_runtime.py",
+      "sha256": "569b03444704bce108be10862ec55f26cce40906653695f68755f0ae4d8c9ae0"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_runtime.py": {
+      "bytes": 38363,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_runtime.py",
+      "sha256": "6b59afd5b9280d3f8f63144630ce6ecaba50c646bfe7f5644c1564ca6e8d414c"
+    },
+    "tests/unit/logic/formalization/autoencoder/test_arbitrary_native_legal_ir_runtime.py": {
+      "bytes": 27713,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_arbitrary_native_legal_ir_runtime.py",
+      "sha256": "bb04faa2e2f2405f575224fa7b281ac17b5f8e1d6a64c33cb82430f2b8810cd6"
+    }
+  },
+  "decoder_contract_id": "arbitrary-native-source-cache-legal-ir/v2",
+  "description_schema": "arbitrary-native-legal-ir-description/v2",
+  "evaluation_gold_mask": 0,
+  "evidence_id": "prepared384-occurrence-facade-v2-qualified-20261028-01",
+  "exact_f32_native_vector_preflight_reuses_existing_cache_owner": true,
+  "existing_native_cache_raw_BOS_or_numeric_fixture_campaigns_replayed": false,
+  "external_publication_performed": false,
+  "fixture": {
+    "cache_native_and_numerical_boundaries_are_inert_doubles": true,
+    "cases_passed": 12,
+    "phase_events_passed": 36,
+    "scope": "Metadata facade/custody/dispatch controls; no neural or native-cache qualification is inferred."
+  },
+  "metadata_plan_schema": "arbitrary-native-legal-ir-runtime-plan/v2",
+  "model_restore_or_generation_encoder_SQL_or_Lean_executed_in_actual_preparation": false,
+  "model_start_execution_separate_from_numerical_API_start_return": true,
+  "model_tests_retained_DATA_or_resource_census_replayed_by_documentation": false,
+  "next_task": "Reuse the qualified occurrence-v2 facade and its genuine 48-row authored TRAIN metadata preparation. Under existing admission, declare bounded retained-model opening/generation or fixed-prefix/later-clause trajectory comparison using the current source/native/artifact plan and cached vectors; preserve split/exposure and raw completion/EOS/IR/task dispositions. Do not repeat source encoding, cache/raw/BOS or closed fixture campaigns. Reviewed statutory source/edition/meaning/context, independent held-out targets, model/head basis, graph/Lean release and convergence remain open.",
+  "post_return_refusal_preserves_detached_diagnostics": true,
+  "prior_v1_public_contracts_and_numeric_training_cache_owners_changed": false,
+  "proof_authority": false,
+  "recorded_at_utc": "2026-10-28T04:17:23.618347+00:00",
+  "references": {
+    "actual_summary": {
+      "bytes": 68085,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-head-sensitivity-v01/occurrence-inference-v01/facade-v2-v01/actual-prepare-summary-v01.json",
+      "sha256": "c9db5aa1a9775d3eb79df68e0459e0227244d7d3c527ba152bdb3ed50c89c8c8"
+    },
+    "fixture_summary": {
+      "bytes": 10576,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-head-sensitivity-v01/occurrence-inference-v01/facade-v2-v01/qualification-summary-v01.json",
+      "sha256": "cb8568bc34f223f2047cb225b582f5ef660641c8a87ea2c3509c0a98de3aad1a"
+    },
+    "independent_fixture_review": {
+      "bytes": 7821,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-head-sensitivity-v01/occurrence-inference-v01/facade-v2-v01/qualification-v02/independent-result-review-v01.json",
+      "sha256": "ec38e8384e53d206fa6196a81507d66cb8607282343a45424b887c88c8f9f55c"
+    },
+    "installation_receipt": {
+      "bytes": 3850,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-head-sensitivity-v01/occurrence-inference-v01/facade-v2-v01/product-installation-v01.json",
+      "sha256": "3d9a8e1aa931f2dad6d785212487d381cb3565cc7268b969a72441456588bc0a"
+    },
+    "product_installation_manifest": {
+      "bytes": 45397,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-head-sensitivity-v01/occurrence-inference-v01/facade-v2-v01/product-installation-manifest-v01.json",
+      "sha256": "2e14172de94453376b3606205307b8bc6024f6120890130a7056cc736f8da8a9"
+    },
+    "product_readback": {
+      "bytes": 18699,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-head-sensitivity-v01/occurrence-inference-v01/facade-v2-v01/independent-product-installation-readback-v01.json",
+      "sha256": "ad868a9f12e915988c976c595d71a953e7f5524c5e86add111a6ecc1d22cc5da"
+    }
+  },
+  "retained_768_numerical_qualification_claimed": false,
+  "schema": "legal-ir-occurrence-facade-v2-public-qualification/v1",
+  "selected_entry_and_code_pinned_across_restore_and_generation": true,
+  "source_basis_head_equivalence_task_accuracy_or_convergence_qualified": false,
+  "source_consistency_scope": "Repeated per-file endpoint fences, not atomic cross-file or continuous currentness.",
+  "source_edition_meaning_and_context_selected": false,
+  "task_satisfied": null,
+  "training_mask": 0,
+  "unobserved_model_execution": null,
+  "versioned_facade_dispatch_fixture_qualified": true,
+  "zero_greedy_deadline_is_not_model_execution": true
+}

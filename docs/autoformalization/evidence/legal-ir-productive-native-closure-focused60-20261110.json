@@ -1,0 +1,185 @@
+{
+  "adoption": {
+    "CLI_only": "Canonical CLI3e4\u21928e7 after completed intended RED; all14 other current source/doc buffers, modes/owners and original24 task statuses preserved. Parent and SDK product were not installed by this operation.",
+    "intended_RED": {
+      "JUnit_seconds": 0.746,
+      "claim_id": "070a0cd9f47541d48c41081f6ad530f4",
+      "errors": 0,
+      "failures": 1,
+      "missing_API": "_productive_native_closed_profile_v1",
+      "normal_original_custody_closed": true,
+      "retained_storage_bytes": 16777216,
+      "skips": 0,
+      "tests": 1
+    },
+    "tests_only": "Canonical SDK tests dcb0\u2192dc019 staged before intended RED; old390329-byte prefix and all14 other full9 buffers retained."
+  },
+  "coverage": {
+    "additional_lower_primitive_cases": 17,
+    "lower_primitives": "Permission/EIO process reads, unavailable proc accounting, duplicate disk/native JSON, exact control-file read faults, missing existing native lock without recreation, real live child without signaling, and expiry beneath the original cutoff. Original product/helper methods remain bound; lower primitives exercise the real paths.",
+    "prior43_binding_native_and_diagnostic_cases": 43,
+    "total": 60
+  },
+  "date": "2026-11-10",
+  "evidence_id": "productive-native-closure-focused60-20261110",
+  "focused60": {
+    "JUnit_seconds": 62.957,
+    "JUnit_timestamp": "2026-11-09T23:52:26.836105+00:00",
+    "artifact_bytes": 692121,
+    "claim_id": "572d506a95614ab59cfe670aba1df5ef",
+    "complete_owned_attempt_full9_hash_inventory": true,
+    "errors": 0,
+    "failures": 0,
+    "functions": 15,
+    "manifest_self_files": 1,
+    "nine_operational_full9_unchanged": true,
+    "normal_original_Popen_wait_native_process_Source_closed": true,
+    "ordinary_scratch_observation": {
+      "live_exception_active": false,
+      "ordinary_absences_observed": 0,
+      "request_sha256": "7957cea5179579f1df3417ff9de548baea6f39e08a4a8ca862aca21c11d78375",
+      "schema": "owned-validation-ordinary-scratch-live/v1",
+      "unseen_leaf_ownership_attested": false,
+      "whole_census_resampling": false
+    },
+    "ordinary_single_link_files": 314,
+    "original_custody_errors": [],
+    "request_sha256": "7957cea5179579f1df3417ff9de548baea6f39e08a4a8ca862aca21c11d78375",
+    "runtime_source_pins_unchanged": 236,
+    "sealed_rows": 313,
+    "skips": 0,
+    "storage_durably_released": true,
+    "storage_promise_bytes": 16777216,
+    "tests": 60,
+    "tool_final_chunk": "5ea1ac",
+    "tool_returncode": 0
+  },
+  "history_preserved": {
+    "all_prior_qualification_generations": "Keep namespace62/c99, Host214/ff56 and recovery408/6f84 as separate measured generations; no pooled counts. Earlier immutable capsules remain unchanged.",
+    "capture_identity_tightening": "Current160fa read-only capture joins complete final walk full9 to first verified seal/self full9, preventing same-byte inode/mode substitution between reads. No test, resource or permission change.",
+    "capture_v01": "The first completed GREEN60 capture refused stale three-doc guards (005cb1); the actual runtime was not rerun. Fresh598 permits only latest three maintained-doc updates; all9 operations and README/ARCH/BACKLOG stay exact.",
+    "failed_claims": "Keep original failed539 ACTIVE full16MiB317e claim, unknown historic retention cause and exceptional kernel SourceFD closeout. All earlier retained failures and intended RED claims remain unchanged.",
+    "peer_progress": "Preserve latest decoder resume pointer, complete prose tails, current catalog components/evidence, all24ordered task statuses/holds; current598 context is subordinate to latest WRITE beforeimages.",
+    "tests_admission": "Earlier Source preentry timeouts caused no mutations. Final test-only v03 reused the same3s bound after passive foreign-reader readiness; no foreign signal or budget widening."
+  },
+  "limits": [
+    "Focused15function/60case canonical API software only; no complete SDK664 or original420 parent/selected539/native-family activation qualification.",
+    "The private150s real-CLI positive is distinct from genuine standard420 supervisor-parent integration.",
+    "Zero ordinary absences supplies no unseen ownership/type/timing or resampling authority.",
+    "No model training/weights/checkpoint, decoder accuracy, statutory fidelity or Lean corpus admission."
+  ],
+  "pinned_source_sha256": {
+    "CLI": "8e7fd9e15c1f6d9024648b9a9f67df81518414cf644fe82099653b50c35888f6",
+    "Host": "ff56d3c02148fbcd2aeffcd603232edde831be12218fa1e2765694aa71d03b1f",
+    "Host_tests": "5b2c7bea84f1306160acfc11aa415048443fb81f7461396a01e712387e5fc256",
+    "SDK": "11e5110aa8dcf39c5b11c0bd06a6d02933052e917fa46bf6d53a5467107d6def",
+    "SDK_tests": "dc0192045c46021a74eaf829f090ccd9c4275fc6e14477748d34b9cf6eb61c4c",
+    "Source42": "42e9f07d0d458177079269d9f495f0b70512180c1adc2f7fe0bfdb05518a12f9",
+    "peer_worker": "38b496bf74f80b477d91af98f2ffb7559b0cdde6983a8b3d0672eae5990f6a26",
+    "recovery": "6f84df5d178f7a80b6f727f3c97fd7b2da83c3bbb037f0f914082a6498a33e25",
+    "recovery_tests": "f42b7f29c71cb3aa313de5f82337e87f255ca1b18bd86517f711b4f6afe09a33"
+  },
+  "qualified_interface": {
+    "caller_prerequisite": "A genuine retained original Popen/wait, original absolute cutoff and held Source contexts must be supplied by the caller; serialized metadata alone does not prove those facts.",
+    "canonical_CLI_installed": true,
+    "contract": "Exact V5 request/terminal/witness/current own ACTIVE row/full promise, source pins, selected original lease/request/observed ancestry; repeated existing read-only native/process absence. Duplicate/nonfinite JSON, IO/permission/unavailable/live/reused-process/native/source/row/deadline uncertainty remains closed=False. No lock creation, admission, census, claim write/release/retry or new deadline.",
+    "pure_binding_gate": "_productive_native_closed_profile_v1",
+    "read_only_inspector": "inspect_owned_validation_productive_native_closed_v1",
+    "source_custody_closed_field": true,
+    "storage_release_authorized_field": false,
+    "success_verdict": "proven_original_productive_native_closed_storage_separate"
+  },
+  "real_private_positive": {
+    "failure_returncode": 7,
+    "native_acquisitions_asserted": 1,
+    "native_lease_released": true,
+    "new_standard420_parent_qualification": false,
+    "original_CLI_returncode": 1,
+    "scope": "Actual original CLI via subprocess.Popen, one real private native grant and child; real held retention ledger lock reaches unchanged existing60s timeout. Genuine owner wait and API use the same original150s cutoff. Source API returns closed=True/storage-release=False, while own ACTIVE full nondurable claim and scheduler bytes remain unchanged.",
+    "tests": 1
+  },
+  "references": {
+    "CLI_adoption_review": {
+      "bytes": 1922,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/phase2-CLI-product-after-intended-RED-source-adoption-v01/reviewed-actual-CLI-only-adoption-and-fourteen-guards-v01.json",
+      "sha256": "9547254d8a3e5eaee9b98db03f815906b957a0358fb17363599653021d1a96a4"
+    },
+    "actual_CLI_adoption": {
+      "bytes": 4503250,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/phase2-CLI-product-after-intended-RED-source-adoption-v01/Sourceclosed-actual-phase2-CLI-only-product-adoption-v01.json",
+      "sha256": "d2776c79daf66d94946adde77bcacd5335e95d3f4ac422ebe88c5f5a044a51e8"
+    },
+    "actual_focused60": {
+      "bytes": 360763,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/productive-native-closure-focused60-GREEN-input-v01/Root-actual-focused60-qualified-output-custody-and-durability-v02.json",
+      "sha256": "412cbeff5ef8ca11597142a477051fef0f6c5d886b4dea1c03e2dbfc8c2aafd7"
+    },
+    "actual_intended_RED": {
+      "bytes": 84833,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/productive-native-closure-missing-API-RED1-input-v01/Root-actual-intended-productive-missing-API-RED1-output-custody-v01.json",
+      "sha256": "26fc14eb0c00a7aa086c8815e3d597b25c1db9038862e544f620a98e8694f5ef"
+    },
+    "actual_tests_adoption": {
+      "bytes": 4798560,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/phase2-SDK-owning-tests-first-source-adoption-v03/Sourceclosed-actual-phase2-SDK-owning-test-only-adoption-v01.json",
+      "sha256": "8a0df5162c6ef69862bbda0d14b7cf4277d806b2bda4722c59d787e854aa6315"
+    },
+    "independent_focused60_review": {
+      "bytes": 4375,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/productive-native-closure-focused60-GREEN-input-v01/independent-actual-focused60-custody-durability-review-v01.json",
+      "sha256": "94d7390d18cb3348f68190ec157b653f8f4a8af7951f4f62d53b12a3d07927b2"
+    },
+    "independent_intended_RED_review": {
+      "bytes": 1961,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/productive-native-closure-missing-API-RED1-input-v01/independent-actual-intended-productive-missing-API-RED1-review-v01.json",
+      "sha256": "449e4f4ff895c089c38b14ec63238d399a76e8d5c4131ed7f8a9d874f54bb5aa"
+    },
+    "limited_parent_static_review": {
+      "bytes": 3212,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/cleanup-diagnostics-and-productive-source-closure-private-v01/independent-limited-phase2-existing-parent-callsite-review-v01.json",
+      "sha256": "da10237e565cbbcfdb19080817bdbdd201be1627cb4741e60f5dc5e17b2dc77a"
+    },
+    "private_cleanup_review": {
+      "bytes": 3158,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/SDK-legacy-source-snapshot-fixture-cleanup-private-v01/independent-six-source-snapshot-fixture-cleanup-static-review-v01.json",
+      "sha256": "22376804ba200ee46217443177fdb051e9eafc7e46c064925b04a14e4aafeed7"
+    },
+    "private_unadopted_cleanup_proposal": {
+      "bytes": 5782,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/SDK-legacy-source-snapshot-fixture-cleanup-private-v01/proposal-manifest-v01.json",
+      "sha256": "e71030f17504cef1770986a28de42397faf6c4d3c14ff49066a671dd509981fe"
+    },
+    "reviewed_private_API_tests_parent_proposal": {
+      "bytes": 12726,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/cleanup-diagnostics-and-productive-source-closure-private-v01/phase2-productive-native-closure-proposal-v04.json",
+      "sha256": "7c69da7fa69166f223640655cea1aa014459ad91a978e650a7648f8823534cca"
+    },
+    "tests_adoption_review": {
+      "bytes": 1982,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/phase2-SDK-owning-tests-first-source-adoption-v03/reviewed-actual-tests-only-adoption-and-fourteen-guards-v01.json",
+      "sha256": "e4335d6eb280ee8c6a0ae3d58552ec8f3329c2cde9cc19c31668758a12026faf"
+    }
+  },
+  "schema": "legal-ir-current-productive-native-closure-focused60-software-evidence/v1",
+  "status": "CANONICAL_CLI_API_FOCUSED60_SOFTWARE_QUALIFIED_PARENT_PENDING",
+  "unqualified_frontier": {
+    "existing_tasks": [
+      "LIR-03",
+      "LIR-22"
+    ],
+    "native_family_profile_activation_qualified": false,
+    "new_standard420_parent_qualified": false,
+    "next_tasks": [
+      "Select and qualify the genuine original420 Source-held parent route on exact current sources, retaining full failed storage and denying closure for unknown wait/native/process proof.",
+      "If explicitly selected, adopt reviewed SDK six-case cleanup under fresh Source CAS and run whole664 current owning regression; focused60 does not qualify the old604 cases.",
+      "Then assemble the selected539 immutable root with the seven reviewed fixture-case ports, fresh namespace directory/process identities and exact collected ordering; preserve all IDs/assertions and selected698/a13/H origins.",
+      "Separate genuine selected native-family/profile qualification still precedes runtime activation."
+    ],
+    "parent_installed": false,
+    "private_cleanup_bad66_adopted": false,
+    "private_cleanup_scope": "Reviewed one-function six-case finally cleanup preserves real unsafe fixtures, all60 new controls and static221functions/664cases. It remains PRIVATE/unadopted and requires explicit later Root selection/fresh CAS.",
+    "private_parent": "3eb8 afterimage retains old request constants; needs a fresh current-source packet and genuine original420 integration qualification.",
+    "selected539_new_root_qualified": false,
+    "whole_SDK664_qualified": false
+  }
+}

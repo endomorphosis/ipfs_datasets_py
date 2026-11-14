@@ -179,6 +179,31 @@ def test_invalid_job_template_is_refused(tmp_path: Path) -> None:
 def test_loop_population_carries_dispatch_into_duckdb(tmp_path: Path) -> None:
     from ipfs_accelerate_py.agent_supervisor.task_sources.database_task_source import DatabaseTaskSource
     from ipfs_datasets_py.logic.autoformal.supervisor_loop import ingest_population
+    import duckdb
+    from ipfs_accelerate_py.agent_supervisor.task_sources.control_plane_schema import (
+        DATASETS_AUTHORITATIVE_OPERATIONAL_PROFILE_ID,
+        install_datasets_authoritative_operational_schema,
+        verify_datasets_authoritative_operational_schema,
+    )
+
+    # Small persisted fixture: choose file blocks before the original owner
+    # installs its schema; its connection policy and all assertions stay intact.
+    database = tmp_path / "control.duckdb"
+    assert not database.exists()
+    with duckdb.connect(str(database), config={"default_block_size": "16384", "threads": "1"}) as seed:
+        seed.execute("CHECKPOINT")
+        size = seed.execute("PRAGMA database_size")
+        sizes = dict(zip((column[0] for column in size.description), size.fetchone(), strict=True))
+        assert sizes["block_size"] == 16384
+
+    # Dispatch persistence uses the existing datasets-authoritative operational
+    # schema; semantic/AST/proof truth stays in the datasets owner.
+    install_datasets_authoritative_operational_schema(database)
+    profile = verify_datasets_authoritative_operational_schema(database)
+    assert profile["valid"] is True
+    assert profile["profile_id"] == DATASETS_AUTHORITATIVE_OPERATIONAL_PROFILE_ID
+    assert profile["forbidden_relations"] == []
+    assert profile["forbidden_contracts"] == []
 
     agreement = {
         "rows": [
@@ -216,6 +241,13 @@ def test_loop_population_carries_dispatch_into_duckdb(tmp_path: Path) -> None:
         assert all(body.get("admitted") is False for body in bodies)
         assert all(body.get("formalized") is False for body in bodies)
         assert all(body.get("wrote_compiler") is False for body in bodies)
+
+    assert database.is_file()
+    with DatabaseTaskSource(database, install_schema=False) as reopened:
+        persisted = reopened.list_tasks(limit=10).tasks
+        assert [(record.task_cid, dict(record.body)) for record in persisted] == [
+            (record.task_cid, dict(record.body)) for record in records]
+
 
 
 def test_supervisor_loop_stamps_train_and_edit_on_population(tmp_path: Path) -> None:
@@ -265,3 +297,137 @@ def test_review_todos_stay_off_the_compiler() -> None:
     assert "compiler/decompiler" in task["conflict_policy"] or "do not write compiler" in task["conflict_policy"]
     assert not task.get("packet_sha256")
     assert not task.get("training_job")
+
+
+def _reviewed_dispatch_metadata_case(tmp_path, monkeypatch):
+    """Isolated DATA-binding fixture; no model or native owner is exercised."""
+    from copy import deepcopy
+    from ipfs_datasets_py.logic.autoformal import supervisor_dispatch as dispatch
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_inference as inference
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_training_worker as worker
+    reference = worker.CheckpointArtifact(str(tmp_path / "reviewed-request.json"), "1" * 64, 2)
+    offered = {"path": reference.path, "sha256": reference.sha256, "bytes": reference.bytes}
+    task = {"task_id": "LIR-existing-review", "task_cid": "fixture:original-task-cid", "revision": 19,
+        "spec_cid": "fixture:original-spec", "goal_cid": "fixture:original-goal", "status": "blocked",
+        "claims": [], "attempt": 2, "max_attempts": 2, "depends_on": ["fixture:original-dependency"],
+        "work_kind": dispatch.WORK_KIND_REVIEWED_EVALUATION, "operator_hold": True,
+        "historical_provider_outcome": "UNKNOWN", "admitted": False, "formalized": False}
+    request = {"schema": "reviewed-source-evaluation-request/v1", "request_id": task["task_id"],
+               "operation": "heldout_evaluation"}
+    observed = []
+    def read_request(value):
+        observed.append(deepcopy(value))
+        assert value == offered
+        return reference, b"{}", deepcopy(request)
+    monkeypatch.setattr(inference, "_read_reviewed_evaluation_request", read_request)
+    return dispatch, inference, worker, task, request, reference, offered, observed
+
+
+def test_reviewed_evaluation_dispatch_unconfigured_runtime_refuses_before_packet_or_effects(monkeypatch):
+    from ipfs_datasets_py.logic.autoformal import supervisor_dispatch as dispatch
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_inference as inference
+    def forbidden(*args, **kwargs):
+        pytest.fail("unconfigured reviewed dispatch accessed packet or effect owner")
+    monkeypatch.setattr(inference, "_read_reviewed_evaluation_request", forbidden)
+    with pytest.raises(dispatch.SupervisorDispatchError, match="runtime"):
+        dispatch.execute_reviewed_evaluation_task({"task_id": "existing", "reviewed_evaluation": {}},
+                                                 reviewed_parent_runtime=None)
+
+
+def test_reviewed_evaluation_binding_preserves_existing_native_identity_history_and_hold(tmp_path, monkeypatch):
+    from copy import deepcopy
+    dispatch, _, _, task, _, _, offered, observed = _reviewed_dispatch_metadata_case(tmp_path, monkeypatch)
+    before = deepcopy(task)
+    bound = dispatch.bind_reviewed_evaluation_task(task, offered)
+    assert task == before and bound is not task
+    assert set(bound) == set(before) | {"reviewed_evaluation"}
+    assert {key: bound[key] for key in before} == before
+    binding = bound["reviewed_evaluation"]
+    assert binding["schema"] == dispatch.REVIEWED_EVALUATION_BINDING_SCHEMA
+    assert binding["entrypoint"] == "scripts/ops/legal_ir/run_incremental_autoencoders.py"
+    assert binding["request_artifact"] == offered and binding["requires_live_parent_runtime"] is True
+    assert binding["operation"] == "heldout_evaluation"
+    assert observed == [offered]
+    # Binding the same bytes is idempotent metadata, never another attempt.
+    assert dispatch.bind_reviewed_evaluation_task(bound, offered) == bound
+    assert bound["attempt"] == 2 and bound["max_attempts"] == 2 and bound["operator_hold"] is True
+    assert bound["status"] == "blocked" and bound["historical_provider_outcome"] == "UNKNOWN"
+
+
+@pytest.mark.parametrize("damage", ["missing_work_kind", "training_work_kind", "missing_id", "blank_id"])
+def test_reviewed_evaluation_binding_requires_explicit_existing_work_kind_before_packet(tmp_path, monkeypatch, damage):
+    dispatch, inference, _, task, _, _, offered, _ = _reviewed_dispatch_metadata_case(tmp_path, monkeypatch)
+    if damage == "missing_work_kind":
+        del task["work_kind"]
+    elif damage == "training_work_kind":
+        task["work_kind"] = dispatch.WORK_KIND_TRAIN
+    elif damage == "missing_id":
+        del task["task_id"]
+    else:
+        task["task_id"] = " "
+    def forbidden(*args, **kwargs):
+        pytest.fail("invalid task metadata reached request reader")
+    monkeypatch.setattr(inference, "_read_reviewed_evaluation_request", forbidden)
+    with pytest.raises(dispatch.SupervisorDispatchError, match="existing task ID"):
+        dispatch.bind_reviewed_evaluation_task(task, offered)
+
+
+def test_reviewed_evaluation_binding_refuses_request_for_another_native_task(tmp_path, monkeypatch):
+    from copy import deepcopy
+    dispatch, _, _, task, request, _, offered, _ = _reviewed_dispatch_metadata_case(tmp_path, monkeypatch)
+    before = deepcopy(task)
+    request["request_id"] = "different-existing-task"
+    with pytest.raises(dispatch.SupervisorDispatchError, match="existing native task ID"):
+        dispatch.bind_reviewed_evaluation_task(task, offered)
+    assert task == before
+
+
+def test_reviewed_evaluation_binding_never_implicitly_rebinds_or_rearms(tmp_path, monkeypatch):
+    from copy import deepcopy
+    dispatch, inference, worker, task, request, _, offered, _ = _reviewed_dispatch_metadata_case(tmp_path, monkeypatch)
+    bound = dispatch.bind_reviewed_evaluation_task(task, offered)
+    before = deepcopy(bound)
+    replacement = worker.CheckpointArtifact(str(tmp_path / "new-review.json"), "2" * 64, 2)
+    new_descriptor = {"path": replacement.path, "sha256": replacement.sha256, "bytes": replacement.bytes}
+    monkeypatch.setattr(inference, "_read_reviewed_evaluation_request",
+                        lambda value: (replacement, b"{}", deepcopy(request)))
+    with pytest.raises(dispatch.SupervisorDispatchError, match="no implicit rebind or retry"):
+        dispatch.bind_reviewed_evaluation_task(bound, new_descriptor)
+    assert bound == before and bound["status"] == "blocked" and bound["attempt"] == 2
+
+
+@pytest.mark.parametrize("field,value", [
+    ("entrypoint", "untrusted/alternate-evaluator.py"),
+    ("request_schema", "untrusted-schema/v1"),
+    ("operation", "training"),
+    ("requires_live_parent_runtime", False),
+])
+def test_reviewed_evaluation_execute_refuses_corrupt_binding_before_fixed_import(tmp_path, monkeypatch, field, value):
+    import time
+    from copy import deepcopy
+    dispatch, inference, _, task, _, _, offered, _ = _reviewed_dispatch_metadata_case(tmp_path, monkeypatch)
+    bound = dispatch.bind_reviewed_evaluation_task(task, offered)
+    bound["reviewed_evaluation"][field] = value
+    before = deepcopy(bound)
+    guarded = []
+    # The negative metadata boundary must refuse before consulting this unused
+    # object as an owner. It supplies no fake execution or native qualification.
+    runtime = inference.ReviewedInferenceParentRuntime(object(), lambda: guarded.append(True),
+        lambda policy: pytest.fail("binding refusal reached asset policy"),
+        lambda: pytest.fail("binding refusal reached admission provider"), time.monotonic() + 60)
+    with pytest.raises(dispatch.SupervisorDispatchError, match="no implicit rebind or retry|binding changed"):
+        dispatch.execute_reviewed_evaluation_task(bound, reviewed_parent_runtime=runtime)
+    assert guarded and bound == before
+    assert not (tmp_path / "outputs").exists()
+
+
+def test_reviewed_evaluation_optin_preserves_strict_frozen_v6_training_default(tmp_path):
+    from ipfs_datasets_py.logic.autoformal import supervisor_dispatch as dispatch
+    assert dispatch.TRAINING_JOB_SCHEMA == "autoencoder-training-job-v6"
+    assert dispatch.classify_work("inference_still_failing") == (dispatch.WORK_KIND_TRAIN,)
+    legacy = _v6_template(tmp_path / "legacy-v6.json")
+    assert dispatch.bind_job_template(legacy)["schema_version"] == dispatch.TRAINING_JOB_SCHEMA
+    unsupported = tmp_path / "reviewed-training-v9.json"
+    unsupported.write_text(json.dumps({"schema_version": "autoencoder-training-job-v9-reviewed-legal-ir"}))
+    with pytest.raises(dispatch.SupervisorDispatchError, match="autoencoder-training-job-v6"):
+        dispatch.bind_job_template(unsupported)

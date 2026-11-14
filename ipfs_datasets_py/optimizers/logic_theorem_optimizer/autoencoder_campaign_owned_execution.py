@@ -517,3 +517,239 @@ def _execute_prepared_campaign_training(registry, request_artifact, *, max_new_b
 
 
 __all__ = ["execute_prepared_campaign_training"]
+
+
+F18_STATUS_SCHEMA = "autoencoder-campaign-owned-f18-status/v1"
+
+
+def _f18_output_inventory(spec, *, complete=False):
+    output = Path(spec.output_directory)
+    if not os.path.lexists(output):
+        _require(not complete, "F18 output is missing")
+        return None, 0
+    output = _safe_path(output, directory=True)
+    info = output.stat()
+    if complete:
+        entries = list(output.iterdir())
+        _require(len(entries) == 3 and {p.name for p in entries} == {
+            "checkpoint.json", "report.json", "receipt.json"}, "fixed F18 output inventory differs")
+        for path in entries:
+            _safe_path(path)
+    return (info.st_dev, info.st_ino), _inventory([output], strict=True)["apparent_bytes"]
+
+
+def _f18_verify_artifacts(spec, receipt, job_artifact):
+    owner = preparation._f18_owner()
+    receipt = owner.validate_receipt(spec, receipt, job_file_sha256=job_artifact["sha256"])
+    _f18_output_inventory(spec, complete=True)
+    for key, maximum in (("checkpoint", owner.MAX_CHECKPOINT_BYTES), ("report", owner.MAX_REPORT_BYTES)):
+        owner._read_descriptor(receipt[key], maximum, retain=False)
+    path = _safe_path(Path(spec.output_directory) / "receipt.json")
+    raw = coordinator._read_bounded(path, owner.MAX_RECEIPT_BYTES)
+    _require(raw == owner._canonical(receipt), "persisted F18 receipt differs from worker result")
+    descriptor = {"path": str(path), "bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest()}
+    preparation._read_bound(path, {key: descriptor[key] for key in ("bytes", "sha256")})
+    return receipt, descriptor
+
+
+def execute_prepared_f18_conditions_training(request, *, expected_request_sha256):
+    """Fixed original-owner path; source/purpose admission belongs to the caller.
+
+    A request/preparation is not a resource grant. Prior output or journal is
+    explicit recovery, never an automatic resume or a fresh consumed start.
+    """
+    return _execute_f18_conditions_training(request, expected_request_sha256=expected_request_sha256)
+
+
+def _execute_prepared_f18_conditions_training_for_test(request, *, expected_request_sha256,
+                                                      reservation_factory, executor_factory, input_check):
+    """Fixture-only adapters never establish payload integrity or native credit.
+
+    input_check must return None. It can inject a lifecycle failure, but cannot
+    present cached metadata as a native resource grant or verified input bytes.
+    """
+    _require(all(callable(value) for value in (reservation_factory, executor_factory, input_check)),
+             "explicit test adapters required")
+    return _execute_f18_conditions_training(request, expected_request_sha256=expected_request_sha256,
+                                           _test_adapters=(reservation_factory, executor_factory, input_check))
+
+
+def _execute_f18_conditions_training(request, *, expected_request_sha256, _test_adapters=None):
+    _require(type(expected_request_sha256) is str and len(expected_request_sha256) == 64
+             and all(char in "0123456789abcdef" for char in expected_request_sha256),
+             "independent F18 request SHA-256 required")
+    started = time.monotonic()
+    request, digest, spec = preparation._f18_request(request, expected_sha256=expected_request_sha256)
+    owner, sources = preparation._f18_owner(), preparation._f18_sources()
+    policy, resource = request["execution_policy"], request["resource_policy"]
+    output, journal_path = Path(request["output_root"]), Path(request["journal_path"])
+    _require(not os.path.lexists(output) and not os.path.lexists(journal_path),
+             "existing F18 output/journal requires explicit recovery")
+    _require(resource["storage_bytes"] >= 2 * MAX_JOURNAL_BYTES, "F18 journal allowance exceeds storage")
+    deadline = started + policy["timeout_seconds"]
+    native = _test_adapters is None
+    if native:
+        from .autoencoder_campaign_process import _CampaignProcessExecutor
+        factory, executor_factory = DaemonResourceReservation, _CampaignProcessExecutor
+    else:
+        _require(type(_test_adapters) is tuple and len(_test_adapters) == 3
+                 and all(callable(x) for x in _test_adapters), "explicit test adapters required")
+        factory, executor_factory, input_check = _test_adapters
+    reservation = factory(resource["ledger_path"], roots=resource["roots"], storage_bytes=resource["storage_bytes"],
+        memory_mb=resource["memory_mb"], cpu_slots=resource["cpu_slots"], child_process_slots=1,
+        require_existing_ledger=True, scheduler_state_path=resource["scheduler_state_path"],
+        expected_scheduler_policy_sha256=resource["expected_scheduler_policy_sha256"],
+        timeout_seconds=0, ledger_lock_timeout_seconds=5)
+    if native:
+        _require(type(reservation) is DaemonResourceReservation
+                 and all(name not in reservation.__dict__ for name in ("_usage_inventory", "heartbeat", "cancelled")),
+                 "literal original F18 reservation/default monitor and lease methods required")
+    token = str(reservation.reservation_id)
+    _require(0 < len(token) <= 128 and all(x.isalnum() or x in "_-" for x in token), "invalid F18 reservation identity")
+    attempt = output.parent / (".f18-attempt-" + digest[:16] + "-" + token)
+    _safe_path(attempt, directory=True, missing=True)
+    _require(not os.path.lexists(attempt) and any(Path(root) in attempt.parents for root in resource["roots"]),
+             "F18 attempt must be exclusive and inside charged roots")
+    info = output.parent.stat()
+    parent_identity = (info.st_dev, info.st_ino)
+    executor, output_identity = None, None
+    high_water, charges = 0, 0
+    last_heartbeat = None
+    binding = {"schema_version": preparation.F18_REQUEST_SCHEMA, "request_sha256": digest,
+               "run_id": spec.run_id, "job_spec_sha256": spec.canonical_sha256}
+
+    def time_left():
+        remaining = deadline - time.monotonic()
+        _require(remaining > 0, "owned F18 wall deadline exhausted")
+        return remaining
+
+    def renew(*, force=False):
+        nonlocal last_heartbeat
+        # Cancellation is checked even when renewal is throttled. A successful
+        # renewal does not establish that the original grant was not cancelled.
+        _require(reservation.cancelled() is False, "F18 resource cancellation state is not clear")
+        now = time.monotonic()
+        if force or last_heartbeat is None or now - last_heartbeat >= 5:
+            _require(reservation.heartbeat() is True, "F18 resource heartbeat was not confirmed")
+            last_heartbeat = time.monotonic()
+        _require(reservation.cancelled() is False, "F18 resource cancellation state is not clear")
+
+    def guard(*, payload=False, force_heartbeat=False):
+        time_left()
+        renew(force=force_heartbeat)
+        _require(_same(sources, preparation._f18_sources()), "fixed F18 controller sources changed")
+        current = preparation._f18_job_artifact(request["job_artifact"])
+        _require(current.canonical_sha256 == spec.canonical_sha256, "F18 job metadata changed")
+        parent = output.parent.stat()
+        _require(parent_identity == (parent.st_dev, parent.st_ino), "F18 output parent changed")
+        if payload:
+            if native:
+                verified = owner.validate_job_inputs(spec)
+                _require(verified["job_spec_sha256"] == spec.canonical_sha256 and verified["input_bytes_verified"] is True
+                         and verified["runtime_grant"] is False, "F18 input integrity boundary differs")
+            else:
+                _require(input_check(spec) is None, "test input check cannot grant input integrity")
+        # Input/source reads may take time; never dispatch on an aged renewal.
+        time_left()
+        renew()
+
+    def observe_output():
+        nonlocal output_identity, high_water, charges
+        guard()
+        identity, size = _f18_output_inventory(spec)
+        if identity is not None:
+            _require(output_identity is None or output_identity == identity, "F18 output identity changed")
+            output_identity = identity
+        if size > high_water:
+            charges += 1
+            reservation.account_external_bytes(f"f18-output-{charges:06d}", size - high_water)
+            high_water = size
+
+    with reservation:
+        try:
+            guard(payload=True, force_heartbeat=True)
+            attempt.mkdir(mode=0o700)
+            reservation.account_external_bytes("f18-owner-journal", 2 * MAX_JOURNAL_BYTES)
+            reservation.check_usage(attempt)
+            _require(not os.path.lexists(journal_path), "existing F18 journal requires explicit recovery")
+            with DurableDaemonOperationJournal(journal_path, binding, create=True) as journal:
+                _require(not journal.operations() and journal.get_metadata("f18-start") is None
+                         and journal.get_metadata("f18-prepared") is None, "F18 journal is not pristine")
+                journal.set_metadata("f18-prepared", {"request_sha256": digest, "job_artifact": request["job_artifact"],
+                    "execution_mode": "native_training" if native else "injected_test"})
+                journal.set_metadata("f18-resource", {"reservation_id": token, "attempt_directory": str(attempt)})
+
+                def record_start(current, lease, artifact):
+                    guard(payload=True, force_heartbeat=True)
+                    _require(current.canonical_sha256 == spec.canonical_sha256
+                             and _same(lease, {"run_id": spec.run_id, "request_sha256": digest})
+                             and _same(artifact, request["job_artifact"])
+                             and journal.get_metadata("f18-start") is None, "F18 consumed start cannot repeat")
+                    journal.set_metadata("f18-start", {"state": "intent", "lease": lease, "job_artifact": artifact,
+                        "execution_mode": "native_training" if native else "injected_test"})
+
+                def record_child(current, lease, artifact, identity):
+                    guard(payload=True, force_heartbeat=True)
+                    prior = journal.get_metadata("f18-start")
+                    _require(prior is not None and prior["state"] == "intent" and _same(prior["lease"], lease)
+                             and _same(prior["job_artifact"], artifact), "F18 child/start binding differs")
+                    journal.set_metadata("f18-start", {**prior, "state": "observed", "child": identity})
+
+                executor = executor_factory(record_start=record_start, record_child=record_child,
+                    timeout_seconds=time_left(), max_workers=1, defer_target_hydration_gc=False, reduce_native_targets=False)
+                executor.register_f18(spec, reservation=reservation, attempt_directory=attempt,
+                                      job_artifact=request["job_artifact"], usage_check=observe_output)
+                future = executor.submit(spec, lease={"run_id": spec.run_id, "request_sha256": digest},
+                                         job_artifact=request["job_artifact"])
+                while not future.done():
+                    guard()
+                    executor.poll()
+                    reservation.check_usage(attempt)
+                    if not future.done():
+                        time.sleep(min(policy["poll_seconds"], time_left()))
+                guard(force_heartbeat=True)
+                receipt, receipt_artifact = _f18_verify_artifacts(spec, future.result(), request["job_artifact"])
+                guard(payload=True, force_heartbeat=True)
+                observe_output()
+                reservation.check_usage(attempt)
+                observed = journal.get_metadata("f18-start")
+                _require(observed is not None and observed["state"] == "observed", "F18 child was never observed")
+                executor.retire(spec)
+                executor.close()
+                executor = None
+                journal.set_metadata("f18-terminal", {"status": receipt["status"], "receipt_artifact": receipt_artifact,
+                    "requested_steps": receipt["requested_steps"], "completed_steps": receipt["completed_steps"]})
+                for directory in (attempt, output, journal_path.parent):
+                    fd = os.open(directory, os.O_RDONLY | os.O_DIRECTORY)
+                    try:
+                        os.fsync(fd)
+                    finally:
+                        os.close(fd)
+                guard(payload=True, force_heartbeat=True)
+                reservation.check_usage(attempt)
+                _f18_verify_artifacts(spec, receipt, request["job_artifact"])
+                journal.set_metadata("f18-release-intent", {"reservation_id": token})
+                guard(force_heartbeat=True)
+                released = reservation.finalize(attempt, artifacts_durable=True)
+                _require(released.get("status") == "released", "F18 release was not confirmed")
+                if not native:
+                    released = {**released, "injected_test": True, "input_bytes_verified": False,
+                        "native_execution_verified": False, "native_purpose_admitted": False,
+                        **{key: False for key in owner.FALSE_FIELDS}}
+                journal.set_metadata("f18-released", {"reservation_id": token, "status": "released"})
+                result = {"schema_version": F18_STATUS_SCHEMA, "request_sha256": digest, "run_id": spec.run_id,
+                    "job_spec_sha256": spec.canonical_sha256, "status": receipt["status"],
+                    "requested_steps": receipt["requested_steps"], "completed_steps": receipt["completed_steps"],
+                    "initial_progress": receipt["initial_progress"], "final_progress": receipt["final_progress"],
+                    "all_requested_steps_completed": receipt["all_requested_steps_completed"],
+                    "receipt": receipt, "receipt_artifact": receipt_artifact, "resource": released,
+                    "journal_path": str(journal_path), "attempt_directory": str(attempt),
+                    "execution_mode": "native_training" if native else "injected_test",
+                    "injected_test": not native, "input_bytes_verified": native,
+                    "native_execution_verified": native, "native_purpose_admitted": False,
+                    "controller_elapsed_seconds": time.monotonic() - started,
+                    **{key: False for key in owner.FALSE_FIELDS}}
+            return result
+        finally:
+            if executor is not None:
+                executor.close()

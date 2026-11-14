@@ -410,21 +410,37 @@ def load_checkpoint(path, expected_sha256=None, *, source_profile=None):
 # intentionally distinct from the legacy one-to-one LegalJointRetriever index.
 REVIEWED_SCHEMA = "legal-joint-retrieval-checkpoint/v2"
 REVIEWED_ARCHITECTURE = "two-linear-normalized-reviewed-masked-retrievers/v2"
+REVIEWED_V3_SCHEMA = "legal-joint-retrieval-checkpoint/v3"
+REVIEWED_V3_ARCHITECTURE = "two-linear-normalized-reviewed-masked-retrievers/v3"
 REVIEWED_MAX_ROWS = 128
 
 
-def _reviewed_owners():
+def _reviewed_contract(version="v2"):
+    _require(type(version) is str and version in ("v2", "v3"), "closed reviewed retriever admission domain required")
+    return {"schema": REVIEWED_V3_SCHEMA if version == "v3" else REVIEWED_SCHEMA,
+        "architecture": REVIEWED_V3_ARCHITECTURE if version == "v3" else REVIEWED_ARCHITECTURE,
+        "relation_scope": "full_canonical_reviewed_handoff_replay/" + version}
+
+
+def _reviewed_checkpoint_version(checkpoint):
+    _require(type(checkpoint) is dict and checkpoint.get("schema") in (REVIEWED_SCHEMA, REVIEWED_V3_SCHEMA),
+             "reviewed structural ranking requires an explicit v2 or v3 checkpoint")
+    return "v3" if checkpoint["schema"] == REVIEWED_V3_SCHEMA else "v2"
+
+
+def _reviewed_owners(_admission_version="v2"):
+    _reviewed_contract(_admission_version)
     from ...logic.formalization.autoencoder import alignment_masked_contrastive as objective
     from ...logic.formalization.autoencoder import alignment_relation_mask_handoff as handoff
     from ...logic.formalization.autoencoder import alignment_relation_declarations as declarations
-    from ...logic.autoformal import legal_norm_content_adjudication_v1 as admission
-    _require(callable(getattr(handoff, "compile_reviewed_train_relation_masks_v2", None)),
-             "the canonical reviewed relation handoff v2 is required")
+    admission = declarations._reviewed_owners(_admission_version)[0]
+    required = "compile_reviewed_train_relation_masks_" + _admission_version
+    _require(callable(getattr(handoff, required, None)), "the canonical matching reviewed relation handoff is required")
     return objective, handoff, declarations, admission
 
 
-def _reviewed_implementation():
-    owners = _reviewed_owners()
+def _reviewed_implementation(_admission_version="v2"):
+    owners = _reviewed_owners(_admission_version)
     result = {"legacy_numerical_owner": _implementation(), "reviewed_owners": {}}
     for module in owners:
         path = Path(module.__file__).resolve()
@@ -432,21 +448,22 @@ def _reviewed_implementation():
     return result
 
 
-def _reviewed_config(torch, **values):
+def _reviewed_config(torch, *, _admission_version="v2", **values):
     _require(torch.get_default_dtype() == torch.float32, "reviewed retrieval requires the float32 profile")
     result = _config(torch, **values)
-    result.update(architecture=REVIEWED_ARCHITECTURE,
-        loss="symmetric_masked_multi_positive_contrastive/v1",
-        relation_scope="full_canonical_reviewed_handoff_replay/v2")
+    contract = _reviewed_contract(_admission_version)
+    result.update(architecture=contract["architecture"],
+        loss="symmetric_masked_multi_positive_contrastive/v1", relation_scope=contract["relation_scope"])
     return result
 
 
-def _reviewed_arrays(handoff):
+def _reviewed_arrays(handoff, *, _admission_version="v2"):
     """Check a numerical asset's internal layout, without granting review authority."""
-    _, owner, _, admission = _reviewed_owners()
+    _, owner, declarations, admission = _reviewed_owners(_admission_version)
     _require(type(handoff) is dict and len(_raw(handoff)) <= MAX_BYTES // 2,
              "bounded complete reviewed training handoff required")
-    _require(handoff.get("schema") == owner.REVIEWED_SCHEMA
+    _require(handoff.get("schema") == (owner.REVIEWED_V3_SCHEMA if _admission_version == "v3" else owner.REVIEWED_SCHEMA)
+             and handoff.get("profile") == (declarations.REVIEWED_V3_PROFILE if _admission_version == "v3" else declarations.REVIEWED_PROFILE)
              and handoff.get("status") == "reviewed_objective_mask_ready"
              and handoff.get("reviewed_objective_mask_ready") is True
              and handoff.get("reviewed_pair_labels_authenticated") is True,
@@ -477,22 +494,29 @@ def _reviewed_arrays(handoff):
     return source, formal, copy.deepcopy(positive), copy.deepcopy(negative)
 
 
-def _restore_reviewed(checkpoint):
+def _restore_reviewed(checkpoint, *, _admission_version=None):
     """Restore a historical numerical asset; this does not re-admit its labels."""
+    version = _reviewed_checkpoint_version(checkpoint)
+    _require(_admission_version is None or _admission_version == version, "reviewed checkpoint admission domain differs")
+    contract = _reviewed_contract(version)
     _require(type(checkpoint) is dict and set(checkpoint) == {
         "schema", "config", "implementation", "training_handoff", "training_handoff_sha256",
         "initial_model_state_sha256", "model_state", "progress"}
-        and checkpoint["schema"] == REVIEWED_SCHEMA, "closed reviewed retrieval checkpoint required")
-    _require(checkpoint["implementation"] == _reviewed_implementation(),
+        and checkpoint["schema"] == contract["schema"], "closed reviewed retrieval checkpoint required")
+    _require(checkpoint["implementation"] == _reviewed_implementation(version),
              "reviewed retrieval source pins differ")
-    _reviewed_arrays(checkpoint["training_handoff"])
+    _reviewed_arrays(checkpoint["training_handoff"], _admission_version=version)
     _require(checkpoint["training_handoff_sha256"] == checkpoint_digest(checkpoint["training_handoff"]),
              "reviewed training handoff identity differs")
     config = checkpoint["config"]
     _require(type(config) is dict and all(key in config for key in (
         "seed", "joint_dimension", "learning_rate", "temperature")), "reviewed retrieval configuration missing")
+    _require(config.get("architecture") == contract["architecture"]
+             and config.get("relation_scope") == contract["relation_scope"]
+             and config.get("loss") == "symmetric_masked_multi_positive_contrastive/v1",
+             "reviewed config admission domain differs")
     import torch
-    expected = _reviewed_config(torch, **{key: config[key] for key in (
+    expected = _reviewed_config(torch, _admission_version=version, **{key: config[key] for key in (
         "seed", "joint_dimension", "learning_rate", "temperature")})
     _require(config == expected and _raw(config) == _raw(expected), "reviewed config/runtime differs")
     progress = checkpoint["progress"]
@@ -521,17 +545,18 @@ def _restore_reviewed(checkpoint):
 
 
 def _restore(checkpoint, *, source_profile=None):
-    if type(checkpoint) is dict and checkpoint.get("schema") == REVIEWED_SCHEMA:
-        _require(source_profile is None, "a legacy source port cannot authorize a reviewed v2 asset")
+    if type(checkpoint) is dict and checkpoint.get("schema") in (REVIEWED_SCHEMA, REVIEWED_V3_SCHEMA):
+        _require(source_profile is None, "a legacy source port cannot authorize a reviewed "
+                 + _reviewed_checkpoint_version(checkpoint) + " asset")
         return _restore_reviewed(checkpoint)
     return _restore_legacy(checkpoint, source_profile=source_profile)
 
 
-def train_reviewed_retriever(preparation, registry, policy, reviews, *,
+def _train_reviewed_retriever(preparation, registry, policy, reviews, *,
         expected_preparation_sha256, preparation_inputs, expected_registry_sha256,
         expected_policy_sha256, expected_reviews_sha256, at_time_utc,
         observed_artifact_sha256s, observed_pins, evidence_artifacts, current_endpoint_observations,
-        steps=0, seed=2718, learning_rate=.003, joint_dimension=64, temperature=.1):
+        steps=0, seed=2718, learning_rate=.003, joint_dimension=64, temperature=.1, _admission_version="v2"):
     """Fit the existing projections using a complete canonical reviewed replay.
 
     Callers own the existing resource admission for numerical execution. Mask
@@ -541,7 +566,10 @@ def train_reviewed_retriever(preparation, registry, policy, reviews, *,
     eligibility checks at the caller's admission/retrieval boundary.
     """
     _require(type(steps) is int and 0 <= steps <= 10000, "steps must be an integer in [0, 10000]")
-    objective, owner, _, _ = _reviewed_owners()
+    objective, owner, _, _ = _reviewed_owners(_admission_version)
+    contract = _reviewed_contract(_admission_version)
+    compile_masks = (owner.compile_reviewed_train_relation_masks_v3 if _admission_version == "v3"
+                     else owner.compile_reviewed_train_relation_masks_v2)
     replay = dict(expected_preparation_sha256=expected_preparation_sha256,
         preparation_inputs=preparation_inputs, expected_registry_sha256=expected_registry_sha256,
         expected_policy_sha256=expected_policy_sha256, expected_reviews_sha256=expected_reviews_sha256,
@@ -550,11 +578,11 @@ def train_reviewed_retriever(preparation, registry, policy, reviews, *,
         current_endpoint_observations=current_endpoint_observations)
     # No Torch import, model, optimizer or caller-supplied bare masks precede
     # the canonical complete replay of endpoint and independent pair reviews.
-    handoff = owner.compile_reviewed_train_relation_masks_v2(preparation, registry, policy, reviews, **replay)
-    source_rows, formal_rows, positive_rows, negative_rows = _reviewed_arrays(handoff)
-    pins = _reviewed_implementation()
+    handoff = compile_masks(preparation, registry, policy, reviews, **replay)
+    source_rows, formal_rows, positive_rows, negative_rows = _reviewed_arrays(handoff, _admission_version=_admission_version)
+    pins = _reviewed_implementation(_admission_version)
     import torch
-    config = _reviewed_config(torch, seed=seed, joint_dimension=joint_dimension,
+    config = _reviewed_config(torch, _admission_version=_admission_version, seed=seed, joint_dimension=joint_dimension,
         learning_rate=learning_rate, temperature=temperature)
     with torch.device("cpu"):
         model = _model(torch, config)
@@ -590,18 +618,18 @@ def train_reviewed_retriever(preparation, registry, policy, reviews, *,
         formal_recall = float(positive.gather(0, allowed_scores.argmax(dim=0).unsqueeze(0)).float().mean())
     # Fail if producer sources, supplied evidence, current observations or
     # review/purpose state changed while the numerical operation was running.
-    after = owner.compile_reviewed_train_relation_masks_v2(preparation, registry, policy, reviews, **replay)
+    after = compile_masks(preparation, registry, policy, reviews, **replay)
     _require(_raw(after) == _raw(handoff), "reviewed handoff changed during training")
-    _require(pins == _reviewed_implementation(), "reviewed retrieval implementation changed during training")
+    _require(pins == _reviewed_implementation(_admission_version), "reviewed retrieval implementation changed during training")
     weights = _state(model)
-    checkpoint = {"schema": REVIEWED_SCHEMA, "config": config, "implementation": pins,
+    checkpoint = {"schema": contract["schema"], "config": config, "implementation": pins,
         "training_handoff": copy.deepcopy(handoff), "training_handoff_sha256": checkpoint_digest(handoff),
         "initial_model_state_sha256": checkpoint_digest(initial), "model_state": weights,
         "progress": {"optimizer_steps": steps, "optimizer_state_retained": False}}
     _require(len(_raw(checkpoint)) <= MAX_BYTES, "reviewed retrieval checkpoint exceeds byte bound")
-    _, restored = _restore_reviewed(checkpoint)
+    _, restored = _restore_reviewed(checkpoint, _admission_version=_admission_version)
     _require(_state(restored) == weights, "reviewed checkpoint restoration changed parameters")
-    report = {"schema": "legal-joint-retrieval-training/v2", "optimizer_steps": steps,
+    report = {"schema": "legal-joint-retrieval-training/" + _admission_version, "optimizer_steps": steps,
         "source_rows": len(source_rows), "formal_rows": len(formal_rows), "losses": losses,
         "elapsed_seconds": time.monotonic() - started,
         "training_source_positive_recall_at_1": source_recall, "training_formal_positive_recall_at_1": formal_recall,
@@ -757,8 +785,7 @@ class ReviewedLegalJointRetriever:
         _require(type(expected_checkpoint_sha256) is str and _SHA.fullmatch(expected_checkpoint_sha256)
                  and checkpoint_digest(checkpoint) == expected_checkpoint_sha256,
                  "selected reviewed checkpoint digest differs")
-        _require(type(checkpoint) is dict and checkpoint.get("schema") == REVIEWED_SCHEMA,
-                 "reviewed structural ranking requires an explicit v2 checkpoint")
+        _reviewed_checkpoint_version(checkpoint)
         self._checkpoint = copy.deepcopy(checkpoint)
         self._checkpoint_sha256 = expected_checkpoint_sha256
         self._torch, self._model = _restore_reviewed(self._checkpoint)
@@ -767,7 +794,8 @@ class ReviewedLegalJointRetriever:
     def _integrity(self):
         _require(checkpoint_digest(self._checkpoint) == self._checkpoint_sha256,
                  "reviewed ranking checkpoint mutated")
-        _require(self._checkpoint["implementation"] == _reviewed_implementation(),
+        _require(self._checkpoint["implementation"] == _reviewed_implementation(
+            _reviewed_checkpoint_version(self._checkpoint)),
                  "reviewed ranking source pins changed")
         _require(checkpoint_digest(_state(self._model)) == self._state_sha256,
                  "reviewed ranking parameters mutated")
@@ -792,7 +820,7 @@ class ReviewedLegalJointRetriever:
         """
         from ...logic.formalization.autoencoder import alignment_lane_bundle as lanes
         from . import legal_ir_eval_splits as splits
-        _require(mode in ("raw", "joint", "random"), "unsupported reviewed ranking mode")
+        _require(mode in ("raw", "joint", "random", "lexical"), "unsupported reviewed ranking mode")
         _require(type(top_k) is int and 1 <= top_k <= 16, "top_k must be in [1, 16]")
         _require(expected_query_split in splits.PROTECTED_LEGAL_IR_SPLITS,
                  "one explicit protected query split is required")
@@ -828,18 +856,23 @@ class ReviewedLegalJointRetriever:
         lane = frozen["query_source_lane"]
         lane_check = lanes.validate_lane_bundle(lane, expected_bindings=frozen["expected_query_lane_bindings"])
         _require(lane_check["profile_sha256"] == self._checkpoint["training_handoff"]["source_profile_sha256"]
-                 and lane_check["dimension"] == INPUT_DIMENSION and lane_check["stage"] == "raw_embedding"
+                 and lane_check["dimension"] == INPUT_DIMENSION
+                 and lane_check["stage"] in {"raw_embedding", lanes.COMPLETE_COMPOSITION_STAGE}
+                 and lane_check["stage"] == self._checkpoint["training_handoff"]["source_representation_profile"]["stage"]
                  and lane["profile"]["inference_input_recipe"] == "exact_source_only/v1",
                  "query lane must use the exact source-only native384 representation profile")
-        _, owner, _, _ = _reviewed_owners()
+        version = _reviewed_checkpoint_version(self._checkpoint)
+        _, owner, _, _ = _reviewed_owners(version)
+        compile_masks = (owner.compile_reviewed_train_relation_masks_v3 if version == "v3"
+                         else owner.compile_reviewed_train_relation_masks_v2)
         replay = dict(expected_preparation_sha256=expected_preparation_sha256,
             preparation_inputs=preparation_inputs, expected_registry_sha256=expected_registry_sha256,
             expected_policy_sha256=expected_policy_sha256, expected_reviews_sha256=expected_reviews_sha256,
             at_time_utc=at_time_utc, observed_artifact_sha256s=observed_artifact_sha256s,
             observed_pins=observed_pins, evidence_artifacts=evidence_artifacts,
             current_endpoint_observations=current_endpoint_observations)
-        current = owner.compile_reviewed_train_relation_masks_v2(preparation, registry, policy, reviews, **replay)
-        common = dict(schema="legal-joint-retrieval-result/v2", purpose="structural_contrastive_training_examples",
+        current = compile_masks(preparation, registry, policy, reviews, **replay)
+        common = dict(schema="legal-joint-retrieval-result/" + version, purpose="structural_contrastive_training_examples",
             checkpoint_sha256=self._checkpoint_sha256,
             historical_training_handoff_sha256=self._checkpoint["training_handoff_sha256"],
             current_index_handoff_sha256=checkpoint_digest(current), current_index_scope="freshly_replayed_TRAIN_endpoints_only",
@@ -858,7 +891,7 @@ class ReviewedLegalJointRetriever:
                 "abstention_count": len(frozen["query_rows"]), "retrieved_count": 0,
                 "abstention_reasons": current.get("objective_blockers", []), "training_executed": False,
                 "model_forward_executed": False}
-        _, formal_rows, _, _ = _reviewed_arrays(current)
+        _, formal_rows, _, _ = _reviewed_arrays(current, _admission_version=version)
         history = self._checkpoint["training_handoff"]
         if not all(current[name] == history[name] for name in ("source_profile_sha256", "formal_profile_sha256")):
             return {**common, "status": "abstained_representation_profile_incompatible",
@@ -866,6 +899,27 @@ class ReviewedLegalJointRetriever:
                     "abstention_reasons": ["representation_profile_incompatible"]} for query in frozen["query_rows"]],
                 "abstention_count": len(frozen["query_rows"]), "retrieved_count": 0,
                 "model_forward_executed": False}
+        lexical_profile = None
+        if mode == "lexical":
+            from . import frame_bm25_selector as lexical
+            lexical_path = Path(lexical.__file__).resolve()
+            _require(lexical_path == Path(__file__).with_name("frame_bm25_selector.py").resolve(),
+                     "canonical lexical ranker source required")
+            lexical_lane = copy.deepcopy(preparation_inputs["formal_lane"])
+            lexical_check = lanes.validate_lane_bundle(lexical_lane,
+                expected_bindings=copy.deepcopy(preparation_inputs["expected_formal_lane_bindings"]))
+            _require(lexical_check["profile_sha256"] == current["formal_profile_sha256"]
+                and lexical_check["producer_receipt_sha256"] == current["formal_producer_receipt_sha256"]
+                and [row["id"] for row in lexical_lane["rows"]] == [row["id"] for row in current["formal_endpoints"]],
+                "lexical documents must match the currently reviewed formal producer")
+            lexical_texts = [row["encoder_text"] for row in lexical_lane["rows"]]
+            lexical_profile = {"schema":"reviewed-formal-lexical-baseline/v1",
+                "owner":"frame_bm25_selector.BM25FrameSelector", "source_sha256":hashlib.sha256(lexical_path.read_bytes()).hexdigest(),
+                "candidate_view":"complete_TRAIN_formal_encoder_text", "query_view":"exact_source_text",
+                "fit_scope":"eligible_current_TRAIN_candidates_per_query", "k1":1.5, "b":0.75,
+                "matched_term_bonus":0.05, "score_decimal_places":6,
+                "max_document_bytes":2*1024*1024, "max_token_comparisons":4_000_000,
+                "truncation_permitted":False, "legal_applicability_verified":False}
         manifest = splits.LegalIRSplitManifest.from_mapping(preparation_inputs["split_manifest"])
         _require(splits.validate_legal_ir_eval_splits(manifest).passed, "current source population has split leakage")
         examples = {example.sample_id: example for example in manifest.examples}
@@ -931,20 +985,37 @@ class ReviewedLegalJointRetriever:
             source = torch.tensor([query_vector], dtype=torch.float32, device="cpu")
             formal = torch.tensor([formal_rows[index] for index in eligible], dtype=torch.float32, device="cpu")
             with torch.no_grad():
-                if mode == "joint":
-                    projected_query, projected_examples = self._model(source, formal)
+                if mode == "lexical":
+                    _require(sum(len(lexical_texts[index].encode("utf-8")) for index in eligible)
+                             <= lexical_profile["max_document_bytes"], "lexical document byte budget exceeded")
+                    selector = lexical.BM25FrameSelector([lexical.FrameCandidate(
+                        frame_id=endpoints[index]["id"], label=lexical_texts[index], domain="") for index in eligible],
+                        k1=lexical_profile["k1"], b=lexical_profile["b"])
+                    _require(sum(len(document) for document in selector._documents)
+                        * len(set(selector._tokenize(query["source_text"]))) <= lexical_profile["max_token_comparisons"],
+                        "lexical token comparison budget exceeded")
+                    ranked_rows = selector.rank(query["source_text"], top_k=len(eligible))
+                    positions = {endpoints[index]["id"]:position for position,index in enumerate(eligible)}
+                    _require(len(ranked_rows) == len(eligible)
+                        and {item.frame.frame_id for item in ranked_rows} == set(positions)
+                        and all(math.isfinite(item.score) for item in ranked_rows), "complete finite lexical ranking required")
+                    ranked = [positions[item.frame.frame_id] for item in ranked_rows]
+                    lexical_scores = {positions[item.frame.frame_id]:item.score for item in ranked_rows}
                 else:
-                    projected_query = torch.nn.functional.normalize(source, dim=-1)
-                    projected_examples = torch.nn.functional.normalize(formal, dim=-1)
-                similarities = (projected_query @ projected_examples.T)[0]
-                if mode == "random":
-                    ranked = sorted(range(len(eligible)), key=lambda i: checkpoint_digest([
-                        self._checkpoint["config"]["seed"], query["id"], raw_source_sha256,
-                        common["current_index_handoff_sha256"], endpoints[eligible[i]]["id"]]))
-                else:
-                    ranked = sorted(range(len(eligible)), key=lambda i: (-float(similarities[i]), endpoints[eligible[i]]["id"]))
+                    if mode == "joint":
+                        projected_query, projected_examples = self._model(source, formal)
+                    else:
+                        projected_query = torch.nn.functional.normalize(source, dim=-1)
+                        projected_examples = torch.nn.functional.normalize(formal, dim=-1)
+                    similarities = (projected_query @ projected_examples.T)[0]
+                    if mode == "random":
+                        ranked = sorted(range(len(eligible)), key=lambda i: checkpoint_digest([
+                            self._checkpoint["config"]["seed"], query["id"], raw_source_sha256,
+                            common["current_index_handoff_sha256"], endpoints[eligible[i]]["id"]]))
+                    else:
+                        ranked = sorted(range(len(eligible)), key=lambda i: (-float(similarities[i]), endpoints[eligible[i]]["id"]))
                 selected = ranked[:top_k]
-                scores = [float(similarities[i]) for i in selected]
+                scores = [lexical_scores[i] if mode == "lexical" else float(similarities[i]) for i in selected]
                 weights = (torch.full((top_k,), 1/top_k, device="cpu") if mode == "random" else
                     torch.softmax(torch.tensor(scores, dtype=torch.float32, device="cpu") /
                         self._checkpoint["config"]["temperature"], dim=0))
@@ -958,12 +1029,16 @@ class ReviewedLegalJointRetriever:
                 "retrieved_ids": [item["id"] for item in chosen], "retrieved_endpoint_refs": copy.deepcopy(chosen),
                 "scores": scores, "weights": weights.tolist(), "eligible_rows": len(eligible),
                 "excluded_examples": excluded, "abstention_reasons": []})
-        after = owner.compile_reviewed_train_relation_masks_v2(preparation, registry, policy, reviews, **replay)
+        if lexical_profile is not None:
+            _require(hashlib.sha256(lexical_path.read_bytes()).hexdigest() == lexical_profile["source_sha256"],
+                     "lexical ranker source changed during inference")
+        after = compile_masks(preparation, registry, policy, reviews, **replay)
         _require(_raw(after) == _raw(current), "current index eligibility changed during inference")
         _require(checkpoint_digest(payload) == query_input_sha256 and checkpoint_digest(frozen) == query_input_sha256,
                  "source-only query or exclusion inputs changed during inference")
         self._integrity()
-        return {**common, "status": "retrieval_completed", "rows": results, "mode": mode,
+        return {**common, **({"lexical_profile":lexical_profile} if lexical_profile is not None else {}),
+            "status": "retrieval_completed", "rows": results, "mode": mode,
             "current_index_differs_from_training": current["body_sha256"] != history["body_sha256"],
             "query_input_sha256": query_input_sha256, "query_lane_bundle_sha256": lane_check["bundle_sha256"],
             "query_split_guard_verified": True, "query_source_runtime_computation_proven": False,
@@ -971,3 +1046,97 @@ class ReviewedLegalJointRetriever:
             "retrieved_count": sum(row["status"] == "retrieved" for row in results),
             "abstention_count": sum(row["status"] == "abstained" for row in results),
             "model_forward_executed": any(row["status"] == "retrieved" and mode == "joint" for row in results)}
+
+
+def train_reviewed_retriever(
+        preparation,
+        registry,
+        policy,
+        reviews,
+        *,
+        expected_preparation_sha256,
+        preparation_inputs,
+        expected_registry_sha256,
+        expected_policy_sha256,
+        expected_reviews_sha256,
+        at_time_utc,
+        observed_artifact_sha256s,
+        observed_pins,
+        evidence_artifacts,
+        current_endpoint_observations,
+        steps=0,
+        seed=2718,
+        learning_rate=0.003,
+        joint_dimension=64,
+        temperature=0.1,
+):
+    """Fit canonical reviewed V2 masks under caller-owned runtime admission."""
+    return _train_reviewed_retriever(
+        preparation,
+        registry,
+        policy,
+        reviews,
+        expected_preparation_sha256=expected_preparation_sha256,
+        preparation_inputs=preparation_inputs,
+        expected_registry_sha256=expected_registry_sha256,
+        expected_policy_sha256=expected_policy_sha256,
+        expected_reviews_sha256=expected_reviews_sha256,
+        at_time_utc=at_time_utc,
+        observed_artifact_sha256s=observed_artifact_sha256s,
+        observed_pins=observed_pins,
+        evidence_artifacts=evidence_artifacts,
+        current_endpoint_observations=current_endpoint_observations,
+        steps=steps,
+        seed=seed,
+        learning_rate=learning_rate,
+        joint_dimension=joint_dimension,
+        temperature=temperature,
+        _admission_version="v2",
+    )
+
+
+def train_reviewed_retriever_v3(
+        preparation,
+        registry,
+        policy,
+        reviews,
+        *,
+        expected_preparation_sha256,
+        preparation_inputs,
+        expected_registry_sha256,
+        expected_policy_sha256,
+        expected_reviews_sha256,
+        at_time_utc,
+        observed_artifact_sha256s,
+        observed_pins,
+        evidence_artifacts,
+        current_endpoint_observations,
+        steps=0,
+        seed=2718,
+        learning_rate=0.003,
+        joint_dimension=64,
+        temperature=0.1,
+):
+    """Fit canonical reviewed V3 masks under caller-owned runtime admission."""
+    return _train_reviewed_retriever(
+        preparation,
+        registry,
+        policy,
+        reviews,
+        expected_preparation_sha256=expected_preparation_sha256,
+        preparation_inputs=preparation_inputs,
+        expected_registry_sha256=expected_registry_sha256,
+        expected_policy_sha256=expected_policy_sha256,
+        expected_reviews_sha256=expected_reviews_sha256,
+        at_time_utc=at_time_utc,
+        observed_artifact_sha256s=observed_artifact_sha256s,
+        observed_pins=observed_pins,
+        evidence_artifacts=evidence_artifacts,
+        current_endpoint_observations=current_endpoint_observations,
+        steps=steps,
+        seed=seed,
+        learning_rate=learning_rate,
+        joint_dimension=joint_dimension,
+        temperature=temperature,
+        _admission_version="v3",
+    )

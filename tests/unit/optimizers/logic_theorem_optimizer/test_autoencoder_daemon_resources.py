@@ -31,19 +31,19 @@ def setup(tmp_path, monkeypatch):
     return factory, roots, ledger, scheduler
 
 
-def test_production_storage_cap_is_two_hundred_twenty_gb_without_admission(tmp_path):
+def test_production_storage_cap_is_two_hundred_fifty_gb_without_admission(tmp_path):
     root = tmp_path / "outputs"
     root.mkdir()
     ledger = tmp_path / "disk.json"
     reservation = resources.DaemonResourceReservation(
         ledger, roots=[root], storage_bytes=7, memory_mb=1)
-    assert resources.MAX_STORAGE_BYTES == 220_000_000_000
+    assert resources.MAX_STORAGE_BYTES == 250_000_000_000
     assert resources.MAX_INVENTORY_ENTRIES == 4_000_000
     assert reservation._read() == {
         "schema": resources.SCHEMA, "roots": reservation.root_identities,
-        "limit_bytes": 220_000_000_000, "reservations": {},
+        "limit_bytes": 250_000_000_000, "reservations": {},
     }
-    assert reservation.to_dict()["storage_limit_bytes"] == 220_000_000_000
+    assert reservation.to_dict()["storage_limit_bytes"] == 250_000_000_000
     assert reservation.to_dict()["status"] == "not_entered"
     assert reservation.to_dict()["resource_lease"] is None
     assert not ledger.exists()
@@ -80,11 +80,11 @@ def test_raised_campaign_boundary_still_counts_all_nonreleased_claims(tmp_path, 
     monkeypatch.setattr(resources, "_inventory", lambda roots: {
         "apparent_bytes": 100_203_148_222, "entry_count": 1_359_805,
         "symlink_count": 4_557, "special_file_count": 28})
-    monkeypatch.setattr(resources.shutil, "disk_usage", lambda root: SimpleNamespace(free=120_000_000_000))
-    headroom = 88_331_851_778
+    monkeypatch.setattr(resources.shutil, "disk_usage", lambda root: SimpleNamespace(free=180_000_000_000))
+    headroom = 118_331_851_778
     usage = reservation._account(ledger, additional=headroom)
     assert usage["outstanding_full_reservations_bytes"] == 31_465_000_000
-    assert usage["charged_bytes"] == usage["limit_bytes"] == 220_000_000_000
+    assert usage["charged_bytes"] == usage["limit_bytes"] == 250_000_000_000
     with pytest.raises(resources.DaemonResourceError, match="capacity"):
         reservation._account(ledger, additional=headroom + 1)
     # Accounting headroom never substitutes for physically free storage.
@@ -139,8 +139,8 @@ def test_process_envelope_cannot_exceed_authoritative_scheduler_slots(setup):
         active.release(artifacts_durable=True)
 
 
-@pytest.fixture(params=[50_000_000_000, 60_000_000_000, 62_000_000_000, 75_000_000_000, 80_000_000_000, 85_000_000_000, 87_000_000_000, 90_000_000_000, 145_000_000_000, 160_000_000_000, 200_000_000_000],
-                ids=["fifty-gb", "sixty-gb", "sixty-two-gb", "seventy-five-gb", "eighty-gb", "eighty-five-gb", "eighty-seven-gb", "ninety-gb", "one-hundred-forty-five-gb", "one-hundred-sixty-gb", "two-hundred-gb"])
+@pytest.fixture(params=[50_000_000_000, 60_000_000_000, 62_000_000_000, 75_000_000_000, 80_000_000_000, 85_000_000_000, 87_000_000_000, 90_000_000_000, 145_000_000_000, 160_000_000_000, 200_000_000_000, 220_000_000_000],
+                ids=["fifty-gb", "sixty-gb", "sixty-two-gb", "seventy-five-gb", "eighty-gb", "eighty-five-gb", "eighty-seven-gb", "ninety-gb", "one-hundred-forty-five-gb", "one-hundred-sixty-gb", "two-hundred-gb", "two-hundred-twenty-gb"])
 def historical_storage_ledger(tmp_path, request):
     previous_limit = request.param
     root = tmp_path / "outputs"
@@ -185,7 +185,7 @@ def test_historical_ledger_fails_closed_without_implicit_migration(historical_st
 def test_explicit_top_level_cap_migration_preserves_history_and_full_accounting(historical_storage_ledger):
     reservation, ledger, historical, raw = historical_storage_ledger
     old_prefix = ('{"limit_bytes":' + str(historical["limit_bytes"]) + ',').encode()
-    new_prefix = b'{"limit_bytes":220000000000,'
+    new_prefix = b'{"limit_bytes":250000000000,'
     assert raw.startswith(old_prefix)
     # Model the explicit one-time edit on a tiny, test-owned fixture. This
     # neither introduces an implicit migration API nor acquires a reservation.
@@ -194,13 +194,13 @@ def test_explicit_top_level_cap_migration_preserves_history_and_full_accounting(
     backup.write_bytes(raw)
     with reservation._locked():
         assert ledger.read_bytes() == raw
-        reservation._write({**historical, "limit_bytes": 220_000_000_000})
+        reservation._write({**historical, "limit_bytes": 250_000_000_000})
     current = reservation._read()
-    assert current == {**historical, "limit_bytes": 220_000_000_000}
+    assert current == {**historical, "limit_bytes": 250_000_000_000}
     assert current["reservations"] == historical["reservations"]
     assert migrated[len(new_prefix):] == raw[len(old_prefix):]
     usage = reservation._account(current, additional=13)
-    assert usage["limit_bytes"] == 220_000_000_000
+    assert usage["limit_bytes"] == 250_000_000_000
     assert usage["observed_apparent_bytes"] == 3
     assert usage["outstanding_full_reservations_bytes"] == 4_000
     assert usage["additional_requested_bytes"] == 13
@@ -371,36 +371,54 @@ def test_invalid_requests_fail_before_ledger_mutation(setup, field, value):
 def test_overlapping_missing_and_symlink_roots_rejected(setup, tmp_path):
     _, roots, ledger, _ = setup
     nested=roots[0]/"nested"; nested.mkdir()
-    alias=tmp_path/"alias"; alias.symlink_to(roots[0],target_is_directory=True)
-    for selected in ([roots[0],roots[0]], [roots[0],nested], [alias], [tmp_path/"missing"]):
-        with pytest.raises(resources.DaemonResourceError):
-            resources.DaemonResourceReservation(ledger,roots=selected,storage_bytes=1,memory_mb=1)
+    alias=tmp_path/"alias"
+    try:
+        alias.symlink_to(roots[0],target_is_directory=True)
+        for selected in ([roots[0],roots[0]], [roots[0],nested], [alias], [tmp_path/"missing"]):
+            with pytest.raises(resources.DaemonResourceError):
+                resources.DaemonResourceReservation(ledger,roots=selected,storage_bytes=1,memory_mb=1)
+    finally:
+        alias.unlink(missing_ok=True)  # This fixture owns the alias, not its target.
 
 
 @pytest.mark.parametrize("kind", ["symlink","fifo","hardlink"])
 def test_ledger_aliases_and_special_files_rejected_without_opening_fifo(setup, tmp_path, kind):
     factory, _, ledger, _ = setup
-    if kind=="fifo": os.mkfifo(ledger)
-    elif kind=="symlink": ledger.symlink_to(tmp_path/"other")
-    else:
-        other=tmp_path/"other"; other.write_text("{}")
-        os.link(other,ledger)
-    with pytest.raises(resources.DaemonResourceError):
-        factory().__enter__()
+    try:
+        if kind=="fifo": os.mkfifo(ledger)
+        elif kind=="symlink": ledger.symlink_to(tmp_path/"other")
+        else:
+            other=tmp_path/"other"; other.write_text("{}")
+            os.link(other,ledger)
+        with pytest.raises(resources.DaemonResourceError):
+            factory().__enter__()
+    finally:
+        try:
+            ledger.unlink(missing_ok=True)
+        finally:
+            if kind=="hardlink":
+                (tmp_path/"other").unlink(missing_ok=True)  # Both fixture-owned links.
 
 
 def test_shared_inventory_counts_symlinks_and_special_files_without_following(setup, tmp_path):
     factory, roots, _, _ = setup
     outside=tmp_path/"large-unowned";outside.write_bytes(b"x"*150_000)
-    link=roots[1]/"cache-link";link.symlink_to(outside)
-    os.mkfifo(roots[1]/"unowned-fifo")
-    expected=link.lstat().st_size+(roots[1]/"unowned-fifo").lstat().st_size
-    with factory() as reservation:
-        usage=reservation.check_usage(roots[0])
-        assert usage["observed_apparent_bytes"]==expected
-        assert usage["inventory"]["symlink_count"]==1
-        assert usage["inventory"]["special_file_count"]==1
-        reservation.release(artifacts_durable=True)
+    link=roots[1]/"cache-link"
+    try:
+        link.symlink_to(outside)
+        os.mkfifo(roots[1]/"unowned-fifo")
+        expected=link.lstat().st_size+(roots[1]/"unowned-fifo").lstat().st_size
+        with factory() as reservation:
+            usage=reservation.check_usage(roots[0])
+            assert usage["observed_apparent_bytes"]==expected
+            assert usage["inventory"]["symlink_count"]==1
+            assert usage["inventory"]["special_file_count"]==1
+            reservation.release(artifacts_durable=True)
+    finally:
+        try:
+            link.unlink(missing_ok=True)  # Never unlink the target.
+        finally:
+            (roots[1]/"unowned-fifo").unlink(missing_ok=True)
 
 
 @pytest.mark.parametrize("kind",["symlink","fifo"])
@@ -408,13 +426,16 @@ def test_bound_attempt_rejects_unsafe_output_entries(setup,kind):
     factory,roots,_,_=setup
     attempt=roots[0]/"attempt";attempt.mkdir()
     unsafe=attempt/"unsafe"
-    if kind=="symlink":unsafe.symlink_to(roots[1])
-    else:os.mkfifo(unsafe)
-    with factory() as reservation:
-        with pytest.raises(resources.DaemonResourceError,match="attempt"):
-            reservation.check_usage(attempt)
-        unsafe.unlink()  # Test-owned entry only; production never removes data.
-        reservation.release(artifacts_durable=True)
+    try:
+        if kind=="symlink":unsafe.symlink_to(roots[1])
+        else:os.mkfifo(unsafe)
+        with factory() as reservation:
+            with pytest.raises(resources.DaemonResourceError,match="attempt"):
+                reservation.check_usage(attempt)
+            unsafe.unlink()  # Test-owned entry only; production never removes data.
+            reservation.release(artifacts_durable=True)
+    finally:
+        unsafe.unlink(missing_ok=True)  # Also covers admission/assertion failure.
 
 
 def test_attempt_outside_root_or_replaced_directory_fails(setup,tmp_path):
@@ -798,3 +819,837 @@ def test_finalization_preserves_rss_failure_usage(setup, monkeypatch):
         assert row["status"] == "active" and "released_at" not in row
         monkeypatch.setattr(resources, "_group_usage", lambda child: {"available": True, "live_processes": 0, "rss_bytes": 0})
         reservation.finalize(roots[0], artifacts_durable=True)
+
+
+class _OwnedLiveScandirProxy:
+    """Keep the real immediate-open scandir iterator and context protocol."""
+    def __init__(self, actual, *, transform=None, after_complete=None, prefetched=()):
+        self.actual = actual
+        self.transform = transform
+        self.after_complete = after_complete
+        self.prefetched = list(prefetched)
+    def __iter__(self):
+        return self
+    def __next__(self):
+        entry = self.prefetched.pop(0) if self.prefetched else next(self.actual)
+        return self.transform(entry) if self.transform is not None else entry
+    def __enter__(self):
+        self.actual.__enter__()
+        return self
+    def close(self):
+        self.actual.close()
+    def __exit__(self, exc_type, exc, traceback):
+        result = self.actual.__exit__(exc_type, exc, traceback)
+        if exc_type is None and self.after_complete is not None:
+            self.after_complete()
+        return result
+
+
+def _atomic_census_publication(monkeypatch, module, directory, boundary, *,
+                               before_publish=None, publications=1):
+    directory = Path(directory)
+    staging, published = directory / ".capsule-staging", directory / "published"
+    (staging / "nested").mkdir(parents=True)
+    payload = b"formal source payload\n" * 5
+    metadata = b'{"schema":"fixture"}\n'
+    (staging / "nested" / "payload.txt").write_bytes(payload)
+    (staging / "metadata.json").write_bytes(metadata)
+    state = {"current": staging, "other": published, "publications": 0,
+             "payload_bytes": len(payload) + len(metadata)}
+    actual_scandir = module.os.scandir
+
+    def publish():
+        if state["publications"] >= publications:
+            return
+        if before_publish is not None:
+            before_publish()
+        os.rename(state["current"], state["other"])
+        state["current"], state["other"] = state["other"], state["current"]
+        state["publications"] += 1
+
+    class Entry:
+        def __init__(self, entry, target):
+            self.path = entry.path
+            self._entry, self._target = entry, target
+        def __getattr__(self, name):
+            return getattr(self._entry, name)
+        def stat(self, *, follow_symlinks):
+            assert follow_symlinks is False
+            if Path(self.path) == self._target:
+                publish()
+            return self._entry.stat(follow_symlinks=False)
+
+    def scan(path):
+        named = Path(path)
+        if boundary == "scandir" and named == state["current"]:
+            publish()
+        # Open at the os.scandir call boundary, not delayed __enter__ time.
+        actual = actual_scandir(path)
+        target = state["current"] / "nested" / "payload.txt"
+        transform = (lambda entry: Entry(entry, target)) if boundary == "entry-stat" else None
+        after = publish if boundary == "pending" and named == directory else None
+        return _OwnedLiveScandirProxy(actual, transform=transform, after_complete=after)
+
+    monkeypatch.setattr(module.os, "scandir", scan)
+    return state
+
+
+
+@pytest.mark.parametrize("boundary", ["pending", "scandir"])
+def test_owned_live_census_reports_real_atomic_publication(setup, monkeypatch, boundary):
+    _, roots, _, _ = setup
+    root = roots[0]
+    frozen = resources._root_identity(root)
+    state = _atomic_census_publication(monkeypatch, resources, root, boundary)
+    with pytest.raises(resources.OwnedInventoryDisappearance) as caught:
+        resources._inventory([root], strict=True, report_owned_disappearance=True)
+    event = caught.value
+    assert type(event) is resources.OwnedInventoryDisappearance
+    assert event.frozen_root == frozen
+    assert root in Path(event.vanished_path).parents
+    partial = event.partial_inventory
+    assert set(partial) == {"apparent_bytes", "entry_count", "symlink_count", "special_file_count"}
+    assert partial["entry_count"] > 0
+    assert partial["symlink_count"] == partial["special_file_count"] == 0
+    assert state["publications"] == 1
+    # Detached metadata cannot be rewritten by a consumer.
+    event.frozen_root["path"] = "/foreign"
+    event.partial_inventory["apparent_bytes"] = 999_999
+    assert event.frozen_root == frozen and event.partial_inventory == partial
+    with pytest.raises(AttributeError):
+        event.vanished_path = "/foreign"
+    completed = resources._inventory([root], strict=True)
+    assert completed == {"apparent_bytes": state["payload_bytes"], "entry_count": 4,
+                         "symlink_count": 0, "special_file_count": 0}
+    assert (state["current"] / "nested/payload.txt").read_bytes() == b"formal source payload\n" * 5
+
+
+@pytest.mark.parametrize("flag", [None, 0, 1, "yes"], ids=["none", "zero", "one", "text"])
+def test_owned_live_census_flag_requires_exact_boolean(tmp_path, flag):
+    root = tmp_path / "root"
+    root.mkdir()
+    with pytest.raises(resources.DaemonResourceError, match="boolean"):
+        resources._inventory([root], strict=True, report_owned_disappearance=flag)
+
+
+def test_owned_live_census_reporting_requires_strict_true(tmp_path):
+    root = tmp_path / "root"
+    root.mkdir()
+    with pytest.raises(resources.DaemonResourceError, match="strict=True"):
+        resources._inventory([root], strict=False, report_owned_disappearance=True)
+
+
+def test_owned_live_census_default_does_not_reclassify_strict_failure(setup, monkeypatch):
+    _, roots, _, _ = setup
+    _atomic_census_publication(monkeypatch, resources, roots[0], "entry-stat")
+    with pytest.raises((FileNotFoundError, resources.DaemonResourceError)) as caught:
+        resources._inventory([roots[0]], strict=True)
+    assert not isinstance(caught.value, resources.OwnedInventoryDisappearance)
+
+
+def test_owned_live_census_false_missing_file_is_not_a_typed_disappearance(setup, monkeypatch):
+    _, roots, _, _ = setup
+    root = roots[0]
+    target = root / "present"
+    target.write_bytes(b"must remain accounted")
+    actual = resources.os.scandir
+    failure = FileNotFoundError(2, "injected stale stat", str(target))
+    class Entry:
+        def __init__(self, entry):
+            self.path, self._entry = entry.path, entry
+        def stat(self, *, follow_symlinks):
+            assert follow_symlinks is False
+            if Path(self.path) == target:
+                raise failure
+            return self._entry.stat(follow_symlinks=False)
+    def scan(path):
+        return _OwnedLiveScandirProxy(actual(path), transform=Entry)
+    monkeypatch.setattr(resources.os, "scandir", scan)
+    with pytest.raises(FileNotFoundError) as caught:
+        resources._inventory([root], strict=True, report_owned_disappearance=True)
+    assert caught.value is failure and target.read_bytes() == b"must remain accounted"
+
+
+@pytest.mark.parametrize("replacement", ["root", "ancestor"])
+def test_owned_live_census_root_or_ancestor_replacement_never_becomes_retry(tmp_path, monkeypatch, replacement):
+    parent = tmp_path / "ancestor"
+    root = parent / "owned"
+    root.mkdir(parents=True)
+    queued = root / "queued"
+    queued.mkdir()
+    (queued / "kept").write_bytes(b"retained")
+    actual = resources.os.scandir
+    changed = []
+    def scan(path):
+        actual_entries = actual(path)
+        def after_complete():
+            if Path(path) == root and not changed:
+                selected = root if replacement == "root" else parent
+                backup = selected.with_name(selected.name + "-retained")
+                selected.rename(backup)
+                selected.mkdir()
+                changed.append(backup)
+        return _OwnedLiveScandirProxy(actual_entries, after_complete=after_complete)
+    monkeypatch.setattr(resources.os, "scandir", scan)
+    with pytest.raises(resources.DaemonResourceError) as caught:
+        resources._inventory([root], strict=True, report_owned_disappearance=True)
+    assert not isinstance(caught.value, resources.OwnedInventoryDisappearance)
+    kept = changed[0] / ("queued/kept" if replacement == "root" else "owned/queued/kept")
+    assert kept.read_bytes() == b"retained"
+
+
+
+def _owned_live_fail_entry_stat(monkeypatch, target):
+    actual = resources.os.scandir
+    failure = FileNotFoundError(2, "injected leaf stat disappearance", str(target))
+    class Entry:
+        def __init__(self, entry):
+            self.path, self._entry = entry.path, entry
+        def stat(self, *, follow_symlinks):
+            assert follow_symlinks is False
+            if Path(self.path) == target:
+                raise failure
+            return self._entry.stat(follow_symlinks=False)
+    def scan(path):
+        return _OwnedLiveScandirProxy(actual(path), transform=Entry)
+    monkeypatch.setattr(resources.os, "scandir", scan)
+
+
+def test_owned_live_census_rechecks_internal_ancestor_before_typing_loss(setup, monkeypatch):
+    _, roots, _, _ = setup
+    root, branch = roots[0], roots[0] / "branch"
+    target = branch / "queued"
+    target.mkdir(parents=True)
+    (target / "payload").write_bytes(b"retained original")
+    original_lstat = Path.lstat
+    replacements = []
+    def lstat(path):
+        # This is reached only after the real queued DIR stat observed its
+        # UID/kind/inode; replace its already checked surviving ancestor.
+        if path == target and not replacements:
+            backup = root / "branch-retained"
+            branch.rename(backup)
+            branch.mkdir()
+            replacements.append(backup)
+            raise FileNotFoundError(2, "lost queued directory after checked ancestor", str(path))
+        return original_lstat(path)
+    monkeypatch.setattr(Path, "lstat", lstat)
+    with pytest.raises(resources.DaemonResourceError) as caught:
+        resources._inventory([root], strict=True, report_owned_disappearance=True)
+    assert not isinstance(caught.value, resources.OwnedInventoryDisappearance)
+    assert (replacements[0] / "queued/payload").read_bytes() == b"retained original"
+
+
+def test_owned_live_census_missing_then_present_leaf_is_not_retry_authority(setup, monkeypatch):
+    _, roots, _, _ = setup
+    root, target = roots[0], roots[0] / "queued"
+    target.mkdir()
+    (target / "payload").write_bytes(b"retained original")
+    retained = root / "retained-queued"
+    actual_scandir, actual_lstat = resources.os.scandir, Path.lstat
+    moved, republished = [], []
+    def scan(path):
+        def after_complete():
+            if Path(path) == root and not moved:
+                target.rename(retained)
+                moved.append(True)
+        return _OwnedLiveScandirProxy(actual_scandir(path), after_complete=after_complete)
+    def lstat(path):
+        if path == target and moved and not republished:
+            try:
+                actual_lstat(path)
+            except FileNotFoundError as missing:
+                target.mkdir()
+                (target / "new-payload").write_bytes(b"new directory must not become retry authority")
+                republished.append(True)
+                raise missing
+        return actual_lstat(path)
+    monkeypatch.setattr(resources.os, "scandir", scan)
+    monkeypatch.setattr(Path, "lstat", lstat)
+    with pytest.raises(resources.DaemonResourceError, match="reappeared") as caught:
+        resources._inventory([root], strict=True, report_owned_disappearance=True)
+    assert not isinstance(caught.value, resources.OwnedInventoryDisappearance)
+    assert moved == republished == [True]
+    assert (retained / "payload").read_bytes() == b"retained original"
+
+
+
+@pytest.mark.parametrize("kind", ["symlink-file", "symlink-directory", "fifo"])
+def test_owned_live_census_rejects_declared_unsafe_leaf(tmp_path, monkeypatch, kind):
+    root = tmp_path / "scan"
+    root.mkdir(mode=0o700)
+    leaf = root / "unsafe-leaf"
+    payload = b"retained ordinary payload\n"
+    if kind == "symlink-directory":
+        target = root / "retained-target-directory"
+        target.mkdir(mode=0o700)
+        retained = target / "payload.txt"
+    else:
+        target = root / ("retained-target-file" if kind == "symlink-file" else "retained-payload.txt")
+        retained = target
+    retained.write_bytes(payload)
+    assert not os.path.lexists(leaf)
+    actual_inventory = resources._inventory
+    calls, partials = [], []
+    def inventory(roots, **kwargs):
+        calls.append({"roots": list(roots), **kwargs})
+        try:
+            return actual_inventory(roots, **kwargs)
+        except resources.OwnedInventoryDisappearance as event:
+            partials.append(event.partial_inventory)
+            raise
+    monkeypatch.setattr(resources, "_inventory", inventory)
+    try:
+        if kind == "fifo":
+            os.mkfifo(leaf, 0o600)
+        else:
+            leaf.symlink_to(target.absolute(), target_is_directory=kind == "symlink-directory")
+        with pytest.raises(resources.DaemonResourceError, match="symlink|nonregular") as caught:
+            resources._inventory([root], strict=True, report_owned_disappearance=True)
+        assert not isinstance(caught.value, resources.OwnedInventoryDisappearance)
+        assert calls == [{"roots": [root], "strict": True, "report_owned_disappearance": True}]
+        assert partials == []
+        assert retained.read_bytes() == payload
+    finally:
+        leaf.unlink(missing_ok=True)
+    assert not os.path.lexists(leaf) and retained.read_bytes() == payload
+
+
+# Refinement of the historical prototype: only a previously owned queued DIR
+# may supply typed retry authority. These controls add no new alias permission.
+def _owned_live_unobserved_leaf_disappearance(monkeypatch, module, root):
+    target = Path(root) / "first-stat-unknown-leaf"
+    target.write_bytes(b"the scanner has not observed this leaf UID or kind")
+    actual, removed = module.os.scandir, []
+    class Entry:
+        def __init__(self, entry):
+            self.path, self._entry = entry.path, entry
+        def __getattr__(self, name):
+            return getattr(self._entry, name)
+        def stat(self, *, follow_symlinks):
+            assert follow_symlinks is False
+            if Path(self.path) == target and not removed:
+                target.unlink()
+                removed.append(True)
+            return self._entry.stat(follow_symlinks=False)
+    def scan(path):
+        return _OwnedLiveScandirProxy(actual(path), transform=Entry)
+    monkeypatch.setattr(module.os, "scandir", scan)
+    return target, removed
+
+
+def test_owned_live_census_first_stat_unknown_leaf_disappearance_is_fatal(setup, monkeypatch):
+    _, roots, _, _ = setup
+    target, removed = _owned_live_unobserved_leaf_disappearance(monkeypatch, resources, roots[0])
+    with pytest.raises(FileNotFoundError) as caught:
+        resources._inventory([roots[0]], strict=True, report_owned_disappearance=True)
+    assert not isinstance(caught.value, resources.OwnedInventoryDisappearance)
+    assert removed == [True] and not target.exists()
+
+
+def test_owned_live_census_missing_ancestor_of_known_queued_directory_is_fatal(setup, monkeypatch):
+    _, roots, _, _ = setup
+    root = roots[0]
+    branch, retained = root / "branch", root / "retained-branch"
+    target = branch / "queued"
+    target.mkdir(parents=True)
+    (target / "payload").write_bytes(b"retain ancestor evidence")
+    actual, moved = resources.os.scandir, []
+    def scan(path):
+        def after_complete():
+            if Path(path) == branch and not moved:
+                branch.rename(retained)
+                moved.append(True)
+        return _OwnedLiveScandirProxy(actual(path), after_complete=after_complete)
+    monkeypatch.setattr(resources.os, "scandir", scan)
+    with pytest.raises(FileNotFoundError) as caught:
+        resources._inventory([root], strict=True, report_owned_disappearance=True)
+    assert not isinstance(caught.value, resources.OwnedInventoryDisappearance)
+    assert moved == [True] and (retained / "queued/payload").read_bytes() == b"retain ancestor evidence"
+
+
+@pytest.mark.parametrize("observation", ["permission", "symlink", "fifo", "file", "uid"])
+def test_owned_live_census_known_queued_directory_nonmissing_faults_never_become_retry(setup, monkeypatch, observation):
+    import stat
+    _, roots, _, _ = setup
+    root, target = roots[0], roots[0] / "queued"
+    target.mkdir()
+    (target / "payload").write_bytes(b"unchanged ordinary fixture")
+    actual_lstat, seen = Path.lstat, []
+    def lstat(path):
+        current = actual_lstat(path)
+        if path == target and not seen:
+            seen.append(True)
+            if observation == "permission":
+                raise PermissionError(13, "synthetic queued-leaf permission refusal", str(path))
+            # Deliberately synthetic stat observations. Real static alias/FIFO
+            # fixtures remain in the separate original physical6 profile.
+            fields = list(current)
+            if observation == "uid":
+                fields[4] = os.geteuid() + 1
+            else:
+                fields[0] = {"symlink": stat.S_IFLNK, "fifo": stat.S_IFIFO, "file": stat.S_IFREG}[observation] | 0o600
+            return os.stat_result(fields)
+        return current
+    monkeypatch.setattr(Path, "lstat", lstat)
+    with pytest.raises((PermissionError, resources.DaemonResourceError)) as caught:
+        resources._inventory([root], strict=True, report_owned_disappearance=True)
+    assert not isinstance(caught.value, resources.OwnedInventoryDisappearance)
+    assert seen == [True] and (target / "payload").read_bytes() == b"unchanged ordinary fixture"
+
+
+
+# These controls use private filesystem state only. Injected leases below are
+# explicitly fictional unit controls and establish no actual native custody.
+class _AdmissionDeadlineClock:
+    def __init__(self, actual, now=100.0):
+        self.actual = actual
+        self.now = now
+    def monotonic(self):
+        return self.now
+    def __getattr__(self, name):
+        return getattr(self.actual, name)
+
+
+class _AdmissionDeadlineProxy:
+    def __init__(self, actual, **overrides):
+        self.actual = actual
+        self.overrides = overrides
+    def __getattr__(self, name):
+        return self.overrides.get(name, getattr(self.actual, name))
+
+
+def _host_admission_clock(monkeypatch):
+    clock = _AdmissionDeadlineClock(resources.time)
+    # Replace module references, never the process-wide time.monotonic function.
+    monkeypatch.setattr(resources, "time", clock)
+    monkeypatch.setattr(resources.native_deadlines, "time", clock)
+    return clock
+
+
+@pytest.mark.parametrize("mode", ["ordinary", "strict", "owned_strict"])
+@pytest.mark.parametrize("slow_operation", ["scandir", "entry_stat"])
+def test_admission_inventory_checks_deadline_after_real_io(tmp_path, monkeypatch, mode, slow_operation):
+    root = tmp_path / "inventory"
+    root.mkdir()
+    (root / "payload").write_bytes(b"actual private contents")
+    (root / "payload2").write_bytes(b"second actual entry proves closure")
+    clock = _host_admission_clock(monkeypatch)
+    actual_os = resources.os
+    seen = []
+    opened = []
+    class Scandir(_OwnedLiveScandirProxy):
+        def __exit__(self, *args):
+            result = super().__exit__(*args)
+            self.closed_by_context = True
+            return result
+    class Entry:
+        def __init__(self, actual):
+            self.actual = actual
+        def __getattr__(self, name):
+            return getattr(self.actual, name)
+        def stat(self, **kwargs):
+            value = self.actual.stat(**kwargs)
+            seen.append("entry_stat")
+            if slow_operation == "entry_stat":
+                clock.now = 111.0
+            return value
+    def scandir(path):
+        result = actual_os.scandir(path)
+        seen.append("scandir")
+        if slow_operation == "scandir":
+            clock.now = 111.0
+        proxy = Scandir(result, transform=Entry)
+        proxy.closed_by_context = False
+        opened.append(proxy)
+        return proxy
+    monkeypatch.setattr(resources, "os", _AdmissionDeadlineProxy(actual_os, scandir=scandir))
+    with resources.native_deadlines.resource_admission_deadline(
+            work_deadline_monotonic=110.0, native_deadline_monotonic=120.0):
+        with pytest.raises(resources.native_deadlines.ResourceAdmissionDeadlineError):
+            resources._inventory([root], strict=mode != "ordinary",
+                                 report_owned_disappearance=mode == "owned_strict")
+    assert slow_operation in seen
+    assert opened and all(item.closed_by_context for item in opened)
+    for item in opened:
+        assert next(item.actual, None) is None
+    assert resources.native_deadlines.resource_operation_deadline() is None
+
+
+def test_admission_account_checks_deadline_after_disk_usage(setup, monkeypatch):
+    factory, roots, ledger_path, scheduler = setup
+    owner = factory()
+    ledger = owner._read()
+    clock = _host_admission_clock(monkeypatch)
+    original = resources.shutil
+    calls = []
+    def disk_usage(root):
+        value = original.disk_usage(root)
+        calls.append(str(root))
+        clock.now = 111.0
+        return value
+    monkeypatch.setattr(resources, "shutil", _AdmissionDeadlineProxy(original, disk_usage=disk_usage))
+    with resources.native_deadlines.resource_admission_deadline(
+            work_deadline_monotonic=110.0, native_deadline_monotonic=120.0):
+        with pytest.raises(resources.native_deadlines.ResourceAdmissionDeadlineError):
+            owner._account(ledger, additional=owner.storage_bytes)
+    assert calls == [str(roots[0])]
+    assert not ledger_path.exists() and owner._record is None and owner._lease is None
+
+
+@pytest.mark.parametrize("parent_scope", [False, True])
+@pytest.mark.parametrize("failure_stage", ["before_record", "native_acquire"])
+def test_admission_failure_before_native_grant_keeps_exact_custody(setup, monkeypatch, parent_scope, failure_stage):
+    from contextlib import contextmanager, nullcontext
+    factory, roots, ledger_path, scheduler = setup
+    owner = factory()
+    clock = _host_admission_clock(monkeypatch)
+    native_calls = []
+    @contextmanager
+    def admission_scope():
+        with resources.native_deadlines.resource_admission_deadline(
+                work_deadline_monotonic=110.0, native_deadline_monotonic=150.0):
+            yield
+    monkeypatch.setattr(owner, "_admission_scope", admission_scope)
+    primary = resources.native_deadlines.ResourceAdmissionDeadlineError("fictional injected native refusal")
+    def acquire(*args):
+        native_calls.append("acquire")
+        clock.now = 111.0
+        raise primary
+    monkeypatch.setattr(owner, "_acquire_native_lease", acquire)
+    if failure_stage == "before_record":
+        def account(*args, **kwargs):
+            clock.now = 111.0
+            raise primary
+        monkeypatch.setattr(owner, "_account", account)
+    outer = resources.native_deadlines.resource_admission_deadline(
+        work_deadline_monotonic=110.0, native_deadline_monotonic=150.0) if parent_scope else nullcontext()
+    with outer:
+        previous = resources.native_deadlines.resource_operation_deadline()
+        with pytest.raises(resources.native_deadlines.ResourceAdmissionDeadlineError) as raised:
+            owner.__enter__()
+        assert raised.value is primary
+        assert resources.native_deadlines.resource_operation_deadline() is previous
+    assert owner._lease is None and owner._cleanup_error is None
+    if failure_stage == "before_record":
+        assert native_calls == [] and owner._record is None and not ledger_path.exists()
+    else:
+        assert native_calls == ["acquire"]
+        assert owner._record["status"] == "retained"
+        assert json.loads(ledger_path.read_text())["reservations"][owner.reservation_id]["status"] == "retained"
+    assert scheduler.snapshot()["allocated"]["cpu_slots"] == 0
+
+
+@pytest.mark.parametrize("parent_scope", [False, True])
+@pytest.mark.parametrize("cleanup_failure", ["none", "retain", "release", "both"])
+def test_admission_expiry_unwinds_before_independent_cleanup_attempts(setup, monkeypatch, parent_scope, cleanup_failure):
+    from contextlib import contextmanager, nullcontext
+    factory, roots, ledger_path, scheduler = setup
+    owner = factory()
+    clock = _host_admission_clock(monkeypatch)
+    events = []
+    primary = resources.native_deadlines.ResourceAdmissionDeadlineError("fictional post-grant expiry")
+    class FictionalLease:
+        def release(self):
+            operation = resources.native_deadlines.resource_operation_deadline()
+            events.append(("release", operation))
+            if cleanup_failure in {"release", "both"}:
+                raise RuntimeError("fictional release failed; no release assertion")
+    lease = FictionalLease()
+    @contextmanager
+    def admission_scope():
+        with resources.native_deadlines.resource_admission_deadline(
+                work_deadline_monotonic=110.0, native_deadline_monotonic=150.0):
+            yield
+    monkeypatch.setattr(owner, "_admission_scope", admission_scope)
+    monkeypatch.setattr(owner, "_acquire_native_lease", lambda *args: lease)
+    original_update = owner._update
+    def update(**changes):
+        if changes.get("status") == "active":
+            clock.now = 111.0
+            raise primary
+        return original_update(**changes)
+    monkeypatch.setattr(owner, "_update", update)
+    original_retain = owner._retain
+    def retain(reason):
+        operation = resources.native_deadlines.resource_operation_deadline()
+        events.append(("retain", operation))
+        if cleanup_failure in {"retain", "both"}:
+            raise OSError("fictional retention I/O failure")
+        return original_retain(reason)
+    monkeypatch.setattr(owner, "_retain", retain)
+    outer = resources.native_deadlines.resource_admission_deadline(
+        work_deadline_monotonic=110.0, native_deadline_monotonic=150.0) if parent_scope else nullcontext()
+    with outer:
+        previous = resources.native_deadlines.resource_operation_deadline()
+        with pytest.raises(resources.native_deadlines.ResourceAdmissionDeadlineError) as raised:
+            owner.__enter__()
+        assert raised.value is primary
+        assert resources.native_deadlines.resource_operation_deadline() is previous
+    assert [name for name, _ in events] == ["retain", "release"]
+    for name, operation in events:
+        if parent_scope:
+            assert operation.cleanup_only and operation.native_deadline_monotonic == 150.0
+        else:
+            assert operation is None
+    expected = {"none": None, "retain": "OSError", "release": "RuntimeError", "both": "OSError+RuntimeError"}
+    assert owner._cleanup_error == expected[cleanup_failure]
+    expected_status = "reserved" if cleanup_failure in {"retain", "both"} else "retained"
+    assert owner._record["status"] == expected_status
+    assert json.loads(ledger_path.read_text())["reservations"][owner.reservation_id]["status"] == expected_status
+    # The injected lease is fictional. The actual private scheduler never grants.
+    assert scheduler.snapshot()["allocated"]["cpu_slots"] == 0
+
+
+
+def test_admission_expired_original_native_end_keeps_cleanup_unknown(setup, monkeypatch):
+    from contextlib import contextmanager
+    factory, roots, ledger_path, scheduler = setup
+    owner = factory()
+    clock = _host_admission_clock(monkeypatch)
+    events = []
+    primary = resources.native_deadlines.ResourceAdmissionDeadlineError("fictional post-grant native-end expiry")
+    class FictionalLease:
+        def release(self):
+            events.append("release")
+    lease = FictionalLease()
+    @contextmanager
+    def admission_scope():
+        with resources.native_deadlines.resource_admission_deadline(
+                work_deadline_monotonic=110.0, native_deadline_monotonic=120.0):
+            yield
+    monkeypatch.setattr(owner, "_admission_scope", admission_scope)
+    monkeypatch.setattr(owner, "_acquire_native_lease", lambda *args: lease)
+    original_update = owner._update
+    def update(**changes):
+        if changes.get("status") == "active":
+            clock.now = 121.0
+            raise primary
+        return original_update(**changes)
+    monkeypatch.setattr(owner, "_update", update)
+    def retain(reason):
+        events.append("retain")
+        pytest.fail("expired original native end must not be renewed")
+    monkeypatch.setattr(owner, "_retain", retain)
+    with resources.native_deadlines.resource_admission_deadline(
+            work_deadline_monotonic=110.0, native_deadline_monotonic=120.0):
+        previous = resources.native_deadlines.resource_operation_deadline()
+        with pytest.raises(resources.native_deadlines.ResourceAdmissionDeadlineError) as raised:
+            owner.__enter__()
+        assert raised.value is primary
+        assert resources.native_deadlines.resource_operation_deadline() is previous
+        assert previous.native_deadline_monotonic == 120.0
+    assert events == []
+    assert owner._lease is lease and owner._record["status"] == "reserved"
+    assert owner._cleanup_error == "ResourceAdmissionDeadlineError"
+    assert json.loads(ledger_path.read_text())["reservations"][owner.reservation_id]["status"] == "reserved"
+    # No successful release is asserted; the injected lease is a unit fiction.
+    assert scheduler.snapshot()["allocated"]["cpu_slots"] == 0
+
+
+# Failure diagnostics preserve typed facts without exporting exception messages.
+def test_retention_real_lock_timeout_keeps_full_claim_and_typed_observation(setup):
+    import fcntl
+    factory, _, ledger_path, scheduler = setup
+    owner = factory(ledger_lock_timeout_seconds=0.01)
+    owner.__enter__()
+    before = ledger_path.read_bytes()
+    descriptor = os.open(owner.lock_path, os.O_RDWR | os.O_NOFOLLOW)
+    try:
+        fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        primary = RuntimeError('original check failed')
+        assert owner.__exit__(RuntimeError, primary, None) is False
+    finally:
+        os.close(descriptor)
+    assert ledger_path.read_bytes() == before
+    value = owner.to_dict()
+    assert value['status'] == 'active' and value['record']['storage_bytes'] == owner.storage_bytes
+    assert value['resource_lease']['released'] is True
+    assert scheduler.snapshot()['allocated']['cpu_slots'] == 0
+    assert value['cleanup_error'] == 'DaemonResourceError'
+    observation, = value['cleanup_failure_observations']
+    assert observation['stage'] == 'failure_retention'
+    assert observation['error_kind'] == 'daemon_resource_error'
+    assert observation['reason_code'] == 'ledger_lock_unavailable'
+    assert observation['lock_observation_status'] == 'accepted'
+    actual = observation['lock_observation']
+    assert actual['lock_path'] == str(owner.lock_path)
+    assert actual['lock_acquired'] is actual['holder_identity_established'] is False
+    assert actual['started_monotonic'] <= actual['deadline_monotonic'] <= actual['observed_monotonic']
+    assert value['cleanup_failure_observation_overflow'] is False
+
+
+@pytest.mark.parametrize('error_class', [resources.DaemonResourceError, OSError, RuntimeError])
+def test_retention_diagnostics_never_export_arbitrary_exception_message(setup, monkeypatch, error_class):
+    factory, _, ledger_path, scheduler = setup
+    owner = factory();owner.__enter__()
+    secret = 'SECRET-error-message-must-not-escape-' + 'x' * 5000
+    def fail(reason): raise error_class(secret)
+    monkeypatch.setattr(owner, '_retain', fail)
+    before = ledger_path.read_bytes()
+    assert owner.__exit__(RuntimeError, RuntimeError('primary'), None) is False
+    value = owner.to_dict()
+    assert ledger_path.read_bytes() == before and value['status'] == 'active'
+    assert value['resource_lease']['released'] is True
+    assert scheduler.snapshot()['allocated']['cpu_slots'] == 0
+    assert secret not in json.dumps(value['cleanup_failure_observations'])
+    observation, = value['cleanup_failure_observations']
+    assert observation['stage'] == 'failure_retention'
+    assert observation['reason_code'] == 'unclassified' and observation['lock_observation'] is None
+
+
+@pytest.mark.parametrize('bad', ['extra', 'foreign_path', 'nonfinite', 'untyped_identity',
+    'schema_object', 'stage_object', 'schema_subclass', 'stage_subclass',
+    'missing_origin', 'wrong_origin', 'changed_valid_inode', 'changed_valid_time'])
+def test_retention_diagnostics_refuse_unbound_lock_observation_data(setup, monkeypatch, bad):
+    import fcntl
+    factory, _, ledger_path, _ = setup
+    owner = factory(ledger_lock_timeout_seconds=0.01);owner.__enter__()
+    descriptor = os.open(owner.lock_path, os.O_RDWR | os.O_NOFOLLOW)
+    try:
+        fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        with pytest.raises(resources.DaemonResourceError) as caught:
+            with owner._locked(): pytest.fail('private lock unexpectedly acquired')
+    finally: os.close(descriptor)
+    class EqualSecret:
+        def __eq__(self, other): return True
+        def __deepcopy__(self, memo): return 'SECRET-unsafe-deepcopy'
+    class SecretStr(str):
+        def __deepcopy__(self, memo): return 'SECRET-unsafe-deepcopy'
+    offered = caught.value._lock_observation
+    if bad == 'extra': offered['arbitrary'] = 'SECRET'
+    elif bad == 'foreign_path': offered['lock_path'] = '/SECRET/foreign.lock'
+    elif bad == 'nonfinite': offered['observed_monotonic'] = float('nan')
+    elif bad == 'untyped_identity': offered['opened_lock_identity']['st_ino'] = True
+    elif bad == 'schema_object': offered['schema'] = EqualSecret()
+    elif bad == 'stage_object': offered['stage'] = EqualSecret()
+    elif bad == 'schema_subclass': offered['schema'] = SecretStr(offered['schema'])
+    elif bad == 'stage_subclass': offered['stage'] = SecretStr(offered['stage'])
+    elif bad == 'missing_origin': del caught.value._lock_observation_binding
+    elif bad == 'wrong_origin': caught.value._lock_observation_binding = (object(), caught.value._lock_observation_binding[1])
+    elif bad == 'changed_valid_inode': offered['opened_lock_identity']['st_ino'] += 1
+    else: offered['observed_monotonic'] += 1
+    def fail(reason): raise caught.value
+    monkeypatch.setattr(owner, '_retain', fail)
+    before = ledger_path.read_bytes()
+    assert owner.__exit__(RuntimeError, RuntimeError('primary'), None) is False
+    assert ledger_path.read_bytes() == before and owner._lease.to_dict()['released'] is True
+    observation, = owner.to_dict()['cleanup_failure_observations']
+    assert observation['stage'] == 'failure_retention'
+    assert observation['lock_observation_status'] == 'rejected'
+    assert observation['lock_observation'] is None and observation['reason_code'] == 'unclassified'
+    assert 'SECRET' not in json.dumps(observation)
+
+
+def test_retention_and_native_release_errors_keep_distinct_stages(setup, monkeypatch):
+    factory, _, ledger_path, scheduler = setup
+    owner = factory();owner.__enter__()
+    release = owner._lease.release
+    def fail_retention(reason): raise resources.DaemonResourceError('SECRET-retention')
+    def fail_release(): raise RuntimeError('SECRET-release')
+    monkeypatch.setattr(owner, '_retain', fail_retention)
+    monkeypatch.setattr(owner._lease, 'release', fail_release)
+    before = ledger_path.read_bytes()
+    try:
+        assert owner.__exit__(RuntimeError, RuntimeError('primary'), None) is False
+        value = owner.to_dict()
+        assert ledger_path.read_bytes() == before and value['status'] == 'active'
+        assert [o['stage'] for o in value['cleanup_failure_observations']] == ['failure_retention','native_release']
+        assert 'SECRET' not in json.dumps(value['cleanup_failure_observations'])
+        assert value['resource_lease']['released'] is False
+    finally:
+        release()
+    assert scheduler.snapshot()['allocated']['cpu_slots'] == 0
+
+
+def test_normal_retention_keeps_legacy_receipt_without_diagnostic_extension(setup):
+    factory, _, ledger_path, scheduler = setup
+    with factory() as owner:
+        pass
+    value = owner.to_dict()
+    assert value['cleanup_error'] is None and value['status'] == 'retained'
+    assert 'cleanup_failure_observations' not in value
+    assert 'cleanup_failure_observation_overflow' not in value
+    assert value['record'] == json.loads(ledger_path.read_bytes())['reservations'][owner.reservation_id]
+    assert scheduler.snapshot()['allocated']['cpu_slots'] == 0
+
+
+def test_cleanup_diagnostic_bound_and_detached_receipt(setup):
+    factory, _, _, scheduler = setup
+    owner = factory();owner.__enter__()
+    try:
+        for _ in range(6):
+            owner._remember_cleanup_failure('failure_retention', RuntimeError('SECRET'))
+        first = owner.to_dict()
+        assert len(first['cleanup_failure_observations']) == 4
+        assert first['cleanup_failure_observation_overflow'] is True
+        assert 'SECRET' not in json.dumps(first['cleanup_failure_observations'])
+        first['cleanup_failure_observations'][0]['stage'] = 'SECRET-mutated-receipt'
+        assert owner.to_dict()['cleanup_failure_observations'][0]['stage'] == 'failure_retention'
+    finally:
+        owner.__exit__(RuntimeError, RuntimeError('primary'), None)
+    assert scheduler.snapshot()['allocated']['cpu_slots'] == 0
+
+
+def test_cleanup_diagnostics_recognize_existing_sdk_sixty_second_lock_bound(setup, monkeypatch):
+    # The clock is controlled here; this does not claim sixty seconds elapsed.
+    # Actual _locked emits its own owner-bound event for its unchanged SDK bound.
+    from types import SimpleNamespace
+    import fcntl
+    factory, _, _, scheduler = setup
+    owner = factory(ledger_lock_timeout_seconds=60);owner.__enter__()
+    descriptor = os.open(owner.lock_path, os.O_RDWR | os.O_NOFOLLOW)
+    try:
+        fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        clock = iter((100.0, 161.0))
+        with monkeypatch.context() as patch:
+            patch.setattr(resources, 'time', SimpleNamespace(monotonic=lambda: next(clock)))
+            with pytest.raises(resources.DaemonResourceError) as caught:
+                with owner._locked(): pytest.fail('private held lock unexpectedly acquired')
+        owner._remember_cleanup_failure('failure_retention', caught.value)
+        observation, = owner.to_dict()['cleanup_failure_observations']
+        assert observation['reason_code'] == 'ledger_lock_unavailable'
+        assert observation['lock_observation_status'] == 'accepted'
+        assert observation['lock_observation']['configured_lock_timeout_seconds'] == 60
+    finally:
+        os.close(descriptor)
+        owner.__exit__(RuntimeError, RuntimeError('primary'), None)
+    assert scheduler.snapshot()['allocated']['cpu_slots'] == 0
+
+
+def test_production_storage_cap_is_two_hundred_twenty_gb_without_admission(tmp_path):
+    root = tmp_path / "outputs"
+    root.mkdir()
+    ledger = tmp_path / "disk.json"
+    reservation = resources.DaemonResourceReservation(
+        ledger, roots=[root], storage_bytes=7, memory_mb=1)
+    assert resources.MAX_STORAGE_BYTES == 220_000_000_000
+    assert resources.MAX_INVENTORY_ENTRIES == 2_000_000
+    assert reservation._read() == {
+        "schema": resources.SCHEMA, "roots": reservation.root_identities,
+        "limit_bytes": 220_000_000_000, "reservations": {},
+    }
+    assert reservation.to_dict()["storage_limit_bytes"] == 220_000_000_000
+    assert reservation.to_dict()["status"] == "not_entered"
+    assert reservation.to_dict()["resource_lease"] is None
+    assert not ledger.exists()
+    assert not reservation.lock_path.exists()
+
+
+
+def test_default_usage_inventory_hook_keeps_strict_unaliased_inventory(tmp_path, monkeypatch):
+    reservation = object.__new__(resources.DaemonResourceReservation)
+    original = resources._inventory
+    calls = []
+    def observed(paths, **kwargs):
+        calls.append((tuple(paths), kwargs))
+        return original(paths, **kwargs)
+    monkeypatch.setattr(resources, "_inventory", observed)
+    (tmp_path / "regular").write_bytes(b"x")
+    result = reservation._usage_inventory(tmp_path)
+    assert calls == [((tmp_path,), {"strict": True})]
+    assert result["apparent_bytes"] == 1
+    (tmp_path / "alias").symlink_to(tmp_path / "regular")
+    with pytest.raises(resources.DaemonResourceError):
+        reservation._usage_inventory(tmp_path)
+    assert "_usage_inventory" not in reservation.__dict__

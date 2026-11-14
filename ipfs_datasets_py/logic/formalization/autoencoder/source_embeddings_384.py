@@ -32,6 +32,8 @@ def _cached_model(snapshot, device, torch, producer, asset_manifest=None):
     from sentence_transformers import SentenceTransformer
     with torch.random.fork_rng(devices=[]):
         model = SentenceTransformer(str(snapshot), local_files_only=True, trust_remote_code=False, device="cpu")
+    # Published storage may be float16; the existing execution contract is float32.
+    model.float()
     model.eval()
     producer._validate_model(model, torch)
     # The receipt validator checks CPU float32 assets. Validate before moving

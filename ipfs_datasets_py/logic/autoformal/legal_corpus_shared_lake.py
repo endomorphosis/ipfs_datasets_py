@@ -746,3 +746,694 @@ __all__ = ["SharedCorpusPreparation", "prepare_shared_definition_corpus", "valid
     "ParentSharedCorpusPreparation", "prepare_parent_shared_definition_use_corpus_v1",
     "validate_parent_shared_definition_use_corpus_v1", "load_parent_shared_definition_use_corpus_v1",
     "write_parent_shared_definition_use_corpus_v1"]
+
+
+# This profile composes independent preservation witnesses, not the older
+# conditional definition-use theorems. Its lazy owners and pins deliberately do
+# not enlarge any legacy operation's exact producer set.
+REVIEWED_PRESERVATION_SCHEMA = "legal-corpus-reviewed-preservation-preparation/v2"
+REVIEWED_PRESERVATION_PROFILE = "reviewed-multi-unit-object-relational-preservation/v2"
+REVIEWED_PRESERVATION_ROOT = "LegalReviewedNormPreservation"
+MAX_REVIEWED_PRESERVATION_UNITS = 8
+MAX_REVIEWED_PRESERVATION_FILES = 9 * MAX_REVIEWED_PRESERVATION_UNITS + 6
+MAX_REVIEWED_PRESERVATION_MODULES = MAX_REVIEWED_PRESERVATION_UNITS + 3
+MAX_REVIEWED_PRESERVATION_OBLIGATIONS = 5 * MAX_REVIEWED_PRESERVATION_UNITS
+_REVIEWED_PRESERVATION_LEAVES = (
+    "native_value_exact", "native_ast_closed", "denotation_matches_native",
+    "typed_source_lowering_exact", "role_denotation_matches_native",
+)
+_REVIEWED_PRESERVATION_SELF_PIN = _sha(Path(__file__).read_bytes())
+
+
+@dataclass(frozen=True)
+class ReviewedPreservationCorpusPreparation:
+    """A replay-bound project proposal with no build or admission authority."""
+
+    manifest_json: str
+    files: tuple[tuple[str, str], ...]
+
+    def to_dict(self):
+        raw = self.manifest_json.encode("utf-8")
+        return contracts.load_record_bytes(raw, expected_sha256=_sha(raw))
+
+
+def _reviewed_preservation_owners():
+    from . import corpus_norm_definition_adapter, legal_native_ast_preservation
+    from . import legal_norm_content_adjudication_v1
+    return corpus_norm_definition_adapter, legal_norm_content_adjudication_v1, legal_native_ast_preservation
+
+
+def _reviewed_preservation_pins(owners):
+    graph, admission, native = owners
+    if _sha(Path(__file__).read_bytes()) != _REVIEWED_PRESERVATION_SELF_PIN:
+        _fail("reviewed preservation owner changed since import")
+    pins = dict(graph._reviewed_graph_pins(admission))
+    for module in (native,):
+        path = str(Path(module.__file__).resolve())
+        digest = _sha(Path(path).read_bytes())
+        if path in pins and pins[path] != digest:
+            _fail("reviewed preservation producer observations disagree")
+        pins[path] = digest
+    pins[str(Path(__file__).resolve())] = _REVIEWED_PRESERVATION_SELF_PIN
+    return pins
+
+
+def _reviewed_preservation_offered(preparation):
+    if type(preparation) is not ReviewedPreservationCorpusPreparation:
+        _fail("typed reviewed preservation preparation required")
+    if (type(preparation.manifest_json) is not str
+            or len(preparation.manifest_json.encode("utf-8")) > contracts.MAX_RECORD_BYTES
+            or type(preparation.files) is not tuple
+            or not 1 <= len(preparation.files) <= MAX_REVIEWED_PRESERVATION_FILES):
+        _fail("bounded reviewed preservation manifest and files required")
+    pairs, names, total = [], [], 0
+    for pair in preparation.files:
+        if type(pair) is not tuple or len(pair) != 2 or any(type(value) is not str for value in pair):
+            _fail("ordinary immutable reviewed preservation file pairs required")
+        name, body = pair
+        if (len(name) > 256 or re.fullmatch(r"[A-Za-z0-9_][A-Za-z0-9_.-]*(/[A-Za-z0-9_][A-Za-z0-9_.-]*)?", name) is None
+                or any(part in (".", "..") for part in name.split("/"))):
+            _fail("bounded safe reviewed preservation paths required")
+        total += len(body.encode("utf-8"))
+        if total > joint_owner.MAX_PROJECT_BYTES:
+            _fail("reviewed preservation project byte bound exceeded")
+        names.append(name)
+        pairs.append([name, body])
+    if names != sorted(set(names)):
+        _fail("sorted unique reviewed preservation file paths required")
+    return {"manifest_json": preparation.manifest_json, "files": pairs}
+
+
+def reviewed_preservation_corpus_sha256(preparation):
+    """Bind every UTF8 byte of the manifest, active project and child companions."""
+    return _sha(canonical_dag_json_bytes(_reviewed_preservation_offered(preparation)))
+
+
+def _reviewed_preservation_units(graph, admission, replay, *, version=2):
+    if type(version) is not int or version not in (2, 3):
+        _fail("explicit reviewed preservation unit version required")
+    declaration = replay["preparation_inputs"]["declaration"]
+    if not {"formalization", "proof_obligation"}.issubset(admission["permitted_uses"]):
+        _fail("explicit reviewed formalization and proof-obligation permissions required")
+    units = declaration["units"]
+    if not 3 <= len(units) <= MAX_REVIEWED_PRESERVATION_UNITS:
+        _fail("reviewed preservation requires three to eight complete source units")
+    ids = [row["unit_id"] for row in units]
+    groups = (admission["units"], graph["unit_records"], graph["ast_records"])
+    if any([row["unit_id"] for row in group] != ids for group in groups):
+        _fail("complete ordered reviewed admission and graph unit bijection required")
+    if (set(replay["preparation_inputs"]["relational_inputs"]) != set(ids)
+            or set(replay["preparation_inputs"]["source_inputs"]) != set(ids)):
+        _fail("complete exact source and relational replay inputs required")
+    if (graph["source_versions"] != [row["source_version"] for row in units]
+            or graph["source_occurrences"] != [row["occurrence"] for row in units]):
+        _fail("reviewed graph source version and occurrence order differs")
+    context = declaration["governing_context"]
+    if (any(graph["scope_record"][key] != value for key, value in context.items())
+            or graph["scope_record"]["interpretation_id"] != declaration["interpretation_id"]):
+        _fail("one exact reviewed governing context and interpretation required")
+    signature_header, predicate_ledger, index = None, {}, []
+    signature_headers = []
+    for ordinal, (unit, admitted, graph_unit, graph_ast) in enumerate(zip(units, *groups, strict=True)):
+        ir = admitted["canonical_ir"]
+        binding = {"source_version_cid": unit["source_version"]["record_cid"],
+            "occurrence_cid": unit["occurrence"]["record_cid"], "document_revision": unit["document_revision"]}
+        ir_bytes = canonical_dag_json_bytes(ir)
+        if (ir["source_binding"] != binding or admitted["occurrence_cid"] != binding["occurrence_cid"]
+                or ir["governing_context"] != context or ir["interpretation_id"] != declaration["interpretation_id"]
+                or ir["assumptions"] != [] or graph_ast["ast_json"].encode("utf-8") != ir_bytes
+                or graph_ast["ast_sha256"] != _sha(ir_bytes)
+                or graph_ast["source_occurrence_cid"] != binding["occurrence_cid"]
+                or graph_unit["ast_record_cid"] != graph_ast["record_cid"]
+                or graph_unit["source_version_cid"] != binding["source_version_cid"]
+                or graph_unit["source_occurrence_cid"] != binding["occurrence_cid"]
+                or graph_unit["scope_record_cid"] != graph["scope_record"]["record_cid"]
+                or graph_unit["interpretation_record_cid"] != graph["interpretation_record"]["record_cid"]):
+            _fail("complete unit source, ordered IR, origin and reviewed scope binding differs")
+        inputs = replay["preparation_inputs"]["relational_inputs"][unit["unit_id"]]
+        report = inputs["report"]
+        if (report["typed_expression"] != ir["typed_expression"]
+                or report["argument_roles"] != ir["argument_roles"]
+                or admitted["argument_roles"] != ir["argument_roles"]
+                or admitted["relational_profile"] != report["profile"]
+                or graph_unit["relational_request_sha256"] != unit["relational_request_sha256"]):
+            _fail("complete unit report, ordered roles and request identity differs")
+        signature = ir["typed_expression"]["signature"]
+        header = {key: value for key, value in signature.items() if key != "symbols"}
+        if version == 2:
+            if signature_header is None:
+                signature_header = header
+            elif header != signature_header:
+                _fail("shared Object signature headers differ")
+            namespace = None
+            symbol_ledger = predicate_ledger
+        else:
+            # A signature ID, sort ordering and source profile remain part of
+            # each unit's model. Equal spellings across different models are
+            # not a declaration merge or a governing-definition theorem.
+            namespace = report["profile"] + ":" + _sha(canonical_dag_json_bytes(header))
+            signature_headers.append({"unit_id": unit["unit_id"],
+                "relational_profile": report["profile"], "signature_header": header,
+                "signature_namespace_sha256": _sha(canonical_dag_json_bytes({
+                    "relational_profile": report["profile"], "signature_header": header}))})
+            if namespace not in predicate_ledger:
+                predicate_ledger[namespace] = {"relational_profile": report["profile"],
+                    "signature_header": header, "unit_ids": [], "predicates": {}}
+            namespace_ledger = predicate_ledger[namespace]
+            if (namespace_ledger["relational_profile"] != report["profile"]
+                    or namespace_ledger["signature_header"] != header):
+                _fail("reviewed signature namespace collision")
+            namespace_ledger["unit_ids"].append(unit["unit_id"])
+            symbol_ledger = namespace_ledger["predicates"]
+        roles = {row["symbol"]: row["roles"] for row in ir["argument_roles"]}
+        for symbol in signature["symbols"]:
+            entry = {"declaration": symbol, "ordered_argument_roles": roles[symbol["name"]]}
+            name = symbol["name"]
+            if name in symbol_ledger and symbol_ledger[name] != entry:
+                _fail("shared predicate signature or ordered argument roles differ")
+            symbol_ledger[name] = entry
+        index.append({"ordinal": ordinal, "unit_id": unit["unit_id"], "kind": unit["kind"],
+            "source_version_cid": binding["source_version_cid"], "source_occurrence_cid": binding["occurrence_cid"],
+            "document_revision": unit["document_revision"], "parent_unit_ids": unit["parent_unit_ids"],
+            "source_text_sha256": _sha(admitted["source_text"].encode("utf-8")),
+            "graph_unit_record_cid": graph_unit["record_cid"], "graph_ast_record_cid": graph_ast["record_cid"],
+            "complete_ir_sha256": _sha(ir_bytes), "scope_record_cid": graph_unit["scope_record_cid"],
+            "interpretation_record_cid": graph_unit["interpretation_record_cid"],
+            "signature_id": signature["signature_id"],
+            "relational_request_sha256": unit["relational_request_sha256"],
+            "relational_report_sha256": inputs["expected_report_sha256"]})
+        if version == 3:
+            index[-1].update(relational_profile=report["profile"], signature_header=header,
+                signature_namespace_sha256=signature_headers[-1]["signature_namespace_sha256"])
+    return index, signature_header if version == 2 else signature_headers, predicate_ledger
+
+
+def _reviewed_preservation_project(graph, admission, replay, owners, pins, commitment,
+        expected_graph_sha256, expected_admission_sha256, toolchain):
+    _, _, native = owners
+    index, signature_header, predicates = _reviewed_preservation_units(graph, admission, replay)
+    files, modules, obligations, units, native_pins = {}, [], [], [], {}
+    imports = {}
+
+    def add(name, body, *, shared=False):
+        if type(name) is not str or type(body) is not str:
+            _fail("ordinary reviewed preservation project files required")
+        if name in files:
+            if shared and files[name] == body:
+                return
+            _fail("reviewed preservation path or instance declaration collision")
+        if (len(files) >= MAX_REVIEWED_PRESERVATION_FILES
+                or sum(len(text.encode("utf-8")) for text in files.values()) + len(body.encode("utf-8"))
+                    > joint_owner.MAX_PROJECT_BYTES):
+            _fail("reviewed preservation aggregate file or UTF8 byte bound exceeded")
+        files[name] = body
+
+    common = [native.RELATIONAL_PROJECT_ROOT + ".Prelude", native.RELATIONAL_PROJECT_ROOT + ".Semantics"]
+    for item in index:
+        inputs = replay["preparation_inputs"]["relational_inputs"][item["unit_id"]]
+        child_args = dict(expected_report_sha256=item["relational_report_sha256"],
+            expected_request_sha256=item["relational_request_sha256"], toolchain=toolchain)
+        child = native.prepare_relational_ast_preservation(inputs["report"], inputs["request_raw"], **child_args)
+        child_sha = native.preparation_sha256(child)
+        native.validate_relational_ast_preservation(child, inputs["report"], inputs["request_raw"],
+            expected_preparation_sha256=child_sha, **child_args)
+        manifest, child_files = child.to_dict(), dict(child.files)
+        instance_modules = [module for module in manifest["expected_modules"]
+            if module not in common + [native.RELATIONAL_PROJECT_ROOT]]
+        if (manifest["schema"] != native.SCHEMA or manifest["profile"] != native.RELATIONAL_PROFILE
+                or manifest["family"] != "deontic_fol"
+                or manifest["toolchain"] != toolchain or len(instance_modules) != 1
+                or manifest["relational_report_sha256"] != item["relational_report_sha256"]
+                or manifest["original_request_sha256"] != item["relational_request_sha256"]
+                or manifest["preparation_only"] is not True
+                or type(manifest["training_mask"]) is not int or manifest["training_mask"] != 0
+                or type(manifest["evaluation_gold_mask"]) is not int or manifest["evaluation_gold_mask"] != 0
+                or set(manifest["authority"]) != set(native.AUTHORITY)
+                or any(value is not False for value in manifest["authority"].values())
+                or any(manifest[key] is not False for key in native.FALSE_FLAGS)
+                or manifest["support_profile"]["typed_sort"] != "Object"
+                or manifest["support_profile"]["native_sort"] is not None
+                or manifest["support_profile"]["counting_supported"] is not False
+                or manifest["support_profile"]["modal_agent"] is not None
+                or manifest["support_profile"]["modal_context"] is not None):
+            _fail("unchanged closed Object relational O/P/F preservation child required")
+        instance = instance_modules[0]
+        if (re.fullmatch(r"LegalRelationalAstPreservation\.Instance[0-9a-f]{64}", instance) is None
+                or instance in modules):
+            _fail("distinct physical units cannot share an instance or declaration in this profile")
+        expected_theorems = [instance + "." + leaf for leaf in _REVIEWED_PRESERVATION_LEAVES]
+        expected_imports = {common[0]: [], common[1]: [common[0]], instance: [common[1]],
+            native.RELATIONAL_PROJECT_ROOT: [instance]}
+        expected_files = {module.replace(".", "/") + ".lean" for module in [*common, instance]}
+        expected_files |= {"lakefile.toml", "lean-toolchain", "preservation-inputs.json",
+            native.RELATIONAL_PROJECT_ROOT + ".lean"}
+        if (manifest["expected_modules"] != [*common, instance, native.RELATIONAL_PROJECT_ROOT]
+                or manifest["module_imports"] != expected_imports or manifest["theorems"] != expected_theorems
+                or set(child_files) != expected_files or len(child.files) != 7
+                or manifest["file_sha256"] != {name: _sha(body.encode("utf-8")) for name, body in child.files}
+                or child_files["lean-toolchain"] != toolchain + "\n"
+                or child_files[native.RELATIONAL_PROJECT_ROOT + ".lean"] != "import " + instance + "\n"):
+            _fail("complete unchanged child project and five ordered preservation obligations required")
+        for path, digest in manifest["producer_pins"].items():
+            if path in native_pins and native_pins[path] != digest:
+                _fail("per-unit native preservation producer pins disagree")
+            native_pins[path] = digest
+        for module in (*common, instance):
+            add(module.replace(".", "/") + ".lean", child_files[module.replace(".", "/") + ".lean"],
+                shared=module in common)
+        # Keep all seven child files byte-for-byte under unique ordinal paths,
+        # including their colliding inputs, child root and child lakefile.
+        prefix = "unit-companions/" + format(item["ordinal"], "02d") + "-"
+        companions = []
+        for ordinal, (name, body) in enumerate(child.files):
+            target = prefix + "file-" + format(ordinal, "02d") + ".txt"
+            add(target, body)
+            companions.append({"original_path": name, "companion_path": target,
+                "sha256": _sha(body.encode("utf-8"))})
+        manifest_path = prefix + "manifest.json"
+        add(manifest_path, child.manifest_json)
+        units.append(dict(item, child_preparation_sha256=child_sha,
+            child_manifest_sha256=_sha(child.manifest_json.encode("utf-8")), child_manifest_path=manifest_path,
+            original_child_files=companions, instance_module=instance, preservation_obligations=expected_theorems))
+        modules.append(instance)
+        obligations.extend(expected_theorems)
+        imports[instance] = [common[1]]
+    if (len(set(obligations)) != len(index) * 5 or len(obligations) > MAX_REVIEWED_PRESERVATION_OBLIGATIONS
+            or len(modules) + 3 > MAX_REVIEWED_PRESERVATION_MODULES):
+        _fail("complete distinct bounded unit preservation obligations required")
+    root = REVIEWED_PRESERVATION_ROOT
+    add(root + ".lean", "".join("import " + module + "\n" for module in modules))
+    lake_roots = canonical_dag_json_bytes([*common, *modules, root]).decode("utf-8")
+    add("lakefile.toml", 'name = "legal_reviewed_norm_preservation"\nversion = "0.1.0"\n\n[[lean_lib]]\nname = "legal"\nroots = ' + lake_roots + "\n")
+    add("lean-toolchain", toolchain + "\n")
+    bindings = {"schema": "legal-corpus-reviewed-preservation-bindings/v2",
+        "input_commitment_sha256": commitment, "reviewed_graph_sha256": expected_graph_sha256,
+        "reviewed_admission_sha256": expected_admission_sha256, "declaration_sha256": admission["declaration_sha256"],
+        "units": units}
+    add("reviewed-input-bindings.json", canonical_dag_json_bytes(bindings).decode("utf-8") + "\n")
+    imports.update({common[0]: [], common[1]: [common[0]], root: modules})
+    for path, digest in native_pins.items():
+        if (path in pins and pins[path] != digest) or _sha(Path(path).read_bytes()) != digest:
+            _fail("current native preservation dependencies differ")
+    flags = dict(native.FALSE_FLAGS)
+    manifest = contracts.seal_record({**bindings, "schema": REVIEWED_PRESERVATION_SCHEMA,
+        "profile": REVIEWED_PRESERVATION_PROFILE, "toolchain": toolchain, "target": "legal",
+        "provenance_kind": admission["provenance_kind"],
+        "scope_record_cid": graph["scope_record"]["record_cid"],
+        "interpretation_record_cid": graph["interpretation_record"]["record_cid"],
+        "signature_header": signature_header, "predicate_compatibility_ledger": predicates,
+        "expected_modules": [*common, *modules, root], "module_imports": imports,
+        "preservation_obligations": obligations,
+        "file_sha256": {name: _sha(body.encode("utf-8")) for name, body in sorted(files.items())},
+        "producer_pins": pins, "native_producer_pins": native_pins,
+        "support_profile": {"families": ["deontic_fol"], "typed_sort": "Object", "native_sort": None,
+            "modalities": ["O", "P", "F"], "counting_supported": False, "modal_agent": None, "modal_context": None,
+            "all_declared_units_required": True, "ordered_units_preserved": True,
+            "one_exact_signature_header_including_signature_id": True,
+            "signature_symbol_subsets_may_differ": True,
+            "overlapping_predicates_require_exact_signatures_and_ordered_roles": True,
+            "predicate_compatibility_is_syntactic_only": True, "cross_unit_definition_application_proved": False,
+            "source_versions_may_differ_under_exact_common_reviewed_context": True,
+            "duplicate_instance_declarations_across_physical_units": "entire_preparation_refused",
+            "instance_rewriting_or_deduplication": False, "shared_files": "byte_identical_Prelude_and_Semantics_only",
+            "max_units": MAX_REVIEWED_PRESERVATION_UNITS, "max_files": MAX_REVIEWED_PRESERVATION_FILES,
+            "max_modules": MAX_REVIEWED_PRESERVATION_MODULES, "max_obligations": MAX_REVIEWED_PRESERVATION_OBLIGATIONS,
+            "max_project_utf8_bytes": joint_owner.MAX_PROJECT_BYTES},
+        "trust_boundary": ["Current complete reviewed admission and graph inputs are replayed, not inferred.",
+            "Every original child file and manifest remains retained; active instance bytes remain unchanged.",
+            "Five independent typed/native preservation obligations per unit are proposed, not executed.",
+            "Same predicate spelling is syntactic compatibility, not shared legal meaning or definition application.",
+            "No alias theorem, desired-equivalence premise, source prose proof, corpus or statutory admission is supplied."],
+        "preparation_only": True, "lean_compilation_status": "not_executed", "proof_status": "not_executed",
+        "authority": dict(native.AUTHORITY), "semantic_use_eligible": False, "training_mask": 0,
+        "evaluation_gold_mask": 0, **flags})
+    result = ReviewedPreservationCorpusPreparation(canonical_dag_json_bytes(manifest).decode("utf-8"),
+        tuple(sorted(files.items())))
+    reviewed_preservation_corpus_sha256(result)
+    if any(_sha(Path(path).read_bytes()) != digest for path, digest in native_pins.items()):
+        _fail("native preservation producers changed during aggregate preparation")
+    return result
+
+
+def _reviewed_preservation_operation(graph, admission, args, kwargs, *, expected_graph_sha256,
+        expected_admission_sha256, toolchain, offered=None):
+    import inspect
+    owners = _reviewed_preservation_owners()
+    graph_owner, admission_owner, _ = owners
+    contracts.require_sha256(expected_graph_sha256, "expected_graph_sha256")
+    contracts.require_sha256(expected_admission_sha256, "expected_admission_sha256")
+    original = {"graph": graph, "admission": admission, "args": list(args), "kwargs": kwargs,
+        "expected_graph_sha256": expected_graph_sha256, "expected_admission_sha256": expected_admission_sha256,
+        "toolchain": toolchain}
+    detached, commitment = admission_owner.norm._snapshot(original)
+    offered_commitment = None
+    if offered is not None:
+        _, offered_commitment = admission_owner.norm._snapshot(_reviewed_preservation_offered(offered))
+    pins = _reviewed_preservation_pins(owners)
+    signature = inspect.signature(admission_owner.assess_reviewed_norm_admission_v2)
+    bound = signature.bind(*detached["args"], **detached["kwargs"])
+    if set(bound.arguments) != set(signature.parameters):
+        _fail("complete reviewed admission replay inputs required for preservation")
+    checked_graph = graph_owner.validate_reviewed_norm_graph_v2(detached["graph"], detached["admission"],
+        *detached["args"], expected_graph_sha256=expected_graph_sha256,
+        expected_admission_sha256=expected_admission_sha256, **detached["kwargs"])
+    if (admission_owner.norm._snapshot(original)[1] != commitment
+            or admission_owner.norm._snapshot(detached)[1] != commitment):
+        _fail("reviewed preservation inputs changed during admission and graph replay")
+    result = _reviewed_preservation_project(checked_graph, detached["admission"], bound.arguments, owners,
+        pins, commitment, expected_graph_sha256, expected_admission_sha256, toolchain)
+    if offered is not None and result != offered:
+        _fail("reviewed preservation differs from complete current regeneration")
+    if (admission_owner.norm._snapshot(original)[1] != commitment
+            or admission_owner.norm._snapshot(detached)[1] != commitment
+            or _reviewed_preservation_pins(owners) != pins
+            or (offered is not None and admission_owner.norm._snapshot(
+                _reviewed_preservation_offered(offered))[1] != offered_commitment)):
+        _fail("reviewed preservation inputs, preparation or producers changed during operation")
+    return result
+
+
+def prepare_reviewed_norm_preservation_corpus_v2(graph, admission, *args, expected_graph_sha256,
+        expected_admission_sha256, toolchain, **kwargs):
+    """Replay all reviewed units and prepare unchanged independent H witnesses.
+
+    This API performs no native build and grants no legal, corpus or training
+    authority. Complete external source/review/dependency inputs remain required.
+    """
+    return _reviewed_preservation_operation(graph, admission, args, kwargs,
+        expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
+        toolchain=toolchain)
+
+
+def validate_reviewed_norm_preservation_corpus_v2(preparation, graph, admission, *args,
+        expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256, toolchain, **kwargs):
+    """Regenerate every unit, obligation and companion under current admission.
+
+    The preservation pin has its own name because expected_preparation_sha256
+    remains the required, independently pinned admission replay keyword.
+    """
+    contracts.require_sha256(expected_preservation_sha256, "expected_preservation_sha256")
+    if reviewed_preservation_corpus_sha256(preparation) != expected_preservation_sha256:
+        _fail("independent complete reviewed preservation preparation pin differs")
+    return _reviewed_preservation_operation(graph, admission, args, kwargs,
+        expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
+        toolchain=toolchain, offered=preparation)
+
+
+__all__ += ["ReviewedPreservationCorpusPreparation", "REVIEWED_PRESERVATION_SCHEMA",
+    "REVIEWED_PRESERVATION_PROFILE", "prepare_reviewed_norm_preservation_corpus_v2",
+    "validate_reviewed_norm_preservation_corpus_v2", "reviewed_preservation_corpus_sha256"]
+
+
+REVIEWED_MIXED_PRESERVATION_SCHEMA = "legal-corpus-reviewed-preservation-preparation/v3"
+REVIEWED_MIXED_PRESERVATION_PROFILE = "reviewed-multi-unit-mixed-relational-preservation/v3"
+REVIEWED_MIXED_PRESERVATION_ROOT = "LegalReviewedMixedNormPreservation"
+_REVIEWED_MIXED_PRESERVATION_LEAVES = (
+    "mixed_typed_value_exact", "mixed_renderer_value_exact", "mixed_ast_closed",
+    "mixed_denotation_matches_lowering", "mixed_role_denotation_matches_lowering",
+)
+
+
+def _reviewed_mixed_preservation_policy():
+    if ((REVIEWED_MIXED_PRESERVATION_SCHEMA, REVIEWED_MIXED_PRESERVATION_PROFILE,
+            REVIEWED_MIXED_PRESERVATION_ROOT) != (
+            "legal-corpus-reviewed-preservation-preparation/v3",
+            "reviewed-multi-unit-mixed-relational-preservation/v3",
+            "LegalReviewedMixedNormPreservation")
+            or any(type(value) is not int for value in (MAX_REVIEWED_PRESERVATION_UNITS,
+                MAX_REVIEWED_PRESERVATION_FILES, MAX_REVIEWED_PRESERVATION_MODULES,
+                MAX_REVIEWED_PRESERVATION_OBLIGATIONS, joint_owner.MAX_PROJECT_BYTES))
+            or (MAX_REVIEWED_PRESERVATION_UNITS, MAX_REVIEWED_PRESERVATION_FILES,
+                MAX_REVIEWED_PRESERVATION_MODULES, MAX_REVIEWED_PRESERVATION_OBLIGATIONS,
+                joint_owner.MAX_PROJECT_BYTES) != (8, 78, 11, 40, 8 * 1024 * 1024)):
+        _fail("fixed reviewed mixed preservation domain and original bounds required")
+
+
+def _reviewed_mixed_preservation_owners():
+    from . import corpus_norm_definition_adapter, legal_reviewed_norm_admission_v3
+    from . import legal_native_ast_preservation
+    return corpus_norm_definition_adapter, legal_reviewed_norm_admission_v3, legal_native_ast_preservation
+
+
+def _reviewed_mixed_preservation_child(native, profile):
+    """Select one closed child domain; never retag an Object or mixed value."""
+    if profile == "authored-object-relational-deontic/v1":
+        root, child_profile, family = ("LegalRelationalAstPreservation",
+            "typed-relational-deontic-native-preservation/v1", "deontic_fol")
+        if (native.RELATIONAL_PROJECT_ROOT != root or native.RELATIONAL_PROFILE != child_profile
+                or _REVIEWED_PRESERVATION_LEAVES != (
+                    "native_value_exact", "native_ast_closed", "denotation_matches_native",
+                    "typed_source_lowering_exact", "role_denotation_matches_native")):
+            _fail("fixed Object preservation policy changed")
+        return (native.prepare_relational_ast_preservation, native.validate_relational_ast_preservation,
+            root, child_profile, family, "relational_report_sha256", _REVIEWED_PRESERVATION_LEAVES)
+    if profile == "authored-many-sorted-relational-deontic/v1":
+        root, child_profile, family = ("LegalMixedRelationalAstPreservation",
+            "typed-many-sorted-relational-deontic-renderer-preservation/v1", "tdfol")
+        if (native.MIXED_PROJECT_ROOT != root or native.MIXED_PROFILE != child_profile
+                or _REVIEWED_MIXED_PRESERVATION_LEAVES != (
+                    "mixed_typed_value_exact", "mixed_renderer_value_exact", "mixed_ast_closed",
+                    "mixed_denotation_matches_lowering", "mixed_role_denotation_matches_lowering")):
+            _fail("fixed mixed renderer preservation policy changed")
+        return (native.prepare_mixed_relational_ast_preservation,
+            native.validate_mixed_relational_ast_preservation, root, child_profile, family,
+            "mixed_report_sha256", _REVIEWED_MIXED_PRESERVATION_LEAVES)
+    _fail("explicit Object or mixed relational source profile required")
+
+
+def _reviewed_mixed_preservation_project(graph, admission, replay, owners, pins, commitment,
+        expected_graph_sha256, expected_admission_sha256, toolchain):
+    native = owners[2]
+    authority, false_flags = dict(native.AUTHORITY), dict(native.FALSE_FLAGS)
+    if (not authority or any(value is not False for value in authority.values())
+            or not false_flags or any(value is not False for value in false_flags.values())):
+        _fail("mixed aggregate preparation cannot confer authority")
+    index, headers, predicates = _reviewed_preservation_units(graph, admission, replay, version=3)
+    files, instance_modules, obligations, units, native_pins = {}, [], [], [], {}
+    imports, common_profiles = {}, {}
+
+    def add(name, body, *, shared=False):
+        if type(name) is not str or type(body) is not str:
+            _fail("ordinary mixed preservation project files required")
+        if name in files:
+            if shared and files[name] == body:
+                return
+            _fail("mixed preservation path or instance collision")
+        if (len(files) >= MAX_REVIEWED_PRESERVATION_FILES
+                or sum(len(text.encode("utf-8")) for text in files.values()) + len(body.encode("utf-8"))
+                    > joint_owner.MAX_PROJECT_BYTES):
+            _fail("complete mixed preservation aggregate exceeds original project bounds")
+        files[name] = body
+
+    for item in index:
+        inputs = replay["preparation_inputs"]["relational_inputs"][item["unit_id"]]
+        prepare, validate, root, profile, family, report_pin, leaves = _reviewed_mixed_preservation_child(
+            native, item["relational_profile"])
+        child_args = dict(expected_report_sha256=item["relational_report_sha256"],
+            expected_request_sha256=item["relational_request_sha256"], toolchain=toolchain)
+        child = prepare(inputs["report"], inputs["request_raw"], **child_args)
+        child_sha = native.preparation_sha256(child)
+        validate(child, inputs["report"], inputs["request_raw"],
+            expected_preparation_sha256=child_sha, **child_args)
+        manifest, child_files = child.to_dict(), dict(child.files)
+        common = [root + ".Prelude", root + ".Semantics"]
+        instances = [module for module in manifest["expected_modules"] if module not in [*common, root]]
+        if (manifest["schema"] != native.SCHEMA or manifest["profile"] != profile
+                or manifest["family"] != family or manifest["toolchain"] != toolchain
+                or len(instances) != 1 or manifest[report_pin] != item["relational_report_sha256"]
+                or manifest["original_request_sha256"] != item["relational_request_sha256"]
+                or manifest["preparation_only"] is not True
+                or type(manifest["training_mask"]) is not int or manifest["training_mask"] != 0
+                or type(manifest["evaluation_gold_mask"]) is not int or manifest["evaluation_gold_mask"] != 0
+                or set(manifest["authority"]) != set(authority)
+                or any(value is not False for value in manifest["authority"].values())
+                or any(manifest[key] is not False for key in false_flags)
+                or native.AUTHORITY != authority or native.FALSE_FLAGS != false_flags):
+            _fail("complete unchanged child preservation domain and false authorities required")
+        if family == "tdfol":
+            if (manifest["support_profile"]["sorts"] != ["Object", "EventFrame", "TimeFrame"]
+                    or manifest["native_ast"] is not None
+                    or manifest["native_TDFOL_route_used"] is not False
+                    or manifest["native_parser_roundtrip"] is not False):
+                _fail("mixed renderer child cannot acquire native AST or parser authority")
+        elif (manifest["support_profile"]["typed_sort"] != "Object"
+                or manifest["support_profile"]["native_sort"] is not None
+                or manifest["support_profile"]["counting_supported"] is not False
+                or manifest["support_profile"]["modal_agent"] is not None
+                or manifest["support_profile"]["modal_context"] is not None):
+            _fail("unchanged Object relational child contract required")
+        instance = instances[0]
+        if (re.fullmatch(re.escape(root) + r"\.Instance[0-9a-f]{64}", instance) is None
+                or instance in instance_modules):
+            _fail("distinct physical units require distinct unchanged child instances")
+        theorems = [instance + "." + leaf for leaf in leaves]
+        expected_imports = {common[0]: [], common[1]: [common[0]], instance: [common[1]], root: [instance]}
+        expected_files = {module.replace(".", "/") + ".lean" for module in [*common, instance, root]}
+        expected_files |= {"lakefile.toml", "lean-toolchain", "preservation-inputs.json"}
+        if (manifest["expected_modules"] != [*common, instance, root]
+                or manifest["module_imports"] != expected_imports or manifest["theorems"] != theorems
+                or set(child_files) != expected_files or len(child.files) != 7
+                or manifest["file_sha256"] != {name: _sha(body.encode("utf-8")) for name, body in child.files}
+                or child_files["lean-toolchain"] != toolchain + "\n"
+                or child_files[root + ".lean"] != "import " + instance + "\n"):
+            _fail("all seven unchanged child files and five ordered domain obligations required")
+        current_common = {"relational_profile": item["relational_profile"],
+            "preservation_profile": profile, "family": family, "project_root": root,
+            "modules": common, "theorem_suffixes": list(leaves)}
+        if root in common_profiles and common_profiles[root] != current_common:
+            _fail("child preservation namespace or theorem-domain collision")
+        common_profiles[root] = current_common
+        for path, digest in manifest["producer_pins"].items():
+            if path in native_pins and native_pins[path] != digest:
+                _fail("mixed aggregate child producer observations disagree")
+            native_pins[path] = digest
+        for module in [*common, instance]:
+            add(module.replace(".", "/") + ".lean", child_files[module.replace(".", "/") + ".lean"],
+                shared=module in common)
+        prefix = "unit-companions/" + format(item["ordinal"], "02d") + "-"
+        companions = []
+        for ordinal, (name, body) in enumerate(child.files):
+            target = prefix + "file-" + format(ordinal, "02d") + ".txt"
+            add(target, body)
+            companions.append({"original_path": name, "companion_path": target,
+                "sha256": _sha(body.encode("utf-8"))})
+        manifest_path = prefix + "manifest.json"
+        add(manifest_path, child.manifest_json)
+        units.append(dict(item, child_preparation_sha256=child_sha,
+            child_manifest_sha256=_sha(child.manifest_json.encode("utf-8")), child_manifest_path=manifest_path,
+            original_child_files=companions, instance_module=instance, preservation_obligations=theorems,
+            child_preservation_profile=profile, child_family=family))
+        instance_modules.append(instance)
+        obligations.extend(theorems)
+        imports[instance] = [common[1]]
+    common = [module for key in sorted(common_profiles) for module in common_profiles[key]["modules"]]
+    root = REVIEWED_MIXED_PRESERVATION_ROOT
+    if (len(set(obligations)) != 5 * len(index) or len(obligations) > MAX_REVIEWED_PRESERVATION_OBLIGATIONS
+            or len(common) + len(instance_modules) + 1 > MAX_REVIEWED_PRESERVATION_MODULES):
+        _fail("complete mixed population exceeds original module or obligation capacity; no unit omitted")
+    add(root + ".lean", "".join("import " + module + "\n" for module in instance_modules))
+    modules = [*common, *instance_modules, root]
+    lake_roots = canonical_dag_json_bytes(modules).decode("utf-8")
+    add("lakefile.toml", 'name = "legal_reviewed_mixed_norm_preservation"\nversion = "0.1.0"\n\n[[lean_lib]]\nname = "legal"\nroots = ' + lake_roots + "\n")
+    add("lean-toolchain", toolchain + "\n")
+    bindings = {"schema": "legal-corpus-reviewed-preservation-bindings/v3",
+        "input_commitment_sha256": commitment, "reviewed_graph_sha256": expected_graph_sha256,
+        "reviewed_admission_sha256": expected_admission_sha256, "declaration_sha256": admission["declaration_sha256"],
+        "definition_use_record_cids": [row["record_cid"] for row in graph["definition_use_records"]],
+        "units": units}
+    add("reviewed-input-bindings.json", canonical_dag_json_bytes(bindings).decode("utf-8") + "\n")
+    for profile in common_profiles.values():
+        first, second = profile["modules"]
+        imports.update({first: [], second: [first]})
+    imports[root] = instance_modules
+    for path, digest in native_pins.items():
+        if (path in pins and pins[path] != digest) or _sha(Path(path).read_bytes()) != digest:
+            _fail("current mixed aggregate preservation producer differs")
+    if native.AUTHORITY != authority or native.FALSE_FLAGS != false_flags:
+        _fail("mixed aggregate false-authority policy changed during preparation")
+    manifest = contracts.seal_record({**bindings,
+        "schema": REVIEWED_MIXED_PRESERVATION_SCHEMA, "profile": REVIEWED_MIXED_PRESERVATION_PROFILE,
+        "toolchain": toolchain, "target": "legal", "provenance_kind": admission["provenance_kind"],
+        "scope_record_cid": graph["scope_record"]["record_cid"],
+        "interpretation_record_cid": graph["interpretation_record"]["record_cid"],
+        "signature_headers_by_unit": headers, "predicate_compatibility_ledger": predicates,
+        "common_module_profiles": [common_profiles[key] for key in sorted(common_profiles)],
+        "expected_modules": modules, "module_imports": imports, "preservation_obligations": obligations,
+        "file_sha256": {name: _sha(body.encode("utf-8")) for name, body in sorted(files.items())},
+        "producer_pins": pins, "native_producer_pins": native_pins,
+        "support_profile": {"families": sorted({row["child_family"] for row in units}),
+            "all_declared_units_required": True, "ordered_units_preserved": True,
+            "complete_signature_headers_by_unit_retained": True,
+            "signature_namespaces_are_exact_profile_and_header_commitments": True,
+            "signature_symbol_subsets_may_differ_within_one_namespace": True,
+            "overlapping_predicates_require_exact_signatures_and_ordered_roles_within_namespace": True,
+            "cross_namespace_signature_or_carrier_coercion": False,
+            "predicate_compatibility_is_syntactic_only": True,
+            "cross_unit_definition_application_proved": False,
+            "source_versions_may_differ_under_exact_common_reviewed_context": True,
+            "duplicate_instance_declarations_across_physical_units": "entire_preparation_refused",
+            "instance_rewriting_or_deduplication": False,
+            "shared_files": "byte_identical_Prelude_and_Semantics_within_original_child_profile_only",
+            "max_units": MAX_REVIEWED_PRESERVATION_UNITS, "max_files": MAX_REVIEWED_PRESERVATION_FILES,
+            "max_modules": MAX_REVIEWED_PRESERVATION_MODULES, "max_obligations": MAX_REVIEWED_PRESERVATION_OBLIGATIONS,
+            "max_project_utf8_bytes": joint_owner.MAX_PROJECT_BYTES},
+        "trust_boundary": ["Complete current V3 reviewed admission, source and graph inputs are replayed.",
+            "Every original child file and manifest and every active instance byte remains unchanged.",
+            "Each unit retains its exact signature namespace and its own five child-profile obligations.",
+            "Shared syntax is not shared legal meaning, a common model or cross-unit definition application.",
+            "Capacity refusal preserves the entire input population; partitioning is a separate explicit operation.",
+            "No alias premise, statutory truth, source-prose proof, corpus or release admission is supplied."],
+        "preparation_only": True, "lean_compilation_status": "not_executed", "proof_status": "not_executed",
+        "authority": authority, "semantic_use_eligible": False,
+        "training_mask": 0, "evaluation_gold_mask": 0, **false_flags})
+    result = ReviewedPreservationCorpusPreparation(canonical_dag_json_bytes(manifest).decode("utf-8"),
+        tuple(sorted(files.items())))
+    reviewed_preservation_corpus_sha256(result)
+    if (native.AUTHORITY != authority or native.FALSE_FLAGS != false_flags
+            or any(_sha(Path(path).read_bytes()) != digest for path, digest in native_pins.items())):
+        _fail("mixed preservation producers changed during aggregate preparation")
+    return result
+
+
+def _reviewed_mixed_preservation_operation(graph, admission, args, kwargs, *, expected_graph_sha256,
+        expected_admission_sha256, toolchain, offered=None):
+    import inspect
+    _reviewed_mixed_preservation_policy()
+    owners = _reviewed_mixed_preservation_owners()
+    graph_owner, admission_owner, _ = owners
+    contracts.require_sha256(expected_graph_sha256, "expected_graph_sha256")
+    contracts.require_sha256(expected_admission_sha256, "expected_admission_sha256")
+    original = {"graph": graph, "admission": admission, "args": list(args), "kwargs": kwargs,
+        "expected_graph_sha256": expected_graph_sha256, "expected_admission_sha256": expected_admission_sha256,
+        "toolchain": toolchain}
+    detached, commitment = admission_owner.norm._snapshot(original)
+    offered_commitment = None
+    if offered is not None:
+        _, offered_commitment = admission_owner.norm._snapshot(_reviewed_preservation_offered(offered))
+    pins = _reviewed_preservation_pins(owners)
+    signature = inspect.signature(admission_owner.assess_reviewed_norm_admission_v3)
+    bound = signature.bind(*detached["args"], **detached["kwargs"])
+    if set(bound.arguments) != set(signature.parameters):
+        _fail("complete original V3 reviewed admission replay inputs required")
+    checked_graph = graph_owner.validate_reviewed_norm_graph_v3(detached["graph"], detached["admission"],
+        *detached["args"], expected_graph_sha256=expected_graph_sha256,
+        expected_admission_sha256=expected_admission_sha256, **detached["kwargs"])
+    if (admission_owner.norm._snapshot(original)[1] != commitment
+            or admission_owner.norm._snapshot(detached)[1] != commitment):
+        _fail("mixed preservation inputs changed during complete reviewed graph replay")
+    result = _reviewed_mixed_preservation_project(checked_graph, detached["admission"], bound.arguments,
+        owners, pins, commitment, expected_graph_sha256, expected_admission_sha256, toolchain)
+    if offered is not None and result != offered:
+        _fail("mixed reviewed preservation differs from complete current regeneration")
+    if (admission_owner.norm._snapshot(original)[1] != commitment
+            or admission_owner.norm._snapshot(detached)[1] != commitment
+            or _reviewed_preservation_pins(owners) != pins
+            or (offered is not None and admission_owner.norm._snapshot(
+                _reviewed_preservation_offered(offered))[1] != offered_commitment)):
+        _fail("mixed preservation inputs, project or producer changed during operation")
+    _reviewed_mixed_preservation_policy()
+    return result
+
+
+def prepare_reviewed_norm_preservation_corpus_v3(graph, admission, *args, expected_graph_sha256,
+        expected_admission_sha256, toolchain, **kwargs):
+    """Replay every V3 reviewed source unit and retain its unchanged child profile."""
+    return _reviewed_mixed_preservation_operation(graph, admission, args, kwargs,
+        expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
+        toolchain=toolchain)
+
+
+def validate_reviewed_norm_preservation_corpus_v3(preparation, graph, admission, *args,
+        expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256, toolchain, **kwargs):
+    """Regenerate the complete V3 project without coercion, clipping or authority."""
+    contracts.require_sha256(expected_preservation_sha256, "expected_preservation_sha256")
+    if reviewed_preservation_corpus_sha256(preparation) != expected_preservation_sha256:
+        _fail("independent complete mixed preservation preparation pin differs")
+    return _reviewed_mixed_preservation_operation(graph, admission, args, kwargs,
+        expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
+        toolchain=toolchain, offered=preparation)
+
+
+__all__ += ["REVIEWED_MIXED_PRESERVATION_SCHEMA", "REVIEWED_MIXED_PRESERVATION_PROFILE",
+    "REVIEWED_MIXED_PRESERVATION_ROOT", "prepare_reviewed_norm_preservation_corpus_v3",
+    "validate_reviewed_norm_preservation_corpus_v3"]

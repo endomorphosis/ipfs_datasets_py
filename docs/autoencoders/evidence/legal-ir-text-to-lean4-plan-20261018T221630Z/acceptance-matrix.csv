@@ -1,0 +1,38 @@
+area,case,planned_acceptance,increment,execution_status,result,reason
+source,literal_plain_text,Parquet/JSON field binds without markup wrapper; original bytes and fields retained,A,planned,null,not_executed_in_planning_turn
+source,unicode_offsets,Non-ASCII characters map exactly between character and UTF-8 coordinates in the named view,A,planned,null,not_executed_in_planning_turn
+source,repeated_occurrences,Every literal match retained; ambiguous provenance never silently picks the first,A,planned,null,not_executed_in_planning_turn
+source,wrong_field_edition,Same legal ID with changed field/text/edition cannot substitute for original source,A,planned,null,not_executed_in_planning_turn
+source,unit_context,Body/editorial labels and external conditions remain explicit; omission prevents unsupported completeness claims,A,planned,null,not_executed_in_planning_turn
+source,normalization_map,Transformed input has a reversible coordinate map or declared nonrecoverable losses,A,planned,null,not_executed_in_planning_turn
+ir,representability,Each enrolled unit has a supported AST profile or explicit unsupported constructs,B,planned,null,not_executed_in_planning_turn
+ir,roles_binders_modality,"Ordered roles, lexical binders, O/P/F, negation and modal scope survive serialization",B,planned,null,not_executed_in_planning_turn
+ir,conditions_exceptions,Necessary/sufficient conditions and exception attachment remain distinct,B,planned,null,not_executed_in_planning_turn
+ir,counts_time_symbols,Unsupported counts/time refuse; stable aliases preserve full identity without truncation,B,planned,null,not_executed_in_planning_turn
+review,genuine_decisions,Qualified reviews bind source/context/AST; disagreement and adjudication retained,B,planned,null,not_executed_in_planning_turn
+model,weighted_inference_compatibility,Reuse completed canonical training parity; qualify remaining all-one numerical inference and target-independent original-BOS evaluation on exact compatible checkpoints,C,planned,null,not_executed_in_planning_turn
+model,full_bos_generation,Complete generation starts from original BOS with declared cap/EOS and no target prefix,C,planned,null,not_executed_in_planning_turn
+model,context_leakage,Predictor receives only independently available source/catalog context; target-derived signatures excluded or separately labeled oracle,C,planned,null,not_executed_in_planning_turn
+model,complete_population,Missing/refused/unsupported/capped cases stay in denominator with reasons,C,planned,null,not_executed_in_planning_turn
+model,resume_identity,Exact compatible model/optimizer/RNG/counter restoration or explicit nonexact-resume limitation,C,planned,null,not_executed_in_planning_turn
+model,objective_control,All-one and choice-weighted policies differ only in declared intervention with identical frozen eligible inputs,C,planned,null,not_executed_in_planning_turn
+graph,ast_roundtrip,Exact ordered AST returns from graph without argument reorder or dropped alternatives,D,planned,null,not_executed_in_planning_turn
+graph,endpoint_closure,Every asserted edge has typed actual endpoints and complete source/AST companion,D,planned,null,not_executed_in_planning_turn
+graph,scope_collision,Equal labels across scope/date/edition stay distinct unless explicit supported identity evidence exists,D,planned,null,not_executed_in_planning_turn
+graph,every_use,"Every governed occurrence gets a resolution, ambiguity or unavailable disposition",D,planned,null,not_executed_in_planning_turn
+graph,negative_dependencies,New competing definitions or formerly empty partitions invalidate affected resolutions,D,planned,null,not_executed_in_planning_turn
+lean,full_module_coverage,Actual native build returns every expected module and root; no overflow truncation,E,planned,null,not_executed_in_planning_turn
+lean,premises_axioms,"Conditional premises explicit, concrete preservation checked, no unreported sorry/admit or unexplained axioms",E,planned,null,not_executed_in_planning_turn
+lean,cold_warm_changed,Clean and incremental builds agree; fresh/reused modules counted separately,E,planned,null,not_executed_in_planning_turn
+lean,invalidations,Changed definition/source/toolchain or review revocation cannot reuse incompatible acceptance,E,planned,null,not_executed_in_planning_turn
+lean,failed_descendant,Failed prerequisite blocks dependents and cannot resurrect stale prior artifacts,E,planned,null,not_executed_in_planning_turn
+evaluation,grouped_splits,Lineage/duplicate/definition-use grouping and exposure policy fixed before fitting,F,planned,null,not_executed_in_planning_turn
+evaluation,latent_contribution,Source-only and compatible genuine/zero/shuffled inputs compared without cross-profile checkpoint mixing,F,planned,null,not_executed_in_planning_turn
+evaluation,complete_semantics,"Coverage, complete accepted ASTs and critical semantic errors reported separately from loss and compile rate",F,planned,null,not_executed_in_planning_turn
+evaluation,nonoverlap_cost,All preparation/update/check/review/failure/storage costs retained with nonoverlapping or explicitly nested clocks,F,planned,null,not_executed_in_planning_turn
+runtime,admission_refusal,Memory/disk/CPU/provider admission refusal starts no unadmitted productive work,cross_cutting,planned,null,not_executed_in_planning_turn
+runtime,pressure_backoff,Controlled external-pressure signal reduces new admission and owned concurrency; stable recovery resumes within budget,cross_cutting,planned,null,not_executed_in_planning_turn
+runtime,cancellation,Before/during-work cancellation preserves disposition/checkpoint policy and releases owned resources,cross_cutting,planned,null,not_executed_in_planning_turn
+runtime,provider_rate_limit,429/Retry-After and transient responses obey bounded jitter/deadline; malformed requests do not loop,cross_cutting,planned,null,not_executed_in_planning_turn
+release,coherent_manifest,Exact source/span/entity/IR/model/toolchain artifacts read back under one release root,G,planned,null,not_executed_in_planning_turn
+end_to_end,three_unit_component,Definition plus complete norm plus genuine second use traverse exact source to graph to reviewed Lean; unresolved rows retained,E,planned,null,not_executed_in_planning_turn

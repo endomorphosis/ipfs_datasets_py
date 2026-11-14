@@ -1,0 +1,330 @@
+{
+  "administrative_closeout": {
+    "actual_capacity_satisfied_at_census": true,
+    "actual_over_limit_bytes_at_census": 0,
+    "actual_postwrite_census_separate_from_projection": true,
+    "artifact_bytes": 34073868,
+    "cap_bytes_unchanged": 220000000000,
+    "cap_changed": false,
+    "deadline_satisfied": true,
+    "elapsed_through_Source_closure_seconds": 167.19029180612415,
+    "errors": [],
+    "failed367_qualification_transferred": false,
+    "foreign_guard_scope": "API_locked_interval_and_separate_controller_locked_intervals_only",
+    "independent_admin_review_included": true,
+    "inter_interval_foreign_changes_observed": {
+      "API_to_postwrite": false,
+      "initial_to_pre_API": false,
+      "pre_API_to_API": false,
+      "preflight_to_initial": true
+    },
+    "new_native_grant_or_reservation": false,
+    "original_Source_R_A_closed": true,
+    "original_overrun_bytes_preserved": 519436,
+    "original_promised_bytes_unchanged": 33554432,
+    "outputs_deleted": false,
+    "provenance": "Historical Tool DATA checked at original fixed ranges; no reconstructed Popen or cryptographic execution attestation. Current storage operation confers no earlier test/Source/native/legal authority.",
+    "released_accounting_promise_bytes": 33554432,
+    "reservation_id": "5b6b570ec57f47faa588d105ddd07a1e",
+    "retained_files": 12348,
+    "single_cleanup_budget_seconds": 240.0,
+    "status": "ACTUAL_STORAGE_ONLY_CLOSED_INDEPENDENTLY_REVIEWED_NO_RETROQUALIFICATION",
+    "total_elapsed_seconds": 167.37347031291574,
+    "whole_operation_foreign_immutability_claimed": false
+  },
+  "date": "2026-11-09",
+  "evidence_id": "direct-tool-quota-nested-path-order-full408-20261109",
+  "history_preserved": {
+    "earlier_failed_runs": "All prior failed qualification outcomes remain historical. The old5b6 accounting promise is released only by this separate explicit administrative operation, never transferred from whole408 success. Other claims are not changed by this entry.",
+    "failed_admin_preparation": "Earlier98417/bf802a ended before APIcall after fsync/order mismatch. Preserve its outcome and emptyOUT-v01. Successful finalv03 uses a distinct OUT-v02 and fresh outcome; no replay or retroqualification.",
+    "peer_docs_catalog_and_tasks": "Fresh current peer tails (including152-era changes), catalog components/evidence, original task IDs/order/statuses and holds must survive prefix/append merge unchanged.",
+    "prior_full405_generation": "405/75 passed64.241s on3e7/8dd; retains its own evidence and zero scratch-absence observation. Do not pool counts or relabel it as6f84/f42."
+  },
+  "next_smallest_operational_repair": {
+    "existing_task_ids": [
+      "LIR-03",
+      "LIR-22"
+    ],
+    "implementation_done": false,
+    "tasks": [
+      "Preserve bounded cleanup_error detail and available typed lock observation in existing Host/SDK terminal; current exception class alone cannot establish the actual cause.",
+      "Add strict genuine productive Popen wait/native/process closure handling independent of failed disk-retention status, allowing owned Source guardian closure without infinite wait. Never grant storage release, resume work, acquire a new grant or retry.",
+      "Negative controls must keep Source custody held if genuine wait, lease identity/absence or process closure remains unknown.",
+      "Qualify an explicit closed namespace contract for actual ipfs_datasets_py.logic.backends and controls;18 capacity cases currently stop before tracker import/grants. Do not label these18 as established production logic failures.",
+      "Then review unrun fixture compatibility candidates, preserving all539 IDs/assertions and selected698/a13/H origins. The suspected unknown-cycle lead passed and must not be patched.",
+      "After those controls require fresh whole539 owning qualification and a separate genuine selected native-family/profile qualification before activation."
+    ]
+  },
+  "qualified_source_sha256": {
+    "CLI": "3e4cdb8104c58e15beefed0c84b43b2d19732ee8c36e93a1ae15eec6b96a663c",
+    "Host": "c99d78004e6ce6b8a861f15e2c0b7009bbb6f45a37a89daabc8894ac440b282d",
+    "SDK": "11e5110aa8dcf39c5b11c0bd06a6d02933052e917fa46bf6d53a5467107d6def",
+    "Source42": "42e9f07d0d458177079269d9f495f0b70512180c1adc2f7fe0bfdb05518a12f9",
+    "recovery": "6f84df5d178f7a80b6f727f3c97fd7b2da83c3bbb037f0f914082a6498a33e25",
+    "recovery_tests": "f42b7f29c71cb3aa313de5f82337e87f255ca1b18bd86517f711b4f6afe09a33"
+  },
+  "references": {
+    "actual_backends_namespace_source_basis": {
+      "bytes": 277028,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/selected539-actual-backends-namespace-and-process-Source-capture-v01.json",
+      "sha256": "79e2e9cf7bf88a2b7b3bfadc24c62b1b85a9eaa7ff64ec87c5dee015422e65f4"
+    },
+    "admin_actual_closed_outcome": {
+      "bytes": 7364,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/old-full367-direct-tool-quota-administrative-closeout-private-v03/outcome.json",
+      "sha256": "bd0c08ae22a9af625709ddf313dd5af13adaa57f0a1d6ec99e667df081a0817e"
+    },
+    "admin_actual_postwrite_census": {
+      "bytes": 532,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-native-full367-direct-tool-quota-administrative-closeout-v02/actual-postwrite-census.json",
+      "sha256": "788dae45997bcf6e68ea8f0da500c61a3cc1461a0f777a813a65b120569bb473"
+    },
+    "admin_detached_inventory": {
+      "bytes": 3153278,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-native-full367-direct-tool-quota-administrative-closeout-v02/artifact-inventory.json",
+      "sha256": "259019d2bf2ef4c24367e08229508915b2429342c4c5e9dd7e7333c8fccbb858"
+    },
+    "admin_historical_Tool_DATA_archive": {
+      "bytes": 177977,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-native-full367-direct-tool-quota-administrative-closeout-v02/original-tool-quota-proof.json",
+      "sha256": "fd42244cfbed0177537d75a3766eea233eb54bd55782726fe0d210f9aaa4b825"
+    },
+    "admin_independent_review": {
+      "bytes": 3035,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/old-full367-direct-tool-quota-administrative-closeout-private-v03/independent-actual-own367-storage-closeout-review-v01.json",
+      "sha256": "f92fcf46b1a610c04b15fb070cbd8d0d983edaec4aff478c3a29b2968a76890e"
+    },
+    "admin_original_API_receipt": {
+      "bytes": 4151,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-native-full367-direct-tool-quota-administrative-closeout-v02/original-reconciliation-returned.json",
+      "sha256": "1fac9368916f12be872c74c9f643113bb0c0919e5bdabf0187e80543f1f0695d"
+    },
+    "admin_selected_control": {
+      "bytes": 31563,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/old-full367-direct-tool-quota-administrative-closeout-private-v03/recover_once.py",
+      "sha256": "a26769d8a859667289cb751861a9ad3bbbac31db590170ca7d8e26b18dbaa82f"
+    },
+    "admin_selected_manifest": {
+      "bytes": 5707,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/old-full367-direct-tool-quota-administrative-closeout-private-v03/proposal-manifest-v03.json",
+      "sha256": "1d4df882ad85271418e27aa5791a87d9d3d94af63d69fb5551b831316f6cdd02"
+    },
+    "failed_admin_preparation_Path_mismatch": {
+      "bytes": 3753,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/old-full367-direct-tool-quota-administrative-closeout-private-v02/outcome.json",
+      "sha256": "5f34f0753706eace57a2c9c9868b09afd3d9a7c826e6f9f912577193a2e65866"
+    },
+    "intended_nested_order_RED1": {
+      "bytes": 82607,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/direct-tool-quota-nested-inventory-order-red1-input-v01/actual-intended-nested-order-red1-output-custody-v01.json",
+      "sha256": "72e42e3908960fcf30ccc8fea72f116287e8a68259b58fabf3fc1e5ab3170fd4"
+    },
+    "one_line_original_Source_product_adoption": {
+      "bytes": 2348805,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/direct-tool-quota-nested-order-product-source-adoption-v01/Sourceclosed-actual-one-product-adoption-v01.json",
+      "sha256": "1fd8b011edd570d42a96a6f333fa47f1220e673e15410797dcdf6be040a1e2ce"
+    },
+    "passive_active_claim_and_pure_retention_size_DATA": {
+      "bytes": 4149,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/selected-runtime539-existing-observer-input-v03/Root-persisted-active-row-and-pure-retention-size-DATA-v02.json",
+      "sha256": "6bd4541ea43c4ed8375590d7cdb350bd85ac55cb885c8ce1a6316d1994483310"
+    },
+    "prior_full405_actual": {
+      "bytes": 4697060,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/direct-tool-quota-recovery-full405-ordinary-scratch-input-v04/actual-full405-qualified-output-custody-and-inventory-v01.json",
+      "sha256": "be5cf9abe5a06e726ed3fb61f0a7c1b5d9f75772d9bc1551633f2a90f049e8da"
+    },
+    "prior_full405_capsule_private_published_basis": {
+      "bytes": 9695,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/direct-tool-quota-recovery-maintained-docs-private-v01/evidence-capsule-FULL405-GREEN-v06.json",
+      "sha256": "ca5a48bcb167d89e735a84a801b045729934e94690d8f04c54086c940af3ff65"
+    },
+    "product_proposal": {
+      "bytes": 3694,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/direct-tool-quota-nested-inventory-order-private-v01/product-proposal-manifest-v01.json",
+      "sha256": "9fdc18cef4ec9ba3099c6edb31e5fe7e0bd6a09a9d669dc9733e6172a00d1404"
+    },
+    "selected539_exact_guardian_administrative_cancellation": {
+      "bytes": 1473,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/selected-runtime539-existing-observer-input-v03/Root-owned-guardian-administrative-cancel-v02.json",
+      "sha256": "9e72cb579d838302b07735652a99202d14824ef8c16e1d26cc5f9b15ff00d8bd"
+    },
+    "selected539_failed_body_and_administrative_Source_closeout": {
+      "bytes": 1361436,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/selected-runtime539-existing-observer-input-v03/Root-actual-failed539-and-administrative-Source-closeout-v01.json",
+      "sha256": "09b1296812e1197e740198d446332f5e71ef317fe641b3eef4c6b69e56914241"
+    },
+    "selected539_failed_body_closeout_independent_review": {
+      "bytes": 2546,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/selected-runtime539-existing-observer-input-v03/independent-failed539-and-administrative-OS-closeout-review-v01.json",
+      "sha256": "c7d7b097e0bbbf63238f37c3bf8326657cae47fdace2d2df8ccd5f7785c5bccb"
+    },
+    "selected539_zero_body_order_refusal": {
+      "bytes": 382725,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/selected-runtime539-existing-observer-input-v02/Root-actual-zero-body539-order-failure-capture-v01.json",
+      "sha256": "bdca09a3ed1975a5b4de22642fb3b4ae02121baeb563f24d53358fdb12461189"
+    },
+    "test_first_proposal": {
+      "bytes": 4735,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/direct-tool-quota-nested-inventory-order-private-v01/tests-first-proposal-manifest-v01.json",
+      "sha256": "803f5d54b38f3a83f13704c9026729625b476937e6d635bcc459d68509ec7d4a"
+    },
+    "whole408_actual": {
+      "bytes": 6476152,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/direct-tool-quota-recovery-full408-ordinary-scratch-input-v01/actual-full408-qualified-output-custody-and-inventory-v01.json",
+      "sha256": "3393f8efac84446c388d5e1ce5f925ac3d087ffc3320e9c468956d0544db3649"
+    },
+    "whole408_independent_review": {
+      "bytes": 2926,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/direct-tool-quota-recovery-full408-ordinary-scratch-input-v01/independent-actual-full408-qualified-and-durability-review-v01.json",
+      "sha256": "45817ea755f0d8763873e776ed9d1397faabdeec3e393df07ed55bfff8f57567"
+    }
+  },
+  "repair": {
+    "canonical_delta": "Only new profile expected sequence now uses sorted(sizes,key=Path). Original _durable_inventory global ordering, old schemas and Source branches unchanged.",
+    "cause": "Existing durable owner sorts Path objects, while the added direct-Tool quota profile compared its relative-path sequence with sorted strings. Nested proof/file and proof-next/file expose the mismatch.",
+    "intended_RED1": {
+      "JUnit_seconds": 0.538,
+      "claim_retained_bytes": 16777216,
+      "errors": 0,
+      "failures": 1,
+      "fixture_error": false,
+      "original_custody_closed": true,
+      "scope": "Actual intended owner-order schema/namespace refusal; this failed run is never counted as success.",
+      "skips": 0,
+      "tests": 1
+    },
+    "new_controls": {
+      "additional_cases": 3,
+      "all405_prior_case_IDs_preserved": true,
+      "all_prior_assertions_preserved": true,
+      "nested_real_file_positive": 1,
+      "reversed_and_lexicographic_order_no_write_negatives": 2
+    },
+    "original_Source_product_adoption_seconds": 0.06521726120263338
+  },
+  "schema": "legal-ir-direct-Tool-quota-nested-Path-order-software-qualification/v1",
+  "scope_limits": [
+    "One V5 scratch-absence observation does not establish which unseen leaf vanished, its type/ownership or first-stat timing; no whole-census resampling, window closed at end.",
+    "Current owning-module software qualification only. No complete transitive executed-imports/publictree/hostedCI/wholeSDK result.",
+    "No retrospective failure qualification, foreignclaim release, task/hold/cap bypass or scientific native-family/runtime activation. Old5b6 storagecloseout is explicitly separate and does not qualify original367.",
+    "No model training, weights/checkpoint, decoder accuracy, statutory fidelity or Lean4 unified-corpus admission."
+  ],
+  "selected539_collection_order_refusal": {
+    "JUnit_failures": 0,
+    "JUnit_internal_error_records": 1,
+    "actual_collected_IDs": 539,
+    "exact_expected_ID_set_equal": true,
+    "natural_test_phases": 0,
+    "ordered_ID_equality": false,
+    "original_Source_native_process_closed": true,
+    "pins_unchanged": 187,
+    "retained_bytes": 16777216,
+    "retained_claim": "adaf435a32974f6c9b391ca59b6963f6",
+    "scope": "Collection-order refusal before test bodies; corrected expected unittest-method ordering/rerun requires separate actual evidence. No guard weakening or test drop.",
+    "selected_generation_qualified": false
+  },
+  "selected539_failed_body": {
+    "JUnit_seconds": 7.75,
+    "administrative_OS_Source_FD_closure": true,
+    "capacity18_import_contract_gap": {
+      "before_required_tracker_import": true,
+      "canonical_and_frozen_initializer_absent": true,
+      "cases": 18,
+      "eighteen_production_logic_failures_established": false,
+      "native_grants_reached": false,
+      "process_source_sha256": "cc2741550e16966292dc8b64a634a7b0a493e2a43e909fae326e1205715c9626",
+      "refused_real_namespace": "ipfs_datasets_py.logic.backends"
+    },
+    "claim_id": "317eccc6a3aa4bffb50117319b70d7cc",
+    "claim_release": false,
+    "claim_status": "active",
+    "cleanup_cause_established": false,
+    "cleanup_error_class": "DaemonResourceError",
+    "cleanup_error_detail_recorded": false,
+    "current_passive_retention_size_observation": {
+      "actual_retention_write_performed": false,
+      "current_proposal_fits": true,
+      "historical_cleanup_cause_established": false,
+      "ledger_bytes": 16209239,
+      "pure_retained_proposal_bytes": 16209277,
+      "unchanged_ledger_limit_bytes": 16777216
+    },
+    "errors": 0,
+    "exact_observed_IDs": 539,
+    "failures": 25,
+    "fresh_native_lease_request_descendants_absent": {
+      "descendant_count": 0,
+      "historical_release_established": false,
+      "lease_id": "c58cb825e9594e659d42bd8b91ba6efa",
+      "matching_leases": 0,
+      "matching_waiters": 0,
+      "policy_sha256": "f07cb14289fcb6275e4497dcc36be0dcf8bfc3dc87531ff7a9537eb85fdcc661",
+      "request_id": "validation:317eccc6a3aa4bffb50117319b70d7cc",
+      "scheduler_state_path": "/tmp/ipfs-datasets-resource-scheduler-1000.json",
+      "schema": "exact-sampled-validation-native-absence/v1",
+      "state_written": false
+    },
+    "fresh_postexit_original_Source_READs_closed": true,
+    "functions_methods_expected": 194,
+    "guard_denials": [],
+    "guardian_genuine_Tool_final": {
+      "final_chunk": "6b30bf",
+      "launch_chunk": "5b12c6",
+      "returncode": 130,
+      "session_id": 9937
+    },
+    "independent_closeout_review_included": true,
+    "natural_phases": 1617,
+    "normal_parent_Source_context_exit": false,
+    "observer_reported_seconds": 7.780721552204341,
+    "original_actual_owner_wait_completed": true,
+    "original_native_lease_release_reported": true,
+    "passed": 514,
+    "pins_unchanged": 187,
+    "productive_wait_budget_renewed": false,
+    "selected_generation_qualified": false,
+    "skips": 0,
+    "source_pin_drift": [],
+    "storage_durability_qualified": false,
+    "strict_order_equal": true,
+    "tests": 539,
+    "unreleased_full_claim_bytes": 16777216
+  },
+  "separate_work_not_reported": {
+    "scientific_native_family_activation_claimed": false,
+    "selected539_qualification_claimed": false
+  },
+  "status": "CURRENT_WHOLE408_SOFTWARE_QUALIFIED_OLD367_STORAGE_CLOSED_NO_ACTIVATION",
+  "unchanged_outer_limits": {
+    "child_process_slots": 4,
+    "cpu_slots": 1,
+    "memory_mb": 1536,
+    "policy_sha256": "f07cb14289fcb6275e4497dcc36be0dcf8bfc3dc87531ff7a9537eb85fdcc661",
+    "storage_bytes": 16777216,
+    "timeout_seconds": 300
+  },
+  "whole408": {
+    "JUnit_seconds": 65.794,
+    "artifact_bytes": 10297980,
+    "critical_pins_unchanged": 229,
+    "durably_released_storage_bytes": 16777216,
+    "errors": 0,
+    "failures": 0,
+    "functions": 77,
+    "ordinary_scratch_observation": {
+      "live_exception_active": false,
+      "ordinary_absences_observed": 1,
+      "request_sha256": "2edbd0e6af9c5cee95c57c4771c280cd8a67889f9e92d1ecc91b664122847c10",
+      "schema": "owned-validation-ordinary-scratch-live/v1",
+      "unseen_leaf_ownership_attested": false,
+      "whole_census_resampling": false
+    },
+    "original_wait_Source_native_process_custody_closed": true,
+    "retained_regular_files": 7353,
+    "skips": 0,
+    "source_drift": [],
+    "storage_claim": "27589dbe26594e0b8bfef38450d9a53e",
+    "tests": 408
+  }
+}

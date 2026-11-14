@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 import json
 from pathlib import Path
 
 import pytest
 
+from ipfs_datasets_py.huggingface.release import canonical_json_bytes
 from ipfs_datasets_py.processors.legal_data.uscode_hf_release import (
     CONTROL_PLANE_PATHS,
+    DATASET_INFOS_FILENAME,
     DEFAULT_CONFIG_NAME,
     LEGACY_CONFIG_NAME,
     LINEAGE_REPORT_PATH,
@@ -18,7 +21,9 @@ from ipfs_datasets_py.processors.legal_data.uscode_hf_release import (
     RELEASE_METADATA_FILENAME,
     SCHEMA_VERSION,
     TASK_ID,
+    UscodeHFReleaseBuilder,
     UscodeHFReleaseConfigError,
+    UscodeHFReleaseIntegrityError,
     UscodeHFReleaseSafetyError,
     advertised_viewer_configs,
     assert_configs_schema_coherent,
@@ -31,6 +36,9 @@ from ipfs_datasets_py.processors.legal_data.uscode_hf_release import (
     render_dataset_card,
     stage_uscode_hf_release,
     validate_uscode_hf_release,
+)
+from ipfs_datasets_py.processors.legal_data.uscode_release_schema import (
+    digest_mapping,
 )
 
 FIXTURE_DIR = Path(__file__).resolve().parents[3] / "fixtures" / "legal_ir"
@@ -179,6 +187,170 @@ def test_validate_acceptance_contract() -> None:
     assert acc["legacy_files_not_deleted"] is True
 
 
+def _replace_release_artifact(release, path, content):
+    artifact = replace(release.artifact(path), content=content, sha256="", content_cid="")
+    return replace(
+        release,
+        artifacts=tuple(
+            artifact if item.relative_path == path else item for item in release.artifacts
+        ),
+    )
+
+
+def _replace_release_manifest(release, manifest, *, reseal):
+    if reseal:
+        manifest.pop("manifest_digest")
+        manifest["manifest_digest"] = digest_mapping(manifest)
+        release = replace(release, manifest_digest=manifest["manifest_digest"])
+    return _replace_release_artifact(
+        release, MANIFEST_FILENAME, canonical_json_bytes(manifest) + b"\n"
+    )
+
+
+def _replace_release_metadata(release, metadata, manifest):
+    release = _replace_release_artifact(
+        release, RELEASE_METADATA_FILENAME, canonical_json_bytes(metadata) + b"\n"
+    )
+    descriptor = (
+        release.artifact(RELEASE_METADATA_FILENAME).to_artifact_descriptor().to_dict()
+    )
+    manifest["artifacts"] = [
+        descriptor if item["relative_path"] == RELEASE_METADATA_FILENAME else item
+        for item in manifest["artifacts"]
+    ]
+    return _replace_release_manifest(release, manifest, reseal=True)
+
+
+def test_validate_rejects_shard_with_stale_manifest_descriptor() -> None:
+    release = _build_fixture_release()
+    shard = release.data_artifacts[0]
+    bad = _replace_release_artifact(
+        release, shard.relative_path, shard.content + b"changed"
+    )
+    with pytest.raises(UscodeHFReleaseIntegrityError, match="manifest artifact descriptors"):
+        validate_uscode_hf_release(bad)
+
+
+@pytest.mark.parametrize("mutation", ["drop", "family", "self_entry"])
+def test_validate_rejects_resealed_manifest_descriptor_changes(mutation) -> None:
+    release = _build_fixture_release()
+    manifest = release.manifest_dict()
+    descriptors = manifest["artifacts"]
+    if mutation == "drop":
+        descriptors.pop(0)
+    elif mutation == "family":
+        descriptors[0]["family"] = "corpus"
+    else:
+        descriptors.append(
+            release.artifact(MANIFEST_FILENAME).to_artifact_descriptor().to_dict()
+        )
+    bad = _replace_release_manifest(release, manifest, reseal=True)
+    with pytest.raises(UscodeHFReleaseIntegrityError, match="manifest artifact descriptors"):
+        validate_uscode_hf_release(bad)
+
+
+def test_validate_recomputes_digest_from_manifest_body() -> None:
+    release = _build_fixture_release()
+    manifest = release.manifest_dict()
+    manifest["source_revision"] = "a" * 40
+    bad = _replace_release_manifest(release, manifest, reseal=False)
+    with pytest.raises(UscodeHFReleaseIntegrityError, match="manifest_digest mismatch"):
+        validate_uscode_hf_release(bad)
+
+
+def test_validate_recomputes_root_even_when_resealed_manifest_echoes_it() -> None:
+    release = _build_fixture_release()
+    manifest = release.manifest_dict()
+    forged_root = "a" * 64
+    manifest["release_root_cid"] = forged_root
+    metadata = release.release_metadata_dict()
+    metadata["release_root_cid"] = forged_root
+    bad = _replace_release_metadata(
+        replace(release, release_root_cid=forged_root), metadata, manifest
+    )
+    with pytest.raises(UscodeHFReleaseIntegrityError, match="release_root_cid mismatch"):
+        validate_uscode_hf_release(bad)
+
+
+def test_validate_rejects_release_with_different_source_revision() -> None:
+    release = _build_fixture_release()
+    with pytest.raises(UscodeHFReleaseIntegrityError, match="manifest source_revision mismatch"):
+        validate_uscode_hf_release(replace(release, source_revision="a" * 40))
+
+
+@pytest.mark.parametrize(
+    "field, value", [("source_revision", "a" * 40), ("model_revision", "b" * 40)]
+)
+def test_validate_rejects_resealed_metadata_with_different_revision(field, value) -> None:
+    release = _build_fixture_release()
+    metadata = release.release_metadata_dict()
+    metadata[field] = value
+    bad = _replace_release_metadata(release, metadata, release.manifest_dict())
+    with pytest.raises(UscodeHFReleaseIntegrityError, match=f"release metadata {field} mismatch"):
+        validate_uscode_hf_release(bad)
+
+
+@pytest.mark.parametrize(
+    "field, value",
+    [
+        ("model_revision", "a" * 40),
+        ("source_revision", "b" * 40),
+        ("tokenizer_id", "changed-tokenizer/v1"),
+        ("vector_space_id", "changed-vector-space/v1"),
+        ("determinism_seed", 17),
+    ],
+)
+def test_validate_rejects_reissued_metadata_and_manifest_with_different_provenance(
+    field, value
+) -> None:
+    release = _build_fixture_release()
+    manifest = release.manifest_dict()
+    metadata = release.release_metadata_dict()
+    metadata[field] = value
+    if field == "determinism_seed":
+        manifest["determinism_seeds"]["build"] = value
+    else:
+        manifest[field] = value
+    if field in {"source_revision", "vector_space_id"}:
+        release = replace(release, **{field: value})
+    bad = _replace_release_metadata(release, metadata, manifest)
+    assert bad.release_root_cid == release.release_root_cid
+    with pytest.raises(
+        UscodeHFReleaseIntegrityError, match=f"release reproducibility {field} mismatch"
+    ):
+        validate_uscode_hf_release(bad)
+
+
+def test_validate_rejects_manifest_build_seed_drift() -> None:
+    release = _build_fixture_release()
+    manifest = release.manifest_dict()
+    manifest["determinism_seeds"]["build"] = 17
+    bad = _replace_release_manifest(release, manifest, reseal=True)
+    with pytest.raises(
+        UscodeHFReleaseIntegrityError, match="manifest build determinism_seed mismatch"
+    ):
+        validate_uscode_hf_release(bad)
+
+
+def test_validate_recomputes_build_configuration_digest() -> None:
+    release = _build_fixture_release()
+    manifest = release.manifest_dict()
+    metadata = release.release_metadata_dict()
+    metadata["graph_ontology_version"] = "changed-ontology/v1"
+    manifest["graph_ontology_version"] = metadata["graph_ontology_version"]
+    bad = _replace_release_metadata(release, metadata, manifest)
+    with pytest.raises(UscodeHFReleaseIntegrityError, match="build configuration digest mismatch"):
+        validate_uscode_hf_release(bad)
+
+
+def test_validate_accepts_nondefault_shard_limit_and_build_seed() -> None:
+    release = UscodeHFReleaseBuilder(max_rows_per_shard=2, determinism_seed=17).build(
+        fixture_family_rows(), legacy_files=fixture_legacy_files()
+    )
+    assert release.release_metadata_dict()["determinism_seed"] == 17
+    assert validate_uscode_hf_release(release)["valid"] is True
+
+
 def test_default_config_excludes_recovery_json() -> None:
     release = _build_fixture_release()
     default = next(c for c in release.configs if c.is_default)
@@ -298,6 +470,63 @@ def test_dataset_card_matches_advertised_configs() -> None:
     assert "reports/lineage.json" in rendered
 
 
+def test_dataset_card_uses_safe_hub_names_and_marks_default() -> None:
+    release = _build_fixture_release()
+    front = release.dataset_card_text().split("---", 2)[1]
+    names = [
+        json.loads(line.split(": ", 1)[1])
+        for line in front.splitlines()
+        if line.startswith("- config_name: ")
+    ]
+    assert names == [
+        "publicus-ir-graphrag-v2",
+        "legacy-uscode-parquet-v1",
+        "recovery-quarantine-v1",
+    ]
+    assert front.count("  default: true") == 1
+    assert 'config_name: "publicus-ir-graphrag-v2"\n  default: true\n' in front
+    legacy_front = front.split('- config_name: "legacy-uscode-parquet-v1"', 1)[1].split(
+        '- config_name: "recovery-quarantine-v1"', 1
+    )[0]
+    assert legacy_front.count('  - split: "train"') == 1
+    legacy = next(cfg for cfg in release.configs if cfg.is_legacy)
+    assert '    path:\n' + ''.join(f'    - {json.dumps(item["path"])}\n' for item in legacy.data_files) in legacy_front
+    assert release.manifest_dict()["default_config"] == DEFAULT_CONFIG_NAME
+    assert [config["config_name"] for config in release.manifest_dict()["configs"]] == [
+        DEFAULT_CONFIG_NAME, LEGACY_CONFIG_NAME, RECOVERY_CONFIG_NAME,
+    ]
+
+
+def test_dataset_card_rejects_colliding_hub_names() -> None:
+    configs = advertised_viewer_configs()
+    collision = replace(configs[0], config_name="publicus-ir-graphrag-v2", is_default=False)
+    with pytest.raises(UscodeHFReleaseConfigError, match="Hub config names must be unique"):
+        render_dataset_card(configs=(*configs, collision))
+
+
+def test_dataset_infos_matches_hub_aliases_and_the_viewer_shard_population() -> None:
+    release = _build_fixture_release()
+    artifact = next(art for art in release.artifacts if art.relative_path == DATASET_INFOS_FILENAME)
+    infos = json.loads(artifact.content)
+    default_name = "publicus-ir-graphrag-v2"
+    assert set(infos) == {default_name, "legacy-uscode-parquet-v1", "recovery-quarantine-v1"}
+    shards = [art for art in release.artifacts if art.relative_path.startswith("data/")]
+    routing = [art for art in release.artifacts if art.family == "routing_index"]
+    assert shards and routing and all(art.row_count > 0 for art in routing)
+    assert infos[default_name] == {
+        "config_name": default_name,
+        "dataset_name": release.dataset_id,
+        "download_size": sum(art.size_bytes for art in shards),
+        "features": {
+            name: {"dtype": "string", "_type": "Value"}
+            for name in ("entry_cid", "legal_id", "family", "record_json", "record_sha256")
+        },
+        "splits": {"train": {"name": "train", "num_examples": sum(art.row_count for art in shards)}},
+    }
+    for name in ("legacy-uscode-parquet-v1", "recovery-quarantine-v1"):
+        assert infos[name] == {"config_name": name, "dataset_name": release.dataset_id}
+
+
 def test_manifest_and_metadata_are_control_plane() -> None:
     release = _build_fixture_release()
     manifest = release.manifest_dict()
@@ -378,3 +607,148 @@ def test_no_huggingface_hub_upload_surface() -> None:
     assert "HfApi(" not in source.replace(
         "HfApi construction is forbidden in uscode_hf_release", ""
     )
+
+
+# Explicit wire metadata is an opt-in producer profile, not a new importer.
+def _wire_profile_fixture(**kwargs):
+    return _build_fixture_release(metadata_profile="hf-default-parquet-envelope/v1", **kwargs)
+
+
+def _wire_profile_intake(release):
+    import hashlib
+    from ipfs_datasets_py.logic.autoformal import legal_source_package_intake_v1 as intake
+    blobs = {name: release.artifact(name).content for name in intake.FILES}
+    manifest = release.manifest_dict()
+    descriptors = manifest["artifacts"]
+    request = {
+        "schema": intake.REQUEST_SCHEMA_V2, "repository_id": intake.REPOSITORY,
+        # This is explicitly a fictional immutable Hub revision, not remote evidence.
+        "revision": "a" * 40, "metadata_profile": intake.METADATA_PROFILE_V2,
+        "expected_release_identity": {key: manifest[key] for key in (
+            "release_profile", "release_point", "release_root_cid", "source_revision",
+            "manifest_digest", "graph_ontology_version", "producer")},
+        "expected_graph_population": {family: {
+            "files": sum(item["family"] == family for item in descriptors),
+            "rows": sum(item["row_count"] for item in descriptors if item["family"] == family),
+        } for family in ("graph_nodes", "graph_edges")},
+        "files": [{"path_in_repo": name, "bytes": len(body),
+                   "sha256": hashlib.sha256(body).hexdigest()} for name, body in blobs.items()],
+    }
+    raw = canonical_json_bytes(request)
+    return intake.prepare_source_package_intake_v2(raw, blobs,
+        expected_request_sha256=hashlib.sha256(raw).hexdigest())
+
+
+def test_wire_profile_producer_connects_actual_parquet_to_strict_intake_v2():
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+    release = _wire_profile_fixture(max_rows_per_shard=1)
+    declaration = release.manifest_dict()["wire_metadata"]
+    shards = [artifact for artifact in release.artifacts
+              if artifact.relative_path.startswith("data/") and artifact.relative_path.endswith(".parquet")]
+    tables = [pq.ParquetFile(pa.BufferReader(artifact.content)).read(use_threads=False) for artifact in shards]
+    assert declaration["data_files"] == [{"split": "train", "path": [item.relative_path for item in shards]}]
+    assert all(table.column_names == ["entry_cid", "legal_id", "family", "record_sha256", "record_json"]
+               and all(pa.types.is_string(field.type) for field in table.schema) for table in tables)
+    assert declaration["num_examples"] == sum(table.num_rows for table in tables)
+    assert declaration["num_bytes"] == sum(table.nbytes for table in tables)
+    assert declaration["num_bytes"] != sum(item.size_bytes for item in shards)
+    assert declaration["unadvertised_configs"] == [LEGACY_CONFIG_NAME, RECOVERY_CONFIG_NAME]
+    assert all(release.artifact(name).content for name in fixture_legacy_files())
+    report = _wire_profile_intake(release)
+    assert report["status"] == "selected_wire_metadata_reconciled"
+    assert report["issues"] == [] and report["authority"]["accepted"] is False
+    assert report["count_reconciliation"]["arrow_bytes_physically_measured_here"] is False
+    assert validate_uscode_hf_release(release)["metadata_profile"] == declaration["profile"]
+
+
+def test_wire_profile_is_explicit_and_legacy_defaults_are_unchanged():
+    ordinary = _build_fixture_release()
+    explicit = _build_fixture_release(metadata_profile=None)
+    assert releases_are_byte_identical(ordinary, explicit)
+    assert "wire_metadata" not in ordinary.manifest_dict()
+    assert validate_uscode_hf_release(ordinary).get("metadata_profile") is None
+    assert ordinary.build_config_cid != _wire_profile_fixture().build_config_cid
+
+
+@pytest.mark.parametrize("profile", ["unknown/v1", "", False, 1])
+def test_wire_profile_rejects_unsupported_explicit_profiles(profile):
+    from ipfs_datasets_py.processors.legal_data.uscode_hf_release import UscodeHFReleaseError
+    with pytest.raises(UscodeHFReleaseError, match="metadata profile"):
+        _build_fixture_release(metadata_profile=profile)
+
+
+def test_wire_profile_default_only_inventory_remains_exact():
+    release = _wire_profile_fixture(include_legacy_config=False, include_recovery_config=False)
+    assert release.manifest_dict()["wire_metadata"]["unadvertised_configs"] == []
+    assert _wire_profile_intake(release)["issues"] == []
+
+
+def _reseal_wire_profile_test_package(release, changes):
+    """Rebuild legitimate outer commitments so tests reach producer profile checks."""
+    from ipfs_datasets_py.processors.legal_data import uscode_hf_release as hf
+    files = {item.relative_path: item for item in release.artifacts}
+    for name, body in changes.items():
+        files[name] = replace(files[name], content=body, sha256="", content_cid="")
+    root = hf._compute_release_root_cid(dataset_id=release.dataset_id,
+        artifacts=[item for name, item in files.items()
+                   if name not in (MANIFEST_FILENAME, RELEASE_METADATA_FILENAME)],
+        build_config_cid=release.build_config_cid)
+    metadata = json.loads(files[RELEASE_METADATA_FILENAME].content)
+    metadata["release_root_cid"] = root
+    files[RELEASE_METADATA_FILENAME] = replace(files[RELEASE_METADATA_FILENAME],
+        content=canonical_json_bytes(metadata) + b"\n", sha256="", content_cid="")
+    manifest = json.loads(files[MANIFEST_FILENAME].content)
+    manifest.update(release_root_cid=root, artifacts=[item.to_artifact_descriptor().to_dict()
+        for name, item in sorted(files.items()) if name != MANIFEST_FILENAME])
+    manifest.pop("manifest_digest")
+    manifest["manifest_digest"] = digest_mapping(manifest)
+    files[MANIFEST_FILENAME] = replace(files[MANIFEST_FILENAME],
+        content=canonical_json_bytes(manifest) + b"\n", sha256="", content_cid="")
+    return replace(release, release_root_cid=root, manifest_digest=manifest["manifest_digest"],
+                   artifacts=tuple(files.values()))
+
+
+@pytest.mark.parametrize("damage", ["profile", "alias", "paths", "rows", "arrow_bytes",
+    "boolean_rows", "infos_extra", "infos_schema", "readme", "physical_schema", "physical_rows"])
+def test_wire_profile_validation_rejects_resealed_drift(damage):
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+    release = _wire_profile_fixture()
+    changes = {}
+    if damage in ("profile", "alias", "paths", "rows", "arrow_bytes", "boolean_rows"):
+        for name in (MANIFEST_FILENAME, RELEASE_METADATA_FILENAME, "dataset_configs.json"):
+            body = json.loads(release.artifact(name).content)
+            declaration = body["wire_metadata"]
+            if damage == "profile": declaration["profile"] = "unknown/v1"
+            elif damage == "alias": declaration["aliases"][DEFAULT_CONFIG_NAME] = "wrong-alias"
+            elif damage == "paths": declaration["data_files"][0]["path"].append("recovery/fake.parquet")
+            elif damage == "rows": declaration["num_examples"] += 1
+            elif damage == "arrow_bytes": declaration["num_bytes"] += 1
+            else: declaration["num_examples"] = True
+            changes[name] = canonical_json_bytes(body) + b"\n"
+    elif damage.startswith("infos_"):
+        body = json.loads(release.artifact(DATASET_INFOS_FILENAME).content)
+        info = body["publicus-ir-graphrag-v2"]
+        if damage == "infos_extra": info["dataset_name"] = release.dataset_id
+        else: info["features"]["entry_cid"]["dtype"] = "int64"
+        changes[DATASET_INFOS_FILENAME] = canonical_json_bytes(body) + b"\n"
+    elif damage == "readme":
+        changes[README_FILENAME] = release.artifact(README_FILENAME).content.replace(
+            b"    dtype: string", b"    dtype: int64", 1)
+    else:
+        shard = next(item for item in release.artifacts if item.family == "corpus")
+        table = pq.ParquetFile(pa.BufferReader(shard.content)).read(use_threads=False)
+        if damage == "physical_schema":
+            table = table.set_column(0, "entry_cid", pa.array([1] * table.num_rows, type=pa.int64()))
+        else: table = table.slice(0, 0)
+        sink = pa.BufferOutputStream(); pq.write_table(table, sink)
+        changes[shard.relative_path] = sink.getvalue().to_pybytes()
+    bad = _reseal_wire_profile_test_package(release, changes)
+    with pytest.raises(UscodeHFReleaseIntegrityError, match="wire"):
+        validate_uscode_hf_release(bad)
+
+
+def test_wire_profile_legacy_package_is_refused_by_strict_intake_v2():
+    with pytest.raises(ValueError, match="explicit HF wire declaration"):
+        _wire_profile_intake(_build_fixture_release())

@@ -232,8 +232,60 @@ def _collisions(rows):
         "is_global_model_limit": False, "applies_to_learned_surface_or_residual_input": False}
 
 
+
+def _recompile_selected_prose(rendering, predicted_ir, reference_ir, recompiler):
+    """Score one text-only callback result; never give it an IR or source.
+
+    This measures a caller-owned canonical-syntax cycle. It does not authenticate
+    the callback's closure, model, parser execution, or legal interpretation.
+    """
+    result = {"status": "unavailable", "reason": "selected_prose_unavailable",
+        "callback_invoked": False, "input_text_sha256": None,
+        "output_ir": None, "output_ir_sha256": None,
+        "exact_predicted_ir": False, "exact_reference_ir": False,
+        "facets_predicted": {key: False for key in _FACETS},
+        "facets_reference": {key: False for key in _FACETS}}
+    if rendering["status"] != "rendered":
+        return result
+    text = rendering["text"]
+    result["input_text_sha256"] = hashlib.sha256(text.encode("utf-8")).hexdigest()
+    result["callback_invoked"] = True
+    try:
+        # No source wording, reference, predicted IR, vector, row identifier,
+        # cache lookup key, decoder prefix or proof signal crosses this boundary.
+        output = recompiler(text, "legal-selected-prose-recompile")
+    except Exception as error:
+        result.update(status="error", reason=type(error).__name__)
+        return result
+    try:
+        output = _copy(output)
+        _require(type(output) is dict and set(output) == {"status", "candidate_ir", "reason"}
+            and output["status"] in ("recompiled", "unsupported", "abstained"),
+            "closed prose-recompiler result required")
+        if output["status"] in ("unsupported", "abstained"):
+            _require(output["candidate_ir"] is None and _text(output["reason"], 512),
+                "unsupported or abstained recompile must contain no IR")
+            result.update(status=output["status"], reason=output["reason"])
+            return result
+        _require(output["reason"] is None and _rule_ir(output["candidate_ir"]),
+            "complete single-rule canonical IR required; unsupported fields cannot be discarded")
+        candidate = output["candidate_ir"]
+        result.update(status="recompiled", reason=None, output_ir=candidate,
+            output_ir_sha256=_digest(candidate),
+            exact_predicted_ir=_raw(candidate) == _raw(predicted_ir),
+            exact_reference_ir=_raw(candidate) == _raw(reference_ir),
+            facets_predicted={key: candidate["rules"][0][key] == predicted_ir["rules"][0][key]
+                for key in _FACETS},
+            facets_reference={key: candidate["rules"][0][key] == reference_ir["rules"][0][key]
+                for key in _FACETS})
+    except Exception as error:
+        result.update(status="invalid", reason=type(error).__name__)
+    return result
+
+
 def score_legal_original_text_roundtrip(corpus_pin, captured_inputs, candidate_report, *,
-        render_canonical=False, renderer=None, max_edit_cells=2_000_000, max_reference_bytes=_MAX_JSON):
+        render_canonical=False, renderer=None, max_edit_cells=2_000_000, max_reference_bytes=_MAX_JSON,
+        recompile_rendered=False, recompiler=None):
     """Score an explicit cached cohort; never invoke its numerical decoder.
 
     Captured rows must be exactly ``{id, source_text, embedding}``. Gold remains
@@ -242,9 +294,18 @@ def score_legal_original_text_roundtrip(corpus_pin, captured_inputs, candidate_r
     source-free behavior. The built-in opt-in renderer is deterministic and has
     no learned prose head. Missing/duplicate/invalid outputs receive zero credit
     in all selected-row accuracy denominators, with coverage recorded separately.
+    Optional prose recompilation passes only the selected rendered text and a
+    constant non-source request ID to the supplied callback. Its outputs receive
+    exact seven-facet CanonicalRoundTripIR@1 comparisons, not complete TypedAST,
+    semantic-equivalence, legal-faithfulness or proof credit. Callback behavior,
+    including hidden closure state, remains unauthenticated. Defaults are unchanged.
     """
     _require(type(render_canonical) is bool and (renderer is None or render_canonical and callable(renderer)),
              "renderer requires explicit canonical-rendering selection")
+    _require(type(recompile_rendered) is bool
+        and (recompiler is None or recompile_rendered and callable(recompiler))
+        and (not recompile_rendered or render_canonical and callable(recompiler)),
+        "prose recompilation requires explicit rendering selection and a text-only callback")
     _require(type(max_edit_cells) is int and 1 <= max_edit_cells <= 4_000_000
         and type(max_reference_bytes) is int and 1 <= max_reference_bytes <= _MAX_JSON, "finite scoring budgets required")
     pin, inputs, report = _copy(corpus_pin), _copy(captured_inputs), _copy(candidate_report)
@@ -336,6 +397,12 @@ def score_legal_original_text_roundtrip(corpus_pin, captured_inputs, candidate_r
             result["exact_ir"] and result["rendering"]["exact_original_utf8"] is True
         ) if render_canonical else None
         results.append(result)
+    if recompile_rendered:
+        for result, expected in zip(results, gold):
+            predicted = (indexed[result["id"]][0]["candidate_ir"]
+                if result["outcome"] == "decoded" else None)
+            result["recompilation"] = _recompile_selected_prose(
+                result["rendering"], predicted, expected["target"], recompiler)
     # Reread the complete corpus after optional caller-owned rendering. This
     # observes endpoint stability; no atomic multi-file/current-model claim.
     _read_pin(pin, max_reference_bytes)
@@ -363,7 +430,7 @@ def score_legal_original_text_roundtrip(corpus_pin, captured_inputs, candidate_r
             "mean_distance_on_scored_rows": sum(scored) / len(scored) if scored else None,
             "scored_coverage_fraction": len(scored) / total,
             "mean_excludes_unrendered_and_budget_exhausted_rows": True}
-    return {"schema": SCHEMA, "corpus_pin": pin, "source_embeddings_metadata_sha256": _digest(corpus["source_embeddings"]),
+    scored = {"schema": SCHEMA, "corpus_pin": pin, "source_embeddings_metadata_sha256": _digest(corpus["source_embeddings"]),
         "captured_inputs_sha256": _digest(inputs), "candidate_report_sha256": _digest(report),
         "coverage": {"valid": coverage_ok, "expected_count": total, "prediction_count": len(predictions),
             "missing_ids": missing, "unexpected_ids": unexpected, "duplicate_ids": duplicate, "invalid_id_row_indices": invalid_ids},
@@ -393,5 +460,113 @@ def score_legal_original_text_roundtrip(corpus_pin, captured_inputs, candidate_r
         "learned_original_prose_head_evaluated": False, "retained_source_restoration_evaluated": False,
         "semantic_correctness_qualified": False, "proof_authority": False}
 
+    if recompile_rendered:
+        recompilations = [row["recompilation"] for row in results]
+        statuses = {name: sum(row["status"] == name for row in recompilations)
+            for name in ("recompiled", "unsupported", "abstained", "unavailable", "error", "invalid")}
+        cycle_exact = sum(row["exact_predicted_ir"] for row in recompilations)
+        reference_exact = sum(row["exact_reference_ir"] for row in recompilations)
+        scored["prose_recompilation"] = {
+            "scope": "single_rule_CanonicalRoundTripIR@1_seven_facet_syntax_only",
+            "prose_input": "selected_renderer_output_verbatim",
+            "denominator": "all_captured_input_rows", "attempted_rows": total,
+            "callback_calls": sum(row["callback_invoked"] for row in recompilations),
+            "counts": {**statuses, "exact_predicted_ir": cycle_exact, "exact_reference_ir": reference_exact},
+            "rates": {"exact_predicted_ir": cycle_exact / total,
+                "exact_reference_ir": reference_exact / total},
+            "facets_predicted": {key: {"matched": sum(row["facets_predicted"][key]
+                for row in recompilations), "total": total} for key in _FACETS},
+            "facets_reference": {key: {"matched": sum(row["facets_reference"][key]
+                for row in recompilations), "total": total} for key in _FACETS},
+            "callback_boundary": "selected_prose_and_constant_non_source_request_id_only",
+            "callback_is_caller_supplied": True, "callback_behavior_authenticated": False,
+            "hidden_source_or_target_copying_ruled_out": False,
+            "native_compiler_or_model_execution_authenticated": False,
+            "complete_typed_AST_fidelity": None, "semantic_equivalence": None,
+            "legal_source_faithfulness": None, "proof_validity": None,
+            "unsupported_semantics": ["quantifier_and_binder_scope", "observed_compliance",
+                "nested_exception_scope", "calendar_interpretation", "legal_effective_dates",
+                "typed_cardinality", "governing_definition_dependencies"],
+            "semantic_correctness_qualified": False, "proof_authority": False}
+        scored["operational_complete"] = scored["operational_complete"] and statuses["recompiled"] == total
+    return scored
+
 
 __all__ = ["SCHEMA", "LegalTextRoundTripError", "score_legal_original_text_roundtrip"]
+
+
+def score_relational_legal_text_roundtrip(reference_expression, candidate_text, *,
+        reference_argument_roles, profile, original_text=None,
+        reference_governing_fields=None, candidate_governing_fields=None):
+    """Score one complete opt-in controlled-prose prediction against typed content.
+
+    Original source is optional and remains exclusively on the scoring side.
+    The compiler receives only candidate prose and its explicit profile; the
+    reference and original source cannot influence its reconstruction. Unsupported
+    candidates remain an abstention in the one-input denominator. No model, file,
+    native backend or legal review operation is performed by this score path.
+    Optional governing_context and definition_uses observations are compared
+    independently and stay on the scoring side, even for unsupported prose.
+    """
+    from ipfs_datasets_py.logic.legal_ir.extended_decompiler import decompile_relational
+    from ipfs_datasets_py.logic.legal_ir.extended_compiler import compile_relational
+    from ipfs_datasets_py.logic.autoformal.legal_relational_reconstruction_v1 import (
+        compare_relational_governing_fields_v1,
+        compare_relational_prose_structure_v1,
+    )
+
+    _require(type(candidate_text) is str, "candidate prose text required")
+    _require(original_text is None or type(original_text) is str, "optional original source text required")
+    try:
+        candidate_bytes = candidate_text.encode("utf-8")
+        original_bytes = None if original_text is None else original_text.encode("utf-8")
+    except UnicodeError as error:
+        raise LegalTextRoundTripError("valid UTF8 candidate and optional original text required") from error
+    _require(len(candidate_bytes) <= _MAX_JSON and (original_bytes is None or len(original_bytes) <= _MAX_JSON),
+             "bounded candidate and optional original source text required")
+    governing_comparison = None
+    if reference_governing_fields is not None or candidate_governing_fields is not None:
+        governing_comparison = compare_relational_governing_fields_v1(
+            reference_governing_fields, candidate_governing_fields)
+    reference_prose = decompile_relational(reference_expression,
+        argument_roles=reference_argument_roles, profile=profile)
+    candidate = compile_relational(candidate_text, profile=profile) if candidate_text.strip() else None
+    comparison = dict.fromkeys(("exact_typed_expression_equal", "typed_structure_equal",
+                                 "canonical_prose_equal", "argument_roles_equal"), False)
+    normalized_candidate = None
+    if candidate is not None:
+        expression, roles = candidate
+        comparison = compare_relational_prose_structure_v1(reference_expression, expression,
+            reference_argument_roles=reference_argument_roles, candidate_argument_roles=roles, profile=profile)
+        normalized_candidate = decompile_relational(expression, argument_roles=roles, profile=profile)
+    byte_exact = None if original_bytes is None else candidate_bytes == original_bytes
+    result = {
+        "schema": "legal-relational-text-roundtrip-score/v1", "profile": profile,
+        "status": "complete_candidate_scored" if candidate is not None else "unsupported_candidate_abstained",
+        "input_count": 1, "supported_count": int(candidate is not None),
+        "abstention_count": int(candidate is None),
+        "measurements": {
+            "original_utf8_exact": byte_exact,
+            "canonical_prose_exact": comparison["canonical_prose_equal"],
+            "complete_typed_structure_exact": comparison["typed_structure_equal"],
+            "exact_typed_expression_equal": comparison["exact_typed_expression_equal"],
+            "argument_roles_exact": comparison["argument_roles_equal"],
+            "joint_typed_structure_original_utf8_exact": (None if byte_exact is None else
+                comparison["typed_structure_equal"] and byte_exact),
+            "semantic_equivalence_verified": False, "source_correspondence_verified": False,
+            "proof_validity_verified": False, "source_dependence_evaluated": False,
+        },
+        "normalized_reference_prose": reference_prose,
+        "normalized_candidate_prose": normalized_candidate,
+        "original_source_available_to_inverse": False,
+        "reference_target_available_to_inverse": False,
+        "authority": {"source_semantics_verified": False, "admitted": False,
+                      "proof_authority": False, "model_quality_established": False},
+        "training_mask": 0, "evaluation_gold_mask": 0,
+    }
+    if governing_comparison is not None:
+        result["governing_fields_comparison"] = governing_comparison
+    return result
+
+
+__all__.append("score_relational_legal_text_roundtrip")

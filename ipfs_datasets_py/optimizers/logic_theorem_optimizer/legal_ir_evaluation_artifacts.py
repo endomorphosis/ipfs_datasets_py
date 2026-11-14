@@ -1470,13 +1470,15 @@ __all__ = [
 def evaluate_reviewed_source_span_producer_artifact(*, binding, rows, split_manifest,
         admission_inputs, exposure_records, compiler_commit, input_profile,
         checkpoint_declarations, permitted_context, retrieved_examples, producer,
-        allow_heldout_evaluation=False):
+        allow_heldout_evaluation=False, reviewed_training_context=None, context_policy_guard=None,
+        typed_structure_profile=None):
     """Evaluate one opt-in validation callback against replayed reviewed targets.
 
     Default hparam_selection never relabels heldout/training use. Explicit
     allow_heldout_evaluation requires the consumer's frozen complete-component
-    heldout receipt and empty supplied context/retrieval; it does not establish
-    external/model exposure exclusion or generalization. Producer
+    heldout receipt. The source-only purpose requires empty context. The rich
+    purpose requires complete, disjoint, revalidated TRAIN examples and an
+    explicit live caller policy. Producer
     arguments contain detached id/source_text/context, never reviewed targets.
     Context records are closed {id, content} declarations and must name examples
     authorized for training by the same split owner. That establishes split
@@ -1487,6 +1489,9 @@ def evaluate_reviewed_source_span_producer_artifact(*, binding, rows, split_mani
     is inferred from a callback or a successful structural comparison.
     Malformed/missing/duplicate producer rows refuse the whole batch; callers
     must preserve that failure rather than drop cases or award partial credit.
+    Explicit typed_structure_profile adds canonical AST formula-wire/signature
+    checks and a distinct cache identity; it never grants native proof or legal
+    authority. The default structural-comparison report remains unchanged.
     Stored artifacts are historical observations. Generic cache retrieval does
     not replay current admission: any later eligibility use requires another
     canonical reviewed-consumer validation against current review inputs.
@@ -1494,11 +1499,13 @@ def evaluate_reviewed_source_span_producer_artifact(*, binding, rows, split_mani
     import json
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_ir_eval_splits as splits
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_consumer_binding import (
-        consume_reviewed_source_span_binding_v2,
-        validate_reviewed_source_span_consumer_binding_v2,
+        REVIEWED_HELDOUT_CONTEXT_PURPOSE, REVIEWED_HELDOUT_PURPOSE, REVIEWED_V3_HELDOUT_CONTEXT_PURPOSE,
+        _reviewed_binding_dispatch, _reviewed_binding_version,
     )
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_semantic_metrics import (
         COMPLETE_NORM_PAYLOAD_METRICS_SCHEMA, evaluate_complete_norm_payloads,
+        CANONICAL_TYPED_STRUCTURE_PROFILE, COMPLETE_NORM_TYPED_STRUCTURE_METRICS_SCHEMA,
+        evaluate_complete_norm_typed_structure,
     )
 
     def require(condition, message):
@@ -1535,9 +1542,16 @@ def evaluate_reviewed_source_span_producer_artifact(*, binding, rows, split_mani
     def text(value):
         return type(value) is str and 0 < len(value) <= 512 and not any(c in value for c in "\r\n\0")
 
+    require(typed_structure_profile is None or type(typed_structure_profile) is str
+            and typed_structure_profile == CANONICAL_TYPED_STRUCTURE_PROFILE,
+            "explicit canonical typed-structure profile required")
     require(callable(producer), "explicit producer callback required")
     require(type(allow_heldout_evaluation) is bool, "explicit boolean heldout opt-in required")
     operation = "heldout_evaluation" if allow_heldout_evaluation else "hparam_selection"
+    rich_heldout = reviewed_training_context is not None
+    require((rich_heldout and allow_heldout_evaluation and callable(context_policy_guard))
+            or (not rich_heldout and context_policy_guard is None),
+            "explicit heldout TRAIN context and live context policy required together")
     originals = [rows, split_manifest, exposure_records, input_profile,
                  checkpoint_declarations, permitted_context, retrieved_examples]
     frozen = snapshot(originals)
@@ -1553,16 +1567,23 @@ def evaluate_reviewed_source_span_producer_artifact(*, binding, rows, split_mani
                 and re.fullmatch(r"[0-9a-f]{64}", declaration["sha256"]) is not None,
                 "explicit checkpoint identity and SHA256 declaration required")
     require(text(compiler_commit), "explicit compiler identity declaration required")
-    before = validate_reviewed_source_span_consumer_binding_v2(binding, rows,
+    validate_binding, consume_binding = _reviewed_binding_dispatch(binding)
+    admission_version = _reviewed_binding_version(binding)
+    before = validate_binding(binding, rows,
         split_manifest=split_manifest, admission_inputs=admission_inputs, exposure_records=exposure_records)
     require(before["operation"] == operation and before["status"] == "ready",
             "ready reviewed binding for the explicit operation required; no relabelling")
     heldout = None
     if allow_heldout_evaluation:
         heldout = snapshot(before.get("heldout_evaluation"))
+        purpose = ((REVIEWED_HELDOUT_CONTEXT_PURPOSE if admission_version == "v2"
+                    else REVIEWED_V3_HELDOUT_CONTEXT_PURPOSE) if rich_heldout else REVIEWED_HELDOUT_PURPOSE)
+        require(admission_version != "v3" or not rich_heldout
+                or type(heldout) is dict and heldout.get("purpose") == purpose,
+                "V3 rich TRAIN context requires its explicit frozen heldout contract")
         require(type(heldout) is dict
                 and heldout.get("schema") == "reviewed-single-component-heldout/v1"
-                and heldout.get("purpose") == "frozen-single-component-final-scoring/v1"
+                and heldout.get("purpose") == purpose
                 and heldout.get("population_scope") == "exact_complete_admitted_component_only"
                 and heldout.get("partition") == "holdout"
                 and heldout.get("split_manifest_sha256") == before["input_sha256s"]["split_manifest"]
@@ -1573,11 +1594,14 @@ def evaluate_reviewed_source_span_producer_artifact(*, binding, rows, split_mani
         require(context == [], "heldout callback requires empty supplied context")
     identifiers = [row["id"] for row in row_copy]
     require(type(retrieval) is dict and set(retrieval) == set(identifiers), "exact retrieval case population required")
-    if allow_heldout_evaluation:
+    if allow_heldout_evaluation and not rich_heldout:
         require(all(records == [] for records in retrieval.values()), "heldout callback requires empty retrieval")
     # Validate all references using the public scorer before any producer call.
     evaluate_complete_norm_payloads([dict(case_id=row["id"], reference=row["canonical_ir"],
         candidate=None, outcome="incomplete") for row in row_copy])
+    if typed_structure_profile is not None:
+        evaluate_complete_norm_typed_structure([dict(case_id=row["id"], reference=row["canonical_ir"],
+            candidate=None, outcome="incomplete") for row in row_copy])
     manifest = splits.LegalIRSplitManifest.from_mapping(manifest_copy)
     target_ids = set(identifiers) | {row["unit_id"] for row in row_copy}
     target_digests = {stable_digest(row["canonical_ir"]) for row in row_copy}
@@ -1602,10 +1626,45 @@ def evaluate_reviewed_source_span_producer_artifact(*, binding, rows, split_mani
             except splits.LegalIRSplitPolicyError as error:
                 raise InvalidEvaluationArtifactError(
                     "producer context is not authorized for training") from error
-            screen(record)
+            if not rich_heldout:
+                screen(record)
     context_records(context)
     for records in retrieval.values():
         context_records(records)
+
+    def replay_rich_context():
+        from . import legal_span_consumer_binding as consumer
+        from . import legal_structured_retrieval as structured
+
+        inputs = reviewed_training_context
+        closed(inputs, ("binding", "training_rows", "split_manifest", "admission_inputs",
+                       "exposure_records", "query_rows", "retrieval_rows"), "reviewed TRAIN context inputs")
+        require(snapshot(inputs["query_rows"]) == [{"id": row["id"], "source_text": row["source_text"]}
+                for row in row_copy] and snapshot(inputs["split_manifest"]) == manifest_copy,
+                "reviewed TRAIN context must bind the exact heldout source and common manifest")
+        payload = structured._consume_reviewed_contexts(**inputs,
+            expected_query_rows_sha256=structured.reviewed_context_inputs_sha256(inputs["query_rows"]),
+            expected_retrieval_rows_sha256=structured.reviewed_context_inputs_sha256(inputs["retrieval_rows"]),
+            consumer=lambda complete: complete, heldout_evaluation=heldout, _admission_version=admission_version)
+        require(retrieval == {row["id"]: [{"id": example["id"], "content": example}
+                for example in row["examples"]] for row in payload["rows"]},
+                "offered heldout examples differ from complete reviewed TRAIN retrieval")
+        return {"profile": heldout["inference_context_profile"],
+            "heldout_dependency_group_sha256": payload["heldout_dependency_group_sha256"],
+            "training_dependency_manifest_sha256": payload["training_dependency_manifest_sha256"],
+            "training_admission_inputs_sha256": consumer.reviewed_admission_inputs_sha256(inputs["admission_inputs"]),
+            "context_payload_sha256": structured.reviewed_context_inputs_sha256(payload),
+            "retrieved_example_ids": sorted({record["id"] for records in retrieval.values() for record in records})}
+
+    rich_context_receipt = None
+    if rich_heldout:
+        from .legal_structured_retrieval import _screen_reviewed_heldout_context
+
+        rich_context_receipt = replay_rich_context()
+        _screen_reviewed_heldout_context(list(retrieval.values()), heldout_evaluation=heldout, reference_rows=row_copy)
+        require(context_policy_guard(snapshot(rich_context_receipt)) is None,
+                "trusted context policy must return None or raise its original denial")
+        require(replay_rich_context() == rich_context_receipt, "reviewed TRAIN context changed during context policy")
     arguments = [dict(id=row["id"], source_text=row["source_text"],
         context=dict(permitted=context, retrieved=retrieval[row["id"]])) for row in row_copy]
     arguments = snapshot(arguments)
@@ -1627,16 +1686,18 @@ def evaluate_reviewed_source_span_producer_artifact(*, binding, rows, split_mani
     # The canonical consumer itself replays admission before dispatching once.
     # Replay again on every callback exit, including a refused output/mutation.
     try:
-        consume_reviewed_source_span_binding_v2(binding, rows, split_manifest=split_manifest,
+        consume_binding(binding, rows, split_manifest=split_manifest,
             admission_inputs=admission_inputs, exposure_records=exposure_records, consumer=dispatch)
     finally:
-        after = validate_reviewed_source_span_consumer_binding_v2(binding, rows,
+        after = validate_binding(binding, rows,
             split_manifest=split_manifest, admission_inputs=admission_inputs, exposure_records=exposure_records)
         require(after["operation"] == operation and after["status"] == "ready",
                 "reviewed operation admission no longer ready after callback")
         if allow_heldout_evaluation:
             require(stable_digest(snapshot(after.get("heldout_evaluation"))) == stable_digest(heldout),
                     "frozen heldout purpose/split/dependency group changed during callback")
+        if rich_heldout:
+            require(replay_rich_context() == rich_context_receipt, "reviewed TRAIN context changed during callback")
         require(stable_digest(snapshot(originals)) == stable_digest(frozen), "bound source/context/profile inputs changed during callback")
     outputs = snapshot(output_holder["outputs"])
     require(type(outputs) is list and len(outputs) == len(row_copy), "complete ordered producer population required")
@@ -1646,6 +1707,10 @@ def evaluate_reviewed_source_span_producer_artifact(*, binding, rows, split_mani
     started = time.monotonic()
     report = evaluate_complete_norm_payloads([dict(case_id=row["id"], reference=row["canonical_ir"],
         candidate=output["candidate"], outcome=output["outcome"]) for row, output in zip(row_copy, outputs)])
+    typed_report = None
+    if typed_structure_profile is not None:
+        typed_report = evaluate_complete_norm_typed_structure([dict(case_id=row["id"], reference=row["canonical_ir"],
+            candidate=output["candidate"], outcome=output["outcome"]) for row, output in zip(row_copy, outputs)])
     metric_seconds = max(0.0, time.monotonic() - started)
     configuration = dict(profile="reviewed-source-span-producer-validation/v1",
         admission_identity_sha256=before["admission_identity_sha256"],
@@ -1657,9 +1722,15 @@ def evaluate_reviewed_source_span_producer_artifact(*, binding, rows, split_mani
         admission_before_sha256=stable_digest(before), admission_after_sha256=stable_digest(after))
     if allow_heldout_evaluation:
         configuration.update(profile="reviewed-source-span-producer-heldout/v1", heldout_evaluation=heldout)
+    if rich_heldout:
+        configuration.update(profile="reviewed-source-span-producer-heldout-rich-TRAIN/v1",
+                             rich_training_context=rich_context_receipt)
+    if typed_report is not None:
+        configuration["typed_structure_profile"] = typed_structure_profile
     # A bare list falls through the legacy object hash; wrap rows explicitly.
     key = LegalIREvaluationCacheKey.for_sample({"rows": row_copy}, compiler_commit=compiler_commit,
-        state_hash=stable_digest(checkpoints), metric_schema=COMPLETE_NORM_PAYLOAD_METRICS_SCHEMA,
+        state_hash=stable_digest(checkpoints), metric_schema=(COMPLETE_NORM_PAYLOAD_METRICS_SCHEMA if typed_report is None else
+            COMPLETE_NORM_PAYLOAD_METRICS_SCHEMA + "+" + COMPLETE_NORM_TYPED_STRUCTURE_METRICS_SCHEMA),
         configuration=configuration)
     payload = dict(configuration=configuration, reference_population=row_copy,
         producer_arguments=arguments, producer_outputs=outputs, admission_before=before,
@@ -1677,18 +1748,410 @@ def evaluate_reviewed_source_span_producer_artifact(*, binding, rows, split_mani
             cost_per_correctly_accepted_formalization=None),
         artifact_observation_scope="historical_at_callback_time",
         cache_retrieval_replays_admission=False, current_review_replay_required_for_later_eligibility=True,
-        heldout_evaluation=heldout, empty_context_enforced_at_argument_boundary=allow_heldout_evaluation,
+        heldout_evaluation=heldout, empty_context_enforced_at_argument_boundary=allow_heldout_evaluation and not rich_heldout,
         external_training_exposure_verified=False, model_pretraining_exposure_verified=False,
         heldout_generalization_established=False,
-        token_budget_enforced=False, context_authority_scope=("empty_supplied_context_at_callback_argument_boundary"
+        token_budget_enforced=False, context_authority_scope=("replayed_reviewed_TRAIN_examples_with_caller_context_policy"
+            if rich_heldout else "empty_supplied_context_at_callback_argument_boundary"
             if allow_heldout_evaluation else "training_split_eligibility_declaration_only"),
         context_screen_scope="exact_target_ID_and_subtree_only_not_encoded_leaks_or_process_sandbox",
         reference_authority_scope="replayed_review_policy_eligibility_not_legal_truth_or_proof")
+    metrics = {"complete_norm_payload": report}
+    if typed_report is not None:
+        payload["typed_structure_comparison"] = typed_report
+        payload["formal_checks_status"] = "canonical_typed_structure_only_no_native_proof"
+        metrics["canonical_typed_structure"] = typed_report
     return LegalIREvaluationArtifact(key=key,
         compiler_artifact={"reviewed_source_span_producer_evaluation": payload},
-        metrics={"complete_norm_payload": report},
+        metrics=metrics,
         metadata={"profile": configuration["profile"], "content_sha256": stable_digest(payload)},
         metric_seconds=output_holder["producer_seconds"] + metric_seconds)
 
 
 __all__ += ["evaluate_reviewed_source_span_producer_artifact"]
+
+
+def compare_reviewed_source_span_retention(before, after, *, expected_before_sha256, expected_after_sha256):
+    """Compare two pinned source-only heldout observations on one frozen panel.
+
+    The expected digests use stable_digest(artifact.to_dict()). Scores are
+    recomputed from each saved producer output against the identical reviewed
+    reference. This is a structural retention measurement under declared
+    checkpoint identities. The normal source-producer route also replays its
+    observed input commitments: only checkpoint artifacts and their derived
+    profile ID may vary. Generic callbacks require the same literal profile.
+    This does not replay current admission, reopen assets or load a model.
+    """
+    from hashlib import sha256
+    from .legal_ir_semantic_metrics import (
+        COMPLETE_NORM_PAYLOAD_METRICS_SCHEMA, evaluate_complete_norm_payloads,
+    )
+    from .legal_span_consumer_binding import (REVIEWED_HELDOUT_EXPOSURE, REVIEWED_HELDOUT_PURPOSE,
+        REVIEWED_SCHEMA, REVIEWED_PROFILE, REVIEWED_V3_SCHEMA, REVIEWED_V3_PROFILE)
+
+    def require(condition, message):
+        if not condition:
+            raise InvalidEvaluationArtifactError(message)
+
+    def capture(artifact, expected):
+        require(type(artifact) is LegalIREvaluationArtifact, "reviewed retention requires evaluation artifacts")
+        offered = artifact.to_dict()
+        require(type(expected) is str and re.fullmatch(r"[0-9a-f]{64}", expected) is not None
+                and stable_digest(offered) == expected, "independent retention artifact commitment differs")
+        payload = offered["compiler_artifact"].get("reviewed_source_span_producer_evaluation")
+        require(type(payload) is dict and type(payload.get("configuration")) is dict
+                and offered["metadata"].get("content_sha256") == stable_digest(payload),
+                "complete reviewed producer evaluation artifact required")
+        config = payload["configuration"]
+        require(set(config) == {"profile", "admission_identity_sha256", "declaration_sha256", "input_sha256s",
+                "operation", "target_codec", "input_profile", "checkpoint_declarations", "permitted_context",
+                "retrieved_examples", "producer_arguments_sha256", "producer_outputs_sha256",
+                "admission_before_sha256", "admission_after_sha256", "heldout_evaluation"},
+                "closed source-only retention configuration required")
+        heldout = config.get("heldout_evaluation")
+        require(config.get("profile") == "reviewed-source-span-producer-heldout/v1"
+                and config.get("operation") == "heldout_evaluation"
+                and type(heldout) is dict and heldout.get("schema") == "reviewed-single-component-heldout/v1"
+                and heldout.get("purpose") == REVIEWED_HELDOUT_PURPOSE
+                and heldout.get("partition") == "holdout" and heldout == payload.get("heldout_evaluation")
+                and heldout.get("inference_context_profile") == "declared_source_only_empty_retrieval_context"
+                and type(heldout.get("dependency_group")) is dict
+                and heldout.get("dependency_group_sha256") == stable_digest(heldout.get("dependency_group"))
+                and heldout.get("population_scope") == "exact_complete_admitted_component_only",
+                "retention requires an exact source-only frozen heldout component")
+        references = payload.get("reference_population")
+        require(type(references) is list and 0 < len(references) <= 4096
+                and all(type(row) is dict and set(row) == {"id", "unit_id", "source_text", "canonical_ir"}
+                        and all(type(row[field]) is str and bool(row[field])
+                                for field in ("id", "unit_id", "source_text")) for row in references)
+                and len({row["id"] for row in references}) == len(references),
+                "complete ordered reviewed retention references required")
+        source_units = heldout["dependency_group"].get("source_units")
+        require(type(source_units) is list and len(source_units) == len(references)
+                and all(type(unit) is dict and unit.get("id") == row["id"]
+                        and unit.get("unit_id") == row["unit_id"]
+                        for unit, row in zip(source_units, references, strict=True))
+                and len({row["unit_id"] for row in references}) == len(references)
+                and heldout["dependency_group"].get("declaration_sha256") == config["declaration_sha256"]
+                and type(config["input_sha256s"]) is dict
+                and config["input_sha256s"].get("rows") == stable_digest(references)
+                and heldout.get("split_manifest_sha256") == config["input_sha256s"].get("split_manifest"),
+                "retention references differ from the complete admitted dependency component")
+        profile = config["input_profile"]
+        require(type(profile) is dict
+                and set(profile) == {"profile_id", "max_source_tokens", "max_context_tokens", "max_output_tokens"}
+                and type(profile["profile_id"]) is str and 0 < len(profile["profile_id"]) <= 512
+                and all(type(profile[field]) is int and profile[field] > 0 for field in
+                        ("max_source_tokens", "max_context_tokens", "max_output_tokens")),
+                "complete declared retention token budgets required")
+        require(config.get("permitted_context") == []
+                and config.get("retrieved_examples") == {row["id"]: [] for row in references}
+                and heldout.get("training_example_ids") == heldout.get("retrieved_example_ids") == []
+                and payload.get("empty_context_enforced_at_argument_boundary") is True
+                and payload.get("producer_arguments") == [{"id": row["id"], "source_text": row["source_text"],
+                    "context": {"permitted": [], "retrieved": []}} for row in references],
+                "retention requires identical source-only arguments and empty retrieval/context")
+        checkpoints = config.get("checkpoint_declarations")
+        require(type(checkpoints) is dict and set(checkpoints) == {"encoder", "decoder"}
+                and all(type(item) is dict and set(item) == {"id", "sha256"}
+                        and type(item["id"]) is str and bool(item["id"])
+                        and type(item["sha256"]) is str and re.fullmatch(r"[0-9a-f]{64}", item["sha256"])
+                        for item in checkpoints.values()),
+                "complete declared retention checkpoint identities required")
+        return offered, payload, config
+
+    previous, prior_payload, prior_config = capture(before, expected_before_sha256)
+    current, next_payload, next_config = capture(after, expected_after_sha256)
+
+    def normal_source_observation(offered, payload, config):
+        metadata = offered["metadata"]
+        contracts = {
+            "reviewed-decoder-source-producer/v1:": (
+                "reviewed-decoder-source-producer-observation/v1", "reviewed-decoder-source-producer-policy/v1",
+                REVIEWED_SCHEMA, REVIEWED_PROFILE, None),
+            "reviewed-decoder-source-producer/v2:": (
+                "reviewed-decoder-source-producer-observation/v2", "reviewed-decoder-source-producer-policy/v2",
+                REVIEWED_V3_SCHEMA, REVIEWED_V3_PROFILE, "complete-reviewed-mixed-sort-norm-admission/v3"),
+            "reviewed-decoder-profiled-producer/v1:": (
+                "reviewed-decoder-source-producer-observation/v3", "reviewed-decoder-source-producer-policy/v3",
+                REVIEWED_V3_SCHEMA, REVIEWED_V3_PROFILE, "complete-reviewed-mixed-sort-norm-admission/v3"),
+            "reviewed-decoder-qwen2-profiled-producer/v1:": (
+                "reviewed-decoder-source-producer-observation/v4", "reviewed-decoder-source-producer-policy/v4",
+                REVIEWED_V3_SCHEMA, REVIEWED_V3_PROFILE, "complete-reviewed-mixed-sort-norm-admission/v3"),
+        }
+        observation = metadata.get("source_generation_observation")
+        expected = metadata.get("source_generation_input_commitment_sha256")
+        selected = [(prefix, contract) for prefix, contract in contracts.items()
+                    if config["input_profile"]["profile_id"].startswith(prefix)]
+        if observation is None and expected is None and not selected:
+            return None
+        require(len(selected) == 1, "normal retention requires a supported explicit source-producer profile")
+        prefix, (observation_schema, policy_schema, consumer_schema, consumer_profile, admission_profile) = selected[0]
+        require(type(observation) is dict
+                and observation.get("schema") == observation_schema
+                and type(observation.get("calls")) is int and observation["calls"] == 1
+                and observation.get("loaded_checkpoint_identity_scope")
+                    == "exact supplied pair equals already-loaded backend at entry and exit only"
+                and all(observation.get(field) is False for field in ("training_or_restore_performed",
+                    "resource_authority_granted", "pretrained_quality_verified", "process_sandbox")),
+                "normal retention requires the complete observed source generation")
+        commitment = observation.get("input_commitment")
+        fields = {"schema", "backend_identity", "assets", "model_checkpoint", "optimizer_checkpoint",
+            "source_contexts_sha256", "admission_inputs_sha256", "max_source_tokens", "max_output_tokens",
+            "operation", "training_requested", "restore_requested", "source_sha256", "exposure_sha256",
+            "supplied_context_supported"}
+        if admission_profile is not None:
+            fields.add("admission_profile")
+        qwen2_generation = prefix == "reviewed-decoder-qwen2-profiled-producer/v1:"
+        profiled_generation = qwen2_generation or prefix == "reviewed-decoder-profiled-producer/v1:"
+        if profiled_generation:
+            fields.add("generation_policy")
+        if qwen2_generation:
+            fields.add("runtime_profile")
+        require((admission_profile is None and "admission_profile" not in observation
+                 or admission_profile is not None and observation.get("admission_profile") == admission_profile)
+                and all(type(payload.get(field)) is dict
+                    and payload[field].get("schema") == consumer_schema
+                    and payload[field].get("profile") == consumer_profile
+                    for field in ("admission_before", "admission_after")),
+                "normal retention source-producer admission domain differs")
+        require(type(commitment) is dict and set(commitment) == fields
+                and commitment.get("schema") == policy_schema
+                and (admission_profile is None or commitment.get("admission_profile") == admission_profile)
+                and expected == observation.get("input_commitment_sha256") == stable_digest(commitment)
+                and observation.get("input_profile_id") == config["input_profile"]["profile_id"] == prefix + expected,
+                "normal retention source-generation commitment or derived profile differs")
+        if profiled_generation:
+            # Metadata-only replay of the closed producer-policy contract. Do
+            # not import numerical/runtime owners in this saved-artifact path.
+            generation = commitment["generation_policy"]
+            generation_fields = {"schema", "generation_profile", "conditioning_profile", "max_generation_seconds"}
+            if qwen2_generation:
+                generation_fields.add("context_budget_profile")
+            require(type(generation) is dict and set(generation) == generation_fields
+                    and type(generation["schema"]) is str
+                    and generation["schema"] == ("reviewed-decoder-generation-policy/v2" if qwen2_generation
+                                                else "reviewed-decoder-generation-policy/v1")
+                    and type(generation["generation_profile"]) is str
+                    and generation["generation_profile"] == ("builtin-qwen2-dynamic-kv/v1" if qwen2_generation
+                                                            else "builtin-llama-dynamic-kv/v1")
+                    and type(generation["conditioning_profile"]) is str
+                    and generation["conditioning_profile"] == ("qwen2-chatml-complete-legal-ir/v1" if qwen2_generation
+                                                              else "chatml-complete-legal-ir/v1")
+                    and (not qwen2_generation or type(commitment["runtime_profile"]) is str
+                         and commitment["runtime_profile"] == "builtin-qwen2-bfloat16/v1"
+                         and type(generation["context_budget_profile"]) is str
+                         and generation["context_budget_profile"] == "qwen2-full-context-8192/v1"),
+                    "normal retention profiled generation policy differs")
+            seconds = generation["max_generation_seconds"]
+            try:
+                finite_positive = type(seconds) in (int, float) and math.isfinite(seconds) and seconds > 0
+            except OverflowError:
+                finite_positive = False
+            require(finite_positive, "normal retention profiled generation policy differs")
+        profile = config["input_profile"]
+        identity = commitment["backend_identity"]
+        require(commitment["operation"] == config["operation"]
+                and commitment["training_requested"] is commitment["restore_requested"] is False
+                and commitment["supplied_context_supported"] == "empty_permitted_and_retrieved_only"
+                and commitment["max_source_tokens"] == profile["max_source_tokens"]
+                and commitment["max_output_tokens"] == profile["max_output_tokens"]
+                and profile["max_context_tokens"] == 1
+                and commitment["exposure_sha256"] == config["input_sha256s"]["exposure"]
+                and all(commitment["admission_inputs_sha256"] == payload[field].get("admission_inputs_sha256")
+                        for field in ("admission_before", "admission_after"))
+                and type(identity) is dict and set(identity) == {"backend_id", "implementation_sha256",
+                    "checkpoint_format", "target_codec", "source_conditioned", "pretrained"}
+                and identity["backend_id"] == config["checkpoint_declarations"]["decoder"]["id"]
+                and identity["source_conditioned"] is True and type(identity["pretrained"]) is bool
+                and identity["target_codec"] == "complete-reviewed-norm-json/v2",
+                "normal retention producer policy differs from evaluator inputs")
+        code = commitment["source_sha256"]
+        require(type(code) is dict and set(code) == {"worker", "inputs", "consumer", "admission", "splits"}
+                and all(type(value) is str and re.fullmatch(r"[0-9a-f]{64}", value) is not None
+                        for value in [*code.values(), identity["implementation_sha256"],
+                                      commitment["source_contexts_sha256"], commitment["admission_inputs_sha256"]])
+                and identity["implementation_sha256"] == code["worker"],
+                "normal retention requires exact producer code and source-context commitments")
+
+        def artifact_reference(value):
+            return type(value) is dict and set(value) == {"path", "sha256", "bytes"} \
+                and type(value["path"]) is str and bool(value["path"]) \
+                and type(value["sha256"]) is str and re.fullmatch(r"[0-9a-f]{64}", value["sha256"]) is not None \
+                and type(value["bytes"]) is int and value["bytes"] > 0
+
+        pair = {key: commitment[key] for key in ("model_checkpoint", "optimizer_checkpoint")}
+        assets = commitment["assets"]
+        require(all(artifact_reference(value) for value in pair.values())
+                and pair["model_checkpoint"]["path"] != pair["optimizer_checkpoint"]["path"]
+                and pair["model_checkpoint"]["sha256"] == config["checkpoint_declarations"]["decoder"]["sha256"]
+                and type(assets) is list and 1 <= len(assets) <= 64 and all(artifact_reference(value) for value in assets)
+                and len({value["path"] for value in assets}) == len(assets),
+                "normal retention requires the exact declared checkpoint pair and assets")
+        normalized_assets = []
+        for asset in assets:
+            aliases = [key for key, value in pair.items() if asset["path"] == value["path"]]
+            require(not aliases or asset == pair[aliases[0]], "normal retention asset conflicts with checkpoint identity")
+            normalized_assets.append({"checkpoint_role": aliases[0]} if aliases else asset)
+        preflight = observation.get("factory_preflight")
+        call = observation.get("last_call")
+        require(type(preflight) is dict and set(preflight) == {"reviewed_binding_ready",
+                    "already_loaded_pair_match", "independent_context_matches_admitted_facts"}
+                and all(value is True for value in preflight.values())
+                and type(call) is dict and call.get("entry_pair_match") is call.get("exit_pair_match") is True
+                and "closeout_exception_type" not in call,
+                "normal retention requires observed matched-pair entry and exit")
+        outputs = payload.get("producer_outputs")
+        require(type(outputs) is list and len(outputs) == len(payload["reference_population"])
+                and all(type(output) is dict and set(output) == {"id", "outcome", "candidate"}
+                        and output["id"] == row["id"] for row, output in
+                        zip(payload["reference_population"], outputs, strict=True)),
+                "normal retention requires every ordered producer output")
+        if call.get("completed") is True:
+            raw = call.get("raw_generation_outputs")
+            require(call.get("exception_type") is None and payload.get("producer_exception_type") is None
+                    and call.get("producer_outputs") == outputs and type(raw) is list
+                    and len(raw) == len(payload["reference_population"])
+                    and all(type(item) is dict and set(item) == {"id", "unit_id", "outcome", "candidate",
+                                "generated_token_ids", "generated_text", "reason"}
+                            and item["unit_id"] == row["unit_id"]
+                            and {key: item[key] for key in ("id", "outcome", "candidate")} == output
+                            for item, row, output in zip(raw, payload["reference_population"], outputs, strict=True)),
+                    "normal retention outputs differ from observed generation")
+        else:
+            require(call.get("completed") is False and type(call.get("exception_type")) is str
+                    and call["exception_type"] == payload.get("producer_exception_type")
+                    and call.get("producer_outputs") is None and call.get("raw_generation_outputs") is None
+                    and all(output.get("outcome") == "error" and output.get("candidate") is None for output in outputs),
+                    "normal retention failed invocation must preserve every error case")
+        receipt = call.get("input_receipt")
+        if receipt is not None:
+            rows = payload["reference_population"]
+            require(type(receipt) is dict and receipt.get("schema") == "reviewed-decoder-generation-input-receipt/v1"
+                    and receipt.get("profile") == "source-only-reviewed-decoder-generation-inputs/v1"
+                    and receipt.get("source_arguments_sha256") == call.get("source_arguments_sha256")
+                        == config["producer_arguments_sha256"]
+                    and receipt.get("prepared_records_sha256") == call.get("source_records_sha256")
+                    and receipt.get("source_contexts_sha256") == commitment["source_contexts_sha256"]
+                    and receipt.get("max_source_tokens") == profile["max_source_tokens"]
+                    and receipt.get("record_count") == len(rows)
+                    and type(receipt.get("tokenizer_contract")) is dict
+                    and type(receipt.get("row_commitments")) is list and len(receipt["row_commitments"]) == len(rows)
+                    and all(type(observed) is dict and observed.get("id") == row["id"]
+                            and observed.get("unit_id") == row["unit_id"]
+                            and observed.get("source_text_sha256") == sha256(row["source_text"].encode("utf-8")).hexdigest()
+                            for observed, row in zip(receipt["row_commitments"], rows, strict=True)),
+                    "normal retention input receipt differs from source generation commitments")
+        else:
+            require(call.get("completed") is False, "normal retention completed generation requires its input receipt")
+        normalized = {key: value for key, value in commitment.items() if key not in pair and key != "assets"}
+        normalized["assets"] = normalized_assets
+        return {"fixed_commitment": normalized, "input_receipt": receipt, "checkpoint_pair": pair,
+                "input_commitment_sha256": expected}
+
+    prior_generation = normal_source_observation(previous, prior_payload, prior_config)
+    next_generation = normal_source_observation(current, next_payload, next_config)
+    require((prior_generation is None) == (next_generation is None), "retention producer routes differ")
+    if prior_generation is not None:
+        require(stable_digest(prior_generation["fixed_commitment"]) == stable_digest(next_generation["fixed_commitment"])
+                and (prior_generation["input_receipt"] is None or next_generation["input_receipt"] is None
+                     or stable_digest(prior_generation["input_receipt"]) == stable_digest(next_generation["input_receipt"])),
+                "normal retention observations differ in frozen producer inputs or tokenized source")
+    # The producer output and decoder identity are the only variable inputs.
+    # Compare all other configuration fields, including admission observations,
+    # rather than silently accepting future unbound fields.
+    variable_fields = {"checkpoint_declarations", "producer_outputs_sha256"}
+    def fixed_configuration(config):
+        fixed = {key: value for key, value in config.items() if key not in variable_fields}
+        if prior_generation is not None:
+            fixed["input_profile"] = {key: value for key, value in config["input_profile"].items() if key != "profile_id"}
+        return fixed
+    require(stable_digest(fixed_configuration(prior_config)) == stable_digest(fixed_configuration(next_config))
+            and prior_config["checkpoint_declarations"]["encoder"] == next_config["checkpoint_declarations"]["encoder"]
+            and stable_digest(prior_payload["reference_population"]) == stable_digest(next_payload["reference_population"])
+            and stable_digest(prior_payload["producer_arguments"]) == stable_digest(next_payload["producer_arguments"])
+            and before.key.compiler_commit == after.key.compiler_commit,
+            "retention observations differ in frozen source, split, dependencies, context, compiler, encoder or budget")
+
+    def rescore(artifact, offered, payload, config):
+        references = payload["reference_population"]
+        outputs = payload.get("producer_outputs")
+        require(type(outputs) is list and len(outputs) == len(references)
+                and all(type(output) is dict and set(output) == {"id", "outcome", "candidate"}
+                        and output["id"] == row["id"] for row, output in zip(references, outputs, strict=True)),
+                "retention requires a complete ordered output for every frozen case")
+        for field in ("producer_arguments", "producer_outputs", "admission_before", "admission_after"):
+            require(field in payload and config.get(field + "_sha256") == stable_digest(payload[field]),
+                    "retention producer or admission commitment differs")
+        for field in ("admission_before", "admission_after"):
+            admission = payload[field]
+            require(type(admission) is dict and admission.get("status") == "ready"
+                    and admission.get("semantic_use_eligible") is True
+                    and admission.get("semantic_admission_replayed") is True
+                    and admission.get("operation") == "heldout_evaluation"
+                    and admission.get("heldout_evaluation") == config["heldout_evaluation"]
+                    and admission.get("row_count") == admission.get("ready_row_count") == len(references)
+                    and admission.get("blocked_row_count") == admission.get("rows_discarded") == 0
+                    and admission.get("blockers") == []
+                    and all(admission.get(key) == config[key] for key in
+                            ("admission_identity_sha256", "declaration_sha256", "input_sha256s", "target_codec")),
+                    "retention artifact differs from its observed heldout admission")
+            observed_rows = admission.get("rows")
+            source_units = config["heldout_evaluation"]["dependency_group"]["source_units"]
+            require(type(observed_rows) is list and len(observed_rows) == len(references)
+                    and all(type(observed) is dict and observed.get("row_index") == index
+                            and observed.get("id") == row["id"] and observed.get("unit_id") == row["unit_id"]
+                            and observed.get("status") == "ready" and observed.get("blockers") == []
+                            and observed.get("occurrence_cid") == unit.get("occurrence_cid")
+                            and observed.get("source_text_sha256") == sha256(row["source_text"].encode("utf-8")).hexdigest()
+                            and observed.get("canonical_ir_sha256") == stable_digest(row["canonical_ir"])
+                            and type(observed.get("exposure")) is dict
+                            and all(observed["exposure"].get(key) == observed[key] for key in
+                                    ("id", "source_text_sha256", "canonical_ir_sha256"))
+                            and observed["exposure"].get("target_exposure") == REVIEWED_HELDOUT_EXPOSURE
+                            for index, (observed, row, unit) in enumerate(zip(observed_rows, references,
+                                                                           source_units, strict=True))),
+                    "retention references differ from observed reviewed admission rows")
+        require(payload.get("declared_compiler_identity") == artifact.key.compiler_commit
+                and artifact.key == LegalIREvaluationCacheKey.for_sample({"rows": references},
+                    compiler_commit=artifact.key.compiler_commit,
+                    state_hash=stable_digest(config["checkpoint_declarations"]),
+                    metric_schema=COMPLETE_NORM_PAYLOAD_METRICS_SCHEMA, configuration=config),
+                "retention evaluation cache key differs from its complete observation")
+        report = evaluate_complete_norm_payloads([dict(case_id=row["id"], reference=row["canonical_ir"],
+            candidate=output["candidate"], outcome=output["outcome"])
+            for row, output in zip(references, outputs, strict=True)])
+        require(report == payload.get("comparison") == offered["metrics"].get("complete_norm_payload"),
+                "stored retention scores differ from complete rescoring")
+        return report
+
+    prior_scores = rescore(before, previous, prior_payload, prior_config)
+    next_scores = rescore(after, current, next_payload, next_config)
+    labels = {(1, 1): "retained", (1, 0): "lost", (0, 1): "gained", (0, 0): "still_incorrect"}
+    counts = dict.fromkeys(labels.values(), 0)
+    cases = []
+    for left, right in zip(prior_scores["cases"], next_scores["cases"], strict=True):
+        status = labels[left["scores"]["full_nine_payload_exact"], right["scores"]["full_nine_payload_exact"]]
+        counts[status] += 1
+        cases.append({"id": left["case_id"], "before_outcome": left["outcome"],
+                      "after_outcome": right["outcome"], "status": status})
+    baseline_exact = counts["retained"] + counts["lost"]
+    return {"schema": "reviewed-source-span-retention/v1", "before_artifact_sha256": expected_before_sha256,
+        "after_artifact_sha256": expected_after_sha256, "reference_population_sha256": before.key.sample_hash,
+        "split_manifest_sha256": prior_config["heldout_evaluation"]["split_manifest_sha256"],
+        "dependency_group_sha256": prior_config["heldout_evaluation"]["dependency_group_sha256"],
+        "before_decoder": prior_config["checkpoint_declarations"]["decoder"],
+        "after_decoder": next_config["checkpoint_declarations"]["decoder"],
+        "denominator": len(cases), "baseline_exact": baseline_exact,
+        "after_exact": counts["retained"] + counts["gained"], "counts": counts, "cases": cases,
+        "retention_rate": counts["retained"] / baseline_exact if baseline_exact else None,
+        "before_outcome_counts": prior_scores["outcome_counts"], "after_outcome_counts": next_scores["outcome_counts"],
+        "before_complete_norm_scores": prior_scores, "after_complete_norm_scores": next_scores,
+        "producer_route": "normal_source_producer" if prior_generation is not None else "generic_callback",
+        "before_source_generation": prior_generation, "after_source_generation": next_generation,
+        "scope": "paired_full_nine_payload_exactness_on_one_declared_frozen_heldout_component",
+        "current_admission_replayed": False, "loaded_checkpoint_identity_verified": False,
+        "heldout_generalization_established": False, "proof_authority": False}
+
+
+__all__ += ["compare_reviewed_source_span_retention"]

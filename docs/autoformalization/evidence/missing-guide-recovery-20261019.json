@@ -1,0 +1,141 @@
+{
+  "attempted_routes": [
+    {
+      "result": "All three paths absent in canonical HEAD.",
+      "route": "git show HEAD:docs/autoencoders/<each exact basename>"
+    },
+    {
+      "result": "No matching missing guide names.",
+      "route": "Exact-name lookup in docs/autoformalization/evidence/work_inventory.json, consolidation-20261019.json, existing four-dimension register and 132-path landing map"
+    },
+    {
+      "result": "None of the three guide basenames present; no extraction.",
+      "route": "Member-name inspection of docs/autoformalization/evidence/consolidation-20261019.tar.gz"
+    },
+    {
+      "result": "Retained review and closeout receipts identify exact original guide paths and Git commits.",
+      "route": "Top-level artifacts directories matching decoder-output, span-graph, definition-review, plus named sampled-primary directories; source/receipt reads limited to depth 3"
+    },
+    {
+      "result": "All three guides present; no traversal of that retained checkout. Decoder and span guide live versions differ from earlier audits; primary guide matches.",
+      "route": "Direct exact file reads in artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/docs/autoencoders/ only"
+    },
+    {
+      "result": "All three recovered; span and primary guide hashes match audits. Decoder commit snapshot differs from the earlier static audit and is labeled accordingly.",
+      "route": "git show the three exact commits and guide paths named by retained closeouts"
+    }
+  ],
+  "body_content_or_links_rewritten": false,
+  "canonical_files_modified": false,
+  "guides": [
+    {
+      "body_byte_exact": true,
+      "body_links_rewritten": false,
+      "canonical_HEAD_path_exists": false,
+      "commit_identity_evidence": {
+        "bytes": 10069,
+        "path": "artifacts/legal-decoder-output-integration-20261016-01/turn-closeout-v02.json",
+        "sha256": "2fc229dcb40386091ea9405d9dc7b3b54fa40d87019741b50c5fcf1079436d97"
+      },
+      "guide_audit_evidence": {
+        "bytes": 23680,
+        "path": "artifacts/legal-decoder-output-integration-20261016-01/source-helper-doc-audit-v02.json",
+        "sha256": "3554fe4456678b67a33a06b927250eb2f292fa11dd0f59c0fb1186b91b06d948"
+      },
+      "history_path": "docs/autoformalization/history/legal_ir_decoder_output_integration_20261016.md",
+      "legacy_path": "docs/autoencoders/legal_ir_decoder_output_integration_20261016.md",
+      "recorded_audit_guide": {
+        "bytes": 11244,
+        "selected_snapshot_matches": false,
+        "sha256": "92520e6f1cac2910ccc798ef78dc379a20ca1ba944fa34d2e0cbd1d8aa0f961a"
+      },
+      "selection_reason": "The named closeout commit retains a later 11,679-byte guide. It differs from the earlier 11,244-byte static-audit guide and is explicitly preserved as a historical commit snapshot, not represented as audit-matched. The live retained checkout also has a still-later 16,834-byte version; that version was not selected.",
+      "source": {
+        "bytes": 11679,
+        "commit": "d8637a1bd37aef67bc5299de2dd4264ca3296bf1",
+        "method": "git show <recorded-commit>:<exact-path>",
+        "path": "docs/autoencoders/legal_ir_decoder_output_integration_20261016.md",
+        "repository": "external/ipfs_datasets",
+        "sha256": "e9c7213c119d9c5d328528d2cd6fa543cd0a7c61c52b9d21f6e9b13767c702ff"
+      },
+      "status": "historical_only_not_current_plan_or_new_qualification",
+      "title": "Decoder output integration",
+      "version_kind": "later_retained_commit_snapshot_audit_hash_differs"
+    },
+    {
+      "body_byte_exact": true,
+      "body_links_rewritten": false,
+      "canonical_HEAD_path_exists": false,
+      "commit_identity_evidence": {
+        "bytes": 1264,
+        "path": "artifacts/legal-ir-span-graph-plan-20261016-01/turn-closeout-v01.json",
+        "sha256": "cf64798c3d18757d63445de7eecd1d8a84895c63ed054dbbd920eeaec1a42367"
+      },
+      "guide_audit_evidence": {
+        "bytes": 1629,
+        "path": "artifacts/legal-ir-span-graph-plan-20261016-01/document-verification-v01.json",
+        "sha256": "243ccf9e9b5b7c059956211bc0e604d7155d57bd3d19b192c8e5b9d69c754cfe"
+      },
+      "history_path": "docs/autoformalization/history/legal_ir_span_graph_lean_execution_plan_20261016.md",
+      "legacy_path": "docs/autoencoders/legal_ir_span_graph_lean_execution_plan_20261016.md",
+      "recorded_audit_guide": {
+        "bytes": 40230,
+        "selected_snapshot_matches": true,
+        "sha256": "80fcffa00252dfde901e0373d240e63702d3e536dc7f11fb0e7d67d180205ca1"
+      },
+      "selection_reason": "Selected exact guide bytes matching the retained audit and the named historical commit.",
+      "source": {
+        "bytes": 40230,
+        "commit": "dc95e6dc486e0588245e7b22a4c4db934d201a94",
+        "method": "git show <recorded-commit>:<exact-path>",
+        "path": "docs/autoencoders/legal_ir_span_graph_lean_execution_plan_20261016.md",
+        "repository": "external/ipfs_datasets",
+        "sha256": "80fcffa00252dfde901e0373d240e63702d3e536dc7f11fb0e7d67d180205ca1"
+      },
+      "status": "historical_only_not_current_plan_or_new_qualification",
+      "title": "Span, graph and Lean execution plan",
+      "version_kind": "audit_hash_matched_historical_snapshot"
+    },
+    {
+      "body_byte_exact": true,
+      "body_links_rewritten": false,
+      "canonical_HEAD_path_exists": false,
+      "commit_identity_evidence": {
+        "bytes": 10696,
+        "path": "artifacts/legal-sampled-primary-review-20261015-01/turn-closeout.json",
+        "sha256": "ecce90b12a3ed0f2ee3243f83301cd477ae5e115f04d9503f0566a5d12aaf6d7"
+      },
+      "guide_audit_evidence": {
+        "bytes": 16635,
+        "path": "artifacts/legal-sampled-primary-review-20261015-01/primary-review-source-helper-doc-audit-v02.json",
+        "sha256": "34cc223a57d3203933d1e98966b713bc06cb0f46fa58e2e56d8cb3c44ea39e3a"
+      },
+      "history_path": "docs/autoformalization/history/legal_sampled_primary_definition_review_v2.md",
+      "legacy_path": "docs/autoencoders/legal_sampled_primary_definition_review_v2.md",
+      "recorded_audit_guide": {
+        "bytes": 8619,
+        "selected_snapshot_matches": true,
+        "sha256": "444da62054f606b47242ffe599a5dc8069c2b07add52db2b994bdfbc7f510b90"
+      },
+      "selection_reason": "Selected exact guide bytes matching the retained audit and the named historical commit.",
+      "source": {
+        "bytes": 8619,
+        "commit": "7ce52f9a3abe40965fd8b45261d86ae16ea79bdb",
+        "method": "git show <recorded-commit>:<exact-path>",
+        "path": "docs/autoencoders/legal_sampled_primary_definition_review_v2.md",
+        "repository": "external/ipfs_datasets",
+        "sha256": "444da62054f606b47242ffe599a5dc8069c2b07add52db2b994bdfbc7f510b90"
+      },
+      "status": "historical_only_not_current_plan_or_new_qualification",
+      "title": "Sampled primary definition review",
+      "version_kind": "audit_hash_matched_historical_snapshot"
+    }
+  ],
+  "historical_files_modified": false,
+  "history_readme_install_precondition": "Canonical docs/autoformalization/history/README.md was absent when staged. If another staged README exists, merge this index/warning rather than overwriting it.",
+  "project_imports": false,
+  "recorded_at_utc": "2026-10-19T20:34:16.117948+00:00",
+  "schema": "autoformalization-missing-guide-recovery/v1",
+  "scope": "Three explicitly named missing historical guides only. No broad workspace census, project import, tests, native/model execution, canonical edit or external access.",
+  "tests_executed": false
+}

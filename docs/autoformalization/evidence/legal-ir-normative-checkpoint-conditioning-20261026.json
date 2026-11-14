@@ -1,0 +1,378 @@
+{
+  "Lean_operations": 0,
+  "SQL_operations": 0,
+  "api": "inspect_normative_checkpoint_conditioning_v1",
+  "authority": {
+    "checkpoint_compatible": false,
+    "context_permission_verified": false,
+    "full_decoder_input_verified": false,
+    "model_convergence_proven": false,
+    "proof_authority": false,
+    "runtime_ready": false,
+    "source_producer_execution_authenticated": false,
+    "source_semantics_verified": false,
+    "target_independence_verified": false,
+    "training_qualified": false
+  },
+  "candidates": {
+    "ipfs_datasets_py/logic/formalization/autoencoder/ir_cell_target_compatibility.py": {
+      "after": {
+        "bytes": 111835,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/checkpoint-binding-v01/source-stage/ir_cell_target_compatibility.v05.py.after",
+        "sha256": "0276ac521d681864a112cb3745853d1c728e5754d1bd0865158971ccb8b05415"
+      },
+      "before_archive": {
+        "bytes": 96130,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/checkpoint-binding-v01/source-stage/ir_cell_target_compatibility.v01.py.before",
+        "sha256": "3fc17c64bfec51948f0c04adf7f21164a4d666365f73043fe1d45bbcde4cdc3a"
+      },
+      "original_prefix_and_AST_preserved": true
+    },
+    "tests/unit/logic/formalization/autoencoder/test_ir_cell_target_compatibility.py": {
+      "after": {
+        "bytes": 169850,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/checkpoint-binding-v01/test-stage/test_ir_cell_target_compatibility.v03.py.after",
+        "sha256": "bbfffc3673bb228219730816a2be596f1f88d251a435168e5b130028f47c8235"
+      },
+      "before_archive": {
+        "bytes": 145461,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/checkpoint-binding-v01/test-stage/test_ir_cell_target_compatibility.v01.py.before",
+        "sha256": "91d9911a0dd8261d4850210494b85262116904d8b36ee2458f89190a0a7cf4d5"
+      },
+      "original_prefix_and_AST_preserved": true
+    }
+  },
+  "canonical_owner": "ipfs_datasets_py/logic/formalization/autoencoder/ir_cell_target_compatibility.py",
+  "canonical_runtime_or_publication_qualification": false,
+  "cohorts": [
+    {
+      "cases_passed": 21,
+      "direct_source_pins": 72,
+      "function_selectors": 13,
+      "label": "authored-v01",
+      "original_native_cleanup_verified": true,
+      "phase_events_passed": 63,
+      "profile": "legal-checkpoint-conditioning-authored-controls/v1",
+      "pytest_elapsed_seconds": 8.011865772074088,
+      "retained_attempt_bytes": 12412095,
+      "scope": "Authored metadata fixture/refusal controls; no retained-artifact inference or learning.",
+      "source_READ_closed": true,
+      "storage_released_by_original_owner": true
+    },
+    {
+      "cases_passed": 4,
+      "direct_source_pins": 73,
+      "function_selectors": 1,
+      "label": "retained-v01",
+      "original_native_cleanup_verified": true,
+      "phase_events_passed": 12,
+      "profile": "legal-checkpoint-conditioning-retained-data/v1",
+      "pytest_elapsed_seconds": 18.72803088882938,
+      "retained_attempt_bytes": 824249,
+      "scope": "Four original exposed authored-benchmark checkpoint metadata checks, zero/CE at384/768; no numerical restore, new inference, learning or statutory accuracy.",
+      "source_READ_closed": true,
+      "storage_released_by_original_owner": true
+    }
+  ],
+  "derived_contract": {
+    "boundary": "decoder_input",
+    "clause_side_chain": [
+      "saved TRAIN input_transform",
+      "zero-pad to eight clauses",
+      "saved separate clause feature normalization"
+    ],
+    "paragraph_chain": [
+      "saved TRAIN input_transform",
+      "saved paragraph feature normalization"
+    ],
+    "recipe_execution_performed": false,
+    "required_padding_mask": "source_derived_contiguous_nonempty_bool8",
+    "width384": "original producer/profile missing; producer and basis stay null",
+    "width768": "recorded original profile retained only; historical8192 and experiment-admission512 budgets preserved without relabelling"
+  },
+  "evaluation_gold_mask": 0,
+  "generation": {
+    "captured_source_files": 46,
+    "empty_initializer_transport": {
+      "canonical": {
+        "bytes": 0,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/__init__.py",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "executable_body_empty": true,
+      "frozen_file_omitted": true,
+      "qualification_test_package_transport": "implicit_namespace"
+    },
+    "frozen_root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/checkpoint-binding-v01/source-v01/frozen",
+    "import_origins_per_cohort": 33,
+    "namespace_scope": {
+      "ipfs_datasets_py.logic": {
+        "genuine_fileless": false,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/checkpoint-binding-v01/source-v01/frozen/ipfs_datasets_py/logic"
+      }
+    },
+    "recorded_source_compilation_observations_per_cohort": 35,
+    "scope": "Exact frozen-source finite-worker namespace, pinned-source checks and recorded source-compilation observations only; not complete actual compile-input/bytecode or public-package startup authentication."
+  },
+  "head_contract_schema": "legal-conditioning-space-contract/v1",
+  "id": "normative-checkpoint-conditioning-qualified-20261026-01",
+  "independent_statutory_quality_cases": 0,
+  "legacy_cases_rerun": 0,
+  "limitations": [
+    "Original JSON model-state metadata and historical training count-prior metadata are parsed. No label-independence or independently permitted context is established.",
+    "The binder describes retained recipes; it applies no vector transform and accepts no current inference source. Actual source/head compatibility remains a separate qualification.",
+    "Original normalization/prior training_rows_sha256 includes historical target IDs. The original validator preserves its opaque receipt joins; the binder does not reconstruct that digest from target-free source rows.",
+    "The 384D producer profile remains missing. The 768D recorded profile declares a space without authenticating actual encoder execution or weights.",
+    "Original complete source/definition/use targets, source/edition/meaning, fresh grouped evaluation and model fidelity/convergence remain separate gates.",
+    "All historical checkpoints, original TRAIN data and preceding source/head declaration qualifications remain unchanged; there is no new registry, trainer, scheduler, proof backend or default runtime."
+  ],
+  "manual_storage_release": false,
+  "model_inference_calls": 0,
+  "model_restores": 0,
+  "new_encoder_calls": 0,
+  "new_training_calls": 0,
+  "normative_fixed_codec_sha256": "cba3e5384e2bee12e709ccc8e9ee430e51cf09a8fc2e8abdd57143fdaa38dba2",
+  "normative_fixed_recipe_weights": {
+    "normative-wording-ce": 0.05,
+    "normative-wording-zero": 0.0
+  },
+  "original_validators_reused": [
+    "contextual_legal_ir_runtime._json",
+    "contextual_legal_ir_runtime._documents",
+    "contextual_legal_ir_runtime._source_rows"
+  ],
+  "owning_test": "tests/unit/logic/formalization/autoencoder/test_ir_cell_target_compatibility.py",
+  "purpose": "Derive conditioning recipes from independently pinned original checkpoint/preprocessing/donor JSON and bind optional original TRAIN provenance through existing metadata validators.",
+  "recorded_at_utc": "2026-10-26T02:21:11.156170+00:00",
+  "report_schema": "legal-normative-checkpoint-conditioning-inspection/v1",
+  "retained_data": {
+    "artifact_bytes": 36148366,
+    "artifact_count": 8,
+    "manifest": {
+      "bytes": 3797,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/checkpoint-binding-v01/retained-data-manifest-v01.json",
+      "sha256": "2481eb93d2be16eefc4ce20a8d42a28b1d6d063e472437fae9375286d5b5f608"
+    },
+    "original_training_input_sha256_by_lane": {
+      "384": "b44393417eaf32893a2e28d6359c7baf31bc42155fe03bd9e25e7434b3e73acf",
+      "768": "5c8dc69ed5a9176c30012459a328075b4b8d65c88343b047a50bab10930b7595"
+    },
+    "reports": [
+      {
+        "head_contract_sha256": "45efdc4776f6ebff9788614620fd415a3ac606db64ddc88d9bd2ed33242cef9c",
+        "id": "384-normative-wording-zero",
+        "original_training_provenance_sha256": "b44393417eaf32893a2e28d6359c7baf31bc42155fe03bd9e25e7434b3e73acf",
+        "report": {
+          "bytes": 156912,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/checkpoint-binding-v01/attempt-retained-v01/exports/checkpoint-binding/384-normative-wording-zero.json",
+          "sha256": "2ca50eeb2748ae653c3e93c565bf82f412a1e57187aab5730f3e900b0843dec6"
+        },
+        "training_counts": {
+          "train": 48,
+          "validation": 48
+        },
+        "unresolved": [
+          "recorded_training_profile_unprovided"
+        ]
+      },
+      {
+        "head_contract_sha256": "bbd56bbf195aff53ceb5a8c93ac9c452f9c2a04ed57e23f79d02be9689c32a84",
+        "id": "384-normative-wording-ce",
+        "original_training_provenance_sha256": "b44393417eaf32893a2e28d6359c7baf31bc42155fe03bd9e25e7434b3e73acf",
+        "report": {
+          "bytes": 156910,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/checkpoint-binding-v01/attempt-retained-v01/exports/checkpoint-binding/384-normative-wording-ce.json",
+          "sha256": "bb2d2c481c0a3a5bdac3e8262273d3871b66ba3a653d9f115b2a951c9af776ec"
+        },
+        "training_counts": {
+          "train": 48,
+          "validation": 48
+        },
+        "unresolved": [
+          "recorded_training_profile_unprovided"
+        ]
+      },
+      {
+        "head_contract_sha256": "c26ae946ad704cf06c7114ab624ca5e91fa70f391a5134cd16fdfa5be6d59035",
+        "id": "768-normative-wording-zero",
+        "original_training_provenance_sha256": "5c8dc69ed5a9176c30012459a328075b4b8d65c88343b047a50bab10930b7595",
+        "report": {
+          "bytes": 242964,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/checkpoint-binding-v01/attempt-retained-v01/exports/checkpoint-binding/768-normative-wording-zero.json",
+          "sha256": "966d7f3b858171963a073986fe2a88e599963524248e26b4678a7ada33996a19"
+        },
+        "training_counts": {
+          "train": 48,
+          "validation": 48
+        },
+        "unresolved": []
+      },
+      {
+        "head_contract_sha256": "29a47134202991b134d4c8dff3580a734342fb83d57b6935bc51584788c3917a",
+        "id": "768-normative-wording-ce",
+        "original_training_provenance_sha256": "5c8dc69ed5a9176c30012459a328075b4b8d65c88343b047a50bab10930b7595",
+        "report": {
+          "bytes": 242962,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/checkpoint-binding-v01/attempt-retained-v01/exports/checkpoint-binding/768-normative-wording-ce.json",
+          "sha256": "7045cb244585c80806647fa670ac8ab212012343584646e7b74ca9fccf4a1f27"
+        },
+        "training_counts": {
+          "train": 48,
+          "validation": 48
+        },
+        "unresolved": []
+      }
+    ],
+    "scope": "Full original raw artifact pins and selected-lane canonical provenance are separate identities; a population digest is not a coordinate basis.",
+    "training_population_per_width": {
+      "same_original_ID_population_shared_by_both_recipes": true,
+      "source_kind": "exposed_authored_benchmark",
+      "train": 48,
+      "validation": 48
+    }
+  },
+  "reviewed_inputs": [
+    {
+      "bytes": 35725,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/checkpoint-binding-v01/source-capture-v01.json",
+      "sha256": "dc432923f2b6bd0911cc4d5a254348cef4f4ad8de849dff264e6d180f19d7764"
+    },
+    {
+      "bytes": 9569,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/checkpoint-binding-v01/qualification-spec-v03.json",
+      "sha256": "b8b3d9a2a347c1513469b76e33b04596107cd2d76774f05bebb05966e770e785"
+    },
+    {
+      "bytes": 3797,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/checkpoint-binding-v01/retained-data-manifest-v01.json",
+      "sha256": "2481eb93d2be16eefc4ce20a8d42a28b1d6d063e472437fae9375286d5b5f608"
+    },
+    {
+      "bytes": 6008,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/checkpoint-binding-v01/independent-binding-source-and-tests-static-review-v01.json",
+      "sha256": "e1a91d79de1279c2ef19016a6660b06b0aa5153a34c189b94e0c21e50c47e502"
+    },
+    {
+      "bytes": 5492,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/checkpoint-binding-v01/independent-controls-capture-request-review-v01.json",
+      "sha256": "e80628b3824d6263adbf9a77545fa53db276eb0b94a482ec343347b830db7e63"
+    },
+    {
+      "bytes": 3703,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/checkpoint-binding-v01/root-result-review-authored-v01.json",
+      "sha256": "a3f1e8cbc46bc04c7507ae24cd80e9ee80553848bd950ac64b973208f0c2ccc5"
+    },
+    {
+      "bytes": 5931,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/checkpoint-binding-v01/independent-result-review-authored-v01.json",
+      "sha256": "aa98f0531cd996365477086db8cd7bd5a7dcbc3c41a32c8c3536df35432c61fc"
+    },
+    {
+      "bytes": 7844,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/checkpoint-binding-v01/root-result-review-retained-v01.json",
+      "sha256": "5137c55d4ab6c89d83fcf2fe30f6535024bc84787599c5cf17b4dd9ecd1853f9"
+    },
+    {
+      "bytes": 9769,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/checkpoint-binding-v01/independent-result-review-retained-v01.json",
+      "sha256": "3a47cba4f7d684e93e19ddcd405f01e6d1607a261f0e5a3958f09a6508a5dad6"
+    },
+    {
+      "bytes": 2725,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/checkpoint-binding-v01/retained-result-exports-retained-v01.json",
+      "sha256": "d048cc79e66f9fe4df18b7c4c40f8d88e7c1fc74029b2c4d5e6d809f668a266e"
+    },
+    {
+      "bytes": 27468,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/checkpoint-binding-v01/request-authored-v01.json",
+      "sha256": "25d707407369da61fb2b371ac6df09b0739b544650ce529d02c3de2603103fb4"
+    },
+    {
+      "bytes": 15762,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/checkpoint-binding-v01/manifest-authored-v01.json",
+      "sha256": "a39111122f3ff604388b019a8cec9d68fa97bc95379d0064353423e400d88f16"
+    },
+    {
+      "bytes": 521,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/checkpoint-binding-v01/controller-complete-authored-v01.json",
+      "sha256": "c88c965ff24a64d838ca7f4e26d0c206205af475af403935f36a9cb03c136e81"
+    },
+    {
+      "bytes": 7895,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/checkpoint-binding-v01/launch-authored-v01.json",
+      "sha256": "d1c6f687dc78bbadb838fec90b80344191dde91100d11507642f1f4d75029949"
+    },
+    {
+      "bytes": 6422,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/checkpoint-binding-v01/attempt-authored-v01/exports/test-result.json",
+      "sha256": "c462e2ef240d1e1786775f72afc7b98570700736e87b8c9f3faa08fbbf507f90"
+    },
+    {
+      "bytes": 18725,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/checkpoint-binding-v01/attempt-authored-v01/exports/test-collection.json",
+      "sha256": "bfe2e3fa70fdd29c6ad53ca1419c0167cc3b99b1adbf5303d80254c57968f532"
+    },
+    {
+      "bytes": 4671,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/checkpoint-binding-v01/attempt-authored-v01/exports/tests.xml",
+      "sha256": "420161c0718e61cf14b2192346b81f290112952b5eb7f52a87c91e85b573f2a7"
+    },
+    {
+      "bytes": 13980,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/checkpoint-binding-v01/attempt-authored-v01/exports/import-origins.json",
+      "sha256": "747846cb84323fd4c74610df23e33adde9edb909898382abd0c7f5ffafe09712"
+    },
+    {
+      "bytes": 25663,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/checkpoint-binding-v01/request-retained-v01.json",
+      "sha256": "7ec38db2eef88f6cd07ea41aea53debf200020596781420ebb32a0d8db501936"
+    },
+    {
+      "bytes": 10979,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/checkpoint-binding-v01/manifest-retained-v01.json",
+      "sha256": "3417207602931167b058a56a0c96926d2b16d63b0b3fa6294eadc84c00e8bf07"
+    },
+    {
+      "bytes": 857,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/checkpoint-binding-v01/controller-complete-retained-v01.json",
+      "sha256": "8a54d192563c7982884507440bbe5dcf18a73a2a35d7cfaaa5ea21e85e2cd5b3"
+    },
+    {
+      "bytes": 7887,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/checkpoint-binding-v01/launch-retained-v01.json",
+      "sha256": "71fdd18fd7950f3b978257f0fff375bd32dd0f2b49cd66371204e5dc795bda8b"
+    },
+    {
+      "bytes": 1312,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/checkpoint-binding-v01/attempt-retained-v01/exports/test-result.json",
+      "sha256": "fbaa315b2eae962c8fb68733ae2e386f3dda1666ad647cd08a0e26e907d328ca"
+    },
+    {
+      "bytes": 3673,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/checkpoint-binding-v01/attempt-retained-v01/exports/test-collection.json",
+      "sha256": "b0151942a67aba6f62b9b0d4198b20116f26bfcda58d1b3daff3bbd8b5bf22a1"
+    },
+    {
+      "bytes": 1095,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/checkpoint-binding-v01/attempt-retained-v01/exports/tests.xml",
+      "sha256": "6e156b127a2d7a43acda3bf0b0025e16b85d7b2cc2c679fe6b1509a2fcef5689"
+    },
+    {
+      "bytes": 13980,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/checkpoint-binding-v01/attempt-retained-v01/exports/import-origins.json",
+      "sha256": "747846cb84323fd4c74610df23e33adde9edb909898382abd0c7f5ffafe09712"
+    }
+  ],
+  "schema": "legal-ir-normative-checkpoint-conditioning-qualification/v1",
+  "separate_populations_not_pooled": true,
+  "status": "separate_authored_and_original_retained_metadata_cohorts_passed",
+  "training_mask": 0,
+  "transport_limits": {
+    "original_contextual_parser_depth": 64,
+    "original_contextual_parser_value_nodes": 1000000,
+    "original_direct_code_source_pin_bytes": 4194304,
+    "original_file_reader_limits_unchanged": true,
+    "raw_DATA_aggregate_bytes": 67108864,
+    "raw_DATA_bytes_per_artifact": 33554432
+  }
+}

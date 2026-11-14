@@ -1,0 +1,732 @@
+{
+  "archive_delivery_rule": {
+    "bytes": 105,
+    "path": "docs/autoformalization/evidence/.gitignore",
+    "reason": "The repository-wide *.tar.gz ignore would otherwise omit the bounded migration archive from ordinary Git addition. This exact exception changes no workspace or dataset ignore rules.",
+    "sha256": "24337ebbeaa45edeef13980cfc1bcad2afeeb7833d9f5e5053b2e177ac1ed47f"
+  },
+  "files": [
+    {
+      "bytes": 19629,
+      "path": "docs/autoencoders/README.md",
+      "sha256": "340d8292136e67d2b39ee4236e2e5b3d568a28e7c3ad6f410e6680583052a059"
+    },
+    {
+      "bytes": 11418,
+      "path": "docs/autoencoders/api_map.md",
+      "sha256": "04c5521a8689489b22e97a26e0f4ceae8bd565933490973e9264316f401f4a93"
+    },
+    {
+      "bytes": 556,
+      "path": "docs/autoencoders/corpus_definition_review.md",
+      "sha256": "452d1924cf50fc063e8e087d072c5601c9b598e5cd9eb5e71dd823767ce20b05"
+    },
+    {
+      "bytes": 719,
+      "path": "docs/autoencoders/corpus_definition_review_v2.md",
+      "sha256": "c0fc5b7112e51ef3bb638118a69f950a8fa95616cb7efd8ea5987d9d7c5973da"
+    },
+    {
+      "bytes": 752,
+      "path": "docs/autoencoders/corpus_definition_use_review_v2.md",
+      "sha256": "35c8e637449af2044adc7bb32a91e9e7c3d7f312c77eda52134884cd00362575"
+    },
+    {
+      "bytes": 778,
+      "path": "docs/autoencoders/corpus_definition_use_v2.md",
+      "sha256": "80d089cf95f99c1741819ebbc5dcae181661cfb1ba104b0e6c2b97991f27f780"
+    },
+    {
+      "bytes": 486,
+      "path": "docs/autoencoders/corpus_parent_alignment_adapter.md",
+      "sha256": "5384f535ce096d588fea33de9d1837ad32abf6248aa6c8c4ed58c177959a2b13"
+    },
+    {
+      "bytes": 599,
+      "path": "docs/autoencoders/corpus_parent_occurrence_adapter.md",
+      "sha256": "0c0eaeab8806cc7c1360201052a72679b85d34e9a96c9db2e2a5cc88443c4d47"
+    },
+    {
+      "bytes": 610,
+      "path": "docs/autoencoders/corpus_source_review.md",
+      "sha256": "9544c24fbf86e27d2a3ed7892e45477f010dcaedc42f56811dd9dcea54fefbb4"
+    },
+    {
+      "bytes": 644,
+      "path": "docs/autoencoders/corpus_source_review_packets.md",
+      "sha256": "26328a618eabf3c652994441577112ff5dab6a4fffe5b7b09c44c531887393de"
+    },
+    {
+      "bytes": 644,
+      "path": "docs/autoencoders/definition_use_v2_integration.md",
+      "sha256": "97353b9087ff3e09242c203de5496b6e3c2db6f649f4924215afece6fa288cad"
+    },
+    {
+      "bytes": 111508,
+      "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub-cache-survey.json",
+      "sha256": "735c53c37be1a512618e7561ec8a2e8ec53b29c1a68dfe3688ef848ade64976a"
+    },
+    {
+      "bytes": 48373,
+      "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/pipeline-and-integration-survey.json",
+      "sha256": "a777bcba3c155d063ff860f5416c9fc75c6be3da8cba72c33da94fb084b388c6"
+    },
+    {
+      "bytes": 44262,
+      "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/reconstruction-and-assets-survey.json",
+      "sha256": "be53f4860478d6c5321edf0a7628cef6bc893c2b226fe3e0d559a40dfc0f22c1"
+    },
+    {
+      "bytes": 679,
+      "path": "docs/autoencoders/legal_bound_variable_definition_v1.md",
+      "sha256": "80d52d65f69486aa3608e156513f25478b33d8d7e4746d19c14e97118460210c"
+    },
+    {
+      "bytes": 622,
+      "path": "docs/autoencoders/legal_corpus_contracts.md",
+      "sha256": "ca598378868afbba4b0a3283db3a81031a341aeb7b4b9ac4769cc9d9f7e30d4d"
+    },
+    {
+      "bytes": 662,
+      "path": "docs/autoencoders/legal_corpus_definition_norm_adapter.md",
+      "sha256": "0d41eb498a08dd1d8e8e6313d6e64d7eb2137a88107eefeb71729f0167c8e5f6"
+    },
+    {
+      "bytes": 849,
+      "path": "docs/autoencoders/legal_corpus_definition_use_preservation_elaboration_v2.md",
+      "sha256": "5a58425992576d7a49b045730f0d033ad5a4b27cf018fb86852808e839a03880"
+    },
+    {
+      "bytes": 696,
+      "path": "docs/autoencoders/legal_corpus_definition_use_preservation_index_v2.md",
+      "sha256": "dae31135859245afeb2fed07a7c24cd8ca446f811a8c70bf63afe30be33d27e2"
+    },
+    {
+      "bytes": 731,
+      "path": "docs/autoencoders/legal_corpus_definition_use_preservation_kernel_claims_v2.md",
+      "sha256": "2458c53bc2e9f16c827c0e462bb7449eb2ffe977cc62986bd1b73d0e92abe496"
+    },
+    {
+      "bytes": 619,
+      "path": "docs/autoencoders/legal_corpus_definition_use_preservation_packet_v2.md",
+      "sha256": "0ac8437aeab6fd2ef63b6ba987ed690c2e9c6c1f4211704911f4e41f1a649e7a"
+    },
+    {
+      "bytes": 790,
+      "path": "docs/autoencoders/legal_corpus_definition_use_preservation_theorem_lineage_v2.md",
+      "sha256": "f0a76e512395fab54fa9850d26a0cef8bec3690a3d33a3b439f0916c76de2784"
+    },
+    {
+      "bytes": 821,
+      "path": "docs/autoencoders/legal_corpus_definition_use_preservation_v2.md",
+      "sha256": "4024a288d9a79c7b30b269e5b7b3e10f4a20b06f4ea63f7075b2c0176b748c0c"
+    },
+    {
+      "bytes": 568,
+      "path": "docs/autoencoders/legal_corpus_graph_exchange.md",
+      "sha256": "90e7c09a052245dabcd0f7f75d8749f2defdc176fa0a96fbf0288f73764c07c9"
+    },
+    {
+      "bytes": 596,
+      "path": "docs/autoencoders/legal_corpus_incremental.md",
+      "sha256": "ba0371a0e16baeed5fa3bc1ba6ca93f1e4838b5c1cfedea1b1efba24c9367b5d"
+    },
+    {
+      "bytes": 594,
+      "path": "docs/autoencoders/legal_corpus_lake.md",
+      "sha256": "4601c6c5c97f402f73bbb151a627bdfa95f4fc0723aaf57d634e07553a3a3465"
+    },
+    {
+      "bytes": 444,
+      "path": "docs/autoencoders/legal_corpus_legacy_source_join.md",
+      "sha256": "b033020f13422feeadd0dab2a53d1f87f59191032a0c404fbf66f651a2cd350c"
+    },
+    {
+      "bytes": 688,
+      "path": "docs/autoencoders/legal_corpus_norm_definition_adapter.md",
+      "sha256": "f154ad54f06c0ff7b2eab93b7e62fe801cd6c0f62452f0654856c5bf106961af"
+    },
+    {
+      "bytes": 679,
+      "path": "docs/autoencoders/legal_corpus_proposed_graph_adapter.md",
+      "sha256": "e24285d3906f402bf610b9d4fcf206ea1417f08778c5bc33bff732d4c1a04aa9"
+    },
+    {
+      "bytes": 582,
+      "path": "docs/autoencoders/legal_corpus_shared_lake.md",
+      "sha256": "6c918a8957d9785886326bfa7513caaccf0956d703a0f3d920cd881dd74ab6dd"
+    },
+    {
+      "bytes": 498,
+      "path": "docs/autoencoders/legal_corpus_span_adapter.md",
+      "sha256": "4a9ca1412771a8fe262f2397897b036fc3535af01dbe8dc27d9d1f59bb712780"
+    },
+    {
+      "bytes": 612,
+      "path": "docs/autoencoders/legal_definition_use_v2_integration_20261015.md",
+      "sha256": "6ff6acbb7377d39620d318d37f8788eab9897c0a2b0f17b147cff69ca7fe1a0a"
+    },
+    {
+      "bytes": 655,
+      "path": "docs/autoencoders/legal_definition_v2_integration_20261015.md",
+      "sha256": "8944464dd5936df3f0937d06ed9d7de0cb24c7ed9a73d4485c755fa697b7b6d1"
+    },
+    {
+      "bytes": 657,
+      "path": "docs/autoencoders/legal_definition_v2_review_integration_20261015.md",
+      "sha256": "0c674c0308b0ca477f18cba3acff4fc4a89727993d51bf526219bf6dec4c9773"
+    },
+    {
+      "bytes": 745,
+      "path": "docs/autoencoders/legal_ir_graph_citation_identity.md",
+      "sha256": "5acbfb50d29fde668079ffc85b3f80600569dfcc52efe766fa1a0200486a4bac"
+    },
+    {
+      "bytes": 137172,
+      "path": "docs/autoencoders/legal_ir_text_to_lean4_execution_plan_20261018.md",
+      "sha256": "77249182f5025099a9c6da6fb318ebe7735e7d5128e820ac12a843f75a69a3f3"
+    },
+    {
+      "bytes": 80012,
+      "path": "docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
+      "sha256": "9dbaa5e634b5815c431744293e17c6086ae1c82d15bfdca4679afa58db74e357"
+    },
+    {
+      "bytes": 157759,
+      "path": "docs/autoencoders/legal_ir_uscode_roadmap_20261018.md",
+      "sha256": "951836f4e1a86129b7771eba1a6d3c242f192bc3415878862e3499ea023732f9"
+    },
+    {
+      "bytes": 602,
+      "path": "docs/autoencoders/legal_norm_content_adjudication_v1.md",
+      "sha256": "18c79a3856cdead8a60501cdd2d440aac8ddd01ba46136468d81571beacc7381"
+    },
+    {
+      "bytes": 688,
+      "path": "docs/autoencoders/legal_norm_content_declaration_binding_v1.md",
+      "sha256": "dc4054d1f6a9e7e0899a38e0815ea131d74af7d72282065efa3e9f7dd4decdff"
+    },
+    {
+      "bytes": 566,
+      "path": "docs/autoencoders/legal_norm_content_declaration_v1.md",
+      "sha256": "78555568defe6f8e739dd0455797994cbd087ef502cd888b6b472ac45d966484"
+    },
+    {
+      "bytes": 575,
+      "path": "docs/autoencoders/legal_norm_content_responses_v1.md",
+      "sha256": "482c4fbd29cc6dfaf008fdf6545e87e5c380ae41ed589e9223bffd410657238e"
+    },
+    {
+      "bytes": 785,
+      "path": "docs/autoencoders/legal_norm_definition_applicability_v1.md",
+      "sha256": "99762c4dbc765ed1d5486e141e303d5d95fc23822c96ca9a6e13ff5d5a79f2dd"
+    },
+    {
+      "bytes": 654,
+      "path": "docs/autoencoders/legal_norm_definition_application_binding_v1.md",
+      "sha256": "5519ad381728390db190eff9f8806415d220d448ce69c91567f7bc4444dd5cf1"
+    },
+    {
+      "bytes": 579,
+      "path": "docs/autoencoders/legal_norm_definition_evidence_v1.md",
+      "sha256": "2e24e88b72cdd6a8a11f3e896751b0a1fcb342c575c326783d17e0f29cf9959d"
+    },
+    {
+      "bytes": 673,
+      "path": "docs/autoencoders/legal_norm_interpretation_review_v1.md",
+      "sha256": "7fe1c18104c17e619d58e58b3549170e93bf676c5ad062df5af07a1bda1ca948"
+    },
+    {
+      "bytes": 605,
+      "path": "docs/autoencoders/legal_norm_scope_correspondence_v1.md",
+      "sha256": "74eeb7448c2aed437dc0eac794b44904599d7c8162bd3fcb6872cc0acee30e2d"
+    },
+    {
+      "bytes": 466,
+      "path": "docs/autoencoders/legal_parent_complete_source_metadata.md",
+      "sha256": "485c79799b1a37f33b27ba1e1147d7a4534d97719dc4fc79c1ab4b827d2a0b0e"
+    },
+    {
+      "bytes": 705,
+      "path": "docs/autoencoders/legal_parent_source_identity_bindings_v1.md",
+      "sha256": "a63bd4cbe362940ddf2c4dc84d61eab31389c5f389ecc5a70911c73def516c90"
+    },
+    {
+      "bytes": 462,
+      "path": "docs/autoencoders/legal_parent_source_inventory_v1.md",
+      "sha256": "8772a907f9f08a5fc21906b8f073701e3c2155d516789617e1c0fbe7f0cd3a3f"
+    },
+    {
+      "bytes": 677,
+      "path": "docs/autoencoders/legal_parent_source_metadata_inventory_v1.md",
+      "sha256": "f58232c20269379cb0f46edde6226ac2dd188314b255fb4c2bb99b6b915281a7"
+    },
+    {
+      "bytes": 706,
+      "path": "docs/autoencoders/legal_source_correspondence_requests_v1.md",
+      "sha256": "29789ec72c906f3df1cf1dffe5825924591830aafae60cbd3673c8cfda002a0e"
+    },
+    {
+      "bytes": 647,
+      "path": "docs/autoencoders/legal_source_definition_v2.md",
+      "sha256": "050ec297bf8a6fcb1feefe913904753e0ce28c2b396f8a5f31c89d8705d06506"
+    },
+    {
+      "bytes": 450,
+      "path": "docs/autoencoders/legal_source_norm_scope_v1.md",
+      "sha256": "eaa66fcbdbe7366773f9dcec5d33fff5fa0779026d2f3f2b850df4cbd9a1f323"
+    },
+    {
+      "bytes": 864,
+      "path": "docs/autoencoders/legal_source_review_stack_integration_20261015.md",
+      "sha256": "bc88a410c37db20813b2ffa951d4fd3b237a00c89bc1b620f9bb4093a4a8bbfe"
+    },
+    {
+      "bytes": 438,
+      "path": "docs/autoencoders/legal_source_sampling.md",
+      "sha256": "d3daaa7342701ee26a82763d24dfce72e74a5a39f42cf5e5be54994f7a0e4e5a"
+    },
+    {
+      "bytes": 678,
+      "path": "docs/autoencoders/legal_source_sampling_definition_binding_v2.md",
+      "sha256": "5cd06d44f71aeb0a10540e2d366a1184a72a205f7fa44563698099e17ab6ff97"
+    },
+    {
+      "bytes": 778,
+      "path": "docs/autoencoders/legal_source_sampling_definition_lake_v2.md",
+      "sha256": "3179deb0b66256c60a6768b91c23f3891c485211723a1543186af92259e619e1"
+    },
+    {
+      "bytes": 593,
+      "path": "docs/autoencoders/legal_source_sampling_review.md",
+      "sha256": "0b993b73bbf9c5d3ad73affbbf23663330243ae2d3be1a95ac3ece3a8f4a3441"
+    },
+    {
+      "bytes": 568,
+      "path": "docs/autoencoders/legal_source_span_entity_census_v1.md",
+      "sha256": "5d3e8ff2000c9695f094394a731647f0e0069c0d7157289da214f4a53025057f"
+    },
+    {
+      "bytes": 595,
+      "path": "docs/autoencoders/legal_source_span_entity_join_v1.md",
+      "sha256": "33e7f8d57cbc1dac1debacaf9e0923764aa6728cffdf6473ba85019233151dc7"
+    },
+    {
+      "bytes": 606,
+      "path": "docs/autoencoders/legal_source_span_target_eligibility_v1.md",
+      "sha256": "b07b651a91124616c9b8e23a537ded09b153d82eb7e55b36a92c2c1b47883323"
+    },
+    {
+      "bytes": 464,
+      "path": "docs/autoencoders/legal_source_typed_norm_join_v1.md",
+      "sha256": "b9a351b6b32133ca28c798ebf18e16fa10b9e33879d15af30e25d9ee4656e7fa"
+    },
+    {
+      "bytes": 620,
+      "path": "docs/autoencoders/scoped_definition_resolution.md",
+      "sha256": "e24991ff7f8b56822560d29baaa771e5686b2c9e6c173bf1a2ba9afebb2bd698"
+    },
+    {
+      "bytes": 6745,
+      "path": "docs/autoformalization/CURRENT_STATE.md",
+      "sha256": "a78661bcd8d5d2b40c4835c0deff44044a5ccef871d6ca6505d7a60d69952578"
+    },
+    {
+      "bytes": 11770,
+      "path": "docs/autoformalization/MIGRATION.md",
+      "sha256": "5b9302330dea0f71755cc9a42b7c8c852ea8f3caedd5440ab48038a84d291eee"
+    },
+    {
+      "bytes": 4608,
+      "path": "docs/autoformalization/README.md",
+      "sha256": "3cbd8660fe909e76ed84011d7b895b093e85e9ec2fcdb910f49faa519be25858"
+    },
+    {
+      "bytes": 6691,
+      "path": "docs/autoformalization/corpus_definition_review.md",
+      "sha256": "322f1be6ee07d4cadf5149ef50767538fa07e630b8b45a8bdb55c7a3ce672c3b"
+    },
+    {
+      "bytes": 16306,
+      "path": "docs/autoformalization/corpus_definition_review_v2.md",
+      "sha256": "80cc63a9a30fb0b10a85b39e61877ac1c97899ad8a69dd77607a356cf0b4b583"
+    },
+    {
+      "bytes": 14317,
+      "path": "docs/autoformalization/corpus_definition_use_review_v2.md",
+      "sha256": "ca98c19e78b9f24724dae3634fd039570083e8a5ca8140b67988d740629db83c"
+    },
+    {
+      "bytes": 13474,
+      "path": "docs/autoformalization/corpus_definition_use_v2.md",
+      "sha256": "30261a4e5a8fae1429353f0ef8aec7cdd7e67b5e4b2ee81efafe7de152b9a21d"
+    },
+    {
+      "bytes": 7970,
+      "path": "docs/autoformalization/corpus_parent_alignment_adapter.md",
+      "sha256": "1cea5bc0f91a0ebe86c2a315161f11870539e3bc9d31a072ce29fa875fd946df"
+    },
+    {
+      "bytes": 7457,
+      "path": "docs/autoformalization/corpus_parent_occurrence_adapter.md",
+      "sha256": "4b5e2b766bf17bb2894a17e323c3d3f8d2b3583e6c123f57a05bd8350a80049c"
+    },
+    {
+      "bytes": 7363,
+      "path": "docs/autoformalization/corpus_source_review.md",
+      "sha256": "67538cf91c4cf4211d2fdacebb211e78aa0795b9535aaa6fd2baf8ce6443cda1"
+    },
+    {
+      "bytes": 8443,
+      "path": "docs/autoformalization/corpus_source_review_packets.md",
+      "sha256": "3265768bf94e54aca0102ff608efdeaf73ca0e41d6b0ad9c0b0cdfdd3a4fa341"
+    },
+    {
+      "bytes": 12533,
+      "path": "docs/autoformalization/definition_use_v2_integration.md",
+      "sha256": "839478138e904822411ea5c9707a34820ac0232b551c0ccc9af8000b9b163d20"
+    },
+    {
+      "bytes": 3210,
+      "path": "docs/autoformalization/evidence/consolidation-20261019.json",
+      "sha256": "523e874347f438814902999984bccc7a93cc1a1159d1c1d60056cf1d9f771869"
+    },
+    {
+      "bytes": 619777,
+      "path": "docs/autoformalization/evidence/consolidation-20261019.tar.gz",
+      "sha256": "0b6dbc18b5cd7ff5015dc14a39a14f215d5496ac634ee3ca082676277f366e89"
+    },
+    {
+      "bytes": 5914,
+      "path": "docs/autoformalization/evidence/full-norm-qualification-20261019.json",
+      "sha256": "dce57162bdcd5694c50c9ae2de204b9c9dcecde15e11766cb03ecadfef9eb60e"
+    },
+    {
+      "bytes": 1480163,
+      "path": "docs/autoformalization/evidence/work_inventory.json",
+      "sha256": "5b65d4504e0e6903fb7537eb5edd67b0bb800b53c1e87c86c2251d1cf8a222e5"
+    },
+    {
+      "bytes": 6801,
+      "path": "docs/autoformalization/history/legal-conditions-composition-20261015.md",
+      "sha256": "d44c672abe2b13df669f9c10c6ce397cd37a72d1a17f1c60b662c1326a7c8313"
+    },
+    {
+      "bytes": 9707,
+      "path": "docs/autoformalization/history/legal-modality-conditions-retention-20261015.md",
+      "sha256": "e6e46ae9100e101d1391b44303b193ee24f48e42a61f8b65268a29f4660257cc"
+    },
+    {
+      "bytes": 7225,
+      "path": "docs/autoformalization/history/legal_definition_use_v2_integration_20261015.md",
+      "sha256": "d3ab1bcaef059e19419aa7e64c4271b919507ad73ff87419c75e16e63177e147"
+    },
+    {
+      "bytes": 8544,
+      "path": "docs/autoformalization/history/legal_definition_v2_integration_20261015.md",
+      "sha256": "cb8eef193024dbdc9c22dcb3006d84aeb3b35cdd239a7cebf4c313a25230e64c"
+    },
+    {
+      "bytes": 8329,
+      "path": "docs/autoformalization/history/legal_definition_v2_review_integration_20261015.md",
+      "sha256": "66ea9f7db162f8fc8ccfeb79559b44c9571cdbf42a5de26d961380f1a5e057bb"
+    },
+    {
+      "bytes": 7960,
+      "path": "docs/autoformalization/history/legal_ir_graph_citation_identity.md",
+      "sha256": "d502ed3eca16294ded59011654d312c32e8af9bdf83094b0db9147ea3f0930d8"
+    },
+    {
+      "bytes": 12965,
+      "path": "docs/autoformalization/history/legal_source_review_stack_integration_20261015.md",
+      "sha256": "9fce0fba64af9319222589a24af86855dd72c1d97a1af8c419b2c1b1e203b927"
+    },
+    {
+      "bytes": 490,
+      "path": "docs/autoformalization/legal-conditions-composition-20261015.md",
+      "sha256": "db38263bd57b1ca7d7eef7cf8900cccca9b22b5f3a15a5d0fafa999dac8480b7"
+    },
+    {
+      "bytes": 560,
+      "path": "docs/autoformalization/legal-modality-conditions-retention-20261015.md",
+      "sha256": "5a092b013c994330ab4bb4970fe4a09296ace55307d2dcc8887c9e4a2997bd84"
+    },
+    {
+      "bytes": 10184,
+      "path": "docs/autoformalization/legal_bound_variable_definition_v1.md",
+      "sha256": "1ec822e03efd1bb6234019a6f758db1d141f46c81162613bb1243cbbb608e019"
+    },
+    {
+      "bytes": 9012,
+      "path": "docs/autoformalization/legal_corpus_contracts.md",
+      "sha256": "57f81cb9665a44fee16fc63f50c5a46a116efe60251d2b036ac94a2c5151e45c"
+    },
+    {
+      "bytes": 8329,
+      "path": "docs/autoformalization/legal_corpus_definition_norm_adapter.md",
+      "sha256": "4d8c1a892e99b430dd27d2a0590ae7a02dac19e11e20aecc8c06b19ab5603d7a"
+    },
+    {
+      "bytes": 14081,
+      "path": "docs/autoformalization/legal_corpus_definition_use_preservation_elaboration_v2.md",
+      "sha256": "5232dfad1da5b41c5e6851694373148225041af2d917af977bcb02e37ba7a5ca"
+    },
+    {
+      "bytes": 8087,
+      "path": "docs/autoformalization/legal_corpus_definition_use_preservation_index_v2.md",
+      "sha256": "beb1333749ed303cd0bd98e73b358837a5d62b43d0a6837d1a5ed61c43a23454"
+    },
+    {
+      "bytes": 10928,
+      "path": "docs/autoformalization/legal_corpus_definition_use_preservation_kernel_claims_v2.md",
+      "sha256": "52a0548c67821f1074cc75b0202cd11f71c68893e242a51df9dc4ce380700597"
+    },
+    {
+      "bytes": 7625,
+      "path": "docs/autoformalization/legal_corpus_definition_use_preservation_packet_v2.md",
+      "sha256": "b2fa87ba03d4b0964487b0e5c86637d3e79dd383db1886fe513e87112a0ea582"
+    },
+    {
+      "bytes": 9023,
+      "path": "docs/autoformalization/legal_corpus_definition_use_preservation_theorem_lineage_v2.md",
+      "sha256": "4bd376edd34eb02488bd68da976ea7b8c10c3a00b35ef7c4095433372ec8d6cc"
+    },
+    {
+      "bytes": 20636,
+      "path": "docs/autoformalization/legal_corpus_definition_use_preservation_v2.md",
+      "sha256": "2621951071bbf4b5be3277862ea75f7e5c0e73a501cf580994154f4eaf0ead5a"
+    },
+    {
+      "bytes": 6743,
+      "path": "docs/autoformalization/legal_corpus_graph_exchange.md",
+      "sha256": "e0ea63497e5d8f6fd6ca62390b6ae86953beb6b58ec6a766cd42626adf966d10"
+    },
+    {
+      "bytes": 5240,
+      "path": "docs/autoformalization/legal_corpus_incremental.md",
+      "sha256": "7d441d26ae131224274358b3ce5d762f5e51b43384e03aed5f113b08228b23c4"
+    },
+    {
+      "bytes": 6388,
+      "path": "docs/autoformalization/legal_corpus_lake.md",
+      "sha256": "fdf9c16deb0a4efd5822d7b69b6d0ac7a8c385a185bad986f31a4d2bde5febe6"
+    },
+    {
+      "bytes": 4208,
+      "path": "docs/autoformalization/legal_corpus_legacy_source_join.md",
+      "sha256": "1955ad768df2d0e9eb76e86726924e09d0c4a51372e4f696186823b2df0d4ffb"
+    },
+    {
+      "bytes": 8837,
+      "path": "docs/autoformalization/legal_corpus_norm_definition_adapter.md",
+      "sha256": "ffba937d03ddc80fb95d448dcfc7501844a6c6a494f8853042632c6e93ededfb"
+    },
+    {
+      "bytes": 11666,
+      "path": "docs/autoformalization/legal_corpus_proposed_graph_adapter.md",
+      "sha256": "24d65fda5790ad3cf1816c579eb984135e85cd4b57c2df2eb43af23c41108940"
+    },
+    {
+      "bytes": 5567,
+      "path": "docs/autoformalization/legal_corpus_shared_lake.md",
+      "sha256": "3749b672d516358c6b0f81d260f6e63dee9583c8251f618de9e591b1d66a140f"
+    },
+    {
+      "bytes": 5921,
+      "path": "docs/autoformalization/legal_corpus_span_adapter.md",
+      "sha256": "e16269dca6f2001b1815f798bf582f5812fd745c2a82d0cf5e4daea3a9d6bd93"
+    },
+    {
+      "bytes": 2925,
+      "path": "docs/autoformalization/legal_full_norm_consequences_v1.md",
+      "sha256": "7759fdbfe7ae411caea43ea18c9de4a39ecbd6a51e55808224795af65431f159"
+    },
+    {
+      "bytes": 6658,
+      "path": "docs/autoformalization/legal_norm_content_adjudication_v1.md",
+      "sha256": "6b5a0ab1a903be301d32b6dfc3c712fb22358dd09508f467a224fd1f770addc3"
+    },
+    {
+      "bytes": 8246,
+      "path": "docs/autoformalization/legal_norm_content_declaration_binding_v1.md",
+      "sha256": "15aff1a1160efc63eb9721d836913cca7230ef6ffcbbb05fb66e8c99dc06e1ce"
+    },
+    {
+      "bytes": 6307,
+      "path": "docs/autoformalization/legal_norm_content_declaration_v1.md",
+      "sha256": "09e1d4a0b14831ffaf54b10f9b32a7d8147087bd06d2d2552179d627a7de3cde"
+    },
+    {
+      "bytes": 7461,
+      "path": "docs/autoformalization/legal_norm_content_responses_v1.md",
+      "sha256": "cdb7ce4d0f0c13aebbd6150f9fe7cbbb787b71b98f5d6b83910e145315449779"
+    },
+    {
+      "bytes": 8896,
+      "path": "docs/autoformalization/legal_norm_definition_applicability_v1.md",
+      "sha256": "7d55fc91245ddc3cab0611bd1f9e3f7c5f067b9705c1b541c05172e817c2cbee"
+    },
+    {
+      "bytes": 5329,
+      "path": "docs/autoformalization/legal_norm_definition_application_binding_v1.md",
+      "sha256": "ad200f9b583c01771b16725712f5fb55c84f6fe90e461b293eed86f67d58130f"
+    },
+    {
+      "bytes": 6897,
+      "path": "docs/autoformalization/legal_norm_definition_evidence_v1.md",
+      "sha256": "7758d2fadb9ecacc2ef3ca62044397b07fe6555f23c88bbaab48dc28935c2622"
+    },
+    {
+      "bytes": 11916,
+      "path": "docs/autoformalization/legal_norm_interpretation_review_v1.md",
+      "sha256": "391387874bcd976e28ea50ea124210b35da077817497aa7ba03d741c5553ea31"
+    },
+    {
+      "bytes": 6769,
+      "path": "docs/autoformalization/legal_norm_scope_correspondence_v1.md",
+      "sha256": "ef648993d10b471a7f9037b15961501b7201fb77b3b8780449329538c707d505"
+    },
+    {
+      "bytes": 7809,
+      "path": "docs/autoformalization/legal_parent_complete_source_metadata.md",
+      "sha256": "d16846589e303fe0253f46bcfb192528eaf54bd30d4116ba1996f6f2f461f943"
+    },
+    {
+      "bytes": 10068,
+      "path": "docs/autoformalization/legal_parent_source_identity_bindings_v1.md",
+      "sha256": "963dfcf353d9573a35ca226a3bf3d93d3603447bc190a14373de182379b81b1b"
+    },
+    {
+      "bytes": 6355,
+      "path": "docs/autoformalization/legal_parent_source_inventory_v1.md",
+      "sha256": "a7d19b03f39dab6840cd688144fc33ade3a925553014971409a0a7b89a0b59b0"
+    },
+    {
+      "bytes": 10236,
+      "path": "docs/autoformalization/legal_parent_source_metadata_inventory_v1.md",
+      "sha256": "ac79fb9c140e7672509dbde364a5825549b13af6de4b388bb45677b0308a8fa3"
+    },
+    {
+      "bytes": 10253,
+      "path": "docs/autoformalization/legal_source_correspondence_requests_v1.md",
+      "sha256": "8b76a0a03c6c2623287164f127dae70930852e5f4969da2fc4f777c6f1f85db5"
+    },
+    {
+      "bytes": 13565,
+      "path": "docs/autoformalization/legal_source_definition_v2.md",
+      "sha256": "7702eb648da6fb17376f535b7f89b18d11c593fe3a3e124778f2046a8bf5b8d4"
+    },
+    {
+      "bytes": 4862,
+      "path": "docs/autoformalization/legal_source_norm_scope_v1.md",
+      "sha256": "2c93153b4dfb7e238a7d76eccc69ffa3185a05ecbeeea67d7cd523cb3c63e6ef"
+    },
+    {
+      "bytes": 4888,
+      "path": "docs/autoformalization/legal_source_sampling.md",
+      "sha256": "290a6320bd0522109df593af4fd4a6e0a52b80c375a6cde1511c27c6c5ae0f62"
+    },
+    {
+      "bytes": 8002,
+      "path": "docs/autoformalization/legal_source_sampling_definition_binding_v2.md",
+      "sha256": "76276cae6554fec55d71b6f1de313c5461a8d862b1c15f0fc0d341b88b362f95"
+    },
+    {
+      "bytes": 13401,
+      "path": "docs/autoformalization/legal_source_sampling_definition_lake_v2.md",
+      "sha256": "e50b9f03a5076cade0353a85c9e5a597da0e8584d5e0b72e26407611ea2fb53d"
+    },
+    {
+      "bytes": 8493,
+      "path": "docs/autoformalization/legal_source_sampling_review.md",
+      "sha256": "a81fffe5f307c25480ab59e8a6ad5ce7ba5b08a342d731ed8ff87c938761f69c"
+    },
+    {
+      "bytes": 7542,
+      "path": "docs/autoformalization/legal_source_span_entity_census_v1.md",
+      "sha256": "fccd2c90d00d6542527386d961085e719e8fef14415d308737b329b48587c02e"
+    },
+    {
+      "bytes": 6374,
+      "path": "docs/autoformalization/legal_source_span_entity_join_v1.md",
+      "sha256": "7d0882477e318dd2337d0cc6098d93252e28f818cd317040eb3b644ccb98af0b"
+    },
+    {
+      "bytes": 4577,
+      "path": "docs/autoformalization/legal_source_span_target_eligibility_v1.md",
+      "sha256": "aaad0d49937395ebd4bc9e712b7fac12cd932376b8d62e2f67a057dc0624f5c2"
+    },
+    {
+      "bytes": 5332,
+      "path": "docs/autoformalization/legal_source_typed_norm_join_v1.md",
+      "sha256": "55a5a73982c833ffd85f9b61b919b4a204672e17b479c716515c8497861e97c1"
+    },
+    {
+      "bytes": 9278,
+      "path": "docs/autoformalization/scoped_definition_resolution.md",
+      "sha256": "ef3c0ead9b3948f0fed0b2df9d679ee7c0596895da9e53384fc39010924bb61a"
+    },
+    {
+      "bytes": 3547,
+      "path": "ipfs_datasets_py/logic/autoformal/README.md",
+      "sha256": "272cf6d0d13b60e35359bc955da73790cf53c58e8efeb7503c427fd578b6bad4"
+    },
+    {
+      "bytes": 13184,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_full_norm_consequences_v1.py",
+      "sha256": "22d89447536ccbf1350cf039888531a07a0144c04e0d2bea821ffb392503fe81"
+    },
+    {
+      "bytes": 3503,
+      "path": "tests/unit/logic/autoformal/fixtures/legal_full_norm_consequences_v1/LegalFullNorms.lean",
+      "sha256": "30e70c9ea780e0bc5f2e3a17be9ad21447dbaf42e102e47e74c5fb99a9c755ba"
+    },
+    {
+      "bytes": 1727,
+      "path": "tests/unit/logic/autoformal/fixtures/legal_full_norm_consequences_v1/provenance.json",
+      "sha256": "d07214133e8ffb7bc67f28c6a702f8d49c89acdc896199bc1eca4fc282b5f8ed"
+    },
+    {
+      "bytes": 7665,
+      "path": "tests/unit/logic/autoformal/test_legal_full_norm_consequences_v1.py",
+      "sha256": "58c79293049e43cea70464e59a3d268ce8f83f578bd2621f8a09b771c1118b60"
+    }
+  ],
+  "git_commit_created": false,
+  "manifest_sha256": "22a9d2cece9b9b46c9c691225af03a3d5e0624778fbe084e4a092e7a97184b70",
+  "navigation_pointers": [
+    {
+      "bytes": 575,
+      "path": "workspace/README.md",
+      "root": "datasets_repository",
+      "sha256": "70d77675edd5a1fd9d862b5a7161244d9716ecb7f33eb5829f875c67abc74115"
+    },
+    {
+      "bytes": 670,
+      "path": "artifacts/README.md",
+      "root": "workspace_parent",
+      "sha256": "7290842c89434fddeb3304b8dce07efa5b2df56c6ab8b294d9e9b646fc9611fb"
+    }
+  ],
+  "navigation_source_lease": {
+    "canonical_root": "/home/barberb/lift_coding/external/ipfs_datasets",
+    "cooperative": true,
+    "lock_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/control-plane/source-leases/source.lock",
+    "mode": "write",
+    "schema_version": "autoencoder-source-lease/v1",
+    "waited_seconds": 3.6000972613692284e-05
+  },
+  "original_evidence_removed": false,
+  "pushed": false,
+  "schema": "legal-ir-consolidation-installation-receipt/v1",
+  "source_lease": {
+    "canonical_root": "/home/barberb/lift_coding/external/ipfs_datasets",
+    "cooperative": true,
+    "lock_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/control-plane/source-leases/source.lock",
+    "mode": "write",
+    "schema_version": "autoencoder-source-lease/v1",
+    "waited_seconds": 3.6528101190924644e-05
+  },
+  "source_lease_released": true,
+  "status": "installed"
+}

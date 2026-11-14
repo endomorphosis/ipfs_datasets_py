@@ -176,6 +176,386 @@
     "tests/integration/logic/backends/test_kernel_backends.py",
     ".github/workflows/legal-v2-reasoner-ci.yml"
   ],
+  "lexical_boundary_repair_20261110": {
+    "actual_evidence": {
+      "admin_partial_report": {
+        "bytes": 9929,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/failed-admission-own-claim-recovery-DRAFT-v02/P1-own-df35-NativeRED7-admin-sampled-reconcile-actual-v01.json",
+        "sha256": "19103287d5ca5bbfb7077dcd9f4bccd16e1cf60fc7d11434389915e0e6a5fa7b"
+      },
+      "admin_returned_reconciliation": {
+        "bytes": 4516,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/failed-admission-own-claim-recovery-DRAFT-v02/P1-own-df35-NativeRED7-admin-returned-reconciliation-v01.json",
+        "sha256": "33947affd532c88ef789b61c15007e90cc0219a9bce23eacefa81f46e84c79ee"
+      },
+      "admin_same_deadline_observation": {
+        "bytes": 635,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/failed-admission-own-claim-recovery-DRAFT-v02/P1-own-df35-independent-postwrite-same-original-deadline-v01.json",
+        "sha256": "abc470d023652dfa9ed23472609dbc34cdfa908de5f2a1a7a827ca6d95cee56b"
+      },
+      "native_green_observation": {
+        "bytes": 196983,
+        "path": "/tmp/pytest-of-barberb/legal-ir-P1-literal-boundary-native-GREEN7-20261110-v01/attempt-v01/exports/native-control-observation.json",
+        "sha256": "d1f8a45c1722b3bff24738bdefed27d12a7deca2f959cef84066cd43681095d3"
+      },
+      "native_green_parent": {
+        "bytes": 14507,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-native-proof-cache-roundtrip-20261109-v01/ordinary-P1-literal-boundary-native-GREEN7-v01/parent-closeout.json",
+        "sha256": "0954c89b19c94b3e7eea3b73751d77c4d14d60e2c827869cb48c6ddad2c3a636"
+      },
+      "native_green_progress": {
+        "bytes": 156088,
+        "path": "/tmp/pytest-of-barberb/legal-ir-P1-literal-boundary-native-GREEN7-20261110-v01/attempt-v01/exports/native-kernel-progress.json",
+        "sha256": "de3195cd17431b379f7c0492234f7797fcbf9f1d4a79f3d273780cb600d92266"
+      },
+      "native_green_readback": {
+        "bytes": 113472,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/failed-admission-own-claim-recovery-DRAFT-v02/P1-lean-literal-boundary-native-GREEN7-independent-readback-v01.json",
+        "sha256": "f4195c8e7ae36d874541e44ae99b1b67037de33c97de89d5a26b48afa28d7910"
+      },
+      "native_green_replay": {
+        "bytes": 156088,
+        "path": "/tmp/pytest-of-barberb/legal-ir-P1-literal-boundary-native-GREEN7-20261110-v01/attempt-v01/exports/native-kernel-progress.json",
+        "sha256": "de3195cd17431b379f7c0492234f7797fcbf9f1d4a79f3d273780cb600d92266"
+      },
+      "native_green_request": {
+        "bytes": 41335,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-native-proof-cache-roundtrip-20261109-v01/ordinary-P1-literal-boundary-native-GREEN7-v01/request.json",
+        "sha256": "13d75eed570b80388f805211e3d7dd46ed10e7ed6921e5a55fdc417034724393"
+      },
+      "native_red_parent": {
+        "bytes": 19599,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-native-proof-cache-roundtrip-20261109-v01/ordinary-P1-quoted-identifier-native-RED7-v01/parent-closeout.json",
+        "sha256": "31c807837a0ac04121dbfce082b4c92743ac58dac537527003b42a96e3a5559d"
+      },
+      "native_red_progress": {
+        "bytes": 161216,
+        "path": "/tmp/pytest-of-barberb/legal-ir-P1-quoted-identifier-native-RED7-20261110-v01/attempt-v01/exports/native-kernel-progress.json",
+        "sha256": "01f8d367136420199d3d37942ab85df180b00e90aa75afe255170da829a5302e"
+      },
+      "native_red_readback": {
+        "bytes": 114646,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/failed-admission-own-claim-recovery-DRAFT-v02/P1-quoted-identifier-native7-independent-readback-v01.json",
+        "sha256": "f0c263bb89c9e41df2f3bb72791f75f84c2166cabf5e22701e638ada1e623053"
+      },
+      "native_red_request": {
+        "bytes": 40725,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-native-proof-cache-roundtrip-20261109-v01/ordinary-P1-quoted-identifier-native-RED7-v01/request.json",
+        "sha256": "e85130b90cddc5187787f7c02345ab764519bbb3852b777aa59012ea24d7b79f"
+      },
+      "source1_CAS": {
+        "bytes": 3172,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/failed-admission-own-claim-recovery-DRAFT-v02/P1-lean-quoted-identifier-tests-Source-CAS-closeout-v01.json",
+        "sha256": "7e2e1fc42139e0609dc6581150654821dba70841a6a6679cebfc4a4d652ee794"
+      },
+      "source1_readback": {
+        "bytes": 4273,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/failed-admission-own-claim-recovery-DRAFT-v02/P1-lean-quoted-identifier-tests-independent-Source-readback-v01.json",
+        "sha256": "ed8b2b899b9b50126b1790622b18c9c9eb17eedf804e85f47022b1c41fd52a67"
+      },
+      "source2_CAS": {
+        "bytes": 11960,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/failed-admission-own-claim-recovery-DRAFT-v02/P1-lean-literal-boundary-Source2-CAS-closeout-v01.json",
+        "sha256": "11d99a328c1dc0ffca56d773b5b5a2de1e48ec3501f7ff16967989c7a7612530"
+      },
+      "source2_readback": {
+        "bytes": 1972,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/failed-admission-own-claim-recovery-DRAFT-v02/P1-lean-literal-boundary-Source2-independent-readback-v01.json",
+        "sha256": "73bd2d0e30157db062e271bce1b4320561699fcc8d70d9c676158647d352c0f0"
+      },
+      "unit_green_JUnit": {
+        "bytes": 39935,
+        "path": "/tmp/pytest-of-barberb/legal-ir-P1-literal-boundary-unit-GREEN205-6MiB-20261110-v02/attempt-v01/exports/junit.xml",
+        "sha256": "51a6246f640f7fe5cc865b8abbbb406605e8710fb35ccb7a70dee4d0685e4853"
+      },
+      "unit_green_parent": {
+        "bytes": 13723,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-native-proof-cache-roundtrip-20261109-v01/ordinary-P1-literal-boundary-unit-GREEN205-6MiB-v02/parent-closeout.json",
+        "sha256": "f53a1387dd37b429d67d285e0e1ff4d14116404760ea2a775df4dce2473a3c10"
+      },
+      "unit_green_readback": {
+        "bytes": 3758,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/failed-admission-own-claim-recovery-DRAFT-v02/P1-lean-literal-boundary-unit205-6MiB-independent-readback-v02.json",
+        "sha256": "85e3c101d6b982f1619d1a7beeae8e9df7c6dc83e742c3a2852fe5e293a8203d"
+      },
+      "unit_green_request": {
+        "bytes": 51438,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-native-proof-cache-roundtrip-20261109-v01/ordinary-P1-literal-boundary-unit-GREEN205-6MiB-v02/request.json",
+        "sha256": "43f5f2051d4083755bc60abb01c378a8802a818065a3eb2af9b588f4990dc948"
+      },
+      "unit_green_source_observation": {
+        "bytes": 34934,
+        "path": "/tmp/pytest-of-barberb/legal-ir-P1-literal-boundary-unit-GREEN205-6MiB-20261110-v02/attempt-v01/exports/source-observation.json",
+        "sha256": "66b85fffeab1badb425083cf42a4b996e58fb8108dea7e65a2747837fbc3cb4c"
+      },
+      "unit_red_v01_readback": {
+        "bytes": 3209,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/failed-admission-own-claim-recovery-DRAFT-v02/P1-quoted-identifier-unit-RED2-v01-independent-setup-failure-readback-v01.json",
+        "sha256": "ad8b45da32e7a70de5900207bf289d129bdc811ad553955b5e4fcc89b48fda23"
+      },
+      "unit_red_v02_readback": {
+        "bytes": 3865,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/failed-admission-own-claim-recovery-DRAFT-v02/P1-quoted-identifier-unit-RED2-v02-independent-policy-failure-readback-v01.json",
+        "sha256": "c971d2556228d87bfcf04989ad135cad6e2726a388cf73d3443b742066cec4f4"
+      }
+    },
+    "actual_summary": {
+      "failed_admin_postwrite_observations_not_promoted_to_completed_recovery": true,
+      "historical_receipt_id": "lean-kernel-receipt:1b427c8057b5a6178e488c1efb5a92d98173050fdfdcef463eb2d620746c42dc",
+      "native_compiles": 5,
+      "native_parent_seconds": 217.51362335821614,
+      "native_processes": 8,
+      "native_scenarios": 7,
+      "native_source_pins": 215,
+      "native_storage": {
+        "artifacts_durable_asserted": true,
+        "final_attempt_bytes": 357552,
+        "native_lease": {
+          "acquired_at": 1794349956.1443686,
+          "cancelled": true,
+          "child_process_slots": 2,
+          "cpu_slots": 1,
+          "gpu_memory_mb": 0,
+          "lane": "validation",
+          "lease_id": "091641215a324bde9b4a9405d514fad8",
+          "memory_mb": 1536,
+          "owner_pid": 1836525,
+          "parent_lease_id": null,
+          "released": true,
+          "requires_gpu": false,
+          "unified_memory_mb": 0,
+          "wait_seconds": 0.001765361987054348
+        },
+        "reservation_id": "af9abc7eb19d4e7997ecc87e7d5ea734",
+        "status": "released",
+        "storage_bytes": 16777216,
+        "storage_release_authorized_by_parent": false
+      },
+      "native_version_probes": 3,
+      "quoted_native_processes": 0,
+      "quoted_status": "malformed",
+      "selected_storage_profiles_bytes": {
+        "native_green": 16777216,
+        "unit_green": 6291456
+      },
+      "unit_functions": 61,
+      "unit_parent_seconds": 139.14849038701504,
+      "unit_seconds": 2.706,
+      "unit_source_pins": 215,
+      "unit_storage": {
+        "artifacts_durable_asserted": true,
+        "final_attempt_bytes": 136319,
+        "native_lease": {
+          "acquired_at": 1794349766.507621,
+          "cancelled": true,
+          "child_process_slots": 2,
+          "cpu_slots": 1,
+          "gpu_memory_mb": 0,
+          "lane": "validation",
+          "lease_id": "fa87e68509c8416bad0ee287ca05d832",
+          "memory_mb": 1536,
+          "owner_pid": 1802069,
+          "parent_lease_id": null,
+          "released": true,
+          "requires_gpu": false,
+          "unified_memory_mb": 0,
+          "wait_seconds": 0.0017359298653900623
+        },
+        "reservation_id": "6ef78894c3f14a59ba97385f7308ede3",
+        "status": "released",
+        "storage_bytes": 6291456,
+        "storage_release_authorized_by_parent": false
+      },
+      "unit_tests": 205
+    },
+    "administrative_API_return_preserved_but_postwrite_census_and_completed_recovery_unqualified": true,
+    "caller_trust": "Original Root genuine Tool/wait and actual native outcome readbacks are trusted historical DATA; this document adapter does not recreate them.",
+    "failed_claims_preserved": true,
+    "failure_interpretation": "The old backend accepted textual expected False after source notation changed that token to True. This is a source-policy/proposition-binding defect, not standard False proved or Lean kernel inconsistency.",
+    "historical_243_ordinary_and_11_native_top_level_record_unchanged": true,
+    "historical_bad_receipt_refused_by_existing_validator": true,
+    "independent_selected_profiles": {
+      "native_storage_bytes": 16777216,
+      "original_16MiB_packets_unchanged": true,
+      "unit_storage_bytes": 6291456
+    },
+    "limits": {
+      "hosted_CI_qualified": false,
+      "model_fit_or_inference_or_gain": false,
+      "resource_or_retry_budget_changed": false,
+      "scientific_task_activation": false,
+      "standalone_native_wrapper_qualified": false,
+      "statutory_correspondence_or_corpus_admission": false,
+      "whole_parser_or_compiler_correctness": false
+    },
+    "preserved_evidence": {
+      "archive": {
+        "bytes": 1926899,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-native-proof-cache-roundtrip-20261109-v01/ordinary-P1-quoted-identifier-native-RED7-v01/P1-proof-evidence-and-control-preservation-DATA-v03.tar.gz",
+        "sha256": "cab2ef6c12c709f4a6be70a7bd7a1eac781d2fc3032224cec66db866872a4379"
+      },
+      "deduplicated_blobs": 191,
+      "locator": {
+        "bytes": 226805,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-native-proof-cache-roundtrip-20261109-v01/ordinary-P1-quoted-identifier-native-RED7-v01/P1-proof-evidence-and-control-preservation-locator-v03.json",
+        "sha256": "06736e4a6134c1b18a1540d88a7dce1c5450e32cddb8d3292d5c635d66d025c0"
+      },
+      "original_parent_bound_bytes": 4194304,
+      "parent_bytes_with_reserve": 3521258,
+      "publication": {
+        "bytes": 2654,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/failed-admission-own-claim-recovery-DRAFT-v02/P1-own-evidence-preservation-publication-receipt-v04.json",
+        "sha256": "d07f1a8ec73a70d518e6146bc0137990947d1b7945511cc448d4fd716342e6a1"
+      },
+      "selected_paths": 211
+    },
+    "qualified_scopes_separate_not_pooled": true,
+    "recorded_at_utc": "2026-11-10T22:39:56.047748+00:00",
+    "schema": "P1-lean-literal-boundary-source-repair-qualified/v1",
+    "source2_repair": "Existing opaque-token masker follows installed Lean 4.34.1 quoted identifiers, character/raw/ordinary strings and numeric/identifier boundaries while preserving offsets and line feeds.",
+    "source_generation": {
+      "all_prior_tests_preserved": true,
+      "mask_only_owner_AST_change": true,
+      "new_boundary_cases": 41,
+      "owner_sha256": "7987a3effc2009fbf5961b43ce36c7114c5ca4088d069c2e63531189e958435b",
+      "proof_cache_sha256": "b4f15711f2c9b41866bdff89f26e4e70d98baccf303d918a6d5604167bc64f09",
+      "test_sha256": "4b185af9ef8de7f885a94d1d2887276d3430ec3522bf7b2346693a648db54496"
+    }
+  },
+  "lexical_boundary_source_installed_validation_pending_20261110": {
+    "JUnit_created": false,
+    "Native_grant_created": false,
+    "actual_evidence": {
+      "native_red_outcome": {
+        "bytes": 161216,
+        "path": "/tmp/pytest-of-barberb/legal-ir-P1-quoted-identifier-native-RED7-20261110-v01/attempt-v01/exports/native-kernel-progress.json",
+        "sha256": "01f8d367136420199d3d37942ab85df180b00e90aa75afe255170da829a5302e"
+      },
+      "native_red_parent": {
+        "bytes": 19599,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-native-proof-cache-roundtrip-20261109-v01/ordinary-P1-quoted-identifier-native-RED7-v01/parent-closeout.json",
+        "sha256": "31c807837a0ac04121dbfce082b4c92743ac58dac537527003b42a96e3a5559d"
+      },
+      "native_red_readback": {
+        "bytes": 114646,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/failed-admission-own-claim-recovery-DRAFT-v02/P1-quoted-identifier-native7-independent-readback-v01.json",
+        "sha256": "f0c263bb89c9e41df2f3bb72791f75f84c2166cabf5e22701e638ada1e623053"
+      },
+      "native_red_request": {
+        "bytes": 40725,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-native-proof-cache-roundtrip-20261109-v01/ordinary-P1-quoted-identifier-native-RED7-v01/request.json",
+        "sha256": "e85130b90cddc5187787f7c02345ab764519bbb3852b777aa59012ea24d7b79f"
+      },
+      "refusal_readback": {
+        "bytes": 2987,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/failed-admission-own-claim-recovery-DRAFT-v02/P1-literal-boundary-unit205-pregrant-capacity-refusal-independent-readback-v01.json",
+        "sha256": "527ccbbc602557f3ee166d3703989f0b2cb26de4935759fa4a7d3f9335bacf32"
+      },
+      "source2_CAS": {
+        "bytes": 11960,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/failed-admission-own-claim-recovery-DRAFT-v02/P1-lean-literal-boundary-Source2-CAS-closeout-v01.json",
+        "sha256": "11d99a328c1dc0ffca56d773b5b5a2de1e48ec3501f7ff16967989c7a7612530"
+      },
+      "source2_readback": {
+        "bytes": 1972,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/failed-admission-own-claim-recovery-DRAFT-v02/P1-lean-literal-boundary-Source2-independent-readback-v01.json",
+        "sha256": "73bd2d0e30157db062e271bce1b4320561699fcc8d70d9c676158647d352c0f0"
+      },
+      "unit205_owner_stdout": {
+        "bytes": 3581,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-native-proof-cache-roundtrip-20261109-v01/ordinary-P1-literal-boundary-unit-GREEN205-v01/owner.stdout",
+        "sha256": "407ead474c314dc27047056e2c75287de855bd711672a081ab0b35dd7facf874"
+      },
+      "unit205_parent": {
+        "bytes": 10279,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-native-proof-cache-roundtrip-20261109-v01/ordinary-P1-literal-boundary-unit-GREEN205-v01/parent-closeout.json",
+        "sha256": "6b81a083ac9917cada86d6b05a2ddbc991c3b1595dbf2d986b7857c0d52a394b"
+      },
+      "unit205_request": {
+        "bytes": 51389,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-native-proof-cache-roundtrip-20261109-v01/ordinary-P1-literal-boundary-unit-GREEN205-v01/request.json",
+        "sha256": "69f654de720c327e46ad5d17fa881d59b607e03a8a084925b1565d63ecce4466"
+      }
+    },
+    "actual_observation": {
+      "JUnit_created": false,
+      "Native_grant_created": false,
+      "capacity_observation": {
+        "additional_requested_bytes": 16777216,
+        "charged_bytes": 220004404073,
+        "filesystem_free_deficit_bytes": 0,
+        "filesystem_free_insufficient": false,
+        "limit_bytes": 220000000000,
+        "minimum_filesystem_free_bytes": 501469429760,
+        "observed_apparent_bytes": 174250131113,
+        "outstanding_full_reservations_bytes": 45737495744,
+        "schema": "daemon-resource-capacity-observation/v1",
+        "scope": "named_roots_only_apparent_bytes",
+        "storage_capacity_deficit_bytes": 4404073,
+        "storage_capacity_exceeded": true
+      },
+      "current_source_pins": 215,
+      "historical_receipt_replay_run": false,
+      "native_GREEN_run": false,
+      "native_RED_actual_processes": 9,
+      "original_errors": [],
+      "original_source_closed": true,
+      "source_installed_runtime_unqualified": true,
+      "storage_record_opened": false,
+      "tests_executed": 0,
+      "unit205_original_Tool": {
+        "drained": true,
+        "elapsed_seconds": 70.86756591591984,
+        "exit": 1,
+        "final_chunk": "4cb690",
+        "initial_chunk": "7b688b",
+        "session_id": 30206
+      }
+    },
+    "actual_source_installation_distinct_from_runtime_qualification": true,
+    "capacity_observation": {
+      "additional_requested_bytes": 16777216,
+      "charged_bytes_including_requested_allowance": 220004404073,
+      "filesystem_free_insufficient": false,
+      "limit_bytes": 220000000000,
+      "observed_apparent_bytes": 174250131113,
+      "outstanding_full_reservations_bytes": 45737495744,
+      "storage_capacity_deficit_bytes": 4404073
+    },
+    "capacity_refusal_parent_sha256": "6b81a083ac9917cada86d6b05a2ddbc991c3b1595dbf2d986b7857c0d52a394b",
+    "capacity_refusal_request_sha256": "69f654de720c327e46ad5d17fa881d59b607e03a8a084925b1565d63ecce4466",
+    "child_created": false,
+    "errors": [],
+    "failed_claims_and_all_prior_cutoffs_preserved": true,
+    "fresh_native_GREEN7_executed": false,
+    "historical_accepted_receipt_replay_executed": false,
+    "ordinary205_qualified": false,
+    "original_Tool": {
+      "drained": true,
+      "elapsed_seconds": 70.86756591591984,
+      "exit": 1,
+      "final_chunk": "4cb690",
+      "launch_chunk": "7b688b",
+      "session_id": 30206
+    },
+    "original_custody_verdict": "proven_original_no_child_no_native_grant",
+    "original_native_RED9_distinct_from_GREEN_and_historical243_11": true,
+    "pytest_cases_executed": 0,
+    "recorded_at_utc": "2026-11-10T21:46:06.145488+00:00",
+    "resource_cap_or_retry_budget_changed": false,
+    "schema": "P1-lean-literal-boundary-source-installed-validation-pending/v1",
+    "scientific_task_activation_or_model_gain_or_statutory_meaning_or_corpus_admission": false,
+    "source2_CAS_sha256": "11d99a328c1dc0ffca56d773b5b5a2de1e48ec3501f7ff16967989c7a7612530",
+    "source2_independent_readback_sha256": "73bd2d0e30157db062e271bce1b4320561699fcc8d70d9c676158647d352c0f0",
+    "source_closed": true,
+    "source_drift": [],
+    "source_owner_sha256": "7987a3effc2009fbf5961b43ce36c7114c5ca4088d069c2e63531189e958435b",
+    "source_pins": 215,
+    "source_test_sha256": "4b185af9ef8de7f885a94d1d2887276d3430ec3522bf7b2346693a648db54496",
+    "status": "SOURCE_INSTALLED_FRESH205_CAPACITY_REFUSED_NATIVE_GREEN_UNRUN",
+    "storage_record_opened": false,
+    "storage_recovery_or_foreign_row_mutation_performed": false
+  },
   "limits": {
     "captured_controls_are_data_not_replay_authority": true,
     "fictional_source_only": true,
@@ -834,5 +1214,52 @@
   "source_base_commit": "b9daa81c34a22340b036132abb4c51576e1e21e6",
   "task_ids": [
     "LIR-14"
-  ]
+  ],
+  "current_a722_native_cache_roundtrip_20261114": {
+    "GREEN_original16MiB_released_durably": true,
+    "RED_original16MiB_retained": true,
+    "actual_Lean_commands": 3,
+    "actual_compiler_commands": 2,
+    "actual_version_probes": 1,
+    "canonical_Lean_sha256": "7987a3effc2009fbf5961b43ce36c7114c5ca4088d069c2e63531189e958435b",
+    "canonical_cache_sha256": "a7228286d47ddcd39a7814d674805f98e0981ce5dfe193ffe82da68e1adab633",
+    "canonical_pytest_rerun_or_whole_owning_suite_credit": false,
+    "native_calls_on_reuse": 0,
+    "pytest_case_credit": 0,
+    "receipts": {
+      "GREEN_independent": {
+        "bytes": 54086,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-native-proof-cache-roundtrip-20261109-v01/context-type-identity-v01/native-current-a722-roundtrip-v01/independent-GREEN-native-cache-saved-DATA-v02.json",
+        "sha256": "db29f7115fe90987e1f03c8db3bde92e74e704474423da7e1339f987918bcfec"
+      },
+      "GREEN_original": {
+        "bytes": 14303,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-native-proof-cache-roundtrip-20261109-v01/context-type-identity-v01/native-current-a722-roundtrip-v01/GREEN-current-fixture-pin-v01/parent-closeout.json",
+        "sha256": "f4c57efbbe1e2d8867225a59434b260f6e83bd9c3a62f0369a3bafa5c613dce5"
+      },
+      "RED_independent": {
+        "bytes": 4716,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-native-proof-cache-roundtrip-20261109-v01/context-type-identity-v01/native-current-a722-roundtrip-v01/independent-RED-and-fresh-GREEN-native-cache-preflight-v01.json",
+        "sha256": "5b9273080c39124f97517264a6b57243685e72875b23062353169938f24dc566"
+      },
+      "RED_original": {
+        "bytes": 16791,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-native-proof-cache-roundtrip-20261109-v01/context-type-identity-v01/native-current-a722-roundtrip-v01/RED-stale-fixture-pin-v01/parent-closeout.json",
+        "sha256": "7d570da636a4e821736e4437219b9df82ce67d4aea8cf1b47b29da4cfee775b7"
+      },
+      "Source_independent": {
+        "bytes": 3665,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-native-proof-cache-roundtrip-20261109-v01/context-type-identity-v01/native-current-a722-roundtrip-v01/independent-current-a722-native-cache-test-pin-source-readback-v01.json",
+        "sha256": "07b9625d434122e9d0c2a427e91b13c3ac0318a564439ea3140e3813f0aea6e3"
+      },
+      "Source_original": {
+        "bytes": 5964,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-native-proof-cache-roundtrip-20261109-v01/context-type-identity-v01/native-current-a722-roundtrip-v01/actual-current-a722-native-cache-test-pin-source-v01.json",
+        "sha256": "d48dd69a34dde9b4e592d6b1202a69119c7c222dbffcb1ebd4d53fb7a96dd48c"
+      }
+    },
+    "source_adopted_owning_test_sha256": "ffd64175ec7d12e7ce0585f0add30a72aeea43f814fd44b286d6a29415803743",
+    "status": "actual_current_native_helper_and_exact_one_test_Source_delivery_qualified",
+    "statutory_model_Lean_corpus_release_authority": false
+  }
 }

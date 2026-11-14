@@ -27,9 +27,13 @@ def _contracts():
     return autoencoder_daemon_invocation_contracts
 
 
-def _deny_network():
+def _deny_network(*, fixed_seccomp=False):
     """Same libseccomp filter as audit_native_uscode_embedding_production."""
-    library = ctypes.util.find_library("seccomp")
+    if type(fixed_seccomp) is not bool:
+        raise RuntimeError("fixed seccomp selection must be boolean")
+    # The reviewed bootstrap must not spawn ldconfig/compiler lookup helpers
+    # inside its already admitted two-process parent/child envelope.
+    library = "libseccomp.so.2" if fixed_seccomp else ctypes.util.find_library("seccomp")
     if not library:
         raise RuntimeError("native daemon requires libseccomp network denial")
     lib = ctypes.CDLL(library, use_errno=True)

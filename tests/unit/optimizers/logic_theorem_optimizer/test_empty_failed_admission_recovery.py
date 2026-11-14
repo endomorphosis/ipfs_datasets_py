@@ -559,3 +559,78 @@ def test_unopened_invalid_scalars_refuse_before_live_resource_access(monkeypatch
         lambda *a, **k: pytest.fail('invalid scalar reached resource helper'))
     with pytest.raises(recovery.resources.DaemonResourceError):
         recovery.reconcile_empty_unopened_validation_reservation_v1('/never-accessed/ledger', **args)
+
+
+# Adapt this cohort's already private fixture ledger to the current generation.
+# Restore its original limit for the unchanged legacy fixture teardown only.
+@pytest.fixture
+def historical_cap_unopened_control(private_control, monkeypatch):
+    ledger = private_control['ledger']
+    old = json.loads(ledger.read_bytes())['limit_bytes']
+    monkeypatch.setattr(recovery.resources, 'MAX_STORAGE_BYTES', 250_000_000_000)
+    value = json.loads(ledger.read_bytes())
+    value['limit_bytes'] = 250_000_000_000
+    ledger.write_bytes(unopened_raw(value))
+    try:
+        yield private_control
+    finally:
+        value = json.loads(ledger.read_bytes())
+        value['limit_bytes'] = old
+        ledger.write_bytes(unopened_raw(value))
+
+
+def _historical_cap_unopened_case(control, monkeypatch, cap):
+    ledger, args, proof, row = unopened_fixture(control, monkeypatch)
+    terminal = json.loads(proof['terminal_raw_utf8'])
+    terminal['reservation']['storage_limit_bytes'] = cap
+    proof['terminal_raw_utf8'] = unopened_raw(terminal).decode()
+    unopened_commit(args, proof)
+    return ledger, args, proof, row
+
+
+@pytest.mark.parametrize('historical_cap', [220_000_000_000, 250_000_000_000, 300_000_000_000])
+def test_unopened_historical_cap_is_data_under_current_250gb_ledger(historical_cap_unopened_control, monkeypatch, historical_cap):
+    ledger, args, _, row = _historical_cap_unopened_case(historical_cap_unopened_control, monkeypatch, historical_cap)
+    receipt = unopened_call(ledger, args, 'administrative_closeout')
+    value = json.loads(ledger.read_bytes())
+    assert value['limit_bytes'] == recovery.resources.MAX_STORAGE_BYTES == 250_000_000_000
+    assert value['reservations'][args['reservation_id']]['status'] == 'released'
+    assert value['reservations']['foreign-retained'] == historical_cap_unopened_control['foreign']
+    assert receipt['cap_changed'] is False and row['status'] == 'reserved'
+
+
+@pytest.mark.parametrize('historical_cap', [True, False, 220_000_000_000.0, 250_000_000_000.0, 0, -1, '220000000000'])
+def test_unopened_historical_cap_refuses_non_positive_exact_int_data(historical_cap_unopened_control, monkeypatch, historical_cap):
+    ledger, args, _, _ = _historical_cap_unopened_case(historical_cap_unopened_control, monkeypatch, historical_cap)
+    before = ledger.read_bytes()
+    with pytest.raises(recovery.resources.DaemonResourceError, match='original storage roots or cap differ'):
+        unopened_call(ledger, args)
+    assert ledger.read_bytes() == before
+
+
+@pytest.mark.parametrize('fault', ['source', 'root', 'row', 'native', 'closure', 'current_ledger_cap'])
+def test_unopened_historical_cap_does_not_relax_other_custody_guards(historical_cap_unopened_control, monkeypatch, fault):
+    ledger, args, proof, _ = _historical_cap_unopened_case(historical_cap_unopened_control, monkeypatch, 220_000_000_000)
+    terminal = json.loads(proof['terminal_raw_utf8'])
+    close = json.loads(proof['controller_closeout_raw_utf8'])
+    if fault == 'source':
+        proof['stderr_utf8'] = proof['stderr_utf8'].replace('line 188', 'line 217')
+    elif fault == 'root':
+        terminal['reservation']['roots'][0]['inode'] += 1
+    elif fault == 'row':
+        terminal['reservation']['record']['owner_pid'] += 1
+    elif fault == 'native':
+        terminal['reservation']['resource_lease'] = {'released': True}
+    elif fault == 'closure':
+        close['source_lock_descriptor_closed'] = False
+    elif fault == 'current_ledger_cap':
+        value = json.loads(ledger.read_bytes())
+        value['limit_bytes'] = 220_000_000_000
+        ledger.write_bytes(unopened_raw(value))
+    proof['terminal_raw_utf8'] = unopened_raw(terminal).decode()
+    proof['controller_closeout_raw_utf8'] = unopened_raw(close).decode()
+    unopened_commit(args, proof)
+    before = ledger.read_bytes()
+    with pytest.raises(recovery.resources.DaemonResourceError):
+        unopened_call(ledger, args)
+    assert ledger.read_bytes() == before

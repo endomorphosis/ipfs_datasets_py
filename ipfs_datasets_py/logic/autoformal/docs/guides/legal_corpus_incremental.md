@@ -9,6 +9,8 @@ no compiler, session or numerical model.
 
 ## Execution and cache identity
 
+The explicit `build_incremental_reviewed_preservation_corpus_v3` entry point uses this same direct-Lean coordinator under verified-reviewed-mixed-preservation-olean-per-module/v3. Supply the complete preparation, graph, admission, original review inputs and independent preparation/graph/admission pins; reuse still requires the exact prior cache digest and complete prior artifacts. Recipes retain full unit/dependency/formal-input provenance, so a governing-definition correction invalidates its declared consumers even when some generated Lean text remains unchanged. Current source/revocation replay and closing producer/toolchain/artifact checks remain mandatory. Legacy and parent profiles keep their original defaults and separate cache domains. Selected fictional/authored qualification does not establish genuine current mixed cold/warm/affected/clean Lean, whole93 coverage, admitted-parent/release integration, statutory correspondence or model convergence.
+
 The bounded `verified-legacy-olean-per-module/v1` profile compiles generated
 legacy Lean modules directly with the explicit installed Lean executable:
 

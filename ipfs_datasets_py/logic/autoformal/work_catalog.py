@@ -368,7 +368,7 @@ def main(argv=None):
                       "scope": "Curated metadata only; use --check or --section NAME."}
     except (KeyError, OSError, TypeError, ValueError) as exc:
         parser.exit(2, "catalog error: " + str(exc) + "\n")
-    print(json.dumps(result, indent=2, sort_keys=True, allow_nan=False))
+    print(json.dumps(result, indent=None if args.component is not None else 2, sort_keys=True, allow_nan=False))
     return 1 if args.check and not result["valid"] else 0
 
 

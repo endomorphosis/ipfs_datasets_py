@@ -1,0 +1,384 @@
+{
+  "schema": "legal-ir-planning-observations/v1",
+  "created_utc": "2026-10-18T22:16:30.961192+00:00",
+  "workspace_root": "/home/barberb/lift_coding",
+  "scope": "planning; source inspection and retained evidence references; no product execution",
+  "metadata_observed_utc": "2026-10-18T03:53:25.812843+00:00",
+  "datasets": [
+    {
+      "repository": "justicedao/ipfs_uscode",
+      "retained_revision": "91ca1838853ac82d7a12dd4ab47d9686f47667f9"
+    },
+    {
+      "repository": "justicedao/uscode-autoformal-span-cache",
+      "retained_revision": "60501f3e920f6c9050cfc452e0d9fcc2b7c184f3"
+    },
+    {
+      "repository": "justicedao/uscode-autoformal-entity-cache",
+      "retained_revision": "79d54378c5d6a89ab56e7a27e0f0ba867e800e19"
+    }
+  ],
+  "observations": [
+    {
+      "id": "text_format",
+      "result": "26 fields across 13 pairs reported plain text; no XML/HTML tags",
+      "status": "retained_report_inspected",
+      "recomputed_this_turn": false
+    },
+    {
+      "id": "source_binding",
+      "result": "graph and definition bridge retain markup-specific source contracts; new literal-text adapter proposed",
+      "status": "source_inspected",
+      "runtime_executed_this_turn": false
+    },
+    {
+      "id": "journal_eleven",
+      "result": "0/4 complete original-BOS64 outputs across two fictional rows and two arms",
+      "status": "retained_report_inspected",
+      "recomputed_this_turn": false
+    },
+    {
+      "id": "public_prepared_training",
+      "result": "closed fixture profile; newly retained canonical four-update/three-lifetime numerical training qualification passes; weighted all-one inference remains separate",
+      "status": "source_and_updated_report_inspected",
+      "runtime_executed_this_turn": false
+    },
+    {
+      "id": "entity_projection",
+      "result": "retained census reports 1722395 edges with empty endpoints in pinned file",
+      "status": "retained_report_inspected",
+      "recomputed_this_turn": false
+    }
+  ],
+  "reference_files": [
+    {
+      "workspace_relative_path": "external/ipfs_datasets/docs/autoencoders/evidence/legal-ir-roadmap-20261018/public-metadata.json",
+      "sha256": "17e1ae9b60cc677324f0811067e779c5e1d708ec5942d3c725bf706c1e2aa629",
+      "bytes": 39704,
+      "evidence_kind": "hash_checked_reference_bytes",
+      "historical_result_reexecuted": false
+    },
+    {
+      "workspace_relative_path": "external/ipfs_datasets/docs/autoencoders/legal_ir_uscode_roadmap_20261018.md",
+      "sha256": "3e903b0b21af74d9f21e9bf11fa076bf9a1ce1f7afdf47922eed30cc83e26323",
+      "bytes": 71578,
+      "evidence_kind": "hash_checked_reference_bytes",
+      "historical_result_reexecuted": false,
+      "snapshot_path": "reference-snapshots/legal_ir_uscode_roadmap_20261018.md"
+    },
+    {
+      "workspace_relative_path": "external/ipfs_datasets/docs/autoencoders/legal_ir_supervisor_task_catalog_20261016.md",
+      "sha256": "4be7e14fd1d85c0fe6a73fdf0b90d0c4564aa362c09f848f929de143d3c951c7",
+      "bytes": 8961,
+      "evidence_kind": "hash_checked_reference_bytes",
+      "historical_result_reexecuted": false
+    },
+    {
+      "workspace_relative_path": "external/ipfs_datasets/docs/autoencoders/legal_corpus_shared_lake.md",
+      "sha256": "3749b672d516358c6b0f81d260f6e63dee9583c8251f618de9e591b1d66a140f",
+      "bytes": 5567,
+      "evidence_kind": "hash_checked_reference_bytes",
+      "historical_result_reexecuted": false
+    },
+    {
+      "workspace_relative_path": "external/ipfs_datasets/docs/autoencoders/legal_corpus_incremental.md",
+      "sha256": "7d441d26ae131224274358b3ce5d762f5e51b43384e03aed5f113b08228b23c4",
+      "bytes": 5240,
+      "evidence_kind": "hash_checked_reference_bytes",
+      "historical_result_reexecuted": false
+    },
+    {
+      "workspace_relative_path": "implementation_plan/docs/legal-ir-supervisor-operations-2026-10-16.md",
+      "sha256": "7b8e2b372d17cd843a699cbe9635fa36617efe5c057aaeac90f1bae8503e8fee",
+      "bytes": 159317,
+      "evidence_kind": "hash_checked_reference_bytes",
+      "historical_result_reexecuted": false,
+      "previous_observation": {
+        "sha256": "38d7afdcc4809af20b84c93053e66261cc67ab403ca3e149078bf1b6afb05860",
+        "bytes": 158574,
+        "body_retained": false
+      },
+      "snapshot_path": "reference-snapshots/legal-ir-supervisor-operations-2026-10-16.md"
+    },
+    {
+      "workspace_relative_path": "implementation_plan/docs/legal-ir-source-to-lean4-delivery-plan-2026-10-17.md",
+      "sha256": "0798dea69b7a5c82d891cb639391a86d567fec413aac9153da631d9ac47c98bc",
+      "bytes": 286704,
+      "evidence_kind": "hash_checked_reference_bytes",
+      "historical_result_reexecuted": false,
+      "previous_observation": {
+        "sha256": "e87f00e02abf18b24864d90a7a38813a2c596bd4f278331bc9173245449e7768",
+        "bytes": 286098,
+        "body_retained": false
+      },
+      "snapshot_path": "reference-snapshots/legal-ir-source-to-lean4-delivery-plan-2026-10-17.md"
+    },
+    {
+      "workspace_relative_path": "artifacts/legal-ir-text-sample-scope-correction-20261018T220325Z/README.md",
+      "sha256": "33dd7766401da3e9fb405806f2f3491204eac7894338a6f0c0587344ba8e6c36",
+      "bytes": 1481,
+      "evidence_kind": "hash_checked_reference_bytes",
+      "historical_result_reexecuted": false
+    },
+    {
+      "workspace_relative_path": "artifacts/legal-ir-text-sample-scope-correction-20261018T220325Z/scope-correction.json",
+      "sha256": "f9fff9378ba7b98456c347f317d1f225dc6d47fbbb93db9a1087447ddff9c339",
+      "bytes": 2184,
+      "evidence_kind": "hash_checked_reference_bytes",
+      "historical_result_reexecuted": false
+    },
+    {
+      "workspace_relative_path": "artifacts/legal-ir-text-sample-scope-correction-20261018T220325Z/sample-format-check.json",
+      "sha256": "7f8a82f776772d55ad296ad06bfe0ad6bce5cf3b61aa6cf5b8b749854c43e5aa",
+      "bytes": 9943,
+      "evidence_kind": "hash_checked_reference_bytes",
+      "historical_result_reexecuted": false
+    },
+    {
+      "workspace_relative_path": "artifacts/legal-ir-journal-inference-20261018-01/README.md",
+      "sha256": "fcf410c845c9ef94d521dbd95aaedfa9c07dd392a5a4bbd74889bca0170c059c",
+      "bytes": 5501,
+      "evidence_kind": "hash_checked_reference_bytes",
+      "historical_result_reexecuted": false
+    },
+    {
+      "workspace_relative_path": "artifacts/legal-ir-journal-inference-20261018-01/RESULTS.json",
+      "sha256": "419ede6dbe7d999519d1fd96c46e4dd96c9126ad86c3b9f1ae6b8759a1549ea2",
+      "bytes": 39883,
+      "evidence_kind": "hash_checked_reference_bytes",
+      "historical_result_reexecuted": false
+    },
+    {
+      "workspace_relative_path": "artifacts/legal-ir-entity-census-companion-20261018T201552Z/README.md",
+      "sha256": "de61db45e53754bb546fa648bc1d7b031c2c940938b24e81c729c8aadc193041",
+      "bytes": 4598,
+      "evidence_kind": "hash_checked_reference_bytes",
+      "historical_result_reexecuted": false
+    },
+    {
+      "workspace_relative_path": "artifacts/legal-ir-source-graph-correspondence-20261018T211010Z/README.md",
+      "sha256": "1c28cbc6c18785e973b1196ab14a14243f331987f9a03d5389ee5d45fb3f07e4",
+      "bytes": 5458,
+      "evidence_kind": "hash_checked_reference_bytes",
+      "historical_result_reexecuted": false
+    },
+    {
+      "workspace_relative_path": "artifacts/legal-ir-corpus-counterpart-recovery-20261018T214932Z/README.md",
+      "sha256": "277775388fcd8205e8325cb878b95d15979cc0679afec81e97881fac4ebb28de",
+      "bytes": 6630,
+      "evidence_kind": "hash_checked_reference_bytes",
+      "historical_result_reexecuted": false
+    },
+    {
+      "workspace_relative_path": "external/ipfs_datasets/scripts/ops/legal_ir/run_owned_validation.py",
+      "sha256": "caa966d37794b69e919ec4adb51f1853797aa36371c7a3909a0a155adf642987",
+      "bytes": 13413,
+      "evidence_kind": "hash_checked_reference_bytes",
+      "historical_result_reexecuted": false
+    },
+    {
+      "workspace_relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/supervisor_loop.py",
+      "sha256": "3c24de1f4747dcb168ecc139fc27f1cc0c931caee803ee19386ad429dee03c4b",
+      "bytes": 69939,
+      "evidence_kind": "hash_checked_reference_bytes",
+      "historical_result_reexecuted": false
+    },
+    {
+      "workspace_relative_path": "external/ipfs_accelerate/ipfs_accelerate_py/agent_supervisor/task_sources/database_task_source.py",
+      "sha256": "1bfd5b1233a00511afeecc358e3a76e62ca9f8e9dab5d6c7a3380844d048b0be",
+      "bytes": 189019,
+      "evidence_kind": "hash_checked_reference_bytes",
+      "historical_result_reexecuted": false
+    },
+    {
+      "workspace_relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/legal_parent_text_views.py",
+      "sha256": "94855a18b9ed466a38382715675052f7cb5952c9c672f28c255e376bd28d76cc",
+      "bytes": 13849,
+      "evidence_kind": "hash_checked_reference_bytes",
+      "historical_result_reexecuted": false
+    },
+    {
+      "workspace_relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/corpus_source.py",
+      "sha256": "6e4be77cfc27a750b11aa57bb92baa92617c57d5c4a26316e25563aa715ec257",
+      "bytes": 16185,
+      "evidence_kind": "hash_checked_reference_bytes",
+      "historical_result_reexecuted": false
+    },
+    {
+      "workspace_relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/legal_semantic_graph.py",
+      "sha256": "ebce80cbb7da29029f30866e1ec87b2ae0cb62563b30628621fb434d58adebde",
+      "bytes": 24042,
+      "evidence_kind": "hash_checked_reference_bytes",
+      "historical_result_reexecuted": false
+    },
+    {
+      "workspace_relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/legal_relational_norm_v1.py",
+      "sha256": "6af97bbe5bb729fc6218b77bc32551aaca5d2ed2ba89d61312937a3109032614",
+      "bytes": 18645,
+      "evidence_kind": "hash_checked_reference_bytes",
+      "historical_result_reexecuted": false
+    },
+    {
+      "workspace_relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/legal_source_definition_bridge_v2.py",
+      "sha256": "dc4448d3cb8dbbc23f7686674bb5b2b56d04cfbdb74b817b9e22b180ee7ee36a",
+      "bytes": 25634,
+      "evidence_kind": "hash_checked_reference_bytes",
+      "historical_result_reexecuted": false
+    },
+    {
+      "workspace_relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/corpus_definition_use_v2.py",
+      "sha256": "9017a10f5505814e88499e90717009b94d17335e1ec30529c7adfb00b65ceb90",
+      "bytes": 29795,
+      "evidence_kind": "hash_checked_reference_bytes",
+      "historical_result_reexecuted": false
+    },
+    {
+      "workspace_relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/legal_graph_dependencies.py",
+      "sha256": "86cb7c3b09102a94237d0455d610d437e558cca4250242201becd06c775ca2e8",
+      "bytes": 12974,
+      "evidence_kind": "hash_checked_reference_bytes",
+      "historical_result_reexecuted": false
+    },
+    {
+      "workspace_relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/legal_corpus_shared_lake.py",
+      "sha256": "e4bb92e23878ed081f891fdb05eb69bfa17b9d850ae93a298555e209c64eb413",
+      "bytes": 20213,
+      "evidence_kind": "hash_checked_reference_bytes",
+      "historical_result_reexecuted": false
+    },
+    {
+      "workspace_relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/legal_corpus_incremental.py",
+      "sha256": "976e8cddcafc274b3c90b48c932bcce6a5026964d8c000958aa0d7f066712b83",
+      "bytes": 24836,
+      "evidence_kind": "hash_checked_reference_bytes",
+      "historical_result_reexecuted": false
+    },
+    {
+      "workspace_relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/legal_native_ast_preservation.py",
+      "sha256": "2cdf3e8c0734ad8e4226c5df30f737322d8dee0f4e5a3674c3ad4d7c36ac810e",
+      "bytes": 26612,
+      "evidence_kind": "hash_checked_reference_bytes",
+      "historical_result_reexecuted": false
+    },
+    {
+      "workspace_relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_v2.py",
+      "sha256": "10548fae4cc2a2eb1c762103119ae21fa606057bbc45d57c95424e11286e9418",
+      "bytes": 28034,
+      "evidence_kind": "hash_checked_reference_bytes",
+      "historical_result_reexecuted": false
+    },
+    {
+      "workspace_relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/lean_units.py",
+      "sha256": "fd22c6f66edde6688e59d1df581694c9d4c788cdc1b674d3cb25e6bf1bb1e037",
+      "bytes": 8159,
+      "evidence_kind": "hash_checked_reference_bytes",
+      "historical_result_reexecuted": false
+    },
+    {
+      "workspace_relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_training_v2.py",
+      "sha256": "3ff34b8094a8bb19315741a03873c95f7d809654b35717fd4cee97e074fd2b59",
+      "bytes": 33914,
+      "evidence_kind": "hash_checked_reference_bytes",
+      "historical_result_reexecuted": false
+    },
+    {
+      "workspace_relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_prepared_runtime_v3.py",
+      "sha256": "a7d7cedfa482537ac76a9ccf9a49a79f6108e89268b02ca3b355abcfe774ec1e",
+      "bytes": 53267,
+      "evidence_kind": "hash_checked_reference_bytes",
+      "historical_result_reexecuted": false
+    },
+    {
+      "workspace_relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_trained_source_generation_v2.py",
+      "sha256": "e89a495993f998da7c61e549f708e69c6e38fd20dc86b6132e1d7d57dcb8c5e1",
+      "bytes": 25119,
+      "evidence_kind": "hash_checked_reference_bytes",
+      "historical_result_reexecuted": false
+    },
+    {
+      "workspace_relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_weighted_training_v1.py",
+      "sha256": "3646b831d73338a2bc93f4ca414f8e3cf317b576d404244be4089fbe736168cc",
+      "bytes": 34023,
+      "evidence_kind": "hash_checked_reference_bytes",
+      "historical_result_reexecuted": false
+    },
+    {
+      "workspace_relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_weighted_runtime_v1.py",
+      "sha256": "1089043125980023c8979b0ae9bf05aa121c85ce7a70e0cf2891f7f67fc3f6d5",
+      "bytes": 20050,
+      "evidence_kind": "hash_checked_reference_bytes",
+      "historical_result_reexecuted": false
+    },
+    {
+      "workspace_relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_weighted_prepared_training_v1.py",
+      "sha256": "6f7248714cea81edfe6fda69bb0abe38bb37535f2cb92d460d8e38c4d2cd4b07",
+      "bytes": 32735,
+      "evidence_kind": "hash_checked_reference_bytes",
+      "historical_result_reexecuted": false
+    },
+    {
+      "workspace_relative_path": "external/ipfs_datasets/docs/autoencoders/corpus_definition_use_v2.md",
+      "sha256": "4d7ed9e181bf6cd5975dbbf980dfbb13911e86276a0ed86fd4b5c3aaa5d41dfc",
+      "bytes": 9577,
+      "evidence_kind": "hash_checked_reference_bytes",
+      "historical_result_reexecuted": false
+    },
+    {
+      "workspace_relative_path": "external/ipfs_datasets/docs/autoencoders/legal_corpus_definition_use_preservation_v2.md",
+      "sha256": "8938d4f092431681af7263b3b75a11e3c2684b0d7712c61ca269f54fc1b38cab",
+      "bytes": 20572,
+      "evidence_kind": "hash_checked_reference_bytes",
+      "historical_result_reexecuted": false
+    },
+    {
+      "workspace_relative_path": "artifacts/legal-ir-weighted-prepared-public-numerical-20261018-01/README-v04.md",
+      "sha256": "8295d14b45ea0c998069e2e0fad927e3bf3de2fd6e2c4552b668d719992d9777",
+      "bytes": 8340,
+      "evidence_kind": "hash_checked_reference_bytes",
+      "historical_result_reexecuted": false
+    },
+    {
+      "workspace_relative_path": "artifacts/legal-ir-weighted-prepared-public-numerical-20261018-01/audit/saved-readback-01.json",
+      "sha256": "5a1b954e0ac80c35aff1f53728a1866f761cd91169bfd54cb05a2cc737899042",
+      "bytes": 171301,
+      "evidence_kind": "hash_checked_reference_bytes",
+      "historical_result_reexecuted": false
+    },
+    {
+      "workspace_relative_path": "artifacts/legal-ir-weighted-prepared-public-numerical-20261018-01/audit/cost-interpretation.json",
+      "sha256": "ac64a5359057d3b0c85a531bc817f9e44d141a1da4feee6431088f5d34e8a951",
+      "bytes": 44189,
+      "evidence_kind": "hash_checked_reference_bytes",
+      "historical_result_reexecuted": false
+    }
+  ],
+  "limitations": [
+    "Hashes identify local inspected bytes, including potentially uncommitted files; they do not certify the historical result or represent a clean Git commit.",
+    "Referenced historical packages are not copied or independently fully reverified by this planning operation.",
+    "Mutable viewer schemas in retained metadata were not bound to repository revisions.",
+    "Current source card was readable in web browsing; span/entity live refresh was unavailable. Retained metadata revisions are not asserted to be latest heads.",
+    "No model, training, Lean build, benchmark, active database access, supervisor dispatch, toolchain install or publication performed."
+  ],
+  "review_notes": [
+    {
+      "review_type": "assistant_read_only_source_review",
+      "area": "model",
+      "finding": "zero conditioning is not a source-only parser; retained grammar/context must be disclosed in latent-only claims",
+      "disposition": "incorporated"
+    },
+    {
+      "review_type": "assistant_read_only_source_review",
+      "area": "graph_and_lean",
+      "finding": "V2 joins unary definition candidates; norm consumers require extension; direct incremental Lean and Lake routes are distinct; concrete preservation is restricted to unary null-sort FOL/TDFOL",
+      "disposition": "incorporated"
+    }
+  ],
+  "concurrent_document_updates": {
+    "paths": [
+      "implementation_plan/docs/legal-ir-supervisor-operations-2026-10-16.md",
+      "implementation_plan/docs/legal-ir-source-to-lean4-delivery-plan-2026-10-17.md"
+    ],
+    "disposition": "inspected updated source documents; adopted new public numerical training qualification without rerunning it; no original file edited",
+    "snapshot_utc": "2026-10-18T22:19:03.242608+00:00"
+  }
+}

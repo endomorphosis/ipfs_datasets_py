@@ -1,0 +1,1315 @@
+{
+  "datasets": [
+    {
+      "card_planning_lines": [
+        "- config_name: publicus-ir-graphrag/v2",
+        "- Pinned source revision: `006dd603185b283c54648dd4aef3c2cbe650981a`",
+        "- Official release point: `us/pl/119/102`",
+        "- Vector space: `gte-small@17e1f347d17fe144873b1201da91788898c639cd:d384:pool=mean:norm=l2`",
+        "- Recovery quarantine rows are excluded from the default config and from corpus/BM25/vector/graph counts until normalized and admitted."
+      ],
+      "file_count": 2802,
+      "last_modified": "2026-10-14T19:46:00.000Z",
+      "license_metadata": "other",
+      "metadata_observation": {
+        "bytes": 185927,
+        "http_status": 200,
+        "sha256": "1ba00ad9f51ad7ecd65e68581288099f915e3d20deee154847b3be9c2b8a166a",
+        "url": "https://huggingface.co/api/datasets/justicedao/ipfs_uscode"
+      },
+      "pinned_readme_observation": {
+        "bytes": 3476,
+        "http_status": 200,
+        "sha256": "a3b0aaa50d3274d4dc18c7ea24989c7eaf69b78b9e085b8b2ce6019fd5eb312e",
+        "url": "https://huggingface.co/datasets/justicedao/ipfs_uscode/resolve/91ca1838853ac82d7a12dd4ab47d9686f47667f9/README.md"
+      },
+      "repository": "justicedao/ipfs_uscode",
+      "revision": "91ca1838853ac82d7a12dd4ab47d9686f47667f9",
+      "viewer_schemas": [],
+      "viewer_splits": [],
+      "viewer_splits_observation": {
+        "error": "http_error",
+        "http_status": 500,
+        "url": "https://datasets-server.huggingface.co/splits?dataset=justicedao%2Fipfs_uscode"
+      }
+    },
+    {
+      "card_planning_lines": [
+        "  - config_name: formal_logic_text",
+        "  - config_name: paired_spans",
+        "  - config_name: deferred_goals",
+        "  - config_name: evidence_artifacts",
+        "  - config_name: retained_outputs_v1",
+        "  - config_name: census_v3",
+        "  - config_name: census_v2",
+        "  - config_name: supervisor_goals_v2",
+        "# Paired US Code conversions, diagnostic census and deferred repair goals",
+        "Failed outputs remain useful diagnostic evidence and potential repair-training",
+        "The local legacy autoencoder emits eight-dimensional diagnostic vectors and",
+        "Their agreement is **diagnostic, not independent validation**. The current",
+        "No result in this diagnostic campaign grants admission. `admitted=false`,",
+        "`formalized=false`, and Lake `not_run` stay explicit. A separate source-bound",
+        "formalized and must never receive `roundtrip_ok` here.",
+        "modal ASTs. Nine rows have diagnostic AST agreement; 15 have no formulas from"
+      ],
+      "file_count": 7962,
+      "last_modified": "2026-10-15T20:42:14.000Z",
+      "license_metadata": null,
+      "metadata_observation": {
+        "bytes": 1394826,
+        "http_status": 200,
+        "sha256": "51ce642b189dbc7a90afd827ee943646c0dfd41b33f629b433c32601389b0c82",
+        "url": "https://huggingface.co/api/datasets/justicedao/uscode-autoformal-span-cache"
+      },
+      "pinned_readme_observation": {
+        "bytes": 13863,
+        "http_status": 200,
+        "sha256": "12baa9ccf9038e7799fdd0dd59991dbb202b80617f00a636f0f7963e6b2336a6",
+        "url": "https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/resolve/60501f3e920f6c9050cfc452e0d9fcc2b7c184f3/README.md"
+      },
+      "repository": "justicedao/uscode-autoformal-span-cache",
+      "revision": "60501f3e920f6c9050cfc452e0d9fcc2b7c184f3",
+      "viewer_schemas": [
+        {
+          "config": "paired_spans",
+          "features": [
+            {
+              "feature_idx": 0,
+              "name": "schema_version",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 1,
+              "name": "repository_id",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 2,
+              "name": "source",
+              "type": {
+                "constitution": {
+                  "_type": "Value",
+                  "dtype": "bool"
+                },
+                "legal_id": {
+                  "_type": "Value",
+                  "dtype": "string"
+                },
+                "revision": {
+                  "_type": "Value",
+                  "dtype": "string"
+                },
+                "span_id": {
+                  "_type": "Value",
+                  "dtype": "string"
+                },
+                "text": {
+                  "_type": "Value",
+                  "dtype": "string"
+                },
+                "text_sha256": {
+                  "_type": "Value",
+                  "dtype": "string"
+                }
+              }
+            },
+            {
+              "feature_idx": 3,
+              "name": "autoencoder",
+              "type": {
+                "complete": {
+                  "_type": "Value",
+                  "dtype": "bool"
+                },
+                "cosine_similarity": {
+                  "_type": "Value",
+                  "dtype": "float64"
+                },
+                "embedding_model": {
+                  "_type": "Value",
+                  "dtype": "string"
+                },
+                "formal_outputs": {
+                  "_type": "List",
+                  "feature": {
+                    "family": {
+                      "_type": "Value",
+                      "dtype": "string"
+                    },
+                    "format": {
+                      "_type": "Value",
+                      "dtype": "string"
+                    },
+                    "independent": {
+                      "_type": "Value",
+                      "dtype": "bool"
+                    },
+                    "origin": {
+                      "_type": "Value",
+                      "dtype": "string"
+                    },
+                    "payload_json": {
+                      "_type": "Value",
+                      "dtype": "string"
+                    },
+                    "sha256": {
+                      "_type": "Value",
+                      "dtype": "string"
+                    },
+                    "syntax_status": {
+                      "_type": "Value",
+                      "dtype": "string"
+                    },
+                    "target_conditioned": {
+                      "_type": "Value",
+                      "dtype": "bool"
+                    }
+                  }
+                },
+                "model_identity": {
+                  "_type": "Value",
+                  "dtype": "string"
+                },
+                "projected_cosine_similarity": {
+                  "_type": "Value",
+                  "dtype": "float64"
+                },
+                "projected_reconstruction_loss": {
+                  "_type": "Value",
+                  "dtype": "float64"
+                },
+                "projected_target_conditioned": {
+                  "_type": "Value",
+                  "dtype": "bool"
+                },
+                "projected_vector": {
+                  "_type": "List",
+                  "feature": {
+                    "_type": "Value",
+                    "dtype": "float64"
+                  }
+                },
+                "raw_vector": {
+                  "_type": "List",
+                  "feature": {
+                    "_type": "Value",
+                    "dtype": "float64"
+                  }
+                },
+                "reconstruction_loss": {
+                  "_type": "Value",
+                  "dtype": "float64"
+                },
+                "semantic_embeddings": {
+                  "_type": "Value",
+                  "dtype": "bool"
+                },
+                "source_binding_verified": {
+                  "_type": "Value",
+                  "dtype": "bool"
+                },
+                "status": {
+                  "_type": "Value",
+                  "dtype": "string"
+                }
+              }
+            },
+            {
+              "feature_idx": 4,
+              "name": "compiler",
+              "type": {
+                "canonical_complete": {
+                  "_type": "Value",
+                  "dtype": "bool"
+                },
+                "canonical_formal_outputs": {
+                  "_type": "List",
+                  "feature": {
+                    "family": {
+                      "_type": "Value",
+                      "dtype": "string"
+                    },
+                    "format": {
+                      "_type": "Value",
+                      "dtype": "string"
+                    },
+                    "independent": {
+                      "_type": "Value",
+                      "dtype": "bool"
+                    },
+                    "origin": {
+                      "_type": "Value",
+                      "dtype": "string"
+                    },
+                    "payload_json": {
+                      "_type": "Value",
+                      "dtype": "string"
+                    },
+                    "sha256": {
+                      "_type": "Value",
+                      "dtype": "string"
+                    },
+                    "syntax_status": {
+                      "_type": "Value",
+                      "dtype": "string"
+                    },
+                    "target_conditioned": {
+                      "_type": "Value",
+                      "dtype": "bool"
+                    }
+                  }
+                },
+                "complete": {
+                  "_type": "Value",
+                  "dtype": "bool"
+                },
+                "component_count": {
+                  "_type": "Value",
+                  "dtype": "int64"
+                },
+                "components_artifact_pointer": {
+                  "_type": "Value",
+                  "dtype": "string"
+                },
+                "components_artifact_sha256": {
+                  "_type": "Value",
+                  "dtype": "string"
+                },
+                "decompiled": {
+                  "_type": "Value",
+                  "dtype": "string"
+                },
+                "formal_outputs": {
+                  "_type": "List",
+                  "feature": {
+                    "family": {
+                      "_type": "Value",
+                      "dtype": "string"
+                    },
+                    "format": {
+                      "_type": "Value",
+                      "dtype": "string"
+                    },
+                    "independent": {
+                      "_type": "Value",
+                      "dtype": "bool"
+                    },
+                    "origin": {
+                      "_type": "Value",
+                      "dtype": "string"
+                    },
+                    "payload_json": {
+                      "_type": "Value",
+                      "dtype": "string"
+                    },
+                    "sha256": {
+                      "_type": "Value",
+                      "dtype": "string"
+                    },
+                    "syntax_status": {
+                      "_type": "Value",
+                      "dtype": "string"
+                    },
+                    "target_conditioned": {
+                      "_type": "Value",
+                      "dtype": "bool"
+                    }
+                  }
+                },
+                "reason": {
+                  "_type": "Value",
+                  "dtype": "string"
+                },
+                "roundtrip_ok": {
+                  "_type": "Value",
+                  "dtype": "bool"
+                },
+                "status": {
+                  "_type": "Value",
+                  "dtype": "string"
+                }
+              }
+            },
+            {
+              "feature_idx": 5,
+              "name": "provenance",
+              "type": {
+                "agent_id": {
+                  "_type": "Value",
+                  "dtype": "string"
+                },
+                "batch_id": {
+                  "_type": "Value",
+                  "dtype": "string"
+                },
+                "bridge_names": {
+                  "_type": "List",
+                  "feature": {
+                    "_type": "Value",
+                    "dtype": "string"
+                  }
+                },
+                "code_identity": {
+                  "_type": "Value",
+                  "dtype": "string"
+                },
+                "disk_cache": {
+                  "_type": "Value",
+                  "dtype": "bool"
+                },
+                "elapsed_seconds": {
+                  "_type": "Value",
+                  "dtype": "float64"
+                },
+                "evaluate_provers": {
+                  "_type": "Value",
+                  "dtype": "bool"
+                },
+                "model_identity": {
+                  "_type": "Value",
+                  "dtype": "string"
+                },
+                "parallel_workers": {
+                  "_type": "Value",
+                  "dtype": "int64"
+                },
+                "sample_count": {
+                  "_type": "Value",
+                  "dtype": "int64"
+                },
+                "wall_seconds_per_span": {
+                  "_type": "Value",
+                  "dtype": "float64"
+                }
+              }
+            },
+            {
+              "feature_idx": 6,
+              "name": "lake",
+              "type": {
+                "admitted": {
+                  "_type": "Value",
+                  "dtype": "bool"
+                },
+                "receipt_sha256": {
+                  "_type": "Value",
+                  "dtype": "string"
+                },
+                "status": {
+                  "_type": "Value",
+                  "dtype": "string"
+                }
+              }
+            },
+            {
+              "feature_idx": 7,
+              "name": "source_target_artifact_sha256",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 8,
+              "name": "source_target_artifact_pointer",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 9,
+              "name": "goal_ids",
+              "type": {
+                "_type": "List",
+                "feature": {
+                  "_type": "Value",
+                  "dtype": "string"
+                }
+              }
+            },
+            {
+              "feature_idx": 10,
+              "name": "admitted",
+              "type": {
+                "_type": "Value",
+                "dtype": "bool"
+              }
+            },
+            {
+              "feature_idx": 11,
+              "name": "formalized",
+              "type": {
+                "_type": "Value",
+                "dtype": "bool"
+              }
+            },
+            {
+              "feature_idx": 12,
+              "name": "comparison",
+              "type": {
+                "agrees": {
+                  "_type": "Value",
+                  "dtype": "bool"
+                },
+                "autoencoder_output_count": {
+                  "_type": "Value",
+                  "dtype": "int64"
+                },
+                "comparable": {
+                  "_type": "Value",
+                  "dtype": "bool"
+                },
+                "compiler_output_count": {
+                  "_type": "Value",
+                  "dtype": "int64"
+                },
+                "coverage_scope": {
+                  "_type": "Value",
+                  "dtype": "string"
+                },
+                "independent": {
+                  "_type": "Value",
+                  "dtype": "bool"
+                },
+                "method": {
+                  "_type": "Value",
+                  "dtype": "string"
+                },
+                "mismatches": {
+                  "_type": "List",
+                  "feature": {
+                    "_type": "Value",
+                    "dtype": "string"
+                  }
+                },
+                "reason": {
+                  "_type": "Value",
+                  "dtype": "string"
+                },
+                "status": {
+                  "_type": "Value",
+                  "dtype": "string"
+                }
+              }
+            },
+            {
+              "feature_idx": 13,
+              "name": "observation_id",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            }
+          ],
+          "observation": {
+            "bytes": 198342,
+            "http_status": 200,
+            "sha256": "c0f6f592a689a84de47b300aa5e599866196b879d6ca279a9fd175a96dc539b3",
+            "url": "https://datasets-server.huggingface.co/first-rows?dataset=justicedao%2Fuscode-autoformal-span-cache&config=paired_spans&split=train"
+          },
+          "returned_rows_count": 40,
+          "row_content_exported": false,
+          "split": "train"
+        },
+        {
+          "config": "formal_logic_text",
+          "features": [
+            {
+              "feature_idx": 0,
+              "name": "source_text",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 1,
+              "name": "formula_text",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 2,
+              "name": "view_name",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 3,
+              "name": "producer_origin",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 4,
+              "name": "fallback_origin",
+              "type": {
+                "_type": "Value",
+                "dtype": "bool"
+              }
+            },
+            {
+              "feature_idx": 5,
+              "name": "producer_record_source_id",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 6,
+              "name": "source_span_id",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 7,
+              "name": "legal_id",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 8,
+              "name": "format",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 9,
+              "name": "formula_field",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 10,
+              "name": "formula_sha256",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 11,
+              "name": "learned_formula_generation",
+              "type": {
+                "_type": "Value",
+                "dtype": "bool"
+              }
+            },
+            {
+              "feature_idx": 12,
+              "name": "reported_validation_json",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 13,
+              "name": "independent_validation",
+              "type": {
+                "_type": "Value",
+                "dtype": "bool"
+              }
+            },
+            {
+              "feature_idx": 14,
+              "name": "admitted",
+              "type": {
+                "_type": "Value",
+                "dtype": "bool"
+              }
+            },
+            {
+              "feature_idx": 15,
+              "name": "training_qualified",
+              "type": {
+                "_type": "Value",
+                "dtype": "bool"
+              }
+            },
+            {
+              "feature_idx": 16,
+              "name": "source_report_path_in_repo",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 17,
+              "name": "source_report_revision",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 18,
+              "name": "source_report_sha256",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 19,
+              "name": "source_receipt_sha256",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 20,
+              "name": "source_document_sha256",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 21,
+              "name": "recorded_document_sha256",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 22,
+              "name": "recorded_document_identity_status",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 23,
+              "name": "decoded_document_json_pointer",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            }
+          ],
+          "observation": {
+            "bytes": 194745,
+            "http_status": 200,
+            "sha256": "85181da5ee73b5965915f82e5a9bc96c74a43c8f6753dd591f808d5f65dc35b8",
+            "url": "https://datasets-server.huggingface.co/first-rows?dataset=justicedao%2Fuscode-autoformal-span-cache&config=formal_logic_text&split=train"
+          },
+          "returned_rows_count": 100,
+          "row_content_exported": false,
+          "split": "train"
+        },
+        {
+          "config": "retained_outputs_v1",
+          "features": [
+            {
+              "feature_idx": 0,
+              "name": "schema_version",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 1,
+              "name": "repository_id",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 2,
+              "name": "source_revision",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 3,
+              "name": "source_manifest_path",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 4,
+              "name": "source_manifest_sha256",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 5,
+              "name": "source_census_path",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 6,
+              "name": "source_census_sha256",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 7,
+              "name": "source_goals_path",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 8,
+              "name": "source_goals_sha256",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 9,
+              "name": "source_census_schema",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 10,
+              "name": "source_span_id",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 11,
+              "name": "legal_id",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 12,
+              "name": "source_text",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 13,
+              "name": "source_text_sha256",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 14,
+              "name": "census_sha256",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 15,
+              "name": "code_identity",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 16,
+              "name": "model_identity",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 17,
+              "name": "metric_scope",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 18,
+              "name": "autoencoder_output_kind",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 19,
+              "name": "autoencoder_output_status",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 20,
+              "name": "autoencoder_text",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 21,
+              "name": "autoencoder_compiled",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 22,
+              "name": "autoencoder_raw_embedding",
+              "type": {
+                "_type": "List",
+                "feature": {
+                  "_type": "Value",
+                  "dtype": "float64"
+                }
+              }
+            },
+            {
+              "feature_idx": 23,
+              "name": "autoencoder_raw_cosine_similarity",
+              "type": {
+                "_type": "Value",
+                "dtype": "float64"
+              }
+            },
+            {
+              "feature_idx": 24,
+              "name": "autoencoder_raw_reconstruction_loss",
+              "type": {
+                "_type": "Value",
+                "dtype": "float64"
+              }
+            },
+            {
+              "feature_idx": 25,
+              "name": "autoencoder_safety_projected_embedding",
+              "type": {
+                "_type": "List",
+                "feature": {
+                  "_type": "Value",
+                  "dtype": "float64"
+                }
+              }
+            },
+            {
+              "feature_idx": 26,
+              "name": "autoencoder_safety_projected_decoder_json",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 27,
+              "name": "embedding_representation_json",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 28,
+              "name": "compiler_status",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 29,
+              "name": "compiler_reason",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 30,
+              "name": "compiler_rule_count",
+              "type": {
+                "_type": "Value",
+                "dtype": "int64"
+              }
+            },
+            {
+              "feature_idx": 31,
+              "name": "compiler_rules_json",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 32,
+              "name": "compiler_result_json",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 33,
+              "name": "compiler_decompiled",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 34,
+              "name": "logic_target_observation_json",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 35,
+              "name": "logic_target_availability",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 36,
+              "name": "bridge_names_json",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 37,
+              "name": "goal_references_json",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 38,
+              "name": "input_json",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 39,
+              "name": "comparison_provenance_json",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 40,
+              "name": "admitted",
+              "type": {
+                "_type": "Value",
+                "dtype": "bool"
+              }
+            },
+            {
+              "feature_idx": 41,
+              "name": "formalized",
+              "type": {
+                "_type": "Value",
+                "dtype": "bool"
+              }
+            },
+            {
+              "feature_idx": 42,
+              "name": "enqueued",
+              "type": {
+                "_type": "Value",
+                "dtype": "bool"
+              }
+            },
+            {
+              "feature_idx": 43,
+              "name": "inference_executed",
+              "type": {
+                "_type": "Value",
+                "dtype": "bool"
+              }
+            },
+            {
+              "feature_idx": 44,
+              "name": "training_executed",
+              "type": {
+                "_type": "Value",
+                "dtype": "bool"
+              }
+            },
+            {
+              "feature_idx": 45,
+              "name": "output_sha256",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            }
+          ],
+          "observation": {
+            "bytes": 194488,
+            "http_status": 200,
+            "sha256": "e7f39f4d166806126f6ede7058578baad6fc875ad6a4580e2d927b5b703958e2",
+            "url": "https://datasets-server.huggingface.co/first-rows?dataset=justicedao%2Fuscode-autoformal-span-cache&config=retained_outputs_v1&split=train"
+          },
+          "returned_rows_count": 10,
+          "row_content_exported": false,
+          "split": "train"
+        }
+      ],
+      "viewer_splits": [
+        {
+          "config": "paired_spans",
+          "split": "train"
+        },
+        {
+          "config": "census_v2",
+          "split": "train"
+        },
+        {
+          "config": "census_v3",
+          "split": "train"
+        },
+        {
+          "config": "deferred_goals",
+          "split": "train"
+        },
+        {
+          "config": "evidence_artifacts",
+          "split": "train"
+        },
+        {
+          "config": "formal_logic_text",
+          "split": "train"
+        },
+        {
+          "config": "retained_outputs_v1",
+          "split": "train"
+        },
+        {
+          "config": "supervisor_goals_v2",
+          "split": "train"
+        }
+      ],
+      "viewer_splits_observation": {
+        "bytes": 810,
+        "http_status": 200,
+        "sha256": "7dbc91afe7099640804cd25ffedd0a42c3e828e1865de1422ebe90b29c06a2bf",
+        "url": "https://datasets-server.huggingface.co/splits?dataset=justicedao%2Fuscode-autoformal-span-cache"
+      }
+    },
+    {
+      "card_planning_lines": [
+        "- config_name: autoformal_uscode"
+      ],
+      "file_count": 3,
+      "last_modified": "2026-10-15T05:55:40.000Z",
+      "license_metadata": "other",
+      "metadata_observation": {
+        "bytes": 1221,
+        "http_status": 200,
+        "sha256": "a903893eaf4e896c30a26c9a80dee4a17a104633e8fc03a0c53f739a87be998d",
+        "url": "https://huggingface.co/api/datasets/justicedao/uscode-autoformal-entity-cache"
+      },
+      "pinned_readme_observation": {
+        "bytes": 581,
+        "http_status": 200,
+        "sha256": "5ef5c8cb742e67cdbafa91315ddec88a38fc6d803467629a493b7148bbab6bd4",
+        "url": "https://huggingface.co/datasets/justicedao/uscode-autoformal-entity-cache/resolve/79d54378c5d6a89ab56e7a27e0f0ba867e800e19/README.md"
+      },
+      "repository": "justicedao/uscode-autoformal-entity-cache",
+      "revision": "79d54378c5d6a89ab56e7a27e0f0ba867e800e19",
+      "viewer_schemas": [
+        {
+          "config": "autoformal_uscode",
+          "features": [
+            {
+              "feature_idx": 0,
+              "name": "record_kind",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 1,
+              "name": "meta_category",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 2,
+              "name": "graph_kind",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 3,
+              "name": "label",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 4,
+              "name": "legal_id",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 5,
+              "name": "node_id",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 6,
+              "name": "src",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 7,
+              "name": "dst",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 8,
+              "name": "logic_role",
+              "type": {
+                "_type": "Value",
+                "dtype": "string"
+              }
+            },
+            {
+              "feature_idx": 9,
+              "name": "in_formula",
+              "type": {
+                "_type": "Value",
+                "dtype": "bool"
+              }
+            },
+            {
+              "feature_idx": 10,
+              "name": "admitted",
+              "type": {
+                "_type": "Value",
+                "dtype": "bool"
+              }
+            },
+            {
+              "feature_idx": 11,
+              "name": "formalized",
+              "type": {
+                "_type": "Value",
+                "dtype": "bool"
+              }
+            }
+          ],
+          "observation": {
+            "bytes": 31051,
+            "http_status": 200,
+            "sha256": "5f081b7189518d0f38edb98b4f2a3f45a3aef9ac807961cc097d05a9f61da53b",
+            "url": "https://datasets-server.huggingface.co/first-rows?dataset=justicedao%2Fuscode-autoformal-entity-cache&config=autoformal_uscode&split=train"
+          },
+          "returned_rows_count": 100,
+          "row_content_exported": false,
+          "split": "train"
+        }
+      ],
+      "viewer_splits": [
+        {
+          "config": "autoformal_uscode",
+          "split": "train"
+        }
+      ],
+      "viewer_splits_observation": {
+        "bytes": 138,
+        "http_status": 200,
+        "sha256": "6a460ee4eff400c981cc0d66879cacb6716cc7d91949d261224dc35a52595c5b",
+        "url": "https://datasets-server.huggingface.co/splits?dataset=justicedao%2Fuscode-autoformal-entity-cache"
+      }
+    }
+  ],
+  "limitations": [
+    "Viewer endpoints are mutable and are not cryptographically joined to Hub revisions.",
+    "README bytes were hashed; corpus/checkpoint payloads were not downloaded or verified.",
+    "Sampled schemas and file presence establish neither population quality nor legal meaning.",
+    "HTTP failures are access observations, not proof that repository data is absent.",
+    "No training, inference, tests, Lean builds, uploads, or runtime state changes occurred."
+  ],
+  "observed_at_utc": "2026-10-18T03:53:25.812843+00:00",
+  "schema": "legal-ir-roadmap-public-metadata/v1",
+  "scope": "public metadata and bounded first-row schema observations only",
+  "script_sha256": "c385519e1ec10829b1960b4c07c06c5ffbb8202fa0070ffd0fb335f240402894"
+}

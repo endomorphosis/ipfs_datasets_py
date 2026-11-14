@@ -1356,3 +1356,785 @@ def test_parent_shared_replay_export_requires_exact_manifest_pin_before_child_di
 def test_parent_shared_replay_length_requires_exact_positive_integer(parent_shared_replay_transport):
     with pytest.raises(contracts.CorpusContractError):
         load_parent_shared_replay_fixture(parent_shared_replay_transport, expected_payload_bytes=True)
+
+
+# The complete public reviewed fixture remains owned by the admission tests.
+# These tests compose its APIs; no fixture or preservation implementation is
+# copied into the shared owner.
+def reviewed_preservation_fixture_helper_v2():
+    import importlib.util
+    path = Path(__file__).with_name("test_legal_norm_content_adjudication_v1.py")
+    spec = importlib.util.spec_from_file_location("_shared_reviewed_admission_fixture_v2", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def reviewed_preservation_reauthorize_fixture_v2(helper, admission_owner, case):
+    """Fresh fictional signatures for deliberate source/IR fixture changes."""
+    helper.reviewed_refresh_manifest_v2(case)
+    case["preparation"] = admission_owner.prepare_reviewed_norm_admission_v2(case["declaration"],
+        **helper.reviewed_prepare_arguments_v2(case))
+    subject = case["preparation"]["subject"]
+    body_raw = admission_owner.norm._wire(case["declaration"])
+    case["evidence"][case["declaration"]["component_id"]] = body_raw
+    for claim in case["reviews"]:
+        claim["subject"] = deepcopy(subject)
+        claim["interpretation"]["reviewed_graph_sha256"] = subject["graph_sha256"]
+        claim["interpretation"]["reviewed_ast_sha256"] = subject["ast_sha256"]
+        for obligation in claim["context_closure"]["obligations"]:
+            for ref in obligation["evidence_refs"]:
+                if ref["artifact_id"] == case["declaration"]["component_id"]:
+                    ref["sha256"] = sha(body_raw)
+    helper.reviewed_resign_v2(case)
+
+
+def reviewed_preservation_refresh_expression_v2(request):
+    """Reconstruct an intentionally edited fixture with its canonical digest."""
+    from ipfs_datasets_py.logic.syntax_core import ast
+    edited = dict(request["expression"], content_digest="")
+    request["expression"] = ast.TypedExpression.from_dict(edited).to_dict()
+
+
+def reviewed_preservation_graph_fixture_v2(helper, admission_owner, case):
+    from ipfs_datasets_py.logic.autoformal import corpus_norm_definition_adapter as graph_owner
+    args, kwargs = helper.reviewed_assessment_arguments_v2(admission_owner, case)
+    admission = admission_owner.assess_reviewed_norm_admission_v2(*args, **kwargs)
+    assert admission["semantic_use_eligible"] is True
+    admission_sha = admission_owner.norm_content_adjudication_sha256(admission)
+    graph = graph_owner.build_reviewed_norm_graph_v2(admission, *args,
+        expected_admission_sha256=admission_sha, **kwargs)
+    return dict(helper=helper, owner=admission_owner, case=case, args=args, kwargs=kwargs,
+        admission=admission, graph=graph, admission_sha=admission_sha,
+        graph_sha=graph_owner.norm_definition_graph_sha256(graph))
+
+
+def reviewed_preservation_prepare_fixture_v2(control, *, graph=None, admission=None, args=None, kwargs=None):
+    return shared.prepare_reviewed_norm_preservation_corpus_v2(
+        control["graph"] if graph is None else graph, control["admission"] if admission is None else admission,
+        *(control["args"] if args is None else args), expected_graph_sha256=control["graph_sha"],
+        expected_admission_sha256=control["admission_sha"], toolchain=TOOLCHAIN,
+        **(control["kwargs"] if kwargs is None else kwargs))
+
+
+def reviewed_preservation_validate_fixture_v2(control, offered=None, *, args=None, kwargs=None, toolchain=TOOLCHAIN):
+    offered = control["preparation"] if offered is None else offered
+    return shared.validate_reviewed_norm_preservation_corpus_v2(offered, control["graph"], control["admission"],
+        *(control["args"] if args is None else args),
+        expected_preservation_sha256=shared.reviewed_preservation_corpus_sha256(offered),
+        expected_graph_sha256=control["graph_sha"], expected_admission_sha256=control["admission_sha"],
+        toolchain=toolchain, **(control["kwargs"] if kwargs is None else kwargs))
+
+
+@pytest.fixture
+def reviewed_preservation_control_v2():
+    from ipfs_datasets_py.logic.autoformal import legal_norm_content_adjudication_v1 as admission_owner
+    helper = reviewed_preservation_fixture_helper_v2()
+    case = helper.reviewed_norm_fixture_v2(admission_owner)
+    control = reviewed_preservation_graph_fixture_v2(helper, admission_owner, case)
+    control["preparation"] = reviewed_preservation_prepare_fixture_v2(control)
+    return control
+
+
+def reviewed_preservation_reseal_fixture_v2(preparation, manifest, files):
+    manifest["file_sha256"] = {name: sha(body.encode("utf-8")) for name, body in sorted(files.items())}
+    sealed = contracts.seal_record({key: value for key, value in manifest.items()
+                                    if key not in ("record_cid", "cid_scope")})
+    return replace(preparation, manifest_json=canonical_dag_json_bytes(sealed).decode(),
+        files=tuple(sorted(files.items())))
+
+
+def test_reviewed_preservation_v2_retains_all_unchanged_child_files_and_five_obligations(reviewed_preservation_control_v2):
+    from ipfs_datasets_py.logic.autoformal import legal_native_ast_preservation as preservation
+    control = reviewed_preservation_control_v2
+    prepared = control["preparation"]
+    before = control["owner"].norm._snapshot({"args": list(control["args"]), "kwargs": control["kwargs"]})[1]
+    assert reviewed_preservation_validate_fixture_v2(control) == prepared
+    manifest, files = prepared.to_dict(), dict(prepared.files)
+    assert [row["unit_id"] for row in manifest["units"]] == [
+        row["unit_id"] for row in control["case"]["declaration"]["units"]]
+    assert len(manifest["preservation_obligations"]) == 15
+    assert len(set(manifest["preservation_obligations"])) == 15
+    assert len(manifest["expected_modules"]) == 6
+    assert manifest["preparation_only"] and manifest["proof_status"] == "not_executed"
+    assert manifest["lean_compilation_status"] == "not_executed"
+    assert manifest["training_mask"] == manifest["evaluation_gold_mask"] == 0
+    assert manifest["semantic_use_eligible"] is False and not any(manifest["authority"].values())
+    assert all(manifest[key] is False for key in preservation.FALSE_FLAGS)
+    assert manifest["support_profile"]["cross_unit_definition_application_proved"] is False
+    assert manifest["support_profile"]["one_exact_signature_header_including_signature_id"] is True
+    assert {row["signature_id"] for row in manifest["units"]} == {manifest["signature_header"]["signature_id"]}
+    assert manifest["support_profile"]["duplicate_instance_declarations_across_physical_units"] == "entire_preparation_refused"
+    assert len({row["source_version_cid"] for row in manifest["units"]}) == 3
+    for row in manifest["units"]:
+        original = control["case"]["relational_inputs"][row["unit_id"]]
+        child = preservation.prepare_relational_ast_preservation(original["report"], original["request_raw"],
+            expected_report_sha256=original["expected_report_sha256"],
+            expected_request_sha256=row["relational_request_sha256"], toolchain=TOOLCHAIN)
+        assert row["child_preparation_sha256"] == preservation.preparation_sha256(child)
+        assert files[row["child_manifest_path"]] == child.manifest_json
+        assert len(row["original_child_files"]) == 7
+        for companion in row["original_child_files"]:
+            assert files[companion["companion_path"]] == dict(child.files)[companion["original_path"]]
+        module_path = row["instance_module"].replace(".", "/") + ".lean"
+        assert files[module_path] == dict(child.files)[module_path]
+        assert row["preservation_obligations"] == child.to_dict()["theorems"]
+    assert files[shared.REVIEWED_PRESERVATION_ROOT + ".lean"] == "".join(
+        "import " + row["instance_module"] + "\n" for row in manifest["units"])
+    import tomllib
+    library, = tomllib.loads(files["lakefile.toml"])["lean_lib"]
+    assert library["name"] == "legal"
+    assert library["roots"] == manifest["expected_modules"]
+    assert len(library["roots"]) == len(set(library["roots"])) == 6
+    assert before == control["owner"].norm._snapshot({"args": list(control["args"]), "kwargs": control["kwargs"]})[1]
+
+
+@pytest.mark.parametrize("damage", ["missing_unit", "duplicate_unit", "reordered_units", "fifth_obligation",
+    "alias_obligation", "occurrence", "source_version", "ast", "request", "scope", "roles",
+    "inputs_companion", "child_lakefile", "child_root", "child_manifest", "active_instance", "aggregate_root",
+    "aggregate_lakefile", "authority", "training_mask"])
+def test_reviewed_preservation_v2_resealed_projection_or_project_requires_full_regeneration(
+        reviewed_preservation_control_v2, damage):
+    control = reviewed_preservation_control_v2
+    prepared = control["preparation"]
+    manifest, files = prepared.to_dict(), dict(prepared.files)
+    unit = manifest["units"][1]
+    if damage == "missing_unit": manifest["units"].pop()
+    elif damage == "duplicate_unit": manifest["units"][2] = deepcopy(unit)
+    elif damage == "reordered_units": manifest["units"].reverse()
+    elif damage == "fifth_obligation": unit["preservation_obligations"].pop()
+    elif damage == "alias_obligation":
+        unit["preservation_obligations"][-1] = unit["instance_module"] + ".alias_iff_assuming_desired_equivalence"
+    elif damage in ("occurrence", "source_version", "ast", "request", "scope"):
+        field = {"occurrence": "source_occurrence_cid", "source_version": "source_version_cid",
+            "ast": "complete_ir_sha256", "request": "relational_request_sha256", "scope": "scope_record_cid"}[damage]
+        unit[field] = manifest["units"][0][field] if damage != "scope" else "fixture:unreviewed-scope"
+    elif damage == "roles":
+        manifest["predicate_compatibility_ledger"]["CoveredOfficer"]["ordered_argument_roles"] = ["different_role"]
+    elif damage in ("inputs_companion", "child_lakefile", "child_root"):
+        original_name = {"inputs_companion": "preservation-inputs.json", "child_lakefile": "lakefile.toml",
+            "child_root": "LegalRelationalAstPreservation.lean"}[damage]
+        companion = next(row for row in unit["original_child_files"] if row["original_path"] == original_name)
+        files[companion["companion_path"]] += "\nchanged retained child bytes\n"
+        companion["sha256"] = sha(files[companion["companion_path"]].encode())
+    elif damage == "child_manifest": files[unit["child_manifest_path"]] += "\n"
+    elif damage == "active_instance": files[unit["instance_module"].replace(".", "/") + ".lean"] += "\n-- changed\n"
+    elif damage == "aggregate_root": files[shared.REVIEWED_PRESERVATION_ROOT + ".lean"] = "-- missing all units\n"
+    elif damage == "aggregate_lakefile": files["lakefile.toml"] = files["lakefile.toml"].replace("legal", "other", 1)
+    elif damage == "authority": manifest["authority"]["corpus_admission"] = True
+    elif damage == "training_mask": manifest["training_mask"] = 1
+    forged = reviewed_preservation_reseal_fixture_v2(prepared, manifest, files)
+    with pytest.raises((ValueError, TypeError)):
+        reviewed_preservation_validate_fixture_v2(control, forged)
+
+
+@pytest.mark.parametrize("damage", ["source", "IR_request", "IR_report", "review", "revoked", "expired",
+    "dependency", "graph", "admission", "toolchain"])
+def test_reviewed_preservation_v2_replays_current_sources_reviews_dependencies_and_graph(
+        reviewed_preservation_control_v2, damage):
+    control = reviewed_preservation_control_v2
+    args, kwargs = deepcopy(control["args"]), deepcopy(control["kwargs"])
+    unit_id = control["case"]["declaration"]["units"][1]["unit_id"]
+    if damage == "source": kwargs["preparation_inputs"]["source_inputs"][unit_id]["raw_bytes"] += b" changed"
+    elif damage == "IR_request": kwargs["preparation_inputs"]["relational_inputs"][unit_id]["request_raw"] += b" "
+    elif damage == "IR_report": kwargs["preparation_inputs"]["relational_inputs"][unit_id]["report"]["argument_roles"][0]["roles"] = ["other"]
+    elif damage == "review": args[3][0]["interpretation"]["rationale"] += " unsigned"
+    elif damage == "revoked":
+        case = deepcopy({key: value for key, value in control["case"].items() if key != "signers"})
+        case["signers"] = control["case"]["signers"]
+        case["registry"]["keys"][0]["revoked_at_utc"] = kwargs["at_time_utc"]
+        control["helper"].reviewed_resign_v2(case)
+        args, kwargs = control["helper"].reviewed_assessment_arguments_v2(control["owner"], case)
+    elif damage == "expired": kwargs["at_time_utc"] = "2026-11-02T00:00:00Z"
+    elif damage == "dependency": kwargs["observed_artifact_sha256s"][unit_id + ":source"] = "f" * 64
+    elif damage == "graph":
+        graph = deepcopy(control["graph"])
+        graph["unit_records"].reverse()
+        with pytest.raises((ValueError, TypeError)):
+            reviewed_preservation_prepare_fixture_v2(control, graph=graph)
+        return
+    elif damage == "admission":
+        admission = deepcopy(control["admission"])
+        admission["units"][1]["canonical_ir"]["assumptions"] = ["Assume desired equivalence."]
+        with pytest.raises((ValueError, TypeError)):
+            reviewed_preservation_prepare_fixture_v2(control, admission=admission)
+        return
+    with pytest.raises((ValueError, TypeError)):
+        reviewed_preservation_validate_fixture_v2(control, args=args, kwargs=kwargs,
+            toolchain="leanprover/lean4:v4.35.0" if damage == "toolchain" else TOOLCHAIN)
+
+
+def test_reviewed_preservation_v2_refuses_same_ir_at_distinct_physical_uses():
+    from ipfs_datasets_py.logic.autoformal import legal_norm_content_adjudication_v1 as admission_owner
+    helper = reviewed_preservation_fixture_helper_v2()
+    case = helper.reviewed_norm_fixture_v2(admission_owner)
+    original, repeated = case["declaration"]["units"][1:]
+    assert original["occurrence"]["record_cid"] != repeated["occurrence"]["record_cid"]
+    case["relational_inputs"][repeated["unit_id"]] = deepcopy(case["relational_inputs"][original["unit_id"]])
+    repeated["relational_request_sha256"] = original["relational_request_sha256"]
+    report = case["relational_inputs"][repeated["unit_id"]]["report"]
+    text = case["source_inputs"][repeated["unit_id"]]["extracted_text"]
+    repeated["coverage"] = [{"typed_path": row["typed_path"], "start_char": 0, "end_char": len(text),
+        "start_utf8": 0, "end_utf8": len(text.encode())} for row in report["structural_mapping"]]
+    case["declaration"]["definition_uses"][1]["target_typed_paths"] = deepcopy(
+        case["declaration"]["definition_uses"][0]["target_typed_paths"])
+    reviewed_preservation_reauthorize_fixture_v2(helper, admission_owner, case)
+    control = reviewed_preservation_graph_fixture_v2(helper, admission_owner, case)
+    with pytest.raises(ValueError, match="distinct physical units cannot share an instance"):
+        reviewed_preservation_prepare_fixture_v2(control)
+
+
+def test_reviewed_preservation_v2_requires_explicit_proof_obligation_permission():
+    from ipfs_datasets_py.logic.autoformal import legal_norm_content_adjudication_v1 as admission_owner
+    helper = reviewed_preservation_fixture_helper_v2()
+    case = helper.reviewed_norm_fixture_v2(admission_owner)
+    case["declaration"]["permitted_uses"] = ["formalization"]
+    reviewed_preservation_reauthorize_fixture_v2(helper, admission_owner, case)
+    control = reviewed_preservation_graph_fixture_v2(helper, admission_owner, case)
+    with pytest.raises(ValueError, match="explicit reviewed formalization and proof-obligation permissions"):
+        reviewed_preservation_prepare_fixture_v2(control)
+
+
+@pytest.mark.parametrize("damage", ["roles", "signature_id"])
+def test_reviewed_preservation_v2_refuses_incompatible_shared_contract_after_valid_independent_replay(damage):
+    from ipfs_datasets_py.logic.autoformal import legal_norm_content_adjudication_v1 as admission_owner
+    from ipfs_datasets_py.logic.autoformal import legal_relational_norm_v1 as relational
+    helper = reviewed_preservation_fixture_helper_v2()
+    case = helper.reviewed_norm_fixture_v2(admission_owner)
+    unit = case["declaration"]["units"][2]
+    request = json.loads(case["relational_inputs"][unit["unit_id"]]["request_raw"])
+
+    def rename(node):
+        if type(node) is dict:
+            if node.get("kind") == "predicate" and node.get("symbol") == "InspectsRegister":
+                node["symbol"] = "FilesReport"
+            for value in node.values(): rename(value)
+        elif type(node) is list:
+            for value in node: rename(value)
+
+    if damage == "roles":
+        rename(request["expression"]["root"])
+        for symbol in request["expression"]["signature"]["symbols"]:
+            if symbol["name"] == "InspectsRegister": symbol["name"] = "FilesReport"
+        for roles in request["argument_roles"]:
+            if roles["symbol"] == "InspectsRegister":
+                roles.update(symbol="FilesReport", roles=["different_ordered_role"])
+    else:
+        # A separately named vocabulary is deliberately outside this minimal
+        # common-header profile, despite otherwise compatible Object symbols.
+        request["expression"]["signature"]["signature_id"] = "fixture:separate-signature"
+    reviewed_preservation_refresh_expression_v2(request)
+    request_raw = canonical_dag_json_bytes(request)
+    report = relational.prepare_relational_norm_v1(request_raw, expected_request_sha256=sha(request_raw))
+    case["relational_inputs"][unit["unit_id"]] = {"request_raw": request_raw, "report": report,
+        "expected_report_sha256": relational.relational_norm_report_sha256(report)}
+    unit["relational_request_sha256"] = sha(request_raw)
+    reviewed_preservation_reauthorize_fixture_v2(helper, admission_owner, case)
+    control = reviewed_preservation_graph_fixture_v2(helper, admission_owner, case)
+    message = "shared predicate signature or ordered argument roles differ" if damage == "roles" else "shared Object signature headers differ"
+    with pytest.raises(ValueError, match=message):
+        reviewed_preservation_prepare_fixture_v2(control)
+
+
+def test_reviewed_preservation_v2_keeps_different_definition_bodies_in_distinct_instances():
+    from ipfs_datasets_py.logic.autoformal import legal_norm_content_adjudication_v1 as admission_owner
+    from ipfs_datasets_py.logic.autoformal import legal_relational_norm_v1 as relational, corpus_source as sources
+    helper = reviewed_preservation_fixture_helper_v2()
+    case = helper.reviewed_norm_fixture_v2(admission_owner)
+    old = case["declaration"]["units"][0]
+    new = deepcopy(old)
+    identity = "fixture:act-v1/unit-4"
+    text = "For this fictional Act, a covered officer means an officer appointed by the Commission."
+    raw = text.encode("utf-8")
+    version = sources.build_source_version(source_id=identity, release_id="fixture:act-v1",
+        edition="fictional-edition-1", provision_id=identity, raw_bytes=raw,
+        expected_raw_sha256=sha(raw), extracted_text=text, expected_extracted_sha256=sha(raw),
+        extraction_profile="identity/v1", normalization_profile="identity/v1", media_type="text/plain")
+    occurrence = sources.build_source_occurrence(version, expected_raw_sha256=sha(raw), extracted_text=text,
+        expected_extracted_sha256=sha(raw), start_char=0, end_char=len(text), start_utf8=0, end_utf8=len(raw))
+    # The whole original request is retained with one explicit fictional body
+    # change. Nothing unifies the two different meanings of CoveredOfficer.
+    request = json.loads(case["relational_inputs"][old["unit_id"]]["request_raw"].decode().replace(
+        "AppointedByBoard", "AppointedByCommission"))
+    reviewed_preservation_refresh_expression_v2(request)
+    request = canonical_dag_json_bytes(request)
+    report = relational.prepare_relational_norm_v1(request, expected_request_sha256=sha(request))
+    new.update(unit_id=identity, source_version=version, occurrence=occurrence,
+        source_artifact_id=identity + ":source", ir_artifact_id=identity + ":ir",
+        relational_request_sha256=sha(request), coverage=[{"typed_path": row["typed_path"],
+            "start_char": 0, "end_char": len(text), "start_utf8": 0, "end_utf8": len(raw)}
+            for row in report["structural_mapping"]])
+    case["declaration"]["units"].append(new)
+    case["source_inputs"][identity] = {"raw_bytes": raw, "extracted_text": text}
+    case["relational_inputs"][identity] = {"request_raw": request, "report": report,
+        "expected_report_sha256": relational.relational_norm_report_sha256(report)}
+    case["declaration"]["definition_uses"][1]["definition_unit_id"] = identity
+    reviewed_preservation_reauthorize_fixture_v2(helper, admission_owner, case)
+    control = reviewed_preservation_graph_fixture_v2(helper, admission_owner, case)
+    prepared = reviewed_preservation_prepare_fixture_v2(control)
+    manifest = prepared.to_dict()
+    definitions = [row for row in manifest["units"] if row["kind"] == "definition"]
+    assert len(definitions) == 2 and len({row["instance_module"] for row in definitions}) == 2
+    assert len({row["complete_ir_sha256"] for row in definitions}) == 2
+    assert len(manifest["preservation_obligations"]) == 20
+    assert manifest["support_profile"]["cross_unit_definition_application_proved"] is False
+
+
+@pytest.mark.parametrize("damage", ["duplicate", "parent_path", "absolute", "nested", "reordered"])
+def test_reviewed_preservation_v2_requires_safe_unique_bounded_project_paths(reviewed_preservation_control_v2, damage):
+    offered = reviewed_preservation_control_v2["preparation"]
+    pairs = list(offered.files)
+    if damage == "duplicate": pairs.append(pairs[0])
+    elif damage == "reordered": pairs.reverse()
+    else:
+        name = {"parent_path": "../outside", "absolute": "/outside", "nested": "a/b/c"}[damage]
+        pairs[0] = (name, pairs[0][1])
+        pairs.sort()
+    with pytest.raises(ValueError):
+        shared.reviewed_preservation_corpus_sha256(replace(offered, files=tuple(pairs)))
+
+
+@pytest.mark.parametrize("damage", ["common_semantics", "common_prelude", "fifth_obligation", "counted", "agent", "sort",
+    "authority", "report_pin", "mask"])
+def test_reviewed_preservation_v2_checks_child_composition_contract(reviewed_preservation_control_v2, monkeypatch, damage):
+    from ipfs_datasets_py.logic.autoformal import legal_native_ast_preservation as preservation
+    control = reviewed_preservation_control_v2
+    original = preservation.prepare_relational_ast_preservation
+    calls = []
+
+    def changed(*args, **kwargs):
+        child = original(*args, **kwargs)
+        # The first unit remains unmodified, so differing common bytes cannot
+        # be silently deduplicated. The validator also regenerates each child.
+        report_sha = kwargs["expected_report_sha256"]
+        if report_sha not in calls: calls.append(report_sha)
+        if calls.index(report_sha) != 1: return child
+        manifest, files = child.to_dict(), dict(child.files)
+        if damage in ("common_semantics", "common_prelude"):
+            name = "LegalRelationalAstPreservation/" + ("Semantics" if damage == "common_semantics" else "Prelude") + ".lean"
+            files[name] += "\n-- changed common bytes\n"
+        elif damage == "fifth_obligation": manifest["theorems"].pop()
+        elif damage == "counted": manifest["support_profile"]["counting_supported"] = True
+        elif damage == "agent": manifest["support_profile"]["modal_agent"] = "InventedAgent"
+        elif damage == "sort": manifest["support_profile"]["typed_sort"] = "Person"
+        elif damage == "authority": manifest["authority"]["proof"] = True
+        elif damage == "report_pin": manifest["relational_report_sha256"] = "f" * 64
+        elif damage == "mask": manifest["training_mask"] = False
+        manifest["file_sha256"] = {name: sha(body.encode()) for name, body in sorted(files.items())}
+        manifest = contracts.seal_record({key: value for key, value in manifest.items()
+                                          if key not in ("record_cid", "cid_scope")})
+        return replace(child, manifest_json=canonical_dag_json_bytes(manifest).decode(), files=tuple(sorted(files.items())))
+
+    monkeypatch.setattr(preservation, "prepare_relational_ast_preservation", changed)
+    with pytest.raises(ValueError):
+        reviewed_preservation_prepare_fixture_v2(control)
+
+
+@pytest.mark.parametrize("damage", ["caller_inputs", "producer_pins"])
+def test_reviewed_preservation_v2_fences_operation_inputs_and_producers(reviewed_preservation_control_v2, monkeypatch, damage):
+    from ipfs_datasets_py.logic.autoformal import legal_native_ast_preservation as preservation
+    control = reviewed_preservation_control_v2
+    if damage == "caller_inputs":
+        original = preservation.prepare_relational_ast_preservation
+
+        def changing(*args, **kwargs):
+            result = original(*args, **kwargs)
+            unit_id = control["case"]["declaration"]["units"][0]["unit_id"]
+            control["kwargs"]["preparation_inputs"]["source_inputs"][unit_id]["raw_bytes"] += b" changed caller bytes"
+            return result
+
+        monkeypatch.setattr(preservation, "prepare_relational_ast_preservation", changing)
+    else:
+        original = shared._reviewed_preservation_pins
+        calls = []
+
+        def changing(owners):
+            result = original(owners)
+            calls.append(True)
+            if len(calls) > 1:
+                result[str(Path(shared.__file__).resolve())] = "f" * 64
+            return result
+
+        monkeypatch.setattr(shared, "_reviewed_preservation_pins", changing)
+    with pytest.raises(ValueError, match="inputs, preparation or producers changed"):
+        reviewed_preservation_prepare_fixture_v2(control)
+
+
+# Reuse complete fictional V3 admission and graph fixtures before reproducing
+# the aggregate seam. No legal review, child proof or original build is invented.
+def test_reviewed_preservation_v3_requires_explicit_aggregate_after_genuine_mixed_replay(
+        tmp_path_factory):
+    from tests.unit.logic.autoformal import test_corpus_norm_definition_adapter as graph_fixture
+    from ipfs_datasets_py.logic.autoformal import legal_native_ast_preservation as preservation
+    from ipfs_datasets_py.logic.autoformal import legal_relational_norm_v1 as relational
+
+    baseline = graph_fixture.reviewed_graph_baseline_v3.__wrapped__(tmp_path_factory)
+    baseline["helper"].assert_signatures_valid(baseline["case"])
+    admission = baseline["admission"]
+    assert admission["semantic_use_eligible"] is True and admission["fixture_only"] is True
+    assert admission["blockers"] == []
+    assert {"formalization", "proof_obligation"} <= set(admission["permitted_uses"])
+    graph = graph_fixture.build_reviewed_graph_fixture_v3(baseline)
+    assert graph_fixture.validate_reviewed_graph_fixture_v3(baseline, graph) == graph
+    assert graph["schema"] == "legal-corpus-reviewed-norm-candidate-graph/v3"
+    assert graph["counts"]["units"] == 3 and graph["counts"]["definitions"] == 1
+    assert graph["counts"]["norms"] == graph["counts"]["definition_uses"] == 2
+    assert graph["semantic_use_eligible"] is False and not any(graph["authority"].values())
+    assert all(type(graph[key]) is int and graph[key] == 0
+               for key in ("training_mask", "evaluation_gold_mask"))
+    declaration = baseline["case"]["declaration"]
+    assert [unit["relational_profile"] for unit in declaration["units"]] == [
+        relational.PROFILE, relational.PROFILE, relational.MIXED_PROFILE]
+    original = baseline["admission_owner"].norm._snapshot({
+        "args": list(baseline["args"]), "inputs": baseline["inputs"]})[1]
+    children = []
+    headers = []
+    for unit, admitted, graph_unit, ast_record in zip(declaration["units"], admission["units"],
+            graph["unit_records"], graph["ast_records"], strict=True):
+        inputs = baseline["case"]["relational_inputs"][unit["unit_id"]]
+        report, request_raw = inputs["report"], inputs["request_raw"]
+        ir = json.loads(ast_record["ast_json"])
+        assert canonical_dag_json_bytes(ir) == canonical_dag_json_bytes(admitted["canonical_ir"])
+        assert ir["typed_expression"] == report["typed_expression"]
+        assert ir["argument_roles"] == report["argument_roles"] == admitted["argument_roles"]
+        assert ir["source_binding"]["source_version_cid"] == unit["source_version"]["record_cid"]
+        assert ir["source_binding"]["occurrence_cid"] == unit["occurrence"]["record_cid"]
+        assert graph_unit["relational_request_sha256"] == unit["relational_request_sha256"]
+        headers.append({key: value for key, value in ir["typed_expression"]["signature"].items()
+                        if key != "symbols"})
+        child_args = dict(expected_report_sha256=inputs["expected_report_sha256"],
+                          expected_request_sha256=unit["relational_request_sha256"], toolchain=TOOLCHAIN)
+        if unit["relational_profile"] == relational.MIXED_PROFILE:
+            child = preservation.prepare_mixed_relational_ast_preservation(report, request_raw, **child_args)
+            child_pin = preservation.preparation_sha256(child)
+            assert preservation.validate_mixed_relational_ast_preservation(child, report, request_raw,
+                expected_preparation_sha256=child_pin, **child_args) == child
+            manifest = child.to_dict()
+            assert manifest["profile"] == preservation.MIXED_PROFILE
+            assert manifest["mixed_report_sha256"] == inputs["expected_report_sha256"]
+            assert manifest["native_ast"] is None and manifest["native_TDFOL_route_used"] is False
+            assert manifest["native_parser_roundtrip"] is False
+        else:
+            child = preservation.prepare_relational_ast_preservation(report, request_raw, **child_args)
+            child_pin = preservation.preparation_sha256(child)
+            assert preservation.validate_relational_ast_preservation(child, report, request_raw,
+                expected_preparation_sha256=child_pin, **child_args) == child
+            manifest = child.to_dict()
+            assert manifest["profile"] == preservation.RELATIONAL_PROFILE
+            assert manifest["relational_report_sha256"] == inputs["expected_report_sha256"]
+        assert manifest["original_request_sha256"] == unit["relational_request_sha256"]
+        assert manifest["preparation_only"] is True and not any(manifest["authority"].values())
+        assert all(type(manifest[key]) is int and manifest[key] == 0
+                   for key in ("training_mask", "evaluation_gold_mask"))
+        assert len(child.files) == 7 and len(manifest["expected_modules"]) == 4
+        assert len(manifest["theorems"]) == len(set(manifest["theorems"])) == 5
+        assert manifest["file_sha256"] == {name: sha(body.encode("utf-8")) for name, body in child.files}
+        children.append(child)
+    assert len(children) == 3 and headers[0] == headers[1] and headers[2] != headers[0]
+    assert sum(len(child.to_dict()["theorems"]) for child in children) == 15
+    assert original == baseline["admission_owner"].norm._snapshot({
+        "args": list(baseline["args"]), "inputs": baseline["inputs"]})[1]
+
+    # The existing exact Object-only aggregate retains its original V2 domain.
+    with pytest.raises(ValueError):
+        shared.prepare_reviewed_norm_preservation_corpus_v2(graph, admission, *baseline["args"],
+            expected_graph_sha256=graph_fixture.owner.norm_definition_graph_sha256(graph),
+            expected_admission_sha256=baseline["admission_sha256"], toolchain=TOOLCHAIN,
+            **baseline["inputs"])
+    assert original == baseline["admission_owner"].norm._snapshot({
+        "args": list(baseline["args"]), "inputs": baseline["inputs"]})[1]
+    assert callable(getattr(shared, "prepare_reviewed_norm_preservation_corpus_v3", None)), (
+        "explicit reviewed mixed-sort aggregate preservation missing after accepted V3 admission, graph and child replay")
+
+
+
+def reviewed_preservation_graph_fixture_v3(tmp_path_factory):
+    from tests.unit.logic.autoformal import test_corpus_norm_definition_adapter as graph_fixture
+    baseline = graph_fixture.reviewed_graph_baseline_v3.__wrapped__(tmp_path_factory)
+    baseline["helper"].assert_signatures_valid(baseline["case"])
+    graph = graph_fixture.build_reviewed_graph_fixture_v3(baseline)
+    assert graph_fixture.validate_reviewed_graph_fixture_v3(baseline, graph) == graph
+    return dict(helper=graph_fixture, mixed_helper=baseline["helper"], owner=baseline["admission_owner"],
+        case=baseline["case"], args=baseline["args"], kwargs=baseline["inputs"],
+        admission=baseline["admission"], graph=graph, admission_sha=baseline["admission_sha256"],
+        graph_sha=graph_fixture.owner.norm_definition_graph_sha256(graph))
+
+
+def reviewed_preservation_prepare_fixture_v3(control, *, graph=None, admission=None, args=None, kwargs=None):
+    return shared.prepare_reviewed_norm_preservation_corpus_v3(
+        control["graph"] if graph is None else graph, control["admission"] if admission is None else admission,
+        *(control["args"] if args is None else args), expected_graph_sha256=control["graph_sha"],
+        expected_admission_sha256=control["admission_sha"], toolchain=TOOLCHAIN,
+        **(control["kwargs"] if kwargs is None else kwargs))
+
+
+def reviewed_preservation_validate_fixture_v3(control, offered=None, *, args=None, kwargs=None, toolchain=TOOLCHAIN):
+    offered = control["preparation"] if offered is None else offered
+    return shared.validate_reviewed_norm_preservation_corpus_v3(offered, control["graph"], control["admission"],
+        *(control["args"] if args is None else args),
+        expected_preservation_sha256=shared.reviewed_preservation_corpus_sha256(offered),
+        expected_graph_sha256=control["graph_sha"], expected_admission_sha256=control["admission_sha"],
+        toolchain=toolchain, **(control["kwargs"] if kwargs is None else kwargs))
+
+
+@pytest.fixture(scope="module")
+def reviewed_preservation_control_v3(tmp_path_factory):
+    control = reviewed_preservation_graph_fixture_v3(tmp_path_factory)
+    control["preparation"] = reviewed_preservation_prepare_fixture_v3(control)
+    return control
+
+
+def test_reviewed_preservation_v3_retains_all_mixed_and_object_children_without_coercion(reviewed_preservation_control_v3):
+    from ipfs_datasets_py.logic.autoformal import legal_native_ast_preservation as preservation
+    from ipfs_datasets_py.logic.autoformal import legal_relational_norm_v1 as relational
+    control = reviewed_preservation_control_v3
+    prepared = control["preparation"]
+    assert reviewed_preservation_validate_fixture_v3(control) == prepared
+    manifest, files = prepared.to_dict(), dict(prepared.files)
+    assert manifest["schema"] == shared.REVIEWED_MIXED_PRESERVATION_SCHEMA
+    assert manifest["profile"] == shared.REVIEWED_MIXED_PRESERVATION_PROFILE
+    assert len(files) == 35 and len(manifest["expected_modules"]) == 8
+    assert len(manifest["preservation_obligations"]) == len(set(manifest["preservation_obligations"])) == 15
+    assert len(manifest["common_module_profiles"]) == 2
+    assert len({x["signature_namespace_sha256"] for x in manifest["units"]}) == 2
+    assert manifest["definition_use_record_cids"] == [x["record_cid"] for x in control["graph"]["definition_use_records"]]
+    assert manifest["preparation_only"] is True and manifest["semantic_use_eligible"] is False
+    assert manifest["proof_status"] == manifest["lean_compilation_status"] == "not_executed"
+    assert not any(manifest["authority"].values())
+    assert all(type(manifest[k]) is int and manifest[k] == 0 for k in ("training_mask", "evaluation_gold_mask"))
+    assert all(manifest[k] is False for k in preservation.FALSE_FLAGS)
+    support = manifest["support_profile"]
+    assert support["all_declared_units_required"] is support["ordered_units_preserved"] is True
+    assert support["cross_namespace_signature_or_carrier_coercion"] is False
+    assert support["cross_unit_definition_application_proved"] is False
+    assert support["predicate_compatibility_is_syntactic_only"] is True
+    assert (support["max_units"], support["max_files"], support["max_modules"], support["max_obligations"],
+            support["max_project_utf8_bytes"]) == (8, 78, 11, 40, 8 * 1024 * 1024)
+    source_units = control["case"]["declaration"]["units"]
+    assert [row["unit_id"] for row in manifest["units"]] == [row["unit_id"] for row in source_units]
+    headers = manifest["signature_headers_by_unit"]
+    assert headers[0]["signature_header"] == headers[1]["signature_header"]
+    assert headers[2]["signature_header"] != headers[0]["signature_header"]
+    assert len(manifest["predicate_compatibility_ledger"]) == 2
+    for row, header, unit in zip(manifest["units"], headers, source_units, strict=True):
+        inputs = control["case"]["relational_inputs"][unit["unit_id"]]
+        report = inputs["report"]
+        expected_header = {k: v for k, v in report["typed_expression"]["signature"].items() if k != "symbols"}
+        assert row["signature_header"] == header["signature_header"] == expected_header
+        assert header["unit_id"] == row["unit_id"]
+        assert row["relational_profile"] == header["relational_profile"] == unit["relational_profile"]
+        assert row["signature_namespace_sha256"] == header["signature_namespace_sha256"] == sha(
+            canonical_dag_json_bytes({"relational_profile": report["profile"], "signature_header": expected_header}))
+        assert row["source_version_cid"] == unit["source_version"]["record_cid"]
+        assert row["source_occurrence_cid"] == unit["occurrence"]["record_cid"]
+        args = dict(expected_report_sha256=inputs["expected_report_sha256"],
+            expected_request_sha256=unit["relational_request_sha256"], toolchain=TOOLCHAIN)
+        if unit["relational_profile"] == relational.MIXED_PROFILE:
+            child = preservation.prepare_mixed_relational_ast_preservation(report, inputs["request_raw"], **args)
+            assert row["child_family"] == "tdfol" and row["child_preservation_profile"] == preservation.MIXED_PROFILE
+            assert child.to_dict()["native_ast"] is None and child.to_dict()["native_parser_roundtrip"] is False
+        else:
+            child = preservation.prepare_relational_ast_preservation(report, inputs["request_raw"], **args)
+            assert row["child_family"] == "deontic_fol" and row["child_preservation_profile"] == preservation.RELATIONAL_PROFILE
+        assert row["child_preparation_sha256"] == preservation.preparation_sha256(child)
+        assert files[row["child_manifest_path"]] == child.manifest_json
+        assert len(row["original_child_files"]) == 7
+        for companion in row["original_child_files"]:
+            assert files[companion["companion_path"]] == dict(child.files)[companion["original_path"]]
+        path = row["instance_module"].replace(".", "/") + ".lean"
+        assert files[path] == dict(child.files)[path]
+        assert row["preservation_obligations"] == child.to_dict()["theorems"]
+    root = shared.REVIEWED_MIXED_PRESERVATION_ROOT
+    assert files[root + ".lean"] == "".join("import " + x["instance_module"] + "\n" for x in manifest["units"])
+    import tomllib
+    library, = tomllib.loads(files["lakefile.toml"])["lean_lib"]
+    assert library["roots"] == manifest["expected_modules"]
+    assert manifest["file_sha256"] == {name: sha(body.encode()) for name, body in files.items()}
+
+
+@pytest.mark.parametrize("damage", ["missing_unit", "duplicate_unit", "reordered_units", "header", "namespace",
+    "source_version", "profile", "child_family", "child_profile", "definition_use", "fifth_obligation",
+    "alias_obligation", "predicate_roles", "companion", "child_manifest", "active_mixed", "active_object",
+    "common_semantics", "aggregate_root", "lakefile", "authority", "mask"])
+def test_reviewed_preservation_v3_resealed_population_namespace_and_child_mutants_refuse(reviewed_preservation_control_v3, damage):
+    control = reviewed_preservation_control_v3
+    prepared = control["preparation"]
+    manifest, files = prepared.to_dict(), dict(prepared.files)
+    row = manifest["units"][2]
+    if damage == "missing_unit": manifest["units"].pop()
+    elif damage == "duplicate_unit": manifest["units"][2] = deepcopy(manifest["units"][1])
+    elif damage == "reordered_units": manifest["units"].reverse()
+    elif damage == "header": manifest["signature_headers_by_unit"][2]["signature_header"] = deepcopy(manifest["signature_headers_by_unit"][0]["signature_header"])
+    elif damage == "namespace": row["signature_namespace_sha256"] = manifest["units"][0]["signature_namespace_sha256"]
+    elif damage == "source_version": row["source_version_cid"] = manifest["units"][0]["source_version_cid"]
+    elif damage == "profile": row["relational_profile"] = manifest["units"][0]["relational_profile"]
+    elif damage == "child_family": row["child_family"] = "deontic_fol"
+    elif damage == "child_profile": row["child_preservation_profile"] = manifest["units"][0]["child_preservation_profile"]
+    elif damage == "definition_use": manifest["definition_use_record_cids"].pop()
+    elif damage == "fifth_obligation": row["preservation_obligations"].pop()
+    elif damage == "alias_obligation": row["preservation_obligations"][-1] = row["instance_module"] + ".alias_assuming_desired_equivalence"
+    elif damage == "predicate_roles":
+        ledger = next(x for x in manifest["predicate_compatibility_ledger"].values() if x["relational_profile"] == row["relational_profile"])
+        ledger["predicates"]["CoveredOfficer"]["ordered_argument_roles"] = ["invented_role"]
+    elif damage == "companion":
+        x = next(x for x in row["original_child_files"] if x["original_path"] == "preservation-inputs.json")
+        files[x["companion_path"]] += "\nchanged complete retained inputs\n"
+        x["sha256"] = sha(files[x["companion_path"]].encode())
+    elif damage == "child_manifest": files[row["child_manifest_path"]] += "\n"
+    elif damage in ("active_mixed", "active_object"):
+        chosen = row if damage == "active_mixed" else manifest["units"][0]
+        files[chosen["instance_module"].replace(".", "/") + ".lean"] += "\n-- changed complete witness\n"
+    elif damage == "common_semantics": files["LegalMixedRelationalAstPreservation/Semantics.lean"] += "\n-- changed common semantics\n"
+    elif damage == "aggregate_root": files[shared.REVIEWED_MIXED_PRESERVATION_ROOT + ".lean"] = "-- omitted all units\n"
+    elif damage == "lakefile": files["lakefile.toml"] = files["lakefile.toml"].replace("legal", "other", 1)
+    elif damage == "authority": manifest["authority"]["corpus_admission"] = True
+    elif damage == "mask": manifest["training_mask"] = False
+    forged = reviewed_preservation_reseal_fixture_v2(prepared, manifest, files)
+    with pytest.raises((ValueError, TypeError)):
+        reviewed_preservation_validate_fixture_v3(control, forged)
+
+
+@pytest.mark.parametrize("damage", ["source", "request", "report", "review", "time", "dependency"])
+def test_reviewed_preservation_v3_replays_current_complete_sources_reviews_and_dependencies(reviewed_preservation_control_v3, damage):
+    control = reviewed_preservation_control_v3
+    args, kwargs = deepcopy(control["args"]), deepcopy(control["kwargs"])
+    unit_id = control["case"]["declaration"]["units"][2]["unit_id"]
+    if damage == "source": kwargs["preparation_inputs"]["source_inputs"][unit_id]["raw_bytes"] += b" changed"
+    elif damage == "request": kwargs["preparation_inputs"]["relational_inputs"][unit_id]["request_raw"] += b" "
+    elif damage == "report": kwargs["preparation_inputs"]["relational_inputs"][unit_id]["report"]["argument_roles"][0]["roles"] = ["invented_role"]
+    elif damage == "review": args[3][0]["interpretation"]["rationale"] += " unsigned change"
+    elif damage == "time": kwargs["at_time_utc"] = "2026-11-02T00:00:00Z"
+    elif damage == "dependency": kwargs["observed_artifact_sha256s"][unit_id + ":source"] = "f" * 64
+    with pytest.raises((ValueError, TypeError)):
+        reviewed_preservation_validate_fixture_v3(control, args=args, kwargs=kwargs)
+
+
+@pytest.mark.parametrize("direction", ["v2_prepare_v3", "v3_prepare_v2", "v2_validate_v3", "v3_validate_v2"])
+def test_reviewed_preservation_v3_and_v2_domains_remain_separate(reviewed_preservation_control_v3, reviewed_preservation_control_v2, direction):
+    v3, v2 = reviewed_preservation_control_v3, reviewed_preservation_control_v2
+    with pytest.raises((ValueError, TypeError)):
+        if direction == "v2_prepare_v3": reviewed_preservation_prepare_fixture_v2(v3)
+        elif direction == "v3_prepare_v2": reviewed_preservation_prepare_fixture_v3(v2)
+        elif direction == "v2_validate_v3": reviewed_preservation_validate_fixture_v2(v3)
+        else: reviewed_preservation_validate_fixture_v3(v3, v2["preparation"])
+
+
+@pytest.mark.parametrize("field,value", [
+    ("REVIEWED_MIXED_PRESERVATION_SCHEMA", "legal-corpus-reviewed-preservation-preparation/v2"),
+    ("REVIEWED_MIXED_PRESERVATION_PROFILE", "reviewed-multi-unit-object-relational-preservation/v2"),
+    ("REVIEWED_MIXED_PRESERVATION_ROOT", "LegalReviewedNormPreservation"),
+    ("MAX_REVIEWED_PRESERVATION_UNITS", 9), ("MAX_REVIEWED_PRESERVATION_FILES", 79),
+    ("MAX_REVIEWED_PRESERVATION_MODULES", 12), ("MAX_REVIEWED_PRESERVATION_OBLIGATIONS", 41),
+    ("MAX_REVIEWED_PRESERVATION_UNITS", True), ("MAX_PROJECT_BYTES", 8 * 1024 * 1024 + 1)])
+def test_reviewed_preservation_v3_policy_aliases_and_raised_bounds_refuse_before_owners(reviewed_preservation_control_v3, monkeypatch, field, value):
+    target = shared.joint_owner if field == "MAX_PROJECT_BYTES" else shared
+    monkeypatch.setattr(target, field, value)
+    monkeypatch.setattr(shared, "_reviewed_mixed_preservation_owners", lambda: pytest.fail("lazy owners reached after fixed policy refusal"))
+    with pytest.raises(ValueError, match="fixed reviewed mixed preservation domain and original bounds"):
+        reviewed_preservation_prepare_fixture_v3(reviewed_preservation_control_v3)
+
+
+@pytest.mark.parametrize("field", ["RELATIONAL_PROFILE", "RELATIONAL_PROJECT_ROOT", "MIXED_PROFILE", "MIXED_PROJECT_ROOT", "AUTHORITY", "FALSE_FLAGS"])
+def test_reviewed_preservation_v3_child_domain_constant_swaps_refuse(reviewed_preservation_control_v3, monkeypatch, field):
+    from ipfs_datasets_py.logic.autoformal import legal_native_ast_preservation as preservation
+    if field in ("AUTHORITY", "FALSE_FLAGS"):
+        replacement = dict(getattr(preservation, field))
+        replacement[next(iter(replacement))] = True
+    else:
+        replacement = "invented-domain"
+    monkeypatch.setattr(preservation, field, replacement)
+    with pytest.raises(ValueError):
+        reviewed_preservation_prepare_fixture_v3(reviewed_preservation_control_v3)
+
+
+@pytest.mark.parametrize("field", ["root", "AUTHORITY", "FALSE_FLAGS"])
+def test_reviewed_preservation_v3_late_policy_change_cannot_return_a_success(reviewed_preservation_control_v3, monkeypatch, field):
+    from ipfs_datasets_py.logic.autoformal import legal_native_ast_preservation as preservation
+    mutated = []
+    if field == "root":
+        original = shared._reviewed_mixed_preservation_project
+        def changing(*args, **kwargs):
+            result = original(*args, **kwargs)
+            monkeypatch.setattr(shared, "REVIEWED_MIXED_PRESERVATION_ROOT", "ChangedAfterProject")
+            mutated.append(field)
+            return result
+        monkeypatch.setattr(shared, "_reviewed_mixed_preservation_project", changing)
+        reason = "fixed reviewed mixed preservation domain and original bounds"
+    else:
+        original = preservation.validate_mixed_relational_ast_preservation
+        def changing(*args, **kwargs):
+            result = original(*args, **kwargs)
+            replacement = dict(getattr(preservation, field))
+            replacement[next(iter(replacement))] = True
+            monkeypatch.setattr(preservation, field, replacement)
+            mutated.append(field)
+            return result
+        monkeypatch.setattr(preservation, "validate_mixed_relational_ast_preservation", changing)
+        reason = "complete unchanged child preservation domain and false authorities required"
+    with pytest.raises(ValueError, match=reason):
+        reviewed_preservation_prepare_fixture_v3(reviewed_preservation_control_v3)
+    assert mutated == [field]
+
+
+def reviewed_preservation_capacity_control_v3(control, total_units):
+    """Extend the existing explicitly fictional source/review fixture, not a legal review."""
+    from ipfs_datasets_py.logic.autoformal import corpus_source, legal_relational_norm_v1 as relational
+    case = deepcopy({k: v for k, v in control["case"].items() if k != "signers"})
+    case["signers"] = control["case"]["signers"]
+    template = case["declaration"]["units"][1]
+    original_raw = case["relational_inputs"][template["unit_id"]]["request_raw"]
+    original_text = case["source_inputs"][template["unit_id"]]["extracted_text"]
+    for ordinal in range(4, total_units + 1):
+        identity = case["declaration"]["component_id"] + "/capacity-use-" + str(ordinal)
+        text = original_text + " Fictional independent use " + str(ordinal) + "."
+        raw = text.encode("utf-8")
+        version = corpus_source.build_source_version(source_id=identity, release_id="fixture:mixed-act-v1",
+            edition="fictional-edition-1", provision_id=identity, raw_bytes=raw, expected_raw_sha256=sha(raw),
+            extracted_text=text, expected_extracted_sha256=sha(raw), extraction_profile="identity/v1",
+            normalization_profile="identity/v1", media_type="text/plain")
+        occurrence = corpus_source.build_source_occurrence(version, expected_raw_sha256=sha(raw),
+            extracted_text=text, expected_extracted_sha256=sha(raw), start_char=0, end_char=len(text), start_utf8=0, end_utf8=len(raw))
+        request = json.loads(original_raw)
+        request["expression"]["expression_id"] += ":capacity-" + str(ordinal)
+        reviewed_preservation_refresh_expression_v2(request)
+        request_raw = canonical_dag_json_bytes(request)
+        report = relational.prepare_relational_norm_v1(request_raw, expected_request_sha256=sha(request_raw))
+        unit = deepcopy(template)
+        unit.update(unit_id=identity, source_version=version, occurrence=occurrence,
+            source_artifact_id=identity + ":source", ir_artifact_id=identity + ":ir",
+            relational_request_sha256=sha(request_raw), coverage=[{"typed_path": x["typed_path"],
+                "start_char": 0, "end_char": len(text), "start_utf8": 0, "end_utf8": len(raw)} for x in report["structural_mapping"]])
+        case["declaration"]["units"].append(unit)
+        case["source_inputs"][identity] = {"raw_bytes": raw, "extracted_text": text}
+        case["relational_inputs"][identity] = dict(request_raw=request_raw, report=report,
+            expected_report_sha256=relational.relational_norm_report_sha256(report))
+        use = deepcopy(case["declaration"]["definition_uses"][0])
+        use.update(use_unit_id=identity, use_occurrence_cid=occurrence["record_cid"])
+        case["declaration"]["definition_uses"].append(use)
+    helper, owner = control["mixed_helper"], control["owner"]
+    case["preparation"] = helper.prepare(owner, case)
+    helper.refresh_signed_reviews(case, owner)
+    helper.assert_signatures_valid(case)
+    args, kwargs = helper.fixture.reviewed_assessment_arguments_v2(owner, case)
+    admission = owner.assess_reviewed_norm_admission_v3(*args, **kwargs)
+    assert admission["semantic_use_eligible"] is True and admission["fixture_only"] is True
+    assert admission["blockers"] == []
+    admission_sha = owner.norm_content_adjudication_sha256(admission)
+    graph_owner = control["helper"].owner
+    graph = graph_owner.build_reviewed_norm_graph_v3(admission, *args, expected_admission_sha256=admission_sha, **kwargs)
+    graph_sha = graph_owner.norm_definition_graph_sha256(graph)
+    assert graph_owner.validate_reviewed_norm_graph_v3(graph, admission, *args,
+        expected_graph_sha256=graph_sha, expected_admission_sha256=admission_sha, **kwargs) == graph
+    assert graph["counts"]["units"] == total_units
+    return dict(control, case=case, args=args, kwargs=kwargs, admission=admission, graph=graph,
+                admission_sha=admission_sha, graph_sha=graph_sha)
+
+
+@pytest.mark.parametrize("total_units", [7, 8])
+def test_reviewed_preservation_v3_whole_genuine_large_population_refuses_original_capacity(reviewed_preservation_control_v3, total_units):
+    control = reviewed_preservation_capacity_control_v3(reviewed_preservation_control_v3, total_units)
+    before = control["owner"].norm._snapshot({"args": list(control["args"]), "kwargs": control["kwargs"]})[1]
+    with pytest.raises(ValueError, match="capacity"):
+        reviewed_preservation_prepare_fixture_v3(control)
+    assert len(control["case"]["declaration"]["units"]) == total_units
+    assert before == control["owner"].norm._snapshot({"args": list(control["args"]), "kwargs": control["kwargs"]})[1]

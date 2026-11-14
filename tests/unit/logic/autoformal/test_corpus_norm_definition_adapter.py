@@ -819,3 +819,326 @@ def test_reviewed_graph_v2_refuses_a_resealed_false_eligible_admission(reviewed_
     with pytest.raises(ValueError):
         owner.build_reviewed_norm_graph_v2(admission, *baseline["args"],
             expected_admission_sha256=pin, **baseline["inputs"])
+
+
+# V3 reuses the existing signed mixed admission fixture. Its review identities,
+# source prose and interpretation remain explicitly fictional engineering data.
+def reviewed_graph_fixture_helper_v3():
+    spec = importlib.util.spec_from_file_location("_reviewed_graph_mixed_admission_fixture",
+        Path(__file__).with_name("test_legal_reviewed_norm_admission_v3.py"))
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+@pytest.fixture(scope="module")
+def reviewed_graph_baseline_v3(tmp_path_factory):
+    helper = reviewed_graph_fixture_helper_v3()
+    saved_v2 = helper.v2_saved.__wrapped__(tmp_path_factory)
+    admission_owner = helper.sibling.__wrapped__(saved_v2)
+    case = helper.mixed_base.__wrapped__(admission_owner, saved_v2)
+    helper.assert_signatures_valid(case)
+    args, inputs = helper.fixture.reviewed_assessment_arguments_v2(admission_owner, case)
+    admission = admission_owner.assess_reviewed_norm_admission_v3(*args, **inputs)
+    pin = admission_owner.norm_content_adjudication_sha256(admission)
+    assert admission["semantic_use_eligible"] is True and admission["fixture_only"] is True
+    assert admission["blockers"] == []
+    assert admission_owner.validate_reviewed_norm_admission_v3(admission, *args,
+        expected_report_sha256=pin, **inputs) == admission
+    return {"helper": helper, "case": case, "admission_owner": admission_owner,
+        "admission": admission, "args": args, "inputs": inputs, "admission_sha256": pin}
+
+
+def build_reviewed_graph_fixture_v3(baseline, *, admission=None, args=None, inputs=None):
+    admission = baseline["admission"] if admission is None else admission
+    return owner.build_reviewed_norm_graph_v3(admission,
+        *(baseline["args"] if args is None else args),
+        expected_admission_sha256=baseline["admission_owner"].norm_content_adjudication_sha256(admission),
+        **(baseline["inputs"] if inputs is None else inputs))
+
+
+def validate_reviewed_graph_fixture_v3(baseline, record, *, args=None, inputs=None):
+    return owner.validate_reviewed_norm_graph_v3(record, baseline["admission"],
+        *(baseline["args"] if args is None else args),
+        expected_graph_sha256=owner.norm_definition_graph_sha256(record),
+        expected_admission_sha256=baseline["admission_sha256"],
+        **(baseline["inputs"] if inputs is None else inputs))
+
+
+@pytest.fixture(scope="module")
+def reviewed_graph_record_v3(reviewed_graph_baseline_v3):
+    return build_reviewed_graph_fixture_v3(reviewed_graph_baseline_v3)
+
+
+def test_reviewed_graph_v3_requires_explicit_domain_after_genuine_mixed_admission(reviewed_graph_baseline_v3):
+    baseline = reviewed_graph_baseline_v3
+    assert baseline["admission"]["semantic_use_eligible"] is True
+    assert baseline["admission"]["profile"] == baseline["admission_owner"].REVIEWED_PROFILE
+    with pytest.raises(ValueError):
+        owner.build_reviewed_norm_graph_v2(baseline["admission"], *baseline["args"],
+            expected_admission_sha256=baseline["admission_sha256"], **baseline["inputs"])
+    assert callable(getattr(owner, "build_reviewed_norm_graph_v3", None)), (
+        "explicit reviewed mixed-sort graph V3 builder missing after accepted admission")
+    assert callable(getattr(owner, "validate_reviewed_norm_graph_v3", None)), (
+        "explicit reviewed mixed-sort graph V3 validator missing after accepted admission")
+    record = build_reviewed_graph_fixture_v3(baseline)
+    assert validate_reviewed_graph_fixture_v3(baseline, record) == record
+    assert record["schema"] == owner.REVIEWED_GRAPH_SCHEMA_V3
+    assert record["profile"] == owner.REVIEWED_GRAPH_PROFILE_V3
+    assert record["admission_record"]["schema"] == "legal-corpus-reviewed-norm-admission-reference/v3"
+    assert record["admission_record"]["admission_profile"] == baseline["admission_owner"].REVIEWED_PROFILE
+    assert record["counts"]["units"] == 3 and record["counts"]["norms"] == 2
+    assert record["counts"]["definitions"] == 1 and record["counts"]["definition_uses"] == 2
+    declaration = baseline["case"]["declaration"]
+    assert record["source_versions"] == [unit["source_version"] for unit in declaration["units"]]
+    assert record["source_occurrences"] == [unit["occurrence"] for unit in declaration["units"]]
+    for graph_unit, ast_record, unit, admitted in zip(record["unit_records"], record["ast_records"],
+            declaration["units"], baseline["admission"]["units"], strict=True):
+        full_ir = json.loads(ast_record["ast_json"])
+        assert canonical_dag_json_bytes(full_ir) == canonical_dag_json_bytes(admitted["canonical_ir"])
+        assert graph_unit["relational_profile"] == ast_record["profile"] == unit["relational_profile"]
+        assert full_ir["argument_roles"] == admitted["argument_roles"]
+        assert graph_unit["coverage"] == unit["coverage"]
+        assert full_ir["source_binding"]["source_version_cid"] == unit["source_version"]["record_cid"]
+        assert full_ir["source_binding"]["occurrence_cid"] == unit["occurrence"]["record_cid"]
+        assert sha(canonical_dag_json_bytes(full_ir)) == ast_record["ast_sha256"]
+    mixed = json.loads(record["ast_records"][2]["ast_json"])
+    assert {sort["name"] for sort in mixed["typed_expression"]["signature"]["sorts"]} >= {
+        "Object", "EventFrame", "TimeFrame"}
+    assert len(mixed["definition_uses"][0]["target_typed_paths"]) == 2
+    for actual, expected in zip(record["definition_use_records"], declaration["definition_uses"], strict=True):
+        assert all(actual[key] == value for key, value in expected.items())
+    assert corpus_graph.validate_graph_snapshot(record["graph"]) == record["graph"]
+    assert len([edge for edge in record["graph"]["edges"] if edge["relation"] == "USES_DEFINITION"]) == 2
+    assert record["semantic_use_eligible"] is False and not any(record["authority"].values())
+    assert all(type(record[key]) is int and record[key] == 0 for key in ("training_mask", "evaluation_gold_mask"))
+    assert record["graph"]["admitted"] is record["graph"]["formalized"] is False
+
+
+def test_reviewed_graph_v3_fresh_validation_replays_original_prepare_assess_validate(
+        reviewed_graph_baseline_v3, reviewed_graph_record_v3, monkeypatch):
+    baseline = reviewed_graph_baseline_v3
+    admission_owner = baseline["admission_owner"]
+    from functools import wraps
+    calls = []
+    for name in ("prepare_reviewed_norm_admission_v3", "assess_reviewed_norm_admission_v3",
+                 "validate_reviewed_norm_admission_v3"):
+        original = getattr(admission_owner, name)
+        @wraps(original)
+        def traced(*args, _original=original, _name=name, **kwargs):
+            calls.append(_name)
+            return _original(*args, **kwargs)
+        monkeypatch.setattr(admission_owner, name, traced)
+    assert validate_reviewed_graph_fixture_v3(baseline, reviewed_graph_record_v3) == reviewed_graph_record_v3
+    assert calls == ["validate_reviewed_norm_admission_v3", "assess_reviewed_norm_admission_v3",
+                     "prepare_reviewed_norm_admission_v3"]
+
+
+@pytest.mark.parametrize("direction", ["v2_builder_v3_admission", "v3_builder_v2_admission",
+    "v2_validator_v3_graph", "v3_validator_v2_graph", "resealed_v2_schema", "resealed_v2_reference"])
+def test_reviewed_graph_v3_domains_do_not_alias_v2(reviewed_graph_baseline_v3,
+        reviewed_graph_record_v3, reviewed_graph_baseline_v2, direction):
+    v3, v2 = reviewed_graph_baseline_v3, reviewed_graph_baseline_v2
+    with pytest.raises(ValueError):
+        if direction == "v2_builder_v3_admission":
+            owner.build_reviewed_norm_graph_v2(v3["admission"], *v3["args"],
+                expected_admission_sha256=v3["admission_sha256"], **v3["inputs"])
+        elif direction == "v3_builder_v2_admission":
+            build_reviewed_graph_fixture_v3(v3, admission=v2["admission"], args=v2["args"], inputs=v2["inputs"])
+        elif direction == "v2_validator_v3_graph":
+            validate_reviewed_graph_fixture_v2(v2, reviewed_graph_record_v3)
+        elif direction == "v3_validator_v2_graph":
+            validate_reviewed_graph_fixture_v3(v3, v2["record"])
+        else:
+            record = deepcopy(reviewed_graph_record_v3)
+            if direction == "resealed_v2_schema":
+                record["schema"] = owner.REVIEWED_GRAPH_SCHEMA
+            else:
+                record["admission_record"]["schema"] = "legal-corpus-reviewed-norm-admission-reference/v2"
+                record["admission_record"] = reseal(record["admission_record"])
+            validate_reviewed_graph_fixture_v3(v3, reseal(record))
+
+
+@pytest.mark.parametrize("damage", ["drop_mixed_unit", "drop_mixed_ast", "changed_mixed_sort",
+    "changed_ordered_roles", "changed_use_target", "missing_definition_edge", "source_revision",
+    "scope", "admission_profile", "authority", "boolean_training_mask", "boolean_gold_mask"])
+def test_reviewed_graph_v3_resealed_damage_requires_complete_regeneration(
+        reviewed_graph_baseline_v3, reviewed_graph_record_v3, damage):
+    record = deepcopy(reviewed_graph_record_v3)
+    if damage == "drop_mixed_unit":
+        record["unit_records"].pop()
+    elif damage == "drop_mixed_ast":
+        record["ast_records"].pop()
+    elif damage in ("changed_mixed_sort", "changed_ordered_roles"):
+        ast_record = record["ast_records"][2]
+        ir = json.loads(ast_record["ast_json"])
+        if damage == "changed_mixed_sort":
+            signature = ir["typed_expression"]["signature"]
+            signature["sorts"] = [sort for sort in signature["sorts"] if sort["name"] != "TimeFrame"]
+        else:
+            roles = next(row["roles"] for row in ir["argument_roles"] if row["symbol"] == "InspectsRegisterAt")
+            roles.reverse()
+        ir_raw = canonical_dag_json_bytes(ir)
+        ast_record["ast_json"] = ir_raw.decode("utf-8")
+        ast_record["ast_sha256"] = sha(ir_raw)
+        ast_record["ast_cid"] = owner.cid_utils.cid_for_dag_json(ir)
+        record["ast_records"][2] = reseal(ast_record)
+    elif damage == "changed_use_target":
+        use = record["definition_use_records"][1]
+        use["target_typed_paths"].pop()
+        record["definition_use_records"][1] = reseal(use)
+    elif damage == "missing_definition_edge":
+        edges = record["graph"]["edges"]
+        edges.remove(next(edge for edge in edges if edge["relation"] == "USES_DEFINITION"))
+        record["graph"] = reseal(record["graph"])
+    elif damage == "source_revision":
+        unit = record["unit_records"][2]
+        unit["document_revision"] += ":another-revision"
+        record["unit_records"][2] = reseal(unit)
+    elif damage == "scope":
+        record["scope_record"]["governing_edition"] = "another-edition"
+        record["scope_record"] = reseal(record["scope_record"])
+    elif damage == "admission_profile":
+        record["admission_record"]["admission_profile"] = "complete-reviewed-norm-admission/v2"
+        record["admission_record"] = reseal(record["admission_record"])
+    elif damage == "authority":
+        record["authority"]["admitted"] = True
+    elif damage == "boolean_training_mask":
+        record["training_mask"] = False
+    else:
+        record["evaluation_gold_mask"] = False
+    with pytest.raises(ValueError):
+        validate_reviewed_graph_fixture_v3(reviewed_graph_baseline_v3, reseal(record))
+
+
+@pytest.mark.parametrize("damage", ["source_raw", "source_view", "mixed_request", "mixed_ir",
+    "definition", "review", "policy", "dependencies"])
+def test_reviewed_graph_v3_replays_current_original_source_ir_review_and_dependencies(
+        reviewed_graph_baseline_v3, reviewed_graph_record_v3, damage):
+    baseline = reviewed_graph_baseline_v3
+    args, inputs = deepcopy(baseline["args"]), deepcopy(baseline["inputs"])
+    preparation = inputs["preparation_inputs"]
+    mixed_id = preparation["declaration"]["units"][2]["unit_id"]
+    if damage == "source_raw":
+        preparation["source_inputs"][mixed_id]["raw_bytes"] += b" changed"
+    elif damage == "source_view":
+        preparation["source_inputs"][mixed_id]["extracted_text"] += " changed"
+    elif damage == "mixed_request":
+        preparation["relational_inputs"][mixed_id]["request_raw"] += b" "
+    elif damage == "mixed_ir":
+        preparation["relational_inputs"][mixed_id]["report"]["typed_expression"] = {}
+    elif damage == "definition":
+        preparation["declaration"]["definition_uses"][1]["target_typed_paths"].pop()
+    elif damage == "review":
+        args[3][0]["interpretation"]["rationale"] += " unsigned edit"
+    elif damage == "policy":
+        args[2]["max_review_age_seconds"] = 1
+    else:
+        observations = inputs["observed_artifact_sha256s"]
+        observations[next(iter(observations))] = "f" * 64
+    with pytest.raises(ValueError):
+        validate_reviewed_graph_fixture_v3(baseline, reviewed_graph_record_v3, args=args, inputs=inputs)
+
+
+@pytest.mark.parametrize("damage,expected_reason", [
+    ("stale-policy-signature", "signed_policy_sha256_differs"),
+    ("expired-policy", "policy_not_current"),
+    ("revoked-key", "key_revoked"),
+    ("revoked-principal", "principal_revoked"),
+])
+def test_reviewed_graph_v3_current_trust_refusals_preserve_genuine_signatures(
+        reviewed_graph_baseline_v3, damage, expected_reason):
+    baseline = reviewed_graph_baseline_v3
+    helper, admission_owner = baseline["helper"], baseline["admission_owner"]
+    case = helper.cloned(baseline["case"])
+    if damage == "stale-policy-signature":
+        case["policy"]["policy_id"] += ":fresh-version"
+    elif damage == "expired-policy":
+        case["policy"]["valid_until_utc"] = helper.fixture.EVALUATED
+        helper.fixture.reviewed_resign_v2(case)
+    elif damage == "revoked-key":
+        case["registry"]["revocation_generation"] += 1
+        case["registry"]["keys"][0]["revoked_at_utc"] = helper.fixture.EVALUATED
+        helper.fixture.reviewed_resign_v2(case)
+    else:
+        case["registry"]["revocation_generation"] += 1
+        case["registry"]["revoked_principals"] = [{"principal_id": case["registry"]["keys"][0]["principal_id"],
+            "revoked_at_utc": helper.fixture.EVALUATED}]
+        helper.fixture.reviewed_resign_v2(case)
+    helper.assert_signatures_valid(case)
+    args, inputs = helper.fixture.reviewed_assessment_arguments_v2(admission_owner, case)
+    admission = admission_owner.assess_reviewed_norm_admission_v3(*args, **inputs)
+    assert admission["semantic_use_eligible"] is False
+    reasons = admission["blockers"] + [reason for row in admission["review_authority"]["reviews"] for reason in row["blockers"]]
+    assert expected_reason in reasons
+    with pytest.raises(ValueError, match="currently eligible"):
+        build_reviewed_graph_fixture_v3(baseline, admission=admission, args=args, inputs=inputs)
+
+
+@pytest.mark.parametrize("damage", ["caller", "detached", "offered", "projection", "producer_pins"])
+def test_reviewed_graph_v3_original_detached_offered_and_producer_guards(
+        reviewed_graph_baseline_v3, reviewed_graph_record_v3, monkeypatch, damage):
+    baseline = reviewed_graph_baseline_v3
+    args, inputs = deepcopy(baseline["args"]), deepcopy(baseline["inputs"])
+    record = deepcopy(reviewed_graph_record_v3)
+    source_id = next(iter(inputs["preparation_inputs"]["source_inputs"]))
+    if damage in ("caller", "detached", "offered"):
+        original = baseline["admission_owner"].validate_reviewed_norm_admission_v3
+        def changing(admission, *inner_args, **inner_kwargs):
+            result = original(admission, *inner_args, **inner_kwargs)
+            if damage == "caller":
+                inputs["preparation_inputs"]["source_inputs"][source_id]["raw_bytes"] += b" changed"
+            elif damage == "detached":
+                inner_kwargs["preparation_inputs"]["source_inputs"][source_id]["raw_bytes"] += b" changed"
+            else:
+                record["training_mask"] = False
+            return result
+        monkeypatch.setattr(baseline["admission_owner"], "validate_reviewed_norm_admission_v3", changing)
+    elif damage == "projection":
+        original = owner._reviewed_graph_project
+        def changing(*inner_args, **inner_kwargs):
+            result = original(*inner_args, **inner_kwargs)
+            inputs["preparation_inputs"]["source_inputs"][source_id]["raw_bytes"] += b" changed"
+            return result
+        monkeypatch.setattr(owner, "_reviewed_graph_project", changing)
+    else:
+        original = owner._reviewed_graph_pins
+        calls = []
+        def changing(admission_owner):
+            result = original(admission_owner)
+            calls.append(True)
+            if len(calls) > 1:
+                result[next(iter(result))] = "f" * 64
+            return result
+        monkeypatch.setattr(owner, "_reviewed_graph_pins", changing)
+    with pytest.raises(ValueError):
+        validate_reviewed_graph_fixture_v3(baseline, record, args=args, inputs=inputs)
+
+
+@pytest.mark.parametrize("damage", ["eligibility", "permitted_uses"])
+def test_reviewed_graph_v3_resealed_eligible_flags_cannot_replace_original_admission(
+        reviewed_graph_baseline_v3, damage):
+    baseline = reviewed_graph_baseline_v3
+    admission = deepcopy(baseline["admission"])
+    if damage == "eligibility":
+        admission["semantic_use_eligible"] = False
+    else:
+        admission["permitted_uses"] = []
+    with pytest.raises(ValueError):
+        build_reviewed_graph_fixture_v3(baseline, admission=admission)
+
+
+def test_reviewed_graph_v3_requires_genuine_formalization_permission(reviewed_graph_baseline_v3):
+    baseline = reviewed_graph_baseline_v3
+    helper, admission_owner = baseline["helper"], baseline["admission_owner"]
+    case = helper.cloned(baseline["case"])
+    case["declaration"]["permitted_uses"] = ["proof_obligation"]
+    case["preparation"] = helper.prepare(admission_owner, case)
+    helper.refresh_signed_reviews(case, admission_owner)
+    helper.assert_signatures_valid(case)
+    args, inputs = helper.fixture.reviewed_assessment_arguments_v2(admission_owner, case)
+    admission = admission_owner.assess_reviewed_norm_admission_v3(*args, **inputs)
+    assert admission["semantic_use_eligible"] is True and admission["permitted_uses"] == ["proof_obligation"]
+    with pytest.raises(ValueError, match="explicit formalization use"):
+        build_reviewed_graph_fixture_v3(baseline, admission=admission, args=args, inputs=inputs)

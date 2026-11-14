@@ -126,3 +126,53 @@ additive reconstructable candidate graph view. A future coherent corpus release
 must separately bind exact span/entity dataset revisions, reviewed semantic
 artifacts, resolved definition dependencies, generated Lean modules, toolchain
 and actual compilation/theorem receipts. No such release is claimed by v1.
+
+## Read-only selected release-component replay
+
+The separate `reviewed-norm-v2-local-replay/v1` profile is available through the existing coordinator's `validate_uscode_release_closure_v1(request_raw, expected_request_sha256=...)` API and CLI:
+
+```bash
+python -m scripts.ops.legal_ir.validate_uscode_corpus_release validate-closure \
+  --request /absolute/path/closure.request --request-sha256 EXPECTED_REQUEST_SHA256
+```
+
+Requests use the existing `legal_corpus_definition_use_lake_v2.encode_parent_replay_value_v1` / `decode_parent_replay_value_v1` bounded plain-value-and-bytes codec. The request is at most 8 MiB, with at most 64 exact byte-bound artifacts of at most 1,000,000 bytes each. Supply independently retained request and complete component pins, all law/span/entity revision declarations, exact unit/artifact populations and complete original replay inputs. Reuse the existing owners; do not create an importer or replace an unsupported profile with another version.
+
+Validation replays current reviewed norm V2 admission, its graph and dependency closure, Lean preservation preparation, HF packaging and strict source/span/entity join V3. The selected package identity and all five metadata bodies must agree. A Hub commit is not the producer source revision. Local byte equality authenticates neither remote acquisition nor legal meaning. Existing `export`, `validate` and general-help contracts remain unchanged; `validate-closure --help` returns its separate usage receipt.
+
+The existing HF producer supplies the compatible metadata directly:
+
+```python
+from ipfs_datasets_py.processors.legal_data.uscode_hf_release import build_uscode_hf_release
+candidate = build_uscode_hf_release(
+    family_rows, legacy_files=legacy_files, dry_run=True,
+    source_revision=producer_source_commit,
+    metadata_profile="hf-default-parquet-envelope/v1",
+)
+```
+
+This explicit profile measures actual local Parquet schema, rows and Arrow bytes. Its manifest, release metadata and configuration declaration match the standard single-alias infos and exact card frontmatter before existing descriptor/root sealing. Preserve logical `publicus-ir-graphrag/v2` and wire alias `publicus-ir-graphrag-v2`. Legacy/recovery files remain retained but their streaming configurations are unadvertised in this profile. Omitting the option keeps the original default bytes. Do not substitute compressed artifact bytes for Arrow bytes or a producer source commit for a Hub commit.
+
+A successful JSON receipt means the supplied local replay completed; `closure_complete` and `release_ready` remain false. The packaging compatibility blocker is removed only after genuine package validation and matching selected-intake profile. Independent source correspondence, original admitted-native parent custody and immutable remote Hub readback remain blockers. The fictional positive fixture has no original native receipt/packet; that optional positive path remains unqualified. Metadata-only intake does not itself measure physical Arrow bytes, authenticate remote acquisition or admit meaning.
+
+The four source/test changes have 103 private owning controls (producer58 and closure45), 33 actual software CLI children, 208 unchanged observed canonical dependencies, and an independent original-vs-new default comparison of all23 artifact bytes. Canonical pytest and actual Native counts remain zero. [Qualification and exact source scope](../../../../../workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/coherent-release-closure-v01/producer-wire-profile-v01/private-wire-profile-qualification-summary-v01.json); [Source installation](../../../../../workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/coherent-release-closure-v01/producer-wire-profile-v01/source-adoption-actual-v02.json). Earlier45-case and canonical-help observations retain their separate provenance.
+
+## Reviewed physical law/span/entity successor
+
+Select the closed v2 request explicitly; omitting `--profile` retains v1:
+
+```bash
+python -m scripts.ops.legal_ir.validate_uscode_corpus_release validate-closure \
+  --profile reviewed-norm-v2-physical-three-cache-replay/v1 \
+  --request /absolute/path/physical-closure.request --request-sha256 EXPECTED_REQUEST_SHA256
+```
+
+The existing coordinator API is `validate_uscode_release_closure_v2(request_raw, expected_request_sha256=...)`. Use request schema `legal-uscode-release-closure-request/v2` and the profile above. The existing8MiB request/64-artifact/1,000,000-byte artifact bounds remain. Add `physical_inputs` with exact absolute `law_path`/`entity_path`, component roles `reviewed_crosswalk`/`entity_parquet`, and the independently expected `reviewed_crosswalk` pin. Files must equal the exact supplied artifacts and remain the same byte/stat generation throughout replay.
+
+The canonical crosswalk uses `legal-reviewed-physical-source-crosswalk/v1` and `identity-text-complete-reviewed-graph/v1`. It declares all three revision namespaces, selected package-bound legacy law file/rows and coordinate report, complete entity file/projection, ordered reviewed unit selections, every physical paired row and every physical entity row. Each unit's existing reviewed declaration must reference the exact crosswalk bytes/version as a dependency before review. Supply its original evidence body and current dependency observation; its own bytes are not independent process evidence.
+
+The law text is captured by the existing raw-row owner, before cleaning or fallback. Identity extraction/normalization is the supported profile; a different extraction needs an explicit compatible owner rather than guessed offsets. Reviewed source versions, full occurrences, document revisions and Unicode coordinates remain distinct from Hub commits and producer source revisions. Sentence rows may cover one reviewed unit together; uncovered nonwhitespace clauses refuse. Entity rows bind explicit stable semantic selectors, then resolve unambiguously to all actual reviewed graph records/companions. The projection exhausts both node and edge populations. Matching labels, legal IDs or legacy admission booleans do not establish that binding.
+
+Successful v2 replay sets `local_source_cache_entity_bindings_verified` and `independent_reviewed_crosswalk_verified` for the complete declared selected component. It removes only the local crosswalk blocker. Original-native custody, optional retained-native positive evidence and immutable remote Hub readback remain separate; release/proof/corpus flags stay false. This profile measures selected physical rows, not whole corpus coverage.
+
+The114-case private qualification covers wholeCLI65 plus49 affected reviewed-admission cases, with63 unrelated helperV1 cases deselected. Two separately saved normalcanonical invocations also replayed the full fictional3unit/4span/39entity/18node/21edge component. These are no statutory/model/native results. [Qualification](../../../../../workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/coherent-release-closure-v01/reviewed-physical-crosswalk-v01/private-physical-crosswalk-qualification-summary-v02.json); [canonical observations](../../../../../workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/coherent-release-closure-v01/reviewed-physical-crosswalk-v01/canonical-readonly-CLI-v01/observation.json). The earlier v1/wire qualifications above retain their original generations.

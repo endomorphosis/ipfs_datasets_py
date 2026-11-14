@@ -1,0 +1,32 @@
+{
+  "admitted": false,
+  "cells_recorded_separately": false,
+  "completion_authority": false,
+  "constitution_roundtrip_ok": false,
+  "distinct_seed_count": 1,
+  "federal_corpus_acceptance_claimed": false,
+  "federal_corpus_scored": false,
+  "formalized": false,
+  "gold_or_teacher_admission_granted": false,
+  "legal_acceptance_claimed": false,
+  "measurement": "Both matched arms record seed 1729. One seed does not support a seed-uncertainty spread.",
+  "metric": "seed_uncertainty",
+  "metric_remains_separate": true,
+  "observed_seeds": [
+    {
+      "arm": "ce_retention",
+      "seed": 1729
+    },
+    {
+      "arm": "ce_retention_plus_margin",
+      "seed": 1729
+    }
+  ],
+  "pooled_score_recorded": false,
+  "reviewed_accuracy": false,
+  "schema": "legal-ir-separated-metric-measurement/v1",
+  "seed_uncertainty_recorded": false,
+  "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/data/legal_ir_span_graph_lean_20261016/LIR-9101/e1-experiment-spec.json",
+  "source_sha256": "9b9546e0239fa664c98a09daea680ccefa3524863e94185dc67c33b68806b8a0",
+  "training_executed": false
+}

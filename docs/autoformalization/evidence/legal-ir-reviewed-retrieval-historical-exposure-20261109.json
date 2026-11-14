@@ -1,0 +1,168 @@
+{
+  "diagnostic": {
+    "abstentions_rankings_current_admission_and_context_permissions_unchanged": true,
+    "checkpoint_reseal_or_numerical_compatibility_exception": false,
+    "fields_scope": "checkpoint_declared_training_population_only",
+    "missing_or_malformed_history": "history_available=False; match/overlap null",
+    "numerical_owner_sha256_unchanged": "eed4fc3258301c76df9e108194b5c073398e032ab06d82a029b9ce3f5acea114",
+    "owner": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_structured_retrieval.py",
+    "owner_sha256": "479f91a14a0ccde961ce89e7deb1c7bab9c7a598d1febcce33ad842965dc903c",
+    "unseen_query_proven": false,
+    "valid_history_fields": [
+      "source_sha256_match",
+      "exposure_group_match",
+      "known_overlap"
+    ],
+    "where_emitted": "validated retrieved rich candidate rows only"
+  },
+  "evidence_id": "reviewed-retrieval-historical-exposure-20261109",
+  "full_four_suite_validation": {
+    "actual_case_counts": {
+      "deselected": 0,
+      "errors": 0,
+      "failures": 0,
+      "passed": 295,
+      "pytest_seconds": 225.011,
+      "skipped": 0,
+      "tests": 295
+    },
+    "actual_result_ref": {
+      "bytes": 260454,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/phase4-structured-history-full295-green-input-v01/actual-full295-output-custody-and-inventory-v01.json",
+      "sha256": "c30960379a4610baa6fad330b98a8ee5b3886f91e1b3979a66985e821674bf88"
+    },
+    "actual_storage_closeout": {
+      "artifacts_durable_asserted": true,
+      "reservation_id": "7103dbff7dc342f69d4d22888430678c",
+      "retained_bytes": 889071,
+      "retained_files": 10,
+      "status": "released"
+    },
+    "caller_ref": {
+      "bytes": 10640,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/phase4-structured-history-full295-green-input-v01/run-source-held-structured-history-full295-v01.py",
+      "sha256": "73c876832318ff93130b1ad857fca67a02e982cc8ac1b892efbc808a22c72ca9"
+    },
+    "child_process_slots": 4,
+    "complete_transitive_execution_attested": false,
+    "cpu_slots": 1,
+    "critical_source_pins": 227,
+    "expected_cases_static": 295,
+    "genuine_Tool_final": {
+      "chunk_id": "7883ad",
+      "exit_code": 0,
+      "session_id": 78026
+    },
+    "independent_acceptance_ref": {
+      "bytes": 3341,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/phase4-structured-history-full295-green-input-v01/independent-actual-full295-GREEN-and-custody-acceptance-v01.json",
+      "sha256": "ac77b9776ffd1aca61d3c34f857f9161492784c1fe35420932d685ef0a0b5630"
+    },
+    "memory_mb": 1536,
+    "original_parent_wait_Source_native_and_process_closed": true,
+    "productive_seconds": 300,
+    "request_ref": {
+      "bytes": 45300,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/phase4-structured-history-full295-green-input-v01/request.json",
+      "sha256": "a514b8d52b51f61fd75e61541a59b395b989a05c256fd252579347d80fca5e33"
+    },
+    "scheduler_policy_sha256": "f07cb14289fcb6275e4497dcc36be0dcf8bfc3dc87531ff7a9537eb85fdcc661",
+    "status": "ACTUAL_FULL295_SCOPED_SOFTWARE_QUALIFIED_ORIGINAL_CUSTODY_CLOSED",
+    "storage_profile_bytes": 2097152,
+    "warnings": {
+      "count": 29,
+      "scope": "Frozen legacy fixture __package__ != __spec__.parent import metadata; unchanged warnings retained"
+    },
+    "whole_four_suite_counts": {
+      "declarations": 62,
+      "joint": 59,
+      "masks": 105,
+      "structured": 69
+    }
+  },
+  "intended_RED": {
+    "error": "KeyError: 'historical_training_exposure'",
+    "errors": 0,
+    "expected_failures": 1,
+    "original_parent_wait_Source_native_and_process_custody_closed": true,
+    "pytest_seconds": 11.68,
+    "reservation_id": "0482d985f07a4e95ae66f5bd5a50e870",
+    "skipped": 0,
+    "storage_profile_bytes": 1048576,
+    "storage_release_authority": false,
+    "storage_status": "retained",
+    "tests": 1,
+    "unchanged_trained_A_checkpoint_vs_independently_reviewed_disjoint_B": true,
+    "valid_candidate_reached_before_failure": true
+  },
+  "limits": [
+    "Fictional source/review/embedding and trained-fixture checks do not establish statutory fidelity, heldout gain, trained asset delivery, Lean corpus or supervisor activation.",
+    "All prior cancelled/refused/failed attempts and fully charged storage claims retain their own evidence; no pooled qualification.",
+    "Canonical source changes and materialized selected-runtime source candidates have distinct qualification boundaries.",
+    "This records the actual fully closed295-case local software qualification only; complete transitive executed-import/public-tree/hosted-CI attestation is not claimed. Prior294 evidence retains its distinct source/checkpoint/custody scope."
+  ],
+  "recorded_at_utc": "2026-11-09",
+  "schema": "legal-ir-reviewed-retrieval-historical-exposure-evidence/v1",
+  "scope": "Scoped full295 software qualification of declared historical training exposure in existing rich-context reports; not unseen-query, legal permission or model-quality proof",
+  "selected_runtime_source_candidate": {
+    "activation": false,
+    "commit": "a53b173781999cdde0faaccf245ea5b4d404f730",
+    "materialization_ref": {
+      "bytes": 29773,
+      "path": "/tmp/legal-ir-scientific-external-source-integration-prequalification-20261109-v01/Sourceclosed-actual-unqualified-materialization-v01.json",
+      "sha256": "466355397abbd34a3ee922467404272290cb864229db6979629898e8279fd445"
+    },
+    "native_family_qualified": false,
+    "old_five_profile_sources_preserved": true,
+    "physical_source_files": 9,
+    "primary_Git_metadata_preserved": true,
+    "profile_rebound": false,
+    "projection_count": 2,
+    "qualification_status": "unqualified_source_candidate",
+    "readback_ref": {
+      "bytes": 3361,
+      "path": "/tmp/legal-ir-scientific-external-source-integration-prequalification-20261109-v01/independent-actual-nine-source-readback-v01.json",
+      "sha256": "d3f3ee44713b544c3bdb766f96dd94e4e6e13e5f15ef526c0254e83c982bd014"
+    },
+    "tree": "3ca94ad899e7b4be2738deaca886787326e7a4ac"
+  },
+  "separate_recovery_patch": {
+    "canonical_adoption_or_release_asserted": false,
+    "private_reviewed_product_sha256": "d818f4066863f45e8eacf36f7d8e533854e326ccbd6db6212a4bf12ff826aa2e",
+    "qualification_scope": "Static-only review of existing-owner direct-Tool quota storage profile; no actual release/test/canonical adoption credit from this capsule"
+  },
+  "source_adoption": {
+    "four_test_fixture_source_adoption_ref": {
+      "bytes": 2004803,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/phase4-structured-history-four-test-source-adoption-v01/Sourceclosed-actual-four-test-only-adoption-v01.json",
+      "sha256": "15d47f6ed867883325c28fe745751593e8427eb95aac89123cbaa8c08e1138ee"
+    },
+    "fresh_product_readback_ref": {
+      "bytes": 1379,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/phase4-structured-history-full295-green-input-v01/fresh-Source-and-one-product-readback-v01.json",
+      "sha256": "ed79f560eab39de637c41bb183fee0f6984cac6c3ee5bb9d1e4b6cd3e7750900"
+    },
+    "intended_RED_acceptance_ref": {
+      "bytes": 4131,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/phase4-structured-history-red-input-v05/independent-actual-expected-RED-and-custody-acceptance-v01.json",
+      "sha256": "367b2c747aa18333afbb64b86cd435f71aae6a2f3ceeef13d9add4a8ba6ca086"
+    },
+    "numerical_checkpoint_and_optimizer_changed": false,
+    "one_product_Source_write_seconds": 2.526625905651599,
+    "one_product_source_adoption_ref": {
+      "bytes": 1818206,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/phase4-structured-history-product-adoption-v01/Sourceclosed-actual-one-product-adoption-v01.json",
+      "sha256": "e1cdc6e9bc8be03bba4c6905f8e64881e0c7c9b6e83946e5cca9435a7a94ea5e"
+    },
+    "post_GREEN_current_Source_product_and_doc_readback_ref": {
+      "bytes": 2643419,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/phase4-structured-history-full295-green-input-v01/independent-current-Source-product-and-doc-readback-v01.json",
+      "sha256": "7204bc3f51d084460417082e451962da914eee5932e9cc510429ea1fefd2240f"
+    }
+  },
+  "supersedes_only_pending_private_draft_ref": {
+    "bytes": 6884,
+    "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/phase4-structured-history-maintained-docs-private-v01/evidence-capsule-GREEN-pending-v01.json",
+    "sha256": "fa66edec6e305c4b22d7daab03d9fbea99aefde155213ce84a5437d064440981"
+  }
+}

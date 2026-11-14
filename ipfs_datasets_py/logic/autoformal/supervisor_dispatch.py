@@ -368,3 +368,136 @@ def dispatch_counts(tasks: Sequence[Mapping[str, Any]]) -> dict[str, int]:
         if task.get("dispatch_status") == "bound_training_job":
             counts["bound_training"] += 1
     return counts
+
+
+WORK_KIND_REVIEWED_EVALUATION = "reviewed_source_evaluation"
+REVIEWED_EVALUATION_ENTRYPOINT = "scripts/ops/legal_ir/run_incremental_autoencoders.py"
+REVIEWED_EVALUATION_BINDING_SCHEMA = "supervisor-reviewed-source-evaluation/v1"
+
+
+def bind_reviewed_evaluation_task(task: Mapping[str, Any], request_artifact: Mapping[str, Any]) -> dict[str, Any]:
+    """Bind explicit evaluation DATA without changing the native task lifecycle."""
+    if (not isinstance(task, Mapping) or task.get("work_kind") != WORK_KIND_REVIEWED_EVALUATION
+            or type(task.get("task_id")) is not str or not task["task_id"].strip()):
+        raise SupervisorDispatchError("explicit reviewed evaluation work kind and existing task ID required")
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_inference import _read_reviewed_evaluation_request
+    reference, _raw, request = _read_reviewed_evaluation_request(request_artifact)
+    if request["request_id"] != task["task_id"]:
+        raise SupervisorDispatchError("reviewed request must bind the existing native task ID")
+    binding = {
+        "schema": REVIEWED_EVALUATION_BINDING_SCHEMA,
+        "entrypoint": REVIEWED_EVALUATION_ENTRYPOINT,
+        "request_artifact": {"path": reference.path, "sha256": reference.sha256, "bytes": reference.bytes},
+        "request_schema": request["schema"],
+        "operation": request["operation"],
+        "requires_live_parent_runtime": True,
+    }
+    if "reviewed_evaluation" in task and task["reviewed_evaluation"] != binding:
+        raise SupervisorDispatchError("existing reviewed task binding differs; no implicit rebind or retry")
+    result = dict(task)
+    result["reviewed_evaluation"] = binding
+    return result
+
+
+def execute_reviewed_evaluation_task(task: Mapping[str, Any], *, reviewed_parent_runtime=None) -> dict[str, Any]:
+    """Use the normal fixed CLI under the caller's original admitted parent.
+
+    Accelerate retains claims, task revisions, completion and resource release.
+    No callable, permission or runtime is reconstructed from serialized task data.
+    """
+    if reviewed_parent_runtime is None:
+        raise SupervisorDispatchError("configured original reviewed parent runtime required")
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_inference as inference
+    if type(reviewed_parent_runtime) is not inference.ReviewedInferenceParentRuntime:
+        raise SupervisorDispatchError("exact configured reviewed parent runtime required")
+    runtime = reviewed_parent_runtime
+    # Freeze ordinary native task DATA before invoking caller-owned callbacks.
+    frozen_task = json.dumps(dict(task), sort_keys=True, separators=(",", ":"), allow_nan=False)
+    original_task = task
+    task = json.loads(frozen_task)
+    runtime.source_guard()
+    if not isinstance(task, Mapping) or not isinstance(task.get("reviewed_evaluation"), Mapping):
+        raise SupervisorDispatchError("explicit bound reviewed evaluation task required")
+    binding = task["reviewed_evaluation"]
+    rebound = bind_reviewed_evaluation_task(task, binding.get("request_artifact"))
+    if rebound["reviewed_evaluation"] != binding:
+        raise SupervisorDispatchError("reviewed task binding changed")
+    reference, _raw, request = inference._read_reviewed_evaluation_request(binding["request_artifact"])
+    # The importer is fixed in this canonical owner; task data cannot select code.
+    root = Path(__file__).resolve().parents[3]
+    cli_path = root / REVIEWED_EVALUATION_ENTRYPOINT
+    expected = request["lifecycle_source_sha256"][str(cli_path)]
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_daemon_invocation_contracts as artifacts
+    raw = artifacts.read_bytes(cli_path, 1024 * 1024)
+    if len(raw) > 1024 * 1024 or hashlib.sha256(raw).hexdigest() != expected:
+        raise SupervisorDispatchError("fixed reviewed CLI source changed")
+    import types
+    module = types.ModuleType("_autoformal_reviewed_cli_" + expected)
+    module.__file__ = str(cli_path)
+    runtime.source_guard()
+    exec(compile(raw, str(cli_path), "exec", dont_inherit=True), module.__dict__)
+    runtime.source_guard()
+    if hashlib.sha256(artifacts.read_bytes(cli_path, 1024 * 1024)).hexdigest() != expected:
+        raise SupervisorDispatchError("fixed reviewed CLI source changed during import")
+    code = module.main([
+        "--execution-mode", "inference", "--state-directory", request["attempt_directory"],
+        "--reviewed-evaluation-request", reference.path,
+        "--reviewed-evaluation-sha256", reference.sha256,
+    ], reviewed_parent_runtime=runtime)
+    if code != 0:
+        raise SupervisorDispatchError("normal reviewed evaluation CLI did not finish")
+    runtime.source_guard()
+    parent_path = Path(request["output_directory"]) / "parent-cycle.json"
+    child_path = Path(request["output_directory"]) / "cycle.json"
+    # These receipts record execution; they cannot grant task-completion authority.
+    def receipt(path):
+        raw = artifacts.read_bytes(path, 1024 * 1024)
+        value = artifacts.parse_json(raw)
+        if type(value) is not dict:
+            raise SupervisorDispatchError("reviewed cycle receipt must be an object")
+        return value, {"path": str(path), "sha256": hashlib.sha256(raw).hexdigest(), "bytes": len(raw)}
+    parent, parent_ref = receipt(parent_path)
+    child, child_ref = receipt(child_path)
+    if parent.get("child_cycle_artifact") != child_ref:
+        raise SupervisorDispatchError("parent receipt does not bind the exact child cycle bytes")
+    false_claims = ("training_executed", "admitted", "model_quality_qualified", "legal_meaning_verified",
+                    "proof_authority", "convergence_proved", "corpus_admitted")
+    if (parent.get("schema") != "reviewed-source-evaluation-parent/v1"
+            or child.get("schema") != "reviewed-source-evaluation-cycle/v1"
+            or any(value.get("request_sha256") != reference.sha256 or value.get("completed") is not True
+                   or value.get("execution_path") != "inference" for value in (parent, child))
+            or parent.get("parent_receipt") != str(parent_path) or parent.get("receipt") != str(child_path)
+            or type(parent.get("parent_callbacks")) is not dict
+            or (parent.get("parent_callbacks") or {}).get("child_identity") != parent.get("original_child_identity")
+            or any(value.get(name) is not False for name in false_claims for value in (parent, child))
+            or parent.get("original_child_waited") is not True
+            or parent.get("parent_FINISH_acknowledged") is not True
+            or parent.get("parent_current_admission_rechecked_after_wait") is not True
+            or parent.get("parent_output_artifacts_rechecked_after_wait") is not True
+            or parent.get("resource_release_performed") is not False
+            or parent.get("original_owner_reservation_id") != runtime.owner.reservation_id
+            or (parent.get("parent_callbacks") or {}).get("finished") is not True
+            or (parent.get("parent_callbacks") or {}).get("closed") is not True):
+        raise SupervisorDispatchError("original parent execution closeout is incomplete or mismatched")
+    runtime.source_guard()
+    if json.dumps(dict(original_task), sort_keys=True, separators=(",", ":"), allow_nan=False) != frozen_task:
+        raise SupervisorDispatchError("native task DATA changed during reviewed execution")
+    # The final original Source callback can change files after receipt reads.
+    # Recheck all child outputs and both exact receipts after that callback.
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_training_worker as worker
+    for value in (parent, child):
+        inference._check_reviewed_evaluation_outputs(value, request)
+    if parent["output_artifacts"] != child["output_artifacts"]:
+        raise SupervisorDispatchError("parent receipt does not bind the exact child output descriptors")
+    for descriptor in (child_ref, parent_ref):
+        worker._reviewed_decoder_artifact(worker.CheckpointArtifact.from_dict(descriptor),
+                                         limit=1024 * 1024, load=False)
+    return {
+        "schema": "supervisor-reviewed-source-evaluation-result/v1",
+        "task_id": task["task_id"], "request_sha256": reference.sha256,
+        "parent_receipt": parent_ref, "cycle_receipt": child_ref,
+        "output_artifacts": child["output_artifacts"],
+        "original_child_waited": True, "training_executed": False,
+        "task_status_changed": False, "task_completion_authority": False,
+        "resource_release_performed": False, "admitted": False,
+    }

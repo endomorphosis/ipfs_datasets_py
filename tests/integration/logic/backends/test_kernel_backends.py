@@ -1206,7 +1206,7 @@ def _assert_lean_native_v3_proof_cache_round_trip(
     import hashlib
     import importlib.util
     fixture_path = Path(__file__).resolve().parents[3] / "unit/logic/legal_ir/test_proof_cache.py"
-    fixture_sha256 = "72cbb04c69fe3065b1029ed4394406bd55972191b6a8872f4dacf7d7d5434bb4"
+    fixture_sha256 = "158b5f0c0a25ea42778f0a718477eaa0a6b8c4f053f3987ef3cd8e5517f82b23"
     assert hashlib.sha256(fixture_path.read_bytes()).hexdigest() == fixture_sha256
     fixture_spec = importlib.util.spec_from_file_location("_native_lean_cache_fixture_owner", fixture_path)
     assert fixture_spec is not None and fixture_spec.loader is not None
@@ -1370,3 +1370,71 @@ def test_lean_native_v3_proof_cache_round_trip_and_exact_reuse_context(tmp_path)
         version=os.environ.get("IPFS_DATASETS_LEAN_VERSION", "4.34.1"),
         bounds=ExecutionBounds(timeout_ms=30000, max_steps=100,
             max_memory_bytes=512 * 1024**2, max_output_bytes=65536))
+
+
+
+def test_lean_quoted_identifier_preserves_active_command_policy():
+    """Quoted names are tokens, not string delimiters around later commands."""
+    source = ('def «name"left» : Nat := 0\n'
+              'set_option autoImplicit true\n'
+              'def «name"right» : Nat := 0\n'
+              'theorem wanted : True := by trivial\n')
+    outcome, calls, _ = _bound_lean_outcome(source=source, proposition="True")
+    assert outcome.result.status is ResultStatus.MALFORMED
+    assert outcome.receipt.accepted is False and calls == []
+    assert "lean_source_contains_unsupported_metaprogramming_or_output" in outcome.receipt.diagnostics
+
+
+@pytest.mark.skipif(os.environ.get("IPFS_DATASETS_RUN_NATIVE_LEAN") != "1",
+                    reason="explicit native Lean resource authorization required")
+def test_lean_native_quoted_identifier_preserves_expected_goal(tmp_path):
+    """Use the existing real kernel boundary; simulated reports cannot qualify this case."""
+    from ipfs_datasets_py.logic.backends.resource_admission import ResourceAdmittedToolRunner
+    executable = os.environ.get("IPFS_DATASETS_LEAN_EXECUTABLE", "")
+    version = os.environ.get("IPFS_DATASETS_LEAN_VERSION", "4.34.1")
+    assert executable and Path(executable).is_absolute() and Path(executable).is_file()
+    source = ('def «name"left» : Nat := 0\n'
+              'notation "False" => True\n'
+              'def «name"right» : Nat := 0\n'
+              'theorem wanted : True := by trivial\n')
+    backend = LeanKernelBackend(executable=executable, backend_version=version,
+        runner=ResourceAdmittedToolRunner(cpu_slots=1, child_process_slots=1))
+    outcome = backend.run(_request(family="lean4", encoding="lean4", source=source,
+        expected_declaration="wanted", expected_proposition="False",
+        bounds=ExecutionBounds(timeout_ms=30000, max_steps=100,
+            max_memory_bytes=512*1024**2, max_output_bytes=65536)))
+    (tmp_path/"quoted-identifier-expected-goal-outcome.json").write_text(
+        json.dumps({"schema": "lean-quoted-identifier-goal-regression/v1",
+            "source": source, "expected_declaration": "wanted", "expected_proposition": "False",
+            "outcome": outcome.to_dict(), "model_or_statutory_admission": False},
+            sort_keys=True, indent=2)+"\n", encoding="utf-8")
+    assert outcome.result.status is not ResultStatus.PROVED
+    assert outcome.receipt.accepted is False
+
+
+# Lexer-boundary controls only; no native compiler or legal-meaning claim.
+@pytest.mark.parametrize(("label", "prefix"), [('quoted-double-quote', 'def «name"left» : Nat := 0'), ('quoted-comment-markers', 'def «-- /- axiom "» : Nat := 0'), ('quoted-first-close', 'def «outer«inner» : Nat := 0'), ('quoted-backslash-close', 'def «left\\» : Nat := 0'), ('character-guillemet', "def c : Char := '«'"), ('character-double-quote', 'def c : Char := \'"\''), ('character-escaped-quote', "def c : Char := '\\''"), ('character-hex', "def c : Char := '\\x22'"), ('primed-qualified', "def Name.prime' : Nat := 0"), ('unicode-primed', "def α₀' : Nat := 0"), ('ordinary-string', 'def text : String := "quotes: \\" and «"'), ('ordinary-gap', 'def text : String := "first\\\n  second"'), ('raw-zero-backslash', 'r"\\"'), ('raw-one-inner-quote', 'r#"inner " and \\"#'), ('raw-two-inner-hash', 'r##"inner "# and \\"##'), ('numeric-hex-adjacent-raw', '0xffr"\\"'), ('numeric-binary-adjacent-raw', '0b101r#"\\"#'), ('numeric-octal-adjacent-raw', '0o77r"\\"'), ('numeric-decimal-adjacent-raw', '12_3r"\\"'), ('numeric-scientific-adjacent-raw', '1.2e+3r#"\\"#')])
+def test_lean_literal_boundaries_preserve_offsets_and_expose_following_policy_command(label, prefix):
+    from ipfs_datasets_py.logic.backends.kernel import lean
+    source = prefix + "\nset_option autoImplicit true\ntheorem wanted : True := by trivial\n"
+    masked = lean._mask_lean_comments_and_strings(source)
+    assert len(masked) == len(source)
+    assert [i for i, char in enumerate(masked) if char == "\n"] == [i for i, char in enumerate(source) if char == "\n"]
+    start = source.index("set_option autoImplicit true")
+    assert masked[start:start + len("set_option autoImplicit true")] == "set_option autoImplicit true"
+    assert "lean_source_contains_unsupported_metaprogramming_or_output" in lean.scan_lean_incomplete_or_unsafe(source)
+
+
+@pytest.mark.parametrize(("label", "prefix"), [('quoted-danger-words', 'def «sorry admit axiom # set_option "» : Nat := 0'), ('character-hash', "def c : Char := '#'"), ('character-guillemet', "def c : Char := '«'"), ('character-unicode-escape', "def c : Char := '\\u00ab'"), ('ordinary-string', 'def text : String := "sorry admit axiom # set_option «"'), ('raw-zero', 'r"sorry admit axiom # set_option «"'), ('raw-one', 'r#"sorry " admit axiom # set_option \\"#'), ('raw-two', 'r##"sorry "# admit axiom # set_option \\"##'), ('nested-comments', '/- sorry /- admit " « -/ axiom # -/'), ('line-comment', '-- sorry admit axiom # " «')])
+def test_lean_literal_contents_do_not_become_active_policy_commands(label, prefix):
+    from ipfs_datasets_py.logic.backends.kernel import lean
+    source = prefix + "\ntheorem wanted : True := by trivial\n"
+    assert lean.scan_lean_incomplete_or_unsafe(source) == ()
+    assert lean.extract_lean_theorem_name(source) == "wanted"
+
+
+@pytest.mark.parametrize(("label", "source"), [('quoted-open', 'def «unterminated : Nat := 0'), ('raw-open', 'r#"unterminated"'), ('raw-hash-mismatch', 'r##"unterminated"#'), ('string-open', '"unterminated'), ('char-open', "'«"), ('char-too-long', "'ab'"), ('char-invalid-escape', "'\\q'"), ('char-short-hex', "'\\x2'"), ('number-incomplete', '0xff_'), ('scientific-incomplete', '1e+'), ('string-double-gap', '"first\\\n \n second"')])
+def test_lean_incomplete_literal_boundaries_refuse_without_hiding_later_text(label, source):
+    from ipfs_datasets_py.logic.backends.kernel import lean
+    with pytest.raises(LeanKernelError):
+        lean._mask_lean_comments_and_strings(source)

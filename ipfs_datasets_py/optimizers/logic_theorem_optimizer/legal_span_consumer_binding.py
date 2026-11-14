@@ -354,8 +354,14 @@ __all__ = ["SourceSpanConsumerBinding", "SourceSpanConsumerBindingError",
 
 REVIEWED_SCHEMA = "reviewed-source-span-consumer-binding/v2"
 REVIEWED_PROFILE = "complete-reviewed-source-span-supervision/v2"
+REVIEWED_V3_SCHEMA = "reviewed-source-span-consumer-binding/v3"
+REVIEWED_V3_PROFILE = "complete-reviewed-mixed-sort-source-span-supervision/v3"
 REVIEWED_TARGET_CODEC = "complete-relational-typed-ast/v1"
 REVIEWED_HELDOUT_PURPOSE = "frozen-single-component-final-scoring/v1"
+REVIEWED_HELDOUT_CONTEXT_PURPOSE = "frozen-single-component-with-reviewed-TRAIN-context/v1"
+REVIEWED_HELDOUT_CONTEXT_PROFILE = "reviewed-rich-TRAIN-context-heldout/v1"
+REVIEWED_V3_HELDOUT_CONTEXT_PURPOSE = "frozen-single-mixed-sort-component-with-reviewed-TRAIN-context/v1"
+REVIEWED_V3_HELDOUT_CONTEXT_PROFILE = "reviewed-mixed-sort-rich-TRAIN-context-heldout/v1"
 REVIEWED_HELDOUT_EXPOSURE = "declared_frozen_heldout_scoring"
 _REVIEWED_ROW_FIELDS = {"id", "unit_id", "source_text", "canonical_ir"}
 
@@ -363,6 +369,26 @@ _REVIEWED_ROW_FIELDS = {"id", "unit_id", "source_text", "canonical_ir"}
 def _reviewed_admission_owner():
     from ipfs_datasets_py.logic.autoformal import legal_norm_content_adjudication_v1
     return legal_norm_content_adjudication_v1
+
+
+
+def _reviewed_admission_owner_v3():
+    from ipfs_datasets_py.logic.autoformal import legal_reviewed_norm_admission_v3
+    return legal_reviewed_norm_admission_v3
+
+
+def _reviewed_contract(version):
+    _require(type(version) is str and version in ("v2", "v3"), "closed reviewed admission contract required")
+    if version == "v2":
+        return (REVIEWED_SCHEMA, REVIEWED_PROFILE, "legal-reviewed-norm-admission-assessment/v2",
+                "complete-reviewed-norm-admission/v2")
+    return (REVIEWED_V3_SCHEMA, REVIEWED_V3_PROFILE, "legal-reviewed-mixed-sort-norm-admission-assessment/v3",
+            "complete-reviewed-mixed-sort-norm-admission/v3")
+
+
+def _reviewed_admission_for_version(version):
+    _reviewed_contract(version)
+    return _reviewed_admission_owner() if version == "v2" else _reviewed_admission_owner_v3()
 
 
 def _reviewed_snapshot(value):
@@ -391,15 +417,22 @@ def _reviewed_implementation():
 
 
 def _reviewed_assessment(admission_inputs):
+    return _reviewed_assessment_for_version(admission_inputs, "v2")
+
+
+def _reviewed_assessment_for_version(admission_inputs, version):
+    _, _, assessment_schema, admission_profile = _reviewed_contract(version)
+    owner = _reviewed_admission_for_version(version)
     _require(type(admission_inputs) is dict, "complete admission replay mapping required")
     try:
-        report = _reviewed_admission_owner().assess_reviewed_norm_admission_v2(**admission_inputs)
+        report = (owner.assess_reviewed_norm_admission_v2(**admission_inputs) if version == "v2"
+                  else owner.assess_reviewed_norm_admission_v3(**admission_inputs))
     except (ValueError, TypeError, KeyError, OverflowError, RecursionError) as error:
         raise SourceSpanConsumerBindingError("reviewed admission replay failed: " + str(error)) from error
     _preflight(report)
     _require(type(report) is dict
-             and report.get("schema") == "legal-reviewed-norm-admission-assessment/v2"
-             and report.get("profile") == "complete-reviewed-norm-admission/v2",
+             and report.get("schema") == assessment_schema
+             and report.get("profile") == admission_profile,
              "complete reviewed admission assessment profile required")
     _sha256(report.get("declaration_sha256"), "reviewed declaration SHA256")
     _sha256(admission_inputs.get("expected_preparation_sha256"), "reviewed preparation SHA256")
@@ -454,6 +487,8 @@ class ReviewedSourceSpanConsumerBinding:
     _guards: tuple
     _implementation_guard: CheckpointContentGuard
     _admission_identity_guard: CheckpointContentGuard
+    _contract_guard: CheckpointContentGuard
+    _admission_version: str
     _operation: str
     _target_codec: str
     _allow_fictional_fixture: bool
@@ -475,6 +510,36 @@ def prepare_reviewed_source_span_consumer_binding_v2(rows, *, expected_rows_sha2
         expected_admission_inputs_sha256, exposure_records, expected_exposure_sha256,
         operation, target_codec=REVIEWED_TARGET_CODEC, allow_fictional_fixture=False,
         allow_heldout_evaluation=False, heldout_evaluation_purpose=None):
+    """Bind complete reviewed V2 targets using the unchanged V2 admission domain."""
+    return _prepare_reviewed_source_span_consumer_binding(rows,
+        expected_rows_sha256=expected_rows_sha256, split_manifest=split_manifest,
+        expected_split_manifest_sha256=expected_split_manifest_sha256, admission_inputs=admission_inputs,
+        expected_admission_inputs_sha256=expected_admission_inputs_sha256, exposure_records=exposure_records,
+        expected_exposure_sha256=expected_exposure_sha256, operation=operation, target_codec=target_codec,
+        allow_fictional_fixture=allow_fictional_fixture, allow_heldout_evaluation=allow_heldout_evaluation,
+        heldout_evaluation_purpose=heldout_evaluation_purpose, _admission_version="v2")
+
+
+def prepare_reviewed_source_span_consumer_binding_v3(rows, *, expected_rows_sha256,
+        split_manifest, expected_split_manifest_sha256, admission_inputs,
+        expected_admission_inputs_sha256, exposure_records, expected_exposure_sha256,
+        operation, target_codec=REVIEWED_TARGET_CODEC, allow_fictional_fixture=False,
+        allow_heldout_evaluation=False, heldout_evaluation_purpose=None):
+    """Explicitly bind full mixed-sort targets using independently reviewed V3 admission."""
+    return _prepare_reviewed_source_span_consumer_binding(rows,
+        expected_rows_sha256=expected_rows_sha256, split_manifest=split_manifest,
+        expected_split_manifest_sha256=expected_split_manifest_sha256, admission_inputs=admission_inputs,
+        expected_admission_inputs_sha256=expected_admission_inputs_sha256, exposure_records=exposure_records,
+        expected_exposure_sha256=expected_exposure_sha256, operation=operation, target_codec=target_codec,
+        allow_fictional_fixture=allow_fictional_fixture, allow_heldout_evaluation=allow_heldout_evaluation,
+        heldout_evaluation_purpose=heldout_evaluation_purpose, _admission_version="v3")
+
+
+def _prepare_reviewed_source_span_consumer_binding(rows, *, expected_rows_sha256,
+        split_manifest, expected_split_manifest_sha256, admission_inputs,
+        expected_admission_inputs_sha256, exposure_records, expected_exposure_sha256,
+        operation, target_codec=REVIEWED_TARGET_CODEC, allow_fictional_fixture=False,
+        allow_heldout_evaluation=False, heldout_evaluation_purpose=None, _admission_version):
     """Bind complete reviewed typed targets without projecting or training them.
 
     JSON commitments use CheckpointContentGuard. The admission-input commitment
@@ -482,14 +547,18 @@ def prepare_reviewed_source_span_consumer_binding_v2(rows, *, expected_rows_sha2
     reviewed_admission_inputs_sha256. Review eligibility is an explicit policy
     outcome, not machine proof of legal truth or a Lean/corpus acceptance.
     """
+    schema, profile, _, _ = _reviewed_contract(_admission_version)
+    _require(_admission_version != "v3" or heldout_evaluation_purpose != REVIEWED_HELDOUT_CONTEXT_PURPOSE,
+             "V3 rich TRAIN context requires its explicit V3 heldout purpose")
     _require(type(allow_heldout_evaluation) is bool, "explicit boolean heldout opt-in required")
     heldout = type(operation) is str and operation == "heldout_evaluation" and allow_heldout_evaluation
     _require(type(operation) is str and (operation in OPERATIONS or heldout),
              "unsupported reviewed consumer operation")
     _require(not allow_heldout_evaluation or heldout,
              "heldout opt-in cannot change training or hparam permissions")
-    _require((heldout and heldout_evaluation_purpose == REVIEWED_HELDOUT_PURPOSE
-              and type(heldout_evaluation_purpose) is str)
+    _require((heldout and type(heldout_evaluation_purpose) is str and heldout_evaluation_purpose in
+              (REVIEWED_HELDOUT_PURPOSE, (REVIEWED_HELDOUT_CONTEXT_PURPOSE if _admission_version == "v2"
+                                        else REVIEWED_V3_HELDOUT_CONTEXT_PURPOSE)))
              or (not heldout and heldout_evaluation_purpose is None),
              "explicit supported frozen heldout purpose required")
     _require(type(target_codec) is str, "explicit target codec required")
@@ -504,7 +573,8 @@ def prepare_reviewed_source_span_consumer_binding_v2(rows, *, expected_rows_sha2
     rows_copy, manifest_copy, exposure = copies
     admission_copy, admission_sha = _reviewed_snapshot(admission_inputs)
     _require(admission_sha == expected_admission_inputs_sha256, "complete admission replay input commitment differs")
-    report = _reviewed_assessment(admission_copy)
+    report = (_reviewed_assessment(admission_copy) if _admission_version == "v2"
+              else _reviewed_assessment_for_version(admission_copy, "v3"))
     _require(type(rows_copy) is list and 1 <= len(rows_copy) <= MAX_ROWS,
              "row count bound requires one through 4096 rows")
     _require(type(exposure) is list and len(exposure) == len(rows_copy),
@@ -581,12 +651,12 @@ def prepare_reviewed_source_span_consumer_binding_v2(rows, *, expected_rows_sha2
     blocked = sum(record["status"] == "blocked" for record in records)
     implementation = _reviewed_implementation()
     identity_guard = _guard(_reviewed_stable_identity(report, admission_copy))
-    receipt = {"schema": REVIEWED_SCHEMA, "profile": REVIEWED_PROFILE, "operation": operation,
+    receipt = {"schema": schema, "profile": profile, "operation": operation,
         "target_codec": target_codec, "status": "blocked" if blockers else "ready",
         "row_count": len(records), "ready_row_count": len(records) - blocked,
         "blocked_row_count": blocked, "rows_discarded": 0, "rows": records, "blockers": blockers,
         "declaration_sha256": report["declaration_sha256"], "admission_identity_sha256": identity_guard.sha256,
-        "admission_assessment_sha256": _reviewed_admission_owner().norm_content_adjudication_sha256(report),
+        "admission_assessment_sha256": _reviewed_admission_for_version(_admission_version).norm_content_adjudication_sha256(report),
         "admission_inputs_sha256": admission_sha,
         "admission_input_digest_recipe": "norm_review_type_separated_bounded_JSON_bytes_snapshot/v1",
         "input_sha256s": dict(zip(("rows", "split_manifest", "exposure"), expected)),
@@ -604,7 +674,7 @@ def prepare_reviewed_source_span_consumer_binding_v2(rows, *, expected_rows_sha2
         # the separately replayed review also permits a training use.
         receipt["training_mask"] = 0
         receipt["heldout_evaluation"] = _reviewed_heldout_component(
-            report, admission_copy, rows_copy, manifest, expected_split_manifest_sha256)
+            report, admission_copy, rows_copy, manifest, expected_split_manifest_sha256, heldout_evaluation_purpose)
     receipt_raw = _preflight(receipt)
     implementation_guard = _guard(implementation)
     _check(implementation_guard, _reviewed_implementation(), "reviewed implementation")
@@ -615,7 +685,9 @@ def prepare_reviewed_source_span_consumer_binding_v2(rows, *, expected_rows_sha2
              "admission replay inputs changed during preparation")
     binding = object.__new__(ReviewedSourceSpanConsumerBinding)
     for name, value in (("_guards", guards), ("_implementation_guard", implementation_guard),
-            ("_admission_identity_guard", identity_guard), ("_operation", operation),
+            ("_admission_identity_guard", identity_guard),
+            ("_contract_guard", _guard({"version": _admission_version, "schema": schema, "profile": profile})),
+            ("_admission_version", _admission_version), ("_operation", operation),
             ("_target_codec", target_codec), ("_allow_fictional_fixture", allow_fictional_fixture),
             ("_allow_heldout_evaluation", allow_heldout_evaluation),
             ("_heldout_evaluation_purpose", heldout_evaluation_purpose),
@@ -626,14 +698,30 @@ def prepare_reviewed_source_span_consumer_binding_v2(rows, *, expected_rows_sha2
 
 def validate_reviewed_source_span_consumer_binding_v2(binding, rows, *, split_manifest,
         admission_inputs, exposure_records):
+    """Replay the original V2 domain; V3 bindings cannot be relabeled."""
+    return _validate_reviewed_source_span_consumer_binding(binding, rows,
+        split_manifest=split_manifest, admission_inputs=admission_inputs, exposure_records=exposure_records,
+        _admission_version="v2")
+
+
+def validate_reviewed_source_span_consumer_binding_v3(binding, rows, *, split_manifest,
+        admission_inputs, exposure_records):
+    """Replay the explicit V3 domain and present trust before reusing a binding."""
+    return _validate_reviewed_source_span_consumer_binding(binding, rows,
+        split_manifest=split_manifest, admission_inputs=admission_inputs, exposure_records=exposure_records,
+        _admission_version="v3")
+
+
+def _validate_reviewed_source_span_consumer_binding(binding, rows, *, split_manifest,
+        admission_inputs, exposure_records, _admission_version):
     """Replay current admission; unchanged old receipts cannot authorize reuse."""
-    _require(type(binding) is ReviewedSourceSpanConsumerBinding, "prepared reviewed consumer binding required")
+    _require(_reviewed_binding_version(binding) == _admission_version, "reviewed binding admission contract differs")
     inputs = (rows, split_manifest, exposure_records)
     _preflight(list(inputs))
     for guard, value, label in zip(binding._guards, inputs, ("rows", "split manifest", "exposure")):
         _check(guard, value, label)
     _check(binding._implementation_guard, _reviewed_implementation(), "reviewed implementation")
-    fresh = prepare_reviewed_source_span_consumer_binding_v2(rows,
+    fresh = _prepare_reviewed_source_span_consumer_binding(rows,
         expected_rows_sha256=binding._guards[0].sha256, split_manifest=split_manifest,
         expected_split_manifest_sha256=binding._guards[1].sha256, admission_inputs=admission_inputs,
         expected_admission_inputs_sha256=reviewed_admission_inputs_sha256(admission_inputs),
@@ -641,7 +729,7 @@ def validate_reviewed_source_span_consumer_binding_v2(binding, rows, *, split_ma
         operation=binding._operation, target_codec=binding._target_codec,
         allow_fictional_fixture=binding._allow_fictional_fixture,
         allow_heldout_evaluation=binding._allow_heldout_evaluation,
-        heldout_evaluation_purpose=binding._heldout_evaluation_purpose)
+        heldout_evaluation_purpose=binding._heldout_evaluation_purpose, _admission_version=_admission_version)
     receipt = fresh.receipt()
     if receipt["admission_identity_sha256"] != binding._admission_identity_guard.sha256:
         receipt["status"] = "blocked"
@@ -668,48 +756,109 @@ def consume_reviewed_source_span_binding_v2(binding, rows, *, split_manifest, ad
     return consumer(consumed_rows)
 
 
+def consume_reviewed_source_span_binding_v3(binding, rows, *, split_manifest, admission_inputs,
+        exposure_records, consumer):
+    """Dispatch full V3 rows once, checking current admission on every callback exit."""
+    receipt = validate_reviewed_source_span_consumer_binding_v3(binding, rows,
+        split_manifest=split_manifest, admission_inputs=admission_inputs, exposure_records=exposure_records)
+    if receipt["status"] != "ready":
+        raise SourceSpanConsumerBindingError("reviewed source-span consumer batch is blocked", receipt=receipt)
+    _require(callable(consumer), "explicit callable consumer required")
+    consumed_rows = json.loads(binding._rows_json)
+    _check(binding._guards[0], consumed_rows, "detached complete reviewed consumer rows")
+    try:
+        return consumer(consumed_rows)
+    finally:
+        current = validate_reviewed_source_span_consumer_binding_v3(binding, rows,
+            split_manifest=split_manifest, admission_inputs=admission_inputs, exposure_records=exposure_records)
+        if current["status"] != "ready":
+            raise SourceSpanConsumerBindingError("reviewed source-span consumer batch is blocked", receipt=current)
+        _check(binding._guards[0], consumed_rows, "detached complete reviewed consumer rows")
+
+
+def _reviewed_binding_version(binding):
+    _require(type(binding) is ReviewedSourceSpanConsumerBinding, "prepared reviewed consumer binding required")
+    version = binding._admission_version
+    schema, profile, _, _ = _reviewed_contract(version)
+    _check(binding._contract_guard, {"version": version, "schema": schema, "profile": profile},
+           "reviewed admission contract")
+    return version
+
+
+def _reviewed_binding_dispatch(binding):
+    """Select only fixed operations from the guarded prepared-binding contract."""
+    if _reviewed_binding_version(binding) == "v2":
+        return validate_reviewed_source_span_consumer_binding_v2, consume_reviewed_source_span_binding_v2
+    return validate_reviewed_source_span_consumer_binding_v3, consume_reviewed_source_span_binding_v3
+
+
 __all__ += ["ReviewedSourceSpanConsumerBinding", "prepare_reviewed_source_span_consumer_binding_v2",
             "validate_reviewed_source_span_consumer_binding_v2", "consume_reviewed_source_span_binding_v2",
+            "prepare_reviewed_source_span_consumer_binding_v3", "validate_reviewed_source_span_consumer_binding_v3",
+            "consume_reviewed_source_span_binding_v3", "REVIEWED_V3_SCHEMA", "REVIEWED_V3_PROFILE",
             "reviewed_admission_inputs_sha256", "REVIEWED_SCHEMA", "REVIEWED_PROFILE", "REVIEWED_TARGET_CODEC",
-            "REVIEWED_HELDOUT_PURPOSE", "REVIEWED_HELDOUT_EXPOSURE"]
+            "REVIEWED_HELDOUT_PURPOSE", "REVIEWED_HELDOUT_EXPOSURE",
+            "REVIEWED_HELDOUT_CONTEXT_PURPOSE", "REVIEWED_HELDOUT_CONTEXT_PROFILE",
+            "REVIEWED_V3_HELDOUT_CONTEXT_PURPOSE", "REVIEWED_V3_HELDOUT_CONTEXT_PROFILE"]
 
 
-def _reviewed_heldout_component(report, admission_inputs, rows, manifest, manifest_sha256):
-    """Describe the complete replayed component, not global training exclusion.
-
-    Full admission replay has already validated the preparation, dependency
-    manifest and root reachability. This intentionally narrow profile has no
-    external training or retrieval population: the frozen split manifest must
-    contain exactly this complete component and place every member in holdout.
-    Supplied exposure declarations do not authenticate external/model history.
-    """
-    _require({row["unit_id"] for row in rows} == {unit["unit_id"] for unit in report["units"]},
-             "heldout evaluation requires the complete admitted component")
-    _require(set(manifest.assignments) == {row["id"] for row in rows}
-             and {example.sample_id for example in manifest.examples} == {row["id"] for row in rows},
-             "heldout manifest population must exactly equal the complete admitted component")
-    _require(all(partition == splits.HOLDOUT_SPLIT for partition in manifest.assignments.values()),
-             "complete admitted dependency component must remain in holdout")
+def _reviewed_dependency_closure(admission_inputs):
+    """Extract the exact dependency closure from replayed reviewed admission."""
     prepared = admission_inputs.get("preparation")
     original = admission_inputs.get("preparation_inputs")
     _require(type(prepared) is dict and type(original) is dict,
              "complete replayed preparation required for heldout dependencies")
     subject = prepared.get("subject")
     _require(type(subject) is dict, "replayed dependency signing subject required")
+    # V2 and V3 explicitly share this unchanged dependency owner, without admission dispatch.
     dependency_owner = _reviewed_admission_owner()._reviewed_owners()[-1]
     try:
         dependency_manifest = dependency_owner.validate_dependency_manifest(
             original["dependency_manifest"], expected_manifest_sha256=original["expected_manifest_sha256"])
     except (ValueError, TypeError, KeyError, OverflowError, RecursionError) as error:
         raise SourceSpanConsumerBindingError("invalid heldout dependency manifest: " + str(error)) from error
-    dependencies = [{"artifact_id": item["artifact_id"], "artifact_sha256": item["artifact_sha256"]}
-                    for item in dependency_manifest["artifacts"]]
     required = subject.get("required_dependency_ids")
     _require(type(required) is list and len(required) == len(set(required))
-             and set(required) == {item["artifact_id"] for item in dependencies}
+             and set(required) == {item["artifact_id"] for item in dependency_manifest["artifacts"]}
              and subject.get("dependency_manifest_sha256") == original["expected_manifest_sha256"],
-             "heldout dependencies must equal the full reviewed root closure")
-    declaration_units = {unit["unit_id"]: unit for unit in prepared["declaration"]["units"]}
+             "dependencies must equal the full reviewed root closure")
+    return subject, dependency_manifest
+
+
+def _reviewed_legal_dependency_pins(dependency_manifest):
+    return [{"kind": kind, **pin} for item in dependency_manifest["artifacts"]
+            for kind in ("root", "source", "revision", "context", "definition")
+            for pin in item["dependency_pins"][kind]]
+
+
+def _reviewed_provision_identity(declaration, unit):
+    context = declaration["governing_context"]
+    return (context["jurisdiction"], context["instrument_id"], unit["source_version"]["provision_id"])
+
+
+def _reviewed_heldout_component(report, admission_inputs, rows, manifest, manifest_sha256, purpose):
+    """Describe the full heldout component and its signed dependency closure."""
+    _require({row["unit_id"] for row in rows} == {unit["unit_id"] for unit in report["units"]},
+             "heldout evaluation requires the complete admitted component")
+    identifiers = {row["id"] for row in rows}
+    rich_context = purpose in (REVIEWED_HELDOUT_CONTEXT_PURPOSE, REVIEWED_V3_HELDOUT_CONTEXT_PURPOSE)
+    training_ids = []
+    if rich_context:
+        partitions = manifest.samples_by_split
+        training_ids = partitions[splits.TRAIN_SPLIT]
+        _require(training_ids and set(partitions[splits.HOLDOUT_SPLIT]) == identifiers
+                 and set(manifest.assignments) == identifiers.union(training_ids),
+                 "rich heldout manifest requires the complete holdout and a separate TRAIN population")
+    else:
+        _require(set(manifest.assignments) == identifiers
+                 and {example.sample_id for example in manifest.examples} == identifiers,
+                 "heldout manifest population must exactly equal the complete admitted component")
+        _require(all(partition == splits.HOLDOUT_SPLIT for partition in manifest.assignments.values()),
+                 "complete admitted dependency component must remain in holdout")
+    subject, dependency_manifest = _reviewed_dependency_closure(admission_inputs)
+    prepared = admission_inputs["preparation"]
+    declaration = prepared["declaration"]
+    declaration_units = {unit["unit_id"]: unit for unit in declaration["units"]}
     admitted_units = {unit["unit_id"]: unit for unit in report["units"]}
     source_units = [{"id": row["id"], "unit_id": row["unit_id"],
         "source_version_cid": admitted_units[row["unit_id"]]["source_version_cid"],
@@ -717,15 +866,25 @@ def _reviewed_heldout_component(report, admission_inputs, rows, manifest, manife
         "source_artifact_id": declaration_units[row["unit_id"]]["source_artifact_id"],
         "ir_artifact_id": declaration_units[row["unit_id"]]["ir_artifact_id"]} for row in rows]
     group = {"component_id": subject["graph_id"], "declaration_sha256": report["declaration_sha256"],
-        "dependency_manifest_sha256": original["expected_manifest_sha256"],
-        "required_dependency_ids": required, "dependencies": dependencies, "source_units": source_units}
-    return {"schema": "reviewed-single-component-heldout/v1", "purpose": REVIEWED_HELDOUT_PURPOSE,
+        "dependency_manifest_sha256": subject["dependency_manifest_sha256"],
+        "required_dependency_ids": subject["required_dependency_ids"], "dependencies": [
+            {"artifact_id": item["artifact_id"], "artifact_sha256": item["artifact_sha256"]}
+            for item in dependency_manifest["artifacts"]], "source_units": source_units}
+    if rich_context:
+        group["legal_dependency_pins"] = _reviewed_legal_dependency_pins(dependency_manifest)
+        for source_unit in source_units:
+            declared = declaration_units[source_unit["unit_id"]]
+            source_unit.update(source_raw_sha256=declared["source_version"]["raw_artifact"]["sha256"],
+                               provision_identity=list(_reviewed_provision_identity(declaration, declared)))
+    return {"schema": "reviewed-single-component-heldout/v1", "purpose": purpose,
         "split_manifest_sha256": manifest_sha256, "partition": splits.HOLDOUT_SPLIT,
         "dependency_group": group, "dependency_group_sha256": _guard(group).sha256,
         "population_scope": "exact_complete_admitted_component_only",
-        "inference_context_profile": "declared_source_only_empty_retrieval_context",
+        "inference_context_profile": ((REVIEWED_V3_HELDOUT_CONTEXT_PROFILE
+            if purpose == REVIEWED_V3_HELDOUT_CONTEXT_PURPOSE else REVIEWED_HELDOUT_CONTEXT_PROFILE)
+            if rich_context else "declared_source_only_empty_retrieval_context"),
         "inference_context_enforced": False,
-        "retrieved_example_ids": [], "training_example_ids": [],
+        "retrieved_example_ids": [], "training_example_ids": training_ids,
         "external_training_exposure_verified": False, "model_pretraining_exposure_verified": False,
         "external_retrieval_exclusion_verified": False, "global_dependency_grouping_verified": False,
         "preregistration_time_authenticated": False, "producer_authenticity_verified": False,

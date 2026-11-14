@@ -1,0 +1,135 @@
+{
+  "actual_caller_fix": {
+    "Source_custody_closed": true,
+    "canonical_normal_imports_used": true,
+    "capacity_pregrant_branch_actually_exercised": true,
+    "child_reaped": false,
+    "current_canonical_CLI_sha256": "eb5f77b3ce9ed953f1ae249ad56d867dbfe5f6d7ef5eba5ffb164a2b77f68f5a",
+    "existing_wait_adapter_sha256": "246d8bb699d564ae449f461127a39aac9ce25df4d6ba342caa2a15cc105302e8",
+    "legacy_a0b_false_preserved": true,
+    "opening_ledger_lock_branch_actually_exercised": false,
+    "refusal_remains_noncompletion": true,
+    "storage_release_authorized": false
+  },
+  "actual_pregrant_attempts": [
+    {
+      "cases_executed": 0,
+      "charged_bytes": 220006456270,
+      "closing_Source_seconds": 0.1131884721107781,
+      "deficit_bytes": 6456270,
+      "generation": "v07",
+      "native_grant": false,
+      "productive_child": false,
+      "request_bytes": 25165824,
+      "reservation_record": false,
+      "strict_original_nochild_verdict_verified": true,
+      "unchanged_cap_bytes": 220000000000
+    },
+    {
+      "cases_executed": 0,
+      "charged_bytes": 220010194251,
+      "closing_Source_seconds": 0.10389214800670743,
+      "deficit_bytes": 10194251,
+      "generation": "v08",
+      "native_grant": false,
+      "productive_child": false,
+      "request_bytes": 16777216,
+      "reservation_record": false,
+      "strict_original_nochild_verdict_verified": true,
+      "unchanged_cap_bytes": 220000000000
+    }
+  ],
+  "actual_receipt_refs": {
+    "MainW_boundary_install_readback_ref": {
+      "bytes": 1683,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/phase8-producer-context-policy-boundary-fix-v01/independent-actual-one-MainW-Source-readback-acceptance-v01.json",
+      "sha256": "fafff220a9e7f50454b13356e4e255a86e93c2379ec363c4dc4464932cd00b0b"
+    },
+    "actual_v04_cohort_ref": {
+      "bytes": 5503,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/phase8-producer-evaluation-source-v01/qualification-controls-current-runtime-v04/independent-actual-238-pass-3-fail-cohort-and-custody-audit-v01.json",
+      "sha256": "81dce58ddc321ed1e2ad6b59836eb8ccc603add03fc3eca9afc824e51b18553a"
+    },
+    "actual_v07_nochild_ref": {
+      "bytes": 4387,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/phase8-producer-evaluation-source-v01/qualification-controls-current-runtime-v07/independent-actual-pregrant-strict-caller-acceptance-v07.json",
+      "sha256": "b6e6171f2028ac9d2f536325f45acc36b1632143587eda028f358751597b6204"
+    },
+    "actual_v08_nochild_ref": {
+      "bytes": 4790,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/phase8-producer-evaluation-source-v01/qualification-controls-current-runtime-v08/independent-actual-pregrant-strict-caller-acceptance-v08.json",
+      "sha256": "561c2d440e3e6b54c7b1d7b63c1d60e1438a0a2639888909cc9426fabbb6482a"
+    },
+    "current_recovery55fc_legacy_static_ref": {
+      "bytes": 2648,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/independent-current55fc-recovery-legacy-route-review-v01.json",
+      "sha256": "17af47f81eaedf2f5076c7852fa1baeadab55426317e0b49f7f4d807621284d2"
+    },
+    "draft_PR1463_actual_publication_ref": {
+      "bytes": 11296,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/delivery-preparation/Phase8-minimal-seven-file-draft-PR1463-actual-publication-20261109-v01.json",
+      "sha256": "c3a5d277e1ab10a1fac95b7171379b2628928e21e99cd39bb486015e898fecd1"
+    },
+    "strict_caller_source_review_ref": {
+      "bytes": 4062,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/wait-caller-strict-pregrant-current-CLI-compatibility-v01/independent-strict-pregrant-adapter-component-static-review-v01.json",
+      "sha256": "78c11616391e3e6b0730757180fa34c9d9b47ed5c621dc1ab6694941a1fe0bcb"
+    },
+    "verified_own_cleanup_ref": {
+      "bytes": 5186,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/actual241-v04-required-postwrite-census-source-v01/independent-saved-composite-cleanup-acceptance-v01.json",
+      "sha256": "bb9cb38330838f7e8eb86b2acf9f610c37adc875b7eb76d5922439cf6f063fb0"
+    }
+  },
+  "cleanup": "The own v04 ae7 64MiB release plus14 preserved files/321423B and actual separate census remain independently verified; failed capacity/late-lock wrappers remain unchanged. Historical headroom and later foreign changes are separate, with no foreign cleanup or new release.",
+  "component_or_task_status_changes": false,
+  "current_runtime_scope": {
+    "legacy_route_review": "Read-only disposition and default generic-route static compatibility scoped in17af; new sampled route is not exercised or qualified by this contribution.",
+    "new_recovery_source_pinned_in_v07_and_v08": true,
+    "profile423_observation": "Earlier423 stable/zero unsafe/419match/four stale audit remains historical; no active profile or scientific admission derived.",
+    "recovery_source_sha256": "55fc922f683eb53f946114b1393ced041f61cf6b29c89ceb053f2ceebb734f8e"
+  },
+  "delivery": {
+    "PR1460_remains_separately_merged_no_duplicate": true,
+    "additions": 1296,
+    "all7_committed_postimages_matched_saved_MainW": true,
+    "all7_remote_bases_matched_primary_R_beforeimages": true,
+    "commit": "9848069bd1bf7133a2e60ebdb6a0a239b8bcdd5c",
+    "commits": 1,
+    "deletions": 6,
+    "exact_files": 7,
+    "other_restorations_or_shared_runtime_controls_included": false,
+    "parent": "d8e0e655d166edde409855b35287de615f96d80c",
+    "public_source_CI_qualified": false,
+    "pull_request": "https://github.com/endomorphosis/ipfs_datasets_py/pull/1463",
+    "state": "draft_open_not_merged",
+    "tree": "1598c74e73e0e41aac4d7c122b37555b4ef94d57"
+  },
+  "evidence_id": "phase8-draft-delivery-and-strict-pregrant-custody-20261109",
+  "functional_cohort": {
+    "MainW_boundary_after_sha256": "80ec0e6cb99dd8cbb6660f5576e85c8e3f38c4f9e64b875797e0c47b7b7340f7",
+    "boundary_installed_and_independently_read_back": true,
+    "full_fixed_241_rerun_qualified": false,
+    "prior_v04": {
+      "JUnit_seconds": 19.451,
+      "enrolled": 241,
+      "failed": 3,
+      "failure": "Three correctly rejected context inputs exposed the public split-policy/artifact-error boundary.",
+      "functions": 79,
+      "passed": 238,
+      "skipped": 0
+    }
+  },
+  "limits": [
+    "Draft publication is delivery, not merge/CI/test or model-quality qualification.",
+    "Both latest refusals did zero test work; native-compute closed means proven absence, not release.",
+    "The three historical v04 failures are not counted as fixed by an unexecuted rerun.",
+    "All existing peer documentation, components, task statuses and evidence remain preserved by the append-only merge."
+  ],
+  "no_further_admission_or_budget_shrinking_selected": true,
+  "observed_date_utc": "2026-11-09",
+  "prior_evidence_rewritten": false,
+  "remaining": "Full fixed241 qualification and public-source CI remain pending. Scientific/native-family, statutory meaning/correspondence, corpus/model and Lean-corpus gates remain separate; review fixtures are fictional.",
+  "schema": "legal-ir-phase8-draft-delivery-and-pregrant-custody/v1",
+  "scope": "Saved engineering delivery and actual pregrant-custody observations; full fixed241 cohort pending."
+}

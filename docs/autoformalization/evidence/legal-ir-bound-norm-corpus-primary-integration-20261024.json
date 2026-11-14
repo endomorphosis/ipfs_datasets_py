@@ -1,0 +1,418 @@
+{
+  "bypassed_initializer_sources": [
+    "ipfs_datasets_py/logic/integration/__init__.py",
+    "ipfs_datasets_py/logic/integration/reasoning/__init__.py"
+  ],
+  "bypassed_initializers_qualified": false,
+  "cases": 42,
+  "current_namespace_profile": "bound-norm-corpus-scoped-unit-namespaces/v1",
+  "current_native_Lean_model_training_execution": false,
+  "current_original_compute_storage_and_source_READ_closed": true,
+  "decoded_Parquet_source_profile_supported": false,
+  "default_or_downstream_adoption": false,
+  "entire_owning_test_modules_qualified": false,
+  "evaluation_gold_mask": 0,
+  "fresh_original_input_preparation_after_producer_path_changes_required": true,
+  "full_package_integration_qualified": false,
+  "historical_delivery": {
+    "child_PR": 1366,
+    "child_main": "aec4d0e356d31308f514fc694f66955b4c01ffa3",
+    "current_primary_failed_generation": {
+      "failure": "validation_guard_refused_genuine_dir_fd_file_writes_as_external_file_write",
+      "independent_failure_review": {
+        "bytes": 9234,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/independent-failed-result-review-pure-v01.json",
+        "sha256": "ca9e98e8dc6f356ad99646c9d27f7d49c5f767e2ccd70effde4a280fb5d351d3"
+      },
+      "label": "pure-v01",
+      "later_supported_storage_closeout": {
+        "actual_postwrite_readback": {
+          "bytes": 17096,
+          "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/v01-storage-closeout/actual-postwrite-readback.json",
+          "sha256": "166a2b4fe81d1d72eca08cbbde34dc4b3b0bae5c36a6e9c940a29861617dd028"
+        },
+        "independent_review": {
+          "bytes": 6659,
+          "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/v01-storage-closeout/independent-result-review-v01.json",
+          "sha256": "84a6e5cae9c0e99f1ff1d459d2fb21286fc31384aecde4359ba13b74dd378244"
+        },
+        "original_API_calls": 1,
+        "qualification_credit": 0,
+        "released_promise_bytes": 134217728,
+        "retained_file_bytes": 202410,
+        "retained_files": 25,
+        "scope": "Separate supported administrative release with all original artifacts preserved; no validation credit or native grant.",
+        "status": "released",
+        "summary": {
+          "bytes": 2442,
+          "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/v01-storage-closeout/summary.json",
+          "sha256": "7a31a9fc5b98f9be82d6b4d4cc5d6699fbe3a0d2bcb2a94d2f0a5ac401ebc081"
+        }
+      },
+      "observed_cases": 42,
+      "observed_failed_call_phases": 14,
+      "observed_failed_calls": 14,
+      "observed_passed_calls": 28,
+      "observed_passed_phases": 112,
+      "original_compute_and_source_READ_closed": true,
+      "original_reserved_bytes": 134217728,
+      "original_terminal_returncode": 1,
+      "original_terminal_storage_status": "retained",
+      "qualification_credit": 0,
+      "qualified_cases": 0,
+      "qualified_phases": 0
+    },
+    "delivery": {
+      "bytes": 5004,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/delivery-complete-v01.json",
+      "sha256": "af06e502e46ba805968eee722326962b515e76c7e4c0c876fc94da90222472a8"
+    },
+    "earlier_native_v01": {
+      "current_administrative_release_proven": false,
+      "original_reserved_bytes": 201326592,
+      "original_storage_status": "retained",
+      "qualification_credit": 0
+    },
+    "fixture_repair": "Native fixture numbered=False only; historical pure result keeps its original test generation.",
+    "historical_actual_native_cases": 2,
+    "historical_actual_native_phases": 6,
+    "historical_native_scope": "Original 230-source closure only; no current-dependency Lean qualification.",
+    "historical_pure_cases": 42,
+    "historical_pure_phases": 126,
+    "hosted_CI_qualified": false,
+    "parent_PR": 610,
+    "source_meaning_applicability_graph_or_corpus_admitted": false
+  },
+  "phase_passes": 126,
+  "profile": "replayed-bound-norm-definition-conditional-project/v1",
+  "qualification_label": "pure-v02",
+  "receipts": [
+    {
+      "bytes": 132321,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/manifest-pure-v02.json",
+      "sha256": "2bcd472c977166860c7c3925e425f4a58050ad423ebd61b720c11736098482a4"
+    },
+    {
+      "bytes": 85773,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/request-pure-v02.json",
+      "sha256": "17e0869775bd42f04540ef3c7145c6b007954ed229cbf64857fe938542b86825"
+    },
+    {
+      "bytes": 8691,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/independent-result-review-pure-v02.json",
+      "sha256": "bc866664065f3776f221819df7fbb4bdaf122a164f37e28a31575b9e3ae977fb"
+    },
+    {
+      "bytes": 10082,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/attempt-pure-v02/exports/test-result.json",
+      "sha256": "e808c3036a14d708ed7a3ffc1274ef3e04163d1f503e6c9b1023a291f2b9da5e"
+    },
+    {
+      "bytes": 34433,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/attempt-pure-v02/exports/test-collection.json",
+      "sha256": "ca7823afb5ff6a60fccaaeb099a027a177c6bab53077e2466f32e622f7d9c308"
+    },
+    {
+      "bytes": 51354,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/attempt-pure-v02/exports/import-origins.json",
+      "sha256": "cf0dae02893c3fe68fb035c7118a72d21031b220e7a83901ae65b451d454b396"
+    },
+    {
+      "bytes": 8391,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/attempt-pure-v02/exports/tests.xml",
+      "sha256": "44d564f65b7719460b320a07ebcbdc6a6aab8a77f5ba63cee369243e2232e491"
+    },
+    {
+      "bytes": 7739,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/launch-pure-v02.json",
+      "sha256": "39251e390d9b32de9369bc2043c14e19eba68df90abcc482b8d55e3e257dc6ad"
+    },
+    {
+      "bytes": 308,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/controller-complete-pure-v02.json",
+      "sha256": "27836f0c7dd31ec849d456b81451fb43060e0f0f503bae281f227e36c9904ac4"
+    },
+    {
+      "bytes": 451,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/source-READ-pure-v02.json",
+      "sha256": "602db6e21629141b29870d59225cb90dc9232dd9083452954b1615d37971cb95"
+    },
+    {
+      "bytes": 435,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/coordination-pure-v02.json",
+      "sha256": "4e8b546fc16f42f72b220e30afdfb6abf8c8f7542888cf81f8155f0425f38ab3"
+    },
+    {
+      "bytes": 16496,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/baseline-capture-v01.json",
+      "sha256": "a3cafeb62ac369f4f867a1335a3e6b8589338513bbf7e057c6b90ce3b08456a3"
+    },
+    {
+      "bytes": 6838,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/published-child-head-readback-v01.json",
+      "sha256": "3329c5e5eddfedeef0e9c312c5d088906bc138a56dbe2da6fe9b833161c80979"
+    },
+    {
+      "bytes": 1589,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/reviewed-delivery-commit-v01.json",
+      "sha256": "27586066cb848f08ced838d392f9235addc7f97f83feb8297b4e029d87f632d8"
+    },
+    {
+      "bytes": 1973,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/source-fixture-repair-v01.json",
+      "sha256": "5f522c78b69d9e23f831bff1faf3784b6dcc286d3652403b009a4cf564294f34"
+    },
+    {
+      "bytes": 1078,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/native-v02-fixture-source-compatibility-reader-v01.json",
+      "sha256": "c0ed4d40387ddf7260232e0eb4a539906df4b81441ad5a01dd744c96f7202e8d"
+    },
+    {
+      "bytes": 20187,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/independent-saved-pure-review-v02.json",
+      "sha256": "0282874c790a9c72fcda9141f9716b85e6fbd4134601bc0032fb61f7de2e4db8"
+    },
+    {
+      "bytes": 7193,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/independent-saved-native-v02-review-v01.json",
+      "sha256": "604684bc96d75f14e7c70f1ffe00e60dc2aeac629c6a9e4467b14cbf52953723"
+    },
+    {
+      "bytes": 5004,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/delivery-complete-v01.json",
+      "sha256": "af06e502e46ba805968eee722326962b515e76c7e4c0c876fc94da90222472a8"
+    },
+    {
+      "bytes": 9234,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/independent-failed-result-review-pure-v01.json",
+      "sha256": "ca9e98e8dc6f356ad99646c9d27f7d49c5f767e2ccd70effde4a280fb5d351d3"
+    },
+    {
+      "bytes": 132321,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/manifest-pure-v01.json",
+      "sha256": "5ef81328de28559976268122462f627c927bdf73fa33be2f5629bae67da9ec0d"
+    },
+    {
+      "bytes": 85773,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/request-pure-v01.json",
+      "sha256": "d9719a0773eebf7a6528dcebeeaa0ae15f9419c46c77c858aaa1dd675cf9f0f6"
+    },
+    {
+      "bytes": 13963,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/launch-pure-v01.json",
+      "sha256": "e6c74003a9e3b7c16774e1f1df2dc5849ad637bbe6b111fbecdf9447f59f764b"
+    },
+    {
+      "bytes": 309,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/controller-complete-pure-v01.json",
+      "sha256": "4d20073ca6efcf2bfef1a58b9c1d668ceed2b351f10b12fc05466808ed3d9079"
+    },
+    {
+      "bytes": 34433,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/attempt-pure-v01/exports/test-collection.json",
+      "sha256": "7907f371a5ba02207fec5478e70350f4d32cf3fe662763f1bb9b0b9cefe2590a"
+    },
+    {
+      "bytes": 58575,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/attempt-pure-v01/exports/tests.xml",
+      "sha256": "3664b68ac60298bf6887e108bfa7595e75bdb55a1f9aa7e7f4c79a82c3a2751a"
+    },
+    {
+      "bytes": 2442,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/v01-storage-closeout/summary.json",
+      "sha256": "7a31a9fc5b98f9be82d6b4d4cc5d6699fbe3a0d2bcb2a94d2f0a5ac401ebc081"
+    },
+    {
+      "bytes": 17096,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/v01-storage-closeout/actual-postwrite-readback.json",
+      "sha256": "166a2b4fe81d1d72eca08cbbde34dc4b3b0bae5c36a6e9c940a29861617dd028"
+    },
+    {
+      "bytes": 6461,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/v01-storage-closeout/api-return.json",
+      "sha256": "faf13e25e74739d7414206cc3ed67865a64e9cdc65e99a3eedf3f68bc4eeabf8"
+    },
+    {
+      "bytes": 6659,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/v01-storage-closeout/independent-result-review-v01.json",
+      "sha256": "84a6e5cae9c0e99f1ff1d459d2fb21286fc31384aecde4359ba13b74dd378244"
+    },
+    {
+      "bytes": 21622,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/v01-storage-closeout/recover_bound_norm_pure_v01_storage_once_v01.py",
+      "sha256": "d71aefb6e5a45b4cd2ac7ead2c8c8d18b87d11d7825c9f16637cc654ada1e49a"
+    },
+    {
+      "bytes": 23570,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/v01-storage-closeout/readonly-plan-v01.json",
+      "sha256": "2de68e61c903b727e9abbb7f369a31de018bad470d53354c9f4f07adff6c0e3f"
+    },
+    {
+      "bytes": 1622,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/v01-storage-closeout/control-root-review-v01.json",
+      "sha256": "4ab0581b27d9eba5921d7007300a7019eb24514e3038939347e3cb6484d70a2f"
+    },
+    {
+      "bytes": 3693,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/v01-storage-closeout/control-independent-review-v01.json",
+      "sha256": "1f9b0571bbce0e236f27200fbb18ea2eb1e9403e373a253aee376d04fc323b06"
+    },
+    {
+      "bytes": 51734,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/attempt-pure-v01/exports/import-origins.json",
+      "sha256": "8ac4a0e87f8203071ee7740b137dd59fab6f5d4adac1269b6b12e0081e175158"
+    },
+    {
+      "bytes": 34433,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/attempt-pure-v01/exports/test-collection.json",
+      "sha256": "7907f371a5ba02207fec5478e70350f4d32cf3fe662763f1bb9b0b9cefe2590a"
+    },
+    {
+      "bytes": 58575,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/attempt-pure-v01/exports/tests.xml",
+      "sha256": "3664b68ac60298bf6887e108bfa7595e75bdb55a1f9aa7e7f4c79a82c3a2751a"
+    },
+    {
+      "bytes": 3656,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/attempt-pure-v01/logs/failure.json",
+      "sha256": "b671d8270605e31b4071a378b5d534269f3722fd3894014e2cfc45b3b52a1e48"
+    },
+    {
+      "bytes": 0,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/attempt-pure-v01/logs/pytest.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 951,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/attempt-pure-v01/logs/stderr.log",
+      "sha256": "4535a51818b0a6d48407a71d02130850afaa3268253172962b07fdf24be5b9de"
+    },
+    {
+      "bytes": 52188,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/attempt-pure-v01/logs/stdout.log",
+      "sha256": "1b7948cae2e7fe346f0d372d51543c2055167eab96a4fcd72ff4907068391a33"
+    },
+    {
+      "bytes": 46,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/attempt-pure-v01/pytest/cases/test_bound_norm_native_exact_mode_handoff_retain-76lm_5t7/synthetic-lake",
+      "sha256": "79a72607876f2f871a4816b211e81654f76418ddae028375a5126b3fe29fd5e5"
+    },
+    {
+      "bytes": 51,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/attempt-pure-v01/pytest/cases/test_bound_norm_native_exact_mode_handoff_retain-76lm_5t7/synthetic-lean",
+      "sha256": "98735fc35287d014bae81440ca1f037420a29fbdc36c0b6e5ada969f8bf45489"
+    },
+    {
+      "bytes": 46,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/attempt-pure-v01/pytest/cases/test_bound_norm_native_exact_mode_handoff_retain-tzen26ot/synthetic-lake",
+      "sha256": "79a72607876f2f871a4816b211e81654f76418ddae028375a5126b3fe29fd5e5"
+    },
+    {
+      "bytes": 51,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/attempt-pure-v01/pytest/cases/test_bound_norm_native_exact_mode_handoff_retain-tzen26ot/synthetic-lean",
+      "sha256": "98735fc35287d014bae81440ca1f037420a29fbdc36c0b6e5ada969f8bf45489"
+    },
+    {
+      "bytes": 46,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/attempt-pure-v01/pytest/cases/test_bound_norm_native_failed_observation_retain-4d4axrbd/synthetic-lake",
+      "sha256": "79a72607876f2f871a4816b211e81654f76418ddae028375a5126b3fe29fd5e5"
+    },
+    {
+      "bytes": 51,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/attempt-pure-v01/pytest/cases/test_bound_norm_native_failed_observation_retain-4d4axrbd/synthetic-lean",
+      "sha256": "98735fc35287d014bae81440ca1f037420a29fbdc36c0b6e5ada969f8bf45489"
+    },
+    {
+      "bytes": 46,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/attempt-pure-v01/pytest/cases/test_bound_norm_native_failed_observation_retain-7hle68gq/synthetic-lake",
+      "sha256": "79a72607876f2f871a4816b211e81654f76418ddae028375a5126b3fe29fd5e5"
+    },
+    {
+      "bytes": 51,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/attempt-pure-v01/pytest/cases/test_bound_norm_native_failed_observation_retain-7hle68gq/synthetic-lean",
+      "sha256": "98735fc35287d014bae81440ca1f037420a29fbdc36c0b6e5ada969f8bf45489"
+    },
+    {
+      "bytes": 46,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/attempt-pure-v01/pytest/cases/test_bound_norm_native_failed_observation_retain-msw0mw4m/synthetic-lake",
+      "sha256": "79a72607876f2f871a4816b211e81654f76418ddae028375a5126b3fe29fd5e5"
+    },
+    {
+      "bytes": 51,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/attempt-pure-v01/pytest/cases/test_bound_norm_native_failed_observation_retain-msw0mw4m/synthetic-lean",
+      "sha256": "98735fc35287d014bae81440ca1f037420a29fbdc36c0b6e5ada969f8bf45489"
+    },
+    {
+      "bytes": 46,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/attempt-pure-v01/pytest/cases/test_bound_norm_native_failed_observation_retain-zqxxsmen/synthetic-lake",
+      "sha256": "79a72607876f2f871a4816b211e81654f76418ddae028375a5126b3fe29fd5e5"
+    },
+    {
+      "bytes": 51,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/attempt-pure-v01/pytest/cases/test_bound_norm_native_failed_observation_retain-zqxxsmen/synthetic-lean",
+      "sha256": "98735fc35287d014bae81440ca1f037420a29fbdc36c0b6e5ada969f8bf45489"
+    },
+    {
+      "bytes": 46,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/attempt-pure-v01/pytest/cases/test_exact_native_handoff_retains_full_condition-266ffo5k/synthetic-lake",
+      "sha256": "79a72607876f2f871a4816b211e81654f76418ddae028375a5126b3fe29fd5e5"
+    },
+    {
+      "bytes": 51,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/attempt-pure-v01/pytest/cases/test_exact_native_handoff_retains_full_condition-266ffo5k/synthetic-lean",
+      "sha256": "98735fc35287d014bae81440ca1f037420a29fbdc36c0b6e5ada969f8bf45489"
+    },
+    {
+      "bytes": 46,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/attempt-pure-v01/pytest/cases/test_exact_native_handoff_retains_full_condition-e5gnmv7t/synthetic-lake",
+      "sha256": "79a72607876f2f871a4816b211e81654f76418ddae028375a5126b3fe29fd5e5"
+    },
+    {
+      "bytes": 51,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/attempt-pure-v01/pytest/cases/test_exact_native_handoff_retains_full_condition-e5gnmv7t/synthetic-lean",
+      "sha256": "98735fc35287d014bae81440ca1f037420a29fbdc36c0b6e5ada969f8bf45489"
+    },
+    {
+      "bytes": 46,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/attempt-pure-v01/pytest/cases/test_unresolved_native_cleanup_preserves_same_ex-7hsn4a1d/synthetic-lake",
+      "sha256": "79a72607876f2f871a4816b211e81654f76418ddae028375a5126b3fe29fd5e5"
+    },
+    {
+      "bytes": 51,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/attempt-pure-v01/pytest/cases/test_unresolved_native_cleanup_preserves_same_ex-7hsn4a1d/synthetic-lean",
+      "sha256": "98735fc35287d014bae81440ca1f037420a29fbdc36c0b6e5ada969f8bf45489"
+    }
+  ],
+  "recorded_at_utc": "2026-10-24T05:18:37.599702+00:00",
+  "relational_source_binding": null,
+  "relational_source_bound": false,
+  "schema": "legal-ir-bound-norm-primary-integration-qualification/v1",
+  "scope": "Published opt-in complete unchanged norm plus conditional bound-definition packaging reused in existing owners. Fresh current-source 42 authored pure cases / 126 phases / 17 selectors; synthetic compiler controls only. Historical actual Lean two cases / six phases remains original-closure evidence. Raw-HTML replay, null relational source binding, false authority, null selections and zero masks remain. Decoded-Parquet source compatibility, governing edition, meaning/applicability, physical entity correspondence and two statutory uses remain pending.",
+  "selectors": 17,
+  "source_and_test_postimages": {
+    "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_lake_v2.py": {
+      "bytes": 67180,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/candidate-v01/ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_lake_v2.py",
+      "sha256": "8a43095f1575b8e4275cb9c548984da7ce9330695d6c8b669e4ceab710ce1b31"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_native_v2.py": {
+      "bytes": 55635,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/candidate-v01/ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_native_v2.py",
+      "sha256": "50b86914895e99f05a057abbbb3c692751f463d6c9ab930dc427a2ff72926127"
+    },
+    "tests/unit/logic/autoformal/test_legal_corpus_definition_use_lake_v2.py": {
+      "bytes": 40649,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/candidate-v01/tests/unit/logic/autoformal/test_legal_corpus_definition_use_lake_v2.py",
+      "sha256": "887e43be4f15ebf71663d6351d480437a2a80baf7d41072c384e93c3c8f10282"
+    },
+    "tests/unit/logic/autoformal/test_legal_corpus_definition_use_native_v2.py": {
+      "bytes": 53832,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/bound-norm-corpus-v01/primary-reuse-v01/candidate-v01/tests/unit/logic/autoformal/test_legal_corpus_definition_use_native_v2.py",
+      "sha256": "4348e1e0c65354df20f3f68998df6a467bdda7c964b9571dc88fcfa64582d493"
+    }
+  },
+  "source_edition_meaning_entity_governing_two_use_graph_corpus_admission": false,
+  "source_representation": "complete_original_raw_HTML_sampler_context_replay",
+  "status": "focused_pure_fixture_tests_qualified",
+  "training_mask": 0
+}

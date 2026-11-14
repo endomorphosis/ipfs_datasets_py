@@ -1,0 +1,106 @@
+{
+  "API": "infer_contextual_legal_model_occurrences_v1",
+  "actual_later_clause_or_complete_sequence_comparison_performed": false,
+  "actual_worker_returncode": 0,
+  "canonical_source_and_test": {
+    "ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_numeric.py": {
+      "bytes": 63251,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_numeric.py",
+      "sha256": "c1f01482ab6e69900af8b48ce9b5255d9bb6f3ec08e20a76c0cb3cf698d60999"
+    },
+    "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_numeric.py": {
+      "bytes": 47265,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_numeric.py",
+      "sha256": "203919cb4729a3e10b1d19b9bbce398ac8d997dc7743f2d247238e48cdeae5f7"
+    }
+  },
+  "cases_passed": 12,
+  "context_receipt_schema": "contextual-source-inference-occurrences/v1",
+  "decoded_IR_valid": null,
+  "evaluation_gold_mask": 0,
+  "evidence_id": "prepared384-occurrence-inference-consumer-qualified-20261027-01",
+  "execution_completion_distinct_from_EOS_and_IR_task_assessment": true,
+  "external_publication_performed": false,
+  "fixture_scope": {
+    "batch16_eight_slot_boundary_control_passed": true,
+    "dimension": 384,
+    "existing_twenty_one_BOS_cases_or_other_old_cohorts_replayed": false,
+    "explicit_status_taxonomy_doubles_not_model_trajectory_evidence": true,
+    "fixture_targets_and_synthetic_fit_receipts_used_for_authored_model_setup": true,
+    "genuine_legacy_and_new_EOS_parity_case_passed": true,
+    "repeated_paragraph_and_clause_physical_uses_preserved": true,
+    "retained_checkpoint_vector_cache_native_receipt_or_source_DATA_bodies_opened": false,
+    "selected_nodes": [
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_numeric.py::test_occurrence_inference_genuine_legacy_parity_and_no_training",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_numeric.py::test_occurrence_inference_repeated_paragraphs_and_clauses_preserve_uses",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_numeric.py::test_occurrence_inference_exact_transform_padding_and_bounded_batches",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_numeric.py::test_occurrence_inference_identity_membership_and_closed_fields_refuse",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_numeric.py::test_occurrence_inference_digest_geometry_and_exact_f32_refuse",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_numeric.py::test_occurrence_inference_validator_mutation_cannot_be_adopted",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_numeric.py::test_occurrence_inference_explicit_f32_and_precision_policy",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_numeric.py::test_occurrence_inference_frozen_model_preflight_and_parameter_mutation",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_numeric.py::test_occurrence_inference_rng_source_metadata_and_working_tensors_guarded",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_numeric.py::test_occurrence_inference_deadline_and_argument_bounds_preserve_rows",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_numeric.py::test_occurrence_inference_raw_status_taxonomy",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_numeric.py::test_occurrence_inference_malformed_generation_return_refuses"
+    ],
+    "test_observations_are_not_aggregate_API_entry_counters": true
+  },
+  "independent_fixture_review": {
+    "bytes": 30490,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-head-sensitivity-v01/occurrence-inference-v01/qualification-v01/independent-result-review-v01.json",
+    "sha256": "f97001ca977788660c83e6d4a0380404b9d831a70d715d550b28bf3b144ced75"
+  },
+  "installation_readback": {
+    "bytes": 11932,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-head-sensitivity-v01/occurrence-inference-v01/independent-product-installation-readback-v01.json",
+    "sha256": "db4726bef611b8c1e634b41e84099da9320c86d242dbe60744786ed826d7a8e0"
+  },
+  "installation_receipt": {
+    "bytes": 7329,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-head-sensitivity-v01/occurrence-inference-v01/product-installation-v01.json",
+    "sha256": "e0b13ab28fab1995372ee34fbec5a0cc6658f842af63f29b4a7930a85871d780"
+  },
+  "legacy_inference_training_BOS_contracts_and_cache_owners_changed": false,
+  "model_API_tests_retained_DATA_or_resource_census_replayed_by_documentation": false,
+  "next_task": "Reuse the qualified numerical occurrence consumer and all closed source/native/cache/raw/BOS observations. Qualify explicit versioned facade dispatch and source/context ingress using existing runtime owners, with authenticated artifact, native and current 13-source-generation bindings. Do not promote these authored fixtures into retained-data or768D qualification. Then separately admit predeclared bounded fixed-prefix, later-clause-route and complete-sequence comparisons with raw completion/IR/task dispositions; preserve legacy global inference/training contracts, normal consumer checks, source/meaning/context and grouped exposure/gold/Lean/convergence gates.",
+  "numerical_policy": {
+    "CPU_autocast_enabled": false,
+    "cpu_threads": 1,
+    "float32_matmul_precision": "highest",
+    "optional_dependency_profile": "optional_dill_unavailable",
+    "torch_version": "2.9.1+cpu"
+  },
+  "original_owned_pipeline_succeeded": true,
+  "original_owner_returncode": 0,
+  "paragraph_text_uniqueness_or_global_text_single_vector_asserted": false,
+  "phase_events_passed": 36,
+  "product_installation_manifest": {
+    "bytes": 21380,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-head-sensitivity-v01/occurrence-inference-v01/product-installation-manifest-v01.json",
+    "sha256": "f76a8eec7ed5e917a9c14cc2b104bdc01bfe6b0fff2330973cd5d256e25d7929"
+  },
+  "qualification_basis": "original_owned_pipeline_pass",
+  "qualification_summary": {
+    "bytes": 33084,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-head-sensitivity-v01/occurrence-inference-v01/qualification-summary-v01.json",
+    "sha256": "45a6c21af3a593c137b92fd1256c1612cbeabbb7324903305d8a82e4ee74e092"
+  },
+  "recorded_at_utc": "2026-10-27T20:32:14.966270+00:00",
+  "recovered_storage_custody_closed": false,
+  "report_schema": "contextual-legal-ir-occurrence-inference/v1",
+  "retained_768_qualification_claimed": false,
+  "schema": "legal-ir-occurrence-inference-consumer-public-qualification/v1",
+  "scope": "384D authored numeric-consumer fixture qualification only, including genuine legacy/new EOS parity and explicit raw-status taxonomy doubles.",
+  "semantic_or_Lean_proof_authority": false,
+  "source_basis_head_equivalence_task_accuracy_or_convergence_qualified": false,
+  "source_native_storage_custody_closed": true,
+  "source_observations": {
+    "compiled_source_buffer_count": 12,
+    "import_origin_count": 12,
+    "native_binary_or_whole_runtime_attestation": false
+  },
+  "task_satisfied": null,
+  "training_mask": 0,
+  "versioned_facade_dispatch_and_authenticated_retained_consumption_qualified": false
+}

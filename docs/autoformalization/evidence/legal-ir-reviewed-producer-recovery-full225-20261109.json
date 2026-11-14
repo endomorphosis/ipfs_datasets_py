@@ -1,0 +1,834 @@
+{
+  "behavior": "Existing sampled recovery accepts the finite fully closed Root V4/18 post-barrier failed-command profile; existing V1 proof and recovery engine remain intact. Fresh exact record, process/native absence and complete durable artifacts remain required. No automatic expiration or blind retry.",
+  "closure": {
+    "genuine_wait_native_process_Source_closed": true,
+    "preserved_attempt_bytes": 2086573,
+    "reservation_id": "f0d4f29c741841d5821c8489a93ff615",
+    "retained_bytes": 0,
+    "storage_released_and_durable": true
+  },
+  "current_maintenance_release_freshness_20261110": {
+    "Native_or_H_qualification_claimed": false,
+    "actual": {
+      "cleanup_seconds": 35.20533216185868,
+      "completed": true,
+      "elapsed_seconds": 493.2470763097517,
+      "errors": [],
+      "fresh_report_checked_at_epoch": 1794277838.0224113,
+      "held_fresh_health_ack_at_epoch": 1794277872.586986,
+      "monitor_START_count": 1,
+      "original_absolute690_satisfied": true,
+      "own_hold_removed": true,
+      "postrestore_release_fence_satisfied": true,
+      "quiet_seconds": 450.00017702113837,
+      "timer_restored_at_epoch": 1794277837.9698937
+    },
+    "actual_v04_terminal_ref": {
+      "bytes": 22198,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/phase8-producer-evaluation-source-v01/qualification-controls-v01/runtime-owner-sdk-host-compatibility-v01/H-no-child-engineering-hold-quiet450-closed-actual-v04.json",
+      "sha256": "ffd3f37ce2aac959baafdfe207a664c80bc8b18c3ab226b3ad8881f8b7c68666"
+    },
+    "budget_at_held_fresh_ack": {
+      "actions": 3,
+      "board_id": "legal-ir",
+      "circuit_open_until": 1794280260.0758686,
+      "schema": "agent-supervisor/infrastructure-budget@1",
+      "status": "open",
+      "total_actions": 9,
+      "window_started_at": 1794239802.732565
+    },
+    "budget_before": {
+      "actions": 3,
+      "board_id": "legal-ir",
+      "circuit_open_until": 1794280260.0758686,
+      "schema": "agent-supervisor/infrastructure-budget@1",
+      "status": "open",
+      "total_actions": 9,
+      "window_started_at": 1794239802.732565
+    },
+    "fresh_monitor_report_full9": {
+      "st_ctime_ns": 1794277838103992770,
+      "st_dev": 66306,
+      "st_gid": 1000,
+      "st_ino": 38166560,
+      "st_mode": 33024,
+      "st_mtime_ns": 1794277838103992770,
+      "st_nlink": 1,
+      "st_size": 16570,
+      "st_uid": 1000
+    },
+    "fresh_monitor_report_ref": {
+      "bytes": 16570,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/phase8-producer-evaluation-source-v01/qualification-controls-v01/runtime-owner-sdk-host-compatibility-v01/H-no-child-engineering-hold-quiet450-postrestore-healthy-report-v04.json",
+      "sha256": "525df99891ed929b6d90fa07c536a2a63916301653b9b638e3c1699b7aef4146"
+    },
+    "held_watchdog_ack_ref": {
+      "bytes": 6044,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/phase8-producer-evaluation-source-v01/qualification-controls-v01/runtime-owner-sdk-host-compatibility-v01/H-no-child-quiet450-v04-held-fresh-health-ACK-DATA-v01.json",
+      "sha256": "b6df6e47d28a09a1a718202db93d2b2fedba066dcf78d866d4326dbfca976011"
+    },
+    "independent_finite_peer_ref": {
+      "bytes": 4842,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/phase8-producer-evaluation-source-v01/qualification-controls-v01/runtime-owner-sdk-host-compatibility-v01/H-no-child-engineering-HOLD-quiet450-v04-reviewed-independent-finite-peer-v01.json",
+      "sha256": "88994f0bead3959ec5908c8cf4d76909cb6b3d6b1d761d08e8a1b8ff1868c8c6"
+    },
+    "independent_terminal_peer_ref": {
+      "bytes": 4751,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/phase8-producer-evaluation-source-v01/qualification-controls-v01/runtime-owner-sdk-host-compatibility-v01/H-no-child-quiet450-v04-actual-closure-and-fresh-release-fence-independent-DATA-peer-v01.json",
+      "sha256": "faeaf6c9160386c84ea7b44ef188d86d9671471d1d31ed913ad6819d99253836"
+    },
+    "limits": {
+      "absolute_controller_seconds": 690,
+      "cleanup_reserved_seconds": 120,
+      "monitor_START_calls_maximum": 1,
+      "quiet_seconds": 450,
+      "setup_max_seconds": 120
+    },
+    "old600_closure_ref": {
+      "bytes": 3531,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/phase8-producer-evaluation-source-v01/qualification-controls-v01/runtime-owner-sdk-host-compatibility-v01/H-no-child-engineering-hold-quiet600-actual-closure-independent-DATA-peer-v01.json",
+      "sha256": "ec8aa6932ee38aba08f0c5c29424f3ad4b22d5d582fcc4276ccdf5c84722e56a"
+    },
+    "original_budgets_preserved_without_reset": true,
+    "own_token_release_ref": {
+      "bytes": 559,
+      "path": "/home/barberb/.local/state/ipfs-taskboard-watchdog/legal-ir/legal-ir/HOLD.released-a59db33dab904e6b8dd8e6b34905593e.json",
+      "sha256": "982868ec584126ad67ea99fd5ff660e58f65ad45c04c527f5e537b074d9da4ff"
+    },
+    "own_token_release_registration_ref": {
+      "bytes": 164,
+      "path": "/home/barberb/.local/state/ipfs-taskboard-watchdog/legal-ir/legal-ir/HOLD.released-a59db33dab904e6b8dd8e6b34905593e.json.lease.json",
+      "sha256": "c8b79e6e08e1a64a3d942a127f48da26aca2e5ce0401e8955554d1f3689e8063"
+    },
+    "recorded_at_utc": "2026-11-10T02:36:07.733459+00:00",
+    "schema": "existing225-maintenance-release-freshness-actual/v1",
+    "scientific_global_holds_or_tasks_changed": false,
+    "scope": "Actual existing-owner maintenance and fresh-health release fence for the enrolled dependency. The first stale-report repair attempt remains charged at actions3/total9/open circuit; this later window preserves that history. Guarded coding-repair observation is established for an inactive enrolled dependency; no general timer-crash automatic recovery, Source repin, Native job, model or statutory/Lean admission follows.",
+    "selected_controller_ref": {
+      "bytes": 18780,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/phase8-producer-evaluation-source-v01/qualification-controls-v01/runtime-owner-sdk-host-compatibility-v01/H-no-child-engineering-HOLD-quiet450-controller-INERT-v04-reviewed.py",
+      "sha256": "3f5e5b95b31523f0e40f0c2e71e4efcbe1610c352c2261f52ef7b94bd7bf0d68"
+    },
+    "selected_preparation_ref": {
+      "bytes": 6066,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/phase8-producer-evaluation-source-v01/qualification-controls-v01/runtime-owner-sdk-host-compatibility-v01/H-no-child-engineering-HOLD-quiet450-controller-INERT-preparation-v04-reviewed.json",
+      "sha256": "d8f265933598375328d5d463b3120b280f04951665079839d4400fa66933edec"
+    },
+    "stale_report_race_ref": {
+      "bytes": 2902,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/phase8-producer-evaluation-source-v01/qualification-controls-v01/runtime-owner-sdk-host-compatibility-v01/H-no-child-quiet600-postrestore-race-and-recovered-health-independent-DATA-peer-v01.json",
+      "sha256": "348c2a65a31845bb08407ea8b5ed988e64ed920b112d22cc90a0e64e5bad1fb1"
+    }
+  },
+  "current_recovery_frontier_20261110": {
+    "all_original24_catalog_BACKLOG_statuses_unchanged": true,
+    "evidence_refs": {
+      "P5_original43_source_delivery": {
+        "bytes": 1964,
+        "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/phase8-producer-evaluation-source-v01/qualification-controls-v01/runtime-owner-sdk-host-compatibility-v01/P5-qualified-source-only-tail-actual-delivery-independent-DATA-peer-v01.json",
+        "sha256": "a7a59a7a8f21e6364850a815ea1c6080dd7ddede66a4b58256b0e3ea3d4ce5a2"
+      },
+      "SDK_epoch9": {
+        "bytes": 6268,
+        "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/phase8-producer-evaluation-source-v01/qualification-controls-v01/runtime-owner-sdk-host-compatibility-v01/sdk-open-epoch9-actual-success-independent-DATA-acceptance-v01.json",
+        "sha256": "bddf1488d953de65d81f5e71ef5f8ee131874c15523451f028edc0034fb5e959"
+      },
+      "capacity_service_first_cycle": {
+        "bytes": 4776,
+        "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/phase8-producer-evaluation-source-v01/qualification-controls-v01/runtime-owner-sdk-host-compatibility-v01/current-watch-existing-service-first-cycle-independent-DATA-acceptance-v01.json",
+        "sha256": "14931b4a1b9cbabb4b8e24a5650cb627ae5ba23433094446dc3712759946f42b"
+      },
+      "capacity_service_natural_second_cycle": {
+        "bytes": 3206,
+        "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/phase8-producer-evaluation-source-v01/qualification-controls-v01/runtime-owner-sdk-host-compatibility-v01/current-watch-existing-service-natural-second-cycle-actual-v01.json",
+        "sha256": "f45e599065781e61043f69e1f22168584a9cf4e54567b0d0049e4463e94d52b4"
+      },
+      "config_enrollment_DATA": {
+        "bytes": 3775,
+        "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/phase8-producer-evaluation-source-v01/qualification-controls-v01/runtime-owner-sdk-host-compatibility-v01/fleet-dependency-config-Source1-actual-enrollment-independent-DATA-acceptance-v01.json",
+        "sha256": "62102080717f47a16e79a1fa52728a150cc437f5d00694bb64e5d28e2d5ad8c5"
+      },
+      "config_independent_readback": {
+        "bytes": 999000,
+        "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/phase8-producer-evaluation-source-v01/qualification-controls-v01/runtime-owner-sdk-host-compatibility-v01/fleet-dependency-config-Source1-independent-readback-v01.json",
+        "sha256": "4c03bd77846cd9c87874a48eb508788166e9d7066ba6b51beb94d12eb7849428"
+      },
+      "config_source_writer": {
+        "bytes": 7806,
+        "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/phase8-producer-evaluation-source-v01/qualification-controls-v01/runtime-owner-sdk-host-compatibility-v01/fleet-dependency-config-Source1-closed-outcome-v01.json",
+        "sha256": "10ce5d5363b93f63df48a4c53c393c7a25f5058ee465c228929faf162c4e7fb1"
+      },
+      "delegated_config_execution": {
+        "bytes": 3696,
+        "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/phase8-producer-evaluation-source-v01/qualification-controls-v01/runtime-owner-sdk-host-compatibility-v01/fleet-dependency-config-Source1-delegated-actor-execution-DATA-v01.json",
+        "sha256": "95d49f661cfc514bb6e1902bb4b45da265e066a28c463ac94cbaa10014a36abf"
+      },
+      "existing_eight_workstream_matrix": {
+        "bytes": 30409,
+        "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/phase8-producer-evaluation-source-v01/qualification-controls-v01/runtime-owner-sdk-host-compatibility-v01/legal-ir-current-final-deliverable-concise-eight-workstream-INERT-matrix-v02.json",
+        "sha256": "6d24bca6edbc48fd11e1f22f5e01ef4242a6df8a9b396deb5018ef6b902aee83"
+      },
+      "first204_failure": {
+        "bytes": 7447,
+        "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/phase8-producer-evaluation-source-v01/qualification-controls-v01/runtime-owner-sdk-host-compatibility-v01/fleet-dependency-whole204-first-actual-failure-independent-DATA-review-v01.json",
+        "sha256": "f314777fe46572f07a94b0fdde180584449b86864b3a87341e12b03a0e6b9ad6"
+      },
+      "genuine92c9_actual_readiness": {
+        "bytes": 4291,
+        "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/phase8-producer-evaluation-source-v01/qualification-controls-v01/runtime-owner-sdk-host-compatibility-v01/own92c9-actual-readiness-independent-DATA-review-v02.json",
+        "sha256": "59ed4f9f24722dd346dc12395633b6f1071fe133077eb1421e33a90398a8ad5b"
+      },
+      "legacy_aebb1GB": {
+        "bytes": 6531,
+        "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/phase8-producer-evaluation-source-v01/qualification-controls-v01/runtime-owner-sdk-host-compatibility-v01/legacy-aebb-complete-closeout-independent-composite-DATA-acceptance-v01.json",
+        "sha256": "50ee44c74160529f4d0ac6faa6abfb7cceb8d979635103c140dcef4e7974ef8a"
+      },
+      "legacy_ec901GB": {
+        "bytes": 9470,
+        "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/phase8-producer-evaluation-source-v01/qualification-controls-v01/runtime-owner-sdk-host-compatibility-v01/legacy-ec90-complete-closeout-independent-composite-DATA-acceptance-v01.json",
+        "sha256": "39a9ea70eb94b707c1499450403a91d3b30311d5fdeb787cd7a3d106b8c2bbd2"
+      },
+      "monitor_source2": {
+        "bytes": 5291,
+        "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/phase8-producer-evaluation-source-v01/qualification-controls-v01/runtime-owner-sdk-host-compatibility-v01/fleet-dependency-monitor-actual-Source2-independent-DATA-acceptance-v01.json",
+        "sha256": "8857b665d0344795fe989ab622b25a360a68ad07c9cd1e623b8d0b9af51c6c4a"
+      },
+      "natural_enrolled_health_DATA": {
+        "bytes": 5858,
+        "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/phase8-producer-evaluation-source-v01/qualification-controls-v01/runtime-owner-sdk-host-compatibility-v01/fleet-dependency-config-enrolled-natural-monitor-and-propagation-DATA-v01.json",
+        "sha256": "fa4530e1d62b6e53313da77e28a6009fedaebeaac6eec491e12d7425b076e69c"
+      },
+      "natural_enrolled_health_independent_peer": {
+        "bytes": 2421,
+        "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/phase8-producer-evaluation-source-v01/qualification-controls-v01/runtime-owner-sdk-host-compatibility-v01/fleet-dependency-config-enrolled-natural-observation-independent-DATA-peer-v01.json",
+        "sha256": "28c4ce19f43159dd752cd191c35e93011ac1a7ac00c7768b38bfecbf79cb4d7c"
+      },
+      "proper276_closeout": {
+        "bytes": 6567,
+        "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/phase8-producer-evaluation-source-v01/qualification-controls-v01/runtime-owner-sdk-host-compatibility-v01/own276-H16-V4-closeout-composite-independent-DATA-review-v01.json",
+        "sha256": "bd0c2c6df5dd89eed2d311c961eb0bdf3d6a2c28f2321b261e3ff39d45ed6ab8"
+      },
+      "proper398_closeout": {
+        "bytes": 6876,
+        "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/phase8-producer-evaluation-source-v01/qualification-controls-v01/runtime-owner-sdk-host-compatibility-v01/own398-administrative-closeout-composite-independent-DATA-acceptance-v03.json",
+        "sha256": "2af24fa843e1e3e3b303a1bfe92aa5b0c096dc1e1df117d6fb83deeb370d5ec5"
+      },
+      "supervisor17": {
+        "bytes": 5951,
+        "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/phase8-producer-evaluation-source-v01/qualification-controls-v01/runtime-owner-sdk-host-compatibility-v01/lane0-birth-postfix17-v12-actual-success-independent-DATA-acceptance-v01.json",
+        "sha256": "a610b8cdced32e14e59b4c62a9262d0d317cd8fbf1306289ea18edff961c3379"
+      },
+      "whole133": {
+        "bytes": 5868,
+        "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/phase8-producer-evaluation-source-v01/qualification-controls-v01/runtime-owner-sdk-host-compatibility-v01/retained-capacity-current-watch133-actual-success-independent-DATA-acceptance-v01.json",
+        "sha256": "b8a9b385f0d15285f9efe2dde7392bada8b2192976df4b26a18b6e08bb5362f3"
+      },
+      "whole204": {
+        "bytes": 5824,
+        "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/phase8-producer-evaluation-source-v01/qualification-controls-v01/runtime-owner-sdk-host-compatibility-v01/fleet-dependency-whole204-physical-actual-success-independent-DATA-acceptance-v02.json",
+        "sha256": "1144dea94c883b3600605685cbb0066190a3180babc97439ee65cca9167bc0c5"
+      }
+    },
+    "existing_workstream_matrix": [
+      {
+        "engineering": "Existing family/dimension registries, source/checkpoint/codec/optimizer contracts and retained asset receipts exist. Original temporal comparison LIR-16 remains completed.",
+        "gaps": [
+          "Choose exact compatible consumer/source-view/checkpoint/objective lineage; preserve all failed/exposed comparisons.",
+          "A trained state, registered width or successful restore does not establish complete formula fidelity."
+        ],
+        "next_existing_task": {
+          "action": "Authenticate current selected family/profile against existing registry and retained receipts; reuse compatible assets rather than recapture or relabel.",
+          "task_ids": [
+            "LIR-01",
+            "LIR-03"
+          ]
+        },
+        "workstream": "LIR-PHASE-01"
+      },
+      {
+        "engineering": "Existing intake-v2, join-v3, source-coordinate/correspondence, independent context and review-request owners retain original/wire views and offsets.",
+        "gaps": [
+          "Authenticate one selected release/component and exact source/span/entity row/file/view/Unicode+UTF8-offset witnesses.",
+          "Governing edition/legal-as-of, complete meaning and each-use definition applicability remain substantive inputs, not values inferred from caches.",
+          "Manifest population counts remain null until authenticated inventory; mixed index rows or cache files are not normative-provision denominators."
+        ],
+        "next_existing_task": {
+          "action": "Reuse existing LIR-0201 source-binding preparation and retained review packets for one norm, its governing definition and two genuinely distinct operative uses; retain unresolved decisions.",
+          "task_ids": [
+            "LIR-02",
+            "LIR-05",
+            "LIR-06"
+          ]
+        },
+        "workstream": "LIR-PHASE-02"
+      },
+      {
+        "engineering": "Complete typed/relational/counting, ordered role/binder, norm-content alternatives/adjudication and scoped applicability contracts already exist.",
+        "gaps": [
+          "Supply independent reviewed complete targets and governing decisions for every physical use.",
+          "Prove lossless support for all selected actors, roles, modality, conditions, exceptions, temporal and counting structure; unresolved/unsupported alternatives stay explicit."
+        ],
+        "next_existing_task": {
+          "action": "Census the reviewed pilot through existing complete-norm/definition owners; extend only an evidenced missing constructor or compatibility boundary.",
+          "task_ids": [
+            "LIR-07",
+            "LIR-09",
+            "LIR-10"
+          ]
+        },
+        "workstream": "LIR-PHASE-03"
+      },
+      {
+        "engineering": "Existing semantic-graph and typed-source/norm adapters preserve occurrence/mention/sense/entity/definition/norm identity and ordered reconstructable AST links.",
+        "gaps": [
+          "Independent reviewed semantic edges, exact source/meaning commitments and closed endpoints/dependencies for a real component are still required.",
+          "Two interpretations or two references from one occurrence do not constitute two operative statutory uses."
+        ],
+        "next_existing_task": {
+          "action": "Close one reviewed component through the existing graph owner and prove source→AST→graph→AST reconstruction without a second graph pipeline.",
+          "task_ids": [
+            "LIR-04",
+            "LIR-08",
+            "LIR-11"
+          ]
+        },
+        "workstream": "LIR-PHASE-04"
+      },
+      {
+        "engineering": "Existing modular Lake preparation/native build, context-bound proof cache, interpretation and AST-preservation/invalidation owners exist.",
+        "gaps": [
+          "A genuinely source-bound reviewed statutory norm/definition/two-use component has not been admitted by these fictional engineering builds.",
+          "Require pinned actual Lean build, explicit axioms/interpretation, source→AST→theorem lineage, non-vacuity/negative controls and affected-versus-clean equality."
+        ],
+        "next_existing_task": {
+          "action": "Use reviewed manual targets with existing modular/native/preservation owners; do not wait for decoder accuracy or create another generic corpus builder.",
+          "task_ids": [
+            "LIR-12",
+            "LIR-13",
+            "LIR-14",
+            "LIR-15"
+          ]
+        },
+        "workstream": "LIR-PHASE-05"
+      },
+      {
+        "engineering": "Retained native8/384/768/4096 producer families, numerical trainers, checkpoint restore/resume, source-only generation, rich retrieval and exposure reporting are implemented.",
+        "gaps": [
+          "Reviewed grouped complete statutory targets, compatible objective/teacher/masks and leakage-free fresh evaluation groups remain necessary.",
+          "Local licensed pretrained decoder/tokenizer assets and per-profile runtime/source provenance must meet their own selected policy; no download/training permission is inferred.",
+          "Measured autonomous complete legal semantics, source dependence and whole-session comparative costs remain unavailable; retention/typed output and EOS abstention are different metrics."
+        ],
+        "next_existing_task": {
+          "action": "Finish the already selected genuine parent/runtime/profile integration through existing owners, then compare four distinct producers on frozen reviewed groups and declared controls; no paid fit or new experiment is selected by this audit.",
+          "task_ids": [
+            "LIR-17",
+            "LIR-18",
+            "LIR-19",
+            "LIR-20",
+            "LIR-23"
+          ]
+        },
+        "workstream": "LIR-PHASE-06"
+      },
+      {
+        "engineering": "Existing immutable manifest/publication/readback, disposition, repair/admission and supervisor task hierarchy owners exist; engineering145 completion does not count formalized laws.",
+        "gaps": [
+          "Existing scientific executor descriptor/profile activation is unverified; materialized nine-filea53b candidate still needs selected-family qualification, exact profile binding and health/activation proof through its original owner.",
+          "LIR-2102 remote immutable required-body match/preservation obligations remain; LIR-2401/02/03 require real reviewed component acceptance, wider context/evaluation and coherent neighborhood release.",
+          "No all-release disposition ledger or accepted whole-US-Code graph/Lean corpus has been demonstrated."
+        ],
+        "next_existing_task": {
+          "action": "Reuse revision4 and completed coordinator-retention children, LIR-2101 revision3, exact existing remote_body_match/partial-upload preservation contract; prepare missing proofs under existing holds without a new queue/upload/activation.",
+          "native_alias": "LIR-2102",
+          "task_ids": [
+            "LIR-21",
+            "LIR-22",
+            "LIR-24"
+          ]
+        },
+        "workstream": "LIR-PHASE-07"
+      },
+      {
+        "engineering": "Original producer-bound evaluation artifacts, metrics, split and consumer contracts are merged and seven owner/test files adopted in primaryR.",
+        "gaps": [
+          "Hosted CI execution/readback is unverified; configured workflow or merged code is not a successful hosted job.",
+          "Evaluation interfaces cannot supply legal meaning/review labels, pretrained model quality, whole-corpus coverage or selected scientific runtime activation."
+        ],
+        "next_existing_task": {
+          "action": "Reuse merged241 APIs and exact source-scoped receipts; obtain the existing hosted-CI owner result when available and keep current operational/inference/profile qualification separate.",
+          "task_ids": [
+            "LIR-03",
+            "LIR-19",
+            "LIR-20",
+            "LIR-22",
+            "LIR-23"
+          ]
+        },
+        "workstream": "Phase8 producer/evaluation software"
+      }
+    ],
+    "known_engineering_facts": {
+      "capacity_service": {
+        "durable_input_copy": "Existingrequestidentitypreserved;stored_request_ref exactbytes copydoesnotrewriteoriginalparent.request",
+        "first_and_natural_second_cycles": "Actualidle_current_capacity_satisfied/no mutatingAPIcalls;timerrestored",
+        "known_limit": "Doesnotclaimagenuinepressure-reconciliationreleaseorunknownclaimrecoveryfromtheseidlecycles"
+      },
+      "config_source": {
+        "execution_attribution": "Executed by delegated /root/finish_enrollment_docs under explicit /root authorization, exact original42/733 bounded Source1 followed by separate independent readback; main Root did not execute these two actors.",
+        "independent_readback_seconds": 0.056541134137660265,
+        "max_idle_seconds": 180,
+        "max_runtime_seconds": 300,
+        "meaning": "Existing one-dependency config Source enrollment independently accepted; natural fleet observation separately accepted.",
+        "original_four_lanes_unchanged": true,
+        "service": "ipfs-legal-ir-retained-capacity-recovery.service",
+        "single_binding_source_published": true,
+        "source_writer_seconds": 0.07334607094526291,
+        "timer": "ipfs-legal-ir-retained-capacity-recovery.timer"
+      },
+      "engine_timeout_controlled_UNIT_recovery": {
+        "Source2": {
+          "CAS_count": 2,
+          "execution_attribution": "Delegated /root/finish_enrollment_docs executed the exact Root-selected writer and separate original Source readback. Main Root selected the plan; this source transaction admitted no Native tests.",
+          "full0400_archives": 3,
+          "instruction_absences": 20,
+          "original_byte_CAS_sha256_prefix": "733d651f",
+          "original_source_owner_sha256_prefix": "42e9f07d",
+          "protected_rows": 25,
+          "qualification_inferred_from_installation": false,
+          "readback_seconds": 0.06425781408324838,
+          "shared_Source_seconds": 3,
+          "source_installed": true,
+          "total_target_and_protected_full9_rows": 27,
+          "writer_seconds": 0.10844903998076916
+        },
+        "baseline_UNIT_RED": {
+          "cases": 3,
+          "errors": 0,
+          "failed_artifacts_durable": false,
+          "failed_reservation_prefix": "ffdacb",
+          "failed_storage_bytes": 16777216,
+          "failed_storage_retained": true,
+          "functions": 2,
+          "intended_completion_assertion_failures": 1,
+          "passed": 2,
+          "skipped": 0,
+          "timeout_result124_partial_and_prefix_assertions_reached": false
+        },
+        "capacity_cycle_scopes": {
+          "budget_history": "Original actions3/total9/window/circuit timestamps remain unchanged; natural clock expiry is not a reset.",
+          "earlier_refusal": "Existing06:01:22 cycle refused inspection ledger lock; Sourceclosed, no holder/source-drift cause inferred. Preserved separately.",
+          "new_natural_success": "Existing06:17:12→06:17:59 cycle Resultsuccess/ExecStatus0/PID0 observed at docs-only entry; not inferred from NativeGREEN or earlier IN_PROGRESS maintenance report."
+        },
+        "current_sources": {
+          "engine": {
+            "bytes": 43366,
+            "path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/agent_supervisor/todo_daemon/engine.py",
+            "sha256": "f6ee34fa5e03281e067fa0100e1adb3716d2fd6c845d0d5ac0d3fcde24b549b6"
+          },
+          "owning_test": {
+            "bytes": 27296,
+            "path": "/home/barberb/lift_coding/external/ipfs_accelerate/test/api/test_supervisor_staged_file_patching.py",
+            "sha256": "b23911698823bad441550f2f5bb50baeb2bcb92c34798fa440a5e956c2b9f796"
+          }
+        },
+        "evidence_refs": {
+          "Source2_independent_DATA": {
+            "bytes": 3383,
+            "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/phase8-producer-evaluation-source-v01/qualification-controls-v01/runtime-owner-sdk-host-compatibility-v01/engine-finite-drain-Source2-actual-adoption-independent-DATA-peer-v01.json",
+            "sha256": "99dad1270e4cf11d59e81b4355f406ce59986c11aa38d6477b747863fc9942a1"
+          },
+          "Source2_plan": {
+            "bytes": 178546,
+            "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/phase8-producer-evaluation-source-v01/qualification-controls-v01/runtime-owner-sdk-host-compatibility-v01/engine-finite-drain-Source2-plan-v02.json",
+            "sha256": "b095c199cebaebaaed8ba094162ec75c11370cd0e3d7dceea9940fbfae602fc4"
+          },
+          "Source2_readback": {
+            "bytes": 506558,
+            "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/phase8-producer-evaluation-source-v01/qualification-controls-v01/runtime-owner-sdk-host-compatibility-v01/engine-finite-drain-Source2-independent-readback-v01.json",
+            "sha256": "65b385ebd79d38a64fef8b21a278f07a8168898a916a8f8f5064ee7dbaa4defc"
+          },
+          "Source2_semantics": {
+            "bytes": 5021,
+            "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/phase8-producer-evaluation-source-v01/qualification-controls-v01/runtime-owner-sdk-host-compatibility-v01/engine-postkill-finite-drain-independent-static-semantics-peer-v01.json",
+            "sha256": "2a42469137cb419de3286eedf646aa476a19682e518346b4fb2de9eda8a5fc46"
+          },
+          "Source2_writer": {
+            "bytes": 10173,
+            "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/phase8-producer-evaluation-source-v01/qualification-controls-v01/runtime-owner-sdk-host-compatibility-v01/engine-finite-drain-Source2-closed-outcome-v01.json",
+            "sha256": "d43eaf6e15b35b3a0f0fadb4723d0f39ac5758c1ffaa2f54c9e7364f8c913bce"
+          },
+          "baseline_UNIT_RED": {
+            "bytes": 13973,
+            "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/engine-postkill-controlled-unit-RED1-input-INERT-v02/actual-controlled-UNIT-RED1-output-custody-v01.json",
+            "sha256": "65dc1c19a79aa4068bf83cd7c940e8dec7ac833481cbe3fe7bd9249751ea8d43"
+          },
+          "baseline_UNIT_RED_independent_DATA": {
+            "bytes": 3406,
+            "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/engine-postkill-controlled-unit-RED1-input-INERT-v02/actual-controlled-UNIT-RED1-independent-DATA-peer-v01.json",
+            "sha256": "3c06b6fadc610bcce4c2b9726ea26a03c62858de42dc47b5e54ea588d75789c8"
+          },
+          "focused12_GREEN": {
+            "bytes": 19954,
+            "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/engine-postkill-finite-drain-focused12-GREEN-input-INERT-v01/actual-focused12-GREEN-output-custody-v01.json",
+            "sha256": "512a4197634084df45b928dbaf3f6edbf92f8f82b49a3fd40d0783cf35522eae"
+          },
+          "focused12_GREEN_independent_DATA": {
+            "bytes": 5745,
+            "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/engine-postkill-finite-drain-focused12-GREEN-input-INERT-v01/actual-focused12-GREEN-independent-DATA-peer-v01.json",
+            "sha256": "6e5046de0f081c77ce1d01fa9c7a86a9e9bc39ba91adff7c4901dce8c0c1ed24"
+          },
+          "focused12_maintenance_closed": {
+            "bytes": 23235,
+            "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/phase8-producer-evaluation-source-v01/qualification-controls-v01/runtime-owner-sdk-host-compatibility-v01/engine-focused12-GREEN-engineering-hold-quiet450-closed-actual-v01.json",
+            "sha256": "068b3a449b81f4641452587346b117543d032526f5da1b43fce7c3365d97fd66"
+          },
+          "focused12_maintenance_independent_DATA": {
+            "bytes": 5950,
+            "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/phase8-producer-evaluation-source-v01/qualification-controls-v01/runtime-owner-sdk-host-compatibility-v01/engine-focused12-GREEN-quiet450-actual-closure-and-fresh-release-fence-independent-DATA-peer-v01.json",
+            "sha256": "9da73846efa6ee3ce73c566520567fddd621bf0a0e9a40d30d34622e68b8c656"
+          },
+          "new_natural_successful_capacity_cycle": {
+            "bytes": 2569,
+            "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/phase8-producer-evaluation-source-v01/qualification-controls-v01/runtime-owner-sdk-host-compatibility-v01/existing-maintained-docs-only-entry-unit-readonly-observation-v01.json",
+            "sha256": "7a0f97b784e72cce7c295f45bc3522e6b77213131e6dfaf01f387706dd1a19a2"
+          },
+          "prior_ledger_lock_refusal": {
+            "bytes": 4940,
+            "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/phase8-producer-evaluation-source-v01/qualification-controls-v01/runtime-owner-sdk-host-compatibility-v01/engine-focused12-GREEN-capacity-service-ledger-lock-refusal-readonly-observation-v01.json",
+            "sha256": "d1d5053999a229b472ae05661798e7bbda4dff31043ac6973ab1de04486ec4d0"
+          },
+          "prior_whole57_at_e46_cutoff": {
+            "bytes": 1412859,
+            "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/canonical-A-V5-whole57-GREEN-input-v02/Root-actual-whole57-Source-identity-testcase-custody-and-durability-qualification-v01.json",
+            "sha256": "372bdac87aa732cdb9b3a1ec74cf1046e91706541f517ace2fc4d2f7937a8308"
+          }
+        },
+        "focused_GREEN": {
+          "all_original_wait_native_compute_sampled_process_and_Source_custody_closed": true,
+          "artifact_bytes": 70498,
+          "artifacts_durable": true,
+          "cases": 12,
+          "durability_manifest_entries": 7,
+          "errors": 0,
+          "execution_attribution": "/root/engine_timeout_unit_repro owned and drained the one Root-admitted original standard2459 focused12 Native invocation; the documentation/source coordinator started no Native job.",
+          "failures": 0,
+          "functions": 7,
+          "ordinary_files_including_durability_manifest": 8,
+          "original_execution_elapsed_seconds": 132.14946952322498,
+          "passed": 12,
+          "pytest_seconds": 0.554,
+          "reservation_id": "b642d0c620af400f927e888440650f0f",
+          "retained_storage_bytes": 0,
+          "skipped": 0,
+          "source_drift": [],
+          "storage_bytes": 16777216,
+          "storage_status": "released"
+        },
+        "schema": "existing-recovery-frontier-engine-timeout-controlled-UNIT-qualification/v1",
+        "scope_limits": {
+          "controlled_transport_only": true,
+          "hosted_CI_or_full_release_qualified": false,
+          "model_quality_or_statutory_edition_meaning_or_corpus_Lean_qualified": false,
+          "physical_descendant_cleanup_qualified": false,
+          "real_escaped_pipe_EOF_cleanup_qualified": false,
+          "runtime360_or_live_worker_deployment_qualified": false,
+          "scientific_holds_or_all24_BACKLOG_statuses_changed": false,
+          "whole34_owning_module_run": false,
+          "whole57_prior_cutoff": "372b is57PASS/26functions/1.657seconds at its original100-source e46 cutoff before Source2; no after-f6ee whole57 regression is inferred."
+        },
+        "tested_UNIT_behavior": [
+          "One five-second remaining monotonic cleanup cutoff covers the final post-KILL communicate and direct-leader wait without renewal.",
+          "Latest non-None cumulative stdout and stderr snapshots are retained independently; explicit empty snapshots replace prior data without duplicate prefixes.",
+          "Incomplete ordinary-mode partial output uses replacement decoding and normalized newlines; exact output retains strict UTF-8 behavior, including fail-closed UnicodeDecodeError after local cleanup.",
+          "A short capture-incomplete/EOF-not-observed/descendant-cleanup-UNKNOWN prefix survives compact160 and default compaction before long child stderr.",
+          "Four-field CommandResult, ordinary/exact successful output, and complete TERM/KILL timeout formatting are preserved in the selected controls."
+        ]
+      },
+      "genuine92c9_readiness": {
+        "fsynced_and_matched": true,
+        "full9_entries": 153,
+        "ready_observed": true,
+        "regular_bytes": 20776408,
+        "regular_files": 73,
+        "release_performed": false,
+        "scope": "Original existing inspector and saved custody/current-row checks; future action rechecks Source/locks/row/artifacts/custody within original240, no evergreenauthorization",
+        "state_written": false
+      },
+      "prior_scopes": {
+        "276": "Original276assertionsPASSbutoverallownerFAILED;properretained16MiBcloseoutdoesnotpromoteoverallPASS",
+        "P5": "Canonicalsource-onlyportretainsoriginal43fixturequalificationlineage,notanewmodelrun",
+        "SDK9": "Narrow9/5fakeclockcohortqualified;productiveepochstartsaftercompleteowneropen,originaldeadlinesnotraised",
+        "failures": "Firstwhole204203PASS/1fixtureFAILanditsretained64MiBremainhistorical; laterwhole204successdoesnoterasethem",
+        "supervisor17": "17pureunitcases/zeroaudits/fullcustodyclosed;typedbirthfixandrealPIDheartbeat assertionspreserved"
+      },
+      "typed_wait_controlled139_generation_20261110": {
+        "JUnit": {
+          "errors": 0,
+          "failures": 0,
+          "skipped": 0,
+          "tests": 139
+        },
+        "JUnit_seconds": 2.381,
+        "canonical_owner_capsule_ref": {
+          "bytes": 65588,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoformalization/evidence/legal-ir-canonical-v5-parent-source-adoption-20261110.json",
+          "sha256": "02255dfbaa1ef5ba43ce5c5f6324d0556c3d5133e9155a4b3e5f4d4d94677b8e"
+        },
+        "functions": 57,
+        "historical225_engine12_whole57_cutoffs_unmodified": true,
+        "independent_saved_DATA_ACK_ref": {
+          "bytes": 5671,
+          "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/canonical-productive-source-parent-port-private-v01/future-typed-wait-deadline-private-v01/review-v01/actual-selected-GREEN139-independent-saved-DATA-ACK-v01.json",
+          "sha256": "26f0f2db83b97dc6a11e750f3610cee39ca4622b4e8544ac835e443b0c500893"
+        },
+        "normal_original_wait_Source_native_sampled_processes_closed": true,
+        "old_failed_Source_admission_preserved": true,
+        "original_afc0033_storage_status": "released_durable_full16MiB;1241files/8921603bytes,1240manifestrows_plus_manifest",
+        "production360_runtime_enrollment_science_model_legal_Lean_corpus_qualification": false,
+        "scope": "owner108 plus staged31 (oldcontrolled12+new19); remaining22 staged cases unqualified",
+        "selected_qualification_ref": {
+          "bytes": 4116,
+          "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/canonical-A-typed-wait-GREEN139-input-v01/Root-actual-selected-GREEN139-qualification-v01.json",
+          "sha256": "963be2ef5f3482872cc8961fccb2d94466398ea360886c4dfe9b4ac968616cca"
+        },
+        "source_generation": {
+          "engine": "e6e3e5fc0906cd312e305f46d5c7b12f48c726855561f28991de62ebee759b30",
+          "engine_tests": "6c6742412ac504e9b30d8815aabce49b510052944e8240767326d8fde11dd004",
+          "owner": "33eef26b099907225afa2df0d5bedc9839a6f6db026d2a3efe59849f9e36ba82",
+          "owner_tests": "57e83df09e69006664dec40d241a0c7a72cbd2785fc6f59659873c5fae6d540c"
+        }
+      },
+      "whole133": {
+        "audit_denials": 0,
+        "current_cases": 100,
+        "current_scope_breakdown": {
+          "new_current_profile": 54,
+          "previously_passing_legacy": 33,
+          "stored_request_copy": 13
+        },
+        "full_original_custody_closed_and_64MiB_released": true,
+        "functions": 62,
+        "historical_versioned_cases": 33,
+        "passed": 133,
+        "phases": 399,
+        "scope": "Owning software qualification; genuine custody readiness separate; no observed pressure-release from idle service cycles"
+      },
+      "whole204": {
+        "audit_denials": 0,
+        "full_original_custody_closed_and_64MiB_released": true,
+        "functions": 75,
+        "passed": 204,
+        "phases": 612,
+        "plaintext_fixture_bytes": 32,
+        "real_cold_probes": 15,
+        "real_physical_cases_started_closed": 21,
+        "scope": "ExistingSDKv2 actualcanonicalC19; onlythedeclaredunitplaintextfixture isallowed,noDBengineauthority"
+      }
+    },
+    "matrix_ref": {
+      "bytes": 30409,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/phase8-producer-evaluation-source-v01/qualification-controls-v01/runtime-owner-sdk-host-compatibility-v01/legal-ir-current-final-deliverable-concise-eight-workstream-INERT-matrix-v02.json",
+      "sha256": "6d24bca6edbc48fd11e1f22f5e01ef4242a6df8a9b396deb5018ef6b902aee83"
+    },
+    "no_full_USCode_legal_semantic_Lean_or_model_quality_claim": true,
+    "observed_enrolled_monitoring": {
+      "dependency_services": {
+        "action_authority": false,
+        "automatic_source_repin_authorized": false,
+        "available": true,
+        "completion_authority": false,
+        "configured": true,
+        "issues": [],
+        "schema": "board-service-dependency-diagnostics/v1",
+        "services": [
+          {
+            "action": "none",
+            "healthy": true,
+            "max_idle_seconds": 180,
+            "max_runtime_seconds": 300,
+            "service": "ipfs-legal-ir-retained-capacity-recovery.service",
+            "service_observation": {
+              "ActiveState": "inactive",
+              "ExecMainExitTimestampMonotonic": "3293033179187",
+              "ExecMainStartTimestampMonotonic": "3292988291076",
+              "ExecMainStatus": "0",
+              "Id": "ipfs-legal-ir-retained-capacity-recovery.service",
+              "LoadState": "loaded",
+              "Result": "success",
+              "SubState": "dead",
+              "Triggers": "",
+              "Type": "oneshot"
+            },
+            "status": "scheduled_idle",
+            "successful_exit_age_seconds": 16.194701480213553,
+            "timer": "ipfs-legal-ir-retained-capacity-recovery.timer",
+            "timer_observation": {
+              "ActiveState": "active",
+              "Id": "ipfs-legal-ir-retained-capacity-recovery.timer",
+              "LoadState": "loaded",
+              "Result": "success",
+              "SubState": "waiting",
+              "Triggers": "ipfs-legal-ir-retained-capacity-recovery.service"
+            }
+          }
+        ]
+      },
+      "downstream_probe_health": "healthy",
+      "downstream_probe_monitor_checked_at": 1794274912.9377456,
+      "downstream_watchdog_health": "healthy",
+      "downstream_watchdog_observed_at": 1794274962.7204103,
+      "engineering_lanes": [
+        {
+          "action": "none",
+          "completed_count": 145,
+          "healthy": true,
+          "lane_id": "lane-0",
+          "restart_eligible": false,
+          "status": "completed"
+        },
+        {
+          "action": "none",
+          "completed_count": 145,
+          "healthy": true,
+          "lane_id": "lane-1",
+          "restart_eligible": false,
+          "status": "completed"
+        },
+        {
+          "action": "none",
+          "completed_count": 145,
+          "healthy": true,
+          "lane_id": "lane-2",
+          "restart_eligible": false,
+          "status": "completed"
+        },
+        {
+          "action": "none",
+          "completed_count": 145,
+          "healthy": true,
+          "lane_id": "lane-3",
+          "restart_eligible": false,
+          "status": "completed"
+        }
+      ],
+      "natural_monitor_checked_at": "2026-11-10T01:42:55.927446+00:00",
+      "natural_monitor_checked_at_epoch": 1794274975.9274461,
+      "natural_monitor_healthy": true,
+      "scientific_counts": {
+        "blocked": 4,
+        "completed": 60
+      },
+      "scientific_health": "operator_hold",
+      "scientific_holds": [
+        "/home/barberb/.local/state/ipfs-taskboard-watchdog/legal-ir/legal-ir-scientific/watchdog.hold"
+      ],
+      "scope": "Asynchronous independently healthy post-publication observations, not exact-latest-report propagation or failure injection. Existing repair route tested by unit controls; no new task/restart/completion/source-repin authority."
+    },
+    "prior_source_cutoffs_preserved": true,
+    "recorded_at_utc": "2026-11-10T01:43:40.377659+00:00",
+    "schema": "legal-ir-current-recovery-frontier-and-existing-eight-workstreams/v2",
+    "vector_lineage": {
+      "384D_768D": "Use existing registered family/profile/checkpoint/codec/objective receipts; do not infer shared semantics from width",
+      "4096D": "Leanstral vectors as specified by user; exact source/profile/assets and optional consumer authorization remain explicit",
+      "8D": "spaCy-based encoder data as specified by user; retain actual registeredprofile/source-view lineage"
+    }
+  },
+  "evidence_refs": {
+    "failed_strict_census": {
+      "bytes": 12721,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/phase8-producer-evaluation-source-v01/qualification-controls-v01/H183-reviewed-producer-post225-actual-capture-v01/parent-closeout.json",
+      "sha256": "c0db6ef23719d124be31326e6e7232042d4e8d8acce6cdf8a96a74999ceadaea"
+    },
+    "independent_qualification": {
+      "bytes": 4401,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/phase8-producer-evaluation-source-v01/qualification-controls-v01/H183-plus42-actual225-independent-qualification-DATA-acceptance-v03.json",
+      "sha256": "d0bbf8708aeb8a17b808db5173b66ec404e2044afe3a5d06b1ce4e4454fbd839"
+    },
+    "junit": {
+      "bytes": 51265,
+      "path": "/tmp/pytest-of-barberb/H183-reviewed-producer-post225-live1-20261109-v02/attempt-v01/logs/junit.xml",
+      "sha256": "62cd578bc5c22cc64ff8b7fa08b995d0c866108c7ae1434aba779c7bb82e11f7"
+    },
+    "old5d8_closeout": {
+      "bytes": 6660,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/phase8-producer-evaluation-source-v01/qualification-controls-v01/runtime-owner-sdk-host-compatibility-v01/own5d8-administrative-closeout-composite-independent-saved-DATA-acceptance-v01.json",
+      "sha256": "8773852a2d6dfdb6932b2713f67fb4c5a5d945c07a22b4e377667db372b9420d"
+    },
+    "old8084_closeout": {
+      "bytes": 4653,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/phase8-producer-evaluation-source-v01/qualification-controls-v01/runtime-owner-sdk-host-compatibility-v01/own8084-actual-admin-closeout-composite-independent-DATA-acceptance-v02.json",
+      "sha256": "bc4d76c873532024a8129ae34d6f2c1cad8b8b4a382e318b3ba2a8ed3d2d1a2c"
+    },
+    "parent": {
+      "bytes": 9878,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/phase8-producer-evaluation-source-v01/qualification-controls-v01/H183-reviewed-producer-post225-live1-actual-capture-v02/parent-closeout.json",
+      "sha256": "4df1ff6c3e0c73fd4433d37b9e7d1c297556ecf6d8c67a18e03c9ccf22c670c2"
+    },
+    "refused_live_census_admission": {
+      "bytes": 7023,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/phase8-producer-evaluation-source-v01/qualification-controls-v01/H183-reviewed-producer-post225-live1-actual-capture-v01/parent-closeout.json",
+      "sha256": "a31bd9f6ac48131d9c164e4696a5b09ce5247652c138f990d0efee14fea85f3d"
+    },
+    "result": {
+      "bytes": 8108,
+      "path": "/tmp/pytest-of-barberb/H183-reviewed-producer-post225-live1-20261109-v02/attempt-v01/logs/result.json",
+      "sha256": "15bf597a6fca65dd03fa8f32e6d6ca8abd1294cd015693bbc8cdb638d5dbb244"
+    },
+    "selection": {
+      "bytes": 12005,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/phase8-producer-evaluation-source-v01/qualification-controls-v01/H183-reviewed-producer-post225-case-selection-v01.json",
+      "sha256": "2ca4d35734ba567e384c1fa62bea3ce2bfdbd95fd72de93cac2f099f2113702c"
+    },
+    "source_adoption": {
+      "bytes": 5347,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/phase8-producer-evaluation-source-v01/qualification-controls-v01/runtime-owner-sdk-host-compatibility-v01/reviewed-producer-recovery-actual-source-adoption-independent-DATA-acceptance-v01.json",
+      "sha256": "3aa1258e7c1aa1776ceb5bad3c19325bda18a33ed33428cac53d54f8fefdc1e8"
+    }
+  },
+  "existing_tasks": [
+    "LIR-23",
+    "LIR-24"
+  ],
+  "historical_closeouts": "Separate current-owner administrative closeouts released only original own8084 and own5d8 64 MiB promises, retaining their files and failure histories; these are not passing historical test runs.",
+  "limits": {
+    "child_process_slots": 2,
+    "complete_resamples_observed": 0,
+    "cpu_slots": 1,
+    "live_complete_resamples_per_census": 1,
+    "memory_mb": 1536,
+    "productive_seconds": 120,
+    "request_schema": "owned-validation-request/v4",
+    "scheduler_policy_sha256": "f07cb14289fcb6275e4497dcc36be0dcf8bfc3dc87531ff7a9537eb85fdcc661",
+    "storage_bytes": 16777216
+  },
+  "preserved_failures": "Strict V1 polling cancelled on a disappearing atomic temporary leaf after 194 dots without final JUnit. The first V4/live1 admission was refused before record/native/child/test. Neither is qualified or reset. The successful later generation has fresh admission and its own complete result.",
+  "qualification": {
+    "cases": 225,
+    "complete_owner_seconds": 156.82168629858643,
+    "errors": 0,
+    "failures": 0,
+    "functions": 36,
+    "new_recovery_cases": 42,
+    "pytest_seconds": 22.252,
+    "selected_host_cases": 7,
+    "selected_recovery_cases": 218,
+    "skipped": 0,
+    "whole_recovery_module_qualified": false
+  },
+  "recorded_at_utc": "2026-11-09T10:26:28.509344+00:00",
+  "remaining": "Before-barrier398 and UNKNOWN686 histories remain outside this source generation. Current supervisor birth-status fix and its tests are separately pending. This qualifies neither the complete resource SDK/CLI modules nor G200, model training, legal meaning, native Lean or corpus admission.",
+  "schema": "legal-ir-reviewed-producer-recovery-full225-qualification/v1",
+  "source": {
+    "all_project_execution_attestation_claimed": false,
+    "guarded_source_count": 35,
+    "owning_test": {
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_resource_recovery.py",
+      "sha256": "7c2c06a7320d9821a416659168b67293bcc53f2fa0f9861f03cf1ad4de6db3e4"
+    },
+    "recovery": {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_resource_recovery.py",
+      "sha256": "1b10588b7e31f01e14bc7740b91aeb50b742837bad32eb6e099b783300b5de1b"
+    },
+    "source_drift": []
+  }
+}

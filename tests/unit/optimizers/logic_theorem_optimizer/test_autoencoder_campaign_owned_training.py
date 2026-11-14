@@ -764,3 +764,100 @@ def test_foreign_tree_pin_rejects_before_plan_capture_or_artifact_mutation(case,
     assert {str(path.relative_to(case.registry.artifact_root)): path.read_bytes()
             for path in case.registry.artifact_root.rglob("*") if path.is_file()} == cas_before
     assert list(case.output.iterdir()) == []
+
+
+# Fixed F18 metadata fixtures deliberately contain no usable training payloads.
+def _f18_control_case(tmp_path):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_campaign_f18_conditions_v1 as f18
+    root = tmp_path / "charged"
+    root.mkdir()
+    inputs = tmp_path / "unread-inputs"
+    inputs.mkdir()
+    def descriptor(name, digest="2" * 64):
+        return {"path": str(inputs / name), "bytes": 1, "sha256": digest}
+    mapping = {"schema_version": f18.SCHEMA_VERSION, "run_id": "f18-fixture",
+        "output_directory": str(root / "outputs"),
+        "prepared_inputs": descriptor("prepared.json", "3" * 64),
+        "initial_checkpoint": descriptor("initial.json", "4" * 64),
+        "physical_assets": [{"role": role, **descriptor("asset-" + str(index))}
+                            for index, role in enumerate(f18.ASSET_ROLES)],
+        "source_pins": {path: {"bytes": 1, "sha256": digest or "1" * 64}
+                        for path, digest in f18.REQUIRED_SOURCE_SHA256.items()},
+        "margin_weight": 0.25, "max_steps": 2, "max_seconds": 1,
+        "runtime_contract": None}
+    raw = owned.canonical_json_bytes(mapping)
+    job = tmp_path / "job.json"
+    job.write_bytes(raw)
+    ledger, scheduler = tmp_path / "ledger.json", tmp_path / "scheduler.json"
+    ledger.write_bytes(b"{}\n")
+    scheduler.write_bytes(b"{}\n")
+    resource = {"ledger_path": str(ledger), "roots": [str(root)], "storage_bytes": 64 * 1024 * 1024,
+        "memory_mb": 128, "cpu_slots": 1, "child_process_slots": 1,
+        "require_existing_ledger": True, "scheduler_state_path": str(scheduler),
+        "expected_scheduler_policy_sha256": "5" * 64}
+    output = Path(mapping["output_directory"])
+    return SimpleNamespace(root=root, inputs=inputs, mapping=mapping, job=job,
+        job_artifact={"path": str(job), "bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest()},
+        resource=resource, output=output, journal=owned.f18_conditions_journal_path(output),
+        execution={"max_workers": 1, "timeout_seconds": 10, "poll_seconds": 0.01})
+
+
+def _prepare_f18_control(case):
+    return owned.prepare_f18_conditions_training(job_artifact=case.job_artifact,
+        resource_policy=case.resource, journal_path=case.journal, output_root=case.output,
+        execution_policy=case.execution)
+
+
+def test_fixed_f18_preparation_reads_only_control_metadata(tmp_path, monkeypatch):
+    case = _f18_control_case(tmp_path)
+    before = {p.name: p.read_bytes() for p in (tmp_path / "ledger.json", tmp_path / "scheduler.json")}
+    f18 = owned._f18_owner()
+    monkeypatch.setattr(f18, "validate_job_inputs", _forbidden)
+    prepared = _prepare_f18_control(case)
+    assert prepared["metadata_only"] is True
+    assert prepared["native_execution_verified"] is False
+    assert prepared["native_purpose_admitted"] is False
+    assert all(prepared[key] is False for key in f18.FALSE_FIELDS)
+    assert hashlib.sha256(owned.canonical_json_bytes(prepared["request"])).hexdigest() == prepared["request_sha256"]
+    assert prepared["job_spec_sha256"] == f18.F18JobSpec.from_dict(case.mapping).canonical_sha256
+    assert list(case.inputs.iterdir()) == []
+    assert not case.output.exists() and not case.journal.exists()
+    assert {name: (tmp_path / name).read_bytes() for name in before} == before
+
+
+@pytest.mark.parametrize("section,key,value", [
+    ("resource", "child_process_slots", 2), ("resource", "require_existing_ledger", False),
+    ("resource", "expected_scheduler_policy_sha256", "not-a-hash"),
+    ("resource", "cpu_slots", True), ("resource", "extra", 1),
+    ("execution", "max_workers", 2), ("execution", "timeout_seconds", 601),
+    ("execution", "poll_seconds", 2), ("execution", "extra", 1),
+])
+def test_fixed_f18_preparation_rejects_unbounded_or_open_policy(tmp_path, section, key, value):
+    case = _f18_control_case(tmp_path)
+    getattr(case, section)[key] = value
+    with pytest.raises(ERRORS):
+        _prepare_f18_control(case)
+    assert not case.journal.exists() and not case.output.exists()
+    assert list(case.inputs.iterdir()) == []
+
+
+def test_fixed_f18_journal_identity_cannot_change_with_request_metadata(tmp_path):
+    case = _f18_control_case(tmp_path)
+    first = _prepare_f18_control(case)
+    case.resource["memory_mb"] = 256
+    second = _prepare_f18_control(case)
+    assert first["request_sha256"] != second["request_sha256"]
+    assert first["request"]["journal_path"] == second["request"]["journal_path"] == str(case.journal)
+    case.journal = case.root / "fresh-consumed-start.json"
+    with pytest.raises(owned.CampaignOwnedTrainingError, match="deterministic"):
+        _prepare_f18_control(case)
+    assert not case.output.exists()
+
+
+def test_fixed_f18_changed_job_bytes_reject_before_payload_or_output(tmp_path):
+    case = _f18_control_case(tmp_path)
+    case.job.write_bytes(case.job.read_bytes() + b"\n")
+    with pytest.raises(ERRORS):
+        _prepare_f18_control(case)
+    assert list(case.inputs.iterdir()) == []
+    assert not case.output.exists() and not case.journal.exists()

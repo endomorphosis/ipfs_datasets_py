@@ -1,0 +1,126 @@
+{
+  "authority": {
+    "admitted": false,
+    "checkpoint_compatible": false,
+    "context_permission_verified": false,
+    "model_convergence_proven": false,
+    "native_execution_qualified": false,
+    "proof_authority": false,
+    "qualified": false,
+    "source_producer_execution_authenticated": false,
+    "source_semantics_verified": false,
+    "target_independence_verified": false,
+    "training_qualified": false
+  },
+  "comparison_scope": {
+    "all_cached_receipts_censused": false,
+    "exact_UTF8_only": true,
+    "f32_comparison": "Compare losslessly packed original IEEE754 float32 big-endian bytes with retained float32-be-hex bytes; little-endian commitments are byte-order representations only",
+    "first_hit_selection": false,
+    "global_absence_claimed": false,
+    "model_asset_bodies_opened": 0,
+    "original_role_views": 263,
+    "original_slot_occurrences": 360,
+    "original_unique_literal_texts": 239,
+    "receipt_inputs": 10,
+    "receipt_populations": 2,
+    "source_artifact_bodies_opened": 0
+  },
+  "evidence": {
+    "combined_independent_review": {
+      "bytes": 4225,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/checkpoint-binding-v01/original384-provenance-v01/receipt-overlap-v01/independent-overlap-and-preparation-review-v01.json",
+      "sha256": "4118f12ec91d17cecf69f91bf2d1fd7933f1b366566fb8824eca0c692bf580c8"
+    },
+    "independent_preparation_review": {
+      "bytes": 8786,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/checkpoint-binding-v01/original384-provenance-v01/receipt-overlap-v01/capture-preparation-v01/independent-prepared-capture-review-v01.json",
+      "sha256": "68c4e7fc337ad3acc3aa21a0c6f622ddb8289ede55ba509c049cc9ec75111e99"
+    },
+    "overlap_program": {
+      "bytes": 21687,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/checkpoint-binding-v01/original384-provenance-v01/receipt-overlap-v01/audit_receipt_overlap_v02.py",
+      "sha256": "2aebff82d5bf508938014b6b5eb8ac78c5e9eaec00fbfcb6c5a98c7b9817b8cb"
+    },
+    "overlap_result": {
+      "bytes": 41538,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/checkpoint-binding-v01/original384-provenance-v01/receipt-overlap-v01/result-v02.json",
+      "sha256": "8ffcf7240021842bdad2ce8b75b9291f5e4c71482d9502f364f63c67d2589e97"
+    },
+    "prepared_packet": {
+      "bytes": 16156,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/checkpoint-binding-v01/original384-provenance-v01/receipt-overlap-v01/capture-preparation-v01/prepared-capture-packet-v01.json",
+      "sha256": "cec90bd4156bdef2fca47572026652733b528126f8a8c52f00309e8f4934f39a"
+    },
+    "preserved_overlap_failure": {
+      "bytes": 1473,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/checkpoint-binding-v01/original384-provenance-v01/receipt-overlap-v01/audit-v01-failure.json",
+      "sha256": "dc7f582f56c7253318e4a327d732b40550f915c777a2e0d80dda627826eb2c88"
+    },
+    "preserved_probe_failure": {
+      "bytes": 1832,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/checkpoint-binding-v01/original384-provenance-v01/receipt-overlap-v01/preliminary-probe-format-failure-v01.json",
+      "sha256": "d85ef1fddab6f48f9e9d1804e1c465f783753e642033d6f301e243f3832c89ee"
+    }
+  },
+  "genuine_validation_pending": [
+    "SourceSpan and EmbeddingInput dataclass validation of the exact prepared wire payloads",
+    "arbitrary_native_source_cache._requests with an admitted exact source resolver",
+    "producer validate_embedding_inputs against diagnostic carriers",
+    "original native resource admission and pinned producer runtime/assets",
+    "actual tokenizer counts and refusals under512tokens without truncation",
+    "actual native CPU384 outputs/receipts then original cache resolver validation",
+    "new successor producer/profile declaration and compatibility, independently of unchanged historical null384profile"
+  ],
+  "implementation_unchanged": {
+    "ipfs_datasets_py/logic/formalization/autoencoder/ir_cell_target_compatibility.py": {
+      "bytes": 111835,
+      "sha256": "0276ac521d681864a112cb3745853d1c728e5754d1bd0865158971ccb8b05415"
+    },
+    "tests/unit/logic/formalization/autoencoder/test_ir_cell_target_compatibility.py": {
+      "bytes": 169850,
+      "sha256": "bbfffc3673bb228219730816a2be596f1f88d251a435168e5b130028f47c8235"
+    }
+  },
+  "limitations": [
+    "Absence applies only to these two indexed receipt populations; no global cache inventory was performed.",
+    "Exact recorded metadata comparisons are not native validation, physical source authentication or encoder execution attestation.",
+    "Diagnostic carriers are newly derived copies; historical role vectors and source identities remain unchanged.",
+    "Prepared wire requests have no resource admission, native validation, current tokens, new vectors or receipts.",
+    "Original profile, compatible conditioning, context permission, source meaning, training/Lean admission and convergence remain unresolved."
+  ],
+  "model_native_pytest_training_SQL_Lean_execution": false,
+  "original_artifacts_or_product_APIs_modified": false,
+  "prepared_request_status": "unvalidated_prepared_request",
+  "recorded_at_utc": "2026-10-26T16:11:43.795068+00:00",
+  "schema": "legal-original384-indexed-receipt-overlap-evidence/v1",
+  "summary": {
+    "encoder_calls": 0,
+    "evaluation_gold_mask": 0,
+    "evidence_id": "original384-indexed-receipt-overlap-audit-20261026-01",
+    "exact_f32_matches": 0,
+    "exact_text_matches": 0,
+    "execution_ready": false,
+    "native_validation_performed": false,
+    "original384_profile_id": null,
+    "original_clause_slots": 360,
+    "original_paragraph_views": 96,
+    "original_unique_clause_views": 167,
+    "prepared_physical_inputs": 432,
+    "prepared_role_uses": 456,
+    "prepared_split_inputs": [
+      216,
+      216
+    ],
+    "prepared_split_requests": [
+      48,
+      48
+    ],
+    "prepared_whole_paragraph_aliases": 24,
+    "receipt_inputs": 10,
+    "receipt_populations": 2,
+    "status": "saved_finite_metadata_audit_and_unvalidated_request_preparation",
+    "successor_profile_id": null,
+    "training_mask": 0
+  }
+}

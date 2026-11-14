@@ -2,10 +2,10 @@
 
 The [preparation owner](../../legal_native_ast_preservation.py)
 and separate [native executor](../../legal_native_ast_preservation_native.py)
-connect a complete serialized native AST to an independent Lean denotation and
-the unchanged existing native emitter output. Each project prepares three
-concrete obligations: exact AST value reconstruction, absence of free
-variables, and equivalence between that AST's denotation and the emitted formula.
+provide separate explicit preservation profiles. The original unary profile
+connects a complete serialized native AST to an independent Lean denotation
+and the unchanged native emitter output through three concrete obligations.
+The relational, counted and mixed profiles have their own input domains and five obligations.
 
 **Qualified on October 15, 2026:** 200 tests passed, with one existing optional
 native-route test skipped because its installed executable was not configured.
@@ -22,7 +22,99 @@ Its proof boundary starts with an exact supplied native fragment. Original
 source acquisition, source-to-AST interpretation, legal review and corpus
 admission retain their existing owners and states.
 
-## Supported native subset
+## Explicit preservation profiles
+
+The two existing owners now provide four separately dispatched profiles. The
+October 15 unary qualification below remains historical evidence on its original
+source generation. Current mixed delivery has its own [qualification](../../../../../workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/qualification-summary-v02.json)
+and [exact four-source adoption](../../../../../workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/source-installation-v01.json).
+
+| Profile | Preparation and native entry points | Concrete checks |
+| --- | --- | --- |
+| Original unary native AST | `prepare_native_ast_preservation` / `validate_native_ast_preservation`; native `validate_native_ast_preservation` / `build_native_ast_preservation` | Three native-value, closedness and denotation obligations. |
+| Typed Object-relational native AST | `prepare_relational_ast_preservation` / `validate_relational_ast_preservation`; native `validate_relational_ast_preservation` / `build_relational_ast_preservation` | Five native/typed/ordered-role obligations in its separate native-AST domain. |
+| Fixed-three counted IR | `prepare_counted_ast_preservation` / `validate_counted_ast_preservation`; native `validate_counted_ast_preservation` / `build_counted_ast_preservation` | Complete sorted value, closedness and denotation, plus cap-two and cap-four counterexamples. |
+| Three-carrier mixed renderer | `prepare_mixed_relational_ast_preservation` / `validate_mixed_relational_ast_preservation`; native `validate_mixed_relational_ast_preservation` / `build_mixed_relational_ast_preservation` | Five complete typed/renderer/closedness/direct-denotation/ordered-role obligations below. |
+
+### Mixed source and renderer preservation
+
+The preparation profile is
+`typed-many-sorted-relational-deontic-renderer-preservation/v1`; the native receipt
+uses `replayed-typed-many-sorted-relational-deontic-renderer-preservation/v1`.
+Supply the complete original mixed report and original request bytes, independent
+`expected_report_sha256` and `expected_request_sha256`, and an explicit versioned
+`toolchain`. Validation and building additionally require the independently
+retained `expected_preparation_sha256`. Preparation and validation run no model
+or compiler. The same existing native executor owns the later bounded build.
+
+| Mixed theorem suffix | Exact concrete obligation |
+| --- | --- |
+| `mixed_typed_value_exact` | `typedMixedSourceValue = actualMixedSourceValue`: reconstruct the complete serialized typed expression and ordered role ledger. |
+| `mixed_renderer_value_exact` | `mixedRendererValue typedMixedAst = actualMixedRendererValue`: reconstruct the complete existing renderer record. |
+| `mixed_ast_closed` | `mixedWellFormed mixedSortOrder mixedPredicateDeclarations mixedArgumentRoles typedMixedAst = true`: validate signature, sorts, ordered roles and lexical closure. |
+| `mixed_denotation_matches_lowering` | Direct source-AST denotation is equivalent to the unchanged emitted `formula i t`. |
+| `mixed_role_denotation_matches_lowering` | Direct role-labelled source denotation is equivalent to that same formula under `mixedRoleInterpretation`. |
+
+Independent reification retains expression/signature IDs, content digest,
+signature-array and sort order, every typed node, equality, Boolean association,
+quantifier order and shadowing, predicate argument order, and the complete role
+ledger. Complete renderer fields are compared as values, rather than assumed
+equal from a digest. The actual emitted `lean_body` is retained unchanged.
+
+The direct interpreter quantifies over arbitrary `Object`, `EventFrame` and
+`TimeFrame` source carriers, including empty carriers. Quantifiers and equality
+operate on the raw selected source carrier; tags are introduced only for
+predicate arguments. The authored `TimeFrame` carrier stays separate from the
+ambient modal evaluation time `Nat`. Ordered roles are passed explicitly to the
+role interpretation. O/P/F retain the original placement and independent modal
+parameters. The concrete proofs introduce no inhabited-carrier premise, modal
+congruence axiom, extensionality axiom or universal compiler assumption.
+
+The seven concrete witness/value declarations are `noncomputable def`: their
+complete transparent kernel bodies remain available to `rfl` and ordinary
+`decide`, while unused executable code generation is suppressed. This keeps the
+retained complete hypotheses within the original artifact capture bound without
+dropping fields, proof obligations or metadata. Shared semantics and the original
+counted semantics are unchanged.
+
+Mixed limits remain 8 MiB for the complete report, 512 KiB for original request
+bytes, 512 AST nodes and depth 48. Every project still has seven inputs and four
+modules within the existing 8 MiB project bound. Native limits remain at most
+60 seconds, sampled 2 GiB process-tree RSS, 128 MiB workspace and 2 MiB per
+capture/output file. Actual output truncation still refuses the build; a shortened
+receipt preview is a separate observation. Complete retained files, executed
+inputs, logs, binaries and producer pins are independently rechecked.
+
+Lean proves exact supplied value reconstruction and these concrete denotations.
+Raw JSON parsing, request-byte custody, hashing, Python reification and source
+prose interpretation remain outside those theorems and retain explicit source
+commitments and engineering checks. Mixed receipts keep `native_ast=None`,
+`native_ast_value_preservation_proved=False`, `native_TDFOL_route_used=False`
+and `native_parser_roundtrip=False`. All legal, training, model and admission
+authorities remain false, with zero training/evaluation masks.
+
+### Current bounded qualification
+
+One original-owned Python cohort passed all 423 cases across 105 functions: the whole Pure file (229 cases/54 functions)
+and 51 Native unit functions (194 cases). Three separate original-owned
+installed Lean 4.34.1 cohorts passed the exact selected nine cases: A4 contains
+mixed reviewed-graph, legacy unary, relational P and counted-three; B3 contains
+mixed complete-grammar O/P/F; C2 contains both retained unreviewed hypotheses.
+They compiled 36 modules, checked 43 exact empty-axiom reports and retained 63
+executed inputs. All four original Source/Native/process/storage lifecycles
+closed and their successful promises were durably released before source adoption.
+
+The two older relational O/F installed cases were not selected on this source
+generation; the whole installed population and hosted CI remain unqualified.
+Keep the missing-API baseline, closure failures, failed Native wrapper, pre-child
+A4 refusal, original B3 deadline/manual Source-only close, failed clipped C2
+artifacts and pre-Popen Python Source-coordination refusal as retained history.
+No old failed build or reservation is promoted by the new success. The two C2
+alternatives remain unreviewed hypotheses. Statutory meaning, governing-definition
+applicability, aggregate/release integration, corpus admission and model quality
+or convergence remain separate open gates.
+
+## Original unary native subset
 
 The input is the complete original legal-native-family-route/v1 record
 returned by legal_family_routes.prepare_native_fragment, retained as original
@@ -55,7 +147,7 @@ unary definition shape "forall x, head(x) iff body(x)", and also accepts other
 closed formulas built from the listed constructors. Input acceptance does not
 guarantee compilation within finite native resource limits.
 
-## Three concrete obligations
+## Three original unary obligations
 
 The generated semantics module defines two separate data types. NativeValue
 mirrors the null, string, array and object values occurring in the accepted
@@ -98,7 +190,7 @@ source prose interpretation or the installed compiler's entire dependency
 closure. The manifest records these trust boundaries. Kernel checking does not
 turn a supplied interpretation into a legal fact.
 
-## API and independent commitments
+## Original unary API and independent commitments
 
 Public imports of both new owners use only the standard library. Operation
 owners load lazily after caller-controlled input bounds and pins are checked.

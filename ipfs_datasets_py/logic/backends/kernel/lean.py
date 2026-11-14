@@ -680,16 +680,129 @@ def _approved_axioms(values: Sequence[str]) -> tuple[str, ...]:
 
 
 def _mask_lean_comments_and_strings(source: str, *, allow_comments: bool = True) -> str:
-    """Lexical diagnostics only; this does not establish elaborated dependencies."""
+    """Mask opaque Lean tokens, preserving offsets; elaboration checks dependencies.
+
+    Token boundaries follow Lean 4.34.1 Parser.Basic and Init.Meta.Defs. Quoted
+    identifiers end at the first guillemet; their quotes and comment markers
+    are identifier content. Character literals and identifier primes differ.
+    """
     chars = list(source)
     i, length = 0, len(source)
+    decimal, hexadecimal = "0123456789", "0123456789abcdefABCDEF"
+
+    def mask(start: int, stop: int) -> None:
+        for index in range(start, stop):
+            if chars[index] != "\n":
+                chars[index] = " "
+
+    def letter_like(char: str) -> bool:
+        value = ord(char)
+        return (0x3B1 <= value <= 0x3C9 and value != 0x3BB
+            or 0x391 <= value <= 0x3A9 and value not in (0x3A0, 0x3A3)
+            or 0x3CA <= value <= 0x3FB or 0x1F00 <= value <= 0x1FFE
+            or 0x2100 <= value <= 0x214F or 0x1D49C <= value <= 0x1D59F
+            or 0xC0 <= value <= 0xFF and value not in (0xD7, 0xF7)
+            or 0x100 <= value <= 0x17F)
+
+    def id_first(char: str) -> bool:
+        return "a" <= char <= "z" or "A" <= char <= "Z" or char == "_" or letter_like(char)
+
+    def id_rest(char: str) -> bool:
+        value = ord(char)
+        return (id_first(char) or char in decimal or char in "'!?"
+            or 0x2080 <= value <= 0x2089 or 0x2090 <= value <= 0x209C
+            or 0x1D62 <= value <= 0x1D6A or value == 0x2C7C)
+
+    def identifier_end(start: int) -> int:
+        cursor = start
+        while True:
+            if source[cursor] == "«":
+                stop = source.find("»", cursor + 1)
+                if stop < 0:
+                    raise LeanKernelError("unterminated Lean identifier escape")
+                mask(cursor, stop + 1)
+                cursor = stop + 1
+            else:
+                cursor += 1
+                while cursor < length and id_rest(source[cursor]):
+                    cursor += 1
+            if (cursor + 1 < length and source[cursor] == "."
+                    and (id_first(source[cursor + 1]) or source[cursor + 1] == "«")):
+                cursor += 1
+            else:
+                return cursor
+
+    def digits_end(start: int, alphabet: str, *, required: bool) -> int:
+        cursor, need_digit = start, required
+        while cursor < length:
+            char = source[cursor]
+            if char == "_":
+                need_digit = True
+            elif char in alphabet:
+                need_digit = False
+            else:
+                break
+            cursor += 1
+        if need_digit:
+            raise LeanKernelError("incomplete Lean numeral")
+        return cursor
+
+    def number_end(start: int) -> int:
+        # Consume the numeric token before considering an adjacent raw-string r.
+        if source[start] == "0" and start + 1 < length:
+            base = source[start + 1]
+            alphabet = ("01" if base in "bB" else "01234567" if base in "oO"
+                        else hexadecimal if base in "xX" else None)
+            if alphabet is not None:
+                return digits_end(start + 2, alphabet, required=True)
+        cursor = digits_end(start + 1, decimal, required=False)
+        if source.startswith("..", cursor):
+            return cursor
+        bare_dot = False
+        if cursor < length and source[cursor] == ".":
+            cursor += 1
+            bare_dot = cursor == length or source[cursor] not in decimal
+            if not bare_dot:
+                cursor = digits_end(cursor, decimal, required=False)
+        if cursor < length and source[cursor] in "eE":
+            cursor += 1
+            if cursor < length and source[cursor] in "+-":
+                cursor += 1
+            if cursor == length or source[cursor] not in decimal:
+                raise LeanKernelError("missing Lean scientific exponent digits")
+            return digits_end(cursor, decimal, required=False)
+        if bare_dot and cursor < length and (id_first(source[cursor]) or source[cursor] == "«"):
+            raise LeanKernelError("unexpected Lean identifier after decimal point")
+        return cursor
+
+    def escape_end(start: int, *, in_string: bool) -> int:
+        if start == length:
+            raise LeanKernelError("unterminated Lean literal escape")
+        char = source[start]
+        if char in "\\\"'rnt":
+            return start + 1
+        count = 2 if char == "x" else 4 if char == "u" else 0
+        if count:
+            stop = start + count + 1
+            if stop > length or any(value not in hexadecimal for value in source[start + 1:stop]):
+                raise LeanKernelError("invalid Lean hexadecimal literal escape")
+            return stop
+        if in_string and char == "\n":
+            cursor = start + 1
+            while cursor < length and source[cursor] in " \t\r\n":
+                if source[cursor] == "\n":
+                    raise LeanKernelError("multiple newlines in Lean string gap")
+                cursor += 1
+            return cursor
+        raise LeanKernelError("invalid Lean literal escape")
+
     while i < length:
         start = i
         if source.startswith("--", i):
             if not allow_comments:
                 raise LeanKernelError("comments are unsupported in the explicit expected proposition")
-            end = source.find("\n", i)
-            i = length if end < 0 else end
+            stop = source.find("\n", i)
+            i = length if stop < 0 else stop
         elif source.startswith("/-", i):
             if not allow_comments:
                 raise LeanKernelError("comments are unsupported in the explicit expected proposition")
@@ -703,22 +816,48 @@ def _mask_lean_comments_and_strings(source: str, *, allow_comments: bool = True)
                     i += 1
             if depth:
                 raise LeanKernelError("unterminated Lean block comment")
+        elif source[i] == "r":
+            cursor = i + 1
+            while cursor < length and source[cursor] == "#":
+                cursor += 1
+            if cursor < length and source[cursor] == '"':
+                terminator = '"' + "#" * (cursor - i - 1)
+                stop = source.find(terminator, cursor + 1)
+                if stop < 0:
+                    raise LeanKernelError("unterminated Lean raw string")
+                i = stop + len(terminator)
+            else:
+                i = identifier_end(i)
+                continue
         elif source[i] == '"':
             i += 1
-            while i < length:
-                if source[i] == "\\":
-                    i += 2
-                elif source[i] == '"':
-                    i += 1; break
-                else:
-                    i += 1
-            else:
+            while i < length and source[i] != '"':
+                i = escape_end(i + 1, in_string=True) if source[i] == "\\" else i + 1
+            if i == length:
                 raise LeanKernelError("unterminated Lean string")
+            i += 1
+        elif source[i] == "'" and not source.startswith("''", i):
+            i += 1
+            if i == length:
+                raise LeanKernelError("unterminated Lean character literal")
+            i = escape_end(i + 1, in_string=False) if source[i] == "\\" else i + 1
+            if i == length or source[i] != "'":
+                raise LeanKernelError("missing end of Lean character literal")
+            i += 1
+        elif source[i] == "«" or id_first(source[i]):
+            i = identifier_end(i)
+            continue
+        elif (source[i] == "`" and i + 1 < length
+                and (id_first(source[i + 1]) or source[i + 1] == "«")):
+            i = identifier_end(i + 1)
+            continue
+        elif source[i] in decimal:
+            i = number_end(i)
+            continue
         else:
-            i += 1; continue
-        for index in range(start, min(i, length)):
-            if chars[index] != "\n":
-                chars[index] = " "
+            i += 1
+            continue
+        mask(start, i)
     return "".join(chars)
 
 

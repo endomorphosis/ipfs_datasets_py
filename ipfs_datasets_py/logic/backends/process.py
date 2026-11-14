@@ -42,6 +42,7 @@ import tempfile
 import threading
 import time
 from collections.abc import Callable, Mapping, Sequence
+from contextlib import nullcontext
 from dataclasses import dataclass, field, replace
 from enum import StrEnum
 from pathlib import Path, PurePosixPath
@@ -1329,26 +1330,27 @@ class SubprocessExecutor:
                     timed_out=timed_out, cancelled=cancelled,
                     error="operation stopped before process start",
                 )
-            process = self._popen(
-                argv,
-                cwd=str(invocation.cwd),
-                env=dict(invocation.environment),
-                stdin=(
-                    subprocess.PIPE
-                    if invocation.stdin is not None
-                    else subprocess.DEVNULL
-                ),
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                shell=False,
-                start_new_session=(os.name == "posix"),
-                creationflags=creation_flags,
-                preexec_fn=preexec,
-            )
-            if owned is not None:
-                owned.attach_process(process)
-            else:
-                descendants = _LinuxDescendantTracker(process.pid)
+            # No-input launches need a read-only EOF source. CPython DEVNULL
+            # opens O_RDWR, which exceeds strict read-only external I/O scopes.
+            # Keep the original Popen and close the parent's handle immediately.
+            with (open(os.devnull, "rb") if invocation.stdin is None
+                  else nullcontext(subprocess.PIPE)) as stdin:
+                process = self._popen(
+                    argv,
+                    cwd=str(invocation.cwd),
+                    env=dict(invocation.environment),
+                    stdin=stdin,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    shell=False,
+                    start_new_session=(os.name == "posix"),
+                    creationflags=creation_flags,
+                    preexec_fn=preexec,
+                )
+                if owned is not None:
+                    owned.attach_process(process)
+                else:
+                    descendants = _LinuxDescendantTracker(process.pid)
             assert process.stdout is not None
             assert process.stderr is not None
             stdout = _BoundedCapture(invocation.limits.max_output_bytes)

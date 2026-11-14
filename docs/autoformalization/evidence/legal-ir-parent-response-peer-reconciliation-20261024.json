@@ -1,0 +1,125 @@
+{
+  "backlog_records_preserved": 24,
+  "completed_production_reviews": 0,
+  "counts_combined": false,
+  "evaluation_gold_mask": 0,
+  "models_training_or_Lean_executed": false,
+  "product_or_test_changes": 0,
+  "receipts": [
+    {
+      "bytes": 35024,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-norm-scope-20261024-root-932c992e/review-intake-v01/peer-reuse-v01/supplied-response-v01/independent-result-review-pure-v01.json",
+      "sha256": "1a949aebb4304271229eaa63881fb89c32fecf086ef41679962452854ceb516e"
+    },
+    {
+      "bytes": 126773,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-norm-scope-20261024-root-932c992e/review-intake-v01/peer-reuse-v01/supplied-response-v01/manifest-pure-v01.json",
+      "sha256": "a0c50bd0ff0cb2388298f2a7d49b445be87ffa1515c78afb8ebb51bcfa8dd4bf"
+    },
+    {
+      "bytes": 86880,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-norm-scope-20261024-root-932c992e/review-intake-v01/peer-reuse-v01/supplied-response-v01/request-pure-v01.json",
+      "sha256": "1d295aa2d57146da29bc80f584953ada01f1ee460c2b3a7d4d4b6cc0b17844a0"
+    },
+    {
+      "bytes": 14315,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-norm-scope-20261024-root-932c992e/review-intake-v01/peer-reuse-v01/supplied-response-v01/attempt-pure-v01/exports/test-result.json",
+      "sha256": "242987f7e247a69af71274cb2bc83ff07d8df3f41fced7233417c1700a9086dd"
+    },
+    {
+      "bytes": 8204,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-norm-scope-20261024-root-932c992e/review-intake-v01/peer-reuse-v01/supplied-response-v01/launch-pure-v01.json",
+      "sha256": "6132ca50359d998b813f173aa9f2de546551c36cf72acc5d8ab02e1ea61abc04"
+    },
+    {
+      "bytes": 308,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-norm-scope-20261024-root-932c992e/review-intake-v01/peer-reuse-v01/supplied-response-v01/controller-complete-pure-v01.json",
+      "sha256": "698346fb0091ca40ae7ce9923b827d35eedd050a3f003c6edf4cabce0137f727"
+    },
+    {
+      "bytes": 21590,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-norm-scope-20261024-root-932c992e/review-intake-v01/peer-reuse-v01/supplied-response-v01/canonical-doc-review-notes-v02.json",
+      "sha256": "b9c21412f6d2193769c61364aa566654f0576ddccc0e672ccfdfdeb15b5dd0d6"
+    },
+    {
+      "bytes": 27106,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-norm-scope-20261024-root-932c992e/review-intake-v01/peer-reuse-v01/supplied-response-v01/controls/integrate_supplied_response_v01.py",
+      "sha256": "1f9d487853a2186abcd204ed88ec9a8d152b5e21a55af07e21a349ace6472bc9"
+    },
+    {
+      "bytes": 3058,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-norm-scope-20261024-root-932c992e/review-intake-v01/peer-reuse-v01/supplied-response-v01/qualification-summary-v01.json",
+      "sha256": "c20fdfbfdc3c962145c47358583520fc3c6a09613c09dd1e2676df8b8a9d600a"
+    },
+    {
+      "bytes": 8013,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-norm-scope-20261024-root-932c992e/review-intake-v01/peer-reuse-v01/supplied-response-v01/peer-canonical-readback-v01.json",
+      "sha256": "627886a87889a71414ce4b4a73effc4805277fb664a7c7555e818709b3a3beb2"
+    },
+    {
+      "bytes": 94626,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-norm-responses-20261024-root-a64d82f1/installation-v01/candidate-manifest-v01.json",
+      "sha256": "9f81ffecefcad250caca86d0ea97cc1109951f6e4ab409626e975baf19335022"
+    },
+    {
+      "bytes": 15006,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-norm-responses-20261024-root-a64d82f1/installation-v01/installation-v02.json",
+      "sha256": "96fd299cf51f8483084239ccf00ae87eaf683b439037a4a3d2407bca8d4a4b7d"
+    },
+    {
+      "bytes": 10154,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-norm-responses-20261024-root-a64d82f1/qualification-summary-v01.json",
+      "sha256": "877263a3f96bdf9d2a11743de6e6ecaa8c6cd4439c805fb9ba6533f659d557b9"
+    },
+    {
+      "bytes": 37438,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-norm-responses-20261024-root-a64d82f1/execution-v01/independent-saved-result-audit-v01.json",
+      "sha256": "5984a0eade628c41fd08aa77a3c1e88f4989fc366526df9e4517ad3908b81f26"
+    },
+    {
+      "bytes": 12281,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-norm-responses-20261024-root-a64d82f1/installation-v01/post-close-proposed-adapter-compatibility-review-v01.json",
+      "sha256": "897f8ea73d02f6470af0a44b4cfb417d3b826a3c72a8105ea718f2f0451ceebc"
+    },
+    {
+      "bytes": 8405,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-norm-responses-20261024-root-a64d82f1/installation-v01/boundedparallel-supplied-response-review-v01.json",
+      "sha256": "5dffd724fcb07407b572fd75c5654302eca39781707eec5b725da3ef2020ef99"
+    },
+    {
+      "bytes": 14441,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-norm-scope-20261024-root-932c992e/review-intake-v01/peer-reuse-v01/supplied-response-v01/peer-response-reuse-source-review-v01.json",
+      "sha256": "1786554c6fad72d5a38aed005ed3e5cea1cefac7e406e5ffceae44dd78f0540c"
+    }
+  ],
+  "recorded_at_utc": "2026-10-24T08:12:53.809768+00:00",
+  "retained_alternative": {
+    "canonical_writes": 0,
+    "cases": 42,
+    "cold_child_raw_buffers_or_full_package_attested": false,
+    "declared_references_only": true,
+    "exact_cold_export_children": 1,
+    "installation_staged": false,
+    "installed": false,
+    "live_processes": 0,
+    "original_compute_storage_source_READ_closed": true,
+    "phases": 126,
+    "qualification_transferred": false,
+    "source_sha256": "e242bacb27a2f47b57f01e2b80cd8a7f27bf33e43ed79594e7956f9915de2c1b"
+  },
+  "schema": "legal-ir-parent-response-peer-reconciliation/v1",
+  "scope": "Installed raw-evidence parent response reused; original23/69 scoped qualification and current static compatibility limit retained. Parallel e242 references-only42/126 result remains uninstalled and separate. No product/API overwrite, case pooling, completed review or semantic authority.",
+  "selected": {
+    "cases": 23,
+    "current_dependency_snapshot_qualified": false,
+    "current_selected_path_static_review_only": true,
+    "phases": 69,
+    "raw_evidence_required": true,
+    "source_sha256": "7bc2fb42b2be0906b89ee32ee886d3c29ff3443ca8cff4456d07020b1a45fd3e",
+    "unavailable_parent_context_must_stay_unresolved": true
+  },
+  "signing_or_content_adjudication": false,
+  "source_edition_or_meaning_selected": false,
+  "status": "selected_peer_delivery_reused_parallel_alternative_retained",
+  "training_mask": 0
+}

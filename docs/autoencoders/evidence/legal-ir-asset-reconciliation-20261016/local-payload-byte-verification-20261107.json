@@ -1,0 +1,176 @@
+{
+  "asset_record_count": 16,
+  "assets": [
+    {
+      "bytes": 398209746,
+      "immutable_primary_release": null,
+      "inventory_key": "legal_ir:legacy8:historical_sparse_core",
+      "local_sha256": "7236de26bd3d7f8414ffa04805f1b6e8a8849f9e0103cec6edb4985b911658be",
+      "local_sha256_matches_recorded_pin": true,
+      "recorded_checkpoint_sha256": "7236de26bd3d7f8414ffa04805f1b6e8a8849f9e0103cec6edb4985b911658be"
+    },
+    {
+      "bytes": 5112,
+      "immutable_primary_release": null,
+      "inventory_key": "legal_ir:legacy8:small_linguistic_bundle",
+      "local_sha256": "f0fca433cbe8cfc4a8700c9e7325b79bc6e3d5ec73f067260b9ac61920f72bb1",
+      "local_sha256_matches_recorded_pin": true,
+      "recorded_checkpoint_sha256": "f0fca433cbe8cfc4a8700c9e7325b79bc6e3d5ec73f067260b9ac61920f72bb1"
+    },
+    {
+      "bytes": 128924,
+      "immutable_primary_release": null,
+      "inventory_key": "legal_ir:legacy8:learned_formula_sidecar",
+      "local_sha256": "ffca84492b81ab94fa291ae6ddbe52cfc84318f3516a22f901d468de255b6cbe",
+      "local_sha256_matches_recorded_pin": true,
+      "recorded_checkpoint_sha256": "ffca84492b81ab94fa291ae6ddbe52cfc84318f3516a22f901d468de255b6cbe"
+    },
+    {
+      "bytes": 614534,
+      "immutable_primary_release": null,
+      "inventory_key": "legal_ir:source_v2:raw384_donor",
+      "local_sha256": "6e3f4d731d798aa2732afc37bd74fec34da3267a323844975d2dab78f59f9c61",
+      "local_sha256_matches_recorded_pin": true,
+      "recorded_checkpoint_sha256": "6e3f4d731d798aa2732afc37bd74fec34da3267a323844975d2dab78f59f9c61"
+    },
+    {
+      "bytes": 2799098,
+      "immutable_primary_release": null,
+      "inventory_key": "legal_ir:contextual:384:selected_followup",
+      "local_sha256": "0ac5c21656187d1d8040a02bcc0b4716a8093db17f05adc9a22e99d5b6b2cc00",
+      "local_sha256_matches_recorded_pin": true,
+      "recorded_checkpoint_sha256": "0ac5c21656187d1d8040a02bcc0b4716a8093db17f05adc9a22e99d5b6b2cc00"
+    },
+    {
+      "bytes": 4781613,
+      "immutable_primary_release": null,
+      "inventory_key": "legal_ir:contextual:768:selected_followup",
+      "local_sha256": "8892a3261c0750a6247ba5400069ed18cad3354426e2095ed1d295287e3559b4",
+      "local_sha256_matches_recorded_pin": true,
+      "recorded_checkpoint_sha256": "8892a3261c0750a6247ba5400069ed18cad3354426e2095ed1d295287e3559b4"
+    },
+    {
+      "bytes": 6873498,
+      "immutable_primary_release": null,
+      "inventory_key": "legal_ir:dual_donor768:initialized_unaligned",
+      "local_sha256": "7443c8a60cb1f95e9a35017edcd394c0f47fd457c3733e0863d37bfc09a09a12",
+      "local_sha256_matches_recorded_pin": true,
+      "recorded_checkpoint_sha256": "7443c8a60cb1f95e9a35017edcd394c0f47fd457c3733e0863d37bfc09a09a12"
+    },
+    {
+      "bytes": 2797024,
+      "immutable_primary_release": {
+        "checkpoint_sha256": "6c7609b8f2f54afefbb832157b5f8a7590a77df4393feb9f3c61d8bf9be6caff",
+        "path_in_repo": "experiments/retained-wording-recipes-20261007/run-01-dual-6e47fc6d5452/checkpoints/384d/control-wording-ce/selected-state.json",
+        "repository_id": "Publicus/legal-ir-autoencoder-384d",
+        "revision": "ac8f3439bfd2409797dfdab245c120b93b3d0747"
+      },
+      "inventory_key": "legal_ir:retained_wording384:control_wording_ce_selected_semantic_decoder_state",
+      "local_sha256": "6c7609b8f2f54afefbb832157b5f8a7590a77df4393feb9f3c61d8bf9be6caff",
+      "local_sha256_matches_recorded_pin": true,
+      "recorded_checkpoint_sha256": "6c7609b8f2f54afefbb832157b5f8a7590a77df4393feb9f3c61d8bf9be6caff"
+    },
+    {
+      "bytes": 2797028,
+      "immutable_primary_release": {
+        "checkpoint_sha256": "cf2d10df31f8cb1145369aeef3cfc717629dd7f14c69b5ba62ba956b5eaa4f26",
+        "path_in_repo": "experiments/retained-wording-recipes-20261007/run-01-dual-6e47fc6d5452/checkpoints/384d/control-wording-ce/last-attempt-state.json",
+        "repository_id": "Publicus/legal-ir-autoencoder-384d",
+        "revision": "ac8f3439bfd2409797dfdab245c120b93b3d0747"
+      },
+      "inventory_key": "legal_ir:retained_wording384:control_wording_ce_last_attempt_semantic_decoder_state",
+      "local_sha256": "cf2d10df31f8cb1145369aeef3cfc717629dd7f14c69b5ba62ba956b5eaa4f26",
+      "local_sha256_matches_recorded_pin": true,
+      "recorded_checkpoint_sha256": "cf2d10df31f8cb1145369aeef3cfc717629dd7f14c69b5ba62ba956b5eaa4f26"
+    },
+    {
+      "bytes": 2797399,
+      "immutable_primary_release": {
+        "checkpoint_sha256": "d2439394a7827b55c363a8f9b7f5ad74c4a9cf6875e869886c6840ba74088b05",
+        "path_in_repo": "experiments/retained-wording-recipes-20261007/run-01-dual-6e47fc6d5452/checkpoints/384d/balanced-wording-ce/selected-state.json",
+        "repository_id": "Publicus/legal-ir-autoencoder-384d",
+        "revision": "ac8f3439bfd2409797dfdab245c120b93b3d0747"
+      },
+      "inventory_key": "legal_ir:retained_wording384:balanced_wording_ce_selected_semantic_decoder_state",
+      "local_sha256": "d2439394a7827b55c363a8f9b7f5ad74c4a9cf6875e869886c6840ba74088b05",
+      "local_sha256_matches_recorded_pin": true,
+      "recorded_checkpoint_sha256": "d2439394a7827b55c363a8f9b7f5ad74c4a9cf6875e869886c6840ba74088b05"
+    },
+    {
+      "bytes": 2797403,
+      "immutable_primary_release": {
+        "checkpoint_sha256": "c7af74bd4dc8ab10b54692f665c2561b83a1417ed117d071f7c984be67611aa1",
+        "path_in_repo": "experiments/retained-wording-recipes-20261007/run-01-dual-6e47fc6d5452/checkpoints/384d/balanced-wording-ce/last-attempt-state.json",
+        "repository_id": "Publicus/legal-ir-autoencoder-384d",
+        "revision": "ac8f3439bfd2409797dfdab245c120b93b3d0747"
+      },
+      "inventory_key": "legal_ir:retained_wording384:balanced_wording_ce_last_attempt_semantic_decoder_state",
+      "local_sha256": "c7af74bd4dc8ab10b54692f665c2561b83a1417ed117d071f7c984be67611aa1",
+      "local_sha256_matches_recorded_pin": true,
+      "recorded_checkpoint_sha256": "c7af74bd4dc8ab10b54692f665c2561b83a1417ed117d071f7c984be67611aa1"
+    },
+    {
+      "bytes": 2797164,
+      "immutable_primary_release": {
+        "checkpoint_sha256": "c51cbb51150cb16de2e4617f7c1d03b53cf5f65d430ebadc0923ba199284405e",
+        "path_in_repo": "experiments/retained-wording-recipes-20261007/run-01-dual-6e47fc6d5452/checkpoints/384d/dual-bank-retention-ce/selected-state.json",
+        "repository_id": "Publicus/legal-ir-autoencoder-384d",
+        "revision": "ac8f3439bfd2409797dfdab245c120b93b3d0747"
+      },
+      "inventory_key": "legal_ir:retained_wording384:dual_bank_retention_ce_selected_semantic_decoder_state",
+      "local_sha256": "c51cbb51150cb16de2e4617f7c1d03b53cf5f65d430ebadc0923ba199284405e",
+      "local_sha256_matches_recorded_pin": true,
+      "recorded_checkpoint_sha256": "c51cbb51150cb16de2e4617f7c1d03b53cf5f65d430ebadc0923ba199284405e"
+    },
+    {
+      "bytes": 2797168,
+      "immutable_primary_release": {
+        "checkpoint_sha256": "4269e6d957f9a31d2d9b09b0d90f345f5da00a003c0c898a59d7fcb3220ff61f",
+        "path_in_repo": "experiments/retained-wording-recipes-20261007/run-01-dual-6e47fc6d5452/checkpoints/384d/dual-bank-retention-ce/last-attempt-state.json",
+        "repository_id": "Publicus/legal-ir-autoencoder-384d",
+        "revision": "ac8f3439bfd2409797dfdab245c120b93b3d0747"
+      },
+      "inventory_key": "legal_ir:retained_wording384:dual_bank_retention_ce_last_attempt_semantic_decoder_state",
+      "local_sha256": "4269e6d957f9a31d2d9b09b0d90f345f5da00a003c0c898a59d7fcb3220ff61f",
+      "local_sha256_matches_recorded_pin": true,
+      "recorded_checkpoint_sha256": "4269e6d957f9a31d2d9b09b0d90f345f5da00a003c0c898a59d7fcb3220ff61f"
+    },
+    {
+      "bytes": 12230969,
+      "immutable_primary_release": null,
+      "inventory_key": "legal_ir:source_conditioned:F15_actor_parent",
+      "local_sha256": "f421514dc02cb3542e7587767191aa99bd32551f145e0af4d01c47595d4d73c4",
+      "local_sha256_matches_recorded_pin": true,
+      "recorded_checkpoint_sha256": "f421514dc02cb3542e7587767191aa99bd32551f145e0af4d01c47595d4d73c4"
+    },
+    {
+      "bytes": 20467217,
+      "immutable_primary_release": null,
+      "inventory_key": "legal_ir:source_conditioned:F17",
+      "local_sha256": "d38f6481f8cdb35d996d5231d15331855043f20a258180b0af9b1143d477d42e",
+      "local_sha256_matches_recorded_pin": true,
+      "recorded_checkpoint_sha256": "d38f6481f8cdb35d996d5231d15331855043f20a258180b0af9b1143d477d42e"
+    },
+    {
+      "bytes": 21058430,
+      "immutable_primary_release": null,
+      "inventory_key": "legal_ir:source_conditioned:F18",
+      "local_sha256": "90031d084f2d86cf860c5fc95d2dae374dc254adec70bd85a90893f98c5a1555",
+      "local_sha256_matches_recorded_pin": true,
+      "recorded_checkpoint_sha256": "90031d084f2d86cf860c5fc95d2dae374dc254adec70bd85a90893f98c5a1555"
+    }
+  ],
+  "byte_exact_payload_verification_executed": false,
+  "failed_models_preserved": false,
+  "hub_metadata_read": "unauthorized",
+  "legal_acceptance_claimed": false,
+  "local_payload_sha256_recomputed": true,
+  "local_payloads_matching_recorded_pin": 16,
+  "measurement": "All 16 selected local payloads were hashed and match their recorded pins. Remote payload download was not run. The historical join still records 2 of 16 advertised LFS descriptor matches. No partial-upload outcome and no failed-model set are recorded.",
+  "models_uploaded": false,
+  "partial_or_uncertain_upload_retained_previous_release": false,
+  "payload_downloaded": false,
+  "previous_release_retained": false,
+  "records_with_current_advertised_lfs_match": 2,
+  "schema": "legal-ir-local-payload-byte-verification/v1"
+}

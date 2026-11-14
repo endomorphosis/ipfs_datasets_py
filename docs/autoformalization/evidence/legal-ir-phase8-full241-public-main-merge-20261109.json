@@ -1,0 +1,107 @@
+{
+  "actual_closed_owner": {
+    "Source_native_process_and_storage_closed": true,
+    "Source_refs": 237,
+    "actual_compiled_project_files": 137,
+    "all_attempt_bytes_preserved": 320244,
+    "attempt_files": 16,
+    "genuine_wait": true,
+    "required_compiled_files": 7,
+    "reservation_id": "379dfb082aee491796b2430cef9ab149",
+    "returncode": 0,
+    "source_pins": 238,
+    "status": "released",
+    "storage_bytes": 25165824
+  },
+  "actual_receipt_refs": {
+    "full241": {
+      "bytes": 9135,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/phase8-producer-evaluation-source-v01/qualification-controls-current-runtime-v09/independent-actual-full241-suite-and-custody-acceptance-v01.json",
+      "sha256": "feb322e839d74d4357e6ba29f0d730432316a09e125350fa1048d06cd8bebbeb"
+    },
+    "merged": {
+      "bytes": 1362,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/delivery-preparation/PR1463-qualified-normal-merge-and-readback-20261109-v01.json",
+      "sha256": "ce0db2035f369c4205289d1daf83ec4b2f0126375f6f38089fa530c85b2efab1"
+    },
+    "primary_R_READ": {
+      "bytes": 5146,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/primary-R-PR1463-seven-source-adoption-v02/independent-actual-primary-R-seven-readback-v01.json",
+      "sha256": "11a115eb8b63d0f17e5cbb25c8029594913b222083dd424f765d18e3c7fe40f0"
+    },
+    "primary_R_WRITE": {
+      "bytes": 3230352,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/primary-R-PR1463-seven-source-adoption-v02/Sourceclosed-primary-R-seven-adoption-v02.json",
+      "sha256": "9a398de9c05b6851853600d1b5145b6ac5650aa1c6289963745670aba5d357df"
+    },
+    "public192": {
+      "bytes": 212856,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/phase8-producer-evaluation-source-v01/qualification-controls-current-runtime-v09/independent-public-PR1463-source-generation-equivalence-v01.json",
+      "sha256": "e73f056e953282561f7587b871cde082a4f49ab30eef863d23a587d911c0cf0e"
+    },
+    "status_correction": {
+      "bytes": 1307,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/phase8-producer-evaluation-source-v01/qualification-controls-current-runtime-v09/actual-genuine-v09-outer-status-narrative-correction-v01.json",
+      "sha256": "310280e1ebc048ce626e4a0a28bc7dac8c1b4afecd079a1dcc2fa3435822d7dc"
+    }
+  },
+  "evidence_id": "phase8-full241-public-main-merge-primary-adoption-20261109",
+  "followups": {
+    "model_training_or_accuracy_gain": "none",
+    "native_capacity_family": "Actual ORCHESTRATION grants precede storage refusal; require typed original-owner closed-ancestry witness before finite executor wait. CLI zero-native predicate is insufficient.",
+    "native_capacity_six_case_proposal": "private v03; unrun and uninstalled; standard original-owner red reproduction is next",
+    "phase6": "Existing 79-case controlled literal-cycle baseline has actual retained results; new Unicode candidate/13 tests remain unrun and uninstalled after a delegated preparation step was stopped by a platform safety flag. No retry/rephrasing/rerouting selected.",
+    "statutory_meaning_and_edition_review": "pending",
+    "supervisor_activation": "not granted by software test or merge"
+  },
+  "history": {
+    "local_v01_SyntaxError_and_v01_Source_timeout_preserved": true,
+    "outer_status_was_always_zero_wrong_Root_note_corrected": true,
+    "previous238_pass3_fail_preserved": true,
+    "v07_v08_zero_test_capacity_refusals_preserved": true
+  },
+  "merge": {
+    "PR": "https://github.com/endomorphosis/ipfs_datasets_py/pull/1463",
+    "changed_files_from_qualified_head": 0,
+    "force_or_required_check_bypass": false,
+    "head_pinned": true,
+    "merge_commit": "ad43f049556f5c00350d5dde97ca45ee6c7dd9c0",
+    "merged": true,
+    "tree": "1598c74e73e0e41aac4d7c122b37555b4ef94d57"
+  },
+  "observed_date_utc": "2026-11-09",
+  "original24_statuses_or_components_changed": false,
+  "primary_R": {
+    "Git_index_branch_or_HEAD_changed": false,
+    "Source_READ_closed_seconds": 0.04845784418284893,
+    "Source_WRITE_closed_seconds": 0.2185352691449225,
+    "beforeimages_0400": 7,
+    "other_local_transitive_runtime_requalified": false,
+    "seven_files_adopted": true,
+    "untouched_protected_sources": 9
+  },
+  "public_generation": {
+    "commit": "9848069bd1bf7133a2e60ebdb6a0a239b8bcdd5c",
+    "declared_buffers_match": 192,
+    "declared_unloaded_match": 55,
+    "executed_buffers_match": 137,
+    "hosted_CI_executed": false,
+    "missing_or_mismatched": 0,
+    "namespace_layouts_checked": 2,
+    "separate_validation_runtime_equivalence_claimed": false
+  },
+  "schema": "legal-ir-phase8-full241-public-main-merge/v1",
+  "scope": "Source-pinned fixture software qualification, normal upstream merge and local seven-file adoption; no statutory/model/Lean-corpus admission.",
+  "tests": {
+    "all_three_previous_boundary_failures_pass": true,
+    "artifact_cases": 46,
+    "consumer_cases": 154,
+    "errors": 0,
+    "failed": 0,
+    "functions": 79,
+    "metric_cases": 41,
+    "passed": 241,
+    "pytest_seconds": 19.397,
+    "skipped": 0
+  }
+}

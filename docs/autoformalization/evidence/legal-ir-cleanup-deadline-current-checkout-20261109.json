@@ -1,0 +1,1679 @@
+{
+  "actual_deadline_reproduction": {
+    "original_ref": {
+      "bytes": 10418,
+      "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/recovery-deadline-current-owner-postterminal-readback-WORKING-v01/independent-actual-current-v1-deadline-reproduction-acceptance-v01.json",
+      "sha256": "e5fde0899887be75e674f94da02bb4a521776a7c2b39e7e2691a203bd48e75a1"
+    },
+    "record": {
+      "accepted": true,
+      "accepted_as_actual_reproduction_only": true,
+      "actual_full_capture_ref": {
+        "bytes": 76565,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/recovery-deadline-current-owner-postterminal-readback-WORKING-v01/actual-postterminal-capture-readback-full-v01.json",
+        "sha256": "ad10621f5949994a6c966e17311cf1630b0a58fb470539ff9a77c2d55ef25828"
+      },
+      "actual_readback": {
+        "Source_READ_closed": true,
+        "Source_READ_seconds": 0.021298442967236042,
+        "all_six_files_present": true,
+        "capture_complete": true,
+        "captured_body_bytes": 51790,
+        "errors": [],
+        "exit_code": 0,
+        "raw_body_SHA_length_and_nine_field_identity_rows_verified": true,
+        "summary_exactly_derived_from_full_archive": true,
+        "terminal_chunk": "30bf2b",
+        "time_evidence_limit": "Genuine tool wall_time_seconds and recorded internal READ duration retained as distinct observations; no equality or timing calibration claimed."
+      },
+      "actual_summary_ref": {
+        "bytes": 7720,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/recovery-deadline-current-owner-postterminal-readback-WORKING-v01/actual-postterminal-capture-readback-summary-v01.json",
+        "sha256": "e4bfcb9dc0ca637c89b182873628765471b6a8981520c2d3e0560df99f21f1ec"
+      },
+      "actual_terminal_evidence": {
+        "Source_custody_closed_recorded": true,
+        "a0b_terminal_cleanup_verified_recorded": true,
+        "closeout_ref": {
+          "bytes": 12888,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-recovery-deadline-four-case-20261109-v01/parent-capture-v03/actual-owner-closeout.json",
+          "sha256": "c7b0aba861cee947a32a18e5ca488d25aeb62f9a64ecd96e804747256d38d027"
+        },
+        "current_runtime_lease_released_and_cancelled_recorded": true,
+        "genuine_session_id": 58252,
+        "genuine_terminal_chunk": "a9d637",
+        "genuine_terminal_exit_code": 1,
+        "native_compute_closed_recorded": true,
+        "new_artifacts_durable_asserted": false,
+        "new_reservation_id": "872eb7f2401e41238a331b52452a5ad2",
+        "new_storage_bytes": 67108864,
+        "new_storage_status": "retained",
+        "no_live_state_inference": "These are exact saved terminal facts, not a fresh ledger/process/capacity inspection.",
+        "observed_child_and_owner_gone_recorded": true,
+        "old_fc41_storage_bytes_still_unreleased_or_reused": 134217728,
+        "own_old_plus_new_promises_bytes": 201326592,
+        "owner_PID": 3905484,
+        "owner_birth": 321228184,
+        "sampled_birth_bound_observed_identity_count": 1,
+        "stdout_exactly_matches_original_terminal": true,
+        "storage_release_claimed": false
+      },
+      "actual_test_result": {
+        "JUnit_errors": 0,
+        "JUnit_failures": 2,
+        "JUnit_skipped": 0,
+        "JUnit_tests": 4,
+        "Source_observer_errors": [],
+        "all_tests_passed": false,
+        "conclusion": "Both existing retained-artifact and empty-failed-admission recovery branches committed released after census advanced the original cleanup clock to 241 beyond its 240 deadline. Foreign rows remained unchanged.",
+        "expected_deadline_regression_observed": true,
+        "expired_negative_diagnostics": [
+          {
+            "census_count": 1,
+            "clock": 241.0,
+            "deadline_error": null,
+            "empty_failed_admission": false,
+            "expire_census": true,
+            "foreign_changed": false,
+            "ledger_changed": true,
+            "selected_status": "released",
+            "testcase": "test_recovery_census_cannot_commit_after_cleanup_deadline[expired-census-retained-artifact]",
+            "write_attempts": [
+              "released"
+            ],
+            "write_commits": [
+              "released"
+            ]
+          },
+          {
+            "census_count": 1,
+            "clock": 241.0,
+            "deadline_error": null,
+            "empty_failed_admission": true,
+            "expire_census": true,
+            "foreign_changed": false,
+            "ledger_changed": true,
+            "selected_status": "released",
+            "testcase": "test_recovery_census_cannot_commit_after_cleanup_deadline[expired-census-empty-failed-admission]",
+            "write_attempts": [
+              "released"
+            ],
+            "write_commits": [
+              "released"
+            ]
+          }
+        ],
+        "natural_phase_reports": 12,
+        "normal_canonical_product_execution_reported": true,
+        "positive_control_tests": [
+          "test_recovery_census_cannot_commit_after_cleanup_deadline[nonexpired-retained-artifact]",
+          "test_recovery_census_cannot_commit_after_cleanup_deadline[nonexpired-empty-failed-admission]"
+        ],
+        "private_candidate_source_ref": {
+          "bytes": 47718,
+          "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/recovery-deadline-current-owner-test-SOURCE-v01/test_autoencoder_resource_recovery.py",
+          "sha256": "eada248961b5725caed78a7d71a2defe4016e9b85bb362a257162a5b827e371e"
+        },
+        "pytest_returncode": 1,
+        "twelve_report_names_phases_and_outcomes_match_JUnit": true
+      },
+      "captured_evidence_refs": [
+        {
+          "bytes": 12888,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-recovery-deadline-four-case-20261109-v01/parent-capture-v03/actual-owner-closeout.json",
+          "sha256": "c7b0aba861cee947a32a18e5ca488d25aeb62f9a64ecd96e804747256d38d027"
+        },
+        {
+          "bytes": 7965,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-recovery-deadline-four-case-20261109-v01/parent-capture-v03/owner.stdout",
+          "sha256": "23daa50886b4f39ecc12e3c47026b856b004178a736c4e03b1bc66e3dfb1d9af"
+        },
+        {
+          "bytes": 685,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-recovery-deadline-four-case-20261109-v01/parent-capture-v03/owner.stderr",
+          "sha256": "2f8b489b7f691a3ba7145ac8477ad4c7541130f1d2dc6cefae34c0d47156a1ff"
+        },
+        {
+          "bytes": 27694,
+          "path": "/tmp/pytest-of-barberb/legal-ir-recovery-deadline-four-case-20261109-v01/attempt-v01/exports/resource-census-child-source-observation.json",
+          "sha256": "c7d9cdd4522f3f3b98657f2d9b5def377499b0f8e42f75e12548f5dd75a71596"
+        },
+        {
+          "bytes": 2558,
+          "path": "/tmp/pytest-of-barberb/legal-ir-recovery-deadline-four-case-20261109-v01/attempt-v01/exports/test-results.xml",
+          "sha256": "c38c54d86b8c77e02c51ff79c09406e2ae2f4b68a8d1936a5b0886cb70bf126c"
+        },
+        {
+          "bytes": 0,
+          "path": "/tmp/pytest-of-barberb/legal-ir-recovery-deadline-four-case-20261109-v01/attempt-v01/exports/pytest.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "errors": [],
+      "genuine_readback_tool_result_ref": {
+        "bytes": 937,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/recovery-deadline-current-owner-postterminal-readback-WORKING-v01/genuine-own-postterminal-readback-tool-result-v01.json",
+        "sha256": "f9d3b2944764962e923c833c0879510ee4faf77b8e9dfc3fecaca900c789ac95"
+      },
+      "genuine_runtime_tool_results_ref": {
+        "bytes": 2298,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/recovery-deadline-current-owner-controls-SOURCE-v03/genuine-current-v1-corrected-stage-metadata-parent-results-v01.json",
+        "sha256": "ce769894cf975ad211b6eb69364ef2349494cd43706e58f88ff633b0d2c47a33"
+      },
+      "limitations": [
+        "This is a successful defect reproduction with two failing regressions, not a qualification pass.",
+        "No implementation correction or rerun occurred in this review.",
+        "No full471/H323/model/Lean/statutory/convergence credit or budget refund/reset follows from this engineering run.",
+        "No claim authenticates every loaded vendor module or all raw execution; existing named-origin scope remains limited."
+      ],
+      "next_concrete_step": "Correct the maintained current recovery owner to enforce its original cleanup deadline after the full census and immediately before the ledger commit; retain these same two positive controls and two deadline regressions for separately accounted validation.",
+      "same_buffer_invocation_ref": {
+        "bytes": 2184,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/recovery-deadline-current-owner-postterminal-readback-WORKING-v01/same-buffer-own-readback-invocation-DATA-v01.json",
+        "sha256": "8b2e5822d45d01f9c615259e91f6742c23ef6bbfe7cab9a3d29c03c3e38ab9b1"
+      },
+      "schema": "independent-current-v1-four-case-deadline-reproduction-acceptance/v1",
+      "scope": "Private saved-evidence review; no live Source, attempt, ledger, process, API, test or resource operation by reviewer.",
+      "source_reader_ref": {
+        "bytes": 12053,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/recovery-deadline-current-owner-postterminal-readback-WORKING-v01/read_own_terminal_capture_SOURCE_ONLY.py",
+        "sha256": "08428d251d98c235ee098ba8d9c81e953e60d0f7777d4b7589b1783fb5603db7"
+      },
+      "source_reader_review": {
+        "accepted_for_finite_own_evidence_READ_only": true,
+        "actual_READ_bound_seconds": 3,
+        "aggregate_body_bytes": 33554432,
+        "aggregate_remaining_bound_checked_before_each_read": true,
+        "cooperative_seconds": 2.5,
+        "full_archive_bytes": 100663296,
+        "mandatory_closeout_genuine_terminal_join_verified": true,
+        "no_extra_Root_approval_gate_invented": true,
+        "per_file_bytes": 16777216,
+        "private_bound_change": "Rejects .. spelling and compares all nine identity fields including uid/gid.",
+        "raw_publication_after_lease_exit": true,
+        "retained_helper_ASTs_unchanged": [
+          "need",
+          "sha",
+          "load_exact",
+          "error_identity"
+        ],
+        "same_original42_and_common_IO_pins_authenticated": true,
+        "six_literal_files_closeout_first": true,
+        "summary_bytes": 4194304
+      },
+      "source_scope_ref": {
+        "bytes": 3638,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/recovery-deadline-current-owner-postterminal-readback-WORKING-v01/finite-current-four-case-postterminal-capture-scope-v01.json",
+        "sha256": "4f9ee4ad4c03bff3072e172848089374c19f4f555a8af61a8204fb7a8c022def"
+      }
+    }
+  },
+  "actual_fix_source_genuine_tool_result": {
+    "original_ref": {
+      "bytes": 815,
+      "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/recovery-deadline-current-owner-deadline-fix-SOURCE-v02/genuine-three-target-Source-CAS-tool-result-v01.json",
+      "sha256": "a50df624986d024d83a1b383b8e6e215541f3670c8e797d0c6a85afbfd7b2e19"
+    },
+    "record": {
+      "chunk_id": "ba2aef",
+      "exit_code": 0,
+      "original_token_count": 166,
+      "output": "{\"Source_WRITE_closed\": true, \"applied_paths\": [\"ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_resource_recovery.py\", \"ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py\", \"tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_resource_recovery.py\"], \"completed\": true, \"private_closeout_ref\": {\"bytes\": 8602, \"path\": \"/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/recovery-deadline-current-owner-deadline-fix-SOURCE-v02/actual-three-target-Source-CAS-closeout-v01.json\", \"sha256\": \"f3ce9f327fbe411b5e2b8ac9591e9770b20ffec79badd01b8fa80b4e2f82c358\"}}\n",
+      "wall_time_seconds": 0.003573607
+    }
+  },
+  "actual_fix_source_installation": {
+    "original_ref": {
+      "bytes": 8602,
+      "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/recovery-deadline-current-owner-deadline-fix-SOURCE-v02/actual-three-target-Source-CAS-closeout-v01.json",
+      "sha256": "f3ce9f327fbe411b5e2b8ac9591e9770b20ffec79badd01b8fa80b4e2f82c358"
+    },
+    "record": {
+      "Root7_extra_grant_required": false,
+      "Source_WRITE_closed": true,
+      "Source_WRITE_entered": true,
+      "Source_seconds": 0.09148106491193175,
+      "applied_paths": [
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_resource_recovery.py",
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py",
+        "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_resource_recovery.py"
+      ],
+      "audit_mutation_attempts": [
+        {
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-recovery-deadline-four-case-20261109-v01/deadline-fix-source-install-v02/preimage-0.py",
+          "role": "beforeimage"
+        },
+        {
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-recovery-deadline-four-case-20261109-v01/deadline-fix-source-install-v02/preimage-1.py",
+          "role": "beforeimage"
+        },
+        {
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-recovery-deadline-four-case-20261109-v01/deadline-fix-source-install-v02/preimage-2.py",
+          "role": "beforeimage"
+        },
+        {
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-recovery-deadline-four-case-20261109-v01/deadline-fix-source-install-v02/source-body-receipt.json",
+          "role": "pending_Source_exit_receipt"
+        }
+      ],
+      "body_complete": true,
+      "canonical_body_receipt_Source_exit_pending": true,
+      "canonical_body_receipt_ref": {
+        "bytes": 7965,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-recovery-deadline-four-case-20261109-v01/deadline-fix-source-install-v02/source-body-receipt.json",
+        "sha256": "22ae42cb461d322758536f6b777b1bb22c2a5793d8d4a4128c11a1853f561834"
+      },
+      "completed": true,
+      "errors": [],
+      "files": {
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py": {
+          "actual_post_full9": {
+            "st_ctime_ns": 1794195872543093438,
+            "st_dev": 66306,
+            "st_gid": 1000,
+            "st_ino": 21922958,
+            "st_mode": 33204,
+            "st_mtime_ns": 1794195872539983452,
+            "st_nlink": 1,
+            "st_size": 51106,
+            "st_uid": 1000
+          },
+          "actual_post_ref": {
+            "bytes": 51106,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py",
+            "sha256": "3b0f1d047041e63c7761a01f44784b08fb492ca00051e6d383f404422b95eb37"
+          },
+          "after_bytes": 51106,
+          "after_sha256": "3b0f1d047041e63c7761a01f44784b08fb492ca00051e6d383f404422b95eb37",
+          "before_sha256": "a3af02679758592cfd0ed23bd1220def2d80c273d32342db55520609bd7566d7",
+          "mode": 436
+        },
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_resource_recovery.py": {
+          "actual_post_full9": {
+            "st_ctime_ns": 1794195872536093362,
+            "st_dev": 66306,
+            "st_gid": 1000,
+            "st_ino": 21922754,
+            "st_mode": 33204,
+            "st_mtime_ns": 1794195872532520955,
+            "st_nlink": 1,
+            "st_size": 62727,
+            "st_uid": 1000
+          },
+          "actual_post_ref": {
+            "bytes": 62727,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_resource_recovery.py",
+            "sha256": "800dd4791de8c187e3a2ed3738beec474e73c15060638726da4a40d46bd4fc4c"
+          },
+          "after_bytes": 62727,
+          "after_sha256": "800dd4791de8c187e3a2ed3738beec474e73c15060638726da4a40d46bd4fc4c",
+          "before_sha256": "c084300068a210ab18e17fab35f3f6a38de82fdd940e91a4a1cc40d743d0cdac",
+          "mode": 436
+        },
+        "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_resource_recovery.py": {
+          "actual_post_full9": {
+            "st_ctime_ns": 1794195872551093526,
+            "st_dev": 66306,
+            "st_gid": 1000,
+            "st_ino": 21935403,
+            "st_mode": 33204,
+            "st_mtime_ns": 1794195872547465118,
+            "st_nlink": 1,
+            "st_size": 52792,
+            "st_uid": 1000
+          },
+          "actual_post_ref": {
+            "bytes": 52792,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_resource_recovery.py",
+            "sha256": "f1e65940db3e2a283366b56ecb4ceccc0c54e5cf7d1cc4909845a23f709a0a9e"
+          },
+          "after_bytes": 52792,
+          "after_sha256": "f1e65940db3e2a283366b56ecb4ceccc0c54e5cf7d1cc4909845a23f709a0a9e",
+          "before_sha256": "83b9aec852fba89e9463bf309c02f606a2f49248d8d437f7ae5e223d44e84bbd",
+          "mode": 436
+        }
+      },
+      "historical_four_check_logic_Source_peer_ref": {
+        "bytes": 7399,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/recovery-deadline-current-owner-deadline-fix-SOURCE-v01/independent-current-owned-recovery-deadline-fix-Source-review-v01.json",
+        "sha256": "73d615b9ca52d5e0c6e875f68c3a809b4007f03657d11f45a37866dd471659c6"
+      },
+      "original_Source_owner": {
+        "canonical_root": "/home/barberb/lift_coding/external/ipfs_datasets",
+        "cooperative": true,
+        "lock_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/control-plane/source-leases/source.lock",
+        "mode": "write",
+        "schema_version": "autoencoder-source-lease/v1",
+        "waited_seconds": 3.964919596910477e-05
+      },
+      "owned_temporaries_cleaned": [],
+      "preimages": [
+        {
+          "archive_ref": {
+            "bytes": 62507,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-recovery-deadline-four-case-20261109-v01/deadline-fix-source-install-v02/preimage-0.py",
+            "sha256": "c084300068a210ab18e17fab35f3f6a38de82fdd940e91a4a1cc40d743d0cdac"
+          },
+          "identity": {
+            "st_ctime_ns": 1794195872514070257,
+            "st_dev": 66306,
+            "st_gid": 1000,
+            "st_ino": 77071022,
+            "st_mode": 33024,
+            "st_mtime_ns": 1794195872514070257,
+            "st_nlink": 1,
+            "st_size": 62507,
+            "st_uid": 1000
+          },
+          "mode": 256,
+          "relative_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_resource_recovery.py",
+          "role": "beforeimage"
+        },
+        {
+          "archive_ref": {
+            "bytes": 51040,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-recovery-deadline-four-case-20261109-v01/deadline-fix-source-install-v02/preimage-1.py",
+            "sha256": "a3af02679758592cfd0ed23bd1220def2d80c273d32342db55520609bd7566d7"
+          },
+          "identity": {
+            "st_ctime_ns": 1794195872522912625,
+            "st_dev": 66306,
+            "st_gid": 1000,
+            "st_ino": 77071023,
+            "st_mode": 33024,
+            "st_mtime_ns": 1794195872522912625,
+            "st_nlink": 1,
+            "st_size": 51040,
+            "st_uid": 1000
+          },
+          "mode": 256,
+          "relative_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py",
+          "role": "beforeimage"
+        },
+        {
+          "archive_ref": {
+            "bytes": 43020,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-recovery-deadline-four-case-20261109-v01/deadline-fix-source-install-v02/preimage-2.py",
+            "sha256": "83b9aec852fba89e9463bf309c02f606a2f49248d8d437f7ae5e223d44e84bbd"
+          },
+          "identity": {
+            "st_ctime_ns": 1794195872529014788,
+            "st_dev": 66306,
+            "st_gid": 1000,
+            "st_ino": 77071024,
+            "st_mode": 33024,
+            "st_mtime_ns": 1794195872529014788,
+            "st_nlink": 1,
+            "st_size": 43020,
+            "st_uid": 1000
+          },
+          "mode": 256,
+          "relative_path": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_resource_recovery.py",
+          "role": "beforeimage"
+        }
+      ],
+      "prior_retained_storage_promise_bytes": 201326592,
+      "runtime_test_API_ledger_or_storage_release_performed": false,
+      "runtime_validation_pending": true,
+      "schema": "existing-original42-733-three-path-Source-CAS/v1",
+      "source_manifest_ref": {
+        "bytes": 10024,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/recovery-deadline-current-owner-deadline-fix-SOURCE-v02/SOURCE-deadline-fix-manifest-v02.json",
+        "sha256": "ee1a0abcbddae8374976cd6c6e682b0861678d07bfd1895f64996d1710e6227f"
+      },
+      "uncertain_temporary_paths_preserved": []
+    }
+  },
+  "actual_old_empty_claim_recovery": {
+    "Source_READs_closed": true,
+    "actual_postwrite_accounting": {
+      "additional_requested_bytes": 0,
+      "charged_bytes": 219847068799,
+      "inventory": {
+        "apparent_bytes": 175258007871,
+        "entry_count": 2570009,
+        "special_file_count": 303,
+        "symlink_count": 8548
+      },
+      "limit_bytes": 220000000000,
+      "minimum_filesystem_free_bytes": 509027143680,
+      "observed_apparent_bytes": 175258007871,
+      "outstanding_full_reservations_bytes": 44589060928,
+      "scope": "named_roots_only_apparent_bytes"
+    },
+    "cap_policy_or_budget_reset": false,
+    "completed": true,
+    "current_source_capture_ref": {
+      "bytes": 873872,
+      "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/failed-admission-own-claim-recovery-DRAFT-v02/actual-current32-compact-after-fc41-guard-refusal-v01.json",
+      "sha256": "b8872cebe95a384e9cc562bb1d778ef7d57acfc358daf8c12fa957e04d4d6776"
+    },
+    "elapsed_seconds": 83.57255951827392,
+    "errors": [],
+    "expected_record_sha256": "8e9b2eace375ee4ea9998e08d6686f4d68952e22ff57432141b913bd4fcf24ce",
+    "fresh_own_evidence_ref": {
+      "bytes": 10478,
+      "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/failed-admission-own-claim-recovery-DRAFT-v02/actual-current-two-own-claim-inspection-v03.json",
+      "sha256": "a9c5c00808960bdf0cb5e59f34a05784eedeb190d40327986a4b18ef58389bb6"
+    },
+    "genuine_own_evidence_ref": {
+      "bytes": 577,
+      "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/failed-admission-own-claim-recovery-DRAFT-v02/genuine-current-two-own-inspection-v04-tool-result.json",
+      "sha256": "70c56526e58460c095b2ff0730ae41dd64b838658bd438b1f407d47bc6090365"
+    },
+    "hard_wall_IO_preemption_claimed": false,
+    "manual_state_reconciliation_needed": false,
+    "new872e_67108864_bytes_release_selected": false,
+    "new_native_grant_or_reservation": false,
+    "observed_post_API_status": "released",
+    "original240_cleanup_seconds": 240,
+    "original_API_result_ref": {
+      "bytes": 1499,
+      "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/failed-admission-own-claim-recovery-DRAFT-v02/actual-current-fc41-storage-only-closeout-v04/original-API-returned.json",
+      "sha256": "9500535e73437ee6815f3d8d43b747c398647505139b57e2054597ec07dd75f0"
+    },
+    "original_Source_READs": [
+      {
+        "canonical_root": "/home/barberb/lift_coding/external/ipfs_datasets",
+        "cooperative": true,
+        "lock_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/control-plane/source-leases/source.lock",
+        "mode": "read",
+        "schema_version": "autoencoder-source-lease/v1",
+        "waited_seconds": 3.763195127248764e-05
+      },
+      {
+        "canonical_root": "/home/barberb/lift_coding/external/ipfs_accelerate",
+        "cooperative": true,
+        "lock_path": "/home/barberb/lift_coding/external/ipfs_accelerate/workspace/control-plane/source-leases/source.lock",
+        "mode": "read",
+        "schema_version": "autoencoder-source-lease/v1",
+        "waited_seconds": 4.2079947888851166e-05
+      }
+    ],
+    "original_failed323_reclassified": false,
+    "outputs_deleted": false,
+    "recovery_API_calls": 1,
+    "recovery_API_returned": true,
+    "released_record_sha256": "054fe6041bb222920f810137c3db7a44283cba8f02ece04ea26f0ebe042077bc",
+    "reservation_id": "fc41c5724fff45af979ff3f0db5a6d1e",
+    "schema": "current-fc41-existing-strict-empty-storage-closeout/v1",
+    "storage_release_established": true
+  },
+  "actual_old_empty_claim_recovery_genuine": {
+    "initial": {
+      "chunk_id": "23a74c",
+      "original_token_count": 0,
+      "output": "",
+      "session_id": 20523,
+      "wall_time_seconds": 1.001457087
+    },
+    "intermediate_chunks": [
+      "428df5",
+      "a3104d"
+    ],
+    "no_retry": true,
+    "one_original_API_operation": true,
+    "operator": "/root",
+    "terminal": {
+      "chunk_id": "706c36",
+      "exit_code": 0,
+      "original_token_count": 125,
+      "output": "{\"Source_READs_closed\": true, \"automatic_retry\": false, \"completed\": true, \"new872e_release_selected\": false, \"private_closeout_ref\": {\"bytes\": 3581, \"path\": \"/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/failed-admission-own-claim-recovery-DRAFT-v02/actual-current-fc41-storage-only-closeout-v04/actual-storage-only-closeout.json\", \"sha256\": \"d38de6a45e316f688856f9283cc673e42039738df9bcd215755339d2eb197767\"}, \"storage_release_established\": true}\n",
+      "wall_time_seconds": 5.198679188
+    }
+  },
+  "actual_old_empty_claim_recovery_independent_acceptance": {
+    "original_ref": {
+      "bytes": 6119,
+      "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/failed-admission-own-claim-recovery-DRAFT-v02/actual-current-fc41-storage-only-closeout-v04/independent-actual-fc41-storage-closeout-acceptance-v04.json",
+      "sha256": "9aefccbe8c73dd7a9d0b0635892a9d403829c101def53b0ddb830dd3761b3038"
+    },
+    "record": {
+      "accepted": true,
+      "accounting": {
+        "actual_postwrite_physical_metadata_growth_over_projection_bytes": 1848,
+        "exact_outstanding_claim_reduction_bytes": 134217728,
+        "fresh_actual_postwrite": {
+          "additional_requested_bytes": 0,
+          "charged_bytes": 219847068799,
+          "inventory": {
+            "apparent_bytes": 175258007871,
+            "entry_count": 2570009,
+            "special_file_count": 303,
+            "symlink_count": 8548
+          },
+          "limit_bytes": 220000000000,
+          "minimum_filesystem_free_bytes": 509027143680,
+          "observed_apparent_bytes": 175258007871,
+          "outstanding_full_reservations_bytes": 44589060928,
+          "scope": "named_roots_only_apparent_bytes"
+        },
+        "full_claim_before": {
+          "additional_requested_bytes": 0,
+          "charged_bytes": 219981284679,
+          "inventory": {
+            "apparent_bytes": 175258006023,
+            "entry_count": 2570009,
+            "special_file_count": 303,
+            "symlink_count": 8548
+          },
+          "limit_bytes": 220000000000,
+          "minimum_filesystem_free_bytes": 509027618816,
+          "observed_apparent_bytes": 175258006023,
+          "outstanding_full_reservations_bytes": 44723278656,
+          "scope": "named_roots_only_apparent_bytes"
+        },
+        "projected_after": {
+          "additional_requested_bytes": 0,
+          "charged_bytes": 219847066951,
+          "inventory": {
+            "apparent_bytes": 175258006023,
+            "entry_count": 2570009,
+            "special_file_count": 303,
+            "symlink_count": 8548
+          },
+          "limit_bytes": 220000000000,
+          "minimum_filesystem_free_bytes": 509027618816,
+          "observed_apparent_bytes": 175258006023,
+          "outstanding_full_reservations_bytes": 44589060928,
+          "scope": "named_roots_only_apparent_bytes"
+        },
+        "recorded_headroom_after_postwrite_census_bytes": 152931201,
+        "scope": "Reservation promise closed. Actual physical bytes were separately measured and not equated to the prewrite projection; no artifacts were deleted. Recorded headroom is historical, not current admission availability."
+      },
+      "actual_closeout_ref": {
+        "bytes": 3581,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/failed-admission-own-claim-recovery-DRAFT-v02/actual-current-fc41-storage-only-closeout-v04/actual-storage-only-closeout.json",
+        "sha256": "d38de6a45e316f688856f9283cc673e42039738df9bcd215755339d2eb197767"
+      },
+      "actual_storage_transition": {
+        "automatic_expiry": false,
+        "before_sha256": "8e9b2eace375ee4ea9998e08d6686f4d68952e22ff57432141b913bd4fcf24ce",
+        "new872e_release_selected": false,
+        "new_grant_or_claim": false,
+        "original_failed323_reclassified": false,
+        "other_claims_preserved_in_reviewed_live_postchecks": true,
+        "outputs_deleted": false,
+        "recorded_post_status": "released",
+        "release_established": true,
+        "released_record_sha256_recorded": "054fe6041bb222920f810137c3db7a44283cba8f02ece04ea26f0ebe042077bc",
+        "reservation_id": "fc41c5724fff45af979ff3f0db5a6d1e",
+        "reservation_promise_bytes_released": 134217728,
+        "strict_empty_artifacts": []
+      },
+      "errors": [],
+      "genuine_operation": {
+        "Source_READs_closed": true,
+        "elapsed_seconds": 83.57255951827392,
+        "hard_wall_IO_preemption_claimed": false,
+        "initial_chunk": "23a74c",
+        "session_id": 20523,
+        "single_original_API_call": true,
+        "terminal_chunk": "706c36",
+        "terminal_exit_code": 0,
+        "typed_cleanup_limit_seconds": 240
+      },
+      "genuine_tool_results_ref": {
+        "bytes": 978,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/failed-admission-own-claim-recovery-DRAFT-v02/genuine-Root-current-fc41-v04-recovery-tool-results.json",
+        "sha256": "ab5594bba68b3ff303ae78aaa6514e27d97c2fb82565639e1679989190451047"
+      },
+      "guard_evidence": "Successful exact reviewed caller flow checked currentSource32, original policy/request absence, PID/empty attempt, own history restoration, unchanged foreign records, zero final owned bytes, exact original receipt, postwrite census and ledger stability before setting release_established. Those live checks were not rerun by this reviewer.",
+      "literal_caller_Source_review_ref": {
+        "bytes": 1736,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/failed-admission-own-claim-recovery-DRAFT-v02/independent-current-fc41-literal-successor-Source-review-v04.json",
+        "sha256": "a788cb253a141fbe04c19b50f0f5b31ec23e4cdfc9fe4ceea5e2771000cceada"
+      },
+      "original_API_Source_review_ref": {
+        "bytes": 4602,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/failed-admission-own-claim-recovery-DRAFT-v02/independent-current-fc41-original-API-closeout-Source-review-v03.json",
+        "sha256": "48da6ae4481ed613fcf84147e11ff7c09f81efb504815d4059fe284a0c0862c6"
+      },
+      "original_API_result_ref": {
+        "bytes": 1499,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/failed-admission-own-claim-recovery-DRAFT-v02/actual-current-fc41-storage-only-closeout-v04/original-API-returned.json",
+        "sha256": "9500535e73437ee6815f3d8d43b747c398647505139b57e2054597ec07dd75f0"
+      },
+      "remaining_scope": "The last-observed872e64MiB claim was not selected or released by this operation. No52 test pass, model/full471/Lean/statutory/convergence qualification or productive-budget reset follows.",
+      "reviewer_operations": "Only saved immutable outcome/genuine/receipt/arithmetic checks and report publication; no live Source/ledger/proc/API/census or repeat operation.",
+      "schema": "independent-actual-original-fc41-storage-closeout-acceptance/v1",
+      "started_before_API_ref": {
+        "bytes": 2494,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/failed-admission-own-claim-recovery-DRAFT-v02/actual-current-fc41-storage-only-closeout-v04/started-before-original-API.json",
+        "sha256": "6de166ae701bf056f9115a93fa522d7b0e4aef333d845ea41f7f1b7014d92905"
+      }
+    }
+  },
+  "another_validation_selected": false,
+  "compatible_decoder_source_port": {
+    "original_ref": {
+      "bytes": 3866,
+      "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/canonical-drift-private-static-review-v01/independent-actual-H4-current-four-owner-Source-port-execution-acceptance-v01.json",
+      "sha256": "7bcd81ebc4d03d7bcb4d90023ce30fa40d993961e2df3adf66010df401c6fc17"
+    },
+    "record": {
+      "Source_actor_review_ref": {
+        "bytes": 7874,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/canonical-drift-private-static-review-v01/independent-H4-four-owner-current-Source-port-review-v01.json",
+        "sha256": "4ad1149e969e53bc7deb7682ce3dd40b42b2c8ef866fb589fc2f88e295ff5638"
+      },
+      "accepted": true,
+      "accepted_as_actual_Source_execution_evidence": true,
+      "actual_closeout_ref": {
+        "bytes": 10229,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/canonical-drift-private-static-review-v01/actual-four-H4-owner-Source-CAS-closeout-v01.json",
+        "sha256": "b39de07dcbc22bf0d9f5418043e2552458de96efe70606f99a3798bd324b4cf9"
+      },
+      "all_four_applied_paths_exact": [
+        "ipfs_datasets_py/logic/autoformal/training_cycle_inputs.py",
+        "tests/unit/logic/test_autoformal_campaign_training_inputs.py",
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py",
+        "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py"
+      ],
+      "all_four_full0400_preimage_records_exact": true,
+      "all_four_recorded_postimage_SHA_size_full9_mode_uid_gid_singlelink_match_scope": true,
+      "all_twelve_protected_guards_reached_in_reviewed_successful_flow": true,
+      "canonical_body_receipt_Source_exit_remains_pending": true,
+      "canonical_body_receipt_ref": {
+        "bytes": 9542,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-phase7-reviewed-cycle-transition-20261108-v01/full-reviewed-decoder-current-owner-source-port-v01/source-body-receipt.json",
+        "sha256": "403389c34f3d4482379e826fa702d07444209e5c4436c75d7f9220d02049e2a5"
+      },
+      "errors": [],
+      "evidence_limits": [
+        "Only saved actual execution records were inspected by this reviewer; canonical preimage bodies and current postimages were not reread here.",
+        "Root is separately capturing independent current16 readback; that evidence remains separately reviewable.",
+        "Producer elapsed and genuine tool wall time remain separate recorded observations without cross-clock equality claims."
+      ],
+      "genuine_EXIT0_chunk": "1ce223",
+      "genuine_tool_result_ref": {
+        "bytes": 840,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/canonical-drift-private-static-review-v01/genuine-four-H4-owner-Source-CAS-tool-result-v01.json",
+        "sha256": "c108ec39bfd3199d2eefa6983484b63032c496ba0f78ca144e499763a5f1a92c"
+      },
+      "independent_current_postinstall_readback_pending_for_this_review": true,
+      "next_step": "Review Root independent current16 saved readback and validate the existing owning tests under separately accounted maintained resource limits.",
+      "original42_Source_WRITE_closed": true,
+      "owning_tests_model_Lean_convergence_or_legal_qualified": false,
+      "private_postexit_closeout_closed": true,
+      "recorded_Source_seconds": 0.10556094814091921,
+      "runtime_test_API_resource_or_storage_release_performed_by_reviewer": false,
+      "same_buffer_invocation_ref": {
+        "bytes": 2980,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/canonical-drift-private-static-review-v01/four-owner-current-source-port-invocation-DATA-v01.json",
+        "sha256": "1edd556f2ca61d94c75d3bc9dfbb634fe571999982ab8eccfe81456f1c51ab32"
+      },
+      "schema": "independent-actual-H4-current-four-owner-Source-port-execution-acceptance/v1",
+      "scope_ref": {
+        "bytes": 9588,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/canonical-drift-private-static-review-v01/four-owner-current-source-port-scope-v01.json",
+        "sha256": "e2e80feaf232a19f5c7c62af1e8b3f60d2c613d581e035199fa1eb5402302804"
+      }
+    }
+  },
+  "corrected_validation": {
+    "executed_cases": 0,
+    "global_cap_bytes": 220000000000,
+    "latest_Source_custody_closed": true,
+    "latest_native_cleanup_or_storage_release_claimed": false,
+    "latest_parent_errors": [],
+    "latest_saved_zero_additional_charged_bytes": 220001739786,
+    "new_record_native_or_child_created": false,
+    "requests": 2,
+    "selected_cases": 52,
+    "selected_phases": 156,
+    "smaller_retry_or_cap_change_or_foreign_cleanup_selected": false,
+    "status": "BOTH_REQUESTS_PREGRANT_CAPACITY_REFUSED_ALL_52_UNRUN"
+  },
+  "current_decoder_independent_source_readback_summary": {
+    "Source_READ_closed": true,
+    "Source_seconds": 0.04498819401487708,
+    "accepted": true,
+    "canonical_mutation_or_tests_or_API_or_model_or_storage_release": false,
+    "errors": [],
+    "files": [
+      {
+        "identity": {
+          "st_ctime_ns": 1794196079493749171,
+          "st_dev": 66306,
+          "st_gid": 1000,
+          "st_ino": 19827092,
+          "st_mode": 33204,
+          "st_mtime_ns": 1794196079490477882,
+          "st_nlink": 1,
+          "st_size": 93252,
+          "st_uid": 1000
+        },
+        "role": "installed_target",
+        "source_ref": {
+          "bytes": 93252,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/training_cycle_inputs.py",
+          "sha256": "c008fe132dd62a89878d585c69b0261324e6d12897a6ac26a6f86e6165e6fe3a"
+        }
+      },
+      {
+        "identity": {
+          "st_ctime_ns": 1794196079509749135,
+          "st_dev": 66306,
+          "st_gid": 1000,
+          "st_ino": 21918485,
+          "st_mode": 33204,
+          "st_mtime_ns": 1794196079506634662,
+          "st_nlink": 1,
+          "st_size": 177512,
+          "st_uid": 1000
+        },
+        "role": "installed_target",
+        "source_ref": {
+          "bytes": 177512,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py",
+          "sha256": "cf1a0c6a115a5921c31b0d6594a81a4c0ebf765c5a040e3ed940acf530df12d2"
+        }
+      },
+      {
+        "identity": {
+          "st_ctime_ns": 1794196079501749153,
+          "st_dev": 66306,
+          "st_gid": 1000,
+          "st_ino": 21932846,
+          "st_mode": 33204,
+          "st_mtime_ns": 1794196079498556728,
+          "st_nlink": 1,
+          "st_size": 132076,
+          "st_uid": 1000
+        },
+        "role": "installed_target",
+        "source_ref": {
+          "bytes": 132076,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/test_autoformal_campaign_training_inputs.py",
+          "sha256": "119ece9c48fba121cccf68c1470938fd5bbbf5230b3cc201051b71efbe2c67ad"
+        }
+      },
+      {
+        "identity": {
+          "st_ctime_ns": 1794196079517749117,
+          "st_dev": 66306,
+          "st_gid": 1000,
+          "st_ino": 21931446,
+          "st_mode": 33204,
+          "st_mtime_ns": 1794196079514824996,
+          "st_nlink": 1,
+          "st_size": 164233,
+          "st_uid": 1000
+        },
+        "role": "installed_target",
+        "source_ref": {
+          "bytes": 164233,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py",
+          "sha256": "278c54e130761bce38a435cbc3e3e6fa7226cb856526f1f0679ebb17f5b7e486"
+        }
+      },
+      {
+        "identity": {
+          "st_ctime_ns": 1794125871559217768,
+          "st_dev": 66306,
+          "st_gid": 1000,
+          "st_ino": 21931355,
+          "st_mode": 33204,
+          "st_mtime_ns": 1794125871557201262,
+          "st_nlink": 1,
+          "st_size": 37208,
+          "st_uid": 1000
+        },
+        "role": "protected_dependency",
+        "source_ref": {
+          "bytes": 37208,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_consumer_binding.py",
+          "sha256": "e2654f498a1c911d962a4e19873344e0ef2da75e906983e6acea8ba97206a47d"
+        }
+      },
+      {
+        "identity": {
+          "st_ctime_ns": 1794125871551217728,
+          "st_dev": 66306,
+          "st_gid": 1000,
+          "st_ino": 19827051,
+          "st_mode": 33204,
+          "st_mtime_ns": 1794125871540794187,
+          "st_nlink": 1,
+          "st_size": 60977,
+          "st_uid": 1000
+        },
+        "role": "protected_dependency",
+        "source_ref": {
+          "bytes": 60977,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/legal_norm_content_adjudication_v1.py",
+          "sha256": "1e4d8674851d03ee9b7e8f770a8925f22c50358375a934f42ec34d0d8ffef3d2"
+        }
+      },
+      {
+        "identity": {
+          "st_ctime_ns": 1792173711144867787,
+          "st_dev": 66306,
+          "st_gid": 1000,
+          "st_ino": 21903661,
+          "st_mode": 33204,
+          "st_mtime_ns": 1792173711144867787,
+          "st_nlink": 1,
+          "st_size": 57859,
+          "st_uid": 1000
+        },
+        "role": "protected_dependency",
+        "source_ref": {
+          "bytes": 57859,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_eval_splits.py",
+          "sha256": "495a988ea30679187a8b695f5ec50e2fa24729064ebccc3d623cd90c78240dce"
+        }
+      },
+      {
+        "identity": {
+          "st_ctime_ns": 1792002298482457881,
+          "st_dev": 66306,
+          "st_gid": 1000,
+          "st_ino": 19026229,
+          "st_mode": 33204,
+          "st_mtime_ns": 1792002298482457881,
+          "st_nlink": 1,
+          "st_size": 63678,
+          "st_uid": 1000
+        },
+        "role": "protected_dependency",
+        "source_ref": {
+          "bytes": 63678,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/duckdb_control/autoencoder_registry.py",
+          "sha256": "f6e782db575b3b645439082bb244449152c55cd82bdf1f8787fce9a1381fab7f"
+        }
+      },
+      {
+        "identity": {
+          "st_ctime_ns": 1790497895727021725,
+          "st_dev": 66306,
+          "st_gid": 1000,
+          "st_ino": 21944977,
+          "st_mode": 33204,
+          "st_mtime_ns": 1790497895727021725,
+          "st_nlink": 1,
+          "st_size": 17893,
+          "st_uid": 1000
+        },
+        "role": "protected_dependency",
+        "source_ref": {
+          "bytes": 17893,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_training_worker.py",
+          "sha256": "acb0092927aec9c39faf40412a662057094585476af2100a4c6d4b73acc54610"
+        }
+      },
+      {
+        "identity": {
+          "st_ctime_ns": 1794192393562946465,
+          "st_dev": 66306,
+          "st_gid": 1000,
+          "st_ino": 21922264,
+          "st_mode": 33204,
+          "st_mtime_ns": 1794192393562946465,
+          "st_nlink": 1,
+          "st_size": 42516,
+          "st_uid": 1000
+        },
+        "role": "protected_dependency",
+        "source_ref": {
+          "bytes": 42516,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_consumer_binding.py",
+          "sha256": "10afa2d4de9296e56de1367a7338fa483b85f483ca8194837cce4ccea00f4902"
+        }
+      },
+      {
+        "identity": {
+          "st_ctime_ns": 1794126941294592280,
+          "st_dev": 66306,
+          "st_gid": 1000,
+          "st_ino": 22827326,
+          "st_mode": 33204,
+          "st_mtime_ns": 1794126941294592280,
+          "st_nlink": 1,
+          "st_size": 66299,
+          "st_uid": 1000
+        },
+        "role": "protected_dependency",
+        "source_ref": {
+          "bytes": 66299,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/autoformal/test_legal_norm_content_adjudication_v1.py",
+          "sha256": "f765c46cadc10c8371df689f4f4b9acead3fb7d559e18d6accb827e4b81b78f9"
+        }
+      },
+      {
+        "identity": {
+          "st_ctime_ns": 1790660815958881142,
+          "st_dev": 66306,
+          "st_gid": 1000,
+          "st_ino": 21949706,
+          "st_mode": 33204,
+          "st_mtime_ns": 1790660815958881142,
+          "st_nlink": 1,
+          "st_size": 7896,
+          "st_uid": 1000
+        },
+        "role": "protected_dependency",
+        "source_ref": {
+          "bytes": 7896,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_native_pool.py",
+          "sha256": "04f29da03f937dfee7ecfcb621980240c014754abe55f71a2c1ef8338ba715bb"
+        }
+      },
+      {
+        "identity": {
+          "st_ctime_ns": 1790666388624611621,
+          "st_dev": 66306,
+          "st_gid": 1000,
+          "st_ino": 21949783,
+          "st_mode": 33204,
+          "st_mtime_ns": 1790666388624611621,
+          "st_nlink": 1,
+          "st_size": 21228,
+          "st_uid": 1000
+        },
+        "role": "protected_dependency",
+        "source_ref": {
+          "bytes": 21228,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_adaptive_optimizer.py",
+          "sha256": "dcd3a885820e7985ebec458a80325fe00d4d50656cf5827a828dd9cb45eb2524"
+        }
+      },
+      {
+        "identity": {
+          "st_ctime_ns": 1790497895450018237,
+          "st_dev": 66306,
+          "st_gid": 1000,
+          "st_ino": 21944746,
+          "st_mode": 33204,
+          "st_mtime_ns": 1790497895450018237,
+          "st_nlink": 1,
+          "st_size": 27947,
+          "st_uid": 1000
+        },
+        "role": "protected_dependency",
+        "source_ref": {
+          "bytes": 27947,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py",
+          "sha256": "b067f05b3cfc28cb213a83519530f7148b2a5fa7d5b25809e87e1f7c286f9a5d"
+        }
+      },
+      {
+        "identity": {
+          "st_ctime_ns": 1790497895447018199,
+          "st_dev": 66306,
+          "st_gid": 1000,
+          "st_ino": 21944726,
+          "st_mode": 33204,
+          "st_mtime_ns": 1790497895447018199,
+          "st_nlink": 1,
+          "st_size": 27296,
+          "st_uid": 1000
+        },
+        "role": "protected_dependency",
+        "source_ref": {
+          "bytes": 27296,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_campaign_job_inputs.py",
+          "sha256": "3017c6c6e6e700fc64b2d21b0624a521765801deb79816b57611209b76f9046a"
+        }
+      },
+      {
+        "identity": {
+          "st_ctime_ns": 1793405362124239914,
+          "st_dev": 66306,
+          "st_gid": 1000,
+          "st_ino": 21950383,
+          "st_mode": 33188,
+          "st_mtime_ns": 1790695206901896473,
+          "st_nlink": 1,
+          "st_size": 10375,
+          "st_uid": 1000
+        },
+        "role": "protected_dependency",
+        "source_ref": {
+          "bytes": 10375,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_source_lease.py",
+          "sha256": "42e9f07d0d458177079269d9f495f0b70512180c1adc2f7fe0bfdb05518a12f9"
+        }
+      }
+    ],
+    "installed_targets": 4,
+    "protected_dependencies": 12,
+    "qualification_scope": "Exact source reinstallation/readback only; no transitive or runtime numerical or statutory or Lean or convergence credit.",
+    "raw_total_bytes": 1008245,
+    "schema": "independent-primary-actual-four-H4-owner-current-readback/v1"
+  },
+  "current_decoder_readback_acceptance": {
+    "original_ref": {
+      "bytes": 2763,
+      "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/canonical-drift-private-static-review-v01/independent-secondary-current-four-H4-owner-readback-acceptance-v01.json",
+      "sha256": "d8cbc4adfd0defb114c6a24158c3ec510c88c01b378cbb3ed31915917d9b43bb"
+    },
+    "record": {
+      "Source_READ_closed": true,
+      "Source_READ_seconds": 0.04498819401487708,
+      "accepted": true,
+      "actual_CAS_closeout_ref": {
+        "bytes": 10229,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/canonical-drift-private-static-review-v01/actual-four-H4-owner-Source-CAS-closeout-v01.json",
+        "sha256": "b39de07dcbc22bf0d9f5418043e2552458de96efe70606f99a3798bd324b4cf9"
+      },
+      "actual_CAS_execution_acceptance_ref": {
+        "bytes": 3866,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/canonical-drift-private-static-review-v01/independent-actual-H4-current-four-owner-Source-port-execution-acceptance-v01.json",
+        "sha256": "7bcd81ebc4d03d7bcb4d90023ce30fa40d993961e2df3adf66010df401c6fc17"
+      },
+      "actual_current_readback_ref": {
+        "bytes": 1355273,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/canonical-drift-private-static-review-v01/independent-primary-actual-four-owner-port-readback-v01.json",
+        "sha256": "56266dad729766965cf9a6e2a3c73682ee198338c7b8b7aa18a9963d2e388738"
+      },
+      "all16_raw_SHA_length_regular_singlelink_identity_rows_verified": true,
+      "all_current4_match": true,
+      "all_protected12_match": true,
+      "errors": [],
+      "four_installed_targets_bytes_full9_modes_uid_gid_exactly_match_closed_CAS": true,
+      "genuine_current_readback_ref": {
+        "bytes": 572,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/canonical-drift-private-static-review-v01/genuine-primary-four-owner-current-readback-tool-result-v01.json",
+        "sha256": "aeed0b9666d6618d42a5da3a1a94a394c05ad3d67f3804baebaa6db85d95e0c3"
+      },
+      "raw_body_bytes": 1008245,
+      "reviewer_operations": "Private saved JSON/base64/hash/identity comparisons and immutable report publication only. No duplicate live Source readback or other live operation.",
+      "runtime_tests_native_model_Lean_statutory_convergence_or_storage_release_credit": false,
+      "schema": "independent-secondary-current-four-H4-owner-readback-acceptance/v1",
+      "scope_ref": {
+        "bytes": 9588,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/canonical-drift-private-static-review-v01/four-owner-current-source-port-scope-v01.json",
+        "sha256": "e2e80feaf232a19f5c7c62af1e8b3f60d2c613d581e035199fa1eb5402302804"
+      },
+      "source_qualification_scope": "Exact four-owner source port and current16 readback at captured time only. No all17 historical protected-source requalification or transitive runtime qualification.",
+      "twelve_dependency_bodies_and_full9_unchanged_from_preinstall_capture": true
+    }
+  },
+  "current_source_advances": {
+    "original_ref": {
+      "bytes": 2699,
+      "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/recovery-deadline-current-owner-deadline-fix-SOURCE-v02/concurrent-staging-drift-Source-DATA/independent-current-source-overlay-compatibility-acceptance-v01.json",
+      "sha256": "c7e98736f29d4c2767c55c8a1b46163bff40887c1010ea85f94a18aa5449b84c"
+    },
+    "record": {
+      "CLI_only_module_change": "Trainer daemon hash constant updated to installed3b0f; no validation function AST change.",
+      "CLI_validation_functions_AST_unchanged": true,
+      "Host_fixture_and_selected6_AST_unchanged": true,
+      "accepted": true,
+      "all32_current_full9_SHA_pre_post_stable": true,
+      "all32_current_raw_SHA_and_lengths_independently_verified": true,
+      "all46_prior_Host_test_definitions_AST_unchanged": true,
+      "current_Source_ref": {
+        "bytes": 1785616,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/recovery-deadline-current-owner-deadline-fix-SOURCE-v02/actual-current32-after-staging-drift-Source-read-v01.json",
+        "sha256": "150c149408bb7db751115f2ad5473ff9414d9314ddec45d0799d48b95585a6cd"
+      },
+      "detailed_saved_compatibility_review_ref": {
+        "bytes": 4487,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/recovery-deadline-current-owner-deadline-fix-SOURCE-v02/concurrent-staging-drift-Source-DATA/independent-validation52-current-source-drift-compatibility-v01.json",
+        "sha256": "db1c886b7b3cc06a7a91b19b5f5d0e793dc781696db3e8be2af389ecac04b7e7"
+      },
+      "errors": [],
+      "existing_934_ACK_runtime_provenance_only_ref": {
+        "bytes": 5168,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/recovery-deadline-fix-validation-profile-v01/independent-actual-installed-deadline-followup-profile-acceptance-v01.json",
+        "sha256": "05be1a5d593ca01b7269c90e216573b0492e101695f49c747f8368b18f0e4940"
+      },
+      "historical_runtime_DATA_basis": "Only original934 runtime_pre/runtime_post and prior namespace observations; not operative Source rows, not a new fresh runtime rehash claim. Fresh maintained guards remain required.",
+      "historical_runtime_DATA_ref": {
+        "bytes": 4378594,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/recovery-deadline-fix-validation-profile-v01/actual-installed-deadline-followup-source-runtime-profile-v01.json",
+        "sha256": "934b559d53d4085817a8095b71830745038e3da7d83078d53991a68cbe76aba2"
+      },
+      "model_or_statutory_or_Lean_or_convergence_qualification": false,
+      "operative_Source_basis": "Only direct current150c Source rows; canonical current values preserved.",
+      "runtime_test_API_or_Source_operation_by_reviewer": false,
+      "schema": "independent-current-source-overlay-compatibility-acceptance/v1",
+      "selected52_Host_fixture_CLIv1_AST_unchanged": true,
+      "selected_case_population": 52,
+      "selected_function_population": 16,
+      "unchanged29_full9_and_bytes_match_historical934": true
+    }
+  },
+  "evidence_relocation_adds_qualification": false,
+  "first_corrected_validation_pregrant_refusal_acceptance": {
+    "original_ref": {
+      "bytes": 8214,
+      "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/recovery-deadline52-validation-postterminal-readback-v01/independent-actual-deadline52-pregrant-capacity-refusal-acceptance-v01.json",
+      "sha256": "fa815020b226cfaa4f8332057732073e4762d9c64c54d51878d2cb5f7b932359"
+    },
+    "record": {
+      "accepted": true,
+      "accepted_as_actual_failure_evidence": true,
+      "actual_closeout_ref": {
+        "bytes": 7164,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-recovery-deadline-four-case-20261109-v01/parent-capture-fix-validation-v03/actual-owner-closeout.json",
+        "sha256": "64af343cc240b84beb9451e02ee6720f129dd92db3d1c8d5e9647bbb71587e9d"
+      },
+      "actual_failure": {
+        "capacity_observation": {
+          "additional_requested_bytes": 33554432,
+          "charged_bytes": 220010978118,
+          "filesystem_free_deficit_bytes": 0,
+          "filesystem_free_insufficient": false,
+          "limit_bytes": 220000000000,
+          "minimum_filesystem_free_bytes": 509061296128,
+          "observed_apparent_bytes": 175254145030,
+          "outstanding_full_reservations_bytes": 44723278656,
+          "schema": "daemon-resource-capacity-observation/v1",
+          "scope": "named_roots_only_apparent_bytes",
+          "storage_capacity_deficit_bytes": 10978118,
+          "storage_capacity_exceeded": true
+        },
+        "child_created": false,
+        "executed_checks": [],
+        "failure_cause": "Requested32MiB would exceed existing220000000000-byte named-root accounting cap by10978118 bytes; physical filesystem free space was sufficient.",
+        "native_grant": "not_requested_capacity_refusal",
+        "native_resource_lease": null,
+        "new32MiB_claim_created_or_retained": false,
+        "new_reservation_id_label_only": "9d044c133c9847be9a35f168e5a30dac",
+        "new_reservation_record": null,
+        "no_release_or_refund_claim": true,
+        "old_own_retained_promises_bytes": 201326592,
+        "recorded_headroom_before_this_request_bytes": 22576314,
+        "selected52_tests_status": "UNRUN",
+        "stage": "owner_open_capacity_refused_before_record",
+        "typed_schema": "owned-validation-pre-grant-capacity-refusal/v1"
+      },
+      "actual_full_readback_ref": {
+        "bytes": 23045,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/recovery-deadline52-validation-postterminal-readback-v01/actual-postterminal-capture-readback-full-v01.json",
+        "sha256": "42f7026badaf89fcacad151ef0ccdf5d406cf91b64353e48fd45ab1ade5c646a"
+      },
+      "actual_summary_ref": {
+        "bytes": 6327,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/recovery-deadline52-validation-postterminal-readback-v01/actual-postterminal-capture-readback-summary-v01.json",
+        "sha256": "cb8264d3df73caad0d6e51a6e28164a5490a3dee63eadabf005cc9a55705d6d7"
+      },
+      "capture_checks": {
+        "Source_READ_seconds": 0.02179373800754547,
+        "captured_body_bytes": 12745,
+        "note": "No separate saved readback-tool receipt was supplied in this folder; mandatory closeout identity is independently joined to the saved genuine runtime terminal, and reader/producer closure facts are retained without a new live read.",
+        "original_READ_closed_recorded": true,
+        "stdout_exactly_matches_original_terminal": true,
+        "summary_exact_full_archive_derivation": true,
+        "three_named_test_outputs_absent": [
+          "/tmp/pytest-of-barberb/legal-ir-recovery-deadline-fix-validation-20261109-v01/attempt-v01/exports/resource-census-child-source-observation.json",
+          "/tmp/pytest-of-barberb/legal-ir-recovery-deadline-fix-validation-20261109-v01/attempt-v01/exports/test-results.xml",
+          "/tmp/pytest-of-barberb/legal-ir-recovery-deadline-fix-validation-20261109-v01/attempt-v01/exports/pytest.log"
+        ],
+        "three_present_bodies_raw_SHA_length_full9_rows_verified": true
+      },
+      "errors": [],
+      "genuine_runtime": {
+        "exit_code": 1,
+        "initial_chunk": "0b506b",
+        "one_invocation_no_retry": true,
+        "session_id": 11339,
+        "terminal_chunk": "7d2d1f"
+      },
+      "genuine_runtime_tool_results_ref": {
+        "bytes": 1383,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/recovery-deadline-fix-validation-controls-SOURCE-v04/genuine-deadline52-validation-runtime-tool-results-v01.json",
+        "sha256": "780d01b8f1da541693c113bdd3fc65889304c84d70a5e23e0fbffc6f35b0f9b2"
+      },
+      "limits": [
+        "Acceptance is failure evidence, not52 passes, model/full471, statutory/Lean/convergence or native runtime qualification.",
+        "Recorded capacity is historical and is not current availability.",
+        "Root separately owns any fresh own-fact inspection and maintained guarded recovery decision; this report selects no action."
+      ],
+      "maintained_classifier_Source_trace": {
+        "actual_returned_verdict_claimed": false,
+        "captured_current_CLI_ref": {
+          "bytes": 108018,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/run_owned_validation.py",
+          "sha256": "aa698ad3b0b16bcd3d7bac675a910a4d1da7fe6ff9c9a0cbb3bfe4d13440c2f8"
+        },
+        "classifier_executed_by_reviewer": false,
+        "conditional_verdict": "proven_original_no_child_no_native_grant; source_custody_closed=True; storage_release_authorized=False",
+        "consumer_function": "classify_owned_validation_source_custody",
+        "consumer_is_readonly_but_not_IO_free": "It checks ledger path identity and current producer/Source bytes and imports the current Host; no SDK constructor, scheduler admission, census, process sampling or ledger mutation.",
+        "consumer_lines": [
+          446,
+          460,
+          472,
+          488,
+          503,
+          511,
+          518,
+          524,
+          534
+        ],
+        "consumer_signature": "(terminal, request_raw, *, expected_request_sha256, owner_pid, owner_birth, returncode, expected_resource_ledger)",
+        "emitter_checks": "Exact owner/exception identities, original open\u2192Host.__enter__\u2192_account traceback code/globals, no entered/opened/record/lease/child state, capacity arithmetic, current owner identity/request/source guards.",
+        "emitter_lines": [
+          253,
+          262,
+          271,
+          280,
+          293,
+          309,
+          319
+        ],
+        "source_capture_ref": {
+          "bytes": 1776829,
+          "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/recovery-deadline-fix-validation-controls-SOURCE-v03/actual-current32-after-known-counted-diagnostic-closure-v01.json",
+          "sha256": "e78fadd68a00eb71c1a7901a145689285e929432301d1d4672ec891a44d6b442"
+        }
+      },
+      "metadata_success_ref": {
+        "bytes": 1553,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/recovery-deadline-fix-validation-controls-SOURCE-v04/actual-current-metadata-preflight-v01.json",
+        "sha256": "70c4742cfec2a0e1475e5b7e0765a2895dfd6c0a652b1013ca77069e85b80ba3"
+      },
+      "parent_adapter_findings": {
+        "minimal_route": "Use the maintained typed no-child/pregrant classifier for this exact terminal before native-child cleanup classification; handle record=None as a pregrant outcome without constructing final_attempt_bytes or claiming allocated-budget accounting.",
+        "raw_generic_a0b_cleanup_verified": false,
+        "raw_parent_errors": [
+          {
+            "stage": "original_a0b_terminal",
+            "type": "RuntimeError"
+          },
+          {
+            "stage": "combined_attempt_parent_bound",
+            "type": "AttributeError"
+          }
+        ],
+        "raw_parent_source_custody_closed": false,
+        "separate_bug": "combined_attempt_parent_bound dereferences reservation.record=None as a dict. The generic a0b path also requires native process observations that are intentionally absent before admission. These are terminal classification/adaptation issues; they are not the cause of capacity refusal and receive no cleanup success credit."
+      },
+      "readback_actor_ref": {
+        "bytes": 12129,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/recovery-deadline52-validation-postterminal-readback-v01/read_own_terminal_capture_SOURCE_ONLY.py",
+        "sha256": "240988efbe7778b54025dfb525cc579622cf071025c06b1371a1c8eb7c959262"
+      },
+      "reviewer_operations": "Saved private archive/Source/JSON/raw SHA/identity/arithmetic and static call-trace review only; no live Source/ledger/proc/API, retry, release or test execution.",
+      "schema": "independent-deadline52-actual-pregrant-capacity-refusal-acceptance/v1"
+    }
+  },
+  "latest_accepted_source_compatibility": {
+    "original_ref": {
+      "bytes": 4086,
+      "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/failed-admission-own-claim-recovery-DRAFT-v02/independent-current-Source-b887-compatibility-acceptance-v01.json",
+      "sha256": "341d3075e9a63127e60e1c233266f24ed33a57fb16526df2fceeed1d430188d6"
+    },
+    "record": {
+      "CLI_change": "Only classifier allows the typed pregrant-capacity schema through the v4 outer shape gate; its deeper original capacity/no-child checks remain. CLI is not executed by the fc41 cleanup caller.",
+      "SDK_test_change": "Existing bytes and definitions retained as prefix; added qualification controls are not part of cleanup execution.",
+      "accepted": true,
+      "all32_current_full9_SHA_pre_post_stable": true,
+      "all32_guards_retained_no_pruning": true,
+      "all32_raw_SHA_lengths_verified_from_changed_raw_or_exact_matching_prior_e78_body": true,
+      "byte_changes": [
+        {
+          "bytes": 80836,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_resource_recovery.py",
+          "sha256": "b1acd8cfd0d5a331474842e4fec98cb940c191b547f627633532a1271e4110fa"
+        },
+        {
+          "bytes": 108076,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/run_owned_validation.py",
+          "sha256": "07b57d067461d0ca6334e667db5c913cd5fe30739731e16e162c3c861051a997"
+        },
+        {
+          "bytes": 309642,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_validation_run_resources.py",
+          "sha256": "aa6cae94eb3346be60d80b576bf43b0574b379eee3024d93d0492c19b2693254"
+        }
+      ],
+      "cleanup_generic_reconcile_and_all_deadline_helpers_AST_unchanged": true,
+      "current_Source_ref": {
+        "bytes": 873872,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/failed-admission-own-claim-recovery-DRAFT-v02/actual-current32-compact-after-fc41-guard-refusal-v01.json",
+        "sha256": "b8872cebe95a384e9cc562bb1d778ef7d57acfc358daf8c12fa957e04d4d6776"
+      },
+      "errors": [],
+      "fresh_own_fc41_facts_remain_metadata_only_and_API_must_recheck": true,
+      "historical_runtime_DATA_ref": {
+        "bytes": 4378594,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/recovery-deadline-fix-validation-profile-v01/actual-installed-deadline-followup-source-runtime-profile-v01.json",
+        "sha256": "934b559d53d4085817a8095b71830745038e3da7d83078d53991a68cbe76aba2"
+      },
+      "mode_only_changes": [
+        {
+          "current_mode": "0644",
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py",
+          "prior_mode": "0664",
+          "scope": "group-write removed; owner remains writable"
+        },
+        {
+          "current_mode": "0644",
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/parented_phase_resources.py",
+          "prior_mode": "0664",
+          "scope": "group-write removed; owner remains writable"
+        },
+        {
+          "current_mode": "0644",
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/validation_run_resources.py",
+          "prior_mode": "0664",
+          "scope": "group-write removed; owner remains writable"
+        }
+      ],
+      "prior_e78_capture_ref": {
+        "bytes": 1776829,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/recovery-deadline-fix-validation-controls-SOURCE-v03/actual-current32-after-known-counted-diagnostic-closure-v01.json",
+        "sha256": "e78fadd68a00eb71c1a7901a145689285e929432301d1d4672ec891a44d6b442"
+      },
+      "qualification_scope": "Source compatibility for narrow caller CURRENT/fresh-output rebinding only. No runtime/classifier/model/Lean/convergence qualification or readonly-file guarantee.",
+      "recovery_change": "Exact old module bytes retained as prefix; only two appended inspection/archive function definitions.",
+      "reviewer_operations": "Saved private Source/JSON/hash/AST/mode comparisons and immutable publication only.",
+      "runtime_or_API_execution_or_release_by_reviewer": false,
+      "schema": "independent-current-source-overlay-compatibility-acceptance/v1",
+      "selected52_Host_fixture_CLIv1_AST_unchanged": true
+    }
+  },
+  "minimal_existing_owner_fix_source_review": {
+    "original_ref": {
+      "bytes": 6631,
+      "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/recovery-deadline-current-owner-deadline-fix-SOURCE-v02/independent-current-rebased-deadline-fix-and-Source-CAS-review-v02.json",
+      "sha256": "76962f263bae8a7435b4f4240bef567b4a10fafb75e56ce3187fadc3db94989f"
+    },
+    "record": {
+      "accepted": true,
+      "accepted_for_Source_only": true,
+      "current_Source32_ref": {
+        "bytes": 1550047,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/recovery-deadline-current-owner-deadline-fix-SOURCE-v01/actual-current32-after-zero-write-Source-read-v01.json",
+        "sha256": "1a87ad3c257f9d1fbb5cdb24c884803099a8732af74aef4daf38b291c9cf4bea"
+      },
+      "current_generation_external_Source_peer": "This report reviews the current generation; historical73d615 is retained solely for unchanged four-check logic. No self-referential byte/hash binding is introduced.",
+      "current_rebase_checks": {
+        "current32_raw_SHA_full9_stable_rows_authenticated": true,
+        "current_SDK_and_CLI_not_install_targets_and_in_protected29": true,
+        "old66_role": "Historical/runtime DATA provenance only; all operative Source rows and guards are fresh1a87.",
+        "only_three_sources_changed_from_old66_profile": [
+          {
+            "bytes": 51040,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py",
+            "sha256": "a3af02679758592cfd0ed23bd1220def2d80c273d32342db55520609bd7566d7"
+          },
+          {
+            "bytes": 68529,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/validation_run_resources.py",
+            "sha256": "ff22f10a712e000e5ecd9ac22f314d94918cf0160abd3be1d3b1d75210239b70"
+          },
+          {
+            "bytes": 108018,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/run_owned_validation.py",
+            "sha256": "98436ba653e0d0e79bc805f38211d5b8a28fddc0d18a1ea9e4a2a2ce3e32546a"
+          }
+        ],
+        "other29_bytes_and_full9_unchanged": true,
+        "prior_failed_CAS_record": "Source closed with applied_paths/preimages/audit_mutation_attempts empty; no blind replay of old generation.",
+        "recovery800dd_and_testf1e_byte_identical_to_reviewed_v01": true,
+        "target_expected_before_and_full9_bound_to_fresh1a87_not_old66": true,
+        "whole_concurrent_Host_preserved_with_only_one_added_pre_replace_check": true
+      },
+      "current_saved_ABI_facts": {
+        "CLI98436": "request46\u201353 accepts v1/v2/v4; ordinary flags and lifecycle five-owner guard unchanged.",
+        "SDKff22": "validate279\u2013302 accepts strict17 v1, strict18 v4 with exact live-census schema and integer max_complete_resamples1. V1 default path460\u2013462 uses ordinary strict inventory without live resamples.",
+        "constructor_and_fixture": "Host and SDK constructor signatures unchanged; current owning Host fixture retains same private-root/scheduler/factory four-tuple.",
+        "scope_limit": "Source compatibility facts do not establish a runtime result or fresh remaining capacity."
+      },
+      "errors": [],
+      "historical_installer_review_ref": {
+        "bytes": 5093,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/recovery-deadline-current-owner-deadline-fix-SOURCE-v01/independent-three-target-original42-733-source-CAS-review-v01.json",
+        "sha256": "3059c5b6d187136ea98ca1a39cc997f75098f80e2128c61c148fcbd1c68a5618"
+      },
+      "historical_product_logic_peer_ref": {
+        "bytes": 7399,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/recovery-deadline-current-owner-deadline-fix-SOURCE-v01/independent-current-owned-recovery-deadline-fix-Source-review-v01.json",
+        "sha256": "73d615b9ca52d5e0c6e875f68c3a809b4007f03657d11f45a37866dd471659c6"
+      },
+      "installer_checks": {
+        "actual_elapsed_bound_seconds": 3,
+        "all32_full9_and_byte_pre_guards": true,
+        "all_three_bytes_mode_uid_gid_and_final_full9_guards": true,
+        "all_three_durable0400_preimages_before_any_replace": true,
+        "canonical_receipt_exit_pending_private_closeout_after_exit": true,
+        "cooperative_seconds": 2.5,
+        "entire_canonical_IO_archive_CAS_Source_lifetime_and_publication_tail_AST_unchanged": true,
+        "new_absent_archive_namespace": "deadline-fix-source-install-v02",
+        "original42_R_WRITE": true,
+        "private_guard_functions_AST_unchanged": true,
+        "protected29_post_guards": true,
+        "same_authenticated_invocation_actor_buffer": true
+      },
+      "installer_ref": {
+        "bytes": 11271,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/recovery-deadline-current-owner-deadline-fix-SOURCE-v02/install_source_only.py",
+        "sha256": "28c31e1749eeaba19e2c6436481c8a5e7ebb95562dda13ee3989735b87bbaa69"
+      },
+      "limits": [
+        "Cooperative pre-syscall checks; no I/O preemption or kernel-time cutoff.",
+        "No current resource release/refund, budget reset, model/H323/full471 or legal/Lean qualification.",
+        "Reviewer used only saved private Source/JSON, hashes and ASTs; no canonical, live state, API or product/test execution."
+      ],
+      "prior_zero_write_closeout_ref": {
+        "bytes": 1944,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/recovery-deadline-current-owner-deadline-fix-SOURCE-v01/actual-three-target-Source-CAS-closeout-v01.json",
+        "sha256": "f1818d6acdd9b799303672c02f39b0aa2a6af05e4aaecd22e18aaf4af27dcb50"
+      },
+      "retained_storage_promises_bytes": 201326592,
+      "runtime_or_install_status": "No installation or corrected test execution by reviewer; corrected eight cases remain UNRUN at this review.",
+      "same_buffer_invocation_ref": {
+        "bytes": 2891,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/recovery-deadline-current-owner-deadline-fix-SOURCE-v02/three-target-original-source-CAS-invocation-DATA-v02.json",
+        "sha256": "7c52fc0eb0ff0dff4871418d1b61d38c84ecd0bfa426a89dc194a0969e92b6df"
+      },
+      "schema": "independent-current-rebased-three-target-deadline-fix-and-Source-CAS-review/v1",
+      "scope_ref": {
+        "bytes": 3101,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/recovery-deadline-current-owner-deadline-fix-SOURCE-v02/three-target-original-source-CAS-scope-v02.json",
+        "sha256": "d8df41adf355fab47f1b3f90fa2f8a82e702d8f565b4b4634165d0adf5bea267"
+      },
+      "source_manifest_ref": {
+        "bytes": 10024,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/recovery-deadline-current-owner-deadline-fix-SOURCE-v02/SOURCE-deadline-fix-manifest-v02.json",
+        "sha256": "ee1a0abcbddae8374976cd6c6e682b0861678d07bfd1895f64996d1710e6227f"
+      }
+    }
+  },
+  "own_claims_at_last_accepted_observation": [
+    {
+      "bytes": 134217728,
+      "path": "strict17_empty_failed_admission",
+      "reservation_id": "fc41c5724fff45af979ff3f0db5a6d1e",
+      "status": "released_by_original_guarded_API"
+    },
+    {
+      "bytes": 67108864,
+      "path": "sampled_process_scope_requires_safe_recovery_support",
+      "reservation_id": "872eb7f2401e41238a331b52452a5ad2",
+      "status": "retained"
+    }
+  ],
+  "qualifications_not_supplied": [
+    "authored471_decoder_tests",
+    "new_model_fit_or_numerical_gain",
+    "statutory_meaning_review_or_gold_admission",
+    "new_native_Lean_or_whole_USCode_corpus",
+    "global_or_heldout_convergence"
+  ],
+  "sampled_process_recovery_gap": {
+    "generic_group_recovery_does_not_establish_full_sampled_custody": true,
+    "new_existing_inspection_APIs_preserved": true,
+    "prepared_four_case_regression_executed": false,
+    "reservation_id": "872eb7f2401e41238a331b52452a5ad2",
+    "retained_bytes": 67108864
+  },
+  "schema": "legalir-current-checkout-cleanup-and-decoder-evidence/v1",
+  "scope_limits": [
+    "Cooperative deadline checks do not preempt filesystem syscalls.",
+    "Recorded charged-cap headroom is historical, not a fresh admission-availability claim.",
+    "The separate counted-denotation native diagnostic is not an approved Lean proof or a 52-case/model qualification.",
+    "Historical source/readback receipts retain their captured generation and do not require rollback of concurrent inspection APIs."
+  ],
+  "second_corrected_validation_pregrant_refusal_acceptance": {
+    "original_ref": {
+      "bytes": 7879,
+      "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/recovery-deadline52-validation-postterminal-readback-v02/independent-actual-deadline52-second-capacity-refusal-acceptance-v02.json",
+      "sha256": "9d36948ac5c1ff4312b6ccf00fd287dd2ef701cf335d77367b74b0b63f568f53"
+    },
+    "record": {
+      "accepted": true,
+      "accepted_evidence_kind": "Actual terminal pre-admission capacity refusal; engineering tests remain UNRUN",
+      "authorship_disclosure": "This reviewer authored the parent no-record branch; independent Primary Source review0b49 accepted that code. This report independently checks saved actual terminal/readback evidence; no classifier is executed during review.",
+      "capacity_arithmetic": {
+        "before_additional_request_charged_bytes": 220001739786,
+        "before_additional_request_over_limit_bytes": 1739786,
+        "interpretation": "At this recorded census even zero additional requested bytes remained above the fixed cap; no current or foreign cause inferred."
+      },
+      "capacity_observation": {
+        "additional_requested_bytes": 33554432,
+        "charged_bytes": 220035294218,
+        "filesystem_free_deficit_bytes": 0,
+        "filesystem_free_insufficient": false,
+        "limit_bytes": 220000000000,
+        "minimum_filesystem_free_bytes": 509082710016,
+        "observed_apparent_bytes": 175261683914,
+        "outstanding_full_reservations_bytes": 44740055872,
+        "schema": "daemon-resource-capacity-observation/v1",
+        "scope": "named_roots_only_apparent_bytes",
+        "storage_capacity_deficit_bytes": 35294218,
+        "storage_capacity_exceeded": true
+      },
+      "closeout_ref": {
+        "bytes": 7820,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-recovery-deadline-four-case-20261109-v01/parent-capture-fix-validation-v04/actual-owner-closeout.json",
+        "sha256": "d94e620f8a87efe9a74488672fbe41c87e3d93090dbebcf847c06039846b97b5"
+      },
+      "current_controls_manifest_ref": {
+        "bytes": 8865,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/recovery-deadline-fix-validation-controls-SOURCE-v05/SOURCE-installed-deadline-followup-controls-manifest-v01.json",
+        "sha256": "a5da56722297eed7e30beccaaf6ced9fd4014e91f067a61b1d089ab6d98530db"
+      },
+      "errors": [],
+      "full_capture_ref": {
+        "bytes": 23923,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/recovery-deadline52-validation-postterminal-readback-v02/actual-postterminal-capture-readback-full-v01.json",
+        "sha256": "dd45b08046df039e1ef53adc669ee0e255d85b6a3ee8fda0a1f9daed7f68ad48"
+      },
+      "genuine_readback_tool_result_ref": {
+        "bytes": 918,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/recovery-deadline52-validation-postterminal-readback-v02/genuine-postterminal-readback-tool-result-v01.json",
+        "sha256": "2b3d93a2c8ddc33094c0a5367bb44f23d68d3923c704345c8867e4c5e30d68d3"
+      },
+      "genuine_runtime_tool_results_ref": {
+        "bytes": 1018,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/recovery-deadline-fix-validation-controls-SOURCE-v05/genuine-deadline52-validation-runtime-tool-results-v01.json",
+        "sha256": "864d9be74d56f6c5b47d4682ea520e71a08f5109a539ba3ccfb1c5299a4d3be0"
+      },
+      "genuine_session": {
+        "closed": true,
+        "exit_code": 1,
+        "initial_chunk": "3d1bc7",
+        "session_id": 43665,
+        "terminal_chunk": "624351"
+      },
+      "independent_primary_parent_review_ref": {
+        "bytes": 1471,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/recovery-deadline-fix-validation-controls-SOURCE-v05/independent-primary-parent-null-record-Source-review-v01.json",
+        "sha256": "0b49a83f4098a5a0fb517fba8f4d5ed74eb815c0791546cfd9c9d0f23f82aa43"
+      },
+      "limits": {
+        "automatic_retry": false,
+        "cap_or_budget_reset": false,
+        "requested_storage_bytes": 33554432,
+        "storage_limit_bytes": 220000000000
+      },
+      "observed_outcome": {
+        "JUnit_SourceObservation_pytest_log_all_absent": true,
+        "actual_observed_owner": {
+          "birth": 322011973,
+          "pid": 1084455
+        },
+        "child_created": false,
+        "current_32MiB_claim_created": false,
+        "current_reservation_record_created": false,
+        "expected_cases": 52,
+        "expected_phases": 156,
+        "native_grant_requested": false,
+        "reservation_id_is_unallocated_label": "3ae98dc2f34a477a99bfeae6cf46ac19",
+        "tests_executed": 0
+      },
+      "parent_fix_observed": {
+        "None_AttributeError_absent": true,
+        "Source_READ_closed": true,
+        "Source_custody_closed": true,
+        "allocated_combined_budget_status": "not_applicable_before_storage_admission",
+        "child_reaped_claimed": false,
+        "exact_closeout_bytes": 7820,
+        "final_attempt_bytes": null,
+        "maintained_no_native_source_classification": {
+          "source_custody_closed": true,
+          "storage_release_authorized": false,
+          "verdict": "proven_original_no_child_no_native_grant"
+        },
+        "native_cleanup_claimed": false,
+        "parent_errors": [],
+        "parent_one_MiB_bound_verified": true,
+        "recorded_parent_before_closeout_bytes": 10215,
+        "source_pins_unchanged": true,
+        "storage_release_authorized": false
+      },
+      "readback": {
+        "Source_READ_closed": true,
+        "Source_READ_seconds": 0.019208396784961224,
+        "absent_paths": [
+          "/tmp/pytest-of-barberb/legal-ir-recovery-deadline-fix-validation-20261109-v02/attempt-v01/exports/resource-census-child-source-observation.json",
+          "/tmp/pytest-of-barberb/legal-ir-recovery-deadline-fix-validation-20261109-v02/attempt-v01/exports/test-results.xml",
+          "/tmp/pytest-of-barberb/legal-ir-recovery-deadline-fix-validation-20261109-v02/attempt-v01/exports/pytest.log"
+        ],
+        "all_raw_bodies_SHA_and_lengths_verified": true,
+        "errors": [],
+        "present_refs": [
+          {
+            "bytes": 7820,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-recovery-deadline-four-case-20261109-v01/parent-capture-fix-validation-v04/actual-owner-closeout.json",
+            "sha256": "d94e620f8a87efe9a74488672fbe41c87e3d93090dbebcf847c06039846b97b5"
+          },
+          {
+            "bytes": 3582,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-recovery-deadline-four-case-20261109-v01/parent-capture-fix-validation-v04/owner.stdout",
+            "sha256": "326774953fff0cbb750ed50bf85a67b33060519dbf9d83f7f1424c5d17741917"
+          },
+          {
+            "bytes": 2000,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-recovery-deadline-four-case-20261109-v01/parent-capture-fix-validation-v04/owner.stderr",
+            "sha256": "469d9c70d83243ddb16e933062c44e25584f7ab9a4bf130370a0c6d55e4324f9"
+          }
+        ],
+        "summary_full_identity_verified": true
+      },
+      "readback_actor_ref": {
+        "bytes": 12129,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/recovery-deadline52-validation-postterminal-readback-v02/read_own_terminal_capture_SOURCE_ONLY.py",
+        "sha256": "0a7637a4c67631a4ebd4c9e7e52dabf01d3be4ef9bea3b5fbd849b719ce0db83"
+      },
+      "remaining_truth": {
+        "Lean_model_convergence_or_semantic_qualification": false,
+        "deadline52_validation": "UNRUN",
+        "old_fc41_storage_released": true,
+        "prior872e_64MiB_release_not_selected": true,
+        "whole323_and471": "UNRUN"
+      },
+      "reviewer_operations": {
+        "canonical_or_live_state_reads": false,
+        "saved_private_evidence_only": true,
+        "target_imports_or_tests_or_API_calls": false
+      },
+      "schema": "independent-actual-deadline52-pregrant-capacity-refusal-acceptance/v2",
+      "summary_ref": {
+        "bytes": 6329,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/recovery-deadline52-validation-postterminal-readback-v02/actual-postterminal-capture-readback-summary-v01.json",
+        "sha256": "ac3ddf38e33c5ed5a356ca16ad8ccb6e2a27af485e4bc4d630c12b1698d687dd"
+      }
+    }
+  },
+  "status": "SOURCE_PORT_AND_OLD_CLAIM_RECOVERY_COMPLETE_BOTH_52_REQUESTS_PREGRANT_CAPACITY_REFUSED",
+  "updated_at_utc": "2026-11-09T05:32:35.001701+00:00"
+}

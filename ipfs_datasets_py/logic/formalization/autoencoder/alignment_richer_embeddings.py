@@ -620,3 +620,86 @@ def run_gte768(inputs: dict, *, manifest_path, expected_manifest_sha256, model_d
     return _lane(inputs, "native768", receipts, _backend(complete.PROFILE_ID, implementation=implementation,
                  execution_profile=production["execution_profile"], runtime_versions=production["runtime_versions"],
                  asset_evidence=production["assets"], production_evidence=production))
+
+
+
+def compose_native384_complete_chunks(manifest, receipt, *, inputs,
+        expected_inputs_sha256, expected_manifest_sha256, expected_receipt_sha256):
+    """Explicit fixed byte-weighted mean/L2/f32 composition of complete chunks.
+
+    The existing receipt owner replays all original bytes and raw dispositions
+    before arithmetic. Native leaves remain unchanged. Missing leaves block the
+    parent; a cancelled mean remains unavailable rather than an invented zero
+    vector. This performs no encoder/fit and establishes no semantic authority.
+    """
+    from ....optimizers.logic_theorem_optimizer import autoencoder_embedding_production as codec
+    from . import alignment_lane_bundle as lanes
+    manifest_raw = codec._canonical(manifest)
+    coverage = codec.bind_native384_complete_chunk_receipt(manifest, receipt, inputs=inputs,
+        expected_inputs_sha256=expected_inputs_sha256,
+        expected_manifest_sha256=expected_manifest_sha256,
+        expected_receipt_sha256=expected_receipt_sha256)
+    native_raw = receipt.to_bytes()
+    native = codec.EmbeddingProductionReceipt(native_raw).to_dict()
+    implementation = _implementation(codec, lanes)
+    implementation["native_encoder"] = native["producer"]["code_sha256"]
+    profile = {"schema": lanes.PROFILE_SCHEMA, "lane_id": "native384",
+        "stage": lanes.COMPLETE_COMPOSITION_STAGE, "dimension": 384,
+        "producer": {"profile_id": lanes.COMPLETE_COMPOSITION_PROFILE,
+            "model_id": native["model"]["model_id"], "model_revision": native["model"]["revision"],
+            "code_sha256": _digest(implementation), "model_assets_sha256": _digest(native["model_assets"]),
+            "checkpoint_sha256": None},
+        "pooling": {"method": "mean", "endpoint": lanes.COMPLETE_COMPOSITION_ENDPOINT},
+        "normalization": {"kind": "l2", "unit_tolerance": 1e-5}, "precision": "float32",
+        "fit_input_recipe": "exact_source_only/v1", "inference_input_recipe": "exact_source_only/v1"}
+    profile["content_sha256"] = lanes._digest(profile)
+    lanes._profile(profile)
+    grouped = {}
+    for chunk, result in zip(manifest["chunks"], native["results"], strict=True):
+        vector = list(codec._decode_vector(result["vector"])) if result["status"] == "embedded" else None
+        if vector is not None:
+            _vector(vector, 384)
+        weight = chunk["relative_byte_end"] - chunk["relative_byte_start"]
+        grouped.setdefault(chunk["parent_input_id"], []).append((weight, vector))
+    parents = []
+    for original, observed in zip(manifest["original_inputs"], coverage["parents"], strict=True):
+        parts = grouped[original["input_id"]]
+        total = sum(weight for weight, _ in parts)
+        vector, upstream = None, None
+        reason = "unavailable_native_chunk"
+        if all(leaf is not None for _, leaf in parts):
+            mean = [math.fsum(weight * leaf[column] for weight, leaf in parts) / total
+                    for column in range(384)]
+            upstream = _digest(mean)
+            norm = math.hypot(*mean)
+            _require(math.isfinite(norm), "nonfinite complete chunk mean")
+            reason = "composition_cancelled_mean"
+            if norm > 1e-12:
+                vector = [struct.unpack(">f", struct.pack(">f", value / norm))[0] for value in mean]
+                _vector(vector, 384)
+                reason = None
+        parents.append({"input_id": original["input_id"],
+            "status": "available" if vector is not None else "unavailable", "reason": reason,
+            "vector": vector, "vector_sha256": _digest(vector) if vector is not None else None,
+            "upstream_vector_sha256": upstream,
+            "token_receipt_sha256": _digest({"native_receipt_sha256": expected_receipt_sha256,
+                                             "coverage_parent": observed}),
+            "chunk_count": len(parts), "byte_weight_sum": total})
+    current = _implementation(codec, lanes)
+    current["native_encoder"] = native["producer"]["code_sha256"]
+    _require(current == implementation and codec._canonical(manifest) == manifest_raw
+             and receipt.to_bytes() == native_raw, "composition implementation or inputs changed")
+    codec.bind_native384_complete_chunk_receipt(manifest, receipt, inputs=inputs,
+        expected_inputs_sha256=expected_inputs_sha256,
+        expected_manifest_sha256=expected_manifest_sha256,
+        expected_receipt_sha256=expected_receipt_sha256)
+    available = sum(row["status"] == "available" for row in parents)
+    return _seal({"schema": lanes.COMPLETE_COMPOSITION_SCHEMA, "profile": profile,
+        "original_inputs": manifest["original_inputs"], "coverage": coverage,
+        "parents": parents, "implementation": implementation,
+        "manifest_sha256": expected_manifest_sha256, "native_receipt_sha256": expected_receipt_sha256,
+        "original_inputs_sha256": expected_inputs_sha256,
+        "available_count": available, "unavailable_count": len(parents) - available,
+        "aggregation_performed": coverage["complete_parent_count"] > 0,
+        "normalization_performed": available > 0, "model_inference_executed": False,
+        "training_executed": False, "semantic_admission_granted": False, "proof_authority": False})

@@ -2237,3 +2237,201 @@ def evaluate_complete_norm_payloads(examples: Sequence[Mapping[str, Any]]) -> di
 
 
 __all__ += ["COMPLETE_NORM_PAYLOAD_METRICS_SCHEMA", "evaluate_complete_norm_payloads"]
+
+
+
+def evaluate_complete_norm_retrieval_rankings(rankings, reference_rows, candidate_rows, *,
+        expected_rankings_sha256, expected_reference_rows_sha256, expected_candidate_rows_sha256,
+        ranking_depth, cutoffs=(1, 3)):
+    """Posthoc exact payload diagnostics over frozen reviewed-retriever DATA.
+
+    Input commitments use this owner's existing complete-payload JSON wire.
+    Producer formal-view links use canonical UTF8 JSON, as the norm owner does.
+    This compares literal structure/custody; it authenticates no producer,
+    reference, legal relationship, syntax family, split or governing definition.
+    Absent exact counterparts have no conditional-match denominator. Unknown
+    semantic relevance remains unscored, even when payload fields match.
+    """
+    def need(condition, message):
+        if not condition: raise ValueError(message)
+    def sha(value):return hashlib.sha256(_complete_norm_payload_wire(value)).hexdigest()
+    def pin(value):return type(value) is str and len(value)==64 and all(c in '0123456789abcdef' for c in value)
+    def identity(value):return type(value) is str and 0<len(value)<=512
+    need(type(rankings) is dict and 1<=len(rankings)<=8 and type(reference_rows) is list
+         and type(candidate_rows) is list and 1<=len(reference_rows)<=128 and 1<=len(candidate_rows)<=128
+         and len(reference_rows)*len(candidate_rows)<=4096, 'bounded complete retrieval comparison population required')
+    need(type(ranking_depth) is int and 1<=ranking_depth<=len(candidate_rows)
+         and type(cutoffs) in (list,tuple) and 1<=len(cutoffs)<=8,
+         'explicit bounded cutoff configuration and ranking depth required')
+    # Keep a caller-owned list in the closing fence; compute only from its
+    # detached snapshot. Canonical comparison also separates 1/True/1.0.
+    original=[rankings,reference_rows,candidate_rows,cutoffs if type(cutoffs) is list else list(cutoffs)]
+    frozen=_complete_norm_payload_copy(original);ranked,references,candidates,cutoffs=frozen
+    need(all(type(k) is int and 1<=k<=ranking_depth for k in cutoffs)
+         and cutoffs==sorted(set(cutoffs)), 'explicit increasing integer cutoffs required')
+    for value,pinned in zip(frozen[:3],(expected_rankings_sha256,expected_reference_rows_sha256,expected_candidate_rows_sha256),strict=True):
+        need(pin(pinned) and sha(value)==pinned,'independent complete retrieval input pin differs')
+    def table(rows,label):
+        result={}
+        for row in rows:
+            need(type(row) is dict and set(row)=={'id','canonical_ir'} and identity(row['id'])
+                 and row['id'] not in result,'closed unique '+label+' payload rows required')
+            result[row['id']]=row['canonical_ir']
+        return result
+    refs=table(references,'reference');bank=table(candidates,'candidate')
+    pair_cases=[dict(case_id='pair:'+str(i)+':'+str(j),reference=ref,candidate=candidate,outcome='complete')
+                for i,ref in enumerate(refs.values()) for j,candidate in enumerate(bank.values())]
+    pairs=evaluate_complete_norm_payloads(pair_cases);metric_names=list(pairs['metric_numerators'])
+    grid={};details=[];n=len(bank)
+    for i,qid in enumerate(refs):
+        grid[qid]={}
+        for j,cid in enumerate(bank):
+            pair=pairs['cases'][i*n+j];grid[qid][cid]=pair['scores']
+            details.append(dict(query_id=qid,candidate_id=cid,candidate_payload_shape_supported=pair['candidate_payload_shape_supported'],scores=pair['scores']))
+    formal_hashes={key:hashlib.sha256(json.dumps(value,sort_keys=True,separators=(',',':'),ensure_ascii=False,allow_nan=False).encode('utf-8')).hexdigest() for key,value in bank.items()}
+    common=None;order=None;methods={};eligible_by_query={}
+    identity_fields=('checkpoint_sha256','current_index_handoff_sha256','query_input_sha256','query_lane_bundle_sha256')
+    for method,producer in ranked.items():
+        need(identity(method) and len(method)<=64 and type(producer) is dict
+             and producer.get('schema') in ('legal-joint-retrieval-result/v2','legal-joint-retrieval-result/v3')
+             and producer.get('mode')==method and producer.get('status')=='retrieval_completed'
+             and producer.get('query_target_access') is False
+             and producer.get('inference_reference_content_forwarded') is False,
+             'frozen completed source-only retriever DATA required')
+        offered=[producer.get(key) for key in identity_fields]
+        need(all(pin(value) for value in offered),'complete frozen producer identities required')
+        if common is None:common=offered
+        need(offered==common,'retrieval methods have different checkpoint, index or query identities')
+        rows=producer.get('rows');need(type(rows) is list and len(rows)==len(refs),'complete enrolled query denominator required')
+        ids=[row.get('id') if type(row) is dict else None for row in rows]
+        need(all(identity(key) for key in ids) and len(ids)==len(set(ids)) and set(ids)==set(refs),'unique complete query population required')
+        if order is None:order=ids
+        need(ids==order,'frozen query order differs between methods')
+        totals={str(k):dict.fromkeys(metric_names,0) for k in cutoffs}
+        available=dict.fromkeys(metric_names,0);abstentions=0;case_details=[]
+        for row in rows:
+            qid=row['id'];status=row.get('status');chosen=row.get('retrieved_ids')
+            need(status in ('retrieved','abstained') and type(chosen) is list
+                 and all(identity(key) and key in bank for key in chosen) and len(chosen)==len(set(chosen)),
+                 'complete unique known ranked candidates required')
+            excluded=row.get('excluded_examples');need(type(excluded) is list,'explicit query candidate exclusions required')
+            excluded_ids=[]
+            for item in excluded:
+                need(type(item) is dict and set(item)=={'id','reason'} and identity(item['id']) and item['id'] in bank and identity(item['reason']),
+                     'closed candidate exclusion identity required')
+                excluded_ids.append(item['id'])
+            need(len(excluded_ids)==len(set(excluded_ids)) and not set(chosen).intersection(excluded_ids)
+                 and type(row.get('eligible_rows')) is int and row['eligible_rows']==len(bank)-len(excluded_ids),
+                 'complete eligible candidate population required')
+            links=row.get('retrieved_endpoint_refs',[])
+            need(type(links) is list and len(links)==len(chosen),'complete ranked producer endpoint links required')
+            for key,link in zip(chosen,links,strict=True):
+                need(type(link) is dict and link.get('id')==key and link.get('formal_view_sha256')==formal_hashes[key],
+                     'ranked producer formal payload differs from independent candidate')
+            need((status=='abstained' and not chosen) or (status=='retrieved' and len(chosen)==ranking_depth),
+                 'fixed ranking depth or explicit abstention required')
+            abstentions+=int(status=='abstained')
+            eligible=set(bank)-set(excluded_ids)
+            need(eligible_by_query.setdefault(qid,eligible)==eligible,
+                 'retrieval methods have different eligible candidate populations')
+            for metric in metric_names:available[metric]+=int(any(grid[qid][key][metric] for key in eligible))
+            hits={}
+            for k in cutoffs:
+                hit={metric:int(any(grid[qid][key][metric] for key in chosen[:k])) for metric in metric_names}
+                hits[str(k)]=hit
+                for metric,value in hit.items():totals[str(k)][metric]+=value
+            case_details.append(dict(id=qid,status=status,ranked_candidate_ids=chosen,eligible_candidate_count=len(eligible),cutoff_matches=hits))
+        methods[method]=dict(query_count=len(refs),retrieved_count=len(refs)-abstentions,abstention_count=abstentions,
+            cutoffs={str(k):dict(denominator=len(refs),metric_numerators=totals[str(k)],
+                population_exact_match_rates={name:value/len(refs) for name,value in totals[str(k)].items()},
+                eligible_index_match_counts=dict(available),
+                conditional_exact_match_rates={name:totals[str(k)][name]/available[name] if available[name] else None for name in metric_names}) for k in cutoffs},
+            cases=case_details)
+    need(_complete_norm_payload_wire(_complete_norm_payload_copy(original))==_complete_norm_payload_wire(frozen),
+         'retrieval comparison input changed during scoring')
+    return dict(schema='complete-norm-retrieved-example-payload-diagnostics/v1',
+        scope='posthoc_literal_structural_and_custody_payload_comparison_only',reference_count=len(refs),
+        candidate_view_count=len(bank),unique_candidate_payload_count=len({sha(value) for value in bank.values()}),
+        ranking_depth=ranking_depth,cutoffs=list(cutoffs),methods=methods,pair_diagnostics=details,
+        input_commitments=dict(rankings=expected_rankings_sha256,references=expected_reference_rows_sha256,candidates=expected_candidate_rows_sha256),
+        frozen_producer_identities=dict(zip(identity_fields,common,strict=True)),
+        semantic_relevance_metrics=None,legal_applicability_metrics=None,producer_authenticity_verified=False,
+        reference_authenticity_verified=False,source_or_dependency_split_verified=False,
+        syntax_or_logic_family_validity_verified=False,semantic_equivalence_proved=False,
+        governing_definition_meaning_verified=False,source_fidelity_proved=False,structural_usefulness_proved=False,
+        legal_admission_or_proof_authority=False,generator_invoked_by_scorer=False)
+
+
+__all__ += ['evaluate_complete_norm_retrieval_rankings']
+
+
+CANONICAL_TYPED_STRUCTURE_PROFILE = "canonical-typed-expression-wire/v1"
+COMPLETE_NORM_TYPED_STRUCTURE_METRICS_SCHEMA = "complete-norm-canonical-typed-structure-metrics/v1"
+
+
+def evaluate_complete_norm_typed_structure(examples: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    """Audit canonical formula wires/signatures, never proof or legal meaning.
+
+    References must all be canonical TypedExpression formulas before a report
+    can be issued. Complete candidates are parsed by the existing AST owner and
+    must roundtrip exactly; missing digests/defaults are never filled in an
+    accepted candidate. Other dispositions keep their original denominator.
+    Family semantics, obligations, source correspondence and native proof are
+    outside this structural check. No generator or prover is invoked.
+    """
+    if type(examples) not in (list, tuple) or not 0 < len(examples) <= 4096:
+        raise ValueError("bounded nonempty ordinary example sequence required")
+    rows = _complete_norm_payload_copy(list(examples))
+    frozen = _complete_norm_payload_wire(rows)
+    # Reuse the established closed case/outcome/payload boundary unchanged.
+    evaluate_complete_norm_payloads(rows)
+    from ...logic.syntax_core.ast import TypedExpression
+
+    def inspect(payload):
+        if not _complete_norm_payload_shape(payload):
+            return "malformed_complete_payload"
+        wire = payload["typed_expression"]
+        offered = _complete_norm_payload_wire(wire)
+        try:
+            expression = TypedExpression.from_dict(wire)
+            if not expression.is_formula:
+                return "non_formula_root"
+            if _complete_norm_payload_wire(expression.to_dict()) != offered:
+                return "noncanonical_typed_expression"
+        except (ValueError, TypeError, KeyError, RecursionError):
+            return "invalid_typed_expression"
+        return None
+
+    for row in rows:
+        if inspect(row["reference"]) is not None:
+            raise ValueError("canonical formula reference required; denominator cannot shrink")
+    counts = {"canonical_formula": 0, "invalid_complete": 0, "not_checked": 0}
+    details = []
+    for row in rows:
+        reason = None
+        if row["outcome"] != "complete":
+            status = "not_checked"
+            reason = "noncomplete_disposition"
+        else:
+            reason = inspect(row["candidate"])
+            status = "canonical_formula" if reason is None else "invalid_complete"
+        counts[status] += 1
+        details.append(dict(case_id=row["case_id"], outcome=row["outcome"], status=status, reason=reason))
+    if (_complete_norm_payload_wire(rows) != frozen or
+            _complete_norm_payload_wire(_complete_norm_payload_copy(list(examples))) != frozen):
+        raise ValueError("typed-structure input changed during scoring")
+    return dict(schema=COMPLETE_NORM_TYPED_STRUCTURE_METRICS_SCHEMA,
+        profile=CANONICAL_TYPED_STRUCTURE_PROFILE,
+        scope="canonical_typed_expression_formula_wire_and_signature_only",
+        denominator=len(rows), canonical_reference_count=len(rows), counts=counts,
+        canonical_formula_rate=counts["canonical_formula"] / len(rows), cases=details,
+        reference_and_prediction_payload_sha256=hashlib.sha256(frozen).hexdigest(),
+        candidate_repaired=False, generator_invoked_by_scorer=False,
+        producer_authenticity_verified=False, reference_authenticity_verified=False,
+        syntax_or_logic_family_validity_verified=False, native_proof_verified=False,
+        semantic_equivalence_proved=False, source_fidelity_proved=False,
+        legal_admission_or_proof_authority=False)
+
+
+__all__ += ["CANONICAL_TYPED_STRUCTURE_PROFILE", "COMPLETE_NORM_TYPED_STRUCTURE_METRICS_SCHEMA",
+            "evaluate_complete_norm_typed_structure"]

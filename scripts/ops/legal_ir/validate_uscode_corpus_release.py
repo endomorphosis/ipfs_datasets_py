@@ -1,4 +1,4 @@
-"""Export or validate the bounded, candidate-only Legal corpus graph v1.
+"""Export/validate a candidate graph or replay one bounded release component.
 
 Run with the package installed/on a qualified PYTHONPATH, either as a module
 or a direct script. This command never adjusts sys.path, calls models, or
@@ -39,6 +39,14 @@ def _parser():
     validate.add_argument("-h", "--help", action="store_true")
     validate.add_argument("--bundle", required=True)
     validate.add_argument("--manifest-sha256", required=True)
+    closure = commands.add_parser("validate-closure", add_help=False)
+    closure.add_argument("-h", "--help", action="store_true")
+    closure.add_argument("--request", required=True)
+    closure.add_argument("--request-sha256", required=True)
+    closure.add_argument("--profile", choices=(
+        "reviewed-norm-v2-local-replay/v1",
+        "reviewed-norm-v2-physical-three-cache-replay/v1",
+    ), default="reviewed-norm-v2-local-replay/v1")
     return parser
 
 
@@ -115,16 +123,41 @@ def main(argv=None):
         parser = _parser()
         # Help is a receipt too; subcommand help does not require file options.
         if "--help" in arguments or "-h" in arguments:
-            command = arguments[0] if arguments and arguments[0] in ("export", "validate") else None
+            command = arguments[0] if arguments and arguments[0] in ("export", "validate", "validate-closure") else None
             result = _receipt(status="help", command=command, usage=[
                 "export --snapshot PATH --snapshot-sha256 SHA --output DIRECTORY",
                 "validate --bundle DIRECTORY --manifest-sha256 SHA",
+            ] if command != "validate-closure" else [
+                "validate-closure --request PATH --request-sha256 SHA",
             ])
+            if command == "validate-closure":
+                result["supported_profiles"] = [
+                    "reviewed-norm-v2-local-replay/v1",
+                    "reviewed-norm-v2-physical-three-cache-replay/v1",
+                ]
+                result["default_profile"] = "reviewed-norm-v2-local-replay/v1"
         else:
             args = parser.parse_args(arguments)
             command = args.command
             if command is None:
-                raise CLIError("a subcommand is required: export or validate")
+                raise CLIError("a subcommand is required: export, validate or validate-closure")
+            if command == "validate-closure":
+                from ipfs_datasets_py.logic.autoformal.legal_release_coordinator_v1 import (
+                    MAX_CLOSURE_REQUEST_BYTES, validate_uscode_release_closure_v1,
+                )
+                raw = _read_regular_file(args.request, maximum_bytes=MAX_CLOSURE_REQUEST_BYTES)
+                validator = validate_uscode_release_closure_v1
+                if args.profile == "reviewed-norm-v2-physical-three-cache-replay/v1":
+                    from ipfs_datasets_py.logic.autoformal.legal_release_coordinator_v1 import (
+                        validate_uscode_release_closure_v2,
+                    )
+                    validator = validate_uscode_release_closure_v2
+                closure = validator(raw, expected_request_sha256=args.request_sha256)
+                result = _receipt(status="success", command=command,
+                    validation_scope="selected-component-local-replay-not-release-admission",
+                    closure=closure)
+                sys.stdout.write(json.dumps(result, sort_keys=True, ensure_ascii=False, allow_nan=False) + "\n")
+                return 0
             from ipfs_datasets_py.logic.autoformal.corpus_contracts import (
                 MAX_RECORD_BYTES,
                 load_record_bytes,

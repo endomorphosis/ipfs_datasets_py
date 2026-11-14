@@ -1,0 +1,417 @@
+{
+  "actual_green": {
+    "cases": 80,
+    "cohorts": {
+      "deadline_and_prior": 52,
+      "explicit_scope": 20,
+      "sampled_custody": 8
+    },
+    "custody_selected": {
+      "all_observed_identities_gone": true,
+      "child_reaped": true,
+      "errors": [],
+      "genuine_wait_completed": true,
+      "original_completed_result_verified": true,
+      "original_native_compute_closed": true,
+      "original_source_exit_lifecycle_closed": true,
+      "owner_identity_gone": true,
+      "retained_storage_bytes": 0,
+      "storage_artifacts_durable_asserted": true,
+      "storage_released_and_durable": true,
+      "storage_status": "released"
+    },
+    "errors": 0,
+    "failures": 0,
+    "junit": {
+      "bytes": 17576,
+      "path": "/tmp/pytest-of-barberb/legal-ir-sampled-recovery-20261109-green-v02/attempt-v01/logs/junit.xml",
+      "sha256": "d46d187af925dd8d3aa97e198a8b955c13408577125d57c1d01455bd2295e100"
+    },
+    "parent": {
+      "bytes": 9436,
+      "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/failed-admission-own-claim-recovery-DRAFT-v02/sampled-scope-green-v02/parent-closeout.json",
+      "sha256": "1f99488ce91746b8011a4d92e39f9be99eb7d25bd0d5b85cab0fa33fc87da7b3"
+    },
+    "parent_selected": {
+      "actual_attempt_file_bytes": 977925,
+      "cap_or_budget_changed": false,
+      "elapsed_seconds": 136.6175219481811,
+      "owner_pid": 1422056,
+      "owner_returncode": 0,
+      "recovery_performed": false,
+      "request_sha256": "0eca07d5f89c7195507725e912aeb3641ee06b717d5b78a2908c476ee37540ee",
+      "schema": "sampled-recovery-owned-validation-observation/v1",
+      "source_closed": true,
+      "source_drift": [],
+      "source_pins": 35,
+      "tag": "green-v02"
+    },
+    "passed": 80,
+    "prior_maximum_storage_bytes": 33554432,
+    "pytest_seconds": 6.55,
+    "released_reservation_id": "8c1d745693254b94b143f5d636df5eb0",
+    "request": {
+      "bytes": 16040,
+      "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/failed-admission-own-claim-recovery-DRAFT-v02/sampled-scope-green-v02/request.json",
+      "sha256": "0eca07d5f89c7195507725e912aeb3641ee06b717d5b78a2908c476ee37540ee"
+    },
+    "selected_source_pins": {
+      "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/__init__.py": "f258f8eada774251feacd8e2ee2048efe56c89a8ee88efd50e4271ea41d43dc9",
+      "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/ipfs_backend_router.py": "d57898ceb7a5be0d8776f81ecb08cf96144afa03f55090d5f33b41baed3e8b0d",
+      "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/__init__.py": "f25a9702ddc282092dbae1bc1731afdcc35576c10745487dccedaa531ccc9e79",
+      "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/backends/process.py": "cc2741550e16966292dc8b64a634a7b0a493e2a43e909fae326e1205715c9626",
+      "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/__init__.py": "a12bab3724da07be67b447719ace42fc1f480cb5635581f320a99a372f02f450",
+      "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/__init__.py": "9d693fa576f00dc36899faad75ef3044c437e2bfec5c62306f7031236725bb0e",
+      "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py": "3b0f1d047041e63c7761a01f44784b08fb492ca00051e6d383f404422b95eb37",
+      "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_external_resource_recovery.py": "239c9355cc1fe4396edee7a126e85194d45be960e43d0966bb99de8afbc27cff",
+      "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_resource_recovery.py": "3c3edd130deed257ab813a3dcdb22bf001f29f93541f4bb122c2464c92d0c1c3",
+      "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_source_lease.py": "42e9f07d0d458177079269d9f495f0b70512180c1adc2f7fe0bfdb05518a12f9",
+      "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/existing_resource_scheduler.py": "d654ab5ed2fec314ea5ac07a662784ab20843b0b2feb56f13989ce1504607776",
+      "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/parented_phase_resources.py": "4a9406233f57deb8322bd30836c4360f8163f313939a9420f354d6e183a9fb61",
+      "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/proof_resource_safety.py": "3655923785cb99409171caaba8c523354f03dbe8d82b6deb45a7b46db8394633",
+      "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py": "2c00683202b4a783b5050329caa24a411f83788010baba86d9380123bae7d083",
+      "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/runtime_telemetry.py": "542f705867b93fcb138a117e1f5c97a144ad6635dc92c37bc5034eee5065ef63",
+      "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/validation_pytest.py": "cef7fd00277c38ac55ce80ae0e6234eeda36559ab56a9de4e0954d0590327d31",
+      "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/validation_run_resources.py": "ff22f10a712e000e5ecd9ac22f314d94918cf0160abd3be1d3b1d75210239b70",
+      "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/router_deps.py": "56f66dfff183d9d0ee7977a314c49adbaa181e6fe0087c8f1c581a7d2973bf4c",
+      "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/utils/__init__.py": "78f4cd7f8e14b4fff482c0c91ada5c49f8b9edf707bffd9cd58840b5503e66c2",
+      "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/utils/cid_utils.py": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf",
+      "/home/barberb/lift_coding/external/ipfs_datasets/pytest.ini": "01737eaafcd2b7e7e1a8db2368a93d4a28053ba44e611a10b1c87d2155dc65ff",
+      "/home/barberb/lift_coding/external/ipfs_datasets/scripts/__init__.py": "8bae0240c318680619db09765fadb6f8159d857d1ade30d030148a24da0c585e",
+      "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/__init__.py": "4c9d3c43d6e3f9cf1ef247346a713679a5a93f3c4c47345ad8e2780983132a5a",
+      "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/__init__.py": "f01f69ade8a699c97cfcad8ba04a79fab4b219f4ac39e3b5a47b0d4a8a4426c5",
+      "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/run_owned_validation.py": "07b57d067461d0ca6334e667db5c913cd5fe30739731e16e162c3c861051a997",
+      "/home/barberb/lift_coding/external/ipfs_datasets/tests/__init__.py": "89588b0c2be9d872060e78aa68ccf95f94ca27ea6bcb79a43509d66c296c73ce",
+      "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/__init__.py": "9d566025eaa21543b52722147774afc45981154f677dcc38078a2632e5b52947",
+      "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/__init__.py": "a2915ce482d690b118753f039d6d394743a89b07fe4392781656952e584531c1",
+      "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_daemon_resources.py": "e1ee0fa01ac0891c236a3918b87817c135bc77943013c34fb330e9d21e6da575",
+      "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_resource_recovery.py": "a891e0392c6a0a9537da97b89c4429ab19dfb02b9ca59ba68371b3dd07bf594d",
+      "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_validation_run_resources.py": "aa6cae94eb3346be60d80b576bf43b0574b379eee3024d93d0492c19b2693254",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-normative-target-binding-20261021-01/controls/install_product_v02.py": "733d651fb88f08fd1f09c4075e0b6d2b496509c1dcac04926f9e00d373d85671",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-warmstart-qualification-v01/controls/launch_single_lease.py": "a0b2785bf417bfca462d958827d319ef1da2347645becdd1f6a001cec24ad6aa",
+      "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/failed-admission-own-claim-recovery-DRAFT-v02/run_sampled_scope_validation.py": "9052392b18b7cb7c710e86c64330e353c4eb6bdba850cfe87c9d94f36b1748b2",
+      "/tmp/legal_ir_execute_local54_ir30_ir33_v03_20261107.py": "dcdc40b6768b40112a4e346b0afa84b643b3d80826fa6e0d2cb1384040ba1599"
+    },
+    "skips": 0,
+    "storage_bytes": 25165824
+  },
+  "actual_red": {
+    "cases": 8,
+    "custody_selected": {
+      "all_observed_identities_gone": true,
+      "child_reaped": true,
+      "errors": [],
+      "genuine_wait_completed": true,
+      "original_native_compute_closed": true,
+      "original_source_exit_lifecycle_closed": true
+    },
+    "errors": 0,
+    "failures": 4,
+    "finding": "All four sampled-process-scope cases incorrectly released across the two recovery policies.",
+    "junit": {
+      "bytes": 6822,
+      "path": "/tmp/pytest-of-barberb/legal-ir-sampled-recovery-20261109-red-v01/attempt-v01/logs/junit.xml",
+      "sha256": "6828d0b331ffecc63c9026bb7b4d3ec3cd84d05eca153b6b6a3166e47a67344b"
+    },
+    "parent": {
+      "bytes": 12451,
+      "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/failed-admission-own-claim-recovery-DRAFT-v02/sampled-scope-red-v01/parent-closeout.json",
+      "sha256": "d0613aa923bb3255b80c464e3e9e7af4ad0ab0dd3d1cd24549d2ff48fc453123"
+    },
+    "parent_selected": {
+      "actual_attempt_file_bytes": 69247,
+      "elapsed_seconds": 160.63554355408996,
+      "owner_pid": 1336835,
+      "owner_returncode": 1,
+      "request_sha256": "d11f1e7427618d0e4f726209a2cd7aa722926a488a98f62991bd3546a6684af6",
+      "schema": "sampled-recovery-owned-validation-observation/v1",
+      "source_closed": true,
+      "source_drift": [],
+      "source_pins": 35,
+      "tag": "red-v01"
+    },
+    "passed": 4,
+    "retained_reservation_id": "364c6d1dcafa4dcab09d2e1f9e1cafc8",
+    "retained_storage_bytes": 33554432,
+    "skips": 0
+  },
+  "first_green_pregrant_refusal": {
+    "charged_with_request_bytes": 220000415891,
+    "children": 0,
+    "manual_source_closeout": {
+      "bytes": 966,
+      "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/failed-admission-own-claim-recovery-DRAFT-v02/sampled-scope-green-v01/manual-no-native-source-closeout-v01.json",
+      "sha256": "b0272af0112a51ee692f15c0ba51710ad43556f64ad0f43d36061e96b3ef369d"
+    },
+    "native_grants": 0,
+    "new_reservations": 0,
+    "original_wrapper_defect_retained": true,
+    "raw_owner_stderr": {
+      "bytes": 1998,
+      "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/failed-admission-own-claim-recovery-DRAFT-v02/sampled-scope-green-v01/owner.stderr",
+      "sha256": "5a792714e2a527e9a4f786e2e080950a0d3ccb01626d0e1be3c47d138263df18"
+    },
+    "raw_owner_stdout": {
+      "bytes": 3580,
+      "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/failed-admission-own-claim-recovery-DRAFT-v02/sampled-scope-green-v01/owner.stdout",
+      "sha256": "444781c371b5976066537d61c991bcbc35055f5dca0767b0bba9908571b1d42b"
+    },
+    "request": {
+      "bytes": 16040,
+      "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/failed-admission-own-claim-recovery-DRAFT-v02/sampled-scope-green-v01/request.json",
+      "sha256": "38626354e467fd7fe1f17afd87d3a824731418520d1ae95b85f88c324bd5d7b8"
+    },
+    "request_shortfall_bytes": 415891,
+    "requested_storage_bytes": 33554432,
+    "scope": "First green request never admitted. Exact-own-wrapper manual Source closure preserves canonical no-child/no-native classification; it is separate from actual v02 qualification.",
+    "selected_manual_closeout": {
+      "all_request_sources_still_match": true,
+      "canonical_no_native_verdict": {
+        "source_custody_closed": true,
+        "storage_release_authorized": false,
+        "verdict": "proven_original_no_child_no_native_grant"
+      },
+      "exact_own_argv_verified": true,
+      "native_or_storage_recovery_performed": false,
+      "new_native_grants": 0,
+      "new_storage_records": 0,
+      "original_owner_pid": 1387227,
+      "owner_observed_absent": true,
+      "recorded_at_utc": "2026-11-09T05:58:17.191863+00:00",
+      "request_sha256": "38626354e467fd7fe1f17afd87d3a824731418520d1ae95b85f88c324bd5d7b8",
+      "schema": "root-own-wrapper-no-native-manual-closeout/v1",
+      "scope": "Only own refused wrapper; current canonical classifier independently imported from canonical R; historical wrapper cleanup import-path defect retained.",
+      "terminal_sha256": "444781c371b5976066537d61c991bcbc35055f5dca0767b0bba9908571b1d42b",
+      "tests_executed": 0,
+      "wrapper_birth": "322180042",
+      "wrapper_pid": 1387212
+    },
+    "tests": 0,
+    "unchanged_cap_bytes": 220000000000,
+    "zero_additional_charged_bytes": 219966861459,
+    "zero_additional_headroom_bytes": 33138541
+  },
+  "fresh_zero_additional_capacity": {
+    "receipt": {
+      "bytes": 5840,
+      "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/failed-admission-own-claim-recovery-DRAFT-v02/actual-zero-additional-capacity-20261109-v02.json",
+      "sha256": "c3b88eaca18403ea42e1aa0e0d82d67316adf544cfef1d15ee58dbee580f4262"
+    },
+    "selected": {
+      "Source_READs_closed": true,
+      "accounting": {
+        "additional_requested_bytes": 0,
+        "capacity_satisfied": true,
+        "charged_bytes": 219918380989,
+        "filesystem_free_shortfall_bytes": 0,
+        "inventory": {
+          "apparent_bytes": 175262211197,
+          "entry_count": 2567099,
+          "special_file_count": 303,
+          "symlink_count": 8548
+        },
+        "limit_bytes": 220000000000,
+        "minimum_filesystem_free_bytes": 509050576896,
+        "observed_apparent_bytes": 175262211197,
+        "outstanding_full_reservations_bytes": 44656169792,
+        "over_limit_bytes": 0,
+        "scope": "named_roots_only_apparent_bytes"
+      },
+      "cap_or_scheduler_config_changed": false,
+      "census_completed_at_utc": "2026-11-09T05:48:02.372763+00:00",
+      "cleanup": false,
+      "errors": [],
+      "headroom_bytes": 81619011,
+      "ledger_unchanged": true,
+      "native_resource_grant": false,
+      "new_reservation": false,
+      "recovery": false,
+      "retry": false,
+      "schema": "read-only-zero-additional-capacity-observation/v1"
+    }
+  },
+  "historical_deadline_capsule_unchanged": {
+    "bytes": 89814,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoformalization/evidence/legal-ir-cleanup-deadline-current-checkout-20261109.json",
+    "sha256": "8b8f4b73c932d06291369b646ad8146a1f190566ee96b4eb345962595806e026"
+  },
+  "recorded_at_utc": "2026-11-09T06:04:15.855872+00:00",
+  "retained_real_claims": [
+    {
+      "bytes": 67108864,
+      "reservation_id": "872eb7f2401e41238a331b52452a5ad2",
+      "status": "retained"
+    },
+    {
+      "bytes": 33554432,
+      "reservation_id": "364c6d1dcafa4dcab09d2e1f9e1cafc8",
+      "status": "retained"
+    }
+  ],
+  "schema": "legal-ir-retained-process-scope-recovery-qualification/v1",
+  "scope": "Selected canonical recovery engineering qualification: explicit sampled-process-scope refusal and existing deadline/prior controls. Original failures and source generations retained; no real retained sampled claim recovered.",
+  "scope_limits": [
+    "Historical initial four-case deadline failure, both original 52-case pregrant refusals, sampled red failure and green-v01 pregrant/manual source closeout remain separate; no failed attempt receives passing credit.",
+    "Current green80 includes all52 deadline/prior checks; historical refused52 requests still executed zero tests.",
+    "The original empty128MiB release remains a separate earlier operation. Current qualification releases only its own green24MiB reservation and no retained sampled claim.",
+    "Only the35 exact green source pins are qualified. Decoder471, later source changes, broader real sampled custody, whole-suite and hosted execution remain unqualified.",
+    "No commit, publication, Hugging Face operation, model/optimizer work, native Lean command, statutory admission or convergence qualification occurred.",
+    "Observed native60/4 statuses are separate from executor verification, legal/graph/Lean corpus completion and all execution authority."
+  ],
+  "separate_watchdog_observation": {
+    "blocked_task_rows": [
+      {
+        "automatic_retry_admitted": null,
+        "receipt_attempt_budget_exhausted": null,
+        "receipt_failure_kind": null,
+        "retained_execution_outcomes": [],
+        "revision": 2,
+        "status": "blocked",
+        "task_alias": "LIR-2403",
+        "task_cid": "baguqeera5dvlic5h6b4nvcnocd6asjbv3bn24lvkljupukbtegvqwvr656sa"
+      },
+      {
+        "automatic_retry_admitted": null,
+        "receipt_attempt_budget_exhausted": null,
+        "receipt_failure_kind": null,
+        "retained_execution_outcomes": [],
+        "revision": 2,
+        "status": "blocked",
+        "task_alias": "LIR-2401",
+        "task_cid": "baguqeeraa522uawqqmux3tel3fhig5yeryrle4f7pshd6bsxb2r6pe2ohg5a"
+      },
+      {
+        "automatic_retry_admitted": null,
+        "receipt_attempt_budget_exhausted": null,
+        "receipt_failure_kind": null,
+        "retained_execution_outcomes": [],
+        "revision": 2,
+        "status": "blocked",
+        "task_alias": "LIR-2402",
+        "task_cid": "baguqeeraanwof6almluu2sevorxmhdmkexk22tvlzp2sq2whdwvhvo4eqm5a"
+      },
+      {
+        "automatic_retry_admitted": null,
+        "receipt_attempt_budget_exhausted": null,
+        "receipt_failure_kind": null,
+        "retained_execution_outcomes": [],
+        "revision": 4,
+        "status": "blocked",
+        "task_alias": "LIR-2102",
+        "task_cid": "baguqeerastzc2enyjm65ousek3zw34he32lqonbecxqdixkuv4wbtoc3pcha"
+      }
+    ],
+    "limits": [
+      "60 completed / 4 blocked is the saved probe observation of existing native task statuses, not independently accepted legal/graph/Lean corpus completion.",
+      "Executor verification reports descriptor_changed, scope none, verified false, dispatch_authority false and completion_authority false; activation remains not_activated and executor health not_established.",
+      "Attempt history is incomplete and retained UNKNOWN outcome remains present. Empty normalized attempt/provider rows do not establish zero attempts or provider success.",
+      "The scientific operator hold and expired finite engineering repair authorization are preserved. No authority, retry, budget reset or operational recovery is inferred from active services.",
+      "Engineering fleet-health and watchdog status are sampled at different times and may disagree during native-child restart. This record preserves each original observation time.",
+      "The runtime liveness projection is declared_profile_only, not byte attestation of all loaded code."
+    ],
+    "receipt": {
+      "bytes": 14356,
+      "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/failed-admission-own-claim-recovery-DRAFT-v02/current-watchdog-readback-20261109-v01.json",
+      "sha256": "e173af0eacc45c05186bfa0bc92c62d45022f5b91a6697107ad315c0bef5f387"
+    },
+    "recorded_at_utc": "2026-11-09T05:45:21.926410+00:00",
+    "repair_worker_observation": {
+      "board_id": "legal-ir",
+      "coding_attempts_incremented": false,
+      "expires_at": 1794118855.806815,
+      "not_before_observed_at": 1794115254.806815,
+      "observed_at": 1794203121.6568582,
+      "reason": "repair_authorization_expired",
+      "repair_epoch_id": "legal-ir-c19-20261108-0ad0cd3a54eb4821a3051f41f729f114",
+      "status": "policy_wait"
+    },
+    "scientific_hold_file_metadata": [
+      {
+        "exists": true,
+        "mtime_utc": "2026-10-31T05:05:35.840819+00:00",
+        "path": "/home/barberb/.local/state/ipfs-taskboard-watchdog/legal-ir/legal-ir-scientific/watchdog.hold"
+      }
+    ],
+    "scientific_selected": {
+      "activation_state": "not_activated",
+      "attempt_history_complete": false,
+      "board_namespace": "legal-ir-span-graph-lean-refinement-20261016",
+      "checked_at_epoch": 1794203068.4093978,
+      "completion_authority": false,
+      "counts": {
+        "blocked": 4,
+        "completed": 60
+      },
+      "event_cursor": 415,
+      "executor_health": "not_established",
+      "executor_verification": {
+        "completion_authority": false,
+        "dispatch_authority": false,
+        "reason": "descriptor_changed",
+        "scope": "none",
+        "verified": false
+      },
+      "goal_count": 34,
+      "ready_status_count": 0,
+      "retained_unknown_outcome_task_cids": [
+        "baguqeeraqk2ln7d3plwfonnyycsxkr5tjrpo7e5uq4p7rhe6vi6btpxsaeyq"
+      ],
+      "store_generation": 19,
+      "task_count": 64
+    }
+  },
+  "source_installation": {
+    "receipt": {
+      "bytes": 4326,
+      "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/failed-admission-own-claim-recovery-DRAFT-v02/explicit-scope-guard-product-and-owning-test-Source-CAS-closeout-v01.json",
+      "sha256": "ab2e9cf7487bf46a4d07e15533a6c5509260b3eb95b3fa2ae661b587313d6e9a"
+    },
+    "selected": {
+      "beforeimages": [
+        {
+          "bytes": 80836,
+          "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/failed-admission-own-claim-recovery-DRAFT-v02/autoencoder_resource_recovery-before-explicit-scope-guard-v01.py",
+          "sha256": "b1acd8cfd0d5a331474842e4fec98cb940c191b547f627633532a1271e4110fa"
+        },
+        {
+          "bytes": 65960,
+          "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/failed-admission-own-claim-recovery-DRAFT-v02/test_autoencoder_resource_recovery-before-explicit-scope-guard-v01.py",
+          "sha256": "73942caef22750f30747a31ec830c2b10f94207973058d6df9904520ef7c26ab"
+        }
+      ],
+      "completed": true,
+      "elapsed_seconds": 0.0391952209174633,
+      "errors": [],
+      "files": {
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_resource_recovery.py": {
+          "after_bytes": 81305,
+          "after_sha256": "3c3edd130deed257ab813a3dcdb22bf001f29f93541f4bb122c2464c92d0c1c3",
+          "before_sha256": "b1acd8cfd0d5a331474842e4fec98cb940c191b547f627633532a1271e4110fa",
+          "mode": 420
+        },
+        "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_resource_recovery.py": {
+          "after_bytes": 68082,
+          "after_sha256": "a891e0392c6a0a9537da97b89c4429ab19dfb02b9ca59ba68371b3dd07bf594d",
+          "before_sha256": "73942caef22750f30747a31ec830c2b10f94207973058d6df9904520ef7c26ab",
+          "mode": 436
+        }
+      },
+      "postimages": [
+        {
+          "bytes": 81305,
+          "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/failed-admission-own-claim-recovery-DRAFT-v02/autoencoder_resource_recovery-explicit-scope-guard_SOURCE_ONLY_v01.py",
+          "sha256": "3c3edd130deed257ab813a3dcdb22bf001f29f93541f4bb122c2464c92d0c1c3"
+        },
+        {
+          "bytes": 68082,
+          "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/failed-admission-own-claim-recovery-DRAFT-v02/test_autoencoder_resource_recovery_explicit_scope_guard_SOURCE_ONLY_v01.py",
+          "sha256": "a891e0392c6a0a9537da97b89c4429ab19dfb02b9ca59ba68371b3dd07bf594d"
+        }
+      ],
+      "source_WRITE_acquired": true,
+      "source_WRITE_closed": true,
+      "tests_executed": 0,
+      "validation_pending": true
+    }
+  }
+}

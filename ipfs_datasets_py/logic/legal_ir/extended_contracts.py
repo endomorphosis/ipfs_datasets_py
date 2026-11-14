@@ -10,8 +10,11 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field, fields
 from typing import ClassVar
 
+from ..TDFOL.compiler_repairs import TemporalDeadline
+
 
 EXTENDED_IR_SCHEMA = "legal-surface-ir/v2"
+EXTENDED_DEADLINE_IR_SCHEMA = "legal-surface-ir-with-typed-deadlines/v1"
 MAX_STATEMENTS = 128
 MAX_ATOM_CHARACTERS = 16_384
 
@@ -78,7 +81,7 @@ class NormV2:
     scope: tuple[str, ...] = ()
     conditions: tuple[str, ...] = ()
     exceptions: tuple[str, ...] = ()
-    temporal: tuple[str, ...] = ()
+    temporal: tuple[str | TemporalDeadline, ...] = ()
     kind: str = field(default="norm", init=False)
 
     def __post_init__(self):
@@ -86,8 +89,17 @@ class NormV2:
             raise ValueError("norm requires an explicit O/P/F modality")
         for value in (self.actor, self.action, self.object):
             _atom(value)
-        for value in (self.scope, self.conditions, self.exceptions, self.temporal):
+        for value in (self.scope, self.conditions, self.exceptions):
             _atoms(value)
+        if type(self.temporal) is not tuple or len(self.temporal) > MAX_STATEMENTS:
+            raise ValueError("IR temporal collections must be bounded immutable tuples")
+        for temporal in self.temporal:
+            if type(temporal) is str:
+                _atom(temporal)
+            else:
+                if type(temporal) is not TemporalDeadline:
+                    raise ValueError("literal temporal atom or typed deadline required")
+                TemporalDeadline.__post_init__(temporal)
 
 
 _KINDS = {"definition": DefinitionV2, "policy": PolicyV2, "norm": NormV2}
@@ -102,6 +114,7 @@ class ExtendedLegalIR:
     def __post_init__(self):
         if type(self.statements) is not tuple or not 1 <= len(self.statements) <= MAX_STATEMENTS:
             raise ValueError("IR needs a bounded nonempty tuple of statements")
+        has_deadline = False
         for statement in self.statements:
             if type(statement) not in _KINDS.values():
                 raise ValueError("unsupported statement type")
@@ -109,6 +122,10 @@ class ExtendedLegalIR:
             type(statement).__post_init__(statement)
             if statement.kind not in _KINDS or _KINDS[statement.kind] is not type(statement):
                 raise ValueError("statement discriminator differs from type")
+            if type(statement) is NormV2 and any(type(temporal) is TemporalDeadline for temporal in statement.temporal):
+                has_deadline = True
+        if has_deadline != (self.schema == EXTENDED_DEADLINE_IR_SCHEMA):
+            raise ValueError("typed deadline inventory differs from the selected IR schema")
 
     def to_dict(self) -> dict:
         ExtendedLegalIR.__post_init__(self)
@@ -117,12 +134,17 @@ class ExtendedLegalIR:
             value = asdict(statement)
             statements.append({key: list(item) if isinstance(item, tuple) else item
                                for key, item in value.items()})
-        return {"schema": EXTENDED_IR_SCHEMA, "statements": statements}
+        return {"schema": self.schema, "statements": statements}
 
     @classmethod
     def from_dict(cls, value: dict) -> ExtendedLegalIR:
-        if type(value) is not dict or set(value) != {"schema", "statements"} or value["schema"] != EXTENDED_IR_SCHEMA:
+        if (type(value) is not dict or set(value) != {"schema", "statements"}
+                or type(value["schema"]) is not str):
             raise ValueError("unknown IR schema or source-bearing extra field")
+        ir_kind = {EXTENDED_IR_SCHEMA: ExtendedLegalIR,
+                   EXTENDED_DEADLINE_IR_SCHEMA: ExtendedDeadlineLegalIR}.get(value["schema"])
+        if ir_kind is None or (cls is not ExtendedLegalIR and cls.schema != value["schema"]):
+            raise ValueError("unknown or mismatched extended IR schema")
         if type(value["statements"]) is not list or not 1 <= len(value["statements"]) <= MAX_STATEMENTS:
             raise ValueError("invalid statement inventory")
         statements = []
@@ -134,8 +156,19 @@ class ExtendedLegalIR:
                 raise ValueError("unknown statement fields")
             arguments = {key: item for key, item in record.items() if key != "kind"}
             for key in arguments.keys() & _COLLECTIONS:
-                if type(arguments[key]) is not list:
-                    raise ValueError("wire atom collections must be lists")
+                if type(arguments[key]) is not list or len(arguments[key]) > MAX_STATEMENTS:
+                    raise ValueError("wire atom collections must be bounded lists")
                 arguments[key] = tuple(arguments[key])
+            if kind is NormV2 and ir_kind is ExtendedDeadlineLegalIR:
+                arguments["temporal"] = tuple(
+                    item if type(item) is str else TemporalDeadline.from_dict(item)
+                    for item in arguments["temporal"])
             statements.append(kind(**arguments))
-        return cls(tuple(statements))
+        return (ir_kind if cls is ExtendedLegalIR else cls)(tuple(statements))
+
+
+@dataclass(frozen=True, slots=True)
+class ExtendedDeadlineLegalIR(ExtendedLegalIR):
+    """The existing surface IR with at least one explicit typed normative deadline."""
+
+    schema: ClassVar[str] = EXTENDED_DEADLINE_IR_SCHEMA

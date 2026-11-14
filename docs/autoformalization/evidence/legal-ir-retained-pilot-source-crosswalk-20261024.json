@@ -693,5 +693,646 @@
   "source_versions_or_CIDs_created": 0,
   "status": "four_source_unit_literal_physical_crosswalk_qualified_meaning_pending",
   "training_mask": 0,
-  "whole_span_equalities": 0
+  "whole_span_equalities": 0,
+  "published_dataset_release_point_comparison_119_102": {
+    "comparison_method": {
+      "difference_coordinates": "Zero-based half-open character offsets in the whitespace-normalized strings.",
+      "normalization": "Collapse presentation whitespace runs to a single U+0020 and trim boundary whitespace. Preserve punctuation and all other code points.",
+      "ranges": "Zero-based half-open intervals. Retained byte ranges address the decoded text field encoded as UTF-8. Release byte ranges address exact markup in the uncompressed XML member.",
+      "release_text": "Concatenate decoded character data from the listed direct children in document order. For the subsection lead-in, the fragment spans num through chapeau."
+    },
+    "governing_definition_selection": null,
+    "interpretation_review": "pending",
+    "legal_applicability_review": "pending",
+    "missing_selectors": [],
+    "official_release": {
+      "archive_url": "https://uscode.house.gov/download/releasepoints/us/pl/119/102/xml_usc10@119-102.zip",
+      "listing_url": "https://uscode.house.gov/download/releasepoints/us/pl/119/102/usc-rp%40119-102.htm",
+      "publication_marker": "Online@119-102",
+      "retrieved_at_utc": "2026-11-10T22:41:00.248799+00:00",
+      "xml_member": {
+        "bytes": 55658864,
+        "crc32": "3ba6592d",
+        "name": "usc10.xml",
+        "sha256": "95cffae02b423464f744dbcb55df91fce386d494a74d22e56146a32e65979dd0"
+      },
+      "zip": {
+        "bytes": 8383271,
+        "path": "/tmp/legal-ir-olrc-119-102-title10-zabd_4ax/xml_usc10@119-102.zip",
+        "sha256": "48143f52ef3d9c92b44d3499c1abd145f0b8baae74af6b2534f33c80f82cbe34"
+      }
+    },
+    "requested_dataset_baseline": {
+      "dataset_card_url": "https://huggingface.co/datasets/justicedao/ipfs_uscode",
+      "release_point": "us/pl/119/102",
+      "release_point_binding": "dataset_card_declaration_supplied_for_selected_source_comparison",
+      "repository_id": "justicedao/ipfs_uscode",
+      "declared_pinned_source_revision": "006dd603185b283c54648dd4aef3c2cbe650981a"
+    },
+    "retained_source": {
+      "cohort_id": "retained-official-2024-title10-three-source/v1",
+      "crosswalk": {
+        "bytes": 35136,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoformalization/evidence/legal-ir-retained-pilot-source-crosswalk-20261024.json",
+        "sha256": "4f4fa06c31c28072f414e130a6d3001e98f210a036f4be742b48bc587393e9f3"
+      },
+      "parent_text_views_report": {
+        "bytes": 222905,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/attempt-data2-v01/exports/parent-text-views.json",
+        "sha256": "ab01d3cee838a0124832e3db6b8d8c0aaeb06be76ac77d1be5c2c0c0e6748c8e"
+      },
+      "physical_cohort_evidence": {
+        "bytes": 37021,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoformalization/evidence/legal-ir-retained-official-pilot-20261024.json",
+        "sha256": "3e33e6191dcb006505929022178b4a2d2bbe7b82ee9b4efa1d5abe3b9d5cb395"
+      },
+      "physical_parquet": {
+        "bytes": 80951,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/attempt-data1-v02/exports/source-documents.parquet",
+        "sha256": "79e93611a65c2593353df5a4bdaddf6363c2f2ffc6e9817ef6f90abb4e5be315"
+      },
+      "selected_rows_report": {
+        "bytes": 94295,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/attempt-data2-v01/exports/parent-selected-rows.json",
+        "sha256": "b37fc2444d34ba20ddd718d8ef5d58b70a6010ccd714e800ef30b85e33c13044"
+      },
+      "source_edition": 2024,
+      "source_repository": "https://github.com/endomorphosis/ipfs_datasets_py",
+      "source_revision": "348e61e65422a952d8ca4c348a4eaac0a119b1e3"
+    },
+    "schema": "legal-ir-retained-title10-olrc-release-point-source-comparison/v1",
+    "selectors": [
+      {
+        "comparison": {
+          "normalized_differences": [],
+          "release_normalized_UTF8_sha256": "431d51cf606490903708cc3ca2e88de11e200b5581f459843169341180cd4fc4",
+          "retained_normalized_UTF8_sha256": "431d51cf606490903708cc3ca2e88de11e200b5581f459843169341180cd4fc4",
+          "whitespace_normalized_equal": true
+        },
+        "release": {
+          "USLM_id": "ida71d6c11-3a6f-11f1-a58a-d8db54b14ab5",
+          "canonical_USLM_selector": "/us/usc/t10/s101/b",
+          "direct_text_elements_in_order": [
+            "num",
+            "heading",
+            "chapeau"
+          ],
+          "element": "subsection",
+          "exact_XML_UTF8_fragment": {
+            "UTF8_byte_range": [
+              1075635,
+              1075834
+            ],
+            "bytes": 199,
+            "sha256": "802e2124e51b72e858346128b92357080b3d619d62a4a324d9a413367228f64f",
+            "text_utf8": "<num value=\"b\">(b)</num><heading> <inline class=\"small-caps\">Personnel Generally</inline>.—</heading><chapeau>The following definitions relating to military personnel apply in this title:</chapeau>"
+          },
+          "exact_extracted_UTF8_bytes": 104,
+          "exact_extracted_UTF8_sha256": "431d51cf606490903708cc3ca2e88de11e200b5581f459843169341180cd4fc4",
+          "extracted_text_utf8": "(b) Personnel Generally.—The following definitions relating to military personnel apply in this title:"
+        },
+        "retained": {
+          "UTF8_byte_range": [
+            6447,
+            6551
+          ],
+          "char_range": [
+            6425,
+            6527
+          ],
+          "decoded_field_UTF8_sha256": "e16ca14e06034a08bc1e732cdb790c9ec5bbb96d3ba38ac3bee23367c8481851",
+          "exact_UTF8_bytes": 104,
+          "exact_UTF8_sha256": "431d51cf606490903708cc3ca2e88de11e200b5581f459843169341180cd4fc4",
+          "field": "text",
+          "legal_id": "usc:us:10:101",
+          "physical_row_ordinal": 0,
+          "physical_selector_sha256": "390a75d538e6999da106e6811c41974d517542f5418383a32fffaa55cb3a82dc",
+          "raw_HTML_sha256": "4e8d017794220f192668d5313fc537fbb7140652ac4a00faaf93a6c921c2c08b",
+          "raw_row_sha256": "a7fe4b3971e3074a9af106ded561ab02dd03430c5120274decf6493e8e90793d",
+          "source_occurrence_cid": "baguqeera2cmwvh2ny35xyhcok4zd7v6lvhdswp3ca3uj4tnoo6lcodlzsl2a",
+          "source_unit": {
+            "record_cid": "baguqeerahdfpg6hzil7fbc45vksgjzsqdq7uh4dmch4bwt3oo3cybch7btpa",
+            "schema": "legal-source-structured-sample-unit/v1",
+            "sha256": "8cf40c47c26e77e5721b7bd124740b21c0a81f10239963b7ba5c195de04e7706"
+          },
+          "source_url": "https://www.govinfo.gov/content/pkg/USCODE-2024-title10/html/USCODE-2024-title10-subtitleA-partI-chap1-sec101.htm",
+          "source_version_cid": "baguqeerave77xhahqkwfznpcifxg2axl3uesrac7yiuaginwxxvqj7aghmza",
+          "text_view_json_pointer": "/views/0/text_view/text",
+          "text_utf8": "(b) Personnel Generally.—The following definitions relating to military personnel apply in this title:"
+        },
+        "role": "title_scope"
+      },
+      {
+        "comparison": {
+          "normalized_differences": [
+            {
+              "operation": "replace",
+              "release": "“",
+              "release_char_range": [
+                13,
+                14
+              ],
+              "release_codepoints": [
+                "U+201C"
+              ],
+              "retained": "\"",
+              "retained_char_range": [
+                13,
+                14
+              ],
+              "retained_codepoints": [
+                "U+0022"
+              ]
+            },
+            {
+              "operation": "replace",
+              "release": "”",
+              "release_char_range": [
+                21,
+                22
+              ],
+              "release_codepoints": [
+                "U+201D"
+              ],
+              "retained": "\"",
+              "retained_char_range": [
+                21,
+                22
+              ],
+              "retained_codepoints": [
+                "U+0022"
+              ]
+            }
+          ],
+          "release_normalized_UTF8_sha256": "1a36a5405213e506a11b85821c74fb95ba4ae83b94103751b1d03ddd5154100c",
+          "retained_normalized_UTF8_sha256": "7a846b7108358ef569a6c0606b1d1705f79ee94d8f3d3ee9da32386c1faea7e7",
+          "whitespace_normalized_equal": false
+        },
+        "release": {
+          "USLM_id": "ida71d6c12-3a6f-11f1-a58a-d8db54b14ab5",
+          "canonical_USLM_selector": "/us/usc/t10/s101/b/1",
+          "direct_text_elements_in_order": [
+            "num",
+            "content"
+          ],
+          "element": "paragraph",
+          "exact_XML_UTF8_fragment": {
+            "UTF8_byte_range": [
+              1075834,
+              1076080
+            ],
+            "bytes": 246,
+            "sha256": "fd3957d0b8892a1fc4e1d39e387ecb5a76249adb8b3e2a297f1b3d1e22e83a0a",
+            "text_utf8": "<paragraph style=\"-uslm-lc:I12\" class=\"indent1\" id=\"ida71d6c12-3a6f-11f1-a58a-d8db54b14ab5\" identifier=\"/us/usc/t10/s101/b/1\"><num value=\"1\">(1)</num><content> The term “officer” means a commissioned or warrant officer.</content>\n</paragraph>"
+          },
+          "exact_extracted_UTF8_bytes": 67,
+          "exact_extracted_UTF8_sha256": "1a36a5405213e506a11b85821c74fb95ba4ae83b94103751b1d03ddd5154100c",
+          "extracted_text_utf8": "(1) The term “officer” means a commissioned or warrant officer."
+        },
+        "retained": {
+          "UTF8_byte_range": [
+            6552,
+            6615
+          ],
+          "char_range": [
+            6528,
+            6591
+          ],
+          "decoded_field_UTF8_sha256": "e16ca14e06034a08bc1e732cdb790c9ec5bbb96d3ba38ac3bee23367c8481851",
+          "exact_UTF8_bytes": 63,
+          "exact_UTF8_sha256": "7a846b7108358ef569a6c0606b1d1705f79ee94d8f3d3ee9da32386c1faea7e7",
+          "field": "text",
+          "legal_id": "usc:us:10:101",
+          "physical_row_ordinal": 0,
+          "physical_selector_sha256": "d3105f69ef22ef4e270e41152b533e50cac707401f7a853d2f7e9d432e21ada3",
+          "raw_HTML_sha256": "4e8d017794220f192668d5313fc537fbb7140652ac4a00faaf93a6c921c2c08b",
+          "raw_row_sha256": "a7fe4b3971e3074a9af106ded561ab02dd03430c5120274decf6493e8e90793d",
+          "source_occurrence_cid": "baguqeeracyfied5gomuscg5pdep44znimi2zdlqjbs4n2jwq4yf6dekbgera",
+          "source_unit": {
+            "record_cid": "baguqeeraaa3y5jwjaf2d2jkar6now7eq3vml7do7ytuy7jvkajfcrwzx2dgq",
+            "schema": "legal-source-structured-sample-unit/v1",
+            "sha256": "a15dca5d46ad7783a09b4f6ec69b97cdb45aa393df9a48caa5c328612a6a356a"
+          },
+          "source_url": "https://www.govinfo.gov/content/pkg/USCODE-2024-title10/html/USCODE-2024-title10-subtitleA-partI-chap1-sec101.htm",
+          "source_version_cid": "baguqeerave77xhahqkwfznpcifxg2axl3uesrac7yiuaginwxxvqj7aghmza",
+          "text_view_json_pointer": "/views/0/text_view/text",
+          "text_utf8": "(1) The term \"officer\" means a commissioned or warrant officer."
+        },
+        "role": "officer_definition"
+      },
+      {
+        "comparison": {
+          "normalized_differences": [],
+          "release_normalized_UTF8_sha256": "1cffae41c1d05bc7813b2fd578e5b06f5870422221c99bc39a89803ca4644e52",
+          "retained_normalized_UTF8_sha256": "1cffae41c1d05bc7813b2fd578e5b06f5870422221c99bc39a89803ca4644e52",
+          "whitespace_normalized_equal": true
+        },
+        "release": {
+          "USLM_id": "idaade6b78-3a6f-11f1-a58a-d8db54b14ab5",
+          "canonical_USLM_selector": "/us/usc/t10/s7213",
+          "direct_text_elements_in_order": [
+            "content"
+          ],
+          "element": "section",
+          "exact_XML_UTF8_fragment": {
+            "UTF8_byte_range": [
+              43390107,
+              43390365
+            ],
+            "bytes": 258,
+            "sha256": "03dc452ac3a311aeb015b3081935ab98ac1ef6c4972e545f60d5df0561f01b76",
+            "text_utf8": "<content>\n<p style=\"-uslm-lc:I11\" class=\"indent0\">Officers of the Corps of Engineers may be assigned or transferred to and from duties involving the civil functions of the Corps of Engineers only with the approval of the Secretary of the Army.</p>\n</content>"
+          },
+          "exact_extracted_UTF8_bytes": 195,
+          "exact_extracted_UTF8_sha256": "7c543d229a70ad9994707c9f57a8f110a1b7d0ef30a38dbc6131937b1a609dde",
+          "extracted_text_utf8": "\nOfficers of the Corps of Engineers may be assigned or transferred to and from duties involving the civil functions of the Corps of Engineers only with the approval of the Secretary of the Army.\n"
+        },
+        "retained": {
+          "UTF8_byte_range": [
+            432,
+            625
+          ],
+          "char_range": [
+            431,
+            624
+          ],
+          "decoded_field_UTF8_sha256": "6b0c306698da9e5e44262e74e1f14dac151e0f7e84f466b44285bd544cd52963",
+          "exact_UTF8_bytes": 193,
+          "exact_UTF8_sha256": "1cffae41c1d05bc7813b2fd578e5b06f5870422221c99bc39a89803ca4644e52",
+          "field": "text",
+          "legal_id": "usc:us:10:7213",
+          "physical_row_ordinal": 1,
+          "physical_selector_sha256": "b2c4e35da15642fa7000e140f1608b02c5c5c2f51d87165932b387f6a562224a",
+          "raw_HTML_sha256": "671925114eada7731a355e33c8076baa6926fed1b7cb35c90a8c4c705c55b0ef",
+          "raw_row_sha256": "ebc70566b71e5e258246d0067682cadfc8bc4949cf731c487655bb25e71c0002",
+          "source_occurrence_cid": "baguqeerarbvejvawh23hjqt5b7e7ii5x5zzibekdweepvmi36sqzywkchcda",
+          "source_unit": {
+            "record_cid": "baguqeerayiogyiuxpxy2cdjngs6vcu32575lsddffqtbdqjoklbilpe4dfvq",
+            "schema": "legal-source-structured-sample-unit/v1",
+            "sha256": "14510dd173adbb2100c99a76e4a7802e0bbb8f42ea01a0b8e6cf67621125af3e"
+          },
+          "source_url": "https://www.govinfo.gov/content/pkg/USCODE-2024-title10/html/USCODE-2024-title10-subtitleB-partII-chap723-sec7213.htm",
+          "source_version_cid": "baguqeera3y2krszyd5mqfdh6jfieircvqtzxcib45qamwrs4klhmhwkql5ca",
+          "text_view_json_pointer": "/views/1/text_view/text",
+          "text_utf8": "Officers of the Corps of Engineers may be assigned or transferred to and from duties involving the civil functions of the Corps of Engineers only with the approval of the Secretary of the Army."
+        },
+        "role": "officer_use_7213"
+      },
+      {
+        "comparison": {
+          "normalized_differences": [],
+          "release_normalized_UTF8_sha256": "3c8264afde92003a962dc254b3bc0192858cdfa2b5f6f1ed82cd1e1a82c1313e",
+          "retained_normalized_UTF8_sha256": "3c8264afde92003a962dc254b3bc0192858cdfa2b5f6f1ed82cd1e1a82c1313e",
+          "whitespace_normalized_equal": true
+        },
+        "release": {
+          "USLM_id": "idaade6b80-3a6f-11f1-a58a-d8db54b14ab5",
+          "canonical_USLM_selector": "/us/usc/t10/s7214",
+          "direct_text_elements_in_order": [
+            "content"
+          ],
+          "element": "section",
+          "exact_XML_UTF8_fragment": {
+            "UTF8_byte_range": [
+              43395556,
+              43395784
+            ],
+            "bytes": 228,
+            "sha256": "f24dcb53fa0769de4176ce55e8eaf4746c3c257754617d939f1e2c2c8d337bdc",
+            "text_utf8": "<content>\n<p style=\"-uslm-lc:I11\" class=\"indent0\">The President may detail not more than three officers assigned to the Corps of Engineers to assist the Mayor of the District of Columbia in discharging his duties.</p>\n</content>"
+          },
+          "exact_extracted_UTF8_bytes": 165,
+          "exact_extracted_UTF8_sha256": "f83712a216781b4092c68d9ec8045e38c5b09695b772244a0c44e3a4dcde6287",
+          "extracted_text_utf8": "\nThe President may detail not more than three officers assigned to the Corps of Engineers to assist the Mayor of the District of Columbia in discharging his duties.\n"
+        },
+        "retained": {
+          "UTF8_byte_range": [
+            408,
+            571
+          ],
+          "char_range": [
+            407,
+            570
+          ],
+          "decoded_field_UTF8_sha256": "58e446ec84d0d3cf42d4b322f0da06a16620c2621cfa29fab0f0c5ddbe834b64",
+          "exact_UTF8_bytes": 163,
+          "exact_UTF8_sha256": "3c8264afde92003a962dc254b3bc0192858cdfa2b5f6f1ed82cd1e1a82c1313e",
+          "field": "text",
+          "legal_id": "usc:us:10:7214",
+          "physical_row_ordinal": 2,
+          "physical_selector_sha256": "cb810520db41bb4ed6ca8ffa1d033b6764fa3d2aec7cde17db4ed1dfffc33870",
+          "raw_HTML_sha256": "9c33986e216e85dbae33e58a3201bf3c02d3c4ff887d48e5ec524f8813c5842e",
+          "raw_row_sha256": "7e53ea0aec792fdb168b3177b6552de1a3091aecef5137af43f7386c624fbc86",
+          "source_occurrence_cid": "baguqeeracdglsquykktyomvkuyrq2xf4ljhzwbdn7kguvnhithregnhhpoja",
+          "source_unit": {
+            "record_cid": "baguqeera632lzwmnhvsgkmnw6ydcqxmhepnxg7nssnnq2ayxcihfgevvlbrq",
+            "schema": "legal-source-structured-sample-unit/v1",
+            "sha256": "71d864e39fa5e175eb3af26eb78427418435fb89eb4868a2bb68bc2cc7a4a65c"
+          },
+          "source_url": "https://www.govinfo.gov/content/pkg/USCODE-2024-title10/html/USCODE-2024-title10-subtitleB-partII-chap723-sec7214.htm",
+          "source_version_cid": "baguqeerazs3yvjdtyapov3z5dbwfgpc7sks2lttcphq624tbw3ozrsp3pgba",
+          "text_view_json_pointer": "/views/2/text_view/text",
+          "text_utf8": "The President may detail not more than three officers assigned to the Corps of Engineers to assist the Mayor of the District of Columbia in discharging his duties."
+        },
+        "role": "officer_use_7214"
+      }
+    ],
+    "independent_input_observation": {
+      "path": "/tmp/legal-ir-olrc-119-102-title10-zabd_4ax/retained-pilot-title10-release-point-comparison-v01.json",
+      "bytes": 14899,
+      "sha256": "abcc04d63cdfba8cc2546cbab6a905ab46c04980cc04d53771b133618c536baf"
+    }
+  },
+  "current_retained_title10_source_typed_norm_replay_20261110": {
+    "7213": {
+      "alternatives": [
+        "A",
+        "B"
+      ],
+      "physical_paragraphs": 1,
+      "typed_expression_sha256s": [
+        "10cbe2589659caa3336e8d37550b4cad140c608445a4940507696f1ed33ec426",
+        "9c9a0d0ba26c89312ec58d20a6a48810545a23c34a2218b61c359c82946d9ba0"
+      ]
+    },
+    "7214": {
+      "anchors": 11,
+      "characters": 163,
+      "join": {
+        "bytes": 67766,
+        "path": "/tmp/pytest-of-barberb/legal-ir-retained-title10-source-replay-current-20261110-v01/attempt-v01/exports/7214pending-current-join-report.json",
+        "sha256": "f5f01152385a38fe36a7466f4d06868c08b695e9c887b3dcd5c898814dd04297"
+      },
+      "lexical_scope_status": "unreviewed_lexical_scope_transport_retained",
+      "open_context_slots": [
+        {
+          "attachments": [],
+          "availability": "missing",
+          "candidate_selector": null,
+          "expected_view_id": null,
+          "kind": "definition",
+          "locator": null,
+          "open": true,
+          "semantic_attachment_verified": false,
+          "slot_id": "legal-official-markup-context-slot:sha256:c44beafc1f0878c1373280be14b18df564a3348663fd6667cb3a1051f957992a",
+          "status": "open_missing"
+        },
+        {
+          "attachments": [],
+          "availability": "missing",
+          "candidate_selector": null,
+          "expected_view_id": null,
+          "kind": "authority",
+          "locator": null,
+          "open": true,
+          "semantic_attachment_verified": false,
+          "slot_id": "legal-official-markup-context-slot:sha256:16aaabd82119c6502ef6bc237a8871bb323a4547d58743b7353d612ed7d32ec8",
+          "status": "open_missing"
+        },
+        {
+          "attachments": [],
+          "availability": "missing",
+          "candidate_selector": null,
+          "expected_view_id": null,
+          "kind": "antecedent",
+          "locator": null,
+          "open": true,
+          "semantic_attachment_verified": false,
+          "slot_id": "legal-official-markup-context-slot:sha256:8144ab591e5a502a8cbd17855e434615f0d0baf3da29540228594aadd2eab14b",
+          "status": "open_missing"
+        },
+        {
+          "attachments": [],
+          "availability": "missing",
+          "candidate_selector": null,
+          "expected_view_id": null,
+          "kind": "shared_qualifier",
+          "locator": null,
+          "open": true,
+          "semantic_attachment_verified": false,
+          "slot_id": "legal-official-markup-context-slot:sha256:96ebabd75a8ba88df478ec4e84a463e2eb4a52ae23d104117da6ddf4ff978093",
+          "status": "open_missing"
+        },
+        {
+          "attachments": [],
+          "availability": "missing",
+          "candidate_selector": null,
+          "expected_view_id": null,
+          "kind": "temporal_origin",
+          "locator": null,
+          "open": true,
+          "semantic_attachment_verified": false,
+          "slot_id": "legal-official-markup-context-slot:sha256:8cb6245fcaeea3b76d5c68e683dded56b8b2fd5b7e1411972df8e3a738878fae",
+          "status": "open_missing"
+        },
+        {
+          "attachments": [],
+          "availability": "missing",
+          "candidate_selector": null,
+          "expected_view_id": null,
+          "kind": "referenced_provision",
+          "locator": null,
+          "open": true,
+          "semantic_attachment_verified": false,
+          "slot_id": "legal-official-markup-context-slot:sha256:e23907608260a9d54545ba1a3be2f1ab92c5aa1ae9fecce45bca70a9b78cbd18",
+          "status": "open_missing"
+        }
+      ],
+      "scope": {
+        "bytes": 46365,
+        "path": "/tmp/pytest-of-barberb/legal-ir-retained-title10-source-replay-current-20261110-v01/attempt-v01/exports/7214-current-scope-report.json",
+        "sha256": "61c460279d8f5398fbd205b33e1321fb2603122b3049985181c6350be936ae6e"
+      },
+      "selected_source_unit": {
+        "record_cid": "baguqeera632lzwmnhvsgkmnw6ydcqxmhepnxg7nssnnq2ayxcihfgevvlbrq",
+        "schema": "legal-source-structured-sample-unit/v1",
+        "sha256": "71d864e39fa5e175eb3af26eb78427418435fb89eb4868a2bb68bc2cc7a4a65c"
+      },
+      "status": "source_only_pending_typed_interpretation_retained",
+      "text_sha256": "3c8264afde92003a962dc254b3bc0192858cdfa2b5f6f1ed82cd1e1a82c1313e",
+      "typed_candidate": null,
+      "unresolved_issues": [
+        {
+          "code": "cardinality_frame_distinctness_and_time",
+          "reason": "The capped plural phrase needs explicit counted objects, distinctness, event/state and time scope; no global or lifetime frame is inferred.",
+          "span": {
+            "end": 44,
+            "offset_unit": "unicode_character_half_open",
+            "origin": "source",
+            "start": 25,
+            "text": "not more than three"
+          }
+        },
+        {
+          "code": "recipient_assignment_restriction",
+          "reason": "The selected officer category and Corps assignment restriction need explicit relational arguments and scope.",
+          "span": {
+            "end": 88,
+            "offset_unit": "unicode_character_half_open",
+            "origin": "source",
+            "start": 45,
+            "text": "officers assigned to the Corps of Engineers"
+          }
+        },
+        {
+          "code": "purpose_attachment",
+          "reason": "The assistance-purpose phrase is retained without deciding its formal attachment.",
+          "span": {
+            "end": 136,
+            "offset_unit": "unicode_character_half_open",
+            "origin": "source",
+            "start": 89,
+            "text": "to assist the Mayor of the District of Columbia"
+          }
+        },
+        {
+          "code": "pronoun_and_duties_referent",
+          "reason": "The discharge clause and pronoun referent remain unresolved.",
+          "span": {
+            "end": 162,
+            "offset_unit": "unicode_character_half_open",
+            "origin": "source",
+            "start": 137,
+            "text": "in discharging his duties"
+          }
+        },
+        {
+          "code": "plural_to_definition_identity",
+          "reason": "The literal plural officers is not a resolved singular officer definition binding.",
+          "span": {
+            "end": 53,
+            "offset_unit": "unicode_character_half_open",
+            "origin": "source",
+            "start": 45,
+            "text": "officers"
+          }
+        },
+        {
+          "code": "applicability_authority_and_remaining_context",
+          "reason": "The original context requirements remain open. Separate retained definition/scope nominations are available but are not applied or adjudicated by this source-only request.",
+          "span": {
+            "end": 163,
+            "offset_unit": "unicode_character_half_open",
+            "origin": "source",
+            "start": 0,
+            "text": "The President may detail not more than three officers assigned to the Corps of Engineers to assist the Mayor of the District of Columbia in discharging his duties."
+          }
+        }
+      ]
+    },
+    "accepted_observation": true,
+    "authority": {
+      "Lean_admitted": false,
+      "complete_norm_formalized": false,
+      "evaluation_gold_qualified": false,
+      "execution_authority": false,
+      "governing_use_verified": false,
+      "graph_admitted": false,
+      "model_promoted": false,
+      "proof_authority": false,
+      "review_performed": false,
+      "source_meaning_selected": false,
+      "source_meaning_verified": false,
+      "teacher_promoted": false,
+      "training_gold_qualified": false
+    },
+    "durability": {
+      "bytes": 8265,
+      "path": "/tmp/pytest-of-barberb/legal-ir-retained-title10-source-replay-current-20261110-v01/attempt-v01/logs/validation-durability.json",
+      "sha256": "03e60e473b37e41ea2d67673af7067c7881f09fdbfb5e8caff2ca0129d12284e"
+    },
+    "file_bytes": 1887661,
+    "file_count": 47,
+    "file_index": {
+      "bytes": 7043,
+      "path": "/tmp/pytest-of-barberb/legal-ir-retained-title10-source-replay-current-20261110-v01/attempt-v01/exports/file-index.json",
+      "sha256": "3ce87dc5e5ece2910789db36f87f8c3a93dfe73e609a8562ecb8112974aff62d"
+    },
+    "interpretation_review": "pending",
+    "legal_applicability_review": "pending",
+    "named_checks": [
+      "original_manifest_chain_and_30_file_custody",
+      "two_complete_original_populations_67_units_65_controls",
+      "current_scopes_preserve_exact_paragraphs_22_anchors_12_issues_and_open_context",
+      "original_typed_requests_preserve_native_ast_and_generated_text_only",
+      "two_partial_hypotheses_preserve_38_provenance_entries_12_argument_occurrences",
+      "competing_alternatives_share_one_physical_7213_paragraph",
+      "7214_stays_source_only_pending_without_typed_target",
+      "all_source_meaning_review_gold_build_and_model_authority_stays_false",
+      "new_current_root_generation_has_explicit_original_lineage",
+      "saved_byte_public_replay_same_process",
+      "refuse_wrong_independent_join_request_pin",
+      "refuse_changed_original_source_bytes",
+      "refuse_resealed_shortened_source_request",
+      "refuse_resealed_missing_typed_node_correspondence",
+      "refuse_other_original_modal_alternative_as_same_typed_report",
+      "refuse_resealed_training_mask_escalation",
+      "refuse_resealed_omission_of_original_unresolved_issue",
+      "refuse_partial_typed_inputs_for_pending_7214",
+      "original_assets_and_current_producer_bytes_unchanged_at_close"
+    ],
+    "original_Tool": {
+      "drained": true,
+      "elapsed_seconds": 302.989466782,
+      "exit": 0,
+      "final_chunk": "be8fc8",
+      "initial_chunk": "39a49b",
+      "session_id": 45714
+    },
+    "original_custody_closed": true,
+    "owner_stdout": {
+      "bytes": 5330,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-retained-title10-source-replay-current-20261110-v01/owner.stdout",
+      "sha256": "04886ef2988cafcaaf1c7f76cc7a172931daa9fd718bd54db54cdcdd0bde1bfa"
+    },
+    "parent": {
+      "bytes": 13682,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-retained-title10-source-replay-current-20261110-v01/parent-closeout.json",
+      "sha256": "b74884c5f205acc3b2877dcb35dbd4170ee5616dc5ef83ddaf4b2dc944060c6b"
+    },
+    "probe_receipt": {
+      "bytes": 27527,
+      "path": "/tmp/pytest-of-barberb/legal-ir-retained-title10-source-replay-current-20261110-v01/attempt-v01/exports/probe-receipt.json",
+      "sha256": "885da8cdaa22547aa3ab74cc805205fcdfb49696e445def321db4c92cad9f988"
+    },
+    "refusal_count": 8,
+    "request": {
+      "bytes": 44628,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-retained-title10-source-replay-current-20261110-v01/request.json",
+      "sha256": "7c1389d8bae52ede6bebc518d06eb1202b0d42d93d807c82b397a9dd5d2becd0"
+    },
+    "schema": "legal-ir-retained-title10-current-replay-readback/v1",
+    "source_closed": true,
+    "source_pins": 234,
+    "storage": {
+      "artifacts_durable_asserted": true,
+      "final_attempt_bytes": 1887661,
+      "native_lease": {
+        "acquired_at": 1794353287.9459438,
+        "cancelled": true,
+        "child_process_slots": 2,
+        "cpu_slots": 1,
+        "gpu_memory_mb": 0,
+        "lane": "validation",
+        "lease_id": "384d0520790a43838abc11eb3513efc5",
+        "memory_mb": 1536,
+        "owner_pid": 2483476,
+        "parent_lease_id": null,
+        "released": true,
+        "requires_gpu": false,
+        "unified_memory_mb": 0,
+        "wait_seconds": 0.0018663019873201847
+      },
+      "reservation_id": "adcefa4958794f8d931f6f3afd64be8b",
+      "status": "released",
+      "storage_bytes": 6291456,
+      "storage_release_authorized_by_parent": false
+    },
+    "independent_readback": {
+      "path": "/tmp/legal-ir-olrc-119-102-title10-zabd_4ax/retained-title10-current-source-replay-readback-v01.json",
+      "bytes": 11355,
+      "sha256": "19dff40cabf3ba3dbb6d15e0deede9eb31b241ba7dfb9024512756ff863ecf0b"
+    },
+    "scope": "Current lexical custody and typed candidate transport for retained paragraphs. Full-parent correspondence and independent legal review are pending."
+  }
 }

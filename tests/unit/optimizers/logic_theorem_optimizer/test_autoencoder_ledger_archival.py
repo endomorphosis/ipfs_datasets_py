@@ -1,13 +1,17 @@
-"""Effect-free unittest controls. They do not qualify native/storage effects.
+"""Pure archival protocol controls and explicit private Native fixtures.
 
-Run only under root's genuine finite scheduler root/phase admission, with
-python -I -S -B. No pytest, temp files, caches, JUnit or test artifacts are used.
+The direct unittest entry selects MemoryProtocolTests, whose controls remain
+effect-free. NativeProfileTests is selected separately under the existing
+owned validator and retains its private metadata for the outer evidence seal.
 """
+from contextlib import contextmanager
 import copy
 import importlib.util
 import json
+import os
 from pathlib import Path
 import sys
+import tempfile
 import unittest
 from unittest.mock import patch
 
@@ -98,23 +102,6 @@ class MemoryProtocolTests(unittest.TestCase):
         self.assertEqual(result["snapshot_bytes"], raw)
         self.assertEqual(sdk.restore_archived_record(raw, result["ledger"]["reservations"][ID]), ledger["reservations"][ID])
         self.assertGreater(result["reclaimed_ledger_bytes"], 64 * 1024)
-
-    def test_current_profile_archives_ledger_larger_than_legacy_limit(self):
-        ledger, selections, admin = inputs()
-        ledger["limit_bytes"] = 220_000_000_000
-        ledger["reservations"][OTHER]["opaque_authority_free_metadata"] = "x" * (8 * 1024 * 1024)
-        result = plan(ledger, selections, admin)
-        self.assertGreater(len(result["snapshot_bytes"]), 8 * 1024 * 1024)
-        self.assertEqual(result["ledger"]["reservations"][OTHER], ledger["reservations"][OTHER])
-        self.assertEqual(result["ledger"]["limit_bytes"], ledger["limit_bytes"])
-        self.assertEqual(sdk.restore_archived_record(result["snapshot_bytes"],
-            result["ledger"]["reservations"][ID]), ledger["reservations"][ID])
-
-    def test_legacy_profile_refuses_ledger_larger_than_its_limit(self):
-        ledger, selections, admin = inputs()
-        ledger["reservations"][OTHER]["opaque_authority_free_metadata"] = "x" * (8 * 1024 * 1024)
-        with self.assertRaisesRegex(sdk.ArchivalRefusal, "profile metadata bound"):
-            plan(ledger, selections, admin)
 
     def test_foreign_active_row_and_root_policy_are_unchanged(self):
         ledger, selections, admin = inputs()
@@ -279,10 +266,339 @@ class MemoryProtocolTests(unittest.TestCase):
     def test_peak_math_includes_snapshot_atomic_temp_journals_and_directory_margin(self):
         self.assertEqual(sdk.required_peak_bytes(8388608, 8388608), 8388608 * 2 + 2097152 + 65536)
         self.assertLess(sdk.required_peak_bytes(8388608, 8388608), sdk.DEFAULT_PEAK_BYTES)
-        self.assertEqual(sdk.required_peak_bytes(16777216, 16777216), 16777216 * 2 + 2097152 + 65536)
-        for invalid in (0, -1, 16777217, True):
+        for invalid in (0, -1, 8388609, True):
             with self.assertRaisesRegex(sdk.ArchivalRefusal, "bounded archival size"):
                 sdk.required_peak_bytes(invalid, 1)
+
+
+    def test_current_profile_roundtrip_preserves_complete_records(self):
+        ledger, selections, admin = current_inputs()
+        before = copy.deepcopy(ledger)
+        result = current_plan(ledger, selections, admin)
+        self.assertEqual(result["snapshot_bytes"], sdk.wire(before))
+        self.assertEqual(result["ledger"]["limit_bytes"], 220_000_000_000)
+        self.assertEqual(result["ledger"]["reservations"][OTHER], before["reservations"][OTHER])
+        self.assertEqual(
+            sdk.restore_archived_record(result["snapshot_bytes"], result["ledger"]["reservations"][ID],
+                                        profile=sdk.CURRENT_PROFILE),
+            before["reservations"][ID],
+        )
+        self.assertEqual(ledger, before)
+
+    def test_current_reader_accepts_legacy_snapshot_without_rewriting_it(self):
+        legacy = plan()
+        before = bytes(legacy["snapshot_bytes"])
+        restored = sdk.restore_archived_record(before, legacy["ledger"]["reservations"][ID],
+                                               profile=sdk.CURRENT_PROFILE)
+        self.assertEqual(restored, inputs()[0]["reservations"][ID])
+        self.assertEqual(before, legacy["snapshot_bytes"])
+
+    def test_small_current_snapshot_keeps_legacy_pointer_reader_behavior(self):
+        result = current_plan()
+        folded = result["ledger"]["reservations"][ID]
+        self.assertEqual(folded["explicit_reconciliation"]["schema"], sdk.POINTER_SCHEMA)
+        self.assertEqual(sdk.restore_archived_record(result["snapshot_bytes"], folded),
+                         current_inputs()[0]["reservations"][ID])
+
+    def test_current_large_snapshot_is_explicit_and_legacy_reader_stays_bounded(self):
+        ledger, selections, admin = current_inputs()
+        record = ledger["reservations"][ID]
+        record["explicit_reconciliation"]["proof"] = "p" * (8 * 1024 * 1024)
+        selections[0]["expected_record_sha256"] = sdk.digest(record)
+        selections[0]["expected_reconciliation_sha256"] = sdk.digest(record["explicit_reconciliation"])
+        result = current_plan(ledger, selections, admin)
+        self.assertGreater(len(result["snapshot_bytes"]), 8 * 1024 * 1024)
+        folded = result["ledger"]["reservations"][ID]
+        self.assertEqual(sdk.restore_archived_record(result["snapshot_bytes"], folded,
+                                                    profile=sdk.CURRENT_PROFILE), record)
+        with self.assertRaisesRegex(sdk.ArchivalRefusal, "bounded original snapshot"):
+            sdk.restore_archived_record(result["snapshot_bytes"], folded)
+
+    def test_current_profile_requires_its_exact_cap(self):
+        for cap in (160_000_000_000, 220_000_000_001, True):
+            with self.subTest(cap=cap):
+                ledger, selections, admin = current_inputs()
+                ledger["limit_bytes"] = cap
+                with self.assertRaisesRegex(sdk.ArchivalRefusal, "schema and cap"):
+                    current_plan(ledger, selections, admin)
+
+    def test_current_profile_capacity_and_boundary_keep_exact_arithmetic(self):
+        observation = self.capacity()
+        for name in ("observed_apparent_bytes", "charged_bytes", "limit_bytes"):
+            observation[name] += 60_000_000_000
+        self.assertTrue(sdk.check_capacity_precharge(observation, 60, profile=sdk.CURRENT_PROFILE))
+        with self.assertRaisesRegex(sdk.ArchivalRefusal, "projection or cap"):
+            sdk.check_capacity_precharge(observation, 60)
+        observation["observed_apparent_bytes"] += 1
+        observation["charged_bytes"] += 1
+        with self.assertRaisesRegex(sdk.ArchivalRefusal, "precharge does not fit"):
+            sdk.check_capacity_precharge(observation, 60, profile=sdk.CURRENT_PROFILE)
+
+    def test_current_peak_math_preserves_default_and_rejects_invalid_sizes(self):
+        bound = 16 * 1024 * 1024
+        expected = bound * 2 + 2 * 1024 * 1024 + 65536
+        self.assertEqual(sdk.required_peak_bytes(bound, bound, profile=sdk.CURRENT_PROFILE), expected)
+        self.assertGreater(expected, sdk.DEFAULT_PEAK_BYTES)
+        self.assertEqual(sdk.DEFAULT_PEAK_BYTES, 32 * 1024 * 1024)
+        for value in (0, -1, bound + 1, True, 1.0):
+            with self.subTest(value=value):
+                with self.assertRaisesRegex(sdk.ArchivalRefusal, "bounded archival size"):
+                    sdk.required_peak_bytes(value, 1, profile=sdk.CURRENT_PROFILE)
+
+    def test_current_profile_pure_operations_open_no_files(self):
+        ledger, selections, admin = current_inputs()
+        with patch("builtins.open", side_effect=AssertionError("filesystem effect")), patch(
+                "os.open", side_effect=AssertionError("filesystem effect")):
+            result = current_plan(ledger, selections, admin)
+            sdk.restore_archived_record(result["snapshot_bytes"], result["ledger"]["reservations"][ID],
+                                        profile=sdk.CURRENT_PROFILE)
+            sdk.required_peak_bytes(len(result["snapshot_bytes"]), len(result["ledger_bytes"]),
+                                    profile=sdk.CURRENT_PROFILE)
+
+    def test_unknown_profiles_refuse_before_any_pure_effect(self):
+        legacy = plan()
+        for profile in (None, True, {}, [], "released-reconciliation-archival/v3"):
+            with self.subTest(profile=profile):
+                with self.assertRaises(sdk.ArchivalRefusal):
+                    sdk.plan_reconciliation_archival(legacy["snapshot_bytes"], selections=inputs()[1],
+                        snapshot_path="/named/private-history/ledger-before.private.json",
+                        administration_record=inputs()[2], profile=profile)
+                with self.assertRaises(sdk.ArchivalRefusal):
+                    sdk.restore_archived_record(legacy["snapshot_bytes"],
+                        legacy["ledger"]["reservations"][ID], profile=profile)
+                with self.assertRaises(sdk.ArchivalRefusal):
+                    sdk.required_peak_bytes(1, 1, profile=profile)
+                with self.assertRaises(sdk.ArchivalRefusal):
+                    sdk.check_capacity_precharge(self.capacity(), 60, profile=profile)
+
+
+def current_inputs():
+    ledger, selections, admin = inputs()
+    ledger["limit_bytes"] = 220_000_000_000
+    admin["archival"]["schema"] = sdk.CURRENT_PROFILE
+    return ledger, selections, admin
+
+
+def current_plan(ledger=None, selections=None, admin=None):
+    fixture = current_inputs()
+    return sdk.plan_reconciliation_archival(
+        sdk.wire(fixture[0] if ledger is None else ledger),
+        selections=fixture[1] if selections is None else selections,
+        snapshot_path="/named/private-history/ledger-before.private.json",
+        administration_record=fixture[2] if admin is None else admin,
+        profile=sdk.CURRENT_PROFILE,
+    )
+
+
+class NativeProfileTests(unittest.TestCase):
+    """Explicit private Native fixtures retained for the outer owner's seal."""
+
+    def setUp(self):
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer import existing_resource_scheduler
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer import resource_scheduler
+        self.native = resource_scheduler
+        self.existing = existing_resource_scheduler
+        self.directory = Path(tempfile.mkdtemp(prefix="legal-ir-archive-native-profile-"))
+        self.root = self.directory / "outputs"
+        self.root.mkdir(mode=0o700)
+        self.archive = self.root / "private-history"
+        self.archive.mkdir(mode=0o700)
+        self.ledger_path = self.directory / "disk.json"
+        self.scheduler = self.native.GlobalResourceScheduler(self.native.ResourceSchedulerConfig(
+            total_cpu_slots=4, total_memory_mb=4096, total_child_process_slots=8,
+            total_gpu_memory_mb=None, total_unified_memory_mb=None,
+            lane_reservations={"orchestration": {"cpu_slots": 1, "memory_mb": 0}},
+            state_path=self.directory / "native-state.json", proof_safety_enabled=True,
+            proof_memory_stall_percent=100.0, proof_cpu_stall_percent=100.0,
+            proof_io_stall_percent=100.0, auto_renew_leases=False,
+        ))
+        self.policy = copy.deepcopy(self._read(self.scheduler.state_path)["config"])
+        self.policy_digest = self.existing.policy_sha256(self.policy)
+        self.original_caps = (base.MAX_LEDGER_BYTES, base.MAX_STORAGE_BYTES)
+        template = inputs()[0]["reservations"][ID]
+        rows = {}
+        self.selections = []
+        for ordinal in range(8):
+            identifier = format(0x1000 + ordinal, "032x")
+            attempt = self.root / ("old-attempt-" + str(ordinal))
+            attempt.mkdir(mode=0o700)
+            record = copy.deepcopy(template)
+            record.update(reservation_id=identifier, owner_pid=os.getpid(),
+                          attempt_directory=base._root_identity(attempt))
+            record["explicit_reconciliation"]["ordinal"] = ordinal
+            rows[identifier] = record
+            self.selections.append({"reservation_id": identifier,
+                "expected_record_sha256": sdk.digest(record),
+                "expected_reconciliation_sha256": sdk.digest(record["explicit_reconciliation"]),
+                "expected_owner_pid": os.getpid(), "expected_attempt_path": str(attempt)})
+        foreign = inputs()[0]["reservations"][OTHER]
+        for identifier, status in ((OTHER, "active"), ("4" * 32, "retained")):
+            attempt = self.root / ("foreign-" + status)
+            attempt.mkdir(mode=0o700)
+            record = copy.deepcopy(foreign)
+            record.update(reservation_id=identifier, status=status, owner_pid=os.getpid(),
+                          attempt_directory=base._root_identity(attempt))
+            rows[identifier] = record
+        self.original = {"schema": base.SCHEMA, "roots": [base._root_identity(self.root)],
+                         "limit_bytes": base.MAX_STORAGE_BYTES, "reservations": rows}
+        with os.fdopen(os.open(self.ledger_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
+                               0o600), "wb") as stream:
+            stream.write(sdk.wire(self.original))
+            stream.flush()
+            os.fsync(stream.fileno())
+
+    def tearDown(self):
+        self.assertEqual(self.scheduler.snapshot()["allocated"]["cpu_slots"], 0)
+        self.assertEqual(self._read(self.scheduler.state_path)["config"], self.policy)
+        self.assertEqual((base.MAX_LEDGER_BYTES, base.MAX_STORAGE_BYTES), self.original_caps)
+
+    @staticmethod
+    def _read(path):
+        return json.loads(path.read_bytes())
+
+    @contextmanager
+    def _leases(self):
+        with self.scheduler.acquire("orchestration", cpu_slots=1, memory_mb=256,
+                child_process_slots=1, timeout=10, request_id="private-archive-test:root") as root:
+            with root.acquire_child(cpu_slots=1, memory_mb=256, child_process_slots=1,
+                    timeout=10, request_id="private-archive-test:phase") as phase:
+                yield root, phase
+        self.assertTrue(root.released)
+        self.assertTrue(phase.released)
+
+    def _invoke(self, root, phase, **overrides):
+        arguments = dict(ledger_path=self.ledger_path, roots=[self.root],
+            archive_directory=self.archive, selections=self.selections,
+            expected_ledger_sha256=sdk.sha(self.ledger_path.read_bytes()),
+            root_lease=root, phase_lease=phase,
+            root_request_id="private-archive-test:root", phase_request_id="private-archive-test:phase",
+            scheduler_state_path=self.scheduler.state_path,
+            expected_scheduler_policy_sha256=self.policy_digest,
+            peak_storage_bytes=32 * 1024 * 1024, timeout_seconds=30)
+        arguments.update(overrides)
+        return sdk.archive_released_reconciliations(**arguments)
+
+    def test_legacy_native_profile_refuses_current_host_before_write(self):
+        self.assertEqual(self.original_caps, (16 * 1024 * 1024, 220_000_000_000))
+        before = self.ledger_path.read_bytes()
+        with self._leases() as (root, phase):
+            with self.assertRaisesRegex(sdk.ArchivalRefusal, "unchanged native caps required"):
+                self._invoke(root, phase)
+            self.assertEqual(self.ledger_path.read_bytes(), before)
+            self.assertEqual(tuple(self.archive.iterdir()), ())
+            self.assertFalse(root.released)
+            self.assertFalse(phase.released)
+
+    def test_current_native_profile_archives_all_eight_and_preserves_foreign_rows(self):
+        before = self.ledger_path.read_bytes()
+        with self._leases() as (root, phase):
+            result = self._invoke(root, phase, profile=sdk.CURRENT_PROFILE)
+            self.assertFalse(root.released)
+            self.assertFalse(phase.released)
+            self.assertEqual(result["schema"], sdk.CURRENT_PROFILE)
+            self.assertTrue(result["archive_history_durable"])
+            self.assertTrue(result["actual_postwrite_capacity_satisfied"])
+            self.assertTrue(result["all_original_selected_records_reconstructed"])
+            self.assertFalse(result["active_or_retained_rows_changed"])
+            self.assertFalse(result["native_caps_changed"])
+            self.assertEqual(result["actual_native_root_id"], root.lease_id)
+            self.assertEqual(result["actual_native_phase_id"], phase.lease_id)
+        saved = (self.archive / "ledger-before.private.json").read_bytes()
+        self.assertEqual(saved, before)
+        actual = self._read(self.ledger_path)
+        self.assertEqual(actual["roots"], self.original["roots"])
+        self.assertEqual(actual["limit_bytes"], self.original["limit_bytes"])
+        for selection in self.selections:
+            identifier = selection["reservation_id"]
+            rebuilt = sdk.restore_archived_record(saved, actual["reservations"][identifier],
+                                                  profile=sdk.CURRENT_PROFILE)
+            self.assertEqual(rebuilt, self.original["reservations"][identifier])
+        for identifier in (OTHER, "4" * 32):
+            self.assertEqual(actual["reservations"][identifier], self.original["reservations"][identifier])
+        added = set(actual["reservations"]) - set(self.original["reservations"])
+        self.assertEqual(len(added), 1)
+        admin = actual["reservations"][added.pop()]
+        self.assertEqual(admin["status"], "released")
+        self.assertEqual(admin["archival"]["schema"], sdk.CURRENT_PROFILE)
+        self.assertEqual(admin["storage_bytes"], 32 * 1024 * 1024)
+        self.assertEqual(set(path.name for path in self.archive.iterdir()),
+                         {"ledger-before.private.json", "admission-intent.private.json"})
+
+    def test_current_native_profile_rejects_unknown_profile_before_write(self):
+        before = self.ledger_path.read_bytes()
+        with self._leases() as (root, phase):
+            with self.assertRaises(sdk.ArchivalRefusal):
+                self._invoke(root, phase, profile="released-reconciliation-archival/v3")
+        self.assertEqual(self.ledger_path.read_bytes(), before)
+        self.assertEqual(tuple(self.archive.iterdir()), ())
+
+    def test_current_native_profile_rejects_ledger_cap_mismatch_before_write(self):
+        damaged = copy.deepcopy(self.original)
+        damaged["limit_bytes"] = 160_000_000_000
+        self.ledger_path.write_bytes(sdk.wire(damaged))
+        before = self.ledger_path.read_bytes()
+        with self._leases() as (root, phase):
+            with self.assertRaises((sdk.ArchivalRefusal, base.DaemonResourceError)):
+                self._invoke(root, phase, profile=sdk.CURRENT_PROFILE)
+        self.assertEqual(self.ledger_path.read_bytes(), before)
+        self.assertEqual(tuple(self.archive.iterdir()), ())
+
+    def test_current_native_profile_rejects_unbound_peak_before_write(self):
+        before = self.ledger_path.read_bytes()
+        with self._leases() as (root, phase):
+            for peak in (32 * 1024 * 1024 - 1, 64 * 1024 * 1024 + 1, True):
+                with self.subTest(peak=peak):
+                    with self.assertRaises(sdk.ArchivalRefusal):
+                        self._invoke(root, phase, profile=sdk.CURRENT_PROFILE, peak_storage_bytes=peak)
+        self.assertEqual(self.ledger_path.read_bytes(), before)
+        self.assertEqual(tuple(self.archive.iterdir()), ())
+
+
+    def test_current_native_profile_requires_explicit_peak_for_large_snapshot(self):
+        ledger = copy.deepcopy(self.original)
+        unselected_id = "5" * 32
+        unselected_attempt = self.root / "unselected-large-released"
+        unselected_attempt.mkdir(mode=0o700)
+        unselected = copy.deepcopy(ledger["reservations"][OTHER])
+        unselected.update(reservation_id=unselected_id, status="released",
+            artifacts_durable_asserted=True,
+            attempt_directory=base._root_identity(unselected_attempt))
+        unselected["opaque_authority_free_metadata"]["padding"] = "u" * (15 * 1024**2 - 128 * 1024)
+        ledger["reservations"][unselected_id] = unselected
+        before = sdk.wire(ledger)
+        self.assertGreater(len(before), 15 * 1024**2)
+        self.assertLessEqual(len(before), 16 * 1024**2)
+        self.ledger_path.write_bytes(before)
+        with self._leases() as (root, phase):
+            with self.assertRaisesRegex(sdk.ArchivalRefusal, "amplification exceeds precharge"):
+                self._invoke(root, phase, profile=sdk.CURRENT_PROFILE)
+            self.assertEqual(self.ledger_path.read_bytes(), before)
+            self.assertEqual(tuple(self.archive.iterdir()), ())
+            self.assertFalse(root.released)
+            self.assertFalse(phase.released)
+            result = self._invoke(root, phase, profile=sdk.CURRENT_PROFILE,
+                                  peak_storage_bytes=64 * 1024**2)
+            self.assertTrue(result["archive_history_durable"])
+            self.assertTrue(result["all_original_selected_records_reconstructed"])
+            self.assertFalse(result["native_caps_changed"])
+        snapshot = (self.archive / "ledger-before.private.json").read_bytes()
+        self.assertEqual(snapshot, before)
+        actual = self._read(self.ledger_path)
+        for selection in self.selections:
+            identifier = selection["reservation_id"]
+            rebuilt = sdk.restore_archived_record(snapshot, actual["reservations"][identifier],
+                                                  profile=sdk.CURRENT_PROFILE)
+            self.assertEqual(rebuilt, ledger["reservations"][identifier])
+        for identifier in (OTHER, "4" * 32, unselected_id):
+            self.assertEqual(actual["reservations"][identifier], ledger["reservations"][identifier])
+        self.assertEqual(actual["roots"], ledger["roots"])
+        self.assertEqual(actual["limit_bytes"], ledger["limit_bytes"])
+        added = set(actual["reservations"]) - set(ledger["reservations"])
+        self.assertEqual(len(added), 1)
+        admin = actual["reservations"][added.pop()]
+        self.assertEqual(admin["status"], "released")
+        self.assertEqual(admin["storage_bytes"], 64 * 1024**2)
+
 
 
 if __name__ == "__main__":

@@ -1,0 +1,10 @@
+# Documentation moved
+
+The maintained entry is [legal_corpus_definition_norm_adapter.md](../../ipfs_datasets_py/logic/autoformal/docs/guides/legal_corpus_definition_norm_adapter.md). This former path is retained for existing links; original bytes and provenance are preserved in the [migration archive](../../ipfs_datasets_py/logic/autoformal/docs/ARCHIVE.md).
+
+<!-- Legacy bookmarks refer to sections in the preserved original. -->
+<a id="explicit-definition-and-unary-norm-to-a-candidate-graph"></a>
+<a id="independent-inputs"></a>
+<a id="supported-declared-meaning"></a>
+<a id="source-origins-and-scoped-records"></a>
+<a id="qualification-bounds-and-export"></a>

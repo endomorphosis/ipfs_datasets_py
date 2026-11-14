@@ -1,0 +1,136 @@
+{
+  "actual_cache_review": {
+    "bytes": 20689,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-successor-cache-v01/independent-actual-cache-result-review-v01.json",
+    "sha256": "d0662674124b5f4938e8d2ab8af35a6bd7b40c05f03446cf843c2ff2d0880b33"
+  },
+  "actual_cache_scope": "Two actual canonical-R planner/saved-byte-validator operations on96 authored diagnostic benchmark requests; not96 statutory provisions.",
+  "actual_copy_review": {
+    "bytes": 27711,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-successor-cache-v01/independent-actual-copy-review-v01.json",
+    "sha256": "cd012888d912aa7df2a0f8049b269c937a5bf2faf614d6cac1f455331be29b0a"
+  },
+  "commitment_comparison": {
+    "differing_uses": 456,
+    "distances_or_cosines_or_head_quality_computed": false,
+    "equal_uses": 0,
+    "review": {
+      "bytes": 4620,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-successor-cache-v01/independent-raw-commitment-review-v01.json",
+      "sha256": "c07e13f3169886eb85efc19560b7898c6bb317d68ca5cf9192db2789c8e688f1"
+    },
+    "role_uses": 456,
+    "scope": "Saved metadata BE-f32 commitments only."
+  },
+  "commitment_review": {
+    "bytes": 4620,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-successor-cache-v01/independent-raw-commitment-review-v01.json",
+    "sha256": "c07e13f3169886eb85efc19560b7898c6bb317d68ca5cf9192db2789c8e688f1"
+  },
+  "conditioning_or_head_compatibility_qualified": false,
+  "copied_bytes": 9420264,
+  "copied_payload_files": 12,
+  "copy_is_not_new_cache_or_model_validation": true,
+  "durable_cache_files": {
+    "train": {
+      "copied": {
+        "bytes": 4606279,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-successor-cache-v01/attempt-copy-v01/exports/durable-cache/train-cache.json",
+        "sha256": "f2139b8c9d4e491fdca3feabcffb462a4930134742746b6a8eeb008536804b62"
+      },
+      "original": {
+        "bytes": 4606279,
+        "path": "/tmp/pytest-of-barberb/legal-ir-native384-cache-20261027-v02/exports/native384-cache/train-cache.json",
+        "sha256": "f2139b8c9d4e491fdca3feabcffb462a4930134742746b6a8eeb008536804b62"
+      },
+      "structural_sha256": "00de38c4112d9d51da5f5e347dc48b77e139aa80a7a9412fd49e28152ec5535b"
+    },
+    "validation": {
+      "copied": {
+        "bytes": 4617952,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-successor-cache-v01/attempt-copy-v01/exports/durable-cache/validation-cache.json",
+        "sha256": "08a0810ae19b379d52b8829599289c69a7be4150bea75276f2babe8cde34b6f5"
+      },
+      "original": {
+        "bytes": 4617952,
+        "path": "/tmp/pytest-of-barberb/legal-ir-native384-cache-20261027-v02/exports/native384-cache/validation-cache.json",
+        "sha256": "08a0810ae19b379d52b8829599289c69a7be4150bea75276f2babe8cde34b6f5"
+      },
+      "structural_sha256": "316311b6a8e63586bd28b46f8df958f6213dbb995bf6c64982d7ad33bb879208"
+    }
+  },
+  "evaluation_gold_mask": 0,
+  "evidence_id": "prepared384-canonical-source-cache-qualified-20261027-01",
+  "exact_byte_copy_manifest": {
+    "bytes": 15069,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-successor-cache-v01/attempt-copy-v01/exports/durable-cache/copy-manifest.json",
+    "sha256": "bd6ea791c6994c6548b30228c3381f14b6e827657da01d58f774a2df8179e715"
+  },
+  "external_publication_performed": false,
+  "facts": {
+    "actual_module_name_observations": 16,
+    "actual_physical_module_origins": 15,
+    "captured_sources": 21,
+    "cases_passed": 2,
+    "clause_slots": 360,
+    "exact_f32_payload_copies_checked": 912,
+    "genuine_code_entries": {
+      "arbitrary_native_source_cache._requests": 8,
+      "legal_native_conditioning._native_index": 4,
+      "load_embedding_production_receipt": 8,
+      "plan_arbitrary_native_source_cache": 4,
+      "validate_arbitrary_native_source_cache": 2
+    },
+    "phase_events_passed": 6,
+    "physical_input_identities": 432,
+    "physical_role_uses": 456,
+    "ready_rows": 96,
+    "refused_rows": 0,
+    "requested_rows": 96,
+    "source_compile_PATH_observations": 15,
+    "source_pin_count": 42,
+    "source_resolver_calls": 12,
+    "whole_payload_alias_groups": 24
+  },
+  "failed_setup_recovery_review": {
+    "bytes": 7779,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-successor-cache-v01/storage-recovery-v01/independent-closeout-review-v01.json",
+    "sha256": "056a2283545aa59af6e1f0ae79fa081099b75e3988bc6217059183a4985a9b51"
+  },
+  "failed_v01": {
+    "actual_cache_API_operations": 0,
+    "original_files_retained": 6,
+    "original_storage_reconciled": true,
+    "qualification_credit": 0,
+    "review": {
+      "bytes": 7779,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-successor-cache-v01/storage-recovery-v01/independent-closeout-review-v01.json",
+      "sha256": "056a2283545aa59af6e1f0ae79fa081099b75e3988bc6217059183a4985a9b51"
+    },
+    "setup_failed": true
+  },
+  "limitations": [
+    "Cache acceptance covers only the selected96 diagnostic requests and saved receipts; broader corpus and changed-generation consumers require their own exact contracts.",
+    "Eight ordinary receipt-loader returns are metadata consumption, not eight encoder executions.",
+    "Commitment mismatch is exact declared-byte evidence; it supplies no distance, tolerance, learned-head degradation or numerical-parity result.",
+    "The setup-failed first attempt and its original-owner storage recovery are separate from the two passed actual cases.",
+    "Source/import/compile-path observations do not attest exact compiled buffers, whole-package execution, legal meaning or model convergence.",
+    "Durable exact-byte copy adds no new cache/API validation result and preserves original temporary and copied descriptors."
+  ],
+  "normal_consumer_source_receipt_and_current_generation_checks_required": true,
+  "old_vectors_and_decoder_checkpoint_unchanged": true,
+  "original384_conditioning_profile_id": null,
+  "original_main_copy_and_failed_recovery_custody_closed": true,
+  "original_tmp_outputs_retained": true,
+  "qualification_campaign_or_encoder_replayed": false,
+  "qualification_summary": {
+    "bytes": 14447,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-successor-cache-v01/qualification-summary-v01.json",
+    "sha256": "1821e1e759a017d1e77e792b00c1d7d9f912e30f6e043e00af94563ad73454aa"
+  },
+  "recorded_at_utc": "2026-10-27T01:53:09.583090+00:00",
+  "schema": "legal-ir-canonical-native384-cache-public-qualification/v1",
+  "semantic_training_gold_Lean_or_convergence_authority": false,
+  "successor_conditioning_profile_id": null,
+  "training_mask": 0
+}

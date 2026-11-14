@@ -1,0 +1,41 @@
+{
+  "schema": "legal-ir-plan-artifacts/v1",
+  "artifacts": [
+    {
+      "workspace_relative_path": "external/ipfs_datasets/docs/autoencoders/legal_ir_text_to_lean4_execution_plan_20261018.md",
+      "bytes": 35780,
+      "sha256": "23bb7fa1a2413f6a4087097a39eade245e922fc8bf8301a6541beeffbfd15149"
+    },
+    {
+      "workspace_relative_path": "external/ipfs_datasets/docs/autoencoders/evidence/legal-ir-text-to-lean4-plan-20261018T221630Z/acceptance-matrix.csv",
+      "bytes": 6285,
+      "sha256": "8cace56e6fc7c279b70e2f2a3830bc0b3441a60398c21836a575ff53c36d9d7e"
+    },
+    {
+      "workspace_relative_path": "external/ipfs_datasets/docs/autoencoders/evidence/legal-ir-text-to-lean4-plan-20261018T221630Z/document-verification.json",
+      "bytes": 746,
+      "sha256": "7cc173f8d220dc2d33252b11a5ececa5ca78e38b66bb76fde35f00d796b60f8d"
+    },
+    {
+      "workspace_relative_path": "external/ipfs_datasets/docs/autoencoders/evidence/legal-ir-text-to-lean4-plan-20261018T221630Z/observations.json",
+      "bytes": 18371,
+      "sha256": "52fb87e1df78386f86d56c48edc0cca04702fb3790f74db4e1bee7884fc6658a"
+    },
+    {
+      "workspace_relative_path": "external/ipfs_datasets/docs/autoencoders/evidence/legal-ir-text-to-lean4-plan-20261018T221630Z/reference-snapshots/legal-ir-source-to-lean4-delivery-plan-2026-10-17.md",
+      "bytes": 286704,
+      "sha256": "0798dea69b7a5c82d891cb639391a86d567fec413aac9153da631d9ac47c98bc"
+    },
+    {
+      "workspace_relative_path": "external/ipfs_datasets/docs/autoencoders/evidence/legal-ir-text-to-lean4-plan-20261018T221630Z/reference-snapshots/legal-ir-supervisor-operations-2026-10-16.md",
+      "bytes": 159317,
+      "sha256": "7b8e2b372d17cd843a699cbe9635fa36617efe5c057aaeac90f1bae8503e8fee"
+    },
+    {
+      "workspace_relative_path": "external/ipfs_datasets/docs/autoencoders/evidence/legal-ir-text-to-lean4-plan-20261018T221630Z/reference-snapshots/legal_ir_uscode_roadmap_20261018.md",
+      "bytes": 71578,
+      "sha256": "3e903b0b21af74d9f21e9bf11fa076bf9a1ce1f7afdf47922eed30cc83e26323"
+    }
+  ],
+  "self_excluded": true
+}

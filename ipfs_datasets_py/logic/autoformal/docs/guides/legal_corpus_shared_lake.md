@@ -55,6 +55,8 @@ the definition nor norm is introduced as an axiom or a proved fact.
 
 ## Preparation and actual build
 
+The explicit `prepare_reviewed_norm_preservation_corpus_v3` and `validate_reviewed_norm_preservation_corpus_v3` APIs reuse this owner for complete reviewed mixed/Object relational units. Provide the complete graph/admission and unchanged original review inputs, independent graph/admission/preparation commitments and explicit toolchain. Each child keeps its exact profile, ordered roles, complete files and five preservation obligations; separate signature namespaces prevent equal spellings from merging distinct models. The V3 preparation profile is reviewed-multi-unit-mixed-relational-preservation/v3, while V2 keeps its original domain. This prepares and regenerates engineering witnesses only. Selected source-pinned controls, canonical source availability, actual compilation and statutory/corpus admission remain separate as recorded in HANDOFF.
+
 `prepare_shared_definition_corpus` and `validate_shared_definition_corpus`
 perform native parsing/lowering and complete deterministic regeneration.
 Public import initializes no session, compiler, backend or numerical model.

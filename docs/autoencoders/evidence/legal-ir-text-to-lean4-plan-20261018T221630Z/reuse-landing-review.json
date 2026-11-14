@@ -1,0 +1,114 @@
+{
+  "accelerator_owns": "Existing supervisor/task/provider/resource interfaces consuming Datasets APIs.",
+  "artifacts_retain": "Large checkpoints, immutable run evidence and one-off harnesses; no runtime imports from developer artifacts.",
+  "canonical_product_Python_or_checkpoint_modified": false,
+  "dataset_head_observation_utc": "2026-10-18T22:45:02Z",
+  "dataset_scope": "Metadata API heads only; no payload/census/model/weight downloads.",
+  "datasets_owns": "Reusable text/IR/model/graph/Lean APIs, focused tests/docs, small fixtures.",
+  "four_width_asset_register": "../legal-ir-four-dimension-reuse-20261018.json",
+  "map_not_exhaustive_or_bulk_commit_list": true,
+  "models_training_tests_Lean_liveDB_commit_or_publication": false,
+  "modified_documents": [
+    {
+      "after_bytes": 50145,
+      "after_sha256": "85836f60af363f98869b640d7d366f7920002d158dad37d8e41b1506d1c98ccb",
+      "before_bytes": 48295,
+      "before_sha256": "7983b26dbedc63cf4231db6ea169ed2d7ca64512ad2ec403aebb12eb5690e1d9",
+      "path": "legal_ir_text_to_lean4_execution_plan_20261018.md"
+    },
+    {
+      "after_bytes": 72244,
+      "after_sha256": "7bab34859f2e88eca0ff8c5bec27ced8a36162f5ed6ce4393e88bf366856e282",
+      "before_bytes": 71578,
+      "before_sha256": "3e903b0b21af74d9f21e9bf11fa076bf9a1ce1f7afdf47922eed30cc83e26323",
+      "path": "legal_ir_uscode_roadmap_20261018.md"
+    },
+    {
+      "after_bytes": 19337,
+      "after_sha256": "1783f0872a48797545b424576d3f31d2306321bcaade19839c3da21991a4762c",
+      "before_bytes": 19027,
+      "before_sha256": "53caf10fba2b983fdf3a44ceaae7fa5da23738247d99cae185ee1164b1bb56d4",
+      "path": "README.md"
+    }
+  ],
+  "native4096_support_closure_to_include": [
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_bound_native4096.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_native4096_binding.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_native4096_numeric.py",
+    "ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_4096_verified.py",
+    "ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_4096_full_owner.py",
+    "existing matching native4096 unit tests and profile documentation"
+  ],
+  "new_task_ids_or_status_changes": false,
+  "observed_utc": "2026-10-18T22:54:41.720023+00:00",
+  "original_map": {
+    "bytes": 58391,
+    "sha256": "ea206b005955641585f5e687b0fec39f308fb4166d835d83712f137172861767",
+    "workspace_path": "artifacts/legal-ir-reuse-and-landing-audit-20261018T223853Z/landing-map.csv"
+  },
+  "original_source_write_lease": {
+    "canonical_root": "/home/barberb/lift_coding/external/ipfs_datasets",
+    "cooperative": true,
+    "lock_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/control-plane/source-leases/source.lock",
+    "mode": "write",
+    "schema_version": "autoencoder-source-lease/v1",
+    "waited_seconds": 39.286961008096114
+  },
+  "portable_map": {
+    "bytes": 58391,
+    "relative_path": "reuse-landing-map.csv",
+    "sha256": "ea206b005955641585f5e687b0fec39f308fb4166d835d83712f137172861767"
+  },
+  "public_Hub_expand_sha_heads": {
+    "justicedao/ipfs_uscode": "91ca1838853ac82d7a12dd4ab47d9686f47667f9",
+    "justicedao/uscode-autoformal-entity-cache": "79d54378c5d6a89ab56e7a27e0f0ba867e800e19",
+    "justicedao/uscode-autoformal-span-cache": "60501f3e920f6c9050cfc452e0d9fcc2b7c184f3"
+  },
+  "qualification_hash_labels": {
+    "matches_selected_receipt": 65,
+    "not_checked": 67
+  },
+  "remote_commits": [
+    "13061f6783cd2cd7b7ed38080d5c701117643b80"
+  ],
+  "remote_comparison_counts": {
+    "absent_from_pinned_remote": 85,
+    "different_from_pinned_remote": 13,
+    "identical_to_pinned_remote": 34
+  },
+  "remote_snapshot_not_fresh_delivery_certification": true,
+  "schema": "legal-ir-portable-landing-review/v1",
+  "scope": "Adopt concurrent comprehensive/four-width plan, repair navigation and stale proposals, retain existing selected landing map in submodule; no new implementation or taskboard.",
+  "selected_paths": 132,
+  "source_contract_followup": {
+    "documents": [
+      {
+        "after_sha256": "85836f60af363f98869b640d7d366f7920002d158dad37d8e41b1506d1c98ccb",
+        "before_sha256": "ad376089a8603a27cdbea677c102b87e4e9de2325f975a0a52f94e5404ee261c",
+        "path": "legal_ir_text_to_lean4_execution_plan_20261018.md"
+      },
+      {
+        "after_sha256": "7bab34859f2e88eca0ff8c5bec27ced8a36162f5ed6ce4393e88bf366856e282",
+        "before_sha256": "5ba648ef49744daed533ffe846b0e6889653ce1e81d2f1e889ade8731bfe1283",
+        "path": "legal_ir_uscode_roadmap_20261018.md"
+      },
+      {
+        "after_sha256": "1783f0872a48797545b424576d3f31d2306321bcaade19839c3da21991a4762c",
+        "before_sha256": "d5020678b908b930b8239fb55ead296db719a713492ee3320d77d43e2ff8e4ed",
+        "path": "README.md"
+      }
+    ],
+    "nonblocking_public_lease": true,
+    "observed_utc": "2026-10-18T22:57:16.774891+00:00",
+    "product_code_or_model_or_task_state_changed": false,
+    "purpose": "Explicit4096 source width/projection/full-source/tokenizer distinction and spacing only; adopt existing profiles.",
+    "source_write_lease": {
+      "canonical_root": "/home/barberb/lift_coding/external/ipfs_datasets",
+      "cooperative": true,
+      "lock_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/control-plane/source-leases/source.lock",
+      "mode": "write",
+      "schema_version": "autoencoder-source-lease/v1",
+      "waited_seconds": 3.5217031836509705e-05
+    }
+  }
+}

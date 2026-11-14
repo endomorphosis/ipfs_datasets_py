@@ -1,0 +1,17 @@
+# LegalIR handoff
+
+Start at [the autoformal module](ipfs_datasets_py/logic/autoformal/README.md), then its [current handoff](ipfs_datasets_py/logic/autoformal/docs/HANDOFF.md). Reusable source/span/graph/review/Lean integration and its maintained documentation have one home there.
+
+From the repository root, use the compact metadata views:
+
+```sh
+python ipfs_datasets_py/logic/autoformal/work_catalog.py --summary
+python ipfs_datasets_py/logic/autoformal/work_catalog.py --tasks
+python ipfs_datasets_py/logic/autoformal/work_catalog.py --task LIR-14
+```
+
+The single canonical backlog preserves all 24 original task records. Read individual tasks through the navigator; avoid loading the whole historical backlog into the initial context. The navigator imports no product owners and starts no training or native build.
+
+The handoff incorporates the completed CP128 continuation, both budget cohorts on the same two examples, the zero-conditioning diagnostic, existing persistent conditioning, the completed context150 branch, and the later 30-case parent Lake preparation qualification. Parent native execution and genuine source/meaning/applicability review remain open. Existing task statuses are preserved; a partial implementation does not close an entire pipeline task. The handoff now contains the comprehensive four-width delivery plan, dataset revision snapshot, existing-owner map and acceptance gates.
+
+Use [the archive map](ipfs_datasets_py/logic/autoformal/docs/ARCHIVE.md) for a specific historical question. Models and numerical kernels retain their established shared owners and checkpoint profiles. Six experimental profile adapters and the parent-native API are now installed, with88focused migration controls qualified. Original checkpoint/state replay and real parent Lean execution remain separate gates; the history archive preserves their original sources. Original run evidence, checkpoints and failed attempts retain their identities. Former guides and plans redirect to the maintained module home.

@@ -1,0 +1,290 @@
+{
+  "actual_controller": {
+    "bytes": 329,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-variable-definition-20261025-01/native-conditional-v01/controller-complete-native-v02.json",
+    "sha256": "74970b13c1e9423dbf9d830fc708d0f96a89f9c0b10759dfeea95e39b768e9b4"
+  },
+  "actual_launch": {
+    "bytes": 8576,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-variable-definition-20261025-01/native-conditional-v01/launch-native-v02.json",
+    "sha256": "b58db40dcc32d83bbcf77ccb6447dff48987594e34a78e18fbcdece2501fd6ff"
+  },
+  "actual_native_manifest": {
+    "bytes": 14740,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-variable-definition-20261025-01/native-conditional-v01/manifest-native-v02.json",
+    "sha256": "51944ccabe8aab485e4535dba3bdeeafb9fb06c955c3083b24a0ea56d610e0c3"
+  },
+  "actual_native_request": {
+    "bytes": 12828,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-variable-definition-20261025-01/native-conditional-v01/request-native-v02.json",
+    "sha256": "d009d946aa2684a2d8e4949156d38246658546c149fbf4d4fea3713ff93cd90c"
+  },
+  "actual_native_result": {
+    "bytes": 47786,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-variable-definition-20261025-01/native-conditional-v01/attempt-native-v02/exports/native-result.json",
+    "sha256": "90aee51e310f2b472269b05cf79cbf1b803f5d1ede355a3f415f76f9e82bb942"
+  },
+  "actual_preflight": {
+    "bytes": 2556,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-variable-definition-20261025-01/native-conditional-v01/preflight-native-v02.json",
+    "sha256": "b7890136998e62923a30494895996e428ccf59bcd839903c77c1aeec66273b85"
+  },
+  "checked_source_buffer": {
+    "bytes": 106570,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-variable-definition-20261025-01/native-conditional-v01/attempt-native-v02/exports/checked-source-buffers.json",
+    "sha256": "29aee5e1f77d25fac835fa57d93b8914b5b13e24dcfdbf80cdd30a0f2a513e59"
+  },
+  "completed": true,
+  "consumer_mask": 0,
+  "counts": {
+    "compiler_invocations": 3,
+    "distinct_positive_theorem_names": 2,
+    "enrolled_native_commands": 5,
+    "native_checks": 3,
+    "negative_invalid_term_cases": 1,
+    "passed_checks": 3,
+    "positive_files": 2,
+    "positive_theorem_observations": 3,
+    "version_probes": 2
+  },
+  "evaluation_gold_mask": 0,
+  "independent_saved_result_review": {
+    "bytes": 33931,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-variable-definition-20261025-01/native-conditional-v01/independent-result-review-native-v02.json",
+    "sha256": "8e396adb353da04149eda0d23c2a0633d358964c2b7ebc2707791013b7194fee"
+  },
+  "limits": [
+    "Compiler acceptance is for these retained standalone files under explicit hDefinition and optional hMembership parameters.",
+    "The negative rejects one invalid proof term; it is not a universal non-entailment proof.",
+    "Three positive theorem observations are across two successful compilations; the negative file is not a qualified module.",
+    "Original preparation reports and pure29/87/16 qualification remain unchanged and are not pooled with native checks.",
+    "The worker compiled/executed one full process module; seventeen outer custody ancestry sources and package initializer absence are separate scopes.",
+    "Runtime ownership is sampled; kernel containment and stdlib cached bytecode are not attested.",
+    "Mutable global resource-ledger/scheduler observations are historical audit references, not immutable installation pins."
+  ],
+  "native_binary_sha256": {
+    "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake": "f80f50cbab5322e35bcb0bf88937e22e9d908b5e4e336e83ddfc30eb1506aacf",
+    "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lean": "79fb1d26fa5a39385d59fdc48a711a14b0710ca6480271acce99b4d177cea085"
+  },
+  "negative_control": {
+    "check": "retained_parent_bound::test_missing_membership_invalid_term",
+    "compiled_artifact_observed": false,
+    "executed_source": {
+      "bytes": 3384,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-variable-definition-20261025-01/native-conditional-v01/attempt-native-v02/exports/missing_membership_invalid_term/executed-source.lean",
+      "sha256": "b69c64eeb5da2e95bedd727abc8eacbfef9de7b5112d047420ead2966258c5e6"
+    },
+    "intended_type_mismatch_observed": true,
+    "negative_suffix_sha256": "762b4f7c96a0cb1610bbac57aaf4a17006d8e3c838015e872ea7e5f1e59ca913",
+    "original_source_prefix_sha256": "211d2718c2f4ca131ebf0ffb958c10de73f0cfce78079c0b0f9f7d57bb426481",
+    "returncode": 1,
+    "scope": "Rejection of this invalid Iff-as-body proof term; not universal non-entailment.",
+    "stderr": {
+      "bytes": 0,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-variable-definition-20261025-01/native-conditional-v01/attempt-native-v02/exports/missing_membership_invalid_term/stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "stdout": {
+      "bytes": 326,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-variable-definition-20261025-01/native-conditional-v01/attempt-native-v02/exports/missing_membership_invalid_term/stdout.txt",
+      "sha256": "9bd36f2bbec87639e765be2da847783c227db0ce0565a18e2e0093a8914a31b9"
+    },
+    "universal_nonentailment_proved": false
+  },
+  "original_input_pin_count": 38,
+  "original_outer_closeout": {
+    "artifacts_durable_asserted": true,
+    "durability": {
+      "bytes": 4803,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-variable-definition-20261025-01/native-conditional-v01/attempt-native-v02/logs/validation-durability.json",
+      "sha256": "7ff61c249739ede9c3857b3953774df14364014983b15e1e744dadb95bb3b2ec"
+    },
+    "kernel_containment_attested": false,
+    "native_lease_id": "b1fa7af041f24477887c6889b9b7a56c",
+    "native_lease_released": true,
+    "original_artifact_seals": 26,
+    "original_observed_live_processes": 0,
+    "original_source_READ_closed": true,
+    "ownership_sampled": true,
+    "retained_bytes": 421808,
+    "retained_file_count": 27,
+    "storage_released": true,
+    "storage_reservation_id": "59bac14598624f938a243788a7e49725"
+  },
+  "original_preparation_authority_all_false": true,
+  "original_preparation_kernel_checked": false,
+  "original_preparation_lean_compilation_verified": false,
+  "original_preparation_reports_unchanged": true,
+  "original_pure_qualification": {
+    "bytes": 15732,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoformalization/evidence/legal-ir-parent-bound-variable-definition-20261025.json",
+    "sha256": "f660ef2d5be8cbbcfa7e6ab3b829abafb77abce7aa6871957386e777d2881669"
+  },
+  "positive_results": [
+    {
+      "check": "retained_parent_bound::test_instance_only",
+      "compiled_artifact": {
+        "bytes": 115776,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-variable-definition-20261025-01/native-conditional-v01/attempt-native-v02/exports/instance_only/compiled.olean",
+        "sha256": "1efcfa115635f298ce447cc1a0acb3c213319ffad83716de3db2492b41a5ab04"
+      },
+      "conditional_theorems": [
+        "LegalBoundVariableDefinition.definition_instance"
+      ],
+      "empty_axiom_observations": {
+        "LegalBoundVariableDefinition.definition_instance": []
+      },
+      "executed_source": {
+        "bytes": 2782,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-variable-definition-20261025-01/native-conditional-v01/attempt-native-v02/exports/instance_only/executed-source.lean",
+        "sha256": "6fbdbe278f91b84a927f89be328806985d8c42499f40c106b1c12a932f4bdde5"
+      },
+      "hypotheses": [
+        [
+          "hDefinition : formula_0 i t"
+        ]
+      ],
+      "mode": "instance_only",
+      "native_lifecycle_cleanup_confirmed": true,
+      "original_preparation_flags_and_masks_unchanged": true,
+      "original_report": {
+        "bytes": 782532,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-variable-definition-20261025-01/attempt-pure-v02/pytest/cases/test_parent_bound_genuine_modes_preserve_exact_p-opdfyfty/conditional-report.json",
+        "sha256": "f0bfb025928d39bc5b58523be1248c2752b67e47bd099578ed38f39f19968327"
+      },
+      "original_request": {
+        "bytes": 1902,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-variable-definition-20261025-01/attempt-pure-v02/pytest/cases/test_parent_bound_genuine_modes_preserve_exact_p-opdfyfty/conditional-request.json",
+        "sha256": "af6aa1e3412c474bac75a58513b6f944a2339f668eb9cd29a95db444b7042770"
+      },
+      "original_source": {
+        "bytes": 2782,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-variable-definition-20261025-01/attempt-pure-v02/pytest/cases/test_parent_bound_genuine_modes_preserve_exact_p-opdfyfty/conditional-source.lean",
+        "sha256": "6fbdbe278f91b84a927f89be328806985d8c42499f40c106b1c12a932f4bdde5"
+      },
+      "returncode": 0,
+      "stderr": {
+        "bytes": 0,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-variable-definition-20261025-01/native-conditional-v01/attempt-native-v02/exports/instance_only/stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 81,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-variable-definition-20261025-01/native-conditional-v01/attempt-native-v02/exports/instance_only/stdout.txt",
+        "sha256": "48f87e51da74dc8169ea222272e4fcd251ce88e179c4c565a481fe4d1ea349a2"
+      }
+    },
+    {
+      "check": "retained_parent_bound::test_body_with_membership",
+      "compiled_artifact": {
+        "bytes": 118904,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-variable-definition-20261025-01/native-conditional-v01/attempt-native-v02/exports/body_with_membership/compiled.olean",
+        "sha256": "d9efcd61a1bfab1b7b1571853d93a4607134f9f26606608ec1ca7ea87d8a92e6"
+      },
+      "conditional_theorems": [
+        "LegalBoundVariableDefinition.definition_instance",
+        "LegalBoundVariableDefinition.body_instance"
+      ],
+      "empty_axiom_observations": {
+        "LegalBoundVariableDefinition.body_instance": [],
+        "LegalBoundVariableDefinition.definition_instance": []
+      },
+      "executed_source": {
+        "bytes": 3054,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-variable-definition-20261025-01/native-conditional-v01/attempt-native-v02/exports/body_with_membership/executed-source.lean",
+        "sha256": "211d2718c2f4ca131ebf0ffb958c10de73f0cfce78079c0b0f9f7d57bb426481"
+      },
+      "hypotheses": [
+        [
+          "hDefinition : formula_0 i t"
+        ],
+        [
+          "hDefinition : formula_0 i t",
+          "hMembership : headAt i entity t"
+        ]
+      ],
+      "mode": "body_with_membership",
+      "native_lifecycle_cleanup_confirmed": true,
+      "original_preparation_flags_and_masks_unchanged": true,
+      "original_report": {
+        "bytes": 783360,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-variable-definition-20261025-01/attempt-pure-v02/pytest/cases/test_parent_bound_genuine_modes_preserve_exact_p-0ukykia1/conditional-report.json",
+        "sha256": "e91e5216f3752b0ab216a4335899e9f2bfc1fffb854445fc4c6a34fccda33345"
+      },
+      "original_request": {
+        "bytes": 2159,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-variable-definition-20261025-01/attempt-pure-v02/pytest/cases/test_parent_bound_genuine_modes_preserve_exact_p-0ukykia1/conditional-request.json",
+        "sha256": "6c8367f64d321684d615c6963e76e2593634cead6d7f8c6a731f30045a0aeb96"
+      },
+      "original_source": {
+        "bytes": 3054,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-variable-definition-20261025-01/attempt-pure-v02/pytest/cases/test_parent_bound_genuine_modes_preserve_exact_p-0ukykia1/conditional-source.lean",
+        "sha256": "211d2718c2f4ca131ebf0ffb958c10de73f0cfce78079c0b0f9f7d57bb426481"
+      },
+      "returncode": 0,
+      "stderr": {
+        "bytes": 0,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-variable-definition-20261025-01/native-conditional-v01/attempt-native-v02/exports/body_with_membership/stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 156,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-variable-definition-20261025-01/native-conditional-v01/attempt-native-v02/exports/body_with_membership/stdout.txt",
+        "sha256": "974d000adb8c5339a452cfb51fbec97195c0511d1fa5da13c9d30f63f21e6bfd"
+      }
+    }
+  ],
+  "prior_v01_prelaunch_refusal": {
+    "bytes": 1334,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-variable-definition-20261025-01/native-conditional-v01/prelaunch-refusal-native-v01.json",
+    "sha256": "c5188691b892bac4ca8f6c1eb10d9d6caa85196c5ef9c89ac415ac5b430a4ce3"
+  },
+  "prior_v01_qualification_credit": 0,
+  "prior_v01_scope": "Intake coordination filename collision refused before worker/resource dispatch; zero native jobs or qualification credit.",
+  "profile": "standalone-retained-parent-bound-conditional-artifacts/v1",
+  "pytest_case_or_phase_count_claimed": false,
+  "qualified": true,
+  "recorded_at_utc": "2026-10-25T04:26:23.970151+00:00",
+  "root_saved_result_review": {
+    "bytes": 6821,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-variable-definition-20261025-01/native-conditional-v01/root-result-readback-native-v02.json",
+    "sha256": "1ff2ccf7d30ef4f05f085b08adb55eb21964ea96ddad7f416f1dca4f8213c939"
+  },
+  "schema": "legal-ir-parent-bound-variable-retained-native-qualification/v1",
+  "scope": "Native compilation of two exact retained authored conditional Lean files and rejection of one specific invalid Iff-as-body proof term.",
+  "selected_checks": [
+    "retained_parent_bound::test_instance_only",
+    "retained_parent_bound::test_body_with_membership",
+    "retained_parent_bound::test_missing_membership_invalid_term"
+  ],
+  "semantic_mask": 0,
+  "source_custody": {
+    "all38_original_input_pins_rehashed": true,
+    "full_process_source_bytes": 102469,
+    "full_process_source_sha256": "cc2741550e16966292dc8b64a634a7b0a493e2a43e909fae326e1205715c9626",
+    "outer17_original_custody_owner_sources_separate": true,
+    "stdlib_source_rechecked_but_cached_bytecode_not_attested": true,
+    "worker_full_source_files_compiled_executed": 1,
+    "worker_package_initializers_executed": false,
+    "worker_standalone_module": "_retained_conditional_process"
+  },
+  "tool_returncodes": [
+    0,
+    0,
+    0,
+    0,
+    1
+  ],
+  "toolchain": "leanprover/lean4:v4.34.1",
+  "training_mask": 0,
+  "unqualified": {
+    "fresh_original_source_replay": false,
+    "full_package_startup": false,
+    "governing_definition_or_membership_assumptions": false,
+    "graph_or_corpus_admission": false,
+    "model_training_or_convergence": false,
+    "norm_rewrite_or_definition_substitution": false,
+    "production_native_profile": false,
+    "source_edition_or_legal_meaning": false
+  }
+}
