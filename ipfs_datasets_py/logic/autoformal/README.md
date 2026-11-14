@@ -1,5 +1,7 @@
 # Legal autoformalization
 
+Reviewed admission now rejects duplicate paragraph uses created by raw repackaging, unaligned views or artifact revision labels. All 355 canonical source-only checks pass. Legal source authenticity, real statutory review and native proof remain separate gates. See the [handoff](docs/HANDOFF.md).
+
 The explicit v3 candidate audit now supports the existing many-sorted representation alongside object-only syntax. All 324 source-only software cases pass; legacy v1/v2 refusals and all legal/model/proof limits remain. See the [handoff](docs/HANDOFF.md).
 
 The producer evaluator now offers a separate full-candidate syntax audit against caller-supplied source, context and interpretation identifiers. All 67 selected source-only cases pass; unsupported and incomplete outputs remain counted. Legal meaning, model quality and proof authority remain unverified. See the [handoff](docs/HANDOFF.md).

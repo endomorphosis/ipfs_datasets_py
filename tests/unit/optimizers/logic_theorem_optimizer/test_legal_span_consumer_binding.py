@@ -1207,7 +1207,9 @@ def test_reviewed_v3_saved_v2_reviews_and_receipt_replay_without_resigning(tmp_p
         **reviewed_validation_inputs(options)) == saved["receipt"] == before
     assert helper.assess_reviewed_fixture_v2(admission, restored)["semantic_use_eligible"] is True
     assert path.read_bytes() == raw
-    assert hashlib.sha256(Path(admission.__file__).read_bytes()).hexdigest() == v3_helper.V2_SOURCE_SHA256
+    source_path = Path(admission.__file__).resolve()
+    assert source_path.read_bytes() == v3_helper.LEGACY_RAW
+    assert hashlib.sha256(v3_helper.LEGACY_RAW).hexdigest() == restored["preparation"]["producer_pins"][str(source_path)]
 
 
 def test_reviewed_v3_signed_training_permission_cannot_be_relabelled_as_hparam_selection():

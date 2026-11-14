@@ -536,6 +536,56 @@ def _reviewed_subject(subject, manifest):
           and subject["required_dependency_ids"] == reachable, "complete reviewed dependency closure differs")
 
 
+class _ReviewedSourceUseTracker:
+    """Keep physical custody and declared logical-use identities independent.
+
+    Raw encodings/containers do not create additional uses of the same declared
+    legal source revision. Different canonical views of that revision require
+    an alignment contract, which this admission profile does not provide. This
+    does not infer aliases between different caller-declared legal identities.
+    """
+
+    def __init__(self):
+        self.physical_occurrences = set()
+        self.physical_norm_intervals = []
+        self.logical_views = {}
+        self.logical_occurrences = set()
+        self.logical_norm_intervals = []
+
+    def add(self, unit, version, occurrence):
+        raw_sha = version["raw_artifact"]["sha256"]
+        view_sha = version["extracted_view"]["sha256"]
+        start, end = occurrence["start_char"], occurrence["end_char"]
+        physical_parent = (raw_sha, view_sha)
+        physical = physical_parent + (start, end)
+        _need(physical not in self.physical_occurrences,
+              "two interpretations of one physical occurrence are not distinct units")
+        if unit["kind"] == "norm":
+            _need(not any(parent == physical_parent and max(begin, start) < min(finish, end)
+                for parent, begin, finish in self.physical_norm_intervals),
+                "overlapping interpretations are not two distinct normative uses")
+        logical_source = tuple(version[key] for key in
+            ("source_id", "release_id", "edition", "provision_id"))
+        _need(logical_source not in self.logical_views or self.logical_views[logical_source] == view_sha,
+              "different extracted views of one logical source revision require unsupported source-view alignment")
+        # A document-revision label is not another legal provision/release.
+        # The known same view/location remains the same use across such labels.
+        logical_parent = logical_source + (view_sha,)
+        logical = (logical_parent, start, end)
+        _need(logical not in self.logical_occurrences,
+              "two raw representations of one logical source occurrence are not distinct units")
+        if unit["kind"] == "norm":
+            _need(not any(parent == logical_parent and max(begin, start) < min(finish, end)
+                for parent, begin, finish in self.logical_norm_intervals),
+                "overlapping logical source interpretations are not two distinct normative uses")
+        self.physical_occurrences.add(physical)
+        self.logical_views[logical_source] = view_sha
+        self.logical_occurrences.add(logical)
+        if unit["kind"] == "norm":
+            self.physical_norm_intervals.append((physical_parent, start, end))
+            self.logical_norm_intervals.append((logical_parent, start, end))
+
+
 def _reviewed_units(body, source_inputs, relational_inputs):
     source, _, relational, _ = _reviewed_owners()
     units = body["units"]
@@ -545,7 +595,8 @@ def _reviewed_units(body, source_inputs, relational_inputs):
           "unique complete source unit identities required")
     _need(type(source_inputs) is dict and type(relational_inputs) is dict
           and set(source_inputs) == set(relational_inputs) == set(ids), "complete original source and IR inputs required")
-    results, expected_artifacts, occurrences, norm_intervals = [], {}, set(), []
+    results, expected_artifacts = [], {}
+    source_uses = _ReviewedSourceUseTracker()
     for unit in units:
         _keys(unit, {"unit_id", "kind", "source_version", "occurrence", "document_revision",
             "parent_unit_ids", "relational_request_sha256", "source_artifact_id", "ir_artifact_id", "coverage"},
@@ -566,16 +617,7 @@ def _reviewed_units(body, source_inputs, relational_inputs):
             extracted_text=inputs["extracted_text"], expected_extracted_sha256=view_sha)
         occurrence = source.validate_source_occurrence(unit["occurrence"], source_version=version,
             expected_raw_sha256=raw_sha, extracted_text=inputs["extracted_text"], expected_extracted_sha256=view_sha)
-        # Aliases, source labels and record seals cannot turn the same retained
-        # artifact/view interval into an additional physical statutory use.
-        physical_parent = (raw_sha, view_sha)
-        physical = physical_parent + (occurrence["start_char"], occurrence["end_char"])
-        _need(physical not in occurrences, "two interpretations of one physical occurrence are not distinct units")
-        occurrences.add(physical)
-        if unit["kind"] == "norm":
-            _need(not any(parent == physical_parent and max(start, occurrence["start_char"]) < min(end, occurrence["end_char"])
-                for parent, start, end in norm_intervals), "overlapping interpretations are not two distinct normative uses")
-            norm_intervals.append((physical_parent, occurrence["start_char"], occurrence["end_char"]))
+        source_uses.add(unit, version, occurrence)
         if body["provenance_kind"] == "statutory":
             _need(not any(str(version[key]).startswith("fixture:") for key in ("source_id", "release_id", "provision_id")),
                   "fictional source identities cannot be promoted to statutory evidence")

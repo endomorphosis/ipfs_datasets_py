@@ -4971,6 +4971,13 @@
         "LIR-05"
       ],
       "id": "LIR-06",
+      "source_use_identity_qualification_20261114": {
+        "evidence_id": "reviewed-source-use-identity-20261114",
+        "canonical_source_only_cases": 355,
+        "raw_or_artifact_revision_repackaging_creates_use": false,
+        "unaligned_views_supported": false,
+        "real_statutory_review_or_gold_admitted": false
+      },
       "pending_source_review_request_inventory": {
         "active_declaration_slots_per_request": 9,
         "actual_reviews": 0,

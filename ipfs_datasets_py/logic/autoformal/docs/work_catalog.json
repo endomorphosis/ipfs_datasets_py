@@ -4119,6 +4119,14 @@
       ],
       "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_norm_content_adjudication_v1.md",
       "id": "norm-content-adjudication-v1",
+      "reviewed_source_use_identity_20261114": {
+        "evidence_id": "reviewed-source-use-identity-20261114",
+        "canonical_source_only_cases": 355,
+        "shared_physical_and_legal_use_guard": true,
+        "artifact_revision_is_provenance_only": true,
+        "unaligned_views_supported": false,
+        "legal_review_or_native_proof_or_training_executed": false
+      },
       "notes": "Unchanged common norm-content adjudication owner/test. Fresh current-public integration passed 13 existing adjudication-only cases / 39 phases, with no response-control cohort or new tests. Historical 63 fictional signed-source/adjudicator cases and the failed first assertion attempt keep their separate legacy scope. Common-body validity, authentication and current source/partial prerequisites remain distinct; all variants and dissent remain and choices stay unapplied. Fresh evidence covers 3 ordinary pytest origins and 21 physical source paths; dynamic response/norm helpers have physical-source evidence without canonical-origin claims. It retained 117 compile/exec filenames, 112 module entries / 110 physical origins, within 173 sources / 199 pins. Six initializer bypasses were declared; only logic was observed, five unused. Genuine cryptography 49.0.0 fixture APIs; no independent operation counts, binary/code-object or whole-environment qualification. Original compute/storage and source READs closed, retaining 10 regular files / 2882943 bytes. No actual statutory adjudication, legal-as-of or governing decision, source/span/entity join, model/training or graph/Lean admission. Masks remain zero; declaration-binding/applicability migrations stay separate.",
       "owner_module": "ipfs_datasets_py.logic.autoformal.legal_norm_content_adjudication_v1",
       "ownership_role": "existing_single_owner",
@@ -5611,6 +5619,14 @@
         "unchanged_cases": 21
       },
       "id": "kernel-proof-evidence-integrity",
+      "native_fixture_loader_source_repair_20261114": {
+        "evidence_id": "reviewed-source-use-identity-20261114",
+        "canonical_kernel_software_passed": 276,
+        "native_Lean_opt_in_skipped": 3,
+        "exact_verified_buffer_and_hard_fixture_pin": true,
+        "new_native_execution_qualified": false,
+        "hosted_native_job_started": false
+      },
       "current_source_screen_20261114": {
         "evidence_id": "proof-screen-and-legacy-metrics-20261114",
         "ordinary_kernel_cache_passed": 396,
@@ -8924,6 +8940,14 @@
         "reviewed-mixed-consumer-evaluator-canonical331-20261111"
       ],
       "id": "reviewed-mixed-sort-admission-v3",
+      "reviewed_source_use_identity_20261114": {
+        "evidence_id": "reviewed-source-use-identity-20261114",
+        "canonical_source_only_cases": 355,
+        "shared_physical_and_legal_use_guard": true,
+        "artifact_revision_is_provenance_only": true,
+        "unaligned_views_supported": false,
+        "legal_review_or_native_proof_or_training_executed": false
+      },
       "notes": "Explicit versioned mixed-sort sibling preserves original signed V2 owner identity. Thirteen new fictional cases; model/CLI integration and real statutory review remain pending.",
       "owner_module": "ipfs_datasets_py.logic.autoformal.legal_reviewed_norm_admission_v3",
       "ownership_role": "explicit_versioned_successor",
@@ -9279,6 +9303,14 @@
   "schema": "legal-autoformal-work-catalog/v1",
   "scope": "Curated current ownership/navigation with attributed saved evidence. Observations are snapshots, not future source-hash requirements or proof admission.",
   "selected_evidence": [
+    {
+      "id": "reviewed-source-use-identity-20261114",
+      "path": "docs/autoformalization/evidence/legal-ir-reviewed-source-use-identity-20261114.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Canonical 355-case V2/V3 source-use and reviewed-consumer software qualification; original false admissions, combined-mutation failure and historical source-epoch test failures retained. No real statutory, model, native proof or corpus authority.",
+      "status": "canonical_source_only_qualified_real_review_pending"
+    },
     {
       "id": "many-sorted-complete-candidate-syntax-v3-20261114",
       "path": "workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-mixed-candidate-syntax-qualification-v01/qualification-summary.json",

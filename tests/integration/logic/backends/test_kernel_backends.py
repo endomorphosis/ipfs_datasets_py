@@ -1182,6 +1182,39 @@ def test_lean_v3_version_output_charge_preserves_complete_source_input_capacity(
     assert outcome.receipt.submitted_source==source
 
 
+# Historical selected fixture pin before 51d2c414 was
+# 158b5f0c0a25ea42778f0a718477eaa0a6b8c4f053f3987ef3cd8e5517f82b23.
+# The current reviewed helper bodies are unchanged; new negative tests changed
+# the complete owning-file pin. This explicit pin never follows edits itself.
+_NATIVE_PROOF_CACHE_FIXTURE_SHA256 = "27ede074ceb68cd91d50eada99b9c6f02216607e22610bc63db4fde69e17fb4c"
+
+
+def _load_native_proof_cache_fixture_owner():
+    """Load exact pinned fixture bytes; execute no fixture/kernel helper.
+
+    This distinct fixture-only module does not claim canonical package identity.
+    Compiling the verified buffer avoids accepting a stale bytecode cache as
+    evidence of the source whose pre/post bytes were checked.
+    """
+    import hashlib
+    import importlib.util
+
+    fixture_path = Path(__file__).resolve().parents[3] / "unit/logic/legal_ir/test_proof_cache.py"
+    assert fixture_path.is_file() and not fixture_path.is_symlink()
+    raw = fixture_path.read_bytes()
+    assert hashlib.sha256(raw).hexdigest() == _NATIVE_PROOF_CACHE_FIXTURE_SHA256, "native proof-cache fixture source pin differs before import"
+    fixture_spec = importlib.util.spec_from_file_location("_native_lean_cache_fixture_owner", fixture_path)
+    assert fixture_spec is not None and fixture_spec.loader is not None
+    fixture_owner = importlib.util.module_from_spec(fixture_spec)
+    exec(compile(raw, str(fixture_path), "exec", dont_inherit=True), fixture_owner.__dict__)
+    assert fixture_owner.__name__ == fixture_spec.name == "_native_lean_cache_fixture_owner"
+    assert fixture_owner.__spec__ is fixture_spec
+    assert fixture_owner.__file__ == fixture_spec.origin == str(fixture_path)
+    assert fixture_owner.__loader__ is fixture_spec.loader
+    assert hashlib.sha256(fixture_path.read_bytes()).hexdigest() == _NATIVE_PROOF_CACHE_FIXTURE_SHA256, "native proof-cache fixture source changed during import"
+    return fixture_owner
+
+
 def _assert_lean_native_v3_proof_cache_round_trip(
     tmp_path, *, runner, processes, executable, version, bounds
 ):
@@ -1199,21 +1232,7 @@ def _assert_lean_native_v3_proof_cache_round_trip(
         LegalProofCache, LegalProofCacheError, LegalProofIntegrityError,
         build_legal_proof_binding,
     )
-    # Reuse the existing pure fixture constructors by their exact owning file,
-    # without depending on tests/unit/logic package or namespace discovery.
-    # This distinct fixture-only module never claims canonical package identity.
-    # Its authored kernel/native-identity helpers are defined but never called.
-    import hashlib
-    import importlib.util
-    fixture_path = Path(__file__).resolve().parents[3] / "unit/logic/legal_ir/test_proof_cache.py"
-    fixture_sha256 = "158b5f0c0a25ea42778f0a718477eaa0a6b8c4f053f3987ef3cd8e5517f82b23"
-    assert hashlib.sha256(fixture_path.read_bytes()).hexdigest() == fixture_sha256
-    fixture_spec = importlib.util.spec_from_file_location("_native_lean_cache_fixture_owner", fixture_path)
-    assert fixture_spec is not None and fixture_spec.loader is not None
-    fixture_owner = importlib.util.module_from_spec(fixture_spec)
-    fixture_spec.loader.exec_module(fixture_owner)
-    assert fixture_owner.__file__ == fixture_owner.__spec__.origin == str(fixture_path)
-    assert hashlib.sha256(fixture_path.read_bytes()).hexdigest() == fixture_sha256
+    fixture_owner = _load_native_proof_cache_fixture_owner()
 
     # The local SDK controller supplies the already-admitted ordinary runner;
     # the standalone wrapper below supplies the existing admitted runner. This
@@ -1540,3 +1559,57 @@ def test_lean_interpolated_expected_proposition_is_not_a_complete_literal():
 ])
 def test_lean_interpolation_policy_preserves_noninterpolating_token_contexts(prefix):
     assert scan_lean_incomplete_or_unsafe(prefix + "\ntheorem wanted : True := True.intro\n") == ()
+
+
+def test_native_cache_fixture_loader_uses_pinned_current_owner_without_invoking_helpers():
+    import sys
+    fixture_path = Path(__file__).resolve().parents[3] / "unit/logic/legal_ir/test_proof_cache.py"
+    prior = sys.getprofile()
+    called = []
+    def watch(frame, event, argument):
+        if event == "call" and frame.f_code.co_filename == str(fixture_path):
+            # Module/class definitions are declarations. No authored fixture,
+            # test, kernel, native identity or constructor function may run.
+            assert frame.f_code.co_name in {"<module>", "_ShadowObservation"}
+            called.append(frame.f_code.co_name)
+    try:
+        sys.setprofile(watch)
+        owner = _load_native_proof_cache_fixture_owner()
+    finally:
+        sys.setprofile(prior)
+    assert called and "<module>" in called
+    assert owner.__name__ == "_native_lean_cache_fixture_owner"
+    assert owner.__file__ == owner.__spec__.origin == str(fixture_path)
+    assert owner._legal_artifact.__code__.co_filename == str(fixture_path)
+    assert owner._reviewed_fixture.__code__.co_filename == str(fixture_path)
+
+
+def test_native_cache_fixture_loader_refuses_tampered_preimage_before_module_creation(monkeypatch):
+    import importlib.util
+    fixture_path = Path(__file__).resolve().parents[3] / "unit/logic/legal_ir/test_proof_cache.py"
+    original_read = Path.read_bytes
+    def changed(path):
+        raw = original_read(path)
+        return raw + b"\n# fictional pre-import drift\n" if path == fixture_path else raw
+    monkeypatch.setattr(Path, "read_bytes", changed)
+    monkeypatch.setattr(importlib.util, "spec_from_file_location",
+                        lambda *a, **k: pytest.fail("tampered fixture reached module construction"))
+    with pytest.raises(AssertionError, match="source pin differs before import"):
+        _load_native_proof_cache_fixture_owner()
+
+
+def test_native_cache_fixture_loader_refuses_post_import_drift_without_retry(monkeypatch):
+    fixture_path = Path(__file__).resolve().parents[3] / "unit/logic/legal_ir/test_proof_cache.py"
+    original_read = Path.read_bytes
+    reads = []
+    def changed(path):
+        raw = original_read(path)
+        if path == fixture_path:
+            reads.append(path)
+            if len(reads) > 1:
+                return raw + b"\n# fictional post-import drift\n"
+        return raw
+    monkeypatch.setattr(Path, "read_bytes", changed)
+    with pytest.raises(AssertionError, match="source changed during import"):
+        _load_native_proof_cache_fixture_owner()
+    assert len(reads) == 2

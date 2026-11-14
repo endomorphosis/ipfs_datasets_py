@@ -1110,6 +1110,15 @@ def reviewed_refresh_manifest_v2(case):
     for ref in declaration["cross_references"]:
         artifacts.append({"artifact_id": ref["dependency_artifact_id"],
             "artifact_sha256": ref["dependency_sha256"], "dependency_pins": {kind: [] for kind in deps.PIN_KINDS}})
+    # Several legal units may refer to the same exact physical artifact.
+    # The graph manifest has one record per identity; the declaration retains
+    # every distinct use. Conflicting bytes under one identity must refuse.
+    by_identity = {}
+    for artifact in artifacts:
+        previous = by_identity.setdefault(artifact["artifact_id"], artifact)
+        if previous != artifact:
+            raise ValueError("conflicting fixture artifact identity")
+    artifacts = list(by_identity.values())
     case["manifest"] = deps.build_dependency_manifest(artifacts,
         [{"dependent_id": declaration["component_id"], "dependency_id": row["artifact_id"]}
          for row in artifacts[1:]], expected_artifact_ids=[row["artifact_id"] for row in artifacts])
@@ -1764,3 +1773,155 @@ def test_candidate_mixed_v3_keeps_unsupported_constructs_explicit(owner, mixed_c
     else: known['known_selection_context']['selection_mode'] = 'meaning-resolved'
     with pytest.raises(owner.CompleteNormCandidateUnsupportedError):
         owner.validate_complete_norm_candidate_v3(candidate, **known)
+
+
+@pytest.mark.parametrize("conflicting_bytes", [False, True])
+def test_reviewed_v2_manifest_refresh_preserves_shared_uses_and_refuses_conflicting_bytes(
+        reviewed_case_v2, conflicting_bytes):
+    case = reviewed_case_v2
+    dependency_id = "fixture:shared-physical-crosswalk"
+    dependency_raw = b"fictional shared crosswalk; no statutory review"
+    process = dict(artifact_id=REVIEWED_PROCESS_ID,
+                   sha256=sha(case["evidence"][REVIEWED_PROCESS_ID]))
+    references = [dict(from_unit_id=unit["unit_id"], dependency_artifact_id=dependency_id,
+        dependency_sha256=sha(dependency_raw), version="fictional-shared/v1",
+        evidence_refs=[deepcopy(process)]) for unit in case["declaration"]["units"]]
+    assert len(references) == 3
+    if conflicting_bytes:
+        references[1]["dependency_sha256"] = sha(dependency_raw + b" changed")
+    case["declaration"]["cross_references"] = references
+    units_before = deepcopy(case["declaration"]["units"])
+    references_before = deepcopy(references)
+    manifest_before = deepcopy(case["manifest"])
+    if conflicting_bytes:
+        with pytest.raises(ValueError, match="conflicting fixture artifact identity"):
+            reviewed_refresh_manifest_v2(case)
+        assert case["manifest"] == manifest_before
+    else:
+        reviewed_refresh_manifest_v2(case)
+        manifest = case["manifest"]
+        expected = [case["declaration"]["component_id"]]
+        for unit in units_before:
+            expected.extend([unit["source_artifact_id"], unit["ir_artifact_id"]])
+        expected.append(dependency_id)
+        assert manifest["expected_artifact_ids"] == expected
+        assert len(expected) == len(set(expected)) == 8
+        assert [edge for edge in manifest["edges"] if edge["dependency_id"] == dependency_id] == [
+            dict(dependent_id=case["declaration"]["component_id"], dependency_id=dependency_id)]
+        assert case["observed_artifacts"][dependency_id] == sha(dependency_raw)
+    assert case["declaration"]["units"] == units_before
+    assert case["declaration"]["cross_references"] == references_before
+
+
+# Repeated-source controls are fictional and keep the source text and typed IR
+# together. Alternate raw encodings are not additional legal uses.
+def reviewed_repeated_permission_source_v2(case, mutation):
+    from ipfs_datasets_py.logic.autoformal import corpus_source as sources
+    alternate, original = case["declaration"]["units"][1:]
+    old, alternate_old = original["source_version"], alternate["source_version"]
+    text = case["source_inputs"][original["unit_id"]]["extracted_text"]
+    original_length = len(text)
+    identity = {key: old[key] for key in ("source_id", "release_id", "edition", "provision_id")}
+    if mutation == "different_provision":
+        identity = {key: alternate_old[key] for key in identity}
+    elif mutation == "different_release":
+        identity["release_id"] += ":separately-reviewed-legal-release"
+    elif mutation == "different_edition":
+        identity["edition"] += ":separately-reviewed-legal-edition"
+    alternate["document_revision"] = original["document_revision"]
+    if mutation in ("document_revision_label", "different_view_and_document_revision_label"):
+        alternate["document_revision"] += ":artifact-label-only"
+    for field in ("coverage", "relational_request_sha256"):
+        alternate[field] = deepcopy(original[field])
+    if "relational_profile" in original:
+        alternate["relational_profile"] = original["relational_profile"]
+    case["relational_inputs"][alternate["unit_id"]] = deepcopy(case["relational_inputs"][original["unit_id"]])
+    original_use = next(row for row in case["declaration"]["definition_uses"]
+                        if row["use_unit_id"] == original["unit_id"])
+    alternate_use = next(row for row in case["declaration"]["definition_uses"]
+                         if row["use_unit_id"] == alternate["unit_id"])
+    alternate_use["target_typed_paths"] = deepcopy(original_use["target_typed_paths"])
+
+    def install(unit, ids, view, raw, start, end, extraction):
+        assert (raw.decode("utf-8-sig") if extraction == "fixture:utf8-sig/v1" else raw.decode("utf-8")) == view
+        version = sources.build_source_version(**ids, raw_bytes=raw, expected_raw_sha256=sha(raw),
+            extracted_text=view, expected_extracted_sha256=sha(view.encode("utf-8")),
+            extraction_profile=extraction, normalization_profile="identity/v1", media_type="text/plain")
+        occurrence = sources.build_source_occurrence(version, expected_raw_sha256=sha(raw),
+            extracted_text=view, expected_extracted_sha256=sha(view.encode("utf-8")),
+            start_char=start, end_char=end, start_utf8=len(view[:start].encode("utf-8")),
+            end_utf8=len(view[:end].encode("utf-8")))
+        unit.update(source_version=version, occurrence=occurrence)
+        case["source_inputs"][unit["unit_id"]] = {"raw_bytes": raw, "extracted_text": view}
+        for row in unit["coverage"]:
+            row.update({key: occurrence[key] for key in ("start_char", "end_char", "start_utf8", "end_utf8")})
+        use = next(row for row in case["declaration"]["definition_uses"] if row["use_unit_id"] == unit["unit_id"])
+        use["use_occurrence_cid"] = occurrence["record_cid"]
+
+    if mutation == "nonoverlapping_paragraphs":
+        view = text + "\n" + text
+        raw = view.encode("utf-8")
+        install(original, identity, view, raw, 0, original_length, "identity/v1")
+        install(alternate, identity, view, raw, original_length + 1, len(view), "identity/v1")
+    elif mutation in ("different_unaligned_view", "different_view_and_document_revision_label"):
+        view = "\n" + text
+        install(alternate, identity, view, view.encode("utf-8"), 1, len(view), "identity/v1")
+    elif mutation == "physical_alias":
+        identity = {key: alternate_old[key] for key in identity}
+        install(alternate, identity, text, text.encode("utf-8"), 0, original_length, "identity/v1")
+    else:
+        raw = b"\xef\xbb\xbf" + text.encode("utf-8")
+        start, end = (1, original_length - 1) if mutation == "overlapping_repackage" else (0, original_length)
+        install(alternate, identity, text, raw, start, end, "fixture:utf8-sig/v1")
+    return original, alternate
+
+
+def reviewed_refresh_signed_preparation_v2(owner, case):
+    reviewed_refresh_manifest_v2(case)
+    case["preparation"] = owner.prepare_reviewed_norm_admission_v2(case["declaration"],
+        **reviewed_prepare_arguments_v2(case))
+    subject = case["preparation"]["subject"]
+    raw = norm._wire(case["declaration"])
+    case["evidence"][case["declaration"]["component_id"]] = raw
+    for claim in case["reviews"]:
+        claim["subject"] = deepcopy(subject)
+        claim["interpretation"].update(reviewed_graph_sha256=subject["graph_sha256"],
+                                       reviewed_ast_sha256=subject["ast_sha256"])
+        for obligation in claim["context_closure"]["obligations"]:
+            obligation["evidence_refs"][0] = {"artifact_id": case["declaration"]["component_id"], "sha256": sha(raw)}
+    reviewed_resign_v2(case)
+
+
+@pytest.mark.parametrize("mutation,reason", [
+    ("duplicate_repackage", "logical source occurrence"),
+    ("overlapping_repackage", "overlapping logical source"),
+    ("document_revision_label", "logical source occurrence"),
+    ("different_unaligned_view", "unsupported source-view alignment"),
+    ("different_view_and_document_revision_label", "unsupported source-view alignment"),
+    ("physical_alias", "physical occurrence"),
+])
+def test_reviewed_v2_raw_repackaging_and_artifact_labels_do_not_create_legal_uses(owner, reviewed_case_v2, mutation, reason):
+    case = reviewed_case_v2
+    original, alternate = reviewed_repeated_permission_source_v2(case, mutation)
+    if mutation != "physical_alias":
+        assert original["source_version"]["raw_artifact"]["sha256"] != alternate["source_version"]["raw_artifact"]["sha256"]
+    reviewed_refresh_manifest_v2(case)
+    with pytest.raises(ValueError, match=reason):
+        owner.prepare_reviewed_norm_admission_v2(case["declaration"], **reviewed_prepare_arguments_v2(case))
+    # The public assessment replays original sources; an old ready preparation
+    # cannot substitute for the newly offered duplicate source population.
+    with pytest.raises(ValueError, match=reason):
+        assess_reviewed_fixture_v2(owner, case)
+
+
+@pytest.mark.parametrize("mutation", ["different_provision", "different_release", "different_edition", "nonoverlapping_paragraphs"])
+def test_reviewed_v2_distinct_legal_identities_and_nonoverlapping_uses_survive(owner, reviewed_case_v2, mutation):
+    case = reviewed_case_v2
+    original, alternate = reviewed_repeated_permission_source_v2(case, mutation)
+    reviewed_refresh_signed_preparation_v2(owner, case)
+    report = assess_reviewed_fixture_v2(owner, case)
+    assert report["semantic_use_eligible"] is True and report["blockers"] == []
+    assert report["fixture_only"] and report["training_mask"] == report["evaluation_gold_mask"] == 0
+    assert report["Lean_admitted"] is report["proof_authority"] is report["corpus_admitted"] is False
+    assert len({row["occurrence_cid"] for row in report["units"] if row["kind"] == "norm"}) == 2
+    assert original["occurrence"]["span_text"] == alternate["occurrence"]["span_text"]

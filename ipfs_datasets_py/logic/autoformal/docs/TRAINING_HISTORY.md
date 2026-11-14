@@ -1,5 +1,15 @@
 # Training and experiment history
 
+## Source-use identity; software qualification only — 2026-11-14
+
+The existing reviewed V2/V3 admission owners now reject duplicate paragraph uses created by raw repackaging or artifact revision labels, including combined revision/view mutations. A legal source/provision/release has one canonical view until an explicit alignment profile exists. Original physical guards and previously supported distinct-use controls remain. Fresh canonical checks passed 355 cases with no skips; saved bad records fail through public admission and span-consumer replay. Historical failures and source epochs remain separate. [Exact qualification](../../../../docs/autoformalization/evidence/legal-ir-reviewed-source-use-identity-20261114.json).
+
+No checkpoint, fitting, inference, native Lean result, human legal review or real statutory gold is produced. This is an admission source-epoch correction; old model and proof receipts remain bound to their own sources. Private assets and existing budgets remain on hold/unchanged.
+
+The native proof-cache test loader also has a current explicit fixture pin and executes the exact verified buffer, retaining pre/post source and module identity checks. The full canonical kernel file passes 276 ordinary cases; three native Lean cases remain explicitly skipped. The three new loader cases are included in 276, not added again. The old fixture pin remains historical. Existing native CI is active and pins Lean 4.34.1/Elan 4.1.2, but the inspected GitHub run executed zero job steps because GitHub reports an account billing lock. No native success, model execution or permission/budget renewal follows.
+
+The existing CI workflow now also triggers on masked-contrastive and storage-capacity test-only edits and selects both files in its compatible contracts lane. Thirty canonical data-only checks pass for the filters, commands and existing dependency coverage; no job, dependency, budget, permission or shard-weight change is introduced. This is workflow configuration validation, not hosted, numerical or native execution.
+
 ## Explicit many-sorted complete-candidate syntax — 2026-11-14
 
 The canonical candidate owner adds `validate_complete_norm_candidate_v3` with the distinct `unreviewed-complete-norm-candidate-syntax/v3` profile. It delegates object and many-sorted expressions to the existing relational lowering owners, retains all nine predicted fields exactly, and checks separately supplied source, governing-context and identifier-only selection facts. Mixed reports must retain their canonical schema/status, false authority/execution flags and zero semantic/consumer/training/gold masks. The public v1/v2 APIs retain their object-only refusals. No source text, legal interpretation, review, model or native proof is manufactured.

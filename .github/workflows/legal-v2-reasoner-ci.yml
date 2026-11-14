@@ -16,12 +16,14 @@ on:
       - "ipfs_datasets_py/optimizers/logic_theorem_optimizer/**"
       - "tests/unit/optimizers/logic_theorem_optimizer/test_legal_*.py"
       - "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py"
+      - "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_storage_capacity.py"
       - "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_process.py"
       - "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py"
       - "scripts/ops/legal_ir/run_incremental_autoencoders.py"
       - "tests/unit/logic/test_autoformal_campaign_training_inputs.py"
       - "tests/unit/logic/test_autoformal_reviewed_context_sharing.py"
       - "tests/unit/logic/formalization/autoencoder/test_alignment_relation_*.py"
+      - "tests/unit/logic/formalization/autoencoder/test_alignment_masked_contrastive.py"
       - "tests/unit/logic/formalization/autoencoder/test_alignment_richer_embeddings.py"
       - "tests/unit/logic/formalization/autoencoder/test_alignment_lane_bundle.py"
       - "tests/unit/logic/formalization/autoencoder/test_source_embeddings_384_device.py"
@@ -63,12 +65,14 @@ on:
       - "ipfs_datasets_py/optimizers/logic_theorem_optimizer/**"
       - "tests/unit/optimizers/logic_theorem_optimizer/test_legal_*.py"
       - "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py"
+      - "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_storage_capacity.py"
       - "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_process.py"
       - "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py"
       - "scripts/ops/legal_ir/run_incremental_autoencoders.py"
       - "tests/unit/logic/test_autoformal_campaign_training_inputs.py"
       - "tests/unit/logic/test_autoformal_reviewed_context_sharing.py"
       - "tests/unit/logic/formalization/autoencoder/test_alignment_relation_*.py"
+      - "tests/unit/logic/formalization/autoencoder/test_alignment_masked_contrastive.py"
       - "tests/unit/logic/formalization/autoencoder/test_alignment_richer_embeddings.py"
       - "tests/unit/logic/formalization/autoencoder/test_alignment_lane_bundle.py"
       - "tests/unit/logic/formalization/autoencoder/test_source_embeddings_384_device.py"
@@ -374,7 +378,7 @@ jobs:
         printf '%s\n' "IPFS_DATASETS_LEAN_EXECUTABLE=$HOME/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lean" >> "$GITHUB_ENV"
         printf '%s\n' "IPFS_DATASETS_NATIVE_LAKE_TEST_EXECUTABLE=$HOME/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake" >> "$GITHUB_ENV"
       if: ${{ matrix.group == 'native' }}
-    - name: Run focused proof and cache contracts
+    - name: Run focused proof, cache and storage contracts
       env:
         IPFS_DATASETS_RUN_NATIVE_LEAN: '0'
         PYTHONPATH: ${{ github.workspace }}
@@ -382,6 +386,7 @@ jobs:
         python -m pytest -c /dev/null --noconftest \
           tests/integration/logic/backends/test_kernel_backends.py \
           tests/unit/logic/legal_ir/test_proof_cache.py \
+          tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_storage_capacity.py \
           tests/unit/logic/autoformal/test_corpus_graph.py \
           tests/unit/logic/autoformal/test_legal_graph_dependencies.py \
           tests/unit/logic/test_duckdb_proof_migration.py \
@@ -446,6 +451,7 @@ jobs:
         python -m pytest -c /dev/null --noconftest \
           tests/unit/logic/formalization/autoencoder/test_alignment_relation_declarations.py \
           tests/unit/logic/formalization/autoencoder/test_alignment_relation_mask_handoff.py \
+          tests/unit/logic/formalization/autoencoder/test_alignment_masked_contrastive.py \
           tests/unit/logic/formalization/autoencoder/test_alignment_richer_embeddings.py \
           tests/unit/logic/formalization/autoencoder/test_alignment_lane_bundle.py \
           tests/unit/logic/formalization/autoencoder/test_source_embeddings_384_device.py \

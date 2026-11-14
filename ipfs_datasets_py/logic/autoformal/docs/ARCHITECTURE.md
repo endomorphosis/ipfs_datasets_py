@@ -1,5 +1,9 @@
 # Architecture and owner map
 
+## Source-use identity in reviewed admission — 2026-11-14
+
+The V2 and mixed V3 positive admission paths use one shared source-use checker in the existing V1 owner. Physical artifact/view/interval custody and declared legal source/release/edition/provision identity are separate checks. Artifact document revision remains provenance; it cannot add another occurrence of the same canonical view. Multiple unaligned views of one declared legal source/release fail explicitly. This supplies no source alias resolution, source authenticity, legal interpretation, proof or corpus authority. The 355-case canonical qualification and its failed originals are indexed in the current handoff; real statutory review remains pending.
+
 ## Explicit many-sorted complete-candidate syntax — 2026-11-14
 
 The canonical candidate owner adds `validate_complete_norm_candidate_v3` with the distinct `unreviewed-complete-norm-candidate-syntax/v3` profile. It delegates object and many-sorted expressions to the existing relational lowering owners, retains all nine predicted fields exactly, and checks separately supplied source, governing-context and identifier-only selection facts. Mixed reports must retain their canonical schema/status, false authority/execution flags and zero semantic/consumer/training/gold masks. The public v1/v2 APIs retain their object-only refusals. No source text, legal interpretation, review, model or native proof is manufactured.
