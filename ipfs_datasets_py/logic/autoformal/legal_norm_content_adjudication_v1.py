@@ -536,6 +536,56 @@ def _reviewed_subject(subject, manifest):
           and subject["required_dependency_ids"] == reachable, "complete reviewed dependency closure differs")
 
 
+class _ReviewedSourceUseTracker:
+    """Keep physical custody and declared logical-use identities independent.
+
+    Raw encodings/containers do not create additional uses of the same declared
+    legal source revision. Different canonical views of that revision require
+    an alignment contract, which this admission profile does not provide. This
+    does not infer aliases between different caller-declared legal identities.
+    """
+
+    def __init__(self):
+        self.physical_occurrences = set()
+        self.physical_norm_intervals = []
+        self.logical_views = {}
+        self.logical_occurrences = set()
+        self.logical_norm_intervals = []
+
+    def add(self, unit, version, occurrence):
+        raw_sha = version["raw_artifact"]["sha256"]
+        view_sha = version["extracted_view"]["sha256"]
+        start, end = occurrence["start_char"], occurrence["end_char"]
+        physical_parent = (raw_sha, view_sha)
+        physical = physical_parent + (start, end)
+        _need(physical not in self.physical_occurrences,
+              "two interpretations of one physical occurrence are not distinct units")
+        if unit["kind"] == "norm":
+            _need(not any(parent == physical_parent and max(begin, start) < min(finish, end)
+                for parent, begin, finish in self.physical_norm_intervals),
+                "overlapping interpretations are not two distinct normative uses")
+        logical_source = tuple(version[key] for key in
+            ("source_id", "release_id", "edition", "provision_id"))
+        _need(logical_source not in self.logical_views or self.logical_views[logical_source] == view_sha,
+              "different extracted views of one logical source revision require unsupported source-view alignment")
+        # A document-revision label is not another legal provision/release.
+        # The known same view/location remains the same use across such labels.
+        logical_parent = logical_source + (view_sha,)
+        logical = (logical_parent, start, end)
+        _need(logical not in self.logical_occurrences,
+              "two raw representations of one logical source occurrence are not distinct units")
+        if unit["kind"] == "norm":
+            _need(not any(parent == logical_parent and max(begin, start) < min(finish, end)
+                for parent, begin, finish in self.logical_norm_intervals),
+                "overlapping logical source interpretations are not two distinct normative uses")
+        self.physical_occurrences.add(physical)
+        self.logical_views[logical_source] = view_sha
+        self.logical_occurrences.add(logical)
+        if unit["kind"] == "norm":
+            self.physical_norm_intervals.append((physical_parent, start, end))
+            self.logical_norm_intervals.append((logical_parent, start, end))
+
+
 def _reviewed_units(body, source_inputs, relational_inputs):
     source, _, relational, _ = _reviewed_owners()
     units = body["units"]
@@ -545,7 +595,8 @@ def _reviewed_units(body, source_inputs, relational_inputs):
           "unique complete source unit identities required")
     _need(type(source_inputs) is dict and type(relational_inputs) is dict
           and set(source_inputs) == set(relational_inputs) == set(ids), "complete original source and IR inputs required")
-    results, expected_artifacts, occurrences, norm_intervals = [], {}, set(), []
+    results, expected_artifacts = [], {}
+    source_uses = _ReviewedSourceUseTracker()
     for unit in units:
         _keys(unit, {"unit_id", "kind", "source_version", "occurrence", "document_revision",
             "parent_unit_ids", "relational_request_sha256", "source_artifact_id", "ir_artifact_id", "coverage"},
@@ -566,16 +617,7 @@ def _reviewed_units(body, source_inputs, relational_inputs):
             extracted_text=inputs["extracted_text"], expected_extracted_sha256=view_sha)
         occurrence = source.validate_source_occurrence(unit["occurrence"], source_version=version,
             expected_raw_sha256=raw_sha, extracted_text=inputs["extracted_text"], expected_extracted_sha256=view_sha)
-        # Aliases, source labels and record seals cannot turn the same retained
-        # artifact/view interval into an additional physical statutory use.
-        physical_parent = (raw_sha, view_sha)
-        physical = physical_parent + (occurrence["start_char"], occurrence["end_char"])
-        _need(physical not in occurrences, "two interpretations of one physical occurrence are not distinct units")
-        occurrences.add(physical)
-        if unit["kind"] == "norm":
-            _need(not any(parent == physical_parent and max(start, occurrence["start_char"]) < min(end, occurrence["end_char"])
-                for parent, start, end in norm_intervals), "overlapping interpretations are not two distinct normative uses")
-            norm_intervals.append((physical_parent, occurrence["start_char"], occurrence["end_char"]))
+        source_uses.add(unit, version, occurrence)
         if body["provenance_kind"] == "statutory":
             _need(not any(str(version[key]).startswith("fixture:") for key in ("source_id", "release_id", "provision_id")),
                   "fictional source identities cannot be promoted to statutory evidence")
@@ -1038,6 +1080,13 @@ def _candidate_dependencies(candidate):
 
 
 def validate_complete_norm_candidate_v1(candidate, *, known_source_binding, known_governing_context):
+    """Validate the unchanged object-only unreviewed candidate contract."""
+    return _validate_complete_norm_candidate_shape(candidate,
+        known_source_binding=known_source_binding, known_governing_context=known_governing_context)
+
+
+def _validate_complete_norm_candidate_shape(candidate, *, known_source_binding, known_governing_context,
+                                            _allow_mixed=False):
     """Validate a complete nine-field *unreviewed* candidate without admission.
 
     The existing relational owner checks TypedExpression reconstruction,
@@ -1061,18 +1110,27 @@ def validate_complete_norm_candidate_v1(candidate, *, known_source_binding, know
     _need(norm._same(offered["governing_context"], known["governing_context"]),
           "candidate governing context differs from the supplied known context")
     _need(type(offered["profile"]) is str, "candidate relational profile must be text")
-    if offered["profile"] != relational.PROFILE:
+    mixed = _allow_mixed and offered["profile"] == relational.MIXED_PROFILE
+    if offered["profile"] == relational.PROFILE:
+        prepare = relational.prepare_relational_norm_v1
+        request_schema = "legal-relational-norm-request/v1"
+    elif mixed:
+        prepare = relational.prepare_mixed_relational_norm_v1
+        request_schema = relational.MIXED_REQUEST_SCHEMA
+    else:
         raise CompleteNormCandidateUnsupportedError("unsupported complete-norm candidate relational profile")
     _need(type(offered["assumptions"]) is list, "candidate formal assumptions must be a list")
     if offered["assumptions"]:
         raise CompleteNormCandidateUnsupportedError("nonempty candidate assumptions require a supported typed-premise profile")
     _auth()._id(offered["interpretation_id"], "candidate interpretation declaration")
-    request = {"schema": "legal-relational-norm-request/v1",
+    request = {"schema": request_schema,
         "interpretation_status": "authored_unreviewed_declaration", "expression": offered["typed_expression"],
         "argument_roles": offered["argument_roles"], "source_binding": None}
+    if mixed:
+        request["profile"] = relational.MIXED_PROFILE
     request_raw = norm._wire(request)
     try:
-        fragment = relational.prepare_relational_norm_v1(request_raw,
+        fragment = prepare(request_raw,
             expected_request_sha256=hashlib.sha256(request_raw).hexdigest())
     except ValueError as error:
         message = str(error)
@@ -1090,6 +1148,12 @@ def validate_complete_norm_candidate_v1(candidate, *, known_source_binding, know
           and all(type(fragment[field]) is int and fragment[field] == 0 for field in
                   ("human_reviews", "signatures_constructed", "admissions", "training_mask", "evaluation_gold_mask")),
           "candidate syntax requires an unreviewed nonexecuting relational preparation")
+    if mixed:
+        _need(fragment["schema"] == relational.MIXED_SCHEMA
+              and fragment["status"] == "authored_unreviewed_mixed_relational_fragment_prepared"
+              and all(type(fragment[field]) is int and fragment[field] == 0
+                      for field in ("semantic_mask", "consumer_mask")),
+              "mixed candidate syntax requires the canonical unreviewed zero-mask report")
     _candidate_dependencies(offered)
     result = {"schema": CANDIDATE_SYNTAX_SCHEMA, "profile": CANDIDATE_SYNTAX_PROFILE,
         "status": "candidate_syntax_validated_unreviewed", "candidate": offered,
@@ -1176,6 +1240,15 @@ def validate_complete_norm_known_input_v2(*, known_source_binding, known_governi
 
 def validate_complete_norm_candidate_v2(candidate, *, known_source_binding, known_governing_context,
                                       known_selection_context):
+    """Bind the identifier while retaining the object-only v2 profile."""
+    return _validate_complete_norm_candidate_identifier_bound(candidate,
+        known_source_binding=known_source_binding, known_governing_context=known_governing_context,
+        known_selection_context=known_selection_context, _candidate_validator=validate_complete_norm_candidate_v1,
+        _report_schema=CANDIDATE_SYNTAX_SCHEMA_V2, _report_profile=CANDIDATE_SYNTAX_PROFILE_V2)
+
+
+def _validate_complete_norm_candidate_identifier_bound(candidate, *, known_source_binding,
+        known_governing_context, known_selection_context, _candidate_validator, _report_schema, _report_profile):
     """Require exact declared interpretation identity without accepting meaning.
 
     All nine predicted fields must be emitted. A missing or mismatched identity
@@ -1194,12 +1267,12 @@ def validate_complete_norm_candidate_v2(candidate, *, known_source_binding, know
         known_selection_context=detached["selection_context"])
     _need(offered["interpretation_id"] == known["selection_context"]["interpretation_id"],
           "candidate interpretation identity differs from the supplied known selection")
-    result = validate_complete_norm_candidate_v1(offered,
+    result = _candidate_validator(offered,
         known_source_binding=known["source_binding"], known_governing_context=known["governing_context"])
     _keys(result, {"schema", "profile", "status", "candidate", "candidate_sha256",
         "known_source_binding_matches", "known_governing_context_matches", "authority",
         "semantic_use_eligible", "training_mask", "evaluation_gold_mask"}, "version-one candidate syntax result")
-    result.update(schema=CANDIDATE_SYNTAX_SCHEMA_V2, profile=CANDIDATE_SYNTAX_PROFILE_V2,
+    result.update(schema=_report_schema, profile=_report_profile,
         selection_context=known["selection_context"], known_interpretation_identifier_matches=True,
         semantic_selection_supported=False)
     result_fields = frozenset(result)
@@ -1207,8 +1280,8 @@ def validate_complete_norm_candidate_v2(candidate, *, known_source_binding, know
     _need(len(raw) <= MAX_REPORT_BYTES, "identifier-bound candidate report byte bound exceeded")
     returned = json.loads(raw)
     _need(type(returned) is dict and set(returned) == result_fields
-          and returned["schema"] == CANDIDATE_SYNTAX_SCHEMA_V2
-          and returned["profile"] == CANDIDATE_SYNTAX_PROFILE_V2
+          and returned["schema"] == _report_schema
+          and returned["profile"] == _report_profile
           and returned["status"] == "candidate_syntax_validated_unreviewed"
           and norm._same(returned["candidate"], offered)
           and returned["candidate_sha256"] == norm_content_adjudication_sha256(offered)
@@ -1231,3 +1304,33 @@ def validate_complete_norm_candidate_v2(candidate, *, known_source_binding, know
 __all__ += ["validate_complete_norm_known_input_v2", "validate_complete_norm_candidate_v2",
     "CANDIDATE_KNOWN_INPUT_SCHEMA_V2", "CANDIDATE_SYNTAX_SCHEMA_V2", "CANDIDATE_SYNTAX_PROFILE_V2",
     "CANDIDATE_SELECTION_SCHEMA"]
+
+
+# Additive syntax scope only. The v1/v2 routes keep their object-only refusals.
+CANDIDATE_SYNTAX_SCHEMA_V3 = "legal-complete-norm-candidate-syntax/v3"
+CANDIDATE_SYNTAX_PROFILE_V3 = "unreviewed-complete-norm-candidate-syntax/v3"
+
+
+def _validate_complete_norm_candidate_shape_v3(candidate, *, known_source_binding, known_governing_context):
+    return _validate_complete_norm_candidate_shape(candidate,
+        known_source_binding=known_source_binding, known_governing_context=known_governing_context,
+        _allow_mixed=True)
+
+
+def validate_complete_norm_candidate_v3(candidate, *, known_source_binding, known_governing_context,
+                                      known_selection_context):
+    """Check object or many-sorted syntax against declared facts, never meaning.
+
+    Reuse the existing lowering owners with null renderer source bindings and
+    no native execution. The predicted nine-field payload is retained exactly.
+    Known facts and identifier-only selection retain their v2 contract; this
+    report's distinct version does not accept an interpretation or legal use.
+    """
+    return _validate_complete_norm_candidate_identifier_bound(candidate,
+        known_source_binding=known_source_binding, known_governing_context=known_governing_context,
+        known_selection_context=known_selection_context,
+        _candidate_validator=_validate_complete_norm_candidate_shape_v3,
+        _report_schema=CANDIDATE_SYNTAX_SCHEMA_V3, _report_profile=CANDIDATE_SYNTAX_PROFILE_V3)
+
+
+__all__ += ["validate_complete_norm_candidate_v3", "CANDIDATE_SYNTAX_SCHEMA_V3", "CANDIDATE_SYNTAX_PROFILE_V3"]

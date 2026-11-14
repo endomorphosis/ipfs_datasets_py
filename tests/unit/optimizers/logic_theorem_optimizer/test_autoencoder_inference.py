@@ -2910,3 +2910,148 @@ def test_reviewed_inference_actual_Qwen25_rich_layout_typed_audit_physical_origi
         runtime_profile="builtin-qwen2-bfloat16/v1",generation_policy=policy,
         qualified_pretrained_pair=qualified_actual_pretrained_pair_input,
         typed_structure_profile="canonical-typed-expression-wire/v1")
+
+
+@pytest.mark.parametrize('profile', [None, 'unreviewed-complete-norm-candidate-syntax/v2',
+    'unreviewed-complete-norm-candidate-syntax/v3', False, 1, {}, 'unknown'])
+def test_reviewed_parent_candidate_audit_trusted_runtime_closed_profile(profile):
+    callbacks = [lambda: None, lambda _: None, lambda: {}]
+    if profile is None or type(profile) is str and profile.endswith(('/v2', '/v3')):
+        runtime = inference.ReviewedInferenceParentRuntime(object(), *callbacks, 1.0, candidate_syntax_profile=profile)
+        assert runtime.candidate_syntax_profile == profile
+    else:
+        with pytest.raises(ValueError, match='candidate-syntax profile'):
+            inference.ReviewedInferenceParentRuntime(object(), *callbacks, 1.0, candidate_syntax_profile=profile)
+
+
+@pytest.mark.parametrize('rich', [False, True])
+def test_reviewed_parent_candidate_audit_not_enabled_by_packet(tmp_path, rich):
+    _, _, value, write = _reviewed_Qwen2_request_data(tmp_path, rich)
+    value['candidate_syntax_profile'] = 'unreviewed-complete-norm-candidate-syntax/v3'
+    with pytest.raises(ValueError, match='closed reviewed'):
+        inference._read_reviewed_evaluation_request(write())
+    assert not Path(value['output_directory']).exists()
+
+
+@pytest.fixture(scope='module')
+def parent_candidate_audit_seed():
+    from copy import deepcopy
+    from tests.unit.optimizers.logic_theorem_optimizer import test_legal_ir_evaluation_artifacts as bridge
+    options, rows, known, _ = bridge._candidate_audit_fixture()
+    evaluation = bridge._producer_evaluate(options, lambda _: bridge._producer_exact_outputs(rows)).to_dict()
+    # Only declaration-derived known facts, not copied reference target fields.
+    contexts = dict(profile='reviewed-source-selection-context/v2',
+        selection_context=deepcopy(known[rows[0]['id']]['known_selection_context']),
+        rows=[dict(id=r['id'], unit_id=r['unit_id'],
+            source_binding=deepcopy(known[r['id']]['known_source_binding']),
+            governing_context=deepcopy(known[r['id']]['known_governing_context'])) for r in rows])
+    return rows, evaluation, contexts
+
+
+@pytest.mark.parametrize('damage', [None, 'missing-contexts', 'source-fact', 'selection', 'order',
+    'unit-id', 'extra', 'metrics', 'output-join', 'checkpoint', 'context-bytes', 'batch-error'])
+def test_reviewed_parent_candidate_audit_binds_independent_original_artifacts(tmp_path, parent_candidate_audit_seed, damage):
+    from copy import deepcopy
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_training_worker as worker
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_ir_semantic_metrics as metrics
+    rows, evaluation, contexts = deepcopy(parent_candidate_audit_seed)
+    payload = evaluation['compiler_artifact']['reviewed_source_span_producer_evaluation']
+    generation = {'last_call': {'completed': True, 'raw_generation_outputs': deepcopy(payload['producer_outputs'])}}
+    checkpoints = deepcopy(payload['configuration']['checkpoint_declarations'])
+    if damage == 'source-fact': contexts['rows'][0]['source_binding']['document_revision'] = 'fixture:different'
+    elif damage == 'selection': contexts['selection_context']['interpretation_id'] = 'fixture:different'
+    elif damage == 'order': contexts['rows'].reverse()
+    elif damage == 'unit-id': contexts['rows'][0]['unit_id'] = 'fixture:different'
+    elif damage == 'extra': contexts['reference_target'] = rows[0]['canonical_ir']
+    elif damage == 'metrics': evaluation['metrics']['complete_norm_payload']['denominator'] = 999
+    elif damage == 'output-join': generation['last_call']['raw_generation_outputs'][0]['outcome'] = 'incomplete'
+    elif damage == 'checkpoint': checkpoints['decoder']['sha256'] = '0' * 64
+    elif damage == 'batch-error':
+        for output in payload['producer_outputs']: output.update(candidate=None, outcome='error')
+        payload['producer_exception_type'] = 'RuntimeError'
+        exact = metrics.evaluate_complete_norm_payloads([dict(case_id=r['id'], reference=r['canonical_ir'],
+            candidate=o['candidate'], outcome=o['outcome']) for r, o in zip(rows, payload['producer_outputs'], strict=True)])
+        payload['comparison'] = exact; evaluation['metrics']['complete_norm_payload'] = deepcopy(exact)
+        generation['last_call'].update(completed=False, raw_generation_outputs=None, exception_type='RuntimeError',
+            entry_pair_match=True, exit_pair_match=True, closeout_exception_type=None)
+    def save(name, value):
+        path = tmp_path / (name + '.json');path.write_bytes(worker._json_bytes(value))
+        return dict(path=str(path), bytes=path.stat().st_size, sha256=_sha(path))
+    artifacts = {name: save(name, value) for name, value in [('evaluation', evaluation), ('generation', generation), ('loader', {})]}
+    request = dict(rows_artifact=save('rows', rows), checkpoint_declarations=checkpoints,
+        source_contexts_artifact=save('contexts', contexts))
+    cycle = dict(output_artifacts=artifacts);cycle_ref = worker.CheckpointArtifact.from_dict(save('cycle', cycle))
+    if damage == 'missing-contexts': request.pop('source_contexts_artifact')
+    elif damage == 'context-bytes': Path(request['source_contexts_artifact']['path']).write_text('{}\n')
+    profile = 'unreviewed-complete-norm-candidate-syntax/v3'
+    if damage not in (None, 'batch-error'):
+        with pytest.raises(ValueError):
+            inference._build_parent_candidate_syntax_audit(cycle, request, cycle_ref, 'a' * 64, {}, profile)
+    else:
+        report = inference._build_parent_candidate_syntax_audit(cycle, request, cycle_ref, 'a' * 64, {}, profile)
+        assert report['profile'] == profile and report['report']['denominator'] == 3
+        assert report['report']['counts']['not_checked' if damage == 'batch-error' else 'syntax_validated_unreviewed'] == 3
+        assert report['source_contexts_artifact'] == request['source_contexts_artifact']
+        assert report['original_output_artifacts'] == artifacts
+        assert report['original_child_artifacts_modified'] is report['model_reexecuted'] is False
+        assert report['native_proof_verified'] is report['legal_meaning_verified'] is report['current_admission_authority_granted'] is False
+    assert not (tmp_path / 'candidate-syntax-audit.json').exists()
+
+
+@pytest.mark.parametrize('typed,candidate', [(None, None), (None, 'unreviewed-complete-norm-candidate-syntax/v2'),
+    ('canonical-typed-expression-wire/v1', None), ('canonical-typed-expression-wire/v1', 'unreviewed-complete-norm-candidate-syntax/v3')])
+def test_reviewed_parent_candidate_audit_cli_forwards_trusted_opt_ins_only(monkeypatch, typed, candidate):
+    cli = _reviewed_physical_cli(monkeypatch);marker = object();calls = []
+    runtime = inference.ReviewedInferenceParentRuntime(object(), lambda: None, lambda _: None, lambda: {}, 1.0,
+        typed_structure_profile=typed, candidate_syntax_profile=candidate)
+    def route(*args, **kwargs): calls.append(kwargs);return marker
+    monkeypatch.setattr(inference, 'run_reviewed_source_inference_cycle', route)
+    assert cli.supervised_cycle({'reviewed_evaluation_request': {}}, reviewed_parent_runtime=runtime) is marker
+    assert calls[0].get('typed_structure_profile') == typed
+    assert calls[0].get('candidate_syntax_profile') == candidate
+    assert ('candidate_syntax_profile' in calls[0]) is (candidate is not None)
+
+
+def test_reviewed_parent_candidate_audit_source_pins_are_canonical_metadata_only():
+    pins = inference._parent_candidate_syntax_source_pins()
+    root = Path(inference.__file__).resolve().parents[3]
+    assert 0 < len(pins) <= 256
+    assert any(path.endswith('/legal_norm_content_adjudication_v1.py') for path in pins)
+    assert any(path.endswith('/native_family_lean_emitters.py') for path in pins)
+    for path, digest in pins.items():
+        assert Path(path).resolve().is_relative_to(root)
+        assert _sha(path) == digest
+
+
+@pytest.mark.parametrize('charged,limit,sizes,accepted', [(100,120,[12,12],False),
+    (100,124,[12,12],True), (121,120,[],False)])
+def test_reviewed_parent_candidate_audit_quota_retains_prior_charges(charged, limit, sizes, accepted):
+    usage = dict(total_attempt_charged_bytes=charged, attempt_limit_bytes=limit, attempt_live_bytes=1)
+    wires = [b'x' * n for n in sizes]
+    if accepted: inference._check_parent_audit_storage(usage, wires)
+    else:
+        with pytest.raises(ValueError, match='storage promise'):
+            inference._check_parent_audit_storage(usage, wires)
+
+
+def test_reviewed_parent_candidate_audit_keeps_individual_output_bound(monkeypatch):
+    monkeypatch.setattr(inference, 'REVIEWED_EVALUATION_OUTPUT_LIMIT', 8)
+    with pytest.raises(ValueError, match='output bound'):
+        inference._check_parent_audit_storage(dict(total_attempt_charged_bytes=0, attempt_limit_bytes=100), [b'x' * 9])
+
+
+@pytest.mark.parametrize('candidate', [False, True])
+def test_reviewed_parent_candidate_audit_final_input_check_after_late_context_write(tmp_path, candidate):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_training_worker as worker
+    def save(name, value):
+        path = tmp_path / (name + '.json');path.write_bytes(worker._json_bytes(value))
+        return dict(path=str(path), bytes=path.stat().st_size, sha256=_sha(path))
+    request = dict(rows_artifact=save('rows', []), source_contexts_artifact=save('contexts', {'declared': True}))
+    reference = worker.CheckpointArtifact.from_dict(save('request', request))
+    # Simulate a last caller callback overwriting independent known facts.
+    Path(request['source_contexts_artifact']['path']).write_text('{}\n')
+    if candidate:
+        with pytest.raises(ValueError):
+            inference._check_parent_audit_inputs(request, reference, candidate=True)
+    else:
+        inference._check_parent_audit_inputs(request, reference, candidate=False)

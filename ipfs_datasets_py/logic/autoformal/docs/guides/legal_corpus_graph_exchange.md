@@ -176,3 +176,32 @@ The law text is captured by the existing raw-row owner, before cleaning or fallb
 Successful v2 replay sets `local_source_cache_entity_bindings_verified` and `independent_reviewed_crosswalk_verified` for the complete declared selected component. It removes only the local crosswalk blocker. Original-native custody, optional retained-native positive evidence and immutable remote Hub readback remain separate; release/proof/corpus flags stay false. This profile measures selected physical rows, not whole corpus coverage.
 
 The114-case private qualification covers wholeCLI65 plus49 affected reviewed-admission cases, with63 unrelated helperV1 cases deselected. Two separately saved normalcanonical invocations also replayed the full fictional3unit/4span/39entity/18node/21edge component. These are no statutory/model/native results. [Qualification](../../../../../workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/coherent-release-closure-v01/reviewed-physical-crosswalk-v01/private-physical-crosswalk-qualification-summary-v02.json); [canonical observations](../../../../../workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/coherent-release-closure-v01/reviewed-physical-crosswalk-v01/canonical-readonly-CLI-v01/observation.json). The earlier v1/wire qualifications above retain their original generations.
+
+## Current V3 three-cache integration and typed JSON correction — 2026-11-14
+
+The integration checkout now extends the existing release coordinator and CLI
+with the explicit V3 law/span/entity path. Complete admission and graph
+artifacts use the existing norm correspondence JSON profile, retaining the
+1,000,000-byte artifact and 8 MiB request ceilings and all downstream semantic
+and independent-pin validation. Generic graph records and V1/V2 keep their
+existing decoder limits. The shared review fixture now inventories one exact
+artifact per identity while preserving every legal unit and cross-reference;
+conflicting bytes under one identity refuse before manifest replacement.
+
+A fresh canonical-source run passed **56 cases in 13 functions**: 54 release
+cases and two shared-fixture controls. It covers a complete three-unit
+fictional physical replay, damaged legal JSON, complete 83-file packet
+transport, selected V1/V2 behavior and direct/module CLI paths. Source, native
+resource, process, genuine wait and storage custody closed; this successful
+run released only its own 32 MiB promise. The earlier missing-API, temporary
+factory, duplicate-reference and generic-depth failures remain preserved.
+A larger legacy batch hit its original 120-second deadline and grants no
+whole-batch credit. Use the retained smaller cohorts and the existing
+`--owned-ordinary-temp-factory` option for remaining checks.
+
+The release owning file now declares 152 cases; **98 remain unqualified on
+this current source**. The prior 35-case transport result overlaps this run
+and must not be added to it. No actual Lean build, original Native-parent
+authentication, immutable Hub readback, statutory review, model fitting or
+corpus release is established. V3 remains an explicit local replay path.
+[Closed qualification](../../../../../workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/current-canonical-release-v3-physical56-qualified-and-closed.json).

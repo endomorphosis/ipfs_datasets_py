@@ -1375,3 +1375,29 @@ def test_mixed_physical_closure_v3_refuses_same_core_function_state_drift_after_
     with pytest.raises(ValueError, match="V3 callback function/code/default/keyword-default generation changed"):
         replay_physical_closure_v3(physical_closure_control_v3[0])
     assert observed and release._validate_uscode_release_byte_closure_v3 is target
+
+
+@pytest.mark.parametrize("family", ["admission", "graph"])
+@pytest.mark.parametrize("damage", ["duplicate_key", "nonfinite", "too_deep", "noncanonical"])
+def test_mixed_physical_closure_v3_rejects_malformed_complete_legal_json(
+        physical_closure_control_v3, family, damage):
+    from copy import deepcopy
+    request = deepcopy(physical_closure_control_v3[0])
+    identity = request["component"][family]
+    row = next(row for row in request["artifacts"] if row["artifact_id"] == identity)
+    if damage == "duplicate_key":
+        raw = b'{"same":0,"same":1}'
+    elif damage == "nonfinite":
+        raw = b'{"value":NaN}'
+    elif damage == "too_deep":
+        # The existing norm correspondence profile bounds JSON depth at96.
+        value = None
+        for _ in range(97):
+            value = [value]
+        raw = _physical_wire(value)
+    else:
+        raw = row["payload"] + b" "
+    row.update(payload=raw,bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest())
+    # Updated outer byte descriptors cannot replace independent subject pins.
+    with pytest.raises(ValueError):
+        replay_physical_closure_v3(request)

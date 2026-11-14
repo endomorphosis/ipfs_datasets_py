@@ -1493,7 +1493,7 @@ def evaluate_reviewed_source_span_producer_artifact(*, binding, rows, split_mani
     checks and a distinct cache identity; it never grants native proof or legal
     authority. The default structural-comparison report remains unchanged.
     Explicit candidate_syntax_profile requires separately supplied known facts
-    for every case. The canonical candidate-v2 owner checks all nine fields and
+    for every case. The selected canonical candidate-v2/v3 owner checks all nine fields and
     exact declared source/context/selection identity; unsupported references and
     outputs remain visible. Known facts never enter producer arguments and are
     never inferred from targets. Equality does not authenticate these declarations
@@ -1554,60 +1554,17 @@ def evaluate_reviewed_source_span_producer_artifact(*, binding, rows, split_mani
     candidate_owner = None
     if candidate_syntax_profile is not None:
         from ...logic.autoformal import legal_norm_content_adjudication_v1 as candidate_owner
-        require(type(candidate_syntax_profile) is str
-                and candidate_syntax_profile == candidate_owner.CANDIDATE_SYNTAX_PROFILE_V2,
+        candidate_profiles = (candidate_owner.CANDIDATE_SYNTAX_PROFILE_V2, candidate_owner.CANDIDATE_SYNTAX_PROFILE_V3)
+        require(type(candidate_syntax_profile) is str and candidate_syntax_profile in candidate_profiles,
                 "explicit complete-candidate syntax profile required")
     require((candidate_syntax_profile is None) == (known_candidate_inputs is None),
             "complete-candidate profile and independent known inputs required together")
     known_frozen = snapshot(known_candidate_inputs) if candidate_owner is not None else None
 
     def candidate_audit(examples):
-        # Inputs are detached ordinary JSON at this evaluator boundary. Delegate
-        # every candidate check to its existing owner; do not repair predictions.
-        require(type(known_frozen) is dict and set(known_frozen) == {row["case_id"] for row in examples},
-                "exact complete-candidate known-input population required")
-        counts = dict(syntax_validated_unreviewed=0, invalid_complete=0, unsupported_complete=0, not_checked=0)
-        reference_counts = dict(syntax_validated_unreviewed=0, unsupported=0)
-        details = []
-        for row in examples:
-            facts = known_frozen[row["case_id"]]
-            closed(facts, ("known_source_binding", "known_governing_context", "known_selection_context"),
-                   "independent complete-candidate known facts")
-            candidate_owner.validate_complete_norm_known_input_v2(**facts)
-            try:
-                candidate_owner.validate_complete_norm_candidate_v2(row["reference"], **facts)
-                reference_status = "syntax_validated_unreviewed"
-            except candidate_owner.CompleteNormCandidateUnsupportedError:
-                reference_status = "unsupported"
-            # Invalid reference identities must fail before callback, while an
-            # explicitly unsupported profile retains its original denominator.
-            reference_counts[reference_status] += 1
-            if row["outcome"] != "complete":
-                status = "not_checked"
-            else:
-                try:
-                    candidate_owner.validate_complete_norm_candidate_v2(row["candidate"], **facts)
-                    status = "syntax_validated_unreviewed"
-                except candidate_owner.CompleteNormCandidateUnsupportedError:
-                    status = "unsupported_complete"
-                except (ValueError, TypeError, KeyError, RecursionError):
-                    status = "invalid_complete"
-            counts[status] += 1
-            details.append(dict(case_id=row["case_id"], outcome=row["outcome"], status=status,
-                                reference_status=reference_status))
-        require(stable_digest(snapshot(known_candidate_inputs)) == stable_digest(known_frozen),
-                "independent candidate facts changed during audit")
-        return dict(schema="complete-norm-source-bound-candidate-syntax-metrics/v1",
-            profile=candidate_syntax_profile, denominator=len(examples), counts=counts,
-            reference_counts=reference_counts, cases=details,
-            syntax_validated_rate=counts["syntax_validated_unreviewed"] / len(examples),
-            known_inputs_sha256=stable_digest(known_frozen),
-            reference_and_prediction_payload_sha256=stable_digest(examples),
-            known_input_authenticity_verified=False, candidate_repaired=False,
-            generator_invoked_by_scorer=False, semantic_selection_supported=False,
-            semantic_use_eligible=False, training_mask=0, evaluation_gold_mask=0,
-            source_fidelity_proved=False, semantic_equivalence_proved=False,
-            native_proof_verified=False, legal_admission_or_proof_authority=False)
+        from .legal_ir_semantic_metrics import evaluate_complete_norm_candidate_syntax
+        return evaluate_complete_norm_candidate_syntax(examples,
+            known_candidate_inputs=known_frozen, candidate_syntax_profile=candidate_syntax_profile)
 
     require(callable(producer), "explicit producer callback required")
     require(type(allow_heldout_evaluation) is bool, "explicit boolean heldout opt-in required")

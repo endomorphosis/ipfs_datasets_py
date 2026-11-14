@@ -1110,6 +1110,15 @@ def reviewed_refresh_manifest_v2(case):
     for ref in declaration["cross_references"]:
         artifacts.append({"artifact_id": ref["dependency_artifact_id"],
             "artifact_sha256": ref["dependency_sha256"], "dependency_pins": {kind: [] for kind in deps.PIN_KINDS}})
+    # Several legal units may refer to the same exact physical artifact.
+    # The graph manifest has one record per identity; the declaration retains
+    # every distinct use. Conflicting bytes under one identity must refuse.
+    by_identity = {}
+    for artifact in artifacts:
+        previous = by_identity.setdefault(artifact["artifact_id"], artifact)
+        if previous != artifact:
+            raise ValueError("conflicting fixture artifact identity")
+    artifacts = list(by_identity.values())
     case["manifest"] = deps.build_dependency_manifest(artifacts,
         [{"dependent_id": declaration["component_id"], "dependency_id": row["artifact_id"]}
          for row in artifacts[1:]], expected_artifact_ids=[row["artifact_id"] for row in artifacts])
@@ -1661,3 +1670,258 @@ def test_candidate_v3_delegated_syntax_cannot_supply_meaning_or_approval_fields(
     monkeypatch.setattr(owner, "validate_complete_norm_candidate_v1", mutate)
     with pytest.raises(ValueError):
         validate_identifier_bound_candidate_v2(owner, complete_candidate_v1)
+
+
+@pytest.fixture
+def mixed_candidate_v3():
+    from tests.unit.logic.autoformal import test_legal_reviewed_norm_admission_v3 as mixed
+    candidate = complete_candidate_fixture_v1()
+    request = mixed.mixed_request()
+    candidate.update(profile=request['profile'], typed_expression=request['expression'],
+                     argument_roles=request['argument_roles'])
+    # A syntax-only proposal: equality to a declared source binding cannot
+    # establish that this different formula faithfully translates its text.
+    known = dict(known_source_binding=deepcopy(candidate['source_binding']),
+        known_governing_context=deepcopy(candidate['governing_context']),
+        known_selection_context=caller_selection_fixture_v2())
+    return candidate, known
+
+
+def test_candidate_mixed_v3_delegates_genuine_many_sorted_lowering_without_authority(owner, mixed_candidate_v3, monkeypatch):
+    from ipfs_datasets_py.logic.autoformal import legal_relational_norm_v1 as relational
+    candidate, known = mixed_candidate_v3; original = deepcopy(candidate)
+    prepare = relational.prepare_mixed_relational_norm_v1; calls = []
+    def observed(raw, **kwargs):
+        request = json.loads(raw); calls.append(request)
+        assert kwargs['expected_request_sha256'] == sha(raw)
+        assert request['profile'] == relational.MIXED_PROFILE and request['source_binding'] is None
+        return prepare(raw, **kwargs)
+    monkeypatch.setattr(relational, 'prepare_mixed_relational_norm_v1', observed)
+    result = owner.validate_complete_norm_candidate_v3(candidate, **known)
+    assert len(calls) == 1
+    assert result['schema'] == owner.CANDIDATE_SYNTAX_SCHEMA_V3
+    assert result['profile'] == owner.CANDIDATE_SYNTAX_PROFILE_V3
+    assert result['candidate'] == original and candidate == original
+    assert result['candidate_sha256'] == owner.norm_content_adjudication_sha256(original)
+    assert result['known_interpretation_identifier_matches'] is True
+    assert result['semantic_selection_supported'] is result['semantic_use_eligible'] is False
+    assert result['authority'] and all(value is False for value in result['authority'].values())
+    assert result['training_mask'] == result['evaluation_gold_mask'] == 0
+    result['candidate']['argument_roles'][1]['roles'].reverse()
+    assert candidate == original
+
+
+def test_candidate_mixed_v3_preserves_legacy_refusals(owner, mixed_candidate_v3):
+    candidate, known = mixed_candidate_v3
+    with pytest.raises(owner.CompleteNormCandidateUnsupportedError):
+        owner.validate_complete_norm_candidate_v1(candidate, **{k: v for k, v in known.items() if k != 'known_selection_context'})
+    with pytest.raises(owner.CompleteNormCandidateUnsupportedError):
+        owner.validate_complete_norm_candidate_v2(candidate, **known)
+
+
+def test_candidate_mixed_v3_retains_object_route_under_distinct_report_identity(owner, complete_candidate_v1):
+    known = dict(known_source_binding=deepcopy(complete_candidate_v1['source_binding']),
+        known_governing_context=deepcopy(complete_candidate_v1['governing_context']),
+        known_selection_context=caller_selection_fixture_v2())
+    old = owner.validate_complete_norm_candidate_v2(complete_candidate_v1, **known)
+    new = owner.validate_complete_norm_candidate_v3(complete_candidate_v1, **known)
+    assert old['schema'] != new['schema'] and old['profile'] != new['profile']
+    assert {k: v for k, v in old.items() if k not in ('schema', 'profile')} == {k: v for k, v in new.items() if k not in ('schema', 'profile')}
+
+
+@pytest.mark.parametrize('field', ['profile', 'typed_expression', 'argument_roles', 'assumptions',
+    'governing_context', 'interpretation_id', 'source_binding', 'definition_uses', 'cross_references'])
+def test_candidate_mixed_v3_requires_every_predicted_field(owner, mixed_candidate_v3, field):
+    candidate, known = mixed_candidate_v3; candidate.pop(field)
+    with pytest.raises(ValueError, match='nine-field'):
+        owner.validate_complete_norm_candidate_v3(candidate, **known)
+
+
+@pytest.mark.parametrize('which', ['source', 'context', 'selection'])
+def test_candidate_mixed_v3_rejects_independent_fact_mismatches_before_lowering(owner, mixed_candidate_v3, monkeypatch, which):
+    from ipfs_datasets_py.logic.autoformal import legal_relational_norm_v1 as relational
+    candidate, known = mixed_candidate_v3
+    if which == 'source': known['known_source_binding']['document_revision'] = 'fixture:different-revision'
+    elif which == 'context': known['known_governing_context']['governing_edition'] = 'fixture:different-edition'
+    else: known['known_selection_context']['interpretation_id'] = 'fixture:different-selection'
+    monkeypatch.setattr(relational, 'prepare_mixed_relational_norm_v1', lambda *_a, **_k: pytest.fail('mismatched facts reached lowering'))
+    with pytest.raises(ValueError, match='differs'):
+        owner.validate_complete_norm_candidate_v3(candidate, **known)
+
+
+@pytest.mark.parametrize('damage', ['authority', 'source_bound', 'source_translation_performed',
+    'native_build_executed', 'training_mask', 'evaluation_gold_mask', 'semantic_mask', 'consumer_mask'])
+def test_candidate_mixed_v3_refuses_delegated_authority_or_execution(owner, mixed_candidate_v3, monkeypatch, damage):
+    from ipfs_datasets_py.logic.autoformal import legal_relational_norm_v1 as relational
+    candidate, known = mixed_candidate_v3; original = relational.prepare_mixed_relational_norm_v1
+    def mutate(*args, **kwargs):
+        report = original(*args, **kwargs)
+        if damage == 'authority': report['authority']['source_translation_verified'] = True
+        elif damage.endswith('_mask'): report[damage] = 1
+        else: report[damage] = True
+        return report
+    monkeypatch.setattr(relational, 'prepare_mixed_relational_norm_v1', mutate)
+    with pytest.raises(ValueError):
+        owner.validate_complete_norm_candidate_v3(candidate, **known)
+
+
+@pytest.mark.parametrize('damage', ['unknown-profile', 'nonempty-assumptions', 'selection-policy'])
+def test_candidate_mixed_v3_keeps_unsupported_constructs_explicit(owner, mixed_candidate_v3, damage):
+    candidate, known = mixed_candidate_v3
+    if damage == 'unknown-profile': candidate['profile'] = 'unknown-many-sorted/v999'
+    elif damage == 'nonempty-assumptions': candidate['assumptions'] = ['unrepresented fictional premise']
+    else: known['known_selection_context']['selection_mode'] = 'meaning-resolved'
+    with pytest.raises(owner.CompleteNormCandidateUnsupportedError):
+        owner.validate_complete_norm_candidate_v3(candidate, **known)
+
+
+@pytest.mark.parametrize("conflicting_bytes", [False, True])
+def test_reviewed_v2_manifest_refresh_preserves_shared_uses_and_refuses_conflicting_bytes(
+        reviewed_case_v2, conflicting_bytes):
+    case = reviewed_case_v2
+    dependency_id = "fixture:shared-physical-crosswalk"
+    dependency_raw = b"fictional shared crosswalk; no statutory review"
+    process = dict(artifact_id=REVIEWED_PROCESS_ID,
+                   sha256=sha(case["evidence"][REVIEWED_PROCESS_ID]))
+    references = [dict(from_unit_id=unit["unit_id"], dependency_artifact_id=dependency_id,
+        dependency_sha256=sha(dependency_raw), version="fictional-shared/v1",
+        evidence_refs=[deepcopy(process)]) for unit in case["declaration"]["units"]]
+    assert len(references) == 3
+    if conflicting_bytes:
+        references[1]["dependency_sha256"] = sha(dependency_raw + b" changed")
+    case["declaration"]["cross_references"] = references
+    units_before = deepcopy(case["declaration"]["units"])
+    references_before = deepcopy(references)
+    manifest_before = deepcopy(case["manifest"])
+    if conflicting_bytes:
+        with pytest.raises(ValueError, match="conflicting fixture artifact identity"):
+            reviewed_refresh_manifest_v2(case)
+        assert case["manifest"] == manifest_before
+    else:
+        reviewed_refresh_manifest_v2(case)
+        manifest = case["manifest"]
+        expected = [case["declaration"]["component_id"]]
+        for unit in units_before:
+            expected.extend([unit["source_artifact_id"], unit["ir_artifact_id"]])
+        expected.append(dependency_id)
+        assert manifest["expected_artifact_ids"] == expected
+        assert len(expected) == len(set(expected)) == 8
+        assert [edge for edge in manifest["edges"] if edge["dependency_id"] == dependency_id] == [
+            dict(dependent_id=case["declaration"]["component_id"], dependency_id=dependency_id)]
+        assert case["observed_artifacts"][dependency_id] == sha(dependency_raw)
+    assert case["declaration"]["units"] == units_before
+    assert case["declaration"]["cross_references"] == references_before
+
+
+# Repeated-source controls are fictional and keep the source text and typed IR
+# together. Alternate raw encodings are not additional legal uses.
+def reviewed_repeated_permission_source_v2(case, mutation):
+    from ipfs_datasets_py.logic.autoformal import corpus_source as sources
+    alternate, original = case["declaration"]["units"][1:]
+    old, alternate_old = original["source_version"], alternate["source_version"]
+    text = case["source_inputs"][original["unit_id"]]["extracted_text"]
+    original_length = len(text)
+    identity = {key: old[key] for key in ("source_id", "release_id", "edition", "provision_id")}
+    if mutation == "different_provision":
+        identity = {key: alternate_old[key] for key in identity}
+    elif mutation == "different_release":
+        identity["release_id"] += ":separately-reviewed-legal-release"
+    elif mutation == "different_edition":
+        identity["edition"] += ":separately-reviewed-legal-edition"
+    alternate["document_revision"] = original["document_revision"]
+    if mutation in ("document_revision_label", "different_view_and_document_revision_label"):
+        alternate["document_revision"] += ":artifact-label-only"
+    for field in ("coverage", "relational_request_sha256"):
+        alternate[field] = deepcopy(original[field])
+    if "relational_profile" in original:
+        alternate["relational_profile"] = original["relational_profile"]
+    case["relational_inputs"][alternate["unit_id"]] = deepcopy(case["relational_inputs"][original["unit_id"]])
+    original_use = next(row for row in case["declaration"]["definition_uses"]
+                        if row["use_unit_id"] == original["unit_id"])
+    alternate_use = next(row for row in case["declaration"]["definition_uses"]
+                         if row["use_unit_id"] == alternate["unit_id"])
+    alternate_use["target_typed_paths"] = deepcopy(original_use["target_typed_paths"])
+
+    def install(unit, ids, view, raw, start, end, extraction):
+        assert (raw.decode("utf-8-sig") if extraction == "fixture:utf8-sig/v1" else raw.decode("utf-8")) == view
+        version = sources.build_source_version(**ids, raw_bytes=raw, expected_raw_sha256=sha(raw),
+            extracted_text=view, expected_extracted_sha256=sha(view.encode("utf-8")),
+            extraction_profile=extraction, normalization_profile="identity/v1", media_type="text/plain")
+        occurrence = sources.build_source_occurrence(version, expected_raw_sha256=sha(raw),
+            extracted_text=view, expected_extracted_sha256=sha(view.encode("utf-8")),
+            start_char=start, end_char=end, start_utf8=len(view[:start].encode("utf-8")),
+            end_utf8=len(view[:end].encode("utf-8")))
+        unit.update(source_version=version, occurrence=occurrence)
+        case["source_inputs"][unit["unit_id"]] = {"raw_bytes": raw, "extracted_text": view}
+        for row in unit["coverage"]:
+            row.update({key: occurrence[key] for key in ("start_char", "end_char", "start_utf8", "end_utf8")})
+        use = next(row for row in case["declaration"]["definition_uses"] if row["use_unit_id"] == unit["unit_id"])
+        use["use_occurrence_cid"] = occurrence["record_cid"]
+
+    if mutation == "nonoverlapping_paragraphs":
+        view = text + "\n" + text
+        raw = view.encode("utf-8")
+        install(original, identity, view, raw, 0, original_length, "identity/v1")
+        install(alternate, identity, view, raw, original_length + 1, len(view), "identity/v1")
+    elif mutation in ("different_unaligned_view", "different_view_and_document_revision_label"):
+        view = "\n" + text
+        install(alternate, identity, view, view.encode("utf-8"), 1, len(view), "identity/v1")
+    elif mutation == "physical_alias":
+        identity = {key: alternate_old[key] for key in identity}
+        install(alternate, identity, text, text.encode("utf-8"), 0, original_length, "identity/v1")
+    else:
+        raw = b"\xef\xbb\xbf" + text.encode("utf-8")
+        start, end = (1, original_length - 1) if mutation == "overlapping_repackage" else (0, original_length)
+        install(alternate, identity, text, raw, start, end, "fixture:utf8-sig/v1")
+    return original, alternate
+
+
+def reviewed_refresh_signed_preparation_v2(owner, case):
+    reviewed_refresh_manifest_v2(case)
+    case["preparation"] = owner.prepare_reviewed_norm_admission_v2(case["declaration"],
+        **reviewed_prepare_arguments_v2(case))
+    subject = case["preparation"]["subject"]
+    raw = norm._wire(case["declaration"])
+    case["evidence"][case["declaration"]["component_id"]] = raw
+    for claim in case["reviews"]:
+        claim["subject"] = deepcopy(subject)
+        claim["interpretation"].update(reviewed_graph_sha256=subject["graph_sha256"],
+                                       reviewed_ast_sha256=subject["ast_sha256"])
+        for obligation in claim["context_closure"]["obligations"]:
+            obligation["evidence_refs"][0] = {"artifact_id": case["declaration"]["component_id"], "sha256": sha(raw)}
+    reviewed_resign_v2(case)
+
+
+@pytest.mark.parametrize("mutation,reason", [
+    ("duplicate_repackage", "logical source occurrence"),
+    ("overlapping_repackage", "overlapping logical source"),
+    ("document_revision_label", "logical source occurrence"),
+    ("different_unaligned_view", "unsupported source-view alignment"),
+    ("different_view_and_document_revision_label", "unsupported source-view alignment"),
+    ("physical_alias", "physical occurrence"),
+])
+def test_reviewed_v2_raw_repackaging_and_artifact_labels_do_not_create_legal_uses(owner, reviewed_case_v2, mutation, reason):
+    case = reviewed_case_v2
+    original, alternate = reviewed_repeated_permission_source_v2(case, mutation)
+    if mutation != "physical_alias":
+        assert original["source_version"]["raw_artifact"]["sha256"] != alternate["source_version"]["raw_artifact"]["sha256"]
+    reviewed_refresh_manifest_v2(case)
+    with pytest.raises(ValueError, match=reason):
+        owner.prepare_reviewed_norm_admission_v2(case["declaration"], **reviewed_prepare_arguments_v2(case))
+    # The public assessment replays original sources; an old ready preparation
+    # cannot substitute for the newly offered duplicate source population.
+    with pytest.raises(ValueError, match=reason):
+        assess_reviewed_fixture_v2(owner, case)
+
+
+@pytest.mark.parametrize("mutation", ["different_provision", "different_release", "different_edition", "nonoverlapping_paragraphs"])
+def test_reviewed_v2_distinct_legal_identities_and_nonoverlapping_uses_survive(owner, reviewed_case_v2, mutation):
+    case = reviewed_case_v2
+    original, alternate = reviewed_repeated_permission_source_v2(case, mutation)
+    reviewed_refresh_signed_preparation_v2(owner, case)
+    report = assess_reviewed_fixture_v2(owner, case)
+    assert report["semantic_use_eligible"] is True and report["blockers"] == []
+    assert report["fixture_only"] and report["training_mask"] == report["evaluation_gold_mask"] == 0
+    assert report["Lean_admitted"] is report["proof_authority"] is report["corpus_admitted"] is False
+    assert len({row["occurrence_cid"] for row in report["units"] if row["kind"] == "norm"}) == 2
+    assert original["occurrence"]["span_text"] == alternate["occurrence"]["span_text"]

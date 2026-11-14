@@ -1,5 +1,57 @@
 # Current handoff
 
+## Reviewed source-use identity correction — 2026-11-14
+
+Complete V2 and mixed-sort V3 admission now share the existing owner's source-use checks. The original physical artifact/view/interval checks remain. A declared legal source, release, edition and provision must have one canonical extracted view in this profile; raw encoding/container changes and artifact document-revision labels cannot create another use of a known paragraph. Conflicting views require an explicit alignment contract, which this profile does not supply. No aliases between different declared legal identities are inferred.
+
+The defect was reproduced with complete authenticated fictional reviews: UTF-8/BOM repackaging, unaligned views, document-revision relabeling and the combined view/revision mutation admitted duplicate uses. The corrected public validators and span consumers now refuse the captured bad records. Previously admissible distinct declared provisions/releases/editions and nonoverlapping paragraphs remain supported; equal wording alone establishes neither legal identity nor independence. Historical source pins and failed originals are preserved. Newly constructed current-generation replay tests bind the captured current producer rather than falsely require the historical whole-file epoch.
+
+Fresh canonical source-only qualification passed **355 cases with no failures or skips**: 263 V2 owning cases, 25 V3 owning cases, 65 reviewed-consumer controls and two actual saved-bad-record replay controls. No Torch, NumPy, Transformers, pretrained assets or native proof ran. The original primary checkout and real Title 10 records remain untouched. Fictional training/gold masks and proof/corpus authority remain zero/false. [Exact qualification](../../../../docs/autoformalization/evidence/legal-ir-reviewed-source-use-identity-20261114.json).
+
+This correction changes the admission producer source epoch; older qualifications and checkpoints retain their original identities. Public schemas, signing domains, source bytes and legal decisions are not rewritten. All 24 task IDs/statuses and existing resource budgets remain unchanged. Real Title 10 meaning/definition/two-use review, current native proof and corpus release remain pending. Next under LIR-17/LIR-20: add a separately reviewed cross-context relation contract so distinct interpretations can be compared without weakening current single-context admission. Private assets remain on hold.
+
+The native proof-cache test loader also has a current explicit fixture pin and executes the exact verified buffer, retaining pre/post source and module identity checks. The full canonical kernel file passes 276 ordinary cases; three native Lean cases remain explicitly skipped. The three new loader cases are included in 276, not added again. The old fixture pin remains historical. Existing native CI is active and pins Lean 4.34.1/Elan 4.1.2, but the inspected GitHub run executed zero job steps because GitHub reports an account billing lock. No native success, model execution or permission/budget renewal follows.
+
+The existing CI workflow now also triggers on masked-contrastive and storage-capacity test-only edits and selects both files in its compatible contracts lane. Thirty canonical data-only checks pass for the filters, commands and existing dependency coverage; no job, dependency, budget, permission or shard-weight change is introduced. This is workflow configuration validation, not hosted, numerical or native execution.
+
+## Current V3 three-cache integration and typed JSON correction — 2026-11-14
+
+The integration checkout now extends the existing release coordinator and CLI
+with the explicit V3 law/span/entity path. Complete admission and graph
+artifacts use the existing norm correspondence JSON profile, retaining the
+1,000,000-byte artifact and 8 MiB request ceilings and all downstream semantic
+and independent-pin validation. Generic graph records and V1/V2 keep their
+existing decoder limits. The shared review fixture now inventories one exact
+artifact per identity while preserving every legal unit and cross-reference;
+conflicting bytes under one identity refuse before manifest replacement.
+
+A fresh canonical-source run passed **56 cases in 13 functions**: 54 release
+cases and two shared-fixture controls. It covers a complete three-unit
+fictional physical replay, damaged legal JSON, complete 83-file packet
+transport, selected V1/V2 behavior and direct/module CLI paths. Source, native
+resource, process, genuine wait and storage custody closed; this successful
+run released only its own 32 MiB promise. The earlier missing-API, temporary
+factory, duplicate-reference and generic-depth failures remain preserved.
+A larger legacy batch hit its original 120-second deadline and grants no
+whole-batch credit. Use the retained smaller cohorts and the existing
+`--owned-ordinary-temp-factory` option for remaining checks.
+
+The release owning file now declares 152 cases; **98 remain unqualified on
+this current source**. The prior 35-case transport result overlaps this run
+and must not be added to it. No actual Lean build, original Native-parent
+authentication, immutable Hub readback, statutory review, model fitting or
+corpus release is established. V3 remains an explicit local replay path.
+[Closed qualification](../../../../workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/current-canonical-release-v3-physical56-qualified-and-closed.json).
+
+
+## Explicit many-sorted complete-candidate syntax — 2026-11-14
+
+The canonical candidate owner adds `validate_complete_norm_candidate_v3` with the distinct `unreviewed-complete-norm-candidate-syntax/v3` profile. It delegates object and many-sorted expressions to the existing relational lowering owners, retains all nine predicted fields exactly, and checks separately supplied source, governing-context and identifier-only selection facts. Mixed reports must retain their canonical schema/status, false authority/execution flags and zero semantic/consumer/training/gold masks. The public v1/v2 APIs retain their object-only refusals. No source text, legal interpretation, review, model or native proof is manufactured.
+
+All **324 source-only software cases pass**: the complete 251-case candidate module (26 new cases) and 73 selected evaluator cases (six new cases, 67 retained), with no failures, skips, source drift or numerical imports. The genuine red baseline retains two missing-API failures and one legacy-refusal control pass; the evaluator red baseline retains its explicit v3-profile refusal. The evaluator selects v2 or v3 explicitly and binds the profile and independent known-fact digest into its cache identity. All three scripted fictional reference rows validate under v3; the v2 audit still reports the many-sorted row unsupported. Missing ordered roles, unknown profiles and changed selection IDs remain invalid/unsupported without dropping cases. A role-label swap can remain syntactically valid while exact role fidelity drops to 2/3, demonstrating that syntax is not source faithfulness. No generator, pretrained asset or native Lean command runs.
+
+Legal meaning, authenticity, training/gold, proof, actual model quality, original-parent integration and corpus release remain unqualified. Historical checkpoints and qualifications keep their exact source epochs; the private-asset hold remains. The separately reproduced same-paragraph UTF-8/BOM admission defect awaits its own current-source repair and qualification. [Exact source captures, red baselines and green results](../../../../workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-mixed-candidate-syntax-qualification-v01/qualification-summary.json).
+
 ## Complete-candidate source-bound producer audit — 2026-11-14
 
 The existing producer evaluator now accepts the explicit `unreviewed-complete-norm-candidate-syntax/v2` audit with separately supplied, closed known source/governing-context/identifier-only selection facts for every case. It delegates all nine candidate fields to the canonical candidate-v2 validator. References and known facts are checked before dispatch; facts never enter producer arguments or get inferred from reference targets. Changed declared source/context/selection identities refuse, callback fact mutation refuses, and audit policy plus known-fact digest enter a distinct cache identity. Defaults and existing payload scores stay unchanged.

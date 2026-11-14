@@ -100,7 +100,8 @@ def _reviewed_units(body, source_inputs, relational_inputs):
           "unique complete source unit identities required")
     _need(type(source_inputs) is dict and type(relational_inputs) is dict
           and set(source_inputs) == set(relational_inputs) == set(ids), "complete original source and IR inputs required")
-    results, expected_artifacts, occurrences, norm_intervals = [], {}, set(), []
+    results, expected_artifacts = [], {}
+    source_uses = legacy._ReviewedSourceUseTracker()
     for unit in units:
         _keys(unit, {"unit_id", "kind", "source_version", "occurrence", "document_revision",
             "parent_unit_ids", "relational_profile", "relational_request_sha256", "source_artifact_id",
@@ -122,16 +123,7 @@ def _reviewed_units(body, source_inputs, relational_inputs):
             extracted_text=inputs["extracted_text"], expected_extracted_sha256=view_sha)
         occurrence = source.validate_source_occurrence(unit["occurrence"], source_version=version,
             expected_raw_sha256=raw_sha, extracted_text=inputs["extracted_text"], expected_extracted_sha256=view_sha)
-        # Aliases, source labels and record seals cannot turn the same retained
-        # artifact/view interval into an additional physical statutory use.
-        physical_parent = (raw_sha, view_sha)
-        physical = physical_parent + (occurrence["start_char"], occurrence["end_char"])
-        _need(physical not in occurrences, "two interpretations of one physical occurrence are not distinct units")
-        occurrences.add(physical)
-        if unit["kind"] == "norm":
-            _need(not any(parent == physical_parent and max(start, occurrence["start_char"]) < min(end, occurrence["end_char"])
-                for parent, start, end in norm_intervals), "overlapping interpretations are not two distinct normative uses")
-            norm_intervals.append((physical_parent, occurrence["start_char"], occurrence["end_char"]))
+        source_uses.add(unit, version, occurrence)
         if body["provenance_kind"] == "statutory":
             _need(not any(str(version[key]).startswith("fixture:") for key in ("source_id", "release_id", "provision_id")),
                   "fictional source identities cannot be promoted to statutory evidence")

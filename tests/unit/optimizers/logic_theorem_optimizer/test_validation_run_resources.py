@@ -10165,6 +10165,7 @@ def test_cancelled_retained_v5_current_absence_and_exact_row_are_not_terminal_fl
     module, terminal, raw, caller, attempt = _cancelled_retained_binding_fixture(private_control)
     row = terminal['reservation']['record']; rid, lid = row['reservation_id'], row['native_lease_id']
     state_path = private_control['scheduler'].state_path
+    original_private_state = state_path.read_bytes()
     if fault == 'source-drift': private_control['source'].write_text('changed pinned source')
     elif fault == 'own-row-drift':
         state = _json(private_control['ledger']); state['reservations'][rid]['storage_bytes'] += 1
@@ -10188,6 +10189,8 @@ def test_cancelled_retained_v5_current_absence_and_exact_row_are_not_terminal_fl
         if fault in ('native-root', 'native-waiter', 'native-descendant'):
             state = _json(state_path); state['leases'].clear(); state['waiters'].clear()
             _write_json(state_path, state)
+        elif fault == 'current-policy':
+            state_path.write_bytes(original_private_state)
 
 
 @pytest.mark.parametrize('boundary', ['ledger-read', 'native-lease-inspection'])

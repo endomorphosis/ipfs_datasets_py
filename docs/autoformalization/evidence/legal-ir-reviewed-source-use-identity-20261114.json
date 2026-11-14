@@ -1,0 +1,377 @@
+{
+  "schema": "reviewed-legal-source-use-and-native-fixture-software-qualification/v1",
+  "date_utc": "2026-11-14",
+  "base_commit": "2c611273b7d611a6aaa2a83c4aa9a24c69f81278",
+  "scope": "Existing admission and proof-test owners; source-only software corrections with explicitly fictional legal fixtures.",
+  "changed_source_sha256": {
+    "ipfs_datasets_py/logic/autoformal/legal_norm_content_adjudication_v1.py": "41ba82cfe1cbbf92f7d946410eeb5e3efb75f88106ba2c545d089a39ef465062",
+    "ipfs_datasets_py/logic/autoformal/legal_reviewed_norm_admission_v3.py": "1249dc93b2a6208f152c08f3bab5706acc272fa93663a58f0f87924e80d172be",
+    "tests/unit/logic/autoformal/test_legal_norm_content_adjudication_v1.py": "1ee2e398c9d8e231cb41521287aae050655a22265c9cf6b70626c818c4a6d76e",
+    "tests/unit/logic/autoformal/test_legal_reviewed_norm_admission_v3.py": "5e21865d42eb405532d3e580a14b86e0ccb082156ba04d916256b328d96b89ec",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_consumer_binding.py": "b3376a24990eaecc603ca829f5de971f092cb5cd2e83e84b9eb28fb10e399c78",
+    "tests/integration/logic/backends/test_kernel_backends.py": "4cefc82d2b24f8346ba03f67803984872f7a382e4580b349fe1eb41267fc4828",
+    ".github/workflows/legal-v2-reasoner-ci.yml": "4f5a018681405348349fe3c405a33098023f9ff0fcb40988ecc11aa5c9ec9fe2"
+  },
+  "reviewed_admission": {
+    "schema": "reviewed-source-use-identity-software-qualification/v1",
+    "recorded_date_utc": "2026-11-14",
+    "existing_task_scope": [
+      "LIR-03 qualification and legacy admission",
+      "LIR-06 complete source interpretation review",
+      "LIR-05 distinct-use pilot prerequisite"
+    ],
+    "scope": "Bounded source-identity correctness for existing V2/V3 complete reviewed norm admission, not actual statutory review or corpus qualification.",
+    "changes": [
+      {
+        "path": "ipfs_datasets_py/logic/autoformal/legal_norm_content_adjudication_v1.py",
+        "before_bytes": 86054,
+        "before_sha256": "a72c20301f4070650cce6c105fafd0d63f32ffb7e46876a49bd895ffbf505ba8",
+        "after_bytes": 88084,
+        "after_sha256": "41ba82cfe1cbbf92f7d946410eeb5e3efb75f88106ba2c545d089a39ef465062"
+      },
+      {
+        "path": "ipfs_datasets_py/logic/autoformal/legal_reviewed_norm_admission_v3.py",
+        "before_bytes": 30435,
+        "before_sha256": "fe6fcf380d6dafdf4f3f1732855572fe875a5bfc29ba480a23e0de505e1a3edb",
+        "after_bytes": 29667,
+        "after_sha256": "1249dc93b2a6208f152c08f3bab5706acc272fa93663a58f0f87924e80d172be"
+      },
+      {
+        "path": "tests/unit/logic/autoformal/test_legal_norm_content_adjudication_v1.py",
+        "before_bytes": 107331,
+        "before_sha256": "748a9422a67d850cfb8226bb122ac62b879be6d0da4a687329301e44c83e5d56",
+        "after_bytes": 114578,
+        "after_sha256": "1ee2e398c9d8e231cb41521287aae050655a22265c9cf6b70626c818c4a6d76e"
+      },
+      {
+        "path": "tests/unit/logic/autoformal/test_legal_reviewed_norm_admission_v3.py",
+        "before_bytes": 19790,
+        "before_sha256": "7cbb056f33a919593e88a5fd036f58522652d3daa591eceb7186dfb4f897b151",
+        "after_bytes": 22943,
+        "after_sha256": "5e21865d42eb405532d3e580a14b86e0ccb082156ba04d916256b328d96b89ec"
+      },
+      {
+        "path": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_consumer_binding.py",
+        "before_bytes": 66098,
+        "before_sha256": "1ea7a4d1311ce8c133a1aae2c977713d8be14aec8ab7bd1ee4b8d6d3a953ad1d",
+        "after_bytes": 66226,
+        "after_sha256": "b3376a24990eaecc603ca829f5de971f092cb5cd2e83e84b9eb28fb10e399c78"
+      }
+    ],
+    "resolved_behaviors": [
+      "Raw encoding/container changes cannot create another use of the same declared legal source/release/edition/provision and selected view interval.",
+      "An artifact document-revision label does not create another known legal use or evade the one-view requirement.",
+      "Different unaligned canonical views of the same declared legal source identity fail explicitly; combined view/revision relabeling is also refused.",
+      "Original physical raw/view duplicate and overlap guards remain independent.",
+      "Distinct declared legal provisions/releases/editions and nonoverlapping paragraphs in one canonical view remain supported.",
+      "Current source-epoch tests bind saved signed preparation producer pins and unchanged captured runtime bytes; historical producer identities are retained and rejected as current generations."
+    ],
+    "identity_scope": "Exact caller-declared identity strings only; no inferred legal aliases or global prose deduplication.",
+    "before_observations": [
+      {
+        "name": "UTF8 versus UTF8-BOM of same logical paragraph",
+        "cases": 8,
+        "passed": 6,
+        "failed": 2,
+        "errors": 0,
+        "skipped": 0,
+        "meaning": "V2/V3 false eligible duplicated-use components; other six controls passed."
+      },
+      {
+        "name": "same logical revision with different unaligned views",
+        "cases": 6,
+        "passed": 4,
+        "failed": 2,
+        "errors": 0,
+        "skipped": 0,
+        "meaning": "V2/V3 false eligibility for unaligned views; artifact-revision acceptance was separately reclassified and reproduced as a negative."
+      },
+      {
+        "name": "artifact document-revision label only",
+        "cases": 2,
+        "passed": 0,
+        "failed": 2,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "combined changed view and artifact revision against initial private tracker",
+        "cases": 2,
+        "passed": 0,
+        "failed": 2,
+        "errors": 0,
+        "skipped": 0,
+        "private_proposal_only": true
+      },
+      {
+        "name": "stale historical source epoch assertion in current V3 test",
+        "cases": 1,
+        "passed": 0,
+        "failed": 1,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "stale historical source epoch assertion in current consumer test",
+        "cases": 1,
+        "passed": 0,
+        "failed": 1,
+        "errors": 0,
+        "skipped": 0
+      }
+    ],
+    "qualification": {
+      "actual_fresh_canonical_cases": 355,
+      "passed": 355,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "junit_seconds": 103.187,
+      "population_by_test_module": {
+        "tests.unit.logic.autoformal.test_legal_norm_content_adjudication_v1": 263,
+        "tests.unit.logic.autoformal.test_legal_reviewed_norm_admission_v3": 25,
+        "tests.unit.optimizers.logic_theorem_optimizer.test_legal_span_consumer_binding": 65,
+        "": 2
+      },
+      "repository_cases": 353,
+      "captured_false_positive_report_replay_cases": 2,
+      "whole_V2_owner_cases": 263,
+      "whole_V3_owner_cases": 25,
+      "reviewed_consumer_cases": 65,
+      "source_write_waited_seconds": 45.79266963992268,
+      "source_write_closed": true,
+      "source_cas_and_after_hashes_verified": true,
+      "original_primary_sources_untouched": true,
+      "native_model_modules_loaded": []
+    },
+    "qualification_limits": {
+      "real_statutory_meaning_reviewed": false,
+      "real_reviewers_or_approvals_created": false,
+      "actual_Title10_status_requalified": false,
+      "real_training_or_gold_admission": false,
+      "semantic_graph_admission": false,
+      "native_Lean_or_proof_authority": false,
+      "corpus_release": false,
+      "model_or_private_model_assets_loaded": false,
+      "runtime_or_resource_budgets_changed": false,
+      "task_status_changed": false
+    },
+    "retained_history": [
+      "Original failed reproductions and initial private 286-pass cohort are preserved with their own source identities.",
+      "The later private 354-pass/one-stale-consumer-failure result remains separate; its corrected single case passed before canonical integration.",
+      "Historical source hash 1e4d8674851d03ee9b7e8f770a8925f22c50358375a934f42ec34d0d8ffef3d2 is unchanged and not relabelled current."
+    ],
+    "evidence_descriptors": [
+      {
+        "name": "canonical-full-source-use-identity.xml",
+        "kind": "fresh_canonical_junit",
+        "bytes": 71663,
+        "sha256": "c1eca204a33e28bb4214f1949b0a6b0949b916a49c5bf7b510cbaa5b2f43d1f4"
+      },
+      {
+        "name": "canonical-full-source-use-identity.log",
+        "kind": "fresh_canonical_test_log",
+        "bytes": 1464,
+        "sha256": "df5d34adf593c7b1f624d22f8f3e64fdf662879e0469750eff37abdba297f2e2"
+      },
+      {
+        "name": "canonical-full-source-use-identity-result.json",
+        "kind": "exact_source_cas_and_qualification",
+        "bytes": 3590,
+        "sha256": "fa57711b05763f68e13da62990bfdb4fbe47c8f281cd7fc7dc69b5195c62c2d1"
+      },
+      {
+        "name": "private-five-path-proposal-v03.diff",
+        "kind": "reviewed_exact_five_path_diff",
+        "bytes": 21102,
+        "sha256": "24d3cb0f2294d6e64205156af7a54f1fb443f42da975b1a4a5e17133b89de434"
+      },
+      {
+        "name": "combined-before-private-proposal.xml",
+        "kind": "combined_bypass_before_reproduction",
+        "bytes": 4908,
+        "sha256": "815f60638c884b553e0d8fd107e85d5a2e9ef10a512ab13a15ecb477303a1e2c"
+      },
+      {
+        "name": "current-v2-v3-distinct-source-uses.xml",
+        "kind": "initial_source_population_reproduction",
+        "bytes": 5998,
+        "sha256": "041b3cd4bd8e450874d2e7d301a4cd8277eb1f5cf66d803b15eb340ec8aec5e5"
+      },
+      {
+        "name": "additional-current-v2-v3-view-controls.xml",
+        "kind": "unaligned_view_before_reproduction",
+        "bytes": 5182,
+        "sha256": "d7e3bb20873c264517a83c07f121428131834b00e15bf5ec7a37c77b328b0a3c"
+      },
+      {
+        "name": "document-revision-relabel-current.xml",
+        "kind": "artifact_revision_before_reproduction",
+        "bytes": 4058,
+        "sha256": "5f91f86e4b1c31596c202239e04525f708da9886e0a74dddb72e41e1e65c8532"
+      },
+      {
+        "name": "peer-fixture-exact-source.diff",
+        "kind": "carried_forward_peer_fixture_delta",
+        "bytes": 3608,
+        "sha256": "7814129ba05c588c131b3acfd19e9c943870f23ab71083ea83048a30d98261c2"
+      }
+    ],
+    "next_smallest_task": "Continue existing reviewed source/definition/interpretation prerequisites for the retained Title 10 pilot; actual legal judgments and independent source/view alignment remain unprovided. Do not infer whole-code or corpus completion from these fixtures.",
+    "base_commit": "2c611273b7d611a6aaa2a83c4aa9a24c69f81278",
+    "carried_forward_peer_fixture_change": {
+      "authored_by_this_agent": false,
+      "peer_author_identity_authenticated": false,
+      "provenance": "Observed in current worktree during preflight; preserved through exact current-source reconciliation, without attribution.",
+      "existing_test_owner": "tests/unit/logic/autoformal/test_legal_norm_content_adjudication_v1.py",
+      "changed_helper": "reviewed_refresh_manifest_v2",
+      "added_test_function": "test_reviewed_v2_manifest_refresh_preserves_shared_uses_and_refuses_conflicting_bytes",
+      "added_parametrized_regression_cases": 2,
+      "behavior": "Keep one dependency-manifest artifact per identity, preserve every distinct declared use, and refuse conflicting content under one identity.",
+      "before_sha256": "477943050a0aa2056012e920d9543dae5f711efe7178dd27085f388fb15eb984",
+      "carried_forward_sha256": "748a9422a67d850cfb8226bb122ac62b879be6d0da4a687329301e44c83e5d56",
+      "qualification": "Included in all 263 canonical V2 owning cases; no separate authorship or prior qualification claim.",
+      "immutable_descriptors": [
+        {
+          "name": "peer-fixture-source-before.py",
+          "kind": "original_test_source_preimage",
+          "bytes": 104718,
+          "sha256": "477943050a0aa2056012e920d9543dae5f711efe7178dd27085f388fb15eb984"
+        },
+        {
+          "name": "peer-fixture-source-carried-forward.py",
+          "kind": "newer_peer_test_source_preimage",
+          "bytes": 107331,
+          "sha256": "748a9422a67d850cfb8226bb122ac62b879be6d0da4a687329301e44c83e5d56"
+        },
+        {
+          "name": "peer-fixture-exact-source.diff",
+          "kind": "exact_peer_source_delta",
+          "bytes": 3608,
+          "sha256": "7814129ba05c588c131b3acfd19e9c943870f23ab71083ea83048a30d98261c2"
+        }
+      ]
+    },
+    "actual_old_bad_record_replay": {
+      "cases": 2,
+      "versions": [
+        "v2",
+        "v3"
+      ],
+      "captured_origin": "Frozen initial private tracker, with genuine fictional Ed25519 verification and full source/IR replay.",
+      "origin_owner_sha256": "81f79f2e40aaf99d5166dde517a1084e272a9acf88dc4bbf0dba3ea459b28cbe",
+      "origin_mixed_owner_sha256": "1249dc93b2a6208f152c08f3bab5706acc272fa93663a58f0f87924e80d172be",
+      "before_semantic_use_eligible": true,
+      "after_public_report_validation": "ValueError with asserted cause unsupported source-view alignment",
+      "after_public_consumer_preparation": "SourceSpanConsumerBindingError with asserted cause unsupported source-view alignment",
+      "cause_scope": "The current logical source view guard rejects the combined changed-view/artifact-revision population during replay; the controls require this cause rather than a generic outer-hash or stale-producer mismatch.",
+      "ephemeral_private_signers_serialized": false,
+      "real_statutory_or_gold_status_changed": false
+    }
+  },
+  "native_CI_fixture": {
+    "owner": "tests/integration/logic/backends/test_kernel_backends.py",
+    "expected_fixture_sha256": "27ede074ceb68cd91d50eada99b9c6f02216607e22610bc63db4fde69e17fb4c",
+    "historical_fixture_sha256": "158b5f0c0a25ea42778f0a718477eaa0a6b8c4f053f3987ef3cd8e5517f82b23",
+    "behavior": "Load the exact hard-pinned verified buffer with file/spec/module identity and pre/post source checks. Refuse preload tampering and post-import drift.",
+    "qualification": {
+      "cases": 279,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 3,
+      "passed": 276
+    },
+    "three_new_loader_cases_included_in_276": true,
+    "native_execution_or_qualification": false,
+    "source_write_closed": true,
+    "skipped_names": [
+      "test_lean_native_v2_expected_type_and_dependency_policy",
+      "test_lean_native_v3_proof_cache_round_trip_and_exact_reuse_context",
+      "test_lean_native_quoted_identifier_preserves_expected_goal"
+    ]
+  },
+  "hosted_CI": {
+    "workflow": ".github/workflows/legal-v2-reasoner-ci.yml",
+    "workflow_sha256": "93af6673ad8658a5ff5dc652d5bd1a2d1e2cc620438804b9da7e2aad7da00e40",
+    "state": "active",
+    "Lean_version": "4.34.1",
+    "Elan_version": "4.1.2",
+    "observed_run": "https://github.com/endomorphosis/ipfs_datasets_py/actions/runs/43651959570",
+    "observed_job_steps": [
+      {
+        "name": "Legal autoformal validation (contracts)",
+        "steps": 0
+      },
+      {
+        "name": "Legal autoformal validation (native-lean)",
+        "steps": 0
+      },
+      {
+        "name": "legal-autoformal-native-lean",
+        "steps": 0
+      }
+    ],
+    "reported_failure": "The job was not started because your account is locked due to a billing issue.",
+    "native_result": "unrun",
+    "new_manual_workflow_dispatched": false
+  },
+  "canonical_software_total": {
+    "passed": 631,
+    "failed": 0,
+    "errors": 0,
+    "native_Lean_opt_in_skipped": 3
+  },
+  "retained_evidence": [
+    {
+      "label": "canonical-admission-and-consumer-result",
+      "name": "canonical-full-source-use-identity-result.json",
+      "bytes": 3590,
+      "sha256": "fa57711b05763f68e13da62990bfdb4fbe47c8f281cd7fc7dc69b5195c62c2d1"
+    },
+    {
+      "label": "canonical-kernel-loader-result",
+      "name": "canonical-adoption-and-qualification-v01.json",
+      "bytes": 2508,
+      "sha256": "5beb0244e20b68d286a2dc25c1e67ab3ca0775174836d6b6fcc5acb151fa1fd8"
+    },
+    {
+      "label": "canonical-kernel-whole-owner-JUnit",
+      "name": "canonical-owner-junit-v01.xml",
+      "bytes": 40315,
+      "sha256": "00d2c76405fcb7429f9e49c2f8b9b61a59fa1c0e1c8d572b92e039483393ed35"
+    },
+    {
+      "label": "existing-hosted-CI-metadata-audit",
+      "name": "CI_AUDIT.json",
+      "bytes": 4243,
+      "sha256": "05db93d4b3f8b05621b3791dbd4378b4ece093f513007dacb59842a4766961eb"
+    }
+  ],
+  "limits": {
+    "new_real_statutory_gold": 0,
+    "model_or_private_assets_used": false,
+    "formal_proof_executed": false,
+    "resource_budget_or_permission_reset": false,
+    "source_aliases_inferred": false,
+    "unaligned_views_of_one_declared_legal_source_supported": false,
+    "old_receipts_or_checkpoints_relabelled": false
+  },
+  "next_existing_task": "LIR-17/LIR-20: explicit reviewed cross-context relation domain in existing declaration/mask/trainer owners; keep current single-context guard and unknown-pair exclusion.",
+  "CI_coverage_integration": {
+    "workflow": ".github/workflows/legal-v2-reasoner-ci.yml",
+    "before_sha256": "93af6673ad8658a5ff5dc652d5bd1a2d1e2cc620438804b9da7e2aad7da00e40",
+    "after_sha256": "4f5a018681405348349fe3c405a33098023f9ff0fcb40988ecc11aa5c9ec9fe2",
+    "canonical_static_checks_passed": 30,
+    "source_write_closed": true,
+    "tests_added_to_push_and_PR_triggers_and_existing_commands": [
+      "tests/unit/logic/formalization/autoencoder/test_alignment_masked_contrastive.py",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_storage_capacity.py"
+    ],
+    "new_jobs_dependencies_budgets_permissions_or_weight_changes": false,
+    "hosted_or_native_or_numerical_execution_claimed": false,
+    "checks_evidence": {
+      "name": "canonical-static-checks-v01.json",
+      "sha256": "ebabb6b215e9b63e23b2db1faa40d1622f20cb4ff482402dbcf3cc34ec0e8257"
+    }
+  }
+}

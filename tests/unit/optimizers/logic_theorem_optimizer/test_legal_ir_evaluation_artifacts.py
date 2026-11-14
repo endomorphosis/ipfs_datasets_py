@@ -3178,3 +3178,68 @@ def test_reviewed_producer_complete_candidate_audit_keeps_callback_errors():
         candidate_syntax_profile=profile, known_candidate_inputs=known)
     assert artifact.to_dict()['metrics']['complete_candidate_syntax']['counts']['not_checked'] == 3
     assert _producer_payload(artifact)['producer_exception_type'] == 'RuntimeError'
+
+
+def test_reviewed_producer_mixed_candidate_v3_explicit_scope_has_distinct_cache():
+    from ipfs_datasets_py.logic.autoformal import legal_norm_content_adjudication_v1 as candidate_owner
+    options, rows, known, old_profile = _candidate_audit_fixture()
+    def producer(_): return _producer_exact_outputs(rows)
+    old = _producer_owner.evaluate_reviewed_source_span_producer_artifact(**options, producer=producer,
+        candidate_syntax_profile=old_profile, known_candidate_inputs=known)
+    new = _producer_owner.evaluate_reviewed_source_span_producer_artifact(**options, producer=producer,
+        candidate_syntax_profile=candidate_owner.CANDIDATE_SYNTAX_PROFILE_V3, known_candidate_inputs=known)
+    left = old.to_dict()['metrics']['complete_candidate_syntax']
+    right = new.to_dict()['metrics']['complete_candidate_syntax']
+    assert left['counts']['unsupported_complete'] == left['reference_counts']['unsupported'] == 1
+    assert right['counts'] == {'syntax_validated_unreviewed': 3, 'unsupported_complete': 0,
+        'invalid_complete': 0, 'not_checked': 0}
+    assert right['reference_counts'] == {'syntax_validated_unreviewed': 3, 'unsupported': 0}
+    assert right['denominator'] == 3 and right['profile'] == candidate_owner.CANDIDATE_SYNTAX_PROFILE_V3
+    assert old.key != new.key
+    assert right['semantic_use_eligible'] is right['legal_admission_or_proof_authority'] is False
+    assert right['training_mask'] == right['evaluation_gold_mask'] == 0
+    assert old.to_dict()['metrics']['complete_norm_payload'] == new.to_dict()['metrics']['complete_norm_payload']
+
+
+@pytest.mark.parametrize('damage', ['missing-role', 'unknown-profile', 'wrong-selection'])
+def test_reviewed_producer_mixed_candidate_v3_preserves_invalid_or_unsupported_outputs(damage):
+    from ipfs_datasets_py.logic.autoformal import legal_norm_content_adjudication_v1 as candidate_owner
+    options, rows, known, _ = _candidate_audit_fixture()
+    def producer(_):
+        outputs = _producer_exact_outputs(rows); candidate = outputs[2]['candidate']
+        if damage == 'missing-role': candidate['argument_roles'][1]['roles'].pop()
+        elif damage == 'unknown-profile': candidate['profile'] = 'unrecognized-many-sorted/v999'
+        else: candidate['interpretation_id'] = 'fixture:unselected-candidate'
+        return outputs
+    artifact = _producer_owner.evaluate_reviewed_source_span_producer_artifact(**options, producer=producer,
+        candidate_syntax_profile=candidate_owner.CANDIDATE_SYNTAX_PROFILE_V3, known_candidate_inputs=known)
+    report = artifact.to_dict()['metrics']['complete_candidate_syntax']
+    assert report['denominator'] == 3 and report['counts']['syntax_validated_unreviewed'] == 2
+    assert report['counts']['unsupported_complete' if damage == 'unknown-profile' else 'invalid_complete'] == 1
+    assert report['candidate_repaired'] is False
+
+
+def test_reviewed_producer_mixed_candidate_v3_syntax_does_not_award_role_fidelity():
+    from ipfs_datasets_py.logic.autoformal import legal_norm_content_adjudication_v1 as candidate_owner
+    options, rows, known, _ = _candidate_audit_fixture()
+    def producer(_):
+        outputs = _producer_exact_outputs(rows)
+        roles = outputs[2]['candidate']['argument_roles'][1]['roles']
+        roles[0], roles[1] = roles[1], roles[0]
+        return outputs
+    artifact = _producer_owner.evaluate_reviewed_source_span_producer_artifact(**options, producer=producer,
+        candidate_syntax_profile=candidate_owner.CANDIDATE_SYNTAX_PROFILE_V3, known_candidate_inputs=known)
+    reports = artifact.to_dict()['metrics']
+    assert reports['complete_candidate_syntax']['counts']['syntax_validated_unreviewed'] == 3
+    assert reports['complete_norm_payload']['metric_numerators']['ordered_argument_roles_exact'] == 2
+    assert reports['complete_candidate_syntax']['source_fidelity_proved'] is False
+
+
+def test_reviewed_producer_mixed_candidate_v3_preflights_caller_selection():
+    from ipfs_datasets_py.logic.autoformal import legal_norm_content_adjudication_v1 as candidate_owner
+    options, rows, known, _ = _candidate_audit_fixture()
+    known[rows[2]['id']]['known_selection_context']['interpretation_id'] = 'fixture:different-caller-choice'
+    with pytest.raises(ValueError, match='differs'):
+        _producer_owner.evaluate_reviewed_source_span_producer_artifact(**options,
+            candidate_syntax_profile=candidate_owner.CANDIDATE_SYNTAX_PROFILE_V3, known_candidate_inputs=known,
+            producer=lambda _: pytest.fail('mismatched caller facts reached producer'))

@@ -20,7 +20,8 @@ from tests.unit.logic.autoformal import test_legal_relational_norm_v1 as relatio
 ROOT = Path(__file__).resolve().parents[4]
 CANONICAL_SOURCE = Path(legacy.__file__).resolve()
 LEGACY_RAW = CANONICAL_SOURCE.read_bytes()
-# Existing signed V2 context packets retain this exact source identity.
+# Retained historical V2 epoch, not the identity of every later source revision.
+# Current signed fixtures independently capture and pin LEGACY_RAW below.
 V2_SOURCE_SHA256 = "1e4d8674851d03ee9b7e8f770a8925f22c50358375a934f42ec34d0d8ffef3d2"
 
 auth, norm = fixture.auth, fixture.norm
@@ -324,7 +325,11 @@ def test_current_trust_controls_reject_even_genuine_signatures(sibling, mixed_ca
 
 def test_v3_sibling_preserves_v2_source_and_binds_current_producers(sibling, mixed_case, v2_saved):
     assert CANONICAL_SOURCE.read_bytes() == LEGACY_RAW
-    assert hashlib.sha256(LEGACY_RAW).hexdigest() == V2_SOURCE_SHA256
+    saved = decode(json.loads(v2_saved[1].read_bytes()))
+    current_pin = hashlib.sha256(LEGACY_RAW).hexdigest()
+    assert saved['canonical_owner_sha256'] == current_pin
+    assert saved['case']['preparation']['producer_pins'][str(CANONICAL_SOURCE)] == current_pin
+    assert v2_saved[0]['preparation']['producer_pins'][str(CANONICAL_SOURCE)] == current_pin
     expected = ROOT / 'ipfs_datasets_py/logic/autoformal/legal_reviewed_norm_admission_v3.py'
     assert Path(sibling.__file__).resolve() == expected
     assert sibling.__name__ == 'ipfs_datasets_py.logic.autoformal.legal_reviewed_norm_admission_v3'
@@ -358,3 +363,50 @@ def test_governing_definition_rejects_implication_instead_of_complete_equivalenc
     fixture.reviewed_refresh_manifest_v2(case)
     with pytest.raises(ValueError, match='supported definition must universally bind a predicate equivalence'):
         sibling.prepare_reviewed_norm_admission_v3(case['declaration'], **prepare_args(case))
+
+
+@pytest.mark.parametrize('mutation,reason', [
+    ('duplicate_repackage', 'logical source occurrence'),
+    ('overlapping_repackage', 'overlapping logical source'),
+    ('document_revision_label', 'logical source occurrence'),
+    ('different_unaligned_view', 'unsupported source-view alignment'),
+    ('different_view_and_document_revision_label', 'unsupported source-view alignment'),
+    ('physical_alias', 'physical occurrence'),
+])
+def test_reviewed_v3_raw_repackaging_and_artifact_labels_do_not_create_legal_uses(sibling, mixed_case, mutation, reason):
+    case = mixed_case
+    original, alternate = fixture.reviewed_repeated_permission_source_v2(case, mutation)
+    if mutation != 'physical_alias':
+        assert original['source_version']['raw_artifact']['sha256'] != alternate['source_version']['raw_artifact']['sha256']
+    fixture.reviewed_refresh_manifest_v2(case)
+    with pytest.raises(ValueError, match=reason):
+        sibling.prepare_reviewed_norm_admission_v3(case['declaration'], **prepare_args(case))
+    with pytest.raises(ValueError, match=reason):
+        assess(sibling, case)
+
+
+@pytest.mark.parametrize('mutation', ['different_provision', 'different_release', 'different_edition', 'nonoverlapping_paragraphs'])
+def test_reviewed_v3_distinct_legal_identities_and_nonoverlapping_uses_survive(sibling, mixed_case, mutation):
+    case = mixed_case
+    original, alternate = fixture.reviewed_repeated_permission_source_v2(case, mutation)
+    case['preparation'] = prepare(sibling, case)
+    refresh_signed_reviews(case, sibling)
+    assert_signatures_valid(case)
+    report = assess(sibling, case)
+    assert report['semantic_use_eligible'] is True and report['blockers'] == []
+    assert report['fixture_only'] and report['training_mask'] == report['evaluation_gold_mask'] == 0
+    assert report['Lean_admitted'] is report['proof_authority'] is report['corpus_admitted'] is False
+    assert len({row['occurrence_cid'] for row in report['units'] if row['kind'] == 'norm'}) == 2
+    assert original['occurrence']['span_text'] == alternate['occurrence']['span_text']
+
+
+def test_old_generation_source_pin_cannot_be_rehashed_into_current_v2_preparation(sibling, v2_saved):
+    case = cloned(v2_saved[0])
+    source_key = str(CANONICAL_SOURCE)
+    assert case['preparation']['producer_pins'][source_key] != V2_SOURCE_SHA256
+    case['preparation']['producer_pins'][source_key] = V2_SOURCE_SHA256
+    # The expected preparation digest is freshly computed by this fixture
+    # helper. A matching outer hash does not make a historical producer current.
+    args, kwargs = fixture.reviewed_assessment_arguments_v2(legacy, case)
+    with pytest.raises(ValueError, match='complete original replay'):
+        legacy.assess_reviewed_norm_admission_v2(*args, **kwargs)
