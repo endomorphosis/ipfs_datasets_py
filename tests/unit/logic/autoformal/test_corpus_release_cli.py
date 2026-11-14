@@ -431,7 +431,7 @@ def _physical_wire(value):
                       ensure_ascii=False, allow_nan=False).encode("utf-8")
 
 
-def _physical_source_material(directory):
+def _physical_source_material(directory, *, source_texts=None):
     import shutil
     import pyarrow as pa
     import pyarrow.parquet as pq
@@ -450,6 +450,9 @@ def _physical_source_material(directory):
         "Every covered officer must file a report unless the Board expressly excuses that officer.",
         "A covered officer may inspect the register.",
     ]
+    if source_texts is not None:
+        assert type(source_texts) is list and len(source_texts) == 3
+        texts = list(source_texts)
     units = []
     laws = []
     for index, text in enumerate(texts):
@@ -600,7 +603,7 @@ def _physical_source_material(directory):
         entity_bytes=entity_bytes, entity_path=entity_path, entity_rows=entity_rows, mapping=mapping)
 
 
-def _physical_closure_request(material, *, map_damage=None):
+def _physical_closure_request(material, *, map_damage=None, reviewed_version=2, return_control=False):
     from copy import deepcopy
     from dataclasses import fields
     from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_lake_v2 as transport
@@ -655,8 +658,36 @@ def _physical_closure_request(material, *, map_damage=None):
     case = fixture.reviewed_norm_fixture_v2(admission, fixture_namespace=material["namespace"],
         source_texts=material["texts"], cross_references=references,
         dependency_artifacts={map_id: map_raw})
-    control = shared_fixture.reviewed_preservation_graph_fixture_v2(fixture, admission, case)
-    control["preparation"] = shared_fixture.reviewed_preservation_prepare_fixture_v2(control)
+    assert type(reviewed_version) is int and reviewed_version in (2, 3)
+    if reviewed_version == 2:
+        control = shared_fixture.reviewed_preservation_graph_fixture_v2(fixture, admission, case)
+        control["preparation"] = shared_fixture.reviewed_preservation_prepare_fixture_v2(control)
+    else:
+        from ipfs_datasets_py.logic.autoformal import legal_reviewed_norm_admission_v3 as admission_v3
+        from ipfs_datasets_py.logic.autoformal import corpus_norm_definition_adapter as graphs
+        from tests.unit.logic.autoformal import test_legal_reviewed_norm_admission_v3 as mixed_fixture
+        case["declaration"]["schema"] = admission_v3.REVIEWED_DECLARATION_SCHEMA
+        for unit in case["declaration"]["units"]:
+            unit["relational_profile"] = mixed_fixture.relational.PROFILE
+        mixed_fixture.set_mixed_ir(case)
+        case["preparation"] = mixed_fixture.prepare(admission_v3, case)
+        mixed_fixture.refresh_signed_reviews(case, admission_v3)
+        mixed_fixture.assert_signatures_valid(case)
+        args, kwargs = fixture.reviewed_assessment_arguments_v2(admission_v3, case)
+        admitted = admission_v3.assess_reviewed_norm_admission_v3(*args, **kwargs)
+        assert admitted["semantic_use_eligible"] is True and admitted["fixture_only"] is True
+        admission_sha = admission_v3.norm_content_adjudication_sha256(admitted)
+        graph = graphs.build_reviewed_norm_graph_v3(admitted, *args,
+            expected_admission_sha256=admission_sha, **kwargs)
+        assert graphs.validate_reviewed_norm_graph_v3(graph, admitted, *args,
+            expected_admission_sha256=admission_sha,
+            expected_graph_sha256=graphs.norm_definition_graph_sha256(graph), **kwargs) == graph
+        control = dict(helper=fixture, mixed_helper=mixed_fixture, owner=admission_v3,
+            case=case, args=args, kwargs=kwargs, admission=admitted, graph=graph,
+            admission_sha=admission_sha, graph_sha=graphs.norm_definition_graph_sha256(graph),
+            shared=shared_fixture.shared)
+        control["preparation"] = shared_fixture.reviewed_preservation_prepare_fixture_v3(control)
+        assert shared_fixture.reviewed_preservation_validate_fixture_v3(control) == control["preparation"]
 
     corpus_rows = [dict(entry_cid=law["ipfs_cid"], legal_id=document["legal_id"], text=law["text"],
         source_cid=unit["source_version"]["raw_artifact"]["cid"],
@@ -746,7 +777,7 @@ def _physical_closure_request(material, *, map_damage=None):
     for unit in case["declaration"]["units"]:
         add(unit["source_artifact_id"], "source_version", _physical_wire(unit["source_version"]))
         add(unit["ir_artifact_id"], "ir", case["relational_inputs"][unit["unit_id"]]["request_raw"])
-    return dict(schema="legal-uscode-release-closure-request/v2",
+    request = dict(schema="legal-uscode-release-closure-request/v2",
         profile="reviewed-norm-v2-physical-three-cache-replay/v1",
         datasets=material["datasets"], expected_artifact_ids=[row["artifact_id"] for row in artifacts],
         artifacts=artifacts, expected_unit_ids=[unit["unit_id"] for unit in case["declaration"]["units"]],
@@ -754,6 +785,10 @@ def _physical_closure_request(material, *, map_damage=None):
             preservation=shared_fixture.shared.reviewed_preservation_corpus_sha256(control["preparation"]),
             reviewed_crosswalk=map_pin), native=None,
         physical_inputs=dict(law_path=str(material["law_path"]), entity_path=str(material["entity_path"])))
+    if reviewed_version == 3:
+        request.update(schema="legal-uscode-release-closure-request/v3",
+            profile="reviewed-norm-v3-physical-three-cache-replay/v1")
+    return (request, control) if return_control else request
 
 
 @pytest.fixture(scope="module")
@@ -904,3 +939,439 @@ def test_physical_closure_late_equal_byte_entity_replacement_cannot_change_held_
     assert observed == dict(rows=39, replacement_performed=True)
     assert physical.read_bytes() == row["payload"]
     assert (physical.stat().st_dev, physical.stat().st_ino) != old_identity
+
+
+# V3 successors use the same physical owners and independently signed fiction.
+# Authored compiler observations exercise contracts, never actual Lean/parent proof.
+@pytest.fixture(scope="module")
+def physical_closure_material_v3(tmp_path_factory):
+    texts = [
+        "For this fictional Act, a covered officer means an officer appointed by the Board. Café.",
+        "Every covered officer must file a report unless the Board expressly excuses that officer.",
+        "For every officer, supervisor, event, and time, if both people are covered officers, that officer may inspect the register under that supervisor at that event and time.",
+    ]
+    return _physical_source_material(tmp_path_factory.mktemp("mixed-physical-crosswalk") / "material", source_texts=texts)
+
+
+@pytest.fixture(scope="module")
+def physical_closure_control_v3(physical_closure_material_v3):
+    return _physical_closure_request(physical_closure_material_v3, reviewed_version=3, return_control=True)
+
+
+def replay_physical_closure_v3(request):
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_lake_v2 as transport
+    raw = transport.encode_parent_replay_value_v1(request, max_bytes=release.MAX_CLOSURE_REQUEST_BYTES)
+    return release.validate_uscode_release_closure_v3(raw, expected_request_sha256=hashlib.sha256(raw).hexdigest())
+
+
+def assert_release_v3_byte_authority_only(report):
+    assert report["local_replay_complete"] is True
+    for key in ("release_ready", "closure_complete", "admitted", "formalized", "proof_verified",
+        "source_semantics_verified", "source_authenticity_verified", "source_metadata_arrow_bytes_verified",
+        "original_native_parent_custody_verified", "remote_readback_verified", "model_or_compiler_execution_performed",
+        "original_parent_handle_consumed", "native_receipt_authenticated", "release_eligible",
+        "statutory_meaning_proved", "gold_verified", "original_success_authenticated",
+        "source_kernel_receipt_authenticated"):
+        assert report[key] is False, key
+    for key in ("admission_mask", "release_mask", "gold_mask", "training_mask", "evaluation_gold_mask"):
+        assert type(report[key]) is int and report[key] == 0
+    assert "original_admitted_native_parent_custody_not_established" in report["blockers"]
+    assert "immutable_remote_Hub_readback_not_established" in report["blockers"]
+    assert "statutory_meaning_and_full_corpus_qualification_not_established" in report["blockers"]
+
+
+def test_mixed_physical_closure_v3_replays_complete_signed_three_cache_component(physical_closure_control_v3):
+    request, control = physical_closure_control_v3
+    report = replay_physical_closure_v3(request)
+    assert_release_v3_byte_authority_only(report)
+    assert report["schema"] == "legal-uscode-release-closure-report/v3"
+    assert report["profile"] == "reviewed-norm-v3-physical-three-cache-replay/v1"
+    manifest = control["preparation"].to_dict()
+    assert report["signature_headers_by_unit"] == manifest["signature_headers_by_unit"]
+    assert report["predicate_compatibility_ledger"] == manifest["predicate_compatibility_ledger"]
+    assert report["definition_use_record_cids"] == manifest["definition_use_record_cids"]
+    assert report["unit_preservation_bindings"] == manifest["units"]
+    assert len(report["unit_ids"]) == len(manifest["units"]) == 3
+    graph = control["graph"]["graph"]
+    physical = report["physical_crosswalk"]
+    assert physical["counts"]["graph_nodes"] == len(graph["nodes"])
+    assert physical["counts"]["graph_edges"] == len(graph["edges"])
+    assert {row["graph_record_cid"] for row in physical["entity_bindings"]} == {
+        row["record_cid"] for row in graph["nodes"] + graph["edges"]}
+    assert report["native_receipt_replayed"] is False and report["native_packet_transport"] is None
+
+
+@pytest.mark.parametrize("damage", ["law_row_alias", "source_version_alias", "document_alias", "document_revision",
+    "span_missing", "span_duplicate", "span_wrong_overlap", "entity_node_alias", "entity_endpoint", "entity_missing",
+    "entity_row_digest", "dataset_revision"])
+def test_mixed_physical_closure_v3_refuses_signed_crosswalk_damage(physical_closure_material_v3, damage):
+    request = _physical_closure_request(physical_closure_material_v3, reviewed_version=3, map_damage=damage)
+    with pytest.raises(ValueError):
+        replay_physical_closure_v3(request)
+
+
+@pytest.mark.parametrize("damage", ["unicode_geometry", "governing_scope", "review_revoked", "IR", "graph", "source"])
+def test_mixed_physical_closure_v3_replays_original_current_subject(physical_closure_control_v3, damage):
+    from copy import deepcopy
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_lake_v2 as wire
+    from ipfs_datasets_py.logic.autoformal import legal_graph_review as reviews
+    request = deepcopy(physical_closure_control_v3[0])
+    replay_row = next(row for row in request["artifacts"] if row["artifact_id"] == request["component"]["replay"])
+    replay = wire.decode_parent_replay_value_v1(replay_row["payload"], expected_payload_sha256=replay_row["sha256"])
+    inputs = replay["admission_kwargs"]["preparation_inputs"]
+    if damage == "unicode_geometry":
+        occurrence = inputs["declaration"]["units"][0]["occurrence"]
+        assert occurrence["end_utf8"] > occurrence["end_char"]
+        occurrence["end_utf8"] = occurrence["end_char"]
+    elif damage == "governing_scope":
+        inputs["declaration"]["governing_context"]["governing_edition"] += ":other"
+    elif damage == "review_revoked":
+        registry = replay["admission_args"][1]
+        registry["keys"][0]["revoked_at_utc"] = replay["admission_kwargs"]["at_time_utc"]
+        replay["admission_kwargs"]["expected_registry_sha256"] = reviews.digest(registry)
+    elif damage == "IR":
+        unit = inputs["declaration"]["units"][-1]
+        inputs["relational_inputs"][unit["unit_id"]]["request_raw"] += b" "
+    elif damage == "source":
+        unit = inputs["declaration"]["units"][-1]
+        inputs["source_inputs"][unit["unit_id"]]["extracted_text"] += " changed"
+    else:
+        row = next(row for row in request["artifacts"] if row["artifact_id"] == request["component"]["graph"])
+        value = json.loads(row["payload"]);value["graph"]["edges"].pop()
+        raw = _physical_wire(value)
+        row.update(payload=raw, bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
+    raw = wire.encode_parent_replay_value_v1(replay)
+    replay_row.update(payload=raw, bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
+    with pytest.raises(ValueError):
+        replay_physical_closure_v3(request)
+
+
+@pytest.mark.parametrize("legacy", [1, 2])
+def test_mixed_physical_closure_v3_never_retags_legacy_request(physical_closure_control_v3, legacy):
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_lake_v2 as wire
+    raw = wire.encode_parent_replay_value_v1(physical_closure_control_v3[0])
+    validator = release.validate_uscode_release_closure_v1 if legacy == 1 else release.validate_uscode_release_closure_v2
+    with pytest.raises(ValueError):
+        validator(raw, expected_request_sha256=hashlib.sha256(raw).hexdigest())
+
+
+@pytest.fixture(scope="module")
+def authored_packet_transport_v3():
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_lake_v2 as wire
+    # Eighty-three fictional named file bytes exercise a four-chunk whole wire.
+    # This is NOT the retained 3,974,918-byte actual compiler packet.
+    packet = [["authored-file-" + str(i), (str(i) + ":").encode() + b"x" * 47_800] for i in range(83)]
+    raw = wire.encode_parent_replay_value_v1(packet, max_bytes=release.MAX_CLOSURE_REQUEST_BYTES)
+    prepared = release.prepare_reviewed_native_packet_transport_v3(raw, artifact_id_prefix="fixture:complete83")
+    return raw, packet, prepared
+
+
+def transport_boundary_v3(prepared, *, mutate=None):
+    from copy import deepcopy
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_lake_v2 as wire
+    from ipfs_datasets_py.logic.autoformal import corpus_contracts as contracts
+    value = deepcopy(prepared)
+    receipt = dict(artifact_id="fixture:transport-receipt", family="native_receipt",
+        payload=b'{"transport_only":true}', bytes=23, sha256=hashlib.sha256(b'{"transport_only":true}').hexdigest())
+    assert receipt["bytes"] == len(receipt["payload"])
+    rows = [receipt, value["index"], *value["chunks"]]
+    selection = dict(receipt=receipt["artifact_id"], packet_index=value["index"]["artifact_id"],
+        expected_packet_sha256="a" * 64, expected_binary_sha256={}, observation_profile="fictional-authored-observation/v1")
+    required = {"fixture:original-role"}
+    if mutate:
+        mutate(value, rows, selection, required)
+    materials = {row["artifact_id"]: row for row in rows}
+    result = release._release_native_packet_v3(selection, materials, required, contracts, wire)
+    return result, required, rows
+
+
+def test_native_packet_v3_publishes_and_reassembles_all_four_chunks(authored_packet_transport_v3, tmp_path):
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_lake_v2 as wire
+    raw, packet, prepared = authored_packet_transport_v3
+    assert len(prepared["chunks"]) == 4
+    assert all(0 < row["bytes"] <= 1_000_000 for row in [prepared["index"], *prepared["chunks"]])
+    refs = [release.publish_referenced_artifact(tmp_path, "packet/" + str(i), row["payload"], "candidate")
+        for i, row in enumerate([prepared["index"], *prepared["chunks"]])]
+    sealed = release.seal_coordinator_receipt(tmp_path, refs)
+    assert sealed["remote_upload_executed"] is sealed["hub_readback_executed"] is False
+    persisted = dict(prepared)
+    persisted["index"] = dict(prepared["index"], payload=(tmp_path / "packet/0").read_bytes())
+    persisted["chunks"] = [dict(row, payload=(tmp_path / ("packet/" + str(i + 1))).read_bytes())
+        for i, row in enumerate(prepared["chunks"])]
+    (receipt, decoded, observation), required, rows = transport_boundary_v3(persisted)
+    assert decoded == packet and wire.encode_parent_replay_value_v1(decoded, max_bytes=8 * 1024**2) == raw
+    assert observation["complete_wire_bytes"] == len(raw)
+    assert observation["complete_wire_sha256"] == hashlib.sha256(raw).hexdigest()
+    assert observation["complete_packet_file_count"] == 83 and observation["parent_or_release_authority"] is False
+    assert {row["artifact_id"] for row in rows} <= required
+
+
+@pytest.mark.parametrize("damage", ["index_schema", "index_profile", "codec", "wire_sha", "wire_length", "wire_bool",
+    "ordinal", "ordinal_bool", "gap", "overlap", "chunk_bytes", "chunk_bool", "chunk_sha", "chunk_body", "reorder",
+    "missing", "duplicate_id", "extra", "family", "role_alias", "unused_index", "observation", "parent_handle"])
+def test_native_packet_v3_rejects_incomplete_reordered_aliased_and_resealed_transport(authored_packet_transport_v3, damage):
+    def mutate(value, rows, selection, required):
+        index = json.loads(value["index"]["payload"])
+        first = index["chunks"][0]
+        if damage in ("index_schema", "index_profile", "codec", "wire_sha", "wire_length", "wire_bool"):
+            key = {"index_schema":"schema", "index_profile":"profile", "codec":"codec", "wire_sha":"wire_sha256",
+                "wire_length":"wire_bytes", "wire_bool":"wire_bytes"}[damage]
+            index[key] = True if damage == "wire_bool" else (index[key] + 1 if damage == "wire_length" else "wrong")
+        elif damage == "ordinal": first["ordinal"] = 1
+        elif damage == "ordinal_bool": first["ordinal"] = False
+        elif damage == "gap": first["offset"] = 1
+        elif damage == "overlap": index["chunks"][1]["offset"] -= 1
+        elif damage == "chunk_bytes": first["bytes"] -= 1
+        elif damage == "chunk_bool": first["bytes"] = True
+        elif damage == "chunk_sha": first["sha256"] = "0" * 64
+        elif damage == "chunk_body": rows[2]["payload"] = b"y" * rows[2]["bytes"]
+        elif damage == "reorder": rows[2], rows[3] = rows[3], rows[2]
+        elif damage == "missing": rows.pop()
+        elif damage == "duplicate_id": index["chunks"][1]["artifact_id"] = first["artifact_id"]
+        elif damage == "extra": rows.append(dict(rows[-1], artifact_id="fixture:extra-chunk"))
+        elif damage == "family": rows[2]["family"] = "native_packet"
+        elif damage == "role_alias": required.add(first["artifact_id"])
+        elif damage == "unused_index": selection["packet_index"] = "fixture:missing-index"
+        elif damage == "observation": selection["observation_profile"] = "verified-by-JSON"
+        else: selection["original_parent_handle"] = {"verified":True}
+        raw = _physical_wire(index)
+        value["index"].update(payload=raw, bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
+    with pytest.raises(ValueError):
+        transport_boundary_v3(authored_packet_transport_v3[2], mutate=mutate)
+
+
+@pytest.mark.parametrize("damage", ["artifact_limit", "request_limit", "schema", "profile", "codec"])
+def test_native_packet_v3_literal_policy_cannot_be_widened_or_retagged(authored_packet_transport_v3, monkeypatch, damage):
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+    name = {"artifact_limit":"_MAX_ARTIFACT_BYTES", "request_limit":"MAX_CLOSURE_REQUEST_BYTES",
+        "schema":"NATIVE_PACKET_INDEX_SCHEMA_V3", "profile":"CLOSURE_PROFILE_V3", "codec":"NATIVE_PACKET_CODEC_V3"}[damage]
+    monkeypatch.setattr(release, name, 99_000_000 if damage.endswith("limit") else "wrong")
+    with pytest.raises(ValueError):
+        release.prepare_reviewed_native_packet_transport_v3(authored_packet_transport_v3[0], artifact_id_prefix="fixture:wrong")
+
+
+@pytest.fixture(scope="module")
+def authored_physical_native_v3(physical_closure_control_v3, tmp_path_factory):
+    from copy import deepcopy
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_lake_v2 as wire
+    from tests.unit.logic.autoformal import test_legal_corpus_definition_use_native_v2 as fixture
+    request, control = physical_closure_control_v3
+    tmp_path = tmp_path_factory.mktemp("matching-physical-native-v3")
+    monkeypatch = pytest.MonkeyPatch()
+    install = fixture.synthetic_compiler.__wrapped__(monkeypatch, tmp_path)
+    def complete_outputs(outputs, compiled, sources):
+        for i, path in enumerate(compiled):
+            outputs[path] = b"fictional olean; no real proof:" + str(i).encode() + b"q" * 220_000
+    executable, calls = install(control["preparation"], output_edit=complete_outputs,
+        stdout=fixture.reviewed_native_stdout_v2(control["preparation"]))
+    output = tmp_path / "authored-matching-physical-packet"
+    try:
+        receipt = fixture.reviewed_native_build_v3(control, executable, output)
+    finally:
+        monkeypatch.undo()
+    assert len(calls) == 1 and receipt["build_passed"] is True
+    native = fixture.native
+    packet = tuple(sorted((path.relative_to(output).as_posix(), path.read_bytes())
+        for path in output.rglob("*") if path.is_file()))
+    assert len(packet) == 83
+    packet_raw = wire.encode_parent_replay_value_v1([list(row) for row in packet], max_bytes=8 * 1024**2)
+    prepared = release.prepare_reviewed_native_packet_transport_v3(packet_raw, artifact_id_prefix="fixture:physical-native")
+    result = deepcopy(request)
+    receipt_raw = native.reviewed_norm_preservation_receipt_bytes_v3(receipt)
+    result["artifacts"].extend([dict(artifact_id="fixture:physical-native-receipt", family="native_receipt",
+        payload=receipt_raw, bytes=len(receipt_raw), sha256=hashlib.sha256(receipt_raw).hexdigest()),
+        prepared["index"], *prepared["chunks"]])
+    result["expected_artifact_ids"] = [row["artifact_id"] for row in result["artifacts"]]
+    result["native"] = dict(receipt="fixture:physical-native-receipt", packet_index=prepared["index"]["artifact_id"],
+        expected_packet_sha256=native.reviewed_norm_preservation_packet_sha256_v3(packet),
+        expected_binary_sha256=receipt["binary_sha256"], observation_profile="fictional-authored-observation/v1")
+    # Measure COMPLETE encoded request independently, before the production8MiB gate.
+    full_wire = wire.encode_parent_replay_value_v1(result, max_bytes=64 * 1024**2)
+    (tmp_path / "complete-authored-physical-request.wire").write_bytes(full_wire)
+    (tmp_path / "complete-authored-physical-request-size.json").write_bytes(_physical_wire(dict(
+        bytes=len(full_wire), sha256=hashlib.sha256(full_wire).hexdigest(), packet_bytes=len(packet_raw),
+        artifacts=len(result["artifacts"]), all_files_retained=True, original_parent_authority=False)))
+    assert len(full_wire) <= 8 * 1024**2 and len(result["artifacts"]) <= 64
+    return result, control, receipt, packet, full_wire
+
+
+def test_mixed_physical_native_v3_replays_matching_complete_authored_packet_without_authority(authored_physical_native_v3):
+    request, control, receipt, packet, full_wire = authored_physical_native_v3
+    report = replay_physical_closure_v3(request)
+    assert_release_v3_byte_authority_only(report)
+    assert report["native_receipt_replayed"] is True
+    assert report["native_packet_transport"]["complete_packet_file_count"] == len(packet) == 83
+    assert report["native_packet_transport"]["logical_packet_inventory_sha256"] == request["native"]["expected_packet_sha256"]
+    assert report["admission_sha256"] == control["admission_sha"]
+
+
+@pytest.mark.parametrize("damage", ["subject", "inventory", "binary", "actual_observation", "receipt", "unreferenced",
+    "true_authority", "parent_handle", "oversize_artifact", "too_many_artifacts", "oversize_whole_request"])
+def test_mixed_physical_native_v3_refuses_subject_and_transport_authority_substitution(authored_physical_native_v3, damage):
+    from copy import deepcopy
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_lake_v2 as wire
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+    request = deepcopy(authored_physical_native_v3[0])
+    if damage == "subject":
+        row = next(row for row in request["artifacts"] if row["artifact_id"] == request["native"]["receipt"])
+        value = json.loads(row["payload"])
+        value["reviewed_admission_sha256"] = "0" * 64
+        raw = _physical_wire(value);row.update(payload=raw, bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
+    elif damage == "inventory": request["native"]["expected_packet_sha256"] = "0" * 64
+    elif damage == "binary": request["native"]["expected_binary_sha256"] = {}
+    elif damage == "actual_observation": request["native"]["observation_profile"] = "retained-native-observation/v1"
+    elif damage == "receipt":
+        row = next(row for row in request["artifacts"] if row["artifact_id"] == request["native"]["receipt"])
+        row["payload"] += b" "
+        row.update(bytes=len(row["payload"]), sha256=hashlib.sha256(row["payload"]).hexdigest())
+    elif damage == "true_authority": request["release_ready"] = True
+    elif damage == "parent_handle": request["native"]["original_parent_handle"] = {"verified":True}
+    else:
+        raw = b"x" * (1_000_001 if damage == "oversize_artifact" else 900_000 if damage == "oversize_whole_request" else 1)
+        count = 65 if damage == "too_many_artifacts" else 10 if damage == "oversize_whole_request" else 1
+        for i in range(count):
+            request["artifacts"].append(dict(artifact_id="fixture:unreferenced:" + str(i), family="native_packet_chunk",
+                payload=raw, bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest()))
+        request["expected_artifact_ids"] = [row["artifact_id"] for row in request["artifacts"]]
+    raw = wire.encode_parent_replay_value_v1(request, max_bytes=64 * 1024**2)
+    with pytest.raises(ValueError):
+        release.validate_uscode_release_closure_v3(raw, expected_request_sha256=hashlib.sha256(raw).hexdigest())
+
+
+@pytest.mark.parametrize("direct", [False, True])
+def test_mixed_physical_closure_v3_explicit_cli_preserves_default_domain(physical_closure_control_v3, tmp_path, direct):
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_lake_v2 as wire
+    request = physical_closure_control_v3[0]
+    raw = wire.encode_parent_replay_value_v1(request, max_bytes=8 * 1024**2)
+    path = tmp_path / "mixed.request";path.write_bytes(raw)
+    args = ["validate-closure", "--request", str(path), "--request-sha256", hashlib.sha256(raw).hexdigest()]
+    result, refused = run_cli(args, cwd=tmp_path, direct=direct)
+    assert result.returncode != 0 and refused["status"] == "error"
+    result, accepted = run_cli(args + ["--profile", "reviewed-norm-v3-physical-three-cache-replay/v1"], cwd=tmp_path, direct=direct)
+    assert result.returncode == 0 and accepted["status"] == "success"
+    assert_release_v3_byte_authority_only(accepted["closure"])
+
+
+def test_mixed_physical_closure_v3_refuses_independently_valid_foreign_review_packet(
+        physical_closure_control_v3, tmp_path_factory, monkeypatch, tmp_path):
+    from copy import deepcopy
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_lake_v2 as wire
+    from tests.unit.logic.autoformal import test_legal_corpus_definition_use_native_v2 as fixture
+    # Genuine different fictional review, with all original signatures/current
+    # source/IR/graph/preparation replayed before its authored tool boundary.
+    seed = fixture.reviewed_native_seed_v3.__wrapped__(tmp_path_factory)
+    foreign = fixture.reviewed_native_control_v3.__wrapped__(seed)
+    assert foreign["admission_sha"] != physical_closure_control_v3[1]["admission_sha"]
+    install = fixture.synthetic_compiler.__wrapped__(monkeypatch, tmp_path)
+    executable, calls = install(foreign["preparation"], stdout=fixture.reviewed_native_stdout_v2(foreign["preparation"]))
+    output = tmp_path / "genuine-foreign-subject"
+    receipt = fixture.reviewed_native_build_v3(foreign, executable, output)
+    packet = tuple(sorted((path.relative_to(output).as_posix(), path.read_bytes())
+        for path in output.rglob("*") if path.is_file()))
+    own_replay = fixture.reviewed_native_reopen_v3(foreign, receipt, packet)
+    assert own_replay["original_success_authenticated"] is False
+    assert own_replay["retained_observations_consistent"] is True
+    request = deepcopy(physical_closure_control_v3[0])
+    raw = wire.encode_parent_replay_value_v1([list(row) for row in packet], max_bytes=8 * 1024**2)
+    prepared = release.prepare_reviewed_native_packet_transport_v3(raw, artifact_id_prefix="fixture:foreign-native")
+    receipt_raw = fixture.native.reviewed_norm_preservation_receipt_bytes_v3(receipt)
+    request["artifacts"].extend([dict(artifact_id="fixture:foreign-receipt", family="native_receipt",
+        payload=receipt_raw, bytes=len(receipt_raw), sha256=hashlib.sha256(receipt_raw).hexdigest()),
+        prepared["index"], *prepared["chunks"]])
+    request["expected_artifact_ids"] = [row["artifact_id"] for row in request["artifacts"]]
+    request["native"] = dict(receipt="fixture:foreign-receipt", packet_index=prepared["index"]["artifact_id"],
+        expected_packet_sha256=fixture.native.reviewed_norm_preservation_packet_sha256_v3(packet),
+        expected_binary_sha256=receipt["binary_sha256"], observation_profile="fictional-authored-observation/v1")
+    with pytest.raises(ValueError, match="retained receipt differs from current whole reviewed semantics or producers"):
+        replay_physical_closure_v3(request)
+
+
+@pytest.mark.parametrize("damage", ["empty", "mapping", "file_pair", "bytes_type", "noncanonical", "over_budget"])
+def test_native_packet_transport_v3_refuses_nonpacket_or_oversize_wire_before_publication(damage):
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_lake_v2 as wire
+    value = [] if damage == "empty" else {} if damage == "mapping" else [["file", "not-bytes"]] if damage == "file_pair" else [["file", b"source"]]
+    raw = wire.encode_parent_replay_value_v1(value)
+    if damage == "bytes_type": raw = bytearray(raw)
+    elif damage == "noncanonical": raw += b" "
+    elif damage == "over_budget": raw = b"x" * (8 * 1024**2 + 1)
+    with pytest.raises(ValueError):
+        release.prepare_reviewed_native_packet_transport_v3(raw, artifact_id_prefix="fixture:invalid")
+
+
+@pytest.mark.parametrize("damage", ["profile", "core_callback"])
+def test_mixed_physical_closure_v3_closes_original_policy_and_callback_generation(
+        physical_closure_control_v3, monkeypatch, damage):
+    from ipfs_datasets_py.logic.autoformal import legal_entity_index_intake as entity
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+    original = entity.iter_observed_rows
+    observed = []
+    def genuine_rows_then_mutate(*args, **kwargs):
+        for row in original(*args, **kwargs):
+            observed.append(row)
+            yield row
+        if damage == "profile":
+            monkeypatch.setattr(release, "CLOSURE_PROFILE_V3", "retagged/v2")
+        else:
+            monkeypatch.setattr(release, "_validate_uscode_release_byte_closure_v3", lambda *a, **k: {})
+    monkeypatch.setattr(entity, "iter_observed_rows", genuine_rows_then_mutate)
+    with pytest.raises(ValueError):
+        replay_physical_closure_v3(physical_closure_control_v3[0])
+    assert observed
+
+
+@pytest.mark.parametrize("damage", ["code", "defaults", "keyword_defaults"])
+def test_mixed_byte_closure_v3_refuses_same_function_state_drift_after_genuine_prepare(
+        physical_closure_control_v3, monkeypatch, damage):
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_native_v2 as native
+    target = native.validate_reviewed_norm_preservation_native_receipt_v3
+    original = native.validate_reviewed_norm_preservation_native_v3
+    changed = []
+    def genuine_prepare_then_mutate(*args, **kwargs):
+        prepared = original(*args, **kwargs)
+        if damage == "code":
+            def altered(*args, **kwargs): return {}
+            monkeypatch.setattr(target, "__code__", altered.__code__)
+        elif damage == "defaults":
+            monkeypatch.setattr(target, "__defaults__", (None,))
+        else:
+            assert type(target.__kwdefaults__) is dict and "observation_profile" in target.__kwdefaults__
+            monkeypatch.setitem(target.__kwdefaults__, "observation_profile", "different-default/v1")
+        changed.append(target)
+        return prepared
+    monkeypatch.setattr(native, "validate_reviewed_norm_preservation_native_v3", genuine_prepare_then_mutate)
+    with pytest.raises(ValueError, match="V3 callback function/code/default/keyword-default generation changed"):
+        replay_physical_closure_v3(physical_closure_control_v3[0])
+    assert changed == [target] and native.validate_reviewed_norm_preservation_native_receipt_v3 is target
+
+
+@pytest.mark.parametrize("damage", ["code", "defaults", "keyword_defaults"])
+def test_mixed_physical_closure_v3_refuses_same_core_function_state_drift_after_real_rows(
+        physical_closure_control_v3, monkeypatch, damage):
+    from ipfs_datasets_py.logic.autoformal import legal_entity_index_intake as entity
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+    target = release._validate_uscode_release_byte_closure_v3
+    original = entity.iter_observed_rows
+    observed = []
+    def genuine_rows_then_mutate(*args, **kwargs):
+        for row in original(*args, **kwargs):
+            observed.append(row)
+            yield row
+        if damage == "code":
+            def altered(*args, **kwargs): return {}
+            monkeypatch.setattr(target, "__code__", altered.__code__)
+        elif damage == "defaults":
+            monkeypatch.setattr(target, "__defaults__", (None,))
+        else:
+            monkeypatch.setattr(target, "__kwdefaults__", {"expected_request_sha256": "0" * 64})
+    monkeypatch.setattr(entity, "iter_observed_rows", genuine_rows_then_mutate)
+    with pytest.raises(ValueError, match="V3 callback function/code/default/keyword-default generation changed"):
+        replay_physical_closure_v3(physical_closure_control_v3[0])
+    assert observed and release._validate_uscode_release_byte_closure_v3 is target
