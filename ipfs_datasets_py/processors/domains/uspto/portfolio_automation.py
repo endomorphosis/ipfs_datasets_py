@@ -7,10 +7,12 @@ This module automates **review prep**, not legal submission:
 * Batch-refresh public status through production runtime bootstrap
 * Build Patent Center export manifests from a local download folder
 * Drive authorized ``import-private`` into a tenant store
+* Aggregate per-matter prior-art / compliance-audit / IDS status (content-free)
 
 It never accepts Patent Center passwords, MFA secrets, session cookies as
 CLI args, or signs/pays/files. Browser automation lives in the attended ops
 script and only produces local export packages for this import path.
+Matter status dashboards never emit secrets or PDF/document bodies.
 """
 
 from __future__ import annotations
@@ -51,10 +53,55 @@ from ipfs_datasets_py.processors.domains.uspto.runtime import bootstrap_producti
 
 PORTFOLIO_AUTOMATION_SCHEMA: Final = "patlaw-portfolio-automation-v1"
 PORTFOLIO_SEED_SCHEMA: Final = "patlaw-portfolio-seed-v1"
+MATTER_STATUS_SCHEMA: Final = "patlaw-portfolio-matter-status-v1"
+UNIFIED_APPLICATION_REVIEW_SCHEMA: Final = "paar.UnifiedApplicationReview@1"
+MATTER_STATUS_DISCLAIMER: Final = (
+    "Review-only matter status. Not a readiness certification, patentability "
+    "opinion, or filing authorization. Never auto-files an IDS; Sign/Pay/Submit "
+    "remain human-only. Output is content-free metadata (counts, ids, statuses) "
+    "and never includes secrets, credentials, or PDF/document bodies."
+)
 DEFAULT_TENANT_ID: Final = "operator-default"
 DEFAULT_INVENTOR_QUERY_FIELD: Final = (
     "applicationMetaData.inventorBag.inventorNameText"
 )
+
+# Closed vocabularies for UnifiedApplicationReview dashboard fields (PAAR-120).
+_REVIEW_RISK_TIERS: Final = frozenset({"unknown", "low", "medium", "high"})
+_REVIEW_CONFORMANCE_STATUSES: Final = frozenset(
+    {"satisfied", "unsatisfied", "unknown", "human_only"}
+)
+_REVIEW_DISPOSITIONS: Final = frozenset(
+    {"ready", "review_required", "not_ready"}
+)
+
+# Keys that must never appear in matter-status operator output.
+_MATTER_STATUS_SECRET_KEY_FRAGMENTS: Final = frozenset(
+    {
+        "api_key",
+        "apikey",
+        "password",
+        "secret",
+        "token",
+        "authorization",
+        "cookie",
+        "bearer",
+        "session",
+        "mfa",
+        "x-api-key",
+        "document_body",
+        "document_bytes",
+        "extracted_text",
+        "raw_body",
+        "pdf_body",
+        "private_key",
+        "totp",
+    }
+)
+_MATTER_STATUS_MAX_STR: Final = 240
+_MATTER_STATUS_MAX_ACTIONS: Final = 40
+_MATTER_STATUS_MAX_GAPS: Final = 40
+_MATTER_STATUS_MAX_HUMAN_ITEMS: Final = 40
 
 # Attended browser export is an operator capability. Unattended scrape remains
 # forbidden (see private_boundary_policy.json and patent_center_export).
@@ -992,8 +1039,1192 @@ def summarize_public_documents(documents_root: Path) -> dict[str, Any]:
     }
 
 
+def _matter_status_is_secret_key(key: str) -> bool:
+    lowered = str(key or "").strip().lower().replace("-", "_")
+    if not lowered:
+        return False
+    if lowered in _MATTER_STATUS_SECRET_KEY_FRAGMENTS:
+        return True
+    return any(frag in lowered for frag in _MATTER_STATUS_SECRET_KEY_FRAGMENTS)
+
+
+def _matter_status_safe_str(value: Any, *, max_len: int = _MATTER_STATUS_MAX_STR) -> str:
+    """Bound free-form text; strip credential-like substrings when available."""
+    if value is None:
+        return ""
+    text = str(value)
+    try:
+        from ipfs_datasets_py.processors.domains.uspto.providers.base import (
+            sanitize_secret_text,
+        )
+
+        text = sanitize_secret_text(text)
+    except Exception:  # noqa: BLE001 — fail closed to truncated plain text
+        pass
+    text = text.replace("\x00", "")
+    # Drop obvious PDF / binary markers rather than echoing bodies.
+    if text.startswith("%PDF") or "stream\n" in text[:64]:
+        return "<redacted:binary-or-pdf>"
+    if len(text) > max_len:
+        return text[: max(0, max_len - 3)] + "..."
+    return text
+
+
+def _matter_status_redact(value: Any, *, depth: int = 0) -> Any:
+    """Recursively drop secret-bearing keys and bound strings (no PDF bodies)."""
+    if depth > 8:
+        return "<redacted:max-depth>"
+    if isinstance(value, Mapping):
+        out: dict[str, Any] = {}
+        for raw_key, raw_val in value.items():
+            key = str(raw_key)
+            if _matter_status_is_secret_key(key):
+                continue
+            out[key] = _matter_status_redact(raw_val, depth=depth + 1)
+        return out
+    if isinstance(value, (list, tuple)):
+        return [_matter_status_redact(v, depth=depth + 1) for v in value[:80]]
+    if isinstance(value, (bytes, bytearray)):
+        return f"<redacted:bytes:{len(value)}>"
+    if isinstance(value, str):
+        return _matter_status_safe_str(value)
+    if isinstance(value, (int, float, bool)) or value is None:
+        return value
+    return _matter_status_safe_str(value)
+
+
+def _matter_status_read_json(path: Path) -> dict[str, Any] | None:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError, UnicodeDecodeError):
+        return None
+    if not isinstance(payload, Mapping):
+        return None
+    return dict(payload)
+
+
+def _matter_status_mtime(path: Path) -> float:
+    try:
+        return float(path.stat().st_mtime)
+    except OSError:
+        return -1.0
+
+
+def _discover_matter_app_ids(
+    state: Path,
+    *,
+    seed_apps: Sequence[str] | None = None,
+    application_numbers: Sequence[str] | None = None,
+    include_orphans: bool = True,
+) -> list[str]:
+    """Ordered unique application numbers for the matter dashboard."""
+    ordered: list[str] = []
+    seen: set[str] = set()
+
+    def _add(raw: str) -> None:
+        app = normalize_application_number_token(raw)
+        if not app or app in seen:
+            return
+        seen.add(app)
+        ordered.append(app)
+
+    if application_numbers:
+        for raw in application_numbers:
+            _add(str(raw))
+        return ordered
+
+    for raw in seed_apps or ():
+        _add(str(raw))
+
+    if include_orphans:
+        for sub in (
+            "prior_art",
+            "compliance_audits",
+            "ids_queues",
+            "reviews",
+            "unified_reviews",
+        ):
+            root = state / sub
+            if not root.is_dir():
+                continue
+            for child in sorted(root.iterdir()):
+                if child.is_dir():
+                    _add(child.name)
+                elif child.is_file() and child.suffix.lower() == ".json":
+                    # Flat review pointer files named <app>.json
+                    _add(child.stem)
+    return ordered
+
+
+def _summarize_latest_prior_art_run(
+    state: Path, application_number: str
+) -> dict[str, Any] | None:
+    """Content-free summary of the newest prior-art run for one matter."""
+    app = normalize_application_number_token(application_number)
+    app_dir = state / "prior_art" / app
+    if not app_dir.is_dir():
+        return None
+
+    best: tuple[float, Path, dict[str, Any]] | None = None
+    for run_dir in app_dir.iterdir():
+        if not run_dir.is_dir():
+            continue
+        man_path = run_dir / "run_manifest.json"
+        payload = _matter_status_read_json(man_path) if man_path.is_file() else None
+        if payload is None:
+            payload = {"run_id": run_dir.name, "action": "unknown"}
+        stamp = str(
+            payload.get("created_at_utc")
+            or payload.get("generated_at_utc")
+            or ""
+        )
+        mtime = _matter_status_mtime(man_path if man_path.is_file() else run_dir)
+        # Prefer lexicographic UTC stamps when present; else mtime.
+        sort_key = float(
+            "".join(c for c in stamp if c.isdigit())[:14] or 0
+        ) or mtime
+        if best is None or sort_key >= best[0]:
+            best = (sort_key, run_dir, payload)
+
+    if best is None:
+        return None
+
+    _, run_dir, payload = best
+    paths = payload.get("paths") if isinstance(payload.get("paths"), Mapping) else {}
+    # Presence flags only — never expand path contents or PDF names beyond count.
+    artifact_flags = {
+        "has_plan": (run_dir / "prior_art_plan.json").is_file()
+        or bool(paths.get("plan") or paths.get("prior_art_plan")),
+        "has_journal": (run_dir / "search_journal.json").is_file()
+        or bool(paths.get("journal") or paths.get("search_journal")),
+        "has_report": (run_dir / "prior_art_report.json").is_file()
+        or bool(paths.get("report") or paths.get("prior_art_report")),
+        "has_ids_queue": (run_dir / "ids_review_queue.json").is_file(),
+        "has_pps_verification": (run_dir / "pps_verification.json").is_file()
+        or (run_dir / "pps_verification_checklist.json").is_file(),
+        "has_human_ack": (run_dir / "human_coverage_acknowledgment.json").is_file()
+        or bool(paths.get("human_ack")),
+    }
+    backends = payload.get("backends")
+    backends_out: dict[str, Any] = {}
+    if isinstance(backends, Mapping):
+        for k, v in backends.items():
+            if isinstance(v, bool) or v is None:
+                backends_out[str(k)] = v
+            else:
+                backends_out[str(k)] = _matter_status_safe_str(v, max_len=64)
+
+    return {
+        "present": True,
+        "run_id": _matter_status_safe_str(
+            payload.get("run_id") or run_dir.name, max_len=128
+        ),
+        "run_dir": str(run_dir),
+        "action": _matter_status_safe_str(payload.get("action") or "", max_len=64),
+        "created_at_utc": _matter_status_safe_str(
+            payload.get("created_at_utc") or payload.get("generated_at_utc") or "",
+            max_len=64,
+        ),
+        "hit_count": int(payload.get("hit_count") or 0),
+        "gap_count": int(payload.get("gap_count") or 0),
+        "plan_id": _matter_status_safe_str(payload.get("plan_id") or "", max_len=128)
+        or None,
+        "journal_id": _matter_status_safe_str(
+            payload.get("journal_id") or "", max_len=128
+        )
+        or None,
+        "backends": backends_out,
+        "artifacts": artifact_flags,
+    }
+
+
+def _summarize_latest_compliance_audit(
+    state: Path, application_number: str
+) -> dict[str, Any] | None:
+    """Content-free summary of the newest compliance audit for one matter."""
+    app = normalize_application_number_token(application_number)
+    app_dir = state / "compliance_audits" / app
+    if not app_dir.is_dir():
+        return None
+
+    best: tuple[float, Path, dict[str, Any]] | None = None
+    for audit_dir in app_dir.iterdir():
+        if not audit_dir.is_dir():
+            continue
+        man_path = audit_dir / "submission_compliance_audit.json"
+        if not man_path.is_file():
+            continue
+        payload = _matter_status_read_json(man_path)
+        if payload is None:
+            continue
+        stamp = str(payload.get("generated_at_utc") or "")
+        mtime = _matter_status_mtime(man_path)
+        sort_key = float(
+            "".join(c for c in stamp if c.isdigit())[:14] or 0
+        ) or mtime
+        if best is None or sort_key >= best[0]:
+            best = (sort_key, audit_dir, payload)
+
+    if best is None:
+        return None
+
+    _, audit_dir, payload = best
+    delta = payload.get("delta") if isinstance(payload.get("delta"), Mapping) else {}
+    prior = payload.get("prior_art") if isinstance(payload.get("prior_art"), Mapping) else {}
+    filing = (
+        payload.get("filing_rules")
+        if isinstance(payload.get("filing_rules"), Mapping)
+        else {}
+    )
+    ids_q = payload.get("ids_queue") if isinstance(payload.get("ids_queue"), Mapping) else {}
+    action_plan = payload.get("action_plan")
+    if not isinstance(action_plan, list):
+        plan_file = _matter_status_read_json(audit_dir / "action_plan.json") or {}
+        raw_actions = plan_file.get("actions") if isinstance(plan_file, Mapping) else None
+        action_plan = raw_actions if isinstance(raw_actions, list) else []
+
+    residual_actions: list[dict[str, Any]] = []
+    for action in action_plan[:_MATTER_STATUS_MAX_ACTIONS]:
+        if not isinstance(action, Mapping):
+            continue
+        residual_actions.append(
+            {
+                "priority": int(action.get("priority") or 99),
+                "code": _matter_status_safe_str(action.get("code") or "", max_len=96),
+                "title": _matter_status_safe_str(
+                    action.get("title") or "", max_len=160
+                ),
+                # CLI template only — already content-free; still sanitize.
+                "command": _matter_status_safe_str(
+                    action.get("command") or "", max_len=220
+                )
+                or None,
+            }
+        )
+
+    open_gap_codes: list[str] = []
+    for code in prior.get("blocking_codes") or []:
+        open_gap_codes.append(f"prior_art:blocking:{_matter_status_safe_str(code, max_len=64)}")
+    for code in prior.get("warning_codes") or []:
+        open_gap_codes.append(f"prior_art:warning:{_matter_status_safe_str(code, max_len=64)}")
+    for gap in filing.get("evidence_gaps") or []:
+        if not isinstance(gap, Mapping):
+            continue
+        status = str(gap.get("status") or "")
+        if status not in {"missing", "human_only", "optional_missing"}:
+            continue
+        kind = _matter_status_safe_str(gap.get("evidence_kind") or "unknown", max_len=48)
+        rule = _matter_status_safe_str(gap.get("rule_id") or "", max_len=64)
+        open_gap_codes.append(f"filing:{kind}:{status}:{rule}".rstrip(":"))
+    open_gap_codes = open_gap_codes[:_MATTER_STATUS_MAX_GAPS]
+
+    action_plan_count = int(
+        payload.get("action_plan_count")
+        or len(action_plan)
+        or 0
+    )
+
+    return {
+        "present": True,
+        "audit_id": _matter_status_safe_str(
+            payload.get("audit_id") or audit_dir.name, max_len=128
+        ),
+        "audit_dir": str(audit_dir),
+        "overall_status": _matter_status_safe_str(
+            payload.get("overall_status") or "", max_len=64
+        ),
+        "revision_id": _matter_status_safe_str(
+            payload.get("revision_id") or "", max_len=128
+        )
+        or None,
+        "generated_at_utc": _matter_status_safe_str(
+            payload.get("generated_at_utc") or "", max_len=64
+        ),
+        "delta_from": _matter_status_safe_str(payload.get("delta_from") or "", max_len=128)
+        or None,
+        "closed_gap_count": int(delta.get("closed_gap_count") or 0)
+        if delta
+        else None,
+        "opened_gap_count": int(delta.get("opened_gap_count") or 0)
+        if delta
+        else None,
+        "status_transition": (
+            {
+                "from": _matter_status_safe_str(
+                    (delta.get("status_transition") or {}).get("from") or "",
+                    max_len=64,
+                )
+                or None,
+                "to": _matter_status_safe_str(
+                    (delta.get("status_transition") or {}).get("to") or "",
+                    max_len=64,
+                )
+                or None,
+                "changed": bool(
+                    (delta.get("status_transition") or {}).get("changed")
+                ),
+            }
+            if isinstance(delta.get("status_transition"), Mapping)
+            else None
+        ),
+        "prior_art_status": _matter_status_safe_str(
+            prior.get("status") or "", max_len=64
+        )
+        or None,
+        "ids_candidates_on_audit": int(ids_q.get("candidate_count") or 0)
+        if ids_q
+        else None,
+        "action_plan_count": action_plan_count,
+        "action_residuals": {
+            "residual_count": len(residual_actions),
+            "actions": residual_actions,
+            "open_gap_count": len(open_gap_codes),
+            "open_gap_codes": open_gap_codes,
+        },
+    }
+
+
+def _review_stamp_sort_key(payload: Mapping[str, Any], path: Path) -> float:
+    """Prefer lexicographic UTC stamps; fall back to mtime."""
+    stamp = str(
+        payload.get("generated_at_utc")
+        or payload.get("created_at_utc")
+        or ""
+    )
+    digits = "".join(c for c in stamp if c.isdigit())[:14]
+    if digits:
+        try:
+            return float(digits)
+        except ValueError:
+            pass
+    return _matter_status_mtime(path)
+
+
+def _normalize_risk_tier(raw: Any) -> str:
+    text = str(raw or "").strip().lower()
+    if text in _REVIEW_RISK_TIERS:
+        return text
+    return "unknown" if not text else _matter_status_safe_str(text, max_len=32)
+
+
+def _normalize_conformance_status(raw: Any) -> str:
+    text = str(raw or "").strip().lower()
+    if text in _REVIEW_CONFORMANCE_STATUSES:
+        return text
+    return "unknown" if not text else _matter_status_safe_str(text, max_len=32)
+
+
+def _normalize_disposition(raw: Any) -> str:
+    text = str(raw or "").strip().lower()
+    if text in _REVIEW_DISPOSITIONS:
+        return text
+    return "review_required" if not text else _matter_status_safe_str(text, max_len=32)
+
+
+def _pointer_ref(
+    ref: Mapping[str, Any] | None,
+    *,
+    risk_key: str | None = None,
+    status_key: str | None = None,
+) -> dict[str, Any] | None:
+    """Content-free pointer fields only (ids, digests, paths, status enums)."""
+    if not isinstance(ref, Mapping):
+        return None
+    out: dict[str, Any] = {}
+    for key in ("report_id", "path", "content_digest", "schema"):
+        val = ref.get(key)
+        if val is None or val == "":
+            continue
+        out[key] = _matter_status_safe_str(val, max_len=220)
+    if risk_key and ref.get(risk_key) is not None:
+        out[risk_key] = _normalize_risk_tier(ref.get(risk_key))
+    if status_key and ref.get(status_key) is not None:
+        out[status_key] = _normalize_conformance_status(ref.get(status_key))
+    return out or None
+
+
+def _extract_open_human_items(
+    payload: Mapping[str, Any],
+    *,
+    risk_tier: str,
+    conformance_status: str,
+    disposition: str,
+) -> list[dict[str, Any]]:
+    """Build content-free open human items from UnifiedApplicationReview fields.
+
+    Emits ids/kinds/statuses only — never claim quotes, hit bodies, or PDF paths
+    contents. Pointer path fields are allowed when present on residual rows.
+    """
+    items: list[dict[str, Any]] = []
+    seen: set[str] = set()
+
+    def _add(
+        item_id: str,
+        *,
+        kind: str,
+        status: str = "open",
+        source: str = "unified_review",
+        path: str | None = None,
+    ) -> None:
+        iid = _matter_status_safe_str(item_id, max_len=128) or kind
+        key = f"{kind}:{iid}"
+        if key in seen:
+            return
+        seen.add(key)
+        row: dict[str, Any] = {
+            "item_id": iid,
+            "kind": _matter_status_safe_str(kind, max_len=64),
+            "status": _matter_status_safe_str(status, max_len=48),
+            "source": _matter_status_safe_str(source, max_len=64),
+        }
+        if path:
+            # Path pointer only — never read file contents.
+            row["path"] = _matter_status_safe_str(path, max_len=220)
+        items.append(row)
+
+    # Coverage gaps (named corpora / adapters — no body text).
+    gaps = payload.get("coverage_gaps")
+    if isinstance(gaps, list):
+        for gap in gaps:
+            if not isinstance(gap, Mapping):
+                continue
+            gap_kind = str(
+                gap.get("kind")
+                or gap.get("gap_kind")
+                or gap.get("corpus")
+                or "coverage_gap"
+            )
+            gap_status = str(gap.get("status") or "open")
+            gap_id = str(
+                gap.get("gap_id")
+                or gap.get("id")
+                or f"gap:{gap_kind}:{gap_status}"
+            )
+            _add(
+                gap_id,
+                kind="coverage_gap",
+                status=gap_status,
+                source="coverage_gaps",
+                path=str(gap.get("path") or "") or None,
+            )
+
+    # Diligence residuals (pack / check pointers).
+    residuals = payload.get("diligence_residuals")
+    if isinstance(residuals, list):
+        for residual in residuals:
+            if not isinstance(residual, Mapping):
+                continue
+            rid = str(
+                residual.get("residual_id")
+                or residual.get("id")
+                or residual.get("check_id")
+                or residual.get("kind")
+                or "residual"
+            )
+            rkind = str(residual.get("kind") or "diligence_residual")
+            rstatus = str(
+                residual.get("status")
+                or residual.get("state")
+                or "open"
+            )
+            _add(
+                rid,
+                kind=rkind if rkind != "coverage_gap" else "diligence_coverage_gap",
+                status=rstatus,
+                source="diligence_residuals",
+                path=str(
+                    residual.get("path")
+                    or residual.get("pack_path")
+                    or residual.get("pointer")
+                    or ""
+                )
+                or None,
+            )
+
+    # Explicit open_human_items array if present on the review payload.
+    explicit = payload.get("open_human_items")
+    if isinstance(explicit, list):
+        for row in explicit:
+            if not isinstance(row, Mapping):
+                continue
+            _add(
+                str(row.get("item_id") or row.get("id") or row.get("kind") or "item"),
+                kind=str(row.get("kind") or "human_item"),
+                status=str(row.get("status") or "open"),
+                source="open_human_items",
+                path=str(row.get("path") or "") or None,
+            )
+
+    # Reasons list (short codes only).
+    reasons = payload.get("reasons")
+    if isinstance(reasons, list):
+        for reason in reasons:
+            if isinstance(reason, Mapping):
+                code = str(reason.get("code") or reason.get("reason") or "")
+            else:
+                code = str(reason or "")
+            code = code.strip()
+            if not code:
+                continue
+            # Skip free-form paragraphs; keep short codes.
+            if len(code) > 96 or " " in code and len(code) > 48:
+                code = code.split()[0][:64]
+            _add(code, kind="reason", status="open", source="reasons")
+
+    # Medium/high conflict risk without human dispositions remains open.
+    dispositions = payload.get("dispositions")
+    has_dispositions = isinstance(dispositions, list) and len(dispositions) > 0
+    conflict_ref = (
+        payload.get("conflict_risk_ref")
+        if isinstance(payload.get("conflict_risk_ref"), Mapping)
+        else {}
+    )
+    if risk_tier in {"medium", "high"} and not has_dispositions:
+        _add(
+            f"conflict_risk:{risk_tier}:needs_disposition",
+            kind="conflict_risk_disposition",
+            status="needs_human",
+            source="conflict_risk_ref",
+            path=str(conflict_ref.get("path") or "") or None,
+        )
+
+    if conformance_status in {"unsatisfied", "unknown", "human_only"}:
+        conf_ref = (
+            payload.get("conformance_ref")
+            if isinstance(payload.get("conformance_ref"), Mapping)
+            else {}
+        )
+        _add(
+            f"conformance:{conformance_status}",
+            kind="conformance",
+            status=conformance_status,
+            source="conformance_ref",
+            path=str(conf_ref.get("path") or "") or None,
+        )
+
+    if disposition in {"review_required", "not_ready"}:
+        _add(
+            f"disposition:{disposition}",
+            kind="disposition",
+            status=disposition,
+            source="disposition",
+        )
+
+    return items[:_MATTER_STATUS_MAX_HUMAN_ITEMS]
+
+
+def _iter_unified_review_candidates(state: Path, app: str) -> list[Path]:
+    """Locate unified_application_review.json files for one application."""
+    candidates: list[Path] = []
+    seen: set[str] = set()
+
+    def _add(path: Path) -> None:
+        try:
+            key = str(path.resolve())
+        except OSError:
+            key = str(path)
+        if key in seen:
+            return
+        if path.is_file():
+            seen.add(key)
+            candidates.append(path)
+
+    # Canonical persist layout from PAAR-090:
+    #   state/compliance_audits/<app>/review_<stamp>/unified_application_review.json
+    app_audit = state / "compliance_audits" / app
+    if app_audit.is_dir():
+        for path in app_audit.rglob("unified_application_review.json"):
+            _add(path)
+        # Compact summary may stand alone when full report is absent.
+        for path in app_audit.rglob("summary.json"):
+            parent = path.parent
+            if (parent / "unified_application_review.json").is_file():
+                continue
+            # Only treat summary.json under review_* dirs as review status.
+            if parent.name.startswith("review_") or "review" in parent.name.lower():
+                _add(path)
+
+    reviews_root = state / "reviews" / app
+    if reviews_root.is_dir():
+        for path in reviews_root.rglob("unified_application_review.json"):
+            _add(path)
+        for path in reviews_root.rglob("summary.json"):
+            if (path.parent / "unified_application_review.json").is_file():
+                continue
+            _add(path)
+
+    # Flat per-app pointer files (operator-friendly).
+    for flat in (
+        state / "reviews" / f"{app}.json",
+        state / "unified_reviews" / f"{app}.json",
+        state / "unified_reviews" / app / "unified_application_review.json",
+    ):
+        _add(flat)
+
+    return candidates
+
+
+def _summarize_latest_unified_review(
+    state: Path, application_number: str
+) -> dict[str, Any] | None:
+    """Content-free summary of the newest UnifiedApplicationReview for one matter.
+
+    Dashboard fields (PAAR-120 / PAAR-G130):
+    * pointer path to the review artifact (never PDF/document bodies)
+    * risk_tier (conflict matter_risk)
+    * conformance_status
+    * open_human_items (ids/kinds only)
+    """
+    app = normalize_application_number_token(application_number)
+    if not app:
+        return None
+
+    best: tuple[float, Path, dict[str, Any]] | None = None
+    for path in _iter_unified_review_candidates(state, app):
+        payload = _matter_status_read_json(path)
+        if payload is None:
+            continue
+        # Accept full UnifiedApplicationReview or compact summary with same fields.
+        schema = str(payload.get("schema") or "")
+        has_review_shape = any(
+            key in payload
+            for key in (
+                "review_id",
+                "disposition",
+                "conflict_risk_ref",
+                "conformance_ref",
+                "risk_tier",
+                "matter_risk",
+            )
+        )
+        if not has_review_shape and "UnifiedApplicationReview" not in schema:
+            # summary.json from other tools — skip unless it looks like a review.
+            if path.name != "summary.json":
+                continue
+            if not (
+                payload.get("disposition") is not None
+                or payload.get("exit_code_hint") is not None
+            ):
+                continue
+        sort_key = _review_stamp_sort_key(payload, path)
+        if best is None or sort_key >= best[0]:
+            best = (sort_key, path, payload)
+
+    if best is None:
+        return None
+
+    _, review_path, payload = best
+    review_dir = review_path.parent
+
+    conflict_ref_raw = (
+        payload.get("conflict_risk_ref")
+        if isinstance(payload.get("conflict_risk_ref"), Mapping)
+        else None
+    )
+    conformance_ref_raw = (
+        payload.get("conformance_ref")
+        if isinstance(payload.get("conformance_ref"), Mapping)
+        else None
+    )
+
+    # risk_tier: prefer explicit field, then conflict_risk_ref.matter_risk, then matter_risk
+    risk_tier = _normalize_risk_tier(
+        payload.get("risk_tier")
+        or (conflict_ref_raw or {}).get("matter_risk")
+        or payload.get("matter_risk")
+        or "unknown"
+    )
+    conformance_status = _normalize_conformance_status(
+        payload.get("conformance_status")
+        or (conformance_ref_raw or {}).get("overall_status")
+        or payload.get("overall_status")
+        or "unknown"
+    )
+    disposition = _normalize_disposition(payload.get("disposition") or "review_required")
+
+    try:
+        exit_hint = int(payload.get("exit_code_hint"))
+    except (TypeError, ValueError):
+        exit_hint = {"ready": 0, "review_required": 1, "not_ready": 2}.get(
+            disposition, 1
+        )
+
+    open_items = _extract_open_human_items(
+        payload,
+        risk_tier=risk_tier,
+        conformance_status=conformance_status,
+        disposition=disposition,
+    )
+
+    # Companion files are pointers only.
+    full_path = review_dir / "unified_application_review.json"
+    summary_path = review_dir / "summary.json"
+    pointer_path = str(review_path)
+    if full_path.is_file():
+        pointer_path = str(full_path)
+
+    coverage_gaps = payload.get("coverage_gaps")
+    coverage_gap_count = (
+        len(coverage_gaps) if isinstance(coverage_gaps, list) else 0
+    )
+    diligence = payload.get("diligence_residuals")
+    diligence_count = len(diligence) if isinstance(diligence, list) else 0
+
+    conflict_ref = _pointer_ref(conflict_ref_raw, risk_key="matter_risk")
+    conformance_ref = _pointer_ref(conformance_ref_raw, status_key="overall_status")
+
+    return {
+        "present": True,
+        "schema": _matter_status_safe_str(
+            payload.get("schema") or UNIFIED_APPLICATION_REVIEW_SCHEMA, max_len=96
+        ),
+        "review_id": _matter_status_safe_str(
+            payload.get("review_id") or review_dir.name, max_len=128
+        ),
+        # UnifiedApplicationReview pointer — path only, never body.
+        "path": pointer_path,
+        "review_dir": str(review_dir),
+        "summary_path": str(summary_path) if summary_path.is_file() else None,
+        "content_digest": _matter_status_safe_str(
+            payload.get("content_digest") or "", max_len=128
+        )
+        or None,
+        "generated_at_utc": _matter_status_safe_str(
+            payload.get("generated_at_utc") or payload.get("created_at_utc") or "",
+            max_len=64,
+        ),
+        "disposition": disposition,
+        "exit_code_hint": exit_hint,
+        "risk_tier": risk_tier,
+        "conformance_status": conformance_status,
+        "conflict_risk_ref": conflict_ref,
+        "conformance_ref": conformance_ref,
+        "open_human_items": open_items,
+        "open_human_item_count": len(open_items),
+        "coverage_gap_count": coverage_gap_count,
+        "diligence_residual_count": diligence_count,
+        "auto_file_blocked": bool(payload.get("auto_file_blocked", True)),
+        "review_only": True,
+    }
+
+
+def _empty_unified_review() -> dict[str, Any]:
+    return {
+        "present": False,
+        "review_id": None,
+        "path": None,
+        "disposition": None,
+        "risk_tier": None,
+        "conformance_status": None,
+        "open_human_items": [],
+        "open_human_item_count": 0,
+        "auto_file_blocked": True,
+    }
+
+
+def _summarize_ids_counts(
+    state: Path,
+    application_number: str,
+    *,
+    prior_art_run_dir: str | None = None,
+) -> dict[str, Any]:
+    """IDS queue counts for a matter (no citation text / PDF bodies)."""
+    app = normalize_application_number_token(application_number)
+    candidates: list[Path] = []
+
+    if prior_art_run_dir:
+        p = Path(prior_art_run_dir) / "ids_review_queue.json"
+        if p.is_file():
+            candidates.append(p)
+
+    prior_root = state / "prior_art" / app
+    if prior_root.is_dir():
+        candidates.extend(prior_root.rglob("ids_review_queue.json"))
+
+    ids_root = state / "ids_queues" / app
+    if ids_root.is_dir():
+        candidates.extend(ids_root.glob("*.json"))
+
+    # Newest mtime wins.
+    newest: Path | None = None
+    newest_mtime = -1.0
+    seen_paths: set[str] = set()
+    for path in candidates:
+        key = str(path.resolve()) if path.exists() else str(path)
+        if key in seen_paths:
+            continue
+        seen_paths.add(key)
+        if not path.is_file():
+            continue
+        m = _matter_status_mtime(path)
+        if m > newest_mtime:
+            newest_mtime = m
+            newest = path
+
+    empty = {
+        "present": False,
+        "queue_id": None,
+        "queue_path": None,
+        "candidate_count": 0,
+        "ids_ready_count": 0,
+        "by_state": {},
+        "auto_file_blocked": True,
+        "claims_exhaustive_search": False,
+    }
+    if newest is None:
+        return empty
+
+    payload = _matter_status_read_json(newest)
+    if payload is None:
+        return {**empty, "present": True, "queue_path": str(newest), "error": "unreadable"}
+
+    rows = payload.get("candidates") if isinstance(payload.get("candidates"), list) else []
+    by_state: dict[str, int] = {}
+    ready = 0
+    for row in rows:
+        if not isinstance(row, Mapping):
+            continue
+        state_name = str(
+            row.get("state")
+            or ("ids_ready" if row.get("is_ids_ready") else "candidate")
+        )
+        # Prefer enum value strings.
+        if hasattr(state_name, "value"):
+            state_name = str(getattr(state_name, "value"))
+        state_name = _matter_status_safe_str(state_name, max_len=48) or "unknown"
+        by_state[state_name] = by_state.get(state_name, 0) + 1
+        if row.get("is_ids_ready") or state_name in {"ids_ready", "IDS_READY"}:
+            ready += 1
+
+    return {
+        "present": True,
+        "queue_id": _matter_status_safe_str(payload.get("queue_id") or "", max_len=128)
+        or None,
+        "queue_path": str(newest),
+        "candidate_count": len(rows),
+        "ids_ready_count": ready,
+        "by_state": by_state,
+        "auto_file_blocked": bool(payload.get("auto_file_blocked", True)),
+        "claims_exhaustive_search": bool(payload.get("claims_exhaustive_search", False)),
+    }
+
+
+def _seed_info_from_matter(
+    seed_matter: PortfolioMatter | Mapping[str, Any],
+) -> dict[str, Any]:
+    if isinstance(seed_matter, PortfolioMatter):
+        return {
+            "ownership": seed_matter.ownership,
+            "title": _matter_status_safe_str(seed_matter.title, max_len=100),
+            "status_odp_search": _matter_status_safe_str(
+                seed_matter.status_odp_search, max_len=80
+            ),
+            "filing_date": _matter_status_safe_str(
+                seed_matter.filing_date, max_len=32
+            ),
+            "applicant": _matter_status_safe_str(seed_matter.applicant, max_len=100),
+        }
+    return {
+        "ownership": _matter_status_safe_str(
+            seed_matter.get("ownership") or "", max_len=64
+        ),
+        "title": _matter_status_safe_str(seed_matter.get("title") or "", max_len=100),
+        "status_odp_search": _matter_status_safe_str(
+            seed_matter.get("status_odp_search") or seed_matter.get("status") or "",
+            max_len=80,
+        ),
+        "filing_date": _matter_status_safe_str(
+            seed_matter.get("filing_date") or "", max_len=32
+        ),
+        "applicant": _matter_status_safe_str(
+            seed_matter.get("applicant") or "", max_len=100
+        ),
+    }
+
+
+def summarize_matter_status(
+    state_root: Path | str,
+    application_number: str,
+    *,
+    seed_matter: PortfolioMatter | Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Per-matter prior-art / audit residual / IDS triage summary (content-free)."""
+    state = Path(state_root)
+    app = normalize_application_number_token(application_number)
+    seed_info: dict[str, Any] | None = None
+    if seed_matter is not None:
+        seed_info = _seed_info_from_matter(seed_matter)
+    else:
+        # Auto-resolve seed membership when callers pass only an application number.
+        seed_path = state / "portfolio_seed.json"
+        if seed_path.is_file():
+            try:
+                seed = load_portfolio_seed(seed_path)
+            except Exception:  # noqa: BLE001
+                seed = None
+            if seed is not None:
+                for matter in seed.matters:
+                    if normalize_application_number_token(matter.application_number) == app:
+                        seed_info = _seed_info_from_matter(matter)
+                        break
+
+    prior = _summarize_latest_prior_art_run(state, app)
+    audit = _summarize_latest_compliance_audit(state, app)
+    review = _summarize_latest_unified_review(state, app)
+    ids = _summarize_ids_counts(
+        state,
+        app,
+        prior_art_run_dir=(prior or {}).get("run_dir") if prior else None,
+    )
+
+    residuals = (audit or {}).get("action_residuals") if audit else None
+    if residuals is None:
+        residuals = {
+            "residual_count": 0,
+            "actions": [],
+            "open_gap_count": 0,
+            "open_gap_codes": [],
+        }
+
+    review_block = review or _empty_unified_review()
+    # Top-level convenience mirrors for dashboard consumers (PAAR-120).
+    risk_tier = review_block.get("risk_tier") if review_block.get("present") else None
+    conformance_status = (
+        review_block.get("conformance_status") if review_block.get("present") else None
+    )
+
+    row = {
+        "application_number": app or str(application_number).strip(),
+        "in_seed": seed_info is not None,
+        "seed": seed_info,
+        "prior_art": prior
+        or {
+            "present": False,
+            "run_id": None,
+            "hit_count": 0,
+            "gap_count": 0,
+        },
+        "audit": (
+            {
+                "present": True,
+                "audit_id": audit["audit_id"],
+                "overall_status": audit["overall_status"],
+                "generated_at_utc": audit["generated_at_utc"],
+                "revision_id": audit.get("revision_id"),
+                "delta_from": audit.get("delta_from"),
+                "closed_gap_count": audit.get("closed_gap_count"),
+                "opened_gap_count": audit.get("opened_gap_count"),
+                "status_transition": audit.get("status_transition"),
+                "prior_art_status": audit.get("prior_art_status"),
+                "action_plan_count": audit.get("action_plan_count"),
+                "ids_candidates_on_audit": audit.get("ids_candidates_on_audit"),
+            }
+            if audit
+            else {
+                "present": False,
+                "audit_id": None,
+                "overall_status": None,
+                "action_plan_count": 0,
+            }
+        ),
+        # PAAR-120: latest UnifiedApplicationReview pointer + risk/conformance.
+        "review": review_block,
+        "unified_review": review_block,
+        "risk_tier": risk_tier,
+        "conformance_status": conformance_status,
+        "open_human_items": list(review_block.get("open_human_items") or []),
+        "action_residuals": residuals,
+        "ids": ids,
+        "triage_hints": _matter_status_triage_hints(
+            prior=prior,
+            audit=audit,
+            ids=ids,
+            residuals=residuals,
+            review=review_block,
+        ),
+    }
+    return _matter_status_redact(row)
+
+
+def _matter_status_triage_hints(
+    *,
+    prior: Mapping[str, Any] | None,
+    audit: Mapping[str, Any] | None,
+    ids: Mapping[str, Any] | None,
+    residuals: Mapping[str, Any] | None,
+    review: Mapping[str, Any] | None = None,
+) -> list[str]:
+    """Short operator next-step hints (never secrets)."""
+    hints: list[str] = []
+    review_map = review or {}
+    if review_map.get("present"):
+        disposition = str(review_map.get("disposition") or "")
+        risk = str(review_map.get("risk_tier") or "")
+        conf = str(review_map.get("conformance_status") or "")
+        if disposition and disposition != "ready":
+            hints.append(
+                f"unified review disposition is {disposition} "
+                f"(risk={risk or 'unknown'}, conformance={conf or 'unknown'})"
+            )
+        human_n = int(review_map.get("open_human_item_count") or 0)
+        if human_n:
+            hints.append(f"{human_n} open human item(s) on latest review")
+        if risk in {"medium", "high"}:
+            hints.append(f"conflict risk tier is {risk} — human disposition required")
+        if conf in {"unsatisfied", "unknown"}:
+            hints.append(f"conformance status is {conf} — review package obligations")
+    else:
+        hints.append("run unified application review for this matter")
+    if not prior or not prior.get("present"):
+        hints.append("run prior-art search for this matter")
+    if not audit or not audit.get("present"):
+        hints.append("run compliance audit (audit-submission / revise audit)")
+    else:
+        status = str(audit.get("overall_status") or "")
+        if status and status not in {"ready_for_human_filing", "ready"}:
+            hints.append(f"audit status is {status} — review action residuals")
+        residual_count = int((residuals or {}).get("residual_count") or 0)
+        if residual_count:
+            hints.append(f"{residual_count} open action residual(s)")
+    ids_map = ids or {}
+    if ids_map.get("present"):
+        cand = int(ids_map.get("candidate_count") or 0)
+        ready = int(ids_map.get("ids_ready_count") or 0)
+        if cand and ready == 0:
+            hints.append(f"{cand} IDS candidate(s) awaiting human relevance/materiality review")
+        elif ready:
+            hints.append(
+                f"{ready} IDS-ready reference(s) — human file only (auto-file blocked)"
+            )
+    elif prior and prior.get("present"):
+        hints.append("build IDS candidate queue from prior-art hits for human review")
+    if not hints:
+        hints.append("no open triage signals — re-audit after package changes")
+    return hints[:8]
+
+
+def build_portfolio_matter_status(
+    state_root: Path | str,
+    *,
+    application_numbers: Sequence[str] | None = None,
+    include_orphans: bool = True,
+) -> dict[str, Any]:
+    """Portfolio-wide per-matter status: prior-art, audit, residuals, IDS, review.
+
+    Operator-safe: never prints secrets, credentials, API keys, or PDF/document
+    bodies. Status is review-only and is not a readiness certification.
+
+    PAAR-120 dashboard fields per matter include the latest
+    UnifiedApplicationReview pointer path, risk_tier, conformance_status, and
+    open_human_items (content-free; pointer paths only).
+    """
+    state = Path(state_root)
+    seed_path = state / "portfolio_seed.json"
+    seed_by_app: dict[str, PortfolioMatter] = {}
+    tenant_id: str | None = None
+    if seed_path.is_file():
+        try:
+            seed = load_portfolio_seed(seed_path)
+            tenant_id = seed.tenant_id
+            for matter in seed.matters:
+                key = normalize_application_number_token(matter.application_number)
+                if key:
+                    seed_by_app[key] = matter
+        except Exception:  # noqa: BLE001
+            tenant_id = None
+
+    apps = _discover_matter_app_ids(
+        state,
+        seed_apps=list(seed_by_app.keys()),
+        application_numbers=application_numbers,
+        include_orphans=include_orphans
+        if not application_numbers
+        else False,
+    )
+
+    matters: list[dict[str, Any]] = []
+    totals: dict[str, Any] = {
+        "with_prior_art": 0,
+        "with_audit": 0,
+        "with_ids_queue": 0,
+        "with_unified_review": 0,
+        "ids_ready_total": 0,
+        "ids_candidate_total": 0,
+        "residual_action_total": 0,
+        "open_human_item_total": 0,
+        "audit_status_counts": {},
+        "risk_tier_counts": {},
+        "conformance_status_counts": {},
+        "disposition_counts": {},
+    }
+    for app in apps:
+        row = summarize_matter_status(
+            state,
+            app,
+            seed_matter=seed_by_app.get(app),
+        )
+        matters.append(row)
+        if (row.get("prior_art") or {}).get("present"):
+            totals["with_prior_art"] += 1
+        audit = row.get("audit") or {}
+        if audit.get("present"):
+            totals["with_audit"] += 1
+            st = str(audit.get("overall_status") or "unknown")
+            counts = totals["audit_status_counts"]
+            counts[st] = int(counts.get(st) or 0) + 1
+        ids = row.get("ids") or {}
+        if ids.get("present"):
+            totals["with_ids_queue"] += 1
+            totals["ids_ready_total"] += int(ids.get("ids_ready_count") or 0)
+            totals["ids_candidate_total"] += int(ids.get("candidate_count") or 0)
+        residuals = row.get("action_residuals") or {}
+        totals["residual_action_total"] += int(residuals.get("residual_count") or 0)
+
+        review = row.get("review") or row.get("unified_review") or {}
+        if review.get("present"):
+            totals["with_unified_review"] += 1
+            risk = str(review.get("risk_tier") or row.get("risk_tier") or "unknown")
+            conf = str(
+                review.get("conformance_status")
+                or row.get("conformance_status")
+                or "unknown"
+            )
+            disp = str(review.get("disposition") or "unknown")
+            risk_counts = totals["risk_tier_counts"]
+            risk_counts[risk] = int(risk_counts.get(risk) or 0) + 1
+            conf_counts = totals["conformance_status_counts"]
+            conf_counts[conf] = int(conf_counts.get(conf) or 0) + 1
+            disp_counts = totals["disposition_counts"]
+            disp_counts[disp] = int(disp_counts.get(disp) or 0) + 1
+            totals["open_human_item_total"] += int(
+                review.get("open_human_item_count")
+                or len(review.get("open_human_items") or [])
+                or 0
+            )
+
+    payload = {
+        "schema": MATTER_STATUS_SCHEMA,
+        "ok": True,
+        "generated_at_utc": utc_now_iso(),
+        "state_root": str(state),
+        "tenant_id": tenant_id,
+        "matter_count": len(matters),
+        "matters": matters,
+        "totals": totals,
+        "disclaimer": MATTER_STATUS_DISCLAIMER,
+        "review_only": True,
+        "hard_barriers": {
+            "sign": "human_only",
+            "pay": "human_only",
+            "submit": "human_only",
+            "ids_auto_file": "blocked",
+        },
+    }
+    return _matter_status_redact(payload)
+
+
 def build_portfolio_dashboard(state_root: Path) -> dict[str, Any]:
-    """Aggregate seed, last review, public docs, exports, and schedule status."""
+    """Aggregate seed, last review, public docs, exports, schedule, and PAAR-120 fields."""
     state = Path(state_root)
     seed_path = state / "portfolio_seed.json"
     review_path = state / "public_status_review.json"
@@ -1003,8 +2234,14 @@ def build_portfolio_dashboard(state_root: Path) -> dict[str, Any]:
     schedule_manifest = state / "schedule" / "install_manifest.json"
 
     seed_payload: dict[str, Any] | None = None
+    seed_apps: list[str] = []
     if seed_path.is_file():
         seed = load_portfolio_seed(seed_path)
+        seed_apps = [
+            normalize_application_number_token(m.application_number)
+            for m in seed.matters
+            if normalize_application_number_token(m.application_number)
+        ]
         seed_payload = {
             "tenant_id": seed.tenant_id,
             "matter_count": len(seed.matters),
@@ -1080,25 +2317,66 @@ def build_portfolio_dashboard(state_root: Path) -> dict[str, Any]:
         except (OSError, json.JSONDecodeError):
             schedule = {"error": "unreadable_manifest"}
 
-    return {
-        "schema": "patlaw-portfolio-dashboard-v1",
-        "generated_at_utc": utc_now_iso(),
-        "state_root": str(state),
-        "seed": seed_payload,
-        "last_review": review_summary,
-        "public_documents": summarize_public_documents(docs_root)
-        if docs_root.exists()
-        else {"application_count": 0, "documents_root": str(docs_root)},
-        "exports": export_dirs,
-        "private_inbox": inbox_dirs,
-        "schedule": schedule,
-        "next_steps": [
-            "keep-only / confirm your real application numbers",
-            "refresh --with-documents for confirmed public wrappers",
-            "drop Patent Center downloads into private_inbox/<app>/ then inbox-import",
-            "attended-export for interactive private retrieval when needed",
-        ],
-    }
+    # PAAR-120: per-matter UnifiedApplicationReview status rollup (content-free).
+    matter_status = build_portfolio_matter_status(
+        state,
+        application_numbers=seed_apps or None,
+        include_orphans=not seed_apps,
+    )
+    review_status_rows: list[dict[str, Any]] = []
+    for matter in matter_status.get("matters") or []:
+        if not isinstance(matter, Mapping):
+            continue
+        rev = matter.get("review") or matter.get("unified_review") or {}
+        review_status_rows.append(
+            {
+                "application_number": matter.get("application_number"),
+                "present": bool(rev.get("present")),
+                "path": rev.get("path"),
+                "review_id": rev.get("review_id"),
+                "disposition": rev.get("disposition") or matter.get("disposition"),
+                "risk_tier": matter.get("risk_tier") or rev.get("risk_tier"),
+                "conformance_status": matter.get("conformance_status")
+                or rev.get("conformance_status"),
+                "open_human_item_count": rev.get("open_human_item_count")
+                or len(matter.get("open_human_items") or []),
+                "open_human_items": list(
+                    matter.get("open_human_items") or rev.get("open_human_items") or []
+                )[:_MATTER_STATUS_MAX_HUMAN_ITEMS],
+                "content_digest": rev.get("content_digest"),
+                "generated_at_utc": rev.get("generated_at_utc"),
+            }
+        )
+
+    return _matter_status_redact(
+        {
+            "schema": "patlaw-portfolio-dashboard-v1",
+            "generated_at_utc": utc_now_iso(),
+            "state_root": str(state),
+            "seed": seed_payload,
+            "last_review": review_summary,
+            "review_status": {
+                "schema": "paar-portfolio-review-status-v1",
+                "matter_count": len(review_status_rows),
+                "matters": review_status_rows,
+                "totals": matter_status.get("totals") or {},
+                "disclaimer": MATTER_STATUS_DISCLAIMER,
+            },
+            "public_documents": summarize_public_documents(docs_root)
+            if docs_root.exists()
+            else {"application_count": 0, "documents_root": str(docs_root)},
+            "exports": export_dirs,
+            "private_inbox": inbox_dirs,
+            "schedule": schedule,
+            "next_steps": [
+                "keep-only / confirm your real application numbers",
+                "refresh --with-documents for confirmed public wrappers",
+                "drop Patent Center downloads into private_inbox/<app>/ then inbox-import",
+                "attended-export for interactive private retrieval when needed",
+                "run unified application review then matter-status for risk/conformance",
+            ],
+        }
+    )
 
 
 def _inbox_folder_status(folder: Path) -> dict[str, Any]:
@@ -1303,6 +2581,9 @@ __all__ = [
     "ALLOWED_OPERATOR_CAPABILITIES",
     "FORBIDDEN_OPERATOR_CAPABILITIES",
     "ForbiddenOperatorCapabilityError",
+    "MATTER_STATUS_DISCLAIMER",
+    "MATTER_STATUS_SCHEMA",
+    "UNIFIED_APPLICATION_REVIEW_SCHEMA",
     "PortfolioAutomationError",
     "PortfolioMatter",
     "PortfolioSeed",
@@ -1310,6 +2591,7 @@ __all__ = [
     "build_export_manifest_from_folder",
     "build_import_authorization",
     "build_portfolio_dashboard",
+    "build_portfolio_matter_status",
     "confirm_ownership",
     "default_state_root",
     "discover_public_by_inventor",
@@ -1322,6 +2604,7 @@ __all__ = [
     "merge_matters",
     "save_portfolio_seed",
     "scan_private_inbox",
+    "summarize_matter_status",
     "summarize_public_documents",
     "sync_public_documents_batch",
     "sync_public_status_batch",

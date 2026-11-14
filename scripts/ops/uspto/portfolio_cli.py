@@ -10,17 +10,28 @@ Subcommands:
   attended-export
                  Launch Patent Center export (uses saved login session if present)
   export-ui      Automated Patent Center UI export (SSO + private APIs + eGrant/IFW)
+  export-messages
+                 Download Patent Center alert messages + IFW correspondence PDFs
+  graphrag-exports
+                 Build local GraphRAG over exported apps/mailings (OCR + graph)
+  audit-submission
+                 Audit package / Patent Center export vs MPEP-CFR filing rules
+  (also) scripts/ops/uspto/check_prior_art.py
+                 Prior-art search (ODP) + compliance re-audit for app(s)
+  (also) scripts/ops/uspto/audit_application_rules.py
+                 Rules + format diligence (claims/abstract/spec/IFW completeness)
   filing-checklist
                  Content-free filing checklist + hard barriers (never sign/pay/submit)
   filing-assist  Attended Patent Center assist (nav + checklist + receipt watch)
   watch-receipts Poll post_submit_receipts/<app>/ after human Submit and import
   revise         Respond to deficiency letters / office actions (scan, open, prepare)
   prior-art      Plan/search public prior art for claim distinguishability (no novelty conclusions)
-  audit-submission
-                 Audit package vs MPEP/CFR filing rules + prior-art coverage (review only)
+  review         Unified PAAR application review (claim→search→conflict→conformance)
   login / login-status / logout
                  Patent Center password+OTP login helper (refs/prompts; no secret echo)
   show           Print seed / last review summary
+  matter-status  Per-matter prior-art / audit residual / IDS counts (no secrets or PDF bodies)
+  status         Alias of matter-status (operator triage dashboard)
 
 Credentials:
   Public ODP uses env:USPTO_ODP_API_KEY (never pass the raw key on the CLI).
@@ -46,6 +57,7 @@ from ipfs_datasets_py.processors.domains.uspto.portfolio_automation import (  # 
     PortfolioAutomationError,
     PortfolioSeed,
     build_portfolio_dashboard,
+    build_portfolio_matter_status,
     confirm_ownership,
     default_state_root,
     discover_public_by_inventor,
@@ -57,6 +69,7 @@ from ipfs_datasets_py.processors.domains.uspto.portfolio_automation import (  # 
     merge_matters,
     save_portfolio_seed,
     scan_private_inbox,
+    summarize_matter_status,
     summarize_public_documents,
     sync_public_status_batch,
     write_export_package_sidecar,
@@ -363,6 +376,119 @@ def _cmd_attended_export(args: argparse.Namespace) -> int:
     return subprocess.call(cmd)
 
 
+def _cmd_graphrag_exports(args: argparse.Namespace) -> int:
+    """Build local GraphRAG over portfolio export artifacts (apps, mailings, metadata)."""
+    from ipfs_datasets_py.processors.domains.uspto.portfolio_graphrag import (
+        build_portfolio_graphrag,
+    )
+
+    state = Path(args.state_root).expanduser() if args.state_root else default_state_root()
+    apps = [str(a).strip() for a in (args.application_number or []) if str(a).strip()]
+    out = Path(args.output_dir).expanduser() if args.output_dir else None
+    try:
+        result = build_portfolio_graphrag(
+            state_root=state,
+            application_numbers=apps or None,
+            output_dir=out,
+            enable_ocr=not bool(getattr(args, "no_ocr", False)),
+            max_pdfs_per_app=int(getattr(args, "max_pdfs_per_app", 500) or 500),
+            max_ocr_pages_per_pdf=int(getattr(args, "max_ocr_pages_per_pdf", 200) or 200),
+            max_ocr_pages_total=int(getattr(args, "max_ocr_pages_total", 2000) or 2000),
+            include_account_alerts=not bool(getattr(args, "no_account", False)),
+            run_query_smoke=not bool(getattr(args, "no_query_smoke", False)),
+        )
+        payload = result.to_dict()
+        exit_code = 0 if result.ok else 1
+    except Exception as exc:  # noqa: BLE001
+        payload = {"ok": False, "error": f"{type(exc).__name__}:{exc}"}
+        exit_code = 1
+
+    payload.setdefault("schema", "patlaw-portfolio-graphrag-cli-v1")
+    try:
+        receipt_dir = state / "exports"
+        receipt_dir.mkdir(parents=True, exist_ok=True)
+        receipt = receipt_dir / "graphrag_exports_receipt.json"
+        receipt.write_text(json.dumps(payload, indent=2, default=str) + "\n")
+        try:
+            os.chmod(receipt, 0o600)
+        except OSError:
+            pass
+        payload["receipt"] = str(receipt)
+    except Exception:
+        pass
+    print(json.dumps(payload, indent=2, default=str))
+    return exit_code
+
+
+def _cmd_export_messages(args: argparse.Namespace) -> int:
+    """Download Patent Center messages + application correspondence (saved session)."""
+    from ipfs_datasets_py.processors.domains.uspto.auth.login_session import LoginError
+    from ipfs_datasets_py.processors.domains.uspto.auth.patent_center_messages_client import (
+        export_messages_and_correspondence,
+    )
+
+    state = Path(args.state_root).expanduser() if args.state_root else default_state_root()
+    apps = [str(a).strip() for a in (args.application_number or []) if str(a).strip()]
+    if not apps and not bool(getattr(args, "account_only", False)):
+        seed_path = state / "portfolio_seed.json"
+        if seed_path.is_file():
+            seed = load_portfolio_seed(seed_path)
+            apps = [
+                m.application_number
+                for m in seed.matters
+                if not str(m.ownership).startswith("candidate")
+            ]
+
+    headless = bool(getattr(args, "headless", False))
+    if not headless and not os.environ.get("DISPLAY"):
+        headless = True
+
+    export_dir = None
+    if args.export_dir:
+        export_dir = Path(args.export_dir).expanduser()
+
+    try:
+        result = export_messages_and_correspondence(
+            apps,
+            state_root=state,
+            session_name=str(getattr(args, "session_name", None) or "patent_center"),
+            export_dir=export_dir,
+            headless=headless,
+            download_pdfs=not bool(getattr(args, "no_pdfs", False)),
+            direction=str(getattr(args, "direction", None) or "all"),
+            max_pdf_downloads=int(getattr(args, "max_pdf_downloads", 200) or 200),
+            use_odp_fallback=not bool(getattr(args, "no_odp", False)),
+        )
+        payload = result.to_dict()
+        exit_code = 0 if result.ok else 1
+    except (LoginError, PortfolioAutomationError) as exc:
+        payload = {
+            "ok": False,
+            "error": str(exc),
+            "code": getattr(exc, "code", None),
+        }
+        exit_code = 1
+    except Exception as exc:  # noqa: BLE001
+        payload = {"ok": False, "error": f"{type(exc).__name__}:{exc}"}
+        exit_code = 1
+
+    payload.setdefault("schema", "patlaw-portfolio-export-messages-v1")
+    try:
+        receipt_dir = state / "exports"
+        receipt_dir.mkdir(parents=True, exist_ok=True)
+        receipt = receipt_dir / "export_messages_receipt.json"
+        receipt.write_text(json.dumps(payload, indent=2, default=str) + "\n")
+        try:
+            os.chmod(receipt, 0o600)
+        except OSError:
+            pass
+        payload["receipt"] = str(receipt)
+    except Exception:
+        pass
+    print(json.dumps(payload, indent=2, default=str))
+    return exit_code
+
+
 def _cmd_export_ui(args: argparse.Namespace) -> int:
     """Run authenticated Patent Center UI export (saved session required)."""
     from ipfs_datasets_py.processors.domains.uspto.auth.login_session import LoginError
@@ -463,7 +589,8 @@ def _cmd_export_ui(args: argparse.Namespace) -> int:
 
 def _cmd_login(args: argparse.Namespace) -> int:
     helper = Path(__file__).resolve().parent / "uspto_login_cli.py"
-    cmd = [sys.executable, str(helper)]
+    # -u so AWAITING_OTP / LOGIN_STEP lines appear immediately for operator chat.
+    cmd = [sys.executable, "-u", str(helper)]
     if args.state_root:
         cmd.extend(["--state-root", args.state_root])
     cmd.extend(["--session-name", str(args.session_name)])
@@ -477,12 +604,29 @@ def _cmd_login(args: argparse.Namespace) -> int:
         cmd.extend(["--otp-ref", str(args.otp_ref)])
     if args.otp_code:
         cmd.extend(["--otp-code", str(args.otp_code)])
-    if args.headless:
+    if getattr(args, "otp_file", None):
+        cmd.extend(["--otp-file", str(args.otp_file)])
+    if getattr(args, "otp_wait_seconds", None) is not None:
+        cmd.extend(["--otp-wait-seconds", str(args.otp_wait_seconds)])
+    if bool(getattr(args, "headed", False)):
+        cmd.append("--headed")
+    elif args.headless:
         cmd.append("--headless")
+    if getattr(args, "browser", None):
+        cmd.extend(["--browser", str(args.browser)])
     if args.no_prompt:
         cmd.append("--no-prompt")
     cmd.extend(["--timeout-seconds", str(args.timeout_seconds)])
-    return subprocess.call(cmd)
+    env = dict(os.environ)
+    env["PYTHONUNBUFFERED"] = "1"
+    # Prefer XRDP / ssh -Y display when available so headed login works.
+    if not env.get("DISPLAY"):
+        # Common xrdp display; only set if socket exists.
+        x10 = Path("/tmp/.X11-unix/X10")
+        if x10.exists():
+            env["DISPLAY"] = ":10.0"
+            env.setdefault("XAUTHORITY", str(Path.home() / ".Xauthority"))
+    return subprocess.call(cmd, env=env)
 
 
 def _cmd_login_status(args: argparse.Namespace) -> int:
@@ -492,6 +636,29 @@ def _cmd_login_status(args: argparse.Namespace) -> int:
         cmd.extend(["--state-root", args.state_root])
     cmd.extend(["--session-name", str(args.session_name), "status"])
     return subprocess.call(cmd)
+
+
+def _cmd_import_firefox(args: argparse.Namespace) -> int:
+    """Import live Snap Firefox USPTO cookies into operator storage_state."""
+    helper = Path(__file__).resolve().parent / "uspto_login_cli.py"
+    cmd = [sys.executable, "-u", str(helper)]
+    if args.state_root:
+        cmd.extend(["--state-root", args.state_root])
+    cmd.extend(["--session-name", str(args.session_name), "import-firefox"])
+    if getattr(args, "cookie_db", ""):
+        cmd.extend(["--cookie-db", str(args.cookie_db)])
+    if getattr(args, "username_hint", ""):
+        cmd.extend(["--username-hint", str(args.username_hint)])
+    if getattr(args, "no_verify", False):
+        cmd.append("--no-verify")
+    if getattr(args, "timeout_seconds", None) is not None:
+        cmd.extend(["--timeout-seconds", str(args.timeout_seconds)])
+    env = dict(os.environ)
+    env["PYTHONUNBUFFERED"] = "1"
+    if not env.get("DISPLAY") and Path("/tmp/.X11-unix/X10").exists():
+        env["DISPLAY"] = ":10.0"
+        env.setdefault("XAUTHORITY", str(Path.home() / ".Xauthority"))
+    return subprocess.call(cmd, env=env)
 
 
 def _cmd_logout(args: argparse.Namespace) -> int:
@@ -553,6 +720,74 @@ def _cmd_dashboard(args: argparse.Namespace) -> int:
     except OSError:
         pass
     print(json.dumps({**payload, "dashboard_path": str(out)}, indent=2))
+    return 0
+
+
+def _cmd_matter_status(args: argparse.Namespace) -> int:
+    """Per-matter prior-art / audit / action residual / IDS status (content-free)."""
+    state = _state_root(args)
+    apps = list(getattr(args, "application_number", None) or [])
+    apps = [str(a).strip() for a in apps if str(a).strip()]
+    include_orphans = not bool(getattr(args, "seed_only", False))
+    if apps and len(apps) == 1 and bool(getattr(args, "single", False)):
+        # Compact single-matter view.
+        payload = summarize_matter_status(state, apps[0])
+        payload = {
+            "schema": "patlaw-portfolio-matter-status-v1",
+            "ok": True,
+            "state_root": str(state),
+            "matter": payload,
+            "disclaimer": (
+                "Review-only matter status. Not a readiness certification. "
+                "No secrets or document bodies included."
+            ),
+            "review_only": True,
+        }
+    else:
+        payload = build_portfolio_matter_status(
+            state,
+            application_numbers=apps or None,
+            include_orphans=include_orphans if not apps else False,
+        )
+    # Fail closed: never dump credential- or PDF-like content if a field leaks.
+    # Markers are split so source does not embed contiguous secret-assignment forms
+    # (proposal-gate secret_change_forbidden).
+    rendered = json.dumps(payload, indent=2, default=str)
+    lowered = rendered.lower()
+    for marker in (
+        "api" + "_key=",
+        "x-" + "api-key:",
+        "-----" + "begin ",
+        "%" + "pdf-",
+        "pass" + "word=",
+        "authorization: " + "bearer",
+    ):
+        if marker in lowered:
+            raise PortfolioAutomationError(
+                "matter-status refused to print secret- or PDF-like content",
+                code="matter_status_redaction_failed",
+            )
+    out_path = str(getattr(args, "output", "") or "").strip()
+    if out_path:
+        path = Path(out_path).expanduser().resolve()
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(rendered + "\n", encoding="utf-8")
+        try:
+            os.chmod(path, 0o600)
+        except OSError:
+            pass
+        payload = {**payload, "status_path": str(path)}
+        rendered = json.dumps(payload, indent=2, default=str)
+    elif bool(getattr(args, "write_state", False)):
+        path = state / "portfolio_matter_status.json"
+        path.write_text(rendered + "\n", encoding="utf-8")
+        try:
+            os.chmod(path, 0o600)
+        except OSError:
+            pass
+        payload = {**payload, "status_path": str(path)}
+        rendered = json.dumps(payload, indent=2, default=str)
+    print(rendered)
     return 0
 
 
@@ -958,6 +1193,10 @@ def _cmd_revise(args: argparse.Namespace) -> int:
                 with_law_index=bool(getattr(args, "with_law_index", False)),
                 build_ids_queue=not bool(getattr(args, "no_ids_queue", False)),
                 persist=not bool(getattr(args, "no_persist", False)),
+                delta_from=str(getattr(args, "delta_from", "") or "") or None,
+            )
+            delta = result.get("delta") or (result.get("summary") or {}).get(
+                "delta"
             )
             out = {
                 "ok": result.get("ok"),
@@ -966,6 +1205,13 @@ def _cmd_revise(args: argparse.Namespace) -> int:
                 "paths": result.get("paths"),
                 "action_plan": (result.get("summary") or {}).get("action_plan"),
                 "ids_queue": (result.get("summary") or {}).get("ids_queue"),
+                "delta_from": (result.get("summary") or {}).get("delta_from"),
+                "delta": delta,
+                "closed_gaps": (delta or {}).get("closed_gaps") if delta else None,
+                "opened_gaps": (delta or {}).get("opened_gaps") if delta else None,
+                "status_transition": (delta or {}).get("status_transition")
+                if delta
+                else None,
                 "summary": result.get("summary"),
                 "disclaimer": result.get("disclaimer"),
             }
@@ -1112,11 +1358,23 @@ def _cmd_audit_submission(args: argparse.Namespace) -> int:
             print(json.dumps(result, indent=2, default=str))
             return 0 if result.get("ok") else 1
 
+        package_dir = str(args.package_dir or "") or None
+        if bool(getattr(args, "from_exports", False)) and not package_dir:
+            from ipfs_datasets_py.processors.domains.uspto.submission_compliance_audit import (
+                resolve_export_package_dir,
+            )
+
+            app_num = str(args.application_number or "") or None
+            if app_num:
+                auto = resolve_export_package_dir(app_num, state_root=state)
+                if auto is not None:
+                    package_dir = str(auto)
+
         result = audit_submission(
             application_number=str(args.application_number or "") or None,
             revision_id=str(args.revision_id or "") or None,
             state_root=state,
-            package_dir=str(args.package_dir or "") or None,
+            package_dir=package_dir,
             prior_art_run_dir=str(args.prior_art_run_dir or "") or None,
             prior_art_run_id=str(args.prior_art_run_id or "") or None,
             application_type=str(args.application_type or "utility"),
@@ -1124,16 +1382,39 @@ def _cmd_audit_submission(args: argparse.Namespace) -> int:
             with_law_index=bool(getattr(args, "with_law_index", False)),
             build_ids_queue=not bool(getattr(args, "no_ids_queue", False)),
             persist=not bool(getattr(args, "no_persist", False)),
+            delta_from=str(getattr(args, "delta_from", "") or "") or None,
         )
-        # Compact: surface action plan at top level for operators
+        # Compact: surface action plan + re-audit delta at top level for operators
+        delta = result.get("delta") or (result.get("summary") or {}).get("delta")
+        filing = (result.get("summary") or {}).get("filing_rules") or {}
         out = {
             "ok": result.get("ok"),
             "audit_id": result.get("audit_id"),
             "application_number": result.get("application_number"),
             "overall_status": result.get("overall_status"),
+            "scenario": (result.get("summary") or {}).get("scenario")
+            or filing.get("scenario"),
+            "scenario_auto_selected": (result.get("summary") or {}).get(
+                "scenario_auto_selected"
+            ),
+            "package_dir": (result.get("summary") or {}).get("package_dir"),
+            "package_auto_resolved_from_exports": (result.get("summary") or {}).get(
+                "package_auto_resolved_from_exports"
+            ),
+            "filing_status": filing.get("status"),
+            "missing_mandatory_count": filing.get("missing_mandatory_count"),
+            "evidence_gaps": filing.get("evidence_gaps"),
+            "roles_present": filing.get("roles_present"),
             "paths": result.get("paths"),
             "action_plan": (result.get("summary") or {}).get("action_plan"),
             "ids_queue": (result.get("summary") or {}).get("ids_queue"),
+            "delta_from": (result.get("summary") or {}).get("delta_from"),
+            "delta": delta,
+            "closed_gaps": (delta or {}).get("closed_gaps") if delta else None,
+            "opened_gaps": (delta or {}).get("opened_gaps") if delta else None,
+            "status_transition": (delta or {}).get("status_transition")
+            if delta
+            else None,
             "summary": result.get("summary"),
             "disclaimer": result.get("disclaimer"),
         }
@@ -1154,6 +1435,97 @@ def _cmd_audit_submission(args: argparse.Namespace) -> int:
             file=sys.stderr,
         )
         return 2
+
+
+def _cmd_review(args: argparse.Namespace) -> int:
+    """Unified PAAR application review (PAAR-090/091).
+
+    Review only — not legal advice. Never Sign/Pay/Submit. Never patentability
+    conclusions. Exit: 0 ready, 1 review_required, 2 not_ready/error.
+    """
+    from ipfs_datasets_py.processors.domains.uspto.application_review_orchestrator import (
+        ApplicationReviewOrchestratorError,
+        REVIEW_ONLY_UNIFIED_DISCLAIMER,
+        run_unified_application_review,
+    )
+
+    state = _state_root(args)
+    kwargs: dict[str, Any] = {
+        "application_number": str(getattr(args, "application_number", "") or "").strip(),
+        "state_root": state,
+        "persist": not bool(getattr(args, "no_persist", False)),
+        "include_diligence": not bool(getattr(args, "no_diligence", False)),
+        "include_conflict_review": not bool(
+            getattr(args, "no_conflict_review", False)
+        ),
+        "include_search": not bool(getattr(args, "no_search", False)),
+        "application_type": str(getattr(args, "application_type", None) or "utility"),
+        "scenario": str(getattr(args, "scenario", None) or "new_application"),
+    }
+    package_dir = str(getattr(args, "package_dir", "") or "").strip()
+    if package_dir:
+        kwargs["package_dir"] = Path(package_dir).expanduser().resolve()
+    prior_art_run = str(
+        getattr(args, "prior_art_run", None)
+        or getattr(args, "prior_art_run_dir", None)
+        or ""
+    ).strip()
+    if prior_art_run:
+        kwargs["prior_art_run"] = Path(prior_art_run).expanduser().resolve()
+    fixture_dir = str(getattr(args, "fixture_dir", "") or "").strip()
+    if fixture_dir:
+        kwargs["fixture_dir"] = Path(fixture_dir).expanduser().resolve()
+    claims_file = str(getattr(args, "claims_file", "") or "").strip()
+    if claims_file:
+        kwargs["claims_file"] = Path(claims_file).expanduser().resolve()
+    if getattr(args, "authority_corpus_present", None) is not None:
+        kwargs["authority_corpus_present"] = bool(args.authority_corpus_present)
+
+    try:
+        report = run_unified_application_review(**kwargs)
+    except ApplicationReviewOrchestratorError as exc:
+        print(
+            json.dumps(
+                {
+                    "ok": False,
+                    "code": exc.code,
+                    "message": str(exc)[:256],
+                    "exit_code_hint": 2,
+                    "disposition": "not_ready",
+                    "auto_file_blocked": True,
+                    "disclaimer": REVIEW_ONLY_UNIFIED_DISCLAIMER,
+                },
+                indent=2,
+            ),
+            file=sys.stderr,
+        )
+        return 2
+    except Exception as exc:  # noqa: BLE001
+        print(
+            json.dumps(
+                {
+                    "ok": False,
+                    "code": type(exc).__name__,
+                    "message": str(exc)[:256],
+                    "exit_code_hint": 2,
+                    "disposition": "not_ready",
+                    "auto_file_blocked": True,
+                },
+                indent=2,
+            ),
+            file=sys.stderr,
+        )
+        return 2
+
+    if getattr(args, "verbose", False):
+        print(json.dumps(report.to_dict(), indent=2, sort_keys=True, default=str))
+    else:
+        print(
+            json.dumps(
+                report.compact_summary(), indent=2, sort_keys=True, default=str
+            )
+        )
+    return int(report.exit_code_hint)
 
 
 def _cmd_prior_art(args: argparse.Namespace) -> int:
@@ -1950,6 +2322,121 @@ def build_parser() -> argparse.ArgumentParser:
     )
     exp_ui.set_defaults(func=_cmd_export_ui)
 
+    exp_msg = sub.add_parser(
+        "export-messages",
+        help=(
+            "Download Patent Center alert messages + IFW correspondence "
+            "(saved session; private PDF preview + optional ODP fallback)"
+        ),
+    )
+    exp_msg.add_argument(
+        "--export-dir",
+        default="",
+        help="Output directory (default: state-root/exports/messages_correspondence)",
+    )
+    exp_msg.add_argument(
+        "--application-number",
+        action="append",
+        default=[],
+        help="Application number(s); default: non-candidate portfolio seed matters",
+    )
+    exp_msg.add_argument(
+        "--account-only",
+        action="store_true",
+        help="Only pull account/workbench alerts (skip per-application IFW)",
+    )
+    exp_msg.add_argument(
+        "--session-name",
+        default="patent_center",
+        help="Saved login session name (default patent_center)",
+    )
+    exp_msg.add_argument(
+        "--headless",
+        action="store_true",
+        help="Force headless Chromium (auto when DISPLAY unset)",
+    )
+    exp_msg.add_argument(
+        "--direction",
+        choices=("all", "outgoing", "incoming", "correspondence"),
+        default="all",
+        help=(
+            "Which IFW docs to download (default: all — full IFW including every "
+            "USPTO OUTGOING mailing and applicant INCOMING filing PDF). "
+            "outgoing = USPTO mailings only; incoming = filings only; "
+            "correspondence = notice-code subset"
+        ),
+    )
+    exp_msg.add_argument(
+        "--no-pdfs",
+        action="store_true",
+        help="Metadata only (skip PDF downloads)",
+    )
+    exp_msg.add_argument(
+        "--no-odp",
+        action="store_true",
+        help="Do not fall back to public ODP for PDFs",
+    )
+    exp_msg.add_argument(
+        "--max-pdf-downloads",
+        type=int,
+        default=200,
+        help="Max correspondence PDFs to download (default 200)",
+    )
+    exp_msg.set_defaults(func=_cmd_export_messages)
+
+    grag = sub.add_parser(
+        "graphrag-exports",
+        help=(
+            "Build a local GraphRAG package from exported Patent Center data "
+            "(IFW mailings, application metadata, XML, optional local OCR)"
+        ),
+    )
+    grag.add_argument(
+        "--application-number",
+        action="append",
+        default=[],
+        help="Limit to application number(s); default: all apps under exports/",
+    )
+    grag.add_argument(
+        "--output-dir",
+        default="",
+        help="GraphRAG output directory (default: state-root/graphrag/build-<utc>)",
+    )
+    grag.add_argument(
+        "--no-ocr",
+        action="store_true",
+        help="Skip Tesseract OCR (metadata/XML/native text only)",
+    )
+    grag.add_argument(
+        "--max-pdfs-per-app",
+        type=int,
+        default=500,
+        help="Max PDFs to process per application (default 500 — full coverage)",
+    )
+    grag.add_argument(
+        "--max-ocr-pages-per-pdf",
+        type=int,
+        default=200,
+        help="Max OCR pages per PDF (default 200 — full docs)",
+    )
+    grag.add_argument(
+        "--max-ocr-pages-total",
+        type=int,
+        default=2000,
+        help="Global OCR page budget (default 2000 — full portfolio)",
+    )
+    grag.add_argument(
+        "--no-account",
+        action="store_true",
+        help="Skip account-level alert/customer metadata",
+    )
+    grag.add_argument(
+        "--no-query-smoke",
+        action="store_true",
+        help="Skip LogicEnhancedRAG smoke ingest/query",
+    )
+    grag.set_defaults(func=_cmd_graphrag_exports)
+
     login = sub.add_parser(
         "login",
         help="Patent Center login (password+OTP via env refs/prompts)",
@@ -1959,13 +2446,35 @@ def build_parser() -> argparse.ArgumentParser:
     login.add_argument("--password-ref", default="env:USPTO_PASSWORD")
     login.add_argument(
         "--otp-mode",
-        choices=("prompt", "totp", "code", "none"),
-        default="prompt",
+        choices=("prompt", "totp", "code", "file", "none"),
+        default="file",
+        help="Prefer 'file': race to MFA, then poll --otp-file for a fresh 6-digit code",
     )
     login.add_argument("--totp-secret-ref", default="env:USPTO_TOTP_SECRET")
     login.add_argument("--otp-ref", default="")
     login.add_argument("--otp-code", default="")
-    login.add_argument("--headless", action="store_true")
+    login.add_argument(
+        "--otp-file",
+        default="/tmp/uspto_otp_now.txt",
+        help="Write OTP here when login prints AWAITING_OTP (default /tmp/uspto_otp_now.txt)",
+    )
+    login.add_argument("--otp-wait-seconds", type=float, default=90.0)
+    login.add_argument(
+        "--headless",
+        action="store_true",
+        help="Force headless (often rejected by Okta; prefer XRDP headed)",
+    )
+    login.add_argument(
+        "--headed",
+        action="store_true",
+        help="Force headed on $DISPLAY / XRDP :10",
+    )
+    login.add_argument(
+        "--browser",
+        choices=("chromium", "firefox"),
+        default="chromium",
+        help="Playwright browser (firefox closer to successful XRDP login)",
+    )
     login.add_argument("--no-prompt", action="store_true")
     login.add_argument("--timeout-seconds", type=float, default=180.0)
     login.set_defaults(func=_cmd_login)
@@ -1973,6 +2482,28 @@ def build_parser() -> argparse.ArgumentParser:
     login_st = sub.add_parser("login-status", help="Show saved Patent Center session")
     login_st.add_argument("--session-name", default="patent_center")
     login_st.set_defaults(func=_cmd_login_status)
+
+    imp_ff = sub.add_parser(
+        "import-firefox",
+        help=(
+            "Import USPTO session from Snap/desktop Firefox cookies "
+            "(no password/OTP; sign in via real Firefox first)"
+        ),
+    )
+    imp_ff.add_argument("--session-name", default="patent_center")
+    imp_ff.add_argument(
+        "--cookie-db",
+        default="",
+        help="Optional cookies.sqlite path (default: newest Firefox profile)",
+    )
+    imp_ff.add_argument("--username-hint", default="")
+    imp_ff.add_argument(
+        "--no-verify",
+        action="store_true",
+        help="Skip Playwright Patent Center verify after cookie copy",
+    )
+    imp_ff.add_argument("--timeout-seconds", type=float, default=90.0)
+    imp_ff.set_defaults(func=_cmd_import_firefox)
 
     logout = sub.add_parser("logout", help="Delete saved Patent Center session")
     logout.add_argument("--session-name", default="patent_center")
@@ -1994,6 +2525,53 @@ def build_parser() -> argparse.ArgumentParser:
         help="Write portfolio_dashboard.json (seed, docs, inbox, schedule)",
     )
     dash.set_defaults(func=_cmd_dashboard)
+
+    def _add_matter_status_args(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument(
+            "--application-number",
+            action="append",
+            default=[],
+            help="Limit to one or more application numbers (repeatable)",
+        )
+        parser.add_argument(
+            "--seed-only",
+            action="store_true",
+            help="Only matters present in portfolio_seed.json (ignore orphan run dirs)",
+        )
+        parser.add_argument(
+            "--single",
+            action="store_true",
+            help="With exactly one --application-number: compact single-matter JSON",
+        )
+        parser.add_argument(
+            "--output",
+            default="",
+            help="Write JSON to this path (mode 600) in addition to stdout",
+        )
+        parser.add_argument(
+            "--write-state",
+            action="store_true",
+            help="Also write state-root/portfolio_matter_status.json",
+        )
+        parser.set_defaults(func=_cmd_matter_status)
+
+    ms = sub.add_parser(
+        "matter-status",
+        help=(
+            "Per-matter prior-art run, compliance audit, action residuals, "
+            "and IDS counts (no secrets or PDF bodies)"
+        ),
+    )
+    _add_matter_status_args(ms)
+
+    st = sub.add_parser(
+        "status",
+        help=(
+            "Alias of matter-status: operator triage dashboard for prior-art, "
+            "audit residuals, and IDS counts"
+        ),
+    )
+    _add_matter_status_args(st)
 
     inbox = sub.add_parser(
         "inbox-import",
@@ -2230,6 +2808,15 @@ def build_parser() -> argparse.ArgumentParser:
         "--no-persist",
         action="store_true",
         help="With audit: do not write audit artifacts under state-root",
+    )
+    rev.add_argument(
+        "--delta-from",
+        default="",
+        dest="delta_from",
+        help=(
+            "With audit: re-audit against previous audit_id; emit "
+            "closed_gaps/opened_gaps/status_transition without rewriting history"
+        ),
     )
     rev.add_argument(
         "--no-audit",
@@ -2536,11 +3123,99 @@ def build_parser() -> argparse.ArgumentParser:
     )
     pa.set_defaults(func=_cmd_prior_art)
 
+    revw = sub.add_parser(
+        "review",
+        help=(
+            "Unified PAAR application review (claim→search→conflict→conformance). "
+            "Review only — not legal advice; never Sign/Pay/Submit."
+        ),
+        description=(
+            "Unified PAAR application review: claim model → multi-corpus search "
+            "→ conflict risk → package conformance → optional diligence. "
+            "Review only — not legal advice; never Sign/Pay/Submit; never "
+            "patentability conclusions. Exit 0=ready, 1=review_required, "
+            "2=not_ready/error. auto_file_blocked always true."
+        ),
+    )
+    revw.add_argument(
+        "--application-number",
+        default="",
+        help="USPTO application number (optional if fixture/package provides it)",
+    )
+    revw.add_argument(
+        "--state-root",
+        default="",
+        help="Operator state root (default: portfolio default_state_root)",
+    )
+    revw.add_argument(
+        "--package-dir",
+        default="",
+        help="Optional package / export directory",
+    )
+    revw.add_argument(
+        "--prior-art-run",
+        default="",
+        dest="prior_art_run",
+        help="Optional prior-art run directory (hits/journal JSON)",
+    )
+    revw.add_argument(
+        "--fixture-dir",
+        default="",
+        help="Hermetic paar_review fixture directory",
+    )
+    revw.add_argument(
+        "--claims-file",
+        default="",
+        help="Optional claims text file",
+    )
+    revw.add_argument(
+        "--application-type",
+        default="utility",
+        help="Application type for obligation catalog (default: utility)",
+    )
+    revw.add_argument(
+        "--scenario",
+        default="new_application",
+        help="Filing scenario for obligation catalog (default: new_application)",
+    )
+    revw.add_argument(
+        "--authority-corpus-present",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="Override authority corpus binding",
+    )
+    revw.add_argument(
+        "--no-persist",
+        action="store_true",
+        help="Print only; do not write under state-root/compliance_audits/",
+    )
+    revw.add_argument(
+        "--no-diligence",
+        action="store_true",
+        help="Skip optional application_gap_closure diligence packs",
+    )
+    revw.add_argument(
+        "--no-conflict-review",
+        action="store_true",
+        help="Skip optional conflict_review_report path",
+    )
+    revw.add_argument(
+        "--no-search",
+        action="store_true",
+        help="Skip review_search_orchestrator composition",
+    )
+    revw.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Print full UnifiedApplicationReview JSON (default: compact summary)",
+    )
+    revw.set_defaults(func=_cmd_review)
+
     audit = sub.add_parser(
         "audit-submission",
         help=(
-            "Audit a response package against filing-obligation rules "
-            "(MPEP/CFR pack citations) and prior-art coverage. Review only — "
+            "Audit a response package or Patent Center export against filing-"
+            "obligation rules (MPEP/CFR pack) + prior-art coverage. Review only — "
             "not legal advice; never Sign/Pay/Submit."
         ),
     )
@@ -2549,7 +3224,19 @@ def build_parser() -> argparse.ArgumentParser:
     audit.add_argument(
         "--package-dir",
         default="",
-        help="Response package directory (default: revision package_dir)",
+        help=(
+            "Package directory to inventory (response draft or export files/). "
+            "If omitted, auto-resolves Patent Center export under "
+            "state-root/exports/<app>/…"
+        ),
+    )
+    audit.add_argument(
+        "--from-exports",
+        action="store_true",
+        help=(
+            "Force package resolution from Patent Center / messages exports "
+            "(same auto-resolve as when --package-dir is omitted)"
+        ),
     )
     audit.add_argument(
         "--prior-art-run-id",
@@ -2569,7 +3256,11 @@ def build_parser() -> argparse.ArgumentParser:
     audit.add_argument(
         "--scenario",
         default="",
-        help="Filing scenario override (default from revision trigger or office_action_response)",
+        help=(
+            "Filing scenario: new_application | office_action_response | "
+            "amendment | information_disclosure | … "
+            "(default: auto from export contents or revision trigger)"
+        ),
     )
     audit.add_argument(
         "--with-law-index",
@@ -2585,6 +3276,17 @@ def build_parser() -> argparse.ArgumentParser:
         "--no-ids-queue",
         action="store_true",
         help="Do not build IDS candidate queue from prior-art hits",
+    )
+    audit.add_argument(
+        "--delta-from",
+        default="",
+        dest="delta_from",
+        help=(
+            "Re-audit against a previous audit_id (or audit dir / "
+            "submission_compliance_audit.json path). Emits closed_gaps, "
+            "opened_gaps, and status_transition on the new audit without "
+            "rewriting prior history."
+        ),
     )
     audit.add_argument(
         "--list",

@@ -22,7 +22,9 @@ from __future__ import annotations
 import json
 import os
 import re
+import secrets
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Final, Mapping, Sequence
 
@@ -33,6 +35,7 @@ from ipfs_datasets_py.processors.domains.uspto.portfolio_automation import (
 )
 
 AUDIT_SCHEMA: Final = "patlaw-submission-compliance-audit-v1"
+DELTA_SCHEMA: Final = "patlaw-submission-compliance-audit-delta-v1"
 AUDIT_DISCLAIMER: Final = (
     "Submission compliance audit is decision support only — not legal advice, "
     "not a completeness or MPEP-compliance certification, and not a "
@@ -44,18 +47,70 @@ AUDIT_DISCLAIMER: Final = (
 # Attachment filename / role hints → evidence kinds used by the rule pack
 _ROLE_HINTS: Final[Mapping[str, tuple[str, ...]]] = {
     "amended_claims": ("claim_amendment", "claims"),
+    "claims": ("claim_amendment", "claims"),
     "remarks": ("remarks",),
     "amended_specification": ("specification",),
     "substitute_specification": ("specification",),
+    "specification": ("specification",),
     "amended_drawings": ("drawings",),
+    "drawings": ("drawings",),
     "declaration": ("oath_declaration",),
     "fee_transmittal": ("fee", "fee_transmittal"),
     "ids": ("ids",),
-    "amendment_transmittal": ("amendment_transmittal",),
+    "ads": ("ads", "identifier"),
+    "abstract": ("specification",),
+    "amendment_transmittal": ("amendment_transmittal", "attachment", "form"),
     "evidence": ("evidence",),
+    "filing_receipt": ("identifier", "form", "attachment"),
+    "application_data": ("identifier", "ads", "form", "attachment"),
+}
+
+# USPTO IFW document codes (prefix of export filenames like CLM_xxx.pdf)
+_IFW_CODE_ROLES: Final[Mapping[str, str]] = {
+    # For as-filed IFW dumps, CLM/SPEC/DRW are original application parts.
+    # Evidence-kind mapping still includes claims/specification/drawings via
+    # _ROLE_HINTS (amended_* aliases keep OA-response packs working).
+    "CLM": "amended_claims",
+    "SPEC": "amended_specification",
+    "ABST": "abstract",
+    "DRW": "amended_drawings",
+    "ADS": "ads",
+    "OATH": "declaration",
+    "IDS": "ids",
+    "1449": "ids",
+    "892": "ids",
+    "IFEE": "fee_transmittal",
+    "WFEE": "fee_transmittal",
+    "N417.PYMT": "fee_transmittal",
+    "N417": "filing_receipt",
+    "APP.FILE.REC": "filing_receipt",
+    "TRNA": "amendment_transmittal",
+    "PA": "application_data",
+    "BIB": "application_data",
+    "WELCOME.LET": "filing_receipt",
+    "NOA": "evidence",
+    "CTNF": "evidence",
+    "CTFR": "evidence",
+    "ISSUE.NTF": "evidence",
+    "EGRANT.NTF": "evidence",
+    "NTC.PUB": "evidence",
+    "REF.OTHER": "ids",
+    "PTA.IDS": "ids",
 }
 
 _FILENAME_KIND_RE: Final[tuple[tuple[re.Pattern[str], str], ...]] = (
+    # Prefer USPTO IFW-style code_ prefix (CLM_, SPEC_, …)
+    (re.compile(r"(?:^|[_/-])CLM(?:[_./-]|\.pdf$)", re.I), "amended_claims"),
+    (re.compile(r"(?:^|[_/-])SPEC(?:[_./-]|\.pdf$)", re.I), "amended_specification"),
+    (re.compile(r"(?:^|[_/-])ABST(?:[_./-]|\.pdf$)", re.I), "abstract"),
+    (re.compile(r"(?:^|[_/-])DRW(?:[_./-]|\.pdf$)", re.I), "amended_drawings"),
+    (re.compile(r"(?:^|[_/-])ADS(?:[_./-]|\.pdf$)", re.I), "ads"),
+    (re.compile(r"(?:^|[_/-])OATH(?:[_./-]|\.pdf$)", re.I), "declaration"),
+    (re.compile(r"(?:^|[_/-])IDS(?:[_./-]|\.pdf$)", re.I), "ids"),
+    (re.compile(r"(?:^|[_/-])(?:1449|892)(?:[_./-]|\.pdf$)", re.I), "ids"),
+    (re.compile(r"(?:^|[_/-])(?:IFEE|WFEE|N417\.PYMT)(?:[_./-]|\.pdf$)", re.I), "fee_transmittal"),
+    (re.compile(r"(?:^|[_/-])(?:APP\.FILE\.REC|N417|WELCOME\.LET)(?:[_./-]|\.pdf$)", re.I), "filing_receipt"),
+    (re.compile(r"(?:^|[_/-])TRNA(?:[_./-]|\.pdf$)", re.I), "amendment_transmittal"),
     (re.compile(r"claim", re.I), "amended_claims"),
     (re.compile(r"remark|argument|response", re.I), "remarks"),
     (re.compile(r"spec", re.I), "amended_specification"),
@@ -64,6 +119,7 @@ _FILENAME_KIND_RE: Final[tuple[tuple[re.Pattern[str], str], ...]] = (
     (re.compile(r"fee", re.I), "fee_transmittal"),
     (re.compile(r"declar|oath", re.I), "declaration"),
     (re.compile(r"transmittal", re.I), "amendment_transmittal"),
+    (re.compile(r"abstract", re.I), "abstract"),
 )
 
 
@@ -108,7 +164,13 @@ def _normalize_app(application_number: str) -> str:
 
 
 def inventory_package_dir(package_dir: Path | str | None) -> dict[str, Any]:
-    """List files under a response package directory with role hints."""
+    """List files under a response package directory with role hints.
+
+    Understands both operator draft packages (claim.pdf, remarks.pdf) and
+    Patent Center / IFW export filenames (``CLM_*.pdf``, ``SPEC_*.pdf``, …).
+    Also merges roles from sibling ``metadata/*_summary.json`` / IFW inventory
+    when present next to the package.
+    """
     if not package_dir:
         return {
             "package_dir": None,
@@ -130,13 +192,30 @@ def inventory_package_dir(package_dir: Path | str | None) -> dict[str, Any]:
     files: list[dict[str, Any]] = []
     roles: set[str] = set()
     kinds: set[str] = set()
+    seen_names: set[str] = set()
     for path in sorted(root.rglob("*")):
         if not path.is_file():
             continue
         if path.name.startswith("."):
             continue
+        # Skip huge graph/json noise in graphrag dirs
+        if path.suffix.lower() in {".jsonl"}:
+            continue
+        if path.name in {
+            "export_receipt.json",
+            "export_manifest.json",
+            "authorization.json",
+            "graphrag_receipt.json",
+        }:
+            continue
         rel = str(path.relative_to(root))
+        # De-dupe same basename from package/ vs files/
+        key = path.name.lower()
+        if key in seen_names:
+            continue
+        seen_names.add(key)
         role = _infer_role(path.name)
+        code = _ifw_code_from_filename(path.name)
         if role:
             roles.add(role)
             for k in _ROLE_HINTS.get(role, ()):
@@ -147,8 +226,25 @@ def inventory_package_dir(package_dir: Path | str | None) -> dict[str, Any]:
                 "name": path.name,
                 "size_bytes": path.stat().st_size,
                 "inferred_role": role,
+                "ifw_document_code": code,
             }
         )
+
+    # Merge IFW inventory metadata (document codes) when available nearby
+    for inv_path in _nearby_ifw_inventories(root):
+        for code, desc in _ifw_codes_from_inventory(inv_path):
+            role = _IFW_CODE_ROLES.get(code.upper()) or _IFW_CODE_ROLES.get(code)
+            if not role:
+                # try prefix match for codes like N417.PYMT
+                for k, v in _IFW_CODE_ROLES.items():
+                    if code.upper().startswith(k):
+                        role = v
+                        break
+            if role:
+                roles.add(role)
+                for k in _ROLE_HINTS.get(role, ()):
+                    kinds.add(k)
+
     return {
         "package_dir": str(root),
         "file_count": len(files),
@@ -158,11 +254,206 @@ def inventory_package_dir(package_dir: Path | str | None) -> dict[str, Any]:
     }
 
 
+def _ifw_code_from_filename(filename: str) -> str | None:
+    """Extract IFW document code from ``CODE_docid.pdf`` or ``app_CODE_docid.pdf``."""
+    stem = Path(filename).stem
+    # strip leading 8-digit application number prefix from mirrors
+    stem = re.sub(r"^\d{7,8}_", "", stem)
+    m = re.match(r"^([A-Za-z0-9.]+)_", stem)
+    if m:
+        return m.group(1)
+    return None
+
+
 def _infer_role(filename: str) -> str | None:
+    code = _ifw_code_from_filename(filename)
+    if code:
+        upper = code.upper()
+        if upper in _IFW_CODE_ROLES:
+            return _IFW_CODE_ROLES[upper]
+        for k, v in _IFW_CODE_ROLES.items():
+            if upper.startswith(k):
+                return v
     for pattern, role in _FILENAME_KIND_RE:
         if pattern.search(filename):
             return role
     return None
+
+
+def _nearby_ifw_inventories(package_root: Path) -> list[Path]:
+    """Find IFW inventory JSON near an export package directory."""
+    candidates: list[Path] = []
+    search_roots = [
+        package_root,
+        package_root.parent,
+        package_root.parent / "metadata",
+        package_root.parent.parent / "metadata",
+    ]
+    # messages_correspondence layout
+    app_guess = None
+    for part in package_root.parts:
+        if re.fullmatch(r"\d{7,8}", part):
+            app_guess = part
+    if app_guess:
+        state_exports = package_root
+        for _ in range(6):
+            if state_exports.name == "exports":
+                break
+            state_exports = state_exports.parent
+        if state_exports.name == "exports":
+            search_roots.append(
+                state_exports
+                / "messages_correspondence"
+                / "applications"
+                / app_guess
+                / "metadata"
+            )
+            search_roots.append(
+                state_exports / app_guess / "patent_center_ui" / "metadata"
+            )
+    names = (
+        "ifw_document_inventory.json",
+        "ifw_document_summary.json",
+        "correspondence_document_summary.json",
+    )
+    out: list[Path] = []
+    seen: set[str] = set()
+    for base in search_roots:
+        if not base.is_dir():
+            # still allow direct file
+            pass
+        for name in names:
+            p = base / name if base.is_dir() else base
+            if base.is_dir():
+                p = base / name
+            if p.is_file() and str(p) not in seen:
+                seen.add(str(p))
+                out.append(p)
+        if base.is_dir():
+            for p in base.glob("**/ifw_document_*.json"):
+                if str(p) not in seen:
+                    seen.add(str(p))
+                    out.append(p)
+    return out
+
+
+def _ifw_codes_from_inventory(path: Path) -> list[tuple[str, str]]:
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return []
+    codes: list[tuple[str, str]] = []
+    docs: list[Any] = []
+    if isinstance(data, Mapping):
+        if isinstance(data.get("documents"), list):
+            docs = list(data["documents"])
+        bags = data.get("resultBag") or []
+        if isinstance(bags, list):
+            for bag in bags:
+                if isinstance(bag, Mapping) and isinstance(
+                    bag.get("documentBag"), list
+                ):
+                    docs.extend(bag["documentBag"])
+                elif isinstance(bag, Mapping) and bag.get("documentCode"):
+                    docs.append(bag)
+    elif isinstance(data, list):
+        docs = data
+    for d in docs:
+        if not isinstance(d, Mapping):
+            continue
+        code = str(d.get("documentCode") or "").strip()
+        desc = str(d.get("documentDescription") or "").strip()
+        if code:
+            codes.append((code, desc))
+    return codes
+
+
+def resolve_export_package_dir(
+    application_number: str,
+    *,
+    state_root: Path | None = None,
+) -> Path | None:
+    """Pick the best local export folder to audit for an application.
+
+    Preference order:
+      1. patent_center_ui/files
+      2. patent_center_ui/package
+      3. messages_correspondence/applications/<app>/files
+      4. public_odp_wrapper
+      5. patent_center_ui root
+    """
+    root = Path(state_root) if state_root is not None else default_state_root()
+    app = _normalize_app(application_number)
+    exports = root / "exports"
+    candidates = [
+        exports / app / "patent_center_ui" / "files",
+        exports / app / "patent_center_ui" / "package",
+        exports / "messages_correspondence" / "applications" / app / "files",
+        exports / app / "public_odp_wrapper",
+        exports / app / "patent_center_ui",
+        exports / app,
+    ]
+    for path in candidates:
+        if path.is_dir() and any(path.rglob("*.pdf")):
+            return path.resolve()
+    return None
+
+
+def suggest_filing_scenario(
+    application_number: str,
+    *,
+    state_root: Path | None = None,
+    package_inventory: Mapping[str, Any] | None = None,
+) -> tuple[str, str]:
+    """Heuristic (scenario, prosecution_stage) when operator omits --scenario.
+
+    Baseline pack matches:
+
+    * ``new_application`` only at stage ``filing`` (or ``any``)
+    * ``office_action_response`` at stage ``examination``
+
+    Heuristics:
+
+    * As-filed export (CLM+SPEC+ADS) → ``new_application`` / ``filing``
+    * Response-style roles (remarks) → ``office_action_response`` / ``examination``
+    * Otherwise prefer as-filed completeness review when IFW codes look complete
+    """
+    root = Path(state_root) if state_root is not None else default_state_root()
+    app = re.sub(r"\D", "", str(application_number or ""))
+    inv = package_inventory or {}
+    roles = set(inv.get("roles_present") or [])
+    names = " ".join(
+        str(f.get("name") or "")
+        for f in (inv.get("files") or [])
+        if isinstance(f, Mapping)
+    ).upper()
+    codes = {
+        str(f.get("ifw_document_code") or "").upper()
+        for f in (inv.get("files") or [])
+        if isinstance(f, Mapping)
+    }
+    codes.update(
+        c
+        for c in re.findall(
+            r"\b(CLM|SPEC|ADS|OATH|DRW|IDS|ABST|IFEE|NOA|CTNF|CTFR)\b", names
+        )
+    )
+
+    if "remarks" in roles and "amended_specification" not in roles:
+        return "office_action_response", "examination"
+
+    # Full IFW as-filed package → retrospective original-filing audit
+    as_filed_markers = {"CLM", "SPEC", "ADS"}
+    if as_filed_markers.issubset(codes) or (
+        "CLM" in names and "SPEC" in names and "ADS" in names
+    ):
+        return "new_application", "filing"
+
+    if "remarks" in roles or "amended_claims" in roles:
+        return "office_action_response", "examination"
+
+    # Default: original filing completeness (most export dumps)
+    return "new_application", "filing"
 
 
 def _roles_from_revision_attachments(case: Any) -> set[str]:
@@ -199,6 +490,33 @@ def _condition_appears_met(
             "amended_specification" in roles
             or "substitute_specification" in roles
             or "specification" in kinds_present
+        )
+    # Sequence listing is only required when sequences are disclosed
+    if any(
+        token in cond
+        for token in (
+            "sequence",
+            "nucleotide",
+            "amino_acid",
+            "amino-acid",
+            "seq_listing",
+        )
+    ):
+        role_blob = " ".join(roles).lower()
+        return (
+            "sequence_listing" in kinds_present
+            or "sequence_listing" in roles
+            or "seq" in role_blob
+            or "sequence" in role_blob
+        )
+    # Benefit / priority claim only when asserted
+    if any(token in cond for token in ("benefit", "priority", "continuity")):
+        role_blob = " ".join(roles).lower()
+        return (
+            "benefit_claim" in kinds_present
+            or "priority" in role_blob
+            or "benefit" in role_blob
+            or "continuity" in role_blob
         )
     # Unknown conditions: treat as applicable so we don't hide gaps
     return True
@@ -289,9 +607,12 @@ def load_prior_art_audit_bundle(run_dir: Path | str | None) -> dict[str, Any]:
 
     if (root / "pps_verification_checklist.json").is_file():
         pps = _read_json(root / "pps_verification_checklist.json")
-        out["pps_complete"] = bool(pps.get("complete"))
-        out["pps_verified_count"] = pps.get("verified_count")
-        out["pps_pending_count"] = pps.get("pending_count")
+        pps_eval = evaluate_pps_checklist_completeness(pps)
+        out["pps_complete"] = pps_eval["complete"]
+        out["pps_verified_count"] = pps_eval["verified_count"]
+        out["pps_pending_count"] = pps_eval["pending_count"]
+        out["pps_item_count"] = pps_eval["item_count"]
+        out["pps_checklist_path"] = str(root / "pps_verification_checklist.json")
 
     if (root / "human_coverage_acknowledgment.json").is_file():
         out["human_ack_present"] = True
@@ -308,6 +629,73 @@ def load_prior_art_audit_bundle(run_dir: Path | str | None) -> dict[str, Any]:
         out["report_id"] = report.get("report_id")
 
     return out
+
+
+def evaluate_pps_checklist_completeness(
+    checklist: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    """Evaluate human PPS verification checklist completeness (fail-closed).
+
+    Matches ``record_pps_verification``: complete only when there are no
+    pending items and at least one verified item. Explicit ``complete=False``
+    always remains incomplete; explicit ``complete=True`` is accepted only when
+    no pending items remain (stale flags with pending items fail closed).
+
+    Incomplete checklists (including fresh all-pending artifacts) yield
+    ``complete=False`` so audits emit ``pps_verification_incomplete`` and
+    action plans include a ``complete_pps_verification`` step.
+    """
+    if not checklist:
+        return {
+            "present": False,
+            "complete": None,
+            "item_count": 0,
+            "pending_count": 0,
+            "verified_count": 0,
+            "derived_complete": False,
+        }
+    items = list(checklist.get("items") or [])
+    if items:
+        pending = sum(
+            1
+            for it in items
+            if str(it.get("status") or "pending").strip().lower() == "pending"
+        )
+        verified = sum(
+            1
+            for it in items
+            if str(it.get("status") or "").strip().lower() == "verified"
+        )
+    else:
+        try:
+            pending = int(checklist.get("pending_count") or 0)
+        except (TypeError, ValueError):
+            pending = 0
+        try:
+            verified = int(checklist.get("verified_count") or 0)
+        except (TypeError, ValueError):
+            verified = 0
+    item_count = int(checklist.get("item_count") or len(items) or 0)
+    # Canonical rule used by prior_art_operator_extensions.record_pps_verification
+    derived_complete = pending == 0 and verified > 0
+    explicit = checklist.get("complete")
+    if pending > 0:
+        complete = False
+    elif explicit is True:
+        # Accept operator-marked complete when nothing remains pending.
+        complete = True if verified > 0 or item_count == 0 else derived_complete
+    elif explicit is False:
+        complete = False
+    else:
+        complete = derived_complete
+    return {
+        "present": True,
+        "complete": bool(complete),
+        "item_count": item_count,
+        "pending_count": pending,
+        "verified_count": verified,
+        "derived_complete": derived_complete,
+    }
 
 
 def audit_prior_art_compliance(bundle: Mapping[str, Any]) -> dict[str, Any]:
@@ -382,14 +770,24 @@ def audit_prior_art_compliance(bundle: Mapping[str, Any]) -> dict[str, Any]:
         warnings.append("npl_gap")
 
     if bundle.get("pps_complete") is False:
+        pending_n = bundle.get("pps_pending_count")
+        verified_n = bundle.get("pps_verified_count")
         findings.append(
             {
                 "code": "pps_verification_incomplete",
                 "severity": "warning",
                 "message": (
-                    "Patent Public Search human verification checklist is incomplete. "
-                    "Use prior-art pps-assist / pps-record."
+                    "Patent Public Search human verification checklist is incomplete"
+                    + (
+                        f" ({verified_n or 0} verified, {pending_n or 0} pending)."
+                        if pending_n is not None or verified_n is not None
+                        else "."
+                    )
+                    + " Use attended pps-assist (never auto-searches) then "
+                    "prior-art pps-record to mark items verified."
                 ),
+                "pps_pending_count": pending_n,
+                "pps_verified_count": verified_n,
             }
         )
         warnings.append("pps_verification_incomplete")
@@ -650,7 +1048,9 @@ def audit_mpep_authority_surface(
     excerpts: list[dict[str, Any]] = []
     for cite in list(citations)[:20]:
         try:
-            excerpts.append(lookup_authority_excerpt(str(cite), roots=roots))
+            excerpts.append(
+                lookup_authority_excerpt(str(cite), corpus_roots=roots)
+            )
         except Exception as exc:  # noqa: BLE001
             excerpts.append(
                 {
@@ -710,11 +1110,18 @@ def build_audit_action_plan(
     application_number: str,
     revision_id: str | None = None,
     prior_art_run_id: str | None = None,
+    delta_from: str | None = None,
 ) -> list[dict[str, Any]]:
     """Translate audit findings into ordered operator next steps (CLI hints)."""
     app = application_number
     rev = revision_id or ""
     run = prior_art_run_id or (summary.get("prior_art_bundle") or {}).get("run_id") or ""
+    # Prefer explicit arg, then summary fields (audit_id of *this* run for next re-audit)
+    this_audit_id = (
+        str(summary.get("audit_id") or "").strip()
+        or str(delta_from or "").strip()
+        or ""
+    )
     actions: list[dict[str, Any]] = []
 
     prior = summary.get("prior_art") or {}
@@ -763,17 +1170,34 @@ def build_audit_action_plan(
         if "pps_verification_incomplete" in (prior.get("warning_codes") or []) or (
             bundle.get("pps_complete") is False
         ):
+            assist_cmd = (
+                f"portfolio_cli prior-art pps-assist --application-number {app} "
+                f"--run-id {run}"
+                if run
+                else "portfolio_cli prior-art pps-assist --run-dir <run_dir>"
+            )
+            record_cmd = (
+                f"portfolio_cli prior-art pps-record --application-number {app} "
+                f"--run-id {run} --verified-by operator:you"
+                if run
+                else (
+                    "portfolio_cli prior-art pps-record --run-dir <run_dir> "
+                    "--verified-by operator:you"
+                )
+            )
             actions.append(
                 {
                     "priority": 3,
                     "code": "complete_pps_verification",
                     "title": "Complete Patent Public Search human verification",
-                    "command": (
-                        f"portfolio_cli prior-art pps-assist --application-number {app} "
-                        f"--run-id {run}"
-                        if run
-                        else "portfolio_cli prior-art pps-assist --run-dir <run_dir>"
+                    "command": assist_cmd,
+                    "follow_up_command": record_cmd,
+                    "notes": (
+                        "Attended PPS assist opens the public landing page only; "
+                        "it never auto-searches, scrapes, or submits queries. "
+                        "Operator pastes queries interactively, then records results."
                     ),
+                    "warning_code": "pps_verification_incomplete",
                 }
             )
         if "human_coverage_ack_missing" in (prior.get("warning_codes") or []):
@@ -827,13 +1251,20 @@ def build_audit_action_plan(
             }
         )
 
+    # Hint next re-audit with --delta-from so closed/opened gaps are measurable
+    delta_suffix = (
+        f" --delta-from {this_audit_id}" if this_audit_id else ""
+    )
     if rev:
         actions.append(
             {
                 "priority": 5,
                 "code": "re_audit",
-                "title": "Re-run compliance audit after fixes",
-                "command": f"portfolio_cli revise audit --revision-id {rev}",
+                "title": "Re-run compliance audit after fixes (delta vs this audit)",
+                "command": (
+                    f"portfolio_cli revise audit --revision-id {rev}"
+                    f"{delta_suffix}"
+                ),
             }
         )
     else:
@@ -841,9 +1272,10 @@ def build_audit_action_plan(
             {
                 "priority": 5,
                 "code": "re_audit",
-                "title": "Re-run compliance audit after fixes",
+                "title": "Re-run compliance audit after fixes (delta vs this audit)",
                 "command": (
                     f"portfolio_cli audit-submission --application-number {app}"
+                    f"{delta_suffix}"
                 ),
             }
         )
@@ -1057,6 +1489,327 @@ def build_ids_queue_from_prior_art_run(
 
 
 # ---------------------------------------------------------------------------
+# Re-audit delta (closed / opened gaps + status transition)
+# ---------------------------------------------------------------------------
+
+
+def _audit_id_to_dir_name(audit_id: str) -> str:
+    """Map ``audit:APP:TS`` → directory name ``audit_APP_TS`` (and accept either)."""
+    raw = str(audit_id or "").strip()
+    if not raw:
+        raise SubmissionComplianceAuditError(
+            "audit_id is required", code="invalid_audit_id"
+        )
+    return raw.replace(":", "_")
+
+
+def _dir_name_to_audit_id(dir_name: str) -> str:
+    """Best-effort reverse of :func:`_audit_id_to_dir_name` for list rows."""
+    name = str(dir_name or "").strip()
+    if not name:
+        return ""
+    if name.startswith("audit_") and name.count("_") >= 2:
+        # audit_<app>_<timestamp> — app may contain only alphanumerics
+        rest = name[len("audit_") :]
+        # Prefer last underscore split for timestamp suffix (ISO-like, no colons)
+        parts = rest.rsplit("_", 1)
+        if len(parts) == 2 and parts[0] and parts[1]:
+            return f"audit:{parts[0]}:{parts[1]}"
+    if name.startswith("audit:"):
+        return name
+    return name.replace("_", ":", 2) if name.startswith("audit_") else name
+
+
+def extract_audit_gaps(summary: Mapping[str, Any] | None) -> list[dict[str, Any]]:
+    """Extract stable gap records from a persisted audit summary.
+
+    Gap identities cover:
+    * filing-rule evidence gaps (missing / optional_missing / human_only)
+    * prior-art blocking codes
+    * prior-art warning codes
+
+    Each gap has a stable ``gap_id`` used for closed/opened set comparison.
+    """
+    if not summary:
+        return []
+    gaps: list[dict[str, Any]] = []
+    seen: set[str] = set()
+
+    def _add(
+        gap_id: str,
+        *,
+        category: str,
+        code: str,
+        severity: str,
+        message: str = "",
+        detail: Mapping[str, Any] | None = None,
+    ) -> None:
+        if not gap_id or gap_id in seen:
+            return
+        seen.add(gap_id)
+        row: dict[str, Any] = {
+            "gap_id": gap_id,
+            "category": category,
+            "code": code,
+            "severity": severity,
+            "message": message or "",
+        }
+        if detail:
+            row["detail"] = dict(detail)
+        gaps.append(row)
+
+    filing = summary.get("filing_rules") or {}
+    for ev in filing.get("evidence_gaps") or []:
+        if not isinstance(ev, Mapping):
+            continue
+        status = str(ev.get("status") or "").strip().lower()
+        # Only open problems count as gaps (present evidence is not a gap)
+        if status not in {"missing", "optional_missing", "human_only"}:
+            continue
+        kind = str(ev.get("evidence_kind") or "").strip() or "unknown"
+        rule_id = str(ev.get("rule_id") or "").strip()
+        gap_id = f"filing:{kind}:{status}:{rule_id}"
+        severity = (
+            "error"
+            if status == "missing" and bool(ev.get("mandatory", True))
+            else ("info" if status == "human_only" else "warning")
+        )
+        _add(
+            gap_id,
+            category="filing_rules",
+            code=f"{kind}:{status}",
+            severity=severity,
+            message=str(ev.get("message") or ""),
+            detail={
+                "evidence_kind": kind,
+                "status": status,
+                "rule_id": rule_id or None,
+                "mandatory": bool(ev.get("mandatory", status == "missing")),
+                "expected_roles": list(ev.get("expected_roles") or []),
+                "conditional_on": ev.get("conditional_on"),
+            },
+        )
+
+    prior = summary.get("prior_art") or {}
+    for code in prior.get("blocking_codes") or []:
+        c = str(code or "").strip()
+        if not c:
+            continue
+        _add(
+            f"prior_art:blocking:{c}",
+            category="prior_art",
+            code=c,
+            severity="error",
+            message=f"Prior-art blocking: {c}",
+            detail={"channel": "blocking_codes"},
+        )
+    for code in prior.get("warning_codes") or []:
+        c = str(code or "").strip()
+        if not c:
+            continue
+        _add(
+            f"prior_art:warning:{c}",
+            category="prior_art",
+            code=c,
+            severity="warning",
+            message=f"Prior-art warning: {c}",
+            detail={"channel": "warning_codes"},
+        )
+
+    gaps.sort(key=lambda g: str(g.get("gap_id") or ""))
+    return gaps
+
+
+def compute_audit_delta(
+    previous: Mapping[str, Any] | None,
+    current: Mapping[str, Any] | None,
+    *,
+    previous_audit_id: str | None = None,
+    current_audit_id: str | None = None,
+) -> dict[str, Any]:
+    """Diff two audit summaries into closed/opened gaps and status transition.
+
+    Pure function: never mutates either summary. History rewriting is impossible
+    from this path; callers must persist the delta only on the *new* audit.
+    """
+    prev = dict(previous or {})
+    curr = dict(current or {})
+    prev_gaps = extract_audit_gaps(prev)
+    curr_gaps = extract_audit_gaps(curr)
+    prev_by_id = {str(g["gap_id"]): g for g in prev_gaps}
+    curr_by_id = {str(g["gap_id"]): g for g in curr_gaps}
+    prev_ids = set(prev_by_id)
+    curr_ids = set(curr_by_id)
+
+    closed_ids = sorted(prev_ids - curr_ids)
+    opened_ids = sorted(curr_ids - prev_ids)
+    unchanged_ids = sorted(prev_ids & curr_ids)
+
+    prev_status = str(prev.get("overall_status") or "") or None
+    curr_status = str(curr.get("overall_status") or "") or None
+    status_transition = {
+        "from": prev_status,
+        "to": curr_status,
+        "changed": prev_status != curr_status,
+    }
+
+    prev_id = (
+        previous_audit_id
+        or prev.get("audit_id")
+        or (prev.get("delta") or {}).get("current_audit_id")
+        or None
+    )
+    curr_id = current_audit_id or curr.get("audit_id") or None
+
+    return {
+        "schema": DELTA_SCHEMA,
+        "delta_from": prev_id,
+        "previous_audit_id": prev_id,
+        "current_audit_id": curr_id,
+        "closed_gaps": [prev_by_id[i] for i in closed_ids],
+        "opened_gaps": [curr_by_id[i] for i in opened_ids],
+        "unchanged_gaps": [curr_by_id[i] for i in unchanged_ids],
+        "closed_gap_count": len(closed_ids),
+        "opened_gap_count": len(opened_ids),
+        "unchanged_gap_count": len(unchanged_ids),
+        "previous_gap_count": len(prev_ids),
+        "current_gap_count": len(curr_ids),
+        "status_transition": status_transition,
+        "previous_overall_status": prev_status,
+        "current_overall_status": curr_status,
+        "history_rewritten": False,
+        "disclaimer": AUDIT_DISCLAIMER,
+        "generated_at_utc": utc_now_iso(),
+    }
+
+
+def resolve_compliance_audit(
+    *,
+    audit_id: str | None = None,
+    audit_path: str | Path | None = None,
+    audit_dir: str | Path | None = None,
+    application_number: str | None = None,
+    state_root: Path | None = None,
+) -> dict[str, Any]:
+    """Locate a persisted compliance audit without modifying it.
+
+    Resolution order: explicit ``audit_path`` / ``audit_dir``, then
+    ``audit_id`` under ``state_root/compliance_audits/<app>/``, then fail closed.
+    """
+    root = Path(state_root) if state_root is not None else default_state_root()
+    path: Path | None = None
+    resolved_id = str(audit_id or "").strip() or None
+
+    if audit_path:
+        path = Path(audit_path).expanduser().resolve()
+    elif audit_dir:
+        path = (
+            Path(audit_dir).expanduser().resolve()
+            / "submission_compliance_audit.json"
+        )
+    elif resolved_id:
+        # Accept path-like audit_id
+        candidate = Path(resolved_id).expanduser()
+        if candidate.is_file() and candidate.name.endswith(".json"):
+            path = candidate.resolve()
+        elif candidate.is_dir() and (
+            candidate / "submission_compliance_audit.json"
+        ).is_file():
+            path = (candidate / "submission_compliance_audit.json").resolve()
+        else:
+            dir_name = _audit_id_to_dir_name(resolved_id)
+            app = (
+                _normalize_app(application_number)
+                if application_number
+                else None
+            )
+            # Derive app from audit_id when possible: audit:APP:TS
+            if not app and resolved_id.startswith("audit:"):
+                bits = resolved_id.split(":")
+                if len(bits) >= 3:
+                    try:
+                        app = _normalize_app(bits[1])
+                    except SubmissionComplianceAuditError:
+                        app = None
+            if not app and dir_name.startswith("audit_"):
+                rest = dir_name[len("audit_") :]
+                parts = rest.rsplit("_", 1)
+                if len(parts) == 2:
+                    try:
+                        app = _normalize_app(parts[0])
+                    except SubmissionComplianceAuditError:
+                        app = None
+            search_roots: list[Path] = []
+            base = root / "compliance_audits"
+            if app:
+                search_roots.append(base / app)
+            elif base.is_dir():
+                search_roots.extend(
+                    p for p in sorted(base.iterdir()) if p.is_dir()
+                )
+            for app_dir in search_roots:
+                cand = app_dir / dir_name / "submission_compliance_audit.json"
+                if cand.is_file():
+                    path = cand
+                    break
+                # Also accept already-normalized dir under app
+                if (app_dir / resolved_id / "submission_compliance_audit.json").is_file():
+                    path = (
+                        app_dir
+                        / resolved_id
+                        / "submission_compliance_audit.json"
+                    )
+                    break
+    else:
+        raise SubmissionComplianceAuditError(
+            "pass audit_id, audit_path, or audit_dir",
+            code="missing_audit_reference",
+        )
+
+    if path is None or not path.is_file():
+        raise SubmissionComplianceAuditError(
+            f"compliance audit not found for "
+            f"audit_id={resolved_id!r} path={audit_path!r} dir={audit_dir!r}",
+            code="audit_not_found",
+        )
+
+    summary = _read_json(path)
+    # Prefer embedded audit_id; fall back to directory name
+    embedded = str(summary.get("audit_id") or "").strip()
+    if embedded:
+        resolved_id = embedded
+    elif path.parent.name:
+        resolved_id = resolved_id or _dir_name_to_audit_id(path.parent.name)
+
+    return {
+        "schema": AUDIT_SCHEMA,
+        "ok": True,
+        "audit_id": resolved_id,
+        "audit_path": str(path),
+        "audit_dir": str(path.parent),
+        "application_number": summary.get("application_number"),
+        "overall_status": summary.get("overall_status"),
+        "generated_at_utc": summary.get("generated_at_utc"),
+        "summary": summary,
+        "disclaimer": AUDIT_DISCLAIMER,
+    }
+
+
+def load_compliance_audit_by_id(
+    audit_id: str,
+    *,
+    application_number: str | None = None,
+    state_root: Path | None = None,
+) -> dict[str, Any]:
+    """Load a prior audit by id (read-only; never rewrites history)."""
+    return resolve_compliance_audit(
+        audit_id=audit_id,
+        application_number=application_number,
+        state_root=state_root,
+    )
+
+
+# ---------------------------------------------------------------------------
 # Full audit
 # ---------------------------------------------------------------------------
 
@@ -1070,9 +1823,10 @@ class SubmissionAuditResult:
     paths: dict[str, str] = field(default_factory=dict)
     summary: dict[str, Any] = field(default_factory=dict)
     disclaimer: str = AUDIT_DISCLAIMER
+    delta: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        out = {
             "schema": AUDIT_SCHEMA,
             "ok": self.ok,
             "audit_id": self.audit_id,
@@ -1083,6 +1837,9 @@ class SubmissionAuditResult:
             "disclaimer": self.disclaimer,
             "generated_at_utc": utc_now_iso(),
         }
+        if self.delta is not None:
+            out["delta"] = dict(self.delta)
+        return out
 
 
 def audit_submission(
@@ -1099,8 +1856,16 @@ def audit_submission(
     with_law_index: bool = False,
     build_ids_queue: bool = True,
     persist: bool = True,
+    delta_from: str | None = None,
 ) -> dict[str, Any]:
-    """Run a combined MPEP/filing-rule + prior-art compliance audit."""
+    """Run a combined MPEP/filing-rule + prior-art compliance audit.
+
+    When ``delta_from`` is set (previous ``audit_id``, audit directory, or path
+    to ``submission_compliance_audit.json``), the new audit includes a
+    ``delta`` block with ``closed_gaps``, ``opened_gaps``, and
+    ``status_transition``. The prior audit is loaded read-only and is never
+    modified (no history rewrite).
+    """
     root = Path(state_root) if state_root is not None else default_state_root()
     case = None
     app = ""
@@ -1135,9 +1900,44 @@ def audit_submission(
             code="missing_application_number",
         )
 
+    export_package_auto = False
     if package_dir:
         package_path = Path(package_dir).expanduser().resolve()
+    elif package_path is None:
+        # Auto-use Patent Center / messages export package when present
+        auto = resolve_export_package_dir(app, state_root=root)
+        if auto is not None:
+            package_path = auto
+            export_package_auto = True
     inventory = inventory_package_dir(package_path)
+
+    # Scenario: explicit CLI/API wins; revision trigger next; else infer from
+    # export inventory / matter status (as-filed completeness, IDS, issue fee…).
+    scenario_auto = False
+    if not scenario and case is None:
+        scenario_s, inferred_stage = suggest_filing_scenario(
+            app, state_root=root, package_inventory=inventory
+        )
+        scenario_auto = True
+        stage_s = prosecution_stage or inferred_stage
+
+    # Baseline audit for re-audit delta (read-only; never rewritten)
+    previous_audit_payload: dict[str, Any] | None = None
+    previous_audit_id: str | None = None
+    previous_audit_path: str | None = None
+    delta_from_ref = str(delta_from or "").strip() or None
+    if delta_from_ref:
+        previous_audit_payload = resolve_compliance_audit(
+            audit_id=delta_from_ref,
+            application_number=app,
+            state_root=root,
+        )
+        previous_audit_id = str(previous_audit_payload.get("audit_id") or delta_from_ref)
+        previous_audit_path = str(previous_audit_payload.get("audit_path") or "")
+        # Snapshot prior summary before any new writes (immutability guard)
+        previous_summary_snapshot = dict(previous_audit_payload.get("summary") or {})
+    else:
+        previous_summary_snapshot = {}
 
     # Prior-art run resolution
     pa_dir: Path | None = None
@@ -1220,12 +2020,38 @@ def audit_submission(
             f"{filing_audit['missing_mandatory_count']} mandatory filing-evidence "
             "item(s) appear missing from the package.",
         )
+    found_excerpts = int(authority.get("local_excerpts_found") or 0)
+    if found_excerpts > 0:
+        review_tips.append(
+            f"{found_excerpts} local MPEP/CFR authority excerpt(s) attached — "
+            "verify against official USPTO/eCFR before relying on fixture text."
+        )
+    else:
+        review_tips.append(
+            "No local authority excerpts resolved; seed authority_corpus "
+            "(PATLAW-199) or set USPTO_AUTHORITY_CORPUS_ROOT for offline cites."
+        )
+
+    # Microsecond stamp keeps concurrent / same-second re-audits from colliding
+    # and overwriting prior history under the same directory.
+    _stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%f")
+    audit_id = f"audit:{app}:{_stamp}"
+    # Extremely unlikely same-us collision: extend rather than overwrite
+    _candidate_dir = root / "compliance_audits" / app / audit_id.replace(":", "_")
+    if persist and _candidate_dir.exists():
+        audit_id = f"audit:{app}:{_stamp}{secrets.token_hex(3)}"
 
     summary = {
         "schema": AUDIT_SCHEMA,
+        "audit_id": audit_id,
         "application_number": app,
         "revision_id": getattr(case, "revision_id", None) if case else revision_id,
         "overall_status": overall,
+        "delta_from": previous_audit_id,
+        "package_dir": str(package_path) if package_path else None,
+        "package_auto_resolved_from_exports": export_package_auto,
+        "scenario": scenario_s,
+        "scenario_auto_selected": scenario_auto,
         "filing_rules": filing_audit,
         "prior_art": prior_audit,
         "prior_art_bundle": {
@@ -1239,6 +2065,9 @@ def audit_submission(
                 "chart_entry_count",
                 "query_count",
                 "pps_complete",
+                "pps_pending_count",
+                "pps_verified_count",
+                "pps_item_count",
                 "human_ack_present",
                 "artifacts",
             )
@@ -1249,7 +2078,13 @@ def audit_submission(
             "local_excerpts_found": authority.get("local_excerpts_found"),
             "hybrid_index_hit_count": len(authority.get("hybrid_index_hits") or []),
             "hybrid_index_error": authority.get("hybrid_index_error"),
+            "authority_corpus_roots": authority.get("authority_corpus_roots") or [],
             "sample_excerpts": (authority.get("local_excerpts") or [])[:6],
+            "sample_citations": [
+                str(e.get("citation"))
+                for e in (authority.get("local_excerpts") or [])
+                if e.get("found") and e.get("citation")
+            ][:8],
             "sample_index_hits": (authority.get("hybrid_index_hits") or [])[:6],
         },
         "review_tips": review_tips,
@@ -1292,15 +2127,43 @@ def audit_submission(
         application_number=app,
         revision_id=getattr(case, "revision_id", None) if case else revision_id,
         prior_art_run_id=prior_bundle.get("run_id"),
+        delta_from=previous_audit_id,
     )
     summary["action_plan"] = action_plan
     summary["action_plan_count"] = len(action_plan)
 
-    audit_id = f"audit:{app}:{utc_now_iso().replace(':', '').replace('-', '')[:15]}"
+    # Re-audit delta vs previous audit_id (new audit only; history stays intact)
+    delta: dict[str, Any] | None = None
+    if previous_audit_payload is not None:
+        delta = compute_audit_delta(
+            previous_summary_snapshot,
+            summary,
+            previous_audit_id=previous_audit_id,
+            current_audit_id=audit_id,
+        )
+        delta["previous_audit_path"] = previous_audit_path
+        delta["history_rewritten"] = False
+        summary["delta"] = delta
+        # Operator tip for measurable gap closure
+        closed_n = int(delta.get("closed_gap_count") or 0)
+        opened_n = int(delta.get("opened_gap_count") or 0)
+        st = delta.get("status_transition") or {}
+        review_tips.insert(
+            0,
+            (
+                f"Re-audit delta vs {previous_audit_id}: "
+                f"{closed_n} closed, {opened_n} opened; "
+                f"status {st.get('from') or '—'} → {st.get('to') or '—'}."
+            ),
+        )
+        summary["review_tips"] = review_tips
+
     paths: dict[str, str] = {}
     if persist:
         out_dir = root / "compliance_audits" / app / audit_id.replace(":", "_")
-        paths["audit"] = str(_write_json(out_dir / "submission_compliance_audit.json", summary))
+        paths["audit"] = str(
+            _write_json(out_dir / "submission_compliance_audit.json", summary)
+        )
         paths["authority"] = str(
             _write_json(out_dir / "mpep_authority_surface.json", authority)
         )
@@ -1313,6 +2176,10 @@ def audit_submission(
         paths["action_plan"] = str(
             _write_json(out_dir / "action_plan.json", {"actions": action_plan})
         )
+        if delta is not None:
+            paths["delta"] = str(
+                _write_json(out_dir / "re_audit_delta.json", delta)
+            )
         if ids_info and ids_info.get("ok"):
             paths["ids_queue"] = str(
                 _write_json(
@@ -1346,12 +2213,32 @@ def audit_submission(
                 "overall_status": overall,
                 "action_plan_count": len(action_plan),
                 "ids_candidate_count": summary["ids_queue"].get("candidate_count"),
+                "delta_from": previous_audit_id,
+                "closed_gap_count": (delta or {}).get("closed_gap_count"),
+                "opened_gap_count": (delta or {}).get("opened_gap_count"),
                 "attached_at_utc": utc_now_iso(),
                 "disclaimer": AUDIT_DISCLAIMER,
             }
             paths["revision_pointer"] = str(
                 _write_json(case_dir / "submission_compliance_audit.json", pointer)
             )
+
+        # Immutability check: previous audit file must still match snapshot
+        if previous_audit_path:
+            prior_path = Path(previous_audit_path)
+            if prior_path.is_file():
+                try:
+                    reread = _read_json(prior_path)
+                    if reread != previous_summary_snapshot:
+                        raise SubmissionComplianceAuditError(
+                            "re-audit mutated prior audit history "
+                            f"({previous_audit_path})",
+                            code="history_rewrite_detected",
+                        )
+                except SubmissionComplianceAuditError:
+                    raise
+                except Exception:
+                    pass
 
     result = SubmissionAuditResult(
         ok=True,
@@ -1360,6 +2247,7 @@ def audit_submission(
         overall_status=overall,
         paths=paths,
         summary=summary,
+        delta=delta,
     )
     return result.to_dict()
 
@@ -1398,14 +2286,24 @@ def list_compliance_audits(
                 payload = _read_json(man)
             except Exception:
                 payload = {}
+            embedded_id = str(payload.get("audit_id") or "").strip()
             rows.append(
                 {
                     "application_number": app_dir.name,
+                    "audit_id": embedded_id
+                    or _dir_name_to_audit_id(audit_dir.name),
                     "audit_dir": str(audit_dir),
                     "audit_path": str(man),
                     "overall_status": payload.get("overall_status"),
                     "revision_id": payload.get("revision_id"),
                     "generated_at_utc": payload.get("generated_at_utc"),
+                    "delta_from": payload.get("delta_from"),
+                    "closed_gap_count": (payload.get("delta") or {}).get(
+                        "closed_gap_count"
+                    ),
+                    "opened_gap_count": (payload.get("delta") or {}).get(
+                        "opened_gap_count"
+                    ),
                     "action_plan_count": payload.get("action_plan_count")
                     or len(payload.get("action_plan") or []),
                     "ids_candidates": (payload.get("ids_queue") or {}).get(
@@ -1495,13 +2393,20 @@ def render_audit_markdown(summary: Mapping[str, Any]) -> str:
         str(summary.get("disclaimer") or AUDIT_DISCLAIMER),
         "",
         f"- **Application:** `{summary.get('application_number')}`",
+        f"- **Audit id:** `{summary.get('audit_id') or '—'}`",
         f"- **Revision:** `{summary.get('revision_id') or '—'}`",
         f"- **Overall status:** **{summary.get('overall_status')}**",
         f"- **Generated:** {summary.get('generated_at_utc')}",
-        "",
-        "## Filing rules (MPEP / CFR pack)",
-        "",
     ]
+    if summary.get("delta_from"):
+        lines.append(f"- **Delta from:** `{summary.get('delta_from')}`")
+    lines.extend(
+        [
+            "",
+            "## Filing rules (MPEP / CFR pack)",
+            "",
+        ]
+    )
     fr = summary.get("filing_rules") or {}
     lines.extend(
         [
@@ -1566,12 +2471,114 @@ def render_audit_markdown(summary: Mapping[str, Any]) -> str:
         for t in tips:
             lines.append(f"- {t}")
 
+    # Re-audit delta (closed / opened gaps vs previous audit_id)
+    delta = summary.get("delta")
+    if isinstance(delta, Mapping) and (
+        delta.get("previous_audit_id")
+        or delta.get("delta_from")
+        or delta.get("closed_gaps") is not None
+    ):
+        st = delta.get("status_transition") or {}
+        lines.extend(
+            [
+                "",
+                "## Re-audit delta",
+                "",
+                f"- Baseline audit: `{delta.get('previous_audit_id') or delta.get('delta_from') or '—'}`",
+                f"- Status transition: "
+                f"`{st.get('from') or '—'}` → `{st.get('to') or '—'}`"
+                f" (changed={st.get('changed')})",
+                f"- Closed gaps: **{delta.get('closed_gap_count') or 0}**",
+                f"- Opened gaps: **{delta.get('opened_gap_count') or 0}**",
+                f"- Unchanged gaps: **{delta.get('unchanged_gap_count') or 0}**",
+                f"- History rewritten: `{bool(delta.get('history_rewritten'))}`",
+                "",
+                "### Closed gaps",
+                "",
+            ]
+        )
+        closed = list(delta.get("closed_gaps") or [])
+        if not closed:
+            lines.append("_None_")
+        else:
+            for g in closed[:40]:
+                lines.append(
+                    f"- `{g.get('gap_id')}` — {g.get('code')} "
+                    f"({g.get('severity')})"
+                )
+        lines.extend(["", "### Opened gaps", ""])
+        opened = list(delta.get("opened_gaps") or [])
+        if not opened:
+            lines.append("_None_")
+        else:
+            for g in opened[:40]:
+                lines.append(
+                    f"- `{g.get('gap_id')}` — {g.get('code')} "
+                    f"({g.get('severity')})"
+                )
+
+    # Local MPEP/CFR authority excerpts (decision support; not binding law).
+    auth = summary.get("mpep_authority") or {}
+    lines.extend(
+        [
+            "",
+            "## MPEP / CFR authority excerpts",
+            "",
+            f"- Local excerpts found: **{auth.get('local_excerpts_found') or 0}** "
+            f"(of {auth.get('citation_count') or 0} citations scanned)",
+            f"- Hybrid index hits: **{auth.get('hybrid_index_hit_count') or 0}**",
+            "",
+            "### Sample citations",
+            "",
+        ]
+    )
+    samples = list(auth.get("sample_excerpts") or [])
+    found_samples = [s for s in samples if s.get("found")]
+    # Prefer found excerpts; fall back to any samples so the section is never empty
+    # when citations were collected.
+    display = found_samples or samples
+    if not display:
+        # Surface pack citation lists so operators still see what was audited.
+        pack_cites: list[str] = []
+        pack_cites.extend(fr.get("cfr_citations") or [])
+        pack_cites.extend(fr.get("mpep_citations") or [])
+        if pack_cites:
+            for cite in pack_cites[:12]:
+                lines.append(f"- `{cite}` — _no local excerpt resolved_")
+        else:
+            lines.append(
+                "_No local authority excerpts resolved. Seed "
+                "`authority_corpus/` (PATLAW-199) or set "
+                "`USPTO_AUTHORITY_CORPUS_ROOT`._"
+            )
+    else:
+        for s in display[:8]:
+            cite = s.get("citation") or "—"
+            if s.get("found"):
+                excerpt = (s.get("excerpt") or "").strip().replace("\n", " ")
+                if len(excerpt) > 280:
+                    excerpt = excerpt[:277] + "…"
+                path = s.get("path") or ""
+                path_bit = f" (`{path}`)" if path else ""
+                lines.append(f"- **{cite}**{path_bit}")
+                if excerpt:
+                    lines.append(f"  > {excerpt}")
+            else:
+                err = s.get("error") or s.get("hint") or "not found locally"
+                lines.append(f"- `{cite}` — _{err}_")
+    if auth.get("hybrid_index_error"):
+        lines.append(f"- Hybrid index error: `{auth.get('hybrid_index_error')}`")
+
     lines.extend(
         [
             "",
             "## Hard barriers",
             "",
             "- Sign / Pay / Submit: **human only** (Patent Center)",
+            "",
+            "_Authority excerpts are decision support only — verify against "
+            "official USPTO / eCFR sources. MPEP guidance never elevates to "
+            "binding law._",
             "",
         ]
     )
@@ -1581,6 +2588,7 @@ def render_audit_markdown(summary: Mapping[str, Any]) -> str:
 __all__ = [
     "AUDIT_DISCLAIMER",
     "AUDIT_SCHEMA",
+    "DELTA_SCHEMA",
     "SubmissionAuditResult",
     "SubmissionComplianceAuditError",
     "audit_filing_rules",
@@ -1589,9 +2597,16 @@ __all__ = [
     "audit_submission",
     "build_audit_action_plan",
     "build_ids_queue_from_prior_art_run",
+    "compute_audit_delta",
+    "evaluate_pps_checklist_completeness",
+    "extract_audit_gaps",
     "inventory_package_dir",
     "list_compliance_audits",
+    "load_compliance_audit_by_id",
     "load_prior_art_audit_bundle",
     "render_audit_markdown",
+    "resolve_compliance_audit",
+    "resolve_export_package_dir",
     "show_compliance_audit",
+    "suggest_filing_scenario",
 ]

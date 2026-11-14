@@ -1,0 +1,10 @@
+{
+  "schema": "paar.fixture-package-inventory.v1",
+  "application_number": "16990002",
+  "application_type": "utility",
+  "scenario": "new_application",
+  "ifw_codes": ["CLM", "SPEC", "ABST", "DRW", "ADS", "OATH", "IFEE"],
+  "title": "Synthetic biodegradable packaging kit",
+  "authority_corpus_bound": true,
+  "notes": "Clean package inventory with bound authority."
+}

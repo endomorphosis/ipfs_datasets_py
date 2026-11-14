@@ -95,6 +95,10 @@ _TOKEN_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9\-/]{1,63}")
 # Synthetic but stable CID prefix for ODP item payloads when no store CID.
 _ODP_SOURCE_CID_PREFIX: Final = "bafybeigodppriorart"
 
+# Human-review landing URLs only (never scraped; open-in-browser).
+GOOGLE_PATENTS_PATENT_URL_TMPL: Final = "https://patents.google.com/patent/{token}/en"
+PPUBS_PUBLIC_URL: Final = "https://ppubs.uspto.gov/pubwebapp/"
+
 
 # ---------------------------------------------------------------------------
 # Errors
@@ -772,6 +776,23 @@ class OdpPublicSearchAdapter:
         retries: list[RetryAttemptRecord] = []
         # Build ODP query body from keywords/classifications/text.
         body = _build_odp_search_body(query)
+        # Prior-art relevance: constrain filing date to corpus_cutoff (priority /
+        # effective filing). Live ODP returns HTTP 404 for empty sets; without a
+        # date bound, default ranking is newest-first and floods post-priority art.
+        cutoff_day = ""
+        try:
+            cutoff_day = str(corpus_cutoff or "").strip()[:10]
+        except Exception:
+            cutoff_day = ""
+        if cutoff_day and re.match(r"^\d{4}-\d{2}-\d{2}$", cutoff_day):
+            q_core = str(body.get("q") or "").strip() or "*:*"
+            body["q"] = (
+                f"({q_core}) AND applicationMetaData.filingDate:[* TO {cutoff_day}]"
+            )
+            # Prefer newest prior art first (still on-or-before cutoff).
+            body["sort"] = [
+                {"field": "applicationMetaData.filingDate", "order": "desc"}
+            ]
         page_limit = min(query.rank_cutoff, self.default_page_limit)
 
         try:
@@ -881,8 +902,29 @@ class OdpPublicSearchAdapter:
                 source_snapshot_cid=self._snapshot_cid(snapshot_parts),
             )
 
+        # Client-side date gate (safety net if ODP date clause is ignored).
+        filtered_items = list(all_items)
+        if cutoff_day and re.match(r"^\d{4}-\d{2}-\d{2}$", cutoff_day):
+            kept: list[Any] = []
+            for it in filtered_items:
+                if not isinstance(it, Mapping):
+                    kept.append(it)
+                    continue
+                meta = it.get("applicationMetaData") or {}
+                if not isinstance(meta, Mapping):
+                    meta = {}
+                filing = str(
+                    meta.get("filingDate")
+                    or meta.get("effectiveFilingDate")
+                    or it.get("filingDate")
+                    or ""
+                ).strip()[:10]
+                if not filing or filing <= cutoff_day:
+                    kept.append(it)
+            filtered_items = kept
+
         hits = _odp_items_to_journal_hits(
-            all_items,
+            filtered_items,
             rank_cutoff=query.rank_cutoff,
             receipt_id=receipt_id,
         )
@@ -963,50 +1005,96 @@ def _build_odp_search_body(query: PublicSearchQuery) -> dict[str, Any]:
         else:
             q_text = text
     else:
-        # Keyword / claim-limitation free text
-        # Use explicit keywords when provided; else tokenize query_text
-        kws = [k.strip() for k in (query.keywords or ()) if str(k).strip()]
+        # Keyword / claim-limitation free text.
+        # Live ODP returns HTTP 404 for "no records" — overly strict AND queries
+        # and stopword-heavy keyword lists commonly produce false empties.
+        _STOP = {
+            "a",
+            "an",
+            "the",
+            "and",
+            "or",
+            "for",
+            "with",
+            "from",
+            "into",
+            "to",
+            "of",
+            "in",
+            "on",
+            "by",
+            "at",
+            "as",
+            "is",
+            "are",
+            "method",
+            "system",
+            "device",
+            "apparatus",
+            "comprising",
+            "including",
+            "wherein",
+            "claim",
+            "said",
+            "least",
+            "one",
+            "first",
+            "second",
+            "plurality",
+            "configured",
+            "between",
+            "about",
+            "such",
+            "further",
+            "having",
+            "using",
+        }
+
+        def _filter_kws(seq: Any) -> list[str]:
+            out: list[str] = []
+            seen: set[str] = set()
+            for k in seq or ():
+                t = str(k).strip()
+                if len(t) < 3:
+                    continue
+                low = t.lower()
+                if low in _STOP or low in seen:
+                    continue
+                # Drop USPC-looking junk like 340/539130
+                if re.fullmatch(r"\d{2,4}/\d{3,}", t):
+                    continue
+                seen.add(low)
+                out.append(t)
+            return out
+
+        kws = _filter_kws(query.keywords or ())
         if not kws:
-            kws = [
-                t
-                for t in re.findall(r"[A-Za-z][A-Za-z0-9\-]{2,}", text)
-                if t.lower()
-                not in {
-                    "the",
-                    "and",
-                    "for",
-                    "with",
-                    "from",
-                    "method",
-                    "system",
-                    "device",
-                    "comprising",
-                    "including",
-                    "wherein",
-                    "claim",
-                    "said",
-                }
-            ][:8]
+            kws = _filter_kws(re.findall(r"[A-Za-z][A-Za-z0-9\-]{2,}", text))[:10]
+        # Prefer free-text (space) over AND: broader, avoids ODP empty-404 on tight AND.
         if len(kws) >= 2:
-            # AND tightens relevance (ODP free-text OR-ish bag is too broad)
-            q_text = " AND ".join(kws[:6])
+            q_text = " ".join(kws[:8])
         elif kws:
             q_text = kws[0]
         else:
-            q_text = text or "*:*"
-
-        # Boost title field when we have a short distinctive phrase
-        if len(kws) >= 2 and len(kws[0]) > 4:
-            title_clause = f'applicationMetaData.inventionTitle:({kws[0]})'
-            # Prefer free-text AND primary; title as alternate not combined poorly
-            # Keep free-text AND as primary q (most reliable on live ODP).
-            q_text = " AND ".join(kws[:6])
+            # Last resort: collapse claim text tokens without full sentence
+            q_text = " ".join(_filter_kws(re.findall(r"[A-Za-z]{4,}", text))[:8]) or (
+                text[:120] if text else "*:*"
+            )
 
         if query.classification_codes:
-            codes = [c.strip() for c in query.classification_codes if str(c).strip()]
-            if codes:
-                # Append first CPC as free-text token (fielded CPC can 404 when empty)
-                q_text = f"({q_text}) AND ({codes[0]})"
+            codes = [
+                c.strip()
+                for c in query.classification_codes
+                if str(c).strip() and not re.fullmatch(r"\d{2,4}/\d{3,}", str(c).strip())
+            ]
+            # Only append real CPC-like symbols (letter+digits…), not USPC class/subclass
+            cpc_like = [
+                c
+                for c in codes
+                if re.match(r"^[A-HY]\d{2}[A-Z]", c, re.I)
+            ]
+            if cpc_like:
+                q_text = f"{q_text} {cpc_like[0]}"
 
     body: dict[str, Any] = {"q": q_text}
     # Optional metadata filters recorded for replay — only pass through string
@@ -1102,7 +1190,30 @@ def _odp_item_document_id(item: Any) -> str:
     return f"doc:odp:{content_digest(item if not hasattr(item, 'to_dict') else item)[:16]}"
 
 
+def _odp_extract_cpc_codes(meta: Mapping[str, Any], *, limit: int = 8) -> list[str]:
+    """Return ordered CPC symbol texts from applicationMetaData when present."""
+    cpc_bag = meta.get("cpcClassificationBag") or meta.get("cpcClassifications") or []
+    if not isinstance(cpc_bag, list):
+        return []
+    codes: list[str] = []
+    for row in cpc_bag[:limit]:
+        if isinstance(row, Mapping):
+            code = (
+                row.get("cpcSymbolText")
+                or row.get("symbolText")
+                or row.get("cpcClass")
+                or row.get("class")
+                or ""
+            )
+            if code:
+                codes.append(str(code).strip())
+        elif isinstance(row, str) and row.strip():
+            codes.append(row.strip())
+    return codes
+
+
 def _odp_item_identifiers(item: Mapping[str, Any]) -> dict[str, str]:
+    """Extract stable app/pub/patent identifiers and light metadata fields."""
     identifiers: dict[str, str] = {}
     for key in (
         "applicationNumberText",
@@ -1130,23 +1241,10 @@ def _odp_item_identifiers(item: Mapping[str, Any]) -> dict[str, str]:
             val = meta.get(src)
             if val and dest not in identifiers:
                 identifiers[dest] = str(val).strip()
-        # CPC symbols (first few)
-        cpc_bag = meta.get("cpcClassificationBag") or []
-        if isinstance(cpc_bag, list):
-            codes = []
-            for row in cpc_bag[:8]:
-                if isinstance(row, Mapping):
-                    code = (
-                        row.get("cpcSymbolText")
-                        or row.get("symbolText")
-                        or row.get("cpcClass")
-                        or ""
-                    )
-                    if code:
-                        codes.append(str(code))
-            if codes:
-                identifiers["cpc"] = ";".join(codes)
-    # Preferred patent_number for Google Patents deep links
+        codes = _odp_extract_cpc_codes(meta)
+        if codes:
+            identifiers["cpc"] = ";".join(codes)
+    # Preferred patent_number for Google Patents deep links (display form).
     for cand in (
         identifiers.get("patentNumber"),
         identifiers.get("publicationNumber"),
@@ -1156,7 +1254,89 @@ def _odp_item_identifiers(item: Mapping[str, Any]) -> dict[str, str]:
         if cand:
             identifiers.setdefault("patent_number", re.sub(r"\s+", "", str(cand)))
             break
+    # Stable snake_case aliases for operator tooling.
+    if identifiers.get("applicationNumberText"):
+        identifiers.setdefault(
+            "application_number", identifiers["applicationNumberText"]
+        )
+    if identifiers.get("publicationNumber"):
+        identifiers.setdefault(
+            "publication_number", identifiers["publicationNumber"]
+        )
+    if identifiers.get("patentNumber"):
+        identifiers.setdefault("granted_patent_number", identifiers["patentNumber"])
     return identifiers
+
+
+def _normalize_patent_review_token(raw: str) -> str:
+    """Normalize a patent/pub/app token for Google Patents path segments."""
+    return re.sub(r"[^A-Za-z0-9]", "", str(raw or "")).upper()
+
+
+def _odp_human_review_urls(
+    identifiers: Mapping[str, str],
+    *,
+    document_id: str = "",
+) -> dict[str, str]:
+    """Build stable human browser URLs for a hit (open-in-browser only; no scrape).
+
+    Returns flat string keys suitable for :class:`JournalHit` metadata
+    (``google_patents_url``, ``ppubs_url``). Patent Public Search (ppubs) has
+    no stable deep-link API; operators land on the public interactive UI.
+    """
+    urls: dict[str, str] = {}
+    raw = str(
+        identifiers.get("patent_number")
+        or identifiers.get("patentNumber")
+        or identifiers.get("publicationNumber")
+        or identifiers.get("publication_number")
+        or identifiers.get("applicationNumberText")
+        or identifiers.get("application_number")
+        or ""
+    ).strip()
+    if not raw and document_id:
+        # doc:odp:<token>
+        raw = document_id.split(":", 2)[-1] if document_id.startswith("doc:") else document_id
+    token = _normalize_patent_review_token(raw)
+    if not token:
+        return urls
+    urls["google_patents_url"] = GOOGLE_PATENTS_PATENT_URL_TMPL.format(token=token)
+    # Human interactive PPS landing — never automated / scraped.
+    urls["ppubs_url"] = PPUBS_PUBLIC_URL
+    return urls
+
+
+def _odp_item_publication_fields(
+    item: Mapping[str, Any],
+) -> tuple[str, str, str, str]:
+    """Return (title, status, filing_date, cpc) from an ODP search item."""
+    title = ""
+    status = ""
+    filing = ""
+    cpc = ""
+    meta = item.get("applicationMetaData") or {}
+    if isinstance(meta, Mapping):
+        title = str(meta.get("inventionTitle") or meta.get("title") or "").strip()
+        status = str(
+            meta.get("applicationStatusDescriptionText")
+            or meta.get("applicationStatusCode")
+            or ""
+        ).strip()
+        filing = str(
+            meta.get("filingDate") or meta.get("effectiveFilingDate") or ""
+        ).strip()[:10]
+        codes = _odp_extract_cpc_codes(meta)
+        if codes:
+            cpc = ";".join(codes)
+    if not title:
+        title = str(item.get("inventionTitle") or item.get("title") or "").strip()
+    if not status:
+        status = str(item.get("applicationStatusDescriptionText") or "").strip()
+    if not filing:
+        filing = str(item.get("filingDate") or item.get("effectiveFilingDate") or "").strip()[
+            :10
+        ]
+    return title, status, filing, cpc
 
 
 def _odp_items_to_journal_hits(
@@ -1165,6 +1345,12 @@ def _odp_items_to_journal_hits(
     rank_cutoff: int,
     receipt_id: str | None,
 ) -> tuple[JournalHit, ...]:
+    """Project ODP search bag items into journal hits with review URLs.
+
+    When present, each hit carries title/status/filing/CPC, app/pub/patent
+    identifiers, and stable ``google_patents_url`` / ``ppubs_url`` for human
+    browser review (never scraped).
+    """
     out: list[JournalHit] = []
     for index, item in enumerate(items):
         rank = index + 1
@@ -1178,21 +1364,18 @@ def _odp_items_to_journal_hits(
         title = ""
         status = ""
         filing = ""
-        if isinstance(item, Mapping):
-            meta = item.get("applicationMetaData") or {}
-            if isinstance(meta, Mapping):
-                title = str(meta.get("inventionTitle") or meta.get("title") or "")
-                status = str(meta.get("applicationStatusDescriptionText") or "")
-                filing = str(
-                    meta.get("filingDate") or meta.get("effectiveFilingDate") or ""
-                )[:10]
-            title = title or str(item.get("inventionTitle") or "")
-        excerpt_parts = [p for p in (title, status, filing) if p]
-        excerpt = " | ".join(excerpt_parts)[:512] if excerpt_parts else doc_id[:512]
+        cpc = ""
         identifiers: dict[str, str] = {}
         if isinstance(item, Mapping):
+            title, status, filing, cpc = _odp_item_publication_fields(item)
             identifiers = _odp_item_identifiers(item)
-        meta_out = {
+            if cpc and "cpc" not in identifiers:
+                identifiers["cpc"] = cpc
+            elif not cpc and identifiers.get("cpc"):
+                cpc = identifiers["cpc"]
+        excerpt_parts = [p for p in (title, status, filing, cpc) if p]
+        excerpt = " | ".join(excerpt_parts)[:512] if excerpt_parts else doc_id[:512]
+        meta_out: dict[str, str] = {
             "source": "odp_search",
             "adapter": ODP_PUBLIC_ADAPTER_NAME,
         }
@@ -1202,14 +1385,13 @@ def _odp_items_to_journal_hits(
             meta_out["status"] = status[:200]
         if filing:
             meta_out["filing_date"] = filing
-        # Human review deep links (no scraping)
-        patent_token = identifiers.get("patent_number") or ""
-        if patent_token:
-            clean = re.sub(r"[^A-Za-z0-9]", "", patent_token).upper()
-            if clean:
-                meta_out["google_patents_url"] = (
-                    f"https://patents.google.com/patent/{clean}/en"
-                )
+            meta_out["filing"] = filing
+        if cpc:
+            meta_out["cpc"] = cpc[:400]
+        # Human review deep links (no scraping of Google Patents or PPS).
+        meta_out.update(
+            _odp_human_review_urls(identifiers, document_id=doc_id)
+        )
         out.append(
             JournalHit(
                 document_id=doc_id,
@@ -1705,6 +1887,8 @@ __all__ = [
     "PRIOR_ART_RUNTIME_SCHEMA_VERSION",
     "LOCAL_SNAPSHOT_ADAPTER_NAME",
     "ODP_PUBLIC_ADAPTER_NAME",
+    "GOOGLE_PATENTS_PATENT_URL_TMPL",
+    "PPUBS_PUBLIC_URL",
     "AdapterExecutionError",
     "AdapterNotRegisteredError",
     "AdapterSearchResult",

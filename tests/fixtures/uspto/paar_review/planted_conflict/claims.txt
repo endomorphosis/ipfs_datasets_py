@@ -1,0 +1,5 @@
+1. A method comprising:
+receiving a temperature signal from a probe; and
+activating a cooling valve when the temperature signal exceeds a safety threshold.
+
+2. The method of claim 1, wherein the safety threshold is stored in non-volatile memory.

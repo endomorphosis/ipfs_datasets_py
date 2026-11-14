@@ -1,0 +1,2119 @@
+{
+  "schema": "paar.obligation-catalog.v1",
+  "catalog_id": "paar.obligation-catalog.seed",
+  "version": "1.1.0",
+  "disclaimer": "This obligation catalog is a reviewed, versioned decision-support input for package conformance and prior-art diligence screening. It is not legal advice, not a completeness certification, and does not authorize filing, payment, signature, or docket mutation. MPEP entries are guidance tier and are never silently elevated above 37 C.F.R. or Title 35. Form instructions are not controlling law. Unknown authority fails closed to unknown. Exhaustive prior-art diligence means required corpora are searched or residual gaps are explicitly named \u2014 never asserts absence of all prior art and never a legal patentability opinion. Named human review is required before any export or assurance disposition.",
+  "notes": "PAAR-053/054 seed v1.1.0: core utility filing components + expanded MPEP/CFR crosswalk (format, inventorship, priority, IDS, 112 diligence, PCT ISR) and exhaustive multi-corpus prior-art obligations (US/ODP, foreign/EPO OPS, NPL). MPEP is guidance tier only. Not a literal every-paragraph MPEP dump; remaining coverage gaps must surface as unknown, never silent pass. Not legal advice; never legal patentability opinions; never Sign/Pay/Submit/auto-IDS.",
+  "obligations": [
+    {
+      "obligation_id": "obl:utility:new:specification",
+      "title": "Utility specification present",
+      "description": "A nonprovisional utility application must include a written specification describing the invention.",
+      "component": "specification",
+      "version": "1.0.0",
+      "severity": "blocking",
+      "fail_closed": "unknown",
+      "applicability": {
+        "application_types": [
+          "utility"
+        ],
+        "scenarios": [
+          "new_application"
+        ],
+        "components": [
+          "specification"
+        ],
+        "notes": ""
+      },
+      "authority_cites": [
+        {
+          "citation": "35 U.S.C. 111(a)",
+          "tier": "statute",
+          "is_controlling": true,
+          "source_id": "src:35-usc-111",
+          "notes": ""
+        },
+        {
+          "citation": "37 C.F.R. 1.51(b)",
+          "tier": "regulation",
+          "is_controlling": true,
+          "source_id": "src:37-cfr-1-51",
+          "notes": ""
+        }
+      ],
+      "guidance_cites": [
+        {
+          "citation": "MPEP 601",
+          "tier": "guidance",
+          "is_controlling": false,
+          "source_id": null,
+          "notes": "Guidance only; not elevated above CFR/statute."
+        }
+      ],
+      "evidence_predicates": [
+        {
+          "kind": "ifw_code_present",
+          "target": "SPEC",
+          "description": "Specification IFW document code present in package inventory",
+          "parameters": {
+            "codes": [
+              "SPEC"
+            ]
+          },
+          "mandatory": true
+        },
+        {
+          "kind": "document_present",
+          "target": "specification",
+          "description": "Specification document present",
+          "parameters": {},
+          "mandatory": true
+        }
+      ],
+      "notes": "Fail closed to unknown when inventory/extract unavailable."
+    },
+    {
+      "obligation_id": "obl:utility:new:claims",
+      "title": "Utility claims present",
+      "description": "A nonprovisional utility application must include one or more claims particularly pointing out and distinctly claiming the subject matter.",
+      "component": "claims",
+      "version": "1.0.0",
+      "severity": "blocking",
+      "fail_closed": "unknown",
+      "applicability": {
+        "application_types": [
+          "utility"
+        ],
+        "scenarios": [
+          "new_application"
+        ],
+        "components": [
+          "claims"
+        ],
+        "notes": ""
+      },
+      "authority_cites": [
+        {
+          "citation": "35 U.S.C. 112(b)",
+          "tier": "statute",
+          "is_controlling": true,
+          "source_id": null,
+          "notes": ""
+        },
+        {
+          "citation": "37 C.F.R. 1.75",
+          "tier": "regulation",
+          "is_controlling": true,
+          "source_id": null,
+          "notes": ""
+        },
+        {
+          "citation": "37 C.F.R. 1.51(b)",
+          "tier": "regulation",
+          "is_controlling": true,
+          "source_id": "src:37-cfr-1-51",
+          "notes": ""
+        }
+      ],
+      "guidance_cites": [
+        {
+          "citation": "MPEP 608.01(m)",
+          "tier": "guidance",
+          "is_controlling": false,
+          "source_id": null,
+          "notes": "Form of claims \u2014 guidance tier only."
+        }
+      ],
+      "evidence_predicates": [
+        {
+          "kind": "ifw_code_present",
+          "target": "CLM",
+          "description": "Claims IFW code present",
+          "parameters": {
+            "codes": [
+              "CLM"
+            ]
+          },
+          "mandatory": true
+        },
+        {
+          "kind": "text_present",
+          "target": "claims",
+          "description": "Parsed claim text available for review",
+          "parameters": {},
+          "mandatory": true
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "obligation_id": "obl:utility:new:drawings",
+      "title": "Utility drawings when necessary",
+      "description": "Drawings are required where necessary for understanding of the subject matter sought to be patented.",
+      "component": "drawings",
+      "version": "1.0.0",
+      "severity": "major",
+      "fail_closed": "unknown",
+      "applicability": {
+        "application_types": [
+          "utility"
+        ],
+        "scenarios": [
+          "new_application"
+        ],
+        "components": [
+          "drawings"
+        ],
+        "notes": "Conditional on necessity for understanding."
+      },
+      "authority_cites": [
+        {
+          "citation": "35 U.S.C. 113",
+          "tier": "statute",
+          "is_controlling": true,
+          "source_id": null,
+          "notes": ""
+        },
+        {
+          "citation": "37 C.F.R. 1.81",
+          "tier": "regulation",
+          "is_controlling": true,
+          "source_id": null,
+          "notes": ""
+        }
+      ],
+      "guidance_cites": [
+        {
+          "citation": "MPEP 608.02",
+          "tier": "guidance",
+          "is_controlling": false,
+          "source_id": null,
+          "notes": "Drawing guidance only."
+        }
+      ],
+      "evidence_predicates": [
+        {
+          "kind": "ifw_code_present",
+          "target": "DRW",
+          "description": "Drawing IFW code present when drawings are necessary",
+          "parameters": {
+            "codes": [
+              "DRW"
+            ],
+            "conditional_on": "drawings_necessary_for_understanding"
+          },
+          "mandatory": true
+        }
+      ],
+      "notes": "Necessity determination is human_only; machine checks presence only."
+    },
+    {
+      "obligation_id": "obl:utility:new:ads",
+      "title": "Application data sheet",
+      "description": "Application data sheet (ADS) provides bibliographic data for the application.",
+      "component": "ads",
+      "version": "1.0.0",
+      "severity": "major",
+      "fail_closed": "unknown",
+      "applicability": {
+        "application_types": [
+          "utility"
+        ],
+        "scenarios": [
+          "new_application"
+        ],
+        "components": [
+          "ads"
+        ],
+        "notes": ""
+      },
+      "authority_cites": [
+        {
+          "citation": "37 C.F.R. 1.76",
+          "tier": "regulation",
+          "is_controlling": true,
+          "source_id": null,
+          "notes": ""
+        }
+      ],
+      "guidance_cites": [
+        {
+          "citation": "MPEP 601.05",
+          "tier": "guidance",
+          "is_controlling": false,
+          "source_id": null,
+          "notes": "ADS practice guidance."
+        }
+      ],
+      "evidence_predicates": [
+        {
+          "kind": "ifw_code_present",
+          "target": "ADS",
+          "description": "ADS IFW code present",
+          "parameters": {
+            "codes": [
+              "ADS"
+            ]
+          },
+          "mandatory": true
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "obligation_id": "obl:utility:new:oath-declaration",
+      "title": "Oath or declaration",
+      "description": "Inventor oath or declaration under 37 C.F.R. 1.63 (or substitute statement) is required for nonprovisional applications.",
+      "component": "oath",
+      "version": "1.0.0",
+      "severity": "blocking",
+      "fail_closed": "unknown",
+      "applicability": {
+        "application_types": [
+          "utility"
+        ],
+        "scenarios": [
+          "new_application"
+        ],
+        "components": [
+          "oath"
+        ],
+        "notes": ""
+      },
+      "authority_cites": [
+        {
+          "citation": "35 U.S.C. 115",
+          "tier": "statute",
+          "is_controlling": true,
+          "source_id": null,
+          "notes": ""
+        },
+        {
+          "citation": "37 C.F.R. 1.63",
+          "tier": "regulation",
+          "is_controlling": true,
+          "source_id": null,
+          "notes": ""
+        }
+      ],
+      "guidance_cites": [
+        {
+          "citation": "MPEP 602",
+          "tier": "guidance",
+          "is_controlling": false,
+          "source_id": null,
+          "notes": "Oath/declaration guidance only."
+        }
+      ],
+      "evidence_predicates": [
+        {
+          "kind": "ifw_code_present",
+          "target": "OATH",
+          "description": "Oath/declaration IFW code present",
+          "parameters": {
+            "codes": [
+              "OATH",
+              "DECL"
+            ]
+          },
+          "mandatory": true
+        }
+      ],
+      "notes": "Signature validity is human_only; presence check only."
+    },
+    {
+      "obligation_id": "obl:utility:new:fees",
+      "title": "Filing fee process hygiene",
+      "description": "Basic filing, search, and examination fees (or fee deficiency notice) should be reflected in the package inventory. Payment execution is never automated.",
+      "component": "fees",
+      "version": "1.0.0",
+      "severity": "major",
+      "fail_closed": "unknown",
+      "applicability": {
+        "application_types": [
+          "utility"
+        ],
+        "scenarios": [
+          "new_application"
+        ],
+        "components": [
+          "fees"
+        ],
+        "notes": "Process hygiene only; no payment automation."
+      },
+      "authority_cites": [
+        {
+          "citation": "37 C.F.R. 1.16",
+          "tier": "regulation",
+          "is_controlling": true,
+          "source_id": null,
+          "notes": ""
+        },
+        {
+          "citation": "35 U.S.C. 41",
+          "tier": "statute",
+          "is_controlling": true,
+          "source_id": null,
+          "notes": ""
+        }
+      ],
+      "guidance_cites": [
+        {
+          "citation": "MPEP 509",
+          "tier": "guidance",
+          "is_controlling": false,
+          "source_id": null,
+          "notes": "Fee guidance only."
+        }
+      ],
+      "evidence_predicates": [
+        {
+          "kind": "ifw_code_present",
+          "target": "FEE",
+          "description": "Fee or payment-related IFW codes when present",
+          "parameters": {
+            "codes": [
+              "IFEE",
+              "WFEE",
+              "N417.PYMT"
+            ]
+          },
+          "mandatory": false
+        },
+        {
+          "kind": "human_process",
+          "target": "fee_payment",
+          "description": "Natural person pays fees in Patent Center; automation blocked",
+          "parameters": {
+            "auto_pay_blocked": true
+          },
+          "mandatory": true
+        }
+      ],
+      "notes": "Never Sign/Pay/Submit."
+    },
+    {
+      "obligation_id": "obl:utility:ids:process-hygiene",
+      "title": "IDS process hygiene (not materiality)",
+      "description": "Information Disclosure Statement process hygiene: candidate queues and human disposition only. Does not judge 37 C.F.R. 1.56 materiality and never auto-files an IDS.",
+      "component": "ids",
+      "version": "1.0.0",
+      "severity": "human_only",
+      "fail_closed": "human_only",
+      "applicability": {
+        "application_types": [
+          "utility",
+          "any"
+        ],
+        "scenarios": [
+          "information_disclosure",
+          "new_application",
+          "any"
+        ],
+        "components": [
+          "ids"
+        ],
+        "notes": "Process hygiene only; not materiality judgment."
+      },
+      "authority_cites": [
+        {
+          "citation": "37 C.F.R. 1.56",
+          "tier": "regulation",
+          "is_controlling": true,
+          "source_id": null,
+          "notes": "Duty of disclosure \u2014 process framing only; no materiality automation."
+        },
+        {
+          "citation": "37 C.F.R. 1.97",
+          "tier": "regulation",
+          "is_controlling": true,
+          "source_id": null,
+          "notes": "IDS timing rules \u2014 cited for process awareness only."
+        },
+        {
+          "citation": "37 C.F.R. 1.98",
+          "tier": "regulation",
+          "is_controlling": true,
+          "source_id": null,
+          "notes": "IDS content rules \u2014 process checklist only."
+        }
+      ],
+      "guidance_cites": [
+        {
+          "citation": "MPEP 609",
+          "tier": "guidance",
+          "is_controlling": false,
+          "source_id": null,
+          "notes": "IDS guidance; never elevated above CFR."
+        }
+      ],
+      "evidence_predicates": [
+        {
+          "kind": "human_process",
+          "target": "ids_disposition",
+          "description": "Human disposition required before IDS queue promotion; auto_file_blocked",
+          "parameters": {
+            "auto_file_blocked": true,
+            "requires_human_disposition": true
+          },
+          "mandatory": true
+        }
+      ],
+      "notes": "Forbidden: auto-file IDS; assert materiality; Sign/Pay/Submit."
+    },
+    {
+      "obligation_id": "obl:utility:new:abstract-word-limit",
+      "title": "Abstract word limit",
+      "description": "The abstract of the technical disclosure should generally be limited to 150 words (37 C.F.R. 1.72(b)). Machine check is heuristic on OCR text.",
+      "component": "abstract",
+      "version": "1.0.0",
+      "severity": "minor",
+      "fail_closed": "unknown",
+      "applicability": {
+        "application_types": [
+          "utility"
+        ],
+        "scenarios": [
+          "new_application"
+        ],
+        "components": [
+          "abstract"
+        ],
+        "notes": "Heuristic OCR word count."
+      },
+      "authority_cites": [
+        {
+          "citation": "37 C.F.R. 1.72(b)",
+          "tier": "regulation",
+          "is_controlling": true,
+          "source_id": null,
+          "notes": ""
+        }
+      ],
+      "guidance_cites": [
+        {
+          "citation": "MPEP 608.01(b)",
+          "tier": "guidance",
+          "is_controlling": false,
+          "source_id": null,
+          "notes": "Abstract guidance only."
+        }
+      ],
+      "evidence_predicates": [
+        {
+          "kind": "word_count_max",
+          "target": "abstract",
+          "description": "Abstract word count should not exceed 150 (heuristic)",
+          "parameters": {
+            "max_words": 150,
+            "heuristic": true
+          },
+          "mandatory": false
+        },
+        {
+          "kind": "ifw_code_present",
+          "target": "ABST",
+          "description": "Abstract IFW code present",
+          "parameters": {
+            "codes": [
+              "ABST"
+            ]
+          },
+          "mandatory": true
+        }
+      ],
+      "notes": "OCR false positives remain labeled heuristic."
+    },
+    {
+      "obligation_id": "obl:utility:new:title",
+      "title": "Application title present",
+      "description": "The title of the invention should be technically accurate and descriptive; presence on ADS/specification is machine-checkable.",
+      "component": "title",
+      "version": "1.0.0",
+      "severity": "minor",
+      "fail_closed": "unknown",
+      "applicability": {
+        "application_types": [
+          "utility"
+        ],
+        "scenarios": [
+          "new_application"
+        ],
+        "components": [
+          "title"
+        ],
+        "notes": ""
+      },
+      "authority_cites": [
+        {
+          "citation": "37 C.F.R. 1.72(a)",
+          "tier": "regulation",
+          "is_controlling": true,
+          "source_id": null,
+          "notes": ""
+        }
+      ],
+      "guidance_cites": [
+        {
+          "citation": "MPEP 606",
+          "tier": "guidance",
+          "is_controlling": false,
+          "source_id": null,
+          "notes": "Title guidance only."
+        }
+      ],
+      "evidence_predicates": [
+        {
+          "kind": "field_present",
+          "target": "title",
+          "description": "Title field present on ADS or specification header",
+          "parameters": {
+            "min_chars": 2
+          },
+          "mandatory": true
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "obligation_id": "obl:utility:new:authority-corpus-bound",
+      "title": "Authority corpus binding required for satisfied status",
+      "description": "Package conformance cannot mark obligations satisfied when the local MPEP/CFR authority corpus is unbound or missing. Fail closed to unknown.",
+      "component": "authority",
+      "version": "1.0.0",
+      "severity": "blocking",
+      "fail_closed": "unknown",
+      "applicability": {
+        "application_types": [
+          "any"
+        ],
+        "scenarios": [
+          "any"
+        ],
+        "components": [
+          "authority"
+        ],
+        "notes": "Meta-obligation for fail-closed evaluation."
+      },
+      "authority_cites": [
+        {
+          "citation": "program:fail-closed",
+          "tier": "unknown",
+          "is_controlling": false,
+          "source_id": null,
+          "notes": "Program invariant; unknown authority \u2192 unknown status."
+        }
+      ],
+      "guidance_cites": [],
+      "evidence_predicates": [
+        {
+          "kind": "authority_corpus_bound",
+          "target": "authority_corpus",
+          "description": "Local authority corpus digests bound before satisfied disposition",
+          "parameters": {
+            "missing_yields": "unknown"
+          },
+          "mandatory": true
+        }
+      ],
+      "notes": "Missing authority cannot pass as satisfied."
+    },
+    {
+      "obligation_id": "obl:utility:new:inventor-identification",
+      "title": "Inventor identification on ADS/oath package",
+      "description": "Inventor names must be identified for a nonprovisional utility application (presence check only; inventorship correctness is human_only).",
+      "component": "inventorship",
+      "version": "1.1.0",
+      "severity": "major",
+      "fail_closed": "unknown",
+      "applicability": {
+        "application_types": [
+          "utility"
+        ],
+        "scenarios": [
+          "new_application"
+        ],
+        "components": [
+          "inventorship",
+          "ads",
+          "oath"
+        ],
+        "notes": ""
+      },
+      "authority_cites": [
+        {
+          "citation": "35 U.S.C. 115",
+          "tier": "statute",
+          "is_controlling": true,
+          "source_id": null,
+          "notes": ""
+        },
+        {
+          "citation": "37 C.F.R. 1.41",
+          "tier": "regulation",
+          "is_controlling": true,
+          "source_id": null,
+          "notes": ""
+        },
+        {
+          "citation": "37 C.F.R. 1.76",
+          "tier": "regulation",
+          "is_controlling": true,
+          "source_id": null,
+          "notes": ""
+        }
+      ],
+      "guidance_cites": [
+        {
+          "citation": "MPEP 602.01",
+          "tier": "guidance",
+          "is_controlling": false,
+          "source_id": null,
+          "notes": "Inventor identification guidance only."
+        }
+      ],
+      "evidence_predicates": [
+        {
+          "kind": "ifw_code_present",
+          "target": "ADS",
+          "description": "ADS present for inventor bibliographic data",
+          "parameters": {
+            "codes": [
+              "ADS"
+            ]
+          },
+          "mandatory": true
+        },
+        {
+          "kind": "ifw_code_present",
+          "target": "OATH",
+          "description": "Oath/declaration or substitute present",
+          "parameters": {
+            "codes": [
+              "OATH",
+              "DECL"
+            ]
+          },
+          "mandatory": false
+        }
+      ],
+      "notes": "Does not judge inventorship correctness."
+    },
+    {
+      "obligation_id": "obl:utility:new:power-of-attorney",
+      "title": "Power of attorney / customer number evidence when represented",
+      "description": "When the applicant is represented, power of attorney / customer number documentation should appear in IFW (process hygiene).",
+      "component": "representation",
+      "version": "1.1.0",
+      "severity": "minor",
+      "fail_closed": "unknown",
+      "applicability": {
+        "application_types": [
+          "utility",
+          "any"
+        ],
+        "scenarios": [
+          "new_application",
+          "any"
+        ],
+        "components": [
+          "representation"
+        ],
+        "notes": "Conditional when representation claimed."
+      },
+      "authority_cites": [
+        {
+          "citation": "37 C.F.R. 1.31",
+          "tier": "regulation",
+          "is_controlling": true,
+          "source_id": null,
+          "notes": ""
+        },
+        {
+          "citation": "37 C.F.R. 1.32",
+          "tier": "regulation",
+          "is_controlling": true,
+          "source_id": null,
+          "notes": ""
+        }
+      ],
+      "guidance_cites": [
+        {
+          "citation": "MPEP 402",
+          "tier": "guidance",
+          "is_controlling": false,
+          "source_id": null,
+          "notes": "Power of attorney guidance."
+        }
+      ],
+      "evidence_predicates": [
+        {
+          "kind": "ifw_code_present",
+          "target": "PA",
+          "description": "Power of attorney / POA-related IFW code",
+          "parameters": {
+            "codes": [
+              "PA",
+              "POA"
+            ]
+          },
+          "mandatory": false
+        }
+      ],
+      "notes": "Optional presence check; absence is unknown not automatic unsatisfied."
+    },
+    {
+      "obligation_id": "obl:utility:new:benefit-claim-docs",
+      "title": "Domestic benefit / priority claim supporting documents when claimed",
+      "description": "When priority/benefit is claimed, supporting continuity documentation should be reflected in the package or ADS claim data.",
+      "component": "priority",
+      "version": "1.1.0",
+      "severity": "major",
+      "fail_closed": "unknown",
+      "applicability": {
+        "application_types": [
+          "utility"
+        ],
+        "scenarios": [
+          "new_application",
+          "any"
+        ],
+        "components": [
+          "priority"
+        ],
+        "notes": ""
+      },
+      "authority_cites": [
+        {
+          "citation": "35 U.S.C. 119",
+          "tier": "statute",
+          "is_controlling": true,
+          "source_id": null,
+          "notes": ""
+        },
+        {
+          "citation": "35 U.S.C. 120",
+          "tier": "statute",
+          "is_controlling": true,
+          "source_id": null,
+          "notes": ""
+        },
+        {
+          "citation": "37 C.F.R. 1.78",
+          "tier": "regulation",
+          "is_controlling": true,
+          "source_id": null,
+          "notes": ""
+        }
+      ],
+      "guidance_cites": [
+        {
+          "citation": "MPEP 211",
+          "tier": "guidance",
+          "is_controlling": false,
+          "source_id": null,
+          "notes": ""
+        },
+        {
+          "citation": "MPEP 201.06",
+          "tier": "guidance",
+          "is_controlling": false,
+          "source_id": null,
+          "notes": ""
+        }
+      ],
+      "evidence_predicates": [
+        {
+          "kind": "ifw_code_present",
+          "target": "ADS",
+          "description": "ADS present for benefit claims",
+          "parameters": {
+            "codes": [
+              "ADS"
+            ]
+          },
+          "mandatory": true
+        },
+        {
+          "kind": "field_present",
+          "target": "priority",
+          "description": "Priority/filing date field when known",
+          "parameters": {
+            "field": "filingDate"
+          },
+          "mandatory": false
+        }
+      ],
+      "notes": "Machine checks presence; legal entitlement is human review."
+    },
+    {
+      "obligation_id": "obl:utility:new:claims-numbering-format",
+      "title": "Claims numbering / form (heuristic)",
+      "description": "Claims should be present as text suitable for numbering review; form-of-claims heuristics are labeled and not legal 112 conclusions.",
+      "component": "claims_format",
+      "version": "1.1.0",
+      "severity": "minor",
+      "fail_closed": "unknown",
+      "applicability": {
+        "application_types": [
+          "utility"
+        ],
+        "scenarios": [
+          "new_application",
+          "amendment",
+          "any"
+        ],
+        "components": [
+          "claims"
+        ],
+        "notes": "Heuristic."
+      },
+      "authority_cites": [
+        {
+          "citation": "37 C.F.R. 1.75",
+          "tier": "regulation",
+          "is_controlling": true,
+          "source_id": null,
+          "notes": ""
+        },
+        {
+          "citation": "37 C.F.R. 1.126",
+          "tier": "regulation",
+          "is_controlling": true,
+          "source_id": null,
+          "notes": ""
+        }
+      ],
+      "guidance_cites": [
+        {
+          "citation": "MPEP 608.01(m)",
+          "tier": "guidance",
+          "is_controlling": false,
+          "source_id": null,
+          "notes": "Form of claims guidance only."
+        },
+        {
+          "citation": "MPEP 608.01(n)",
+          "tier": "guidance",
+          "is_controlling": false,
+          "source_id": null,
+          "notes": ""
+        }
+      ],
+      "evidence_predicates": [
+        {
+          "kind": "text_present",
+          "target": "claims",
+          "description": "Claim text available for form heuristics",
+          "parameters": {},
+          "mandatory": true
+        },
+        {
+          "kind": "heuristic_format",
+          "target": "claims_numbering",
+          "description": "Human/OCR review of claim numbering and terminal punctuation",
+          "parameters": {
+            "checks": [
+              "contiguous_numbering",
+              "terminal_period",
+              "independent_present"
+            ]
+          },
+          "mandatory": false
+        }
+      ],
+      "notes": "Heuristic; OCR false positives remain labeled."
+    },
+    {
+      "obligation_id": "obl:utility:new:spec-written-description-text",
+      "title": "Specification written description text available for review",
+      "description": "Specification text extract must be available so written-description / enablement diligence can be performed by humans; machine only checks text presence and minimum length (not legal sufficiency).",
+      "component": "specification",
+      "version": "1.1.0",
+      "severity": "blocking",
+      "fail_closed": "unknown",
+      "applicability": {
+        "application_types": [
+          "utility"
+        ],
+        "scenarios": [
+          "new_application"
+        ],
+        "components": [
+          "specification"
+        ],
+        "notes": ""
+      },
+      "authority_cites": [
+        {
+          "citation": "35 U.S.C. 112(a)",
+          "tier": "statute",
+          "is_controlling": true,
+          "source_id": null,
+          "notes": ""
+        },
+        {
+          "citation": "37 C.F.R. 1.71",
+          "tier": "regulation",
+          "is_controlling": true,
+          "source_id": null,
+          "notes": ""
+        }
+      ],
+      "guidance_cites": [
+        {
+          "citation": "MPEP 2161",
+          "tier": "guidance",
+          "is_controlling": false,
+          "source_id": null,
+          "notes": ""
+        },
+        {
+          "citation": "MPEP 2163",
+          "tier": "guidance",
+          "is_controlling": false,
+          "source_id": null,
+          "notes": ""
+        },
+        {
+          "citation": "MPEP 608.01",
+          "tier": "guidance",
+          "is_controlling": false,
+          "source_id": null,
+          "notes": ""
+        }
+      ],
+      "evidence_predicates": [
+        {
+          "kind": "text_present",
+          "target": "specification",
+          "description": "Specification extract present",
+          "parameters": {},
+          "mandatory": true
+        },
+        {
+          "kind": "word_count_min",
+          "target": "specification",
+          "description": "Specification has non-trivial length (heuristic min words)",
+          "parameters": {
+            "min_words": 50
+          },
+          "mandatory": false
+        }
+      ],
+      "notes": "Never asserts enablement/written description legal sufficiency."
+    },
+    {
+      "obligation_id": "obl:utility:new:spec-preferred-arrangement",
+      "title": "Specification preferred arrangement sections (heuristic)",
+      "description": "Preferred arrangement under 37 C.F.R. 1.77 / MPEP 608.01(a) is guidance for section headings; machine flags missing common headings as heuristic review items.",
+      "component": "specification_format",
+      "version": "1.1.0",
+      "severity": "informational",
+      "fail_closed": "unknown",
+      "applicability": {
+        "application_types": [
+          "utility"
+        ],
+        "scenarios": [
+          "new_application"
+        ],
+        "components": [
+          "specification"
+        ],
+        "notes": "Heuristic headings."
+      },
+      "authority_cites": [
+        {
+          "citation": "37 C.F.R. 1.77",
+          "tier": "regulation",
+          "is_controlling": true,
+          "source_id": null,
+          "notes": ""
+        }
+      ],
+      "guidance_cites": [
+        {
+          "citation": "MPEP 608.01(a)",
+          "tier": "guidance",
+          "is_controlling": false,
+          "source_id": null,
+          "notes": ""
+        }
+      ],
+      "evidence_predicates": [
+        {
+          "kind": "text_present",
+          "target": "specification",
+          "description": "Spec text for section heuristics",
+          "parameters": {},
+          "mandatory": false
+        },
+        {
+          "kind": "heuristic_format",
+          "target": "spec_sections",
+          "description": "Background/summary/detailed description heading heuristics",
+          "parameters": {
+            "sections": [
+              "background",
+              "summary",
+              "brief_description_drawings",
+              "detailed_description"
+            ]
+          },
+          "mandatory": false
+        }
+      ],
+      "notes": "Preferred arrangement is not a hard legal bar by itself."
+    },
+    {
+      "obligation_id": "obl:utility:new:drawings-formalities",
+      "title": "Drawing formalities process hygiene",
+      "description": "When drawings are present, formalities (37 C.F.R. 1.84) remain human review; machine checks DRW presence.",
+      "component": "drawings",
+      "version": "1.1.0",
+      "severity": "minor",
+      "fail_closed": "unknown",
+      "applicability": {
+        "application_types": [
+          "utility"
+        ],
+        "scenarios": [
+          "new_application"
+        ],
+        "components": [
+          "drawings"
+        ],
+        "notes": ""
+      },
+      "authority_cites": [
+        {
+          "citation": "37 C.F.R. 1.84",
+          "tier": "regulation",
+          "is_controlling": true,
+          "source_id": null,
+          "notes": ""
+        },
+        {
+          "citation": "35 U.S.C. 113",
+          "tier": "statute",
+          "is_controlling": true,
+          "source_id": null,
+          "notes": ""
+        }
+      ],
+      "guidance_cites": [
+        {
+          "citation": "MPEP 608.02",
+          "tier": "guidance",
+          "is_controlling": false,
+          "source_id": null,
+          "notes": ""
+        }
+      ],
+      "evidence_predicates": [
+        {
+          "kind": "ifw_code_present",
+          "target": "DRW",
+          "description": "Drawings IFW present when filed",
+          "parameters": {
+            "codes": [
+              "DRW"
+            ]
+          },
+          "mandatory": false
+        },
+        {
+          "kind": "human_process",
+          "target": "drawing_formalities",
+          "description": "Human review of drawing formalities; automation blocked",
+          "parameters": {
+            "auto_file_blocked": true
+          },
+          "mandatory": true
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "obligation_id": "obl:utility:new:abstract-present",
+      "title": "Abstract of the disclosure present",
+      "description": "An abstract of the technical disclosure should be included (presence + word-limit sibling obligation).",
+      "component": "abstract",
+      "version": "1.1.0",
+      "severity": "major",
+      "fail_closed": "unknown",
+      "applicability": {
+        "application_types": [
+          "utility"
+        ],
+        "scenarios": [
+          "new_application"
+        ],
+        "components": [
+          "abstract"
+        ],
+        "notes": ""
+      },
+      "authority_cites": [
+        {
+          "citation": "37 C.F.R. 1.72(b)",
+          "tier": "regulation",
+          "is_controlling": true,
+          "source_id": null,
+          "notes": ""
+        }
+      ],
+      "guidance_cites": [
+        {
+          "citation": "MPEP 608.01(b)",
+          "tier": "guidance",
+          "is_controlling": false,
+          "source_id": null,
+          "notes": ""
+        }
+      ],
+      "evidence_predicates": [
+        {
+          "kind": "ifw_code_present",
+          "target": "ABST",
+          "description": "Abstract IFW code",
+          "parameters": {
+            "codes": [
+              "ABST"
+            ]
+          },
+          "mandatory": true
+        },
+        {
+          "kind": "text_present",
+          "target": "abstract",
+          "description": "Abstract text extract",
+          "parameters": {},
+          "mandatory": false
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "obligation_id": "obl:utility:new:entity-status-declared",
+      "title": "Entity status declared (fee process)",
+      "description": "Entity status (large/small/micro) should be reflected for fee process hygiene; certification accuracy is human_only.",
+      "component": "fees",
+      "version": "1.1.0",
+      "severity": "minor",
+      "fail_closed": "unknown",
+      "applicability": {
+        "application_types": [
+          "utility",
+          "any"
+        ],
+        "scenarios": [
+          "new_application",
+          "any"
+        ],
+        "components": [
+          "fees"
+        ],
+        "notes": ""
+      },
+      "authority_cites": [
+        {
+          "citation": "37 C.F.R. 1.27",
+          "tier": "regulation",
+          "is_controlling": true,
+          "source_id": null,
+          "notes": ""
+        },
+        {
+          "citation": "37 C.F.R. 1.28",
+          "tier": "regulation",
+          "is_controlling": true,
+          "source_id": null,
+          "notes": ""
+        },
+        {
+          "citation": "35 U.S.C. 41",
+          "tier": "statute",
+          "is_controlling": true,
+          "source_id": null,
+          "notes": ""
+        }
+      ],
+      "guidance_cites": [
+        {
+          "citation": "MPEP 509.02",
+          "tier": "guidance",
+          "is_controlling": false,
+          "source_id": null,
+          "notes": ""
+        }
+      ],
+      "evidence_predicates": [
+        {
+          "kind": "field_present",
+          "target": "entity_status",
+          "description": "Entity status field when present in meta",
+          "parameters": {
+            "field": "businessEntityStatusCategory"
+          },
+          "mandatory": false
+        },
+        {
+          "kind": "human_process",
+          "target": "entity_status_certification",
+          "description": "Natural person certifies entity status; automation blocked",
+          "parameters": {
+            "auto_file_blocked": true
+          },
+          "mandatory": true
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "obligation_id": "obl:utility:ids:document-presence",
+      "title": "IDS document present when disclosure package used",
+      "description": "When an IDS is part of the package, IFW should show IDS/citation documents. Materiality and completeness remain human_only; never auto-file.",
+      "component": "ids",
+      "version": "1.1.0",
+      "severity": "major",
+      "fail_closed": "unknown",
+      "applicability": {
+        "application_types": [
+          "utility",
+          "any"
+        ],
+        "scenarios": [
+          "information_disclosure",
+          "new_application",
+          "any"
+        ],
+        "components": [
+          "ids"
+        ],
+        "notes": ""
+      },
+      "authority_cites": [
+        {
+          "citation": "37 C.F.R. 1.97",
+          "tier": "regulation",
+          "is_controlling": true,
+          "source_id": null,
+          "notes": ""
+        },
+        {
+          "citation": "37 C.F.R. 1.98",
+          "tier": "regulation",
+          "is_controlling": true,
+          "source_id": null,
+          "notes": ""
+        }
+      ],
+      "guidance_cites": [
+        {
+          "citation": "MPEP 609",
+          "tier": "guidance",
+          "is_controlling": false,
+          "source_id": null,
+          "notes": ""
+        }
+      ],
+      "evidence_predicates": [
+        {
+          "kind": "ifw_code_present",
+          "target": "IDS",
+          "description": "IDS or citation list IFW codes",
+          "parameters": {
+            "codes": [
+              "IDS",
+              "1449",
+              "892",
+              "REF.OTHER"
+            ]
+          },
+          "mandatory": false
+        },
+        {
+          "kind": "human_process",
+          "target": "ids_filing",
+          "description": "Human files IDS; auto_file_blocked",
+          "parameters": {
+            "auto_file_blocked": true,
+            "requires_human_disposition": true
+          },
+          "mandatory": true
+        }
+      ],
+      "notes": "Forbidden: auto-file IDS; assert materiality."
+    },
+    {
+      "obligation_id": "obl:utility:new:signature-human-only",
+      "title": "Inventor/applicant signature is human-only",
+      "description": "Oath/declaration signatures and certifications are natural-person hard barriers.",
+      "component": "signature",
+      "version": "1.1.0",
+      "severity": "human_only",
+      "fail_closed": "human_only",
+      "applicability": {
+        "application_types": [
+          "any"
+        ],
+        "scenarios": [
+          "any"
+        ],
+        "components": [
+          "signature",
+          "oath"
+        ],
+        "notes": ""
+      },
+      "authority_cites": [
+        {
+          "citation": "35 U.S.C. 115",
+          "tier": "statute",
+          "is_controlling": true,
+          "source_id": null,
+          "notes": ""
+        },
+        {
+          "citation": "37 C.F.R. 1.63",
+          "tier": "regulation",
+          "is_controlling": true,
+          "source_id": null,
+          "notes": ""
+        },
+        {
+          "citation": "37 C.F.R. 1.4",
+          "tier": "regulation",
+          "is_controlling": true,
+          "source_id": null,
+          "notes": ""
+        }
+      ],
+      "guidance_cites": [
+        {
+          "citation": "MPEP 602",
+          "tier": "guidance",
+          "is_controlling": false,
+          "source_id": null,
+          "notes": ""
+        }
+      ],
+      "evidence_predicates": [
+        {
+          "kind": "human_process",
+          "target": "signature",
+          "description": "Natural person signs; Sign/Pay/Submit blocked",
+          "parameters": {
+            "auto_sign_blocked": true,
+            "auto_file_blocked": true
+          },
+          "mandatory": true
+        }
+      ],
+      "notes": "Never Sign/Pay/Submit."
+    },
+    {
+      "obligation_id": "obl:utility:new:nonpublication-diligence",
+      "title": "Publication / nonpublication request diligence",
+      "description": "Nonpublication request applicability and publication posture are human diligence items; machine may note publication evidence when present.",
+      "component": "publication",
+      "version": "1.1.0",
+      "severity": "human_only",
+      "fail_closed": "human_only",
+      "applicability": {
+        "application_types": [
+          "utility"
+        ],
+        "scenarios": [
+          "new_application",
+          "any"
+        ],
+        "components": [
+          "publication"
+        ],
+        "notes": ""
+      },
+      "authority_cites": [
+        {
+          "citation": "35 U.S.C. 122(b)",
+          "tier": "statute",
+          "is_controlling": true,
+          "source_id": null,
+          "notes": ""
+        },
+        {
+          "citation": "37 C.F.R. 1.213",
+          "tier": "regulation",
+          "is_controlling": true,
+          "source_id": null,
+          "notes": ""
+        }
+      ],
+      "guidance_cites": [
+        {
+          "citation": "MPEP 1122",
+          "tier": "guidance",
+          "is_controlling": false,
+          "source_id": null,
+          "notes": ""
+        }
+      ],
+      "evidence_predicates": [
+        {
+          "kind": "human_process",
+          "target": "nonpublication",
+          "description": "Human confirms nonpublication/publication posture",
+          "parameters": {
+            "requires_human_disposition": true
+          },
+          "mandatory": true
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "obligation_id": "obl:utility:new:export-control-diligence",
+      "title": "Foreign filing license / export control diligence",
+      "description": "Foreign filing license and export-control posture are human-only diligence; automation never files foreign applications.",
+      "component": "export_control",
+      "version": "1.1.0",
+      "severity": "human_only",
+      "fail_closed": "human_only",
+      "applicability": {
+        "application_types": [
+          "utility",
+          "any"
+        ],
+        "scenarios": [
+          "any"
+        ],
+        "components": [
+          "export_control"
+        ],
+        "notes": ""
+      },
+      "authority_cites": [
+        {
+          "citation": "35 U.S.C. 184",
+          "tier": "statute",
+          "is_controlling": true,
+          "source_id": null,
+          "notes": ""
+        },
+        {
+          "citation": "37 C.F.R. 5.11",
+          "tier": "regulation",
+          "is_controlling": true,
+          "source_id": null,
+          "notes": ""
+        }
+      ],
+      "guidance_cites": [
+        {
+          "citation": "MPEP 140",
+          "tier": "guidance",
+          "is_controlling": false,
+          "source_id": null,
+          "notes": ""
+        }
+      ],
+      "evidence_predicates": [
+        {
+          "kind": "human_process",
+          "target": "export_control",
+          "description": "Human confirms FFL/export posture",
+          "parameters": {
+            "requires_human_disposition": true
+          },
+          "mandatory": true
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "obligation_id": "obl:utility:new:112-clarity-human-review",
+      "title": "35 U.S.C. 112 clarity / antecedent human review",
+      "description": "Claim clarity, antecedent basis, and means-plus-function interpretation remain human legal judgment; machine may attach heuristic flags only.",
+      "component": "claim_clarity",
+      "version": "1.1.0",
+      "severity": "human_only",
+      "fail_closed": "human_only",
+      "applicability": {
+        "application_types": [
+          "utility"
+        ],
+        "scenarios": [
+          "new_application",
+          "amendment",
+          "any"
+        ],
+        "components": [
+          "claims"
+        ],
+        "notes": ""
+      },
+      "authority_cites": [
+        {
+          "citation": "35 U.S.C. 112(b)",
+          "tier": "statute",
+          "is_controlling": true,
+          "source_id": null,
+          "notes": ""
+        },
+        {
+          "citation": "35 U.S.C. 112(f)",
+          "tier": "statute",
+          "is_controlling": true,
+          "source_id": null,
+          "notes": ""
+        }
+      ],
+      "guidance_cites": [
+        {
+          "citation": "MPEP 2173",
+          "tier": "guidance",
+          "is_controlling": false,
+          "source_id": null,
+          "notes": ""
+        },
+        {
+          "citation": "MPEP 2181",
+          "tier": "guidance",
+          "is_controlling": false,
+          "source_id": null,
+          "notes": ""
+        }
+      ],
+      "evidence_predicates": [
+        {
+          "kind": "human_process",
+          "target": "112_clarity",
+          "description": "Human counsel reviews claim clarity; not a rejection conclusion",
+          "parameters": {
+            "requires_human_disposition": true
+          },
+          "mandatory": true
+        },
+        {
+          "kind": "heuristic_format",
+          "target": "antecedent_basis",
+          "description": "Optional antecedent/OCR heuristics labeled non-conclusive",
+          "parameters": {},
+          "mandatory": false
+        }
+      ],
+      "notes": "Forbidden: patentability or 112 rejection conclusions."
+    },
+    {
+      "obligation_id": "obl:prior-art:us-odp-corpus-searched",
+      "title": "US patent corpus searched (ODP)",
+      "description": "Exhaustive prior-art diligence requires the public US patent/application corpus to be searched via ODP (or equivalent licensed US search). Unsearched \u2192 unsatisfied. Never asserts absence of all prior art.",
+      "component": "prior_art_us",
+      "version": "1.1.0",
+      "severity": "blocking",
+      "fail_closed": "unsatisfied",
+      "applicability": {
+        "application_types": [
+          "utility",
+          "any"
+        ],
+        "scenarios": [
+          "new_application",
+          "information_disclosure",
+          "any"
+        ],
+        "components": [
+          "prior_art"
+        ],
+        "notes": "Required corpus for exhaustive diligence."
+      },
+      "authority_cites": [
+        {
+          "citation": "37 C.F.R. 1.56",
+          "tier": "regulation",
+          "is_controlling": true,
+          "source_id": null,
+          "notes": "Duty of disclosure \u2014 process framing for search diligence only."
+        }
+      ],
+      "guidance_cites": [
+        {
+          "citation": "MPEP 904",
+          "tier": "guidance",
+          "is_controlling": false,
+          "source_id": null,
+          "notes": "Search guidance only."
+        },
+        {
+          "citation": "MPEP 609",
+          "tier": "guidance",
+          "is_controlling": false,
+          "source_id": null,
+          "notes": ""
+        }
+      ],
+      "evidence_predicates": [
+        {
+          "kind": "corpus_searched",
+          "target": "us_patents",
+          "description": "US patent/application corpus marked searched",
+          "parameters": {
+            "corpus": "us_patents",
+            "aliases": [
+              "us_patents",
+              "us",
+              "odp",
+              "uspto_odp",
+              "us_applications"
+            ]
+          },
+          "mandatory": true
+        }
+      ],
+      "notes": "Forbidden: asserting absence of all prior art; silent coverage; Google Patents scrape; PPS automation."
+    },
+    {
+      "obligation_id": "obl:prior-art:foreign-epo-ops-corpus-searched",
+      "title": "Foreign patent corpus searched (EPO OPS)",
+      "description": "Exhaustive prior-art diligence requires foreign-patent metadata search via EPO OPS (or licensed foreign). Unsearched without named residual \u2192 unsatisfied. Named gap acceptance leaves status unknown (visible incomplete), never silent pass.",
+      "component": "prior_art_foreign",
+      "version": "1.1.0",
+      "severity": "blocking",
+      "fail_closed": "unsatisfied",
+      "applicability": {
+        "application_types": [
+          "utility",
+          "any"
+        ],
+        "scenarios": [
+          "new_application",
+          "information_disclosure",
+          "any"
+        ],
+        "components": [
+          "prior_art"
+        ],
+        "notes": "Required corpus for exhaustive diligence."
+      },
+      "authority_cites": [
+        {
+          "citation": "37 C.F.R. 1.56",
+          "tier": "regulation",
+          "is_controlling": true,
+          "source_id": null,
+          "notes": "Process framing only."
+        }
+      ],
+      "guidance_cites": [
+        {
+          "citation": "MPEP 904",
+          "tier": "guidance",
+          "is_controlling": false,
+          "source_id": null,
+          "notes": ""
+        },
+        {
+          "citation": "MPEP 609.04(a)",
+          "tier": "guidance",
+          "is_controlling": false,
+          "source_id": null,
+          "notes": ""
+        }
+      ],
+      "evidence_predicates": [
+        {
+          "kind": "corpus_searched",
+          "target": "foreign_patents",
+          "description": "Foreign patent corpus marked searched (EPO OPS)",
+          "parameters": {
+            "corpus": "foreign_patents",
+            "aliases": [
+              "foreign_patents",
+              "foreign",
+              "epo_ops",
+              "epo",
+              "wo",
+              "pct"
+            ],
+            "allow_named_gap_acceptance": true
+          },
+          "mandatory": true
+        }
+      ],
+      "notes": "Use EPO_OPS_KEY/SECRET + --live-foreign. Never scrape EPO/Google UIs."
+    },
+    {
+      "obligation_id": "obl:prior-art:npl-corpus-searched",
+      "title": "Non-patent literature corpus searched or residual named",
+      "description": "Exhaustive prior-art diligence requires NPL search when available under license, or an explicit named residual. Unsearched without residual \u2192 unsatisfied. Unlicensed NPL body text is not reproduced.",
+      "component": "prior_art_npl",
+      "version": "1.1.0",
+      "severity": "major",
+      "fail_closed": "unsatisfied",
+      "applicability": {
+        "application_types": [
+          "utility",
+          "any"
+        ],
+        "scenarios": [
+          "new_application",
+          "information_disclosure",
+          "any"
+        ],
+        "components": [
+          "prior_art"
+        ],
+        "notes": ""
+      },
+      "authority_cites": [
+        {
+          "citation": "37 C.F.R. 1.56",
+          "tier": "regulation",
+          "is_controlling": true,
+          "source_id": null,
+          "notes": "Process framing only."
+        }
+      ],
+      "guidance_cites": [
+        {
+          "citation": "MPEP 904",
+          "tier": "guidance",
+          "is_controlling": false,
+          "source_id": null,
+          "notes": ""
+        },
+        {
+          "citation": "MPEP 609.05",
+          "tier": "guidance",
+          "is_controlling": false,
+          "source_id": null,
+          "notes": ""
+        }
+      ],
+      "evidence_predicates": [
+        {
+          "kind": "corpus_searched",
+          "target": "npl",
+          "description": "NPL corpus marked searched",
+          "parameters": {
+            "corpus": "npl",
+            "aliases": [
+              "npl",
+              "non_patent_literature",
+              "literature"
+            ],
+            "allow_named_gap_acceptance": true
+          },
+          "mandatory": true
+        }
+      ],
+      "notes": "Never asserts NPL completeness or patentability."
+    },
+    {
+      "obligation_id": "obl:prior-art:required-corpora-declaration",
+      "title": "Required corpora declaration complete for exhaustive diligence",
+      "description": "Search orchestration must declare searched vs unsearched required corpora. Missing declaration fails closed to unknown.",
+      "component": "prior_art_coverage",
+      "version": "1.1.0",
+      "severity": "blocking",
+      "fail_closed": "unknown",
+      "applicability": {
+        "application_types": [
+          "utility",
+          "any"
+        ],
+        "scenarios": [
+          "new_application",
+          "information_disclosure",
+          "any"
+        ],
+        "components": [
+          "prior_art"
+        ],
+        "notes": ""
+      },
+      "authority_cites": [
+        {
+          "citation": "37 C.F.R. 1.56",
+          "tier": "regulation",
+          "is_controlling": true,
+          "source_id": null,
+          "notes": "Duty of disclosure process framing only."
+        }
+      ],
+      "guidance_cites": [
+        {
+          "citation": "MPEP 904",
+          "tier": "guidance",
+          "is_controlling": false,
+          "source_id": null,
+          "notes": ""
+        }
+      ],
+      "evidence_predicates": [
+        {
+          "kind": "field_present",
+          "target": "searched_corpora",
+          "description": "searched_corpora field present (may be empty list only if unsearched listed)",
+          "parameters": {
+            "field": "searched_corpora"
+          },
+          "mandatory": false
+        },
+        {
+          "kind": "human_process",
+          "target": "prior_art_exhaustiveness_review",
+          "description": "Human reviews conflict-risk hits and residual gaps; no legal patentability opinion automation",
+          "parameters": {
+            "requires_human_disposition": true,
+            "auto_file_blocked": true
+          },
+          "mandatory": true
+        }
+      ],
+      "notes": "Forbidden product language includes claims of total prior-art absence or filing without human review."
+    },
+    {
+      "obligation_id": "obl:prior-art:no-patentability-conclusion",
+      "title": "Prior-art review must not emit legal patentability opinions",
+      "description": "Conflict-risk and search outputs are screening only. Novelty, obviousness, allowability, and validity judgments remain permanent non-goals for automation (human counsel only).",
+      "component": "prior_art_safety",
+      "version": "1.1.0",
+      "severity": "human_only",
+      "fail_closed": "human_only",
+      "applicability": {
+        "application_types": [
+          "any"
+        ],
+        "scenarios": [
+          "any"
+        ],
+        "components": [
+          "prior_art"
+        ],
+        "notes": "Safety invariant."
+      },
+      "authority_cites": [
+        {
+          "citation": "37 C.F.R. 1.56",
+          "tier": "regulation",
+          "is_controlling": true,
+          "source_id": null,
+          "notes": "Duty of disclosure \u2014 process framing only; automation does not judge materiality or patentability."
+        }
+      ],
+      "guidance_cites": [
+        {
+          "citation": "MPEP 2100",
+          "tier": "guidance",
+          "is_controlling": false,
+          "source_id": null,
+          "notes": "Examination guidance is not automated patentability."
+        }
+      ],
+      "evidence_predicates": [
+        {
+          "kind": "human_process",
+          "target": "patentability_judgment",
+          "description": "Licensed counsel only; automation emits conflict risk tiers only",
+          "parameters": {
+            "requires_human_disposition": true
+          },
+          "mandatory": true
+        }
+      ],
+      "notes": "Enforced also by phrase-ban tests on runtime outputs."
+    },
+    {
+      "obligation_id": "obl:pct:international-search-evidence",
+      "title": "PCT family ISR/WO evidence when PCT member present",
+      "description": "When a PCT family member exists, ISR and/or Written Opinion evidence should be inventoried for diligence (not a legal patentability opinion).",
+      "component": "pct",
+      "version": "1.1.0",
+      "severity": "major",
+      "fail_closed": "unknown",
+      "applicability": {
+        "application_types": [
+          "utility",
+          "any"
+        ],
+        "scenarios": [
+          "any"
+        ],
+        "components": [
+          "pct",
+          "prior_art"
+        ],
+        "notes": "Conditional on PCT family member."
+      },
+      "authority_cites": [
+        {
+          "citation": "35 U.S.C. 371",
+          "tier": "statute",
+          "is_controlling": true,
+          "source_id": null,
+          "notes": ""
+        },
+        {
+          "citation": "37 C.F.R. 1.496",
+          "tier": "regulation",
+          "is_controlling": true,
+          "source_id": null,
+          "notes": ""
+        }
+      ],
+      "guidance_cites": [
+        {
+          "citation": "MPEP 1840",
+          "tier": "guidance",
+          "is_controlling": false,
+          "source_id": null,
+          "notes": ""
+        },
+        {
+          "citation": "MPEP 1893",
+          "tier": "guidance",
+          "is_controlling": false,
+          "source_id": null,
+          "notes": ""
+        }
+      ],
+      "evidence_predicates": [
+        {
+          "kind": "ifw_code_present",
+          "target": "ISR",
+          "description": "ISR/WO or REF.OTHER international search evidence",
+          "parameters": {
+            "codes": [
+              "ISR",
+              "WO",
+              "REF.OTHER",
+              "SRNT",
+              "SRFW"
+            ]
+          },
+          "mandatory": false
+        },
+        {
+          "kind": "human_process",
+          "target": "pct_isr_review",
+          "description": "Human reviews ISR/WO citations for IDS consideration",
+          "parameters": {
+            "requires_human_disposition": true
+          },
+          "mandatory": true
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "obligation_id": "obl:utility:new:assignment-diligence",
+      "title": "Assignment / ownership diligence (human-only)",
+      "description": "Ownership and assignment chain correctness remain human diligence; machine may note assignment documents if present.",
+      "component": "assignment",
+      "version": "1.1.0",
+      "severity": "human_only",
+      "fail_closed": "human_only",
+      "applicability": {
+        "application_types": [
+          "any"
+        ],
+        "scenarios": [
+          "any"
+        ],
+        "components": [
+          "assignment"
+        ],
+        "notes": ""
+      },
+      "authority_cites": [
+        {
+          "citation": "35 U.S.C. 261",
+          "tier": "statute",
+          "is_controlling": true,
+          "source_id": null,
+          "notes": ""
+        },
+        {
+          "citation": "37 C.F.R. 3.11",
+          "tier": "regulation",
+          "is_controlling": true,
+          "source_id": null,
+          "notes": ""
+        }
+      ],
+      "guidance_cites": [
+        {
+          "citation": "MPEP 301",
+          "tier": "guidance",
+          "is_controlling": false,
+          "source_id": null,
+          "notes": ""
+        }
+      ],
+      "evidence_predicates": [
+        {
+          "kind": "human_process",
+          "target": "assignment",
+          "description": "Human confirms ownership/assignment",
+          "parameters": {
+            "requires_human_disposition": true
+          },
+          "mandatory": true
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "obligation_id": "obl:mpep:authority-tier-discipline",
+      "title": "MPEP remains guidance tier under controlling CFR/statute",
+      "description": "Catalog evaluation must keep MPEP cites as non-controlling guidance. Missing controlling authority for an obligation fails closed to unknown.",
+      "component": "authority",
+      "version": "1.1.0",
+      "severity": "blocking",
+      "fail_closed": "unknown",
+      "applicability": {
+        "application_types": [
+          "any"
+        ],
+        "scenarios": [
+          "any"
+        ],
+        "components": [
+          "authority"
+        ],
+        "notes": "Meta discipline."
+      },
+      "authority_cites": [
+        {
+          "citation": "program:authority-tier-discipline",
+          "tier": "unknown",
+          "is_controlling": false,
+          "source_id": null,
+          "notes": "MPEP never outranks CFR/Title 35."
+        }
+      ],
+      "guidance_cites": [
+        {
+          "citation": "MPEP Foreword",
+          "tier": "guidance",
+          "is_controlling": false,
+          "source_id": null,
+          "notes": "MPEP is guidance."
+        }
+      ],
+      "evidence_predicates": [
+        {
+          "kind": "authority_corpus_bound",
+          "target": "authority_corpus",
+          "description": "Authority corpus bound so MPEP/CFR cites can be version-pinned",
+          "parameters": {},
+          "mandatory": true
+        }
+      ],
+      "notes": "Reinforces guidance_never_above_regulation invariant."
+    }
+  ]
+}
