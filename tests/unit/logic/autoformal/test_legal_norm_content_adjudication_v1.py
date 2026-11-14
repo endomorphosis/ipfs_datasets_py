@@ -1661,3 +1661,106 @@ def test_candidate_v3_delegated_syntax_cannot_supply_meaning_or_approval_fields(
     monkeypatch.setattr(owner, "validate_complete_norm_candidate_v1", mutate)
     with pytest.raises(ValueError):
         validate_identifier_bound_candidate_v2(owner, complete_candidate_v1)
+
+
+@pytest.fixture
+def mixed_candidate_v3():
+    from tests.unit.logic.autoformal import test_legal_reviewed_norm_admission_v3 as mixed
+    candidate = complete_candidate_fixture_v1()
+    request = mixed.mixed_request()
+    candidate.update(profile=request['profile'], typed_expression=request['expression'],
+                     argument_roles=request['argument_roles'])
+    # A syntax-only proposal: equality to a declared source binding cannot
+    # establish that this different formula faithfully translates its text.
+    known = dict(known_source_binding=deepcopy(candidate['source_binding']),
+        known_governing_context=deepcopy(candidate['governing_context']),
+        known_selection_context=caller_selection_fixture_v2())
+    return candidate, known
+
+
+def test_candidate_mixed_v3_delegates_genuine_many_sorted_lowering_without_authority(owner, mixed_candidate_v3, monkeypatch):
+    from ipfs_datasets_py.logic.autoformal import legal_relational_norm_v1 as relational
+    candidate, known = mixed_candidate_v3; original = deepcopy(candidate)
+    prepare = relational.prepare_mixed_relational_norm_v1; calls = []
+    def observed(raw, **kwargs):
+        request = json.loads(raw); calls.append(request)
+        assert kwargs['expected_request_sha256'] == sha(raw)
+        assert request['profile'] == relational.MIXED_PROFILE and request['source_binding'] is None
+        return prepare(raw, **kwargs)
+    monkeypatch.setattr(relational, 'prepare_mixed_relational_norm_v1', observed)
+    result = owner.validate_complete_norm_candidate_v3(candidate, **known)
+    assert len(calls) == 1
+    assert result['schema'] == owner.CANDIDATE_SYNTAX_SCHEMA_V3
+    assert result['profile'] == owner.CANDIDATE_SYNTAX_PROFILE_V3
+    assert result['candidate'] == original and candidate == original
+    assert result['candidate_sha256'] == owner.norm_content_adjudication_sha256(original)
+    assert result['known_interpretation_identifier_matches'] is True
+    assert result['semantic_selection_supported'] is result['semantic_use_eligible'] is False
+    assert result['authority'] and all(value is False for value in result['authority'].values())
+    assert result['training_mask'] == result['evaluation_gold_mask'] == 0
+    result['candidate']['argument_roles'][1]['roles'].reverse()
+    assert candidate == original
+
+
+def test_candidate_mixed_v3_preserves_legacy_refusals(owner, mixed_candidate_v3):
+    candidate, known = mixed_candidate_v3
+    with pytest.raises(owner.CompleteNormCandidateUnsupportedError):
+        owner.validate_complete_norm_candidate_v1(candidate, **{k: v for k, v in known.items() if k != 'known_selection_context'})
+    with pytest.raises(owner.CompleteNormCandidateUnsupportedError):
+        owner.validate_complete_norm_candidate_v2(candidate, **known)
+
+
+def test_candidate_mixed_v3_retains_object_route_under_distinct_report_identity(owner, complete_candidate_v1):
+    known = dict(known_source_binding=deepcopy(complete_candidate_v1['source_binding']),
+        known_governing_context=deepcopy(complete_candidate_v1['governing_context']),
+        known_selection_context=caller_selection_fixture_v2())
+    old = owner.validate_complete_norm_candidate_v2(complete_candidate_v1, **known)
+    new = owner.validate_complete_norm_candidate_v3(complete_candidate_v1, **known)
+    assert old['schema'] != new['schema'] and old['profile'] != new['profile']
+    assert {k: v for k, v in old.items() if k not in ('schema', 'profile')} == {k: v for k, v in new.items() if k not in ('schema', 'profile')}
+
+
+@pytest.mark.parametrize('field', ['profile', 'typed_expression', 'argument_roles', 'assumptions',
+    'governing_context', 'interpretation_id', 'source_binding', 'definition_uses', 'cross_references'])
+def test_candidate_mixed_v3_requires_every_predicted_field(owner, mixed_candidate_v3, field):
+    candidate, known = mixed_candidate_v3; candidate.pop(field)
+    with pytest.raises(ValueError, match='nine-field'):
+        owner.validate_complete_norm_candidate_v3(candidate, **known)
+
+
+@pytest.mark.parametrize('which', ['source', 'context', 'selection'])
+def test_candidate_mixed_v3_rejects_independent_fact_mismatches_before_lowering(owner, mixed_candidate_v3, monkeypatch, which):
+    from ipfs_datasets_py.logic.autoformal import legal_relational_norm_v1 as relational
+    candidate, known = mixed_candidate_v3
+    if which == 'source': known['known_source_binding']['document_revision'] = 'fixture:different-revision'
+    elif which == 'context': known['known_governing_context']['governing_edition'] = 'fixture:different-edition'
+    else: known['known_selection_context']['interpretation_id'] = 'fixture:different-selection'
+    monkeypatch.setattr(relational, 'prepare_mixed_relational_norm_v1', lambda *_a, **_k: pytest.fail('mismatched facts reached lowering'))
+    with pytest.raises(ValueError, match='differs'):
+        owner.validate_complete_norm_candidate_v3(candidate, **known)
+
+
+@pytest.mark.parametrize('damage', ['authority', 'source_bound', 'source_translation_performed',
+    'native_build_executed', 'training_mask', 'evaluation_gold_mask', 'semantic_mask', 'consumer_mask'])
+def test_candidate_mixed_v3_refuses_delegated_authority_or_execution(owner, mixed_candidate_v3, monkeypatch, damage):
+    from ipfs_datasets_py.logic.autoformal import legal_relational_norm_v1 as relational
+    candidate, known = mixed_candidate_v3; original = relational.prepare_mixed_relational_norm_v1
+    def mutate(*args, **kwargs):
+        report = original(*args, **kwargs)
+        if damage == 'authority': report['authority']['source_translation_verified'] = True
+        elif damage.endswith('_mask'): report[damage] = 1
+        else: report[damage] = True
+        return report
+    monkeypatch.setattr(relational, 'prepare_mixed_relational_norm_v1', mutate)
+    with pytest.raises(ValueError):
+        owner.validate_complete_norm_candidate_v3(candidate, **known)
+
+
+@pytest.mark.parametrize('damage', ['unknown-profile', 'nonempty-assumptions', 'selection-policy'])
+def test_candidate_mixed_v3_keeps_unsupported_constructs_explicit(owner, mixed_candidate_v3, damage):
+    candidate, known = mixed_candidate_v3
+    if damage == 'unknown-profile': candidate['profile'] = 'unknown-many-sorted/v999'
+    elif damage == 'nonempty-assumptions': candidate['assumptions'] = ['unrepresented fictional premise']
+    else: known['known_selection_context']['selection_mode'] = 'meaning-resolved'
+    with pytest.raises(owner.CompleteNormCandidateUnsupportedError):
+        owner.validate_complete_norm_candidate_v3(candidate, **known)

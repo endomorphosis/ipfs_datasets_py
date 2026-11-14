@@ -1,5 +1,7 @@
 # Legal autoformalization
 
+The explicit v3 candidate audit now supports the existing many-sorted representation alongside object-only syntax. All 324 source-only software cases pass; legacy v1/v2 refusals and all legal/model/proof limits remain. See the [handoff](docs/HANDOFF.md).
+
 The producer evaluator now offers a separate full-candidate syntax audit against caller-supplied source, context and interpretation identifiers. All 67 selected source-only cases pass; unsupported and incomplete outputs remain counted. Legal meaning, model quality and proof authority remain unverified. See the [handoff](docs/HANDOFF.md).
 
 Explicit Qwen2 training conditioning now matches the selected inference prompt and body/EOS labels through a distinct recipe/checkpoint identity. All 93 selected tests pass, including a complete reviewed tiny-fixture job. The worker has a new source epoch: historical pretrained pairs require a fresh explicit transition before reuse. No actual pretrained fitting or legal/proof gain is claimed. See the [handoff](docs/HANDOFF.md). Historical actual-tokenizer capacity is now recorded: the largest complete public-layout training-shaped capacity sequence, including heldout rows, is 8197 positions, so an 8192 total-position window is insufficient. Current-checkout runtime and pretrained fitting remain unqualified.

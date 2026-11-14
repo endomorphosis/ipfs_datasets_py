@@ -1493,7 +1493,7 @@ def evaluate_reviewed_source_span_producer_artifact(*, binding, rows, split_mani
     checks and a distinct cache identity; it never grants native proof or legal
     authority. The default structural-comparison report remains unchanged.
     Explicit candidate_syntax_profile requires separately supplied known facts
-    for every case. The canonical candidate-v2 owner checks all nine fields and
+    for every case. The selected canonical candidate-v2/v3 owner checks all nine fields and
     exact declared source/context/selection identity; unsupported references and
     outputs remain visible. Known facts never enter producer arguments and are
     never inferred from targets. Equality does not authenticate these declarations
@@ -1554,9 +1554,13 @@ def evaluate_reviewed_source_span_producer_artifact(*, binding, rows, split_mani
     candidate_owner = None
     if candidate_syntax_profile is not None:
         from ...logic.autoformal import legal_norm_content_adjudication_v1 as candidate_owner
-        require(type(candidate_syntax_profile) is str
-                and candidate_syntax_profile == candidate_owner.CANDIDATE_SYNTAX_PROFILE_V2,
+        candidate_validators = {
+            candidate_owner.CANDIDATE_SYNTAX_PROFILE_V2: candidate_owner.validate_complete_norm_candidate_v2,
+            candidate_owner.CANDIDATE_SYNTAX_PROFILE_V3: candidate_owner.validate_complete_norm_candidate_v3,
+        }
+        require(type(candidate_syntax_profile) is str and candidate_syntax_profile in candidate_validators,
                 "explicit complete-candidate syntax profile required")
+        candidate_validator = candidate_validators[candidate_syntax_profile]
     require((candidate_syntax_profile is None) == (known_candidate_inputs is None),
             "complete-candidate profile and independent known inputs required together")
     known_frozen = snapshot(known_candidate_inputs) if candidate_owner is not None else None
@@ -1575,7 +1579,7 @@ def evaluate_reviewed_source_span_producer_artifact(*, binding, rows, split_mani
                    "independent complete-candidate known facts")
             candidate_owner.validate_complete_norm_known_input_v2(**facts)
             try:
-                candidate_owner.validate_complete_norm_candidate_v2(row["reference"], **facts)
+                candidate_validator(row["reference"], **facts)
                 reference_status = "syntax_validated_unreviewed"
             except candidate_owner.CompleteNormCandidateUnsupportedError:
                 reference_status = "unsupported"
@@ -1586,7 +1590,7 @@ def evaluate_reviewed_source_span_producer_artifact(*, binding, rows, split_mani
                 status = "not_checked"
             else:
                 try:
-                    candidate_owner.validate_complete_norm_candidate_v2(row["candidate"], **facts)
+                    candidate_validator(row["candidate"], **facts)
                     status = "syntax_validated_unreviewed"
                 except candidate_owner.CompleteNormCandidateUnsupportedError:
                     status = "unsupported_complete"

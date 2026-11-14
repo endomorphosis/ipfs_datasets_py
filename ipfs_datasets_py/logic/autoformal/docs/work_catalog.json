@@ -4086,7 +4086,22 @@
       "status": "focused_tests_qualified"
     },
     {
+      "many_sorted_candidate_syntax_v3": {
+        "evidence_id": "many-sorted-complete-candidate-syntax-v3-20261114",
+        "profile": "unreviewed-complete-norm-candidate-syntax/v3",
+        "source_only_passes": 324,
+        "new_cases": 32,
+        "all_three_fictional_references_syntax_valid": true,
+        "legacy_mixed_refusals_preserved": true,
+        "legal_meaning_or_proof_authority": false,
+        "model_or_original_parent_integration_qualified": false
+      },
       "apis": [
+        "validate_complete_norm_known_input_v1",
+        "validate_complete_norm_candidate_v1",
+        "validate_complete_norm_known_input_v2",
+        "validate_complete_norm_candidate_v2",
+        "validate_complete_norm_candidate_v3",
         "norm_content_adjudication_sha256",
         "build_norm_content_adjudication_template_v1",
         "build_norm_content_adjudication_declaration_v1",
@@ -4098,6 +4113,7 @@
       ],
       "compatibility_dependency": true,
       "evidence_ids": [
+        "many-sorted-complete-candidate-syntax-v3-20261114",
         "norm-content-adjudication-public-integration-20261024-01",
         "reviewed-semantic-admission-v2-main-source-port-20261108-01"
       ],
@@ -8490,6 +8506,16 @@
       "status": "focused_tests_qualified"
     },
     {
+      "many_sorted_candidate_syntax_v3": {
+        "evidence_id": "many-sorted-complete-candidate-syntax-v3-20261114",
+        "profile": "unreviewed-complete-norm-candidate-syntax/v3",
+        "source_only_passes": 324,
+        "new_cases": 32,
+        "all_three_fictional_references_syntax_valid": true,
+        "legacy_mixed_refusals_preserved": true,
+        "legal_meaning_or_proof_authority": false,
+        "model_or_original_parent_integration_qualified": false
+      },
       "complete_candidate_syntax_audit": {
         "evidence_id": "complete-candidate-source-bound-producer-audit-20261114",
         "profile": "unreviewed-complete-norm-candidate-syntax/v2",
@@ -8528,6 +8554,7 @@
       },
       "compatibility_dependency": false,
       "evidence_ids": [
+        "many-sorted-complete-candidate-syntax-v3-20261114",
         "complete-candidate-source-bound-producer-audit-20261114",
         "reviewed-retention-and-mixed-admission-canonical-20261111",
         "reviewed-mixed-consumer-evaluator-canonical331-20261111",
@@ -9252,6 +9279,15 @@
   "schema": "legal-autoformal-work-catalog/v1",
   "scope": "Curated current ownership/navigation with attributed saved evidence. Observations are snapshots, not future source-hash requirements or proof admission.",
   "selected_evidence": [
+    {
+      "id": "many-sorted-complete-candidate-syntax-v3-20261114",
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-mixed-candidate-syntax-qualification-v01/qualification-summary.json",
+      "root": "ipfs_datasets",
+      "observed_bytes": 4536,
+      "observed_sha256": "3cadf73d5ab0e57a6459219b4d033a0feac74f0233944ae1a205a89d9bf3813d",
+      "status": "qualified_within_recorded_scope",
+      "scope": "324 source-only passes/32 new cases: explicit many-sorted candidate-v3 delegation and evaluator opt-in; legacy refusals, declared source/context/selection, zero authority and exact role-fidelity controls; no model/native/legal qualification."
+    },
     {
       "id": "complete-candidate-source-bound-producer-audit-20261114",
       "path": "workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-complete-candidate-producer-audit-green-v02/qualification-summary.json",
