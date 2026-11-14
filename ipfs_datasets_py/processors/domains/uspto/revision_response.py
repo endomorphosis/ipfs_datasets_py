@@ -165,6 +165,10 @@ ALLOWED_ATTACHMENT_ROLES: Final[frozenset[str]] = frozenset(
     }
 )
 
+# Package role used for IDS-ready export handoff (markdown/json checklist).
+# Attach only — never auto-files an IDS to Patent Center.
+IDS_ATTACHMENT_ROLE: Final = "ids"
+
 # Suggested empty placeholders by trigger kind (content-free filenames).
 _SUGGESTED_PLACEHOLDERS: Final[Mapping[TriggerKind, tuple[str, ...]]] = MappingProxyType(
     {
@@ -1060,6 +1064,36 @@ def attach_to_revision(
     return case
 
 
+def attach_ids_role_files(
+    revision_id: str,
+    file_paths: Sequence[str | Path],
+    *,
+    state_root: Path | None = None,
+) -> RevisionCase:
+    """Attach IDS export artifacts into ``package_dir`` with role ``ids``.
+
+    Copies each existing file into the revision response package using
+    :data:`IDS_ATTACHMENT_ROLE`. This is package inventory only — it never
+    signs, pays, submits, or otherwise automates Patent Center IDS filing.
+    """
+    paths = [Path(p) for p in file_paths if p is not None and str(p).strip()]
+    if not paths:
+        raise RevisionError(
+            "attach_ids_role_files requires at least one file path",
+            code="empty_ids_attach",
+        )
+    case: RevisionCase | None = None
+    for path in paths:
+        case = attach_to_revision(
+            revision_id,
+            Path(path),
+            role=IDS_ATTACHMENT_ROLE,
+            state_root=state_root,
+        )
+    assert case is not None
+    return case
+
+
 def prepare_revision_package(
     revision_id: str,
     *,
@@ -1243,6 +1277,7 @@ def close_revision_case(
 
 __all__ = [
     "ALLOWED_ATTACHMENT_ROLES",
+    "IDS_ATTACHMENT_ROLE",
     "REVISION_SCHEMA",
     "REVIEW_ONLY_DEADLINE_DISCLAIMER",
     "RevisionAttachment",
@@ -1252,6 +1287,7 @@ __all__ = [
     "TriggerDocument",
     "TriggerKind",
     "analyze_revision_letter",
+    "attach_ids_role_files",
     "attach_to_revision",
     "candidate_reply_window",
     "classify_trigger",

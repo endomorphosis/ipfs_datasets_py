@@ -1,5 +1,13 @@
 # LegalIR handoff
 
+## Retained patent and trust integration — 2026-11-14
+
+The retained patent application-review work is now integrated into the existing USPTO/patent owners: review/search orchestration, claim limitation and conformance analysis, content-free portfolio reports, explicit IDS package attachments, authority excerpts and immutable re-audit deltas. The original sources remain on the preservation branch. The obligation catalog is explicitly a draft pending independent review; no legal approval was supplied or inferred.
+
+Strict compatible counterexample features now extend the existing public boundary: validated source-map/redaction values, closed validation and batch projection, and keyword conveniences that preserve the bounded API authority ceiling. The maintained wire format, source/assumption identity and mandatory supervisor normalizer remain in force. Malformed booleans, artifact containers, alias containers and identity profiles fail closed; the incompatible alternate envelope was not substituted.
+
+All 408 offline integration/regression cases pass (244 patent controls, 84 public-boundary/API controls and 80 existing operator regressions), with no skips. They use the real pinned supervisor normalizer. This establishes software behavior on fictional/local fixtures, not actual legal review, model training, live browser/MFA/authentication, filing, payment, or proof/corpus admission. Earlier collection, merge and environment failures remain preserved. The original 24 LegalIR task statuses and approved runtime budgets remain unchanged.
+
 Start at [the autoformal module](ipfs_datasets_py/logic/autoformal/README.md), then its [current handoff](ipfs_datasets_py/logic/autoformal/docs/HANDOFF.md). Reusable source/span/graph/review/Lean integration and its maintained documentation have one home there.
 
 From the repository root, use the compact metadata views:

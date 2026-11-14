@@ -294,8 +294,16 @@ def export_ids_ready_checklist(
     queue_path: str | Path,
     *,
     output_path: str | Path | None = None,
+    revision_id: str | None = None,
+    state_root: Path | None = None,
 ) -> dict[str, Any]:
-    """Export IDS-ready (+ candidate summary) as JSON + markdown for human forms."""
+    """Export IDS-ready (+ candidate summary) as JSON + markdown for human forms.
+
+    When *revision_id* is provided, also attaches the markdown and JSON artifacts
+    into that revision response ``package_dir`` with attachment role ``ids``.
+    Attachment is package inventory only — never Patent Center filing automation.
+    ``auto_file_blocked`` remains true on every successful export.
+    """
     path = Path(queue_path).expanduser().resolve()
     queue = load_ids_queue(path)
     ready = [c for c in queue.candidates if c.is_ids_ready]
@@ -385,22 +393,98 @@ def export_ids_ready_checklist(
     except OSError:
         pass
 
-    return {
+    result: dict[str, Any] = {
         "schema": IDS_OPERATOR_SCHEMA,
         "ok": True,
         "json_path": str(json_path),
         "markdown_path": str(md_path),
         "ids_ready_count": len(ready),
         "remaining_candidate_count": len(deferred),
+        "auto_file_blocked": True,
+        "patent_center_filing": False,
         "disclaimer": IDS_OPERATOR_DISCLAIMER,
         "generated_at_utc": utc_now_iso(),
     }
+
+    rid = str(revision_id or "").strip()
+    if rid:
+        attached = attach_ids_export_to_revision(
+            rid,
+            queue_path=path,
+            state_root=state_root,
+            json_path=json_path,
+            markdown_path=md_path,
+            ids_ready_count=len(ready),
+        )
+        result.update(attached)
+        result["ok"] = True
+        result["auto_file_blocked"] = True
+        result["patent_center_filing"] = False
+
+    return result
+
+
+def bind_conflict_consider_ids(
+    report: Any = None,
+    *,
+    report_path: str | Path | None = None,
+    queue_path: str | Path | None = None,
+    run_dir: str | Path | None = None,
+    prior_art_run_dir: str | Path | None = None,
+    review_run_dir: str | Path | None = None,
+    application_number: str | None = None,
+    subject_id: str | None = None,
+    state_root: Path | None = None,
+    create_queue_if_missing: bool = True,
+) -> dict[str, Any]:
+    """Bind ``consider_ids`` dispositions from a conflict report into the IDS queue.
+
+    Thin operator wrapper around
+    :func:`ipfs_datasets_py.processors.domains.uspto.conflict_review_report.bind_consider_ids_to_ids_queue`.
+    Never auto-files; ``auto_file_blocked`` remains true; candidates stay
+    non-IDS-ready until separate natural-person relevance + materiality reviews.
+    """
+    from ipfs_datasets_py.processors.domains.uspto.conflict_review_report import (
+        ConflictReviewReportError,
+        bind_consider_ids_to_ids_queue,
+        load_conflict_review_report,
+    )
+
+    try:
+        if report is None:
+            report = load_conflict_review_report(
+                path=report_path,
+                prior_art_run_dir=prior_art_run_dir or run_dir,
+                review_run_dir=review_run_dir,
+            )
+        result = bind_consider_ids_to_ids_queue(
+            report,
+            queue_path=queue_path,
+            run_dir=run_dir,
+            prior_art_run_dir=prior_art_run_dir,
+            review_run_dir=review_run_dir,
+            subject_id=subject_id,
+            application_number=application_number,
+            create_queue_if_missing=create_queue_if_missing,
+            state_root=state_root,
+        )
+    except ConflictReviewReportError as exc:
+        raise IdsReviewOperatorError(
+            str(exc), code=getattr(exc, "code", "conflict_ids_bind")
+        ) from exc
+
+    result["auto_file_blocked"] = True
+    result["patent_center_filing"] = False
+    result["schema"] = result.get("schema") or IDS_OPERATOR_SCHEMA
+    return result
 
 
 __all__ = [
     "IDS_OPERATOR_DISCLAIMER",
     "IDS_OPERATOR_SCHEMA",
     "IdsReviewOperatorError",
+    "attach_ids_export_to_revision",
+    "bind_conflict_consider_ids",
     "export_ids_ready_checklist",
     "list_ids_candidates",
     "load_ids_queue",
@@ -408,3 +492,130 @@ __all__ = [
     "review_ids_candidate",
     "save_ids_queue",
 ]
+
+
+__all__ = ['IDS_OPERATOR_DISCLAIMER', 'IDS_OPERATOR_SCHEMA', 'IdsReviewOperatorError', 'attach_ids_export_to_revision', 'bind_conflict_consider_ids', 'export_ids_ready_checklist', 'list_ids_candidates', 'load_ids_queue', 'resolve_ids_queue_path', 'review_ids_candidate', 'save_ids_queue']
+
+
+def attach_ids_export_to_revision(
+    revision_id: str,
+    *,
+    queue_path: str | Path | None = None,
+    state_root: Path | None = None,
+    json_path: str | Path | None = None,
+    markdown_path: str | Path | None = None,
+    ids_ready_count: int | None = None,
+    output_path: str | Path | None = None,
+) -> dict[str, Any]:
+    """Attach IDS-ready export markdown/JSON into a revision package as role ``ids``.
+
+    If *json_path* / *markdown_path* are omitted, exports from *queue_path* first.
+    Updates package inventory only; never automates Patent Center Sign/Pay/Submit.
+    Always returns ``auto_file_blocked: true`` and ``patent_center_filing: false``.
+    """
+    from ipfs_datasets_py.processors.domains.uspto.revision_response import (
+        IDS_ATTACHMENT_ROLE,
+        RevisionError,
+        attach_ids_role_files,
+    )
+
+    rid = str(revision_id or "").strip()
+    if not rid:
+        raise IdsReviewOperatorError(
+            "revision_id is required to attach IDS export",
+            code="missing_revision_id",
+        )
+
+    json_p = Path(json_path).expanduser().resolve() if json_path else None
+    md_p = Path(markdown_path).expanduser().resolve() if markdown_path else None
+
+    if json_p is None or md_p is None:
+        if not queue_path:
+            raise IdsReviewOperatorError(
+                "queue_path required when json_path/markdown_path are omitted",
+                code="missing_queue_path",
+            )
+        # Export without re-entering attach to avoid recursion.
+        exported = export_ids_ready_checklist(
+            queue_path,
+            output_path=output_path,
+            revision_id=None,
+            state_root=state_root,
+        )
+        json_p = Path(exported["json_path"])
+        md_p = Path(exported["markdown_path"])
+        if ids_ready_count is None:
+            ids_ready_count = int(exported.get("ids_ready_count") or 0)
+
+    for label, p in (("json_path", json_p), ("markdown_path", md_p)):
+        if p is None or not p.is_file():
+            raise IdsReviewOperatorError(
+                f"IDS export {label} not found: {p}",
+                code="ids_export_missing",
+            )
+
+    try:
+        case = attach_ids_role_files(
+            rid,
+            [json_p, md_p],
+            state_root=state_root,
+        )
+    except RevisionError as exc:
+        raise IdsReviewOperatorError(
+            str(exc), code=getattr(exc, "code", "revision_attach_failed")
+        ) from exc
+
+    package = Path(case.package_dir)
+    ids_attachments = [
+        a.to_dict()
+        for a in case.attachments
+        if str(a.role).lower() == IDS_ATTACHMENT_ROLE
+    ]
+    # Confirm on-disk copies under package_dir
+    package_files = [
+        str(package / a.filename)
+        for a in case.attachments
+        if str(a.role).lower() == IDS_ATTACHMENT_ROLE
+        and (package / a.filename).is_file()
+    ]
+
+    # Optional pointer under case_dir for audit trails (not a filing action).
+    try:
+        case_dir = Path(case.case_dir) if case.case_dir else package.parent
+        pointer = {
+            "schema": IDS_OPERATOR_SCHEMA,
+            "revision_id": rid,
+            "application_number": case.application_number,
+            "role": IDS_ATTACHMENT_ROLE,
+            "auto_file_blocked": True,
+            "patent_center_filing": False,
+            "ids_ready_count": ids_ready_count,
+            "json_path": str(json_p),
+            "markdown_path": str(md_p),
+            "package_dir": str(package),
+            "package_files": package_files,
+            "attached_at_utc": utc_now_iso(),
+            "disclaimer": IDS_OPERATOR_DISCLAIMER,
+        }
+        _write_json(case_dir / "ids_export_attachment.json", pointer)
+    except Exception:
+        pass
+
+    return {
+        "schema": IDS_OPERATOR_SCHEMA,
+        "ok": True,
+        "revision_id": rid,
+        "application_number": case.application_number,
+        "package_dir": str(package),
+        "role": IDS_ATTACHMENT_ROLE,
+        "json_path": str(json_p),
+        "markdown_path": str(md_p),
+        "package_files": package_files,
+        "attachments": ids_attachments,
+        "ids_ready_count": ids_ready_count,
+        "auto_file_blocked": True,
+        "patent_center_filing": False,
+        "disclaimer": IDS_OPERATOR_DISCLAIMER,
+        "generated_at_utc": utc_now_iso(),
+    }
+

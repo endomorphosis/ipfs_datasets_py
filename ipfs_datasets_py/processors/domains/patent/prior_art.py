@@ -152,7 +152,9 @@ _CPC_IPC_RE = re.compile(
 )
 
 DEFAULT_RANK_CUTOFF: Final = 10
-DEFAULT_MAX_LIMITATIONS: Final = 64
+# Raised from 64 so multi-independent-claim utility sets (e.g. 1/14/17)
+# can plan exhaustive prior-art diligence without hard-failing.
+DEFAULT_MAX_LIMITATIONS: Final = 128
 DEFAULT_MAX_KEYWORDS: Final = 64
 DEFAULT_MAX_QUERIES: Final = 128
 DEFAULT_MAX_CHART_ENTRIES: Final = 256
@@ -1999,7 +2001,11 @@ def extract_keyword_candidates(
         if len(ordered) >= max_keywords:
             break
 
-    related = tuple(related_limitation_ids)
+    # Contract bound: KeywordCandidate.related_limitation_ids max_items=64.
+    # Keep a stable prefix so large claim sets still plan instead of hard-failing.
+    related = tuple(dict.fromkeys(str(r) for r in related_limitation_ids if str(r).strip()))[
+        :64
+    ]
     keywords: list[KeywordCandidate] = []
     for i, token in enumerate(ordered, start=1):
         kind = "classification" if _CPC_IPC_RE.search(token) or "/" in token else "keyword"
@@ -2079,6 +2085,8 @@ def build_search_queries(
                 related_keyword_ids=tuple(k.keyword_id for k in keywords if k.kind == "keyword")[
                     :12
                 ],
+                # Cap at contract max (64) — large multi-claim keyword unions
+                # previously hard-failed exhaustive search runs.
                 related_limitation_ids=tuple(
                     sorted(
                         {
@@ -2087,7 +2095,7 @@ def build_search_queries(
                             for rid in k.related_limitation_ids
                         }
                     )
-                ),
+                )[:64],
                 metadata={"source": "keyword_candidates"},
             )
         )
@@ -2180,10 +2188,16 @@ def build_prior_art_search_plan(
             decompose_claim_limitations(ctext, claim_number=cnum)
         )
 
+    # Fail closed soft: truncate rather than hard-fail exhaustive diligence.
+    if len(all_limitations) > DEFAULT_MAX_LIMITATIONS:
+        all_limitations = all_limitations[:DEFAULT_MAX_LIMITATIONS]
+
     keywords = extract_keyword_candidates(
         all_texts,
         classifications=classifications,
-        related_limitation_ids=tuple(lim.limitation_id for lim in all_limitations),
+        related_limitation_ids=tuple(
+            lim.limitation_id for lim in all_limitations[:64]
+        ),
     )
     queries = list(
         build_search_queries(

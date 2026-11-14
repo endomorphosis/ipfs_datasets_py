@@ -1,0 +1,10 @@
+{
+  "schema": "paar.fixture-package-inventory.v1",
+  "application_number": "16990003",
+  "application_type": "utility",
+  "scenario": "new_application",
+  "ifw_codes": ["CLM", "SPEC", "ABST", "ADS"],
+  "title": "Synthetic optical sensor housing",
+  "authority_corpus_bound": false,
+  "notes": "Authority deliberately unbound for fail-closed tests."
+}

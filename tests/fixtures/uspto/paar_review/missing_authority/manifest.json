@@ -1,0 +1,19 @@
+{
+  "schema": "paar.review-fixture.v1",
+  "fixture_id": "paar-missing-authority-001",
+  "variant": "missing_authority",
+  "synthetic": true,
+  "network_free": true,
+  "application_number": "16990003",
+  "notes": "Package inventory present but authority corpus unbound — must fail closed to unknown / not ready. Not legal advice.",
+  "expected": {
+    "conformance_overall": "unknown",
+    "disposition_not": "ready",
+    "auto_file_blocked": true
+  },
+  "files": {
+    "claims": "claims.txt",
+    "package_inventory": "package_inventory.json",
+    "authority": "authority_status.json"
+  }
+}

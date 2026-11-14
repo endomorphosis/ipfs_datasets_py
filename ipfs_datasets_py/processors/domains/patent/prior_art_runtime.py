@@ -772,6 +772,23 @@ class OdpPublicSearchAdapter:
         retries: list[RetryAttemptRecord] = []
         # Build ODP query body from keywords/classifications/text.
         body = _build_odp_search_body(query)
+        # Prior-art relevance: constrain filing date to corpus_cutoff (priority /
+        # effective filing). Live ODP returns HTTP 404 for empty sets; without a
+        # date bound, default ranking is newest-first and floods post-priority art.
+        cutoff_day = ""
+        try:
+            cutoff_day = str(corpus_cutoff or "").strip()[:10]
+        except Exception:
+            cutoff_day = ""
+        if cutoff_day and re.match(r"^\d{4}-\d{2}-\d{2}$", cutoff_day):
+            q_core = str(body.get("q") or "").strip() or "*:*"
+            body["q"] = (
+                f"({q_core}) AND applicationMetaData.filingDate:[* TO {cutoff_day}]"
+            )
+            # Prefer newest prior art first (still on-or-before cutoff).
+            body["sort"] = [
+                {"field": "applicationMetaData.filingDate", "order": "desc"}
+            ]
         page_limit = min(query.rank_cutoff, self.default_page_limit)
 
         try:
@@ -881,8 +898,29 @@ class OdpPublicSearchAdapter:
                 source_snapshot_cid=self._snapshot_cid(snapshot_parts),
             )
 
+        # Client-side date gate (safety net if ODP date clause is ignored).
+        filtered_items = list(all_items)
+        if cutoff_day and re.match(r"^\d{4}-\d{2}-\d{2}$", cutoff_day):
+            kept: list[Any] = []
+            for it in filtered_items:
+                if not isinstance(it, Mapping):
+                    kept.append(it)
+                    continue
+                meta = it.get("applicationMetaData") or {}
+                if not isinstance(meta, Mapping):
+                    meta = {}
+                filing = str(
+                    meta.get("filingDate")
+                    or meta.get("effectiveFilingDate")
+                    or it.get("filingDate")
+                    or ""
+                ).strip()[:10]
+                if not filing or filing <= cutoff_day:
+                    kept.append(it)
+            filtered_items = kept
+
         hits = _odp_items_to_journal_hits(
-            all_items,
+            filtered_items,
             rank_cutoff=query.rank_cutoff,
             receipt_id=receipt_id,
         )
@@ -963,50 +1001,96 @@ def _build_odp_search_body(query: PublicSearchQuery) -> dict[str, Any]:
         else:
             q_text = text
     else:
-        # Keyword / claim-limitation free text
-        # Use explicit keywords when provided; else tokenize query_text
-        kws = [k.strip() for k in (query.keywords or ()) if str(k).strip()]
+        # Keyword / claim-limitation free text.
+        # Live ODP returns HTTP 404 for "no records" — overly strict AND queries
+        # and stopword-heavy keyword lists commonly produce false empties.
+        _STOP = {
+            "a",
+            "an",
+            "the",
+            "and",
+            "or",
+            "for",
+            "with",
+            "from",
+            "into",
+            "to",
+            "of",
+            "in",
+            "on",
+            "by",
+            "at",
+            "as",
+            "is",
+            "are",
+            "method",
+            "system",
+            "device",
+            "apparatus",
+            "comprising",
+            "including",
+            "wherein",
+            "claim",
+            "said",
+            "least",
+            "one",
+            "first",
+            "second",
+            "plurality",
+            "configured",
+            "between",
+            "about",
+            "such",
+            "further",
+            "having",
+            "using",
+        }
+
+        def _filter_kws(seq: Any) -> list[str]:
+            out: list[str] = []
+            seen: set[str] = set()
+            for k in seq or ():
+                t = str(k).strip()
+                if len(t) < 3:
+                    continue
+                low = t.lower()
+                if low in _STOP or low in seen:
+                    continue
+                # Drop USPC-looking junk like 340/539130
+                if re.fullmatch(r"\d{2,4}/\d{3,}", t):
+                    continue
+                seen.add(low)
+                out.append(t)
+            return out
+
+        kws = _filter_kws(query.keywords or ())
         if not kws:
-            kws = [
-                t
-                for t in re.findall(r"[A-Za-z][A-Za-z0-9\-]{2,}", text)
-                if t.lower()
-                not in {
-                    "the",
-                    "and",
-                    "for",
-                    "with",
-                    "from",
-                    "method",
-                    "system",
-                    "device",
-                    "comprising",
-                    "including",
-                    "wherein",
-                    "claim",
-                    "said",
-                }
-            ][:8]
+            kws = _filter_kws(re.findall(r"[A-Za-z][A-Za-z0-9\-]{2,}", text))[:10]
+        # Prefer free-text (space) over AND: broader, avoids ODP empty-404 on tight AND.
         if len(kws) >= 2:
-            # AND tightens relevance (ODP free-text OR-ish bag is too broad)
-            q_text = " AND ".join(kws[:6])
+            q_text = " ".join(kws[:8])
         elif kws:
             q_text = kws[0]
         else:
-            q_text = text or "*:*"
-
-        # Boost title field when we have a short distinctive phrase
-        if len(kws) >= 2 and len(kws[0]) > 4:
-            title_clause = f'applicationMetaData.inventionTitle:({kws[0]})'
-            # Prefer free-text AND primary; title as alternate not combined poorly
-            # Keep free-text AND as primary q (most reliable on live ODP).
-            q_text = " AND ".join(kws[:6])
+            # Last resort: collapse claim text tokens without full sentence
+            q_text = " ".join(_filter_kws(re.findall(r"[A-Za-z]{4,}", text))[:8]) or (
+                text[:120] if text else "*:*"
+            )
 
         if query.classification_codes:
-            codes = [c.strip() for c in query.classification_codes if str(c).strip()]
-            if codes:
-                # Append first CPC as free-text token (fielded CPC can 404 when empty)
-                q_text = f"({q_text}) AND ({codes[0]})"
+            codes = [
+                c.strip()
+                for c in query.classification_codes
+                if str(c).strip() and not re.fullmatch(r"\d{2,4}/\d{3,}", str(c).strip())
+            ]
+            # Only append real CPC-like symbols (letter+digits…), not USPC class/subclass
+            cpc_like = [
+                c
+                for c in codes
+                if re.match(r"^[A-HY]\d{2}[A-Z]", c, re.I)
+            ]
+            if cpc_like:
+                q_text = f"{q_text} {cpc_like[0]}"
 
     body: dict[str, Any] = {"q": q_text}
     # Optional metadata filters recorded for replay — only pass through string

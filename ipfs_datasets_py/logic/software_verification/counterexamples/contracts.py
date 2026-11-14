@@ -365,7 +365,14 @@ def _assert_public_safe(value: Any, *, label: str = "projection") -> None:
                 key_l = key.lower().replace("-", "_")
                 child_path = f"{path}.{key}" if path else key
                 if key_l in _SAFE_FLAG_KEYS:
-                    # Boolean denial / status flags may contain marker substrings.
+                    if type(child) is not bool:
+                        raise CounterexampleBoundaryError(
+                            f"{label} status flag {key!r} must be boolean"
+                        )
+                    if key_l.startswith("contains_") and child is not False:
+                        raise CounterexampleBoundaryError(
+                            f"{label} claims forbidden material at {child_path}"
+                        )
                     continue
                 if key_l == "channel" and allow_channel_class:
                     if not isinstance(child, str) or (
@@ -514,7 +521,7 @@ class PrivateArtifactReference:
             retention_policy_id=value.get(
                 "retention_policy_id", DEFAULT_DROP_RETENTION_POLICY
             ),
-            retained=bool(value.get("retained", False)),
+            retained=value.get("retained", False),
             byte_size=value.get("byte_size"),
             media_type=value.get("media_type", ""),
             schema=value.get("schema", PRIVATE_ARTIFACT_REFERENCE_SCHEMA),
@@ -804,20 +811,21 @@ class CounterexampleEnvelope:
             "contains_raw_prover_output",
             "contains_source",
         ):
-            if value.get(forbidden_flag) not in (None, False):
+            if value.get(forbidden_flag) is not None and value.get(forbidden_flag) is not False:
                 raise CounterexampleBoundaryError(
                     f"envelope claims {forbidden_flag}"
                 )
 
-        private_raw = value.get("private_artifacts") or ()
+        private_raw = value.get("private_artifacts", ())
         if not isinstance(private_raw, Sequence) or isinstance(
             private_raw, (str, bytes, bytearray)
         ):
             raise CounterexampleBoundaryError("private_artifacts must be a sequence")
+        if any(not isinstance(item, Mapping) for item in private_raw):
+            raise CounterexampleBoundaryError("every private artifact must be an object")
         private_artifacts = tuple(
             PrivateArtifactReference.from_dict(item)
             for item in private_raw
-            if isinstance(item, Mapping)
         )
 
         assumptions = value.get("assumptions", value.get("assumption_ids", ()))
@@ -845,7 +853,7 @@ class CounterexampleEnvelope:
             repair_classes=tuple(value.get("repair_classes") or ()),
             content_id=value.get("content_id", ""),
             minimized=value.get("minimized", False),
-            truncated=bool(value.get("truncated", False)),
+            truncated=value.get("truncated", False),
             schema=schema or COUNTEREXAMPLE_ENVELOPE_SCHEMA,
             interface=value.get("interface", COUNTEREXAMPLE_ENVELOPE_INTERFACE),
             boundary=value.get("boundary", PUBLIC_COUNTEREXAMPLE_BOUNDARY_INTERFACE),
@@ -861,6 +869,29 @@ class CounterexampleEnvelope:
                 raise CounterexampleBoundaryError(
                     "counterexample content identity does not match"
                 )
+        # The public dictionary contains compatibility aliases. They describe
+        # the same envelope; conflicting aliases must never be silently ignored.
+        for name, actual in (
+            ("property_id", envelope.violated_property),
+            ("tool_id", envelope.tool_id),
+            ("finite_bounds", dict(envelope.bounds)),
+            ("model", envelope.model),
+        ):
+            if name in value and _canonical_json_bytes(value[name]) != _canonical_json_bytes(actual):
+                raise CounterexampleBoundaryError(f"conflicting counterexample alias {name}")
+        for name in ("assumptions", "assumption_ids"):
+            if name in value and _string_tuple(value[name], name) != envelope.assumptions:
+                raise CounterexampleBoundaryError(f"conflicting counterexample alias {name}")
+        for name, expected in (
+            ("interface", COUNTEREXAMPLE_ENVELOPE_INTERFACE),
+            ("boundary", PUBLIC_COUNTEREXAMPLE_BOUNDARY_INTERFACE),
+            ("envelope_version", PUBLIC_COUNTEREXAMPLE_BOUNDARY_VERSION),
+            ("redacted", True),
+        ):
+            if name in value and (
+                type(value[name]) is not type(expected) or value[name] != expected
+            ):
+                raise CounterexampleBoundaryError(f"unsupported counterexample {name}")
         return envelope
 
 
@@ -1095,6 +1126,81 @@ def project_public_counterexample(
     return envelope
 
 
+class ConfidentialityDisposition(StrEnum):
+    """Supported public disposition; never a private-storage attestation."""
+
+    PUBLIC_REDACTED = "public_redacted"
+
+
+@dataclass(frozen=True, slots=True)
+class SourceMapRef:
+    """Strict public identifiers, explicitly convertible to source-map metadata."""
+
+    source_ref_ids: tuple[str, ...] = ()
+    span_ids: tuple[str, ...] = ()
+
+    def __post_init__(self) -> None:
+        for name in ("source_ref_ids", "span_ids"):
+            values = getattr(self, name)
+            if not isinstance(values, (tuple, list)) or any(
+                type(item) is not str or not item.strip() or len(item) > 256
+                or item.startswith(("/", "\\", "~/"))
+                or re.match(r"^[A-Za-z]:[\\/]", item)
+                for item in values
+            ):
+                raise CounterexampleBoundaryError(f"{name} must contain bounded public IDs")
+            object.__setattr__(self, name, _string_tuple(values, name))
+        _assert_public_safe(self.to_dict(), label="source map reference")
+
+    def to_dict(self) -> dict[str, Any]:
+        return {"source_ref_ids": list(self.source_ref_ids), "span_ids": list(self.span_ids)}
+
+    @classmethod
+    def from_dict(cls, value: Mapping[str, Any] | None) -> "SourceMapRef":
+        if value is None:
+            return cls()
+        if not isinstance(value, Mapping):
+            raise CounterexampleBoundaryError("source map reference must be an object")
+        _reject_unknown_keys(value, frozenset({"source_ref_ids", "span_ids"}), label="source map reference")
+        return cls(source_ref_ids=value.get("source_ref_ids", ()), span_ids=value.get("span_ids", ()))
+
+
+@dataclass(frozen=True, slots=True)
+class RedactionReport:
+    """Typed public redaction counts; supplies no retention or proof authority."""
+
+    disposition: ConfidentialityDisposition = ConfidentialityDisposition.PUBLIC_REDACTED
+    dropped_fields: int = 0
+    redacted_values: int = 0
+
+    def __post_init__(self) -> None:
+        try:
+            object.__setattr__(self, "disposition", ConfidentialityDisposition(self.disposition))
+        except (TypeError, ValueError) as error:
+            raise CounterexampleBoundaryError("unsupported confidentiality disposition") from error
+        for name in ("dropped_fields", "redacted_values"):
+            value = getattr(self, name)
+            if type(value) is not int or value < 0:
+                raise CounterexampleBoundaryError(f"{name} must be a non-negative integer")
+
+    def to_dict(self) -> dict[str, Any]:
+        return {"contains_private_material": False, "disposition": self.disposition.value,
+                "dropped_fields": self.dropped_fields, "redacted_values": self.redacted_values}
+
+    @classmethod
+    def from_dict(cls, value: Mapping[str, Any] | None) -> "RedactionReport":
+        if value is None:
+            return cls()
+        if not isinstance(value, Mapping):
+            raise CounterexampleBoundaryError("redaction report must be an object")
+        _reject_unknown_keys(value, frozenset({"contains_private_material", "disposition",
+            "dropped_fields", "redacted_values"}), label="redaction report")
+        if value.get("contains_private_material", False) is not False:
+            raise CounterexampleBoundaryError("public redaction report claims private material")
+        return cls(disposition=value.get("disposition", ConfidentialityDisposition.PUBLIC_REDACTED),
+                   dropped_fields=value.get("dropped_fields", 0), redacted_values=value.get("redacted_values", 0))
+
+
 class PublicCounterexampleBoundary:
     """Stable adapter for public projections and fail-closed decode."""
 
@@ -1130,6 +1236,38 @@ class PublicCounterexampleBoundary:
     def decode(self, value: Mapping[str, Any]) -> CounterexampleEnvelope:
         return CounterexampleEnvelope.from_dict(value)
 
+    def validate(self, value: Mapping[str, Any] | CounterexampleEnvelope) -> CounterexampleEnvelope:
+        """Replay the canonical codec, including identity and public-safety checks."""
+        return self.decode(value.to_dict() if isinstance(value, CounterexampleEnvelope) else value)
+
+    def project_many(
+        self, witnesses: Iterable[Any], *, max_items: int = 256, **kwargs: Any
+    ) -> tuple[CounterexampleEnvelope, ...]:
+        """Project a bounded batch; deduplicate complete public equality only.
+
+        Equal semantic IDs never authorize merging assumptions, source bindings,
+        authority, finite bounds or private-artifact retention observations.
+        """
+        if type(max_items) is not int or not 1 <= max_items <= 4096:
+            raise CounterexampleBoundaryError("max_items must be an integer in [1, 4096]")
+        if isinstance(witnesses, (Mapping, str, bytes, bytearray, memoryview)):
+            raise CounterexampleBoundaryError("witnesses must be an iterable of separate witnesses")
+        try:
+            iterator = iter(witnesses)
+        except TypeError as error:
+            raise CounterexampleBoundaryError("witnesses must be iterable") from error
+        result: list[CounterexampleEnvelope] = []
+        observed: set[str] = set()
+        for index, witness in enumerate(iterator):
+            if index >= max_items:
+                raise CounterexampleBoundaryError("counterexample batch exceeds max_items")
+            envelope = self.validate(self.project(witness, **kwargs))
+            canonical = envelope.to_json()
+            if canonical not in observed:
+                observed.add(canonical)
+                result.append(envelope)
+        return tuple(result)
+
     def assert_public_safe(self, value: Any) -> None:
         _assert_public_safe(value, label="public counterexample projection")
 
@@ -1154,8 +1292,11 @@ __all__ = [
     "CounterexampleAuthority",
     "CounterexampleBoundaryError",
     "CounterexampleEnvelope",
+    "ConfidentialityDisposition",
     "PrivateArtifactReference",
     "PublicCounterexampleBoundary",
+    "RedactionReport",
+    "SourceMapRef",
     "explain_counterexample_envelope",
     "project_public_counterexample",
 ]

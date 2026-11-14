@@ -1,6 +1,11 @@
-"""End-to-end: prior-art search → package → submission compliance audit.
+"""End-to-end prior-art compliance loop (offline).
 
-Offline path (local snapshot). Does not require ODP/HF network.
+Covers PATLAW-205 acceptance path:
+
+    search → audit → IDS → re-audit → filing-assist
+
+Offline path uses a local patent snapshot. Does not require ODP/HF network,
+Patent Center session, or API keys.
 """
 
 from __future__ import annotations
@@ -8,15 +13,28 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from ipfs_datasets_py.processors.domains.uspto.filing_assist import (
+    HARD_BARRIER_CLICK_LABELS,
+    build_filing_checklist,
+)
+from ipfs_datasets_py.processors.domains.uspto.ids_review_operator import (
+    export_ids_ready_checklist,
+    list_ids_candidates,
+    load_ids_queue,
+    resolve_ids_queue_path,
+    review_ids_candidate,
+)
 from ipfs_datasets_py.processors.domains.uspto.prior_art_search_client import (
     search_prior_art,
 )
 from ipfs_datasets_py.processors.domains.uspto.revision_response import (
+    IDS_ATTACHMENT_ROLE,
     attach_to_revision,
     open_revision_case,
 )
 from ipfs_datasets_py.processors.domains.uspto.submission_compliance_audit import (
     AUDIT_DISCLAIMER,
+    DELTA_SCHEMA,
     audit_submission,
 )
 
@@ -25,6 +43,9 @@ CLAIM = (
     "1. A method comprising tamper evident securing of a monitoring device "
     "to an individual."
 )
+
+APP = "18654466"
+REVIEWER = "operator:e2e"
 
 
 def _snap(path: Path) -> Path:
@@ -48,10 +69,9 @@ def _snap(path: Path) -> Path:
     return path
 
 
-def test_e2e_revision_prior_art_and_audit(tmp_path: Path) -> None:
-    # 1) Open revision case (OA nonfinal → office_action_response scenario)
+def _open_oa_case(tmp_path: Path, *, app: str = APP):
     case = open_revision_case(
-        "18654466",
+        app,
         state_root=tmp_path,
         document_identifier="OA-E2E",
         document_code="CTNF",
@@ -61,10 +81,6 @@ def test_e2e_revision_prior_art_and_audit(tmp_path: Path) -> None:
         analyze=False,
         notes=["e2e compliance audit"],
     )
-    assert case.revision_id
-    assert case.package_dir
-
-    # 2) Human-authored package files + attach roles
     pkg = Path(case.package_dir)
     claims = pkg / "02_amended_claims.pdf"
     remarks = pkg / "03_remarks.pdf"
@@ -76,11 +92,12 @@ def test_e2e_revision_prior_art_and_audit(tmp_path: Path) -> None:
     case = attach_to_revision(
         case.revision_id, remarks, role="remarks", state_root=tmp_path
     )
-    assert len(case.attachments) >= 2
+    return case
 
-    # 3) Prior-art search (local snapshot — offline)
-    pa = search_prior_art(
-        application_number="18654466",
+
+def _run_offline_search(tmp_path: Path, *, app: str = APP) -> dict:
+    return search_prior_art(
+        application_number=app,
         state_root=tmp_path,
         claims_text=CLAIM,
         filing_date="2024-05-03",
@@ -88,11 +105,22 @@ def test_e2e_revision_prior_art_and_audit(tmp_path: Path) -> None:
         local_snapshot_path=_snap(tmp_path / "snap.json"),
         max_queries=4,
     )
+
+
+def test_e2e_revision_prior_art_and_audit(tmp_path: Path) -> None:
+    # 1) Open revision case (OA nonfinal → office_action_response scenario)
+    case = _open_oa_case(tmp_path)
+    assert case.revision_id
+    assert case.package_dir
+    assert len(case.attachments) >= 2
+
+    # 2) Prior-art search (local snapshot — offline)
+    pa = _run_offline_search(tmp_path)
     assert pa["ok"] is True
     assert Path(pa["paths"]["journal"]).is_file()
     assert Path(pa["paths"]["claim_chart"]).is_file()
 
-    # 4) Combined audit (revision + package + prior-art run)
+    # 3) Combined audit (revision + package + prior-art run)
     audit = audit_submission(
         revision_id=case.revision_id,
         state_root=tmp_path,
@@ -133,7 +161,7 @@ def test_e2e_revision_prior_art_and_audit(tmp_path: Path) -> None:
     assert "review_tips" in saved
     assert AUDIT_DISCLAIMER
 
-    # 5) Auto-discover latest prior-art run without explicit path
+    # 4) Auto-discover latest prior-art run without explicit path
     auto = audit_submission(
         revision_id=case.revision_id,
         state_root=tmp_path,
@@ -187,3 +215,140 @@ def test_e2e_remarks_only_skips_conditional_claim_amendment(tmp_path: Path) -> N
     # Conditional claim_amendment should not block a remarks-only reply package
     assert "claim_amendment" not in missing_kinds
     assert filing["missing_mandatory_count"] == 0
+
+
+def test_e2e_full_compliance_loop_search_audit_ids_reaudit_filing_assist(
+    tmp_path: Path,
+) -> None:
+    """Full offline loop: search → audit → IDS → re-audit → filing-assist."""
+    case = _open_oa_case(tmp_path)
+    pa = _run_offline_search(tmp_path)
+    assert pa["ok"] is True
+    run_dir = Path(pa["run_dir"])
+
+    # --- audit ---
+    audit1 = audit_submission(
+        revision_id=case.revision_id,
+        state_root=tmp_path,
+        prior_art_run_dir=run_dir,
+        application_type="utility",
+        persist=True,
+        build_ids_queue=True,
+    )
+    assert audit1["ok"] is True
+    audit_id_1 = audit1["summary"]["audit_id"]
+    assert audit1["summary"]["ids_queue"]["auto_file_blocked"] is True
+    assert Path(audit1["paths"]["audit"]).is_file()
+    # Action plan should point operators at next loop steps
+    plan = audit1["summary"].get("action_plan") or []
+    assert isinstance(plan, list)
+
+    # --- IDS: resolve queue, optional promote, export + attach as role ids ---
+    qpath = resolve_ids_queue_path(
+        application_number=APP,
+        run_dir=run_dir,
+        state_root=tmp_path,
+    )
+    assert qpath.is_file()
+    listed = list_ids_candidates(load_ids_queue(qpath))
+    assert listed["ok"] is True
+    assert listed["auto_file_blocked"] is True
+    candidates = listed.get("candidates") or []
+
+    if candidates:
+        cid = candidates[0]["candidate_id"]
+        reviewed = review_ids_candidate(
+            qpath,
+            candidate_id=cid,
+            reviewer_id=REVIEWER,
+            relevance="relevant",
+            materiality="material",
+            promote=True,
+        )
+        assert reviewed["ok"] is True
+        assert reviewed["candidate"]["is_ids_ready"] is True
+        assert reviewed["ids_ready_count"] >= 1
+
+    exported = export_ids_ready_checklist(
+        qpath,
+        revision_id=case.revision_id,
+        state_root=tmp_path,
+    )
+    assert exported["ok"] is True
+    assert exported["auto_file_blocked"] is True
+    assert exported["patent_center_filing"] is False
+    assert exported["role"] == IDS_ATTACHMENT_ROLE == "ids"
+    assert exported["revision_id"] == case.revision_id
+    package_files = [Path(p) for p in (exported.get("package_files") or [])]
+    assert package_files, "IDS export must attach files into package_dir"
+    assert all(p.is_file() for p in package_files)
+    assert any(p.name.startswith("ids__") for p in package_files)
+    # Source export preserves human-only disclaimer
+    md_src = Path(exported["markdown_path"])
+    md_text = md_src.read_text(encoding="utf-8")
+    assert "auto-file" in md_text.lower() or "auto file" in md_text.lower()
+
+    pointer = Path(case.case_dir) / "ids_export_attachment.json"
+    assert pointer.is_file()
+    ptr = json.loads(pointer.read_text(encoding="utf-8"))
+    assert ptr["auto_file_blocked"] is True
+    assert ptr["patent_center_filing"] is False
+    assert ptr["role"] == "ids"
+
+    # --- re-audit with delta (history immutable) ---
+    prior_audit_path = Path(audit1["paths"]["audit"])
+    prior_payload = json.loads(prior_audit_path.read_text(encoding="utf-8"))
+    prior_fingerprint = json.dumps(prior_payload, sort_keys=True)
+
+    audit2 = audit_submission(
+        revision_id=case.revision_id,
+        state_root=tmp_path,
+        prior_art_run_dir=run_dir,
+        application_type="utility",
+        persist=True,
+        delta_from=audit_id_1,
+    )
+    assert audit2["ok"] is True
+    assert audit2["summary"]["audit_id"] != audit_id_1
+    delta = audit2.get("delta") or audit2["summary"].get("delta")
+    assert isinstance(delta, dict)
+    assert delta.get("schema") == DELTA_SCHEMA or "closed_gaps" in delta
+    assert delta.get("history_rewritten") is False
+    assert "closed_gaps" in delta and "opened_gaps" in delta
+    assert "status_transition" in delta
+    assert "closed_gap_count" in delta and "opened_gap_count" in delta
+    # Prior audit file must be unchanged (no history rewrite)
+    after = prior_audit_path.read_text(encoding="utf-8")
+    assert json.dumps(json.loads(after), sort_keys=True) == prior_fingerprint
+    # New audit + delta artifact persisted separately
+    assert Path(audit2["paths"]["audit"]).is_file()
+    assert Path(audit2["paths"]["audit"]) != prior_audit_path
+    if "delta" in audit2["paths"]:
+        assert Path(audit2["paths"]["delta"]).is_file()
+
+    # --- filing-assist: checklist only (no browser / no Sign-Pay-Submit) ---
+    checklist = build_filing_checklist(
+        application_number=APP,
+        package_dir=Path(case.package_dir),
+        state_root=tmp_path,
+    )
+    payload = checklist.to_dict()
+    assert payload["application_number"] == APP
+    assert payload["package_path"]
+    hard_steps = [s for s in payload["steps"] if s.get("hard_barrier")]
+    assert len(hard_steps) >= 3
+    hard_ids = {s["step_id"] for s in hard_steps}
+    assert "human-sign-certify" in hard_ids or any(
+        "sign" in s["step_id"] for s in hard_steps
+    )
+    assert any("pay" in s["step_id"] for s in hard_steps)
+    assert any("submit" in s["step_id"] for s in hard_steps)
+    for s in hard_steps:
+        assert s["automation_allowed"] is False
+        assert s["actor"] == "human"
+    assert HARD_BARRIER_CLICK_LABELS
+    assert any("sign" in label for label in HARD_BARRIER_CLICK_LABELS)
+    assert "not" in payload["disclaimer"].lower() or "human" in payload["disclaimer"].lower()
+    # Receipt drop folder is prepared for post-submit human downloads
+    assert payload.get("post_submit_receipt_dir")
+    assert Path(payload["post_submit_receipt_dir"]).is_dir()

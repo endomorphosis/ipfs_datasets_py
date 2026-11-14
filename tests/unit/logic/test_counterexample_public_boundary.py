@@ -305,3 +305,178 @@ def test_module_level_explain_helper_matches_boundary() -> None:
     via_project = project_public_counterexample(_leaky_smt_witness())
     assert via_helper.counterexample_id == via_project.counterexample_id
     assert via_helper.to_dict() == via_project.to_dict()
+
+
+def _public_codec_fixture() -> dict[str, Any]:
+    return CounterexampleEnvelope(
+        counterexample_id="counterexample:fixture", kind="model",
+        property_class="safety", violated_property="property:exclusive",
+        summary="bounded fictional witness",
+    ).to_dict()
+
+
+@pytest.mark.parametrize("retained", ["false", "true", 0, 1, 0.0, 1.0, None])
+def test_private_retention_decode_rejects_coercion(retained: Any) -> None:
+    with pytest.raises(CounterexampleBoundaryError, match="boolean"):
+        PrivateArtifactReference.from_dict({
+            "channel": "provider_transcript", "digest": "sha256:" + "ab" * 32,
+            "retention_policy_id": DEFAULT_PRIVATE_RETENTION_POLICY,
+            "retained": retained,
+        })
+
+
+@pytest.mark.parametrize("artifact", [None, "discard-me", 1, False, []])
+def test_envelope_decode_never_discards_malformed_artifacts(artifact: Any) -> None:
+    value = _public_codec_fixture()
+    value["private_artifacts"] = [artifact]
+    with pytest.raises(CounterexampleBoundaryError, match="every private artifact"):
+        CounterexampleEnvelope.from_dict(value)
+
+
+@pytest.mark.parametrize("truncated", ["false", "true", 0, 1, None])
+def test_truncation_decode_rejects_coercion(truncated: Any) -> None:
+    value = _public_codec_fixture()
+    value.update(truncated=truncated, content_id="")
+    with pytest.raises(CounterexampleBoundaryError, match="boolean"):
+        CounterexampleEnvelope.from_dict(value)
+
+
+@pytest.mark.parametrize("field,value", [
+    ("property_id", "property:other"), ("tool_id", "provider:other"),
+    ("finite_bounds", {"steps": 10}), ("model", {"different": 1}),
+    ("assumption_ids", ["assumption:other"]),
+])
+def test_compatibility_aliases_cannot_disagree(field: str, value: Any) -> None:
+    raw = _public_codec_fixture()
+    raw[field] = value
+    with pytest.raises(CounterexampleBoundaryError, match="alias"):
+        CounterexampleEnvelope.from_dict(raw)
+
+
+@pytest.mark.parametrize("field,value", [
+    ("interface", "CounterexampleEnvelope@999"), ("boundary", "another-boundary"),
+    ("envelope_version", True), ("envelope_version", 1.0), ("redacted", 1),
+    ("contains_source", 0), ("contains_private_material", 0.0),
+])
+def test_decode_rejects_false_profile_or_denial_flags(field: str, value: Any) -> None:
+    raw = _public_codec_fixture()
+    raw[field] = value
+    with pytest.raises(CounterexampleBoundaryError):
+        CounterexampleEnvelope.from_dict(raw)
+
+
+@pytest.mark.parametrize("field", ["contains_source", "contains_private_material",
+    "contains_raw_prover_output", "retained", "redacted", "truncated", "minimized"])
+def test_denial_flag_names_cannot_hide_private_payload(field: str) -> None:
+    with pytest.raises(CounterexampleBoundaryError, match="boolean"):
+        CounterexampleEnvelope(
+            counterexample_id="counterexample:fictional", kind="model",
+            property_class="safety", violated_property="property:one", summary="fictional",
+            payload={field: "source_text must not escape through a flag"},
+        )
+
+
+def test_typed_source_map_and_redaction_helpers_use_current_wire() -> None:
+    from ipfs_datasets_py.logic.software_verification.counterexamples.contracts import (
+        SourceMapRef, RedactionReport, ConfidentialityDisposition,
+    )
+    source = SourceMapRef(source_ref_ids=("source:b", "source:a"), span_ids=("span:one",))
+    assert SourceMapRef.from_dict(source.to_dict()) == source
+    report = RedactionReport(dropped_fields=2, redacted_values=3)
+    assert report.disposition is ConfidentialityDisposition.PUBLIC_REDACTED
+    assert RedactionReport.from_dict(report.to_dict()) == report
+    envelope = CounterexampleEnvelope(
+        counterexample_id="counterexample:fictional", kind="model", property_class="safety",
+        violated_property="property:one", summary="fictional", source_map=source.to_dict(),
+        redaction=report.to_dict(),
+    )
+    assert envelope.schema == COUNTEREXAMPLE_ENVELOPE_SCHEMA
+    assert PublicCounterexampleBoundary().validate(envelope).to_dict() == envelope.to_dict()
+
+
+@pytest.mark.parametrize("value", [True, 1.0, "1", -1, None])
+def test_typed_redaction_counts_never_coerce(value: Any) -> None:
+    from ipfs_datasets_py.logic.software_verification.counterexamples.contracts import RedactionReport
+    with pytest.raises(CounterexampleBoundaryError):
+        RedactionReport.from_dict({"dropped_fields": value})
+
+
+@pytest.mark.parametrize("raw", [
+    {"source_ref_ids": "source:one"}, {"source_ref_ids": [True]},
+    {"source_ref_ids": ["x" * 257]}, {"source_text": "private bytes"},
+    {"source_ref_ids": ["/home/example/private.py"]},
+    {"source_ref_ids": ["C:\\private\\file.py"]},
+])
+def test_typed_source_map_rejects_unknown_or_lossy_values(raw: Any) -> None:
+    from ipfs_datasets_py.logic.software_verification.counterexamples.contracts import SourceMapRef
+    with pytest.raises(CounterexampleBoundaryError):
+        SourceMapRef.from_dict(raw)
+
+
+def test_batch_projection_retains_distinct_provenance_without_union(monkeypatch: pytest.MonkeyPatch) -> None:
+    first = CounterexampleEnvelope.from_dict(_public_codec_fixture())
+    second = CounterexampleEnvelope(
+        counterexample_id=first.counterexample_id, kind=first.kind,
+        property_class=first.property_class, violated_property=first.violated_property,
+        summary=first.summary, assumptions=("assumption:another",),
+        source_map={"source_ref_ids": ["source:another"]}, bounds={"steps": 2},
+    )
+    boundary = PublicCounterexampleBoundary()
+    monkeypatch.setattr(boundary, "project", lambda item, **kwargs: item)
+    projected = boundary.project_many([first, first, second])
+    assert projected == (first, second)
+    assert projected[0].assumptions == ()
+    assert projected[1].assumptions == ("assumption:another",)
+    assert len({x.content_id for x in projected}) == 2
+
+
+def test_real_batch_projection_reuses_canonical_normalizer() -> None:
+    boundary = PublicCounterexampleBoundary()
+    witnesses = [_leaky_smt_witness(), _leaky_smt_witness()]
+    projected = boundary.project_many(witnesses)
+    assert len(projected) == 1
+    assert projected[0].to_dict() == boundary.project(witnesses[0]).to_dict()
+
+
+def test_batch_projection_bound_counts_duplicates(monkeypatch: pytest.MonkeyPatch) -> None:
+    envelope = CounterexampleEnvelope.from_dict(_public_codec_fixture())
+    boundary = PublicCounterexampleBoundary()
+    monkeypatch.setattr(boundary, "project", lambda item, **kwargs: item)
+    with pytest.raises(CounterexampleBoundaryError, match="max_items"):
+        boundary.project_many([envelope, envelope], max_items=1)
+
+
+def test_validate_rejects_variant_wire_and_forged_digest() -> None:
+    raw = _public_codec_fixture()
+    raw["schema"] = "counterexample-envelope/v2"
+    with pytest.raises(CounterexampleBoundaryError, match="schema"):
+        PublicCounterexampleBoundary().validate(raw)
+    raw = _public_codec_fixture()
+    raw["content_id"] = "sha256:" + "00" * 32
+    with pytest.raises(CounterexampleBoundaryError, match="identity"):
+        PublicCounterexampleBoundary().validate(raw)
+
+
+def test_api_compatibility_keywords_preserve_bounded_authority_and_witness() -> None:
+    witness = _leaky_smt_witness()
+    snapshot = json.dumps(witness, sort_keys=True)
+    result = LogicVerificationAPI().explain_counterexample(
+        witness, property_id="obligation:exclusive-lease", tool_id="solver.z3", authority="bounded"
+    )
+    assert result.status is VerificationStatus.SUCCEEDED
+    assert result.authority is VerificationAuthority.BOUNDED
+    assert result.property_id == "obligation:exclusive-lease"
+    assert result.provider_id == "solver.z3"
+    assert json.dumps(witness, sort_keys=True) == snapshot
+
+
+@pytest.mark.parametrize("kwargs", [
+    {"property_id": "property:conflicting"}, {"tool_id": "solver:conflicting"},
+    {"authority": "theorem"}, {"authority": "attestation"}, {"authority": True},
+    {"property_id": True}, {"tool_id": ""},
+])
+def test_api_compatibility_keywords_cannot_rebind_or_elevate(kwargs: Any) -> None:
+    result = LogicVerificationAPI().explain_counterexample(_leaky_smt_witness(), **kwargs)
+    assert result.status is VerificationStatus.INVALID
+    assert result.authority is VerificationAuthority.NONE
+    assert not result.result
