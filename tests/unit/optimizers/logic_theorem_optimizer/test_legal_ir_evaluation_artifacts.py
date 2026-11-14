@@ -3054,3 +3054,127 @@ def test_reviewed_producer_typed_structure_references_check_before_callback(monk
         _producer_owner.evaluate_reviewed_source_span_producer_artifact(**options,
             typed_structure_profile=metrics.CANONICAL_TYPED_STRUCTURE_PROFILE,
             producer=lambda _: pytest.fail("noncanonical reference dispatched"))
+
+
+def _candidate_audit_fixture():
+    from ipfs_datasets_py.logic.autoformal import legal_norm_content_adjudication_v1 as candidate_owner
+    _, options, populations, _, components = _rich_v3_heldout_case()
+    declaration = components['holdout']['declaration']
+    # Known facts originate in source declarations and caller selection, never
+    # in reference targets or generated candidates. These are fictional inputs.
+    known = {'reviewed:' + unit['unit_id']: {
+        'known_source_binding': {'source_version_cid': unit['source_version']['record_cid'],
+            'occurrence_cid': unit['occurrence']['record_cid'], 'document_revision': unit['document_revision']},
+        'known_governing_context': deepcopy(declaration['governing_context']),
+        'known_selection_context': {'schema': candidate_owner.CANDIDATE_SELECTION_SCHEMA,
+            'selection_mode': 'identifier_only', 'interpretation_id': declaration['interpretation_id']}}
+        for unit in declaration['units']}
+    return options, populations['holdout'], known, candidate_owner.CANDIDATE_SYNTAX_PROFILE_V2
+
+
+@pytest.mark.parametrize('mixed', [False, True])
+def test_reviewed_producer_complete_candidate_audit_binds_source_selection_and_cache(mixed):
+    options, rows, known, profile = _candidate_audit_fixture()
+    calls = []
+    def producer(arguments):
+        calls.append(deepcopy(arguments))
+        assert all(set(row) == {'id', 'source_text', 'context'} for row in arguments)
+        outputs = _producer_exact_outputs(rows)  # Scripted software fixture only.
+        if mixed:
+            outputs[1]['candidate']['source_binding']['document_revision'] = 'fixture:wrong-revision'
+            outputs[2].update(candidate=None, outcome='incomplete')
+        return outputs
+    legacy = _producer_evaluate(options, producer)
+    artifact = _producer_owner.evaluate_reviewed_source_span_producer_artifact(**options, producer=producer,
+        candidate_syntax_profile=profile, known_candidate_inputs=known)
+    payload = _producer_payload(artifact)
+    report = artifact.to_dict()['metrics']['complete_candidate_syntax']
+    assert report == payload['candidate_syntax_comparison']
+    assert report['denominator'] == 3
+    assert report['counts'] == ({'syntax_validated_unreviewed': 1, 'invalid_complete': 1,
+        'unsupported_complete': 0, 'not_checked': 1} if mixed else {'syntax_validated_unreviewed': 2,
+        'invalid_complete': 0, 'unsupported_complete': 1, 'not_checked': 0})
+    assert report['reference_counts'] == {'syntax_validated_unreviewed': 2, 'unsupported': 1}
+    assert report['known_inputs_sha256'] == _producer_digest(known)
+    assert report['legal_admission_or_proof_authority'] is report['semantic_selection_supported'] is False
+    assert report['training_mask'] == report['evaluation_gold_mask'] == 0
+    assert calls[0] == calls[1] and legacy.key != artifact.key
+    assert 'complete_candidate_syntax' not in legacy.to_dict()['metrics']
+    assert payload['configuration']['candidate_syntax_profile'] == profile
+    assert payload['configuration']['known_candidate_inputs_sha256'] == _producer_digest(known)
+    assert payload['formal_checks_status'] == 'complete_candidate_syntax_only_no_native_proof'
+    assert payload['native_proof_verified'] is payload['source_fidelity_proved'] is payload['corpus_admitted'] is False
+    assert legacy.to_dict()['metrics']['complete_norm_payload'] == artifact.to_dict()['metrics']['complete_norm_payload']
+
+
+@pytest.mark.parametrize('damage', ['profile', 'missing', 'extra', 'selection', 'source', 'context', 'extra-fact'])
+def test_reviewed_producer_complete_candidate_audit_preflights_independent_facts(damage):
+    options, rows, known, profile = _candidate_audit_fixture()
+    if damage == 'profile': profile = 'unknown'
+    elif damage == 'missing': known.pop(rows[0]['id'])
+    elif damage == 'extra': known['unexpected'] = deepcopy(known[rows[0]['id']])
+    elif damage == 'selection': known[rows[0]['id']]['known_selection_context']['interpretation_id'] = 'fixture:wrong-selection'
+    elif damage == 'source': known[rows[0]['id']]['known_source_binding']['document_revision'] = 'fixture:wrong-revision'
+    elif damage == 'context': known[rows[0]['id']]['known_governing_context']['governing_edition'] = 'fixture:wrong-edition'
+    else: known[rows[0]['id']]['reference_target'] = rows[0]['canonical_ir']
+    with pytest.raises(ValueError):
+        _producer_owner.evaluate_reviewed_source_span_producer_artifact(**options,
+            candidate_syntax_profile=profile, known_candidate_inputs=known,
+            producer=lambda _: pytest.fail('invalid known facts reached producer'))
+
+
+@pytest.mark.parametrize('which', ['profile-only', 'facts-only'])
+def test_reviewed_producer_complete_candidate_audit_requires_explicit_pair(which):
+    options, _, known, profile = _candidate_audit_fixture()
+    with pytest.raises(ValueError):
+        _producer_owner.evaluate_reviewed_source_span_producer_artifact(**options,
+            **({'candidate_syntax_profile': profile} if which == 'profile-only' else {'known_candidate_inputs': known}),
+            producer=lambda _: pytest.fail('partial audit request dispatched'))
+
+
+def test_reviewed_producer_complete_candidate_audit_detects_callback_fact_mutation():
+    options, rows, known, profile = _candidate_audit_fixture()
+    def producer(_):
+        known[rows[0]['id']]['known_selection_context']['interpretation_id'] = 'fixture:mutated-during-callback'
+        return _producer_exact_outputs(rows)
+    with pytest.raises(ValueError, match='changed during callback'):
+        _producer_owner.evaluate_reviewed_source_span_producer_artifact(**options, producer=producer,
+            candidate_syntax_profile=profile, known_candidate_inputs=known)
+
+
+@pytest.mark.parametrize('outcome', ['incomplete', 'unsupported', 'invalid', 'abstained', 'error'])
+def test_reviewed_producer_complete_candidate_audit_preserves_noncomplete_denominators(outcome):
+    options, rows, known, profile = _candidate_audit_fixture()
+    def producer(_):
+        return [dict(id=row['id'], outcome=outcome, candidate=None) for row in rows]
+    artifact = _producer_owner.evaluate_reviewed_source_span_producer_artifact(**options, producer=producer,
+        candidate_syntax_profile=profile, known_candidate_inputs=known)
+    report = artifact.to_dict()['metrics']['complete_candidate_syntax']
+    assert report['denominator'] == report['counts']['not_checked'] == 3
+    assert report['syntax_validated_rate'] == 0
+    assert [row['outcome'] for row in report['cases']] == [outcome] * 3
+
+
+def test_reviewed_producer_complete_candidate_audit_combines_with_typed_structure():
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_ir_semantic_metrics as metrics
+    options, rows, known, profile = _candidate_audit_fixture()
+    artifact = _producer_owner.evaluate_reviewed_source_span_producer_artifact(**options,
+        producer=lambda _: _producer_exact_outputs(rows), candidate_syntax_profile=profile,
+        known_candidate_inputs=known, typed_structure_profile=metrics.CANONICAL_TYPED_STRUCTURE_PROFILE)
+    reports = artifact.to_dict()['metrics'];payload = _producer_payload(artifact)
+    assert reports['canonical_typed_structure']['counts']['canonical_formula'] == 3
+    assert reports['complete_candidate_syntax']['counts']['syntax_validated_unreviewed'] == 2
+    assert reports['complete_candidate_syntax']['counts']['unsupported_complete'] == 1
+    assert payload['formal_checks_status'] == 'canonical_typed_and_complete_candidate_syntax_only_no_native_proof'
+    assert reports['complete_candidate_syntax']['schema'] in artifact.key.metric_schema
+    assert reports['canonical_typed_structure']['schema'] in artifact.key.metric_schema
+
+
+def test_reviewed_producer_complete_candidate_audit_keeps_callback_errors():
+    options, _, known, profile = _candidate_audit_fixture()
+    def producer(_):
+        raise RuntimeError('fictional callback failure')
+    artifact = _producer_owner.evaluate_reviewed_source_span_producer_artifact(**options, producer=producer,
+        candidate_syntax_profile=profile, known_candidate_inputs=known)
+    assert artifact.to_dict()['metrics']['complete_candidate_syntax']['counts']['not_checked'] == 3
+    assert _producer_payload(artifact)['producer_exception_type'] == 'RuntimeError'

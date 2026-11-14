@@ -1762,16 +1762,23 @@ def _productive_cleanup_diagnostic_v1(reservation, expected_resource_ledger):
     return timeout <= 60 and started <= deadline <= observed and deadline-started <= timeout+1e-6
 
 
-def _productive_native_closed_profile_v1(terminal, request_raw, *,
-        expected_request_sha256, owner_pid, owner_birth, returncode, expected_resource_ledger):
-    """Closed V5 bindings for an original productive exit with failed retention.
+def _attached_native_closed_profile_v1(terminal, request_raw, *,
+        expected_request_sha256, owner_pid, owner_birth, returncode, expected_resource_ledger, cleanup_profile=None):
+    """Closed V5 attached-child bindings; no mutation or cleanup authority.
 
-    This is a pure binding gate, not a native-absence or genuine-wait proof.
-    The original Source-held caller supplies its genuine Popen/wait separately.
+    The default is the unchanged productive ACTIVE profile. The explicit
+    cancelled-retained profile uses its own exact terminal/row shape; it never
+    projects a retained frame into the ACTIVE or no-child profiles. Genuine
+    original wait and current Native/process absence remain caller/inspector
+    prerequisites, independently of any qualified worker report.
     """
     def need(condition):
         if not condition:
             raise ValueError('unproven original productive lifecycle')
+    need(cleanup_profile is None or
+        (type(cleanup_profile) is str and cleanup_profile == 'cancelled_retained_v5'))
+    cancelled = cleanup_profile is not None
+    retained_status = 'retained' if cancelled else 'active'
     remaining_nodes = 65536
     def exact_json(item, depth=0):
         nonlocal remaining_nodes
@@ -1803,6 +1810,11 @@ def _productive_native_closed_profile_v1(terminal, request_raw, *,
         and type(expected_resource_ledger) is str and Path(expected_resource_ledger).is_absolute())
     value = json.loads(request_raw)
     need(_ordinary_scratch_no_child_request_shape(value, request_raw))
+    if cancelled:
+        budgets = {'cpu_slots':1, 'memory_mb':1536, 'child_process_slots':4,
+            'storage_bytes':16777216, 'timeout_seconds':300}
+        need(all(type(value[key]) is int and value[key] == expected
+            for key, expected in budgets.items()))
     exact_json(terminal)
     need(len(json.dumps(terminal, sort_keys=True, allow_nan=False).encode()) <= 1024*1024
         and type(terminal) is dict and set(terminal) == {'schema','request_sha256','completed',
@@ -1819,40 +1831,54 @@ def _productive_native_closed_profile_v1(terminal, request_raw, *,
         'process_observation','process_cleanup_error'}
         and failure['schema'] == 'owned-validation-result/v1'
         and failure['request_sha256'] == expected_request_sha256
-        and same(failure['executed_checks'], value['selected_checks'])
-        and type(failure['returncode']) is int and failure['returncode'] != 0
         and failure['error_type'] == 'RuntimeError'
-        and failure['error'] == 'validation command failed with returncode '+str(failure['returncode'])
+        and ((failure['executed_checks'] == [] and failure['returncode'] is None
+              and failure['error'] == 'validation cancelled: []'
+              and type(failure['received_signals']) is list
+              and len(failure['received_signals']) == 1
+              and type(failure['received_signals'][0]) is int
+              and failure['received_signals'][0] == 15)
+             if cancelled else
+             (same(failure['executed_checks'], value['selected_checks'])
+              and type(failure['returncode']) is int and failure['returncode'] != 0
+              and failure['error'] == 'validation command failed with returncode '+str(failure['returncode'])
+              and failure['received_signals'] == []))
         and all(failure[key] is False for key in ('completed','admitted','Lean_admitted',
             'authority_granted','model_weights_downloaded'))
-        and failure['watchdog_errors'] == [] and failure['received_signals'] == []
+        and failure['watchdog_errors'] == []
         and failure['process_cleanup_error'] is None
         and type(failure['elapsed_seconds']) in (int,float) and math.isfinite(failure['elapsed_seconds'])
         and 0 <= failure['elapsed_seconds'] < 2**63
         and failure['resource_scope'] == 'cooperative_sampled_birth_bound_descendants_and_owned_attempt')
-    need(type(reservation) is dict and set(reservation) == {'schema','ledger_path','reservation_id',
-        'status','record','resource_lease','process_observation','cleanup_error','roots','scheduler_lane',
-        'workload','storage_limit_bytes','enforcement','ordinary_scratch_profile',
-        'cleanup_failure_observations','cleanup_failure_observation_overflow'}
+    reservation_fields = {'schema','ledger_path','reservation_id','status','record',
+        'resource_lease','process_observation','cleanup_error','roots','scheduler_lane',
+        'workload','storage_limit_bytes','enforcement','ordinary_scratch_profile'}
+    if not cancelled:
+        reservation_fields |= {'cleanup_failure_observations','cleanup_failure_observation_overflow'}
+    need(type(reservation) is dict and set(reservation) == reservation_fields
         and reservation['schema'] == 'daemon-resource-reservations-v1'
-        and reservation['status'] == 'active' and reservation['cleanup_error'] in
-            ('DaemonResourceError','ResourceAdmissionDeadlineError','OSError','RuntimeError')
+        and reservation['status'] == retained_status
+        and (reservation['cleanup_error'] is None if cancelled else
+             reservation['cleanup_error'] in
+             ('DaemonResourceError','ResourceAdmissionDeadlineError','OSError','RuntimeError'))
         and reservation['ledger_path'] == expected_resource_ledger
         and reservation['scheduler_lane'] == 'validation' and reservation['workload'] == 'canonical_validation'
         and type(reservation['storage_limit_bytes']) is int and reservation['storage_limit_bytes'] > 0
         and reservation['enforcement'] == 'cooperative_admission_and_polled_usage_not_kernel_quota'
-        and reservation['cleanup_failure_observation_overflow'] is False)
-    diagnostics = reservation['cleanup_failure_observations']
-    need(type(diagnostics) is list and len(diagnostics) == 1)
-    diagnostic = diagnostics[0]
-    need(type(diagnostic) is dict and set(diagnostic) == {'schema','stage','error_kind','reason_code',
-        'lock_observation_status','lock_observation'}
-        and diagnostic['schema'] == 'owned-resource-cleanup-failure/v1'
-        and diagnostic['stage'] == 'failure_retention'
-        and diagnostic['error_kind'] in ('resource_deadline','daemon_resource_error','os_error','unknown_error')
-        and diagnostic['reason_code'] in ('unclassified','ledger_lock_unavailable')
-        and diagnostic['lock_observation_status'] in ('absent','rejected','accepted')
-        and _productive_cleanup_diagnostic_v1(reservation, expected_resource_ledger))
+        and (cancelled or reservation['cleanup_failure_observation_overflow'] is False))
+    diagnostics = None
+    if not cancelled:
+        diagnostics = reservation['cleanup_failure_observations']
+        need(type(diagnostics) is list and len(diagnostics) == 1)
+        diagnostic = diagnostics[0]
+        need(type(diagnostic) is dict and set(diagnostic) == {'schema','stage','error_kind','reason_code',
+            'lock_observation_status','lock_observation'}
+            and diagnostic['schema'] == 'owned-resource-cleanup-failure/v1'
+            and diagnostic['stage'] == 'failure_retention'
+            and diagnostic['error_kind'] in ('resource_deadline','daemon_resource_error','os_error','unknown_error')
+            and diagnostic['reason_code'] in ('unclassified','ledger_lock_unavailable')
+            and diagnostic['lock_observation_status'] in ('absent','rejected','accepted')
+            and _productive_cleanup_diagnostic_v1(reservation, expected_resource_ledger))
     need(type(witness) is dict and set(witness) == {'schema','request_sha256','producer','owner',
         'reservation_id','resource_request_id','ledger_path','scheduler','attempt_directory','outputs',
         'budgets','process_scope','events','owner_child_attached','native_grant','source_guards','storage'}
@@ -1872,14 +1898,19 @@ def _productive_native_closed_profile_v1(terminal, request_raw, *,
     need(witness['producer'] == {'path':producer,'sha256':value['source_sha256'].get(producer)}
         and digest(value['source_sha256'].get(producer)))
     row, lease, observation = (reservation[key] for key in ('record','resource_lease','process_observation'))
-    need(type(row) is dict and set(row) == {'reservation_id','status','owner_pid','storage_bytes',
-        'memory_mb','cpu_slots','child_process_slots','external_charges','created_at','prior_children',
-        'child','artifacts_durable_asserted','scheduler_lane','workload','attempt_directory','last_usage',
+    row_fields = {'reservation_id','status','owner_pid','storage_bytes','memory_mb','cpu_slots',
+        'child_process_slots','external_charges','created_at','prior_children','child',
+        'artifacts_durable_asserted','scheduler_lane','workload','attempt_directory','last_usage',
         'native_lease_id','outputs','owner_birth','process_scope','scheduler_policy_sha256',
         'scheduler_state_path','validation_request_sha256'}
+    if cancelled:
+        row_fields.add('retention_reason')
+    need(type(row) is dict and set(row) == row_fields
         and identifier(row['reservation_id'])
         and row['reservation_id'] == reservation['reservation_id'] == witness['reservation_id']
-        and row['status'] == 'active' and row['owner_pid'] == owner_pid and type(row['owner_pid']) is int
+        and row['status'] == retained_status
+        and (not cancelled or row['retention_reason'] == 'context_failed')
+        and row['owner_pid'] == owner_pid and type(row['owner_pid']) is int
         and row['owner_birth'] == owner_birth and row['artifacts_durable_asserted'] is False
         and row['prior_children'] == [] and row['external_charges'] == {}
         and row['process_scope'] == witness['process_scope'] == value['process_scope']
@@ -1903,9 +1934,11 @@ def _productive_native_closed_profile_v1(terminal, request_raw, *,
         and witness['scheduler'] == {'state_path':value['scheduler_state_path'],
             'policy_sha256':value['expected_scheduler_policy_sha256'],'lane':'validation','workload':'canonical_validation'}
         and witness['resource_request_id'] == 'validation:'+row['reservation_id']
-        and same(witness['storage'], {'status':'active','cleanup_error':reservation['cleanup_error'],
-            'release_authorized':False,'cleanup_failure_observations':diagnostics,
-            'cleanup_failure_observation_overflow':False}))
+        and same(witness['storage'],
+            {'status':'retained','cleanup_error':None,'release_authorized':False} if cancelled else
+            {'status':'active','cleanup_error':reservation['cleanup_error'],
+             'release_authorized':False,'cleanup_failure_observations':diagnostics,
+             'cleanup_failure_observation_overflow':False}))
     need(type(lease) is dict and set(lease) == {'lease_id','lane','owner_pid','parent_lease_id',
         'cpu_slots','memory_mb','child_process_slots','gpu_memory_mb','unified_memory_mb','requires_gpu',
         'acquired_at','wait_seconds','released','cancelled'}
@@ -1955,14 +1988,39 @@ def _productive_native_closed_profile_v1(terminal, request_raw, *,
     return value, witness, reservation, row, lease
 
 
+def _productive_native_closed_profile_v1(terminal, request_raw, *,
+        expected_request_sha256, owner_pid, owner_birth, returncode, expected_resource_ledger):
+    """Preserve the original strict ACTIVE productive-failure profile."""
+    return _attached_native_closed_profile_v1(terminal, request_raw,
+        expected_request_sha256=expected_request_sha256, owner_pid=owner_pid,
+        owner_birth=owner_birth, returncode=returncode,
+        expected_resource_ledger=expected_resource_ledger)
+
+
+def _cancelled_retained_native_closed_profile_v5(terminal, request_raw, *,
+        expected_request_sha256, owner_pid, owner_birth, returncode, expected_resource_ledger):
+    """Strict cancelled RETAINED V5 bindings, without worker/test qualification.
+
+    No qualified worker report is needed or granted. Empty reported checks do
+    not establish whether any underlying calls started. This gate alone proves
+    neither genuine wait nor current Native/process/Source closure.
+    """
+    return _attached_native_closed_profile_v1(terminal, request_raw,
+        expected_request_sha256=expected_request_sha256, owner_pid=owner_pid,
+        owner_birth=owner_birth, returncode=returncode,
+        expected_resource_ledger=expected_resource_ledger,
+        cleanup_profile='cancelled_retained_v5')
+
+
 def inspect_owned_validation_productive_native_closed_v1(terminal, request_raw, *,
         expected_request_sha256, owner_pid, owner_birth, returncode, expected_resource_ledger,
-        original_wait_deadline_monotonic):
-    """Inspect sampled productive closure while failed storage stays ACTIVE.
+        original_wait_deadline_monotonic, cleanup_profile=None):
+    """Inspect original sampled closure; storage remains ACTIVE or RETAINED.
 
-    Caller prerequisites: genuine original Popen/wait, fixed original absolute
-    420s wait cutoff, and the same original Source READs held through this call
-    and final source checks. Existing stable no-follow snapshots read only the
+    Caller prerequisites: genuine original Popen/wait, the same fixed original
+    absolute cutoff (at most420s for the legacy ACTIVE path or360s for explicit
+    cancelled RETAINED cleanup), and original Source READs held through this
+    call and final source checks. Existing stable no-follow snapshots read only the
     selected row; unrelated foreign rows may advance between observations.
     No lock file, grant, retry, deadline, disk claim, census or fsync is created.
     Unknown wait/process/native/source/own-row facts retain Source custody.
@@ -1972,11 +2030,17 @@ def inspect_owned_validation_productive_native_closed_v1(terminal, request_raw, 
     try:
         def need(condition):
             if not condition: raise ValueError('unproven productive native closure')
+        need(cleanup_profile is None or
+            (type(cleanup_profile) is str and cleanup_profile == 'cancelled_retained_v5'))
+        cancelled = cleanup_profile is not None
         observed_start = time.monotonic()
         need(type(original_wait_deadline_monotonic) in (int,float)
             and math.isfinite(original_wait_deadline_monotonic)
-            and observed_start < original_wait_deadline_monotonic <= observed_start+420)
-        value, witness, reservation, row, lease = _productive_native_closed_profile_v1(terminal,
+            and observed_start < original_wait_deadline_monotonic
+            <= observed_start+(360 if cancelled else 420))
+        binding = (_cancelled_retained_native_closed_profile_v5 if cancelled
+                   else _productive_native_closed_profile_v1)
+        value, witness, reservation, row, lease = binding(terminal,
             request_raw, expected_request_sha256=expected_request_sha256, owner_pid=owner_pid,
             owner_birth=owner_birth, returncode=returncode, expected_resource_ledger=expected_resource_ledger)
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_daemon_resources as host
@@ -2047,7 +2111,8 @@ def inspect_owned_validation_productive_native_closed_v1(terminal, request_raw, 
                 recovery._sampled_processes_stopped(profile)
                 current_own_row()
                 native._check_resource_operation_deadline()
-            return dict(verdict='proven_original_productive_native_closed_storage_separate',
+            return dict(verdict=('proven_original_cancelled_retained_native_closed' if cancelled
+                else 'proven_original_productive_native_closed_storage_separate'),
                 source_custody_closed=True,storage_release_authorized=False)
     except BaseException:
         return unknown
