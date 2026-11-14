@@ -12210,6 +12210,37 @@
       "title": "Reconcile temporal attention comparison"
     },
     {
+      "historical_Qwen2_training_conditioning_capacity": {
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-Qwen25-training-conditioning-capacity-v01/closed-capacity-observation.json",
+        "bytes": 2333,
+        "sha256": "dbbe8a1726a273141a4fdfcbd467f103fcce869f9d919ef6ce8be26b26cb2210",
+        "profile_summary": {
+          "qwen2-chatml-complete-legal-ir/v1": {
+            "capacity_rows": 9,
+            "source_pairs": 6,
+            "rich_queries": 3,
+            "minimum_physical_positions": 2040,
+            "maximum_physical_positions": 7941,
+            "physical_rows_over_8192": 0
+          },
+          "qwen2-chatml-field-layouts/v1": {
+            "capacity_rows": 9,
+            "source_pairs": 6,
+            "rich_queries": 3,
+            "minimum_physical_positions": 2296,
+            "maximum_physical_positions": 8197,
+            "physical_rows_over_8192": 1
+          }
+        },
+        "declared_model_positions": 32768,
+        "operation_count": 1,
+        "additional_test_count": 0,
+        "historical_source_only": true,
+        "current_runtime_approval": false,
+        "actual_current_source_pretrained_pair_qualified": false,
+        "actual_pretrained_fitting_performed": false,
+        "training_eligibility_granted": false
+      },
       "acceptance_criteria": [
         "Candidate coverage, final binding, stopping and complete IR are separately measured.",
         "Casewise/length/class retention and unsupported floors pass before selecting a candidate."

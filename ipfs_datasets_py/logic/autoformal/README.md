@@ -1,6 +1,6 @@
 # Legal autoformalization
 
-Explicit Qwen2 training conditioning now matches the selected inference prompt and body/EOS labels through a distinct recipe/checkpoint identity. All 93 selected tests pass, including a complete reviewed tiny-fixture job. The worker has a new source epoch: historical pretrained pairs require a fresh explicit transition before reuse. No actual pretrained fitting or legal/proof gain is claimed. See the [handoff](docs/HANDOFF.md).
+Explicit Qwen2 training conditioning now matches the selected inference prompt and body/EOS labels through a distinct recipe/checkpoint identity. All 93 selected tests pass, including a complete reviewed tiny-fixture job. The worker has a new source epoch: historical pretrained pairs require a fresh explicit transition before reuse. No actual pretrained fitting or legal/proof gain is claimed. See the [handoff](docs/HANDOFF.md). Historical actual-tokenizer capacity is now recorded: the largest complete public-layout training-shaped capacity sequence, including heldout rows, is 8197 positions, so an 8192 total-position window is insufficient. Current-checkout runtime and pretrained fitting remain unqualified.
 
 The actual pretrained Qwen rich-context path now passes the explicit original-parent typed-structure audit on all three heldout queries. Outcomes {"abstained": 0, "complete": 0, "error": 0, "incomplete": 3, "invalid": 0, "unsupported": 0}; no quality or legal/proof gain is inferred. See the [handoff](docs/HANDOFF.md).
 

@@ -1438,3 +1438,105 @@ def test_lean_incomplete_literal_boundaries_refuse_without_hiding_later_text(lab
     from ipfs_datasets_py.logic.backends.kernel import lean
     with pytest.raises(LeanKernelError):
         lean._mask_lean_comments_and_strings(source)
+
+
+@pytest.mark.parametrize("aliases", [
+    {"source": "theorem wanted : True := True.intro\n"},
+    {"lean": "theorem wanted : True := True.intro\n"},
+    {"checked_source": "theorem wanted : True := True.intro\n"},
+    dict.fromkeys(("lean", "source", "checked_source"), "theorem wanted : True := True.intro\n"),
+    {"lean": "", "source": "theorem wanted : True := True.intro\n", "checked_source": None},
+])
+def test_lean_source_aliases_bind_one_exact_source(aliases):
+    from dataclasses import replace
+    from ipfs_datasets_py.logic.backends.kernel import lean
+    request = _request(family="lean4", encoding="lean4", source="unused")
+    request = replace(request, payload=FrozenMap({"encoding": "lean4", **aliases}))
+    source, encoding, translation = lean._payload_source(request)
+    assert source == "theorem wanted : True := True.intro\n"
+    assert encoding == "lean4" and translation is None
+
+
+@pytest.mark.parametrize("pair", [
+    ("lean", "source"), ("lean", "checked_source"), ("source", "checked_source"),
+])
+@pytest.mark.parametrize("other", [
+    "theorem wanted : False := by sorry\n",
+    "theorem wanted : True := True.intro\n\n",  # bytes, not stripped text
+])
+def test_lean_conflicting_source_aliases_reject_before_execution(pair, other):
+    from dataclasses import replace
+    aliases = {pair[0]: "theorem wanted : True := True.intro\n", pair[1]: other}
+    request = _request(family="lean4", encoding="lean4", source="unused")
+    request = replace(request, payload=FrozenMap({"encoding": "lean4", **aliases}))
+    runner, calls = _process_runner("")
+    backend = LeanKernelBackend(runner=runner,
+        native_probe=lambda: pytest.fail("conflicting source reached capability probe"),
+        native_identity_probe=lambda *args, **kwargs: pytest.fail("conflicting source reached native identity"))
+    with pytest.raises(LeanKernelError, match="unambiguous checked Lean source"):
+        backend.run(request)
+    assert calls == []
+
+
+@pytest.mark.parametrize("alias", ["lean", "source", "checked_source"])
+@pytest.mark.parametrize("invalid", [False, 0, [], {}, 42, "   ", "bad\x00source"])
+def test_lean_malformed_source_alias_cannot_hide_beside_valid_source(alias, invalid):
+    from dataclasses import replace
+    from ipfs_datasets_py.logic.backends.kernel import lean
+    aliases = dict.fromkeys(("lean", "source", "checked_source"), "theorem wanted : True := True.intro\n")
+    aliases[alias] = invalid
+    request = _request(family="lean4", encoding="lean4", source="unused")
+    request = replace(request, payload=FrozenMap({"encoding": "lean4", **aliases}))
+    with pytest.raises(LeanKernelError, match="Lean source must be non-empty text"):
+        lean._payload_source(request)
+
+
+@pytest.mark.parametrize("token", [
+    "s!", "m!", "f!", "dbg_trace", "trace", "throwNamedError", "throwNamedErrorAt",
+    "logNamedError", "logNamedErrorAt", "logNamedWarning", "logNamedWarningAt",
+    "throwError", "throwErrorAt",
+])
+@pytest.mark.parametrize("gap", ["", " ", "/- literal boundary -/\n"])
+def test_lean_interpolating_tokens_fail_explicitly_instead_of_hiding_terms(token, gap):
+    """Lexical profile coverage only, not compilation of every token combination."""
+    source = 'def value := ' + token + gap + '"{(by sorry : Nat)}"\ntheorem wanted : True := True.intro\n'
+    with pytest.raises(LeanKernelError, match="interpolated Lean syntax is unsupported"):
+        scan_lean_incomplete_or_unsafe(source)
+
+
+@pytest.mark.parametrize("body", ["sorry", "admit", "run_tac pure (); exact 7"])
+def test_lean_interpolated_proof_terms_never_reach_compiler(body):
+    source = 'def value : String := s!"{(by ' + body + ' : Nat)}"\ntheorem wanted : True := True.intro\n'
+    runner, calls = _process_runner("")
+    backend = LeanKernelBackend(runner=runner,
+        native_probe=lambda: _available_native("lean", "fixture-not-an-executed-compiler"),
+        native_identity_probe=lambda *args, **kwargs: pytest.fail("interpolation reached native identity"))
+    with pytest.raises(LeanKernelError, match="interpolated Lean syntax is unsupported"):
+        backend.run(_request(family="lean4", encoding="lean4", source=source,
+            expected_declaration="wanted", expected_proposition="True"))
+    assert calls == []
+
+
+def test_lean_interpolated_expected_proposition_is_not_a_complete_literal():
+    from ipfs_datasets_py.logic.backends.kernel import lean
+    with pytest.raises(LeanKernelError, match="interpolated Lean syntax is unsupported"):
+        lean._expected_proposition('s!"{(by sorry : Nat)}" = ""')
+
+
+@pytest.mark.parametrize("prefix", [
+    'def value := NS.s! "literal {sorry}"',
+    'def value := s!name "literal {admit}"',
+    'def value := s!\' "literal {run_tac}"',
+    'def value := αs! "literal {sorry}"',
+    'def value := «s!» "literal {sorry}"',
+    'def value := `s!',
+    'def value := `dbg_trace',
+    'def value := NS.throwError "literal {sorry}"',
+    'def value := traceMore "literal {sorry}"',
+    'def value := "s! m! f! dbg_trace trace throwError {sorry}"',
+    'def value := r#"s!\"{sorry}\" dbg_trace"#',
+    '/- s!"{sorry}" /- dbg_trace -/ throwError -/',
+    '-- s!"{sorry}" throwError',
+])
+def test_lean_interpolation_policy_preserves_noninterpolating_token_contexts(prefix):
+    assert scan_lean_incomplete_or_unsafe(prefix + "\ntheorem wanted : True := True.intro\n") == ()

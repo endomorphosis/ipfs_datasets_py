@@ -321,7 +321,12 @@ def evaluate_legal_ir_semantic_equivalence(
     *,
     family: str = "unscoped",
 ) -> SemanticEquivalenceFamilyResult:
-    """Compute semantic-equivalence scores for one reference/candidate IR pair."""
+    """Compare reported legacy surfaces, withholding uncovered measurements.
+
+    This raw-payload route does not validate canonical typed IR, independently
+    recompile text, or establish legal source correspondence. Unknown legacy
+    shapes remain diagnostic inputs, but cannot supply complete gate evidence.
+    """
 
     family_name = _canonical_family_or_unscoped(family)
     structural_left = _structural_signature(reference_ir)
@@ -334,8 +339,10 @@ def evaluate_legal_ir_semantic_equivalence(
     graph_right = _graph_signature(candidate_ir)
     temporal_left = _temporal_window_signature(reference_ir)
     temporal_right = _temporal_window_signature(candidate_ir)
-    decompiler_left = _decompiler_round_trip_signature(reference_ir)
-    decompiler_right = _decompiler_round_trip_signature(candidate_ir)
+    decompiler_left, round_trip_left = _legacy_round_trip_observation(reference_ir)
+    decompiler_right, round_trip_right = _legacy_round_trip_observation(candidate_ir)
+    unsupported_left = _legacy_raw_ir_unsupported_paths(reference_ir)
+    unsupported_right = _legacy_raw_ir_unsupported_paths(candidate_ir)
     proof_left = _proof_obligation_signature(reference_ir)
     proof_right = _proof_obligation_signature(candidate_ir)
     proof_delta = float(len(proof_left ^ proof_right))
@@ -355,18 +362,39 @@ def evaluate_legal_ir_semantic_equivalence(
             temporal_left,
             temporal_right,
         ),
-        DECOMPILER_ROUND_TRIP_PRESERVATION: _empty_aware_similarity(
-            decompiler_left or structural_left,
-            decompiler_right or structural_right,
-        ),
         PROOF_OBLIGATION_DELTA_SCORE: _proof_delta_score(proof_left, proof_right),
     }
+    missing: set[str] = set()
+    if decompiler_left and decompiler_right:
+        scores[DECOMPILER_ROUND_TRIP_PRESERVATION] = _set_similarity(
+            decompiler_left, decompiler_right,
+        )
+    else:
+        missing.add(DECOMPILER_ROUND_TRIP_PRESERVATION)
+    if unsupported_left or unsupported_right:
+        # Preserve the old similarity diagnostics without treating unhandled
+        # fields as covered legal structure or obligation semantics.
+        missing.update((STRUCTURAL_EQUIVALENCE, OBLIGATION_EQUIVALENCE))
     return SemanticEquivalenceFamilyResult(
         family=family_name,
         scores=scores,
         raw_deltas={PROOF_OBLIGATION_DELTA: proof_delta},
+        missing_metrics=tuple(metric for metric in SEMANTIC_EQUIVALENCE_METRICS if metric in missing),
         evidence_sources=("computed_ir_pair",),
         detail={
+            "raw_input_coverage": {
+                "profile": "legacy-reported-surfaces/v1",
+                "reference_unsupported_paths": list(unsupported_left),
+                "candidate_unsupported_paths": list(unsupported_right),
+                "canonical_typed_ir_validated": False,
+                "legal_source_correspondence_verified": False,
+            },
+            "round_trip_evidence": {
+                "reference": round_trip_left,
+                "candidate": round_trip_right,
+                "independently_recompiled": False,
+                "authority": "caller_reported_observations_only",
+            },
             "counterexample_signature_sizes": {
                 "candidate": len(counterexamples_right),
                 "reference": len(counterexamples_left),
@@ -419,7 +447,8 @@ def semantic_equivalence_from_metrics(
             scores=merged,
             raw_deltas=raw_deltas,
             missing_metrics=tuple(
-                metric for metric in SEMANTIC_EQUIVALENCE_METRICS if metric not in merged
+                metric for metric in SEMANTIC_EQUIVALENCE_METRICS
+                if metric not in merged or metric in computed.missing_metrics
             ),
             evidence_sources=("computed_ir_pair", "explicit_metric"),
             detail=computed.detail,
@@ -748,6 +777,135 @@ def _ce_cosine_improvements(
     return improvements
 
 
+def _legacy_raw_ir_unsupported_paths(value: Any) -> tuple[str, ...]:
+    """Describe coverage of the finite legacy surface, not typed-IR validity.
+
+    The old set signatures are useful diagnostics for these simple records.
+    They do not interpret arbitrary argument arrays, binders, or extra semantic
+    fields. Identity metadata retains its historical excluded scope. Assignment
+    names are open, but their values must remain scalar; no nested semantics
+    are accepted merely because a recursive signature can flatten them.
+    """
+    def text_keys(keys: str) -> dict[str, str]:
+        return {key: "text" for key in keys.split()}
+
+    schemas = {
+        "root": {"rules": "rules", "graph": "graph", "counterexamples": "counterexamples",
+                 "round_trip": "round_trip", "roundtrip": "round_trip",
+                 **text_keys("decompiled decompiler recompiled_ir reconstructed_ir")},
+        "rule": {**text_keys("modality type norm_type obligation_type subject actor agent party "
+                             "action predicate verb duty obligation condition unless if exception"),
+                 "proof_obligation_ids": "texts", "temporal_window": "temporal"},
+        "temporal": text_keys("start from effective begin after end to expires deadline before duration within window"),
+        "graph": {"nodes": "nodes", "edges": "edges", "relationships": "edges",
+                  "triples": "triples", "kg_triples": "triples"},
+        "node": text_keys("node_id label name type"),
+        "edge": text_keys("source from subject target to object label type predicate"),
+        "triple": text_keys("subject s predicate p relation object o"),
+        "counterexample": {"assignment": "assignment", "violates": "text"},
+        "round_trip": text_keys("decompiled decompiler recompiled_ir reconstructed_ir"),
+    }
+    sequence_items = {"rules": "rule", "nodes": "node", "edges": "edge",
+                      "triples": "triple", "counterexamples": "counterexample", "texts": "text"}
+    unsupported: set[str] = set()
+
+    def mark(path: str, reason: str) -> None:
+        unsupported.add((path or "/") + ":" + reason)
+
+    def scalar(item: Any) -> bool:
+        return type(item) in (str, bool, int, type(None)) or (
+            type(item) is float and math.isfinite(item)
+        )
+
+    def visit(item: Any, context: str, path: str) -> None:
+        if context == "text":
+            if type(item) is not str:
+                mark(path, "scalar_text_required")
+            return
+        if context in sequence_items:
+            if not isinstance(item, Sequence) or isinstance(item, (str, bytes, bytearray)):
+                mark(path, "sequence_required")
+                return
+            for index, child in enumerate(item):
+                visit(child, sequence_items[context], f"{path}/{index}")
+            return
+        if context in {"edge", "triple"} and isinstance(item, (list, tuple)):
+            if len(item) not in ({2, 3} if context == "edge" else {3}) or not all(
+                type(child) is str for child in item
+            ):
+                mark(path, "unsupported_positional_graph_record")
+            return
+        if context == "node" and type(item) is str:
+            return
+        if not isinstance(item, Mapping):
+            mark(path, "mapping_required")
+            return
+        if context == "assignment":
+            for key, child in item.items():
+                if type(key) is not str or not scalar(child):
+                    mark(path, "scalar_assignment_required")
+            return
+        schema = schemas[context]
+        for key, child in item.items():
+            if type(key) is not str:
+                mark(path, "string_keys_required")
+                continue
+            if key in _IGNORED_NORMALIZATION_KEYS:
+                continue
+            child_path = path + "/" + key.replace("~", "~0").replace("/", "~1")
+            if key not in schema:
+                mark(child_path, "unsupported_field")
+            else:
+                visit(child, schema[key], child_path)
+        if context == "root":
+            graph = item.get("graph")
+            has_graph = isinstance(graph, Mapping) and any(
+                graph.get(key) for key in ("nodes", "edges", "relationships", "triples", "kg_triples")
+            )
+            if not item.get("rules") and not has_graph:
+                mark(path, "legacy_content_missing")
+        elif context == "rule":
+            groups = (("modality", "type", "norm_type", "obligation_type"),
+                      ("subject", "actor", "agent", "party"),
+                      ("action", "predicate", "verb", "duty", "obligation"))
+            for group in groups:
+                present = [key for key in group if key in item]
+                if len(present) != 1 or type(item[present[0]]) is not str or not item[present[0]].strip():
+                    mark(path, "missing_or_ambiguous_" + group[0])
+            modes = [item[key] for key in groups[0] if key in item]
+            if len(modes) == 1 and _normalize_scalar(modes[0]) not in _MODALITY_WORDS:
+                mark(path, "unsupported_modality")
+
+    visit(value, "root", "")
+    return tuple(sorted(unsupported))
+
+
+def _legacy_round_trip_observation(value: Any) -> tuple[frozenset[str], str]:
+    """Require both named reported observations; structural equality is no substitute."""
+    if not isinstance(value, Mapping):
+        return frozenset(), "unsupported_raw_payload"
+    source_keys = ("decompiled", "decompiler")
+    result_keys = ("recompiled_ir", "reconstructed_ir")
+    blocks = [value[key] for key in ("round_trip", "roundtrip") if key in value]
+    if any(key in value for key in source_keys + result_keys):
+        blocks.append({key: value[key] for key in source_keys + result_keys if key in value})
+    if len(blocks) != 1:
+        return frozenset(), "missing_or_ambiguous_observation"
+    block = blocks[0]
+    if not isinstance(block, Mapping) or any(
+        key not in source_keys + result_keys and key not in _IGNORED_NORMALIZATION_KEYS for key in block
+    ):
+        return frozenset(), "unsupported_observation_shape"
+    sources = [block[key] for key in source_keys if key in block]
+    results = [block[key] for key in result_keys if key in block]
+    if len(sources) != 1 or len(results) != 1 or any(
+        type(item) is not str or not item.strip() for item in sources + results
+    ):
+        return frozenset(), "missing_or_malformed_observation_pair"
+    return frozenset(("decompiled:" + _normalize_text(sources[0]),
+                      "recompiled_ir:" + _normalize_text(results[0]))), "reported_nonempty_pair"
+
+
 def _structural_signature(value: Any) -> frozenset[str]:
     tokens: set[str] = set()
 
@@ -953,19 +1111,7 @@ def _temporal_window_signature(value: Any) -> frozenset[str]:
 
 
 def _decompiler_round_trip_signature(value: Any) -> frozenset[str]:
-    return frozenset(
-        _contextual_values(
-            value,
-            (
-                "decompiled",
-                "decompiler",
-                "round_trip",
-                "roundtrip",
-                "reconstructed_ir",
-                "recompiled_ir",
-            ),
-        )
-    )
+    return _legacy_round_trip_observation(value)[0]
 
 
 def _proof_obligation_signature(value: Any) -> frozenset[str]:

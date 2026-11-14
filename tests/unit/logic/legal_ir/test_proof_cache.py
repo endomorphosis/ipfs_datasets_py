@@ -525,6 +525,8 @@ def _fictional_kernel_receipt(request, *, toolchain=None):
     from ipfs_datasets_py.logic.backends.kernel import lean
     from ipfs_datasets_py.logic.backends.kernel.wasm import CapabilityPlane,KernelSourceTreeBinding,KernelToolchainBinding
     payload=request.payload.to_dict()
+    # Deliberately retain legacy selection while constructing fictional receipt
+    # headers. Cache replay must independently enforce the current backend policy.
     source=payload.get("lean")or payload.get("source")or payload.get("checked_source")
     name=payload["expected_declaration"];proposition=payload["expected_proposition"]
     guard=lean.lean_expected_obligation_declaration(source,name,proposition)
@@ -550,7 +552,8 @@ def _fictional_kernel_receipt(request, *, toolchain=None):
 def _bound_fixture(*, extra_obligation: bool = False,
                    native_resource_profile: dict[str, Any] | None = None,
                    request_native_resource_profile: dict[str, Any] | None = None,
-                   kernel_native_resource_profile: dict[str, Any] | None = None):
+                   kernel_native_resource_profile: dict[str, Any] | None = None,
+                   source_aliases: dict[str, Any] | None = None):
     from ipfs_datasets_py.logic.backends.kernel import lean
     from ipfs_datasets_py.logic.backends.kernel.wasm import CapabilityPlane, KernelToolchainBinding
     from ipfs_datasets_py.logic.ir_core.claims import FrozenMap
@@ -590,7 +593,9 @@ def _bound_fixture(*, extra_obligation: bool = False,
     request = BackendRequest.for_claim(claim, obligation.obligation_id, request_id="request:fictional-cache",
         requested_backend_id="lean", bounds=ExecutionBounds(timeout_ms=1000, max_steps=1000,
             max_memory_bytes=1000000, max_output_bytes=4096),
-        payload={"lean": "theorem cache_fixture : True := by trivial\n", "expected_declaration": "cache_fixture",
+        payload={**({"lean": "theorem cache_fixture : True := by trivial\n"}
+                    if source_aliases is None else deepcopy(source_aliases)),
+                 "expected_declaration": "cache_fixture",
                  "expected_proposition": "True", "legal_proof_context": request_context})
     kernel_toolchain = toolchain
     if kernel_native_resource_profile is not None:
@@ -610,6 +615,41 @@ def _bound_fixture(*, extra_obligation: bool = False,
     binding = build_legal_proof_binding(artifact, receipt, claim=claim, request=request, attempt=attempt,
                                       result=result, context=context)
     return artifact, receipt, binding, context
+
+
+
+@pytest.mark.parametrize("alias", ["lean", "source", "checked_source"])
+@pytest.mark.parametrize("value", [
+    pytest.param(False, id="false"),
+    pytest.param(0, id="zero-int"),
+    pytest.param(0.0, id="zero-float"),
+    pytest.param([], id="empty-list"),
+    pytest.param({}, id="empty-mapping"),
+])
+def test_bound_proof_rejects_legacy_falsey_nontext_source_alias(alias: str, value: Any) -> None:
+    # The complete fictional chain selects valid Lean bytes under the old
+    # truthiness rule; replay must not reinterpret the malformed alias as absent.
+    source = "theorem cache_fixture : True := by trivial\n"
+    aliases = {"source" if alias == "lean" else "lean": source, alias: value}
+    with pytest.raises(LegalProofIntegrityError, match="current backend"):
+        _bound_fixture(source_aliases=aliases)
+
+
+@pytest.mark.parametrize("aliases", [
+    pytest.param({"lean": "theorem cache_fixture : True := by trivial\n"}, id="lean-only"),
+    pytest.param({"source": "theorem cache_fixture : True := by trivial\n"}, id="source-only"),
+    pytest.param({"checked_source": "theorem cache_fixture : True := by trivial\n"}, id="checked-source-only"),
+    pytest.param(dict.fromkeys(("lean", "source", "checked_source"),
+                              "theorem cache_fixture : True := by trivial\n"), id="identical-aliases"),
+    pytest.param({"lean": None, "source": "theorem cache_fixture : True := by trivial\n",
+                  "checked_source": ""}, id="empty-optional-aliases"),
+])
+def test_bound_proof_preserves_canonical_source_alias_reuse(aliases: dict[str, Any]) -> None:
+    artifact, receipt, binding, context = _bound_fixture(source_aliases=aliases)
+    record = LegalProofRecord.build(artifact, profile="fictional-bound", jurisdiction="fictional",
+        theorem_receipts=(receipt,), proof_bindings=(binding,))
+    assert record.theorem_receipt_results(expected_context=context,
+        obligation_id=receipt.obligation_id) == (receipt,)
 
 
 def _bound_record(*, extra_obligation: bool = False, native_resource_profile: dict[str, Any] | None = None):

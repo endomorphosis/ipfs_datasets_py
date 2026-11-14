@@ -1,0 +1,204 @@
+{
+  "schema": "legal-ir-proof-screen-and-legacy-metrics-qualification/v1",
+  "recorded_date_utc": "2026-11-14",
+  "baseline_commit": "0bcc6a35a09bfbde7770f2c6b9bbd18a279aa6eb",
+  "scope": "Source-only correctness changes in existing owners; ordinary software tests and explicitly fictional proof chains.",
+  "source_sha256": {
+    "ipfs_datasets_py/logic/backends/kernel/lean.py": "dd97770c61b3fc5f57f73e9d9d3d19bb1c161219864ee31cc89af57a319b94bd",
+    "tests/integration/logic/backends/test_kernel_backends.py": "b8659abd82c3c31d6ca2aad445fab4da79407f4ba8345be491dea7cf2cf77011",
+    "ipfs_datasets_py/logic/legal_ir/proof_cache.py": "e716a01e29617a9b1ebd3df4b8a32aaa66bf1955532afa51d0036dde9e0b016a",
+    "tests/unit/logic/legal_ir/test_proof_cache.py": "27ede074ceb68cd91d50eada99b9c6f02216607e22610bc63db4fde69e17fb4c",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_semantic_metrics.py": "c7d3d1dd00f258027c1236640f7554d36ecf314816f1f65f025a76a90697bdb4",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_semantic_metrics.py": "4d4662d4d5edecb2009331d31df40120b13944cefeaceb301c0116279dd5c1f0"
+  },
+  "proof_validation": {
+    "reproduced": [
+      "Interpolating syntax hid sorry/admit/run_tac terms from the lexical source screen.",
+      "Interpolating expected propositions bypassed the complete-term screen.",
+      "Conflicting source aliases silently selected one source; malformed unused aliases were ignored.",
+      "The previous cache binding selector accepted 15 malformed-alias fictional chains under the stricter current backend policy."
+    ],
+    "resolved": [
+      "Known Lean 4.34.1 interpolating syntax explicitly refuses as unsupported; no partial recursive parser is claimed.",
+      "Single and byte-identical source aliases remain valid; malformed or conflicting aliases reject before compilation.",
+      "Cache proof binding reuses the canonical backend source and encoding selector."
+    ],
+    "native_false_proof_acceptance_demonstrated": false,
+    "ordinary_tests": {
+      "collected": 399,
+      "passed": 396,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 3
+    },
+    "native_Lean_tests": "Three explicitly opt-in cases skipped; no native Lean execution or current native qualification.",
+    "source_guard_closed": true,
+    "source_unchanged_through_tests": true,
+    "independent_AST_harness": {
+      "cases": 179,
+      "failed_assertions": 0,
+      "pytest_or_native_credit": false
+    },
+    "pinned_syntax_references": [
+      "https://raw.githubusercontent.com/leanprover/lean4/v4.34.1/src/Init/Data/ToString/Macro.lean",
+      "https://raw.githubusercontent.com/leanprover/lean4/v4.34.1/src/Init/Data/Format/Macro.lean",
+      "https://raw.githubusercontent.com/leanprover/lean4/v4.34.1/src/Lean/Parser/Term.lean"
+    ]
+  },
+  "legacy_semantic_metrics": {
+    "schema": "legal-ir-legacy-semantic-metrics-software-qualification/v1",
+    "recorded_date_utc": "2026-11-14",
+    "scope": "Existing legacy raw-surface metrics and default promotion evidence completeness; no statutory or native/model qualification.",
+    "existing_owners": [
+      {
+        "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_semantic_metrics.py",
+        "before_bytes": 99022,
+        "before_sha256": "465565062d57dc6aea3e78cd91529afbdcbd9698d80fec830a9af88c9f38aefd",
+        "after_bytes": 106977,
+        "after_sha256": "c7d3d1dd00f258027c1236640f7554d36ecf314816f1f65f025a76a90697bdb4"
+      },
+      {
+        "path": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_semantic_metrics.py",
+        "before_bytes": 30526,
+        "before_sha256": "1e141f49dca27f920e4ee17bbcd2eba770b7b59466e0ea393517e032f0f86d61",
+        "after_bytes": 39178,
+        "after_sha256": "4d4662d4d5edecb2009331d31df40120b13944cefeaceb301c0116279dd5c1f0"
+      }
+    ],
+    "reproduced_baseline": {
+      "selected_cases": 7,
+      "passed": 5,
+      "failed": 2,
+      "errors": 0,
+      "skipped": 0,
+      "failure_meaning": [
+        "Absent reported reverse measurements received structural-fallback credit.",
+        "Unrecognized ordered role/actor fields received complete legacy equivalence; no canonical typed interpretation was asserted."
+      ],
+      "owner_sha256": "465565062d57dc6aea3e78cd91529afbdcbd9698d80fec830a9af88c9f38aefd"
+    },
+    "actual_canonical_validation": {
+      "cases": 114,
+      "passed": 114,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "junit_seconds": 0.369,
+      "whole_metric_owner_cases": 108,
+      "whole_objective_balancer_cases": 6,
+      "new_fixture_cases": 29,
+      "source_cas_verified": true,
+      "source_guard_mode": "write",
+      "source_guard_waited_seconds": 98.21655553858727,
+      "source_guard_closed": true,
+      "native_model_modules_loaded": []
+    },
+    "resolved_behaviors": [
+      "Missing, malformed, empty, one-sided and ambiguous reverse observations cannot supply the reverse score.",
+      "Unsupported legacy fields and nested shapes mark evidence incomplete while retaining similarity diagnostics.",
+      "Explicit scores accompanying a raw pair preserve its missing-evidence markers."
+    ],
+    "preserved_behaviors": [
+      "Known fixture ID/node-order invariance and recognized actor/modality regressions.",
+      "Supported explicit observation aliases, labelled caller-reported only.",
+      "Explicit-only metric contract.",
+      "Existing complete-payload, retrieval and canonical typed-structure audit function bodies.",
+      "Previous owning test bytes preserved as exact prefix."
+    ],
+    "authority": {
+      "paired_strings_independently_recompiled": false,
+      "canonical_typed_ir_validated_by_legacy_gate": false,
+      "legal_source_correspondence_verified": false,
+      "proof_verified": false,
+      "legal_review_or_corpus_admitted": false,
+      "pretrained_training_or_inference_executed": false,
+      "real_resource_policy_or_ledger_changed": false
+    },
+    "known_legacy_complete_means": "The seven legacy surface measures are available; this is not full typed-AST or legal semantic equivalence.",
+    "compatibility_change": "Previously unhandled raw shapes are now incomplete for the default hard gate. Permissive diagnostic scores are retained.",
+    "evidence_descriptors": [
+      {
+        "name": "canonical-metrics-objective-unit.xml",
+        "kind": "actual_canonical_junit",
+        "bytes": 23628,
+        "sha256": "d68c509eae4048941740895448ee933474e51406d38e678e6cba0e22bf2ee05d"
+      },
+      {
+        "name": "canonical-metrics-objective-unit.log",
+        "kind": "actual_canonical_test_log",
+        "bytes": 1114,
+        "sha256": "a6cd4e8f30c73f9378ced4babeb7348d0b0100f3a66088781bf6d25a11b412d3"
+      },
+      {
+        "name": "canonical-source-unit-result.json",
+        "kind": "source_cas_and_unit_result",
+        "bytes": 2383,
+        "sha256": "f323a5c883e383426411f24cbc349144315781d754190c4cf5b7a9bf988b94eb"
+      },
+      {
+        "name": "final-source-test.diff",
+        "kind": "exact_two_path_source_diff",
+        "bytes": 20875,
+        "sha256": "97c5b9d84fa68512d4ce5bba06a9fe4b919fdd91eaf348bd3546c7a9ad62ec50"
+      }
+    ],
+    "historical_failures_preserved": true,
+    "task_status_or_budget_changed": false
+  },
+  "total_ordinary_tests": {
+    "passed": 510,
+    "failed": 0,
+    "errors": 0,
+    "skipped_native_Lean": 3
+  },
+  "retained_evidence": [
+    {
+      "label": "proof-software-source-guard",
+      "name": "result.json",
+      "bytes": 1915,
+      "sha256": "74568fbff19b83c978aafa86635d756ff3b4a2ec116dbc53cb7d30c3aed1c876"
+    },
+    {
+      "label": "proof-software-tests",
+      "name": "junit.xml",
+      "bytes": 73791,
+      "sha256": "a1397985b5779580a378a068211dc6d21c5f210a8e2d7858c88f5734fa246db6"
+    },
+    {
+      "label": "old-binding-negative-controls",
+      "name": "junit.xml",
+      "bytes": 7616,
+      "sha256": "55433bb19d31dbb574214e16fb8c10886858cf9a793e901247f9f088d576a356"
+    },
+    {
+      "label": "scanner-before",
+      "name": "lean-scanner-independent-before-repro-20261114-v01.json",
+      "bytes": 9790,
+      "sha256": "b2bbe0b6c90bd6c09727bd22798124b2379ca3e24ce1107f7b7148739281b118"
+    },
+    {
+      "label": "independent-scanner-after",
+      "name": "lean-scanner-independent-after-review-20261114-v01.json",
+      "bytes": 31594,
+      "sha256": "9a34bcae0768d361477f4cbce14f1f23e4ddf1682449a634b0f17b8cc3e8be5a"
+    }
+  ],
+  "authority_and_limits": {
+    "new_native_Lean_result": false,
+    "model_or_private_assets_used": false,
+    "training_or_inference_executed": false,
+    "real_statutory_gold_admitted": 0,
+    "legal_review_fabricated": false,
+    "resource_budgets_reset": false,
+    "old_failures_or_receipts_replaced": false,
+    "note": "Prior native/model results remain bound to their original exact sources. Missing reverse observations and unsupported legacy surfaces are incomplete evidence, not proven semantic failures of canonical typed IR."
+  },
+  "existing_task_ids": [
+    "LIR-03",
+    "LIR-14",
+    "LIR-15",
+    "LIR-17",
+    "LIR-20"
+  ],
+  "task_statuses_changed": false
+}

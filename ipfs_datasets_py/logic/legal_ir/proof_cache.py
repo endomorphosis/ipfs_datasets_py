@@ -336,6 +336,7 @@ def _validate_proof_binding(
     try:
         from ..backends.kernel.lean import (
             LEAN_KERNEL_RECEIPT_VERSION, LeanKernelReceipt, content_digest, instrument_lean_source_for_axioms,
+            _payload_source,
         )
         if LEAN_KERNEL_RECEIPT_VERSION != "lean-kernel-receipt/v3":
             raise ValueError("the canonical Lean v3 verification profile is required")
@@ -351,11 +352,14 @@ def _validate_proof_binding(
             or _canonical_bytes(kernel.toolchain.to_dict()) != _canonical_bytes(context["toolchain"])
             or kernel.toolchain.kernel_id != receipt.backend_id):
         raise LegalProofIntegrityError("checked kernel receipt does not match the proof context")
-    source_values = [request.payload.get(name) for name in ("lean", "source", "checked_source")
-                     if request.payload.get(name)]
-    if not source_values or any(value != source_values[0] for value in source_values):
-        raise LegalProofIntegrityError("one unambiguous checked Lean source is required")
-    source = source_values[0]
+    # Replay the same source-alias and encoding policy as a fresh backend run;
+    # an archival receipt cannot bypass a stricter current request boundary.
+    try:
+        source, _, _ = _payload_source(request)
+    except (TypeError, ValueError, AttributeError) as exc:
+        raise LegalProofIntegrityError(
+            "one unambiguous checked Lean source is required by the current backend"
+        ) from exc
     if (not isinstance(source, str) or kernel.submitted_source != source
             or kernel.theorem_digest != content_digest(source)):
         raise LegalProofIntegrityError("checked Lean source identity differs from request")

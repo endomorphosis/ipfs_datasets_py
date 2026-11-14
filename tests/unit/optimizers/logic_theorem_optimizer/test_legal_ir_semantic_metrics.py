@@ -569,3 +569,164 @@ def test_complete_norm_typed_structure_detects_input_mutation(monkeypatch):
     monkeypatch.setattr(TypedExpression, "from_dict", classmethod(mutate))
     with pytest.raises(ValueError, match="changed during"):
         owner.evaluate_complete_norm_typed_structure(rows)
+
+
+def test_unsupported_ordered_argument_facet_cannot_receive_complete_equivalence() -> None:
+    from copy import deepcopy
+
+    # Fictional proposed facet: the author intends ordered role/actor pairs.
+    # The legacy raw-IR contract does not establish a supported denotation for
+    # these added fields; this is not claimed to be canonical typed LegalIR.
+    # No conjunction or IDs are reordered. Reused ancillary graph/reported
+    # round-trip summaries are not independent authority for this new facet.
+    reference = _reference_ir()
+    reference["rules"][0]["predicate"] = "ProvideNotice"
+    reference["rules"][0]["arguments"] = [
+        {"role": "provider", "actor": "Agency"},
+        {"role": "recipient", "actor": "Contractor"},
+    ]
+    candidate = deepcopy(reference)
+    candidate["rules"][0]["arguments"] = [
+        {"role": "provider", "actor": "Contractor"},
+        {"role": "recipient", "actor": "Agency"},
+    ]
+    result = evaluate_legal_ir_semantic_equivalence(reference, candidate, family="deontic")
+    gate = semantic_equivalence_promotion_gate(
+        {"view_family_metrics": {"deontic": {"reference_ir": reference, "candidate_ir": reference}}},
+        {"view_family_metrics": {"deontic": {"reference_ir": reference, "candidate_ir": candidate}}},
+        config=SemanticEquivalenceConfig(families=("deontic",)),
+    )
+
+    # The expected failure-closed contract here is unsupported/incomplete,
+    # rather than a numeric semantic-distance claim for an unapproved shape.
+    assert result.complete is False
+    assert gate["accepted"] is False
+
+
+def test_absent_reverse_round_trip_cannot_be_credited_from_structural_agreement() -> None:
+    reference, candidate = _reference_ir(), _isomorphic_ir()
+    del reference["round_trip"]
+    del candidate["round_trip"]
+    # No reverse-decompiler/recompiler observation is supplied. Matching raw
+    # structures cannot substitute for that unavailable measurement.
+    result = evaluate_legal_ir_semantic_equivalence(reference, candidate, family="deontic")
+    gate = semantic_equivalence_promotion_gate(
+        {"view_family_metrics": {"deontic": {
+            "reference_ir": _reference_ir(), "candidate_ir": _isomorphic_ir(),
+        }}},
+        {"view_family_metrics": {"deontic": {"reference_ir": reference, "candidate_ir": candidate}}},
+        config=SemanticEquivalenceConfig(families=("deontic",)),
+    )
+
+    assert result.scores.get(DECOMPILER_ROUND_TRIP_PRESERVATION, 0.0) < 1.0
+    assert gate["accepted"] is False
+
+
+@pytest.mark.parametrize("damage", ["absent", "empty", "scalar", "false", "only_decompiled",
+    "only_recompiled", "blank_decompiled", "blank_recompiled", "nested_result", "extra_field",
+    "ambiguous_source", "ambiguous_container"])
+def test_raw_round_trip_requires_both_reported_nonempty_observations(damage):
+    reference, candidate = _reference_ir(), _isomorphic_ir()
+    for value in (reference, candidate):
+        if damage == "absent":
+            del value["round_trip"]
+        elif damage == "empty": value["round_trip"] = {}
+        elif damage == "scalar": value["round_trip"] = "reported success"
+        elif damage == "false": value["round_trip"] = False
+        elif damage == "only_decompiled": del value["round_trip"]["recompiled_ir"]
+        elif damage == "only_recompiled": del value["round_trip"]["decompiled"]
+        elif damage == "blank_decompiled": value["round_trip"]["decompiled"] = " "
+        elif damage == "blank_recompiled": value["round_trip"]["recompiled_ir"] = ""
+        elif damage == "nested_result": value["round_trip"]["recompiled_ir"] = {"uninterpreted": "O(a,b)"}
+        elif damage == "extra_field": value["round_trip"]["verified"] = True
+        elif damage == "ambiguous_source": value["round_trip"]["decompiler"] = value["round_trip"]["decompiled"]
+        else: value["roundtrip"] = deepcopy(value["round_trip"])
+    result = evaluate_legal_ir_semantic_equivalence(reference, candidate, family="deontic")
+    assert DECOMPILER_ROUND_TRIP_PRESERVATION not in result.scores
+    assert DECOMPILER_ROUND_TRIP_PRESERVATION in result.missing_metrics
+    assert not result.complete
+
+
+@pytest.mark.parametrize("side", ["reference", "candidate"])
+def test_one_sided_round_trip_evidence_is_not_a_complete_pair(side):
+    reference, candidate = _reference_ir(), _isomorphic_ir()
+    del (reference if side == "reference" else candidate)["round_trip"]
+    result = evaluate_legal_ir_semantic_equivalence(reference, candidate)
+    assert DECOMPILER_ROUND_TRIP_PRESERVATION not in result.scores
+    assert DECOMPILER_ROUND_TRIP_PRESERVATION in result.missing_metrics
+
+
+@pytest.mark.parametrize("shape", ["unknown_root", "unknown_rule", "nested_condition", "empty", "sequence", "text"])
+def test_unknown_legacy_shapes_are_diagnostic_and_cannot_claim_typed_semantics(shape):
+    value = _reference_ir()
+    if shape == "unknown_root": value["typed_expression"] = {"binders": ["x"]}
+    elif shape == "unknown_rule": value["rules"][0]["arguments"] = ["agency", "notice"]
+    elif shape == "nested_condition": value["rules"][0]["condition"] = {"if": "emergency"}
+    elif shape == "empty": value = {}
+    elif shape == "sequence": value = [_reference_ir()]
+    else: value = "O(agency, provide_notice)"
+    result = evaluate_legal_ir_semantic_equivalence(value, deepcopy(value))
+    assert not result.complete
+    assert STRUCTURAL_EQUIVALENCE in result.missing_metrics
+    assert OBLIGATION_EQUIVALENCE in result.missing_metrics
+    assert result.detail["raw_input_coverage"]["reference_unsupported_paths"]
+    assert result.detail["raw_input_coverage"]["canonical_typed_ir_validated"] is False
+    assert result.detail["raw_input_coverage"]["legal_source_correspondence_verified"] is False
+
+
+def test_recognized_actor_change_still_blocks_legacy_raw_promotion():
+    reference, candidate = _reference_ir(), _isomorphic_ir()
+    candidate["rules"][0]["subject"] = "Contractor"
+    report = compare_legal_ir_semantic_equivalence(
+        {"view_family_metrics": {"deontic": {"reference_ir": reference, "candidate_ir": reference}}},
+        {"view_family_metrics": {"deontic": {"reference_ir": reference, "candidate_ir": candidate}}},
+        families=("deontic",),
+    )
+    assert report.accepted is False
+    assert report.family_results["deontic"].after.scores[OBLIGATION_EQUIVALENCE] < 1.0
+
+
+@pytest.mark.parametrize("damage", ["missing_reverse", "unknown_arguments"])
+def test_explicit_scores_cannot_launder_uncovered_raw_pair_evidence(damage):
+    reference, candidate = _reference_ir(), _isomorphic_ir()
+    if damage == "missing_reverse":
+        del reference["round_trip"]
+        del candidate["round_trip"]
+    else:
+        reference["rules"][0]["arguments"] = ["actor", "object"]
+        candidate["rules"][0]["arguments"] = ["actor", "object"]
+    payload = {"reference_ir": reference, "candidate_ir": candidate, **_all_semantic_scores()}
+    result = semantic_equivalence_from_metrics(payload, family="deontic")
+    assert result.scores[DECOMPILER_ROUND_TRIP_PRESERVATION] == 1.0
+    assert not result.complete
+    gate = semantic_equivalence_promotion_gate(
+        {"view_family_metrics": {"deontic": _all_semantic_scores()}},
+        {"view_family_metrics": {"deontic": payload}},
+        config=SemanticEquivalenceConfig(families=("deontic",)),
+    )
+    assert gate["accepted"] is False
+    assert "deontic:semantic_equivalence_evidence_missing" in gate["block_reasons"]
+
+
+@pytest.mark.parametrize("alias", ["roundtrip", "direct", "field_aliases"])
+def test_explicit_legacy_observation_aliases_retain_reported_only_scope(alias):
+    reference, candidate = _reference_ir(), _isomorphic_ir()
+    for value in (reference, candidate):
+        block = value.pop("round_trip")
+        if alias == "roundtrip": value["roundtrip"] = block
+        elif alias == "direct": value.update(block)
+        else: value["round_trip"] = {"decompiler": block["decompiled"], "reconstructed_ir": block["recompiled_ir"]}
+    result = evaluate_legal_ir_semantic_equivalence(reference, candidate)
+    assert result.complete
+    assert result.scores[DECOMPILER_ROUND_TRIP_PRESERVATION] == 1.0
+    assert result.detail["round_trip_evidence"]["independently_recompiled"] is False
+    assert result.detail["round_trip_evidence"]["authority"] == "caller_reported_observations_only"
+
+
+def test_explicit_metrics_without_a_raw_pair_keep_the_existing_contract():
+    report = compare_legal_ir_semantic_equivalence(
+        {"view_family_metrics": {"deontic": _all_semantic_scores()}},
+        {"view_family_metrics": {"deontic": _all_semantic_scores()}},
+        families=("deontic",),
+    )
+    assert report.accepted

@@ -93,6 +93,14 @@ _UNSUPPORTED_COMMAND = re.compile(
     r"prefix|postfix|attribute|instance|set_option|open|local|scoped|export|alias|"
     r"variable|variables|parameter|parameters|include|omit|universe|universes|prelude|module)(?![A-Za-z0-9_'])"
 )
+# These Lean 4.34.1 syntaxes parse embedded terms inside apparently quoted
+# text. This restricted source profile does not implement that recursive
+# grammar; accepting them as opaque strings would hide executable code.
+_INTERPOLATING_SYNTAX = frozenset({
+    "s!", "f!", "m!", "dbg_trace", "trace",
+    "throwNamedError", "throwNamedErrorAt", "logNamedError", "logNamedErrorAt",
+    "logNamedWarning", "logNamedWarningAt", "throwError", "throwErrorAt",
+})
 _DECL = re.compile(r"^\s*(?:theorem|lemma)\s+([^\s:(=]+)", re.MULTILINE)
 _LEAN_NAME = re.compile(r"[A-Za-z_][A-Za-z0-9_']*(?:\.[A-Za-z0-9_][A-Za-z0-9_']*)*\Z")
 _AXIOM_MARKER = re.compile(r"\b(?:axioms?|sorryAx)\b")
@@ -685,6 +693,8 @@ def _mask_lean_comments_and_strings(source: str, *, allow_comments: bool = True)
     Token boundaries follow Lean 4.34.1 Parser.Basic and Init.Meta.Defs. Quoted
     identifiers end at the first guillemet; their quotes and comment markers
     are identifier content. Character literals and identifier primes differ.
+    Interpolating syntax is explicitly unsupported, since its quoted content
+    can contain complete Lean terms, including nested proofs and tactics.
     """
     chars = list(source)
     i, length = 0, len(source)
@@ -846,6 +856,8 @@ def _mask_lean_comments_and_strings(source: str, *, allow_comments: bool = True)
             i += 1
         elif source[i] == "«" or id_first(source[i]):
             i = identifier_end(i)
+            if source[start:i] in _INTERPOLATING_SYNTAX:
+                raise LeanKernelError("interpolated Lean syntax is unsupported by the checked source profile")
             continue
         elif (source[i] == "`" and i + 1 < length
                 and (id_first(source[i + 1]) or source[i + 1] == "«")):
@@ -1219,7 +1231,18 @@ def _result_id(backend_id: str, request: BackendRequest) -> str:
 
 def _payload_source(request: BackendRequest) -> tuple[str, str, KernelTranslationBinding | None]:
     payload = request.payload.to_dict()
-    source = payload.get("lean") or payload.get("source") or payload.get("checked_source")
+    # Aliases name the same exact submitted bytes, not competing candidates.
+    # Keep empty/None optional aliases compatible, but never silently ignore a
+    # malformed or contradictory supplied source (including falsey non-text).
+    sources = []
+    for name in ("lean", "source", "checked_source"):
+        value = payload.get(name)
+        if value is None or isinstance(value, str) and value == "":
+            continue
+        sources.append(_source_text(value))
+    if not sources or any(value != sources[0] for value in sources[1:]):
+        raise LeanKernelError("one unambiguous checked Lean source is required")
+    source = sources[0]
     source_format = str(payload.get("encoding", "lean4")).strip().lower()
     if source_format not in {"lean", "lean4", "lean4-source"}:
         raise LeanKernelError(
