@@ -20597,6 +20597,17 @@
       "title": "Classify repair feedback and admit training evidence"
     },
     {
+      "complete_candidate_syntax_producer_audit": {
+        "evidence_id": "complete-candidate-source-bound-producer-audit-20261114",
+        "profile": "unreviewed-complete-norm-candidate-syntax/v2",
+        "selected_passes": 67,
+        "new_cases": 19,
+        "independent_known_facts_required": true,
+        "unsupported_references_retained": true,
+        "default_scope_unchanged": true,
+        "original_parent_or_model_integration_qualified": false,
+        "legal_authority": false
+      },
       "acceptance_criteria": [
         "Encoding, decoding, review, graph, build and publication scopes are explicit.",
         "All abstentions, failures and unresolved work remain in appropriate denominators."

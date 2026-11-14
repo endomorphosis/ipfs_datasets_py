@@ -1471,7 +1471,7 @@ def evaluate_reviewed_source_span_producer_artifact(*, binding, rows, split_mani
         admission_inputs, exposure_records, compiler_commit, input_profile,
         checkpoint_declarations, permitted_context, retrieved_examples, producer,
         allow_heldout_evaluation=False, reviewed_training_context=None, context_policy_guard=None,
-        typed_structure_profile=None):
+        typed_structure_profile=None, candidate_syntax_profile=None, known_candidate_inputs=None):
     """Evaluate one opt-in validation callback against replayed reviewed targets.
 
     Default hparam_selection never relabels heldout/training use. Explicit
@@ -1492,6 +1492,12 @@ def evaluate_reviewed_source_span_producer_artifact(*, binding, rows, split_mani
     Explicit typed_structure_profile adds canonical AST formula-wire/signature
     checks and a distinct cache identity; it never grants native proof or legal
     authority. The default structural-comparison report remains unchanged.
+    Explicit candidate_syntax_profile requires separately supplied known facts
+    for every case. The canonical candidate-v2 owner checks all nine fields and
+    exact declared source/context/selection identity; unsupported references and
+    outputs remain visible. Known facts never enter producer arguments and are
+    never inferred from targets. Equality does not authenticate these declarations
+    or establish legal meaning, training eligibility or proof.
     Stored artifacts are historical observations. Generic cache retrieval does
     not replay current admission: any later eligibility use requires another
     canonical reviewed-consumer validation against current review inputs.
@@ -1545,6 +1551,64 @@ def evaluate_reviewed_source_span_producer_artifact(*, binding, rows, split_mani
     require(typed_structure_profile is None or type(typed_structure_profile) is str
             and typed_structure_profile == CANONICAL_TYPED_STRUCTURE_PROFILE,
             "explicit canonical typed-structure profile required")
+    candidate_owner = None
+    if candidate_syntax_profile is not None:
+        from ...logic.autoformal import legal_norm_content_adjudication_v1 as candidate_owner
+        require(type(candidate_syntax_profile) is str
+                and candidate_syntax_profile == candidate_owner.CANDIDATE_SYNTAX_PROFILE_V2,
+                "explicit complete-candidate syntax profile required")
+    require((candidate_syntax_profile is None) == (known_candidate_inputs is None),
+            "complete-candidate profile and independent known inputs required together")
+    known_frozen = snapshot(known_candidate_inputs) if candidate_owner is not None else None
+
+    def candidate_audit(examples):
+        # Inputs are detached ordinary JSON at this evaluator boundary. Delegate
+        # every candidate check to its existing owner; do not repair predictions.
+        require(type(known_frozen) is dict and set(known_frozen) == {row["case_id"] for row in examples},
+                "exact complete-candidate known-input population required")
+        counts = dict(syntax_validated_unreviewed=0, invalid_complete=0, unsupported_complete=0, not_checked=0)
+        reference_counts = dict(syntax_validated_unreviewed=0, unsupported=0)
+        details = []
+        for row in examples:
+            facts = known_frozen[row["case_id"]]
+            closed(facts, ("known_source_binding", "known_governing_context", "known_selection_context"),
+                   "independent complete-candidate known facts")
+            candidate_owner.validate_complete_norm_known_input_v2(**facts)
+            try:
+                candidate_owner.validate_complete_norm_candidate_v2(row["reference"], **facts)
+                reference_status = "syntax_validated_unreviewed"
+            except candidate_owner.CompleteNormCandidateUnsupportedError:
+                reference_status = "unsupported"
+            # Invalid reference identities must fail before callback, while an
+            # explicitly unsupported profile retains its original denominator.
+            reference_counts[reference_status] += 1
+            if row["outcome"] != "complete":
+                status = "not_checked"
+            else:
+                try:
+                    candidate_owner.validate_complete_norm_candidate_v2(row["candidate"], **facts)
+                    status = "syntax_validated_unreviewed"
+                except candidate_owner.CompleteNormCandidateUnsupportedError:
+                    status = "unsupported_complete"
+                except (ValueError, TypeError, KeyError, RecursionError):
+                    status = "invalid_complete"
+            counts[status] += 1
+            details.append(dict(case_id=row["case_id"], outcome=row["outcome"], status=status,
+                                reference_status=reference_status))
+        require(stable_digest(snapshot(known_candidate_inputs)) == stable_digest(known_frozen),
+                "independent candidate facts changed during audit")
+        return dict(schema="complete-norm-source-bound-candidate-syntax-metrics/v1",
+            profile=candidate_syntax_profile, denominator=len(examples), counts=counts,
+            reference_counts=reference_counts, cases=details,
+            syntax_validated_rate=counts["syntax_validated_unreviewed"] / len(examples),
+            known_inputs_sha256=stable_digest(known_frozen),
+            reference_and_prediction_payload_sha256=stable_digest(examples),
+            known_input_authenticity_verified=False, candidate_repaired=False,
+            generator_invoked_by_scorer=False, semantic_selection_supported=False,
+            semantic_use_eligible=False, training_mask=0, evaluation_gold_mask=0,
+            source_fidelity_proved=False, semantic_equivalence_proved=False,
+            native_proof_verified=False, legal_admission_or_proof_authority=False)
+
     require(callable(producer), "explicit producer callback required")
     require(type(allow_heldout_evaluation) is bool, "explicit boolean heldout opt-in required")
     operation = "heldout_evaluation" if allow_heldout_evaluation else "hparam_selection"
@@ -1601,6 +1665,9 @@ def evaluate_reviewed_source_span_producer_artifact(*, binding, rows, split_mani
         candidate=None, outcome="incomplete") for row in row_copy])
     if typed_structure_profile is not None:
         evaluate_complete_norm_typed_structure([dict(case_id=row["id"], reference=row["canonical_ir"],
+            candidate=None, outcome="incomplete") for row in row_copy])
+    if candidate_owner is not None:
+        candidate_audit([dict(case_id=row["id"], reference=row["canonical_ir"],
             candidate=None, outcome="incomplete") for row in row_copy])
     manifest = splits.LegalIRSplitManifest.from_mapping(manifest_copy)
     target_ids = set(identifiers) | {row["unit_id"] for row in row_copy}
@@ -1699,6 +1766,9 @@ def evaluate_reviewed_source_span_producer_artifact(*, binding, rows, split_mani
         if rich_heldout:
             require(replay_rich_context() == rich_context_receipt, "reviewed TRAIN context changed during callback")
         require(stable_digest(snapshot(originals)) == stable_digest(frozen), "bound source/context/profile inputs changed during callback")
+        if candidate_owner is not None:
+            require(stable_digest(snapshot(known_candidate_inputs)) == stable_digest(known_frozen),
+                    "independent candidate facts changed during callback")
     outputs = snapshot(output_holder["outputs"])
     require(type(outputs) is list and len(outputs) == len(row_copy), "complete ordered producer population required")
     for row, output in zip(row_copy, outputs):
@@ -1710,6 +1780,10 @@ def evaluate_reviewed_source_span_producer_artifact(*, binding, rows, split_mani
     typed_report = None
     if typed_structure_profile is not None:
         typed_report = evaluate_complete_norm_typed_structure([dict(case_id=row["id"], reference=row["canonical_ir"],
+            candidate=output["candidate"], outcome=output["outcome"]) for row, output in zip(row_copy, outputs)])
+    candidate_report = None
+    if candidate_owner is not None:
+        candidate_report = candidate_audit([dict(case_id=row["id"], reference=row["canonical_ir"],
             candidate=output["candidate"], outcome=output["outcome"]) for row, output in zip(row_copy, outputs)])
     metric_seconds = max(0.0, time.monotonic() - started)
     configuration = dict(profile="reviewed-source-span-producer-validation/v1",
@@ -1727,10 +1801,17 @@ def evaluate_reviewed_source_span_producer_artifact(*, binding, rows, split_mani
                              rich_training_context=rich_context_receipt)
     if typed_report is not None:
         configuration["typed_structure_profile"] = typed_structure_profile
+    if candidate_report is not None:
+        configuration.update(candidate_syntax_profile=candidate_syntax_profile,
+                             known_candidate_inputs_sha256=stable_digest(known_frozen))
+    metric_schema = COMPLETE_NORM_PAYLOAD_METRICS_SCHEMA
+    if typed_report is not None:
+        metric_schema += "+" + COMPLETE_NORM_TYPED_STRUCTURE_METRICS_SCHEMA
+    if candidate_report is not None:
+        metric_schema += "+" + candidate_report["schema"]
     # A bare list falls through the legacy object hash; wrap rows explicitly.
     key = LegalIREvaluationCacheKey.for_sample({"rows": row_copy}, compiler_commit=compiler_commit,
-        state_hash=stable_digest(checkpoints), metric_schema=(COMPLETE_NORM_PAYLOAD_METRICS_SCHEMA if typed_report is None else
-            COMPLETE_NORM_PAYLOAD_METRICS_SCHEMA + "+" + COMPLETE_NORM_TYPED_STRUCTURE_METRICS_SCHEMA),
+        state_hash=stable_digest(checkpoints), metric_schema=metric_schema,
         configuration=configuration)
     payload = dict(configuration=configuration, reference_population=row_copy,
         producer_arguments=arguments, producer_outputs=outputs, admission_before=before,
@@ -1761,6 +1842,12 @@ def evaluate_reviewed_source_span_producer_artifact(*, binding, rows, split_mani
         payload["typed_structure_comparison"] = typed_report
         payload["formal_checks_status"] = "canonical_typed_structure_only_no_native_proof"
         metrics["canonical_typed_structure"] = typed_report
+    if candidate_report is not None:
+        payload["candidate_syntax_comparison"] = candidate_report
+        payload["candidate_syntax_known_inputs"] = known_frozen
+        payload["formal_checks_status"] = ("canonical_typed_and_complete_candidate_syntax_only_no_native_proof"
+            if typed_report is not None else "complete_candidate_syntax_only_no_native_proof")
+        metrics["complete_candidate_syntax"] = candidate_report
     return LegalIREvaluationArtifact(key=key,
         compiler_artifact={"reviewed_source_span_producer_evaluation": payload},
         metrics=metrics,

@@ -8490,6 +8490,17 @@
       "status": "focused_tests_qualified"
     },
     {
+      "complete_candidate_syntax_audit": {
+        "evidence_id": "complete-candidate-source-bound-producer-audit-20261114",
+        "profile": "unreviewed-complete-norm-candidate-syntax/v2",
+        "selected_passes": 67,
+        "new_cases": 19,
+        "independent_known_facts_required": true,
+        "unsupported_references_retained": true,
+        "default_scope_unchanged": true,
+        "original_parent_or_model_integration_qualified": false,
+        "legal_authority": false
+      },
       "actual_pretrained_parent_rich_typed_audit": {
         "evidence_id": "actual-qwen25-original-parent-typed-audit-rich-20261114",
         "legal_authority": false,
@@ -8517,6 +8528,7 @@
       },
       "compatibility_dependency": false,
       "evidence_ids": [
+        "complete-candidate-source-bound-producer-audit-20261114",
         "reviewed-retention-and-mixed-admission-canonical-20261111",
         "reviewed-mixed-consumer-evaluator-canonical331-20261111",
         "reviewed-mixed-heldout-context-20261111",
@@ -9240,6 +9252,15 @@
   "schema": "legal-autoformal-work-catalog/v1",
   "scope": "Curated current ownership/navigation with attributed saved evidence. Observations are snapshots, not future source-hash requirements or proof admission.",
   "selected_evidence": [
+    {
+      "id": "complete-candidate-source-bound-producer-audit-20261114",
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-complete-candidate-producer-audit-green-v02/qualification-summary.json",
+      "root": "ipfs_datasets",
+      "observed_bytes": 3363,
+      "observed_sha256": "2601e6b4a7c3e1cc9987f303144c60de626b48afb798958604a26f1308fcaa20",
+      "status": "qualified_within_recorded_scope",
+      "scope": "67 selected pure-Python software passes/19 new audit cases; independent source/context/selection facts, candidate-v2 delegation, unsupported denominators, callback fences, distinct cache; no model/legal/proof/runtime qualification."
+    },
     {
       "id": "proof-screen-and-legacy-metrics-20261114",
       "path": "docs/autoformalization/evidence/legal-ir-proof-screen-and-legacy-metrics-20261114.json",
