@@ -59,7 +59,15 @@ module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(module)
 assert not attempts
 assert not any(any(name == prefix or name.startswith(prefix + '.') for prefix in blocked) for name in sys.modules)
-assert len(module.__all__) == 6
+assert set(module.__all__) == {
+    'prepare_sampling_review_bundle', 'record_sampling_review_response',
+    'sampling_review_bundle_sha256', 'summarize_sampling_review_population',
+    'validate_sampling_review_bundle', 'validate_sampling_review_response',
+    'prepare_sampling_review_context', 'sampling_review_context_sha256',
+    'validate_sampling_review_context', 'record_sampling_review_context_response',
+    'validate_sampling_review_context_response', 'summarize_sampling_review_context_population',
+}
+assert len(module.__all__) == 12
 print(json.dumps({'production_import_attempts': attempts, 'public_APIs': len(module.__all__)}))
 """
     completed = subprocess.run(
@@ -72,7 +80,7 @@ print(json.dumps({'production_import_attempts': attempts, 'public_APIs': len(mod
     assert completed.returncode == 0, completed.stderr
     assert json.loads(completed.stdout) == {
         "production_import_attempts": [],
-        "public_APIs": 6,
+        "public_APIs": 12,
     }
 
 

@@ -1,5 +1,11 @@
 # Current handoff
 
+## Explicit storage-policy reconciliation and sampling controls — 2026-11-14
+
+The retained storage-capacity helper now delegates to the current existing-scheduler inspection facade. Every limit is explicit and the selected backend limit is checked before and throughout the operation. Planning refuses a target below the selected policy; applying requires that the backend already selects the exact target, an idle scheduler, exact source/policy/ledger preimages, a complete accounting census and an unused durable backup. The helper changes no backend cap, resource policy, lease, reservation history or retry history. The historical 220 GB default is not restored over the current 250000000000-byte policy. No real ledger migration was executed.
+
+The owning storage tests and both complete sampling/definition-binding modules pass **170 cases**, with no skips. Storage cases use isolated fictional ledgers and private exact source copies. Two original cold-import failures were reproduced: their stale public API expectations omitted already-present contextual review/binding APIs. Those assertions now enumerate the current six/twelve APIs while retaining standard-library-only and no-operation-owner import checks. These are software controls, not native resource admission or statutory review. All 24 task statuses, approved runtime budgets, historical failures and checkpoint/source identities remain unchanged. The supervisor gitlink follows its published historical-documentation successor; the 408-case patent/trust test normalizer bytes are unchanged.
+
 ## Worktree publication and candidate integration — 2026-11-14
 
 The publication worktree reconciles current source, tests and maintained guides with `origin/main` at `3f1691d59cc0a310750c0b441b51d3528b17eb85`. Original dirty worktrees, checkpoint identities, failed runs and rescue branches are preserved. Historical archives and proposal patches remain historical DATA. The current navigation check is `work_catalog.py --check`; the former 157-guide migration verifier is not the current gate.

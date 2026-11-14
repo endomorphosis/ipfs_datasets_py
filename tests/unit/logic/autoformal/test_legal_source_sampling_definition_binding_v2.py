@@ -903,7 +903,7 @@ spec = importlib.util.spec_from_file_location('_sampling_definition_binding_cold
 module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(module)
 assert not attempts
-assert set(module.__all__) == {'prepare_definition_binding_v2', 'definition_binding_sha256', 'validate_definition_binding_v2'}
+assert set(module.__all__) == {'prepare_definition_binding_v2', 'definition_binding_sha256', 'validate_definition_binding_v2', 'prepare_contextual_definition_binding_v2', 'contextual_definition_binding_sha256', 'validate_contextual_definition_binding_v2'}
 assert not any(any(name == prefix or name.startswith(prefix + '.') for prefix in blocked) for name in sys.modules)
 print(json.dumps({'production_import_attempts': attempts, 'public_APIs': len(module.__all__)}))
 """
@@ -916,5 +916,5 @@ print(json.dumps({'production_import_attempts': attempts, 'public_APIs': len(mod
     )
     assert completed.returncode == 0, completed.stderr
     assert json.loads(completed.stdout) == {
-        "production_import_attempts": [], "public_APIs": 3
+        "production_import_attempts": [], "public_APIs": 6
     }
