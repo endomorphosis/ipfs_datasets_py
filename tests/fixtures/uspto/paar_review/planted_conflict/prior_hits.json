@@ -1,0 +1,17 @@
+{
+  "schema": "paar.fixture-prior-hits.v1",
+  "hits": [
+    {
+      "hit_id": "hit:planted:us-synthetic-001",
+      "publication_number": "US9999901B2",
+      "title": "Synthetic cooling valve controller",
+      "abstract": "A method receives a temperature signal from a probe and activates a cooling valve when the temperature signal exceeds a safety threshold stored in memory.",
+      "body_excerpt": "The controller receives a temperature signal from a probe and activates a cooling valve when the temperature signal exceeds a safety threshold.",
+      "text": "The controller receives a temperature signal from a probe and activates a cooling valve when the temperature signal exceeds a safety threshold.",
+      "corpus": "us_public_synthetic",
+      "planted_overlap": true
+    }
+  ],
+  "coverage_gaps": [],
+  "notes": "Synthetic planted overlap for eval only. Not a patentability determination."
+}

@@ -1,0 +1,19 @@
+{
+  "schema": "paar.review-fixture.v1",
+  "fixture_id": "paar-clean-package-001",
+  "variant": "clean_package",
+  "synthetic": true,
+  "network_free": true,
+  "application_number": "16990002",
+  "notes": "Hermetic clean package with unrelated prior-art text. Expect not high risk without evidence. Not legal advice.",
+  "expected": {
+    "matter_risk_not": "high",
+    "auto_file_blocked": true,
+    "patentability_conclusions": false
+  },
+  "files": {
+    "claims": "claims.txt",
+    "prior_hits": "prior_hits.json",
+    "package_inventory": "package_inventory.json"
+  }
+}

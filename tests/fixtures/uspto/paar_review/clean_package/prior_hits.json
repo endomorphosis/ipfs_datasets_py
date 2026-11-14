@@ -1,0 +1,20 @@
+{
+  "schema": "paar.fixture-prior-hits.v1",
+  "hits": [
+    {
+      "hit_id": "hit:clean:us-synthetic-099",
+      "publication_number": "US8888801B2",
+      "title": "Unrelated hydraulic pump impeller",
+      "abstract": "An impeller for a hydraulic pump includes curved vanes and a central hub.",
+      "body_excerpt": "The impeller rotates within a housing to move fluid under pressure.",
+      "text": "The impeller rotates within a housing to move fluid under pressure.",
+      "corpus": "us_public_synthetic",
+      "planted_overlap": false
+    }
+  ],
+  "coverage_gaps": [
+    {"kind": "foreign_patent", "status": "unsearched"},
+    {"kind": "npl", "status": "unsearched"}
+  ],
+  "notes": "Unrelated art; foreign/NPL gaps remain visible."
+}

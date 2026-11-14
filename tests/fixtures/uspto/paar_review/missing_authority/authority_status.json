@@ -1,0 +1,8 @@
+{
+  "schema": "paar.fixture-authority-status.v1",
+  "authority_corpus_bound": false,
+  "mpep_present": false,
+  "cfr_title37_present": false,
+  "missing_yields": "unknown",
+  "notes": "Fail closed: missing authority cannot yield satisfied / ready."
+}

@@ -38,12 +38,25 @@ PPS_PUBLIC_URL: Final = "https://ppubs.uspto.gov/pubwebapp/"
 PPS_CHECKLIST_SCHEMA: Final = "patlaw-pps-verification-checklist-v1"
 PPS_RECORD_SCHEMA: Final = "patlaw-pps-verification-record-v1"
 EXTENSIONS_SCHEMA: Final = "patlaw-prior-art-operator-extensions-v1"
+FOREIGN_GAP_PACKAGE_SCHEMA: Final = "patlaw-foreign-gap-package-v1"
+FOREIGN_GAP_ACTION_PLAN_SCHEMA: Final = "patlaw-foreign-gap-action-plan-v1"
+
+FOREIGN_CORPUS_VALUE: Final = "foreign_patents"
+FOREIGN_GAP_CODE: Final = "foreign_patent_gap"
+FOREIGN_GAP_PACKAGE_ID: Final = "gap-package:foreign-patent-unsearched"
 
 PPS_DISCLAIMER: Final = (
     "Patent Public Search (PPS) is an interactive USPTO web interface, not a "
     "documented public API. This checklist helps a human run and record "
     "verification queries. Automation never scrapes or automates PPS. "
     "Not a novelty/patentability determination; not legal advice."
+)
+
+FOREIGN_GAP_DISCLAIMER: Final = (
+    "This package documents that the foreign-patent corpus was not searched "
+    "(or only failed / was unlicensed). It is not evidence of foreign-patent "
+    "coverage, not an IDS filing, and not a novelty, obviousness, or "
+    "patentability determination. Human review is required."
 )
 
 
@@ -1073,6 +1086,863 @@ def acknowledge_prior_art_run(
 
 
 # ---------------------------------------------------------------------------
+# Foreign-patent unsearched gap packages (PATLAW-195)
+# ---------------------------------------------------------------------------
+
+
+def _corpus_token(value: Any) -> str:
+    if value is None:
+        return ""
+    if hasattr(value, "value"):
+        return str(value.value).strip().lower()
+    return str(value).strip().lower()
+
+
+def _as_mapping(value: Any) -> dict[str, Any] | None:
+    if value is None:
+        return None
+    if isinstance(value, Mapping):
+        return dict(value)
+    to_dict = getattr(value, "to_dict", None)
+    if callable(to_dict):
+        raw = to_dict()
+        if isinstance(raw, Mapping):
+            return dict(raw)
+    return None
+
+
+def _corpus_list(value: Any) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, (str, bytes)):
+        token = _corpus_token(value)
+        return [token] if token else []
+    out: list[str] = []
+    try:
+        items = list(value)
+    except TypeError:
+        token = _corpus_token(value)
+        return [token] if token else []
+    for item in items:
+        token = _corpus_token(item)
+        if token and token not in out:
+            out.append(token)
+    return out
+
+
+def foreign_corpus_was_searched(
+    coverage: Mapping[str, Any] | Any | None = None,
+    *,
+    searched_corpora: Sequence[Any] | None = None,
+    unsearched_corpora: Sequence[Any] | None = None,
+    journal: Mapping[str, Any] | Any | None = None,
+) -> bool:
+    """Return True only when foreign_patents is explicitly in searched corpora.
+
+    Fail-closed: absence of an explicit searched listing means unsearched.
+    Presence only in unsearched/failed lists never counts as searched.
+    """
+    searched = list(_corpus_list(searched_corpora))
+    unsearched = list(_corpus_list(unsearched_corpora))
+
+    cov = _as_mapping(coverage)
+    if cov is not None:
+        searched.extend(_corpus_list(cov.get("searched_corpora")))
+        unsearched.extend(_corpus_list(cov.get("unsearched_corpora")))
+
+    jour = _as_mapping(journal)
+    if jour is not None:
+        searched.extend(_corpus_list(jour.get("searched_corpora")))
+        unsearched.extend(_corpus_list(jour.get("unsearched_corpora")))
+
+    searched_set = {c for c in searched if c}
+    # Explicit search claim only when listed under searched_corpora.
+    if FOREIGN_CORPUS_VALUE in searched_set:
+        return True
+    return False
+
+
+def _foreign_named_gaps_from_coverage(
+    coverage: Mapping[str, Any] | None,
+) -> list[dict[str, Any]]:
+    if not coverage:
+        return []
+    gaps_out: list[dict[str, Any]] = []
+    for raw in list(coverage.get("named_gaps") or ()):
+        if hasattr(raw, "to_dict"):
+            gap = dict(raw.to_dict())
+        elif isinstance(raw, Mapping):
+            gap = dict(raw)
+        else:
+            continue
+        corpus = _corpus_token(gap.get("corpus"))
+        gap_id = str(gap.get("gap_id") or "").lower()
+        source = str(gap.get("source_name") or "").lower()
+        blob = json.dumps(gap, sort_keys=True, default=str).lower()
+        if (
+            corpus == FOREIGN_CORPUS_VALUE
+            or "foreign" in gap_id
+            or "foreign" in source
+            or "foreign" in blob
+        ):
+            # Force visibility + non-search claim on projected package gaps.
+            gap["remains_visible"] = True
+            if gap.get("searched") is True and corpus == FOREIGN_CORPUS_VALUE:
+                # Named gap for foreign must not claim searched when packaging
+                # an unsearched path; caller only invokes this when unsearched.
+                gap["searched"] = False
+            gaps_out.append(gap)
+    return gaps_out
+
+
+def _foreign_plan_gaps(plan: Mapping[str, Any] | None) -> list[dict[str, Any]]:
+    if not plan:
+        return []
+    gaps_out: list[dict[str, Any]] = []
+    for raw in list(plan.get("coverage_gaps") or ()):
+        if hasattr(raw, "to_dict"):
+            gap = dict(raw.to_dict())
+        elif isinstance(raw, Mapping):
+            gap = dict(raw)
+        else:
+            continue
+        kind = _corpus_token(gap.get("kind"))
+        corpus = _corpus_token(gap.get("corpus"))
+        gap_id = str(gap.get("gap_id") or "").lower()
+        if (
+            kind in {"foreign_patent", "foreign_patents"}
+            or corpus == FOREIGN_CORPUS_VALUE
+            or "foreign" in gap_id
+        ):
+            gap["remains_visible"] = True
+            gap["searched"] = False
+            gaps_out.append(gap)
+    return gaps_out
+
+
+def _default_foreign_named_gap(
+    *,
+    reason: str = "not_run",
+    adapter_name: str | None = None,
+    rights_status: str = "unknown",
+) -> dict[str, Any]:
+    from ipfs_datasets_py.processors.domains.patent.prior_art_coverage import (
+        named_gap_foreign_patents,
+        NamedGapReason,
+        RightsStatus,
+    )
+
+    try:
+        reason_enum = NamedGapReason(reason)
+    except ValueError:
+        reason_enum = NamedGapReason.NOT_RUN
+    try:
+        rights_enum = RightsStatus(rights_status)
+    except ValueError:
+        rights_enum = RightsStatus.UNKNOWN
+    gap = named_gap_foreign_patents(
+        reason=reason_enum,
+        adapter_name=adapter_name,
+        rights_status=rights_enum,
+    )
+    return gap.to_dict()
+
+
+def _infer_foreign_gap_reason(
+    *,
+    adapter_status: Mapping[str, Any] | None,
+    coverage: Mapping[str, Any] | None,
+) -> tuple[str, str | None, str]:
+    """Return (reason, adapter_name, rights_status) for an unsearched foreign gap."""
+    reason = "not_run"
+    adapter_name: str | None = None
+    rights_status = "unknown"
+
+    foreign_status = {}
+    if adapter_status and isinstance(adapter_status.get("foreign"), Mapping):
+        foreign_status = dict(adapter_status["foreign"])
+
+    if foreign_status:
+        adapter_name = foreign_status.get("adapter_name") or adapter_name
+        if foreign_status.get("licensed") is False:
+            reason = "unlicensed"
+            rights_status = "unlicensed"
+        warning = str(foreign_status.get("warning") or "").lower()
+        if "credential" in warning or "unset" in warning or "inaccessible" in warning:
+            reason = "inaccessible"
+            rights_status = "inaccessible"
+        if not foreign_status.get("enabled") and not foreign_status.get("backend"):
+            reason = "not_configured" if reason == "not_run" else reason
+
+    # Prefer explicit named-gap reason from coverage when present.
+    for gap in _foreign_named_gaps_from_coverage(coverage):
+        if gap.get("reason"):
+            reason = str(gap["reason"])
+        if gap.get("adapter_name"):
+            adapter_name = str(gap["adapter_name"])
+        if gap.get("rights_status"):
+            rights_status = str(gap["rights_status"])
+        break
+
+    if coverage is not None:
+        failed = set(_corpus_list(coverage.get("failed_corpora")))
+        if FOREIGN_CORPUS_VALUE in failed and reason == "not_run":
+            reason = "adapter_failure"
+
+    return reason, adapter_name, rights_status
+
+
+def build_foreign_gap_next_steps(
+    *,
+    application_number: str = "",
+    reason: str = "not_run",
+    run_id: str | None = None,
+    foreign_searched: bool = False,
+) -> list[dict[str, Any]]:
+    """Ordered operator next steps for foreign-patent gap review (CLI hints)."""
+    app = (application_number or "<application_number>").strip() or "<application_number>"
+    run_hint = run_id or "<run_id>"
+    steps: list[dict[str, Any]] = []
+
+    if foreign_searched:
+        steps.append(
+            {
+                "priority": 1,
+                "code": "foreign_coverage_present",
+                "title": "Foreign-patent corpus recorded as searched",
+                "detail": (
+                    "Coverage lists foreign_patents under searched_corpora. "
+                    "Still review hits for IDS candidates; this is not a "
+                    "patentability determination."
+                ),
+                "command": None,
+            }
+        )
+        steps.append(
+            {
+                "priority": 2,
+                "code": "build_ids_queue",
+                "title": "Build IDS candidate queue (human review only)",
+                "detail": "Auto-file remains blocked; every reference needs human disposition.",
+                "command": (
+                    f"portfolio_cli prior-art show --application-number {app} "
+                    f"--run-id {run_hint}"
+                ),
+            }
+        )
+        return steps
+
+    steps.append(
+        {
+            "priority": 1,
+            "code": "document_foreign_gap",
+            "title": "Document foreign-patent unsearched gap for human review",
+            "detail": (
+                "Do not claim foreign-patent coverage. Keep the named gap visible "
+                f"on coverage and IDS/remarks packages (reason={reason})."
+            ),
+            "command": None,
+        }
+    )
+    steps.append(
+        {
+            "priority": 2,
+            "code": "cover_foreign_patents",
+            "title": "Search foreign patents (EPO OPS live or foreign hits file)",
+            "detail": (
+                "Run with --live-foreign (EPO_OPS_KEY/EPO_OPS_SECRET) or supply "
+                "--foreign-hits / --foreign-snapshot. Never invent search success."
+            ),
+            "command": (
+                f"portfolio_cli prior-art search --application-number {app} "
+                "--claims-file <claims.json> --odp --live-foreign --max-queries 6"
+            ),
+        }
+    )
+    steps.append(
+        {
+            "priority": 3,
+            "code": "alternate_foreign_hits_file",
+            "title": "Or attach an offline foreign hits file",
+            "detail": "JSON/JSONL of EP/WO/… document rows with source_cid when available.",
+            "command": (
+                f"portfolio_cli prior-art search --application-number {app} "
+                "--claims-file <claims.json> --foreign-hits <foreign_hits.json> "
+                "--max-queries 6"
+            ),
+        }
+    )
+    if reason in {"unlicensed", "inaccessible", "adapter_failure"}:
+        steps.append(
+            {
+                "priority": 2,
+                "code": "remediate_foreign_adapter",
+                "title": "Remediate foreign adapter rights / credentials / failure",
+                "detail": (
+                    f"Gap reason is {reason}. Confirm EPO OPS credentials, "
+                    "licensing for any private foreign backend, and re-run."
+                ),
+                "command": None,
+            }
+        )
+    steps.append(
+        {
+            "priority": 4,
+            "code": "acknowledge_prior_art_coverage",
+            "title": "Record human coverage acknowledgment with foreign gap visible",
+            "detail": (
+                "Acknowledgment must not assert foreign coverage was obtained. "
+                "Gaps remain visible on the rule checklist."
+            ),
+            "command": (
+                f"portfolio_cli prior-art acknowledge --application-number {app} "
+                f"--run-id {run_hint} --acknowledger operator:you"
+            ),
+        }
+    )
+    steps.append(
+        {
+            "priority": 5,
+            "code": "ids_and_remarks_gap_note",
+            "title": "Carry foreign gap into IDS review and remarks",
+            "detail": (
+                "Before IDS or office-action remarks, note that foreign patents "
+                "were not searched unless a later run records searched_corpora."
+            ),
+            "command": None,
+        }
+    )
+    return steps
+
+
+def build_foreign_gap_package(
+    *,
+    coverage: Mapping[str, Any] | Any | None = None,
+    plan: Mapping[str, Any] | Any | None = None,
+    journal: Mapping[str, Any] | Any | None = None,
+    adapter_status: Mapping[str, Any] | None = None,
+    application_number: str = "",
+    subject_id: str | None = None,
+    run_id: str | None = None,
+    plan_id: str | None = None,
+    declaration_id: str | None = None,
+) -> dict[str, Any]:
+    """Build an explicit foreign-patent gap package for human review.
+
+    When foreign is **not** searched, the package is active: it surfaces named
+    gaps, next steps, and never lists ``foreign_patents`` under
+    ``searched_corpora``. When foreign **was** searched, the package reports
+    ``status=searched`` and ``gap_package_required=False`` without inventing
+    an unsearched gap.
+    """
+    from ipfs_datasets_py.processors.domains.patent.prior_art import (
+        assert_no_patentability_conclusions,
+    )
+
+    cov = _as_mapping(coverage)
+    plan_map = _as_mapping(plan)
+    jour = _as_mapping(journal)
+    adapter_status = dict(adapter_status or {})
+
+    searched = _corpus_list((cov or {}).get("searched_corpora") if cov else None)
+    unsearched = _corpus_list((cov or {}).get("unsearched_corpora") if cov else None)
+    failed = _corpus_list((cov or {}).get("failed_corpora") if cov else None)
+    if jour:
+        if not searched:
+            searched = _corpus_list(jour.get("searched_corpora"))
+        if not unsearched:
+            unsearched = _corpus_list(jour.get("unsearched_corpora"))
+        if not failed:
+            failed = _corpus_list(jour.get("failed_corpora"))
+
+    foreign_searched = foreign_corpus_was_searched(
+        cov,
+        searched_corpora=searched,
+        unsearched_corpora=unsearched,
+        journal=jour,
+    )
+
+    sid = subject_id
+    if not sid and cov is not None:
+        sid = cov.get("subject_id")
+    if not sid and plan_map is not None:
+        sid = plan_map.get("subject_id")
+    if not sid and jour is not None:
+        sid = jour.get("subject_id")
+    if not sid and application_number:
+        sid = f"app:{application_number}"
+
+    pid = plan_id
+    if not pid and cov is not None:
+        pid = cov.get("plan_id")
+    if not pid and plan_map is not None:
+        pid = plan_map.get("plan_id")
+    if not pid and jour is not None:
+        pid = jour.get("plan_id")
+
+    did = declaration_id
+    if not did and cov is not None:
+        did = cov.get("declaration_id")
+
+    # Ensure foreign appears under unsearched when not searched (fail-closed).
+    if not foreign_searched and FOREIGN_CORPUS_VALUE not in unsearched:
+        unsearched = list(unsearched) + [FOREIGN_CORPUS_VALUE]
+    # Never list foreign under searched when packaging an unsearched gap.
+    if not foreign_searched:
+        searched = [c for c in searched if c != FOREIGN_CORPUS_VALUE]
+
+    reason, adapter_name, rights_status = _infer_foreign_gap_reason(
+        adapter_status=adapter_status,
+        coverage=cov,
+    )
+
+    named_gaps = _foreign_named_gaps_from_coverage(cov)
+    plan_gaps = _foreign_plan_gaps(plan_map)
+    if not foreign_searched and not named_gaps:
+        named_gaps = [
+            _default_foreign_named_gap(
+                reason=reason,
+                adapter_name=adapter_name,
+                rights_status=rights_status,
+            )
+        ]
+
+    next_steps = build_foreign_gap_next_steps(
+        application_number=application_number
+        or str(sid or "").removeprefix("app:"),
+        reason=reason,
+        run_id=run_id,
+        foreign_searched=foreign_searched,
+    )
+    action_plan = build_foreign_gap_action_plan(
+        application_number=application_number
+        or str(sid or "").removeprefix("app:"),
+        reason=reason,
+        run_id=run_id,
+        foreign_searched=foreign_searched,
+        next_steps=next_steps,
+    )
+
+    if foreign_searched:
+        status = "searched"
+        gap_package_required = False
+        human_summary = (
+            "Foreign-patent corpus is listed under searched_corpora. No unsearched "
+            "foreign gap package is required for this run."
+        )
+    else:
+        status = "unsearched_gap"
+        gap_package_required = True
+        human_summary = (
+            "Foreign-patent corpus was not searched. This package is an explicit "
+            "named gap for human review (IDS, remarks, coverage acknowledgment). "
+            "Do not treat US-only results as foreign coverage."
+        )
+
+    package: dict[str, Any] = {
+        "schema": FOREIGN_GAP_PACKAGE_SCHEMA,
+        "package_id": FOREIGN_GAP_PACKAGE_ID,
+        "code": FOREIGN_GAP_CODE,
+        "status": status,
+        "gap_package_required": gap_package_required,
+        "corpus": FOREIGN_CORPUS_VALUE,
+        "subject_id": sid,
+        "application_number": application_number or None,
+        "run_id": run_id,
+        "plan_id": pid,
+        "declaration_id": did,
+        "searched_corpora": list(searched),
+        "unsearched_corpora": list(unsearched),
+        "failed_corpora": list(failed),
+        "foreign_searched": bool(foreign_searched),
+        "claims_foreign_searched": bool(foreign_searched),
+        "reason": reason if not foreign_searched else "searched",
+        "adapter_name": adapter_name,
+        "rights_status": rights_status if not foreign_searched else "licensed",
+        "named_gaps": named_gaps,
+        "plan_coverage_gaps": plan_gaps,
+        "remains_visible": True if not foreign_searched else False,
+        "next_steps": next_steps,
+        "action_plan": action_plan,
+        "human_summary": human_summary,
+        "review_required": bool(gap_package_required),
+        "disclaimer": FOREIGN_GAP_DISCLAIMER,
+        "generated_at_utc": utc_now_iso(),
+        "metadata": {
+            "source": "prior_art_operator_extensions",
+            "extensions_schema": EXTENSIONS_SCHEMA,
+            "patlaw_task": "PATLAW-195",
+        },
+    }
+    # Hard invariant: unsearched packages must never claim foreign was searched.
+    if not foreign_searched:
+        assert FOREIGN_CORPUS_VALUE not in package["searched_corpora"]
+        assert package["foreign_searched"] is False
+        assert package["claims_foreign_searched"] is False
+        assert package["gap_package_required"] is True
+        assert package["named_gaps"], "unsearched foreign package needs named gaps"
+        assert package["next_steps"], "unsearched foreign package needs next steps"
+    assert_no_patentability_conclusions(package)
+    return package
+
+
+def build_foreign_gap_action_plan(
+    *,
+    application_number: str = "",
+    reason: str = "not_run",
+    run_id: str | None = None,
+    foreign_searched: bool = False,
+    next_steps: Sequence[Mapping[str, Any]] | None = None,
+    package: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Action-plan envelope with explicit foreign gap packages and next steps."""
+    from ipfs_datasets_py.processors.domains.patent.prior_art import (
+        assert_no_patentability_conclusions,
+    )
+
+    if package is not None:
+        foreign_searched = bool(package.get("foreign_searched"))
+        reason = str(package.get("reason") or reason)
+        run_id = package.get("run_id") or run_id
+        application_number = (
+            str(package.get("application_number") or application_number or "")
+        )
+        if next_steps is None:
+            next_steps = list(package.get("next_steps") or [])
+
+    steps = list(next_steps) if next_steps is not None else build_foreign_gap_next_steps(
+        application_number=application_number,
+        reason=reason,
+        run_id=run_id,
+        foreign_searched=foreign_searched,
+    )
+
+    packages: list[dict[str, Any]] = []
+    if not foreign_searched:
+        packages.append(
+            {
+                "package_id": FOREIGN_GAP_PACKAGE_ID,
+                "code": FOREIGN_GAP_CODE,
+                "corpus": FOREIGN_CORPUS_VALUE,
+                "status": "unsearched_gap",
+                "reason": reason,
+                "remains_visible": True,
+                "claims_foreign_searched": False,
+                "title": "Foreign-patent unsearched gap package",
+                "summary": (
+                    "Foreign patents were not searched. Explicit gap package for "
+                    "human review; do not claim searched foreign corpora."
+                ),
+            }
+        )
+
+    actions = [
+        {
+            "priority": int(s.get("priority") or 99),
+            "code": s.get("code"),
+            "title": s.get("title"),
+            "command": s.get("command"),
+            "detail": s.get("detail"),
+            "gap_package_id": FOREIGN_GAP_PACKAGE_ID if not foreign_searched else None,
+        }
+        for s in steps
+    ]
+
+    plan: dict[str, Any] = {
+        "schema": FOREIGN_GAP_ACTION_PLAN_SCHEMA,
+        "application_number": application_number or None,
+        "run_id": run_id,
+        "foreign_searched": bool(foreign_searched),
+        "claims_foreign_searched": bool(foreign_searched),
+        "gap_packages": packages,
+        "actions": actions,
+        "action_count": len(actions),
+        "warning_codes": [] if foreign_searched else [FOREIGN_GAP_CODE],
+        "disclaimer": FOREIGN_GAP_DISCLAIMER,
+        "generated_at_utc": utc_now_iso(),
+    }
+    if not foreign_searched:
+        assert plan["claims_foreign_searched"] is False
+        assert plan["gap_packages"], "action plan must emit foreign gap packages"
+        assert any(a.get("code") == "cover_foreign_patents" for a in actions)
+    assert_no_patentability_conclusions(plan)
+    return plan
+
+
+def emit_foreign_gap_on_coverage(
+    coverage: Mapping[str, Any] | Any,
+    *,
+    application_number: str = "",
+    run_id: str | None = None,
+    adapter_status: Mapping[str, Any] | None = None,
+    plan: Mapping[str, Any] | Any | None = None,
+    journal: Mapping[str, Any] | Any | None = None,
+) -> dict[str, Any]:
+    """Return a coverage declaration dict with an embedded foreign gap package.
+
+    When foreign is unsearched, attaches ``foreign_gap_package`` and ensures
+    ``foreign_patents`` is not listed under ``searched_corpora``. When foreign
+    was searched, attaches a non-required package with ``status=searched``.
+    """
+    from ipfs_datasets_py.processors.domains.patent.prior_art import (
+        assert_no_patentability_conclusions,
+    )
+
+    cov = _as_mapping(coverage)
+    if cov is None:
+        raise PriorArtSearchClientError(
+            "coverage mapping or PriorArtCoverageDeclaration required",
+            code="coverage_missing",
+        )
+    out = dict(cov)
+    package = build_foreign_gap_package(
+        coverage=out,
+        plan=plan,
+        journal=journal,
+        adapter_status=adapter_status,
+        application_number=application_number,
+        run_id=run_id,
+        subject_id=out.get("subject_id"),
+        plan_id=out.get("plan_id"),
+        declaration_id=out.get("declaration_id"),
+    )
+    out["foreign_gap_package"] = package
+    if not package["foreign_searched"]:
+        # Fail-closed: strip any accidental foreign searched claim.
+        out["searched_corpora"] = [
+            c
+            for c in _corpus_list(out.get("searched_corpora"))
+            if c != FOREIGN_CORPUS_VALUE
+        ]
+        unsearched = _corpus_list(out.get("unsearched_corpora"))
+        if FOREIGN_CORPUS_VALUE not in unsearched:
+            unsearched.append(FOREIGN_CORPUS_VALUE)
+        out["unsearched_corpora"] = unsearched
+        # Ensure at least one foreign named gap remains on the declaration.
+        existing = _foreign_named_gaps_from_coverage(out)
+        if not existing:
+            named = list(out.get("named_gaps") or [])
+            named.extend(package.get("named_gaps") or [])
+            out["named_gaps"] = named
+    meta = dict(out.get("metadata") or {})
+    if not isinstance(meta, dict):
+        meta = {str(k): str(v) for k, v in dict(meta).items()}
+    meta["foreign_gap_package_schema"] = FOREIGN_GAP_PACKAGE_SCHEMA
+    meta["foreign_gap_package_required"] = (
+        "true" if package["gap_package_required"] else "false"
+    )
+    out["metadata"] = meta
+    assert_no_patentability_conclusions(out)
+    return out
+
+
+def emit_foreign_gap_on_action_plan(
+    action_plan: Mapping[str, Any] | Sequence[Mapping[str, Any]] | None = None,
+    *,
+    coverage: Mapping[str, Any] | Any | None = None,
+    application_number: str = "",
+    run_id: str | None = None,
+    adapter_status: Mapping[str, Any] | None = None,
+    plan: Mapping[str, Any] | Any | None = None,
+    journal: Mapping[str, Any] | Any | None = None,
+) -> dict[str, Any]:
+    """Merge an existing action plan with an explicit foreign gap package.
+
+    Accepts either a list of action dicts (audit-style) or a mapping with an
+    ``actions`` key. Always returns a mapping that includes ``gap_packages``
+    and ``next_steps`` when foreign is unsearched, without claiming searched
+    foreign corpora.
+    """
+    from ipfs_datasets_py.processors.domains.patent.prior_art import (
+        assert_no_patentability_conclusions,
+    )
+
+    package = build_foreign_gap_package(
+        coverage=coverage,
+        plan=plan,
+        journal=journal,
+        adapter_status=adapter_status,
+        application_number=application_number,
+        run_id=run_id,
+    )
+    foreign_plan = build_foreign_gap_action_plan(
+        application_number=application_number,
+        run_id=run_id,
+        package=package,
+    )
+
+    existing_actions: list[dict[str, Any]] = []
+    base: dict[str, Any] = {}
+    if isinstance(action_plan, Mapping):
+        base = dict(action_plan)
+        raw_actions = base.get("actions") or base.get("action_plan") or []
+        existing_actions = [
+            dict(a) if isinstance(a, Mapping) else {"title": str(a)}
+            for a in raw_actions
+        ]
+    elif isinstance(action_plan, Sequence) and not isinstance(
+        action_plan, (str, bytes)
+    ):
+        existing_actions = [
+            dict(a) if isinstance(a, Mapping) else {"title": str(a)}
+            for a in action_plan
+        ]
+
+    # Merge without duplicating foreign cover action codes.
+    existing_codes = {str(a.get("code") or "") for a in existing_actions}
+    merged = list(existing_actions)
+    for action in foreign_plan.get("actions") or []:
+        code = str(action.get("code") or "")
+        if code and code in existing_codes:
+            continue
+        merged.append(dict(action))
+        if code:
+            existing_codes.add(code)
+
+    gap_packages = list(base.get("gap_packages") or [])
+    for gp in foreign_plan.get("gap_packages") or []:
+        if gp not in gap_packages:
+            gap_packages.append(gp)
+
+    warning_codes = list(base.get("warning_codes") or [])
+    for code in foreign_plan.get("warning_codes") or []:
+        if code not in warning_codes:
+            warning_codes.append(code)
+
+    out = {
+        **base,
+        "schema": base.get("schema") or FOREIGN_GAP_ACTION_PLAN_SCHEMA,
+        "application_number": application_number
+        or base.get("application_number")
+        or foreign_plan.get("application_number"),
+        "run_id": run_id or base.get("run_id") or foreign_plan.get("run_id"),
+        "actions": merged,
+        "action_plan": merged,
+        "action_count": len(merged),
+        "gap_packages": gap_packages,
+        "foreign_gap_package": package,
+        "next_steps": list(package.get("next_steps") or []),
+        "foreign_searched": package["foreign_searched"],
+        "claims_foreign_searched": package["claims_foreign_searched"],
+        "warning_codes": warning_codes,
+        "disclaimer": base.get("disclaimer") or FOREIGN_GAP_DISCLAIMER,
+        "generated_at_utc": utc_now_iso(),
+    }
+    if not package["foreign_searched"]:
+        assert out["claims_foreign_searched"] is False
+        assert out["gap_packages"]
+        assert out["next_steps"]
+    assert_no_patentability_conclusions(out)
+    return out
+
+
+def build_and_persist_foreign_gap_package(
+    run_dir: str | Path,
+    *,
+    application_number: str = "",
+    adapter_status: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Load run coverage/plan/journal and write foreign gap package artifacts.
+
+    Writes:
+    * ``foreign_gap_package.json`` — explicit human-review gap package
+    * ``foreign_gap_action_plan.json`` — next steps + gap packages
+    * Optionally rewrites ``coverage_declaration.json`` with embedded package
+      when foreign is unsearched (preserves other coverage fields).
+    """
+    from ipfs_datasets_py.processors.domains.patent.prior_art import (
+        assert_no_patentability_conclusions,
+    )
+
+    run_path = Path(run_dir).expanduser().resolve()
+    if not run_path.is_dir():
+        raise PriorArtSearchClientError(
+            f"run directory not found: {run_path}", code="run_dir_missing"
+        )
+
+    coverage = None
+    plan = None
+    journal = None
+    status = dict(adapter_status or {})
+
+    cov_path = run_path / "coverage_declaration.json"
+    plan_path = run_path / "prior_art_plan.json"
+    journal_path = run_path / "search_journal.json"
+    status_path = run_path / "adapter_status.json"
+
+    if cov_path.is_file():
+        coverage = _read_json(cov_path)
+    if plan_path.is_file():
+        plan = _read_json(plan_path)
+    if journal_path.is_file():
+        journal = _read_json(journal_path)
+    if not status and status_path.is_file():
+        status = _read_json(status_path)
+
+    if coverage is None and plan is None and journal is None:
+        raise PriorArtSearchClientError(
+            f"run missing coverage/plan/journal under {run_path}",
+            code="run_incomplete",
+        )
+
+    app = application_number
+    if not app and isinstance(coverage, Mapping):
+        sid = str(coverage.get("subject_id") or "")
+        if sid.startswith("app:"):
+            app = sid[4:]
+    if not app and isinstance(plan, Mapping):
+        sid = str(plan.get("subject_id") or "")
+        if sid.startswith("app:"):
+            app = sid[4:]
+
+    run_id = run_path.name
+    package = build_foreign_gap_package(
+        coverage=coverage,
+        plan=plan,
+        journal=journal,
+        adapter_status=status,
+        application_number=app,
+        run_id=run_id,
+    )
+    action_plan = build_foreign_gap_action_plan(package=package)
+
+    package_path = _write_json(run_path / "foreign_gap_package.json", package)
+    action_path = _write_json(run_path / "foreign_gap_action_plan.json", action_plan)
+
+    coverage_path = None
+    if coverage is not None:
+        enriched = emit_foreign_gap_on_coverage(
+            coverage,
+            application_number=app,
+            run_id=run_id,
+            adapter_status=status,
+            plan=plan,
+            journal=journal,
+        )
+        coverage_path = _write_json(cov_path, enriched)
+
+    result = {
+        "schema": PRIOR_ART_CLIENT_SCHEMA,
+        "ok": True,
+        "run_dir": str(run_path),
+        "package_path": str(package_path),
+        "action_plan_path": str(action_path),
+        "coverage_path": str(coverage_path) if coverage_path else None,
+        "foreign_searched": package["foreign_searched"],
+        "gap_package_required": package["gap_package_required"],
+        "status": package["status"],
+        "named_gap_count": len(package.get("named_gaps") or []),
+        "next_step_count": len(package.get("next_steps") or []),
+        "action_count": action_plan.get("action_count"),
+        "warning_codes": list(action_plan.get("warning_codes") or []),
+        "disclaimer": FOREIGN_GAP_DISCLAIMER,
+        "generated_at_utc": utc_now_iso(),
+    }
+    assert_no_patentability_conclusions(result)
+    return result
+
+
+# ---------------------------------------------------------------------------
 # Distinguishability matrix (overlap candidates — never patentability)
 # ---------------------------------------------------------------------------
 
@@ -1286,17 +2156,30 @@ def build_and_persist_distinguishability_matrix(
 
 __all__ = [
     "EXTENSIONS_SCHEMA",
+    "FOREIGN_CORPUS_VALUE",
+    "FOREIGN_GAP_ACTION_PLAN_SCHEMA",
+    "FOREIGN_GAP_CODE",
+    "FOREIGN_GAP_DISCLAIMER",
+    "FOREIGN_GAP_PACKAGE_ID",
+    "FOREIGN_GAP_PACKAGE_SCHEMA",
     "PPS_DISCLAIMER",
     "PPS_PUBLIC_URL",
     "acknowledge_prior_art_run",
     "augment_plan_for_coverage",
     "build_and_persist_distinguishability_matrix",
+    "build_and_persist_foreign_gap_package",
     "build_coverage_adapter_registry",
     "build_distinguishability_matrix",
+    "build_foreign_gap_action_plan",
+    "build_foreign_gap_next_steps",
+    "build_foreign_gap_package",
     "build_human_coverage_acknowledgment",
     "build_operator_prior_art_report",
     "build_operator_rule_checklist",
     "build_pps_verification_checklist",
+    "emit_foreign_gap_on_action_plan",
+    "emit_foreign_gap_on_coverage",
+    "foreign_corpus_was_searched",
     "foreign_hits_from_snapshot",
     "load_citation_edges",
     "load_family_members",

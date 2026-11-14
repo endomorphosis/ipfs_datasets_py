@@ -154,7 +154,8 @@ _SYNONYM_TABLE: Final[Mapping[str, tuple[str, ...]]] = MappingProxyType(
     }
 )
 
-DEFAULT_MAX_LIMITATIONS: Final = 64
+# Align with prior_art.DEFAULT_MAX_LIMITATIONS — multi-claim utility sets.
+DEFAULT_MAX_LIMITATIONS: Final = 128
 DEFAULT_MAX_QUERIES: Final = 128
 DEFAULT_MAX_SYNONYMS: Final = 64
 DEFAULT_MAX_CONCEPTS: Final = 64
@@ -2532,6 +2533,9 @@ def build_claim_search_plan(
         corpus_cutoff=corpus_cutoff or search_date_utc[:10],
     )
     limitations = list(decompose_limitations(claim_version))
+    if len(limitations) > DEFAULT_MAX_LIMITATIONS:
+        # Soft-cap for exhaustive multi-claim diligence; do not hard-fail planning.
+        limitations = limitations[:DEFAULT_MAX_LIMITATIONS]
     # Admit model candidates without promotion.
     for i, raw in enumerate(model_candidates):
         if not isinstance(raw, Mapping):

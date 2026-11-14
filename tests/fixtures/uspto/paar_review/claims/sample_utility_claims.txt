@@ -1,0 +1,7 @@
+1. A method comprising:
+receiving a first data packet at a network interface; and
+forwarding the first data packet to a processing unit when a priority flag is set.
+
+2. The method of claim 1, wherein the priority flag is carried in a header field.
+
+3. The method of claim 2, further comprising logging the first data packet.
