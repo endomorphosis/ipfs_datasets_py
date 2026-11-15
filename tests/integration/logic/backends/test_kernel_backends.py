@@ -1182,11 +1182,11 @@ def test_lean_v3_version_output_charge_preserves_complete_source_input_capacity(
     assert outcome.receipt.submitted_source==source
 
 
-# Historical selected fixture pin before 51d2c414 was
-# 158b5f0c0a25ea42778f0a718477eaa0a6b8c4f053f3987ef3cd8e5517f82b23.
-# The current reviewed helper bodies are unchanged; new negative tests changed
-# the complete owning-file pin. This explicit pin never follows edits itself.
-_NATIVE_PROOF_CACHE_FIXTURE_SHA256 = "27ede074ceb68cd91d50eada99b9c6f02216607e22610bc63db4fde69e17fb4c"
+# Historical fixture pins: 158b5f0c0a25ea42778f0a718477eaa0a6b8c4f053f3987ef3cd8e5517f82b23
+# before 51d2c414, then 27ede074ceb68cd91d50eada99b9c6f02216607e22610bc63db4fde69e17fb4c.
+# Current reviewed constructors explicitly bind the current verifier profile;
+# negative cache controls changed the complete owner. This pin never follows edits itself.
+_NATIVE_PROOF_CACHE_FIXTURE_SHA256 = "e0c287ad1c7e85814f77fcaac4a33435b5167438f119ff2af7b9f93250f2dfa1"
 
 
 def _load_native_proof_cache_fixture_owner():
@@ -1613,3 +1613,173 @@ def test_native_cache_fixture_loader_refuses_post_import_drift_without_retry(mon
     with pytest.raises(AssertionError, match="source changed during import"):
         _load_native_proof_cache_fixture_owner()
     assert len(reads) == 2
+
+
+# Deliberately authored compiler-stream fixtures only; no Lean process runs.
+def _bound_clean_lean_dependency_fixture():
+    from ipfs_datasets_py.logic.backends.kernel import lean
+    source = "theorem wanted : True := by trivial\n"
+    instrumented = lean.instrument_lean_source_for_axioms(source, "wanted", expected_proposition="True")
+    guard = lean.lean_expected_obligation_declaration(source, "wanted", "True")
+    line = instrumented[:instrumented.rfind("#print axioms")].count("\n") + 1
+    stdout = _axiom_message("'" + guard + "' does not depend on any axioms",
+        fileName="Main.lean", pos={"line": line, "column": 0})
+    return stdout, {"declaration": guard, "expected_source_path": "Main.lean", "expected_source_line": line}
+
+
+@pytest.mark.parametrize("stream", ["stdout", "stderr"])
+@pytest.mark.parametrize("diagnostic", [
+    json.dumps({"severity": "error", "data": "fictional unsolved goals"}) + "\n",
+    "  " + json.dumps({"severity": "error", "data": "fictional type mismatch"}) + "\n",
+    "error: fictional unsolved goals\n",
+    "Main.lean:1:0: error: fictional unsolved goals\n",
+    "  \tMain.lean:12:3: error: fictional unsolved goals\n",
+    "  ERROR: fictional unsolved goals\n",
+])
+def test_lean_bound_error_diagnostics_on_either_stream_cannot_be_rescued(stream, diagnostic):
+    stdout, expected = _bound_clean_lean_dependency_fixture()
+    process = _lean_output(stdout + (diagnostic if stream == "stdout" else ""),
+        stderr=diagnostic if stream == "stderr" else "")
+    accepted, report, diagnostics = evaluate_lean_kernel_output(process, **expected)
+    assert accepted is False
+    assert report is None  # Error diagnostics never become elaborated axiom evidence.
+    assert any("reported error diagnostics" in message for message in diagnostics)
+
+
+@pytest.mark.parametrize("stream", ["stdout", "stderr"])
+@pytest.mark.parametrize("diagnostic", [
+    '{"severity":"error","severity":"warning","data":"fictional failure"}',
+    '{"severity":"warning","data":"first","data":"second"}',
+    '{"severity":"warning","data":NaN}',
+    '{"severity":"error","data":"unfinished"',
+    '[{"severity":"error","data":"fictional failure"}]',
+])
+def test_lean_bound_ambiguous_or_malformed_json_diagnostics_fail_closed(stream, diagnostic):
+    stdout, expected = _bound_clean_lean_dependency_fixture()
+    process = _lean_output(stdout + (diagnostic if stream == "stdout" else ""),
+        stderr=diagnostic if stream == "stderr" else "")
+    accepted, _, diagnostics = evaluate_lean_kernel_output(process, **expected)
+    assert accepted is False
+    assert diagnostics
+
+
+@pytest.mark.parametrize("stderr", [
+    "warning: a fictional warning mentions the word error without failing\n",
+    "  Main.lean:2:0: warning: the text error: is only an example\n",
+    json.dumps({"severity": "warning", "data": "Main.lean:2:0: error: quoted diagnostic example"}),
+    json.dumps({"severity": "information", "data": "error: is quoted diagnostic text"}),
+    "  \t\n",
+])
+def test_lean_bound_harmless_stderr_warnings_preserve_dependency_evidence(stderr):
+    stdout, expected = _bound_clean_lean_dependency_fixture()
+    accepted, report, diagnostics = evaluate_lean_kernel_output(_lean_output(stdout, stderr=stderr), **expected)
+    assert accepted is True
+    assert report is not None and report.declaration == expected["declaration"]
+    assert report.source_path == expected["expected_source_path"]
+    assert report.source_line == expected["expected_source_line"]
+    assert diagnostics == ()
+
+
+@pytest.mark.parametrize("severity", ["warning", "information"])
+def test_lean_bound_stdout_json_warning_may_quote_error_text(severity):
+    stdout, expected = _bound_clean_lean_dependency_fixture()
+    warning = json.dumps({"severity": severity, "data": "Main.lean:1:0: error: is quoted text"}) + "\n"
+    accepted, report, diagnostics = evaluate_lean_kernel_output(_lean_output(stdout + warning), **expected)
+    assert accepted is True and report is not None and diagnostics == ()
+
+
+@pytest.mark.parametrize("damage", ["stderr_report", "duplicate_stdout_report", "wrong_declaration", "wrong_source_line"])
+def test_lean_error_stream_policy_preserves_strict_dependency_report_binding(damage):
+    stdout, expected = _bound_clean_lean_dependency_fixture()
+    stderr = ""
+    if damage == "stderr_report": stderr = stdout
+    elif damage == "duplicate_stdout_report": stdout += stdout
+    elif damage == "wrong_declaration": expected["declaration"] = "another_requested_declaration"
+    else: expected["expected_source_line"] += 1
+    accepted, _, _ = evaluate_lean_kernel_output(_lean_output(stdout, stderr=stderr), **expected)
+    assert accepted is False
+
+
+def test_lean_json_diagnostic_reader_remains_a_graceful_collector():
+    from ipfs_datasets_py.logic.backends.kernel import lean
+    warning = {"severity": "warning", "data": "an error word in harmless text"}
+    valid = json.dumps(warning) + "\n"
+    damaged = 'not JSON\n[]\n{"severity":"warning","data":NaN}\n' + '{"severity":"error","severity":"warning"}\n'
+    assert lean.parse_lean_json_messages(damaged + valid) == [warning]
+    assert lean.parse_lean_json_messages(None) == []
+
+
+def test_lean_fresh_backend_receipt_explicitly_binds_current_verification_profile():
+    from ipfs_datasets_py.logic.backends.kernel import lean
+    outcome, calls, _ = _bound_lean_outcome()
+    assert calls and outcome.receipt.accepted is True
+    assert outcome.receipt.schema_version == "lean-kernel-receipt/v3"
+    assert outcome.receipt.toolchain.metadata["verification_profile"] == lean.LEAN_KERNEL_VERIFICATION_PROFILE
+    assert LeanKernelReceipt.from_dict(outcome.receipt.to_dict()).to_dict() == outcome.receipt.to_dict()
+
+
+@pytest.mark.parametrize("profile", [None, "lean-kernel-verification/v0", True, {}, [], 1])
+def test_lean_old_or_wrong_verification_profile_cannot_be_reissued_as_current(profile):
+    outcome, _, _ = _bound_lean_outcome()
+    value = copy.deepcopy(outcome.receipt.to_dict())
+    if profile is None:
+        value["toolchain"]["metadata"].pop("verification_profile")
+    else:
+        value["toolchain"]["metadata"]["verification_profile"] = profile
+    # Reach the actual generation gate, not an unrelated stale receipt ID.
+    value["receipt_id"] = "lean-kernel-receipt:" + stable_digest({key: item for key, item in value.items() if key != "receipt_id"})
+    preserved = copy.deepcopy(value)
+    with pytest.raises(LeanKernelError, match="current explicit verification profile"):
+        LeanKernelReceipt.from_dict(value)
+    assert value == preserved  # No inferred token or in-place archival upgrade.
+
+
+@pytest.mark.parametrize("stream", ["stdout", "stderr"])
+@pytest.mark.parametrize("diagnostic", [
+    json.dumps({"severity": "error", "data": "fictional BOM unsolved goals"}) + "\n",
+    "error: fictional BOM unsolved goals\n",
+    "  Main.lean:1:0: error: fictional BOM unsolved goals\n",
+])
+def test_lean_framing_bom_cannot_hide_error_diagnostics(stream, diagnostic):
+    stdout, expected = _bound_clean_lean_dependency_fixture()
+    if stream == "stdout": stdout = "\ufeff" + diagnostic + stdout
+    stderr = "\ufeff" + diagnostic if stream == "stderr" else ""
+    accepted, report, diagnostics = evaluate_lean_kernel_output(_lean_output(stdout, stderr=stderr), **expected)
+    assert accepted is False and report is None
+    assert any("reported error diagnostics" in message for message in diagnostics)
+
+
+@pytest.mark.parametrize("stream", ["stdout", "stderr"])
+def test_lean_one_stream_bom_preserves_json_warning_quoting_error(stream):
+    stdout, expected = _bound_clean_lean_dependency_fixture()
+    warning = "\ufeff" + json.dumps({"severity": "warning", "data": "error: is quoted warning text"}) + "\n"
+    if stream == "stdout": stdout = warning + stdout
+    stderr = warning if stream == "stderr" else ""
+    accepted, report, diagnostics = evaluate_lean_kernel_output(_lean_output(stdout, stderr=stderr), **expected)
+    assert accepted is True and report is not None and diagnostics == ()
+
+
+def test_lean_one_stderr_bom_preserves_plain_warning_and_empty_stream():
+    stdout, expected = _bound_clean_lean_dependency_fixture()
+    for stderr in ("\ufeffwarning: the word error does not make this a failure\n", "\ufeff"):
+        accepted, report, diagnostics = evaluate_lean_kernel_output(_lean_output(stdout, stderr=stderr), **expected)
+        assert accepted is True and report is not None and diagnostics == ()
+
+
+@pytest.mark.parametrize("stream", ["stdout", "stderr"])
+@pytest.mark.parametrize("diagnostic", [
+    "\ufeff\ufeff" + json.dumps({"severity": "error", "data": "extra BOM"}) + "\n",
+    json.dumps({"severity": "warning", "data": "ordinary warning"}) + "\n\ufefferror: misplaced BOM\n",
+])
+def test_lean_additional_or_misplaced_diagnostic_bom_fails_closed(stream, diagnostic):
+    stdout, expected = _bound_clean_lean_dependency_fixture()
+    if stream == "stdout": stdout = diagnostic + stdout
+    stderr = diagnostic if stream == "stderr" else ""
+    accepted, _, diagnostics = evaluate_lean_kernel_output(_lean_output(stdout, stderr=stderr), **expected)
+    assert accepted is False and diagnostics
+
+
+def test_lean_one_output_bom_preserves_the_single_bound_dependency_report():
+    stdout, expected = _bound_clean_lean_dependency_fixture()
+    accepted, report, diagnostics = evaluate_lean_kernel_output(_lean_output("\ufeff" + stdout), **expected)
+    assert accepted is True and report is not None and diagnostics == ()

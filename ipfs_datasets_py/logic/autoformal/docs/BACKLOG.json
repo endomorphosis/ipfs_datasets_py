@@ -11386,6 +11386,13 @@
         "LIR-13"
       ],
       "id": "LIR-14",
+      "diagnostic_source_boundary_20261115": {
+        "evidence_id": "diagnostic-verifier-and-heldout-source-boundaries-20261115",
+        "verification_profile": "lean-kernel-verification/v1",
+        "kernel_cache_software_passed": 470,
+        "native_cases_skipped": 3,
+        "historical_receipts_upgraded": false
+      },
       "implementation_commit": "0c87f42578225bbac86810fbb93da97ffb4ce4c7",
       "implementation_commits": [
         "0c87f42578225bbac86810fbb93da97ffb4ce4c7"
@@ -20002,6 +20009,12 @@
         "LIR-17"
       ],
       "id": "LIR-20",
+      "diagnostic_source_boundary_20261115": {
+        "evidence_id": "diagnostic-verifier-and-heldout-source-boundaries-20261115",
+        "admission_and_heldout_software_cases": 329,
+        "source_identity_independent_of_governing_context": true,
+        "new_splitter_or_model_run": false
+      },
       "reviewed_context_set_relations_v4_20261115": {
         "evidence_id": "reviewed-context-set-relations-v4-20261115",
         "endpoint_admission_version": "v3",

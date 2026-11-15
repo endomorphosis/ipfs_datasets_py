@@ -1,5 +1,9 @@
 # Training and experiment history
 
+## Diagnostic/profile and heldout-source software corrections — 2026-11-15
+
+The current canonical checks pass 470 whole kernel/cache cases (three native cases skipped) and 329 admission/heldout cases. Old error-bearing mock output and its unchanged cached proof were reproduced before repair. The current verifier and cache now require an explicit verifier-generation profile; no missing profile is defaulted or retroactively inserted. Rich heldout evaluation also rejects same-source TRAIN exposure across different context/view/revision declarations. Source-only fictional controls establish these software boundaries; no fitting, actual native proof, pretrained quality, real statutory gold or corpus release follows. Private assets and budgets remain unchanged. [Exact qualification](../../../../docs/autoformalization/evidence/legal-ir-diagnostic-source-boundaries-20261115.json).
+
 ## Stable relational roundtrip scoring inputs — 2026-11-15
 
 The existing relational prose scorer now detaches the canonical TypedExpression, ordered role ledger and scoring-only governing observations before rendering or inverse compilation. It checks both caller-owned and detached inputs before invoking the inverse and before returning a report. Mutations refuse the complete score rather than produce mixed-epoch measurements. Original source text and governing observations still stay off the inverse interface; no missing field is filled from the reference, and no parser, model or semantic interpretation is added. Stable score schemas and measurements remain unchanged.

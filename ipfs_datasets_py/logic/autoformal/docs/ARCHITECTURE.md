@@ -1,5 +1,11 @@
 # Architecture and owner map
 
+## Verifier generation and cross-context source grouping — 2026-11-15
+
+The Lean verifier owns both-stream error classification and the exact stdout-only elaborated dependency report. One optional output-framing BOM is handled without changing submitted Lean source bytes. Its explicit verification-profile token is part of the toolchain metadata committed by the kernel receipt and complete legal proof-cache context. Current accepted receipt parsing and cache domain selection reject missing, obsolete or malformed profiles before reuse. This closes archival receipt replay after a checker repair; it is neither a native-execution grant nor proof of a compiler process by itself. Historical objects retain their original bytes and source epochs.
+
+Rich heldout source units carry a closed four-field declared source identity and exact extracted-view digest from current admission replay. Structural retrieval compares those identities independently of governing context before producer dispatch. Source grouping, context interpretation and artifact packaging are distinct: changing an instrument label, view or artifact revision cannot make one declared legal source independent across TRAIN and holdout. Existing source/dependency/provision/near-duplicate checks remain. Full raw/typed examples and definition closure keep their current consumers; this correction introduces no new splitter, importer, queue or numerical machinery.
+
 ## Stable relational roundtrip scoring inputs — 2026-11-15
 
 The existing relational prose scorer now detaches the canonical TypedExpression, ordered role ledger and scoring-only governing observations before rendering or inverse compilation. It checks both caller-owned and detached inputs before invoking the inverse and before returning a report. Mutations refuse the complete score rather than produce mixed-epoch measurements. Original source text and governing observations still stay off the inverse interface; no missing field is filled from the reference, and no parser, model or semantic interpretation is added. Stable score schemas and measurements remain unchanged.
