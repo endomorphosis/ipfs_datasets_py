@@ -9394,7 +9394,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-11-15T00:04:46.465206+00:00",
+  "last_updated_at_utc": "2026-11-15T02:08:59.996398+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -14892,6 +14892,16 @@
       "root": "datasets_repository",
       "scope": "Audited original Source4+R1 adoption and exact17A+54R selected cleanup-owning software controls; preserves Source3/P3/C4 failures. No fullSDK95, actualSDKtimeout, delegated profile, raw7, model/legal/Lean/runtime gain.",
       "status": "qualified_selected71_cleanup_controls_only"
+    },
+    {
+      "id": "legal-ir-current-immutable-v1-cleanup146-qualified-20261115-v01",
+      "observed_bytes": 28411,
+      "observed_sha256": "7686b3383250bec9314775b62f909b4205ab202e0800d3c470a12d3d9547d84a",
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-current-immutable-v1-cleanup146-qualified-20261115-v01/qualification-summary.json",
+      "required_for_catalog_check": false,
+      "root": "datasets_repository",
+      "scope": "Exact40A+106R selected owning controls in one original CLI run, audited Source4 adoption and retained RED2; no full SDK/SourceGen/live cleanup/@2/model/legal/Lean transfer.",
+      "status": "qualified_selected146_current_immutable_v1_cleanup_controls_only"
     }
   ]
 }
