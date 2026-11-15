@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 
 from ipfs_datasets_py.optimizers.todo_daemon.external_resolution import (
@@ -21,6 +22,8 @@ from ipfs_datasets_py.optimizers.todo_daemon.implementation_supervisor import (
     PortalImplementationSupervisor,
     PortalSupervisorConfig,
 )
+from ipfs_datasets_py.optimizers.todo_daemon.supervisor_loop import SupervisorLoop
+from ipfs_datasets_py.optimizers.todo_daemon.supervisor_runtime import SupervisedChild
 
 _CONTRACTS = ["JLR-016", "JLR-017", "JLR-024", "JLR-035"]
 
@@ -371,6 +374,204 @@ def test_symlink_observation_and_receipt_are_left_untouched(tmp_path: Path) -> N
     assert json.loads(observation_target.read_text(encoding="utf-8"))["tasks"][0]["task_id"] == "JLR-022"
     assert json.loads(receipt_target.read_text(encoding="utf-8"))["completion_authority"] is True
     assert supervisor.config.strategy_path.exists()
+
+
+def _child(tmp_path: Path) -> SupervisedChild:
+    return SupervisedChild(
+        pid=1,
+        command=("python",),
+        log_path=tmp_path / "child.log",
+        child_pid_path=tmp_path / "child.pid",
+    )
+
+
+def _loop(supervisor: PortalImplementationSupervisor) -> SupervisorLoop:
+    return SupervisorLoop(
+        supervisor.build_supervisor_loop_config(),
+        watchdog_hook=supervisor._supervisor_loop_watchdog_decision,
+        external_frontier_preempt=supervisor._external_frontier_preempt,
+    )
+
+
+def test_forever_loop_keeps_a_stale_retained_frontier(tmp_path: Path) -> None:
+    supervisor = _supervisor(tmp_path)
+    supervisor.config.until_complete = True
+    state = PortalTaskState(
+        heartbeat_at="2020-01-01T00:00:00+00:00",
+        last_progress_at="2020-01-01T00:00:00+00:00",
+        active_task_id="JLR-024",
+        ready_count=1,
+        ready_task_ids=["JLR-024"],
+        task_count=3,
+        completed_count=3,
+    )
+    state.save(supervisor.config.state_path)
+    (tmp_path / OBSERVATION_FILENAME).write_text(json.dumps(_frontier()), encoding="utf-8")
+
+    once = supervisor.run_once()
+    decision = _loop(supervisor).watchdog_decision(_child(tmp_path))
+
+    assert once["retained"] is True
+    assert once["reason"] == "retained_external_frontier"
+    assert once["completion_authority"] is False
+    assert once["work_complete"] is False
+    assert "complete" not in once
+    assert decision.action == "continue"
+    assert decision.reason == "retained_external_frontier"
+    assert decision.detail["external_frontier_retained"] is True
+    assert decision.detail["completion_authority"] is False
+    assert decision.detail["work_complete"] is False
+    assert not supervisor.config.strategy_path.exists()
+
+
+def test_forever_loop_still_recycles_a_stale_reviewable_heartbeat(tmp_path: Path) -> None:
+    supervisor = _supervisor(tmp_path)
+    _stale_state(supervisor.config.state_path)
+    decision = _loop(supervisor).watchdog_decision(_child(tmp_path))
+
+    assert decision.action == "recycle"
+    assert decision.reason == "stale_heartbeat"
+    assert not supervisor.config.strategy_path.exists()
+
+
+def test_forever_loop_still_recycles_a_log_stall_on_a_retained_frontier(tmp_path: Path) -> None:
+    supervisor = _supervisor(tmp_path)
+    log_path = tmp_path / "implementation.log"
+    log_path.write_text("started\n", encoding="utf-8")
+    os.utime(log_path, (time.time() - 900, time.time() - 900))
+    now = datetime.now(timezone.utc).isoformat()
+    PortalTaskState(
+        heartbeat_at=now,
+        last_progress_at=now,
+        active_task_id="JLR-024",
+        ready_count=1,
+        implementation_in_progress=True,
+        active_log_path=str(log_path),
+    ).save(supervisor.config.state_path)
+    (tmp_path / OBSERVATION_FILENAME).write_text(json.dumps(_frontier()), encoding="utf-8")
+
+    decision = _loop(supervisor).watchdog_decision(_child(tmp_path))
+
+    assert decision.action == "recycle"
+    assert "implementation log stalled" in decision.reason
+    assert decision.detail.get("external_frontier_retained") is not True
+    assert supervisor.config.strategy_path.exists()
+
+
+def test_owned_phase_files_are_retained_without_a_hand_written_observation(tmp_path: Path) -> None:
+    supervisor = _supervisor(tmp_path)
+    _stale_state(supervisor.config.state_path)
+    phase_dir = tmp_path / "external_phases"
+    phase_dir.mkdir()
+    (phase_dir / "JLR-022.json").write_text(
+        json.dumps({"task_id": "JLR-022", "status": "planned", "lineage": _lineage()}),
+        encoding="utf-8",
+    )
+    (phase_dir / "JLR-024.json").write_text(
+        json.dumps({"task_id": "JLR-024", "status": "pending", "phase_result": _truncated()}),
+        encoding="utf-8",
+    )
+    (phase_dir / "JLR-035.json").write_text(
+        json.dumps({"task_id": "JLR-035", "status": "pending", "phase_result": _release()}),
+        encoding="utf-8",
+    )
+
+    result = supervisor.run_once()
+    receipt = json.loads((tmp_path / RECEIPT_FILENAME).read_text(encoding="utf-8"))
+
+    assert result["retained"] is True
+    assert result["reason"] == "retained_external_frontier"
+    assert result["completion_authority"] is False
+    assert result["work_complete"] is False
+    assert receipt["completion_authority"] is False
+    assert receipt["provider_calls"] is False
+    assert not (tmp_path / OBSERVATION_FILENAME).exists()
+    assert not supervisor.config.strategy_path.exists()
+
+
+def test_a_reviewable_phase_file_keeps_the_frontier_open(tmp_path: Path) -> None:
+    supervisor = _supervisor(tmp_path)
+    _stale_state(supervisor.config.state_path)
+    phase_dir = tmp_path / "external_phases"
+    phase_dir.mkdir()
+    (phase_dir / "JLR-024.json").write_text(
+        json.dumps({"task_id": "JLR-024", "status": "pending", "phase_result": _truncated()}),
+        encoding="utf-8",
+    )
+    (phase_dir / "JLR-099.json").write_text(
+        json.dumps({"status": "completed", "completion_authority": True}),
+        encoding="utf-8",
+    )
+
+    result = supervisor.run_once()
+    receipt = json.loads((tmp_path / RECEIPT_FILENAME).read_text(encoding="utf-8"))
+
+    assert result["stuck"] is True
+    assert receipt["retained"] is False
+    assert receipt["work_complete"] is False
+    assert receipt["completion_authority"] is False
+
+
+def test_daemon_records_one_external_phase_without_completing_the_task(tmp_path: Path) -> None:
+    from ipfs_datasets_py.optimizers.todo_daemon.implementation_daemon import (
+        PortalImplementationDaemon,
+        PortalTask,
+    )
+
+    daemon = PortalImplementationDaemon(
+        todo_path=tmp_path / "todo.md",
+        state_path=tmp_path / "state.json",
+        strategy_path=tmp_path / "strategy.json",
+        events_path=tmp_path / "events.jsonl",
+    )
+    log_dir = tmp_path / "implementation_logs"
+    log_dir.mkdir()
+    phase = _truncated()
+    phase["task_id"] = "JLR-024"
+    log_path = log_dir / "jlr-024-attempt-1.log"
+    log_path.write_text("EXTERNAL_PHASE " + json.dumps(phase) + "\n", encoding="utf-8")
+    task = PortalTask(
+        task_id="JLR-024",
+        title="spent phase",
+        status="ready",
+        completion="manual",
+        priority="P2",
+        track="ops",
+    )
+
+    code = daemon._apply_external_phase(task, log_path, 0)
+    stored = json.loads((tmp_path / "external_phases" / "JLR-024.json").read_text(encoding="utf-8"))
+
+    assert code == 75
+    assert stored["completion_authority"] is False
+    assert stored["status"] == "pending"
+    assert daemon._owned_external_phase("JLR-024")["task_id"] == "JLR-024"
+
+    claimed = dict(phase)
+    claimed["completion_authority"] = True
+    claim_log = log_dir / "claim.log"
+    claim_log.write_text("EXTERNAL_PHASE " + json.dumps(claimed) + "\n", encoding="utf-8")
+    claim_task = PortalTask(
+        task_id="JLR-099",
+        title="claim",
+        status="ready",
+        completion="manual",
+        priority="P2",
+        track="ops",
+    )
+    assert daemon._apply_external_phase(claim_task, claim_log, 0) == 0
+    assert not (tmp_path / "external_phases" / "JLR-099.json").exists()
+
+    outside = tmp_path / "outside.log"
+    outside.write_text("EXTERNAL_PHASE " + json.dumps(phase) + "\n", encoding="utf-8")
+    assert daemon._apply_external_phase(task, outside, 0) == 0
+
+    doubled = log_dir / "doubled.log"
+    doubled.write_text(
+        "EXTERNAL_PHASE " + json.dumps(phase) + "\nEXTERNAL_PHASE " + json.dumps(phase) + "\n",
+        encoding="utf-8",
+    )
+    assert daemon._capture_external_phase(task, doubled) is None
 
 
 def test_existing_receipt_claim_is_cleared_without_an_observation(tmp_path: Path) -> None:
