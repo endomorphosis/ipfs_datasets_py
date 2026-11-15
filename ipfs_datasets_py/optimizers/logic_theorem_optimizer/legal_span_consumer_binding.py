@@ -875,7 +875,10 @@ def _reviewed_heldout_component(report, admission_inputs, rows, manifest, manife
         for source_unit in source_units:
             declared = declaration_units[source_unit["unit_id"]]
             source_unit.update(source_raw_sha256=declared["source_version"]["raw_artifact"]["sha256"],
-                               provision_identity=list(_reviewed_provision_identity(declaration, declared)))
+                               provision_identity=list(_reviewed_provision_identity(declaration, declared)),
+                               source_identity={key: declared["source_version"][key] for key in
+                                   ("source_id", "release_id", "edition", "provision_id")},
+                               source_extracted_sha256=declared["source_version"]["extracted_view"]["sha256"])
     return {"schema": "reviewed-single-component-heldout/v1", "purpose": purpose,
         "split_manifest_sha256": manifest_sha256, "partition": splits.HOLDOUT_SPLIT,
         "dependency_group": group, "dependency_group_sha256": _guard(group).sha256,

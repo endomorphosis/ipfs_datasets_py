@@ -1116,8 +1116,9 @@ def consume_reviewed_contexts_v4(*, schema, components, split_manifest, query_ro
         heldout_evaluation=heldout_evaluation,
         components=[{key: value for key, value in item.items() if key != "binding"} for item in components],
         binding_receipts=[item["binding"].receipt() for item in components])
-    original_raw = bound._preflight(original)
-    frozen = json.loads(original_raw)
+    # Admission replay includes exact source/request bytes. Reuse the existing
+    # type-separated snapshot owner; never JSON-coerce source evidence.
+    frozen, original_sha256 = bound._reviewed_snapshot(original)
     pins = _rich_implementation("v4")
     bound._guard(query_rows, expected_query_rows_sha256)
     bound._guard(retrieval_rows, expected_retrieval_rows_sha256)
@@ -1158,7 +1159,9 @@ def consume_reviewed_contexts_v4(*, schema, components, split_manifest, query_ro
             heldout_evaluation=heldout_evaluation,
             components=[{key: value for key, value in item.items() if key != "binding"} for item in components],
             binding_receipts=[item["binding"].receipt() for item in components])
-        _require(bound._preflight(current) == original_raw, "aggregate context inputs changed during dispatch")
+        _require(bound._reviewed_snapshot(current)[1] == original_sha256
+                 and bound._reviewed_snapshot(frozen)[1] == original_sha256,
+                 "aggregate context inputs changed during dispatch")
         _require(pins == _rich_implementation("v4"), "aggregate context source owners changed during dispatch")
 
     def replay():
@@ -1205,7 +1208,8 @@ def consume_reviewed_contexts_v4(*, schema, components, split_manifest, query_ro
             rows=rows, training_index_sha256=index_sha, component_receipts=dependencies,
             training_dependency_manifest_sha256=bound._guard(dependencies).sha256,
             training_admission_inputs_sha256=bound._guard([
-                {"admission_id": item["admission_id"], "admission_inputs": item["admission_inputs"]}
+                {"admission_id": item["admission_id"],
+                 "admission_inputs_sha256": bound.reviewed_admission_inputs_sha256(item["admission_inputs"])}
                 for item in components]).sha256,
             examples_are_complete=True, query_target_access=False, inference_context_permission_verified=False,
             legal_applicability_established=False, proof_authority=False, corpus_admitted=False,

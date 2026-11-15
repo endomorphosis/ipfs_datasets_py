@@ -3470,7 +3470,7 @@ def test_aggregate_v4_refuses_incomplete_or_unselected_context_before_producer(d
     assert calls==[]
 
 
-@pytest.mark.parametrize("damage",["review","selection","component","row","policy"])
+@pytest.mark.parametrize("damage",["review","selection","component","row","source-bytes","policy"])
 def test_aggregate_v4_replays_all_component_custody_after_external_callbacks(damage):
     _,options,_=_aggregate_v4_heldout_case();calls=[]
     context=options["reviewed_training_context"]
@@ -3479,6 +3479,9 @@ def test_aggregate_v4_replays_all_component_custody_after_external_callbacks(dam
         elif damage=="selection": context["retrieval_rows"][0]["retrieved_refs"].pop()
         elif damage=="component": context["components"].pop()
         elif damage=="row": context["components"][1]["training_rows"][0]["source_text"]="Changed source."
+        elif damage=="source-bytes":
+            inputs=context["components"][1]["admission_inputs"]["preparation_inputs"]["source_inputs"]
+            inputs[next(iter(inputs))]["raw_bytes"] += b" changed exact source bytes"
         else: context["components"][1]["exposure_records"][0]["provenance_ref"]="Changed exposure."
     def producer(arguments):
         calls.append(arguments);mutate()
@@ -3539,3 +3542,75 @@ def test_reviewed_v4_rich_candidate_replays_actual_signed_masks_before_any_ranki
     assert result["model_forward_executed"] is False
     assert structured.validate_reviewed_rich_context_candidates_v4(result,model,queries,*args,
         expected_candidate_sha256=structured.joint.checkpoint_digest(result),**options)==result
+
+
+@pytest.mark.parametrize("damage",[None,"abstention","source","selected-body"])
+def test_aggregate_v4_ranked_recipe_reaches_evaluator_with_genuine_component_custody(monkeypatch,damage):
+    """Simulated rank output; genuine V3 bindings/context/evaluator, no model."""
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_structured_retrieval as structured
+    ch,options,_=_aggregate_v4_heldout_case()
+    context=options["reviewed_training_context"]
+    components=context["components"]
+    endpoint_admissions={}
+    observations={}
+    offered={}
+    for component in components:
+        identity=component["admission_id"];inputs=component["admission_inputs"]
+        endpoint_admissions[identity]=dict(args=[inputs[key] for key in ("preparation","registry","policy","reviews")],
+            kwargs={key:value for key,value in inputs.items() if key not in {"preparation","registry","policy","reviews"}})
+        observations[identity]={key:inputs[key] for key in ("observed_artifact_sha256s","observed_pins")}
+        offered[identity]=dict(rows=component["training_rows"],expected_rows_sha256=ch.digest(component["training_rows"]),
+            exposure_records=component["exposure_records"],expected_exposure_sha256=ch.digest(component["exposure_records"]),
+            allow_fictional_fixture=True)
+    queries=[dict(id="fixture:rank-query:"+str(i),split_sample_id=query["id"],source_text=query["source_text"])
+             for i,query in enumerate(context["query_rows"])]
+    ranked=[]
+    for query,selection in zip(queries,context["retrieval_rows"],strict=True):
+        examples=[]
+        for ref in selection["retrieved_refs"]:
+            component=next(item for item in components if item["admission_id"]==ref["admission_id"])
+            row=next(row for row in component["training_rows"] if row["id"]==ref["id"])
+            examples.append(dict(admission_id=component["admission_id"],unit_id=row["unit_id"],
+                source_text=row["source_text"],canonical_ir=deepcopy(row["canonical_ir"]),
+                selected_endpoint_refs=[dict(id="fixture:rank-endpoint:"+row["id"],admission_id=component["admission_id"],
+                                             unit_id=row["unit_id"],split_sample_id=row["id"])]))
+        ranked.append(dict(id=query["id"],split_sample_id=query["split_sample_id"],
+            source_sha256=ch.source_digest(query["source_text"]),examples=examples))
+    candidate=dict(status="candidate_only",abstention_count=0,rows=ranked,
+        checkpoint_sha256="a"*64,current_index_handoff_sha256="b"*64)
+    if damage=="abstention":candidate["abstention_count"]=1
+    elif damage=="source":ranked[0]["source_sha256"]="c"*64
+    elif damage=="selected-body":ranked[0]["examples"][0]["source_text"]="Changed ranked source."
+    calls=[]
+    def simulated_rank(*args,**kwargs):
+        calls.append((args,kwargs));return deepcopy(candidate)
+    monkeypatch.setattr(structured,"build_reviewed_rich_context_candidates_v4",simulated_rank)
+    retrieval_inputs=dict(preparation_inputs=dict(endpoint_admissions=endpoint_admissions,
+        split_manifest=context["split_manifest"],expected_split_manifest_sha256=ch.digest(context["split_manifest"])),
+        at_time_utc=components[0]["admission_inputs"]["at_time_utc"],current_endpoint_observations=observations)
+    args=(object(),queries,None,None,None,[])
+    kwargs=dict(retrieval_inputs=retrieval_inputs,example_consumer_inputs=offered)
+    if damage:
+        with pytest.raises(ValueError): structured.prepare_reviewed_ranked_training_context_v4(*args,**kwargs)
+        assert len(calls)==1
+        return
+    prepared=structured.prepare_reviewed_ranked_training_context_v4(*args,**kwargs)
+    assert len(calls)==1
+    provenance=prepared["selection_provenance"]
+    assert provenance["checkpoint_sha256"]==candidate["checkpoint_sha256"]
+    assert [row["query_id"] for row in provenance["query_identity_bindings"]]==[query["id"] for query in queries]
+    assert provenance["decoder_context_admitted"] is provenance["heldout_evaluation_performed"] is False
+    fresh=prepared["context_inputs"]
+    payload=structured.consume_reviewed_contexts_v4(**fresh,
+        expected_query_rows_sha256=ch.digest(fresh["query_rows"]),expected_retrieval_rows_sha256=ch.digest(fresh["retrieval_rows"]),
+        consumer=lambda value:value,heldout_evaluation=options["binding"].receipt()["heldout_evaluation"])
+    options["reviewed_training_context"]=fresh
+    options["retrieved_examples"]={row["id"]:[dict(id=example["id"],content=example) for example in row["examples"]]
+                                   for row in payload["rows"]}
+    seen=[]
+    def producer(arguments):
+        seen.append(deepcopy(arguments))
+        return [dict(id=row["id"],outcome="abstained",candidate=None) for row in arguments]
+    artifact=_producer_evaluate(options,producer)
+    assert len(seen)==1
+    assert _producer_payload(artifact)["comparison"]["outcome_counts"]["abstained"]==3
