@@ -2138,3 +2138,283 @@ def test_reviewed_preservation_v3_whole_genuine_large_population_refuses_origina
         reviewed_preservation_prepare_fixture_v3(control)
     assert len(control["case"]["declaration"]["units"]) == total_units
     assert before == control["owner"].norm._snapshot({"args": list(control["args"]), "kwargs": control["kwargs"]})[1]
+
+
+# These two source-complete fictional controls reproduce the aggregate identity
+# seam. They do not authenticate statutory meaning or execute a native compiler.
+def test_reviewed_preservation_v2_keeps_identical_ir_at_disjoint_reviewed_source_uses():
+    from ipfs_datasets_py.logic.autoformal import legal_norm_content_adjudication_v1 as admission_owner
+    from ipfs_datasets_py.logic.autoformal import corpus_norm_definition_adapter as graph_owner
+    from ipfs_datasets_py.logic.autoformal import legal_native_ast_preservation as preservation
+
+    helper = reviewed_preservation_fixture_helper_v2()
+    case = helper.reviewed_norm_fixture_v2(admission_owner)
+    first, second = helper.reviewed_repeated_permission_source_v2(case, "nonoverlapping_paragraphs")
+    reviewed_preservation_reauthorize_fixture_v2(helper, admission_owner, case)
+    control = reviewed_preservation_graph_fixture_v2(helper, admission_owner, case)
+    assert graph_owner.validate_reviewed_norm_graph_v2(control["graph"], control["admission"],
+        *control["args"], expected_graph_sha256=control["graph_sha"],
+        expected_admission_sha256=control["admission_sha"], **control["kwargs"]) == control["graph"]
+    assert len(control["admission"]["units"]) == len(control["graph"]["unit_records"]) == 3
+    assert control["admission"]["fixture_only"] is True
+    assert control["admission"]["semantic_use_eligible"] is True and control["admission"]["blockers"] == []
+    assert {key: control["graph"]["counts"][key] for key in ("units", "definitions", "norms", "definition_uses")} == dict(units=3, definitions=1, norms=2, definition_uses=2)
+    assert first["source_version"] == second["source_version"]
+    assert first["occurrence"]["record_cid"] != second["occurrence"]["record_cid"]
+    assert first["occurrence"]["span_text"] == second["occurrence"]["span_text"]
+    assert first["occurrence"]["end_char"] < second["occurrence"]["start_char"]
+    assert first["occurrence"]["end_utf8"] < second["occurrence"]["start_utf8"]
+    first_source, second_source = (case["source_inputs"][unit["unit_id"]] for unit in (first, second))
+    assert first_source == second_source
+    assert first["source_version"]["raw_artifact"]["sha256"] == sha(first_source["raw_bytes"])
+    assert first["source_version"]["extracted_view"]["sha256"] == sha(first_source["extracted_text"].encode())
+    first_input, second_input = (case["relational_inputs"][unit["unit_id"]] for unit in (first, second))
+    assert first_input == second_input
+    assert first["relational_request_sha256"] == second["relational_request_sha256"]
+    children = []
+    for unit in (first, second):
+        inputs = case["relational_inputs"][unit["unit_id"]]
+        child_args = dict(expected_report_sha256=inputs["expected_report_sha256"],
+            expected_request_sha256=unit["relational_request_sha256"], toolchain=TOOLCHAIN)
+        child = preservation.prepare_relational_ast_preservation(inputs["report"], inputs["request_raw"], **child_args)
+        assert preservation.validate_relational_ast_preservation(child, inputs["report"], inputs["request_raw"],
+            expected_preparation_sha256=preservation.preparation_sha256(child), **child_args) == child
+        assert len(child.files) == 7 and len(child.to_dict()["theorems"]) == 5
+        children.append(child)
+    assert children[0] == children[1]  # Healthy legacy children share a content identity.
+    opening = admission_owner.norm._snapshot({"args": list(control["args"]), "kwargs": control["kwargs"]})[1]
+
+    prepared = reviewed_source_use_prepare_fixture(control, 2)
+
+    manifest, files = prepared.to_dict(), dict(prepared.files)
+    reviewed_source_use_assert_bindings(prepared)
+    assert [unit["unit_id"] for unit in manifest["units"]] == [unit["unit_id"] for unit in case["declaration"]["units"]]
+    assert len(manifest["units"]) == len({unit["instance_module"] for unit in manifest["units"]}) == 3
+    assert len(manifest["preservation_obligations"]) == len(set(manifest["preservation_obligations"])) == 15
+    for unit in manifest["units"]:
+        child_manifest = contracts.load_record_bytes(files[unit["child_manifest_path"]].encode(),
+            expected_sha256=unit["child_manifest_sha256"])
+        assert len(unit["original_child_files"]) == 7
+        assert len(unit["preservation_obligations"]) == 5
+        assert child_manifest["theorems"] == unit["preservation_obligations"]
+        for companion in unit["original_child_files"]:
+            assert sha(files[companion["companion_path"]].encode()) == companion["sha256"]
+    assert manifest["preparation_only"] is True and not any(manifest["authority"].values())
+    assert manifest["semantic_use_eligible"] is False
+    assert manifest["training_mask"] == manifest["evaluation_gold_mask"] == 0
+    assert admission_owner.norm._snapshot({"args": list(control["args"]), "kwargs": control["kwargs"]})[1] == opening
+
+
+def test_reviewed_preservation_v3_keeps_identical_mixed_ir_at_disjoint_reviewed_source_uses():
+    from tests.unit.logic.autoformal import test_legal_reviewed_norm_admission_v3 as mixed_fixture
+    from ipfs_datasets_py.logic.autoformal import legal_reviewed_norm_admission_v3 as admission_owner
+    from ipfs_datasets_py.logic.autoformal import corpus_norm_definition_adapter as graph_owner
+    from ipfs_datasets_py.logic.autoformal import legal_native_ast_preservation as preservation
+    from ipfs_datasets_py.logic.autoformal import legal_relational_norm_v1 as relational
+
+    # mixed_base does not read its v2_saved argument. No saved-V2 transport or
+    # filesystem compatibility experiment is claimed by this direct fixture use.
+    case = mixed_fixture.mixed_base.__wrapped__(admission_owner, None)
+    first, second = mixed_fixture.fixture.reviewed_repeated_permission_source_v2(case, "nonoverlapping_paragraphs")
+    case["preparation"] = mixed_fixture.prepare(admission_owner, case)
+    mixed_fixture.refresh_signed_reviews(case, admission_owner)
+    mixed_fixture.assert_signatures_valid(case)
+    args, kwargs = mixed_fixture.fixture.reviewed_assessment_arguments_v2(admission_owner, case)
+    admission = admission_owner.assess_reviewed_norm_admission_v3(*args, **kwargs)
+    admission_sha = admission_owner.norm_content_adjudication_sha256(admission)
+    assert admission_owner.validate_reviewed_norm_admission_v3(admission, *args,
+        expected_report_sha256=admission_sha, **kwargs) == admission
+    graph = graph_owner.build_reviewed_norm_graph_v3(admission, *args,
+        expected_admission_sha256=admission_sha, **kwargs)
+    graph_sha = graph_owner.norm_definition_graph_sha256(graph)
+    assert graph_owner.validate_reviewed_norm_graph_v3(graph, admission, *args,
+        expected_graph_sha256=graph_sha, expected_admission_sha256=admission_sha, **kwargs) == graph
+    assert len(admission["units"]) == len(graph["unit_records"]) == 3
+    assert admission["fixture_only"] is True and admission["semantic_use_eligible"] is True
+    assert admission["blockers"] == []
+    assert {key: graph["counts"][key] for key in ("units", "definitions", "norms", "definition_uses")} == dict(units=3, definitions=1, norms=2, definition_uses=2)
+    assert [unit["relational_profile"] for unit in case["declaration"]["units"]] == [
+        relational.PROFILE, relational.MIXED_PROFILE, relational.MIXED_PROFILE]
+    assert first["source_version"] == second["source_version"]
+    assert first["occurrence"]["record_cid"] != second["occurrence"]["record_cid"]
+    assert first["occurrence"]["span_text"] == second["occurrence"]["span_text"]
+    assert first["occurrence"]["end_char"] < second["occurrence"]["start_char"]
+    assert first["occurrence"]["end_utf8"] < second["occurrence"]["start_utf8"]
+    first_source, second_source = (case["source_inputs"][unit["unit_id"]] for unit in (first, second))
+    assert first_source == second_source
+    assert first["source_version"]["raw_artifact"]["sha256"] == sha(first_source["raw_bytes"])
+    assert first["source_version"]["extracted_view"]["sha256"] == sha(first_source["extracted_text"].encode())
+    first_input, second_input = (case["relational_inputs"][unit["unit_id"]] for unit in (first, second))
+    assert first_input == second_input
+    assert first["relational_request_sha256"] == second["relational_request_sha256"]
+    children = []
+    for unit in (first, second):
+        inputs = case["relational_inputs"][unit["unit_id"]]
+        child_args = dict(expected_report_sha256=inputs["expected_report_sha256"],
+            expected_request_sha256=unit["relational_request_sha256"], toolchain=TOOLCHAIN)
+        child = preservation.prepare_mixed_relational_ast_preservation(inputs["report"], inputs["request_raw"], **child_args)
+        assert preservation.validate_mixed_relational_ast_preservation(child, inputs["report"], inputs["request_raw"],
+            expected_preparation_sha256=preservation.preparation_sha256(child), **child_args) == child
+        assert len(child.files) == 7 and len(child.to_dict()["theorems"]) == 5
+        children.append(child)
+    assert children[0] == children[1]  # Healthy mixed children share a content identity.
+    opening = admission_owner.norm._snapshot({"args": list(args), "kwargs": kwargs})[1]
+
+    prepared = shared.prepare_reviewed_norm_preservation_corpus_v3(graph, admission, *args,
+        expected_graph_sha256=graph_sha, expected_admission_sha256=admission_sha,
+        toolchain=TOOLCHAIN, instance_identity_profile="reviewed-source-use/v1", **kwargs)
+
+    manifest, files = prepared.to_dict(), dict(prepared.files)
+    reviewed_source_use_assert_bindings(prepared)
+    assert [unit["unit_id"] for unit in manifest["units"]] == [unit["unit_id"] for unit in case["declaration"]["units"]]
+    assert len(manifest["units"]) == len({unit["instance_module"] for unit in manifest["units"]}) == 3
+    assert len(manifest["preservation_obligations"]) == len(set(manifest["preservation_obligations"])) == 15
+    for unit in manifest["units"]:
+        child_manifest = contracts.load_record_bytes(files[unit["child_manifest_path"]].encode(),
+            expected_sha256=unit["child_manifest_sha256"])
+        assert len(unit["original_child_files"]) == 7
+        assert len(unit["preservation_obligations"]) == 5
+        assert child_manifest["theorems"] == unit["preservation_obligations"]
+        for companion in unit["original_child_files"]:
+            assert sha(files[companion["companion_path"]].encode()) == companion["sha256"]
+    assert manifest["preparation_only"] is True and not any(manifest["authority"].values())
+    assert manifest["semantic_use_eligible"] is False
+    assert manifest["training_mask"] == manifest["evaluation_gold_mask"] == 0
+    assert admission_owner.norm._snapshot({"args": list(args), "kwargs": kwargs})[1] == opening
+
+
+# Reviewed-source-use is an explicit custody domain, not a statutory or model
+# qualification. These fixtures exercise full current fictional review replay.
+def reviewed_source_use_prepare_fixture(control, version):
+    prepare = getattr(shared, "prepare_reviewed_norm_preservation_corpus_v" + str(version))
+    return prepare(control["graph"], control["admission"], *control["args"],
+        expected_graph_sha256=control["graph_sha"], expected_admission_sha256=control["admission_sha"],
+        toolchain=TOOLCHAIN, instance_identity_profile="reviewed-source-use/v1", **control["kwargs"])
+
+
+def reviewed_source_use_validate_fixture(control, version, prepared, *, args=None, kwargs=None,
+        instance_identity_profile="reviewed-source-use/v1"):
+    validate = getattr(shared, "validate_reviewed_norm_preservation_corpus_v" + str(version))
+    return validate(prepared, control["graph"], control["admission"],
+        *(control["args"] if args is None else args),
+        expected_preservation_sha256=shared.reviewed_preservation_corpus_sha256(prepared),
+        expected_graph_sha256=control["graph_sha"], expected_admission_sha256=control["admission_sha"],
+        toolchain=TOOLCHAIN, instance_identity_profile=instance_identity_profile,
+        **(control["kwargs"] if kwargs is None else kwargs))
+
+
+def reviewed_source_use_assert_bindings(prepared):
+    manifest, files = prepared.to_dict(), dict(prepared.files)
+    assert manifest["instance_identity_profile"] == "reviewed-source-use/v1"
+    assert manifest["profile"].endswith("+reviewed-source-use/v1")
+    inputs = json.loads(files["reviewed-input-bindings.json"])
+    assert inputs["instance_identity_profile"] == manifest["instance_identity_profile"]
+    assert inputs["units"] == manifest["units"]
+    for row in manifest["units"]:
+        expected = {"schema": "legal-native-reviewed-source-use-binding/v1", **{key: row[key]
+            for key in ("unit_id", "source_version_cid", "source_occurrence_cid", "complete_ir_sha256",
+                "graph_unit_record_cid", "graph_ast_record_cid", "scope_record_cid", "interpretation_record_cid")}}
+        assert row["source_use_binding"] == expected
+        assert row["source_use_binding_sha256"] == sha(canonical_dag_json_bytes(expected))
+        child = contracts.load_record_bytes(files[row["child_manifest_path"]].encode(),
+            expected_sha256=row["child_manifest_sha256"])
+        assert child["profile"].endswith("+reviewed-source-use/v1")
+        assert child["source_use_binding"] == expected
+        assert child["source_use_binding_sha256"] == row["source_use_binding_sha256"]
+        assert child["instance_identity_profile"] == manifest["instance_identity_profile"]
+        assert child["theorems"] == row["preservation_obligations"]
+        assert len(row["original_child_files"]) == 7 and len(child["theorems"]) == 5
+        for companion in row["original_child_files"]:
+            body = files[companion["companion_path"]]
+            assert sha(body.encode()) == child["file_sha256"][companion["original_path"]] == companion["sha256"]
+            if companion["original_path"] == "preservation-inputs.json":
+                child_inputs = json.loads(body)
+                assert child_inputs["source_use_binding"] == expected
+                assert child_inputs["source_use_binding_sha256"] == row["source_use_binding_sha256"]
+                assert child_inputs["instance_identity_profile"] == manifest["instance_identity_profile"]
+    assert len(manifest["expected_modules"]) <= 11 and len(files) <= 78
+    assert len(manifest["preservation_obligations"]) == 5 * len(manifest["units"]) <= 40
+    assert not any(manifest["authority"].values())
+    assert manifest["semantic_use_eligible"] is False
+    assert manifest["training_mask"] == manifest["evaluation_gold_mask"] == 0
+
+
+@pytest.mark.parametrize("version", [2, 3])
+def test_reviewed_source_use_complete_project_and_explicit_domain_separation(request, version):
+    control = request.getfixturevalue("reviewed_preservation_control_v" + str(version))
+    prepared = reviewed_source_use_prepare_fixture(control, version)
+    reviewed_source_use_assert_bindings(prepared)
+    assert reviewed_source_use_validate_fixture(control, version, prepared) == prepared
+    assert reviewed_source_use_prepare_fixture(control, version) == prepared
+    with pytest.raises(ValueError):
+        reviewed_source_use_validate_fixture(control, version, prepared, instance_identity_profile=None)
+    with pytest.raises(ValueError):
+        reviewed_source_use_validate_fixture(control, version, control["preparation"])
+    assert "instance_identity_profile" not in control["preparation"].to_dict()
+
+
+@pytest.mark.parametrize("version", [2, 3])
+@pytest.mark.parametrize("field", ["schema", "unit_id", "source_version_cid", "source_occurrence_cid",
+    "complete_ir_sha256", "graph_unit_record_cid", "graph_ast_record_cid", "scope_record_cid", "interpretation_record_cid"])
+def test_reviewed_source_use_resealed_binding_cannot_replace_current_source(request, version, field):
+    control = request.getfixturevalue("reviewed_preservation_control_v" + str(version))
+    prepared = reviewed_source_use_prepare_fixture(control, version)
+    manifest = prepared.to_dict()
+    row = manifest["units"][1]
+    row["source_use_binding"][field] += ":changed"
+    row["source_use_binding_sha256"] = sha(canonical_dag_json_bytes(row["source_use_binding"]))
+    forged = reviewed_preservation_reseal_fixture_v2(prepared, manifest, dict(prepared.files))
+    with pytest.raises(ValueError, match="complete current regeneration"):
+        reviewed_source_use_validate_fixture(control, version, forged)
+
+
+@pytest.mark.parametrize("version", [2, 3])
+@pytest.mark.parametrize("damage", ["source", "request", "review", "time", "dependency"])
+def test_reviewed_source_use_replays_current_source_reviews_and_dependencies(request, version, damage):
+    control = request.getfixturevalue("reviewed_preservation_control_v" + str(version))
+    prepared = reviewed_source_use_prepare_fixture(control, version)
+    args, kwargs = deepcopy(control["args"]), deepcopy(control["kwargs"])
+    unit_id = control["case"]["declaration"]["units"][2]["unit_id"]
+    if damage == "source": kwargs["preparation_inputs"]["source_inputs"][unit_id]["raw_bytes"] += b" changed"
+    elif damage == "request": kwargs["preparation_inputs"]["relational_inputs"][unit_id]["request_raw"] += b" "
+    elif damage == "review": args[3][0]["interpretation"]["rationale"] += " unsigned change"
+    elif damage == "time": kwargs["at_time_utc"] = "2026-11-02T00:00:00Z"
+    elif damage == "dependency": kwargs["observed_artifact_sha256s"][unit_id + ":source"] = "f" * 64
+    with pytest.raises((ValueError, TypeError)):
+        reviewed_source_use_validate_fixture(control, version, prepared, args=args, kwargs=kwargs)
+
+
+@pytest.mark.parametrize("version", [2, 3])
+@pytest.mark.parametrize("selector", [False, 0, "", "reviewed-source-use/v2", {}, []])
+def test_reviewed_source_use_selector_refuses_before_lazy_owners(monkeypatch, version, selector):
+    target = "_reviewed_preservation_owners" if version == 2 else "_reviewed_mixed_preservation_owners"
+    monkeypatch.setattr(shared, target, lambda: pytest.fail("lazy owners reached before selector refusal"))
+    prepare = getattr(shared, "prepare_reviewed_norm_preservation_corpus_v" + str(version))
+    with pytest.raises(ValueError, match="explicit reviewed source-use identity profile"):
+        prepare({}, {}, expected_graph_sha256="0" * 64, expected_admission_sha256="0" * 64,
+            toolchain=TOOLCHAIN, instance_identity_profile=selector)
+
+
+@pytest.mark.parametrize("version", [2, 3])
+def test_reviewed_source_use_derived_binding_is_fenced_after_child_callbacks(request, monkeypatch, version):
+    from ipfs_datasets_py.logic.autoformal import legal_native_ast_preservation as preservation
+    control = request.getfixturevalue("reviewed_preservation_control_v" + str(version))
+    original = preservation.validate_relational_ast_preservation
+    changed = []
+    def changing(*args, **kwargs):
+        result = original(*args, **kwargs)
+        kwargs["source_use_binding"]["unit_id"] += ":changed-by-child"
+        changed.append(True)
+        return result
+    monkeypatch.setattr(preservation, "validate_relational_ast_preservation", changing)
+    with pytest.raises(ValueError, match="derived reviewed source-use binding changed"):
+        reviewed_source_use_prepare_fixture(control, version)
+    assert changed == [True]
+
+
+@pytest.mark.parametrize("total_units", [7, 8])
+def test_reviewed_source_use_preserves_original_two_namespace_capacity(reviewed_preservation_control_v3, total_units):
+    control = reviewed_preservation_capacity_control_v3(reviewed_preservation_control_v3, total_units)
+    with pytest.raises(ValueError, match="capacity"):
+        reviewed_source_use_prepare_fixture(control, 3)
+    assert len(control["case"]["declaration"]["units"]) == total_units

@@ -552,8 +552,9 @@ def _build_validated_native(preparation, validated, *, replay,
         maximum_files=MAX_FILES, maximum_modules=MAX_MODULES,
         maximum_theorems=None, producer_pin_reader=None, receipt_scope=None,
         preparation_document_reader=None, closing_custody_guard=None, execution_observer=None,
-        frozen_authority=None):
+        frozen_authority=None, instance_identity_profile=None):
     """One bounded native execution path, with each source profile replayed by its owner."""
+    selected_identity = _reviewed_source_use_kwargs(instance_identity_profile)
     if frozen_authority is not None:
         _need(type(frozen_authority) is dict and frozen_authority
               and all(type(key) is str and value is False for key, value in frozen_authority.items()),
@@ -607,6 +608,13 @@ def _build_validated_native(preparation, validated, *, replay,
                 ("legal-corpus-reviewed-preservation-native-build/v3",
                  "replayed-reviewed-mixed-multiunit-preservation-native-build/v3"),
         }
+        if selected_identity:
+            reviewed_domains = {(schema, source_profile + "+reviewed-source-use/v1"):
+                (schema_out, native_profile + "+reviewed-source-use/v1")
+                for (schema, source_profile), (schema_out, native_profile) in reviewed_domains.items()}
+            _reviewed_source_use_manifest(manifest, instance_identity_profile)
+            _need(receipt_binding.get("instance_identity_profile") == instance_identity_profile,
+                  "explicit source-use receipt identity selection required")
         reviewed_domain = (manifest.get("schema"), manifest.get("profile"))
         _need(reviewed_domain in reviewed_domains
               and (build_schema, profile) == reviewed_domains[reviewed_domain],
@@ -616,6 +624,7 @@ def _build_validated_native(preparation, validated, *, replay,
         # The declaration's formal assumptions remain separate, unproved data.
         theorem_assumptions = []
     else:
+        _need(not selected_identity, "source-use identity requires a reviewed preservation project")
         theorems = (list(dict.fromkeys(name for row in receipt_binding["theorem_contributors"]
                                       for name in row["conditional_theorems"])) if shared_type
                     else manifest["conditional_theorems"])
@@ -2022,6 +2031,48 @@ MAX_REVIEWED_PRESERVATION_THEOREMS = 5 * MAX_REVIEWED_PRESERVATION_UNITS
 _REVIEWED_PRESERVATION_OPERATION_PINS = None
 
 
+def _reviewed_source_use_kwargs(instance_identity_profile):
+    """Select one caller-requested source-use domain; never infer from records."""
+    if instance_identity_profile is None:
+        return {}
+    if type(instance_identity_profile) is not str or instance_identity_profile != "reviewed-source-use/v1":
+        raise ValueError("explicit reviewed-source-use/v1 instance identity profile required")
+    return {"instance_identity_profile": instance_identity_profile}
+
+
+def _reviewed_source_use_domain(profile, instance_identity_profile):
+    _reviewed_source_use_kwargs(instance_identity_profile)
+    return profile if instance_identity_profile is None else profile + "+reviewed-source-use/v1"
+
+
+def _reviewed_source_use_manifest(manifest, instance_identity_profile):
+    """Check the exact verified Shared unit echoes, without granting authority."""
+    selected = _reviewed_source_use_kwargs(instance_identity_profile)
+    if not selected:
+        return {}
+    _need(type(manifest) is dict and manifest.get("instance_identity_profile") == instance_identity_profile
+          and type(manifest.get("units")) is list and 3 <= len(manifest["units"]) <= 8,
+          "complete explicitly selected source-use manifest required")
+    keys = {"schema", "unit_id", "source_version_cid", "source_occurrence_cid", "complete_ir_sha256",
+            "graph_unit_record_cid", "graph_ast_record_cid", "scope_record_cid", "interpretation_record_cid"}
+    instances = []
+    for unit in manifest["units"]:
+        _need(type(unit) is dict and type(unit.get("source_use_binding")) is dict,
+              "complete source-use binding for every reviewed unit required")
+        binding = unit["source_use_binding"]
+        _need(set(binding) == keys and all(type(value) is str and 0 < len(value) <= 2048
+                                         for value in binding.values())
+              and binding["schema"] == "legal-native-reviewed-source-use-binding/v1"
+              and all(binding[key] == unit[key] for key in keys - {"schema"}),
+              "source-use binding differs from exact reviewed unit provenance")
+        _pin(unit.get("source_use_binding_sha256"), "reviewed source-use binding")
+        _need(_sha(_wire(binding, MAX_RECORD_BYTES)) == unit["source_use_binding_sha256"],
+              "source-use binding canonical commitment differs")
+        instances.append(unit["instance_module"])
+    _need(len(instances) == len(set(instances)), "one distinct source-use instance per reviewed unit required")
+    return selected
+
+
 def _reviewed_preservation_native_document(preparation):
     cls = type(preparation)
     _need(cls.__module__ == _PARENT_SHARED_MODULE and cls.__name__ == "ReviewedPreservationCorpusPreparation",
@@ -2058,9 +2109,12 @@ def _reviewed_preservation_native_document(preparation):
     return {"manifest_json": text, "files": files}
 
 
-def _reviewed_preservation_native_pins(owners, manifest):
+def _reviewed_preservation_native_pins(owners, manifest, *, instance_identity_profile=None):
     global _REVIEWED_PRESERVATION_OPERATION_PINS
     shared = owners[4]
+    _reviewed_source_use_kwargs(instance_identity_profile)
+    if instance_identity_profile is not None:
+        _reviewed_preservation_native_manifest(manifest, shared, instance_identity_profile=instance_identity_profile)
     current = shared._reviewed_preservation_pins(shared._reviewed_preservation_owners())
     pins = _observed_producer_pins(owners, manifest)
     for path, expected in current.items():
@@ -2073,9 +2127,15 @@ def _reviewed_preservation_native_pins(owners, manifest):
     return pins
 
 
-def _reviewed_preservation_native_manifest(manifest, shared):
+def _reviewed_preservation_native_manifest(manifest, shared, *, instance_identity_profile=None):
+    _reviewed_source_use_kwargs(instance_identity_profile)
+    if instance_identity_profile is not None:
+        _need(shared.REVIEWED_SOURCE_USE_PRESERVATION_PROFILE == shared.REVIEWED_PRESERVATION_PROFILE + "+reviewed-source-use/v1",
+              "closed Shared source-use preservation profile required")
+    _reviewed_source_use_manifest(manifest, instance_identity_profile)
     _need(manifest.get("schema") == shared.REVIEWED_PRESERVATION_SCHEMA
-          and manifest.get("profile") == shared.REVIEWED_PRESERVATION_PROFILE,
+          and manifest.get("profile") == (shared.REVIEWED_PRESERVATION_PROFILE if instance_identity_profile is None
+              else shared.REVIEWED_SOURCE_USE_PRESERVATION_PROFILE),
           "exact current reviewed preservation preparation profile required")
     _need(shared.MAX_REVIEWED_PRESERVATION_FILES == MAX_REVIEWED_PRESERVATION_FILES
           and shared.MAX_REVIEWED_PRESERVATION_MODULES == MAX_REVIEWED_PRESERVATION_MODULES
@@ -2099,11 +2159,12 @@ def _reviewed_preservation_native_manifest(manifest, shared):
 
 def _reviewed_preservation_native_operation(preparation, graph, admission, args, kwargs, *,
         expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256,
-        toolchain, operation=None, reviewed_version=2):
+        toolchain, operation=None, reviewed_version=2, instance_identity_profile=None):
     _need(type(reviewed_version) is int and reviewed_version in (2, 3),
           "explicit closed reviewed native version required")
     if reviewed_version == 3:
-        _reviewed_mixed_native_policy()
+        _reviewed_mixed_native_policy(**_reviewed_source_use_kwargs(instance_identity_profile))
+    _reviewed_source_use_kwargs(instance_identity_profile)
     document = _reviewed_preservation_native_document(preparation)
     for value, label in ((expected_preservation_sha256, "complete reviewed preservation preparation"),
                          (expected_graph_sha256, "complete reviewed graph"),
@@ -2115,6 +2176,8 @@ def _reviewed_preservation_native_operation(preparation, graph, admission, args,
     original = dict(graph=graph, admission=admission, args=list(args), kwargs=kwargs,
         expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
         toolchain=toolchain)
+    if instance_identity_profile is not None:
+        original["instance_identity_profile"] = instance_identity_profile
     _bound_tree({"preparation": document, **original}, MAX_INPUT_BYTES, allow_bytes=True)
     _need(_sha(_wire(document, MAX_PREPARATION_BYTES)) == expected_preservation_sha256,
           "independent complete reviewed preservation preparation pin differs")
@@ -2131,7 +2194,7 @@ def _reviewed_preservation_native_operation(preparation, graph, admission, args,
         read_pins = _reviewed_preservation_native_pins
         domain_callables = ()
     else:
-        _reviewed_mixed_native_policy(shared)
+        _reviewed_mixed_native_policy(shared, **_reviewed_source_use_kwargs(instance_identity_profile))
         admission_owner = shared._reviewed_mixed_preservation_owners()[1]
         validate_project = shared.validate_reviewed_norm_preservation_corpus_v3
         validate_manifest = _reviewed_mixed_preservation_native_manifest
@@ -2149,7 +2212,7 @@ def _reviewed_preservation_native_operation(preparation, graph, admission, args,
 
     def fence():
         if reviewed_version == 3:
-            _reviewed_mixed_native_policy(shared)
+            _reviewed_mixed_native_policy(shared, **_reviewed_source_use_kwargs(instance_identity_profile))
             _need(all(_live_callable_matches(getattr(shared, name), state) for name, state in domain_callables),
                   "mixed shared preparation callbacks changed during native replay")
         _need(admission_owner.norm._snapshot(original)[1] == commitment
@@ -2168,7 +2231,7 @@ def _reviewed_preservation_native_operation(preparation, graph, admission, args,
             expected_preservation_sha256=expected_preservation_sha256,
             expected_graph_sha256=detached["expected_graph_sha256"],
             expected_admission_sha256=detached["expected_admission_sha256"],
-            toolchain=toolchain, **detached["kwargs"])
+            toolchain=toolchain, **detached["kwargs"], **_reviewed_source_use_kwargs(instance_identity_profile))
         _need(_reviewed_preservation_native_document(checked) == frozen_document
               and shared.reviewed_preservation_corpus_sha256(checked) == expected_preservation_sha256,
               "canonical current reviewed project replay differs")
@@ -2176,11 +2239,11 @@ def _reviewed_preservation_native_operation(preparation, graph, admission, args,
         _need(parsed_manifest == execution_document["manifest"],
               "parsed reviewed preservation execution manifest differs from exact envelope")
         if reviewed_version == 2:
-            _reviewed_preservation_native_manifest(parsed_manifest, shared)
-            _reviewed_preservation_native_pins(owners, parsed_manifest)
+            _reviewed_preservation_native_manifest(parsed_manifest, shared, **_reviewed_source_use_kwargs(instance_identity_profile))
+            _reviewed_preservation_native_pins(owners, parsed_manifest, **_reviewed_source_use_kwargs(instance_identity_profile))
         else:
-            validate_manifest(parsed_manifest, shared)
-            read_pins(owners, parsed_manifest)
+            validate_manifest(parsed_manifest, shared, **_reviewed_source_use_kwargs(instance_identity_profile))
+            read_pins(owners, parsed_manifest, **_reviewed_source_use_kwargs(instance_identity_profile))
         fence()
         return checked
 
@@ -2194,9 +2257,9 @@ def _reviewed_preservation_native_operation(preparation, graph, admission, args,
         try:
             fence()
             if reviewed_version == 2:
-                _reviewed_preservation_native_pins(owners, checked.to_dict())
+                _reviewed_preservation_native_pins(owners, checked.to_dict(), **_reviewed_source_use_kwargs(instance_identity_profile))
             else:
-                read_pins(owners, checked.to_dict())
+                read_pins(owners, checked.to_dict(), **_reviewed_source_use_kwargs(instance_identity_profile))
         except (ValueError, TypeError, KeyError, OSError, UnicodeError, RecursionError) as failure:
             if stage in ("snapshot", "toolchain", "after_persistence"):
                 raise
@@ -2210,7 +2273,7 @@ def _reviewed_preservation_native_operation(preparation, graph, admission, args,
 
 def validate_reviewed_norm_preservation_native_v2(preparation, graph, admission, *args,
         expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256,
-        toolchain, **kwargs):
+        toolchain, instance_identity_profile=None, **kwargs):
     """Replay the complete current source/review/graph/project, without building.
 
     Validation of preparation is not validation of a previous native receipt.
@@ -2219,10 +2282,10 @@ def validate_reviewed_norm_preservation_native_v2(preparation, graph, admission,
     return _reviewed_preservation_native_operation(preparation, graph, admission, args, kwargs,
         expected_preservation_sha256=expected_preservation_sha256,
         expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
-        toolchain=toolchain)
+        toolchain=toolchain, **_reviewed_source_use_kwargs(instance_identity_profile))
 
 
-def _reviewed_preservation_receipt_binding(manifest, admission):
+def _reviewed_preservation_receipt_binding(manifest, admission, *, instance_identity_profile=None):
     return {name: manifest[name] for name in (
         "input_commitment_sha256", "reviewed_graph_sha256", "reviewed_admission_sha256",
         "declaration_sha256", "provenance_kind", "scope_record_cid", "interpretation_record_cid",
@@ -2232,12 +2295,12 @@ def _reviewed_preservation_receipt_binding(manifest, admission):
         "statutory_meaning_proved": False, "release_ready": False,
         "full_formal_corpus_consistency_verified": False,
         "generic_lean_v3_receipt_substituted": False,
-        "formal_assumptions": admission["formal_assumptions"], "formal_assumptions_proved": False}
+        "formal_assumptions": admission["formal_assumptions"], "formal_assumptions_proved": False} | _reviewed_source_use_manifest(manifest, instance_identity_profile)
 
 
 def build_reviewed_norm_preservation_native_v2(preparation, graph, admission, *args,
         expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256,
-        toolchain, lake_executable, output_directory, timeout_seconds=60, cancellation=None, **kwargs):
+        toolchain, lake_executable, output_directory, timeout_seconds=60, cancellation=None, instance_identity_profile=None, **kwargs):
     """Observe all concrete multiunit preservation obligations through the old runner.
 
     Callers must retain existing admitted native resources. Current original
@@ -2250,25 +2313,26 @@ def build_reviewed_norm_preservation_native_v2(preparation, graph, admission, *a
 
     def execute(checked, replay, custody):
         def binding(manifest):
-            return _reviewed_preservation_receipt_binding(manifest, admission)
+            return _reviewed_preservation_receipt_binding(manifest, admission, **_reviewed_source_use_kwargs(instance_identity_profile))
         return _build_validated_native(preparation, checked, replay=replay,
             expected_preparation_sha256=expected_preservation_sha256, toolchain=toolchain,
             lake_executable=lake_executable, output_directory=output_directory,
             timeout_seconds=timeout_seconds, cancellation=cancellation,
-            build_schema=REVIEWED_PRESERVATION_BUILD_SCHEMA, profile=REVIEWED_PRESERVATION_NATIVE_PROFILE,
+            build_schema=REVIEWED_PRESERVATION_BUILD_SCHEMA, profile=_reviewed_source_use_domain(REVIEWED_PRESERVATION_NATIVE_PROFILE, instance_identity_profile),
             flags=dict(PARENT_FALSE_FLAGS), receipt_binding=binding,
             maximum_files=MAX_REVIEWED_PRESERVATION_FILES,
             maximum_modules=MAX_REVIEWED_PRESERVATION_MODULES,
             maximum_theorems=MAX_REVIEWED_PRESERVATION_THEOREMS,
-            producer_pin_reader=_reviewed_preservation_native_pins,
+            producer_pin_reader=(_reviewed_preservation_native_pins if instance_identity_profile is None else
+                lambda owners, manifest: _reviewed_preservation_native_pins(owners, manifest, instance_identity_profile=instance_identity_profile)),
             preparation_document_reader=_reviewed_preservation_native_document,
             closing_custody_guard=custody,
-            receipt_scope="Five exact independent concrete IR/native preservation obligations for each current reviewed source unit; no cross-unit governing-definition application, statutory truth, universal compiler theorem, legal review or corpus/release admission.")
+            receipt_scope="Five exact independent concrete IR/native preservation obligations for each current reviewed source unit; no cross-unit governing-definition application, statutory truth, universal compiler theorem, legal review or corpus/release admission.", **_reviewed_source_use_kwargs(instance_identity_profile))
 
     return _reviewed_preservation_native_operation(preparation, graph, admission, args, kwargs,
         expected_preservation_sha256=expected_preservation_sha256,
         expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
-        toolchain=toolchain, operation=execute)
+        toolchain=toolchain, operation=execute, **_reviewed_source_use_kwargs(instance_identity_profile))
 
 
 __all__ += ["REVIEWED_PRESERVATION_BUILD_SCHEMA", "REVIEWED_PRESERVATION_NATIVE_PROFILE",
@@ -2514,16 +2578,18 @@ _REVIEWED_REPLAY_SCOPE = (
     "theorem, legal review or corpus/release admission.")
 
 
-def reviewed_norm_preservation_receipt_bytes_v2(receipt):
+def reviewed_norm_preservation_receipt_bytes_v2(receipt, *, instance_identity_profile=None):
     """Format one complete reviewed-profile observation, granting no authority.
 
     This is a bounded closed formatter, not receipt validation, producer
     authentication or an original-success adapter. No operation owner is loaded.
     """
+    selected = _reviewed_source_use_kwargs(instance_identity_profile)
     _bound_tree(receipt, MAX_RECEIPT_BYTES)
-    _need(type(receipt) is dict and set(receipt) == _REVIEWED_REPLAY_CORE_FIELDS
+    _reviewed_source_use_manifest(receipt, instance_identity_profile)
+    _need(type(receipt) is dict and set(receipt) == _REVIEWED_REPLAY_CORE_FIELDS | set(selected)
           and receipt["schema"] == REVIEWED_PRESERVATION_BUILD_SCHEMA
-          and receipt["profile"] == REVIEWED_PRESERVATION_NATIVE_PROFILE,
+          and receipt["profile"] == _reviewed_source_use_domain(REVIEWED_PRESERVATION_NATIVE_PROFILE, instance_identity_profile),
           "closed complete reviewed-native receipt required")
     return _wire(receipt, MAX_RECEIPT_BYTES)
 
@@ -2549,8 +2615,9 @@ def _reviewed_retained_packet(packet_files):
     return dict(pairs), inventory
 
 
-def reviewed_norm_preservation_packet_sha256_v2(packet_files):
+def reviewed_norm_preservation_packet_sha256_v2(packet_files, *, instance_identity_profile=None):
     """Commit the complete retained byte inventory, without authenticating it."""
+    _reviewed_source_use_kwargs(instance_identity_profile)
     _, inventory = _reviewed_retained_packet(packet_files)
     return _sha(_wire(inventory, MAX_RECORD_BYTES))
 
@@ -2589,7 +2656,7 @@ def validate_reviewed_norm_preservation_native_receipt_v2(
         receipt_raw, preparation, graph, admission, *args,
         packet_files, expected_receipt_sha256, expected_packet_sha256, expected_binary_sha256,
         expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256,
-        toolchain, observation_profile=_REVIEWED_REPLAY_ACTUAL, **kwargs):
+        toolchain, observation_profile=_REVIEWED_REPLAY_ACTUAL, instance_identity_profile=None, **kwargs):
     """Replay retained observations and current complete semantics without Lean.
 
     The caller owns physical acquisition and independently trusted receipt,
@@ -2610,7 +2677,7 @@ def validate_reviewed_norm_preservation_native_receipt_v2(
           and contents.get("build-receipt.json") == receipt_raw,
           "independent original receipt bytes differ")
     receipt = _parse(receipt_raw, MAX_RECEIPT_BYTES)
-    _need(reviewed_norm_preservation_receipt_bytes_v2(receipt) == receipt_raw,
+    _need(reviewed_norm_preservation_receipt_bytes_v2(receipt, **_reviewed_source_use_kwargs(instance_identity_profile)) == receipt_raw,
           "original reviewed receipt must retain its canonical complete bytes")
     _need(type(observation_profile) is str
           and observation_profile in (_REVIEWED_REPLAY_ACTUAL, _REVIEWED_REPLAY_FICTIONAL),
@@ -2624,7 +2691,7 @@ def validate_reviewed_norm_preservation_native_receipt_v2(
     checked = validate_reviewed_norm_preservation_native_v2(preparation, graph, admission, *args,
         expected_preservation_sha256=expected_preservation_sha256,
         expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
-        toolchain=toolchain, **kwargs)
+        toolchain=toolchain, **kwargs, **_reviewed_source_use_kwargs(instance_identity_profile))
     owners = _owners(); transport, process = owners[1], owners[3]
     from . import legal_corpus_definition_use_preservation_packet_v2 as packets
     packet_owner_pin = _sha(Path(packets.__file__).read_bytes())
@@ -2632,12 +2699,12 @@ def validate_reviewed_norm_preservation_native_receipt_v2(
     manifest = checked.to_dict(); contracts = transport.contracts
     contracts.validate_record(receipt, schema=REVIEWED_PRESERVATION_BUILD_SCHEMA,
         fields=set(receipt) - {"schema", "record_cid", "cid_scope"})
-    binding = _reviewed_preservation_receipt_binding(manifest, admission)
+    binding = _reviewed_preservation_receipt_binding(manifest, admission, **_reviewed_source_use_kwargs(instance_identity_profile))
     binding.update(preparation_cid=manifest["record_cid"],
         preparation_full_canonical_sha256=expected_preservation_sha256,
         preparation_manifest_sha256=_sha(checked.manifest_json.encode("utf-8")), toolchain=toolchain,
         expected_modules=manifest["expected_modules"], compiled_modules=manifest["expected_modules"],
-        producer_pins=_reviewed_preservation_native_pins(owners, manifest),
+        producer_pins=_reviewed_preservation_native_pins(owners, manifest, **_reviewed_source_use_kwargs(instance_identity_profile)),
         conditional_theorems=manifest["preservation_obligations"],
         original_preparation_theorem_assumptions=[], theorem_assumptions=[], scope=_REVIEWED_REPLAY_SCOPE)
     _need(_wire({name: receipt[name] for name in binding}, MAX_RECEIPT_BYTES)
@@ -2747,16 +2814,17 @@ def validate_reviewed_norm_preservation_native_receipt_v2(
     validate_reviewed_norm_preservation_native_v2(preparation, graph, admission, *args,
         expected_preservation_sha256=expected_preservation_sha256,
         expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
-        toolchain=toolchain, **kwargs)
+        toolchain=toolchain, **kwargs, **_reviewed_source_use_kwargs(instance_identity_profile))
     _need(_sha(Path(packets.__file__).read_bytes()) == packet_owner_pin,
           "retained-packet validator changed during replay")
     return contracts.seal_record({**dict(PARENT_FALSE_FLAGS), "schema": REVIEWED_RECEIPT_REPLAY_SCHEMA,
-        "profile": REVIEWED_RECEIPT_REPLAY_PROFILE, "observation_profile": observation_profile,
+        "profile": _reviewed_source_use_domain(REVIEWED_RECEIPT_REPLAY_PROFILE, instance_identity_profile),
+        **_reviewed_source_use_kwargs(instance_identity_profile), "observation_profile": observation_profile,
         "retained_receipt_sha256": expected_receipt_sha256, "retained_packet_sha256": expected_packet_sha256,
         "preparation_sha256": expected_preservation_sha256, "graph_sha256": expected_graph_sha256,
         "admission_sha256": expected_admission_sha256, "retained_observations_consistent": True,
         "current_complete_semantics_replayed": True, "obligations": list(manifest["preservation_obligations"]),
-        "packet_inventory": inventory, "producer_pins": {**_reviewed_preservation_native_pins(owners, manifest),
+        "packet_inventory": inventory, "producer_pins": {**_reviewed_preservation_native_pins(owners, manifest, **_reviewed_source_use_kwargs(instance_identity_profile)),
             str(Path(packets.__file__).resolve()): packet_owner_pin},
         "original_success_authenticated": False, "native_execution_authenticated": False,
         "native_execution_performed": False, "olean_kernel_rechecked": False,
@@ -2767,7 +2835,7 @@ def validate_reviewed_norm_preservation_native_receipt_v2(
         "scope": "Retained observation consistency and current replay only; no historical process, kernel, legal or release authority."})
 
 
-def load_reviewed_norm_preservation_native_v2(packet_files, preparation, graph, admission, *args, **kwargs):
+def load_reviewed_norm_preservation_native_v2(packet_files, preparation, graph, admission, *args, instance_identity_profile=None, **kwargs):
     """Reopen an acquired byte packet; caller owns physical file acquisition.
 
     No path is opened and no compiler/process is run by this entry. The existing
@@ -2777,7 +2845,7 @@ def load_reviewed_norm_preservation_native_v2(packet_files, preparation, graph, 
     contents, _ = _reviewed_retained_packet(packet_files)
     _need("build-receipt.json" in contents, "original complete native receipt required")
     return validate_reviewed_norm_preservation_native_receipt_v2(contents["build-receipt.json"],
-        preparation, graph, admission, *args, packet_files=packet_files, **kwargs)
+        preparation, graph, admission, *args, packet_files=packet_files, **kwargs, **_reviewed_source_use_kwargs(instance_identity_profile))
 
 
 __all__ += ["REVIEWED_RECEIPT_REPLAY_SCHEMA", "REVIEWED_RECEIPT_REPLAY_PROFILE",
@@ -3072,7 +3140,7 @@ def _live_original_inputs(preparation, graph, admission, args, kwargs):
                                graph, admission, args, kwargs))
 
 
-def _live_read_persisted_packet(output, checked, receipt, transport, *, reviewed_version=2):
+def _live_read_persisted_packet(output, checked, receipt, transport, *, reviewed_version=2, instance_identity_profile=None):
     """Reopen the closed original packet through existing no-follow readers."""
     output = transport._path(output)
     transport._check_directories(output)
@@ -3115,12 +3183,13 @@ def _live_read_persisted_packet(output, checked, receipt, transport, *, reviewed
         os.close(root_fd)
     packet = tuple(sorted(contents.items()))
     _reviewed_retained_packet(packet)
-    _need(contents["build-receipt.json"] == _live_success_domain(reviewed_version)[9](receipt),
+    _need(contents["build-receipt.json"] == _live_success_domain(reviewed_version, **_reviewed_source_use_kwargs(instance_identity_profile))[9](receipt, **_reviewed_source_use_kwargs(instance_identity_profile)),
           "persisted live success receipt differs from original returned receipt")
     return packet
 
 
-def _live_handle_entry(handle, *, reviewed_version=2):
+def _live_handle_entry(handle, *, reviewed_version=2, instance_identity_profile=None):
+    _reviewed_source_use_kwargs(instance_identity_profile)
     _need(type(reviewed_version) is int and reviewed_version in (2, 3),
           "explicit closed live handle version required")
     # This check intentionally precedes every owner import and preparation read.
@@ -3133,15 +3202,17 @@ def _live_handle_entry(handle, *, reviewed_version=2):
           and vars(_LIVE_HANDLE_CLASS).get("__eq__") is object.__eq__,
           "live success handle was not issued by this process and native thread")
     entry = _LIVE_SUCCESS_HANDLES.get(handle)
-    _need(type(entry) is tuple and len(entry) == 9 and type(entry[8]) is int
-          and entry[8] == reviewed_version and entry[0] == os.getpid() and entry[1] == threading.get_native_id()
+    _need(type(entry) is tuple and len(entry) == (9 if instance_identity_profile is None else 10) and type(entry[8]) is int
+          and entry[8] == reviewed_version
+          and (instance_identity_profile is None or entry[9] == instance_identity_profile) and entry[0] == os.getpid() and entry[1] == threading.get_native_id()
           and entry[6]() is threading.current_thread() and entry[7]() is handle,
           "live success handle was not issued by this process and native thread")
     return entry
 
 
-def _live_success_domain(reviewed_version):
+def _live_success_domain(reviewed_version, *, instance_identity_profile=None):
     """Select one closed literal domain after the independent callable fence."""
+    _reviewed_source_use_kwargs(instance_identity_profile)
     _need(type(reviewed_version) is int and reviewed_version in (2, 3),
           "explicit closed live success version required")
     _need(type(PARENT_FALSE_FLAGS) is dict and set(PARENT_FALSE_FLAGS) == _REVIEWED_MIXED_FALSE_KEYS
@@ -3157,19 +3228,19 @@ def _live_success_domain(reviewed_version):
             "legal-reviewed-native-live-success/v1", "current-reviewed-live-native-owner-success/v1"),
             "closed Object live success domain cannot alias another profile")
         return ("legal-corpus-reviewed-preservation-native-build/v2",
-            "replayed-reviewed-multiunit-preservation-native-build/v2",
-            "legal-reviewed-native-live-success/v1", "current-reviewed-live-native-owner-success/v1",
+            _reviewed_source_use_domain("replayed-reviewed-multiunit-preservation-native-build/v2", instance_identity_profile),
+            "legal-reviewed-native-live-success/v1", _reviewed_source_use_domain("current-reviewed-live-native-owner-success/v1", instance_identity_profile),
             _reviewed_preservation_receipt_binding, _reviewed_preservation_native_pins,
             reviewed_norm_preservation_packet_sha256_v2, load_reviewed_norm_preservation_native_v2,
             validate_reviewed_norm_preservation_native_v2, reviewed_norm_preservation_receipt_bytes_v2,
             _REVIEWED_REPLAY_SCOPE)
-    _reviewed_mixed_native_policy()
+    _reviewed_mixed_native_policy(**_reviewed_source_use_kwargs(instance_identity_profile))
     _need((REVIEWED_MIXED_LIVE_SUCCESS_SCHEMA, REVIEWED_MIXED_LIVE_SUCCESS_PROFILE) == (
         "legal-reviewed-native-live-success/v3", "current-reviewed-mixed-live-native-owner-success/v3"),
         "closed mixed live success domain cannot alias another profile")
     return ("legal-corpus-reviewed-preservation-native-build/v3",
-        "replayed-reviewed-mixed-multiunit-preservation-native-build/v3",
-        "legal-reviewed-native-live-success/v3", "current-reviewed-mixed-live-native-owner-success/v3",
+        _reviewed_source_use_domain("replayed-reviewed-mixed-multiunit-preservation-native-build/v3", instance_identity_profile),
+        "legal-reviewed-native-live-success/v3", _reviewed_source_use_domain("current-reviewed-mixed-live-native-owner-success/v3", instance_identity_profile),
         _reviewed_mixed_preservation_receipt_binding, _reviewed_mixed_preservation_native_pins,
         reviewed_norm_preservation_packet_sha256_v3, load_reviewed_norm_preservation_native_v3,
         validate_reviewed_norm_preservation_native_v3, reviewed_norm_preservation_receipt_bytes_v3,
@@ -3201,7 +3272,7 @@ def _live_review_components(owners, reviewed_version):
 
 def _build_verified_reviewed_norm_preservation_native(preparation, graph, admission, *args,
         _live_integrity_state, reviewed_version, expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256,
-        toolchain, lake_executable, output_directory, timeout_seconds=60, cancellation=None, **kwargs):
+        toolchain, lake_executable, output_directory, timeout_seconds=60, cancellation=None, instance_identity_profile=None, **kwargs):
     """Issue an opaque handle after one fresh default native build and replay.
 
     Existing Source/native/storage admission remains with the original caller.
@@ -3236,7 +3307,7 @@ def _build_verified_reviewed_norm_preservation_native(preparation, graph, admiss
     _need(type(timeout_seconds) in (int, float) and math.isfinite(timeout_seconds)
           and 0 < timeout_seconds <= 60, "finite compiler timeout in (0,60] required")
     integrity_fence()
-    domain = _live_success_domain(reviewed_version)
+    domain = _live_success_domain(reviewed_version, **_reviewed_source_use_kwargs(instance_identity_profile))
     (build_schema, native_profile, live_schema, live_profile, receipt_binding, pin_reader,
      packet_hasher, retained_loader, validator, formatter, receipt_scope) = domain
     authority_snapshot = dict(AUTHORITY)
@@ -3248,7 +3319,7 @@ def _build_verified_reviewed_norm_preservation_native(preparation, graph, admiss
 
     def fence():
         integrity_fence(owners)
-        _need(_live_success_domain(reviewed_version) == domain, "live success domain changed during build")
+        _need(_live_success_domain(reviewed_version, **_reviewed_source_use_kwargs(instance_identity_profile)) == domain, "live success domain changed during build")
         _need(_live_original_inputs(preparation, graph, admission, args, kwargs) == original,
               "live success original inputs changed during build")
 
@@ -3309,28 +3380,29 @@ def _build_verified_reviewed_norm_preservation_native(preparation, graph, admiss
             timeout_seconds=timeout_seconds, cancellation=cancellation,
             build_schema=build_schema, profile=native_profile,
             flags=dict(PARENT_FALSE_FLAGS),
-            receipt_binding=lambda manifest: receipt_binding(manifest, admission),
+            receipt_binding=lambda manifest: receipt_binding(manifest, admission, **_reviewed_source_use_kwargs(instance_identity_profile)),
             maximum_files=MAX_REVIEWED_PRESERVATION_FILES,
             maximum_modules=MAX_REVIEWED_PRESERVATION_MODULES,
             maximum_theorems=MAX_REVIEWED_PRESERVATION_THEOREMS,
-            producer_pin_reader=pin_reader,
+            producer_pin_reader=(pin_reader if instance_identity_profile is None else
+                lambda owners, manifest: pin_reader(owners, manifest, instance_identity_profile=instance_identity_profile)),
             preparation_document_reader=_reviewed_preservation_native_document,
             closing_custody_guard=guard, execution_observer=execution, receipt_scope=receipt_scope,
-            frozen_authority=authority_snapshot)
+            frozen_authority=authority_snapshot, **_reviewed_source_use_kwargs(instance_identity_profile))
         fence()
         _need(receipt["build_passed"] is True and "projection" in observed
               and _wire(receipt["reviewed_execution_evidence"], MAX_RECEIPT_BYTES) == observed["projection"],
               "successful original live native execution required")
         packet = _live_read_persisted_packet(output_directory, checked, receipt, owners[1],
-                                            reviewed_version=reviewed_version)
+                                            reviewed_version=reviewed_version, **_reviewed_source_use_kwargs(instance_identity_profile))
         receipt_hash = _sha(dict(packet)["build-receipt.json"])
-        packet_hash = packet_hasher(packet)
+        packet_hash = packet_hasher(packet, **_reviewed_source_use_kwargs(instance_identity_profile))
         old = retained_loader(packet, preparation, graph, admission, *args,
             expected_receipt_sha256=receipt_hash, expected_packet_sha256=packet_hash,
             expected_binary_sha256=receipt["binary_sha256"],
             expected_preservation_sha256=expected_preservation_sha256,
             expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
-            toolchain=toolchain, **kwargs)
+            toolchain=toolchain, **kwargs, **_reviewed_source_use_kwargs(instance_identity_profile))
         fence()
         _need(old["retained_observations_consistent"] is True
               and old["current_complete_semantics_replayed"] is True
@@ -3345,13 +3417,15 @@ def _build_verified_reviewed_norm_preservation_native(preparation, graph, admiss
         preparation, graph, admission, args, kwargs,
         expected_preservation_sha256=expected_preservation_sha256,
         expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
-        toolchain=toolchain, operation=execute, reviewed_version=reviewed_version)
+        toolchain=toolchain, operation=execute, reviewed_version=reviewed_version, **_reviewed_source_use_kwargs(instance_identity_profile))
     # The existing after-persistence custody and final outer semantic fence have
     # finished before any capability is inserted into the issuance registry.
     fence()
     handle = object.__new__(VerifiedReviewedPreservationNativeSuccess)
     entry = (os.getpid(), threading.get_native_id(), packet, joins, projection, original,
              weakref.ref(threading.current_thread()), weakref.ref(handle), reviewed_version)
+    if instance_identity_profile is not None:
+        entry = (*entry, instance_identity_profile)
     _LIVE_SUCCESS_HANDLES[handle] = entry
     # A return-hook mutation cannot leave an issued handle after our last check.
     try:
@@ -3364,7 +3438,7 @@ def _build_verified_reviewed_norm_preservation_native(preparation, graph, admiss
 
 def _load_verified_reviewed_norm_preservation_native(handle, packet_files, preparation, graph, admission, *args,
         _live_integrity_state, reviewed_version, expected_receipt_sha256, expected_packet_sha256, expected_binary_sha256,
-        expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256, toolchain, **kwargs):
+        expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256, toolchain, instance_identity_profile=None, **kwargs):
     """Join this process's live issuance to exact bytes and current review state.
 
     Reads invoke no compiler, executable, cleanup action or historical PID probe.
@@ -3396,9 +3470,9 @@ def _load_verified_reviewed_norm_preservation_native(handle, packet_files, prepa
         return function(owners, reviewed_version=reviewed_version)
 
     integrity_fence()
-    entry = _live_handle_entry(handle, reviewed_version=reviewed_version)
+    entry = _live_handle_entry(handle, reviewed_version=reviewed_version, **_reviewed_source_use_kwargs(instance_identity_profile))
     integrity_fence()
-    domain = _live_success_domain(reviewed_version)
+    domain = _live_success_domain(reviewed_version, **_reviewed_source_use_kwargs(instance_identity_profile))
     (build_schema, native_profile, live_schema, live_profile, receipt_binding, pin_reader,
      packet_hasher, retained_loader, validator, formatter, receipt_scope) = domain
     authority_snapshot = dict(AUTHORITY)
@@ -3411,8 +3485,8 @@ def _load_verified_reviewed_norm_preservation_native(handle, packet_files, prepa
     integrity_fence(owners)
 
     def fence():
-        _need(_live_success_domain(reviewed_version) == domain, "live success domain changed during read")
-        _need(_live_handle_entry(handle, reviewed_version=reviewed_version) is entry,
+        _need(_live_success_domain(reviewed_version, **_reviewed_source_use_kwargs(instance_identity_profile)) == domain, "live success domain changed during read")
+        _need(_live_handle_entry(handle, reviewed_version=reviewed_version, **_reviewed_source_use_kwargs(instance_identity_profile)) is entry,
               "same issued live success handle required")
         integrity_fence(owners)
         _need(_live_original_inputs(preparation, graph, admission, args, kwargs) == original,
@@ -3423,7 +3497,7 @@ def _load_verified_reviewed_norm_preservation_native(handle, packet_files, prepa
         expected_binary_sha256=expected_binary_sha256,
         expected_preservation_sha256=expected_preservation_sha256,
         expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
-        toolchain=toolchain, **kwargs)
+        toolchain=toolchain, **kwargs, **_reviewed_source_use_kwargs(instance_identity_profile))
     fence()
     joins = _live_freeze_inputs((reviewed_version, expected_preservation_sha256, expected_graph_sha256,
         expected_admission_sha256, toolchain, expected_binary_sha256,
@@ -3434,11 +3508,11 @@ def _load_verified_reviewed_norm_preservation_native(handle, packet_files, prepa
     checked = validator(preparation, graph, admission, *args,
         expected_preservation_sha256=expected_preservation_sha256,
         expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
-        toolchain=toolchain, **kwargs)
+        toolchain=toolchain, **kwargs, **_reviewed_source_use_kwargs(instance_identity_profile))
     fence()
     _need(_live_original_inputs(checked, graph, admission, args, kwargs) == original,
           "exact issued live success regenerated project required")
-    binding = receipt_binding(checked.to_dict(), admission) if reviewed_version == 3 else {}
+    binding = receipt_binding(checked.to_dict(), admission, **_reviewed_source_use_kwargs(instance_identity_profile)) if reviewed_version == 3 else {}
     fence()
     result = owners[1].contracts.seal_record({
         **{key: value for key, value in replay.items() if key not in {"schema", "profile", "record_cid", "cid_scope"}},
@@ -3459,7 +3533,7 @@ def _load_verified_reviewed_norm_preservation_native(handle, packet_files, prepa
 
 def build_verified_reviewed_norm_preservation_native_v2(preparation, graph, admission, *args,
         expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256,
-        toolchain, lake_executable, output_directory, timeout_seconds=60, cancellation=None, **kwargs):
+        toolchain, lake_executable, output_directory, timeout_seconds=60, cancellation=None, instance_identity_profile=None, **kwargs):
     """Issue this explicit reviewed domain through the shared original live engine."""
     _need(type(timeout_seconds) in (int, float) and math.isfinite(timeout_seconds)
           and 0 < timeout_seconds <= 60, "finite compiler timeout in (0,60] required")
@@ -3469,14 +3543,14 @@ def build_verified_reviewed_norm_preservation_native_v2(preparation, graph, admi
         expected_preservation_sha256=expected_preservation_sha256,
         expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
         toolchain=toolchain, lake_executable=lake_executable, output_directory=output_directory,
-        timeout_seconds=timeout_seconds, cancellation=cancellation, **kwargs)
+        timeout_seconds=timeout_seconds, cancellation=cancellation, **kwargs, **_reviewed_source_use_kwargs(instance_identity_profile))
 
 
 def load_verified_reviewed_norm_preservation_native_v2(handle, packet_files, preparation, graph, admission, *args,
         expected_receipt_sha256, expected_packet_sha256, expected_binary_sha256,
-        expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256, toolchain, **kwargs):
+        expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256, toolchain, instance_identity_profile=None, **kwargs):
     """Join this explicit domain's original live issuance without new execution."""
-    _live_handle_entry(handle, reviewed_version=2)
+    _live_handle_entry(handle, reviewed_version=2, **_reviewed_source_use_kwargs(instance_identity_profile))
     _live_entry_guard(2)
     return _load_verified_reviewed_norm_preservation_native(
         handle, packet_files, preparation, graph, admission, *args, reviewed_version=2,
@@ -3484,7 +3558,7 @@ def load_verified_reviewed_norm_preservation_native_v2(handle, packet_files, pre
         expected_binary_sha256=expected_binary_sha256,
         expected_preservation_sha256=expected_preservation_sha256,
         expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
-        toolchain=toolchain, **kwargs)
+        toolchain=toolchain, **kwargs, **_reviewed_source_use_kwargs(instance_identity_profile))
 
 
 __all__ += ["REVIEWED_LIVE_SUCCESS_SCHEMA", "REVIEWED_LIVE_SUCCESS_PROFILE",
@@ -3529,7 +3603,8 @@ _REVIEWED_MIXED_CHILD_DOMAINS = {
 }
 
 
-def _reviewed_mixed_native_policy(shared=None):
+def _reviewed_mixed_native_policy(shared=None, *, instance_identity_profile=None):
+    _reviewed_source_use_kwargs(instance_identity_profile)
     _need((REVIEWED_MIXED_PRESERVATION_BUILD_SCHEMA, REVIEWED_MIXED_PRESERVATION_NATIVE_PROFILE,
            REVIEWED_MIXED_RECEIPT_REPLAY_SCHEMA, REVIEWED_MIXED_RECEIPT_REPLAY_PROFILE) == (
         "legal-corpus-reviewed-preservation-native-build/v3",
@@ -3564,6 +3639,10 @@ def _reviewed_mixed_native_policy(shared=None):
              "mixed_denotation_matches_lowering", "mixed_role_denotation_matches_lowering"))},
         "mixed native child domains and theorem populations cannot be replaced")
     if shared is not None:
+        if instance_identity_profile is not None:
+            _need(shared.REVIEWED_MIXED_SOURCE_USE_PRESERVATION_PROFILE ==
+                  shared.REVIEWED_MIXED_PRESERVATION_PROFILE + "+reviewed-source-use/v1",
+                  "closed Shared mixed source-use preservation profile required")
         _need((shared.REVIEWED_MIXED_PRESERVATION_SCHEMA, shared.REVIEWED_MIXED_PRESERVATION_PROFILE,
                shared.REVIEWED_MIXED_PRESERVATION_ROOT) == (
             "legal-corpus-reviewed-preservation-preparation/v3",
@@ -3576,10 +3655,13 @@ def _reviewed_mixed_native_policy(shared=None):
                 == (8, 78, 11, 40), "closed current mixed shared preparation domain required")
 
 
-def _reviewed_mixed_preservation_native_pins(owners, manifest):
+def _reviewed_mixed_preservation_native_pins(owners, manifest, *, instance_identity_profile=None):
     global _REVIEWED_MIXED_PRESERVATION_OPERATION_PINS
     shared = owners[4]
-    _reviewed_mixed_native_policy(shared)
+    _reviewed_source_use_kwargs(instance_identity_profile)
+    if instance_identity_profile is not None:
+        _reviewed_mixed_preservation_native_manifest(manifest, shared, instance_identity_profile=instance_identity_profile)
+    _reviewed_mixed_native_policy(shared, **_reviewed_source_use_kwargs(instance_identity_profile))
     current = shared._reviewed_preservation_pins(shared._reviewed_mixed_preservation_owners())
     pins = _observed_producer_pins(owners, manifest)
     for path, expected in current.items():
@@ -3592,10 +3674,12 @@ def _reviewed_mixed_preservation_native_pins(owners, manifest):
     return pins
 
 
-def _reviewed_mixed_preservation_native_manifest(manifest, shared):
-    _reviewed_mixed_native_policy(shared)
+def _reviewed_mixed_preservation_native_manifest(manifest, shared, *, instance_identity_profile=None):
+    _reviewed_mixed_native_policy(shared, **_reviewed_source_use_kwargs(instance_identity_profile))
+    _reviewed_source_use_manifest(manifest, instance_identity_profile)
     _need(manifest.get("schema") == "legal-corpus-reviewed-preservation-preparation/v3"
-          and manifest.get("profile") == "reviewed-multi-unit-mixed-relational-preservation/v3",
+          and manifest.get("profile") == _reviewed_source_use_domain(
+              "reviewed-multi-unit-mixed-relational-preservation/v3", instance_identity_profile),
           "exact current mixed reviewed preservation preparation required")
     units = manifest["units"]
     _need(type(units) is list and 3 <= len(units) <= 8,
@@ -3606,6 +3690,7 @@ def _reviewed_mixed_preservation_native_manifest(manifest, shared):
         domain = _REVIEWED_MIXED_CHILD_DOMAINS.get(unit.get("relational_profile"))
         _need(domain is not None, "unknown reviewed unit preservation domain")
         profile, family, root, suffixes = domain
+        profile = _reviewed_source_use_domain(profile, instance_identity_profile)
         instance = unit["instance_module"]
         _need(type(unit["ordinal"]) is int and unit["ordinal"] == ordinal
               and unit["child_preservation_profile"] == profile and unit["child_family"] == family
@@ -3654,7 +3739,7 @@ def _reviewed_mixed_preservation_native_manifest(manifest, shared):
     return manifest
 
 
-def _reviewed_mixed_preservation_receipt_binding(manifest, admission):
+def _reviewed_mixed_preservation_receipt_binding(manifest, admission, *, instance_identity_profile=None):
     keys = ("input_commitment_sha256", "reviewed_graph_sha256", "reviewed_admission_sha256",
         "declaration_sha256", "provenance_kind", "scope_record_cid", "interpretation_record_cid",
         "units", "definition_use_record_cids", "signature_headers_by_unit", "predicate_compatibility_ledger",
@@ -3663,63 +3748,67 @@ def _reviewed_mixed_preservation_receipt_binding(manifest, admission):
         "preservation_only": True, "cross_unit_definition_application_proved": False,
         "statutory_meaning_proved": False, "release_ready": False,
         "full_formal_corpus_consistency_verified": False, "generic_lean_v3_receipt_substituted": False,
-        "formal_assumptions": admission["formal_assumptions"], "formal_assumptions_proved": False}
+        "formal_assumptions": admission["formal_assumptions"], "formal_assumptions_proved": False} | _reviewed_source_use_manifest(manifest, instance_identity_profile)
 
 
 def validate_reviewed_norm_preservation_native_v3(preparation, graph, admission, *args,
-        expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256, toolchain, **kwargs):
+        expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256, toolchain, instance_identity_profile=None, **kwargs):
     """Replay complete current V3 source, review, mixed graph and exact project."""
-    _reviewed_mixed_native_policy()
+    _reviewed_mixed_native_policy(**_reviewed_source_use_kwargs(instance_identity_profile))
     return _reviewed_preservation_native_operation(preparation, graph, admission, args, kwargs,
         expected_preservation_sha256=expected_preservation_sha256, expected_graph_sha256=expected_graph_sha256,
-        expected_admission_sha256=expected_admission_sha256, toolchain=toolchain, reviewed_version=3)
+        expected_admission_sha256=expected_admission_sha256, toolchain=toolchain, reviewed_version=3, **_reviewed_source_use_kwargs(instance_identity_profile))
 
 
 def build_reviewed_norm_preservation_native_v3(preparation, graph, admission, *args,
         expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256,
-        toolchain, lake_executable, output_directory, timeout_seconds=60, cancellation=None, **kwargs):
+        toolchain, lake_executable, output_directory, timeout_seconds=60, cancellation=None, instance_identity_profile=None, **kwargs):
     """Build every complete V3 unit with its unchanged child semantics and formula."""
-    _reviewed_mixed_native_policy()
+    _reviewed_mixed_native_policy(**_reviewed_source_use_kwargs(instance_identity_profile))
     _need(type(timeout_seconds) in (int, float) and math.isfinite(timeout_seconds)
           and 0 < timeout_seconds <= 60, "finite compiler timeout in (0,60] required")
 
     def execute(checked, replay, custody):
         def binding(manifest):
-            return _reviewed_mixed_preservation_receipt_binding(manifest, admission)
+            return _reviewed_mixed_preservation_receipt_binding(manifest, admission, **_reviewed_source_use_kwargs(instance_identity_profile))
         return _build_validated_native(preparation, checked, replay=replay,
             expected_preparation_sha256=expected_preservation_sha256, toolchain=toolchain,
             lake_executable=lake_executable, output_directory=output_directory,
             timeout_seconds=timeout_seconds, cancellation=cancellation,
             build_schema="legal-corpus-reviewed-preservation-native-build/v3",
-            profile="replayed-reviewed-mixed-multiunit-preservation-native-build/v3",
+            profile=_reviewed_source_use_domain("replayed-reviewed-mixed-multiunit-preservation-native-build/v3", instance_identity_profile),
             flags=dict(PARENT_FALSE_FLAGS), receipt_binding=binding,
             maximum_files=MAX_REVIEWED_PRESERVATION_FILES, maximum_modules=MAX_REVIEWED_PRESERVATION_MODULES,
             maximum_theorems=MAX_REVIEWED_PRESERVATION_THEOREMS,
-            producer_pin_reader=_reviewed_mixed_preservation_native_pins,
+            producer_pin_reader=(_reviewed_mixed_preservation_native_pins if instance_identity_profile is None else
+                lambda owners, manifest: _reviewed_mixed_preservation_native_pins(owners, manifest, instance_identity_profile=instance_identity_profile)),
             preparation_document_reader=_reviewed_preservation_native_document,
             closing_custody_guard=custody, receipt_scope=_REVIEWED_MIXED_SCOPE,
-            frozen_authority=dict(AUTHORITY))
+            frozen_authority=dict(AUTHORITY), **_reviewed_source_use_kwargs(instance_identity_profile))
 
     return _reviewed_preservation_native_operation(preparation, graph, admission, args, kwargs,
         expected_preservation_sha256=expected_preservation_sha256, expected_graph_sha256=expected_graph_sha256,
         expected_admission_sha256=expected_admission_sha256, toolchain=toolchain,
-        operation=execute, reviewed_version=3)
+        operation=execute, reviewed_version=3, **_reviewed_source_use_kwargs(instance_identity_profile))
 
 
-def reviewed_norm_preservation_receipt_bytes_v3(receipt):
+def reviewed_norm_preservation_receipt_bytes_v3(receipt, *, instance_identity_profile=None):
     """Format one complete mixed aggregate observation, without authentication."""
-    _reviewed_mixed_native_policy()
+    _reviewed_mixed_native_policy(**_reviewed_source_use_kwargs(instance_identity_profile))
+    selected = _reviewed_source_use_kwargs(instance_identity_profile)
     _bound_tree(receipt, MAX_RECEIPT_BYTES)
-    _need(type(receipt) is dict and set(receipt) == _REVIEWED_MIXED_CORE_FIELDS
+    _reviewed_source_use_manifest(receipt, instance_identity_profile)
+    _need(type(receipt) is dict and set(receipt) == _REVIEWED_MIXED_CORE_FIELDS | set(selected)
           and receipt.get("schema") == "legal-corpus-reviewed-preservation-native-build/v3"
-          and receipt.get("profile") == "replayed-reviewed-mixed-multiunit-preservation-native-build/v3",
+          and receipt.get("profile") == _reviewed_source_use_domain("replayed-reviewed-mixed-multiunit-preservation-native-build/v3", instance_identity_profile),
           "closed complete mixed aggregate receipt required")
     return _wire(receipt, MAX_RECEIPT_BYTES)
 
 
-def reviewed_norm_preservation_packet_sha256_v3(packet_files):
+def reviewed_norm_preservation_packet_sha256_v3(packet_files, *, instance_identity_profile=None):
     """Commit every complete sorted retained path/byte pair, without authority."""
-    _reviewed_mixed_native_policy()
+    _reviewed_source_use_kwargs(instance_identity_profile)
+    _reviewed_mixed_native_policy(**_reviewed_source_use_kwargs(instance_identity_profile))
     _, inventory = _reviewed_retained_packet(packet_files)
     return _sha(_wire(inventory, MAX_RECORD_BYTES))
 
@@ -3734,7 +3823,7 @@ def validate_reviewed_norm_preservation_native_receipt_v3(
         receipt_raw, preparation, graph, admission, *args,
         packet_files, expected_receipt_sha256, expected_packet_sha256, expected_binary_sha256,
         expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256,
-        toolchain, observation_profile=_REVIEWED_REPLAY_ACTUAL, **kwargs):
+        toolchain, observation_profile=_REVIEWED_REPLAY_ACTUAL, instance_identity_profile=None, **kwargs):
     """Replay the complete retained V3 mixed aggregate and current inputs without Lean.
 
     The caller owns physical acquisition and independently trusted receipt,
@@ -3743,7 +3832,7 @@ def validate_reviewed_norm_preservation_native_receipt_v3(
     kernel or authorize release/cache/native/statutory admission. The missing
     original-success adapter remains an explicit prerequisite in every result.
     """
-    _reviewed_mixed_native_policy()
+    _reviewed_mixed_native_policy(**_reviewed_source_use_kwargs(instance_identity_profile))
     for value, label in ((expected_receipt_sha256, "retained reviewed receipt"),
                          (expected_packet_sha256, "whole retained reviewed packet")):
         _pin(value, label)
@@ -3756,7 +3845,7 @@ def validate_reviewed_norm_preservation_native_receipt_v3(
           and contents.get("build-receipt.json") == receipt_raw,
           "independent original receipt bytes differ")
     receipt = _parse(receipt_raw, MAX_RECEIPT_BYTES)
-    _need(reviewed_norm_preservation_receipt_bytes_v3(receipt) == receipt_raw,
+    _need(reviewed_norm_preservation_receipt_bytes_v3(receipt, **_reviewed_source_use_kwargs(instance_identity_profile)) == receipt_raw,
           "original reviewed receipt must retain its canonical complete bytes")
     _need(type(observation_profile) is str
           and observation_profile in (_REVIEWED_REPLAY_ACTUAL, _REVIEWED_REPLAY_FICTIONAL),
@@ -3770,7 +3859,7 @@ def validate_reviewed_norm_preservation_native_receipt_v3(
     checked = validate_reviewed_norm_preservation_native_v3(preparation, graph, admission, *args,
         expected_preservation_sha256=expected_preservation_sha256,
         expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
-        toolchain=toolchain, **kwargs)
+        toolchain=toolchain, **kwargs, **_reviewed_source_use_kwargs(instance_identity_profile))
     owners = _owners(); transport, process = owners[1], owners[3]
     from . import legal_corpus_definition_use_preservation_packet_v2 as packets
     packet_owner_pin = _sha(Path(packets.__file__).read_bytes())
@@ -3778,12 +3867,12 @@ def validate_reviewed_norm_preservation_native_receipt_v3(
     manifest = checked.to_dict(); contracts = transport.contracts
     contracts.validate_record(receipt, schema=REVIEWED_MIXED_PRESERVATION_BUILD_SCHEMA,
         fields=set(receipt) - {"schema", "record_cid", "cid_scope"})
-    binding = _reviewed_mixed_preservation_receipt_binding(manifest, admission)
+    binding = _reviewed_mixed_preservation_receipt_binding(manifest, admission, **_reviewed_source_use_kwargs(instance_identity_profile))
     binding.update(preparation_cid=manifest["record_cid"],
         preparation_full_canonical_sha256=expected_preservation_sha256,
         preparation_manifest_sha256=_sha(checked.manifest_json.encode("utf-8")), toolchain=toolchain,
         expected_modules=manifest["expected_modules"], compiled_modules=manifest["expected_modules"],
-        producer_pins=_reviewed_mixed_preservation_native_pins(owners, manifest),
+        producer_pins=_reviewed_mixed_preservation_native_pins(owners, manifest, **_reviewed_source_use_kwargs(instance_identity_profile)),
         conditional_theorems=manifest["preservation_obligations"],
         original_preparation_theorem_assumptions=[], theorem_assumptions=[], scope=_REVIEWED_MIXED_SCOPE)
     _need(_wire({name: receipt[name] for name in binding}, MAX_RECEIPT_BYTES)
@@ -3896,17 +3985,18 @@ def validate_reviewed_norm_preservation_native_receipt_v3(
     validate_reviewed_norm_preservation_native_v3(preparation, graph, admission, *args,
         expected_preservation_sha256=expected_preservation_sha256,
         expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
-        toolchain=toolchain, **kwargs)
+        toolchain=toolchain, **kwargs, **_reviewed_source_use_kwargs(instance_identity_profile))
     _need(_sha(Path(packets.__file__).read_bytes()) == packet_owner_pin,
           "retained-packet validator changed during replay")
-    _reviewed_mixed_native_policy()
+    _reviewed_mixed_native_policy(**_reviewed_source_use_kwargs(instance_identity_profile))
     return contracts.seal_record({**dict(PARENT_FALSE_FLAGS), "schema": REVIEWED_MIXED_RECEIPT_REPLAY_SCHEMA,
-        "profile": REVIEWED_MIXED_RECEIPT_REPLAY_PROFILE, "observation_profile": observation_profile,
+        "profile": _reviewed_source_use_domain(REVIEWED_MIXED_RECEIPT_REPLAY_PROFILE, instance_identity_profile),
+        **_reviewed_source_use_kwargs(instance_identity_profile), "observation_profile": observation_profile,
         "retained_receipt_sha256": expected_receipt_sha256, "retained_packet_sha256": expected_packet_sha256,
         "preparation_sha256": expected_preservation_sha256, "graph_sha256": expected_graph_sha256,
         "admission_sha256": expected_admission_sha256, "retained_observations_consistent": True,
         "current_complete_semantics_replayed": True, "obligations": list(manifest["preservation_obligations"]),
-        "packet_inventory": inventory, "producer_pins": {**_reviewed_mixed_preservation_native_pins(owners, manifest),
+        "packet_inventory": inventory, "producer_pins": {**_reviewed_mixed_preservation_native_pins(owners, manifest, **_reviewed_source_use_kwargs(instance_identity_profile)),
             str(Path(packets.__file__).resolve()): packet_owner_pin},
         "original_success_authenticated": False, "native_execution_authenticated": False,
         "live_native_success_authenticated": False, "original_admitted_parent_custody_authenticated": False,
@@ -3919,13 +4009,13 @@ def validate_reviewed_norm_preservation_native_receipt_v3(
 
 
 
-def load_reviewed_norm_preservation_native_v3(packet_files, preparation, graph, admission, *args, **kwargs):
+def load_reviewed_norm_preservation_native_v3(packet_files, preparation, graph, admission, *args, instance_identity_profile=None, **kwargs):
     """Replay every retained byte under the explicit mixed V3 receipt domain."""
-    _reviewed_mixed_native_policy()
+    _reviewed_mixed_native_policy(**_reviewed_source_use_kwargs(instance_identity_profile))
     contents, _ = _reviewed_retained_packet(packet_files)
     _need("build-receipt.json" in contents, "original complete mixed native receipt required")
     return validate_reviewed_norm_preservation_native_receipt_v3(contents["build-receipt.json"],
-        preparation, graph, admission, *args, packet_files=packet_files, **kwargs)
+        preparation, graph, admission, *args, packet_files=packet_files, **kwargs, **_reviewed_source_use_kwargs(instance_identity_profile))
 
 
 __all__ += ["validate_reviewed_norm_preservation_native_receipt_v3", "load_reviewed_norm_preservation_native_v3"]
@@ -3933,7 +4023,7 @@ __all__ += ["validate_reviewed_norm_preservation_native_receipt_v3", "load_revie
 
 def build_verified_reviewed_norm_preservation_native_v3(preparation, graph, admission, *args,
         expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256,
-        toolchain, lake_executable, output_directory, timeout_seconds=60, cancellation=None, **kwargs):
+        toolchain, lake_executable, output_directory, timeout_seconds=60, cancellation=None, instance_identity_profile=None, **kwargs):
     """Issue this explicit reviewed domain through the shared original live engine."""
     _need(type(timeout_seconds) in (int, float) and math.isfinite(timeout_seconds)
           and 0 < timeout_seconds <= 60, "finite compiler timeout in (0,60] required")
@@ -3943,14 +4033,14 @@ def build_verified_reviewed_norm_preservation_native_v3(preparation, graph, admi
         expected_preservation_sha256=expected_preservation_sha256,
         expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
         toolchain=toolchain, lake_executable=lake_executable, output_directory=output_directory,
-        timeout_seconds=timeout_seconds, cancellation=cancellation, **kwargs)
+        timeout_seconds=timeout_seconds, cancellation=cancellation, **kwargs, **_reviewed_source_use_kwargs(instance_identity_profile))
 
 
 def load_verified_reviewed_norm_preservation_native_v3(handle, packet_files, preparation, graph, admission, *args,
         expected_receipt_sha256, expected_packet_sha256, expected_binary_sha256,
-        expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256, toolchain, **kwargs):
+        expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256, toolchain, instance_identity_profile=None, **kwargs):
     """Join this explicit domain's original live issuance without new execution."""
-    _live_handle_entry(handle, reviewed_version=3)
+    _live_handle_entry(handle, reviewed_version=3, **_reviewed_source_use_kwargs(instance_identity_profile))
     _live_entry_guard(3)
     return _load_verified_reviewed_norm_preservation_native(
         handle, packet_files, preparation, graph, admission, *args, reviewed_version=3,
@@ -3958,7 +4048,7 @@ def load_verified_reviewed_norm_preservation_native_v3(handle, packet_files, pre
         expected_binary_sha256=expected_binary_sha256,
         expected_preservation_sha256=expected_preservation_sha256,
         expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
-        toolchain=toolchain, **kwargs)
+        toolchain=toolchain, **kwargs, **_reviewed_source_use_kwargs(instance_identity_profile))
 
 
 __all__ += ["REVIEWED_MIXED_LIVE_SUCCESS_SCHEMA", "REVIEWED_MIXED_LIVE_SUCCESS_PROFILE",
@@ -4053,7 +4143,7 @@ def _bind_live_success_independent_guard_v1():
 
     def build_verified_reviewed_norm_preservation_native_v2(preparation, graph, admission, *args,
             expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256,
-            toolchain, lake_executable, output_directory, timeout_seconds=60, cancellation=None, **kwargs):
+            toolchain, lake_executable, output_directory, timeout_seconds=60, cancellation=None, instance_identity_profile=None, **kwargs):
         """Issue this explicit reviewed domain through the shared original live engine."""
         _need(type(timeout_seconds) in (int, float) and math.isfinite(timeout_seconds)
               and 0 < timeout_seconds <= 60, "finite compiler timeout in (0,60] required")
@@ -4073,7 +4163,7 @@ def _bind_live_success_independent_guard_v1():
             expected_preservation_sha256=expected_preservation_sha256,
             expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
             toolchain=toolchain, lake_executable=lake_executable, output_directory=output_directory,
-            timeout_seconds=timeout_seconds, cancellation=cancellation, **kwargs)
+            timeout_seconds=timeout_seconds, cancellation=cancellation, **kwargs, **_reviewed_source_use_kwargs(instance_identity_profile))
         try:
             if (integrity.__code__ is not integrity_state[1]
                     or integrity.__defaults__ is not integrity_state[2]
@@ -4090,7 +4180,7 @@ def _bind_live_success_independent_guard_v1():
 
     def load_verified_reviewed_norm_preservation_native_v2(handle, packet_files, preparation, graph, admission, *args,
             expected_receipt_sha256, expected_packet_sha256, expected_binary_sha256,
-            expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256, toolchain, **kwargs):
+            expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256, toolchain, instance_identity_profile=None, **kwargs):
         """Join this explicit domain's original live issuance without new execution."""
         if (globals().get("_live_handle_entry") is not original_handle_entry
                 or original_handle_entry.__code__ is not handle_code
@@ -4099,7 +4189,7 @@ def _bind_live_success_independent_guard_v1():
                 or not all((original_handle_entry.__kwdefaults__ or {})[key] is value
                            for key, value in handle_keywords)):
             raise ValueError("live success callable bindings changed: independent _live_handle_entry")
-        original_handle_entry(handle, reviewed_version=2)
+        original_handle_entry(handle, reviewed_version=2, **_reviewed_source_use_kwargs(instance_identity_profile))
         if (entry_guard.__code__ is not entry_code
                 or entry_guard.__defaults__ is not entry_defaults
                 or guarded.__code__ is not guard_code
@@ -4117,7 +4207,7 @@ def _bind_live_success_independent_guard_v1():
             expected_binary_sha256=expected_binary_sha256,
             expected_preservation_sha256=expected_preservation_sha256,
             expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
-            toolchain=toolchain, **kwargs)
+            toolchain=toolchain, **kwargs, **_reviewed_source_use_kwargs(instance_identity_profile))
         if (integrity.__code__ is not integrity_state[1]
                 or integrity.__defaults__ is not integrity_state[2]
                 or set(integrity.__kwdefaults__ or {}) != {key for key, _ in integrity_state[3]}
@@ -4129,7 +4219,7 @@ def _bind_live_success_independent_guard_v1():
 
     def build_verified_reviewed_norm_preservation_native_v3(preparation, graph, admission, *args,
             expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256,
-            toolchain, lake_executable, output_directory, timeout_seconds=60, cancellation=None, **kwargs):
+            toolchain, lake_executable, output_directory, timeout_seconds=60, cancellation=None, instance_identity_profile=None, **kwargs):
         """Issue this explicit reviewed domain through the shared original live engine."""
         _need(type(timeout_seconds) in (int, float) and math.isfinite(timeout_seconds)
               and 0 < timeout_seconds <= 60, "finite compiler timeout in (0,60] required")
@@ -4149,7 +4239,7 @@ def _bind_live_success_independent_guard_v1():
             expected_preservation_sha256=expected_preservation_sha256,
             expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
             toolchain=toolchain, lake_executable=lake_executable, output_directory=output_directory,
-            timeout_seconds=timeout_seconds, cancellation=cancellation, **kwargs)
+            timeout_seconds=timeout_seconds, cancellation=cancellation, **kwargs, **_reviewed_source_use_kwargs(instance_identity_profile))
         try:
             if (integrity.__code__ is not integrity_state[1]
                     or integrity.__defaults__ is not integrity_state[2]
@@ -4166,7 +4256,7 @@ def _bind_live_success_independent_guard_v1():
 
     def load_verified_reviewed_norm_preservation_native_v3(handle, packet_files, preparation, graph, admission, *args,
             expected_receipt_sha256, expected_packet_sha256, expected_binary_sha256,
-            expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256, toolchain, **kwargs):
+            expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256, toolchain, instance_identity_profile=None, **kwargs):
         """Join this explicit domain's original live issuance without new execution."""
         if (globals().get("_live_handle_entry") is not original_handle_entry
                 or original_handle_entry.__code__ is not handle_code
@@ -4175,7 +4265,7 @@ def _bind_live_success_independent_guard_v1():
                 or not all((original_handle_entry.__kwdefaults__ or {})[key] is value
                            for key, value in handle_keywords)):
             raise ValueError("live success callable bindings changed: independent _live_handle_entry")
-        original_handle_entry(handle, reviewed_version=3)
+        original_handle_entry(handle, reviewed_version=3, **_reviewed_source_use_kwargs(instance_identity_profile))
         if (entry_guard.__code__ is not entry_code
                 or entry_guard.__defaults__ is not entry_defaults
                 or guarded.__code__ is not guard_code
@@ -4193,7 +4283,7 @@ def _bind_live_success_independent_guard_v1():
             expected_binary_sha256=expected_binary_sha256,
             expected_preservation_sha256=expected_preservation_sha256,
             expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
-            toolchain=toolchain, **kwargs)
+            toolchain=toolchain, **kwargs, **_reviewed_source_use_kwargs(instance_identity_profile))
         if (integrity.__code__ is not integrity_state[1]
                 or integrity.__defaults__ is not integrity_state[2]
                 or set(integrity.__kwdefaults__ or {}) != {key for key, _ in integrity_state[3]}

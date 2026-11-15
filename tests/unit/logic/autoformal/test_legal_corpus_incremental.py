@@ -1670,7 +1670,10 @@ def test_parent_incremental_installed_lean_warm_refusals_preserve_cold_native_ev
 # below are authored. No test calls a real Lean executable or model.
 @pytest.fixture(scope="module")
 def reviewed_incremental_component_v3(tmp_path_factory):
-    control = _FIXTURE_MODULE.reviewed_preservation_graph_fixture_v3(tmp_path_factory)
+    class FixtureTempNamespace:
+        def mktemp(self, basename, numbered=True):
+            return tmp_path_factory.mktemp("reviewed-incremental-v3-" + basename, numbered=numbered)
+    control = _FIXTURE_MODULE.reviewed_preservation_graph_fixture_v3(FixtureTempNamespace())
     control["preparation"] = _FIXTURE_MODULE.reviewed_preservation_prepare_fixture_v3(control)
     return control
 
@@ -2164,3 +2167,219 @@ def test_reviewed_incremental_v4_detached_snapshot_must_match_independent_curren
         assert not (runtime["directory"] / "opening-snapshot-refused").exists()
     finally:
         control[subject].clear(); control[subject].update(original)
+
+
+# Source-use identity is an explicit technical reuse domain. All compiler
+# observations here remain authored fixture data, never native/legal evidence.
+def reviewed_incremental_source_use_control_v1(original, mutation="nonoverlapping_paragraphs"):
+    helper, owner = original["mixed_helper"], original["owner"]
+    case = helper.cloned(original["case"])
+    first, second = helper.fixture.reviewed_repeated_permission_source_v2(case, mutation)
+    assert case["relational_inputs"][first["unit_id"]] == case["relational_inputs"][second["unit_id"]]
+    assert first["occurrence"]["record_cid"] != second["occurrence"]["record_cid"]
+    assert first["occurrence"]["end_char"] < second["occurrence"]["start_char"]
+    case["preparation"] = helper.prepare(owner, case)
+    helper.refresh_signed_reviews(case, owner)
+    helper.assert_signatures_valid(case)
+    args, kwargs = helper.fixture.reviewed_assessment_arguments_v2(owner, case)
+    admission = owner.assess_reviewed_norm_admission_v3(*args, **kwargs)
+    assert admission["fixture_only"] is admission["semantic_use_eligible"] is True
+    admission_sha = owner.norm_content_adjudication_sha256(admission)
+    graph_owner = original["helper"].owner
+    graph = graph_owner.build_reviewed_norm_graph_v3(admission, *args,
+        expected_admission_sha256=admission_sha, **kwargs)
+    graph_sha = graph_owner.norm_definition_graph_sha256(graph)
+    preparation = shared.prepare_reviewed_norm_preservation_corpus_v3(graph, admission, *args,
+        expected_graph_sha256=graph_sha, expected_admission_sha256=admission_sha,
+        toolchain=TOOLCHAIN, instance_identity_profile="reviewed-source-use/v1", **kwargs)
+    manifest = preparation.to_dict()
+    assert manifest["instance_identity_profile"] == "reviewed-source-use/v1"
+    assert len(manifest["units"]) == len({row["instance_module"] for row in manifest["units"]}) == 3
+    assert len(manifest["preservation_obligations"]) == len(set(manifest["preservation_obligations"])) == 15
+    assert all(len(row["original_child_files"]) == 7 and len(row["preservation_obligations"]) == 5
+        for row in manifest["units"])
+    return dict(original, case=case, args=args, kwargs=kwargs, admission=admission,
+        admission_sha=admission_sha, graph=graph, graph_sha=graph_sha, preparation=preparation)
+
+
+@pytest.fixture(scope="module")
+def reviewed_incremental_source_use_component_v1(reviewed_incremental_component_v3):
+    return reviewed_incremental_source_use_control_v1(reviewed_incremental_component_v3)
+
+
+def build_reviewed_incremental_source_use_v1(runtime, control, name, **kwargs):
+    return build_reviewed_incremental_v3(runtime, control, name,
+        instance_identity_profile="reviewed-source-use/v1", **kwargs)
+
+
+def test_reviewed_source_use_incremental_cold_warm_preserves_every_physical_unit(
+        reviewed_incremental_runtime_v3, reviewed_incremental_source_use_component_v1):
+    runtime, control = reviewed_incremental_runtime_v3, reviewed_incremental_source_use_component_v1
+    cold = build_reviewed_incremental_source_use_v1(runtime, control, "source-use-cold")
+    calls = len(runtime["compiler"].calls)
+    warm = build_reviewed_incremental_source_use_v1(runtime, control, "source-use-warm", previous=cold)
+    assert cold[0]["build_passed"] is warm[0]["build_passed"] is True
+    assert calls == len(control["preparation"].to_dict()["expected_modules"]) == 8
+    assert len(runtime["compiler"].calls) == calls
+    assert warm[0]["compiled_modules"] == warm[0]["fresh_theorems"] == []
+    assert len(warm[0]["reused_modules"]) == 8 and len(warm[0]["reused_theorems"]) == 15
+    assert artifacts(cold) == artifacts(warm)
+    assert warm[0]["units"] == control["preparation"].to_dict()["units"]
+    assert warm[0]["instance_identity_profile"] == "reviewed-source-use/v1"
+    assert cache(warm)["profile"] == runtime["incremental"].REVIEWED_PROFILE + "+reviewed-source-use/v1"
+    assert cache(warm)["execution_contract"]["profile"] == cache(warm)["profile"]
+    assert warm[0]["fresh_proof_for_reused_modules"] is False
+    assert warm[0]["composition_obligations_checked"] is False
+    assert warm[0]["original_success_authenticated"] is warm[0]["live_native_success_authenticated"] is False
+    assert warm[0]["statutory_meaning_proved"] is warm[0]["release_ready"] is False
+    assert not any(warm[0]["authority"].values())
+    assert warm[0]["training_mask"] == warm[0]["evaluation_gold_mask"] == 0
+    assert all(raw.startswith(b"authored-fake-olean-no-native-proof\0") for raw in artifacts(warm).values())
+
+
+@pytest.mark.parametrize("selector", [None, "", True, "reviewed-source-use/v2"])
+def test_reviewed_source_use_incremental_requires_explicit_exact_selector(
+        reviewed_incremental_runtime_v3, reviewed_incremental_source_use_component_v1, selector):
+    runtime = reviewed_incremental_runtime_v3
+    with pytest.raises(ValueError):
+        build_reviewed_incremental_v3(runtime, reviewed_incremental_source_use_component_v1,
+            "source-use-selector-refused", instance_identity_profile=selector)
+    assert runtime["compiler"].calls == []
+    assert not (runtime["directory"] / "source-use-selector-refused").exists()
+
+
+@pytest.mark.parametrize("direction", ["old-to-bound", "bound-to-old"])
+def test_reviewed_source_use_incremental_caches_cannot_cross_identity_domains(
+        reviewed_incremental_runtime_v3, reviewed_incremental_component_v3,
+        reviewed_incremental_source_use_component_v1, direction):
+    runtime = reviewed_incremental_runtime_v3
+    old = build_reviewed_incremental_v3(runtime, reviewed_incremental_component_v3, "legacy-domain-positive")
+    bound = build_reviewed_incremental_source_use_v1(runtime,
+        reviewed_incremental_source_use_component_v1, "bound-domain-positive")
+    assert old[0]["build_passed"] is bound[0]["build_passed"] is True
+    before = len(runtime["compiler"].calls)
+    control, previous, selected = ((reviewed_incremental_source_use_component_v1, old, "reviewed-source-use/v1")
+        if direction == "old-to-bound" else (reviewed_incremental_component_v3, bound, None))
+    with pytest.raises(ValueError, match="qualified technical cache|profile"):
+        build_reviewed_incremental_v3(runtime, control, "cross-domain-refused", previous=previous,
+            instance_identity_profile=selected)
+    assert len(runtime["compiler"].calls) == before
+    assert not (runtime["directory"] / "cross-domain-refused").exists()
+
+
+@pytest.fixture(scope="module")
+def reviewed_incremental_source_use_cold_seed_v1(tmp_path_factory, reviewed_incremental_source_use_component_v1):
+    """One authored healthy cold build; each adversarial case copies its cache and artifact mapping."""
+    directory = tmp_path_factory.mktemp("reviewed-incremental-source-use-cold-seed", numbered=False)
+    with pytest.MonkeyPatch.context() as monkeypatch:
+        runtime = reviewed_incremental_runtime_v3.__wrapped__(monkeypatch, directory)
+        cold = build_reviewed_incremental_source_use_v1(
+            runtime, reviewed_incremental_source_use_component_v1, "binding-positive")
+        assert cold[0]["build_passed"] is True
+        yield {"runtime": runtime, "cache": cache(cold), "artifacts": artifacts(cold)}
+
+
+@pytest.mark.parametrize("damage", ["missing-binding", "binding-digest", "foreign-binding", "extra-binding-key",
+    "old-child-profile", "missing-companion", "missing-obligation"])
+def test_reviewed_source_use_incremental_prior_provenance_cannot_be_resealed_into_another_unit(
+        reviewed_incremental_source_use_cold_seed_v1, reviewed_incremental_source_use_component_v1, damage):
+    seed, control = reviewed_incremental_source_use_cold_seed_v1, reviewed_incremental_source_use_component_v1
+    runtime = seed["runtime"]
+    saved, raw_artifacts = deepcopy(seed["cache"]), dict(seed["artifacts"])
+    fact = next(row for row in saved["module_facts"]
+        if row["recipe"]["reviewed_provenance"]["role"] == "instance")
+    unit = fact["recipe"]["reviewed_provenance"]["contributors"][0]
+    if damage == "missing-binding": unit.pop("source_use_binding")
+    elif damage == "binding-digest": unit["source_use_binding_sha256"] = "f" * 64
+    elif damage == "foreign-binding":
+        unit["source_use_binding"]["unit_id"] += ":other-physical-unit"
+        unit["source_use_binding_sha256"] = sha(canonical_dag_json_bytes(unit["source_use_binding"]))
+    elif damage == "extra-binding-key":
+        unit["source_use_binding"]["unreviewed"] = "not-an-identity-input"
+        unit["source_use_binding_sha256"] = sha(canonical_dag_json_bytes(unit["source_use_binding"]))
+    elif damage == "old-child-profile": unit["child_preservation_profile"] = unit["child_preservation_profile"].split("+", 1)[0]
+    elif damage == "missing-companion": unit["original_child_files"].pop()
+    else: unit["preservation_obligations"].pop()
+    fact["output"]["recipe_cid"] = runtime["incremental"].cid_for_dag_json(fact["recipe"])
+    raw = canonical_dag_json_bytes(reseal(saved))
+    before = len(runtime["compiler"].calls)
+    with pytest.raises(ValueError):
+        build_reviewed_incremental_source_use_v1(runtime, control, "binding-refused",
+            previous_cache_raw=raw, expected_previous_cache_sha256=sha(raw), previous_artifacts=raw_artifacts)
+    assert len(runtime["compiler"].calls) == before
+    assert not (runtime["directory"] / "binding-refused").exists()
+
+
+def test_reviewed_source_use_incremental_changed_physical_identity_matches_clean_build(
+        reviewed_incremental_runtime_v3, reviewed_incremental_component_v3,
+        reviewed_incremental_source_use_component_v1):
+    runtime, original = reviewed_incremental_runtime_v3, reviewed_incremental_source_use_component_v1
+    changed = reviewed_incremental_source_use_control_v1(reviewed_incremental_component_v3,
+        "nonoverlapping_paragraphs_different_source_id")
+    cold = build_reviewed_incremental_source_use_v1(runtime, original, "physical-cold")
+    updated = build_reviewed_incremental_source_use_v1(runtime, changed, "physical-updated", previous=cold)
+    clean = build_reviewed_incremental_source_use_v1(runtime, changed, "physical-clean")
+    assert updated[0]["build_passed"] is clean[0]["build_passed"] is True
+    assert updated[0]["compiled_modules"]
+    assert artifacts(updated) == artifacts(clean)
+    assert updated[0]["artifact_root_cid"] == clean[0]["artifact_root_cid"]
+    assert len(updated[0]["fresh_theorems"]) + len(updated[0]["reused_theorems"]) == 15
+    old_units = original["preparation"].to_dict()["units"]
+    new_units = changed["preparation"].to_dict()["units"]
+    assert any(a["source_use_binding_sha256"] != b["source_use_binding_sha256"]
+        for a, b in zip(old_units, new_units))
+    assert updated[0]["units"] == new_units and len(new_units) == 3
+    assert not (set(cold[0]["expected_modules"]) - set(clean[0]["expected_modules"])) & set(artifacts(updated))
+
+
+@pytest.mark.parametrize("when", ["opening", "closing"])
+def test_reviewed_source_use_incremental_warm_replays_current_signed_revocation(
+        reviewed_incremental_runtime_v3, reviewed_incremental_source_use_component_v1, monkeypatch, when):
+    runtime, original = reviewed_incremental_runtime_v3, reviewed_incremental_source_use_component_v1
+    cold = build_reviewed_incremental_source_use_v1(runtime, original, "source-use-revocation-positive")
+    helper = original["mixed_helper"]
+    case = helper.cloned(original["case"])
+    args, kwargs = helper.fixture.reviewed_assessment_arguments_v2(original["owner"], case)
+    control = dict(original, case=case, args=args, kwargs=kwargs)
+    def revoke():
+        case["registry"]["revocation_generation"] += 1
+        case["registry"]["keys"][0]["revoked_at_utc"] = helper.fixture.EVALUATED
+        helper.fixture.reviewed_resign_v2(case)
+        helper.assert_signatures_valid(case)
+        control["args"], control["kwargs"] = helper.fixture.reviewed_assessment_arguments_v2(original["owner"], case)
+    before = len(runtime["compiler"].calls)
+    if when == "opening":
+        revoke()
+        with pytest.raises(ValueError):
+            build_reviewed_incremental_source_use_v1(runtime, control, "source-use-revoked-opening", previous=cold)
+        assert not (runtime["directory"] / "source-use-revoked-opening").exists()
+    else:
+        original_replay = runtime["incremental"]._reviewed_replay
+        calls = []
+        def replay(preparation, inputs, pin, toolchain):
+            calls.append(True)
+            if len(calls) == 2:
+                revoke()
+                inputs["args"], inputs["kwargs"] = control["args"], control["kwargs"]
+            return original_replay(preparation, inputs, pin, toolchain)
+        monkeypatch.setattr(runtime["incremental"], "_reviewed_replay", replay)
+        failed = build_reviewed_incremental_source_use_v1(runtime, control, "source-use-revoked-closing", previous=cold)
+        assert failed[0]["build_passed"] is False and failed[0]["post_run_validation_error"] is not None
+        assert cache(failed)["qualified"] is False
+        assert artifacts(failed) == artifacts(cold)
+    assert len(runtime["compiler"].calls) == before
+
+
+def test_reviewed_source_use_incremental_selector_mutation_after_replay_refuses_before_execution(
+        reviewed_incremental_runtime_v3, reviewed_incremental_source_use_component_v1, monkeypatch):
+    runtime, control = reviewed_incremental_runtime_v3, reviewed_incremental_source_use_component_v1
+    replay = runtime["incremental"]._reviewed_replay
+    def mutate(preparation, inputs, pin, toolchain):
+        result = replay(preparation, inputs, pin, toolchain)
+        inputs["instance_identity_profile"] = None
+        return result
+    monkeypatch.setattr(runtime["incremental"], "_reviewed_replay", mutate)
+    with pytest.raises(ValueError, match="identity snapshot|identity selection"):
+        build_reviewed_incremental_source_use_v1(runtime, control, "source-use-selector-mutated")
+    assert runtime["compiler"].calls == []
+    assert not (runtime["directory"] / "source-use-selector-mutated").exists()

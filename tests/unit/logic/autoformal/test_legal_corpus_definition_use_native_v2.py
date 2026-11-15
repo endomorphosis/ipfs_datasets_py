@@ -3108,7 +3108,10 @@ def reviewed_native_seed_v3(tmp_path_factory):
     spec = importlib.util.spec_from_file_location("_reviewed_native_shared_fixture_v3", path)
     helper = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(helper)
-    control = helper.reviewed_preservation_control_v3.__wrapped__(tmp_path_factory)
+    class NativeV3FixturePaths:
+        def mktemp(self, basename, *, numbered=True):
+            return tmp_path_factory.mktemp("reviewed-native-v3-" + basename, numbered=numbered)
+    control = helper.reviewed_preservation_control_v3.__wrapped__(NativeV3FixturePaths())
     control["shared"], control["shared_helper"] = shared, helper
     fixed = ("helper", "mixed_helper", "owner", "shared", "shared_helper", "preparation")
     environment = tuple((name, control[name]) for name in fixed)
@@ -4035,3 +4038,262 @@ def test_reviewed_live_v3_installed_lean_late_execution_alias_drift_cannot_issue
         reviewed_live_build_v3_fixture(control, executable, output)
     assert reached == ["real-run-complete-binary-read"]
     assert tuple(native._LIVE_SUCCESS_HANDLES) == old_handles
+
+
+# Explicit source-use identity controls use the existing complete fictional
+# admission fixtures and authored compiler interface. Authored olean bytes are
+# diagnostic software evidence, never actual kernel/native proof observations.
+def reviewed_source_use_native_control_data(version):
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_shared_lake as shared
+    if version == 2:
+        c = reviewed_native_fixture_v2()
+        helper, admission_owner, case = c["helper"], c["owner"], c["case"]
+        helper.reviewed_repeated_permission_source_v2(case, "nonoverlapping_paragraphs")
+        c["shared_helper"].reviewed_preservation_reauthorize_fixture_v2(helper, admission_owner, case)
+        current = c["shared_helper"].reviewed_preservation_graph_fixture_v2(helper, admission_owner, case)
+        current.update(shared=shared, shared_helper=c["shared_helper"])
+    else:
+        from tests.unit.logic.autoformal import test_legal_reviewed_norm_admission_v3 as fixture
+        from ipfs_datasets_py.logic.autoformal import legal_reviewed_norm_admission_v3 as admission_owner
+        from ipfs_datasets_py.logic.autoformal import corpus_norm_definition_adapter as graph_owner
+        # The existing wrapped fixture does not use its v2_saved parameter.
+        # No saved-V2 transport or filesystem-fixture qualification is claimed.
+        case = fixture.mixed_base.__wrapped__(admission_owner, None)
+        fixture.fixture.reviewed_repeated_permission_source_v2(case, "nonoverlapping_paragraphs")
+        case["preparation"] = fixture.prepare(admission_owner, case)
+        fixture.refresh_signed_reviews(case, admission_owner)
+        fixture.assert_signatures_valid(case)
+        args, kwargs = fixture.fixture.reviewed_assessment_arguments_v2(admission_owner, case)
+        admission = admission_owner.assess_reviewed_norm_admission_v3(*args, **kwargs)
+        admission_sha = admission_owner.norm_content_adjudication_sha256(admission)
+        graph = graph_owner.build_reviewed_norm_graph_v3(admission, *args,
+            expected_admission_sha256=admission_sha, **kwargs)
+        graph_sha = graph_owner.norm_definition_graph_sha256(graph)
+        assert graph_owner.validate_reviewed_norm_graph_v3(graph, admission, *args,
+            expected_graph_sha256=graph_sha, expected_admission_sha256=admission_sha, **kwargs) == graph
+        current = dict(helper=fixture.fixture, mixed_helper=fixture, owner=admission_owner,
+            shared=shared, case=case, args=args, kwargs=kwargs, admission=admission, graph=graph,
+            admission_sha=admission_sha, graph_sha=graph_sha)
+    current["version"] = version
+    current["preparation"] = getattr(shared, "prepare_reviewed_norm_preservation_corpus_v" + str(version))(
+        current["graph"], current["admission"], *current["args"],
+        expected_graph_sha256=current["graph_sha"], expected_admission_sha256=current["admission_sha"],
+        toolchain=TOOLCHAIN, instance_identity_profile="reviewed-source-use/v1", **current["kwargs"])
+    assert current["admission"]["fixture_only"] is True
+    assert len(current["preparation"].to_dict()["units"]) == 3
+    return current
+
+
+def reviewed_source_use_native_arguments(c):
+    return reviewed_native_arguments_v2(c) | {"instance_identity_profile": "reviewed-source-use/v1"}
+
+
+def reviewed_source_use_native_api(c, stem):
+    return getattr(native, stem + "_v" + str(c["version"]))
+
+
+@pytest.fixture(scope="module")
+def reviewed_source_use_native_seeds(tmp_path_factory):
+    # Both parameter populations share one module fixture; selector ordering
+    # cannot recreate an unnumbered directory. Exactly one authored packet per
+    # version is retained and copied for independent current replays.
+    seeds = {}
+    for version in (2, 3):
+        c = reviewed_source_use_native_control_data(version)
+        directory = tmp_path_factory.mktemp("reviewed-source-use-native-v" + str(version), numbered=False)
+        with pytest.MonkeyPatch.context() as patcher:
+            install = synthetic_compiler.__wrapped__(patcher, directory)
+            executable, calls = install(c["preparation"], stdout=reviewed_native_stdout_v2(c["preparation"]))
+            output = directory / "authored-packet"
+            receipt = reviewed_source_use_native_api(c, "build_reviewed_norm_preservation_native")(
+                c["preparation"], c["graph"], c["admission"], *c["args"],
+                lake_executable=str(executable), output_directory=output, timeout_seconds=12,
+                **reviewed_source_use_native_arguments(c))
+            packet = tuple(sorted((str(p.relative_to(output)), p.read_bytes())
+                for p in output.rglob("*") if p.is_file()))
+            assert len(calls) == 1
+        fixed = tuple(key for key in ("helper", "mixed_helper", "owner", "shared", "shared_helper", "preparation") if key in c)
+        environment = tuple((key, c[key]) for key in fixed)
+        data = {key: value for key, value in c.items() if key not in fixed}
+        data["case"] = dict(data["case"])
+        signers = tuple(data["case"].pop("signers"))
+        frozen = reviewed_retained_freeze_fixture_data_v2({"control": data, "receipt": receipt})
+        seeds[version] = environment, frozen, signers, packet, tuple(calls)
+    return seeds
+
+
+@pytest.fixture
+def reviewed_source_use_native_case(version, reviewed_source_use_native_seeds):
+    return reviewed_retained_case_from_seed_fixture_v2(reviewed_source_use_native_seeds[version])
+
+
+def reviewed_source_use_native_reopen(c, receipt, packet, **changes):
+    formatter = reviewed_source_use_native_api(c, "reviewed_norm_preservation_receipt_bytes")
+    packet_sha = reviewed_source_use_native_api(c, "reviewed_norm_preservation_packet_sha256")
+    options = reviewed_source_use_native_arguments(c) | dict(
+        expected_receipt_sha256=sha(dict(packet)["build-receipt.json"]),
+        expected_packet_sha256=packet_sha(packet, instance_identity_profile="reviewed-source-use/v1"),
+        expected_binary_sha256=receipt["binary_sha256"],
+        observation_profile="fictional-authored-observation/v1")
+    return reviewed_source_use_native_api(c, "validate_reviewed_norm_preservation_native_receipt")(
+        formatter(receipt, instance_identity_profile="reviewed-source-use/v1"),
+        c["preparation"], c["graph"], c["admission"], *c["args"], packet_files=packet,
+        **(options | changes))
+
+
+@pytest.mark.parametrize("version", (2, 3))
+def test_reviewed_source_use_native_validation_retains_three_distinct_instances(version, reviewed_source_use_native_case):
+    c, _, _, _ = reviewed_source_use_native_case
+    validate = reviewed_source_use_native_api(c, "validate_reviewed_norm_preservation_native")
+    assert validate(c["preparation"], c["graph"], c["admission"], *c["args"],
+        **reviewed_source_use_native_arguments(c)) == c["preparation"]
+    manifest = c["preparation"].to_dict()
+    assert manifest["instance_identity_profile"] == "reviewed-source-use/v1"
+    assert len({row["instance_module"] for row in manifest["units"]}) == 3
+    assert len(set(manifest["preservation_obligations"])) == 15
+    for unit in manifest["units"]:
+        assert unit["source_use_binding"]["source_occurrence_cid"] == unit["source_occurrence_cid"]
+        assert sha(canonical(unit["source_use_binding"])) == unit["source_use_binding_sha256"]
+        assert len(unit["original_child_files"]) == 7 and len(unit["preservation_obligations"]) == 5
+    defaults = reviewed_native_arguments_v2(c)
+    with pytest.raises(ValueError):
+        validate(c["preparation"], c["graph"], c["admission"], *c["args"], **defaults)
+
+
+@pytest.mark.parametrize("version", (2, 3))
+def test_reviewed_source_use_authored_build_persists_exact_obligations_and_formatter(version, reviewed_source_use_native_case):
+    c, receipt, packet, calls = reviewed_source_use_native_case
+    manifest = c["preparation"].to_dict()
+    formatter = reviewed_source_use_native_api(c, "reviewed_norm_preservation_receipt_bytes")
+    assert len(calls) == 1 and receipt["build_passed"] is True
+    assert receipt["profile"].endswith("+reviewed-source-use/v1")
+    assert receipt["instance_identity_profile"] == "reviewed-source-use/v1"
+    assert receipt["conditional_theorems"] == manifest["preservation_obligations"]
+    assert set(receipt["theorem_axiom_dependencies"]) == set(manifest["preservation_obligations"])
+    assert all(value == [] for value in receipt["theorem_axiom_dependencies"].values())
+    assert receipt["expected_modules"] == receipt["compiled_modules"] == manifest["expected_modules"]
+    assert formatter(receipt, instance_identity_profile="reviewed-source-use/v1") == dict(packet)["build-receipt.json"]
+    for name, raw in c["preparation"].files:
+        assert dict(packet)["project/" + name] == dict(packet)["executed-inputs/" + name] == raw.encode()
+    assert all(value is False for value in receipt["authority"].values())
+    assert receipt["training_mask"] == receipt["evaluation_gold_mask"] == 0
+    with pytest.raises(ValueError):
+        formatter(receipt)  # Default formatting cannot relabel the selected domain.
+
+
+@pytest.mark.parametrize("version", (2, 3))
+def test_reviewed_source_use_retained_observations_keep_zero_live_authority(version, reviewed_source_use_native_case, monkeypatch):
+    c, receipt, packet, _ = reviewed_source_use_native_case
+    reviewed_retained_no_tools_v2(monkeypatch)
+    result = reviewed_source_use_native_reopen(c, receipt, packet)
+    assert result["profile"].endswith("+reviewed-source-use/v1")
+    assert result["instance_identity_profile"] == "reviewed-source-use/v1"
+    assert result["retained_observations_consistent"] is result["current_complete_semantics_replayed"] is True
+    for key in ("original_success_authenticated", "native_execution_authenticated", "native_execution_performed",
+                "olean_kernel_rechecked", "release_ready", "Lean_admitted"):
+        assert result[key] is False
+    assert result.get("live_native_success_authenticated", False) is False
+    assert all(value is False for value in result["authority"].values())
+    assert result["training_mask"] == result["evaluation_gold_mask"] == 0
+    assert len(result["obligations"]) == 15 and len(result["packet_inventory"]) == len(packet)
+
+
+@pytest.mark.parametrize("version", (2, 3))
+def test_reviewed_source_use_resealed_foreign_binding_cannot_replace_current_unit(version, reviewed_source_use_native_case):
+    c, _, _, _ = reviewed_source_use_native_case
+    validate = reviewed_source_use_native_api(c, "validate_reviewed_norm_preservation_native")
+    for damage in ("binding", "digest", "selector"):
+        manifest = c["preparation"].to_dict()
+        if damage == "binding":
+            manifest["units"][1]["source_use_binding"] = deepcopy(manifest["units"][2]["source_use_binding"])
+            manifest["units"][1]["source_use_binding_sha256"] = sha(canonical(manifest["units"][1]["source_use_binding"]))
+        elif damage == "digest":
+            manifest["units"][1]["source_use_binding_sha256"] = "0" * 64
+        else:
+            manifest["instance_identity_profile"] = "reviewed-source-use/v0"
+        forged = reseal_manifest(c["preparation"], manifest)
+        options = reviewed_source_use_native_arguments(c) | dict(
+            expected_preservation_sha256=c["shared"].reviewed_preservation_corpus_sha256(forged))
+        with pytest.raises(ValueError):
+            validate(forged, c["graph"], c["admission"], *c["args"], **options)
+
+
+@pytest.mark.parametrize("version", (2, 3))
+def test_reviewed_source_use_repaired_receipt_cannot_select_default_or_foreign_profile(version, reviewed_source_use_native_case):
+    c, receipt, packet, _ = reviewed_source_use_native_case
+    formatter = reviewed_source_use_native_api(c, "reviewed_norm_preservation_receipt_bytes")
+    forged = deepcopy(receipt)
+    forged.pop("instance_identity_profile")
+    forged["profile"] = forged["profile"].removesuffix("+reviewed-source-use/v1")
+    forged = contracts.seal_record({key: value for key, value in forged.items() if key not in {"record_cid", "cid_scope"}})
+    with pytest.raises(ValueError):
+        formatter(forged, instance_identity_profile="reviewed-source-use/v1")
+    for invalid in (False, True, "reviewed-source-use/v0", ""):
+        with pytest.raises(ValueError):
+            formatter(receipt, instance_identity_profile=invalid)
+    options = reviewed_source_use_native_arguments(c)
+    options.pop("instance_identity_profile")
+    options.update(expected_receipt_sha256=sha(dict(packet)["build-receipt.json"]),
+        expected_packet_sha256=reviewed_source_use_native_api(c, "reviewed_norm_preservation_packet_sha256")(packet),
+        expected_binary_sha256=receipt["binary_sha256"], observation_profile="fictional-authored-observation/v1")
+    with pytest.raises(ValueError):
+        reviewed_source_use_native_api(c, "load_reviewed_norm_preservation_native")(
+            packet, c["preparation"], c["graph"], c["admission"], *c["args"], **options)
+
+
+@pytest.mark.parametrize("version", (2, 3))
+def test_reviewed_source_use_authored_packet_cannot_mint_a_live_capability(version, reviewed_source_use_native_case, monkeypatch):
+    c, receipt, packet, _ = reviewed_source_use_native_case
+    options = reviewed_source_use_native_arguments(c) | dict(
+        expected_receipt_sha256=sha(dict(packet)["build-receipt.json"]),
+        expected_packet_sha256=reviewed_source_use_native_api(c, "reviewed_norm_preservation_packet_sha256")(packet),
+        expected_binary_sha256=receipt["binary_sha256"])
+    monkeypatch.setattr(native, "_owners", lambda: pytest.fail("unissued handle reached operation owners"))
+    loader = reviewed_source_use_native_api(c, "load_verified_reviewed_norm_preservation_native")
+    for handle in (object(), object.__new__(native.VerifiedReviewedPreservationNativeSuccess), receipt):
+        with pytest.raises(ValueError, match="not issued"):
+            loader(handle, packet, c["preparation"], c["graph"], c["admission"], *c["args"], **options)
+    states = dict(native._LIVE_NATIVE_FUNCTIONS)
+    for name in ("_reviewed_source_use_kwargs", "_reviewed_source_use_domain", "_reviewed_source_use_manifest"):
+        assert states[name][0] is getattr(native, name)
+        assert states[name][1] is getattr(native, name).__code__
+
+
+@pytest.mark.parametrize("version", (2, 3))
+def test_reviewed_source_use_installed_lean_keeps_actual_live_and_retained_domains_separate(
+        version, bound_norm_installed_lake, tmp_path):
+    # The existing pinned installed-Lean fixture is the opt-in gate. Its binary
+    # source pins and admitted original resource profile remain unchanged.
+    executable, binary_pins = bound_norm_installed_lake
+    c = reviewed_source_use_native_control_data(version)
+    options = reviewed_source_use_native_arguments(c)
+    output = tmp_path / "source-use-live-native"
+    handle = reviewed_source_use_native_api(c, "build_verified_reviewed_norm_preservation_native")(
+        c["preparation"], c["graph"], c["admission"], *c["args"],
+        lake_executable=str(executable), output_directory=output, timeout_seconds=60, **options)
+    packet = tuple(sorted((str(p.relative_to(output)), p.read_bytes())for p in output.rglob("*")if p.is_file()))
+    receipt = json.loads(dict(packet)["build-receipt.json"])
+    assert receipt["binary_sha256"] == binary_pins
+    assert receipt["build_passed"] is receipt["kernel_proofs_checked"] is True
+    assert receipt["conditional_theorems"] == c["preparation"].to_dict()["preservation_obligations"]
+    assert len(receipt["theorem_axiom_dependencies"]) == 15
+    assert all(value == [] for value in receipt["theorem_axiom_dependencies"].values())
+    common = dict(expected_receipt_sha256=sha(dict(packet)["build-receipt.json"]),
+        expected_packet_sha256=reviewed_source_use_native_api(c, "reviewed_norm_preservation_packet_sha256")(packet),
+        expected_binary_sha256=binary_pins)
+    live = reviewed_source_use_native_api(c, "load_verified_reviewed_norm_preservation_native")(
+        handle, packet, c["preparation"], c["graph"], c["admission"], *c["args"], **(options | common))
+    assert live["live_native_success_authenticated"] is live["native_execution_authenticated"] is True
+    assert live["profile"].endswith("+reviewed-source-use/v1")
+    assert live["original_admitted_parent_custody_authenticated"] is live["release_ready"] is False
+    assert live["training_mask"] == live["evaluation_gold_mask"] == 0
+    retained = reviewed_source_use_native_api(c, "load_reviewed_norm_preservation_native")(
+        packet, c["preparation"], c["graph"], c["admission"], *c["args"],
+        **(options | common | dict(observation_profile=native._REVIEWED_REPLAY_ACTUAL)))
+    assert retained["retained_observations_consistent"] is True
+    assert retained["native_execution_authenticated"] is retained.get("live_native_success_authenticated", False) is False
+    default_options = dict(options)
+    default_options.pop("instance_identity_profile")
+    with pytest.raises(ValueError, match="not issued"):
+        reviewed_source_use_native_api(c, "load_verified_reviewed_norm_preservation_native")(
+            handle, packet, c["preparation"], c["graph"], c["admission"], *c["args"], **(default_options | common))

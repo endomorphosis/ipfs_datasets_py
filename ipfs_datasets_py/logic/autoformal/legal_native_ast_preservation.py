@@ -19,6 +19,9 @@ import re
 SCHEMA = "legal-native-ast-preservation-preparation/v1"
 PROFILE = "native-unary-boolean-fol-json-value-preservation/v1"
 RELATIONAL_PROFILE = "typed-relational-deontic-native-preservation/v1"
+REVIEWED_SOURCE_USE_BINDING_SCHEMA = "legal-native-reviewed-source-use-binding/v1"
+REVIEWED_SOURCE_USE_IDENTITY_PROFILE = "reviewed-source-use/v1"
+RELATIONAL_SOURCE_USE_PROFILE = RELATIONAL_PROFILE + "+reviewed-source-use/v1"
 RELATIONAL_PROJECT_ROOT = "LegalRelationalAstPreservation"
 RELATIONAL_INPUT_SCHEMA = "legal-relational-ast-preservation-inputs/v1"
 INPUT_SCHEMA = "legal-native-ast-preservation-inputs/v1"
@@ -784,8 +787,42 @@ def _relational_pins(owners, relational, report):
     return pins
 
 
+def _reviewed_source_use_identity(source_use_binding, expected_source_use_binding_sha256, *, contracts=None):
+    """Detach a declared identity; current reviewed-source replay belongs upstream."""
+    if source_use_binding is None and expected_source_use_binding_sha256 is None:
+        return None, {}
+    _need(source_use_binding is not None and expected_source_use_binding_sha256 is not None,
+          "source-use binding and independent SHA256 must be supplied together")
+    _need((REVIEWED_SOURCE_USE_BINDING_SCHEMA, REVIEWED_SOURCE_USE_IDENTITY_PROFILE,
+            RELATIONAL_SOURCE_USE_PROFILE, MIXED_SOURCE_USE_PROFILE) == (
+            "legal-native-reviewed-source-use-binding/v1", "reviewed-source-use/v1",
+            "typed-relational-deontic-native-preservation/v1+reviewed-source-use/v1",
+            "typed-many-sorted-relational-deontic-renderer-preservation/v1+reviewed-source-use/v1"),
+          "fixed explicit reviewed source-use child identity domain required")
+    fields = {"schema", "unit_id", "source_version_cid", "source_occurrence_cid", "complete_ir_sha256",
+        "graph_unit_record_cid", "graph_ast_record_cid", "scope_record_cid", "interpretation_record_cid"}
+    _keys(source_use_binding, fields, "reviewed source-use binding")
+    _need(all(type(value) is str and 0 < len(value.encode("utf-8")) <= 512
+              for value in source_use_binding.values()), "bounded ordinary source-use binding strings required")
+    _need(source_use_binding["schema"] == REVIEWED_SOURCE_USE_BINDING_SCHEMA,
+          "explicit reviewed source-use binding schema required")
+    _pin(expected_source_use_binding_sha256, "complete reviewed source-use binding")
+    _pin(source_use_binding["complete_ir_sha256"], "complete reviewed unit IR")
+    raw = _wire(source_use_binding, MAX_RECORD_BYTES)
+    _need(_sha(raw) == expected_source_use_binding_sha256, "independent reviewed source-use binding pin differs")
+    detached = _parse(raw, MAX_RECORD_BYTES)
+    if contracts is not None:
+        for field in ("source_version_cid", "source_occurrence_cid", "graph_unit_record_cid",
+                "graph_ast_record_cid", "scope_record_cid", "interpretation_record_cid"):
+            contracts.require_cid(detached[field], "reviewed source-use " + field, codecs=("dag-json",))
+    return raw, {"source_use_binding": detached,
+        "source_use_binding_sha256": expected_source_use_binding_sha256,
+        "instance_identity_profile": REVIEWED_SOURCE_USE_IDENTITY_PROFILE}
+
+
 def prepare_relational_ast_preservation(report, request_raw: bytes, *,
-        expected_report_sha256, expected_request_sha256, toolchain):
+        expected_report_sha256, expected_request_sha256, toolchain,
+        source_use_binding=None, expected_source_use_binding_sha256=None):
     """Prepare source-role/native correspondence; no legal or proof admission.
 
     The exact existing authored relational request, report, role ledger and
@@ -807,6 +844,10 @@ def prepare_relational_ast_preservation(report, request_raw: bytes, *,
           "exact version-pinned Lean toolchain required")
     _need(_sha(Path(__file__).read_bytes()) == _SELF_PIN,
           "native AST preservation owner changed since import")
+    identity_validator = _reviewed_source_use_identity
+    identity_validator_code = identity_validator.__code__
+    identity_raw, source_identity = identity_validator(source_use_binding, expected_source_use_binding_sha256)
+    selected_profile = RELATIONAL_PROFILE if identity_raw is None else RELATIONAL_SOURCE_USE_PROFILE
     fragment = report.get("native_fragment")
     _keys(fragment, _FRAGMENT_FIELDS, "original relational native fragment")
     _need(fragment["schema"] == "legal-native-family-route/v1" and fragment["family"] == "deontic_fol",
@@ -819,6 +860,20 @@ def prepare_relational_ast_preservation(report, request_raw: bytes, *,
         expected_request_sha256=expected_request_sha256)
     owners = _owners()
     _, emitter, contracts = owners
+    def source_identity_fence():
+        if identity_raw is None:
+            return
+        _need(_reviewed_source_use_identity is identity_validator
+              and identity_validator.__code__ is identity_validator_code,
+              "reviewed source-use identity validator changed during preparation")
+        current_raw, current_identity = identity_validator(source_use_binding,
+            expected_source_use_binding_sha256, contracts=contracts)
+        _need(current_raw == identity_raw and _wire(current_identity, MAX_RECORD_BYTES)
+              == _wire(source_identity, MAX_RECORD_BYTES)
+              and selected_profile == RELATIONAL_SOURCE_USE_PROFILE,
+              "caller or detached reviewed source-use identity changed during preparation")
+
+    source_identity_fence()
     producers = _relational_pins(owners, relational, checked)
     _need(checked["request"] == request, "relational original request replay differs")
     fragment = checked["native_fragment"]
@@ -828,8 +883,9 @@ def prepare_relational_ast_preservation(report, request_raw: bytes, *,
     source = _relational_source_syntax(checked["typed_expression"]["root"], roles)
     semantics = RELATIONAL_SEMANTICS
     instance = RELATIONAL_PROJECT_ROOT + ".Instance" + _sha(_wire({
-        "profile": RELATIONAL_PROFILE, "report_sha256": expected_report_sha256,
+        "profile": selected_profile, "report_sha256": expected_report_sha256,
         "request_sha256": expected_request_sha256, "semantics_sha256": _sha(semantics.encode()),
+        **source_identity,
     }, MAX_RECORD_BYTES))
     modules = [RELATIONAL_PROJECT_ROOT + ".Prelude", RELATIONAL_PROJECT_ROOT + ".Semantics", instance, RELATIONAL_PROJECT_ROOT]
     imports = {modules[0]: [], modules[1]: [modules[0]], instance: [modules[1]], RELATIONAL_PROJECT_ROOT: [instance]}
@@ -856,7 +912,7 @@ def prepare_relational_ast_preservation(report, request_raw: bytes, *,
         + "    roleDenote base atoms typedSourceAst emptyEnvironment t ↔\n"
         + "      formula_0 (roleInterpretation base atoms predicateRoles) t := by\n  exact Iff.intro (fun h => h) (fun h => h)\n"
         + "#print axioms role_denotation_matches_native\n")
-    inputs = {"schema": RELATIONAL_INPUT_SCHEMA, "profile": RELATIONAL_PROFILE,
+    inputs = {"schema": RELATIONAL_INPUT_SCHEMA, "profile": selected_profile, **source_identity,
         "original_fragment_file_sha256": _sha(fragment_raw), "original_fragment_file_bytes": len(fragment_raw),
         "original_fragment_canonical_sha256": _sha(fragment_raw),
         "original_fragment_raw_utf8": fragment_raw.decode(), "original_fragment": fragment,
@@ -875,7 +931,7 @@ def prepare_relational_ast_preservation(report, request_raw: bytes, *,
           and sum(len(text.encode()) for text in files.values()) <= MAX_PROJECT_BYTES,
           "complete relational preservation project exceeds bounds")
     manifest = contracts.seal_record({
-        "schema": SCHEMA, "profile": RELATIONAL_PROFILE, "toolchain": toolchain, "target": "legal",
+        "schema": SCHEMA, "profile": selected_profile, "toolchain": toolchain, "target": "legal", **source_identity,
         "family": fragment["family"], "original_fragment_file_sha256": _sha(fragment_raw),
         "original_fragment_file_bytes": len(fragment_raw), "original_fragment_canonical_sha256": _sha(fragment_raw),
         "relational_report_sha256": expected_report_sha256, "original_request_sha256": expected_request_sha256,
@@ -918,18 +974,21 @@ def prepare_relational_ast_preservation(report, request_raw: bytes, *,
           "relational preservation producers changed during preparation")
     preparation = NativeAstPreservationPreparation(_wire(manifest, MAX_RECORD_BYTES).decode(), tuple(sorted(files.items())))
     preparation_sha256(preparation)
+    source_identity_fence()
     return preparation
 
 
 def validate_relational_ast_preservation(preparation, report, request_raw: bytes, *,
-        expected_preparation_sha256, expected_report_sha256, expected_request_sha256, toolchain):
+        expected_preparation_sha256, expected_report_sha256, expected_request_sha256, toolchain,
+        source_use_binding=None, expected_source_use_binding_sha256=None):
     """Replay whole typed/native inputs; never accept a merely resealed project."""
     _pin(expected_preparation_sha256, "complete relational preservation preparation")
     _need(preparation_sha256(preparation) == expected_preparation_sha256,
           "independent complete relational preservation pin differs")
     expected = prepare_relational_ast_preservation(report, request_raw,
         expected_report_sha256=expected_report_sha256, expected_request_sha256=expected_request_sha256,
-        toolchain=toolchain)
+        toolchain=toolchain, source_use_binding=source_use_binding,
+        expected_source_use_binding_sha256=expected_source_use_binding_sha256)
     _need(expected == preparation, "relational preservation differs from complete original regeneration")
     return expected
 
@@ -1556,6 +1615,7 @@ def validate_counted_ast_preservation(preparation, report, request_raw: bytes, *
 
 
 MIXED_PROFILE = "typed-many-sorted-relational-deontic-renderer-preservation/v1"
+MIXED_SOURCE_USE_PROFILE = MIXED_PROFILE + "+reviewed-source-use/v1"
 MIXED_PROJECT_ROOT = "LegalMixedRelationalAstPreservation"
 MIXED_INPUT_SCHEMA = "legal-mixed-relational-ast-preservation-inputs/v1"
 MAX_MIXED_REPORT_BYTES = 8 * MAX_RECORD_BYTES
@@ -2090,7 +2150,7 @@ def _mixed_pins(owners, relational, checked):
 
 
 def _mixed_callback_state(relational, owners):
-    functions = (_mixed_identity, _mixed_sort, _mixed_source_witness, _mixed_pins,
+    functions = (_reviewed_source_use_identity, _mixed_identity, _mixed_sort, _mixed_source_witness, _mixed_pins,
         _mixed_callback_state, prepare_mixed_relational_ast_preservation,
         validate_mixed_relational_ast_preservation, _counted_json_value, _counted_string,
         preparation_sha256, _owners, _pins, _wire, _parse, _sha, _pin, _keys, _name,
@@ -2102,7 +2162,8 @@ def _mixed_callback_state(relational, owners):
 
 
 def prepare_mixed_relational_ast_preservation(report, request_raw: bytes, *,
-        expected_report_sha256, expected_request_sha256, toolchain):
+        expected_report_sha256, expected_request_sha256, toolchain,
+        source_use_binding=None, expected_source_use_binding_sha256=None):
     """Prepare independent concrete sorted-source/renderer obligations.
 
     The original mixed owner replays the complete request and report. The
@@ -2124,6 +2185,10 @@ def prepare_mixed_relational_ast_preservation(report, request_raw: bytes, *,
           "exact version-pinned Lean toolchain required")
     _need(_sha(Path(__file__).read_bytes()) == _SELF_PIN,
           "native AST preservation owner changed since import")
+    identity_validator = _reviewed_source_use_identity
+    identity_validator_code = identity_validator.__code__
+    identity_raw, source_identity = identity_validator(source_use_binding, expected_source_use_binding_sha256)
+    selected_profile = MIXED_PROFILE if identity_raw is None else MIXED_SOURCE_USE_PROFILE
     _need(detached.get("schema") == "legal-mixed-relational-norm-report/v1"
           and detached.get("profile") == "authored-many-sorted-relational-deontic/v1"
           and detached.get("native_ast") is None and detached.get("native_parser_roundtrip") is False,
@@ -2138,6 +2203,20 @@ def prepare_mixed_relational_ast_preservation(report, request_raw: bytes, *,
     from . import legal_relational_norm_v1 as relational
     owners = _owners()
     _, emitter, contracts = owners
+    def source_identity_fence():
+        if identity_raw is None:
+            return
+        _need(_reviewed_source_use_identity is identity_validator
+              and identity_validator.__code__ is identity_validator_code,
+              "reviewed source-use identity validator changed during preparation")
+        current_raw, current_identity = identity_validator(source_use_binding,
+            expected_source_use_binding_sha256, contracts=contracts)
+        _need(current_raw == identity_raw and _wire(current_identity, MAX_RECORD_BYTES)
+              == _wire(source_identity, MAX_RECORD_BYTES)
+              and selected_profile == MIXED_SOURCE_USE_PROFILE,
+              "caller or detached reviewed source-use identity changed during preparation")
+
+    source_identity_fence()
     callbacks = _mixed_callback_state(relational, owners)
     upstream_pins = relational._mixed_owners()[-1]
     authority, false_flags = dict(AUTHORITY), dict(FALSE_FLAGS)
@@ -2151,6 +2230,7 @@ def prepare_mixed_relational_ast_preservation(report, request_raw: bytes, *,
     checked_raw = None
 
     def fence():
+        source_identity_fence()
         _need(_wire(report, MAX_MIXED_REPORT_BYTES) == report_raw
               and _wire(detached, MAX_MIXED_REPORT_BYTES) == report_raw,
               "caller or detached mixed report changed during preservation")
@@ -2189,8 +2269,9 @@ def prepare_mixed_relational_ast_preservation(report, request_raw: bytes, *,
     renderer_value = _counted_json_value(checked["renderer_ast"])
     semantics = MIXED_SEMANTICS
     instance = MIXED_PROJECT_ROOT + ".Instance" + _sha(_wire({
-        "profile": MIXED_PROFILE, "report_sha256": expected_report_sha256,
+        "profile": selected_profile, "report_sha256": expected_report_sha256,
         "request_sha256": expected_request_sha256, "semantics_sha256": _sha(semantics.encode()),
+        **source_identity,
     }, MAX_RECORD_BYTES))
     modules = [MIXED_PROJECT_ROOT + ".Prelude", MIXED_PROJECT_ROOT + ".Semantics", instance, MIXED_PROJECT_ROOT]
     imports = {modules[0]: [], modules[1]: [modules[0]], instance: [modules[1]], MIXED_PROJECT_ROOT: [instance]}
@@ -2224,7 +2305,7 @@ def prepare_mixed_relational_ast_preservation(report, request_raw: bytes, *,
         + "      formula (mixedRoleInterpretation base atoms mixedArgumentRoles) t := by\n"
         + "  exact Iff.intro (fun h => h) (fun h => h)\n"
         + "#print axioms mixed_role_denotation_matches_lowering\n")
-    inputs = {"schema": MIXED_INPUT_SCHEMA, "profile": MIXED_PROFILE,
+    inputs = {"schema": MIXED_INPUT_SCHEMA, "profile": selected_profile, **source_identity,
         "mixed_report": checked, "mixed_report_sha256": expected_report_sha256,
         "original_request_raw_utf8": request_raw.decode("utf-8"),
         "original_request_sha256": expected_request_sha256}
@@ -2245,7 +2326,7 @@ def prepare_mixed_relational_ast_preservation(report, request_raw: bytes, *,
               == imports[module], "exact closed mixed preservation imports required")
     fence()
     manifest = contracts.seal_record({
-        "schema": SCHEMA, "profile": MIXED_PROFILE, "toolchain": toolchain, "target": "legal", "family": "tdfol",
+        "schema": SCHEMA, "profile": selected_profile, "toolchain": toolchain, "target": "legal", "family": "tdfol", **source_identity,
         "mixed_report_sha256": expected_report_sha256, "original_request_sha256": expected_request_sha256,
         "typed_expression_sha256": checked["typed_expression_sha256"],
         "typed_expression_content_digest": expression["content_digest"],
@@ -2303,18 +2384,21 @@ def prepare_mixed_relational_ast_preservation(report, request_raw: bytes, *,
     fence()
     _need(_mixed_pins(owners, relational, checked) == producers,
           "mixed preservation producers changed during complete serialization")
+    source_identity_fence()
     return preparation
 
 
 def validate_mixed_relational_ast_preservation(preparation, report, request_raw: bytes, *,
-        expected_preparation_sha256, expected_report_sha256, expected_request_sha256, toolchain):
+        expected_preparation_sha256, expected_report_sha256, expected_request_sha256, toolchain,
+        source_use_binding=None, expected_source_use_binding_sha256=None):
     """Replay complete original source/renderer inputs and the whole project."""
     _pin(expected_preparation_sha256, "complete mixed preservation preparation")
     _need(preparation_sha256(preparation) == expected_preparation_sha256,
           "independent complete mixed preservation pin differs")
     expected = prepare_mixed_relational_ast_preservation(report, request_raw,
         expected_report_sha256=expected_report_sha256, expected_request_sha256=expected_request_sha256,
-        toolchain=toolchain)
+        toolchain=toolchain, source_use_binding=source_use_binding,
+        expected_source_use_binding_sha256=expected_source_use_binding_sha256)
     _need(expected == preparation and preparation_sha256(preparation) == expected_preparation_sha256,
           "mixed preservation differs from complete original regeneration")
     return expected

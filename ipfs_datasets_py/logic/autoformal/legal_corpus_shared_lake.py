@@ -753,6 +753,8 @@ __all__ = ["SharedCorpusPreparation", "prepare_shared_definition_corpus", "valid
 # not enlarge any legacy operation's exact producer set.
 REVIEWED_PRESERVATION_SCHEMA = "legal-corpus-reviewed-preservation-preparation/v2"
 REVIEWED_PRESERVATION_PROFILE = "reviewed-multi-unit-object-relational-preservation/v2"
+REVIEWED_SOURCE_USE_IDENTITY_PROFILE = "reviewed-source-use/v1"
+REVIEWED_SOURCE_USE_PRESERVATION_PROFILE = REVIEWED_PRESERVATION_PROFILE + "+reviewed-source-use/v1"
 REVIEWED_PRESERVATION_ROOT = "LegalReviewedNormPreservation"
 MAX_REVIEWED_PRESERVATION_UNITS = 8
 MAX_REVIEWED_PRESERVATION_FILES = 9 * MAX_REVIEWED_PRESERVATION_UNITS + 6
@@ -928,8 +930,53 @@ def _reviewed_preservation_units(graph, admission, replay, *, version=2):
     return index, signature_header if version == 2 else signature_headers, predicate_ledger
 
 
+def _reviewed_source_use_profile(instance_identity_profile, *, version):
+    """Select an explicit identity domain; saved preparations cannot opt in."""
+    if (instance_identity_profile is not None and (type(instance_identity_profile) is not str
+            or instance_identity_profile != "reviewed-source-use/v1")):
+        _fail("explicit reviewed source-use identity profile required")
+    if instance_identity_profile is None:
+        return REVIEWED_PRESERVATION_PROFILE if version == 2 else REVIEWED_MIXED_PRESERVATION_PROFILE
+    if (REVIEWED_SOURCE_USE_IDENTITY_PROFILE != "reviewed-source-use/v1"
+            or REVIEWED_SOURCE_USE_PRESERVATION_PROFILE !=
+                "reviewed-multi-unit-object-relational-preservation/v2+reviewed-source-use/v1"
+            or REVIEWED_MIXED_SOURCE_USE_PRESERVATION_PROFILE !=
+                "reviewed-multi-unit-mixed-relational-preservation/v3+reviewed-source-use/v1"):
+        _fail("fixed reviewed source-use identity domains required")
+    return (REVIEWED_SOURCE_USE_PRESERVATION_PROFILE if version == 2
+        else REVIEWED_MIXED_SOURCE_USE_PRESERVATION_PROFILE)
+
+
+def _reviewed_source_use_child_args(item):
+    """Derive custody only from the complete, currently replayed unit index."""
+    binding = {"schema": "legal-native-reviewed-source-use-binding/v1",
+        **{key: item[key] for key in ("unit_id", "source_version_cid", "source_occurrence_cid",
+            "complete_ir_sha256", "graph_unit_record_cid", "graph_ast_record_cid",
+            "scope_record_cid", "interpretation_record_cid")}}
+    return {"source_use_binding": binding,
+        "expected_source_use_binding_sha256": _sha(canonical_dag_json_bytes(binding))}
+
+
+def _reviewed_source_use_child_echo(manifest, item, child_args, instance_identity_profile):
+    keys = ("source_use_binding", "source_use_binding_sha256", "instance_identity_profile")
+    if instance_identity_profile is None:
+        if any(key in manifest for key in keys):
+            _fail("legacy child cannot acquire reviewed source-use identity")
+        return {}
+    expected = _reviewed_source_use_child_args(item)
+    if any(child_args.get(key) != value for key, value in expected.items()):
+        _fail("derived reviewed source-use binding changed during child preparation")
+    binding = {"source_use_binding": expected["source_use_binding"],
+        "source_use_binding_sha256": expected["expected_source_use_binding_sha256"]}
+    if any(manifest.get(key) != value for key, value in
+            {**binding, "instance_identity_profile": instance_identity_profile}.items()):
+        _fail("child reviewed source-use binding differs from current complete replay")
+    return binding
+
+
 def _reviewed_preservation_project(graph, admission, replay, owners, pins, commitment,
-        expected_graph_sha256, expected_admission_sha256, toolchain):
+        expected_graph_sha256, expected_admission_sha256, toolchain, *, instance_identity_profile=None):
+    profile = _reviewed_source_use_profile(instance_identity_profile, version=2)
     _, _, native = owners
     index, signature_header, predicates = _reviewed_preservation_units(graph, admission, replay)
     files, modules, obligations, units, native_pins = {}, [], [], [], {}
@@ -953,14 +1000,19 @@ def _reviewed_preservation_project(graph, admission, replay, owners, pins, commi
         inputs = replay["preparation_inputs"]["relational_inputs"][item["unit_id"]]
         child_args = dict(expected_report_sha256=item["relational_report_sha256"],
             expected_request_sha256=item["relational_request_sha256"], toolchain=toolchain)
+        if instance_identity_profile is not None:
+            child_args.update(_reviewed_source_use_child_args(item))
         child = native.prepare_relational_ast_preservation(inputs["report"], inputs["request_raw"], **child_args)
         child_sha = native.preparation_sha256(child)
         native.validate_relational_ast_preservation(child, inputs["report"], inputs["request_raw"],
             expected_preparation_sha256=child_sha, **child_args)
         manifest, child_files = child.to_dict(), dict(child.files)
+        source_use = _reviewed_source_use_child_echo(manifest, item, child_args, instance_identity_profile)
+        child_profile = ("typed-relational-deontic-native-preservation/v1+reviewed-source-use/v1"
+            if instance_identity_profile is not None else native.RELATIONAL_PROFILE)
         instance_modules = [module for module in manifest["expected_modules"]
             if module not in common + [native.RELATIONAL_PROJECT_ROOT]]
-        if (manifest["schema"] != native.SCHEMA or manifest["profile"] != native.RELATIONAL_PROFILE
+        if (manifest["schema"] != native.SCHEMA or manifest["profile"] != child_profile
                 or manifest["family"] != "deontic_fol"
                 or manifest["toolchain"] != toolchain or len(instance_modules) != 1
                 or manifest["relational_report_sha256"] != item["relational_report_sha256"]
@@ -1012,7 +1064,7 @@ def _reviewed_preservation_project(graph, admission, replay, owners, pins, commi
                 "sha256": _sha(body.encode("utf-8"))})
         manifest_path = prefix + "manifest.json"
         add(manifest_path, child.manifest_json)
-        units.append(dict(item, child_preparation_sha256=child_sha,
+        units.append(dict(item, **source_use, child_preparation_sha256=child_sha,
             child_manifest_sha256=_sha(child.manifest_json.encode("utf-8")), child_manifest_path=manifest_path,
             original_child_files=companions, instance_module=instance, preservation_obligations=expected_theorems))
         modules.append(instance)
@@ -1030,6 +1082,8 @@ def _reviewed_preservation_project(graph, admission, replay, owners, pins, commi
         "input_commitment_sha256": commitment, "reviewed_graph_sha256": expected_graph_sha256,
         "reviewed_admission_sha256": expected_admission_sha256, "declaration_sha256": admission["declaration_sha256"],
         "units": units}
+    if instance_identity_profile is not None:
+        bindings["instance_identity_profile"] = instance_identity_profile
     add("reviewed-input-bindings.json", canonical_dag_json_bytes(bindings).decode("utf-8") + "\n")
     imports.update({common[0]: [], common[1]: [common[0]], root: modules})
     for path, digest in native_pins.items():
@@ -1037,7 +1091,7 @@ def _reviewed_preservation_project(graph, admission, replay, owners, pins, commi
             _fail("current native preservation dependencies differ")
     flags = dict(native.FALSE_FLAGS)
     manifest = contracts.seal_record({**bindings, "schema": REVIEWED_PRESERVATION_SCHEMA,
-        "profile": REVIEWED_PRESERVATION_PROFILE, "toolchain": toolchain, "target": "legal",
+        "profile": profile, "toolchain": toolchain, "target": "legal",
         "provenance_kind": admission["provenance_kind"],
         "scope_record_cid": graph["scope_record"]["record_cid"],
         "interpretation_record_cid": graph["interpretation_record"]["record_cid"],
@@ -1076,8 +1130,9 @@ def _reviewed_preservation_project(graph, admission, replay, owners, pins, commi
 
 
 def _reviewed_preservation_operation(graph, admission, args, kwargs, *, expected_graph_sha256,
-        expected_admission_sha256, toolchain, offered=None):
+        expected_admission_sha256, toolchain, instance_identity_profile=None, offered=None):
     import inspect
+    _reviewed_source_use_profile(instance_identity_profile, version=2)
     owners = _reviewed_preservation_owners()
     graph_owner, admission_owner, _ = owners
     contracts.require_sha256(expected_graph_sha256, "expected_graph_sha256")
@@ -1085,6 +1140,8 @@ def _reviewed_preservation_operation(graph, admission, args, kwargs, *, expected
     original = {"graph": graph, "admission": admission, "args": list(args), "kwargs": kwargs,
         "expected_graph_sha256": expected_graph_sha256, "expected_admission_sha256": expected_admission_sha256,
         "toolchain": toolchain}
+    if instance_identity_profile is not None:
+        original["instance_identity_profile"] = instance_identity_profile
     detached, commitment = admission_owner.norm._snapshot(original)
     offered_commitment = None
     if offered is not None:
@@ -1101,7 +1158,8 @@ def _reviewed_preservation_operation(graph, admission, args, kwargs, *, expected
             or admission_owner.norm._snapshot(detached)[1] != commitment):
         _fail("reviewed preservation inputs changed during admission and graph replay")
     result = _reviewed_preservation_project(checked_graph, detached["admission"], bound.arguments, owners,
-        pins, commitment, expected_graph_sha256, expected_admission_sha256, toolchain)
+        pins, commitment, expected_graph_sha256, expected_admission_sha256, toolchain,
+        **({"instance_identity_profile": instance_identity_profile} if instance_identity_profile is not None else {}))
     if offered is not None and result != offered:
         _fail("reviewed preservation differs from complete current regeneration")
     if (admission_owner.norm._snapshot(original)[1] != commitment
@@ -1110,23 +1168,26 @@ def _reviewed_preservation_operation(graph, admission, args, kwargs, *, expected
             or (offered is not None and admission_owner.norm._snapshot(
                 _reviewed_preservation_offered(offered))[1] != offered_commitment)):
         _fail("reviewed preservation inputs, preparation or producers changed during operation")
+    _reviewed_source_use_profile(instance_identity_profile, version=2)
     return result
 
 
 def prepare_reviewed_norm_preservation_corpus_v2(graph, admission, *args, expected_graph_sha256,
-        expected_admission_sha256, toolchain, **kwargs):
+        expected_admission_sha256, toolchain, instance_identity_profile=None, **kwargs):
     """Replay all reviewed units and prepare unchanged independent H witnesses.
 
     This API performs no native build and grants no legal, corpus or training
     authority. Complete external source/review/dependency inputs remain required.
+    Explicit reviewed-source-use/v1 binds each child to its replayed physical use.
     """
     return _reviewed_preservation_operation(graph, admission, args, kwargs,
         expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
-        toolchain=toolchain)
+        toolchain=toolchain, instance_identity_profile=instance_identity_profile)
 
 
 def validate_reviewed_norm_preservation_corpus_v2(preparation, graph, admission, *args,
-        expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256, toolchain, **kwargs):
+        expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256, toolchain,
+        instance_identity_profile=None, **kwargs):
     """Regenerate every unit, obligation and companion under current admission.
 
     The preservation pin has its own name because expected_preparation_sha256
@@ -1137,16 +1198,18 @@ def validate_reviewed_norm_preservation_corpus_v2(preparation, graph, admission,
         _fail("independent complete reviewed preservation preparation pin differs")
     return _reviewed_preservation_operation(graph, admission, args, kwargs,
         expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
-        toolchain=toolchain, offered=preparation)
+        toolchain=toolchain, instance_identity_profile=instance_identity_profile, offered=preparation)
 
 
 __all__ += ["ReviewedPreservationCorpusPreparation", "REVIEWED_PRESERVATION_SCHEMA",
-    "REVIEWED_PRESERVATION_PROFILE", "prepare_reviewed_norm_preservation_corpus_v2",
+    "REVIEWED_PRESERVATION_PROFILE", "REVIEWED_SOURCE_USE_IDENTITY_PROFILE",
+    "REVIEWED_SOURCE_USE_PRESERVATION_PROFILE", "prepare_reviewed_norm_preservation_corpus_v2",
     "validate_reviewed_norm_preservation_corpus_v2", "reviewed_preservation_corpus_sha256"]
 
 
 REVIEWED_MIXED_PRESERVATION_SCHEMA = "legal-corpus-reviewed-preservation-preparation/v3"
 REVIEWED_MIXED_PRESERVATION_PROFILE = "reviewed-multi-unit-mixed-relational-preservation/v3"
+REVIEWED_MIXED_SOURCE_USE_PRESERVATION_PROFILE = REVIEWED_MIXED_PRESERVATION_PROFILE + "+reviewed-source-use/v1"
 REVIEWED_MIXED_PRESERVATION_ROOT = "LegalReviewedMixedNormPreservation"
 _REVIEWED_MIXED_PRESERVATION_LEAVES = (
     "mixed_typed_value_exact", "mixed_renderer_value_exact", "mixed_ast_closed",
@@ -1175,7 +1238,7 @@ def _reviewed_mixed_preservation_owners():
     return corpus_norm_definition_adapter, legal_reviewed_norm_admission_v3, legal_native_ast_preservation
 
 
-def _reviewed_mixed_preservation_child(native, profile):
+def _reviewed_mixed_preservation_child(native, profile, *, instance_identity_profile=None):
     """Select one closed child domain; never retag an Object or mixed value."""
     if profile == "authored-object-relational-deontic/v1":
         root, child_profile, family = ("LegalRelationalAstPreservation",
@@ -1186,7 +1249,8 @@ def _reviewed_mixed_preservation_child(native, profile):
                     "typed_source_lowering_exact", "role_denotation_matches_native")):
             _fail("fixed Object preservation policy changed")
         return (native.prepare_relational_ast_preservation, native.validate_relational_ast_preservation,
-            root, child_profile, family, "relational_report_sha256", _REVIEWED_PRESERVATION_LEAVES)
+            root, child_profile + ("+reviewed-source-use/v1" if instance_identity_profile is not None else ""),
+            family, "relational_report_sha256", _REVIEWED_PRESERVATION_LEAVES)
     if profile == "authored-many-sorted-relational-deontic/v1":
         root, child_profile, family = ("LegalMixedRelationalAstPreservation",
             "typed-many-sorted-relational-deontic-renderer-preservation/v1", "tdfol")
@@ -1196,13 +1260,15 @@ def _reviewed_mixed_preservation_child(native, profile):
                     "mixed_denotation_matches_lowering", "mixed_role_denotation_matches_lowering")):
             _fail("fixed mixed renderer preservation policy changed")
         return (native.prepare_mixed_relational_ast_preservation,
-            native.validate_mixed_relational_ast_preservation, root, child_profile, family,
+            native.validate_mixed_relational_ast_preservation, root,
+            child_profile + ("+reviewed-source-use/v1" if instance_identity_profile is not None else ""), family,
             "mixed_report_sha256", _REVIEWED_MIXED_PRESERVATION_LEAVES)
     _fail("explicit Object or mixed relational source profile required")
 
 
 def _reviewed_mixed_preservation_project(graph, admission, replay, owners, pins, commitment,
-        expected_graph_sha256, expected_admission_sha256, toolchain):
+        expected_graph_sha256, expected_admission_sha256, toolchain, *, instance_identity_profile=None):
+    selected_profile = _reviewed_source_use_profile(instance_identity_profile, version=3)
     native = owners[2]
     authority, false_flags = dict(native.AUTHORITY), dict(native.FALSE_FLAGS)
     if (not authority or any(value is not False for value in authority.values())
@@ -1228,14 +1294,18 @@ def _reviewed_mixed_preservation_project(graph, admission, replay, owners, pins,
     for item in index:
         inputs = replay["preparation_inputs"]["relational_inputs"][item["unit_id"]]
         prepare, validate, root, profile, family, report_pin, leaves = _reviewed_mixed_preservation_child(
-            native, item["relational_profile"])
+            native, item["relational_profile"], **({"instance_identity_profile": instance_identity_profile}
+                if instance_identity_profile is not None else {}))
         child_args = dict(expected_report_sha256=item["relational_report_sha256"],
             expected_request_sha256=item["relational_request_sha256"], toolchain=toolchain)
+        if instance_identity_profile is not None:
+            child_args.update(_reviewed_source_use_child_args(item))
         child = prepare(inputs["report"], inputs["request_raw"], **child_args)
         child_sha = native.preparation_sha256(child)
         validate(child, inputs["report"], inputs["request_raw"],
             expected_preparation_sha256=child_sha, **child_args)
         manifest, child_files = child.to_dict(), dict(child.files)
+        source_use = _reviewed_source_use_child_echo(manifest, item, child_args, instance_identity_profile)
         common = [root + ".Prelude", root + ".Semantics"]
         instances = [module for module in manifest["expected_modules"] if module not in [*common, root]]
         if (manifest["schema"] != native.SCHEMA or manifest["profile"] != profile
@@ -1299,7 +1369,7 @@ def _reviewed_mixed_preservation_project(graph, admission, replay, owners, pins,
                 "sha256": _sha(body.encode("utf-8"))})
         manifest_path = prefix + "manifest.json"
         add(manifest_path, child.manifest_json)
-        units.append(dict(item, child_preparation_sha256=child_sha,
+        units.append(dict(item, **source_use, child_preparation_sha256=child_sha,
             child_manifest_sha256=_sha(child.manifest_json.encode("utf-8")), child_manifest_path=manifest_path,
             original_child_files=companions, instance_module=instance, preservation_obligations=theorems,
             child_preservation_profile=profile, child_family=family))
@@ -1321,6 +1391,8 @@ def _reviewed_mixed_preservation_project(graph, admission, replay, owners, pins,
         "reviewed_admission_sha256": expected_admission_sha256, "declaration_sha256": admission["declaration_sha256"],
         "definition_use_record_cids": [row["record_cid"] for row in graph["definition_use_records"]],
         "units": units}
+    if instance_identity_profile is not None:
+        bindings["instance_identity_profile"] = instance_identity_profile
     add("reviewed-input-bindings.json", canonical_dag_json_bytes(bindings).decode("utf-8") + "\n")
     for profile in common_profiles.values():
         first, second = profile["modules"]
@@ -1332,7 +1404,7 @@ def _reviewed_mixed_preservation_project(graph, admission, replay, owners, pins,
     if native.AUTHORITY != authority or native.FALSE_FLAGS != false_flags:
         _fail("mixed aggregate false-authority policy changed during preparation")
     manifest = contracts.seal_record({**bindings,
-        "schema": REVIEWED_MIXED_PRESERVATION_SCHEMA, "profile": REVIEWED_MIXED_PRESERVATION_PROFILE,
+        "schema": REVIEWED_MIXED_PRESERVATION_SCHEMA, "profile": selected_profile,
         "toolchain": toolchain, "target": "legal", "provenance_kind": admission["provenance_kind"],
         "scope_record_cid": graph["scope_record"]["record_cid"],
         "interpretation_record_cid": graph["interpretation_record"]["record_cid"],
@@ -1376,8 +1448,9 @@ def _reviewed_mixed_preservation_project(graph, admission, replay, owners, pins,
 
 
 def _reviewed_mixed_preservation_operation(graph, admission, args, kwargs, *, expected_graph_sha256,
-        expected_admission_sha256, toolchain, offered=None):
+        expected_admission_sha256, toolchain, instance_identity_profile=None, offered=None):
     import inspect
+    _reviewed_source_use_profile(instance_identity_profile, version=3)
     _reviewed_mixed_preservation_policy()
     owners = _reviewed_mixed_preservation_owners()
     graph_owner, admission_owner, _ = owners
@@ -1386,6 +1459,8 @@ def _reviewed_mixed_preservation_operation(graph, admission, args, kwargs, *, ex
     original = {"graph": graph, "admission": admission, "args": list(args), "kwargs": kwargs,
         "expected_graph_sha256": expected_graph_sha256, "expected_admission_sha256": expected_admission_sha256,
         "toolchain": toolchain}
+    if instance_identity_profile is not None:
+        original["instance_identity_profile"] = instance_identity_profile
     detached, commitment = admission_owner.norm._snapshot(original)
     offered_commitment = None
     if offered is not None:
@@ -1402,7 +1477,8 @@ def _reviewed_mixed_preservation_operation(graph, admission, args, kwargs, *, ex
             or admission_owner.norm._snapshot(detached)[1] != commitment):
         _fail("mixed preservation inputs changed during complete reviewed graph replay")
     result = _reviewed_mixed_preservation_project(checked_graph, detached["admission"], bound.arguments,
-        owners, pins, commitment, expected_graph_sha256, expected_admission_sha256, toolchain)
+        owners, pins, commitment, expected_graph_sha256, expected_admission_sha256, toolchain,
+        **({"instance_identity_profile": instance_identity_profile} if instance_identity_profile is not None else {}))
     if offered is not None and result != offered:
         _fail("mixed reviewed preservation differs from complete current regeneration")
     if (admission_owner.norm._snapshot(original)[1] != commitment
@@ -1411,29 +1487,32 @@ def _reviewed_mixed_preservation_operation(graph, admission, args, kwargs, *, ex
             or (offered is not None and admission_owner.norm._snapshot(
                 _reviewed_preservation_offered(offered))[1] != offered_commitment)):
         _fail("mixed preservation inputs, project or producer changed during operation")
+    _reviewed_source_use_profile(instance_identity_profile, version=3)
     _reviewed_mixed_preservation_policy()
     return result
 
 
 def prepare_reviewed_norm_preservation_corpus_v3(graph, admission, *args, expected_graph_sha256,
-        expected_admission_sha256, toolchain, **kwargs):
-    """Replay every V3 reviewed source unit and retain its unchanged child profile."""
+        expected_admission_sha256, toolchain, instance_identity_profile=None, **kwargs):
+    """Replay every V3 unit; optionally bind children to explicit reviewed source uses."""
     return _reviewed_mixed_preservation_operation(graph, admission, args, kwargs,
         expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
-        toolchain=toolchain)
+        toolchain=toolchain, instance_identity_profile=instance_identity_profile)
 
 
 def validate_reviewed_norm_preservation_corpus_v3(preparation, graph, admission, *args,
-        expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256, toolchain, **kwargs):
+        expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256, toolchain,
+        instance_identity_profile=None, **kwargs):
     """Regenerate the complete V3 project without coercion, clipping or authority."""
     contracts.require_sha256(expected_preservation_sha256, "expected_preservation_sha256")
     if reviewed_preservation_corpus_sha256(preparation) != expected_preservation_sha256:
         _fail("independent complete mixed preservation preparation pin differs")
     return _reviewed_mixed_preservation_operation(graph, admission, args, kwargs,
         expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
-        toolchain=toolchain, offered=preparation)
+        toolchain=toolchain, instance_identity_profile=instance_identity_profile, offered=preparation)
 
 
 __all__ += ["REVIEWED_MIXED_PRESERVATION_SCHEMA", "REVIEWED_MIXED_PRESERVATION_PROFILE",
+    "REVIEWED_MIXED_SOURCE_USE_PRESERVATION_PROFILE",
     "REVIEWED_MIXED_PRESERVATION_ROOT", "prepare_reviewed_norm_preservation_corpus_v3",
     "validate_reviewed_norm_preservation_corpus_v3"]

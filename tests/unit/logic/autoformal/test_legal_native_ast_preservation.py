@@ -1438,3 +1438,211 @@ def test_mixed_profile_preserves_existing_unary_relational_and_counted_domains(
         _prepare_relational_preservation((captured["report"], captured["request_raw"]))
     with pytest.raises(ValueError):
         _prepare_counted_preservation((captured["report"], captured["request_raw"]))
+
+
+# Declared identity DATA only: current source/review/graph replay is tested by
+# the shared aggregate owner, not authenticated by these child-level fixtures.
+def _reviewed_source_use_binding_fixture(unit_id="fixture:source-use-one"):
+    fields = ("source_version_cid", "source_occurrence_cid", "graph_unit_record_cid",
+              "graph_ast_record_cid", "scope_record_cid", "interpretation_record_cid")
+    binding = {"schema": "legal-native-reviewed-source-use-binding/v1", "unit_id": unit_id,
+               "complete_ir_sha256": "a" * 64}
+    for field in fields:
+        binding[field] = corpus_contracts.seal_record({"schema": "fictional-source-use-coordinate/v1",
+            "unit_id": unit_id, "coordinate": field})["record_cid"]
+    return binding
+
+
+def _reviewed_source_use_options(binding):
+    return dict(source_use_binding=binding, expected_source_use_binding_sha256=sha(canonical(binding)))
+
+
+def _reviewed_source_use_child_case(kind, relational_preservation_base, mixed_preservation_base):
+    if kind == "object":
+        captured, legacy = relational_preservation_base
+        return captured, legacy, _prepare_relational_preservation, _validate_relational_preservation, owner.RELATIONAL_PROFILE
+    assert kind == "mixed"
+    captured, legacy = mixed_preservation_base
+    return captured, legacy, _prepare_mixed_preservation, _validate_mixed_preservation, owner.MIXED_PROFILE
+
+
+@pytest.mark.parametrize("kind", ["object", "mixed"])
+def test_reviewed_source_use_child_explicit_identity_keeps_defaults_values_and_five_obligations(
+        relational_preservation_base, mixed_preservation_base, kind):
+    captured, legacy, prepare, validate, old_profile = _reviewed_source_use_child_case(
+        kind, relational_preservation_base, mixed_preservation_base)
+    assert prepare(captured, source_use_binding=None, expected_source_use_binding_sha256=None) == legacy
+    assert validate(captured, legacy) == legacy
+    original_meta, original_files = manifest(legacy), dict(legacy.files)
+    original_inputs = json.loads(original_files["preservation-inputs.json"])
+    new_keys = {"source_use_binding", "source_use_binding_sha256", "instance_identity_profile"}
+    assert not new_keys & set(original_meta) and not new_keys & set(original_inputs)
+    report_key = "relational_report_sha256" if kind == "object" else "mixed_report_sha256"
+    old_payload = {"profile": old_profile, "report_sha256": original_meta[report_key],
+        "request_sha256": original_meta["original_request_sha256"],
+        "semantics_sha256": original_meta["semantics_sha256"]}
+    old_instance = original_meta["expected_modules"][2]
+    assert old_instance.rsplit(".Instance", 1)[1] == sha(canonical(old_payload))
+    binding = _reviewed_source_use_binding_fixture()
+    unchanged = deepcopy(binding)
+    prepared = prepare(captured, **_reviewed_source_use_options(binding))
+    assert validate(captured, prepared, **_reviewed_source_use_options(binding)) == prepared
+    assert binding == unchanged
+    meta, files = manifest(prepared), dict(prepared.files)
+    assert meta["profile"] == old_profile + "+reviewed-source-use/v1"
+    assert meta["instance_identity_profile"] == "reviewed-source-use/v1"
+    assert meta["source_use_binding"] == unchanged and meta["source_use_binding_sha256"] == sha(canonical(unchanged))
+    inputs = json.loads(files["preservation-inputs.json"])
+    for key in new_keys:
+        assert inputs[key] == meta[key]
+    restored_inputs = {key: value for key, value in inputs.items() if key not in new_keys}
+    restored_inputs["profile"] = original_inputs["profile"]
+    assert restored_inputs == original_inputs
+    assert len(files) == 7 and len(meta["expected_modules"]) == 4 and len(meta["theorems"]) == 5
+    new_instance = meta["expected_modules"][2]
+    assert new_instance != old_instance
+    assert files[new_instance.replace(".", "/") + ".lean"] == original_files[
+        old_instance.replace(".", "/") + ".lean"].replace(old_instance, new_instance)
+    for module in original_meta["expected_modules"][:2]:
+        assert files[module.replace(".", "/") + ".lean"] == original_files[module.replace(".", "/") + ".lean"]
+    assert [name.rsplit(".", 1)[1] for name in meta["theorems"]] == [name.rsplit(".", 1)[1] for name in original_meta["theorems"]]
+    assert meta["file_sha256"] == {name: sha(body.encode()) for name, body in prepared.files}
+    assert meta["preparation_only"] is True and not any(meta["authority"].values())
+    assert all(meta[key] is False for key in owner.FALSE_FLAGS)
+    assert meta["training_mask"] == meta["evaluation_gold_mask"] == 0
+    assert meta["source_custody"]["original_source_bundle_replayed"] is False
+    assert meta["source_custody"]["source_prose_to_ast_proved"] is False
+
+
+@pytest.mark.parametrize("kind", ["object", "mixed"])
+@pytest.mark.parametrize("damage", ["missing_binding", "missing_digest", "missing_field", "extra_field", "wrong_schema",
+    "wrong_digest", "bad_cid", "unit_type", "empty_unit", "full_ir_bad"])
+def test_reviewed_source_use_child_requires_closed_independently_pinned_binding(
+        relational_preservation_base, mixed_preservation_base, kind, damage):
+    captured, _, prepare, validate, _ = _reviewed_source_use_child_case(
+        kind, relational_preservation_base, mixed_preservation_base)
+    binding = _reviewed_source_use_binding_fixture()
+    healthy = prepare(captured, **_reviewed_source_use_options(binding))
+    assert validate(captured, healthy, **_reviewed_source_use_options(binding)) == healthy
+    changed = deepcopy(binding)
+    if damage == "missing_field": del changed["interpretation_record_cid"]
+    elif damage == "extra_field": changed["ordinal"] = 0
+    elif damage == "wrong_schema": changed["schema"] = "legal-native-reviewed-source-use-binding/v0"
+    elif damage == "bad_cid": changed["source_occurrence_cid"] = "not-a-canonical-cid"
+    elif damage == "unit_type": changed["unit_id"] = False
+    elif damage == "empty_unit": changed["unit_id"] = ""
+    elif damage == "full_ir_bad": changed["complete_ir_sha256"] = "A" * 64
+    options = _reviewed_source_use_options(changed)
+    if damage == "missing_binding": options["source_use_binding"] = None
+    elif damage == "missing_digest": options["expected_source_use_binding_sha256"] = None
+    elif damage == "wrong_digest": options["expected_source_use_binding_sha256"] = "0" * 64
+    if damage == "bad_cid":
+        # Existing canonical CID validation occurs at the existing lazy owner boundary.
+        with pytest.raises(ValueError):
+            prepare(captured, **options)
+    else:
+        with patch.object(owner, "_owners", side_effect=AssertionError("invalid binding reached operation owners")):
+            with pytest.raises(ValueError):
+                prepare(captured, **options)
+    if damage == "wrong_digest":
+        with pytest.raises(ValueError):
+            prepare(captured, source_use_binding=binding, expected_source_use_binding_sha256=True)
+
+
+@pytest.mark.parametrize("kind", ["object", "mixed"])
+def test_reviewed_source_use_child_does_not_infer_selection_or_cross_join_other_bindings(
+        relational_preservation_base, mixed_preservation_base, kind):
+    captured, legacy, prepare, validate, _ = _reviewed_source_use_child_case(
+        kind, relational_preservation_base, mixed_preservation_base)
+    first = _reviewed_source_use_binding_fixture()
+    second = _reviewed_source_use_binding_fixture("fixture:source-use-two")
+    one = prepare(captured, **_reviewed_source_use_options(first))
+    two = prepare(captured, **_reviewed_source_use_options(second))
+    assert one != two and manifest(one)["expected_modules"][2] != manifest(two)["expected_modules"][2]
+    assert validate(captured, one, **_reviewed_source_use_options(first)) == one
+    assert validate(captured, two, **_reviewed_source_use_options(second)) == two
+    for offered, options in ((one, {}), (legacy, _reviewed_source_use_options(first)),
+                             (one, _reviewed_source_use_options(second)), (two, _reviewed_source_use_options(first))):
+        with pytest.raises(ValueError):
+            validate(captured, offered, **options)
+
+
+@pytest.mark.parametrize("kind", ["object", "mixed"])
+def test_reviewed_source_use_child_repaired_foreign_binding_metadata_requires_regeneration(
+        relational_preservation_base, mixed_preservation_base, kind):
+    captured, _, prepare, validate, _ = _reviewed_source_use_child_case(
+        kind, relational_preservation_base, mixed_preservation_base)
+    first = _reviewed_source_use_binding_fixture()
+    second = _reviewed_source_use_binding_fixture("fixture:source-use-two")
+    prepared = prepare(captured, **_reviewed_source_use_options(first))
+    genuine_second = prepare(captured, **_reviewed_source_use_options(second))
+    assert validate(captured, genuine_second, **_reviewed_source_use_options(second)) == genuine_second
+    meta, files = manifest(prepared), dict(prepared.files)
+    meta["source_use_binding"] = deepcopy(second)
+    meta["source_use_binding_sha256"] = sha(canonical(second))
+    inputs = json.loads(files["preservation-inputs.json"])
+    inputs["source_use_binding"] = deepcopy(second)
+    inputs["source_use_binding_sha256"] = sha(canonical(second))
+    files["preservation-inputs.json"] = canonical(inputs).decode() + "\n"
+    forged = _mixed_reseal(prepared, meta, files)
+    assert forged != genuine_second
+    with pytest.raises(ValueError):
+        validate(captured, forged, **_reviewed_source_use_options(second))
+
+
+@pytest.mark.parametrize("kind", ["object", "mixed"])
+@pytest.mark.parametrize("changed_target", ["caller", "detached"])
+def test_reviewed_source_use_child_late_binding_mutation_cannot_return_preparation(
+        relational_preservation_base, mixed_preservation_base, monkeypatch, kind, changed_target):
+    captured, _, prepare, validate, old_profile = _reviewed_source_use_child_case(
+        kind, relational_preservation_base, mixed_preservation_base)
+    binding = _reviewed_source_use_binding_fixture()
+    healthy = prepare(captured, **_reviewed_source_use_options(binding))
+    assert validate(captured, healthy, **_reviewed_source_use_options(binding)) == healthy
+    original_binding = deepcopy(binding)
+    other_cid = _reviewed_source_use_binding_fixture("fixture:late-other-use")["scope_record_cid"]
+    original_seal = corpus_contracts.seal_record
+    hits = []
+
+    def change_after_original_seal(value):
+        result = original_seal(value)
+        if value.get("schema") == owner.SCHEMA and value.get("profile") == old_profile + "+reviewed-source-use/v1":
+            hits.append(True)
+            changed = binding if changed_target == "caller" else value["source_use_binding"]
+            changed["scope_record_cid"] = other_cid
+        return result
+
+    monkeypatch.setattr(corpus_contracts, "seal_record", change_after_original_seal)
+    with pytest.raises(ValueError):
+        prepare(captured, source_use_binding=binding,
+            expected_source_use_binding_sha256=sha(canonical(original_binding)))
+    assert hits == [True]
+    assert (binding == original_binding) is (changed_target == "detached")
+
+
+@pytest.mark.parametrize("kind", ["object", "mixed"])
+def test_reviewed_source_use_child_late_identity_validator_replacement_refuses(
+        relational_preservation_base, mixed_preservation_base, monkeypatch, kind):
+    captured, _, prepare, validate, old_profile = _reviewed_source_use_child_case(
+        kind, relational_preservation_base, mixed_preservation_base)
+    binding = _reviewed_source_use_binding_fixture()
+    healthy = prepare(captured, **_reviewed_source_use_options(binding))
+    assert validate(captured, healthy, **_reviewed_source_use_options(binding)) == healthy
+    original_identity = owner._reviewed_source_use_identity
+    original_seal = corpus_contracts.seal_record
+    hits = []
+
+    def changed_identity(*args, **kwargs):
+        return original_identity(*args, **kwargs)
+
+    def replace_after_original_seal(value):
+        result = original_seal(value)
+        if value.get("schema") == owner.SCHEMA and value.get("profile") == old_profile + "+reviewed-source-use/v1":
+            hits.append(True)
+            monkeypatch.setattr(owner, "_reviewed_source_use_identity", changed_identity)
+        return result
+
+    monkeypatch.setattr(corpus_contracts, "seal_record", replace_after_original_seal)
+    with pytest.raises(ValueError):
+        prepare(captured, **_reviewed_source_use_options(binding))
+    assert hits == [True]

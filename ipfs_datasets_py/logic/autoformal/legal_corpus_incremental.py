@@ -82,9 +82,9 @@ def _owners():
     return incremental, passes, native
 
 
-def _owner_pins(incremental, passes, *, parent=False, manifest=None, reviewed=False):
+def _owner_pins(incremental, passes, *, parent=False, manifest=None, reviewed=False, instance_identity_profile=None):
     if reviewed:
-        return _reviewed_owner_pins(incremental, passes, manifest)
+        return _reviewed_owner_pins(incremental, passes, manifest, **_reviewed_identity_keywords(instance_identity_profile))
     native = _owners()[2]
     if parent:
         from ..integration.reasoning import legal_ir_obligations, legal_ir_schema_evolution, legal_ir_source_maps
@@ -291,19 +291,19 @@ def _parent_recipe_provenance(module, value):
     return value
 
 
-def _recipe(module, source, imports, contract, *, provenance=None, reviewed_provenance=None):
+def _recipe(module, source, imports, contract, *, provenance=None, reviewed_provenance=None, instance_identity_profile=None):
     result = {"module": module, "source_sha256": _sha(source.encode("utf-8")),
               "imports": imports, "contract_cid": contract["record_cid"]}
     if provenance is not None:
         result["provenance"] = _parent_recipe_provenance(module, provenance)
     if reviewed_provenance is not None:
-        result["reviewed_provenance"] = _reviewed_recipe_provenance(module, reviewed_provenance)
+        result["reviewed_provenance"] = _reviewed_recipe_provenance(module, reviewed_provenance, **_reviewed_identity_keywords(instance_identity_profile))
     return result
 
 
-def _facts(preparation, contract, *, parent=False, reviewed=False, graph=None):
+def _facts(preparation, contract, *, parent=False, reviewed=False, graph=None, instance_identity_profile=None):
     if reviewed:
-        return _reviewed_facts(preparation, contract, graph)
+        return _reviewed_facts(preparation, contract, graph, **_reviewed_identity_keywords(instance_identity_profile))
     manifest, files = preparation.to_dict(), dict(preparation.files)
     provenance = _parent_provenance(preparation) if parent else {}
     facts = []
@@ -327,8 +327,8 @@ def _facts(preparation, contract, *, parent=False, reviewed=False, graph=None):
     return facts
 
 
-def _parent_contract(contract, *, reviewed=False):
-    if (contract["profile"] != (REVIEWED_PROFILE if reviewed else PARENT_PROFILE) or type(contract["toolchain"]) is not str
+def _parent_contract(contract, *, reviewed=False, instance_identity_profile=None):
+    if (contract["profile"] != (_reviewed_profile(instance_identity_profile) if reviewed else PARENT_PROFILE) or type(contract["toolchain"]) is not str
             or not re.fullmatch(r"leanprover/lean4:v[0-9]+\.[0-9]+\.[0-9]+", contract["toolchain"])
             or contract["environment"] != {"LEAN_PATH": "compiled", "LEAN_NUM_THREADS": "1"}
             or contract["argv_recipe"] != ["installed-sibling-lean", "-o", "compiled/<module>.olean", "<module>.lean"]):
@@ -355,7 +355,7 @@ def _parent_contract(contract, *, reviewed=False):
     return lean[0]
 
 
-def _parent_execution_evidence(evidence, row, facts, process, contract, *, reviewed=False):
+def _parent_execution_evidence(evidence, row, facts, process, contract, *, reviewed=False, instance_identity_profile=None):
     """Validate historical sampled ownership internally; fresh scope uses its owner."""
     contracts.require_keys(evidence, EVIDENCE_FIELDS, "parent native execution evidence")
     module, source = row["module"], row["source"]
@@ -399,7 +399,7 @@ def _parent_execution_evidence(evidence, row, facts, process, contract, *, revie
     command = evidence["command"]
     wanted = ["-o", "compiled/" + module.replace(".", "/") + ".olean", module.replace(".", "/") + ".lean"]
     if (evidence["runtime"] != process.ToolRuntime.NATIVE.value or type(command) is not list
-            or len(command) != 4 or command[1:] != wanted or command[0] != _parent_contract(contract, reviewed=reviewed)
+            or len(command) != 4 or command[1:] != wanted or command[0] != _parent_contract(contract, reviewed=reviewed, instance_identity_profile=instance_identity_profile)
             or evidence["source_readback_sha256"] != _sha(source.encode())):
         _fail("native executed source/command evidence differs")
     needed, frontier = set(), list(row["imports"])
@@ -427,7 +427,7 @@ def _artifact_root(facts):
     return cid_for_dag_json({row["module"]: row["output"]["artifact_sha256"] for row in facts})
 
 
-def _previous(raw, expected_sha256, artifacts, *, parent=False, reviewed=False):
+def _previous(raw, expected_sha256, artifacts, *, parent=False, reviewed=False, instance_identity_profile=None):
     if raw is None:
         if expected_sha256 is not None or artifacts is not None:
             _fail("previous cache, independent pin and complete artifacts must be supplied together")
@@ -436,14 +436,14 @@ def _previous(raw, expected_sha256, artifacts, *, parent=False, reviewed=False):
     flags = _reviewed_flags() if reviewed else _parent_flags() if parent else FALSE_FLAGS
     fields = {"profile", "qualified", "execution_contract", "module_facts", "artifact_root_cid", *flags}
     value = contracts.validate_record(value, schema=REVIEWED_CACHE_SCHEMA if reviewed else PARENT_CACHE_SCHEMA if parent else CACHE_SCHEMA, fields=fields)
-    if (value["profile"] != (REVIEWED_PROFILE if reviewed else PARENT_PROFILE if parent else PROFILE) or value["qualified"] is not True
+    if (value["profile"] != (_reviewed_profile(instance_identity_profile) if reviewed else PARENT_PROFILE if parent else PROFILE) or value["qualified"] is not True
             or any(value[key] is not False for key in flags)):
         _fail("independently pinned qualified technical cache required")
     contract = contracts.validate_record(value["execution_contract"], schema=REVIEWED_CONTRACT_SCHEMA if reviewed else PARENT_CONTRACT_SCHEMA if parent else CONTRACT_SCHEMA, fields=CONTRACT_FIELDS)
-    if contract["profile"] != (REVIEWED_PROFILE if reviewed else PARENT_PROFILE if parent else PROFILE):
+    if contract["profile"] != (_reviewed_profile(instance_identity_profile) if reviewed else PARENT_PROFILE if parent else PROFILE):
         _fail("prior execution contract profile differs")
     if parent or reviewed:
-        _parent_contract(contract, reviewed=reviewed)
+        _parent_contract(contract, reviewed=reviewed, instance_identity_profile=instance_identity_profile)
     facts = value["module_facts"]
     if type(facts) is not list or not 1 <= len(facts) <= (shared.MAX_REVIEWED_PRESERVATION_MODULES if reviewed else 34 if parent else 130) or type(artifacts) is not dict or ((parent or reviewed) and len(artifacts) != len(facts)):
         _fail("bounded complete prior module/artifact population required")
@@ -466,7 +466,8 @@ def _previous(raw, expected_sha256, artifacts, *, parent=False, reviewed=False):
         if parent and provenance is None:
             _fail("complete parent semantic recipe required")
         recipe = _recipe(module, source, imports, contract, provenance=provenance,
-            reviewed_provenance=row["recipe"].get("reviewed_provenance") if reviewed else None)
+            reviewed_provenance=row["recipe"].get("reviewed_provenance") if reviewed else None,
+            instance_identity_profile=instance_identity_profile)
         if reviewed and "reviewed_provenance" not in recipe:
             _fail("complete reviewed unit/dependency provenance required")
         if row["recipe"] != recipe:
@@ -492,7 +493,8 @@ def _previous(raw, expected_sha256, artifacts, *, parent=False, reviewed=False):
         _reviewed_graph(facts) if reviewed else _parent_graph(facts)
         process = _parent_native()._owners()[3]
         for row in facts:
-            _parent_execution_evidence(row["output"]["execution_evidence"], row, by_module, process, contract, reviewed=reviewed)
+            _parent_execution_evidence(row["output"]["execution_evidence"], row, by_module, process, contract,
+                reviewed=reviewed, instance_identity_profile=instance_identity_profile)
     if value["artifact_root_cid"] != _artifact_root(facts):
         _fail("prior artifact root differs")
     return value
@@ -545,15 +547,16 @@ def _build_incremental_corpus(preparation, *, candidate_inputs=None, component_i
             or not 0 < operation_timeout_seconds <= 3600):
         _fail("finite whole-operation cooperative deadline required")
     reviewed = reviewed_inputs is not None
+    instance_identity_profile = reviewed_inputs.get("instance_identity_profile") if reviewed else None
     if reviewed and parent:
         _fail("reviewed mixed and parent profiles are distinct")
     strict = parent or reviewed
     if reviewed:
-        _reviewed_policy()
+        _reviewed_policy(**_reviewed_identity_keywords(instance_identity_profile))
     cache_schema = REVIEWED_CACHE_SCHEMA if reviewed else PARENT_CACHE_SCHEMA if parent else CACHE_SCHEMA
     contract_schema = REVIEWED_CONTRACT_SCHEMA if reviewed else PARENT_CONTRACT_SCHEMA if parent else CONTRACT_SCHEMA
     build_schema = REVIEWED_BUILD_SCHEMA if reviewed else PARENT_BUILD_SCHEMA if parent else BUILD_SCHEMA
-    profile = REVIEWED_PROFILE if reviewed else PARENT_PROFILE if parent else PROFILE
+    profile = _reviewed_profile(instance_identity_profile) if reviewed else PARENT_PROFILE if parent else PROFILE
     flags = _reviewed_flags() if reviewed else None
     started, deadline = time.monotonic(), time.monotonic() + timeout_seconds
     operation_deadline = started + operation_timeout_seconds if strict else deadline
@@ -564,10 +567,13 @@ def _build_incremental_corpus(preparation, *, candidate_inputs=None, component_i
     shared.joint_owner._check_directories(output.parent, allow_missing=True)
     if output.exists() or output.is_symlink():
         _fail("fresh incremental output directory required")
-    prior = _previous(previous_cache_raw, expected_previous_cache_sha256, previous_artifacts, parent=parent, reviewed=reviewed) if strict else None
+    prior = _previous(previous_cache_raw, expected_previous_cache_sha256, previous_artifacts, parent=parent, reviewed=reviewed,
+        instance_identity_profile=instance_identity_profile) if strict else None
     def replay(offered):
         _deadline(operation_deadline, cancellation)
         if reviewed:
+            if reviewed_inputs.get("instance_identity_profile") != instance_identity_profile:
+                _fail("explicit reviewed instance identity selection changed during replay")
             result = _reviewed_replay(offered, reviewed_inputs, expected_preparation_sha256, toolchain)
         elif parent:
             result = _parent_native().validate_parent_shared_definition_use_native_v1(offered,
@@ -586,6 +592,8 @@ def _build_incremental_corpus(preparation, *, candidate_inputs=None, component_i
         if shared.reviewed_preservation_corpus_sha256(checked) != expected_preparation_sha256:
             _fail("reviewed mixed snapshot differs from independently pinned preparation")
         reviewed_execution = _reviewed_execution_snapshot(reviewed_inputs)
+        if reviewed_execution.get("instance_identity_profile") != instance_identity_profile:
+            _fail("opening reviewed identity snapshot differs from explicit caller selection")
         _deadline(operation_deadline, cancellation)
         deadline = min(operation_deadline, time.monotonic() + timeout_seconds)
     elif parent:
@@ -600,7 +608,8 @@ def _build_incremental_corpus(preparation, *, candidate_inputs=None, component_i
     else:
         prior = _previous(previous_cache_raw, expected_previous_cache_sha256, previous_artifacts)
     incremental, passes, native = _owners()
-    owner_pins = _owner_pins(incremental, passes, parent=parent, reviewed=reviewed, manifest=checked.to_dict()) if strict else _owner_pins(incremental, passes)
+    owner_pins = _owner_pins(incremental, passes, parent=parent, reviewed=reviewed, manifest=checked.to_dict(),
+                instance_identity_profile=instance_identity_profile) if strict else _owner_pins(incremental, passes)
     _deadline(deadline, cancellation)
     # The two installed-toolchain version probes each have a five-second cap.
     if deadline - time.monotonic() < 10:
@@ -615,7 +624,7 @@ def _build_incremental_corpus(preparation, *, candidate_inputs=None, component_i
         "argv_recipe": ["installed-sibling-lean", "-o", "compiled/<module>.olean", "<module>.lean"],
         "environment": {"LEAN_PATH": "compiled", "LEAN_NUM_THREADS": "1"}})
     facts = _facts(checked, contract, parent=parent, reviewed=reviewed,
-        graph=reviewed_execution["graph"] if reviewed else None)
+        graph=reviewed_execution["graph"] if reviewed else None, instance_identity_profile=instance_identity_profile)
     by_module = {row["module"]: row for row in facts}
     artifacts = {} if prior is None else {name: raw for name, raw in previous_artifacts.items() if name in by_module}
     old_snapshot = None
@@ -703,7 +712,8 @@ def _build_incremental_corpus(preparation, *, candidate_inputs=None, component_i
                         "stdout": result.stdout, "stderr": result.stderr}
                     executed_facts = {name: {**fact, "output": state.get("compiled", {}).get(_key(name))}
                                       for name, fact in by_module.items()}
-                    _parent_execution_evidence(evidence, row, executed_facts, native.process, contract, reviewed=reviewed)
+                    _parent_execution_evidence(evidence, row, executed_facts, native.process, contract,
+                        reviewed=reviewed, instance_identity_profile=instance_identity_profile)
                     result_output["execution_evidence"] = evidence
             if passed:
                 artifacts[module] = raw
@@ -743,7 +753,8 @@ def _build_incremental_corpus(preparation, *, candidate_inputs=None, component_i
                 _fail("closing parent replay differs from frozen executed preparation")
             deadline = min(operation_deadline, deadline + time.monotonic() - replay_started)
         after_closure, after_raw = _toolchain_closure(executable, deadline, cancellation)
-        if closure != after_closure or closure_raw != after_raw or (_owner_pins(incremental, passes, parent=parent, reviewed=reviewed, manifest=checked.to_dict()) if strict else _owner_pins(incremental, passes)) != owner_pins:
+        if closure != after_closure or closure_raw != after_raw or (_owner_pins(incremental, passes, parent=parent, reviewed=reviewed, manifest=checked.to_dict(),
+                instance_identity_profile=instance_identity_profile) if strict else _owner_pins(incremental, passes)) != owner_pins:
             _fail("compiler closure or owner changed during native compilation")
         if any(_sha(Path(name).read_bytes()) != digest for name, digest in binaries.items()):
             _fail("native compiler executable changed during compilation")
@@ -813,7 +824,7 @@ def _build_incremental_corpus(preparation, *, candidate_inputs=None, component_i
             "implementation_pin_scope": "native-producer-closure-and-five-direct-LegalIR-framework-owners"})
         _deadline(operation_deadline, cancellation)
     if reviewed:
-        _reviewed_policy()
+        _reviewed_policy(**_reviewed_identity_keywords(instance_identity_profile))
         receipt = _reviewed_receipt(receipt, checked, reviewed_execution, expected_preparation_sha256,
             timeout_seconds, operation_timeout_seconds)
         _deadline(operation_deadline, cancellation)
@@ -844,7 +855,7 @@ def _build_incremental_corpus(preparation, *, candidate_inputs=None, component_i
     if strict:
         _deadline(operation_deadline, cancellation)
     if reviewed:
-        _reviewed_policy()
+        _reviewed_policy(**_reviewed_identity_keywords(instance_identity_profile))
     return receipt
 
 
@@ -887,6 +898,9 @@ REVIEWED_CACHE_SCHEMA = "legal-corpus-reviewed-mixed-direct-lean-cache/v3"
 REVIEWED_CONTRACT_SCHEMA = "legal-corpus-reviewed-mixed-direct-lean-execution-contract/v3"
 REVIEWED_BUILD_SCHEMA = "legal-corpus-reviewed-mixed-incremental-native-build/v3"
 REVIEWED_PROFILE = "verified-reviewed-mixed-preservation-olean-per-module/v3"
+REVIEWED_SOURCE_USE_IDENTITY_PROFILE = "reviewed-source-use/v1"
+REVIEWED_SOURCE_USE_BINDING_SCHEMA = "legal-native-reviewed-source-use-binding/v1"
+REVIEWED_SOURCE_USE_PROFILE = REVIEWED_PROFILE + "+reviewed-source-use/v1"
 _REVIEWED_ROOT = "LegalReviewedMixedNormPreservation"
 _REVIEWED_MODULE = re.compile(r"(?:LegalReviewedMixedNormPreservation|Legal(?:MixedRelational|Relational)AstPreservation\.(?:Prelude|Semantics|Instance[0-9a-f]{64}))\Z")
 _REVIEWED_IMPORT = re.compile(r"^import ((?:LegalReviewedMixedNormPreservation|Legal(?:MixedRelational|Relational)AstPreservation\.(?:Prelude|Semantics|Instance[0-9a-f]{64})))$", re.M)
@@ -901,7 +915,25 @@ _REVIEWED_DOMAINS = {
 _REVIEWED_PROVENANCE_FIELDS = {"module", "role", "contributors", "dependency_units", "dependency_record_cids"}
 
 
-def _reviewed_policy():
+def _reviewed_profile(instance_identity_profile):
+    if instance_identity_profile is None:
+        return REVIEWED_PROFILE
+    if type(instance_identity_profile) is not str or instance_identity_profile != "reviewed-source-use/v1":
+        _fail("explicit supported reviewed instance identity profile required")
+    return REVIEWED_SOURCE_USE_PROFILE
+
+
+def _reviewed_identity_keywords(instance_identity_profile):
+    _reviewed_profile(instance_identity_profile)
+    return {} if instance_identity_profile is None else {"instance_identity_profile": instance_identity_profile}
+
+
+def _reviewed_policy(*, instance_identity_profile=None):
+    _reviewed_profile(instance_identity_profile)
+    if (REVIEWED_SOURCE_USE_IDENTITY_PROFILE, REVIEWED_SOURCE_USE_BINDING_SCHEMA, REVIEWED_SOURCE_USE_PROFILE) != (
+            "reviewed-source-use/v1", "legal-native-reviewed-source-use-binding/v1",
+            "verified-reviewed-mixed-preservation-olean-per-module/v3+reviewed-source-use/v1"):
+        _fail("closed reviewed source-use identity domain differs")
     if (REVIEWED_CACHE_SCHEMA, REVIEWED_CONTRACT_SCHEMA, REVIEWED_BUILD_SCHEMA, REVIEWED_PROFILE,
             _REVIEWED_ROOT) != (
             "legal-corpus-reviewed-mixed-direct-lean-cache/v3",
@@ -919,7 +951,7 @@ def _reviewed_policy():
     owner = _parent_native()
     if not callable(getattr(owner, "validate_reviewed_norm_preservation_native_v3", None)):
         _fail("explicit reviewed V3 native validation interface required")
-    owner._reviewed_mixed_native_policy(shared)
+    owner._reviewed_mixed_native_policy(shared, **_reviewed_identity_keywords(instance_identity_profile))
     if _REVIEWED_DOMAINS != {
         "LegalRelationalAstPreservation": (
             "native_value_exact", "native_ast_closed", "denotation_matches_native",
@@ -938,13 +970,13 @@ def _reviewed_flags():
     return dict(flags)
 
 
-def _reviewed_owner_pins(incremental, passes, manifest):
+def _reviewed_owner_pins(incremental, passes, manifest, *, instance_identity_profile=None):
     from ..integration.reasoning import legal_ir_obligations, legal_ir_schema_evolution, legal_ir_source_maps
-    _reviewed_policy()
+    _reviewed_policy(**_reviewed_identity_keywords(instance_identity_profile))
     if _sha(Path(__file__).read_bytes()) != _SELF_PIN:
         _fail("reviewed incremental owner changed since import")
     owner = _parent_native()
-    return owner._reviewed_mixed_preservation_native_pins(owner._owners(), manifest) | {
+    return owner._reviewed_mixed_preservation_native_pins(owner._owners(), manifest, **_reviewed_identity_keywords(instance_identity_profile)) | {
         str(Path(module.__file__).resolve()): _sha(Path(module.__file__).read_bytes())
         for module in (incremental, passes, legal_ir_obligations, legal_ir_schema_evolution, legal_ir_source_maps)
     } | {str(Path(__file__).resolve()): _SELF_PIN}
@@ -956,7 +988,7 @@ def _reviewed_replay(preparation, inputs, expected_preparation_sha256, toolchain
         expected_preservation_sha256=expected_preparation_sha256,
         expected_graph_sha256=inputs["expected_graph_sha256"],
         expected_admission_sha256=inputs["expected_admission_sha256"],
-        toolchain=toolchain, **inputs["kwargs"])
+        toolchain=toolchain, **_reviewed_identity_keywords(inputs.get("instance_identity_profile")), **inputs["kwargs"])
 
 
 def _reviewed_execution_snapshot(inputs):
@@ -966,14 +998,20 @@ def _reviewed_execution_snapshot(inputs):
     supply execution provenance only, and must match both independent pins.
     """
     graph_owner, admission_owner, _ = shared._reviewed_mixed_preservation_owners()
-    detached, _ = admission_owner.norm._snapshot({
-        "graph": inputs["graph"], "admission": inputs["admission"]})
+    current = {"graph": inputs["graph"], "admission": inputs["admission"]}
+    if inputs.get("instance_identity_profile") is not None:
+        current["instance_identity_profile"] = inputs["instance_identity_profile"]
+    detached, _ = admission_owner.norm._snapshot(current)
     if (graph_owner.norm_definition_graph_sha256(detached["graph"]) != inputs["expected_graph_sha256"]
             or admission_owner.norm_content_adjudication_sha256(detached["admission"])
                 != inputs["expected_admission_sha256"]):
         _fail("opening reviewed execution snapshot differs from independent graph/admission pins")
-    return {**detached, "expected_graph_sha256": inputs["expected_graph_sha256"],
+    result = {**detached, "expected_graph_sha256": inputs["expected_graph_sha256"],
         "expected_admission_sha256": inputs["expected_admission_sha256"]}
+    if inputs.get("instance_identity_profile") is not None:
+        _reviewed_profile(detached["instance_identity_profile"])
+        result["instance_identity_profile"] = detached["instance_identity_profile"]
+    return result
 
 
 def _reviewed_role(module):
@@ -1035,9 +1073,13 @@ REVIEWED_UNIT_PROVENANCE_FIELDS_V3 = frozenset({
 })
 
 
-def _reviewed_unit_provenance_v3(row):
+def _reviewed_unit_provenance_v3(row, *, instance_identity_profile=None):
     from ..syntax_core import signatures
-    contracts.require_keys(row, REVIEWED_UNIT_PROVENANCE_FIELDS_V3, "complete reviewed V3 unit provenance")
+    _reviewed_profile(instance_identity_profile)
+    fields = REVIEWED_UNIT_PROVENANCE_FIELDS_V3
+    if instance_identity_profile is not None:
+        fields = fields | {"source_use_binding", "source_use_binding_sha256"}
+    contracts.require_keys(row, fields, "complete reviewed V3 unit provenance")
     ordinal = row["ordinal"]
     if type(ordinal) is not int or not 0 <= ordinal < shared.MAX_REVIEWED_PRESERVATION_UNITS:
         _fail("exact integer reviewed source ordinal required")
@@ -1062,6 +1104,16 @@ def _reviewed_unit_provenance_v3(row):
     if domain is None:
         _fail("existing reviewed child provenance domain required")
     profile, family, root, suffixes = domain
+    if instance_identity_profile is not None:
+        profile += "+reviewed-source-use/v1"
+        binding = {"schema": "legal-native-reviewed-source-use-binding/v1", **{key: row[key] for key in (
+            "unit_id", "source_version_cid", "source_occurrence_cid", "complete_ir_sha256",
+            "graph_unit_record_cid", "graph_ast_record_cid", "scope_record_cid", "interpretation_record_cid")}}
+        contracts.require_keys(row["source_use_binding"], set(binding), "exact reviewed source-use binding")
+        contracts.require_sha256(row["source_use_binding_sha256"], "reviewed source-use binding digest")
+        if (row["source_use_binding"] != binding
+                or row["source_use_binding_sha256"] != _sha(canonical_dag_json_bytes(binding))):
+            _fail("reviewed source-use binding must match the complete physical unit")
     if (row["child_preservation_profile"] != profile or row["child_family"] != family
             or type(row["instance_module"]) is not str
             or not re.fullmatch(re.escape(root) + r"\.Instance[0-9a-f]{64}", row["instance_module"])
@@ -1098,7 +1150,7 @@ def _reviewed_unit_provenance_v3(row):
     return row
 
 
-def _reviewed_recipe_provenance(module, value):
+def _reviewed_recipe_provenance(module, value, *, instance_identity_profile=None):
     contracts.require_keys(value, _REVIEWED_PROVENANCE_FIELDS, "reviewed native recipe provenance")
     role = _reviewed_role(module)
     if value["module"] != module or value["role"] != role:
@@ -1111,7 +1163,7 @@ def _reviewed_recipe_provenance(module, value):
     contributors, dependencies = value["contributors"], value["dependency_units"]
     for rows in (contributors, dependencies):
         for row in rows:
-            _reviewed_unit_provenance_v3(row)
+            _reviewed_unit_provenance_v3(row, **_reviewed_identity_keywords(instance_identity_profile))
         if len({row["unit_id"] for row in rows}) != len(rows):
             _fail("reviewed provenance cannot duplicate a physical unit")
     if role == "instance":
@@ -1129,8 +1181,12 @@ def _reviewed_recipe_provenance(module, value):
     return value
 
 
-def _reviewed_facts(preparation, contract, graph):
+def _reviewed_facts(preparation, contract, graph, *, instance_identity_profile=None):
     manifest, files = preparation.to_dict(), dict(preparation.files)
+    if (contract["profile"] != _reviewed_profile(instance_identity_profile)
+            or (manifest.get("instance_identity_profile") if instance_identity_profile is not None else None) != instance_identity_profile
+            or (instance_identity_profile is None and "instance_identity_profile" in manifest)):
+        _fail("current reviewed instance identity domain differs from explicit caller selection")
     units = manifest["units"]
     # Complete graph-unit identities include the common reviewed admission.
     # A correction may therefore invalidate an otherwise byte-identical instance
@@ -1166,7 +1222,8 @@ def _reviewed_facts(preparation, contract, graph):
         if imports != manifest["module_imports"][module]:
             _fail("reviewed source imports differ from current replayed manifest")
         result.append({"module": module, "source": source, "imports": imports,
-            "recipe": _recipe(module, source, imports, contract, reviewed_provenance=provenance), "output": None})
+            "recipe": _recipe(module, source, imports, contract, reviewed_provenance=provenance,
+                instance_identity_profile=instance_identity_profile), "output": None})
     _reviewed_graph(result)
     return result
 
@@ -1174,7 +1231,8 @@ def _reviewed_facts(preparation, contract, graph):
 def _reviewed_receipt(receipt, preparation, inputs, expected_preparation_sha256, timeout_seconds, operation_timeout_seconds):
     manifest = preparation.to_dict()
     return contracts.seal_record({**{key: value for key, value in receipt.items() if key not in {"record_cid", "cid_scope"}},
-        **_parent_native()._reviewed_mixed_preservation_receipt_binding(manifest, inputs["admission"]),
+        **_parent_native()._reviewed_mixed_preservation_receipt_binding(manifest, inputs["admission"],
+            **_reviewed_identity_keywords(inputs.get("instance_identity_profile"))),
         "expected_preparation_sha256": expected_preparation_sha256,
         "reviewed_graph_sha256": inputs["expected_graph_sha256"],
         "reviewed_admission_sha256": inputs["expected_admission_sha256"],
@@ -1193,18 +1251,21 @@ def _reviewed_receipt(receipt, preparation, inputs, expected_preparation_sha256,
 def build_incremental_reviewed_preservation_corpus_v3(preparation, graph, admission, *args,
         expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256, toolchain,
         lake_executable, output_directory, previous_cache_raw=None, expected_previous_cache_sha256=None,
-        previous_artifacts=None, timeout_seconds=60, operation_timeout_seconds=3600, cancellation=None, **kwargs):
+        previous_artifacts=None, timeout_seconds=60, operation_timeout_seconds=3600, cancellation=None, instance_identity_profile=None, **kwargs):
     """Replay complete current reviewed meaning; incrementally check its exact witnesses.
 
     This is the existing direct-Lean pass/runner algorithm in a separate domain.
     Cached proofs never replace current source, interpretation or revocation
     replay and neither this route nor a cache hit issues a release capability.
     """
+    _reviewed_profile(instance_identity_profile)
     for name, pin in (("preservation", expected_preservation_sha256), ("graph", expected_graph_sha256),
                       ("admission", expected_admission_sha256)):
         contracts.require_sha256(pin, "reviewed incremental " + name)
     inputs = {"graph": graph, "admission": admission, "args": args, "kwargs": kwargs,
         "expected_graph_sha256": expected_graph_sha256, "expected_admission_sha256": expected_admission_sha256}
+    if instance_identity_profile is not None:
+        inputs["instance_identity_profile"] = instance_identity_profile
     return _build_incremental_corpus(preparation, reviewed_inputs=inputs, expected_population=None,
         expected_preparation_sha256=expected_preservation_sha256, toolchain=toolchain,
         lake_executable=lake_executable, output_directory=output_directory,
