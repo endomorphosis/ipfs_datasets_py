@@ -85,6 +85,9 @@ class SupervisorLoopResult:
 WatchdogHook = Callable[
     ["SupervisorLoop", SupervisedChild, Mapping[str, Any]], SupervisorLoopDecision
 ]
+ExternalFrontierPreempt = Callable[
+    ["SupervisorLoop", SupervisedChild, Mapping[str, Any]], Optional[SupervisorLoopDecision]
+]
 SupervisorLoopConfigFactory = Callable[[argparse.Namespace], SupervisorLoopConfig]
 
 
@@ -119,11 +122,13 @@ class SupervisorLoop:
         config: SupervisorLoopConfig,
         *,
         watchdog_hook: Optional[WatchdogHook] = None,
+        external_frontier_preempt: Optional[ExternalFrontierPreempt] = None,
         sleep: Callable[[float], None] = time.sleep,
         monotonic: Callable[[], float] = time.monotonic,
     ) -> None:
         self.config = config
         self.watchdog_hook = watchdog_hook
+        self.external_frontier_preempt = external_frontier_preempt
         self.sleep = sleep
         self.monotonic = monotonic
         self.status = SupervisorStatusContext(
@@ -216,8 +221,36 @@ class SupervisorLoop:
             )
         return SupervisorLoopDecision.keep_running()
 
+    def _preempted_external_frontier(
+        self, child: SupervisedChild, current_status: Mapping[str, Any]
+    ) -> Optional[SupervisorLoopDecision]:
+        """Keep a retained external frontier ahead of the stale-heartbeat recycle.
+
+        The preempt hook may only continue. A completion claim, a finished-work
+        claim, or any other action falls through to the default watchdog.
+        """
+
+        hook = self.external_frontier_preempt
+        if hook is None:
+            return None
+        decision = hook(self, child, current_status)
+        if not isinstance(decision, SupervisorLoopDecision):
+            return None
+        detail = decision.detail
+        if (
+            decision.action == "continue"
+            and detail.get("external_frontier_retained") is True
+            and detail.get("completion_authority") is False
+            and detail.get("work_complete") is False
+        ):
+            return decision
+        return None
+
     def watchdog_decision(self, child: SupervisedChild) -> SupervisorLoopDecision:
         current_status = read_json(self.config.spec.resolve(self.config.spec.status_path))
+        preempted = self._preempted_external_frontier(child, current_status)
+        if preempted is not None:
+            return preempted
         decision = self.default_watchdog(child, current_status)
         if decision.action != "continue":
             return decision

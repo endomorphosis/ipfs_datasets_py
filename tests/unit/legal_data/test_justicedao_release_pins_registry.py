@@ -14,7 +14,7 @@ from ipfs_datasets_py.processors.legal_data.justicedao_release_registry import (
 _AMERICAN_MUNICIPAL_REVISION = "df0c0c405bf59cb948d1269dea29767a4712fb81"
 
 
-_WORLD_MUNICIPAL_NORM_REVISION = "6b89d5f27aac836be64ad7908329308d70ed66ed"
+_WORLD_MUNICIPAL_NORM_REVISION = "16398e555fd1c2724004904f828dee27dea5a9e5"
 
 
 def test_world_pins_stay_unreadable() -> None:

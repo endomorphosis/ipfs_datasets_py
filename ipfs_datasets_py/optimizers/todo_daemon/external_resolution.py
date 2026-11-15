@@ -4,7 +4,8 @@ A closed compiled lineage, a length-truncated spent phase, and an official
 release that is still missing are retained. A receipt from this module keeps
 completion authority false. It does not mark a task complete, spend a model
 call, invent a missing file, or open a campaign result on disk. The caller
-passes the evidence in the observation.
+passes the evidence in the observation, or the supervisor reads phase files
+it already owns under its state directory.
 """
 
 from __future__ import annotations
@@ -16,12 +17,18 @@ from typing import Any, Mapping
 SCHEMA = "ipfs_datasets_py.optimizers.todo_daemon.external-resolution@1"
 OBSERVATION_FILENAME = "external_resolution_observation.json"
 RECEIPT_FILENAME = "external_resolution_receipt.json"
+PHASE_DIRECTORY_NAME = "external_phases"
+EXTERNAL_PHASE_PREFIX = "EXTERNAL_PHASE "
 _DONE = {"completed", "complete", "done"}
+_BOARD_OPEN = {"pending", "ready", "blocked", "waiting", "todo"}
 _GATE_INCIDENTS = frozenset({"gate_fixed_point", "planned_work_blocked_frontier"})
 _RETAIN_ACTIONS = frozenset(
     {"retain_closed_lineage", "retain_truncated_phase", "retain_official_release"}
 )
 _OWNED_JSON_LIMIT = 1_000_000
+_PHASE_LINE_LIMIT = 100_000
+_PHASE_FILE_CAP = 64
+_LOG_TAIL_LIMIT = 262_144
 _TRUNCATED_REASON = (
     "both bounded calls returned finish_reason length and no closed proof; "
     "retain the spent phase, do not spend another call, and do not grant completion"
@@ -38,6 +45,146 @@ _REVIEW_REASON = (
     "dependency-ready planned work stays planned until a reviewed execution contract exists"
 )
 _OPEN_REASON = "open task is not an external retain"
+
+
+def safe_task_id(task_id: str) -> bool:
+    """True for a task id that can be one file name inside the phase directory."""
+
+    if not task_id or len(task_id) > 64 or task_id.startswith("."):
+        return False
+    return all(character.isalnum() or character in "-_." for character in task_id)
+
+
+def owned_task_document(task_id: str, payload: Mapping[str, Any] | None) -> dict[str, Any] | None:
+    """Return a retainable task record, or None when the payload is not one.
+
+    A completion claim, a proof body, or a drifted contract set is not retained.
+    The returned record does not grant completion authority.
+    """
+
+    if not safe_task_id(task_id) or not isinstance(payload, Mapping):
+        return None
+    stated = str(payload.get("task_id") or task_id).strip()
+    if stated != task_id:
+        return None
+    status = str(payload.get("status") or "").strip().lower()
+    lineage = payload.get("lineage") if isinstance(payload.get("lineage"), Mapping) else None
+    phase = payload.get("phase_result") if isinstance(payload.get("phase_result"), Mapping) else None
+    if phase is None and lineage is None:
+        if truncated_spent_phase(payload) or waiting_official_release(payload):
+            phase = payload
+            status = "pending"
+        else:
+            return None
+    elif status != "planned" and status not in _BOARD_OPEN:
+        status = "pending"
+    if status == "planned" and closed_lineage_match(task_id, lineage):
+        return {
+            "task_id": task_id,
+            "status": "planned",
+            "lineage": dict(lineage or {}),
+            "completion_authority": False,
+        }
+    if isinstance(phase, Mapping) and truncated_spent_phase(phase):
+        return {
+            "task_id": task_id,
+            "status": status or "pending",
+            "phase_result": dict(phase),
+            "completion_authority": False,
+        }
+    if isinstance(phase, Mapping) and waiting_official_release(phase):
+        return {
+            "task_id": task_id,
+            "status": status or "pending",
+            "phase_result": dict(phase),
+            "completion_authority": False,
+        }
+    return None
+
+
+def extract_external_phase_line(text: str) -> dict[str, Any] | None:
+    """Return the single EXTERNAL_PHASE object in a log tail.
+
+    Zero lines or more than one line are ignored. This does not open a path
+    named inside the line.
+    """
+
+    found: list[dict[str, Any]] = []
+    for line in text.splitlines():
+        stripped = line.strip()
+        if not stripped.startswith(EXTERNAL_PHASE_PREFIX):
+            continue
+        body = stripped[len(EXTERNAL_PHASE_PREFIX) :].strip()
+        if not body or len(body) > _PHASE_LINE_LIMIT:
+            return None
+        try:
+            payload = json.loads(body)
+        except json.JSONDecodeError:
+            return None
+        if not isinstance(payload, dict):
+            return None
+        found.append(payload)
+        if len(found) > 1:
+            return None
+    return found[0] if len(found) == 1 else None
+
+
+def external_phase_from_log_tail(raw: bytes) -> dict[str, Any] | None:
+    """Decode one owned log tail and return its single external-phase object."""
+
+    if len(raw) > _LOG_TAIL_LIMIT:
+        raw = raw[-_LOG_TAIL_LIMIT :]
+    return extract_external_phase_line(raw.decode("utf-8", errors="replace"))
+
+
+def assemble_owned_phase_observation(state_dir: Path) -> dict[str, Any] | None:
+    """Build an observation from phase files the supervisor owns.
+
+    Only direct ``external_phases/*.json`` children are read. A symlink, an
+    oversized file, or a file outside that directory is ignored. A file that
+    is not one of the three external shapes stays in the observation as
+    reviewable work, so it cannot be skipped while the others are retained.
+    """
+
+    directory = state_dir / PHASE_DIRECTORY_NAME
+    try:
+        if not directory.is_dir() or directory.is_symlink():
+            return None
+        directory_resolved = directory.resolve()
+        children = sorted(directory.iterdir(), key=lambda item: item.name)
+    except OSError:
+        return None
+    tasks: list[dict[str, Any]] = []
+    for child in children[:_PHASE_FILE_CAP]:
+        try:
+            if (
+                not child.is_file()
+                or child.is_symlink()
+                or child.suffix != ".json"
+                or child.parent.resolve() != directory_resolved
+            ):
+                continue
+        except OSError:
+            continue
+        document = read_owned_json(child)
+        if document is None or not safe_task_id(child.stem):
+            continue
+        owned = owned_task_document(child.stem, document)
+        if owned is not None:
+            tasks.append(owned)
+            continue
+        phase = document.get("phase_result")
+        tasks.append(
+            {
+                "task_id": child.stem,
+                "status": "pending",
+                "phase_result": phase if isinstance(phase, dict) else document,
+                "completion_authority": False,
+            }
+        )
+    if not tasks:
+        return None
+    return {"tasks": tasks}
 
 
 def read_owned_json(path: Path, *, limit: int = _OWNED_JSON_LIMIT) -> dict[str, Any] | None:

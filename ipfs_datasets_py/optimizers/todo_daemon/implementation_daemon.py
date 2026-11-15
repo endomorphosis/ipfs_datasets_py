@@ -18,6 +18,13 @@ from typing import Any
 from .core import pid_alive as _shared_pid_alive
 from .core import process_args as _shared_process_args
 from .engine import atomic_write_json as _shared_atomic_write_json
+from .external_resolution import (
+    PHASE_DIRECTORY_NAME,
+    external_phase_from_log_tail,
+    owned_task_document,
+    read_owned_json,
+    safe_task_id,
+)
 from .runner import TodoDaemonHooks, TodoDaemonRunner
 
 REPO_ROOT = Path.cwd()
@@ -806,6 +813,14 @@ class PortalImplementationDaemon:
                     ),
                 }
                 self._record_event("implementation_skipped", implementation_result)
+            elif self._owned_external_phase(selected.task_id) is not None:
+                implementation_result = {
+                    "skipped": True,
+                    "reason": "external_phase_retained",
+                    "task_id": selected.task_id,
+                    "completion_authority": False,
+                }
+                self._record_event("implementation_skipped", implementation_result)
             else:
                 implementation_result = self._run_implementation(selected, state)
         self._record_event(
@@ -946,6 +961,7 @@ class PortalImplementationDaemon:
                 )
                 if not validation_result.get("passed", False):
                     effective_returncode = int(validation_result.get("returncode") or 1)
+            effective_returncode = self._apply_external_phase(task, log_path, effective_returncode)
             if effective_returncode == 0:
                 todo_update_result = self._mark_task_completed_in_todo(task.task_id)
             finished_at = utc_now()
@@ -977,6 +993,7 @@ class PortalImplementationDaemon:
             state.last_implementation_finished_at = finished_at
             state.last_implementation_returncode = 124
             state.last_implementation_log_path = str(log_path)
+            self._capture_external_phase(task, log_path)
             self._mark_implementation_finished(state, finished_at=finished_at)
             state.save(self.state_path)
             result = {
@@ -995,6 +1012,71 @@ class PortalImplementationDaemon:
                     lock_path.unlink()
             except OSError:
                 logger.warning("Failed to remove implementation lock %s", lock_path)
+
+    def _external_phase_path(self, task_id: str) -> Path | None:
+        if not safe_task_id(task_id):
+            return None
+        return self.state_path.parent / PHASE_DIRECTORY_NAME / f"{task_id}.json"
+
+    def _owned_external_phase(self, task_id: str) -> dict[str, Any] | None:
+        path = self._external_phase_path(task_id)
+        if path is None:
+            return None
+        return owned_task_document(task_id, read_owned_json(path))
+
+    def _capture_external_phase(self, task: PortalTask, log_path: Path) -> dict[str, Any] | None:
+        """Record one external phase printed by the implementation this daemon owns.
+
+        The log must stay inside the implementation log directory. A matching
+        phase is stored under the state directory and is not a completion.
+        """
+
+        destination = self._external_phase_path(task.task_id)
+        if destination is None:
+            return None
+        try:
+            log_root = self.implementation_log_dir.resolve()
+            resolved = log_path.resolve()
+            if resolved != log_root and log_root not in resolved.parents:
+                return None
+            if not resolved.is_file() or resolved.is_symlink():
+                return None
+            size = resolved.stat().st_size
+            with resolved.open("rb") as handle:
+                if size > 262144:
+                    handle.seek(size - 262144)
+                raw = handle.read(262144)
+        except OSError:
+            return None
+        payload = external_phase_from_log_tail(raw)
+        owned = owned_task_document(task.task_id, payload)
+        if owned is None:
+            return None
+        try:
+            if destination.is_symlink():
+                return None
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            if destination.parent.is_symlink():
+                return None
+            write_json_atomic(destination, owned)
+        except OSError:
+            return None
+        self._record_event(
+            "external_phase_retained",
+            {
+                "task_id": task.task_id,
+                "status": owned.get("status"),
+                "completion_authority": False,
+            },
+        )
+        return owned
+
+    def _apply_external_phase(self, task: PortalTask, log_path: Path, returncode: int) -> int:
+        if self._capture_external_phase(task, log_path) is None:
+            return returncode
+        if returncode == 0:
+            return 75
+        return returncode
 
     def _mark_task_completed_in_todo(self, task_id: str) -> dict[str, Any]:
         todo_path = self.todo_path
@@ -1413,6 +1495,8 @@ class PortalImplementationDaemon:
             int(merge_result["returncode"]) if merge_result.get("returncode") is not None else None
         )
         state.last_merge_error = str(merge_result.get("stderr") or merge_result.get("reason") or "")
+        returncode = self._apply_external_phase(task, log_path, returncode)
+        state.last_implementation_returncode = returncode
         if returncode == 0:
             todo_update_result = self._mark_task_completed_in_todo(task.task_id)
         self._mark_implementation_finished(state, finished_at=finished_at)

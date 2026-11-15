@@ -19,6 +19,7 @@ from .core import ManagedDaemonSpec
 from .external_resolution import (
     OBSERVATION_FILENAME,
     RECEIPT_FILENAME,
+    assemble_owned_phase_observation,
     correct_completion_claims,
     read_owned_json,
     resolve_external_frontier,
@@ -120,7 +121,17 @@ class PortalImplementationSupervisor:
 
     def run_once(self) -> dict[str, Any]:
         state = PortalTaskState.load(self.config.state_path)
-        receipt = self.classify_external_resolution()
+        retained = self._retained_external_decision(state, now_ts=time.time())
+        if retained is not None:
+            return {
+                "stuck": False,
+                "retained": True,
+                "reason": retained.reason,
+                "active_task_id": state.active_task_id,
+                "completed_count": state.completed_count,
+                "completion_authority": False,
+                "work_complete": False,
+            }
         if self.config.until_complete and self._state_is_complete(state):
             self._record_event(
                 "supervisor_check",
@@ -150,16 +161,6 @@ class PortalImplementationSupervisor:
                 "active_task_id": state.active_task_id,
                 "completion_authority": False,
             }
-        if self._receipt_retains_frontier(receipt):
-            return {
-                "stuck": False,
-                "retained": True,
-                "reason": str(receipt.get("reason") or ""),
-                "active_task_id": state.active_task_id,
-                "completed_count": state.completed_count,
-                "completion_authority": False,
-                "work_complete": False,
-            }
         self._record_event(
             "supervisor_check",
             {
@@ -178,6 +179,7 @@ class PortalImplementationSupervisor:
         loop = SupervisorLoop(
             self.build_supervisor_loop_config(),
             watchdog_hook=self._supervisor_loop_watchdog_decision,
+            external_frontier_preempt=self._external_frontier_preempt,
         )
         result = loop.run()
         self.restart_count = result.restart_count
@@ -249,6 +251,9 @@ class PortalImplementationSupervisor:
         _current_status: dict[str, Any],
     ) -> SupervisorLoopDecision:
         state = PortalTaskState.load(self.config.state_path)
+        retained = self._retained_external_decision(state, now_ts=time.time())
+        if retained is not None:
+            return retained
         if self.config.until_complete and self._state_is_complete(state):
             return SupervisorLoopDecision.stop("backlog_complete", status="completed")
         stuck, reason = self.is_stuck(state, now_ts=time.time())
@@ -257,6 +262,43 @@ class PortalImplementationSupervisor:
         self.rewrite_strategy(state, reason)
         return SupervisorLoopDecision.recycle(
             reason, detail={"active_task_id": state.active_task_id}
+        )
+
+    def _external_frontier_preempt(
+        self,
+        _loop: SupervisorLoop,
+        _child: Any,
+        _current_status: dict[str, Any],
+    ) -> SupervisorLoopDecision | None:
+        """Return the retain decision before a stale heartbeat can recycle it.
+
+        A log stall or an unresolved merge still falls through so the normal
+        watchdog can recycle those. This does not grant completion.
+        """
+
+        state = PortalTaskState.load(self.config.state_path)
+        return self._retained_external_decision(state, now_ts=time.time())
+
+    def _retained_external_decision(
+        self, state: PortalTaskState, *, now_ts: float
+    ) -> SupervisorLoopDecision | None:
+        receipt = self.classify_external_resolution()
+        if self._implementation_log_stall_reason(state, now_ts=now_ts):
+            return None
+        if self._unresolved_merge_reason(state):
+            return None
+        if not self._receipt_retains_frontier(receipt) or not isinstance(receipt, dict):
+            return None
+        reason = str(receipt.get("reason") or "")
+        return SupervisorLoopDecision(
+            action="continue",
+            reason=reason,
+            detail={
+                "external_frontier_retained": True,
+                "completion_authority": False,
+                "work_complete": False,
+                "reason": reason,
+            },
         )
 
     def _implementation_attempt_is_active(self, state: PortalTaskState, *, now_ts: float) -> bool:
@@ -322,15 +364,18 @@ class PortalImplementationSupervisor:
         """Retain an owned external-gate observation. Never grants completion.
 
         The observation is ``external_resolution_observation.json`` in the
-        supervisor state directory. A closed lineage, a truncated spent phase,
-        and a missing official release are recorded on the receipt and are not
-        stalls. A completion claim on a phase result stays reviewable. This
-        does not edit a campaign result, a board, or a file outside that
-        directory.
+        supervisor state directory. When that file is absent, phase files the
+        daemon recorded under ``external_phases/`` are used instead. A closed
+        lineage, a truncated spent phase, and a missing official release are
+        recorded on the receipt and are not stalls. A completion claim on a
+        phase result stays reviewable. This does not edit a campaign result,
+        a board, or a file outside that directory.
         """
 
         path = self._external_observation_path()
         document = read_owned_json(path)
+        if document is None:
+            document = assemble_owned_phase_observation(self.config.state_dir)
         if document is None:
             self._correct_existing_resolution_receipt()
             return None
