@@ -1635,6 +1635,12 @@ _REVIEWED_SAMPLED_V5_COOPERATIVE_PRODUCER_SHA256 = (
 _REVIEWED_SAMPLED_V5_COOPERATIVE_SDK_SHA256 = (
     "4df3f7f2c6d2952550dd78153b579f4e928e9f119e697bded8a7dc001021f8d2"
 )
+# This finite map selects source generations only. Every existing V5 request,
+# terminal, parent, source, native, process and storage predicate still applies.
+_COMPLETED_LEDGER_SOURCE_PAIRS = {
+    "86c8c151e559e4f4e665c475348e3a81665f008ba69298b3829d474b4873035f": "4df3f7f2c6d2952550dd78153b579f4e928e9f119e697bded8a7dc001021f8d2",
+    "7ce92270e5a203b4bea00451997712ba5255ba3552728721d6457486157d57e3": "860d25af0ab629c48bb7a2c7356c7690c09fdfe81b53777777c0a41384f1b293",
+}
 _SAMPLED_V5_REQUEST_SCHEMA = "owned-validation-request/v5"
 _SAMPLED_V5_SCRATCH_SCHEMA = "owned-validation-ordinary-scratch-live/v1"
 _SAMPLED_V5_PARENT_SCHEMA = "source-held-owned-validation-v5-observation/v1"
@@ -1698,6 +1704,8 @@ def _sampled_source_held_v5_parent(parent, request, terminal, producer, request_
                 "4df3f7f2c6d2952550dd78153b579f4e928e9f119e697bded8a7dc001021f8d2",
             "86c8c151e559e4f4e665c475348e3a81665f008ba69298b3829d474b4873035f":
                 "4df3f7f2c6d2952550dd78153b579f4e928e9f119e697bded8a7dc001021f8d2",
+            "7ce92270e5a203b4bea00451997712ba5255ba3552728721d6457486157d57e3":
+                "860d25af0ab629c48bb7a2c7356c7690c09fdfe81b53777777c0a41384f1b293",
         }
         need(type(producer["sha256"]) is str and producer["sha256"] in pairs,
              "manual private snapshot finite producer/SDK pair required")
@@ -1745,6 +1753,8 @@ def _sampled_source_held_v5_parent(parent, request, terminal, producer, request_
         _REVIEWED_SAMPLED_V5_COOPERATIVE_PRODUCER_SHA256: _REVIEWED_SAMPLED_V5_COOPERATIVE_SDK_SHA256,
         "86c8c151e559e4f4e665c475348e3a81665f008ba69298b3829d474b4873035f":
             "4df3f7f2c6d2952550dd78153b579f4e928e9f119e697bded8a7dc001021f8d2",
+        "7ce92270e5a203b4bea00451997712ba5255ba3552728721d6457486157d57e3":
+            "860d25af0ab629c48bb7a2c7356c7690c09fdfe81b53777777c0a41384f1b293",
     }
     need(producer["sha256"] in reviewed_pairs
         and producer["path"] == str(root / "scripts/ops/legal_ir/run_owned_validation.py")
@@ -3213,10 +3223,11 @@ def _private_completed_ledger_disposition_fields_v1(row, receipt, helper, attemp
              "cryptographic_execution_attestation", "reconstructed_Popen_handle",
              "arbitrary_descendant_completeness_claimed")),
          "private completed-ledger disposition lost failed original-owner provenance")
-    cli = "86c8c151e559e4f4e665c475348e3a81665f008ba69298b3829d474b4873035f"
-    sdk = "4df3f7f2c6d2952550dd78153b579f4e928e9f119e697bded8a7dc001021f8d2"
+    cli = proof.get("producer_sha256")
+    sdk = _COMPLETED_LEDGER_SOURCE_PAIRS.get(cli) if type(cli) is str else None
     host = "3d1086df85ca33394c71f848e6bb45f954d369d2e977b9b73df92941f9ff4075"
-    need(proof.get("producer_sha256") == proof.get("private_subject_producer_sha256") == cli
+    need(sdk is not None
+         and proof.get("producer_sha256") == proof.get("private_subject_producer_sha256") == cli
          and proof.get("owner_sdk_sha256") == proof.get("private_subject_sdk_sha256") == sdk
          and proof.get("private_subject_resource_owner_sha256") == host
          and proof.get("private_subject_pin_scope") == "original_declared_pytest_file_pins_not_execution_attestation",
@@ -3376,6 +3387,8 @@ def _completed_watchdog_disposition_fields(row, receipt, helper, attempt):
             "4df3f7f2c6d2952550dd78153b579f4e928e9f119e697bded8a7dc001021f8d2",
         "86c8c151e559e4f4e665c475348e3a81665f008ba69298b3829d474b4873035f":
             "4df3f7f2c6d2952550dd78153b579f4e928e9f119e697bded8a7dc001021f8d2",
+        "7ce92270e5a203b4bea00451997712ba5255ba3552728721d6457486157d57e3":
+            "860d25af0ab629c48bb7a2c7356c7690c09fdfe81b53777777c0a41384f1b293",
     }
     owner = proof.get("producer_sha256")
     subject = proof.get("private_subject_producer_sha256")
@@ -3450,10 +3463,11 @@ def _completed_ledger_finalization_original_scope_v1(request, producer, *, _priv
         need(snapshot == root, "completed-ledger canonical cwd required")
     pins = request.get("source_sha256")
     need(request.get("schema") == _SAMPLED_V5_REQUEST_SCHEMA
-         and producer["sha256"] == "86c8c151e559e4f4e665c475348e3a81665f008ba69298b3829d474b4873035f"
+         and type(producer.get("sha256")) is str
+         and producer["sha256"] in _COMPLETED_LEDGER_SOURCE_PAIRS
          and type(pins) is dict and pins.get(str(path)) == producer["sha256"]
          and pins.get(str(root / "ipfs_datasets_py/optimizers/logic_theorem_optimizer/validation_run_resources.py"))
-             == "4df3f7f2c6d2952550dd78153b579f4e928e9f119e697bded8a7dc001021f8d2"
+             == _COMPLETED_LEDGER_SOURCE_PAIRS[producer["sha256"]]
          and pins.get(str(root / "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py"))
              == "3d1086df85ca33394c71f848e6bb45f954d369d2e977b9b73df92941f9ff4075",
          "completed-ledger canonical cwd or exact original source generation differs")

@@ -4398,3 +4398,64 @@ def test_registered_adaptive_genuine_return_precedes_tail_error_and_same_end_rea
     assert case['ledger'].read_bytes() == before
     assert all(watched['paths'][name].read_bytes() == value for name,value in history.items())
     assert native.resource_operation_deadline() is None
+
+
+
+def _auto_completed_current_v5_select_fixture(monkeypatch):
+    from tests.unit.optimizers.logic_theorem_optimizer import test_autoencoder_resource_recovery as unit
+    unit._current_v5_pair_select_completed_fixture(monkeypatch)
+
+
+def test_auto_completed_current_V5_pair_registration_runs_existing_API0_then_single_closeout(
+        auto_completed_setup_v1, monkeypatch, auto_completed_captured_producers_v1):
+    _auto_completed_current_v5_select_fixture(monkeypatch)
+    test_auto_completed_registered_wiring_prepares_API0_then_existing_single_closeout_next_cycle(
+        auto_completed_setup_v1, monkeypatch, auto_completed_captured_producers_v1)
+
+
+@pytest.mark.parametrize('damage', ['cross-sdk', 'missing-sdk', 'V6-schema', 'V6-field', 'unqualified-parent'])
+def test_auto_completed_current_V5_registration_refuses_unqualified_input_before_candidate(
+        auto_completed_setup_v1, monkeypatch, auto_completed_captured_producers_v1, damage):
+    _auto_completed_current_v5_select_fixture(monkeypatch)
+    case, watched, declaration, outcome_path, outcome = _auto_completed_registered_watch_case_v1(
+        auto_completed_setup_v1, monkeypatch, auto_completed_captured_producers_v1)
+    selection = json.loads(Path(declaration['selection_ref']['path']).read_bytes())
+    request_path = Path(selection['request']['path'])
+    request = json.loads(request_path.read_bytes())
+    sdk = str(Path(declaration['producer_ref']['path']).parents[3] /
+        'ipfs_datasets_py/optimizers/logic_theorem_optimizer/validation_run_resources.py')
+    if damage == 'cross-sdk': request['source_sha256'][sdk] = '4df3f7f2c6d2952550dd78153b579f4e928e9f119e697bded8a7dc001021f8d2'
+    elif damage == 'missing-sdk': request['source_sha256'].pop(sdk)
+    elif damage == 'V6-schema': request['schema'] = 'owned-validation-request/v6'
+    elif damage == 'V6-field': request['startup_clock_profile'] = {'schema': 'unqualified'}
+    else:
+        old_parent = Path(selection['parent']['path'])
+        wrong_parent = request_path.parent / 'A-parent-source-closeout@2.py'
+        wrong_parent.write_bytes(old_parent.read_bytes())
+        wrong_parent.chmod(0o600)
+        selection['parent'] = pin(wrong_parent)
+    selection['request'] = save(request_path, request)
+    declaration['selection_ref'] = save(Path(declaration['selection_ref']['path']), selection)
+    before = case['ledger'].read_bytes()
+    with pytest.raises(ValueError):
+        cli._capacity_current_registered_original_v1(declaration, recovery)
+    assert case['ledger'].read_bytes() == before
+    assert not any(watched['paths'][name].exists() for name in watched['paths'])
+
+
+@pytest.mark.parametrize('damage', ['owner-sdk', 'subject-sdk', 'subject-producer'])
+def test_auto_completed_current_V5_compact_summary_rejects_mixed_source_tuple(
+        auto_completed_setup_v1, monkeypatch, auto_completed_captured_producers_v1, damage):
+    _auto_completed_current_v5_select_fixture(monkeypatch)
+    case = _auto_private_ledger_case_v1(auto_completed_setup_v1, monkeypatch, auto_completed_captured_producers_v1)
+    entry = _auto_private_ledger_entry_v1(case)
+    record, kwargs = cli._capacity_current_completed_candidate_data_v1(entry, recovery, lambda: 5.0)
+    ready = case['auto_unit']._private_completed_ledger_call(case, **kwargs)
+    proof = ready['proof']
+    key = {'owner-sdk': 'owner_sdk_sha256', 'subject-sdk': 'private_subject_sdk_sha256',
+           'subject-producer': 'private_subject_producer_sha256'}[damage]
+    proof[key] = '86c8c151e559e4f4e665c475348e3a81665f008ba69298b3829d474b4873035f' if damage == 'subject-producer' else '4df3f7f2c6d2952550dd78153b579f4e928e9f119e697bded8a7dc001021f8d2'
+    before = case['ledger'].read_bytes()
+    with pytest.raises(ValueError):
+        cli._capacity_current_private_completed_ledger_evidence_v1(entry, ready, 'proof')
+    assert case['ledger'].read_bytes() == before

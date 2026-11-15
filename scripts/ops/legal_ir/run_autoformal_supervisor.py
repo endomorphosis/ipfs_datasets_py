@@ -2069,7 +2069,7 @@ def _capacity_recovery_source_lease_v1(module, lease_path):
 
 
 CAPACITY_CURRENT_PROFILE = "root-v4-sampled-validation/v1"
-CAPACITY_CURRENT_API_SHA256 = "1508f37dc562b20ab5a91221088eb3731d5c4439ba8e21a12c6b7bda73919f6b"
+CAPACITY_CURRENT_API_SHA256 = "83709f35e9373f4dfc48aa7c330853b86aa3e6726bcaab1df8e625ecc6dc677c"
 CAPACITY_CURRENT_POLICY_SHA256 = "f07cb14289fcb6275e4497dcc36be0dcf8bfc3dc87531ff7a9537eb85fdcc661"
 CAPACITY_CURRENT_PRODUCERS = frozenset((
     "8a5f43b09892fbafb21060f98f546b8df3bec5135488939d9734f346577c203b",
@@ -2394,9 +2394,15 @@ _CAPACITY_COMPLETED_PRODUCERS = frozenset((
     "280bf5bcb4d1cdc42ba91d5e1d71d6c867fb6e575833957eca7fc79d5e3228a4",
     "269eca283dbe83548602a102f31d81eed1232b85d1dfbeb861cde9d17edb0d4f",
     "86c8c151e559e4f4e665c475348e3a81665f008ba69298b3829d474b4873035f",
+    "7ce92270e5a203b4bea00451997712ba5255ba3552728721d6457486157d57e3",
 ))
 
 
+# A known source tuple does not relax the existing V5 custody/profile gates.
+_CAPACITY_COMPLETED_LEDGER_SOURCE_PAIRS = {
+    "86c8c151e559e4f4e665c475348e3a81665f008ba69298b3829d474b4873035f": "4df3f7f2c6d2952550dd78153b579f4e928e9f119e697bded8a7dc001021f8d2",
+    "7ce92270e5a203b4bea00451997712ba5255ba3552728721d6457486157d57e3": "860d25af0ab629c48bb7a2c7356c7690c09fdfe81b53777777c0a41384f1b293",
+}
 CAPACITY_PRIVATE_COMPLETED_LEDGER_RECOVERY_PROFILE = "private-snapshot-source-held-V5-completed-command-ledger-finalization/v1"
 CAPACITY_PRIVATE_COMPLETED_LEDGER_READINESS_SCHEMA = "private-snapshot-completed-ledger-validation-recovery-readiness/v1"
 CAPACITY_PRIVATE_COMPLETED_LEDGER_RECEIPT_SCHEMA = "explicit-private-snapshot-completed-ledger-validation-reconciliation/v1"
@@ -2477,10 +2483,11 @@ def _capacity_current_private_completed_ledger_evidence_v1(entry, result, proof_
         and proof.get("storage_limit_transition") == "unchanged/v1"
         and proof.get("original_resource_owner_sha256") is None,
         "private completed-ledger compact storage generation differs")
-    need(proof.get("producer_sha256") == proof.get("private_subject_producer_sha256")
-            == "86c8c151e559e4f4e665c475348e3a81665f008ba69298b3829d474b4873035f"
-        and proof.get("owner_sdk_sha256") == proof.get("private_subject_sdk_sha256")
-            == "4df3f7f2c6d2952550dd78153b579f4e928e9f119e697bded8a7dc001021f8d2"
+    producer = proof.get("producer_sha256")
+    sdk = _CAPACITY_COMPLETED_LEDGER_SOURCE_PAIRS.get(producer) if type(producer) is str else None
+    need(sdk is not None
+        and proof.get("private_subject_producer_sha256") == producer
+        and proof.get("owner_sdk_sha256") == proof.get("private_subject_sdk_sha256") == sdk
         and proof.get("private_subject_resource_owner_sha256")
             == "3d1086df85ca33394c71f848e6bb45f954d369d2e977b9b73df92941f9ff4075"
         and proof.get("private_subject_pin_scope") == "original_declared_pytest_file_pins_not_execution_attestation",
@@ -2620,7 +2627,7 @@ def _capacity_current_completed_candidate_data_v1(entry, recovery, remaining):
             ("stdout_ref", "stdout_raw_utf8"), ("producer_ref", "producer_source_utf8")):
         need(type(proof.get(raw_key)) is str and proof[raw_key].encode("utf-8")
             == _checked_job_packet_bytes_v1(entry[field]), "completed proof is not the configured original bytes")
-    allowed_producers = ({"86c8c151e559e4f4e665c475348e3a81665f008ba69298b3829d474b4873035f"}
+    allowed_producers = (_CAPACITY_COMPLETED_LEDGER_SOURCE_PAIRS
         if ledger_finalization else _CAPACITY_COMPLETED_PRODUCERS)
     need(entry["producer_ref"]["sha256"] in allowed_producers
         and pins["expected_producer_sha256"] == entry["producer_ref"]["sha256"]
@@ -2861,13 +2868,18 @@ def _capacity_current_registered_original_v1(declaration, recovery):
     need(packet.is_absolute() and packet.resolve(strict=True) == packet
         and selection['request']['path'] == str(packet / 'request.json')
         and selection['parent']['path'] == str(packet / 'run-original-source-held-owner-v02-acquired-v5.py')
-        and declaration['producer_ref']['sha256'] == '86c8c151e559e4f4e665c475348e3a81665f008ba69298b3829d474b4873035f',
+        and declaration['producer_ref']['sha256'] in _CAPACITY_COMPLETED_LEDGER_SOURCE_PAIRS,
         'exact currently supported registered source-held D original required')
     request = _capacity_recovery_json(selection['request'])
-    need(request.get('schema') == 'owned-validation-request/v5'
+    need('startup_clock_profile' not in request
+        and request.get('schema') == 'owned-validation-request/v5'
         and request.get('process_scope') == 'sampled_birth_bound_descendants'
         and request.get('source_sha256', {}).get(declaration['producer_ref']['path'])
-            == declaration['producer_ref']['sha256'], 'registered original request/producer differs')
+            == declaration['producer_ref']['sha256']
+        and request.get('source_sha256', {}).get(str(Path(declaration['producer_ref']['path']).parents[3]
+            / 'ipfs_datasets_py/optimizers/logic_theorem_optimizer/validation_run_resources.py'))
+            == _CAPACITY_COMPLETED_LEDGER_SOURCE_PAIRS[declaration['producer_ref']['sha256']],
+        'registered original request/producer/SDK differs')
     outcome_path = packet / ('Root-original-completion-' + selection['request']['sha256'] + '-outcome.json')
     if not os.path.lexists(outcome_path):
         return dict(status='registered_original_wait_pending', original_refs=None)
@@ -3064,9 +3076,9 @@ def _capacity_current_prepare_closed_ledger_candidate_v1(original_refs, register
     recovery._sampled_cleanup_deadline()  # Borrow the existing end; create none.
     remaining()
     api = Path(recovery.__file__)
-    _checked_job_packet_bytes_v1(dict(path=str(api), bytes=261256,
+    _checked_job_packet_bytes_v1(dict(path=str(api), bytes=262198,
         sha256=CAPACITY_CURRENT_API_SHA256))
-    need(CAPACITY_CURRENT_API_SHA256 == '1508f37dc562b20ab5a91221088eb3731d5c4439ba8e21a12c6b7bda73919f6b',
+    need(CAPACITY_CURRENT_API_SHA256 == '83709f35e9373f4dfc48aa7c330853b86aa3e6726bcaab1df8e625ecc6dc677c',
         'candidate preparation requires the exact existing proof owner')
     need(type(original_refs) is dict and set(original_refs) == {'recovery_profile',
         'parent_ref', 'request_ref', 'stdout_ref', 'producer_ref'}

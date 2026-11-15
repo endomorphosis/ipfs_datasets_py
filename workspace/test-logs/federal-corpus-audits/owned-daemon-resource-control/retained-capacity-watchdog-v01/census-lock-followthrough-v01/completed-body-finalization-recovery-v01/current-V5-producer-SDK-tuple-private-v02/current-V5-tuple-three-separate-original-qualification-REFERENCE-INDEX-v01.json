@@ -1,0 +1,124 @@
+{
+  "at": "2026-11-15T19:55:16.896327+00:00",
+  "coverage": "The distinct selected functions across three separately completed originals are exactly map78bb:15/4 +9/3 +21/6. This joins evidence references; it does not create a45-case single original or whole-module qualification.",
+  "declared_selection": {
+    "bytes": 5703,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/retained-capacity-watchdog-v01/census-lock-followthrough-v01/completed-body-finalization-recovery-v01/current-V5-producer-SDK-tuple-private-v02/GREEN-current-V5-tuple-new24-retained21-DATA-v02-current-compatible-retained.json",
+    "sha256": "78bb7214b6012d799c801c153f4a6f2bb1f1c1c56904e965dcc0a292532e63a3"
+  },
+  "evidence": {
+    "actual_RED6_intended_failure_and_closure": {
+      "bytes": 8996,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/retained-capacity-watchdog-v01/census-lock-followthrough-v01/completed-body-finalization-recovery-v01/current-V5-producer-SDK-tuple-private-v02/ordinary-RED-current-V5-tuple-all-original16MiB-v02-after-pre-SDK-admission-refusal/independent-actual48287-RED6-intended-failures-full-closure-retained-storage-review-v01.json",
+      "sha256": "5cd6ffcc7ad8ce0f95897296aac5045be751cacda6d5b11745010999d2184322"
+    },
+    "actual_production_adoption": {
+      "bytes": 4704,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/retained-capacity-watchdog-v01/census-lock-followthrough-v01/completed-body-finalization-recovery-v01/current-V5-producer-SDK-tuple-private-v02/actual-TWO-PRODUCTION-sources-adoption-after-RED6-v01.json",
+      "sha256": "54557320a4b202f1fc00cac0e866fe1a45d6b8c7f143c0b47d01f10ac91f0d70"
+    },
+    "actual_test_adoption": {
+      "bytes": 4678,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/retained-capacity-watchdog-v01/census-lock-followthrough-v01/completed-body-finalization-recovery-v01/current-V5-producer-SDK-tuple-private-v02/actual-TWO-TESTS-only-adoption-before-RED-v01.json",
+      "sha256": "359807e3b0b4f0afec8b61bb098983bcf7a2a608f334c3934c0a890dda78d062"
+    },
+    "bounded_concrete_three_packet_gate": {
+      "bytes": 14781,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/retained-capacity-watchdog-v01/census-lock-followthrough-v01/completed-body-finalization-recovery-v01/current-V5-producer-SDK-tuple-private-v02/independent-actual-PROD2-and-three-current217-GREEN-packets-bounded-review-v01.json",
+      "sha256": "d9f9c77c02efac4e7c3601c40d009073da5a9905ed09757bb3d07de7007a52ce"
+    },
+    "source4_material": {
+      "bytes": 7710,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/retained-capacity-watchdog-v01/census-lock-followthrough-v01/completed-body-finalization-recovery-v01/current-V5-producer-SDK-tuple-private-v02/private-current-V5-tuple-four-source-MATERIAL-v02.json",
+      "sha256": "0cc5c52096b65431739e29f114f429afc78eab8484e1343254404b6c6d3e010f"
+    },
+    "source4_static_protocol_gate": {
+      "bytes": 11499,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/retained-capacity-watchdog-v01/census-lock-followthrough-v01/completed-body-finalization-recovery-v01/current-V5-producer-SDK-tuple-private-v02/independent-current-V5-finite-tuple-four-source-test-first-bounded-static-review-v01.json",
+      "sha256": "fdf5c0fb6611f0f34477ad40ed8d485f6127416dc3303a3f1a3e5553b3743b69"
+    }
+  },
+  "limits_of_this_index": {
+    "no_V6_or_unknown_parent_acceptance": true,
+    "no_legal_Lean_model_training_or_corpus_qualification": true,
+    "no_live_OLD_source_service_or_configuration_action": true,
+    "no_new_queue_or_backlog": true,
+    "no_pooled_original_qualification": true,
+    "no_qualification_transferred_to_other_source_or_runtime_protocol": true,
+    "no_whole_module_or_all_runtime_controls_qualification": true,
+    "original_failed_RED_storage_retained_nondurable": true,
+    "retained21_known_PID_births_absent_in_second_postdrain_read": true
+  },
+  "parts": [
+    {
+      "distinct_original_tool_session": 1419,
+      "independent_actual_closure": {
+        "bytes": 87216,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/retained-capacity-watchdog-v01/census-lock-followthrough-v01/completed-body-finalization-recovery-v01/current-V5-producer-SDK-tuple-private-v02/ordinary-GREEN-current-V5-tuple-api-new-original16MiB-v01/independent-actual1419-GREEN-API15-full-closure-and-durable-storage-review-v01.json",
+        "sha256": "a9830a073a6b12a86731f10e21a3551f5625f9db6d0b8f76c753f91d3f955ab0"
+      },
+      "partition": "api-new",
+      "selected_cases": 15,
+      "selected_functions": 4
+    },
+    {
+      "distinct_original_tool_session": 88871,
+      "independent_actual_closure": {
+        "bytes": 7433,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/retained-capacity-watchdog-v01/census-lock-followthrough-v01/completed-body-finalization-recovery-v01/current-V5-producer-SDK-tuple-private-v02/ordinary-GREEN-current-V5-tuple-watch-new-original16MiB-v01/independent-actual88871-GREEN-watch9-full-closure-and-durable-storage-review-v01.json",
+        "sha256": "eff28637efb33747d3b09b7ee00919485564e626ad6449186e2480152307184b"
+      },
+      "partition": "watch-new",
+      "selected_cases": 9,
+      "selected_functions": 3
+    },
+    {
+      "distinct_original_tool_session": 82069,
+      "independent_actual_closure": {
+        "bytes": 7713,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/retained-capacity-watchdog-v01/census-lock-followthrough-v01/completed-body-finalization-recovery-v01/current-V5-producer-SDK-tuple-private-v02/ordinary-GREEN-current-V5-tuple-retained-original16MiB-v01/independent-actual82069-GREEN-retained21-full-closure-and-durable-storage-review-v01.json",
+        "sha256": "367e6df6ed15b1c28044cb14fd6da07d9b1bccdfbaec478ca2f4cdc6beb16f8f"
+      },
+      "partition": "retained",
+      "selected_cases": 21,
+      "selected_functions": 6
+    }
+  ],
+  "reviewer": "/root/independent_current_inventory",
+  "schema": "legal-ir-current-V5-tuple-three-separate-original-qualification-reference-index/v1",
+  "scope": "References-only index for the exact current producer7ce/SDK860 finite V5 tuple software correction, including retained legacy tuple controls. Each original keeps its own qualification, source epoch, resource closure and storage result.",
+  "source4_roles": [
+    {
+      "role": "recovery_API",
+      "source_reference": {
+        "bytes": 262198,
+        "path": "/tmp/datasets-publish-main-20261114/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_resource_recovery.py",
+        "sha256": "83709f35e9373f4dfc48aa7c330853b86aa3e6726bcaab1df8e625ecc6dc677c"
+      }
+    },
+    {
+      "role": "watcher",
+      "source_reference": {
+        "bytes": 277948,
+        "path": "/tmp/datasets-publish-main-20261114/scripts/ops/legal_ir/run_autoformal_supervisor.py",
+        "sha256": "3ccc6de6b62b08aeb40c3168dc2d538a8a2a5221100f8748c7d96cdb1deb1cc7"
+      }
+    },
+    {
+      "role": "recovery_API_owning_tests",
+      "source_reference": {
+        "bytes": 631253,
+        "path": "/tmp/datasets-publish-main-20261114/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_resource_recovery.py",
+        "sha256": "30cb1199b8a1f2741d3a635999439536411e6f391a3a64aa2e1474cb56d1183d"
+      }
+    },
+    {
+      "role": "watcher_owning_tests",
+      "source_reference": {
+        "bytes": 280251,
+        "path": "/tmp/datasets-publish-main-20261114/tests/unit/optimizers/logic_theorem_optimizer/test_retained_validation_capacity_recovery.py",
+        "sha256": "d0be4a2ab73d033d0567fabc61a981d76c6f6cc91f24f485260a5112e0e65b50"
+      }
+    }
+  ]
+}

@@ -7012,6 +7012,106 @@
         "separate_recovery_cases": 54,
         "separate_watcher_cases": 49,
         "single_combined_rerun": false
+      },
+      "current_V5_finite_pair_software_20261115": {
+        "actual_current_pair_failed_claim_reconciled": false,
+        "canonical_only_sources": [
+          "83709f35",
+          "3ccc6de6",
+          "30cb1199",
+          "d0be4a2a"
+        ],
+        "current_pair": [
+          "7ce92270",
+          "860d25af"
+        ],
+        "legal_model_Lean_or_whole_USCode_claim": false,
+        "live_cutover_actual_ref": null,
+        "live_cutover_completed": false,
+        "live_independent_readback_ref": null,
+        "live_natural_cycle_ref": null,
+        "qualification_evidence_ID": "current-V5-producer-SDK-tuple-software45-20261115",
+        "qualification_reference": {
+          "bytes": 8415,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/retained-capacity-watchdog-v01/census-lock-followthrough-v01/completed-body-finalization-recovery-v01/current-V5-producer-SDK-tuple-private-v02/current-V5-tuple-three-separate-original-qualification-REFERENCE-INDEX-v01.json",
+          "sha256": "a28bcd41337f223b94ee436a48b9cd2fff353b5409629cba2c366a86fa75d020"
+        },
+        "separate_original_scopes": [
+          {
+            "actual_original": 1419,
+            "cases": 15,
+            "functions": 4,
+            "partition": "api-new"
+          },
+          {
+            "actual_original": 88871,
+            "cases": 9,
+            "functions": 3,
+            "partition": "watch-new"
+          },
+          {
+            "actual_original": 82069,
+            "cases": 21,
+            "functions": 6,
+            "partition": "retained"
+          }
+        ],
+        "status": "CANONICAL_FINITE_V5_PAIR_SOFTWARE45_QUALIFIED_LIVE_DELIVERY_PENDING",
+        "unique_selected_cases": 45,
+        "whole_functions": 13,
+        "whole_module_qualified": false,
+        "qualification_source_epoch": "captured217_at_each_closed_original; no later peer transition requalification",
+        "single_45_case_original": false,
+        "Main_owning_test_postclose_transition": {
+          "old_SHA256_prefix": "7d3",
+          "observed_new_SHA256": "a4a4cef24c702f998e03c1a0e38443d07e2916d10ddabe4261ea2ae237a2f120",
+          "actual_publication_ref": {
+            "bytes": 8686965,
+            "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/ordinary-at2-current-nativeV3-semantic-merge-private-v02/SDK49-split-original16MiB-inputs-INERT-v01/SDK46-current-exact-epoch-INERT-v06/PID1-closeout-ledger-test-only-Source1-private-v01/actual-SDK46-PID1-ledger-test-only-Source1-v01/original-Source-CAS.json",
+            "sha256": "3d90730c55816b6b74338026847ee99a6652218d3ba4c868810ff67af14ed7b6"
+          },
+          "independent_postclose_readback_ref": {
+            "bytes": 8687145,
+            "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/ordinary-at2-current-nativeV3-semantic-merge-private-v02/SDK49-split-original16MiB-inputs-INERT-v01/SDK46-current-exact-epoch-INERT-v06/PID1-closeout-ledger-test-only-Source1-private-v01/actual-SDK46-PID1-ledger-test-only-Source1-v01/separate-original-Source-READ.json",
+            "sha256": "c1a9d29130da1d590f5ad305936acc4c0bda608baf92a7eaf11edf6412ce70b5"
+          },
+          "status": "AUTHENTICATED_EXACT_ONE_FILE_POSTCLOSE_TRANSITION_WITHOUT_QUALIFICATION_TRANSFER",
+          "qualification_transferred_to_current217": false,
+          "independent_transition_review": {
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/retained-capacity-watchdog-v01/census-lock-followthrough-v01/completed-body-finalization-recovery-v01/current-V5-producer-SDK-tuple-private-v02/current217-peer-qualification-adapter-private-v04/independent-exact-A-test7d3-to-a4a-postclose-Source-transition-evidence-review-v01.json",
+            "bytes": 8278,
+            "sha256": "08865c61702067437a36e90947569ecfea52f9e8f46a6e3ee2d93561143c0917"
+          }
+        },
+        "private_DATA36_followthrough": {
+          "actual_original": 23361,
+          "actual_outcome_ref": {
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/retained-capacity-watchdog-v01/census-lock-followthrough-v01/completed-body-finalization-recovery-v01/current-V5-producer-SDK-tuple-private-v02/current217-peer-qualification-adapter-private-v04/ordinary-private-current217-DATA36-current222-original16MiB-v01/independent-actual23361-private-DATA36-fixture-failure-full-closure-retained-storage-review-v01.json",
+            "bytes": 12292,
+            "sha256": "77137bc11ee2ff850389c881927b8e883d89ed60e429f2e6eb7ec8f5086e9348"
+          },
+          "passed": 35,
+          "failed": 1,
+          "errors": 0,
+          "whole36_qualified": false,
+          "partial35_qualification": false,
+          "own_storage_claim_bytes": 16777216,
+          "own_storage_claim_status": "retained",
+          "fixture_only_static_review": {
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/retained-capacity-watchdog-v01/census-lock-followthrough-v01/completed-body-finalization-recovery-v01/current-V5-producer-SDK-tuple-private-v02/current217-peer-qualification-adapter-private-v04/independent-DATA36-compact-ledger-fixture-only-delta-static-review-v01.json",
+            "bytes": 7325,
+            "sha256": "2268a5bb1f6521a06eacc1eaa68cf3b3143f9bbfa603bd4a37bbccc0e303555b"
+          },
+          "fixture_only_material": {
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/retained-capacity-watchdog-v01/census-lock-followthrough-v01/completed-body-finalization-recovery-v01/current-V5-producer-SDK-tuple-private-v02/current217-peer-qualification-adapter-private-v04/private-current217-qualification-finite-controls-fixture-correction-MATERIAL-v03.json",
+            "bytes": 4565,
+            "sha256": "0ce9778f250fccf65851a68ad7907189be86ce63c0df63e52ea898a8d49bdca5"
+          },
+          "corrected_original_result_ref": null,
+          "operational_qualification": false,
+          "future_DATA53_result_ref": null,
+          "future_corrected_controls_status": "PRIVATE_UNRUN_NO_QUALIFICATION"
+        }
       }
     },
     {
@@ -7952,6 +8052,106 @@
         "new_cases": 22,
         "old_failed_claims_released": false,
         "retained_cases": 4
+      },
+      "current_V5_finite_pair_software_20261115": {
+        "actual_current_pair_failed_claim_reconciled": false,
+        "canonical_only_sources": [
+          "83709f35",
+          "3ccc6de6",
+          "30cb1199",
+          "d0be4a2a"
+        ],
+        "current_pair": [
+          "7ce92270",
+          "860d25af"
+        ],
+        "legal_model_Lean_or_whole_USCode_claim": false,
+        "live_cutover_actual_ref": null,
+        "live_cutover_completed": false,
+        "live_independent_readback_ref": null,
+        "live_natural_cycle_ref": null,
+        "qualification_evidence_ID": "current-V5-producer-SDK-tuple-software45-20261115",
+        "qualification_reference": {
+          "bytes": 8415,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/retained-capacity-watchdog-v01/census-lock-followthrough-v01/completed-body-finalization-recovery-v01/current-V5-producer-SDK-tuple-private-v02/current-V5-tuple-three-separate-original-qualification-REFERENCE-INDEX-v01.json",
+          "sha256": "a28bcd41337f223b94ee436a48b9cd2fff353b5409629cba2c366a86fa75d020"
+        },
+        "separate_original_scopes": [
+          {
+            "actual_original": 1419,
+            "cases": 15,
+            "functions": 4,
+            "partition": "api-new"
+          },
+          {
+            "actual_original": 88871,
+            "cases": 9,
+            "functions": 3,
+            "partition": "watch-new"
+          },
+          {
+            "actual_original": 82069,
+            "cases": 21,
+            "functions": 6,
+            "partition": "retained"
+          }
+        ],
+        "status": "CANONICAL_FINITE_V5_PAIR_SOFTWARE45_QUALIFIED_LIVE_DELIVERY_PENDING",
+        "unique_selected_cases": 45,
+        "whole_functions": 13,
+        "whole_module_qualified": false,
+        "qualification_source_epoch": "captured217_at_each_closed_original; no later peer transition requalification",
+        "single_45_case_original": false,
+        "Main_owning_test_postclose_transition": {
+          "old_SHA256_prefix": "7d3",
+          "observed_new_SHA256": "a4a4cef24c702f998e03c1a0e38443d07e2916d10ddabe4261ea2ae237a2f120",
+          "actual_publication_ref": {
+            "bytes": 8686965,
+            "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/ordinary-at2-current-nativeV3-semantic-merge-private-v02/SDK49-split-original16MiB-inputs-INERT-v01/SDK46-current-exact-epoch-INERT-v06/PID1-closeout-ledger-test-only-Source1-private-v01/actual-SDK46-PID1-ledger-test-only-Source1-v01/original-Source-CAS.json",
+            "sha256": "3d90730c55816b6b74338026847ee99a6652218d3ba4c868810ff67af14ed7b6"
+          },
+          "independent_postclose_readback_ref": {
+            "bytes": 8687145,
+            "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/ordinary-at2-current-nativeV3-semantic-merge-private-v02/SDK49-split-original16MiB-inputs-INERT-v01/SDK46-current-exact-epoch-INERT-v06/PID1-closeout-ledger-test-only-Source1-private-v01/actual-SDK46-PID1-ledger-test-only-Source1-v01/separate-original-Source-READ.json",
+            "sha256": "c1a9d29130da1d590f5ad305936acc4c0bda608baf92a7eaf11edf6412ce70b5"
+          },
+          "status": "AUTHENTICATED_EXACT_ONE_FILE_POSTCLOSE_TRANSITION_WITHOUT_QUALIFICATION_TRANSFER",
+          "qualification_transferred_to_current217": false,
+          "independent_transition_review": {
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/retained-capacity-watchdog-v01/census-lock-followthrough-v01/completed-body-finalization-recovery-v01/current-V5-producer-SDK-tuple-private-v02/current217-peer-qualification-adapter-private-v04/independent-exact-A-test7d3-to-a4a-postclose-Source-transition-evidence-review-v01.json",
+            "bytes": 8278,
+            "sha256": "08865c61702067437a36e90947569ecfea52f9e8f46a6e3ee2d93561143c0917"
+          }
+        },
+        "private_DATA36_followthrough": {
+          "actual_original": 23361,
+          "actual_outcome_ref": {
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/retained-capacity-watchdog-v01/census-lock-followthrough-v01/completed-body-finalization-recovery-v01/current-V5-producer-SDK-tuple-private-v02/current217-peer-qualification-adapter-private-v04/ordinary-private-current217-DATA36-current222-original16MiB-v01/independent-actual23361-private-DATA36-fixture-failure-full-closure-retained-storage-review-v01.json",
+            "bytes": 12292,
+            "sha256": "77137bc11ee2ff850389c881927b8e883d89ed60e429f2e6eb7ec8f5086e9348"
+          },
+          "passed": 35,
+          "failed": 1,
+          "errors": 0,
+          "whole36_qualified": false,
+          "partial35_qualification": false,
+          "own_storage_claim_bytes": 16777216,
+          "own_storage_claim_status": "retained",
+          "fixture_only_static_review": {
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/retained-capacity-watchdog-v01/census-lock-followthrough-v01/completed-body-finalization-recovery-v01/current-V5-producer-SDK-tuple-private-v02/current217-peer-qualification-adapter-private-v04/independent-DATA36-compact-ledger-fixture-only-delta-static-review-v01.json",
+            "bytes": 7325,
+            "sha256": "2268a5bb1f6521a06eacc1eaa68cf3b3143f9bbfa603bd4a37bbccc0e303555b"
+          },
+          "fixture_only_material": {
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/retained-capacity-watchdog-v01/census-lock-followthrough-v01/completed-body-finalization-recovery-v01/current-V5-producer-SDK-tuple-private-v02/current217-peer-qualification-adapter-private-v04/private-current217-qualification-finite-controls-fixture-correction-MATERIAL-v03.json",
+            "bytes": 4565,
+            "sha256": "0ce9778f250fccf65851a68ad7907189be86ce63c0df63e52ea898a8d49bdca5"
+          },
+          "corrected_original_result_ref": null,
+          "operational_qualification": false,
+          "future_DATA53_result_ref": null,
+          "future_corrected_controls_status": "PRIVATE_UNRUN_NO_QUALIFICATION"
+        }
       }
     },
     {
@@ -15238,6 +15438,35 @@
       "root": "ipfs_datasets",
       "scope": "Exact two-file source delivery of the original two-case local CLI metadata qualification; later unrelated dependency epochs are not requalified.",
       "status": "qualified_within_recorded_scope"
+    },
+    {
+      "id": "current-V5-producer-SDK-tuple-software45-20261115",
+      "observed_bytes": 8415,
+      "observed_sha256": "a28bcd41337f223b94ee436a48b9cd2fff353b5409629cba2c366a86fa75d020",
+      "path": "workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/retained-capacity-watchdog-v01/census-lock-followthrough-v01/completed-body-finalization-recovery-v01/current-V5-producer-SDK-tuple-private-v02/current-V5-tuple-three-separate-original-qualification-REFERENCE-INDEX-v01.json",
+      "required_for_catalog_check": false,
+      "root": "datasets_repository",
+      "scope": "45 distinct selected cases/13 whole functions in three separate API15/4, watcher9/3 and retained21/6 originals at their captured217 cutoff, canonical recovery8370/watcher3ccc/tests30cb/d0be and finite V5 pair7ce/860. Each own16MiB closed and released durably; REDa312 stays failed/retained. Later DATA36 remains35PASS1fixtureFAIL with its own16MiB retained; static fixture correction is not a passing rerun. Main owning-test7d3→a4a4 has authenticated one-file postclose Source transition0886, without qualification transfer; corrected DATA53 stays private/unrun. LiveOLD1508/27049cfg0b7c/Source29 and unresolved adapters/enrollment remain separate; no graph/legal/model/Lean/corpus qualification.",
+      "status": "qualified_selected_software_scope_live_delivery_pending",
+      "portable_transport": {
+        "schema": "selected-evidence-portable-transport-reference/v1",
+        "transport_only": true,
+        "manifest": {
+          "root": "datasets_repository",
+          "path": "docs/autoformalization/evidence/legal-ir-current-v5-supervisor-source4-selected-evidence-20261115.json",
+          "observed_bytes": 961793,
+          "observed_sha256": "5983c6184d4deb9a0bc9116c1827306d7e64cd3ded2b5a0bc5dd1dc79fe3e45e"
+        },
+        "archive": {
+          "root": "datasets_repository",
+          "path": "docs/autoformalization/evidence/legal-ir-current-v5-supervisor-source4-selected-evidence-20261115.zip",
+          "observed_bytes": 2653596,
+          "observed_sha256": "94d6ae3b8a2680f939b8bbee3235a957083c1e0aa2a65f502851484e383ccde4"
+        },
+        "original_full9_is_historical_context_not_transport_identity": true,
+        "UNRUN53_preparations_grant_no_qualification": true,
+        "new_qualification_or_operational_authority": false
+      }
     }
   ]
 }
