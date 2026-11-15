@@ -1,5 +1,16 @@
 # Training and experiment history
 
+## G14 legacy-parser software evidence preserves runtime and corpus holds — 2026-11-15
+
+The existing embedded observation owner referenced two import-scope constants that it had never defined. The intended physical-R CLI4 probe therefore stopped with two setup errors in the legacy parser before reaching the proposed CLI4 call. That failed 16MiB claim stays retained and nondurable; it is not a CLI4 feature reproduction.
+
+The minimal fix adds only the archived-import and read-only-import scope literals already defined by the unchanged driver (289 bytes). All owner function bodies remain identical. Original Source2 adoption and a separate independent readback bind the two current A source files. No new flag, schema, backend, import permission or resource authority is introduced.
+
+A fresh original generic run passed 14 selected software controls in 0.399 seconds: 12 new scope/matching/no-effects/count-guard cases and 2 existing parser/backend-refusal regressions, with zero failures/errors/skips. The 211 declared source pins remained exact; this is not proof of all runtime import origins. Original Source R+A, Native, sampled-process and genuine-wait custody closed in 155.635 seconds before the initial 420-second cutoff. The run durably released its own 16MiB promise after 29 sealed rows plus the seal, 30 files / 142,436 bytes.
+
+These are constructor and literal-validation controls. They do not execute native database observation, qualify the physical-R/namespace port, reproduce CLI4 CALL failures, or grant model, statutory, Lean, corpus, SDK or Source-generation admission. CPU1, memory1536MiB, process4, productive300, shared Source60, initial acceptance420 and ledger60 stay unchanged, with no automatic retry or deadline renewal. Peer sections, 119 owners, 24 task IDs/states and runtime/private-asset holds are preserved. [Exact selected 14 evidence](../../../../workspace/test-logs/federal-corpus-audits/legal-ir-native-owner-import-scope-G14-qualified-20261115-v01/qualification-summary.json).
+
+
 ## V4 complete-context capacity refusal with public tokenizer — 2026-11-15
 
 The original public-tokenizer/inert-backend attempt **12754** ended with **one failed case, zero passes and zero skips**, in **34.68 seconds**; the actual terminal exit was **1**. Complete rich context exceeded the unchanged **4096-token** bound and refused before backend generation. No exact overflow-token count was measured. Source, Native validation-resource and process custody closed, while its **16 MiB storage promise remains retained**. Earlier failures, source identities and receipts remain intact. [Original unchanged failure evidence](../../../../docs/autoformalization/evidence/legal-ir-v4-public-tokenizer-context-refusal-20261115.json).

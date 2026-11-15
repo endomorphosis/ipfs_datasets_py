@@ -9394,7 +9394,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-11-15T03:00:19.396084+00:00",
+  "last_updated_at_utc": "2026-11-15T04:06:36.109864+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -14920,6 +14920,16 @@
       "root": "datasets_repository",
       "scope": "Fresh current3R source batch; exact13functions/56 software cases in explicit198 source frontier with original Source/Native/process closure. No all-import/old155/Native Lean/realUSCode/model/corpus transfer.",
       "status": "qualified_current_selected_R56_source_only_software_controls"
+    },
+    {
+      "id": "legal-ir-native-owner-import-scope-G14-qualified-20261115-v01",
+      "observed_bytes": 20881,
+      "observed_sha256": "8ebd2d70a1f68c2c0202b44860d7695d9a336f21bbb06f88d97295378a0ca21e",
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-native-owner-import-scope-G14-qualified-20261115-v01/qualification-summary.json",
+      "required_for_catalog_check": false,
+      "root": "datasets_repository",
+      "scope": "Exact2A literal-constant fix, audited Source2 and fresh14 selected legacy-constructor software controls; prior2setupErrors retained, noCLI4/nativeobserver/physicalR/model/legal/runtime credit.",
+      "status": "qualified_selected_G14_scope_literal_software_controls_only"
     }
   ]
 }
