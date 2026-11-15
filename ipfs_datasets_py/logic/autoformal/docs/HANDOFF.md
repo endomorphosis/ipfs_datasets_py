@@ -73,6 +73,37 @@ Original Source R+A, Native, sampled-process and genuine-wait custody closed in 
 This publication preserves all current peer sections, 119 owners, 24 task IDs/states, retained failures and private-asset/runtime holds. Source-generation, delegated immutable@2, actual live SDK cleanup, full-import qualification, native Lean and real corpus/model/training/legal validation remain separate gates. [Current 13/56 exact evidence](../../../../workspace/test-logs/federal-corpus-audits/legal-ir-current-release-v3-source-only-R56-qualified-20261115-v01/qualification-summary.json).
 
 
+## Full-release CLI selects strict wire metadata — 2026-11-15
+
+The existing `scripts/ops/legal_data/build_uscode_full_hf_release.py` now
+selects the existing `hf-default-parquet-envelope/v1` packaging profile by
+default. Staged release metadata lists exact files and records measured
+Parquet schema, row counts and Arrow bytes. Unselected files in the staging
+directory remain untouched and cannot enter the manifest through a broad
+glob. `--legacy-metadata-profile` explicitly retains the old CLI behavior;
+the underlying producer API keeps its existing default.
+
+The old CLI reproduced a strict-intake failure after successful real local
+staging. The corrected default and explicit legacy route pass both owning
+tests, using real tiny Parquet files and the existing staging/intake owners.
+Only upstream family generation is modeled. All229 source pins stayed exact;
+the original156-second run closed Source, Native and process custody and
+durably released its own32MiB reservation. This is local packaging evidence,
+with no Hub upload, model execution, statutory review or corpus admission.
+Public law/span/entity compatibility findings remain separate from this fix.
+
+[Closed two-case qualification](../../../../workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/HF_full_release_cli_current2-small-v01/cohort-closeout.json).
+
+## Live context policy on evaluator exit — 2026-11-15
+
+The existing reviewed producer evaluator now rechecks its independent live context policy after production, including producer-error and malformed-return paths. Current query/TRAIN admission, complete context, source/profile inputs and independent candidate facts are checked after that last policy callback. An original policy denial remains the raised object; a simultaneous failed evidence fence is retained as its cause. An already failed evidence fence may refuse first; no artifact is published in that case.
+
+Producer results are detached at the callback boundary before a later policy can mutate the returned list or nested candidates. Malformed returns retain validation-error semantics, producer exceptions retain their complete error populations, and callback timing retains its original boundary. Benign context policies are now called again on exit; a prior entry grant cannot authorize a report after revocation. This is an argument/policy contract, not a global process sandbox or legal interpretation.
+
+The defect was reproduced independently in canonical V3 and frozen private V4: unchanged source, reference, checkpoint, admission and context inputs still produced a three-abstention artifact after external authorization was revoked inside the producer. Fresh canonical V2/V3 qualification passes **61 selected cases** (20 new and 41 retained), with zero failures/errors/skips, closed Source custody and no model/native execution. They include final-policy query/TRAIN/source/checkpoint mutations, denial identity/cause, frozen output capture, producer errors and malformed outputs. The whole numerical owning module is unqualified. [Exact source/test hashes and evidence](../../../../docs/autoformalization/evidence/legal-ir-live-context-policy-exit-20261115.json).
+
+All 24 backlog IDs/statuses, original receipts, failed attempts, checkpoints and resource limits remain unchanged. Private V4 aggregate/factory work remains a separate integration until independently reviewed and adopted. Next under LIR-20: connect complete multi-component context to the existing decoder input/factory route, preserving all definitions, source exclusions, complete byte/token bounds and this final live policy check. Real retained 2024 Title 10 reviews, native proof, model quality, gold and corpus admission remain pending; private assets stay on hold.
+
 ## Current immutable@1 cleanup146 controls qualified; live SDK gates remain — 2026-11-15
 
 The current immutable-source qualification@1 cleanup changes were adopted in the published worktrees through the original four-target Source operation and a separate audited readback. The new completed-failed-retained profile is cleanup-only: it preserves current-row, process, Native, source, request and original-deadline checks; it grants no passed receipt, repair adoption, retry or storage authority.
@@ -86,15 +117,27 @@ CPU1, memory1536MiB, process4, storage16MiB, productive300 and ledger60 are unch
 Later V5 acquired-before-child ledger-lock handling now recognizes the exact existing V5 lock-failure profile after a genuine public-inspector RED. The one-predicate repair passed all 26 selected Main software controls (22 new and four retained), with original Source/Native/process custody closed and its own 16 MiB durably released. Generic-parent no-child integration, live SDK cleanup, historical UNKNOWN and retained failures, and model/legal/Lean/corpus authority remain separate. [Exact scoped evidence](../../../../docs/autoformalization/evidence/legal-ir-v5-postgrant-ledger-lock-software-20261115.json).
 
 
-## Live context policy on evaluator exit — 2026-11-15
+## Current Lean verification-profile cache roundtrip — 2026-11-15
 
-The existing reviewed producer evaluator now rechecks its independent live context policy after production, including producer-error and malformed-return paths. Current query/TRAIN admission, complete context, source/profile inputs and independent candidate facts are checked after that last policy callback. An original policy denial remains the raised object; a simultaneous failed evidence fence is retained as its cause. An already failed evidence fence may refuse first; no artifact is published in that case.
+A fresh original now exercises the existing cache helper against the updated
+Lean backend and proof cache, including the lean-kernel-verification/v1 fence
+and current verified fixture loader. Lean 4.34.1 ran one version probe and two
+real compilations. Both compiled obligation reports contain no axiom
+dependencies. Disk persistence/reopen and exact reuse pass; reuse and changed
+context/obligation checks launch zero additional Lean commands.
 
-Producer results are detached at the callback boundary before a later policy can mutate the returned list or nested candidates. Malformed returns retain validation-error semantics, producer exceptions retain their complete error populations, and callback timing retains its original boundary. Benign context policies are now called again on exit; a prior entry grant cannot authorize a report after revocation. This is an argument/policy contract, not a global process sandbox or legal interpretation.
+This is one fictional True-obligation control, with zero pytest case credit.
+The captured backend f4925374, cache 013d9977, kernel test bd4a7e5b and fixture
+e0c287ad form its tested source epoch. All 216 source/control pins and declared
+public Native inputs stayed unchanged; 52 source buffers and 53 loaded origins
+were recorded. The original parent genuinely exited zero, closed Source,
+Native and process custody, and durably released its own 16 MiB promise.
+No compiler/cache implementation was duplicated. The existing caller-owned
+runner made no nested resource grant. This does not establish statutory
+correspondence, training eligibility, model quality or corpus admission.
 
-The defect was reproduced independently in canonical V3 and frozen private V4: unchanged source, reference, checkpoint, admission and context inputs still produced a three-abstention artifact after external authorization was revoked inside the producer. Fresh canonical V2/V3 qualification passes **61 selected cases** (20 new and 41 retained), with zero failures/errors/skips, closed Source custody and no model/native execution. They include final-policy query/TRAIN/source/checkpoint mutations, denial identity/cause, frozen output capture, producer errors and malformed outputs. The whole numerical owning module is unqualified. [Exact source/test hashes and evidence](../../../../docs/autoformalization/evidence/legal-ir-live-context-policy-exit-20261115.json).
+[Closed current Native qualification](../../../../workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/current-native-cache-helper-binding-v01/current-native-cache-helper-v02-qualified-and-closed-v01.json).
 
-All 24 backlog IDs/statuses, original receipts, failed attempts, checkpoints and resource limits remain unchanged. Private V4 aggregate/factory work remains a separate integration until independently reviewed and adopted. Next under LIR-20: connect complete multi-component context to the existing decoder input/factory route, preserving all definitions, source exclusions, complete byte/token bounds and this final live policy check. Real retained 2024 Title 10 reviews, native proof, model quality, gold and corpus admission remain pending; private assets stay on hold.
 
 ## Compiler diagnostics, verifier generations and heldout source identity — 2026-11-15
 
@@ -134,6 +177,35 @@ All **93 source-only software cases pass**: the entire 45-case dispatch module a
 
 Default result/v1 remains; requested audited results use result/v2 and retain both sidecar descriptors. The adapter leaves task identity, status, holds, attempts, UNKNOWN history, completion authority, resource release and admission unchanged. **Physical supervisor/parent-v3 execution, current model/resource profiles and legal/native-proof/corpus qualification remain unverified.** Source-only acceptance of metadata is not an observed native execution, grant or promotion. Private assets and existing budgets remain on hold/unchanged. [Exact source captures, failed attempts and results](../../../../workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-supervisor-parent-audit-qualification-v01/qualification-summary.json).
 
+## Shared law-row replay and release regression checks — 2026-11-15
+
+The existing physical fixture represents two source rows carrying three legal
+units. It retains complete original bytes, exact character and UTF-8 offsets,
+all span overlaps and one graph source-version node per identity. Signing binds
+the original shared row before admission; source/IR artifact identities stay
+distinct for each unit. The prior three-row default remains available.
+
+The shared-row run passed six checks: three new cases, the retained three-row
+positive and two shared-artifact controls. The five invalid-path cases also
+passed after their owning test gained exact-leaf cleanup following its original
+CLI assertions. Original and working snapshots plus ordinary observation
+evidence remain; the C19 plugin, SDK and CLI were not changed for this fix.
+Both runs closed all original custody and released their own 32 MiB promises.
+The old symlink teardown error and earlier timed-out runs remain preserved.
+
+All 98 cases in the previously unqualified regression selection now have
+passing results across 19 closed originals. The latest nine sequential runs
+cover the final 46. Independent raw-JUnit accounting joins those 98 with the
+earlier 54 release cases and three new shared-row cases: all 155 declared
+release case IDs and 39 functions are covered. Helper cases and overlapping
+runs are not added twice. Every scope retains its exact source epoch; this is
+not one unified current-source run or verification of statutory meaning.
+Actual corpus Native-parent integration, immutable Hub readback, real legal
+review and a complete statutory Lean corpus remain open.
+
+[Shared-row closeout](../../../../workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/shared_lawrow6-shared-v01/cohort-closeout.json). [Physical5 closeout](../../../../workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/legacy_CLI_paths5-physical-current5-green-v01/cohort-closeout.json). [Complete98 closeout](../../../../workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/remaining-release98-complete-19closed-v01.json). [Independent155 accounting](../../../../workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/independent-final-remaining98-and-release155-captured-epoch-coverage-audit-v01.json).
+
+
 ## Published-worktree cleanup71 controls qualified; SDK lifecycle gates remain — 2026-11-14
 
 The four cancelled-retained cleanup sources were installed in the published worktrees through the original Source operation and separate readback. A private current-policy fault in one R owning control was then restored after its refusal/no-write assertions through a separately audited one-target Source operation. The SDK, CLI and strict origin/current-state guards retain their reviewed limits.
@@ -166,6 +238,36 @@ This correction changes the admission producer source epoch; older qualification
 The native proof-cache test loader also has a current explicit fixture pin and executes the exact verified buffer, retaining pre/post source and module identity checks. The full canonical kernel file passes 276 ordinary cases; three native Lean cases remain explicitly skipped. The three new loader cases are included in 276, not added again. The old fixture pin remains historical. Existing native CI is active and pins Lean 4.34.1/Elan 4.1.2, but the inspected GitHub run executed zero job steps because GitHub reports an account billing lock. No native success, model execution or permission/budget renewal follows.
 
 The existing CI workflow now also triggers on masked-contrastive and storage-capacity test-only edits and selects both files in its compatible contracts lane. Thirty canonical data-only checks pass for the filters, commands and existing dependency coverage; no job, dependency, budget, permission or shard-weight change is introduced. This is workflow configuration validation, not hosted, numerical or native execution.
+
+## Current V3 three-cache integration and typed JSON correction — 2026-11-14
+
+The integration checkout now extends the existing release coordinator and CLI
+with the explicit V3 law/span/entity path. Complete admission and graph
+artifacts use the existing norm correspondence JSON profile, retaining the
+1,000,000-byte artifact and 8 MiB request ceilings and all downstream semantic
+and independent-pin validation. Generic graph records and V1/V2 keep their
+existing decoder limits. The shared review fixture now inventories one exact
+artifact per identity while preserving every legal unit and cross-reference;
+conflicting bytes under one identity refuse before manifest replacement.
+
+A fresh canonical-source run passed **56 cases in 13 functions**: 54 release
+cases and two shared-fixture controls. It covers a complete three-unit
+fictional physical replay, damaged legal JSON, complete 83-file packet
+transport, selected V1/V2 behavior and direct/module CLI paths. Source, native
+resource, process, genuine wait and storage custody closed; this successful
+run released only its own 32 MiB promise. The earlier missing-API, temporary
+factory, duplicate-reference and generic-depth failures remain preserved.
+A larger legacy batch hit its original 120-second deadline and grants no
+whole-batch credit. Use the retained smaller cohorts and the existing
+`--owned-ordinary-temp-factory` option for remaining checks.
+
+At that run’s cutoff, the release owning file declared 152 cases; **98 remained
+unqualified on its captured source**. The prior 35-case transport result overlaps this run
+and must not be added to it. No actual Lean build, original Native-parent
+authentication, immutable Hub readback, statutory review, model fitting or
+corpus release is established. V3 remains an explicit local replay path.
+[Closed qualification](../../../../workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/current-canonical-release-v3-physical56-qualified-and-closed.json).
+
 
 ## Explicit many-sorted complete-candidate syntax — 2026-11-14
 

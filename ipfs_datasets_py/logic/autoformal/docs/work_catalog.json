@@ -4133,16 +4133,6 @@
       "status": "focused_tests_qualified"
     },
     {
-      "many_sorted_candidate_syntax_v3": {
-        "evidence_id": "many-sorted-complete-candidate-syntax-v3-20261114",
-        "profile": "unreviewed-complete-norm-candidate-syntax/v3",
-        "source_only_passes": 324,
-        "new_cases": 32,
-        "all_three_fictional_references_syntax_valid": true,
-        "legacy_mixed_refusals_preserved": true,
-        "legal_meaning_or_proof_authority": false,
-        "model_or_original_parent_integration_qualified": false
-      },
       "apis": [
         "validate_complete_norm_known_input_v1",
         "validate_complete_norm_candidate_v1",
@@ -4166,13 +4156,15 @@
       ],
       "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_norm_content_adjudication_v1.md",
       "id": "norm-content-adjudication-v1",
-      "reviewed_source_use_identity_20261114": {
-        "evidence_id": "reviewed-source-use-identity-20261114",
-        "canonical_source_only_cases": 355,
-        "shared_physical_and_legal_use_guard": true,
-        "artifact_revision_is_provenance_only": true,
-        "unaligned_views_supported": false,
-        "legal_review_or_native_proof_or_training_executed": false
+      "many_sorted_candidate_syntax_v3": {
+        "all_three_fictional_references_syntax_valid": true,
+        "evidence_id": "many-sorted-complete-candidate-syntax-v3-20261114",
+        "legacy_mixed_refusals_preserved": true,
+        "legal_meaning_or_proof_authority": false,
+        "model_or_original_parent_integration_qualified": false,
+        "new_cases": 32,
+        "profile": "unreviewed-complete-norm-candidate-syntax/v3",
+        "source_only_passes": 324
       },
       "notes": "Unchanged common norm-content adjudication owner/test. Fresh current-public integration passed 13 existing adjudication-only cases / 39 phases, with no response-control cohort or new tests. Historical 63 fictional signed-source/adjudicator cases and the failed first assertion attempt keep their separate legacy scope. Common-body validity, authentication and current source/partial prerequisites remain distinct; all variants and dissent remain and choices stay unapplied. Fresh evidence covers 3 ordinary pytest origins and 21 physical source paths; dynamic response/norm helpers have physical-source evidence without canonical-origin claims. It retained 117 compile/exec filenames, 112 module entries / 110 physical origins, within 173 sources / 199 pins. Six initializer bypasses were declared; only logic was observed, five unused. Genuine cryptography 49.0.0 fixture APIs; no independent operation counts, binary/code-object or whole-environment qualification. Original compute/storage and source READs closed, retaining 10 regular files / 2882943 bytes. No actual statutory adjudication, legal-as-of or governing decision, source/span/entity join, model/training or graph/Lean admission. Masks remain zero; declaration-binding/applicability migrations stay separate.",
       "owner_module": "ipfs_datasets_py.logic.autoformal.legal_norm_content_adjudication_v1",
@@ -4195,6 +4187,14 @@
         "legacy_v1_unapplied_profile_preserved": true,
         "profile": "complete-reviewed-norm-admission/v2",
         "status": "focused_tests_qualified"
+      },
+      "reviewed_source_use_identity_20261114": {
+        "artifact_revision_is_provenance_only": true,
+        "canonical_source_only_cases": 355,
+        "evidence_id": "reviewed-source-use-identity-20261114",
+        "legal_review_or_native_proof_or_training_executed": false,
+        "shared_physical_and_legal_use_guard": true,
+        "unaligned_views_supported": false
       },
       "status": "focused_tests_qualified"
     },
@@ -4533,15 +4533,6 @@
       ],
       "guide": "docs/autoencoders/legal_original_text_roundtrip.md",
       "id": "legal-original-text-roundtrip",
-      "relational_roundtrip_input_stability_20261115": {
-        "evidence_id": "relational-roundtrip-input-stability-20261115",
-        "source_only_passes": 431,
-        "new_cases": 4,
-        "mutable_scoring_inputs_detached_and_fenced": true,
-        "stable_score_schema_unchanged": true,
-        "inverse_receives_source_or_governing_fields": false,
-        "legal_or_model_or_proof_authority": false
-      },
       "notes": "Index the existing public detached single-rule source384 original-text scorer once. Canonical rendering, semantic IR exactness and original UTF8 are separate; no new model, learned prose head, independent teacher or statutory authority. Additive same-row joint and four-cell metrics retain all old fields. Accepted same-input60 replay: IR3, UTF8/joint0, cells0/3/0/57; no new model. Separate owning regression qualification passed68cases/204phases with68scorerentries across67cases in the pinned realpytest/native profile. Six zero-case failures and their separate closeouts remain preserved; no legal/model-quality authority.",
       "owner_module": "ipfs_datasets_py.logic.formalization.autoencoder.ir_legal_text_roundtrip",
       "ownership_role": "existing_single_owner",
@@ -4549,6 +4540,15 @@
         "tests/unit/logic/formalization/autoencoder/test_ir_legal_text_roundtrip.py"
       ],
       "path": "ipfs_datasets_py/logic/formalization/autoencoder/ir_legal_text_roundtrip.py",
+      "relational_roundtrip_input_stability_20261115": {
+        "evidence_id": "relational-roundtrip-input-stability-20261115",
+        "inverse_receives_source_or_governing_fields": false,
+        "legal_or_model_or_proof_authority": false,
+        "mutable_scoring_inputs_detached_and_fenced": true,
+        "new_cases": 4,
+        "source_only_passes": 431,
+        "stable_score_schema_unchanged": true
+      },
       "required": true,
       "status": "implementation_present"
     },
@@ -5563,22 +5563,22 @@
         "consume_reviewed_source_span_binding_v3"
       ],
       "compatibility_dependency": true,
-      "evidence_ids": [
-        "reviewed-semantic-admission-v2-main-source-port-20261108-01",
-        "reviewed-mixed-consumer-evaluator-canonical331-20261111",
-        "reviewed-mixed-heldout-context-20261111"
-      ],
-      "id": "source-span-consumer-binding",
       "diagnostic_source_boundary_20261115": {
+        "current_replay_required": true,
         "evidence_id": "diagnostic-verifier-and-heldout-source-boundaries-20261115",
         "heldout_source_identity_fields": [
           "source_id",
           "release_id",
           "edition",
           "provision_id"
-        ],
-        "current_replay_required": true
+        ]
       },
+      "evidence_ids": [
+        "reviewed-semantic-admission-v2-main-source-port-20261108-01",
+        "reviewed-mixed-consumer-evaluator-canonical331-20261111",
+        "reviewed-mixed-heldout-context-20261111"
+      ],
+      "id": "source-span-consumer-binding",
       "notes": "Existing engineering V1 remains unchanged. The additive reviewed V2 consumer replays current admission, retains complete typed targets, pins registry/policy identities, enforces permitted operations/splits/exposure and blocks compact-codec projection. Fresh clean-base qualification passed all 130 consumer cases within the 242-case cohort; historical V03 remains a separate generation with zero transferred credit. Fictional fixture gold masks stay zero, with no statutory, model, graph or Lean admission. Explicit mixed-sort heldout context now has a separate focused software qualification with complete TRAIN targets and current two-component review/dependency replay; no configured model, ranking-quality or statutory result follows.",
       "owner_module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_consumer_binding",
       "ownership_role": "existing_single_owner",
@@ -5611,6 +5611,16 @@
         "evaluate_lean_kernel_output"
       ],
       "compatibility_dependency": true,
+      "current_013d_native_cache_roundtrip_20261115": {
+        "actual_Lean_commands": 3,
+        "backend_source_sha256": "f4925374651fa4dc02eee59034f595a69dc69ec93c251b521665cbb3ee3907f4",
+        "cache_reuse_or_mismatch_commands": 0,
+        "cache_source_sha256": "013d9977ecc664c806cf747b5fab0101bc665c469213940c5598547717ddad61",
+        "evidence_id": "current-013d-native-cache-helper-20261115",
+        "pytest_case_credit": 0,
+        "statutory_or_corpus_authority": false,
+        "verifier_profile": "lean-kernel-verification/v1"
+      },
       "current_a722_native_cache_roundtrip_20261114": {
         "GREEN_original16MiB_released_durably": true,
         "RED_original16MiB_retained": true,
@@ -5658,12 +5668,29 @@
         "status": "actual_current_native_helper_and_exact_one_test_Source_delivery_qualified",
         "statutory_model_Lean_corpus_release_authority": false
       },
+      "current_source_screen_20261114": {
+        "current_native_or_model_qualification": false,
+        "evidence_id": "proof-screen-and-legacy-metrics-20261114",
+        "interpolating_syntax": "explicitly_unsupported",
+        "native_Lean_opt_in_skipped": 3,
+        "ordinary_kernel_cache_passed": 396,
+        "source_alias_policy_reused_by_cache": true
+      },
+      "diagnostic_source_boundary_20261115": {
+        "evidence_id": "diagnostic-verifier-and-heldout-source-boundaries-20261115",
+        "native_skipped": 3,
+        "old_unchanged_proof_receipt_current_reuse": false,
+        "profile_constant": "LEAN_KERNEL_VERIFICATION_PROFILE",
+        "verification_profile": "lean-kernel-verification/v1",
+        "whole_kernel_and_cache_source_passed": 470
+      },
       "evidence_ids": [
         "kernel-proof-cache-native-roundtrip-20261109-01",
         "legal-proof-cache-json-context-direct45-20261111",
         "legal-proof-cache-json-context-source-install-20261111",
         "legal-proof-formal-content-private103-20261111",
-        "legal-proof-formal-content-source-installed-20261111"
+        "legal-proof-formal-content-source-installed-20261111",
+        "current-013d-native-cache-helper-20261115"
       ],
       "exact_formal_content_identity": {
         "canonical_postimages_installed": true,
@@ -5686,31 +5713,15 @@
         "unchanged_cases": 21
       },
       "id": "kernel-proof-evidence-integrity",
-      "diagnostic_source_boundary_20261115": {
-        "evidence_id": "diagnostic-verifier-and-heldout-source-boundaries-20261115",
-        "verification_profile": "lean-kernel-verification/v1",
-        "profile_constant": "LEAN_KERNEL_VERIFICATION_PROFILE",
-        "whole_kernel_and_cache_source_passed": 470,
-        "native_skipped": 3,
-        "old_unchanged_proof_receipt_current_reuse": false
-      },
       "native_fixture_loader_source_repair_20261114": {
-        "evidence_id": "reviewed-source-use-identity-20261114",
         "canonical_kernel_software_passed": 276,
-        "native_Lean_opt_in_skipped": 3,
+        "evidence_id": "reviewed-source-use-identity-20261114",
         "exact_verified_buffer_and_hard_fixture_pin": true,
-        "new_native_execution_qualified": false,
-        "hosted_native_job_started": false
-      },
-      "current_source_screen_20261114": {
-        "evidence_id": "proof-screen-and-legacy-metrics-20261114",
-        "ordinary_kernel_cache_passed": 396,
+        "hosted_native_job_started": false,
         "native_Lean_opt_in_skipped": 3,
-        "interpolating_syntax": "explicitly_unsupported",
-        "source_alias_policy_reused_by_cache": true,
-        "current_native_or_model_qualification": false
+        "new_native_execution_qualified": false
       },
-      "notes": "Historical 243 ordinary cases and 11 Lean commands remain attributed to their original source/control generation. The later quoted-identifier/literal-boundary repair is qualified on Lean 7987a3ef/test 4b185af9: 205 ordinary cases across 61 functions and seven native scenarios/eight actual Lean commands; the saved faulty receipt was refused. Preserve the earlier source-installation/capacity-refusal cutoffs and all failed claims as history. Current LegalIR cache a7228286/test 158b5f0c separately passed the whole private 103-case/46-function owning file (79 prior + 24 new) on captured CLI 269 / SDK 4df, followed by exact Source installation/readback; no canonical pytest rerun or new Lean execution is claimed. The earlier actual native-cache roundtrip used cache b4f15711 and supplies no current a722 native-cache execution credit. Reuse these existing owners; no replacement cache/compiler, standalone-wrapper or hosted-CI qualification, statutory/model/corpus admission, or authority for later control postimages follows. A separate 2026-11-14 current-a722 helper integration now supplies3actualLean commands and exact disk reuse, with ffd fixture-pin Source delivery; see the existing current_a722_native_cache_roundtrip_20261114 subrecord. Earlier results supply no transferred current credit.",
+      "notes": "Historical 243 ordinary cases and 11 Lean commands remain attributed to their original source/control generation. The later quoted-identifier/literal-boundary repair is qualified on Lean 7987a3ef/test 4b185af9: 205 ordinary cases across 61 functions and seven native scenarios/eight actual Lean commands; the saved faulty receipt was refused. Preserve the earlier source-installation/capacity-refusal cutoffs and all failed claims as history. Current LegalIR cache a7228286/test 158b5f0c separately passed the whole private 103-case/46-function owning file (79 prior + 24 new) on captured CLI 269 / SDK 4df, followed by exact Source installation/readback; no canonical pytest rerun or new Lean execution is claimed. The earlier actual native-cache roundtrip used cache b4f15711 and supplies no current a722 native-cache execution credit. Reuse these existing owners; no replacement cache/compiler, standalone-wrapper or hosted-CI qualification, statutory/model/corpus admission, or authority for later control postimages follows. A separate 2026-11-14 current-a722 helper integration now supplies3actualLean commands and exact disk reuse, with ffd fixture-pin Source delivery; see the existing current_a722_native_cache_roundtrip_20261114 subrecord. Earlier results supply no transferred current credit. Fresh Nov15 source-bound native cache helper qualifies actual3 commands/2 empty-axiom compilations and0 reuse commands on f492/013d with repaired bd4a/e0c2 fixture loader. All original custody and own16MiB closed; old a722/7987 receipts stay historical.",
       "owner_module": "ipfs_datasets_py.logic.backends.kernel.lean",
       "ownership_role": "existing_single_owner",
       "owning_tests": [
@@ -5794,6 +5805,13 @@
         "prepare_reviewed_ranked_training_context_v3"
       ],
       "compatibility_dependency": false,
+      "diagnostic_source_boundary_20261115": {
+        "actual_producer_dispatch_leak_repaired": true,
+        "evidence_id": "diagnostic-verifier-and-heldout-source-boundaries-20261115",
+        "heldout_selected_cases": 41,
+        "model_or_legal_review_claimed": false,
+        "source_identity_independent_of_context": true
+      },
       "evidence_ids": [
         "reviewed-rich-context-20261109",
         "reviewed-retrieval-current-compatible-source-port-20261109",
@@ -5808,13 +5826,6 @@
         "LIR-20"
       ],
       "id": "reviewed-rich-retrieval-context",
-      "diagnostic_source_boundary_20261115": {
-        "evidence_id": "diagnostic-verifier-and-heldout-source-boundaries-20261115",
-        "source_identity_independent_of_context": true,
-        "actual_producer_dispatch_leak_repaired": true,
-        "heldout_selected_cases": 41,
-        "model_or_legal_review_claimed": false
-      },
       "notes": "Exact nine-file source delivery matches the complete 294-case qualification. Unknown pairs/analogies do not become automatic negatives; candidate context grants no decoder or legal authority. Historical 225/287 cohorts, failed requests and unrelated runtime changes retain their own scopes. All137 executed clean-checkout product buffers match selected public index; three private dependency deltas were excluded and freshly qualified separately. Current V3 direct TRAIN context has a separate focused qualification; full-file timeout is retained and no whole-file or ranked/numerical qualification follows. V3 heldout authorization, pair-ledger integration and decoder transport remain separate. Explicit mixed-sort heldout context now has a separate focused software qualification with complete TRAIN targets and current two-component review/dependency replay; no configured model, ranking-quality or statutory result follows.",
       "owner_module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_structured_retrieval",
       "ownership_role": "existing_single_owner",
@@ -5903,17 +5914,6 @@
         "LIR-20"
       ],
       "id": "reviewed-relation-declarations",
-      "reviewed_context_set_v4_20261115": {
-        "evidence_id": "reviewed-context-set-relations-v4-20261115",
-        "apis": [
-          "prepare_reviewed_relation_declaration_v4",
-          "validate_reviewed_relation_declaration_v4"
-        ],
-        "endpoint_admission_version": "v3",
-        "fresh_context_set_pair_review_required": true,
-        "numerical_qualification": false,
-        "real_legal_review_or_authority_claimed": false
-      },
       "mixed_sort_v3_direct_contracts": {
         "complete_current_source_pins": 193,
         "evidence": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-reviewed-mixed-pair-source-v01/qualification-summary.json",
@@ -5934,6 +5934,17 @@
         "actual_GTE_joint_fit_qualified": false,
         "evidence_id": "reviewed-v3-native384-composed-integration-20261111",
         "explicit_V3_opt_in": true
+      },
+      "reviewed_context_set_v4_20261115": {
+        "apis": [
+          "prepare_reviewed_relation_declaration_v4",
+          "validate_reviewed_relation_declaration_v4"
+        ],
+        "endpoint_admission_version": "v3",
+        "evidence_id": "reviewed-context-set-relations-v4-20261115",
+        "fresh_context_set_pair_review_required": true,
+        "numerical_qualification": false,
+        "real_legal_review_or_authority_claimed": false
       },
       "selected_qualification": {
         "cohort": "clean-public-source-invocation-v05",
@@ -5966,17 +5977,6 @@
         "LIR-20"
       ],
       "id": "reviewed-train-relation-masks",
-      "reviewed_context_set_v4_20261115": {
-        "evidence_id": "reviewed-context-set-relations-v4-20261115",
-        "apis": [
-          "compile_reviewed_train_relation_masks_v4",
-          "validate_reviewed_train_relation_masks_v4"
-        ],
-        "endpoint_admission_version": "v3",
-        "fresh_context_set_pair_review_required": true,
-        "numerical_qualification": false,
-        "real_legal_review_or_authority_claimed": false
-      },
       "mixed_sort_v3_direct_contracts": {
         "complete_current_source_pins": 193,
         "evidence": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-reviewed-mixed-pair-source-v01/qualification-summary.json",
@@ -5993,6 +5993,17 @@
       "ownership_role": "existing_single_owner",
       "path": "ipfs_datasets_py/logic/formalization/autoencoder/alignment_relation_mask_handoff.py",
       "required": true,
+      "reviewed_context_set_v4_20261115": {
+        "apis": [
+          "compile_reviewed_train_relation_masks_v4",
+          "validate_reviewed_train_relation_masks_v4"
+        ],
+        "endpoint_admission_version": "v3",
+        "evidence_id": "reviewed-context-set-relations-v4-20261115",
+        "fresh_context_set_pair_review_required": true,
+        "numerical_qualification": false,
+        "real_legal_review_or_authority_claimed": false
+      },
       "selected_qualification": {
         "cohort": "clean-public-source-invocation-v05",
         "cohort_cases": 294,
@@ -6032,16 +6043,6 @@
         "LIR-20"
       ],
       "id": "reviewed-joint-retriever",
-      "reviewed_context_set_v4_20261115": {
-        "evidence_id": "reviewed-context-set-relations-v4-20261115",
-        "apis": [
-          "train_reviewed_retriever_v4"
-        ],
-        "endpoint_admission_version": "v3",
-        "fresh_context_set_pair_review_required": true,
-        "numerical_qualification": false,
-        "real_legal_review_or_authority_claimed": false
-      },
       "lexical_and_fixed_native_comparison": {
         "actual_frozen_rankings_qualified": true,
         "evidence_id": "reviewed-lexical-actual-heldout-rankings-20261111",
@@ -6087,6 +6088,16 @@
         "actual_GTE_joint_fit_qualified": false,
         "evidence_id": "reviewed-v3-native384-composed-integration-20261111",
         "explicit_V3_opt_in": true
+      },
+      "reviewed_context_set_v4_20261115": {
+        "apis": [
+          "train_reviewed_retriever_v4"
+        ],
+        "endpoint_admission_version": "v3",
+        "evidence_id": "reviewed-context-set-relations-v4-20261115",
+        "fresh_context_set_pair_review_required": true,
+        "numerical_qualification": false,
+        "real_legal_review_or_authority_claimed": false
       },
       "selected_qualification": {
         "cohort": "clean-public-source-invocation-v05",
@@ -7953,41 +7964,41 @@
         "profile": "qwen2-chatml-complete-legal-ir/v1"
       },
       "Qwen2_explicit_training_conditioning": {
-        "historical_actual_tokenizer_capacity": {
-          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-Qwen25-training-conditioning-capacity-v01/closed-capacity-observation.json",
-          "bytes": 2333,
-          "sha256": "dbbe8a1726a273141a4fdfcbd467f103fcce869f9d919ef6ce8be26b26cb2210",
-          "profile_summary": {
-            "qwen2-chatml-complete-legal-ir/v1": {
-              "capacity_rows": 9,
-              "source_pairs": 6,
-              "rich_queries": 3,
-              "minimum_physical_positions": 2040,
-              "maximum_physical_positions": 7941,
-              "physical_rows_over_8192": 0
-            },
-            "qwen2-chatml-field-layouts/v1": {
-              "capacity_rows": 9,
-              "source_pairs": 6,
-              "rich_queries": 3,
-              "minimum_physical_positions": 2296,
-              "maximum_physical_positions": 8197,
-              "physical_rows_over_8192": 1
-            }
-          },
-          "declared_model_positions": 32768,
-          "operation_count": 1,
-          "additional_test_count": 0,
-          "historical_source_only": true,
-          "current_runtime_approval": false,
-          "actual_current_source_pretrained_pair_qualified": false,
-          "actual_pretrained_fitting_performed": false,
-          "training_eligibility_granted": false
-        },
         "actual_current_source_pretrained_pair_qualified": false,
         "actual_pretrained_fitting_performed": false,
         "configuration_schema": "torch-complete-reviewed-decoder-configuration/v4",
         "evidence_id": "qwen2-explicit-training-conditioning-20261114",
+        "historical_actual_tokenizer_capacity": {
+          "actual_current_source_pretrained_pair_qualified": false,
+          "actual_pretrained_fitting_performed": false,
+          "additional_test_count": 0,
+          "bytes": 2333,
+          "current_runtime_approval": false,
+          "declared_model_positions": 32768,
+          "historical_source_only": true,
+          "operation_count": 1,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-Qwen25-training-conditioning-capacity-v01/closed-capacity-observation.json",
+          "profile_summary": {
+            "qwen2-chatml-complete-legal-ir/v1": {
+              "capacity_rows": 9,
+              "maximum_physical_positions": 7941,
+              "minimum_physical_positions": 2040,
+              "physical_rows_over_8192": 0,
+              "rich_queries": 3,
+              "source_pairs": 6
+            },
+            "qwen2-chatml-field-layouts/v1": {
+              "capacity_rows": 9,
+              "maximum_physical_positions": 8197,
+              "minimum_physical_positions": 2296,
+              "physical_rows_over_8192": 1,
+              "rich_queries": 3,
+              "source_pairs": 6
+            }
+          },
+          "sha256": "dbbe8a1726a273141a4fdfcbd467f103fcce869f9d919ef6ce8be26b26cb2210",
+          "training_eligibility_granted": false
+        },
         "legal_authority": false,
         "profiles": [
           "qwen2-chatml-complete-legal-ir/v1",
@@ -8656,27 +8667,6 @@
       "status": "focused_tests_qualified"
     },
     {
-      "many_sorted_candidate_syntax_v3": {
-        "evidence_id": "many-sorted-complete-candidate-syntax-v3-20261114",
-        "profile": "unreviewed-complete-norm-candidate-syntax/v3",
-        "source_only_passes": 324,
-        "new_cases": 32,
-        "all_three_fictional_references_syntax_valid": true,
-        "legacy_mixed_refusals_preserved": true,
-        "legal_meaning_or_proof_authority": false,
-        "model_or_original_parent_integration_qualified": false
-      },
-      "complete_candidate_syntax_audit": {
-        "evidence_id": "complete-candidate-source-bound-producer-audit-20261114",
-        "profile": "unreviewed-complete-norm-candidate-syntax/v2",
-        "selected_passes": 67,
-        "new_cases": 19,
-        "independent_known_facts_required": true,
-        "unsupported_references_retained": true,
-        "default_scope_unchanged": true,
-        "original_parent_or_model_integration_qualified": false,
-        "legal_authority": false
-      },
       "actual_pretrained_parent_rich_typed_audit": {
         "evidence_id": "actual-qwen25-original-parent-typed-audit-rich-20261114",
         "legal_authority": false,
@@ -8703,6 +8693,17 @@
         "retention_or_legal_authority": false
       },
       "compatibility_dependency": false,
+      "complete_candidate_syntax_audit": {
+        "default_scope_unchanged": true,
+        "evidence_id": "complete-candidate-source-bound-producer-audit-20261114",
+        "independent_known_facts_required": true,
+        "legal_authority": false,
+        "new_cases": 19,
+        "original_parent_or_model_integration_qualified": false,
+        "profile": "unreviewed-complete-norm-candidate-syntax/v2",
+        "selected_passes": 67,
+        "unsupported_references_retained": true
+      },
       "evidence_ids": [
         "trusted-original-parent-complete-candidate-audit-20261114",
         "many-sorted-complete-candidate-syntax-v3-20261114",
@@ -8715,23 +8716,21 @@
       "id": "reviewed-evaluation-and-retention",
       "live_context_policy_exit_20261115": {
         "evidence_id": "live-context-policy-exit-and-output-capture-20261115",
-        "selected_source_cases": 61,
-        "new_cases": 20,
         "final_live_policy_and_evidence_fences": true,
+        "model_native_or_real_review_claimed": false,
+        "new_cases": 20,
         "raw_return_detached_before_later_callbacks": true,
-        "model_native_or_real_review_claimed": false
+        "selected_source_cases": 61
       },
-      "trusted_parent_candidate_syntax_20261114": {
-        "evidence_id": "trusted-original-parent-complete-candidate-audit-20261114",
-        "source_only_passes": 233,
-        "new_cases": 36,
-        "parent_schema": "reviewed-source-evaluation-parent/v3",
-        "trusted_runtime_only": true,
-        "packet_schemas_changed": false,
-        "physical_parent_v3_qualified": false,
-        "supervisor_adoption_qualified": false,
-        "current_resource_or_model_profile_approved": false,
-        "legal_or_proof_authority": false
+      "many_sorted_candidate_syntax_v3": {
+        "all_three_fictional_references_syntax_valid": true,
+        "evidence_id": "many-sorted-complete-candidate-syntax-v3-20261114",
+        "legacy_mixed_refusals_preserved": true,
+        "legal_meaning_or_proof_authority": false,
+        "model_or_original_parent_integration_qualified": false,
+        "new_cases": 32,
+        "profile": "unreviewed-complete-norm-candidate-syntax/v3",
+        "source_only_passes": 324
       },
       "notes": "Existing evaluator retains complete nine-field targets, fixed-panel provenance, errors and abstentions. Exact qualified source generation is recorded in the evidence. Explicit mixed-sort heldout context now has a separate focused software qualification with complete TRAIN targets and current two-component review/dependency replay; no configured model, ranking-quality or statutory result follows. The historical-body-tested profiled-retention evaluator/test pair is now available canonically through a separate Source-only installation. Its original54 bodies passed but operational owner returned1;8952 recorded24MiB retained without durable release. Current integration and test support remain UNVERIFIED. CI selectors/weights are configuration only, without current-case, Native, model or hosted qualification; see the nested profiled_generation_v3_retention_20261114 scope.",
       "original_parent_typed_structure_audit": {
@@ -8968,7 +8967,19 @@
         "owner_source_sha256": "b78ee03eddf39b910d7586a96470852d54c14652a106c590176d0c6228d94968",
         "whole_owning_file_qualified": false
       },
-      "status": "focused_tests_qualified"
+      "status": "focused_tests_qualified",
+      "trusted_parent_candidate_syntax_20261114": {
+        "current_resource_or_model_profile_approved": false,
+        "evidence_id": "trusted-original-parent-complete-candidate-audit-20261114",
+        "legal_or_proof_authority": false,
+        "new_cases": 36,
+        "packet_schemas_changed": false,
+        "parent_schema": "reviewed-source-evaluation-parent/v3",
+        "physical_parent_v3_qualified": false,
+        "source_only_passes": 233,
+        "supervisor_adoption_qualified": false,
+        "trusted_runtime_only": true
+      }
     },
     {
       "BF16_original_parent_CLI": {
@@ -8996,18 +9007,6 @@
         "explicit-Llama-BF16-original-parent-CLI-20261112"
       ],
       "id": "reviewed-original-parent-inference",
-      "trusted_parent_candidate_syntax_20261114": {
-        "evidence_id": "trusted-original-parent-complete-candidate-audit-20261114",
-        "source_only_passes": 233,
-        "new_cases": 36,
-        "parent_schema": "reviewed-source-evaluation-parent/v3",
-        "trusted_runtime_only": true,
-        "packet_schemas_changed": false,
-        "physical_parent_v3_qualified": false,
-        "supervisor_adoption_qualified": false,
-        "current_resource_or_model_profile_approved": false,
-        "legal_or_proof_authority": false
-      },
       "mixed_rich_v4_implementation": {
         "metadata_original_storage_finalization_passed": true,
         "metadata_pytest_bodies_passed": 23,
@@ -9058,7 +9057,19 @@
         "source_only": true,
         "unselected_peer_test_appends_qualified": false
       },
-      "status": "focused_tests_qualified"
+      "status": "focused_tests_qualified",
+      "trusted_parent_candidate_syntax_20261114": {
+        "current_resource_or_model_profile_approved": false,
+        "evidence_id": "trusted-original-parent-complete-candidate-audit-20261114",
+        "legal_or_proof_authority": false,
+        "new_cases": 36,
+        "packet_schemas_changed": false,
+        "parent_schema": "reviewed-source-evaluation-parent/v3",
+        "physical_parent_v3_qualified": false,
+        "source_only_passes": 233,
+        "supervisor_adoption_qualified": false,
+        "trusted_runtime_only": true
+      }
     },
     {
       "apis": [
@@ -9073,18 +9084,6 @@
         "legal-autoformal-ci-parent-two-shards-source-20261111"
       ],
       "id": "reviewed-supervisor-dispatch",
-      "supervisor_audited_parent_receipts_20261115": {
-        "evidence_id": "supervisor-audited-parent-receipts-20261115",
-        "source_only_passes": 93,
-        "new_cases": 22,
-        "default_result_schema": "supervisor-reviewed-source-evaluation-result/v1",
-        "audited_result_schema": "supervisor-reviewed-source-evaluation-result/v2",
-        "trusted_runtime_only": true,
-        "sidecars_recomputed_and_reauthenticated": true,
-        "physical_supervisor_integration_qualified": false,
-        "current_model_or_resource_profile_approved": false,
-        "task_completion_release_or_legal_authority": false
-      },
       "notes": "Existing supervisor owner binds evaluator requests and rechecks child/parent receipts and outputs after Source callbacks.",
       "owner_module": "ipfs_datasets_py.logic.autoformal.supervisor_dispatch",
       "ownership_role": "existing_single_owner",
@@ -9107,7 +9106,19 @@
         "source_only": true,
         "unselected_peer_test_appends_qualified": false
       },
-      "status": "focused_tests_qualified"
+      "status": "focused_tests_qualified",
+      "supervisor_audited_parent_receipts_20261115": {
+        "audited_result_schema": "supervisor-reviewed-source-evaluation-result/v2",
+        "current_model_or_resource_profile_approved": false,
+        "default_result_schema": "supervisor-reviewed-source-evaluation-result/v1",
+        "evidence_id": "supervisor-audited-parent-receipts-20261115",
+        "new_cases": 22,
+        "physical_supervisor_integration_qualified": false,
+        "sidecars_recomputed_and_reauthenticated": true,
+        "source_only_passes": 93,
+        "task_completion_release_or_legal_authority": false,
+        "trusted_runtime_only": true
+      }
     },
     {
       "apis": [
@@ -9121,14 +9132,6 @@
         "reviewed-mixed-consumer-evaluator-canonical331-20261111"
       ],
       "id": "reviewed-mixed-sort-admission-v3",
-      "reviewed_source_use_identity_20261114": {
-        "evidence_id": "reviewed-source-use-identity-20261114",
-        "canonical_source_only_cases": 355,
-        "shared_physical_and_legal_use_guard": true,
-        "artifact_revision_is_provenance_only": true,
-        "unaligned_views_supported": false,
-        "legal_review_or_native_proof_or_training_executed": false
-      },
       "notes": "Explicit versioned mixed-sort sibling preserves original signed V2 owner identity. Thirteen new fictional cases; model/CLI integration and real statutory review remain pending.",
       "owner_module": "ipfs_datasets_py.logic.autoformal.legal_reviewed_norm_admission_v3",
       "ownership_role": "explicit_versioned_successor",
@@ -9139,6 +9142,14 @@
         "evidence_id": "reviewed-mixed-consumer-evaluator-canonical331-20261111",
         "numeric_worker_or_CLI_admission_v3_qualified": false,
         "real_statutory_reviews_supplied": false
+      },
+      "reviewed_source_use_identity_20261114": {
+        "artifact_revision_is_provenance_only": true,
+        "canonical_source_only_cases": 355,
+        "evidence_id": "reviewed-source-use-identity-20261114",
+        "legal_review_or_native_proof_or_training_executed": false,
+        "shared_physical_and_legal_use_guard": true,
+        "unaligned_views_supported": false
       },
       "status": "focused_tests_qualified"
     },
@@ -9172,9 +9183,26 @@
         "coordinator_commit_sha256",
         "select_model_manager_status",
         "validate_uscode_release_closure_v1",
-        "validate_uscode_release_closure_v2"
+        "validate_uscode_release_closure_v2",
+        "validate_uscode_release_closure_v3",
+        "prepare_reviewed_native_packet_transport_v3"
       ],
       "compatibility_dependency": false,
+      "current_v3_integration_scope": {
+        "actual_native_Lean_builds": 0,
+        "complete_fictional_physical_units": 3,
+        "evidence_id": "current-release-v3-physical56-typed-json-20261114",
+        "full_release_owning_cases": 152,
+        "functions": 13,
+        "old_transport35_overlaps_current56": true,
+        "original_native_parent_Hub_statutory_or_corpus_qualification": false,
+        "qualified_cases": 56,
+        "release_owning_cases": 54,
+        "remaining_release_owning_cases": 98,
+        "shared_fixture_cases": 2,
+        "source_native_process_storage_closed": true,
+        "whole_release_suite_qualified": false
+      },
       "evidence_ids": [
         "legal-uscode-local-release-replay-source-private45-20261111",
         "hf-wire-producer-closure-private103-source-20261111",
@@ -9194,7 +9222,7 @@
         "release_ready": false,
         "unchanged_private_cases": 25
       },
-      "notes": "Existing coordinator explicitv2 replays signed dependency-bound physical law/coordinate/cache/entity-to-complete-reviewed-graph correspondence, with heldfile/sourcegeneration custody and exact populations. Source4 installed/closed afterprivate114, plus2separate normalcanonical read-only CLI observations. v1default/prefix unchanged. Original admitted Native parent/retainedpositivepacket/immutableHubreadback/realstatutoryreview remain unresolved; no task completion or model/corpus promotion.",
+      "notes": "Existing coordinator explicitv2 replays signed dependency-bound physical law/coordinate/cache/entity-to-complete-reviewed-graph correspondence, with heldfile/sourcegeneration custody and exact populations. Source4 installed/closed afterprivate114, plus2separate normalcanonical read-only CLI observations. v1default/prefix unchanged. Original admitted Native parent/retainedpositivepacket/immutableHubreadback/realstatutoryreview remain unresolved; no task completion or model/corpus promotion. Current integration V3 uses the existing norm JSON profile for complete typed admission/graph artifacts, preserving byte ceilings and V1/V2. Current56 qualifies54release+2shared-fixture cases;98release cases remain. Actual Native-parent/Lean/Hub/statutory/corpus gates stay open; see current-release-v3-physical56-typed-json-20261114. Nov15 closes all original98 remaining cases across19 source-bound originals. Together with earlier54 release cases and3 new shared-row cases, independent accounting covers155 case IDs/39functions without double counting. Exact source epochs remain separate; no unified-current-source or corpus qualification. See remaining-release98-and-155-case-coverage-20261115.",
       "owner_module": "ipfs_datasets_py.logic.autoformal.legal_release_coordinator_v1",
       "ownership_role": "existing_single_owner",
       "owning_tests": [
@@ -9241,15 +9269,26 @@
       ],
       "compatibility_dependency": true,
       "evidence_ids": [
-        "hf-wire-producer-closure-private103-source-20261111"
+        "hf-wire-producer-closure-private103-source-20261111",
+        "full-release-cli-existing-wire-default-20261115"
       ],
+      "full_release_cli_default": {
+        "cases": 2,
+        "evidence_id": "full-release-cli-existing-wire-default-20261115",
+        "legacy_opt_out": "--legacy-metadata-profile",
+        "metadata_profile": "hf-default-parquet-envelope/v1",
+        "path": "scripts/ops/legal_data/build_uscode_full_hf_release.py",
+        "producer_API_default_changed": false,
+        "remote_publication_or_statutory_admission": false
+      },
       "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_corpus_graph_exchange.md",
       "id": "uscode-hf-release-packaging",
-      "notes": "Existing deterministic local packager, newly indexed. Optional explicit hf-default-parquet-envelope/v1 derives strict intake-compatible metadata from actual local Parquet schema/rows/Arrow bytes before existing sealing. Default23 fixture artifacts exactly match old generation; no Hub upload, legal or corpus admission.",
+      "notes": "Existing deterministic local packager, newly indexed. Optional explicit hf-default-parquet-envelope/v1 derives strict intake-compatible metadata from actual local Parquet schema/rows/Arrow bytes before existing sealing. Default23 fixture artifacts exactly match old generation; no Hub upload, legal or corpus admission. Nov15 full-release CLI selects the existing strict wire profile by default, with an explicit legacy option. Both real local staging/intake controls pass; core API remains unchanged. See full-release-cli-existing-wire-default-20261115.",
       "owner_module": "ipfs_datasets_py.processors.legal_data.uscode_hf_release",
       "ownership_role": "existing_single_owner",
       "owning_tests": [
-        "tests/unit/processors/legal_data/test_uscode_hf_release.py"
+        "tests/unit/processors/legal_data/test_uscode_hf_release.py",
+        "tests/unit/scripts/test_build_uscode_full_hf_release.py"
       ],
       "path": "ipfs_datasets_py/processors/legal_data/uscode_hf_release.py",
       "required": false,
@@ -9362,26 +9401,14 @@
         "canonical-typed-structure-producer-opt-in-20261114"
       ],
       "id": "complete-norm-payload-metrics",
-      "trusted_parent_candidate_syntax_20261114": {
-        "evidence_id": "trusted-original-parent-complete-candidate-audit-20261114",
-        "source_only_passes": 233,
-        "new_cases": 36,
-        "parent_schema": "reviewed-source-evaluation-parent/v3",
-        "trusted_runtime_only": true,
-        "packet_schemas_changed": false,
-        "physical_parent_v3_qualified": false,
-        "supervisor_adoption_qualified": false,
-        "current_resource_or_model_profile_approved": false,
-        "legal_or_proof_authority": false
-      },
       "legacy_surface_evidence_completeness_20261114": {
+        "canonical_typed_or_legal_equivalence_established": false,
         "evidence_id": "proof-screen-and-legacy-metrics-20261114",
-        "ordinary_metrics_objective_passed": 114,
-        "reverse_measurements_require_explicit_nonempty_pair": true,
-        "unsupported_raw_facets_mark_incomplete": true,
         "explicit_scores_cannot_erase_missing_evidence": true,
+        "ordinary_metrics_objective_passed": 114,
         "reported_strings_independently_recompiled": false,
-        "canonical_typed_or_legal_equivalence_established": false
+        "reverse_measurements_require_explicit_nonempty_pair": true,
+        "unsupported_raw_facets_mark_incomplete": true
       },
       "notes": "Literal complete payload diagnostics only; no semantic relevance, syntax, legal applicability or structural usefulness authority.",
       "owner_module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_semantic_metrics",
@@ -9395,7 +9422,19 @@
       "task_ids": [
         "LIR-17",
         "LIR-20"
-      ]
+      ],
+      "trusted_parent_candidate_syntax_20261114": {
+        "current_resource_or_model_profile_approved": false,
+        "evidence_id": "trusted-original-parent-complete-candidate-audit-20261114",
+        "legal_or_proof_authority": false,
+        "new_cases": 36,
+        "packet_schemas_changed": false,
+        "parent_schema": "reviewed-source-evaluation-parent/v3",
+        "physical_parent_v3_qualified": false,
+        "source_only_passes": 233,
+        "supervisor_adoption_qualified": false,
+        "trusted_runtime_only": true
+      }
     }
   ],
   "entry_point": "ipfs_datasets_py/logic/autoformal/README.md",
@@ -9517,35 +9556,35 @@
     {
       "id": "v4-public-tokenizer-complete-context-refusal-20261115",
       "path": "docs/autoformalization/evidence/legal-ir-v4-public-tokenizer-context-refusal-20261115.json",
-      "root": "datasets_repository",
       "required_for_catalog_check": true,
-      "status": "recorded_original_capacity_failure_unqualified",
-      "scope": "Original12754 EXIT1: one failed case/34.68s; complete4096 context refusal before backend, no exact overflow count. Source/Native validation/process closed;16MiB retained. Five-source V4 preserved/unqualified; no retry/model/gold/nativeLean/corpus credit."
+      "root": "datasets_repository",
+      "scope": "Original12754 EXIT1: one failed case/34.68s; complete4096 context refusal before backend, no exact overflow count. Source/Native validation/process closed;16MiB retained. Five-source V4 preserved/unqualified; no retry/model/gold/nativeLean/corpus credit.",
+      "status": "recorded_original_capacity_failure_unqualified"
     },
     {
       "id": "live-context-policy-exit-and-output-capture-20261115",
       "path": "docs/autoformalization/evidence/legal-ir-live-context-policy-exit-20261115.json",
-      "root": "datasets_repository",
       "required_for_catalog_check": true,
-      "status": "canonical_source_only_qualified_real_review_pending",
-      "scope": "61 selected live-policy/output-capture software controls over fictional signed V2/V3 contexts; no model/native/statutory/gold/corpus authority."
+      "root": "datasets_repository",
+      "scope": "61 selected live-policy/output-capture software controls over fictional signed V2/V3 contexts; no model/native/statutory/gold/corpus authority.",
+      "status": "canonical_source_only_qualified_real_review_pending"
     },
     {
       "id": "diagnostic-verifier-and-heldout-source-boundaries-20261115",
       "path": "docs/autoformalization/evidence/legal-ir-diagnostic-source-boundaries-20261115.json",
-      "root": "datasets_repository",
       "required_for_catalog_check": true,
-      "status": "canonical_source_only_qualified_native_and_real_review_pending",
-      "scope": "Whole kernel/cache software and complete reviewed V2/V3 fixture + selected heldout source-group qualification. Historical false acceptances/failures retained; no native/model/legal/corpus authority."
+      "root": "datasets_repository",
+      "scope": "Whole kernel/cache software and complete reviewed V2/V3 fixture + selected heldout source-group qualification. Historical false acceptances/failures retained; no native/model/legal/corpus authority.",
+      "status": "canonical_source_only_qualified_native_and_real_review_pending"
     },
     {
       "id": "relational-roundtrip-input-stability-20261115",
-      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-relational-score-input-fence-qualification-v01/qualification-summary.json",
-      "root": "ipfs_datasets",
       "observed_bytes": 4311,
       "observed_sha256": "d280eeb356c2f02bde0c0fef21e420eb843bbea20d10c2ba83a9f0d0126b4f3c",
-      "status": "qualified_within_recorded_scope",
-      "scope": "431 source-only scorer/decompiler/reconstruction passes/4 new controls; reproduced false prose equality under reference-role mutation now refuses; scoring inputs detached/fenced. No model, legal, native-proof or resource qualification."
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-relational-score-input-fence-qualification-v01/qualification-summary.json",
+      "root": "ipfs_datasets",
+      "scope": "431 source-only scorer/decompiler/reconstruction passes/4 new controls; reproduced false prose equality under reference-role mutation now refuses; scoring inputs detached/fenced. No model, legal, native-proof or resource qualification.",
+      "status": "qualified_within_recorded_scope"
     },
     {
       "id": "reviewed-context-set-relations-v4-20261115",
@@ -9557,21 +9596,21 @@
     },
     {
       "id": "supervisor-audited-parent-receipts-20261115",
-      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-supervisor-parent-audit-qualification-v01/qualification-summary.json",
-      "root": "ipfs_datasets",
       "observed_bytes": 5058,
       "observed_sha256": "22e328e19c92ec8abf5b84ca34ac36c61885ea7c10ceb54e9c7e460c29c14c0b",
-      "status": "qualified_within_recorded_scope",
-      "scope": "93 source-only software passes/22 new cases; trusted parent audit receipt validation, exact descriptor/source joins, recomputation and final callback controls. Simulated adapter flows only; no physical owner/model/resource/native/legal qualification."
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-supervisor-parent-audit-qualification-v01/qualification-summary.json",
+      "root": "ipfs_datasets",
+      "scope": "93 source-only software passes/22 new cases; trusted parent audit receipt validation, exact descriptor/source joins, recomputation and final callback controls. Simulated adapter flows only; no physical owner/model/resource/native/legal qualification.",
+      "status": "qualified_within_recorded_scope"
     },
     {
       "id": "trusted-original-parent-complete-candidate-audit-20261114",
-      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-parent-candidate-audit-qualification-v01/qualification-summary.json",
-      "root": "ipfs_datasets",
       "observed_bytes": 6252,
       "observed_sha256": "6bce6c7722af60d06aaccd9b9a3b9a30ac6d237a2705bbfac4f0e8dd1cb5a0b0",
-      "status": "qualified_within_recorded_scope",
-      "scope": "233 selected source-only software passes/36 new cases; shared candidate scorer, trusted parent opt-in, original artifact/context joins, combined retained charges and late context checks. No physical owner/model/resource/native/legal qualification."
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-parent-candidate-audit-qualification-v01/qualification-summary.json",
+      "root": "ipfs_datasets",
+      "scope": "233 selected source-only software passes/36 new cases; shared candidate scorer, trusted parent opt-in, original artifact/context joins, combined retained charges and late context checks. No physical owner/model/resource/native/legal qualification.",
+      "status": "qualified_within_recorded_scope"
     },
     {
       "id": "reviewed-source-use-identity-20261114",
@@ -9583,21 +9622,21 @@
     },
     {
       "id": "many-sorted-complete-candidate-syntax-v3-20261114",
-      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-mixed-candidate-syntax-qualification-v01/qualification-summary.json",
-      "root": "ipfs_datasets",
       "observed_bytes": 4536,
       "observed_sha256": "3cadf73d5ab0e57a6459219b4d033a0feac74f0233944ae1a205a89d9bf3813d",
-      "status": "qualified_within_recorded_scope",
-      "scope": "324 source-only passes/32 new cases: explicit many-sorted candidate-v3 delegation and evaluator opt-in; legacy refusals, declared source/context/selection, zero authority and exact role-fidelity controls; no model/native/legal qualification."
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-mixed-candidate-syntax-qualification-v01/qualification-summary.json",
+      "root": "ipfs_datasets",
+      "scope": "324 source-only passes/32 new cases: explicit many-sorted candidate-v3 delegation and evaluator opt-in; legacy refusals, declared source/context/selection, zero authority and exact role-fidelity controls; no model/native/legal qualification.",
+      "status": "qualified_within_recorded_scope"
     },
     {
       "id": "complete-candidate-source-bound-producer-audit-20261114",
-      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-complete-candidate-producer-audit-green-v02/qualification-summary.json",
-      "root": "ipfs_datasets",
       "observed_bytes": 3363,
       "observed_sha256": "2601e6b4a7c3e1cc9987f303144c60de626b48afb798958604a26f1308fcaa20",
-      "status": "qualified_within_recorded_scope",
-      "scope": "67 selected pure-Python software passes/19 new audit cases; independent source/context/selection facts, candidate-v2 delegation, unsupported denominators, callback fences, distinct cache; no model/legal/proof/runtime qualification."
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-complete-candidate-producer-audit-green-v02/qualification-summary.json",
+      "root": "ipfs_datasets",
+      "scope": "67 selected pure-Python software passes/19 new audit cases; independent source/context/selection facts, candidate-v2 delegation, unsupported denominators, callback fences, distinct cache; no model/legal/proof/runtime qualification.",
+      "status": "qualified_within_recorded_scope"
     },
     {
       "id": "proof-screen-and-legacy-metrics-20261114",
@@ -14985,6 +15024,15 @@
       "status": "qualified_within_recorded_scope"
     },
     {
+      "id": "current-release-v3-physical56-typed-json-20261114",
+      "observed_bytes": 43574,
+      "observed_sha256": "2073e9ac201c8975bc21f426c3e68e56ee83b25e339041116725eb1fd3eea891",
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/current-canonical-release-v3-physical56-qualified-and-closed.json",
+      "root": "ipfs_datasets",
+      "scope": "Current canonical V3 physical/typed JSON/transport/selected CLI56 (54release+2shared-fixture);closed Source/native/process/storage;no actual Lean,statutory,parent,Hub or whole152 qualification.",
+      "status": "qualified_within_recorded_scope"
+    },
+    {
       "id": "legal-ir-worktree-cleanup71-qualified-20261114-v01",
       "observed_bytes": 43685,
       "observed_sha256": "09a28937e13689a0dcbade5868760506df72a9588c118e51b5907098b27057f0",
@@ -14995,6 +15043,69 @@
       "status": "qualified_selected71_cleanup_controls_only"
     },
     {
+      "id": "shared-lawrow6-closed-20261115",
+      "observed_bytes": 3124,
+      "observed_sha256": "eed2ea598830dca8f9ede4ebe281b2271b5aebbc23e8b77e0db3e8497051ae51",
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/shared_lawrow6-shared-v01/cohort-closeout.json",
+      "root": "ipfs_datasets",
+      "scope": "Six selected fictional replay checks: three new shared-row cases, retained three-row positive and two helper controls; complete caches/offsets, duplicate/overlap refusal; closed own32MiB; no actual Lean/legal/model/Hub/corpus gain.",
+      "status": "qualified_within_recorded_scope"
+    },
+    {
+      "id": "remaining-release-regression35-closed-20261115",
+      "observed_bytes": 4547,
+      "observed_sha256": "c7e0f0c02e1e562313000c588725945748da58ec58c631100718dd6c10f69635",
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/remaining-small-cohort-progress-6closed-shared6closed-physical6failed-v01.json",
+      "root": "ipfs_datasets",
+      "scope": "35of original remaining98 cases pass in six distinct captured-source runs;63 remain. Separate new shared-row3 cases; physical6 timeout retained/no JUnit/no credit. No whole current155 qualification or source-epoch pooling.",
+      "status": "qualified_within_recorded_scope"
+    },
+    {
+      "id": "existing-physical-five-owning-test-closed-20261115",
+      "observed_bytes": 3024,
+      "observed_sha256": "cfc604197e4fac88a0e2c0517a342fdcccd86e6a690142b0706a10b8393d4cb6",
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/legacy_CLI_paths5-physical-current5-green-v01/cohort-closeout.json",
+      "root": "ipfs_datasets",
+      "scope": "Five existing invalid-path cases; test-only exact-leaf lifecycle correction, unchanged C19/SDK/CLI. Closed original custody/own32MiB durable; old real teardown error preserved. No observer runtime installed.",
+      "status": "qualified_within_recorded_scope"
+    },
+    {
+      "id": "remaining-release-regression52-closed-20261115",
+      "observed_bytes": 8385,
+      "observed_sha256": "f5538d1d1391ead49443031a47cebaf3bbc55513e384f91a9a8fdec0b458f6b3",
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/remaining-small-cohort-progress-10closed-52passed-46remaining-v01.json",
+      "root": "ipfs_datasets",
+      "scope": "52of original98 selected release cases in10distinct source-bound closed scopes;46ordinary remain. No pooled whole155/current-source/Lean/model/statutory/corpus qualification.",
+      "status": "qualified_within_recorded_scope"
+    },
+    {
+      "id": "supervisor-sawm-source-preflight26-closed-20261115",
+      "observed_bytes": 4910,
+      "observed_sha256": "e4747e6cfece9d320db7c6cbb99fe07e295ba4c49c9afcbfaf2ff379ee16787b",
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/SAWM_preflight_current26-small-v01/cohort-closeout.json",
+      "root": "ipfs_datasets",
+      "scope": "22new+4retained owning software checks for exact source availability before unit binding; olddata-only actualbinder failure preserved;SourceA3installed/closed Native+own32MiB. Current missing SAWM checkout/runtime/live rollout not restored.",
+      "status": "qualified_within_recorded_scope"
+    },
+    {
+      "id": "remaining-release98-and-155-case-coverage-20261115",
+      "observed_bytes": 29811,
+      "observed_sha256": "5a4360ef14a020060009ce568a229c36265301836acfa5574ddcb7f4b698f514",
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/independent-final-remaining98-and-release155-captured-epoch-coverage-audit-v01.json",
+      "root": "ipfs_datasets",
+      "scope": "Independent raw accounting: 19 closed source-bound originals cover original98 remainder; earlier54 release and3 new shared cases yield all155 declared case IDs/39functions. Exact epochs remain separate, no unified-current-source or statutory corpus claim.",
+      "status": "qualified_within_recorded_scope"
+    },
+    {
+      "id": "current-013d-native-cache-helper-20261115",
+      "observed_bytes": 5230,
+      "observed_sha256": "92c62f7beb5e5e9d9961d7d53c502301f785156b6d268b2f4a8d2adc06a90137",
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/current-native-cache-helper-binding-v01/current-native-cache-helper-v02-qualified-and-closed-v01.json",
+      "root": "ipfs_datasets",
+      "scope": "One fictional True cache helper; actual Lean4.34.1 version probe+2 compiles/empty axioms, disk reopen and0 Native commands on reuse/mismatch; current f492/013d/bd4a/e0c2 epoch; Source/Native/process/own16MiB closed. Zero pytest, no model/statutory/corpus authority.",
+      "status": "qualified_within_recorded_scope"
+    },
+    {
       "id": "legal-ir-current-immutable-v1-cleanup146-qualified-20261115-v01",
       "observed_bytes": 28411,
       "observed_sha256": "7686b3383250bec9314775b62f909b4205ab202e0800d3c470a12d3d9547d84a",
@@ -15003,6 +15114,15 @@
       "root": "datasets_repository",
       "scope": "Exact40A+106R selected owning controls in one original CLI run, audited Source4 adoption and retained RED2; no full SDK/SourceGen/live cleanup/@2/model/legal/Lean transfer.",
       "status": "qualified_selected146_current_immutable_v1_cleanup_controls_only"
+    },
+    {
+      "id": "full-release-cli-existing-wire-default-20261115",
+      "observed_bytes": 2731,
+      "observed_sha256": "1b21c382be9ebfc28e89dc3798da0f23dc738fdece64d2f12063647fb8da51e1",
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/HF_full_release_cli_current2-small-v01/cohort-closeout.json",
+      "root": "ipfs_datasets",
+      "scope": "Two real local Parquet CLI staging/intake controls; upstream family generation modeled; exact229 source pins and all original custody closed, own32MiB durably released. Existing producer API unchanged; no Hub/model/statutory/corpus authority.",
+      "status": "qualified_within_recorded_scope"
     },
     {
       "id": "legal-ir-current-release-v3-source-only-R56-qualified-20261115-v01",

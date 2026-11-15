@@ -15,6 +15,27 @@ Original Source R+A, Native, sampled-process and genuine-wait custody closed in 
 This publication preserves all current peer sections, 119 owners, 24 task IDs/states, retained failures and private-asset/runtime holds. Source-generation, delegated immutable@2, actual live SDK cleanup, full-import qualification, native Lean and real corpus/model/training/legal validation remain separate gates. [Current 13/56 exact evidence](../../../../../workspace/test-logs/federal-corpus-audits/legal-ir-current-release-v3-source-only-R56-qualified-20261115-v01/qualification-summary.json).
 
 
+## Full-release CLI selects strict wire metadata — 2026-11-15
+
+The existing `scripts/ops/legal_data/build_uscode_full_hf_release.py` now
+selects the existing `hf-default-parquet-envelope/v1` packaging profile by
+default. Staged release metadata lists exact files and records measured
+Parquet schema, row counts and Arrow bytes. Unselected files in the staging
+directory remain untouched and cannot enter the manifest through a broad
+glob. `--legacy-metadata-profile` explicitly retains the old CLI behavior;
+the underlying producer API keeps its existing default.
+
+The old CLI reproduced a strict-intake failure after successful real local
+staging. The corrected default and explicit legacy route pass both owning
+tests, using real tiny Parquet files and the existing staging/intake owners.
+Only upstream family generation is modeled. All229 source pins stayed exact;
+the original156-second run closed Source, Native and process custody and
+durably released its own32MiB reservation. This is local packaging evidence,
+with no Hub upload, model execution, statutory review or corpus admission.
+Public law/span/entity compatibility findings remain separate from this fix.
+
+[Closed two-case qualification](../../../../../workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/HF_full_release_cli_current2-small-v01/cohort-closeout.json).
+
 This additive v1 profile exports and validates a bounded local candidate graph.
 It preserves complete sealed node/edge records and explicit graph endpoints.
 It is a graph interchange format, not a complete statutory or Lean corpus
@@ -191,3 +212,60 @@ The law text is captured by the existing raw-row owner, before cleaning or fallb
 Successful v2 replay sets `local_source_cache_entity_bindings_verified` and `independent_reviewed_crosswalk_verified` for the complete declared selected component. It removes only the local crosswalk blocker. Original-native custody, optional retained-native positive evidence and immutable remote Hub readback remain separate; release/proof/corpus flags stay false. This profile measures selected physical rows, not whole corpus coverage.
 
 The114-case private qualification covers wholeCLI65 plus49 affected reviewed-admission cases, with63 unrelated helperV1 cases deselected. Two separately saved normalcanonical invocations also replayed the full fictional3unit/4span/39entity/18node/21edge component. These are no statutory/model/native results. [Qualification](../../../../../workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/coherent-release-closure-v01/reviewed-physical-crosswalk-v01/private-physical-crosswalk-qualification-summary-v02.json); [canonical observations](../../../../../workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/coherent-release-closure-v01/reviewed-physical-crosswalk-v01/canonical-readonly-CLI-v01/observation.json). The earlier v1/wire qualifications above retain their original generations.
+
+## Current V3 three-cache integration and typed JSON correction — 2026-11-14
+
+The integration checkout now extends the existing release coordinator and CLI
+with the explicit V3 law/span/entity path. Complete admission and graph
+artifacts use the existing norm correspondence JSON profile, retaining the
+1,000,000-byte artifact and 8 MiB request ceilings and all downstream semantic
+and independent-pin validation. Generic graph records and V1/V2 keep their
+existing decoder limits. The shared review fixture now inventories one exact
+artifact per identity while preserving every legal unit and cross-reference;
+conflicting bytes under one identity refuse before manifest replacement.
+
+A fresh canonical-source run passed **56 cases in 13 functions**: 54 release
+cases and two shared-fixture controls. It covers a complete three-unit
+fictional physical replay, damaged legal JSON, complete 83-file packet
+transport, selected V1/V2 behavior and direct/module CLI paths. Source, native
+resource, process, genuine wait and storage custody closed; this successful
+run released only its own 32 MiB promise. The earlier missing-API, temporary
+factory, duplicate-reference and generic-depth failures remain preserved.
+A larger legacy batch hit its original 120-second deadline and grants no
+whole-batch credit. Use the retained smaller cohorts and the existing
+`--owned-ordinary-temp-factory` option for remaining checks.
+
+At that run’s cutoff, the release owning file declared 152 cases; **98 remained
+unqualified on its captured source**. The prior 35-case transport result overlaps this run
+and must not be added to it. No actual Lean build, original Native-parent
+authentication, immutable Hub readback, statutory review, model fitting or
+corpus release is established. V3 remains an explicit local replay path.
+[Closed qualification](../../../../../workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/current-canonical-release-v3-physical56-qualified-and-closed.json).
+
+## Shared law-row replay and release regression checks — 2026-11-15
+
+The existing physical fixture represents two source rows carrying three legal
+units. It retains complete original bytes, exact character and UTF-8 offsets,
+all span overlaps and one graph source-version node per identity. Signing binds
+the original shared row before admission; source/IR artifact identities stay
+distinct for each unit. The prior three-row default remains available.
+
+The shared-row run passed six checks: three new cases, the retained three-row
+positive and two shared-artifact controls. The five invalid-path cases also
+passed after their owning test gained exact-leaf cleanup following its original
+CLI assertions. Original and working snapshots plus ordinary observation
+evidence remain; the C19 plugin, SDK and CLI were not changed for this fix.
+Both runs closed all original custody and released their own 32 MiB promises.
+The old symlink teardown error and earlier timed-out runs remain preserved.
+
+All 98 cases in the previously unqualified regression selection now have
+passing results across 19 closed originals. The latest nine sequential runs
+cover the final 46. Independent raw-JUnit accounting joins those 98 with the
+earlier 54 release cases and three new shared-row cases: all 155 declared
+release case IDs and 39 functions are covered. Helper cases and overlapping
+runs are not added twice. Every scope retains its exact source epoch; this is
+not one unified current-source run or verification of statutory meaning.
+Actual corpus Native-parent integration, immutable Hub readback, real legal
+review and a complete statutory Lean corpus remain open.
+
+[Shared-row closeout](../../../../../workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/shared_lawrow6-shared-v01/cohort-closeout.json). [Physical5 closeout](../../../../../workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/legacy_CLI_paths5-physical-current5-green-v01/cohort-closeout.json). [Complete98 closeout](../../../../../workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/remaining-release98-complete-19closed-v01.json). [Independent155 accounting](../../../../../workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/independent-final-remaining98-and-release155-captured-epoch-coverage-audit-v01.json).

@@ -61,6 +61,10 @@ Original Source R+A, Native, sampled-process and genuine-wait custody closed in 
 This publication preserves all current peer sections, 119 owners, 24 task IDs/states, retained failures and private-asset/runtime holds. Source-generation, delegated immutable@2, actual live SDK cleanup, full-import qualification, native Lean and real corpus/model/training/legal validation remain separate gates. [Current 13/56 exact evidence](../../../../workspace/test-logs/federal-corpus-audits/legal-ir-current-release-v3-source-only-R56-qualified-20261115-v01/qualification-summary.json).
 
 
+## Live context permission and returned-output capture — 2026-11-15
+
+The canonical evaluator now refuses a report when context permission is revoked during production, even when every bound input is unchanged. It replays evidence after the final policy callback and freezes producer-returned data before later callbacks can alter it. All61 selected software cases pass (20 new/41 retained), no skips. These are scripted callbacks over fictional signed inputs, not training or model-quality measurements. No native, statutory gold or corpus qualification follows. [Exact qualification](../../../../docs/autoformalization/evidence/legal-ir-live-context-policy-exit-20261115.json).
+
 ## Cleanup146 software evidence preserves training and corpus holds — 2026-11-15
 
 The current immutable-source qualification@1 cleanup changes were adopted in the published worktrees through the original four-target Source operation and a separate audited readback. The new completed-failed-retained profile is cleanup-only: it preserves current-row, process, Native, source, request and original-deadline checks; it grants no passed receipt, repair adoption, retry or storage authority.
@@ -73,10 +77,6 @@ CPU1, memory1536MiB, process4, storage16MiB, productive300 and ledger60 are unch
 
 The V5 postgrant ledger-lock public-inspector repair passed 26 selected Main software controls after its intended RED; the private predecessor remains a separate 26-case operation. This changes no training, model, legal, Lean or corpus gate, repairs no historical UNKNOWN or failed claim, and grants no generic-parent or live SDK cleanup authority. [Exact scoped evidence](../../../../docs/autoformalization/evidence/legal-ir-v5-postgrant-ledger-lock-software-20261115.json).
 
-
-## Live context permission and returned-output capture — 2026-11-15
-
-The canonical evaluator now refuses a report when context permission is revoked during production, even when every bound input is unchanged. It replays evidence after the final policy callback and freezes producer-returned data before later callbacks can alter it. All61 selected software cases pass (20 new/41 retained), no skips. These are scripted callbacks over fictional signed inputs, not training or model-quality measurements. No native, statutory gold or corpus qualification follows. [Exact qualification](../../../../docs/autoformalization/evidence/legal-ir-live-context-policy-exit-20261115.json).
 
 ## Diagnostic/profile and heldout-source software corrections — 2026-11-15
 
