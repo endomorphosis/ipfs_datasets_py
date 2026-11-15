@@ -122,6 +122,28 @@
   "components": [
     {
       "apis": [
+        "candidate_from_recipe_case",
+        "canonical_positive_pair_recipe",
+        "mine_canonical_positive_pairs",
+        "mine_positive_pairs",
+        "write_positive_pair_shards",
+        "load_positive_pair_shards",
+        "loss_pair_admissions"
+      ],
+      "compatibility_dependency": false,
+      "evidence_ids": [
+        "PGIR040-explicit-positive-evidence-20261115"
+      ],
+      "id": "typed-positive-pair-evidence-proposals",
+      "notes": "Existing optimizer owner; canonical recipes propose relationships without executing checkers or reviews. Explicit typed caller evidence is detached and bound before training admission. Historical archive/loss projection authentication remains pending; no native/legal/model qualification inferred.",
+      "owner_module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_positive_pairs",
+      "ownership_role": "existing_single_owner",
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_positive_pairs.py",
+      "required": true,
+      "status": "focused_tests_qualified"
+    },
+    {
+      "apis": [
         "MinimalSemanticMutation",
         "MutationValidationRecord",
         "parse_and_typecheck_typed_ir",
@@ -4230,7 +4252,17 @@
         "shared_physical_and_legal_use_guard": true,
         "unaligned_views_supported": false
       },
-      "status": "focused_tests_qualified"
+      "status": "focused_tests_qualified",
+      "reviewed_source_raw_view_identity_20261115": {
+        "capsule": "docs/autoformalization/evidence/legal-ir-reviewed-source-raw-view-identity-20261115.json",
+        "capsule_bytes": 11721,
+        "capsule_sha256": "a05330f2071ba36829e0c599ab498af9f9efe11a6185e9e730dce18662e4a1d7",
+        "cross_view_alignment_supported": false,
+        "focused_cases": 24,
+        "human_statutory_Lean_training_or_corpus_authority": false,
+        "same_raw_requires_one_coordinate_view": true,
+        "software_qualified": true
+      }
     },
     {
       "apis": [
@@ -5724,6 +5756,7 @@
         "legal-proof-cache-json-context-source-install-20261111",
         "legal-proof-formal-content-private103-20261111",
         "legal-proof-formal-content-source-installed-20261111",
+        "cache-native-version-coherence-20261115",
         "current-013d-native-cache-helper-20261115"
       ],
       "exact_formal_content_identity": {
@@ -9563,7 +9596,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-11-15T05:09:52.432861+00:00",
+  "last_updated_at_utc": "2026-11-15T08:13:54.076998+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -9605,6 +9638,22 @@
   "schema": "legal-autoformal-work-catalog/v1",
   "scope": "Curated current ownership/navigation with attributed saved evidence. Observations are snapshots, not future source-hash requirements or proof admission.",
   "selected_evidence": [
+    {
+      "id": "PGIR040-explicit-positive-evidence-20261115",
+      "path": "docs/autoformalization/evidence/legal-ir-PGIR040-explicit-positive-evidence-20261115.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Original2304 EXIT0/133PASS:45 positive+82 hard-negative+6 metamorphic, Source256/Git8 exact, custody164.245540s<420/own16MiBdurableReleased209720B. OriginalRED4FAIL retained. Explicit fictional labels only; archive/loss projection authentication, actual checkers/reviews, native Lean, statutory gold and model training remain separate.",
+      "status": "selected_original_software_qualified_archive_authentication_pending"
+    },
+    {
+      "id": "cache-native-version-coherence-20261115",
+      "path": "docs/autoformalization/evidence/legal-ir-cache-native-version-coherence-20261115.json",
+      "root": "datasets_repository",
+      "required_for_catalog_check": true,
+      "status": "selected_source_and_fresh_native_cache_controls_qualified_legal_gates_pending",
+      "scope": "SourceRED1PASS2DIDNOTRAISEfailures0.804s; SourceGREEN142PASS/8.739s Source252/Git8exact, custody252.7759765s<420/own16MiBdurablyreleased431529B. FreshNative11commands=4probes7compiles/6expectedcases/cache3commands,2software-reissuedversionrefusals0newLean,0ordinary/standalonepytest; Source217/Git8+19native-input hashesexact, custody161.7251710s<420/own16MiBdurablyreleased573315B. RED16MiBretained; old013dNative11notinherited. No hostedCI/model/statutory/gold/corpus acceptance."
+    },
     {
       "id": "PGIR041-mutation-label-admission-20261115",
       "path": "docs/autoformalization/evidence/legal-ir-PGIR041-mutation-label-admission-20261115.json",
@@ -9686,7 +9735,17 @@
       "required_for_catalog_check": true,
       "root": "datasets_repository",
       "scope": "Canonical 355-case V2/V3 source-use and reviewed-consumer software qualification; original false admissions, combined-mutation failure and historical source-epoch test failures retained. No real statutory, model, native proof or corpus authority.",
-      "status": "canonical_source_only_qualified_real_review_pending"
+      "status": "canonical_source_only_qualified_real_review_pending",
+      "reviewed_source_raw_view_identity_20261115": {
+        "capsule": "docs/autoformalization/evidence/legal-ir-reviewed-source-raw-view-identity-20261115.json",
+        "capsule_bytes": 11721,
+        "capsule_sha256": "a05330f2071ba36829e0c599ab498af9f9efe11a6185e9e730dce18662e4a1d7",
+        "cross_view_alignment_supported": false,
+        "focused_cases": 24,
+        "human_statutory_Lean_training_or_corpus_authority": false,
+        "same_raw_requires_one_coordinate_view": true,
+        "software_qualified": true
+      }
     },
     {
       "id": "many-sorted-complete-candidate-syntax-v3-20261114",

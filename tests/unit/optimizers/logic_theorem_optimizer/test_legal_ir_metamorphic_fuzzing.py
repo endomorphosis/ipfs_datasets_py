@@ -170,3 +170,73 @@ def _contains_hash_only_redaction(value: object) -> bool:
     if isinstance(value, list):
         return any(_contains_hash_only_redaction(item) for item in value)
     return False
+
+
+# Heuristic mutation diagnostics are proposals, not independently checked
+# semantic labels. These controls use no model or filesystem fixture.
+def test_legacy_decompiler_heuristics_without_independent_evidence_export_no_trusted_negatives() -> None:
+    report = run_legal_ir_metamorphic_fuzzing(
+        LEGAL_TEXT,
+        sample_id="lir-legacy-decompiler-unattested-export",
+        config=LegalIRFuzzingConfig(targets=(TARGET_DECOMPILER,)),
+    )
+    changing = tuple(
+        result for result in report.results
+        if result.mutation.relation == SEMANTICS_CHANGING
+    )
+    assert changing
+    assert any(result.grammar_rejections for result in changing)
+    assert all(result.differential_metrics for result in changing)
+    assert all(result.semantic_metrics for result in changing)
+
+    assert report.trusted_negative_candidates == (), (
+        "heuristic and grammar diagnostics cannot supply independent semantic "
+        "evidence or export trusted training negatives"
+    )
+    assert all(result.verified is False for result in changing)
+
+
+def test_legacy_fuzzer_proposals_without_independent_evidence_admit_no_curriculum_examples() -> None:
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_hard_negatives import (
+        LegalIRHardNegativeConfig,
+        build_legal_ir_hard_negative_curriculum,
+    )
+
+    report = run_legal_ir_metamorphic_fuzzing(
+        LEGAL_TEXT,
+        sample_id="lir-legacy-decompiler-unattested-curriculum",
+        config=LegalIRFuzzingConfig(targets=(TARGET_DECOMPILER,)),
+    )
+    changing = tuple(
+        result for result in report.results
+        if result.mutation.relation == SEMANTICS_CHANGING
+    )
+    assert changing
+    assert any(result.grammar_rejections for result in changing)
+    proposals = tuple(
+        result.counterexample for result in changing
+        if result.counterexample is not None
+    )
+    assert proposals, "retain diagnostic proposals without promoting their authority"
+    # Downgrading these detached proposal flags supplies no checking evidence.
+    # The opt-out must not upgrade an explicitly untrusted proposal either.
+    untrusted_proposals = []
+    for proposal in proposals:
+        payload = proposal.to_dict()
+        payload["trusted"] = False
+        payload["verification"] = {**payload["verification"], "verified": False}
+        untrusted_proposals.append(payload)
+
+    for config in (None, LegalIRHardNegativeConfig(require_verified_negatives=False)):
+        curriculum = build_legal_ir_hard_negative_curriculum(
+            verified_counterexamples=untrusted_proposals,
+            config=config,
+        )
+        assert curriculum.accepted_count == 0, (
+            "legacy fuzzer proposals explicitly marked untrusted cannot admit "
+            "semantic training labels, including when verification is optional"
+        )
+        assert curriculum.examples == ()
+        assert curriculum.stages == ()
+        assert curriculum.ready_for_training is False
+        assert curriculum.rejected_count == len(untrusted_proposals)
