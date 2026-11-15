@@ -14930,6 +14930,26 @@
       "root": "datasets_repository",
       "scope": "Exact2A literal-constant fix, audited Source2 and fresh14 selected legacy-constructor software controls; prior2setupErrors retained, noCLI4/nativeobserver/physicalR/model/legal/runtime credit.",
       "status": "qualified_selected_G14_scope_literal_software_controls_only"
+    },
+    {
+      "id": "legal-ir-current-native-cache-20261115",
+      "observed_bytes": 8912,
+      "observed_sha256": "d922ff8f84ee8cacc9c3e4b9b1d3a9b976d1aa8354ba063a40726b0db2c72b70",
+      "path": "docs/autoformalization/evidence/legal-ir-current-native-cache-20261115.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Fresh actual11localLean commands:4versions/7compilations;6expected kernel scenarios with deliberate wrong-goal exit1; current verifierprofilev1; exact disk reopen/reuse and3artifact+6context refusals with0additionalNative. Zero pytest or statutory/model/corpus credit; original custodyclosed and own16MiB durablyreleased. Hostedjob neverstarted.",
+      "status": "qualified_current_local_native_engineering_controls_only"
+    },
+    {
+      "id": "legal-ir-v4-complete-context-census-20261115",
+      "observed_bytes": 12573,
+      "observed_sha256": "7b92c55bf8fe5bfaa6abf488532db250cbb4701c803eb092f5a932bf2d9110be",
+      "path": "docs/autoformalization/evidence/legal-ir-v4-complete-context-census-20261115.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Onepassed count-only diagnostic;3queries×3transports=9measurements,0codec refusals and2plain-context byte refusals; complete sharedv2context4598/4598/2952 vs4096 and fullsource4869/4870/3229 vs65536. Fresh6b5apipeline (no inheritedhistoricalv04 or savedc68 qualification), fullroundtrip/no truncation or backend/model calls; own16MiB released, priorfailed16MiB retained. Separate unqualifiedV3source-preservation d95427c9/3files495504B is notMain or tokenfit. No factory/model/legal/corpus claim.",
+      "status": "qualified_complete_input_count_diagnostic_capacity_refusals_preserved"
     }
   ]
 }
