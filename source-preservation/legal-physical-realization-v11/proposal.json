@@ -1,0 +1,236 @@
+{
+  "schema": "private-physical-realization-four-owner-integration-proposal/v1",
+  "status": "PRIVATE_CODE_WIRED_UNEXECUTED_NOT_ADOPTED_OR_QUALIFIED",
+  "base_private_proposal_sha256": "65315d9339539426af13c3528fc26ed39f979a3d08b316229369f0227fe29b77",
+  "files": [
+    {
+      "path": "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_native_v2.py",
+      "before_sha256": "e2adfb0f674a6d5d558ff1e862aa04740b0d62ad2bed9364902adbdd89c5e5ca",
+      "candidate_sha256": "eb36ad0a117a37e794af2f86e385272dfa2db0830eefc777081f6132d51a0fcb",
+      "candidate_bytes": 308570,
+      "changed_definitions": [
+        "_build_validated_native",
+        "_validate_reviewed_native_retained_domain",
+        "_reviewed_definition_realization_native_manifest",
+        "_reviewed_definition_realization_native_operation"
+      ],
+      "added_definitions": [
+        "_reviewed_physical_realization_native_policy",
+        "_reviewed_physical_realization_native_pins",
+        "_reviewed_physical_realization_receipt_binding",
+        "validate_reviewed_physical_definition_realization_native_v1",
+        "build_reviewed_physical_definition_realization_native_v1",
+        "reviewed_physical_realization_receipt_bytes_v1",
+        "_reviewed_physical_realization_validate_adapter",
+        "validate_reviewed_physical_realization_native_receipt_v1"
+      ]
+    },
+    {
+      "path": "ipfs_datasets_py/logic/autoformal/legal_corpus_incremental.py",
+      "before_sha256": "a752d3caae1bbcdfd25eabfca8d818982f840076fac847290eaf234e8e2e335b",
+      "candidate_sha256": "2892faa069ebb96f2377c103967721d42723dd3f0fe899754b5bd759f94a8a61",
+      "candidate_bytes": 112789,
+      "changed_definitions": [
+        "_build_incremental_corpus",
+        "_is_realization",
+        "_reviewed_domain_value",
+        "_reviewed_policy_for",
+        "_reviewed_graph_for",
+        "_realization_owner_pins",
+        "_realization_replay",
+        "_realization_execution_snapshot",
+        "_realization_callbacks",
+        "_realization_guard",
+        "_realization_model",
+        "_realization_binding",
+        "_realization_facts",
+        "_realization_receipt"
+      ],
+      "added_definitions": [
+        "_is_physical_realization",
+        "_physical_realization_policy",
+        "build_incremental_reviewed_physical_realization_corpus_v1"
+      ]
+    },
+    {
+      "path": "ipfs_datasets_py/logic/autoformal/legal_corpus_shared_lake.py",
+      "before_sha256": "7284dff2e1d419d51a4487cd78836e77a887120e3e0d35e6272e45e415acd580",
+      "candidate_sha256": "3a53cc700675fd1a926e2c1fb1b7ad8899c528a5959801a0432e6d2aab29be42",
+      "candidate_bytes": 133905,
+      "changed_definitions": [
+        "_reviewed_definition_realization_selection",
+        "_reviewed_definition_realization_project",
+        "_reviewed_definition_realization_callbacks",
+        "_reviewed_definition_realization_operation"
+      ],
+      "added_definitions": [
+        "_reviewed_physical_realization_policy",
+        "prepare_reviewed_physical_definition_realization_corpus_v1",
+        "validate_reviewed_physical_definition_realization_corpus_v1"
+      ]
+    },
+    {
+      "path": "ipfs_datasets_py/logic/autoformal/legal_release_coordinator_v1.py",
+      "before_sha256": "b28cb61ee0415b27e7dca6860dfb3a8556d0113c53b2669841433c948d8fac75",
+      "candidate_sha256": "b77a3acd240997145985b4f6ced0862fe4efea68a369ceafd2c1970882aa4a4a",
+      "candidate_bytes": 106418,
+      "changed_definitions": [],
+      "added_definitions": [
+        "validate_reviewed_physical_realization_context_v1",
+        "_physical_definition_realization_release_policy_v1",
+        "validate_uscode_physical_definition_realization_release_closure_v1"
+      ]
+    },
+    {
+      "path": "tests/unit/logic/autoformal/test_corpus_release_cli.py",
+      "before_sha256": "e8a88d5419ffcfce3b0975c86a50c301c1b2d7ae103e3368b9651c57cb6c6085",
+      "candidate_sha256": "4730382216fdff00e65184000f833a49ec1850de8dd0acebe783570273b27168",
+      "candidate_bytes": 153731,
+      "changed_definitions": [
+        "_physical_source_material",
+        "_physical_closure_request"
+      ],
+      "added_definitions": [
+        "replay_physical_realization_context_v1",
+        "test_physical_realization_context_preserves_required_reviewed_crosswalk_evidence",
+        "test_physical_realization_context_refuses_resealed_context_changes",
+        "test_physical_realization_context_fences_physical_delegate_defaults",
+        "test_physical_realization_context_refuses_valid_reviewed_foreign_legal_dependency",
+        "physical_realization_preparation_v1",
+        "test_physical_realization_preparation_replays_complete_original_request_and_all_obligations",
+        "test_physical_realization_preparation_requires_independently_supplied_original_request",
+        "test_physical_realization_preparation_cannot_retag_into_old_no_reference_profile",
+        "test_physical_realization_native_validation_replays_current_complete_physical_inputs",
+        "authored_physical_realization_native_packet_v1",
+        "replay_authored_physical_realization_packet_v1",
+        "test_physical_realization_native_authored_packet_replays_all_obligations_without_authority",
+        "test_physical_realization_native_refuses_resealed_receipt_with_foreign_context",
+        "test_physical_realization_native_receipt_cannot_enter_old_receipt_domain",
+        "physical_realization_incremental_runtime_v1",
+        "build_physical_realization_incremental_fixture_v1",
+        "test_physical_realization_incremental_cold_warm_preserves_all26_and_compact_evidence_commitments",
+        "test_physical_realization_incremental_refuses_missing_or_foreign_original_before_tools",
+        "test_physical_realization_incremental_refuses_original_v3_cache_domain",
+        "test_physical_realization_incremental_refuses_old_constructed_cache_provenance",
+        "retained_physical_realization_release_request_v1",
+        "replay_retained_physical_realization_release_v1",
+        "test_retained_physical_realization_release_replays_original_physical_request_and_native_packet",
+        "test_retained_physical_realization_release_refuses_resealed_foreign_original_pin",
+        "test_retained_physical_realization_release_refuses_native_role_alias",
+        "test_retained_physical_realization_release_refuses_residue_even_with_new_physical_pin",
+        "test_retained_physical_realization_release_rejects_old_profile_and_parent_argument",
+        "test_retained_physical_realization_release_fences_final_serializer_mutation"
+      ]
+    }
+  ],
+  "task_ids": [
+    "LIR-21",
+    "LIR-14",
+    "LIR-15"
+  ],
+  "test_functions": [
+    {
+      "name": "test_physical_realization_context_preserves_required_reviewed_crosswalk_evidence",
+      "natural_cases": 1
+    },
+    {
+      "name": "test_physical_realization_context_refuses_resealed_context_changes",
+      "natural_cases": 3
+    },
+    {
+      "name": "test_physical_realization_context_fences_physical_delegate_defaults",
+      "natural_cases": 1
+    },
+    {
+      "name": "test_physical_realization_context_refuses_valid_reviewed_foreign_legal_dependency",
+      "natural_cases": 2
+    },
+    {
+      "name": "test_physical_realization_preparation_replays_complete_original_request_and_all_obligations",
+      "natural_cases": 1
+    },
+    {
+      "name": "test_physical_realization_preparation_requires_independently_supplied_original_request",
+      "natural_cases": 2
+    },
+    {
+      "name": "test_physical_realization_preparation_cannot_retag_into_old_no_reference_profile",
+      "natural_cases": 1
+    },
+    {
+      "name": "test_physical_realization_native_validation_replays_current_complete_physical_inputs",
+      "natural_cases": 1
+    },
+    {
+      "name": "test_physical_realization_native_authored_packet_replays_all_obligations_without_authority",
+      "natural_cases": 1
+    },
+    {
+      "name": "test_physical_realization_native_refuses_resealed_receipt_with_foreign_context",
+      "natural_cases": 2
+    },
+    {
+      "name": "test_physical_realization_native_receipt_cannot_enter_old_receipt_domain",
+      "natural_cases": 1
+    },
+    {
+      "name": "test_physical_realization_incremental_cold_warm_preserves_all26_and_compact_evidence_commitments",
+      "natural_cases": 1
+    },
+    {
+      "name": "test_physical_realization_incremental_refuses_missing_or_foreign_original_before_tools",
+      "natural_cases": 2
+    },
+    {
+      "name": "test_physical_realization_incremental_refuses_original_v3_cache_domain",
+      "natural_cases": 1
+    },
+    {
+      "name": "test_physical_realization_incremental_refuses_old_constructed_cache_provenance",
+      "natural_cases": 1
+    },
+    {
+      "name": "test_retained_physical_realization_release_replays_original_physical_request_and_native_packet",
+      "natural_cases": 1
+    },
+    {
+      "name": "test_retained_physical_realization_release_refuses_resealed_foreign_original_pin",
+      "natural_cases": 1
+    },
+    {
+      "name": "test_retained_physical_realization_release_refuses_native_role_alias",
+      "natural_cases": 3
+    },
+    {
+      "name": "test_retained_physical_realization_release_refuses_residue_even_with_new_physical_pin",
+      "natural_cases": 1
+    },
+    {
+      "name": "test_retained_physical_realization_release_rejects_old_profile_and_parent_argument",
+      "natural_cases": 1
+    },
+    {
+      "name": "test_retained_physical_realization_release_fences_final_serializer_mutation",
+      "natural_cases": 1
+    }
+  ],
+  "total_proposed_natural_cases": 29,
+  "scope": "Four existing owners connect explicit physical evidence context, constructed-model preparation, bounded native/retained replay, separate incremental cache provenance, and retained-only release closure. No original-parent capability or corpus admission is supplied.",
+  "release_request_binding": "Reconstruct the exact original physical V3 request by removing the explicit realization/native transport extension; compare to independent physical_request pin and supply those immutable bytes on every compiler/native replay.",
+  "checks_performed": [
+    "AST parsing and compile without executing imports/module bodies",
+    "independent AST-derived29naturalcase count",
+    "source preimage/candidate hashes and existing definition deltas"
+  ],
+  "runtime_tests_run": false,
+  "canonical_installation_performed": false,
+  "remaining": [
+    "Fresh baseline reproduction after full physical prerequisites",
+    "Original-owner tests and regressions for all four affected owners",
+    "Actual normal-import/dependency-cycle and callback-drift qualification",
+    "Actual Lean build and exact empty-axiom observations under new profile",
+    "Measure all complete request/project/receipt/cache sizes under original bounds",
+    "Review backward compatibility and source qualification before canonical installation/publication",
+    "Real statutory review, parent authentication and corpus release remain external gates"
+  ]
+}
