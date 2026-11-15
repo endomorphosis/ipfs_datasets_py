@@ -652,3 +652,275 @@ def test_reviewed_v3_composed_profile_requires_explicit_exact_opt_in(tmp_path,da
         assert result['source_representation_profile']['stage']==result['formal_representation_profile']['stage']=='complete_chunk_composition'
         assert result['semantic_label_admission'] is result['actual_fit_authorized'] is result['runtime_computation_proven'] is False
         assert result==subject.validate_reviewed_relation_declaration_v3(result,expected_preparation_sha256=lane._digest(result),**inputs)
+
+
+def reviewed_pair_fixture_v4(*, fixture_factory=reviewed_pair_fixture_v3, declarations=subject, lane=lane,
+        prepare=True, cross_relation="mixed"):
+    """Combine two genuine *fictional* V3 admissions without rewriting either.
+
+    New context-set label reviews are signed in the explicit V4 fixture domain.
+    Existing independent pair keys may be reused under a fresh exact set-scope
+    registry/policy; no global endpoint/pair reviewer-disjointness is claimed.
+    All source and formal vectors remain authored declarations, not inference.
+    """
+    import hashlib
+    from ipfs_datasets_py.logic.autoformal import legal_norm_content_adjudication_v1 as admission
+    from ipfs_datasets_py.logic.autoformal import legal_graph_dependencies as dependencies
+    from ipfs_datasets_py.logic.autoformal import legal_graph_review as auth
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_ir_eval_splits as splits
+
+    assert cross_relation in {"mixed", "unknown", "analogy", "incompatible"}
+    cases = {key: fixture_factory(
+        norm_fixture_options={"fixture_namespace": "v4-context-" + key,
+            "governing_instrument_id": "fixture:shared-v4-governing-act"},
+        lineage_group_id="fixture:v4-lineage-" + key,
+        sample_id_prefix="v4:" + key + ":", ledger_id="fixture:original-v3-pairs-" + key)
+        for key in ("a", "b")}
+    inputs = deepcopy(cases["a"]["preparation_inputs"])
+    body = inputs["body"]
+    body.update(schema="alignment-reviewed-pair-declaration/v4",
+        ledger_id="fixture:two-context-v4-pairs")
+    body["author_actors"] = [deepcopy(actor) for case in cases.values()
+        for actor in case["preparation_inputs"]["body"]["author_actors"]]
+    admissions, endpoint_ids, contexts = {}, {}, {}
+    for key, case in cases.items():
+        admissions["fixture:v4-admission-" + key] = deepcopy(next(iter(
+            case["preparation_inputs"]["endpoint_admissions"].values())))
+        for endpoint in (*case["preparation"]["source_endpoints"],
+                         *case["preparation"]["formal_endpoints"]):
+            scope = deepcopy(endpoint["scope"])
+            digest = admission.norm_content_adjudication_sha256(scope)
+            assert digest == endpoint["context_sha256"]
+            contexts[digest] = {"context_sha256": digest, "scope": scope}
+    assert len(contexts) == 2
+    ordered_contexts = [contexts[key] for key in sorted(contexts)]
+    assert ordered_contexts[0]["scope"]["governing_context"] == ordered_contexts[1]["scope"]["governing_context"]
+    assert ordered_contexts[0]["scope"]["assumptions"] == ordered_contexts[1]["scope"]["assumptions"]
+    assert ordered_contexts[0]["scope"]["interpretation_id"] != ordered_contexts[1]["scope"]["interpretation_id"]
+    body["context_set"] = ordered_contexts
+
+    for side in ("source", "formal"):
+        rows, bound_rows, endpoints = [], [], []
+        for key, case in cases.items():
+            previous = case["preparation_inputs"]
+            endpoint_ids[key, side] = {}
+            for ordinal, (row, endpoint) in enumerate(zip(previous[side + "_lane"]["rows"],
+                    previous["body"][side + "_endpoints"], strict=True)):
+                row, endpoint = deepcopy(row), deepcopy(endpoint)
+                identity = side + ":" + key + ":" + str(ordinal)
+                endpoint_ids[key, side][row["id"]] = identity
+                row["id"] = identity
+                bound = {name: row[name] for name in ("id", "input_sha256", "encoder_text_sha256",
+                    "status", "reason", "vector_sha256", "upstream_vector_sha256", "token_receipt_sha256")}
+                row["producer_row_sha256"] = lane._digest(bound)
+                rows.append(row); bound_rows.append(bound)
+                endpoint.update(id=identity, admission_id="fixture:v4-admission-" + key)
+                endpoints.append(endpoint)
+        bundle = deepcopy(inputs[side + "_lane"])
+        bundle["rows"] = rows
+        producer = bundle["producer_receipt"]
+        producer["rows"] = bound_rows
+        producer["content_sha256"] = lane._digest({k: v for k, v in producer.items() if k != "content_sha256"})
+        bundle["content_sha256"] = lane._digest({k: v for k, v in bundle.items() if k != "content_sha256"})
+        inputs[side + "_lane"] = bundle
+        inputs["expected_" + side + "_lane_bindings"] = {
+            "profile_sha256": lane._digest(bundle["profile"]),
+            "producer_receipt_sha256": lane._digest(producer),
+            "inputs": [{"id": row["id"], "input_sha256": row["input_sha256"]} for row in rows]}
+        body[side + "_endpoints"] = endpoints
+        body[side + "_lane_sha256"] = lane._digest(bundle)
+
+    examples, assignments = [], {}
+    for case in cases.values():
+        manifest = splits.LegalIRSplitManifest.from_mapping(case["preparation_inputs"]["split_manifest"])
+        examples.extend(manifest.examples); assignments.update(manifest.assignments)
+    manifest = splits.LegalIRSplitManifest(examples=tuple(examples), assignments=assignments,
+        config_digest="d" * 64, metadata={"fixture_only": True}).to_dict()
+    inputs.update(endpoint_admissions=admissions, split_manifest=manifest,
+        expected_split_manifest_sha256=lane._digest(manifest))
+    body["split_manifest_sha256"] = lane._digest(manifest)
+
+    # Review process evidence is newly authored for the combined V4 ledger.
+    # Neither original V3 pair signatures nor endpoint closures are witnesses.
+    process_id = "fixture:independent-v4-context-pair-process"
+    process_raw = (b"Fictional independent V4 whole-context-set directed-pair meaning review process; "
+        b"no actual law, controlling authority, applicability, proof or encoder execution.")
+    process_ref = {"artifact_id": process_id, "sha256": hashlib.sha256(process_raw).hexdigest()}
+    own_pairs = {}
+    for key, case in cases.items():
+        for pair in case["preparation_inputs"]["body"]["pairs"]:
+            pair = deepcopy(pair)
+            pair["left_id"] = endpoint_ids[key, "source"][pair["left_id"]]
+            pair["right_id"] = endpoint_ids[key, "formal"][pair["right_id"]]
+            own_pairs[pair["left_id"], pair["right_id"]] = pair
+    pairs = []
+    for source in body["source_endpoints"]:
+        for formal in body["formal_endpoints"]:
+            old = own_pairs.get((source["id"], formal["id"]))
+            relation = old["relation"] if old else cross_relation
+            if relation == "mixed":
+                relation = ("incompatible" if (source["id"], formal["id"]) == ("source:a:0", "formal:b:2")
+                    else "analogy" if (source["id"], formal["id"]) == ("source:b:1", "formal:a:0") else "unknown")
+            pairs.append({"left_id": source["id"], "right_id": formal["id"], "relation": relation,
+                "reason": "Explicit fictional context-bound meaning label; no legal applicability inferred.",
+                "evidence_refs": [] if relation in {"unknown", "analogy"} else [deepcopy(process_ref)]})
+    body["pairs"] = pairs
+    inputs["expected_body_sha256"] = admission.norm_content_adjudication_sha256(body)
+    pins = {body["ledger_id"]: inputs["expected_body_sha256"],
+        **{body["ledger_id"] + ":admission:" + identity: item["expected_report_sha256"]
+           for identity, item in admissions.items()},
+        body["ledger_id"] + ":source-lane": lane._digest(inputs["source_lane"]),
+        body["ledger_id"] + ":formal-lane": lane._digest(inputs["formal_lane"]),
+        body["ledger_id"] + ":split": lane._digest(manifest)}
+    artifacts = [{"artifact_id": identity, "artifact_sha256": digest,
+        "dependency_pins": {kind: [] for kind in dependencies.PIN_KINDS}}
+        for identity, digest in pins.items()]
+    manifest = dependencies.build_dependency_manifest(artifacts,
+        [{"dependent_id": body["ledger_id"], "dependency_id": identity}
+         for identity in pins if identity != body["ledger_id"]], expected_artifact_ids=list(pins))
+    inputs.update(dependency_manifest=manifest, expected_manifest_sha256=manifest["manifest_sha256"])
+    result = {"preparation_inputs": inputs,
+        "expected_positive_mask": [[True, True, False, False, False, False],
+            [False, False, True, False, False, False], [False, False, False, True, True, False],
+            [False, False, False, False, False, True]],
+        "context_set_sha256": admission.norm_content_adjudication_sha256(body["context_set"]),
+        "source_endpoint_snapshots_rewritten": False, "fixture_only": True,
+        "actual_fit_authorized": False, "runtime_computation_proven": False}
+    if not prepare:
+        return result
+
+    prepared = declarations.prepare_reviewed_relation_declaration_v4(**inputs)
+    signing_subject = prepared["subject"]
+    assert signing_subject["context_set_sha256"] == result["context_set_sha256"]
+    assert signing_subject["scope_id"] == "contrastive-context-set:" + result["context_set_sha256"]
+    contract = declarations._reviewed_contract("v4")
+    slots = [*declarations.REVIEWED_SLOTS, "context_set_and_endpoint_membership"]
+    assert signing_subject["context_slot_ids"] == slots
+    registry = deepcopy(cases["a"]["registry"])
+    registry.update(process_id="fixture:whole-context-v4-review-process", generation=2)
+    for key in registry["keys"]:
+        key["scope_ids"] = [signing_subject["scope_id"]]
+    policy = deepcopy(cases["a"]["policy"])
+    policy.update(policy_id="fixture:whole-context-v4-review-policy", process_id=registry["process_id"],
+        registry_sha256=auth.digest(registry), action=contract["action"], audience=contract["audience"])
+    body_ref = {"artifact_id": body["ledger_id"], "sha256": inputs["expected_body_sha256"]}
+    closure = {"status": "declared_complete", "obligations": [{"slot_id": slot,
+        "disposition": "resolved_by_evidence", "evidence_refs": [deepcopy(body_ref), deepcopy(process_ref)]}
+        for slot in slots], "unresolved": []}
+    signers, reviews = list(cases["a"]["signers"]), []
+    for index, (previous, signer) in enumerate(zip(cases["a"]["reviews"], signers, strict=True)):
+        claim = {key: deepcopy(value) for key, value in previous.items()
+            if key not in {"signer_did", "signature_alg", "signature"}}
+        claim.update(schema=contract["claim_schema"], action=contract["action"], audience=contract["audience"],
+            review_id="fixture:whole-context-v4-pair-review:" + str(index),
+            registry_sha256=auth.digest(registry), policy_sha256=auth.digest(policy),
+            subject=deepcopy(signing_subject), context_closure=deepcopy(closure))
+        claim["interpretation"].update(reviewed_graph_sha256=signing_subject["graph_sha256"],
+            reviewed_ast_sha256=signing_subject["ast_sha256"],
+            rationale="Fictional independently signed V4 whole-context-set pair/purpose review only.")
+        reviews.append(signer.sign(claim))
+    result.update(preparation=prepared, registry=registry, policy=policy, reviews=reviews, signers=signers,
+        at_time_utc=cases["a"]["at_time_utc"], observed_artifacts=pins,
+        observed_pins={kind: {} for kind in dependencies.PIN_KINDS},
+        evidence={body["ledger_id"]: admission.norm._wire(body), process_id: process_raw},
+        current_endpoint_observations={identity: {
+            "observed_artifact_sha256s": deepcopy(entry["kwargs"]["observed_artifact_sha256s"]),
+            "observed_pins": deepcopy(entry["kwargs"]["observed_pins"])} for identity, entry in admissions.items()})
+    return result
+
+
+@pytest.fixture(scope="module")
+def reviewed_pairs_v4():
+    return reviewed_pair_fixture_v4()
+
+
+def test_reviewed_v4_context_set_binds_both_interpretations_without_granting_labels(reviewed_pairs_v4):
+    case = reviewed_pairs_v4
+    prepared = case['preparation']
+    expected = case['preparation_inputs']['body']['context_set']
+    assert len(expected) == 2
+    assert expected == sorted(expected, key=lambda row: row['context_sha256'])
+    assert expected[0]['scope']['interpretation_id'] != expected[1]['scope']['interpretation_id']
+    assert prepared['context_set'] == expected
+    assert prepared['endpoint_admission_version'] == 'v3'
+    assert prepared['context_set_sha256'] == lane._digest(expected)
+    assert prepared['subject']['scope_id'] == 'contrastive-context-set:' + lane._digest(expected)
+    assert prepared['subject']['scope_id'] != prepared['source_endpoints'][0]['jurisdiction']
+    assert prepared['subject']['context_slot_ids'] == list(subject.REVIEWED_V4_SLOTS)
+    assert len(prepared['source_endpoints']) == 4 and len(prepared['formal_endpoints']) == 6
+    assert prepared['semantic_label_admission'] is prepared['actual_fit_authorized'] is False
+    assert prepared['legal_applicability_verified'] is prepared['controlling_authority'] is False
+    replayed = subject.validate_reviewed_relation_declaration_v4(prepared,
+        expected_preparation_sha256=lane._digest(prepared), **case['preparation_inputs'])
+    assert replayed == prepared
+
+
+@pytest.mark.parametrize('damage', ['missing', 'duplicate', 'reordered', 'foreign_scope', 'changed_interpretation',
+    'changed_assumptions', 'extra_field', 'wrong_digest'])
+def test_reviewed_v4_requires_the_complete_exact_context_union(reviewed_pairs_v4, damage):
+    inputs = deepcopy(reviewed_pairs_v4['preparation_inputs'])
+    contexts = inputs['body']['context_set']
+    if damage == 'missing': contexts.pop()
+    elif damage == 'duplicate': contexts.append(deepcopy(contexts[0]))
+    elif damage == 'reordered': contexts.reverse()
+    elif damage == 'foreign_scope':
+        foreign = deepcopy(contexts[0]); foreign['scope']['governing_context']['jurisdiction'] = 'fixture:foreign'
+        foreign['context_sha256'] = lane._digest(foreign['scope']); contexts.append(foreign)
+    elif damage == 'changed_interpretation': contexts[0]['scope']['interpretation_id'] = 'fixture:unprovided-interpretation'
+    elif damage == 'changed_assumptions': contexts[0]['scope']['assumptions'] = ['unreviewed premise']
+    elif damage == 'extra_field': contexts[0]['scope']['legal_applicability'] = True
+    elif damage == 'wrong_digest': contexts[0]['context_sha256'] = 'f' * 64
+    inputs['expected_body_sha256'] = lane._digest(inputs['body'])
+    with pytest.raises(ValueError, match='context inventory'):
+        subject.prepare_reviewed_relation_declaration_v4(**inputs)
+
+
+@pytest.mark.parametrize('version', ['v2', 'v3'])
+def test_reviewed_legacy_pair_domains_cannot_silently_adopt_v4_contexts(reviewed_pairs_v4, version):
+    inputs = deepcopy(reviewed_pairs_v4['preparation_inputs'])
+    inputs['body']['schema'] = subject._reviewed_contract(version)['body_schema']
+    inputs['expected_body_sha256'] = lane._digest(inputs['body'])
+    with pytest.raises(ValueError, match='reviewed pair declaration'):
+        getattr(subject, 'prepare_reviewed_relation_declaration_' + version)(**inputs)
+
+
+def test_reviewed_v3_still_refuses_cross_interpretation_even_without_inventory(reviewed_pairs_v4):
+    inputs = deepcopy(reviewed_pairs_v4['preparation_inputs'])
+    inputs['body'].pop('context_set')
+    inputs['body']['schema'] = subject.REVIEWED_V3_BODY_SCHEMA
+    inputs['expected_body_sha256'] = lane._digest(inputs['body'])
+    with pytest.raises(ValueError, match='differing governing contexts'):
+        subject.prepare_reviewed_relation_declaration_v3(**inputs)
+
+
+def test_reviewed_v4_endpoint_scope_membership_cannot_be_relabelled(reviewed_pairs_v4):
+    inputs = deepcopy(reviewed_pairs_v4['preparation_inputs'])
+    endpoint = inputs['body']['source_endpoints'][0]
+    endpoint['context_sha256'] = next(row['context_sha256'] for row in inputs['body']['context_set']
+        if row['context_sha256'] != endpoint['context_sha256'])
+    inputs['expected_body_sha256'] = lane._digest(inputs['body'])
+    with pytest.raises(ValueError, match='endpoint source, formal view or context'):
+        subject.prepare_reviewed_relation_declaration_v4(**inputs)
+
+
+@pytest.mark.parametrize('damage', ['first_jurisdiction', 'missing_context_slot', 'changed_context_hash'])
+def test_reviewed_v4_signing_subject_cannot_collapse_to_one_jurisdiction(reviewed_pairs_v4, damage):
+    signing = deepcopy(reviewed_pairs_v4['preparation']['subject'])
+    if damage == 'first_jurisdiction': signing['scope_id'] = reviewed_pairs_v4['preparation']['source_endpoints'][0]['jurisdiction']
+    elif damage == 'missing_context_slot': signing['context_slot_ids'].pop()
+    else: signing['context_set_sha256'] = 'f' * 64
+    with pytest.raises(ValueError):
+        subject._reviewed_subject_v4(signing, reviewed_pairs_v4['preparation_inputs']['dependency_manifest'])
+
+
+def test_reviewed_v4_coherently_rehashed_foreign_scope_still_fails_complete_replay(reviewed_pairs_v4):
+    prepared = deepcopy(reviewed_pairs_v4['preparation'])
+    prepared['subject']['context_set_sha256'] = 'f' * 64
+    prepared['subject']['scope_id'] = 'contrastive-context-set:' + 'f' * 64
+    # Syntax/namespace agreement is insufficient: the inventory must also be
+    # regenerated from the original independently admitted endpoint inputs.
+    subject._reviewed_subject_v4(prepared['subject'],
+        reviewed_pairs_v4['preparation_inputs']['dependency_manifest'])
+    with pytest.raises(ValueError, match='complete replay'):
+        subject.validate_reviewed_relation_declaration_v4(prepared,
+            expected_preparation_sha256=lane._digest(prepared), **reviewed_pairs_v4['preparation_inputs'])

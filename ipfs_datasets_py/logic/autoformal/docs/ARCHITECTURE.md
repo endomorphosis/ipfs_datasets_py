@@ -1,5 +1,9 @@
 # Architecture and owner map
 
+## Cross-context reviewed retrieval — 2026-11-15
+
+V4 versions the existing pair declaration, preparation, signing subject, review action/audience, mask handoff and joint checkpoint. Its endpoints are still fully replayed V3 admissions. A closed, sorted unique context set must exactly equal the endpoint scope union, with the existing endpoint context digest establishing membership. The subject and reviewer registry bind the complete context-set digest, and an additional review slot covers set completeness/membership. This permits explicitly reviewed cross-context correspondence or incompatibility without changing single-context admission or deriving legal applicability. Unknowns and analogies never become automatic negatives. The trainer/ranker dispatches through the V4 handoff before numerical allocation/current use; historical checkpoint restoration supplies integrity only. Public ranking retains an opaque set commitment and false legal-authority flags. The existing masked objective and numerical kernels are reused unchanged.
+
 ## Supervisor validation of audited parent receipts — 2026-11-15
 
 The existing supervisor adapter now accepts parent/v1, typed parent/v2 and full-candidate parent/v3 only when their schema and audit fields match the exact trusted in-process runtime selection. Task DATA cannot enable an audit or select an importer. Each sidecar must occupy its fixed output path, match its byte descriptor and equal a fresh recomputation by the existing inference owner using the original request, child outputs, independent contexts and canonical source pins. After the last caller callback, the adapter reauthenticates the request, audited inputs, source closure, sidecars, parent/child receipts and original outputs. Resealed false reports and late sidecar/context/source changes refuse.

@@ -1,5 +1,9 @@
 # Training and experiment history
 
+## V4 cross-context relation supervision; source qualification — 2026-11-15
+
+Existing masked retrieval now has a separate V4 pair-review contract over complete context sets while endpoint admission remains V3. Fresh signatures bind the exact union and membership; unknown pairs and analogies remain excluded from negative labels. The original numerical implementation is unchanged. [Exact source-only qualification](../../../../docs/autoformalization/evidence/legal-ir-reviewed-context-v4-20261115.json) distinguishes whole declaration/mask tests from five guarded joint-retriever metadata controls. No V4 fitting, model/held-out quality, legal review, native proof or real gold/corpus admission is claimed. Historical numerical qualifications remain bound to their original source epochs; private assets remain on hold.
+
 ## Supervisor validation of audited parent receipts — 2026-11-15
 
 The existing supervisor adapter now accepts parent/v1, typed parent/v2 and full-candidate parent/v3 only when their schema and audit fields match the exact trusted in-process runtime selection. Task DATA cannot enable an audit or select an importer. Each sidecar must occupy its fixed output path, match its byte descriptor and equal a fresh recomputation by the existing inference owner using the original request, child outputs, independent contexts and canonical source pins. After the last caller callback, the adapter reauthenticates the request, audited inputs, source closure, sidecars, parent/child receipts and original outputs. Resealed false reports and late sidecar/context/source changes refuse.

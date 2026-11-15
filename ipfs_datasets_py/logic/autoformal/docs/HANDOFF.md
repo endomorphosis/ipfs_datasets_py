@@ -1,5 +1,15 @@
 # Current handoff
 
+## Reviewed context-set relation contract — 2026-11-15
+
+The existing relation-declaration, mask-handoff and joint-retriever owners now offer an explicit V4 relation-review domain with unchanged mixed-sort V3 endpoint admission. Distinct reviewed interpretations can share one relation ledger only after fresh pair review covers the exact sorted context union and every endpoint's membership. The new signing subject binds its context-set digest and a sixth review obligation. Existing single-context V2/V3 contracts retain their domains and checks; no relation or legal applicability is inferred from context overlap.
+
+Corresponding/equivalent pairs can supply multiple positives, explicitly reviewed incompatibilities can supply negatives, and unknown pairs/analogies supply neither. Current admission and pair review are replayed before training allocation and ranking. Historical checkpoint integrity is distinct from current readmission. Retrieval exposes an opaque context-set commitment rather than an unfiltered context inventory; it grants no controlling-authority or legal-applicability claim. Original numerical machinery and old checkpoint identities are preserved.
+
+Fresh source-only qualification, exact changed-source hashes, adversarial controls and earlier failed attempts are recorded in the [public evidence capsule](../../../../docs/autoformalization/evidence/legal-ir-reviewed-context-v4-20261115.json). These tests use explicitly fictional signed inputs. No V4 tensor fitting, numerical restore, model quality, native Lean, human statutory review or corpus admission is claimed. The whole numerical joint-retriever test module remains unrun in this source-only qualification.
+
+All 24 backlog task IDs/statuses and existing resource constraints remain unchanged. The retained 2024 Title 10 pilot still awaits genuine legal meaning, definition and two-distinct-use reviews. Next under LIR-17/LIR-20: qualify the V4 trainer's numerical fit/restore/ranking using the existing resource-admission procedure, then compare fixed lexical/GTE/aligned retrieval on an independently reviewed grouped held-out population. Private archives and model checkpoints remain on hold.
+
 ## Supervisor validation of audited parent receipts — 2026-11-15
 
 The existing supervisor adapter now accepts parent/v1, typed parent/v2 and full-candidate parent/v3 only when their schema and audit fields match the exact trusted in-process runtime selection. Task DATA cannot enable an audit or select an importer. Each sidecar must occupy its fixed output path, match its byte descriptor and equal a fresh recomputation by the existing inference owner using the original request, child outputs, independent contexts and canonical source pins. After the last caller callback, the adapter reauthenticates the request, audited inputs, source closure, sidecars, parent/child receipts and original outputs. Resealed false reports and late sidecar/context/source changes refuse.

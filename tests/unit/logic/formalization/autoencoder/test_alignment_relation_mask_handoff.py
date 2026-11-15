@@ -567,8 +567,13 @@ def _refresh_reviewed_pair_ledger(case, version):
     inputs["dependency_manifest"] = manifest
     inputs["expected_manifest_sha256"] = manifest["manifest_sha256"]
     case["observed_artifacts"][body["ledger_id"]] = pin
-    prepare = (subject.relations.prepare_reviewed_relation_declaration_v3 if version == "v3"
-               else subject.relations.prepare_reviewed_relation_declaration_v2)
+    if version == "v4":
+        prepare = subject.relations.prepare_reviewed_relation_declaration_v4
+    elif version == "v3":
+        prepare = subject.relations.prepare_reviewed_relation_declaration_v3
+    else:
+        assert version == "v2"
+        prepare = subject.relations.prepare_reviewed_relation_declaration_v2
     case["preparation"] = prepare(**inputs)
     signing_subject = case["preparation"]["subject"]
     case["evidence"][body["ledger_id"]] = admission.norm._wire(body)
@@ -887,3 +892,207 @@ def test_reviewed_v3_composition_preserves_current_review_and_unknown_masks(tmp_
         j=next(i for i,row in enumerate(case['preparation_inputs']['body']['formal_endpoints']) if row['id']==pair['right_id'])
         if damage is not None or pair['relation'] in ('unknown','analogy'):
             assert result['objective_positive_mask'][i][j] is result['objective_permitted_negative_mask'][i][j] is False
+
+
+@pytest.fixture(scope="module")
+def reviewed_pair_case_v4():
+    return fixtures.reviewed_pair_fixture_v4()
+
+
+def reviewed_mask_compile_v4(case):
+    args, options = reviewed_mask_arguments_v2(case)
+    return subject.compile_reviewed_train_relation_masks_v4(*args, **options)
+
+
+def test_reviewed_v4_whole_context_pair_review_preserves_five_labels_and_no_legal_applicability(reviewed_pair_case_v4):
+    case = reviewed_pair_case_v4
+    report = reviewed_mask_compile_v4(case)
+    assert report["schema"] == subject.REVIEWED_V4_SCHEMA
+    assert report["mode"] == subject.REVIEWED_V4_MODE
+    assert report["reviewed_pair_labels_authenticated"] is report["reviewed_objective_mask_ready"] is True
+    assert report["endpoint_admission_version"] == "v3"
+    assert report["context_set"] == case["preparation_inputs"]["body"]["context_set"]
+    assert len(report["context_set"]) == 2
+    assert report["context_set_sha256"] == subject._digest(report["context_set"])
+    assert case["preparation"]["subject"]["scope_id"] == "contrastive-context-set:" + report["context_set_sha256"]
+    assert set(pair["relation"] for pair in report["pair_rows"]) == set(subject.relations.REVIEWED_RELATIONS)
+    for index, pair in enumerate(report["pair_rows"]):
+        row, column = divmod(index, report["formal_row_count"])
+        assert report["objective_positive_mask"][row][column] is (pair["relation"] in ("corresponding", "equivalent"))
+        assert report["objective_permitted_negative_mask"][row][column] is (pair["relation"] == "incompatible")
+        if pair["relation"] in ("unknown", "analogy"):
+            assert pair["objective_positive"] is pair["objective_permitted_negative"] is False
+    assert report["objective_positive_mask"] == case["expected_positive_mask"]
+    for flag in ("legal_applicability_verified", "controlling_authority", "graph_admitted", "Lean_admitted",
+                 "proof_authority", "actual_fit_authorized", "runtime_computation_proven", "training_executed", "model_executed"):
+        assert report[flag] is False
+    assert report["production_contrastive_mask"] == report["training_gold_mask"] == report["evaluation_gold_mask"] == 0
+    args, options = reviewed_mask_arguments_v2(case)
+    assert subject.validate_reviewed_train_relation_masks_v4(report, *args,
+        expected_receipt_sha256=subject._digest(report), **options) == report
+
+
+def test_reviewed_v4_does_not_fall_through_legacy_pair_validation(reviewed_pair_case_v4, monkeypatch):
+    def deny(*args, **kwargs):
+        raise AssertionError("legacy pair validation cannot authorize V4")
+    monkeypatch.setattr(subject.relations, "validate_reviewed_relation_declaration_v2", deny)
+    monkeypatch.setattr(subject.relations, "validate_reviewed_relation_declaration_v3", deny)
+    report = reviewed_mask_compile_v4(reviewed_pair_case_v4)
+    assert report["reviewed_objective_mask_ready"] is True
+    assert report["endpoint_admission_version"] == "v3"
+
+
+def test_reviewed_v4_endpoint_permissions_without_pair_review_supply_no_labels(reviewed_pair_case_v4):
+    case = reviewed_pair_clone_v2(reviewed_pair_case_v4)
+    case["reviews"] = []
+    report = reviewed_mask_compile_v4(case)
+    assert report["reviewed_pair_labels_authenticated"] is report["reviewed_objective_mask_ready"] is False
+    assert not any(any(row) for row in report["objective_positive_mask"])
+    assert not any(any(row) for row in report["objective_permitted_negative_mask"])
+
+
+def test_reviewed_v4_jurisdiction_permissions_do_not_authorize_whole_context_set(reviewed_pair_case_v4):
+    case = reviewed_pair_clone_v2(reviewed_pair_case_v4)
+    scopes = sorted({row["jurisdiction"] for side in ("source", "formal")
+                     for row in case["preparation"][side + "_endpoints"]})
+    assert case["preparation"]["subject"]["scope_id"] not in scopes
+    for key in case["registry"]["keys"]:
+        key["scope_ids"] = scopes
+    reviewed_pair_resign_v2(case)
+    report = reviewed_mask_compile_v4(case)
+    assert report["reviewed_objective_mask_ready"] is False
+    assert any("unauthorized_legal_scope" in review["blockers"] for review in report["review_authority"]["reviews"])
+    assert not any(any(row) for row in report["objective_positive_mask"])
+
+
+@pytest.mark.parametrize("damage", ["policy_action", "policy_audience", "claim_schema", "claim_action", "claim_audience"])
+def test_reviewed_v4_genuine_signatures_cannot_reuse_legacy_pair_domains(reviewed_pair_case_v4, damage):
+    case = reviewed_pair_clone_v2(reviewed_pair_case_v4)
+    old = subject.relations._reviewed_contract("v3")
+    if damage.startswith("policy_"):
+        field = damage.removeprefix("policy_")
+        case["policy"][field] = old[field]
+    else:
+        field = damage.removeprefix("claim_")
+        for claim in case["reviews"]:
+            claim[field] = old["claim_schema"] if field == "schema" else old[field]
+    reviewed_pair_resign_v2(case)
+    with pytest.raises(ValueError):
+        reviewed_mask_compile_v4(case)
+
+
+@pytest.mark.parametrize("slot_index", range(6))
+def test_reviewed_v4_every_whole_context_obligation_needs_resolved_evidence(reviewed_pair_case_v4, slot_index):
+    case = reviewed_pair_clone_v2(reviewed_pair_case_v4)
+    for claim in case["reviews"]:
+        assert len(claim["context_closure"]["obligations"]) == 6
+        claim["context_closure"]["obligations"][slot_index]["disposition"] = "not_applicable"
+    reviewed_pair_resign_v2(case)
+    report = reviewed_mask_compile_v4(case)
+    assert report["reviewed_objective_mask_ready"] is False
+    assert "every_fixed_pair_review_obligation_requires_resolved_by_evidence" in report["objective_blockers"]
+
+
+def test_reviewed_v4_both_contexts_replay_current_dependencies_independently(reviewed_pair_case_v4):
+    case = reviewed_pair_clone_v2(reviewed_pair_case_v4)
+    identities = list(case["preparation_inputs"]["endpoint_admissions"])
+    assert len(identities) == 2
+    second = identities[1]
+    entry = case["preparation_inputs"]["endpoint_admissions"][second]
+    artifact = entry["kwargs"]["preparation_inputs"]["declaration"]["units"][0]["source_artifact_id"]
+    case["current_endpoint_observations"][second]["observed_artifact_sha256s"][artifact] = "0" * 64
+    report = reviewed_mask_compile_v4(case)
+    assert report["review_authority"]["review_prerequisites_satisfied_under_selected_trust"] is True
+    assert not report["current_endpoint_blockers"][identities[0]]
+    assert report["current_endpoint_blockers"][second]
+    assert report["reviewed_pair_labels_authenticated"] is report["reviewed_objective_mask_ready"] is False
+    assert not any(any(row) for row in report["objective_positive_mask"])
+    assert not any(any(row) for row in report["objective_permitted_negative_mask"])
+
+
+def test_reviewed_v4_current_context_observations_cannot_omit_one_admission(reviewed_pair_case_v4):
+    case = reviewed_pair_clone_v2(reviewed_pair_case_v4)
+    case["current_endpoint_observations"].pop(next(iter(case["current_endpoint_observations"])))
+    with pytest.raises(ValueError, match="current observations"):
+        reviewed_mask_compile_v4(case)
+
+
+@pytest.mark.parametrize("witness", ["context_set", "one_complete_scope", "context_row"])
+def test_reviewed_v4_context_inventory_is_not_independent_pair_process_evidence(reviewed_pair_case_v4, witness):
+    import hashlib
+    case = reviewed_pair_clone_v2(reviewed_pair_case_v4)
+    context_set = case["preparation_inputs"]["body"]["context_set"]
+    value = context_set if witness == "context_set" else context_set[0]["scope"] if witness == "one_complete_scope" else context_set[0]
+    admission = subject.relations._reviewed_owners("v4")[0]
+    raw = admission.norm._wire(value)
+    identity = "fixture:aliased-v4-context-process"
+    ref = {"artifact_id": identity, "sha256": hashlib.sha256(raw).hexdigest()}
+    for pair in case["preparation_inputs"]["body"]["pairs"]:
+        if pair["relation"] in ("corresponding", "equivalent", "incompatible"):
+            pair["evidence_refs"] = [deepcopy(ref)]
+    _refresh_reviewed_pair_ledger(case, "v4")
+    case["evidence"][identity] = raw
+    for claim in case["reviews"]:
+        for obligation in claim["context_closure"]["obligations"]:
+            obligation["evidence_refs"] = [obligation["evidence_refs"][0], deepcopy(ref)]
+    reviewed_pair_resign_v2(case)
+    report = reviewed_mask_compile_v4(case)
+    assert report["reviewed_objective_mask_ready"] is False
+    assert "every_pair_review_obligation_needs_whole_ledger_and_independent_process_evidence" in report["objective_blockers"]
+    assert "reviewed_relationship_independent_process_evidence_missing_or_changed" in report["objective_blockers"]
+
+
+def test_reviewed_v4_source_author_from_either_context_cannot_review_pair_labels(reviewed_pair_case_v4):
+    case = reviewed_pair_clone_v2(reviewed_pair_case_v4)
+    entry = list(case["preparation_inputs"]["endpoint_admissions"].values())[-1]
+    actor = entry["kwargs"]["preparation_inputs"]["declaration"]["source_actors"][0]
+    assert actor in case["preparation"]["author_exclusions"]
+    case["registry"]["keys"][0]["principal_id"] = actor["principal_id"]
+    case["reviews"][0]["principal_id"] = actor["principal_id"]
+    reviewed_pair_resign_v2(case)
+    report = reviewed_mask_compile_v4(case)
+    assert report["reviewed_objective_mask_ready"] is False
+    assert "pair_reviewer_reuses_declared_source_IR_or_ledger_author" in report["objective_blockers"]
+
+
+@pytest.mark.parametrize("damage", ["context_set", "context_set_sha256", "legal_applicability_verified", "controlling_authority"])
+def test_reviewed_v4_resealed_cached_report_cannot_rewrite_contexts_or_claim_authority(reviewed_pair_case_v4, damage):
+    admission = subject.relations._reviewed_owners("v4")[0]
+    report = reviewed_mask_compile_v4(reviewed_pair_case_v4)
+    forged = deepcopy(report)
+    if damage == "context_set":
+        forged["context_set"].pop()
+    elif damage == "context_set_sha256":
+        forged[damage] = "0" * 64
+    else:
+        forged[damage] = True
+    forged["content_sha256"] = admission.norm_content_adjudication_sha256({key: value for key, value in forged.items() if key != "content_sha256"})
+    args, options = reviewed_mask_arguments_v2(reviewed_pair_case_v4)
+    with pytest.raises(ValueError):
+        subject.validate_reviewed_train_relation_masks_v4(forged, *args,
+            expected_receipt_sha256=admission.norm_content_adjudication_sha256(forged), **options)
+
+
+@pytest.mark.parametrize("relation", ["corresponding", "equivalent"])
+def test_reviewed_v4_explicit_cross_context_positive_requires_new_pair_review_not_endpoint_rewrite(reviewed_pair_case_v4, relation):
+    case = reviewed_pair_clone_v2(reviewed_pair_case_v4)
+    admission = subject.relations._reviewed_owners("v4")[0]
+    original_endpoints = admission.norm._snapshot(case["preparation_inputs"]["endpoint_admissions"])[1]
+    source = {row["id"]: row for row in case["preparation"]["source_endpoints"]}
+    formal = {row["id"]: row for row in case["preparation"]["formal_endpoints"]}
+    pair = next(pair for pair in case["preparation_inputs"]["body"]["pairs"]
+        if source[pair["left_id"]]["context_sha256"] != formal[pair["right_id"]]["context_sha256"]
+        and pair["relation"] in ("unknown", "analogy"))
+    pair["relation"] = relation
+    pair["reason"] = "Separately reviewed fictional cross-context correspondence; no controlling applicability."
+    process_ref = case["reviews"][0]["context_closure"]["obligations"][0]["evidence_refs"][1]
+    pair["evidence_refs"] = [deepcopy(process_ref)]
+    _refresh_reviewed_pair_ledger(case, "v4")
+    report = reviewed_mask_compile_v4(case)
+    selected = next(row for row in report["pair_rows"]
+        if row["left_id"] == pair["left_id"] and row["right_id"] == pair["right_id"])
+    assert report["reviewed_objective_mask_ready"] is True
+    assert selected["objective_positive"] is True and selected["objective_permitted_negative"] is False
+    assert report["objective_positive_pair_count"] == sum(map(sum, case["expected_positive_mask"])) + 1
+    assert admission.norm._snapshot(case["preparation_inputs"]["endpoint_admissions"])[1] == original_endpoints
+    assert report["legal_applicability_verified"] is report["controlling_authority"] is False

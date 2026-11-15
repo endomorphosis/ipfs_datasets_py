@@ -801,3 +801,211 @@ def test_reviewed_lexical_budget_refuses_complete_oversized_query_without_clippi
     monkeypatch.setattr(lexical.BM25FrameSelector,'rank',lambda *a,**k:pytest.fail('scored before lexical work admission'))
     with pytest.raises(ValueError,match='lexical token comparison budget exceeded'):
         _structural_call(model,reviewed_fixture_owner,case,query,lane,expected,mode='lexical',top_k=1)
+
+
+# These controls exercise metadata/routing only. They allocate no tensors,
+# models or optimizers and do not qualify a V4 numerical update or restore.
+def _forbid_reviewed_v4_torch_import(monkeypatch):
+    import builtins
+    original = builtins.__import__
+
+    def guarded(name, *args, **kwargs):
+        if name == "torch" or name.startswith("torch."):
+            raise AssertionError("V4 metadata or rejected evidence reached Torch")
+        return original(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", guarded)
+
+
+def test_reviewed_v4_checkpoint_domain_and_restore_dispatch_are_closed_before_torch(monkeypatch):
+    _forbid_reviewed_v4_torch_import(monkeypatch)
+    contracts = [retrieval._reviewed_contract(version) for version in ("v2", "v3", "v4")]
+    assert len({row["schema"] for row in contracts}) == 3
+    assert len({row["architecture"] for row in contracts}) == 3
+    assert len({row["relation_scope"] for row in contracts}) == 3
+    for version, contract in zip(("v2", "v3", "v4"), contracts):
+        assert retrieval._reviewed_checkpoint_version({"schema": contract["schema"]}) == version
+    for bad in (None, "v5", {}, []):
+        with pytest.raises(ValueError):
+            retrieval._reviewed_contract(bad)
+    for bad in (None, {}, {"schema": []}, {"schema": "legal-joint-retrieval-checkpoint/v5"}):
+        with pytest.raises(ValueError):
+            retrieval._reviewed_checkpoint_version(bad)
+    calls = []
+    original_restore = retrieval._restore_reviewed
+    monkeypatch.setattr(retrieval, "_restore_reviewed", lambda value: calls.append(value) or "metadata-route")
+    checkpoint = {"schema": retrieval.REVIEWED_V4_SCHEMA}
+    assert retrieval._restore(checkpoint) == "metadata-route"
+    with pytest.raises(ValueError, match="legacy source port"):
+        retrieval._restore(checkpoint, source_profile={})
+    assert calls == [checkpoint]
+    monkeypatch.setattr(retrieval, "_restore_reviewed", original_restore)
+    monkeypatch.setattr(retrieval, "_reviewed_implementation", lambda version: {})
+    monkeypatch.setattr(retrieval, "_reviewed_arrays", lambda value, **kwargs: None)
+    historical = {"schema": retrieval.REVIEWED_V4_SCHEMA, "implementation": {},
+        "training_handoff": {}, "training_handoff_sha256": retrieval.checkpoint_digest({}),
+        "initial_model_state_sha256": "a" * 64, "model_state": {}, "progress": {},
+        "config": {"seed": 1, "joint_dimension": 8, "learning_rate": .003, "temperature": .1,
+                   "architecture": contracts[-1]["architecture"],
+                   "relation_scope": contracts[-1]["relation_scope"],
+                   "loss": "symmetric_masked_multi_positive_contrastive/v1",
+                   "endpoint_admission_version": "v2"}}
+    with pytest.raises(ValueError, match="reviewed config admission domain"):
+        original_restore(historical)
+
+
+def test_reviewed_v4_training_wrapper_and_replay_refuse_before_torch(monkeypatch):
+    from types import SimpleNamespace
+    _forbid_reviewed_v4_torch_import(monkeypatch)
+    original = retrieval._train_reviewed_retriever
+    calls = []
+    inputs = dict.fromkeys(("expected_preparation_sha256", "preparation_inputs", "expected_registry_sha256",
+        "expected_policy_sha256", "expected_reviews_sha256", "at_time_utc", "observed_artifact_sha256s",
+        "observed_pins", "evidence_artifacts", "current_endpoint_observations"))
+    monkeypatch.setattr(retrieval, "_train_reviewed_retriever", lambda *args, **kwargs: calls.append(kwargs) or "metadata-route")
+    assert retrieval.train_reviewed_retriever_v4(None, None, None, [], **inputs) == "metadata-route"
+    assert calls[0]["_admission_version"] == "v4" and calls[0]["steps"] == 0
+    monkeypatch.setattr(retrieval, "_train_reviewed_retriever", original)
+    routes = []
+
+    def current_v4(*args, **kwargs):
+        routes.append("v4")
+        raise ValueError("fictional current pair review revoked")
+
+    def wrong_domain(*args, **kwargs):
+        raise AssertionError("V4 relation replay fell back to an older relation domain")
+
+    masks = SimpleNamespace(compile_reviewed_train_relation_masks_v2=wrong_domain,
+        compile_reviewed_train_relation_masks_v3=wrong_domain, compile_reviewed_train_relation_masks_v4=current_v4)
+    monkeypatch.setattr(retrieval, "_reviewed_owners", lambda version: (None, masks, None, None))
+    with pytest.raises(ValueError, match="fictional current pair review revoked"):
+        retrieval.train_reviewed_retriever_v4(None, None, None, [], **inputs)
+    assert routes == ["v4"]
+
+
+def test_reviewed_v4_array_layout_reuses_canonical_context_guard_without_authority(monkeypatch):
+    from types import SimpleNamespace
+    _forbid_reviewed_v4_torch_import(monkeypatch)
+    calls = []
+    scope = {"governing_context": {"jurisdiction": "fixture:jurisdiction"},
+             "interpretation_id": "fixture:interpretation", "assumptions": []}
+    context_set = [{"context_sha256": retrieval.checkpoint_digest(scope), "scope": scope}]
+    endpoints = {name: [{"id": "fixture:" + name, "context_sha256": context_set[0]["context_sha256"],
+                        "scope": scope}] for name in ("source", "formal")}
+
+    def context_guard(offered, population):
+        assert offered == context_set and population == endpoints
+        calls.append("canonical-context-guard")
+        return retrieval.checkpoint_digest(context_set)
+
+    declarations = SimpleNamespace(REVIEWED_PROFILE="fixture:relation-v2", REVIEWED_V3_PROFILE="fixture:relation-v3",
+        REVIEWED_V4_PROFILE="fixture:relation-v4", _reviewed_context_set_sha256=context_guard)
+    masks = SimpleNamespace(REVIEWED_SCHEMA="fixture:mask-v2", REVIEWED_V3_SCHEMA="fixture:mask-v3",
+        REVIEWED_V4_SCHEMA="fixture:mask-v4")
+    admission = SimpleNamespace(norm_content_adjudication_sha256=retrieval.checkpoint_digest)
+    monkeypatch.setattr(retrieval, "_reviewed_owners", lambda version: (None, masks, declarations, admission))
+    handoff = dict(schema=masks.REVIEWED_V4_SCHEMA, profile=declarations.REVIEWED_V4_PROFILE,
+        status="reviewed_objective_mask_ready", endpoint_admission_version="v3", reviewed_objective_mask_ready=True,
+        reviewed_pair_labels_authenticated=True, representation_dimension=384,
+        source_row_count=1, formal_row_count=1, source_vectors=[[1.0] + [0.0] * 383],
+        formal_vectors=[[1.0] + [0.0] * 383], objective_positive_mask=[[True]],
+        objective_permitted_negative_mask=[[False]], context_set=context_set,
+        context_set_sha256=retrieval.checkpoint_digest(context_set),
+        legal_applicability_verified=False, controlling_authority=False,
+        source_endpoints=endpoints["source"], formal_endpoints=endpoints["formal"])
+
+    def seal(value):
+        value["content_sha256"] = retrieval.checkpoint_digest({k: v for k, v in value.items() if k != "content_sha256"})
+
+    seal(handoff)
+    assert retrieval._reviewed_arrays(handoff, _admission_version="v4")[2:] == ([[True]], [[False]])
+    assert calls == ["canonical-context-guard"]
+    for field, changed in (("context_set_sha256", "b" * 64), ("legal_applicability_verified", True),
+                           ("controlling_authority", True), ("endpoint_admission_version", "v2"), ("source_endpoints", []),
+                           ("schema", masks.REVIEWED_V3_SCHEMA)):
+        altered = copy.deepcopy(handoff)
+        altered[field] = changed
+        seal(altered)
+        with pytest.raises(ValueError):
+            retrieval._reviewed_arrays(altered, _admission_version="v4")
+
+
+def test_reviewed_v4_owner_routing_requires_v3_endpoint_admission(monkeypatch):
+    from types import SimpleNamespace
+    from ipfs_datasets_py.logic.formalization.autoencoder import alignment_relation_declarations as declarations
+    from ipfs_datasets_py.logic.formalization.autoencoder import alignment_relation_mask_handoff as handoff
+    _forbid_reviewed_v4_torch_import(monkeypatch)
+    monkeypatch.setattr(declarations, "_reviewed_contract", lambda version: {"endpoint_version": "v2"})
+    with pytest.raises(ValueError, match="explicit V3 endpoint"):
+        retrieval._reviewed_owners("v4")
+    monkeypatch.setattr(declarations, "_reviewed_contract", lambda version: {"endpoint_version": "v3"})
+    wrong = SimpleNamespace(__name__="ipfs_datasets_py.logic.autoformal.legal_norm_content_adjudication_v1")
+    monkeypatch.setattr(declarations, "_reviewed_owners", lambda version: (wrong,))
+    with pytest.raises(ValueError, match="fall back to V2 endpoint"):
+        retrieval._reviewed_owners("v4")
+    correct = SimpleNamespace(__name__="ipfs_datasets_py.logic.autoformal.legal_reviewed_norm_admission_v3",
+        validate_reviewed_norm_admission_v3=lambda: None, assess_reviewed_norm_admission_v3=lambda: None)
+    monkeypatch.setattr(declarations, "_reviewed_owners", lambda version: (correct,))
+    monkeypatch.setattr(handoff, "compile_reviewed_train_relation_masks_v4", lambda: None, raising=False)
+    assert retrieval._reviewed_owners("v4")[-1] is correct
+
+
+def test_reviewed_v4_actual_fixture_masks_and_current_denial_precede_torch(monkeypatch):
+    """Actual canonical fictional admission/masks, never a numerical model."""
+    import importlib.util
+    from pathlib import Path
+    _forbid_reviewed_v4_torch_import(monkeypatch)
+    # Reuse the existing pure signed-fixture owner. Resolve it from the shared
+    # codec root so private source previews use the genuine current fixture.
+    root = Path(retrieval.codec.__file__).resolve().parents[3]
+    path = root / 'tests/unit/logic/formalization/autoencoder/test_alignment_relation_mask_handoff.py'
+    spec = importlib.util.spec_from_file_location('_reviewed_joint_v4_current_fixture_owner', path)
+    fixture = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(fixture)
+    case = fixture.fixtures.reviewed_pair_fixture_v4()
+    args, inputs = fixture.reviewed_mask_arguments_v2(case)
+    _, handoff, declarations, admission = retrieval._reviewed_owners('v4')
+    current = handoff.compile_reviewed_train_relation_masks_v4(*args, **inputs)
+    assert current['reviewed_objective_mask_ready'] is True
+    assert current['endpoint_admission_version'] == 'v3'
+    assert len(current['context_set']) >= 2
+    assert current['context_set_sha256'] == declarations._reviewed_context_set_sha256(
+        current['context_set'], {side: current[side + '_endpoints'] for side in ('source', 'formal')})
+    assert current['legal_applicability_verified'] is current['controlling_authority'] is False
+    assert current['training_gold_mask'] == current['evaluation_gold_mask'] == 0
+    arrays = retrieval._reviewed_arrays(current, _admission_version='v4')
+    assert len(arrays[0]) == current['source_row_count']
+    assert len(arrays[1]) == current['formal_row_count']
+    assert current['unknown_pair_count'] >= 1 and current['analogy_retrieval_only_pair_count'] >= 1
+    for row in current['pair_rows']:
+        if row['relation'] in ('unknown', 'analogy'):
+            assert row['objective_positive'] is row['objective_permitted_negative'] is False
+    for old_domain in ('v2', 'v3'):
+        with pytest.raises(ValueError, match='not ready'):
+            retrieval._reviewed_arrays(current, _admission_version=old_domain)
+    for damage in ('context_order', 'missing_context', 'wrong_endpoint_domain'):
+        altered = copy.deepcopy(current)
+        if damage == 'context_order':
+            altered['context_set'].reverse()
+        elif damage == 'missing_context':
+            altered['context_set'].pop()
+        else:
+            altered['endpoint_admission_version'] = 'v2'
+        altered['content_sha256'] = admission.norm_content_adjudication_sha256(
+            {key: value for key, value in altered.items() if key != 'content_sha256'})
+        with pytest.raises(ValueError):
+            retrieval._reviewed_arrays(altered, _admission_version='v4')
+    # Missing independent review evidence invalidates the real current handoff.
+    # The trainer must reject it before even importing Torch, including steps=0.
+    blocked = dict(inputs, evidence_artifacts={})
+    entered = []
+    actual_compile = handoff.compile_reviewed_train_relation_masks_v4
+
+    def observe_actual_compile(*replay_args, **replay_inputs):
+        entered.append(replay_inputs['evidence_artifacts'] == {})
+        return actual_compile(*replay_args, **replay_inputs)
+
+    monkeypatch.setattr(handoff, 'compile_reviewed_train_relation_masks_v4', observe_actual_compile)
+    with pytest.raises(ValueError):
+        retrieval.train_reviewed_retriever_v4(*args, **blocked, steps=0)
+    assert entered == [True]
