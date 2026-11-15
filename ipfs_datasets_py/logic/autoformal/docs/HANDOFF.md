@@ -1,5 +1,11 @@
 # Current handoff
 
+## Six V4 producer refusal controls — 2026-11-15
+
+The six previously pending authored structural controls now pass through the existing original V5 owner: one complete byte-context budget refusal and five factory custody refusals (unknown profile, heldout use not permitted, wrong context commitment, revoked query and changed checkpoint bytes). All six require an empty backend-call log; the byte-refusal control also asserts no training or restore. This is selected software refusal coverage, with no real tokenizer/model forward, native Lean, legal interpretation or corpus qualification.
+
+Original handle `4127` exited 0 with **six passed, zero failures/errors/skips**, pytest 132.765 seconds. Source255/Git8 drift was empty. Source and resource custody closed in 288.306845 seconds within the original 420 seconds, and the original owner durably released its own 16 MiB claim using 10,040 bytes. Canonical production and test files were unchanged. The source-pin cap remains 256; the corrected preparation replaced only unused prior child/ini inputs instead of accumulating them. All 24 backlog IDs and states remain unchanged.
+
 ## PGIR-040 loss projection requires a selected example — 2026-11-15
 
 The separate raw-pair loss-admission gap is corrected in the existing positive-pair owner. Use `loss_pair_admissions(pairs, examples=tuple(item.example for item in result.admitted))` for an explicitly selected mined population. The default `examples=()` keeps decoded pairs nontraining. Full record digest/CID and canonical training eligibility must match; pair IDs alone, removed evidence, conflicting example IDs, quarantine and proof-only examples cannot supply admission. This does not authenticate external reviewers/checkers or turn historical recipe claims into statutory gold.

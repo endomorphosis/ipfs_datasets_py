@@ -1,0 +1,123 @@
+{
+  "JUnit": {
+    "cases": [
+      "test_aggregate_v4_structural_factory_retains_complete_byte_context_refusal",
+      "test_aggregate_v4_structural_factory_refuses_before_backend_on_invalid_custody[unknown-profile]",
+      "test_aggregate_v4_structural_factory_refuses_before_backend_on_invalid_custody[no-heldout]",
+      "test_aggregate_v4_structural_factory_refuses_before_backend_on_invalid_custody[wrong-commitment]",
+      "test_aggregate_v4_structural_factory_refuses_before_backend_on_invalid_custody[query-revoked]",
+      "test_aggregate_v4_structural_factory_refuses_before_backend_on_invalid_custody[checkpoint-bytes]"
+    ],
+    "errors": 0,
+    "failures": 0,
+    "passed": 6,
+    "seconds": 132.765,
+    "skipped": 0,
+    "tests": 6
+  },
+  "actual_exec": {
+    "exit_code": 0,
+    "handle": "4127",
+    "terminal_chunk": "012a55"
+  },
+  "lifecycle": {
+    "custody_errors": [],
+    "genuine_wait_completed": true,
+    "initial_total_seconds": 420,
+    "original_storage": {
+      "artifacts_durable_asserted": true,
+      "final_attempt_bytes": 10040,
+      "reservation_id": "43cc169d4cf4454c99f024091bbd8065",
+      "status": "released",
+      "storage_bytes": 16777216
+    },
+    "owner_birth_bound_independently_gone": true,
+    "parent_seconds": 288.3068452109583,
+    "resource_compute_custody_closed": true,
+    "source_closed": true,
+    "source_exit_closed": true
+  },
+  "preparation_correction": "The old inert255-pin packet included two previous bootstrap inputs. Replacing those with the actual new child/ini retained255, within the unchanged256 cap; no malformed request was executed for this cohort.",
+  "preserved_preparations": "The original separate1+5 inert templates and old freezer are retained. This combined request replaced only unexecuted prior bootstrap/ini pins and kept255within the unchanged256 cap.",
+  "qualification_boundary": "Executed authored refusal assertions, not tokenizer throughput, model restore/inference, learned fitting, native Lean, real legal review or corpus acceptance.",
+  "qualification_summary": {
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-v4-six-structural-qualification-20261115-v01/all-six/qualification-summary.json",
+    "sha256": "831a281019505550016acf89d6938c3e014dbff14b694e583b059ddc8ce72e99"
+  },
+  "raw_artifacts": [
+    {
+      "bytes": 46530,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-v4-six-structural-qualification-20261115-v01/all-six/request.json",
+      "sha256": "aaa4f9c1405c01d056257d05eb8479c46b5584e1015b2d13e0346049bc96e5ac"
+    },
+    {
+      "bytes": 22345,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-v4-six-structural-qualification-20261115-v01/all-six/run-original-source-held.py",
+      "sha256": "774aa351f61939dec66763a204ae2ccbd148344ad4b6c1188a424eb0281c2bdb"
+    },
+    {
+      "bytes": 1789,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-v4-six-structural-qualification-20261115-v01/all-six/structural-child.py",
+      "sha256": "54887a0e12ba98316592a9a38f186b3467c9900fdc2075bbf4d7ddbc7961e710"
+    },
+    {
+      "bytes": 19,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-v4-six-structural-qualification-20261115-v01/all-six/pytest.ini",
+      "sha256": "713f986ee48be06ad4bff2a700d39514a9f69e34b3547af52366c0a274e30e5b"
+    },
+    {
+      "bytes": 2709,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-v4-six-structural-qualification-20261115-v01/all-six/source-freeze.json",
+      "sha256": "486fc2f8397088495b800c5afa0c00d409d51fa7febc2cb332ffb72d74105288"
+    },
+    {
+      "bytes": 424,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-v4-six-structural-qualification-20261115-v01/all-six/request-static-review.json",
+      "sha256": "4fcb5cf719074efbb9a5f7a6022d538026ff022e244c70c8802d7d71eb206cb7"
+    },
+    {
+      "bytes": 163,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-v4-six-structural-qualification-20261115-v01/all-six/started.json",
+      "sha256": "b9ba97b749b230801db95c676bf33257014ec5422062828ff60565e410624992"
+    },
+    {
+      "bytes": 11364,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-v4-six-structural-qualification-20261115-v01/all-six/parent-closeout.json",
+      "sha256": "aa6d4cbbf0f79c9ae3ffbf4f1f83d1306dbf01148347b91cef5b74503c0e2a05"
+    },
+    {
+      "bytes": 5388,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-v4-six-structural-qualification-20261115-v01/all-six/owner.stdout",
+      "sha256": "7ddd6645bfc2681adc368d3e55685890924a6d1b49b85b81898fe9cf92504d50"
+    },
+    {
+      "bytes": 0,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-v4-six-structural-qualification-20261115-v01/all-six/owner.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 1518,
+      "path": "/tmp/pytest-of-barberb/legal-ir-v4-six-structural-20261115-v01/a/exports/structural-factory.xml",
+      "sha256": "df73f0db290c552dd99b04237488fd67725ce4917453bfbda08daa0d892f3695"
+    },
+    {
+      "bytes": 812,
+      "path": "/tmp/pytest-of-barberb/legal-ir-v4-six-structural-20261115-v01/a/logs/result.json",
+      "sha256": "617c1adc8030db662a42f7862a39dfbff46f4796bfe2d617d54e8012bd77e292"
+    }
+  ],
+  "schema": "reviewed-v4-six-structural-refusal-qualification/v1",
+  "scope": "Six selected authored structural controls in an unchanged existing test owner. Covers complete byte-context over-budget refusal, unknown profile, forbidden heldout use, wrong context commitment, revoked query and changed checkpoint bytes. Executed assertions require no backend call; the byte-refusal case asserts no training/restore. No real tokenizer/model forward, native Lean, real legal review, learned quality or corpus qualification is inferred.",
+  "source": {
+    "A_HEAD": "21e94730749848ee76ced9cecf8082494ded8ad1",
+    "Git_identity_pins": 8,
+    "MAX_SOURCE_PINS": 256,
+    "R_HEAD": "35027cc3bb12f19cbb359db690325d9ec6d7e2ab",
+    "canonical_code_or_test_changes": false,
+    "drift": [],
+    "pins": 255,
+    "selected_test_owner_sha256": "12a6c39ad06222f500097dc21e5b7fe2e41e4e9e625f8f6bda06a3714a439fa8"
+  },
+  "status": "SIX_EXISTING_STRUCTURAL_REFUSAL_CONTROLS_PASSED",
+  "task_id": "LIR-20"
+}

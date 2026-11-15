@@ -1,5 +1,11 @@
 # Training and experiment history
 
+## Existing V4 structural producer refusal coverage — 2026-11-15
+
+Original `4127` / terminal `012a55` passed all **six selected authored controls** in 132.765 seconds: complete byte-context overflow, unknown profile, forbidden heldout use, mismatched context commitment, revoked query and changed checkpoint bytes. These assert no backend calls; the byte case also checks no training/restore and preserves the three refused query outcomes. No numerical fit, learned score, real tokenizer forward, native Lean proof or legal gold was measured.
+
+The fresh combined request retained Source255/Git8 with no drift, original1CPU/1536MiB/4process/16MiB/300-second limits, one shared60-second Source admission and initial420 seconds. Genuine wait, process/resource cleanup and Source exit completed in 288.306845 seconds. The original owner durably released `43cc169d4cf4454c99f024091bbd8065` with10,040 bytes. The older separate1+5 inert preparations and freezer remain preserved; the corrected255-pin preparation substitutes actual new bootstrap inputs for the two unused prior bootstrap inputs, leaving every prior production and test pin intact.
+
 ## PGIR-040 exact training-example linkage for loss — 2026-11-15
 
 Measured RED original `37130` exited 1 with **four intended failures and one pass**, no fixture errors or skips: historical decoded labels, a pair without evidence and an explicit fixture without a selected training example all acquired automatic admission; the evidence-free pair also bypassed the existing cosine-loss admission refusal. Source256/Git8 stayed unchanged and custody closed in 104.036275 seconds; the failed 16 MiB claim remains retained and nondurable. Its final attempt-byte count was not recorded.
