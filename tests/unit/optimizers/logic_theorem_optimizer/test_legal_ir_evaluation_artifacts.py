@@ -3360,3 +3360,160 @@ def test_reviewed_producer_mixed_candidate_v3_preflights_caller_selection():
         _producer_owner.evaluate_reviewed_source_span_producer_artifact(**options,
             candidate_syntax_profile=candidate_owner.CANDIDATE_SYNTAX_PROFILE_V3, known_candidate_inputs=known,
             producer=lambda _: pytest.fail('mismatched caller facts reached producer'))
+
+
+@pytest.fixture(scope="module", params=["v2", "v3"])
+def rich_policy_exit_base(request):
+    _, options, _, _, _ = _rich_v3_heldout_case(version=request.param)
+    return options
+
+
+@pytest.fixture
+def rich_policy_exit_case(rich_policy_exit_base):
+    # Bindings contain immutable bytes and ordinary guarded metadata. Copy the
+    # complete object graph together so each mutation control owns its inputs.
+    return deepcopy(rich_policy_exit_base)
+
+
+def _rich_policy_exit_training_inputs(options):
+    context = options["reviewed_training_context"]
+    return context["components"][-1] if "components" in context else context
+
+
+def _rich_policy_exit_input_commitment(options):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_span_consumer_binding as bound
+    context = options["reviewed_training_context"]
+    inputs = {key: value for key, value in context.items() if key not in {"binding", "components"}}
+    if "components" in context:
+        inputs["components"] = [{**{key: value for key, value in component.items() if key != "binding"},
+            "binding_receipt": component["binding"].receipt()} for component in context["components"]]
+    else:
+        inputs["binding_receipt"] = context["binding"].receipt()
+    return bound._reviewed_snapshot(dict(rows=options["rows"], split_manifest=options["split_manifest"],
+        exposure_records=options["exposure_records"], input_profile=options["input_profile"],
+        checkpoint_declarations=options["checkpoint_declarations"], permitted_context=options["permitted_context"],
+        retrieved_examples=options["retrieved_examples"], admission_inputs=options["admission_inputs"],
+        binding_receipt=options["binding"].receipt(), training_context=inputs))[1]
+
+
+@pytest.mark.parametrize("producer_error", [False, True], ids=["abstained", "producer-error"])
+def test_rich_policy_exit_external_only_revocation_preserves_original_denial(rich_policy_exit_case, producer_error):
+    options = rich_policy_exit_case
+    before = _rich_policy_exit_input_commitment(options)
+    state = {"revoked": False}
+    policy_calls, producer_calls = [], []
+    denial = PermissionError("fictional live context policy revoked during this producer callback")
+    def policy(_receipt):
+        policy_calls.append(state["revoked"])
+        if state["revoked"]:
+            raise denial
+        return None
+    def producer(arguments):
+        producer_calls.append(deepcopy(arguments))
+        state["revoked"] = True
+        if producer_error:
+            raise RuntimeError("fictional producer failure still requires final policy readmission")
+        return [dict(id=row["id"], outcome="abstained", candidate=None) for row in arguments]
+    options["context_policy_guard"] = policy
+    with pytest.raises(PermissionError) as caught:
+        _producer_evaluate(options, producer)
+    assert caught.value is denial
+    assert policy_calls == [False, True] and len(producer_calls) == 1
+    assert _rich_policy_exit_input_commitment(options) == before
+
+
+@pytest.mark.parametrize("damage", ["training-review", "query-review", "checkpoint", "training-source"])
+def test_rich_policy_exit_rechecks_all_inputs_after_the_last_policy_callback(rich_policy_exit_case, damage):
+    options = rich_policy_exit_case
+    policy_calls, producer_calls = [], []
+    def policy(_receipt):
+        policy_calls.append(True)
+        if len(policy_calls) == 2:
+            training = _rich_policy_exit_training_inputs(options)
+            if damage == "training-review":
+                training["admission_inputs"]["registry"]["keys"][0]["revoked_at_utc"] = "2026-01-01T00:00:00Z"
+            elif damage == "query-review":
+                options["admission_inputs"]["registry"]["keys"][0]["revoked_at_utc"] = "2026-01-01T00:00:00Z"
+            elif damage == "checkpoint":
+                options["checkpoint_declarations"]["decoder"]["sha256"] = "f" * 64
+            else:
+                sources = training["admission_inputs"]["preparation_inputs"]["source_inputs"]
+                sources[next(iter(sources))]["raw_bytes"] += b" changed by final policy"
+        return None
+    def producer(arguments):
+        producer_calls.append(deepcopy(arguments))
+        return [dict(id=row["id"], outcome="abstained", candidate=None) for row in arguments]
+    options["context_policy_guard"] = policy
+    with pytest.raises(ValueError):
+        _producer_evaluate(options, producer)
+    assert len(policy_calls) == 2 and len(producer_calls) == 1
+
+
+def test_rich_policy_exit_preserves_original_denial_when_its_callback_also_mutates_inputs(rich_policy_exit_case):
+    options = rich_policy_exit_case
+    calls = []
+    denial = PermissionError("fictional original final-policy denial with a separate failed source fence")
+    def policy(_receipt):
+        calls.append(True)
+        if len(calls) == 2:
+            sources = _rich_policy_exit_training_inputs(options)["admission_inputs"]["preparation_inputs"]["source_inputs"]
+            sources[next(iter(sources))]["raw_bytes"] += b" final-policy mutation"
+            raise denial
+        return None
+    options["context_policy_guard"] = policy
+    with pytest.raises(PermissionError) as caught:
+        _producer_evaluate(options, lambda arguments: [dict(id=row["id"], outcome="abstained", candidate=None) for row in arguments])
+    assert caught.value is denial and isinstance(caught.value.__cause__, ValueError)
+    assert len(calls) == 2
+
+
+def test_rich_policy_exit_freezes_raw_returned_outputs_before_later_policy_mutation(rich_policy_exit_case):
+    options = rich_policy_exit_case
+    policy_calls, returned = [], []
+    expected = []
+    def policy(_receipt):
+        policy_calls.append(True)
+        if len(policy_calls) == 2:
+            # This is a later policy-owned mutation, never producer output.
+            returned[0].update(outcome="complete", candidate=deepcopy(options["rows"][0]["canonical_ir"]))
+            returned.pop()
+        return None
+    def producer(arguments):
+        returned.extend(dict(id=row["id"], outcome="abstained", candidate=None) for row in arguments)
+        expected.extend(deepcopy(returned))
+        return returned
+    options["context_policy_guard"] = policy
+    artifact = _producer_evaluate(options, producer)
+    payload = _producer_payload(artifact)
+    assert len(policy_calls) == 2 and len(returned) == 2
+    assert payload["producer_outputs"] == expected and len(expected) == 3
+    assert payload["comparison"]["outcome_counts"]["abstained"] == 3
+    assert payload["comparison"]["outcome_counts"]["complete"] == 0
+    assert payload["producer_exception_type"] is None
+    assert payload["producer_callback_count"] == 1 and payload["producer_callback_seconds"] >= 0
+
+
+def test_rich_policy_exit_keeps_complete_error_population_and_exception_type(rich_policy_exit_case):
+    options = rich_policy_exit_case
+    policy_calls = []
+    options["context_policy_guard"] = lambda _receipt: policy_calls.append(True)
+    def producer(_arguments):
+        raise RuntimeError("fictional producer error retained for every fixed reference")
+    payload = _producer_payload(_producer_evaluate(options, producer))
+    assert len(policy_calls) == 2
+    assert payload["producer_exception_type"] == "RuntimeError"
+    assert len(payload["producer_outputs"]) == payload["comparison"]["denominator"] == 3
+    assert payload["comparison"]["outcome_counts"]["error"] == 3
+    assert payload["producer_callback_count"] == 1 and payload["producer_callback_seconds"] >= 0
+
+
+def test_rich_policy_exit_keeps_malformed_return_failure_separate_from_producer_errors(rich_policy_exit_case):
+    options = rich_policy_exit_case
+    policy_calls, producer_calls = [], []
+    options["context_policy_guard"] = lambda _receipt: policy_calls.append(True)
+    def producer(_arguments):
+        producer_calls.append(True)
+        return object()
+    with pytest.raises(_producer_owner.InvalidEvaluationArtifactError, match="ordinary JSON"):
+        _producer_evaluate(options, producer)
+    assert len(policy_calls) == 2 and len(producer_calls) == 1

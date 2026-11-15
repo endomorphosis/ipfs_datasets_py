@@ -1,5 +1,48 @@
 # Current handoff
 
+## Live context policy on evaluator exit — 2026-11-15
+
+The existing reviewed producer evaluator now rechecks its independent live context policy after production, including producer-error and malformed-return paths. Current query/TRAIN admission, complete context, source/profile inputs and independent candidate facts are checked after that last policy callback. An original policy denial remains the raised object; a simultaneous failed evidence fence is retained as its cause. An already failed evidence fence may refuse first; no artifact is published in that case.
+
+Producer results are detached at the callback boundary before a later policy can mutate the returned list or nested candidates. Malformed returns retain validation-error semantics, producer exceptions retain their complete error populations, and callback timing retains its original boundary. Benign context policies are now called again on exit; a prior entry grant cannot authorize a report after revocation. This is an argument/policy contract, not a global process sandbox or legal interpretation.
+
+The defect was reproduced independently in canonical V3 and frozen private V4: unchanged source, reference, checkpoint, admission and context inputs still produced a three-abstention artifact after external authorization was revoked inside the producer. Fresh canonical V2/V3 qualification passes **61 selected cases** (20 new and 41 retained), with zero failures/errors/skips, closed Source custody and no model/native execution. They include final-policy query/TRAIN/source/checkpoint mutations, denial identity/cause, frozen output capture, producer errors and malformed outputs. The whole numerical owning module is unqualified. [Exact source/test hashes and evidence](../../../../docs/autoformalization/evidence/legal-ir-live-context-policy-exit-20261115.json).
+
+All 24 backlog IDs/statuses, original receipts, failed attempts, checkpoints and resource limits remain unchanged. Private V4 aggregate/factory work remains a separate integration until independently reviewed and adopted. Next under LIR-20: connect complete multi-component context to the existing decoder input/factory route, preserving all definitions, source exclusions, complete byte/token bounds and this final live policy check. Real retained 2024 Title 10 reviews, native proof, model quality, gold and corpus admission remain pending; private assets stay on hold.
+
+## Current immutable@1 cleanup146 controls qualified; live SDK gates remain — 2026-11-15
+
+The current immutable-source qualification@1 cleanup changes were adopted in the published worktrees through the original four-target Source operation and a separate audited readback. The new completed-failed-retained profile is cleanup-only: it preserves current-row, process, Native, source, request and original-deadline checks; it grants no passed receipt, repair adoption, retry or storage authority.
+
+Fresh GREEN146 ran all146 exact selected owning controls (40 SDK and106 CLI, including the prior17+54 regressions plus23+52 new cases) in one original generic CLI run:146 clean JUnit records, zero failures/errors/skips,6.09seconds. Source, Native, process and genuine-wait custody closed before the initial420-second acceptance cutoff (178.700seconds). Its own16MiB promise was durably released after680 files/2,551,287bytes. Modeled proof frames inside these software controls do not establish a genuine live SDK cleanup lifecycle.
+
+The earlier RED2 reproduced two expected CALL failures under the previous source bytes; its own16MiB failure claim remains retained and nondurable. The separate previously published71 result remains historical, without pooled or transferred qualification. The four-target Source guard now keeps55 strict fences and captures exactly10 known unselected documentation files under both original Source scopes, then checks them unchanged through the writes and final read. A separate READ records its own fresh interval. This permits unrelated peer prose before admission without authorizing any documentation write by the code actor.
+
+CPU1, memory1536MiB, process4, storage16MiB, productive300 and ledger60 are unchanged; one shared60-second Source-admission cutoff stays inside the initial420-second acceptance deadline without renewal or automatic retry. Existing runtime holds,119 owners,24 task states and physical200/next201/9,800 remaining at generation2of2 are preserved. FullSDK95/SourceGen/raw7, actual SDK timeout cleanup, private delegated immutable@2 SDK/worker/Main and mapped preparation remain separate unqualified gates. No model, legal, Lean, native-corpus or activation gain follows. [Exact146 evidence](../../../../workspace/test-logs/federal-corpus-audits/legal-ir-current-immutable-v1-cleanup146-qualified-20261115-v01/qualification-summary.json).
+
+
+## Current Lean verification-profile cache roundtrip — 2026-11-15
+
+A fresh original now exercises the existing cache helper against the updated
+Lean backend and proof cache, including the lean-kernel-verification/v1 fence
+and current verified fixture loader. Lean 4.34.1 ran one version probe and two
+real compilations. Both compiled obligation reports contain no axiom
+dependencies. Disk persistence/reopen and exact reuse pass; reuse and changed
+context/obligation checks launch zero additional Lean commands.
+
+This is one fictional True-obligation control, with zero pytest case credit.
+The captured backend f4925374, cache 013d9977, kernel test bd4a7e5b and fixture
+e0c287ad form its tested source epoch. All 216 source/control pins and declared
+public Native inputs stayed unchanged; 52 source buffers and 53 loaded origins
+were recorded. The original parent genuinely exited zero, closed Source,
+Native and process custody, and durably released its own 16 MiB promise.
+No compiler/cache implementation was duplicated. The existing caller-owned
+runner made no nested resource grant. This does not establish statutory
+correspondence, training eligibility, model quality or corpus admission.
+
+[Closed current Native qualification](../../../../workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/current-native-cache-helper-binding-v01/current-native-cache-helper-v02-qualified-and-closed-v01.json).
+
+
 ## Compiler diagnostics, verifier generations and heldout source identity — 2026-11-15
 
 The canonical Lean backend now rejects error diagnostics from either captured output stream, including framed UTF-8 BOM records and plain Lean error forms. JSON warnings quoting error text remain warnings. Malformed, duplicate-key and nonfinite compiler JSON refuse. The single dependency report still must come from stdout and bind the exact generated declaration, source path and command position; diagnostics are not elaborated dependency evidence.
@@ -38,40 +81,33 @@ All **93 source-only software cases pass**: the entire 45-case dispatch module a
 
 Default result/v1 remains; requested audited results use result/v2 and retain both sidecar descriptors. The adapter leaves task identity, status, holds, attempts, UNKNOWN history, completion authority, resource release and admission unchanged. **Physical supervisor/parent-v3 execution, current model/resource profiles and legal/native-proof/corpus qualification remain unverified.** Source-only acceptance of metadata is not an observed native execution, grant or promotion. Private assets and existing budgets remain on hold/unchanged. [Exact source captures, failed attempts and results](../../../../workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-supervisor-parent-audit-qualification-v01/qualification-summary.json).
 
-## Shared law-row replay and remaining release checks — 2026-11-15
+## Shared law-row replay and release regression checks — 2026-11-15
 
-The existing physical fixture can represent two source rows carrying three
-legal units. The normative row retains both nonoverlapping occurrences, complete
-original bytes, exact character/UTF-8 offsets, all span overlaps and one graph
-source-version node per identity. Signing binds the original shared row before
-admission; source/IR artifact identities remain distinct for each unit. Defaults
-retain the three-row fixture. The two owning test files carry this integration;
-production schemas and admission owners did not change for it.
+The existing physical fixture represents two source rows carrying three legal
+units. It retains complete original bytes, exact character and UTF-8 offsets,
+all span overlaps and one graph source-version node per identity. Signing binds
+the original shared row before admission; source/IR artifact identities stay
+distinct for each unit. The prior three-row default remains available.
 
-All six selected checks passed with closed Source/resource/process/wait/storage
-custody: three new shared-row cases, the retained three-row positive and two
-shared-artifact controls. Duplicate and overlapping uses are refused through
-genuinely signed fictional replay. The request durably released its own32MiB.
+The shared-row run passed six checks: three new cases, the retained three-row
+positive and two shared-artifact controls. The five invalid-path cases also
+passed after their owning test gained exact-leaf cleanup following its original
+CLI assertions. Original and working snapshots plus ordinary observation
+evidence remain; the C19 plugin, SDK and CLI were not changed for this fix.
+Both runs closed all original custody and released their own 32 MiB promises.
+The old symlink teardown error and earlier timed-out runs remain preserved.
 
-The existing five invalid-path cases now use a private work directory and own
-their newly created symlink/FIFO cleanup after the original CLI assertions.
-Held inode, parent and literal checks precede exact-leaf removal; original and
-working snapshots plus ordinary observation evidence remain. All five passed
-through unchanged C19/V2 fixture, SDK and CLI owners, with full original custody
-closed and own32MiB durably released. The old symlink case reproduced one call
-pass plus one teardown error; that failed original and its32MiB remain retained.
-The larger private observer/plugin proposals were not installed.
+All 98 cases in the previously unqualified regression selection now have
+passing results across 19 closed originals. The latest nine sequential runs
+cover the final 46. Independent raw-JUnit accounting joins those 98 with the
+earlier 54 release cases and three new shared-row cases: all 155 declared
+release case IDs and 39 functions are covered. Helper cases and overlapping
+runs are not added twice. Every scope retains its exact source epoch; this is
+not one unified current-source run or verification of statutory meaning.
+Actual corpus Native-parent integration, immutable Hub readback, real legal
+review and a complete statutory Lean corpus remain open.
 
-Ten separate closed scopes now qualify52of the original98 remaining release
-cases, leaving46 ordinary cases. Their captured source epochs remain distinct.
-The release file declares155cases/39functions; neither the whole current file
-nor one unified current source epoch is qualified by pooling saved runs. Earlier
-physical-map and V3 six-case timeouts retain zero credit and their failed claims;
-the six physical-map cases have separate successful three-case closeouts.
-Actual statutory review, Lean proof, Native-parent integration and immutable Hub
-readback remain open.
-
-[Shared-row closeout](../../../../workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/shared_lawrow6-shared-v01/cohort-closeout.json). [Physical5 closeout](../../../../workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/legacy_CLI_paths5-physical-current5-green-v01/cohort-closeout.json). [Exact52/46 accounting](../../../../workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/remaining-small-cohort-progress-10closed-52passed-46remaining-v01.json).
+[Shared-row closeout](../../../../workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/shared_lawrow6-shared-v01/cohort-closeout.json). [Physical5 closeout](../../../../workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/legacy_CLI_paths5-physical-current5-green-v01/cohort-closeout.json). [Complete98 closeout](../../../../workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/remaining-release98-complete-19closed-v01.json). [Independent155 accounting](../../../../workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/independent-final-remaining98-and-release155-captured-epoch-coverage-audit-v01.json).
 
 
 ## Published-worktree cleanup71 controls qualified; SDK lifecycle gates remain — 2026-11-14

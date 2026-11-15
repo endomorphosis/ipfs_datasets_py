@@ -1706,13 +1706,13 @@ def evaluate_reviewed_source_span_producer_artifact(*, binding, rows, split_mani
         finally:
             output_holder["producer_seconds"] = max(0.0, time.monotonic() - started)
             require(stable_digest(snapshot(offered)) == stable_digest(arguments), "producer mutated its detached arguments")
+        # Capture the actual returned observation before any later consumer or
+        # policy callback can mutate a producer-owned list or nested payload.
+        # JSON/shape failures keep their existing exception semantics; only
+        # exceptions from producer itself become complete error populations.
+        output_holder["outputs"] = snapshot(output_holder["outputs"])
 
-    # The canonical consumer itself replays admission before dispatching once.
-    # Replay again on every callback exit, including a refused output/mutation.
-    try:
-        consume_binding(binding, rows, split_manifest=split_manifest,
-            admission_inputs=admission_inputs, exposure_records=exposure_records, consumer=dispatch)
-    finally:
+    def recheck_exit_evidence():
         after = validate_binding(binding, rows,
             split_manifest=split_manifest, admission_inputs=admission_inputs, exposure_records=exposure_records)
         require(after["operation"] == operation and after["status"] == "ready",
@@ -1726,6 +1726,33 @@ def evaluate_reviewed_source_span_producer_artifact(*, binding, rows, split_mani
         if candidate_owner is not None:
             require(stable_digest(snapshot(known_candidate_inputs)) == stable_digest(known_frozen),
                     "independent candidate facts changed during callback")
+        return after
+
+    # The canonical consumer replays admission around dispatch. Recheck the
+    # independent live context policy on exit as well, including error paths.
+    # Its last callback can mutate inputs, so all evidence fences run after it.
+    try:
+        consume_binding(binding, rows, split_manifest=split_manifest,
+            admission_inputs=admission_inputs, exposure_records=exposure_records, consumer=dispatch)
+    finally:
+        after = recheck_exit_evidence()
+        if rich_heldout:
+            policy_failure = None
+            try:
+                require(context_policy_guard(snapshot(rich_context_receipt)) is None,
+                        "trusted context policy must return None or raise its original denial")
+            except BaseException as error:
+                policy_failure = error
+            try:
+                after = recheck_exit_evidence()
+            except BaseException as fence_failure:
+                if policy_failure is not None:
+                    # Preserve the caller's original denial, while retaining
+                    # any failed post-policy fence as its explicit cause.
+                    raise policy_failure from fence_failure
+                raise
+            if policy_failure is not None:
+                raise policy_failure
     outputs = snapshot(output_holder["outputs"])
     require(type(outputs) is list and len(outputs) == len(row_copy), "complete ordered producer population required")
     for row, output in zip(row_copy, outputs):

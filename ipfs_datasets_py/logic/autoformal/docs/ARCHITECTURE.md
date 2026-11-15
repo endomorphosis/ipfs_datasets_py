@@ -1,5 +1,9 @@
 # Architecture and owner map
 
+## Evaluator policy and observation boundary — 2026-11-15
+
+Current rich V2/V3 evaluation brackets production with the same independent live context policy. A final policy callback is followed by fresh query/TRAIN/context replay and source/profile/fact fences, so a policy cannot grant and then rewrite the facts being evaluated. Denial identity is retained, with any failed final fence recorded as its cause. Returned producer data is detached before later callbacks; timings and error populations keep their existing meanings. Earlier failed evidence may refuse without another policy call. This adds no interpreter, model, supervisor, execution grant or legal authority.
+
 ## Verifier generation and cross-context source grouping — 2026-11-15
 
 The Lean verifier owns both-stream error classification and the exact stdout-only elaborated dependency report. One optional output-framing BOM is handled without changing submitted Lean source bytes. Its explicit verification-profile token is part of the toolchain metadata committed by the kernel receipt and complete legal proof-cache context. Current accepted receipt parsing and cache domain selection reject missing, obsolete or malformed profiles before reuse. This closes archival receipt replay after a checker repair; it is neither a native-execution grant nor proof of a compiler process by itself. Historical objects retain their original bytes and source epochs.

@@ -1,5 +1,16 @@
 # Operations and evidence ownership
 
+## Cleanup146 retained-failure and Source guard boundaries — 2026-11-15
+
+The current immutable-source qualification@1 cleanup changes were adopted in the published worktrees through the original four-target Source operation and a separate audited readback. The new completed-failed-retained profile is cleanup-only: it preserves current-row, process, Native, source, request and original-deadline checks; it grants no passed receipt, repair adoption, retry or storage authority.
+
+Fresh GREEN146 ran all146 exact selected owning controls (40 SDK and106 CLI, including the prior17+54 regressions plus23+52 new cases) in one original generic CLI run:146 clean JUnit records, zero failures/errors/skips,6.09seconds. Source, Native, process and genuine-wait custody closed before the initial420-second acceptance cutoff (178.700seconds). Its own16MiB promise was durably released after680 files/2,551,287bytes. Modeled proof frames inside these software controls do not establish a genuine live SDK cleanup lifecycle.
+
+The earlier RED2 reproduced two expected CALL failures under the previous source bytes; its own16MiB failure claim remains retained and nondurable. The separate previously published71 result remains historical, without pooled or transferred qualification. The four-target Source guard now keeps55 strict fences and captures exactly10 known unselected documentation files under both original Source scopes, then checks them unchanged through the writes and final read. A separate READ records its own fresh interval. This permits unrelated peer prose before admission without authorizing any documentation write by the code actor.
+
+CPU1, memory1536MiB, process4, storage16MiB, productive300 and ledger60 are unchanged; one shared60-second Source-admission cutoff stays inside the initial420-second acceptance deadline without renewal or automatic retry. Existing runtime holds,119 owners,24 task states and physical200/next201/9,800 remaining at generation2of2 are preserved. FullSDK95/SourceGen/raw7, actual SDK timeout cleanup, private delegated immutable@2 SDK/worker/Main and mapped preparation remain separate unqualified gates. No model, legal, Lean, native-corpus or activation gain follows. [Exact146 evidence](../../../../workspace/test-logs/federal-corpus-audits/legal-ir-current-immutable-v1-cleanup146-qualified-20261115-v01/qualification-summary.json).
+
+
 ## Cleanup71 Source scheduling and retained-failure boundaries — 2026-11-14
 
 The four cancelled-retained cleanup sources were installed in the published worktrees through the original Source operation and separate readback. A private current-policy fault in one R owning control was then restored after its refusal/no-write assertions through a separately audited one-target Source operation. The SDK, CLI and strict origin/current-state guards retain their reviewed limits.

@@ -206,37 +206,30 @@ authentication, immutable Hub readback, statutory review, model fitting or
 corpus release is established. V3 remains an explicit local replay path.
 [Closed qualification](../../../../../workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/current-canonical-release-v3-physical56-qualified-and-closed.json).
 
-## Shared law-row replay and remaining release checks — 2026-11-15
+## Shared law-row replay and release regression checks — 2026-11-15
 
-The existing physical fixture can represent two source rows carrying three
-legal units. The normative row retains both nonoverlapping occurrences, complete
-original bytes, exact character/UTF-8 offsets, all span overlaps and one graph
-source-version node per identity. Signing binds the original shared row before
-admission; source/IR artifact identities remain distinct for each unit. Defaults
-retain the three-row fixture. The two owning test files carry this integration;
-production schemas and admission owners did not change for it.
+The existing physical fixture represents two source rows carrying three legal
+units. It retains complete original bytes, exact character and UTF-8 offsets,
+all span overlaps and one graph source-version node per identity. Signing binds
+the original shared row before admission; source/IR artifact identities stay
+distinct for each unit. The prior three-row default remains available.
 
-All six selected checks passed with closed Source/resource/process/wait/storage
-custody: three new shared-row cases, the retained three-row positive and two
-shared-artifact controls. Duplicate and overlapping uses are refused through
-genuinely signed fictional replay. The request durably released its own32MiB.
+The shared-row run passed six checks: three new cases, the retained three-row
+positive and two shared-artifact controls. The five invalid-path cases also
+passed after their owning test gained exact-leaf cleanup following its original
+CLI assertions. Original and working snapshots plus ordinary observation
+evidence remain; the C19 plugin, SDK and CLI were not changed for this fix.
+Both runs closed all original custody and released their own 32 MiB promises.
+The old symlink teardown error and earlier timed-out runs remain preserved.
 
-The existing five invalid-path cases now use a private work directory and own
-their newly created symlink/FIFO cleanup after the original CLI assertions.
-Held inode, parent and literal checks precede exact-leaf removal; original and
-working snapshots plus ordinary observation evidence remain. All five passed
-through unchanged C19/V2 fixture, SDK and CLI owners, with full original custody
-closed and own32MiB durably released. The old symlink case reproduced one call
-pass plus one teardown error; that failed original and its32MiB remain retained.
-The larger private observer/plugin proposals were not installed.
+All 98 cases in the previously unqualified regression selection now have
+passing results across 19 closed originals. The latest nine sequential runs
+cover the final 46. Independent raw-JUnit accounting joins those 98 with the
+earlier 54 release cases and three new shared-row cases: all 155 declared
+release case IDs and 39 functions are covered. Helper cases and overlapping
+runs are not added twice. Every scope retains its exact source epoch; this is
+not one unified current-source run or verification of statutory meaning.
+Actual corpus Native-parent integration, immutable Hub readback, real legal
+review and a complete statutory Lean corpus remain open.
 
-Ten separate closed scopes now qualify52of the original98 remaining release
-cases, leaving46 ordinary cases. Their captured source epochs remain distinct.
-The release file declares155cases/39functions; neither the whole current file
-nor one unified current source epoch is qualified by pooling saved runs. Earlier
-physical-map and V3 six-case timeouts retain zero credit and their failed claims;
-the six physical-map cases have separate successful three-case closeouts.
-Actual statutory review, Lean proof, Native-parent integration and immutable Hub
-readback remain open.
-
-[Shared-row closeout](../../../../../workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/shared_lawrow6-shared-v01/cohort-closeout.json). [Physical5 closeout](../../../../../workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/legacy_CLI_paths5-physical-current5-green-v01/cohort-closeout.json). [Exact52/46 accounting](../../../../../workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/remaining-small-cohort-progress-10closed-52passed-46remaining-v01.json).
+[Shared-row closeout](../../../../../workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/shared_lawrow6-shared-v01/cohort-closeout.json). [Physical5 closeout](../../../../../workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/legacy_CLI_paths5-physical-current5-green-v01/cohort-closeout.json). [Complete98 closeout](../../../../../workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/remaining-release98-complete-19closed-v01.json). [Independent155 accounting](../../../../../workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/independent-final-remaining98-and-release155-captured-epoch-coverage-audit-v01.json).

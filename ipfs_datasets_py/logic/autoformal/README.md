@@ -1,5 +1,7 @@
 # Legal autoformalization
 
+Reviewed evaluation now rechecks live context permission on exit and freezes producer outputs before later callbacks. All61 selected software cases pass; see the [handoff](docs/HANDOFF.md) for exact scope and remaining model/legal gates.
+
 Compiler diagnostics and proof-cache reuse now bind the current verifier profile; reviewed heldout contexts also enforce declared legal source identity across interpretations. Current source-only qualification and historical/native limits are recorded in the [handoff](docs/HANDOFF.md).
 
 Relational roundtrip scoring now detaches and fences reference, role and governing-observation inputs. A reproduced false prose-equality report now refuses, and all 431 source-only regression cases pass. Legal/model/proof authority remains unqualified. See the [handoff](docs/HANDOFF.md).
