@@ -1,5 +1,13 @@
 # Training and experiment history
 
+## External alias validation: nine software cases, no new training — 2026-11-15
+
+The existing symbol-table validator now checks explicit alias IDs against the supplied external definitions. The two new parameter cases cover a supplied external ID and its absence beside a same-name local decoy; all seven original cases remain unchanged.
+
+The original RED run recorded **one intended `validation.valid` failure and one pass**, with no errors or skips. The full runtime diagnostic list was not recorded by the short traceback; the alias-error cause is an independently reviewed static inference from the exact pinned owner and test. After correction, the whole module passed **nine cases with zero failures, errors or skips in 0.105 seconds**. Source/resource/process/genuine-wait custody closed before the initial 420 seconds; the successful own 16 MiB claim was durably released, while the failed RED claim remains retained and nondurable.
+
+The exact two-file normal-main publication is commit `8dca54e92165bf67dc6a537dc0bda56683a7cc1b`, independently verified through anonymous HTTPS. No model inference, fitting, native Lean qualification, statutory review or corpus admission was added. Existing resource limits, private-asset holds, 123 components and 24 backlog states remain unchanged. [Measured evidence](../../../../docs/autoformalization/evidence/legal-ir-external-symbol-alias-software9-20261115.json).
+
 ## Proof-feedback boolean epoch: final whole-owner software result — 2026-11-15
 
 The final existing replay owner passed **45/45** tests in1.349seconds, with no failures, errors or skips. This includes the retained25 cases, the19 strict-flag/cache-corruption controls and the independent closed-v1-wire legacy-cache case. The latter verifies a fresh executor call and preservation of old cached bytes. The earlier44-case flags-only qualification does not cover this profile change; both original red failures remain historical.

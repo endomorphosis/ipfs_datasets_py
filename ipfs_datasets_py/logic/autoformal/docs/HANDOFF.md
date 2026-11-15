@@ -1,5 +1,13 @@
 # Current handoff
 
+## External symbol aliases: nine software controls — 2026-11-15
+
+The existing symbol-table validator now accepts an alias target ID when that exact definition is present in a supplied external table, matching the existing resolver. Without that table, the ID remains unresolved even when a local definition has the same name. Only the canonical owner and its owning tests changed.
+
+The original reproduction recorded one failure at `validation.valid` and one passing negative control. Its short traceback did not record the full diagnostic list; the alias-error attribution is an independently reviewed inference from the pinned source. The corrected whole owning module passed all **nine cases: seven retained and two new**, with zero failures, errors or skips in **0.105 seconds**. Original Source, resource, process and genuine-wait custody closed in **241.947297 seconds** within the unchanged 420-second cutoff. Only the successful run's own 16 MiB claim was durably released; the failed reproduction's 16 MiB claim remains retained and nondurable.
+
+Normal-main commit `8dca54e92165bf67dc6a537dc0bda56683a7cc1b` contains exactly the two qualified source paths; five anonymous HTTPS reads independently verified the commit and both source blobs. These are fictional symbol/definition software controls. Statutory meaning and review, model or training quality, native Lean and corpus admission remain separate. All 123 components and 24 backlog task states are unchanged. [Exact software and publication evidence](../../../../docs/autoformalization/evidence/legal-ir-external-symbol-alias-software9-20261115.json).
+
 ## Strict proof-feedback replay flags and cache epoch — 2026-11-15
 
 The existing historical Hammer replay adapter now requires exact booleans for its six selected proof/reconstruction authority flags. It reuses the canonical Hammer validator at construction and before cache persistence; mapping and serialization no longer turn strings or integers into attestations. A fixed `strict-proof-boolean-authority-v2` profile enters the existing policy fingerprint, so pre-strict cache entries cannot bypass the current executor. Old cache bytes, source/receipt identities and transport schemas remain intact. Current-profile cache reuse remains supported.

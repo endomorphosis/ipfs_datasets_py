@@ -1,0 +1,209 @@
+{
+  "bounds": {
+    "child_process_slots": 4,
+    "cpu_slots": 1,
+    "initial_total_seconds": 420,
+    "ledger_admission_seconds": 60,
+    "memory_mb": 1536,
+    "productive_seconds": 300,
+    "shared_Source_admission_seconds": 60,
+    "storage_bytes": 16777216,
+    "unchanged": true
+  },
+  "change": "Validate an alias target ID against definitions in supplied external symbol tables, matching the existing resolver and resolution-target validator. A same-name local definition cannot replace an absent explicit external ID.",
+  "evidence_refs": {
+    "GREEN9_JUnit": {
+      "artifact": "symbols-external-alias-GREEN9.xml",
+      "bytes": 1741,
+      "sha256": "1f031609cac57daad518cb87404ea1603fefd798e411424753e4c7aba345fc95"
+    },
+    "GREEN9_durability_seal": {
+      "artifact": "validation-durability.json",
+      "bytes": 1197,
+      "sha256": "19f09a97667077c004f7d37de859da0ff479a530d0125baa5f251319a1f6369e"
+    },
+    "GREEN9_independent_audit": {
+      "artifact": "independent-symbols-external-ID-alias-original-GREEN9-closeout-v01.json",
+      "bytes": 23027,
+      "sha256": "cc41ae6d308bd8c76a04d782286ba68dee3d831e5efef47bf93b3f45441d519a"
+    },
+    "GREEN9_parent_closeout": {
+      "artifact": "prepared-original-symbols-GREEN9-v01/parent-closeout.json",
+      "bytes": 11417,
+      "sha256": "79fd247cbdc331219e0ee67ca39c0ec6fc02d47be8dcae70886f24280f50da4d"
+    },
+    "GREEN9_request": {
+      "artifact": "prepared-original-symbols-GREEN9-v01/request.json",
+      "bytes": 25239,
+      "sha256": "51e2f1358cb1d70d08c83c7a02574c33b993a45ac94958c3c0e3b41999a7c5e3"
+    },
+    "RED2_JUnit": {
+      "artifact": "symbols-external-alias-RED2.xml",
+      "bytes": 1891,
+      "sha256": "d2628dbebd5fc59fd3d6c311da92ba88b7c80074b9f362e4696bcba100f6b854"
+    },
+    "RED2_independent_audit": {
+      "artifact": "independent-symbols-external-ID-alias-original-RED2-closeout-v01.json",
+      "bytes": 15029,
+      "sha256": "42e5b510dc7ae32951926de5201a6d864f631813a52139880cf9791dd7c45023"
+    },
+    "RED2_parent_closeout": {
+      "artifact": "prepared-original-symbols-RED2-v01/parent-closeout.json",
+      "bytes": 14563,
+      "sha256": "4f794383eb51b369186525a8f098d279699f57022e518b098b07a961367c91d2"
+    },
+    "RED2_request": {
+      "artifact": "prepared-original-symbols-RED2-v01/request.json",
+      "bytes": 25729,
+      "sha256": "df644f5dec8f1c004dd52625392c8ac3f887ec18aac1732592d1f00df43826ca"
+    },
+    "normal_main_publication_and_anonymous_HTTPS_audit": {
+      "artifact": "independent-qualified-symbols-R2-normal-main-publication-anonymous-HTTPS-audit-v01.json",
+      "bytes": 13622,
+      "sha256": "ef9a1a27863df9eb650739b13eb4db3e12055490bfe226b6ea8bdd87701fd27e"
+    },
+    "normal_main_publication_receipt": {
+      "artifact": "publication-result.json",
+      "bytes": 10660,
+      "sha256": "7b014db5ed0bbcef4706d0c1e022185f3d958d88ee59f06c63b84a2c929d1835"
+    },
+    "owner_fix_Source1_independent_audit": {
+      "artifact": "independent-symbols-owner-fix-Source1-current-postimages-audit-v01.json",
+      "bytes": 125124,
+      "sha256": "88ef12d6b28ab663b9c57a071ffdc22ebe070ac293c24955f81b9e9cea67e979"
+    },
+    "test_Source1_independent_audit": {
+      "artifact": "independent-symbols-test-only-Source1-current-postimages-audit-v01.json",
+      "bytes": 122754,
+      "sha256": "cb9afa16d3db31c699b2f0b74fb4a278791fd9f4f25a5c3bb41ec727ebf7746d"
+    }
+  },
+  "existing_owner": "ipfs_datasets_py/logic/integration/reasoning/legal_ir_symbols.py",
+  "owning_tests": "tests/unit/logic/integration/test_legal_ir_symbols.py",
+  "publication": {
+    "anonymous_HTTPS": {
+      "GETs": 5,
+      "TLS_verified": true,
+      "all_HTTP_statuses": 200,
+      "credentials_or_cookies_sent": false,
+      "exact_commit_tree_parent_and_both_raw_source_blobs_verified": true,
+      "public_main_equal_commit_at_observation": true
+    },
+    "commit": "8dca54e92165bf67dc6a537dc0bda56683a7cc1b",
+    "exact_changed_paths": [
+      "ipfs_datasets_py/logic/integration/reasoning/legal_ir_symbols.py",
+      "tests/unit/logic/integration/test_legal_ir_symbols.py"
+    ],
+    "immutable_Git_fences_preserved": 12,
+    "later_successors_do_not_rewrite_this_observation": true,
+    "normal_main_publication": true,
+    "normal_nonforce_push_verified": true,
+    "other_tree_entries_unchanged": 41209,
+    "parent": "2a746bcdd2863213a4e7f71fad6c4f25ddf22427",
+    "peer_working_fences_preserved": 29,
+    "selected_source_bytes": 87687,
+    "tree": "c7433ea9333d1bf1eaa9fdb2f8b5386cda7f9d33",
+    "unselected_index_rows_preserved": true
+  },
+  "qualification": {
+    "Git_pins": 8,
+    "Source_resource_sampled_process_and_genuine_wait_closed": true,
+    "actual_original": "session37790 ->08a5d0 EXIT0",
+    "cases": 9,
+    "durability": {
+      "artifacts_durable": true,
+      "every_seal_row_and_seal_verified": true,
+      "failed_RED_claim_unchanged": true,
+      "files_including_seal": 6,
+      "manual_release": false,
+      "only_own_claim_released_by_original_owner": true,
+      "persisted_status": "released",
+      "reservation_id": "2f4907f834554f38bff8299595464ccd",
+      "reserved_bytes": 16777216,
+      "retained_bytes": 0,
+      "seal_rows": 5,
+      "total_bytes": 4579
+    },
+    "errors": 0,
+    "failures": 0,
+    "new_parameter_cases": 2,
+    "original_errors": [],
+    "original_owner_seconds": 190.30034322012216,
+    "parent_Source_seconds": 241.94729704596102,
+    "passed": 9,
+    "pytest_seconds": 0.105,
+    "retained_old_cases": 7,
+    "selected_scope": "Whole owning test module; exact supplied-external and absent-external parameter cases, plus all seven original cases.",
+    "skipped": 0,
+    "source_and_Git_drift": [],
+    "source_epoch_guards_are_not_whole_package_execution_coverage": true,
+    "source_pins": 137
+  },
+  "recorded_date": "2026-11-15",
+  "reproduction": {
+    "actual_original": "session85621 ->067d90 EXIT1",
+    "cases": 2,
+    "diagnostic_evidence": {
+      "causal_attribution": "Independent static inference from the exact pinned original owner and owning test; no reconstructed runtime diagnostic payload.",
+      "full_runtime_diagnostic_list_recorded": false,
+      "inferred_error": "alias_target_unresolved",
+      "provenance_findings_are_nonfatal_warnings": true,
+      "raw_runtime_alias_error_literal_present": false,
+      "validation_valid_rejects_error_only": true
+    },
+    "errors": 0,
+    "failed_claim": {
+      "artifacts_durable": false,
+      "persisted_status": "retained",
+      "reservation_id": "87ef66c167e347539c7b3358c5401546",
+      "reserved_bytes": 16777216
+    },
+    "failure": {
+      "assertion": "assert validation.valid",
+      "parameter": "supplied-external",
+      "prior_resolution_ID_and_alias_assertions_reached": true,
+      "test_line": 452
+    },
+    "failures": 1,
+    "original_owner_sha256": "9c7fe139e2bfd04096769dd866c38ab8d7e18fa9ad0699206be3425b293d003d",
+    "parent_Source_seconds": 175.26066212216392,
+    "passed": 1,
+    "pytest_seconds": 0.115,
+    "skipped": 0
+  },
+  "schema": "legal-ir-external-symbol-alias-software9-evidence/v1",
+  "scope_limits": {
+    "backlog_task_states_unchanged": true,
+    "budgets_permissions_and_private_asset_holds_unchanged": true,
+    "fictional_software_symbol_definition_controls_only": true,
+    "model_inference_or_training_or_quality": false,
+    "native_Lean_proof_or_hosted_CI_qualification": false,
+    "semantic_graph_or_statutory_corpus_admission": false,
+    "statutory_meaning_or_independent_legal_review": false,
+    "whole_package_or_future_source_epoch_qualification": false
+  },
+  "source_adoption": {
+    "only_existing_owner_and_owning_test_changed": true,
+    "original_Source42_and_CAS733": true,
+    "owner_fix_only_after_genuine_closed_RED": true,
+    "separate_original_READ_after_each_WRITE": true,
+    "test_only_before_RED": true
+  },
+  "source_postimages": [
+    {
+      "bytes": 71313,
+      "git_blob_SHA1": "2449b7b2c4eb8ca0f74a583d5c3dc54eddc56a0e",
+      "git_mode": "100644",
+      "path": "ipfs_datasets_py/logic/integration/reasoning/legal_ir_symbols.py",
+      "sha256": "923150886f4b6650310c81e693ed6b07dd0ec304b7b88393f5cd91de3cc62cce"
+    },
+    {
+      "bytes": 16374,
+      "git_blob_SHA1": "0eb4e55b361358a5996537d496c9f718b894370d",
+      "git_mode": "100644",
+      "path": "tests/unit/logic/integration/test_legal_ir_symbols.py",
+      "sha256": "6eaef4b79946f526735780b29617998fd4ec81c890961e9b35aab717dd16bf62"
+    }
+  ],
+  "status": "published_owning_module_software_qualified"
+}
