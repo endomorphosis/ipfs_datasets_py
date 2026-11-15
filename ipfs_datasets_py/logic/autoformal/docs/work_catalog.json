@@ -15144,6 +15144,16 @@
       "root": "datasets_repository",
       "scope": "Fresh whole93PASS/0FES7.619s:82hard-negative+11metamorphic. Source255/Git8 unchanged, custody162.788363s<420/own16MiB durableReleased144157B. RED2 intended failures and zero-write refusals preserved. Diagnostic report/proposal v2 has no semantic trust; explicit distrust/proposal veto survives opt-out. Explicit V1 caller metadata and typed PGIR041 remain software contracts, not checker/legal/model/training/convergence/corpus authority; old88/133 not pooled.",
       "status": "selected_original_software_qualified_independent_semantic_evidence_pending"
+    },
+    {
+      "id": "Main-parent-delegated-reader-selected-software142-20261115",
+      "observed_bytes": 4694,
+      "observed_sha256": "1cf6815cf506a83831473e11d4f5d3e10f71c205ab0bd6a025f984d53970f044",
+      "path": "docs/autoformalization/evidence/legal-ir-Main-parent-delegated-reader-software142-20261115.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Actual original142PASS/0FAIL/ERR/SKIP3.889s:48new immutable-parent metadata consumer controls plus94 retained/current preparation controls. Frozen213Source/8Git unchanged during the run; Source/resource/process/genuine-wait closed168.795988s<420 and own16MiB durably released. Earlier failedMain94/claim retained. Selected software only: no wholeSDK/CLI4/worker module, genuine A-to-D consumption, live activation, legal/model/Lean/corpus authority or A6 product publication.",
+      "status": "selected_original_software142_qualified_full_executor_activation_pending"
     }
   ]
 }

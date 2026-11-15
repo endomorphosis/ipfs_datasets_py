@@ -1,0 +1,96 @@
+{
+  "actual_original": "f1ce3e/session95080 ->091e87 EXIT0",
+  "cases": {
+    "errors": 0,
+    "failures": 0,
+    "new_consumer": 48,
+    "pytest_seconds": 3.889,
+    "retained_current_preparation": 94,
+    "skips": 0,
+    "total": 142
+  },
+  "change": "Explicitwrapper@2readerforimmutable-source-qualification@2;joinsdelegatedreport/summary/custody, physicalandcanonicalroots, sameparentnonce/PIDbirth/request/observation. Default@1contractsretained. Twohelpers+oneexistingreaderbranchonly.",
+  "custody": {
+    "Source_total_seconds": 168.79598797904328,
+    "closed": [
+      "SourceRREAD",
+      "SourceAREAD",
+      "originalNativeResource",
+      "sampledBirthBoundProcesses",
+      "genuineWaitReap"
+    ],
+    "errors": [],
+    "initial_total_limit_seconds": 420
+  },
+  "durability": {
+    "all_files_including_seal": 2331,
+    "artifacts_durable": true,
+    "audit_no_manual_release": true,
+    "final_bytes": 6288838,
+    "only_own_claim_released_by_original_owner": true,
+    "own_claim": "1ae2675d4f1f489d80ae7aaabaabaf88",
+    "own_reserved_bytes": 16777216,
+    "persisted_status": "released",
+    "retained_bytes": 0,
+    "rows": 2330,
+    "seal_bytes": 660107,
+    "sealed_bytes": 5628731
+  },
+  "historical_failures": "OriginalMain94permissionfailureandits16MiBretained; allotherfailedclaims/epochsimmutable; noresultpooling.",
+  "independent_audit_ref": {
+    "bytes": 15221,
+    "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/ordinary-immutable-source-parent-delegation-private-v01/Main-current-immutable-parent-consumer-private-v05/consumer142-original16MiB-conditional-inputs-INERT-v01/prepared-Main-consumer142-Source2-guardedSDK4-v01/independent-actual-Main-consumer142-current213-original-closeout-audit-v01.json",
+    "sha256": "403d03f4fe8ae62d3acbe8cef42b5584cc57876ebbc1c7967ae99d74b9c69bb8"
+  },
+  "owning_tests": "tests/unit/agent_supervisor/test_scientific_closed_capacity_continuation.py",
+  "parent_closeout_ref": {
+    "bytes": 11387,
+    "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/ordinary-immutable-source-parent-delegation-private-v01/Main-current-immutable-parent-consumer-private-v05/consumer142-original16MiB-conditional-inputs-INERT-v01/prepared-Main-consumer142-Source2-guardedSDK4-v01/parent-closeout.json",
+    "sha256": "1883b3cbfd2618de582f15367dd2c36ccca8b8e7585648a029a48da6ec76113f"
+  },
+  "private_assets": "HOLD/noassetsopeneduploaded",
+  "raw_terminal_admitted": false,
+  "recorded_at_utc": "2026-11-15T11:17:54.233575+00:00",
+  "remaining": [
+    "FullCLI4comparison@3review/template/owner-drivertransitionremainsrefused",
+    "ActualSDK25/46shared-coreandwholemodulesnotqualifiedbythiscohort",
+    "GenuineA-to-Dopaquehandleconsumptionremainsseparate",
+    "NoDBobservation/livewatchdog/scientificcycleactivation",
+    "Nolegalreview/statutorymeaning/modeltraining/Lean/corpusgain"
+  ],
+  "request_ref": {
+    "bytes": 101155,
+    "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/ordinary-immutable-source-parent-delegation-private-v01/Main-current-immutable-parent-consumer-private-v05/consumer142-original16MiB-conditional-inputs-INERT-v01/prepared-Main-consumer142-Source2-guardedSDK4-v01/request.json",
+    "sha256": "71fa88812f96e232913e4ed33c140261f8c26ffd082d5c68a7006fdb5ffe9025"
+  },
+  "schema": "legal-ir-Main-parent-delegated-qualification-reader-software@1",
+  "software_acceptance": true,
+  "source_adoption": "OriginalSource42/733twoMainCASandseparateSourceREADclosed;SDK4/protected6bytes/full9/mode+Git14unchanged",
+  "source_after": {
+    "bytes": 409242,
+    "sha256": "fdeed037860bc1be8ae66dcc66c9e8ce1e9df8830262a37bb1009c15ac891897"
+  },
+  "source_frontier": {
+    "Git_pins": 8,
+    "closing_drift": [],
+    "current_hash_full9_same": true,
+    "declared_pins": 213,
+    "scope_not_exhaustive_import_origin_claim": true
+  },
+  "source_owner": "ipfs_accelerate_py/agent_supervisor/rescue/scientific_executor.py",
+  "status": "INSTALLED_SELECTED_SOFTWARE142_QUALIFIED_NOT_FULL_EXECUTOR_ACTIVATION",
+  "taskboard_and_generation_states": "UNCHANGED",
+  "tests_after": {
+    "bytes": 159795,
+    "sha256": "0712cc2dde748fd805802619d0e6363a20f94d5c5f13fda52645a1fecd4a63f7"
+  },
+  "unchanged_limits": {
+    "child_process_slots": 4,
+    "cpu_slots": 1,
+    "initial_total_seconds": 420,
+    "memory_mb": 1536,
+    "shared_Source_seconds": 60,
+    "storage_limit_bytes": 250000000000,
+    "validation_seconds": 300
+  }
+}

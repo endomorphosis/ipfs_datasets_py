@@ -1,5 +1,15 @@
 # Training and experiment history
 
+## Main qualification-reader software scope; no new training — 2026-11-15
+
+The existing Main source-generation qualification reader now accepts a distinct wrapper @2 for parent-delegated immutable Source qualification. It binds the same original report, summary and custody to physical/canonical roots, parent identity, nonce, request and observation; legacy @1 contracts remain unchanged. Original Source42/733 adoption and separate readback changed only Main and its owning tests, preserving current SDK4 and six protected files.
+
+A fresh original passed 142 selected software cases: 48 new consumer controls and 94 retained/current preparation controls, with zero failures, errors or skips in 3.889 seconds. All 213 source pins and eight Git pins remained exact. Source, Native-resource, process and genuine-wait custody closed without errors in 168.796 seconds before the unchanged 420-second cutoff. Independent audit verified all 2,331 files / 6,288,838 bytes and the persisted durable release of only this run's own 16 MiB claim. The earlier failed Main94 and its retained claim remain historical.
+
+This is selected software qualification. It does not qualify whole SDK/worker modules, genuine parent-to-D consumption or full scientific execution. Physical CLI4 comparison @3 still refuses until the owner/driver/template/qualification transition is complete. Holds, consumed generations, all 24 backlog task states and private assets remain unchanged.
+
+[Exact selected-software evidence](../../../../docs/autoformalization/evidence/legal-ir-Main-parent-delegated-reader-software142-20261115.json). The 213 Source and eight Git pins describe this run's frozen epoch; later changes require their own qualification.
+
 ## Existing V4 structural producer refusal coverage — 2026-11-15
 
 Original `4127` / terminal `012a55` passed all **six selected authored controls** in 132.765 seconds: complete byte-context overflow, unknown profile, forbidden heldout use, mismatched context commitment, revoked query and changed checkpoint bytes. These assert no backend calls; the byte case also checks no training/restore and preserves the three refused query outcomes. No numerical fit, learned score, real tokenizer forward, native Lean proof or legal gold was measured.

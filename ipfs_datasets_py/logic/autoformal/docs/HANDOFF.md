@@ -1,5 +1,15 @@
 # Current handoff
 
+## Main parent-delegated qualification reader: selected software controls — 2026-11-15
+
+The existing Main source-generation qualification reader now accepts a distinct wrapper @2 for parent-delegated immutable Source qualification. It binds the same original report, summary and custody to physical/canonical roots, parent identity, nonce, request and observation; legacy @1 contracts remain unchanged. Original Source42/733 adoption and separate readback changed only Main and its owning tests, preserving current SDK4 and six protected files.
+
+A fresh original passed 142 selected software cases: 48 new consumer controls and 94 retained/current preparation controls, with zero failures, errors or skips in 3.889 seconds. All 213 source pins and eight Git pins remained exact. Source, Native-resource, process and genuine-wait custody closed without errors in 168.796 seconds before the unchanged 420-second cutoff. Independent audit verified all 2,331 files / 6,288,838 bytes and the persisted durable release of only this run's own 16 MiB claim. The earlier failed Main94 and its retained claim remain historical.
+
+This is selected software qualification. It does not qualify whole SDK/worker modules, genuine parent-to-D consumption or full scientific execution. Physical CLI4 comparison @3 still refuses until the owner/driver/template/qualification transition is complete. Holds, consumed generations, all 24 backlog task states and private assets remain unchanged.
+
+[Exact selected-software evidence](../../../../docs/autoformalization/evidence/legal-ir-Main-parent-delegated-reader-software142-20261115.json). The 213 Source and eight Git pins describe this run's frozen epoch; later changes require their own qualification.
+
 ## Six V4 producer refusal controls — 2026-11-15
 
 The six previously pending authored structural controls now pass through the existing original V5 owner: one complete byte-context budget refusal and five factory custody refusals (unknown profile, heldout use not permitted, wrong context commitment, revoked query and changed checkpoint bytes). All six require an empty backend-call log; the byte-refusal control also asserts no training or restore. This is selected software refusal coverage, with no real tokenizer/model forward, native Lean, legal interpretation or corpus qualification.
