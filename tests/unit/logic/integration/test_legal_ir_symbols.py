@@ -398,3 +398,65 @@ def test_build_symbol_table_extracts_common_legal_ir_shapes() -> None:
         LegalIRSymbolKind.CONDITION,
         LegalIRSymbolKind.EXCEPTION,
     }
+
+
+@pytest.mark.parametrize("supply_external", [True, False], ids=["supplied-external", "absent-external"])
+def test_external_target_id_alias_validation_matches_resolution(supply_external):
+    """An explicit external ID is available only from the supplied table."""
+    external_builder = LegalIRSymbolTableBuilder(symbol_table_id="external-id-alias-doc-b")
+    doc_b = external_builder.add_document_scope("doc-b")
+    external_builder.add_definition(
+        "records officer",
+        LegalIRSymbolKind.AUTHORITY,
+        symbol_id="authority:external-records-officer",
+        scope_id=doc_b.scope_id,
+        document_id="doc-b",
+    )
+    external_table = external_builder.to_symbol_table()
+    external_tables = (external_table,) if supply_external else ()
+
+    builder = LegalIRSymbolTableBuilder(symbol_table_id="external-id-alias-doc-a")
+    doc_a = builder.add_document_scope("doc-a")
+    # A same-name local definition cannot replace the explicitly named ID.
+    builder.add_definition(
+        "records officer",
+        LegalIRSymbolKind.AUTHORITY,
+        symbol_id="authority:local-decoy",
+        scope_id=doc_a.scope_id,
+        document_id="doc-a",
+    )
+    builder.add_alias(
+        "external officer",
+        alias_id="alias:external-officer",
+        target_symbol_id="authority:external-records-officer",
+        target_document_id="doc-b",
+        target_scope_id=doc_b.scope_id,
+        symbol_kind=LegalIRSymbolKind.AUTHORITY,
+        scope_id=doc_a.scope_id,
+        document_id="doc-a",
+    )
+    builder.add_reference(
+        "external officer",
+        LegalIRSymbolKind.AUTHORITY,
+        reference_id="ref:external-officer",
+        scope_id=doc_a.scope_id,
+        document_id="doc-a",
+    )
+    table = builder.to_symbol_table(external_symbol_tables=external_tables)
+    resolution = table.resolution_by_reference_id["ref:external-officer"]
+    validation = validate_legal_ir_symbol_table(table, external_symbol_tables=external_tables)
+    if supply_external:
+        assert resolution.status is LegalIRResolutionStatus.RESOLVED
+        assert resolution.symbol_ids == ("authority:external-records-officer",)
+        assert resolution.alias_ids == ("alias:external-officer",)
+        assert validation.valid, validation.to_dict()
+        assert validation.resolved_count == 1
+        assert not any(issue.diagnostic_type is LegalIRSymbolDiagnosticType.ALIAS_TARGET_UNRESOLVED
+            for issue in validation.diagnostics)
+    else:
+        assert resolution.status is LegalIRResolutionStatus.UNRESOLVED
+        assert resolution.symbol_ids == ()
+        assert not validation.valid
+        assert validation.resolved_count == 0
+        assert any(issue.diagnostic_type is LegalIRSymbolDiagnosticType.ALIAS_TARGET_UNRESOLVED
+            and issue.alias_ids == ("alias:external-officer",) for issue in validation.diagnostics)

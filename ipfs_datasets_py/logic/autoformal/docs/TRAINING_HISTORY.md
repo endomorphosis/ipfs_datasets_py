@@ -1,5 +1,25 @@
 # Training and experiment history
 
+## Existing V4 structural producer refusal coverage — 2026-11-15
+
+Original `4127` / terminal `012a55` passed all **six selected authored controls** in 132.765 seconds: complete byte-context overflow, unknown profile, forbidden heldout use, mismatched context commitment, revoked query and changed checkpoint bytes. These assert no backend calls; the byte case also checks no training/restore and preserves the three refused query outcomes. No numerical fit, learned score, real tokenizer forward, native Lean proof or legal gold was measured.
+
+The fresh combined request retained Source255/Git8 with no drift, original1CPU/1536MiB/4process/16MiB/300-second limits, one shared60-second Source admission and initial420 seconds. Genuine wait, process/resource cleanup and Source exit completed in 288.306845 seconds. The original owner durably released `43cc169d4cf4454c99f024091bbd8065` with10,040 bytes. The older separate1+5 inert preparations and freezer remain preserved; the corrected255-pin preparation substitutes actual new bootstrap inputs for the two unused prior bootstrap inputs, leaving every prior production and test pin intact.
+
+## PGIR-040 exact training-example linkage for loss — 2026-11-15
+
+Measured RED original `37130` exited 1 with **four intended failures and one pass**, no fixture errors or skips: historical decoded labels, a pair without evidence and an explicit fixture without a selected training example all acquired automatic admission; the evidence-free pair also bypassed the existing cosine-loss admission refusal. Source256/Git8 stayed unchanged and custody closed in 104.036275 seconds; the failed 16 MiB claim remains retained and nondurable. Its final attempt-byte count was not recorded.
+
+Measured GREEN original `87226` exited 0 with **78 passed** (63 positive-pair and 15 loss-configuration cases), pytest 0.768 seconds, no failures/errors/skips. Source256/Git8 drift was empty; genuine wait, process/resource closure and Source exit completed in 156.157376 seconds. The original owner durably released successful claim `fcf70b90f6ba4cc8afa9f36f02490ae2` with 76,009 bytes. Synthetic fixture labels test exact record attachment, same-ID/different-evidence refusal, quarantine/conflict behavior, detached inputs, stable iteration and proof-kind separation; this run performs no learned fitting or native Lean verification.
+
+The earlier distinct 257-pin preparation error created no child or resource claim. Its original CLI refused, its inactive guardian exited 130 after operator interruption, and its canonical custody verdict remains unknown. It is preserved as an incident, with zero executed cases and no qualification credit. Source-pin selection was corrected within the existing 256-pin policy before the measured RED; old request bytes and records were retained.
+
+## Legacy heuristic proposals quarantined; software qualification — 2026-11-15
+
+The original two-control reproduction failed twice and retains its nondurable 16 MiB claim. The repaired existing owners passed a fresh **93-case** whole-module run (82 hard-negative + 11 metamorphic), **0 failures/errors/skips in 7.619s**. Original custody closed in 162.788363s with unchanged Source255/Git8; its own 16 MiB claim was durably released at 144,157 bytes. Prior failures and epochs remain unchanged.
+
+Report/proposal v2 separates heuristic diagnostics from semantic verification. Tests cover real proposal objects and serialized forms, both verification policies, conflicting explicit trust declarations, source/model intake and fictional V1 caller compatibility. The typed PGIR-041 path remains separate. This run performs no fitting, independent semantic checking, native Lean or convergence experiment, and supplies no legal/gold/corpus authority. [Single evidence record](../../../../docs/autoformalization/evidence/legal-ir-legacy-fuzzer-proposal-boundary-20261115.json).
+
 ## PGIR-040 proposal-only recipes and explicit labels — 2026-11-15
 
 The original unattested-positive reproduction produced four assertion failures, retaining its failed 16 MiB claim and original evidence. After the existing owner was corrected, original handle `2304` exited 0 with **133 passed, no failures, errors or skips** across the three complete owning modules. Source256/Git8 drift was empty; the original owner and child were reaped and Source/resource custody closed in 164.245540 seconds. The successful attempt used 209,720 bytes of its own 16 MiB reservation, which the original owner marked durable and released. Earlier failure evidence was not rewritten or released.
