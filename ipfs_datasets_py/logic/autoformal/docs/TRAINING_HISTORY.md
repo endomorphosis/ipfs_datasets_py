@@ -1,5 +1,17 @@
 # Training and experiment history
 
+## Reviewed source-use identity: separate software and Lean outcomes — 2026-11-15
+
+The genuine two-case duplicate-instance refusal remains recorded. Following the four-owner change, the A cohort passed **102 cases, 0 failures/errors/skips, in 112.526s** with Source custody closed in 268.222479s and 3,165,127 successful bytes durably released. The initial incremental B cohort had 26 raw passes but exceeded its 16 MiB reservation at 19,209,561 bytes; its failed claim remains retained and nondurable. A later 60-second ledger refusal created no child, native grant, record or storage claim.
+
+A one-test fixture amendment shares a healthy authored cold seed across seven independently copied cache mutants. The same **26-case** B scope passed with **0 failures/errors/skips in 56.226s**; custody closed in 216.534778s and 15,423,788 bytes were durably released within the unchanged limit.
+
+The separate installed Lean run passed **two cases, 0 failures/errors/skips, in 29.55s** under pinned Lean 4.34.1 ELF identities. V2 compiled six modules and V3 eight; each retained three distinct source-use instances, all seven child companions and 15 named empty-axiom preservation obligations. Source/resource/process/wait custody closed in 186.212721s and 6,093,410 bytes were durably released. Original live-handle and retained-observation assertions passed; this saved audit does not recreate a live capability or change the false `installed_toolchain_verified` receipt flag.
+
+[Exact generations and separate receipts](../../../../docs/autoformalization/evidence/legal-ir-reviewed-source-use-bindings-20261115.json) preserve every earlier outcome without pooling and anchor qualification to R2 base `35027cc3` plus the reviewed changes. No model fitting, convergence, human legal review, statutory gold, governing-definition application or corpus/release authority follows.
+
+The separate current-main compatibility run passed **three cases, 0 failures/errors/skips, in 38.427s**: one authored incremental cold/warm control and two genuine installed Lean profile controls. Custody closed in 196.088206s and 7,809,052 bytes were durably released. Only the selected `legal_ir_symbols.py` role differed from the historical B source set; it is absent from the captured native-producer and incremental-owner pin sets. This focused integration does not rerun or retag the historical 128 software cases or their earlier Lean receipts. A subsequent docs-only upstream merge preserved the selected Source256 inputs.
+
 ## External alias validation: nine software cases, no new training — 2026-11-15
 
 The existing symbol-table validator now checks explicit alias IDs against the supplied external definitions. The two new parameter cases cover a supplied external ID and its absence beside a same-name local decoy; all seven original cases remain unchanged.

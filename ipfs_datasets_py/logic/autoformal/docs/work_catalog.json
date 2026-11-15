@@ -1356,7 +1356,8 @@
         "parent-shared-physical-close-20261020-01",
         "parent-shared-native-20261020-01",
         "genuine-parent420-retention-integration-20261110",
-        "mixed-renderer-preservation-20261111"
+        "mixed-renderer-preservation-20261111",
+        "reviewed-source-use-bindings-20261115"
       ],
       "id": "shared-corpus",
       "notes": "Legacy shared preparation/build remains available. The distinct exact-parent-definition-use-module-sharing/v1 preparation/validation/load/write profile is qualified by28 main cases plus two separately reused physical-source controls. Complete child commitments, separate review outcomes, exact source-bound donor identity and contributor ordinals survive sharing. Closing physical replay is sequential, not an atomic snapshot. This preparation cohort supplies no aggregate build result; the separate native owner now has qualified aggregate controls and two authored builds. Parent incremental caching, model training and statutory meaning remain separate. Retain the separate architecture review; do not fabricate paragraph_indices or norm_record.",
@@ -9522,7 +9523,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-11-15T10:02:15.688800+00:00",
+  "last_updated_at_utc": "2026-11-15T19:43:27.583732+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -15197,6 +15198,16 @@
       "root": "datasets_repository",
       "scope": "Whole owning module: nine software cases passed (seven retained plus two external-ID alias controls), zero failures/errors/skips in 0.105s. RED one intended validation.valid failure plus one passing negative control preserved; alias-error attribution is pinned-source static inference, full runtime diagnostics unrecorded. Source137/Git8 stayed exact; custody closed241.947297s before420 and only own16MiB was durably released. Exact two-file commit8dca independently verified by five anonymous HTTPS reads. Failed RED16MiB retained; no statutory meaning/review, model/training, native Lean or corpus authority.",
       "status": "published_owning_software9_qualified_semantic_admission_separate"
+    },
+    {
+      "id": "reviewed-source-use-bindings-20261115",
+      "observed_bytes": 31692,
+      "observed_sha256": "d265caa00ba89f490944884f6229387d11b0ccc1121faff40877e98ae8318569",
+      "path": "docs/autoformalization/evidence/legal-ir-reviewed-source-use-bindings-20261115.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Explicit reviewed-source-use/v1 in existing owners; historical R2 A102/B26 software and Lean2 native scopes plus focused current-main Integration3 qualified separately. All prior failures and upstream documentation retained; no whole128 rerun, legal/model/training/convergence/corpus authority.",
+      "status": "R2_source_scoped_A102_B26_Lean2_and_focused_current_Main_integration3_qualified"
     }
   ]
 }

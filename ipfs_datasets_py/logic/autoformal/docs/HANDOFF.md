@@ -1,5 +1,15 @@
 # Current handoff
 
+## Reviewed source-use binding and installed Lean preservation — 2026-11-15
+
+The aggregate, native-handoff and incremental APIs accept explicit `instance_identity_profile="reviewed-source-use/v1"`. After complete current source/admission/graph replay, the aggregate passes the child API a closed `source_use_binding` plus `expected_source_use_binding_sha256`; the child API does not accept the selector keyword. This separates identical IR at genuinely disjoint source uses while retaining default-profile behavior, all seven child companions and five obligations per unit. Saved receipts and caches cannot select or inherit another identity domain.
+
+Separate software runs passed **102 cases in 112.526s** and **26 cases in 56.226s**, with zero failures, errors or skips. Their Source/resource/process/wait custody closed in 268.222479s and 216.534778s. A one-test cold-seed materialization change kept all 26 cases and reduced the incremental attempt to **15,423,788 bytes** within the unchanged 16 MiB limit. The original 19,209,561-byte resource failure and later pregrant ledger refusal remain preserved and unqualified.
+
+Two genuine installed Lean cases then passed with **0 failures/errors/skips in 29.55s**, compiling six V2 modules and eight V3 modules. Each profile retained three distinct source instances and **15 exactly named obligations with empty axiom-dependency reports**. Source/resource/process/wait custody closed in 186.212721s and 6,093,410 successful bytes were durably released. The tests exercised original live-handle authentication separately from retained observations; the saved receipt flag `installed_toolchain_verified` remains false.
+
+[One evidence capsule](../../../../docs/autoformalization/evidence/legal-ir-reviewed-source-use-bindings-20261115.json) binds these results to base `35027cc3` plus the exact four-owner/four-test changes and later one-test amendment. After integration with newer main, a separate **three-case** compatibility run passed in **38.427s**: one authored incremental cold/warm control and the two installed Lean profiles. Custody closed in 196.088206s and 7,809,052 bytes were durably released. The changed `legal_ir_symbols.py` source pin lies outside the captured native-producer and incremental-owner pin sets; this finite observation does not requalify the historical 128-case software population. The later upstream merge changed documentation only and preserved all selected Source256 files. This concrete typed/native preservation supplies no human statutory review, governing-definition application, model fitting, convergence, training gold, corpus or release admission; all 24 backlog states remain unchanged.
+
 ## External symbol aliases: nine software controls — 2026-11-15
 
 The existing symbol-table validator now accepts an alias target ID when that exact definition is present in a supplied external table, matching the existing resolver. Without that table, the ID remains unresolved even when a local definition has the same name. Only the canonical owner and its owning tests changed.

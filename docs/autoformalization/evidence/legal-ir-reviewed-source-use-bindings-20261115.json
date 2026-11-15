@@ -1,0 +1,622 @@
+{
+  "FAST_A102": {
+    "Git_identity_rows": 8,
+    "JUnit_seconds": 112.526,
+    "Root_reported_genuine_Original": {
+      "exec_session_id": 70301,
+      "launch_tool_id": "bbb2ad",
+      "provenance": "Root-reported same-session genuine wait; auditor did not poll or rewait",
+      "returncode": 0,
+      "terminal_tool_id": "799539"
+    },
+    "Source_Native_process_genuine_wait_closed": true,
+    "Source_elapsed_seconds": 268.2224790286273,
+    "audit": {
+      "bytes": 11921,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/independent-R2-reviewed-source-use-GREEN102-fast-A-saved-DATA-audit-v01.json",
+      "sha256": "1bb1226f5273407bc74060a1075c2e67e097a6c0fbf9cd1e6d11bf99e98291e1"
+    },
+    "compiler_scope": "software authored/synthetic compiler fixtures; installed Lean excluded",
+    "current_ledger_at_independent_point": "unknown: one nonblocking SH read busy; saved original release/durability separately verified",
+    "errors": 0,
+    "failures": 0,
+    "ordinary_inventory_bytes": 3165127,
+    "ordinary_inventory_files": 257,
+    "own_storage_bytes": 16777216,
+    "own_storage_released_and_durable": true,
+    "retained_storage_bytes": 0,
+    "sealed_files": 256,
+    "skipped": 0,
+    "tests": 102,
+    "whole_source_pins": 256
+  },
+  "authority_limits": {
+    "human_statutory_reviews_added": 0,
+    "legal_or_corpus_admission": false,
+    "model_execution_or_quality_qualified": false,
+    "real_Title10_reviews_added": 0,
+    "separate_native_actual_results_may_not_be_inferred_from_FAST_A_or_B": true,
+    "training_or_convergence_qualified": false,
+    "whole_programme_complete": false
+  },
+  "genuine_RED2": {
+    "Source_elapsed_seconds": 161.6361359031871,
+    "audit": {
+      "bytes": 12838,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/independent-current-R2-reviewed-source-use-RED2-saved-DATA-audit-v01.json",
+      "sha256": "7e2fe99775174489dfbf87d86918a498e4427ee7c8106e3c5da79ae7130592e8"
+    },
+    "case_count": 2,
+    "errors": 0,
+    "failed_16MiB_claim_remains_retained_nondurable": true,
+    "intended_duplicate_child_instance_failures": true,
+    "seconds": 5.774,
+    "skips": 0
+  },
+  "implementation": {
+    "aggregate_explicit_selector_required": true,
+    "aggregate_native_incremental_selector_keyword": "instance_identity_profile",
+    "all_seven_companions_and_five_obligations_per_unit_preserved": true,
+    "arbitrary_ordinal_salts": false,
+    "binding_derived_after_complete_current_source_admission_graph_replay": true,
+    "binding_digest": "sha256 of sorted compact UTF-8 canonical JSON",
+    "binding_fields": [
+      "schema",
+      "unit_id",
+      "source_version_cid",
+      "source_occurrence_cid",
+      "complete_ir_sha256",
+      "graph_unit_record_cid",
+      "graph_ast_record_cid",
+      "scope_record_cid",
+      "interpretation_record_cid"
+    ],
+    "binding_schema": "legal-native-reviewed-source-use-binding/v1",
+    "bounds": {
+      "files": 78,
+      "modules": 11,
+      "obligations": 40,
+      "units": 8
+    },
+    "child_API_accepts_instance_identity_profile_keyword": false,
+    "child_API_requires_pair": [
+      "source_use_binding",
+      "expected_source_use_binding_sha256"
+    ],
+    "default_profile_behavior_changed": false,
+    "instance_identity_profile": "reviewed-source-use/v1",
+    "old_receipts_or_cache_entries_retagged": false,
+    "one_contributor_per_instance": true,
+    "per_unit_added_fields": [
+      "source_use_binding",
+      "source_use_binding_sha256"
+    ],
+    "selected_profile_rule": "old corresponding profile + '+reviewed-source-use/v1'",
+    "source_receipts_reused_for_other_uses": false,
+    "source_uses_deduplicated": false,
+    "unchanged_numerical_owner_profiles": [
+      8,
+      384,
+      768,
+      4096
+    ],
+    "warm_cache_grants_fresh_Native_proof": false
+  },
+  "incremental_B26_initial_storage_failure": {
+    "Root_reported_genuine_Original": {
+      "exec_session_id": 70974,
+      "launch_tool_id": "61cd0b",
+      "returncode": 1,
+      "terminal_tool_id": "912389"
+    },
+    "Source_Native_process_genuine_wait_closed": true,
+    "Source_elapsed_seconds": 259.38629095,
+    "actual_audit": {
+      "bytes": 14853,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/independent-R2-reviewed-source-use-GREEN26-fast-B-storage-failure-saved-DATA-audit-v01.json",
+      "sha256": "1c85e668c1a4d6c0ce5d2fc890ed1be5d9a5501de6fb63401a753fc7c143dd34"
+    },
+    "error": "validation aggregate storage limit exceeded",
+    "failure": {
+      "bytes": 3095,
+      "path": "/tmp/pytest-of-barberb/current-R2-reviewed-source-use-GREEN26-fast-B-v01/a/logs/failure.json",
+      "sha256": "1b1a2a0b602b4c05863e72003972568228c5083ac26cbe3e1f22ac4678aeea69"
+    },
+    "no_pooling_with_FAST_A102": true,
+    "observation_scope": "Independent saved-artifact/resource-failure audit; no qualification credit or claim release",
+    "ordinary_inventory_bytes": 19209561,
+    "outer_original_returncode": 1,
+    "own_16MiB_claim_retained_nondurable": true,
+    "parent_closeout": {
+      "bytes": 16392,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-R2-reviewed-source-use-GREEN26-fast-B-incremental-original16MiB-input-v01/parent-closeout.json",
+      "sha256": "a1369d4c2741f2f14f630186b0cd255ffddbe0b5be28171451b86c093a1ec703"
+    },
+    "qualified": false,
+    "raw_JUnit": {
+      "errors": 0,
+      "failures": 0,
+      "record": {
+        "bytes": 5295,
+        "path": "/tmp/pytest-of-barberb/current-R2-reviewed-source-use-GREEN26-fast-B-v01/a/exports/reviewed-source-use-green-fast-B26.xml",
+        "sha256": "7da74e38f2eb4495d843c376fb6bbe0c8ec4ef37d3dfcf85535168a3345d2004"
+      },
+      "seconds": 69.206,
+      "skipped": 0,
+      "tests": 26
+    },
+    "raw_command_returncode": 0,
+    "status": "preserved_raw26_pass_outer_storage_failure_not_qualified"
+  },
+  "incremental_B26_post_optimization": {
+    "Git_identity_rows": 8,
+    "JUnit_seconds": 56.226,
+    "Root_reported_genuine_Original": {
+      "auditor_rewaited": false,
+      "exec_session_id": 23025,
+      "launch_tool_id": "b73f39",
+      "returncode": 0,
+      "same_session_genuine_wait_reported": true,
+      "terminal_tool_id": "49d7e5"
+    },
+    "Source_Native_process_genuine_wait_closed": true,
+    "Source_elapsed_seconds": 216.53477784292772,
+    "audit": {
+      "bytes": 21122,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/independent-R2-reviewed-source-use-GREEN26-fast-B-postopt-saved-DATA-audit-v01.json",
+      "sha256": "d92a679f235b97dca78d416a43fe4bfc2ec2d722cadc2f6481610865ddcd9f97"
+    },
+    "compiler_scope": "authored/synthetic compiler fixtures only; installed Lean excluded",
+    "errors": 0,
+    "failures": 0,
+    "initial_failure_artifacts_or_claim_released_deleted_or_reclassified": false,
+    "optimization": "One module-scoped healthy cold seed for seven cache mutants; each mutant deep-copies cache and copies artifact mapping; same fake compiler paths, all mutation/refusal/counter assertions preserved",
+    "ordinary_inventory_bytes": 15423788,
+    "ordinary_inventory_files": 1151,
+    "own_storage_bytes": 16777216,
+    "own_storage_released_and_durable": true,
+    "qualified": true,
+    "retained_storage_bytes": 0,
+    "sealed_files": 1150,
+    "skipped": 0,
+    "source_pins": 256,
+    "stdout_seconds": 56.22,
+    "tests": 26
+  },
+  "installed_Lean2": {
+    "JUnit_seconds": 29.55,
+    "Root_reported_genuine_Original": {
+      "exec_session_id": 91758,
+      "launch_tool_id": "d7a5b2",
+      "provenance": "Root-reported original same-session genuine wait, independently joined to exact saved terminal; auditor did not poll or rewait",
+      "returncode": 0,
+      "terminal_tool_id": "841131"
+    },
+    "Source_Native_process_genuine_wait_closed": true,
+    "Source_elapsed_seconds": 186.21272094594315,
+    "actual_audit": {
+      "bytes": 11699,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/independent-R2-reviewed-source-use-installed-LEAN2-saved-DATA-audit-v01.json",
+      "sha256": "80a959ff728c8514d3806bdcb1865cf35bf623f17c8e3bea66b9aeedcb9bfb13"
+    },
+    "build_observations": [
+      {
+        "binary_sha256": {
+          "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake": "f80f50cbab5322e35bcb0bf88937e22e9d908b5e4e336e83ddfc30eb1506aacf",
+          "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lean": "79fb1d26fa5a39385d59fdc48a711a14b0710ca6480271acce99b4d177cea085"
+        },
+        "companions_per_unit": 7,
+        "compiled_artifacts": 8,
+        "compiler_command": [
+          "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake",
+          "--offline",
+          "--no-cache",
+          "build",
+          "legal"
+        ],
+        "cross_unit_definition_application_proved": false,
+        "distinct_instances": 3,
+        "exact_named_empty_axiom_reports": 15,
+        "modules": 8,
+        "native_elapsed_seconds": 4.265834713820368,
+        "obligations": 15,
+        "preservation_only": true,
+        "profile": "replayed-reviewed-mixed-multiunit-preservation-native-build/v3+reviewed-source-use/v1",
+        "project_and_executed_files": 35,
+        "receipt": {
+          "bytes": 84069,
+          "path": "/tmp/pytest-of-barberb/current-R2-reviewed-source-use-LEAN2-amended-v01/a/tmp/pytest/test_reviewed_source_use_installed_lean_keeps_ac-hgnhdpd5/source-use-live-native/build-receipt.json",
+          "sha256": "92613dfa071656ddfba01c9bcbd7cf21119df5f1807ab79691208156611febe6"
+        },
+        "retained_receipt_all_authorities_false": true,
+        "unit_count": 3,
+        "version": 3,
+        "zero_training_and_gold_masks": true
+      },
+      {
+        "binary_sha256": {
+          "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake": "f80f50cbab5322e35bcb0bf88937e22e9d908b5e4e336e83ddfc30eb1506aacf",
+          "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lean": "79fb1d26fa5a39385d59fdc48a711a14b0710ca6480271acce99b4d177cea085"
+        },
+        "companions_per_unit": 7,
+        "compiled_artifacts": 6,
+        "compiler_command": [
+          "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake",
+          "--offline",
+          "--no-cache",
+          "build",
+          "legal"
+        ],
+        "cross_unit_definition_application_proved": false,
+        "distinct_instances": 3,
+        "exact_named_empty_axiom_reports": 15,
+        "modules": 6,
+        "native_elapsed_seconds": 2.62510361103341,
+        "obligations": 15,
+        "preservation_only": true,
+        "profile": "replayed-reviewed-multiunit-preservation-native-build/v2+reviewed-source-use/v1",
+        "project_and_executed_files": 33,
+        "receipt": {
+          "bytes": 69972,
+          "path": "/tmp/pytest-of-barberb/current-R2-reviewed-source-use-LEAN2-amended-v01/a/tmp/pytest/test_reviewed_source_use_installed_lean_keeps_ac-u_ts0ssb/source-use-live-native/build-receipt.json",
+          "sha256": "4402c45b81cce04311600bfe1b85505bf5eaf8ab7e2dee68b68c13e0c76d56f0"
+        },
+        "retained_receipt_all_authorities_false": true,
+        "unit_count": 3,
+        "version": 2,
+        "zero_training_and_gold_masks": true
+      }
+    ],
+    "current_ledger_scope": "not attempted; saved original release/durability and complete seal independently verified",
+    "errors": 0,
+    "failures": 0,
+    "installed_toolchain_verified_receipt_flag": false,
+    "live_and_retained_separation": {
+      "audit_recreated_live_handle": false,
+      "passed_installed_tests_exercised_original_live_handle_load": true,
+      "passed_installed_tests_refused_default_domain_handle_load": true,
+      "passed_installed_tests_required_live_authentication_true": true,
+      "passed_installed_tests_required_retained_native_authentication_false": true,
+      "saved_build_receipts_grant_live_or_legal_authority": false
+    },
+    "no_legal_meaning_cross_unit_definition_application_model_or_release_authority": true,
+    "no_skipped_cases_supplied_qualification": true,
+    "observed_sampled_identities_closed": 13,
+    "ordinary_inventory_bytes": 6093410,
+    "ordinary_inventory_files": 166,
+    "own_storage_bytes": 16777216,
+    "own_storage_released_and_durable": true,
+    "qualified": true,
+    "retained_storage_bytes": 0,
+    "sealed_files": 165,
+    "skipped": 0,
+    "status": "two_genuine_installed_Lean_profiles_qualified_on_fictional_reviewed_units",
+    "tests": 2,
+    "total_compiled_modules_across_profiles": 14,
+    "total_named_empty_axiom_preservation_obligations": 30
+  },
+  "post_optimization_pregrant_refusal": {
+    "Native_grant_created": false,
+    "Root_reported_genuine_Original": {
+      "exec_session_id": 46092,
+      "launch_tool_id": "366bde",
+      "returncode": 1,
+      "terminal_tool_id": "bc79a6"
+    },
+    "Source_elapsed_seconds": 60.532875234726816,
+    "Source_genuine_wait_no_child_custody_closed": true,
+    "audit": {
+      "bytes": 11558,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/independent-R2-reviewed-source-use-GREEN26-postopt-pregrant-ledger-refusal-saved-DATA-audit-v01.json",
+      "sha256": "42717354efdded64f37d5241d01cbcc4d7dd7b71400901947f2f89f72fce963f"
+    },
+    "error": "disk ledger lock unavailable",
+    "executed_tests": 0,
+    "productive_child_created": false,
+    "status": "preserved_pregrant_ledger60_refusal_no_qualification",
+    "storage_record_or_claim_created": false
+  },
+  "preservation": {
+    "all_24_backlog_task_IDs_and_states_unchanged": true,
+    "all_existing_component_IDs_statuses_and_order_unchanged": true,
+    "historical_355_and_other_prior_qualifications_not_pooled": true,
+    "prior_refusals_failures_and_claims_preserved": true
+  },
+  "private_revision_note": "v06 uses current bdfac6 canonical documentation preimages, preserves all123components/458prior evidence rows, adds one capsule, and records actual focusedIntegration3 without retagging historical qualifications.",
+  "publication_gate": {
+    "B26_actual_required": {
+      "bytes": 21122,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/independent-R2-reviewed-source-use-GREEN26-fast-B-postopt-saved-DATA-audit-v01.json",
+      "sha256": "d92a679f235b97dca78d416a43fe4bfc2ec2d722cadc2f6481610865ddcd9f97"
+    },
+    "Lean2_actual_required": {
+      "bytes": 11699,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/independent-R2-reviewed-source-use-installed-LEAN2-saved-DATA-audit-v01.json",
+      "sha256": "80a959ff728c8514d3806bdcb1865cf35bf623f17c8e3bea66b9aeedcb9bfb13"
+    },
+    "Root_Git_selected": false,
+    "Root_Source_selected": false,
+    "all_required_actual_outcomes_ready": true,
+    "current_main_integration3_required": {
+      "bytes": 13729,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/independent-R2-reviewed-source-use-current-Main-INTEGRATION3-saved-DATA-audit-v01.json",
+      "sha256": "a3942a06e6c1dd5aa78188a695c1c50083d07483874459337193d1bc1b36cd36"
+    },
+    "scope": "Exact historical R2 source-scoped qualifications plus focused648ff Integration3; bdfac6 docs-only followthrough preserved selected Source256. Documentation Source adoption and Git publication remain separate Root actions."
+  },
+  "publication_integration": {
+    "JUnit_seconds": 38.427,
+    "Source_Native_process_genuine_wait_closed": true,
+    "Source_elapsed_seconds": 196.08820631401613,
+    "authored_incremental_smoke": {
+      "artifact_bytes_explicitly_authored_fake_olean": true,
+      "authority_false_masks_zero": true,
+      "cold_compiled_modules": 8,
+      "cold_proposed_fresh_theorems": 15,
+      "cold_receipt": {
+        "bytes": 44410,
+        "path": "/tmp/pytest-of-barberb/current-R2-reviewed-source-use-INTEGRATION3-current-main-v01/a/tmp/pytest/test_reviewed_source_use_incremental_cold_warm_p-kdrwbe_8/source-use-cold/build-receipt.json",
+        "sha256": "9e47d3a4b4c22676f0421267381fa76b7a05f76635dfed96eb691a0f3ab46367"
+      },
+      "legal_ir_symbols_outside_captured_incremental_owner_pins": true,
+      "warm_compiled_modules": 0,
+      "warm_fresh_proof_for_reused_modules": false,
+      "warm_receipt": {
+        "bytes": 43899,
+        "path": "/tmp/pytest-of-barberb/current-R2-reviewed-source-use-INTEGRATION3-current-main-v01/a/tmp/pytest/test_reviewed_source_use_incremental_cold_warm_p-kdrwbe_8/source-use-warm/build-receipt.json",
+        "sha256": "69db029d6051d4fc6deaba7902f0d472d5a52f55a3c7bdb37e2414ee85de27ed"
+      },
+      "warm_reused_modules": 8,
+      "warm_reused_theorems": 15
+    },
+    "changed_selected_Source_role": {
+      "/tmp/datasets-reviewed-source-use-main-20261115/ipfs_datasets_py/logic/integration/reasoning/legal_ir_symbols.py": {
+        "historical": "9c7fe139e2bfd04096769dd866c38ab8d7e18fa9ad0699206be3425b293d003d",
+        "reviewed_upstream": "923150886f4b6650310c81e693ed6b07dd0ec304b7b88393f5cd91de3cc62cce"
+      }
+    },
+    "code_commit": "9789df86f3a3dcb77a486c43b6c4f26bfce0f88c",
+    "code_merge_commit": "648ff8bc8cade0f30493e71e8f0607d057810cee",
+    "current_main_integration3_audit": {
+      "bytes": 13729,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/independent-R2-reviewed-source-use-current-Main-INTEGRATION3-saved-DATA-audit-v01.json",
+      "sha256": "a3942a06e6c1dd5aa78188a695c1c50083d07483874459337193d1bc1b36cd36"
+    },
+    "current_main_integration3_status": "qualified_focused_compatibility_scope_only",
+    "errors": 0,
+    "failures": 0,
+    "finite_captured_closure_claim_only": true,
+    "historical128_software_tests_not_rerun_or_requalified_as_a_whole": true,
+    "historical_A102_B26_Lean2_receipts_unchanged": true,
+    "ordinary_inventory_bytes": 7809052,
+    "ordinary_inventory_files": 265,
+    "own_storage_released_and_durable": true,
+    "qualified_R2_producer_closures_not_reissued": true,
+    "retained_storage_bytes": 0,
+    "sampled_identities_closed": 9,
+    "sealed_files": 264,
+    "skipped": 0,
+    "subsequent_docs_only_merge": {
+      "head_after": "bdfac6f57a918e9783e689f6334b95b952617893",
+      "head_before": "648ff8bc8cade0f30493e71e8f0607d057810cee",
+      "only_four_documentation_paths": [
+        "docs/autoformalization/evidence/legal-ir-external-symbol-alias-software9-20261115.json",
+        "ipfs_datasets_py/logic/autoformal/docs/HANDOFF.md",
+        "ipfs_datasets_py/logic/autoformal/docs/TRAINING_HISTORY.md",
+        "ipfs_datasets_py/logic/autoformal/docs/work_catalog.json"
+      ],
+      "operation": {
+        "bytes": 3540,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/actual-reviewed-source-use-upstream-docs-only-integration-v02.json",
+        "sha256": "33988d14cb1401dc6a224d294594fda7e13152d8cfc32157ff48d9118ffa5b85"
+      },
+      "selected_Source256_unchanged": true,
+      "tests_or_Native_invoked": false,
+      "upstream": "c76bcfc274899d95944365dfaf35554ce729ce77"
+    },
+    "symbol_outside_captured_actual_native_producer_closures": true,
+    "symbol_outside_captured_incremental_owner_pins": true,
+    "tests": 3,
+    "two_actual_Lean_profiles": [
+      {
+        "binary_sha256": {
+          "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake": "f80f50cbab5322e35bcb0bf88937e22e9d908b5e4e336e83ddfc30eb1506aacf",
+          "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lean": "79fb1d26fa5a39385d59fdc48a711a14b0710ca6480271acce99b4d177cea085"
+        },
+        "companions_per_unit": 7,
+        "compiled_artifacts": 6,
+        "compiler_command": [
+          "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake",
+          "--offline",
+          "--no-cache",
+          "build",
+          "legal"
+        ],
+        "cross_unit_definition_application_proved": false,
+        "distinct_instances": 3,
+        "exact_named_empty_axiom_reports": 15,
+        "modules": 6,
+        "native_elapsed_seconds": 2.0898597040213645,
+        "obligations": 15,
+        "preservation_only": true,
+        "profile": "replayed-reviewed-multiunit-preservation-native-build/v2+reviewed-source-use/v1",
+        "project_and_executed_files": 33,
+        "receipt": {
+          "bytes": 69976,
+          "path": "/tmp/pytest-of-barberb/current-R2-reviewed-source-use-INTEGRATION3-current-main-v01/a/tmp/pytest/test_reviewed_source_use_installed_lean_keeps_ac-23il42us/source-use-live-native/build-receipt.json",
+          "sha256": "5e9300d66fe3d246fbb73ecc32f10d29a2e39be3443574f733d4ecb6af21090d"
+        },
+        "retained_receipt_all_authorities_false": true,
+        "unit_count": 3,
+        "version": 2,
+        "zero_training_and_gold_masks": true
+      },
+      {
+        "binary_sha256": {
+          "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake": "f80f50cbab5322e35bcb0bf88937e22e9d908b5e4e336e83ddfc30eb1506aacf",
+          "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lean": "79fb1d26fa5a39385d59fdc48a711a14b0710ca6480271acce99b4d177cea085"
+        },
+        "companions_per_unit": 7,
+        "compiled_artifacts": 8,
+        "compiler_command": [
+          "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake",
+          "--offline",
+          "--no-cache",
+          "build",
+          "legal"
+        ],
+        "cross_unit_definition_application_proved": false,
+        "distinct_instances": 3,
+        "exact_named_empty_axiom_reports": 15,
+        "modules": 8,
+        "native_elapsed_seconds": 3.5672058761119843,
+        "obligations": 15,
+        "preservation_only": true,
+        "profile": "replayed-reviewed-mixed-multiunit-preservation-native-build/v3+reviewed-source-use/v1",
+        "project_and_executed_files": 35,
+        "receipt": {
+          "bytes": 84071,
+          "path": "/tmp/pytest-of-barberb/current-R2-reviewed-source-use-INTEGRATION3-current-main-v01/a/tmp/pytest/test_reviewed_source_use_installed_lean_keeps_ac-a2hvhmpy/source-use-live-native/build-receipt.json",
+          "sha256": "9cfe5d581cc47b2bead2760c575ae85a11282f4a9688cf4745cc94ac1626cb47"
+        },
+        "retained_receipt_all_authorities_false": true,
+        "unit_count": 3,
+        "version": 3,
+        "zero_training_and_gold_masks": true
+      }
+    ],
+    "upstream_catalog_preserved": {
+      "components": 123,
+      "including_this_capsule": 459,
+      "prior_selected_evidence": 458
+    }
+  },
+  "qualification_source_epoch": {
+    "Git_identity_rows_each": 8,
+    "all_four_Product_owners_unchanged_between_A_B_and_Lean": true,
+    "base_commit": "35027cc3bb12f19cbb359db690325d9ec6d7e2ab",
+    "effective_eight_file_generation_field": "source_generations_at_incremental_B26_post_optimization_qualification",
+    "incremental_owning_test_later_amendment_explicit": true,
+    "newer_main_qualification_not_inherited": true,
+    "source_pins_each": 256,
+    "source_root_at_capture": "/tmp/datasets-reviewed-source-use-main-20261115"
+  },
+  "recorded_at_utc": "2026-11-15T19:43:27.583732+00:00",
+  "schema": "legal-ir-reviewed-source-use-bindings-evidence/v1",
+  "scope": "Explicit reviewed source-use identity in four existing owners; historical R2 A102/B26/Lean2 qualifications plus separately qualified focused current-main Integration3 and subsequent docs-only merge",
+  "source_adoption": {
+    "READ": {
+      "bytes": 8924,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/actual-reviewed-source-use-eight-target-Source-READ-v01.json",
+      "sha256": "857cee88371c69eb62fab210ee8779b0364db400f565a06a80e46e2c2ab3f05d"
+    },
+    "WRITE": {
+      "bytes": 12912,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/actual-reviewed-source-use-eight-target-Source-WRITE-v02.json",
+      "sha256": "916782c9bbf9b6763c8d0b26a7ce90dfb4f4c2fb46a5d0787b987c2df68a57b1"
+    },
+    "all_eight_postimages_verified": true,
+    "audit": {
+      "bytes": 27410,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/independent-reviewed-source-use-eight-target-Source-adoption-audit-v01.json",
+      "sha256": "91493cbff494a03abaf8d87aaf7d5aec8c95e2f140247ce62c08f0bcfdcc1140"
+    },
+    "historical_initial_eight_postimages_remain_immutable": true,
+    "later_one_test_amendment": {
+      "READ": {
+        "bytes": 8998,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/actual-reviewed-source-use-incremental-seed-Source-READ-v01.json",
+        "sha256": "3f3add7dd7f1674244e39f9763a5a7dfb40d731412adc64beeba4a10ba6b5296"
+      },
+      "WRITE": {
+        "bytes": 9478,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/actual-reviewed-source-use-incremental-seed-Source-WRITE-v02.json",
+        "sha256": "3f99ab077894a5b647168d9db26e31400e048fd1ae6d05c94d03b4f91908054c"
+      },
+      "audit": {
+        "bytes": 19276,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/independent-reviewed-source-use-incremental-seed-Source-adoption-audit-v01.json",
+        "sha256": "03a2a6ac0b4cdc83fc8d2d393407a1d7c3f9599f7c26e3f1334217afd0f7ab65"
+      },
+      "scope": "Only incremental owning-test materialization changed; all four Product owners and other three owning tests unchanged"
+    },
+    "only_four_existing_owners_and_four_owning_tests": true,
+    "publication_to_Git_claimed": false
+  },
+  "source_generations_at_FAST_A_qualification": {
+    "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_native_v2.py": {
+      "bytes": 274209,
+      "sha256": "553766968987deeb13b53fd63e65d9b72362a72d929b9286acb1fab04bbd2cfa"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_corpus_incremental.py": {
+      "bytes": 83242,
+      "sha256": "b74f0959deabd1685de5a19e72b46a661410040ce4aeff5e513f1ad5a68efbbe"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_corpus_shared_lake.py": {
+      "bytes": 96836,
+      "sha256": "6d48f015b7bf2a9fb40082324b15981cd110dc1bb23a663153b58e339e180086"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_native_ast_preservation.py": {
+      "bytes": 143966,
+      "sha256": "29d132c454dd092a0a1fdd91f2b89b474140649cad3d5ae9164694ebfbffb389"
+    },
+    "tests/unit/logic/autoformal/test_legal_corpus_definition_use_native_v2.py": {
+      "bytes": 246138,
+      "sha256": "887737f69909133ecfa38422df379956990f3d1bdf3327c90f50983b6ed5628d"
+    },
+    "tests/unit/logic/autoformal/test_legal_corpus_incremental.py": {
+      "bytes": 134525,
+      "sha256": "39605a1b10921524f09f9283516085bc49caeb61164fa1e6b1ae5ba25ec83d86"
+    },
+    "tests/unit/logic/autoformal/test_legal_corpus_shared_lake.py": {
+      "bytes": 139074,
+      "sha256": "3ede41e45c68e3384a6f796ed57f5768fcc0ad2535e9bb1f7d1fa83492bc9ddb"
+    },
+    "tests/unit/logic/autoformal/test_legal_native_ast_preservation.py": {
+      "bytes": 90167,
+      "sha256": "b4d65ed22c0ebff2dbf832846d3ce81e7977e33d04fa3c94d7ed7890d5000812"
+    }
+  },
+  "source_generations_at_incremental_B26_post_optimization_qualification": {
+    "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_native_v2.py": {
+      "bytes": 274209,
+      "sha256": "553766968987deeb13b53fd63e65d9b72362a72d929b9286acb1fab04bbd2cfa"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_corpus_incremental.py": {
+      "bytes": 83242,
+      "sha256": "b74f0959deabd1685de5a19e72b46a661410040ce4aeff5e513f1ad5a68efbbe"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_corpus_shared_lake.py": {
+      "bytes": 96836,
+      "sha256": "6d48f015b7bf2a9fb40082324b15981cd110dc1bb23a663153b58e339e180086"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_native_ast_preservation.py": {
+      "bytes": 143966,
+      "sha256": "29d132c454dd092a0a1fdd91f2b89b474140649cad3d5ae9164694ebfbffb389"
+    },
+    "tests/unit/logic/autoformal/test_legal_corpus_definition_use_native_v2.py": {
+      "bytes": 246138,
+      "sha256": "887737f69909133ecfa38422df379956990f3d1bdf3327c90f50983b6ed5628d"
+    },
+    "tests/unit/logic/autoformal/test_legal_corpus_incremental.py": {
+      "bytes": 135266,
+      "sha256": "2d3960097973671001798f2523862537ebfbfc112d7d5d49c412b50867b2120f"
+    },
+    "tests/unit/logic/autoformal/test_legal_corpus_shared_lake.py": {
+      "bytes": 139074,
+      "sha256": "3ede41e45c68e3384a6f796ed57f5768fcc0ad2535e9bb1f7d1fa83492bc9ddb"
+    },
+    "tests/unit/logic/autoformal/test_legal_native_ast_preservation.py": {
+      "bytes": 90167,
+      "sha256": "b4d65ed22c0ebff2dbf832846d3ce81e7977e33d04fa3c94d7ed7890d5000812"
+    }
+  },
+  "source_generations_between_A_and_B": {
+    "A_sha256": "39605a1b10921524f09f9283516085bc49caeb61164fa1e6b1ae5ba25ec83d86",
+    "B_sha256": "2d3960097973671001798f2523862537ebfbfc112d7d5d49c412b50867b2120f",
+    "Product_owners_unchanged": true,
+    "only_changed_path": "tests/unit/logic/autoformal/test_legal_corpus_incremental.py",
+    "same_B26_case_set_and_unchanged_resource_limits": true
+  },
+  "source_root_at_capture": "/tmp/datasets-reviewed-source-use-main-20261115"
+}

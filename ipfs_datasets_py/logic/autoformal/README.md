@@ -1,5 +1,11 @@
 # Legal autoformalization
 
+## Reviewed source-use identity and concrete preservation
+
+The explicit `reviewed-source-use/v1` mode keeps disjoint, currently reviewed source uses separate even when their IR is identical; default profiles retain their existing refusals. Separate software cohorts passed **102** and **26** cases, and **two installed Lean cases** checked 15 named preservation obligations each. [Exact source-bound evidence](../../../docs/autoformalization/evidence/legal-ir-reviewed-source-use-bindings-20261115.json) preserves failures and qualification limits; these fictional reviewed units establish no statutory meaning, model, training or corpus authority.
+
+A separate three-case current-main compatibility check passed; historical qualification scopes and the later docs-only merge remain explicit in the same evidence record.
+
 Positive-pair loss projection additionally requires explicitly selected, eligible `IRTrainingExample` records matching the complete pair identity. Decoding a shard alone keeps its rows nontraining. The [handoff](docs/HANDOFF.md) records the 78-case software qualification and external-authentication limits.
 
 The legacy heuristic fuzzer now retains diagnostics and sanitized unverified proposals without exporting trusted training negatives. Explicit distrust and proposal markers are rejected even when verification is optional. The [93-case software qualification](../../../docs/autoformalization/evidence/legal-ir-legacy-fuzzer-proposal-boundary-20261115.json) preserves explicit caller compatibility and the separate typed PGIR-041 route; independent semantic evidence, training and convergence remain separate gates.

@@ -1,5 +1,15 @@
 # Architecture and owner map
 
+## Explicit reviewed source-use identity across preservation owners — 2026-11-15
+
+Callers select `instance_identity_profile="reviewed-source-use/v1"` on the existing aggregate, native, retained-observation, live-success and incremental APIs. After complete current source/admission/graph replay, Shared derives the closed nine-field `legal-native-reviewed-source-use-binding/v1` record: `schema`, `unit_id`, `source_version_cid`, `source_occurrence_cid`, `complete_ir_sha256`, `graph_unit_record_cid`, `graph_ast_record_cid`, `scope_record_cid` and `interpretation_record_cid`. The child API receives `source_use_binding` and `expected_source_use_binding_sha256`, rather than the selector keyword. Its independently checked digest joins the child instance domain. Selected profiles append `+reviewed-source-use/v1`; ordinals supply no identity salt, and physical uses are neither deduplicated nor merged.
+
+Saved records cannot select the mode or retag an old receipt/cache. Incremental provenance retains the current binding, one contributor per instance and fresh source, permission and revocation replay; warm reuse grants no fresh native proof. All seven child companions and five obligations per unit remain within unchanged bounds of eight units, 78 files, 11 modules and 40 obligations. Retained observations remain separate from the process-local live-success handle.
+
+[The evidence capsule](../../../../docs/autoformalization/evidence/legal-ir-reviewed-source-use-bindings-20261115.json) records separate 102-case and 26-case software qualifications and two genuine installed Lean preservation profiles, each with three source instances and 15 exact empty-axiom obligations. Those concrete results do not prove statutory meaning or cross-unit governing-definition application. Existing numerical 8D/384D/768D/4096D owners and legal/model/training/corpus gates remain unchanged.
+
+Focused current-main integration separately checks authored cold/warm reuse and both installed Lean profiles; historical software/native receipts retain their original source epochs. The subsequent upstream merge changes documentation only.
+
 ## Explicit pair admission reaches loss through a matching example — 2026-11-15
 
 The existing positive-pair owner exposes `loss_pair_admissions(pairs, *, examples=())`. Raw decoded pairs have no implicit admission. Callers explicitly attach canonical `IRTrainingExample` records; the owner detaches both inputs and matches complete pair digest/CID, including exact label evidence and lineage. Pair ID equality alone cannot attach a different record. The canonical training contract determines eligibility, a matching quarantined example keeps the pair nontraining, and conflicting example IDs refuse. A proof-trace training example cannot substitute for a positive-pair example.
