@@ -2458,6 +2458,7 @@ class ReviewedPretrainedTokenizer:
 REVIEWED_GENERATION_CONTEXT_SOURCE_PROFILE = "reviewed-source-with-training-context/v1"
 REVIEWED_GENERATION_SHARED_CONTEXT_SOURCE_PROFILE = "reviewed-source-with-shared-training-context/v1"
 REVIEWED_GENERATION_SHARED_CONTEXT_SOURCE_PROFILE_V2 = "reviewed-source-with-shared-training-context/v2"
+REVIEWED_GENERATION_SHARED_CONTEXT_SOURCE_PROFILE_V3 = "reviewed-source-with-shared-training-context/v3"
 REVIEWED_GENERATION_CONTEXT_PROFILE = "reviewed-decoder-training-context/v1"
 REVIEWED_GENERATION_CONTEXT_MAX_RECORDS = 32
 REVIEWED_GENERATION_CONTEXT_MAX_BYTES = 16 * 1024
@@ -2478,14 +2479,16 @@ def _reviewed_generation_context_wire(source, query_identifiers):
         raise TrainingJobValidationError("closed six-key context generation source required")
     context = source["context"]
     shorttag = source.get("profile") == REVIEWED_GENERATION_SHARED_CONTEXT_SOURCE_PROFILE_V2
-    shared = shorttag or source.get("profile") == REVIEWED_GENERATION_SHARED_CONTEXT_SOURCE_PROFILE
+    keylayout = source.get("profile") == REVIEWED_GENERATION_SHARED_CONTEXT_SOURCE_PROFILE_V3
+    shared = keylayout or shorttag or source.get("profile") == REVIEWED_GENERATION_SHARED_CONTEXT_SOURCE_PROFILE
     if shared:
         # Explicit opt-in DATA transport. The codec bounds canonical expansion
         # before allocation; all record/leakage checks below use expanded data.
         # This profile grants no admission, context-use or execution authority.
-        from ...logic.autoformal.training_cycle_inputs import unpack_reviewed_context_json_v1, unpack_reviewed_context_json_v2
+        from ...logic.autoformal.training_cycle_inputs import unpack_reviewed_context_json_v1, unpack_reviewed_context_json_v2, unpack_reviewed_context_json_v3
         try:
-            expanded = (unpack_reviewed_context_json_v2(context) if shorttag
+            expanded = (unpack_reviewed_context_json_v3(context) if keylayout else
+                        unpack_reviewed_context_json_v2(context) if shorttag
                         else unpack_reviewed_context_json_v1(context))
         except (ValueError, TypeError, UnicodeError, OverflowError, RecursionError) as error:
             raise TrainingJobValidationError("bounded canonical shared context DATA required") from error
@@ -3310,7 +3313,6 @@ class TorchReviewedDecoderBackend:
         from ...logic.autoformal.training_cycle_inputs import (
             ReviewedDecoderInputValidationError, _reviewed_wire, _reviewed_decoder_tokens, MAX_REVIEWED_ARTIFACT_BYTES)
         from .legal_ir_semantic_metrics import _complete_norm_payload_shape
-        torch = self._torch()
         def bounded_source_records():
             if (type(records) is not list or not 1 <= len(records) <= 32
                     or type(self.max_sequence_tokens) is not int or not 3 <= self.max_sequence_tokens <= 262144):
@@ -3343,6 +3345,21 @@ class TorchReviewedDecoderBackend:
         except (ValueError, TypeError) as error:
             raise TrainingJobValidationError("bounded ordinary generation records required") from error
         owned = _parse_json(original_raw)
+
+        # A direct low-level caller must not combine the new DATA transport
+        # with a larger context profile. Check detached bounded records before
+        # importing Torch or touching model/optimizer state. Existing v2 Qwen
+        # transport remains eligible under its separate explicit contract.
+        if context_budget_profile is not None:
+            for row in owned:
+                try:
+                    source = _parse_json(row["source_wire"].encode("utf-8"))
+                except (ValueError, UnicodeError) as error:
+                    raise TrainingJobValidationError("canonical source-only generation JSON required") from error
+                if (type(source) is dict
+                        and source.get("profile") == REVIEWED_GENERATION_SHARED_CONTEXT_SOURCE_PROFILE_V3):
+                    raise TrainingJobValidationError("key-layout DATA requires the unchanged default context budget")
+        torch = self._torch()
 
         # Capture numeric state without checkpoint reserialization. Restoration
         # must remain possible even when a tokenizer callback changes its policy.
@@ -3456,7 +3473,7 @@ class TorchReviewedDecoderBackend:
                 except (ValueError, UnicodeError) as error:
                     raise TrainingJobValidationError("canonical source-only generation JSON required") from error
                 context_text, transport_source = None, source
-                if type(source) is dict and source.get("profile") in {REVIEWED_GENERATION_CONTEXT_SOURCE_PROFILE, REVIEWED_GENERATION_SHARED_CONTEXT_SOURCE_PROFILE, REVIEWED_GENERATION_SHARED_CONTEXT_SOURCE_PROFILE_V2}:
+                if type(source) is dict and source.get("profile") in {REVIEWED_GENERATION_CONTEXT_SOURCE_PROFILE, REVIEWED_GENERATION_SHARED_CONTEXT_SOURCE_PROFILE, REVIEWED_GENERATION_SHARED_CONTEXT_SOURCE_PROFILE_V2, REVIEWED_GENERATION_SHARED_CONTEXT_SOURCE_PROFILE_V3}:
                     context_text = _reviewed_generation_context_wire(source, query_identifiers)
                     transport_source = {key: value for key, value in source.items() if key != "context"}
                     transport_source["profile"] = "reviewed-source-selection-context/v2"
@@ -3817,12 +3834,13 @@ def _make_reviewed_decoder_source_producer(runtime, *, binding, rows, split_mani
         "complete source-conditioned decoder identity required")
     operation = "heldout_evaluation" if allow_heldout_evaluation else "hparam_selection"
     context_enabled = context_profile is not None
-    need(type(context_transport) is str and context_transport in {"plain_json_v1", "shared_json_v1", "shared_json_v2"},
+    need(type(context_transport) is str and context_transport in {"plain_json_v1", "shared_json_v1", "shared_json_v2", "shared_json_v3"},
          "explicit supported admitted context transport required")
-    shared_context = context_transport in {"shared_json_v1", "shared_json_v2"}
+    shared_context = context_transport in {"shared_json_v1", "shared_json_v2", "shared_json_v3"}
     need(not qwen2_generation or context_profile is None or context_transport == "shared_json_v2",
          "Qwen2 reviewed rich context requires explicit lossless shared_json_v2 transport")
-    shared_schema = (inputs.REVIEWED_SHARED_CONTEXT_JSON_SCHEMA_V2 if context_transport == "shared_json_v2"
+    shared_schema = (inputs.REVIEWED_SHARED_CONTEXT_JSON_SCHEMA_V3 if context_transport == "shared_json_v3" else
+                     inputs.REVIEWED_SHARED_CONTEXT_JSON_SCHEMA_V2 if context_transport == "shared_json_v2"
                      else inputs.REVIEWED_SHARED_CONTEXT_JSON_SCHEMA)
     need(not shared_context or (_admission_version == "v3" and context_enabled and allow_heldout_evaluation),
          "shared context requires explicit admission V3 heldout rich TRAIN route")
