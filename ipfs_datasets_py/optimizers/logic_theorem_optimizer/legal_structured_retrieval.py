@@ -298,6 +298,25 @@ def _require_disjoint_heldout_review(heldout, training_admission, training_rows,
     training_provisions = {bound._reviewed_provision_identity(training_declaration, unit) for unit in training_units}
     _require(not training_provisions.intersection(tuple(unit["provision_identity"]) for unit in group["source_units"]),
              "heldout and TRAIN share a reviewed statutory provision identity")
+    # Reviewed governing contexts can differ while addressing the same declared
+    # legal source. Neither an interpretation/context nor an artifact-revision
+    # label creates another independent source for evaluation. These identities
+    # come from each current admission's source-version declaration, rather
+    # than caller-supplied split groups or inferred text aliases.
+    from ipfs_datasets_py.logic.autoformal import corpus_contracts
+    source_fields = ("source_id", "release_id", "edition", "provision_id")
+    training_sources = {tuple(unit["source_version"][key] for key in source_fields)
+                        for unit in training_units}
+    heldout_sources = set()
+    for unit in group["source_units"]:
+        identity = unit.get("source_identity")
+        corpus_contracts.require_keys(identity, source_fields, "reviewed heldout declared source identity")
+        for key in source_fields:
+            corpus_contracts.require_text(identity[key], "reviewed heldout source " + key)
+        corpus_contracts.require_sha256(unit.get("source_extracted_sha256"), "reviewed heldout extracted view")
+        heldout_sources.add(tuple(identity[key] for key in source_fields))
+    _require(not training_sources.intersection(heldout_sources),
+             "heldout and TRAIN share a reviewed declared legal source identity")
     source_rows = [*queries, *training_rows]
     source_examples = [bound.splits.LegalIRSplitExample.from_sample(row) for row in source_rows]
     clusters = bound.splits._near_duplicate_clusters(source_examples,

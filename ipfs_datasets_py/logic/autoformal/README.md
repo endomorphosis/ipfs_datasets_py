@@ -1,5 +1,9 @@
 # Legal autoformalization
 
+Compiler diagnostics and proof-cache reuse now bind the current verifier profile; reviewed heldout contexts also enforce declared legal source identity across interpretations. Current source-only qualification and historical/native limits are recorded in the [handoff](docs/HANDOFF.md).
+
+Relational roundtrip scoring now detaches and fences reference, role and governing-observation inputs. A reproduced false prose-equality report now refuses, and all 431 source-only regression cases pass. Legal/model/proof authority remains unqualified. See the [handoff](docs/HANDOFF.md).
+
 Reviewed retrieval now supports a separately signed V4 context-set relation contract over V3 endpoints. Unknown pairs and analogies remain excluded from negatives; legal applicability is not inferred. See the [handoff](docs/HANDOFF.md) for source-only qualification and pending numerical/legal gates.
 
 The supervisor adapter now validates explicitly requested parent/v2 and parent/v3 audit receipts against trusted runtime selection and recomputed sidecars. All 93 source-only software cases pass; task/completion/resource/admission authority is unchanged. Physical supervisor execution and model/legal/proof qualification remain open. See the [handoff](docs/HANDOFF.md).

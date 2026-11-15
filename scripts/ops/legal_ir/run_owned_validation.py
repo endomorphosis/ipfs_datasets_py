@@ -1767,7 +1767,7 @@ def _attached_native_closed_profile_v1(terminal, request_raw, *,
     """Closed V5 attached-child bindings; no mutation or cleanup authority.
 
     The default is the unchanged productive ACTIVE profile. The explicit
-    cancelled-retained profile uses its own exact terminal/row shape; it never
+    cancelled-retained and failed-retained profiles use their exact shapes; neither
     projects a retained frame into the ACTIVE or no-child profiles. Genuine
     original wait and current Native/process absence remain caller/inspector
     prerequisites, independently of any qualified worker report.
@@ -1776,9 +1776,10 @@ def _attached_native_closed_profile_v1(terminal, request_raw, *,
         if not condition:
             raise ValueError('unproven original productive lifecycle')
     need(cleanup_profile is None or
-        (type(cleanup_profile) is str and cleanup_profile == 'cancelled_retained_v5'))
-    cancelled = cleanup_profile is not None
-    retained_status = 'retained' if cancelled else 'active'
+        (type(cleanup_profile) is str and cleanup_profile in ('cancelled_retained_v5', 'failed_retained_v5')))
+    cancelled = cleanup_profile == 'cancelled_retained_v5'
+    retained = cleanup_profile is not None
+    retained_status = 'retained' if retained else 'active'
     remaining_nodes = 65536
     def exact_json(item, depth=0):
         nonlocal remaining_nodes
@@ -1810,7 +1811,7 @@ def _attached_native_closed_profile_v1(terminal, request_raw, *,
         and type(expected_resource_ledger) is str and Path(expected_resource_ledger).is_absolute())
     value = json.loads(request_raw)
     need(_ordinary_scratch_no_child_request_shape(value, request_raw))
-    if cancelled:
+    if retained:
         budgets = {'cpu_slots':1, 'memory_mb':1536, 'child_process_slots':4,
             'storage_bytes':16777216, 'timeout_seconds':300}
         need(all(type(value[key]) is int and value[key] == expected
@@ -1853,21 +1854,21 @@ def _attached_native_closed_profile_v1(terminal, request_raw, *,
     reservation_fields = {'schema','ledger_path','reservation_id','status','record',
         'resource_lease','process_observation','cleanup_error','roots','scheduler_lane',
         'workload','storage_limit_bytes','enforcement','ordinary_scratch_profile'}
-    if not cancelled:
+    if not retained:
         reservation_fields |= {'cleanup_failure_observations','cleanup_failure_observation_overflow'}
     need(type(reservation) is dict and set(reservation) == reservation_fields
         and reservation['schema'] == 'daemon-resource-reservations-v1'
         and reservation['status'] == retained_status
-        and (reservation['cleanup_error'] is None if cancelled else
+        and (reservation['cleanup_error'] is None if retained else
              reservation['cleanup_error'] in
              ('DaemonResourceError','ResourceAdmissionDeadlineError','OSError','RuntimeError'))
         and reservation['ledger_path'] == expected_resource_ledger
         and reservation['scheduler_lane'] == 'validation' and reservation['workload'] == 'canonical_validation'
         and type(reservation['storage_limit_bytes']) is int and reservation['storage_limit_bytes'] > 0
         and reservation['enforcement'] == 'cooperative_admission_and_polled_usage_not_kernel_quota'
-        and (cancelled or reservation['cleanup_failure_observation_overflow'] is False))
+        and (retained or reservation['cleanup_failure_observation_overflow'] is False))
     diagnostics = None
-    if not cancelled:
+    if not retained:
         diagnostics = reservation['cleanup_failure_observations']
         need(type(diagnostics) is list and len(diagnostics) == 1)
         diagnostic = diagnostics[0]
@@ -1903,13 +1904,13 @@ def _attached_native_closed_profile_v1(terminal, request_raw, *,
         'artifacts_durable_asserted','scheduler_lane','workload','attempt_directory','last_usage',
         'native_lease_id','outputs','owner_birth','process_scope','scheduler_policy_sha256',
         'scheduler_state_path','validation_request_sha256'}
-    if cancelled:
+    if retained:
         row_fields.add('retention_reason')
     need(type(row) is dict and set(row) == row_fields
         and identifier(row['reservation_id'])
         and row['reservation_id'] == reservation['reservation_id'] == witness['reservation_id']
         and row['status'] == retained_status
-        and (not cancelled or row['retention_reason'] == 'context_failed')
+        and (not retained or row['retention_reason'] == 'context_failed')
         and row['owner_pid'] == owner_pid and type(row['owner_pid']) is int
         and row['owner_birth'] == owner_birth and row['artifacts_durable_asserted'] is False
         and row['prior_children'] == [] and row['external_charges'] == {}
@@ -1935,7 +1936,7 @@ def _attached_native_closed_profile_v1(terminal, request_raw, *,
             'policy_sha256':value['expected_scheduler_policy_sha256'],'lane':'validation','workload':'canonical_validation'}
         and witness['resource_request_id'] == 'validation:'+row['reservation_id']
         and same(witness['storage'],
-            {'status':'retained','cleanup_error':None,'release_authorized':False} if cancelled else
+            {'status':'retained','cleanup_error':None,'release_authorized':False} if retained else
             {'status':'active','cleanup_error':reservation['cleanup_error'],
              'release_authorized':False,'cleanup_failure_observations':diagnostics,
              'cleanup_failure_observation_overflow':False}))
@@ -2012,6 +2013,22 @@ def _cancelled_retained_native_closed_profile_v5(terminal, request_raw, *,
         cleanup_profile='cancelled_retained_v5')
 
 
+def _failed_retained_native_closed_profile_v5(terminal, request_raw, *,
+        expected_request_sha256, owner_pid, owner_birth, returncode, expected_resource_ledger):
+    """Strict completed-command RETAINED bindings, without report qualification.
+
+    Reported selected checks are the CLI's command metadata, not observed test
+    counts. Missing or present worker output supplies no acceptance or claim
+    about which underlying calls began. Genuine wait and current closure are
+    separate caller/inspector prerequisites; this parser supplies neither.
+    """
+    return _attached_native_closed_profile_v1(terminal, request_raw,
+        expected_request_sha256=expected_request_sha256, owner_pid=owner_pid,
+        owner_birth=owner_birth, returncode=returncode,
+        expected_resource_ledger=expected_resource_ledger,
+        cleanup_profile='failed_retained_v5')
+
+
 def inspect_owned_validation_productive_native_closed_v1(terminal, request_raw, *,
         expected_request_sha256, owner_pid, owner_birth, returncode, expected_resource_ledger,
         original_wait_deadline_monotonic, cleanup_profile=None):
@@ -2019,7 +2036,7 @@ def inspect_owned_validation_productive_native_closed_v1(terminal, request_raw, 
 
     Caller prerequisites: genuine original Popen/wait, the same fixed original
     absolute cutoff (at most420s for the legacy ACTIVE path or360s for explicit
-    cancelled RETAINED cleanup), and original Source READs held through this
+    RETAINED cleanup), and original Source READs held through this
     call and final source checks. Existing stable no-follow snapshots read only the
     selected row; unrelated foreign rows may advance between observations.
     No lock file, grant, retry, deadline, disk claim, census or fsync is created.
@@ -2031,15 +2048,16 @@ def inspect_owned_validation_productive_native_closed_v1(terminal, request_raw, 
         def need(condition):
             if not condition: raise ValueError('unproven productive native closure')
         need(cleanup_profile is None or
-            (type(cleanup_profile) is str and cleanup_profile == 'cancelled_retained_v5'))
-        cancelled = cleanup_profile is not None
+            (type(cleanup_profile) is str and cleanup_profile in ('cancelled_retained_v5', 'failed_retained_v5')))
+        retained = cleanup_profile is not None
         observed_start = time.monotonic()
         need(type(original_wait_deadline_monotonic) in (int,float)
             and math.isfinite(original_wait_deadline_monotonic)
             and observed_start < original_wait_deadline_monotonic
-            <= observed_start+(360 if cancelled else 420))
-        binding = (_cancelled_retained_native_closed_profile_v5 if cancelled
-                   else _productive_native_closed_profile_v1)
+            <= observed_start+(360 if retained else 420))
+        binding = (_cancelled_retained_native_closed_profile_v5 if cleanup_profile == 'cancelled_retained_v5'
+            else _failed_retained_native_closed_profile_v5 if cleanup_profile == 'failed_retained_v5'
+            else _productive_native_closed_profile_v1)
         value, witness, reservation, row, lease = binding(terminal,
             request_raw, expected_request_sha256=expected_request_sha256, owner_pid=owner_pid,
             owner_birth=owner_birth, returncode=returncode, expected_resource_ledger=expected_resource_ledger)
@@ -2111,8 +2129,9 @@ def inspect_owned_validation_productive_native_closed_v1(terminal, request_raw, 
                 recovery._sampled_processes_stopped(profile)
                 current_own_row()
                 native._check_resource_operation_deadline()
-            return dict(verdict=('proven_original_cancelled_retained_native_closed' if cancelled
-                else 'proven_original_productive_native_closed_storage_separate'),
+            return dict(verdict=('proven_original_cancelled_retained_native_closed'
+                if cleanup_profile == 'cancelled_retained_v5' else 'proven_original_failed_retained_native_closed'
+                if cleanup_profile == 'failed_retained_v5' else 'proven_original_productive_native_closed_storage_separate'),
                 source_custody_closed=True,storage_release_authorized=False)
     except BaseException:
         return unknown

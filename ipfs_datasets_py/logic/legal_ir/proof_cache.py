@@ -335,19 +335,23 @@ def _validate_proof_binding(
     # A v1 source-only receipt cannot become proof of an opaque IR obligation.
     try:
         from ..backends.kernel.lean import (
-            LEAN_KERNEL_RECEIPT_VERSION, LeanKernelReceipt, content_digest, instrument_lean_source_for_axioms,
+            LEAN_KERNEL_RECEIPT_VERSION, LEAN_KERNEL_VERIFICATION_PROFILE, LeanKernelReceipt,
+            content_digest, instrument_lean_source_for_axioms,
             _payload_source,
         )
-        if LEAN_KERNEL_RECEIPT_VERSION != "lean-kernel-receipt/v3":
-            raise ValueError("the canonical Lean v3 verification profile is required")
+        if (LEAN_KERNEL_RECEIPT_VERSION != "lean-kernel-receipt/v3"
+                or type(LEAN_KERNEL_VERIFICATION_PROFILE) is not str
+                or LEAN_KERNEL_VERIFICATION_PROFILE != "lean-kernel-verification/v1"):
+            raise ValueError("the canonical Lean v3 current verification profile is required")
         kernel = LeanKernelReceipt.from_dict(result.to_dict()["payload"]["kernel_receipt"])
-    except (TypeError, ValueError, KeyError, AttributeError) as exc:
+    except (ImportError, TypeError, ValueError, KeyError, AttributeError) as exc:
         raise LegalProofIntegrityError("a canonical checked Lean v3 receipt is required") from exc
     if (kernel.schema_version != LEAN_KERNEL_RECEIPT_VERSION or not kernel.accepted
             or not kernel.expected_proposition_checked
             or kernel.request_digest != request.digest
             or kernel.theorem_name != context["expected_declaration"]
             or kernel.expected_proposition != context["expected_proposition"]
+            or kernel.toolchain.metadata.get("verification_profile") != LEAN_KERNEL_VERIFICATION_PROFILE
             or kernel.axiom_policy_digest != context["axiom_policy_digest"]
             or _canonical_bytes(kernel.toolchain.to_dict()) != _canonical_bytes(context["toolchain"])
             or kernel.toolchain.kernel_id != receipt.backend_id):

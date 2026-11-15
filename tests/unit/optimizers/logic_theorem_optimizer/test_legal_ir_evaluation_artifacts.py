@@ -2236,7 +2236,8 @@ def test_reviewed_mixed_retention_full_v1_label_swap_keeps_v3_receipts_out_of_v2
 
 
 
-def _rich_v3_heldout_case(*, shared_provision=False, version="v3"):
+def _rich_v3_heldout_case(*, shared_provision=False, version="v3", shared_source_identity=False,
+        defer_heldout_check=False):
     from tests.unit.optimizers.logic_theorem_optimizer import test_legal_span_consumer_binding as ch
     from tests.unit.logic.autoformal import test_legal_reviewed_norm_admission_v3 as mixed
     from ipfs_datasets_py.logic.autoformal import legal_reviewed_norm_admission_v3 as admission
@@ -2253,8 +2254,28 @@ def _rich_v3_heldout_case(*, shared_provision=False, version="v3"):
                  ["QUERY establishes a covered officer through appointment by its separate inland council.",
                   "QUERY requires a covered officer to submit monthly statements unless an inland exemption applies.",
                   "QUERY permits covered officers to inspect records with supervisors at the designated event and time."])
+        source_bindings = None
+        if shared_source_identity and partition == "holdout":
+            from ipfs_datasets_py.logic.autoformal import corpus_source
+            source_bindings = {}
+            for index, text in enumerate(texts):
+                train_source = components["train"]["declaration"]["units"][index]["source_version"]
+                identity = {key: train_source[key] for key in ("source_id", "release_id", "edition", "provision_id")}
+                raw = text.encode("utf-8")
+                source = corpus_source.build_source_version(**identity, raw_bytes=raw,
+                    expected_raw_sha256=ch.source_digest(text), extracted_text=text,
+                    expected_extracted_sha256=ch.source_digest(text), extraction_profile="identity/v1",
+                    normalization_profile="identity/v1", media_type="text/plain")
+                occurrence = corpus_source.build_source_occurrence(source,
+                    expected_raw_sha256=ch.source_digest(text), extracted_text=text,
+                    expected_extracted_sha256=ch.source_digest(text), start_char=0, end_char=len(text),
+                    start_utf8=0, end_utf8=len(raw))
+                unit_id = "fixture:rich-mixed-" + prefix.lower() + "/unit-" + str(index + 1)
+                source_bindings[unit_id] = dict(source_version=source, occurrence=occurrence,
+                    raw_bytes=raw, extracted_text=text)
         case = mixed.fixture.reviewed_norm_fixture_v2(mixed.legacy, fixture_namespace="rich-mixed-"+prefix.lower(),
             source_texts=texts, predicate_prefix=prefix, permitted_uses=["formalization", operation],
+            source_bindings=source_bindings,
             **(dict(governing_instrument_id="fixture:common-instrument",
                     definition_provision_id="fixture:common-instrument/definition") if shared_provision else {}))
         if version == "v3":
@@ -2313,7 +2334,11 @@ def _rich_v3_heldout_case(*, shared_provision=False, version="v3"):
             index_sha256=ch.digest(train),retrieved_ids=[train[2]["id"]]) for r in query])
     payload=structured._consume_reviewed_contexts(**inputs,expected_query_rows_sha256=ch.digest(inputs["query_rows"]),
         expected_retrieval_rows_sha256=ch.digest(inputs["retrieval_rows"]),consumer=lambda x:x,
-        heldout_evaluation=bindings["holdout"].receipt()["heldout_evaluation"],_admission_version=version)
+        # Adversarial evaluator cases may offer ordinary reviewed TRAIN context
+        # before its heldout check. The actual evaluator must independently
+        # reject that offer before invoking any producer.
+        heldout_evaluation=(None if defer_heldout_check else bindings["holdout"].receipt()["heldout_evaluation"]),
+        _admission_version=version)
     options=_producer_bridge_options((bindings["holdout"],query,dict(split_manifest=manifest,
         admission_inputs=replays["holdout"],exposure_records=exposures["holdout"]),None))
     options.update(allow_heldout_evaluation=True,reviewed_training_context=inputs,
@@ -2396,6 +2421,98 @@ def test_rich_v3_heldout_preserves_the_original_v2_rich_context_domain():
     payload=_producer_payload(result)
     assert payload["configuration"]["heldout_evaluation"]["inference_context_profile"]=="reviewed-rich-TRAIN-context-heldout/v1"
     assert result.to_dict()["metrics"]["complete_norm_payload"]["denominator"]==3
+
+
+@pytest.fixture(scope="module", params=["v2", "v3"])
+def reviewed_source_group_distinct_case(request):
+    return request.param, _rich_v3_heldout_case(version=request.param)
+
+
+def test_reviewed_rich_heldout_source_identity_is_bound_to_current_declaration(reviewed_source_group_distinct_case):
+    version, (ch, options, populations, replays, components) = reviewed_source_group_distinct_case
+    heldout = options["binding"].receipt()["heldout_evaluation"]
+    declarations = {unit["unit_id"]: unit for unit in components["holdout"]["declaration"]["units"]}
+    for unit in heldout["dependency_group"]["source_units"]:
+        source = declarations[unit["unit_id"]]["source_version"]
+        assert unit["source_identity"] == {key: source[key] for key in
+            ("source_id", "release_id", "edition", "provision_id")}
+        assert unit["source_extracted_sha256"] == source["extracted_view"]["sha256"]
+    calls = []
+    def producer(arguments):
+        calls.append(deepcopy(arguments))
+        return [dict(id=row["id"], outcome="incomplete", candidate=None) for row in arguments]
+    artifact = _producer_evaluate(options, producer)
+    assert len(calls) == 1 and len(calls[0]) == 3
+    assert artifact.to_dict()["metrics"]["complete_norm_payload"]["denominator"] == 3
+    assert _producer_payload(artifact)["heldout_generalization_established"] is False
+
+
+@pytest.mark.parametrize("version", ["v2", "v3"])
+def test_reviewed_rich_heldout_shared_source_identity_rejects_before_actual_producer(version):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_structured_retrieval as structured
+    ch, options, populations, replays, components = _rich_v3_heldout_case(
+        version=version, shared_source_identity=True, defer_heldout_check=True)
+    context = options["reviewed_training_context"]
+    assert options["binding"].receipt()["status"] == context["binding"].receipt()["status"] == "ready"
+    assert ch.splits.require_legal_ir_split_guard(context["split_manifest"]).passed
+    assert components["train"]["declaration"]["governing_context"]["instrument_id"] != components["holdout"]["declaration"]["governing_context"]["instrument_id"]
+    for train, query in zip(components["train"]["declaration"]["units"], components["holdout"]["declaration"]["units"], strict=True):
+        left, right = train["source_version"], query["source_version"]
+        assert all(left[key] == right[key] for key in ("source_id", "release_id", "edition", "provision_id"))
+        assert left["raw_artifact"]["sha256"] != right["raw_artifact"]["sha256"]
+        assert left["extracted_view"]["sha256"] != right["extracted_view"]["sha256"]
+        assert train["document_revision"] != query["document_revision"]
+    diagnostic = "heldout and TRAIN share a reviewed declared legal source identity"
+    heldout = options["binding"].receipt()["heldout_evaluation"]
+    with pytest.raises(ValueError, match=diagnostic):
+        structured._require_disjoint_heldout_review(heldout, context["admission_inputs"],
+            context["training_rows"], context["query_rows"],
+            ch.splits.LegalIRSplitManifest.from_mapping(context["split_manifest"]), _admission_version=version)
+    calls = []
+    with pytest.raises(ValueError, match=diagnostic):
+        _producer_evaluate(options, lambda arguments: calls.append(arguments))
+    assert calls == []
+
+
+@pytest.mark.parametrize("damage", ["missing_identity", "identity_type", "extra_identity_field",
+    "missing_identity_field", "identity_bool", "identity_blank", "identity_nul", "identity_invalid_utf8",
+    "identity_oversized", "missing_view", "view_bool", "view_uppercase"])
+def test_reviewed_rich_heldout_rehashed_missing_or_malformed_source_identity_fails_closed(
+        reviewed_source_group_distinct_case, damage):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_structured_retrieval as structured
+    version, (ch, options, _, _, _) = reviewed_source_group_distinct_case
+    context = options["reviewed_training_context"]
+    heldout = options["binding"].receipt()["heldout_evaluation"]
+    unit = heldout["dependency_group"]["source_units"][0]
+    if damage == "missing_identity": unit.pop("source_identity")
+    elif damage == "identity_type": unit["source_identity"] = list(unit["source_identity"].values())
+    elif damage == "extra_identity_field": unit["source_identity"]["document_revision"] = "artifact-label"
+    elif damage == "missing_identity_field": unit["source_identity"].pop("release_id")
+    elif damage == "identity_bool": unit["source_identity"]["source_id"] = True
+    elif damage == "identity_blank": unit["source_identity"]["edition"] = "  "
+    elif damage == "identity_nul": unit["source_identity"]["provision_id"] = "fixture:\x00"
+    elif damage == "identity_invalid_utf8": unit["source_identity"]["source_id"] = "\ud800"
+    elif damage == "identity_oversized": unit["source_identity"]["source_id"] = "x" * 4097
+    elif damage == "missing_view": unit.pop("source_extracted_sha256")
+    elif damage == "view_bool": unit["source_extracted_sha256"] = False
+    else: unit["source_extracted_sha256"] = unit["source_extracted_sha256"].upper()
+    # Rehashing the offered receipt cannot restore the omitted source boundary.
+    # The invalid-Unicode case refuses even at the existing canonical hash gate.
+    with pytest.raises(ValueError, match="declared source identity|heldout source|heldout extracted view|JSON"):
+        heldout["dependency_group_sha256"] = ch.digest(heldout["dependency_group"])
+        structured._require_disjoint_heldout_review(heldout, context["admission_inputs"],
+            context["training_rows"], context["query_rows"],
+            ch.splits.LegalIRSplitManifest.from_mapping(context["split_manifest"]), _admission_version=version)
+
+
+@pytest.mark.parametrize("version", ["v2", "v3"])
+def test_reviewed_rich_heldout_original_provision_guard_precedes_source_identity_check(version):
+    _, options, _, _, _ = _rich_v3_heldout_case(
+        version=version, shared_provision=True, defer_heldout_check=True)
+    calls = []
+    with pytest.raises(ValueError, match="heldout and TRAIN share a reviewed statutory provision identity"):
+        _producer_evaluate(options, lambda arguments: calls.append(arguments))
+    assert calls == []
 
 
 def _ranked_mixed_context_join(mode, *, capture=None):

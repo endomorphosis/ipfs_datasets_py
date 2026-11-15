@@ -539,7 +539,8 @@ def _fictional_kernel_receipt(request, *, toolchain=None):
         toolchain=toolchain if toolchain is not None else KernelToolchainBinding(toolchain_id="fictional:lean-v3",kernel_id="lean",plane=CapabilityPlane.NATIVE,
             executable=identity.resolved_executable,version=identity.actual_version,metadata=lean.FrozenMap({
                 "approved_axioms":[],"approved_imports":list(lean.LEAN_DEFAULT_APPROVED_IMPORTS),"axiom_policy_digest":policy,
-                "native_identity_digest":identity.identity_digest,"native_library_scope":identity.library_scope})),
+                "native_identity_digest":identity.identity_digest,"native_library_scope":identity.library_scope,
+                "verification_profile":lean.LEAN_KERNEL_VERIFICATION_PROFILE})),
         source_tree=KernelSourceTreeBinding.from_files({"Main.lean":source},primary_path="Main.lean"),translation=None,
         axiom_report=lean.LeanAxiomReport(declaration=guard,report_text="'"+guard+"' does not depend on any axioms",axioms=(),
             contains_sorry_ax=False,source_path="Main.lean",source_line=compiled[:compiled.rfind("#print axioms")].count("\n")+1,source_column=0),
@@ -574,7 +575,8 @@ def _bound_fixture(*, extra_obligation: bool = False,
         executable=identity.resolved_executable, version=identity.actual_version,
         metadata=FrozenMap({"approved_axioms": [], "approved_imports": list(lean.LEAN_DEFAULT_APPROVED_IMPORTS),
             "axiom_policy_digest": policy, "native_identity_digest": identity.identity_digest,
-            "native_library_scope": identity.library_scope}))
+            "native_library_scope": identity.library_scope,
+            "verification_profile": lean.LEAN_KERNEL_VERIFICATION_PROFILE}))
     if native_resource_profile is not None:
         toolchain = replace(toolchain, metadata={**toolchain.metadata.to_dict(),
             "native_resource_profile": deepcopy(native_resource_profile)})
@@ -1113,3 +1115,92 @@ def test_bound_proof_rejects_changed_numeric_unselected_obligation_content(diffe
     with pytest.raises(LegalProofIntegrityError, match="claim obligation differs"):
         _reissued_formal_content_binding({"fictional_threshold": 1}, {"fictional_threshold": different},
                                          facet="unselected-obligation")
+
+
+def test_current_lean_verification_profile_survives_bound_cache_wire_replay(tmp_path: Path) -> None:
+    """Authored receipt integrity only: no compiler or native identity probe."""
+    from ipfs_datasets_py.logic.backends.kernel import lean
+    record, _, receipt, binding, context = _bound_record()
+    assert context["toolchain"]["metadata"]["verification_profile"] == lean.LEAN_KERNEL_VERIFICATION_PROFILE
+    kernel = binding["result"]["payload"]["kernel_receipt"]
+    assert kernel["schema_version"] == "lean-kernel-receipt/v3"
+    assert kernel["toolchain"]["metadata"]["verification_profile"] == lean.LEAN_KERNEL_VERIFICATION_PROFILE
+    before = record.to_dict()
+    cache = LegalProofCache(root=tmp_path / "current-profile-cache")
+    cache.put(record)
+    restored = LegalProofCache(root=tmp_path / "current-profile-cache").get(record.content_cid)
+    reopened = LegalProofRecord.from_dict(restored.to_dict())
+    assert reopened.to_dict() == before
+    assert reopened.theorem_receipt_results(expected_context=context) == (receipt,)
+
+
+@pytest.mark.parametrize("profile", [None, "lean-kernel-verification/older", False, 1, ["lean-kernel-verification/v1"]])
+def test_reissued_kernel_profile_cannot_launder_old_or_wrong_verifier_into_current_cache(profile: Any) -> None:
+    """Reissue the outer protocol; the canonical Lean parser must still refuse.
+
+    Removing the marker constructs an explicitly fictional old-v3-shaped wire.
+    It does not alter or upgrade any archived source, receipt or native result.
+    """
+    record, artifact, _, binding, _ = _bound_record()
+    original = record.to_dict()
+    claim = IRClaim.from_dict(binding["claim"])
+    request = BackendRequest.from_dict(binding["request"])
+    attempt = BackendAttempt.from_dict(binding["attempt"])
+    result = ProofResult.from_dict(binding["result"])
+    payload = result.payload.to_dict()
+    metadata = payload["kernel_receipt"]["toolchain"]["metadata"]
+    if profile is None:
+        metadata.pop("verification_profile")
+    else:
+        metadata["verification_profile"] = deepcopy(profile)
+    kernel = payload["kernel_receipt"]
+    kernel["receipt_id"] = "lean-kernel-receipt:" + stable_digest(
+        {key: value for key, value in kernel.items() if key != "receipt_id"})
+    result = replace(result, payload=payload)
+    receipt = ProofReceipt.issue(claim, request, attempt, result,
+        receipt_id="receipt:fictional-reissued-wrong-verifier-profile", verifier="fictional-test")
+    changed = deepcopy(binding)
+    changed.update(receipt_digest=receipt.digest, result=result.to_dict())
+    with pytest.raises(LegalProofIntegrityError, match="canonical checked Lean v3 receipt") as caught:
+        LegalProofRecord.build(artifact, profile="fictional-wrong-verifier-profile", jurisdiction="fictional",
+            theorem_receipts=(receipt,), proof_bindings=(changed,))
+    assert "verification profile" in str(caught.value.__cause__).lower()
+    assert record.to_dict() == original
+
+
+@pytest.mark.parametrize("profile", [None, "lean-kernel-verification/older", False, 1])
+def test_current_cache_reuse_refuses_missing_or_mutated_expected_verification_profile(profile: Any) -> None:
+    record, _, receipt, _, context = _bound_record()
+    original = record.to_dict()
+    assert record.theorem_receipt_results(expected_context=context) == (receipt,)
+    changed = deepcopy(context)
+    if profile is None:
+        changed["toolchain"]["metadata"].pop("verification_profile")
+    else:
+        changed["toolchain"]["metadata"]["verification_profile"] = profile
+    with pytest.raises(LegalProofIntegrityError, match="expected reuse context"):
+        record.theorem_receipt_results(expected_context=changed)
+    assert record.to_dict() == original
+
+
+@pytest.mark.parametrize("profile", [None, "lean-kernel-verification/older", False, 1,
+                                    ["lean-kernel-verification/v1"], {"profile": "lean-kernel-verification/v1"}])
+def test_current_cache_refuses_an_unsupported_loaded_lean_verifier_profile_before_parser(monkeypatch, profile: Any) -> None:
+    """An old cached v3 Python module is not upgraded by its wire version."""
+    from ipfs_datasets_py.logic.backends.kernel import lean
+    artifact, receipt, binding, _ = _bound_fixture()
+    calls = []
+    class OlderParser:
+        @staticmethod
+        def from_dict(value):
+            calls.append(value)
+            raise AssertionError("unsupported loaded verifier must not parse a proof")
+    if profile is None:
+        monkeypatch.delattr(lean, "LEAN_KERNEL_VERIFICATION_PROFILE")
+    else:
+        monkeypatch.setattr(lean, "LEAN_KERNEL_VERIFICATION_PROFILE", deepcopy(profile))
+    monkeypatch.setattr(lean, "LeanKernelReceipt", OlderParser)
+    with pytest.raises(LegalProofIntegrityError, match="canonical checked Lean v3 receipt"):
+        LegalProofRecord.build(artifact, profile="fictional-older-loaded-verifier", jurisdiction="fictional",
+            theorem_receipts=(receipt,), proof_bindings=(binding,))
+    assert calls == []

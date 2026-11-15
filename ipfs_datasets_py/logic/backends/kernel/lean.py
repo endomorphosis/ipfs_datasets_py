@@ -75,6 +75,10 @@ from .wasm import (
 
 LEAN_KERNEL_BACKEND_VERSION: Final = "LeanKernelBackend@1"
 LEAN_KERNEL_RECEIPT_VERSION: Final = "lean-kernel-receipt/v3"
+# Version this token whenever trust-relevant source, obligation, dependency,
+# native-identity or diagnostic acceptance rules change. It names the verifier
+# rules, not an execution grant; never infer it when decoding old receipts.
+LEAN_KERNEL_VERIFICATION_PROFILE: Final = "lean-kernel-verification/v1"
 LEAN_SOURCE_BINDING_VERSION: Final = "lean-source-binding/v1"
 LEAN_AXIOM_REPORT_VERSION: Final = "lean-axiom-report/v2"
 LEAN_NATIVE_ADDRESS_SPACE_FLOOR_BYTES: Final = 4 * 1024**3
@@ -456,6 +460,9 @@ class LeanKernelReceipt:
         if self.expected_proposition_checked and (not proposition or not self.compiled_source_digest):
             raise LeanKernelError("type checking requires an explicit expected proposition and compiled source identity")
         if self.accepted:
+            profile = self.toolchain.metadata.get("verification_profile")
+            if type(profile) is not str or profile != LEAN_KERNEL_VERIFICATION_PROFILE:
+                raise LeanKernelError("accepted receipts require the current explicit verification profile")
             if submitted and scan_lean_incomplete_or_unsafe(submitted):
                 raise LeanKernelError("accepted receipts cannot bypass the supported source verification profile")
             if (not submitted or self.source_binding.source_format != "lean4"
@@ -1044,17 +1051,69 @@ def instrument_lean_source_for_axioms(
     return body + f"#print axioms _root_.{decl}\n"
 
 
+def _lean_diagnostic_lines(text: str) -> list[str]:
+    """Remove one optional output-framing BOM, never a source-text byte."""
+    return text.removeprefix("\ufeff").splitlines()
+
+
+def _load_lean_json_line(raw_line: str) -> Any:
+    """Decode one compiler record without silently selecting duplicate fields."""
+    def unique_pairs(pairs):
+        result = {}
+        for key, value in pairs:
+            if key in result:
+                raise ValueError("duplicate compiler JSON key")
+            result[key] = value
+        return result
+    return json.loads(raw_line, object_pairs_hook=unique_pairs,
+                      parse_constant=lambda _: (_ for _ in ()).throw(ValueError("nonfinite JSON")))
+
+
+# A warning mentioning the word "error" is not an error diagnostic. The
+# optional location is Lean's ordinary file:line:column prefix, not arbitrary
+# prose before a later error word. JSON records are classified before this.
+_PLAIN_LEAN_ERROR = re.compile(
+    r"^\s*(?:(?:[A-Za-z]:)?[^:\r\n]+:[0-9]+:[0-9]+:\s*)?error:(?:\s|$)", re.IGNORECASE
+)
+
+
+def _lean_error_diagnostics(stdout: str, stderr: str) -> tuple[str, ...]:
+    """Inspect both diagnostic streams; neither stream supplies proof evidence."""
+    errors = []
+    for stream, text in (("stdout", stdout), ("stderr", stderr)):
+        for raw_line in _lean_diagnostic_lines(text):
+            line = raw_line.strip()
+            if not line:
+                continue
+            if line.startswith("\ufeff"):
+                errors.append("unexpected Lean diagnostic BOM framing on " + stream)
+                continue
+            try:
+                message = _load_lean_json_line(line)
+            except (json.JSONDecodeError, ValueError):
+                if line.startswith(("{", "[")):
+                    errors.append("malformed Lean JSON diagnostic on " + stream)
+                elif _PLAIN_LEAN_ERROR.match(line):
+                    errors.append(line)
+                continue
+            if type(message) is not dict:
+                errors.append("non-object Lean JSON diagnostic on " + stream)
+            elif message.get("severity") == "error":
+                errors.append(str(message.get("data", "")))
+    return tuple(errors)
+
+
 def parse_lean_json_messages(stdout: str) -> list[dict[str, Any]]:
     messages: list[dict[str, Any]] = []
     if not isinstance(stdout, str):
         return messages
-    for raw_line in stdout.splitlines():
+    for raw_line in _lean_diagnostic_lines(stdout):
         raw_line = raw_line.strip()
         if not raw_line:
             continue
         try:
-            payload = json.loads(raw_line)
-        except json.JSONDecodeError:
+            payload = _load_lean_json_line(raw_line)
+        except (json.JSONDecodeError, ValueError):
             continue
         if isinstance(payload, dict):
             messages.append(payload)
@@ -1082,19 +1141,11 @@ def parse_lean_axiom_report(
     """Require exactly one complete named report; never scan unrelated prose."""
     expected = _lean_name(declaration)
     reports: list[tuple[dict[str, Any], re.Match[str]]] = []
-    for line in stdout.splitlines():
+    for line in _lean_diagnostic_lines(stdout):
         if not line.strip():
             continue
         try:
-            def unique_pairs(pairs):
-                result = {}
-                for key, value in pairs:
-                    if key in result:
-                        raise ValueError("duplicate compiler JSON key")
-                    result[key] = value
-                return result
-            message = json.loads(line, object_pairs_hook=unique_pairs,
-                                 parse_constant=lambda _: (_ for _ in ()).throw(ValueError("nonfinite JSON")))
+            message = _load_lean_json_line(line)
         except (json.JSONDecodeError, ValueError):
             if expected_source_path is not None:
                 return None
@@ -1163,12 +1214,11 @@ def evaluate_lean_kernel_output(
         diagnostics.append("lean invocation exceeded a resource or output bound")
         return False, None, bound_diagnostics(diagnostics)
 
-    messages = parse_lean_json_messages(process.stdout)
-    error_messages = [m for m in messages if m.get("severity") == "error"]
+    error_messages = _lean_error_diagnostics(process.stdout, process.stderr)
     if error_messages:
         excerpt = "; ".join(
-            sanitize_diagnostic(str(m.get("data", "")), max_chars=200)
-            for m in error_messages[:4]
+            sanitize_diagnostic(message, max_chars=200)
+            for message in error_messages[:4]
         )
         diagnostics.append(f"lean reported error diagnostics: {excerpt}")
         return False, None, bound_diagnostics(diagnostics)
@@ -1662,7 +1712,7 @@ class LeanKernelBackend:
                 metadata=FrozenMap({"approved_axioms": list(self.approved_axioms),
                     "approved_imports": list(self.approved_imports),
                     "native_identity_digest": identity.identity_digest if identity is not None else "",
-                    "native_library_scope": LEAN_NATIVE_LIBRARY_SCOPE,
+                    "native_library_scope": LEAN_NATIVE_LIBRARY_SCOPE, "verification_profile": LEAN_KERNEL_VERIFICATION_PROFILE,
                     "axiom_policy_digest": self.axiom_policy_digest, "native_resource_profile": {
                     "cpu_slots": self._runner.cpu_slots,
                     "child_process_slots": self._runner.child_process_slots,
@@ -1673,7 +1723,7 @@ class LeanKernelBackend:
                 }} if self._managed_resource_runner else {"approved_axioms": list(self.approved_axioms),
                     "approved_imports": list(self.approved_imports),
                     "native_identity_digest": identity.identity_digest if identity is not None else "",
-                    "native_library_scope": LEAN_NATIVE_LIBRARY_SCOPE,
+                    "native_library_scope": LEAN_NATIVE_LIBRARY_SCOPE, "verification_profile": LEAN_KERNEL_VERIFICATION_PROFILE,
                     "axiom_policy_digest": self.axiom_policy_digest}),
             )
         else:
@@ -1952,6 +2002,7 @@ class LeanKernelBackend:
 __all__ = [
     "LEAN_KERNEL_BACKEND_VERSION",
     "LEAN_KERNEL_RECEIPT_VERSION",
+    "LEAN_KERNEL_VERIFICATION_PROFILE",
     "LeanAuthorityDisposition",
     "LeanAxiomReport",
     "LeanKernelBackend",

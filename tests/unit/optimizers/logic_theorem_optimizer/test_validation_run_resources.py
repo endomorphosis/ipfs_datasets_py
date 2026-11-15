@@ -10219,3 +10219,165 @@ def test_cancelled_retained_v5_never_renews_an_invalid_original_deadline(private
     module, terminal, raw, caller, _ = _cancelled_retained_binding_fixture(private_control)
     _assert_cancelled_retained_unknown_without_write(module, terminal, raw, caller,
         private_control, time.monotonic() + remaining)
+
+
+# Completed command failures are distinct authored RETAINED fixture DATA. No
+# historical terminal is rewritten and no worker-report/test credit is inferred.
+def _failed_retained_binding_fixture(control, worker_returncode=7):
+    module, terminal, raw, caller, attempt = _cancelled_retained_binding_fixture(control)
+    terminal['failure'].update(executed_checks=deepcopy(json.loads(raw)['selected_checks']),
+        returncode=worker_returncode, error_type='RuntimeError',
+        error='validation command failed with returncode '+str(worker_returncode), received_signals=[])
+    return module, terminal, raw, caller, attempt
+
+
+def _assert_failed_retained_unknown_without_write(module, terminal, raw, caller, control, cutoff):
+    helper = module._failed_retained_native_closed_profile_v5
+    _assert_cancelled_retained_unknown_without_write(module, terminal, raw, caller, control, cutoff,
+        cleanup_profile='failed_retained_v5')
+    assert module._failed_retained_native_closed_profile_v5 is helper
+
+
+@pytest.mark.parametrize('worker_output', ['absent', 'partial-unsealed', 'unaccepted-sealed'])
+@pytest.mark.parametrize('worker_returncode', [1, 7, -9])
+def test_failed_retained_v5_current_closure_is_not_worker_qualification(private_control, worker_output, worker_returncode):
+    module, terminal, raw, caller, attempt = _failed_retained_binding_fixture(private_control, worker_returncode)
+    report = attempt / 'exports/trusted-validation.json'
+    if worker_output != 'absent':
+        report.parent.mkdir(parents=True)
+        report.write_bytes(b'{partial' if worker_output == 'partial-unsealed' else b'{"passed":true}\n')
+        report.chmod(0o600 if worker_output == 'partial-unsealed' else 0o400)
+    saved_report = report.read_bytes() if report.exists() else None
+    frames = deepcopy(terminal), bytes(raw), dict(caller)
+    before = private_control['ledger'].read_bytes(), private_control['scheduler'].state_path.read_bytes()
+    _, _, reservation, row, lease = module._failed_retained_native_closed_profile_v5(terminal, raw, **caller)
+    assert row is terminal['reservation']['record'] and reservation['status'] == row['status'] == 'retained'
+    assert row['retention_reason'] == 'context_failed' and row['artifacts_durable_asserted'] is False
+    assert lease['released'] is True and lease['cancelled'] is True
+    assert module.inspect_owned_validation_productive_native_closed_v1(terminal, raw, **caller,
+        original_wait_deadline_monotonic=time.monotonic()+3, cleanup_profile='failed_retained_v5') == dict(
+            verdict='proven_original_failed_retained_native_closed', source_custody_closed=True,
+            storage_release_authorized=False)
+    assert (terminal, raw, caller) == frames
+    assert before == (private_control['ledger'].read_bytes(), private_control['scheduler'].state_path.read_bytes())
+    assert (report.read_bytes() if report.exists() else None) == saved_report
+    assert not (attempt / 'logs/validation-durability.json').exists()
+    assert terminal['failure']['executed_checks'] == json.loads(raw)['selected_checks']
+    # Reported command selectors establish no actual collected/executed case count.
+
+
+def test_failed_retained_v5_does_not_project_to_cancelled_or_ACTIVE(private_control):
+    module, terminal, raw, caller, _ = _failed_retained_binding_fixture(private_control)
+    for helper in (module._productive_native_closed_profile_v1, module._cancelled_retained_native_closed_profile_v5):
+        with pytest.raises((ValueError, KeyError)):
+            helper(terminal, raw, **caller)
+    for profile in (None, 'cancelled_retained_v5'):
+        _assert_cancelled_retained_unknown_without_write(module, terminal, raw, caller, private_control,
+            time.monotonic()+3, cleanup_profile=profile)
+    module, terminal, raw, caller, _ = _cancelled_retained_binding_fixture(private_control)
+    _assert_failed_retained_unknown_without_write(module, terminal, raw, caller, private_control, time.monotonic()+3)
+    module, terminal, raw, caller, _ = _productive_failed_retention_binding_fixture(private_control)
+    _assert_failed_retained_unknown_without_write(module, terminal, raw, caller, private_control, time.monotonic()+3)
+
+
+@pytest.mark.parametrize('fault', ['reported-empty', 'reported-foreign', 'worker-zero', 'worker-none',
+    'worker-bool', 'worker-float', 'error-text', 'error-type', 'signals', 'completed', 'durability',
+    'retention-reason', 'cleanup-error', 'cleanup-diagnostics', 'lease-unreleased', 'lease-not-cancelled',
+    'lease-wrong-id', 'owner-birth', 'child-birth', 'identity-cycle', 'event-boolean', 'native-live-count',
+    'authority', 'elapsed-bool', 'elapsed-nonfinite'])
+def test_failed_retained_v5_binding_refuses_incomplete_or_foreign_failure(private_control, fault):
+    module, terminal, raw, caller, _ = _failed_retained_binding_fixture(private_control)
+    r, f, w = (terminal[key] for key in ('reservation', 'failure', 'source_custody_lifecycle'))
+    if fault == 'reported-empty': f['executed_checks'] = []
+    elif fault == 'reported-foreign': f['executed_checks'] = ['foreign selector']
+    elif fault == 'worker-zero': f['returncode'] = 0
+    elif fault == 'worker-none': f['returncode'] = None
+    elif fault == 'worker-bool': f['returncode'] = True
+    elif fault == 'worker-float': f['returncode'] = 7.0
+    elif fault == 'error-text': f['error'] = 'another failure'
+    elif fault == 'error-type': f['error_type'] = 'TimeoutError'
+    elif fault == 'signals': f['received_signals'] = [15]
+    elif fault == 'completed': terminal['completed'] = True
+    elif fault == 'durability': r['record']['artifacts_durable_asserted'] = True
+    elif fault == 'retention-reason': r['record']['retention_reason'] = 'another claim'
+    elif fault == 'cleanup-error': r['cleanup_error'] = 'unknown'
+    elif fault == 'cleanup-diagnostics': r['cleanup_failure_observations'] = []
+    elif fault == 'lease-unreleased': r['resource_lease']['released'] = False
+    elif fault == 'lease-not-cancelled': r['resource_lease']['cancelled'] = False
+    elif fault == 'lease-wrong-id': r['resource_lease']['lease_id'] = 'c'*32
+    elif fault == 'owner-birth': w['owner']['birth'] = 'other'
+    elif fault == 'child-birth': r['record']['child']['birth'] = 'other'
+    elif fault == 'identity-cycle': r['process_observation']['observed_identities'][0]['parent_pid'] = r['record']['child']['pid']
+    elif fault == 'event-boolean': w['events']['barrier_released'] = 1
+    elif fault == 'native-live-count': r['process_observation']['live_processes'] = False
+    elif fault == 'authority': f['authority_granted'] = True
+    elif fault == 'elapsed-bool': f['elapsed_seconds'] = False
+    else: f['elapsed_seconds'] = float('inf')
+    with pytest.raises((ValueError, KeyError)):
+        module._failed_retained_native_closed_profile_v5(terminal, raw, **caller)
+
+
+@pytest.mark.parametrize('field,bad', [('cpu_slots', True), ('memory_mb', 2048),
+    ('child_process_slots', 3), ('storage_bytes', 33554432), ('timeout_seconds', 301)])
+def test_failed_retained_v5_cannot_borrow_different_resource_profile(private_control, field, bad):
+    module, terminal, raw, caller, _ = _failed_retained_binding_fixture(private_control)
+    request = json.loads(raw); request[field] = bad
+    changed = (json.dumps(request, sort_keys=True, separators=(',', ':'))+'\n').encode()
+    caller['expected_request_sha256'] = hashlib.sha256(changed).hexdigest()
+    with pytest.raises((ValueError, KeyError)):
+        module._failed_retained_native_closed_profile_v5(terminal, changed, **caller)
+
+
+@pytest.mark.parametrize('fault', ['source-drift', 'own-row-drift', 'native-root', 'native-waiter',
+    'native-descendant', 'attempt-inode', 'current-policy'])
+def test_failed_retained_v5_rechecks_current_closure_instead_of_terminal_flags(private_control, fault):
+    module, terminal, raw, caller, attempt = _failed_retained_binding_fixture(private_control)
+    row = terminal['reservation']['record']; rid, lid = row['reservation_id'], row['native_lease_id']
+    path = private_control['scheduler'].state_path
+    original_native_bytes = path.read_bytes()
+    if fault == 'source-drift': private_control['source'].write_text('changed pinned source')
+    elif fault == 'own-row-drift':
+        state = _json(private_control['ledger']); state['reservations'][rid]['storage_bytes'] += 1
+        _write_json(private_control['ledger'], state)
+    elif fault in ('native-root', 'native-waiter', 'native-descendant'):
+        state = _json(path)
+        if fault == 'native-root': state['leases'][lid] = {'lease_id': lid, 'request_id': 'validation:'+rid}
+        elif fault == 'native-waiter': state['waiters']['c'*32] = {'request_id': 'validation:'+rid}
+        else: state['leases']['c'*32] = {'parent_lease_id': lid}
+        _write_json(path, state)
+    elif fault == 'attempt-inode':
+        attempt.rename(attempt.with_name(attempt.name+'-retained-original')); attempt.mkdir(mode=0o700)
+    else:
+        state = _json(path); state['config']['total_cpu_slots'] += 1; _write_json(path, state)
+    try:
+        _assert_failed_retained_unknown_without_write(module, terminal, raw, caller, private_control, time.monotonic()+3)
+    finally:
+        if fault in ('native-root', 'native-waiter', 'native-descendant', 'current-policy'):
+            path.write_bytes(original_native_bytes)
+
+
+@pytest.mark.parametrize('boundary', ['ledger-read', 'native-lease-inspection'])
+def test_failed_retained_v5_expires_inside_the_original_absolute_cutoff(private_control, monkeypatch, boundary):
+    module, terminal, raw, caller, _ = _failed_retained_binding_fixture(private_control)
+    state_path = private_control['scheduler'].state_path
+    target = private_control['ledger'] if boundary == 'ledger-read' else state_path.with_name(state_path.name+'.lock')
+    actual_open, actual_clock = os.open, time.monotonic
+    cutoff = actual_clock()+3; reached, expired = [], []
+    def observed_open(path, flags, *args, **kwargs):
+        descriptor = actual_open(path, flags, *args, **kwargs)
+        if os.fspath(path) == str(target):
+            reached.append(str(path))
+            if boundary == 'ledger-read' or len(reached) == 2: expired.append(True)
+        return descriptor
+    with monkeypatch.context() as patch:
+        patch.setattr(os, 'open', observed_open)
+        patch.setattr(time, 'monotonic', lambda: cutoff+1 if expired else actual_clock())
+        _assert_failed_retained_unknown_without_write(module, terminal, raw, caller, private_control, cutoff)
+    assert expired == [True] and len(reached) == (1 if boundary == 'ledger-read' else 2)
+
+
+@pytest.mark.parametrize('remaining', [-1, 361, float('inf')])
+def test_failed_retained_v5_never_renews_or_borrows_a_deadline(private_control, remaining):
+    module, terminal, raw, caller, _ = _failed_retained_binding_fixture(private_control)
+    _assert_failed_retained_unknown_without_write(module, terminal, raw, caller, private_control,
+        time.monotonic()+remaining)

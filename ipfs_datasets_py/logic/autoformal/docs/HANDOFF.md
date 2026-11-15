@@ -1,5 +1,25 @@
 # Current handoff
 
+## Compiler diagnostics, verifier generations and heldout source identity — 2026-11-15
+
+The canonical Lean backend now rejects error diagnostics from either captured output stream, including framed UTF-8 BOM records and plain Lean error forms. JSON warnings quoting error text remain warnings. Malformed, duplicate-key and nonfinite compiler JSON refuse. The single dependency report still must come from stdout and bind the exact generated declaration, source path and command position; diagnostics are not elaborated dependency evidence.
+
+The old backend's stderr omission was reproduced with an authored zero-exit tool result, then followed through a complete proof-binding/cache wire/reuse chain. The repaired output validator alone could not distinguish that old accepted receipt. Fresh backend toolchains now explicitly carry `verification_profile="lean-kernel-verification/v1"`. Accepted receipts and cache reuse require this current profile, including when a stale v3 Python verifier module is loaded. No parser infers a missing marker, and no historical receipt is rewritten or promoted. Receipt wire v3, cache v2 and context v1 remain; old accepted v3 receipts without the profile are archival and cannot supply current proof. Reuse needs fresh verification under the selected profile. The marker identifies verifier rules and grants no execution permission or native authenticity by itself.
+
+Rich heldout dependency groups now retain each source version's exact declared `source_id`, `release_id`, `edition`, `provision_id` and extracted-view digest. The existing structured context guard compares that four-field identity independently of governing interpretation/instrument, raw/view bytes and artifact revision. The reproduced V2/V3 cases had passed signed review replay and actually reached the producer callback across the same declared source. They now refuse before that callback. Existing dependency, raw/CID, provision, near-duplicate and split guards remain; different declared identities are not automatically resolved as aliases.
+
+Fresh canonical software checks pass **470 kernel/cache cases**, with three native opt-in cases skipped, plus **329 admission/heldout cases**. The latter qualifies both complete V2/V3 admission files and the selected 41-case heldout cohort on the final source epoch. It includes the shared test helper's strict source-binding hook so the publication is self-contained. The unchanged captured old kernel receipt and cache record now reject; a fresh current-backend function-executor control completes exact cache reuse. These are authored software controls, not compiler/native proof, model execution, statutory review or corpus admission. Earlier failures, harness errors, wait timeouts and original receipts remain separately recorded. [Exact qualification and changed-file hashes](../../../../docs/autoformalization/evidence/legal-ir-diagnostic-source-boundaries-20261115.json).
+
+All 24 backlog IDs/statuses and existing resource limits remain unchanged. Retained 2024 Title 10 meaning, definitions and two genuinely distinct statutory uses still need real review. Current native qualification and V4 numerical fitting remain open. Next under LIR-20: complete the explicit multi-component V4 rich-context/evaluator route over V3 endpoint consumers, retaining source-group exclusions, governing definitions, whole-context bounds and separate live permission. Its private source work is preserved separately and is not adopted by this change. Private archives and model checkpoints remain on hold.
+
+## Stable relational roundtrip scoring inputs — 2026-11-15
+
+The existing relational prose scorer now detaches the canonical TypedExpression, ordered role ledger and scoring-only governing observations before rendering or inverse compilation. It checks both caller-owned and detached inputs before invoking the inverse and before returning a report. Mutations refuse the complete score rather than produce mixed-epoch measurements. Original source text and governing observations still stay off the inverse interface; no missing field is filled from the reference, and no parser, model or semantic interpretation is added. Stable score schemas and measurements remain unchanged.
+
+The defect was reproduced deterministically: an inverse callback changed the caller role ledger after reference rendering, and the scorer returned canonical_prose_exact=true while normalized_reference_prose and normalized_candidate_prose visibly differed. The original failed test and its contradictory JSON witness are retained. The fix passes **431 source-only cases with no failures or skips**: 137 scorer cases, 182 extended-decompiler cases and 112 relational-reconstruction cases. Four new controls cover the role contradiction, both governing-observation mutation directions and detached renderer inputs. All seven source/test pins stayed unchanged and no numerical runtime imported.
+
+This is an engineering score-integrity correction. It grants no legal equivalence, source correspondence, proof, training/gold, model quality, publication or resource authority. Actual statutory review, native proof and model fitting remain separate gates; private assets and existing budgets remain on hold/unchanged. [Exact captured sources, red witness and green results](../../../../workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-relational-score-input-fence-qualification-v01/qualification-summary.json).
+
 ## Reviewed context-set relation contract — 2026-11-15
 
 The existing relation-declaration, mask-handoff and joint-retriever owners now offer an explicit V4 relation-review domain with unchanged mixed-sort V3 endpoint admission. Distinct reviewed interpretations can share one relation ledger only after fresh pair review covers the exact sorted context union and every endpoint's membership. The new signing subject binds its context-set digest and a sixth review obligation. Existing single-context V2/V3 contracts retain their domains and checks; no relation or legal applicability is inferred from context overlap.
@@ -20,30 +40,38 @@ Default result/v1 remains; requested audited results use result/v2 and retain bo
 
 ## Shared law-row replay and remaining release checks — 2026-11-15
 
-The existing physical fixture can now represent two source rows carrying three
+The existing physical fixture can represent two source rows carrying three
 legal units. The normative row retains both nonoverlapping occurrences, complete
 original bytes, exact character/UTF-8 offsets, all span overlaps and one graph
-source-version node per identity. Review signing binds the original shared row
-before admission; source/IR artifact identities remain distinct for each unit.
-Defaults retain the prior three-row fixture. Only the two owning test files
-changed for this integration; production schemas and admission owners did not.
+source-version node per identity. Signing binds the original shared row before
+admission; source/IR artifact identities remain distinct for each unit. Defaults
+retain the three-row fixture. The two owning test files carry this integration;
+production schemas and admission owners did not change for it.
 
 All six selected checks passed with closed Source/resource/process/wait/storage
 custody: three new shared-row cases, the retained three-row positive and two
-shared-artifact controls. The negative cases replay genuinely signed inputs and
-refuse duplicate or overlapping source uses. They use fictional law and reviews.
-The successful request released its own 32 MiB promise durably.
+shared-artifact controls. Duplicate and overlapping uses are refused through
+genuinely signed fictional replay. The request durably released its own32MiB.
 
-Separately, six smaller regression runs passed 35 of the original 98 remaining
-release cases on their captured source epochs. The next six-case physical-map
-run timed out without JUnit or a complete result; its custody closed and its
-32 MiB claim remains retained, with zero case credit. Thus 63 of that original
-98-case selection still need qualification. The release file now declares 155
-cases in 39 functions; neither the whole current file nor a unified current
-source epoch is qualified by combining historical runs. Actual statutory review,
-Lean proof, Native-parent integration and immutable Hub readback remain open.
+The existing five invalid-path cases now use a private work directory and own
+their newly created symlink/FIFO cleanup after the original CLI assertions.
+Held inode, parent and literal checks precede exact-leaf removal; original and
+working snapshots plus ordinary observation evidence remain. All five passed
+through unchanged C19/V2 fixture, SDK and CLI owners, with full original custody
+closed and own32MiB durably released. The old symlink case reproduced one call
+pass plus one teardown error; that failed original and its32MiB remain retained.
+The larger private observer/plugin proposals were not installed.
 
-[Shared-row closeout](../../../../workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/shared_lawrow6-shared-v01/cohort-closeout.json). [Regression accounting](../../../../workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/remaining-small-cohort-progress-6closed-shared6closed-physical6failed-v01.json).
+Ten separate closed scopes now qualify52of the original98 remaining release
+cases, leaving46 ordinary cases. Their captured source epochs remain distinct.
+The release file declares155cases/39functions; neither the whole current file
+nor one unified current source epoch is qualified by pooling saved runs. Earlier
+physical-map and V3 six-case timeouts retain zero credit and their failed claims;
+the six physical-map cases have separate successful three-case closeouts.
+Actual statutory review, Lean proof, Native-parent integration and immutable Hub
+readback remain open.
+
+[Shared-row closeout](../../../../workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/shared_lawrow6-shared-v01/cohort-closeout.json). [Physical5 closeout](../../../../workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/legacy_CLI_paths5-physical-current5-green-v01/cohort-closeout.json). [Exact52/46 accounting](../../../../workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/remaining-small-cohort-progress-10closed-52passed-46remaining-v01.json).
 
 
 ## Published-worktree cleanup71 controls qualified; SDK lifecycle gates remain — 2026-11-14
