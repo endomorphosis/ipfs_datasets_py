@@ -1,5 +1,7 @@
 # Legal autoformalization
 
+Generated PGIR-041 mutation proposals no longer create independent semantic labels automatically. Default mining quarantines them; explicit caller-supplied labels must bind the current pair and pass the existing contracts. The completed original passed all 88 selected software cases (82 hard-negative and six retained metamorphic cases), with no failures, errors or skips. See the [handoff](docs/HANDOFF.md) for measured scope, preserved failures and the remaining LIR-22 evidence-integration gate. Caller metadata supplies no authenticated solver, directed proof, legal review or statutory gold.
+
 Reviewed evaluation now rechecks live context permission on exit and freezes producer outputs before later callbacks. All61 selected software cases pass; see the [handoff](docs/HANDOFF.md) for exact scope and remaining model/legal gates.
 
 Compiler diagnostics and proof-cache reuse now bind the current verifier profile; reviewed heldout contexts also enforce declared legal source identity across interpretations. Current source-only qualification and historical/native limits are recorded in the [handoff](docs/HANDOFF.md).

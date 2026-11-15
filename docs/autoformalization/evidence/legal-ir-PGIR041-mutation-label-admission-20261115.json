@@ -1,0 +1,147 @@
+{
+  "change": "Unattested records remain UNKNOWN and nontraining. Explicit caller-supplied labels must pass current endpoint, parse, minimality, outcome and evidence checks; quarantine cannot grant admission or receipts.",
+  "current_storage": {
+    "artifacts_durable_asserted": true,
+    "bytes": 16777216,
+    "final_attempt_bytes": 143090,
+    "reservation_id": "29db9e801fd545868812395291a6bf4d",
+    "status": "released"
+  },
+  "evidence": {
+    "RED": {
+      "bytes": 15992,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-ir-PGIR041-red-original-v01-input/red-reproduction-summary.json",
+      "sha256": "eb353a53c07e523c355c6f304bde09437100b5c669065358d04981437998ae85"
+    },
+    "first_GREEN": {
+      "bytes": 30192,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-ir-PGIR041-green-original-v01-input/failed-green-summary.json",
+      "sha256": "ef0cf1a6f343cc1162f865d4d2096e31c64e0462fb073672592b71e7b0911186"
+    },
+    "initial_source3_readback": {
+      "bytes": 10464,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-ir-PGIR041-explicit-evidence-fix-proposal-v01/independent-source3-readback-v01.json",
+      "sha256": "9ceae0f378130ac0de90ced5fa1f71be5d5ae6ede81a8860946e93fbb9d3965f"
+    },
+    "qualification": {
+      "bytes": 33671,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-ir-PGIR041-green-original-v02-input/qualification-summary.json",
+      "sha256": "dd4d4b82aff474b730d0cb2bf942b7b8d715bb92edec5ec3c8dae9f25aac4576"
+    },
+    "test_only_correction": {
+      "bytes": 2687,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-ir-PGIR041-explicit-evidence-green-test-proposal-v07/actual-test-source-write.json",
+      "sha256": "446dea64978a3f56aad58f92e0b3ef4c49a655ca21cb185fe7d6075e52aef709"
+    }
+  },
+  "exclusions": {
+    "actual_solver_execution": false,
+    "corpus_admitted": false,
+    "legal_review_authenticated": false,
+    "model_execution": false,
+    "native_Lean_execution": false,
+    "old_archival_labels_authenticated_or_readmitted": false,
+    "retained_failed_storage_released": false,
+    "semantic_non_equivalence_proved": false,
+    "statutory_gold_admitted": false,
+    "training_executed": false
+  },
+  "final_source_sha256": {
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_fuzzing.py": "4b83a14ec2740a32743073175d1dde7194fa9bd6942908081c2a1f2eefde6e3c",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_hard_negatives.py": "53a0176385d96fc34b04b60f4701945b4756fe63681e567e19de0960082e0b75",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_hard_negatives.py": "f39e600015c6ed5f16df6c21d0b04121e8e89d75ca4687bf0b5e7bb937e916c4"
+  },
+  "history_policy": "Earlier labels, failures, receipts and reservations remain historical. This change does not authenticate or re-admit old archival labels, reset budgets, or promote stored assertions into current authority.",
+  "observed_admission": {
+    "basis": "Passing exact canonical-miner assertions plus original durable unknown-shard manifest and empty receipt set.",
+    "default_canonical_miner_after_admitted": 0,
+    "default_canonical_miner_before_admitted": 12,
+    "default_receipts": 0,
+    "explicit_fictional_label_positive_records": 12,
+    "explicit_fictional_unknown_records": 1,
+    "explicit_positive_classes": 12,
+    "persisted_unknown_records": 13,
+    "positive_label_boundary": "Caller-supplied LabelEvidence is an explicit fictional claim in these tests, not authenticated solver execution, signed human review, or a new gold label.",
+    "unknown_mutation_classes": 12
+  },
+  "preserved_failures": [
+    {
+      "artifacts_durable_asserted": false,
+      "failed": 7,
+      "passed": 1,
+      "reservation_id": "ce258d27203f4790bedf0bd92487ab7b",
+      "scope": "RED",
+      "seconds": 1.012,
+      "status": "retained",
+      "storage_bytes": 16777216
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "correction": "Test-only malformed-pointer expectation now requires the existing canonical storage refusal; product implementations unchanged between GREEN runs.",
+      "failed": 1,
+      "passed": 87,
+      "reservation_id": "de63210b8e714934ab32dabc27a2efec",
+      "scope": "first_GREEN",
+      "seconds": 7.202,
+      "status": "retained",
+      "storage_bytes": 16777216,
+      "whole_request_qualified": false
+    }
+  ],
+  "problem": "Default mutation recipes and caller-authored solver/result strings were promoted into independent negative labels without actual checking evidence.",
+  "qualification": {
+    "Source_closed": true,
+    "actual_parent_tool": "4579",
+    "actual_terminal_chunk": "eefaa6",
+    "durability_files_checked": 27,
+    "exit_code": 0,
+    "genuine_owner_wait_verified": true,
+    "git_identity_pins": 8,
+    "groups": {
+      "hard_negative": 82,
+      "metamorphic_fuzzing": 6
+    },
+    "junit": {
+      "errors": 0,
+      "failures": 0,
+      "passed": 88,
+      "seconds": 7.221,
+      "skipped": 0,
+      "tests": 88
+    },
+    "native_resource_and_process_custody_closed": true,
+    "owner_elapsed_seconds": 114.46970920497552,
+    "parent_elapsed_seconds": 167.46576710231602,
+    "positive_software_acceptance_before_initial420": true,
+    "request_sha256": "f673b13350d4c8a122bbdbe05e6c9d3e0a77ea2e3aecb373a892122142a012cc",
+    "runtime_import_origin_completeness_verified": false,
+    "source_and_git_drift": [],
+    "source_pins": 255,
+    "whole_modules": [
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_hard_negatives.py",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_metamorphic_fuzzing.py"
+    ]
+  },
+  "resource_limits": {
+    "child_process_slots": 4,
+    "cpu_slots": 1,
+    "initial_total_seconds": 420,
+    "ledger_seconds": 60,
+    "memory_mb": 1536,
+    "productive_seconds": 300,
+    "shared_Source_admission_seconds": 60,
+    "storage_bytes": 16777216
+  },
+  "schema": "legal-ir-PGIR041-mutation-label-admission-evidence/v1",
+  "source_readback_limits": {
+    "initial_source3_postimages_verified": true,
+    "original_peer_prewrite_comparison_available": false,
+    "original_writer_real_index_identity_available": false,
+    "readback_precedes_test_only_correction_to_final_f39": true,
+    "readback_test_sha256": "533911f9170d54968fe61067e2613fa2f345316aa422214c19400ded48831034",
+    "scope": "The independent readback verifies selected preimages/postimages and stability in its own read interval; it does not reconstruct initial peer prewrite bytes or initial writer index identity. Later final test bytes are bound by the correction receipt and fresh qualification.",
+    "source_READ_closed": true
+  },
+  "status": "qualified_selected_software_scope",
+  "task_id": "PGIR-041"
+}

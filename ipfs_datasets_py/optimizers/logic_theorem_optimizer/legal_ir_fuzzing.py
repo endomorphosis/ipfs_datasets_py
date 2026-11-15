@@ -1610,7 +1610,7 @@ class TypedIRCheckResult:
 
 @dataclass(frozen=True)
 class MinimalSemanticMutation:
-    """One specified, single-path semantic mutation over typed LegalIR."""
+    """An authored mutation proposal, without an independent semantic verdict."""
 
     mutation_class: MutationClass
     original: Mapping[str, Any]
@@ -1619,7 +1619,7 @@ class MinimalSemanticMutation:
     relationship: str
     evidence_kind: str
     description: str = ""
-    solver_outcome: str = SOLVER_DISPROVED
+    solver_outcome: str = SOLVER_UNKNOWN
 
     @property
     def mutation_id(self) -> str:
@@ -1647,7 +1647,7 @@ class MinimalSemanticMutation:
 
 @dataclass(frozen=True)
 class MutationValidationRecord:
-    """Parse/type, evidence, and minimality record for one mutation."""
+    """Syntactic checks and unverified outcome diagnostics for a proposal."""
 
     mutation: MinimalSemanticMutation
     check: TypedIRCheckResult
@@ -1715,7 +1715,7 @@ def parse_and_typecheck_typed_ir(document: Any) -> TypedIRCheckResult:
             status="parse_error",
             diagnostics=tuple(diagnostics + ["formulas_missing"]),
         )
-    typed = True
+    typed = not diagnostics
     for index, formula in enumerate(formulas):
         if not isinstance(formula, Mapping):
             return TypedIRCheckResult(
@@ -1836,6 +1836,11 @@ def _formula_signature(document: Any) -> str:
 
 
 def typed_documents_equivalent(left: Any, right: Any) -> bool:
+    """Compare exact formula payloads; this is not logical equivalence.
+
+    The historical API name is retained for compatibility. Unequal payloads
+    supply no counterexample, solver result, or semantic training label.
+    """
     return _formula_signature(left) == _formula_signature(right)
 
 
@@ -1844,9 +1849,39 @@ def check_mutation_minimality(
     mutant: Any,
     mutated_paths: Sequence[str],
 ) -> tuple[bool, tuple[str, ...]]:
-    """Record whether the mutated-path set is a minimal non-equivalence."""
+    """Check declared-path structural changes, without a semantic verdict."""
 
-    paths = tuple(dict.fromkeys(str(path) for path in mutated_paths if str(path)))
+    offered = tuple(mutated_paths)
+    paths = tuple(dict.fromkeys(str(path) for path in offered if str(path)))
+    if len(paths) != len(offered) or any(type(path) is not str for path in offered):
+        return False, paths
+    decoded = []
+    for path in paths:
+        if not path.startswith("/") or re.search(r"~(?![01])", path):
+            return False, paths
+        tokens = tuple(token.replace("~1", "/").replace("~0", "~")
+                       for token in path[1:].split("/"))
+        if any(not token for token in tokens):
+            return False, paths
+        # Canonical list indices prevent alias paths such as /0 and /00.
+        for document in (original, mutant):
+            current = document
+            try:
+                for token in tokens:
+                    if isinstance(current, Mapping):
+                        current = current[token]
+                    elif isinstance(current, Sequence) and not isinstance(current, (str, bytes, bytearray)):
+                        if re.fullmatch(r"0|[1-9][0-9]*", token) is None:
+                            return False, paths
+                        current = current[int(token)]
+                    else:
+                        return False, paths
+            except (KeyError, IndexError, TypeError, ValueError):
+                return False, paths
+        decoded.append(tokens)
+    if any(left == right[:len(left)] or right == left[:len(right)]
+           for index, left in enumerate(decoded) for right in decoded[index + 1:]):
+        return False, paths
     if not paths or typed_documents_equivalent(original, mutant):
         return False, paths
     necessary: list[str] = []
@@ -1859,7 +1894,7 @@ def check_mutation_minimality(
         if typed_documents_equivalent(original, reverted):
             necessary.append(path)
     minimal = tuple(necessary) if necessary else paths
-    checked = set(minimal) == set(paths)
+    checked = bool(necessary) and set(necessary) == set(paths)
     return checked, minimal
 
 
@@ -1876,11 +1911,11 @@ def _apply_class_mutation(
     if mutation_class is MutationClass.OPERATOR:
         mutant = _pointer_set(mutant, "/formulas/0/operator/symbol", "may")
         mutant = _pointer_set(mutant, "/formulas/0/operator/label", "permission")
-        return mutant, ("/formulas/0/operator/symbol",), "Replace shall with may."
+        return mutant, ("/formulas/0/operator",), "Replace shall with may."
     if mutation_class is MutationClass.MODALITY:
         mutant = _pointer_set(mutant, "/formulas/0/operator/label", "permission")
         mutant = _pointer_set(mutant, "/formulas/0/operator/symbol", "may")
-        return mutant, ("/formulas/0/operator/label",), "Invert obligation modality."
+        return mutant, ("/formulas/0/operator",), "Invert obligation modality."
     if mutation_class is MutationClass.QUANTIFIER:
         mutant = _pointer_set(mutant, "/formulas/0/quantifier/kind", "existential")
         return mutant, ("/formulas/0/quantifier/kind",), "Change universal to existential."
@@ -1929,7 +1964,7 @@ def generate_minimal_semantic_mutations(
                 relationship=_CLASS_RELATIONSHIP[mutation_class],
                 evidence_kind=_CLASS_EVIDENCE_KIND[mutation_class],
                 description=description,
-                solver_outcome=_CLASS_SOLVER_OUTCOME[mutation_class],
+                solver_outcome=SOLVER_UNKNOWN,
             )
         )
     return tuple(mutations)
@@ -1940,7 +1975,12 @@ def collect_mutation_evidence(
     *,
     solver_outcome: Optional[str] = None,
 ) -> MutationValidationRecord:
-    """Parse/type-check, score, and record minimality for one mutation."""
+    """Check syntax and structural changes; never manufacture solver evidence.
+
+    An outcome string is caller-reported diagnostic data. This collector does
+    not run a solver or authenticate a proof/counterexample. Independent labels
+    must be supplied separately at the existing hard-negative admission owner.
+    """
 
     outcome = str(solver_outcome or mutation.solver_outcome)
     check = parse_and_typecheck_typed_ir(mutation.mutant)
@@ -1959,22 +1999,23 @@ def collect_mutation_evidence(
         mutation.mutated_paths,
     )
     unknown_reason = ""
-    if outcome in {SOLVER_TIMED_OUT, SOLVER_UNAVAILABLE, SOLVER_UNKNOWN}:
-        evidence_status = "unknown"
-        relationship = "unknown"
-        unknown_reason = f"solver_{outcome}_is_not_negative"
-    elif not check.accepted:
+    if not check.accepted:
         evidence_status = "unknown"
         relationship = "unknown"
         unknown_reason = "parse_or_type_error"
     elif equivalent:
         evidence_status = "rejected"
         relationship = "unknown"
-        unknown_reason = "mutation_did_not_change_semantics"
+        unknown_reason = "mutation_did_not_change_formula_payload"
         minimality_checked = False
+    elif outcome in {SOLVER_TIMED_OUT, SOLVER_UNAVAILABLE, SOLVER_UNKNOWN}:
+        evidence_status = "unknown"
+        relationship = "unknown"
+        unknown_reason = f"solver_{outcome}_is_not_negative"
     else:
-        evidence_status = "verified"
-        relationship = mutation.relationship
+        evidence_status = "unknown"
+        relationship = "unknown"
+        unknown_reason = "independent_semantic_evidence_required"
     return MutationValidationRecord(
         mutation=mutation,
         check=check,
