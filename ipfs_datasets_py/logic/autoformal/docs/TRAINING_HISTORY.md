@@ -1,5 +1,16 @@
 # Training and experiment history
 
+## Cleanup71 software evidence preserves training and corpus holds — 2026-11-14
+
+The four cancelled-retained cleanup sources were installed in the published worktrees through the original Source operation and separate readback. A private current-policy fault in one R owning control was then restored after its refusal/no-write assertions through a separately audited one-target Source operation. The SDK, CLI and strict origin/current-state guards retain their reviewed limits.
+
+Fresh P4 ran exactly17 SDK and54 CLI cleanup owning controls:71 clean JUnit records, zero failures/errors/skips,3.6seconds. The original generic CLI route closed Source, Native and process/wait custody before the initial420-second cutoff (158.901seconds); its own16MiB promise was durably released after322 files/616,444bytes. These are selected software controls with modeled proof frames, not a genuine SDK timeout-cleanup lifecycle or a complete SDK/SourceGen qualification.
+
+Earlier P1/P2 Source-admission refusals ran no CLI tests. P3 reached71 call passes but one teardown error; its failed16MiB claim stays retained. The new shared60-second Source-admission cutoff is inside one initial420-second acceptance deadline, with no renewal. CPU1, memory1536MiB, process4, storage16MiB, productive300 and ledger60 remain unchanged. This is no hard preemption or guaranteed worst-case setup/work envelope.
+
+The old C4 SDK timeout and abnormal owned-holder close remain historical failure evidence: no qualified worker report, actual underlying execution unobserved, and no normal Source@2 closure. Complete95/raw source-role execution, genuine SDK cleanup integration, parent delegation and completed-failure cleanup remain separate gates; the latter private proposals gain no qualification here. Runtime holds,119 owners,24 task states and physical200/next201/9,800 remaining at generation2of2 are preserved. No model, legal, Lean or native-corpus gain follows. [Selected71 exact evidence](../../../../workspace/test-logs/federal-corpus-audits/legal-ir-worktree-cleanup71-qualified-20261114-v01/qualification-summary.json).
+
+
 ## Trusted original-parent complete-candidate audit — 2026-11-14
 
 The full-candidate aggregation now has one public owner, `evaluate_complete_norm_candidate_syntax`, shared by the evaluator and the original parent. The parent accepts a trusted in-process `candidate_syntax_profile` opt-in for the existing v2/v3 candidate contracts. Execution packets v1–v10 cannot select it. The fixed CLI forwards it only when selected; defaults retain parent/v1 and typed-only auditing retains parent/v2. The opted parent/v3 publishes a separate hashed `candidate-syntax-audit.json` after the existing FINISH and genuine child-wait boundary, fresh query/TRAIN policy checks and final artifact reauthentication. Source/context/selection facts come only from the request-bound independent context artifact, never from reference targets. Original child artifacts are preserved.
