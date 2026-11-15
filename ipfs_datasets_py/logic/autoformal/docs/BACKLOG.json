@@ -21134,6 +21134,15 @@
         "LIR-14"
       ],
       "id": "LIR-23",
+      "relational_roundtrip_input_stability_20261115": {
+        "evidence_id": "relational-roundtrip-input-stability-20261115",
+        "source_only_passes": 431,
+        "new_cases": 4,
+        "mutable_scoring_inputs_detached_and_fenced": true,
+        "stable_score_schema_unchanged": true,
+        "inverse_receives_source_or_governing_fields": false,
+        "legal_or_model_or_proof_authority": false
+      },
       "supervisor_audited_parent_receipts_20261115": {
         "evidence_id": "supervisor-audited-parent-receipts-20261115",
         "source_only_passes": 93,

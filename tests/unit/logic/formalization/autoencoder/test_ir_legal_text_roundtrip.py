@@ -928,3 +928,52 @@ def test_corpus_endpoint_is_rechecked_after_prose_recompiler_callback(bundle):
     with pytest.raises(scorer.LegalTextRoundTripError):
         score(bundle, render_canonical=True, renderer=render_first,
             recompile_rendered=True, recompiler=callback)
+
+
+def test_relational_score_refuses_live_role_change_that_falsifies_prose_equality(monkeypatch):
+    from ipfs_datasets_py.logic.legal_ir import extended_compiler
+    expression,roles=_relational_score_reference()
+    candidate=_RELATIONAL_SCORE_TEXT.replace('server','sender').replace('addressee','recipient')
+    original=extended_compiler.compile_relational
+    def mutate_reference(text,*,profile):
+        parsed=original(text,profile=profile)
+        roles[0]['roles'][:]=parsed[1][0]['roles']
+        return parsed
+    monkeypatch.setattr(extended_compiler,'compile_relational',mutate_reference)
+    with pytest.raises(scorer.LegalTextRoundTripError,match='changed during'):
+        report=scorer.score_relational_legal_text_roundtrip(expression,candidate,
+            reference_argument_roles=roles,profile=RELATIONAL_PROSE_PROFILE)
+        # The unfenced implementation returns this contradictory witness.
+        assert report['measurements']['canonical_prose_exact'] is True
+        assert report['normalized_reference_prose']!=report['normalized_candidate_prose']
+        print(json.dumps(dict(false_canonical_prose_exact=report['measurements']['canonical_prose_exact'],
+            normalized_reference_prose=report['normalized_reference_prose'],normalized_candidate_prose=report['normalized_candidate_prose'])))
+
+
+@pytest.mark.parametrize('which',['reference','candidate'])
+def test_relational_score_refuses_governing_observation_change_during_inverse(monkeypatch,which):
+    from ipfs_datasets_py.logic.legal_ir import extended_compiler
+    expression,roles=_relational_score_reference()
+    reference={'governing_context':{'instrument_id':'fixture:one'},'definition_uses':[]}
+    candidate=clone(reference);original=extended_compiler.compile_relational
+    def mutate_observation(text,*,profile):
+        (reference if which=='reference' else candidate)['governing_context']['instrument_id']='fixture:changed-during-inverse'
+        return original(text,profile=profile)
+    monkeypatch.setattr(extended_compiler,'compile_relational',mutate_observation)
+    with pytest.raises(scorer.LegalTextRoundTripError,match='changed during'):
+        scorer.score_relational_legal_text_roundtrip(expression,_RELATIONAL_SCORE_TEXT,
+            reference_argument_roles=roles,profile=RELATIONAL_PROSE_PROFILE,
+            reference_governing_fields=reference,candidate_governing_fields=candidate)
+
+
+def test_relational_score_reference_inputs_are_detached_before_rendering(monkeypatch):
+    from ipfs_datasets_py.logic.legal_ir import extended_decompiler
+    expression,roles=_relational_score_reference();original=extended_decompiler.decompile_relational;seen=[]
+    def observe(value,*,argument_roles,profile):
+        seen.append((value is expression,argument_roles is roles))
+        return original(value,argument_roles=argument_roles,profile=profile)
+    monkeypatch.setattr(extended_decompiler,'decompile_relational',observe)
+    report=scorer.score_relational_legal_text_roundtrip(expression,_RELATIONAL_SCORE_TEXT,
+        reference_argument_roles=roles,profile=RELATIONAL_PROSE_PROFILE)
+    assert report['measurements']['canonical_prose_exact'] is True
+    assert seen and all(not original_ast and not original_roles for original_ast,original_roles in seen)

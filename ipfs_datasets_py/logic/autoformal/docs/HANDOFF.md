@@ -1,5 +1,13 @@
 # Current handoff
 
+## Stable relational roundtrip scoring inputs — 2026-11-15
+
+The existing relational prose scorer now detaches the canonical TypedExpression, ordered role ledger and scoring-only governing observations before rendering or inverse compilation. It checks both caller-owned and detached inputs before invoking the inverse and before returning a report. Mutations refuse the complete score rather than produce mixed-epoch measurements. Original source text and governing observations still stay off the inverse interface; no missing field is filled from the reference, and no parser, model or semantic interpretation is added. Stable score schemas and measurements remain unchanged.
+
+The defect was reproduced deterministically: an inverse callback changed the caller role ledger after reference rendering, and the scorer returned canonical_prose_exact=true while normalized_reference_prose and normalized_candidate_prose visibly differed. The original failed test and its contradictory JSON witness are retained. The fix passes **431 source-only cases with no failures or skips**: 137 scorer cases, 182 extended-decompiler cases and 112 relational-reconstruction cases. Four new controls cover the role contradiction, both governing-observation mutation directions and detached renderer inputs. All seven source/test pins stayed unchanged and no numerical runtime imported.
+
+This is an engineering score-integrity correction. It grants no legal equivalence, source correspondence, proof, training/gold, model quality, publication or resource authority. Actual statutory review, native proof and model fitting remain separate gates; private assets and existing budgets remain on hold/unchanged. [Exact captured sources, red witness and green results](../../../../workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-relational-score-input-fence-qualification-v01/qualification-summary.json).
+
 ## Reviewed context-set relation contract — 2026-11-15
 
 The existing relation-declaration, mask-handoff and joint-retriever owners now offer an explicit V4 relation-review domain with unchanged mixed-sort V3 endpoint admission. Distinct reviewed interpretations can share one relation ledger only after fresh pair review covers the exact sorted context union and every endpoint's membership. The new signing subject binds its context-set digest and a sixth review obligation. Existing single-context V2/V3 contracts retain their domains and checks; no relation or legal applicability is inferred from context overlap.

@@ -4479,12 +4479,22 @@
       ],
       "compatibility_dependency": false,
       "evidence_ids": [
+        "relational-roundtrip-input-stability-20261115",
         "source384-saved-original-text-roundtrip-qualified-20261026-01",
         "source384-joint-original-text-roundtrip-20261027-01",
         "relational-prose-ordinary-306-20261110"
       ],
       "guide": "docs/autoencoders/legal_original_text_roundtrip.md",
       "id": "legal-original-text-roundtrip",
+      "relational_roundtrip_input_stability_20261115": {
+        "evidence_id": "relational-roundtrip-input-stability-20261115",
+        "source_only_passes": 431,
+        "new_cases": 4,
+        "mutable_scoring_inputs_detached_and_fenced": true,
+        "stable_score_schema_unchanged": true,
+        "inverse_receives_source_or_governing_fields": false,
+        "legal_or_model_or_proof_authority": false
+      },
       "notes": "Index the existing public detached single-rule source384 original-text scorer once. Canonical rendering, semantic IR exactness and original UTF8 are separate; no new model, learned prose head, independent teacher or statutory authority. Additive same-row joint and four-cell metrics retain all old fields. Accepted same-input60 replay: IR3, UTF8/joint0, cells0/3/0/57; no new model. Separate owning regression qualification passed68cases/204phases with68scorerentries across67cases in the pinned realpytest/native profile. Six zero-case failures and their separate closeouts remain preserved; no legal/model-quality authority.",
       "owner_module": "ipfs_datasets_py.logic.formalization.autoencoder.ir_legal_text_roundtrip",
       "ownership_role": "existing_single_owner",
@@ -9393,6 +9403,15 @@
   "schema": "legal-autoformal-work-catalog/v1",
   "scope": "Curated current ownership/navigation with attributed saved evidence. Observations are snapshots, not future source-hash requirements or proof admission.",
   "selected_evidence": [
+    {
+      "id": "relational-roundtrip-input-stability-20261115",
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-relational-score-input-fence-qualification-v01/qualification-summary.json",
+      "root": "ipfs_datasets",
+      "observed_bytes": 4311,
+      "observed_sha256": "d280eeb356c2f02bde0c0fef21e420eb843bbea20d10c2ba83a9f0d0126b4f3c",
+      "status": "qualified_within_recorded_scope",
+      "scope": "431 source-only scorer/decompiler/reconstruction passes/4 new controls; reproduced false prose equality under reference-role mutation now refuses; scoring inputs detached/fenced. No model, legal, native-proof or resource qualification."
+    },
     {
       "id": "reviewed-context-set-relations-v4-20261115",
       "path": "docs/autoformalization/evidence/legal-ir-reviewed-context-v4-20261115.json",
