@@ -2164,3 +2164,262 @@ def test_reviewed_incremental_v4_detached_snapshot_must_match_independent_curren
         assert not (runtime["directory"] / "opening-snapshot-refused").exists()
     finally:
         control[subject].clear(); control[subject].update(original)
+
+
+# The following controls are fictional signed-source/software fixtures. The
+# existing AuthoredParentIncrementalCompiler supplies synthetic bytes/lifecycle
+# and axiom strings; none of these controls executes Lean or authenticates a
+# Native process, proof, legal interpretation, or reviewed statutory corpus.
+@pytest.fixture(scope="module")
+def reviewed_incremental_realization_v1(reviewed_incremental_component_v3):
+    control = dict(reviewed_incremental_component_v3)
+    control["realization"] = shared.prepare_reviewed_definition_realization_corpus_v1(
+        control["preparation"], control["graph"], control["admission"], *control["args"],
+        expected_preservation_sha256=shared.reviewed_preservation_corpus_sha256(control["preparation"]),
+        expected_graph_sha256=control["graph_sha"], expected_admission_sha256=control["admission_sha"],
+        toolchain=TOOLCHAIN, **control["kwargs"])
+    return control
+
+
+def build_reviewed_incremental_realization_v1(runtime, control, name, *, previous=None, **overrides):
+    arguments = dict(expected_realization_sha256=shared.reviewed_preservation_corpus_sha256(control["realization"]),
+        expected_preservation_sha256=shared.reviewed_preservation_corpus_sha256(control["preparation"]),
+        expected_graph_sha256=control["graph_sha"], expected_admission_sha256=control["admission_sha"],
+        toolchain=TOOLCHAIN, lake_executable=str(runtime["compiler"].lake),
+        output_directory=runtime["directory"] / name, **control["kwargs"])
+    if previous is not None:
+        raw = (previous[1] / "cache.json").read_bytes()
+        arguments.update(previous_cache_raw=raw, expected_previous_cache_sha256=sha(raw),
+            previous_artifacts=artifacts(previous))
+    arguments.update(overrides)
+    receipt = runtime["incremental"].build_incremental_reviewed_definition_realization_corpus_v1(
+        control["realization"], control["preparation"], control["graph"], control["admission"],
+        *control["args"], **arguments)
+    return receipt, runtime["directory"] / name
+
+
+def test_reviewed_incremental_realization_v1_preserves_all_old_children_and_cold_warm_complete_obligations(
+        reviewed_incremental_runtime_v3, reviewed_incremental_realization_v1):
+    runtime, control = reviewed_incremental_runtime_v3, reviewed_incremental_realization_v1
+    old = build_reviewed_incremental_v3(runtime, control, "old-independent-v3")
+    cold = build_reviewed_incremental_realization_v1(runtime, control, "realization-cold")
+    calls = len(runtime["compiler"].calls)
+    warm = build_reviewed_incremental_realization_v1(runtime, control, "realization-warm", previous=cold)
+    original, complete = control["preparation"].to_dict(), control["realization"].to_dict()
+    assert old[0]["build_passed"] is cold[0]["build_passed"] is warm[0]["build_passed"] is True
+    assert original["expected_modules"] == complete["expected_modules"][:-2]
+    assert len(original["expected_modules"]) == len(old[0]["compiled_modules"]) == 8
+    assert len(cold[0]["compiled_modules"]) == len(warm[0]["reused_modules"]) == 10
+    assert len(cold[0]["fresh_theorems"]) == len(warm[0]["reused_theorems"]) == 26
+    assert sorted(cold[0]["fresh_theorems"]) == sorted(complete["preservation_obligations"])
+    assert warm[0]["reused_theorems"] == cold[0]["fresh_theorems"]
+    assert warm[0]["compiled_modules"] == warm[0]["fresh_theorems"] == []
+    assert len(runtime["compiler"].calls) == calls
+    assert artifacts(cold) == artifacts(warm)
+    assert {name: artifacts(cold)[name] for name in original["expected_modules"]} == artifacts(old)
+    assert warm[0]["reviewed_preservation_sha256"] == shared.reviewed_preservation_corpus_sha256(control["preparation"])
+    assert warm[0]["expected_preparation_sha256"] == shared.reviewed_preservation_corpus_sha256(control["realization"])
+    assert warm[0]["reviewed_graph_sha256"] == control["graph_sha"]
+    assert warm[0]["reviewed_admission_sha256"] == control["admission_sha"]
+    saved = cache(warm)
+    assert saved["schema"] == runtime["incremental"].REALIZATION_CACHE_SCHEMA
+    assert saved["execution_contract"]["schema"] == runtime["incremental"].REALIZATION_CONTRACT_SCHEMA
+    assert saved["profile"] == runtime["incremental"].REALIZATION_PROFILE != cache(old)["profile"]
+    for row in saved["module_facts"]:
+        provenance = row["recipe"]["realization_provenance"]
+        binding = provenance["realization_binding"]
+        assert "reviewed_provenance" not in row["recipe"]
+        assert binding["units"] == original["units"]
+        assert binding["selection"] == complete["selection"]
+        assert binding["original_file_sha256"] == original["file_sha256"]
+        assert binding["producer_pins"] == complete["producer_pins"]
+        assert binding["native_producer_pins"] == complete["native_producer_pins"]
+    assert all(raw.startswith(b"authored-fake-olean-no-native-proof\0") for raw in artifacts(warm).values())
+    assert warm[0]["constructed_model_obligations_checked"] is True
+    assert warm[0]["composition_obligations_checked"] is False
+    assert warm[0]["fresh_proof_for_reused_modules"] is False
+    assert warm[0]["live_native_success_authenticated"] is warm[0]["original_success_authenticated"] is False
+    assert warm[0]["statutory_meaning_proved"] is warm[0]["release_ready"] is False
+    assert not any(warm[0]["authority"].values())
+    assert warm[0]["training_mask"] == warm[0]["evaluation_gold_mask"] == 0
+
+
+@pytest.mark.parametrize("pin", ["expected_realization_sha256", "expected_preservation_sha256",
+    "expected_graph_sha256", "expected_admission_sha256"])
+def test_reviewed_incremental_realization_v1_every_independent_pin_refuses_before_toolchain(
+        reviewed_incremental_runtime_v3, reviewed_incremental_realization_v1, pin):
+    runtime = reviewed_incremental_runtime_v3
+    with pytest.raises(ValueError):
+        build_reviewed_incremental_realization_v1(runtime, reviewed_incremental_realization_v1,
+            "realization-pin-refused", **{pin: "f" * 64})
+    assert runtime["compiler"].calls == []
+    assert not (runtime["directory"] / "realization-pin-refused").exists()
+
+
+@pytest.mark.parametrize("direction", ["v3-to-realization", "realization-to-v3"])
+def test_reviewed_incremental_realization_v1_never_retags_prior_cache_domains(
+        reviewed_incremental_runtime_v3, reviewed_incremental_realization_v1, direction):
+    runtime, control = reviewed_incremental_runtime_v3, reviewed_incremental_realization_v1
+    if direction == "v3-to-realization":
+        first = build_reviewed_incremental_v3(runtime, control, "v3-domain-original")
+        builder = build_reviewed_incremental_realization_v1
+    else:
+        first = build_reviewed_incremental_realization_v1(runtime, control, "realization-domain-original")
+        builder = build_reviewed_incremental_v3
+    before = len(runtime["compiler"].calls)
+    with pytest.raises(ValueError):
+        builder(runtime, control, "wrong-domain-refused", previous=first)
+    assert len(runtime["compiler"].calls) == before
+    assert not (runtime["directory"] / "wrong-domain-refused").exists()
+
+
+@pytest.mark.parametrize("facet", ["definition", "role", "sort"])
+def test_reviewed_incremental_realization_v1_genuine_corrected_meaning_invalidates_complete_binding(
+        reviewed_incremental_runtime_v3, reviewed_incremental_realization_v1, facet):
+    runtime, control = reviewed_incremental_runtime_v3, reviewed_incremental_realization_v1
+    cold = build_reviewed_incremental_realization_v1(runtime, control, "realization-correction-cold")
+    changed = reviewed_incremental_changed_component_v3(control, facet)
+    changed["realization"] = shared.prepare_reviewed_definition_realization_corpus_v1(
+        changed["preparation"], changed["graph"], changed["admission"], *changed["args"],
+        expected_preservation_sha256=shared.reviewed_preservation_corpus_sha256(changed["preparation"]),
+        expected_graph_sha256=changed["graph_sha"], expected_admission_sha256=changed["admission_sha"],
+        toolchain=TOOLCHAIN, **changed["kwargs"])
+    updated = build_reviewed_incremental_realization_v1(runtime, changed, "realization-correction-updated", previous=cold)
+    clean = build_reviewed_incremental_realization_v1(runtime, changed, "realization-correction-clean")
+    assert updated[0]["build_passed"] is clean[0]["build_passed"] is True
+    assert updated[0]["reused_modules"] == []  # full current source/review binding invalidates conservatively
+    assert artifacts(updated) == artifacts(clean)
+    assert updated[0]["artifact_root_cid"] == clean[0]["artifact_root_cid"]
+    assert len(updated[0]["fresh_theorems"]) == 26
+    before_binding = cache(cold)["module_facts"][0]["recipe"]["realization_provenance"]["realization_binding"]
+    after_binding = cache(updated)["module_facts"][0]["recipe"]["realization_provenance"]["realization_binding"]
+    assert before_binding["preservation_sha256"] != after_binding["preservation_sha256"]
+    assert before_binding["admission_sha256"] != after_binding["admission_sha256"]
+    if facet == "definition":
+        assert before_binding["selection"]["body_typed_sha256"] != after_binding["selection"]["body_typed_sha256"]
+    assert not (set(cold[0]["expected_modules"]) - set(clean[0]["expected_modules"])) & set(artifacts(updated))
+
+
+@pytest.mark.parametrize("change", ["compiler", "library"])
+def test_reviewed_incremental_realization_v1_compiler_or_library_change_invalidates_all_artifacts(
+        reviewed_incremental_runtime_v3, reviewed_incremental_realization_v1, change):
+    runtime, control = reviewed_incremental_runtime_v3, reviewed_incremental_realization_v1
+    cold = build_reviewed_incremental_realization_v1(runtime, control, "realization-toolchain-cold")
+    if change == "compiler":
+        runtime["compiler"].lean.write_bytes(b"authored-changed-compiler-no-native")
+    else:
+        runtime["compiler"].library_salt = "authored-changed-library-no-native"
+    updated = build_reviewed_incremental_realization_v1(runtime, control, "realization-toolchain-updated", previous=cold)
+    assert updated[0]["build_passed"] is True
+    assert updated[0]["reused_modules"] == []
+    assert updated[0]["compiled_modules"] == control["realization"].to_dict()["expected_modules"]
+
+
+@pytest.mark.parametrize("damage", ["missing-binding", "extra-binding-field", "body-digest", "source-occurrence",
+    "ordered-role", "unit-ordinal", "original-file-pin", "producer-pin", "missing-occurrence"])
+def test_reviewed_incremental_realization_v1_self_resealed_cache_cannot_remove_or_forge_complete_binding(
+        reviewed_incremental_runtime_v3, reviewed_incremental_realization_v1, damage):
+    from ipfs_datasets_py.utils.cid_utils import cid_for_dag_json
+    runtime, control = reviewed_incremental_runtime_v3, reviewed_incremental_realization_v1
+    cold = build_reviewed_incremental_realization_v1(runtime, control, "realization-provenance-cold")
+    saved = cache(cold)
+    fact = saved["module_facts"][-2]
+    provenance = fact["recipe"]["realization_provenance"]
+    binding = provenance["realization_binding"]
+    if damage == "missing-binding":
+        del provenance["realization_binding"]
+    elif damage == "extra-binding-field":
+        binding["unreviewed_identity_alias"] = "must refuse"
+    elif damage == "body-digest":
+        binding["selection"]["body_typed_sha256"] = "a" * 64
+        binding["selection_sha256"] = sha(canonical_dag_json_bytes(binding["selection"]))
+    elif damage == "source-occurrence":
+        binding["selection"]["occurrences"][0]["source_occurrence_cid"] = binding["units"][0]["source_occurrence_cid"]
+        binding["selection_sha256"] = sha(canonical_dag_json_bytes(binding["selection"]))
+    elif damage == "ordered-role":
+        binding["selection"]["occurrences"][0]["ordered_roles"] = ["supervisor"]
+        binding["selection_sha256"] = sha(canonical_dag_json_bytes(binding["selection"]))
+    elif damage == "unit-ordinal":
+        binding["units"][0]["ordinal"] = False
+    elif damage == "original-file-pin":
+        binding["original_file_sha256"][next(iter(binding["original_file_sha256"]))] = "wrong"
+    elif damage == "producer-pin":
+        binding["producer_pins"][next(iter(binding["producer_pins"]))] = "wrong"
+    else:
+        binding["selection"]["occurrences"].pop()
+        binding["selection_sha256"] = sha(canonical_dag_json_bytes(binding["selection"]))
+    fact["output"]["recipe_cid"] = cid_for_dag_json(fact["recipe"])
+    raw = canonical_dag_json_bytes(reseal(saved))
+    before = len(runtime["compiler"].calls)
+    with pytest.raises(ValueError):
+        build_reviewed_incremental_realization_v1(runtime, control, "realization-provenance-refused",
+            previous_cache_raw=raw, expected_previous_cache_sha256=sha(raw), previous_artifacts=artifacts(cold))
+    assert len(runtime["compiler"].calls) == before
+    assert not (runtime["directory"] / "realization-provenance-refused").exists()
+
+
+@pytest.mark.parametrize("damage", ["duplicate", "stderr_claim"])
+def test_reviewed_incremental_realization_v1_requires_exact_native_observation_for_new_theorems(
+        reviewed_incremental_runtime_v3, reviewed_incremental_realization_v1, monkeypatch, damage):
+    runtime, control = reviewed_incremental_runtime_v3, reviewed_incremental_realization_v1
+    compiler = runtime["compiler"]
+    original_run = compiler.run
+    model = control["realization"].to_dict()["expected_modules"][-2]
+    model_path = model.replace(".", "/") + ".lean"
+    assert model.startswith("LegalReviewedDefinitionRealization.Instance")
+    assert len(re.findall(r"^theorem ([A-Za-z0-9_]+)",
+        dict(control["realization"].files)[model_path], re.M)) == 11
+    selected = []
+    def damage_only_new_model(runner, request, **kwargs):
+        previous = compiler.axiom_damage
+        if request.argv[-1] == model_path:
+            selected.append(model)
+            compiler.axiom_damage = damage
+        try:
+            return original_run(runner, request, **kwargs)
+        finally:
+            compiler.axiom_damage = previous
+    monkeypatch.setattr(native.process.BoundedToolRunner, "run", damage_only_new_model)
+    result = build_reviewed_incremental_realization_v1(runtime, control, "realization-observation-refused")
+    assert selected == [model]
+    assert compiler.calls[-1]["module"] == model
+    assert set(control["preparation"].to_dict()["preservation_obligations"]) <= set(result[0]["fresh_theorems"])
+    assert result[0]["build_passed"] is False
+    assert cache(result)["qualified"] is False
+    assert result[0]["constructed_model_obligations_checked"] is False
+    assert result[0]["live_native_success_authenticated"] is False
+
+
+@pytest.mark.parametrize("subject", ["graph", "admission"])
+def test_reviewed_incremental_realization_v1_late_retention_callback_cannot_publish_changed_current_inputs(
+        reviewed_incremental_runtime_v3, reviewed_incremental_realization_v1, monkeypatch, subject):
+    runtime, original = reviewed_incremental_runtime_v3, reviewed_incremental_realization_v1
+    control = dict(original, graph=deepcopy(original["graph"]), admission=deepcopy(original["admission"]))
+    original_write = shared._write_compiled
+    seen = []
+    def change_after_retained_write(*args, **kwargs):
+        result = original_write(*args, **kwargs)
+        seen.append(True)
+        if subject == "admission":
+            control["admission"]["formal_assumptions"].append("Unreviewed late caller assumption.")
+        else:
+            control["graph"]["definition_use_records"][0]["use_unit_id"] += ":unreviewed"
+        return result
+    monkeypatch.setattr(shared, "_write_compiled", change_after_retained_write)
+    with pytest.raises(ValueError):
+        build_reviewed_incremental_realization_v1(runtime, control, "realization-late-input-refused")
+    assert seen == [True]
+    assert not (runtime["directory"] / "realization-late-input-refused" / "build-receipt.json").exists()
+
+
+@pytest.mark.parametrize("field", ["MAX_REVIEWED_PRESERVATION_FILES", "MAX_REVIEWED_PRESERVATION_MODULES",
+    "MAX_REVIEWED_PRESERVATION_OBLIGATIONS"])
+def test_reviewed_incremental_realization_v1_cannot_raise_shared_support_bounds(
+        reviewed_incremental_runtime_v3, reviewed_incremental_realization_v1, monkeypatch, field):
+    runtime = reviewed_incremental_runtime_v3
+    monkeypatch.setattr(shared, field, getattr(shared, field) + 1)
+    with pytest.raises(ValueError):
+        build_reviewed_incremental_realization_v1(runtime, reviewed_incremental_realization_v1,
+            "realization-bound-refused")
+    assert runtime["compiler"].calls == []
+    assert not (runtime["directory"] / "realization-bound-refused").exists()

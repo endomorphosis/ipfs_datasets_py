@@ -4035,3 +4035,214 @@ def test_reviewed_live_v3_installed_lean_late_execution_alias_drift_cannot_issue
         reviewed_live_build_v3_fixture(control, executable, output)
     assert reached == ["real-run-complete-binary-read"]
     assert tuple(native._LIVE_SUCCESS_HANDLES) == old_handles
+
+
+# Constructed-definition domain controls. Source/review fixtures are fictional;
+# synthetic_compiler supplies authored metadata only, never Native proof credit.
+@pytest.fixture
+def reviewed_realization_native_control_v1(reviewed_native_control_v3):
+    control = dict(reviewed_native_control_v3)
+    control["preservation"] = control["preparation"]
+    control["preparation"] = control["shared"].prepare_reviewed_definition_realization_corpus_v1(
+        control["preservation"], control["graph"], control["admission"], *control["args"],
+        expected_preservation_sha256=control["shared"].reviewed_preservation_corpus_sha256(control["preservation"]),
+        expected_graph_sha256=control["graph_sha"], expected_admission_sha256=control["admission_sha"],
+        toolchain=TOOLCHAIN, **control["kwargs"])
+    return control
+
+
+def reviewed_realization_native_arguments_v1(control):
+    return dict(expected_realization_sha256=control["shared"].reviewed_preservation_corpus_sha256(control["preparation"]),
+        expected_preservation_sha256=control["shared"].reviewed_preservation_corpus_sha256(control["preservation"]),
+        expected_graph_sha256=control["graph_sha"], expected_admission_sha256=control["admission_sha"],
+        toolchain=TOOLCHAIN, **control["kwargs"])
+
+
+def reviewed_realization_native_validate_v1(control, **changes):
+    return native.validate_reviewed_definition_realization_native_v1(control["preparation"], control["preservation"],
+        control["graph"], control["admission"], *control["args"],
+        **(reviewed_realization_native_arguments_v1(control) | changes))
+
+
+def reviewed_realization_native_build_v1(control, executable, output, **changes):
+    return native.build_reviewed_definition_realization_native_v1(control["preparation"], control["preservation"],
+        control["graph"], control["admission"], *control["args"],
+        **(reviewed_realization_native_arguments_v1(control) | dict(lake_executable=str(executable),
+            output_directory=output, timeout_seconds=12) | changes))
+
+
+def test_realization_native_validation_replays_both_envelopes_without_a_compiler(
+        reviewed_realization_native_control_v1, monkeypatch):
+    c = reviewed_realization_native_control_v1
+    reviewed_retained_no_tools_v2(monkeypatch)
+    assert reviewed_realization_native_validate_v1(c) == c["preparation"]
+    m = c["preparation"].to_dict()
+    assert len(m["units"]) == 3 and len(m["preservation_obligations"]) == 26
+    assert len(m["realization_obligations"]) == 11 and len(m["expected_modules"]) == 10
+    assert len(c["preparation"].files) == 39
+    old = dict(c, preparation=c["preservation"])
+    assert reviewed_native_validate_v3(old) == c["preservation"]
+    with pytest.raises(ValueError):
+        native.validate_reviewed_norm_preservation_native_v3(c["preparation"], c["graph"], c["admission"],
+            *c["args"], **reviewed_native_arguments_v3(c))
+
+
+@pytest.mark.parametrize("pin", ["expected_realization_sha256", "expected_preservation_sha256",
+    "expected_graph_sha256", "expected_admission_sha256"])
+def test_realization_native_malformed_independent_pins_refuse_before_owners(
+        reviewed_realization_native_control_v1, monkeypatch, pin):
+    monkeypatch.setattr(native, "_owners", lambda: pytest.fail("malformed pin reached operation imports"))
+    with pytest.raises(ValueError, match="independent lowercase SHA256"):
+        reviewed_realization_native_validate_v1(reviewed_realization_native_control_v1, **{pin: "not-a-sha256"})
+
+
+def test_realization_native_authored_runner_keeps_complete_new_domain_and_empty_axiom_inventory(
+        reviewed_realization_native_control_v1, synthetic_compiler, tmp_path):
+    c = reviewed_realization_native_control_v1
+    executable, calls = synthetic_compiler(c["preparation"], stdout=reviewed_native_stdout_v2(c["preparation"]))
+    output = tmp_path / "authored-realization-packet"
+    receipt = reviewed_realization_native_build_v1(c, executable, output)
+    assert len(calls) == 1  # Synthetic protocol invocation, not a compiler process.
+    assert receipt["schema"] == native.REVIEWED_DEFINITION_REALIZATION_BUILD_SCHEMA
+    assert receipt["profile"] == native.REVIEWED_DEFINITION_REALIZATION_NATIVE_PROFILE
+    assert receipt["build_passed"] is receipt["axiom_observations_passed"] is True
+    assert receipt["constructed_model_only"] is True and receipt["preservation_only"] is False
+    assert receipt["reviewed_preservation_sha256"] == c["shared"].reviewed_preservation_corpus_sha256(c["preservation"])
+    assert receipt["conditional_theorems"] == c["preparation"].to_dict()["preservation_obligations"]
+    assert len(receipt["compiled_modules"]) == 10 and len(receipt["executed_project_sha256"]) == 39
+    assert len(receipt["theorem_axiom_dependencies"]) == 26
+    assert all(value == [] for value in receipt["theorem_axiom_dependencies"].values())
+    assert receipt["cross_unit_definition_application_proved"] is receipt["statutory_meaning_proved"] is False
+    assert all(value is False for value in receipt["authority"].values())
+    assert receipt["training_mask"] == receipt["evaluation_gold_mask"] == 0
+    assert native.reviewed_definition_realization_receipt_bytes_v1(receipt) == (output / "build-receipt.json").read_bytes()
+    with pytest.raises(ValueError):
+        native.reviewed_norm_preservation_receipt_bytes_v3(receipt)
+
+
+@pytest.mark.parametrize("facet", ["original", "body-source", "definition-model", "occurrence-source", "occurrence-body", "whole-child"])
+def test_realization_native_requires_old_and_every_new_obligation_class(
+        reviewed_realization_native_control_v1, synthetic_compiler, tmp_path, facet):
+    c = reviewed_realization_native_control_v1
+    lines = reviewed_native_stdout_v2(c["preparation"]).splitlines()
+    marker = {"original": ".native_value_exact", "body-source": ".definition_body_source_exact",
+        "definition-model": ".definition_realized", "occurrence-source": ".occurrence_1_source_exact",
+        "occurrence-body": ".occurrence_2_matches_body", "whole-child": ".unit_1_preservation_under_realization"}[facet]
+    index = next(i for i, line in enumerate(lines) if marker in line)
+    lines.pop(index)
+    executable, calls = synthetic_compiler(c["preparation"], stdout="\n".join(lines) + "\n")
+    receipt = reviewed_realization_native_build_v1(c, executable, tmp_path / ("missing-realization-" + facet))
+    assert len(calls) == 1 and receipt["build_passed"] is receipt["axiom_observations_passed"] is False
+    assert receipt["proof_checked"] is False
+
+
+@pytest.mark.parametrize("damage", ["new-module", "old-module", "source"])
+def test_realization_native_requires_all_old_new_artifacts_and_exact_executed_sources(
+        reviewed_realization_native_control_v1, synthetic_compiler, tmp_path, damage):
+    c = reviewed_realization_native_control_v1
+    def edit(outputs, artifacts, sources):
+        if damage == "new-module": outputs.pop(artifacts[-2])
+        elif damage == "old-module": outputs.pop(artifacts[0])
+        else: outputs[sources[-1]] += b" changed exact execution input"
+    executable, calls = synthetic_compiler(c["preparation"], stdout=reviewed_native_stdout_v2(c["preparation"]), output_edit=edit)
+    receipt = reviewed_realization_native_build_v1(c, executable, tmp_path / ("incomplete-realization-" + damage))
+    assert len(calls) == 1 and receipt["build_passed"] is receipt["proof_checked"] is False
+
+
+def test_realization_retained_authored_packet_replays_without_new_execution_or_live_authority(
+        reviewed_realization_native_control_v1, synthetic_compiler, monkeypatch, tmp_path):
+    c = reviewed_realization_native_control_v1
+    executable, calls = synthetic_compiler(c["preparation"], stdout=reviewed_native_stdout_v2(c["preparation"]))
+    output = tmp_path / "authored-realization-retained"
+    receipt = reviewed_realization_native_build_v1(c, executable, output)
+    packet = reviewed_live_success_packet_v2(output)
+    before = deepcopy((receipt, packet, c["graph"], c["admission"]))
+    reviewed_retained_no_tools_v2(monkeypatch)
+    options = reviewed_realization_native_arguments_v1(c) | dict(
+        expected_receipt_sha256=sha(dict(packet)["build-receipt.json"]),
+        expected_packet_sha256=native.reviewed_definition_realization_packet_sha256_v1(packet),
+        expected_binary_sha256=receipt["binary_sha256"], observation_profile=native._REVIEWED_REPLAY_FICTIONAL)
+    replay = native.load_reviewed_definition_realization_native_v1(packet, c["preparation"], c["preservation"],
+        c["graph"], c["admission"], *c["args"], **options)
+    assert len(calls) == 1 and replay["retained_observations_consistent"] is True
+    assert replay["current_complete_semantics_replayed"] is True and replay["constructed_model_only"] is True
+    assert replay["obligations"] == c["preparation"].to_dict()["preservation_obligations"]
+    assert replay["native_execution_authenticated"] is replay["live_native_success_authenticated"] is False
+    assert replay["native_execution_performed"] is replay["olean_kernel_rechecked"] is False
+    assert all(value is False for value in replay["authority"].values())
+    assert before == (receipt, packet, c["graph"], c["admission"])
+    with pytest.raises(ValueError):
+        native.load_reviewed_definition_realization_native_v1(packet, c["preparation"], c["preservation"],
+            c["graph"], c["admission"], *c["args"], **(options | dict(observation_profile=native._REVIEWED_REPLAY_ACTUAL)))
+    with pytest.raises(ValueError):
+        native.load_reviewed_norm_preservation_native_v3(packet, c["preparation"], c["graph"], c["admission"],
+            *c["args"], **(reviewed_native_arguments_v3(c) | dict(
+                expected_receipt_sha256=sha(dict(packet)["build-receipt.json"]),
+                expected_packet_sha256=native.reviewed_norm_preservation_packet_sha256_v3(packet),
+                expected_binary_sha256=receipt["binary_sha256"], observation_profile=native._REVIEWED_REPLAY_FICTIONAL)))
+
+
+@pytest.mark.parametrize("timeout", [0, -1, 61, float("nan"), True])
+def test_realization_live_invalid_timeout_refuses_before_owners(monkeypatch, timeout):
+    monkeypatch.setattr(native, "_owners", lambda: pytest.fail("invalid timeout reached owners"))
+    with pytest.raises(ValueError, match="finite compiler timeout"):
+        native.build_verified_reviewed_definition_realization_native_v1(None, None, {}, {},
+            expected_realization_sha256="1" * 64, expected_preservation_sha256="2" * 64,
+            expected_graph_sha256="3" * 64, expected_admission_sha256="4" * 64, toolchain=TOOLCHAIN,
+            lake_executable="unopened", output_directory="uncreated", timeout_seconds=timeout)
+
+
+@pytest.mark.parametrize("handle_kind", ["none", "dict", "object", "unissued"])
+def test_realization_live_does_not_accept_caller_or_old_domain_success(monkeypatch, handle_kind):
+    handles = {"none": None, "dict": {"native_execution_authenticated": True}, "object": object(),
+        "unissued": object.__new__(native.VerifiedReviewedPreservationNativeSuccess)}
+    monkeypatch.setattr(native, "_owners", lambda: pytest.fail("unissued handle reached owners"))
+    with pytest.raises(ValueError, match="not issued by this process and native thread"):
+        native.load_verified_reviewed_definition_realization_native_v1(handles[handle_kind], (), None, None, {}, {},
+            expected_receipt_sha256="1" * 64, expected_packet_sha256="2" * 64, expected_binary_sha256={},
+            expected_realization_sha256="3" * 64, expected_preservation_sha256="4" * 64,
+            expected_graph_sha256="5" * 64, expected_admission_sha256="6" * 64, toolchain=TOOLCHAIN)
+
+
+def test_realization_native_late_source_mutation_after_genuine_shared_replay_refuses(
+        reviewed_realization_native_control_v1, monkeypatch):
+    c = reviewed_realization_native_control_v1
+    original = c["shared"].validate_reviewed_definition_realization_corpus_v1
+    observed = []
+    def replay_then_mutate(*args, **kwargs):
+        result = original(*args, **kwargs)
+        observed.append(True)
+        unit = c["case"]["declaration"]["units"][1]["unit_id"]
+        c["kwargs"]["preparation_inputs"]["source_inputs"][unit]["raw_bytes"] += b" changed after genuine replay"
+        return result
+    monkeypatch.setattr(c["shared"], "validate_reviewed_definition_realization_corpus_v1", replay_then_mutate)
+    reviewed_retained_no_tools_v2(monkeypatch)
+    with pytest.raises(ValueError, match="changed"):
+        reviewed_realization_native_validate_v1(c)
+    assert observed
+
+
+def test_realization_native_installed_lean_uses_existing_verified_owner_and_all26_obligations(
+        bound_norm_installed_lake, reviewed_realization_native_control_v1, tmp_path):
+    # The pre-existing admitted Native fixture owns opt-in, toolchain and resources.
+    # Ordinary source runs skip here; no synthetic boundary may satisfy this case.
+    executable, binary_pins = bound_norm_installed_lake
+    c = reviewed_realization_native_control_v1
+    output = tmp_path / "actual-original-realization"
+    handle = native.build_verified_reviewed_definition_realization_native_v1(c["preparation"], c["preservation"],
+        c["graph"], c["admission"], *c["args"], **(reviewed_realization_native_arguments_v1(c) | dict(
+            lake_executable=str(executable), output_directory=output, timeout_seconds=60)))
+    packet = reviewed_live_success_packet_v2(output)
+    receipt = json.loads(dict(packet)["build-receipt.json"])
+    assert receipt["binary_sha256"] == binary_pins and receipt["build_passed"] is True
+    assert len(receipt["compiled_modules"]) == 10 and len(receipt["theorem_axiom_dependencies"]) == 26
+    assert all(value == [] for value in receipt["theorem_axiom_dependencies"].values())
+    joined = native.load_verified_reviewed_definition_realization_native_v1(handle, packet,
+        c["preparation"], c["preservation"], c["graph"], c["admission"], *c["args"],
+        **(reviewed_realization_native_arguments_v1(c) | dict(expected_receipt_sha256=sha(dict(packet)["build-receipt.json"]),
+            expected_packet_sha256=native.reviewed_definition_realization_packet_sha256_v1(packet),
+            expected_binary_sha256=binary_pins)))
+    assert joined["live_native_success_authenticated"] is True and joined["constructed_model_only"] is True
+    assert joined["original_admitted_parent_custody_authenticated"] is False
+    assert joined["cross_unit_definition_application_proved"] is joined["statutory_meaning_proved"] is False
+    assert all(value is False for value in joined["authority"].values())

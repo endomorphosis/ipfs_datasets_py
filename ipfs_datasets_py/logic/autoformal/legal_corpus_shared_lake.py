@@ -1593,9 +1593,11 @@ def _reviewed_definition_realization_lean(selection, units, native, module):
         + obj + ".emptyEnvironment " + binder + " entity) t\n"
         + "def realizedObjectAtoms " + obj_parameters + " (name : String) (values : List (String × Object)) (t : Nat) : Prop :=\n"
         + "  if name = " + head + " then\n"
-        + "    match values with\n"
-        + "    | [(label, entity)] => if label = " + role + " then bodyAt base atoms entity t else False\n"
-        + "    | _ => False\n"
+        + "    List.casesOn (motive := fun _ => Prop) values False (fun pair rest =>\n"
+        + "      List.casesOn (motive := fun _ => Prop) rest\n"
+        + "        (Prod.casesOn (motive := fun _ => Prop) pair (fun label entity =>\n"
+        + "          if label = " + role + " then bodyAt base atoms entity t else False))\n"
+        + "        (fun _ _ => False))\n"
         + "  else atoms name values t\n")
     if any(unit["child_family"] == "tdfol" for unit in units):
         body += ("def realizedMixedAtoms {Object Agent EventFrame TimeFrame : Type}\n"
@@ -1603,9 +1605,14 @@ def _reviewed_definition_realization_lean(selection, units, native, module):
         + "    (mixedAtoms : " + mix_atoms + ") (name : String)\n"
         + "    (values : List (String × (" + mix_type + "))) (t : Nat) : Prop :=\n"
         + "  if name = " + head + " then\n"
-        + "    match values with\n"
-        + "    | [(label, Sum.inr (Sum.inl entity))] => if label = " + role + " then bodyAt base atoms entity t else False\n"
-        + "    | _ => False\n"
+        + "    List.casesOn (motive := fun _ => Prop) values False (fun pair rest =>\n"
+        + "      List.casesOn (motive := fun _ => Prop) rest\n"
+        + "        (Prod.casesOn (motive := fun _ => Prop) pair (fun label value =>\n"
+        + "          Sum.casesOn (motive := fun _ => Prop) value (fun _ => False) (fun objectOrEvent =>\n"
+        + "            Sum.casesOn (motive := fun _ => Prop) objectOrEvent\n"
+        + "              (fun entity => if label = " + role + " then bodyAt base atoms entity t else False)\n"
+        + "              (fun _ => False))))\n"
+        + "        (fun _ _ => False))\n"
         + "  else mixedAtoms name values t\n")
     # Logical child projection is independent of atom rendering.  Every use
     # witness is tied to the ORIGINAL complete child AST at its reviewed path.
@@ -1623,17 +1630,25 @@ def _reviewed_definition_realization_lean(selection, units, native, module):
                 any(unit["child_family"] == "tdfol" for unit in units))):
         if not enabled:
             continue
-        body += "def " + prefix + "FormulaChild : " + type_name + " → Nat → Option " + type_name + "\n"
+        # Explicit recursors keep the source projection constructive without
+        # equation-compiler recursion over a changing source accumulator.
+        body += ("def " + prefix + "FormulaChild (source : " + type_name + ") (index : Nat) : Option " + type_name + " :=\n"
+            + "  " + type_name + ".casesOn (motive := fun _ => Option " + type_name + ") source\n"
+            + "    (fun _ _ _ => none)\n")
+        if prefix == "mixed":
+            body += "    (fun _ _ _ => none)\n"
         for constructor, fields, _ in constructors:
             if "left right" in fields:
-                body += "  | ." + constructor + " " + fields + ", 0 => some left\n"
-                body += "  | ." + constructor + " " + fields + ", 1 => some right\n"
+                branch = "Nat.casesOn index (some left) (fun rest => Nat.casesOn rest (some right) (fun _ => none))"
             else:
-                body += "  | ." + constructor + " " + fields + ", 0 => some body\n"
-        body += "  | _, _ => none\n"
-        body += ("def " + prefix + "FormulaAt (source : " + type_name + ") : List Nat → Option " + type_name + "\n"
-            + "  | [] => some source\n"
-            + "  | index :: rest => (" + prefix + "FormulaChild source index).bind (fun child => " + prefix + "FormulaAt child rest)\n")
+                branch = "Nat.casesOn index (some body) (fun _ => none)"
+            body += "    (fun " + fields + " => " + branch + ")\n"
+        body += ("noncomputable def " + prefix + "FormulaAt (source : " + type_name + ") (path : List Nat) : Option " + type_name + " :=\n"
+            + "  List.rec (motive := fun _ => " + type_name + " → Option " + type_name + ")\n"
+            + "    (fun node => some node)\n"
+            + "    (fun index _ descend node =>\n"
+            + "      Option.casesOn (motive := fun _ => Option " + type_name + ") (" + prefix + "FormulaChild node index)\n"
+            + "        none (fun child => descend child)) path source\n")
     theorems, entries = [], []
 
     def theorem(name, statement, proof, binding):

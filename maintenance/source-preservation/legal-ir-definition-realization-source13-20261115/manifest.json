@@ -1,0 +1,136 @@
+{
+  "incoming_main_compatibility": "Current remote main8336 includes9789 source-use changes to these same canonical owners. Old Root whole-file bytes must never overwrite those changes. The archived peer6 candidates attempt composition but are unqualified until independent current-source tests and Native validation.",
+  "no_models_archives_checkpoint_binaries_or_runtime_logs": true,
+  "no_runtime_execution_authorized": true,
+  "peer6_unqualified": [
+    {
+      "canonical_source_ref": {
+        "bytes": 313683,
+        "path": "/tmp/datasets-reviewed-source-use-main-20261115/ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_native_v2.py",
+        "sha256": "edd185d42bec9627cab84d05c3617b00769850c8d6f5104655d5089ea250bd7c"
+      },
+      "git_mode": "100644",
+      "relative_path": "workspace/test-logs/federal-corpus-audits/legal-ir-source-donation-reviewed-baselines-20261115-v01/merged-reviewed-source-use-realization-UNQUALIFIED-v01/ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_native_v2.py",
+      "variant": "source-use-compatible merged realization UNQUALIFIED"
+    },
+    {
+      "canonical_source_ref": {
+        "bytes": 115699,
+        "path": "/tmp/datasets-reviewed-source-use-main-20261115/ipfs_datasets_py/logic/autoformal/legal_corpus_incremental.py",
+        "sha256": "24debeb97181ab0d45cdc35a080e209fcefcc5c7f430e619e3da5bd8393dff41"
+      },
+      "git_mode": "100644",
+      "relative_path": "workspace/test-logs/federal-corpus-audits/legal-ir-source-donation-reviewed-baselines-20261115-v01/merged-reviewed-source-use-realization-UNQUALIFIED-v01/ipfs_datasets_py/logic/autoformal/legal_corpus_incremental.py",
+      "variant": "source-use-compatible merged realization UNQUALIFIED"
+    },
+    {
+      "canonical_source_ref": {
+        "bytes": 135507,
+        "path": "/tmp/datasets-reviewed-source-use-main-20261115/ipfs_datasets_py/logic/autoformal/legal_corpus_shared_lake.py",
+        "sha256": "b8ad46e1d784f1ac729580cde6c0d4ec20d80df7ae816215b7e367ef919828df"
+      },
+      "git_mode": "100644",
+      "relative_path": "workspace/test-logs/federal-corpus-audits/legal-ir-source-donation-reviewed-baselines-20261115-v01/merged-reviewed-source-use-realization-UNQUALIFIED-v01/ipfs_datasets_py/logic/autoformal/legal_corpus_shared_lake.py",
+      "variant": "source-use-compatible merged realization UNQUALIFIED"
+    },
+    {
+      "canonical_source_ref": {
+        "bytes": 271544,
+        "path": "/tmp/datasets-reviewed-source-use-main-20261115/tests/unit/logic/autoformal/test_legal_corpus_definition_use_native_v2.py",
+        "sha256": "205bec94dbf4631742be20289ed2bbc3b547ec5143c766f158e3d7602ac0d6dd"
+      },
+      "git_mode": "100644",
+      "relative_path": "workspace/test-logs/federal-corpus-audits/legal-ir-source-donation-reviewed-baselines-20261115-v01/merged-reviewed-source-use-realization-UNQUALIFIED-v01/tests/unit/logic/autoformal/test_legal_corpus_definition_use_native_v2.py",
+      "variant": "source-use-compatible merged realization UNQUALIFIED"
+    },
+    {
+      "canonical_source_ref": {
+        "bytes": 160413,
+        "path": "/tmp/datasets-reviewed-source-use-main-20261115/tests/unit/logic/autoformal/test_legal_corpus_incremental.py",
+        "sha256": "58fda1e166827445bb4eba115d5a91dacef00a9d7eb77d5f0c75d244856c391d"
+      },
+      "git_mode": "100644",
+      "relative_path": "workspace/test-logs/federal-corpus-audits/legal-ir-source-donation-reviewed-baselines-20261115-v01/merged-reviewed-source-use-realization-UNQUALIFIED-v01/tests/unit/logic/autoformal/test_legal_corpus_incremental.py",
+      "variant": "source-use-compatible merged realization UNQUALIFIED"
+    },
+    {
+      "canonical_source_ref": {
+        "bytes": 178476,
+        "path": "/tmp/datasets-reviewed-source-use-main-20261115/tests/unit/logic/autoformal/test_legal_corpus_shared_lake.py",
+        "sha256": "d7ea33e002d316b719b889ed6474a32379b8e2ee3910ffb7de8dbf7a6159e129"
+      },
+      "git_mode": "100644",
+      "relative_path": "workspace/test-logs/federal-corpus-audits/legal-ir-source-donation-reviewed-baselines-20261115-v01/merged-reviewed-source-use-realization-UNQUALIFIED-v01/tests/unit/logic/autoformal/test_legal_corpus_shared_lake.py",
+      "variant": "source-use-compatible merged realization UNQUALIFIED"
+    }
+  ],
+  "private_assets_on_hold": true,
+  "qualification_status": "All prior receipts keep their exact source epochs; no automatic software/Native/legal/model/corpus qualification transfer.",
+  "root7": [
+    {
+      "canonical_source_ref": {
+        "bytes": 295584,
+        "path": "/tmp/datasets-publish-main-20261114/ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_native_v2.py",
+        "sha256": "e2adfb0f674a6d5d558ff1e862aa04740b0d62ad2bed9364902adbdd89c5e5ca"
+      },
+      "git_mode": "100644",
+      "relative_path": "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_native_v2.py"
+    },
+    {
+      "canonical_source_ref": {
+        "bytes": 104540,
+        "path": "/tmp/datasets-publish-main-20261114/ipfs_datasets_py/logic/autoformal/legal_corpus_incremental.py",
+        "sha256": "a752d3caae1bbcdfd25eabfca8d818982f840076fac847290eaf234e8e2e335b"
+      },
+      "git_mode": "100644",
+      "relative_path": "ipfs_datasets_py/logic/autoformal/legal_corpus_incremental.py"
+    },
+    {
+      "canonical_source_ref": {
+        "bytes": 126370,
+        "path": "/tmp/datasets-publish-main-20261114/ipfs_datasets_py/logic/autoformal/legal_corpus_shared_lake.py",
+        "sha256": "7284dff2e1d419d51a4487cd78836e77a887120e3e0d35e6272e45e415acd580"
+      },
+      "git_mode": "100644",
+      "relative_path": "ipfs_datasets_py/logic/autoformal/legal_corpus_shared_lake.py"
+    },
+    {
+      "canonical_source_ref": {
+        "bytes": 243277,
+        "path": "/tmp/datasets-publish-main-20261114/tests/unit/logic/autoformal/test_legal_corpus_definition_use_native_v2.py",
+        "sha256": "fa590ad9b21721b1f8cc83faec5839ed836b70aa551a0d1f7f66613e73069d84"
+      },
+      "git_mode": "100644",
+      "relative_path": "tests/unit/logic/autoformal/test_legal_corpus_definition_use_native_v2.py"
+    },
+    {
+      "canonical_source_ref": {
+        "bytes": 137735,
+        "path": "/tmp/datasets-publish-main-20261114/tests/unit/logic/autoformal/test_legal_corpus_incremental.py",
+        "sha256": "137b32dde0269a97a11a8491b1d0a842ff427e8e8cd70212ea1241bcab75371b"
+      },
+      "git_mode": "100644",
+      "relative_path": "tests/unit/logic/autoformal/test_legal_corpus_incremental.py"
+    },
+    {
+      "canonical_source_ref": {
+        "bytes": 148240,
+        "path": "/tmp/datasets-publish-main-20261114/tests/unit/logic/autoformal/test_legal_corpus_shared_lake.py",
+        "sha256": "37a01e1da51d93c73eef538b5fcf880fdea3e71fd622f22845ca51abde1fafc3"
+      },
+      "git_mode": "100644",
+      "relative_path": "tests/unit/logic/autoformal/test_legal_corpus_shared_lake.py"
+    },
+    {
+      "canonical_source_ref": {
+        "bytes": 27287,
+        "path": "/tmp/datasets-publish-main-20261114/tests/unit/logic/autoformal/test_legal_reviewed_norm_admission_v3.py",
+        "sha256": "2952d416d1783751112c67cad5945e0cf5dc9fc6f042f1a3c8476d2d26b6bc91"
+      },
+      "git_mode": "100644",
+      "relative_path": "tests/unit/logic/autoformal/test_legal_reviewed_norm_admission_v3.py"
+    }
+  ],
+  "schema": "source13-offbox-preservation-manifest/v1",
+  "scope": "Seven Root source versions and six distinct source-use-compatible peer merge candidates, plus this manifest. Preservation does not promote either variant to main."
+}

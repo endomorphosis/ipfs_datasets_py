@@ -2262,7 +2262,13 @@ def test_reviewed_definition_realization_source_anchors_original_body_and_each_o
         assert "theorem occurrence_" + n + "_matches_body" in source
         whole = ".typedMixedAst" if row["relational_profile"] == "authored-many-sorted-relational-deontic/v1" else ".typedSourceAst"
         assert row["instance_module"] + whole in source
-    assert "Sum.inr (Sum.inl entity)" in source
+    # The same right/left Object injection is destructured constructively.
+    assert "Sum.casesOn (motive := fun _ => Prop) value (fun _ => False) (fun objectOrEvent =>" in source
+    assert "Sum.casesOn (motive := fun _ => Prop) objectOrEvent" in source
+    assert "(fun entity => if label = \"officer\" then bodyAt base atoms entity t else False)" in source
+    assert "List.rec (motive := fun _ => LegalRelationalAstPreservation.RoleFormula" in source
+    assert "List.rec (motive := fun _ => LegalMixedRelationalAstPreservation.MixedFormula" in source
+    assert re.search(r"\b(?:propext|funext|Classical|unsafe|partial|hDefinition|hMembership|hAlias)\b|\bEq\.(?:mp|mpr|rec|ndrec)\b|\bcast\b", source) is None
     assert "(t : Nat)" in source
     assert "(hDefinition" not in source and "(hMembership" not in source and "(hAlias" not in source
     assert re.search(r"(?m)^\s*(axiom|sorry|admit)\b", source) is None
@@ -2535,3 +2541,48 @@ def test_reviewed_definition_realization_reused_policy_callback_cannot_hide_boun
     with pytest.raises(ValueError, match="changed during operation"):
         reviewed_definition_realization_prepare(control)
     assert observed["rendered"] is True
+
+
+@pytest.mark.parametrize("prefix,namespace,type_name", [
+    ("object", "LegalRelationalAstPreservation", "RoleFormula"),
+    ("mixed", "LegalMixedRelationalAstPreservation", "MixedFormula"),
+])
+def test_reviewed_definition_realization_selector_branches_follow_original_inductive_order(
+        reviewed_definition_realization_control, prefix, namespace, type_name):
+    """Check the adapter against original child types, without claiming Lean proof.
+
+    The independent unchanged child inductive defines constructor/field order.
+    This guards recursor argument drift, including unselected logical children;
+    the separate actual Native check must still inspect every theorem's axioms.
+    """
+    prepared = reviewed_definition_realization_control["realization"]
+    manifest, files = prepared.to_dict(), dict(prepared.files)
+    original = files[namespace.replace(".", "/") + "/Semantics.lean"]
+    header = original.split("inductive " + type_name + " where\n", 1)[1].split("\ndef ", 1)[0]
+    constructors = []
+    for line in header.splitlines():
+        if not line.startswith("  | "):
+            continue
+        fields = []
+        for names, field_type in re.findall(r"\(([^:()]+) : ([^()]+)\)", line):
+            fields.extend((name, field_type) for name in names.split())
+        constructors.append((line.split()[1], fields))
+    assert len(constructors) == (9 if prefix == "object" else 10)
+    model = manifest["expected_modules"][-2]
+    emitted = files[model.replace(".", "/") + ".lean"]
+    selector = emitted.split("def " + prefix + "FormulaChild ", 1)[1].split("\nnoncomputable def " + prefix + "FormulaAt ", 1)[0]
+    branches = [line.strip() for line in selector.splitlines() if line.startswith("    (fun ")]
+    assert len(branches) == len(constructors)
+    for (constructor, fields), branch in zip(constructors, branches, strict=True):
+        formals, _, result = branch.removeprefix("(fun ").partition(" => ")
+        children = [name for name, field_type in fields if field_type == type_name]
+        expected = [name if field_type == type_name else "_" for name, field_type in fields]
+        assert formals.split() == expected, constructor
+        if not children:
+            assert result == "none)", constructor
+        else:
+            # The independent source constructor's left-to-right logical child
+            # sequence is the index0/index1 sequence. All later indices refuse.
+            assert re.findall(r"\(some ([A-Za-z]+)\)", result) == children, constructor
+            assert result.count("Nat.casesOn") == len(children), constructor
+            assert result.endswith("(fun _ => none)" + ")" * len(children)), constructor

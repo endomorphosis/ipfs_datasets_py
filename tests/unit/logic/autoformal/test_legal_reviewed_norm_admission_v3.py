@@ -67,7 +67,7 @@ def v2_saved(tmp_path_factory):
     assert report['semantic_use_eligible'] and report['fixture_only']
     state = {key: value for key, value in case.items() if key != 'signers'}
     saved = {'case': state, 'assessment': report, 'canonical_owner_sha256': hashlib.sha256(LEGACY_RAW).hexdigest()}
-    path = tmp_path_factory.mktemp('saved-reviewed-v2', numbered=False) / 'v2-before-sibling-load.json'
+    path = tmp_path_factory.mktemp('saved-reviewed-v2') / 'v2-before-sibling-load.json'
     save(path, saved)
     return case, path
 
