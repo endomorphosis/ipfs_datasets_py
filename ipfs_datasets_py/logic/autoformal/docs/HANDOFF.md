@@ -1,5 +1,15 @@
 # Current handoff
 
+## Repair validation controls and six-source main consolidation — 2026-11-15
+
+Normal A main commit `2d4ad8b84d7ef5024c895925393eeb1ea60279e2`, parent `3fa5c80757a60eacd3e131666378f0759e16be9f`, publishes exactly six maintained scientific-executor/repair-validation source and owning-test files. Independent anonymous HTTPS verified all six source bodies and the public commit/tree; upstream dispatcher changes and peer working/index rows were preserved.
+
+The two original software cohorts remain separate: **SDK25 passed 25 cases** at c970/7d3; **corrected SDK46 passed 46 cases** (24 new and 22 retained) at c970/a4a. SDK25's selected and reachable fixture ASTs match after the later fix, but its qualification keeps the old 7d3 epoch. The first SDK46 run remains **43 passes and three fixture failures**, before the type-mutation assertions, with its 16 MiB claim retained and nondurable. Original Source42/733 then installed one 97-byte test-helper line supplying `resource_ledger`; a separate Source readback and independent audit confirmed it. Production c970 and all assertions stayed unchanged.
+
+Corrected46 Source/resource/process/genuine-wait custody closed without errors in **160.317259 seconds**, before the unchanged 420-second cutoff. Its audit verified all 336 files / 9,570,508 bytes and durable release of only its own 16 MiB claim. SDK25 has its own completed custody and durable claim; the results are not a pooled 71-case run.
+
+These are modeled delegation controls through the original outer V5 owner. Genuine whole ordinary@2 SDK-parent/worker execution and the physical CLI4 comparison@3 owner/driver/template transition remain unqualified. Main142, worker49, focused28 and genuinev07 keep their separate recorded scopes. All 123 components, 24 backlog states and private-asset holds are unchanged. [Exact software, failure, fix and publication evidence](../../../../docs/autoformalization/evidence/legal-ir-SDK25-SDK46-A6-main-20261115.json).
+
 ## Full-release CLI wire-metadata source delivery — 2026-11-15
 
 The full-release CLI source and owning tests are now delivered at the exact hashes from the original two-case local staging/intake qualification. Default strict metadata and the explicit legacy option retain their recorded scope. No new test run, current full dependency qualification, Hub upload, model result, Lean proof or statutory/corpus admission follows. [Source and qualification record](../../../../docs/autoformalization/evidence/legal-ir-full-release-cli-wire-metadata-source-20261115.json).

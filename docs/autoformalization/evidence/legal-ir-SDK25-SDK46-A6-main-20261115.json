@@ -1,0 +1,212 @@
+{
+  "SDK25": {
+    "Source_closed_seconds": 214.89870338886976,
+    "actual_original": "48238 ->2a0d57 EXIT0",
+    "errors": 0,
+    "failures": 0,
+    "later_a4a_compatibility": "Static selected/reachable AST equality only. The 25-case qualification remains the old 7d3 source epoch.",
+    "own_claim": "8481f460138d4f609520d719599f17df",
+    "own_claim_released_durable": true,
+    "passed": 25,
+    "pytest_seconds": 1.357,
+    "sealed_bytes": 10732040,
+    "sealed_files": 250,
+    "skipped": 0,
+    "source_epoch": {
+      "owner": "c970b651",
+      "owning_tests": "7d3c403a",
+      "worker": "493333c6"
+    },
+    "tests": 25
+  },
+  "backlog_task_states_count": 24,
+  "component_count": 123,
+  "corrected_SDK46": {
+    "Source_closed_seconds": 160.31725860619918,
+    "actual_original": "4b93af/session90272 ->303393 EXIT0",
+    "errors": 0,
+    "failed_original_9322_claim_preserved": true,
+    "failures": 0,
+    "genuine_Source_native_process_wait_closed": true,
+    "new_cases": 24,
+    "own_claim": "21e1e0a99ae74eed81aeae1b228589b8",
+    "own_claim_released_durable": true,
+    "passed": 46,
+    "pytest_seconds": 1.778,
+    "retained_cases": 22,
+    "sealed_bytes": 9570508,
+    "sealed_files": 336,
+    "sealed_rows": 335,
+    "skipped": 0,
+    "source_epoch": {
+      "owner": "c970b651",
+      "owning_tests": "a4a4cef2",
+      "worker": "493333c6"
+    },
+    "tests": 46
+  },
+  "fixture_fix": {
+    "Source1_WRITE_and_separate_READ_closed": true,
+    "added_bytes": 97,
+    "after_SHA256": "a4a4cef24c702f998e03c1a0e38443d07e2916d10ddabe4261ea2ae237a2f120",
+    "assertions_or_caps_weakened": false,
+    "before_SHA256": "7d3c403af5c3df2359d0f80913950cebf9038cf3ebb599af5822694b95a04afb",
+    "changed_helper": "_immutable_parent_PID1_closeout_DATA",
+    "changed_lines": 1,
+    "independent_postimage_audit": true,
+    "owning_test": "test/api/test_agent_supervisor_productive_owner_v3.py",
+    "production_owner_c970_unchanged": true
+  },
+  "frozen_frontier": {
+    "Git_pins_per_run": 8,
+    "no_exhaustive_runtime_origin_claim": true,
+    "no_single_pooled_71_case_run": true,
+    "source_files_per_run": 213
+  },
+  "original_failed_SDK46": {
+    "Source_closed_seconds": 108.1345517267473,
+    "actual_original": "140ae2/session19432 ->218c86 EXIT1",
+    "artifacts_durable": false,
+    "errors": 0,
+    "failed_case_names": [
+      "test_immutable_parent_archived_custody_preserves_exact_PID1_and_receipt_types[custody_PID]",
+      "test_immutable_parent_archived_custody_preserves_exact_PID1_and_receipt_types[verified_PID]",
+      "test_immutable_parent_archived_custody_preserves_exact_PID1_and_receipt_types[receipt_cooperative]"
+    ],
+    "failure": "KeyError resource_ledger in the shared PID1 fixture before the three type-mutation assertions; no production type-guard defect demonstrated.",
+    "failures": 3,
+    "genuine_Source_native_process_wait_closed": true,
+    "no_completed_cohort_or_partial_success_credit": true,
+    "own_claim": "9322f343dc654df89f49350f148a20b0",
+    "passed": 43,
+    "reserved_bytes": 16777216,
+    "skipped": 0,
+    "status": "retained",
+    "tests": 46
+  },
+  "original_limits": {
+    "child_process_slots": 4,
+    "cpu_slots": 1,
+    "initial_total_seconds": 420,
+    "ledger_seconds": 60,
+    "memory_MiB": 1536,
+    "no_retry_or_extension": true,
+    "own_storage_bytes": 16777216,
+    "shared_Source_seconds": 60,
+    "work_seconds": 300
+  },
+  "private_assets": "HOLD; no archive/model/checkpoint/weight access or publication",
+  "proof_digests": {
+    "A6_independent_anonymous_HTTPS_audit": {
+      "bytes": 57126,
+      "sha256": "5787a2512add717f495bdf6114c54fb01d098d8db2bdab6d3a4aefccfb636e5a"
+    },
+    "A6_publication_Root_genuine_terminal": {
+      "bytes": 1603,
+      "sha256": "e15e6802a08f251e8e478ad26d426a2ff9c8ff846ba9e6320cdf3a1e927c8f28"
+    },
+    "A6_publication_original_receipt": {
+      "bytes": 12513,
+      "sha256": "1d2680ee3c76d53887035f64906b2d1495d216d425ff2ba465d09d6c25006f6d"
+    },
+    "SDK25_a4a_static_compatibility": {
+      "bytes": 2587,
+      "sha256": "cb79c2b9720474dc1a2eaeb9e80818aada131d177684db8c7f0a115efdedce7a"
+    },
+    "SDK25_audit": {
+      "bytes": 15541,
+      "sha256": "8d15ab1c24ad25c7f060ceb5dfc532969231d2e80a4fc007b794bbc0df4a151a"
+    },
+    "corrected_SDK46_audit": {
+      "bytes": 21798,
+      "sha256": "67af519142eddefbe48f87ac528913d2a8973b3e5961327afb260c66e084bd6e"
+    },
+    "failed_SDK46_audit": {
+      "bytes": 14003,
+      "sha256": "c3251c8f16fdf46912bcfb6d2c47d8ed5c9fcd3d71d272d74af2936e9770238c"
+    },
+    "fixture_Source1_WRITE": {
+      "bytes": 8686965,
+      "sha256": "3d90730c55816b6b74338026847ee99a6652218d3ba4c868810ff67af14ed7b6"
+    },
+    "fixture_Source1_independent_audit": {
+      "bytes": 1014029,
+      "sha256": "2ad7b35501b01c88bfcadbbf0f7d64e590798f6b61d2498c8ae869f39df55fa9"
+    },
+    "fixture_Source1_separate_READ": {
+      "bytes": 8687145,
+      "sha256": "c1a9d29130da1d590f5ad305936acc4c0bda608baf92a7eaf11edf6412ce70b5"
+    }
+  },
+  "proof_transport": "Digest summaries of retained original evidence; this capsule does not archive every original output buffer.",
+  "publication": {
+    "Root_genuine_terminal": "78f356/session51272 -> a0d93a EXIT0",
+    "commit": "2d4ad8b84d7ef5024c895925393eeb1ea60279e2",
+    "exact_source_files": 6,
+    "independent_anonymous_HTTPS": {
+      "public_metadata_GET_200": 2,
+      "raw_source_GET_200": 6,
+      "unchanged_other_tree_leaves": 29550,
+      "upstream_three_changes_retained": true
+    },
+    "normal_push": true,
+    "original_Source_R_READ_A_WRITE_closed": true,
+    "parent": "3fa5c80757a60eacd3e131666378f0759e16be9f",
+    "peer_noninterference": {
+      "immutable_Git_raw_full9": 12,
+      "later_index_raw_refresh": "Separately observed with UNKNOWN attribution; no evergreen raw-index identity claim.",
+      "unselected_index_rows_and_cache_flags_preserved": true,
+      "working_raw_full9": 29
+    },
+    "total_source_bytes": 1532792,
+    "tree": "ffa5c39fbeb20b2626c848554c0b9740ff2da2e6"
+  },
+  "published_sources": [
+    {
+      "bytes": 379362,
+      "path": "ipfs_accelerate_py/agent_supervisor/rescue/repair_candidate_owners.py",
+      "sha256": "c970b65189235b637e6951cf4f5fb94dfac3b38c46729d3c19ef69f243bd0a28"
+    },
+    {
+      "bytes": 173604,
+      "path": "ipfs_accelerate_py/agent_supervisor/rescue/repair_validation_worker.py",
+      "sha256": "493333c631d287436957bb8418a4629e0d34f37c1214f096944c8e39361e40ec"
+    },
+    {
+      "bytes": 409242,
+      "path": "ipfs_accelerate_py/agent_supervisor/rescue/scientific_executor.py",
+      "sha256": "fdeed037860bc1be8ae66dcc66c9e8ce1e9df8830262a37bb1009c15ac891897"
+    },
+    {
+      "bytes": 376977,
+      "path": "test/api/test_agent_supervisor_productive_owner_v3.py",
+      "sha256": "a4a4cef24c702f998e03c1a0e38443d07e2916d10ddabe4261ea2ae237a2f120"
+    },
+    {
+      "bytes": 33812,
+      "path": "tests/unit/agent_supervisor/test_repair_worker_execution_custody.py",
+      "sha256": "9ed87fbb27cc9679e073eab05dc96f3fd7c05f6e4005c36efdadf65ab6d2790f"
+    },
+    {
+      "bytes": 159795,
+      "path": "tests/unit/agent_supervisor/test_scientific_closed_capacity_continuation.py",
+      "sha256": "0712cc2dde748fd805802619d0e6363a20f94d5c5f13fda52645a1fecd4a63f7"
+    }
+  ],
+  "recorded_at_utc": "2026-11-15T20:58:33.423053+00:00",
+  "remaining": [
+    "Genuine whole ordinary@2 SDK-parent/worker receipt-chain execution remains unqualified by these modeled controls.",
+    "Whole SDK/worker modules and full scientific execution remain unqualified.",
+    "Physical Main CLI4 comparison@3 owner/driver/template/qualification transition remains guarded.",
+    "No new DB observation, scientific activation, statutory/legal review, training/model quality, native Lean or corpus admission."
+  ],
+  "schema": "legal-ir-repair-validation-SDK25-SDK46-A6-main/v1",
+  "separate_recorded_scopes": [
+    "Main142 consumer/preparation software at fdeed/0712",
+    "worker49 selected modeled controls at493/9ed",
+    "focused28 version-forwarding software at its historical1200 profile",
+    "genuinev07 same-thread A opaque-handle to D fictional control"
+  ],
+  "status": "SELECTED_SOFTWARE_QUALIFIED_AND_EXACT_A6_SOURCE_PUBLISHED_NOT_FULL_EXECUTOR_ACTIVATION",
+  "taskboard_and_generation_states": "UNCHANGED"
+}

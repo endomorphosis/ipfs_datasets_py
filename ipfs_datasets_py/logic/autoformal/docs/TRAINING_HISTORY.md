@@ -1,5 +1,13 @@
 # Training and experiment history
 
+## Repair validation software cohorts and A6 source publication — 2026-11-15
+
+Normal A main commit `2d4ad8b84d7ef5024c895925393eeb1ea60279e2` publishes the six existing source/test files, with independent anonymous HTTPS readback. **SDK25 passed 25 cases in 1.357 seconds** at c970/7d3; Source custody closed in 214.898703 seconds and its own 16 MiB was durably released. The later a4a fixture change has static selected/reachable AST compatibility only; SDK25 retains its original source epoch.
+
+The first original SDK46 keeps **43 passes and three fixture failures**, with Source/native/process/genuine wait closed and its own 16 MiB retained and nondurable. The three cases stopped on missing `resource_ledger` in the PID1 helper before their type-mutation assertions. A one-line, 97-byte owning-test fix was installed through original Source42/733 and separately read back; production c970 and the assertions were unchanged. The fresh whole46 then passed **46/46 in 1.778 seconds**, with zero failures/errors/skips. Source custody closed in 160.317259 seconds before the unchanged 420 seconds; all 335 seal rows plus the seal, 336 files / 9,570,508 bytes, were verified and only that successful own 16 MiB claim was durably released.
+
+These separate modeled software results add no training/model, statutory-review, native Lean, corpus or scientific-activation authority. Whole ordinary@2 SDK-parent/worker execution and physical CLI4 comparison@3 integration remain separate unqualified gates. Main142, worker49, focused28 and genuinev07 are not rerun or pooled. Existing resource limits, 123 components and all 24 backlog states are unchanged. [Measured evidence](../../../../docs/autoformalization/evidence/legal-ir-SDK25-SDK46-A6-main-20261115.json).
+
 ## Full-release CLI wire-metadata source delivery — 2026-11-15
 
 The full-release CLI source and owning tests are now delivered at the exact hashes from the original two-case local staging/intake qualification. Default strict metadata and the explicit legacy option retain their recorded scope. No new test run, current full dependency qualification, Hub upload, model result, Lean proof or statutory/corpus admission follows. [Source and qualification record](../../../../docs/autoformalization/evidence/legal-ir-full-release-cli-wire-metadata-source-20261115.json).
