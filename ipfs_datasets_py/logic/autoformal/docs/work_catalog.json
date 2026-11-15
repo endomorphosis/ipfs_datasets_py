@@ -121,12 +121,6 @@
   "canonical_home": "ipfs_datasets_py/logic/autoformal",
   "components": [
     {
-      "id": "typed-mutation-evidence-proposals",
-      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_fuzzing.py",
-      "owner_module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_fuzzing",
-      "ownership_role": "existing_single_owner",
-      "required": true,
-      "compatibility_dependency": false,
       "apis": [
         "MinimalSemanticMutation",
         "MutationValidationRecord",
@@ -137,19 +131,19 @@
         "collect_mutation_evidence",
         "validate_all_minimal_mutation_classes"
       ],
+      "compatibility_dependency": false,
       "evidence_ids": [
         "PGIR041-mutation-label-admission-20261115"
       ],
-      "status": "focused_tests_qualified",
-      "notes": "Existing canonical optimizer owner. PGIR-041 proposals default UNKNOWN; exact formula JSON comparison and declared-path structural checks do not establish independent semantic/solver evidence. No numerical, native or legal qualification inferred."
+      "id": "typed-mutation-evidence-proposals",
+      "notes": "Existing canonical optimizer owner. PGIR-041 proposals default UNKNOWN; exact formula JSON comparison and declared-path structural checks do not establish independent semantic/solver evidence. No numerical, native or legal qualification inferred.",
+      "owner_module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_fuzzing",
+      "ownership_role": "existing_single_owner",
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_fuzzing.py",
+      "required": true,
+      "status": "focused_tests_qualified"
     },
     {
-      "id": "explicit-mutation-label-admission",
-      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_hard_negatives.py",
-      "owner_module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_hard_negatives",
-      "ownership_role": "existing_single_owner",
-      "required": true,
-      "compatibility_dependency": false,
       "apis": [
         "candidate_from_validation_record",
         "candidate_from_recipe_case",
@@ -161,11 +155,17 @@
         "write_hard_negative_shards",
         "load_hard_negative_shards"
       ],
+      "compatibility_dependency": false,
       "evidence_ids": [
         "PGIR041-mutation-label-admission-20261115"
       ],
-      "status": "focused_tests_qualified",
-      "notes": "Existing canonical optimizer owner, miner-v2. Positive software admission requires explicit exact caller LabelEvidence and replayed endpoint/schema/path/outcome checks. Default and nonconfirmed records are nontraining; no independent checker/toolchain/directional proof/legal authentication is supplied. Historical archive decoding is not current readmission."
+      "id": "explicit-mutation-label-admission",
+      "notes": "Existing canonical optimizer owner, miner-v2. Positive software admission requires explicit exact caller LabelEvidence and replayed endpoint/schema/path/outcome checks. Default and nonconfirmed records are nontraining; no independent checker/toolchain/directional proof/legal authentication is supplied. Historical archive decoding is not current readmission.",
+      "owner_module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_hard_negatives",
+      "ownership_role": "existing_single_owner",
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_hard_negatives.py",
+      "required": true,
+      "status": "focused_tests_qualified"
     },
     {
       "apis": [
@@ -954,10 +954,11 @@
         "parent-bound-norm-native-public-pure-compatibility-20261025-01",
         "genuine-parent420-retention-integration-20261110",
         "reviewed-native-admitted-parent-source-regressions-20261111",
-        "mixed-renderer-preservation-20261111"
+        "mixed-renderer-preservation-20261111",
+        "original-parent-v3-A-to-D-bridge-progress-20261115"
       ],
       "id": "definition-use-native",
-      "notes": "Existing owner contains separate official V2 and parent V1 preparation/build/receipt routes. Original migration compiler fixtures remain synthetic. Two authored FOL/TDFOL parent projects now qualify actual Lean4.34.1 execution and observed custody; pending review and explicit premises remain, without statutory admission or source-to-model equivalence. The separate parent shared-native profile adds four aggregate APIs. Its main cohort qualifies 16 cases (11 new and five existing regressions); a separate actual cohort contains two authored FOL/TDFOL aggregate projects, each with nine modules, 15 executed inputs and six unique conditional theorem observations. Child reviews remain pending in the actual cohort; complete assumptions and contributor lineage survive. No parent incremental cache, source meaning, model, training or statutory admission is qualified. Separate authored complete-norm/bound-definition profile: 42 pure cases/126 phases and two actual Lean4.34.1 cases/six phases. Nine files/six modules preserve the unchanged norm and explicit definition/membership premises; preservation is an alias identity. Namespace-scoped qualification; statutory reviews, source binding and training/gold remain pending. First actual attempt retained separately with its 192-MiB storage reservation. The explicit parent-literal complete-norm route reuses its separately source-pinned authored engineering qualification; no default consumer, full-package, semantic or corpus admission is inferred. The existing parent-bound norm/definition native extension adopts source6e6dd821/test02acd69 with unchanged preparer014dc6/renderer5c. Its retained original R32pure/96 and separate R2actual-native/6phase cohorts retain their own 197-source generation and six observed commands (four ordinary probes and two owned builds). The separately accepted current-public4case/12phase pure compatibility check on the completed c59 snapshot contains one genuine membership-mode validation, two synthetic handoffs and a request-pin refusal. The later8b6 graph change has a separate source-only compatibility review; the combined new generation remains unmeasured. It supplies no new actual native execution or global registration. The separate \u00a77214 mixed renderer profile is now available with focused pure and compiler qualification; parent-source/corpus native integration and substantive legal review remain pending. The explicit parent-nomination graph custody route is indexed under the existing graph adapter and has a separate focused custody qualification; null governing decisions, explicit premises and zero masks remain.",
+      "notes": "Existing owner contains separate official V2 and parent V1 preparation/build/receipt routes. Original migration compiler fixtures remain synthetic. Two authored FOL/TDFOL parent projects now qualify actual Lean4.34.1 execution and observed custody; pending review and explicit premises remain, without statutory admission or source-to-model equivalence. The separate parent shared-native profile adds four aggregate APIs. Its main cohort qualifies 16 cases (11 new and five existing regressions); a separate actual cohort contains two authored FOL/TDFOL aggregate projects, each with nine modules, 15 executed inputs and six unique conditional theorem observations. Child reviews remain pending in the actual cohort; complete assumptions and contributor lineage survive. No parent incremental cache, source meaning, model, training or statutory admission is qualified. Separate authored complete-norm/bound-definition profile: 42 pure cases/126 phases and two actual Lean4.34.1 cases/six phases. Nine files/six modules preserve the unchanged norm and explicit definition/membership premises; preservation is an alias identity. Namespace-scoped qualification; statutory reviews, source binding and training/gold remain pending. First actual attempt retained separately with its 192-MiB storage reservation. The explicit parent-literal complete-norm route reuses its separately source-pinned authored engineering qualification; no default consumer, full-package, semantic or corpus admission is inferred. The existing parent-bound norm/definition native extension adopts source6e6dd821/test02acd69 with unchanged preparer014dc6/renderer5c. Its retained original R32pure/96 and separate R2actual-native/6phase cohorts retain their own 197-source generation and six observed commands (four ordinary probes and two owned builds). The separately accepted current-public4case/12phase pure compatibility check on the completed c59 snapshot contains one genuine membership-mode validation, two synthetic handoffs and a request-pin refusal. The later8b6 graph change has a separate source-only compatibility review; the combined new generation remains unmeasured. It supplies no new actual native execution or global registration. The separate §7214 mixed renderer profile is now available with focused pure and compiler qualification; parent-source/corpus native integration and substantive legal review remain pending. The explicit parent-nomination graph custody route is indexed under the existing graph adapter and has a separate focused custody qualification; null governing decisions, explicit premises and zero masks remain.",
       "original_admitted_parent_bridge_20261111": {
         "actual_native_parent_positive_qualified": false,
         "apis": [
@@ -973,6 +974,39 @@
         "ordinary_outer_owner_success": false,
         "release_authority": false,
         "training_mask": 0
+      },
+      "original_parent_v3_bridge_progress_20261115": {
+        "actual_native_receipt_authenticated": null,
+        "actual_original_parent_handle_consumed": null,
+        "captured_A50_cases": 50,
+        "captured_A50_functions": 9,
+        "captured_A50_qualified_and_closed": true,
+        "captured_A50_ref": {
+          "bytes": 10029,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-native-admitted-parent-20261111-v01/v3-original-parent-adapter-private-v01/canonical-Source42-root-binding-private-v01/ordinary-A50-current210-original16MiB-v01/independent-actual-A50-canonical-Source42-current210-GREEN-closure-v01.json",
+          "sha256": "cc533fcd7de42f82e15d49e388bd49f231252d6141b9c2b2c7512f2f7a1582a4"
+        },
+        "current_peer_generation_reconciliation_required": true,
+        "evidence_id": "original-parent-v3-A-to-D-bridge-progress-20261115",
+        "genuine_A83_D_same_thread_success_ref": null,
+        "historical_A26_cases": 26,
+        "historical_A26_functions": 9,
+        "historical_D1v04_full_independent_ref": {
+          "bytes": 14334,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/original-parent-v3-integration-private-v01/datasets/integration-preparation-v01/D-same-physical-derivation1-existing-b95d-current-Adepth-v04/independent-actual-D1-v04-current-Adepth-SAME-physical-GREEN-closure-v01.json",
+          "sha256": "f99af4bda2771d305c57136c994899b9e780aaf3a40f008cb73ddf8a7513b883"
+        },
+        "historical_D1v04_not_current_source_qualification": true,
+        "live_watchdog_deployment": false,
+        "new_D1v05b_failed_ref": {
+          "bytes": 13371,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/original-parent-v3-integration-private-v01/datasets/integration-preparation-v01/D-same-physical-derivation1-existing-b95d-v05b-single-test5337/independent-actual-D1-v05b-precollection-full-PLAN-drift-FAILED-closure-v01.json",
+          "sha256": "e4e9f469c19f384d1da0ff4d3e99a4dba282af6e6e14200aaa71e113b6a54ecf"
+        },
+        "new_D1v05b_status": "FAILED_PRECOLLECTION_ZERO_CREDIT_16MIB_RETAINED",
+        "real_statutory_or_training_or_corpus_authority": false,
+        "schema": "original-parent-v3-bridge-component-progress/v1",
+        "source_adopted_at_captured_epochs": true
       },
       "owner_module": "ipfs_datasets_py.logic.autoformal.legal_corpus_definition_use_native_v2",
       "ownership_role": "existing_single_owner",
@@ -2255,7 +2289,7 @@
         "counted-numerical-source-publication-reuse-20261023-01"
       ],
       "id": "source-representation-profile",
-      "notes": "Separate LegalIR4096 declared expected-producer metadata contract. Original 12 lanes, asset IDs and detached components preserved. Tests use exact private candidates and an inert manager; installed bytes match. No historical source receipt authentication, tensor IO/load, physical-store, runtime, publication, training or legal qualification. Separate retained-asset delivery: three original checkpoints are now public and genuinely registered in the selected retained catalog687\u2192690 through the distinct merged Wv2 importer; see native4096-retained-assets-20261020. The existing canonical importer now exposes both explicit APIs with shared registration logic, qualified by 234 controls including three preserved published-ID metadata cases. Schemas, IDs and path-sensitive versus multiset library identity remain distinct; no automatic conversion or real catalog rewrite occurred. Runtime, producer compatibility and active-supervisor integration remain pending. Separate counted28 spec/transfer-plan APIs retain historical79-case/237-phase metadata qualification, including one private observer. Exact declared shapes and row-mean requests are not actual transfer, runtime/source compatibility, learning, legal meaning or Lean authority. The separate numerical owners retain their own historical cohorts; no new execution is claimed by this publication.",
+      "notes": "Separate LegalIR4096 declared expected-producer metadata contract. Original 12 lanes, asset IDs and detached components preserved. Tests use exact private candidates and an inert manager; installed bytes match. No historical source receipt authentication, tensor IO/load, physical-store, runtime, publication, training or legal qualification. Separate retained-asset delivery: three original checkpoints are now public and genuinely registered in the selected retained catalog687→690 through the distinct merged Wv2 importer; see native4096-retained-assets-20261020. The existing canonical importer now exposes both explicit APIs with shared registration logic, qualified by 234 controls including three preserved published-ID metadata cases. Schemas, IDs and path-sensitive versus multiset library identity remain distinct; no automatic conversion or real catalog rewrite occurred. Runtime, producer compatibility and active-supervisor integration remain pending. Separate counted28 spec/transfer-plan APIs retain historical79-case/237-phase metadata qualification, including one private observer. Exact declared shapes and row-mean requests are not actual transfer, runtime/source compatibility, learning, legal meaning or Lean authority. The separate numerical owners retain their own historical cohorts; no new execution is claimed by this publication.",
       "owner_module": "ipfs_datasets_py.logic.formalization.autoencoder.ir_decoder_profile_inventory",
       "ownership_role": "existing_single_owner",
       "path": "ipfs_datasets_py/logic/formalization/autoencoder/ir_decoder_profile_inventory.py",
@@ -2276,7 +2310,7 @@
         "source4096-reconciliation-20261020-01"
       ],
       "id": "source-representation-registration",
-      "notes": "Separate LegalIR4096 declared expected-producer metadata contract. Original 12 lanes, asset IDs and detached components preserved. Tests use exact private candidates and an inert manager; installed bytes match. No historical source receipt authentication, tensor IO/load, physical-store, runtime, publication, training or legal qualification. Separate retained-asset delivery: three original checkpoints are now public and genuinely registered in the selected retained catalog687\u2192690 through the distinct merged Wv2 importer; see native4096-retained-assets-20261020. The existing canonical importer now exposes both explicit APIs with shared registration logic, qualified by 234 controls including three preserved published-ID metadata cases. Schemas, IDs and path-sensitive versus multiset library identity remain distinct; no automatic conversion or real catalog rewrite occurred. Runtime, producer compatibility and active-supervisor integration remain pending.",
+      "notes": "Separate LegalIR4096 declared expected-producer metadata contract. Original 12 lanes, asset IDs and detached components preserved. Tests use exact private candidates and an inert manager; installed bytes match. No historical source receipt authentication, tensor IO/load, physical-store, runtime, publication, training or legal qualification. Separate retained-asset delivery: three original checkpoints are now public and genuinely registered in the selected retained catalog687→690 through the distinct merged Wv2 importer; see native4096-retained-assets-20261020. The existing canonical importer now exposes both explicit APIs with shared registration logic, qualified by 234 controls including three preserved published-ID metadata cases. Schemas, IDs and path-sensitive versus multiset library identity remain distinct; no automatic conversion or real catalog rewrite occurred. Runtime, producer compatibility and active-supervisor integration remain pending.",
       "owner_module": "ipfs_datasets_py.logic.formalization.autoencoder.ir_model_manager_import",
       "ownership_role": "existing_single_owner",
       "path": "ipfs_datasets_py/logic/formalization/autoencoder/ir_model_manager_import.py",
@@ -3286,7 +3320,7 @@
       ],
       "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_compact_content_training_v2.md",
       "id": "compact-content-generic-training-v2",
-      "notes": "Existing generic authored384 training: 1\u201316 ordered rows, fixed537 codec/512 total IDs, validated v1 initialization, exact named-Adam resume and bounded calls. This navigation record adds no numerical qualification. The separate one-case four-row engineering resume qualification passed with ten physical updates and five unique update positions; source-space compatibility, reviewed statutory targets/context, model quality and legal/graph/Lean admission remain separate.",
+      "notes": "Existing generic authored384 training: 1–16 ordered rows, fixed537 codec/512 total IDs, validated v1 initialization, exact named-Adam resume and bounded calls. This navigation record adds no numerical qualification. The separate one-case four-row engineering resume qualification passed with ten physical updates and five unique update positions; source-space compatibility, reviewed statutory targets/context, model quality and legal/graph/Lean admission remain separate.",
       "owner_module": "ipfs_datasets_py.logic.formalization.autoencoder.legal_compact_content_training_v2",
       "ownership_role": "existing_single_owner",
       "owning_tests": [
@@ -3639,7 +3673,7 @@
         "tested_public_base": "c685a11caa996e35d8c79753e509195d50d3e3cb",
         "training_mask": 0
       },
-      "notes": "Original explicit source-scope to complete relational-node correspondence and exact replay. Preserves mappings/obligations without inferring source meaning or legal applicability; selected52-case authored integration passed; other owning suites remain unqualified by this cohort. The explicit parent-literal complete-norm route reuses its separately source-pinned authored engineering qualification; no default consumer, full-package, semantic or corpus admission is inferred. The explicit mixed parent sibling has a separate frozen-C685-plus-two-overlays engineering qualification:21cases/63phases/9selectors (20new,one legacy). Both retained typed alternatives use only the fictional Cl\u00e9rk parent fixture; the real retained7214 parent bundle/replay/cache join remains missing. Separate original parent binding is retained while the mixed relational request stays null-source, source_bound false and all four masks0. Existing v1/v2 and earlier statutory/renderer/native campaigns retain their own generations.",
+      "notes": "Original explicit source-scope to complete relational-node correspondence and exact replay. Preserves mappings/obligations without inferring source meaning or legal applicability; selected52-case authored integration passed; other owning suites remain unqualified by this cohort. The explicit parent-literal complete-norm route reuses its separately source-pinned authored engineering qualification; no default consumer, full-package, semantic or corpus admission is inferred. The explicit mixed parent sibling has a separate frozen-C685-plus-two-overlays engineering qualification:21cases/63phases/9selectors (20new,one legacy). Both retained typed alternatives use only the fictional Clérk parent fixture; the real retained7214 parent bundle/replay/cache join remains missing. Separate original parent binding is retained while the mixed relational request stays null-source, source_bound false and all four masks0. Existing v1/v2 and earlier statutory/renderer/native campaigns retain their own generations.",
       "owner_module": "ipfs_datasets_py.logic.autoformal.legal_norm_scope_correspondence_v1",
       "ownership_role": "existing_single_owner",
       "owning_tests": [
@@ -9206,7 +9240,8 @@
       "evidence_ids": [
         "legal-uscode-local-release-replay-source-private45-20261111",
         "hf-wire-producer-closure-private103-source-20261111",
-        "reviewed-physical-three-cache-crosswalk-private114-source-20261111"
+        "reviewed-physical-three-cache-crosswalk-private114-source-20261111",
+        "original-parent-v3-A-to-D-bridge-progress-20261115"
       ],
       "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_corpus_graph_exchange.md",
       "id": "legal-release-coordinator",
@@ -9223,6 +9258,39 @@
         "unchanged_private_cases": 25
       },
       "notes": "Existing coordinator explicitv2 replays signed dependency-bound physical law/coordinate/cache/entity-to-complete-reviewed-graph correspondence, with heldfile/sourcegeneration custody and exact populations. Source4 installed/closed afterprivate114, plus2separate normalcanonical read-only CLI observations. v1default/prefix unchanged. Original admitted Native parent/retainedpositivepacket/immutableHubreadback/realstatutoryreview remain unresolved; no task completion or model/corpus promotion. Current integration V3 uses the existing norm JSON profile for complete typed admission/graph artifacts, preserving byte ceilings and V1/V2. Current56 qualifies54release+2shared-fixture cases;98release cases remain. Actual Native-parent/Lean/Hub/statutory/corpus gates stay open; see current-release-v3-physical56-typed-json-20261114. Nov15 closes all original98 remaining cases across19 source-bound originals. Together with earlier54 release cases and3 new shared-row cases, independent accounting covers155 case IDs/39functions without double counting. Exact source epochs remain separate; no unified-current-source or corpus qualification. See remaining-release98-and-155-case-coverage-20261115.",
+      "original_parent_v3_bridge_progress_20261115": {
+        "actual_native_receipt_authenticated": null,
+        "actual_original_parent_handle_consumed": null,
+        "captured_A50_cases": 50,
+        "captured_A50_functions": 9,
+        "captured_A50_qualified_and_closed": true,
+        "captured_A50_ref": {
+          "bytes": 10029,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-native-admitted-parent-20261111-v01/v3-original-parent-adapter-private-v01/canonical-Source42-root-binding-private-v01/ordinary-A50-current210-original16MiB-v01/independent-actual-A50-canonical-Source42-current210-GREEN-closure-v01.json",
+          "sha256": "cc533fcd7de42f82e15d49e388bd49f231252d6141b9c2b2c7512f2f7a1582a4"
+        },
+        "current_peer_generation_reconciliation_required": true,
+        "evidence_id": "original-parent-v3-A-to-D-bridge-progress-20261115",
+        "genuine_A83_D_same_thread_success_ref": null,
+        "historical_A26_cases": 26,
+        "historical_A26_functions": 9,
+        "historical_D1v04_full_independent_ref": {
+          "bytes": 14334,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/original-parent-v3-integration-private-v01/datasets/integration-preparation-v01/D-same-physical-derivation1-existing-b95d-current-Adepth-v04/independent-actual-D1-v04-current-Adepth-SAME-physical-GREEN-closure-v01.json",
+          "sha256": "f99af4bda2771d305c57136c994899b9e780aaf3a40f008cb73ddf8a7513b883"
+        },
+        "historical_D1v04_not_current_source_qualification": true,
+        "live_watchdog_deployment": false,
+        "new_D1v05b_failed_ref": {
+          "bytes": 13371,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/original-parent-v3-integration-private-v01/datasets/integration-preparation-v01/D-same-physical-derivation1-existing-b95d-v05b-single-test5337/independent-actual-D1-v05b-precollection-full-PLAN-drift-FAILED-closure-v01.json",
+          "sha256": "e4e9f469c19f384d1da0ff4d3e99a4dba282af6e6e14200aaa71e113b6a54ecf"
+        },
+        "new_D1v05b_status": "FAILED_PRECOLLECTION_ZERO_CREDIT_16MIB_RETAINED",
+        "real_statutory_or_training_or_corpus_authority": false,
+        "schema": "original-parent-v3-bridge-component-progress/v1",
+        "source_adopted_at_captured_epochs": true
+      },
       "owner_module": "ipfs_datasets_py.logic.autoformal.legal_release_coordinator_v1",
       "ownership_role": "existing_single_owner",
       "owning_tests": [
@@ -9540,10 +9608,10 @@
     {
       "id": "PGIR041-mutation-label-admission-20261115",
       "path": "docs/autoformalization/evidence/legal-ir-PGIR041-mutation-label-admission-20261115.json",
-      "root": "datasets_repository",
       "required_for_catalog_check": true,
-      "status": "selected_original_software_qualified_semantic_authentication_pending",
-      "scope": "Original4579 EXIT0:88PASS/0FAIL/ERROR/SKIP (82 hard-negative+6 metamorphic), pytest7.221s; selected Source255/Git8 unchanged, custody167.466s<420 and own16MiB durably released. RED7FAIL1PASS1.012s and first green87PASS1FAIL7.202s remain separate with16MiB retained each. Caller-label software contracts only; no solver/toolchain/directional-proof/legal/model/corpus authentication; historical archives not currently readmitted."
+      "root": "datasets_repository",
+      "scope": "Original4579 EXIT0:88PASS/0FAIL/ERROR/SKIP (82 hard-negative+6 metamorphic), pytest7.221s; selected Source255/Git8 unchanged, custody167.466s<420 and own16MiB durably released. RED7FAIL1PASS1.012s and first green87PASS1FAIL7.202s remain separate with16MiB retained each. Caller-label software contracts only; no solver/toolchain/directional-proof/legal/model/corpus authentication; historical archives not currently readmitted.",
+      "status": "selected_original_software_qualified_semantic_authentication_pending"
     },
     {
       "id": "canonical-aggregate-key-layout-context-20261115",
@@ -9872,7 +9940,7 @@
       "path": "legal-ir-current-definition-graph-20261017-02/pilot-review-handoff.md",
       "required_for_catalog_check": false,
       "root": "artifact_workspace",
-      "scope": "Retained 2024 Title10 \u00a7101 definition alternatives, partial \u00a77213 hypotheses and source-only \u00a77214 second use; no actual reviews, accepted norm/definition use or connected three-dataset binding.",
+      "scope": "Retained 2024 Title10 §101 definition alternatives, partial §7213 hypotheses and source-only §7214 second use; no actual reviews, accepted norm/definition use or connected three-dataset binding.",
       "status": "historical_candidate_pilot_all_reviews_pending"
     },
     {
@@ -10153,7 +10221,7 @@
       "path": "docs/autoformalization/evidence/native4096-retained-assets-20261020.json",
       "required_for_catalog_check": true,
       "root": "datasets_repository",
-      "scope": "Three exact retained checkpoints published at immutable public7f1621e79eef and anonymously byte-verified; genuine retained catalog687\u2192690 with baseline33fields/activity/schema preserved and original closeout. Separate134 importer,94 catalog and42 inert-driver controls retain their exclusions. Actual operation used merged Wv2 source; canonical92-case contract remains distinct. No model-runtime/legal/teacher/proof qualification.",
+      "scope": "Three exact retained checkpoints published at immutable public7f1621e79eef and anonymously byte-verified; genuine retained catalog687→690 with baseline33fields/activity/schema preserved and original closeout. Separate134 importer,94 catalog and42 inert-driver controls retain their exclusions. Actual operation used merged Wv2 source; canonical92-case contract remains distinct. No model-runtime/legal/teacher/proof qualification.",
       "status": "passed_independent_saved_review"
     },
     {
@@ -10783,7 +10851,7 @@
       "path": "docs/autoformalization/evidence/legal-ir-cp128-warmstart-generation-20261022.json",
       "required_for_catalog_check": false,
       "root": "datasets_repository",
-      "scope": "All six saved objective/step states \u00d7 two exposed authored384 rows; Typed completion is 12/12; exact emitted-ID reconstruction including EOS is 0/12; exact canonical compact-content AST reconstruction is 0/12. 800 new generation forwards/8 restores; 4 retained partial-zero cases are not successful original pipelines. No zero rerun, extra scores/scripted controls/Adam/backward/update/reencoding. Numerical-only zero compatibility independently accepted after storage recovery. Legal prose/full norm and statutory/heldout/native-GTE/graph/Lean unmeasured.",
+      "scope": "All six saved objective/step states × two exposed authored384 rows; Typed completion is 12/12; exact emitted-ID reconstruction including EOS is 0/12; exact canonical compact-content AST reconstruction is 0/12. 800 new generation forwards/8 restores; 4 retained partial-zero cases are not successful original pipelines. No zero rerun, extra scores/scripted controls/Adam/backward/update/reencoding. Numerical-only zero compatibility independently accepted after storage recovery. Legal prose/full norm and statutory/heldout/native-GTE/graph/Lean unmeasured.",
       "status": "closed_mixed_custody_authored384_paired_autonomous_generation"
     },
     {
@@ -11213,7 +11281,7 @@
       "path": "docs/autoformalization/evidence/legal-ir-title10-7214-pending-composition-preparation-20261024.json",
       "required_for_catalog_check": true,
       "root": "datasets_repository",
-      "scope": "Retained2024Title10 \u00a77214:163chars/11features/20literal segments;two same-frame modal-scope drafts each98coreAST+1payload+12binders,47nodecapcore with49origin retained. Five data checks/four typed omission refusals;4genuinecoremodules,3initializer bypasses+1fileless;nativecompute/storage/bothREADsclosed. Member\u2192Detail only, opaque purpose, vacuous guards/pronoun/frame/definition unresolved. Earlier0775preconstructorfailure separately preserved/adminREADteardown; no classifier/resource-release qualification. No new production API/model/training/signing/graph/Lean or legal/gold admission; masks0.",
+      "scope": "Retained2024Title10 §7214:163chars/11features/20literal segments;two same-frame modal-scope drafts each98coreAST+1payload+12binders,47nodecapcore with49origin retained. Five data checks/four typed omission refusals;4genuinecoremodules,3initializer bypasses+1fileless;nativecompute/storage/bothREADsclosed. Member→Detail only, opaque purpose, vacuous guards/pronoun/frame/definition unresolved. Earlier0775preconstructorfailure separately preserved/adminREADteardown; no classifier/resource-release qualification. No new production API/model/training/signing/graph/Lean or legal/gold admission; masks0.",
       "status": "five_data_checks_passed_unreviewed_statutory_drafts_no_admission"
     },
     {
@@ -11593,7 +11661,7 @@
       "path": "docs/autoformalization/evidence/legal-ir-mixed-sort-parent-correspondence-20261026.json",
       "required_for_catalog_check": true,
       "root": "datasets_repository",
-      "scope": "Separate C685+two-overlay authored engineering cohort:21cases/63phases/9selectors (20new,one legacy). Both dd72typed alternatives against fictional Cl\u00e9rk parent only; six anchors/111targets each. Full original fixture replay, sorted bindings/equality operands/inverse accounting and original custody closed. Real retained7214 parent bundle/cache join and meaning/applicability remain open; no new native/model/training/graph/corpus/gold admission, masks0.",
+      "scope": "Separate C685+two-overlay authored engineering cohort:21cases/63phases/9selectors (20new,one legacy). Both dd72typed alternatives against fictional Clérk parent only; six anchors/111targets each. Full original fixture replay, sorted bindings/equality operands/inverse accounting and original custody closed. Real retained7214 parent bundle/cache join and meaning/applicability remain open; no new native/model/training/graph/corpus/gold admission, masks0.",
       "status": "focused_snapshot_qualified"
     },
     {
@@ -15173,6 +15241,15 @@
       "root": "datasets_repository",
       "scope": "Audited corrected external A5 source/readback; separate original A144v02 144-case and H34 34-case software qualifications with original custody closed and each own16MiB durably released. Whole242 unqualified; failedA144 retained and zero-writeSource timeout preserved. No actualDB/Rnegative-lifecycle/scientific/model/legal/Lean/corpus authority.",
       "status": "qualified_separate_selected_A144_and_H34_source_software_controls_only"
+    },
+    {
+      "id": "original-parent-v3-A-to-D-bridge-progress-20261115",
+      "observed_bytes": 21465,
+      "observed_sha256": "7687e5e6cb5a6ed717c1f438e6f6a5e8e6baf544fcaeff6365fc9038e69769e7",
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/original-parent-v3-bridge-progress-selected-evidence-v03-qualified-fixes-genuine-pending.json",
+      "root": "ipfs_datasets",
+      "scope": "Historical A26 depth194 and adopted Source-root A50 software controls; preserved D1 f99 captured lineage and closed 58646/20091 failures. Genuine A-to-D and current peer source qualification remain pending. No statutory, training, corpus or live-service authority.",
+      "status": "source_fixes_qualified_at_captured_epochs_genuine_parent_pending_peer_reconciliation"
     }
   ]
 }
