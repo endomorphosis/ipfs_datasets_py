@@ -4196,7 +4196,17 @@
         "profile": "complete-reviewed-norm-admission/v2",
         "status": "focused_tests_qualified"
       },
-      "status": "focused_tests_qualified"
+      "status": "focused_tests_qualified",
+      "reviewed_source_raw_view_identity_20261115": {
+        "capsule": "docs/autoformalization/evidence/legal-ir-reviewed-source-raw-view-identity-20261115.json",
+        "capsule_bytes": 11721,
+        "capsule_sha256": "a05330f2071ba36829e0c599ab498af9f9efe11a6185e9e730dce18662e4a1d7",
+        "cross_view_alignment_supported": false,
+        "focused_cases": 24,
+        "human_statutory_Lean_training_or_corpus_authority": false,
+        "same_raw_requires_one_coordinate_view": true,
+        "software_qualified": true
+      }
     },
     {
       "apis": [
@@ -9456,7 +9466,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-11-15T05:09:52.432861+00:00",
+  "last_updated_at_utc": "2026-11-15T08:13:54.076998+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -9579,7 +9589,17 @@
       "required_for_catalog_check": true,
       "root": "datasets_repository",
       "scope": "Canonical 355-case V2/V3 source-use and reviewed-consumer software qualification; original false admissions, combined-mutation failure and historical source-epoch test failures retained. No real statutory, model, native proof or corpus authority.",
-      "status": "canonical_source_only_qualified_real_review_pending"
+      "status": "canonical_source_only_qualified_real_review_pending",
+      "reviewed_source_raw_view_identity_20261115": {
+        "capsule": "docs/autoformalization/evidence/legal-ir-reviewed-source-raw-view-identity-20261115.json",
+        "capsule_bytes": 11721,
+        "capsule_sha256": "a05330f2071ba36829e0c599ab498af9f9efe11a6185e9e730dce18662e4a1d7",
+        "cross_view_alignment_supported": false,
+        "focused_cases": 24,
+        "human_statutory_Lean_training_or_corpus_authority": false,
+        "same_raw_requires_one_coordinate_view": true,
+        "software_qualified": true
+      }
     },
     {
       "id": "many-sorted-complete-candidate-syntax-v3-20261114",

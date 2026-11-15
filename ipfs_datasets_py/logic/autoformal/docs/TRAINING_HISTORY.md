@@ -1,5 +1,7 @@
 # Training and experiment history
 
+Current canonical reviewed V2/V3 source-use software passed 24 focused fictional cases: two counterexamples, 12 negative controls and 10 positive controls. The [single evidence capsule](../../../../docs/autoformalization/evidence/legal-ir-reviewed-source-raw-view-identity-20261115.json) preserves the genuine two-case RED, fixture/ordering failures and separate historical 355-case scope; no fitting, model, native proof, human meaning or corpus admission is claimed.
+
 ## PGIR-041 proposal quarantine and explicit caller labels — 2026-11-15
 
 The retained red original measured seven failing admission controls and one passing timeout control. Default generation/collection could mark synthetic mutations verified and conversion could create independent checker metadata without supplied evidence; all twelve default generated classes could become training eligible. The corrected existing owners keep default proposals unknown/nontraining, recheck exact current pair/schema/path/outcome inputs, and require explicit caller `LabelEvidence` for the positive software route. The new miner epoch is `pgir-041-negative-miner-v2`; the catalog indexes both pre-existing owners, with 121 total components and the same 24 task IDs/statuses.

@@ -1,5 +1,7 @@
 # Current handoff
 
+The existing reviewed V2/V3 admission owner now rejects different extracted views of the same raw artifact, including a changed source_id, until an explicit physical alignment contract is supported. A grouped canonical original passed all 24 focused fictional cases; same-view disjoint uses remain supported and historical 355-case plus failed originals stay separate. See the [single evidence capsule](../../../../docs/autoformalization/evidence/legal-ir-reviewed-source-raw-view-identity-20261115.json) for exact receipts and limits; no human statutory review, native Lean, training/gold or corpus authority was created.
+
 ## Mutation proposals require explicit caller-label admission — 2026-11-15
 
 The existing PGIR-041 owners, `legal_ir_fuzzing.py` and `legal_ir_hard_negatives.py`, no longer turn changed JSON or a reported solver-outcome string into VERIFIED independent semantic evidence. The generator and collector produce unverified proposals; the default canonical recipe keeps all thirteen rows unknown and nontraining under `pgir-041-negative-miner-v2`. Identical formula payloads are rejected as unchanged; parsing and changed-path checks establish structure only. The two existing implementation owners are now indexed explicitly, bringing the maintained component catalog from 119 to 121 without adding a module or task queue. All 24 backlog task IDs and statuses remain unchanged.
