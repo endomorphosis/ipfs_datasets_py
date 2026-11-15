@@ -20009,6 +20009,14 @@
         "LIR-17"
       ],
       "id": "LIR-20",
+      "live_context_policy_exit_20261115": {
+        "evidence_id": "live-context-policy-exit-and-output-capture-20261115",
+        "selected_source_cases": 61,
+        "new_cases": 20,
+        "final_live_policy_and_evidence_fences": true,
+        "raw_return_detached_before_later_callbacks": true,
+        "model_native_or_real_review_claimed": false
+      },
       "diagnostic_source_boundary_20261115": {
         "evidence_id": "diagnostic-verifier-and-heldout-source-boundaries-20261115",
         "admission_and_heldout_software_cases": 329,

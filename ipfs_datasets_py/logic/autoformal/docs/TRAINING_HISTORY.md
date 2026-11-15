@@ -1,5 +1,9 @@
 # Training and experiment history
 
+## Live context permission and returned-output capture — 2026-11-15
+
+The canonical evaluator now refuses a report when context permission is revoked during production, even when every bound input is unchanged. It replays evidence after the final policy callback and freezes producer-returned data before later callbacks can alter it. All61 selected software cases pass (20 new/41 retained), no skips. These are scripted callbacks over fictional signed inputs, not training or model-quality measurements. No native, statutory gold or corpus qualification follows. [Exact qualification](../../../../docs/autoformalization/evidence/legal-ir-live-context-policy-exit-20261115.json).
+
 ## Diagnostic/profile and heldout-source software corrections — 2026-11-15
 
 The current canonical checks pass 470 whole kernel/cache cases (three native cases skipped) and 329 admission/heldout cases. Old error-bearing mock output and its unchanged cached proof were reproduced before repair. The current verifier and cache now require an explicit verifier-generation profile; no missing profile is defaulted or retroactively inserted. Rich heldout evaluation also rejects same-source TRAIN exposure across different context/view/revision declarations. Source-only fictional controls establish these software boundaries; no fitting, actual native proof, pretrained quality, real statutory gold or corpus release follows. Private assets and budgets remain unchanged. [Exact qualification](../../../../docs/autoformalization/evidence/legal-ir-diagnostic-source-boundaries-20261115.json).

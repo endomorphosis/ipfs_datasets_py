@@ -1,5 +1,15 @@
 # Current handoff
 
+## Live context policy on evaluator exit — 2026-11-15
+
+The existing reviewed producer evaluator now rechecks its independent live context policy after production, including producer-error and malformed-return paths. Current query/TRAIN admission, complete context, source/profile inputs and independent candidate facts are checked after that last policy callback. An original policy denial remains the raised object; a simultaneous failed evidence fence is retained as its cause. An already failed evidence fence may refuse first; no artifact is published in that case.
+
+Producer results are detached at the callback boundary before a later policy can mutate the returned list or nested candidates. Malformed returns retain validation-error semantics, producer exceptions retain their complete error populations, and callback timing retains its original boundary. Benign context policies are now called again on exit; a prior entry grant cannot authorize a report after revocation. This is an argument/policy contract, not a global process sandbox or legal interpretation.
+
+The defect was reproduced independently in canonical V3 and frozen private V4: unchanged source, reference, checkpoint, admission and context inputs still produced a three-abstention artifact after external authorization was revoked inside the producer. Fresh canonical V2/V3 qualification passes **61 selected cases** (20 new and 41 retained), with zero failures/errors/skips, closed Source custody and no model/native execution. They include final-policy query/TRAIN/source/checkpoint mutations, denial identity/cause, frozen output capture, producer errors and malformed outputs. The whole numerical owning module is unqualified. [Exact source/test hashes and evidence](../../../../docs/autoformalization/evidence/legal-ir-live-context-policy-exit-20261115.json).
+
+All 24 backlog IDs/statuses, original receipts, failed attempts, checkpoints and resource limits remain unchanged. Private V4 aggregate/factory work remains a separate integration until independently reviewed and adopted. Next under LIR-20: connect complete multi-component context to the existing decoder input/factory route, preserving all definitions, source exclusions, complete byte/token bounds and this final live policy check. Real retained 2024 Title 10 reviews, native proof, model quality, gold and corpus admission remain pending; private assets stay on hold.
+
 ## Compiler diagnostics, verifier generations and heldout source identity — 2026-11-15
 
 The canonical Lean backend now rejects error diagnostics from either captured output stream, including framed UTF-8 BOM records and plain Lean error forms. JSON warnings quoting error text remain warnings. Malformed, duplicate-key and nonfinite compiler JSON refuse. The single dependency report still must come from stdout and bind the exact generated declaration, source path and command position; diagnostics are not elaborated dependency evidence.

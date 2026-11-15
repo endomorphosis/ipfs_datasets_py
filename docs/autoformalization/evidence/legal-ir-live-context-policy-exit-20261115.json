@@ -1,0 +1,79 @@
+{
+  "schema": "autoformal-live-context-policy-source-qualification/v1",
+  "evidence_id": "live-context-policy-exit-and-output-capture-20261115",
+  "existing_task_ids": [
+    "LIR-20"
+  ],
+  "date_utc": "2026-11-15",
+  "changed_source_sha256": {
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_evaluation_artifacts.py": "10ac61a4c583ed1453ae459c02462d213912e53d0f109284db7b2019f36ec3b4",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_evaluation_artifacts.py": "6b1e65742569bb11bd3741057da010d121f263ce70ef070f5ea9f9cb6ba6573e"
+  },
+  "resolved_gap": "The V2/V3 rich heldout evaluator could return an artifact after external-only context permission was revoked during its producer callback, with every bound input unchanged.",
+  "reproduced_original": {
+    "name": "result-v01.json",
+    "sha256": "651b7a0d226c4d323b14a93696ab3921a9a1c83d1e6a20752960fcb6813b1d41"
+  },
+  "reproduction_scope": "Canonical V3 and separately frozen private V4 evaluator each passed one ordinary control and failed one external-revocation control; genuine reviewed fictional contexts and ordinary producer callbacks, no models/native proof.",
+  "implementation": {
+    "same_live_context_policy_rechecked_after_producer": true,
+    "query_TRAIN_context_source_and_known_fact_fences_after_final_policy_callback": true,
+    "original_policy_denial_preserved_with_failed_fence_as_cause": true,
+    "producer_outputs_detached_before_later_callbacks": true,
+    "producer_exception_and_malformed_return_semantics_preserved": true,
+    "producer_callback_timing_boundary_preserved": true,
+    "previously_failed_evidence_fence_can_refuse_before_final_policy": true,
+    "new_schema_queue_consumer_model_or_execution_permission": false
+  },
+  "canonical_qualification": {
+    "actual_counts": {
+      "tests": 61,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "new_cases": 20,
+    "retained_cases": 41,
+    "whole_owning_file_qualified": false,
+    "Source_closed": true,
+    "scope": "Actual existing V2/V3 signed fictional admission/context/evaluator callbacks. All candidate outputs are scripted software controls; no neural producer, model, tokenizer runtime, checkpoint inspection/restore, native compiler or real review.",
+    "original_inputs_and_checkpoint_declarations_fenced": true,
+    "late_policy_cannot_rewrite_saved_returned_outputs": true
+  },
+  "private_scope": "The private V4 extension has the same planned core fix and separately recorded tests; canonical V4 integration is not adopted by this publication.",
+  "qualification_receipts": [
+    {
+      "name": "canonical-policy-exit-result-v01.json",
+      "sha256": "08641d118678b1579851f29ed1310b9f4fcc6ef4af2f176b1ddc60a52bea4382"
+    },
+    {
+      "name": "canonical-policy-exit-v01.xml",
+      "sha256": "34d4fd21d0c94233249dee4831e1555ff379d0adc1256d9d892919b399d6ce8a"
+    },
+    {
+      "name": "private-policy-exit-result-v01.json",
+      "sha256": "e2edd9a54858fc29f9b85f90fcfa7aa006f4ed3fc56bc65e5fc4cea79a4fca3d"
+    }
+  ],
+  "unverified": {
+    "current_native_Lean": true,
+    "actual_model_restore_generation_training": true,
+    "real_statutory_source_correspondence_and_meaning": true,
+    "legal_applicability_or_controlling_authority": true,
+    "heldout_generalization": true,
+    "corpus_release": true,
+    "hosted_CI": true
+  },
+  "real_statutory_gold_admitted": 0,
+  "real_statutory_corpus_admitted": 0,
+  "preservation": {
+    "all_24_backlog_IDs_and_statuses_unchanged": true,
+    "old_receipts_and_failures_preserved": true,
+    "budgets_or_permissions_broadened": false,
+    "private_assets_and_model_checkpoints": "on_hold"
+  },
+  "next_smallest_task": {
+    "task_id": "LIR-20",
+    "action": "Complete explicit V4 aggregate context-to-decoder-factory input integration, reconcile this policy fix, and qualify complete inputs/current policy without changing context bounds or claiming model quality."
+  }
+}
