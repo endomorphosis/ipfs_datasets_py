@@ -1,11 +1,10 @@
-"""Verified hard-negative curricula for LegalIR training.
+"""Hard-negative curricula under explicit LegalIR caller trust metadata.
 
-Hard negatives are only useful when they are trusted labels.  This module
-therefore accepts verified fuzzing counterexamples and deterministic mutation
-oracles over trusted positive LegalIR records, rejects unverified model guesses,
-schedules negatives by difficulty, and emits an explicit before/after effect
-report for semantic-equivalence false positives and trusted positive
-obligations.
+The legacy builder rejects explicitly untrusted and producer-only proposals,
+including when verification is optional. Its trust flags do not authenticate a
+checker or establish legal meaning. Explicit trusted callers and the separate
+typed PGIR-041 LabelEvidence admission contract retain their existing behavior.
+Scheduling and before/after effect reports remain software diagnostics.
 """
 
 from __future__ import annotations
@@ -275,9 +274,23 @@ def _verification_payload(value: Any) -> dict[str, Any]:
     }
 
 
+def _explicitly_untrusted_or_proposal(
+    source: Mapping[str, Any], verification: Mapping[str, Any],
+) -> bool:
+    """A negative trust declaration or proposal epoch cannot opt into training."""
+    return (
+        source.get("schema_version") == "legal-ir-fuzzing-unverified-proposal-v2"
+        or source.get("training_partition") == "unverified_proposal"
+        or ("trusted" in source and not _truthy(source["trusted"]))
+        or ("trusted" in verification and not _truthy(verification["trusted"]))
+    )
+
+
 def _verified(value: Any) -> bool:
     source = _as_mapping(value)
     verification = _verification_payload(value)
+    if _explicitly_untrusted_or_proposal(source, verification):
+        return False
     if _truthy(source.get("trusted")) and not verification:
         return False
     return any(_truthy(verification.get(key)) for key in _VERIFIER_KEYS) or bool(
@@ -661,9 +674,12 @@ class LegalIRHardNegativeCurriculumBuilder:
         self,
         candidate: Any,
     ) -> Optional[LegalIRHardNegativeExample]:
-        if self.config.require_verified_negatives and not _verified(candidate):
-            return None
         source = _as_mapping(candidate)
+        verification = _verification_payload(source)
+        if _explicitly_untrusted_or_proposal(source, verification):
+            return None
+        if self.config.require_verified_negatives and not _verified(source):
+            return None
         minimal = source.get("minimal_counterexample", source.get("candidate_ir", source))
         reference = source.get("reference_ir", source.get("original_ir", {}))
         target = source.get("target", source.get("semantic_family", "deontic"))
@@ -671,7 +687,6 @@ class LegalIRHardNegativeCurriculumBuilder:
         semantic_family = _canonical_family_or_default(
             source.get("semantic_family") or _family_from_target(target)
         )
-        verification = _verification_payload(candidate)
         difficulty = self._difficulty(negative_family, semantic_family)
         example_id = (
             source.get("candidate_id")

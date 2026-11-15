@@ -2,8 +2,8 @@
 
 The fuzzer in this module is intentionally deterministic and dependency-light:
 it mutates LegalIR-facing artifacts, recompiles or reprojects the affected
-surface, checks the expected metamorphic relation, and records verified
-semantic counterexamples as source-copy-safe hard-negative candidates.
+surface, records deterministic relation diagnostics, and retains sanitized
+unverified mutation proposals for separate review.
 """
 
 from __future__ import annotations
@@ -36,8 +36,9 @@ from .modal_autoencoder import build_decompiler_structural_learning_target
 from .modal_ir import ModalIRDocument
 
 
-LEGAL_IR_FUZZING_SCHEMA_VERSION: Final = "legal-ir-metamorphic-differential-fuzzing-v1"
+LEGAL_IR_FUZZING_SCHEMA_VERSION: Final = "legal-ir-metamorphic-differential-fuzzing-v2"
 LEGAL_IR_TRUSTED_NEGATIVE_SCHEMA_VERSION: Final = "legal-ir-fuzzing-trusted-negative-v1"
+_LEGAL_IR_UNVERIFIED_PROPOSAL_SCHEMA_VERSION: Final = "legal-ir-fuzzing-unverified-proposal-v2"
 
 SEMANTICS_PRESERVING: Final = "semantics_preserving"
 SEMANTICS_CHANGING: Final = "semantics_changing"
@@ -282,7 +283,7 @@ class LegalIRSurfaceBundle:
 
 @dataclass(frozen=True)
 class TrustedNegativeCandidate:
-    """Verified minimal LegalIR non-equivalence candidate for later curricula."""
+    """Candidate carrying explicit caller trust metadata or an unverified producer proposal."""
 
     candidate_id: str
     source_mutation_id: str
@@ -337,7 +338,7 @@ class LegalIRFuzzingResult:
     def passed(self) -> bool:
         if self.mutation.relation == SEMANTICS_PRESERVING:
             return self.invariant_holds and self.differential_consistent
-        return self.expected_change_detected and self.verified
+        return self.expected_change_detected and self.differential_consistent
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -410,7 +411,7 @@ class LegalIRFuzzingReport:
 
 
 class LegalIRFuzzer:
-    """Generate and verify deterministic LegalIR metamorphic mutations."""
+    """Generate deterministic diagnostics and unverified mutation proposals."""
 
     def __init__(
         self,
@@ -452,7 +453,8 @@ class LegalIRFuzzer:
             if mutation.target in self.config.targets
         )
         trusted = tuple(
-            result.counterexample for result in results if result.counterexample is not None
+            result.counterexample for result in results
+            if result.counterexample is not None and result.counterexample.trusted is True
         )
         return LegalIRFuzzingReport(
             sample_id=resolved_sample_id,
@@ -560,13 +562,13 @@ class LegalIRFuzzer:
             decompiler_similarity=decompiler_similarity,
             grammar_rejections=grammar_rejections,
         )
-        verified = (invariant_holds and mutation.relation == SEMANTICS_PRESERVING) or (
+        diagnostics_passed = (invariant_holds and mutation.relation == SEMANTICS_PRESERVING) or (
             mutation.relation == SEMANTICS_CHANGING
             and expected_change_detected
             and differential_consistent
         )
         counterexample = None
-        if self._should_store_counterexample(mutation, verified, expected_change_detected):
+        if self._should_store_counterexample(mutation, diagnostics_passed, expected_change_detected):
             counterexample = self._trusted_negative_candidate(
                 baseline,
                 mutation,
@@ -585,7 +587,7 @@ class LegalIRFuzzer:
             invariant_holds=invariant_holds,
             expected_change_detected=expected_change_detected,
             differential_consistent=differential_consistent,
-            verified=verified,
+            verified=False,
             semantic_metrics=semantic_metrics,
             differential_metrics=differential_metrics,
             grammar_rejections=grammar_rejections,
@@ -1024,6 +1026,7 @@ class LegalIRFuzzer:
             return False
         if not expected_change_detected:
             return False
+        # This flag records heuristic diagnostics only, never semantic verification.
         return verified or not self.config.require_verification_for_trusted_negatives
 
     def _trusted_negative_candidate(
@@ -1051,8 +1054,9 @@ class LegalIRFuzzer:
             "differential_metrics": _json_ready(differential_metrics),
             "grammar_rejections": list(grammar_rejections),
             "semantic_similarity": semantic_similarity,
-            "verified": True,
-            "verified_by": [
+            "verified": False,
+            "verified_by": [],
+            "diagnostic_checks": [
                 "metamorphic_metric_oracle",
                 "deterministic_compiler",
                 "learned_guidance_projection",
@@ -1063,6 +1067,7 @@ class LegalIRFuzzer:
         candidate_payload = {
             "minimal": sanitized,
             "mutation_id": mutation.mutation_id,
+            "schema_version": _LEGAL_IR_UNVERIFIED_PROPOSAL_SCHEMA_VERSION,
             "verification": verification,
         }
         return TrustedNegativeCandidate(
@@ -1075,6 +1080,9 @@ class LegalIRFuzzer:
             verification=verification,
             source_text_sha256=_text_hash(baseline.text),
             mutated_payload_sha256=_stable_hash(mutation.mutated),
+            trusted=False,
+            training_partition="unverified_proposal",
+            schema_version=_LEGAL_IR_UNVERIFIED_PROPOSAL_SCHEMA_VERSION,
         )
 
 
@@ -1104,7 +1112,7 @@ def minimize_legal_ir_counterexample(
     *,
     max_depth: int = 3,
 ) -> Any:
-    """Greedily minimize a payload while preserving a verified predicate."""
+    """Greedily minimize a payload while preserving a caller-supplied predicate."""
 
     candidate = copy.deepcopy(value)
     if not predicate(candidate):
