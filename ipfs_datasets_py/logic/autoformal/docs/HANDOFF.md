@@ -1,5 +1,13 @@
 # Current handoff
 
+## Legacy fuzzer diagnostics stay outside trusted labels — 2026-11-15
+
+The existing optimizer owners now emit diagnostic report v2 and unverified proposal v2. Similarity, grammar and differential checks retain their diagnostic pass behavior; they do not set semantic `verified`. Minimized, source-copy-safe proposals remain in individual results, with `trusted=False`, an unverified partition and no `verified_by` claims. The curriculum rejects explicit distrust and proposal schema/partition markers before either verification policy can admit an example. Direct V1 trusted-caller defaults and the typed PGIR-041 evidence route retain their existing contracts.
+
+The original reproduction failed at both intended assertions: two heuristic negatives were exported as trusted, and the default curriculum admitted two explicitly untrusted payloads. After repair, a fresh whole-module original passed **93 software cases: 82 hard-negative and 11 metamorphic, zero failures, errors or skips, in 7.619s**. Source255/Git8 remained exact; original Source, resource, process and genuine-wait custody closed in **162.788363s**, and only its own 16 MiB claim was durably released. Failed claims and admission refusals are preserved; earlier 88/133-case results are not pooled.
+
+The unchanged rollout gate requires report v1 plus trusted negatives and intentionally refuses the new diagnostic report. Caller trust metadata is not checker authentication; historical V1 artifacts are not reauthenticated. Existing **LIR-22** still requires actual independent, source-applicable semantic evidence. No model fitting, convergence, Lean, statutory review, gold, corpus or runtime activation follows. [Measured evidence and exact sources](../../../../docs/autoformalization/evidence/legal-ir-legacy-fuzzer-proposal-boundary-20261115.json).
+
 ## PGIR-040 explicit positive evidence — 2026-11-15
 
 The existing positive-pair miner now requires explicit typed relationship evidence for recipe proposals. Under `pgir-040-positive-miner-v2`, the eight default proposals remain nontraining and produce no relationship receipts. Caller evidence is detached and subject-bound; recipe metadata cannot replace its authority, status, independence, result authority or receipt kind. Pending evidence cannot displace an eligible verified label. The three existing bound trace factories remain unchanged.

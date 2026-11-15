@@ -1,5 +1,11 @@
 # Training and experiment history
 
+## Legacy heuristic proposals quarantined; software qualification — 2026-11-15
+
+The original two-control reproduction failed twice and retains its nondurable 16 MiB claim. The repaired existing owners passed a fresh **93-case** whole-module run (82 hard-negative + 11 metamorphic), **0 failures/errors/skips in 7.619s**. Original custody closed in 162.788363s with unchanged Source255/Git8; its own 16 MiB claim was durably released at 144,157 bytes. Prior failures and epochs remain unchanged.
+
+Report/proposal v2 separates heuristic diagnostics from semantic verification. Tests cover real proposal objects and serialized forms, both verification policies, conflicting explicit trust declarations, source/model intake and fictional V1 caller compatibility. The typed PGIR-041 path remains separate. This run performs no fitting, independent semantic checking, native Lean or convergence experiment, and supplies no legal/gold/corpus authority. [Single evidence record](../../../../docs/autoformalization/evidence/legal-ir-legacy-fuzzer-proposal-boundary-20261115.json).
+
 ## PGIR-040 proposal-only recipes and explicit labels — 2026-11-15
 
 The original unattested-positive reproduction produced four assertion failures, retaining its failed 16 MiB claim and original evidence. After the existing owner was corrected, original handle `2304` exited 0 with **133 passed, no failures, errors or skips** across the three complete owning modules. Source256/Git8 drift was empty; the original owner and child were reaped and Source/resource custody closed in 164.245540 seconds. The successful attempt used 209,720 bytes of its own 16 MiB reservation, which the original owner marked durable and released. Earlier failure evidence was not rewritten or released.

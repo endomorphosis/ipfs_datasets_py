@@ -143,12 +143,6 @@
       "status": "focused_tests_qualified"
     },
     {
-      "id": "typed-mutation-evidence-proposals",
-      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_fuzzing.py",
-      "owner_module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_fuzzing",
-      "ownership_role": "existing_single_owner",
-      "required": true,
-      "compatibility_dependency": false,
       "apis": [
         "MinimalSemanticMutation",
         "MutationValidationRecord",
@@ -157,21 +151,24 @@
         "check_mutation_minimality",
         "generate_minimal_semantic_mutations",
         "collect_mutation_evidence",
-        "validate_all_minimal_mutation_classes"
+        "validate_all_minimal_mutation_classes",
+        "LegalIRFuzzer",
+        "run_legal_ir_metamorphic_fuzzing"
       ],
+      "compatibility_dependency": false,
       "evidence_ids": [
-        "PGIR041-mutation-label-admission-20261115"
+        "PGIR041-mutation-label-admission-20261115",
+        "legacy-fuzzer-proposal-boundary-20261115"
       ],
-      "status": "focused_tests_qualified",
-      "notes": "Existing canonical optimizer owner. PGIR-041 proposals default UNKNOWN; exact formula JSON comparison and declared-path structural checks do not establish independent semantic/solver evidence. No numerical, native or legal qualification inferred."
+      "id": "typed-mutation-evidence-proposals",
+      "notes": "Existing canonical optimizer owner. PGIR-041 proposals default UNKNOWN; exact formula JSON comparison and declared-path structural checks do not establish independent semantic/solver evidence. No numerical, native or legal qualification inferred. Legacy report v2 retains diagnostics and sanitized unverified proposal v2 without semantic verification or trusted export; the 93-case software scope does not authenticate independent checkers.",
+      "owner_module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_fuzzing",
+      "ownership_role": "existing_single_owner",
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_fuzzing.py",
+      "required": true,
+      "status": "focused_tests_qualified"
     },
     {
-      "id": "explicit-mutation-label-admission",
-      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_hard_negatives.py",
-      "owner_module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_hard_negatives",
-      "ownership_role": "existing_single_owner",
-      "required": true,
-      "compatibility_dependency": false,
       "apis": [
         "candidate_from_validation_record",
         "candidate_from_recipe_case",
@@ -181,13 +178,22 @@
         "mine_canonical_hard_negatives",
         "build_hard_negative_shards",
         "write_hard_negative_shards",
-        "load_hard_negative_shards"
+        "load_hard_negative_shards",
+        "LegalIRHardNegativeCurriculumBuilder",
+        "build_legal_ir_hard_negative_curriculum"
       ],
+      "compatibility_dependency": false,
       "evidence_ids": [
-        "PGIR041-mutation-label-admission-20261115"
+        "PGIR041-mutation-label-admission-20261115",
+        "legacy-fuzzer-proposal-boundary-20261115"
       ],
-      "status": "focused_tests_qualified",
-      "notes": "Existing canonical optimizer owner, miner-v2. Positive software admission requires explicit exact caller LabelEvidence and replayed endpoint/schema/path/outcome checks. Default and nonconfirmed records are nontraining; no independent checker/toolchain/directional proof/legal authentication is supplied. Historical archive decoding is not current readmission."
+      "id": "explicit-mutation-label-admission",
+      "notes": "Existing canonical optimizer owner, miner-v2. Positive software admission requires explicit exact caller LabelEvidence and replayed endpoint/schema/path/outcome checks. Default and nonconfirmed records are nontraining; no independent checker/toolchain/directional proof/legal authentication is supplied. Historical archive decoding is not current readmission. The legacy curriculum also rejects explicit distrust and proposal schema/partition markers before optional verification; explicit V1 caller flags remain compatibility metadata, not current authentication of historical archives.",
+      "owner_module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_hard_negatives",
+      "ownership_role": "existing_single_owner",
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_hard_negatives.py",
+      "required": true,
+      "status": "focused_tests_qualified"
     },
     {
       "apis": [
@@ -9489,7 +9495,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-11-15T08:13:54.076998+00:00",
+  "last_updated_at_utc": "2026-11-15T10:02:15.688800+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -15112,6 +15118,14 @@
       "root": "datasets_repository",
       "scope": "Audited corrected external A5 source/readback; separate original A144v02 144-case and H34 34-case software qualifications with original custody closed and each own16MiB durably released. Whole242 unqualified; failedA144 retained and zero-writeSource timeout preserved. No actualDB/Rnegative-lifecycle/scientific/model/legal/Lean/corpus authority.",
       "status": "qualified_separate_selected_A144_and_H34_source_software_controls_only"
+    },
+    {
+      "id": "legacy-fuzzer-proposal-boundary-20261115",
+      "path": "docs/autoformalization/evidence/legal-ir-legacy-fuzzer-proposal-boundary-20261115.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Fresh whole93PASS/0FES7.619s:82hard-negative+11metamorphic. Source255/Git8 unchanged, custody162.788363s<420/own16MiB durableReleased144157B. RED2 intended failures and zero-write refusals preserved. Diagnostic report/proposal v2 has no semantic trust; explicit distrust/proposal veto survives opt-out. Explicit V1 caller metadata and typed PGIR041 remain software contracts, not checker/legal/model/training/convergence/corpus authority; old88/133 not pooled.",
+      "status": "selected_original_software_qualified_independent_semantic_evidence_pending"
     }
   ]
 }

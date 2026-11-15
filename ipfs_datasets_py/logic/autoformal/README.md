@@ -1,5 +1,7 @@
 # Legal autoformalization
 
+The legacy heuristic fuzzer now retains diagnostics and sanitized unverified proposals without exporting trusted training negatives. Explicit distrust and proposal markers are rejected even when verification is optional. The [93-case software qualification](../../../docs/autoformalization/evidence/legal-ir-legacy-fuzzer-proposal-boundary-20261115.json) preserves explicit caller compatibility and the separate typed PGIR-041 route; independent semantic evidence, training and convergence remain separate gates.
+
 The existing positive-pair miner treats canonical recipes as unverified proposals. Typed caller-supplied evidence is required before a recipe pair can train or emit a relationship receipt; see the [handoff](docs/HANDOFF.md) for the 133-case qualification and its archive-authentication limits.
 
 Bound Lean proof reuse now requires the advertised backend version to equal the kernel's observed native and toolchain version. All 142 Source-only cache controls pass; the fictional red controls and separate current Native scope are recorded in the [handoff](docs/HANDOFF.md). Historical native results remain bound to their original source epochs and are not inherited by this change.

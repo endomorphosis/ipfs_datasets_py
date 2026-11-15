@@ -1,0 +1,139 @@
+{
+  "actual_GREEN": {
+    "Git_pin_count": 8,
+    "JUnit": {
+      "bytes": 18470,
+      "path": "/tmp/pytest-of-barberb/current-Main-legacy-fuzzer-trust-GREEN93-v01/a/exports/legacy-fuzzer-trust-green93.xml",
+      "sha256": "11a8e811135965710b29f953c57291160ee38642a35d8a4e46178785d6dd895a"
+    },
+    "Root_genuine_wait": "09878f/rc0",
+    "Root_launch": "31f1ea/session66738",
+    "Source_Native_process_genuine_wait_closed": true,
+    "Source_elapsed_seconds": 162.78836324298754,
+    "case_breakdown": {
+      "hard_negative": 82,
+      "metamorphic": 11
+    },
+    "earlier_88_or_133_case_credit_pooled": false,
+    "independent_audit": {
+      "bytes": 60737,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/independent-current-Main-legacy-fuzzer-trust-GREEN93-saved-DATA-audit-v01.json",
+      "sha256": "c23acb9ae2522cf3d6737b2c27c142d091d00e2a31fe712b8cf807e3bcc80615"
+    },
+    "inventory_files": 28,
+    "junit": {
+      "errors": 0,
+      "failures": 0,
+      "passed": 93,
+      "seconds": 7.619,
+      "skipped": 0,
+      "tests": 93
+    },
+    "own_artifacts_durable_asserted": true,
+    "own_attempt_bytes": 144157,
+    "own_storage_bytes": 16777216,
+    "own_storage_status": "released",
+    "parent_closeout": {
+      "bytes": 11401,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-Main-legacy-fuzzer-trust-GREEN93-original16MiB-input-v01/parent-closeout.json",
+      "sha256": "ff8c10e5fb503ee60d57fa6949d8b5e8cb99df8a64dac0375fb0d632c559d28c"
+    },
+    "retained_bytes": 0,
+    "seal_entries": 27,
+    "source_frontier_is_exhaustive_import_attestation": false,
+    "source_pin_count": 255,
+    "summary": {
+      "bytes": 12568,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-Main-legacy-fuzzer-trust-GREEN93-original16MiB-input-v01/qualification-summary.json",
+      "sha256": "cb9b1cb961eff8d9b322a8770ff37823c1df0f1a799482796b456fc6f1744239"
+    }
+  },
+  "actual_RED": {
+    "Source_Native_process_wait_closed": true,
+    "errors": 0,
+    "failures": 2,
+    "independent_audit": {
+      "bytes": 16757,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/independent-current-Main-legacy-fuzzer-trust-RED2-saved-DATA-audit-v01.json",
+      "sha256": "eba69dcac3484fb01e664e9a20653d763417c46fbd7054b5379551216c8bc1a0"
+    },
+    "observations": [
+      "Newly generated legacy decompiler output exported two trusted heuristic negatives.",
+      "The default curriculum accepted two detached payloads explicitly marked trusted=False and verified=False while retaining old verifier names. The failing assertion stopped before the optional-verification iteration."
+    ],
+    "own_artifacts_durable_asserted": false,
+    "own_storage_bytes": 16777216,
+    "own_storage_status": "retained",
+    "pytest_seconds": 1.118,
+    "skipped": 0,
+    "summary": {
+      "bytes": 8261,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-Main-legacy-fuzzer-trust-RED2-original16MiB-input-v01/qualification-summary.json",
+      "sha256": "ded3e9f1074da12aeeb49e2c169f5d3173ae7c76c93921e02e861e8d5087c9da"
+    },
+    "tests": 2
+  },
+  "behavior": {
+    "consumer_explicit_distrust_or_proposal_veto_before_optional_verification": true,
+    "default_trusted_export_count": 0,
+    "diagnostic_pass_retained": true,
+    "direct_trusted_V1_caller_defaults_unchanged": true,
+    "generated_proposal": "legal-ir-fuzzing-unverified-proposal-v2",
+    "generated_semantic_verified": false,
+    "generated_training_partition": "unverified_proposal",
+    "generated_trusted": false,
+    "generated_verified_by": [],
+    "historical_artifacts_rewritten_or_reauthenticated": false,
+    "legacy_report": "legal-ir-metamorphic-differential-fuzzing-v2",
+    "minimized_sanitized_proposals_retained": true,
+    "typed_PGIR041_admission_unchanged": true
+  },
+  "existing_task": "LIR-22",
+  "id": "legacy-fuzzer-proposal-boundary-20261115",
+  "limits": {
+    "child_process_slots": 4,
+    "cpu_slots": 1,
+    "initial_total_seconds": 420,
+    "ledger_seconds": 60,
+    "memory_mb": 1536,
+    "productive_seconds": 300,
+    "shared_Source_admission_seconds": 60,
+    "storage_bytes": 16777216
+  },
+  "next_gate": "Integrate actual independently produced semantic/counterexample evidence with source applicability, direction and checker/toolchain identity under the existing LIR-22 owners. Preserve historical V1 archives without treating their caller claims as current authentication.",
+  "old_promotion_gate": "Unchanged rollout gate expects report v1 and at least one trusted negative. New v2 with zero trusted export intentionally fails it; no promotion compatibility is granted.",
+  "qualification_limits": {
+    "Lean_or_solver_executed": false,
+    "convergence_proved": false,
+    "explicit_V1_caller_flags_are_checker_authentication": false,
+    "gold_or_corpus_release_admitted": false,
+    "independent_semantic_checker_integrated": false,
+    "model_or_training_executed": false,
+    "runtime_Source29_activated_or_repinned": false,
+    "software_only": true,
+    "statutory_meaning_or_human_review_established": false
+  },
+  "recorded_at_utc": "2026-11-15T10:02:15.688800+00:00",
+  "schema": "legal-ir-legacy-fuzzer-proposal-boundary/v1",
+  "source_adoption": {
+    "code_publication": {
+      "bytes": 10890,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/actual-legacy-fuzzer-trust-three-owned-source-Git-publication-v01.json",
+      "sha256": "f7e6d647fa7ae83640e840949fd267146afde6322aef405216698e5cc7e620b7"
+    },
+    "independent_audit": {
+      "bytes": 14507,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/independent-legacy-fuzzer-trust-three-file-Source-adoption-audit-v01.json",
+      "sha256": "50fa700badf890797e792b40e75c6f703b3dde83194e00a8b4b563c3aac10d46"
+    },
+    "metadata_preentry_admission_refusal_preserved": true,
+    "prior_zero_write_admission_refusal_preserved": true
+  },
+  "source_commit": "ad54686ca8403f5ed966d281639e0d7a021d1613",
+  "source_owners": {
+    "/tmp/datasets-publish-main-20261114/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_fuzzing.py": "4e9e09eeb9501281897c98ba73de1dcafe9f2dfdc3ea4a1e01e06bf41341fc13",
+    "/tmp/datasets-publish-main-20261114/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_hard_negatives.py": "b8f432cc9f720a3e7a10883f1032e77fff3d6d2256a243b965e97bd610d8d9f8",
+    "/tmp/datasets-publish-main-20261114/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_hard_negatives.py": "ef397ff414c4ee1a226fccff28854bf866a72534517b3f742b12402bb3f0cbff",
+    "/tmp/datasets-publish-main-20261114/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_metamorphic_fuzzing.py": "6eca3740b5e21b925aa25e6fe0764042cedeb25bc0912a78453aba38b16be6fb"
+  }
+}
