@@ -1876,11 +1876,14 @@ def reviewed_repeated_permission_source_v2(case, mutation):
         use = next(row for row in case["declaration"]["definition_uses"] if row["use_unit_id"] == unit["unit_id"])
         use["use_occurrence_cid"] = occurrence["record_cid"]
 
-    if mutation == "nonoverlapping_paragraphs":
+    if mutation in ("nonoverlapping_paragraphs", "nonoverlapping_paragraphs_different_source_id"):
         view = text + "\n" + text
         raw = view.encode("utf-8")
         install(original, identity, view, raw, 0, original_length, "identity/v1")
-        install(alternate, identity, view, raw, original_length + 1, len(view), "identity/v1")
+        alternate_identity = dict(identity)
+        if mutation == "nonoverlapping_paragraphs_different_source_id":
+            alternate_identity["source_id"] = alternate["unit_id"]
+        install(alternate, alternate_identity, view, raw, original_length + 1, len(view), "identity/v1")
     elif mutation in ("different_unaligned_view", "different_view_and_document_revision_label"):
         view = "\n" + text
         install(alternate, identity, view, view.encode("utf-8"), 1, len(view), "identity/v1")
@@ -1932,10 +1935,18 @@ def test_reviewed_v2_raw_repackaging_and_artifact_labels_do_not_create_legal_use
         assess_reviewed_fixture_v2(owner, case)
 
 
-@pytest.mark.parametrize("mutation", ["different_provision", "different_release", "different_edition", "nonoverlapping_paragraphs"])
+@pytest.mark.parametrize("mutation", ["different_provision", "different_release", "different_edition", "nonoverlapping_paragraphs", "nonoverlapping_paragraphs_different_source_id"])
 def test_reviewed_v2_distinct_legal_identities_and_nonoverlapping_uses_survive(owner, reviewed_case_v2, mutation):
     case = reviewed_case_v2
     original, alternate = reviewed_repeated_permission_source_v2(case, mutation)
+    if mutation == "nonoverlapping_paragraphs_different_source_id":
+        first, second = original["source_version"], alternate["source_version"]
+        assert first["raw_artifact"]["sha256"] == second["raw_artifact"]["sha256"]
+        assert first["extracted_view"]["sha256"] == second["extracted_view"]["sha256"]
+        assert first["source_id"] != second["source_id"] == alternate["unit_id"]
+        assert all(first[field] == second[field] for field in ("release_id", "edition", "provision_id"))
+        assert original["occurrence"]["end_char"] < alternate["occurrence"]["start_char"]
+        assert original["occurrence"]["end_utf8"] < alternate["occurrence"]["start_utf8"]
     reviewed_refresh_signed_preparation_v2(owner, case)
     report = assess_reviewed_fixture_v2(owner, case)
     assert report["semantic_use_eligible"] is True and report["blockers"] == []
@@ -1943,3 +1954,62 @@ def test_reviewed_v2_distinct_legal_identities_and_nonoverlapping_uses_survive(o
     assert report["Lean_admitted"] is report["proof_authority"] is report["corpus_admitted"] is False
     assert len({row["occurrence_cid"] for row in report["units"] if row["kind"] == "norm"}) == 2
     assert original["occurrence"]["span_text"] == alternate["occurrence"]["span_text"]
+
+
+def test_reviewed_v2_alternate_view_of_same_raw_paragraph_requires_distinct_use_witness(owner, reviewed_case_v2):
+    from ipfs_datasets_py.logic.autoformal import corpus_source as sources
+    # Preparation-only fictional counterexample: no modified signed reviews
+    # are submitted to an assessor, and no statutory meaning is asserted.
+    case = reviewed_case_v2
+    original, relabeled = case["declaration"]["units"][1:]
+    assert original["kind"] == relabeled["kind"] == "norm"
+    source_input = deepcopy(case["source_inputs"][original["unit_id"]])
+    raw, first_view = source_input["raw_bytes"], source_input["extracted_text"]
+    first_version, first_occurrence = original["source_version"], original["occurrence"]
+    second_view = "\n" + first_view
+    raw_sha = sha(raw)
+    second_view_sha = sha(second_view.encode("utf-8"))
+    assert first_version["raw_artifact"]["sha256"] == raw_sha
+    assert second_view_sha != first_version["extracted_view"]["sha256"]
+    version = sources.build_source_version(
+        source_id=relabeled["unit_id"], release_id=first_version["release_id"],
+        edition=first_version["edition"], provision_id=first_version["provision_id"],
+        raw_bytes=raw, expected_raw_sha256=raw_sha,
+        extracted_text=second_view, expected_extracted_sha256=second_view_sha,
+        extraction_profile="fixture-leading-newline-derived-view/v1",
+        normalization_profile="preserved-paragraph-leading-newline/v1", media_type="text/plain")
+    occurrence = sources.build_source_occurrence(
+        version, expected_raw_sha256=raw_sha, extracted_text=second_view,
+        expected_extracted_sha256=second_view_sha,
+        start_char=first_occurrence["start_char"] + 1,
+        end_char=first_occurrence["end_char"] + 1,
+        start_utf8=first_occurrence["start_utf8"] + 1,
+        end_utf8=first_occurrence["end_utf8"] + 1)
+    assert sources.validate_source_version(version, expected_raw_sha256=raw_sha,
+        raw_bytes=raw, extracted_text=second_view,
+        expected_extracted_sha256=second_view_sha) == version
+    assert sources.validate_source_occurrence(occurrence, source_version=version,
+        expected_raw_sha256=raw_sha, extracted_text=second_view,
+        expected_extracted_sha256=second_view_sha) == occurrence
+    assert version["raw_artifact"] == first_version["raw_artifact"]
+    assert occurrence["span_text"] == first_occurrence["span_text"]
+    assert occurrence["span_sha256"] == first_occurrence["span_sha256"]
+    assert occurrence["record_cid"] != first_occurrence["record_cid"]
+    relabeled.update(source_version=version, occurrence=occurrence,
+        document_revision=original["document_revision"])
+    case["source_inputs"][relabeled["unit_id"]] = {
+        "raw_bytes": raw, "extracted_text": second_view}
+    for coverage in relabeled["coverage"]:
+        coverage.update({key: occurrence[key] for key in
+            ("start_char", "end_char", "start_utf8", "end_utf8")})
+    use = next(row for row in case["declaration"]["definition_uses"]
+               if row["use_unit_id"] == relabeled["unit_id"])
+    use["use_occurrence_cid"] = occurrence["record_cid"]
+    reviewed_refresh_manifest_v2(case)
+    assert len(case["declaration"]["units"]) == 3
+    assert len(case["declaration"]["definition_uses"]) == 2
+    # Different view coordinates cannot establish a second operative physical
+    # use. This declaration supplies no common physical-coordinate witness.
+    with pytest.raises(ValueError, match=r"same raw|cross.view|physical.*(witness|coordinate)|distinct.*(use|view)"):
+        owner.prepare_reviewed_norm_admission_v2(
+            case["declaration"], **reviewed_prepare_arguments_v2(case))

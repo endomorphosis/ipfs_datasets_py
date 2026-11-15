@@ -543,12 +543,15 @@ class _ReviewedSourceUseTracker:
     legal source revision. Different canonical views of that revision require
     an alignment contract, which this admission profile does not provide. This
     does not infer aliases between different caller-declared legal identities.
+    One raw artifact also has one coordinate view in this conservative profile;
+    cross-view alignment witnesses remain unsupported even across those identities.
     """
 
     def __init__(self):
         self.physical_occurrences = set()
         self.physical_norm_intervals = []
         self.logical_views = {}
+        self.raw_views = {}
         self.logical_occurrences = set()
         self.logical_norm_intervals = []
 
@@ -568,6 +571,8 @@ class _ReviewedSourceUseTracker:
             ("source_id", "release_id", "edition", "provision_id"))
         _need(logical_source not in self.logical_views or self.logical_views[logical_source] == view_sha,
               "different extracted views of one logical source revision require unsupported source-view alignment")
+        _need(raw_sha not in self.raw_views or self.raw_views[raw_sha] == view_sha,
+              "same raw source across different extracted views requires unsupported source-view alignment")
         # A document-revision label is not another legal provision/release.
         # The known same view/location remains the same use across such labels.
         logical_parent = logical_source + (view_sha,)
@@ -580,6 +585,7 @@ class _ReviewedSourceUseTracker:
                 "overlapping logical source interpretations are not two distinct normative uses")
         self.physical_occurrences.add(physical)
         self.logical_views[logical_source] = view_sha
+        self.raw_views[raw_sha] = view_sha
         self.logical_occurrences.add(logical)
         if unit["kind"] == "norm":
             self.physical_norm_intervals.append((physical_parent, start, end))
