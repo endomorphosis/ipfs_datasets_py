@@ -1,5 +1,41 @@
 # Candidate Legal corpus graph exchange
 
+## Release-v3 graph transport source-only 56 qualification — 2026-11-15
+
+Select the V3 replay explicitly with `python -B scripts/ops/legal_ir/validate_uscode_corpus_release.py validate-closure --request PATH --request-sha256 SHA --profile reviewed-norm-v3-physical-three-cache-replay/v1`. The default remains `reviewed-norm-v2-local-replay/v1`.
+
+The V3 controls replay a complete fictional signed three-cache component (an 83-file fixture) and reconstruct its bounded four-chunk packet transport. Complete typed records and literal policy are checked; incomplete/reordered/aliased transport is refused. This fixture demonstrates software replay behavior, without actual Native Lean or real US Code release admission.
+
+The current release-v3 source-only batch covers the release coordinator, validate_uscode_corpus_release CLI and its maintained owning controls. The opt-in transport/closure path preserves the default domain and legacy request identity, checks the literal packet policy, and validates complete ordered chunk transport and mixed physical closure using reviewed test components. These are software behaviors, not actual US Code, Native Lean, model or corpus admission.
+
+One fresh original run selected 13 functions and passed 56 exact natural cases in 33.61 seconds, with zero failures/errors/skips. The result and execution records and full JUnit classname/name/parameter-ID order were independently joined. The explicit source frontier contains 198 pinned files, checked unchanged; no raw import-origin stream establishes that every runtime import belonged to that frontier. No old 56/155/146 outcome is pooled or transferred.
+
+Original Source R+A, Native, sampled-process and genuine-wait custody closed in 189.529 seconds, before the initial 420-second acceptance cutoff. Its own 32MiB promise was durably released after 61 sealed rows plus the seal, 62 files / 6,572,203 bytes. The existing CPU1, memory1536MiB, process4 and productive 120-second request limits stay unchanged. The reviewed helper uses one shared 60-second Source-admission cutoff inside that initial 420 acceptance clock, without deadline renewal, hard-preemption claims or a new runtime grant.
+
+This publication preserves all current peer sections, 119 owners, 24 task IDs/states, retained failures and private-asset/runtime holds. Source-generation, delegated immutable@2, actual live SDK cleanup, full-import qualification, native Lean and real corpus/model/training/legal validation remain separate gates. [Current 13/56 exact evidence](../../../../../workspace/test-logs/federal-corpus-audits/legal-ir-current-release-v3-source-only-R56-qualified-20261115-v01/qualification-summary.json).
+
+
+## Full-release CLI selects strict wire metadata — 2026-11-15
+
+The existing `scripts/ops/legal_data/build_uscode_full_hf_release.py` now
+selects the existing `hf-default-parquet-envelope/v1` packaging profile by
+default. Staged release metadata lists exact files and records measured
+Parquet schema, row counts and Arrow bytes. Unselected files in the staging
+directory remain untouched and cannot enter the manifest through a broad
+glob. `--legacy-metadata-profile` explicitly retains the old CLI behavior;
+the underlying producer API keeps its existing default.
+
+The old CLI reproduced a strict-intake failure after successful real local
+staging. The corrected default and explicit legacy route pass both owning
+tests, using real tiny Parquet files and the existing staging/intake owners.
+Only upstream family generation is modeled. All229 source pins stayed exact;
+the original156-second run closed Source, Native and process custody and
+durably released its own32MiB reservation. This is local packaging evidence,
+with no Hub upload, model execution, statutory review or corpus admission.
+Public law/span/entity compatibility findings remain separate from this fix.
+
+[Closed two-case qualification](../../../../../workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/HF_full_release_cli_current2-small-v01/cohort-closeout.json).
+
 This additive v1 profile exports and validates a bounded local candidate graph.
 It preserves complete sealed node/edge records and explicit graph endpoints.
 It is a graph interchange format, not a complete statutory or Lean corpus

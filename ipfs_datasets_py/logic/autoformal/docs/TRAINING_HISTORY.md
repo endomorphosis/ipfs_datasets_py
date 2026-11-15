@@ -1,5 +1,16 @@
 # Training and experiment history
 
+## R56 software evidence preserves corpus, model and training holds — 2026-11-15
+
+The current release-v3 source-only batch covers the release coordinator, validate_uscode_corpus_release CLI and its maintained owning controls. The opt-in transport/closure path preserves the default domain and legacy request identity, checks the literal packet policy, and validates complete ordered chunk transport and mixed physical closure using reviewed test components. These are software behaviors, not actual US Code, Native Lean, model or corpus admission.
+
+One fresh original run selected 13 functions and passed 56 exact natural cases in 33.61 seconds, with zero failures/errors/skips. The result and execution records and full JUnit classname/name/parameter-ID order were independently joined. The explicit source frontier contains 198 pinned files, checked unchanged; no raw import-origin stream establishes that every runtime import belonged to that frontier. No old 56/155/146 outcome is pooled or transferred.
+
+Original Source R+A, Native, sampled-process and genuine-wait custody closed in 189.529 seconds, before the initial 420-second acceptance cutoff. Its own 32MiB promise was durably released after 61 sealed rows plus the seal, 62 files / 6,572,203 bytes. The existing CPU1, memory1536MiB, process4 and productive 120-second request limits stay unchanged. The reviewed helper uses one shared 60-second Source-admission cutoff inside that initial 420 acceptance clock, without deadline renewal, hard-preemption claims or a new runtime grant.
+
+This publication preserves all current peer sections, 119 owners, 24 task IDs/states, retained failures and private-asset/runtime holds. Source-generation, delegated immutable@2, actual live SDK cleanup, full-import qualification, native Lean and real corpus/model/training/legal validation remain separate gates. [Current 13/56 exact evidence](../../../../workspace/test-logs/federal-corpus-audits/legal-ir-current-release-v3-source-only-R56-qualified-20261115-v01/qualification-summary.json).
+
+
 ## Live context permission and returned-output capture — 2026-11-15
 
 The canonical evaluator now refuses a report when context permission is revoked during production, even when every bound input is unchanged. It replays evidence after the final policy callback and freezes producer-returned data before later callbacks can alter it. All61 selected software cases pass (20 new/41 retained), no skips. These are scripted callbacks over fictional signed inputs, not training or model-quality measurements. No native, statutory gold or corpus qualification follows. [Exact qualification](../../../../docs/autoformalization/evidence/legal-ir-live-context-policy-exit-20261115.json).

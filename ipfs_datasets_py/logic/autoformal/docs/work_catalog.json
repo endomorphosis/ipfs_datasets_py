@@ -8654,11 +8654,11 @@
       "id": "reviewed-evaluation-and-retention",
       "live_context_policy_exit_20261115": {
         "evidence_id": "live-context-policy-exit-and-output-capture-20261115",
-        "selected_source_cases": 61,
-        "new_cases": 20,
         "final_live_policy_and_evidence_fences": true,
+        "model_native_or_real_review_claimed": false,
+        "new_cases": 20,
         "raw_return_detached_before_later_callbacks": true,
-        "model_native_or_real_review_claimed": false
+        "selected_source_cases": 61
       },
       "many_sorted_candidate_syntax_v3": {
         "all_three_fictional_references_syntax_valid": true,
@@ -9207,15 +9207,26 @@
       ],
       "compatibility_dependency": true,
       "evidence_ids": [
-        "hf-wire-producer-closure-private103-source-20261111"
+        "hf-wire-producer-closure-private103-source-20261111",
+        "full-release-cli-existing-wire-default-20261115"
       ],
+      "full_release_cli_default": {
+        "cases": 2,
+        "evidence_id": "full-release-cli-existing-wire-default-20261115",
+        "legacy_opt_out": "--legacy-metadata-profile",
+        "metadata_profile": "hf-default-parquet-envelope/v1",
+        "path": "scripts/ops/legal_data/build_uscode_full_hf_release.py",
+        "producer_API_default_changed": false,
+        "remote_publication_or_statutory_admission": false
+      },
       "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_corpus_graph_exchange.md",
       "id": "uscode-hf-release-packaging",
-      "notes": "Existing deterministic local packager, newly indexed. Optional explicit hf-default-parquet-envelope/v1 derives strict intake-compatible metadata from actual local Parquet schema/rows/Arrow bytes before existing sealing. Default23 fixture artifacts exactly match old generation; no Hub upload, legal or corpus admission.",
+      "notes": "Existing deterministic local packager, newly indexed. Optional explicit hf-default-parquet-envelope/v1 derives strict intake-compatible metadata from actual local Parquet schema/rows/Arrow bytes before existing sealing. Default23 fixture artifacts exactly match old generation; no Hub upload, legal or corpus admission. Nov15 full-release CLI selects the existing strict wire profile by default, with an explicit legacy option. Both real local staging/intake controls pass; core API remains unchanged. See full-release-cli-existing-wire-default-20261115.",
       "owner_module": "ipfs_datasets_py.processors.legal_data.uscode_hf_release",
       "ownership_role": "existing_single_owner",
       "owning_tests": [
-        "tests/unit/processors/legal_data/test_uscode_hf_release.py"
+        "tests/unit/processors/legal_data/test_uscode_hf_release.py",
+        "tests/unit/scripts/test_build_uscode_full_hf_release.py"
       ],
       "path": "ipfs_datasets_py/processors/legal_data/uscode_hf_release.py",
       "required": false,
@@ -9422,7 +9433,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-11-15T02:08:59.996398+00:00",
+  "last_updated_at_utc": "2026-11-15T03:00:19.396084+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -9467,10 +9478,10 @@
     {
       "id": "live-context-policy-exit-and-output-capture-20261115",
       "path": "docs/autoformalization/evidence/legal-ir-live-context-policy-exit-20261115.json",
-      "root": "datasets_repository",
       "required_for_catalog_check": true,
-      "status": "canonical_source_only_qualified_real_review_pending",
-      "scope": "61 selected live-policy/output-capture software controls over fictional signed V2/V3 contexts; no model/native/statutory/gold/corpus authority."
+      "root": "datasets_repository",
+      "scope": "61 selected live-policy/output-capture software controls over fictional signed V2/V3 contexts; no model/native/statutory/gold/corpus authority.",
+      "status": "canonical_source_only_qualified_real_review_pending"
     },
     {
       "id": "diagnostic-verifier-and-heldout-source-boundaries-20261115",
@@ -15002,6 +15013,25 @@
       "root": "datasets_repository",
       "scope": "Exact40A+106R selected owning controls in one original CLI run, audited Source4 adoption and retained RED2; no full SDK/SourceGen/live cleanup/@2/model/legal/Lean transfer.",
       "status": "qualified_selected146_current_immutable_v1_cleanup_controls_only"
+    },
+    {
+      "id": "full-release-cli-existing-wire-default-20261115",
+      "observed_bytes": 2731,
+      "observed_sha256": "1b21c382be9ebfc28e89dc3798da0f23dc738fdece64d2f12063647fb8da51e1",
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/HF_full_release_cli_current2-small-v01/cohort-closeout.json",
+      "root": "ipfs_datasets",
+      "scope": "Two real local Parquet CLI staging/intake controls; upstream family generation modeled; exact229 source pins and all original custody closed, own32MiB durably released. Existing producer API unchanged; no Hub/model/statutory/corpus authority.",
+      "status": "qualified_within_recorded_scope"
+    },
+    {
+      "id": "legal-ir-current-release-v3-source-only-R56-qualified-20261115-v01",
+      "observed_bytes": 20033,
+      "observed_sha256": "0ab4f5115040b164ca9c3a0bd2aad6cd5df72362c642f23576f680a0245778aa",
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-current-release-v3-source-only-R56-qualified-20261115-v01/qualification-summary.json",
+      "required_for_catalog_check": false,
+      "root": "datasets_repository",
+      "scope": "Fresh current3R source batch; exact13functions/56 software cases in explicit198 source frontier with original Source/Native/process closure. No all-import/old155/Native Lean/realUSCode/model/corpus transfer.",
+      "status": "qualified_current_selected_R56_source_only_software_controls"
     }
   ]
 }
