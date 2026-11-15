@@ -1,5 +1,13 @@
 # Current handoff
 
+## Complete V4 public-tokenizer context refused before backend — 2026-11-15
+
+Original tool **12754** exited **1** (terminal `17e59c`): its one selected case failed in **34.68 seconds**. The public-tokenizer/inert-backend factory attempt refused the complete rich context at the unchanged **4096-token limit**, before backend generation. The exact overflowing token count was not measured; no count or successful capacity result is inferred. [Unchanged original failure capsule](../../../../docs/autoformalization/evidence/legal-ir-v4-public-tokenizer-context-refusal-20261115.json).
+
+Source, Native validation-resource and process custody closed. The original **16 MiB storage promise remains retained**. No retry, clipping, panel truncation, limit increase or budget reset is authorized. The separately preserved five-source V4 candidate `c638cbd2a52a6f401979d7642aa483bafca2cc59` remains unqualified and is not adopted by this documentation-only record. No positive model, gold-label, native Lean or corpus qualification follows.
+
+Next under **LIR-20**: establish the actual full-context token census and assess capacity through the existing lossless representation and capacity owners, preserving every permitted definition and source span. No execution or new profile is selected here. Real statutory meaning, model quality, proof and corpus admission remain pending; private assets stay on hold.
+
 ## Current release-v3 source-only R56 controls qualified — 2026-11-15
 
 The current release-v3 source-only batch covers the release coordinator, validate_uscode_corpus_release CLI and its maintained owning controls. The opt-in transport/closure path preserves the default domain and legacy request identity, checks the literal packet policy, and validates complete ordered chunk transport and mixed physical closure using reviewed test components. These are software behaviors, not actual US Code, Native Lean, model or corpus admission.

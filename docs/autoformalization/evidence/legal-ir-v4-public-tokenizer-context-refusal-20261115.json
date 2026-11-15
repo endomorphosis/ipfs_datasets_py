@@ -1,0 +1,81 @@
+{
+  "schema": "original-v5-complete-context-capacity-failure/v1",
+  "actual_tool_handle": 12754,
+  "actual_terminal_chunk": "17e59c",
+  "actual_terminal_exit_code": 1,
+  "request_sha256": "4ea981c26eae63a8235ee73a9dc0fc0c523e9ffb63def031b8d01f67cf4a12d8",
+  "tests": 1,
+  "failed": 1,
+  "passed": 0,
+  "skipped": 0,
+  "test_seconds": 34.68,
+  "owner_elapsed_seconds": 170.4581747627817,
+  "failure": "complete rich context token budget exceeded; truncation forbidden",
+  "context_limit_tokens": 4096,
+  "exact_overflow_token_count_not_measured": true,
+  "backend_generation_not_reached": true,
+  "model_training_or_quality_qualified": false,
+  "source_closed": true,
+  "source_drift": [],
+  "original_owner_and_child_identities_gone": true,
+  "native_grant_released": true,
+  "storage_status": "retained",
+  "retained_storage_bytes": 16777216,
+  "reservation_id": "d70afc7b8f2c4f8e813b6a8381cbe8c0",
+  "automatic_retry": false,
+  "budgets_changed": false,
+  "panel_truncated": false,
+  "module_origin_evidence": "runtime warning identifies /home/barberb/.local/lib/python3.12/site-packages/transformers/utils/hub.py; no comprehensive sys.modules snapshot",
+  "evidence": [
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-v4-aggregate-factory-public-tokenizer-original-v04-input/request.json",
+      "bytes": 45705,
+      "sha256": "4ea981c26eae63a8235ee73a9dc0fc0c523e9ffb63def031b8d01f67cf4a12d8"
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-v4-aggregate-factory-public-tokenizer-original-v04-input/run-original-source-held-public-tokenizer-v01.py",
+      "bytes": 23022,
+      "sha256": "aa3eee28215d9f8dc6e1ce8ab2fd76794d24808626c4639d2d45789695b3d485"
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-v4-aggregate-factory-public-tokenizer-original-v04-input/tokenizer-only-child.py",
+      "bytes": 1851,
+      "sha256": "e2426f59818c3127b7c0b438481f675bf6cd9657582a510ce8de7dc21ace252b"
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-v4-aggregate-factory-public-tokenizer-original-v04-input/parent-closeout.json",
+      "bytes": 14523,
+      "sha256": "30cc371f158093720e82f1cc2708ae25c9dd47033e9b263706dfcd4cafa511fb"
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-v4-aggregate-factory-public-tokenizer-original-v04-input/owner.stdout",
+      "bytes": 8086,
+      "sha256": "94793a0d8d047a9a944b8174b02c51cc5d28f4110eb461adfb65c6f063cb0668"
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-v4-aggregate-factory-public-tokenizer-original-v04-input/owner.stderr",
+      "bytes": 647,
+      "sha256": "e6caa7beb95eb2acaa6a19962656a26f2088dcad8efd6940d7eab56eeb125806"
+    },
+    {
+      "path": "/tmp/pytest-of-barberb/legal-v4-aggregate-public-tokenizer-20261115-v04/a/logs/stdout.log",
+      "bytes": 2312,
+      "sha256": "2a90fbcf5ad9562acc504fd24eab48dcb94273c1304f51f5f84fda611695fb2b"
+    },
+    {
+      "path": "/tmp/pytest-of-barberb/legal-v4-aggregate-public-tokenizer-20261115-v04/a/logs/stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/pytest-of-barberb/legal-v4-aggregate-public-tokenizer-20261115-v04/a/exports/public-tokenizer-factory.xml",
+      "bytes": 1706,
+      "sha256": "057801187b13865a8edff2ea0e13dd359effbe647f281f63cb762f25b647817c"
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-v4-aggregate-factory-public-tokenizer-original-v04-input/live-child-native-library-observation-v01.json",
+      "bytes": 250,
+      "sha256": "a2f0f6080bdc4267581edfb302ecee9e6d847be7abb1540226ba73969e5fa448"
+    }
+  ]
+}

@@ -1638,3 +1638,246 @@ def test_shared_lawrow_v3_original_source_replay_refuses_duplicate_or_overlappin
         r for r in original["artifacts"] if r["artifact_id"] == mapping)
     with pytest.raises(ValueError, match=reason):
         replay_physical_closure_v3(request)
+
+
+# An A-issued capability is never constructed by these software controls.
+# The actual same-thread original-parent consumer below is a separate explicit
+# controller handoff; ordinary pytest cannot turn a dict/callback into success.
+def test_original_parent_v3_omitted_and_explicit_none_keep_retained_default_exact(
+        authored_physical_native_v3, monkeypatch):
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+    request, _, _, _, raw = authored_physical_native_v3
+    def forbidden(*args, **kwargs):
+        pytest.fail("retained default tried to resolve an original parent owner")
+    monkeypatch.setattr(release, "_release_original_parent_context_v3", forbidden)
+    digest = hashlib.sha256(raw).hexdigest()
+    omitted = release.validate_uscode_release_closure_v3(raw, expected_request_sha256=digest)
+    explicit_none = release.validate_uscode_release_closure_v3(raw,
+        expected_request_sha256=digest, original_parent_handle=None)
+    assert omitted == explicit_none
+    assert_release_v3_byte_authority_only(omitted)
+    assert omitted["profile"] == "reviewed-norm-v3-physical-three-cache-replay/v1"
+    assert "original_parent_evidence" not in omitted
+    assert omitted["native_packet_transport"]["logical_packet_inventory_sha256"] == request["native"]["expected_packet_sha256"]
+
+
+@pytest.mark.parametrize("offered", ["object", "mapping", "boolean", "json", "unissued"])
+def test_original_parent_v3_rejects_unissued_before_wire_or_physical_replay(monkeypatch, offered):
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_lake_v2 as wire
+    if offered == "object": value = object()
+    elif offered == "mapping": value = {"original_success_authenticated": True}
+    elif offered == "boolean": value = True
+    elif offered == "json": value = json.loads('{"original_admitted_parent_custody_authenticated":true}')
+    else:
+        from ipfs_accelerate_py.agent_supervisor.rescue import repair_candidate_owners as owner
+        value = object.__new__(owner.VerifiedReviewedPreservationParentSuccess)
+    def forbidden(*args, **kwargs):
+        pytest.fail("unissued handle reached wire/physical/native DATA")
+    monkeypatch.setattr(wire, "decode_parent_replay_value_v1", forbidden)
+    raw = b"not even a closure wire; the opaque boundary must refuse first"
+    with pytest.raises(ValueError, match="(?i)(issued|handle)"):
+        release.validate_uscode_release_closure_v3(raw,
+            expected_request_sha256=hashlib.sha256(raw).hexdigest(), original_parent_handle=value)
+
+
+@pytest.mark.parametrize("claim", ["original_parent_handle", "native_receipt_authenticated", "original_success_authenticated", "profile"])
+def test_original_parent_v3_serialized_claims_cannot_choose_the_authenticated_path(
+        physical_closure_control_v3, claim):
+    from copy import deepcopy
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_lake_v2 as wire
+    request = deepcopy(physical_closure_control_v3[0])
+    request[claim] = (release.CLOSURE_PARENT_PROFILE_V3 if claim == "profile" else
+        {"original_success_authenticated": True} if claim == "original_parent_handle" else True)
+    raw = wire.encode_parent_replay_value_v1(request, max_bytes=release.MAX_CLOSURE_REQUEST_BYTES)
+    with pytest.raises(ValueError):
+        release.validate_uscode_release_closure_v3(raw, expected_request_sha256=hashlib.sha256(raw).hexdigest())
+
+
+@pytest.mark.parametrize("callback", ["guard", "capability", "loader"])
+def test_original_parent_v3_context_refuses_late_owner_callable_substitution_before_claims(monkeypatch, callback):
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+    from ipfs_accelerate_py.agent_supervisor.rescue import repair_candidate_owners as owner
+    names = ("_reviewed_parent_guard", "_reviewed_parent_capability_entry",
+             "load_parent_verified_reviewed_preservation_v3")
+    callbacks = tuple(getattr(owner, name) for name in names)
+    # Explicitly UNISSUED negative context, not a fabricated positive capability.
+    context = (owner, object(), object(), release._release_callback_states_v3(callbacks))
+    calls = []
+    def false_claim(*args, **kwargs):
+        calls.append(True)
+        return {"original_success_authenticated": True, "native_execution_authenticated": True}
+    monkeypatch.setattr(owner, names[("guard", "capability", "loader").index(callback)], false_claim)
+    with pytest.raises(ValueError, match="callback.*changed"):
+        release._release_original_parent_fence_v3(context)
+    assert calls == []
+
+
+def test_original_parent_v3_context_cannot_replace_a_missing_handle():
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+    with pytest.raises(ValueError, match="context cannot replace"):
+        release._validate_uscode_release_byte_closure_v3(b"", expected_request_sha256="0" * 64,
+            _original_parent_context=("fictional callback state",))
+
+
+def consume_actual_reviewed_release_parent_v3(handle, request, control, packet_files):
+    """Existing-controller handoff AFTER A run_v3 returns, in that SAME thread.
+
+    No runner, compiler, fixture admission, resource grant or capability is
+    created here. ``request`` and ``control`` must be the SAME physical signed
+    component used to prepare A's original public Native input. The actual
+    original parent, not an authored compiler substitute, supplies the packet.
+    This helper is deliberately not an ordinary collected pytest case.
+    """
+    from copy import deepcopy
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_lake_v2 as wire
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_native_v2 as native
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_shared_lake as shared
+    assert request["schema"] == release.CLOSURE_REQUEST_SCHEMA_V3 and request["native"] is None
+    packet = tuple(packet_files)
+    assert len(packet) == 83
+    contents = dict(packet)
+    receipt_raw = contents["build-receipt.json"]
+    packet_raw = wire.encode_parent_replay_value_v1([list(row) for row in packet], max_bytes=release.MAX_CLOSURE_REQUEST_BYTES)
+    transport = release.prepare_reviewed_native_packet_transport_v3(packet_raw,
+        artifact_id_prefix="fixture:original-parent-v3")
+    closure = deepcopy(request)
+    closure["artifacts"].extend([dict(artifact_id="fixture:original-parent-v3-receipt", family="native_receipt",
+        payload=receipt_raw, bytes=len(receipt_raw), sha256=hashlib.sha256(receipt_raw).hexdigest()),
+        transport["index"], *transport["chunks"]])
+    closure["expected_artifact_ids"] = [row["artifact_id"] for row in closure["artifacts"]]
+    receipt = json.loads(receipt_raw)
+    closure["native"] = dict(receipt="fixture:original-parent-v3-receipt", packet_index=transport["index"]["artifact_id"],
+        expected_packet_sha256=native.reviewed_norm_preservation_packet_sha256_v3(packet),
+        expected_binary_sha256=receipt["binary_sha256"], observation_profile="retained-native-observation/v1")
+    raw = wire.encode_parent_replay_value_v1(closure, max_bytes=release.MAX_CLOSURE_REQUEST_BYTES)
+    report = release.validate_uscode_release_closure_v3(raw,
+        expected_request_sha256=hashlib.sha256(raw).hexdigest(), original_parent_handle=handle)
+    assert report["profile"] == release.CLOSURE_PARENT_PROFILE_V3
+    for field in ("original_parent_handle_consumed", "native_receipt_authenticated",
+                  "original_native_parent_custody_verified", "original_success_authenticated"):
+        assert report[field] is True
+    evidence = report["original_parent_evidence"]
+    assert evidence["packet_file_count"] == 83
+    assert evidence["retained_receipt_sha256"] == hashlib.sha256(receipt_raw).hexdigest()
+    assert evidence["retained_packet_sha256"] == closure["native"]["expected_packet_sha256"]
+    assert evidence["preparation_sha256"] == shared.reviewed_preservation_corpus_sha256(control["preparation"])
+    assert evidence["graph_sha256"] == control["graph_sha"]
+    assert evidence["admission_sha256"] == control["admission_sha"]
+    for field in ("parent_request_sha256", "parent_closeout_sha256", "parent_durability_sha256"):
+        assert len(evidence[field]) == 64 and all(c in "0123456789abcdef" for c in evidence[field])
+    for field in ("release_ready", "closure_complete", "release_eligible", "admitted", "formalized", "proof_verified",
+                  "source_semantics_verified", "source_authenticity_verified", "statutory_meaning_proved",
+                  "gold_verified", "source_kernel_receipt_authenticated", "model_or_compiler_execution_performed"):
+        assert report[field] is False
+    for field in ("admission_mask", "release_mask", "gold_mask", "training_mask", "evaluation_gold_mask"):
+        assert type(report[field]) is int and report[field] == 0
+    assert "original_admitted_native_parent_custody_not_established" not in report["blockers"]
+    assert "immutable_remote_Hub_readback_not_established" in report["blockers"]
+    assert "statutory_meaning_and_full_corpus_qualification_not_established" in report["blockers"]
+    return raw, report
+
+
+
+@pytest.mark.parametrize("helper", ["context", "fence", "authentication", "states", "callback_fence", "entry_guard"])
+@pytest.mark.parametrize("mutation", ["identity", "code"])
+def test_original_parent_v3_entry_refuses_preexisting_helper_substitution(monkeypatch, helper, mutation):
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+    names = {"context": "_release_original_parent_context_v3", "fence": "_release_original_parent_fence_v3",
+        "authentication": "_release_original_parent_authentication_v3", "states": "_release_callback_states_v3",
+        "callback_fence": "_release_callback_fence_v3", "entry_guard": "_release_original_parent_entry_guard_v3"}
+    calls = []
+    def false_claim(*args, _calls=calls, **kwargs):
+        _calls.append(True)
+        return {"original_success_authenticated": True, "native_execution_authenticated": True}
+    name = names[helper]
+    if mutation == "identity": monkeypatch.setattr(release, name, false_claim)
+    else: monkeypatch.setattr(getattr(release, name), "__code__", false_claim.__code__)
+    # No valid issued handle is fabricated: entry must reject changed local
+    # claim machinery before it ever tries to resolve this unissued object.
+    raw = b"unparsed DATA; no physical or native replay may be entered"
+    with pytest.raises(ValueError, match="original-parent coordinator entry generation changed"):
+        release.validate_uscode_release_closure_v3(raw,
+            expected_request_sha256=hashlib.sha256(raw).hexdigest(), original_parent_handle=object())
+    assert calls == []
+
+
+def test_prepare_original_parent_v3_same_physical_public_inputs(
+        physical_closure_control_v3, tmp_path, monkeypatch, request):
+    """One separately admitted preparation; no Native/compiler/capability.
+
+    Keep the original signed three-unit control and physical source files.
+    Encode public inputs ONCE for the later original A parent, and the exact
+    D closure request for its same-thread consumer. This is not that run.
+    """
+    import importlib.util
+    from ipfs_accelerate_py.agent_supervisor.rescue import repair_candidate_owners as owners
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_lake_v2 as wire
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_native_v2 as native
+    closure, control = physical_closure_control_v3
+    assert closure["native"] is None and control["admission"]["fixture_only"] is True
+    assert control["admission"]["provenance_kind"] == "fictional_fixture"
+    root = Path(owners.__file__).resolve().parents[3]
+    unit_path = root / "test/api/test_agent_supervisor_productive_owner_v3.py"
+    # Same fixed maintained-file loading pattern as the existing controller;
+    # request/source owners independently pin this exact ordinary source.
+    unit_sha = hashlib.sha256(unit_path.read_bytes()).hexdigest()
+    spec = importlib.util.spec_from_file_location("_reviewed_original_A_public_fixture_v3", unit_path)
+    assert spec is not None and spec.origin == str(unit_path)
+    unit = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(unit)
+    assert unit.__file__ == str(unit_path)
+    native_helper = unit.reviewed_parent_original_R_fixture_module_v1(ROOT)
+    def forbidden(*args, **kwargs):
+        pytest.fail("passive public fixture preparation tried to execute a native tool")
+    monkeypatch.setattr(native, "_installed_toolchain", forbidden)
+    monkeypatch.setattr(native_helper.process.BoundedToolRunner, "run", forbidden)
+    public_path = tmp_path / "same-physical-public-native-inputs-v3.json"
+    record = unit.prepare_reviewed_parent_native_fixture_inputs_v3(public_path, control, datasets_root=ROOT)
+    public_ref = record["native_inputs"]
+    value = owners.json_object(owners.checked_descriptor(public_ref))
+    public = {key: unit.reviewed_parent_fixture_tree_decode_v1(value[key])
+              for key in ("graph", "admission", "args", "kwargs")}
+    for key in public:
+        assert wire.encode_parent_replay_value_v1(public[key], max_bytes=release.MAX_CLOSURE_REQUEST_BYTES) == \
+            wire.encode_parent_replay_value_v1(control[key], max_bytes=release.MAX_CLOSURE_REQUEST_BYTES)
+    assert value["preparation"]["manifest_json"] == control["preparation"].manifest_json
+    assert tuple((name, body) for name, body in value["preparation"]["files"]) == control["preparation"].files
+    assert record["expected_graph_sha256"] == control["graph_sha"]
+    assert record["expected_admission_sha256"] == control["admission_sha"]
+    assert record["expected_preservation_sha256"] == control["shared"].reviewed_preservation_corpus_sha256(control["preparation"])
+    raw = wire.encode_parent_replay_value_v1(closure, max_bytes=release.MAX_CLOSURE_REQUEST_BYTES)
+    closure_path = tmp_path / "same-physical-closure-request-v3.wire"
+    with closure_path.open("xb") as stream:
+        stream.write(raw); stream.flush(); os.fsync(stream.fileno())
+    closure_path.chmod(0o400)
+    replayed = release.validate_uscode_release_closure_v3(raw, expected_request_sha256=hashlib.sha256(raw).hexdigest())
+    assert_release_v3_byte_authority_only(replayed)
+    assert replayed["local_source_cache_entity_bindings_verified"] is True
+    def reference(path):
+        body = path.read_bytes()
+        return dict(path=str(path), bytes=len(body), sha256=hashlib.sha256(body).hexdigest())
+    lineage = {"schema": "same-physical-reviewed-V3-public-fixture-derivation/v1",
+        "public_native_inputs": public_ref, "physical_closure_request": reference(closure_path),
+        "expected_preservation_sha256": record["expected_preservation_sha256"],
+        "expected_graph_sha256": record["expected_graph_sha256"],
+        "expected_admission_sha256": record["expected_admission_sha256"], "toolchain": record["toolchain"],
+        "A_fixture_owner": reference(unit_path), "D_fixture_owner": reference(Path(__file__).absolute()),
+        "public_encoder_invocations": 1, "physical_control_fixture_generations": 1,
+        "native_tools_run": 0, "parent_handles_issued": 0, "fixture_only": True,
+        "legal_or_training_or_corpus_admission": False}
+    lineage_path = tmp_path / "same-physical-public-fixture-lineage-v3.json"
+    with lineage_path.open("xb") as stream:
+        stream.write(owners.canonical(lineage) + b"\n"); stream.flush(); os.fsync(stream.fileno())
+    lineage_path.chmod(0o400)
+    with public_path.open("rb") as stream: os.fsync(stream.fileno())
+    directory = os.open(tmp_path, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+    try: os.fsync(directory)
+    finally: os.close(directory)
+    assert reference(public_path) == public_ref
+    assert hashlib.sha256(unit_path.read_bytes()).hexdigest() == unit_sha
+    assert reference(closure_path) == lineage["physical_closure_request"]
+    request.node.user_properties.append(("same_physical_V3_derivation", owners.canonical(reference(lineage_path)).decode("utf-8")))
