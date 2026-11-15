@@ -121,6 +121,31 @@
   "canonical_home": "ipfs_datasets_py/logic/autoformal",
   "components": [
     {
+      "id": "historical-hammer-proof-feedback-replay",
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_proof_feedback_replay.py",
+      "owner_module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_proof_feedback_replay",
+      "ownership_role": "existing_single_owner",
+      "required": true,
+      "status": "focused_tests_qualified",
+      "task_ids": [
+        "LIR-22"
+      ],
+      "apis": [
+        "ReplayExecutorResult",
+        "HistoricalHammerReplayPolicy",
+        "HistoricalHammerProofFeedbackReplay",
+        "load_historical_hammer_obligations",
+        "replay_historical_hammer_obligations"
+      ],
+      "owning_tests": [
+        "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_proof_feedback_replay.py"
+      ],
+      "evidence_ids": [
+        "proof-feedback-replay-boolean-epoch-20261115"
+      ],
+      "notes": "Existing replay owner newly indexed, with strict selected-boolean authority and fixed validation-profile cache namespace. Whole45 software fixtures only; injected proof/checker claims and historical feedback are not independently authenticated. No new replay architecture, actual prover/model, legal gold or corpus admission."
+    },
+    {
       "apis": [
         "candidate_from_recipe_case",
         "canonical_positive_pair_recipe",
@@ -8277,6 +8302,7 @@
       },
       "evidence_ids": [
         "reviewed-decoder-source-generation-selected97-20261109",
+        "v4-six-structural-refusals-20261115",
         "reviewed-component-cycle-v3-preparation-worker-canonical-20261111",
         "reviewed-local-loader-two-runtime-canonical-20261111",
         "mixed-v4-v10-and-source-producer-canonical-20261111",
@@ -9538,6 +9564,22 @@
   "schema": "legal-autoformal-work-catalog/v1",
   "scope": "Curated current ownership/navigation with attributed saved evidence. Observations are snapshots, not future source-hash requirements or proof admission.",
   "selected_evidence": [
+    {
+      "id": "proof-feedback-replay-boolean-epoch-20261115",
+      "path": "docs/autoformalization/evidence/legal-ir-proof-feedback-replay-boolean-epoch-20261115.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "status": "selected_whole_owning_test_software45_qualified",
+      "scope": "Original54554 EXIT0/05dac5:45PASS0FAIL/ERROR/SKIP1.349s, exact254Source/8Git, custody158.495332s<420, own16MiBdurableReleased252068B. Explicit fictional executors only. Preserved13-case red/intermediate44/legacy1red; no pooled qualification, actual solver/model/legal or release authority."
+    },
+    {
+      "id": "v4-six-structural-refusals-20261115",
+      "path": "docs/autoformalization/evidence/legal-ir-v4-six-structural-refusals-20261115.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Original4127 EXIT0/012a55:6PASS/0FAIL/ERROR/SKIP, pytest132.765s; one byte-context and five custody refusals, no backend call per executed assertions. Source255/Git8 drift0, custody288.306845s<420, own16MiBdurableReleased10040B. No production/test changes, real tokenizer/model/restore/fit/native Lean/legal/gold/corpus claim.",
+      "status": "selected_structural_negative_controls_qualified_model_and_legal_gates_pending"
+    },
     {
       "id": "PGIR040-loss-projection-admission-20261115",
       "path": "docs/autoformalization/evidence/legal-ir-PGIR040-loss-projection-admission-20261115.json",
@@ -15135,6 +15177,16 @@
       "root": "datasets_repository",
       "scope": "Fresh whole93PASS/0FES7.619s:82hard-negative+11metamorphic. Source255/Git8 unchanged, custody162.788363s<420/own16MiB durableReleased144157B. RED2 intended failures and zero-write refusals preserved. Diagnostic report/proposal v2 has no semantic trust; explicit distrust/proposal veto survives opt-out. Explicit V1 caller metadata and typed PGIR041 remain software contracts, not checker/legal/model/training/convergence/corpus authority; old88/133 not pooled.",
       "status": "selected_original_software_qualified_independent_semantic_evidence_pending"
+    },
+    {
+      "id": "Main-parent-delegated-reader-selected-software142-20261115",
+      "observed_bytes": 4694,
+      "observed_sha256": "1cf6815cf506a83831473e11d4f5d3e10f71c205ab0bd6a025f984d53970f044",
+      "path": "docs/autoformalization/evidence/legal-ir-Main-parent-delegated-reader-software142-20261115.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Actual original142PASS/0FAIL/ERR/SKIP3.889s:48new immutable-parent metadata consumer controls plus94 retained/current preparation controls. Frozen213Source/8Git unchanged during the run; Source/resource/process/genuine-wait closed168.795988s<420 and own16MiB durably released. Earlier failedMain94/claim retained. Selected software only: no wholeSDK/CLI4/worker module, genuine A-to-D consumption, live activation, legal/model/Lean/corpus authority or A6 product publication.",
+      "status": "selected_original_software142_qualified_full_executor_activation_pending"
     }
   ]
 }

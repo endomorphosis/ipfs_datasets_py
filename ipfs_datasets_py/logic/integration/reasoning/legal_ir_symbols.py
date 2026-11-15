@@ -1074,7 +1074,11 @@ def validate_legal_ir_symbol_table(
                     scope_id=alias.scope_id,
                 )
             )
-        if alias.target_symbol_id and alias.target_symbol_id not in definitions:
+        if (
+            alias.target_symbol_id
+            and alias.target_symbol_id not in definitions
+            and not _external_definition_exists(alias.target_symbol_id, external_tables)
+        ):
             diagnostics.append(
                 _diagnostic(
                     LegalIRSymbolDiagnosticType.ALIAS_TARGET_UNRESOLVED,

@@ -1,5 +1,27 @@
 # Training and experiment history
 
+## Proof-feedback boolean epoch: final whole-owner software result — 2026-11-15
+
+The final existing replay owner passed **45/45** tests in1.349seconds, with no failures, errors or skips. This includes the retained25 cases, the19 strict-flag/cache-corruption controls and the independent closed-v1-wire legacy-cache case. The latter verifies a fresh executor call and preservation of old cached bytes. The earlier44-case flags-only qualification does not cover this profile change; both original red failures remain historical.
+
+Original54554 exited0; Source254/Git8 remained exact, sampled-process and resource custody closed without errors, and Source exited in158.495332seconds before its initial420-second cutoff. Successful claim `bfc631e7b3f24fb1a2a1dfff813cc173` was durably released at252,068bytes. Failed red claims `8ee6f70cdac145ebb32ae850b18bda9c` and `4dfa2675eac149b0b5371e0acfe13645` remain retained and nondurable. No numerical training, actual prover, new semantic review, gold or corpus release was measured. [Scoped evidence](../../../../docs/autoformalization/evidence/legal-ir-proof-feedback-replay-boolean-epoch-20261115.json).
+
+## Main qualification-reader software scope; no new training — 2026-11-15
+
+The existing Main source-generation qualification reader now accepts a distinct wrapper @2 for parent-delegated immutable Source qualification. It binds the same original report, summary and custody to physical/canonical roots, parent identity, nonce, request and observation; legacy @1 contracts remain unchanged. Original Source42/733 adoption and separate readback changed only Main and its owning tests, preserving current SDK4 and six protected files.
+
+A fresh original passed 142 selected software cases: 48 new consumer controls and 94 retained/current preparation controls, with zero failures, errors or skips in 3.889 seconds. All 213 source pins and eight Git pins remained exact. Source, Native-resource, process and genuine-wait custody closed without errors in 168.796 seconds before the unchanged 420-second cutoff. Independent audit verified all 2,331 files / 6,288,838 bytes and the persisted durable release of only this run's own 16 MiB claim. The earlier failed Main94 and its retained claim remain historical.
+
+This is selected software qualification. It does not qualify whole SDK/worker modules, genuine parent-to-D consumption or full scientific execution. Physical CLI4 comparison @3 still refuses until the owner/driver/template/qualification transition is complete. Holds, consumed generations, all 24 backlog task states and private assets remain unchanged.
+
+[Exact selected-software evidence](../../../../docs/autoformalization/evidence/legal-ir-Main-parent-delegated-reader-software142-20261115.json). The 213 Source and eight Git pins describe this run's frozen epoch; later changes require their own qualification.
+
+## Existing V4 structural producer refusal coverage — 2026-11-15
+
+Original `4127` / terminal `012a55` passed all **six selected authored controls** in 132.765 seconds: complete byte-context overflow, unknown profile, forbidden heldout use, mismatched context commitment, revoked query and changed checkpoint bytes. These assert no backend calls; the byte case also checks no training/restore and preserves the three refused query outcomes. No numerical fit, learned score, real tokenizer forward, native Lean proof or legal gold was measured.
+
+The fresh combined request retained Source255/Git8 with no drift, original1CPU/1536MiB/4process/16MiB/300-second limits, one shared60-second Source admission and initial420 seconds. Genuine wait, process/resource cleanup and Source exit completed in 288.306845 seconds. The original owner durably released `43cc169d4cf4454c99f024091bbd8065` with10,040 bytes. The older separate1+5 inert preparations and freezer remain preserved; the corrected255-pin preparation substitutes actual new bootstrap inputs for the two unused prior bootstrap inputs, leaving every prior production and test pin intact.
+
 ## PGIR-040 exact training-example linkage for loss — 2026-11-15
 
 Measured RED original `37130` exited 1 with **four intended failures and one pass**, no fixture errors or skips: historical decoded labels, a pair without evidence and an explicit fixture without a selected training example all acquired automatic admission; the evidence-free pair also bypassed the existing cosine-loss admission refusal. Source256/Git8 stayed unchanged and custody closed in 104.036275 seconds; the failed 16 MiB claim remains retained and nondurable. Its final attempt-byte count was not recorded.

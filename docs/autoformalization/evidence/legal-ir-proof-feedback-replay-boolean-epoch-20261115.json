@@ -1,0 +1,113 @@
+{
+  "canonical_files": [
+    {
+      "bytes": 74443,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_proof_feedback_replay.py",
+      "sha256": "ab9ae1f2dce7afed5878b0b3fe1cf71fbb0113691d49cfe2db18d73a1772174e"
+    },
+    {
+      "bytes": 20098,
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_proof_feedback_replay.py",
+      "sha256": "c53386a3a615edb7fbeb4c214c1b72e515936ac554b67bd1bd593f0a3f0a24f6"
+    }
+  ],
+  "changes": [
+    "Reuse existing Hammer exact-boolean validator for selected executor authority flags at construction and cache serialization.",
+    "Preserve raw mapping flag values until strict validation, rather than coerce strings or integers with bool().",
+    "Bind a fixed strict-proof-boolean-authority-v2 profile into the existing replay policy fingerprint/cache namespace; retain old cache bytes and transport schema identities."
+  ],
+  "compatibility": {
+    "current_profile_cache_reuse_retained": true,
+    "old_cache_bytes_deleted": false,
+    "old_receipts_or_checkpoints_rewritten": false,
+    "pre_strict_policy_cache_is_cold_under_current_profile": true,
+    "transport_schema_versions_preserved": true
+  },
+  "current_qualification": {
+    "actual_handle": "54554",
+    "controller_sha256": "aa46948fe0c4440621628baa2cb2d1fcd72f35d7484fe7cad74fc56e029b0dc4",
+    "custody_errors": [],
+    "genuine_wait_completed": true,
+    "initial_chunk": "d58673",
+    "junit": {
+      "errors": "0",
+      "failures": "0",
+      "hostname": "spark-b271",
+      "name": "pytest",
+      "skipped": "0",
+      "tests": "45",
+      "time": "1.349",
+      "timestamp": "2026-11-15T12:52:14.835286+00:00"
+    },
+    "legacy_control_observed": {
+      "cache_hit_count": 0,
+      "current_executor_called_once": true,
+      "last_two_assertions_scope": "Verified by the passing complete legacy-case assertions, not a native command observation.",
+      "old_cache_bytes_preserved": true,
+      "trusted_feedback_count": 0
+    },
+    "owner_birth": "376510412",
+    "owner_independently_gone": true,
+    "owner_pid": 3047204,
+    "raw_hashes": {
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-ir-proof-feedback-boolean-epoch-fix-proposal-v01/whole-owning-test-green-INERT/owner.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-ir-proof-feedback-boolean-epoch-fix-proposal-v01/whole-owning-test-green-INERT/owner.stdout": "bdf66b0b2a452149e180dd99986218e83172d52f0030994f17a52c2c6040f014",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-ir-proof-feedback-boolean-epoch-fix-proposal-v01/whole-owning-test-green-INERT/parent-closeout.json": "b25efa052b1402ea5980808bce6b07b25901d6f1a72678ad7245dec93d628f89",
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-ir-proof-feedback-boolean-epoch-fix-proposal-v01/whole-owning-test-green-INERT/request.json": "2ba0e5c8f39cf155cf0cdf934e00f142c60568415d3f0ee64bfdbff6feffca38",
+      "/tmp/pytest-of-barberb/legal-ir-proof-feedback-authority-epoch-whole-green-20261115-v01/a/exports/structural-factory.xml": "208a4a80bb9c75ac4db59097776fab4bf9d35ba12f8db435f19e4e7cbc35ca4e",
+      "/tmp/pytest-of-barberb/legal-ir-proof-feedback-authority-epoch-whole-green-20261115-v01/a/tmp/pytest/test_pre_strict_boolean_cache_cannot_supply_curr-cl40ln8c/state/replay-report.json": "d53c9161360b202952f5ed8e4c81456eac15ae6699087c5d58b1544a99944c45"
+    },
+    "remaining_limits": [
+      "Injected executor and checker identity assertions are not independently authenticated by boolean validation.",
+      "Earlier feedback records and checkpoints are not retroactively reauthenticated by cache invalidation.",
+      "No new formal proof, model fitting, legal review, corpus release or hosted CI result."
+    ],
+    "request_sha256": "2ba0e5c8f39cf155cf0cdf934e00f142c60568415d3f0ee64bfdbff6feffca38",
+    "scope": "Original whole-owning-test software qualification of strict flags and fixed authority-policy epoch; fictional executors only. No actual prover/model/review or statutory authority.",
+    "source_drift": [],
+    "source_elapsed_seconds": 158.4953322079964,
+    "source_pins": 254,
+    "source_scope": {
+      "authority_boolean_profile": "strict-proof-boolean-authority-v2",
+      "owner_sha256": "ab9ae1f2dce7afed5878b0b3fe1cf71fbb0113691d49cfe2db18d73a1772174e",
+      "owning_test_sha256": "c53386a3a615edb7fbeb4c214c1b72e515936ac554b67bd1bd593f0a3f0a24f6",
+      "source_git_epoch": "a1d446c05b20429f6868a089416db268f63b50f3"
+    },
+    "storage": {
+      "durable": true,
+      "final_attempt_bytes": 252068,
+      "reservation_id": "bfc631e7b3f24fb1a2a1dfff813cc173",
+      "retained_bytes": 0,
+      "status": "released"
+    },
+    "terminal_chunk": "05dac5"
+  },
+  "limits": [
+    "All proof executors in this cohort are explicit software fixtures; no actual prover, model fitting, legal review or corpus release was performed.",
+    "Boolean and fingerprint consistency do not authenticate injected executor/checker assertions.",
+    "Existing feedback records and checkpoints are not retroactively reauthenticated.",
+    "All24 backlog task IDs and states remain unchanged."
+  ],
+  "preserved_history": [
+    {
+      "kind": "typed-and-mapping-false-acceptance-reproduction",
+      "scope": "12 intended failures, one valid-boolean passing control; own failed16MiB8ee6 retained/nondurable.",
+      "summary_sha256": "b86d0d6a84e836ee5ca2d49b56d73feb0cb857be5c4af0d18f59e15fb961ffcb"
+    },
+    {
+      "kind": "intermediate-flags-only-whole-owner",
+      "scope": "44 passes at source04f/ec046; legacy-cache migration remained unresolved then; not pooled with final45.",
+      "summary_sha256": "c275f4e2dbb568b5cc5efb7684c376ef74621d6e7407614f75199c4a41e2ab60"
+    },
+    {
+      "kind": "legacy-cache-reuse-reproduction",
+      "scope": "One intended failure; current executor not called; produced report recorded one cache hit and one emitted trusted fixture feedback. Failed16MiB4dfa retained/nondurable.",
+      "summary_sha256": "9be9955b4bcdc42380452bc7c5e6c040a6b9cbe2e657b218965779b980b51388"
+    }
+  ],
+  "schema": "legal-ir-proof-feedback-replay-boolean-epoch-software-evidence/v1",
+  "status": "whole-owning-test-software-qualified-no-native-or-meaning-authority",
+  "tasks": [
+    "LIR-22"
+  ]
+}

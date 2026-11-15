@@ -1,5 +1,29 @@
 # Current handoff
 
+## Strict proof-feedback replay flags and cache epoch — 2026-11-15
+
+The existing historical Hammer replay adapter now requires exact booleans for its six selected proof/reconstruction authority flags. It reuses the canonical Hammer validator at construction and before cache persistence; mapping and serialization no longer turn strings or integers into attestations. A fixed `strict-proof-boolean-authority-v2` profile enters the existing policy fingerprint, so pre-strict cache entries cannot bypass the current executor. Old cache bytes, source/receipt identities and transport schemas remain intact. Current-profile cache reuse remains supported.
+
+The original red cohort recorded **12 false-acceptance failures and one passing control**. A separate legacy-cache reproduction then recorded one intended failure: the old cache supplied trusted fixture feedback without calling the current executor. After both corrections, the fresh complete owning-test run passed **45 cases, zero failures/errors/skips, in 1.349 seconds** (25 retained cases, 19 flag/corruption controls and one legacy-cache case). Source254/Git8 drift was empty; original Source/resource/process/genuine-wait closure completed in **158.495332 seconds**, within the original420, and the owner durably released its own16MiB claim at252,068bytes. Both failed16MiB claims and the separate intermediate44-case result remain preserved.
+
+These are explicit software fixtures. They do not authenticate arbitrary executor or checker claims, reauthenticate old feedback/checkpoints, or supply Native, model, statutory-meaning, gold or corpus authority. Existing **LIR-22** and all24 task IDs/states remain unchanged. The catalog indexes this existing implementation owner; no new replay system is introduced. [Exact source and qualification scope](../../../../docs/autoformalization/evidence/legal-ir-proof-feedback-replay-boolean-epoch-20261115.json).
+
+## Main parent-delegated qualification reader: selected software controls — 2026-11-15
+
+The existing Main source-generation qualification reader now accepts a distinct wrapper @2 for parent-delegated immutable Source qualification. It binds the same original report, summary and custody to physical/canonical roots, parent identity, nonce, request and observation; legacy @1 contracts remain unchanged. Original Source42/733 adoption and separate readback changed only Main and its owning tests, preserving current SDK4 and six protected files.
+
+A fresh original passed 142 selected software cases: 48 new consumer controls and 94 retained/current preparation controls, with zero failures, errors or skips in 3.889 seconds. All 213 source pins and eight Git pins remained exact. Source, Native-resource, process and genuine-wait custody closed without errors in 168.796 seconds before the unchanged 420-second cutoff. Independent audit verified all 2,331 files / 6,288,838 bytes and the persisted durable release of only this run's own 16 MiB claim. The earlier failed Main94 and its retained claim remain historical.
+
+This is selected software qualification. It does not qualify whole SDK/worker modules, genuine parent-to-D consumption or full scientific execution. Physical CLI4 comparison @3 still refuses until the owner/driver/template/qualification transition is complete. Holds, consumed generations, all 24 backlog task states and private assets remain unchanged.
+
+[Exact selected-software evidence](../../../../docs/autoformalization/evidence/legal-ir-Main-parent-delegated-reader-software142-20261115.json). The 213 Source and eight Git pins describe this run's frozen epoch; later changes require their own qualification.
+
+## Six V4 producer refusal controls — 2026-11-15
+
+The six previously pending authored structural controls now pass through the existing original V5 owner: one complete byte-context budget refusal and five factory custody refusals (unknown profile, heldout use not permitted, wrong context commitment, revoked query and changed checkpoint bytes). All six require an empty backend-call log; the byte-refusal control also asserts no training or restore. This is selected software refusal coverage, with no real tokenizer/model forward, native Lean, legal interpretation or corpus qualification.
+
+Original handle `4127` exited 0 with **six passed, zero failures/errors/skips**, pytest 132.765 seconds. Source255/Git8 drift was empty. Source and resource custody closed in 288.306845 seconds within the original 420 seconds, and the original owner durably released its own 16 MiB claim using 10,040 bytes. Canonical production and test files were unchanged. The source-pin cap remains 256; the corrected preparation replaced only unused prior child/ini inputs instead of accumulating them. All 24 backlog IDs and states remain unchanged.
+
 ## PGIR-040 loss projection requires a selected example — 2026-11-15
 
 The separate raw-pair loss-admission gap is corrected in the existing positive-pair owner. Use `loss_pair_admissions(pairs, examples=tuple(item.example for item in result.admitted))` for an explicitly selected mined population. The default `examples=()` keeps decoded pairs nontraining. Full record digest/CID and canonical training eligibility must match; pair IDs alone, removed evidence, conflicting example IDs, quarantine and proof-only examples cannot supply admission. This does not authenticate external reviewers/checkers or turn historical recipe claims into statutory gold.
