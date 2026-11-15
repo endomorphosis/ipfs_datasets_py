@@ -1,5 +1,11 @@
 # Training and experiment history
 
+## Proof-feedback boolean epoch: final whole-owner software result — 2026-11-15
+
+The final existing replay owner passed **45/45** tests in1.349seconds, with no failures, errors or skips. This includes the retained25 cases, the19 strict-flag/cache-corruption controls and the independent closed-v1-wire legacy-cache case. The latter verifies a fresh executor call and preservation of old cached bytes. The earlier44-case flags-only qualification does not cover this profile change; both original red failures remain historical.
+
+Original54554 exited0; Source254/Git8 remained exact, sampled-process and resource custody closed without errors, and Source exited in158.495332seconds before its initial420-second cutoff. Successful claim `bfc631e7b3f24fb1a2a1dfff813cc173` was durably released at252,068bytes. Failed red claims `8ee6f70cdac145ebb32ae850b18bda9c` and `4dfa2675eac149b0b5371e0acfe13645` remain retained and nondurable. No numerical training, actual prover, new semantic review, gold or corpus release was measured. [Scoped evidence](../../../../docs/autoformalization/evidence/legal-ir-proof-feedback-replay-boolean-epoch-20261115.json).
+
 ## Main qualification-reader software scope; no new training — 2026-11-15
 
 The existing Main source-generation qualification reader now accepts a distinct wrapper @2 for parent-delegated immutable Source qualification. It binds the same original report, summary and custody to physical/canonical roots, parent identity, nonce, request and observation; legacy @1 contracts remain unchanged. Original Source42/733 adoption and separate readback changed only Main and its owning tests, preserving current SDK4 and six protected files.

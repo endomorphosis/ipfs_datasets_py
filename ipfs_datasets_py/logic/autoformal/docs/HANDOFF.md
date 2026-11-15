@@ -1,5 +1,13 @@
 # Current handoff
 
+## Strict proof-feedback replay flags and cache epoch — 2026-11-15
+
+The existing historical Hammer replay adapter now requires exact booleans for its six selected proof/reconstruction authority flags. It reuses the canonical Hammer validator at construction and before cache persistence; mapping and serialization no longer turn strings or integers into attestations. A fixed `strict-proof-boolean-authority-v2` profile enters the existing policy fingerprint, so pre-strict cache entries cannot bypass the current executor. Old cache bytes, source/receipt identities and transport schemas remain intact. Current-profile cache reuse remains supported.
+
+The original red cohort recorded **12 false-acceptance failures and one passing control**. A separate legacy-cache reproduction then recorded one intended failure: the old cache supplied trusted fixture feedback without calling the current executor. After both corrections, the fresh complete owning-test run passed **45 cases, zero failures/errors/skips, in 1.349 seconds** (25 retained cases, 19 flag/corruption controls and one legacy-cache case). Source254/Git8 drift was empty; original Source/resource/process/genuine-wait closure completed in **158.495332 seconds**, within the original420, and the owner durably released its own16MiB claim at252,068bytes. Both failed16MiB claims and the separate intermediate44-case result remain preserved.
+
+These are explicit software fixtures. They do not authenticate arbitrary executor or checker claims, reauthenticate old feedback/checkpoints, or supply Native, model, statutory-meaning, gold or corpus authority. Existing **LIR-22** and all24 task IDs/states remain unchanged. The catalog indexes this existing implementation owner; no new replay system is introduced. [Exact source and qualification scope](../../../../docs/autoformalization/evidence/legal-ir-proof-feedback-replay-boolean-epoch-20261115.json).
+
 ## Main parent-delegated qualification reader: selected software controls — 2026-11-15
 
 The existing Main source-generation qualification reader now accepts a distinct wrapper @2 for parent-delegated immutable Source qualification. It binds the same original report, summary and custody to physical/canonical roots, parent identity, nonce, request and observation; legacy @1 contracts remain unchanged. Original Source42/733 adoption and separate readback changed only Main and its owning tests, preserving current SDK4 and six protected files.

@@ -436,3 +436,119 @@ def test_jsonl_inputs_are_supported_and_malformed_input_fails_closed(tmp_path):
     malformed.write_text("{not json", encoding="utf-8")
     with pytest.raises(HistoricalHammerInventoryError):
         load_historical_hammer_obligations([malformed])
+
+
+@pytest.mark.parametrize("transport", ["typed", "mapping"])
+@pytest.mark.parametrize("field, malformed", [
+    ("backend_proved", "false"),
+    ("proof_checked", "false"),
+    ("trusted", "false"),
+    ("reconstruction_attempted", "false"),
+    ("reconstruction_verified", "false"),
+    ("draft", 0),
+])
+def test_non_boolean_executor_authority_never_emits_training_feedback(tmp_path, transport, field, malformed):
+    # Fictional injected executor only: no solver, native proof or real review.
+    cycles, _ = _inventory(tmp_path)
+
+    def executor(candidate, context):
+        values = _fresh(candidate, context).to_cache_dict()
+        values[field] = malformed
+        return ReplayExecutorResult(**values) if transport == "typed" else values
+
+    report = HistoricalHammerProofFeedbackReplay(
+        executor, state_dir=tmp_path / "state", policy=_policy(),
+    ).run([cycles])
+    assert report.outcomes[0].feedback_record is None
+    assert report.feedback_replay.records == ()
+    assert report.to_dict()["trusted_feedback_count"] == 0
+
+
+def test_plain_boolean_mapping_retains_existing_fictional_positive_control(tmp_path):
+    cycles, _ = _inventory(tmp_path)
+    report = HistoricalHammerProofFeedbackReplay(
+        lambda candidate, context: _fresh(candidate, context).to_cache_dict(),
+        state_dir=tmp_path / "state", policy=_policy(),
+    ).run([cycles])
+    assert report.outcomes[0].failure_class == ReplayFailureClass.NONE
+    assert report.outcomes[0].trusted_feedback_emitted is True
+    assert len(report.feedback_replay.records) == 1
+
+
+@pytest.mark.parametrize("field, malformed", [
+    ("backend_proved", "false"),
+    ("proof_checked", "false"),
+    ("trusted", "false"),
+    ("reconstruction_attempted", "false"),
+    ("reconstruction_verified", "false"),
+    ("draft", 0),
+])
+def test_mutated_executor_authority_is_rechecked_before_cache_or_feedback(tmp_path, field, malformed):
+    cycles, _ = _inventory(tmp_path)
+
+    def executor(candidate, context):
+        result = _fresh(candidate, context)
+        object.__setattr__(result, field, malformed)
+        return result
+
+    report = HistoricalHammerProofFeedbackReplay(
+        executor, state_dir=tmp_path / "state", policy=_policy(),
+    ).run([cycles])
+    assert report.outcomes[0].feedback_record is None
+    assert report.feedback_replay.records == ()
+    assert report.to_dict()["trusted_feedback_count"] == 0
+    assert list((tmp_path / "state").rglob("results/*.json")) == []
+
+
+def test_pre_strict_boolean_cache_cannot_supply_current_training_feedback(tmp_path):
+    # Explicitly fictional legacy wire: the old adapter persisted bool("false")
+    # as True. Hash consistency cannot recover the original malformed value.
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_ir_proof_feedback_replay as owner
+
+    cycles, inventory = _inventory(tmp_path)
+    candidate = inventory.obligations[0]
+    policy = _policy()
+    calls = []
+
+    def executor(current_candidate, context):
+        calls.append(current_candidate.content_address)
+        return _fresh(current_candidate, context, trusted=False)
+
+    coordinator = HistoricalHammerProofFeedbackReplay(
+        executor, state_dir=tmp_path / "state", policy=policy,
+    )
+    # Closed pre-strict v1 wire, independent of any new repair field/name.
+    legacy_policy = {
+        "compiler_schema_version": policy.compiler_schema_version,
+        "proof_routing_policy_fingerprint": policy.proof_routing_policy_fingerprint,
+        "resource_wait_timeout_seconds": policy.resource_wait_timeout_seconds,
+        "schema_version": "legal-ir-historical-hammer-proof-feedback-replay-v1",
+        "solver_policy_fingerprint": policy.solver_policy_fingerprint,
+        "timeout_seconds": float(policy.timeout_seconds),
+        "trusted_proof_checkers": sorted(set(policy.trusted_proof_checkers)),
+        "trusted_root_ids": sorted(set(policy.trusted_root_ids)),
+        "use_global_solver_budget": policy.use_global_solver_budget,
+        "versions": policy.versions.to_dict(),
+    }
+    legacy_fingerprint = owner.replay_content_digest(legacy_policy)
+    legacy_key = owner._digest_identifier({
+        "obligation_content_address": candidate.content_address,
+        "policy_fingerprint": legacy_fingerprint,
+        "schema_version": "legal-ir-historical-hammer-proof-feedback-replay-v1",
+    }, "historical-hammer-execution")
+    legacy_context = replace(
+        coordinator._context(candidate, legacy_key),
+        execution_fingerprint=legacy_fingerprint,
+    )
+    # Every field is now an ordinary boolean, exactly as after old coercion.
+    coordinator.cache.put(legacy_key, _fresh(candidate, legacy_context))
+    legacy_path = coordinator.cache.path_for(legacy_key)
+    original_legacy_bytes = legacy_path.read_bytes()
+
+    report = coordinator.run([cycles])
+    assert calls == [candidate.content_address]
+    assert report.outcomes[0].cache_hit is False
+    assert report.outcomes[0].feedback_record is None
+    assert report.feedback_replay.records == ()
+    assert report.to_dict()["trusted_feedback_count"] == 0
+    assert legacy_path.read_bytes() == original_legacy_bytes
