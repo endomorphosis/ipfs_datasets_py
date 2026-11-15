@@ -7602,3 +7602,183 @@ def test_reviewed_Qwen2_training_profile_existing_mixed_job_preserves_complete_t
     checkpoint=json.loads(Path(result["candidate"]["path"]).read_bytes())
     assert checkpoint["backend_identity"]==runtime.backend.identity()
     assert result["complete_training_binding"]["production_training_eligible"]is False
+
+
+def _aggregate_v4_context_commitment_fixture(value, profile):
+    """Independent caller commitment; exact evidence bytes use existing owner."""
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_span_consumer_binding as consumer
+    return {"schema":"reviewed-decoder-rich-context-inputs/v4","profile":profile,
+        "components":[{"admission_id":item["admission_id"],
+            "binding_receipt_sha256":worker._digest(worker._json_bytes(item["binding"].receipt())),
+            "training_rows_sha256":worker._digest(worker._json_bytes(item["training_rows"])),
+            "admission_inputs_sha256":consumer.reviewed_admission_inputs_sha256(item["admission_inputs"]),
+            "exposure_records_sha256":worker._digest(worker._json_bytes(item["exposure_records"]))}
+            for item in value["components"]],
+        "split_manifest_sha256":worker._digest(worker._json_bytes(value["split_manifest"])),
+        "query_rows_sha256":worker._digest(worker._json_bytes(value["query_rows"])),
+        "retrieval_rows_sha256":worker._digest(worker._json_bytes(value["retrieval_rows"])),
+        "admission_inputs_sha256":worker._digest(worker._json_bytes([
+            {"admission_id":item["admission_id"],"admission_inputs_sha256":consumer.reviewed_admission_inputs_sha256(item["admission_inputs"])}
+            for item in value["components"]]))}
+
+
+class _AggregateV4StructuralBackend:
+    """Non-neural transport fixture; no model training, restoration or inference."""
+    def __init__(self, tokenizer, pair):
+        self.tokenizer=tokenizer;self.pair=pair;self.calls=[];self.mutate=None
+    def identity(self):
+        return dict(backend_id="fixture:structural-aggregate-v4",implementation_sha256="a"*64,
+            checkpoint_format="fictional-opaque-pair/v1",target_codec="complete-reviewed-norm-json/v2",
+            source_conditioned=True,pretrained=False)
+    def restored_checkpoint_matches(self,model,optimizer):return (model,optimizer)==self.pair
+    def _forbidden(self,*args,**kwargs):raise AssertionError("structural fixture must not restore, inspect, train, snapshot or read registry assets")
+    validate_training_records=inspect_checkpoint=restore_checkpoint=train_batch=snapshot_checkpoint=_forbidden
+    def generate_batch(self,records,*,max_output_tokens,execution_guard):
+        execution_guard();self.calls.append(json.loads(worker._json_bytes(records)))
+        if self.mutate:self.mutate()
+        execution_guard()
+        return [dict(id=row["id"],unit_id=row["unit_id"],outcome="abstained",candidate=None,
+            generated_token_ids=[],generated_text="",reason="fictional non-neural transport abstention") for row in records]
+
+
+def _aggregate_v4_structural_factory_case(tmp_path, *, tokenizer=None):
+    from copy import deepcopy
+    from types import SimpleNamespace
+    from tests.unit.optimizers.logic_theorem_optimizer import test_legal_ir_evaluation_artifacts as evaluation
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_structured_retrieval as structured
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_span_consumer_binding as consumer
+    ch,options,payload=evaluation._aggregate_v4_heldout_case()
+    context=options["reviewed_training_context"];state={"policy_revoked":False};policies=[]
+    def artifact(name,raw):
+        path=tmp_path/name;path.write_bytes(raw)
+        return worker.CheckpointArtifact(path=str(path),sha256=hashlib.sha256(raw).hexdigest(),bytes=len(raw))
+    pair=(b"FICTIONAL structural model bytes; not a neural checkpoint",b"FICTIONAL structural optimizer bytes; not optimizer state")
+    model=artifact("fictional-model.txt",pair[0]);optimizer=artifact("fictional-optimizer.txt",pair[1])
+    asset=artifact("fictional-asset.txt",b"FICTIONAL test asset; no downloaded model or tokenizer")
+    tokenizer=_CompleteReviewedByteTokenizer() if tokenizer is None else tokenizer
+    backend=_AggregateV4StructuralBackend(tokenizer,pair)
+    registry=SimpleNamespace(read_artifact=backend._forbidden,artifact_path=backend._forbidden)
+    runtime=worker.ReviewedDecoderRuntime(registry,backend,tokenizer,lambda:deepcopy(options["admission_inputs"]),lambda:None,lambda _:None)
+    references=options["rows"]
+    source_contexts=dict(profile="reviewed-source-selection-context/v2",selection_context=dict(
+        schema="caller-known-interpretation-selection/v1",interpretation_id=references[0]["canonical_ir"]["interpretation_id"],
+        selection_mode="identifier_only"),rows=[dict(id=row["id"],unit_id=row["unit_id"],
+            governing_context=deepcopy(row["canonical_ir"]["governing_context"]),
+            source_binding=deepcopy(row["canonical_ir"]["source_binding"])) for row in references])
+    profile=structured.AGGREGATE_CONTEXT_V4_PROFILE
+    def policy(value):
+        policies.append(deepcopy(value))
+        if state["policy_revoked"]:raise PermissionError("fictional aggregate context policy revoked")
+    kwargs=dict(binding=options["binding"],rows=references,split_manifest=options["split_manifest"],
+        exposure_records=options["exposure_records"],source_contexts=source_contexts,
+        expected_source_contexts_sha256=evaluation._producer_digest(source_contexts),
+        expected_admission_inputs_sha256=consumer.reviewed_admission_inputs_sha256(options["admission_inputs"]),
+        backend_identity=backend.identity(),assets=(asset,),model_checkpoint=model,optimizer_checkpoint=optimizer,
+        max_source_tokens=65536,max_output_tokens=3,allow_heldout_evaluation=True,
+        context_profile=profile,current_context_inputs_provider=lambda:context,
+        expected_context_inputs_sha256=evaluation._producer_digest(_aggregate_v4_context_commitment_fixture(context,profile)),
+        context_policy_guard=policy,context_transport="shared_json_v2")
+    return SimpleNamespace(runtime=runtime,backend=backend,kwargs=kwargs,options=options,context=context,
+        state=state,policies=policies,evaluation=evaluation,payload=payload)
+
+
+def test_aggregate_v4_structural_factory_retains_complete_byte_context_refusal(tmp_path):
+    fixture=_aggregate_v4_structural_factory_case(tmp_path)
+    producer=worker.make_reviewed_decoder_source_producer_v3(fixture.runtime,**fixture.kwargs)
+    arguments=tuple(dict(id=row["id"],source_text=row["source_text"],context=dict(permitted=[],
+        retrieved=fixture.options["retrieved_examples"][row["id"]])) for row in fixture.options["rows"])
+    from ipfs_datasets_py.logic.autoformal import training_cycle_inputs as inputs
+    with pytest.raises(inputs.ReviewedDecoderInputValidationError,match="complete rich context token budget exceeded"):
+        producer(arguments)
+    assert fixture.backend.calls==[]
+    assert producer.observation()["last_call"]["exit_pair_match"] is True
+    declarations=dict(encoder=dict(id="fixture:declared-encoder",sha256="b"*64),
+        decoder=dict(id=fixture.backend.identity()["backend_id"],sha256=fixture.kwargs["model_checkpoint"].sha256))
+    artifact=producer.evaluate(compiler_commit="fixture:structural-aggregate-source",checkpoint_declarations=declarations)
+    payload=fixture.evaluation._producer_payload(artifact)
+    assert payload["comparison"]["outcome_counts"]["error"]==3
+    assert payload["comparison"]["outcome_counts"]["complete"]==0
+    assert payload["producer_exception_type"]=="ReviewedDecoderInputValidationError"
+    assert fixture.backend.calls==[]
+    assert producer.observation()["training_or_restore_performed"] is False
+
+
+@pytest.mark.parametrize("damage",["unknown-profile","no-heldout","wrong-commitment","query-revoked","checkpoint-bytes"])
+def test_aggregate_v4_structural_factory_refuses_before_backend_on_invalid_custody(tmp_path,damage):
+    from copy import deepcopy
+    fixture=_aggregate_v4_structural_factory_case(tmp_path)
+    options=dict(fixture.kwargs);runtime=fixture.runtime
+    if damage=="unknown-profile":options["context_profile"]="unknown-aggregate-profile"
+    elif damage=="no-heldout":options["allow_heldout_evaluation"]=False
+    elif damage=="wrong-commitment":options["expected_context_inputs_sha256"]="0"*64
+    elif damage=="checkpoint-bytes":Path(options["model_checkpoint"].path).write_bytes(b"Changed fictional checkpoint bytes")
+    else:
+        def revoked():
+            current=deepcopy(fixture.options["admission_inputs"])
+            current["registry"]["keys"][0]["revoked_at_utc"]="2026-01-01T00:00:00Z"
+            return current
+        runtime=worker.ReviewedDecoderRuntime(runtime.registry,runtime.backend,runtime.tokenizer,
+            revoked,runtime.execution_guard,runtime.asset_policy_guard)
+    with pytest.raises(ValueError):worker.make_reviewed_decoder_source_producer_v3(runtime,**options)
+    assert fixture.backend.calls==[]
+
+
+def _aggregate_v4_existing_public_fast_tokenizer():
+    """Existing public fixed-schema Unigram fixture; no model or download."""
+    from tokenizers import Tokenizer,AddedToken,models,pre_tokenizers,decoders
+    from transformers import PreTrainedTokenizerFast
+    vocabulary={"[EOS]":0,**{value:index+1 for index,value in enumerate(sorted(pre_tokenizers.ByteLevel.alphabet()))},
+        "[BOS]":257,"[UNK]":258,"[PAD]":259}
+    # Reuse the existing fixed typed-schema builder, never fit to this panel.
+    _reviewed_local_loader_fixed_typed_schema_bpe(vocabulary)
+    native=Tokenizer(models.Unigram([(token,-1.0) for token,index in
+        sorted(vocabulary.items(),key=lambda pair:pair[1])],unk_id=258))
+    native.pre_tokenizer=pre_tokenizers.ByteLevel(add_prefix_space=False,use_regex=False)
+    native.decoder=decoders.ByteLevel()
+    native.add_special_tokens([AddedToken(value,normalized=False,special=True)
+                               for value in ("[EOS]","[BOS]","[UNK]","[PAD]")])
+    frontend=PreTrainedTokenizerFast(tokenizer_object=native,bos_token="[BOS]",eos_token="[EOS]",
+        unk_token="[UNK]",pad_token="[PAD]",model_max_length=4096,clean_up_tokenization_spaces=False)
+    return worker.ReviewedPretrainedTokenizer(frontend,bos_token_id=257,eos_token_id=0,vocab_size=len(vocabulary))
+
+
+def test_aggregate_v4_public_fast_tokenizer_factory_reaches_structural_backend_with_complete_context(tmp_path):
+    """Run only through the original resource owner; tokenizer, not a model."""
+    tokenizer=_aggregate_v4_existing_public_fast_tokenizer()
+    fixture=_aggregate_v4_structural_factory_case(tmp_path,tokenizer=tokenizer)
+    producer=worker.make_reviewed_decoder_source_producer_v3(fixture.runtime,**fixture.kwargs)
+    arguments=tuple(dict(id=row["id"],source_text=row["source_text"],context=dict(permitted=[],
+        retrieved=fixture.options["retrieved_examples"][row["id"]])) for row in fixture.options["rows"])
+    direct=producer(arguments)
+    assert len(direct)==3 and all(row["outcome"]=="abstained" for row in direct)
+    declarations=dict(encoder=dict(id="fixture:declared-encoder",sha256="b"*64),
+        decoder=dict(id=fixture.backend.identity()["backend_id"],sha256=fixture.kwargs["model_checkpoint"].sha256))
+    artifact=producer.evaluate(compiler_commit="fixture:public-tokenizer-structural-aggregate",checkpoint_declarations=declarations)
+    assert len(fixture.backend.calls)==2 and all(len(records)==3 for records in fixture.backend.calls)
+    from ipfs_datasets_py.logic.autoformal import training_cycle_inputs as inputs
+    observed=[]
+    for index,record in enumerate(fixture.backend.calls[0]):
+        decoded=tokenizer.decode(record["source_token_ids"][1:-1]);assert decoded==record["source_wire"]
+        source=json.loads(decoded);expected=arguments[index]
+        assert source["source_text"]==expected["source_text"]
+        assert "canonical_ir" not in source and "typed_expression" not in source
+        context=inputs.unpack_reviewed_context_json_v2(source["context"])
+        assert context==expected["context"]
+        assert {row["content"]["admission_id"] for row in context["retrieved"]}==(
+            {"fixture:train:A","fixture:train:B"} if index<2 else {"fixture:train:A"})
+        wire=worker._reviewed_generation_context_wire(source,{row["id"] for row in arguments})
+        context_count=len(tokenizer.encode(wire))+2
+        assert context_count<=worker.REVIEWED_GENERATION_CONTEXT_MAX_TOKENS==4096
+        assert len(wire.encode("utf-8"))<=worker.REVIEWED_GENERATION_CONTEXT_MAX_BYTES==16384
+        observed.append(dict(id=record["id"],complete_source_tokens=len(record["source_token_ids"]),
+            complete_context_tokens=context_count,context_bytes=len(wire.encode("utf-8")),
+            examples=len(context["retrieved"])))
+    payload=fixture.evaluation._producer_payload(artifact)
+    assert payload["comparison"]["outcome_counts"]["abstained"]==3
+    assert payload["comparison"]["outcome_counts"]["error"]==0
+    assert producer.observation()["training_or_restore_performed"] is False
+    assert producer.observation()["last_call"]["completed"] is True
+    (tmp_path/"public-tokenizer-structural-observation.json").write_text(json.dumps(dict(
+        schema="public-tokenizer-structural-factory-mechanics/v1",rows=observed,
+        model_weights_loaded=False,model_inference=False,training=False,
+        actual_pretrained_capacity_or_quality=False),indent=2)+"\n")

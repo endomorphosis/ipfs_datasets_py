@@ -3751,11 +3751,16 @@ def _make_reviewed_decoder_source_producer(runtime, *, binding, rows, split_mani
     need(generation_copy is None or _admission_version == "v3", "explicit generation policy requires admission V3")
     need(consumer._reviewed_binding_version(binding) == _admission_version,
          "prepared producer binding admission contract differs from explicit factory domain")
+    aggregate_context = False
     if _admission_version == "v3":
+        if context_profile is not None:
+            from . import legal_structured_retrieval as structured
+            aggregate_context = (type(context_profile) is str
+                                 and context_profile == structured.AGGREGATE_CONTEXT_V4_PROFILE)
         source_only = (context_profile is None and current_context_inputs_provider is None
                        and expected_context_inputs_sha256 is None and context_policy_guard is None)
         explicit_rich_heldout = (allow_heldout_evaluation is True
-            and context_profile == consumer.REVIEWED_V3_HELDOUT_CONTEXT_PROFILE
+            and (context_profile == consumer.REVIEWED_V3_HELDOUT_CONTEXT_PROFILE or aggregate_context)
             and callable(current_context_inputs_provider) and callable(context_policy_guard)
             and type(expected_context_inputs_sha256) is str
             and re.fullmatch(r"[0-9a-f]{64}", expected_context_inputs_sha256) is not None)
@@ -3825,7 +3830,8 @@ def _make_reviewed_decoder_source_producer(runtime, *, binding, rows, split_mani
                              else REVIEWED_GENERATION_CONTEXT_MAX_BYTES)
     rich_heldout = allow_heldout_evaluation and context_enabled
     if context_enabled:
-        expected_profile = ((consumer.REVIEWED_V3_HELDOUT_CONTEXT_PROFILE if _admission_version == "v3"
+        expected_profile = (structured.AGGREGATE_CONTEXT_V4_PROFILE if aggregate_context else
+                            (consumer.REVIEWED_V3_HELDOUT_CONTEXT_PROFILE if _admission_version == "v3"
                              else consumer.REVIEWED_HELDOUT_CONTEXT_PROFILE) if rich_heldout
                             else "reviewed-rich-TRAIN-context-hparam/v1")
         need(context_profile == expected_profile
@@ -3916,25 +3922,53 @@ def _make_reviewed_decoder_source_producer(runtime, *, binding, rows, split_mani
     def context_inputs():
         value = current_context_inputs_provider()
         context_state["provider_checks"] += 1
-        need(type(value) is dict and set(value) == {"binding", "training_rows", "split_manifest",
-             "admission_inputs", "exposure_records", "query_rows", "retrieval_rows"},
+        fields = ({"schema", "components", "split_manifest", "query_rows", "retrieval_rows"} if aggregate_context else
+                  {"binding", "training_rows", "split_manifest", "admission_inputs", "exposure_records", "query_rows", "retrieval_rows"})
+        need(type(value) is dict and set(value) == fields,
              "closed fresh TRAIN context consumer inputs required")
-        need(type(value["binding"]) is consumer.ReviewedSourceSpanConsumerBinding,
-             "existing complete TRAIN consumer binding required")
+        if aggregate_context:
+            need(value["schema"] == structured.AGGREGATE_CONTEXT_V4_SCHEMA
+                 and type(value["components"]) is list and 1 <= len(value["components"]) <= 32,
+                 "explicit complete aggregate TRAIN component contract required")
+            for component in value["components"]:
+                need(type(component) is dict and set(component) == {
+                    "admission_id", "binding", "training_rows", "admission_inputs", "exposure_records"}
+                     and type(component["binding"]) is consumer.ReviewedSourceSpanConsumerBinding
+                     and consumer._reviewed_binding_version(component["binding"]) == "v3",
+                     "aggregate context retains existing complete V3 TRAIN bindings")
+        else:
+            need(type(value["binding"]) is consumer.ReviewedSourceSpanConsumerBinding,
+                 "existing complete TRAIN consumer binding required")
         queries = [{"id": row["id"], "source_text": row["source_text"]} for row in row_copy]
         need(wire(value["query_rows"]) == wire(queries),
              "rich context query/source/order differs from producer population")
         need(wire(value["split_manifest"]) == wire(manifest_copy),
              "query and TRAIN context require the same complete split manifest")
-        commitment = {"schema": "reviewed-decoder-rich-context-inputs/v1",
-            "profile": context_profile,
-            "binding_receipt_sha256": _digest(wire(value["binding"].receipt())),
-            "training_rows_sha256": _digest(wire(value["training_rows"])),
-            "split_manifest_sha256": _digest(wire(value["split_manifest"])),
-            "admission_inputs_sha256": consumer.reviewed_admission_inputs_sha256(value["admission_inputs"]),
-            "exposure_records_sha256": _digest(wire(value["exposure_records"])),
-            "query_rows_sha256": _digest(wire(value["query_rows"])),
-            "retrieval_rows_sha256": _digest(wire(value["retrieval_rows"]))}
+        if aggregate_context:
+            components = [{"admission_id": item["admission_id"],
+                "binding_receipt_sha256": _digest(wire(item["binding"].receipt())),
+                "training_rows_sha256": _digest(wire(item["training_rows"])),
+                "admission_inputs_sha256": consumer.reviewed_admission_inputs_sha256(item["admission_inputs"]),
+                "exposure_records_sha256": _digest(wire(item["exposure_records"]))}
+                for item in value["components"]]
+            commitment = {"schema": "reviewed-decoder-rich-context-inputs/v4", "profile": context_profile,
+                "components": components,
+                "split_manifest_sha256": _digest(wire(value["split_manifest"])),
+                "query_rows_sha256": _digest(wire(value["query_rows"])),
+                "retrieval_rows_sha256": _digest(wire(value["retrieval_rows"])),
+                "admission_inputs_sha256": _digest(wire([
+                    {"admission_id": item["admission_id"], "admission_inputs_sha256": item["admission_inputs_sha256"]}
+                    for item in components]))}
+        else:
+            commitment = {"schema": "reviewed-decoder-rich-context-inputs/v1",
+                "profile": context_profile,
+                "binding_receipt_sha256": _digest(wire(value["binding"].receipt())),
+                "training_rows_sha256": _digest(wire(value["training_rows"])),
+                "split_manifest_sha256": _digest(wire(value["split_manifest"])),
+                "admission_inputs_sha256": consumer.reviewed_admission_inputs_sha256(value["admission_inputs"]),
+                "exposure_records_sha256": _digest(wire(value["exposure_records"])),
+                "query_rows_sha256": _digest(wire(value["query_rows"])),
+                "retrieval_rows_sha256": _digest(wire(value["retrieval_rows"]))}
         need(_digest(wire(commitment)) == expected_context_inputs_sha256,
              "fresh TRAIN context provider differs from independent commitment")
         return value, commitment
@@ -3947,20 +3981,30 @@ def _make_reviewed_decoder_source_producer(runtime, *, binding, rows, split_mani
             need(structured.implementation_pin() == context_implementation,
                  "rich context implementation changed")
         if replay:
-            heldout_context = {"heldout_evaluation": first_review["heldout_evaluation"],
-                               "_admission_version": _admission_version} if rich_heldout else {}
-            consume_context = structured._consume_reviewed_contexts if rich_heldout else structured.consume_reviewed_contexts_v2
-            payload = consume_context(value["binding"], value["training_rows"],
-                split_manifest=value["split_manifest"], admission_inputs=value["admission_inputs"],
-                exposure_records=value["exposure_records"], query_rows=value["query_rows"],
-                retrieval_rows=value["retrieval_rows"],
-                expected_query_rows_sha256=commitment["query_rows_sha256"],
-                expected_retrieval_rows_sha256=commitment["retrieval_rows_sha256"],
-                consumer=lambda complete: complete,
-                max_context_bytes=logical_context_bytes, **heldout_context)
-            need(payload["binding_receipt"]["status"] == "ready"
-                 and payload["binding_receipt"]["operation"] == "training",
-                 "fresh complete TRAIN context review required")
+            if aggregate_context:
+                payload = structured.consume_reviewed_contexts_v4(**value,
+                    expected_query_rows_sha256=commitment["query_rows_sha256"],
+                    expected_retrieval_rows_sha256=commitment["retrieval_rows_sha256"],
+                    consumer=lambda complete: complete, max_context_bytes=logical_context_bytes,
+                    heldout_evaluation=first_review["heldout_evaluation"])
+                need(payload["schema"] == structured.AGGREGATE_CONTEXT_V4_SCHEMA
+                     and payload["examples_are_complete"] is True,
+                     "fresh complete aggregate TRAIN context review required")
+            else:
+                heldout_context = {"heldout_evaluation": first_review["heldout_evaluation"],
+                                   "_admission_version": _admission_version} if rich_heldout else {}
+                consume_context = structured._consume_reviewed_contexts if rich_heldout else structured.consume_reviewed_contexts_v2
+                payload = consume_context(value["binding"], value["training_rows"],
+                    split_manifest=value["split_manifest"], admission_inputs=value["admission_inputs"],
+                    exposure_records=value["exposure_records"], query_rows=value["query_rows"],
+                    retrieval_rows=value["retrieval_rows"],
+                    expected_query_rows_sha256=commitment["query_rows_sha256"],
+                    expected_retrieval_rows_sha256=commitment["retrieval_rows_sha256"],
+                    consumer=lambda complete: complete,
+                    max_context_bytes=logical_context_bytes, **heldout_context)
+                need(payload["binding_receipt"]["status"] == "ready"
+                     and payload["binding_receipt"]["operation"] == "training",
+                     "fresh complete TRAIN context review required")
             # Full examples and governing definitions are retained verbatim.
             retrieval = {item["id"]: [{"id": example["id"], "content": example}
                          for example in item["examples"]] for item in payload["rows"]}
@@ -4257,6 +4301,8 @@ def _make_reviewed_decoder_source_producer(runtime, *, binding, rows, split_mani
 
         heldout_context = {"reviewed_training_context": context_inputs()[0],
                            "context_policy_guard": check_evaluator_context} if rich_heldout else {}
+        if aggregate_context:
+            heldout_context["reviewed_training_context_profile"] = context_profile
         try:
             artifact = evaluate_reviewed_source_span_producer_artifact(binding=binding,
                 rows=row_copy, split_manifest=manifest_copy, admission_inputs=fresh,
