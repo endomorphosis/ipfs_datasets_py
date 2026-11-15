@@ -1,0 +1,67 @@
+{
+  "Hub_upload_or_statutory_or_corpus_admission": false,
+  "behavior": "CLI defaults to the existing strict HF Parquet metadata envelope; explicit legacy option preserves the previous layout. Core producer default is unchanged.",
+  "current_full_dependency_epoch_qualified": false,
+  "original_declared_paths_changed_since_qualification": [
+    "/tmp/datasets-publish-main-20261114/ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_native_v2.py",
+    "/tmp/datasets-publish-main-20261114/ipfs_datasets_py/logic/autoformal/legal_corpus_shared_lake.py",
+    "/tmp/datasets-publish-main-20261114/ipfs_datasets_py/logic/autoformal/legal_norm_content_adjudication_v1.py",
+    "/tmp/datasets-publish-main-20261114/ipfs_datasets_py/logic/autoformal/legal_release_coordinator_v1.py",
+    "/tmp/datasets-publish-main-20261114/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_resource_recovery.py",
+    "/tmp/datasets-publish-main-20261114/scripts/ops/legal_ir/run_autoformal_supervisor.py",
+    "/tmp/datasets-publish-main-20261114/scripts/ops/legal_ir/run_owned_validation.py",
+    "/tmp/datasets-publish-main-20261114/tests/unit/logic/autoformal/test_corpus_release_cli.py",
+    "/tmp/datasets-publish-main-20261114/tests/unit/logic/autoformal/test_legal_corpus_definition_use_native_v2.py",
+    "/tmp/datasets-publish-main-20261114/tests/unit/logic/autoformal/test_legal_corpus_shared_lake.py",
+    "/tmp/datasets-publish-main-20261114/tests/unit/logic/autoformal/test_legal_norm_content_adjudication_v1.py",
+    "/tmp/datasets-publish-main-20261114/tests/unit/logic/autoformal/test_legal_reviewed_norm_admission_v3.py",
+    "/tmp/datasets-publish-main-20261114/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_resource_recovery.py",
+    "/tmp/datasets-publish-main-20261114/tests/unit/optimizers/logic_theorem_optimizer/test_retained_validation_capacity_recovery.py",
+    "/tmp/datasets-publish-main-20261114/tests/unit/optimizers/logic_theorem_optimizer/test_validation_run_resources.py"
+  ],
+  "publication_runs_tests_or_models_or_Lean": false,
+  "qualification": {
+    "case_names": [
+      "test_default_cli_stages_strict_wire_metadata_and_excludes_stale_graph_shard",
+      "test_explicit_legacy_metadata_opt_out_keeps_unselected_files_and_refuses_strict_intake"
+    ],
+    "errors": 0,
+    "exact_published_source_pair_matches": true,
+    "failures": 0,
+    "original_custody_closed": true,
+    "own_32MiB_released_durably": true,
+    "records": {
+      "cohort-closeout.json": {
+        "bytes": 2731,
+        "sha256": "1b21c382be9ebfc28e89dc3798da0f23dc738fdece64d2f12063647fb8da51e1"
+      },
+      "parent-closeout.json": {
+        "bytes": 9593,
+        "sha256": "300dfb0db7c525f855ab86a730da6eef44527ef2d8f35c7dccc3eb74642a3d5d"
+      },
+      "request.json": {
+        "bytes": 43049,
+        "sha256": "632ba63172da1037cb5c4f09a93e4f0ae18ddc0706585c3d4cae85d2d0bcf9e5"
+      }
+    },
+    "reservation_id": "53385b28a56441e99688e6b62e24014a",
+    "scope": "Real tiny Parquet staging and strict local metadata intake; upstream family generation modeled.",
+    "skipped": 0,
+    "source_pins_at_original_run": 229,
+    "tests": 2,
+    "tool_session": 67420
+  },
+  "schema": "legal-ir-full-release-cli-wire-metadata-source-publication/v1",
+  "sources": [
+    {
+      "bytes": 18846,
+      "path": "scripts/ops/legal_data/build_uscode_full_hf_release.py",
+      "sha256": "90a095b15933f9fc7655e7be5e6be6e6168cc8133c2bb5a337fb75cebd54c59e"
+    },
+    {
+      "bytes": 7457,
+      "path": "tests/unit/scripts/test_build_uscode_full_hf_release.py",
+      "sha256": "eb5a23e876a16940c0fa592d17fd70c7af803c9e6642c56cb70210f8afd64367"
+    }
+  ]
+}

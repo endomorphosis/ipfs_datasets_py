@@ -1,5 +1,9 @@
 # Training and experiment history
 
+## Full-release CLI wire-metadata source delivery — 2026-11-15
+
+The full-release CLI source and owning tests are now delivered at the exact hashes from the original two-case local staging/intake qualification. Default strict metadata and the explicit legacy option retain their recorded scope. No new test run, current full dependency qualification, Hub upload, model result, Lean proof or statutory/corpus admission follows. [Source and qualification record](../../../../docs/autoformalization/evidence/legal-ir-full-release-cli-wire-metadata-source-20261115.json).
+
 ## Reviewed source-use identity: separate software and Lean outcomes — 2026-11-15
 
 The genuine two-case duplicate-instance refusal remains recorded. Following the four-owner change, the A cohort passed **102 cases, 0 failures/errors/skips, in 112.526s** with Source custody closed in 268.222479s and 3,165,127 successful bytes durably released. The initial incremental B cohort had 26 raw passes but exceeded its 16 MiB reservation at 19,209,561 bytes; its failed claim remains retained and nondurable. A later 60-second ledger refusal created no child, native grant, record or storage claim.

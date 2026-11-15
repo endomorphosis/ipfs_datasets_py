@@ -1,5 +1,9 @@
 # Current handoff
 
+## Full-release CLI wire-metadata source delivery — 2026-11-15
+
+The full-release CLI source and owning tests are now delivered at the exact hashes from the original two-case local staging/intake qualification. Default strict metadata and the explicit legacy option retain their recorded scope. No new test run, current full dependency qualification, Hub upload, model result, Lean proof or statutory/corpus admission follows. [Source and qualification record](../../../../docs/autoformalization/evidence/legal-ir-full-release-cli-wire-metadata-source-20261115.json).
+
 ## Reviewed source-use binding and installed Lean preservation — 2026-11-15
 
 The aggregate, native-handoff and incremental APIs accept explicit `instance_identity_profile="reviewed-source-use/v1"`. After complete current source/admission/graph replay, the aggregate passes the child API a closed `source_use_binding` plus `expected_source_use_binding_sha256`; the child API does not accept the selector keyword. This separates identical IR at genuinely disjoint source uses while retaining default-profile behavior, all seven child companions and five obligations per unit. Saved receipts and caches cannot select or inherit another identity domain.

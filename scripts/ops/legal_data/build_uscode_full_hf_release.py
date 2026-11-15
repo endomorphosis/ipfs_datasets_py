@@ -7,6 +7,10 @@ Operator-oriented end-to-end pipeline:
   3. Build BM25, deterministic embeddings, centroid vector binding, legal graph
   4. Package additive publicus-ir-graphrag/v2 release (no Hub upload here)
 
+Full-release CLI metadata defaults to hf-default-parquet-envelope/v1.
+Use --legacy-metadata-profile only to request the previous metadata layout;
+the core producer API keeps its existing default.
+
 Upload remains a separate explicit step so production mutation stays gated.
 """
 
@@ -45,6 +49,7 @@ from ipfs_datasets_py.processors.legal_data.uscode_graph import (  # noqa: E402
     project_uscode_graph,
 )
 from ipfs_datasets_py.processors.legal_data.uscode_hf_release import (  # noqa: E402
+    WIRE_METADATA_PROFILE,
     build_uscode_hf_release,
     stage_uscode_hf_release,
     validate_uscode_hf_release,
@@ -428,6 +433,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         "--dataset-id",
         default=DEFAULT_DATASET_REPO_ID,
     )
+    parser.add_argument(
+        "--legacy-metadata-profile",
+        action="store_true",
+        help="Emit previous metadata instead of the default strict HF Parquet envelope",
+    )
     args = parser.parse_args(list(argv) if argv is not None else None)
 
     laws_path = args.laws_parquet.expanduser().resolve()
@@ -470,6 +480,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         admission_summary=admission_summary,
         include_legacy_config=True,
         include_recovery_config=True,
+        metadata_profile=None if args.legacy_metadata_profile else WIRE_METADATA_PROFILE,
         # Do not re-upload a stub uscode_parquet; keep Hub legacy as-is.
         legacy_files=None,
     )
