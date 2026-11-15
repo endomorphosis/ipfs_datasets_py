@@ -7824,6 +7824,21 @@
         "separate_recovery_cases": 54,
         "separate_watcher_cases": 49,
         "single_combined_rerun": false
+      },
+      "v5_postgrant_ledger_lock_software_20261115": {
+        "Main_cases": 26,
+        "Main_software_qualified": true,
+        "capsule": {
+          "observed_bytes": 11393,
+          "observed_sha256": "b82d59cbf6b73bd3416901217ba55ea7f70e89a95572367bb9dbf94a0e23329b",
+          "path": "docs/autoformalization/evidence/legal-ir-v5-postgrant-ledger-lock-software-20261115.json",
+          "root": "datasets_repository"
+        },
+        "generic_parent_or_live_cleanup_qualified": false,
+        "model_legal_Lean_corpus_credit": false,
+        "new_cases": 22,
+        "old_failed_claims_released": false,
+        "retained_cases": 4
       }
     },
     {
@@ -9394,7 +9409,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-11-15T04:06:36.109864+00:00",
+  "last_updated_at_utc": "2026-11-15T05:09:52.432861+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -12485,7 +12500,22 @@
       "required_for_catalog_check": true,
       "root": "datasets_repository",
       "scope": "67 selected fictional-fixture controls on CLI8a5/test178e; 204 unchanged pins and original Source/native/process/durable 2 MiB custody closed. Strict new v1 Source-disposition API only; no storage authority, historical e689 acceptance, physical failure-path qualification, model/Lean or task-completion credit. Separate fresh132 strict lock-profile/old-contract regression,126 capturedpins and originalclosedcustody/durable16MiB; physical coverage remains the old deadline case. P5zero-test/admin and wrongcollection histories retained.",
-      "status": "focused_tests_qualified"
+      "status": "focused_tests_qualified",
+      "v5_postgrant_ledger_lock_software_20261115": {
+        "Main_cases": 26,
+        "Main_software_qualified": true,
+        "capsule": {
+          "observed_bytes": 11393,
+          "observed_sha256": "b82d59cbf6b73bd3416901217ba55ea7f70e89a95572367bb9dbf94a0e23329b",
+          "path": "docs/autoformalization/evidence/legal-ir-v5-postgrant-ledger-lock-software-20261115.json",
+          "root": "datasets_repository"
+        },
+        "generic_parent_or_live_cleanup_qualified": false,
+        "model_legal_Lean_corpus_credit": false,
+        "new_cases": 22,
+        "old_failed_claims_released": false,
+        "retained_cases": 4
+      }
     },
     {
       "id": "reviewed-retrieval-full-current-worktree-qualification-20261109",

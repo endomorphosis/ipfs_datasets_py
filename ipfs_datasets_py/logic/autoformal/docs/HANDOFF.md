@@ -50,6 +50,8 @@ The earlier RED2 reproduced two expected CALL failures under the previous source
 
 CPU1, memory1536MiB, process4, storage16MiB, productive300 and ledger60 are unchanged; one shared60-second Source-admission cutoff stays inside the initial420-second acceptance deadline without renewal or automatic retry. Existing runtime holds,119 owners,24 task states and physical200/next201/9,800 remaining at generation2of2 are preserved. FullSDK95/SourceGen/raw7, actual SDK timeout cleanup, private delegated immutable@2 SDK/worker/Main and mapped preparation remain separate unqualified gates. No model, legal, Lean, native-corpus or activation gain follows. [Exact146 evidence](../../../../workspace/test-logs/federal-corpus-audits/legal-ir-current-immutable-v1-cleanup146-qualified-20261115-v01/qualification-summary.json).
 
+Later V5 acquired-before-child ledger-lock handling now recognizes the exact existing V5 lock-failure profile after a genuine public-inspector RED. The one-predicate repair passed all 26 selected Main software controls (22 new and four retained), with original Source/Native/process custody closed and its own 16 MiB durably released. Generic-parent no-child integration, live SDK cleanup, historical UNKNOWN and retained failures, and model/legal/Lean/corpus authority remain separate. [Exact scoped evidence](../../../../docs/autoformalization/evidence/legal-ir-v5-postgrant-ledger-lock-software-20261115.json).
+
 
 ## Live context policy on evaluator exit — 2026-11-15
 
