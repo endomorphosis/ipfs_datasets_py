@@ -83,6 +83,8 @@ def _owners():
 
 
 def _owner_pins(incremental, passes, *, parent=False, manifest=None, reviewed=False, instance_identity_profile=None):
+    if _is_realization(reviewed):
+        return _realization_owner_pins(incremental, passes, manifest, **_reviewed_identity_keywords(instance_identity_profile))
     if reviewed:
         return _reviewed_owner_pins(incremental, passes, manifest, **_reviewed_identity_keywords(instance_identity_profile))
     native = _owners()[2]
@@ -291,17 +293,24 @@ def _parent_recipe_provenance(module, value):
     return value
 
 
-def _recipe(module, source, imports, contract, *, provenance=None, reviewed_provenance=None, instance_identity_profile=None):
+def _recipe(module, source, imports, contract, *, provenance=None, reviewed_provenance=None, instance_identity_profile=None,
+        realization_provenance=None):
     result = {"module": module, "source_sha256": _sha(source.encode("utf-8")),
               "imports": imports, "contract_cid": contract["record_cid"]}
     if provenance is not None:
         result["provenance"] = _parent_recipe_provenance(module, provenance)
+    if realization_provenance is not None:
+        if provenance is not None or reviewed_provenance is not None:
+            _fail("realization recipe cannot alias a prior provenance domain")
+        result["realization_provenance"] = _realization_recipe_provenance(module, realization_provenance, **_reviewed_identity_keywords(instance_identity_profile))
     if reviewed_provenance is not None:
         result["reviewed_provenance"] = _reviewed_recipe_provenance(module, reviewed_provenance, **_reviewed_identity_keywords(instance_identity_profile))
     return result
 
 
 def _facts(preparation, contract, *, parent=False, reviewed=False, graph=None, instance_identity_profile=None):
+    if _is_realization(reviewed):
+        return _realization_facts(preparation, contract, graph, **_reviewed_identity_keywords(instance_identity_profile))
     if reviewed:
         return _reviewed_facts(preparation, contract, graph, **_reviewed_identity_keywords(instance_identity_profile))
     manifest, files = preparation.to_dict(), dict(preparation.files)
@@ -328,7 +337,7 @@ def _facts(preparation, contract, *, parent=False, reviewed=False, graph=None, i
 
 
 def _parent_contract(contract, *, reviewed=False, instance_identity_profile=None):
-    if (contract["profile"] != (_reviewed_profile(instance_identity_profile) if reviewed else PARENT_PROFILE) or type(contract["toolchain"]) is not str
+    if (contract["profile"] != ((_realization_profile(instance_identity_profile) if _is_realization(reviewed) else _reviewed_profile(instance_identity_profile)) if reviewed else PARENT_PROFILE) or type(contract["toolchain"]) is not str
             or not re.fullmatch(r"leanprover/lean4:v[0-9]+\.[0-9]+\.[0-9]+", contract["toolchain"])
             or contract["environment"] != {"LEAN_PATH": "compiled", "LEAN_NUM_THREADS": "1"}
             or contract["argv_recipe"] != ["installed-sibling-lean", "-o", "compiled/<module>.olean", "<module>.lean"]):
@@ -415,7 +424,8 @@ def _parent_execution_evidence(evidence, row, facts, process, contract, *, revie
     expected = [module + "." + name for name in re.findall(r"^theorem ([A-Za-z0-9_]+)", source, re.M)]
     if expected:
         axioms, errors, passed = _parent_native()._axiom_observations(stdout, stderr,
-            {"conditional_theorems": expected}, maximum_theorems=5 if reviewed else 3)
+            {"conditional_theorems": expected}, maximum_theorems=(shared.MAX_REVIEWED_PRESERVATION_OBLIGATIONS if _is_realization(reviewed)
+                else 5 if reviewed else 3))
         if not passed or errors or axioms != {name: [] for name in expected}:
             _fail("strict parent conditional axiom observations differ")
     elif re.search(r"\b(?:axiom|axioms|sorry|sorryAx)\b", stdout + stderr):
@@ -435,12 +445,12 @@ def _previous(raw, expected_sha256, artifacts, *, parent=False, reviewed=False, 
     value = contracts.load_record_bytes(raw, expected_sha256=expected_sha256)
     flags = _reviewed_flags() if reviewed else _parent_flags() if parent else FALSE_FLAGS
     fields = {"profile", "qualified", "execution_contract", "module_facts", "artifact_root_cid", *flags}
-    value = contracts.validate_record(value, schema=REVIEWED_CACHE_SCHEMA if reviewed else PARENT_CACHE_SCHEMA if parent else CACHE_SCHEMA, fields=fields)
-    if (value["profile"] != (_reviewed_profile(instance_identity_profile) if reviewed else PARENT_PROFILE if parent else PROFILE) or value["qualified"] is not True
+    value = contracts.validate_record(value, schema=_reviewed_domain_value(reviewed, "cache") if reviewed else PARENT_CACHE_SCHEMA if parent else CACHE_SCHEMA, fields=fields)
+    if (value["profile"] != ((_realization_profile(instance_identity_profile) if _is_realization(reviewed) else _reviewed_profile(instance_identity_profile)) if reviewed else PARENT_PROFILE if parent else PROFILE) or value["qualified"] is not True
             or any(value[key] is not False for key in flags)):
         _fail("independently pinned qualified technical cache required")
-    contract = contracts.validate_record(value["execution_contract"], schema=REVIEWED_CONTRACT_SCHEMA if reviewed else PARENT_CONTRACT_SCHEMA if parent else CONTRACT_SCHEMA, fields=CONTRACT_FIELDS)
-    if contract["profile"] != (_reviewed_profile(instance_identity_profile) if reviewed else PARENT_PROFILE if parent else PROFILE):
+    contract = contracts.validate_record(value["execution_contract"], schema=_reviewed_domain_value(reviewed, "contract") if reviewed else PARENT_CONTRACT_SCHEMA if parent else CONTRACT_SCHEMA, fields=CONTRACT_FIELDS)
+    if contract["profile"] != ((_realization_profile(instance_identity_profile) if _is_realization(reviewed) else _reviewed_profile(instance_identity_profile)) if reviewed else PARENT_PROFILE if parent else PROFILE):
         _fail("prior execution contract profile differs")
     if parent or reviewed:
         _parent_contract(contract, reviewed=reviewed, instance_identity_profile=instance_identity_profile)
@@ -456,19 +466,23 @@ def _previous(raw, expected_sha256, artifacts, *, parent=False, reviewed=False, 
     for row in facts:
         contracts.require_keys(row, FACT_FIELDS, "prior module fact")
         module = contracts.require_text(row["module"], "prior module")
-        if not (_REVIEWED_MODULE if reviewed else _PARENT_MODULE if parent else _MODULE).fullmatch(module):
+        if not (_reviewed_domain_value(reviewed, "module") if reviewed else _PARENT_MODULE if parent else _MODULE).fullmatch(module):
             _fail("unsupported prior module identity")
         source = contracts.require_text(row["source"], "prior generated source", max_bytes=contracts.MAX_RECORD_BYTES)
-        imports = (_REVIEWED_IMPORT if reviewed else _PARENT_IMPORT if parent else _IMPORT).findall(source)
+        imports = (_reviewed_domain_value(reviewed, "import") if reviewed else _PARENT_IMPORT if parent else _IMPORT).findall(source)
         if row["imports"] != imports or any(item not in by_module for item in imports):
             _fail("prior import population differs")
         provenance = row["recipe"].get("provenance") if parent and type(row["recipe"]) is dict else None
         if parent and provenance is None:
             _fail("complete parent semantic recipe required")
+        if type(row["recipe"]) is not dict:
+            _fail("closed prior recipe required")
+        realization = _is_realization(reviewed)
         recipe = _recipe(module, source, imports, contract, provenance=provenance,
-            reviewed_provenance=row["recipe"].get("reviewed_provenance") if reviewed else None,
+            reviewed_provenance=row["recipe"].get("reviewed_provenance") if reviewed and not realization else None,
+            realization_provenance=row["recipe"].get("realization_provenance") if realization else None,
             instance_identity_profile=instance_identity_profile)
-        if reviewed and "reviewed_provenance" not in recipe:
+        if reviewed and ("realization_provenance" if realization else "reviewed_provenance") not in recipe:
             _fail("complete reviewed unit/dependency provenance required")
         if row["recipe"] != recipe:
             _fail("prior recipe differs from its exact source and contract")
@@ -490,7 +504,7 @@ def _previous(raw, expected_sha256, artifacts, *, parent=False, reviewed=False, 
         if output["theorem_axiom_dependencies"] != {module + "." + name: [] for name in theorems}:
             _fail("prior theorem evidence differs from exact generated declarations")
     if parent or reviewed:
-        _reviewed_graph(facts) if reviewed else _parent_graph(facts)
+        _reviewed_graph_for(facts, reviewed, **_reviewed_identity_keywords(instance_identity_profile)) if reviewed else _parent_graph(facts)
         process = _parent_native()._owners()[3]
         for row in facts:
             _parent_execution_evidence(row["output"]["execution_evidence"], row, by_module, process, contract,
@@ -504,8 +518,8 @@ def _key(module):
     return "m" + _sha(module.encode())
 
 
-def _compiler(facts, functions, incremental, passes, *, parent=False, reviewed=False):
-    depths = _reviewed_graph(facts) if reviewed else _parent_graph(facts) if parent else {}
+def _compiler(facts, functions, incremental, passes, *, parent=False, reviewed=False, instance_identity_profile=None):
+    depths = _reviewed_graph_for(facts, reviewed, **_reviewed_identity_keywords(instance_identity_profile)) if reviewed else _parent_graph(facts) if parent else {}
     def order(module):
         if parent or reviewed:
             return depths[module]
@@ -537,7 +551,8 @@ def _run(compiler, facts, previous=None):
 
 
 def _build_incremental_corpus(preparation, *, candidate_inputs=None, component_inputs=None,
-        expected_preparation_sha256=None, parent=False, reviewed_inputs=None, operation_timeout_seconds=3600, expected_population, toolchain,
+        expected_preparation_sha256=None, parent=False, reviewed_inputs=None, reviewed_domain=None,
+        operation_timeout_seconds=3600, expected_population, toolchain,
         lake_executable, output_directory, previous_cache_raw=None, expected_previous_cache_sha256=None,
         previous_artifacts=None, timeout_seconds=60, cancellation=None):
     """Compile/reuse exact modules under the caller's shared validation lease."""
@@ -548,15 +563,24 @@ def _build_incremental_corpus(preparation, *, candidate_inputs=None, component_i
         _fail("finite whole-operation cooperative deadline required")
     reviewed = reviewed_inputs is not None
     instance_identity_profile = reviewed_inputs.get("instance_identity_profile") if reviewed else None
+    if reviewed_domain is not None:
+        if not reviewed or not _is_realization(reviewed_domain):
+            _fail("explicit supported reviewed incremental domain and complete inputs required")
+        reviewed = reviewed_domain
     if reviewed and parent:
         _fail("reviewed mixed and parent profiles are distinct")
-    strict = parent or reviewed
+    strict = bool(parent or reviewed)
     if reviewed:
-        _reviewed_policy(**_reviewed_identity_keywords(instance_identity_profile))
-    cache_schema = REVIEWED_CACHE_SCHEMA if reviewed else PARENT_CACHE_SCHEMA if parent else CACHE_SCHEMA
-    contract_schema = REVIEWED_CONTRACT_SCHEMA if reviewed else PARENT_CONTRACT_SCHEMA if parent else CONTRACT_SCHEMA
-    build_schema = REVIEWED_BUILD_SCHEMA if reviewed else PARENT_BUILD_SCHEMA if parent else BUILD_SCHEMA
-    profile = _reviewed_profile(instance_identity_profile) if reviewed else PARENT_PROFILE if parent else PROFILE
+        if _is_realization(reviewed):
+            _realization_policy(**_reviewed_identity_keywords(instance_identity_profile))
+        else:
+            _reviewed_policy(**_reviewed_identity_keywords(instance_identity_profile))
+    realization_fence = (_realization_guard(preparation, reviewed_inputs, expected_preparation_sha256, toolchain)
+        if _is_realization(reviewed) else None)
+    cache_schema = _reviewed_domain_value(reviewed, "cache") if reviewed else PARENT_CACHE_SCHEMA if parent else CACHE_SCHEMA
+    contract_schema = _reviewed_domain_value(reviewed, "contract") if reviewed else PARENT_CONTRACT_SCHEMA if parent else CONTRACT_SCHEMA
+    build_schema = _reviewed_domain_value(reviewed, "build") if reviewed else PARENT_BUILD_SCHEMA if parent else BUILD_SCHEMA
+    profile = (_realization_profile(instance_identity_profile) if _is_realization(reviewed) else _reviewed_profile(instance_identity_profile)) if reviewed else PARENT_PROFILE if parent else PROFILE
     flags = _reviewed_flags() if reviewed else None
     started, deadline = time.monotonic(), time.monotonic() + timeout_seconds
     operation_deadline = started + operation_timeout_seconds if strict else deadline
@@ -574,7 +598,8 @@ def _build_incremental_corpus(preparation, *, candidate_inputs=None, component_i
         if reviewed:
             if reviewed_inputs.get("instance_identity_profile") != instance_identity_profile:
                 _fail("explicit reviewed instance identity selection changed during replay")
-            result = _reviewed_replay(offered, reviewed_inputs, expected_preparation_sha256, toolchain)
+            result = (_realization_replay(offered, reviewed_inputs, expected_preparation_sha256, toolchain)
+                if _is_realization(reviewed) else _reviewed_replay(offered, reviewed_inputs, expected_preparation_sha256, toolchain))
         elif parent:
             result = _parent_native().validate_parent_shared_definition_use_native_v1(offered,
                 component_inputs=component_inputs, expected_population=expected_population,
@@ -591,9 +616,12 @@ def _build_incremental_corpus(preparation, *, candidate_inputs=None, component_i
         checked = shared.ReviewedPreservationCorpusPreparation(checked.manifest_json, tuple(checked.files))
         if shared.reviewed_preservation_corpus_sha256(checked) != expected_preparation_sha256:
             _fail("reviewed mixed snapshot differs from independently pinned preparation")
-        reviewed_execution = _reviewed_execution_snapshot(reviewed_inputs)
+        reviewed_execution = (_realization_execution_snapshot(reviewed_inputs)
+            if _is_realization(reviewed) else _reviewed_execution_snapshot(reviewed_inputs))
         if reviewed_execution.get("instance_identity_profile") != instance_identity_profile:
             _fail("opening reviewed identity snapshot differs from explicit caller selection")
+        if realization_fence is not None:
+            realization_fence()
         _deadline(operation_deadline, cancellation)
         deadline = min(operation_deadline, time.monotonic() + timeout_seconds)
     elif parent:
@@ -632,7 +660,7 @@ def _build_incremental_corpus(preparation, *, candidate_inputs=None, component_i
         old_facts = prior["module_facts"]
         functions = {_key(row["module"]): (lambda _state, row=row: {"compiled": {_key(row["module"]): row["output"]}})
                      for row in old_facts}
-        old_result = _run(_compiler(old_facts, functions, incremental, passes, parent=parent, reviewed=reviewed), old_facts)
+        old_result = _run(_compiler(old_facts, functions, incremental, passes, parent=parent, reviewed=reviewed, instance_identity_profile=instance_identity_profile), old_facts)
         if not old_result.successful:
             _fail("prior module dependency graph failed independent reconstruction")
         old_snapshot = old_result.snapshot
@@ -669,7 +697,7 @@ def _build_incremental_corpus(preparation, *, candidate_inputs=None, component_i
             path = "compiled/" + module.replace(".", "/") + ".olean"
             # The root has no imports only in a one-module profile; create its
             # relative output parent without trusting any external filesystem.
-            inputs["compiled/" + ("LegalReviewedMixedNormPreservation" if reviewed else "LegalCorpusParent" if parent else "LegalCorpus") + "/.keep"] = b""
+            inputs["compiled/" + (_reviewed_domain_value(reviewed, "root") if reviewed else "LegalCorpusParent" if parent else "LegalCorpus") + "/.keep"] = b""
             command = (str(lean), "-o", path, module.replace(".", "/") + ".lean")
             captured_inputs = {name: (raw.encode() if type(raw) is str else raw)
                                for name, raw in inputs.items() if not name.endswith("/.keep")}
@@ -727,7 +755,7 @@ def _build_incremental_corpus(preparation, *, candidate_inputs=None, component_i
 
     functions = {_key(row["module"]): function(row) for row in facts}
     try:
-        result = _run(_compiler(facts, functions, incremental, passes, parent=parent, reviewed=reviewed), facts, old_snapshot)
+        result = _run(_compiler(facts, functions, incremental, passes, parent=parent, reviewed=reviewed, instance_identity_profile=instance_identity_profile), facts, old_snapshot)
     finally:
         # Framework callbacks are diagnosticized; custody must retain the exact owner.
         if cleanup_latch:
@@ -824,8 +852,12 @@ def _build_incremental_corpus(preparation, *, candidate_inputs=None, component_i
             "implementation_pin_scope": "native-producer-closure-and-five-direct-LegalIR-framework-owners"})
         _deadline(operation_deadline, cancellation)
     if reviewed:
-        _reviewed_policy(**_reviewed_identity_keywords(instance_identity_profile))
-        receipt = _reviewed_receipt(receipt, checked, reviewed_execution, expected_preparation_sha256,
+        if _is_realization(reviewed):
+            _realization_policy(**_reviewed_identity_keywords(instance_identity_profile))
+        else:
+            _reviewed_policy(**_reviewed_identity_keywords(instance_identity_profile))
+        receipt_builder = _realization_receipt if _is_realization(reviewed) else _reviewed_receipt
+        receipt = receipt_builder(receipt, checked, reviewed_execution, expected_preparation_sha256,
             timeout_seconds, operation_timeout_seconds)
         _deadline(operation_deadline, cancellation)
     shared._write_frozen_project(checked, output / "project")
@@ -848,10 +880,26 @@ def _build_incremental_corpus(preparation, *, candidate_inputs=None, component_i
     if strict:
         _deadline(operation_deadline, cancellation)
     receipt_raw = canonical_dag_json_bytes(receipt)
+    if realization_fence is not None:
+        # All extensible serialization/writes have completed. Replay original
+        # caller inputs once more before publishing the detached receipt.
+        final_checked = replay(preparation)
+        if (type(final_checked) is not shared.ReviewedPreservationCorpusPreparation
+                or final_checked != checked
+                or shared.reviewed_preservation_corpus_sha256(final_checked) != expected_preparation_sha256
+                or _owner_pins(incremental, passes, reviewed=reviewed, manifest=checked.to_dict(),
+                    instance_identity_profile=instance_identity_profile) != owner_pins):
+            _fail("final realization replay or producer differs from executed snapshot")
+        closed_receipt = json.loads(receipt_raw)
+        _deadline(operation_deadline, cancellation)
+        realization_fence()
     with (output / "build-receipt.json").open("xb") as stream:
         stream.write(receipt_raw)
     if (output / "build-receipt.json").read_bytes() != receipt_raw:
         _fail("retained native build receipt differs on readback")
+    if realization_fence is not None:
+        # No user/product callback follows the final input/policy fence.
+        return closed_receipt
     if strict:
         _deadline(operation_deadline, cancellation)
     if reviewed:
@@ -1276,3 +1324,392 @@ def build_incremental_reviewed_preservation_corpus_v3(preparation, graph, admiss
 
 __all__ += ["REVIEWED_CACHE_SCHEMA", "REVIEWED_CONTRACT_SCHEMA", "REVIEWED_BUILD_SCHEMA", "REVIEWED_PROFILE",
     "build_incremental_reviewed_preservation_corpus_v3"]
+
+
+# A constructed-model profile is a separate technical cache domain. It extends
+# the same incremental compiler; neither historical cache evidence nor a warm
+# artifact grants current source/review or original admitted-process authority.
+REALIZATION_CACHE_SCHEMA = "legal-corpus-reviewed-definition-realization-direct-lean-cache/v1"
+REALIZATION_CONTRACT_SCHEMA = "legal-corpus-reviewed-definition-realization-direct-lean-execution-contract/v1"
+REALIZATION_BUILD_SCHEMA = "legal-corpus-reviewed-definition-realization-incremental-native-build/v1"
+REALIZATION_PROFILE = "verified-reviewed-definition-realization-olean-per-module/v1"
+_REALIZATION_ROOT = "LegalReviewedDefinitionRealization"
+_REALIZATION_MODULE = re.compile(r"(?:LegalReviewedDefinitionRealization(?:\.Instance[0-9a-f]{64})?|LegalReviewedMixedNormPreservation|Legal(?:MixedRelational|Relational)AstPreservation\.(?:Prelude|Semantics|Instance[0-9a-f]{64}))\Z")
+_REALIZATION_IMPORT = re.compile(r"^import ((?:LegalReviewedDefinitionRealization(?:\.Instance[0-9a-f]{64})?|LegalReviewedMixedNormPreservation|Legal(?:MixedRelational|Relational)AstPreservation\.(?:Prelude|Semantics|Instance[0-9a-f]{64})))$", re.M)
+_REALIZATION_BINDING_FIELDS = {"preparation_sha256", "preservation_sha256", "graph_sha256", "admission_sha256",
+    "input_commitment_sha256", "declaration_sha256", "selection", "selection_sha256", "units",
+    "original_file_sha256", "producer_pins", "native_producer_pins"}
+
+
+def _realization_profile(instance_identity_profile):
+    """Bind a caller-selected realization cache domain, never a saved artifact."""
+    _reviewed_profile(instance_identity_profile)
+    return REALIZATION_PROFILE if instance_identity_profile is None else REALIZATION_PROFILE + "+reviewed-source-use/v1"
+
+
+def _is_realization(reviewed):
+    return type(reviewed) is str and reviewed == "verified-reviewed-definition-realization-olean-per-module/v1"
+
+
+def _reviewed_domain_value(reviewed, key):
+    if _is_realization(reviewed):
+        return {"cache": REALIZATION_CACHE_SCHEMA, "contract": REALIZATION_CONTRACT_SCHEMA,
+            "build": REALIZATION_BUILD_SCHEMA, "profile": REALIZATION_PROFILE,
+            "module": _REALIZATION_MODULE, "import": _REALIZATION_IMPORT, "root": _REALIZATION_ROOT}[key]
+    if reviewed is not True:
+        _fail("explicit supported reviewed cache domain required")
+    return {"cache": REVIEWED_CACHE_SCHEMA, "contract": REVIEWED_CONTRACT_SCHEMA,
+        "build": REVIEWED_BUILD_SCHEMA, "profile": REVIEWED_PROFILE,
+        "module": _REVIEWED_MODULE, "import": _REVIEWED_IMPORT, "root": _REVIEWED_ROOT}[key]
+
+
+def _reviewed_policy_for(reviewed):
+    if _is_realization(reviewed):
+        _realization_policy()
+    elif reviewed is True:
+        _reviewed_policy()
+    else:
+        _fail("explicit supported reviewed policy required")
+
+
+def _reviewed_graph_for(facts, reviewed, *, instance_identity_profile=None):
+    return _realization_graph(facts, **_reviewed_identity_keywords(instance_identity_profile)) if _is_realization(reviewed) else _reviewed_graph(facts)
+
+
+def _realization_policy(*, instance_identity_profile=None):
+    _realization_profile(instance_identity_profile)
+    _reviewed_policy(**_reviewed_identity_keywords(instance_identity_profile))
+    if (REALIZATION_CACHE_SCHEMA, REALIZATION_CONTRACT_SCHEMA, REALIZATION_BUILD_SCHEMA,
+            REALIZATION_PROFILE, _REALIZATION_ROOT) != (
+            "legal-corpus-reviewed-definition-realization-direct-lean-cache/v1",
+            "legal-corpus-reviewed-definition-realization-direct-lean-execution-contract/v1",
+            "legal-corpus-reviewed-definition-realization-incremental-native-build/v1",
+            "verified-reviewed-definition-realization-olean-per-module/v1", "LegalReviewedDefinitionRealization"):
+        _fail("fixed separate reviewed realization incremental domain required")
+    owner = _parent_native()
+    for name in ("validate_reviewed_definition_realization_native_v1",
+            "_reviewed_definition_realization_native_pins", "_reviewed_definition_realization_native_manifest",
+            "_reviewed_definition_realization_receipt_binding"):
+        if not callable(getattr(owner, name, None)):
+            _fail("explicit reviewed realization native interface required: " + name)
+    owner._reviewed_definition_realization_native_policy(shared, **_reviewed_identity_keywords(instance_identity_profile))
+
+
+def _realization_owner_pins(incremental, passes, manifest, *, instance_identity_profile=None):
+    from ..integration.reasoning import legal_ir_obligations, legal_ir_schema_evolution, legal_ir_source_maps
+    _realization_policy(**_reviewed_identity_keywords(instance_identity_profile))
+    if _sha(Path(__file__).read_bytes()) != _SELF_PIN:
+        _fail("realization incremental owner changed since import")
+    owner = _parent_native()
+    return owner._reviewed_definition_realization_native_pins(owner._owners(), manifest, **_reviewed_identity_keywords(instance_identity_profile)) | {
+        str(Path(module.__file__).resolve()): _sha(Path(module.__file__).read_bytes())
+        for module in (incremental, passes, legal_ir_obligations, legal_ir_schema_evolution, legal_ir_source_maps)
+    } | {str(Path(__file__).resolve()): _SELF_PIN}
+
+
+def _realization_replay(preparation, inputs, expected_preparation_sha256, toolchain):
+    _realization_profile(inputs.get("instance_identity_profile"))
+    return _parent_native().validate_reviewed_definition_realization_native_v1(
+        preparation, inputs["preservation"], inputs["graph"], inputs["admission"], *inputs["args"],
+        expected_realization_sha256=expected_preparation_sha256,
+        expected_preservation_sha256=inputs["expected_preservation_sha256"],
+        expected_graph_sha256=inputs["expected_graph_sha256"],
+        expected_admission_sha256=inputs["expected_admission_sha256"],
+        toolchain=toolchain, **inputs["kwargs"], **_reviewed_identity_keywords(inputs.get("instance_identity_profile")))
+
+
+def _realization_execution_snapshot(inputs):
+    detached = _reviewed_execution_snapshot(inputs)
+    offered, _ = shared._reviewed_mixed_preservation_owners()[1].norm._snapshot(
+        shared._reviewed_preservation_offered(inputs["preservation"]))
+    preservation = shared.ReviewedPreservationCorpusPreparation(offered["manifest_json"],
+        tuple(tuple(pair) for pair in offered["files"]))
+    if shared.reviewed_preservation_corpus_sha256(preservation) != inputs["expected_preservation_sha256"]:
+        _fail("opening realization upstream snapshot differs from independent preservation pin")
+    return {**detached, "preservation": preservation,
+        "expected_preservation_sha256": inputs["expected_preservation_sha256"]}
+
+
+def _realization_callbacks():
+    # Finite direct callback inventory, not an environment attestation. These
+    # identities supplement current source pins and complete source replay.
+    functions = (_realization_policy, _realization_profile, _reviewed_profile, _reviewed_identity_keywords, _reviewed_policy, _reviewed_policy_for, _realization_replay,
+        _realization_execution_snapshot, _reviewed_execution_snapshot, _realization_guard,
+        _realization_callbacks, _realization_owner_pins, _realization_facts, _realization_graph,
+        _realization_recipe_provenance, _realization_binding, _realization_receipt,
+        _realization_model, _realization_theorems, _reviewed_unit_provenance_v3,
+        _reviewed_recipe_provenance, _reviewed_facts, _reviewed_graph, _reviewed_graph_for,
+        _reviewed_domain_value, _is_realization, _build_incremental_corpus,
+        _owner_pins, _owners, _parent_native, _parent_contract, _parent_execution_evidence,
+        _previous, _recipe, _facts, _compiler, _run, _deadline, _sha,
+        shared._write_frozen_project, shared._write_compiled, shared._reviewed_preservation_offered,
+        shared.reviewed_preservation_corpus_sha256, shared.ReviewedPreservationCorpusPreparation,
+        shared._reviewed_mixed_preservation_owners, canonical_dag_json_bytes,
+        contracts.seal_record, contracts.load_record_bytes, contracts.validate_record,
+        build_incremental_reviewed_definition_realization_corpus_v1)
+    return tuple((function, getattr(function, "__code__", None)) for function in functions)
+
+
+def _realization_guard(preparation, inputs, expected_preparation_sha256, toolchain):
+    instance_identity_profile = inputs.get("instance_identity_profile")
+    _realization_profile(instance_identity_profile)
+    norm = shared._reviewed_mixed_preservation_owners()[1].norm
+    def offered_inputs():
+        offered = {"preparation": shared._reviewed_preservation_offered(preparation),
+            "preservation": shared._reviewed_preservation_offered(inputs["preservation"]),
+            "graph": inputs["graph"], "admission": inputs["admission"],
+            "args": list(inputs["args"]), "kwargs": inputs["kwargs"],
+            "expected_preparation_sha256": expected_preparation_sha256,
+            "expected_preservation_sha256": inputs["expected_preservation_sha256"],
+            "expected_graph_sha256": inputs["expected_graph_sha256"],
+            "expected_admission_sha256": inputs["expected_admission_sha256"], "toolchain": toolchain}
+        if inputs.get("instance_identity_profile") is not None:
+            offered["instance_identity_profile"] = inputs["instance_identity_profile"]
+        return offered
+    _, commitment = norm._snapshot(offered_inputs())
+    callbacks = _realization_callbacks()
+    flags = _reviewed_flags()
+    def fence():
+        _realization_policy(**_reviewed_identity_keywords(instance_identity_profile))
+        if (_realization_callbacks() != callbacks or _reviewed_flags() != flags
+                or norm._snapshot(offered_inputs())[1] != commitment):
+            _fail("realization incremental inputs, callbacks or policy changed during operation")
+    fence()
+    return fence
+
+
+def _realization_model(binding, *, instance_identity_profile=None):
+    _realization_profile(instance_identity_profile)
+    profile = "reviewed-unary-object-definition-realization/v1" + ("+reviewed-source-use/v1" if instance_identity_profile is not None else "")
+    digest = _sha(canonical_dag_json_bytes({"profile": profile,
+        "upstream_preservation_sha256": binding["preservation_sha256"], "selection": binding["selection"]}))
+    return _REALIZATION_ROOT + ".Instance" + digest
+
+
+def _realization_theorems(binding):
+    return ["definition_body_source_exact", "definition_realized",
+        *(name for ordinal in range(len(binding["selection"]["occurrences"]))
+          for name in ("occurrence_" + str(ordinal) + "_source_exact", "occurrence_" + str(ordinal) + "_matches_body")),
+        *("unit_" + str(ordinal) + "_preservation_under_realization" for ordinal in range(len(binding["units"])))]
+
+
+def _realization_binding(value, *, instance_identity_profile=None):
+    _realization_profile(instance_identity_profile)
+    identity_fields = {"instance_identity_profile"} if instance_identity_profile is not None else set()
+    contracts.require_keys(value, _REALIZATION_BINDING_FIELDS | identity_fields, "complete realization cache binding")
+    if instance_identity_profile is not None and value["instance_identity_profile"] != instance_identity_profile:
+        _fail("realization cache identity differs from explicit caller selection")
+    for key in ("preparation_sha256", "preservation_sha256", "graph_sha256", "admission_sha256",
+            "input_commitment_sha256", "declaration_sha256", "selection_sha256"):
+        contracts.require_sha256(value[key], "realization " + key)
+    selection = value["selection"]
+    contracts.require_keys(selection, {"definition_unit_id", "definition_instance_module", "definition_source_occurrence_cid",
+        "definition_ir_sha256", "head_symbol", "head_roles", "definition_binder", "body_typed_path", "body_typed_node",
+        "body_typed_sha256", "body_role_ast", "head_role_ast", "definition_use_records", "occurrences"}
+        | ({"instance_identity_profile", "source_use_bindings"} if instance_identity_profile is not None else set()), "realization selection")
+    if (value["selection_sha256"] != _sha(canonical_dag_json_bytes(selection))
+            or selection["body_typed_sha256"] != _sha(canonical_dag_json_bytes(selection["body_typed_node"]))):
+        _fail("exact complete realization selection/body commitments required")
+    units, occurrences = value["units"], selection["occurrences"]
+    if (type(units) is not list or not 3 <= len(units) <= shared.MAX_REVIEWED_PRESERVATION_UNITS
+            or type(occurrences) is not list or not 2 <= len(occurrences) <= shared.MAX_REVIEWED_PRESERVATION_OBLIGATIONS):
+        _fail("complete bounded realization source and occurrence populations required")
+    for row in units:
+        _reviewed_unit_provenance_v3(row, **_reviewed_identity_keywords(instance_identity_profile))
+    if instance_identity_profile is not None:
+        expected_bindings = [{"unit_id": row["unit_id"], "source_use_binding": row["source_use_binding"],
+            "source_use_binding_sha256": row["source_use_binding_sha256"]} for row in units]
+        if (selection["instance_identity_profile"] != instance_identity_profile
+                or selection["source_use_bindings"] != expected_bindings):
+            _fail("realization cache selection must bind every exact physical source use")
+    by_id = {row["unit_id"]: row for row in units}
+    if len(by_id) != len(units) or [row["ordinal"] for row in units] != list(range(len(units))):
+        _fail("complete unique ordered realization source units required")
+    definition = by_id.get(selection["definition_unit_id"])
+    if (definition is None or definition["kind"] != "definition"
+            or selection["definition_instance_module"] != definition["instance_module"]
+            or selection["definition_source_occurrence_cid"] != definition["source_occurrence_cid"]
+            or selection["definition_ir_sha256"] != definition["complete_ir_sha256"]):
+        _fail("realization selection belongs to another complete definition")
+    used = set()
+    paths = set()
+    for ordinal, occurrence in enumerate(occurrences):
+        contracts.require_keys(occurrence, {"ordinal", "unit_id", "instance_module", "relational_profile",
+            "definition_use_record_cid", "source_occurrence_cid", "typed_path", "typed_node", "argument",
+            "binders", "ordered_roles"}, "realization original occurrence")
+        unit = by_id.get(occurrence["unit_id"])
+        if (type(occurrence["ordinal"]) is not int or occurrence["ordinal"] != ordinal or unit is None
+                or unit["kind"] != "norm" or occurrence["instance_module"] != unit["instance_module"]
+                or occurrence["relational_profile"] != unit["relational_profile"]
+                or occurrence["source_occurrence_cid"] != unit["source_occurrence_cid"]
+                or occurrence["ordered_roles"] != selection["head_roles"]):
+            _fail("exact original typed occurrence/source/role binding required")
+        contracts.require_cid(occurrence["definition_use_record_cid"], "realization governing dependency")
+        path = contracts.require_text(occurrence["typed_path"], "realization occurrence path", max_bytes=4096)
+        if not re.fullmatch(r"/root(?:/arguments/[01])*", path) or (unit["unit_id"], path) in paths:
+            _fail("distinct exact supported original typed occurrence paths required")
+        paths.add((unit["unit_id"], path))
+        used.add(unit["unit_id"])
+    if used != {row["unit_id"] for row in units if row["kind"] == "norm"}:
+        _fail("every complete distinct norm must contribute a realization occurrence")
+    for key in ("original_file_sha256", "producer_pins", "native_producer_pins"):
+        table = value[key]
+        if type(table) is not dict or not 1 <= len(table) <= 512:
+            _fail("complete bounded realization source/producer map required")
+        for name, pin in table.items():
+            contracts.require_text(name, "realization source or producer path", max_bytes=4096)
+            contracts.require_sha256(pin, "realization source or producer pin")
+    if len(_realization_theorems(value)) + 5 * len(units) > shared.MAX_REVIEWED_PRESERVATION_OBLIGATIONS:
+        _fail("all realization and original obligations must fit unchanged bound")
+    return value
+
+
+def _realization_recipe_provenance(module, value, *, instance_identity_profile=None):
+    contracts.require_keys(value, _REVIEWED_PROVENANCE_FIELDS | {"realization_binding"}, "realization native recipe provenance")
+    binding = _realization_binding(value["realization_binding"], **_reviewed_identity_keywords(instance_identity_profile))
+    base = {key: item for key, item in value.items() if key != "realization_binding"}
+    if _REVIEWED_MODULE.fullmatch(module):
+        _reviewed_recipe_provenance(module, base, **_reviewed_identity_keywords(instance_identity_profile))
+    else:
+        role = "realization" if module == _realization_model(binding, **_reviewed_identity_keywords(instance_identity_profile)) else "realization-root" if module == _REALIZATION_ROOT else None
+        if (role is None or base["module"] != module or base["role"] != role
+                or base["contributors"] != binding["units"] or base["dependency_units"] != binding["units"]
+                or base["dependency_record_cids"] != [row["record_cid"] for row in binding["selection"]["definition_use_records"]]):
+            _fail("complete exact realization contributor/dependency population required")
+    return value
+
+
+def _realization_graph(facts, *, instance_identity_profile=None):
+    _realization_profile(instance_identity_profile)
+    if type(facts) is not list or not 8 <= len(facts) <= shared.MAX_REVIEWED_PRESERVATION_MODULES:
+        _fail("complete bounded original plus realization module population required")
+    depths = _reviewed_graph(facts[:-2])
+    binding = _realization_binding(facts[-2]["recipe"]["realization_provenance"]["realization_binding"],
+        **_reviewed_identity_keywords(instance_identity_profile))
+    model = _realization_model(binding, **_reviewed_identity_keywords(instance_identity_profile))
+    expected_imports = [row["instance_module"] for row in binding["units"]]
+    original_units = [row["module"] for row in facts[:-2] if _reviewed_role(row["module"]) == "instance"]
+    if original_units != expected_imports:
+        _fail("realization must retain every original ordered preservation unit")
+    commitment = canonical_dag_json_bytes(binding)
+    for row in facts:
+        if (not _REALIZATION_MODULE.fullmatch(row["module"])
+                or row["imports"] != _REALIZATION_IMPORT.findall(row["source"])
+                or re.findall(r"^import ([^\n]+)$", row["source"], re.M) != row["imports"]
+                or re.search(r"^\s*module(?:\s|$)", row["source"], re.M)):
+            _fail("closed complete realization namespace/import/source profile required")
+        provenance = row["recipe"]["realization_provenance"]
+        _realization_recipe_provenance(row["module"], provenance, **_reviewed_identity_keywords(instance_identity_profile))
+        if canonical_dag_json_bytes(provenance["realization_binding"]) != commitment:
+            _fail("all realization recipes must share one complete replayed binding")
+    for row, module, imports, names in (
+            (facts[-2], model, expected_imports, _realization_theorems(binding)),
+            (facts[-1], _REALIZATION_ROOT, [_REVIEWED_ROOT, model], [])):
+        if (row["module"] != module or row["imports"] != imports
+                or re.findall(r"^theorem ([A-Za-z0-9_]+)", row["source"], re.M) != names):
+            _fail("complete exact realization model/root/theorem population required")
+        depths[module] = max(depths[name] + 1 for name in imports)
+    return depths
+
+
+def _realization_facts(preparation, contract, graph, *, instance_identity_profile=None):
+    if contract["profile"] != _realization_profile(instance_identity_profile):
+        _fail("realization execution contract differs from explicit caller identity selection")
+    manifest, files = preparation.to_dict(), dict(preparation.files)
+    owner = _parent_native()
+    owner._reviewed_definition_realization_native_manifest(manifest, shared, **_reviewed_identity_keywords(instance_identity_profile))
+    upstream_manifest = manifest["upstream_manifest"]
+    upstream_files = {name: files[name] for name in upstream_manifest["file_sha256"] if name != "lakefile.toml"}
+    upstream_files["lakefile.toml"] = files["definition-realization-original-lakefile.txt"]
+    upstream = shared.ReviewedPreservationCorpusPreparation(canonical_dag_json_bytes(upstream_manifest).decode(),
+        tuple(sorted(upstream_files.items())))
+    if shared.reviewed_preservation_corpus_sha256(upstream) != manifest["reviewed_preservation_sha256"]:
+        _fail("complete original V3 project differs from realization upstream commitment")
+    # This ephemeral view derives unchanged upstream source/provenance only.
+    # Every final recipe below is rebuilt against the actual realization
+    # execution contract; no cache or execution record adopts this view.
+    original_contract = contracts.seal_record({**{key: value for key, value in contract.items()
+        if key not in {"record_cid", "cid_scope"}}, "schema": REVIEWED_CONTRACT_SCHEMA,
+        "profile": _reviewed_profile(instance_identity_profile)})
+    original = _reviewed_facts(upstream, original_contract, graph,
+        **_reviewed_identity_keywords(instance_identity_profile))
+    binding_value = {"preparation_sha256": shared.reviewed_preservation_corpus_sha256(preparation),
+        "preservation_sha256": manifest["reviewed_preservation_sha256"], "graph_sha256": manifest["reviewed_graph_sha256"],
+        "admission_sha256": manifest["reviewed_admission_sha256"], "input_commitment_sha256": manifest["input_commitment_sha256"],
+        "declaration_sha256": manifest["declaration_sha256"], "selection": manifest["selection"],
+        "selection_sha256": _sha(canonical_dag_json_bytes(manifest["selection"])), "units": manifest["units"],
+        "original_file_sha256": upstream_manifest["file_sha256"], "producer_pins": manifest["producer_pins"],
+        "native_producer_pins": manifest["native_producer_pins"]}
+    if instance_identity_profile is not None:
+        binding_value["instance_identity_profile"] = instance_identity_profile
+    binding = _realization_binding(binding_value, **_reviewed_identity_keywords(instance_identity_profile))
+    result = []
+    for row in original:
+        provenance = {**row["recipe"]["reviewed_provenance"], "realization_binding": binding}
+        result.append({**row, "recipe": _recipe(row["module"], row["source"], row["imports"], contract,
+            realization_provenance=provenance, instance_identity_profile=instance_identity_profile)})
+    for module, role in ((_realization_model(binding, **_reviewed_identity_keywords(instance_identity_profile)), "realization"), (_REALIZATION_ROOT, "realization-root")):
+        provenance = {"module": module, "role": role, "contributors": manifest["units"],
+            "dependency_units": manifest["units"], "dependency_record_cids": [row["record_cid"] for row in graph["definition_use_records"]],
+            "realization_binding": binding}
+        source = files[module.replace(".", "/") + ".lean"]
+        imports = _REALIZATION_IMPORT.findall(source)
+        result.append({"module": module, "source": source, "imports": imports,
+            "recipe": _recipe(module, source, imports, contract, realization_provenance=provenance, instance_identity_profile=instance_identity_profile), "output": None})
+    if ([row["module"] for row in result] != manifest["expected_modules"]
+            or {row["module"]: row["imports"] for row in result} != manifest["module_imports"]):
+        _fail("complete current realization modules/imports differ from native replay")
+    _realization_graph(result, **_reviewed_identity_keywords(instance_identity_profile))
+    return result
+
+
+def _realization_receipt(receipt, preparation, inputs, expected_preparation_sha256, timeout_seconds, operation_timeout_seconds):
+    manifest = preparation.to_dict()
+    return contracts.seal_record({**{key: value for key, value in receipt.items() if key not in {"record_cid", "cid_scope"}},
+        **_parent_native()._reviewed_definition_realization_receipt_binding(manifest, inputs["admission"],
+            **_reviewed_identity_keywords(inputs.get("instance_identity_profile"))),
+        "expected_preparation_sha256": expected_preparation_sha256,
+        "reviewed_preservation_sha256": inputs["expected_preservation_sha256"],
+        "reviewed_graph_sha256": inputs["expected_graph_sha256"], "reviewed_admission_sha256": inputs["expected_admission_sha256"],
+        "composition_obligations_checked": False,
+        "concrete_preservation_obligations_checked": receipt["build_passed"],
+        "constructed_model_obligations_checked": receipt["build_passed"],
+        "compiler_timeout_seconds": timeout_seconds, "operation_timeout_seconds": operation_timeout_seconds,
+        "deadline_profile": "cooperative-whole-operation; cumulative-compiler-budget-excludes-source-review-replays",
+        "invalidation_scope": "Every recipe binds the complete original V3 population, selected head/body/ordered occurrences, source/review/dependency and producer commitments; conservative recompilation is intentional.",
+        "fresh_proof_for_reused_modules": False, "original_success_authenticated": False,
+        "live_native_success_authenticated": False, "original_admitted_parent_custody_authenticated": False,
+        "authority": dict(_parent_native().AUTHORITY), "training_mask": 0, "evaluation_gold_mask": 0,
+        "native_TDFOL_route_used": False, "native_parser_roundtrip": False,
+        "reuse_scope": "Exact technical per-module artifacts after current complete V3 and constructed-model realization replay; no arbitrary interpretation equivalence, opaque-modal rewrite, statutory truth or release admission."})
+
+
+def build_incremental_reviewed_definition_realization_corpus_v1(preparation, preservation, graph, admission, *args,
+        expected_realization_sha256, expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256,
+        toolchain, lake_executable, output_directory, previous_cache_raw=None, expected_previous_cache_sha256=None,
+        previous_artifacts=None, timeout_seconds=60, operation_timeout_seconds=3600, cancellation=None, instance_identity_profile=None, **kwargs):
+    """Replay the original V3 project and its explicit constructed-model extension.
+
+    This uses the same per-module compiler/pass/artifact and process-custody
+    machinery in a separate cache domain. It issues no original-success or
+    legally accepted-meaning capability and never retags an old V3 receipt.
+    """
+    _realization_profile(instance_identity_profile)
+    for name, pin in (("realization", expected_realization_sha256), ("preservation", expected_preservation_sha256),
+            ("graph", expected_graph_sha256), ("admission", expected_admission_sha256)):
+        contracts.require_sha256(pin, "realization incremental " + name)
+    inputs = {"preservation": preservation, "graph": graph, "admission": admission, "args": args, "kwargs": kwargs,
+        "expected_preservation_sha256": expected_preservation_sha256,
+        "expected_graph_sha256": expected_graph_sha256, "expected_admission_sha256": expected_admission_sha256}
+    if instance_identity_profile is not None:
+        inputs["instance_identity_profile"] = instance_identity_profile
+    return _build_incremental_corpus(preparation, reviewed_inputs=inputs, reviewed_domain=REALIZATION_PROFILE,
+        expected_population=None, expected_preparation_sha256=expected_realization_sha256, toolchain=toolchain,
+        lake_executable=lake_executable, output_directory=output_directory,
+        previous_cache_raw=previous_cache_raw, expected_previous_cache_sha256=expected_previous_cache_sha256,
+        previous_artifacts=previous_artifacts, timeout_seconds=timeout_seconds,
+        operation_timeout_seconds=operation_timeout_seconds, cancellation=cancellation)
+
+
+__all__ += ["REALIZATION_CACHE_SCHEMA", "REALIZATION_CONTRACT_SCHEMA", "REALIZATION_BUILD_SCHEMA", "REALIZATION_PROFILE",
+    "build_incremental_reviewed_definition_realization_corpus_v1"]

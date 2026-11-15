@@ -2418,3 +2418,605 @@ def test_reviewed_source_use_preserves_original_two_namespace_capacity(reviewed_
     with pytest.raises(ValueError, match="capacity"):
         reviewed_source_use_prepare_fixture(control, 3)
     assert len(control["case"]["declaration"]["units"]) == total_units
+
+
+
+def test_reviewed_definition_realization_requires_constructive_api_after_complete_v3(reviewed_preservation_control_v3):
+    """Fictional source-only feature probe; no legal review or native proof."""
+    control = reviewed_preservation_control_v3
+    preserved = control["preparation"]
+    assert reviewed_preservation_validate_fixture_v3(control, preserved) == preserved
+    manifest = preserved.to_dict()
+    assert control["admission"]["fixture_only"] is True
+    assert control["admission"]["semantic_use_eligible"] is True
+    assert manifest["profile"] == shared.REVIEWED_MIXED_PRESERVATION_PROFILE
+    assert len(manifest["units"]) == 3
+    assert sum(unit["kind"] == "definition" for unit in control["case"]["declaration"]["units"]) == 1
+    norms = [unit for unit in control["case"]["declaration"]["units"] if unit["kind"] == "norm"]
+    assert len(norms) == len({unit["unit_id"] for unit in norms}) == 2
+    assert len({unit["occurrence"]["record_cid"] for unit in norms}) == 2
+    assert len(manifest["preservation_obligations"]) == len(set(manifest["preservation_obligations"])) == 15
+    assert manifest["support_profile"]["cross_unit_definition_application_proved"] is False
+    assert callable(getattr(shared, "prepare_reviewed_definition_realization_corpus_v1", None)), (
+        "Missing constructive definition realization after complete fictional V3 admission, "
+        "graph and preservation; existing conditional definition hypotheses are insufficient")
+
+
+
+# Definition-realization source controls. Every legal source, reviewer and
+# interpretation below is fictional. No test compiles or proves Lean here.
+def reviewed_definition_realization_prepare(control, *, preservation=None, graph=None,
+        admission=None, args=None, kwargs=None, **overrides):
+    original = control["preparation"] if preservation is None else preservation
+    options = dict(expected_preservation_sha256=shared.reviewed_preservation_corpus_sha256(control["preparation"]),
+        expected_graph_sha256=control["graph_sha"], expected_admission_sha256=control["admission_sha"],
+        toolchain=TOOLCHAIN)
+    options.update(overrides)
+    return shared.prepare_reviewed_definition_realization_corpus_v1(original,
+        control["graph"] if graph is None else graph,
+        control["admission"] if admission is None else admission,
+        *(control["args"] if args is None else args),
+        **dict(control["kwargs"] if kwargs is None else kwargs), **options)
+
+
+def reviewed_definition_realization_validate(control, offered, *, args=None, kwargs=None):
+    return shared.validate_reviewed_definition_realization_corpus_v1(offered,
+        control["preparation"], control["graph"], control["admission"],
+        *(control["args"] if args is None else args),
+        expected_realization_sha256=shared.reviewed_preservation_corpus_sha256(offered),
+        expected_preservation_sha256=shared.reviewed_preservation_corpus_sha256(control["preparation"]),
+        expected_graph_sha256=control["graph_sha"], expected_admission_sha256=control["admission_sha"],
+        toolchain=TOOLCHAIN, **dict(control["kwargs"] if kwargs is None else kwargs))
+
+
+@pytest.fixture(scope="module")
+def reviewed_definition_realization_control(reviewed_preservation_control_v3):
+    control = dict(reviewed_preservation_control_v3)
+    control["realization"] = reviewed_definition_realization_prepare(control)
+    return control
+
+
+def test_reviewed_definition_realization_prepares_exact_three_heads_and_two_genuine_uses(reviewed_definition_realization_control):
+    from ipfs_datasets_py.logic.autoformal import legal_native_ast_preservation as preservation
+    control = reviewed_definition_realization_control
+    offered, original = control["realization"], control["preparation"]
+    assert reviewed_definition_realization_validate(control, offered) == offered
+    assert reviewed_preservation_validate_fixture_v3(control, original) == original
+    manifest, files, upstream = offered.to_dict(), dict(offered.files), original.to_dict()
+    assert manifest["schema"] == shared.REVIEWED_DEFINITION_REALIZATION_SCHEMA
+    assert manifest["profile"] == shared.REVIEWED_DEFINITION_REALIZATION_PROFILE
+    assert len(files) == 39 and len(manifest["expected_modules"]) == 10
+    assert len(manifest["realization_obligations"]) == 11
+    assert len(manifest["preservation_obligations"]) == 26
+    assert manifest["preservation_obligations"][:15] == upstream["preservation_obligations"]
+    assert len(set(manifest["preservation_obligations"])) == 26
+    assert manifest["units"] == upstream["units"]
+    assert manifest["upstream_manifest"] == upstream
+    assert manifest["reviewed_preservation_sha256"] == shared.reviewed_preservation_corpus_sha256(original)
+    selection = manifest["selection"]
+    assert selection["head_symbol"] == "CoveredOfficer"
+    assert selection["head_roles"] == ["officer"]
+    assert selection["body_typed_node"]["symbol"] == "AppointedByBoard"
+    assert selection["body_typed_sha256"] == sha(canonical_dag_json_bytes(selection["body_typed_node"]))
+    occurrences = selection["occurrences"]
+    assert len(occurrences) == 3
+    assert [row["argument"]["symbol"] for row in occurrences] == ["officer", "officer", "supervisor"]
+    assert [row["typed_path"] for row in occurrences] == [
+        "/root" + "/arguments/0" * 2,
+        "/root" + "/arguments/0" * 6,
+        "/root" + "/arguments/0" * 5 + "/arguments/1"]
+    assert len({row["unit_id"] for row in occurrences}) == 2
+    assert len({row["source_occurrence_cid"] for row in occurrences}) == 2
+    assert all(row["ordered_roles"] == ["officer"] for row in occurrences)
+    for name, body in original.files:
+        assert files[name] == body if name != "lakefile.toml" else files["definition-realization-original-lakefile.txt"] == body
+    assert shared.REVIEWED_MIXED_PRESERVATION_ROOT in manifest["expected_modules"]
+    assert manifest["support_profile"]["cross_unit_definition_application_proved"] is False
+    assert manifest["support_profile"]["opaque_modal_rewrite"] is False
+    assert manifest["support_profile"]["implicit_namespace_coercion"] is False
+    assert (manifest["support_profile"]["max_files"], manifest["support_profile"]["max_modules"],
+        manifest["support_profile"]["max_obligations"]) == (78, 11, 40)
+    assert manifest["preparation_only"] is True
+    assert manifest["proof_status"] == manifest["lean_compilation_status"] == "not_executed"
+    assert manifest["semantic_use_eligible"] is False
+    assert not any(manifest["authority"].values())
+    assert all(manifest[key] is False for key in preservation.FALSE_FLAGS)
+    assert type(manifest["training_mask"]) is int and manifest["training_mask"] == 0
+    assert type(manifest["evaluation_gold_mask"]) is int and manifest["evaluation_gold_mask"] == 0
+    assert manifest["file_sha256"] == {name: sha(body.encode()) for name, body in offered.files}
+
+
+def test_reviewed_definition_realization_source_anchors_original_body_and_each_occurrence(reviewed_definition_realization_control):
+    manifest = reviewed_definition_realization_control["realization"].to_dict()
+    files = dict(reviewed_definition_realization_control["realization"].files)
+    added = [x for x in manifest["expected_modules"] if x not in manifest["upstream_manifest"]["expected_modules"]]
+    instance = next(x for x in added if ".Instance" in x)
+    source = files[instance.replace(".", "/") + ".lean"]
+    donor = manifest["selection"]["definition_instance_module"]
+    assert "theorem definition_body_source_exact : " + donor + ".typedSourceAst = " in source
+    assert "def definitionBodyAst : LegalRelationalAstPreservation.RoleFormula" in source
+    assert "LegalRelationalAstPreservation.roleDenote base atoms definitionBodyAst" in source
+    for row in manifest["selection"]["occurrences"]:
+        n = str(row["ordinal"])
+        assert "theorem occurrence_" + n + "_source_exact" in source
+        assert "theorem occurrence_" + n + "_matches_body" in source
+        whole = ".typedMixedAst" if row["relational_profile"] == "authored-many-sorted-relational-deontic/v1" else ".typedSourceAst"
+        assert row["instance_module"] + whole in source
+    # The same right/left Object injection is destructured constructively.
+    assert "Sum.casesOn (motive := fun _ => Prop) value (fun _ => False) (fun objectOrEvent =>" in source
+    assert "Sum.casesOn (motive := fun _ => Prop) objectOrEvent" in source
+    assert "(fun entity => if label = \"officer\" then bodyAt base atoms entity t else False)" in source
+    assert "List.rec (motive := fun _ => LegalRelationalAstPreservation.RoleFormula" in source
+    assert "List.rec (motive := fun _ => LegalMixedRelationalAstPreservation.MixedFormula" in source
+    assert re.search(r"\b(?:propext|funext|Classical|unsafe|partial|hDefinition|hMembership|hAlias)\b|\bEq\.(?:mp|mpr|rec|ndrec)\b|\bcast\b", source) is None
+    assert "(t : Nat)" in source
+    assert "(hDefinition" not in source and "(hMembership" not in source and "(hAlias" not in source
+    assert re.search(r"(?m)^\s*(axiom|sorry|admit)\b", source) is None
+    assert all(source.count("theorem unit_" + str(n) + "_preservation_under_realization") == 1 for n in range(3))
+
+
+def test_reviewed_definition_realization_source_only_and_default_v3_remains_distinct(reviewed_definition_realization_control, monkeypatch):
+    control = reviewed_definition_realization_control
+    def forbidden(*args, **kwargs):
+        pytest.fail("source-only definition realization attempted subprocess execution")
+    monkeypatch.setattr(subprocess, "run", forbidden)
+    monkeypatch.setattr(subprocess, "Popen", forbidden)
+    assert reviewed_definition_realization_prepare(control) == control["realization"]
+    assert reviewed_preservation_prepare_fixture_v3(control) == control["preparation"]
+    assert control["preparation"].to_dict()["profile"] == shared.REVIEWED_MIXED_PRESERVATION_PROFILE
+    assert control["preparation"].to_dict()["support_profile"]["cross_unit_definition_application_proved"] is False
+
+
+@pytest.mark.parametrize("key", ["expected_preservation_sha256", "expected_graph_sha256", "expected_admission_sha256"])
+def test_reviewed_definition_realization_requires_all_original_exact_input_pins(reviewed_definition_realization_control, key):
+    with pytest.raises((ValueError, TypeError)):
+        reviewed_definition_realization_prepare(reviewed_definition_realization_control, **{key: "f" * 64})
+
+
+@pytest.mark.parametrize("damage", ["source", "source-version", "request", "review", "scope", "missing-path", "sorted-roles"])
+def test_reviewed_definition_realization_replays_complete_current_sources_and_meaning_inputs(reviewed_definition_realization_control, damage):
+    control = reviewed_definition_realization_control
+    args, kwargs = deepcopy(control["args"]), deepcopy(control["kwargs"])
+    inputs = kwargs["preparation_inputs"]
+    unit = inputs["declaration"]["units"][2]
+    key = unit["unit_id"]
+    if damage == "source": inputs["source_inputs"][key]["raw_bytes"] += b" changed"
+    elif damage == "source-version": unit["source_version"]["edition"] = "fictional-other-edition"
+    elif damage == "request": inputs["relational_inputs"][key]["request_raw"] += b" "
+    elif damage == "review": args[3][0]["interpretation"]["rationale"] += " unsigned change"
+    elif damage == "scope": inputs["declaration"]["interpretation_id"] += "-another-scope"
+    elif damage == "missing-path": inputs["declaration"]["definition_uses"][1]["target_typed_paths"].pop()
+    elif damage == "sorted-roles":
+        report = inputs["relational_inputs"][key]["report"]
+        row = next(x for x in report["argument_roles"] if x["symbol"] == "InspectsRegisterAt")
+        assert row["roles"] != sorted(row["roles"])
+        row["roles"] = sorted(row["roles"])
+    with pytest.raises((ValueError, TypeError)):
+        reviewed_definition_realization_validate(control, control["realization"], args=args, kwargs=kwargs)
+
+
+@pytest.mark.parametrize("damage", ["body", "missing-occurrence", "occurrence-argument", "role", "sort", "namespace",
+    "source-equality", "paired-emitted-variable", "original-child", "active-lake", "saved-lake", "authority"])
+def test_reviewed_definition_realization_resealed_source_and_binding_mutants_refuse(reviewed_definition_realization_control, damage):
+    control = reviewed_definition_realization_control
+    offered = control["realization"]
+    manifest, files = offered.to_dict(), dict(offered.files)
+    selection = manifest["selection"]
+    instance = next(x for x in manifest["expected_modules"] if ".Instance" in x and x not in manifest["upstream_manifest"]["expected_modules"])
+    module_path = instance.replace(".", "/") + ".lean"
+    if damage == "body": selection["body_typed_node"]["symbol"] = "CoveredOfficer"
+    elif damage == "missing-occurrence": selection["occurrences"].pop()
+    elif damage == "occurrence-argument": selection["occurrences"][1]["argument"]["symbol"] = "supervisor"
+    elif damage == "role": selection["head_roles"] = ["supervisor"]
+    elif damage == "sort": selection["occurrences"][2]["argument"]["sort"]["name"] = "EventFrame"
+    elif damage == "namespace": manifest["units"][2]["signature_namespace_sha256"] = manifest["units"][0]["signature_namespace_sha256"]
+    elif damage == "source-equality": files[module_path] = files[module_path].replace("theorem occurrence_0_source_exact", "theorem unrelated_head_source_exact", 1)
+    elif damage == "paired-emitted-variable":
+        # Change both a standalone emitted atom and its RHS witness. Full source
+        # regeneration must reject even an internally consistent replacement.
+        whole = files[module_path]
+        start = whole.index("def occurrenceAst1 ")
+        end = whole.index("def occurrenceAst2 ")
+        selected = whole[start:end]
+        assert '\"officer\", .object' in selected
+        assert 'bodyAt base atoms bound0 t' in selected
+        paired = selected.replace('\"officer\", .object', '\"supervisor\", .object', 1).replace(
+            'bodyAt base atoms bound0 t', 'bodyAt base atoms bound1 t', 1)
+        assert paired != selected
+        files[module_path] = whole[:start] + paired + whole[end:]
+    elif damage == "original-child":
+        original = manifest["upstream_manifest"]["units"][1]["instance_module"].replace(".", "/") + ".lean"
+        files[original] += "\n-- changed original normative witness\n"
+    elif damage == "active-lake": files["lakefile.toml"] = "name = \"wrong\"\n"
+    elif damage == "saved-lake": files["definition-realization-original-lakefile.txt"] += "\n"
+    elif damage == "authority": manifest["authority"]["proof"] = True
+    forged = reviewed_preservation_reseal_fixture_v2(offered, manifest, files)
+    with pytest.raises((ValueError, TypeError)):
+        reviewed_definition_realization_validate(control, forged)
+
+
+def reviewed_definition_realization_fresh_case(control, change):
+    """Fresh signatures on deliberately fictional AST changes, never real law."""
+    mh, owner = control["mixed_helper"], control["owner"]
+    case = mh.cloned(control["case"])
+    unit = case["declaration"]["units"][2 if change == "opaque-head" else 0]
+    if change == "opaque-head":
+        request = json.loads(case["relational_inputs"][unit["unit_id"]]["request_raw"])
+        parent = request["expression"]["root"]
+        for _ in range(3): parent = parent["arguments"][0]
+        original_body = deepcopy(parent["arguments"][0])
+        wrapper = deepcopy(original_body["arguments"][1])
+        wrapper["node_id"] = "fixture:new:opaque-head-wrapper"
+        wrapper["extension"]["node_id"] = "fixture:new:opaque-head-wrapper:ext"
+        wrapper["extension"]["children"] = [original_body]
+        parent["arguments"][0] = wrapper
+        reviewed_preservation_refresh_expression_v2(request)
+    else:
+        rf = mh.relational_fixture
+        builder = rf.Builder()
+        head = builder.atom("CoveredOfficer", "officer")
+        if change == "recursive-body":
+            body = builder.binary("and", builder.atom("AppointedByBoard", "officer"), builder.atom("CoveredOfficer", "officer"))
+        elif change == "quantified-body":
+            body = builder.quantify(builder.atom("AppointedByBoard", "inner"), [("inner", "forall")])
+        elif change == "negated-body":
+            body = rf.ast.mk_not(builder.nid(), builder.atom("AppointedByBoard", "officer"))
+        else: raise AssertionError("unknown fictional body mutation")
+        request = rf.request_for(builder, builder.binary("iff", head, body),
+            [("CoveredOfficer", ("officer",)), ("AppointedByBoard", ("officer",))], [("officer", "forall")])
+    raw = canonical_dag_json_bytes(request)
+    mixed = unit["relational_profile"] == mh.relational.MIXED_PROFILE
+    report = (mh.relational.prepare_mixed_relational_norm_v1 if mixed else mh.relational.prepare_relational_norm_v1)(
+        raw, expected_request_sha256=sha(raw))
+    report_pin = (mh.relational.mixed_relational_norm_report_sha256 if mixed else mh.relational.relational_norm_report_sha256)(report)
+    unit["relational_request_sha256"] = sha(raw)
+    occurrence = unit["occurrence"]
+    unit["coverage"] = [{"typed_path": row["typed_path"], **{k: occurrence[k] for k in
+        ("start_char", "end_char", "start_utf8", "end_utf8")}} for row in report["structural_mapping"]]
+    case["relational_inputs"][unit["unit_id"]] = {"request_raw": raw, "report": report, "expected_report_sha256": report_pin}
+    if mixed:
+        targets = []
+        for mapping in report["structural_mapping"]:
+            node = report["typed_expression"]
+            for token in mapping["typed_path"].split("/")[1:]:
+                node = node[int(token)] if type(node) is list else node[token]
+            if type(node) is dict and node.get("kind") == "predicate" and node.get("symbol") == "CoveredOfficer":
+                targets.append(mapping["typed_path"])
+        case["declaration"]["definition_uses"][1]["target_typed_paths"] = targets
+    case["preparation"] = mh.prepare(owner, case)
+    mh.refresh_signed_reviews(case, owner)
+    mh.assert_signatures_valid(case)
+    args, kwargs = mh.fixture.reviewed_assessment_arguments_v2(owner, case)
+    admission = owner.assess_reviewed_norm_admission_v3(*args, **kwargs)
+    assert admission["semantic_use_eligible"] and admission["fixture_only"] and admission["blockers"] == []
+    from ipfs_datasets_py.logic.autoformal import corpus_norm_definition_adapter as graph_owner
+    admission_sha = owner.norm_content_adjudication_sha256(admission)
+    graph = graph_owner.build_reviewed_norm_graph_v3(admission, *args, expected_admission_sha256=admission_sha, **kwargs)
+    changed = dict(control, case=case, args=args, kwargs=kwargs, admission=admission, graph=graph,
+        admission_sha=admission_sha, graph_sha=graph_owner.norm_definition_graph_sha256(graph))
+    changed["preparation"] = reviewed_preservation_prepare_fixture_v3(changed)
+    return changed
+
+
+@pytest.mark.parametrize("change", ["recursive-body", "quantified-body", "opaque-head"])
+def test_reviewed_definition_realization_refuses_fresh_reviewed_unsupported_bodies_or_modal_occurrences(reviewed_definition_realization_control, change):
+    changed = reviewed_definition_realization_fresh_case(reviewed_definition_realization_control, change)
+    # Unsupported realization must be tested after genuine full V3 admission,
+    # graph and child preservation, never with a forged accepted report.
+    assert changed["admission"]["semantic_use_eligible"] and changed["admission"]["fixture_only"]
+    with pytest.raises(ValueError, match="nonrecursive|definition bodies|opaque modalities"):
+        reviewed_definition_realization_prepare(changed)
+
+
+def test_reviewed_definition_realization_fresh_boolean_body_has_new_exact_source_identity(reviewed_definition_realization_control):
+    baseline = reviewed_definition_realization_control
+    changed = reviewed_definition_realization_fresh_case(baseline, "negated-body")
+    current = reviewed_definition_realization_prepare(changed)
+    assert current.to_dict()["selection"]["body_typed_node"]["kind"] == "not"
+    assert current.to_dict()["selection"]["body_typed_sha256"] != baseline["realization"].to_dict()["selection"]["body_typed_sha256"]
+    assert current != baseline["realization"]
+    assert reviewed_definition_realization_validate(changed, current) == current
+    with pytest.raises(ValueError):
+        reviewed_definition_realization_validate(changed, baseline["realization"])
+
+
+@pytest.mark.parametrize("damage", ["input", "callback", "policy"])
+def test_reviewed_definition_realization_late_callback_boundaries_refuse(reviewed_definition_realization_control, monkeypatch, damage):
+    from ipfs_datasets_py.logic.autoformal import legal_native_ast_preservation as preservation
+    control = reviewed_definition_realization_control
+    kwargs = deepcopy(control["kwargs"])
+    unit = control["case"]["declaration"]["units"][1]["unit_id"]
+    original = shared._reviewed_definition_realization_lean
+    def mutate_after_render(*args, **options):
+        result = original(*args, **options)
+        if damage == "input": kwargs["preparation_inputs"]["source_inputs"][unit]["raw_bytes"] += b" late change"
+        elif damage == "callback": monkeypatch.setattr(preservation, "_relational_source_syntax", lambda *a, **k: "altered")
+        else: monkeypatch.setattr(preservation, "AUTHORITY", {**preservation.AUTHORITY, "proof": True})
+        return result
+    monkeypatch.setattr(shared, "_reviewed_definition_realization_lean", mutate_after_render)
+    with pytest.raises(ValueError, match="changed during operation|cannot confer authority"):
+        reviewed_definition_realization_prepare(control, kwargs=kwargs)
+
+
+@pytest.mark.parametrize("profile", ["unreviewed-hypothesis", "reviewed-multi-unit-mixed-relational-preservation/v3"])
+def test_reviewed_definition_realization_explicit_profile_does_not_fall_back(reviewed_definition_realization_control, monkeypatch, profile):
+    control = reviewed_definition_realization_control
+    monkeypatch.setattr(shared, "REVIEWED_DEFINITION_REALIZATION_PROFILE", profile)
+    with pytest.raises(ValueError, match="fixed explicit"):
+        reviewed_definition_realization_prepare(control)
+    assert reviewed_preservation_validate_fixture_v3(control, control["preparation"]) == control["preparation"]
+
+
+
+def test_reviewed_definition_realization_late_actual_result_serialization_cannot_launder_source_mutation(
+        reviewed_definition_realization_control, monkeypatch):
+    control = reviewed_definition_realization_control
+    kwargs = deepcopy(control["kwargs"])
+    unit = control["case"]["declaration"]["units"][1]["unit_id"]
+    source = kwargs["preparation_inputs"]["source_inputs"][unit]
+    before = source["raw_bytes"]
+    actual_project = shared._reviewed_definition_realization_project
+    actual_offered = shared._reviewed_preservation_offered
+    actual_policy = shared._reviewed_definition_realization_policy
+    operation_code = shared._reviewed_definition_realization_operation.__code__
+    observed = {"result": None, "seen_result_read": False,
+                "after_checked_boundary": False, "mutated": False}
+
+    def capture_actual_project(*args, **options):
+        result = actual_project(*args, **options)
+        observed["result"] = result
+        return result
+
+    def observe_actual_policy():
+        actual_policy()
+        observed["after_checked_boundary"] = True
+
+    def serialize_actual_result(value):
+        # Return the real current envelope; do not forge an accepted artifact.
+        envelope = actual_offered(value)
+        if value is observed["result"]:
+            eligible = (observed["seen_result_read"] and observed["after_checked_boundary"]
+                        and sys._getframe(1).f_code is operation_code)
+            observed["seen_result_read"] = True
+            observed["after_checked_boundary"] = False
+            if eligible and not observed["mutated"]:
+                source["raw_bytes"] += b" changed after genuine result serialization"
+                observed["mutated"] = True
+        return envelope
+
+    monkeypatch.setattr(shared, "_reviewed_definition_realization_project", capture_actual_project)
+    monkeypatch.setattr(shared, "_reviewed_definition_realization_policy", observe_actual_policy)
+    monkeypatch.setattr(shared, "_reviewed_preservation_offered", serialize_actual_result)
+    try:
+        result = reviewed_definition_realization_prepare(control, kwargs=kwargs)
+    except ValueError as error:
+        assert observed["result"] is not None
+        assert observed["mutated"] is True
+        assert "changed during operation" in str(error)
+    else:
+        # A closed-buffer implementation may eliminate the unsafe callback.
+        # If it remains, its mutation must never pass the final input fence.
+        assert observed["result"] is not None
+        assert observed["mutated"] is False, "late actual-result callback mutation escaped the final source fence"
+        assert source["raw_bytes"] == before
+        assert result == control["realization"]
+
+
+
+def test_reviewed_definition_realization_reused_policy_callback_cannot_hide_bound_change(
+        reviewed_definition_realization_control, monkeypatch):
+    control = reviewed_definition_realization_control
+    original = shared._reviewed_definition_realization_lean
+    observed = {"rendered": False}
+    assert shared.MAX_REVIEWED_PRESERVATION_FILES == 78
+    def render_then_replace_reused_policy(*args, **options):
+        result = original(*args, **options)
+        observed["rendered"] = True
+        # Only this fixture changes: a replaced reused guard must not hide a
+        # limit mutation. No persistent policy, resource or budget is changed.
+        monkeypatch.setattr(shared, "_reviewed_mixed_preservation_policy", lambda: None)
+        monkeypatch.setattr(shared, "MAX_REVIEWED_PRESERVATION_FILES", 79)
+        return result
+    monkeypatch.setattr(shared, "_reviewed_definition_realization_lean", render_then_replace_reused_policy)
+    with pytest.raises(ValueError, match="changed during operation"):
+        reviewed_definition_realization_prepare(control)
+    assert observed["rendered"] is True
+
+
+@pytest.mark.parametrize("prefix,namespace,type_name", [
+    ("object", "LegalRelationalAstPreservation", "RoleFormula"),
+    ("mixed", "LegalMixedRelationalAstPreservation", "MixedFormula"),
+])
+def test_reviewed_definition_realization_selector_branches_follow_original_inductive_order(
+        reviewed_definition_realization_control, prefix, namespace, type_name):
+    """Check the adapter against original child types, without claiming Lean proof.
+
+    The independent unchanged child inductive defines constructor/field order.
+    This guards recursor argument drift, including unselected logical children;
+    the separate actual Native check must still inspect every theorem's axioms.
+    """
+    prepared = reviewed_definition_realization_control["realization"]
+    manifest, files = prepared.to_dict(), dict(prepared.files)
+    original = files[namespace.replace(".", "/") + "/Semantics.lean"]
+    header = original.split("inductive " + type_name + " where\n", 1)[1].split("\ndef ", 1)[0]
+    constructors = []
+    for line in header.splitlines():
+        if not line.startswith("  | "):
+            continue
+        fields = []
+        for names, field_type in re.findall(r"\(([^:()]+) : ([^()]+)\)", line):
+            fields.extend((name, field_type) for name in names.split())
+        constructors.append((line.split()[1], fields))
+    assert len(constructors) == (9 if prefix == "object" else 10)
+    model = manifest["expected_modules"][-2]
+    emitted = files[model.replace(".", "/") + ".lean"]
+    selector = emitted.split("def " + prefix + "FormulaChild ", 1)[1].split("\nnoncomputable def " + prefix + "FormulaAt ", 1)[0]
+    branches = [line.strip() for line in selector.splitlines() if line.startswith("    (fun ")]
+    assert len(branches) == len(constructors)
+    for (constructor, fields), branch in zip(constructors, branches, strict=True):
+        formals, _, result = branch.removeprefix("(fun ").partition(" => ")
+        children = [name for name, field_type in fields if field_type == type_name]
+        expected = [name if field_type == type_name else "_" for name, field_type in fields]
+        assert formals.split() == expected, constructor
+        if not children:
+            assert result == "none)", constructor
+        else:
+            # The independent source constructor's left-to-right logical child
+            # sequence is the index0/index1 sequence. All later indices refuse.
+            assert re.findall(r"\(some ([A-Za-z]+)\)", result) == children, constructor
+            assert result.count("Nat.casesOn") == len(children), constructor
+            assert result.endswith("(fun _ => none)" + ")" * len(children)), constructor
+
+
+# Source-use identity is explicit custody metadata on complete fictional inputs.
+# This reproduction executes no compiler and grants no legal or proof authority.
+def test_reviewed_definition_realization_accepts_explicit_source_use_identity_after_healthy_v3(
+        reviewed_definition_realization_control):
+    control = reviewed_definition_realization_control
+    # The default realization route is independently healthy before the new
+    # source-use domain is requested. No missing-symbol probe supplies the RED.
+    assert reviewed_definition_realization_validate(control, control["realization"]) == control["realization"]
+    assert len(control["realization"].to_dict()["preservation_obligations"]) == 26
+    preservation = reviewed_source_use_prepare_fixture(control, 3)
+    assert reviewed_source_use_validate_fixture(control, 3, preservation) == preservation
+    reviewed_source_use_assert_bindings(preservation)
+    upstream = preservation.to_dict()
+    assert upstream["profile"] == shared.REVIEWED_MIXED_SOURCE_USE_PRESERVATION_PROFILE
+    assert upstream["instance_identity_profile"] == "reviewed-source-use/v1"
+    assert len(upstream["units"]) == len({row["instance_module"] for row in upstream["units"]}) == 3
+    assert len(set(upstream["preservation_obligations"])) == 15
+    assert control["admission"]["fixture_only"] is True
+    assert control["admission"]["semantic_use_eligible"] is True
+    assert control["admission"]["blockers"] == []
+    current_inputs = control["owner"].norm._snapshot({"args": list(control["args"]), "kwargs": control["kwargs"]})[1]
+    preservation_pin = shared.reviewed_preservation_corpus_sha256(preservation)
+    # A saved upstream manifest cannot silently opt the default caller in.
+    with pytest.raises(ValueError):
+        reviewed_definition_realization_prepare(control, preservation=preservation,
+            expected_preservation_sha256=preservation_pin)
+
+    realized = reviewed_definition_realization_prepare(control, preservation=preservation,
+        expected_preservation_sha256=preservation_pin,
+        instance_identity_profile="reviewed-source-use/v1")
+
+    manifest, files = realized.to_dict(), dict(realized.files)
+    assert manifest["schema"] == shared.REVIEWED_DEFINITION_REALIZATION_SCHEMA
+    assert manifest["profile"] == shared.REVIEWED_DEFINITION_REALIZATION_PROFILE + "+reviewed-source-use/v1"
+    assert manifest["instance_identity_profile"] == "reviewed-source-use/v1"
+    assert manifest["upstream_manifest"] == upstream and manifest["units"] == upstream["units"]
+    assert manifest["reviewed_preservation_sha256"] == preservation_pin
+    assert manifest["preservation_obligations"][:15] == upstream["preservation_obligations"]
+    assert len(manifest["realization_obligations"]) == 11
+    assert len(manifest["preservation_obligations"]) == len(set(manifest["preservation_obligations"])) == 26
+    for name, body in preservation.files:
+        retained = "definition-realization-original-lakefile.txt" if name == "lakefile.toml" else name
+        assert files[retained] == body
+    assert len(files) == 39 and len(manifest["expected_modules"]) == 10
+    assert manifest["preparation_only"] is True
+    assert manifest["proof_status"] == manifest["lean_compilation_status"] == "not_executed"
+    assert manifest["support_profile"]["cross_unit_definition_application_proved"] is False
+    assert not any(manifest["authority"].values())
+    assert manifest["semantic_use_eligible"] is False
+    assert manifest["training_mask"] == manifest["evaluation_gold_mask"] == 0
+    assert shared.validate_reviewed_definition_realization_corpus_v1(realized, preservation,
+        control["graph"], control["admission"], *control["args"],
+        expected_realization_sha256=shared.reviewed_preservation_corpus_sha256(realized),
+        expected_preservation_sha256=preservation_pin,
+        expected_graph_sha256=control["graph_sha"], expected_admission_sha256=control["admission_sha"],
+        toolchain=TOOLCHAIN, instance_identity_profile="reviewed-source-use/v1", **control["kwargs"]) == realized
+    assert control["owner"].norm._snapshot({"args": list(control["args"]), "kwargs": control["kwargs"]})[1] == current_inputs
+
+
+# Selected realization remains a constructed fictional interpretation. Explicit
+# source-use identity separates technical domains; it supplies no legal review.
+@pytest.fixture(scope="module")
+def reviewed_definition_realization_source_use_control_v1(reviewed_preservation_control_v3):
+    control = dict(reviewed_preservation_control_v3)
+    control["preparation"] = reviewed_source_use_prepare_fixture(control, 3)
+    assert reviewed_source_use_validate_fixture(control, 3, control["preparation"]) == control["preparation"]
+    reviewed_source_use_assert_bindings(control["preparation"])
+    control["realization"] = reviewed_definition_realization_prepare(control,
+        instance_identity_profile="reviewed-source-use/v1")
+    manifest = control["realization"].to_dict()
+    assert manifest["selection"]["instance_identity_profile"] == "reviewed-source-use/v1"
+    assert manifest["selection"]["source_use_bindings"] == [
+        {"unit_id": unit["unit_id"], "source_use_binding": unit["source_use_binding"],
+         "source_use_binding_sha256": unit["source_use_binding_sha256"]} for unit in manifest["units"]]
+    return control
+
+
+def reviewed_definition_realization_source_use_validate_v1(control, offered=None, *, args=None, kwargs=None, **changes):
+    offered = control["realization"] if offered is None else offered
+    options = dict(expected_realization_sha256=shared.reviewed_preservation_corpus_sha256(offered),
+        expected_preservation_sha256=shared.reviewed_preservation_corpus_sha256(control["preparation"]),
+        expected_graph_sha256=control["graph_sha"], expected_admission_sha256=control["admission_sha"],
+        toolchain=TOOLCHAIN, instance_identity_profile="reviewed-source-use/v1")
+    options.update(changes)
+    return shared.validate_reviewed_definition_realization_corpus_v1(offered, control["preparation"],
+        control["graph"], control["admission"], *(control["args"] if args is None else args),
+        **dict(control["kwargs"] if kwargs is None else kwargs), **options)
+
+
+@pytest.mark.parametrize("selector", [False, True, 0, "", "reviewed-source-use/v2", {}, []])
+def test_reviewed_definition_realization_source_use_invalid_selector_refuses_before_owners(monkeypatch, selector):
+    monkeypatch.setattr(shared, "_reviewed_mixed_preservation_owners",
+        lambda: pytest.fail("invalid realization selector reached lazy replay owners"))
+    with pytest.raises(ValueError, match="explicit reviewed source-use identity profile"):
+        shared.prepare_reviewed_definition_realization_corpus_v1(None, {}, {},
+            expected_preservation_sha256="1" * 64, expected_graph_sha256="2" * 64,
+            expected_admission_sha256="3" * 64, toolchain=TOOLCHAIN,
+            instance_identity_profile=selector)
+
+
+@pytest.mark.parametrize("damage", ["selector", "profile", "upstream-selector", "selection-selector", "selection-binding"])
+def test_reviewed_definition_realization_source_use_resealed_mode_swap_refuses(
+        reviewed_definition_realization_source_use_control_v1, damage):
+    control = reviewed_definition_realization_source_use_control_v1
+    offered = control["realization"]
+    assert reviewed_definition_realization_source_use_validate_v1(control) == offered
+    manifest = offered.to_dict()
+    if damage == "selector": manifest["instance_identity_profile"] = "reviewed-source-use/v2"
+    elif damage == "profile": manifest["profile"] = shared.REVIEWED_DEFINITION_REALIZATION_PROFILE
+    elif damage == "upstream-selector": manifest["upstream_manifest"].pop("instance_identity_profile")
+    elif damage == "selection-selector": manifest["selection"]["instance_identity_profile"] = "reviewed-source-use/v2"
+    else:
+        row = manifest["selection"]["source_use_bindings"][1]
+        row["source_use_binding"] = deepcopy(manifest["units"][2]["source_use_binding"])
+        row["source_use_binding_sha256"] = sha(canonical_dag_json_bytes(row["source_use_binding"]))
+    forged = reviewed_preservation_reseal_fixture_v2(offered, manifest, dict(offered.files))
+    # The offered pin is recomputed; refusal must bind the selected domain and
+    # current original children rather than depend on an obsolete envelope pin.
+    with pytest.raises(ValueError):
+        reviewed_definition_realization_source_use_validate_v1(control, forged)
+    with pytest.raises(ValueError):
+        reviewed_definition_realization_source_use_validate_v1(control, instance_identity_profile=None)
+
+
+@pytest.mark.parametrize("damage", ["source", "revoked", "binding"])
+def test_reviewed_definition_realization_source_use_replays_current_source_reviews_and_closed_binding(
+        reviewed_definition_realization_source_use_control_v1, damage):
+    control = reviewed_definition_realization_source_use_control_v1
+    assert reviewed_definition_realization_source_use_validate_v1(control) == control["realization"]
+    args, kwargs = deepcopy(control["args"]), deepcopy(control["kwargs"])
+    offered = control["realization"]
+    if damage == "source":
+        unit = control["case"]["declaration"]["units"][2]["unit_id"]
+        kwargs["preparation_inputs"]["source_inputs"][unit]["raw_bytes"] += b" changed current source"
+    elif damage == "revoked":
+        helper = control["mixed_helper"]
+        case = helper.cloned(control["case"])
+        case["registry"]["keys"][0]["revoked_at_utc"] = kwargs["at_time_utc"]
+        helper.refresh_signed_reviews(case, control["owner"])
+        helper.assert_signatures_valid(case)
+        args, kwargs = helper.fixture.reviewed_assessment_arguments_v2(control["owner"], case)
+        current = control["owner"].assess_reviewed_norm_admission_v3(*args, **kwargs)
+        assert current["semantic_use_eligible"] is False
+        assert "key_revoked" in json.dumps(current)
+    else:
+        manifest = offered.to_dict()
+        row = manifest["units"][1]
+        row["source_use_binding"] = deepcopy(manifest["units"][2]["source_use_binding"])
+        row["source_use_binding_sha256"] = sha(canonical_dag_json_bytes(row["source_use_binding"]))
+        offered = reviewed_preservation_reseal_fixture_v2(offered, manifest, dict(offered.files))
+    with pytest.raises((ValueError, TypeError)):
+        reviewed_definition_realization_source_use_validate_v1(control, offered, args=args, kwargs=kwargs)

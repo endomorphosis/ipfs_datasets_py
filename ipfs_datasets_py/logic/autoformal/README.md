@@ -1,5 +1,11 @@
 # Legal autoformalization
 
+## Reviewed definition realization in the existing owners — 2026-11-15
+
+Shared, Native and incremental now support a constructed interpretation of one reviewed unary Object definition with a supported Boolean body. The fictional three-unit project retains two genuine norm-use units, three selected head occurrences and15 original+11 realization obligations. Explicit `reviewed-source-use/v1` carries exact current physical-use bindings; default callbacks and domains retain compatibility.
+
+Separate software scopes passed58 cases,1 default incremental control and6 selected incremental controls at their recorded source epochs. Three current installed Lean cases also passed and were independently audited:15,15 and26 named empty-axiom reports across separate builds. Two compiler/library invalidation controls also passed separately in21.747s. [One evidence capsule](../../../docs/autoformalization/evidence/legal-ir-reviewed-definition-realization-source-use-20261115.json) preserves the two-control RED, historical peer79/default-Lean1, source transitions and remaining gates. No arbitrary-model equivalence, statutory meaning, governing-definition application, training, convergence or corpus authority follows.
+
 ## Reviewed source-use identity and concrete preservation
 
 The explicit `reviewed-source-use/v1` mode keeps disjoint, currently reviewed source uses separate even when their IR is identical; default profiles retain their existing refusals. Separate software cohorts passed **102** and **26** cases, and **two installed Lean cases** checked 15 named preservation obligations each. [Exact source-bound evidence](../../../docs/autoformalization/evidence/legal-ir-reviewed-source-use-bindings-20261115.json) preserves failures and qualification limits; these fictional reviewed units establish no statutory meaning, model, training or corpus authority.

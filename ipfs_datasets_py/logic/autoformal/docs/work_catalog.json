@@ -924,7 +924,15 @@
         "validate_reviewed_norm_preservation_native_receipt_v3",
         "load_reviewed_norm_preservation_native_v3",
         "build_verified_reviewed_norm_preservation_native_v3",
-        "load_verified_reviewed_norm_preservation_native_v3"
+        "load_verified_reviewed_norm_preservation_native_v3",
+        "validate_reviewed_definition_realization_native_v1",
+        "build_reviewed_definition_realization_native_v1",
+        "reviewed_definition_realization_receipt_bytes_v1",
+        "reviewed_definition_realization_packet_sha256_v1",
+        "validate_reviewed_definition_realization_native_receipt_v1",
+        "load_reviewed_definition_realization_native_v1",
+        "build_verified_reviewed_definition_realization_native_v1",
+        "load_verified_reviewed_definition_realization_native_v1"
       ],
       "bound_norm_profile_v1": {
         "evaluation_gold_mask": 0,
@@ -1008,7 +1016,8 @@
         "parent-bound-norm-native-public-pure-compatibility-20261025-01",
         "genuine-parent420-retention-integration-20261110",
         "reviewed-native-admitted-parent-source-regressions-20261111",
-        "mixed-renderer-preservation-20261111"
+        "mixed-renderer-preservation-20261111",
+        "reviewed-definition-realization-source-use-20261115"
       ],
       "id": "definition-use-native",
       "notes": "Existing owner contains separate official V2 and parent V1 preparation/build/receipt routes. Original migration compiler fixtures remain synthetic. Two authored FOL/TDFOL parent projects now qualify actual Lean4.34.1 execution and observed custody; pending review and explicit premises remain, without statutory admission or source-to-model equivalence. The separate parent shared-native profile adds four aggregate APIs. Its main cohort qualifies 16 cases (11 new and five existing regressions); a separate actual cohort contains two authored FOL/TDFOL aggregate projects, each with nine modules, 15 executed inputs and six unique conditional theorem observations. Child reviews remain pending in the actual cohort; complete assumptions and contributor lineage survive. No parent incremental cache, source meaning, model, training or statutory admission is qualified. Separate authored complete-norm/bound-definition profile: 42 pure cases/126 phases and two actual Lean4.34.1 cases/six phases. Nine files/six modules preserve the unchanged norm and explicit definition/membership premises; preservation is an alias identity. Namespace-scoped qualification; statutory reviews, source binding and training/gold remain pending. First actual attempt retained separately with its 192-MiB storage reservation. The explicit parent-literal complete-norm route reuses its separately source-pinned authored engineering qualification; no default consumer, full-package, semantic or corpus admission is inferred. The existing parent-bound norm/definition native extension adopts source6e6dd821/test02acd69 with unchanged preparer014dc6/renderer5c. Its retained original R32pure/96 and separate R2actual-native/6phase cohorts retain their own 197-source generation and six observed commands (four ordinary probes and two owned builds). The separately accepted current-public4case/12phase pure compatibility check on the completed c59 snapshot contains one genuine membership-mode validation, two synthetic handoffs and a request-pin refusal. The later8b6 graph change has a separate source-only compatibility review; the combined new generation remains unmeasured. It supplies no new actual native execution or global registration. The separate \u00a77214 mixed renderer profile is now available with focused pure and compiler qualification; parent-source/corpus native integration and substantive legal review remain pending. The explicit parent-nomination graph custody route is indexed under the existing graph adapter and has a separate focused custody qualification; null governing decisions, explicit premises and zero masks remain.",
@@ -1334,7 +1343,9 @@
         "validate_reviewed_norm_preservation_corpus_v2",
         "reviewed_preservation_corpus_sha256",
         "prepare_reviewed_norm_preservation_corpus_v3",
-        "validate_reviewed_norm_preservation_corpus_v3"
+        "validate_reviewed_norm_preservation_corpus_v3",
+        "prepare_reviewed_definition_realization_corpus_v1",
+        "validate_reviewed_definition_realization_corpus_v1"
       ],
       "compatibility_dependency": false,
       "current_selected_reviewed_corpus_scopes_20261114": {
@@ -1357,7 +1368,8 @@
         "parent-shared-native-20261020-01",
         "genuine-parent420-retention-integration-20261110",
         "mixed-renderer-preservation-20261111",
-        "reviewed-source-use-bindings-20261115"
+        "reviewed-source-use-bindings-20261115",
+        "reviewed-definition-realization-source-use-20261115"
       ],
       "id": "shared-corpus",
       "notes": "Legacy shared preparation/build remains available. The distinct exact-parent-definition-use-module-sharing/v1 preparation/validation/load/write profile is qualified by28 main cases plus two separately reused physical-source controls. Complete child commitments, separate review outcomes, exact source-bound donor identity and contributor ordinals survive sharing. Closing physical replay is sequential, not an atomic snapshot. This preparation cohort supplies no aggregate build result; the separate native owner now has qualified aggregate controls and two authored builds. Parent incremental caching, model training and statutory meaning remain separate. Retain the separate architecture review; do not fabricate paragraph_indices or norm_record.",
@@ -1413,7 +1425,8 @@
       "apis": [
         "build_incremental_shared_corpus",
         "build_incremental_parent_shared_corpus_v1",
-        "build_incremental_reviewed_preservation_corpus_v3"
+        "build_incremental_reviewed_preservation_corpus_v3",
+        "build_incremental_reviewed_definition_realization_corpus_v1"
       ],
       "compatibility_dependency": false,
       "completed_ledger_storage_closeout_20261114": {
@@ -1501,7 +1514,8 @@
         "completed-ledger-source3-storage-closeout-20261114",
         "private-snapshot-ledger-four-target-rollout-20261114",
         "component90-Source4-clock130-HF-frontier-20261114",
-        "registered83-adaptive18-natural9d6-verified-frontier-20261114"
+        "registered83-adaptive18-natural9d6-verified-frontier-20261114",
+        "reviewed-definition-realization-source-use-20261115"
       ],
       "id": "incremental-corpus",
       "incremental_supervisor_original_frontier_20261114": {
@@ -15477,6 +15491,16 @@
       "root": "datasets_repository",
       "scope": "Separate original SDK25 PASS at c970/7d3 (later a4a selected/reachable AST compatibility is static only); original46 43P3F fixture failure retained; 97B one-test Source1 fix; corrected46 46P/0FES with full custody/seal audit; exact six-source normal A main2d4ad8b and independent anonymous HTTPS. Modeled controls only: no whole ordinary@2, whole SDK/worker or CLI4 activation, legal/model/Lean/corpus authority.",
       "status": "selected_SDK25_and_corrected_SDK46_software_qualified_A6_source_published_activation_pending"
+    },
+    {
+      "id": "reviewed-definition-realization-source-use-20261115",
+      "observed_bytes": 48979,
+      "observed_sha256": "928f5a261d1a0c32edebae68589552bbec2895871d1b749624bd6bd35d1b13c1",
+      "path": "docs/autoformalization/evidence/legal-ir-reviewed-definition-realization-source-use-20261115.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Five separate source-scoped originals: A58 software at8336/21e; B1/C6/E2 authored software and actual Lean3 at779/d0ba. Historical peer79/default-Lean1 and RED/C4 failures preserved without retagging. No whole67 coexecution, arbitrary-model/statutory/model/training/convergence/corpus authority.",
+      "status": "source_scoped_A58_B1_C6_E2_software_and_actual_Lean3_qualified_separately"
     }
   ]
 }

@@ -1516,3 +1516,523 @@ __all__ += ["REVIEWED_MIXED_PRESERVATION_SCHEMA", "REVIEWED_MIXED_PRESERVATION_P
     "REVIEWED_MIXED_SOURCE_USE_PRESERVATION_PROFILE",
     "REVIEWED_MIXED_PRESERVATION_ROOT", "prepare_reviewed_norm_preservation_corpus_v3",
     "validate_reviewed_norm_preservation_corpus_v3"]
+
+
+# This explicit profile constructs a model for one reviewed unary definition.
+# It does not change the independent V2/V3 preservation profiles or their files.
+REVIEWED_DEFINITION_REALIZATION_SCHEMA = "legal-reviewed-definition-realization-preparation/v1"
+REVIEWED_DEFINITION_REALIZATION_PROFILE = "reviewed-unary-object-definition-realization/v1"
+REVIEWED_DEFINITION_REALIZATION_ROOT = "LegalReviewedDefinitionRealization"
+
+
+def _reviewed_definition_realization_profile(instance_identity_profile):
+    """Select the caller's realization identity domain without reading artifacts."""
+    _reviewed_source_use_profile(instance_identity_profile, version=3)
+    return (REVIEWED_DEFINITION_REALIZATION_PROFILE if instance_identity_profile is None else
+        REVIEWED_DEFINITION_REALIZATION_PROFILE + "+reviewed-source-use/v1")
+
+
+def _reviewed_definition_realization_policy(*, instance_identity_profile=None):
+    _reviewed_definition_realization_profile(instance_identity_profile)
+    _reviewed_mixed_preservation_policy()
+    if (REVIEWED_DEFINITION_REALIZATION_SCHEMA, REVIEWED_DEFINITION_REALIZATION_PROFILE,
+            REVIEWED_DEFINITION_REALIZATION_ROOT) != (
+            "legal-reviewed-definition-realization-preparation/v1",
+            "reviewed-unary-object-definition-realization/v1", "LegalReviewedDefinitionRealization"):
+        _fail("fixed explicit reviewed definition realization profile required")
+
+
+def _reviewed_definition_realization_selection(graph, admission, replay, upstream, native, *, instance_identity_profile=None):
+    """Select exact already reviewed nodes; never parse a second legal language."""
+    _reviewed_definition_realization_profile(instance_identity_profile)
+    declaration = replay["preparation_inputs"]["declaration"]
+    index, _, _ = _reviewed_preservation_units(graph, admission, replay, version=3)
+    definitions = [row for row in index if row["kind"] == "definition"]
+    if len(definitions) != 1 or declaration["cross_references"]:
+        _fail("initial realization requires one complete definition and no external dependency declarations")
+    definition = definitions[0]
+    if definition["relational_profile"] != "authored-object-relational-deontic/v1":
+        _fail("initial realized definition requires the original unary Object profile")
+    by_id = {row["unit_id"]: row for row in admission["units"]}
+    ir = by_id[definition["unit_id"]]["canonical_ir"]
+    root = ir["typed_expression"]["root"]
+    if (root["kind"] != "forall" or len(root["binders"]) != 1 or len(root["arguments"]) != 1
+            or root["binders"][0]["sort"]["name"] != "Object"):
+        _fail("one complete universal Object definition binder required")
+    binder = root["binders"][0]
+    equivalence = root["arguments"][0]
+    if equivalence["kind"] != "iff" or len(equivalence["arguments"]) != 2:
+        _fail("complete forward head/body definition equivalence required")
+    head, body = equivalence["arguments"]
+    if (head["kind"] != "predicate" or len(head["arguments"]) != 1
+            or head["arguments"][0]["kind"] != "variable"
+            or head["arguments"][0]["symbol"] != binder["name"]
+            or head["arguments"][0]["sort"] != binder["sort"]):
+        _fail("selected unary definition head must use its exact Object binder")
+    symbol = head["symbol"]
+    roles = {row["symbol"]: row["roles"] for row in ir["argument_roles"]}
+    if symbol not in roles or len(roles[symbol]) != 1:
+        _fail("exact unary definition head role required")
+    body_count = 0
+
+    def body_fragment(node, depth=0):
+        nonlocal body_count
+        body_count += 1
+        if body_count > 4096 or depth > 64:
+            _fail("complete definition body exceeds original unary fragment bounds")
+        kind = node["kind"]
+        if kind == "predicate":
+            if (node["symbol"] == symbol or len(node["arguments"]) != 1
+                    or node["symbol"] not in roles or len(roles[node["symbol"]]) != 1
+                    or node["arguments"][0]["kind"] != "variable"
+                    or node["arguments"][0]["symbol"] != binder["name"]
+                    or node["arguments"][0]["sort"] != binder["sort"]):
+                _fail("nonrecursive exact unary Object body atoms required")
+        elif kind in ("and", "or", "not"):
+            if len(node["arguments"]) != (1 if kind == "not" else 2):
+                _fail("complete ordered unary Boolean definition body required")
+            for child in node["arguments"]:
+                body_fragment(child, depth + 1)
+        else:
+            _fail("quantified, modal, counted or other definition bodies require a separate realization profile")
+    body_fragment(body)
+    units = upstream["units"]
+    if [row["unit_id"] for row in units] != [row["unit_id"] for row in index]:
+        _fail("realization must retain every ordered original V3 preservation unit")
+    source_use_bindings = []
+    for item, unit in zip(index, units, strict=True):
+        if any(unit.get(key) != value for key, value in item.items()):
+            _fail("realization unit differs from complete current source/graph replay")
+        if instance_identity_profile is not None:
+            expected = _reviewed_source_use_child_args(item)
+            if (unit.get("source_use_binding") != expected["source_use_binding"]
+                    or unit.get("source_use_binding_sha256") != expected["expected_source_use_binding_sha256"]):
+                _fail("realization requires each exact replay-derived physical source-use binding")
+            source_use_bindings.append({"unit_id": item["unit_id"],
+                "source_use_binding": expected["source_use_binding"],
+                "source_use_binding_sha256": expected["expected_source_use_binding_sha256"]})
+        elif any(key in unit for key in ("source_use_binding", "source_use_binding_sha256")):
+            _fail("legacy realization cannot consume source-use unit identities")
+    modules = {row["unit_id"]: row["instance_module"] for row in units}
+    uses = declaration["definition_uses"]
+    selected, occurrence_rows = [], []
+    for use in uses:
+        if use["definition_unit_id"] != definition["unit_id"] or use["defined_predicate"] != symbol:
+            _fail("one exact selected governing definition must cover every reviewed norm")
+        target = by_id[use["use_unit_id"]]["canonical_ir"]
+        target_roles = {row["symbol"]: row["roles"] for row in target["argument_roles"]}
+        if target_roles.get(symbol) != roles[symbol]:
+            _fail("realization head ordered role differs from selected definition")
+        found = []
+
+        def visit(node, path, binders, modal_depth):
+            kind = node["kind"]
+            nested = binders
+            if kind in ("forall", "exists"):
+                if len(node["binders"]) != 1:
+                    _fail("single original nonshadowing binder required")
+                nested = [*binders, {"typed_path": path, "quantifier": kind, **node["binders"][0]}]
+            if kind == "predicate" and node["symbol"] == symbol:
+                argument = node["arguments"][0] if len(node["arguments"]) == 1 else None
+                matches = [row for row in binders if argument is not None and row["name"] == argument["symbol"]]
+                if (modal_depth or argument is None or argument["kind"] != "variable"
+                        or argument["sort"] != binder["sort"] or len(matches) != 1
+                        or matches[0]["sort"] != argument["sort"]):
+                    _fail("exact Object head occurrence outside opaque modalities required")
+                found.append({"typed_path": path, "typed_node": node, "argument": argument,
+                    "binders": list(binders), "ordered_roles": list(roles[symbol])})
+            for ordinal, child in enumerate(node["arguments"]):
+                visit(child, path + "/arguments/" + str(ordinal), nested, modal_depth)
+            if kind == "extension":
+                for ordinal, child in enumerate(node["extension"]["children"]):
+                    visit(child, path + "/extension/children/" + str(ordinal), nested, modal_depth + 1)
+        visit(target["typed_expression"]["root"], "/root", [], 0)
+        if [row["typed_path"] for row in found] != use["target_typed_paths"] or not found:
+            _fail("complete ordered every-use head occurrence population required")
+        graph_uses = [row for row in graph["definition_use_records"]
+                      if row["definition_unit_id"] == use["definition_unit_id"]
+                      and row["use_unit_id"] == use["use_unit_id"]]
+        if len(graph_uses) != 1:
+            _fail("one exact reviewed graph record required for each distinct physical use")
+        for row in found:
+            occurrence_rows.append({"ordinal": len(occurrence_rows), "unit_id": use["use_unit_id"],
+                "instance_module": modules[use["use_unit_id"]],
+                "relational_profile": by_id[use["use_unit_id"]]["relational_profile"],
+                "definition_use_record_cid": graph_uses[0]["record_cid"],
+                "source_occurrence_cid": use["use_occurrence_cid"], **row})
+        selected.append(use["use_unit_id"])
+    if (len(set(selected)) != len(selected)
+            or set(selected) != {row["unit_id"] for row in index if row["kind"] == "norm"}):
+        _fail("every complete distinct norm unit requires its own reviewed governing use")
+    selection = {"definition_unit_id": definition["unit_id"], "definition_instance_module": modules[definition["unit_id"]],
+        "definition_source_occurrence_cid": definition["source_occurrence_cid"],
+        "definition_ir_sha256": definition["complete_ir_sha256"], "head_symbol": symbol,
+        "head_roles": roles[symbol], "definition_binder": binder,
+        "body_typed_path": "/root/arguments/0/arguments/1", "body_typed_node": body,
+        "body_typed_sha256": _sha(canonical_dag_json_bytes(body)),
+        "body_role_ast": native._relational_source_syntax(body, roles),
+        "head_role_ast": native._relational_source_syntax(head, roles),
+        "definition_use_records": graph["definition_use_records"], "occurrences": occurrence_rows}
+
+    if instance_identity_profile is not None:
+        selection.update(instance_identity_profile=instance_identity_profile, source_use_bindings=source_use_bindings)
+    return selection
+
+def _reviewed_definition_realization_lean(selection, units, native, module):
+    """Construct explicit atom models; no Iff premise or opaque modal rewrite."""
+    obj, mixed = "LegalRelationalAstPreservation", "LegalMixedRelationalAstPreservation"
+    q = native._string
+    head, role = q(selection["head_symbol"]), q(selection["head_roles"][0])
+    binder = q(selection["definition_binder"]["name"])
+    obj_atoms = "String → List (String × Object) → Nat → Prop"
+    mix_type = mixed + ".MixedEntity Object EventFrame TimeFrame"
+    mix_atoms = "String → List (String × (" + mix_type + ")) → Nat → Prop"
+    obj_parameters = "{Object Agent : Type} (base : " + obj + ".Interpretation Object Agent) (atoms : " + obj_atoms + ")"
+    mix_parameters = ("{Object Agent EventFrame TimeFrame : Type} (base : " + obj + ".Interpretation Object Agent) "
+        "(atoms : " + obj_atoms + ") (mixedBase : " + mixed + ".Interpretation (" + mix_type + ") Unit) "
+        "(mixedAtoms : " + mix_atoms + ")")
+    body = ("namespace " + module + "\n"
+        + "def definitionBodyAst : " + obj + ".RoleFormula := " + selection["body_role_ast"] + "\n"
+        + "def bodyAt " + obj_parameters + " (entity : Object) (t : Nat) : Prop :=\n"
+        + "  " + obj + ".roleDenote base atoms definitionBodyAst (" + obj + ".updateEnvironment "
+        + obj + ".emptyEnvironment " + binder + " entity) t\n"
+        + "def realizedObjectAtoms " + obj_parameters + " (name : String) (values : List (String × Object)) (t : Nat) : Prop :=\n"
+        + "  if name = " + head + " then\n"
+        + "    List.casesOn (motive := fun _ => Prop) values False (fun pair rest =>\n"
+        + "      List.casesOn (motive := fun _ => Prop) rest\n"
+        + "        (Prod.casesOn (motive := fun _ => Prop) pair (fun label entity =>\n"
+        + "          if label = " + role + " then bodyAt base atoms entity t else False))\n"
+        + "        (fun _ _ => False))\n"
+        + "  else atoms name values t\n")
+    if any(unit["child_family"] == "tdfol" for unit in units):
+        body += ("def realizedMixedAtoms {Object Agent EventFrame TimeFrame : Type}\n"
+        + "    (base : " + obj + ".Interpretation Object Agent) (atoms : " + obj_atoms + ")\n"
+        + "    (mixedAtoms : " + mix_atoms + ") (name : String)\n"
+        + "    (values : List (String × (" + mix_type + "))) (t : Nat) : Prop :=\n"
+        + "  if name = " + head + " then\n"
+        + "    List.casesOn (motive := fun _ => Prop) values False (fun pair rest =>\n"
+        + "      List.casesOn (motive := fun _ => Prop) rest\n"
+        + "        (Prod.casesOn (motive := fun _ => Prop) pair (fun label value =>\n"
+        + "          Sum.casesOn (motive := fun _ => Prop) value (fun _ => False) (fun objectOrEvent =>\n"
+        + "            Sum.casesOn (motive := fun _ => Prop) objectOrEvent\n"
+        + "              (fun entity => if label = " + role + " then bodyAt base atoms entity t else False)\n"
+        + "              (fun _ => False))))\n"
+        + "        (fun _ _ => False))\n"
+        + "  else mixedAtoms name values t\n")
+    # Logical child projection is independent of atom rendering.  Every use
+    # witness is tied to the ORIGINAL complete child AST at its reviewed path.
+    for prefix, type_name, constructors, enabled in (
+            ("object", obj + ".RoleFormula", (
+                ("negation", "body", None), ("conjunction", "left right", None),
+                ("disjunction", "left right", None), ("implication", "left right", None),
+                ("equivalence", "left right", None), ("universal", "_ body", None),
+                ("existential", "_ body", None), ("modal", "_ body", None)), True),
+            ("mixed", mixed + ".MixedFormula", (
+                ("negation", "_ body", None), ("conjunction", "_ left right", None),
+                ("disjunction", "_ left right", None), ("implication", "_ left right", None),
+                ("equivalence", "_ left right", None), ("universal", "_ _ _ body", None),
+                ("existential", "_ _ _ body", None), ("modal", "_ _ _ body", None)),
+                any(unit["child_family"] == "tdfol" for unit in units))):
+        if not enabled:
+            continue
+        # Explicit recursors keep the source projection constructive without
+        # equation-compiler recursion over a changing source accumulator.
+        body += ("def " + prefix + "FormulaChild (source : " + type_name + ") (index : Nat) : Option " + type_name + " :=\n"
+            + "  " + type_name + ".casesOn (motive := fun _ => Option " + type_name + ") source\n"
+            + "    (fun _ _ _ => none)\n")
+        if prefix == "mixed":
+            body += "    (fun _ _ _ => none)\n"
+        for constructor, fields, _ in constructors:
+            if "left right" in fields:
+                branch = "Nat.casesOn index (some left) (fun rest => Nat.casesOn rest (some right) (fun _ => none))"
+            else:
+                branch = "Nat.casesOn index (some body) (fun _ => none)"
+            body += "    (fun " + fields + " => " + branch + ")\n"
+        body += ("noncomputable def " + prefix + "FormulaAt (source : " + type_name + ") (path : List Nat) : Option " + type_name + " :=\n"
+            + "  List.rec (motive := fun _ => " + type_name + " → Option " + type_name + ")\n"
+            + "    (fun node => some node)\n"
+            + "    (fun index _ descend node =>\n"
+            + "      Option.casesOn (motive := fun _ => Option " + type_name + ") (" + prefix + "FormulaChild node index)\n"
+            + "        none (fun child => descend child)) path source\n")
+    theorems, entries = [], []
+
+    def theorem(name, statement, proof, binding):
+        nonlocal body
+        body += "theorem " + name + " " + statement + " := by\n" + proof + "\n#print axioms " + name + "\n"
+        qualified = module + "." + name
+        theorems.append(qualified)
+        entries.append({"theorem": qualified, "binding": binding, "declaration": "theorem " + name + " " + statement})
+
+    definition_module = selection["definition_instance_module"]
+    source_ast = "(.universal " + binder + " (.equivalence " + selection["head_role_ast"] + " definitionBodyAst))"
+    theorem("definition_body_source_exact", ": " + definition_module + ".typedSourceAst = " + source_ast,
+        "  rfl", {"kind": "exact_definition_body_subtree", "body_typed_sha256": selection["body_typed_sha256"]})
+    interpreted = "(" + obj + ".roleInterpretation base (realizedObjectAtoms base atoms) " + definition_module + ".predicateRoles)"
+    theorem("definition_realized", obj_parameters + " (t : Nat) : " + definition_module + ".formula_0 " + interpreted + " t",
+        "  apply (" + definition_module + ".role_denotation_matches_native base (realizedObjectAtoms base atoms) t).mp\n"
+        + "  intro entity\n  exact Iff.intro (fun h => h) (fun h => h)",
+        {"kind": "constructed_definition_model", "definition_unit_id": selection["definition_unit_id"],
+         "desired_equivalence_hypothesis": False})
+    for occurrence in selection["occurrences"]:
+        number = str(occurrence["ordinal"])
+        is_mixed = occurrence["relational_profile"] == "authored-many-sorted-relational-deontic/v1"
+        names, declarations, environment = {}, [], (mixed + ".emptyCountedEnvironment" if is_mixed else obj + ".emptyEnvironment")
+        for ordinal, binding in enumerate(occurrence["binders"]):
+            name, sort, local = binding["name"], binding["sort"]["name"], "bound" + str(ordinal)
+            if sort not in ("Object", "EventFrame", "TimeFrame") or (not is_mixed and sort != "Object"):
+                _fail("realization occurrence has an unsupported binder carrier")
+            names[name] = local
+            declarations.append("(" + local + " : " + sort + ")")
+            update = (mixed + ".updateCounted" + {"Object": "Object", "EventFrame": "Event", "TimeFrame": "Time"}[sort]
+                      if is_mixed else obj + ".updateEnvironment")
+            environment = "(" + update + " " + environment + " " + q(name) + " " + local + ")"
+        argument = occurrence["argument"]
+        if argument["symbol"] not in names:
+            _fail("head occurrence must bind an actual original entity valuation")
+        if is_mixed:
+            atom = occurrence["typed_node"]
+            ast = "(.predicate " + q(atom["node_id"]) + " " + head + " [⟨" + q(argument["node_id"]) + ", " + q(argument["symbol"]) + ", .object⟩])"
+            body += "def occurrenceAst" + number + " : " + mixed + ".MixedFormula := " + ast + "\n"
+            left = (mixed + ".mixedRoleDenote mixedBase (realizedMixedAtoms base atoms mixedAtoms) "
+                + occurrence["instance_module"] + ".mixedArgumentRoles occurrenceAst" + number + " " + environment + " t")
+        else:
+            ast = native._relational_source_syntax(occurrence["typed_node"], {selection["head_symbol"]: selection["head_roles"]})
+            body += "def occurrenceAst" + number + " : " + obj + ".RoleFormula := " + ast + "\n"
+            left = obj + ".roleDenote base (realizedObjectAtoms base atoms) occurrenceAst" + number + " " + environment + " t"
+        tokens = occurrence["typed_path"].split("/")
+        if (tokens[:2] != ["", "root"] or (len(tokens) - 2) % 2
+                or any(tokens[offset] != "arguments" or tokens[offset + 1] not in ("0", "1")
+                       for offset in range(2, len(tokens), 2))):
+            _fail("exact original nonmodal logical-child source path required")
+        indices = [int(tokens[offset]) for offset in range(3, len(tokens), 2)]
+        projection = "[" + ", ".join(str(index) for index in indices) + "]"
+        source_ast = occurrence["instance_module"] + (".typedMixedAst" if is_mixed else ".typedSourceAst")
+        theorem("occurrence_" + number + "_source_exact", ": " + ("mixed" if is_mixed else "object")
+            + "FormulaAt " + source_ast + " " + projection + " = some occurrenceAst" + number,
+            "  rfl", {"kind": "exact_original_occurrence_subtree", "unit_id": occurrence["unit_id"],
+                "source_typed_path": occurrence["typed_path"], "logical_child_indices": indices,
+                "definition_use_record_cid": occurrence["definition_use_record_cid"]})
+        statement = (mix_parameters if is_mixed else obj_parameters) + " " + " ".join(declarations) + " (t : Nat) :\n    " + left + " ↔ bodyAt base atoms " + names[argument["symbol"]] + " t"
+        theorem("occurrence_" + number + "_matches_body", statement, "  exact Iff.intro (fun h => h) (fun h => h)",
+            {"kind": "exact_reviewed_head_occurrence", **occurrence})
+    for ordinal, unit in enumerate(units):
+        name, instance = "unit_" + str(ordinal) + "_preservation_under_realization", unit["instance_module"]
+        if unit["child_family"] == "tdfol":
+            atom_function = "(realizedMixedAtoms base atoms mixedAtoms)"
+            statement = (mix_parameters + " (t : Nat) :\n    " + mixed + ".mixedRoleDenote mixedBase " + atom_function
+                + " " + instance + ".mixedArgumentRoles " + instance + ".typedMixedAst " + mixed + ".emptyCountedEnvironment t ↔\n      "
+                + instance + ".formula (" + mixed + ".mixedRoleInterpretation mixedBase " + atom_function + " " + instance + ".mixedArgumentRoles) t")
+            proof = "  exact @" + instance + ".mixed_role_denotation_matches_lowering Object EventFrame TimeFrame mixedBase " + atom_function + " t"
+        else:
+            atom_function = "(realizedObjectAtoms base atoms)"
+            statement = (obj_parameters + " (t : Nat) :\n    " + obj + ".roleDenote base " + atom_function
+                + " " + instance + ".typedSourceAst " + obj + ".emptyEnvironment t ↔\n      " + instance + ".formula_0 ("
+                + obj + ".roleInterpretation base " + atom_function + " " + instance + ".predicateRoles) t")
+            proof = "  exact @" + instance + ".role_denotation_matches_native Object Agent base " + atom_function + " t"
+        theorem(name, statement, proof, {"kind": "unchanged_child_preservation_instantiation", "unit_id": unit["unit_id"],
+            "instance_module": instance, "child_preservation_sha256": unit["child_preparation_sha256"]})
+    body += "end " + module + "\n"
+    return body, theorems, entries
+
+
+def _reviewed_definition_realization_project(preservation, graph, admission, replay, owners, pins,
+        commitment, expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256, toolchain, *,
+        instance_identity_profile=None):
+    profile = _reviewed_definition_realization_profile(instance_identity_profile)
+    native = owners[2]
+    manifest, files = preservation.to_dict(), dict(preservation.files)
+    if (manifest["schema"] != REVIEWED_MIXED_PRESERVATION_SCHEMA
+            or manifest["profile"] != _reviewed_source_use_profile(instance_identity_profile, version=3)
+            or manifest["support_profile"]["cross_unit_definition_application_proved"] is not False):
+        _fail("unchanged current V3 preservation profile required before realization")
+    selection = _reviewed_definition_realization_selection(graph, admission, replay, manifest, native,
+        **({"instance_identity_profile": instance_identity_profile} if instance_identity_profile is not None else {}))
+    identity = _sha(canonical_dag_json_bytes({"profile": profile,
+        "upstream_preservation_sha256": expected_preservation_sha256, "selection": selection}))
+    module = REVIEWED_DEFINITION_REALIZATION_ROOT + ".Instance" + identity
+    source, additions, theorem_bindings = _reviewed_definition_realization_lean(selection, manifest["units"], native, module)
+    original_files = dict(files)
+    module_path = module.replace(".", "/") + ".lean"
+    root = REVIEWED_DEFINITION_REALIZATION_ROOT
+    root_path = root + ".lean"
+    bindings_path = "definition-realization-input-bindings.json"
+    companion_lake = "definition-realization-original-lakefile.txt"
+    if any(name in files for name in (module_path, root_path, bindings_path, companion_lake)):
+        _fail("realization file or namespace collision")
+    modules = [*manifest["expected_modules"], module, root]
+    obligations = [*manifest["preservation_obligations"], *additions]
+    if (len(modules) > MAX_REVIEWED_PRESERVATION_MODULES or len(set(modules)) != len(modules)
+            or len(obligations) > MAX_REVIEWED_PRESERVATION_OBLIGATIONS
+            or len(set(obligations)) != len(obligations)):
+        _fail("complete realization population exceeds original modules or obligations; no unit omitted")
+    files[module_path] = "".join("import " + row["instance_module"] + "\n" for row in manifest["units"]) + source
+    files[root_path] = "import " + REVIEWED_MIXED_PRESERVATION_ROOT + "\nimport " + module + "\n"
+    files[companion_lake] = files["lakefile.toml"]
+    files["lakefile.toml"] = ('name = "legal_reviewed_definition_realization"\nversion = "0.1.0"\n\n[[lean_lib]]\nname = "legal"\nroots = '
+        + canonical_dag_json_bytes(modules).decode("utf-8") + "\n")
+    bindings = {"schema": "legal-reviewed-definition-realization-bindings/v1",
+        "input_commitment_sha256": commitment, "reviewed_preservation_sha256": expected_preservation_sha256,
+        "reviewed_graph_sha256": expected_graph_sha256, "reviewed_admission_sha256": expected_admission_sha256,
+        "declaration_sha256": admission["declaration_sha256"], "selection": selection,
+        "upstream_manifest": manifest, "original_file_sha256": manifest["file_sha256"],
+        "theorem_bindings": theorem_bindings}
+    if instance_identity_profile is not None:
+        bindings["instance_identity_profile"] = instance_identity_profile
+    files[bindings_path] = canonical_dag_json_bytes(bindings).decode("utf-8") + "\n"
+    if (len(files) > MAX_REVIEWED_PRESERVATION_FILES
+            or sum(len(value.encode("utf-8")) for value in files.values()) > joint_owner.MAX_PROJECT_BYTES):
+        _fail("complete realization project exceeds original files or byte bound; no input truncated")
+    if any(files[name] != value for name, value in original_files.items() if name != "lakefile.toml"):
+        _fail("realization cannot rewrite any original V3 child, root, binding or companion")
+    imports = {**manifest["module_imports"], module: [row["instance_module"] for row in manifest["units"]],
+        root: [REVIEWED_MIXED_PRESERVATION_ROOT, module]}
+    result_manifest = contracts.seal_record({**bindings,
+        "schema": REVIEWED_DEFINITION_REALIZATION_SCHEMA, "profile": profile,
+        "toolchain": toolchain, "target": "legal", "expected_modules": modules, "module_imports": imports,
+        "units": manifest["units"], "preservation_obligations": obligations,
+        "realization_obligations": additions, "file_sha256": {name: _sha(value.encode("utf-8")) for name, value in sorted(files.items())},
+        "producer_pins": pins, "native_producer_pins": manifest["native_producer_pins"],
+        "support_profile": {"single_unary_Object_definition": True, "nonrecursive_boolean_body": True,
+            "all_original_V3_units_and_children_retained": True, "explicit_common_Object_carrier": True,
+            "mixed_Object_injection": "Sum.inr(Sum.inl entity)", "implicit_namespace_coercion": False,
+            "single_binder_quantifier_nodes_only": True,
+            "head_occurrences_under_modalities_supported": False, "opaque_modal_rewrite": False,
+            "cross_unit_definition_application_proved": False,
+            "max_units": MAX_REVIEWED_PRESERVATION_UNITS, "max_files": MAX_REVIEWED_PRESERVATION_FILES,
+            "max_modules": MAX_REVIEWED_PRESERVATION_MODULES, "max_obligations": MAX_REVIEWED_PRESERVATION_OBLIGATIONS,
+            "max_project_utf8_bytes": joint_owner.MAX_PROJECT_BYTES},
+        "trust_boundary": ["Complete current V3 source, review, graph, dependency and child preservation inputs are replayed.",
+            "Only constructed role-atom interpretations realize the independently denoted definition body; arbitrary original interpretations are not equated.",
+            "Definition realization supplies no actual category membership, norm truth, compliance, legal meaning or statutory/source theorem.",
+            "Only single-binder quantifier nodes are supported; unsupported nodes refuse the entire population rather than collapsing binder scope.",
+            "Ambient Nat evaluation time stays distinct from legal applicability dates and the authored TimeFrame carrier.",
+            "Original modal fields and complete original child sources are unchanged; no opaque modal replacement or extra axiom is supplied.",
+            "The generated new obligations are unexecuted; no native/proof/cache/corpus/learning admission follows from preparation."],
+        "preparation_only": True, "lean_compilation_status": "not_executed", "proof_status": "not_executed",
+        "authority": dict(native.AUTHORITY), "semantic_use_eligible": False,
+        "training_mask": 0, "evaluation_gold_mask": 0, **dict(native.FALSE_FLAGS)})
+    result = ReviewedPreservationCorpusPreparation(canonical_dag_json_bytes(result_manifest).decode("utf-8"), tuple(sorted(files.items())))
+    reviewed_preservation_corpus_sha256(result)
+    return result
+
+
+def _reviewed_definition_realization_callbacks(owners):
+    native = owners[2]
+    functions = (_reviewed_definition_realization_policy, _reviewed_definition_realization_profile,
+        _reviewed_source_use_profile, _reviewed_source_use_child_args, _reviewed_mixed_preservation_policy,
+        _reviewed_definition_realization_selection,
+        _reviewed_definition_realization_lean, _reviewed_definition_realization_project,
+        _reviewed_definition_realization_callbacks, _reviewed_definition_realization_operation,
+        prepare_reviewed_definition_realization_corpus_v1, validate_reviewed_definition_realization_corpus_v1,
+        validate_reviewed_norm_preservation_corpus_v3, _reviewed_mixed_preservation_operation,
+        _reviewed_mixed_preservation_project, _reviewed_preservation_units, _reviewed_preservation_pins,
+        _reviewed_preservation_offered, reviewed_preservation_corpus_sha256, canonical_dag_json_bytes,
+        _reviewed_mixed_preservation_owners, _sha, _fail, ReviewedPreservationCorpusPreparation,
+        owners[1].norm._snapshot, contracts.require_sha256, contracts.load_record_bytes,
+        contracts.seal_record, native._relational_source_syntax, native._string, native._lean_list, native._need,
+        owners[0].validate_reviewed_norm_graph_v3, owners[1].assess_reviewed_norm_admission_v3)
+    return tuple((function, getattr(function, "__code__", None)) for function in functions)
+
+
+def _reviewed_definition_realization_operation(preservation, graph, admission, args, kwargs, *,
+        expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256, toolchain, offered=None,
+        instance_identity_profile=None):
+    import inspect
+    _reviewed_definition_realization_policy(**({"instance_identity_profile": instance_identity_profile} if instance_identity_profile is not None else {}))
+    for value, label in ((expected_preservation_sha256, "expected_preservation_sha256"),
+            (expected_graph_sha256, "expected_graph_sha256"), (expected_admission_sha256, "expected_admission_sha256")):
+        contracts.require_sha256(value, label)
+    if reviewed_preservation_corpus_sha256(preservation) != expected_preservation_sha256:
+        _fail("independent complete original V3 preservation pin differs")
+    owners = _reviewed_mixed_preservation_owners()
+    norm = owners[1].norm
+
+    def original_inputs():
+        original = {"preservation": _reviewed_preservation_offered(preservation), "graph": graph, "admission": admission,
+            "args": list(args), "kwargs": kwargs, "expected_preservation_sha256": expected_preservation_sha256,
+            "expected_graph_sha256": expected_graph_sha256, "expected_admission_sha256": expected_admission_sha256,
+            "toolchain": toolchain}
+        if instance_identity_profile is not None:
+            original["instance_identity_profile"] = instance_identity_profile
+        return original
+    detached, commitment = norm._snapshot(original_inputs())
+    upstream = ReviewedPreservationCorpusPreparation(detached["preservation"]["manifest_json"],
+        tuple(tuple(pair) for pair in detached["preservation"]["files"]))
+    pins, callbacks = _reviewed_preservation_pins(owners), _reviewed_definition_realization_callbacks(owners)
+    offered_commitment = None if offered is None else norm._snapshot(_reviewed_preservation_offered(offered))[1]
+    authority, false_flags = dict(owners[2].AUTHORITY), dict(owners[2].FALSE_FLAGS)
+    if not authority or not false_flags or any(value is not False for value in [*authority.values(), *false_flags.values()]):
+        _fail("realization preparation cannot confer authority")
+
+    def fence():
+        if (norm._snapshot(original_inputs())[1] != commitment or norm._snapshot(detached)[1] != commitment
+                or _reviewed_preservation_pins(owners) != pins or _reviewed_definition_realization_callbacks(owners) != callbacks
+                or owners[2].AUTHORITY != authority or owners[2].FALSE_FLAGS != false_flags
+                or (offered is not None and norm._snapshot(_reviewed_preservation_offered(offered))[1] != offered_commitment)):
+            _fail("realization inputs, callbacks, policy, preparation or producer changed during operation")
+        _reviewed_definition_realization_policy(**({"instance_identity_profile": instance_identity_profile} if instance_identity_profile is not None else {}))
+    fence()
+    validate_reviewed_norm_preservation_corpus_v3(upstream, detached["graph"], detached["admission"],
+        *detached["args"], expected_preservation_sha256=expected_preservation_sha256,
+        expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
+        toolchain=toolchain, **detached["kwargs"],
+        **({"instance_identity_profile": instance_identity_profile} if instance_identity_profile is not None else {}))
+    fence()
+    signature = inspect.signature(owners[1].assess_reviewed_norm_admission_v3)
+    bound = signature.bind(*detached["args"], **detached["kwargs"])
+    if set(bound.arguments) != set(signature.parameters):
+        _fail("complete original V3 replay inputs required for realization")
+    result = _reviewed_definition_realization_project(upstream, detached["graph"], detached["admission"],
+        bound.arguments, owners, pins, commitment, expected_preservation_sha256, expected_graph_sha256,
+        expected_admission_sha256, toolchain, **({"instance_identity_profile": instance_identity_profile} if instance_identity_profile is not None else {}))
+    result_envelope = _reviewed_preservation_offered(result)
+    # Detach all buffers before another callback can retain or change the
+    # serializer's temporary containers. Strings and these tuple pairs are
+    # private immutable values; no later callback receives them.
+    frozen_manifest_json = result_envelope["manifest_json"]
+    frozen_files = tuple(tuple(pair) for pair in result_envelope["files"])
+    result_envelope = {"manifest_json": frozen_manifest_json,
+        "files": [list(pair) for pair in frozen_files]}
+    result_commitment = reviewed_preservation_corpus_sha256(result)
+    fence()
+    if offered is not None and result != offered:
+        _fail("realization differs from complete current source and preservation regeneration")
+    if (reviewed_preservation_corpus_sha256(result) != result_commitment
+            or _reviewed_preservation_offered(result) != result_envelope):
+        _fail("actual realization result changed during final checks")
+    fence()
+    if _reviewed_preservation_offered(result) != result_envelope:
+        _fail("actual realization result changed at final callback boundary")
+    # Construct the detached return value before the LAST input/producer fence.
+    # There is no result-visible serialization or callback after that fence.
+    closed_result = ReviewedPreservationCorpusPreparation(frozen_manifest_json, frozen_files)
+    fence()
+    return closed_result
+
+
+def prepare_reviewed_definition_realization_corpus_v1(preservation, graph, admission, *args,
+        expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256, toolchain, instance_identity_profile=None, **kwargs):
+    """Prepare source-bound constructed-model obligations, without running Lean."""
+    return _reviewed_definition_realization_operation(preservation, graph, admission, args, kwargs,
+        expected_preservation_sha256=expected_preservation_sha256, expected_graph_sha256=expected_graph_sha256,
+        expected_admission_sha256=expected_admission_sha256, toolchain=toolchain,
+        **({"instance_identity_profile": instance_identity_profile} if instance_identity_profile is not None else {}))
+
+
+def validate_reviewed_definition_realization_corpus_v1(preparation, preservation, graph, admission, *args,
+        expected_realization_sha256, expected_preservation_sha256, expected_graph_sha256,
+        expected_admission_sha256, toolchain, instance_identity_profile=None, **kwargs):
+    """Regenerate all obligations and exact unchanged V3 sources under live replay."""
+    _reviewed_definition_realization_profile(instance_identity_profile)
+    contracts.require_sha256(expected_realization_sha256, "expected_realization_sha256")
+    if reviewed_preservation_corpus_sha256(preparation) != expected_realization_sha256:
+        _fail("independent complete realization preparation pin differs")
+    return _reviewed_definition_realization_operation(preservation, graph, admission, args, kwargs,
+        expected_preservation_sha256=expected_preservation_sha256, expected_graph_sha256=expected_graph_sha256,
+        expected_admission_sha256=expected_admission_sha256, toolchain=toolchain,
+        **({"instance_identity_profile": instance_identity_profile} if instance_identity_profile is not None else {}), offered=preparation)
+
+
+__all__ += ["REVIEWED_DEFINITION_REALIZATION_SCHEMA", "REVIEWED_DEFINITION_REALIZATION_PROFILE",
+    "REVIEWED_DEFINITION_REALIZATION_ROOT", "prepare_reviewed_definition_realization_corpus_v1",
+    "validate_reviewed_definition_realization_corpus_v1"]

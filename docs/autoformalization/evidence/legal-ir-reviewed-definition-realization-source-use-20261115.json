@@ -1,0 +1,1000 @@
+{
+  "CI_integration": {
+    "CPU_CI_proposal": "Private and unexecuted; not adopted or published source.",
+    "Native_CI_portability": "Phase8 open: existing installed fixture hard-pins AArch64 binaries and /home/barberb path; no x86 portability or hosted Native CI qualification.",
+    "hosted_CI_executed": false,
+    "no_8D_384D_768D_4096D_owner_or_training_changes": true,
+    "weights_or_models_downloaded": false
+  },
+  "all_five_completed_original_scope_audits": {
+    "A58": {
+      "bytes": 32855,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/independent-R2-definition-realization-source-use-GREEN58-fast-A-saved-DATA-audit-v01.json",
+      "sha256": "b96a9af68a843e2a985ba91975074406f3e8cfcf3d44e63b698cc9fb0a7d3431"
+    },
+    "compiler_library2": {
+      "bytes": 29959,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/independent-R2-definition-realization-source-use-GREEN2-compiler-library-current-Source4-saved-DATA-audit-v01.json",
+      "sha256": "9b7e6d15297de5adfaa635ed80371994907de5ee07e3cc592a7f9933a582850d"
+    },
+    "default_incremental1": {
+      "bytes": 25508,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/independent-R2-definition-realization-source-use-GREEN1-incremental-default-current-Source4-saved-DATA-audit-v01.json",
+      "sha256": "d4eeac5b9a390f4ed1045d3ead7555cb792b767768350f975a3b699181e858e9"
+    },
+    "installed_Lean3": {
+      "bytes": 43853,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/independent-R2-definition-realization-source-use-installed-LEAN3-current-Source4-saved-DATA-audit-v01.json",
+      "sha256": "92d93ce2366f04f8764c7dc8ced3d23216a2ad42f25c7c25ca8aee66358d1d4a"
+    },
+    "selected_incremental6": {
+      "bytes": 26764,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/independent-R2-definition-realization-source-use-GREEN6-incremental-selected-current-Source4-saved-DATA-audit-v01.json",
+      "sha256": "b11bee9e647c4449edc06ff5b1aba0d4c49c01ae1737171115868b98f6b6f33e"
+    }
+  },
+  "current_actual_RED2": {
+    "actual_cases": {
+      "JUnit_seconds": 16.445,
+      "cases": [
+        {
+          "exception": "TypeError: got an unexpected keyword argument 'instance_identity_profile'",
+          "failure_site": "Shared realization signature.bind rejects explicit instance_identity_profile",
+          "name": "test_reviewed_definition_realization_accepts_explicit_source_use_identity_after_healthy_v3",
+          "preceding_authored_controls_reached_without_failure": [
+            "default realization validated with26 obligations",
+            "explicit modeV3 source-use preservation validated with15 obligations and3 distinct units",
+            "default caller refused source-use preservation"
+          ],
+          "status": "expected_failure"
+        },
+        {
+          "exception": "ipfs_datasets_py.logic.autoformal.corpus_contracts.CorpusContractError: current reviewed instance identity domain differs from explicit caller selection",
+          "failure_site": "incremental _realization_facts passes realization execution contract to strict upstream _reviewed_facts identity-domain gate",
+          "name": "test_reviewed_incremental_realization_v1_preserves_all_old_children_and_cold_warm_complete_obligations",
+          "status": "expected_failure"
+        }
+      ],
+      "errors": 0,
+      "failures": 2,
+      "native_compilation_credit": false,
+      "neither_failure_is_a_fixture_error": true,
+      "passed_cases": 0,
+      "skips": 0,
+      "total": 2
+    },
+    "audit": {
+      "bytes": 10907,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/independent-R2-definition-realization-source-use-RED2-saved-DATA-audit-v01.json",
+      "sha256": "167a3305bc29c98231586eb3a8409ede021ba970fdb3d13e6434db47a452560c"
+    },
+    "custody": {
+      "Native_lease_id": "800a8af74d894ffb8533f67c389b0836",
+      "Native_lease_released": true,
+      "Source_admission_seconds": 60,
+      "Source_closed": true,
+      "Source_total_seconds": 122.61861733021215,
+      "all_sampled_identities_gone": true,
+      "child_reaped": true,
+      "errors": [],
+      "genuine_original_wait_completed": true,
+      "identity_readback": [
+        {
+          "birth_ticks": 379248504,
+          "original_identity_gone": true,
+          "pid": 3489884
+        },
+        {
+          "birth_ticks": 379243203,
+          "original_identity_gone": true,
+          "pid": 3480931
+        }
+      ],
+      "initial_total_seconds": 420,
+      "observed_child_identities": 1,
+      "source_drift": [],
+      "source_exit_lifecycle_closed": true
+    },
+    "one_actual_run_with_two_failed_controls": true,
+    "scope": "Both are genuine software failures after healthy controls; neither is a fixture/import error. Explicit selected mode reached Shared signature.bind; default incremental realization reached strict original-profile fact gate. No positive or actual Lean credit.",
+    "storage": {
+      "actual_attempt_directory_count": 18,
+      "actual_attempt_logical_bytes_at_audit": 1304714,
+      "actual_attempt_ordinary_file_count": 56,
+      "artifacts_durable_asserted": false,
+      "durability_seal_present": false,
+      "finite_inventory_source_ref_map_sha256": "0247b97bb90cb6660d2d7334c75b29cee1d7346f4646c4d02b7e842e8c802a49",
+      "ordinary_files_no_aliases_or_specials": true,
+      "reason": "context_failed",
+      "release_or_recovery_authorized": false,
+      "released_and_durable": false,
+      "reservation_id": "e16072cf811e48eaad4cacdf78312e67",
+      "reserved_retained_bytes": 16777216,
+      "status": "retained"
+    }
+  },
+  "current_selected_qualification": {
+    "A58": {
+      "actual_Lean_credit": false,
+      "all_authority_false_and_masks_zero": true,
+      "audit": {
+        "bytes": 32855,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/independent-R2-definition-realization-source-use-GREEN58-fast-A-saved-DATA-audit-v01.json",
+        "sha256": "b96a9af68a843e2a985ba91975074406f3e8cfcf3d44e63b698cc9fb0a7d3431"
+      },
+      "custody": {
+        "Native_compute_closed": true,
+        "Native_lease_id": "df7163d1d78f42e8ad7d4a3eab686bad",
+        "Native_lease_released": true,
+        "Source_closed": true,
+        "Source_exit_lifecycle_closed": true,
+        "Source_total_seconds": 234.97942691110075,
+        "child_reaped": true,
+        "errors": [],
+        "genuine_original_wait_completed": true,
+        "identity_readback": [
+          {
+            "birth_ticks": 379324148,
+            "original_identity_gone": true,
+            "pid": 3618968
+          },
+          {
+            "birth_ticks": 379318791,
+            "original_identity_gone": true,
+            "pid": 3609488
+          }
+        ],
+        "sampled_child_identity_count": 1,
+        "source_drift": []
+      },
+      "qualification_summary": {
+        "JUnit_seconds": 74.959,
+        "Shared_explicit_selector_RED_now_passes": true,
+        "actual_installed_Lean_credit": false,
+        "default_incremental_RED_not_covered_by_this_group": true,
+        "errors": 0,
+        "exact_cases": 58,
+        "failures": 0,
+        "natural_counts_equal_pinned_function_decorators": true,
+        "passed": 58,
+        "selected_functions": 21,
+        "skips": 0
+      },
+      "scope": "58 passed in74.959s:55 Shared+3 authored Native across21 selected functions. Three Product owners unchanged by later publication; original Source256/Git8/test/recovery epoch remains8336/21e, not the current779/d0ba generation.",
+      "source_epoch": {
+        "Git_rows_full9_and_SHA256_current_at_audit": 8,
+        "all14_fences_verified": true,
+        "exact_nonlocal_changed_roles": 6,
+        "finite_captured_roles_only_no_exhaustive_import_attestation": true,
+        "full9_and_SHA256_source_rows_current_at_audit": 256,
+        "heads": {
+          "A": "21e94730749848ee76ced9cecf8082494ded8ad1",
+          "R2": "8336d39eebe6922efcb77d669091593d3a37537b"
+        },
+        "immutable_nonlocal_roles": 254,
+        "namespace_absences_current_at_audit": 5,
+        "ordered_two_CAS_chain_and_final_six_postimages_verified": true,
+        "prior_historical_qualifications_not_retagged": true
+      },
+      "status": "QUALIFIED_SELECTED_SOFTWARE_AT_OWN_CAPTURED_SOURCE_EPOCH",
+      "storage": {
+        "all_ordinary_sealed_file_bytes_SHA256_device_inode_match": true,
+        "artifacts_durable_asserted": true,
+        "directories": 41,
+        "durability_seal_exact_entries": 197,
+        "final_attempt_bytes": 3134565,
+        "final_total_charged_bytes": 3134565,
+        "no_symlinks_specials_or_inode_aliases": true,
+        "ordinary_files": 198,
+        "reservation_id": "0049cb88b2524ce9b7a1888a275cd48d",
+        "reservation_limit_bytes": 16777216,
+        "retained_bytes": 0,
+        "status": "released"
+      }
+    },
+    "compiler_library2": {
+      "actual_Lean_credit": false,
+      "all_authority_false_and_masks_zero": true,
+      "audit": {
+        "bytes": 29959,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/independent-R2-definition-realization-source-use-GREEN2-compiler-library-current-Source4-saved-DATA-audit-v01.json",
+        "sha256": "9b7e6d15297de5adfaa635ed80371994907de5ee07e3cc592a7f9933a582850d"
+      },
+      "custody": {
+        "Native_compute_closed": true,
+        "Native_lease_id": "8aba1728e438415eb6f6460eb6c7110d",
+        "Native_lease_released": true,
+        "Source_closed": true,
+        "Source_exit_lifecycle_closed": true,
+        "Source_total_seconds": 180.26008917205036,
+        "child_reaped": true,
+        "errors": [],
+        "genuine_original_wait_completed": true,
+        "identity_readback": [
+          {
+            "birth_ticks": 379717439,
+            "original_identity_gone": true,
+            "pid": 102057
+          },
+          {
+            "birth_ticks": 379712217,
+            "original_identity_gone": true,
+            "pid": 93698
+          }
+        ],
+        "source_drift": []
+      },
+      "invalidation_pairs": [
+        {
+          "all10_recipe_and_artifact_identities_changed": true,
+          "change": "library",
+          "changed_contract_fields": [
+            "record_cid",
+            "toolchain_closure"
+          ],
+          "complete10_recompiled_and26_fresh": true,
+          "no_reused_modules": true,
+          "previous_cache_referenced_exactly": true,
+          "source_project_bytes_unchanged": true
+        },
+        {
+          "all10_recipe_and_artifact_identities_changed": true,
+          "change": "compiler",
+          "changed_contract_fields": [
+            "binary_sha256",
+            "record_cid"
+          ],
+          "complete10_recompiled_and26_fresh": true,
+          "no_reused_modules": true,
+          "previous_cache_referenced_exactly": true,
+          "source_project_bytes_unchanged": true
+        }
+      ],
+      "qualification_summary": {
+        "JUnit_seconds": 21.747,
+        "actual_Lean_credit": false,
+        "all_import_dependencies_precede_consumers": true,
+        "errors": 0,
+        "every_final_recipe_uses_actual_saved_execution_contract": true,
+        "failures": 0,
+        "historical_C4_4cases2fails_preserved_not_retagged": true,
+        "multiset_and_count_preserve_exact_all10_inventory": true,
+        "no_ephemeral_upstream_contract_leak": true,
+        "order_amendment_is_one_assertion16bytes_only": true,
+        "passed": 2,
+        "skips": 0
+      },
+      "scope": "Two authored compiler/library-change controls: each exact contract-field delta plus record CID invalidates/recompiles all10 modules and26 fresh authored observations, all10 recipe/artifact identities new, valid topological dependency order and exact complete module multiplicity. Every recipe uses actual changed execution-contract CID; no ephemeral contract leaks. This is fake-compiler software, not actual Lean.",
+      "source_epoch": {
+        "Git_rows_current_full9_SHA256": 8,
+        "fixed_recovery_sha256": "83709f35e9373f4dfc48aa7c330853b86aa3e6726bcaab1df8e625ecc6dc677c",
+        "heads": {
+          "A": "d0ba9b6c32cf2c8c78572c1d3093f98b528ac33a",
+          "R2": "779465b98315980bd77e6a5cd03cc73fb71c3295"
+        },
+        "historical_A58_not_retagged": true,
+        "immutable_nonlocal_roles": 254,
+        "incremental_test_sha256": "b87d268543cee24ab7e6778ed38ab34f4b10d8f8145246a674a82468fe2990b0",
+        "latest_current_CAS_union": 6,
+        "namespace_absences_current": 5,
+        "only7_nonlocal_pin_deltas_from_Integration3": true,
+        "ordered_CAS_targets": [
+          6,
+          6,
+          1
+        ],
+        "source_roles_current_full9_SHA256": 256
+      },
+      "status": "TWO_COMPILER_LIBRARY_INVALIDATION_SOFTWARE_CASES_INDEPENDENTLY_QUALIFIED_AT_CURRENT_CAPTURED_SOURCE_EPOCH",
+      "storage": {
+        "artifacts_durable_asserted": true,
+        "directories": 50,
+        "durability_seal_exact_entries": 226,
+        "final_attempt_bytes": 5809549,
+        "no_symlinks_specials_or_inode_aliases": true,
+        "ordinary_files": 227,
+        "reservation_id": "2f128c30513e44b4b500f4d96ef74770",
+        "retained_bytes": 0,
+        "status": "released"
+      }
+    },
+    "default_incremental1": {
+      "actual_Lean_credit": false,
+      "all_authority_false_and_masks_zero": true,
+      "audit": {
+        "bytes": 25508,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/independent-R2-definition-realization-source-use-GREEN1-incremental-default-current-Source4-saved-DATA-audit-v01.json",
+        "sha256": "d4eeac5b9a390f4ed1045d3ead7555cb792b767768350f975a3b699181e858e9"
+      },
+      "custody": {
+        "Native_compute_closed": true,
+        "Native_lease_id": "4e8f2f4454fc4e17bab159b1711d615b",
+        "Native_lease_released": true,
+        "Source_closed": true,
+        "Source_total_seconds": 173.1468642600812,
+        "child_reaped": true,
+        "errors": [],
+        "genuine_original_wait_completed": true,
+        "identity_readback": [
+          {
+            "birth_ticks": 379625970,
+            "original_identity_gone": true,
+            "pid": 4140644
+          },
+          {
+            "birth_ticks": 379620692,
+            "original_identity_gone": true,
+            "pid": 4131752
+          }
+        ],
+        "source_drift": [],
+        "source_exit_lifecycle_closed": true
+      },
+      "qualification_summary": {
+        "JUnit_seconds": 15.561,
+        "actual_Lean_credit": false,
+        "all26_obligations_preserved_15upstream_plus11realization": true,
+        "all_authored_artifact_bytes_preserved_exactly_on_warm": true,
+        "cold_compile10_warm_compile0_reuse10": true,
+        "ephemeral_upstream_contract_does_not_escape_to_final_recipe": true,
+        "errors": 0,
+        "every_final_recipe_contract_CID_equals_actual_execution_contract": true,
+        "exact_selector": "/tmp/datasets-reviewed-source-use-main-20261115/tests/unit/logic/autoformal/test_legal_corpus_incremental.py::test_reviewed_incremental_realization_v1_preserves_all_old_children_and_cold_warm_complete_obligations",
+        "failures": 0,
+        "passed": 1,
+        "same_default_incremental_RED_case_now_passes": true,
+        "skips": 0
+      },
+      "scope": "One default realization control,10 cold compiles/26 fresh obligations to zero warm compiles/reuse10+26; every final saved recipe binds actual execution contract. Authored fake compiler only.",
+      "source_epoch": {
+        "Git_rows_current_full9_SHA256": 8,
+        "bridge_claim_is_pinned_metadata_not_additional_runtime_qualification": true,
+        "fixed_additional_recovery_role_sha256": "83709f35e9373f4dfc48aa7c330853b86aa3e6726bcaab1df8e625ecc6dc677c",
+        "heads": {
+          "A": "d0ba9b6c32cf2c8c78572c1d3093f98b528ac33a",
+          "R2": "779465b98315980bd77e6a5cd03cc73fb71c3295"
+        },
+        "immutable_nonlocal_roles": 254,
+        "incremental_test_sha256": "b87d268543cee24ab7e6778ed38ab34f4b10d8f8145246a674a82468fe2990b0",
+        "latest_current_CAS_union": 6,
+        "namespace_absences_current": 5,
+        "old_A58_keeps_original_test_and_recovery_epoch": true,
+        "only7_nonlocal_pin_deltas_from_Integration3": true,
+        "ordered_CAS_targets": [
+          6,
+          6,
+          1
+        ],
+        "source_roles_current_full9_SHA256": 256
+      },
+      "status": "QUALIFIED_SELECTED_SOFTWARE_AT_OWN_CAPTURED_SOURCE_EPOCH",
+      "storage": {
+        "artifacts_durable_asserted": true,
+        "directories": 37,
+        "durability_seal_exact_entries": 164,
+        "final_attempt_bytes": 3671375,
+        "no_symlinks_specials_or_inode_aliases": true,
+        "ordinary_files": 165,
+        "reservation_id": "b262532dfc3b48fab62cb5e3e6c3d4c4",
+        "retained_bytes": 0,
+        "status": "released"
+      }
+    },
+    "installed_Lean3": {
+      "56_reports_are_across_three_separate_builds_not56_distinct_statutory_theorems": true,
+      "actual_Lean_credit": "Only the exact concrete source-pinned three fictional projects/named empty-axiom reports under installed AArch64 toolchain; no arbitrary-interpretation/meaning/model/corpus/release authority.",
+      "audit": {
+        "bytes": 43853,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/independent-R2-definition-realization-source-use-installed-LEAN3-current-Source4-saved-DATA-audit-v01.json",
+        "sha256": "92d93ce2366f04f8764c7dc8ced3d23216a2ad42f25c7c25ca8aee66358d1d4a"
+      },
+      "custody": {
+        "Native_compute_closed": true,
+        "Native_lease_id": "d679f379d046480d8f9f526f52b559ea",
+        "Native_lease_released": true,
+        "Source_closed": true,
+        "Source_exit_lifecycle_closed": true,
+        "Source_total_seconds": 207.66400173399597,
+        "child_reaped": true,
+        "errors": [],
+        "genuine_original_wait_completed": true,
+        "outer_identity_readback": [
+          {
+            "birth_ticks": 379683881,
+            "original_identity_gone": true,
+            "pid": 45391
+          },
+          {
+            "birth_ticks": 379689542,
+            "original_identity_gone": true,
+            "pid": 55110
+          },
+          {
+            "birth_ticks": 379689572,
+            "original_identity_gone": true,
+            "pid": 55131
+          },
+          {
+            "birth_ticks": 379689650,
+            "original_identity_gone": true,
+            "pid": 55164
+          },
+          {
+            "birth_ticks": 379689716,
+            "original_identity_gone": true,
+            "pid": 55212
+          },
+          {
+            "birth_ticks": 379690738,
+            "original_identity_gone": true,
+            "pid": 57754
+          },
+          {
+            "birth_ticks": 379690742,
+            "original_identity_gone": true,
+            "pid": 57763
+          },
+          {
+            "birth_ticks": 379690827,
+            "original_identity_gone": true,
+            "pid": 58038
+          },
+          {
+            "birth_ticks": 379690861,
+            "original_identity_gone": true,
+            "pid": 58059
+          },
+          {
+            "birth_ticks": 379690989,
+            "original_identity_gone": true,
+            "pid": 58107
+          },
+          {
+            "birth_ticks": 379692495,
+            "original_identity_gone": true,
+            "pid": 59726
+          },
+          {
+            "birth_ticks": 379692514,
+            "original_identity_gone": true,
+            "pid": 59754
+          },
+          {
+            "birth_ticks": 379692551,
+            "original_identity_gone": true,
+            "pid": 59821
+          },
+          {
+            "birth_ticks": 379692641,
+            "original_identity_gone": true,
+            "pid": 60520
+          },
+          {
+            "birth_ticks": 379692767,
+            "original_identity_gone": true,
+            "pid": 60780
+          },
+          {
+            "birth_ticks": 379678571,
+            "original_identity_gone": true,
+            "pid": 36402
+          }
+        ],
+        "sampled_outer_identities": 15,
+        "source_drift": []
+      },
+      "live_and_retained_separation": {
+        "auditor_recreated_live_handle": false,
+        "passed_source_pinned_tests_required_original_opaque_live_handle": true,
+        "passed_tests_authenticated_live_native_success": true,
+        "passed_tests_refused_wrong_default_identity_domain_handle": true,
+        "passed_tests_required_retained_native_authentication_false": true,
+        "retained_receipt_authority_all_false_and_masks_zero": true,
+        "saved_receipts_create_no_live_capability": true
+      },
+      "profile_counts": [
+        {
+          "compiled_modules": 6,
+          "named_empty_axiom_reports": 15,
+          "profile": "selected V2 preservation",
+          "project_files": 33
+        },
+        {
+          "compiled_modules": 8,
+          "named_empty_axiom_reports": 15,
+          "profile": "selected V3 preservation",
+          "project_files": 35
+        },
+        {
+          "compiled_modules": 10,
+          "named_empty_axiom_reports": 26,
+          "profile": "selected constructed realization",
+          "project_files": 39
+        }
+      ],
+      "qualification_summary": {
+        "ELF_e_machine": 183,
+        "JUnit_seconds": 49.82,
+        "errors": 0,
+        "failures": 0,
+        "installed_toolchain_verified_receipt_flag_remains_false": true,
+        "local_toolchain": "leanprover/lean4:v4.34.1",
+        "no_general_source_to_model_or_legal_equivalence_claim": true,
+        "passed": 3,
+        "skips": 0,
+        "total_compiled_modules_across_profiles": 24,
+        "total_reports_across_three_separate_builds": 56
+      },
+      "source_epoch": {
+        "Git_rows_current_full9_SHA256": 8,
+        "fixed_recovery_sha256": "83709f35e9373f4dfc48aa7c330853b86aa3e6726bcaab1df8e625ecc6dc677c",
+        "heads": {
+          "A": "d0ba9b6c32cf2c8c78572c1d3093f98b528ac33a",
+          "R2": "779465b98315980bd77e6a5cd03cc73fb71c3295"
+        },
+        "historical_A58_and_earlier_Lean_receipts_not_retagged": true,
+        "immutable_nonlocal_roles": 254,
+        "incremental_test_sha256": "b87d268543cee24ab7e6778ed38ab34f4b10d8f8145246a674a82468fe2990b0",
+        "latest_current_CAS_union": 6,
+        "namespace_absences_current": 5,
+        "only7_nonlocal_pin_deltas_from_Integration3": true,
+        "ordered_CAS_targets": [
+          6,
+          6,
+          1
+        ],
+        "source_roles_current_full9_SHA256": 256
+      },
+      "status": "THREE_ACTUAL_INSTALLED_LEAN_CASES_INDEPENDENTLY_QUALIFIED_AT_CURRENT_CAPTURED_SOURCE_EPOCH",
+      "storage": {
+        "artifacts_durable_asserted": true,
+        "directories": 47,
+        "durability_seal_exact_entries": 259,
+        "final_attempt_bytes": 10907003,
+        "no_symlinks_specials_or_inode_aliases": true,
+        "ordinary_files": 260,
+        "reservation_id": "728a0fc2c9654272aed63fb5e9dc601b",
+        "retained_bytes": 0,
+        "status": "released"
+      }
+    },
+    "selected_incremental6": {
+      "actual_Lean_credit": false,
+      "all_authority_false_and_masks_zero": true,
+      "audit": {
+        "bytes": 26764,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/independent-R2-definition-realization-source-use-GREEN6-incremental-selected-current-Source4-saved-DATA-audit-v01.json",
+        "sha256": "b11bee9e647c4449edc06ff5b1aba0d4c49c01ae1737171115868b98f6b6f33e"
+      },
+      "custody": {
+        "Native_compute_closed": true,
+        "Native_lease_id": "1b616fbfb6d64ec69cc481fdc8413854",
+        "Native_lease_released": true,
+        "Source_closed": true,
+        "Source_exit_lifecycle_closed": true,
+        "Source_total_seconds": 179.36797033902258,
+        "child_reaped": true,
+        "errors": [],
+        "genuine_original_wait_completed": true,
+        "identity_readback": [
+          {
+            "birth_ticks": 379655111,
+            "original_identity_gone": true,
+            "pid": 4189413
+          },
+          {
+            "birth_ticks": 379649792,
+            "original_identity_gone": true,
+            "pid": 4180810
+          }
+        ],
+        "source_drift": []
+      },
+      "qualification_summary": {
+        "JUnit_seconds": 21.171,
+        "actual_Lean_credit": false,
+        "all3_physical_bindings_and_contributors_recomputed_from_receipt_units": true,
+        "default_and_selected_cold_compile10_each": true,
+        "errors": 0,
+        "every_final_recipe_uses_actual_saved_contract_CID": true,
+        "failures": 0,
+        "no_ephemeral_contract_leak": true,
+        "passed": 6,
+        "selected_warm_compile0_reuse10_all26": true,
+        "skips": 0
+      },
+      "scope": "Six selected-mode software cases: once-only default and selected cold seeds10/26 each; selected warm0/reuse10+26; all3 physical bindings/contributors; two cross-mode and three resealed-cache refusals before compiler and output creation. Authored fake compiler only.",
+      "source_epoch": {
+        "Git_rows_current_full9_SHA256": 8,
+        "fixed_recovery_sha256": "83709f35e9373f4dfc48aa7c330853b86aa3e6726bcaab1df8e625ecc6dc677c",
+        "heads": {
+          "A": "d0ba9b6c32cf2c8c78572c1d3093f98b528ac33a",
+          "R2": "779465b98315980bd77e6a5cd03cc73fb71c3295"
+        },
+        "historical_A58_not_retagged": true,
+        "immutable_nonlocal_roles": 254,
+        "incremental_test_sha256": "b87d268543cee24ab7e6778ed38ab34f4b10d8f8145246a674a82468fe2990b0",
+        "latest_current_CAS_union": 6,
+        "namespace_absences_current": 5,
+        "only7_nonlocal_pin_deltas_from_Integration3": true,
+        "ordered_CAS_targets": [
+          6,
+          6,
+          1
+        ],
+        "source_roles_current_full9_SHA256": 256
+      },
+      "status": "QUALIFIED_SELECTED_SOFTWARE_AT_OWN_CAPTURED_SOURCE_EPOCH",
+      "storage": {
+        "artifacts_durable_asserted": true,
+        "directories": 39,
+        "durability_seal_exact_entries": 170,
+        "final_attempt_bytes": 4612647,
+        "no_symlinks_specials_or_inode_aliases": true,
+        "ordinary_files": 171,
+        "reservation_id": "2df7ef60be194300b30cb8349bdf30a3",
+        "retained_bytes": 0,
+        "status": "released"
+      }
+    }
+  },
+  "evidence_id": "reviewed-definition-realization-source-use-20261115",
+  "historical_C4_failure_preserved": {
+    "JUnit": {
+      "full9": {
+        "st_ctime_ns": 1794774666539892513,
+        "st_dev": 66306,
+        "st_gid": 1000,
+        "st_ino": 63224597,
+        "st_mode": 33152,
+        "st_mtime_ns": 1794774666539892513,
+        "st_nlink": 1,
+        "st_size": 2618,
+        "st_uid": 1000
+      },
+      "source_ref": {
+        "bytes": 2618,
+        "path": "/tmp/pytest-of-barberb/legal-ir-definition-realization-incremental-bounded37-groupC4-20261115-v01/a/exports/software-results.xml",
+        "sha256": "5eac1dfd5b832a96a5af22d4d0d7600b264650bfcdbb65a7b17159ba8224951c"
+      }
+    },
+    "errors": 0,
+    "new_E2_audit_confirms_preservation": {
+      "bytes": 29959,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/independent-R2-definition-realization-source-use-GREEN2-compiler-library-current-Source4-saved-DATA-audit-v01.json",
+      "sha256": "9b7e6d15297de5adfaa635ed80371994907de5ee07e3cc592a7f9933a582850d"
+    },
+    "parent_closeout": {
+      "full9": {
+        "st_ctime_ns": 1794774667658816197,
+        "st_dev": 66306,
+        "st_gid": 1000,
+        "st_ino": 78153355,
+        "st_mode": 33204,
+        "st_mtime_ns": 1794774667658816197,
+        "st_nlink": 1,
+        "st_size": 15083,
+        "st_uid": 1000
+      },
+      "source_ref": {
+        "bytes": 15083,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-ir-definition-realization-incremental-bounded37-groupC4-original-v01-input/parent-closeout.json",
+        "sha256": "8df92a51cf0acba4050b035d11e2b341c331f309e4024f386129dbc6e7a588ac"
+      }
+    },
+    "raw_cases": 4,
+    "raw_failures": 2,
+    "raw_passed": 2,
+    "scope": "Earlier failed positional module-order assertion remains historical. Current one-assertion16-byte correction compares complete module populations while separate DAG/multiplicity checks retain execution-order correctness. Earlier failed parent/JUnit and claims are not retagged."
+  },
+  "historical_peer_scopes_separate": {
+    "actual_default_Lean1": {
+      "JUnit_seconds": 20.596,
+      "Source_seconds": 177.427,
+      "durably_released_bytes": 4987655,
+      "errors": 0,
+      "failures": 0,
+      "historical_source_epoch_only": true,
+      "passed": 1,
+      "qualification_transferred_to_R2": false,
+      "receipt": {
+        "bytes": 28475,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-ir-definition-realization-native-original-v06-input/postterminal-Native-v06-readback-v01.json",
+        "sha256": "64a2d52ba2f04597863898aee319f465a56f8e7baa4218e44a3324c104e34af4"
+      },
+      "scope": "Two real version probes and one real Lake build,10 modules/39 project files/26 exact empty-axiom reports (15 original+11 realization); fictional default realization only.",
+      "skips": 0
+    },
+    "later_source_differences_not_retagged": [
+      "resource_recovery 76a4 to 83709f",
+      "test_reviewed_norm_admission 3d101 to 2952"
+    ],
+    "older_failures_and_original_claims_preserved": true,
+    "software79": {
+      "JUnit_seconds": 99.939,
+      "Source_seconds": 311.397,
+      "composition": "51 Shared + 2 recursor + 26 Native-owner authored controls; no actual Lean",
+      "durably_released_bytes": 13801348,
+      "errors": 0,
+      "failures": 0,
+      "historical_source_epoch_only": true,
+      "passed": 79,
+      "qualification_transferred_to_R2": false,
+      "receipt": {
+        "bytes": 77709,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-ir-definition-realization-constructive-software79-original-v03-input/qualification-summary79.json",
+        "sha256": "049148289fb6f40aea7c2608d85860410fd69de231d248956e487b4a7a1c14d5"
+      },
+      "skips": 0
+    }
+  },
+  "implementation_contract": {
+    "bounds_unchanged": {
+      "files": 78,
+      "modules": 11,
+      "obligations": 40,
+      "units": 8
+    },
+    "child_API": "Closed source_use_binding plus expected_source_use_binding_sha256 after aggregate current replay; no instance_identity_profile keyword on pure child API.",
+    "constructed_model": "Construct an explicit atom interpretation realizing the selected head as its existing Boolean body. This is not equivalence in an arbitrary original atom interpretation and not a theorem of statutory meaning.",
+    "default_mode": "instance_identity_profile=None; legacy callback calls omit added keyword, default manifest/selection shapes remain unchanged. Existing default source-use refusals are retained.",
+    "definition": "Exactly one already reviewed complete unary Object definition with a nonrecursive supported Boolean body; unsupported quantified bodies or selected occurrences under opaque modal extensions refuse.",
+    "fixture_population": {
+      "complete_obligations": 26,
+      "files": 39,
+      "genuine_norm_use_units": 2,
+      "modules": 10,
+      "new_realization_obligations": 11,
+      "original_obligations": 15,
+      "original_units": 3,
+      "selected_head_occurrences": 3
+    },
+    "incremental": "Current source/review/revocation replay remains required on warm reuse. Complete per-recipe current binding and contributor/dependency source-use bindings are retained. Upstream facts derive through a private ephemeral reviewed-profile contract view; every final recipe uses actual realization execution_contract.record_cid. No fresh proof is granted for reused modules.",
+    "new_public_owner_modules": 0,
+    "obligation_classes": [
+      "existing 15 per-unit preservation obligations",
+      "definition_body_source_exact",
+      "definition_realized",
+      "each selected occurrence source-exact and matches constructed body",
+      "each complete original unit preservation under constructed realization"
+    ],
+    "owners": [
+      "ipfs_datasets_py.logic.autoformal.legal_corpus_shared_lake",
+      "ipfs_datasets_py.logic.autoformal.legal_corpus_definition_use_native_v2",
+      "ipfs_datasets_py.logic.autoformal.legal_corpus_incremental"
+    ],
+    "profiles": "Existing realization preparation/native/replay/live/cache/contract/build profile plus +reviewed-source-use/v1 only when caller explicitly selects it; saved objects cannot choose the mode or relabel a prior receipt/cache.",
+    "representation_owners_unchanged": "Existing spaCy 8D, GTE 384D/768D, Leanstral 4096D and numerical autoencoder/checkpoint owners unchanged; no model fitting or convergence measured.",
+    "retained_live": "Retained observations are not a live capability; process/thread-issued live handle authenticates only fresh current Native success, never original parent admission, legal meaning or release.",
+    "selected_mode": "Exact explicit instance_identity_profile=reviewed-source-use/v1. Shared derives nine-field closed binding plus independent digest from every current replayed unit; selection records ordered unit_id/binding/digest projection. Manifest, Native receipt/replay/live and complete incremental realization_binding record explicit selector.",
+    "selection": "Replay current source, admission, graph and governing-use records; preserve complete original typed nodes, ordered roles, scopes and all selected occurrence arguments."
+  },
+  "preservation": {
+    "all_prior_selected_evidence_rows": 463,
+    "backlog_tasks": 24,
+    "existing_components": 123,
+    "new_plan_module_or_owner_tree": false,
+    "new_selected_evidence_rows": 1,
+    "source_edition_governing_and_meaning_decisions_not_supplied": true,
+    "task_ids_and_statuses_unchanged": true
+  },
+  "publication_gate": "Five actual originals have frozen independent saved audits, closed original Source/Native/process/genuine-wait custody and durable release of each successful own claim. This six-doc candidate is ready for Root exact-preimage Source CAS and normal-main publication of selected source/documentation; no claim of publication already performed, whole67 coexecution, hosted CI, model/legal/gold/corpus/release qualification.",
+  "publication_gate_ready": true,
+  "qualification_epoch_limit": "A58, B1, C6, installedLean3 and compiler/library2 remain separate originals. A58 is not rerun at later Recovery/order-test epoch; do not claim all67 software cases coexecuted or all source roles unchanged across scopes.",
+  "qualification_limits": {
+    "arbitrary_original_model_equivalence_proved": false,
+    "cross_unit_definition_application_proved": false,
+    "evaluation_gold_mask": 0,
+    "formal_assumptions_proved": false,
+    "full_US_Code_formalized": false,
+    "full_formal_corpus_consistency_verified": false,
+    "historical_software_or_native_receipts_upgraded": false,
+    "independent_human_legal_review": false,
+    "model_fitting_or_convergence_measured": false,
+    "original_admitted_parent_custody_authenticated": false,
+    "release_ready": false,
+    "statutory_meaning_proved": false,
+    "training_mask": 0,
+    "whole_suite_requalified": false
+  },
+  "recorded_at_utc": "2026-11-15T21:56:18.243394+00:00",
+  "schema": "legal-ir-reviewed-definition-realization-source-use-evidence/v1",
+  "scope": "Explicit default and reviewed-source-use/v1 constructed unary Object Boolean definition realization in existing Shared, Native and incremental owners; fictional engineering corpus only.",
+  "source_epoch": {
+    "A_HEAD_current_qualification": "d0ba9b6c32cf2c8c78572c1d3093f98b528ac33a",
+    "R2_base_HEAD_reported_by_Root": "779465b98315980bd77e6a5cd03cc73fb71c3295",
+    "Source4_Doc4_epoch_bridge": {
+      "audit": {
+        "bytes": 14815,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/independent-R2-definition-realization-Source4-Doc4-publication-epoch-delta-audit-v01.json",
+        "sha256": "0361b91eaa08eddf772c396c4edd4265d54576c37c89ad1aad798e0dcf41d473"
+      },
+      "only_changed_preexisting_source_role": "resource_recovery.py 76a4 to 83709f35e9373f4dfc48aa7c330853b86aa3e6726bcaab1df8e625ecc6dc677c",
+      "qualification": "Pinned static compatibility/epoch bridge, not additional runtime qualification or retagging. Current B/C/E/Lean originals use new role; old A58 retains8336/21e Source256 epoch."
+    },
+    "baseline_Source_READ": {
+      "bytes": 6389,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/actual-reviewed-definition-realization-baseline-six-target-Source-READ-v01.json",
+      "sha256": "1bf66a0242ead01ec3da885f88f95ed8bdce4e16b5308a9f198b69f51064f8f8"
+    },
+    "baseline_Source_WRITE": {
+      "bytes": 9267,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/actual-reviewed-definition-realization-baseline-six-target-Source-WRITE-v01.json",
+      "sha256": "b42e67fd0335a52916fbd632e089400c9b680bc57cdba099b28c12d5b4d397ae"
+    },
+    "code_proposal_v03": {
+      "bytes": 13667,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/private-reviewed-definition-realization-source-use-v03/manifest.json",
+      "sha256": "9fc74d608020a836407545028b2e6c64abce0212b0e1e51c5dbfa570605bc4e4"
+    },
+    "current_incremental_order_one_test_amendment": {
+      "Source_READ": {
+        "bytes": 2923,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/actual-reviewed-definition-realization-incremental-order-one-test-Source-READ-v01.json",
+        "sha256": "b0e453ed9df14b5a5c466ef6ac787943a59efa5483c4973674973178cb4e0ed2"
+      },
+      "Source_WRITE": {
+        "bytes": 3398,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/actual-reviewed-definition-realization-incremental-order-one-test-Source-WRITE-v01.json",
+        "sha256": "76b5044275ccc55872429572eee8554bb1f01aaf596b463f409bbf9ab06e5878"
+      },
+      "input": {
+        "bytes": 17270,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/prepared-reviewed-definition-realization-incremental-order-one-test-Source-CAS-input-v01.json",
+        "sha256": "c43c420f808d167d4fb52a2b810e2b4adafa99aa960e7bf62a4f425732820b74"
+      },
+      "manifest": {
+        "bytes": 7686,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/private-reviewed-definition-realization-incremental-module-order-amend-v01/manifest.json",
+        "sha256": "c697bbd334ec1b588d147cacce1f1baa541607173d61e535612b7c986679bf10"
+      },
+      "scope": "One assertion compares sorted complete module populations; no module, obligation, identity, fixture, policy or Product change. Historical A58 keeps original incremental-test epoch58fda1e1."
+    },
+    "exact_current_six_postimages": [
+      {
+        "full9": {
+          "st_ctime_ns": 1794775006529973329,
+          "st_dev": 66306,
+          "st_gid": 1000,
+          "st_ino": 57446334,
+          "st_mode": 33204,
+          "st_mtime_ns": 1794775006517684741,
+          "st_nlink": 1,
+          "st_size": 135507,
+          "st_uid": 1000
+        },
+        "source_ref": {
+          "bytes": 135507,
+          "path": "/tmp/datasets-reviewed-source-use-main-20261115/ipfs_datasets_py/logic/autoformal/legal_corpus_shared_lake.py",
+          "sha256": "b8ad46e1d784f1ac729580cde6c0d4ec20d80df7ae816215b7e367ef919828df"
+        }
+      },
+      {
+        "full9": {
+          "st_ctime_ns": 1794775006536973408,
+          "st_dev": 66306,
+          "st_gid": 1000,
+          "st_ino": 57446314,
+          "st_mode": 33204,
+          "st_mtime_ns": 1794775006534735111,
+          "st_nlink": 1,
+          "st_size": 313683,
+          "st_uid": 1000
+        },
+        "source_ref": {
+          "bytes": 313683,
+          "path": "/tmp/datasets-reviewed-source-use-main-20261115/ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_native_v2.py",
+          "sha256": "edd185d42bec9627cab84d05c3617b00769850c8d6f5104655d5089ea250bd7c"
+        }
+      },
+      {
+        "full9": {
+          "st_ctime_ns": 1794775006543973488,
+          "st_dev": 66306,
+          "st_gid": 1000,
+          "st_ino": 57446018,
+          "st_mode": 33204,
+          "st_mtime_ns": 1794775006541589236,
+          "st_nlink": 1,
+          "st_size": 115699,
+          "st_uid": 1000
+        },
+        "source_ref": {
+          "bytes": 115699,
+          "path": "/tmp/datasets-reviewed-source-use-main-20261115/ipfs_datasets_py/logic/autoformal/legal_corpus_incremental.py",
+          "sha256": "24debeb97181ab0d45cdc35a080e209fcefcc5c7f430e619e3da5bd8393dff41"
+        }
+      },
+      {
+        "full9": {
+          "st_ctime_ns": 1794775006550973567,
+          "st_dev": 66306,
+          "st_gid": 1000,
+          "st_ino": 58200120,
+          "st_mode": 33204,
+          "st_mtime_ns": 1794775006548258656,
+          "st_nlink": 1,
+          "st_size": 178476,
+          "st_uid": 1000
+        },
+        "source_ref": {
+          "bytes": 178476,
+          "path": "/tmp/datasets-reviewed-source-use-main-20261115/tests/unit/logic/autoformal/test_legal_corpus_shared_lake.py",
+          "sha256": "d7ea33e002d316b719b889ed6474a32379b8e2ee3910ffb7de8dbf7a6159e129"
+        }
+      },
+      {
+        "full9": {
+          "st_ctime_ns": 1794775006557973646,
+          "st_dev": 66306,
+          "st_gid": 1000,
+          "st_ino": 58245305,
+          "st_mode": 33204,
+          "st_mtime_ns": 1794775006555666580,
+          "st_nlink": 1,
+          "st_size": 271544,
+          "st_uid": 1000
+        },
+        "source_ref": {
+          "bytes": 271544,
+          "path": "/tmp/datasets-reviewed-source-use-main-20261115/tests/unit/logic/autoformal/test_legal_corpus_definition_use_native_v2.py",
+          "sha256": "205bec94dbf4631742be20289ed2bbc3b547ec5143c766f158e3d7602ac0d6dd"
+        }
+      },
+      {
+        "full9": {
+          "st_ctime_ns": 1794777334968671434,
+          "st_dev": 66306,
+          "st_gid": 1000,
+          "st_ino": 58245306,
+          "st_mode": 33204,
+          "st_mtime_ns": 1794777334965839465,
+          "st_nlink": 1,
+          "st_size": 160429,
+          "st_uid": 1000
+        },
+        "source_ref": {
+          "bytes": 160429,
+          "path": "/tmp/datasets-reviewed-source-use-main-20261115/tests/unit/logic/autoformal/test_legal_corpus_incremental.py",
+          "sha256": "b87d268543cee24ab7e6778ed38ab34f4b10d8f8145246a674a82468fe2990b0"
+        }
+      }
+    ],
+    "feature_Source_CAS_input": {
+      "bytes": 27841,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/prepared-reviewed-definition-realization-feature-six-target-Source-CAS-input-v01.json",
+      "sha256": "57732ebca7dee9ee069a8ba447a1fcba3e071daa02841526a01a41a15becf2ce"
+    },
+    "feature_Source_READ": {
+      "bytes": 6387,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/actual-reviewed-definition-realization-feature-six-target-Source-READ-v01.json",
+      "sha256": "c2523ae6980b7fdaf9a6117c2916aef3d8fbfca5bcc42d0ed9ae45ce00b7894f"
+    },
+    "feature_Source_WRITE": {
+      "bytes": 9260,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/actual-reviewed-definition-realization-feature-six-target-Source-WRITE-v01.json",
+      "sha256": "e0338b9636d6dbc4fe40264a49a636393e98df4b6b0d714e5079ad79dc384a4a"
+    },
+    "historical_receipts_not_retagged": true,
+    "independent_two_CAS_chain_audit": {
+      "bytes": 23460,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/independent-R2-definition-realization-feature-six-Source-chain-static-audit-v01.json",
+      "sha256": "ee05896ef84436c0999b51a27dabef71a2029c2fcb47517ec7958b391bbade4f"
+    },
+    "source_adoption_is_not_test_qualification": true,
+    "test_proposal_v05": {
+      "bytes": 12821,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/private-reviewed-definition-realization-source-use-tests-v05/proposal.json",
+      "sha256": "8406d9bcb282b7eb365d1a757fe4cb8e0c9744c6543cbe1df0c85285e3796949"
+    }
+  },
+  "static_review": {
+    "actual_installed_Lean_tests_among_new_feature_tests": 1,
+    "default_callback_ABI": "Six Shared call sites omit added selector keyword when None; existing no-argument policy callback retained.",
+    "execution_by_documentation_agent": 0,
+    "mode_and_provenance": "No additional blocking mode-flow defect found statically. Final testv05 explicitly checks every selected warm recipe.contract_cid equals saved execution_contract.record_cid.",
+    "new_feature_tests": 24,
+    "scope": "Read-only source/AST and exact candidate hash review; not runtime qualification."
+  },
+  "status": "SELECTED_SOURCE_SCOPED_A58_B1_C6_E2_SOFTWARE_AND_ACTUAL_LEAN3_QUALIFIED_SEPARATELY"
+}
