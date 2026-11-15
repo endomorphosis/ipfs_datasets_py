@@ -278,6 +278,10 @@ __all__ = ["compile_train_relation_masks", "validate_train_relation_mask_handoff
 
 
 REVIEWED_SCHEMA = "alignment-reviewed-train-relation-mask-handoff/v2"
+REVIEWED_V3_SCHEMA = "alignment-reviewed-train-relation-mask-handoff/v3"
+REVIEWED_V3_MODE = "authenticated_reviewed_pair_purpose/v3"
+REVIEWED_V4_SCHEMA = "alignment-reviewed-train-relation-mask-handoff/v4"
+REVIEWED_V4_MODE = "authenticated_reviewed_pair_purpose/v4"
 REVIEWED_MODE = "authenticated_reviewed_pair_purpose/v2"
 
 from pathlib import Path as _ReviewedPath
@@ -296,11 +300,11 @@ def _reviewed_imported_pins():
     return dict(_REVIEWED_IMPORTED_RAW_PINS)
 
 
-def _reviewed_pins():
+def _reviewed_pins(_admission_version="v2"):
     from pathlib import Path
     import hashlib
     imported = _reviewed_imported_pins()
-    pins = relations._reviewed_pins()
+    pins = relations._reviewed_pins(_admission_version)
     for path, digest in imported.items():
         _require(path not in pins or pins[path] == digest, "reviewed pair mask imported producer identity differs")
         pins[path] = digest
@@ -308,7 +312,8 @@ def _reviewed_pins():
     return pins
 
 
-def _reviewed_process_exclusions(prepared, original_inputs, registry, policy, reviews, current_endpoint_reports):
+def _reviewed_process_exclusions(prepared, original_inputs, registry, policy, reviews, current_endpoint_reports,
+        *, _admission_version="v2"):
     """Inventory bounded known custody bytes before accepting independent evidence.
 
     Hash complete ordinary JSON records and exact bytes/text, plus declared
@@ -316,7 +321,7 @@ def _reviewed_process_exclusions(prepared, original_inputs, registry, policy, re
     so their hashes/IDs are not treated as known evidence bodies. Original
     endpoint closures and both vector lanes remain entirely ineligible witnesses.
     """
-    admission = relations._reviewed_owners()[0]
+    admission = relations._reviewed_owners(_admission_version)[0]
     ids, hashes = set(), set()
     remaining_nodes, remaining_bytes = 1500000, admission.norm.MAX_INPUT_BYTES
 
@@ -362,6 +367,12 @@ def _reviewed_process_exclusions(prepared, original_inputs, registry, policy, re
                   original_inputs["expected_source_lane_bindings"], original_inputs["expected_formal_lane_bindings"],
                   original_inputs["split_manifest"], original_inputs["dependency_manifest"], current_endpoint_reports):
         visit(value, True)
+    if _admission_version == "v4":
+        # The complete context inventory is a reviewed input, not independent
+        # process evidence. Harvest its exact bodies and pins as well as the
+        # endpoint admission closures above; never harvest nominated evidence
+        # references merely because the pair declaration names them.
+        visit(prepared["body"]["context_set"], True)
     # These hashes catch aliases of the whole preparation/registry/policy or a
     # signed pair claim without excluding the nominated process-reference pins.
     for value in (prepared, registry, policy, reviews):
@@ -369,10 +380,10 @@ def _reviewed_process_exclusions(prepared, original_inputs, registry, policy, re
     return ids, hashes
 
 
-def compile_reviewed_train_relation_masks_v2(preparation, registry, policy, reviews, *,
+def _compile_reviewed_train_relation_masks(preparation, registry, policy, reviews, *,
         expected_preparation_sha256, preparation_inputs, expected_registry_sha256,
         expected_policy_sha256, expected_reviews_sha256, at_time_utc,
-        observed_artifact_sha256s, observed_pins, evidence_artifacts, current_endpoint_observations):
+        observed_artifact_sha256s, observed_pins, evidence_artifacts, current_endpoint_observations, _admission_version="v2"):
     """Authenticate a separately reviewed directed ledger and explicit purpose.
 
     Endpoint training permission never supplies pair labels. Unknown relations
@@ -383,7 +394,10 @@ def compile_reviewed_train_relation_masks_v2(preparation, registry, policy, revi
     _reviewed_imported_pins()
     relations._reviewed_imported_pins()
     import hashlib
-    admission, auth, _, _, lanes = relations._reviewed_owners()
+    admission, auth, _, _, lanes = relations._reviewed_owners(_admission_version)
+    contract = relations._reviewed_contract(_admission_version)
+    endpoint_version = contract["endpoint_version"]
+    _require(endpoint_version in ("v2", "v3"), "closed reviewed endpoint admission version required")
     original = dict(preparation=preparation, registry=registry, policy=policy, reviews=reviews,
         expected_preparation_sha256=expected_preparation_sha256, preparation_inputs=preparation_inputs,
         expected_registry_sha256=expected_registry_sha256, expected_policy_sha256=expected_policy_sha256,
@@ -391,13 +405,31 @@ def compile_reviewed_train_relation_masks_v2(preparation, registry, policy, revi
         observed_artifact_sha256s=observed_artifact_sha256s, observed_pins=observed_pins,
         evidence_artifacts=evidence_artifacts, current_endpoint_observations=current_endpoint_observations)
     copied, commitment = admission.norm._snapshot(original)
-    pins = _reviewed_pins()
-    checked = relations.validate_reviewed_relation_declaration_v2(copied["preparation"],
+    pins = _reviewed_pins(_admission_version)
+    if _admission_version == "v4":
+        validate_pairs = relations.validate_reviewed_relation_declaration_v4
+        validate_subject = relations._reviewed_subject_v4
+    elif _admission_version == "v3":
+        validate_pairs = relations.validate_reviewed_relation_declaration_v3
+        validate_subject = relations._reviewed_subject_v3
+    else:
+        _require(_admission_version == "v2", "closed reviewed pair admission version required")
+        validate_pairs = relations.validate_reviewed_relation_declaration_v2
+        validate_subject = relations._reviewed_subject
+    checked = validate_pairs(copied["preparation"],
         expected_preparation_sha256=expected_preparation_sha256, **copied["preparation_inputs"])
     body, subject = checked["body"], checked["subject"]
-    domain = auth._ReviewDomain(relations.REVIEWED_SUBJECT_SCHEMA, relations.REVIEWED_CLAIM_SCHEMA,
-        relations.REVIEWED_ACTION, relations.REVIEWED_AUDIENCE,
-        "alignment-reviewed-pair-authority-assessment/v2", relations._reviewed_subject, len(relations.REVIEWED_SLOTS))
+    if _admission_version == "v4":
+        context_set = body["context_set"]
+        context_set_sha256 = relations._reviewed_context_set_sha256(context_set,
+            {"source": checked["source_endpoints"], "formal": checked["formal_endpoints"]})
+        _require(subject["context_set_sha256"] == context_set_sha256
+                 and subject["scope_id"] == "contrastive-context-set:" + context_set_sha256,
+                 "complete cross-context inventory or reviewer scope binding differs")
+    domain = auth._ReviewDomain(contract["subject_schema"], contract["claim_schema"],
+        contract["action"], contract["audience"],
+        "alignment-reviewed-pair-authority-assessment/" + _admission_version,
+        validate_subject, len(contract["slots"]))
     authority = auth._assess_reviews(subject, copied["registry"], copied["policy"], copied["reviews"],
         copied["preparation_inputs"]["dependency_manifest"], domain=domain,
         expected_subject_sha256=auth.digest(subject), expected_manifest_sha256=subject["dependency_manifest_sha256"],
@@ -420,7 +452,9 @@ def compile_reviewed_train_relation_masks_v2(preparation, registry, policy, revi
         _closed(observations, {"observed_artifact_sha256s", "observed_pins"}, "current endpoint dependency observations")
         current_inputs = dict(entry["kwargs"], at_time_utc=at_time_utc,
             observed_artifact_sha256s=observations["observed_artifact_sha256s"], observed_pins=observations["observed_pins"])
-        current = admission.assess_reviewed_norm_admission_v2(*entry["args"], **current_inputs)
+        assess_endpoint = (admission.assess_reviewed_norm_admission_v3 if endpoint_version == "v3"
+                           else admission.assess_reviewed_norm_admission_v2)
+        current = assess_endpoint(*entry["args"], **current_inputs)
         current_endpoint_reports[identity] = current
         current_endpoint_digests[identity] = admission.norm_content_adjudication_sha256(current)
         current_endpoint_blockers[identity] = list(current["blockers"])
@@ -446,7 +480,8 @@ def compile_reviewed_train_relation_masks_v2(preparation, registry, policy, revi
     if evidence.get(body["ledger_id"]) != admission.norm._wire(body):
         blockers.append("exact_whole_pair_ledger_evidence_missing_or_changed")
     forbidden_ids, forbidden_sha = _reviewed_process_exclusions(checked, copied["preparation_inputs"],
-        copied["registry"], copied["policy"], copied["reviews"], current_endpoint_reports)
+        copied["registry"], copied["policy"], copied["reviews"], current_endpoint_reports,
+        _admission_version=_admission_version)
 
     def independent(ref):
         raw = evidence.get(ref["artifact_id"])
@@ -485,8 +520,10 @@ def compile_reviewed_train_relation_masks_v2(preparation, registry, policy, revi
     if missing_columns: objective_blockers.append("missing_positive_columns")
     ready = verified and not missing_rows and not missing_columns
     fixture = body["provenance_kind"] == "fictional_fixture"
-    report = {"schema": REVIEWED_SCHEMA, "profile": relations.REVIEWED_PROFILE,
-        "mode": REVIEWED_MODE if verified else UNAVAILABLE, "status": "reviewed_objective_mask_ready" if ready else "mask_preflight_blocked",
+    report_schemas = {"v2": REVIEWED_SCHEMA, "v3": REVIEWED_V3_SCHEMA, "v4": REVIEWED_V4_SCHEMA}
+    report_modes = {"v2": REVIEWED_MODE, "v3": REVIEWED_V3_MODE, "v4": REVIEWED_V4_MODE}
+    report = {"schema": report_schemas[_admission_version], "profile": contract["profile"],
+        "mode": report_modes[_admission_version] if verified else UNAVAILABLE, "status": "reviewed_objective_mask_ready" if ready else "mask_preflight_blocked",
         "preparation_sha256": expected_preparation_sha256, "body_sha256": checked["body_sha256"],
         "ordered_endpoint_sha256": checked["ordered_endpoint_sha256"],
         "source_endpoints": source, "formal_endpoints": formal,
@@ -518,30 +555,203 @@ def compile_reviewed_train_relation_masks_v2(preparation, registry, policy, revi
         "human_identity_and_competence_verified": False, "evaluation_clock_authenticated": False,
         "registry_freshness_authenticated": False, "graph_admitted": False, "Lean_admitted": False,
         "proof_authority": False, "training_executed": False, "model_executed": False}
+    if _admission_version == "v4":
+        report.update(context_set=context_set, context_set_sha256=context_set_sha256,
+                      endpoint_admission_version=endpoint_version,
+                      legal_applicability_verified=False, controlling_authority=False)
     report["content_sha256"] = admission.norm_content_adjudication_sha256(report)
     _require(admission.norm._snapshot(original)[1] == commitment and admission.norm._snapshot(copied)[1] == commitment,
              "reviewed pair mask inputs changed during operation")
-    _require(_reviewed_pins() == pins, "reviewed pair mask source owners changed during operation")
+    _require(_reviewed_pins(_admission_version) == pins, "reviewed pair mask source owners changed during operation")
     return json.loads(admission.norm._wire(report))
 
 
-def validate_reviewed_train_relation_masks_v2(receipt, *args, expected_receipt_sha256, **kwargs):
+def _validate_reviewed_train_relation_masks(receipt, *args, expected_receipt_sha256, _admission_version="v2", **kwargs):
     """Recompute whole-ledger authority and all masks; saved flags confer none."""
     _reviewed_imported_pins()
     relations._reviewed_imported_pins()
-    admission = relations._reviewed_owners()[0]
+    admission = relations._reviewed_owners(_admission_version)[0]
     original = {"receipt": receipt, "args": list(args), "kwargs": kwargs}
     copied, commitment = admission.norm._snapshot(original)
-    pins = _reviewed_pins()
+    pins = _reviewed_pins(_admission_version)
     _sha(expected_receipt_sha256, "reviewed pair mask receipt")
     _require(admission.norm_content_adjudication_sha256(copied["receipt"]) == expected_receipt_sha256,
              "independent complete reviewed pair mask receipt differs")
-    expected = compile_reviewed_train_relation_masks_v2(*copied["args"], **copied["kwargs"])
+    expected = _compile_reviewed_train_relation_masks(*copied["args"], **copied["kwargs"], _admission_version=_admission_version)
     _require(admission.norm._same(copied["receipt"], expected), "reviewed pair mask receipt differs from complete replay")
     _require(admission.norm._snapshot(original)[1] == commitment and admission.norm._snapshot(copied)[1] == commitment,
              "reviewed pair mask validation inputs changed during operation")
-    _require(_reviewed_pins() == pins, "reviewed pair mask source owners changed during validation")
+    _require(_reviewed_pins(_admission_version) == pins, "reviewed pair mask source owners changed during validation")
     return expected
 
 
 __all__ += ["compile_reviewed_train_relation_masks_v2", "validate_reviewed_train_relation_masks_v2", "REVIEWED_SCHEMA"]
+
+
+
+def compile_reviewed_train_relation_masks_v2(
+        preparation,
+        registry,
+        policy,
+        reviews,
+        *,
+        expected_preparation_sha256,
+        preparation_inputs,
+        expected_registry_sha256,
+        expected_policy_sha256,
+        expected_reviews_sha256,
+        at_time_utc,
+        observed_artifact_sha256s,
+        observed_pins,
+        evidence_artifacts,
+        current_endpoint_observations,
+):
+    'Replay the fixed V2 reviewed pair domain through the canonical shared owner.'
+    return _compile_reviewed_train_relation_masks(
+        preparation,
+        registry,
+        policy,
+        reviews,
+        expected_preparation_sha256=expected_preparation_sha256,
+        preparation_inputs=preparation_inputs,
+        expected_registry_sha256=expected_registry_sha256,
+        expected_policy_sha256=expected_policy_sha256,
+        expected_reviews_sha256=expected_reviews_sha256,
+        at_time_utc=at_time_utc,
+        observed_artifact_sha256s=observed_artifact_sha256s,
+        observed_pins=observed_pins,
+        evidence_artifacts=evidence_artifacts,
+        current_endpoint_observations=current_endpoint_observations,
+        _admission_version='v2',
+    )
+
+
+def compile_reviewed_train_relation_masks_v3(
+        preparation,
+        registry,
+        policy,
+        reviews,
+        *,
+        expected_preparation_sha256,
+        preparation_inputs,
+        expected_registry_sha256,
+        expected_policy_sha256,
+        expected_reviews_sha256,
+        at_time_utc,
+        observed_artifact_sha256s,
+        observed_pins,
+        evidence_artifacts,
+        current_endpoint_observations,
+):
+    'Replay the fixed V3 reviewed pair domain through the canonical shared owner.'
+    return _compile_reviewed_train_relation_masks(
+        preparation,
+        registry,
+        policy,
+        reviews,
+        expected_preparation_sha256=expected_preparation_sha256,
+        preparation_inputs=preparation_inputs,
+        expected_registry_sha256=expected_registry_sha256,
+        expected_policy_sha256=expected_policy_sha256,
+        expected_reviews_sha256=expected_reviews_sha256,
+        at_time_utc=at_time_utc,
+        observed_artifact_sha256s=observed_artifact_sha256s,
+        observed_pins=observed_pins,
+        evidence_artifacts=evidence_artifacts,
+        current_endpoint_observations=current_endpoint_observations,
+        _admission_version='v3',
+    )
+
+
+def validate_reviewed_train_relation_masks_v2(
+        receipt,
+        *args,
+        expected_receipt_sha256,
+        **kwargs,
+):
+    'Replay the fixed V2 reviewed pair domain through the canonical shared owner.'
+    return _validate_reviewed_train_relation_masks(
+        receipt,
+        *args,
+        expected_receipt_sha256=expected_receipt_sha256,
+        **kwargs,
+        _admission_version='v2',
+    )
+
+
+def validate_reviewed_train_relation_masks_v3(
+        receipt,
+        *args,
+        expected_receipt_sha256,
+        **kwargs,
+):
+    'Replay the fixed V3 reviewed pair domain through the canonical shared owner.'
+    return _validate_reviewed_train_relation_masks(
+        receipt,
+        *args,
+        expected_receipt_sha256=expected_receipt_sha256,
+        **kwargs,
+        _admission_version='v3',
+    )
+
+
+__all__ += ["compile_reviewed_train_relation_masks_v3", "validate_reviewed_train_relation_masks_v3"]
+
+__all__ += ["REVIEWED_V3_SCHEMA", "REVIEWED_V3_MODE"]
+
+
+def compile_reviewed_train_relation_masks_v4(
+        preparation,
+        registry,
+        policy,
+        reviews,
+        *,
+        expected_preparation_sha256,
+        preparation_inputs,
+        expected_registry_sha256,
+        expected_policy_sha256,
+        expected_reviews_sha256,
+        at_time_utc,
+        observed_artifact_sha256s,
+        observed_pins,
+        evidence_artifacts,
+        current_endpoint_observations,
+):
+    'Replay the fixed V4 cross-context reviewed pair domain through the canonical shared owner.'
+    return _compile_reviewed_train_relation_masks(
+        preparation,
+        registry,
+        policy,
+        reviews,
+        expected_preparation_sha256=expected_preparation_sha256,
+        preparation_inputs=preparation_inputs,
+        expected_registry_sha256=expected_registry_sha256,
+        expected_policy_sha256=expected_policy_sha256,
+        expected_reviews_sha256=expected_reviews_sha256,
+        at_time_utc=at_time_utc,
+        observed_artifact_sha256s=observed_artifact_sha256s,
+        observed_pins=observed_pins,
+        evidence_artifacts=evidence_artifacts,
+        current_endpoint_observations=current_endpoint_observations,
+        _admission_version='v4',
+    )
+
+
+def validate_reviewed_train_relation_masks_v4(
+        receipt,
+        *args,
+        expected_receipt_sha256,
+        **kwargs,
+):
+    'Replay the fixed V4 cross-context reviewed pair domain through the canonical shared owner.'
+    return _validate_reviewed_train_relation_masks(
+        receipt,
+        *args,
+        expected_receipt_sha256=expected_receipt_sha256,
+        **kwargs,
+        _admission_version='v4',
+    )
+
+
+__all__ += ["compile_reviewed_train_relation_masks_v4", "validate_reviewed_train_relation_masks_v4",
+            "REVIEWED_V4_SCHEMA", "REVIEWED_V4_MODE"]

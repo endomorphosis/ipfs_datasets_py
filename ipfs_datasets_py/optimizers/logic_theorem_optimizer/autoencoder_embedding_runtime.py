@@ -328,6 +328,8 @@ def produce_native_embedding_receipt(inputs: Sequence, *, resolver,
                 torch.manual_seed(0)
                 model = sentence_transformers.SentenceTransformer(
                     str(snapshot), local_files_only=True, trust_remote_code=False, device="cpu")
+                # Published storage may be float16; the existing execution contract is float32.
+                model.float()
                 model.eval()
                 _validate_model(model, torch)
                 results = _produce_results(selected, model, torch, batch_size=batch_size,

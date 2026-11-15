@@ -167,3 +167,106 @@ def test_returned_observations_are_detached_and_unchanged_artifacts_are_only_con
     assert result["observed_pins"]["policy"]["policy:a"] == "b" * 64
     assert result["reusable_under_declared_dependencies"] == ["a"]
     assert all(result[key] is False for key in subject._FALSE)
+
+
+def component_dependency_case_v2(*, declared=None):
+    """Reuse the graph owner's complete fictional component/import fixture."""
+    from tests.unit.logic.autoformal import test_corpus_graph as graph_fixture
+    case = graph_fixture.component_case_v2()
+    arguments = dict(expected_composition_cid=case["graph"]["record_cid"], expected_components=case["pins"])
+    value = subject.build_component_dependency_manifest_v2(case["graph"],
+        declared_dependencies=[] if declared is None else declared, **arguments)
+    return case, value, dict(expected_manifest_sha256=value["manifest_sha256"], **arguments)
+
+
+def test_component_dependency_v2_keeps_every_competing_import_and_existing_reverse_direction():
+    case, value, arguments = component_dependency_case_v2()
+    assert [row["artifact_id"] for row in value["dependency_manifest"]["artifacts"]] == [
+        row["component_id"] for row in case["pins"]]
+    assert [row["import_cid"] for row in value["import_dependencies"]] == [row["record_cid"] for row in case["imports"]]
+    assert value["dependency_manifest"]["edges"] == [edge("component-0", "component-1"),
+        edge("component-0", "component-2"), edge("component-1", "component-2")]
+    current = observations(value["dependency_manifest"])
+    current.pop("expected_manifest_sha256")
+    result = subject.invalidate_component_dependencies_v2(value, case["graph"], **arguments, **current)
+    assert result["invalidation"]["stale_artifact_ids"] == []
+    assert result["disposition"] == "unchanged_declared_dependencies_only"
+    assert result["review_state_evaluation_performed"] is False
+    assert all(result[key] is False for key in subject._FALSE)
+    assert subject.validate_component_invalidation_v2(result, value, case["graph"], **arguments, **current) == result
+
+
+@pytest.mark.parametrize("changed", ["snapshot", "revoked_review", "unavailable_component"])
+def test_component_dependency_v2_changed_or_revoked_inputs_invalidate_all_users_without_selecting_a_definition(changed):
+    case, value, arguments = component_dependency_case_v2()
+    current = observations(value["dependency_manifest"])
+    current.pop("expected_manifest_sha256")
+    if changed == "snapshot": current["observed_pins"]["source"]["component-2:snapshot"] = "b" * 64
+    elif changed == "revoked_review": current["observed_pins"]["context"]["component-2:review-inputs"] = "c" * 64
+    else: current["observed_artifact_sha256s"]["component-2"] = None
+    result = subject.invalidate_component_dependencies_v2(value, case["graph"], **arguments, **current)
+    assert result["invalidation"]["seed_artifact_ids"] == ["component-2"]
+    assert result["invalidation"]["stale_artifact_ids"] == ["component-0", "component-1", "component-2"]
+    assert result["import_dependencies"] == value["import_dependencies"]
+    assert case["graph"]["components"][1]["review_inputs"]["state"] == "revoked"
+
+
+def test_component_dependency_v2_missing_declared_dependency_and_cycle_remain_explicit_without_hop_cutoff():
+    declared = [edge("component-2", "missing-current-context"), edge("component-2", "component-0")]
+    case, value, arguments = component_dependency_case_v2(declared=declared)
+    assert value["declared_dependencies"] == declared
+    current = observations(value["dependency_manifest"])
+    current.pop("expected_manifest_sha256")
+    result = subject.invalidate_component_dependencies_v2(value, case["graph"], **arguments, **current)
+    assert result["invalidation"]["missing_dependencies"] == [declared[0]]
+    assert result["invalidation"]["cycles"] == [["component-0", "component-1", "component-2"]]
+    assert result["invalidation"]["stale_artifact_ids"] == ["component-0", "component-1", "component-2"]
+    assert result["disposition"] == "declared_dependencies_missing"
+
+
+@pytest.mark.parametrize("damage", ["drop_import", "drop_competing", "review_pin", "reverse_index", "authority"])
+def test_component_dependency_v2_resealed_foreign_or_incomplete_manifest_cannot_replace_independent_pin(damage):
+    case, value, arguments = component_dependency_case_v2()
+    bad = deepcopy(value)
+    if damage == "drop_import": bad["import_dependencies"].pop()
+    elif damage == "drop_competing": bad["dependency_manifest"]["edges"].pop(1)
+    elif damage == "review_pin": bad["component_pins"][0]["review_sha256"] = "b" * 64
+    elif damage == "reverse_index": bad["dependency_manifest"]["reverse_index"]["component-2"] = []
+    else: bad["admitted"] = True
+    bad["manifest_sha256"] = subject._digest({key: item for key, item in bad.items() if key != "manifest_sha256"})
+    with pytest.raises(subject.GraphDependencyError, match="independent identity"):
+        subject.validate_component_dependency_manifest_v2(bad, case["graph"], **arguments)
+    changed_arguments = dict(arguments, expected_manifest_sha256=bad["manifest_sha256"])
+    with pytest.raises(subject.GraphDependencyError, match="exact regeneration"):
+        subject.validate_component_dependency_manifest_v2(bad, case["graph"], **changed_arguments)
+
+
+@pytest.mark.parametrize("damage", ["foreign_observation", "omit_observation", "foreign_pin", "unbound_pin"])
+def test_component_dependency_v2_observation_contract_remains_complete_and_closed(damage):
+    case, value, arguments = component_dependency_case_v2()
+    current = observations(value["dependency_manifest"])
+    current.pop("expected_manifest_sha256")
+    if damage == "foreign_observation": current["observed_artifact_sha256s"]["foreign"] = "a" * 64
+    elif damage == "omit_observation": current["observed_artifact_sha256s"].pop("component-2")
+    elif damage == "foreign_pin": current["observed_pins"]["definition"]["foreign"] = "b" * 64
+    else: current["observed_pins"]["context"].pop("component-2:review-inputs")
+    if damage == "unbound_pin":
+        result = subject.invalidate_component_dependencies_v2(value, case["graph"], **arguments, **current)
+        assert result["invalidation"]["stale_artifact_ids"] == ["component-0", "component-1", "component-2"]
+    else:
+        with pytest.raises(subject.GraphDependencyError):
+            subject.invalidate_component_dependencies_v2(value, case["graph"], **arguments, **current)
+
+
+@pytest.mark.parametrize("damage", ["duplicate", "foreign_dependent", "artifact_bound", "edge_bound"])
+def test_component_dependency_v2_bounds_and_declared_population_never_filter(damage, monkeypatch):
+    from tests.unit.logic.autoformal import test_corpus_graph as graph_fixture
+    case = graph_fixture.component_case_v2()
+    declared = [edge("component-0", "missing")]
+    if damage == "duplicate": declared.append(dict(declared[0]))
+    elif damage == "foreign_dependent": declared[0]["dependent_id"] = "omitted"
+    elif damage == "artifact_bound": monkeypatch.setattr(subject, "MAX_ARTIFACTS", 2)
+    else: monkeypatch.setattr(subject, "MAX_EDGES", 2)
+    with pytest.raises(subject.GraphDependencyError):
+        subject.build_component_dependency_manifest_v2(case["graph"], declared_dependencies=declared,
+            expected_composition_cid=case["graph"]["record_cid"], expected_components=case["pins"])

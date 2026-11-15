@@ -35,9 +35,73 @@ from ipfs_datasets_py.processors.domains.uspto.portfolio_automation import (
 PRIOR_ART_CLIENT_SCHEMA: Final = "patlaw-prior-art-search-client-v1"
 PRIOR_ART_RUN_MANIFEST: Final = "run_manifest.json"
 
+# Accept OCR variants: "1.", "1)", "1:", and "9," (comma misread of period).
 CLAIM_NUM_RE = re.compile(
-    r"(?im)^\s*(?:claim\s+)?(\d+)[\.\):]\s*(.+?)(?=^\s*(?:claim\s+)?\d+[\.\):]|\Z)",
+    r"(?im)^\s*(?:claim\s+)?(\d+)[\.\),:]\s*(.+?)(?=^\s*(?:claim\s+)?\d+[\.\),:]|\Z)",
     re.DOTALL,
+)
+# OCR often drops the leading "3." leaving "The method of claim 2, …"
+_ORPHAN_DEPENDENT_RE = re.compile(
+    r"(?im)^\s*((?:The\s+)?(?:method|system|apparatus|device|kit|composition)"
+    r"\s+of\s+claim\s+(\d+)\b.*?)(?=^\s*(?:claim\s+)?\d+[\.\):]|^\s*(?:The\s+)?"
+    r"(?:method|system|apparatus|device|kit|composition)\s+of\s+claim\s+\d+|\Z)",
+    re.DOTALL,
+)
+_ODP_STOPWORDS = frozenset(
+    {
+        "a",
+        "an",
+        "the",
+        "and",
+        "or",
+        "for",
+        "with",
+        "from",
+        "into",
+        "onto",
+        "to",
+        "of",
+        "in",
+        "on",
+        "by",
+        "at",
+        "as",
+        "is",
+        "are",
+        "be",
+        "been",
+        "being",
+        "that",
+        "this",
+        "these",
+        "those",
+        "method",
+        "system",
+        "device",
+        "apparatus",
+        "comprising",
+        "including",
+        "wherein",
+        "whereby",
+        "claim",
+        "claims",
+        "said",
+        "least",
+        "one",
+        "first",
+        "second",
+        "third",
+        "plurality",
+        "configured",
+        "between",
+        "about",
+        "such",
+        "further",
+        "having",
+        "using",
+        "provided",
+        "providing",
+    }
 )
 
 PRIOR_ART_DISCLAIMER_SHORT: Final = (
@@ -101,20 +165,105 @@ def _read_json(path: Path) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 
+_EMBEDDED_DEPENDENT_RE = re.compile(
+    r"(?i)\b((?:The\s+)?(?:method|system|apparatus|device|kit|composition)"
+    r"\s+of\s+claim\s+(\d+)\b.+)$",
+    re.DOTALL,
+)
+
+
+def _split_embedded_orphan_dependents(
+    claims: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Split OCR-merged dependents out of a previous claim's body.
+
+    When OCR drops ``3.``, claim 2's capture often includes
+    ``The method of claim 2, …`` which is actually claim 3.
+    """
+    if not claims:
+        return []
+    used = {int(c["claim_number"]) for c in claims}
+    out: list[dict[str, Any]] = []
+    for claim in claims:
+        text = str(claim.get("claim_text") or "").strip()
+        num = int(claim["claim_number"])
+        # Look for a second claim-preamble inside this body (after some content).
+        # Prefer splits that start a new dependent preamble mid-string.
+        m = re.search(
+            r"(?i)([.\;])\s+((?:The\s+)?(?:method|system|apparatus|device|kit|"
+            r"composition)\s+of\s+claim\s+(\d+)\b[\s\S]+)$",
+            text,
+        )
+        if not m:
+            # Also handle no punctuation: newline-ish collapse already spaces
+            m = re.search(
+                r"(?i)\s{0,1}((?:The\s+)?(?:method|system|apparatus|device|kit|"
+                r"composition)\s+of\s+claim\s+(\d+)\b[\s\S]+)$",
+                text[40:] if len(text) > 80 else "",
+            )
+            if m:
+                # Adjust: group1 is claim text for orphan, group2 parent
+                orphan_text = " ".join(m.group(1).split()).strip()
+                parent = int(m.group(2))
+                head = text[: len(text) - len(m.group(0)) + (40 if len(text) > 80 else 0)].strip()
+                # recompute head more carefully
+                idx = text.lower().rfind(m.group(1)[:40].lower())
+                if idx > 20:
+                    head = text[:idx].strip(" ;,.")
+                    orphan_text = " ".join(text[idx:].split()).strip()
+                    parent = int(
+                        re.search(r"claim\s+(\d+)", orphan_text, re.I).group(1)  # type: ignore[union-attr]
+                    )
+                else:
+                    out.append(claim)
+                    continue
+            else:
+                out.append(claim)
+                continue
+        else:
+            head = (text[: m.start(2)]).strip(" ;,.")
+            orphan_text = " ".join(m.group(2).split()).strip()
+            parent = int(m.group(3))
+
+        if len(head) < 20 or len(orphan_text) < 20:
+            out.append(claim)
+            continue
+        out.append({"claim_number": num, "claim_text": " ".join(head.split()).strip()})
+        cand = parent + 1
+        while cand in used:
+            cand += 1
+        used.add(cand)
+        out.append({"claim_number": cand, "claim_text": orphan_text})
+    out.sort(key=lambda c: int(c["claim_number"]))
+    return out
+
+
 def parse_claims_text(text: str) -> list[dict[str, Any]]:
-    """Parse numbered claim text into ``[{claim_number, claim_text}, ...]``."""
+    """Parse numbered claim text into ``[{claim_number, claim_text}, ...]``.
+
+    Handles common OCR failures where a dependent claim loses its leading
+    number (``The method of claim 2, …``) and is glued onto the previous claim.
+    """
     body = str(text or "").strip()
     if not body:
         return []
     matches = list(CLAIM_NUM_RE.finditer(body))
+    out: list[dict[str, Any]] = []
     if matches:
-        out: list[dict[str, Any]] = []
         for m in matches:
             ctext = " ".join(m.group(2).split()).strip()
             if ctext:
                 out.append({"claim_number": int(m.group(1)), "claim_text": ctext})
         if out:
+            # Peel OCR-glued dependents out of prior claim bodies (often
+            # repeated once or twice for claims 3, 9, …).
+            for _ in range(3):
+                split = _split_embedded_orphan_dependents(out)
+                if len(split) == len(out):
+                    break
+                out = split
             return out
+
     # Single unnumbered claim block
     collapsed = " ".join(body.split()).strip()
     if collapsed:
@@ -202,6 +351,21 @@ def load_export_temporal_anchors(
     app = _normalize_app(application_number)
     root = Path(state_root) if state_root is not None else default_state_root()
     candidates = [
+        root / "exports" / app / "patent_center_ui" / "metadata" / "application_data.json",
+        root / "exports" / app / "patent_center_ui" / "metadata" / "application_data_v2.json",
+        root
+        / "exports"
+        / app
+        / "patent_center_ui"
+        / "metadata"
+        / "public_application_data.json",
+        root
+        / "exports"
+        / "messages_correspondence"
+        / "applications"
+        / app
+        / "metadata"
+        / "application_data.json",
         root
         / "exports"
         / app
@@ -264,15 +428,183 @@ def load_export_temporal_anchors(
             or data.get("inventionTitle")
             or ""
         ).strip()
+        # CPC / IPC seeds when present on bib data
+        class_codes: list[str] = []
+        for key in (
+            "cpcClassificationBag",
+            "cpcClassifications",
+            "classifications",
+            "ipcClassificationBag",
+        ):
+            bag = meta.get(key) or data.get(key)
+            if isinstance(bag, list):
+                for item in bag:
+                    if isinstance(item, Mapping):
+                        code = str(
+                            item.get("classificationSymbolText")
+                            or item.get("symbol")
+                            or item.get("code")
+                            or ""
+                        ).strip()
+                        if code:
+                            class_codes.append(code)
+                    elif item:
+                        class_codes.append(str(item).strip())
+            elif isinstance(bag, str) and bag.strip():
+                class_codes.append(bag.strip())
+        # USPC class/subclass (e.g. class 340, subclass 539130) is NOT CPC.
+        # Do not invent "340/539130" as a CPC seed — it pollutes ODP queries.
+        # Prefer real CPC/IPC bags already collected above.
         if filing:
             out["filing_date"] = filing
         if priority:
             out["priority_date"] = priority
         if title:
             out["invention_title"] = title
+        if class_codes:
+            out["classifications"] = ",".join(dict.fromkeys(class_codes))
         out["source_path"] = str(path)
         break
     return out
+
+
+def discover_export_claims_sources(
+    application_number: str,
+    *,
+    state_root: Path | None = None,
+) -> list[Path]:
+    """Locate claim text sources under exports / GraphRAG extracts."""
+    app = _normalize_app(application_number)
+    root = Path(state_root) if state_root is not None else default_state_root()
+    candidates: list[Path] = []
+    # GraphRAG OCR extracts (prefer clean CLM_*.txt over app-prefixed mirrors)
+    graphrag = root / "graphrag"
+    if graphrag.is_dir():
+        # Prefer full builds, then latest by mtime
+        builds = sorted(
+            [p for p in graphrag.iterdir() if p.is_dir()],
+            key=lambda p: p.stat().st_mtime,
+            reverse=True,
+        )
+        for build in builds:
+            ext = build / "extracted_text" / app
+            if not ext.is_dir():
+                continue
+            for p in sorted(ext.glob("CLM*.txt")):
+                candidates.append(p)
+            for p in sorted(ext.glob(f"{app}_CLM*.txt")):
+                candidates.append(p)
+    # Raw export PDFs' sibling extracted text is not always present; also try
+    # package JSON claims if any.
+    for base in (
+        root / "exports" / app / "patent_center_ui",
+        root / "exports" / "messages_correspondence" / "applications" / app,
+    ):
+        for p in base.rglob("*claims*.json"):
+            candidates.append(p)
+        for p in base.rglob("CLM*.txt"):
+            candidates.append(p)
+    # de-dupe preserving order
+    seen: set[str] = set()
+    out: list[Path] = []
+    for p in candidates:
+        key = str(p.resolve()) if p.exists() else str(p)
+        if key in seen:
+            continue
+        if p.is_file():
+            seen.add(key)
+            out.append(p)
+    return out
+
+
+def select_prior_art_claims(
+    claims: Sequence[Mapping[str, Any]],
+    *,
+    max_claims: int = 8,
+    independent_only: bool = True,
+) -> list[dict[str, Any]]:
+    """Prefer independent claims and cap count for plan size limits."""
+    parsed = load_claims(claims=list(claims)) if claims else []
+    if independent_only:
+        indep = [
+            c
+            for c in parsed
+            if not re.search(r"\bof claim\s+\d+\b", c["claim_text"], re.I)
+        ]
+        if indep:
+            parsed = indep
+    return parsed[: max(1, int(max_claims))]
+
+
+def load_claims_from_exports(
+    application_number: str,
+    *,
+    state_root: Path | None = None,
+    max_claims: int = 8,
+    independent_only: bool = True,
+) -> dict[str, Any]:
+    """Auto-load claims from GraphRAG OCR / export artifacts.
+
+    Returns ``{ok, claims, source_path, claim_count, warnings}``.
+    Defaults to **independent claims only** (capped) so search plans stay
+    under limitation/query bounds.
+    """
+    app = _normalize_app(application_number)
+    warnings: list[str] = []
+    for path in discover_export_claims_sources(app, state_root=state_root):
+        try:
+            if path.suffix.lower() in {".json", ".jsonl"}:
+                claims = load_claims(claims_file=path)
+            else:
+                raw = path.read_text(encoding="utf-8", errors="replace")
+                # OCR noise cleanup: drop pure garbage lines
+                lines = []
+                for line in raw.splitlines():
+                    s = line.strip()
+                    if not s:
+                        continue
+                    # Keep claim-ish lines and body
+                    if re.search(r"[A-Za-z]{3,}", s):
+                        lines.append(s)
+                cleaned = "\n".join(lines)
+                claims = parse_claims_text(cleaned)
+            if not claims:
+                warnings.append(f"empty_parse:{path.name}")
+                continue
+            full_count = len(claims)
+            claims = select_prior_art_claims(
+                claims,
+                max_claims=max_claims,
+                independent_only=independent_only,
+            )
+            if full_count > len(claims):
+                warnings.append(
+                    f"truncated_claims:{full_count}->{len(claims)}"
+                    f"{'_independent' if independent_only else ''}"
+                )
+            return {
+                "ok": True,
+                "application_number": app,
+                "claims": claims,
+                "claim_count": len(claims),
+                "source_path": str(path),
+                "warnings": warnings,
+            }
+        except PriorArtSearchClientError as exc:
+            warnings.append(f"{path.name}:{exc.code}")
+            continue
+        except Exception as exc:  # noqa: BLE001
+            warnings.append(f"{path.name}:{type(exc).__name__}")
+            continue
+    return {
+        "ok": False,
+        "application_number": app,
+        "claims": [],
+        "claim_count": 0,
+        "source_path": None,
+        "warnings": warnings or ["no_claims_source_found"],
+        "error": "no_claims_found_in_exports",
+    }
 
 
 def _date_only(value: Any) -> str:
@@ -919,9 +1251,32 @@ def plan_prior_art(
     """Build (and optionally persist) a prior-art search plan only."""
     app = _normalize_app(application_number)
     root = Path(state_root) if state_root is not None else default_state_root()
-    claim_list = load_claims(
-        claims=claims, claims_file=claims_file, claims_text=claims_text
-    )
+    claims_source: str | None = None
+    try:
+        claim_list = load_claims(
+            claims=claims, claims_file=claims_file, claims_text=claims_text
+        )
+        if claims_file:
+            claims_source = str(claims_file)
+        elif claims_text:
+            claims_source = "claims_text"
+        else:
+            claims_source = "claims_arg"
+    except PriorArtSearchClientError as exc:
+        if exc.code != "missing_claims":
+            raise
+        auto = load_claims_from_exports(
+            app, state_root=root, max_claims=8, independent_only=True
+        )
+        if not auto.get("ok"):
+            raise PriorArtSearchClientError(
+                "pass claims, --claims-file, --claims-text, or export/OCR claims "
+                f"(CLM_*.txt under graphrag extracts); tried exports: "
+                f"{auto.get('warnings')}",
+                code="missing_claims",
+            ) from exc
+        claim_list = list(auto.get("claims") or [])
+        claims_source = str(auto.get("source_path") or "exports_auto")
     anchors = load_export_temporal_anchors(app, state_root=root)
     filing = _date_only(filing_date) or anchors.get("filing_date") or ""
     priority = (
@@ -934,19 +1289,27 @@ def plan_prior_art(
             "filing_date required (pass --filing-date or export application_data first)",
             code="missing_filing_date",
         )
+    class_list = list(classifications or ())
+    if not class_list and anchors.get("classifications"):
+        class_list = [
+            c.strip()
+            for c in str(anchors["classifications"]).split(",")
+            if c.strip()
+        ]
 
     plan = build_operator_prior_art_plan(
         application_number=app,
         claims=claim_list,
         filing_date=filing,
         priority_date=priority,
-        classifications=classifications,
+        classifications=class_list,
         rank_cutoff=rank_cutoff,
         citation_seed_document_ids=citation_seeds,
         family_seed_document_ids=family_seeds,
         metadata={
             "invention_title": anchors.get("invention_title") or "",
             "anchor_source": anchors.get("source_path") or "cli",
+            "claims_source": claims_source or "",
         },
     )
 
@@ -960,6 +1323,8 @@ def plan_prior_art(
         "filing_date": plan.filing_date,
         "priority_date": plan.priority_date,
         "search_date_utc": plan.search_date_utc,
+        "claim_count": len(claim_list),
+        "claims_source": claims_source,
         "query_count": len(plan.queries),
         "limitation_count": len(plan.limitations),
         "keyword_count": len(plan.keywords),
@@ -1122,15 +1487,38 @@ def search_prior_art(
         rank_cutoff=rank_cutoff,
     )
 
-    # Optionally bound query count for live ODP cost control (keep foreign/NPL
-    # tails when present by preferring US queries first then coverage mirrors).
+    # Optionally bound query count for live ODP cost control. Prefer keeping
+    # at least some foreign/NPL coverage mirrors — a naive [:max_queries] cut
+    # after augment_plan_for_coverage drops all NPL/foreign queries because
+    # they are appended after US limitation queries.
     if max_queries is not None and max_queries > 0 and len(plan.queries) > max_queries:
-        d = plan.to_dict()
-        d["queries"] = [q.to_dict() for q in list(plan.queries)[: int(max_queries)]]
         from ipfs_datasets_py.processors.domains.patent.prior_art import (
             PriorArtSearchPlan,
         )
 
+        cap = int(max_queries)
+        us_q = [
+            q
+            for q in plan.queries
+            if not str(q.query_id).startswith(("q-foreign-", "q-npl-"))
+        ]
+        foreign_q = [
+            q for q in plan.queries if str(q.query_id).startswith("q-foreign-")
+        ]
+        npl_q = [q for q in plan.queries if str(q.query_id).startswith("q-npl-")]
+        # Reserve up to 1/4 slots each for foreign and NPL when enabled.
+        n_foreign = min(len(foreign_q), max(1, cap // 4) if foreign_q else 0)
+        n_npl = min(len(npl_q), max(1, cap // 4) if npl_q else 0)
+        n_us = max(1, cap - n_foreign - n_npl)
+        kept = list(us_q[:n_us]) + list(foreign_q[:n_foreign]) + list(npl_q[:n_npl])
+        # If still under cap (e.g. few coverage queries), fill with more US.
+        if len(kept) < cap:
+            for q in us_q[n_us:]:
+                if len(kept) >= cap:
+                    break
+                kept.append(q)
+        d = plan.to_dict()
+        d["queries"] = [q.to_dict() for q in kept[:cap]]
         plan = PriorArtSearchPlan.from_dict(d)
 
     extra = list(registry.as_runtime_adapters().values())
@@ -1467,8 +1855,10 @@ __all__ = [
     "build_operator_runtime",
     "claim_chart_from_journal",
     "distinguishability_summary",
+    "discover_export_claims_sources",
     "list_prior_art_runs",
     "load_claims",
+    "load_claims_from_exports",
     "load_export_temporal_anchors",
     "load_local_snapshot_documents",
     "parse_claims_text",
@@ -1476,5 +1866,9 @@ __all__ = [
     "prior_art_app_dir",
     "prior_art_root",
     "search_prior_art",
+    "select_prior_art_claims",
     "show_prior_art_run",
 ]
+
+
+__all__ = ['PRIOR_ART_CLIENT_SCHEMA', 'PRIOR_ART_DISCLAIMER_SHORT', 'PriorArtRunResult', 'PriorArtSearchClientError', 'attach_prior_art_to_revision', 'build_local_snapshot_from_docs', 'build_odp_adapter_live', 'build_operator_prior_art_plan', 'build_operator_runtime', 'claim_chart_from_journal', 'distinguishability_summary', 'discover_export_claims_sources', 'list_prior_art_runs', 'load_claims', 'load_claims_from_exports', 'load_export_temporal_anchors', 'load_local_snapshot_documents', 'parse_claims_text', 'plan_prior_art', 'prior_art_app_dir', 'prior_art_root', 'search_prior_art', 'select_prior_art_claims', 'show_prior_art_run']

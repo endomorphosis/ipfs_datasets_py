@@ -147,8 +147,23 @@ REVIEWED_SUBJECT_SCHEMA = "alignment-reviewed-pair-subject/v2"
 REVIEWED_CLAIM_SCHEMA = "alignment-reviewed-pair-signed-claim/v2"
 REVIEWED_ACTION = "authorize_reviewed_contrastive_pair_labels/v2"
 REVIEWED_AUDIENCE = "legal-autoformalization-reviewed-contrastive-pairs/v2"
+REVIEWED_V3_SCHEMA = 'alignment-reviewed-pair-preparation/v3'
+REVIEWED_V3_BODY_SCHEMA = 'alignment-reviewed-pair-declaration/v3'
+REVIEWED_V3_PROFILE = 'reviewed-native384-source-formal-pairs/v3'
+REVIEWED_V3_SUBJECT_SCHEMA = 'alignment-reviewed-pair-subject/v3'
+REVIEWED_V3_CLAIM_SCHEMA = 'alignment-reviewed-pair-signed-claim/v3'
+REVIEWED_V3_ACTION = 'authorize_reviewed_contrastive_pair_labels/v3'
+REVIEWED_V3_AUDIENCE = 'legal-autoformalization-reviewed-contrastive-pairs/v3'
+REVIEWED_V4_SCHEMA = 'alignment-reviewed-pair-preparation/v4'
+REVIEWED_V4_BODY_SCHEMA = 'alignment-reviewed-pair-declaration/v4'
+REVIEWED_V4_PROFILE = 'reviewed-native384-context-bound-source-formal-pairs/v4'
+REVIEWED_V4_SUBJECT_SCHEMA = 'alignment-reviewed-pair-subject/v4'
+REVIEWED_V4_CLAIM_SCHEMA = 'alignment-reviewed-pair-signed-claim/v4'
+REVIEWED_V4_ACTION = 'authorize_reviewed_context_bound_pair_labels/v4'
+REVIEWED_V4_AUDIENCE = 'legal-autoformalization-reviewed-cross-context-pairs/v4'
 REVIEWED_SLOTS = ("directed_pair_relationships", "governing_context", "contrastive_purpose",
                   "representation_provenance", "split_and_dependency_scope")
+REVIEWED_V4_SLOTS = REVIEWED_SLOTS + ("context_set_and_endpoint_membership",)
 REVIEWED_RELATIONS = ("corresponding", "equivalent", "incompatible", "unknown", "analogy")
 REVIEWED_ENDPOINT_FIELDS = {"id", "unit_id", "admission_id", "source_sha256", "formal_view_sha256",
     "context_sha256", "input_sha256", "vector_sha256", "split_sample_id", "exposure_group",
@@ -173,19 +188,42 @@ def _reviewed_imported_pins():
     return dict(_REVIEWED_IMPORTED_RAW_PINS)
 
 
-def _reviewed_owners():
-    from ...autoformal import legal_norm_content_adjudication_v1 as admission
+def _reviewed_contract(version="v2"):
+    _require(type(version) is str and version in ("v2", "v3", "v4"), "closed reviewed pair admission domain required")
+    if version == "v4":
+        return {'schema': REVIEWED_V4_SCHEMA, 'body_schema': REVIEWED_V4_BODY_SCHEMA,
+                'profile': REVIEWED_V4_PROFILE, 'subject_schema': REVIEWED_V4_SUBJECT_SCHEMA,
+                'claim_schema': REVIEWED_V4_CLAIM_SCHEMA, 'action': REVIEWED_V4_ACTION,
+                'audience': REVIEWED_V4_AUDIENCE, 'endpoint_version': 'v3', 'slots': REVIEWED_V4_SLOTS}
+    return {
+        'schema': REVIEWED_V3_SCHEMA if version == "v3" else REVIEWED_SCHEMA,
+        'body_schema': REVIEWED_V3_BODY_SCHEMA if version == "v3" else REVIEWED_BODY_SCHEMA,
+        'profile': REVIEWED_V3_PROFILE if version == "v3" else REVIEWED_PROFILE,
+        'subject_schema': REVIEWED_V3_SUBJECT_SCHEMA if version == "v3" else REVIEWED_SUBJECT_SCHEMA,
+        'claim_schema': REVIEWED_V3_CLAIM_SCHEMA if version == "v3" else REVIEWED_CLAIM_SCHEMA,
+        'action': REVIEWED_V3_ACTION if version == "v3" else REVIEWED_ACTION,
+        'audience': REVIEWED_V3_AUDIENCE if version == "v3" else REVIEWED_AUDIENCE,
+        'endpoint_version': version, 'slots': REVIEWED_SLOTS,
+    }
+
+
+def _reviewed_owners(_admission_version="v2"):
+    contract = _reviewed_contract(_admission_version)
+    if contract['endpoint_version'] == "v3":
+        from ...autoformal import legal_reviewed_norm_admission_v3 as admission
+    else:
+        from ...autoformal import legal_norm_content_adjudication_v1 as admission
     from ...autoformal import legal_graph_review as review, legal_graph_dependencies as dependencies
     from ....optimizers.logic_theorem_optimizer import legal_ir_eval_splits as splits
     from . import alignment_lane_bundle as lanes
     return admission, review, dependencies, splits, lanes
 
 
-def _reviewed_pins():
+def _reviewed_pins(_admission_version="v2"):
     from pathlib import Path
     import hashlib
     imported = _reviewed_imported_pins()
-    owners = _reviewed_owners()
+    owners = _reviewed_owners(_admission_version)
     pins = dict(owners[0]._reviewed_pins())
     pins.update(imported)
     for module in (*owners[1:], stages):
@@ -198,33 +236,69 @@ def _reviewed_pins():
     return pins
 
 
-def _reviewed_finish(original, copied, commitment, pins, report):
-    admission = _reviewed_owners()[0]
+def _reviewed_finish(original, copied, commitment, pins, report, *, _admission_version="v2"):
+    admission = _reviewed_owners(_admission_version)[0]
     _require(admission.norm._snapshot(original)[1] == commitment
              and admission.norm._snapshot(copied)[1] == commitment, "reviewed pair inputs changed during operation")
-    _require(_reviewed_pins() == pins, "reviewed pair source owners changed during operation")
+    _require(_reviewed_pins(_admission_version) == pins, "reviewed pair source owners changed during operation")
     return json.loads(admission.norm._wire(report))
 
 
-def _reviewed_subject(subject, manifest):
-    _, review, _, _, _ = _reviewed_owners()
-    _closed(subject, {"schema", "graph_id", "graph_sha256", "ast_sha256", "scope_id", "context_slot_ids",
+def _reviewed_subject(subject, manifest, *, _admission_version="v2"):
+    _, review, _, _, _ = _reviewed_owners(_admission_version)
+    contract = _reviewed_contract(_admission_version)
+    fields = {"schema", "graph_id", "graph_sha256", "ast_sha256", "scope_id", "context_slot_ids",
         "dependency_manifest_sha256", "required_dependency_ids", "source_binding_sha256",
-        "context_packet_sha256"}, "reviewed pair signing subject")
-    _require(subject["schema"] == REVIEWED_SUBJECT_SCHEMA and subject["context_slot_ids"] == list(REVIEWED_SLOTS),
+        "context_packet_sha256"}
+    if _admission_version == "v4":
+        fields.add("context_set_sha256")
+    _closed(subject, fields, "reviewed pair signing subject")
+    _require(subject["schema"] == contract["subject_schema"] and subject["context_slot_ids"] == list(contract['slots']),
              "fixed reviewed directed-pair subject required")
     for key, value in subject.items():
         if key.endswith("_sha256"): _sha(value, key)
     review._id(subject["graph_id"], "reviewed pair ledger identity")
     review._text(subject["scope_id"], "reviewed pair governing scope")
+    if _admission_version == "v4":
+        _require(subject["scope_id"] == "contrastive-context-set:" + subject["context_set_sha256"],
+                 "reviewed V4 authority must cover the exact complete context set")
     reachable, _ = review._closure(manifest, subject["graph_id"], subject["graph_sha256"])
     _require(subject["required_dependency_ids"] == reachable, "reviewed pair dependency closure differs")
 
 
-def prepare_reviewed_relation_declaration_v2(body, *, expected_body_sha256, endpoint_admissions,
+def _reviewed_context_set_sha256(context_set, endpoint_results):
+    """Check the exact declared context union; infer no semantic relationship.
+
+    Endpoint membership uses the existing context_sha256 field. This check is
+    also usable for historical asset integrity, without granting review or
+    current applicability authority.
+    """
+    admission = _reviewed_owners("v4")[0]
+    _closed(endpoint_results, {"source", "formal"}, "reviewed context endpoint populations")
+    expected = {}
+    for side in ("source", "formal"):
+        rows = endpoint_results[side]
+        _require(type(rows) is list and 1 <= len(rows) <= MAX_TRAIN_ROWS,
+                 "bounded nonempty endpoint population required for context inventory")
+        for endpoint in rows:
+            _require(type(endpoint) is dict, "complete endpoint summary required")
+            scope = endpoint.get("scope")
+            _closed(scope, {"governing_context", "interpretation_id", "assumptions"}, "complete endpoint context")
+            digest = admission.norm_content_adjudication_sha256(scope)
+            _require(endpoint.get("context_sha256") == digest, "endpoint context membership differs from its complete scope")
+            expected[digest] = {"context_sha256": digest, "scope": scope}
+    _require(type(context_set) is list and 1 <= len(context_set) <= 2 * MAX_TRAIN_ROWS,
+             "explicit bounded complete context inventory required")
+    canonical = [expected[key] for key in sorted(expected)]
+    _require(admission.norm._same(context_set, canonical),
+             "reviewed context inventory must exactly match the sorted unique endpoint context union")
+    return admission.norm_content_adjudication_sha256(context_set)
+
+
+def _prepare_reviewed_relation_declaration(body, *, expected_body_sha256, endpoint_admissions,
         source_lane, formal_lane, expected_source_lane_bindings, expected_formal_lane_bindings,
         split_manifest, expected_split_manifest_sha256, dependency_manifest, expected_manifest_sha256,
-        allow_fictional_fixture=False):
+        allow_fictional_fixture=False, representation_stage="raw_embedding", _admission_version="v2"):
     """Replay endpoints, vector custody and splits; grant no pair-label authority.
 
     Vector rows remain externally pinned producer declarations. This operation
@@ -233,22 +307,32 @@ def prepare_reviewed_relation_declaration_v2(body, *, expected_body_sha256, endp
     """
     _reviewed_imported_pins()
     import hashlib
-    admission, review, dependencies, splits, lanes = _reviewed_owners()
+    admission, review, dependencies, splits, lanes = _reviewed_owners(_admission_version)
+    contract = _reviewed_contract(_admission_version)
     original = dict(body=body, expected_body_sha256=expected_body_sha256, endpoint_admissions=endpoint_admissions,
         source_lane=source_lane, formal_lane=formal_lane, expected_source_lane_bindings=expected_source_lane_bindings,
         expected_formal_lane_bindings=expected_formal_lane_bindings, split_manifest=split_manifest,
         expected_split_manifest_sha256=expected_split_manifest_sha256, dependency_manifest=dependency_manifest,
         expected_manifest_sha256=expected_manifest_sha256, allow_fictional_fixture=allow_fictional_fixture)
+    _require(type(representation_stage) is str and
+        (representation_stage == "raw_embedding" or
+         (contract['endpoint_version'] == "v3" and representation_stage == lanes.COMPLETE_COMPOSITION_STAGE)),
+        "explicit V3 complete composition or default raw representation stage required")
+    if representation_stage != "raw_embedding":
+        original["representation_stage"] = representation_stage
     copied, commitment = admission.norm._snapshot(original)
-    pins = _reviewed_pins()
+    pins = _reviewed_pins(_admission_version)
     value = copied["body"]
     _sha(expected_body_sha256, "reviewed pair body")
     _require(admission.norm_content_adjudication_sha256(value) == expected_body_sha256,
              "independent complete reviewed pair body pin differs")
-    _closed(value, {"schema", "ledger_id", "purpose", "provenance_kind", "declared_at_utc", "source_endpoints",
+    fields = {"schema", "ledger_id", "purpose", "provenance_kind", "declared_at_utc", "source_endpoints",
         "formal_endpoints", "pairs", "author_actors", "source_lane_sha256", "formal_lane_sha256",
-        "split_manifest_sha256"}, "reviewed pair declaration")
-    _require(value["schema"] == REVIEWED_BODY_SCHEMA and value["purpose"] == "contrastive_supervision",
+        "split_manifest_sha256"}
+    if _admission_version == "v4":
+        fields.add("context_set")
+    _closed(value, fields, "reviewed pair declaration")
+    _require(value["schema"] == contract["body_schema"] and value["purpose"] == "contrastive_supervision",
              "explicit versioned contrastive purpose required")
     _require(value["provenance_kind"] in ("statutory", "fictional_fixture"), "explicit pair provenance required")
     _require(type(allow_fictional_fixture) is bool and
@@ -271,7 +355,9 @@ def prepare_reviewed_relation_declaration_v2(body, *, expected_body_sha256, endp
         _closed(entry, {"report", "args", "kwargs", "expected_report_sha256"}, "complete endpoint admission replay")
         _require(type(entry["args"]) is list and len(entry["args"]) == 4 and type(entry["kwargs"]) is dict,
                  "exact original admission arguments required")
-        result = admission.validate_reviewed_norm_admission_v2(entry["report"], *entry["args"],
+        validate_endpoint = (admission.validate_reviewed_norm_admission_v3 if contract['endpoint_version'] == "v3"
+                             else admission.validate_reviewed_norm_admission_v2)
+        result = validate_endpoint(entry["report"], *entry["args"],
             expected_report_sha256=entry["expected_report_sha256"], **entry["kwargs"])
         _require(result["semantic_use_eligible"] is True and "training" in result["permitted_uses"],
                  "all endpoints need current explicit semantic training permission")
@@ -289,9 +375,9 @@ def prepare_reviewed_relation_declaration_v2(body, *, expected_body_sha256, endp
         lane, expected = copied[side + "_lane"], copied["expected_" + side + "_lane_bindings"]
         receipt = lanes.validate_lane_bundle(lane, expected_bindings=expected)
         profile = lane["profile"]
-        _require(profile["lane_id"] == "native384" and profile["stage"] == "raw_embedding"
+        _require(profile["lane_id"] == "native384" and profile["stage"] == representation_stage
             and profile["dimension"] == 384 and profile["inference_input_recipe"] == "exact_source_only/v1",
-            "initial reviewed route requires native unmodified 384-dimensional source-only producer declarations")
+            "reviewed route requires the explicitly selected native384 source-only representation stage")
         _require(value[side + "_lane_sha256"] == lanes._digest(lane), "reviewed vector lane differs from complete declaration")
         lane_receipts.append(receipt)
         artifact_pins[value["ledger_id"] + ":" + side + "-lane"] = lanes._digest(lane)
@@ -348,7 +434,11 @@ def prepare_reviewed_relation_declaration_v2(body, *, expected_body_sha256, endp
                 "jurisdiction": ir["governing_context"]["jurisdiction"], "split": "train"})
         endpoint_results[side] = summaries
         vectors[side] = side_vectors
-    _require(len(scopes) == 1, "differing governing contexts require a separately reviewed applicability contract")
+    context_set_sha256 = None
+    if _admission_version == "v4":
+        context_set_sha256 = _reviewed_context_set_sha256(value['context_set'], endpoint_results)
+    else:
+        _require(len(scopes) == 1, "differing governing contexts require a separately reviewed applicability contract")
     _require(used_admissions == set(validated), "unused endpoint admission rows cannot be silently ignored")
     left, right, pairs = value["source_endpoints"], value["formal_endpoints"], value["pairs"]
     _require(type(pairs) is list and len(pairs) == len(left) * len(right), "complete rectangular directed pair ledger required")
@@ -374,14 +464,17 @@ def prepare_reviewed_relation_declaration_v2(body, *, expected_body_sha256, endp
     reachable, _ = review._closure(checked_manifest, value["ledger_id"], expected_body_sha256)
     _require(set(reachable) == set(artifact_pins) and not checked_manifest["cycles"]
         and not checked_manifest["missing_dependencies"], "complete acyclic reviewed pair dependency closure required")
-    subject = {"schema": REVIEWED_SUBJECT_SCHEMA, "graph_id": value["ledger_id"], "graph_sha256": expected_body_sha256,
+    subject = {"schema": contract["subject_schema"], "graph_id": value["ledger_id"], "graph_sha256": expected_body_sha256,
         "ast_sha256": admission.norm_content_adjudication_sha256(value["pairs"]),
-        "scope_id": endpoint_results["source"][0]["jurisdiction"], "context_slot_ids": list(REVIEWED_SLOTS),
+        "scope_id": ("contrastive-context-set:" + context_set_sha256 if _admission_version == "v4"
+                     else endpoint_results["source"][0]["jurisdiction"]), "context_slot_ids": list(contract['slots']),
         "dependency_manifest_sha256": expected_manifest_sha256, "required_dependency_ids": reachable,
         "source_binding_sha256": admission.norm_content_adjudication_sha256(endpoint_results),
         "context_packet_sha256": admission.norm_content_adjudication_sha256({"body": value, "producer_pins": pins})}
-    _reviewed_subject(subject, checked_manifest)
-    report = {"schema": REVIEWED_SCHEMA, "profile": REVIEWED_PROFILE, "body": value, "body_sha256": expected_body_sha256,
+    if _admission_version == "v4":
+        subject['context_set_sha256'] = context_set_sha256
+    _reviewed_subject(subject, checked_manifest, _admission_version=_admission_version)
+    report = {"schema": contract["schema"], "profile": contract["profile"], "body": value, "body_sha256": expected_body_sha256,
         "subject": subject, "source_endpoints": endpoint_results["source"], "formal_endpoints": endpoint_results["formal"],
         "source_vectors": vectors["source"], "formal_vectors": vectors["formal"], "pairs": pairs,
         "source_lane_validation": lane_receipts[0], "formal_lane_validation": lane_receipts[1],
@@ -396,24 +489,174 @@ def prepare_reviewed_relation_declaration_v2(body, *, expected_body_sha256, endp
         "author_exclusions": authors, "endpoint_assessment_time_utc": next(iter(clocks)),
         "unavailable_vector_ids": unavailable, "producer_pins": pins, "semantic_label_admission": False,
         "actual_fit_authorized": False, "runtime_computation_proven": False, "training_executed": False}
-    return _reviewed_finish(original, copied, commitment, pins, report)
+    if _admission_version == "v4":
+        report.update(context_set=value['context_set'], context_set_sha256=context_set_sha256,
+                      endpoint_admission_version=contract['endpoint_version'],
+                      legal_applicability_verified=False, controlling_authority=False)
+    return _reviewed_finish(original, copied, commitment, pins, report, _admission_version=_admission_version)
 
 
-def validate_reviewed_relation_declaration_v2(preparation, *, expected_preparation_sha256, **inputs):
+def _validate_reviewed_relation_declaration(preparation, *, expected_preparation_sha256, _admission_version="v2", **inputs):
     """Regenerate every endpoint/source/vector/split binding from original inputs."""
     _reviewed_imported_pins()
-    admission = _reviewed_owners()[0]
+    admission = _reviewed_owners(_admission_version)[0]
     original = {"preparation": preparation, "inputs": inputs}
     copied, commitment = admission.norm._snapshot(original)
-    pins = _reviewed_pins()
+    pins = _reviewed_pins(_admission_version)
     _sha(expected_preparation_sha256, "reviewed pair preparation")
     _require(admission.norm_content_adjudication_sha256(copied["preparation"]) == expected_preparation_sha256,
              "independent reviewed pair preparation differs")
-    expected = prepare_reviewed_relation_declaration_v2(**copied["inputs"])
+    expected = _prepare_reviewed_relation_declaration(**copied["inputs"], _admission_version=_admission_version)
     _require(admission.norm._same(copied["preparation"], expected), "reviewed pair preparation differs from complete replay")
-    return _reviewed_finish(original, copied, commitment, pins, expected)
+    return _reviewed_finish(original, copied, commitment, pins, expected, _admission_version=_admission_version)
 
 
 __all__ += ["prepare_reviewed_relation_declaration_v2", "validate_reviewed_relation_declaration_v2",
     "REVIEWED_PROFILE", "REVIEWED_BODY_SCHEMA", "REVIEWED_SUBJECT_SCHEMA", "REVIEWED_CLAIM_SCHEMA",
     "REVIEWED_ACTION", "REVIEWED_AUDIENCE", "REVIEWED_SLOTS"]
+
+
+
+def _reviewed_subject_v3(subject, manifest):
+    return _reviewed_subject(subject, manifest, _admission_version="v3")
+
+
+def prepare_reviewed_relation_declaration_v2(
+        body,
+        *,
+        expected_body_sha256,
+        endpoint_admissions,
+        source_lane,
+        formal_lane,
+        expected_source_lane_bindings,
+        expected_formal_lane_bindings,
+        split_manifest,
+        expected_split_manifest_sha256,
+        dependency_manifest,
+        expected_manifest_sha256,
+        allow_fictional_fixture=False,
+):
+    'Replay the fixed V2 reviewed pair domain through the canonical shared owner.'
+    return _prepare_reviewed_relation_declaration(
+        body,
+        expected_body_sha256=expected_body_sha256,
+        endpoint_admissions=endpoint_admissions,
+        source_lane=source_lane,
+        formal_lane=formal_lane,
+        expected_source_lane_bindings=expected_source_lane_bindings,
+        expected_formal_lane_bindings=expected_formal_lane_bindings,
+        split_manifest=split_manifest,
+        expected_split_manifest_sha256=expected_split_manifest_sha256,
+        dependency_manifest=dependency_manifest,
+        expected_manifest_sha256=expected_manifest_sha256,
+        allow_fictional_fixture=allow_fictional_fixture,
+        _admission_version='v2',
+    )
+
+
+def prepare_reviewed_relation_declaration_v3(
+        body,
+        *,
+        expected_body_sha256,
+        endpoint_admissions,
+        source_lane,
+        formal_lane,
+        expected_source_lane_bindings,
+        expected_formal_lane_bindings,
+        split_manifest,
+        expected_split_manifest_sha256,
+        dependency_manifest,
+        expected_manifest_sha256,
+        allow_fictional_fixture=False,
+        representation_stage="raw_embedding",
+):
+    'Replay V3 review; composed native384 DATA requires explicit stage opt-in.'
+    return _prepare_reviewed_relation_declaration(
+        body,
+        expected_body_sha256=expected_body_sha256,
+        endpoint_admissions=endpoint_admissions,
+        source_lane=source_lane,
+        formal_lane=formal_lane,
+        expected_source_lane_bindings=expected_source_lane_bindings,
+        expected_formal_lane_bindings=expected_formal_lane_bindings,
+        split_manifest=split_manifest,
+        expected_split_manifest_sha256=expected_split_manifest_sha256,
+        dependency_manifest=dependency_manifest,
+        expected_manifest_sha256=expected_manifest_sha256,
+        allow_fictional_fixture=allow_fictional_fixture,
+        representation_stage=representation_stage,
+        _admission_version='v3',
+    )
+
+
+def validate_reviewed_relation_declaration_v2(
+        preparation,
+        *,
+        expected_preparation_sha256,
+        **inputs,
+):
+    'Replay the fixed V2 reviewed pair domain through the canonical shared owner.'
+    return _validate_reviewed_relation_declaration(
+        preparation,
+        expected_preparation_sha256=expected_preparation_sha256,
+        **inputs,
+        _admission_version='v2',
+    )
+
+
+def validate_reviewed_relation_declaration_v3(
+        preparation,
+        *,
+        expected_preparation_sha256,
+        **inputs,
+):
+    'Replay the fixed V3 reviewed pair domain through the canonical shared owner.'
+    return _validate_reviewed_relation_declaration(
+        preparation,
+        expected_preparation_sha256=expected_preparation_sha256,
+        **inputs,
+        _admission_version='v3',
+    )
+
+
+__all__ += ["prepare_reviewed_relation_declaration_v3", "validate_reviewed_relation_declaration_v3"]
+
+__all__ += ['REVIEWED_V3_SCHEMA', 'REVIEWED_V3_BODY_SCHEMA', 'REVIEWED_V3_PROFILE', 'REVIEWED_V3_SUBJECT_SCHEMA', 'REVIEWED_V3_CLAIM_SCHEMA', 'REVIEWED_V3_ACTION', 'REVIEWED_V3_AUDIENCE']
+
+
+def _reviewed_subject_v4(subject, manifest):
+    return _reviewed_subject(subject, manifest, _admission_version="v4")
+
+
+def prepare_reviewed_relation_declaration_v4(
+        body, *, expected_body_sha256, endpoint_admissions, source_lane, formal_lane,
+        expected_source_lane_bindings, expected_formal_lane_bindings, split_manifest,
+        expected_split_manifest_sha256, dependency_manifest, expected_manifest_sha256,
+        allow_fictional_fixture=False, representation_stage="raw_embedding"):
+    """Bind a context-set pair review to independently replayed V3 endpoints.
+
+    Preparation grants no relationship label, legal applicability, controlling
+    authority, runtime computation or fit permission.
+    """
+    return _prepare_reviewed_relation_declaration(
+        body, expected_body_sha256=expected_body_sha256, endpoint_admissions=endpoint_admissions,
+        source_lane=source_lane, formal_lane=formal_lane,
+        expected_source_lane_bindings=expected_source_lane_bindings,
+        expected_formal_lane_bindings=expected_formal_lane_bindings,
+        split_manifest=split_manifest, expected_split_manifest_sha256=expected_split_manifest_sha256,
+        dependency_manifest=dependency_manifest, expected_manifest_sha256=expected_manifest_sha256,
+        allow_fictional_fixture=allow_fictional_fixture, representation_stage=representation_stage,
+        _admission_version="v4")
+
+
+def validate_reviewed_relation_declaration_v4(preparation, *, expected_preparation_sha256, **inputs):
+    """Replay the complete V4 inventory, endpoints, source, vectors and splits."""
+    return _validate_reviewed_relation_declaration(
+        preparation, expected_preparation_sha256=expected_preparation_sha256,
+        **inputs, _admission_version="v4")
+
+
+__all__ += ["prepare_reviewed_relation_declaration_v4", "validate_reviewed_relation_declaration_v4",
+            "REVIEWED_V4_SCHEMA", "REVIEWED_V4_BODY_SCHEMA", "REVIEWED_V4_PROFILE",
+            "REVIEWED_V4_SUBJECT_SCHEMA", "REVIEWED_V4_CLAIM_SCHEMA", "REVIEWED_V4_ACTION",
+            "REVIEWED_V4_AUDIENCE", "REVIEWED_V4_SLOTS"]

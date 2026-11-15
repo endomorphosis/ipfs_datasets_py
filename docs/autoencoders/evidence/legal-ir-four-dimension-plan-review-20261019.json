@@ -1,0 +1,190 @@
+{
+  "schema": "legal-ir-four-dimension-plan-reconciliation/v1",
+  "observed_at": "2026-10-19T01:40:23.180050+00:00",
+  "scope": "Plan and reuse reconciliation; no scientific execution, training, toolchain install, scheduler dispatch or publication.",
+  "canonical_plan": "docs/autoencoders/legal_ir_text_to_lean4_execution_plan_20261018.md",
+  "reuse_register": "docs/autoencoders/evidence/legal-ir-four-dimension-reuse-20261018.json",
+  "preimages": [
+    {
+      "path": "docs/autoencoders/legal_ir_text_to_lean4_execution_plan_20261018.md",
+      "sha256": "85836f60af363f98869b640d7d366f7920002d158dad37d8e41b1506d1c98ccb"
+    },
+    {
+      "path": "docs/autoencoders/evidence/legal-ir-four-dimension-reuse-20261018.json",
+      "sha256": "cb5e5e6ea0bfe5a1855e7778be652ea7ed6116907ec86630eb710b3c54571109"
+    }
+  ],
+  "public_metadata": [
+    {
+      "dataset": "ipfs_uscode",
+      "url": "https://huggingface.co/api/datasets/justicedao/ipfs_uscode",
+      "observed_at": "2026-10-19T01:36:14.670564+00:00",
+      "revision": "91ca1838853ac82d7a12dd4ab47d9686f47667f9",
+      "bytes": 185927,
+      "sha256": "c54318fe43b7243cf933d55d765ee5a1e8207eae8fdf662f7815e1d73b58033a",
+      "retained_file": "ipfs_uscode-public-metadata.json",
+      "status": "recovered_public_metadata",
+      "artifact_content_downloaded": false
+    },
+    {
+      "dataset": "uscode-autoformal-span-cache",
+      "url": "https://huggingface.co/api/datasets/justicedao/uscode-autoformal-span-cache",
+      "observed_at": "2026-10-19T01:36:14.671218+00:00",
+      "revision": "60501f3e920f6c9050cfc452e0d9fcc2b7c184f3",
+      "bytes": 1394826,
+      "sha256": "15334bac58fab9b579800a2eae2af92c4e5fc77de907a15f2cfceb273ab612e5",
+      "retained_file": "uscode-autoformal-span-cache-public-metadata.json",
+      "status": "recovered_public_metadata",
+      "artifact_content_downloaded": false
+    },
+    {
+      "dataset": "uscode-autoformal-entity-cache",
+      "url": "https://huggingface.co/api/datasets/justicedao/uscode-autoformal-entity-cache",
+      "observed_at": "2026-10-19T01:36:14.671651+00:00",
+      "revision": "79d54378c5d6a89ab56e7a27e0f0ba867e800e19",
+      "bytes": 1221,
+      "sha256": "ffdce186f547382c08aa80c5d1919805825b47c8040ceb95f154edf8e6abb60e",
+      "retained_file": "uscode-autoformal-entity-cache-public-metadata.json",
+      "status": "recovered_public_metadata",
+      "artifact_content_downloaded": false
+    }
+  ],
+  "public_metadata_workspace_directory": "artifacts/legal-ir-four-dimension-plan-review-20261019T013319Z",
+  "local_delivery_stack": {
+    "base": "13061f6783cd2cd7b7ed38080d5c701117643b80",
+    "commits": [
+      "f07a8b7a467f2f113ea2a7c0f22b766d3b04fe27",
+      "ed02ef7aebfb4d119389055533280a88b686ba84"
+    ],
+    "unique_paths": 6,
+    "publication": "Closeouts record local only; no push or fresh GitHub publication check in this review.",
+    "inventory_tests": {
+      "passed": 91,
+      "skipped": 1
+    },
+    "combined_tests": {
+      "passed": 134,
+      "skipped": 2
+    },
+    "test_counts_overlap": true,
+    "evidence": [
+      {
+        "workspace_relative_path": "artifacts/legal-ir-selected-inventory-landing-20261018T225600Z/closeout.json",
+        "bytes": 7404,
+        "sha256": "71570988ebc6f27e4750f0405834815e5f4bc61b9c12aa38540e5d50671fed8a",
+        "scope": "bytes_hash_checked; historical results not replayed"
+      },
+      {
+        "workspace_relative_path": "artifacts/legal-ir-full-parent-scanner-landing-20261019T004055Z/closeout.json",
+        "bytes": 10509,
+        "sha256": "84882adffaee8dce47bb53481bc2e8f4aa41c45ad9fba643a708a30ab8f30253",
+        "scope": "bytes_hash_checked; historical results not replayed"
+      }
+    ]
+  },
+  "metadata_loader": {
+    "qualification": {
+      "workspace_relative_path": "artifacts/legal-ir-parent-metadata-loader-20261018-02/saved-evidence-readback.json",
+      "bytes": 8328,
+      "sha256": "a37db30d1869ffd807c0af84e86a4f0eaf27b868748f41dd8f36b7fd8878385e",
+      "scope": "bytes_hash_checked; historical results not replayed"
+    },
+    "reported_passed_tests": 51,
+    "source_rows": 60077,
+    "document_identities_unresolved": 60077,
+    "missing_text_rows": 9,
+    "remaining": "Portable integration and grouping/source identity decisions; completed loader and scans not new work."
+  },
+  "hash_checked_references": [
+    {
+      "workspace_relative_path": "external/ipfs_datasets/workspace/test-logs/modal-joint-e2e-20261001-final/legacy_v1/formula-head.json",
+      "bytes": 128924,
+      "sha256": "ffca84492b81ab94fa291ae6ddbe52cfc84318f3516a22f901d468de255b6cbe",
+      "scope": "bytes_hash_checked; historical results not replayed"
+    },
+    {
+      "workspace_relative_path": "artifacts/source-reconstruction-v2-20261001/run-01/legal_ir/raw_ce-1729-checkpoint.json",
+      "bytes": 614534,
+      "sha256": "6e3f4d731d798aa2732afc37bd74fec34da3267a323844975d2dab78f59f9c61",
+      "scope": "bytes_hash_checked; historical results not replayed"
+    },
+    {
+      "workspace_relative_path": "artifacts/source-reconstruction-v2-20261001/run-01/legal_ir/semantic-1729-checkpoint.json",
+      "bytes": 621716,
+      "sha256": "36b6b3a5a31ce88748a7ff69f1ab55f16dae79a78bfb635436a7b13a34c9cbf2",
+      "scope": "bytes_hash_checked; historical results not replayed"
+    },
+    {
+      "workspace_relative_path": "external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-supervisor-runs/legal-ir-retained-matched-context-training-20261018-01/repeated_context_auxiliary-step150-checkpoint.json",
+      "bytes": 1990366,
+      "sha256": "59df2f43ac4e9c05524100d403f90b901048b1364d57df33c811af648aa409bd",
+      "scope": "bytes_hash_checked; historical results not replayed"
+    },
+    {
+      "workspace_relative_path": "external/ipfs_datasets/docs/autoencoders/evidence/normative-wording-retention-20261006/summary.json",
+      "bytes": 43996,
+      "sha256": "cb1c36c1bb7005e8b63f2bdbba7d64ceff0e41e16e3cba4af156ccdc4e628b57",
+      "scope": "bytes_hash_checked; historical results not replayed"
+    },
+    {
+      "workspace_relative_path": "external/ipfs_datasets/docs/implementation/reports/evidence/decoder-normative-wording-20261006/results.json",
+      "bytes": 2902845,
+      "sha256": "afa30e5df3e789fd77170507f90c303814e1bf7ec8f21b6276ac07a7896c9496",
+      "scope": "bytes_hash_checked; historical results not replayed"
+    },
+    {
+      "workspace_relative_path": "external/ipfs_datasets/docs/implementation/reports/evidence/decoder-conditioning-20261004/results.json",
+      "bytes": 27951,
+      "sha256": "e32d1e0cdad4b652e2b50f8b92eed9faccea2d99e4d8bfe741fea47591d6e285",
+      "scope": "bytes_hash_checked; historical results not replayed"
+    },
+    {
+      "workspace_relative_path": "external/ipfs_datasets/docs/implementation/reports/evidence/decoder-generalization-20261004/results.json",
+      "bytes": 26924,
+      "sha256": "2cca4ec7083e0719f8d71540849a9267e79d75c8db4b76c5665049f1b70b57f7",
+      "scope": "bytes_hash_checked; historical results not replayed"
+    },
+    {
+      "workspace_relative_path": "artifacts/legal-ir-selected-inventory-landing-20261018T225600Z/closeout.json",
+      "bytes": 7404,
+      "sha256": "71570988ebc6f27e4750f0405834815e5f4bc61b9c12aa38540e5d50671fed8a",
+      "scope": "bytes_hash_checked; historical results not replayed"
+    },
+    {
+      "workspace_relative_path": "artifacts/legal-ir-full-parent-scanner-landing-20261019T004055Z/closeout.json",
+      "bytes": 10509,
+      "sha256": "84882adffaee8dce47bb53481bc2e8f4aa41c45ad9fba643a708a30ab8f30253",
+      "scope": "bytes_hash_checked; historical results not replayed"
+    },
+    {
+      "workspace_relative_path": "artifacts/legal-ir-parent-metadata-loader-20261018-02/saved-evidence-readback.json",
+      "bytes": 8328,
+      "sha256": "a37db30d1869ffd807c0af84e86a4f0eaf27b868748f41dd8f36b7fd8878385e",
+      "scope": "bytes_hash_checked; historical results not replayed"
+    },
+    {
+      "workspace_relative_path": "external/ipfs_datasets/docs/implementation/reports/evidence/decoder-context-boundary-training-20261003/results.json",
+      "bytes": 3414234,
+      "sha256": "d8358f7d90e1f09a1faf0c8fe7e7a18023236f185aa7ce9cbbf459fc52f454e0",
+      "scope": "bytes_hash_checked; historical results not replayed"
+    }
+  ],
+  "claims_boundary": "Hash checks identify bytes; historical metrics remain reported by those records. No inference/recompute/replay performed. Native build and fixtures do not establish reviewed statutory meaning.",
+  "historical_native4096_current_source_comparison": {
+    "checked_by": "read-only audit delegate",
+    "source_paths": 54,
+    "matching": 51,
+    "changed": [
+      "autoencoder_daemon_resources.py",
+      "existing_resource_scheduler.py",
+      "resource_scheduler.py"
+    ],
+    "consequence": "Historical run retains its source generation; old manifest/policy is not a current execution grant."
+  },
+  "minimal_missing_inputs": [
+    "Exact selected span producer revision and source text/offset basis",
+    "Qualified source-context/meaning and applicability decisions for one definition and two genuine statutory uses",
+    "Real entity endpoint producer/schema evidence or explicitly versioned successor projection"
+  ],
+  "next_experiment_gate": "Adopt existing checkpoints and controls, qualify state migration and reviewed source/profile targets, then declare one changed semantic learning hypothesis with all-enrolled coverage and complete cost."
+}

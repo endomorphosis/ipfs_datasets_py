@@ -1,0 +1,377 @@
+{
+  "bypassed_initializer_sources": [
+    "ipfs_datasets_py/processors/__init__.py",
+    "ipfs_datasets_py/processors/legal_data/__init__.py",
+    "ipfs_datasets_py/logic/__init__.py",
+    "ipfs_datasets_py/logic/bridge/__init__.py",
+    "ipfs_datasets_py/optimizers/__init__.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/__init__.py",
+    "ipfs_datasets_py/logic/integration/__init__.py",
+    "ipfs_datasets_py/logic/integration/reasoning/__init__.py"
+  ],
+  "cases": 48,
+  "direct_request_pins": 193,
+  "entity_cache_meanings_inferred": false,
+  "evaluation_gold_mask": 0,
+  "failed_promises_released_by_supported_one_call_each": true,
+  "frozen_leaves": 167,
+  "full_owning_module_or_package_qualified": false,
+  "graph_or_Lean_admitted": false,
+  "live_processes": 0,
+  "model_training_or_Lean_execution": false,
+  "model_widths_executed": [],
+  "namespace_profile": "wire-semantic-proposals-scoped-unit-namespaces/v1",
+  "original_source_READ_compute_storage_closed": true,
+  "phase_passes": 144,
+  "prior_cohorts_combined": false,
+  "prior_failed_generations": [
+    {
+      "classification": "missing_flat_source_probe",
+      "known_collected_cases": 0,
+      "label": "pure-v01",
+      "qualification_credit": 0,
+      "retained_bytes": 213009,
+      "retained_files": 9
+    },
+    {
+      "actual_completed_case_population": null,
+      "classification": "original300s_deadline",
+      "label": "pure-v02",
+      "qualification_credit": 0,
+      "retained_bytes": 4407176,
+      "retained_files": 364,
+      "saved_progress_marks": 44
+    }
+  ],
+  "profile": "original-input-wire-coordinate-authored-semantic-proposals/v1",
+  "proposals_unreviewed": true,
+  "receipts": [
+    {
+      "bytes": 23616,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/integration-qualified-inputs-v02.json",
+      "sha256": "9d7efde63cbbf98b2e3ae88272bb884e0272d31eef24b529e4c1c790948ac4cc"
+    },
+    {
+      "bytes": 10776,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/baseline_capture_v01.json",
+      "sha256": "53a31bbad7823a990aff8a6baf14daa868c92b51fa823e0bb84fc53b75fa8e62"
+    },
+    {
+      "bytes": 30834,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/controlsource-profile-v03.json",
+      "sha256": "a8cadc6a94b0f3cf826be7753a766b5c9e2143ff605700bf57948c31b0fa090f"
+    },
+    {
+      "bytes": 9305,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/independent-controlsource-review-v03.json",
+      "sha256": "5f25188869610477a213139814d5fa55dbe38b784981bc01f4de6650c6c2f885"
+    },
+    {
+      "bytes": 17414,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/split-cohort-union-v01.json",
+      "sha256": "f445d40ea5482f0c7fbf0b2e5f5d66bab5f8c8b4fc4e4e0fa9bf63c881041271"
+    },
+    {
+      "bytes": 26133,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/focused-test-selection-v01.json",
+      "sha256": "268983be3aa0663278d07e2559871aa9bcd16674292d8fbc0f548958559812a1"
+    },
+    {
+      "bytes": 2573,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/root-product-source-review-v01.json",
+      "sha256": "553742f2b63c2d94ddee3d3caa90ffec2af4015c06e126a34f8f879689ab0f4c"
+    },
+    {
+      "bytes": 4439,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/root-controlsource-review-v03.json",
+      "sha256": "218fba9e56d4dd5d01a3de35bbd66e2218ba08f4052facd806032bb3ea4eaa80"
+    },
+    {
+      "bytes": 2835,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/independent-tests-review-v02.json",
+      "sha256": "e5c19e4560f2013a4414444c606826126824da72aa3bbabf672779d260c5eb2f"
+    },
+    {
+      "bytes": 3812,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/capture-pure-v03.json",
+      "sha256": "31173b36e03a14a99365cbcda1b6fcf9c9d4608c96927964df1693e020625939"
+    },
+    {
+      "bytes": 6158829,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/attempt-pure-v03/exports/checked-source-buffers.json",
+      "sha256": "edfdcee6a4684fe6ad7a13db2ef311bded6fd00686d4e45e7637c851405782a1"
+    },
+    {
+      "bytes": 20373,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/attempt-pure-v03/exports/test-collection.json",
+      "sha256": "44d04da2ccdcaa14b1d756653f090087287113acf92cad75ee2e0792780e005d"
+    },
+    {
+      "bytes": 308,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/controller-complete-pure-v03.json",
+      "sha256": "0de96545c7c4d1d289b4d26f349e1d2a56bd6fb4cbe0068cbc99c7dd7843e851"
+    },
+    {
+      "bytes": 435,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/coordination-pure-v03.json",
+      "sha256": "255151a99d762d14c89e484a1a5ed58ca402d4f42d9519351b2541874996a084"
+    },
+    {
+      "bytes": 9794,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/control-independent-review-pure-v03.json",
+      "sha256": "c546253fdad36e10fb38b65c64b048a8450a5f1c5c6916a430f77d479b06f4e0"
+    },
+    {
+      "bytes": 163053,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/independent-result-review-pure-v03.json",
+      "sha256": "0d3c81b86f9cffda876999318a148b104df21b9d7830bd9222703e5c152dc288"
+    },
+    {
+      "bytes": 5054,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/attempt-pure-v03/exports/tests.xml",
+      "sha256": "36ae2e486d22ad12680dfc69ad9b375c53c8989e6c65747d5160353eb0d58e4d"
+    },
+    {
+      "bytes": 7651,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/launch-pure-v03.json",
+      "sha256": "21a3e3182ce7840533f9659a3e965f65d97b8dd16584ba84022597073232354a"
+    },
+    {
+      "bytes": 106999,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/manifest-pure-v03.json",
+      "sha256": "2813c2f124ab6b453ea26bf2b3b02c6ce396cbb5b378f2f7024702658f60e350"
+    },
+    {
+      "bytes": 71602,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/attempt-pure-v03/exports/import-origins.json",
+      "sha256": "5d8424eb0f2d149b1dee99cb7671817a57d8698d2589f0dd08afb9db83df4d9f"
+    },
+    {
+      "bytes": 3172,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/preflight-pure-v03.json",
+      "sha256": "0f054c84a37779f22d7ffc8ee2bbe346c38de33acca547545e6a3762d98dcf12"
+    },
+    {
+      "bytes": 61975,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/request-pure-v03.json",
+      "sha256": "cd58e377a8a3327247a4c10c3f24edb7c74fb4560b179a3ded5a168f21a6f893"
+    },
+    {
+      "bytes": 1973,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/control-root-review-pure-v03.json",
+      "sha256": "6a0c1f89e120ef988e9c8365cca0f1563c44ca91e75928d59b05565c3e49eb8c"
+    },
+    {
+      "bytes": 13340,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/focused-test-selection-v02.json",
+      "sha256": "09c440fbc779a5c0f8f7dc6023ee070ea9a27f7af7f9928fb572757c799e2889"
+    },
+    {
+      "bytes": 450,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/source-READ-pure-v03.json",
+      "sha256": "9d61237239f6e62533f8a52aae75a98e74902db322878e4a6075f50856af1dc2"
+    },
+    {
+      "bytes": 7347,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/attempt-pure-v03/exports/test-result.json",
+      "sha256": "bcb29a9313fc73bd6156f8d2b74a850daa53b519a2b7a2a8ac2c8c565752c3d8"
+    },
+    {
+      "bytes": 3813,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/capture-pure-v04.json",
+      "sha256": "425d7b132b2a0b9aae239884052af4fb4f8a8d644e2ca566970c841f09a3d09b"
+    },
+    {
+      "bytes": 6158829,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/attempt-pure-v04/exports/checked-source-buffers.json",
+      "sha256": "edfdcee6a4684fe6ad7a13db2ef311bded6fd00686d4e45e7637c851405782a1"
+    },
+    {
+      "bytes": 21053,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/attempt-pure-v04/exports/test-collection.json",
+      "sha256": "97b7ca36484eac841f936f5e8a55f19d33a3502fd5bc2c6a699ceb720f167a33"
+    },
+    {
+      "bytes": 308,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/controller-complete-pure-v04.json",
+      "sha256": "1c54c2ddd993bed87a76167a1ce8792bc82da3c60ebb082d879ac6612a7c63e5"
+    },
+    {
+      "bytes": 435,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/coordination-pure-v04.json",
+      "sha256": "a87e6b9f7eba975f4143295b2d8183575faffd4acf4f2cea1b0e4dc53c5c2135"
+    },
+    {
+      "bytes": 9794,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/control-independent-review-pure-v04.json",
+      "sha256": "eb064b7cd0390127df5afd6f9fa2ab63fb2b1a5633a629c1f32144853f15836f"
+    },
+    {
+      "bytes": 247421,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/independent-result-review-pure-v04.json",
+      "sha256": "0ac57b93c986d1e4ee5321b939513862674613578f1b651c8de613bd1977ae90"
+    },
+    {
+      "bytes": 5229,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/attempt-pure-v04/exports/tests.xml",
+      "sha256": "15889a4316b590c6b615e6211f645f10bfceb27c1137fece0572c02b7ad2c4d8"
+    },
+    {
+      "bytes": 7647,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/launch-pure-v04.json",
+      "sha256": "386de1f5a167ba4f79d3642c869ef82cb12c4d8140603e722fde34e833d4abe9"
+    },
+    {
+      "bytes": 107860,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/manifest-pure-v04.json",
+      "sha256": "fcbc7b726b45e332d10201f09c1e5966d453a68704bcccc9fdc52f3880072991"
+    },
+    {
+      "bytes": 71602,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/attempt-pure-v04/exports/import-origins.json",
+      "sha256": "efc765ee0c9d1b82734a168c8d2858bee339162cb183f489eff1e5e4260cbeca"
+    },
+    {
+      "bytes": 3172,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/preflight-pure-v04.json",
+      "sha256": "ca41c9cbddf0a8107127e8a3a0967f4ec7f119e8926264b7699b9eb83fa7f8e4"
+    },
+    {
+      "bytes": 62666,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/request-pure-v04.json",
+      "sha256": "ba80772b0ecbf13bdc97ecca7628002bccafb0dbfffb89312e9e76c2f1a6119d"
+    },
+    {
+      "bytes": 1973,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/control-root-review-pure-v04.json",
+      "sha256": "358fa2cefaa3078ea6a82da04cdaaa3e0f9748b9056ab23fb4f67b3790bf61d1"
+    },
+    {
+      "bytes": 15074,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/focused-test-selection-v03.json",
+      "sha256": "f9a6d6098231282b452f91c95953786538dc0e63f77b71a9dc736745aa792f65"
+    },
+    {
+      "bytes": 450,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/source-READ-pure-v04.json",
+      "sha256": "9572e909fdf762cae5fee647abeadf2ed7836b0ec26b0e1392356fbe41c8a615"
+    },
+    {
+      "bytes": 8208,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/attempt-pure-v04/exports/test-result.json",
+      "sha256": "87cce9c635a667b62e98e5271a1aaf084a27d4f73f950678e02c4e9f3aee5fbd"
+    },
+    {
+      "bytes": 309,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/controller-complete-pure-v01.json",
+      "sha256": "87e53761108d5748c531b7b295e851c550e739de1ef271074072760411493fb2"
+    },
+    {
+      "bytes": 15189,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/launch-pure-v01.json",
+      "sha256": "b638eec3190d0a79ed2906c27103cd75d493405ea58d8c5ff3bd6d90ff64d4ad"
+    },
+    {
+      "bytes": 63987,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/request-pure-v01.json",
+      "sha256": "93e6156f65c3548f09e212ff34f8afd9f19617b8ed8b8b4433119fbf6d7e4789"
+    },
+    {
+      "bytes": 15642,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/independent-failed-result-review-pure-v01.json",
+      "sha256": "bd60a718aeae19550818deb6ee5cde89ade1e3651d188a1af749a6c048ca9548"
+    },
+    {
+      "bytes": 9506,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/v01-storage-closeout/actual-postwrite-readback.json",
+      "sha256": "258bdbcef4a1d337b2e10b882273b096c17e675a95704acd07bab5ad0c565864"
+    },
+    {
+      "bytes": 2874,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/v01-storage-closeout/api-return.json",
+      "sha256": "d77b0792fc0496bcd8211d36ab60d93fe927a03320e81f009488ff3dfb473206"
+    },
+    {
+      "bytes": 14955,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/v01-storage-closeout/independent-postwrite-review-v01.json",
+      "sha256": "b1ac9c2622bec8936efa1332adc9dee740f7cafa62bc44c8ca0af2f3f892fa6e"
+    },
+    {
+      "bytes": 2447,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/v01-storage-closeout/summary.json",
+      "sha256": "10108b5ad8845d9ac997716657a5de8286a20bfbedea8e5e9ec07dd0f247fc08"
+    },
+    {
+      "bytes": 309,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/controller-complete-pure-v02.json",
+      "sha256": "2cf8c2b11fe56be203977e4c72dcf4aa4c03712ddc1c489498fcc7716927a703"
+    },
+    {
+      "bytes": 11277,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/launch-pure-v02.json",
+      "sha256": "aba4034756ee18642e9edf6e37821c228803e4e8f76c237fa22d707860c3c659"
+    },
+    {
+      "bytes": 64281,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/request-pure-v02.json",
+      "sha256": "ac5c4cbd01307a97a44cd9b5283d8f1ab0b5a5234a17fa4b52580c168653006e"
+    },
+    {
+      "bytes": 175306,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/independent-failed-result-review-pure-v02.json",
+      "sha256": "e02635a93b4ac4010570955ab5656b9f789dba3b30e2572f2e98dfa74d75797d"
+    },
+    {
+      "bytes": 298018,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/v02-storage-closeout/actual-postwrite-readback.json",
+      "sha256": "e149bb2935694d3277fe5581788319c31c6d85fcd7d6675f1d4e9071cd277b73"
+    },
+    {
+      "bytes": 143579,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/v02-storage-closeout/api-return.json",
+      "sha256": "25ddb8769ec2451271576bc2db10948127301eeab5ed674f468e5245d381367d"
+    },
+    {
+      "bytes": 327389,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/v02-storage-closeout/independent-postwrite-review-v01.json",
+      "sha256": "4c517a08c02ef5b97e14b37077242eab723e4c2822b877a015770f01c69dbbb4"
+    },
+    {
+      "bytes": 2450,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/v02-storage-closeout/summary.json",
+      "sha256": "31b6310543c7239c1f48a490eb13d701279f845525f343e6c1b48b6857f2c428"
+    }
+  ],
+  "recorded_at_utc": "2026-10-24T18:38:48.894727+00:00",
+  "schema": "legal-ir-wire-coordinate-semantic-proposals-qualification/v1",
+  "scope": "Explicit independent semantic sidecars for every wire graph-v3 output; genuine complete-original replay, ordered alternatives and authored entities/assertions retained, unsupported/null slots unresolved. Legacy bridge, graph-v3 and corpus-v2 contracts unchanged; false authority and integer0 masks. Focused authored fixture/source profile only; no source/edition/meaning or model/Lean qualification.",
+  "selectors": 26,
+  "source_and_test_postimages": {
+    "ipfs_datasets_py/logic/autoformal/legal_source_graph_proposals.py": {
+      "bytes": 49864,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/candidate-v02/ipfs_datasets_py/logic/autoformal/legal_source_graph_proposals.py",
+      "sha256": "a5450ad7584d1ef39df7f9579eddf4d4064ed603621c150006a3e1386e4a22db"
+    },
+    "tests/unit/logic/autoformal/test_legal_source_graph_proposals.py": {
+      "bytes": 61893,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-semantic-proposals-01/candidate-v02/tests/unit/logic/autoformal/test_legal_source_graph_proposals.py",
+      "sha256": "2f6c5fda6e92333f47032080ab5ae73b617274c75abd11f0edac13f5e876f890"
+    }
+  },
+  "source_or_edition_or_meaning_adopted": false,
+  "status": "focused_authored_fixture_source_profile_qualified",
+  "successful_campaigns": {
+    "pure-v03": {
+      "cases": 24,
+      "phases": 72,
+      "selectors": 11
+    },
+    "pure-v04": {
+      "cases": 24,
+      "phases": 72,
+      "selectors": 15
+    }
+  },
+  "third_party_loaded_code_or_C_IO_attested": false,
+  "training_mask": 0
+}

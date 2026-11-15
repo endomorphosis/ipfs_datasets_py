@@ -1,9 +1,112 @@
 # Legal autoformalization
 
+Positive-pair loss projection additionally requires explicitly selected, eligible `IRTrainingExample` records matching the complete pair identity. Decoding a shard alone keeps its rows nontraining. The [handoff](docs/HANDOFF.md) records the 78-case software qualification and external-authentication limits.
+
+The legacy heuristic fuzzer now retains diagnostics and sanitized unverified proposals without exporting trusted training negatives. Explicit distrust and proposal markers are rejected even when verification is optional. The [93-case software qualification](../../../docs/autoformalization/evidence/legal-ir-legacy-fuzzer-proposal-boundary-20261115.json) preserves explicit caller compatibility and the separate typed PGIR-041 route; independent semantic evidence, training and convergence remain separate gates.
+
+The existing positive-pair miner treats canonical recipes as unverified proposals. Typed caller-supplied evidence is required before a recipe pair can train or emit a relationship receipt; see the [handoff](docs/HANDOFF.md) for the 133-case qualification and its archive-authentication limits.
+
+Bound Lean proof reuse now requires the advertised backend version to equal the kernel's observed native and toolchain version. All 142 Source-only cache controls pass; the fictional red controls and separate current Native scope are recorded in the [handoff](docs/HANDOFF.md). Historical native results remain bound to their original source epochs and are not inherited by this change.
+
+Reviewed V2/V3 source-use preparation now requires one coordinate view per exact raw artifact; caller source labels cannot create a second physical use. The [24-case software correction](../../../docs/autoformalization/evidence/legal-ir-reviewed-source-raw-view-identity-20261115.json) preserves same-view disjoint uses and the separate historical 355-case qualification, without human legal review or proof/training/corpus admission.
+
+Generated PGIR-041 mutation proposals no longer create independent semantic labels automatically. Default mining quarantines them; explicit caller-supplied labels must bind the current pair and pass the existing contracts. The completed original passed all 88 selected software cases (82 hard-negative and six retained metamorphic cases), with no failures, errors or skips. See the [handoff](docs/HANDOFF.md) for measured scope, preserved failures and the remaining LIR-22 evidence-integration gate. Caller metadata supplies no authenticated solver, directed proof, legal review or statutory gold.
+
+Reviewed evaluation now rechecks live context permission on exit and freezes producer outputs before later callbacks. All61 selected software cases pass; see the [handoff](docs/HANDOFF.md) for exact scope and remaining model/legal gates.
+
+Compiler diagnostics and proof-cache reuse now bind the current verifier profile; reviewed heldout contexts also enforce declared legal source identity across interpretations. Current source-only qualification and historical/native limits are recorded in the [handoff](docs/HANDOFF.md).
+
+Relational roundtrip scoring now detaches and fences reference, role and governing-observation inputs. A reproduced false prose-equality report now refuses, and all 431 source-only regression cases pass. Legal/model/proof authority remains unqualified. See the [handoff](docs/HANDOFF.md).
+
+Reviewed retrieval now supports a separately signed V4 context-set relation contract over V3 endpoints. Unknown pairs and analogies remain excluded from negatives; legal applicability is not inferred. See the [handoff](docs/HANDOFF.md) for source-only qualification and pending numerical/legal gates.
+
+The supervisor adapter now validates explicitly requested parent/v2 and parent/v3 audit receipts against trusted runtime selection and recomputed sidecars. All 93 source-only software cases pass; task/completion/resource/admission authority is unchanged. Physical supervisor execution and model/legal/proof qualification remain open. See the [handoff](docs/HANDOFF.md).
+
+The original parent now has an explicit trusted full-candidate audit using independently supplied request contexts and the shared scorer. All 233 selected source-only cases pass. Physical parent/v3 publication, supervisor adoption and model/legal/proof qualification remain open. See the [handoff](docs/HANDOFF.md).
+
+Reviewed admission now rejects duplicate paragraph uses created by raw repackaging, unaligned views or artifact revision labels. All 355 canonical source-only checks pass. Legal source authenticity, real statutory review and native proof remain separate gates. See the [handoff](docs/HANDOFF.md).
+
+The explicit v3 candidate audit now supports the existing many-sorted representation alongside object-only syntax. All 324 source-only software cases pass; legacy v1/v2 refusals and all legal/model/proof limits remain. See the [handoff](docs/HANDOFF.md).
+
+The producer evaluator now offers a separate full-candidate syntax audit against caller-supplied source, context and interpretation identifiers. All 67 selected source-only cases pass; unsupported and incomplete outputs remain counted. Legal meaning, model quality and proof authority remain unverified. See the [handoff](docs/HANDOFF.md).
+
+Explicit Qwen2 training conditioning now matches the selected inference prompt and body/EOS labels through a distinct recipe/checkpoint identity. All 93 selected tests pass, including a complete reviewed tiny-fixture job. The worker has a new source epoch: historical pretrained pairs require a fresh explicit transition before reuse. No actual pretrained fitting or legal/proof gain is claimed. See the [handoff](docs/HANDOFF.md). Historical actual-tokenizer capacity is now recorded: the largest complete public-layout training-shaped capacity sequence, including heldout rows, is 8197 positions, so an 8192 total-position window is insufficient. Current-checkout runtime and pretrained fitting remain unqualified.
+
+The actual pretrained Qwen rich-context path now passes the explicit original-parent typed-structure audit on all three heldout queries. Outcomes {"abstained": 0, "complete": 0, "error": 0, "incomplete": 3, "invalid": 0, "unsupported": 0}; no quality or legal/proof gain is inferred. See the [handoff](docs/HANDOFF.md).
+
+The actual pretrained Qwen source-only path now passes the explicit original-parent typed-structure audit on all three heldout queries. Outcomes {"abstained": 0, "complete": 0, "error": 0, "incomplete": 3, "invalid": 0, "unsupported": 0}; no quality or legal/proof gain is inferred. See the [handoff](docs/HANDOFF.md).
+
+The trusted original-parent runtime can now publish a separate typed-structure audit after child wait and fresh admission checks. All 21 selected tests pass, including five physical success/revocation/tampering cases. Supervisor adoption, actual pretrained replay and legal/proof authority remain open. See the [handoff](docs/HANDOFF.md).
+
+The reviewed producer evaluator now has an explicit canonical typed-expression audit, separate from payload equality and native proof. All 129 selected tests pass; a separate saved-Qwen audit preserves all incomplete cases and original artifacts without model replay. The default evaluator stays unchanged. See the [handoff](docs/HANDOFF.md).
+
+The public-layout Qwen profile now runs through the actual pretrained source-only original-parent path on all three complete queries. A same-pair old-prompt control preserves sources, context and cooperative/output budgets. Layout outcomes: {"abstained": 0, "complete": 0, "error": 0, "incomplete": 3, "invalid": 0, "unsupported": 0}; control: {"abstained": 0, "complete": 0, "error": 0, "incomplete": 3, "invalid": 0, "unsupported": 0}. Both originals close durably. See the [handoff](docs/HANDOFF.md).
+
+No fitting or legal-quality gain is claimed. New-profile actual rich dispatch, retention, fair A–F evaluation and real statutory/corpus/Lean gates remain open. The storage cap stays 250000000000 bytes, preserving earlier checkpoints, qualifications and failed claims.
+
+The entries below retain their original qualification cutoffs. Use the current handoff for later results and remaining gates.
+
+Actual pinned SmolLM2 BF16 weights now import into and restore from the existing checkpoint pair bit for bit. Three full source-only queries pass a bounded first-token generation probe with exact state restoration and an explicit GC/Linux unused-heap-release guard; complete-output quality, fair comparisons, rich-context capacity and full dense Adam capacity remain open. See the [handoff](docs/HANDOFF.md).
+
+Explicit BF16 v5/v6 requests now reach the original-parent CLI, with complete source/rich contexts, checkpoint restore, six fixture abstentions and live parent trust checks. All75 selected cases pass with seven durable original closeouts. Native last-position projection preserves selected nonzero logits/full inputs under unchanged limits; the first resource refusal is retained. Actual pretrained weights, tokenizer rich capacity and statutory/corpus gates remain open. See the [handoff](docs/HANDOFF.md).
+
+The existing local loader now has an explicit Llama/BF16 recipe, preserving float32 rotary state and default float32 T5/GPT2 behavior. All52 selected loader cases pass with two durable original closeouts; independent saved-pair/dispatch readback succeeds. Eight platform-conditional GPT-2 buffer cases skipped. This is real tiny-fixture software qualification; pretrained weights, original-parent BF16 CLI and full rich-context capacity remain pending. See the [handoff](docs/HANDOFF.md).
+
+Pinned SmolLM2 metadata/tokenizer preflight passes with two selected cases and separate durable metadata/validation closeouts. Complete source-only pairs fit8192; rich sources exceed4096 and one rich pair exceeds8192. BF16 model tensors fit the existing checkpoint bound; float32 model tensors do not. Full dense BF16 Adam moments exceed the separate512MiB optimizer-checkpoint bound by1189120 bytes before overhead. No weights or models ran. See the [handoff](docs/HANDOFF.md) for the Llama/BF16 runtime and rich-capacity gates.
+
+Full-target preflight rules out cached GPT-2 before fitting:all six complete targets exceed its1024 positions, with independently matched byte-BPE counts. The selected case passes with durable original closeout; no model runs or target truncation. Next is permitted longer-context tokenizer/model compatibility. See the [handoff](docs/HANDOFF.md).
+
+Qualified actual-GTE ranked artifacts now feed the physical CLI, preserving original encoder/projection identities and dispatching all complete examples to a freshly restored local T5. All five selected cases pass with three durable original closeouts. The decoder still produces fixture abstentions; pretrained quality and statutory admission remain pending. See the [handoff](docs/HANDOFF.md).
+
+Lossless v2 now passes the full local-fixture CLI:checkpoint restore, three decoder abstentions, original parent finish/wait/policy checks, post-child TRAIN revocation and policy denial. All24 scoped case executions pass with six durable original closeouts; the first v1 RSS refusal remains retained. CLI encoder vectors remain explicitly fictional; the earlier actual-GTE in-process result is separate. See the [handoff](docs/HANDOFF.md).
+
+Explicit lossless context v2 now carries all complete actual-GTE-ranked examples to nine real local T5 forwards within the unchanged4096-token and1536MiB profile. All90 scoped cases pass across six durable original closeouts. Outputs are fixture abstentions; pretrained quality and statutory/corpus acceptance remain pending. See the [handoff](docs/HANDOFF.md).
+
+The earlier v1 transport has a separately qualified complete-context capacity check against the local decoder. All three ranking arms refuse the fixed4096-token full-context batch; a separate source-only T5 baseline abstains on all three queries. The selected integration case and20 runtime cases pass with durable original closeouts. Full-context decoder dispatch and model quality remain pending. See the [handoff](docs/HANDOFF.md).
+
+Frozen lexical/raw/aligned retrieval rankings now have complete-payload diagnostics, with all 60 owning metrics tests passing and durable original closeout. The retained candidate bank has no exact typed/local/full counterparts; semantic relevance and structural usefulness remain unscored. See the [handoff](docs/HANDOFF.md).
+
+The reviewed retriever now includes a bounded lexical baseline. Actual cached GTE and one aligned checkpoint have frozen lexical/raw/aligned rankings for three source/dependency-disjoint heldout queries over the same four-view TRAIN bank. All 69 joint and 20 runtime tests pass with durable original-owner closeout. Semantic relevance and legal-applicability judgments remain unscored. See the [handoff](docs/HANDOFF.md).
+
+Concrete mixed-sort preservation is adopted in the existing owners, with 423 Python cases and nine selected Lean builds qualified. See the [handoff](docs/HANDOFF.md) and [exact qualification](../../../workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/qualification-summary-v02.json) for scope, retained failures and the remaining statutory, model and corpus gates.
+
+Actual cached GTE source/formal outputs now reach the reviewed masked trainer: two source inputs and three complete formal candidates produce 51 native chunks and one real projection update. All 19 embedding-runtime tests pass with durable original-owner closeout; independent byte, review, geometry and checkpoint readback succeeds. Fixed heldout retrieval-quality comparisons remain next. See the [handoff](docs/HANDOFF.md).
+
+The user-authorized250GB cap and prior source/ranked-decoder qualifications retain their own scopes. Real statutory review, pretrained decoder quality, whole-corpus admission, protected-root permission tests and hosted CI remain open.
+
+## Qualified supervision and current frontier — 2026-11-10
+
+All 204 fleet-monitor owning cases passed (75 functions, 612 phases, zero audit denials): 169 original cases and 35 dependency controls. The existing SDK v2 profile used the canonical C19 plugin, 21 real physical fixture cases and 15 bounded cold probes. Original Source, Native, process and storage custody closed; this successful run released its 64 MiB promise. The earlier 203-pass/one-plaintext-fixture-failure run and its retained promise remain separately recorded.
+
+The existing fleet configuration now adds only the retained-capacity recovery oneshot and its existing timer as an observational dependency; all four original lanes are unchanged. A natural post-publication monitor cycle reported four healthy lanes and the dependency in fresh successful scheduled-idle state, with its timer active/waiting. The downstream probe and engineering watchdog also reported healthy at their own saved observation times. These asynchronous observations establish no exact-latest-report propagation or injected-failure result. Dependency diagnostics grant no restart, completion or automatic source-repin authority; failures use the existing unhealthy-fleet coding-repair path.
+
+The repaired current capacity-watch CLI separately passed its whole 133-case owning cohort (62 functions, 399 phases, zero audits), with original custody closed and its successful 64 MiB promise released. That scope contains 33 explicit historical-version cases and 100 current cases (54 current-profile, 33 previously passing legacy and 13 stored-request-copy cases). Genuine 92c9 readiness separately checked and fsynced 73 files / 20,776,408 bytes with 153 full-identity entries, observed eligibility and wrote no ledger state. Readiness is not release or an evergreen action token.
+
+The configuration Source1 write and separate readback were executed by delegated `/root/finish_enrollment_docs` under Root authorization; their accepted receipts are distinct from natural monitoring observations.
+
+The capacity service's durable inputs preserve the original parent/request identity. Its controlled and natural timer cycles observed sufficient current capacity and made no mutating recovery call. These idle cycles do not prove a pressure-release path or recovery of unknown claims. Earlier proper 398/276 and aebb/ec90 closeouts retain separate custody and accounting evidence. The original 276 assertions passed while its outer owner failed; administrative closure does not change that result. SDK open-epoch9, supervisor17 and P5's original43 source-only qualification lineage also retain their distinct scopes.
+
+Continue through the existing seven LIR phase subgoals and Phase 8 evaluation workstream. Reuse canonical source/span/entity intake, complete typed norms, reconstructable graphs, Lean/proof-cache owners and decoder/supervisor integration. Preserve spaCy-derived 8D, registered 384D/768D and Leanstral-derived 4096D lineage. No engineering result here asserts complete statutory meaning, whole-US-Code Lean admission, new model quality or scientific-task activation.
+
+The saved scientific frontier remains 60 completed / 4 blocked under its existing operator hold; the four engineering lanes report the existing 145 completed tasks. These are captured board observations, not task-status edits. The maintained recovery capsule records the exact receipts and scopes.
+
+See the [maintained recovery capsule](../../../docs/autoformalization/evidence/legal-ir-reviewed-producer-recovery-full225-20261109.json) for exact receipts, preserved historical outcomes and current workstream scopes.
+
+
+**Recovery qualification, 2026-11-09:** [225 selected cases passed](../../../docs/autoformalization/evidence/legal-ir-reviewed-producer-recovery-full225-20261109.json) on the finite Root V4 post-barrier recovery extension, with all original custody closed and its 16 MiB claim durably released. Separate closeouts preserved the original own8084/own5d8 failures and files while releasing only their 64 MiB promises. See the [handoff](docs/HANDOFF.md); before-barrier and UNKNOWN histories, supervisor rollout and scientific gates remain separate.
+
 **Reviewed retrieval source delivery, 2026-11-09:** the [nine-file source delivery](../../../docs/autoformalization/evidence/legal-ir-reviewed-retrieval-qualified-source-delivery-20261109.json) publishes the exact canonical owner/test/legacy-fixture bytes from the [294-case qualification](../../../docs/autoformalization/evidence/legal-ir-reviewed-retrieval-full-qualification-20261109.json), with no skips or deselections and closed original custody. It connects reviewed directed pair labels to the masked objective and current TRAIN-index retrieval, and retains complete selected typed examples as candidates. Decoder permission, governing-definition/proof bodies, real statutory review, pretrained-decoder gain and corpus admission remain separate gates. The earlier fixture-only publication remains historical. See the [handoff](docs/HANDOFF.md) for source and hosted-CI limits.
+
 
 The separate [clean public-tree qualification](../../../docs/autoformalization/evidence/legal-ir-reviewed-retrieval-public-tree-qualification-20261109.json) passed all294 with137 compiled product buffers matching the selected public index; no private dependency changes were used.
 
+**Resume checkpoint, 2026-11-09:** the [typed sampled-recovery profile](../../../docs/autoformalization/evidence/legal-ir-sampled-validation-recovery-20261109.json) passed **183 selected cases**, with original Source/native/process custody closed and its 16 MiB claim durably released. Separate administrative closeout released only the earlier own32 claim, preserving all 44 files; own64 remains retained. The earlier 80-case generation, failures and refusals retain their historical cutoffs. The restored decoder's 471-case cohort remains unrun. The saved supervisor catalogue shows 60 completed/four blocked, but executor verification reports `descriptor_changed` with no dispatch/completion authority. Continue from the [current handoff](docs/HANDOFF.md) and its exact evidence. No model, statutory, native Lean or convergence qualification follows.
+
+**P4 qualification:** 225 selected declaration/mask/joint cases passed with closed original custody. The separate 68 structured cases never ran after an acquired-then-released native grant hit its admission deadline; manual metadata Source closure grants no storage recovery. The 293-case total remains unqualified. See the [handoff](docs/HANDOFF.md).
+
+**Current retrieval source, 2026-11-09:** the [compatible nine-file reconciliation](../../../docs/autoformalization/evidence/legal-ir-reviewed-retrieval-current-compatible-source-port-20261109.json) preserves the rich-context APIs and installs reviewed declaration, mask and joint-retriever paths in their existing owners. The current declaration/mask/joint owners have the separate 225-case qualification; structured 68 remains unrun. The earlier 287-case result remains bound to its historical generation. See the [handoff](docs/HANDOFF.md) for exact APIs and evidence.
+
+**Preservation closeout:** five actual Lean 4.34.1 cases and 23 empty-axiom reports closed successfully. The current 291 ordinary cases passed, but final storage accounting refused closeout and retained the original 16 MiB claim; preserve that outcome without repeating the tests. The native and 80-case recovery results retain their executed control generations; three later shared resource-control changes inherit no qualification.
 
 **Actual proof-cache integration, 2026-11-09:** [243 ordinary cases and 11 actual Lean commands](../../../docs/autoformalization/evidence/legal-ir-native-proof-cache-roundtrip-20261109.json) check exact-obligation proofs through disk persistence/reopen and context-bound reuse. Changed proof contexts refuse; no compiler runs on cache reuse. This is fictional-source engineering with no statutory, model or corpus admission. See the [handoff](docs/HANDOFF.md) for source-generation and remaining qualification limits.
 

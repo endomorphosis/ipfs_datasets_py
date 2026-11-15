@@ -1,0 +1,441 @@
+{
+  "BOS_observations": {
+    "acceptance_tolerance": null,
+    "argmax_agree_rows": 96,
+    "argmax_differ_rows": 0,
+    "diverse_predictions_or_task_accuracy_claimed": false,
+    "mean_centered_float32_stage_separate_from_binary64_delta_statistics": true,
+    "original_margin_ranges": {
+      "top1_top2_margin": {
+        "defined_rows": 96,
+        "maximum": 8.540583968162537,
+        "minimum": 5.777725458145142,
+        "undefined_rows": 0
+      }
+    },
+    "original_tied_rows": 0,
+    "original_top1_token_histogram": {
+      "30": 96
+    },
+    "paired_rows": 96,
+    "stable_binary64_centered_delta_ranges": {
+      "centered_l2": {
+        "defined_rows": 96,
+        "maximum": 3.719858590611004e-06,
+        "minimum": 1.2432018762612856e-06,
+        "undefined_rows": 0
+      },
+      "centered_max_absolute": {
+        "defined_rows": 96,
+        "maximum": 2.0922161638736725e-06,
+        "minimum": 5.871988832950592e-07,
+        "undefined_rows": 0
+      },
+      "centered_rms": {
+        "defined_rows": 96,
+        "maximum": 6.575843086190186e-07,
+        "minimum": 2.1976911927204853e-07,
+        "undefined_rows": 0
+      },
+      "mean_delta": {
+        "defined_rows": 96,
+        "maximum": 2.3888424038887024e-07,
+        "minimum": -3.012828528881073e-07,
+        "undefined_rows": 0
+      }
+    },
+    "successor_margin_ranges": {
+      "top1_top2_margin": {
+        "defined_rows": 96,
+        "maximum": 8.540585160255432,
+        "minimum": 5.777722954750061,
+        "undefined_rows": 0
+      }
+    },
+    "successor_tied_rows": 0,
+    "successor_top1_token_histogram": {
+      "30": 96
+    }
+  },
+  "acceptance_tolerance": null,
+  "accepted_actual_retained_head_sensitivity_observation": true,
+  "actual_calls": {
+    "fit_count_prior": 0,
+    "fit_normalization": 0,
+    "greedy_generation": 0,
+    "infer_cached_generation": 0,
+    "metadata_binder": 1,
+    "model_restoration": 1,
+    "source_pair_probe": 2
+  },
+  "actual_original_pipeline": {
+    "actual_worker_returncode": 0,
+    "controller_returncode": 0,
+    "original_owned_pipeline_succeeded": true,
+    "original_owner_returncode": 0,
+    "resource_closeout": {
+      "cooperative_not_kernel_containment": true,
+      "current_selected_record_matches_original_terminal": true,
+      "live_processes": 0,
+      "native_lease_id": "e2831bc935df4817a2e1ba74e85eebbd",
+      "native_released": true,
+      "normal_original_release": true,
+      "recovery_performed": false,
+      "rss_bytes": 0,
+      "source_READ_closed": true,
+      "storage_reservation_id": "cc6b183cd4a34b18b86a9ab2661928f1",
+      "storage_status": "released"
+    },
+    "source_READ_closed_after_original_verified_cleanup": true
+  },
+  "checkpoint_state": {
+    "F18_42_tensor_profile_selected": false,
+    "float32_tensors": 30,
+    "int64_buffers": 2,
+    "tensor_sha256": "0b3c7c3b1a5581cd393d9bb8db1d24b87fe2cb9dff0be268aa2b5ed1f88b6594"
+  },
+  "diagnostic_occurrence_receipt_does_not_admit_unchanged_full_inference_or_training": true,
+  "entire_US_Code_formalization_achieved": false,
+  "evidence_id": "prepared384-retained-head-sensitivity-qualified-20261027-01",
+  "external_publication_performed": false,
+  "focused_authored_Torch_qualification": {
+    "actual_worker_returncode": 0,
+    "cases_passed": 21,
+    "original_owned_pipeline_succeeded": true,
+    "original_owner_returncode": 0,
+    "original_pipeline_and_all_prior_attempts_preserved": true,
+    "phase_events_passed": 63,
+    "previous_cases_not_pooled": true,
+    "qualification_basis": "original_owned_pipeline_pass",
+    "qualification_replayed": false,
+    "scope": "Only21 selected synthetic model cases; fixture normalization/count-prior setup is authored. No retained model/vector data, encoder, production capture or prior cohort replay."
+  },
+  "model_encoder_API_tests_input_DATA_or_resource_census_replayed_by_documentation": false,
+  "model_execution": {
+    "BOS_scope": "Paragraph plus first real clause0 at the after-BOS grammar transition; later clause decoder steps and complete sequences remain untested.",
+    "arm_batches": 24,
+    "batch_size": 8,
+    "drift_kernel_calls": 22,
+    "fixed_BOS_forward_executed": true,
+    "fixed_BOS_next_logits_calls": 24,
+    "generation_executed": false,
+    "model_inference_executed": true,
+    "model_restorations": 1,
+    "paired_batches": 12,
+    "prefix_ids": [
+      1
+    ],
+    "source_pair_probe_calls": 2
+  },
+  "model_restorations_across_both_actual_attempts": 2,
+  "next_task": "Reuse completed native receipts, canonical caches, raw-vector and saved-preprocessing/start-state/BOS observations. Preserve normal current-generation/source/receipt checks. Prepare a separately versioned and qualified occurrence-aware inference/trajectory boundary in the existing numerical/runtime owners: current full inference and training still impose a global text-to-one-vector contract and remain unchanged until explicit qualification. Then predeclare bounded fixed-prefix, clause-route, later-clause and full-sequence comparisons with their acceptance policy under original admission. Maintain reviewed source/meaning/context, grouped exposure/held-out evaluation and complete IR/graph/Lean gates. Constant BOS agreement proves no compatibility, task accuracy or convergence.",
+  "normal_consumer_source_receipt_current_generation_checks_required": true,
+  "numerical_policy": {
+    "CPU_autocast_enabled": false,
+    "cpu_threads": 1,
+    "device": "cpu",
+    "dtype": "torch.float32",
+    "float32_matmul_precision": "highest",
+    "interop_threads_observed": 1,
+    "native_binary_or_whole_runtime_attestation": false,
+    "optional_dependency_profile": "optional_dill_unavailable",
+    "torch_module_origin": "/home/barberb/lift_coding/.venv/lib/python3.12/site-packages/torch/__init__.py",
+    "torch_version": "2.9.1+cpu",
+    "weights_and_ambient_CPU_RNG_unchanged": true
+  },
+  "numerical_reports": {
+    "train": {
+      "bytes": 1272776,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-head-sensitivity-v01/attempt-actual-v02/exports/head-sensitivity/source-pair-train.json",
+      "sha256": "97d7a98bc08442a9abe3d40d5e44e56c0517a0eaf82476fd1931c9fd6cb624bf"
+    },
+    "validation": {
+      "bytes": 1277264,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-head-sensitivity-v01/attempt-actual-v02/exports/head-sensitivity/source-pair-validation.json",
+      "sha256": "4a459bd271fd218820e5b57cb9e67b834b837dbb4791c6a57e11748fc4afaf76"
+    }
+  },
+  "occurrence_context_validation": {
+    "causal_runtime_explanation_claimed": false,
+    "genuine_per_row_validator_used": true,
+    "legacy_global_context_validator_full_inference_and_training_contracts_unchanged": true,
+    "observed_embedding_JSON_digest_variation": {
+      "original": {
+        "literal_clause_text_hashes": 167,
+        "occurrences_in_such_groups": 0,
+        "same_text_groups_with_multiple_embedding_hashes": 0
+      },
+      "successor": {
+        "literal_clause_text_hashes": 167,
+        "occurrences_in_such_groups": 8,
+        "same_text_groups_with_multiple_embedding_hashes": 4
+      }
+    },
+    "occurrence_aware_full_inference_trajectory_boundary_qualified": false,
+    "ordered_row_ID_slot_source_embedding_hash_and_offsets_preserved": true,
+    "schema": "contextual-source-occurrence-validation/v1"
+  },
+  "population": {
+    "active_clause_slots": 360,
+    "complete_payload_alias_groups": 24,
+    "forwarded_arm_rows": 192,
+    "historical_views": 263,
+    "native_input_identities": 432,
+    "original_train_rows": 48,
+    "original_validation_rows": 48,
+    "padded_clause_slot_cells": 408,
+    "padding_counted_as_metric_observations": false,
+    "paired_rows": 96,
+    "physical_role_uses": 456,
+    "total_clause_slot_cells": 768
+  },
+  "prior_attempt_history": {
+    "first_actual_attempt": {
+      "actual_calls": {
+        "fit_count_prior": 0,
+        "fit_normalization": 0,
+        "greedy_generation": 0,
+        "infer_cached_generation": 0,
+        "metadata_binder": 1,
+        "model_restoration": 1,
+        "source_pair_probe": 1
+      },
+      "physical_occurrence_vectors_not_repaired_or_deduplicated": true,
+      "scope": "One binder and one model restore returned; first probe refused the global cached-text/vector invariant before a BOS numerical report.",
+      "successful_probe_reports": 0
+    },
+    "first_fixture_attempt": {
+      "qualification_credit": 0,
+      "scope": "Optional Dill import external-write audit refusal before tests.",
+      "tests_executed": 0
+    },
+    "second_fixture_attempt": {
+      "collected_cases": 20,
+      "failed_phase_events": 1,
+      "passed_phase_events": 59,
+      "qualification_credit": 0,
+      "scope": "Incorrect BOS sentinel expectation failed; pytest shutdown cache write also refused. Canonical decoder was not changed."
+    },
+    "third_fixture_attempt": {
+      "actual_worker_returncode": 0,
+      "cases_passed": 20,
+      "original_owned_pipeline_succeeded": false,
+      "original_owner_returncode": 1,
+      "original_pipeline_not_rewritten": true,
+      "phase_events_passed": 60,
+      "recovered_storage_custody_closed": true
+    }
+  },
+  "qualification_summary": {
+    "bytes": 57106,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-head-sensitivity-v01/qualification-summary-v01.json",
+    "sha256": "85baefa0598085a1edb6e300f26a97ee28954c50c69b5296ce3dc6752e110007"
+  },
+  "recorded_at_utc": "2026-10-27T17:57:21.813351+00:00",
+  "references": {
+    "actual_review": {
+      "bytes": 17651,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-head-sensitivity-v01/independent-actual-result-review-v01.json",
+      "sha256": "fe742b71928c1fddff0460040cc3e4136907a2519683d2d8bb2f2a53c5962fe6"
+    },
+    "controller_complete": {
+      "bytes": 621,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-head-sensitivity-v01/actual-controller-complete-v02.json",
+      "sha256": "2e8ad36ac89233c4b81cbc517979146570a52a3600161b3168da1fa1bdde7db1"
+    },
+    "data_manifest": {
+      "bytes": 9080,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-head-sensitivity-v01/study-data-manifest-v01.json",
+      "sha256": "5271c482d9ee7b30bcad82879851ec58ae930f0e27a55671ca32cdba6f76ef42"
+    },
+    "execution_bindings": {
+      "bytes": 17127,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-head-sensitivity-v01/actual-execution-bindings-v02.json",
+      "sha256": "5cd855863d23b155cc666bcd973e41d34e2130e74880ffb3ef3851434671dc6e"
+    },
+    "fixture_review": {
+      "bytes": 14000,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-head-sensitivity-v01/kernel-qualification-v04/independent-result-review-v04.json",
+      "sha256": "4cc65da81f728f7332a878957fdf185cc651b30860074a5cefa3331578b03e39"
+    },
+    "fixture_summary": {
+      "bytes": 57209,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-head-sensitivity-v01/kernel-qualification-v04/qualification-summary-v04.json",
+      "sha256": "58d8c25d0ba882bb86d4a42be2211bc5dc532b3752228062c066cc46ca963ce4"
+    },
+    "installation_readback": {
+      "bytes": 15685,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-head-sensitivity-v01/independent-occurrence-correction-installation-readback-v01.json",
+      "sha256": "d775d13061f3edf7966c2f15af7100cd4948d13216c8ddf6e88c0b117511308a"
+    },
+    "launch": {
+      "bytes": 7963,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-head-sensitivity-v01/actual-launch-v02.json",
+      "sha256": "9f9dd13805541ca7bcb995b206de566b199af9c6d45f81b2019ce02945b2e5cf"
+    },
+    "prior_actual_controller": {
+      "bytes": 622,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-head-sensitivity-v01/actual-controller-complete-v01.json",
+      "sha256": "37550c129990aea1f8fafb8a18a0ee3a5fc7814f323a00d6c765d6fb384e1845"
+    },
+    "prior_actual_launch": {
+      "bytes": 11771,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-head-sensitivity-v01/actual-launch-v01.json",
+      "sha256": "a6ddba0c76b27bd85033e58ebc2dd1718736268d23efef495f59fe70cd6bde2a"
+    },
+    "prior_actual_recovery_closeout": {
+      "bytes": 4935,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-head-sensitivity-v01/actual-storage-recovery-v01/closeout-v01.json",
+      "sha256": "a6873b6b68cfeb7cdc2dabfcfef746bb36dc36dca0737fe9809eea1eaf33ed91"
+    },
+    "prior_actual_recovery_review": {
+      "bytes": 4732,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-head-sensitivity-v01/actual-storage-recovery-v01/independent-result-review-v01.json",
+      "sha256": "0e24f6d06022a3ce090d957c761ba310719c1811e383f023cf06a87194c21fa4"
+    },
+    "prior_actual_worker_failure": {
+      "bytes": 423,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-head-sensitivity-v01/attempt-actual-v01/exports/head-sensitivity/worker-failure.json",
+      "sha256": "bea00cde42edb15a237bed3b25c34dcb03929e48abe93a00cb1930761f27b183"
+    },
+    "prior_fixture_summary": {
+      "bytes": 60361,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-head-sensitivity-v01/kernel-qualification-v03/qualification-summary-v03.json",
+      "sha256": "f06f449a66af1e573ec93b0ed759c5a792842d4d598d422dd317ab57c115cdca"
+    },
+    "request": {
+      "bytes": 16386,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-head-sensitivity-v01/actual-request-v02.json",
+      "sha256": "ec6987e98c1f990b80de57a37befdcfef8f8c822ddd52bc71bd6422e27218691"
+    },
+    "source_capture": {
+      "bytes": 23075,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-head-sensitivity-v01/actual-source-capture-v02.json",
+      "sha256": "221c6598898cfba0568704a8895f5b4460f2f2251b4921eb6be2b7359582b2fc"
+    },
+    "study_scope": {
+      "bytes": 11088,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-head-sensitivity-v01/study-scope-v04.json",
+      "sha256": "888bd65686cccaec11f4816cc531c4e8ed0320af55311396fd8b44eeb2872448"
+    }
+  },
+  "saved_output_references": {
+    "metadata_authentication": {
+      "bytes": 105259,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-head-sensitivity-v01/attempt-actual-v02/exports/head-sensitivity/metadata-authentication.json",
+      "sha256": "66d08a1141518825b3380c6fa790330610802becaae09cca6db6098b52ead003"
+    },
+    "physical_role_custody": {
+      "bytes": 670111,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-head-sensitivity-v01/attempt-actual-v02/exports/head-sensitivity/physical-role-custody.json",
+      "sha256": "7c0f5c29be8299dd01490ad254fde325549f9b0cb02fd5c0744f40ea16a4ccc3"
+    },
+    "terminal_object_custody": {
+      "bytes": 5814,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-head-sensitivity-v01/attempt-actual-v02/exports/head-sensitivity/terminal-object-custody.json",
+      "sha256": "407abe72eb720bfc85cbe76f227708f2e042866d75cf902ac0f9427ff23f8daf"
+    },
+    "worker_observation": {
+      "bytes": 24685,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-head-sensitivity-v01/attempt-actual-v02/exports/head-sensitivity/operation-observation.json",
+      "sha256": "4e50fd10c996a841b3ccab9b44372e97b5e2ad8f3e758a7fcff693354486b23a"
+    }
+  },
+  "schema": "legal-ir-prepared384-retained-head-sensitivity-public-qualification/v1",
+  "scope": "Saved preprocessing, all real-clause start-state features and fixed BOS on96 authored diagnostic rows; no later decoder trajectory or complete-output qualification.",
+  "semantic_basis_head_equivalence_or_convergence_qualified": false,
+  "source_observations": {
+    "accepted_cache_nine_producer_files_unchanged": true,
+    "additional_metadata_sources": 7,
+    "core_contextual_sources": 13,
+    "current_13_source_generation_refreshed": true,
+    "module_origin_count": 20,
+    "native_binary_or_continuous_execution_attestation": false,
+    "source_compile_buffer_observation_count": 20,
+    "source_pins": 60
+  },
+  "stage_metrics_summary": {
+    "BOS.mean_centered_logits": {
+      "bit_exact_rows": 0,
+      "maximum_absolute_error": 2.1457672119140625e-06,
+      "maximum_l2_distance": 3.975232124455706e-06,
+      "observations": 96
+    },
+    "BOS.raw_logits": {
+      "bit_exact_rows": 0,
+      "maximum_absolute_error": 2.384185791015625e-06,
+      "maximum_l2_distance": 3.994873200713231e-06,
+      "observations": 96
+    },
+    "clause_feature_normalization.real_clause": {
+      "bit_exact_rows": 0,
+      "maximum_absolute_error": 4.3213367462158203e-07,
+      "maximum_l2_distance": 1.7319303071613041e-06,
+      "observations": 360
+    },
+    "initial_state.count_logits": {
+      "bit_exact_rows": 0,
+      "maximum_absolute_error": 1.9073486328125e-06,
+      "maximum_l2_distance": 2.6894841605850405e-06,
+      "observations": 96
+    },
+    "initial_state.hidden": {
+      "bit_exact_rows": 0,
+      "maximum_absolute_error": 4.6193599700927734e-07,
+      "maximum_l2_distance": 1.1284324923330449e-06,
+      "observations": 96
+    },
+    "initial_state.recurrent_clause_features.real_clause": {
+      "bit_exact_rows": 0,
+      "maximum_absolute_error": 2.1725427359342575e-06,
+      "maximum_l2_distance": 6.293910796796287e-06,
+      "observations": 360
+    },
+    "initial_state.scalar_logits.real_clause": {
+      "bit_exact_rows": 0,
+      "maximum_absolute_error": 1.811981201171875e-05,
+      "maximum_l2_distance": 5.1949072633123095e-05,
+      "observations": 360
+    },
+    "model_projection.paragraph": {
+      "bit_exact_rows": 0,
+      "maximum_absolute_error": 3.3527612686157227e-07,
+      "maximum_l2_distance": 1.5070245606425658e-06,
+      "observations": 96
+    },
+    "paragraph_feature_normalization": {
+      "bit_exact_rows": 0,
+      "maximum_absolute_error": 3.3527612686157227e-07,
+      "maximum_l2_distance": 1.5070138410629075e-06,
+      "observations": 96
+    },
+    "saved_input_transform.paragraph": {
+      "bit_exact_rows": 0,
+      "maximum_absolute_error": 3.3527612686157227e-07,
+      "maximum_l2_distance": 1.5070245606425658e-06,
+      "observations": 96
+    },
+    "saved_input_transform.real_clause": {
+      "bit_exact_rows": 0,
+      "maximum_absolute_error": 5.587935447692871e-07,
+      "maximum_l2_distance": 2.23934416428003e-06,
+      "observations": 360
+    }
+  },
+  "successful_attempt_model_restorations": 1,
+  "target_and_authority_scope": {
+    "conditioning_profile_ids": null,
+    "count_prior_retains_historical_TRAIN_label_fit": true,
+    "evaluation_gold_mask": 0,
+    "kernel_inputs_only_source_pairs": true,
+    "model_convergence_proven": false,
+    "outer_target_independence_claimed": false,
+    "proof_authority": false,
+    "source_kind": "authored diagnostic benchmark paragraphs, not reviewed statutory provisions",
+    "source_or_basis_or_head_compatibility_qualified": false,
+    "source_to_model_equivalence_proven": false,
+    "teacher_or_source_semantic_authority": false,
+    "training_mask": 0,
+    "whole_original_JSON_target_exposure": true
+  }
+}

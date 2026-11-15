@@ -1,0 +1,135 @@
+{
+  "broader_retained_inventory": {
+    "all_entries_observed_ordinary_regular": true,
+    "bytes_above_declared_32MiB_profile": 519436,
+    "capture_ref": {
+      "bytes": 7464219,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/native-full367-retained-and-selected-runtime-fresh-20261109-v01.json",
+      "sha256": "68b8c214f55bfbbed1323ea11c2535db95f1e454a82912afa920613292c5df4a"
+    },
+    "claim_or_artifact_mutation_by_observation": false,
+    "durability_or_safe_mode_or_release_qualification": false,
+    "file_hashes_or_all_file_body_verification": false,
+    "metadata_apparent_bytes": 34073868,
+    "metadata_entries": 12348,
+    "observed_permission_modes": [
+      "0400",
+      "0600",
+      "0664",
+      "0666"
+    ],
+    "scope": "Metadata sizes/types/identities only; no all-file hashing, durability or release qualification"
+  },
+  "broader_two_module_run": {
+    "artifacts_durable_asserted": false,
+    "audit_ref": {
+      "bytes": 6084,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/native-full367-green-input-v01/independent-full367-body-pass-owner-failure-audit-v01.json",
+      "sha256": "3592f5e2232595a32761e8dfe15bc963f1cc24a5103f8db6b8d947f3ff53f0a6"
+    },
+    "body_passed": 367,
+    "body_tests": 367,
+    "composite_qualified": false,
+    "errors": 0,
+    "failures": 0,
+    "native_lease_id": "e86dadcd5e9641c69e56372d0010703b",
+    "native_lease_released": true,
+    "original_owner_exit_code": 1,
+    "productive_returncode": 0,
+    "pytest_seconds": 11.122,
+    "sampled_live_processes": 0,
+    "skipped": 0,
+    "storage_profile_bytes": 33554432,
+    "storage_release_authorized": false,
+    "storage_reservation_id": "5b6b570ec57f47faa588d105ddd07a1e",
+    "storage_status": "retained",
+    "watchdog_error": "ValidationResourceError: validation aggregate storage limit exceeded"
+  },
+  "intended_red": {
+    "acceptance_ref": {
+      "bytes": 7132,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/native-six-standard-red-input-v04/independent-native-six-intended-red-and-custody-acceptance-v01.json",
+      "sha256": "47259f8a67c5b8b9f784cac242c93efc9833c96669ab74aed84263f4a29b2c54"
+    },
+    "control_passes": 5,
+    "errors": 0,
+    "expected_failures": 1,
+    "missing_typed_witness_after_original_private_cleanup_assertions": true,
+    "skipped": 0,
+    "tests": 6
+  },
+  "next_selected_runtime_boundary": {
+    "fresh_selected_capture_ref": {
+      "bytes": 7464219,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/native-full367-retained-and-selected-runtime-fresh-20261109-v01.json",
+      "sha256": "68b8c214f55bfbbed1323ea11c2535db95f1e454a82912afa920613292c5df4a"
+    },
+    "independent_private_port_static_review_ref": {
+      "bytes": 2741,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/selected-runtime-native-capacity-F2-compatibility-private-v02/independent-minimal-selected-port-static-review-v01.json",
+      "sha256": "c6508d1dac282c942e510962bdca939d18004ef75f1cd0a4554acfa745edd51a"
+    },
+    "next_action": "Install the reviewed port as a distinct versioned Source generation while preserving old0400 sealed buffers/profile, then rebind and qualify the selected family through existing owners before activation. Canonical23 qualification does not transfer automatically.",
+    "port_status": "PRIVATE_STATIC_ACCEPTED_UNINSTALLED_UNRUN; no versioned Source installation, selected-profile rebinding or activation inferred",
+    "private_port_proposal_ref": {
+      "bytes": 11246,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/selected-runtime-native-capacity-F2-compatibility-private-v02/proposal-manifest.json",
+      "sha256": "be77b6333ea23a7800e89a52e9d0fd9af7fe26fc78e154a10156611fdeecb5b8"
+    },
+    "selected_profile_ref": {
+      "bytes": 113869,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-dispatch-integration-v01/unblock-work-v01/executor-watchdog-v01/scientific-activation-candidate-v01/scientific-managed-executor-proof-v03/catalogue-race-profile-metadata-v03/scientific-profile.json",
+      "sha256": "ae9b653a537210b122f8f0065059d2ac8bbcbf88e4f6d51cfb233a88b790466a"
+    },
+    "selected_sources_still_old_and_unchanged": true
+  },
+  "preserved_limits": [
+    "Existing task/status/history and original resource caps remain unchanged.",
+    "Prior cancellation and failed requests retain their own evidence and claims; outcomes are not pooled.",
+    "Private scheduler/storage fixtures are real; Source/Popen/death and service cycle-result premises are explicitly mocked.",
+    "The367 test-body pass is not owner/composite qualification and authorizes neither cleanup nor retry/cap override.",
+    "Source readbacks are closed as recorded; no global handle census, full transitive import/CI or legal/model-quality result follows."
+  ],
+  "qualified_narrow_cohort": {
+    "acceptance_ref": {
+      "bytes": 8012,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/native-capacity-23-green-input-v01/independent-actual-23-green-and-custody-acceptance-v01.json",
+      "sha256": "1bca3439ce4385f0a1d2da115da4c9cac30500f0df9748fab2fe8c4bca5748c6"
+    },
+    "artifacts_durable_asserted": true,
+    "errors": 0,
+    "failures": 0,
+    "functions": 6,
+    "original_native_and_sampled_process_custody_closed": true,
+    "passed": 23,
+    "pytest_seconds": 2.211,
+    "retained_bytes": 520893,
+    "retained_files": 427,
+    "skipped": 0,
+    "source_pins_unchanged": 44,
+    "storage_profile_bytes": 2097152,
+    "storage_reservation_id": "3a94ab44152245aaa5f63a737f221880",
+    "storage_status": "released",
+    "tests": 23
+  },
+  "recorded_at_utc": "2026-11-09",
+  "schema": "legal-ir-native-orchestration-capacity-deferral-evidence/v1",
+  "scope": "Operational software evidence for the existing original native owner and scientific executor; no statutory/model/Lean or live-supervisor activation authority",
+  "source_adoption": {
+    "acceptance_ref": {
+      "bytes": 5254,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/native-capacity-three-source-canonical-adoption-v02/independent-saved-three-source-adoption-and-readback-acceptance-v02.json",
+      "sha256": "4370a186f40a74cd2b5ee42b2d6bb7fb28ede4f39ef591097d8914311954b1bb"
+    },
+    "all_final_modes": "0644",
+    "canonical_executor_sha256": "43e12081e4d6d74e751a3b4c08370573feb055afc2351d7a073b37ce556062cb",
+    "canonical_owner_sha256": "b71139f7e18e3292555f887ad879e67bf4fb678921adccb8b92cf097c3b75c6c",
+    "canonical_owning_test_sha256": "429a16f7b982d57355276941b859709505fad16ac0f6c71bcae22b77e9d1f551",
+    "original_archives_preserved": true
+  },
+  "supersedes_only_private_port_static_status_ref": {
+    "bytes": 6963,
+    "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/native-capacity-three-source-canonical-adoption-v02/native-capacity-evidence-capsule-candidate-v01.json",
+    "sha256": "42a9cf12abdc044cc34a69ebad39805729630c2a1b0e2e149dfe0e97c47f72ba"
+  }
+}

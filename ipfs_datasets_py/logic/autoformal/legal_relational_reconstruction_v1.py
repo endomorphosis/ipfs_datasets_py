@@ -515,3 +515,177 @@ def validate_relational_reconstruction_comparison_v1(report, *args,
 
 __all__ = ["RelationalReconstructionError", "prepare_relational_reconstruction_comparison_v1",
            "relational_reconstruction_comparison_sha256", "validate_relational_reconstruction_comparison_v1"]
+
+
+# Opt-in prose reconstruction extends this comparison owner; it creates no
+# alternate AST, interpretation review, native proof or model-quality route.
+PROSE_RECONSTRUCTION_SCHEMA = "legal-relational-prose-reconstruction/v1"
+
+
+def _prose_typed_projection(expression):
+    """All typed content except transport IDs and declaration-set ordering.
+
+    Binder names, binder nesting, child order, sorted domains, extension payloads
+    and schema/namespace versions remain exact. Arbitrary node/expression and
+    signature IDs are deliberately not smuggled through human-readable prose.
+    Exact full serialized equality is reported separately from this projection.
+    """
+    result = _copy(expression.to_dict(), MAX_REQUEST_BYTES)
+    del result["expression_id"]
+    del result["content_digest"]
+    result["signature"] = _signature(expression)
+
+    def visit(node):
+        del node["node_id"]
+        for child in node["arguments"]:
+            visit(child)
+        if "extension" in node:
+            extension = node["extension"]
+            del extension["node_id"]
+            for child in extension["children"]:
+                visit(child)
+
+    visit(result["root"])
+    return result
+
+
+def compare_relational_prose_structure_v1(reference, candidate, *,
+        reference_argument_roles, candidate_argument_roles, profile):
+    """Compare two complete supported typed structures, without legal authority.
+
+    Validation and realization cover each whole input independently. This is a
+    typed syntax comparison, not an independent interpretation/denotation proof.
+    Declaration order is canonicalized; ordered argument roles are never sorted.
+    """
+    from ..legal_ir.extended_decompiler import decompile_relational
+
+    reference_prose = decompile_relational(reference,
+        argument_roles=reference_argument_roles, profile=profile)
+    candidate_prose = decompile_relational(candidate,
+        argument_roles=candidate_argument_roles, profile=profile)
+    reference_roles = _roles({"argument_roles": reference_argument_roles})
+    candidate_roles = _roles({"argument_roles": candidate_argument_roles})
+    return {
+        "exact_typed_expression_equal": reference.to_dict() == candidate.to_dict(),
+        "typed_structure_equal": (_prose_typed_projection(reference) == _prose_typed_projection(candidate)
+                                 and reference_roles == candidate_roles),
+        "canonical_prose_equal": reference_prose == candidate_prose,
+        "argument_roles_equal": reference_roles == candidate_roles,
+    }
+
+
+def prepare_relational_prose_reconstruction_v1(expression, *, argument_roles, profile):
+    """Run source-withheld AST → controlled legal prose → existing typed AST.
+
+    Only typed content and declared roles reach the realizer; the inverse receives
+    the visible complete prose alone. Original wording/source bytes are absent.
+    This engineering diagnostic cannot establish source correspondence, legal
+    equivalence, proof validity, or performance on an evaluated population.
+    """
+    from ..legal_ir.extended_decompiler import decompile_relational
+    from ..legal_ir.extended_compiler import compile_relational
+
+    prose = decompile_relational(expression, argument_roles=argument_roles, profile=profile)
+    reconstructed = compile_relational(prose, profile=profile)
+    _need(reconstructed is not None, "complete emitted controlled prose did not reconstruct")
+    candidate, candidate_roles = reconstructed
+    comparison = compare_relational_prose_structure_v1(expression, candidate,
+        reference_argument_roles=argument_roles, candidate_argument_roles=candidate_roles, profile=profile)
+    _need(comparison["typed_structure_equal"], "complete emitted typed structure differs")
+    return {
+        "schema": PROSE_RECONSTRUCTION_SCHEMA, "profile": profile,
+        "status": "supported_authored_typed_prose_reconstructed",
+        "normalized_prose": prose,
+        "reconstructed_typed_expression": candidate.to_dict(),
+        "reconstructed_argument_roles": candidate_roles,
+        "measurements": {
+            "exact_typed_expression_equal": comparison["exact_typed_expression_equal"],
+            "typed_structure_equal": comparison["typed_structure_equal"],
+            "canonical_prose_fixed_point": comparison["canonical_prose_equal"],
+            "original_utf8_exact": None,
+            "semantic_equivalence_verified": False,
+            "source_semantics_verified": False,
+        },
+        "typed_structure_scope": "complete supported typed content and ordered roles; excludes transport IDs and declaration-set ordering",
+        "original_source_available_to_realizer": False,
+        "serialized_ast_available_to_inverse": False,
+        "authority": dict(FALSE_AUTHORITY), "training_mask": 0, "evaluation_gold_mask": 0,
+        "limitations": [
+            "Canonical prose is controlled authored language, not arbitrary statutory prose.",
+            "Exact typed serialization, normalized typed structure and original source bytes are separate measurements.",
+            "The fixed-three count macro reuses its existing exact canonical expansion; other counting semantics are not inferred.",
+            "Unknown extensions, metadata, ranges, unused predicates and unsupported binder forms refuse the whole input.",
+        ],
+    }
+
+
+_GOVERNING_FIELDS = ("governing_context", "definition_uses")
+_GOVERNING_CONTEXT_FIELDS = {
+    "jurisdiction", "instrument_id", "governing_edition", "legal_as_of_utc",
+    "valid_from_utc", "valid_until_utc",
+}
+_DEFINITION_USE_FIELDS = {
+    "definition_unit_id", "defined_predicate", "use_unit_id", "use_occurrence_cid",
+    "target_typed_paths", "applicability", "interpretation_id", "evidence_refs",
+}
+
+
+def _governing_fields(value):
+    if value is None:
+        return {}
+    value = json.loads(_wire(value, MAX_REQUEST_BYTES))
+    _need(type(value) is dict and set(value) <= set(_GOVERNING_FIELDS),
+          "only governing_context and definition_uses are accepted for governing comparison")
+    context = value.get("governing_context")
+    if context is not None:
+        _need(type(context) is dict and context.keys() <= _GOVERNING_CONTEXT_FIELDS
+              and all(item is None or type(item) is str for item in context.values()),
+              "governing context must use reviewed v2 field names and string or null values")
+    uses = value.get("definition_uses")
+    if uses is not None:
+        _need(type(uses) is list, "definition uses must be an ordered list or null")
+        for use in uses:
+            _need(type(use) is dict and use.keys() <= _DEFINITION_USE_FIELDS,
+                  "definition uses must use reviewed v2 field names")
+            _need(all(item is None or type(item) is str for key, item in use.items()
+                      if key not in {"target_typed_paths", "evidence_refs"}),
+                  "definition use scalar fields must be strings or null")
+            paths = use.get("target_typed_paths")
+            _need(paths is None or type(paths) is list and all(type(path) is str for path in paths),
+                  "definition use paths must be an ordered string list or null")
+            refs = use.get("evidence_refs")
+            _need(refs is None or type(refs) is list and all(
+                type(ref) is dict and ref.keys() <= {"artifact_id", "sha256"}
+                and all(item is None or type(item) is str for item in ref.values()) for ref in refs),
+                "definition use evidence must be an ordered list of reviewed v2 references or null")
+    return value
+
+
+def compare_relational_governing_fields_v1(reference, candidate):
+    """Compare independently supplied projections of reviewed v2 governing fields.
+
+    An omitted field differs from a supplied null or empty value. If both sides
+    omit a field, its measurement is null. Preserve the complete authored lists
+    and competing uses in order. Equality of authored values establishes no legal
+    applicability, governing-use selection, or review.
+    """
+    reference = _governing_fields(reference)
+    candidate = _governing_fields(candidate)
+    missing = object()
+    measurements = {}
+    for key in _GOVERNING_FIELDS:
+        left, right = reference.get(key, missing), candidate.get(key, missing)
+        measurements[f"{key}_exact"] = None if left is right is missing else left == right
+    return {
+        "reference": reference,
+        "candidate": candidate,
+        "measurements": measurements,
+        "authority": {"applicability_verified": False, "governing_use_verified": False},
+    }
+
+
+__all__.extend([
+    "compare_relational_prose_structure_v1",
+    "prepare_relational_prose_reconstruction_v1",
+    "compare_relational_governing_fields_v1",
+])

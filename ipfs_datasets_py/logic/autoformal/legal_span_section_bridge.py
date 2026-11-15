@@ -12,9 +12,9 @@ from collections import Counter
 from copy import deepcopy
 import hashlib
 import re
+from typing import Any
 
 from . import legal_span_cache_intake as intake
-from ...processors.legal_data.uscode_release_schema import validate_legal_id
 
 SCHEMA = "legal-span-section-observation-bridge/v1"
 POLICY_SCHEMA = "legal-span-section-source-mapping-policy/v1"
@@ -33,6 +33,13 @@ AUTHORITY = dict.fromkeys(("admitted", "formalized", "source_semantics_verified"
     "source_package_content_identity_verified", "primary_source_correspondence_verified", "context_closure_verified", "legal_review_verified",
     "global_consistency_verified", "proof_authority", "training_qualified",
     "complete_section_coverage_verified", "legacy_admission_flags_used"), False)
+
+
+def validate_legal_id(value: Any, *, name: str = "legal_id") -> str:
+    """Use the canonical schema validator only when legal-ID validation is needed."""
+    from ...processors.legal_data.uscode_release_schema import validate_legal_id as validator
+
+    return validator(value, name=name)
 
 
 class SpanSectionBridgeError(ValueError):

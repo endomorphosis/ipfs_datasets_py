@@ -943,9 +943,7 @@ _COUNTED_OPERATION_PINS = None
 
 # The existing NativeValue is reused solely as exact JSON proof-witness syntax.
 # CountedVariable/CountedFormula are not production or decoder representations.
-COUNTED_SEMANTICS = SEMANTICS + r'''
-
-inductive CountedSort where
+_SORTED_PROOF_TYPES = r'''inductive CountedSort where
   | object
   | event
   | time
@@ -956,15 +954,9 @@ structure CountedVariable where
   name : String
   sort : CountedSort
 
-inductive CountedFormula where
-  | member (nodeId : String) (object event time : CountedVariable)
-  | equality (nodeId : String) (left right : CountedVariable)
-  | conjunction (nodeId : String) (left right : CountedFormula)
-  | disjunction (nodeId : String) (left right : CountedFormula)
-  | implication (nodeId : String) (left right : CountedFormula)
-  | universal (nodeId name : String) (sort : CountedSort) (body : CountedFormula)
+'''
 
-def countedSortName : CountedSort → String
+_SORTED_PROOF_VALUES = r'''def countedSortName : CountedSort → String
   | .object => "Object"
   | .event => "EventFrame"
   | .time => "TimeFrame"
@@ -993,7 +985,66 @@ def countedVariableValue (boundVariable : CountedVariable) : NativeValue :=
   countedNodeValue boundVariable.nodeId "variable" boundVariable.name
     (countedAtomicSortValue boundVariable.sort) [] []
 
-def countedToTypedNodeValue : CountedFormula → NativeValue
+'''
+
+_SORTED_PROOF_ENVIRONMENT = r'''structure CountedEnvironment (Object EventFrame TimeFrame : Type) where
+  objects : String → Option Object
+  events : String → Option EventFrame
+  times : String → Option TimeFrame
+
+def emptyCountedEnvironment {Object EventFrame TimeFrame : Type} :
+    CountedEnvironment Object EventFrame TimeFrame :=
+  ⟨fun _ => none, fun _ => none, fun _ => none⟩
+
+def countedObjectValue {Object EventFrame TimeFrame : Type}
+    (environment : CountedEnvironment Object EventFrame TimeFrame)
+    (boundVariable : CountedVariable) : Option Object :=
+  CountedSort.casesOn boundVariable.sort (environment.objects boundVariable.name) none none
+
+def countedEventValue {Object EventFrame TimeFrame : Type}
+    (environment : CountedEnvironment Object EventFrame TimeFrame)
+    (boundVariable : CountedVariable) : Option EventFrame :=
+  CountedSort.casesOn boundVariable.sort none (environment.events boundVariable.name) none
+
+def countedTimeValue {Object EventFrame TimeFrame : Type}
+    (environment : CountedEnvironment Object EventFrame TimeFrame)
+    (boundVariable : CountedVariable) : Option TimeFrame :=
+  CountedSort.casesOn boundVariable.sort none none (environment.times boundVariable.name)
+
+def updateCountedObject {Object EventFrame TimeFrame : Type}
+    (environment : CountedEnvironment Object EventFrame TimeFrame) (name : String)
+    (entity : Object) : CountedEnvironment Object EventFrame TimeFrame :=
+  { environment with objects := fun queried =>
+      if queried = name then .some entity else environment.objects queried }
+def updateCountedEvent {Object EventFrame TimeFrame : Type}
+    (environment : CountedEnvironment Object EventFrame TimeFrame) (name : String)
+    (frame : EventFrame) : CountedEnvironment Object EventFrame TimeFrame :=
+  { environment with events := fun queried =>
+      if queried = name then .some frame else environment.events queried }
+def updateCountedTime {Object EventFrame TimeFrame : Type}
+    (environment : CountedEnvironment Object EventFrame TimeFrame) (name : String)
+    (instant : TimeFrame) : CountedEnvironment Object EventFrame TimeFrame :=
+  { environment with times := fun queried =>
+      if queried = name then .some instant else environment.times queried }
+
+'''
+
+COUNTED_SEMANTICS = (SEMANTICS
+    + r'''
+
+'''
+    + _SORTED_PROOF_TYPES
+    + r'''inductive CountedFormula where
+  | member (nodeId : String) (object event time : CountedVariable)
+  | equality (nodeId : String) (left right : CountedVariable)
+  | conjunction (nodeId : String) (left right : CountedFormula)
+  | disjunction (nodeId : String) (left right : CountedFormula)
+  | implication (nodeId : String) (left right : CountedFormula)
+  | universal (nodeId name : String) (sort : CountedSort) (body : CountedFormula)
+
+'''
+    + _SORTED_PROOF_VALUES
+    + r'''def countedToTypedNodeValue : CountedFormula → NativeValue
   | .member nodeId object event time =>
       countedNodeValue nodeId "predicate" "Member" countedBoolSortValue
         [countedVariableValue object, countedVariableValue event, countedVariableValue time] []
@@ -1060,47 +1111,9 @@ def countedClosed (bound : List (CountedSort × String)) : CountedFormula → Bo
   | .implication _ left right => countedClosed bound left && countedClosed bound right
   | .universal _ name sort body => countedClosed ((sort, name) :: bound) body
 
-structure CountedEnvironment (Object EventFrame TimeFrame : Type) where
-  objects : String → Option Object
-  events : String → Option EventFrame
-  times : String → Option TimeFrame
-
-def emptyCountedEnvironment {Object EventFrame TimeFrame : Type} :
-    CountedEnvironment Object EventFrame TimeFrame :=
-  ⟨fun _ => none, fun _ => none, fun _ => none⟩
-
-def countedObjectValue {Object EventFrame TimeFrame : Type}
-    (environment : CountedEnvironment Object EventFrame TimeFrame)
-    (boundVariable : CountedVariable) : Option Object :=
-  CountedSort.casesOn boundVariable.sort (environment.objects boundVariable.name) none none
-
-def countedEventValue {Object EventFrame TimeFrame : Type}
-    (environment : CountedEnvironment Object EventFrame TimeFrame)
-    (boundVariable : CountedVariable) : Option EventFrame :=
-  CountedSort.casesOn boundVariable.sort none (environment.events boundVariable.name) none
-
-def countedTimeValue {Object EventFrame TimeFrame : Type}
-    (environment : CountedEnvironment Object EventFrame TimeFrame)
-    (boundVariable : CountedVariable) : Option TimeFrame :=
-  CountedSort.casesOn boundVariable.sort none none (environment.times boundVariable.name)
-
-def updateCountedObject {Object EventFrame TimeFrame : Type}
-    (environment : CountedEnvironment Object EventFrame TimeFrame) (name : String)
-    (entity : Object) : CountedEnvironment Object EventFrame TimeFrame :=
-  { environment with objects := fun queried =>
-      if queried = name then .some entity else environment.objects queried }
-def updateCountedEvent {Object EventFrame TimeFrame : Type}
-    (environment : CountedEnvironment Object EventFrame TimeFrame) (name : String)
-    (frame : EventFrame) : CountedEnvironment Object EventFrame TimeFrame :=
-  { environment with events := fun queried =>
-      if queried = name then .some frame else environment.events queried }
-def updateCountedTime {Object EventFrame TimeFrame : Type}
-    (environment : CountedEnvironment Object EventFrame TimeFrame) (name : String)
-    (instant : TimeFrame) : CountedEnvironment Object EventFrame TimeFrame :=
-  { environment with times := fun queried =>
-      if queried = name then .some instant else environment.times queried }
-
-def countedDenote {Object EventFrame TimeFrame : Type}
+'''
+    + _SORTED_PROOF_ENVIRONMENT
+    + r'''def countedDenote {Object EventFrame TimeFrame : Type}
     (member : Object → EventFrame → TimeFrame → Prop) (ast : CountedFormula) :
     CountedEnvironment Object EventFrame TimeFrame → Prop :=
   CountedFormula.rec
@@ -1134,7 +1147,7 @@ def counterfactualAtMostFour {Object EventFrame TimeFrame : Type}
       member x3 event time) ∧ member x4 event time) →
       (((((((((x0 = x1 ∨ x0 = x2) ∨ x0 = x3) ∨ x0 = x4) ∨ x1 = x2) ∨
         x1 = x3) ∨ x1 = x4) ∨ x2 = x3) ∨ x2 = x4) ∨ x3 = x4)
-'''
+''')
 
 
 def _counted_string(value):
@@ -1539,4 +1552,769 @@ def validate_counted_ast_preservation(preparation, report, request_raw: bytes, *
         expected_report_sha256=expected_report_sha256, expected_request_sha256=expected_request_sha256,
         toolchain=toolchain)
     _need(expected == preparation, "counted preservation differs from complete original regeneration")
+    return expected
+
+
+MIXED_PROFILE = "typed-many-sorted-relational-deontic-renderer-preservation/v1"
+MIXED_PROJECT_ROOT = "LegalMixedRelationalAstPreservation"
+MIXED_INPUT_SCHEMA = "legal-mixed-relational-ast-preservation-inputs/v1"
+MAX_MIXED_REPORT_BYTES = 8 * MAX_RECORD_BYTES
+MAX_MIXED_REQUEST_BYTES = MAX_RECORD_BYTES // 2
+MAX_MIXED_AST_NODES = 512
+MAX_MIXED_AST_DEPTH = 48
+_MIXED_OPERATION_PINS = None
+
+
+# Shared Counted-prefixed types are three-carrier proof vocabulary only.
+# No fixed Member syntax, counted denotation or cap premise enters this profile.
+MIXED_SEMANTICS = (SEMANTICS + _SORTED_PROOF_TYPES + _SORTED_PROOF_VALUES
+    + _SORTED_PROOF_ENVIRONMENT + r'''
+
+abbrev MixedEntity (Object EventFrame TimeFrame : Type) :=
+  Sum Unit (Sum Object (Sum EventFrame TimeFrame))
+
+structure MixedPredicate where
+  name : String
+  domain : List CountedSort
+
+structure MixedRoleRow where
+  name : String
+  roles : List String
+
+inductive MixedFormula where
+  | predicate (nodeId name : String) (variables : List CountedVariable)
+  | equality (nodeId : String) (left right : CountedVariable)
+  | negation (nodeId : String) (body : MixedFormula)
+  | conjunction (nodeId : String) (left right : MixedFormula)
+  | disjunction (nodeId : String) (left right : MixedFormula)
+  | implication (nodeId : String) (left right : MixedFormula)
+  | equivalence (nodeId : String) (left right : MixedFormula)
+  | universal (nodeId name : String) (sort : CountedSort) (body : MixedFormula)
+  | existential (nodeId name : String) (sort : CountedSort) (body : MixedFormula)
+  | modal (nodeId extensionId operator : String) (body : MixedFormula)
+
+def mixedIdentityValue (space value : String) : NativeValue :=
+  .object [("interface", .string "LogicIdentityNamespaces@1"),
+    ("namespace", .string space), ("schema_version", .string "logic-identity-namespaces/v1"),
+    ("value", .string value), ("version", .string "1.0.0")]
+
+def mixedModalKind (operator : String) : String :=
+  if operator = "O" then "obligation" else
+  if operator = "P" then "permission" else
+  if operator = "F" then "forbidden" else "unsupported"
+
+def mixedModalFeature (operator : String) : String :=
+  if operator = "O" then "legacy.obligation" else
+  if operator = "P" then "legacy.permission" else
+  if operator = "F" then "legacy.forbidden" else "unsupported"
+
+def mixedModalKey (operator : String) : Option String :=
+  if operator = "O" then some "deontic:O" else
+  if operator = "P" then some "deontic:P" else
+  if operator = "F" then some "deontic:F" else none
+
+def mixedTypedModalValue (nodeId extensionId operator : String)
+    (child : NativeValue) : NativeValue :=
+  .object [("arguments", .array []), ("binders", .array []),
+    ("extension", .object [
+      ("children", .array [child]), ("family", mixedIdentityValue "family" "tdfol"),
+      ("features", .array [.string "legacy.classic_letter", .string (mixedModalFeature operator)]),
+      ("interface", .string "LogicExtensionNode@1"), ("metadata", .object []),
+      ("node_id", .string extensionId),
+      ("payload", .object [("kind", .string (mixedModalKind operator)),
+        ("letter", .string operator), ("resolution", .string "deontic"),
+        ("schema_version", .string "legacy.deontic/v1")]),
+      ("payload_schema", .string "legacy.deontic/v1"),
+      ("profile", mixedIdentityValue "profile" "tdfol_default"),
+      ("schema_version", .string "syntax-logic-extension-node/v1")]),
+    ("kind", .string "extension"), ("metadata", .object []),
+    ("node_id", .string nodeId), ("schema_version", .string "syntax-logic-node/v1"),
+    ("sort", countedBoolSortValue), ("symbol", .string "")]
+
+def mixedToTypedNodeValue : MixedFormula → NativeValue
+  | .predicate nodeId name variables =>
+      countedNodeValue nodeId "predicate" name countedBoolSortValue
+        (variables.map countedVariableValue) []
+  | .equality nodeId left right =>
+      countedNodeValue nodeId "equality" "" countedBoolSortValue
+        [countedVariableValue left, countedVariableValue right] []
+  | .negation nodeId body =>
+      countedNodeValue nodeId "not" "" countedBoolSortValue [mixedToTypedNodeValue body] []
+  | .conjunction nodeId left right =>
+      countedNodeValue nodeId "and" "" countedBoolSortValue
+        [mixedToTypedNodeValue left, mixedToTypedNodeValue right] []
+  | .disjunction nodeId left right =>
+      countedNodeValue nodeId "or" "" countedBoolSortValue
+        [mixedToTypedNodeValue left, mixedToTypedNodeValue right] []
+  | .implication nodeId left right =>
+      countedNodeValue nodeId "implies" "" countedBoolSortValue
+        [mixedToTypedNodeValue left, mixedToTypedNodeValue right] []
+  | .equivalence nodeId left right =>
+      countedNodeValue nodeId "iff" "" countedBoolSortValue
+        [mixedToTypedNodeValue left, mixedToTypedNodeValue right] []
+  | .universal nodeId name sort body =>
+      countedNodeValue nodeId "forall" "" countedBoolSortValue
+        [mixedToTypedNodeValue body] [countedBinderValue name sort]
+  | .existential nodeId name sort body =>
+      countedNodeValue nodeId "exists" "" countedBoolSortValue
+        [mixedToTypedNodeValue body] [countedBinderValue name sort]
+  | .modal nodeId extensionId operator body =>
+      mixedTypedModalValue nodeId extensionId operator (mixedToTypedNodeValue body)
+
+def mixedPredicateValue (declaration : MixedPredicate) : NativeValue :=
+  .object [("domain", .array (declaration.domain.map countedAtomicSortValue)),
+    ("kind", .string "predicate"), ("metadata", .object []),
+    ("name", .string declaration.name), ("range", countedBoolSortValue),
+    ("schema_version", .string "syntax-symbol-declaration/v1")]
+
+def mixedSignatureValue (signatureId : String) (sorts : List CountedSort)
+    (predicates : List MixedPredicate) : NativeValue :=
+  .object [("family", mixedIdentityValue "family" "tdfol"), ("features", .array []),
+    ("interface", .string "LogicSignature@1"), ("metadata", .object []),
+    ("profile", mixedIdentityValue "profile" "tdfol_default"),
+    ("schema_version", .string "syntax-logic-signature/v1"),
+    ("signature_id", .string signatureId),
+    ("sorts", .array (countedBoolSortValue :: sorts.map countedAtomicSortValue)),
+    ("symbols", .array (predicates.map mixedPredicateValue))]
+
+def mixedRoleRowsValue (roles : List MixedRoleRow) : NativeValue :=
+  .array (roles.map fun row => .object [
+    ("roles", .array (row.roles.map NativeValue.string)), ("symbol", .string row.name)])
+
+def mixedTypedExpressionValue (expressionId signatureId contentDigest : String)
+    (sorts : List CountedSort) (predicates : List MixedPredicate) (ast : MixedFormula) : NativeValue :=
+  .object [("content_digest", .string contentDigest), ("expression_id", .string expressionId),
+    ("family", mixedIdentityValue "family" "tdfol"), ("interface", .string "TypedExpression@1"),
+    ("metadata", .object []), ("profile", mixedIdentityValue "profile" "tdfol_default"),
+    ("root", mixedToTypedNodeValue ast), ("schema_version", .string "syntax-typed-expression/v1"),
+    ("signature", mixedSignatureValue signatureId sorts predicates)]
+
+def mixedSourceValue (expressionId signatureId contentDigest : String)
+    (sorts : List CountedSort) (predicates : List MixedPredicate)
+    (roles : List MixedRoleRow) (ast : MixedFormula) : NativeValue :=
+  .object [("argument_roles", mixedRoleRowsValue roles),
+    ("typed_expression", mixedTypedExpressionValue expressionId signatureId contentDigest sorts predicates ast)]
+
+def mixedRendererVariableValue (name : String) (sort : CountedSort) : NativeValue :=
+  .object [("name", .string name), ("node_type", .string "Variable"),
+    ("sort", .string (countedSortName sort))]
+
+def mixedRendererBinaryValue (operator : String) (left right : NativeValue) : NativeValue :=
+  .object [("left", left), ("node_type", .string "BinaryFormula"),
+    ("operator", .object [("value", .string operator)]), ("right", right)]
+
+def mixedRendererQuantifierValue (operator name : String) (sort : CountedSort)
+    (body : NativeValue) : NativeValue :=
+  .object [("formula", body), ("node_type", .string "QuantifiedFormula"),
+    ("quantifier", .object [("value", .string operator)]),
+    ("variable", mixedRendererVariableValue name sort)]
+
+def mixedToRendererNodeValue : MixedFormula → NativeValue
+  | .predicate _ name variables => .object [
+      ("arguments", .array (variables.map fun boundVariable => mixedRendererVariableValue boundVariable.name boundVariable.sort)),
+      ("name", .string name), ("node_type", .string "AtomicFormula")]
+  | .equality _ left right => .object [
+      ("left", mixedRendererVariableValue left.name left.sort),
+      ("node_type", .string "EqualityFormula"),
+      ("right", mixedRendererVariableValue right.name right.sort)]
+  | .negation _ body => .object [("formula", mixedToRendererNodeValue body),
+      ("node_type", .string "UnaryFormula"), ("operator", .object [("value", .string "¬")])]
+  | .conjunction _ left right => mixedRendererBinaryValue "∧" (mixedToRendererNodeValue left) (mixedToRendererNodeValue right)
+  | .disjunction _ left right => mixedRendererBinaryValue "∨" (mixedToRendererNodeValue left) (mixedToRendererNodeValue right)
+  | .implication _ left right => mixedRendererBinaryValue "→" (mixedToRendererNodeValue left) (mixedToRendererNodeValue right)
+  | .equivalence _ left right => mixedRendererBinaryValue "↔" (mixedToRendererNodeValue left) (mixedToRendererNodeValue right)
+  | .universal _ name sort body => mixedRendererQuantifierValue "∀" name sort (mixedToRendererNodeValue body)
+  | .existential _ name sort body => mixedRendererQuantifierValue "∃" name sort (mixedToRendererNodeValue body)
+  | .modal _ _ operator body => .object [("agent", .null), ("context", .null),
+      ("formula", mixedToRendererNodeValue body), ("node_type", .string "DeonticFormula"),
+      ("operator", .object [("value", .string operator)])]
+
+def mixedRendererValue (ast : MixedFormula) : NativeValue :=
+  .object [("profile", .string "three-sort-variables-deontic-equality/v1"),
+    ("root", mixedToRendererNodeValue ast),
+    ("schema", .string "sorted-relational-renderer-ast/v1")]
+
+def mixedDomain (predicates : List MixedPredicate) (name : String) : Option (List CountedSort) :=
+  match predicates with
+  | [] => none
+  | declaration :: rest => if declaration.name = name then some declaration.domain else mixedDomain rest name
+
+def mixedRoles (roles : List MixedRoleRow) (name : String) : List String :=
+  match roles with
+  | [] => []
+  | row :: rest => if row.name = name then row.roles else mixedRoles rest name
+
+def mixedVariableClosed (bound : List (CountedSort × String)) (boundVariable : CountedVariable) : Bool :=
+  bound.contains (boundVariable.sort, boundVariable.name)
+
+def mixedClosed (predicates : List MixedPredicate) (roles : List MixedRoleRow)
+    (bound : List (CountedSort × String)) : MixedFormula → Bool
+  | .predicate _ name variables =>
+      match mixedDomain predicates name with
+      | none => false
+      | some domain => domain == variables.map CountedVariable.sort &&
+          variables.all (mixedVariableClosed bound) &&
+          decide ((mixedRoles roles name).length = variables.length)
+  | .equality _ left right => left.sort == right.sort &&
+      mixedVariableClosed bound left && mixedVariableClosed bound right
+  | .negation _ body => mixedClosed predicates roles bound body
+  | .conjunction _ left right => mixedClosed predicates roles bound left && mixedClosed predicates roles bound right
+  | .disjunction _ left right => mixedClosed predicates roles bound left && mixedClosed predicates roles bound right
+  | .implication _ left right => mixedClosed predicates roles bound left && mixedClosed predicates roles bound right
+  | .equivalence _ left right => mixedClosed predicates roles bound left && mixedClosed predicates roles bound right
+  | .universal _ name sort body => !(bound.map Prod.snd).contains name &&
+      mixedClosed predicates roles ((sort, name) :: bound) body
+  | .existential _ name sort body => !(bound.map Prod.snd).contains name &&
+      mixedClosed predicates roles ((sort, name) :: bound) body
+  | .modal _ _ operator body => (mixedModalKey operator).isSome && mixedClosed predicates roles bound body
+
+def mixedWellFormed (sorts : List CountedSort) (predicates : List MixedPredicate)
+    (roles : List MixedRoleRow) (ast : MixedFormula) : Bool :=
+  decide (sorts.length = 3) && sorts.contains .object && sorts.contains .event && sorts.contains .time &&
+  !(predicates.isEmpty) &&
+  decide ((predicates.map MixedPredicate.name).eraseDups.length = predicates.length) &&
+  decide (roles.length = predicates.length) &&
+  decide ((roles.map MixedRoleRow.name).eraseDups.length = roles.length) &&
+  predicates.all (fun declaration =>
+    decide (1 ≤ declaration.domain.length ∧ declaration.domain.length ≤ 8) &&
+    decide ((mixedRoles roles declaration.name).length = declaration.domain.length) &&
+    decide ((mixedRoles roles declaration.name).eraseDups.length = declaration.domain.length)) &&
+  mixedClosed predicates roles [] ast
+
+def mixedArgumentValue {Object EventFrame TimeFrame : Type}
+    (environment : CountedEnvironment Object EventFrame TimeFrame)
+    (boundVariable : CountedVariable) : Option (MixedEntity Object EventFrame TimeFrame) :=
+  CountedSort.casesOn boundVariable.sort
+    (Option.casesOn (countedObjectValue environment boundVariable) none
+      (fun value => some (Sum.inr (Sum.inl value))))
+    (Option.casesOn (countedEventValue environment boundVariable) none
+      (fun value => some (Sum.inr (Sum.inr (Sum.inl value)))))
+    (Option.casesOn (countedTimeValue environment boundVariable) none
+      (fun value => some (Sum.inr (Sum.inr (Sum.inr value)))))
+
+def mixedArguments {Object EventFrame TimeFrame : Type}
+    (environment : CountedEnvironment Object EventFrame TimeFrame) :
+    List CountedVariable → Option (List (MixedEntity Object EventFrame TimeFrame))
+  | [] => some []
+  | boundVariable :: rest => do
+      let value ← mixedArgumentValue environment boundVariable
+      let values ← mixedArguments environment rest
+      pure (value :: values)
+
+def mixedEqualityDenote {Object EventFrame TimeFrame : Type}
+    (environment : CountedEnvironment Object EventFrame TimeFrame)
+    (left right : CountedVariable) : Prop :=
+  CountedSort.casesOn left.sort
+    (Option.casesOn (countedObjectValue environment left) False (fun l =>
+      Option.casesOn (countedObjectValue environment right) False (fun r => l = r)))
+    (Option.casesOn (countedEventValue environment left) False (fun l =>
+      Option.casesOn (countedEventValue environment right) False (fun r => l = r)))
+    (Option.casesOn (countedTimeValue environment left) False (fun l =>
+      Option.casesOn (countedTimeValue environment right) False (fun r => l = r)))
+
+def mixedDenote {Object EventFrame TimeFrame : Type}
+    (i : Interpretation (MixedEntity Object EventFrame TimeFrame) Unit) :
+    MixedFormula → CountedEnvironment Object EventFrame TimeFrame → Nat → Prop
+  | .predicate _ name variables, environment, t =>
+      match mixedArguments environment variables with
+      | none => False
+      | some values => i.atom name values t
+  | .equality _ left right, environment, _ => mixedEqualityDenote environment left right
+  | .negation _ body, environment, t => ¬ mixedDenote i body environment t
+  | .conjunction _ left right, environment, t => mixedDenote i left environment t ∧ mixedDenote i right environment t
+  | .disjunction _ left right, environment, t => mixedDenote i left environment t ∨ mixedDenote i right environment t
+  | .implication _ left right, environment, t => mixedDenote i left environment t → mixedDenote i right environment t
+  | .equivalence _ left right, environment, t => mixedDenote i left environment t ↔ mixedDenote i right environment t
+  | .universal _ name sort body, environment, t =>
+      CountedSort.casesOn sort
+        (∀ entity : Object, mixedDenote i body (updateCountedObject environment name entity) t)
+        (∀ frame : EventFrame, mixedDenote i body (updateCountedEvent environment name frame) t)
+        (∀ instant : TimeFrame, mixedDenote i body (updateCountedTime environment name instant) t)
+  | .existential _ name sort body, environment, t =>
+      CountedSort.casesOn sort
+        (∃ entity : Object, mixedDenote i body (updateCountedObject environment name entity) t)
+        (∃ frame : EventFrame, mixedDenote i body (updateCountedEvent environment name frame) t)
+        (∃ instant : TimeFrame, mixedDenote i body (updateCountedTime environment name instant) t)
+  | .modal _ _ operator body, environment, t =>
+      match mixedModalKey operator with
+      | none => False
+      | some key => i.modal key [] none (fun u => mixedDenote i body environment u) t
+
+def mixedRoleInterpretation {Object EventFrame TimeFrame : Type}
+    (base : Interpretation (MixedEntity Object EventFrame TimeFrame) Unit)
+    (atoms : String → List (String × MixedEntity Object EventFrame TimeFrame) → Nat → Prop)
+    (roles : List MixedRoleRow) : Interpretation (MixedEntity Object EventFrame TimeFrame) Unit :=
+  { base with atom := fun name values t => atoms name ((mixedRoles roles name).zip values) t }
+
+def mixedRoleDenote {Object EventFrame TimeFrame : Type}
+    (base : Interpretation (MixedEntity Object EventFrame TimeFrame) Unit)
+    (atoms : String → List (String × MixedEntity Object EventFrame TimeFrame) → Nat → Prop)
+    (roles : List MixedRoleRow) :
+    MixedFormula → CountedEnvironment Object EventFrame TimeFrame → Nat → Prop
+  | .predicate _ name variables, environment, t =>
+      match mixedArguments environment variables with
+      | none => False
+      | some values => atoms name ((mixedRoles roles name).zip values) t
+  | .equality _ left right, environment, _ => mixedEqualityDenote environment left right
+  | .negation _ body, environment, t => ¬ mixedRoleDenote base atoms roles body environment t
+  | .conjunction _ left right, environment, t => mixedRoleDenote base atoms roles left environment t ∧ mixedRoleDenote base atoms roles right environment t
+  | .disjunction _ left right, environment, t => mixedRoleDenote base atoms roles left environment t ∨ mixedRoleDenote base atoms roles right environment t
+  | .implication _ left right, environment, t => mixedRoleDenote base atoms roles left environment t → mixedRoleDenote base atoms roles right environment t
+  | .equivalence _ left right, environment, t => mixedRoleDenote base atoms roles left environment t ↔ mixedRoleDenote base atoms roles right environment t
+  | .universal _ name sort body, environment, t =>
+      CountedSort.casesOn sort
+        (∀ entity : Object, mixedRoleDenote base atoms roles body (updateCountedObject environment name entity) t)
+        (∀ frame : EventFrame, mixedRoleDenote base atoms roles body (updateCountedEvent environment name frame) t)
+        (∀ instant : TimeFrame, mixedRoleDenote base atoms roles body (updateCountedTime environment name instant) t)
+  | .existential _ name sort body, environment, t =>
+      CountedSort.casesOn sort
+        (∃ entity : Object, mixedRoleDenote base atoms roles body (updateCountedObject environment name entity) t)
+        (∃ frame : EventFrame, mixedRoleDenote base atoms roles body (updateCountedEvent environment name frame) t)
+        (∃ instant : TimeFrame, mixedRoleDenote base atoms roles body (updateCountedTime environment name instant) t)
+  | .modal _ _ operator body, environment, t =>
+      match mixedModalKey operator with
+      | none => False
+      | some key => base.modal key [] none (fun u => mixedRoleDenote base atoms roles body environment u) t
+''')
+
+
+def _mixed_identity(value, namespace, identity):
+    _keys(value, {"interface", "namespace", "schema_version", "value", "version"},
+          "mixed identity witness")
+    _need(value == {"interface": "LogicIdentityNamespaces@1", "namespace": namespace,
+          "schema_version": "logic-identity-namespaces/v1", "value": identity,
+          "version": "1.0.0"}, "exact mixed identity namespace/version required")
+
+
+def _mixed_sort(value, *, formula=False):
+    _keys(value, {"arguments", "kind", "name", "schema_version"}, "mixed sort witness")
+    _need(value["schema_version"] == "syntax-logic-sort/v1" and value["arguments"] == [],
+          "exact atomic mixed sort required")
+    if formula:
+        _need(value["name"] == "Bool" and value["kind"] == "bool", "mixed formula Bool sort required")
+        return "bool"
+    names = {"Object": "object", "EventFrame": "event", "TimeFrame": "time"}
+    _need(type(value["name"]) is str and value["name"] in names and value["kind"] == "atomic",
+          "only original three source sorts are supported")
+    return names[value["name"]]
+
+
+def _mixed_source_witness(expression, role_rows):
+    """Reconstruct every typed field independently of the production lowering.
+
+    Identities and digest text remain exact values, not in-kernel hash claims.
+    Signature, role and sort arrays retain their actual serialized order.
+    """
+    _keys(expression, {"content_digest", "expression_id", "family", "interface", "metadata",
+                       "profile", "root", "schema_version", "signature"}, "mixed typed expression")
+    _need(expression["interface"] == "TypedExpression@1"
+          and expression["schema_version"] == "syntax-typed-expression/v1"
+          and expression["metadata"] == {}, "exact unannotated mixed typed expression required")
+    _mixed_identity(expression["family"], "family", "tdfol")
+    _mixed_identity(expression["profile"], "profile", "tdfol_default")
+    for key in ("expression_id", "content_digest"):
+        _need(type(expression[key]) is str and 0 < len(expression[key]) <= 4096,
+              "bounded exact mixed expression identity required")
+    _pin(expression["content_digest"], "mixed typed content digest value")
+    signature = expression["signature"]
+    _keys(signature, {"family", "features", "interface", "metadata", "profile", "schema_version",
+                      "signature_id", "sorts", "symbols"}, "mixed signature")
+    _need(signature["interface"] == "LogicSignature@1"
+          and signature["schema_version"] == "syntax-logic-signature/v1"
+          and signature["metadata"] == {} and signature["features"] == []
+          and type(signature["signature_id"]) is str and 0 < len(signature["signature_id"]) <= 4096,
+          "exact closed mixed signature required")
+    _mixed_identity(signature["family"], "family", "tdfol")
+    _mixed_identity(signature["profile"], "profile", "tdfol_default")
+    _need(type(signature["sorts"]) is list and len(signature["sorts"]) == 4,
+          "complete original four-sort signature required")
+    _mixed_sort(signature["sorts"][0], formula=True)
+    sort_order = [_mixed_sort(value) for value in signature["sorts"][1:]]
+    _need(set(sort_order) == {"object", "event", "time"}, "all three distinct source sorts required")
+    declarations, domains = [], {}
+    _need(type(signature["symbols"]) is list and 1 <= len(signature["symbols"]) <= 64,
+          "bounded nonempty mixed predicate table required")
+    for declaration in signature["symbols"]:
+        _keys(declaration, {"domain", "kind", "metadata", "name", "range", "schema_version"},
+              "mixed predicate declaration")
+        name = _name(declaration["name"])
+        _need(len(name) <= 64 and name not in domains and declaration["kind"] == "predicate"
+              and declaration["metadata"] == {}
+              and declaration["schema_version"] == "syntax-symbol-declaration/v1"
+              and type(declaration["domain"]) is list and 1 <= len(declaration["domain"]) <= 8,
+              "exact unique bounded mixed predicate declaration required")
+        _mixed_sort(declaration["range"], formula=True)
+        domain = [_mixed_sort(value) for value in declaration["domain"]]
+        domains[name] = domain
+        declarations.append("⟨" + _counted_string(name) + ", [" + ", ".join("." + x for x in domain) + "]⟩")
+    _need(type(role_rows) is list and len(role_rows) == len(domains),
+          "complete original mixed role ledger required")
+    roles, role_terms = {}, []
+    for row in role_rows:
+        _keys(row, {"symbol", "roles"}, "mixed role row")
+        name, labels = row["symbol"], row["roles"]
+        _need(type(name) is str and name in domains and name not in roles
+              and type(labels) is list and len(labels) == len(domains[name])
+              and all(type(label) is str and re.fullmatch(r"[a-z][a-z0-9_]{0,47}", label) for label in labels)
+              and len(set(labels)) == len(labels), "exact ordered distinct mixed roles required")
+        roles[name] = list(labels)
+        role_terms.append("⟨" + _counted_string(name) + ", [" + ", ".join(_counted_string(x) for x in labels) + "]⟩")
+    count, extension_count, identifiers, binder_names, used = 0, 0, set(), set(), set()
+
+    def identity(value):
+        _need(type(value) is str and 0 < len(value) <= 4096 and value not in identifiers,
+              "distinct bounded original mixed node/extension identities required")
+        identifiers.add(value)
+        return _counted_string(value)
+
+    def node(value, depth):
+        nonlocal count
+        _need(type(value) is dict and type(value.get("kind")) is str,
+              "ordinary exact mixed typed node required")
+        fields = {"arguments", "binders", "kind", "metadata", "node_id", "schema_version", "sort", "symbol"}
+        if value["kind"] == "extension":
+            fields.add("extension")
+        _keys(value, fields, "mixed typed node")
+        count += 1
+        _need(count <= MAX_MIXED_AST_NODES and depth <= MAX_MIXED_AST_DEPTH,
+              "original mixed AST node/depth bound exceeded")
+        node_id = identity(value["node_id"])
+        _need(value["schema_version"] == "syntax-logic-node/v1" and value["metadata"] == {}
+              and type(value["arguments"]) is list and type(value["binders"]) is list
+              and type(value["symbol"]) is str, "exact unannotated mixed typed node required")
+        return node_id
+
+    def variable(value, environment, depth, expected_sort=None):
+        node_id = node(value, depth)
+        _need(value["kind"] == "variable" and value["arguments"] == [] and value["binders"] == [],
+              "only original bound mixed variables supported")
+        found = _mixed_sort(value["sort"])
+        name = _name(value["symbol"])
+        _need(len(name) <= 64 and environment.get(name) == found
+              and (expected_sort is None or expected_sort == found),
+              "free, wrongly sorted or reordered mixed variable refused")
+        return "⟨" + node_id + ", " + _counted_string(name) + ", ." + found + "⟩"
+
+    def formula(value, environment, depth):
+        nonlocal extension_count
+        node_id = node(value, depth)
+        _mixed_sort(value["sort"], formula=True)
+        kind, arguments, binders = value["kind"], value["arguments"], value["binders"]
+        if kind == "predicate":
+            name = value["symbol"]
+            _need(name in domains and binders == [] and len(arguments) == len(domains[name]),
+                  "exact declared mixed predicate and domain required")
+            used.add(name)
+            variables = [variable(child, environment, depth + 1, sort)
+                         for child, sort in zip(arguments, domains[name], strict=True)]
+            return "(.predicate " + node_id + " " + _counted_string(name) + " [" + ", ".join(variables) + "])"
+        _need(value["symbol"] == "", "mixed connective/quantifier/equality symbol must remain empty")
+        if kind == "equality":
+            _need(binders == [] and len(arguments) == 2, "binary original same-sort equality required")
+            sort = _mixed_sort(arguments[0]["sort"])
+            return "(.equality " + node_id + " " + variable(arguments[0], environment, depth + 1, sort) + " " + variable(arguments[1], environment, depth + 1, sort) + ")"
+        if kind in {"and", "or", "implies", "iff"}:
+            _need(binders == [] and len(arguments) == 2, "exact binary mixed connective required")
+            name = {"and": "conjunction", "or": "disjunction", "implies": "implication", "iff": "equivalence"}[kind]
+            return "(." + name + " " + node_id + " " + formula(arguments[0], environment, depth + 1) + " " + formula(arguments[1], environment, depth + 1) + ")"
+        if kind == "not":
+            _need(binders == [] and len(arguments) == 1, "exact original mixed negation required")
+            return "(.negation " + node_id + " " + formula(arguments[0], environment, depth + 1) + ")"
+        if kind in {"forall", "exists"}:
+            _need(len(binders) == 1 and len(arguments) == 1, "single original mixed quantifier binder required")
+            binder = binders[0]
+            _keys(binder, {"name", "schema_version", "sort"}, "mixed binder")
+            name = _name(binder["name"])
+            sort = _mixed_sort(binder["sort"])
+            _need(len(name) <= 64 and binder["schema_version"] == "syntax-binder/v1"
+                  and name not in environment and name not in binder_names and name not in domains,
+                  "globally distinct nonshadowing original mixed binder required")
+            binder_names.add(name)
+            return "(." + ("universal" if kind == "forall" else "existential") + " " + node_id + " " + _counted_string(name) + " ." + sort + " " + formula(arguments[0], {**environment, name: sort}, depth + 1) + ")"
+        if kind == "extension":
+            _need(arguments == [] and binders == [], "closed original mixed modal wrapper required")
+            extension = value["extension"]
+            _keys(extension, {"children", "family", "features", "interface", "metadata", "node_id",
+                              "payload", "payload_schema", "profile", "schema_version"}, "mixed modal extension")
+            extension_id = identity(extension["node_id"])
+            _mixed_identity(extension["family"], "family", "tdfol")
+            _mixed_identity(extension["profile"], "profile", "tdfol_default")
+            _need(extension["interface"] == "LogicExtensionNode@1"
+                  and extension["schema_version"] == "syntax-logic-extension-node/v1"
+                  and extension["metadata"] == {} and extension["payload_schema"] == "legacy.deontic/v1"
+                  and type(extension["children"]) is list and len(extension["children"]) == 1,
+                  "exact original unannotated mixed extension required")
+            payload = extension["payload"]
+            _keys(payload, {"kind", "letter", "resolution", "schema_version"}, "mixed modal payload")
+            letter = payload["letter"]
+            kinds = {"O": "obligation", "P": "permission", "F": "forbidden"}
+            _need(type(letter) is str and letter in kinds
+                  and payload == {"kind": kinds[letter], "letter": letter, "resolution": "deontic",
+                                  "schema_version": "legacy.deontic/v1"}
+                  and extension["features"] == ["legacy.classic_letter", "legacy." + kinds[letter]],
+                  "exact original O/P/F payload and ordered features required")
+            extension_count += 1
+            return "(.modal " + node_id + " " + extension_id + " " + _counted_string(letter) + " " + formula(extension["children"][0], environment, depth + 1) + ")"
+        raise ValueError("unsupported mixed preservation constructor: " + str(kind))
+
+    source = formula(expression["root"], {}, 0)
+    _need(used == set(domains) and binder_names, "closed complete mixed predicate population required")
+    return {"source": source, "count": count, "extension_count": extension_count,
+            "sorts": "[" + ", ".join("." + x for x in sort_order) + "]",
+            "predicates": "[" + ", ".join(declarations) + "]",
+            "roles": "[" + ", ".join(role_terms) + "]",
+            "expression_id": _counted_string(expression["expression_id"]),
+            "signature_id": _counted_string(signature["signature_id"]),
+            "content_digest": _counted_string(expression["content_digest"])}
+
+
+def _mixed_pins(owners, relational, checked):
+    """Authenticate only current freshly replayed producer paths."""
+    global _MIXED_OPERATION_PINS
+    current = relational._mixed_owners()[-1]
+    _need(type(current) is dict and 1 <= len(current) <= 32
+          and checked["producer_pins"] == current, "current complete mixed producer closure required")
+    pins = dict(_pins(owners))
+    for spelling, digest in current.items():
+        _pin(digest, "current mixed producer")
+        path = Path(spelling)
+        _need(path.is_absolute() and str(path.resolve()) == spelling
+              and _sha(path.read_bytes()) == digest, "current mixed producer source bytes differ")
+        pins[spelling] = digest
+    path = Path(relational.__file__).resolve()
+    pins[str(path)] = _sha(path.read_bytes())
+    if _MIXED_OPERATION_PINS is None:
+        _MIXED_OPERATION_PINS = dict(pins)
+    _need(pins == _MIXED_OPERATION_PINS, "mixed preservation operation owners changed since first use")
+    return pins
+
+
+def _mixed_callback_state(relational, owners):
+    functions = (_mixed_identity, _mixed_sort, _mixed_source_witness, _mixed_pins,
+        _mixed_callback_state, prepare_mixed_relational_ast_preservation,
+        validate_mixed_relational_ast_preservation, _counted_json_value, _counted_string,
+        preparation_sha256, _owners, _pins, _wire, _parse, _sha, _pin, _keys, _name,
+        _need, _string, _file, relational.validate_mixed_relational_norm_v1,
+        relational.prepare_mixed_relational_norm_v1, relational._mixed_parse,
+        relational._mixed_owners, relational._mixed_strict_expression, relational._mixed_lower,
+        relational._mixed_callbacks, owners[1].sorted_relational_document, owners[2].seal_record)
+    return tuple((function, getattr(function, "__code__", None)) for function in functions)
+
+
+def prepare_mixed_relational_ast_preservation(report, request_raw: bytes, *,
+        expected_report_sha256, expected_request_sha256, toolchain):
+    """Prepare independent concrete sorted-source/renderer obligations.
+
+    The original mixed owner replays the complete request and report. The
+    witness independently rebuilds full typed and renderer values and directly
+    interprets source constructors; no TDFOL native AST or prose theorem is
+    fabricated. Preparation executes no compiler, model or accepted transition.
+    """
+    _pin(expected_report_sha256, "complete mixed relational report")
+    _pin(expected_request_sha256, "complete original mixed request")
+    report_raw = _wire(report, MAX_MIXED_REPORT_BYTES)
+    _need(_sha(report_raw) == expected_report_sha256, "independent complete mixed report pin differs")
+    _need(type(request_raw) is bytes and 0 < len(request_raw) <= MAX_MIXED_REQUEST_BYTES
+          and _sha(request_raw) == expected_request_sha256, "independent bounded mixed request pin differs")
+    request = _parse(request_raw, MAX_MIXED_REQUEST_BYTES)
+    detached = _parse(report_raw, MAX_MIXED_REPORT_BYTES)
+    _need(type(report) is dict and type(detached) is dict and type(request) is dict,
+          "complete ordinary mixed report/request required")
+    _need(type(toolchain) is str and len(toolchain) <= 128 and _TOOLCHAIN.fullmatch(toolchain) is not None,
+          "exact version-pinned Lean toolchain required")
+    _need(_sha(Path(__file__).read_bytes()) == _SELF_PIN,
+          "native AST preservation owner changed since import")
+    _need(detached.get("schema") == "legal-mixed-relational-norm-report/v1"
+          and detached.get("profile") == "authored-many-sorted-relational-deontic/v1"
+          and detached.get("native_ast") is None and detached.get("native_parser_roundtrip") is False,
+          "explicit original renderer-only mixed profile required")
+    witness = _mixed_source_witness(detached.get("typed_expression"), detached.get("argument_roles"))
+    renderer = detached.get("renderer_ast")
+    _keys(renderer, {"schema", "profile", "root"}, "complete original mixed renderer record")
+    _need(renderer["schema"] == "sorted-relational-renderer-ast/v1"
+          and renderer["profile"] == "three-sort-variables-deontic-equality/v1",
+          "explicit existing sorted renderer required")
+    # All independent commitments and bounded source shapes precede operation imports.
+    from . import legal_relational_norm_v1 as relational
+    owners = _owners()
+    _, emitter, contracts = owners
+    callbacks = _mixed_callback_state(relational, owners)
+    upstream_pins = relational._mixed_owners()[-1]
+    authority, false_flags = dict(AUTHORITY), dict(FALSE_FLAGS)
+    _need(authority and all(value is False for value in authority.values())
+          and all(value is False for value in false_flags.values()), "mixed preparation cannot confer authority")
+    policy = (SCHEMA, MIXED_PROFILE, MIXED_PROJECT_ROOT, MIXED_INPUT_SCHEMA, MIXED_SEMANTICS,
+              MAX_MIXED_REPORT_BYTES, MAX_MIXED_REQUEST_BYTES, MAX_MIXED_AST_NODES,
+              MAX_MIXED_AST_DEPTH, MAX_RECORD_BYTES, MAX_PROJECT_BYTES, MAX_PREPARATION_BYTES,
+              MAX_FILES, MAX_MODULES)
+    checked = None
+    checked_raw = None
+
+    def fence():
+        _need(_wire(report, MAX_MIXED_REPORT_BYTES) == report_raw
+              and _wire(detached, MAX_MIXED_REPORT_BYTES) == report_raw,
+              "caller or detached mixed report changed during preservation")
+        _need(_sha(request_raw) == expected_request_sha256
+              and _wire(_parse(request_raw, MAX_MIXED_REQUEST_BYTES), MAX_MIXED_REQUEST_BYTES)
+                  == _wire(request, MAX_MIXED_REQUEST_BYTES),
+              "original mixed request changed during preservation")
+        _need(_mixed_callback_state(relational, owners) == callbacks
+              and relational._mixed_owners()[-1] == upstream_pins
+              and _sha(Path(__file__).read_bytes()) == _SELF_PIN,
+              "original mixed preservation callbacks or source producers changed")
+        _need(AUTHORITY == authority and FALSE_FLAGS == false_flags
+              and policy == (SCHEMA, MIXED_PROFILE, MIXED_PROJECT_ROOT, MIXED_INPUT_SCHEMA, MIXED_SEMANTICS,
+                  MAX_MIXED_REPORT_BYTES, MAX_MIXED_REQUEST_BYTES, MAX_MIXED_AST_NODES,
+                  MAX_MIXED_AST_DEPTH, MAX_RECORD_BYTES, MAX_PROJECT_BYTES, MAX_PREPARATION_BYTES,
+                  MAX_FILES, MAX_MODULES), "mixed preservation policy changed")
+        if checked is not None:
+            _need(_wire(checked, MAX_MIXED_REPORT_BYTES) == checked_raw,
+                  "freshly replayed mixed report changed during preservation")
+
+    fence()
+    checked = relational.validate_mixed_relational_norm_v1(detached, request_raw,
+        expected_report_sha256=expected_report_sha256, expected_request_sha256=expected_request_sha256)
+    checked_raw = _wire(checked, MAX_MIXED_REPORT_BYTES)
+    _need(checked_raw == report_raw and _wire(checked["request"], MAX_MIXED_REQUEST_BYTES)
+          == _wire(request, MAX_MIXED_REQUEST_BYTES), "complete original mixed replay differs")
+    fence()
+    producers = _mixed_pins(owners, relational, checked)
+    _need(_mixed_source_witness(checked["typed_expression"], checked["argument_roles"]) == witness
+          and witness["count"] == checked["counts"]["nodes"]
+          and witness["extension_count"] == checked["counts"]["extension_payloads"],
+          "complete independent mixed witness/count replay differs")
+    expression = checked["typed_expression"]
+    source_value = _counted_json_value({"typed_expression": expression,
+                                      "argument_roles": checked["argument_roles"]})
+    renderer_value = _counted_json_value(checked["renderer_ast"])
+    semantics = MIXED_SEMANTICS
+    instance = MIXED_PROJECT_ROOT + ".Instance" + _sha(_wire({
+        "profile": MIXED_PROFILE, "report_sha256": expected_report_sha256,
+        "request_sha256": expected_request_sha256, "semantics_sha256": _sha(semantics.encode()),
+    }, MAX_RECORD_BYTES))
+    modules = [MIXED_PROJECT_ROOT + ".Prelude", MIXED_PROJECT_ROOT + ".Semantics", instance, MIXED_PROJECT_ROOT]
+    imports = {modules[0]: [], modules[1]: [modules[0]], instance: [modules[1]], MIXED_PROJECT_ROOT: [instance]}
+    suffixes = ["mixed_typed_value_exact", "mixed_renderer_value_exact", "mixed_ast_closed",
+                "mixed_denotation_matches_lowering", "mixed_role_denotation_matches_lowering"]
+    header = " ".join(witness[key] for key in ("expression_id", "signature_id", "content_digest"))
+    body = (checked["lean_body"]
+        + "\n\nnoncomputable def typedMixedAst : MixedFormula := " + witness["source"]
+        + "\nnoncomputable def mixedSortOrder : List CountedSort := " + witness["sorts"]
+        + "\nnoncomputable def mixedPredicateDeclarations : List MixedPredicate := " + witness["predicates"]
+        + "\nnoncomputable def mixedArgumentRoles : List MixedRoleRow := " + witness["roles"]
+        + "\nnoncomputable def actualMixedSourceValue : NativeValue := " + source_value
+        + "\nnoncomputable def actualMixedRendererValue : NativeValue := " + renderer_value
+        + "\nnoncomputable def typedMixedSourceValue : NativeValue := mixedSourceValue " + header
+        + " mixedSortOrder mixedPredicateDeclarations mixedArgumentRoles typedMixedAst\n"
+        + "\ntheorem mixed_typed_value_exact : typedMixedSourceValue = actualMixedSourceValue := by\n  rfl\n"
+        + "#print axioms mixed_typed_value_exact\n"
+        + "theorem mixed_renderer_value_exact : mixedRendererValue typedMixedAst = actualMixedRendererValue := by\n  rfl\n"
+        + "#print axioms mixed_renderer_value_exact\n"
+        + "theorem mixed_ast_closed : mixedWellFormed mixedSortOrder mixedPredicateDeclarations mixedArgumentRoles typedMixedAst = true := by\n  decide\n"
+        + "#print axioms mixed_ast_closed\n"
+        + "theorem mixed_denotation_matches_lowering {Object EventFrame TimeFrame : Type}\n"
+        + "    (i : Interpretation (MixedEntity Object EventFrame TimeFrame) Unit) (t : Nat) :\n"
+        + "    mixedDenote i typedMixedAst emptyCountedEnvironment t ↔ formula i t := by\n"
+        + "  exact Iff.intro (fun h => h) (fun h => h)\n"
+        + "#print axioms mixed_denotation_matches_lowering\n"
+        + "theorem mixed_role_denotation_matches_lowering {Object EventFrame TimeFrame : Type}\n"
+        + "    (base : Interpretation (MixedEntity Object EventFrame TimeFrame) Unit)\n"
+        + "    (atoms : String → List (String × MixedEntity Object EventFrame TimeFrame) → Nat → Prop) (t : Nat) :\n"
+        + "    mixedRoleDenote base atoms mixedArgumentRoles typedMixedAst emptyCountedEnvironment t ↔\n"
+        + "      formula (mixedRoleInterpretation base atoms mixedArgumentRoles) t := by\n"
+        + "  exact Iff.intro (fun h => h) (fun h => h)\n"
+        + "#print axioms mixed_role_denotation_matches_lowering\n")
+    inputs = {"schema": MIXED_INPUT_SCHEMA, "profile": MIXED_PROFILE,
+        "mixed_report": checked, "mixed_report_sha256": expected_report_sha256,
+        "original_request_raw_utf8": request_raw.decode("utf-8"),
+        "original_request_sha256": expected_request_sha256}
+    files = {
+        "lakefile.toml": 'name = "legal_native_ast_preservation"\nversion = "0.1.0"\n\n[[lean_lib]]\nname = "legal"\nroots = ["LegalMixedRelationalAstPreservation"]\n',
+        "lean-toolchain": toolchain + "\n",
+        "preservation-inputs.json": _wire(inputs, MAX_PROJECT_BYTES).decode("utf-8") + "\n",
+        modules[0].replace(".", "/") + ".lean": _file(MIXED_PROJECT_ROOT, [], emitter.PRELUDE),
+        modules[1].replace(".", "/") + ".lean": _file(MIXED_PROJECT_ROOT, imports[modules[1]], semantics),
+        instance.replace(".", "/") + ".lean": _file(instance, imports[instance], body),
+        MIXED_PROJECT_ROOT + ".lean": "import " + instance + "\n",
+    }
+    _need(len(files) == MAX_FILES and len(set(modules)) == MAX_MODULES
+          and sum(len(text.encode("utf-8")) for text in files.values()) <= MAX_PROJECT_BYTES,
+          "complete mixed preservation project exceeds original bounds")
+    for module in modules:
+        _need(re.findall(r"(?m)^import ([A-Za-z][A-Za-z0-9_.]*)$", files[module.replace(".", "/") + ".lean"])
+              == imports[module], "exact closed mixed preservation imports required")
+    fence()
+    manifest = contracts.seal_record({
+        "schema": SCHEMA, "profile": MIXED_PROFILE, "toolchain": toolchain, "target": "legal", "family": "tdfol",
+        "mixed_report_sha256": expected_report_sha256, "original_request_sha256": expected_request_sha256,
+        "typed_expression_sha256": checked["typed_expression_sha256"],
+        "typed_expression_content_digest": expression["content_digest"],
+        "argument_roles_sha256": _sha(_wire(checked["argument_roles"], MAX_RECORD_BYTES)),
+        "renderer_ast_sha256": checked["renderer_ast_sha256"], "lean_body_sha256": _sha(checked["lean_body"].encode("utf-8")),
+        "typed_ast_node_count": witness["count"], "typed_extension_payload_count": witness["extension_count"],
+        "actual_typed_and_roles_lean_value_sha256": _sha(source_value.encode("utf-8")),
+        "actual_renderer_lean_value_sha256": _sha(renderer_value.encode("utf-8")),
+        "typed_source_lean_value_sha256": _sha(witness["source"].encode("utf-8")),
+        "source_sort_order_lean_value_sha256": _sha(witness["sorts"].encode("utf-8")),
+        "predicate_table_lean_value_sha256": _sha(witness["predicates"].encode("utf-8")),
+        "ordered_roles_lean_value_sha256": _sha(witness["roles"].encode("utf-8")),
+        "semantics_sha256": _sha(semantics.encode("utf-8")), "prelude_sha256": _sha(emitter.PRELUDE.encode("utf-8")),
+        "expected_modules": modules, "module_imports": imports,
+        "file_sha256": {name: _sha(text.encode("utf-8")) for name, text in sorted(files.items())},
+        "theorems": [instance + "." + name for name in suffixes],
+        "theorem_assumptions": [
+            "Object, EventFrame and TimeFrame are independent arbitrary Type carriers and may be empty.",
+            "Only predicate arguments receive disjoint tags; binders and same-sort equality use their raw source carriers.",
+            "Ambient Nat time is independent of authored TimeFrame; O/P/F are distinct unconstrained parameters.",
+            "Predicate role interpretations consume the exact ordered declared role/value pairs.",
+            "Concrete source denotation and unchanged emitted formula must reduce independently; no extensionality or modal congruence is assumed.",
+            "The five obligations are unexecuted during preparation; no generic compiler or source-prose theorem is asserted."],
+        "support_profile": {
+            "sorts": ["Object", "EventFrame", "TimeFrame"], "formula_sort": "Bool",
+            "predicate_arity": [1, 8], "max_predicates": 64,
+            "constructors": ["predicate", "equality", "not", "and", "or", "implies", "iff", "forall", "exists", "extension"],
+            "modal_operators": ["O", "P", "F"], "modal_payload_schema": "legacy.deontic/v1",
+            "max_ast_nodes": MAX_MIXED_AST_NODES, "max_ast_depth": MAX_MIXED_AST_DEPTH,
+            "closed_only": True, "ordered_children_preserved": True, "same_sort_builtin_equality": True,
+            "source_array_order_preserved": True, "source_carriers_may_be_empty": True,
+            "native_TDFOL_route_used": False, "native_parser_roundtrip": False},
+        "source_custody": {
+            "scope": "complete original authored mixed report/request, typed expression, ordered roles and renderer replay",
+            "original_request_raw_retained_in": "preservation-inputs.json/original_request_raw_utf8",
+            "original_report_retained_in": "preservation-inputs.json/mixed_report",
+            "original_source_bundle_replayed": False, "source_prose_to_ast_proved": False,
+            "reviewed_admission_or_graph_replayed": False},
+        "trust_boundary": [
+            "Python JSON decoding, complete value reification, content-digest validation and SHA256 remain explicit custody assumptions.",
+            "NativeValue mirrors supported serialized strings/null/arrays/objects; it is not a JSON byte parser or hash implementation.",
+            "Full typed expression/role and renderer values are compared against independent constructor mirrors, not merely digest literals.",
+            "MixedFormula/CountedSort/CountedVariable and three-carrier environments are proof witnesses, not a replacement production IR.",
+            "The original mixed renderer owns the unchanged emitted formula; native TDFOL AST/parser support is not created.",
+            "No source authenticity, statutory meaning, applicability, corpus admission, universal compiler correctness or model convergence follows."],
+        "producer_pins": producers, "mixed_producer_pins": dict(checked["producer_pins"]),
+        "preparation_only": True, "authority": dict(authority), "training_mask": 0, "evaluation_gold_mask": 0,
+        "native_ast": None, "native_TDFOL_route_used": False, "native_parser_roundtrip": False,
+        "typed_ast_value_preservation_proved": False, "renderer_ast_value_preservation_proved": False,
+        "mixed_ast_denotation_preservation_proved": False, "ordered_role_denotation_preservation_proved": False,
+        **false_flags,
+    })
+    preparation = NativeAstPreservationPreparation(_wire(manifest, MAX_RECORD_BYTES).decode("utf-8"), tuple(sorted(files.items())))
+    preparation_sha256(preparation)
+    fence()
+    _need(_mixed_pins(owners, relational, checked) == producers,
+          "mixed preservation producers changed during complete serialization")
+    return preparation
+
+
+def validate_mixed_relational_ast_preservation(preparation, report, request_raw: bytes, *,
+        expected_preparation_sha256, expected_report_sha256, expected_request_sha256, toolchain):
+    """Replay complete original source/renderer inputs and the whole project."""
+    _pin(expected_preparation_sha256, "complete mixed preservation preparation")
+    _need(preparation_sha256(preparation) == expected_preparation_sha256,
+          "independent complete mixed preservation pin differs")
+    expected = prepare_mixed_relational_ast_preservation(report, request_raw,
+        expected_report_sha256=expected_report_sha256, expected_request_sha256=expected_request_sha256,
+        toolchain=toolchain)
+    _need(expected == preparation and preparation_sha256(preparation) == expected_preparation_sha256,
+          "mixed preservation differs from complete original regeneration")
     return expected

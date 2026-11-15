@@ -364,3 +364,105 @@ def test_dependency_change_mid_inventory_fails_closed(monkeypatch):
     monkeypatch.setattr(deadline, "_dependency_pins", changed)
     with pytest.raises(ValueError, match="producer changed"):
         requests(receipt, proposal)
+
+
+
+def test_qualified_day_evidence_preserves_distinct_unsupported_units_and_plain_control():
+    text = "État. " + " ".join(TEXT.replace("2 days", unit) for unit in (
+        "2 days", "2 business days", "2 calendar days"))
+    document = "Préface.\n" + text.replace("business days", "business\tdays").replace(
+        "calendar days", "calendar  days") + "\nFin."
+    start = document.index("État")
+    offsets = [0]
+    for char in document:
+        offsets.append(offsets[-1] + len(char.encode()))
+    selector = _clause_selector(document, text, start, offsets, hashlib.sha256(document.encode()).hexdigest())
+    receipt, proposal = inputs(text, document_text=document, document_id="doc", clause_start=start,
+                              clause_end=selector["end"], source_selector=selector)
+    inventory = requests(receipt, proposal, text, document)
+    plain, = inventory["requests"]
+    assert plain["proposal_family"] == "not_later_than_after"
+    assert plain["status"] == "awaiting_caller_interpretation"
+    assert plain["deadline_surface"]["source_unit"] == "day"
+    assert all(plain["declaration_skeleton"][field] is None for field in MEANINGS)
+    # These legacy observations must pass before the opt-in API is needed.
+    expected_cues = [text.index("not later than 2 " + unit) for unit in ("business days", "calendar days")]
+    assert inventory["issues"] == proposal["issues"] == [
+        {"cue_span": {"char_start": start, "char_end": start + len("not later than")},
+         "reason_codes": ["unsupported_temporal_prefix"]}
+        for start in expected_cues
+    ]
+    eligible, = proposer.source_queries(text, proposal)
+    assert eligible["proposed_time_span"] == plain["temporal_source"]["source_span"]
+    original = deepcopy((receipt, proposal, inventory))
+    evidence = deadline.build_deadline_qualified_unit_evidence(receipt, proposal, source_text=text,
+                                                              document_text=document)
+    assert evidence["schema"] == deadline.QUALIFIED_UNIT_EVIDENCE_SCHEMA
+    assert evidence["deadline_request_inventory_sha256"] == inventory["receipt_sha256"]
+    assert evidence["occurrence_receipt_sha256"] == receipt["receipt_sha256"]
+    assert evidence["proposal_receipt_sha256"] == deadline.digest(proposal)
+    assert evidence["source_binding"] == receipt["source_binding"]
+    assert not any(evidence["authority"].values())
+    assert (receipt, proposal, requests(receipt, proposal, text, document)) == original
+    observations = evidence["observations"]
+    assert [item["lexical_unit"] for item in observations] == ["business_day", "calendar_day"]
+    assert len({item["unit_source"]["source_observation_id"] for item in observations}) == 2
+    for item, source_unit, document_unit in zip(observations, ("business days", "calendar days"),
+                                                ("business\tdays", "calendar  days"), strict=True):
+        issue = inventory["issues"][item["issue_index"]]
+        assert issue == {"cue_span": item["cue_source"]["source_span"],
+                         "reason_codes": ["unsupported_temporal_prefix"]}
+        assert item["status"] == "unsupported_qualified_unit" and item["quantity"] == 2
+        assert "declaration_skeleton" not in item
+        assert item["quantity_source"]["source_text"] == "2"
+        assert item["connector_source"]["source_text"] == "after"
+        anchor = item["unit_source"]
+        source_start, document_start = text.index(source_unit), document.index(document_unit)
+        assert anchor["source_text"] == source_unit
+        assert anchor["source_span"] == {"char_start": source_start, "char_end": source_start + len(source_unit)}
+        assert anchor["document_text"] == document_unit and anchor["document_translation_resolved"] is True
+        assert anchor["document_span"] == {"char_start": document_start, "char_end": document_start + len(document_unit)}
+    replay = deadline.validate_deadline_qualified_unit_evidence(evidence, receipt, proposal, source_text=text,
+                                                                document_text=document)
+    assert replay == evidence
+    replay["observations"].clear()
+    assert len(evidence["observations"]) == 2
+
+
+def test_qualified_day_evidence_leaves_other_prefixes_and_quoted_mentions_unclassified():
+    text = ('Registry acts within 2 business days after receipt. '
+            'The words "not later than 2 calendar days after receipt" are quoted. '
+            'Registry acts not later than 2 busıness days after receipt.')
+    receipt, proposal = inputs(text)
+    evidence = deadline.build_deadline_qualified_unit_evidence(receipt, proposal, source_text=text)
+    assert proposal["issues"]
+    assert evidence["observations"] == []
+
+
+@pytest.mark.parametrize("damage", ["label", "unit_span", "issue_index", "authority", "omission"])
+def test_resealed_qualified_day_observations_require_exact_replay(damage):
+    text = TEXT.replace("2 days", "2 business days")
+    receipt, proposal = inputs(text)
+    evidence = deadline.build_deadline_qualified_unit_evidence(receipt, proposal, source_text=text)
+    observation, = evidence["observations"]
+    if damage == "label":
+        observation["lexical_unit"] = "calendar_day"
+    elif damage == "unit_span":
+        observation["unit_source"]["source_span"]["char_start"] += 1
+    elif damage == "issue_index":
+        observation["issue_index"] += 1
+    elif damage == "authority":
+        evidence["authority"]["deadline_semantics_inferred"] = True
+    else:
+        evidence["observations"].clear()
+    with pytest.raises(ValueError, match="exact replay"):
+        deadline.validate_deadline_qualified_unit_evidence(resign(evidence), receipt, proposal, source_text=text)
+
+
+def test_qualified_day_evidence_refuses_changed_original_unsupported_issue():
+    text = TEXT.replace("2 days", "2 calendar days")
+    receipt, proposal = inputs(text)
+    issue, = proposal["issues"]
+    issue["cue_span"]["char_end"] += 1
+    with pytest.raises(ValueError, match="authoritative regeneration"):
+        deadline.build_deadline_qualified_unit_evidence(receipt, proposal, source_text=text)

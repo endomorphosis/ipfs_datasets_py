@@ -584,3 +584,117 @@ def test_resident_memory_guard_allows_small_process(tmp_path):
         limits=ToolRunLimits(timeout_seconds=5, resident_memory_bytes=64 * 1024**2)))
     assert result.returncode == 0 and not result.resource_exhausted
     assert result.stdout.strip() == 'ok'
+
+
+# Read-only no-input stdio contract. These ordinary subprocess tests do not
+# issue a verified Native handle or grant parent/corpus authority.
+@pytest.mark.skipif(os.name != "posix", reason="POSIX descriptor access-mode check")
+def test_no_input_launch_passes_readonly_null_and_closes_parent_handle(tmp_path):
+    import fcntl
+    observed = []
+    def observing_popen(argv, **kwargs):
+        source = kwargs["stdin"]
+        assert source.mode == "rb" and not source.closed
+        assert fcntl.fcntl(source.fileno(), fcntl.F_GETFL) & os.O_ACCMODE == os.O_RDONLY
+        assert source.read(1) == b""
+        observed.append(source)
+        return subprocess.Popen(argv, **kwargs)
+    runner = _runner(tmp_path, SubprocessExecutor(popen=observing_popen))
+    result = runner.run(ToolRunRequest(argv=(PYTHON, "-c",
+        "import sys; print('EOF' if sys.stdin.buffer.read() == b'' else 'DATA')")))
+    assert result.ok and result.stdout == "EOF\n", result
+    assert len(observed) == 1 and observed[0].closed
+    assert result.workspace_cleaned
+
+
+@pytest.mark.skipif(os.name != "posix", reason="POSIX descriptor access-mode check")
+def test_no_input_launch_failure_still_closes_readonly_null_handle(tmp_path):
+    import fcntl
+    observed = []
+    def failed_popen(argv, **kwargs):
+        source = kwargs["stdin"]
+        assert source.mode == "rb" and not source.closed
+        assert fcntl.fcntl(source.fileno(), fcntl.F_GETFL) & os.O_ACCMODE == os.O_RDONLY
+        observed.append(source)
+        raise OSError("readonly stdin launch failure sentinel")
+    runner = _runner(tmp_path, SubprocessExecutor(popen=failed_popen))
+    result = runner.run(ToolRunRequest(argv=(PYTHON, "-c", "print('unreached')")))
+    assert result.returncode is None and "readonly stdin launch failure sentinel" in result.error
+    assert len(observed) == 1 and observed[0].closed
+    assert result.workspace_cleaned
+
+
+def test_explicit_stdin_bytes_keep_pipe_and_original_delivery(tmp_path):
+    observed = []
+    def observing_popen(argv, **kwargs):
+        observed.append(kwargs["stdin"])
+        assert kwargs["stdin"] == subprocess.PIPE
+        return subprocess.Popen(argv, **kwargs)
+    runner = _runner(tmp_path, SubprocessExecutor(popen=observing_popen))
+    result = runner.run(ToolRunRequest(argv=(PYTHON, "-c",
+        "import sys; print(sys.stdin.buffer.read().decode('utf-8').upper())"), stdin=b"wire"))
+    assert result.ok and result.stdout == "WIRE\n", result
+    assert observed == [subprocess.PIPE]
+    assert result.workspace_cleaned
+
+
+@pytest.mark.skipif(not sys.platform.startswith("linux"), reason="modeled Linux cleanup ownership")
+@pytest.mark.parametrize("owned_observation", [False, True])
+def test_stdin_close_failure_after_spawn_retains_process_cleanup_owner(tmp_path, monkeypatch, owned_observation):
+    # Modeled lifecycle only: no process is launched and no Native ownership is
+    # authenticated. The real execute() must attach its returned process before
+    # leaving a context whose close can fail.
+    import builtins
+    from types import SimpleNamespace
+    from ipfs_datasets_py.logic.backends import process as module
+    child = SimpleNamespace(pid=777771)
+    trackers, owners, cleaned = [], [], []
+    class Tracker:
+        def __init__(self, leader_pid, **kwargs):
+            self.leader_pid = leader_pid
+            trackers.append(self)
+    class Owner:
+        def __init__(self, process, descendants, workers, workspace, grace, **kwargs):
+            self.process = process
+            owners.append(self)
+        def attach_process(self, process):
+            self.process = process
+        def retry_process_cleanup(self):
+            assert self.process is child
+            cleaned.append(("owned", self.process))
+    class ClosingInput:
+        def __init__(self):
+            self.source = builtins.open(os.devnull, "rb")
+        def __enter__(self):
+            return self.source
+        def __exit__(self, kind, value, trace):
+            self.source.close()
+            raise OSError("modeled stdin close after spawn")
+    inputs = []
+    def readonly_input(path, mode):
+        assert path == os.devnull and mode == "rb"
+        value = ClosingInput()
+        inputs.append(value)
+        return value
+    def returned_process(argv, **kwargs):
+        assert kwargs["stdin"] is inputs[0].source and not kwargs["stdin"].closed
+        return child
+    def cleanup(process, tracker, workers, grace, error):
+        assert process is child and tracker is trackers[-1] and tracker.leader_pid == child.pid
+        cleaned.append(("ordinary", process))
+    monkeypatch.setattr(module, "open", readonly_input, raising=False)
+    monkeypatch.setattr(module, "_LinuxDescendantTracker", Tracker)
+    monkeypatch.setattr(module, "NativeToolCleanupHandle", Owner)
+    monkeypatch.setattr(module, "_cleanup_failed_execution", cleanup)
+    monkeypatch.setattr(module.subprocess, "Popen", returned_process)
+    invocation = ProcessInvocation(argv=(PYTHON, "-c", "pass"), runtime=ToolRuntime.NATIVE,
+        cwd=tmp_path, environment={}, stdin=None, limits=ToolRunLimits(),
+        owned_process_observation=owned_observation)
+    error_type = module.OwnedToolCleanupError if owned_observation else OSError
+    with pytest.raises(error_type, match="modeled stdin close after spawn") as caught:
+        module.SubprocessExecutor(popen=returned_process).execute(invocation)
+    assert inputs[0].source.closed
+    assert cleaned == [("owned" if owned_observation else "ordinary", child)]
+    if owned_observation:
+        assert caught.value.cleanup_handle is owners[0]
+        assert caught.value.cleanup_handle.process is child

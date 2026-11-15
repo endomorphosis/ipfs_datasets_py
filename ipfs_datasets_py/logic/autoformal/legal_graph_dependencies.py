@@ -251,3 +251,114 @@ def validate_invalidation(report, manifest, *, expected_manifest_sha256, observe
 
 __all__ = ["GraphDependencyError", "build_dependency_manifest", "validate_dependency_manifest",
            "invalidate_dependencies", "validate_invalidation"]
+
+
+COMPONENT_SCHEMA_V2 = "legal-component-graph-dependency-manifest/v2"
+COMPONENT_INVALIDATION_SCHEMA_V2 = "legal-component-graph-reverse-invalidation/v2"
+
+
+def build_component_dependency_manifest_v2(composition, *, expected_composition_cid,
+                                            expected_components, declared_dependencies):
+    """Bind complete qualified imports to the existing reverse-dependency owner.
+
+    Every imported relation remains in ``import_dependencies``. Multiple imports
+    between one component pair share one reverse edge, without dropping either
+    original relation. Additional declared missing/competing dependencies are
+    retained, never selected away. Review inputs remain opaque pinned claims.
+    """
+    from . import corpus_graph as graphs
+    from ipfs_datasets_py.utils.cid_utils import canonical_dag_json_bytes
+
+    checked = graphs.validate_component_graph_v2(composition,
+        expected_record_cid=expected_composition_cid, expected_components=expected_components)
+    ids = [row["component_id"] for row in checked["components"]]
+    _need(len(ids) <= MAX_ARTIFACTS, "component dependency artifact bound exceeded; no partial manifest")
+    _need(type(declared_dependencies) is list and len(declared_dependencies) <= MAX_EDGES,
+          "bounded complete declared component dependencies required")
+    declared = json.loads(_wire(declared_dependencies))
+    seen_declared = set()
+    for edge in declared:
+        _need(type(edge) is dict and set(edge) == {"dependent_id", "dependency_id"},
+              "closed declared component dependency required")
+        pair = (_identity(edge["dependent_id"]), _identity(edge["dependency_id"]))
+        _need(pair[0] in ids and pair not in seen_declared,
+              "unknown dependent or duplicate declared component dependency")
+        seen_declared.add(pair)
+    composition_sha = hashlib.sha256(canonical_dag_json_bytes(checked)).hexdigest()
+    artifacts = []
+    for row in checked["components"]:
+        pins = {kind: [] for kind in PIN_KINDS}
+        identity = row["component_id"]
+        pins["root"] = [{"key": "component-composition", "sha256": composition_sha}]
+        pins["source"] = [{"key": identity + ":snapshot", "sha256": row["snapshot_sha256"]}]
+        pins["context"] = [{"key": identity + ":review-inputs", "sha256": row["review_sha256"]}]
+        artifacts.append(dict(artifact_id=identity, artifact_sha256=_digest(row), dependency_pins=pins))
+    imports, edges, seen = [], [], set()
+    for row in checked["imports"]:
+        dependent, dependency = row["src"]["component_id"], row["dst"]["component_id"]
+        imports.append(dict(import_cid=row["record_cid"], edge_cid=row["edge"]["record_cid"],
+                            dependent_id=dependent, dependency_id=dependency))
+        pair = (dependent, dependency)
+        if pair not in seen:
+            edges.append(dict(dependent_id=dependent, dependency_id=dependency))
+            seen.add(pair)
+    for edge in declared:
+        pair = (edge["dependent_id"], edge["dependency_id"])
+        if pair not in seen:
+            edges.append(edge)
+            seen.add(pair)
+    inner = build_dependency_manifest(artifacts, edges, expected_artifact_ids=ids)
+    report = dict(schema=COMPONENT_SCHEMA_V2, composition_cid=expected_composition_cid,
+        composition_sha256=composition_sha, component_pins=json.loads(_wire(expected_components)),
+        import_dependencies=imports, declared_dependencies=declared, dependency_manifest=inner,
+        population_complete=True, coverage_scope="exact_pinned_component_imports_and_declared_dependencies_only",
+        review_state_evaluation_performed=False, **_FALSE)
+    report["manifest_sha256"] = _digest(report)
+    _wire(report)
+    return report
+
+
+def validate_component_dependency_manifest_v2(manifest, composition, *, expected_manifest_sha256,
+                                               expected_composition_cid, expected_components):
+    _sha(expected_manifest_sha256)
+    _need(type(manifest) is dict and manifest.get("manifest_sha256") == expected_manifest_sha256,
+          "component dependency manifest differs from independent identity")
+    expected = build_component_dependency_manifest_v2(composition,
+        expected_composition_cid=expected_composition_cid, expected_components=expected_components,
+        declared_dependencies=manifest.get("declared_dependencies"))
+    _need(_wire(manifest) == _wire(expected), "component dependency manifest differs from exact regeneration")
+    return expected
+
+
+def invalidate_component_dependencies_v2(manifest, composition, *, expected_manifest_sha256,
+                                         expected_composition_cid, expected_components,
+                                         observed_artifact_sha256s, observed_pins):
+    """Reuse full existing reverse invalidation, including cycles and missing pins."""
+    manifest = validate_component_dependency_manifest_v2(manifest, composition,
+        expected_manifest_sha256=expected_manifest_sha256,
+        expected_composition_cid=expected_composition_cid, expected_components=expected_components)
+    inner = manifest["dependency_manifest"]
+    invalidation = invalidate_dependencies(inner, expected_manifest_sha256=inner["manifest_sha256"],
+        observed_artifact_sha256s=observed_artifact_sha256s, observed_pins=observed_pins)
+    disposition = ("declared_dependencies_missing" if invalidation["missing_dependencies"]
+        else "declared_cycle_present" if invalidation["cycles"]
+        else "declared_dependencies_changed_or_unavailable" if invalidation["stale_artifact_ids"]
+        else "unchanged_declared_dependencies_only")
+    report = dict(schema=COMPONENT_INVALIDATION_SCHEMA_V2,
+        manifest_sha256=manifest["manifest_sha256"], composition_cid=expected_composition_cid,
+        import_dependencies=manifest["import_dependencies"],
+        declared_dependencies=manifest["declared_dependencies"], invalidation=invalidation,
+        disposition=disposition, review_state_evaluation_performed=False, **_FALSE)
+    report = json.loads(_wire(report))
+    report["invalidation_sha256"] = _digest(report)
+    return report
+
+
+def validate_component_invalidation_v2(report, manifest, composition, **arguments):
+    expected = invalidate_component_dependencies_v2(manifest, composition, **arguments)
+    _need(_wire(report) == _wire(expected), "component invalidation differs from complete regeneration")
+    return expected
+
+
+__all__ += ["build_component_dependency_manifest_v2", "validate_component_dependency_manifest_v2",
+            "invalidate_component_dependencies_v2", "validate_component_invalidation_v2"]

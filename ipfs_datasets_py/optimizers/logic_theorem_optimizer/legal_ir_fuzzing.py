@@ -2,8 +2,8 @@
 
 The fuzzer in this module is intentionally deterministic and dependency-light:
 it mutates LegalIR-facing artifacts, recompiles or reprojects the affected
-surface, checks the expected metamorphic relation, and records verified
-semantic counterexamples as source-copy-safe hard-negative candidates.
+surface, records deterministic relation diagnostics, and retains sanitized
+unverified mutation proposals for separate review.
 """
 
 from __future__ import annotations
@@ -36,8 +36,9 @@ from .modal_autoencoder import build_decompiler_structural_learning_target
 from .modal_ir import ModalIRDocument
 
 
-LEGAL_IR_FUZZING_SCHEMA_VERSION: Final = "legal-ir-metamorphic-differential-fuzzing-v1"
+LEGAL_IR_FUZZING_SCHEMA_VERSION: Final = "legal-ir-metamorphic-differential-fuzzing-v2"
 LEGAL_IR_TRUSTED_NEGATIVE_SCHEMA_VERSION: Final = "legal-ir-fuzzing-trusted-negative-v1"
+_LEGAL_IR_UNVERIFIED_PROPOSAL_SCHEMA_VERSION: Final = "legal-ir-fuzzing-unverified-proposal-v2"
 
 SEMANTICS_PRESERVING: Final = "semantics_preserving"
 SEMANTICS_CHANGING: Final = "semantics_changing"
@@ -282,7 +283,7 @@ class LegalIRSurfaceBundle:
 
 @dataclass(frozen=True)
 class TrustedNegativeCandidate:
-    """Verified minimal LegalIR non-equivalence candidate for later curricula."""
+    """Candidate carrying explicit caller trust metadata or an unverified producer proposal."""
 
     candidate_id: str
     source_mutation_id: str
@@ -337,7 +338,7 @@ class LegalIRFuzzingResult:
     def passed(self) -> bool:
         if self.mutation.relation == SEMANTICS_PRESERVING:
             return self.invariant_holds and self.differential_consistent
-        return self.expected_change_detected and self.verified
+        return self.expected_change_detected and self.differential_consistent
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -410,7 +411,7 @@ class LegalIRFuzzingReport:
 
 
 class LegalIRFuzzer:
-    """Generate and verify deterministic LegalIR metamorphic mutations."""
+    """Generate deterministic diagnostics and unverified mutation proposals."""
 
     def __init__(
         self,
@@ -452,7 +453,8 @@ class LegalIRFuzzer:
             if mutation.target in self.config.targets
         )
         trusted = tuple(
-            result.counterexample for result in results if result.counterexample is not None
+            result.counterexample for result in results
+            if result.counterexample is not None and result.counterexample.trusted is True
         )
         return LegalIRFuzzingReport(
             sample_id=resolved_sample_id,
@@ -560,13 +562,13 @@ class LegalIRFuzzer:
             decompiler_similarity=decompiler_similarity,
             grammar_rejections=grammar_rejections,
         )
-        verified = (invariant_holds and mutation.relation == SEMANTICS_PRESERVING) or (
+        diagnostics_passed = (invariant_holds and mutation.relation == SEMANTICS_PRESERVING) or (
             mutation.relation == SEMANTICS_CHANGING
             and expected_change_detected
             and differential_consistent
         )
         counterexample = None
-        if self._should_store_counterexample(mutation, verified, expected_change_detected):
+        if self._should_store_counterexample(mutation, diagnostics_passed, expected_change_detected):
             counterexample = self._trusted_negative_candidate(
                 baseline,
                 mutation,
@@ -585,7 +587,7 @@ class LegalIRFuzzer:
             invariant_holds=invariant_holds,
             expected_change_detected=expected_change_detected,
             differential_consistent=differential_consistent,
-            verified=verified,
+            verified=False,
             semantic_metrics=semantic_metrics,
             differential_metrics=differential_metrics,
             grammar_rejections=grammar_rejections,
@@ -1024,6 +1026,7 @@ class LegalIRFuzzer:
             return False
         if not expected_change_detected:
             return False
+        # This flag records heuristic diagnostics only, never semantic verification.
         return verified or not self.config.require_verification_for_trusted_negatives
 
     def _trusted_negative_candidate(
@@ -1051,8 +1054,9 @@ class LegalIRFuzzer:
             "differential_metrics": _json_ready(differential_metrics),
             "grammar_rejections": list(grammar_rejections),
             "semantic_similarity": semantic_similarity,
-            "verified": True,
-            "verified_by": [
+            "verified": False,
+            "verified_by": [],
+            "diagnostic_checks": [
                 "metamorphic_metric_oracle",
                 "deterministic_compiler",
                 "learned_guidance_projection",
@@ -1063,6 +1067,7 @@ class LegalIRFuzzer:
         candidate_payload = {
             "minimal": sanitized,
             "mutation_id": mutation.mutation_id,
+            "schema_version": _LEGAL_IR_UNVERIFIED_PROPOSAL_SCHEMA_VERSION,
             "verification": verification,
         }
         return TrustedNegativeCandidate(
@@ -1075,6 +1080,9 @@ class LegalIRFuzzer:
             verification=verification,
             source_text_sha256=_text_hash(baseline.text),
             mutated_payload_sha256=_stable_hash(mutation.mutated),
+            trusted=False,
+            training_partition="unverified_proposal",
+            schema_version=_LEGAL_IR_UNVERIFIED_PROPOSAL_SCHEMA_VERSION,
         )
 
 
@@ -1104,7 +1112,7 @@ def minimize_legal_ir_counterexample(
     *,
     max_depth: int = 3,
 ) -> Any:
-    """Greedily minimize a payload while preserving a verified predicate."""
+    """Greedily minimize a payload while preserving a caller-supplied predicate."""
 
     candidate = copy.deepcopy(value)
     if not predicate(candidate):
@@ -1610,7 +1618,7 @@ class TypedIRCheckResult:
 
 @dataclass(frozen=True)
 class MinimalSemanticMutation:
-    """One specified, single-path semantic mutation over typed LegalIR."""
+    """An authored mutation proposal, without an independent semantic verdict."""
 
     mutation_class: MutationClass
     original: Mapping[str, Any]
@@ -1619,7 +1627,7 @@ class MinimalSemanticMutation:
     relationship: str
     evidence_kind: str
     description: str = ""
-    solver_outcome: str = SOLVER_DISPROVED
+    solver_outcome: str = SOLVER_UNKNOWN
 
     @property
     def mutation_id(self) -> str:
@@ -1647,7 +1655,7 @@ class MinimalSemanticMutation:
 
 @dataclass(frozen=True)
 class MutationValidationRecord:
-    """Parse/type, evidence, and minimality record for one mutation."""
+    """Syntactic checks and unverified outcome diagnostics for a proposal."""
 
     mutation: MinimalSemanticMutation
     check: TypedIRCheckResult
@@ -1715,7 +1723,7 @@ def parse_and_typecheck_typed_ir(document: Any) -> TypedIRCheckResult:
             status="parse_error",
             diagnostics=tuple(diagnostics + ["formulas_missing"]),
         )
-    typed = True
+    typed = not diagnostics
     for index, formula in enumerate(formulas):
         if not isinstance(formula, Mapping):
             return TypedIRCheckResult(
@@ -1836,6 +1844,11 @@ def _formula_signature(document: Any) -> str:
 
 
 def typed_documents_equivalent(left: Any, right: Any) -> bool:
+    """Compare exact formula payloads; this is not logical equivalence.
+
+    The historical API name is retained for compatibility. Unequal payloads
+    supply no counterexample, solver result, or semantic training label.
+    """
     return _formula_signature(left) == _formula_signature(right)
 
 
@@ -1844,9 +1857,39 @@ def check_mutation_minimality(
     mutant: Any,
     mutated_paths: Sequence[str],
 ) -> tuple[bool, tuple[str, ...]]:
-    """Record whether the mutated-path set is a minimal non-equivalence."""
+    """Check declared-path structural changes, without a semantic verdict."""
 
-    paths = tuple(dict.fromkeys(str(path) for path in mutated_paths if str(path)))
+    offered = tuple(mutated_paths)
+    paths = tuple(dict.fromkeys(str(path) for path in offered if str(path)))
+    if len(paths) != len(offered) or any(type(path) is not str for path in offered):
+        return False, paths
+    decoded = []
+    for path in paths:
+        if not path.startswith("/") or re.search(r"~(?![01])", path):
+            return False, paths
+        tokens = tuple(token.replace("~1", "/").replace("~0", "~")
+                       for token in path[1:].split("/"))
+        if any(not token for token in tokens):
+            return False, paths
+        # Canonical list indices prevent alias paths such as /0 and /00.
+        for document in (original, mutant):
+            current = document
+            try:
+                for token in tokens:
+                    if isinstance(current, Mapping):
+                        current = current[token]
+                    elif isinstance(current, Sequence) and not isinstance(current, (str, bytes, bytearray)):
+                        if re.fullmatch(r"0|[1-9][0-9]*", token) is None:
+                            return False, paths
+                        current = current[int(token)]
+                    else:
+                        return False, paths
+            except (KeyError, IndexError, TypeError, ValueError):
+                return False, paths
+        decoded.append(tokens)
+    if any(left == right[:len(left)] or right == left[:len(right)]
+           for index, left in enumerate(decoded) for right in decoded[index + 1:]):
+        return False, paths
     if not paths or typed_documents_equivalent(original, mutant):
         return False, paths
     necessary: list[str] = []
@@ -1859,7 +1902,7 @@ def check_mutation_minimality(
         if typed_documents_equivalent(original, reverted):
             necessary.append(path)
     minimal = tuple(necessary) if necessary else paths
-    checked = set(minimal) == set(paths)
+    checked = bool(necessary) and set(necessary) == set(paths)
     return checked, minimal
 
 
@@ -1876,11 +1919,11 @@ def _apply_class_mutation(
     if mutation_class is MutationClass.OPERATOR:
         mutant = _pointer_set(mutant, "/formulas/0/operator/symbol", "may")
         mutant = _pointer_set(mutant, "/formulas/0/operator/label", "permission")
-        return mutant, ("/formulas/0/operator/symbol",), "Replace shall with may."
+        return mutant, ("/formulas/0/operator",), "Replace shall with may."
     if mutation_class is MutationClass.MODALITY:
         mutant = _pointer_set(mutant, "/formulas/0/operator/label", "permission")
         mutant = _pointer_set(mutant, "/formulas/0/operator/symbol", "may")
-        return mutant, ("/formulas/0/operator/label",), "Invert obligation modality."
+        return mutant, ("/formulas/0/operator",), "Invert obligation modality."
     if mutation_class is MutationClass.QUANTIFIER:
         mutant = _pointer_set(mutant, "/formulas/0/quantifier/kind", "existential")
         return mutant, ("/formulas/0/quantifier/kind",), "Change universal to existential."
@@ -1929,7 +1972,7 @@ def generate_minimal_semantic_mutations(
                 relationship=_CLASS_RELATIONSHIP[mutation_class],
                 evidence_kind=_CLASS_EVIDENCE_KIND[mutation_class],
                 description=description,
-                solver_outcome=_CLASS_SOLVER_OUTCOME[mutation_class],
+                solver_outcome=SOLVER_UNKNOWN,
             )
         )
     return tuple(mutations)
@@ -1940,7 +1983,12 @@ def collect_mutation_evidence(
     *,
     solver_outcome: Optional[str] = None,
 ) -> MutationValidationRecord:
-    """Parse/type-check, score, and record minimality for one mutation."""
+    """Check syntax and structural changes; never manufacture solver evidence.
+
+    An outcome string is caller-reported diagnostic data. This collector does
+    not run a solver or authenticate a proof/counterexample. Independent labels
+    must be supplied separately at the existing hard-negative admission owner.
+    """
 
     outcome = str(solver_outcome or mutation.solver_outcome)
     check = parse_and_typecheck_typed_ir(mutation.mutant)
@@ -1959,22 +2007,23 @@ def collect_mutation_evidence(
         mutation.mutated_paths,
     )
     unknown_reason = ""
-    if outcome in {SOLVER_TIMED_OUT, SOLVER_UNAVAILABLE, SOLVER_UNKNOWN}:
-        evidence_status = "unknown"
-        relationship = "unknown"
-        unknown_reason = f"solver_{outcome}_is_not_negative"
-    elif not check.accepted:
+    if not check.accepted:
         evidence_status = "unknown"
         relationship = "unknown"
         unknown_reason = "parse_or_type_error"
     elif equivalent:
         evidence_status = "rejected"
         relationship = "unknown"
-        unknown_reason = "mutation_did_not_change_semantics"
+        unknown_reason = "mutation_did_not_change_formula_payload"
         minimality_checked = False
+    elif outcome in {SOLVER_TIMED_OUT, SOLVER_UNAVAILABLE, SOLVER_UNKNOWN}:
+        evidence_status = "unknown"
+        relationship = "unknown"
+        unknown_reason = f"solver_{outcome}_is_not_negative"
     else:
-        evidence_status = "verified"
-        relationship = mutation.relationship
+        evidence_status = "unknown"
+        relationship = "unknown"
+        unknown_reason = "independent_semantic_evidence_required"
     return MutationValidationRecord(
         mutation=mutation,
         check=check,

@@ -1,0 +1,99 @@
+{
+  "CI_observation": {
+    "failed_jobs_cause": "GitHub account locked due to billing; five sampled jobs did not start, no runner or steps.",
+    "scope": "Separate GitHub checks, not local test results.",
+    "unexecuted_checks_are_not_passed": true,
+    "workflow_changes_in_PR": false
+  },
+  "base_commit": "4db8fa5e9f064ba8983ab9b1a478c6ebaaa2aa12",
+  "cases": {
+    "errors": 0,
+    "failed": 0,
+    "nodeids": [
+      "tests/unit/logic/autoformal/test_legal_full_norm_consequences_v1.py::test_closed_candidate_mapping_and_ordinary_inputs",
+      "tests/unit/logic/autoformal/test_legal_full_norm_consequences_v1.py::test_exact_retained_source_and_conditional_metadata",
+      "tests/unit/logic/autoformal/test_legal_full_norm_consequences_v1.py::test_independent_pins_are_required[report-A]",
+      "tests/unit/logic/autoformal/test_legal_full_norm_consequences_v1.py::test_independent_pins_are_required[report-B]",
+      "tests/unit/logic/autoformal/test_legal_full_norm_consequences_v1.py::test_independent_pins_are_required[request-A]",
+      "tests/unit/logic/autoformal/test_legal_full_norm_consequences_v1.py::test_independent_pins_are_required[request-B]",
+      "tests/unit/logic/autoformal/test_legal_full_norm_consequences_v1.py::test_resealed_report_still_requires_full_owner_replay[lean_body]",
+      "tests/unit/logic/autoformal/test_legal_full_norm_consequences_v1.py::test_resealed_report_still_requires_full_owner_replay[producer_pin]",
+      "tests/unit/logic/autoformal/test_legal_full_norm_consequences_v1.py::test_resealed_report_still_requires_full_owner_replay[unknown_field]",
+      "tests/unit/logic/autoformal/test_legal_full_norm_consequences_v1.py::test_semantic_changes_are_refused_before_composition[argument_order]",
+      "tests/unit/logic/autoformal/test_legal_full_norm_consequences_v1.py::test_semantic_changes_are_refused_before_composition[authority]",
+      "tests/unit/logic/autoformal/test_legal_full_norm_consequences_v1.py::test_semantic_changes_are_refused_before_composition[modal_placement]",
+      "tests/unit/logic/autoformal/test_legal_full_norm_consequences_v1.py::test_unknown_request_fields_are_rejected",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_full_public_replay_retains_existing_ast_ledger_and_no_authority",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_producer_change_during_native_lowering_is_rejected"
+    ],
+    "passed": 15,
+    "skipped": 0
+  },
+  "code_commit": "21b910232e4f80f38d35f8985fced06982465313",
+  "direct_source_pins_reverified": 131,
+  "evidence": {
+    "durability": {
+      "bytes": 1406,
+      "path": "workspace/test-logs/federal-corpus-audits/full-norm-main-integration-20261020-01/run-03/logs/validation-durability.json",
+      "sha256": "2fc1bbcdcda16f4e6211caea513fcfb64d9cacaa8c6d25a0bb62f3765b23e92b"
+    },
+    "junit": {
+      "bytes": 2723,
+      "path": "workspace/test-logs/federal-corpus-audits/full-norm-main-integration-20261020-01/run-03/exports/tests.xml",
+      "sha256": "6e1202972b87b7a43b61dd887cfe215beb0f58f86d3d854afcdb7066d80fb350"
+    },
+    "launch": {
+      "bytes": 1117,
+      "path": "workspace/test-logs/federal-corpus-audits/full-norm-main-integration-20261020-01/validation-launch-03.json",
+      "sha256": "2bdae53bfe0f0e60b13fbc5f39d7594e352dcad29a29869efe17a520634e74e7"
+    },
+    "request": {
+      "bytes": 33689,
+      "path": "workspace/test-logs/federal-corpus-audits/full-norm-main-integration-20261020-01/validation-request-03.json",
+      "sha256": "d36c46da5349bb77057ce54dccde49f6391cc7e6841865a1597e86d0ff400666"
+    },
+    "terminal": {
+      "bytes": 5653,
+      "path": "workspace/test-logs/federal-corpus-audits/full-norm-main-integration-20261020-01/native-03.stdout.txt",
+      "sha256": "39855eaca395be9c5c03d579af3e84a9a00b6e4e86c13b9f06c640df14c6fef1"
+    }
+  },
+  "fixture": {
+    "bytes": 3503,
+    "exact_retained_source_parity": true,
+    "sha256": "30e70c9ea780e0bc5f2e3a17be9ad21447dbaf42e102e47e74c5fb99a9c755ba"
+  },
+  "independent_saved_review": "/root/integration_freshness confirmed exact15nodes/all131pins/six durable outputs/original closeout; earlier attempts excluded.",
+  "model_or_training_executed": false,
+  "native_Lean_executed": false,
+  "previous_attempts": [
+    {
+      "cohort": "01",
+      "disposition": "constructor refusal: missing attempt; responsible-owner exact-controller closeout retained",
+      "tests": 0
+    },
+    {
+      "cohort": "02",
+      "disposition": "constructor refusal: pin population over existing256 cap; responsible-owner exact-controller closeout retained",
+      "tests": 0
+    }
+  ],
+  "proof_authority": false,
+  "pull_request": "https://github.com/endomorphosis/ipfs_datasets_py/pull/1325",
+  "recorded_at_utc": "2026-10-20T17:37:16.408254+00:00",
+  "resource_closeout": {
+    "cleanup_error": null,
+    "native_lease_id": "98090f3364c34e449edc9746ecb94a10",
+    "native_lease_released": true,
+    "observed_descendants_remaining": 0,
+    "reservation_id": "c3efc0c5aa2a4d249b3ebcec03f7cdf3",
+    "source_read_released": true,
+    "storage_status": "released"
+  },
+  "schema": "legal-full-norm-main-integration-qualification/v1",
+  "scope": "Clean-main normal-package integration of retained fixed authored A/B conditional norm composition and closing producer fence. No model, training, corpus processing or native Lean build.",
+  "source_provenance_limit": "Cooperative source READ with direct declared hashes, not exhaustive runtime transitive import attestation.",
+  "status": "passed",
+  "statutory_meaning_qualified": false,
+  "training_gold_qualified": false
+}

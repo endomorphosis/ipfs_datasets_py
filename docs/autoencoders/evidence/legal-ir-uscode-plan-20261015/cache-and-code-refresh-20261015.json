@@ -1,0 +1,272 @@
+{
+  "canonical_plan": "docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
+  "entity_cache": {
+    "gated": false,
+    "join_limit": "legal_id alone is not a verified span-to-entity/definition correspondence. Public projection needs source-bound graph payloads or a lossless linked sidecar before it can serve as formalization/training authority.",
+    "last_modified_metadata": "2026-10-15T05:55:40.000Z",
+    "license_metadata": "other",
+    "license_scope_not_reviewed": true,
+    "parquet_descriptor": {
+      "bytes": 11139328,
+      "independent_byte_verification": false,
+      "lfs_sha256": "f5f07379d4ca913cb2d8d98505a4ecb01e4d0658039a2f4ff84fb4fb585e8233",
+      "path": "autoformal/uscode/kg-logic-index.parquet"
+    },
+    "public": true,
+    "public_export_missing_fields": [
+      "source_span_id",
+      "physical_source_occurrence_identity",
+      "source_offsets",
+      "source_revision",
+      "source_sha256",
+      "scoped_term_sense",
+      "typed_definition_ast",
+      "statement_sha256",
+      "decoder_and_model_lineage",
+      "proof_receipt_identity"
+    ],
+    "repository": "justicedao/uscode-autoformal-entity-cache",
+    "repository_files": 3,
+    "revision": "79d54378c5d6a89ab56e7a27e0f0ba867e800e19",
+    "sample_observation": {
+      "admitted": false,
+      "blank_fields": [
+        "legal_id",
+        "node_id",
+        "src",
+        "dst"
+      ],
+      "formalized": false,
+      "graph_kind": "source_package",
+      "label_kind": "source-package hash",
+      "meta_category": "provenance",
+      "prevalence_unknown": true,
+      "record_kind": "node",
+      "row_indexes": [
+        0,
+        1
+      ]
+    },
+    "sources": {
+      "metadata": "https://huggingface.co/api/datasets/justicedao/uscode-autoformal-entity-cache/revision/79d54378c5d6a89ab56e7a27e0f0ba867e800e19",
+      "readme": "https://huggingface.co/datasets/justicedao/uscode-autoformal-entity-cache/blob/79d54378c5d6a89ab56e7a27e0f0ba867e800e19/README.md",
+      "tree": "https://huggingface.co/datasets/justicedao/uscode-autoformal-entity-cache/tree/79d54378c5d6a89ab56e7a27e0f0ba867e800e19",
+      "viewer_size": "https://datasets-server.huggingface.co/size?dataset=justicedao/uscode-autoformal-entity-cache",
+      "viewer_splits": "https://datasets-server.huggingface.co/splits?dataset=justicedao/uscode-autoformal-entity-cache"
+    },
+    "viewer_columns": [
+      "record_kind",
+      "meta_category",
+      "graph_kind",
+      "label",
+      "legal_id",
+      "node_id",
+      "src",
+      "dst",
+      "logic_role",
+      "in_formula",
+      "admitted",
+      "formalized"
+    ],
+    "viewer_config": "autoformal_uscode",
+    "viewer_count_unit": "mixed node/edge/index rows, not independently formalized entities",
+    "viewer_rows": 1960876
+  },
+  "execution_scope": {
+    "bounded_viewer_first_rows_read": true,
+    "campaign_or_task_state_mutated": false,
+    "dataset_payload_bytes_verified": false,
+    "dependencies_installed": false,
+    "full_corpus_downloaded": false,
+    "inference_executed": false,
+    "local_source_read_only": true,
+    "prover_executed": false,
+    "public_metadata_read": true,
+    "public_readme_read": true,
+    "remote_publication_performed": false,
+    "tests_executed": false,
+    "training_executed": false,
+    "weights_downloaded": false
+  },
+  "existing_local_owners": [
+    "ipfs_datasets_py/logic/autoformal/span_cache_feed.py",
+    "ipfs_datasets_py/logic/autoformal/paired_span_census.py",
+    "ipfs_datasets_py/logic/autoformal/legal_span_cache_intake.py:prepare_span_cache_intake",
+    "ipfs_datasets_py/logic/autoformal/legal_span_cache_intake.py:prepare_entity_cache_graphs",
+    "ipfs_datasets_py/logic/autoformal/entity_cache.py:build_proposed_graphs",
+    "ipfs_datasets_py/logic/autoformal/entity_cache.py:validate_proposed_graphs",
+    "ipfs_datasets_py/logic/autoformal/entity_cache.py:export_proposed_graphs",
+    "ipfs_datasets_py/logic/autoformal/entity_cache.py:import_proposed_graphs",
+    "ipfs_datasets_py/logic/autoformal/entity_cache.py:assign_definition_closure"
+  ],
+  "existing_owner_scope": "Current source contains bounded source-bound graph proposal paths. Proposal flags remain admitted=false and formalized=false. Source presence does not establish a full corpus execution.",
+  "historical_document_observation": {
+    "archived_distinct_span_ids": 443904,
+    "document": "docs/autoencoders/uscode_identity_recovery_20261011.md",
+    "document_reported_diagnosis_status": "No successful genuine per-document ordinal diagnosis; failed first attempt and admission-refused follow-up retained.",
+    "exact_archived_joins": 64969,
+    "parent_source_occurrences": 3840988,
+    "scope": "Historical report statement read in local source. Not newly rerun, independently recomputed or asserted as current campaign state. A complete source scan is distinct from retaining every physical-occurrence identity.",
+    "unresolved_archived_ids": 378935
+  },
+  "observation_limits": [
+    "Hub metadata, root/directory tree listings, READMEs and Dataset Viewer splits/size/first rows were inspected; this is not a full corpus audit.",
+    "Viewer URLs were unpinned service endpoints. Their sizes and sampled schemas are current-service observations and were not cryptographically bound to the reported immutable Hub revisions.",
+    "Sample rows are not a random sample or an estimate of corpus-wide prevalence.",
+    "LFS sizes and digests below are descriptor observations, not independent downloads or byte verification.",
+    "No checkpoint qualification, training success, semantic fidelity, formal proof, or corpus admission follows from file presence."
+  ],
+  "purpose": "Bounded planning observation for refresh of existing legal_ir autoformalization roadmap.",
+  "recommended_plan_actions": [
+    "Keep a compatibility manifest across immutable source, span, graph, tokenizer/encoder/decoder, context and Lean generations.",
+    "Classify each producer/configuration separately; do not train on diagnostic train storage merely because it is named train.",
+    "Recover canonical source occurrence and context bindings before accepting aliases or aggregating definitions.",
+    "Publish a separately qualified lossless graph sidecar with stable nodes/edges, source anchors, scoped definitions, modality/exception/time bindings and proof receipt references.",
+    "Use embeddings to nominate relationships; admit correspondence only through declared independent checks.",
+    "Separate semantic reconstruction, normalized text reconstruction, exact-byte restoration, vector reconstruction and actual proof checks.",
+    "Retain unsupported, ambiguous, negative-emission and erroneous examples with explicit target origin and eligibility.",
+    "Group holdouts by source section and dependency/definition families to control leakage.",
+    "Reuse existing feed/intake/entity-cache proposal owners and refresh the existing canonical plan; do not create a parallel corpus authority."
+  ],
+  "recorded_at_utc": "2026-10-15T16:33:27.360980+00:00",
+  "schema": "legal-ir-uscode-plan-cache-observation/v1",
+  "source_snapshot_context": {
+    "older_live_checkout_head": "74f5d98c8ffff3c284cffddf430091b5fc4c6f8c",
+    "qualification": "Snapshot identifiers supplied by coordinating inspection. This observation does not establish that historical corpus jobs executed either snapshot or that current filesystem files are a clean copy of either.",
+    "reporting_source_snapshot": "234dc97a2fedb864c99add7f0d8e37ba81c785cf"
+  },
+  "span_cache": {
+    "branch_file_counts": {
+      "attempts": 3,
+      "autoencoders": 39,
+      "batches": 2,
+      "census": 850,
+      "census-v3": 37,
+      "exchanges": 887,
+      "feature-pretraining": 716,
+      "formula-text": 4,
+      "goals": 887,
+      "modal-ir": 133,
+      "outputs": 2,
+      "paired-v1": 2444,
+      "paired-v2": 1344,
+      "quality-audits": 2,
+      "reports": 8
+    },
+    "card_reported_fixed_formula_audit": {
+      "available_documents": 45,
+      "error_categories": [
+        "unjustified obligation from amendment-history fragment",
+        "unjustified obligation from incomplete fragment",
+        "omitted condition and incorrect action slot"
+      ],
+      "formula_occurrences": 372,
+      "learned_formula_decoder_for_reported_legacy_producer": false,
+      "qualified_gold_semantic_targets": false,
+      "scope": "Card statement for a fixed four-report diagnostic audit, not whole current corpus. Counts not independently recomputed here.",
+      "span_observations": 56,
+      "tdfol_records": 45,
+      "tdfol_text_fallback_records": 41,
+      "unavailable_documents": 11
+    },
+    "file_count_source": "pinned metadata siblings",
+    "gated": false,
+    "last_modified_metadata": "2026-10-15T06:53:58.000Z",
+    "legacy_sample_observation": {
+      "admitted": false,
+      "config": "paired_spans",
+      "embedding_model": "mock:stable-sha256",
+      "evaluate_provers": false,
+      "formalized": false,
+      "formula_generation_kind": "autoencoder-guided compiler or deterministic compiler; not learned formula decoding",
+      "lake_status": "not_run",
+      "model_identity": "legacy-mock-diagnostic:sha256:7236de26bd3d7f8414ffa04805f1b6e8a8849f9e0103cec6edb4985b911658be",
+      "producer_agent": "legacy-cuda-census",
+      "raw_vector_dimension": 8,
+      "sampled_row_indexes": [
+        0,
+        1
+      ],
+      "schema": "uscode-paired-span-census/v1",
+      "scope": "Only these sampled producer observations and the card-described diagnostic campaign. Does not characterize all branches or establish absence of newer learned models.",
+      "semantic_embeddings": false
+    },
+    "other_files": [
+      ".gitattributes",
+      "README.md",
+      "autoformal/uscode/resume-checkpoint.parquet",
+      "autoformal/uscode/span-evidence.parquet"
+    ],
+    "other_training_assets": "Pinned file listing includes feature-pretraining checkpoint, patch, worker and evidence JSON, plus autoencoders and paired-v2 branches. Their numerical/semantic quality was not assessed in this observation.",
+    "paired_schema_fields": [
+      "schema_version",
+      "repository_id",
+      "source",
+      "autoencoder",
+      "compiler",
+      "provenance",
+      "lake",
+      "source_target_artifact_sha256",
+      "source_target_artifact_pointer",
+      "goal_ids",
+      "admitted",
+      "formalized",
+      "comparison",
+      "observation_id"
+    ],
+    "preserve_training_evidence_fields": [
+      "autoencoder.model_identity",
+      "autoencoder.embedding_model",
+      "autoencoder.semantic_embeddings",
+      "autoencoder.formal_outputs[].origin",
+      "autoencoder.formal_outputs[].target_conditioned",
+      "autoencoder.projected_target_conditioned",
+      "compiler.canonical_complete",
+      "compiler.reason",
+      "compiler.canonical_formal_outputs",
+      "comparison.independent",
+      "lake.status",
+      "lake.receipt_sha256",
+      "goal_ids",
+      "observation_id",
+      "provenance.code_identity"
+    ],
+    "public": true,
+    "registered_viewer_configs": {
+      "census_v2": 26952,
+      "census_v3": 1184,
+      "deferred_goals": 4740,
+      "evidence_artifacts": 10091,
+      "formal_logic_text": 372,
+      "paired_spans": 4888,
+      "retained_outputs_v1": 32,
+      "supervisor_goals_v2": 28138
+    },
+    "repository": "justicedao/uscode-autoformal-span-cache",
+    "repository_files": 7362,
+    "resume_file_descriptor": {
+      "bytes": 52701179,
+      "independent_byte_verification": false,
+      "lfs_sha256": "7707c001d650876717651a38e442d1522c5bdab6c792539414973922af1c1d03",
+      "path": "autoformal/uscode/resume-checkpoint.parquet"
+    },
+    "revision": "6b18d5b1e324204aa2268c06e55207062d158609",
+    "source_fields": [
+      "span_id",
+      "text",
+      "text_sha256",
+      "legal_id",
+      "revision",
+      "constitution"
+    ],
+    "sources": {
+      "metadata": "https://huggingface.co/api/datasets/justicedao/uscode-autoformal-span-cache/revision/6b18d5b1e324204aa2268c06e55207062d158609",
+      "readme": "https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/blob/6b18d5b1e324204aa2268c06e55207062d158609/README.md",
+      "tree": "https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/tree/6b18d5b1e324204aa2268c06e55207062d158609",
+      "viewer_size": "https://datasets-server.huggingface.co/size?dataset=justicedao/uscode-autoformal-span-cache",
+      "viewer_splits": "https://datasets-server.huggingface.co/splits?dataset=justicedao/uscode-autoformal-span-cache"
+    },
+    "viewer_count_unit": "mixed table rows, with overlap; not unique source spans or formalized laws",
+    "viewer_coverage_limit": "Registered data globs do not cover the whole paired-v2 or feature-pretraining branches. The train split is a storage label, not training qualification."
+  }
+}

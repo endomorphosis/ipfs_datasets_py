@@ -1,0 +1,19 @@
+{
+  "schema": "paar.review-fixture.v1",
+  "fixture_id": "paar-planted-conflict-001",
+  "variant": "planted_conflict",
+  "synthetic": true,
+  "network_free": true,
+  "application_number": "16990001",
+  "notes": "Hermetic planted high-overlap prior-art pair for e2e conflict screening. Not live matter. Not legal advice.",
+  "expected": {
+    "matter_risk_min": "medium",
+    "auto_file_blocked": true,
+    "patentability_conclusions": false
+  },
+  "files": {
+    "claims": "claims.txt",
+    "prior_hits": "prior_hits.json",
+    "package_inventory": "package_inventory.json"
+  }
+}

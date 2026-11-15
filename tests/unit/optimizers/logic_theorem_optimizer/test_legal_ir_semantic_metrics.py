@@ -371,3 +371,398 @@ def test_complete_norm_payload_absent_candidate_keeps_original_denominator():
     report = evaluate_complete_norm_payloads([row])
     assert report["denominator"] == report["malformed_complete_candidate_count"] == 1
     assert all(value == 0 for value in report["metric_numerators"].values())
+
+
+
+def _retrieved_payload_case():
+    import json,hashlib
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_ir_semantic_metrics as owner
+    a=_complete_norm_payload_fixture();b=deepcopy(a);b['typed_expression']['root']['arguments'][0]['arguments'][0]='court'
+    references=[dict(id='q1',canonical_ir=deepcopy(a)),dict(id='q2',canonical_ir=deepcopy(b))]
+    candidates=[dict(id='a',canonical_ir=a),dict(id='alias-a',canonical_ir=deepcopy(a)),dict(id='b',canonical_ir=b)]
+    def payload_sha(value):return hashlib.sha256(json.dumps(value,sort_keys=True,separators=(',',':'),ensure_ascii=False).encode()).hexdigest()
+    def result(mode,orders):
+        return dict(schema='legal-joint-retrieval-result/v3',status='retrieval_completed',mode=mode,
+            checkpoint_sha256='a'*64,current_index_handoff_sha256='b'*64,query_input_sha256='c'*64,
+            query_lane_bundle_sha256='d'*64,query_target_access=False,inference_reference_content_forwarded=False,
+            rows=[dict(id=key,status='retrieved',retrieved_ids=ids,eligible_rows=3,excluded_examples=[],
+                retrieved_endpoint_refs=[dict(id=i,formal_view_sha256=payload_sha(next(row['canonical_ir'] for row in candidates if row['id']==i))) for i in ids]) for key,ids in orders])
+    rankings={'joint':result('joint',[('q1',['a','alias-a','b']),('q2',['b','a','alias-a'])]),
+              'raw':result('raw',[('q1',['b','a','alias-a']),('q2',['a','alias-a','b'])])}
+    def options():return dict(expected_rankings_sha256=hashlib.sha256(owner._complete_norm_payload_wire(rankings)).hexdigest(),expected_reference_rows_sha256=hashlib.sha256(owner._complete_norm_payload_wire(references)).hexdigest(),expected_candidate_rows_sha256=hashlib.sha256(owner._complete_norm_payload_wire(candidates)).hexdigest(),ranking_depth=3,cutoffs=(1,2,3))
+    return owner,rankings,references,candidates,options
+
+
+def test_retrieved_complete_payloads_bind_frozen_rankings_and_separate_local_matches_from_legal_relevance():
+    owner,rankings,references,candidates,options=_retrieved_payload_case()
+    report=owner.evaluate_complete_norm_retrieval_rankings(rankings,references,candidates,**options())
+    assert report['reference_count']==2 and report['candidate_view_count']==3 and report['unique_candidate_payload_count']==2
+    assert report['methods']['joint']['cutoffs']['1']['metric_numerators']['full_nine_payload_exact']==2
+    assert report['methods']['raw']['cutoffs']['1']['metric_numerators']['full_nine_payload_exact']==0
+    assert report['methods']['raw']['cutoffs']['2']['metric_numerators']['full_nine_payload_exact']==1
+    assert report['methods']['raw']['cutoffs']['3']['metric_numerators']['full_nine_payload_exact']==2
+    assert report['methods']['raw']['cutoffs']['1']['denominator']==2
+    assert report['semantic_relevance_metrics'] is report['legal_applicability_metrics'] is None
+    assert report['semantic_equivalence_proved'] is report['producer_authenticity_verified'] is False
+
+
+def test_retrieved_payloads_retain_abstentions_and_absent_counterparts_without_false_recall():
+    owner,rankings,references,candidates,options=_retrieved_payload_case()
+    row=rankings['joint']['rows'][1];row.update(status='abstained',retrieved_ids=[],retrieved_endpoint_refs=[])
+    references[1]['canonical_ir']['interpretation_id']='unavailable-in-candidate-bank'
+    report=owner.evaluate_complete_norm_retrieval_rankings(rankings,references,candidates,**options())
+    joint=report['methods']['joint'];assert joint['abstention_count']==1
+    assert joint['cutoffs']['1']['metric_numerators']['full_nine_payload_exact']==1
+    assert joint['cutoffs']['1']['denominator']==2
+    assert joint['cutoffs']['1']['eligible_index_match_counts']['full_nine_payload_exact']==1
+    for row in references:row['canonical_ir']['source_binding']['source_version_cid']='absent-entirely'
+    report=owner.evaluate_complete_norm_retrieval_rankings(rankings,references,candidates,**options())
+    assert report['methods']['joint']['cutoffs']['1']['conditional_exact_match_rates']['full_nine_payload_exact'] is None
+
+
+@pytest.mark.parametrize('damage',['rankings-pin','reference-pin','candidate-pin','missing-query','duplicate-query','foreign-candidate','duplicate-rank','mixed-input','payload-binding','eligible-alias','cutoff-alias','target-access'])
+def test_retrieved_payload_metrics_refuse_changed_population_binding_budget_and_opaque_rankings(damage):
+    owner,rankings,references,candidates,options=_retrieved_payload_case()
+    if damage=='missing-query':rankings['raw']['rows'].pop()
+    elif damage=='duplicate-query':rankings['raw']['rows'][1]['id']='q1'
+    elif damage=='foreign-candidate':rankings['raw']['rows'][0]['retrieved_ids'][0]='foreign'
+    elif damage=='duplicate-rank':rankings['raw']['rows'][0]['retrieved_ids'][1]=rankings['raw']['rows'][0]['retrieved_ids'][0]
+    elif damage=='mixed-input':rankings['raw']['query_input_sha256']='e'*64
+    elif damage=='payload-binding':rankings['raw']['rows'][0]['retrieved_endpoint_refs'][0]['formal_view_sha256']='e'*64
+    elif damage=='eligible-alias':rankings['raw']['rows'][0]['eligible_rows']=True
+    elif damage=='target-access':rankings['raw']['query_target_access']=True
+    kwargs=options()
+    if damage in ('rankings-pin','reference-pin','candidate-pin'):
+        kwargs[{'rankings-pin':'expected_rankings_sha256','reference-pin':'expected_reference_rows_sha256','candidate-pin':'expected_candidate_rows_sha256'}[damage]]='f'*64
+    if damage=='cutoff-alias':kwargs['cutoffs']=(True,)
+    with pytest.raises(ValueError):owner.evaluate_complete_norm_retrieval_rankings(rankings,references,candidates,**kwargs)
+
+
+
+def test_retrieved_payloads_detect_original_input_drift_during_posthoc_scoring(monkeypatch):
+    owner,rankings,references,candidates,options=_retrieved_payload_case()
+    original=owner.evaluate_complete_norm_payloads
+    def mutate(rows):
+        result=original(rows);candidates[0]['canonical_ir']['assumptions'].append('late mutation');return result
+    monkeypatch.setattr(owner,'evaluate_complete_norm_payloads',mutate)
+    with pytest.raises(ValueError,match='changed'):
+        owner.evaluate_complete_norm_retrieval_rankings(rankings,references,candidates,**options())
+
+
+
+@pytest.mark.parametrize('damage',['remove','boolean-alias','float-alias'])
+def test_retrieved_payloads_reject_cutoff_configuration_drift_during_scoring(monkeypatch,damage):
+    owner,rankings,references,candidates,options=_retrieved_payload_case()
+    kwargs=options();offered=list(kwargs['cutoffs']);kwargs['cutoffs']=offered
+    original=owner.evaluate_complete_norm_payloads
+    def mutate(rows):
+        result=original(rows)
+        if damage=='remove':offered.pop()
+        elif damage=='boolean-alias':offered[0]=True
+        else:offered[0]=1.0
+        return result
+    monkeypatch.setattr(owner,'evaluate_complete_norm_payloads',mutate)
+    with pytest.raises(ValueError,match='changed'):
+        owner.evaluate_complete_norm_retrieval_rankings(rankings,references,candidates,**kwargs)
+
+
+
+def test_retrieved_payloads_refuse_methods_with_different_eligible_candidate_sets():
+    owner,rankings,references,candidates,options=_retrieved_payload_case()
+    for producer in rankings.values():
+        for row in producer['rows']:
+            row['retrieved_ids']=row['retrieved_ids'][:1]
+            row['retrieved_endpoint_refs']=row['retrieved_endpoint_refs'][:1]
+    row=rankings['raw']['rows'][0]
+    row['excluded_examples']=[dict(id=key,reason='reference_source_family') for key in ('a','alias-a')]
+    row['eligible_rows']=1
+    kwargs=options();kwargs.update(ranking_depth=1,cutoffs=(1,))
+    with pytest.raises(ValueError,match='candidate population'):
+        owner.evaluate_complete_norm_retrieval_rankings(rankings,references,candidates,**kwargs)
+
+
+# Canonical AST validity is independent of exact payload equality and legal meaning.
+def _canonical_typed_norm_fixture(symbol="P", *, term=False):
+    from ipfs_datasets_py.logic.syntax_core.ast import TypedExpression, mk_predicate, mk_constant
+    from ipfs_datasets_py.logic.syntax_core.signatures import propositional_signature, many_sorted_fol_signature, atomic_sort
+    if term:
+        person = atomic_sort("Person")
+        signature = many_sorted_fol_signature("fixture:term-signature", sorts=(person,), constants=(("alice", person),))
+        root = mk_constant("fixture:term", "alice", person)
+    else:
+        signature = propositional_signature("fixture:signature", ("P", "Q"))
+        root = mk_predicate("fixture:predicate", symbol)
+    payload = _complete_norm_payload_fixture()
+    payload["typed_expression"] = TypedExpression(expression_id="fixture:expression", root=root, signature=signature).to_dict()
+    return payload
+
+
+def _canonical_typed_norm_case(candidate=None, *, outcome="complete"):
+    reference = _canonical_typed_norm_fixture()
+    return dict(case_id="typed-case", reference=reference, candidate=deepcopy(reference) if candidate is None else candidate,
+                outcome=outcome)
+
+
+def test_complete_norm_typed_structure_positive_is_not_proof_or_semantics():
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_ir_semantic_metrics as owner
+    report = owner.evaluate_complete_norm_typed_structure([_canonical_typed_norm_case()])
+    assert report["denominator"] == report["canonical_reference_count"] == 1
+    assert report["counts"] == {"canonical_formula": 1, "invalid_complete": 0, "not_checked": 0}
+    for name in ("native_proof_verified", "semantic_equivalence_proved", "source_fidelity_proved",
+                 "legal_admission_or_proof_authority", "candidate_repaired", "generator_invoked_by_scorer",
+                 "syntax_or_logic_family_validity_verified"):
+        assert report[name] is False
+
+
+@pytest.mark.parametrize("damage", ["digest", "interface", "signature", "kind", "missing_digest", "extra", "coerced_id", "term"])
+def test_complete_norm_typed_structure_rejects_malformed_or_noncanonical_complete(damage):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_ir_semantic_metrics as owner
+    candidate = _canonical_typed_norm_fixture(term=damage == "term")
+    wire = candidate["typed_expression"]
+    if damage == "digest": wire["content_digest"] = "0" * 64
+    elif damage == "interface": wire["interface"] = "Unknown@1"
+    elif damage == "signature": wire["signature"]["symbols"] = []
+    elif damage == "kind": wire["root"]["kind"] = "unknown_root"
+    elif damage == "missing_digest": wire.pop("content_digest")
+    elif damage == "extra": wire["ignored_unknown_field"] = True
+    elif damage == "coerced_id": wire["expression_id"] = 7
+    before = deepcopy(candidate)
+    report = owner.evaluate_complete_norm_typed_structure([_canonical_typed_norm_case(candidate)])
+    assert report["counts"] == {"canonical_formula": 0, "invalid_complete": 1, "not_checked": 0}
+    assert candidate == before and report["candidate_repaired"] is False
+    if damage == "term": assert report["cases"][0]["reason"] == "non_formula_root"
+
+
+@pytest.mark.parametrize("outcome", ["incomplete", "abstained", "unsupported", "invalid", "error"])
+def test_complete_norm_typed_structure_noncomplete_preserves_denominator(outcome):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_ir_semantic_metrics as owner
+    candidate = _complete_norm_payload_fixture()  # Not a canonical TypedExpression.
+    report = owner.evaluate_complete_norm_typed_structure([_canonical_typed_norm_case(candidate, outcome=outcome)])
+    assert report["denominator"] == 1 and report["counts"] == {"canonical_formula": 0, "invalid_complete": 0, "not_checked": 1}
+
+
+@pytest.mark.parametrize("damage", ["digest", "minimal", "term"])
+def test_complete_norm_typed_structure_refuses_reference_without_filtering(damage):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_ir_semantic_metrics as owner
+    rows = [_canonical_typed_norm_case()]
+    if damage == "digest": rows[0]["reference"]["typed_expression"]["content_digest"] = "0" * 64
+    elif damage == "minimal": rows[0]["reference"] = _complete_norm_payload_fixture()
+    else: rows[0]["reference"] = _canonical_typed_norm_fixture(term=True)
+    with pytest.raises(ValueError, match="reference"):
+        owner.evaluate_complete_norm_typed_structure(rows)
+
+
+def test_complete_norm_typed_structure_validity_does_not_equal_semantic_equivalence():
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_ir_semantic_metrics as owner
+    rows = [_canonical_typed_norm_case(_canonical_typed_norm_fixture("Q"))]
+    assert owner.evaluate_complete_norm_typed_structure(rows)["counts"]["canonical_formula"] == 1
+    assert owner.evaluate_complete_norm_payloads(rows)["metric_numerators"]["typed_expression_exact"] == 0
+
+
+def test_complete_norm_typed_structure_detects_input_mutation(monkeypatch):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_ir_semantic_metrics as owner
+    from ipfs_datasets_py.logic.syntax_core.ast import TypedExpression
+    rows = [_canonical_typed_norm_case()];original = TypedExpression.from_dict
+    def mutate(cls, offered):
+        rows[0]["reference"]["interpretation_id"] = "changed-during-audit"
+        return original(offered)
+    monkeypatch.setattr(TypedExpression, "from_dict", classmethod(mutate))
+    with pytest.raises(ValueError, match="changed during"):
+        owner.evaluate_complete_norm_typed_structure(rows)
+
+
+def test_unsupported_ordered_argument_facet_cannot_receive_complete_equivalence() -> None:
+    from copy import deepcopy
+
+    # Fictional proposed facet: the author intends ordered role/actor pairs.
+    # The legacy raw-IR contract does not establish a supported denotation for
+    # these added fields; this is not claimed to be canonical typed LegalIR.
+    # No conjunction or IDs are reordered. Reused ancillary graph/reported
+    # round-trip summaries are not independent authority for this new facet.
+    reference = _reference_ir()
+    reference["rules"][0]["predicate"] = "ProvideNotice"
+    reference["rules"][0]["arguments"] = [
+        {"role": "provider", "actor": "Agency"},
+        {"role": "recipient", "actor": "Contractor"},
+    ]
+    candidate = deepcopy(reference)
+    candidate["rules"][0]["arguments"] = [
+        {"role": "provider", "actor": "Contractor"},
+        {"role": "recipient", "actor": "Agency"},
+    ]
+    result = evaluate_legal_ir_semantic_equivalence(reference, candidate, family="deontic")
+    gate = semantic_equivalence_promotion_gate(
+        {"view_family_metrics": {"deontic": {"reference_ir": reference, "candidate_ir": reference}}},
+        {"view_family_metrics": {"deontic": {"reference_ir": reference, "candidate_ir": candidate}}},
+        config=SemanticEquivalenceConfig(families=("deontic",)),
+    )
+
+    # The expected failure-closed contract here is unsupported/incomplete,
+    # rather than a numeric semantic-distance claim for an unapproved shape.
+    assert result.complete is False
+    assert gate["accepted"] is False
+
+
+def test_absent_reverse_round_trip_cannot_be_credited_from_structural_agreement() -> None:
+    reference, candidate = _reference_ir(), _isomorphic_ir()
+    del reference["round_trip"]
+    del candidate["round_trip"]
+    # No reverse-decompiler/recompiler observation is supplied. Matching raw
+    # structures cannot substitute for that unavailable measurement.
+    result = evaluate_legal_ir_semantic_equivalence(reference, candidate, family="deontic")
+    gate = semantic_equivalence_promotion_gate(
+        {"view_family_metrics": {"deontic": {
+            "reference_ir": _reference_ir(), "candidate_ir": _isomorphic_ir(),
+        }}},
+        {"view_family_metrics": {"deontic": {"reference_ir": reference, "candidate_ir": candidate}}},
+        config=SemanticEquivalenceConfig(families=("deontic",)),
+    )
+
+    assert result.scores.get(DECOMPILER_ROUND_TRIP_PRESERVATION, 0.0) < 1.0
+    assert gate["accepted"] is False
+
+
+@pytest.mark.parametrize("damage", ["absent", "empty", "scalar", "false", "only_decompiled",
+    "only_recompiled", "blank_decompiled", "blank_recompiled", "nested_result", "extra_field",
+    "ambiguous_source", "ambiguous_container"])
+def test_raw_round_trip_requires_both_reported_nonempty_observations(damage):
+    reference, candidate = _reference_ir(), _isomorphic_ir()
+    for value in (reference, candidate):
+        if damage == "absent":
+            del value["round_trip"]
+        elif damage == "empty": value["round_trip"] = {}
+        elif damage == "scalar": value["round_trip"] = "reported success"
+        elif damage == "false": value["round_trip"] = False
+        elif damage == "only_decompiled": del value["round_trip"]["recompiled_ir"]
+        elif damage == "only_recompiled": del value["round_trip"]["decompiled"]
+        elif damage == "blank_decompiled": value["round_trip"]["decompiled"] = " "
+        elif damage == "blank_recompiled": value["round_trip"]["recompiled_ir"] = ""
+        elif damage == "nested_result": value["round_trip"]["recompiled_ir"] = {"uninterpreted": "O(a,b)"}
+        elif damage == "extra_field": value["round_trip"]["verified"] = True
+        elif damage == "ambiguous_source": value["round_trip"]["decompiler"] = value["round_trip"]["decompiled"]
+        else: value["roundtrip"] = deepcopy(value["round_trip"])
+    result = evaluate_legal_ir_semantic_equivalence(reference, candidate, family="deontic")
+    assert DECOMPILER_ROUND_TRIP_PRESERVATION not in result.scores
+    assert DECOMPILER_ROUND_TRIP_PRESERVATION in result.missing_metrics
+    assert not result.complete
+
+
+@pytest.mark.parametrize("side", ["reference", "candidate"])
+def test_one_sided_round_trip_evidence_is_not_a_complete_pair(side):
+    reference, candidate = _reference_ir(), _isomorphic_ir()
+    del (reference if side == "reference" else candidate)["round_trip"]
+    result = evaluate_legal_ir_semantic_equivalence(reference, candidate)
+    assert DECOMPILER_ROUND_TRIP_PRESERVATION not in result.scores
+    assert DECOMPILER_ROUND_TRIP_PRESERVATION in result.missing_metrics
+
+
+@pytest.mark.parametrize("shape", ["unknown_root", "unknown_rule", "nested_condition", "empty", "sequence", "text"])
+def test_unknown_legacy_shapes_are_diagnostic_and_cannot_claim_typed_semantics(shape):
+    value = _reference_ir()
+    if shape == "unknown_root": value["typed_expression"] = {"binders": ["x"]}
+    elif shape == "unknown_rule": value["rules"][0]["arguments"] = ["agency", "notice"]
+    elif shape == "nested_condition": value["rules"][0]["condition"] = {"if": "emergency"}
+    elif shape == "empty": value = {}
+    elif shape == "sequence": value = [_reference_ir()]
+    else: value = "O(agency, provide_notice)"
+    result = evaluate_legal_ir_semantic_equivalence(value, deepcopy(value))
+    assert not result.complete
+    assert STRUCTURAL_EQUIVALENCE in result.missing_metrics
+    assert OBLIGATION_EQUIVALENCE in result.missing_metrics
+    assert result.detail["raw_input_coverage"]["reference_unsupported_paths"]
+    assert result.detail["raw_input_coverage"]["canonical_typed_ir_validated"] is False
+    assert result.detail["raw_input_coverage"]["legal_source_correspondence_verified"] is False
+
+
+def test_recognized_actor_change_still_blocks_legacy_raw_promotion():
+    reference, candidate = _reference_ir(), _isomorphic_ir()
+    candidate["rules"][0]["subject"] = "Contractor"
+    report = compare_legal_ir_semantic_equivalence(
+        {"view_family_metrics": {"deontic": {"reference_ir": reference, "candidate_ir": reference}}},
+        {"view_family_metrics": {"deontic": {"reference_ir": reference, "candidate_ir": candidate}}},
+        families=("deontic",),
+    )
+    assert report.accepted is False
+    assert report.family_results["deontic"].after.scores[OBLIGATION_EQUIVALENCE] < 1.0
+
+
+@pytest.mark.parametrize("damage", ["missing_reverse", "unknown_arguments"])
+def test_explicit_scores_cannot_launder_uncovered_raw_pair_evidence(damage):
+    reference, candidate = _reference_ir(), _isomorphic_ir()
+    if damage == "missing_reverse":
+        del reference["round_trip"]
+        del candidate["round_trip"]
+    else:
+        reference["rules"][0]["arguments"] = ["actor", "object"]
+        candidate["rules"][0]["arguments"] = ["actor", "object"]
+    payload = {"reference_ir": reference, "candidate_ir": candidate, **_all_semantic_scores()}
+    result = semantic_equivalence_from_metrics(payload, family="deontic")
+    assert result.scores[DECOMPILER_ROUND_TRIP_PRESERVATION] == 1.0
+    assert not result.complete
+    gate = semantic_equivalence_promotion_gate(
+        {"view_family_metrics": {"deontic": _all_semantic_scores()}},
+        {"view_family_metrics": {"deontic": payload}},
+        config=SemanticEquivalenceConfig(families=("deontic",)),
+    )
+    assert gate["accepted"] is False
+    assert "deontic:semantic_equivalence_evidence_missing" in gate["block_reasons"]
+
+
+@pytest.mark.parametrize("alias", ["roundtrip", "direct", "field_aliases"])
+def test_explicit_legacy_observation_aliases_retain_reported_only_scope(alias):
+    reference, candidate = _reference_ir(), _isomorphic_ir()
+    for value in (reference, candidate):
+        block = value.pop("round_trip")
+        if alias == "roundtrip": value["roundtrip"] = block
+        elif alias == "direct": value.update(block)
+        else: value["round_trip"] = {"decompiler": block["decompiled"], "reconstructed_ir": block["recompiled_ir"]}
+    result = evaluate_legal_ir_semantic_equivalence(reference, candidate)
+    assert result.complete
+    assert result.scores[DECOMPILER_ROUND_TRIP_PRESERVATION] == 1.0
+    assert result.detail["round_trip_evidence"]["independently_recompiled"] is False
+    assert result.detail["round_trip_evidence"]["authority"] == "caller_reported_observations_only"
+
+
+def test_explicit_metrics_without_a_raw_pair_keep_the_existing_contract():
+    report = compare_legal_ir_semantic_equivalence(
+        {"view_family_metrics": {"deontic": _all_semantic_scores()}},
+        {"view_family_metrics": {"deontic": _all_semantic_scores()}},
+        families=("deontic",),
+    )
+    assert report.accepted
+
+
+@pytest.mark.parametrize('version,valid,unsupported', [('v2', 2, 1), ('v3', 3, 0)])
+def test_complete_candidate_shared_metrics_match_existing_evaluator(version, valid, unsupported):
+    from tests.unit.optimizers.logic_theorem_optimizer import test_legal_ir_evaluation_artifacts as bridge
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_ir_semantic_metrics as owner
+    from ipfs_datasets_py.logic.autoformal import legal_norm_content_adjudication_v1 as candidates
+    options, rows, known, _ = bridge._candidate_audit_fixture()
+    profile = getattr(candidates, 'CANDIDATE_SYNTAX_PROFILE_' + version.upper())
+    artifact = bridge._producer_owner.evaluate_reviewed_source_span_producer_artifact(**options,
+        producer=lambda _: bridge._producer_exact_outputs(rows), candidate_syntax_profile=profile,
+        known_candidate_inputs=known)
+    examples = [dict(case_id=r['id'], reference=r['canonical_ir'], candidate=r['canonical_ir'], outcome='complete') for r in rows]
+    report = owner.evaluate_complete_norm_candidate_syntax(examples,
+        known_candidate_inputs=known, candidate_syntax_profile=profile)
+    assert report == artifact.to_dict()['metrics']['complete_candidate_syntax']
+    assert report['counts']['syntax_validated_unreviewed'] == valid
+    assert report['counts']['unsupported_complete'] == unsupported
+
+
+@pytest.mark.parametrize('which', ['examples', 'known'])
+def test_complete_candidate_shared_metrics_fence_original_inputs(which, monkeypatch):
+    from tests.unit.optimizers.logic_theorem_optimizer import test_legal_ir_evaluation_artifacts as bridge
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_ir_semantic_metrics as owner
+    from ipfs_datasets_py.logic.autoformal import legal_norm_content_adjudication_v1 as candidates
+    _, rows, known, profile = bridge._candidate_audit_fixture()
+    examples = [dict(case_id=r['id'], reference=r['canonical_ir'], candidate=None, outcome='incomplete') for r in rows]
+    original = candidates.validate_complete_norm_candidate_v2
+    def mutate(*args, **kwargs):
+        if which == 'examples': examples[0]['outcome'] = 'error'
+        else: known[rows[0]['id']]['known_source_binding']['document_revision'] = 'fixture:mutated-during-metrics'
+        return original(*args, **kwargs)
+    monkeypatch.setattr(candidates, 'validate_complete_norm_candidate_v2', mutate)
+    with pytest.raises(ValueError, match='changed during'):
+        owner.evaluate_complete_norm_candidate_syntax(examples,
+            known_candidate_inputs=known, candidate_syntax_profile=profile)

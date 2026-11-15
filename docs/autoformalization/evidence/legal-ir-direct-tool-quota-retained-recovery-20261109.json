@@ -1,0 +1,193 @@
+{
+  "budgets_unchanged": {
+    "child_process_slots": 4,
+    "cpu_slots": 1,
+    "memory_mb": 1536,
+    "storage_bytes": 16777216,
+    "timeout_seconds": 300
+  },
+  "current_sha256": {
+    "CLI": "3e4cdb8104c58e15beefed0c84b43b2d19732ee8c36e93a1ae15eec6b96a663c",
+    "Host": "c99d78004e6ce6b8a861f15e2c0b7009bbb6f45a37a89daabc8894ac440b282d",
+    "SDK": "11e5110aa8dcf39c5b11c0bd06a6d02933052e917fa46bf6d53a5467107d6def",
+    "SDK_tests": "dcb0a6073f0d59ab114acd7769989401062d82f3ebf0bb1020544e94fe96512c",
+    "recovery": "3e7d4c6b41e2240219d5d6ebcfc539cddc84969b7f23a1bfdb776be0ef47b45c",
+    "recovery_tests": "8dd31021224d493ebb1072d5fd587762837341b60345216a8a0a6d1a1cc991f3"
+  },
+  "date": "2026-11-09",
+  "evidence_id": "direct-tool-quota-retained-recovery-20261109",
+  "older_claims_unchanged": [
+    "cf87d75439f24cc3b8c12936f903f445",
+    "5b6b570ec57f47faa588d105ddd07a1e"
+  ],
+  "preserved_failures": [
+    {
+      "claim": "81c75ad5520548649a66deb208c1d6d3",
+      "completed_counts": null,
+      "final_JUnit": false,
+      "record": "V1_interruption",
+      "retained_bytes": 16777216
+    },
+    {
+      "claim": "72691cc31f564c3ba86b5f8a98887743",
+      "completed_counts": null,
+      "final_JUnit": false,
+      "record": "V4_interruption",
+      "retained_bytes": 16777216
+    },
+    {
+      "JUnit_seconds": 0.958,
+      "claim": "c32ca41590674e358089e7d27be9ce85",
+      "errors": 0,
+      "failures": 2,
+      "reason": "Explicit V5 schema unsupported before product repair; no fixture errors.",
+      "record": "intended_RED2",
+      "retained_bytes": 16777216,
+      "skips": 0,
+      "tests": 2
+    },
+    {
+      "JUnit_seconds": 60.82,
+      "claim": "8bf23d151c6e41e593fd37e86e87327a",
+      "errors": 0,
+      "failures": 1,
+      "passed": 404,
+      "reason": "Initial private fixture cap100000 was below its unchanged1M promise; production parser correctly refused.",
+      "record": "prior404_1",
+      "retained_bytes": 16777216,
+      "skips": 0,
+      "tests": 405
+    }
+  ],
+  "references": {
+    "V1_interruption": {
+      "bytes": 165834,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/direct-tool-quota-recovery-full405-green-input-v01/actual-whole405-output-and-custody-v01.json",
+      "sha256": "d8b4ac715470ac44527a1d6f7c94027b173793d2d962f8dfe7e32417754f737d"
+    },
+    "V4_interruption": {
+      "bytes": 79516,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/direct-tool-quota-recovery-full405-live-census-input-v02/actual-V4-whole405-output-and-custody-v01.json",
+      "sha256": "d33ab0d955c9ee95d23e6ccd9cd83d7613f43bbd929145183ebbd5a3ea62b1e7"
+    },
+    "V5_three_source_CAS": {
+      "bytes": 3065920,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/ordinary-scratch-three-source-adoption-v01/Sourceclosed-actual-three-source-adoption-v01.json",
+      "sha256": "40d95ab19be8703bd4d281b4c1055dc920cfdefdd793db173ecc139b36b5df5d"
+    },
+    "final_preflight": {
+      "bytes": 1647,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/direct-tool-quota-recovery-full405-ordinary-scratch-input-v04/actual-Source-fixture-adoption-readback-and-full405-preflight-v01.json",
+      "sha256": "2bd0896bc3cb950cfd8b2febe941aa2ec4640e53343ed90ba170b60d1b4b609d"
+    },
+    "fixture_only_CAS": {
+      "bytes": 2423434,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/direct-tool-quota-large-population-fixture-source-adoption-v01/Sourceclosed-actual-one-test-fixture-adoption-v01.json",
+      "sha256": "a7f5f23f7f5fc9be031b43dea3c5897c976051782f76536b06aa74a0aba8c9b9"
+    },
+    "focused45": {
+      "bytes": 263688,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/ordinary-scratch-v5-profile-green45-input-v01/actual-green45-output-custody-and-inventory-v01.json",
+      "sha256": "d2ed8a87c679df9a33d224606a7b2fb5a64642004229d026744dace83576ba99"
+    },
+    "intended_RED2": {
+      "bytes": 84952,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/ordinary-scratch-v5-first-stat-red2-input-v02/actual-expected-red2-output-and-custody-v01.json",
+      "sha256": "913ef4f9052b7032d76004213cda0c86a3d22ae3fa758be73746abe6cc880e7f"
+    },
+    "map29": {
+      "bytes": 240471,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/selected-role-map29-live-census-input-v01/actual-map29-output-custody-and-inventory-v01.json",
+      "sha256": "1f16e31dbc5d0c6e14c216f63a9af4ce8dd3c782dfe5e11e4196c0b45635b3a6"
+    },
+    "map29_independent_review": {
+      "bytes": 1856,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/selected-role-map29-live-census-input-v01/independent-role-map29-saved-output-review-v01.json",
+      "sha256": "330f6ebc3d5287ba11a66337b3e444ebeee1f4ec06551540468bd6eb7b56a805"
+    },
+    "prior404_1": {
+      "bytes": 175591,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/direct-tool-quota-recovery-full405-ordinary-scratch-input-v03/actual-full405-complete-one-fixture-failure-output-v01.json",
+      "sha256": "f97d722a3eb8137efb95018dc8ec82916c184bfc018b61d68e223c906d1ccd77"
+    },
+    "whole405": {
+      "bytes": 4697060,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/direct-tool-quota-recovery-full405-ordinary-scratch-input-v04/actual-full405-qualified-output-custody-and-inventory-v01.json",
+      "sha256": "be5cf9abe5a06e726ed3fb61f0a7c1b5d9f75772d9bc1551633f2a90f049e8da"
+    },
+    "whole405_independent_review": {
+      "bytes": 3490,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/direct-tool-quota-recovery-full405-ordinary-scratch-input-v04/independent-actual-full405-qualified-and-fixture-adoption-review-v01.json",
+      "sha256": "08abd657fa947633162a3bb5226034a5eff5d5d8407545017178ccf89996be46"
+    }
+  },
+  "repairs_and_adoption": {
+    "V5_three_source_Source_seconds": 0.09736442705616355,
+    "all_prior_assertions_and405_case_IDs_preserved": true,
+    "existing_fixture_storage_promise_bytes": 1000000,
+    "fixture_cap_set_before_ledger_or_grant": true,
+    "fixture_only_initial_private_cap_bytes": 2000000,
+    "ordinary_scratch": "Explicit V5, existing descriptor walker, zero special slots; no unseen ownership/type attestation; observed unsafe metadata/reappearance remain fatal; strict stopped sealing.",
+    "peer_4be7_SDK_and_entire_d981_test_prefix_preserved": true,
+    "production_and_outer_request_caps_changed": false
+  },
+  "schema": "legal-ir-retained-recovery-ordinary-scratch-qualification-evidence/v1",
+  "scope_limits": [
+    "Results are separate. Current405 qualification does not convert earlier failed runs or release their retained claims.",
+    "No whole SDK module, complete transitive executed imports, public tree or hosted CI qualification.",
+    "No retrospective recovery, foreign release, task/hold/cap bypass, scientific native-family or runtime activation.",
+    "No model training, checkpoint, decoder accuracy, statutory fidelity or Lean-corpus admission."
+  ],
+  "separate_focused45": {
+    "JUnit_seconds": 5.685,
+    "artifact_bytes": 453788,
+    "cases": 45,
+    "cohort": {
+      "Host_first_stat_fatal": 1,
+      "V4_resample_highwater": 3,
+      "new_V5": 32,
+      "peer_epoch": 9
+    },
+    "critical_pins_unchanged": 229,
+    "durably_released_bytes": 16777216,
+    "errors": 0,
+    "failures": 0,
+    "files_retained": 279,
+    "original_custody_closed": true,
+    "outer_request_schema": "owned-validation-request/v4",
+    "scope": "Real first-stat unlink controls are here; unsafe metadata is injected and entry limit lowered only in its unit fixture.",
+    "skips": 0
+  },
+  "separate_map29": {
+    "JUnit_seconds": 0.19,
+    "artifact_bytes": 86427,
+    "cases": 29,
+    "critical_pins_unchanged": 233,
+    "durably_released_bytes": 16777216,
+    "errors": 0,
+    "failures": 0,
+    "files_retained": 253,
+    "original_custody_closed": true,
+    "scope": "Private source-map/observer control modules only.",
+    "skips": 0
+  },
+  "status": "CURRENT_WHOLE405_SOFTWARE_QUALIFIED_SOURCES_ADOPTED_NO_ACTIVATION",
+  "whole405": {
+    "JUnit_seconds": 64.241,
+    "artifact_bytes": 9844096,
+    "cases": 405,
+    "critical_pins_unchanged": 229,
+    "durably_released_bytes": 16777216,
+    "errors": 0,
+    "failures": 0,
+    "functions": 75,
+    "ordinary_absences_observed": 0,
+    "ordinary_regular_files_retained": 7308,
+    "original_Popen_wait_Source_native_process_closed": true,
+    "parent_errors": [],
+    "request_schema": "owned-validation-request/v5",
+    "runtime_first_stat_loss_sampled": false,
+    "skips": 0,
+    "storage_claim": "0d576846de4143d4bce7ef7980fe07ac"
+  }
+}

@@ -1,0 +1,214 @@
+{
+  "Git_publication_scope": {
+    "Git_publication_not_assessed_by_this_capsule": true,
+    "publication_after_capsule_preparation_is_a_separate_event": true,
+    "source_byte_adoption_already_verified": true
+  },
+  "Main_original": {
+    "JUnit": {
+      "bytes": 5397,
+      "path": "/tmp/pytest-of-barberb/current-Main-v5-postgrant-ledger-lock-GREEN26-v01/a/exports/v5-postgrant-ledger-lock-GREEN26.xml",
+      "sha256": "ed9fecd7c480b15c5ec991fb8a5f1ad2ef7d32e3635a7b96796d26e974fc7e34"
+    },
+    "JUnit_seconds": 1.956,
+    "Root_launch": "714c95",
+    "Root_session": 4992,
+    "Root_terminal": "75cb35",
+    "artifact_bytes": 243076,
+    "cases": 26,
+    "current_Native_lease_request_and_original_processes_absent": true,
+    "current_own_row_exact_original_terminal": true,
+    "errors": 0,
+    "failures": 0,
+    "functions": 8,
+    "new_cases": 22,
+    "ordinary_files": 136,
+    "original_Source_Native_process_genuine_wait_closed": true,
+    "original_parent_seconds": 156.97957748593763,
+    "own_artifacts_durable": true,
+    "own_storage_bytes": 16777216,
+    "own_storage_status": "released",
+    "parent": {
+      "bytes": 22344,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-Main-v5-postgrant-ledger-lock-GREEN26-original16MiB-input-v01/run-original-source-held-current-v5-postgrant-ledger-lock-GREEN26-v01.py",
+      "sha256": "ccd414b858120a08702ce7998663918f1c2bd93425abe7535e23364795461af3"
+    },
+    "parent_closeout": {
+      "bytes": 11457,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-Main-v5-postgrant-ledger-lock-GREEN26-original16MiB-input-v01/parent-closeout.json",
+      "sha256": "0050e2b9f7d4083ca58c5cb07e18522e9160dffd849415c8258c28f836049f3a"
+    },
+    "request": {
+      "bytes": 33952,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-Main-v5-postgrant-ledger-lock-GREEN26-original16MiB-input-v01/request.json",
+      "sha256": "b03832dde39e22418401b21926e90cf879139ce9e6da86e049d5af269a89d1b2"
+    },
+    "retained_cases": 4,
+    "returncode": 0,
+    "seal_entries_excluding_receipt": 135,
+    "skips": 0
+  },
+  "actual_evidence": {
+    "Main_audit": {
+      "bytes": 196121,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/independent-current-Main-v5-lock-GREEN26-saved-DATA-audit-v02.json",
+      "sha256": "084ee085ee09cc564d9e6839b3d37eeb867b82d2a3a7dfb39dcdc89e49dddd5e"
+    },
+    "Product_READ": {
+      "bytes": 2892,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/actual-current-v5-postgrant-ledger-lock-CLI-Source-READ-v04.json",
+      "sha256": "b67ecbefcea0e003027f18dbb15655860d7c36a3eda60ea991edf2b01a237765"
+    },
+    "Product_WRITE": {
+      "bytes": 3311,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/actual-current-v5-postgrant-ledger-lock-CLI-Source-WRITE-v04.json",
+      "sha256": "d42731a82e9d6573d5970132f9bb8094c939681e58c59e694af4f4643b40f9ab"
+    },
+    "RED_audit": {
+      "bytes": 10692,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/independent-current-Main-v5-postgrant-ledger-lock-RED1-saved-DATA-audit-v01.json",
+      "sha256": "9348bd8fcedba124dcc68f5b31f8b3743844f6fe5115e5b8c966af29cbf1fa31"
+    },
+    "private_audit": {
+      "bytes": 79080,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/independent-private-candidate-v5-lock-GREEN26-saved-DATA-audit-v01.json",
+      "sha256": "f527f18282532a0cf8142eaad2b0807bae42bb6e1237ad6b1139c170e29a82d0"
+    }
+  },
+  "canonical_source_change": {
+    "CLI_after_bytes": 218056,
+    "CLI_after_sha256": "7ce92270e5a203b4bea00451997712ba5255ba3552728721d6457486157d57e3",
+    "CLI_before_sha256": "7b9d9f35779629bbca252c6da4ee83681e9c9b0845e9db5ced51ae4bd04c2fb6",
+    "SDK_sha256": "860d25af0ab629c48bb7a2c7356c7690c09fdfe81b53777777c0a41384f1b293",
+    "SDK_unchanged": true,
+    "Source_READ": {
+      "bytes": 2892,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/actual-current-v5-postgrant-ledger-lock-CLI-Source-READ-v04.json",
+      "sha256": "b67ecbefcea0e003027f18dbb15655860d7c36a3eda60ea991edf2b01a237765"
+    },
+    "Source_WRITE": {
+      "bytes": 3311,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/actual-current-v5-postgrant-ledger-lock-CLI-Source-WRITE-v04.json",
+      "sha256": "d42731a82e9d6573d5970132f9bb8094c939681e58c59e694af4f4643b40f9ab"
+    },
+    "exact_inverse": {
+      "bytes": 4507,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/prepared-private-v5-postgrant-ledger-lock-CLI-replacement-inverse-v01.json",
+      "sha256": "3afdf0a9f7de6679e6b85218aaf30a43a1539096d312295d81ec3b17c7672915"
+    },
+    "functional_change": "Exact existing postgrant-lock profile now accepts request versions v1 or v5; all other predicates retained.",
+    "other_changes": "Three explanatory docstrings only.",
+    "owning_tests_sha256": "854839a765221e30fc37b3c666c69933dbbbb0aeca2f738079990823bf233b98",
+    "test_append_adoption": {
+      "bytes": 3722,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/independent-current-v5-postgrant-ledger-lock-test-Source-publication-audit-v01.json",
+      "sha256": "1d07c4afb4d9a0fa7bcbc583994c0879534aef450e45528b808cb5802f200e50"
+    }
+  },
+  "causal_baseline": {
+    "audit": {
+      "bytes": 10692,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/independent-current-Main-v5-postgrant-ledger-lock-RED1-saved-DATA-audit-v01.json",
+      "sha256": "9348bd8fcedba124dcc68f5b31f8b3743844f6fe5115e5b8c966af29cbf1fa31"
+    },
+    "cases": 1,
+    "current_V5_lock_inspector_returned_UNKNOWN": true,
+    "expected_public_inspector_failure": true,
+    "failed_storage_bytes": 16777216,
+    "failed_storage_retained_undurable": true,
+    "healthy_V5_deadline_inspector_passed_before_failure": true
+  },
+  "historical_abnormal_original": {
+    "UNKNOWN_immutable": true,
+    "original_Normal_Source_close_or_test_credit_reconstructed": false,
+    "own_keeper_shutdown_was_abnormal_and_separately_recorded": true,
+    "retained16MiB_unchanged_by_this_work": true
+  },
+  "postclose_lineage": {
+    "Git_metadata_current_epoch_not_transferred": true,
+    "postclose_Git_deltas": [
+      {
+        "equals_original_generation": false,
+        "full9": {
+          "st_ctime_ns": 1794718052554064172,
+          "st_dev": 66306,
+          "st_gid": 1000,
+          "st_ino": 23118271,
+          "st_mode": 33204,
+          "st_mtime_ns": 1794718052554064172,
+          "st_nlink": 1,
+          "st_size": 41,
+          "st_uid": 1000
+        },
+        "source_ref": {
+          "bytes": 41,
+          "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/refs/heads/publish/reconciled-worktrees-main-20261114",
+          "sha256": "93434623e64a21ffd4f09f31fac36cdc9b55941aacc8692e36a10a15160dd470"
+        }
+      }
+    ],
+    "selected_source_generations_all136_still_exact": true
+  },
+  "preserved_failed_claims_snapshot": {
+    "4d435b3ee1ee41b4b19db8828e38c016": {
+      "artifacts_durable_asserted": false,
+      "status": "retained",
+      "storage_bytes": 16777216
+    },
+    "da446c672e0042528c346d3f029dfee5": {
+      "artifacts_durable_asserted": false,
+      "status": "retained",
+      "storage_bytes": 16777216
+    }
+  },
+  "private_predecessor": {
+    "JUnit_seconds": 2.092,
+    "artifact_bytes": 289419,
+    "audit": {
+      "bytes": 79080,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/independent-private-candidate-v5-lock-GREEN26-saved-DATA-audit-v01.json",
+      "sha256": "f527f18282532a0cf8142eaad2b0807bae42bb6e1237ad6b1139c170e29a82d0"
+    },
+    "cases": 26,
+    "ordinary_files": 136,
+    "own16MiB_released_durably": true,
+    "seal_entries_excluding_receipt": 135,
+    "separate_operation_not_pooled": true
+  },
+  "recorded_at_utc": "2026-11-15T04:54:09.214708+00:00",
+  "remaining_gates": {
+    "crossview_raw_alias_hypothesis_reproduced": false,
+    "generic_30e_parent_815_helper_V5_acquired_no_child_integration_qualified": false,
+    "live_SDK_cleanup_lifecycle_qualified": false,
+    "models_training_corpus_statutory_Lean_or_permission_credit": false,
+    "real_failed_workload_cleanup_or_storage_release_authority": false,
+    "whole_suite_CI_qualified": false
+  },
+  "schema": "legal-ir-v5-postgrant-ledger-lock-software-qualification/v1",
+  "scope": "Existing public V5 acquired-before-child ledger-lock inspector software contract only; modeled private ledger/Native fixtures, no live failed-workload cleanup qualification.",
+  "status": "focused_current_Main_software_qualified",
+  "timer_restoration": {
+    "historical_event": {
+      "Root_reported_id": "1908db",
+      "active": true,
+      "enabled": true,
+      "independently_mutated": false,
+      "restore_debt": false
+    },
+    "later_Root_reported_maintenance_pause_event": "f48968",
+    "later_pause_does_not_change_this_historical_restoration_event": true,
+    "not_current_timer_or_service_state": true,
+    "observation_scope": "after_Main_original_before_later_maintenance"
+  },
+  "unchanged_limits": {
+    "automatic_retry_or_deadline_renewal": false,
+    "child_process_slots": 4,
+    "cpu_slots": 1,
+    "initial_parent_seconds": 420,
+    "ledger_seconds": 60,
+    "memory_mb": 1536,
+    "productive_seconds": 300,
+    "shared_Source_admission_seconds": 60,
+    "storage_bytes": 16777216
+  }
+}

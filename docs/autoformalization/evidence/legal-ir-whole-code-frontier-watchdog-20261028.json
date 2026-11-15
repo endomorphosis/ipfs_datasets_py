@@ -1,0 +1,120 @@
+{
+  "closed_model_work_reused": {
+    "retained_generation": {
+      "bytes": 13288,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoformalization/evidence/legal-ir-prepared384-retained-generation-pair-20261028.json",
+      "sha256": "0c1657a7a4038593cdbd4229e65335062bac861cce890cb7722a6876d738ef2b"
+    },
+    "saved_only_input_block_contrasts": {
+      "bytes": 55623,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoformalization/evidence/legal-ir-prepared384-conditioning-factors-20261028.json",
+      "sha256": "b801401bfdbb770439875bdc8e8c13945b6b90043b49f4230ef4c6d63ac9af15"
+    },
+    "source_trajectory": {
+      "bytes": 25567,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoformalization/evidence/legal-ir-prepared384-source-trajectory-20261028.json",
+      "sha256": "0701d3f42f86cc762c7d82afb46d6e75886d6e12ef0ec6d8eb5f20b4286b0e9b"
+    }
+  },
+  "engineering_fleet": {
+    "active_workers": 0,
+    "completed_cards": 141,
+    "completion_scope": "engineering inventory only",
+    "healthy_lanes": 4,
+    "observed_at": "2026-10-28T07:15:17.117840+00:00"
+  },
+  "evidence_id": "whole-code-frontier-watchdog-reviewed-20261028-01",
+  "existing_watchdog_verified": true,
+  "failed_original_factor_job_preserved": true,
+  "final_live_model_custody_not_inferred": true,
+  "four_width_contract": "Genuine spaCy8/GTE-small384/Multilingual-GTE768/Leanstral4096 are distinct producers. Native width, trained bottleneck and bypasses remain separate. Reuse existing two-source/eight-vector panel. Compare identical reviewed targets/context; controlled-width ablation uses one frozen producer and no undeclared raw/text/token/residual bypass.",
+  "governing_edition": null,
+  "legal_as_of": null,
+  "migration": "Reuse canonical datasets owners and six experimental successors; three indexed prototypes are duplicates and two canonical Lake/native owners supersede artifacts. Accelerate scoped runtime is a clean worktree of its external submodule; reconcile branch/primary peer edits, not copies into datasets/artifacts.",
+  "native_dispatch_ready": false,
+  "native_scientific_catalogue": {
+    "LIR9001_revision": 14,
+    "activation": "not_activated",
+    "activation_argv": null,
+    "automatic_retry": false,
+    "blocked_tasks": 64,
+    "executor_health": "not_established",
+    "goals": 34,
+    "outcome": "administrative_operator_stop_outcome_unknown",
+    "receipt_attempt": 2,
+    "tasks": 64
+  },
+  "new_activation_retry_rearm_or_claim_authority": false,
+  "new_numerical_or_semantic_qualification": false,
+  "new_watchdog_or_task_board_installed": false,
+  "next_task": "Reuse closed W fit/scoring, occurrence-v2 preparation, retained facade/direct generation, original/successor trajectories and accepted saved-only input-block contrasts. Preserve the failed factor worker/return1/missing final live closure and separately qualified4M storage profile. First reconcile the existing native34-goal/64-task catalogue activation, current LIR-9001 revision14/attempt2 and unknown outcomes through LIR-03 original owners; no guessed activation argv, retry or rearm. In parallel prepare the finite source-universe crosswalk and complete reviewed target/constructor-coverage plus source/definition-grouped evaluation packets under LIR-02/05/06/07/09. Bind existing native CIDs/revisions/dependencies, exact inputs/source profiles, worker/verifier roles, exclusive keys, argv, outputs and finite budgets before enqueue. Reconcile the current protected contract and external Accelerate deployment branch; extend only demonstrated missing contracts under its original maintenance owner. Fitting/promotion waits for scientific dependencies. Do not replay closed endpoints or assign another generic conditioning experiment.",
+  "no_new_model_training_encoder_Lean_database_census_or_tests": true,
+  "no_new_publication_or_external_message": true,
+  "original_goal": "LIR-WHOLE-USCODE",
+  "original_phases": 7,
+  "original_task_statuses_and_dependencies_preserved": true,
+  "original_tasks": 24,
+  "pipeline": [
+    "pinned finite source universe",
+    "physical span crosswalk",
+    "complete typed LegalIR",
+    "scoped term/entity/definition/use graph",
+    "modular preserved Lean4 corpus",
+    "dependency-component expansion and release"
+  ],
+  "priority_order": [
+    "LIR-03 existing native activation/history/outcome and current execution bindings",
+    "LIR-02/05 finite release universe and physical cache crosswalk",
+    "LIR-06/09 complete norm/definition/two operative-use review",
+    "LIR-07/10 complete target representability",
+    "LIR-04/08-11 graph closure",
+    "LIR-12-15 Lean preservation and source-bound admission",
+    "LIR-17-20/23 reviewed grouped model comparison",
+    "LIR-21/22/24 release, repair admission and dependency-shard expansion"
+  ],
+  "recorded_at_utc": "2026-10-28T07:23:29.012666+00:00",
+  "remote_metadata_is_not_physical_source_admission": true,
+  "repair_workflow": [
+    "fresh task/process/resource evidence",
+    "classify crash/stall/backpressure/dependency/review/unknown outcome",
+    "bounded authorized recovery through original owner",
+    "deduplicate remaining technical incident under existing repair namespace",
+    "minimal reproduction and owning regression",
+    "source-pinned fix/qualification/guarded deployment",
+    "fresh post-repair readback; retain failures and budgets"
+  ],
+  "review_scope": "Indexed artifact source reuse, maintained plan/history, official Hub control metadata and read-only existing deployment observations.",
+  "reviews": {
+    "artifacts": {
+      "bytes": 26892,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/programme-frontier-refresh-v01/artifact-reuse-review-v02.json",
+      "sha256": "cf452c53e0daebbdc3223f02f10a4003da93541efd05c6c6bd1d54cf174a8ed3"
+    },
+    "corpus": {
+      "bytes": 7719,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/programme-frontier-refresh-v01/corpus-metadata-review-v01.json",
+      "sha256": "e34344f0bb075b69e4966181234cc2390e7be3e4684d709db518517d44014b10"
+    },
+    "watchdog": {
+      "bytes": 71854,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/programme-frontier-refresh-v01/watchdog-live-review-v01.json",
+      "sha256": "4d9301f6b27120e0c802b0cab51b079a4dcce13a4807dd13f6444fb615b0f24e"
+    }
+  },
+  "schema": "legal-ir-whole-code-frontier-watchdog-review/v1",
+  "service_or_task_or_database_changes": false,
+  "source_universe_complete": false,
+  "watchdog_policy": {
+    "completed_idle_healthy": true,
+    "implementation_monitor_seconds": 60,
+    "implementation_progress_stall_seconds": 3900,
+    "implementation_startup_grace_seconds": 300,
+    "input_recovery_seconds": 300,
+    "max_restarts_per_hour": 4,
+    "profiles_are_distinct": true,
+    "restart_cooldown_seconds": 600,
+    "scoped_watchdog_poll_seconds": 60,
+    "semantic_review_blocks_do_not_restart": true
+  },
+  "whole_US_Code_formalized": false
+}

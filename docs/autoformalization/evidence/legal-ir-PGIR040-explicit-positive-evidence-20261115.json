@@ -1,0 +1,135 @@
+{
+  "actual_exec": {
+    "exit_code": 0,
+    "terminal_chunk": "15829a",
+    "tool_handle": "2304"
+  },
+  "compatibility": "Miner epoch pgir-040-positive-miner-v2; wire schemas, historical statement identities, old shard bytes and CIDs remain unchanged. Existing bound transformation, round-trip and proof-identity factory bodies are unchanged. Explicit caller labels are detached, subject-bound and authority-checked; their external authentication remains the caller responsibility.",
+  "lifecycle": {
+    "custody_errors": [],
+    "genuine_wait_completed": true,
+    "independently_probed_owner_identity_gone": true,
+    "initial_total_seconds": 420,
+    "original_storage": {
+      "artifacts_durable_asserted": true,
+      "final_attempt_bytes": 209720,
+      "reservation_id": "013b8ff0002b4fbfb1d0b0568b3daf89",
+      "status": "released",
+      "storage_bytes": 16777216
+    },
+    "parent_seconds": 164.24553995206952,
+    "source_closed": true
+  },
+  "new_default": "All eight canonical recipe proposals are nontraining and emit no relationship receipts; a new default shard bundle contains zero pairs.",
+  "next_action": "Reproduce and close the existing historical-shard/loss-projection admission gap through these same owners, retaining original archives and treating unsupported relationships as unknown; continue original semantic-preservation and evaluation work.",
+  "qualification_summary": {
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-ir-PGIR040-explicit-evidence-green-v01-input/qualification-summary.json",
+    "sha256": "6514c1898881497476f06959223c80ad9f4872ab949ac2d1341ea05454f01d71"
+  },
+  "raw_artifacts": [
+    {
+      "bytes": 46753,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-ir-PGIR040-explicit-evidence-green-v01-input/request.json",
+      "sha256": "4c8ab57bb112b57e4d90e5647d2ca82842d9881e48ae846e92f7d3649421dd05"
+    },
+    {
+      "bytes": 22355,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-ir-PGIR040-explicit-evidence-green-v01-input/run-original-source-held.py",
+      "sha256": "209a191be109c94bdb71941b85c8ed2b2f357bb4cd7d5a4ab1e48d5bed77df4d"
+    },
+    {
+      "bytes": 1784,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-ir-PGIR040-explicit-evidence-green-v01-input/pgir040-green-child.py",
+      "sha256": "b97fb1ededd51eb24882d2db42d56e59b5434862cbe78cf0c18558793060879a"
+    },
+    {
+      "bytes": 19,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-ir-PGIR040-explicit-evidence-green-v01-input/pytest.ini",
+      "sha256": "713f986ee48be06ad4bff2a700d39514a9f69e34b3547af52366c0a274e30e5b"
+    },
+    {
+      "bytes": 959,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-ir-PGIR040-explicit-evidence-green-v01-input/frozen-request.json",
+      "sha256": "09b4408da91a7ec3c985c137e8a2fe67fda0925810af42031daef695ccbb305b"
+    },
+    {
+      "bytes": 162,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-ir-PGIR040-explicit-evidence-green-v01-input/started.json",
+      "sha256": "05498bdbad8fe10d50784869b1dd695bdb1e1a23ea4ad38787d8735725ba7939"
+    },
+    {
+      "bytes": 11483,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-ir-PGIR040-explicit-evidence-green-v01-input/parent-closeout.json",
+      "sha256": "93d8ef23b0f1454f95eb1ab2315cffbacc4ae56b27a18dd951702cdcacd5e538"
+    },
+    {
+      "bytes": 5500,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-ir-PGIR040-explicit-evidence-green-v01-input/owner.stdout",
+      "sha256": "2eca90f1a4b307a3d1c11341d56a0fb9758b2f93205c12a944d6ac9ce2b63110"
+    },
+    {
+      "bytes": 0,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-ir-PGIR040-explicit-evidence-green-v01-input/owner.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 25896,
+      "path": "/tmp/pytest-of-barberb/legal-ir-PGIR040-explicit-evidence-green-20261115-v01/a/exports/pgir040-green.xml",
+      "sha256": "c35f411499d7e94ad5b5e14cdf398e923c6ae3a04330b76bb3d78964e197189d"
+    },
+    {
+      "bytes": 802,
+      "path": "/tmp/pytest-of-barberb/legal-ir-PGIR040-explicit-evidence-green-20261115-v01/a/logs/result.json",
+      "sha256": "2d22f2967f87cb6675fbec3dd70a2a9a7c8389d852ced58088055a3cc08b3ec1"
+    }
+  ],
+  "resolved_defect": "Recipe names, authority enums and fixed campaign metadata automatically manufactured VERIFIED semantic, proof and human-review labels without a checker, proof or review execution. Recipe expansion now leaves evidence absent until an explicit typed LabelEvidence sequence is supplied.",
+  "retained_red": {
+    "claim_retained_unchanged": true,
+    "exit_code": 1,
+    "failed": 4,
+    "terminal_chunk": "d882e7",
+    "tool_handle": "29059"
+  },
+  "schema": "legal-ir-explicit-positive-evidence-qualification/v1",
+  "scope": "The 133 passing cases cover software contracts, including explicitly fictional caller labels. No semantic solver, independent human review, native Lean proof, real statutory gold, numerical training, source-conditioned model quality or corpus admission was established. Historical archive decoding and loss_pair_admissions projection are not freshly authenticated by this patch; their remaining admission gap is explicit.",
+  "source": {
+    "Git_identity_pins": 8,
+    "drift": [],
+    "pins": 256,
+    "qualified_owners": [
+      {
+        "before_sha256": "a37391a0f273592c8e234a88b067ed424eeea5ace65f220b2ab450c5e381b408",
+        "candidate_sha256": "62dd4ba303eaee68f051abf137dfcdd74e0cdde502942c838d4046ea92608f9c",
+        "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_positive_pairs.py"
+      },
+      {
+        "before_sha256": "f39e600015c6ed5f16df6c21d0b04121e8e89d75ca4687bf0b5e7bb937e916c4",
+        "candidate_sha256": "ef397ff414c4ee1a226fccff28854bf866a72534517b3f742b12402bb3f0cbff",
+        "path": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_hard_negatives.py"
+      },
+      {
+        "before_sha256": "82bfc846d7f589e0bc9bacbaa0290680c2eb7fd1f9aaa98d5b4e356445796358",
+        "candidate_sha256": "298676118543fe35744c95cb6462c106e6048f790ce72e0dd7ac7e6d71327f7c",
+        "path": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_positive_pairs.py"
+      }
+    ],
+    "run_A_HEAD": "21e94730749848ee76ced9cecf8082494ded8ad1",
+    "run_R_HEAD": "dacb0f30b9aec7501862e8eed1dded0d21380363"
+  },
+  "status": "three_existing_owning_modules_qualified_archive_authentication_pending",
+  "task_id": "PGIR-040",
+  "tests": {
+    "by_owner": {
+      "tests.unit.optimizers.logic_theorem_optimizer.test_legal_ir_hard_negatives": 82,
+      "tests.unit.optimizers.logic_theorem_optimizer.test_legal_ir_metamorphic_fuzzing": 6,
+      "tests.unit.optimizers.logic_theorem_optimizer.test_legal_ir_positive_pairs": 45
+    },
+    "errors": 0,
+    "failures": 0,
+    "passed": 133,
+    "seconds": 7.484,
+    "skipped": 0,
+    "tests": 133
+  }
+}

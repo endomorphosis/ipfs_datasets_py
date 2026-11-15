@@ -18,6 +18,10 @@ Examples
   # Interactive prompts for anything missing:
   python3 scripts/ops/uspto/uspto_login_cli.py login --otp-mode prompt
 
+  # Prefer when Playwright password login is blocked: sign in via Snap Firefox,
+  # then import cookies (no password/OTP re-entry):
+  python3 scripts/ops/uspto/uspto_login_cli.py import-firefox
+
 Secrets never appear in JSON output. Session storage_state is mode 0600 under
 the portfolio state root.
 """
@@ -36,6 +40,8 @@ if str(_REPO_ROOT) not in sys.path:
 
 from ipfs_datasets_py.processors.domains.uspto.auth.login_session import (  # noqa: E402
     LoginError,
+    import_session_from_cdp,
+    import_session_from_firefox,
     load_session_status,
     login_patent_center,
     logout_session,
@@ -52,8 +58,46 @@ def _state(args: argparse.Namespace) -> Path:
     return default_state_root()
 
 
+def _cmd_import_cdp(args: argparse.Namespace) -> int:
+    """Capture storage_state from an already-signed-in Chrome (no password/OTP)."""
+    result = import_session_from_cdp(
+        cdp_url=str(args.cdp_url),
+        state_root=_state(args),
+        session_name=str(args.session_name),
+        username_hint=str(args.username_hint or ""),
+        bind_patent_center=not bool(args.no_bind_patent_center),
+        timeout_seconds=float(args.timeout_seconds),
+    )
+    stream = sys.stdout if result.get("ok") else sys.stderr
+    print(json.dumps(result, indent=2), file=stream)
+    return 0 if result.get("ok") else 2
+
+
+def _cmd_import_firefox(args: argparse.Namespace) -> int:
+    """Copy live Snap/desktop Firefox USPTO cookies into operator storage_state."""
+    result = import_session_from_firefox(
+        state_root=_state(args),
+        session_name=str(args.session_name),
+        username_hint=str(args.username_hint or ""),
+        profile_cookie_db=str(args.cookie_db) if getattr(args, "cookie_db", "") else None,
+        verify=not bool(args.no_verify),
+        timeout_seconds=float(args.timeout_seconds),
+    )
+    stream = sys.stdout if result.get("ok") else sys.stderr
+    # Never dump cookie values; result already omits them.
+    print(json.dumps(result, indent=2), file=stream)
+    return 0 if result.get("ok") else 2
+
+
 def _cmd_login(args: argparse.Namespace) -> int:
     try:
+        # headless: CLI --headless forces True; --headed forces False; else auto (DISPLAY).
+        if bool(getattr(args, "headed", False)):
+            headless: bool | None = False
+        elif bool(getattr(args, "headless", False)):
+            headless = True
+        else:
+            headless = None
         result = login_patent_center(
             username_ref=str(args.username_ref),
             password_ref=str(args.password_ref),
@@ -61,9 +105,12 @@ def _cmd_login(args: argparse.Namespace) -> int:
             otp_ref=str(args.otp_ref or ""),
             totp_secret_ref=str(args.totp_secret_ref),
             otp_code=str(args.otp_code or ""),
+            otp_file=str(getattr(args, "otp_file", "") or "") or None,
+            otp_wait_seconds=float(getattr(args, "otp_wait_seconds", 90.0) or 90.0),
             state_root=_state(args),
             session_name=str(args.session_name),
-            headless=bool(args.headless),
+            headless=headless,
+            browser=str(getattr(args, "browser", "chromium") or "chromium"),
             timeout_seconds=float(args.timeout_seconds),
             allow_prompt=not bool(args.no_prompt),
         )
@@ -117,9 +164,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     login.add_argument(
         "--otp-mode",
-        choices=("prompt", "totp", "code", "none"),
+        choices=("prompt", "totp", "code", "file", "none"),
         default="prompt",
-        help="How to obtain MFA: prompt, totp secret, one-shot code, or none",
+        help=(
+            "MFA source: prompt | totp | code (argv/ref, else wait on file) | "
+            "file (wait on --otp-file after password — best for fresh chat OTPs) | none"
+        ),
     )
     login.add_argument(
         "--totp-secret-ref",
@@ -134,12 +184,34 @@ def build_parser() -> argparse.ArgumentParser:
     login.add_argument(
         "--otp-code",
         default="",
-        help="One-shot OTP code (not stored). Prefer prompt/ref over argv when possible.",
+        help="One-shot OTP code (not stored). Prefer --otp-mode file for chat-driven OTPs.",
+    )
+    login.add_argument(
+        "--otp-file",
+        default="/tmp/uspto_otp_now.txt",
+        help="When MFA is ready, poll this file for a 6-digit code (default /tmp/uspto_otp_now.txt)",
+    )
+    login.add_argument(
+        "--otp-wait-seconds",
+        type=float,
+        default=90.0,
+        help="How long to wait for --otp-file after password (default 90)",
     )
     login.add_argument(
         "--headless",
         action="store_true",
-        help="Run browser headless (headed is more reliable for MFA pages)",
+        help="Force headless browser (often rejected by Okta; prefer XRDP headed)",
+    )
+    login.add_argument(
+        "--headed",
+        action="store_true",
+        help="Force headed browser on $DISPLAY (XRDP :10 / ssh -Y). Default when DISPLAY set.",
+    )
+    login.add_argument(
+        "--browser",
+        choices=("chromium", "firefox"),
+        default="chromium",
+        help="Playwright engine (firefox closer to successful operator XRDP login)",
     )
     login.add_argument("--timeout-seconds", type=float, default=180.0)
     login.add_argument(
@@ -154,6 +226,56 @@ def build_parser() -> argparse.ArgumentParser:
 
     lo = sub.add_parser("logout", help="Delete local session storage_state")
     lo.set_defaults(func=_cmd_logout)
+
+    imp = sub.add_parser(
+        "import-cdp",
+        help=(
+            "Import session from already-logged-in Chrome via CDP "
+            "(skip password/OTP; use when headless Okta locks)"
+        ),
+    )
+    imp.add_argument(
+        "--cdp-url",
+        default="http://127.0.0.1:9222",
+        help="Chrome remote debugging URL (default http://127.0.0.1:9222)",
+    )
+    imp.add_argument(
+        "--username-hint",
+        default="",
+        help="Optional username hint stored in session meta (not a secret)",
+    )
+    imp.add_argument(
+        "--no-bind-patent-center",
+        action="store_true",
+        help="Skip Patent Center SSO navigation after import",
+    )
+    imp.add_argument("--timeout-seconds", type=float, default=120.0)
+    imp.set_defaults(func=_cmd_import_cdp)
+
+    ff = sub.add_parser(
+        "import-firefox",
+        help=(
+            "Import session from Snap/desktop Firefox cookies.sqlite "
+            "(sign in via real Firefox first; skip Playwright password/OTP)"
+        ),
+    )
+    ff.add_argument(
+        "--cookie-db",
+        default="",
+        help="Optional path to cookies.sqlite (default: newest Firefox profile)",
+    )
+    ff.add_argument(
+        "--username-hint",
+        default="",
+        help="Optional username hint for session meta (not a secret)",
+    )
+    ff.add_argument(
+        "--no-verify",
+        action="store_true",
+        help="Only copy cookies; do not open Playwright to verify Patent Center",
+    )
+    ff.add_argument("--timeout-seconds", type=float, default=90.0)
+    ff.set_defaults(func=_cmd_import_firefox)
 
     return p
 

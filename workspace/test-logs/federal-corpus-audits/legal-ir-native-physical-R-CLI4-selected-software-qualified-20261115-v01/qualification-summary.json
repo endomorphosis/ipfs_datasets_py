@@ -1,0 +1,268 @@
+{
+  "A144v02": {
+    "Git_metadata_pins": 8,
+    "Source_exit_seconds": 168.17345633124933,
+    "all_runtime_import_origins_qualified": false,
+    "cases": 144,
+    "errors": 0,
+    "exact_request_result_execution_JUnit_order": true,
+    "explicit_source_frontier": 212,
+    "failures": 0,
+    "genuine_terminal_exit": 0,
+    "independent_actual_audit": {
+      "bytes": 13708,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/ordinary-immutable-source-parent-delegation-private-v01/native-physical-R-CLI4-A144-corrected-epoch-original16MiB-inputs-private-v02/independent-actual-corrected-A144v02-outcome-audit-v01.json",
+      "sha256": "37f9b233fae3fae63ade89459eb7df9bdd2af99dcae23664fbf9c35b78209dcb"
+    },
+    "initial_acceptance_seconds": 420,
+    "new_native_cases": 102,
+    "no_arbitrary_descendant_containment_claim": true,
+    "ordered_144_ID_canonical_JSON_sha256": "7a93180967c8a92570b77c2a97db9d010765fde3c19456a9de696a9ae09537b7",
+    "original_Source_R_A_Native_process_genuine_wait_closed": true,
+    "outcome_capsule": {
+      "bytes": 7823,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/ordinary-immutable-source-parent-delegation-private-v01/native-physical-R-CLI4-A144-corrected-epoch-original16MiB-inputs-private-v02/corrected-A144v02-one-original-runtime-outcome-capsule-v01.json",
+      "sha256": "c7f8f8969b12ec43f9ff987062138eca994cd136d69a96fa19bf0d4c10460ed7"
+    },
+    "own_storage": {
+      "bytes": 4697191,
+      "durable": true,
+      "files": 462,
+      "promised_bytes": 16777216,
+      "reservation_id": "f3a6b0f5fc05472cb36ff20a4b688ada",
+      "status": "released"
+    },
+    "process_scope": "sampled_birth_bound_descendants",
+    "pytest_seconds": 3.934,
+    "retained_health_cases": 2,
+    "retained_native_cases": 40,
+    "skipped": 0,
+    "status": "INDEPENDENTLY_AUDITED_SELECTED_144_PASS_ORIGINAL_CUSTODY_CLOSED",
+    "whole_owner_242_qualified": false
+  },
+  "H34": {
+    "Git_metadata_pins": 8,
+    "Source_exit_seconds": 168.30054095201194,
+    "cases": 34,
+    "cohort_separate_from_A144": true,
+    "errors": 0,
+    "exact_request_selector_result_execution_JUnit_order": true,
+    "explicit_source_frontier": 212,
+    "failures": 0,
+    "genuine_terminal_exit": 0,
+    "independent_actual_audit": {
+      "bytes": 12265,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/ordinary-immutable-source-parent-delegation-private-v01/native-physical-R-CLI4-H34-corrected-epoch-original16MiB-inputs-private-v02/independent-actual-corrected-H34-outcome-audit-v01.json",
+      "sha256": "db2380d49616f293ce9209751972852416416311e698db305c070968915e7634"
+    },
+    "independent_capsule_and_current_own_row_supplement": {
+      "bytes": 2897,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/ordinary-immutable-source-parent-delegation-private-v01/native-physical-R-CLI4-H34-corrected-epoch-original16MiB-inputs-private-v02/independent-actual-corrected-H34-capsule-ownrow-supplement-v01.json",
+      "sha256": "5b752715ebccba6b02d63164c88a2b8b2718468c1146b2d6aeaaf32822b94702"
+    },
+    "initial_acceptance_seconds": 420,
+    "new_health_cases": 34,
+    "no_arbitrary_descendant_containment_claim": true,
+    "original_Source_R_A_Native_process_genuine_wait_closed": true,
+    "outcome_capsule": {
+      "bytes": 8719,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/ordinary-immutable-source-parent-delegation-private-v01/native-physical-R-CLI4-H34-corrected-epoch-original16MiB-inputs-private-v02/corrected-H34-one-original-runtime-outcome-capsule-v01.json",
+      "sha256": "e6bb5f302d46900559808bef9249e7b1bd54844c63822557fe79e02ef66796b5"
+    },
+    "own_storage": {
+      "bytes": 3469714,
+      "current_own_row_exact_original_terminal_record": true,
+      "durable": true,
+      "files": 1385,
+      "native_closed": true,
+      "native_lease_id": "f62ca61cf1dd44e192cb4487222b1345",
+      "promised_bytes": 16777216,
+      "reservation_id": "21011528068e4c20af1c254f0621cc81",
+      "sealed_rows": 1384,
+      "status": "released"
+    },
+    "process_scope": "sampled_birth_bound_descendants",
+    "pytest_seconds": 1.413,
+    "selected_runtime_refs": {
+      "JUnit": {
+        "bytes": 6680,
+        "path": "/tmp/pytest-of-barberb/CLI4-H34-20261115-v01/a/exports/CLI4-H34.xml",
+        "sha256": "ae65687db5096df92f44a448cd395591116c9da29aa710ad0c0eaa2368038adf"
+      },
+      "execution": {
+        "bytes": 7744,
+        "path": "/tmp/pytest-of-barberb/CLI4-H34-20261115-v01/a/logs/execution.json",
+        "sha256": "a6a44660042d0d2dfe9e57509dc1aa1e932f05ea1c7208f30908b3c140fce517"
+      },
+      "parent_closeout": {
+        "bytes": 11311,
+        "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/ordinary-immutable-source-parent-delegation-private-v01/native-physical-R-CLI4-H34-corrected-epoch-original16MiB-inputs-private-v02/prepared-CLI4-H34-corrected-epoch-v02/parent-closeout.json",
+        "sha256": "41437d4726674c96e04e0693b6307c731c2df233ce2673d99903db93b16a3504"
+      },
+      "result": {
+        "bytes": 7177,
+        "path": "/tmp/pytest-of-barberb/CLI4-H34-20261115-v01/a/logs/result.json",
+        "sha256": "4784fc94092d4e1a413f0412ea88aeb27ecc020d4dc7497742f17f6bc288e693"
+      }
+    },
+    "skipped": 0,
+    "source_drift": [],
+    "status": "INDEPENDENTLY_AUDITED_SEPARATE_SELECTED_34_PASS_ORIGINAL_CUSTODY_AND_DURABILITY",
+    "whole_health_module_qualified": false
+  },
+  "authority": {
+    "Lean": false,
+    "R_negative_lifecycle": false,
+    "corpus_admission": false,
+    "full_SDK_or_Source_generation": false,
+    "genuine_native_DB_observation": false,
+    "hold_removal": false,
+    "model_training_quality": false,
+    "scientific_activation": false,
+    "source_software_only": true,
+    "statutory_meaning": false
+  },
+  "behavior": {
+    "defaults_resource_issuers_and_caps_preserved": true,
+    "disjoint_roots": true,
+    "explicit_physical_R_profile": {
+      "exact_source_bodies": 15,
+      "no_fake_parent_or_stub": true,
+      "original_Source42_R_A_mapping_under_both_leases": true,
+      "real_backends_namespace_metadata_records": 1,
+      "real_parent_imports_guarded_before_PathFinder": true,
+      "unchanged_source_exact_importer": true
+    },
+    "health_joins": [
+      "request",
+      "plan",
+      "profile",
+      "guard",
+      "PID_birth"
+    ],
+    "legacy_mixed_mode_refusals": true,
+    "pregrant_evidence_memory_only": true,
+    "strict_actual_child_frame_channel": true
+  },
+  "payload_policy": {
+    "full_Source_CAS_or_READ_receipts_included": false,
+    "model_or_dataset_bodies_included": false,
+    "raw_protected_peer_bodies_included": false,
+    "recursive_capsules_included": false,
+    "selected_summary_and_content_hash_refs_only": true
+  },
+  "preservation": {
+    "all119_component_records_exact": true,
+    "all_original_failures_receipts_checkpoints_and_holds_preserved": true,
+    "implementation_owners": 119,
+    "operator_hold_and_expired_repair_authorization_unchanged": true,
+    "peer_prose_and_WIP_preserved": true,
+    "private_assets_on_hold": true,
+    "retained_physical200_and_next_distinct201_9800_remaining_generation2_max2_unchanged": true,
+    "task_ID_status_changes": 0,
+    "task_count": 24
+  },
+  "preserved_attempts": {
+    "corrected_Source_queue_timeout": {
+      "all_acquired_Source_scopes_closed": true,
+      "independent_audit": {
+        "bytes": 9098,
+        "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/ordinary-immutable-source-parent-delegation-private-v01/native-physical-R-CLI4-cold-parent-fix-Source5-private-v02/actual-native-physical-R-CLI4-Source5-v01/independent-corrected-Source5-AWRITE-timeout-no-mutation-audit-v01.json",
+        "sha256": "b7b4da4d4787a67987f0bdae20a9b178b07999a30da4e03b8582b2bde1387b1b"
+      },
+      "no_acquired_A_lease": true,
+      "timeout_seconds": 300,
+      "writes": 0
+    },
+    "first_A144": {
+      "CALL_failed": 6,
+      "Source_closed_seconds": 109.109212811,
+      "cases": 144,
+      "causes": "cold-parent defect and two fixture issues",
+      "closed_custody": true,
+      "durable": false,
+      "parent_closeout": {
+        "bytes": 44219,
+        "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/ordinary-immutable-source-parent-delegation-private-v01/native-physical-R-CLI4-A144-conditional-original16MiB-inputs-private-v01/prepared-CLI4-A144-v01/parent-closeout.json",
+        "sha256": "5dd914c2eb9088f3e8a46ef14b45f8f3ae45daff5e5a06a6d75172d94f11d8a1"
+      },
+      "passed": 138,
+      "qualified": false,
+      "reservation_id": "1774b4924bbd40c4b8820b5b35dc4c92",
+      "storage_bytes": 16777216,
+      "storage_status": "retained"
+    }
+  },
+  "qualification_accounting": {
+    "A144_selected": 144,
+    "H34_selected": 34,
+    "no_pooled_or_whole_module_qualification": true,
+    "no_prior_outcome_transfer": true,
+    "two_separate_original_cohorts": true
+  },
+  "record_scope": "Two independently audited separate source-only software cohorts. This record establishes no publication or runtime activation.",
+  "recorded_at_utc": "2026-11-15T06:28:12.646578+00:00",
+  "remaining_gates": [
+    "Main15 mapped preparation",
+    "private delegated immutable@2 SDK and worker",
+    "full A owner/driver/template transition"
+  ],
+  "schema": "native-physical-R-CLI4-selected-source-software-summary@1",
+  "source_epoch": {
+    "actual_Source5_and_separate_readback_audit": {
+      "bytes": 17397,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/ordinary-immutable-source-parent-delegation-private-v01/native-physical-R-CLI4-cold-parent-fix-Source5-private-v03/actual-native-physical-R-CLI4-Source5-v01/independent-actual-corrected-CLI4-cold-parent-Source5-write-read-audit-v01.json",
+      "sha256": "0e54ae0fb868a84409b529d4eeb3be60e022060c160c5412f9c44d8eeb9d03ea"
+    },
+    "changed_bodies": 2,
+    "files": [
+      {
+        "bytes": 108076,
+        "path": "ipfs_accelerate_py/agent_supervisor/rescue/original_embedded_observation_owner.py",
+        "root": "accelerate_worktree",
+        "sha256": "c75a0824e9e5ba09afdd8fcf64973b1b942d0b36cbb7d21661f1b231395ba1be"
+      },
+      {
+        "bytes": 40317,
+        "path": "ipfs_accelerate_py/agent_supervisor/rescue/native_embedded_observation_driver.py",
+        "root": "accelerate_worktree",
+        "sha256": "da122056f2b10160ede93536848566210d5c195344e3ab87d81f64fdbda64110"
+      },
+      {
+        "bytes": 104242,
+        "path": "ipfs_accelerate_py/agent_supervisor/rescue/native_executor_health.py",
+        "root": "accelerate_worktree",
+        "sha256": "74b6a0b4326a1a0e6574ed700403e5ef156803de7a3fc49d600c5b1c45598734"
+      },
+      {
+        "bytes": 95617,
+        "path": "test/api/test_agent_supervisor_embedded_observation_owner.py",
+        "root": "accelerate_worktree",
+        "sha256": "ae9657febf4159661b79ea6e3d844f9c75101d012f5891e020f02cc9e2e17fa3"
+      },
+      {
+        "bytes": 100282,
+        "path": "test/api/test_agent_supervisor_native_executor_health.py",
+        "root": "accelerate_worktree",
+        "sha256": "28c3489177ea97fcc2c3adea348b5f6f817f96f0ffe90d132dfa39c4f8dbf885"
+      }
+    ],
+    "no_old_full9_transfer": true,
+    "physical_worktree_root": "/tmp/lift-sync-accelerate-all-main-20261114",
+    "same_byte_bodies_recaptured": 3,
+    "unchanged_original_importer_sha256": "141b7da6a57bd65d03c673c5e1041d8e26bce0ed7c02803a3d11f829925da95e",
+    "worktree": "accelerate_worktree"
+  },
+  "unchanged_bounds": {
+    "automatic_retry": false,
+    "child_process_slots": 4,
+    "cpu_slots": 1,
+    "deadline_renewal": false,
+    "initial_acceptance_seconds": 420,
+    "ledger_seconds": 60,
+    "memory_mb": 1536,
+    "productive_seconds": 300,
+    "shared_Source_admission_seconds": 60,
+    "storage_bytes": 16777216
+  }
+}

@@ -554,3 +554,317 @@ def test_forged_worker_result_cannot_gain_owner_acceptance_or_cancel_sibling(tmp
             case.combined, arrow=True, artifact_format="bundle")
         assert any(item.status == "retained" for item in case.reservations.instances)
         assert any(item.status == "released" for item in case.reservations.instances)
+
+
+# These lifecycle tests inject every resource/child operation explicitly. They
+# establish control custody only, and never claim training or native admission.
+def _f18_execution_case(tmp_path):
+    from concurrent.futures import Future
+    from types import SimpleNamespace
+    from tests.unit.optimizers.logic_theorem_optimizer.test_autoencoder_campaign_owned_training import (
+        _f18_control_case, _prepare_f18_control,
+    )
+    case = _f18_control_case(tmp_path)
+    case.prepared = _prepare_f18_control(case)
+    case.instances, case.executors, case.events = [], [], []
+    case.problem, case.completed = None, 1
+    case.input_calls = 0
+    owner = preparation._f18_owner()
+
+    class Reservation:
+        def __init__(self, ledger, **kwargs):
+            assert kwargs["child_process_slots"] == 1 and kwargs["require_existing_ledger"] is True
+            assert kwargs["timeout_seconds"] == 0 and kwargs["ledger_lock_timeout_seconds"] == 5
+            self.reservation_id = "injected-f18-" + str(len(case.instances))
+            self.status, self.finalized, self.charges = "not_entered", False, {}
+            case.instances.append(self)
+        def __enter__(self):
+            self.status = "active"
+            case.events.append("admit")
+            return self
+        def __exit__(self, typ, exc, tb):
+            if self.status == "active":
+                self.status = "retained"
+            return False
+        def cancelled(self):
+            assert self.status == "active"
+            case.events.append("cancelled")
+            if case.problem == "cancel_initial":
+                if case.cancel_response == "raises":
+                    raise RuntimeError("injected cancellation read failure")
+                return case.cancel_response
+            if case.problem == "cancel_running" and "running_tick" in case.events:
+                return True
+            if case.problem == "cancel_before_finalize" and "close" in case.events:
+                return True
+            return False
+        def heartbeat(self):
+            assert self.status == "active"
+            case.events.append("heartbeat")
+            if case.problem == "heartbeat_raises":
+                raise RuntimeError("injected resource renewal failure")
+            if case.problem == "heartbeat_initial":
+                return case.heartbeat_response
+            if case.problem == "heartbeat_after_compute" and "worker_result" in case.events:
+                return False
+            if case.problem == "heartbeat_before_finalize" and "close" in case.events:
+                return False
+            return True
+        def account_external_bytes(self, key, value):
+            assert self.status == "active"
+            assert key not in self.charges or self.charges[key] == value
+            self.charges[key] = value
+        def check_usage(self, path):
+            assert self.status == "active" and Path(path).is_dir()
+            case.events.append("usage")
+        def finalize(self, path, *, artifacts_durable):
+            assert self.status == "active" and artifacts_durable is True
+            assert {p.name for p in case.output.iterdir()} == {"checkpoint.json", "report.json", "receipt.json"}
+            case.events.append("finalize")
+            if case.problem == "finalize":
+                raise RuntimeError("injected finalization failure")
+            self.finalized, self.status = True, "released"
+            return {"status": "released", "native_execution_verified": True, "native_purpose_admitted": True}
+
+    def progress(number):
+        return {"epochs_completed": number // 14, "row_cursor": (number % 14) * 12, "optimizer_steps": number}
+
+    def write_result(spec, artifact):
+        case.events.append("worker_result")
+        case.output.mkdir()
+        descriptors = {}
+        for key in ("checkpoint", "report"):
+            path = case.output / (key + ".json")
+            raw = owner._canonical({"injected_fixture": key})
+            path.write_bytes(raw)
+            descriptors[key] = {"path": str(path), "bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest()}
+        completed = case.completed
+        receipt = {"schema_version": owner.RECEIPT_SCHEMA, "run_id": spec.run_id,
+            "job_spec_sha256": spec.canonical_sha256, "job_file_sha256": artifact["sha256"],
+            "prepared_inputs_sha256": spec.to_dict()["prepared_inputs"]["sha256"],
+            "initial_checkpoint_file_sha256": spec.to_dict()["initial_checkpoint"]["sha256"],
+            "profile_source_sha256": owner.PROFILE_SHA256, "margin_weight": spec.margin_weight,
+            "requested_steps": spec.max_steps, "completed_steps": completed,
+            "initial_progress": progress(5), "final_progress": progress(5 + completed),
+            "reason": "step_limit" if completed == spec.max_steps else "deadline_before_batch",
+            "status": "completed" if completed == spec.max_steps else "partial",
+            **descriptors, "checkpoint_sha256": "8" * 64, "elapsed_seconds": 0.01,
+            "training_executed": bool(completed), "all_requested_steps_completed": completed == spec.max_steps,
+            "prepared_inputs_integrity_only": True, "runtime_contract_sha256": None,
+            **{key: False for key in owner.FALSE_FIELDS}}
+        (case.output / "receipt.json").write_bytes(owner._canonical(receipt))
+        if case.problem == "checkpoint":
+            (case.output / "checkpoint.json").write_bytes(b"corrupt fixture")
+        elif case.problem == "extra":
+            (case.output / "extra.json").write_bytes(b"{}")
+        elif case.problem == "receipt":
+            with (case.output / "receipt.json").open("ab") as stream:
+                stream.write(b"\n")
+        return receipt
+
+    class Executor:
+        def __init__(self, **kwargs):
+            assert kwargs["max_workers"] == 1
+            assert kwargs["defer_target_hydration_gc"] is False and kwargs["reduce_native_targets"] is False
+            self.callbacks, self.closed, self.retired = kwargs, False, False
+            self.future = Future()
+            case.executors.append(self)
+        def register_f18(self, spec, **kwargs):
+            assert kwargs["reservation"].status == "active"
+            self.spec, self.artifact = spec, kwargs["job_artifact"]
+        def submit(self, spec, *, lease, job_artifact):
+            self.callbacks["record_start"](spec, lease, job_artifact)
+            case.events.append("start_intent")
+            if case.problem == "after_start":
+                raise RuntimeError("injected unknown post-start outcome")
+            self.callbacks["record_child"](spec, lease, job_artifact, {"injected_test": True})
+            case.events.append("observed")
+            return self.future
+        def poll(self):
+            if case.problem == "cancel_running":
+                case.events.append("running_tick")
+                return
+            self.future.set_result(write_result(self.spec, self.artifact))
+        def retire(self, spec):
+            assert self.future.done()
+            self.retired = True
+            case.events.append("retire")
+        def close(self):
+            self.closed = True
+            case.events.append("close")
+
+    def input_check(spec):
+        assert case.instances[-1].status == "active"
+        case.input_calls += 1
+        return None
+    case.reservation_factory, case.executor_factory, case.input_check = Reservation, Executor, input_check
+    return case
+
+
+def _run_f18_fixture(case, *, expected=None, input_check=None):
+    return execution._execute_prepared_f18_conditions_training_for_test(case.prepared["request"],
+        expected_request_sha256=case.prepared["request_sha256"] if expected is None else expected,
+        reservation_factory=case.reservation_factory, executor_factory=case.executor_factory,
+        input_check=case.input_check if input_check is None else input_check)
+
+
+@pytest.mark.parametrize("completed", [1, 2])
+def test_fixed_f18_fixture_preserves_slice_counts_and_has_no_native_credit(tmp_path, completed):
+    case = _f18_execution_case(tmp_path)
+    case.completed = completed
+    report = _run_f18_fixture(case)
+    assert report["completed_steps"] == completed and report["requested_steps"] == 2
+    assert report["initial_progress"]["optimizer_steps"] == 5
+    assert report["final_progress"]["optimizer_steps"] == 5 + completed
+    assert report["status"] == ("completed" if completed == 2 else "partial")
+    assert report["all_requested_steps_completed"] is (completed == 2)
+    assert report["injected_test"] is True and report["input_bytes_verified"] is False
+    assert report["native_execution_verified"] is False and report["native_purpose_admitted"] is False
+    assert report["resource"]["native_execution_verified"] is False
+    assert report["resource"]["native_purpose_admitted"] is False
+    assert all(report[key] is False for key in preparation._f18_owner().FALSE_FIELDS)
+    assert case.instances[0].finalized and case.instances[0].status == "released"
+    assert case.executors[0].retired and case.executors[0].closed
+    assert case.events.index("admit") < case.events.index("start_intent") < case.events.index("observed")
+    assert case.events.index("close") < case.events.index("finalize")
+    assert case.events.index("admit") < case.events.index("heartbeat") < case.events.index("start_intent")
+    assert "heartbeat" in case.events[case.events.index("close") + 1:case.events.index("finalize")]
+    assert case.events[-1] == "finalize", "a released grant must never be renewed"
+    assert case.input_calls >= 4 and list(case.inputs.iterdir()) == []
+    assert len(case.instances[0].charges) >= 2
+
+
+@pytest.mark.parametrize("bad_hash", [None, True, "", "x" * 64, "0" * 64])
+def test_fixed_f18_execute_requires_independent_hash_before_any_admission(tmp_path, bad_hash):
+    case = _f18_execution_case(tmp_path)
+    with pytest.raises(ERRORS):
+        execution._execute_prepared_f18_conditions_training_for_test(case.prepared["request"],
+            expected_request_sha256=bad_hash, reservation_factory=case.reservation_factory,
+            executor_factory=case.executor_factory, input_check=case.input_check)
+    assert not case.instances and case.input_calls == 0
+    assert not case.output.exists() and not case.journal.exists()
+
+
+@pytest.mark.parametrize("existing", ["output", "journal"])
+def test_fixed_f18_existing_output_or_consumed_journal_refuses_before_admission(tmp_path, existing):
+    case = _f18_execution_case(tmp_path)
+    if existing == "output":
+        case.output.mkdir()
+    else:
+        case.journal.write_bytes(b"prior consumed start; no replay")
+    with pytest.raises(ERRORS, match="explicit recovery"):
+        _run_f18_fixture(case)
+    assert not case.instances and not case.executors and case.input_calls == 0
+
+
+@pytest.mark.parametrize("problem", ["checkpoint", "receipt", "extra", "finalize"])
+def test_fixed_f18_failed_artifact_or_finalize_custody_retains_claim(tmp_path, problem):
+    case = _f18_execution_case(tmp_path)
+    case.problem = problem
+    with pytest.raises((*ERRORS, RuntimeError)):
+        _run_f18_fixture(case)
+    assert case.instances[0].status == "retained" and not case.instances[0].finalized
+    assert case.executors[0].closed
+    assert case.journal.exists() and case.output.exists()
+    before = case.journal.read_bytes()
+    with pytest.raises(ERRORS, match="explicit recovery"):
+        _run_f18_fixture(case)
+    assert len(case.instances) == 1 and case.journal.read_bytes() == before
+
+
+def test_fixed_f18_unknown_post_start_never_gets_zero_count_or_retry(tmp_path):
+    case = _f18_execution_case(tmp_path)
+    case.problem = "after_start"
+    with pytest.raises(RuntimeError, match="unknown post-start"):
+        _run_f18_fixture(case)
+    assert case.instances[0].status == "retained" and case.executors[0].closed
+    journal = json.loads(case.journal.read_bytes())
+    assert "intent" in json.dumps(journal)
+    assert "completed_steps" not in json.dumps(journal)
+    assert not case.output.exists()
+    with pytest.raises(ERRORS, match="explicit recovery"):
+        _run_f18_fixture(case)
+    assert len(case.instances) == 1
+
+
+def test_fixed_f18_injected_input_callback_cannot_mint_integrity_credit(tmp_path):
+    case = _f18_execution_case(tmp_path)
+    with pytest.raises(ERRORS, match="test input check"):
+        _run_f18_fixture(case, input_check=lambda spec: {"input_bytes_verified": True, "runtime_grant": True})
+    assert case.instances[0].status == "retained" and not case.instances[0].finalized
+    assert not case.executors and not case.output.exists() and not case.journal.exists()
+
+
+@pytest.mark.parametrize("response", [False, None, 1, "raises"])
+def test_fixed_f18_renewal_refusal_prevents_dispatch_without_native_credit(tmp_path, response):
+    case = _f18_execution_case(tmp_path)
+    case.problem = "heartbeat_raises" if response == "raises" else "heartbeat_initial"
+    case.heartbeat_response = response
+    with pytest.raises((*ERRORS, RuntimeError)):
+        _run_f18_fixture(case)
+    assert case.instances[0].status == "retained" and not case.instances[0].finalized
+    assert not case.executors and case.input_calls == 0
+    assert not case.output.exists() and not case.journal.exists()
+    assert case.events == ["admit", "cancelled", "heartbeat"]
+
+
+@pytest.mark.parametrize("problem", ["heartbeat_after_compute", "heartbeat_before_finalize"])
+def test_fixed_f18_late_renewal_refusal_stops_acceptance_and_retains_claim(tmp_path, monkeypatch, problem):
+    case = _f18_execution_case(tmp_path)
+    case.problem = problem
+    checked = []
+    original = execution._f18_verify_artifacts
+    def observed(*args, **kwargs):
+        checked.append(True)
+        return original(*args, **kwargs)
+    monkeypatch.setattr(execution, "_f18_verify_artifacts", observed)
+    with pytest.raises(ERRORS, match="heartbeat"):
+        _run_f18_fixture(case)
+    assert case.instances[0].status == "retained" and not case.instances[0].finalized
+    assert case.executors[0].closed and case.output.exists() and case.journal.exists()
+    assert "finalize" not in case.events
+    assert bool(checked) is (problem == "heartbeat_before_finalize")
+    with pytest.raises(ERRORS, match="explicit recovery"):
+        _run_f18_fixture(case)
+    assert len(case.instances) == 1
+
+
+@pytest.mark.parametrize("response", [True, None, 0, "raises"])
+def test_fixed_f18_cancel_state_must_be_exact_false_before_dispatch(tmp_path, response):
+    case = _f18_execution_case(tmp_path)
+    case.problem, case.cancel_response = "cancel_initial", response
+    with pytest.raises((*ERRORS, RuntimeError)):
+        _run_f18_fixture(case)
+    assert case.instances[0].status == "retained" and not case.instances[0].finalized
+    assert not case.executors and case.input_calls == 0
+    assert not case.output.exists() and not case.journal.exists()
+    assert case.events == ["admit", "cancelled"]
+
+
+def test_fixed_f18_active_cancellation_closes_pending_child_and_retains_claim(tmp_path):
+    case = _f18_execution_case(tmp_path)
+    case.problem = "cancel_running"
+    with pytest.raises(ERRORS, match="cancellation"):
+        _run_f18_fixture(case)
+    assert case.instances[0].status == "retained" and not case.instances[0].finalized
+    assert case.executors[0].closed and not case.executors[0].future.done()
+    assert case.journal.exists() and not case.output.exists()
+    assert "running_tick" in case.events and "finalize" not in case.events
+    assert "completed_steps" not in case.journal.read_text()
+    with pytest.raises(ERRORS, match="explicit recovery"):
+        _run_f18_fixture(case)
+    assert len(case.instances) == 1
+
+
+def test_fixed_f18_pre_finalize_cancellation_preserves_outputs_and_claim(tmp_path):
+    case = _f18_execution_case(tmp_path)
+    case.problem = "cancel_before_finalize"
+    with pytest.raises(ERRORS, match="cancellation"):
+        _run_f18_fixture(case)
+    assert case.instances[0].status == "retained" and not case.instances[0].finalized
+    assert case.executors[0].closed and case.output.exists() and case.journal.exists()
+    assert "finalize" not in case.events
+    assert {p.name for p in case.output.iterdir()} == {"checkpoint.json", "report.json", "receipt.json"}
+    with pytest.raises(ERRORS, match="explicit recovery"):
+        _run_f18_fixture(case)
+    assert len(case.instances) == 1

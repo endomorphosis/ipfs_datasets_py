@@ -769,13 +769,40 @@ def reviewed_resign_v2(case):
         case["reviews"][index] = case["signers"][index].sign(body)
 
 
-def reviewed_norm_fixture_v2(owner):
+def reviewed_norm_fixture_v2(owner, *, fixture_namespace="act-v1", source_texts=None,
+        permitted_uses=None, predicate_prefix=None, document_revision=None,
+        governing_instrument_id=None, definition_provision_id=None,
+        cross_references=None, dependency_artifacts=None, source_bindings=None):
     """One fictional definition and two distinct complete normative provisions.
 
     This public test helper deliberately exercises the existing source,
     TypedExpression, dependency and detached-signature owners. It is reusable
     by the consumer's owning tests; no retained runtime artifact is imported.
     """
+    # Explicit fictional fixture options enter BEFORE preparation, dependency
+    # subjects, registry/policy digests and all original detached signatures.
+    # Defaults retain the original fixture's permitted uses and predicates.
+    if document_revision is not None:
+        assert type(document_revision) is str and 0 < len(document_revision) <= 512
+    if permitted_uses is not None:
+        assert type(permitted_uses) is list and permitted_uses and len(set(permitted_uses)) == len(permitted_uses)
+        assert all(type(use) is str and use in owner.REVIEWED_USES for use in permitted_uses)
+    if predicate_prefix is not None:
+        assert type(predicate_prefix) is str and 0 < len(predicate_prefix) <= 32
+        assert predicate_prefix.isascii() and predicate_prefix.isalpha()
+    if cross_references is not None:
+        assert type(cross_references) is list and len(cross_references) <= 64
+    if dependency_artifacts is not None:
+        assert type(dependency_artifacts) is dict
+        assert all(type(key) is str and type(value) is bytes and 0 < len(value) <= 1_000_000
+                   for key, value in dependency_artifacts.items())
+        assert {row["dependency_artifact_id"] for row in (cross_references or [])} == set(dependency_artifacts)
+        assert all(row["dependency_sha256"] == sha(dependency_artifacts[row["dependency_artifact_id"]])
+                   for row in cross_references)
+    def predicate(name):
+        return name if predicate_prefix is None else predicate_prefix + name
+    instrument_id = "fixture:" + fixture_namespace
+    component_id = "fixture:reviewed-" + fixture_namespace
     from cryptography.hazmat.primitives import serialization
     from ipfs_datasets_py.logic.profile_g import Ed25519Signer
     from ipfs_datasets_py.logic.autoformal import corpus_source as source_owner
@@ -785,22 +812,22 @@ def reviewed_norm_fixture_v2(owner):
     helper = load_fixture("_reviewed_admission_relational_fixture", "test_legal_relational_norm_v1.py")
     builder = helper.Builder()
     definition_request = helper.request_for(builder,
-        builder.binary("iff", builder.atom("CoveredOfficer", "officer"),
-                       builder.atom("AppointedByBoard", "officer")),
-        [("CoveredOfficer", ("officer",)), ("AppointedByBoard", ("officer",))],
+        builder.binary("iff", builder.atom(predicate("CoveredOfficer"), "officer"),
+                       builder.atom(predicate("AppointedByBoard"), "officer")),
+        [(predicate("CoveredOfficer"), ("officer",)), (predicate("AppointedByBoard"), ("officer",))],
         [("officer", "forall")])
     builder = helper.Builder()
     duty_request = helper.request_for(builder,
-        builder.binary("implies", builder.atom("CoveredOfficer", "officer"),
-            builder.binary("implies", helper.ast.mk_not(builder.nid(), builder.atom("Excused", "officer")),
-                builder.modal("O", builder.atom("FilesReport", "officer")))),
-        [("CoveredOfficer", ("officer",)), ("Excused", ("officer",)), ("FilesReport", ("officer",))],
+        builder.binary("implies", builder.atom(predicate("CoveredOfficer"), "officer"),
+            builder.binary("implies", helper.ast.mk_not(builder.nid(), builder.atom(predicate("Excused"), "officer")),
+                builder.modal("O", builder.atom(predicate("FilesReport"), "officer")))),
+        [(predicate("CoveredOfficer"), ("officer",)), (predicate("Excused"), ("officer",)), (predicate("FilesReport"), ("officer",))],
         [("officer", "forall")])
     builder = helper.Builder()
     permission_request = helper.request_for(builder,
-        builder.binary("implies", builder.atom("CoveredOfficer", "officer"),
-                       builder.modal("P", builder.atom("InspectsRegister", "officer"))),
-        [("CoveredOfficer", ("officer",)), ("InspectsRegister", ("officer",))],
+        builder.binary("implies", builder.atom(predicate("CoveredOfficer"), "officer"),
+                       builder.modal("P", builder.atom(predicate("InspectsRegister"), "officer"))),
+        [(predicate("CoveredOfficer"), ("officer",)), (predicate("InspectsRegister"), ("officer",))],
         [("officer", "forall")])
     texts = [
         "For this fictional Act, a covered officer means an officer appointed by the Board. Café.",
@@ -808,28 +835,51 @@ def reviewed_norm_fixture_v2(owner):
         "A covered officer may inspect the register.",
     ]
     requests = [definition_request, duty_request, permission_request]
+    if source_texts is not None:
+        assert type(source_texts) in (list, tuple) and len(source_texts) == len(requests)
+        texts = list(source_texts)
+    if source_bindings is not None:
+        assert type(source_bindings) is dict
+        assert set(source_bindings) == {
+            instrument_id + "/unit-" + str(index + 1) for index in range(len(requests))}
     source_inputs, relational_inputs, units = {}, {}, []
     for index, (text, request) in enumerate(zip(texts, requests)):
-        unit_id = "fixture:act-v1/unit-" + str(index + 1)
+        unit_id = instrument_id + "/unit-" + str(index + 1)
         raw = text.encode("utf-8")
-        version = source_owner.build_source_version(source_id=unit_id, release_id="fixture:act-v1",
-            edition="fictional-edition-1", provision_id=unit_id, raw_bytes=raw,
+        provision_id = definition_provision_id if index == 0 and definition_provision_id is not None else unit_id
+        version = source_owner.build_source_version(source_id=unit_id, release_id=instrument_id,
+            edition="fictional-edition-1", provision_id=provision_id, raw_bytes=raw,
             expected_raw_sha256=sha(raw), extracted_text=text, expected_extracted_sha256=sha(raw),
             extraction_profile="identity/v1", normalization_profile="identity/v1", media_type="text/plain")
         occurrence = source_owner.build_source_occurrence(version, expected_raw_sha256=sha(raw),
             extracted_text=text, expected_extracted_sha256=sha(raw), start_char=0, end_char=len(text),
             start_utf8=0, end_utf8=len(raw))
+        extracted_text = text
+        if source_bindings is not None:
+            selected = source_bindings[unit_id]
+            assert type(selected) is dict and set(selected) == {
+                "source_version", "occurrence", "raw_bytes", "extracted_text"}
+            assert type(selected["raw_bytes"]) is bytes and type(selected["extracted_text"]) is str
+            version, occurrence = deepcopy(selected["source_version"]), deepcopy(selected["occurrence"])
+            raw, extracted_text = selected["raw_bytes"], selected["extracted_text"]
+            source_owner.validate_source_version(version, expected_raw_sha256=sha(raw), raw_bytes=raw,
+                extracted_text=extracted_text, expected_extracted_sha256=sha(extracted_text.encode("utf-8")))
+            source_owner.validate_source_occurrence(occurrence, source_version=version,
+                expected_raw_sha256=sha(raw), extracted_text=extracted_text,
+                expected_extracted_sha256=sha(extracted_text.encode("utf-8")))
         request_raw = wire(request)
         report = relational.prepare_relational_norm_v1(request_raw, expected_request_sha256=sha(request_raw))
-        source_inputs[unit_id] = {"raw_bytes": raw, "extracted_text": text}
+        source_inputs[unit_id] = {"raw_bytes": raw, "extracted_text": extracted_text}
         relational_inputs[unit_id] = {"request_raw": request_raw, "report": report,
             "expected_report_sha256": relational.relational_norm_report_sha256(report)}
         units.append({"unit_id": unit_id, "kind": "definition" if index == 0 else "norm",
-            "source_version": version, "occurrence": occurrence, "document_revision": "fixture:act-v1/revision-1",
+            "source_version": version, "occurrence": occurrence, "document_revision": (instrument_id + "/revision-1"
+                if document_revision is None else document_revision),
             "parent_unit_ids": [], "relational_request_sha256": sha(request_raw),
             "source_artifact_id": unit_id + ":source", "ir_artifact_id": unit_id + ":ir",
-            "coverage": [{"typed_path": row["typed_path"], "start_char": 0, "end_char": len(text),
-                "start_utf8": 0, "end_utf8": len(raw)} for row in report["structural_mapping"]]})
+            "coverage": [{"typed_path": row["typed_path"],
+                **{key: occurrence[key] for key in ("start_char", "end_char", "start_utf8", "end_utf8")}}
+                for row in report["structural_mapping"]]})
     process_raw = b"Fictional independent review process record. No actual statutory or human-review claim."
     process_ref = {"artifact_id": REVIEWED_PROCESS_ID, "sha256": sha(process_raw)}
     definition_uses = []
@@ -842,20 +892,22 @@ def reviewed_norm_fixture_v2(owner):
             node = report["typed_expression"]
             for token in mapping["typed_path"].split("/")[1:]:
                 node = node[int(token)] if type(node) is list else node[token]
-            if node["symbol"] == "CoveredOfficer":
+            if node["symbol"] == predicate("CoveredOfficer"):
                 paths.append(mapping["typed_path"])
         definition_uses.append({"definition_unit_id": units[0]["unit_id"],
             "use_unit_id": unit["unit_id"], "use_occurrence_cid": unit["occurrence"]["record_cid"],
-            "target_typed_paths": paths, "defined_predicate": "CoveredOfficer", "applicability": "governing",
-            "interpretation_id": "fixture:act-v1/selected-interpretation", "evidence_refs": [deepcopy(process_ref)]})
+            "target_typed_paths": paths, "defined_predicate": predicate("CoveredOfficer"), "applicability": "governing",
+            "interpretation_id": instrument_id + "/selected-interpretation", "evidence_refs": [deepcopy(process_ref)]})
     source_signer = Ed25519Signer.generate("did:example:fictional-source-author")
-    declaration = {"schema": "legal-reviewed-norm-declaration/v2", "component_id": "fixture:reviewed-act-v1",
-        "provenance_kind": "fictional_fixture", "interpretation_id": "fixture:act-v1/selected-interpretation",
-        "governing_context": {"jurisdiction": "fictional-jurisdiction", "instrument_id": "fixture:act-v1",
+    declaration = {"schema": "legal-reviewed-norm-declaration/v2", "component_id": component_id,
+        "provenance_kind": "fictional_fixture", "interpretation_id": instrument_id + "/selected-interpretation",
+        "governing_context": {"jurisdiction": "fictional-jurisdiction", "instrument_id": governing_instrument_id or instrument_id,
             "governing_edition": "fictional-edition-1", "legal_as_of_utc": EVALUATED,
             "valid_from_utc": REVIEWED_START, "valid_until_utc": REVIEWED_END},
-        "units": units, "definition_uses": definition_uses, "cross_references": [],
-        "permitted_uses": ["formalization", "training", "heldout_evaluation", "proof_obligation"],
+        "units": units, "definition_uses": definition_uses,
+        "cross_references": [] if cross_references is None else deepcopy(cross_references),
+        "permitted_uses": (["formalization", "training", "heldout_evaluation", "proof_obligation"]
+                           if permitted_uses is None else list(permitted_uses)),
         "unresolved": [], "unsupported": [], "assumptions": [],
         "source_actors": [{"principal_id": "fixture:source-author", "signer_did": source_signer.did,
             "public_key_hex": source_signer.public_key.public_bytes(
@@ -868,6 +920,12 @@ def reviewed_norm_fixture_v2(owner):
                                     (unit["ir_artifact_id"], unit["relational_request_sha256"])):
             artifacts.append({"artifact_id": artifact_id, "artifact_sha256": digest,
                               "dependency_pins": {kind: [] for kind in deps.PIN_KINDS}})
+    # Explicit fictional external dependencies are frozen BEFORE preparation
+    # and detached review signatures. Existing defaults add no artifacts.
+    for artifact_id, raw in (dependency_artifacts or {}).items():
+        assert artifact_id not in {row["artifact_id"] for row in artifacts}
+        artifacts.append({"artifact_id": artifact_id, "artifact_sha256": sha(raw),
+                          "dependency_pins": {kind: [] for kind in deps.PIN_KINDS}})
     manifest = deps.build_dependency_manifest(artifacts,
         [{"dependent_id": declaration["component_id"], "dependency_id": row["artifact_id"]}
          for row in artifacts[1:]], expected_artifact_ids=[row["artifact_id"] for row in artifacts])
@@ -908,7 +966,8 @@ def reviewed_norm_fixture_v2(owner):
             "ambiguity": []}, "context_closure": deepcopy(closure)})
         for index, (signer, role) in enumerate(zip(signers, auth.ROLES))]
     case.update(registry=registry, policy=policy, reviews=reviews, signers=signers,
-                evidence={declaration["component_id"]: declaration_raw, REVIEWED_PROCESS_ID: process_raw})
+                evidence={declaration["component_id"]: declaration_raw, REVIEWED_PROCESS_ID: process_raw,
+                          **(dependency_artifacts or {})})
     return case
 
 
@@ -1069,6 +1128,15 @@ def reviewed_refresh_manifest_v2(case):
     for ref in declaration["cross_references"]:
         artifacts.append({"artifact_id": ref["dependency_artifact_id"],
             "artifact_sha256": ref["dependency_sha256"], "dependency_pins": {kind: [] for kind in deps.PIN_KINDS}})
+    # Several legal units may refer to the same exact physical artifact.
+    # The graph manifest has one record per identity; the declaration retains
+    # every distinct use. Conflicting bytes under one identity must refuse.
+    by_identity = {}
+    for artifact in artifacts:
+        previous = by_identity.setdefault(artifact["artifact_id"], artifact)
+        if previous != artifact:
+            raise ValueError("conflicting fixture artifact identity")
+    artifacts = list(by_identity.values())
     case["manifest"] = deps.build_dependency_manifest(artifacts,
         [{"dependent_id": declaration["component_id"], "dependency_id": row["artifact_id"]}
          for row in artifacts[1:]], expected_artifact_ids=[row["artifact_id"] for row in artifacts])
@@ -1120,3 +1188,828 @@ def test_reviewed_v2_source_or_ir_payload_cannot_replace_independent_process_evi
     reviewed_resign_v2(case)
     report = assess_reviewed_fixture_v2(owner, case)
     assert report["semantic_use_eligible"] is False
+
+
+# Complete candidate syntax uses a single explicitly fictional, unreviewed
+# provision. It does not synthesize a three-unit review, signer or approval.
+def complete_candidate_fixture_v1():
+    from ipfs_datasets_py.logic.autoformal import corpus_source as sources
+    from ipfs_datasets_py.logic.autoformal import legal_relational_norm_v1 as relational
+
+    helper = load_fixture("_complete_candidate_relational_fixture", "test_legal_relational_norm_v1.py")
+    builder = helper.Builder()
+    request = helper.request_for(builder,
+        builder.binary("implies", builder.atom("CoveredOfficer", "officer"),
+            builder.modal("O", builder.atom("Assigns", "officer", "clerk"))),
+        [("CoveredOfficer", ("officer",)), ("Assigns", ("officer", "clerk"))],
+        [("officer", "forall"), ("clerk", "exists")])
+    raw = wire(request)
+    prepared = relational.prepare_relational_norm_v1(raw, expected_request_sha256=sha(raw))
+    text = "For this fictional proposal, every covered officer must assign a clerk. Café."
+    source_raw = text.encode("utf-8")
+    version = sources.build_source_version(source_id="fixture:candidate-use", release_id="fixture:candidate-act",
+        edition="fictional-candidate-edition", provision_id="fixture:candidate-use", raw_bytes=source_raw,
+        expected_raw_sha256=sha(source_raw), extracted_text=text, expected_extracted_sha256=sha(source_raw),
+        extraction_profile="identity/v1", normalization_profile="identity/v1", media_type="text/plain")
+    occurrence = sources.build_source_occurrence(version, expected_raw_sha256=sha(source_raw),
+        extracted_text=text, expected_extracted_sha256=sha(source_raw), start_char=0, end_char=len(text),
+        start_utf8=0, end_utf8=len(source_raw))
+    binding = {"source_version_cid": version["record_cid"], "occurrence_cid": occurrence["record_cid"],
+        "document_revision": "fixture:candidate-revision-1"}
+    context = {"jurisdiction": "fictional-candidate-jurisdiction", "instrument_id": "fixture:candidate-act",
+        "governing_edition": "fictional-candidate-edition", "legal_as_of_utc": EVALUATED,
+        "valid_from_utc": REVIEWED_START, "valid_until_utc": REVIEWED_END}
+    return {"profile": prepared["profile"], "typed_expression": prepared["typed_expression"],
+        "argument_roles": prepared["argument_roles"], "assumptions": [], "governing_context": context,
+        "interpretation_id": "fixture:candidate-unreviewed", "source_binding": binding,
+        "definition_uses": [], "cross_references": []}
+
+
+@pytest.fixture
+def complete_candidate_v1():
+    return complete_candidate_fixture_v1()
+
+
+def validate_complete_candidate_v1(owner, candidate, **overrides):
+    return owner.validate_complete_norm_candidate_v1(candidate,
+        **dict({"known_source_binding": deepcopy(candidate["source_binding"]),
+                "known_governing_context": deepcopy(candidate["governing_context"])}, **overrides))
+
+
+def test_candidate_v1_known_input_normalizer_needs_no_candidate_or_relational_preparation(owner, complete_candidate_v1, monkeypatch):
+    from ipfs_datasets_py.logic.autoformal import legal_relational_norm_v1 as relational
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError("known source facts must not invent a candidate or prepare a fragment")
+
+    monkeypatch.setattr(relational, "prepare_relational_norm_v1", forbidden)
+    binding, context = complete_candidate_v1["source_binding"], complete_candidate_v1["governing_context"]
+    result = owner.validate_complete_norm_known_input_v1(known_source_binding=binding, known_governing_context=context)
+    assert result == {"schema": owner.CANDIDATE_KNOWN_INPUT_SCHEMA,
+        "source_binding": binding, "governing_context": context}
+    result["source_binding"]["document_revision"] = "fixture:mutated-copy"
+    assert binding["document_revision"] == "fixture:candidate-revision-1"
+
+
+def test_candidate_v1_preserves_full_nine_fields_and_all_authority_stays_false(owner, complete_candidate_v1):
+    original = deepcopy(complete_candidate_v1)
+    result = validate_complete_candidate_v1(owner, complete_candidate_v1)
+    assert result["schema"] == owner.CANDIDATE_SYNTAX_SCHEMA
+    assert result["profile"] == owner.CANDIDATE_SYNTAX_PROFILE
+    assert result["status"] == "candidate_syntax_validated_unreviewed"
+    assert result["candidate"] == original
+    assert len(result["candidate"]) == 9
+    assert result["candidate_sha256"] == owner.norm_content_adjudication_sha256(original)
+    assert result["known_source_binding_matches"] is result["known_governing_context_matches"] is True
+    assert result["semantic_use_eligible"] is False
+    assert result["training_mask"] == result["evaluation_gold_mask"] == 0
+    assert result["authority"] and all(value is False for value in result["authority"].values())
+    result["authority"]["eligible_for_training"] = True
+    result["candidate"]["argument_roles"][1]["roles"].reverse()
+    assert complete_candidate_v1 == original
+    fresh = validate_complete_candidate_v1(owner, complete_candidate_v1)
+    assert fresh["authority"]["eligible_for_training"] is False
+    assert fresh["candidate"] == original
+
+
+def test_candidate_v1_does_not_replay_or_construct_admission_or_review(owner, complete_candidate_v1, monkeypatch):
+    def forbidden(*args, **kwargs):
+        raise AssertionError("candidate syntax cannot call legal review or admission")
+
+    for name in ("prepare_reviewed_norm_admission_v2", "assess_reviewed_norm_admission_v2",
+                 "validate_reviewed_norm_admission_v2", "_reviewed_body", "_reviewed_units"):
+        monkeypatch.setattr(owner, name, forbidden)
+    assert validate_complete_candidate_v1(owner, complete_candidate_v1)["semantic_use_eligible"] is False
+
+
+def test_candidate_v1_preserves_untrusted_definition_and_versioned_reference_declarations(owner, complete_candidate_v1):
+    candidate = complete_candidate_v1
+    candidate["definition_uses"] = [{"definition_unit_id": "fixture:unreviewed-definition",
+        "defined_predicate": "CoveredOfficer", "use_unit_id": "fixture:candidate-use",
+        "use_occurrence_cid": candidate["source_binding"]["occurrence_cid"],
+        "target_typed_paths": ["/root/arguments/0/arguments/0/arguments/0"], "applicability": "governing",
+        "interpretation_id": candidate["interpretation_id"], "evidence_refs": []}]
+    candidate["cross_references"] = [{"from_unit_id": "fixture:candidate-use",
+        "dependency_artifact_id": "fixture:unreviewed-external-dependency", "dependency_sha256": "4" * 64,
+        "version": "fictional-version-1", "evidence_refs": []}]
+    result = validate_complete_candidate_v1(owner, candidate)
+    assert result["candidate"]["definition_uses"] == candidate["definition_uses"]
+    assert result["candidate"]["cross_references"] == candidate["cross_references"]
+    assert result["authority"]["governing_definitions_verified"] is False
+    assert result["authority"]["cross_reference_dependencies_verified"] is False
+    assert result["training_mask"] == result["evaluation_gold_mask"] == 0
+
+
+@pytest.mark.parametrize("damage", ["source_extra", "source_missing", "source_cid", "occurrence_cid",
+    "revision_blank", "context_extra", "context_missing", "jurisdiction_type", "as_of_outside", "interval_reversed"])
+def test_candidate_v1_known_facts_require_complete_supported_shapes(owner, complete_candidate_v1, damage):
+    binding, context = deepcopy(complete_candidate_v1["source_binding"]), deepcopy(complete_candidate_v1["governing_context"])
+    if damage == "source_extra":
+        binding["source_authenticity_verified"] = True
+    elif damage == "source_missing":
+        binding.pop("document_revision")
+    elif damage == "source_cid":
+        binding["source_version_cid"] = "not-a-CID"
+    elif damage == "occurrence_cid":
+        binding["occurrence_cid"] = None
+    elif damage == "revision_blank":
+        binding["document_revision"] = " "
+    elif damage == "context_extra":
+        context["reviewed"] = True
+    elif damage == "context_missing":
+        context.pop("governing_edition")
+    elif damage == "jurisdiction_type":
+        context["jurisdiction"] = True
+    elif damage == "as_of_outside":
+        context["legal_as_of_utc"] = REVIEWED_END
+    else:
+        context["valid_from_utc"], context["valid_until_utc"] = context["valid_until_utc"], context["valid_from_utc"]
+    with pytest.raises(ValueError):
+        owner.validate_complete_norm_known_input_v1(known_source_binding=binding, known_governing_context=context)
+
+
+@pytest.mark.parametrize("field", ["profile", "typed_expression", "argument_roles", "assumptions",
+    "governing_context", "interpretation_id", "source_binding", "definition_uses", "cross_references"])
+def test_candidate_v1_rejects_each_omitted_full_target_field(owner, complete_candidate_v1, field):
+    binding, context = deepcopy(complete_candidate_v1["source_binding"]), deepcopy(complete_candidate_v1["governing_context"])
+    complete_candidate_v1.pop(field)
+    with pytest.raises(ValueError, match="nine-field"):
+        owner.validate_complete_norm_candidate_v1(complete_candidate_v1,
+            known_source_binding=binding, known_governing_context=context)
+
+
+@pytest.mark.parametrize("field", ["accepted", "review", "training_mask", "source_text"])
+def test_candidate_v1_rejects_extra_approval_or_hidden_text_fields(owner, complete_candidate_v1, field):
+    complete_candidate_v1[field] = True
+    with pytest.raises(ValueError, match="nine-field"):
+        validate_complete_candidate_v1(owner, complete_candidate_v1)
+
+
+@pytest.mark.parametrize("group,field", [("source_binding", "source_version_cid"), ("source_binding", "occurrence_cid"),
+    ("source_binding", "document_revision"), ("governing_context", "jurisdiction"),
+    ("governing_context", "instrument_id"), ("governing_context", "governing_edition"),
+    ("governing_context", "legal_as_of_utc"), ("governing_context", "valid_from_utc"),
+    ("governing_context", "valid_until_utc")])
+def test_candidate_v1_refuses_every_known_source_or_context_mismatch(owner, complete_candidate_v1, group, field):
+    binding, context = deepcopy(complete_candidate_v1["source_binding"]), deepcopy(complete_candidate_v1["governing_context"])
+    complete_candidate_v1[group][field] = "changed-candidate-value"
+    with pytest.raises(ValueError, match="differs"):
+        owner.validate_complete_norm_candidate_v1(complete_candidate_v1,
+            known_source_binding=binding, known_governing_context=context)
+
+
+@pytest.mark.parametrize("damage", ["profile", "nonempty_assumptions", "expression_metadata"])
+def test_candidate_v1_reports_known_unsupported_profiles_without_omission(owner, complete_candidate_v1, damage):
+    if damage == "profile":
+        complete_candidate_v1["profile"] = "unsupported-full-norm-profile/v99"
+    elif damage == "nonempty_assumptions":
+        complete_candidate_v1["assumptions"] = ["fictional premise not supported by this profile"]
+    else:
+        complete_candidate_v1["typed_expression"]["metadata"] = {"unparsed_qualification": "fictional extra meaning"}
+    original = deepcopy(complete_candidate_v1)
+    with pytest.raises(owner.CompleteNormCandidateUnsupportedError):
+        validate_complete_candidate_v1(owner, complete_candidate_v1)
+    assert complete_candidate_v1 == original
+
+
+@pytest.mark.parametrize("damage", ["missing_role", "duplicate_role", "repeated_label", "wrong_role_arity", "malformed_expression"])
+def test_candidate_v1_reuses_strict_typed_and_ordered_role_checks(owner, complete_candidate_v1, damage):
+    roles = complete_candidate_v1["argument_roles"]
+    if damage == "missing_role":
+        roles.pop()
+    elif damage == "duplicate_role":
+        roles[1] = deepcopy(roles[0])
+    elif damage == "repeated_label":
+        roles[1]["roles"] = ["officer", "officer"]
+    elif damage == "wrong_role_arity":
+        roles[1]["roles"] = ["officer"]
+    else:
+        complete_candidate_v1["typed_expression"]["root"]["arguments"] = []
+    with pytest.raises(ValueError):
+        validate_complete_candidate_v1(owner, complete_candidate_v1)
+
+
+@pytest.mark.parametrize("damage", ["definition_extra", "same_unit", "unknown_predicate", "bad_path", "duplicate_path",
+    "interpretation", "bad_occurrence", "bad_evidence", "cross_extra", "conflicting_dependency"])
+def test_candidate_v1_refuses_malformed_dependency_declarations(owner, complete_candidate_v1, damage):
+    candidate = complete_candidate_v1
+    use = {"definition_unit_id": "fixture:unreviewed-definition", "defined_predicate": "CoveredOfficer",
+        "use_unit_id": "fixture:candidate-use", "use_occurrence_cid": candidate["source_binding"]["occurrence_cid"],
+        "target_typed_paths": ["/root/arguments/0"], "applicability": "governing",
+        "interpretation_id": candidate["interpretation_id"], "evidence_refs": []}
+    ref = {"from_unit_id": "fixture:candidate-use", "dependency_artifact_id": "fixture:external-dependency",
+        "dependency_sha256": "4" * 64, "version": "fictional-v1", "evidence_refs": []}
+    candidate["definition_uses"], candidate["cross_references"] = [use], [ref]
+    if damage == "definition_extra":
+        use["approved"] = True
+    elif damage == "same_unit":
+        use["definition_unit_id"] = use["use_unit_id"]
+    elif damage == "unknown_predicate":
+        use["defined_predicate"] = "OtherPredicate"
+    elif damage == "bad_path":
+        use["target_typed_paths"] = ["/root/arguments/00"]
+    elif damage == "duplicate_path":
+        use["target_typed_paths"] *= 2
+    elif damage == "interpretation":
+        use["interpretation_id"] = "fixture:another-interpretation"
+    elif damage == "bad_occurrence":
+        use["use_occurrence_cid"] = "not-a-CID"
+    elif damage == "bad_evidence":
+        use["evidence_refs"] = [{"artifact_id": "fixture:untrusted-evidence", "sha256": "4" * 64, "verified": True}]
+    elif damage == "cross_extra":
+        ref["reviewed"] = True
+    else:
+        candidate["cross_references"].append(dict(ref, from_unit_id="fixture:another-use", dependency_sha256="5" * 64))
+    with pytest.raises(ValueError):
+        validate_complete_candidate_v1(owner, candidate)
+
+
+@pytest.mark.parametrize("damage", ["candidate", "known_binding", "known_context", "returned_expression", "returned_roles", "returned_authority"])
+def test_candidate_v1_fences_input_mutations_and_relational_contract_drift(owner, complete_candidate_v1, monkeypatch, damage):
+    from ipfs_datasets_py.logic.autoformal import legal_relational_norm_v1 as relational
+
+    binding, context = deepcopy(complete_candidate_v1["source_binding"]), deepcopy(complete_candidate_v1["governing_context"])
+    original = relational.prepare_relational_norm_v1
+
+    def mutate(*args, **kwargs):
+        report = original(*args, **kwargs)
+        if damage == "candidate":
+            complete_candidate_v1["argument_roles"][1]["roles"].reverse()
+        elif damage == "known_binding":
+            binding["document_revision"] = "fixture:changed-after-validation"
+        elif damage == "known_context":
+            context["governing_edition"] = "fictional-changed-after-validation"
+        elif damage == "returned_expression":
+            report["typed_expression"]["metadata"] = {"changed_after_validation": True}
+        elif damage == "returned_roles":
+            report["argument_roles"][1]["roles"].reverse()
+        else:
+            report["authority"]["admitted"] = True
+        return report
+
+    monkeypatch.setattr(relational, "prepare_relational_norm_v1", mutate)
+    with pytest.raises(ValueError):
+        owner.validate_complete_norm_candidate_v1(complete_candidate_v1,
+            known_source_binding=binding, known_governing_context=context)
+
+
+@pytest.mark.parametrize("damage", ["source_mutation", "output_expression", "output_authority"])
+def test_candidate_v1_final_serialization_cannot_change_inputs_or_grant_authority(owner, complete_candidate_v1, monkeypatch, damage):
+    original = norm._wire
+
+    def mutate(value):
+        if type(value) is dict and value.get("schema") == owner.CANDIDATE_SYNTAX_SCHEMA:
+            if damage == "source_mutation":
+                raw = original(value)
+                complete_candidate_v1["source_binding"]["document_revision"] = "fixture:serialization-race"
+                return raw
+            value = deepcopy(value)
+            if damage == "output_expression":
+                value["candidate"]["interpretation_id"] = "fixture:changed-serialized-candidate"
+            else:
+                value["authority"]["eligible_for_training"] = True
+        return original(value)
+
+    monkeypatch.setattr(norm, "_wire", mutate)
+    with pytest.raises(ValueError):
+        validate_complete_candidate_v1(owner, complete_candidate_v1)
+
+
+def candidate_path_declaration_v2(candidate, path):
+    """Unreviewed external-use metadata, never a source correspondence proof."""
+    candidate["definition_uses"] = [{"definition_unit_id": "fixture:unreviewed-definition",
+        "defined_predicate": "CoveredOfficer", "use_unit_id": "fixture:candidate-use",
+        "use_occurrence_cid": candidate["source_binding"]["occurrence_cid"],
+        "target_typed_paths": [path], "applicability": "governing",
+        "interpretation_id": candidate["interpretation_id"], "evidence_refs": []}]
+
+
+@pytest.mark.parametrize("path", ["/root/5", "/root/arguments", "/root/extension/5",
+    "/root/arguments/00", "/root/arguments/-1", "/root/unknown/0", "/root/extension",
+    "/root/extension/children", "/root/children/0", "root/arguments/0", "/root/arguments/+1",
+    "/root/arguments/١", "/root/arguments/0/", "/root/arguments//0", ""])
+def test_candidate_v2_typed_path_grammar_rejects_malformed_token_order(owner, complete_candidate_v1, path):
+    candidate_path_declaration_v2(complete_candidate_v1, path)
+    with pytest.raises(ValueError):
+        validate_complete_candidate_v1(owner, complete_candidate_v1)
+
+
+@pytest.mark.parametrize("path", ["/root", "/root/arguments/0", "/root/binders/0",
+    "/root/extension/children/0", "/root/arguments/0/extension/children/0/arguments/1",
+    "/root/arguments/0/binders/0"])
+def test_candidate_v2_typed_path_grammar_preserves_unreviewed_external_references(owner, complete_candidate_v1, path):
+    candidate_path_declaration_v2(complete_candidate_v1, path)
+    result = validate_complete_candidate_v1(owner, complete_candidate_v1)
+    assert result["candidate"]["definition_uses"][0]["target_typed_paths"] == [path]
+    # This finite grammar does not resolve an external use's AST or prove that
+    # the path selects a predicate to which the declared definition applies.
+    assert result["authority"]["governing_definitions_verified"] is False
+    assert result["authority"]["source_correspondence_verified"] is False
+    assert result["semantic_use_eligible"] is False
+
+
+def caller_selection_fixture_v2():
+    # A separate caller declaration, never derived by reading a target field.
+    # This opaque identity has no reviewed meaning or interpretation policy.
+    return {"schema": "caller-known-interpretation-selection/v1",
+        "interpretation_id": "fixture:candidate-unreviewed", "selection_mode": "identifier_only"}
+
+
+def validate_identifier_bound_candidate_v2(owner, candidate, *, selection=None):
+    return owner.validate_complete_norm_candidate_v2(candidate,
+        known_source_binding=deepcopy(candidate["source_binding"]),
+        known_governing_context=deepcopy(candidate["governing_context"]),
+        known_selection_context=caller_selection_fixture_v2() if selection is None else selection)
+
+
+def test_candidate_v3_known_selection_normalizer_has_no_candidate_or_meaning_input(owner, complete_candidate_v1, monkeypatch):
+    def forbidden(*args, **kwargs):
+        raise AssertionError("known selection normalization must not invent or validate a target")
+
+    monkeypatch.setattr(owner, "validate_complete_norm_candidate_v1", forbidden)
+    selection = caller_selection_fixture_v2()
+    result = owner.validate_complete_norm_known_input_v2(
+        known_source_binding=complete_candidate_v1["source_binding"],
+        known_governing_context=complete_candidate_v1["governing_context"], known_selection_context=selection)
+    assert result == {"schema": owner.CANDIDATE_KNOWN_INPUT_SCHEMA_V2,
+        "source_binding": complete_candidate_v1["source_binding"],
+        "governing_context": complete_candidate_v1["governing_context"],
+        "selection_context": selection, "semantic_selection_supported": False}
+    result["selection_context"]["interpretation_id"] = "fixture:mutated-copy"
+    assert selection["interpretation_id"] == "fixture:candidate-unreviewed"
+
+
+def test_candidate_v3_identifier_equality_preserves_all_predicted_fields_and_no_authority(owner, complete_candidate_v1):
+    before = deepcopy(complete_candidate_v1)
+    result = validate_identifier_bound_candidate_v2(owner, complete_candidate_v1)
+    assert result["schema"] == owner.CANDIDATE_SYNTAX_SCHEMA_V2
+    assert result["profile"] == owner.CANDIDATE_SYNTAX_PROFILE_V2
+    assert result["candidate"] == before
+    assert len(result["candidate"]) == 9
+    assert result["known_interpretation_identifier_matches"] is True
+    assert result["selection_context"] == caller_selection_fixture_v2()
+    assert result["semantic_selection_supported"] is False
+    assert result["semantic_use_eligible"] is False
+    assert all(value is False for value in result["authority"].values())
+    assert result["training_mask"] == result["evaluation_gold_mask"] == 0
+    result["selection_context"]["interpretation_id"] = "fixture:changed-result-only"
+    assert complete_candidate_v1 == before
+
+
+def test_candidate_v3_same_opaque_id_is_not_a_meaning_or_role_equivalence_claim(owner, complete_candidate_v1):
+    alternate = deepcopy(complete_candidate_v1)
+    alternate["argument_roles"][1]["roles"].reverse()
+    first = validate_identifier_bound_candidate_v2(owner, complete_candidate_v1)
+    second = validate_identifier_bound_candidate_v2(owner, alternate)
+    assert first["candidate"]["interpretation_id"] == second["candidate"]["interpretation_id"]
+    assert first["candidate_sha256"] != second["candidate_sha256"]
+    assert first["candidate"]["argument_roles"] != second["candidate"]["argument_roles"]
+    assert first["semantic_selection_supported"] is second["semantic_selection_supported"] is False
+    assert first["authority"]["legal_meaning_verified"] is second["authority"]["legal_meaning_verified"] is False
+
+
+@pytest.mark.parametrize("damage", ["missing", "extra_target", "extra_meaning", "schema", "blank_id", "id_type", "mode_type"])
+def test_candidate_v3_known_selection_is_a_closed_explicit_declaration(owner, complete_candidate_v1, damage):
+    selection = caller_selection_fixture_v2()
+    if damage == "missing":
+        selection.pop("interpretation_id")
+    elif damage == "extra_target":
+        selection["reference_target"] = deepcopy(complete_candidate_v1)
+    elif damage == "extra_meaning":
+        selection["meaning_description"] = "Unprovided policy must not silently become supported."
+    elif damage == "schema":
+        selection["schema"] = "unprovided-interpretation-policy/v99"
+    elif damage == "blank_id":
+        selection["interpretation_id"] = ""
+    elif damage == "id_type":
+        selection["interpretation_id"] = True
+    else:
+        selection["selection_mode"] = None
+    with pytest.raises(ValueError):
+        owner.validate_complete_norm_known_input_v2(known_source_binding=complete_candidate_v1["source_binding"],
+            known_governing_context=complete_candidate_v1["governing_context"], known_selection_context=selection)
+
+
+@pytest.mark.parametrize("mode", ["meaning_policy", "all_interpretations", "meaning_resolved"])
+def test_candidate_v3_meaning_resolving_policy_modes_are_explicitly_unsupported(owner, complete_candidate_v1, mode):
+    selection = dict(caller_selection_fixture_v2(), selection_mode=mode)
+    with pytest.raises(owner.CompleteNormCandidateUnsupportedError, match="policy is unsupported"):
+        validate_identifier_bound_candidate_v2(owner, complete_candidate_v1, selection=selection)
+
+
+@pytest.mark.parametrize("identity", ["fixture:another-choice", "fixture:only-the-target-declares-this", None])
+def test_candidate_v3_changed_or_missing_predicted_identity_is_never_filled(owner, complete_candidate_v1, identity):
+    complete_candidate_v1["interpretation_id"] = identity
+    before = deepcopy(complete_candidate_v1)
+    with pytest.raises(ValueError, match="identity differs"):
+        validate_identifier_bound_candidate_v2(owner, complete_candidate_v1)
+    assert complete_candidate_v1 == before
+
+
+def test_candidate_v3_omitted_interpretation_field_is_not_completed_from_known_context(owner, complete_candidate_v1):
+    complete_candidate_v1.pop("interpretation_id")
+    before = deepcopy(complete_candidate_v1)
+    with pytest.raises(ValueError, match="nine-field"):
+        validate_identifier_bound_candidate_v2(owner, complete_candidate_v1)
+    assert complete_candidate_v1 == before
+
+
+def test_candidate_v3_definition_use_identity_must_match_the_explicit_choice(owner, complete_candidate_v1):
+    candidate_path_declaration_v2(complete_candidate_v1, "/root/arguments/0")
+    complete_candidate_v1["definition_uses"][0]["interpretation_id"] = "fixture:another-definition-choice"
+    with pytest.raises(ValueError, match="interpretation"):
+        validate_identifier_bound_candidate_v2(owner, complete_candidate_v1)
+
+
+def test_candidate_v3_default_v1_remains_an_unreviewed_hypothesis_without_selection_input(owner, complete_candidate_v1):
+    complete_candidate_v1["interpretation_id"] = "fixture:another-unreviewed-hypothesis"
+    result = validate_complete_candidate_v1(owner, complete_candidate_v1)
+    assert result["schema"] == owner.CANDIDATE_SYNTAX_SCHEMA
+    assert result["candidate"]["interpretation_id"] == "fixture:another-unreviewed-hypothesis"
+    assert "selection_context" not in result
+    assert result["authority"]["interpretation_accepted"] is False
+
+
+def test_candidate_v3_selection_mutation_during_relational_validation_is_refused(owner, complete_candidate_v1, monkeypatch):
+    from ipfs_datasets_py.logic.autoformal import legal_relational_norm_v1 as relational
+
+    selection = caller_selection_fixture_v2()
+    original = relational.prepare_relational_norm_v1
+
+    def mutate(*args, **kwargs):
+        report = original(*args, **kwargs)
+        selection["interpretation_id"] = "fixture:changed-during-validation"
+        return report
+
+    monkeypatch.setattr(relational, "prepare_relational_norm_v1", mutate)
+    with pytest.raises(ValueError, match="inputs changed"):
+        validate_identifier_bound_candidate_v2(owner, complete_candidate_v1, selection=selection)
+
+
+@pytest.mark.parametrize("stage", ["known", "candidate"])
+@pytest.mark.parametrize("damage", ["input_selection", "serialized_selection", "semantic_claim"])
+def test_candidate_v3_selection_serialization_cannot_rewrite_facts_or_claim_meaning(owner, complete_candidate_v1, monkeypatch, stage, damage):
+    selection = caller_selection_fixture_v2()
+    original = norm._wire
+    schema = owner.CANDIDATE_KNOWN_INPUT_SCHEMA_V2 if stage == "known" else owner.CANDIDATE_SYNTAX_SCHEMA_V2
+
+    def mutate(value):
+        if type(value) is dict and value.get("schema") == schema:
+            if damage == "input_selection":
+                raw = original(value)
+                selection["interpretation_id"] = "fixture:changed-during-serialization"
+                return raw
+            value = deepcopy(value)
+            if damage == "serialized_selection":
+                value["selection_context"]["interpretation_id"] = "fixture:rewritten-output-selection"
+            else:
+                value["semantic_selection_supported"] = True
+        return original(value)
+
+    monkeypatch.setattr(norm, "_wire", mutate)
+    with pytest.raises(ValueError):
+        validate_identifier_bound_candidate_v2(owner, complete_candidate_v1, selection=selection)
+
+
+@pytest.mark.parametrize("damage", ["authority", "training_mask", "extra_policy"])
+def test_candidate_v3_delegated_syntax_cannot_supply_meaning_or_approval_fields(owner, complete_candidate_v1, monkeypatch, damage):
+    original = owner.validate_complete_norm_candidate_v1
+
+    def mutate(*args, **kwargs):
+        report = original(*args, **kwargs)
+        if damage == "authority":
+            report["authority"]["interpretation_accepted"] = True
+        elif damage == "training_mask":
+            report["training_mask"] = 1
+        else:
+            report["meaning_policy_applied"] = True
+        return report
+
+    monkeypatch.setattr(owner, "validate_complete_norm_candidate_v1", mutate)
+    with pytest.raises(ValueError):
+        validate_identifier_bound_candidate_v2(owner, complete_candidate_v1)
+
+
+@pytest.fixture
+def mixed_candidate_v3():
+    from tests.unit.logic.autoformal import test_legal_reviewed_norm_admission_v3 as mixed
+    candidate = complete_candidate_fixture_v1()
+    request = mixed.mixed_request()
+    candidate.update(profile=request['profile'], typed_expression=request['expression'],
+                     argument_roles=request['argument_roles'])
+    # A syntax-only proposal: equality to a declared source binding cannot
+    # establish that this different formula faithfully translates its text.
+    known = dict(known_source_binding=deepcopy(candidate['source_binding']),
+        known_governing_context=deepcopy(candidate['governing_context']),
+        known_selection_context=caller_selection_fixture_v2())
+    return candidate, known
+
+
+def test_candidate_mixed_v3_delegates_genuine_many_sorted_lowering_without_authority(owner, mixed_candidate_v3, monkeypatch):
+    from ipfs_datasets_py.logic.autoformal import legal_relational_norm_v1 as relational
+    candidate, known = mixed_candidate_v3; original = deepcopy(candidate)
+    prepare = relational.prepare_mixed_relational_norm_v1; calls = []
+    def observed(raw, **kwargs):
+        request = json.loads(raw); calls.append(request)
+        assert kwargs['expected_request_sha256'] == sha(raw)
+        assert request['profile'] == relational.MIXED_PROFILE and request['source_binding'] is None
+        return prepare(raw, **kwargs)
+    monkeypatch.setattr(relational, 'prepare_mixed_relational_norm_v1', observed)
+    result = owner.validate_complete_norm_candidate_v3(candidate, **known)
+    assert len(calls) == 1
+    assert result['schema'] == owner.CANDIDATE_SYNTAX_SCHEMA_V3
+    assert result['profile'] == owner.CANDIDATE_SYNTAX_PROFILE_V3
+    assert result['candidate'] == original and candidate == original
+    assert result['candidate_sha256'] == owner.norm_content_adjudication_sha256(original)
+    assert result['known_interpretation_identifier_matches'] is True
+    assert result['semantic_selection_supported'] is result['semantic_use_eligible'] is False
+    assert result['authority'] and all(value is False for value in result['authority'].values())
+    assert result['training_mask'] == result['evaluation_gold_mask'] == 0
+    result['candidate']['argument_roles'][1]['roles'].reverse()
+    assert candidate == original
+
+
+def test_candidate_mixed_v3_preserves_legacy_refusals(owner, mixed_candidate_v3):
+    candidate, known = mixed_candidate_v3
+    with pytest.raises(owner.CompleteNormCandidateUnsupportedError):
+        owner.validate_complete_norm_candidate_v1(candidate, **{k: v for k, v in known.items() if k != 'known_selection_context'})
+    with pytest.raises(owner.CompleteNormCandidateUnsupportedError):
+        owner.validate_complete_norm_candidate_v2(candidate, **known)
+
+
+def test_candidate_mixed_v3_retains_object_route_under_distinct_report_identity(owner, complete_candidate_v1):
+    known = dict(known_source_binding=deepcopy(complete_candidate_v1['source_binding']),
+        known_governing_context=deepcopy(complete_candidate_v1['governing_context']),
+        known_selection_context=caller_selection_fixture_v2())
+    old = owner.validate_complete_norm_candidate_v2(complete_candidate_v1, **known)
+    new = owner.validate_complete_norm_candidate_v3(complete_candidate_v1, **known)
+    assert old['schema'] != new['schema'] and old['profile'] != new['profile']
+    assert {k: v for k, v in old.items() if k not in ('schema', 'profile')} == {k: v for k, v in new.items() if k not in ('schema', 'profile')}
+
+
+@pytest.mark.parametrize('field', ['profile', 'typed_expression', 'argument_roles', 'assumptions',
+    'governing_context', 'interpretation_id', 'source_binding', 'definition_uses', 'cross_references'])
+def test_candidate_mixed_v3_requires_every_predicted_field(owner, mixed_candidate_v3, field):
+    candidate, known = mixed_candidate_v3; candidate.pop(field)
+    with pytest.raises(ValueError, match='nine-field'):
+        owner.validate_complete_norm_candidate_v3(candidate, **known)
+
+
+@pytest.mark.parametrize('which', ['source', 'context', 'selection'])
+def test_candidate_mixed_v3_rejects_independent_fact_mismatches_before_lowering(owner, mixed_candidate_v3, monkeypatch, which):
+    from ipfs_datasets_py.logic.autoformal import legal_relational_norm_v1 as relational
+    candidate, known = mixed_candidate_v3
+    if which == 'source': known['known_source_binding']['document_revision'] = 'fixture:different-revision'
+    elif which == 'context': known['known_governing_context']['governing_edition'] = 'fixture:different-edition'
+    else: known['known_selection_context']['interpretation_id'] = 'fixture:different-selection'
+    monkeypatch.setattr(relational, 'prepare_mixed_relational_norm_v1', lambda *_a, **_k: pytest.fail('mismatched facts reached lowering'))
+    with pytest.raises(ValueError, match='differs'):
+        owner.validate_complete_norm_candidate_v3(candidate, **known)
+
+
+@pytest.mark.parametrize('damage', ['authority', 'source_bound', 'source_translation_performed',
+    'native_build_executed', 'training_mask', 'evaluation_gold_mask', 'semantic_mask', 'consumer_mask'])
+def test_candidate_mixed_v3_refuses_delegated_authority_or_execution(owner, mixed_candidate_v3, monkeypatch, damage):
+    from ipfs_datasets_py.logic.autoformal import legal_relational_norm_v1 as relational
+    candidate, known = mixed_candidate_v3; original = relational.prepare_mixed_relational_norm_v1
+    def mutate(*args, **kwargs):
+        report = original(*args, **kwargs)
+        if damage == 'authority': report['authority']['source_translation_verified'] = True
+        elif damage.endswith('_mask'): report[damage] = 1
+        else: report[damage] = True
+        return report
+    monkeypatch.setattr(relational, 'prepare_mixed_relational_norm_v1', mutate)
+    with pytest.raises(ValueError):
+        owner.validate_complete_norm_candidate_v3(candidate, **known)
+
+
+@pytest.mark.parametrize('damage', ['unknown-profile', 'nonempty-assumptions', 'selection-policy'])
+def test_candidate_mixed_v3_keeps_unsupported_constructs_explicit(owner, mixed_candidate_v3, damage):
+    candidate, known = mixed_candidate_v3
+    if damage == 'unknown-profile': candidate['profile'] = 'unknown-many-sorted/v999'
+    elif damage == 'nonempty-assumptions': candidate['assumptions'] = ['unrepresented fictional premise']
+    else: known['known_selection_context']['selection_mode'] = 'meaning-resolved'
+    with pytest.raises(owner.CompleteNormCandidateUnsupportedError):
+        owner.validate_complete_norm_candidate_v3(candidate, **known)
+
+
+@pytest.mark.parametrize("conflicting_bytes", [False, True])
+def test_reviewed_v2_manifest_refresh_preserves_shared_uses_and_refuses_conflicting_bytes(
+        reviewed_case_v2, conflicting_bytes):
+    case = reviewed_case_v2
+    dependency_id = "fixture:shared-physical-crosswalk"
+    dependency_raw = b"fictional shared crosswalk; no statutory review"
+    process = dict(artifact_id=REVIEWED_PROCESS_ID,
+                   sha256=sha(case["evidence"][REVIEWED_PROCESS_ID]))
+    references = [dict(from_unit_id=unit["unit_id"], dependency_artifact_id=dependency_id,
+        dependency_sha256=sha(dependency_raw), version="fictional-shared/v1",
+        evidence_refs=[deepcopy(process)]) for unit in case["declaration"]["units"]]
+    assert len(references) == 3
+    if conflicting_bytes:
+        references[1]["dependency_sha256"] = sha(dependency_raw + b" changed")
+    case["declaration"]["cross_references"] = references
+    units_before = deepcopy(case["declaration"]["units"])
+    references_before = deepcopy(references)
+    manifest_before = deepcopy(case["manifest"])
+    if conflicting_bytes:
+        with pytest.raises(ValueError, match="conflicting fixture artifact identity"):
+            reviewed_refresh_manifest_v2(case)
+        assert case["manifest"] == manifest_before
+    else:
+        reviewed_refresh_manifest_v2(case)
+        manifest = case["manifest"]
+        expected = [case["declaration"]["component_id"]]
+        for unit in units_before:
+            expected.extend([unit["source_artifact_id"], unit["ir_artifact_id"]])
+        expected.append(dependency_id)
+        assert manifest["expected_artifact_ids"] == expected
+        assert len(expected) == len(set(expected)) == 8
+        assert [edge for edge in manifest["edges"] if edge["dependency_id"] == dependency_id] == [
+            dict(dependent_id=case["declaration"]["component_id"], dependency_id=dependency_id)]
+        assert case["observed_artifacts"][dependency_id] == sha(dependency_raw)
+    assert case["declaration"]["units"] == units_before
+    assert case["declaration"]["cross_references"] == references_before
+
+
+# Repeated-source controls are fictional and keep the source text and typed IR
+# together. Alternate raw encodings are not additional legal uses.
+def reviewed_repeated_permission_source_v2(case, mutation):
+    from ipfs_datasets_py.logic.autoformal import corpus_source as sources
+    alternate, original = case["declaration"]["units"][1:]
+    old, alternate_old = original["source_version"], alternate["source_version"]
+    text = case["source_inputs"][original["unit_id"]]["extracted_text"]
+    original_length = len(text)
+    identity = {key: old[key] for key in ("source_id", "release_id", "edition", "provision_id")}
+    if mutation == "different_provision":
+        identity = {key: alternate_old[key] for key in identity}
+    elif mutation == "different_release":
+        identity["release_id"] += ":separately-reviewed-legal-release"
+    elif mutation == "different_edition":
+        identity["edition"] += ":separately-reviewed-legal-edition"
+    alternate["document_revision"] = original["document_revision"]
+    if mutation in ("document_revision_label", "different_view_and_document_revision_label"):
+        alternate["document_revision"] += ":artifact-label-only"
+    for field in ("coverage", "relational_request_sha256"):
+        alternate[field] = deepcopy(original[field])
+    if "relational_profile" in original:
+        alternate["relational_profile"] = original["relational_profile"]
+    case["relational_inputs"][alternate["unit_id"]] = deepcopy(case["relational_inputs"][original["unit_id"]])
+    original_use = next(row for row in case["declaration"]["definition_uses"]
+                        if row["use_unit_id"] == original["unit_id"])
+    alternate_use = next(row for row in case["declaration"]["definition_uses"]
+                         if row["use_unit_id"] == alternate["unit_id"])
+    alternate_use["target_typed_paths"] = deepcopy(original_use["target_typed_paths"])
+
+    def install(unit, ids, view, raw, start, end, extraction):
+        assert (raw.decode("utf-8-sig") if extraction == "fixture:utf8-sig/v1" else raw.decode("utf-8")) == view
+        version = sources.build_source_version(**ids, raw_bytes=raw, expected_raw_sha256=sha(raw),
+            extracted_text=view, expected_extracted_sha256=sha(view.encode("utf-8")),
+            extraction_profile=extraction, normalization_profile="identity/v1", media_type="text/plain")
+        occurrence = sources.build_source_occurrence(version, expected_raw_sha256=sha(raw),
+            extracted_text=view, expected_extracted_sha256=sha(view.encode("utf-8")),
+            start_char=start, end_char=end, start_utf8=len(view[:start].encode("utf-8")),
+            end_utf8=len(view[:end].encode("utf-8")))
+        unit.update(source_version=version, occurrence=occurrence)
+        case["source_inputs"][unit["unit_id"]] = {"raw_bytes": raw, "extracted_text": view}
+        for row in unit["coverage"]:
+            row.update({key: occurrence[key] for key in ("start_char", "end_char", "start_utf8", "end_utf8")})
+        use = next(row for row in case["declaration"]["definition_uses"] if row["use_unit_id"] == unit["unit_id"])
+        use["use_occurrence_cid"] = occurrence["record_cid"]
+
+    if mutation in ("nonoverlapping_paragraphs", "nonoverlapping_paragraphs_different_source_id"):
+        view = text + "\n" + text
+        raw = view.encode("utf-8")
+        install(original, identity, view, raw, 0, original_length, "identity/v1")
+        alternate_identity = dict(identity)
+        if mutation == "nonoverlapping_paragraphs_different_source_id":
+            alternate_identity["source_id"] = alternate["unit_id"]
+        install(alternate, alternate_identity, view, raw, original_length + 1, len(view), "identity/v1")
+    elif mutation in ("different_unaligned_view", "different_view_and_document_revision_label"):
+        view = "\n" + text
+        install(alternate, identity, view, view.encode("utf-8"), 1, len(view), "identity/v1")
+    elif mutation == "physical_alias":
+        identity = {key: alternate_old[key] for key in identity}
+        install(alternate, identity, text, text.encode("utf-8"), 0, original_length, "identity/v1")
+    else:
+        raw = b"\xef\xbb\xbf" + text.encode("utf-8")
+        start, end = (1, original_length - 1) if mutation == "overlapping_repackage" else (0, original_length)
+        install(alternate, identity, text, raw, start, end, "fixture:utf8-sig/v1")
+    return original, alternate
+
+
+def reviewed_refresh_signed_preparation_v2(owner, case):
+    reviewed_refresh_manifest_v2(case)
+    case["preparation"] = owner.prepare_reviewed_norm_admission_v2(case["declaration"],
+        **reviewed_prepare_arguments_v2(case))
+    subject = case["preparation"]["subject"]
+    raw = norm._wire(case["declaration"])
+    case["evidence"][case["declaration"]["component_id"]] = raw
+    for claim in case["reviews"]:
+        claim["subject"] = deepcopy(subject)
+        claim["interpretation"].update(reviewed_graph_sha256=subject["graph_sha256"],
+                                       reviewed_ast_sha256=subject["ast_sha256"])
+        for obligation in claim["context_closure"]["obligations"]:
+            obligation["evidence_refs"][0] = {"artifact_id": case["declaration"]["component_id"], "sha256": sha(raw)}
+    reviewed_resign_v2(case)
+
+
+@pytest.mark.parametrize("mutation,reason", [
+    ("duplicate_repackage", "logical source occurrence"),
+    ("overlapping_repackage", "overlapping logical source"),
+    ("document_revision_label", "logical source occurrence"),
+    ("different_unaligned_view", "unsupported source-view alignment"),
+    ("different_view_and_document_revision_label", "unsupported source-view alignment"),
+    ("physical_alias", "physical occurrence"),
+])
+def test_reviewed_v2_raw_repackaging_and_artifact_labels_do_not_create_legal_uses(owner, reviewed_case_v2, mutation, reason):
+    case = reviewed_case_v2
+    original, alternate = reviewed_repeated_permission_source_v2(case, mutation)
+    if mutation != "physical_alias":
+        assert original["source_version"]["raw_artifact"]["sha256"] != alternate["source_version"]["raw_artifact"]["sha256"]
+    reviewed_refresh_manifest_v2(case)
+    with pytest.raises(ValueError, match=reason):
+        owner.prepare_reviewed_norm_admission_v2(case["declaration"], **reviewed_prepare_arguments_v2(case))
+    # The public assessment replays original sources; an old ready preparation
+    # cannot substitute for the newly offered duplicate source population.
+    with pytest.raises(ValueError, match=reason):
+        assess_reviewed_fixture_v2(owner, case)
+
+
+@pytest.mark.parametrize("mutation", ["different_provision", "different_release", "different_edition", "nonoverlapping_paragraphs", "nonoverlapping_paragraphs_different_source_id"])
+def test_reviewed_v2_distinct_legal_identities_and_nonoverlapping_uses_survive(owner, reviewed_case_v2, mutation):
+    case = reviewed_case_v2
+    original, alternate = reviewed_repeated_permission_source_v2(case, mutation)
+    if mutation == "nonoverlapping_paragraphs_different_source_id":
+        first, second = original["source_version"], alternate["source_version"]
+        assert first["raw_artifact"]["sha256"] == second["raw_artifact"]["sha256"]
+        assert first["extracted_view"]["sha256"] == second["extracted_view"]["sha256"]
+        assert first["source_id"] != second["source_id"] == alternate["unit_id"]
+        assert all(first[field] == second[field] for field in ("release_id", "edition", "provision_id"))
+        assert original["occurrence"]["end_char"] < alternate["occurrence"]["start_char"]
+        assert original["occurrence"]["end_utf8"] < alternate["occurrence"]["start_utf8"]
+    reviewed_refresh_signed_preparation_v2(owner, case)
+    report = assess_reviewed_fixture_v2(owner, case)
+    assert report["semantic_use_eligible"] is True and report["blockers"] == []
+    assert report["fixture_only"] and report["training_mask"] == report["evaluation_gold_mask"] == 0
+    assert report["Lean_admitted"] is report["proof_authority"] is report["corpus_admitted"] is False
+    assert len({row["occurrence_cid"] for row in report["units"] if row["kind"] == "norm"}) == 2
+    assert original["occurrence"]["span_text"] == alternate["occurrence"]["span_text"]
+
+
+def test_reviewed_v2_alternate_view_of_same_raw_paragraph_requires_distinct_use_witness(owner, reviewed_case_v2):
+    from ipfs_datasets_py.logic.autoformal import corpus_source as sources
+    # Preparation-only fictional counterexample: no modified signed reviews
+    # are submitted to an assessor, and no statutory meaning is asserted.
+    case = reviewed_case_v2
+    original, relabeled = case["declaration"]["units"][1:]
+    assert original["kind"] == relabeled["kind"] == "norm"
+    source_input = deepcopy(case["source_inputs"][original["unit_id"]])
+    raw, first_view = source_input["raw_bytes"], source_input["extracted_text"]
+    first_version, first_occurrence = original["source_version"], original["occurrence"]
+    second_view = "\n" + first_view
+    raw_sha = sha(raw)
+    second_view_sha = sha(second_view.encode("utf-8"))
+    assert first_version["raw_artifact"]["sha256"] == raw_sha
+    assert second_view_sha != first_version["extracted_view"]["sha256"]
+    version = sources.build_source_version(
+        source_id=relabeled["unit_id"], release_id=first_version["release_id"],
+        edition=first_version["edition"], provision_id=first_version["provision_id"],
+        raw_bytes=raw, expected_raw_sha256=raw_sha,
+        extracted_text=second_view, expected_extracted_sha256=second_view_sha,
+        extraction_profile="fixture-leading-newline-derived-view/v1",
+        normalization_profile="preserved-paragraph-leading-newline/v1", media_type="text/plain")
+    occurrence = sources.build_source_occurrence(
+        version, expected_raw_sha256=raw_sha, extracted_text=second_view,
+        expected_extracted_sha256=second_view_sha,
+        start_char=first_occurrence["start_char"] + 1,
+        end_char=first_occurrence["end_char"] + 1,
+        start_utf8=first_occurrence["start_utf8"] + 1,
+        end_utf8=first_occurrence["end_utf8"] + 1)
+    assert sources.validate_source_version(version, expected_raw_sha256=raw_sha,
+        raw_bytes=raw, extracted_text=second_view,
+        expected_extracted_sha256=second_view_sha) == version
+    assert sources.validate_source_occurrence(occurrence, source_version=version,
+        expected_raw_sha256=raw_sha, extracted_text=second_view,
+        expected_extracted_sha256=second_view_sha) == occurrence
+    assert version["raw_artifact"] == first_version["raw_artifact"]
+    assert occurrence["span_text"] == first_occurrence["span_text"]
+    assert occurrence["span_sha256"] == first_occurrence["span_sha256"]
+    assert occurrence["record_cid"] != first_occurrence["record_cid"]
+    relabeled.update(source_version=version, occurrence=occurrence,
+        document_revision=original["document_revision"])
+    case["source_inputs"][relabeled["unit_id"]] = {
+        "raw_bytes": raw, "extracted_text": second_view}
+    for coverage in relabeled["coverage"]:
+        coverage.update({key: occurrence[key] for key in
+            ("start_char", "end_char", "start_utf8", "end_utf8")})
+    use = next(row for row in case["declaration"]["definition_uses"]
+               if row["use_unit_id"] == relabeled["unit_id"])
+    use["use_occurrence_cid"] = occurrence["record_cid"]
+    reviewed_refresh_manifest_v2(case)
+    assert len(case["declaration"]["units"]) == 3
+    assert len(case["declaration"]["definition_uses"]) == 2
+    # Different view coordinates cannot establish a second operative physical
+    # use. This declaration supplies no common physical-coordinate witness.
+    with pytest.raises(ValueError, match=r"same raw|cross.view|physical.*(witness|coordinate)|distinct.*(use|view)"):
+        owner.prepare_reviewed_norm_admission_v2(
+            case["declaration"], **reviewed_prepare_arguments_v2(case))

@@ -1,0 +1,212 @@
+{
+  "date": "2026-11-10",
+  "evidence_id": "sdk-fixture-cleanup-existing-plugin-safe57-20261110",
+  "focused57": {
+    "JUnit_seconds": 2.96,
+    "Tool": {
+      "final_chunk": "da5d3d",
+      "launch_chunk": "8ea57c",
+      "returncode": 0,
+      "session_id": 88416
+    },
+    "artifact_bytes": 165781,
+    "claim_id": "1feb3194c5a844e1af06af4204aeec5f",
+    "complete_owned_attempt_full9_hash_inventory": true,
+    "errors": 0,
+    "failures": 0,
+    "functions": 18,
+    "manifest_self_files": 1,
+    "normal_original_Popen_wait_native_process_Source_closed": true,
+    "operational_full9_unchanged": 10,
+    "ordinary_scratch_observation": {
+      "live_exception_active": false,
+      "ordinary_absences_observed": 0,
+      "request_sha256": "cef1050db6dea4e8f5ca9842469f30ffb75227b67909dcf3f2a4045bdceefe57",
+      "schema": "owned-validation-ordinary-scratch-live/v1",
+      "unseen_leaf_ownership_attested": false,
+      "whole_census_resampling": false
+    },
+    "ordinary_single_link_files": 70,
+    "original_custody_errors": [],
+    "request_sha256": "cef1050db6dea4e8f5ca9842469f30ffb75227b67909dcf3f2a4045bdceefe57",
+    "runtime_source_pins_unchanged": 236,
+    "scope": "Existing c19 plugin API/default/ordinary-session-factory routing on CLI8e7/SDK421f/c19. All57 use ordinary files/directories; no real unsafe-leaf or new hardlink/V6 transition is qualified.",
+    "sealed_rows": 69,
+    "skips": 0,
+    "storage_durably_released": true,
+    "storage_promise_bytes": 16777216,
+    "tests": 57
+  },
+  "history_preserved": {
+    "all_other_failed_claims": "Earlier retained/ACTIVE claims, unknown historical retention causes and exceptional closeouts remain unchanged. No claim recovery/rearm/release is authorized.",
+    "bad66_historical_wording": "A new maintained top section will record adopted bad66. Earlier sections accurately retain their former unadopted cutoff and will not be rewritten.",
+    "peer_progress": "Preserve all latest peer prose tails/resume pointers/catalog entries/components/24 ordered task statuses/holds; fresh WRITE beforeimages authoritative.",
+    "prior_infrastructure_failure": "Original c1740c7a5d2b4a03a2b1803d33480d9b remained retained16MiB after attach-time ledger-lock refusal, with no body/JUnit. It is not the intended plugin RED.",
+    "qualification_generations": "The old API60 on SDKdc019, namespace62, Host214 and recovery408 retain their original exact source cutoffs. No totals are pooled with this57. The current728 includes allold664 plus64 peer H cases; this57 does not qualify those unexecuted cases or proposed81aa.",
+    "unrun57_prior_generation": "The first planned57 packet bound oldbad66 and was refused by fresh Source preflight after peer421f appeared. No body/runtime occurred. Its preparation is historical; current successor pins421f and preserves all original18selectors/57cases and original budgets."
+  },
+  "limits": [
+    "Focused57 software qualification only; no whole728/old664 or appendedH64 regression qualification.",
+    "The restored existing plugin API is exercised with ordinary fixtures. No real unsafe-leaf permission, new V6/hardlink profile or physical-scope expansion is authorized.",
+    "Genuine standard420 parent, new selected539 root and separate selected native-family/profile activation remain unqualified. Private2738 control remains reusable after exact current-source packet rebinding.",
+    "No model training/weights/accuracy, statutory fidelity or Lean corpus admission. Failed/retained claims and latest peer prose/catalog/statuses/holds remain unchanged."
+  ],
+  "pinned_source_sha256": {
+    "CLI": "8e7fd9e15c1f6d9024648b9a9f67df81518414cf644fe82099653b50c35888f6",
+    "Host": "ff56d3c02148fbcd2aeffcd603232edde831be12218fa1e2765694aa71d03b1f",
+    "Host_tests": "5b2c7bea84f1306160acfc11aa415048443fb81f7461396a01e712387e5fc256",
+    "SDK": "11e5110aa8dcf39c5b11c0bd06a6d02933052e917fa46bf6d53a5467107d6def",
+    "SDK_tests": "421f722f1997bd59fba57b8d5a178288867e5bc2c810f3b5b9c1f695f6c5135d",
+    "Source42": "42e9f07d0d458177079269d9f495f0b70512180c1adc2f7fe0bfdb05518a12f9",
+    "peer_worker": "38b496bf74f80b477d91af98f2ffb7559b0cdde6983a8b3d0672eae5990f6a26",
+    "plugin": "c19ab1470d0a1638635dc796e7ed60cc515181c79bc75f8ca89ad74af59a51e1",
+    "recovery": "6f84df5d178f7a80b6f727f3c97fd7b2da83c3bbb037f0f914082a6498a33e25",
+    "recovery_tests": "f42b7f29c71cb3aa313de5f82337e87f255ca1b18bd86517f711b4f6afe09a33"
+  },
+  "references": {
+    "actual_bad66_tests_only_adoption": {
+      "bytes": 4903573,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/phase2-SDK-legacy-snapshot-cleanup-source-adoption-v02/Sourceclosed-actual-phase2-SDK-legacy-cleanup-test-only-adoption-v01.json",
+      "sha256": "f64c0d44c62e01e93710f2a908fe6fc038227f22e1d626c5093187ec9413deee"
+    },
+    "actual_existing_c19_plugin_only_adoption": {
+      "bytes": 4367695,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/existing-c19-plugin-source-adoption-v01/Sourceclosed-actual-existing-c19-plugin-only-adoption-v01.json",
+      "sha256": "66f5ba0950f52d95c9794d32eaace14092b8d84cfe6672cd7e34cdaf04b2680c"
+    },
+    "actual_intended_plugin_RED": {
+      "bytes": 83944,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/physical-pytest-missing-profile-API-RED1-input-v02/Root-actual-safe-plugin-missing-API-RED1-output-custody-v01.json",
+      "sha256": "2428d6dd8a9d4ef47fd5f35248618f1481e470daf808be0260fc2f840080d7ca"
+    },
+    "actual_safe57": {
+      "bytes": 171911,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/physical-pytest-existing-plugin-focused57-GREEN-input-v02/Root-actual-existing-c19-plugin-safe57-qualified-output-custody-and-durability-v01.json",
+      "sha256": "1d0f1fd4b46d3a56c2b72ad8c9be82f9b036f7b51feab2c0cf229650e30ae07c"
+    },
+    "current16_source_context": {
+      "bytes": 4951835,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/Root-current-sixteen-and236-after-safe57-SDK-peer-drift-v01.json",
+      "sha256": "35da743116dbc6258f96bcd3ae284e69e19db65e57b4bc7e8868447806b9e492"
+    },
+    "current421_preflight_static_review": {
+      "bytes": 3864,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/physical-pytest-safe57-current421-Source-readiness-private-v01/independent-static-current421-safe57-preflight-with-bound-erratum-review-v01.json",
+      "sha256": "8d7ecbca4ea82569aa85903aa8a98109d2715f07911e29962bcaad98c9001ae2"
+    },
+    "independent_bad66_adoption_review": {
+      "bytes": 2811,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/phase2-SDK-legacy-snapshot-cleanup-source-adoption-v02/independent-runner-actual-bad66-single-test-adoption-review-v01.json",
+      "sha256": "4283b68fe3b01753faf37de993c5d5185d12a1c2fca8579785dbb1c5d0621f21"
+    },
+    "independent_c19_adoption_review": {
+      "bytes": 3183,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/existing-c19-plugin-source-adoption-v01/independent-actual-existing-c19-plugin-only-adoption-review-v01.json",
+      "sha256": "20ed0539cc561e75ac40ba6bf8d147f83b5bd41725540c5fce8a70d2822062f4"
+    },
+    "independent_intended_plugin_RED_review": {
+      "bytes": 2776,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/physical-pytest-missing-profile-API-RED1-input-v02/independent-actual-intended-plugin-missing-API-RED-v02-review-v01.json",
+      "sha256": "47322a92f1db102f9d4c5b3556d0e4a3e4359eb56a6c7dedc953d0619a1f1898"
+    },
+    "independent_recovery_safe57_review": {
+      "bytes": 6158,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/physical-pytest-existing-plugin-focused57-GREEN-input-v02/independent-saved-actual-current421-safe57-custody-durability-review-v01.json",
+      "sha256": "33692316c27dcaa052bd2dcf624bc5a24c24058e521e547bfc7760900cf5a770"
+    },
+    "independent_safe57_review": {
+      "bytes": 3011,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/physical-pytest-existing-plugin-focused57-GREEN-input-v02/independent-runner-actual-current421-safe57-qualified-review-v01.json",
+      "sha256": "be6c6920c924eca7f5524d84afceaffb1565050522ceb7fcb194a8ef5f68a3d5"
+    },
+    "peer_SDK_append_adoption": {
+      "bytes": 1614,
+      "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/failed-admission-own-claim-recovery-DRAFT-v02/nochild-postgrant-lock-test-adoption-Source-CAS-closeout-v01.json",
+      "sha256": "e6962227a4fb0d25071a5c03ddb13811417afa904f5980422d79133b36fc27d6"
+    },
+    "peer_SDK_append_and_CLI_preservation_static_review": {
+      "bytes": 5214,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/peer-H-nochild-postgrant-preservation-review-private-v01/independent-peer-H-CLI81aa-API-plugin-preservation-review-v01.json",
+      "sha256": "8f8b019c32dfced83e2c0f37a2b2187bd8536809922ce1b5c346913854ac5555"
+    },
+    "planned_default_safe57_packet": {
+      "bytes": 8908,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/physical-pytest-existing-plugin-focused57-GREEN-input-v02/prepared-manifest-v02.json",
+      "sha256": "67f5a199245bed78125779f6544f047870a94431987969277ac3619ed30b8422"
+    },
+    "private_genuine420_control": {
+      "bytes": 24524,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/genuine-parent420-private-fixture-test-proposal-v01/test_run_specific_genuine_parent420_private_v06.py",
+      "sha256": "2738e2dc3ffc79c5a5098a6fb0350d2221cec923698ee110a5c8f1c7498e5dd6"
+    },
+    "private_genuine420_static_review": {
+      "bytes": 4041,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/genuine-parent420-private-fixture-test-proposal-v01/independent-parent420-v06-held-local-static-review-v01.json",
+      "sha256": "597c133f5f330605bab2fb6451fa2254e070bfefc30016ba89405e66ff2a40d5"
+    },
+    "proper_prior_infrastructure_refusal": {
+      "bytes": 80988,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/physical-pytest-missing-profile-API-RED1-input-v01/Root-actual-plugin-prebarrier-ledger-lock-refusal-output-custody-v01.json",
+      "sha256": "8805c33d5147901751137d0c072fe0d049fe70b4f42ddf538b5123431c97d3e3"
+    }
+  },
+  "schema": "legal-ir-sdk-fixture-cleanup-existing-plugin-safe57-software-evidence/v1",
+  "source_adoptions": {
+    "SDK_fixture_cleanup": {
+      "Source_closed": true,
+      "adopted": true,
+      "after_sha256": "bad66f8747e68df78d7d775659c75013fd54934788ccf4bd6c284e9e900c5b1a",
+      "before_sha256": "dc0192045c46021a74eaf829f090ccd9c4275fc6e14477748d34b9cf6eb61c4c",
+      "protected_rows": 14,
+      "scope": "The adopted bad66 image adds finally cleanup to one six-case source-snapshot fixture, preserving every prior assertion/constructor/decorator/ID and all60 API controls. Its image had static221functions/664cases. The later peer421f image preserves that exact426224-byte prefix and adds64cases; neither image has whole-module qualification."
+    },
+    "existing_plugin_port": {
+      "Source_closed": true,
+      "adopted": true,
+      "after_bytes": 17817,
+      "after_sha256": "c19ab1470d0a1638635dc796e7ed60cc515181c79bc75f8ca89ad74af59a51e1",
+      "before_bytes": 1489,
+      "before_sha256": "cef7fd00277c38ac55ce80ae0e6234eeda36559ab56a9de4e0954d0590327d31",
+      "original24_statuses_preserved": true,
+      "protected_rows": 15,
+      "scope": "Restore the exact existing c19 plugin API required by the maintained SDK tests after the intended missing _load_profile counterexample. Ordinary tmp_path argument/decorator/body AST remains exact. No new V6/hardlink permissions or parent install."
+    },
+    "intended_counterexample": {
+      "JUnit_seconds": 0.768,
+      "claim_id": "0684c0ac4aa8486d8054402c37bec8a8",
+      "durable": false,
+      "errors": 0,
+      "failures": 1,
+      "missing_API": "_load_profile",
+      "normal_original_custody_closed": true,
+      "retained_bytes": 16777216,
+      "skips": 0,
+      "tests": 1
+    },
+    "peer_SDK_append": {
+      "CLI81aa_adopted": false,
+      "H_new_profile_runtime_qualified": false,
+      "adopted": true,
+      "after_sha256": "421f722f1997bd59fba57b8d5a178288867e5bc2c810f3b5b9c1f695f6c5135d",
+      "appended_functions": 6,
+      "appended_static_cases": 64,
+      "before_sha256": "bad66f8747e68df78d7d775659c75013fd54934788ccf4bd6c284e9e900c5b1a",
+      "current_static_cases": 728,
+      "current_static_functions": 227,
+      "prefix_bytes_exact": 426224,
+      "scope": "Peer tests-only source adoption for no-child postgrant lock controls. Exact old664/221 image retained as prefix. This does not install the separate proposed CLI81aa or qualify its controls."
+    }
+  },
+  "status": "EXISTING_C19_PLUGIN_SAFE57_QUALIFIED_CURRENT728_WHOLE_PARENT_PENDING",
+  "unqualified_frontier": {
+    "H_CLI81aa_adopted": false,
+    "genuine_selected_native_family_or_profile_activation": false,
+    "new_V6_hardlink_profile_permission": false,
+    "new_standard420_parent_qualified": false,
+    "parent_installed": false,
+    "prior_SDK664_whole_generation_qualified": false,
+    "selected539_new_root_qualified": false,
+    "training_or_statutory_fidelity_or_Lean_admission": false,
+    "whole_current_SDK728_qualified": false
+  }
+}

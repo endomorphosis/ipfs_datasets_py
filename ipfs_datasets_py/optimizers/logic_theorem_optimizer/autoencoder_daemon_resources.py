@@ -36,7 +36,7 @@ from . import resource_scheduler as native_deadlines
 # Campaign cap aligned to the applied 220 GB rollout on 2026-10-17. Existing
 # ledgers require an explicit, lock-held limit migration; _read never upgrades
 # historical ledgers or releases their retained reservations implicitly.
-MAX_STORAGE_BYTES = 220_000_000_000
+MAX_STORAGE_BYTES = 250_000_000_000
 # Bound the retained JSON metadata independently of storage admission.
 # Reading/writing a larger ledger never changes its schema or storage cap.
 MAX_LEDGER_BYTES = 16 * 1024 * 1024
@@ -64,6 +64,41 @@ class DaemonResourceError(RuntimeError):
         """
         return copy.deepcopy(getattr(self, "_capacity_observation", None))
 
+    @property
+    def lock_observation(self):
+        """Detached diagnostic from the genuine pre-yield lock timeout only."""
+        return copy.deepcopy(getattr(self, "_lock_observation", None))
+
+    @property
+    def ledger_write_bound_observation(self):
+        """Detached size observation from a refusal before ledger writing."""
+        return copy.deepcopy(getattr(self, "_ledger_write_bound_observation", None))
+
+
+class OwnedInventoryDisappearance(DaemonResourceError):
+    """A strict live sample lost a confirmed owned descendant, not its root.
+
+    This is a partial observation, never a successful census or durability
+    receipt. Consumers must start any permitted replacement census at the root.
+    """
+
+    def __init__(self, *, frozen_root, vanished_path, partial_inventory):
+        super().__init__(f"owned inventory descendant disappeared: {vanished_path}")
+        self._frozen_root = copy.deepcopy(frozen_root)
+        self._vanished_path = str(vanished_path)
+        self._partial_inventory = copy.deepcopy(partial_inventory)
+
+    @property
+    def frozen_root(self):
+        return copy.deepcopy(self._frozen_root)
+
+    @property
+    def vanished_path(self):
+        return self._vanished_path
+
+    @property
+    def partial_inventory(self):
+        return copy.deepcopy(self._partial_inventory)
 
 def _integer(value, name, *, minimum=1, maximum=None):
     if type(value) is not int or value < minimum or (maximum is not None and value > maximum):
@@ -159,9 +194,184 @@ def _inventory_entry_disappeared(root, path):
     return False
 
 
-def _inventory(roots, *, strict=False):
+def _owned_strict_inventory(roots):
+    """Report only confirmed descendant loss; all other strict failures stand."""
+    native_deadlines._check_resource_operation_deadline()
+    identities = [_root_identity(root) for root in roots]
+    native_deadlines._check_resource_operation_deadline()
+    counts = {"apparent_bytes": 0, "entry_count": 0,
+              "symlink_count": 0, "special_file_count": 0}
+    # Freeze ancestor identities before walking. A replacement regular directory
+    # is not disappearance and cannot acquire retry authority.
+    frozen_directories = {}
+    queued_owned_directories = {}
+    for root in identities:
+        native_deadlines._check_resource_operation_deadline()
+        named = Path(root["path"])
+        for directory in (*reversed(named.parents), named):
+            native_deadlines._check_resource_operation_deadline()
+            info = directory.lstat()
+            native_deadlines._check_resource_operation_deadline()
+            if not stat.S_ISDIR(info.st_mode):
+                raise DaemonResourceError(f"non-directory resource parent: {directory}")
+            identity = (info.st_dev, info.st_ino)
+            if directory in frozen_directories and frozen_directories[directory] != identity:
+                raise DaemonResourceError("storage ancestor identity changed")
+            frozen_directories[directory] = identity
+        if named.lstat().st_uid != os.geteuid():
+            raise DaemonResourceError("owned live census root is not owned")
+
+    def check_roots():
+        for root in identities:
+            native_deadlines._check_resource_operation_deadline()
+            named = Path(root["path"])
+            for directory in (*reversed(named.parents), named):
+                native_deadlines._check_resource_operation_deadline()
+                info = directory.lstat()
+                native_deadlines._check_resource_operation_deadline()
+                if (not stat.S_ISDIR(info.st_mode)
+                        or (info.st_dev, info.st_ino) != frozen_directories[directory]):
+                    raise DaemonResourceError("storage root or ancestor identity changed")
+            if _root_identity(named) != root:
+                raise DaemonResourceError("storage root identity changed")
+            if named.lstat().st_uid != os.geteuid():
+                raise DaemonResourceError("owned live census root is not owned")
+
+    def check_path(root, path, *, directory):
+        named = Path(root["path"])
+        path = Path(path)
+        if path != named and named not in path.parents:
+            raise DaemonResourceError("inventory descendant is outside its named root")
+        check_roots()
+        for part in (*reversed(path.parents), path):
+            native_deadlines._check_resource_operation_deadline()
+            try:
+                info = part.lstat()
+                native_deadlines._check_resource_operation_deadline()
+            except FileNotFoundError:
+                # The root and every existing ancestor were checked nofollow.
+                # Recheck all named roots immediately before typing the loss.
+                if part == named or named not in part.parents:
+                    raise
+                # A directory must have been successfully observed as owned
+                # before it was queued. Enumeration without a successful stat,
+                # and disappearance of an ancestor of the requested leaf, do
+                # not establish ownership or acquire retry authority.
+                prior = queued_owned_directories.get(path)
+                if part != path or prior is None:
+                    raise
+                if (prior[2] != os.geteuid() or prior[3] != stat.S_IFDIR
+                        or frozen_directories.get(path) != prior[:2]):
+                    raise DaemonResourceError("queued owned directory binding changed")
+                # A stable named root alone cannot distinguish a removed leaf
+                # from replacement of an internal ancestor after its first
+                # check. Reconfirm every surviving ancestor nofollow against
+                # the original traversal identities, then confirm absence a
+                # second time. Any additional disappearance here remains an
+                # ordinary failure; it does not authorize an unbounded search
+                # for a retryable path.
+                check_roots()
+                for ancestor in reversed(part.parents):
+                    native_deadlines._check_resource_operation_deadline()
+                    before_loss = ancestor.lstat()
+                    native_deadlines._check_resource_operation_deadline()
+                    if (not stat.S_ISDIR(before_loss.st_mode)
+                            or (before_loss.st_dev, before_loss.st_ino)
+                            != frozen_directories.get(ancestor)):
+                        raise DaemonResourceError(
+                            "storage descendant or ancestor identity changed before loss confirmation")
+                    if (ancestor == named or named in ancestor.parents) and (
+                            before_loss.st_uid != os.geteuid()):
+                        raise DaemonResourceError("owned live census ancestor is not owned")
+                try:
+                    part.lstat()
+                except FileNotFoundError:
+                    check_roots()
+                    raise OwnedInventoryDisappearance(
+                        frozen_root=root, vanished_path=str(part),
+                        partial_inventory=counts) from None
+                raise DaemonResourceError("inventory descendant reappeared before loss confirmation")
+            if stat.S_ISLNK(info.st_mode):
+                raise DaemonResourceError(f"symlink resource path: {part}")
+            expected_directory = part != path or directory
+            if expected_directory and not stat.S_ISDIR(info.st_mode):
+                raise DaemonResourceError(f"non-directory resource parent: {part}")
+            if part in frozen_directories:
+                if (info.st_dev, info.st_ino) != frozen_directories[part]:
+                    raise DaemonResourceError("storage descendant or ancestor identity changed")
+            if (part == named or named in part.parents) and info.st_uid != os.geteuid():
+                raise DaemonResourceError("owned live census descendant is not owned")
+            if part == path and not directory and not (
+                    stat.S_ISDIR(info.st_mode) or stat.S_ISREG(info.st_mode)):
+                raise DaemonResourceError(f"nonregular attempt entry: {part}")
+        native_deadlines._check_resource_operation_deadline()
+        return path
+
+    check_roots()
+    pending = [(Path(root["path"]), root) for root in identities]
+    while pending:
+        native_deadlines._check_resource_operation_deadline()
+        directory, root = pending.pop()
+        check_path(root, directory, directory=True)
+        try:
+            entries = os.scandir(directory)
+        except FileNotFoundError:
+            check_path(root, directory, directory=True)
+            raise
+        with entries:
+            native_deadlines._check_resource_operation_deadline()
+            while True:
+                native_deadlines._check_resource_operation_deadline()
+                try:
+                    entry = next(entries)
+                    native_deadlines._check_resource_operation_deadline()
+                except StopIteration:
+                    break
+                except FileNotFoundError:
+                    check_path(root, directory, directory=True)
+                    raise
+                counts["entry_count"] += 1
+                if counts["entry_count"] > MAX_INVENTORY_ENTRIES:
+                    raise DaemonResourceError("storage inventory entry bound exceeded")
+                try:
+                    info = entry.stat(follow_symlinks=False)
+                    native_deadlines._check_resource_operation_deadline()
+                except FileNotFoundError:
+                    check_path(root, Path(entry.path), directory=False)
+                    raise
+                if info.st_uid != os.geteuid():
+                    raise DaemonResourceError("owned live census descendant is not owned")
+                if stat.S_ISLNK(info.st_mode):
+                    raise DaemonResourceError(f"symlink in attempt inventory: {entry.path}")
+                if stat.S_ISDIR(info.st_mode):
+                    path = Path(entry.path)
+                    identity = (info.st_dev, info.st_ino)
+                    if path in frozen_directories and frozen_directories[path] != identity:
+                        raise DaemonResourceError("storage descendant identity changed")
+                    frozen_directories[path] = identity
+                    queued_owned_directories[path] = (
+                        info.st_dev, info.st_ino, info.st_uid, stat.S_IFMT(info.st_mode))
+                    pending.append((path, root))
+                elif stat.S_ISREG(info.st_mode):
+                    counts["apparent_bytes"] += info.st_size
+                else:
+                    raise DaemonResourceError(f"nonregular attempt entry: {entry.path}")
+    check_roots()
+    native_deadlines._check_resource_operation_deadline()
+    return counts
+
+def _inventory(roots, *, strict=False, report_owned_disappearance=False):
+    native_deadlines._check_resource_operation_deadline()
+    if type(report_owned_disappearance) is not bool:
+        raise DaemonResourceError("report_owned_disappearance must be a boolean")
+    if report_owned_disappearance:
+        if strict is not True:
+            raise DaemonResourceError("owned disappearance reporting requires strict=True")
+        native_deadlines._check_resource_operation_deadline()
+        return _owned_strict_inventory(roots)
     count, total, symlinks, special = 0, 0, 0, 0
     identities = [_root_identity(root) for root in roots]
+    native_deadlines._check_resource_operation_deadline()
     # Cache path spelling only. Every root and ancestor is freshly lstat'ed at
     # every previous guard boundary; no identity, size or absence is reused.
     lexical_roots = {
@@ -170,19 +380,24 @@ def _inventory(roots, *, strict=False):
     }
     pending = [(lexical_roots[root["path"]][0], root) for root in identities]
     while pending:
+        native_deadlines._check_resource_operation_deadline()
         directory, root = pending.pop()
         directory = (_safe_path(directory, directory=True) if strict
                      else _inventory_descendant(root, directory, lexical_root=lexical_roots[root["path"]]))
+        native_deadlines._check_resource_operation_deadline()
         if directory is None:
             continue
         try:
             with os.scandir(directory) as entries:
+                native_deadlines._check_resource_operation_deadline()
                 for entry in entries:
+                    native_deadlines._check_resource_operation_deadline()
                     count += 1
                     if count > MAX_INVENTORY_ENTRIES:
                         raise DaemonResourceError("storage inventory entry bound exceeded")
                     try:
                         info = entry.stat(follow_symlinks=False)
+                        native_deadlines._check_resource_operation_deadline()
                     except FileNotFoundError:
                         if strict or not _inventory_entry_disappeared(root, entry.path):
                             raise
@@ -206,6 +421,7 @@ def _inventory(roots, *, strict=False):
                 raise
     if [_root_identity(Path(root["path"])) for root in identities] != identities:
         raise DaemonResourceError("storage root identity changed")
+    native_deadlines._check_resource_operation_deadline()
     return {"apparent_bytes": total, "entry_count": count,
             "symlink_count": symlinks, "special_file_count": special}
 
@@ -251,6 +467,80 @@ def _json_pairs(pairs):
         if key in result:
             raise DaemonResourceError("duplicate disk ledger field")
         result[key] = value
+    return result
+
+
+def _bounded_cleanup_failure_observation(stage, error, lock_path, *, origin_owner):
+    """Report typed cleanup metadata; never stringify an exception or its args.
+
+    Diagnostics are DATA, not evidence of resource closure. Only the original owner-bound
+    exact lock-timeout observation has a recognized reason; other causes remain
+    unclassified, including malformed/foreign observations.
+    """
+    stages = {'failure_retention', 'native_release', 'tracked_process_stop', 'tracker_close'}
+    kind = ('resource_deadline' if type(error) is native_deadlines.ResourceAdmissionDeadlineError else
+            'daemon_resource_error' if isinstance(error, DaemonResourceError) else
+            'os_error' if isinstance(error, OSError) else 'unknown_error')
+    result = dict(schema='owned-resource-cleanup-failure/v1',
+        stage=stage if type(stage) is str and stage in stages else 'unknown_cleanup_stage',
+        error_kind=kind, reason_code='unclassified', lock_observation_status='absent',
+        lock_observation=None)
+    # The typed owner exception has an ordinary instance dictionary; no custom
+    # exception attributes, messages, traceback or arbitrary nested data escape.
+    if type(error) is not DaemonResourceError:
+        return result
+    offered = vars(error).get('_lock_observation')
+    if offered is None:
+        return result
+    result['lock_observation_status'] = 'rejected'
+    try:
+        fields = {'schema', 'stage', 'lock_path', 'opened_lock_identity',
+            'configured_lock_timeout_seconds', 'started_monotonic',
+            'deadline_monotonic', 'observed_monotonic', 'lock_acquired',
+            'holder_identity_established'}
+        if (type(offered) is not dict or any(type(key) is not str for key in offered)
+                or set(offered) != fields):
+            return result
+        if (type(offered['schema']) is not str
+                or offered['schema'] != 'daemon-resource-ledger-lock-timeout/v1'
+                or type(offered['stage']) is not str
+                or offered['stage'] != 'exclusive_acquire_before_yield'
+                or type(offered['lock_path']) is not str or offered['lock_path'] != str(lock_path)
+                or len(offered['lock_path'].encode()) > 4096
+                or offered['lock_acquired'] is not False
+                or offered['holder_identity_established'] is not False):
+            return result
+        identity = offered['opened_lock_identity']
+        keys = {'st_dev','st_ino','st_mode','st_uid','st_gid','st_nlink','st_size','st_mtime_ns','st_ctime_ns'}
+        if (type(identity) is not dict or any(type(key) is not str for key in identity)
+                or set(identity) != keys
+                or not all(type(v) is int and 0 <= v < 2**63 for v in identity.values())
+                or identity['st_dev'] <= 0 or identity['st_ino'] <= 0
+                or not stat.S_ISREG(identity['st_mode']) or identity['st_nlink'] != 1
+                or identity['st_uid'] != os.geteuid()):
+            return result
+        names = ('configured_lock_timeout_seconds','started_monotonic','deadline_monotonic','observed_monotonic')
+        if not all(type(offered[k]) in (int,float) and math.isfinite(offered[k])
+                   and 0 <= offered[k] < 2**63 for k in names):
+            return result
+        timeout, started, deadline, observed = (offered[k] for k in names)
+        if not (timeout <= 60 and started <= deadline <= observed
+                and deadline - started <= timeout + 1e-6):
+            return result
+        # Origin and contents are bound at the exact original _locked raise.
+        # This private identity never appears in a receipt and grants no authority.
+        binding = vars(error).get('_lock_observation_binding')
+        if (origin_owner is None or type(binding) is not tuple or len(binding) != 2
+                or binding[0] is not origin_owner or type(binding[1]) is not bytes
+                or json.dumps(offered, sort_keys=True, allow_nan=False).encode() != binding[1]):
+            return result
+        checked = {key: offered[key] for key in fields - {'opened_lock_identity'}}
+        checked['opened_lock_identity'] = {key: identity[key] for key in keys}
+        result.update(reason_code='ledger_lock_unavailable',
+            lock_observation_status='accepted', lock_observation=checked)
+    except BaseException:
+        # Diagnostic formatting must not replace the original exception.
+        pass
     return result
 
 
@@ -317,6 +607,8 @@ class DaemonResourceReservation:
         self._child_history = []
         self._entered = False
         self._cleanup_error = None
+        self._cleanup_failure_observations = []
+        self._cleanup_failure_observation_overflow = False
 
     def _scheduler_identity(self):
         """Private fixed-lane hook; the daemon public API stays HAMMER_LEAN."""
@@ -343,7 +635,9 @@ class DaemonResourceReservation:
             info = os.fstat(descriptor)
             if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
                 raise DaemonResourceError("lock must be an unaliased regular file")
-            deadline = time.monotonic() + self.ledger_lock_timeout_seconds
+            lock_started = time.monotonic()
+            deadline = lock_started + self.ledger_lock_timeout_seconds
+            lock_acquired = False
             operation = native_deadlines.resource_operation_deadline()
             if operation is not None:
                 deadline = min(deadline, native_deadlines._operation_clock(operation))
@@ -351,10 +645,29 @@ class DaemonResourceReservation:
                 native_deadlines._check_resource_operation_deadline()
                 try:
                     fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    lock_acquired = True
                     break
                 except BlockingIOError:
-                    if time.monotonic() >= deadline:
-                        raise DaemonResourceError("disk ledger lock unavailable") from None
+                    observed_at = time.monotonic()
+                    if observed_at >= deadline:
+                        error = DaemonResourceError("disk ledger lock unavailable")
+                        error._lock_observation = {
+                            "schema": "daemon-resource-ledger-lock-timeout/v1",
+                            "stage": "exclusive_acquire_before_yield",
+                            "lock_path": str(self.lock_path),
+                            "opened_lock_identity": {key: getattr(info, key) for key in
+                                ("st_dev", "st_ino", "st_mode", "st_uid", "st_gid", "st_nlink",
+                                 "st_size", "st_mtime_ns", "st_ctime_ns")},
+                            "configured_lock_timeout_seconds": self.ledger_lock_timeout_seconds,
+                            "started_monotonic": lock_started,
+                            "deadline_monotonic": deadline,
+                            "observed_monotonic": observed_at,
+                            "lock_acquired": False,
+                            "holder_identity_established": False,
+                        }
+                        error._lock_observation_binding = (self, json.dumps(
+                            error._lock_observation, sort_keys=True, allow_nan=False).encode())
+                        raise error from None
                     time.sleep(min(0.05, max(0, deadline - time.monotonic())))
             native_deadlines._check_resource_operation_deadline()
             current = self.lock_path.lstat()
@@ -406,7 +719,12 @@ class DaemonResourceReservation:
         _safe_path(self.ledger_path, missing=True)
         raw = (json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False) + "\n").encode()
         if len(raw) > MAX_LEDGER_BYTES:
-            raise DaemonResourceError("disk ledger byte bound exceeded")
+            error = DaemonResourceError("disk ledger byte bound exceeded")
+            error._ledger_write_bound_observation = dict(
+                schema="daemon-resource-ledger-write-bound/v1",
+                serialized_bytes=len(raw), maximum_bytes=MAX_LEDGER_BYTES,
+                excess_bytes=len(raw) - MAX_LEDGER_BYTES, write_started=False)
+            raise error
         temporary = None
         try:
             with tempfile.NamedTemporaryFile(dir=self.ledger_path.parent, prefix=".daemon-reservation-", delete=False) as stream:
@@ -414,6 +732,7 @@ class DaemonResourceReservation:
                 stream.write(raw)
                 stream.flush()
                 os.fsync(stream.fileno())
+            native_deadlines._check_resource_operation_deadline()
             os.replace(temporary, self.ledger_path)
             temporary = None
             descriptor = os.open(self.ledger_path.parent, os.O_RDONLY | os.O_DIRECTORY)
@@ -426,12 +745,22 @@ class DaemonResourceReservation:
                 temporary.unlink(missing_ok=True)
 
     def _account(self, ledger, *, additional=0):
+        native_deadlines._check_resource_operation_deadline()
         inventory = _inventory(self.roots)
+        native_deadlines._check_resource_operation_deadline()
         observed = inventory["apparent_bytes"]
-        outstanding = sum(row["storage_bytes"] for row in ledger["reservations"].values()
-                          if row["status"] != "released")
+        outstanding = 0
+        for row in ledger["reservations"].values():
+            native_deadlines._check_resource_operation_deadline()
+            if row["status"] != "released":
+                outstanding += row["storage_bytes"]
         charged = observed + outstanding + additional
-        free = min(shutil.disk_usage(root).free for root in self.roots)
+        free_values = []
+        for root in self.roots:
+            native_deadlines._check_resource_operation_deadline()
+            free_values.append(shutil.disk_usage(root).free)
+            native_deadlines._check_resource_operation_deadline()
+        free = min(free_values)
         result = {"observed_apparent_bytes": observed, "outstanding_full_reservations_bytes": outstanding,
                   "additional_requested_bytes": additional, "charged_bytes": charged,
                   "limit_bytes": MAX_STORAGE_BYTES, "minimum_filesystem_free_bytes": free,
@@ -451,47 +780,77 @@ class DaemonResourceReservation:
             })
             raise error
         self._verify_owner_roots()
+        native_deadlines._check_resource_operation_deadline()
         return result
+
+    @contextmanager
+    def _admission_scope(self):
+        """Default callers retain their existing operation context unchanged."""
+        yield
+
+    @contextmanager
+    def _admission_cleanup_scope(self):
+        """Use only an already declared native cleanup end; never renew it."""
+        operation = native_deadlines.resource_operation_deadline()
+        if operation is None:
+            yield
+        else:
+            with native_deadlines.resource_cleanup_deadline(
+                    native_deadline_monotonic=operation.native_deadline_monotonic):
+                yield
 
     def __enter__(self):
         if self._entered:
             raise DaemonResourceError("reservation can only be entered once")
         scheduler = None
         scheduler_lane, scheduler_workload = self._scheduler_identity()
-        if self._scheduler_state_path is not None:
-            from .existing_resource_scheduler import open_existing_scheduler
-            # Metadata refusal precedes any durable storage reservation. A
-            # later native admission failure retains the normal disk claim.
-            scheduler = open_existing_scheduler(self._scheduler_state_path,
-                                                self._expected_scheduler_policy_sha256)
-        with self._locked():
-            ledger = self._read()
-            if len(ledger["reservations"]) >= MAX_RESERVATIONS:
-                raise DaemonResourceError("disk reservation inventory full")
-            self._validate_new_reservation(ledger)
-            observation = self._account(ledger, additional=self.storage_bytes)
-            record = {"reservation_id": self.reservation_id, "status": "reserved",
-                      "owner_pid": self._owner_pid, "storage_bytes": self.storage_bytes,
-                      "memory_mb": self.memory_mb, "cpu_slots": self.cpu_slots,
-                      "child_process_slots": self.child_process_slots,
-                      "scheduler_lane": scheduler_lane.value, "workload": scheduler_workload,
-                      "created_at": time.time(), "attempt_directory": self._attempt, "child": None,
-                      "prior_children": [], "external_charges": {},
-                      "last_usage": observation, "artifacts_durable_asserted": False}
-            ledger["reservations"][self.reservation_id] = record
-            self._write(ledger)
-            self._record = copy.deepcopy(record)
-            self._entered = True
         try:
-            self._lease = self._acquire_native_lease(scheduler, scheduler_lane)
-            self._update(status="active")
+            # The admission scope exits BEFORE original post-entry cleanup.
+            with self._admission_scope():
+                if self._scheduler_state_path is not None:
+                    from .existing_resource_scheduler import open_existing_scheduler
+                    scheduler = open_existing_scheduler(self._scheduler_state_path,
+                                                        self._expected_scheduler_policy_sha256)
+                with self._locked():
+                    ledger = self._read()
+                    if len(ledger["reservations"]) >= MAX_RESERVATIONS:
+                        raise DaemonResourceError("disk reservation inventory full")
+                    self._validate_new_reservation(ledger)
+                    observation = self._account(ledger, additional=self.storage_bytes)
+                    record = {"reservation_id": self.reservation_id, "status": "reserved",
+                              "owner_pid": self._owner_pid, "storage_bytes": self.storage_bytes,
+                              "memory_mb": self.memory_mb, "cpu_slots": self.cpu_slots,
+                              "child_process_slots": self.child_process_slots,
+                              "scheduler_lane": scheduler_lane.value, "workload": scheduler_workload,
+                              "created_at": time.time(), "attempt_directory": self._attempt, "child": None,
+                              "prior_children": [], "external_charges": {},
+                              "last_usage": observation, "artifacts_durable_asserted": False}
+                    ledger["reservations"][self.reservation_id] = record
+                    self._write(ledger)
+                    self._record = copy.deepcopy(record)
+                    self._entered = True
+                self._lease = self._acquire_native_lease(scheduler, scheduler_lane)
+                self._update(status="active")
         except BaseException:
-            try:
-                self._retain("scheduler_admission_failed")
-                if self._lease is not None:
-                    self._lease.release()
-            except BaseException as cleanup:
-                self._cleanup_error = type(cleanup).__name__
+            # Preserve unknown first-write failures and original native cleanup.
+            if self._entered:
+                cleanup_errors = []
+                try:
+                    with self._admission_cleanup_scope():
+                        try:
+                            self._retain("scheduler_admission_failed")
+                        except BaseException as cleanup:
+                            cleanup_errors.append(type(cleanup).__name__)
+                        finally:
+                            if self._lease is not None:
+                                try:
+                                    self._lease.release()
+                                except BaseException as cleanup:
+                                    cleanup_errors.append(type(cleanup).__name__)
+                except BaseException as cleanup:
+                    cleanup_errors.append(type(cleanup).__name__)
+                if cleanup_errors:
+                    self._cleanup_error = "+".join(cleanup_errors)
             raise
         return self
 
@@ -525,6 +884,13 @@ class DaemonResourceReservation:
             record.update(fields)
             self._write(ledger)
             self._record = copy.deepcopy(record)
+
+    def _remember_cleanup_failure(self, stage, error):
+        observation = _bounded_cleanup_failure_observation(stage, error, self.lock_path, origin_owner=self)
+        if len(self._cleanup_failure_observations) < 4:
+            self._cleanup_failure_observations.append(observation)
+        else:
+            self._cleanup_failure_observation_overflow = True
 
     def _retain(self, reason):
         if self._record is not None and self._record["status"] != "released":
@@ -574,6 +940,11 @@ class DaemonResourceReservation:
         return {"key": key, "bytes": byte_count, "already_charged": already_charged,
                 "usage": copy.deepcopy(usage)}
 
+    def _usage_inventory(self, attempt):
+        # Live observers may be explicitly specialized by a concrete owner.
+        # Finalize and release deliberately retain their strict inventories.
+        return _inventory([attempt], strict=True)
+
     def check_usage(self, attempt_directory: Path, child_pid: int | None = None):
         if not self._entered or self._record["status"] == "released":
             raise DaemonResourceError("reservation is not outstanding")
@@ -601,7 +972,7 @@ class DaemonResourceReservation:
         self._update(attempt_directory=self._attempt, child=self._child,
                      prior_children=copy.deepcopy(self._child_history))
         group = _group_usage(self._child)
-        attempt_bytes = _inventory([attempt], strict=True)["apparent_bytes"]
+        attempt_bytes = self._usage_inventory(attempt)["apparent_bytes"]
         with self._locked():
             ledger = self._read()
             usage = self._account(ledger)
@@ -751,7 +1122,7 @@ class DaemonResourceReservation:
 
     def to_dict(self):
         scheduler_lane, scheduler_workload = self._scheduler_identity()
-        return {"schema": SCHEMA, "reservation_id": self.reservation_id,
+        value = {"schema": SCHEMA, "reservation_id": self.reservation_id,
                 "scheduler_lane": scheduler_lane.value, "workload": scheduler_workload,
                 "status": self._record["status"] if self._record is not None else "not_entered",
                 "ledger_path": str(self.ledger_path), "roots": copy.deepcopy(self.root_identities),
@@ -759,15 +1130,27 @@ class DaemonResourceReservation:
                 "resource_lease": self._lease.to_dict() if self._lease is not None else None,
                 "cleanup_error": self._cleanup_error,
                 "enforcement": "cooperative_admission_and_polled_usage_not_kernel_quota"}
+        observations = getattr(self, '_cleanup_failure_observations', [])
+        if observations:
+            value['cleanup_failure_observations'] = copy.deepcopy(observations)
+            value['cleanup_failure_observation_overflow'] = self._cleanup_failure_observation_overflow
+        return value
 
     def __exit__(self, exc_type, exc, traceback):
         if self._record is not None and self._record["status"] != "released":
             try:
                 try:
                     self._retain("context_failed" if exc_type else "explicit_release_required")
+                except BaseException as cleanup:
+                    self._remember_cleanup_failure('failure_retention', cleanup)
+                    raise
                 finally:
-                    if self._lease is not None and not _group_usage(self._child)["live_processes"]:
-                        self._lease.release()
+                    try:
+                        if self._lease is not None and not _group_usage(self._child)["live_processes"]:
+                            self._lease.release()
+                    except BaseException as cleanup:
+                        self._remember_cleanup_failure('native_release', cleanup)
+                        raise
             except BaseException as cleanup:
                 self._cleanup_error = type(cleanup).__name__
                 if exc_type is None:

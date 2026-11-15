@@ -1,0 +1,17 @@
+{
+  "schema": "legal-ir-plan-document-checks/v1",
+  "checked_utc": "2026-10-18T22:19:03.244813+00:00",
+  "plan_path": "external/ipfs_datasets/docs/autoencoders/legal_ir_text_to_lean4_execution_plan_20261018.md",
+  "plan_sha256": "23bb7fa1a2413f6a4087097a39eade245e922fc8bf8301a6541beeffbfd15149",
+  "local_markdown_links_checked": 15,
+  "missing_links": [],
+  "reference_hashes_verified": 41,
+  "mutable_document_snapshots": 3,
+  "concurrent_document_updates_reconciled": 2,
+  "acceptance_rows": 37,
+  "duplicate_acceptance_keys": 0,
+  "all_acceptance_results_unexecuted": true,
+  "markdown_fences_paired": true,
+  "trailing_whitespace": false,
+  "scope": "documentation/link/manifest checks only; no product tests, training or Lean execution"
+}

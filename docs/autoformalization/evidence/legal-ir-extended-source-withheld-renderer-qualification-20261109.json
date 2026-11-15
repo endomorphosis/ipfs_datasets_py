@@ -424,5 +424,179 @@
   "evaluation_gold_mask": 0,
   "proof_authority": false,
   "legal_meaning_admitted": false,
-  "corpus_admitted": false
+  "corpus_admitted": false,
+  "canonical_reconstruction_association41": {
+    "schema": "phase6-frozen-surface-association-qualification/v1",
+    "status": "SELECTED41_SOFTWARE_QUALIFIED_CAPTURED124_GENERATION",
+    "recorded_at_utc": "2026-11-10T00:25:23.292251+00:00",
+    "existing_tasks": [
+      "LIR-07",
+      "LIR-23"
+    ],
+    "existing_owner": "ipfs_datasets_py.logic.bridge.decompiler.detect_surface_semantic_differences",
+    "owning_test": "tests/unit/logic/legal_ir/test_canonical_decompiler_reconstruction.py",
+    "counts": {
+      "tests": 41,
+      "functions": 24,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "JUnit_seconds": 3.392,
+      "preserved_original_cases": 10,
+      "original_association_repair_cases": 29,
+      "additional_lower_collision_cases": 2
+    },
+    "source": {
+      "request_pins": 124,
+      "canonical_buffers": 122,
+      "controls": 2,
+      "compiled_buffers": 29,
+      "original_all124_unchanged_through_parent_closeout": true,
+      "independent_later_matches": 123,
+      "independent_later_total": 124,
+      "later_P5_change_enrolled_but_not_selected_or_compiled": true,
+      "original_cutoff_drift": [],
+      "post_cutoff_navigation_changes": [
+        {
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py",
+          "executed_sha256": "483d58d4fccb04fe8baea0d05824e5b4f5988be9dda284beb6b1a444a6b167be",
+          "current_navigation_sha256": "0b7c60e623f9bb40976120f6c0e6ff63c8af28ac858fe628ce02ca96d79d9901",
+          "qualification_transferred": false
+        }
+      ],
+      "future_current_generation_qualification_transferred": false,
+      "genuine_ordinary_public_package_imports": true,
+      "namespace_initializer_stubs": false,
+      "strict_known_R_A_N_compile_and_alias_guard_retained": true,
+      "vendor_bytes_attested": false
+    },
+    "source_postimages": [
+      {
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/bridge/decompiler.py",
+        "bytes": 28024,
+        "sha256": "9b5bf09f2b3b0a9dd040fd1cf3a01d2d3366be9dcf5b3cda0d043b13631bf230"
+      },
+      {
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_decompiler_reconstruction.py",
+        "bytes": 17085,
+        "sha256": "dc3767afec785f79261c3bc96b227b49977b9a06ac51c8ba289f8d8705a79df5"
+      }
+    ],
+    "portable_inert_receipts": {
+      "archive": {
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-phase6-cross-rule-association-baseline-20261108-v01/ordinary-fixed41-v01/actual-receipts.tar.gz",
+        "canonical_relative_path": "workspace/test-logs/federal-corpus-audits/legal-ir-phase6-cross-rule-association-baseline-20261108-v01/ordinary-fixed41-v01/actual-receipts.tar.gz",
+        "bytes": 15460,
+        "sha256": "a7e28db32064f5148ffd172868a040b50199d707102ff55bce03f8ff63792a10"
+      },
+      "manifest": {
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-phase6-cross-rule-association-baseline-20261108-v01/ordinary-fixed41-v01/receipts-manifest.json",
+        "canonical_relative_path": "workspace/test-logs/federal-corpus-audits/legal-ir-phase6-cross-rule-association-baseline-20261108-v01/ordinary-fixed41-v01/receipts-manifest.json",
+        "bytes": 4409,
+        "sha256": "7dc6db975cae1254c9bf28d774363b0e62cf11e8129b03f73a9a1a07700f7932"
+      },
+      "members": 9,
+      "originals_retained": true,
+      "implementation_archived_here": false
+    },
+    "repair_scope": "Original whole-frozen-unit occurrence repair, preserving duplicate multiplicity and unambiguous whole-rule permutations. Unknown or ambiguous prose reports unresolved_rule_association; local polarity/missing-atom hints remain association_unresolved. Preserve old lower() normalization rather than adding Unicode casefold equivalence of opaque atoms.",
+    "old_API_renderer_IR_translation_gate_all_other_definitions_and10_original_tests_preserved": true,
+    "original_baseline5": {
+      "readback": {
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/phase6-cross-rule-association-baseline-v01/independent-actual-baseline-readback-v01.json",
+        "bytes": 16681,
+        "sha256": "a6e6b59e0db2e624115b3852ff9a9d80e40551f3c95f831b1dd5193bd5afc7ba"
+      },
+      "original_parent": {
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-phase6-cross-rule-association-baseline-20261108-v01/actual-owner-closeout.json",
+        "bytes": 9667,
+        "sha256": "32b9152ddc7bae7424fb38508297eeb16b32afc2d10c4a45da454bd67b8493f8",
+        "canonical_relative_path": "workspace/test-logs/federal-corpus-audits/legal-ir-phase6-cross-rule-association-baseline-20261108-v01/actual-owner-closeout.json"
+      },
+      "scope": "One retained actual5-case authored diagnostic operation: actor/exception exchanges yielded zero differences; a valid permission with modal exception yielded false changedF. Not rerun and not fixed-code qualification."
+    },
+    "independent_actual_readback": {
+      "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/failed-admission-own-claim-recovery-DRAFT-v02/phase6-fixed41-independent-actual-readback-v01.json",
+      "bytes": 14052,
+      "sha256": "17ece5f306ff0c114c2e9c2a616f8729f11193e42639f874985866cb6593fa91"
+    },
+    "original_parent": {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-phase6-cross-rule-association-baseline-20261108-v01/ordinary-fixed41-v01/parent-closeout.json",
+      "bytes": 13155,
+      "sha256": "67afffd79f858cc4815f7418835399fe61f1486ea2d36ce0bf98e89b70a235ea",
+      "canonical_relative_path": "workspace/test-logs/federal-corpus-audits/legal-ir-phase6-cross-rule-association-baseline-20261108-v01/ordinary-fixed41-v01/parent-closeout.json"
+    },
+    "request": {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-phase6-cross-rule-association-baseline-20261108-v01/ordinary-fixed41-v01/request.json",
+      "bytes": 28651,
+      "sha256": "fbe42fa1efeb32545928055c58fe83af9c7e4f06bb292570ecc8ed3f143f9f19",
+      "canonical_relative_path": "workspace/test-logs/federal-corpus-audits/legal-ir-phase6-cross-rule-association-baseline-20261108-v01/ordinary-fixed41-v01/request.json"
+    },
+    "prepared_source_manifest": {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-phase6-cross-rule-association-baseline-20261108-v01/ordinary-fixed41-v01/prepared-current-source-manifest.json",
+      "bytes": 104812,
+      "sha256": "77d21284e1feec9f21a7bc5c376e318aec641336c68a42eb01e9c7d07af78a39",
+      "canonical_relative_path": "workspace/test-logs/federal-corpus-audits/legal-ir-phase6-cross-rule-association-baseline-20261108-v01/ordinary-fixed41-v01/prepared-current-source-manifest.json"
+    },
+    "prepared_source_archive": {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-phase6-cross-rule-association-baseline-20261108-v01/ordinary-fixed41-v01/prepared-current-source-buffers.tar.gz",
+      "bytes": 1375142,
+      "sha256": "8fc3b4c0c1c5dfce98c15371a56c24db56cb1504e774b4697e646927d6b271cf",
+      "canonical_relative_path": "workspace/test-logs/federal-corpus-audits/legal-ir-phase6-cross-rule-association-baseline-20261108-v01/ordinary-fixed41-v01/prepared-current-source-buffers.tar.gz"
+    },
+    "JUnit": {
+      "path": "/tmp/pytest-of-barberb/legal-ir-phase6-association-fixed41-20261110-v01/attempt-v01/exports/junit.xml",
+      "bytes": 7875,
+      "sha256": "1e3cadf2c0baa516e1905e3ec00aa67acc8beae5983e4f2d74572606a732a3be"
+    },
+    "source_observation": {
+      "path": "/tmp/pytest-of-barberb/legal-ir-phase6-association-fixed41-20261110-v01/attempt-v01/exports/source-observation.json",
+      "bytes": 9848,
+      "sha256": "c1a1fec65626ff31ec52ba002e51267314a9a54c4b053485b54703788d6a105c"
+    },
+    "original_custody": {
+      "genuine_wait_native_process_Source_closed": true,
+      "parent_seconds": 175.47123032202944,
+      "errors": [],
+      "storage_reservation_id": "9ba8f8318d3c4d58a83fb99abf5441ac",
+      "storage_bytes": 16777216,
+      "storage_status": "released",
+      "storage_durable": true,
+      "attempt_files": 7,
+      "attempt_bytes": 29786,
+      "control_files": 11,
+      "control_bytes": 1593732,
+      "aggregate_bytes": 1623518,
+      "aggregate_margin_bytes": 15153698,
+      "aggregate_bound_verified": true
+    },
+    "later_P5_source_adoption": {
+      "adoption_receipt": {
+        "bytes": 1618,
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/failed-admission-own-claim-recovery-DRAFT-v02/P5-context-capability-RED-test-adoption-Source-CAS-closeout-v01.json",
+        "sha256": "61a3ab6685b241db0ccf30cfd222ffc364a3ac01522101df9583b333b745a384"
+      },
+      "interpretation": "Later unrelated P5 test-only483d->0b7 adoption after original41closed; preserve all124 executed captures and do not retroactively fail41 or transfer41 qualification to the new Torch-test generation.",
+      "test_was_enrolled": true,
+      "test_was_observed_compiled": false,
+      "test_was_selected": false
+    },
+    "metadata_preparation_error": {
+      "receipt": {
+        "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/failed-admission-own-claim-recovery-DRAFT-v02/phase6-fixed41-metadata-preparation-error-v01.json",
+        "bytes": 901,
+        "sha256": "02f2c7e785890c739658619574e150a95c6c9b07eca3d6e43f8e09a65c6b52c4"
+      },
+      "scope": "A post-Source-context metadata assertion expected a nonexistent closed field; original Source context had exited. Packet unchanged; a separate bounded original42 metadata READ rechecked all124current/archive members and closed normally. No productive retry."
+    },
+    "historical79_and_baseline5_unchanged_not_pooled": true,
+    "no_model_optimizer_training_Lean_or_source_corpus_work": true,
+    "semantic_faithfulness_equivalence_source_restoration_or_convergence_qualified": false,
+    "next_existing_owner_work": [
+      "Keep frozen-surface diagnostics separate from full typed-IR and independently reviewed statutory fidelity.",
+      "Original prose-reparse scorer v02 remains a separate private unqualified opt-in integration; reuse existing owners and fresh original qualification if selected, not another parser or scorer.",
+      "The escaped-surrogate compiler candidate and its platform-preparation hold remain untouched; validUTF8 opaque-actor collision controls do not retry that task."
+    ],
+    "all_full_goals_scientific_legal_asset_Lean_and_activation_holds_preserved": true
+  }
 }

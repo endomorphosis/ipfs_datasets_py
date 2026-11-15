@@ -1,0 +1,181 @@
+{
+  "API": "inspect_owned_validation_no_child_native_closed_v1",
+  "current_source_readback": {
+    "inner_lifecycle_source_chain_pins_match": 7,
+    "later_changes": [
+      {
+        "current": {
+          "bytes": 125280,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_resource_recovery.py",
+          "sha256": "1b10588b7e31f01e14bc7740b91aeb50b742837bad32eb6e099b783300b5de1b"
+        },
+        "executed_sha256": "55fc922f683eb53f946114b1393ced041f61cf6b29c89ceb053f2ceebb734f8e",
+        "later_generation_inherits_qualification": false,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_resource_recovery.py"
+      },
+      {
+        "current": {
+          "bytes": 118531,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_resource_recovery.py",
+          "sha256": "7c2c06a7320d9821a416659168b67293bcc53f2fa0f9861f03cf1ad4de6db3e4"
+        },
+        "executed_sha256": "b951c134932dc86b68cb0d85758ec1d6384e7f474dbd796f315af3800dd4764c",
+        "later_generation_inherits_qualification": false,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_resource_recovery.py"
+      }
+    ],
+    "outer_request_pins_still_match": 202,
+    "owner_and_owning_test_match_executed_generation": true
+  },
+  "historical67_test_source_preserved": {
+    "bytes": 346469,
+    "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/failed-admission-own-claim-recovery-DRAFT-v02/test_validation_run_resources-no-child-native-closed-SOURCE_ONLY-v01.py",
+    "sha256": "178e4ebdf206ba1fc1bc51d9a6ee2f7e1af6a4fab85e18e74bf72ba5e25d4d67"
+  },
+  "limits": {
+    "complete_module_or_arbitrary_history_qualification": false,
+    "existing67_result_transferred_to_new_test_generation": false,
+    "historical_e689_manual_closeout_reclassified": false,
+    "historical_storage_release_authorized": false,
+    "metadata_wrapper_exception_callback_itself_exercised": false,
+    "metadata_wrapper_normal_path_completed": true,
+    "model_or_Lean_execution": false,
+    "original_Popen_evidence_fabricated": false,
+    "task_status_changed": false
+  },
+  "owner_path": "scripts/ops/legal_ir/run_owned_validation.py",
+  "physical_case": {
+    "child_or_barrier_attempted": false,
+    "grant_observed_monotonic": 3233129.028836945,
+    "inner_timeout_seconds": 2,
+    "ledger_held_until_monotonic": 3233131.173616039,
+    "original_CLI_birth": "323312889",
+    "original_CLI_genuine_wait": true,
+    "original_CLI_pid": 3410024,
+    "original_CLI_returncode": 1,
+    "original_PIDs_absent_at_audit": [
+      3395167,
+      3403790,
+      3410024
+    ],
+    "original_failure_type": "ResourceAdmissionDeadlineError",
+    "original_native_grant": "acquired",
+    "original_native_lease_id": "33dcf614ffb24f6baa3e89b3fe7ec284",
+    "original_native_lease_released_and_cancelled": true,
+    "positive_verdict": "proven_original_no_child_native_closed",
+    "private_attempt_empty": true,
+    "private_leases_and_waiters_absent": true,
+    "private_ledger_and_native_bytes_unchanged_by_executed_assertion": true,
+    "private_retained_record_fields": 17,
+    "private_retained_reservation_id": "545ebc79fe2e44f2a7d56694bd5fd117",
+    "private_retained_storage_bytes": 1000000,
+    "selected_check": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_validation_run_resources.py::test_actual_cli_acquired_native_admission_deadline_closes_source_without_child",
+    "source_custody_closed": true,
+    "storage_release_authorized": false,
+    "strict_earlier_deadline_bound": 3233130.89085623,
+    "strict_later_deadline_bound": 3233131.17355327,
+    "unexpected_cleanup_signal": false
+  },
+  "qualification": {
+    "JUnit_seconds": 2.527,
+    "errors": 0,
+    "failures": 0,
+    "original_Source_native_process_and_durable_storage_closed": true,
+    "outer_attempt_bytes": 32497,
+    "outer_reservation_id": "b63b66b94d734a8d948fb18f21a57b86",
+    "outer_storage_bytes": 2097152,
+    "parent_seconds": 132.43059644429013,
+    "passed": 1,
+    "skipped": 0,
+    "source_pins": 204,
+    "source_pins_stable_at_original_closeout": true,
+    "whole_module_qualification": false
+  },
+  "receipts": {
+    "JUnit": {
+      "bytes": 445,
+      "path": "/tmp/pytest-of-barberb/legal-ir-sampled-recovery-20261109-P4-pre-child-real-lock-v01/attempt-v01/logs/junit.xml",
+      "sha256": "7113fff216d36054381a837691732af47c5d41763fb357d9b2b8dd60e55e306c"
+    },
+    "durability": {
+      "bytes": 3210,
+      "path": "/tmp/pytest-of-barberb/legal-ir-sampled-recovery-20261109-P4-pre-child-real-lock-v01/attempt-v01/logs/validation-durability.json",
+      "sha256": "21841a9d1839eb6f8e3f8eff57beb761b502700cfd7ef33e210d3290857c6be4"
+    },
+    "execution": {
+      "bytes": 1323,
+      "path": "/tmp/pytest-of-barberb/legal-ir-sampled-recovery-20261109-P4-pre-child-real-lock-v01/attempt-v01/logs/execution.json",
+      "sha256": "9ae7596d39ddcc08e51d0015355e7f104ff34946adf809b6b4998f3ee2beea4f"
+    },
+    "inner_request": {
+      "bytes": 4060,
+      "path": "/tmp/pytest-of-barberb/legal-ir-sampled-recovery-20261109-P4-pre-child-real-lock-v01/attempt-v01/tmp/pytest/test_actual_cli_acquired_native_admission_deadli-ihhq73yx/attempt-0-request.json",
+      "sha256": "57145f81a395fc8be903cfac50d153800ed2b402ba96a1befdaeaa94ce851c45"
+    },
+    "inner_stderr": {
+      "bytes": 1901,
+      "path": "/tmp/pytest-of-barberb/legal-ir-sampled-recovery-20261109-P4-pre-child-real-lock-v01/attempt-v01/tmp/pytest/test_actual_cli_acquired_native_admission_deadli-ihhq73yx/actual-pre-child-deadline-owner.stderr",
+      "sha256": "3f2aaff50f569a2a374d8600af2c77d11ada8eb329c6f8c89aa372729859c974"
+    },
+    "inner_terminal": {
+      "bytes": 6404,
+      "path": "/tmp/pytest-of-barberb/legal-ir-sampled-recovery-20261109-P4-pre-child-real-lock-v01/attempt-v01/tmp/pytest/test_actual_cli_acquired_native_admission_deadli-ihhq73yx/actual-pre-child-deadline-owner.stdout",
+      "sha256": "5647ff01fe0ac6f4f9223ca546811ba5dab382631789945981c6af7eaac611e1"
+    },
+    "outer_terminal": {
+      "bytes": 5452,
+      "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/failed-admission-own-claim-recovery-DRAFT-v02/sampled-scope-P4-pre-child-real-lock-v01/owner.stdout",
+      "sha256": "28f2413aa793e0635867847ee23c00e5eff9c84b76b04f6232b42e6bb232384e"
+    },
+    "parent": {
+      "bytes": 9908,
+      "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/failed-admission-own-claim-recovery-DRAFT-v02/sampled-scope-P4-pre-child-real-lock-v01/parent-closeout.json",
+      "sha256": "b057b8ab3cafed25f50cf6736c28efba48fd59d78351ebc205ebfe95bd0e1994"
+    },
+    "physical_facts": {
+      "bytes": 10336,
+      "path": "/tmp/pytest-of-barberb/legal-ir-sampled-recovery-20261109-P4-pre-child-real-lock-v01/attempt-v01/tmp/pytest/test_actual_cli_acquired_native_admission_deadli-ihhq73yx/actual-pre-child-deadline-observation.json",
+      "sha256": "21aae420d3bed17c97a8abaa86556196c9b78445bc8fd6afd05e376de1774304"
+    },
+    "private_ledger": {
+      "bytes": 1556,
+      "path": "/tmp/pytest-of-barberb/legal-ir-sampled-recovery-20261109-P4-pre-child-real-lock-v01/attempt-v01/tmp/pytest/test_actual_cli_acquired_native_admission_deadli-ihhq73yx/disk.json",
+      "sha256": "3e180ef445f1945f3f58207d6fd92efdad8e95b84483b9903b637b4a233f3a5d"
+    },
+    "private_native_state": {
+      "bytes": 1345,
+      "path": "/tmp/pytest-of-barberb/legal-ir-sampled-recovery-20261109-P4-pre-child-real-lock-v01/attempt-v01/tmp/pytest/test_actual_cli_acquired_native_admission_deadli-ihhq73yx/native-state.json",
+      "sha256": "f496b43e50d750521a47ad8e716343b4dd95acdc3135868d40edc93c5a7ff31a"
+    },
+    "request": {
+      "bytes": 39774,
+      "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/failed-admission-own-claim-recovery-DRAFT-v02/sampled-scope-P4-pre-child-real-lock-v01/request.json",
+      "sha256": "f0dfbeac891010f3919c08aa3cf111ddbb87c522cce15df5076967e3bdc00e0c"
+    },
+    "result": {
+      "bytes": 685,
+      "path": "/tmp/pytest-of-barberb/legal-ir-sampled-recovery-20261109-P4-pre-child-real-lock-v01/attempt-v01/logs/result.json",
+      "sha256": "79198a81e427165e685b6f5a207e55168712f0d86bc7e71cb7c8a25496c5a104"
+    },
+    "source_installation": {
+      "bytes": 2501,
+      "path": "/tmp/legal-ir-phase3-native-ast-preservation-source-20261108-v01/actual-lean-campaign-source-v01/failed-admission-own-claim-recovery-DRAFT-v02/pre-child-real-lock-regression-v02-Source-CAS-closeout.json",
+      "sha256": "6549f7de88c465daec33ab8165c552360c6d2c22c299f05dc6136a32e3417626"
+    }
+  },
+  "recorded_at_utc": "2026-11-09T09:17:46.148588+00:00",
+  "schema": "legal-ir-no-child-native-closed-physical-e2e-qualification/v1",
+  "source_generation": [
+    {
+      "bytes": 139482,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/run_owned_validation.py",
+      "sha256": "8a5f43b09892fbafb21060f98f546b8df3bec5135488939d9734f346577c203b"
+    },
+    {
+      "bytes": 358387,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_validation_run_resources.py",
+      "sha256": "2b738a97b6df32aca3a81b0e3f5fbaab9741d9dc17bc3eacf37ef819f0e62102"
+    }
+  ],
+  "status": "single_physical_case_qualified"
+}

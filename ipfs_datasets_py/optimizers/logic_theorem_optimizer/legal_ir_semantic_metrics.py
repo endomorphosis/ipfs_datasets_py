@@ -321,7 +321,12 @@ def evaluate_legal_ir_semantic_equivalence(
     *,
     family: str = "unscoped",
 ) -> SemanticEquivalenceFamilyResult:
-    """Compute semantic-equivalence scores for one reference/candidate IR pair."""
+    """Compare reported legacy surfaces, withholding uncovered measurements.
+
+    This raw-payload route does not validate canonical typed IR, independently
+    recompile text, or establish legal source correspondence. Unknown legacy
+    shapes remain diagnostic inputs, but cannot supply complete gate evidence.
+    """
 
     family_name = _canonical_family_or_unscoped(family)
     structural_left = _structural_signature(reference_ir)
@@ -334,8 +339,10 @@ def evaluate_legal_ir_semantic_equivalence(
     graph_right = _graph_signature(candidate_ir)
     temporal_left = _temporal_window_signature(reference_ir)
     temporal_right = _temporal_window_signature(candidate_ir)
-    decompiler_left = _decompiler_round_trip_signature(reference_ir)
-    decompiler_right = _decompiler_round_trip_signature(candidate_ir)
+    decompiler_left, round_trip_left = _legacy_round_trip_observation(reference_ir)
+    decompiler_right, round_trip_right = _legacy_round_trip_observation(candidate_ir)
+    unsupported_left = _legacy_raw_ir_unsupported_paths(reference_ir)
+    unsupported_right = _legacy_raw_ir_unsupported_paths(candidate_ir)
     proof_left = _proof_obligation_signature(reference_ir)
     proof_right = _proof_obligation_signature(candidate_ir)
     proof_delta = float(len(proof_left ^ proof_right))
@@ -355,18 +362,39 @@ def evaluate_legal_ir_semantic_equivalence(
             temporal_left,
             temporal_right,
         ),
-        DECOMPILER_ROUND_TRIP_PRESERVATION: _empty_aware_similarity(
-            decompiler_left or structural_left,
-            decompiler_right or structural_right,
-        ),
         PROOF_OBLIGATION_DELTA_SCORE: _proof_delta_score(proof_left, proof_right),
     }
+    missing: set[str] = set()
+    if decompiler_left and decompiler_right:
+        scores[DECOMPILER_ROUND_TRIP_PRESERVATION] = _set_similarity(
+            decompiler_left, decompiler_right,
+        )
+    else:
+        missing.add(DECOMPILER_ROUND_TRIP_PRESERVATION)
+    if unsupported_left or unsupported_right:
+        # Preserve the old similarity diagnostics without treating unhandled
+        # fields as covered legal structure or obligation semantics.
+        missing.update((STRUCTURAL_EQUIVALENCE, OBLIGATION_EQUIVALENCE))
     return SemanticEquivalenceFamilyResult(
         family=family_name,
         scores=scores,
         raw_deltas={PROOF_OBLIGATION_DELTA: proof_delta},
+        missing_metrics=tuple(metric for metric in SEMANTIC_EQUIVALENCE_METRICS if metric in missing),
         evidence_sources=("computed_ir_pair",),
         detail={
+            "raw_input_coverage": {
+                "profile": "legacy-reported-surfaces/v1",
+                "reference_unsupported_paths": list(unsupported_left),
+                "candidate_unsupported_paths": list(unsupported_right),
+                "canonical_typed_ir_validated": False,
+                "legal_source_correspondence_verified": False,
+            },
+            "round_trip_evidence": {
+                "reference": round_trip_left,
+                "candidate": round_trip_right,
+                "independently_recompiled": False,
+                "authority": "caller_reported_observations_only",
+            },
             "counterexample_signature_sizes": {
                 "candidate": len(counterexamples_right),
                 "reference": len(counterexamples_left),
@@ -419,7 +447,8 @@ def semantic_equivalence_from_metrics(
             scores=merged,
             raw_deltas=raw_deltas,
             missing_metrics=tuple(
-                metric for metric in SEMANTIC_EQUIVALENCE_METRICS if metric not in merged
+                metric for metric in SEMANTIC_EQUIVALENCE_METRICS
+                if metric not in merged or metric in computed.missing_metrics
             ),
             evidence_sources=("computed_ir_pair", "explicit_metric"),
             detail=computed.detail,
@@ -748,6 +777,135 @@ def _ce_cosine_improvements(
     return improvements
 
 
+def _legacy_raw_ir_unsupported_paths(value: Any) -> tuple[str, ...]:
+    """Describe coverage of the finite legacy surface, not typed-IR validity.
+
+    The old set signatures are useful diagnostics for these simple records.
+    They do not interpret arbitrary argument arrays, binders, or extra semantic
+    fields. Identity metadata retains its historical excluded scope. Assignment
+    names are open, but their values must remain scalar; no nested semantics
+    are accepted merely because a recursive signature can flatten them.
+    """
+    def text_keys(keys: str) -> dict[str, str]:
+        return {key: "text" for key in keys.split()}
+
+    schemas = {
+        "root": {"rules": "rules", "graph": "graph", "counterexamples": "counterexamples",
+                 "round_trip": "round_trip", "roundtrip": "round_trip",
+                 **text_keys("decompiled decompiler recompiled_ir reconstructed_ir")},
+        "rule": {**text_keys("modality type norm_type obligation_type subject actor agent party "
+                             "action predicate verb duty obligation condition unless if exception"),
+                 "proof_obligation_ids": "texts", "temporal_window": "temporal"},
+        "temporal": text_keys("start from effective begin after end to expires deadline before duration within window"),
+        "graph": {"nodes": "nodes", "edges": "edges", "relationships": "edges",
+                  "triples": "triples", "kg_triples": "triples"},
+        "node": text_keys("node_id label name type"),
+        "edge": text_keys("source from subject target to object label type predicate"),
+        "triple": text_keys("subject s predicate p relation object o"),
+        "counterexample": {"assignment": "assignment", "violates": "text"},
+        "round_trip": text_keys("decompiled decompiler recompiled_ir reconstructed_ir"),
+    }
+    sequence_items = {"rules": "rule", "nodes": "node", "edges": "edge",
+                      "triples": "triple", "counterexamples": "counterexample", "texts": "text"}
+    unsupported: set[str] = set()
+
+    def mark(path: str, reason: str) -> None:
+        unsupported.add((path or "/") + ":" + reason)
+
+    def scalar(item: Any) -> bool:
+        return type(item) in (str, bool, int, type(None)) or (
+            type(item) is float and math.isfinite(item)
+        )
+
+    def visit(item: Any, context: str, path: str) -> None:
+        if context == "text":
+            if type(item) is not str:
+                mark(path, "scalar_text_required")
+            return
+        if context in sequence_items:
+            if not isinstance(item, Sequence) or isinstance(item, (str, bytes, bytearray)):
+                mark(path, "sequence_required")
+                return
+            for index, child in enumerate(item):
+                visit(child, sequence_items[context], f"{path}/{index}")
+            return
+        if context in {"edge", "triple"} and isinstance(item, (list, tuple)):
+            if len(item) not in ({2, 3} if context == "edge" else {3}) or not all(
+                type(child) is str for child in item
+            ):
+                mark(path, "unsupported_positional_graph_record")
+            return
+        if context == "node" and type(item) is str:
+            return
+        if not isinstance(item, Mapping):
+            mark(path, "mapping_required")
+            return
+        if context == "assignment":
+            for key, child in item.items():
+                if type(key) is not str or not scalar(child):
+                    mark(path, "scalar_assignment_required")
+            return
+        schema = schemas[context]
+        for key, child in item.items():
+            if type(key) is not str:
+                mark(path, "string_keys_required")
+                continue
+            if key in _IGNORED_NORMALIZATION_KEYS:
+                continue
+            child_path = path + "/" + key.replace("~", "~0").replace("/", "~1")
+            if key not in schema:
+                mark(child_path, "unsupported_field")
+            else:
+                visit(child, schema[key], child_path)
+        if context == "root":
+            graph = item.get("graph")
+            has_graph = isinstance(graph, Mapping) and any(
+                graph.get(key) for key in ("nodes", "edges", "relationships", "triples", "kg_triples")
+            )
+            if not item.get("rules") and not has_graph:
+                mark(path, "legacy_content_missing")
+        elif context == "rule":
+            groups = (("modality", "type", "norm_type", "obligation_type"),
+                      ("subject", "actor", "agent", "party"),
+                      ("action", "predicate", "verb", "duty", "obligation"))
+            for group in groups:
+                present = [key for key in group if key in item]
+                if len(present) != 1 or type(item[present[0]]) is not str or not item[present[0]].strip():
+                    mark(path, "missing_or_ambiguous_" + group[0])
+            modes = [item[key] for key in groups[0] if key in item]
+            if len(modes) == 1 and _normalize_scalar(modes[0]) not in _MODALITY_WORDS:
+                mark(path, "unsupported_modality")
+
+    visit(value, "root", "")
+    return tuple(sorted(unsupported))
+
+
+def _legacy_round_trip_observation(value: Any) -> tuple[frozenset[str], str]:
+    """Require both named reported observations; structural equality is no substitute."""
+    if not isinstance(value, Mapping):
+        return frozenset(), "unsupported_raw_payload"
+    source_keys = ("decompiled", "decompiler")
+    result_keys = ("recompiled_ir", "reconstructed_ir")
+    blocks = [value[key] for key in ("round_trip", "roundtrip") if key in value]
+    if any(key in value for key in source_keys + result_keys):
+        blocks.append({key: value[key] for key in source_keys + result_keys if key in value})
+    if len(blocks) != 1:
+        return frozenset(), "missing_or_ambiguous_observation"
+    block = blocks[0]
+    if not isinstance(block, Mapping) or any(
+        key not in source_keys + result_keys and key not in _IGNORED_NORMALIZATION_KEYS for key in block
+    ):
+        return frozenset(), "unsupported_observation_shape"
+    sources = [block[key] for key in source_keys if key in block]
+    results = [block[key] for key in result_keys if key in block]
+    if len(sources) != 1 or len(results) != 1 or any(
+        type(item) is not str or not item.strip() for item in sources + results
+    ):
+        return frozenset(), "missing_or_malformed_observation_pair"
+    return frozenset(("decompiled:" + _normalize_text(sources[0]),
+                      "recompiled_ir:" + _normalize_text(results[0]))), "reported_nonempty_pair"
+
+
 def _structural_signature(value: Any) -> frozenset[str]:
     tokens: set[str] = set()
 
@@ -953,19 +1111,7 @@ def _temporal_window_signature(value: Any) -> frozenset[str]:
 
 
 def _decompiler_round_trip_signature(value: Any) -> frozenset[str]:
-    return frozenset(
-        _contextual_values(
-            value,
-            (
-                "decompiled",
-                "decompiler",
-                "round_trip",
-                "roundtrip",
-                "reconstructed_ir",
-                "recompiled_ir",
-            ),
-        )
-    )
+    return _legacy_round_trip_observation(value)[0]
 
 
 def _proof_obligation_signature(value: Any) -> frozenset[str]:
@@ -2237,3 +2383,272 @@ def evaluate_complete_norm_payloads(examples: Sequence[Mapping[str, Any]]) -> di
 
 
 __all__ += ["COMPLETE_NORM_PAYLOAD_METRICS_SCHEMA", "evaluate_complete_norm_payloads"]
+
+
+
+def evaluate_complete_norm_retrieval_rankings(rankings, reference_rows, candidate_rows, *,
+        expected_rankings_sha256, expected_reference_rows_sha256, expected_candidate_rows_sha256,
+        ranking_depth, cutoffs=(1, 3)):
+    """Posthoc exact payload diagnostics over frozen reviewed-retriever DATA.
+
+    Input commitments use this owner's existing complete-payload JSON wire.
+    Producer formal-view links use canonical UTF8 JSON, as the norm owner does.
+    This compares literal structure/custody; it authenticates no producer,
+    reference, legal relationship, syntax family, split or governing definition.
+    Absent exact counterparts have no conditional-match denominator. Unknown
+    semantic relevance remains unscored, even when payload fields match.
+    """
+    def need(condition, message):
+        if not condition: raise ValueError(message)
+    def sha(value):return hashlib.sha256(_complete_norm_payload_wire(value)).hexdigest()
+    def pin(value):return type(value) is str and len(value)==64 and all(c in '0123456789abcdef' for c in value)
+    def identity(value):return type(value) is str and 0<len(value)<=512
+    need(type(rankings) is dict and 1<=len(rankings)<=8 and type(reference_rows) is list
+         and type(candidate_rows) is list and 1<=len(reference_rows)<=128 and 1<=len(candidate_rows)<=128
+         and len(reference_rows)*len(candidate_rows)<=4096, 'bounded complete retrieval comparison population required')
+    need(type(ranking_depth) is int and 1<=ranking_depth<=len(candidate_rows)
+         and type(cutoffs) in (list,tuple) and 1<=len(cutoffs)<=8,
+         'explicit bounded cutoff configuration and ranking depth required')
+    # Keep a caller-owned list in the closing fence; compute only from its
+    # detached snapshot. Canonical comparison also separates 1/True/1.0.
+    original=[rankings,reference_rows,candidate_rows,cutoffs if type(cutoffs) is list else list(cutoffs)]
+    frozen=_complete_norm_payload_copy(original);ranked,references,candidates,cutoffs=frozen
+    need(all(type(k) is int and 1<=k<=ranking_depth for k in cutoffs)
+         and cutoffs==sorted(set(cutoffs)), 'explicit increasing integer cutoffs required')
+    for value,pinned in zip(frozen[:3],(expected_rankings_sha256,expected_reference_rows_sha256,expected_candidate_rows_sha256),strict=True):
+        need(pin(pinned) and sha(value)==pinned,'independent complete retrieval input pin differs')
+    def table(rows,label):
+        result={}
+        for row in rows:
+            need(type(row) is dict and set(row)=={'id','canonical_ir'} and identity(row['id'])
+                 and row['id'] not in result,'closed unique '+label+' payload rows required')
+            result[row['id']]=row['canonical_ir']
+        return result
+    refs=table(references,'reference');bank=table(candidates,'candidate')
+    pair_cases=[dict(case_id='pair:'+str(i)+':'+str(j),reference=ref,candidate=candidate,outcome='complete')
+                for i,ref in enumerate(refs.values()) for j,candidate in enumerate(bank.values())]
+    pairs=evaluate_complete_norm_payloads(pair_cases);metric_names=list(pairs['metric_numerators'])
+    grid={};details=[];n=len(bank)
+    for i,qid in enumerate(refs):
+        grid[qid]={}
+        for j,cid in enumerate(bank):
+            pair=pairs['cases'][i*n+j];grid[qid][cid]=pair['scores']
+            details.append(dict(query_id=qid,candidate_id=cid,candidate_payload_shape_supported=pair['candidate_payload_shape_supported'],scores=pair['scores']))
+    formal_hashes={key:hashlib.sha256(json.dumps(value,sort_keys=True,separators=(',',':'),ensure_ascii=False,allow_nan=False).encode('utf-8')).hexdigest() for key,value in bank.items()}
+    common=None;order=None;methods={};eligible_by_query={}
+    identity_fields=('checkpoint_sha256','current_index_handoff_sha256','query_input_sha256','query_lane_bundle_sha256')
+    for method,producer in ranked.items():
+        need(identity(method) and len(method)<=64 and type(producer) is dict
+             and producer.get('schema') in ('legal-joint-retrieval-result/v2','legal-joint-retrieval-result/v3')
+             and producer.get('mode')==method and producer.get('status')=='retrieval_completed'
+             and producer.get('query_target_access') is False
+             and producer.get('inference_reference_content_forwarded') is False,
+             'frozen completed source-only retriever DATA required')
+        offered=[producer.get(key) for key in identity_fields]
+        need(all(pin(value) for value in offered),'complete frozen producer identities required')
+        if common is None:common=offered
+        need(offered==common,'retrieval methods have different checkpoint, index or query identities')
+        rows=producer.get('rows');need(type(rows) is list and len(rows)==len(refs),'complete enrolled query denominator required')
+        ids=[row.get('id') if type(row) is dict else None for row in rows]
+        need(all(identity(key) for key in ids) and len(ids)==len(set(ids)) and set(ids)==set(refs),'unique complete query population required')
+        if order is None:order=ids
+        need(ids==order,'frozen query order differs between methods')
+        totals={str(k):dict.fromkeys(metric_names,0) for k in cutoffs}
+        available=dict.fromkeys(metric_names,0);abstentions=0;case_details=[]
+        for row in rows:
+            qid=row['id'];status=row.get('status');chosen=row.get('retrieved_ids')
+            need(status in ('retrieved','abstained') and type(chosen) is list
+                 and all(identity(key) and key in bank for key in chosen) and len(chosen)==len(set(chosen)),
+                 'complete unique known ranked candidates required')
+            excluded=row.get('excluded_examples');need(type(excluded) is list,'explicit query candidate exclusions required')
+            excluded_ids=[]
+            for item in excluded:
+                need(type(item) is dict and set(item)=={'id','reason'} and identity(item['id']) and item['id'] in bank and identity(item['reason']),
+                     'closed candidate exclusion identity required')
+                excluded_ids.append(item['id'])
+            need(len(excluded_ids)==len(set(excluded_ids)) and not set(chosen).intersection(excluded_ids)
+                 and type(row.get('eligible_rows')) is int and row['eligible_rows']==len(bank)-len(excluded_ids),
+                 'complete eligible candidate population required')
+            links=row.get('retrieved_endpoint_refs',[])
+            need(type(links) is list and len(links)==len(chosen),'complete ranked producer endpoint links required')
+            for key,link in zip(chosen,links,strict=True):
+                need(type(link) is dict and link.get('id')==key and link.get('formal_view_sha256')==formal_hashes[key],
+                     'ranked producer formal payload differs from independent candidate')
+            need((status=='abstained' and not chosen) or (status=='retrieved' and len(chosen)==ranking_depth),
+                 'fixed ranking depth or explicit abstention required')
+            abstentions+=int(status=='abstained')
+            eligible=set(bank)-set(excluded_ids)
+            need(eligible_by_query.setdefault(qid,eligible)==eligible,
+                 'retrieval methods have different eligible candidate populations')
+            for metric in metric_names:available[metric]+=int(any(grid[qid][key][metric] for key in eligible))
+            hits={}
+            for k in cutoffs:
+                hit={metric:int(any(grid[qid][key][metric] for key in chosen[:k])) for metric in metric_names}
+                hits[str(k)]=hit
+                for metric,value in hit.items():totals[str(k)][metric]+=value
+            case_details.append(dict(id=qid,status=status,ranked_candidate_ids=chosen,eligible_candidate_count=len(eligible),cutoff_matches=hits))
+        methods[method]=dict(query_count=len(refs),retrieved_count=len(refs)-abstentions,abstention_count=abstentions,
+            cutoffs={str(k):dict(denominator=len(refs),metric_numerators=totals[str(k)],
+                population_exact_match_rates={name:value/len(refs) for name,value in totals[str(k)].items()},
+                eligible_index_match_counts=dict(available),
+                conditional_exact_match_rates={name:totals[str(k)][name]/available[name] if available[name] else None for name in metric_names}) for k in cutoffs},
+            cases=case_details)
+    need(_complete_norm_payload_wire(_complete_norm_payload_copy(original))==_complete_norm_payload_wire(frozen),
+         'retrieval comparison input changed during scoring')
+    return dict(schema='complete-norm-retrieved-example-payload-diagnostics/v1',
+        scope='posthoc_literal_structural_and_custody_payload_comparison_only',reference_count=len(refs),
+        candidate_view_count=len(bank),unique_candidate_payload_count=len({sha(value) for value in bank.values()}),
+        ranking_depth=ranking_depth,cutoffs=list(cutoffs),methods=methods,pair_diagnostics=details,
+        input_commitments=dict(rankings=expected_rankings_sha256,references=expected_reference_rows_sha256,candidates=expected_candidate_rows_sha256),
+        frozen_producer_identities=dict(zip(identity_fields,common,strict=True)),
+        semantic_relevance_metrics=None,legal_applicability_metrics=None,producer_authenticity_verified=False,
+        reference_authenticity_verified=False,source_or_dependency_split_verified=False,
+        syntax_or_logic_family_validity_verified=False,semantic_equivalence_proved=False,
+        governing_definition_meaning_verified=False,source_fidelity_proved=False,structural_usefulness_proved=False,
+        legal_admission_or_proof_authority=False,generator_invoked_by_scorer=False)
+
+
+__all__ += ['evaluate_complete_norm_retrieval_rankings']
+
+
+CANONICAL_TYPED_STRUCTURE_PROFILE = "canonical-typed-expression-wire/v1"
+COMPLETE_NORM_TYPED_STRUCTURE_METRICS_SCHEMA = "complete-norm-canonical-typed-structure-metrics/v1"
+
+
+def evaluate_complete_norm_typed_structure(examples: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    """Audit canonical formula wires/signatures, never proof or legal meaning.
+
+    References must all be canonical TypedExpression formulas before a report
+    can be issued. Complete candidates are parsed by the existing AST owner and
+    must roundtrip exactly; missing digests/defaults are never filled in an
+    accepted candidate. Other dispositions keep their original denominator.
+    Family semantics, obligations, source correspondence and native proof are
+    outside this structural check. No generator or prover is invoked.
+    """
+    if type(examples) not in (list, tuple) or not 0 < len(examples) <= 4096:
+        raise ValueError("bounded nonempty ordinary example sequence required")
+    rows = _complete_norm_payload_copy(list(examples))
+    frozen = _complete_norm_payload_wire(rows)
+    # Reuse the established closed case/outcome/payload boundary unchanged.
+    evaluate_complete_norm_payloads(rows)
+    from ...logic.syntax_core.ast import TypedExpression
+
+    def inspect(payload):
+        if not _complete_norm_payload_shape(payload):
+            return "malformed_complete_payload"
+        wire = payload["typed_expression"]
+        offered = _complete_norm_payload_wire(wire)
+        try:
+            expression = TypedExpression.from_dict(wire)
+            if not expression.is_formula:
+                return "non_formula_root"
+            if _complete_norm_payload_wire(expression.to_dict()) != offered:
+                return "noncanonical_typed_expression"
+        except (ValueError, TypeError, KeyError, RecursionError):
+            return "invalid_typed_expression"
+        return None
+
+    for row in rows:
+        if inspect(row["reference"]) is not None:
+            raise ValueError("canonical formula reference required; denominator cannot shrink")
+    counts = {"canonical_formula": 0, "invalid_complete": 0, "not_checked": 0}
+    details = []
+    for row in rows:
+        reason = None
+        if row["outcome"] != "complete":
+            status = "not_checked"
+            reason = "noncomplete_disposition"
+        else:
+            reason = inspect(row["candidate"])
+            status = "canonical_formula" if reason is None else "invalid_complete"
+        counts[status] += 1
+        details.append(dict(case_id=row["case_id"], outcome=row["outcome"], status=status, reason=reason))
+    if (_complete_norm_payload_wire(rows) != frozen or
+            _complete_norm_payload_wire(_complete_norm_payload_copy(list(examples))) != frozen):
+        raise ValueError("typed-structure input changed during scoring")
+    return dict(schema=COMPLETE_NORM_TYPED_STRUCTURE_METRICS_SCHEMA,
+        profile=CANONICAL_TYPED_STRUCTURE_PROFILE,
+        scope="canonical_typed_expression_formula_wire_and_signature_only",
+        denominator=len(rows), canonical_reference_count=len(rows), counts=counts,
+        canonical_formula_rate=counts["canonical_formula"] / len(rows), cases=details,
+        reference_and_prediction_payload_sha256=hashlib.sha256(frozen).hexdigest(),
+        candidate_repaired=False, generator_invoked_by_scorer=False,
+        producer_authenticity_verified=False, reference_authenticity_verified=False,
+        syntax_or_logic_family_validity_verified=False, native_proof_verified=False,
+        semantic_equivalence_proved=False, source_fidelity_proved=False,
+        legal_admission_or_proof_authority=False)
+
+
+__all__ += ["CANONICAL_TYPED_STRUCTURE_PROFILE", "COMPLETE_NORM_TYPED_STRUCTURE_METRICS_SCHEMA",
+            "evaluate_complete_norm_typed_structure"]
+
+
+def evaluate_complete_norm_candidate_syntax(examples: Sequence[Mapping[str, Any]], *,
+        known_candidate_inputs, candidate_syntax_profile) -> dict[str, Any]:
+    """Check declared source/context/selection and full candidate syntax only.
+
+    Callers supply independent known facts; no fact is inferred from a target.
+    Unsupported reference profiles and all noncomplete outcomes retain the
+    denominator. Invalid reference facts refuse the report. This pure scorer
+    invokes neither a generator nor a native prover and grants no eligibility.
+    """
+    from ...logic.autoformal import legal_norm_content_adjudication_v1 as candidates
+    validators = {candidates.CANDIDATE_SYNTAX_PROFILE_V2: candidates.validate_complete_norm_candidate_v2,
+                  candidates.CANDIDATE_SYNTAX_PROFILE_V3: candidates.validate_complete_norm_candidate_v3}
+    if type(candidate_syntax_profile) is not str or candidate_syntax_profile not in validators:
+        raise ValueError('explicit complete-candidate syntax profile required')
+    if type(examples) not in (list, tuple) or not 0 < len(examples) <= 4096:
+        raise ValueError('bounded nonempty ordinary example sequence required')
+    rows = _complete_norm_payload_copy(list(examples))
+    known = _complete_norm_payload_copy(known_candidate_inputs)
+    frozen_rows, frozen_known = _complete_norm_payload_wire(rows), _complete_norm_payload_wire(known)
+    evaluate_complete_norm_payloads(rows)
+    if type(known) is not dict or set(known) != {row['case_id'] for row in rows}:
+        raise ValueError('exact complete-candidate known-input population required')
+    validate = validators[candidate_syntax_profile]
+    counts = dict(syntax_validated_unreviewed=0, invalid_complete=0, unsupported_complete=0, not_checked=0)
+    reference_counts = dict(syntax_validated_unreviewed=0, unsupported=0)
+    details = []
+    for row in rows:
+        facts = known[row['case_id']]
+        if type(facts) is not dict or set(facts) != {'known_source_binding', 'known_governing_context', 'known_selection_context'}:
+            raise ValueError('closed independent complete-candidate known facts required')
+        candidates.validate_complete_norm_known_input_v2(**facts)
+        try:
+            validate(row['reference'], **facts)
+            reference_status = 'syntax_validated_unreviewed'
+        except candidates.CompleteNormCandidateUnsupportedError:
+            reference_status = 'unsupported'
+        reference_counts[reference_status] += 1
+        if row['outcome'] != 'complete':
+            status = 'not_checked'
+        else:
+            try:
+                validate(row['candidate'], **facts)
+                status = 'syntax_validated_unreviewed'
+            except candidates.CompleteNormCandidateUnsupportedError:
+                status = 'unsupported_complete'
+            except (ValueError, TypeError, KeyError, RecursionError):
+                status = 'invalid_complete'
+        counts[status] += 1
+        details.append(dict(case_id=row['case_id'], outcome=row['outcome'], status=status,
+                            reference_status=reference_status))
+    if (_complete_norm_payload_wire(rows) != frozen_rows
+            or _complete_norm_payload_wire(known) != frozen_known
+            or _complete_norm_payload_wire(_complete_norm_payload_copy(list(examples))) != frozen_rows
+            or _complete_norm_payload_wire(_complete_norm_payload_copy(known_candidate_inputs)) != frozen_known):
+        raise ValueError('complete-candidate inputs changed during scoring')
+    return dict(schema='complete-norm-source-bound-candidate-syntax-metrics/v1',
+        profile=candidate_syntax_profile, denominator=len(rows), counts=counts,
+        reference_counts=reference_counts, cases=details,
+        syntax_validated_rate=counts['syntax_validated_unreviewed'] / len(rows),
+        known_inputs_sha256=hashlib.sha256(frozen_known).hexdigest(),
+        reference_and_prediction_payload_sha256=hashlib.sha256(frozen_rows).hexdigest(),
+        known_input_authenticity_verified=False, candidate_repaired=False,
+        generator_invoked_by_scorer=False, semantic_selection_supported=False,
+        semantic_use_eligible=False, training_mask=0, evaluation_gold_mask=0,
+        source_fidelity_proved=False, semantic_equivalence_proved=False,
+        native_proof_verified=False, legal_admission_or_proof_authority=False)
+
+
+__all__ += ['evaluate_complete_norm_candidate_syntax']

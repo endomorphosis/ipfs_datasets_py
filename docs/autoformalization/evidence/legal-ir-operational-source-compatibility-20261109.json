@@ -1,0 +1,374 @@
+{
+  "MainW_specific_public_error_boundary_fix": {
+    "MainW_post_sha256": "80ec0e6cb99dd8cbb6660f5576e85c8e3f38c4f9e64b875797e0c47b7b7340f7",
+    "actual_closed_installation_ref": {
+      "bytes": 283237,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/phase8-producer-context-policy-boundary-fix-v01/Sourceclosed-one-mainW-installation.json",
+      "sha256": "c2855ff10ff2af4e7074f1b694e215c6d8f100d313718f2ca6aa2838cb926fb7"
+    },
+    "full241_rerun_verified": false,
+    "independent_actual_Source_acceptance_ref": {
+      "bytes": 1683,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/phase8-producer-context-policy-boundary-fix-v01/independent-actual-one-MainW-Source-readback-acceptance-v01.json",
+      "sha256": "fafff220a9e7f50454b13356e4e255a86e93c2379ec363c4dc4464932cd00b0b"
+    },
+    "installed_and_independently_read_back": true,
+    "new_validation_attempt_v05_refused_before_tests": true,
+    "primary_R_a1ac_preserved_without_implicit_producer_port": true,
+    "relative_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_evaluation_artifacts.py"
+  },
+  "actual_source_installation": {
+    "Source_WRITE_closed_seconds": 0.1450816891156137,
+    "canonical_OPEN_and_private_CLOSED_receipts_remain_distinct": true,
+    "canonical_OPEN_receipt": {
+      "bytes": 871001,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-operational-source-fixes-20261109-v01/source-body-before-closure.json",
+      "sha256": "cd060a8cf87b8816381ad76fb1edc374b05a1f72b8276c5458ef67743b8d6149"
+    },
+    "content_files": 3,
+    "independent_READ_closed_seconds": 0.03900081291794777,
+    "independent_current_postimages_and_preimages_verified": true,
+    "independent_local_acceptance_ref": {
+      "bytes": 1709,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/operational-source-fixes-v01/independent-actual-Source-readback-acceptance-v01.json",
+      "sha256": "4cadfc657478c5028111f28d0f7ebc3ea218946fe88d3cddb5f70225f3dc5c79"
+    },
+    "independent_local_readback_ref": {
+      "bytes": 13253,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/operational-source-fixes-v01/independent-actual-Source-readback-v01.json",
+      "sha256": "36976a592289981473575bb63eb5227af8ae9fbb114909ec4a3de8c86d042c56"
+    },
+    "local_source_outcome_ref": {
+      "bytes": 871541,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/operational-source-fixes-v01/Sourceclosed-outcome.json",
+      "sha256": "9368ebbfb805e925e11307bca9f37d9f18b3376ecec6d1f79bb0918e62f816fc"
+    },
+    "mode_files": 5,
+    "owner_regressions_qualified": false,
+    "permission_delta": "0664 to0644: remove only group-write on five exact owned regular files; content/executablebits preserved.",
+    "retained_full_beforeimages": 6,
+    "unique_current_files": 6
+  },
+  "actual_v04_functional_cohort": {
+    "JUnit_ref": {
+      "bytes": 56860,
+      "path": "/tmp/pytest-of-barberb/legal-ir-phase8-reviewed-producer-241-current-runtime-20261109-v04/attempt-v01/exports/test-results.xml",
+      "sha256": "298622753918d620bfda4bb2882975547fcaeec8821bd77e88cf550fdf632f5c"
+    },
+    "JUnit_seconds": 19.451,
+    "cases": 241,
+    "errors": 0,
+    "failed": 3,
+    "failed_cases": [
+      "test_reviewed_producer_bridge_refuses_unapproved_or_target_bearing_context_before_dispatch[unknown_id]",
+      "test_reviewed_producer_bridge_refuses_unapproved_or_target_bearing_context_before_dispatch[heldout_id]",
+      "test_reviewed_producer_bridge_refuses_unapproved_or_target_bearing_context_before_dispatch[unknown_retrieval]"
+    ],
+    "failure": "Split authorization correctly refused before producer dispatch, but its domain error escaped the public InvalidEvaluationArtifactError boundary.",
+    "functions": 79,
+    "independent_actual_audit_ref": {
+      "bytes": 5503,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/phase8-producer-evaluation-source-v01/qualification-controls-current-runtime-v04/independent-actual-238-pass-3-fail-cohort-and-custody-audit-v01.json",
+      "sha256": "81dce58ddc321ed1e2ad6b59836eb8ccc603add03fc3eca9afc824e51b18553a"
+    },
+    "passed": 238,
+    "scope": "Exact private source-bound ordinary engineering cohort; no model, legal, or Lean admission.",
+    "skipped": 0,
+    "source_observation_ref": {
+      "bytes": 226685,
+      "path": "/tmp/pytest-of-barberb/legal-ir-phase8-reviewed-producer-241-current-runtime-20261109-v04/attempt-v01/exports/phase8-reviewed-producer-source-observation.json",
+      "sha256": "05b2edbcdff59a979fa0ad409a2edd405461712435fc9828787b3cbba0a81d14"
+    },
+    "storage_failure_retention_and_later_closeout_separate": true,
+    "strict_a0b_terminal_and_native_process_Source_closure": true
+  },
+  "evidence_id": "legal-ir-operational-source-compatibility-observed-20261109-01",
+  "historical_v03_pregrant_attempt": {
+    "Lean_processes": 0,
+    "additional_requested_bytes": 67108864,
+    "all241_cases_UNRUN": true,
+    "canonical_closeout_ref": {
+      "bytes": 15725,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-phase8-reviewed-producer-241-current-runtime-20261109-v03/actual-owner-closeout.json",
+      "sha256": "9dc00b006976634f82ccd6d0c69e6a135a58b4b0d0aae7de4c69548cbd178e5f"
+    },
+    "canonical_stderr_ref": {
+      "bytes": 2000,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-phase8-reviewed-producer-241-current-runtime-20261109-v03/owner.stderr",
+      "sha256": "3c5cf63d80005077d9ea98abbc63a02b9351708cdc7b40d4d6a22f920e9bf525"
+    },
+    "canonical_stdout_ref": {
+      "bytes": 3885,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-phase8-reviewed-producer-241-current-runtime-20261109-v03/owner.stdout",
+      "sha256": "1f58bd82c14b758cc24ea0976a6797dddb94c16c007545f2acd6f8aa46506e0d"
+    },
+    "capacity_deficit_bytes": 60306193,
+    "charged_bytes": 220060306193,
+    "filesystem_free_insufficient": false,
+    "historical_only": true,
+    "independent_saved_failure_audit_ref": {
+      "bytes": 6842,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/phase8-producer-evaluation-source-v01/qualification-controls-current-runtime-v03/independent-actual-pregrant-capacity-refusal-and-binding-gap-audit-v01.json",
+      "sha256": "11d70d849d17c2ce3416c38355e960c4c9c8590d6e4fff659478010ecd2409a5"
+    },
+    "legacy_admitted_process_caller_normalization_unresolved": true,
+    "limit_bytes": 220000000000,
+    "model_workload": false,
+    "native_lease": null,
+    "old_attempt_not_reclassified_after_source_fix": true,
+    "original_owner_CLI_genuine_wait_returncode": 1,
+    "original_owner_CLI_is_distinct_from_zero_productive_children": true,
+    "productive_child_created": false,
+    "recorded_aggregate_source_native_cleanup_flags": false,
+    "reservation_record": null,
+    "status": "failed_pre_grant_capacity_refusal",
+    "tests_executed": 0
+  },
+  "installed_content_scope": [
+    "V4 early witness-schema gate admits only the existing native-timeout or pre-grant-capacity schema before unchanged strict custody checks.",
+    "Read-only selected storage-disposition inspector and anchored archive reader restored; current16recovery definitions/deadlines/writepaths preserved.",
+    "Three additive owning regressions plus one helper retain the entire peer220-definition SDK-test prefix; owning regressions remain unrun."
+  ],
+  "later_non_target_peer_guard_cutoff": {
+    "earlier423audit_and_b1_profile_candidate_keep_their_original_cutoff": true,
+    "historical_prior_capture_ref": {
+      "bytes": 852418,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-six-operational-protections-after-docs-safe-refusal-v01.json",
+      "sha256": "399bca09239b138d0b838824d5778b913155e442db5589be2d29093cdf25744d"
+    },
+    "inactive_profile_candidate_requires_fresh_current_source_review": true,
+    "independent_source_delta_review_ref": {
+      "bytes": 3142,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/independent-current-recovery-scope-guard-peer-progress-review-v01.json",
+      "sha256": "07bf1a0bd3cd7ac9b81b5a9aad741e9f1393bd79360cb56630096f8892f833dc"
+    },
+    "recovery_current_bytes": 81305,
+    "recovery_current_sha256": "3c3edd130deed257ab813a3dcdb22bf001f29f93541f4bb122c2464c92d0c1c3",
+    "scope": "Protect existing non-target peer fail-closed process-scope guard. No code overwrite or transferred runtime/cleanup qualification. Earlier b1 installation/recovery receipts remain historically exact."
+  },
+  "latest_non_target_owner_guard_cutoff": {
+    "actual_Source_READ_capture_ref": {
+      "bytes": 3318035,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-docs-and-six-guards-after-peer-qualification-v01.json",
+      "sha256": "06916b00a94ad0a9fee9ee43e6bab011a4211c90a0f815711aa2db3ba4f52ba5"
+    },
+    "current_peer_results_and_progress": "Preserved verbatim in current maintained checkpoint/history, including80-case recovery qualification and all failures.",
+    "current_refs": [
+      {
+        "bytes": 121648,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/run_owned_validation.py",
+        "sha256": "eb5f77b3ce9ed953f1ae249ad56d867dbfe5f6d7ef5eba5ffb164a2b77f68f5a"
+      },
+      {
+        "bytes": 332198,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_validation_run_resources.py",
+        "sha256": "65cea897756aab2c43742daca1907dbee515755ee624086f058f66563bd2758d"
+      },
+      {
+        "bytes": 81305,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_resource_recovery.py",
+        "sha256": "3c3edd130deed257ab813a3dcdb22bf001f29f93541f4bb122c2464c92d0c1c3"
+      },
+      {
+        "bytes": 56261,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py",
+        "sha256": "c99d78004e6ce6b8a861f15e2c0b7009bbb6f45a37a89daabc8894ac440b282d"
+      },
+      {
+        "bytes": 69338,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/validation_run_resources.py",
+        "sha256": "e8603f40aa19f7c8aef54409a2573c44d45a6e53203ad81bf276f35fd78373e3"
+      },
+      {
+        "bytes": 15663,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/parented_phase_resources.py",
+        "sha256": "4a9406233f57deb8322bd30836c4360f8163f313939a9420f354d6e183a9fb61"
+      }
+    ],
+    "exact_six_guard_DATA_subset_ref": {
+      "bytes": 906354,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/maintained-docs-reconciliation-v01/operational-source-compatibility-20261109-v01/current-six-guard-READ-DATA-view-v01.json",
+      "sha256": "38865959a3665aa28fe93e14f3409b28a069199457549bb3d913b7d38bee6ef8"
+    },
+    "scientific_profile_candidate_keeps_earlier_bindings_and_remains_inactive": true,
+    "scope": "Current peer Source bodies are protected only. Old07b/b1/3b installation, executed requests, actual cleanup and423-audit hashes stay exact historical cutoffs; no qualification transfers to later peer versions."
+  },
+  "latest_v05_pregrant_attempt": {
+    "Source_post_READ_closed": true,
+    "all241_cases_UNRUN": true,
+    "canonical_closeout_ref": {
+      "bytes": 15728,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-phase8-reviewed-producer-241-current-runtime-20261109-v05/actual-owner-closeout.json",
+      "sha256": "fb5687100c9b37528d3e6a93884b0f5faf0a1fb2485f8f74d4ac9b527153ba58"
+    },
+    "capacity_observation": {
+      "additional_requested_bytes": 67108864,
+      "charged_bytes": 220032453605,
+      "filesystem_free_deficit_bytes": 0,
+      "filesystem_free_insufficient": false,
+      "limit_bytes": 220000000000,
+      "minimum_filesystem_free_bytes": 509052727296,
+      "observed_apparent_bytes": 175263037605,
+      "outstanding_full_reservations_bytes": 44702307136,
+      "schema": "daemon-resource-capacity-observation/v1",
+      "scope": "named_roots_only_apparent_bytes",
+      "storage_capacity_deficit_bytes": 32453605,
+      "storage_capacity_exceeded": true
+    },
+    "further_admission_retries_selected": false,
+    "genuine_owner_wait_exit_code": 1,
+    "independent_saved_failure_audit_ref": {
+      "bytes": 2736,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/phase8-producer-evaluation-source-v01/qualification-controls-current-runtime-v05/independent-actual-postfix-pregrant-refusal-audit-v01.json",
+      "sha256": "7365ed80e3b89ec8419b99efa2c1209947823042a0adce454dd8135c23c302d2"
+    },
+    "legacy_wait_aggregate_cleanup_flags_remain_false": true,
+    "native_lease": null,
+    "new_source_fix_not_qualified_by_refusal": true,
+    "pins_unchanged": true,
+    "private_capture_ref": {
+      "bytes": 52199,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/actual-v05-postfix-pregrant-capacity-refusal-capture-v01.json",
+      "sha256": "d22414838f17fa4da29a421bf9e39ea27ee31a2b7f32e007f04b700c496827a8"
+    },
+    "productive_test_children": 0,
+    "reservation_record": null,
+    "status": "failed_pregrant_capacity_refusal",
+    "tests_executed": 0
+  },
+  "ledger_or_hold_release_from_this_evidence": false,
+  "next_existing_supervisor_task": {
+    "action": "Reconcile current supervisor capacity backoff and typed zero-grant handling against the failed historical callers, then freshly qualify current source/request bindings. Later peer implementations and their qualifications are reported separately.",
+    "current_peer_implementations_require_separate_review": true,
+    "guidance_ref": {
+      "bytes": 4857,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/capacity-race-existing-supervisor-guidance-v01.json",
+      "sha256": "3743b166a8c029859eb60fdff546a345493dd89059d79f4764cdf43cfaa3fd1f"
+    },
+    "implemented_or_qualified_by_this_contribution": false,
+    "new_daemon_cap_reset_budget_reset_or_admission_retry": false
+  },
+  "own_v04_storage_closeout": {
+    "cap_bytes_unchanged": 220000000000,
+    "failed_late_admin_wrapper_outcome_ref": {
+      "bytes": 3694,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/actual241-v04-own-retained-administrative-closeout-source-v03/outcome.json",
+      "sha256": "dca0928bdc7c61089ba4213d5955c7a4c998c7b04ea776cc2e8c47e3558e3722"
+    },
+    "failed_original_require_capacity_outcome_ref": {
+      "bytes": 3288,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/actual241-v04-own-retained-recovery-source-v02/outcome.json",
+      "sha256": "b96bf25e7acb8bd22247b4f196ac106ab3c8c5134593c049642a0527c6f2b9d7"
+    },
+    "failed_wrappers_preserved_no_release_replay": true,
+    "historical_census_charged_bytes": 219922562704,
+    "historical_census_headroom_bytes": 77437296,
+    "historical_headroom_is_not_current_admission": true,
+    "independent_saved_composite_acceptance_ref": {
+      "bytes": 5186,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/actual241-v04-required-postwrite-census-source-v01/independent-saved-composite-cleanup-acceptance-v01.json",
+      "sha256": "bb9cb38330838f7e8eb86b2acf9f610c37adc875b7eb76d5922439cf6f063fb0"
+    },
+    "no_foreign_claim_release_or_new_work_admission": true,
+    "original_locked_own64_release_distinct_from_later_foreign_changes": true,
+    "preserved_bytes": 321423,
+    "preserved_files": 14,
+    "released_bytes": 67108864,
+    "released_durable_row_sha256": "206a5e49cb3ec43261d0a2f6911ca000eee250990e95b5da9f8ece088fb8543c",
+    "required_separate_actual_postwrite_census_outcome_ref": {
+      "bytes": 4026,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/actual241-v04-required-postwrite-census-source-v01/outcome.json",
+      "sha256": "8e5571600f1fac01bd22fc0ea6a2798c15809060cf9d77ebcc43da17dae776cb"
+    },
+    "reservation_id": "ae7f74e7909c4ef99b025d1b482abc43"
+  },
+  "profile_423_diagnostic": {
+    "candidate_installed_or_activated": false,
+    "current_profile_automatically_rebound": false,
+    "errors": 0,
+    "executor_health_or_activation_qualified": false,
+    "independent_inert_callmap_review_ref": {
+      "bytes": 2995,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/scientific-profile-four-current-source-refs-INERT-v01/independent-static-four-source-profile-and-callmap-review-v01.json",
+      "sha256": "ad1d7cab6e7034f4ba22276f508853f68b5815326716d566a4bce8f6301bfac0"
+    },
+    "independent_local_acceptance_ref": {
+      "bytes": 5704,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/profile-423-source-metadata-audit-source-v01/independent-actual-profile423-metadata-acceptance-v01.json",
+      "sha256": "e7ac274bad281dbd7f3c97d3786b29512b01f15b77d046cd21426d8982da2046"
+    },
+    "literal_descriptors": 423,
+    "local_actual_observation_ref": {
+      "bytes": 553751,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/profile-423-source-metadata-audit-source-v01/actual-profile423-source-metadata-audit-v01.json",
+      "sha256": "3ea638f42e531775c379c276a3704d9441a489399f0be4cc4b7334f979a4ada2"
+    },
+    "paired_READ_closed_seconds": 0.12608586298301816,
+    "private_inert_four_ref_candidate_ref": {
+      "bytes": 113870,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/scientific-profile-four-current-source-refs-INERT-v01/scientific-profile-INERT-four-source-refs.json",
+      "sha256": "b9c8fc8e186cc291c9611bca9ddf631aa5c2cf9bd4c5b260087c34254c13f6b9"
+    },
+    "profile_hash_matches": 419,
+    "stable_hashed_rows": 423,
+    "stale_hashes": 4,
+    "stale_rows": [
+      {
+        "current_bytes": 51106,
+        "current_mode": "0644",
+        "current_sha256": "3b0f1d047041e63c7761a01f44784b08fb492ca00051e6d383f404422b95eb37",
+        "original_bytes": 41756,
+        "original_sha256": "4c351874ac6725bfdaf43b9e16b1ceba70d283044e9d59a4588c35f83f1142c0",
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py"
+      },
+      {
+        "current_bytes": 80836,
+        "current_mode": "0644",
+        "current_sha256": "b1acd8cfd0d5a331474842e4fec98cb940c191b547f627633532a1271e4110fa",
+        "original_bytes": 68562,
+        "original_sha256": "c3dd27930d44f4464e098af56aed33033f6cacaf26e2a4ed77f2ce9cb5b903ea",
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_resource_recovery.py"
+      },
+      {
+        "current_bytes": 15663,
+        "current_mode": "0644",
+        "current_sha256": "4a9406233f57deb8322bd30836c4360f8163f313939a9420f354d6e183a9fb61",
+        "original_bytes": 19912,
+        "original_sha256": "55f600080f9f908517e7fa8479f620ce91011e8bf472308d0e84b69c5ce9cc6e",
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/parented_phase_resources.py"
+      },
+      {
+        "current_bytes": 108076,
+        "current_mode": "0644",
+        "current_sha256": "07b57d067461d0ca6334e667db5c913cd5fe30739731e16e162c3c861051a997",
+        "original_bytes": 52644,
+        "original_sha256": "7cdbec1093c0b2a4d10f77c8053332f0d0439ed39150cf2498fd32eff8897e7e",
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/run_owned_validation.py"
+      }
+    ],
+    "unsafe_mode_rows": 0
+  },
+  "pure_schema_operands": {
+    "actual_saved_capacity_fixed_gate": true,
+    "actual_saved_capacity_original_gate": false,
+    "cases": 9,
+    "full_classifier_or_owning_fixture_executed": false,
+    "ref": {
+      "bytes": 5011,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/pregrant-capacity-classifier-fix-v01/actual-pure-schema-gate-reproduction-v01.json",
+      "sha256": "43d859b22cd757c4611b2f3ec6d1da78dcf915afcdfc9979dfc9495aff377e84"
+    }
+  },
+  "recorded_at_utc": "2026-11-09T05:56:48.926383+00:00",
+  "remaining_existing_owner_gates": [
+    "Establish legitimate current capacity under the original policy; v05 was refused with a32,453,605-byte deficit. No further admission retries are selected by this handoff.",
+    "Reconcile the historical strict wait caller with current typed zero-grant handling and supervisor backoff; do not invent observed identities or reclassify failures, and review later peer progress separately.",
+    "Qualify installed MainW80ec with the unchanged241 cohort and run the separate owning regressions under fresh request/source bindings.",
+    "Review and qualify the four-ref scientific-profile/caller candidate before any profile installation or executor activation; current423 audit remains419match/4stale.",
+    "Reconcile the seven-file Phase8 delivery after genuine qualification; PR1460 is already merged and must not be duplicated."
+  ],
+  "retention_and_publication": "Exact saved immutable DATA refs remain identified as local/private where applicable; this summary creates no fictitious canonical raw-envelope copies. Canonical OPEN/failure artifacts remain separate from private CLOSED outcomes. No code publication or qualification transfer is performed.",
+  "schema": "legal-ir-operational-source-compatibility-observation/v1",
+  "scope": "Current engineering frontier: Source3 plus mode5 installed; v04 ordinary241 executed238pass3fail; MainW boundary fix installed but unverified after v05 zero-test refusal; exact own64MiB cleanup composite verified;423 metadata diagnostics. No statutory/model/Lean qualification.",
+  "training_gain_statutory_gold_Lean_corpus_runtime_activation_or_task_rearm_claimed": false
+}

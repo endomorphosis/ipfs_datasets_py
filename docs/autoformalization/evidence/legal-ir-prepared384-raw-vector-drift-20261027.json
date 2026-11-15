@@ -1,0 +1,235 @@
+{
+  "accepted_durable_exact_byte_copy": true,
+  "actual_original_resource_closeout": {
+    "live_processes": 0,
+    "native_resource_lease_id": "32467a31bff346baa3e713d1cc2c05a2",
+    "native_resource_released": true,
+    "rss_bytes": 0,
+    "source_READ_closed_after_verified_original_cleanup": true,
+    "storage_released": true,
+    "storage_reservation_id": "60048c773d45493697303fea2351077d"
+  },
+  "actual_source_data_operation": {
+    "acceptance_tolerance": null,
+    "actual_returned_objects_held": 1,
+    "arithmetic_dtype": "python_binary64_fsum_hypot",
+    "cases_passed": 1,
+    "clause_slots": 360,
+    "cosine_distance_policy": "half squared distance of diagnostic unit vectors; independently rounded from similarity",
+    "counts": {
+      "bitwise_differing_coordinates": 164730,
+      "exact_bitwise_rows": 0,
+      "numerically_differing_coordinates": 164730,
+      "row_count": 456,
+      "scalar_pairs": 175104
+    },
+    "dimension": 384,
+    "full_nomination_memberships_and_literal_JSON_selectors_preserved": true,
+    "genuine_kernel_calls": 1,
+    "historical_views": 263,
+    "input_dtype": "binary32_exact",
+    "kernel_receives_only_closed_id_original_successor_fields": true,
+    "literal_target_bytes_unopened_claimed": false,
+    "metric_ranges": {
+      "cosine_distance": {
+        "maximum": 1.780813733906834e-13,
+        "minimum": 2.350594125311015e-14
+      },
+      "cosine_similarity": {
+        "maximum": 0.9999999999999765,
+        "minimum": 0.9999999999998219
+      },
+      "dot_product": {
+        "maximum": 1.0000002069485145,
+        "minimum": 0.9999997672489152
+      },
+      "l1_distance": {
+        "maximum": 9.324315215053502e-06,
+        "minimum": 3.3278774935752153e-06
+      },
+      "l2_distance": {
+        "maximum": 6.010568178496229e-07,
+        "minimum": 2.1686116034984716e-07
+      },
+      "max_absolute_error": {
+        "maximum": 1.4901161193847656e-07,
+        "minimum": 2.9802322387695312e-08
+      },
+      "max_ulp_distance": {
+        "maximum": 492527,
+        "minimum": 188
+      },
+      "mean_ulp_distance": {
+        "maximum": 1320.546875,
+        "minimum": 10.0234375
+      },
+      "original_l2_norm": {
+        "maximum": 1.0000001130119096,
+        "minimum": 0.9999998696617413
+      },
+      "relative_l2_distance": {
+        "maximum": 6.010568127837308e-07,
+        "minimum": 2.1686114216600695e-07
+      },
+      "successor_l2_norm": {
+        "maximum": 1.0000001215042424,
+        "minimum": 0.9999998551781696
+      }
+    },
+    "old_JSON_and_BE_LE_commitments_not_equated": true,
+    "original_and_successor_exact_binary32_verified_without_repair": true,
+    "outer_target_independence_claimed": false,
+    "phase_events_passed": 3,
+    "physical_role_uses": 456,
+    "role_cell_counts": {
+      "train:clause": 180,
+      "train:paragraph": 48,
+      "validation:clause": 180,
+      "validation:paragraph": 48
+    },
+    "source_vector_preprocessing_applied": false,
+    "successor_input_identities": 432,
+    "ulp_policy": "signed-magnitude numerical rank with signed zeros coalesced",
+    "whole_original_JSON_parsed_by_original_admitted_child": true,
+    "whole_payload_alias_groups": 24
+  },
+  "adapter_or_basis_qualified": false,
+  "conditioning_or_head_compatibility_qualified": false,
+  "copy_is_not_new_numerical_or_model_qualification": true,
+  "durable_result_files": {
+    "operation-observation.json": {
+      "bytes": 2364,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-successor-drift-v01/attempt-copy-v01/exports/durable-drift/operation-observation.json",
+      "sha256": "9435492b9e7501f221be8509932d33385fdfc9c29b77b91748c952cb3e66daea"
+    },
+    "physical-role-bindings.json": {
+      "bytes": 669761,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-successor-drift-v01/attempt-copy-v01/exports/durable-drift/physical-role-bindings.json",
+      "sha256": "c758a8e81277d8e82ced6283b46078631be25f1c18968e25a6ca28512891b550"
+    },
+    "raw-vector-drift.json": {
+      "bytes": 398648,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-successor-drift-v01/attempt-copy-v01/exports/durable-drift/raw-vector-drift.json",
+      "sha256": "7840cee61d98bfd920b5e1359bbbae1fcbd859ad8a79883fd0ba4181d668e017"
+    },
+    "terminal-object-custody.json": {
+      "bytes": 409,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-successor-drift-v01/attempt-copy-v01/exports/durable-drift/terminal-object-custody.json",
+      "sha256": "6d92f3a0cb957cc67d29cdd1bacd3ec5f7d123f01e3f70e2a37d6b038846eb0e"
+    }
+  },
+  "evaluation_gold_mask": 0,
+  "evidence_id": "prepared384-raw-source-vector-drift-qualified-20261027-01",
+  "external_publication_performed": false,
+  "focused_fixture_qualification": {
+    "cases_passed": 20,
+    "phase_events_passed": 60,
+    "separate_from_actual_source_data_operation": true,
+    "source_installed_with_independent_readback": true
+  },
+  "kernel_target_access_false_is_closed_source_vector_scope_only": true,
+  "legal_semantics_training_gold_Lean_or_convergence_authority": false,
+  "normal_consumer_source_receipt_current_generation_checks_required": true,
+  "old_TRAIN_successor_cache_or_receipt_vector_bodies_reopened_by_metadata_summary": false,
+  "original384_conditioning_profile_id": null,
+  "original_vectors_and_checkpoints_unchanged": true,
+  "proof_authority": false,
+  "qualification_summary": {
+    "bytes": 14129,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-successor-drift-v01/qualification-summary-v01.json",
+    "sha256": "7e31fd5b4d27e4788d25cd771f1e0743be1b535fb8c8d63c99f14d7fd8b78612"
+  },
+  "recorded_at_utc": "2026-10-27T06:26:21.147030+00:00",
+  "references": {
+    "actual_controller_complete": {
+      "bytes": 656,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-successor-drift-v01/controller-complete-v01.json",
+      "sha256": "97ac846c20fba900b66213dc497ee8dcf70548dfa14bb34731607d7a36d973ca"
+    },
+    "actual_launch": {
+      "bytes": 6752,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-successor-drift-v01/launch-v01.json",
+      "sha256": "a90418e596be161fcf5b7e2d6395e5dbdcab43daba14e0e082b1459acd5b869e"
+    },
+    "actual_request": {
+      "bytes": 11914,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-successor-drift-v01/request-v01.json",
+      "sha256": "26e301dd2a87e6ca35a5e5f7fcdd957cf4e5526798bc0502d3d374af43f89a72"
+    },
+    "copy_controller_complete": {
+      "bytes": 525,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-successor-drift-v01/copy-controller-complete-v01.json",
+      "sha256": "dede963134ce15d6b66d3416e7ae789a337505c3c922b6c62bfcf32b037e4fcb"
+    },
+    "copy_launch": {
+      "bytes": 7935,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-successor-drift-v01/copy-launch-v01.json",
+      "sha256": "1dbb2caa3c75b609b588ca59960f60b3d9119f0d562be67b26b6a75e4ff3793d"
+    },
+    "copy_manifest": {
+      "bytes": 14110,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-successor-drift-v01/attempt-copy-v01/exports/durable-drift/copy-manifest.json",
+      "sha256": "e28df2539972fa9b1ef8378b1caa2f6f49c9fb8e7ff5666fc44dfaab9d4dee08"
+    },
+    "copy_request": {
+      "bytes": 9497,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-successor-drift-v01/copy-request-v01.json",
+      "sha256": "09258078982d36f1966b96ca51cfc2d3e7e446b6ca69946845e436dd22921f2c"
+    },
+    "fixture_qualification": {
+      "bytes": 15233,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-successor-drift-v01/kernel-qualification-v01/qualification-summary-v01.json",
+      "sha256": "717e332656dbd680faea8288c523b01f030a861edff063eeef06c64c6c745f3f"
+    },
+    "fixture_review": {
+      "bytes": 24447,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-successor-drift-v01/kernel-qualification-v01/independent-result-review-v02.json",
+      "sha256": "c667ad9d16c4b36ccc025766ae42467a29e1f1176c26c84036c2af66cdd4fdff"
+    },
+    "independent_actual_review": {
+      "bytes": 10497,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-successor-drift-v01/independent-actual-result-review-v01.json",
+      "sha256": "42141322dbe521a27a109e35ed04d418510a1b173ca2f7e33f698c246b1ac701"
+    },
+    "independent_copy_review": {
+      "bytes": 19178,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-successor-drift-v01/independent-actual-copy-review-v01.json",
+      "sha256": "4f0a46fc3e713b6b7321763f966dc46377d2879466339eb778f6701fae7f8662"
+    },
+    "installation_readback": {
+      "bytes": 11888,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-successor-drift-v01/independent-product-installation-readback-v01.json",
+      "sha256": "06044a403df39aa99ec9bd202c121da78a7ba9f88abd114040a3bf2968fddb99"
+    },
+    "source_capture": {
+      "bytes": 23400,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-successor-drift-v01/source-capture-v01.json",
+      "sha256": "d8e80902074a3d9c3dd52dd4dc04021a20db64ea20d3f8e4a15d3ea1aefd6185"
+    }
+  },
+  "schema": "legal-ir-prepared384-raw-vector-drift-public-qualification/v1",
+  "scope": "Report-only raw source-coordinate metrics on96 authored diagnostic benchmark paragraphs, not reviewed statutes or a head/model equivalence test.",
+  "source_kind": "authored diagnostic benchmark paragraphs; no reviewed statutory-origin or legal-meaning assertion",
+  "source_observations": {
+    "captured_files": 19,
+    "compile_PATH_observations": 8,
+    "compiler_buffer_or_runtime_attestation": false,
+    "contextual_facade_whole_numeric_file_pin_must_be_refreshed_for_future_preparation": true,
+    "import_origin_count": 8,
+    "ordinary_worker_ML_import_denial_unchanged": true,
+    "original_cache_nine_producer_pins_unchanged": true,
+    "source_control_metadata_pins": 43
+  },
+  "source_semantics_verified": false,
+  "source_to_model_equivalence_proven": false,
+  "successor_conditioning_profile_id": null,
+  "teacher_qualified": false,
+  "timing": {
+    "original_owned_elapsed_seconds": 62.148702872917056,
+    "pytest_JUnit_elapsed_seconds": 7.16,
+    "scope": "Includes authenticated input/selector/serialization guards and original accounting; not isolated kernel, encoder or model throughput."
+  },
+  "training_mask": 0,
+  "training_or_gold_admitted": false,
+  "whole_original_JSON_target_exposure_by_admitted_child": true
+}

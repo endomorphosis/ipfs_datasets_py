@@ -1,0 +1,535 @@
+{
+  "GREEN146": {
+    "A_cases": 40,
+    "JUnit_identity_boundary": "All146 testcase names uniquely identify selected locators in exact order. R106 classname is empty under the A pytest root; result+execution carry full canonical module locators.",
+    "R_cases": 106,
+    "Source_closure_seconds": 178.69992510275915,
+    "clean_JUnit": 146,
+    "errors": 0,
+    "failures": 0,
+    "files_including_seal": 680,
+    "independent": {
+      "bytes": 27100,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-immutable-v1-completed-failed-green146-ACTIVE-original16MiB-input-v01/independent-qualified-current-at1-green146-owning-regression-audit-v01.json",
+      "sha256": "d7a887c572b10ffe71bd27d0e4c5ec3c2e5492beb7f79f330251140165f623e5"
+    },
+    "new_A": 23,
+    "new_R": 52,
+    "own_reserved_bytes_released_durably": 16777216,
+    "parent": {
+      "bytes": 11305,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-immutable-v1-completed-failed-green146-ACTIVE-original16MiB-input-v01/parent-closeout.json",
+      "sha256": "76160b55e4168b49d28f32d2c30d6ac933f375d6b93b8c3200042a2ff345e990"
+    },
+    "pytest_seconds": 6.09,
+    "raw_phase_stream_claimed": false,
+    "regression_A": 17,
+    "regression_R": 54,
+    "request": {
+      "bytes": 97704,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-immutable-v1-completed-failed-green146-ACTIVE-original16MiB-input-v01/request.json",
+      "sha256": "dff79a3d24717ee1a2dcbbeab99c4fbb338fcd819123f460e5f92cdbcbd011ff"
+    },
+    "scope": "One exact generic original CLI owning-test run; proof frames inside tests are modeled, not a live SDK cleanup lifecycle.",
+    "selected_cases": 146,
+    "skips": 0,
+    "total_bytes": 2551287
+  },
+  "RED2": {
+    "expected_CALL_failures": 2,
+    "independent": {
+      "bytes": 19370,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-immutable-v1-completed-failed-red2-original16MiB-input-v02-head-refresh/independent-actual-RED2-two-call-failures-and-original-custody-closeout-v01.json",
+      "sha256": "7f0ecf398921cfc234fa1858f485ac4fb4f35fb2fea95c543a389f9511a48d61"
+    },
+    "own16MiB_retained_nondurable": true,
+    "parent": {
+      "bytes": 14746,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-immutable-v1-completed-failed-red2-original16MiB-input-v02-head-refresh/parent-closeout.json",
+      "sha256": "bd283a8f880cd66ecc1187f6a541edbb0d63c745324854ff9eef5e8f990222eb"
+    },
+    "qualified": false
+  },
+  "Root_publication_selection_pending": true,
+  "Source4_installed_and_independently_read_back": true,
+  "authority_granted": false,
+  "current_W_R_metadata": {
+    "captures": [
+      {
+        "captured_ref": {
+          "bytes": 1034979,
+          "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-immutable-v1-completed-failed-green146-maintained-docs-inputs-private-v01/captured-current-W_R-catalog.json",
+          "sha256": "8e195b474ce8337248219cc7afd1b45ecd875e9fc1af2e5805e65c357a577dc5"
+        },
+        "label": "catalog",
+        "scope": "Immutable point-in-time capture, never an evergreen live metadata proof.",
+        "source_full9": {
+          "st_ctime_ns": 1794707746291100276,
+          "st_dev": 66306,
+          "st_gid": 1000,
+          "st_ino": 33994761,
+          "st_mode": 33204,
+          "st_mtime_ns": 1794707746288170222,
+          "st_nlink": 1,
+          "st_size": 1034979,
+          "st_uid": 1000
+        },
+        "source_ref": {
+          "bytes": 1034979,
+          "path": "/tmp/datasets-publish-main-20261114/ipfs_datasets_py/logic/autoformal/docs/work_catalog.json",
+          "sha256": "8e195b474ce8337248219cc7afd1b45ecd875e9fc1af2e5805e65c357a577dc5"
+        }
+      },
+      {
+        "captured_ref": {
+          "bytes": 1238203,
+          "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-immutable-v1-completed-failed-green146-maintained-docs-inputs-private-v01/captured-current-W_R-BACKLOG.json",
+          "sha256": "d8ab99b6c94170f4207c53a76c86e5eae49f286a1722b5b7cc8732dba4ca032c"
+        },
+        "label": "BACKLOG",
+        "scope": "Immutable point-in-time capture, never an evergreen live metadata proof.",
+        "source_full9": {
+          "st_ctime_ns": 1794707138671155618,
+          "st_dev": 66306,
+          "st_gid": 1000,
+          "st_ino": 33994760,
+          "st_mode": 33204,
+          "st_mtime_ns": 1794707138671155618,
+          "st_nlink": 1,
+          "st_size": 1238203,
+          "st_uid": 1000
+        },
+        "source_ref": {
+          "bytes": 1238203,
+          "path": "/tmp/datasets-publish-main-20261114/ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json",
+          "sha256": "d8ab99b6c94170f4207c53a76c86e5eae49f286a1722b5b7cc8732dba4ca032c"
+        }
+      },
+      {
+        "captured_ref": {
+          "bytes": 218010,
+          "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-immutable-v1-completed-failed-green146-maintained-docs-inputs-private-v01/captured-installed-R-run_owned_validation.py",
+          "sha256": "7b9d9f35779629bbca252c6da4ee83681e9c9b0845e9db5ced51ae4bd04c2fb6"
+        },
+        "label": "installed_source",
+        "source_full9": {
+          "st_ctime_ns": 1794705022256676902,
+          "st_dev": 66306,
+          "st_gid": 1000,
+          "st_ino": 35701307,
+          "st_mode": 33188,
+          "st_mtime_ns": 1794705022244794685,
+          "st_nlink": 1,
+          "st_size": 218010,
+          "st_uid": 1000
+        },
+        "source_ref": {
+          "bytes": 218010,
+          "path": "/tmp/datasets-publish-main-20261114/scripts/ops/legal_ir/run_owned_validation.py",
+          "sha256": "7b9d9f35779629bbca252c6da4ee83681e9c9b0845e9db5ced51ae4bd04c2fb6"
+        }
+      },
+      {
+        "captured_ref": {
+          "bytes": 612540,
+          "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-immutable-v1-completed-failed-green146-maintained-docs-inputs-private-v01/captured-installed-R-test_validation_run_resources.py",
+          "sha256": "7d753f60d361cc98fa4be5bb1bc2e381b4b6e3de24b49e66bcb6354fa76f4084"
+        },
+        "label": "installed_source",
+        "source_full9": {
+          "st_ctime_ns": 1794705022273677099,
+          "st_dev": 66306,
+          "st_gid": 1000,
+          "st_ino": 56672969,
+          "st_mode": 33204,
+          "st_mtime_ns": 1794705022271083629,
+          "st_nlink": 1,
+          "st_size": 612540,
+          "st_uid": 1000
+        },
+        "source_ref": {
+          "bytes": 612540,
+          "path": "/tmp/datasets-publish-main-20261114/tests/unit/optimizers/logic_theorem_optimizer/test_validation_run_resources.py",
+          "sha256": "7d753f60d361cc98fa4be5bb1bc2e381b4b6e3de24b49e66bcb6354fa76f4084"
+        }
+      },
+      {
+        "captured_ref": {
+          "bytes": 337169,
+          "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-immutable-v1-completed-failed-green146-maintained-docs-inputs-private-v01/captured-installed-A-repair_candidate_owners.py",
+          "sha256": "8005334455bef73f8c8cc62a713d9f5b2b192d4c24c410d2e2fdf7d84ab23683"
+        },
+        "label": "installed_source",
+        "source_full9": {
+          "st_ctime_ns": 1794705022291677308,
+          "st_dev": 66306,
+          "st_gid": 1000,
+          "st_ino": 28989002,
+          "st_mode": 33204,
+          "st_mtime_ns": 1794705022288273172,
+          "st_nlink": 1,
+          "st_size": 337169,
+          "st_uid": 1000
+        },
+        "source_ref": {
+          "bytes": 337169,
+          "path": "/tmp/lift-sync-accelerate-all-main-20261114/ipfs_accelerate_py/agent_supervisor/rescue/repair_candidate_owners.py",
+          "sha256": "8005334455bef73f8c8cc62a713d9f5b2b192d4c24c410d2e2fdf7d84ab23683"
+        }
+      },
+      {
+        "captured_ref": {
+          "bytes": 286600,
+          "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-immutable-v1-completed-failed-green146-maintained-docs-inputs-private-v01/captured-installed-A-test_agent_supervisor_productive_owner_v3.py",
+          "sha256": "d2c962bfa59dd1a56f05a8dd0e2d31bfbf38d03d3ef53a0aa54fc9800194d65b"
+        },
+        "label": "installed_source",
+        "source_full9": {
+          "st_ctime_ns": 1794705022307677493,
+          "st_dev": 66306,
+          "st_gid": 1000,
+          "st_ino": 31901190,
+          "st_mode": 33204,
+          "st_mtime_ns": 1794705022304829492,
+          "st_nlink": 1,
+          "st_size": 286600,
+          "st_uid": 1000
+        },
+        "source_ref": {
+          "bytes": 286600,
+          "path": "/tmp/lift-sync-accelerate-all-main-20261114/test/api/test_agent_supervisor_productive_owner_v3.py",
+          "sha256": "d2c962bfa59dd1a56f05a8dd0e2d31bfbf38d03d3ef53a0aa54fc9800194d65b"
+        }
+      }
+    ],
+    "catalog_after": 449,
+    "catalog_before": 448,
+    "owners": 119,
+    "task_ID_status_pairs": [
+      [
+        "LIR-01",
+        "in_progress"
+      ],
+      [
+        "LIR-02",
+        "in_progress"
+      ],
+      [
+        "LIR-03",
+        "in_progress"
+      ],
+      [
+        "LIR-04",
+        "in_progress"
+      ],
+      [
+        "LIR-05",
+        "proposed"
+      ],
+      [
+        "LIR-06",
+        "proposed"
+      ],
+      [
+        "LIR-07",
+        "in_progress"
+      ],
+      [
+        "LIR-08",
+        "in_progress"
+      ],
+      [
+        "LIR-09",
+        "in_progress"
+      ],
+      [
+        "LIR-10",
+        "proposed"
+      ],
+      [
+        "LIR-11",
+        "proposed"
+      ],
+      [
+        "LIR-12",
+        "in_progress"
+      ],
+      [
+        "LIR-13",
+        "in_progress"
+      ],
+      [
+        "LIR-14",
+        "in_progress"
+      ],
+      [
+        "LIR-15",
+        "in_progress"
+      ],
+      [
+        "LIR-16",
+        "completed"
+      ],
+      [
+        "LIR-17",
+        "in_progress"
+      ],
+      [
+        "LIR-18",
+        "proposed"
+      ],
+      [
+        "LIR-19",
+        "proposed"
+      ],
+      [
+        "LIR-20",
+        "proposed"
+      ],
+      [
+        "LIR-21",
+        "proposed"
+      ],
+      [
+        "LIR-22",
+        "proposed"
+      ],
+      [
+        "LIR-23",
+        "proposed"
+      ],
+      [
+        "LIR-24",
+        "proposed"
+      ]
+    ]
+  },
+  "full_SDK95_SourceGen_raw7_runtime_model_legal_Lean_qualification": false,
+  "hard_wall_preemption_or_guaranteed_downstream_fit": false,
+  "historical71": {
+    "raw": {
+      "bytes": 2916562,
+      "path": "/tmp/datasets-publish-main-20261114/workspace/test-logs/federal-corpus-audits/legal-ir-worktree-cleanup71-qualified-20261114-v01/execution-evidence.json",
+      "sha256": "c2a6e1676a8ed829574c299ed754646e26211d6db62cbf9971f4900fcbd5fc4a"
+    },
+    "scope": "Previously committed separate epoch; no transfer or pooled qualification count.",
+    "summary": {
+      "bytes": 43685,
+      "path": "/tmp/datasets-publish-main-20261114/workspace/test-logs/federal-corpus-audits/legal-ir-worktree-cleanup71-qualified-20261114-v01/qualification-summary.json",
+      "sha256": "09a28937e13689a0dcbade5868760506df72a9588c118e51b5907098b27057f0"
+    }
+  },
+  "hold_removal_authorized": false,
+  "initial_total_acceptance_seconds": 420,
+  "installed_sources": {
+    "/tmp/datasets-publish-main-20261114/scripts/ops/legal_ir/run_owned_validation.py": "7b9d9f35779629bbca252c6da4ee83681e9c9b0845e9db5ced51ae4bd04c2fb6",
+    "/tmp/datasets-publish-main-20261114/tests/unit/optimizers/logic_theorem_optimizer/test_validation_run_resources.py": "7d753f60d361cc98fa4be5bb1bc2e381b4b6e3de24b49e66bcb6354fa76f4084",
+    "/tmp/lift-sync-accelerate-all-main-20261114/ipfs_accelerate_py/agent_supervisor/rescue/repair_candidate_owners.py": "8005334455bef73f8c8cc62a713d9f5b2b192d4c24c410d2e2fdf7d84ab23683",
+    "/tmp/lift-sync-accelerate-all-main-20261114/test/api/test_agent_supervisor_productive_owner_v3.py": "d2c962bfa59dd1a56f05a8dd0e2d31bfbf38d03d3ef53a0aa54fc9800194d65b"
+  },
+  "ledger_lock_seconds": 60,
+  "live_SDK_cleanup_integration": false,
+  "physical_history": {
+    "generation": 2,
+    "last_spent": 200,
+    "max_generations": 2,
+    "next": 201,
+    "remaining": 9800
+  },
+  "private_immutable_parent_v2_SDK_worker_Main_and_preparation": "Private, uninstalled and unqualified; no Source-generation approval or live delegation claim.",
+  "private_packet_only": true,
+  "proof_refs": {
+    "GREEN146_JUnit": {
+      "bytes": 21579,
+      "path": "/tmp/pytest-of-barberb/completed-failed-v1-green146-v03/a/exports/completed-failed-green146.xml",
+      "sha256": "c8695acf372777c1f8222e1c956b3419a5acd132033fa93e61c07de1ef72ac01"
+    },
+    "GREEN146_Root_selection": {
+      "bytes": 2705,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-immutable-v1-completed-failed-green146-ACTIVE-original16MiB-input-v01/Root-SELECTED-active-current-at1-green146-original-owner-v01.json",
+      "sha256": "0a1a0c3d840a4268789d35f31329895c7c6c9219b4fb3cfbbcd442ff5cd5e63b"
+    },
+    "GREEN146_durability": {
+      "bytes": 151609,
+      "path": "/tmp/pytest-of-barberb/completed-failed-v1-green146-v03/a/logs/validation-durability.json",
+      "sha256": "ad0b79ffc3148f8717e4d66b2471dc3321d886bf6edba524978d0715c936d257"
+    },
+    "GREEN146_execution": {
+      "bytes": 30972,
+      "path": "/tmp/pytest-of-barberb/completed-failed-v1-green146-v03/a/logs/execution.json",
+      "sha256": "296c7a36b034d01bfcaf37368a528afa81414209786226ffabfffcaa637accbb"
+    },
+    "GREEN146_independent": {
+      "bytes": 27100,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-immutable-v1-completed-failed-green146-ACTIVE-original16MiB-input-v01/independent-qualified-current-at1-green146-owning-regression-audit-v01.json",
+      "sha256": "d7a887c572b10ffe71bd27d0e4c5ec3c2e5492beb7f79f330251140165f623e5"
+    },
+    "GREEN146_input_review": {
+      "bytes": 7985,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-immutable-v1-completed-failed-green146-ACTIVE-original16MiB-input-v01/independent-ACTIVE-green146-final-input-review-v01.json",
+      "sha256": "6828ccef7f04534cfd6ddfd84ea6a6b060c828669290dbaaca8f291117289213"
+    },
+    "GREEN146_owner_stdout": {
+      "bytes": 5331,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-immutable-v1-completed-failed-green146-ACTIVE-original16MiB-input-v01/owner.stdout",
+      "sha256": "a0989167f35cad02f81e6e6125c2346947802a1dab03f319ddadcdebb610f2ca"
+    },
+    "GREEN146_parent": {
+      "bytes": 11305,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-immutable-v1-completed-failed-green146-ACTIVE-original16MiB-input-v01/parent-closeout.json",
+      "sha256": "76160b55e4168b49d28f32d2c30d6ac933f375d6b93b8c3200042a2ff345e990"
+    },
+    "GREEN146_prepared": {
+      "bytes": 168060,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-immutable-v1-completed-failed-green146-ACTIVE-original16MiB-input-v01/prepared-ACTIVE-current-at1-green146-manifest-v01.json",
+      "sha256": "68ed7edd0bbed3a9104d195a893c9c16ae3fbaa7298f4a6fe56517b0fcd99c45"
+    },
+    "GREEN146_request": {
+      "bytes": 97704,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-immutable-v1-completed-failed-green146-ACTIVE-original16MiB-input-v01/request.json",
+      "sha256": "dff79a3d24717ee1a2dcbbeab99c4fbb338fcd819123f460e5f92cdbcbd011ff"
+    },
+    "GREEN146_result": {
+      "bytes": 30431,
+      "path": "/tmp/pytest-of-barberb/completed-failed-v1-green146-v03/a/logs/result.json",
+      "sha256": "ad2e3cc24670b50d92326c2b52de147eb89da318dcefcf26150d09a501ae559a"
+    },
+    "GREEN146_started": {
+      "bytes": 160,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-immutable-v1-completed-failed-green146-ACTIVE-original16MiB-input-v01/started.json",
+      "sha256": "42e44c49f382453be4029bf02dd06e118adfba32da4adb1b36364e2929b63000"
+    },
+    "RED2_JUnit": {
+      "bytes": 2518,
+      "path": "/tmp/pytest-of-barberb/completed-failed-v1-red2-v02/a/exports/completed-failed-red2.xml",
+      "sha256": "771cfa0869209d165e1f0c53bf9c5875fe30a8d151e64e631a850df234303912"
+    },
+    "RED2_independent": {
+      "bytes": 19370,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-immutable-v1-completed-failed-red2-original16MiB-input-v02-head-refresh/independent-actual-RED2-two-call-failures-and-original-custody-closeout-v01.json",
+      "sha256": "7f0ecf398921cfc234fa1858f485ac4fb4f35fb2fea95c543a389f9511a48d61"
+    },
+    "RED2_owner_stdout": {
+      "bytes": 8297,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-immutable-v1-completed-failed-red2-original16MiB-input-v02-head-refresh/owner.stdout",
+      "sha256": "1401e4b79330b71717a580d9e1ade9285d12349cb36dc2378e5681b1dd01b61e"
+    },
+    "RED2_parent": {
+      "bytes": 14746,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-immutable-v1-completed-failed-red2-original16MiB-input-v02-head-refresh/parent-closeout.json",
+      "sha256": "bd283a8f880cd66ecc1187f6a541edbb0d63c745324854ff9eef5e8f990222eb"
+    },
+    "RED2_request": {
+      "bytes": 39722,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-immutable-v1-completed-failed-red2-original16MiB-input-v02-head-refresh/request.json",
+      "sha256": "6ab6ae49a809e042211ea489eb2fdda14ebcdaa71d542ae643af1a2922bc5f6e"
+    },
+    "Source4_READ": {
+      "bytes": 1950148,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-immutable-v1-completed-failed-retained-Source4-preparation-private-v01/actual-current-at1-completed-failed-Source4-v04-known-docs-live/separate-original-Source-READ.json",
+      "sha256": "bb7861479cdbd816ec4fd9f09f7a5df5f9e555e73128c2ed135678ad1416172f"
+    },
+    "Source4_WRITE": {
+      "bytes": 1951287,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-immutable-v1-completed-failed-retained-Source4-preparation-private-v01/actual-current-at1-completed-failed-Source4-v04-known-docs-live/original-Source-CAS.json",
+      "sha256": "45cfd0b3fbc72d5b36afebf6f972cd9505e93d4d3891e325295fe36b16327a13"
+    },
+    "Source4_actor": {
+      "bytes": 12184,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-immutable-v1-completed-failed-retained-Source4-preparation-private-v01/apply-current-at1-completed-failed-four-known-docs-original42-733-INERT-v02.py",
+      "sha256": "12403a5b1c49a29f6e38288e380b360aea2f6f357bb3f94115afdc8b004843c4"
+    },
+    "Source4_independent": {
+      "bytes": 28466,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-immutable-v1-completed-failed-retained-Source4-preparation-private-v01/actual-current-at1-completed-failed-Source4-v04-known-docs-live/independent-actual-four-source-known-ten-doc-write-read-closeout-v01.json",
+      "sha256": "d7d969afbfce2746bc6497eac60b74503a3ce8de1bced08c7fd66a03ca1acf42"
+    },
+    "Source4_manifest": {
+      "bytes": 8151609,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-immutable-v1-completed-failed-retained-Source4-preparation-private-v01/manifest-current-at1-completed-failed-Source4-READY-known-doc-interval-v04.json",
+      "sha256": "76f8dc74af491ccd53bb07af8d4580a1f0038c54b744540bbf4a0c69aa4830e0"
+    },
+    "Source4_static": {
+      "bytes": 10514,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-immutable-v1-completed-failed-retained-Source4-preparation-private-v01/independent-final-known-ten-doc-interval-v04-actor-and-input-review-v01.json",
+      "sha256": "8ccd9afbf3876f384fc6acc8db75c09a49d66d6aa6e913ca3e7eb15aecc5bf6f"
+    },
+    "critical_window_release_Root_reported_DATA": {
+      "bytes": 1121,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-immutable-v1-completed-failed-green146-ACTIVE-original16MiB-input-v01/Root-reported-explicit-critical-window-release-DATA-v01.json",
+      "sha256": "d60f47f557a34def7767d1692eda08731db0500a6eb26ce745ba0c33689c6ba9"
+    },
+    "current_four_candidate_manifest": {
+      "bytes": 7911,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-immutable-v1-completed-failed-retained-private-v01/private-current-immutable-v1-completed-failed-retained-four-source-manifest-v01.json",
+      "sha256": "c5a1a1ed0bcd6d565708dda91d32e7818cb0fff6c61f8dd63eea5b9acdc890b8"
+    },
+    "historical_committed71_raw": {
+      "bytes": 2916562,
+      "path": "/tmp/datasets-publish-main-20261114/workspace/test-logs/federal-corpus-audits/legal-ir-worktree-cleanup71-qualified-20261114-v01/execution-evidence.json",
+      "sha256": "c2a6e1676a8ed829574c299ed754646e26211d6db62cbf9971f4900fcbd5fc4a"
+    },
+    "historical_committed71_summary": {
+      "bytes": 43685,
+      "path": "/tmp/datasets-publish-main-20261114/workspace/test-logs/federal-corpus-audits/legal-ir-worktree-cleanup71-qualified-20261114-v01/qualification-summary.json",
+      "sha256": "09a28937e13689a0dcbade5868760506df72a9588c118e51b5907098b27057f0"
+    },
+    "immutable_current_BACKLOG_capture": {
+      "bytes": 1238203,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-immutable-v1-completed-failed-green146-maintained-docs-inputs-private-v01/captured-current-W_R-BACKLOG.json",
+      "sha256": "d8ab99b6c94170f4207c53a76c86e5eae49f286a1722b5b7cc8732dba4ca032c"
+    },
+    "immutable_current_catalog_capture": {
+      "bytes": 1034979,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-immutable-v1-completed-failed-green146-maintained-docs-inputs-private-v01/captured-current-W_R-catalog.json",
+      "sha256": "8e195b474ce8337248219cc7afd1b45ecd875e9fc1af2e5805e65c357a577dc5"
+    },
+    "installed_source_capture//tmp/datasets-publish-main-20261114/scripts/ops/legal_ir/run_owned_validation.py": {
+      "bytes": 218010,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-immutable-v1-completed-failed-green146-maintained-docs-inputs-private-v01/captured-installed-R-run_owned_validation.py",
+      "sha256": "7b9d9f35779629bbca252c6da4ee83681e9c9b0845e9db5ced51ae4bd04c2fb6"
+    },
+    "installed_source_capture//tmp/datasets-publish-main-20261114/tests/unit/optimizers/logic_theorem_optimizer/test_validation_run_resources.py": {
+      "bytes": 612540,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-immutable-v1-completed-failed-green146-maintained-docs-inputs-private-v01/captured-installed-R-test_validation_run_resources.py",
+      "sha256": "7d753f60d361cc98fa4be5bb1bc2e381b4b6e3de24b49e66bcb6354fa76f4084"
+    },
+    "installed_source_capture//tmp/lift-sync-accelerate-all-main-20261114/ipfs_accelerate_py/agent_supervisor/rescue/repair_candidate_owners.py": {
+      "bytes": 337169,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-immutable-v1-completed-failed-green146-maintained-docs-inputs-private-v01/captured-installed-A-repair_candidate_owners.py",
+      "sha256": "8005334455bef73f8c8cc62a713d9f5b2b192d4c24c410d2e2fdf7d84ab23683"
+    },
+    "installed_source_capture//tmp/lift-sync-accelerate-all-main-20261114/test/api/test_agent_supervisor_productive_owner_v3.py": {
+      "bytes": 286600,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-immutable-v1-completed-failed-green146-maintained-docs-inputs-private-v01/captured-installed-A-test_agent_supervisor_productive_owner_v3.py",
+      "sha256": "d2c962bfa59dd1a56f05a8dd0e2d31bfbf38d03d3ef53a0aa54fc9800194d65b"
+    },
+    "proof_map": {
+      "bytes": 11886,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-immutable-v1-completed-failed-green146-maintained-docs-private-v01/proof-map-COMPLETE-actual146-independent-v02.json",
+      "sha256": "9dfad47f6904606a4273bb198e12bdbb128f27070df03894d73781d5772ba9d4"
+    },
+    "unchanged_worktree_builder": {
+      "bytes": 9423,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-published-cleanup71-maintained-docs-private-v01/prepare-five-current-worktree-docs-existing6e71-v02.py",
+      "sha256": "38211bfcfb960fe3e13a33673e722950ba5fdee7e282c19c6a429166adaba6b2"
+    }
+  },
+  "recorded_at_utc": "2026-11-15T02:08:59.996398+00:00",
+  "request_limits": {
+    "child_process_slots": 4,
+    "cpu_slots": 1,
+    "memory_mb": 1536,
+    "storage_bytes": 16777216,
+    "timeout_seconds": 300
+  },
+  "schema": "current-immutable-v1-selected-GREEN146-software-summary/v1",
+  "shared_Source_admission_seconds": 60,
+  "software_admission_profile": "original-owning-shared-Source60-total420/v1",
+  "source_guard_profile": {
+    "exact_write_targets": 4,
+    "known_unselected_doc_paths": 10,
+    "scope": "Fresh full9/SHA interval capture under both original Source scopes, unchanged through each CAS/final; no stale preparation-time docs or evergreen write-interval claim on separate READ.",
+    "strict_fences": 55
+  }
+}

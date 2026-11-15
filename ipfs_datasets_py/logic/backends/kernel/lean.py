@@ -75,6 +75,10 @@ from .wasm import (
 
 LEAN_KERNEL_BACKEND_VERSION: Final = "LeanKernelBackend@1"
 LEAN_KERNEL_RECEIPT_VERSION: Final = "lean-kernel-receipt/v3"
+# Version this token whenever trust-relevant source, obligation, dependency,
+# native-identity or diagnostic acceptance rules change. It names the verifier
+# rules, not an execution grant; never infer it when decoding old receipts.
+LEAN_KERNEL_VERIFICATION_PROFILE: Final = "lean-kernel-verification/v1"
 LEAN_SOURCE_BINDING_VERSION: Final = "lean-source-binding/v1"
 LEAN_AXIOM_REPORT_VERSION: Final = "lean-axiom-report/v2"
 LEAN_NATIVE_ADDRESS_SPACE_FLOOR_BYTES: Final = 4 * 1024**3
@@ -93,6 +97,14 @@ _UNSUPPORTED_COMMAND = re.compile(
     r"prefix|postfix|attribute|instance|set_option|open|local|scoped|export|alias|"
     r"variable|variables|parameter|parameters|include|omit|universe|universes|prelude|module)(?![A-Za-z0-9_'])"
 )
+# These Lean 4.34.1 syntaxes parse embedded terms inside apparently quoted
+# text. This restricted source profile does not implement that recursive
+# grammar; accepting them as opaque strings would hide executable code.
+_INTERPOLATING_SYNTAX = frozenset({
+    "s!", "f!", "m!", "dbg_trace", "trace",
+    "throwNamedError", "throwNamedErrorAt", "logNamedError", "logNamedErrorAt",
+    "logNamedWarning", "logNamedWarningAt", "throwError", "throwErrorAt",
+})
 _DECL = re.compile(r"^\s*(?:theorem|lemma)\s+([^\s:(=]+)", re.MULTILINE)
 _LEAN_NAME = re.compile(r"[A-Za-z_][A-Za-z0-9_']*(?:\.[A-Za-z0-9_][A-Za-z0-9_']*)*\Z")
 _AXIOM_MARKER = re.compile(r"\b(?:axioms?|sorryAx)\b")
@@ -448,6 +460,9 @@ class LeanKernelReceipt:
         if self.expected_proposition_checked and (not proposition or not self.compiled_source_digest):
             raise LeanKernelError("type checking requires an explicit expected proposition and compiled source identity")
         if self.accepted:
+            profile = self.toolchain.metadata.get("verification_profile")
+            if type(profile) is not str or profile != LEAN_KERNEL_VERIFICATION_PROFILE:
+                raise LeanKernelError("accepted receipts require the current explicit verification profile")
             if submitted and scan_lean_incomplete_or_unsafe(submitted):
                 raise LeanKernelError("accepted receipts cannot bypass the supported source verification profile")
             if (not submitted or self.source_binding.source_format != "lean4"
@@ -680,16 +695,131 @@ def _approved_axioms(values: Sequence[str]) -> tuple[str, ...]:
 
 
 def _mask_lean_comments_and_strings(source: str, *, allow_comments: bool = True) -> str:
-    """Lexical diagnostics only; this does not establish elaborated dependencies."""
+    """Mask opaque Lean tokens, preserving offsets; elaboration checks dependencies.
+
+    Token boundaries follow Lean 4.34.1 Parser.Basic and Init.Meta.Defs. Quoted
+    identifiers end at the first guillemet; their quotes and comment markers
+    are identifier content. Character literals and identifier primes differ.
+    Interpolating syntax is explicitly unsupported, since its quoted content
+    can contain complete Lean terms, including nested proofs and tactics.
+    """
     chars = list(source)
     i, length = 0, len(source)
+    decimal, hexadecimal = "0123456789", "0123456789abcdefABCDEF"
+
+    def mask(start: int, stop: int) -> None:
+        for index in range(start, stop):
+            if chars[index] != "\n":
+                chars[index] = " "
+
+    def letter_like(char: str) -> bool:
+        value = ord(char)
+        return (0x3B1 <= value <= 0x3C9 and value != 0x3BB
+            or 0x391 <= value <= 0x3A9 and value not in (0x3A0, 0x3A3)
+            or 0x3CA <= value <= 0x3FB or 0x1F00 <= value <= 0x1FFE
+            or 0x2100 <= value <= 0x214F or 0x1D49C <= value <= 0x1D59F
+            or 0xC0 <= value <= 0xFF and value not in (0xD7, 0xF7)
+            or 0x100 <= value <= 0x17F)
+
+    def id_first(char: str) -> bool:
+        return "a" <= char <= "z" or "A" <= char <= "Z" or char == "_" or letter_like(char)
+
+    def id_rest(char: str) -> bool:
+        value = ord(char)
+        return (id_first(char) or char in decimal or char in "'!?"
+            or 0x2080 <= value <= 0x2089 or 0x2090 <= value <= 0x209C
+            or 0x1D62 <= value <= 0x1D6A or value == 0x2C7C)
+
+    def identifier_end(start: int) -> int:
+        cursor = start
+        while True:
+            if source[cursor] == "«":
+                stop = source.find("»", cursor + 1)
+                if stop < 0:
+                    raise LeanKernelError("unterminated Lean identifier escape")
+                mask(cursor, stop + 1)
+                cursor = stop + 1
+            else:
+                cursor += 1
+                while cursor < length and id_rest(source[cursor]):
+                    cursor += 1
+            if (cursor + 1 < length and source[cursor] == "."
+                    and (id_first(source[cursor + 1]) or source[cursor + 1] == "«")):
+                cursor += 1
+            else:
+                return cursor
+
+    def digits_end(start: int, alphabet: str, *, required: bool) -> int:
+        cursor, need_digit = start, required
+        while cursor < length:
+            char = source[cursor]
+            if char == "_":
+                need_digit = True
+            elif char in alphabet:
+                need_digit = False
+            else:
+                break
+            cursor += 1
+        if need_digit:
+            raise LeanKernelError("incomplete Lean numeral")
+        return cursor
+
+    def number_end(start: int) -> int:
+        # Consume the numeric token before considering an adjacent raw-string r.
+        if source[start] == "0" and start + 1 < length:
+            base = source[start + 1]
+            alphabet = ("01" if base in "bB" else "01234567" if base in "oO"
+                        else hexadecimal if base in "xX" else None)
+            if alphabet is not None:
+                return digits_end(start + 2, alphabet, required=True)
+        cursor = digits_end(start + 1, decimal, required=False)
+        if source.startswith("..", cursor):
+            return cursor
+        bare_dot = False
+        if cursor < length and source[cursor] == ".":
+            cursor += 1
+            bare_dot = cursor == length or source[cursor] not in decimal
+            if not bare_dot:
+                cursor = digits_end(cursor, decimal, required=False)
+        if cursor < length and source[cursor] in "eE":
+            cursor += 1
+            if cursor < length and source[cursor] in "+-":
+                cursor += 1
+            if cursor == length or source[cursor] not in decimal:
+                raise LeanKernelError("missing Lean scientific exponent digits")
+            return digits_end(cursor, decimal, required=False)
+        if bare_dot and cursor < length and (id_first(source[cursor]) or source[cursor] == "«"):
+            raise LeanKernelError("unexpected Lean identifier after decimal point")
+        return cursor
+
+    def escape_end(start: int, *, in_string: bool) -> int:
+        if start == length:
+            raise LeanKernelError("unterminated Lean literal escape")
+        char = source[start]
+        if char in "\\\"'rnt":
+            return start + 1
+        count = 2 if char == "x" else 4 if char == "u" else 0
+        if count:
+            stop = start + count + 1
+            if stop > length or any(value not in hexadecimal for value in source[start + 1:stop]):
+                raise LeanKernelError("invalid Lean hexadecimal literal escape")
+            return stop
+        if in_string and char == "\n":
+            cursor = start + 1
+            while cursor < length and source[cursor] in " \t\r\n":
+                if source[cursor] == "\n":
+                    raise LeanKernelError("multiple newlines in Lean string gap")
+                cursor += 1
+            return cursor
+        raise LeanKernelError("invalid Lean literal escape")
+
     while i < length:
         start = i
         if source.startswith("--", i):
             if not allow_comments:
                 raise LeanKernelError("comments are unsupported in the explicit expected proposition")
-            end = source.find("\n", i)
-            i = length if end < 0 else end
+            stop = source.find("\n", i)
+            i = length if stop < 0 else stop
         elif source.startswith("/-", i):
             if not allow_comments:
                 raise LeanKernelError("comments are unsupported in the explicit expected proposition")
@@ -703,22 +833,50 @@ def _mask_lean_comments_and_strings(source: str, *, allow_comments: bool = True)
                     i += 1
             if depth:
                 raise LeanKernelError("unterminated Lean block comment")
+        elif source[i] == "r":
+            cursor = i + 1
+            while cursor < length and source[cursor] == "#":
+                cursor += 1
+            if cursor < length and source[cursor] == '"':
+                terminator = '"' + "#" * (cursor - i - 1)
+                stop = source.find(terminator, cursor + 1)
+                if stop < 0:
+                    raise LeanKernelError("unterminated Lean raw string")
+                i = stop + len(terminator)
+            else:
+                i = identifier_end(i)
+                continue
         elif source[i] == '"':
             i += 1
-            while i < length:
-                if source[i] == "\\":
-                    i += 2
-                elif source[i] == '"':
-                    i += 1; break
-                else:
-                    i += 1
-            else:
+            while i < length and source[i] != '"':
+                i = escape_end(i + 1, in_string=True) if source[i] == "\\" else i + 1
+            if i == length:
                 raise LeanKernelError("unterminated Lean string")
+            i += 1
+        elif source[i] == "'" and not source.startswith("''", i):
+            i += 1
+            if i == length:
+                raise LeanKernelError("unterminated Lean character literal")
+            i = escape_end(i + 1, in_string=False) if source[i] == "\\" else i + 1
+            if i == length or source[i] != "'":
+                raise LeanKernelError("missing end of Lean character literal")
+            i += 1
+        elif source[i] == "«" or id_first(source[i]):
+            i = identifier_end(i)
+            if source[start:i] in _INTERPOLATING_SYNTAX:
+                raise LeanKernelError("interpolated Lean syntax is unsupported by the checked source profile")
+            continue
+        elif (source[i] == "`" and i + 1 < length
+                and (id_first(source[i + 1]) or source[i + 1] == "«")):
+            i = identifier_end(i + 1)
+            continue
+        elif source[i] in decimal:
+            i = number_end(i)
+            continue
         else:
-            i += 1; continue
-        for index in range(start, min(i, length)):
-            if chars[index] != "\n":
-                chars[index] = " "
+            i += 1
+            continue
+        mask(start, i)
     return "".join(chars)
 
 
@@ -893,17 +1051,69 @@ def instrument_lean_source_for_axioms(
     return body + f"#print axioms _root_.{decl}\n"
 
 
+def _lean_diagnostic_lines(text: str) -> list[str]:
+    """Remove one optional output-framing BOM, never a source-text byte."""
+    return text.removeprefix("\ufeff").splitlines()
+
+
+def _load_lean_json_line(raw_line: str) -> Any:
+    """Decode one compiler record without silently selecting duplicate fields."""
+    def unique_pairs(pairs):
+        result = {}
+        for key, value in pairs:
+            if key in result:
+                raise ValueError("duplicate compiler JSON key")
+            result[key] = value
+        return result
+    return json.loads(raw_line, object_pairs_hook=unique_pairs,
+                      parse_constant=lambda _: (_ for _ in ()).throw(ValueError("nonfinite JSON")))
+
+
+# A warning mentioning the word "error" is not an error diagnostic. The
+# optional location is Lean's ordinary file:line:column prefix, not arbitrary
+# prose before a later error word. JSON records are classified before this.
+_PLAIN_LEAN_ERROR = re.compile(
+    r"^\s*(?:(?:[A-Za-z]:)?[^:\r\n]+:[0-9]+:[0-9]+:\s*)?error:(?:\s|$)", re.IGNORECASE
+)
+
+
+def _lean_error_diagnostics(stdout: str, stderr: str) -> tuple[str, ...]:
+    """Inspect both diagnostic streams; neither stream supplies proof evidence."""
+    errors = []
+    for stream, text in (("stdout", stdout), ("stderr", stderr)):
+        for raw_line in _lean_diagnostic_lines(text):
+            line = raw_line.strip()
+            if not line:
+                continue
+            if line.startswith("\ufeff"):
+                errors.append("unexpected Lean diagnostic BOM framing on " + stream)
+                continue
+            try:
+                message = _load_lean_json_line(line)
+            except (json.JSONDecodeError, ValueError):
+                if line.startswith(("{", "[")):
+                    errors.append("malformed Lean JSON diagnostic on " + stream)
+                elif _PLAIN_LEAN_ERROR.match(line):
+                    errors.append(line)
+                continue
+            if type(message) is not dict:
+                errors.append("non-object Lean JSON diagnostic on " + stream)
+            elif message.get("severity") == "error":
+                errors.append(str(message.get("data", "")))
+    return tuple(errors)
+
+
 def parse_lean_json_messages(stdout: str) -> list[dict[str, Any]]:
     messages: list[dict[str, Any]] = []
     if not isinstance(stdout, str):
         return messages
-    for raw_line in stdout.splitlines():
+    for raw_line in _lean_diagnostic_lines(stdout):
         raw_line = raw_line.strip()
         if not raw_line:
             continue
         try:
-            payload = json.loads(raw_line)
-        except json.JSONDecodeError:
+            payload = _load_lean_json_line(raw_line)
+        except (json.JSONDecodeError, ValueError):
             continue
         if isinstance(payload, dict):
             messages.append(payload)
@@ -931,19 +1141,11 @@ def parse_lean_axiom_report(
     """Require exactly one complete named report; never scan unrelated prose."""
     expected = _lean_name(declaration)
     reports: list[tuple[dict[str, Any], re.Match[str]]] = []
-    for line in stdout.splitlines():
+    for line in _lean_diagnostic_lines(stdout):
         if not line.strip():
             continue
         try:
-            def unique_pairs(pairs):
-                result = {}
-                for key, value in pairs:
-                    if key in result:
-                        raise ValueError("duplicate compiler JSON key")
-                    result[key] = value
-                return result
-            message = json.loads(line, object_pairs_hook=unique_pairs,
-                                 parse_constant=lambda _: (_ for _ in ()).throw(ValueError("nonfinite JSON")))
+            message = _load_lean_json_line(line)
         except (json.JSONDecodeError, ValueError):
             if expected_source_path is not None:
                 return None
@@ -1012,12 +1214,11 @@ def evaluate_lean_kernel_output(
         diagnostics.append("lean invocation exceeded a resource or output bound")
         return False, None, bound_diagnostics(diagnostics)
 
-    messages = parse_lean_json_messages(process.stdout)
-    error_messages = [m for m in messages if m.get("severity") == "error"]
+    error_messages = _lean_error_diagnostics(process.stdout, process.stderr)
     if error_messages:
         excerpt = "; ".join(
-            sanitize_diagnostic(str(m.get("data", "")), max_chars=200)
-            for m in error_messages[:4]
+            sanitize_diagnostic(message, max_chars=200)
+            for message in error_messages[:4]
         )
         diagnostics.append(f"lean reported error diagnostics: {excerpt}")
         return False, None, bound_diagnostics(diagnostics)
@@ -1080,7 +1281,18 @@ def _result_id(backend_id: str, request: BackendRequest) -> str:
 
 def _payload_source(request: BackendRequest) -> tuple[str, str, KernelTranslationBinding | None]:
     payload = request.payload.to_dict()
-    source = payload.get("lean") or payload.get("source") or payload.get("checked_source")
+    # Aliases name the same exact submitted bytes, not competing candidates.
+    # Keep empty/None optional aliases compatible, but never silently ignore a
+    # malformed or contradictory supplied source (including falsey non-text).
+    sources = []
+    for name in ("lean", "source", "checked_source"):
+        value = payload.get(name)
+        if value is None or isinstance(value, str) and value == "":
+            continue
+        sources.append(_source_text(value))
+    if not sources or any(value != sources[0] for value in sources[1:]):
+        raise LeanKernelError("one unambiguous checked Lean source is required")
+    source = sources[0]
     source_format = str(payload.get("encoding", "lean4")).strip().lower()
     if source_format not in {"lean", "lean4", "lean4-source"}:
         raise LeanKernelError(
@@ -1500,7 +1712,7 @@ class LeanKernelBackend:
                 metadata=FrozenMap({"approved_axioms": list(self.approved_axioms),
                     "approved_imports": list(self.approved_imports),
                     "native_identity_digest": identity.identity_digest if identity is not None else "",
-                    "native_library_scope": LEAN_NATIVE_LIBRARY_SCOPE,
+                    "native_library_scope": LEAN_NATIVE_LIBRARY_SCOPE, "verification_profile": LEAN_KERNEL_VERIFICATION_PROFILE,
                     "axiom_policy_digest": self.axiom_policy_digest, "native_resource_profile": {
                     "cpu_slots": self._runner.cpu_slots,
                     "child_process_slots": self._runner.child_process_slots,
@@ -1511,7 +1723,7 @@ class LeanKernelBackend:
                 }} if self._managed_resource_runner else {"approved_axioms": list(self.approved_axioms),
                     "approved_imports": list(self.approved_imports),
                     "native_identity_digest": identity.identity_digest if identity is not None else "",
-                    "native_library_scope": LEAN_NATIVE_LIBRARY_SCOPE,
+                    "native_library_scope": LEAN_NATIVE_LIBRARY_SCOPE, "verification_profile": LEAN_KERNEL_VERIFICATION_PROFILE,
                     "axiom_policy_digest": self.axiom_policy_digest}),
             )
         else:
@@ -1790,6 +2002,7 @@ class LeanKernelBackend:
 __all__ = [
     "LEAN_KERNEL_BACKEND_VERSION",
     "LEAN_KERNEL_RECEIPT_VERSION",
+    "LEAN_KERNEL_VERIFICATION_PROFILE",
     "LeanAuthorityDisposition",
     "LeanAxiomReport",
     "LeanKernelBackend",

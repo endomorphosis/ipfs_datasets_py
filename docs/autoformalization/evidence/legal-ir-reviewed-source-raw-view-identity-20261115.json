@@ -1,0 +1,239 @@
+{
+  "authority": {
+    "corpus_or_semantic_graph_admission": false,
+    "fixture_training_and_evaluation_gold_masks": 0,
+    "native_Lean_or_proof_authority": false,
+    "old_budgets_permissions_and_private_asset_holds_unchanged": true,
+    "real_human_statutory_reviews": 0,
+    "statutory_edition_meaning_or_independent_context_review": false,
+    "training_or_fitting_or_model_quality": false
+  },
+  "bounds": {
+    "Source_seconds": 60,
+    "child_process_slots": 4,
+    "cpu_slots": 1,
+    "initial_parent_seconds": 420,
+    "ledger_seconds": 60,
+    "memory_mb": 1536,
+    "productive_seconds": 300,
+    "storage_bytes": 16777216
+  },
+  "evidence_refs": {
+    "GREEN24_audit": {
+      "bytes": 41644,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/independent-current-Main-crossview-GREEN24-saved-DATA-audit-v01.json",
+      "sha256": "a1f62854332197befbc80dfe0b0efacfd79363e0c44269999535aec5c090969d"
+    },
+    "RED2_audit": {
+      "bytes": 22638,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/independent-current-Main-Raw2-semantic-RED2-saved-DATA-audit-v02.json",
+      "sha256": "2fd492d631a5a6cb0e3eda7469838eea8a811f4c02b35b09e87c632dc21cf565"
+    },
+    "Source_READ": {
+      "bytes": 5130,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/actual-current-reviewed-source-raw-view-guard-three-target-Source-READ-v01.json",
+      "sha256": "cdf995eab0977d18b6c7ecf4969a851e6e23f462e0a8751980f289d6469a23ac"
+    },
+    "Source_WRITE": {
+      "bytes": 6526,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/actual-current-reviewed-source-raw-view-guard-three-target-Source-WRITE-v01.json",
+      "sha256": "dc1400afc20f47b03ff988ad6cda4720cdc6be4e44ea5f5b2dcf2afa7f9727e0"
+    },
+    "fixture_failure_audit": {
+      "bytes": 13951,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/independent-current-Main-Raw2-ordinary-fixture-alias-failure-saved-DATA-audit-v01.json",
+      "sha256": "3bc293fced633bfe9ec9266b6d914f55b96d20ec6a10edd40c9019d14bada296"
+    }
+  },
+  "existing_evidence": "reviewed-source-use-identity-20261114",
+  "existing_owner": "norm-content-adjudication-v1",
+  "original_run_refs": {
+    "JUnit": {
+      "bytes": 5676,
+      "path": "/tmp/pytest-of-barberb/current-Main-crossview-GREEN24-v03-grouped-modules/a/exports/crossview-GREEN24.xml",
+      "sha256": "0a092f8b5e3c5bc19bf3fff6a6fce616ccc92e22e752608f23343875f9a6591a"
+    },
+    "durability": {
+      "bytes": 1378,
+      "path": "/tmp/pytest-of-barberb/current-Main-crossview-GREEN24-v03-grouped-modules/a/logs/validation-durability.json",
+      "sha256": "0cb4bc7d7616ec856d915b4f0e68fb37141e9c7475d224c5c4fabd4f939a2521"
+    },
+    "execution": {
+      "bytes": 2095,
+      "path": "/tmp/pytest-of-barberb/current-Main-crossview-GREEN24-v03-grouped-modules/a/logs/execution.json",
+      "sha256": "a7484a4527e42baa42486837d9fed6d70a92d9b8ff4519ae927214172f5520ea"
+    },
+    "manifest": {
+      "bytes": 513167,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-Main-crossview-GREEN24-original16MiB-input-v03-grouped-modules/prepared-current-Main-crossview-GREEN24-generic-v5-manifest-v01.json",
+      "sha256": "33a523e5a8f929aff39c5dd5d7375de6ee27f7794d1577a5651f3259a064465e"
+    },
+    "parent": {
+      "bytes": 33240,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-Main-crossview-GREEN24-original16MiB-input-v03-grouped-modules/run-original-source-held-current-crossview-GREEN24-v01-caller97.py",
+      "sha256": "3f539b715cd05ba2a96610f83f2dcd374873eada0ebe0b1fe3db0fc12b7855cf"
+    },
+    "parent_closeout": {
+      "bytes": 11472,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-Main-crossview-GREEN24-original16MiB-input-v03-grouped-modules/parent-closeout.json",
+      "sha256": "ec1dd6ed03460391c4c83e073347ce3f676a8d4e3672f3f1fbb5c31ed58e8fb4"
+    },
+    "request": {
+      "bytes": 43083,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-Main-crossview-GREEN24-original16MiB-input-v03-grouped-modules/request.json",
+      "sha256": "032981e91cfbc7ecd411dc4ebc8dce487e0bb32da4e772249bd52527df25609e"
+    },
+    "result": {
+      "bytes": 1586,
+      "path": "/tmp/pytest-of-barberb/current-Main-crossview-GREEN24-v03-grouped-modules/a/logs/result.json",
+      "sha256": "fa8a1808b27a5ca67f7299be076ef63cbf600b4f98749ccd0d24b66d3c8a48fd"
+    }
+  },
+  "preserved_history": {
+    "fixture_inventory_failure": {
+      "Root_reported_original": {
+        "independently_rewaited": false,
+        "launch_id": "ddedd9",
+        "returncode": 1,
+        "session_id": 25752,
+        "terminal_id": "2f3dea"
+      },
+      "audit": {
+        "bytes": 13951,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/independent-current-Main-Raw2-ordinary-fixture-alias-failure-saved-DATA-audit-v01.json",
+        "sha256": "3bc293fced633bfe9ec9266b6d914f55b96d20ec6a10edd40c9019d14bada296"
+      },
+      "complete_JUnit": false,
+      "completed_test_count": null,
+      "reason": "Numbered pytest convenience symlink violated owned regular-file inventory; one module-fixture call now uses numbered=False.",
+      "retained_storage_bytes": 16777216,
+      "semantic_RED_credit": false,
+      "storage_durable": false
+    },
+    "historical_355_cases": "Earlier source-use/logical-identity generation remains a separate qualification; no case pooling or new epoch transfer.",
+    "interleaved_module_failure": {
+      "Root_reported_original": {
+        "independently_rewaited": false,
+        "launch_id": "5bd03e",
+        "returncode": 1,
+        "session_id": 80505,
+        "terminal_id": "707586"
+      },
+      "audit": {
+        "bytes": 43127,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/independent-current-Main-crossview-GREEN24-fixture-ordering-failure-saved-DATA-audit-v01.json",
+        "sha256": "fb5373dbad796fd4384ef1166ffb547e170412fe34b1c8ac2b845cb8a1dff7ad"
+      },
+      "cases": 24,
+      "failures": 0,
+      "passed": 13,
+      "qualified": false,
+      "reason": "Interleaved module selection restarted the unnumbered module fixture; grouped V2 then V3 selectors preserve the exact case set.",
+      "retained_storage_bytes": 16777216,
+      "setup_errors": 11,
+      "storage_durable": false
+    },
+    "no_prior_failed_claim_released_by_success": true,
+    "semantic_RED2": {
+      "JUnit_seconds": 1.988,
+      "Root_reported_original": {
+        "independently_rewaited": false,
+        "launch_id": "61e4f9",
+        "returncode": 1,
+        "session_id": 94724,
+        "terminal_id": "731f48"
+      },
+      "cases": 2,
+      "errors": 0,
+      "failures": 2,
+      "reason": "Both expected public preparation refusals were absent for same raw artifact/different view/different source_id.",
+      "retained_storage_bytes": 16777216,
+      "skipped": 0,
+      "storage_durable": false
+    }
+  },
+  "profile": {
+    "equal_wording_does_not_merge_different_raw_artifacts": true,
+    "logical_view_error_precedence_preserved": true,
+    "multiple_views_require_future_explicit_physical_coordinate_alignment_contract": true,
+    "physical_alignment_witness_supported": false,
+    "public_API_or_schema_or_V3_Product_changed": false,
+    "rule": "Within one preparation, one exact raw-artifact SHA256 requires one extracted-view SHA256 across caller-declared source identities.",
+    "same_raw_same_view_disjoint_occurrences_supported_even_with_different_source_ids": true
+  },
+  "qualification": {
+    "Git_guard_rows": 8,
+    "JUnit_counts": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 24
+    },
+    "JUnit_seconds": 11.461,
+    "Native_lease_id": "568b373495464dcf80fba7727d94cf5f",
+    "Pytest_anchor_paths": 105,
+    "Root_reported_original": {
+      "independently_rewaited": false,
+      "launch_id": "b7706d",
+      "returncode": 0,
+      "session_id": 79134,
+      "terminal_id": "bde73f"
+    },
+    "Source_Native_process_and_genuine_wait_closed": true,
+    "breakdown": {
+      "counterexamples": 2,
+      "positive_cases": 10,
+      "retained_negative_cases": 12
+    },
+    "cases": 24,
+    "claim_id": "0e7d80ab95e54defb230d9a80f4ea26a",
+    "complete_seal_hash_device_inode_join": true,
+    "declared_source_pins": 243,
+    "execution_seconds": 179.35939033981413,
+    "firstparty_sources": 131,
+    "functions": 6,
+    "namespace_absences": 5,
+    "ordinary_bytes": 351063,
+    "ordinary_files": 7,
+    "original_errors": [],
+    "own_storage_bytes": 16777216,
+    "own_storage_durable": true,
+    "own_storage_status": "released",
+    "parent_Source_seconds": 232.73756917892024,
+    "qualified_controls": 5,
+    "raw_fixture_DATA_paths": 2,
+    "seal_entries_excluding_receipt": 6,
+    "source_drift": []
+  },
+  "recorded_at_utc": "2026-11-15T07:54:26.483610+00:00",
+  "schema": "legal-ir-reviewed-source-raw-view-identity-software-evidence/v1",
+  "scope_limits": {
+    "Git_publication": "Not assessed at this capsule preparation cutoff; source/Git publication is a separate original operation.",
+    "actual_failed_SDK_CLI_acquired_no_child_branch_qualification": false,
+    "declared_source_generation_guards_not_executed_import_trace": true,
+    "third_party_or_whole_environment_equivalence": false,
+    "timer_service_state": "No current timer/service state claimed by this capsule.",
+    "usersite_Pytest_runtime_origin_or_hash_qualification": false
+  },
+  "source_postimages": [
+    {
+      "bytes": 88512,
+      "mode": "0o664",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_norm_content_adjudication_v1.py",
+      "sha256": "7350235f02340d2d2f0925d25399f614861c59b6faabcb1ebd427e2682a4f1fd"
+    },
+    {
+      "bytes": 120520,
+      "mode": "0o664",
+      "path": "tests/unit/logic/autoformal/test_legal_norm_content_adjudication_v1.py",
+      "sha256": "c0a60c1bd1bbdbdd48700cbdc72769b08e5d41340a82e51be65bf33b8e5d1141"
+    },
+    {
+      "bytes": 27303,
+      "mode": "0o644",
+      "path": "tests/unit/logic/autoformal/test_legal_reviewed_norm_admission_v3.py",
+      "sha256": "3d10140cef4f1acd38f65a8e67b045e985e1a30c9a8d1d1813f443df1dedf428"
+    }
+  ],
+  "status": "focused_canonical_software_qualified_real_review_pending"
+}

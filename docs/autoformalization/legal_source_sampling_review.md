@@ -1,0 +1,10 @@
+# Documentation moved
+
+The maintained entry is [legal_source_sampling_review.md](../../ipfs_datasets_py/logic/autoformal/docs/guides/legal_source_sampling_review.md). This former path is retained for existing links; original bytes and provenance are preserved in the [migration archive](../../ipfs_datasets_py/logic/autoformal/docs/ARCHIVE.md).
+
+<!-- Legacy bookmarks refer to sections in the preserved original. -->
+<a id="source-first-review-intake"></a>
+<a id="prepare-a-bundle"></a>
+<a id="record-and-validate-declarations"></a>
+<a id="account-for-the-population"></a>
+<a id="migrate-source-only-preparation-packets"></a>

@@ -1,0 +1,283 @@
+{
+  "actual_numeric_return_objects_held_through_closing": 2,
+  "actual_worker_returncode": 0,
+  "arm_metrics": {
+    "direct": {
+      "canonical_contract_valid_candidates": 2,
+      "canonicalization_changed_payload_rows": 1,
+      "complete_candidates": 2,
+      "content_token_counts": [
+        38,
+        269
+      ],
+      "eos_completed": true,
+      "execution_completed": true,
+      "greedy_next_logits_calls": [
+        270
+      ],
+      "observed_calls": {
+        "greedy": 1,
+        "model_next_logits": 270,
+        "model_start": 1,
+        "numeric": 1
+      },
+      "post_generation_contract_inspection_is_not_source_meaning_or_task_validation": true,
+      "raw_EOS_rows": 2,
+      "raw_model_inference_executed": true,
+      "raw_report_IR_valid": null,
+      "raw_report_task_satisfied": null,
+      "raw_status_counts": {
+        "eos": 2
+      },
+      "row_dispositions": [
+        {
+          "canonical_contract_valid": true,
+          "canonicalization_changed_payload": false,
+          "complete_candidate": true,
+          "eos_reached": true,
+          "errors": [],
+          "generation_status": "eos",
+          "id": "authored-paragraph:train:1:2781747e520dee4d065cbd179ea0ba1312f691438d25e928a26d8a5c53b71447"
+        },
+        {
+          "canonical_contract_valid": true,
+          "canonicalization_changed_payload": true,
+          "complete_candidate": true,
+          "eos_reached": true,
+          "errors": [],
+          "generation_status": "eos",
+          "id": "authored-paragraph:train:8:619c891097b737d746c5d37b3b48c3c389c58f4526c9a6cc91f926594d92cc4f"
+        }
+      ]
+    },
+    "facade": {
+      "canonical_contract_valid_candidates": 2,
+      "canonicalization_changed_payload_rows": 1,
+      "complete_candidates": 2,
+      "content_token_counts": [
+        38,
+        269
+      ],
+      "eos_completed": true,
+      "execution_completed": true,
+      "greedy_next_logits_calls": [
+        270
+      ],
+      "observed_calls": {
+        "greedy": 1,
+        "model_next_logits": 270,
+        "model_start": 1,
+        "numeric": 1
+      },
+      "post_generation_contract_inspection_is_not_source_meaning_or_task_validation": true,
+      "raw_EOS_rows": 2,
+      "raw_model_inference_executed": true,
+      "raw_report_IR_valid": null,
+      "raw_report_task_satisfied": null,
+      "raw_status_counts": {
+        "eos": 2
+      },
+      "row_dispositions": [
+        {
+          "canonical_contract_valid": true,
+          "canonicalization_changed_payload": false,
+          "complete_candidate": true,
+          "eos_reached": true,
+          "errors": [],
+          "generation_status": "eos",
+          "id": "authored-paragraph:train:1:2781747e520dee4d065cbd179ea0ba1312f691438d25e928a26d8a5c53b71447"
+        },
+        {
+          "canonical_contract_valid": true,
+          "canonicalization_changed_payload": true,
+          "complete_candidate": true,
+          "eos_reached": true,
+          "errors": [],
+          "generation_status": "eos",
+          "id": "authored-paragraph:train:8:619c891097b737d746c5d37b3b48c3c389c58f4526c9a6cc91f926594d92cc4f"
+        }
+      ]
+    }
+  },
+  "automatic_retry_selected": false,
+  "comparison_disposition": "exact_raw_report_parity",
+  "complete_candidate_means_contract_conformance_plus_EOS_not_source_coverage": true,
+  "convergence_proven": false,
+  "deadline_observed": false,
+  "encoder_fitting_training_SQL_Lean_or_reference_scoring_executed": false,
+  "evidence_id": "prepared384-retained-generation-pair-qualified-20261028-01",
+  "external_publication_performed": false,
+  "finite_comparison_conclusive": true,
+  "finite_exact_wiring_equality_observed": true,
+  "full_raw_reports_byte_equal": true,
+  "genuine_entries": {
+    "cache_planner": 4,
+    "cache_validator": 4,
+    "embedding_builder": 0,
+    "embedding_producer": 0,
+    "facade_infer_cached": 1,
+    "fit_count_prior": 0,
+    "fit_normalization": 0,
+    "generated_only_inspection": 2,
+    "greedy": 2,
+    "legacy_numeric": 0,
+    "legacy_open": 0,
+    "model_next_logits": 540,
+    "model_restore": 1,
+    "model_start": 2,
+    "native_receipt_loader": 8,
+    "occurrence_numeric": 2,
+    "open_v2": 1,
+    "reference_scorer": 0,
+    "text_renderer": 0
+  },
+  "genuine_non_none_returns": {
+    "cache_planner": 4,
+    "cache_validator": 4,
+    "embedding_builder": 0,
+    "embedding_producer": 0,
+    "facade_infer_cached": 1,
+    "fit_count_prior": 0,
+    "fit_normalization": 0,
+    "generated_only_inspection": 2,
+    "greedy": 2,
+    "legacy_numeric": 0,
+    "legacy_open": 0,
+    "model_next_logits": 540,
+    "model_restore": 1,
+    "model_start": 2,
+    "native_receipt_loader": 8,
+    "occurrence_numeric": 2,
+    "open_v2": 1,
+    "reference_scorer": 0,
+    "text_renderer": 0
+  },
+  "historical_native_cache_raw_BOS_numeric_or_facade_fixture_campaigns_replayed": false,
+  "independent_result_review": {
+    "bytes": 11403,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-head-sensitivity-v01/occurrence-inference-v01/facade-v2-v01/retained-generation-v01/independent-result-review-v01.json",
+    "sha256": "88c599aee9e5c41d019c7e6f4fcc96290dc969d425322ea24e8aacd653d7ad13"
+  },
+  "inspection_reports_byte_equal": true,
+  "model_generation_inspection_DATA_or_resource_census_replayed_by_documentation": false,
+  "model_tensor_sha256": "0b3c7c3b1a5581cd393d9bb8db1d24b87fe2cb9dff0be268aa2b5ed1f88b6594",
+  "model_weights_bindings_modes_metadata_and_CPU_rng_unchanged": true,
+  "next_task": "Reuse the closed two-row retained facade/direct generation observation, its source-bound v2 facade, accepted native caches and generated-only contract inspector. Define the next bounded source-conditioning or trajectory controls and their independent acceptance policy before execution; preserve known TRAIN exposure and raw completion/EOS/contract dispositions. A deadline-inconclusive observation receives no automatic retry or equality credit. Complete task/source meaning needs reviewed supported targets and source/definition-grouped held-out evaluation; graph/Lean release, semantic source-to-model equivalence and convergence remain open. Do not replay completed encoding/cache/raw/BOS/facade fixture campaigns.",
+  "no_product_code_or_public_API_added_by_this_milestone": true,
+  "numerical_policy": {
+    "CPU_autocast_enabled": false,
+    "float32_matmul_precision": "highest",
+    "runtime_entry_metadata_only_no_native_library_attestation": true,
+    "torch_interop_threads": 1,
+    "torch_module_origin": "/home/barberb/lift_coding/.venv/lib/python3.12/site-packages/torch/__init__.py",
+    "torch_threads": 1,
+    "torch_version": "2.9.1+cpu"
+  },
+  "ordered_raw_output_and_canonicalized_view_remain_distinct": true,
+  "original_owned_pipeline_succeeded": true,
+  "original_owner_returncode": 0,
+  "output_inspection_companion": {
+    "API": "inspect_contextual_legal_predictions",
+    "broad_parser_or_package_qualification": false,
+    "canonical_contract_interface": "CanonicalRoundTripIR@1",
+    "canonicalization_change_reported_separately": true,
+    "module": "ipfs_datasets_py.logic.formalization.autoencoder.contextual_legal_ir_output",
+    "only_actual_observed_branches_qualified": true,
+    "post_generation_only": true,
+    "raw_output_preserved": true,
+    "reference_scorer_decompiler_or_F18_metric_used": false,
+    "source": {
+      "bytes": 13756,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_output.py",
+      "sha256": "0477aaa5222523e27f4010644ad5bfac67720a793fcccc53b48593e4321c31a7"
+    }
+  },
+  "population": {
+    "known_TRAIN_not_held_out_or_reviewed_statute": true,
+    "literal_clause_counts": [
+      1,
+      8
+    ],
+    "literal_clauses": 9,
+    "original_TRAIN_row_indices": [
+      0,
+      36
+    ],
+    "row_ids": [
+      "authored-paragraph:train:1:2781747e520dee4d065cbd179ea0ba1312f691438d25e928a26d8a5c53b71447",
+      "authored-paragraph:train:8:619c891097b737d746c5d37b3b48c3c389c58f4526c9a6cc91f926594d92cc4f"
+    ],
+    "rows": 2,
+    "selection": "first minimum and first maximum literal clause counts, original order",
+    "source_kind": "authored diagnostic benchmark; no legal-origin assertion"
+  },
+  "qualification_summary": {
+    "bytes": 53908,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-head-sensitivity-v01/occurrence-inference-v01/facade-v2-v01/retained-generation-v01/qualification-summary-v01.json",
+    "sha256": "97c4231c3aabd8e2a8e2b0d2820cad1c1cdaabdbf7f6195b14be1ecc07aace9e"
+  },
+  "raw_IR_valid": null,
+  "raw_predictions_byte_equal": true,
+  "recorded_at_utc": "2026-10-28T05:04:29.229046+00:00",
+  "recovered_storage_custody_closed": false,
+  "same_restored_handle_and_actual_packet_observed": true,
+  "saved_reports": {
+    "direct_inspection": {
+      "bytes": 4980,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-head-sensitivity-v01/occurrence-inference-v01/facade-v2-v01/retained-generation-v01/attempt-v01/exports/retained-generation/direct-inspection.json",
+      "sha256": "97686af671c0bb12da9ac11173414beb740f1e81ace56bbc472b039497835062"
+    },
+    "direct_raw_report": {
+      "bytes": 7231,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-head-sensitivity-v01/occurrence-inference-v01/facade-v2-v01/retained-generation-v01/attempt-v01/exports/retained-generation/direct-raw-report.json",
+      "sha256": "07cb25aa184412bcff4e6ec0a2108154018c89eb1f801eaa1436a78f378d5829"
+    },
+    "facade_inspection": {
+      "bytes": 4980,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-head-sensitivity-v01/occurrence-inference-v01/facade-v2-v01/retained-generation-v01/attempt-v01/exports/retained-generation/facade-inspection.json",
+      "sha256": "97686af671c0bb12da9ac11173414beb740f1e81ace56bbc472b039497835062"
+    },
+    "facade_raw_report": {
+      "bytes": 7231,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-head-sensitivity-v01/occurrence-inference-v01/facade-v2-v01/retained-generation-v01/attempt-v01/exports/retained-generation/facade-raw-report.json",
+      "sha256": "07cb25aa184412bcff4e6ec0a2108154018c89eb1f801eaa1436a78f378d5829"
+    },
+    "facade_result": {
+      "bytes": 24379,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-head-sensitivity-v01/occurrence-inference-v01/facade-v2-v01/retained-generation-v01/attempt-v01/exports/retained-generation/facade-result.json",
+      "sha256": "261a9ec0c57d7c648df7fe3b89d19c6c38c151f68e745a85baa152862ab5e464"
+    },
+    "generation_observation": {
+      "bytes": 38638,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-head-sensitivity-v01/occurrence-inference-v01/facade-v2-v01/retained-generation-v01/attempt-v01/exports/retained-generation/generation-observation.json",
+      "sha256": "0306dc08311bc4be925351de9e4cdb413aa194add7651a3f838df716fbc3537d"
+    },
+    "terminal_object_custody": {
+      "bytes": 4181,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/native384-head-sensitivity-v01/occurrence-inference-v01/facade-v2-v01/retained-generation-v01/attempt-v01/exports/retained-generation/terminal-object-custody.json",
+      "sha256": "623cda16dfc4d5f44e506ce7bae100c5b85d4c6f21d32084b87dfd00eb200873"
+    }
+  },
+  "schema": "legal-ir-retained-generation-pair-public-observation/v1",
+  "source_native_storage_custody_closed": true,
+  "source_observations": {
+    "actual_compiled_source_buffer_count": 28,
+    "actual_import_origin_count": 28,
+    "native_binary_or_whole_runtime_attestation": false,
+    "source_pin_count": 72
+  },
+  "source_to_model_semantic_equivalence_proven": false,
+  "target_and_authority_scope": {
+    "conditioning_profile_ids": null,
+    "count_prior_fit_on_historical_TRAIN_labels": true,
+    "evaluation_gold_mask": 0,
+    "outer_target_independence_claimed": false,
+    "proof_authority": false,
+    "reference_scoring_performed": false,
+    "reviewed_statutory_meaning_context_selected": false,
+    "source_only_API_packets": true,
+    "training_mask": 0,
+    "whole_retained_checkpoint_and_preprocessing_historical_TRAIN_target_exposure": true
+  },
+  "task_satisfied": null
+}

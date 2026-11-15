@@ -1182,6 +1182,39 @@ def test_lean_v3_version_output_charge_preserves_complete_source_input_capacity(
     assert outcome.receipt.submitted_source==source
 
 
+# Historical fixture pins: 158b5f0c0a25ea42778f0a718477eaa0a6b8c4f053f3987ef3cd8e5517f82b23
+# before 51d2c414, then 27ede074ceb68cd91d50eada99b9c6f02216607e22610bc63db4fde69e17fb4c.
+# Current reviewed constructors explicitly bind the current verifier profile;
+# negative cache controls changed the complete owner. This pin never follows edits itself.
+_NATIVE_PROOF_CACHE_FIXTURE_SHA256 = "4baee6dda6afb770e286421c19467bac1fab045b16fe0635f597e8dcfc16a5b2"
+
+
+def _load_native_proof_cache_fixture_owner():
+    """Load exact pinned fixture bytes; execute no fixture/kernel helper.
+
+    This distinct fixture-only module does not claim canonical package identity.
+    Compiling the verified buffer avoids accepting a stale bytecode cache as
+    evidence of the source whose pre/post bytes were checked.
+    """
+    import hashlib
+    import importlib.util
+
+    fixture_path = Path(__file__).resolve().parents[3] / "unit/logic/legal_ir/test_proof_cache.py"
+    assert fixture_path.is_file() and not fixture_path.is_symlink()
+    raw = fixture_path.read_bytes()
+    assert hashlib.sha256(raw).hexdigest() == _NATIVE_PROOF_CACHE_FIXTURE_SHA256, "native proof-cache fixture source pin differs before import"
+    fixture_spec = importlib.util.spec_from_file_location("_native_lean_cache_fixture_owner", fixture_path)
+    assert fixture_spec is not None and fixture_spec.loader is not None
+    fixture_owner = importlib.util.module_from_spec(fixture_spec)
+    exec(compile(raw, str(fixture_path), "exec", dont_inherit=True), fixture_owner.__dict__)
+    assert fixture_owner.__name__ == fixture_spec.name == "_native_lean_cache_fixture_owner"
+    assert fixture_owner.__spec__ is fixture_spec
+    assert fixture_owner.__file__ == fixture_spec.origin == str(fixture_path)
+    assert fixture_owner.__loader__ is fixture_spec.loader
+    assert hashlib.sha256(fixture_path.read_bytes()).hexdigest() == _NATIVE_PROOF_CACHE_FIXTURE_SHA256, "native proof-cache fixture source changed during import"
+    return fixture_owner
+
+
 def _assert_lean_native_v3_proof_cache_round_trip(
     tmp_path, *, runner, processes, executable, version, bounds
 ):
@@ -1199,21 +1232,7 @@ def _assert_lean_native_v3_proof_cache_round_trip(
         LegalProofCache, LegalProofCacheError, LegalProofIntegrityError,
         build_legal_proof_binding,
     )
-    # Reuse the existing pure fixture constructors by their exact owning file,
-    # without depending on tests/unit/logic package or namespace discovery.
-    # This distinct fixture-only module never claims canonical package identity.
-    # Its authored kernel/native-identity helpers are defined but never called.
-    import hashlib
-    import importlib.util
-    fixture_path = Path(__file__).resolve().parents[3] / "unit/logic/legal_ir/test_proof_cache.py"
-    fixture_sha256 = "72cbb04c69fe3065b1029ed4394406bd55972191b6a8872f4dacf7d7d5434bb4"
-    assert hashlib.sha256(fixture_path.read_bytes()).hexdigest() == fixture_sha256
-    fixture_spec = importlib.util.spec_from_file_location("_native_lean_cache_fixture_owner", fixture_path)
-    assert fixture_spec is not None and fixture_spec.loader is not None
-    fixture_owner = importlib.util.module_from_spec(fixture_spec)
-    fixture_spec.loader.exec_module(fixture_owner)
-    assert fixture_owner.__file__ == fixture_owner.__spec__.origin == str(fixture_path)
-    assert hashlib.sha256(fixture_path.read_bytes()).hexdigest() == fixture_sha256
+    fixture_owner = _load_native_proof_cache_fixture_owner()
 
     # The local SDK controller supplies the already-admitted ordinary runner;
     # the standalone wrapper below supplies the existing admitted runner. This
@@ -1329,6 +1348,82 @@ def _assert_lean_native_v3_proof_cache_round_trip(
     assert loaded.theorem_receipt_results(expected_context=context, obligation_id=obligation.obligation_id) == (receipt,)
     assert disk.cids() == (record.content_cid,)
     assert len(processes) == before_reuse
+    # These are coherently reissued SOFTWARE mutation controls over the real
+    # returned Native receipt.  No mutated request is submitted to a backend.
+    # All outer links agree on the advertised version; the checked toolchain
+    # and actual executable version remain the original Native observation.
+    original_evidence = copy.deepcopy({"artifact": artifact.to_dict(),
+        "profile_outcome": profile_outcome.to_dict(), "bound_outcome": outcome.to_dict(),
+        "context": context, "claim": claim.to_dict(), "request": request.to_dict(),
+        "attempt": attempt.to_dict(), "result": result.to_dict(), "receipt": receipt.to_dict(),
+        "binding": binding, "cache_record": loaded.to_dict()})
+    original_process_results = copy.deepcopy(processes)
+    reissued_backend_version_controls = []
+    for advertised_version in ("other-version", "lean4"):
+        assert advertised_version != version
+        changed_context = copy.deepcopy(context)
+        changed_context["backend_version"] = advertised_version
+        changed_claim = replace(claim, metadata={**claim.metadata.to_dict(),
+            "proof_context_digest": stable_digest(changed_context)})
+        changed_payload = request.payload.to_dict()
+        changed_payload["legal_proof_context"] = copy.deepcopy(changed_context)
+        changed_request = BackendRequest.for_claim(changed_claim, request.obligation_id,
+            request_id="request:software-reissued-native-cache-version:" + advertised_version,
+            requested_backend_id="lean", bounds=request.bounds, payload=changed_payload)
+        changed_source_binding = outcome.receipt.source_binding.bind(changed_request, source)
+        changed_kernel = replace(outcome.receipt, request_digest=changed_request.digest,
+            source_binding=changed_source_binding)
+        # This parser check reissues metadata only; its accepted field retains
+        # the original source check, and establishes no new Native execution.
+        assert LeanKernelReceipt.from_dict(changed_kernel.to_dict()) == changed_kernel
+        assert changed_kernel.native_identity.to_dict() == outcome.receipt.native_identity.to_dict()
+        assert changed_kernel.toolchain.to_dict() == context["toolchain"]
+        assert changed_kernel.native_identity.actual_version == changed_kernel.toolchain.version == version
+        assert changed_kernel.request_digest == changed_kernel.source_binding.request_digest == changed_request.digest
+        assert changed_kernel.source_binding.source_digest == outcome.receipt.source_binding.source_digest
+        changed_attempt = replace(attempt,
+            attempt_id="attempt:software-reissued-native-cache-version:" + advertised_version,
+            request_digest=changed_request.digest, backend_version=advertised_version,
+            usage=replace(attempt.usage, elapsed_ms=0, steps=0, peak_memory_bytes=0, output_bytes=0),
+            diagnostics=("Software-reissued mutation; no corresponding Native execution.",),
+            output_digest=stable_digest({"software_reissued_kernel_receipt": changed_kernel.to_dict(),
+                "original_native_receipt_id": outcome.receipt.receipt_id}))
+        changed_result = ProofResult.for_attempt(changed_request, changed_attempt,
+            result_id="result:software-reissued-native-cache-version:" + advertised_version,
+            authority=replace(result.authority, issuer="software-mutation-control",
+                method="software-reissued-actual-native-base/no-new-execution",
+                scope_digest=changed_request.digest, configuration_digest=stable_digest(changed_context)),
+            status=ResultStatus.PROVED, payload={"kernel_receipt": changed_kernel.to_dict(),
+                "software_reissued_mutation_only": True, "new_native_execution": False,
+                "original_native_receipt_id": outcome.receipt.receipt_id})
+        changed_receipt = ProofReceipt.issue(changed_claim, changed_request, changed_attempt, changed_result,
+            receipt_id="receipt:software-reissued-native-cache-version:" + advertised_version,
+            verifier="software-mutation-control")
+        assert changed_receipt.backend_version == changed_result.backend_version == changed_attempt.backend_version == changed_context["backend_version"]
+        assert changed_claim.metadata["proof_context_digest"] == stable_digest(changed_context)
+        assert changed_request.payload.to_dict()["legal_proof_context"] == changed_context
+        assert changed_receipt.request_digest == changed_kernel.request_digest == changed_request.digest
+        assert changed_receipt.backend_version != changed_kernel.native_identity.actual_version
+        with pytest.raises(LegalProofIntegrityError, match="backend version") as rejected_version:
+            build_legal_proof_binding(artifact, changed_receipt, claim=changed_claim, request=changed_request,
+                attempt=changed_attempt, result=changed_result, context=changed_context)
+        assert processes == original_process_results
+        reissued_backend_version_controls.append({"kind": "software_reissued_actual_native_base",
+            "advertised_backend_version": advertised_version, "actual_native_version": version,
+            "original_native_receipt_id": outcome.receipt.receipt_id,
+            "new_native_execution": False, "native_processes_added": 0,
+            "cache_binding_rejected": True, "rejection": str(rejected_version.value),
+            "context": changed_context, "claim": changed_claim.to_dict(), "request": changed_request.to_dict(),
+            "kernel_receipt": changed_kernel.to_dict(), "attempt": changed_attempt.to_dict(),
+            "result": changed_result.to_dict(), "receipt": changed_receipt.to_dict()})
+    assert original_evidence == {"artifact": artifact.to_dict(),
+        "profile_outcome": profile_outcome.to_dict(), "bound_outcome": outcome.to_dict(),
+        "context": context, "claim": claim.to_dict(), "request": request.to_dict(),
+        "attempt": attempt.to_dict(), "result": result.to_dict(), "receipt": receipt.to_dict(),
+        "binding": binding, "cache_record": loaded.to_dict()}
+    assert loaded.theorem_receipt_results(expected_context=context, obligation_id=obligation.obligation_id) == (receipt,)
+    assert disk.cids() == (record.content_cid,)
+    assert processes == original_process_results and len(processes) == before_reuse == 3
     report = {"schema": "native-lean-v3-proof-cache-integration/v1", "native_Lean_executed": True,
         "compiler_output_mocked": False, "actual_process_results": processes,
         "profile_discovery_outcome": profile_outcome.to_dict(), "bound_outcome": outcome.to_dict(),
@@ -1338,6 +1433,11 @@ def _assert_lean_native_v3_proof_cache_round_trip(
         "rejected_artifact_facets": rejected_artifact_facets, "rejected_context_facets": rejected_context_facets,
         "cache_source_profile_and_obligation_mismatches_rejected": True,
         "native_processes_during_reuse_or_mismatch_checks": len(processes) - before_reuse,
+        "backend_version_mutation_controls": reissued_backend_version_controls,
+        "software_reissued_backend_version_control_count": len(reissued_backend_version_controls),
+        "actual_cache_native_command_count": len(processes),
+        "actual_native_commands_for_version_mutation_controls": 0,
+        "version_mutation_controls_are_new_native_results": False,
         "fictional_source_fixture_only": True, "statutory_meaning_or_corpus_admission": False,
         "resource_admission_scope": "caller_owned_not_established_by_this_helper",
         "outer_resource_closure_asserted": False, "pytest_case_credit_claimed_by_helper": 0}
@@ -1370,3 +1470,397 @@ def test_lean_native_v3_proof_cache_round_trip_and_exact_reuse_context(tmp_path)
         version=os.environ.get("IPFS_DATASETS_LEAN_VERSION", "4.34.1"),
         bounds=ExecutionBounds(timeout_ms=30000, max_steps=100,
             max_memory_bytes=512 * 1024**2, max_output_bytes=65536))
+
+
+
+def test_lean_quoted_identifier_preserves_active_command_policy():
+    """Quoted names are tokens, not string delimiters around later commands."""
+    source = ('def «name"left» : Nat := 0\n'
+              'set_option autoImplicit true\n'
+              'def «name"right» : Nat := 0\n'
+              'theorem wanted : True := by trivial\n')
+    outcome, calls, _ = _bound_lean_outcome(source=source, proposition="True")
+    assert outcome.result.status is ResultStatus.MALFORMED
+    assert outcome.receipt.accepted is False and calls == []
+    assert "lean_source_contains_unsupported_metaprogramming_or_output" in outcome.receipt.diagnostics
+
+
+@pytest.mark.skipif(os.environ.get("IPFS_DATASETS_RUN_NATIVE_LEAN") != "1",
+                    reason="explicit native Lean resource authorization required")
+def test_lean_native_quoted_identifier_preserves_expected_goal(tmp_path):
+    """Use the existing real kernel boundary; simulated reports cannot qualify this case."""
+    from ipfs_datasets_py.logic.backends.resource_admission import ResourceAdmittedToolRunner
+    executable = os.environ.get("IPFS_DATASETS_LEAN_EXECUTABLE", "")
+    version = os.environ.get("IPFS_DATASETS_LEAN_VERSION", "4.34.1")
+    assert executable and Path(executable).is_absolute() and Path(executable).is_file()
+    source = ('def «name"left» : Nat := 0\n'
+              'notation "False" => True\n'
+              'def «name"right» : Nat := 0\n'
+              'theorem wanted : True := by trivial\n')
+    backend = LeanKernelBackend(executable=executable, backend_version=version,
+        runner=ResourceAdmittedToolRunner(cpu_slots=1, child_process_slots=1))
+    outcome = backend.run(_request(family="lean4", encoding="lean4", source=source,
+        expected_declaration="wanted", expected_proposition="False",
+        bounds=ExecutionBounds(timeout_ms=30000, max_steps=100,
+            max_memory_bytes=512*1024**2, max_output_bytes=65536)))
+    (tmp_path/"quoted-identifier-expected-goal-outcome.json").write_text(
+        json.dumps({"schema": "lean-quoted-identifier-goal-regression/v1",
+            "source": source, "expected_declaration": "wanted", "expected_proposition": "False",
+            "outcome": outcome.to_dict(), "model_or_statutory_admission": False},
+            sort_keys=True, indent=2)+"\n", encoding="utf-8")
+    assert outcome.result.status is not ResultStatus.PROVED
+    assert outcome.receipt.accepted is False
+
+
+# Lexer-boundary controls only; no native compiler or legal-meaning claim.
+@pytest.mark.parametrize(("label", "prefix"), [('quoted-double-quote', 'def «name"left» : Nat := 0'), ('quoted-comment-markers', 'def «-- /- axiom "» : Nat := 0'), ('quoted-first-close', 'def «outer«inner» : Nat := 0'), ('quoted-backslash-close', 'def «left\\» : Nat := 0'), ('character-guillemet', "def c : Char := '«'"), ('character-double-quote', 'def c : Char := \'"\''), ('character-escaped-quote', "def c : Char := '\\''"), ('character-hex', "def c : Char := '\\x22'"), ('primed-qualified', "def Name.prime' : Nat := 0"), ('unicode-primed', "def α₀' : Nat := 0"), ('ordinary-string', 'def text : String := "quotes: \\" and «"'), ('ordinary-gap', 'def text : String := "first\\\n  second"'), ('raw-zero-backslash', 'r"\\"'), ('raw-one-inner-quote', 'r#"inner " and \\"#'), ('raw-two-inner-hash', 'r##"inner "# and \\"##'), ('numeric-hex-adjacent-raw', '0xffr"\\"'), ('numeric-binary-adjacent-raw', '0b101r#"\\"#'), ('numeric-octal-adjacent-raw', '0o77r"\\"'), ('numeric-decimal-adjacent-raw', '12_3r"\\"'), ('numeric-scientific-adjacent-raw', '1.2e+3r#"\\"#')])
+def test_lean_literal_boundaries_preserve_offsets_and_expose_following_policy_command(label, prefix):
+    from ipfs_datasets_py.logic.backends.kernel import lean
+    source = prefix + "\nset_option autoImplicit true\ntheorem wanted : True := by trivial\n"
+    masked = lean._mask_lean_comments_and_strings(source)
+    assert len(masked) == len(source)
+    assert [i for i, char in enumerate(masked) if char == "\n"] == [i for i, char in enumerate(source) if char == "\n"]
+    start = source.index("set_option autoImplicit true")
+    assert masked[start:start + len("set_option autoImplicit true")] == "set_option autoImplicit true"
+    assert "lean_source_contains_unsupported_metaprogramming_or_output" in lean.scan_lean_incomplete_or_unsafe(source)
+
+
+@pytest.mark.parametrize(("label", "prefix"), [('quoted-danger-words', 'def «sorry admit axiom # set_option "» : Nat := 0'), ('character-hash', "def c : Char := '#'"), ('character-guillemet', "def c : Char := '«'"), ('character-unicode-escape', "def c : Char := '\\u00ab'"), ('ordinary-string', 'def text : String := "sorry admit axiom # set_option «"'), ('raw-zero', 'r"sorry admit axiom # set_option «"'), ('raw-one', 'r#"sorry " admit axiom # set_option \\"#'), ('raw-two', 'r##"sorry "# admit axiom # set_option \\"##'), ('nested-comments', '/- sorry /- admit " « -/ axiom # -/'), ('line-comment', '-- sorry admit axiom # " «')])
+def test_lean_literal_contents_do_not_become_active_policy_commands(label, prefix):
+    from ipfs_datasets_py.logic.backends.kernel import lean
+    source = prefix + "\ntheorem wanted : True := by trivial\n"
+    assert lean.scan_lean_incomplete_or_unsafe(source) == ()
+    assert lean.extract_lean_theorem_name(source) == "wanted"
+
+
+@pytest.mark.parametrize(("label", "source"), [('quoted-open', 'def «unterminated : Nat := 0'), ('raw-open', 'r#"unterminated"'), ('raw-hash-mismatch', 'r##"unterminated"#'), ('string-open', '"unterminated'), ('char-open', "'«"), ('char-too-long', "'ab'"), ('char-invalid-escape', "'\\q'"), ('char-short-hex', "'\\x2'"), ('number-incomplete', '0xff_'), ('scientific-incomplete', '1e+'), ('string-double-gap', '"first\\\n \n second"')])
+def test_lean_incomplete_literal_boundaries_refuse_without_hiding_later_text(label, source):
+    from ipfs_datasets_py.logic.backends.kernel import lean
+    with pytest.raises(LeanKernelError):
+        lean._mask_lean_comments_and_strings(source)
+
+
+@pytest.mark.parametrize("aliases", [
+    {"source": "theorem wanted : True := True.intro\n"},
+    {"lean": "theorem wanted : True := True.intro\n"},
+    {"checked_source": "theorem wanted : True := True.intro\n"},
+    dict.fromkeys(("lean", "source", "checked_source"), "theorem wanted : True := True.intro\n"),
+    {"lean": "", "source": "theorem wanted : True := True.intro\n", "checked_source": None},
+])
+def test_lean_source_aliases_bind_one_exact_source(aliases):
+    from dataclasses import replace
+    from ipfs_datasets_py.logic.backends.kernel import lean
+    request = _request(family="lean4", encoding="lean4", source="unused")
+    request = replace(request, payload=FrozenMap({"encoding": "lean4", **aliases}))
+    source, encoding, translation = lean._payload_source(request)
+    assert source == "theorem wanted : True := True.intro\n"
+    assert encoding == "lean4" and translation is None
+
+
+@pytest.mark.parametrize("pair", [
+    ("lean", "source"), ("lean", "checked_source"), ("source", "checked_source"),
+])
+@pytest.mark.parametrize("other", [
+    "theorem wanted : False := by sorry\n",
+    "theorem wanted : True := True.intro\n\n",  # bytes, not stripped text
+])
+def test_lean_conflicting_source_aliases_reject_before_execution(pair, other):
+    from dataclasses import replace
+    aliases = {pair[0]: "theorem wanted : True := True.intro\n", pair[1]: other}
+    request = _request(family="lean4", encoding="lean4", source="unused")
+    request = replace(request, payload=FrozenMap({"encoding": "lean4", **aliases}))
+    runner, calls = _process_runner("")
+    backend = LeanKernelBackend(runner=runner,
+        native_probe=lambda: pytest.fail("conflicting source reached capability probe"),
+        native_identity_probe=lambda *args, **kwargs: pytest.fail("conflicting source reached native identity"))
+    with pytest.raises(LeanKernelError, match="unambiguous checked Lean source"):
+        backend.run(request)
+    assert calls == []
+
+
+@pytest.mark.parametrize("alias", ["lean", "source", "checked_source"])
+@pytest.mark.parametrize("invalid", [False, 0, [], {}, 42, "   ", "bad\x00source"])
+def test_lean_malformed_source_alias_cannot_hide_beside_valid_source(alias, invalid):
+    from dataclasses import replace
+    from ipfs_datasets_py.logic.backends.kernel import lean
+    aliases = dict.fromkeys(("lean", "source", "checked_source"), "theorem wanted : True := True.intro\n")
+    aliases[alias] = invalid
+    request = _request(family="lean4", encoding="lean4", source="unused")
+    request = replace(request, payload=FrozenMap({"encoding": "lean4", **aliases}))
+    with pytest.raises(LeanKernelError, match="Lean source must be non-empty text"):
+        lean._payload_source(request)
+
+
+@pytest.mark.parametrize("token", [
+    "s!", "m!", "f!", "dbg_trace", "trace", "throwNamedError", "throwNamedErrorAt",
+    "logNamedError", "logNamedErrorAt", "logNamedWarning", "logNamedWarningAt",
+    "throwError", "throwErrorAt",
+])
+@pytest.mark.parametrize("gap", ["", " ", "/- literal boundary -/\n"])
+def test_lean_interpolating_tokens_fail_explicitly_instead_of_hiding_terms(token, gap):
+    """Lexical profile coverage only, not compilation of every token combination."""
+    source = 'def value := ' + token + gap + '"{(by sorry : Nat)}"\ntheorem wanted : True := True.intro\n'
+    with pytest.raises(LeanKernelError, match="interpolated Lean syntax is unsupported"):
+        scan_lean_incomplete_or_unsafe(source)
+
+
+@pytest.mark.parametrize("body", ["sorry", "admit", "run_tac pure (); exact 7"])
+def test_lean_interpolated_proof_terms_never_reach_compiler(body):
+    source = 'def value : String := s!"{(by ' + body + ' : Nat)}"\ntheorem wanted : True := True.intro\n'
+    runner, calls = _process_runner("")
+    backend = LeanKernelBackend(runner=runner,
+        native_probe=lambda: _available_native("lean", "fixture-not-an-executed-compiler"),
+        native_identity_probe=lambda *args, **kwargs: pytest.fail("interpolation reached native identity"))
+    with pytest.raises(LeanKernelError, match="interpolated Lean syntax is unsupported"):
+        backend.run(_request(family="lean4", encoding="lean4", source=source,
+            expected_declaration="wanted", expected_proposition="True"))
+    assert calls == []
+
+
+def test_lean_interpolated_expected_proposition_is_not_a_complete_literal():
+    from ipfs_datasets_py.logic.backends.kernel import lean
+    with pytest.raises(LeanKernelError, match="interpolated Lean syntax is unsupported"):
+        lean._expected_proposition('s!"{(by sorry : Nat)}" = ""')
+
+
+@pytest.mark.parametrize("prefix", [
+    'def value := NS.s! "literal {sorry}"',
+    'def value := s!name "literal {admit}"',
+    'def value := s!\' "literal {run_tac}"',
+    'def value := αs! "literal {sorry}"',
+    'def value := «s!» "literal {sorry}"',
+    'def value := `s!',
+    'def value := `dbg_trace',
+    'def value := NS.throwError "literal {sorry}"',
+    'def value := traceMore "literal {sorry}"',
+    'def value := "s! m! f! dbg_trace trace throwError {sorry}"',
+    'def value := r#"s!\"{sorry}\" dbg_trace"#',
+    '/- s!"{sorry}" /- dbg_trace -/ throwError -/',
+    '-- s!"{sorry}" throwError',
+])
+def test_lean_interpolation_policy_preserves_noninterpolating_token_contexts(prefix):
+    assert scan_lean_incomplete_or_unsafe(prefix + "\ntheorem wanted : True := True.intro\n") == ()
+
+
+def test_native_cache_fixture_loader_uses_pinned_current_owner_without_invoking_helpers():
+    import sys
+    fixture_path = Path(__file__).resolve().parents[3] / "unit/logic/legal_ir/test_proof_cache.py"
+    prior = sys.getprofile()
+    called = []
+    def watch(frame, event, argument):
+        if event == "call" and frame.f_code.co_filename == str(fixture_path):
+            # Module/class definitions are declarations. No authored fixture,
+            # test, kernel, native identity or constructor function may run.
+            assert frame.f_code.co_name in {"<module>", "_ShadowObservation"}
+            called.append(frame.f_code.co_name)
+    try:
+        sys.setprofile(watch)
+        owner = _load_native_proof_cache_fixture_owner()
+    finally:
+        sys.setprofile(prior)
+    assert called and "<module>" in called
+    assert owner.__name__ == "_native_lean_cache_fixture_owner"
+    assert owner.__file__ == owner.__spec__.origin == str(fixture_path)
+    assert owner._legal_artifact.__code__.co_filename == str(fixture_path)
+    assert owner._reviewed_fixture.__code__.co_filename == str(fixture_path)
+
+
+def test_native_cache_fixture_loader_refuses_tampered_preimage_before_module_creation(monkeypatch):
+    import importlib.util
+    fixture_path = Path(__file__).resolve().parents[3] / "unit/logic/legal_ir/test_proof_cache.py"
+    original_read = Path.read_bytes
+    def changed(path):
+        raw = original_read(path)
+        return raw + b"\n# fictional pre-import drift\n" if path == fixture_path else raw
+    monkeypatch.setattr(Path, "read_bytes", changed)
+    monkeypatch.setattr(importlib.util, "spec_from_file_location",
+                        lambda *a, **k: pytest.fail("tampered fixture reached module construction"))
+    with pytest.raises(AssertionError, match="source pin differs before import"):
+        _load_native_proof_cache_fixture_owner()
+
+
+def test_native_cache_fixture_loader_refuses_post_import_drift_without_retry(monkeypatch):
+    fixture_path = Path(__file__).resolve().parents[3] / "unit/logic/legal_ir/test_proof_cache.py"
+    original_read = Path.read_bytes
+    reads = []
+    def changed(path):
+        raw = original_read(path)
+        if path == fixture_path:
+            reads.append(path)
+            if len(reads) > 1:
+                return raw + b"\n# fictional post-import drift\n"
+        return raw
+    monkeypatch.setattr(Path, "read_bytes", changed)
+    with pytest.raises(AssertionError, match="source changed during import"):
+        _load_native_proof_cache_fixture_owner()
+    assert len(reads) == 2
+
+
+# Deliberately authored compiler-stream fixtures only; no Lean process runs.
+def _bound_clean_lean_dependency_fixture():
+    from ipfs_datasets_py.logic.backends.kernel import lean
+    source = "theorem wanted : True := by trivial\n"
+    instrumented = lean.instrument_lean_source_for_axioms(source, "wanted", expected_proposition="True")
+    guard = lean.lean_expected_obligation_declaration(source, "wanted", "True")
+    line = instrumented[:instrumented.rfind("#print axioms")].count("\n") + 1
+    stdout = _axiom_message("'" + guard + "' does not depend on any axioms",
+        fileName="Main.lean", pos={"line": line, "column": 0})
+    return stdout, {"declaration": guard, "expected_source_path": "Main.lean", "expected_source_line": line}
+
+
+@pytest.mark.parametrize("stream", ["stdout", "stderr"])
+@pytest.mark.parametrize("diagnostic", [
+    json.dumps({"severity": "error", "data": "fictional unsolved goals"}) + "\n",
+    "  " + json.dumps({"severity": "error", "data": "fictional type mismatch"}) + "\n",
+    "error: fictional unsolved goals\n",
+    "Main.lean:1:0: error: fictional unsolved goals\n",
+    "  \tMain.lean:12:3: error: fictional unsolved goals\n",
+    "  ERROR: fictional unsolved goals\n",
+])
+def test_lean_bound_error_diagnostics_on_either_stream_cannot_be_rescued(stream, diagnostic):
+    stdout, expected = _bound_clean_lean_dependency_fixture()
+    process = _lean_output(stdout + (diagnostic if stream == "stdout" else ""),
+        stderr=diagnostic if stream == "stderr" else "")
+    accepted, report, diagnostics = evaluate_lean_kernel_output(process, **expected)
+    assert accepted is False
+    assert report is None  # Error diagnostics never become elaborated axiom evidence.
+    assert any("reported error diagnostics" in message for message in diagnostics)
+
+
+@pytest.mark.parametrize("stream", ["stdout", "stderr"])
+@pytest.mark.parametrize("diagnostic", [
+    '{"severity":"error","severity":"warning","data":"fictional failure"}',
+    '{"severity":"warning","data":"first","data":"second"}',
+    '{"severity":"warning","data":NaN}',
+    '{"severity":"error","data":"unfinished"',
+    '[{"severity":"error","data":"fictional failure"}]',
+])
+def test_lean_bound_ambiguous_or_malformed_json_diagnostics_fail_closed(stream, diagnostic):
+    stdout, expected = _bound_clean_lean_dependency_fixture()
+    process = _lean_output(stdout + (diagnostic if stream == "stdout" else ""),
+        stderr=diagnostic if stream == "stderr" else "")
+    accepted, _, diagnostics = evaluate_lean_kernel_output(process, **expected)
+    assert accepted is False
+    assert diagnostics
+
+
+@pytest.mark.parametrize("stderr", [
+    "warning: a fictional warning mentions the word error without failing\n",
+    "  Main.lean:2:0: warning: the text error: is only an example\n",
+    json.dumps({"severity": "warning", "data": "Main.lean:2:0: error: quoted diagnostic example"}),
+    json.dumps({"severity": "information", "data": "error: is quoted diagnostic text"}),
+    "  \t\n",
+])
+def test_lean_bound_harmless_stderr_warnings_preserve_dependency_evidence(stderr):
+    stdout, expected = _bound_clean_lean_dependency_fixture()
+    accepted, report, diagnostics = evaluate_lean_kernel_output(_lean_output(stdout, stderr=stderr), **expected)
+    assert accepted is True
+    assert report is not None and report.declaration == expected["declaration"]
+    assert report.source_path == expected["expected_source_path"]
+    assert report.source_line == expected["expected_source_line"]
+    assert diagnostics == ()
+
+
+@pytest.mark.parametrize("severity", ["warning", "information"])
+def test_lean_bound_stdout_json_warning_may_quote_error_text(severity):
+    stdout, expected = _bound_clean_lean_dependency_fixture()
+    warning = json.dumps({"severity": severity, "data": "Main.lean:1:0: error: is quoted text"}) + "\n"
+    accepted, report, diagnostics = evaluate_lean_kernel_output(_lean_output(stdout + warning), **expected)
+    assert accepted is True and report is not None and diagnostics == ()
+
+
+@pytest.mark.parametrize("damage", ["stderr_report", "duplicate_stdout_report", "wrong_declaration", "wrong_source_line"])
+def test_lean_error_stream_policy_preserves_strict_dependency_report_binding(damage):
+    stdout, expected = _bound_clean_lean_dependency_fixture()
+    stderr = ""
+    if damage == "stderr_report": stderr = stdout
+    elif damage == "duplicate_stdout_report": stdout += stdout
+    elif damage == "wrong_declaration": expected["declaration"] = "another_requested_declaration"
+    else: expected["expected_source_line"] += 1
+    accepted, _, _ = evaluate_lean_kernel_output(_lean_output(stdout, stderr=stderr), **expected)
+    assert accepted is False
+
+
+def test_lean_json_diagnostic_reader_remains_a_graceful_collector():
+    from ipfs_datasets_py.logic.backends.kernel import lean
+    warning = {"severity": "warning", "data": "an error word in harmless text"}
+    valid = json.dumps(warning) + "\n"
+    damaged = 'not JSON\n[]\n{"severity":"warning","data":NaN}\n' + '{"severity":"error","severity":"warning"}\n'
+    assert lean.parse_lean_json_messages(damaged + valid) == [warning]
+    assert lean.parse_lean_json_messages(None) == []
+
+
+def test_lean_fresh_backend_receipt_explicitly_binds_current_verification_profile():
+    from ipfs_datasets_py.logic.backends.kernel import lean
+    outcome, calls, _ = _bound_lean_outcome()
+    assert calls and outcome.receipt.accepted is True
+    assert outcome.receipt.schema_version == "lean-kernel-receipt/v3"
+    assert outcome.receipt.toolchain.metadata["verification_profile"] == lean.LEAN_KERNEL_VERIFICATION_PROFILE
+    assert LeanKernelReceipt.from_dict(outcome.receipt.to_dict()).to_dict() == outcome.receipt.to_dict()
+
+
+@pytest.mark.parametrize("profile", [None, "lean-kernel-verification/v0", True, {}, [], 1])
+def test_lean_old_or_wrong_verification_profile_cannot_be_reissued_as_current(profile):
+    outcome, _, _ = _bound_lean_outcome()
+    value = copy.deepcopy(outcome.receipt.to_dict())
+    if profile is None:
+        value["toolchain"]["metadata"].pop("verification_profile")
+    else:
+        value["toolchain"]["metadata"]["verification_profile"] = profile
+    # Reach the actual generation gate, not an unrelated stale receipt ID.
+    value["receipt_id"] = "lean-kernel-receipt:" + stable_digest({key: item for key, item in value.items() if key != "receipt_id"})
+    preserved = copy.deepcopy(value)
+    with pytest.raises(LeanKernelError, match="current explicit verification profile"):
+        LeanKernelReceipt.from_dict(value)
+    assert value == preserved  # No inferred token or in-place archival upgrade.
+
+
+@pytest.mark.parametrize("stream", ["stdout", "stderr"])
+@pytest.mark.parametrize("diagnostic", [
+    json.dumps({"severity": "error", "data": "fictional BOM unsolved goals"}) + "\n",
+    "error: fictional BOM unsolved goals\n",
+    "  Main.lean:1:0: error: fictional BOM unsolved goals\n",
+])
+def test_lean_framing_bom_cannot_hide_error_diagnostics(stream, diagnostic):
+    stdout, expected = _bound_clean_lean_dependency_fixture()
+    if stream == "stdout": stdout = "\ufeff" + diagnostic + stdout
+    stderr = "\ufeff" + diagnostic if stream == "stderr" else ""
+    accepted, report, diagnostics = evaluate_lean_kernel_output(_lean_output(stdout, stderr=stderr), **expected)
+    assert accepted is False and report is None
+    assert any("reported error diagnostics" in message for message in diagnostics)
+
+
+@pytest.mark.parametrize("stream", ["stdout", "stderr"])
+def test_lean_one_stream_bom_preserves_json_warning_quoting_error(stream):
+    stdout, expected = _bound_clean_lean_dependency_fixture()
+    warning = "\ufeff" + json.dumps({"severity": "warning", "data": "error: is quoted warning text"}) + "\n"
+    if stream == "stdout": stdout = warning + stdout
+    stderr = warning if stream == "stderr" else ""
+    accepted, report, diagnostics = evaluate_lean_kernel_output(_lean_output(stdout, stderr=stderr), **expected)
+    assert accepted is True and report is not None and diagnostics == ()
+
+
+def test_lean_one_stderr_bom_preserves_plain_warning_and_empty_stream():
+    stdout, expected = _bound_clean_lean_dependency_fixture()
+    for stderr in ("\ufeffwarning: the word error does not make this a failure\n", "\ufeff"):
+        accepted, report, diagnostics = evaluate_lean_kernel_output(_lean_output(stdout, stderr=stderr), **expected)
+        assert accepted is True and report is not None and diagnostics == ()
+
+
+@pytest.mark.parametrize("stream", ["stdout", "stderr"])
+@pytest.mark.parametrize("diagnostic", [
+    "\ufeff\ufeff" + json.dumps({"severity": "error", "data": "extra BOM"}) + "\n",
+    json.dumps({"severity": "warning", "data": "ordinary warning"}) + "\n\ufefferror: misplaced BOM\n",
+])
+def test_lean_additional_or_misplaced_diagnostic_bom_fails_closed(stream, diagnostic):
+    stdout, expected = _bound_clean_lean_dependency_fixture()
+    if stream == "stdout": stdout = diagnostic + stdout
+    stderr = diagnostic if stream == "stderr" else ""
+    accepted, _, diagnostics = evaluate_lean_kernel_output(_lean_output(stdout, stderr=stderr), **expected)
+    assert accepted is False and diagnostics
+
+
+def test_lean_one_output_bom_preserves_the_single_bound_dependency_report():
+    stdout, expected = _bound_clean_lean_dependency_fixture()
+    accepted, report, diagnostics = evaluate_lean_kernel_output(_lean_output("\ufeff" + stdout), **expected)
+    assert accepted is True and report is not None and diagnostics == ()

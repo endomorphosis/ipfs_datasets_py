@@ -1,0 +1,100 @@
+{
+  "CPU_numerical_function_ASTs_match": true,
+  "audit_evidence": {
+    "audit_program": {
+      "bytes": 26662,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/checkpoint-binding-v01/original384-provenance-v01/audit_original384_v02.py",
+      "sha256": "23f879c3f65184af510d9cd8260286108bc9d8089eb9e5be32a5f032e5999a7b"
+    },
+    "audit_result": {
+      "bytes": 29224,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/checkpoint-binding-v01/original384-provenance-v01/result-v02.json",
+      "sha256": "c8055a0abcd1424af0a37ce8a217edc3d5b21c58f2efa921ec0fe43d3a28ed41"
+    },
+    "independent_metadata_audit_review": {
+      "bytes": 3535,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/checkpoint-binding-v01/original384-provenance-v01/independent-metadata-audit-review-v01.json",
+      "sha256": "1d4ec779761248a759c89b2edcfe30d3cc693448d279e6540be81a7bb81aef93"
+    },
+    "preserved_failed_audit_program": {
+      "bytes": 26595,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/checkpoint-binding-v01/original384-provenance-v01/audit_original384_v01.py",
+      "sha256": "03375cf536d7964d5e3dafa018fa6db402b71aaf19423209498b078218da4360"
+    },
+    "preserved_failed_audit_result": {
+      "bytes": 1364,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/checkpoint-binding-v01/original384-provenance-v01/audit-v01-failure.json",
+      "sha256": "f2ab10c1ba0e9bb290855e7849222261fa4a0913cdbb002619d4a6ff5ba81ef7"
+    }
+  },
+  "authority": {
+    "conditioning_compatibility": false,
+    "evaluation_gold": false,
+    "graph_admission": false,
+    "lean_admission": false,
+    "model_convergence": false,
+    "permitted_context": false,
+    "producer_execution": false,
+    "reviewed_source_meaning": false,
+    "runtime_cryptographic_attestation": false,
+    "training_eligibility": false
+  },
+  "current_native_checker_invoked": false,
+  "implementation_unchanged": {
+    "ipfs_datasets_py/logic/formalization/autoencoder/ir_cell_target_compatibility.py": {
+      "bytes": 111835,
+      "sha256": "0276ac521d681864a112cb3745853d1c728e5754d1bd0865158971ccb8b05415"
+    },
+    "tests/unit/logic/formalization/autoencoder/test_ir_cell_target_compatibility.py": {
+      "bytes": 169850,
+      "sha256": "bbfffc3673bb228219730816a2be596f1f88d251a435168e5b130028f47c8235"
+    }
+  },
+  "limitations": [
+    "Retained vector/literal/slot agreement binds metadata, not original producer execution or global numerical equivalence.",
+    "Same assets and near-equal coordinates do not justify merging the CPU paragraph and CUDA clause profiles.",
+    "Original custom record bodies are outside the unchanged current native-receipt and runtime-source contract.",
+    "No historical token payload, signature or runtime attestation was synthesized; original384 null profile stays unresolved.",
+    "The earlier authored and retained raw-binder qualification cohorts retain their original separate scopes and were not rerun."
+  ],
+  "metadata_access": {
+    "serialized_decoder_state_metadata_parsed": true,
+    "source_and_reference_documents_parsed": true,
+    "target_independence_claimed": false
+  },
+  "model_weight_bytes_rehashed": false,
+  "native_checker_comparison": "static source review only",
+  "new_model_encoder_training_SQL_Lean_execution": false,
+  "new_product_APIs": 0,
+  "next_task": "Reuse indexed complete current receipts first; preserve role-specific matching and report uncovered/conflicting original views before proposing successor captures or a separately admitted compatibility experiment.",
+  "original384_profile_or_contract_rewritten": false,
+  "pytest_cases_run": 0,
+  "qualification_cases_pooled": false,
+  "recorded_at_utc": "2026-10-26T03:35:13.942746+00:00",
+  "recorded_model_asset_identities_equal": 9,
+  "recorded_producers": {
+    "clause": "historical_cuda_float32",
+    "paragraph": "historical_cpu_float32"
+  },
+  "schema": "legal-original384-saved-metadata-lineage-audit/v1",
+  "scope": "retained authored-benchmark metadata and source-code inspection only",
+  "summary": {
+    "clause_slot_occurrences": 360,
+    "cross_role_pairs_with_different_f32_bits": 24,
+    "current_native_receipt_qualified": false,
+    "evaluation_gold_mask": 0,
+    "evidence_id": "original384-saved-metadata-lineage-audit-20261026-01",
+    "maximum_cross_role_absolute_component_difference": 1.1920928955078125e-07,
+    "model_convergence_proven": false,
+    "original384_profile_id": null,
+    "paragraphs": 96,
+    "producer_execution_authenticated": false,
+    "role_specific_views": 263,
+    "same_literal_cross_role_pairs": 24,
+    "source_head_compatibility_verified": false,
+    "status": "saved_metadata_lineage_audit",
+    "training_mask": 0,
+    "unique_clauses": 167,
+    "unique_literal_texts": 239
+  }
+}

@@ -244,7 +244,102 @@ def test_load_rejects_symlink_and_source_normalization_is_identity(tmp_path):
     path = tmp_path / "receipt.json"
     saved = receipt.save(path, resolver=resolver_for(entries))
     link = tmp_path / "linked.json"
-    link.symlink_to(path)
-    with pytest.raises(codec.EmbeddingProductionError):
-        codec.load_embedding_production_receipt(link, expected_sha256=saved["sha256"], expected_size_bytes=saved["bytes"])
+    try:
+        link.symlink_to(path)
+        with pytest.raises(codec.EmbeddingProductionError):
+            codec.load_embedding_production_receipt(link, expected_sha256=saved["sha256"], expected_size_bytes=saved["bytes"])
+    finally:
+        link.unlink(missing_ok=True)
     assert receipt.inputs[0].text == "The  agency\nshall retain records."
+
+
+
+def _complete_chunk_case(tmp_path):
+    text=('É📄 e\u0301 {"ordered":["actor","recipient"],"exception":null} ')*30
+    entry=input_entry(tmp_path,text=text,prefix='préface\n'.encode(),suffix=b'\nend')
+    inputs=[entry[0]]
+    expected=hashlib.sha256(canonical([item.to_dict() for item in inputs])).hexdigest()
+    return [entry],inputs,expected
+
+
+def test_complete_native384_chunk_manifest_preserves_all_UTF8_bytes_and_source_selectors(tmp_path):
+    entries,inputs,expected=_complete_chunk_case(tmp_path)
+    plan=codec.prepare_native384_complete_chunks(inputs,expected_inputs_sha256=expected)
+    assert plan["profile_id"]=="gte-small-native384-complete-utf8-byte480/v1"
+    assert plan["original_inputs"]==[item.to_dict() for item in inputs]
+    chunks=plan["chunks"];assert len(chunks)>1
+    original=inputs[0];cursor=0;parts=[]
+    for ordinal,row in enumerate(chunks):
+        item=codec.EmbeddingInput.from_dict(row["input"])
+        assert row["parent_input_id"]==original.input_id and row["ordinal"]==ordinal
+        assert row["relative_byte_start"]==cursor
+        raw=item.text.encode();assert 1<=len(raw)<=480
+        assert item.source.artifact==original.source.artifact
+        assert item.source.byte_start==original.source.byte_start+cursor
+        cursor+=len(raw);assert row["relative_byte_end"]==cursor
+        assert item.source.byte_end==original.source.byte_start+cursor
+        parts.append(raw)
+    assert b''.join(parts)==original.text.encode() and cursor==len(original.text.encode())
+    assert plan["aggregation_performed"] is False and plan["raw_token_limit_replay_required"] is True
+    assert plan["source_bytes_rechecked"] is False
+
+
+@pytest.mark.parametrize("damage",["omit","reverse","offset","parent","text","extra","manifest-hash","input-hash","injected","receipt-hash","receipt-subset","receipt-order"])
+def test_complete_native384_chunk_receipt_refuses_resealed_coverage_or_binding_changes(tmp_path,damage):
+    from copy import deepcopy
+    entries,inputs,expected=_complete_chunk_case(tmp_path)
+    plan=codec.prepare_native384_complete_chunks(inputs,expected_inputs_sha256=expected)
+    chunk_entries=[(codec.EmbeddingInput.from_dict(row["input"]),entries[0][1]) for row in plan["chunks"]]
+    injected=fixture_receipt(chunk_entries);receipt=declared_native_receipt(injected)
+    offered=deepcopy(plan)
+    if damage=="omit":offered["chunks"].pop()
+    elif damage=="reverse":offered["chunks"].reverse()
+    elif damage=="offset":offered["chunks"][1]["relative_byte_start"]+=1
+    elif damage=="parent":offered["chunks"][0]["parent_input_id"]="sha256:"+"f"*64
+    elif damage=="text":offered["chunks"][0]["input"]["text"]+="changed"
+    elif damage=="extra":offered["legal_approval"]=True
+    elif damage=="injected":receipt=injected
+    elif damage in {"receipt-subset","receipt-order"}:
+        data=receipt.to_dict()
+        if damage=="receipt-subset":
+            data["inputs"].pop();data["results"].pop();data["status_counts"]["embedded"]-=1
+        else:
+            data["inputs"].reverse();data["results"].reverse()
+        receipt=codec.EmbeddingProductionReceipt(canonical(data))
+    if damage in {"omit","reverse","offset","parent","text","extra"}:
+        offered["content_sha256"]=hashlib.sha256(canonical({k:v for k,v in offered.items() if k!="content_sha256"})).hexdigest()
+    options=dict(inputs=inputs,expected_inputs_sha256=expected,expected_manifest_sha256=hashlib.sha256(canonical(offered)).hexdigest(),expected_receipt_sha256=receipt.sha256)
+    if damage=="manifest-hash":options["expected_manifest_sha256"]="f"*64
+    elif damage=="input-hash":options["expected_inputs_sha256"]="f"*64
+    elif damage=="receipt-hash":options["expected_receipt_sha256"]="f"*64
+    with pytest.raises(ValueError):codec.bind_native384_complete_chunk_receipt(offered,receipt,**options)
+
+
+@pytest.mark.parametrize("status",["embedded","missing_input","token_limit_exceeded"])
+def test_complete_native384_chunk_binding_preserves_all_outcomes_without_aggregation(tmp_path,status):
+    entries,inputs,expected=_complete_chunk_case(tmp_path)
+    plan=codec.prepare_native384_complete_chunks(inputs,expected_inputs_sha256=expected)
+    children=[(codec.EmbeddingInput.from_dict(row["input"]),entries[0][1]) for row in plan["chunks"]]
+    receipt=declared_native_receipt(fixture_receipt(children))
+    if status!="embedded":
+        data=receipt.to_dict();data["results"][0].update(status=status,vector=None,tokens=None if status=="missing_input" else {"token_count":513,"sha256":"a"*64});data["status_counts"]["embedded"]-=1;data["status_counts"][status]=1;receipt=codec.EmbeddingProductionReceipt(canonical(data))
+    bound=codec.bind_native384_complete_chunk_receipt(plan,receipt,inputs=inputs,expected_inputs_sha256=expected,expected_manifest_sha256=hashlib.sha256(canonical(plan)).hexdigest(),expected_receipt_sha256=receipt.sha256)
+    assert bound["parent_count"]==1 and bound["chunk_count"]==len(plan["chunks"])
+    assert bound["complete_parent_count"]==(1 if status=="embedded" else 0)
+    assert bound["aggregation_performed"] is bound["native_execution_authenticated"] is bound["semantic_admission_granted"] is False
+    assert bound["parents"][0]["vector"] is None
+
+
+@pytest.mark.parametrize("damage",["parent-bytes","total-bytes","chunk-count","whitespace-chunk","duplicate-input"])
+def test_complete_native384_chunk_manifest_rejects_bounds_without_truncation(tmp_path,damage):
+    if damage=="parent-bytes":texts=['a'*65537]
+    elif damage=="total-bytes":texts=[str(i)+'a'*65000 for i in range(3)]
+    elif damage=="chunk-count":texts=['a'*64000,'b'*58881]
+    elif damage=="whitespace-chunk":texts=['x'+' '*1200+'y']
+    else:texts=['a']
+    entries=[input_entry(tmp_path,index=i+1,text=text) for i,text in enumerate(texts)]
+    inputs=[item for item,_ in entries]
+    if damage=="duplicate-input":inputs.append(inputs[0])
+    before=canonical([item.to_dict() for item in inputs])
+    with pytest.raises(ValueError):codec.prepare_native384_complete_chunks(inputs,expected_inputs_sha256=hashlib.sha256(before).hexdigest())
+    assert canonical([item.to_dict() for item in inputs])==before

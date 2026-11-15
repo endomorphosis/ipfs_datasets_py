@@ -3779,6 +3779,9 @@ class LogicVerificationAPI:
         finite_bounds: Mapping[str, Any] | None = None,
         bindings: Mapping[str, Any] | None = None,
         private_store: Mapping[str, Mapping[str, Any]] | None = None,
+        property_id: str | None = None,
+        tool_id: str | None = None,
+        authority: VerificationAuthority | str | None = None,
     ) -> VerificationResponse:
         """Project a counterexample through the secret-safe public boundary.
 
@@ -3794,6 +3797,40 @@ class LogicVerificationAPI:
         """
 
         request_id = _text(request_id, "request_id", optional=True)
+        # Compatibility keywords from the alternate boundary are explicit
+        # aliases, not permission to select proof authority or rewrite a witness.
+        def _invalid_alias() -> VerificationResponse:
+            return _response(
+                "explain_counterexample", VerificationStatus.INVALID,
+                authority=VerificationAuthority.NONE,
+                diagnostics=("counterexample aliases conflict or exceed the bounded projection contract",),
+                request_id=request_id,
+            )
+
+        if authority is not None and (
+            not isinstance(authority, (str, VerificationAuthority))
+            or authority != VerificationAuthority.BOUNDED
+        ):
+            return _invalid_alias()
+        if property_id is not None:
+            if type(property_id) is not str or not property_id.strip() or len(property_id) > 256:
+                return _invalid_alias()
+            selected_property = property_id.strip()
+            declared = [violated_property]
+            if isinstance(witness, Mapping):
+                declared.extend((witness.get("violated_property"), witness.get("property_id")))
+            if any(value not in (None, "") and value != selected_property for value in declared):
+                return _invalid_alias()
+            violated_property = selected_property
+        if tool_id is not None:
+            if type(tool_id) is not str or not tool_id.strip() or len(tool_id) > 256:
+                return _invalid_alias()
+            if not isinstance(witness, Mapping):
+                return _invalid_alias()
+            selected_tool = tool_id.strip()
+            if witness.get("tool_id") not in (None, "", selected_tool):
+                return _invalid_alias()
+            witness = {**witness, "tool_id": selected_tool}
         if witness is None:
             return _response(
                 "explain_counterexample",

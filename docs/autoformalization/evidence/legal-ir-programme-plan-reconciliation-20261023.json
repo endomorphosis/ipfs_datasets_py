@@ -1,0 +1,101 @@
+{
+  "current_components": 51,
+  "decisions": [
+    "One maintained programme and24 original tasks; no new production implementation, board or artifact census.",
+    "Reuse published source/correspondence/context/counting work and preserve locally staged peers. Cached9f1eb485 observations are not a current remote-head census.",
+    "Keep mock8, spaCy features and learned8donor separate; source width, actual bottleneck and source/vector bypasses are independent.",
+    "Reuse existing2source/8vector panel; exact source-space compatibility and current capabilities remain gates.",
+    "First close a reviewed norm/definition/two-distinct-use component, then20–40 provisions and dependency-grouped evaluation.",
+    "Use complete typed AST proposals and existing scoped graph/family/Lean owners. A build checks its formal inputs, separately from faithful interpretation of law.",
+    "Same-task four-system comparison differs from a true bottleneck ablation; do not restart completed fits/restores/captures."
+  ],
+  "existing_review_inputs": [
+    {
+      "bytes": 37400,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/artifact-ownership-reuse-review-20261023-v01.json",
+      "sha256": "d39795375c64fe81b074bda9df2e6e4639b6bedf7573bf35f487e362de0d9d31"
+    },
+    {
+      "bytes": 22206,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/source-graph-lean-plan-review-20261023-v01.json",
+      "sha256": "fc9a633a110c137563f3a82c2b4122d2a2903d8a8572216bb1412fd1247474f8"
+    },
+    {
+      "bytes": 6224,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/programme-reconciliation-20261023-v01.json",
+      "sha256": "2d2806d1e65bc9fea49eca179113886b16da05a136014dab1a925588f3258323"
+    },
+    {
+      "bytes": 15214,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-spacy8-leanstral4096-board-20261021-01/completion-summary-v01.json",
+      "sha256": "8b03847eed0d68c43b62c6e6497f7ca643e1e8549775f8ec999d6d47a4b543ef"
+    }
+  ],
+  "existing_task_ids_preserved": true,
+  "hub_observation": "Bounded public API and immutable README reads confirmed unchanged revisions; source Viewer failure is not physical absence. The full span metadata exceeded512KiB and was not consumed; field-selected metadata succeeded.",
+  "hub_revisions": {
+    "justicedao/ipfs_uscode": "91ca1838853ac82d7a12dd4ab47d9686f47667f9",
+    "justicedao/uscode-autoformal-entity-cache": "79d54378c5d6a89ab56e7a27e0f0ba867e800e19",
+    "justicedao/uscode-autoformal-span-cache": "60501f3e920f6c9050cfc452e0d9fcc2b7c184f3"
+  },
+  "operations": {
+    "GitHub_qualification": false,
+    "new_Lean_builds": 0,
+    "new_dataset_payload_reads": 0,
+    "new_model_calls": 0,
+    "new_training_calls": 0
+  },
+  "prior_selected_evidence": 173,
+  "provenance_path_policy": "Repository-relative descriptors reference unchanged evidence; historical producer identities inside original receipts are not rewritten.",
+  "provenance_root": "datasets_repository",
+  "qualification_or_proof_or_training_authority": false,
+  "recorded_at_utc": "2026-10-23T04:36:28.112895+00:00",
+  "remaining": [
+    "Governing edition, occurrence/source correspondence and independent complete meaning/every-use applicability.",
+    "Authenticated missing entity endpoint lineage or separately versioned source-bound graph projection.",
+    "Compatible complete-target corpus trainer/autonomous decoder and missing family-specific complete-norm Lean lowering.",
+    "Original live task ownership remains unknown; no execution assignment is granted."
+  ],
+  "schema": "legal-ir-programme-plan-reconciliation/v1",
+  "scope": "Planning and source/document metadata only; no payload census, model, training, tests or Lean execution.",
+  "selected_existing_evidence": [
+    {
+      "bytes": 83616,
+      "path": "docs/autoformalization/evidence/legal-ir-cp128-reference-semantic-score-audit-20261023.json",
+      "sha256": "dd4398b63a396f47b40870d56747d31dc2ca7a2e15df04484c1bf70efea47f9e"
+    },
+    {
+      "bytes": 97356,
+      "path": "docs/autoformalization/evidence/legal-ir-cp128-warmstart-source-sensitivity-20261023.json",
+      "sha256": "83388dfb4796eeebeb2fbd6cb02b57a2b3f714e3ffe84fb9736e6c71179cc4c9"
+    },
+    {
+      "bytes": 8885,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-counted-threshold-publication-20261023-01/publication-closeout-v01.json",
+      "sha256": "7b1a2d7cc1fd606a851dc73a39f16f706788d57c17556dd70a858d8c59d926d6"
+    },
+    {
+      "bytes": 4725,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-context-public-closure-20261023-01/publication-closeout-v01.json",
+      "sha256": "fba3ba26fa96b738ba75a99a9144d2dfd7aaceb04dc1a6d291ff47a90f39baa5"
+    },
+    {
+      "bytes": 7117,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-counted-numerical-publication-20261023-01/publication-closeout-v01.json",
+      "sha256": "131438e001d272fe681e69176f733e5d6c68a6a0185bd05fc8761ee36dc2b208"
+    },
+    {
+      "bytes": 13422,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/pilot-replay-cost-selection-review-20261023-v01.json",
+      "sha256": "7f830be59aa995fac4ca35d4f7016d86a7db93e741b88b3400d67ed847fdb396"
+    }
+  ],
+  "task_statuses_dependencies_acceptance_and_history_unchanged": true,
+  "updated_next_action_tasks": [
+    "LIR-01",
+    "LIR-05",
+    "LIR-07",
+    "LIR-17",
+    "LIR-19"
+  ]
+}

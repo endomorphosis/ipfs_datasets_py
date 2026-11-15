@@ -1036,3 +1036,547 @@ def test_installed_lean_legacy_unary_preservation(base, tmp_path):
         tmp_path / "installed-legacy-unary", timeout_seconds=45)
     _assert_installed_lean_preservation(receipt, preparation, executable, binaries, native.PROFILE)
     assert receipt["native_ast_value_preservation_proved"] is True
+
+
+# Explicit mixed-sort controls reuse the existing preparation, process and
+# retained-data owners. Synthetic results below are unit protocol observations;
+# only the separately opted-in installed-Lean cases execute a real compiler.
+MIXED_NATIVE_SUBJECT_FIELDS = (
+    "mixed_report_sha256", "original_request_sha256", "typed_expression_sha256",
+    "typed_expression_content_digest", "argument_roles_sha256",
+    "renderer_ast_sha256", "lean_body_sha256", "typed_ast_node_count",
+)
+MIXED_NATIVE_PROOF_FIELDS = (
+    "typed_ast_value_preservation_proved", "renderer_ast_value_preservation_proved",
+    "mixed_ast_denotation_preservation_proved", "ordered_role_denotation_preservation_proved",
+)
+MIXED_NATIVE_THEOREM_SUFFIXES = (
+    "mixed_typed_value_exact", "mixed_renderer_value_exact", "mixed_ast_closed",
+    "mixed_denotation_matches_lowering", "mixed_role_denotation_matches_lowering",
+)
+
+
+def mixed_native_capture(fixtures, request):
+    raw = canonical(request)
+    report = fixtures.bridge.prepare_mixed_relational_norm_v1(
+        raw, expected_request_sha256=sha(raw))
+    assert report["native_ast"] is None and report["native_parser_roundtrip"] is False
+    assert report["native_build_executed"] is False
+    return report, raw
+
+
+def mixed_native_preparation(captured):
+    report, raw = captured
+    return preparer.prepare_mixed_relational_ast_preservation(
+        report, raw, expected_report_sha256=sha(canonical(report)),
+        expected_request_sha256=sha(raw), toolchain=TOOLCHAIN)
+
+
+def mixed_native_arguments(captured, preparation):
+    report, raw = captured
+    return dict(expected_preparation_sha256=preparer.preparation_sha256(preparation),
+        expected_report_sha256=sha(canonical(report)),
+        expected_request_sha256=sha(raw), toolchain=TOOLCHAIN)
+
+
+def validate_mixed_native(captured, preparation, **overrides):
+    report, raw = captured
+    return native.validate_mixed_relational_ast_preservation(
+        preparation, report, raw, **(mixed_native_arguments(captured, preparation) | overrides))
+
+
+def build_mixed_native(captured, preparation, executable, output, **overrides):
+    report, raw = captured
+    return native.build_mixed_relational_ast_preservation(
+        preparation, report, raw, **(mixed_native_arguments(captured, preparation) | dict(
+            lake_executable=str(executable), output_directory=output,
+            timeout_seconds=12) | overrides))
+
+
+def assert_mixed_native_scope(receipt, *, passed):
+    assert receipt["profile"] == native.MIXED_PROFILE
+    assert receipt["build_passed"] is receipt["kernel_proofs_checked"] is passed
+    for field in MIXED_NATIVE_PROOF_FIELDS:
+        assert receipt[field] is passed, field
+    assert receipt["native_ast"] is None
+    assert receipt["native_TDFOL_route_used"] is False
+    assert receipt["native_parser_roundtrip"] is False
+    assert receipt["native_ast_value_preservation_proved"] is False
+    assert_no_authority(receipt)
+
+
+@pytest.fixture(scope="module")
+def mixed_native_base(relational_preservation_fixtures):
+    fixtures = relational_preservation_fixtures
+    captured = mixed_native_capture(fixtures, fixtures.mixed_member_request())
+    return captured, mixed_native_preparation(captured)
+
+
+def test_mixed_native_dispatch_retains_exact_subject_and_complete_project(
+        mixed_native_base, synthetic_compiler, monkeypatch, tmp_path):
+    """Synthetic transport exercises replay/retention, not a native proof."""
+    captured, preparation = mixed_native_base
+    before, original_manifest = deepcopy(captured), preparation.manifest_json
+    original = preparer.validate_mixed_relational_ast_preservation
+    replayed = []
+    def observe(*args, **kwargs):
+        replayed.append((sha(canonical(args[1])), sha(args[2]), dict(kwargs)))
+        return original(*args, **kwargs)
+    monkeypatch.setattr(preparer, "validate_mixed_relational_ast_preservation", observe)
+    executable, calls = synthetic_compiler(preparation)
+    output = tmp_path / "synthetic-mixed-native"
+    receipt = build_mixed_native(captured, preparation, executable, output)
+    observed, manifest = receipt["native_observations"], meta(preparation)
+    assert len(calls) == 1 and len(replayed) == 2
+    assert replayed[0] == replayed[1]
+    assert receipt["profile"] == "replayed-typed-many-sorted-relational-deontic-renderer-preservation/v1"
+    assert manifest["profile"] == "typed-many-sorted-relational-deontic-renderer-preservation/v1"
+    assert len(preparation.files) == len(observed["executed_project_sha256"]) == 7
+    assert len(manifest["expected_modules"]) == len(observed["compiled_modules"]) == 4
+    assert [name.rsplit(".", 1)[1] for name in manifest["theorems"]] == list(MIXED_NATIVE_THEOREM_SUFFIXES)
+    assert observed["theorem_axiom_dependencies"] == {name: [] for name in manifest["theorems"]}
+    for field in MIXED_NATIVE_SUBJECT_FIELDS:
+        assert receipt[field] == manifest[field], field
+    assert observed["cleanup_confirmed"] is observed["observed_process_scope_passed"] is True
+    assert observed["post_run_validation_passed"] is observed["binaries_unchanged"] is True
+    assert "No native TDFOL/parser roundtrip" in receipt["proof_scope"]
+    assert_mixed_native_scope(receipt, passed=True)
+    for name, text in preparation.files:
+        assert (output / "project" / name).read_bytes() == text.encode()
+        assert (output / "executed-inputs" / name).read_bytes() == text.encode()
+    assert (output / "project/corpus-manifest.json").read_bytes() == original_manifest.encode()
+    assert json.loads((output / "build-receipt.json").read_bytes()) == receipt
+    assert len([path for path in output.rglob("*") if path.is_file()]) == 23
+    for name, path in observed["artifact_files"].items():
+        assert sha((output / path).read_bytes()) == observed["artifact_sha256"][name]
+    assert captured == before and preparation.manifest_json == original_manifest
+
+
+@pytest.mark.parametrize("index", range(5))
+def test_mixed_native_requires_every_independent_axiom_observation(
+        mixed_native_base, synthetic_compiler, tmp_path, index):
+    captured, preparation = mixed_native_base
+    lines = axiom_stdout(preparation).splitlines()
+    missing = lines.pop(index).split("'", 2)[1]
+    executable, _ = synthetic_compiler(preparation, stdout="\n".join(lines) + "\n")
+    receipt = build_mixed_native(captured, preparation, executable, tmp_path / "missing-mixed-proof")
+    observed = receipt["native_observations"]
+    assert missing not in observed["theorem_axiom_dependencies"]
+    assert len(observed["theorem_axiom_dependencies"]) == 4
+    assert observed["axiom_observations_passed"] is False
+    assert_mixed_native_scope(receipt, passed=False)
+
+
+@pytest.mark.parametrize("damage", [
+    "foreign", "duplicate", "nonempty", "wrong_qualification", "stderr", "sorry",
+])
+def test_mixed_native_forged_axiom_reports_never_promote_typed_preservation(
+        mixed_native_base, synthetic_compiler, tmp_path, damage):
+    captured, preparation = mixed_native_base
+    lines = axiom_stdout(preparation).splitlines()
+    names, changes = meta(preparation)["theorems"], {}
+    if damage == "foreign":
+        lines.append("'Foreign.mixed_denotation_matches_lowering' does not depend on any axioms")
+    elif damage == "duplicate":
+        lines.append(lines[-1])
+    elif damage == "nonempty":
+        lines[2] = "'" + names[2] + "' depends on axioms: [Classical.choice]"
+    elif damage == "wrong_qualification":
+        lines[3] = "'mixed_denotation_matches_lowering' does not depend on any axioms"
+    elif damage == "stderr":
+        changes["stderr"] = lines.pop(4) + "\n"
+    else:
+        lines.append("warning: declaration uses sorryAx")
+    executable, _ = synthetic_compiler(preparation, stdout="\n".join(lines) + "\n", result_changes=changes)
+    receipt = build_mixed_native(captured, preparation, executable, tmp_path / "forged-mixed-proof")
+    assert receipt["native_observations"]["axiom_observations_passed"] is False
+    assert_mixed_native_scope(receipt, passed=False)
+
+
+@pytest.mark.parametrize("field", [
+    "expected_preparation_sha256", "expected_report_sha256", "expected_request_sha256",
+])
+def test_mixed_native_independent_pins_precede_operation_owner_loading(mixed_native_base, field):
+    captured, preparation = mixed_native_base
+    with patch.object(native, "_owners", side_effect=AssertionError("operation owners reached")):
+        with pytest.raises(ValueError):
+            validate_mixed_native(captured, preparation, **{field: "0" * 64})
+
+
+def test_mixed_native_changed_offered_project_refuses_before_lazy_owners(mixed_native_base):
+    captured, preparation = mixed_native_base
+    files = dict(preparation.files)
+    name = next(name for name in files if name.endswith("/Semantics.lean"))
+    files[name] += "\n-- externally resealed offered project\n"
+    changed = reseal_manifest(preparation, meta(preparation), files)
+    original_pin = preparer.preparation_sha256(preparation)
+    assert preparer.preparation_sha256(changed) != original_pin
+    with patch.object(native, "_owners", side_effect=AssertionError("operation owners reached")):
+        with pytest.raises(ValueError):
+            validate_mixed_native(captured, changed, expected_preparation_sha256=original_pin)
+
+
+@pytest.mark.parametrize("damage", [
+    "report_nonfinite", "report_not_dict", "request_mutable",
+    "request_duplicate", "request_nonfinite", "request_oversize",
+])
+def test_mixed_native_ordinary_bounds_refuse_before_operation_owner_loading(mixed_native_base, damage):
+    captured, preparation = mixed_native_base
+    report, raw = captured
+    kwargs = mixed_native_arguments(captured, preparation)
+    if damage == "report_nonfinite":
+        report = {"bad": float("nan")}
+    elif damage == "report_not_dict":
+        report = []
+    elif damage == "request_mutable":
+        raw = bytearray(raw)
+    else:
+        raw = (b" " * (native.MAX_RELATIONAL_REQUEST_BYTES + 1) if damage == "request_oversize"
+               else b'{"x":0,"x":0}' if damage == "request_duplicate" else b'{"x":NaN}')
+        kwargs["expected_request_sha256"] = sha(raw)
+    with patch.object(native, "_owners", side_effect=AssertionError("operation owners reached")):
+        with pytest.raises(ValueError):
+            native.validate_mixed_relational_ast_preservation(preparation, report, raw, **kwargs)
+
+
+@pytest.mark.parametrize("profile", [
+    "native-unary-boolean-fol-json-value-preservation/v1",
+    "typed-relational-deontic-native-preservation/v1",
+    "typed-many-sorted-fixed-three-counted-preservation/v1",
+])
+def test_mixed_native_profile_cannot_alias_existing_preparation_domains(mixed_native_base, profile):
+    captured, preparation = mixed_native_base
+    document = meta(preparation)
+    document["profile"] = profile
+    changed = reseal_manifest(preparation, document)
+    with patch.object(native, "_owners", side_effect=AssertionError("operation owners reached")):
+        with pytest.raises(ValueError):
+            validate_mixed_native(captured, changed)
+
+
+@pytest.mark.parametrize("damage", ["roles", "renderer", "typed_expression", "lean_body", "project_file", "theorem_name"])
+def test_mixed_native_resealed_subject_or_project_refuses_before_compiler_probe(
+        mixed_native_base, monkeypatch, tmp_path, damage):
+    original, preparation = mixed_native_base
+    report, raw = deepcopy(original)
+    if damage == "roles":
+        report["argument_roles"][0]["roles"].reverse()
+    elif damage == "renderer":
+        report["renderer_ast"]["root"]["quantifier"]["value"] = "∃"
+        report["renderer_ast_sha256"] = sha(canonical(report["renderer_ast"]))
+    elif damage == "typed_expression":
+        report["typed_expression"]["root"]["binders"][0]["name"] += "_changed"
+    elif damage == "lean_body":
+        report["lean_body"] += "\n-- resealed foreign emitted bytes\n"
+    else:
+        document = meta(preparation)
+        files = dict(preparation.files)
+        if damage == "project_file":
+            name = next(name for name in files if name.endswith("/Semantics.lean"))
+            files[name] += "\n-- resealed foreign semantics\n"
+        else:
+            document["theorems"][-1] = document["expected_modules"][2] + ".arbitrary_proof"
+        preparation = reseal_manifest(preparation, document, files)
+    monkeypatch.setattr(native, "_installed_toolchain", lambda *a, **k: pytest.fail("probe reached before replay"))
+    monkeypatch.setattr(process.BoundedToolRunner, "run", lambda *a, **k: pytest.fail("runner reached before replay"))
+    output = tmp_path / "mixed-must-not-export"
+    with pytest.raises(ValueError):
+        build_mixed_native((report, raw), preparation, tmp_path / "not-executed", output)
+    assert not output.exists()
+
+
+@pytest.mark.parametrize("damage", ["report", "request", "source_read", "binary", "current_callback"])
+def test_mixed_native_replays_current_inputs_source_binary_and_callback_after_run(
+        mixed_native_base, synthetic_compiler, monkeypatch, tmp_path, damage):
+    original, preparation = mixed_native_base
+    captured = deepcopy(original)
+    drifted = {"active": False}
+    if damage == "report":
+        def after():
+            captured[0]["argument_roles"][0]["roles"].reverse()
+    elif damage == "request":
+        def after():
+            captured[0]["request_raw_utf8"] = captured[1].decode() + " "
+    elif damage == "source_read":
+        # Simulate a changed producer read without writing any source file.
+        original_read = Path.read_bytes
+        target = Path(preparer.__file__).resolve()
+        def read_current(path):
+            body = original_read(path)
+            return body + b"\n" if drifted["active"] and path.resolve() == target else body
+        monkeypatch.setattr(Path, "read_bytes", read_current)
+        def after():
+            drifted["active"] = True
+    elif damage == "current_callback":
+        def withdrawn(*args, **kwargs):
+            raise ValueError("current mixed preparation replay withdrawn")
+        def after():
+            monkeypatch.setattr(preparer, "validate_mixed_relational_ast_preservation", withdrawn)
+    else:
+        def after():
+            executable.write_bytes(executable.read_bytes() + b"changed synthetic binary")
+    executable, _ = synthetic_compiler(preparation, after=after)
+    receipt = build_mixed_native(captured, preparation, executable, tmp_path / "post-run-mixed-refusal")
+    observed = receipt["native_observations"]
+    if damage == "binary":
+        assert observed["binaries_unchanged"] is False
+    else:
+        assert observed["post_run_validation_passed"] is False
+    for field in MIXED_NATIVE_SUBJECT_FIELDS:
+        assert receipt[field] == meta(preparation)[field]
+    assert_mixed_native_scope(receipt, passed=False)
+
+
+@pytest.mark.parametrize("field,value", [
+    ("returncode", 7), ("timed_out", True), ("output_truncated", True),
+    ("workspace_limit_exceeded", True), ("resource_exhausted", True),
+    ("workspace_cleaned", False), ("unavailable", True),
+])
+def test_mixed_native_failed_process_or_capture_flags_cannot_promote_typed_proofs(
+        mixed_native_base, synthetic_compiler, tmp_path, field, value):
+    captured, preparation = mixed_native_base
+    executable, _ = synthetic_compiler(preparation, result_changes={field: value})
+    receipt = build_mixed_native(captured, preparation, executable, tmp_path / "failed-mixed-process")
+    assert_mixed_native_scope(receipt, passed=False)
+
+
+@pytest.mark.parametrize("damage", ["missing_module", "empty_module", "foreign_module", "missing_input", "changed_input"])
+def test_mixed_native_requires_complete_original_input_and_artifact_populations(
+        mixed_native_base, synthetic_compiler, tmp_path, damage):
+    captured, preparation = mixed_native_base
+    def edit(outputs, artifacts, sources):
+        if damage == "missing_module": outputs.pop(artifacts[0])
+        elif damage == "empty_module": outputs[artifacts[2]] = b""
+        elif damage == "foreign_module": outputs["foreign.olean"] = b"foreign"
+        elif damage == "missing_input": outputs.pop(sources[1])
+        else: outputs[sources[2]] = b"different executed source bytes"
+    executable, _ = synthetic_compiler(preparation, output_edit=edit)
+    receipt = build_mixed_native(captured, preparation, executable, tmp_path / "mixed-population-refusal")
+    observed = receipt["native_observations"]
+    assert observed["manifest_coverage_passed"] is False or observed["executed_project_readback_passed"] is False
+    assert_mixed_native_scope(receipt, passed=False)
+
+
+def test_mixed_native_cleanup_exception_preserves_original_handle_and_refusal_subject(
+        mixed_native_base, synthetic_compiler, monkeypatch, tmp_path):
+    captured, preparation = mixed_native_base
+    executable, _ = synthetic_compiler(preparation)
+    handle = object()
+    original = process.OwnedToolCleanupError(handle, "synthetic unresolved mixed cleanup")
+    def fail(self, request, *, cancellation=None):
+        assert request.owned_process_observation is True
+        raise original
+    monkeypatch.setattr(process.BoundedToolRunner, "run", fail)
+    output = tmp_path / "retained-mixed-cleanup"
+    with pytest.raises(process.OwnedToolCleanupError) as caught:
+        build_mixed_native(captured, preparation, executable, output)
+    assert caught.value is original and caught.value.cleanup_handle is handle
+    receipt = json.loads((output / "build-receipt.json").read_bytes())
+    assert receipt["status"] == "owned_native_cleanup_unresolved"
+    assert receipt["native_observations"]["cleanup_owner_retained_on_exception"] is True
+    assert receipt["native_observations"]["cleanup_confirmed"] is False
+    for field in MIXED_NATIVE_SUBJECT_FIELDS:
+        assert receipt[field] == meta(preparation)[field]
+    assert_mixed_native_scope(receipt, passed=False)
+    for name, text in preparation.files:
+        assert (output / "project" / name).read_bytes() == text.encode()
+
+
+def test_mixed_native_operation_pin_cache_is_separate_from_existing_three_profiles(
+        base, relational_base, counted_base, mixed_native_base, monkeypatch):
+    data, legacy = base
+    relational_data, relational = relational_base
+    counted_data, counted = counted_base
+    mixed_data, mixed = mixed_native_base
+    monkeypatch.setattr(native, "_OPERATION_PINS", {})
+    assert validate(data, legacy) == legacy
+    assert validate_relational(relational_data, relational) == relational
+    assert validate_counted(counted_data, counted) == counted
+    prior = deepcopy(native._OPERATION_PINS)
+    assert validate_mixed_native(mixed_data, mixed) == mixed
+    assert set(native._OPERATION_PINS) == {
+        preparer.PROFILE, preparer.RELATIONAL_PROFILE, preparer.COUNTED_PROFILE, preparer.MIXED_PROFILE}
+    for profile, pins in prior.items():
+        assert native._OPERATION_PINS[profile] == pins
+    assert validate_mixed_native(mixed_data, mixed) == mixed
+
+
+@pytest.mark.parametrize("damage", ["renamed", "reordered", "old_profile"])
+def test_mixed_native_expected_theorem_names_cannot_be_resealed_to_other_proofs(mixed_native_base, damage):
+    _, preparation = mixed_native_base
+    manifest = deepcopy(meta(preparation))
+    if damage == "renamed":
+        manifest["theorems"][4] = manifest["expected_modules"][2] + ".unrelated_proof"
+    elif damage == "reordered":
+        manifest["theorems"][0:2] = list(reversed(manifest["theorems"][0:2]))
+    else:
+        manifest["profile"] = preparer.RELATIONAL_PROFILE
+    with pytest.raises(ValueError):
+        native._axiom_observations(axiom_stdout(preparation), "", manifest)
+
+
+def mixed_native_full_grammar_request(fixtures, operator):
+    """Every accepted constructor, ordered roles, three equalities and an exception."""
+    ast, signatures = fixtures.ast, fixtures.signatures
+    builder = fixtures.Builder()
+    obj, event, time = (signatures.LogicSort(name) for name in ("Object", "EventFrame", "TimeFrame"))
+    variables = {"actor": obj, "recipient": obj, "event": event,
+                 "later_event": event, "moment": time, "deadline": time}
+    def variable(name):
+        return ast.mk_variable(builder.nid(), name, variables[name])
+    def atom(name, *args):
+        return ast.mk_predicate(builder.nid(), name, [variable(value) for value in args])
+    def equality(left, right):
+        return ast.mk_equality(builder.nid(), variable(left), variable(right))
+    equalities = builder.binary("and", equality("actor", "recipient"),
+        builder.binary("and", equality("event", "later_event"), equality("moment", "deadline")))
+    exception = ast.mk_not(builder.nid(), atom("Exempt", "actor"))
+    guard = builder.binary("and", atom("Approved", "actor", "recipient"), exception)
+    role_pair = builder.binary("iff", atom("Action", "actor", "recipient", "event", "moment"),
+        atom("Action", "recipient", "actor", "later_event", "deadline"))
+    alternative = builder.binary("or", atom("MemberAt", "actor", "event", "moment"),
+        builder.binary("and", equalities, atom("Action", "actor", "recipient", "later_event", "deadline")))
+    body = builder.binary("implies", builder.binary("and", guard, role_pair), builder.modal(operator, alternative))
+    binders = (("actor", obj, "forall"), ("recipient", obj, "exists"),
+        ("event", event, "forall"), ("later_event", event, "exists"),
+        ("moment", time, "forall"), ("deadline", time, "exists"))
+    for name, sort, quantifier in reversed(binders):
+        body = (ast.mk_forall if quantifier == "forall" else ast.mk_exists)(builder.nid(), [ast.Binder(name, sort)], body)
+    declarations = (("Approved", (obj, obj), ("actor", "recipient")),
+        ("Exempt", (obj,), ("actor",)),
+        ("MemberAt", (obj, event, time), ("actor", "event", "moment")),
+        ("Action", (obj, obj, event, time), ("actor", "recipient", "event", "moment")))
+    signature = signatures.LogicSignature("fixture:native-mixed-full-signature", family="tdfol", profile="tdfol_default",
+        sorts=(obj, event, time), symbols=tuple(signatures.declare_predicate(name, sorts) for name, sorts, _ in declarations))
+    expression = ast.TypedExpression("fixture:native-mixed-full-expression", body, signature)
+    return {"schema": fixtures.bridge.MIXED_REQUEST_SCHEMA, "profile": fixtures.bridge.MIXED_PROFILE,
+        "interpretation_status": "authored_unreviewed_declaration", "expression": expression.to_dict(),
+        "argument_roles": [{"symbol": name, "roles": list(roles)} for name, _, roles in declarations],
+        "source_binding": None}
+
+
+@pytest.fixture(scope="module")
+def mixed_native_reviewed_graph(tmp_path_factory):
+    from tests.unit.logic.autoformal import test_corpus_norm_definition_adapter as graph_fixture
+    baseline = graph_fixture.reviewed_graph_baseline_v3.__wrapped__(tmp_path_factory)
+    baseline["helper"].assert_signatures_valid(baseline["case"])
+    assert baseline["admission"]["semantic_use_eligible"] is True and baseline["admission"]["fixture_only"] is True
+    assert baseline["admission"]["blockers"] == []
+    graph = graph_fixture.build_reviewed_graph_fixture_v3(baseline)
+    assert graph_fixture.validate_reviewed_graph_fixture_v3(baseline, graph) == graph
+    units = baseline["case"]["declaration"]["units"]
+    selected = [(index, unit) for index, unit in enumerate(units)
+                if unit["relational_profile"] == baseline["helper"].relational.MIXED_PROFILE]
+    assert len(selected) == 1
+    index, unit = selected[0]
+    original = baseline["case"]["relational_inputs"][unit["unit_id"]]
+    captured = original["report"], original["request_raw"]
+    assert sha(canonical(captured[0])) == original["expected_report_sha256"]
+    return dict(baseline=baseline, graph=graph, index=index, unit=unit,
+        captured=captured, preparation=mixed_native_preparation(captured))
+
+
+@pytest.fixture(scope="module")
+def mixed_native_retained_hypotheses(relational_preservation_fixtures, tmp_path_factory):
+    # This is the existing unreviewed packet and original helper, not new labels.
+    return relational_preservation_fixtures.mixed_retained_reports.__wrapped__(tmp_path_factory)
+
+
+def assert_installed_mixed_native(receipt, preparation, executable, binaries, output):
+    _assert_installed_lean_preservation(receipt, preparation, executable, binaries, native.MIXED_PROFILE)
+    assert_mixed_native_scope(receipt, passed=True)
+    manifest = meta(preparation)
+    assert [name.rsplit(".", 1)[1] for name in manifest["theorems"]] == list(MIXED_NATIVE_THEOREM_SUFFIXES)
+    for field in MIXED_NATIVE_SUBJECT_FIELDS:
+        assert receipt[field] == manifest[field]
+    for name, text in preparation.files:
+        assert (output / "project" / name).read_bytes() == text.encode()
+        assert (output / "executed-inputs" / name).read_bytes() == text.encode()
+    assert json.loads((output / "build-receipt.json").read_bytes()) == receipt
+
+
+def test_installed_lean_mixed_reviewed_graph_preservation(mixed_native_reviewed_graph, tmp_path):
+    """Real five-obligation proof joins the actual complete fictional V3 graph subject."""
+    data = mixed_native_reviewed_graph
+    captured, preparation = data["captured"], data["preparation"]
+    executable, binaries = _installed_lean_campaign_binaries()
+    output = tmp_path / "installed-mixed-reviewed-graph"
+    receipt = build_mixed_native(captured, preparation, executable, output, timeout_seconds=45)
+    assert_installed_mixed_native(receipt, preparation, executable, binaries, output)
+    report, raw = captured
+    ir = json.loads(data["graph"]["ast_records"][data["index"]]["ast_json"])
+    assert canonical(ir["typed_expression"]) == canonical(report["typed_expression"])
+    assert ir["argument_roles"] == report["argument_roles"]
+    assert ir["source_binding"]["source_version_cid"] == data["unit"]["source_version"]["record_cid"]
+    assert ir["source_binding"]["occurrence_cid"] == data["unit"]["occurrence"]["record_cid"]
+    assert receipt["original_request_sha256"] == sha(raw)
+    assert receipt["typed_expression_sha256"] == sha(canonical(ir["typed_expression"]))
+    assert data["graph"]["semantic_use_eligible"] is False and not any(data["graph"]["authority"].values())
+    assert all(type(data["graph"][key]) is int and data["graph"][key] == 0
+               for key in ("training_mask", "evaluation_gold_mask"))
+
+
+@pytest.mark.parametrize("operator", ["O", "P", "F"])
+def test_installed_lean_mixed_complete_grammar_preservation(
+        relational_preservation_fixtures, tmp_path, operator):
+    """Actual arbitrary-carrier proofs cover all supported constructors and sorted equality."""
+    fixtures = relational_preservation_fixtures
+    request = mixed_native_full_grammar_request(fixtures, operator)
+    captured = mixed_native_capture(fixtures, request)
+    preparation = mixed_native_preparation(captured)
+    nodes = [node for _, node in fixtures._mixed_typed_nodes(request["expression"]["root"])]
+    assert {"variable", "predicate", "equality", "not", "and", "or", "implies", "iff", "forall", "exists", "extension"} <= {node["kind"] for node in nodes}
+    assert {node["arguments"][0]["sort"]["name"] for node in nodes if node["kind"] == "equality"} == {"Object", "EventFrame", "TimeFrame"}
+    assert {node["extension"]["payload"]["letter"] for node in nodes if node["kind"] == "extension"} == {operator}
+    executable, binaries = _installed_lean_campaign_binaries()
+    output = tmp_path / ("installed-mixed-complete-" + operator)
+    receipt = build_mixed_native(captured, preparation, executable, output, timeout_seconds=45)
+    assert_installed_mixed_native(receipt, preparation, executable, binaries, output)
+    assert captured[0]["source_bound"] is False
+
+
+@pytest.mark.parametrize("alternative", [0, 1])
+def test_installed_lean_mixed_retained_unreviewed_hypothesis_preservation(
+        mixed_native_retained_hypotheses, tmp_path, alternative):
+    """Existing §7214 authored alternatives gain no statutory/source or review authority."""
+    row = mixed_native_retained_hypotheses[alternative]
+    captured = row["report"], row["request_raw"]
+    preparation = mixed_native_preparation(captured)
+    assert row["alternative"]["alternative_id"] == ["7214:cap_within_permission", "7214:cap_as_permission_guard"][alternative]
+    assert row["request"]["source_binding"] is None and row["report"]["source_bound"] is False
+    executable, binaries = _installed_lean_campaign_binaries()
+    output = tmp_path / ("installed-mixed-retained-" + str(alternative))
+    receipt = build_mixed_native(captured, preparation, executable, output, timeout_seconds=45)
+    assert_installed_mixed_native(receipt, preparation, executable, binaries, output)
+    assert row["request"]["source_binding"] is None
+
+
+@pytest.mark.parametrize("policy_alias", [
+    "native_unary", "native_relational", "native_counted",
+    "preparation_unary", "preparation_relational", "preparation_counted",
+    "foreign_native", "foreign_preparation",
+])
+def test_mixed_native_closed_policy_rejects_aliases_before_compiler_dispatch(
+        mixed_native_base, monkeypatch, tmp_path, policy_alias):
+    captured, preparation = mixed_native_base
+    # First establish genuine positive mixed preparation replay. The refusal
+    # then depends on the changed policy rather than an invalid fixture.
+    assert validate_mixed_native(captured, preparation) == preparation
+    aliases = {
+        "native_unary": ("MIXED_PROFILE", native.PROFILE),
+        "native_relational": ("MIXED_PROFILE", native.RELATIONAL_PROFILE),
+        "native_counted": ("MIXED_PROFILE", native.COUNTED_PROFILE),
+        "preparation_unary": ("_MIXED_PREPARATION_PROFILE", native._PREPARATION_PROFILE),
+        "preparation_relational": ("_MIXED_PREPARATION_PROFILE", native._RELATIONAL_PREPARATION_PROFILE),
+        "preparation_counted": ("_MIXED_PREPARATION_PROFILE", native._COUNTED_PREPARATION_PROFILE),
+        "foreign_native": ("MIXED_PROFILE", "foreign-mixed-native-profile/v1"),
+        "foreign_preparation": ("_MIXED_PREPARATION_PROFILE", "foreign-mixed-preparation-profile/v1"),
+    }
+    field, value = aliases[policy_alias]
+    monkeypatch.setattr(native, field, value)
+    monkeypatch.setattr(native, "_installed_toolchain", lambda *a, **k: pytest.fail("compiler probe reached for aliased policy"))
+    monkeypatch.setattr(process.BoundedToolRunner, "run", lambda *a, **k: pytest.fail("runner reached for aliased policy"))
+    output = tmp_path / "aliased-mixed-policy-must-not-export"
+    with pytest.raises(ValueError):
+        build_mixed_native(captured, preparation, tmp_path / "not-executed", output)
+    assert not output.exists()

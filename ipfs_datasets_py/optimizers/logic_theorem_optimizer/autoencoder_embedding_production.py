@@ -538,3 +538,131 @@ def load_embedding_production_receipt(path, *, expected_sha256: str, expected_si
     if resolver is not None:
         result.validate_sources(resolver)
     return result
+
+
+
+COMPLETE_UTF8_CHUNKS_SCHEMA = "native384-complete-utf8-chunks/v1"
+COMPLETE_UTF8_CHUNKS_PROFILE = "gte-small-native384-complete-utf8-byte480/v1"
+COMPLETE_UTF8_CHUNK_BYTES = 480
+COMPLETE_UTF8_MAX_PARENTS = 32
+COMPLETE_UTF8_MAX_PARENT_BYTES = 64 * 1024
+COMPLETE_UTF8_MAX_TOTAL_BYTES = 128 * 1024
+COMPLETE_UTF8_MAX_CHUNKS = 256
+
+
+def prepare_native384_complete_chunks(inputs, *, expected_inputs_sha256):
+    """Prepare opt-in complete UTF-8 coverage, separate from raw embeddings.
+
+    Contiguous chunks preserve exact parent byte offsets and source selectors.
+    This does not predict token counts: every chunk still requires the existing
+    untruncated512-token producer check. Whitespace-only chunks and bounds refuse
+    rather than omit data. No file/model access, aggregation or admission occurs.
+    """
+    _digest(expected_inputs_sha256, "complete original input SHA-256")
+    if type(inputs) not in (list, tuple) or not 1 <= len(inputs) <= COMPLETE_UTF8_MAX_PARENTS:
+        raise EmbeddingProductionError("bounded complete parent population required")
+    originals = _validate_inputs(inputs)
+    original_rows = [item.to_dict() for item in originals]
+    original_raw = _canonical(original_rows)
+    if _sha(original_raw) != expected_inputs_sha256:
+        raise EmbeddingProductionError("complete original input commitment differs")
+    payloads = [item.text.encode("utf-8") for item in originals]
+    if any(len(raw) > COMPLETE_UTF8_MAX_PARENT_BYTES for raw in payloads):
+        raise EmbeddingProductionError("complete parent byte bound exceeded; truncation refused")
+    if sum(map(len, payloads)) > COMPLETE_UTF8_MAX_TOTAL_BYTES:
+        raise EmbeddingProductionError("complete total byte bound exceeded; truncation refused")
+    chunks, children = [], []
+    for parent, raw in zip(originals, payloads, strict=True):
+        start, ordinal = 0, 0
+        while start < len(raw):
+            end = min(start + COMPLETE_UTF8_CHUNK_BYTES, len(raw))
+            # Original text is validated UTF-8. Only the trailing code point
+            # can cross this byte ceiling; retain it wholly in the next chunk.
+            while end > start:
+                try:
+                    text = raw[start:end].decode("utf-8")
+                    break
+                except UnicodeDecodeError:
+                    end -= 1
+            if end == start:
+                raise EmbeddingProductionError("complete UTF-8 chunk cannot be represented")
+            _text(text, "complete native chunk", COMPLETE_UTF8_CHUNK_BYTES)
+            if len(chunks) >= COMPLETE_UTF8_MAX_CHUNKS:
+                raise EmbeddingProductionError("complete chunk count exceeded; omission refused")
+            span = asdict(parent.source)
+            span.update(byte_start=parent.source.byte_start + start,
+                        byte_end=parent.source.byte_start + end)
+            child = EmbeddingInput(SourceSpan.from_dict(span), parent.title, parent.section, text, parent.citation)
+            children.append(child)
+            chunks.append({"parent_input_id": parent.input_id, "ordinal": ordinal,
+                "relative_byte_start": start, "relative_byte_end": end, "input": child.to_dict()})
+            start, ordinal = end, ordinal + 1
+    # Do not silently deduplicate overlapping selectors or reassign input IDs.
+    _validate_inputs(children)
+    body = {"schema": COMPLETE_UTF8_CHUNKS_SCHEMA, "profile_id": COMPLETE_UTF8_CHUNKS_PROFILE,
+        "original_inputs_sha256": expected_inputs_sha256, "original_inputs": original_rows,
+        "chunks": chunks, "parent_count": len(originals), "chunk_count": len(chunks),
+        "policy": {"max_chunk_bytes": COMPLETE_UTF8_CHUNK_BYTES,
+            "max_parent_bytes": COMPLETE_UTF8_MAX_PARENT_BYTES,
+            "max_total_bytes": COMPLETE_UTF8_MAX_TOTAL_BYTES,
+            "max_parents": COMPLETE_UTF8_MAX_PARENTS, "max_chunks": COMPLETE_UTF8_MAX_CHUNKS,
+            "raw_model_token_limit": MAX_TOKENS},
+        "raw_token_limit_replay_required": True, "aggregation_performed": False,
+        "source_bytes_rechecked": False, "model_executed": False,
+        "semantic_admission_granted": False, "proof_authority": False}
+    if _canonical([item.to_dict() for item in _validate_inputs(inputs)]) != original_raw:
+        raise EmbeddingProductionError("complete original inputs changed during preparation")
+    return {**body, "content_sha256": _sha(_canonical(body))}
+
+
+def bind_native384_complete_chunk_receipt(manifest, receipt, *, inputs,
+        expected_inputs_sha256, expected_manifest_sha256, expected_receipt_sha256):
+    """Replay complete byte coverage and bind every raw producer disposition.
+
+    Results are chunk coverage, never a composed parent vector or a new raw
+    encoder profile. Native receipt claims remain DATA without runtime/source
+    attestation or permission. Missing/over-budget chunks block their whole
+    parent; successful subsets never hide an unavailable original input.
+    """
+    _digest(expected_manifest_sha256, "complete manifest SHA-256")
+    _digest(expected_receipt_sha256, "complete native receipt SHA-256")
+    manifest_raw = _canonical(manifest)
+    if _sha(manifest_raw) != expected_manifest_sha256:
+        raise EmbeddingProductionError("complete chunk manifest commitment differs")
+    prepared = prepare_native384_complete_chunks(inputs, expected_inputs_sha256=expected_inputs_sha256)
+    if manifest_raw != _canonical(prepared):
+        raise EmbeddingProductionError("complete chunk coverage differs from independent original inputs")
+    if type(receipt) is not EmbeddingProductionReceipt:
+        raise EmbeddingProductionError("canonical complete native chunk receipt required")
+    native_raw = receipt.to_bytes()
+    if _sha(native_raw) != expected_receipt_sha256:
+        raise EmbeddingProductionError("complete native receipt commitment differs")
+    native = EmbeddingProductionReceipt(native_raw).to_dict()
+    if native["execution"]["kind"] != "native":
+        raise EmbeddingProductionError("injected fixtures cannot bind as native chunk production")
+    if _canonical(native["inputs"]) != _canonical([row["input"] for row in prepared["chunks"]]):
+        raise EmbeddingProductionError("native receipt does not cover every exact ordered chunk")
+    results = {}
+    for chunk, result in zip(prepared["chunks"], native["results"], strict=True):
+        results.setdefault(chunk["parent_input_id"], []).append({
+            "ordinal": chunk["ordinal"], "input_id": result["input_id"], "status": result["status"],
+            "relative_byte_start": chunk["relative_byte_start"], "relative_byte_end": chunk["relative_byte_end"],
+            "native_result_sha256": _sha(_canonical(result))})
+    parents = []
+    for original in prepared["original_inputs"]:
+        rows = results[original["input_id"]]
+        complete = all(row["status"] == "embedded" for row in rows)
+        parents.append({"input_id": original["input_id"], "status": "complete_chunk_coverage" if complete else "unavailable",
+            "chunks": rows, "vector": None})
+    if _canonical(manifest) != manifest_raw or receipt.to_bytes() != native_raw:
+        raise EmbeddingProductionError("complete chunk inputs changed during binding")
+    if _canonical(prepare_native384_complete_chunks(inputs, expected_inputs_sha256=expected_inputs_sha256)) != manifest_raw:
+        raise EmbeddingProductionError("complete original inputs changed during binding")
+    return {"schema": "native384-complete-chunk-receipt-binding/v1",
+        "profile_id": COMPLETE_UTF8_CHUNKS_PROFILE, "manifest_sha256": expected_manifest_sha256,
+        "native_receipt_sha256": expected_receipt_sha256, "original_inputs_sha256": expected_inputs_sha256,
+        "parent_count": len(parents), "chunk_count": len(prepared["chunks"]),
+        "complete_parent_count": sum(row["status"] == "complete_chunk_coverage" for row in parents),
+        "parents": parents, "exact_original_bytes_accounted_for": True,
+        "aggregation_performed": False, "native_execution_authenticated": False,
+        "source_bytes_rechecked": False, "semantic_admission_granted": False, "proof_authority": False}

@@ -308,17 +308,18 @@ def _validate_proof_binding(
             or claim.metadata.get("source_digest") != artifact.declaration_digest
             or claim.metadata.get("proof_context_digest") != stable_digest(context)):
         raise LegalProofIntegrityError("claim does not bind the artifact/source/reuse context")
-    if _json_ready(request.payload.get("legal_proof_context")) != context:
+    if _canonical_bytes(_json_ready(request.payload.get("legal_proof_context"))) != _canonical_bytes(context):
         raise LegalProofIntegrityError("backend request does not bind the exact reuse context")
     obligations = {item.obligation_id: item for item in artifact.proof_obligations}
     if receipt.obligation_id not in obligations:
         raise LegalProofIntegrityError("proved obligation is not declared by the artifact")
     for item in claim.obligations:
-        if item.obligation_id not in obligations or item.to_dict() != obligations[item.obligation_id].to_dict():
+        if (item.obligation_id not in obligations
+                or _canonical_bytes(item.to_dict()) != _canonical_bytes(obligations[item.obligation_id].to_dict())):
             raise LegalProofIntegrityError("claim obligation differs from the artifact obligation")
     expected_assumptions = sorted((item.to_dict() for item in artifact.assumptions), key=lambda x: x["assumption_id"])
     actual_assumptions = sorted((item.to_dict() for item in claim.assumptions), key=lambda x: x["assumption_id"])
-    if expected_assumptions != actual_assumptions:
+    if _canonical_bytes(expected_assumptions) != _canonical_bytes(actual_assumptions):
         raise LegalProofIntegrityError("formal assumption content differs from the artifact")
     obligation = obligations[receipt.obligation_id]
     if (receipt.obligation_digest != obligation.digest
@@ -334,27 +335,41 @@ def _validate_proof_binding(
     # A v1 source-only receipt cannot become proof of an opaque IR obligation.
     try:
         from ..backends.kernel.lean import (
-            LEAN_KERNEL_RECEIPT_VERSION, LeanKernelReceipt, content_digest, instrument_lean_source_for_axioms,
+            LEAN_KERNEL_RECEIPT_VERSION, LEAN_KERNEL_VERIFICATION_PROFILE, LeanKernelReceipt,
+            content_digest, instrument_lean_source_for_axioms,
+            _payload_source,
         )
-        if LEAN_KERNEL_RECEIPT_VERSION != "lean-kernel-receipt/v3":
-            raise ValueError("the canonical Lean v3 verification profile is required")
+        if (LEAN_KERNEL_RECEIPT_VERSION != "lean-kernel-receipt/v3"
+                or type(LEAN_KERNEL_VERIFICATION_PROFILE) is not str
+                or LEAN_KERNEL_VERIFICATION_PROFILE != "lean-kernel-verification/v1"):
+            raise ValueError("the canonical Lean v3 current verification profile is required")
         kernel = LeanKernelReceipt.from_dict(result.to_dict()["payload"]["kernel_receipt"])
-    except (TypeError, ValueError, KeyError, AttributeError) as exc:
+    except (ImportError, TypeError, ValueError, KeyError, AttributeError) as exc:
         raise LegalProofIntegrityError("a canonical checked Lean v3 receipt is required") from exc
     if (kernel.schema_version != LEAN_KERNEL_RECEIPT_VERSION or not kernel.accepted
             or not kernel.expected_proposition_checked
             or kernel.request_digest != request.digest
             or kernel.theorem_name != context["expected_declaration"]
             or kernel.expected_proposition != context["expected_proposition"]
+            or kernel.toolchain.metadata.get("verification_profile") != LEAN_KERNEL_VERIFICATION_PROFILE
             or kernel.axiom_policy_digest != context["axiom_policy_digest"]
-            or kernel.toolchain.to_dict() != context["toolchain"]
+            or _canonical_bytes(kernel.toolchain.to_dict()) != _canonical_bytes(context["toolchain"])
             or kernel.toolchain.kernel_id != receipt.backend_id):
         raise LegalProofIntegrityError("checked kernel receipt does not match the proof context")
-    source_values = [request.payload.get(name) for name in ("lean", "source", "checked_source")
-                     if request.payload.get(name)]
-    if not source_values or any(value != source_values[0] for value in source_values):
-        raise LegalProofIntegrityError("one unambiguous checked Lean source is required")
-    source = source_values[0]
+    if (kernel.native_identity is None
+            or receipt.backend_version != kernel.native_identity.actual_version
+            or receipt.backend_version != kernel.toolchain.version):
+        raise LegalProofIntegrityError(
+            "proved backend version differs from checked native/toolchain version"
+        )
+    # Replay the same source-alias and encoding policy as a fresh backend run;
+    # an archival receipt cannot bypass a stricter current request boundary.
+    try:
+        source, _, _ = _payload_source(request)
+    except (TypeError, ValueError, AttributeError) as exc:
+        raise LegalProofIntegrityError(
+            "one unambiguous checked Lean source is required by the current backend"
+        ) from exc
     if (not isinstance(source, str) or kernel.submitted_source != source
             or kernel.theorem_digest != content_digest(source)):
         raise LegalProofIntegrityError("checked Lean source identity differs from request")
@@ -560,7 +575,7 @@ class LegalProofRecord:
         bindings = {item["receipt_digest"]: item for item in self.proof_bindings}
         matches = tuple(receipt for receipt in headers
                         if (obligation_id is None or receipt.obligation_id == obligation_id)
-                        and _json_ready(bindings[receipt.digest]["context"]) == context)
+                        and _canonical_bytes(_json_ready(bindings[receipt.digest]["context"])) == _canonical_bytes(context))
         if not matches:
             raise LegalProofIntegrityError("no proved obligation matches the expected reuse context")
         return matches

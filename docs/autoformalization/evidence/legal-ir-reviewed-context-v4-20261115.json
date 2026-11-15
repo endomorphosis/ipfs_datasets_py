@@ -1,0 +1,164 @@
+{
+  "schema": "autoformal-reviewed-context-set-source-qualification/v1",
+  "evidence_id": "reviewed-context-set-relations-v4-20261115",
+  "date_utc": "2026-11-15",
+  "existing_task_ids": [
+    "LIR-17",
+    "LIR-20"
+  ],
+  "changed_source_sha256": {
+    "ipfs_datasets_py/logic/formalization/autoencoder/alignment_relation_declarations.py": "e8fc5c15900fac19df46896a0bcb5c04b0cdd5533dc574d4d962b5fdf0e11662",
+    "ipfs_datasets_py/logic/formalization/autoencoder/alignment_relation_mask_handoff.py": "cd4b1e0f2e73a05e9d0f1c061239c5a3c1f532770f306e3c54313937ffe975f2",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_joint_retrieval.py": "0ccc01562f0e54ceaeb4145a4fad1585a8870e7e1cd77d3e3b412ef115d400fd",
+    "tests/unit/logic/formalization/autoencoder/test_alignment_relation_declarations.py": "2ae9d703e62888130976a16a4f2fb2e2a4ad67cc388e6c17196044606e903f70",
+    "tests/unit/logic/formalization/autoencoder/test_alignment_relation_mask_handoff.py": "8e2b503c0c586b56215d26d63f3c17618ec9d47baa008c914d1f5eaad50aeedd",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_legal_joint_retrieval.py": "c4d2763ad3f368bf7be7aa843dcedbbed79f84069d35cc41b8a1269383da2aa5"
+  },
+  "reproduced_gap": {
+    "description": "Existing V3 independently admitted both fictional endpoint contexts but refused a combined cross-context relation ledger, including unknown/analogy/incompatibility declarations. Those refused combined labels were not already authenticated. V4 adds a distinct review domain rather than weakening V3.",
+    "receipt": {
+      "name": "reviewed-cross-context-source-baseline-20261115-v04.json",
+      "sha256": "ed7bad740f3070fb3bba60f9be88228eb91d8c5cdd92b352b0bf91f27c187144"
+    }
+  },
+  "implementation": {
+    "relation_contract_version": "v4",
+    "endpoint_admission_version": "v3",
+    "new_module_or_queue_or_numerical_kernel": false,
+    "context_set": "Exact SHA-sorted unique union regenerated from fully replayed endpoint scopes; existing context hashes bind membership.",
+    "subject_scope": "contrastive-context-set:<digest>",
+    "extra_review_obligation": "context_set_and_endpoint_membership",
+    "fresh_pair_signature_domain_required": true,
+    "single_context_V2_V3_guards_preserved": true,
+    "positive_labels": [
+      "corresponding",
+      "equivalent"
+    ],
+    "negative_labels": [
+      "incompatible"
+    ],
+    "neither_positive_nor_negative": [
+      "unknown",
+      "analogy"
+    ],
+    "current_pair_and_endpoint_replay_before_allocation_and_ranking": true,
+    "historical_checkpoint_integrity_is_current_review_admission": false,
+    "ranking_exposes_unfiltered_context_inventory": false,
+    "legal_applicability_verified": false,
+    "controlling_authority": false
+  },
+  "canonical_qualification": {
+    "whole_owning_pytest_modules": {
+      "test_alignment_relation_declarations.py": 84,
+      "test_alignment_relation_mask_handoff.py": 155
+    },
+    "fresh_combined_whole_module_cases": 239,
+    "fresh_combined_junit_seconds": 156.846,
+    "guarded_joint_owning_test_bodies": 5,
+    "joint_scope": "Four mocked metadata routing/layout checks and one actual fictional V4 signed endpoint/pair/mask authentication test. Exact owning test bodies and guard AST bound to the full canonical test file/source hashes. Whole eager-Torch joint module deliberately not collected.",
+    "joint_exact_test_bodies_and_guard_AST_sha256": "2b5b8ecf93a154f08421152cabc6c403bf0b7195a33d0716b264f7c73ab1aed8",
+    "combined_fresh_source_control_total": 244,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "source_leases_closed": true,
+    "optional_numeric_model_prover_imports_denied": true,
+    "worker_DATA_dataclasses_permitted": true,
+    "actual_missing_evidence_compiler_entry_and_refusal_before_Torch": true,
+    "new_declaration_controls": 17,
+    "new_mask_controls": 27,
+    "new_joint_controls": 5
+  },
+  "controls": [
+    "Two separately reviewed fictional V3 endpoint admissions with distinct selected interpretations; no real statutory acceptance.",
+    "Fresh V4 pair signatures and sixth review slot cover the exact context union and endpoint membership.",
+    "Actual cross-context corresponding/equivalent positives, reviewed incompatibilities, unknowns and noncontrolling analogies.",
+    "Missing/extra/reordered context sets, incoherent membership, wrong scope, downgraded domains and missing review obligations refuse.",
+    "Coherently rehashed subject/context tampering refuses through complete original-input replay.",
+    "Current endpoint revocation, stale evidence and process/reviewer exclusion controls remain enforced.",
+    "V4 ready-mask metadata cannot be silently consumed as V2/V3 or promoted to legal applicability.",
+    "One real canonical V4 compiler entry with missing evidence is observed, delegates actual rejection, and cannot reach Torch import."
+  ],
+  "historical_attempts_preserved": [
+    {
+      "description": "Initial declaration owning run:79 passed,5 failed because source-only harness incorrectly denied worker DATA import. Original result retained; corrected guard permits DATA only and retains numeric/model denial.",
+      "receipt": {
+        "name": "canonical-owning-result.json",
+        "sha256": "bb5272a58ef0c0594a110ad6069a005307582940c07f76474f0184879d0773db"
+      }
+    },
+    {
+      "description": "First mask SourceWRITE120 acquisition timed out before CAS/copy/tests; canonical preimages unchanged. A distinct ordinary300 acquisition waited21.829s, then completed155 source tests. This changes no native/resource/model budget.",
+      "receipt": {
+        "name": "canonical-source-wait-failure-v01.json",
+        "sha256": "ed8fef58a7b37e2e85214d3f87d5b2d5afd2f40700d335d52f84a53b76f81a55"
+      }
+    }
+  ],
+  "evidence_receipts": [
+    {
+      "name": "canonical-combined-source-result.json",
+      "sha256": "ccf5e67227b88b2bac285e39c18ebf85b1b2446b89734bd73db33a8bd1e1d22f"
+    },
+    {
+      "name": "canonical-combined-source-junit.xml",
+      "sha256": "aa9361cfa3e8b7ddf765acdf46ad1361e17011b0a7e6e1ff55a93840c0d5c87c"
+    },
+    {
+      "name": "canonical-owning-v02-result.json",
+      "sha256": "03a8ad08709f04a6ce2dd118576c04a3e298b6f0b0faeb7c0b88b858ccd72aad"
+    },
+    {
+      "name": "canonical-full-mask-owning-result.json",
+      "sha256": "7c5c218b1240b5f836502f6bf0b5c5bc5c4ed29a409bb367a2a89f88cc9c8466"
+    },
+    {
+      "name": "result.json",
+      "sha256": "5d49987f785058ed2f7774d8964c6a48591e806e03a2e29fcacad6b36e7ac3d6"
+    },
+    {
+      "name": "junit.xml",
+      "sha256": "78a6a922389103637dd82ebbbdd835c8710bb5a102f99ea94466a0913f90fa68"
+    },
+    {
+      "name": "independent-static-review-v02.json",
+      "sha256": "07f51c6d7f32b2a193fc6921b4fc5cb03f67156b5687c0037ef746985196df34"
+    },
+    {
+      "name": "independent-static-review-v01.json",
+      "sha256": "a7bc41a2726cca7a1add6b318d128c59be87e5e6208d76b42d1eb69ec92ac46b"
+    },
+    {
+      "name": "independent-static-review-v01.json",
+      "sha256": "87799f68a8574e8a9d08ae43030912144c4584a6b8aa8a80e603f0360583ab57"
+    },
+    {
+      "name": "independent-static-review-v04-observer-delta.json",
+      "sha256": "22e454e2fa15850ba5f3f46dc1ac973cd3ddf99c7548f1e33ec8ff2052267c5f"
+    }
+  ],
+  "unverified_or_pending": {
+    "V4_tensor_fit_restore_or_ranking_numerics": true,
+    "whole_joint_numerical_test_module": true,
+    "V4_GTE_or_pretrained_model_quality": true,
+    "heldout_semantic_relevance_and_legal_applicability": true,
+    "human_Title10_meaning_definition_and_two_distinct_use_review": true,
+    "new_native_Lean_or_hosted_CI": true,
+    "real_statutory_gold_admitted": 0,
+    "real_statutory_corpus_admitted": 0
+  },
+  "source_migration": {
+    "private_assets_archives_and_model_checkpoints": "on_hold",
+    "original_primary_worktree_sources_untouched": true,
+    "existing_backlog_task_IDs_and_statuses_preserved": 24,
+    "checkpoint_and_historical_receipt_identities_rewritten": false,
+    "budgets_or_execution_permissions_broadened": false
+  },
+  "next_smallest_existing_task": {
+    "task_ids": [
+      "LIR-17",
+      "LIR-20"
+    ],
+    "action": "Prepare and obtain existing resource admission for a tiny fictional V4 numerical fit/restore/ranking control, preserving real legal-review gates; compare retrieval quality only on genuinely reviewed grouped held-out cases."
+  }
+}

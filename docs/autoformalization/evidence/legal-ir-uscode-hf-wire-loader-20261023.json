@@ -1,0 +1,128 @@
+{
+  "cases": 49,
+  "datasets_version": "5.1.0",
+  "default_config": "publicus-ir-graphrag-v2",
+  "dependency_scope": "Three SHA/size/tag-pinned wheels in original owned cache; no global installation.",
+  "final_attempt_bytes": 5989086,
+  "hosted_dataset_or_selected_release_pointer_changed": false,
+  "law_or_model_downloads_training_encodings_or_Lean_runs": 0,
+  "legacy_None_generation_fixture_byte_equivalence_qualified": true,
+  "legal_source_edition_meaning_graph_or_gold_admission": false,
+  "loader_calls": [
+    {
+      "data_files_override": false,
+      "name": null,
+      "outcome": "returned",
+      "streaming": false
+    },
+    {
+      "data_files_override": false,
+      "name": "publicus-ir-graphrag-v2",
+      "outcome": "returned",
+      "streaming": false
+    },
+    {
+      "data_files_override": false,
+      "name": null,
+      "outcome": "returned",
+      "streaming": true
+    },
+    {
+      "data_files_override": false,
+      "name": "publicus-ir-graphrag-v2",
+      "outcome": "returned",
+      "streaming": true
+    },
+    {
+      "data_files_override": false,
+      "error_type": "NonMatchingSplitsSizesError",
+      "name": null,
+      "outcome": "error",
+      "streaming": false
+    }
+  ],
+  "logical_default_config": "publicus-ir-graphrag/v2",
+  "namespace_scope": "Explicit namespace parents; optional public initializers were not executed or qualified.",
+  "network_during_loader_tests": false,
+  "original_compute_storage_and_source_READ_closed": true,
+  "phase_passes": 147,
+  "prior_v01_failed_cohort_retained": true,
+  "profile": "hf-default-parquet-envelope/v1",
+  "qualification_receipts": [
+    {
+      "bytes": 28096,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/implementation-v01/manifest-hf-wire-v03.json",
+      "sha256": "1a5bdfa0bf7c9e1c854c6557d78247ab3b9c1a5eea04bef4ca1b746997487b9a"
+    },
+    {
+      "bytes": 19195,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/implementation-v01/request-hf-wire-v03.json",
+      "sha256": "fd54866077eaad9e1f10fe2642917fe018be456aeaa049a489652642148ef8c1"
+    },
+    {
+      "bytes": 308,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/implementation-v01/controller-complete-hf-wire-v03.json",
+      "sha256": "e4a67b111754649481e1a6ff28b4654a5498e3e2e2260a623c048e1e6bd827d3"
+    },
+    {
+      "bytes": 7825,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/implementation-v01/launch-hf-wire-v03.json",
+      "sha256": "273616cc71afcfe7992ed7ab7ff5d7222697f91d3e0e4547de38d5493d2a74b4"
+    },
+    {
+      "bytes": 8769,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/implementation-v01/independent-result-review-hf-wire-v03.json",
+      "sha256": "d64208c3bd2f6187019201f319c0f40e16056a8024a7570f44660c6b529411c8"
+    },
+    {
+      "bytes": 40321,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/implementation-v01/attempt-hf-wire-v03/exports/test-result.json",
+      "sha256": "cd773e407078566d282e22155fb8e9bd9d7ce2d29abf9d56070ef0c45f3443b5"
+    },
+    {
+      "bytes": 5586,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/implementation-v01/attempt-hf-wire-v03/exports/junit.xml",
+      "sha256": "adf66214e9a10e712203c8202e9bd61b60b6a2bb3bcb2e5da907b135c709b0b8"
+    },
+    {
+      "bytes": 3420,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/implementation-v01/reviews/independent-product-review-v04.json",
+      "sha256": "f541ff055ceeb03c7acec601011dc25dbe28128df9f464d16657ca037ac66787"
+    },
+    {
+      "bytes": 10183,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/implementation-v01/independent-test-and-wire-static-review-v05.json",
+      "sha256": "8315460463cd4dcb7b76ea27fe31c4ad3af020c5632f6f2b0340cf8f60ed4e07"
+    },
+    {
+      "bytes": 6740,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/implementation-v01/baseline-capture-v01.json",
+      "sha256": "67780da5cc0079bf035221acbe5c2f0975f5932e222591472c9746b042ef6340"
+    },
+    {
+      "bytes": 6988,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/implementation-v01/independent-failed-result-review-hf-wire-v01.json",
+      "sha256": "9c2dd96d4c852b2c2a7d820efaf67c5efa93f9928232aa24f7620556871d5fd8"
+    },
+    {
+      "bytes": 28096,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/implementation-v01/manifest-hf-wire-v02.json",
+      "sha256": "4ed7d29f66340045d737b430c15abc652a4cf70d18f249698dc2cd4ad33dc0bc"
+    }
+  ],
+  "qualified_source": {
+    "bytes": 101533,
+    "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/implementation-v01/candidate-v03/ipfs_datasets_py/processors/legal_data/uscode_hf_release.py",
+    "sha256": "7e27b499c18f3569a35d0aa0bd62477e825d0bbc461dad82b7d5e50093eb681a"
+  },
+  "qualified_test": {
+    "bytes": 40540,
+    "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/implementation-v01/candidate-v03/tests/unit/processors/legal_data/test_uscode_hf_release.py",
+    "sha256": "26d7d4efb325fdc3b28869abe73c9eb9068b32dbbac7624ed890e5868b3d2aaa"
+  },
+  "recorded_at_utc": "2026-10-23T22:15:54.164495+00:00",
+  "schema": "legal-ir-uscode-hf-wire-local-qualification/v1",
+  "status": "focused_authored_fixture_tests_qualified",
+  "unsupported_boundary": "The existing five-file source-intake profile requires its legacy infos wrapper; a new compatible intake remains unqualified.",
+  "v02_metadata_only_unexecuted": true
+}

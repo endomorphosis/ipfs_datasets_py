@@ -1,0 +1,346 @@
+{
+  "actual_parent_exec": {
+    "exit_code": 0,
+    "terminal_chunk": "82f773",
+    "tool_handle": "83211"
+  },
+  "canonical_source_delivery": {
+    "Git_publication_is_a_separate_event": true,
+    "nine_paths": {
+      "ipfs_datasets_py/logic/autoformal/training_cycle_inputs.py": "2b4d4dbf95549024a5c06d98cf721bf6b9b8ff331692a2377e87a6dd8d4419fe",
+      "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py": "7e930f3037146d74f7bb16eb283ba54a3ab7c122214d933094a64f3fd629e2d5",
+      "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_evaluation_artifacts.py": "d14a2dd8fc0d794cf586ad8318648a99fd2fafd51a3797e354201c088c918832",
+      "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_structured_retrieval.py": "89dacae6727f0991e47ef22d0beff75c1bb1594c90227933b25a8d574c40c081",
+      "tests/fixtures/legal_ir/reviewed_context_tokenizer/README.md": "311466642e971f6bf595c2e318f18c0a50b5d2c9f313481b18a2daa3e5d73e9b",
+      "tests/fixtures/legal_ir/reviewed_context_tokenizer/frozen_native_mapping_v1.json": "96e2847bb5d6ba940dd9a5e3fec599a0204b4a22f6d4c4fd6ad4d250e8d4be14",
+      "tests/unit/logic/test_autoformal_reviewed_context_sharing.py": "369bf376a8ea689264be6012a77c0175c781b9a79886e02b1f53d95ec665fba5",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py": "12a6c39ad06222f500097dc21e5b7fe2e41e4e9e625f8f6bda06a3714a439fa8",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_evaluation_artifacts.py": "ea7bfd2f902abbaa24152c3baea0410495e496a95b5388275df8163e53c9aeee"
+    },
+    "private_assets_on_hold": true,
+    "source_adoption_readback": {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-v4-canonical-source-adoption-v01/independent-source-readback.json",
+      "sha256": "0b8ea1330ca21a9f14f92f7ca162fc026a57b6cad54d7d713e7b091f2ba622f5"
+    },
+    "source_only_backups": {
+      "accelerate": "c02f9f5da30742fa029aeb0aab2ea277c544eee2",
+      "datasets": "017baf3678eb17c7a5c58c52fca718796d71ac30"
+    }
+  },
+  "child_sha256": "9d6f8cbc67f26b61a212b3c0671008eb47ce084c19d8bc438c50f5a8f1445c6d",
+  "completed": true,
+  "controller_sha256": "71d927f21a0aaf83ac4f132462d0316ca3e24f0ef63ad9025a48df7143e8beb4",
+  "corpus_admission": false,
+  "excluded_pending": {
+    "SDK_selectors_qualified": false,
+    "structural_factory_cases": 6,
+    "structural_factory_functions": [
+      "/tmp/datasets-publish-main-20261114/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py::test_aggregate_v4_structural_factory_retains_complete_byte_context_refusal",
+      "/tmp/datasets-publish-main-20261114/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py::test_aggregate_v4_structural_factory_refuses_before_backend_on_invalid_custody"
+    ],
+    "structural_factory_qualified": false,
+    "whole_evaluator_module_qualified": false,
+    "whole_worker_module_qualified": false
+  },
+  "groups": {
+    "native_tokenizer_transport": 2,
+    "tiny_synthetic_retained_pipeline_budget": 13,
+    "whole_context_sharing_codec": 99
+  },
+  "independent_qualification_readback": {
+    "all_natural_case_identities_checked": true,
+    "cases": 114,
+    "path": "/tmp/legal-ir-public-v03-114-independent-readback-20261115-v01.json",
+    "sha256": "3b5b1bf2cacde41dceab1237e898b63ecdddcaed26b0aa12a98eeef91227ff15",
+    "six_omitted_controls_unqualified": true
+  },
+  "junit": {
+    "errors": 0,
+    "failures": 0,
+    "passed": 114,
+    "seconds": 220.802,
+    "skipped": 0,
+    "tests": 114,
+    "warnings": 1
+  },
+  "lifecycle": {
+    "Source_exit_before_initial420": true,
+    "child_reaped": true,
+    "genuine_owner_wait": true,
+    "initial_total_seconds": 420,
+    "original_completed_result_verified": true,
+    "owner_execution_elapsed_seconds": 325.91243496118113,
+    "owner_identity_gone": true,
+    "owner_returncode": 0,
+    "parent_source_elapsed_seconds": 379.26318613719195,
+    "positive_software_acceptance_before_final_journal": true,
+    "process_and_native_closed": true,
+    "pytest_elapsed_seconds": 220.802,
+    "source_closed": true
+  },
+  "limits": {
+    "child_process_slots": 4,
+    "cpu_slots": 1,
+    "memory_mb": 1536,
+    "storage_bytes": 16777216,
+    "timeout_seconds": 300
+  },
+  "local_assembly_error_preserved": {
+    "bytes": 330,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-v4-canonical-public-qualification-v03-input/capsule-assembly-attempt-01-failure.json",
+    "sha256": "6594f355fdecd4881b4c71239266b0cf283682db944c6ee56e33aea1856fd01e"
+  },
+  "model_quality_measured": false,
+  "model_training_qualified": false,
+  "model_weights_downloaded": false,
+  "native_Lean_qualified": false,
+  "native_tokenizer": {
+    "context_bound_bytes": 16384,
+    "context_bound_tokens": 4096,
+    "exact_complete_context_scalar_types_order_definitions_and_source_links_asserted": true,
+    "mapping_sha256": "96e2847bb5d6ba940dd9a5e3fec599a0204b4a22f6d4c4fd6ad4d250e8d4be14",
+    "observation_artifact": {
+      "bytes": 917,
+      "path": "/tmp/pytest-of-barberb/legal-v4-canonical-public-qualification-20261115-v03/a/tmp/pytest/test_aggregate_v4_public_fast_tokenizer_factory_-ohaj8_j0/public-tokenizer-structural-observation.json",
+      "sha256": "ca11ec0cf5040800128326cb6d6468ceae611e8e3b3507f0fcc33ec3bb428acb"
+    },
+    "source_bound_tokens": 65536,
+    "v2": {
+      "backend_calls_asserted": 0,
+      "context_bound": 4096,
+      "expected_refusal_passed": true,
+      "passed_exact_count_assertions": [
+        4598,
+        4598,
+        2952
+      ],
+      "scope": "Exact counts and refusal asserted in passing v2 JUnit case; no separate v2 sidecar emitted",
+      "standalone_measurement_sidecar_available": false
+    },
+    "v3_backend_calls_asserted": 2,
+    "v3_outputs_asserted": "three abstentions per call",
+    "v3_persisted_observation": {
+      "actual_pretrained_capacity_or_quality": false,
+      "context_transport": "shared_json_v3",
+      "mapping_sha256": "96e2847bb5d6ba940dd9a5e3fec599a0204b4a22f6d4c4fd6ad4d250e8d4be14",
+      "model_inference": false,
+      "model_weights_loaded": false,
+      "rows": [
+        {
+          "complete_context_tokens": 3781,
+          "complete_source_tokens": 4052,
+          "context_bytes": 8227,
+          "examples": 4,
+          "id": "reviewed:fixture:rich-mixed-q/unit-1"
+        },
+        {
+          "complete_context_tokens": 3781,
+          "complete_source_tokens": 4053,
+          "context_bytes": 8227,
+          "examples": 4,
+          "id": "reviewed:fixture:rich-mixed-q/unit-2"
+        },
+        {
+          "complete_context_tokens": 2568,
+          "complete_source_tokens": 2845,
+          "context_bytes": 5875,
+          "examples": 2,
+          "id": "reviewed:fixture:rich-mixed-q/unit-3"
+        }
+      ],
+      "schema": "public-tokenizer-structural-factory-mechanics/v2",
+      "training": false
+    },
+    "v3_source_width_measurement": "complete_source_tokens are actual persisted full source token widths; complete source wire byte widths were not persisted by this owning test"
+  },
+  "no_code_or_resource_bounds_changed_for_this_scope": true,
+  "no_prior_retained_reservation_reset": true,
+  "pretrained_model_weights_loaded": false,
+  "previous_attempts": [
+    {
+      "native_grants": 0,
+      "raw_artifact": {
+        "bytes": 2800,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-v4-canonical-public-qualification-v01-input/parent-closeout.json",
+        "sha256": "0d15aa93b103d6049f23cdc510720d72d21d803262bfcb4c33b520f7393a7f45"
+      },
+      "result": "PRELAUNCH_REFUSED_SOURCE_CLOSED_NO_ORIGINAL_OWNER",
+      "scope": "v01",
+      "source_closed": true,
+      "tests_completed": 0
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "completed_test_credit": 0,
+      "partial_stdout_not_counted": true,
+      "raw_artifact": {
+        "bytes": 6199,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-v4-canonical-public-qualification-v02-input/qualification-failure-summary.json",
+        "sha256": "0a89c654c9dc97511f3e0c04610954f846272261c74ce61e25b3c4d49b905428"
+      },
+      "result": "INCOMPLETE_TIMEOUT_NO_QUALIFICATION",
+      "scope": "v02",
+      "storage_bytes": 16777216,
+      "storage_reservation_id": "753d55a5de404977b123b8c3a69c4013",
+      "storage_status": "retained",
+      "untouched": true
+    }
+  ],
+  "qualification_passed": true,
+  "raw_artifacts": [
+    {
+      "bytes": 49402,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-v4-canonical-public-qualification-v03-input/request.json",
+      "sha256": "bab6e507c5de707792ae71d82c6e51803e9977d2f2a786c22bb06b979856cac6"
+    },
+    {
+      "bytes": 22348,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-v4-canonical-public-qualification-v03-input/run-original-source-held-canonical-public-v03.py",
+      "sha256": "71d927f21a0aaf83ac4f132462d0316ca3e24f0ef63ad9025a48df7143e8beb4"
+    },
+    {
+      "bytes": 1790,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-v4-canonical-public-qualification-v03-input/canonical-public-child.py",
+      "sha256": "9d6f8cbc67f26b61a212b3c0671008eb47ce084c19d8bc438c50f5a8f1445c6d"
+    },
+    {
+      "bytes": 19,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-v4-canonical-public-qualification-v03-input/pytest.ini",
+      "sha256": "713f986ee48be06ad4bff2a700d39514a9f69e34b3547af52366c0a274e30e5b"
+    },
+    {
+      "bytes": 8442,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-v4-canonical-public-qualification-v03-input/prepared-plan.json",
+      "sha256": "8a8b18ba04ff8dc8f6043b613b3617253390eab0d1b80e65bd1680c4a1d83006"
+    },
+    {
+      "bytes": 163,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-v4-canonical-public-qualification-v03-input/started.json",
+      "sha256": "20e8c85c05c99de73d9e416cbe529140112d5b0bc33b748a05b401c91f8839ad"
+    },
+    {
+      "bytes": 5490,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-v4-canonical-public-qualification-v03-input/owner.stdout",
+      "sha256": "02862128b778712ae30e7158e6e6ed01a6f8f2bac7b5b7d24bc942f903a810ab"
+    },
+    {
+      "bytes": 0,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-v4-canonical-public-qualification-v03-input/owner.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 11474,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-v4-canonical-public-qualification-v03-input/parent-closeout.json",
+      "sha256": "79aa1ea190526c2050f2d24877081cb0851bcf2d06c8f88c9c35914cc0dddaad"
+    },
+    {
+      "bytes": 2236,
+      "path": "/tmp/pytest-of-barberb/legal-v4-canonical-public-qualification-20261115-v03/a/logs/result.json",
+      "sha256": "306da2db43f762014f49f092836c26ba594bf139633d95672f194f48586640af"
+    },
+    {
+      "bytes": 2741,
+      "path": "/tmp/pytest-of-barberb/legal-v4-canonical-public-qualification-20261115-v03/a/logs/execution.json",
+      "sha256": "7d7ec8a4381665fe5cd938470d00bfb00e350518aaad39e6046b493147f272ac"
+    },
+    {
+      "bytes": 2757,
+      "path": "/tmp/pytest-of-barberb/legal-v4-canonical-public-qualification-20261115-v03/a/logs/validation-durability.json",
+      "sha256": "6b7b98a55e2c8366b8b2a63ae0d64c61c652d3e3b50e7ccf9a5c6482bc8ae8a6"
+    },
+    {
+      "bytes": 924,
+      "path": "/tmp/pytest-of-barberb/legal-v4-canonical-public-qualification-20261115-v03/a/logs/stdout.log",
+      "sha256": "910287e70d6df4c741e3ee914995751bd6adb3993daba8abd5e5beb2fb2988b0"
+    },
+    {
+      "bytes": 0,
+      "path": "/tmp/pytest-of-barberb/legal-v4-canonical-public-qualification-20261115-v03/a/logs/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 21956,
+      "path": "/tmp/pytest-of-barberb/legal-v4-canonical-public-qualification-20261115-v03/a/exports/canonical-public-v4.xml",
+      "sha256": "003302474eb78c73252e5d5832a642b6bac62c9ebf85d2aca9b2dae07f16705f"
+    },
+    {
+      "bytes": 917,
+      "path": "/tmp/pytest-of-barberb/legal-v4-canonical-public-qualification-20261115-v03/a/tmp/pytest/test_aggregate_v4_public_fast_tokenizer_factory_-ohaj8_j0/public-tokenizer-structural-observation.json",
+      "sha256": "ca11ec0cf5040800128326cb6d6468ceae611e8e3b3507f0fcc33ec3bb428acb"
+    }
+  ],
+  "request_sha256": "bab6e507c5de707792ae71d82c6e51803e9977d2f2a786c22bb06b979856cac6",
+  "schema": "canonical-public-reviewed-context-qualification/v1",
+  "selected_checks": [
+    "/tmp/datasets-publish-main-20261114/tests/unit/logic/test_autoformal_reviewed_context_sharing.py",
+    "/tmp/datasets-publish-main-20261114/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py::test_aggregate_v4_public_fast_tokenizer_factory_complete_context_budget_by_transport",
+    "/tmp/datasets-publish-main-20261114/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py::test_reviewed_tokenizer_binding_metadata_derives_six_fields_from_full_actual_fixture_pipeline",
+    "/tmp/datasets-publish-main-20261114/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py::test_reviewed_actual_fast_same_three_ids_changed_pipeline_refuses_parent_pair_before_model_load",
+    "/tmp/datasets-publish-main-20261114/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py::test_reviewed_torch_same_three_ids_different_pipeline_refuses_paired_restore_before_model_mutation",
+    "/tmp/datasets-publish-main-20261114/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py::test_reviewed_tokenizer_wrapper_method_identity_matches_actual_pipeline",
+    "/tmp/datasets-publish-main-20261114/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py::test_reviewed_torch_legacy_three_integer_configuration_pair_cannot_be_silently_upgraded",
+    "/tmp/datasets-publish-main-20261114/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py::test_reviewed_generation_context_fixed_token_boundary_preserves_complete_payload",
+    "/tmp/datasets-publish-main-20261114/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py::test_reviewed_generation_context_subbounds_never_add_to_full_model_allowance"
+  ],
+  "separate_historical_scopes_not_promoted": true,
+  "source_and_git": {
+    "before_after_guards_verified": true,
+    "canonical_public_cwd": "/tmp/datasets-publish-main-20261114",
+    "custody_errors": [],
+    "drift": [],
+    "full_source_inventory_artifact": {
+      "bytes": 49402,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-v4-canonical-public-qualification-v03-input/request.json",
+      "sha256": "bab6e507c5de707792ae71d82c6e51803e9977d2f2a786c22bb06b979856cac6"
+    },
+    "git_identity_count": 8,
+    "git_identity_sha256": {
+      "/home/barberb/lift_coding/.git/modules/external/ipfs_accelerate/refs/heads/reconcile/all-accelerate-work-20261114": "1d08e55c4c495d6a33ddfd768f781b72cf67be54f6fe98c196f75c7464333efd",
+      "/home/barberb/lift_coding/.git/modules/external/ipfs_accelerate/worktrees/lift-sync-accelerate-all-main-20261114/HEAD": "0f25ca213de338698559d5e263b63a5c6371dbeb3c237ec1c5eeb7a0cc509adc",
+      "/home/barberb/lift_coding/.git/modules/external/ipfs_accelerate/worktrees/lift-sync-accelerate-all-main-20261114/commondir": "340ddcb67a6204f742cd1e28e5b462622dde7daaa8ee36001897196aacdc6d47",
+      "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/refs/heads/publish/reconciled-worktrees-main-20261114": "a19a0ee4cc0ffa1004aa6a10a76dbb5c456b29c95016f899c48fada01472f057",
+      "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/worktrees/datasets-publish-main-20261114/HEAD": "9305ba167b0867917dbd913234d132a084e4ce57d641a312c1f68e468eb17380",
+      "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/worktrees/datasets-publish-main-20261114/commondir": "340ddcb67a6204f742cd1e28e5b462622dde7daaa8ee36001897196aacdc6d47",
+      "/tmp/datasets-publish-main-20261114/.git": "5fce2a754476dc452eb31c0c54aa1e5c4a227e0b0920ca3537f2f7aa3b9ce613",
+      "/tmp/lift-sync-accelerate-all-main-20261114/.git": "2125c4eabb34f617be0670208f4e850733011bd5aa770650bfb7e0a27a83671f"
+    },
+    "module_preloading_or_origin_spoof": false,
+    "private_worker_used": false,
+    "selected_source_sha256": {
+      "/tmp/datasets-publish-main-20261114/ipfs_datasets_py/logic/autoformal/training_cycle_inputs.py": "2b4d4dbf95549024a5c06d98cf721bf6b9b8ff331692a2377e87a6dd8d4419fe",
+      "/tmp/datasets-publish-main-20261114/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py": "7e930f3037146d74f7bb16eb283ba54a3ab7c122214d933094a64f3fd629e2d5",
+      "/tmp/datasets-publish-main-20261114/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_evaluation_artifacts.py": "d14a2dd8fc0d794cf586ad8318648a99fd2fafd51a3797e354201c088c918832",
+      "/tmp/datasets-publish-main-20261114/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_structured_retrieval.py": "89dacae6727f0991e47ef22d0beff75c1bb1594c90227933b25a8d574c40c081",
+      "/tmp/datasets-publish-main-20261114/ipfs_datasets_py/optimizers/logic_theorem_optimizer/validation_run_resources.py": "860d25af0ab629c48bb7a2c7356c7690c09fdfe81b53777777c0a41384f1b293",
+      "/tmp/datasets-publish-main-20261114/scripts/ops/legal_ir/run_owned_validation.py": "7ce92270e5a203b4bea00451997712ba5255ba3552728721d6457486157d57e3",
+      "/tmp/datasets-publish-main-20261114/tests/fixtures/legal_ir/reviewed_context_tokenizer/frozen_native_mapping_v1.json": "96e2847bb5d6ba940dd9a5e3fec599a0204b4a22f6d4c4fd6ad4d250e8d4be14",
+      "/tmp/datasets-publish-main-20261114/tests/unit/logic/test_autoformal_reviewed_context_sharing.py": "369bf376a8ea689264be6012a77c0175c781b9a79886e02b1f53d95ec665fba5",
+      "/tmp/datasets-publish-main-20261114/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py": "12a6c39ad06222f500097dc21e5b7fe2e41e4e9e625f8f6bda06a3714a439fa8",
+      "/tmp/datasets-publish-main-20261114/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_evaluation_artifacts.py": "ea7bfd2f902abbaa24152c3baea0410495e496a95b5388275df8163e53c9aeee",
+      "/tmp/datasets-publish-main-20261114/tests/unit/optimizers/logic_theorem_optimizer/test_validation_run_resources.py": "854839a765221e30fc37b3c666c69933dbbbb0aeca2f738079990823bf233b98"
+    },
+    "source_pin_count": 255
+  },
+  "status": "PASSED_SELECTED_CANONICAL_PUBLIC_SOFTWARE_AND_NATIVE_TOKENIZER_SCOPE",
+  "statutory_semantic_acceptance": false,
+  "storage": {
+    "artifacts_durable_asserted": true,
+    "bytes": 16777216,
+    "durability_receipt": {
+      "bytes": 2757,
+      "path": "/tmp/pytest-of-barberb/legal-v4-canonical-public-qualification-20261115-v03/a/logs/validation-durability.json",
+      "sha256": "6b7b98a55e2c8366b8b2a63ae0d64c61c652d3e3b50e7ccf9a5c6482bc8ae8a6"
+    },
+    "every_durability_file_bytes_and_sha256_verified": true,
+    "final_attempt_bytes": 31867,
+    "reservation_id": "ac0bfebd17fe44da917b1ac653bb5fc3",
+    "retained_storage_bytes": 0,
+    "status": "released"
+  },
+  "synthetic_torch_fixture_models_used": true,
+  "warning": {
+    "count": 1,
+    "message": "TRANSFORMERS_CACHE is deprecated; use HF_HOME",
+    "type": "FutureWarning"
+  }
+}

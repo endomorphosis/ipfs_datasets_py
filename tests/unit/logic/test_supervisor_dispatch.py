@@ -179,6 +179,31 @@ def test_invalid_job_template_is_refused(tmp_path: Path) -> None:
 def test_loop_population_carries_dispatch_into_duckdb(tmp_path: Path) -> None:
     from ipfs_accelerate_py.agent_supervisor.task_sources.database_task_source import DatabaseTaskSource
     from ipfs_datasets_py.logic.autoformal.supervisor_loop import ingest_population
+    import duckdb
+    from ipfs_accelerate_py.agent_supervisor.task_sources.control_plane_schema import (
+        DATASETS_AUTHORITATIVE_OPERATIONAL_PROFILE_ID,
+        install_datasets_authoritative_operational_schema,
+        verify_datasets_authoritative_operational_schema,
+    )
+
+    # Small persisted fixture: choose file blocks before the original owner
+    # installs its schema; its connection policy and all assertions stay intact.
+    database = tmp_path / "control.duckdb"
+    assert not database.exists()
+    with duckdb.connect(str(database), config={"default_block_size": "16384", "threads": "1"}) as seed:
+        seed.execute("CHECKPOINT")
+        size = seed.execute("PRAGMA database_size")
+        sizes = dict(zip((column[0] for column in size.description), size.fetchone(), strict=True))
+        assert sizes["block_size"] == 16384
+
+    # Dispatch persistence uses the existing datasets-authoritative operational
+    # schema; semantic/AST/proof truth stays in the datasets owner.
+    install_datasets_authoritative_operational_schema(database)
+    profile = verify_datasets_authoritative_operational_schema(database)
+    assert profile["valid"] is True
+    assert profile["profile_id"] == DATASETS_AUTHORITATIVE_OPERATIONAL_PROFILE_ID
+    assert profile["forbidden_relations"] == []
+    assert profile["forbidden_contracts"] == []
 
     agreement = {
         "rows": [
@@ -216,6 +241,13 @@ def test_loop_population_carries_dispatch_into_duckdb(tmp_path: Path) -> None:
         assert all(body.get("admitted") is False for body in bodies)
         assert all(body.get("formalized") is False for body in bodies)
         assert all(body.get("wrote_compiler") is False for body in bodies)
+
+    assert database.is_file()
+    with DatabaseTaskSource(database, install_schema=False) as reopened:
+        persisted = reopened.list_tasks(limit=10).tasks
+        assert [(record.task_cid, dict(record.body)) for record in persisted] == [
+            (record.task_cid, dict(record.body)) for record in records]
+
 
 
 def test_supervisor_loop_stamps_train_and_edit_on_population(tmp_path: Path) -> None:
@@ -265,3 +297,287 @@ def test_review_todos_stay_off_the_compiler() -> None:
     assert "compiler/decompiler" in task["conflict_policy"] or "do not write compiler" in task["conflict_policy"]
     assert not task.get("packet_sha256")
     assert not task.get("training_job")
+
+
+def _reviewed_dispatch_metadata_case(tmp_path, monkeypatch):
+    """Isolated DATA-binding fixture; no model or native owner is exercised."""
+    from copy import deepcopy
+    from ipfs_datasets_py.logic.autoformal import supervisor_dispatch as dispatch
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_inference as inference
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_training_worker as worker
+    reference = worker.CheckpointArtifact(str(tmp_path / "reviewed-request.json"), "1" * 64, 2)
+    offered = {"path": reference.path, "sha256": reference.sha256, "bytes": reference.bytes}
+    task = {"task_id": "LIR-existing-review", "task_cid": "fixture:original-task-cid", "revision": 19,
+        "spec_cid": "fixture:original-spec", "goal_cid": "fixture:original-goal", "status": "blocked",
+        "claims": [], "attempt": 2, "max_attempts": 2, "depends_on": ["fixture:original-dependency"],
+        "work_kind": dispatch.WORK_KIND_REVIEWED_EVALUATION, "operator_hold": True,
+        "historical_provider_outcome": "UNKNOWN", "admitted": False, "formalized": False}
+    request = {"schema": "reviewed-source-evaluation-request/v1", "request_id": task["task_id"],
+               "operation": "heldout_evaluation"}
+    observed = []
+    def read_request(value):
+        observed.append(deepcopy(value))
+        assert value == offered
+        return reference, b"{}", deepcopy(request)
+    monkeypatch.setattr(inference, "_read_reviewed_evaluation_request", read_request)
+    return dispatch, inference, worker, task, request, reference, offered, observed
+
+
+def test_reviewed_evaluation_dispatch_unconfigured_runtime_refuses_before_packet_or_effects(monkeypatch):
+    from ipfs_datasets_py.logic.autoformal import supervisor_dispatch as dispatch
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_inference as inference
+    def forbidden(*args, **kwargs):
+        pytest.fail("unconfigured reviewed dispatch accessed packet or effect owner")
+    monkeypatch.setattr(inference, "_read_reviewed_evaluation_request", forbidden)
+    with pytest.raises(dispatch.SupervisorDispatchError, match="runtime"):
+        dispatch.execute_reviewed_evaluation_task({"task_id": "existing", "reviewed_evaluation": {}},
+                                                 reviewed_parent_runtime=None)
+
+
+def test_reviewed_evaluation_binding_preserves_existing_native_identity_history_and_hold(tmp_path, monkeypatch):
+    from copy import deepcopy
+    dispatch, _, _, task, _, _, offered, observed = _reviewed_dispatch_metadata_case(tmp_path, monkeypatch)
+    before = deepcopy(task)
+    bound = dispatch.bind_reviewed_evaluation_task(task, offered)
+    assert task == before and bound is not task
+    assert set(bound) == set(before) | {"reviewed_evaluation"}
+    assert {key: bound[key] for key in before} == before
+    binding = bound["reviewed_evaluation"]
+    assert binding["schema"] == dispatch.REVIEWED_EVALUATION_BINDING_SCHEMA
+    assert binding["entrypoint"] == "scripts/ops/legal_ir/run_incremental_autoencoders.py"
+    assert binding["request_artifact"] == offered and binding["requires_live_parent_runtime"] is True
+    assert binding["operation"] == "heldout_evaluation"
+    assert observed == [offered]
+    # Binding the same bytes is idempotent metadata, never another attempt.
+    assert dispatch.bind_reviewed_evaluation_task(bound, offered) == bound
+    assert bound["attempt"] == 2 and bound["max_attempts"] == 2 and bound["operator_hold"] is True
+    assert bound["status"] == "blocked" and bound["historical_provider_outcome"] == "UNKNOWN"
+
+
+@pytest.mark.parametrize("damage", ["missing_work_kind", "training_work_kind", "missing_id", "blank_id"])
+def test_reviewed_evaluation_binding_requires_explicit_existing_work_kind_before_packet(tmp_path, monkeypatch, damage):
+    dispatch, inference, _, task, _, _, offered, _ = _reviewed_dispatch_metadata_case(tmp_path, monkeypatch)
+    if damage == "missing_work_kind":
+        del task["work_kind"]
+    elif damage == "training_work_kind":
+        task["work_kind"] = dispatch.WORK_KIND_TRAIN
+    elif damage == "missing_id":
+        del task["task_id"]
+    else:
+        task["task_id"] = " "
+    def forbidden(*args, **kwargs):
+        pytest.fail("invalid task metadata reached request reader")
+    monkeypatch.setattr(inference, "_read_reviewed_evaluation_request", forbidden)
+    with pytest.raises(dispatch.SupervisorDispatchError, match="existing task ID"):
+        dispatch.bind_reviewed_evaluation_task(task, offered)
+
+
+def test_reviewed_evaluation_binding_refuses_request_for_another_native_task(tmp_path, monkeypatch):
+    from copy import deepcopy
+    dispatch, _, _, task, request, _, offered, _ = _reviewed_dispatch_metadata_case(tmp_path, monkeypatch)
+    before = deepcopy(task)
+    request["request_id"] = "different-existing-task"
+    with pytest.raises(dispatch.SupervisorDispatchError, match="existing native task ID"):
+        dispatch.bind_reviewed_evaluation_task(task, offered)
+    assert task == before
+
+
+def test_reviewed_evaluation_binding_never_implicitly_rebinds_or_rearms(tmp_path, monkeypatch):
+    from copy import deepcopy
+    dispatch, inference, worker, task, request, _, offered, _ = _reviewed_dispatch_metadata_case(tmp_path, monkeypatch)
+    bound = dispatch.bind_reviewed_evaluation_task(task, offered)
+    before = deepcopy(bound)
+    replacement = worker.CheckpointArtifact(str(tmp_path / "new-review.json"), "2" * 64, 2)
+    new_descriptor = {"path": replacement.path, "sha256": replacement.sha256, "bytes": replacement.bytes}
+    monkeypatch.setattr(inference, "_read_reviewed_evaluation_request",
+                        lambda value: (replacement, b"{}", deepcopy(request)))
+    with pytest.raises(dispatch.SupervisorDispatchError, match="no implicit rebind or retry"):
+        dispatch.bind_reviewed_evaluation_task(bound, new_descriptor)
+    assert bound == before and bound["status"] == "blocked" and bound["attempt"] == 2
+
+
+@pytest.mark.parametrize("field,value", [
+    ("entrypoint", "untrusted/alternate-evaluator.py"),
+    ("request_schema", "untrusted-schema/v1"),
+    ("operation", "training"),
+    ("requires_live_parent_runtime", False),
+])
+def test_reviewed_evaluation_execute_refuses_corrupt_binding_before_fixed_import(tmp_path, monkeypatch, field, value):
+    import time
+    from copy import deepcopy
+    dispatch, inference, _, task, _, _, offered, _ = _reviewed_dispatch_metadata_case(tmp_path, monkeypatch)
+    bound = dispatch.bind_reviewed_evaluation_task(task, offered)
+    bound["reviewed_evaluation"][field] = value
+    before = deepcopy(bound)
+    guarded = []
+    # The negative metadata boundary must refuse before consulting this unused
+    # object as an owner. It supplies no fake execution or native qualification.
+    runtime = inference.ReviewedInferenceParentRuntime(object(), lambda: guarded.append(True),
+        lambda policy: pytest.fail("binding refusal reached asset policy"),
+        lambda: pytest.fail("binding refusal reached admission provider"), time.monotonic() + 60)
+    with pytest.raises(dispatch.SupervisorDispatchError, match="no implicit rebind or retry|binding changed"):
+        dispatch.execute_reviewed_evaluation_task(bound, reviewed_parent_runtime=runtime)
+    assert guarded and bound == before
+    assert not (tmp_path / "outputs").exists()
+
+
+def test_reviewed_evaluation_optin_preserves_strict_frozen_v6_training_default(tmp_path):
+    from ipfs_datasets_py.logic.autoformal import supervisor_dispatch as dispatch
+    assert dispatch.TRAINING_JOB_SCHEMA == "autoencoder-training-job-v6"
+    assert dispatch.classify_work("inference_still_failing") == (dispatch.WORK_KIND_TRAIN,)
+    legacy = _v6_template(tmp_path / "legacy-v6.json")
+    assert dispatch.bind_job_template(legacy)["schema_version"] == dispatch.TRAINING_JOB_SCHEMA
+    unsupported = tmp_path / "reviewed-training-v9.json"
+    unsupported.write_text(json.dumps({"schema_version": "autoencoder-training-job-v9-reviewed-legal-ir"}))
+    with pytest.raises(dispatch.SupervisorDispatchError, match="autoencoder-training-job-v6"):
+        dispatch.bind_job_template(unsupported)
+
+
+@pytest.fixture(scope='module')
+def reviewed_supervisor_audit_seed():
+    from tests.unit.optimizers.logic_theorem_optimizer import test_autoencoder_inference as helper
+    return helper.parent_candidate_audit_seed.__wrapped__()
+
+
+def _supervisor_audit_metadata(tmp_path, seed, *, typed=False, candidate=None):
+    from copy import deepcopy
+    from types import SimpleNamespace
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_inference as inference
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_training_worker as worker
+    rows, evaluation, contexts = deepcopy(seed)
+    def save(name, value):
+        path = tmp_path / (name + '.json');raw=worker._json_bytes(value);path.write_bytes(raw)
+        return dict(path=str(path), bytes=len(raw), sha256=worker._digest(raw))
+    payload = evaluation['compiler_artifact']['reviewed_source_span_producer_evaluation']
+    generation = dict(last_call=dict(completed=True, raw_generation_outputs=deepcopy(payload['producer_outputs'])))
+    child = dict(output_artifacts={name:save(name,value) for name,value in [('evaluation',evaluation),('generation',generation),('loader',{})]})
+    child_ref=worker.CheckpointArtifact.from_dict(save('cycle',child))
+    request=dict(output_directory=str(tmp_path),rows_artifact=save('rows',rows),source_contexts_artifact=save('contexts',contexts),
+        checkpoint_declarations=deepcopy(payload['configuration']['checkpoint_declarations']))
+    request_ref=worker.CheckpointArtifact.from_dict(save('request',request))
+    runtime=inference.ReviewedInferenceParentRuntime(SimpleNamespace(reservation_id='fictional:unused'),lambda:None,lambda _:None,lambda:{},1.0,
+        typed_structure_profile='canonical-typed-expression-wire/v1' if typed else None,candidate_syntax_profile=candidate)
+    parent=dict(schema=('reviewed-source-evaluation-parent/v3' if candidate else 'reviewed-source-evaluation-parent/v2' if typed else 'reviewed-source-evaluation-parent/v1'))
+    if typed:
+        pins=inference._parent_typed_structure_source_pins()
+        audit=inference._build_parent_typed_structure_audit(child,request,child_ref,request_ref.sha256,pins)
+        parent.update(typed_structure_profile=runtime.typed_structure_profile,typed_structure_audit_artifact=save('typed-structure-audit',audit),
+            parent_typed_structure_audit_after_wait=True,parent_current_admission_rechecked_after_audit=True)
+    if candidate:
+        pins=inference._parent_candidate_syntax_source_pins()
+        audit=inference._build_parent_candidate_syntax_audit(child,request,child_ref,request_ref.sha256,pins,candidate)
+        parent.update(candidate_syntax_profile=candidate,candidate_syntax_audit_artifact=save('candidate-syntax-audit',audit),
+            parent_candidate_syntax_audit_after_wait=True,parent_current_admission_rechecked_after_candidate_audit=True)
+    # This fixture describes DATA only. It neither claims nor exercises an
+    # original execution, resource grant, actual child wait or task transition.
+    return inference,worker,parent,child,request,request_ref,child_ref,runtime,save
+
+
+@pytest.mark.parametrize('typed,candidate', [(False,None),(True,None),
+    (False,'unreviewed-complete-norm-candidate-syntax/v2'),(False,'unreviewed-complete-norm-candidate-syntax/v3'),
+    (True,'unreviewed-complete-norm-candidate-syntax/v3')])
+def test_reviewed_supervisor_audit_metadata_matches_trusted_opt_ins(tmp_path,reviewed_supervisor_audit_seed,typed,candidate):
+    from ipfs_datasets_py.logic.autoformal import supervisor_dispatch as dispatch
+    _,_,parent,child,request,reference,child_ref,runtime,_=_supervisor_audit_metadata(tmp_path,reviewed_supervisor_audit_seed,typed=typed,candidate=candidate)
+    state=dispatch._validate_reviewed_parent_audits(parent,child,request,reference.sha256,child_ref,runtime)
+    assert set(state['artifacts'])==({'typed_structure'} if typed else set())|({'candidate_syntax'} if candidate else set())
+    assert set(state['source_pins'])==set(state['artifacts'])
+    dispatch._reauthenticate_reviewed_parent_audits(state,request,reference,runtime)
+
+
+@pytest.mark.parametrize('damage',['schema','profile','flag','path','report','request','implementation','extra'])
+def test_reviewed_supervisor_audit_rejects_resealed_or_unrequested_sidecars(tmp_path,reviewed_supervisor_audit_seed,damage):
+    from pathlib import Path
+    from ipfs_datasets_py.logic.autoformal import supervisor_dispatch as dispatch
+    inf,worker,parent,child,request,reference,child_ref,runtime,save=_supervisor_audit_metadata(tmp_path,reviewed_supervisor_audit_seed,candidate='unreviewed-complete-norm-candidate-syntax/v3')
+    if damage=='schema':parent['schema']='reviewed-source-evaluation-parent/v1'
+    elif damage=='profile':parent['candidate_syntax_profile']='unreviewed-complete-norm-candidate-syntax/v2'
+    elif damage=='flag':parent['parent_candidate_syntax_audit_after_wait']=False
+    elif damage=='extra':parent['typed_structure_profile']='canonical-typed-expression-wire/v1'
+    else:
+        d=parent['candidate_syntax_audit_artifact'];audit=json.loads(Path(d['path']).read_bytes())
+        if damage=='path':parent['candidate_syntax_audit_artifact']=save('unexpected-audit',audit)
+        else:
+            if damage=='report':audit['report']['counts']['syntax_validated_unreviewed']=999
+            elif damage=='request':audit['request_sha256']='0'*64
+            else:audit['implementation_sha256']={}
+            parent['candidate_syntax_audit_artifact']=save('candidate-syntax-audit',audit)
+    with pytest.raises(ValueError):dispatch._validate_reviewed_parent_audits(parent,child,request,reference.sha256,child_ref,runtime)
+
+
+@pytest.mark.parametrize('damage',['sidecar','context','source'])
+def test_reviewed_supervisor_audit_reauth_after_last_caller_callback(tmp_path,reviewed_supervisor_audit_seed,monkeypatch,damage):
+    from ipfs_datasets_py.logic.autoformal import supervisor_dispatch as dispatch
+    inf,worker,parent,child,request,reference,child_ref,runtime,_=_supervisor_audit_metadata(tmp_path,reviewed_supervisor_audit_seed,candidate='unreviewed-complete-norm-candidate-syntax/v3')
+    state=dispatch._validate_reviewed_parent_audits(parent,child,request,reference.sha256,child_ref,runtime)
+    if damage=='sidecar':Path(parent['candidate_syntax_audit_artifact']['path']).write_text('{}\n')
+    elif damage=='context':Path(request['source_contexts_artifact']['path']).write_text('{}\n')
+    else:monkeypatch.setattr(inf,'_parent_candidate_syntax_source_pins',lambda:{})
+    with pytest.raises(ValueError):dispatch._reauthenticate_reviewed_parent_audits(state,request,reference,runtime)
+
+
+def _simulated_reviewed_dispatch(tmp_path, seed, monkeypatch, *, typed=False, candidate=None):
+    """Exercise adapter control flow using simulated receipts, never Native."""
+    from copy import deepcopy
+    import hashlib
+    import builtins
+    from ipfs_datasets_py.logic.autoformal import supervisor_dispatch as dispatch
+    inf,worker,parent,child,request,_,_,runtime,save=_supervisor_audit_metadata(tmp_path,seed,typed=typed,candidate=candidate)
+    root=Path(dispatch.__file__).resolve().parents[3];cli=root/dispatch.REVIEWED_EVALUATION_ENTRYPOINT
+    request.update(schema='reviewed-source-evaluation-request/v1',request_id='fixture:simulated-dispatch',operation='heldout_evaluation',
+        attempt_directory=str(tmp_path),lifecycle_source_sha256={str(cli):hashlib.sha256(cli.read_bytes()).hexdigest()})
+    reference=worker.CheckpointArtifact.from_dict(save('request',request))
+    false_claims=('training_executed','admitted','model_quality_qualified','legal_meaning_verified','proof_authority','convergence_proved','corpus_admitted')
+    child.update(schema='reviewed-source-evaluation-cycle/v1',request_sha256=reference.sha256,completed=True,execution_path='inference',
+        inference={'profile':request['schema'],**{n:str(tmp_path/(n+'.json')) for n in ('evaluation','loader','generation')}},
+        **dict.fromkeys(false_claims,False))
+    child_ref=worker.CheckpointArtifact.from_dict(save('cycle',child))
+    parent.update(child, schema=parent['schema'],child_cycle_artifact=dict(path=child_ref.path,bytes=child_ref.bytes,sha256=child_ref.sha256),
+        parent_receipt=str(tmp_path/'parent-cycle.json'),receipt=str(tmp_path/'cycle.json'),parent_callbacks=dict(finished=True,closed=True,child_identity={'fixture':'not-a-real-child'}),
+        original_child_identity={'fixture':'not-a-real-child'},original_child_waited=True,parent_FINISH_acknowledged=True,
+        parent_current_admission_rechecked_after_wait=True,parent_output_artifacts_rechecked_after_wait=True,
+        resource_release_performed=False,original_owner_reservation_id=runtime.owner.reservation_id)
+    if typed:
+        parent['typed_structure_audit_artifact']=save('typed-structure-audit',inf._build_parent_typed_structure_audit(child,request,child_ref,reference.sha256,inf._parent_typed_structure_source_pins()))
+    if candidate:
+        parent['candidate_syntax_audit_artifact']=save('candidate-syntax-audit',inf._build_parent_candidate_syntax_audit(child,request,child_ref,reference.sha256,inf._parent_candidate_syntax_source_pins(),candidate))
+    save('parent-cycle',parent)
+    monkeypatch.setattr(inf,'_read_reviewed_evaluation_request',lambda _: (reference,b'fixture-only',deepcopy(request)))
+    def simulated_cli_import(code, namespace):
+        builtins.exec(code,namespace)
+        namespace['main']=lambda *_a,**_k:0 # No process, model, owner or real wait is exercised.
+    monkeypatch.setattr(dispatch,'exec',simulated_cli_import,raising=False)
+    task=dict(task_id=request['request_id'],work_kind=dispatch.WORK_KIND_REVIEWED_EVALUATION,revision=9,status='blocked',operator_hold=True,
+        attempt=2,max_attempts=2,historical_provider_outcome='UNKNOWN',claims=[])
+    descriptor=dict(path=reference.path,bytes=reference.bytes,sha256=reference.sha256)
+    bound=dispatch.bind_reviewed_evaluation_task(task,descriptor)
+    return dispatch,bound,runtime,parent,request
+
+
+@pytest.mark.parametrize('typed,candidate',[(False,None),(True,None),(False,'unreviewed-complete-norm-candidate-syntax/v3'),(True,'unreviewed-complete-norm-candidate-syntax/v3')])
+def test_reviewed_supervisor_audit_simulated_adapter_flow_preserves_task_authority(tmp_path,reviewed_supervisor_audit_seed,monkeypatch,typed,candidate):
+    from copy import deepcopy
+    dispatch,task,runtime,parent,_=_simulated_reviewed_dispatch(tmp_path,reviewed_supervisor_audit_seed,monkeypatch,typed=typed,candidate=candidate)
+    before=deepcopy(task);result=dispatch.execute_reviewed_evaluation_task(task,reviewed_parent_runtime=runtime)
+    assert task==before
+    assert result['schema']==('supervisor-reviewed-source-evaluation-result/v2' if typed or candidate else 'supervisor-reviewed-source-evaluation-result/v1')
+    assert all(result[k] is False for k in ('training_executed','task_status_changed','task_completion_authority','resource_release_performed','admitted'))
+    if typed or candidate:
+        assert result['parent_schema']==parent['schema'] and result['parent_audits_recomputed'] is True
+        assert result['audit_artifacts']
+
+
+@pytest.mark.parametrize('damage',['sidecar','context'])
+def test_reviewed_supervisor_audit_simulated_adapter_catches_final_callback_write(tmp_path,reviewed_supervisor_audit_seed,monkeypatch,damage):
+    from dataclasses import replace
+    dispatch,task,runtime,parent,request=_simulated_reviewed_dispatch(tmp_path,reviewed_supervisor_audit_seed,monkeypatch,candidate='unreviewed-complete-norm-candidate-syntax/v3')
+    original=dispatch._validate_reviewed_parent_audits;phase={}
+    def validated(*args,**kwargs):
+        state=original(*args,**kwargs);phase['after_audit']=True;return state
+    monkeypatch.setattr(dispatch,'_validate_reviewed_parent_audits',validated)
+    def last_callback():
+        if phase.get('after_audit'):
+            target=parent['candidate_syntax_audit_artifact'] if damage=='sidecar' else request['source_contexts_artifact']
+            Path(target['path']).write_text('{}\n')
+    runtime=replace(runtime,source_guard=last_callback)
+    with pytest.raises(ValueError):dispatch.execute_reviewed_evaluation_task(task,reviewed_parent_runtime=runtime)

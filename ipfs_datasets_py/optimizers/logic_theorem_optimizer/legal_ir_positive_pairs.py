@@ -46,6 +46,8 @@ from ipfs_datasets_py.logic.formalization.training_shared import (
     IR_POSITIVE_PAIR_SCHEMA_VERSION,
     _RELATION_AUTHORITIES,
     _has_verified_relationship_evidence,
+    _normalize_evidence,
+    _validate_evidence_subjects,
 )
 from ipfs_datasets_py.logic.ir_core.identity import canonical_identity
 from ipfs_datasets_py.logic.ir_core.protocols import AuthorityKind
@@ -59,7 +61,7 @@ IR_POSITIVE_PAIR_RECIPE_SCHEMA: Final = "ir-positive-pair-recipe/v1"
 IR_POSITIVE_PAIR_MANIFEST_INTERFACE: Final = "IRPositivePairManifest@1"
 IR_POSITIVE_PAIR_MANIFEST_SCHEMA: Final = "ir-positive-pair-manifest/v1"
 IR_POSITIVE_PAIR_INDEX_INTERFACE: Final = "IRPositiveEquivalenceIndex@1"
-IR_POSITIVE_PAIR_MINER_VERSION: Final = "pgir-040-positive-miner-v1"
+IR_POSITIVE_PAIR_MINER_VERSION: Final = "pgir-040-positive-miner-v2"
 IR_POSITIVE_PAIR_TASK_ID: Final = "PGIR-040"
 
 SEALED_CORPUS_MANIFEST_ID: Final = "corp:jdao-pinset-1"
@@ -723,6 +725,24 @@ def classify_positive_pair_candidate(
     return None
 
 
+def _selected_positive_evidence(pair: IRPositivePair) -> LabelEvidence:
+    """Select an admitted label rather than trusting evidence tuple order."""
+    expected = {_endpoint_key(pair.left), _endpoint_key(pair.right)}
+    eligible = [item for item in pair.evidence
+        if item.status is EvidenceStatus.VERIFIED
+        and item.relationship is pair.relationship
+        and item.authority in positive_pair_authorities(pair.relationship)
+        and set(zip(item.subject_statement_ids, item.subject_statement_digests, strict=True)) == expected
+        and (pair.relationship not in INDEPENDENT_VERIFICATION_CLASSES
+             or (item.independent and item.authority in INDEPENDENT_AUTHORITIES))
+        and (pair.relationship is not SemanticRelationship.PROOF_EQUIVALENT
+             or (item.authority is LabelAuthority.INDEPENDENT_PROOF_CHECKER
+                 and item.result_authority is AuthorityKind.THEOREM_PROOF))]
+    if not eligible:
+        raise PositivePairAdmissionError("positive pair has no admitted relationship evidence")
+    return min(eligible, key=lambda item: item.evidence_id)
+
+
 def _pair_and_example(candidate: PositivePairCandidate) -> tuple[IRPositivePair, IRTrainingExample]:
     left, right = candidate.left, candidate.right
     left_authority, right_authority = candidate.left_authority, candidate.right_authority
@@ -748,7 +768,7 @@ def _pair_and_example(candidate: PositivePairCandidate) -> tuple[IRPositivePair,
         equivalence_class_id=class_id,
         evidence=candidate.evidence,
     )
-    selected = pair.evidence[0].evidence_id
+    selected = _selected_positive_evidence(pair).evidence_id
     example = IRTrainingExample.classify(
         example_id=f"example:{pair.pair_id}",
         record=pair,
@@ -763,7 +783,7 @@ def _pair_and_example(candidate: PositivePairCandidate) -> tuple[IRPositivePair,
 
 
 def _receipt_for(pair: IRPositivePair, candidate: PositivePairCandidate) -> EvidenceReceipt:
-    evidence = pair.evidence[0]
+    evidence = _selected_positive_evidence(pair)
     kind = candidate.receipt_kind or receipt_kind_for(pair.relationship)
     if kind not in RECEIPT_KINDS:
         raise PositivePairAdmissionError(f"unknown receipt kind {kind!r}")
@@ -1069,8 +1089,17 @@ def candidate_from_recipe_case(
     case: Mapping[str, Any],
     *,
     default_family: LogicFamily = LogicFamily.DEONTIC,
+    evidence: Sequence[LabelEvidence] = (),
 ) -> PositivePairCandidate:
-    """Expand one compact recipe case into a fully bound candidate."""
+    """Expand a proposal without manufacturing checker or review evidence.
+
+    Recipe names, authority enums and fixed campaign metadata do not prove a
+    relationship. Absent caller-supplied evidence remains nontraining. Exact
+    typed labels are detached and checked through the existing subject and
+    authority contracts. Authenticating their external checker/reviewer and
+    actual source/trace provenance remains the trusted caller's responsibility.
+    The existing bound-value and verified-trace routes are separate owners.
+    """
 
     if not isinstance(case, Mapping):
         raise PositivePairMinerError("recipe case must be a mapping")
@@ -1114,27 +1143,31 @@ def candidate_from_recipe_case(
         split_name=split_name,
         rights_disposition=rights,
     )
-    authority = _authority(str(case.get("authority") or LabelAuthority.CANONICAL_VALIDATOR.value))
-    independent = case.get("independent")
-    if independent is None:
-        independent = authority in INDEPENDENT_AUTHORITIES
-    result_authority_raw = case.get("result_authority")
-    result_authority = (
-        AuthorityKind(str(result_authority_raw)) if result_authority_raw else None
-    )
-    status = EvidenceStatus(str(case.get("evidence_status") or EvidenceStatus.VERIFIED.value))
-    evidence = make_relationship_evidence(
-        left,
-        right,
-        relationship,
-        evidence_id=str(case.get("evidence_id") or f"evidence:{case_id}"),
-        authority=authority,
-        status=status,
-        independent=bool(independent),
-        result_authority=result_authority,
-        producer_id=str(case.get("producer_id") or "checker:pgir-040"),
-        producer_version=str(case.get("producer_version") or "1.0"),
-    )
+    supplied = tuple(evidence)
+    if any(type(item) is not LabelEvidence for item in supplied):
+        raise PositivePairAdmissionError("explicit LabelEvidence records required")
+    labels = _normalize_evidence(tuple(LabelEvidence.from_dict(item.to_dict()) for item in supplied))
+    if labels:
+        _validate_evidence_subjects(labels, (left, right), relationship)
+    requested = []
+    for key, field_name, enum_type in (
+        ("authority", "authority", LabelAuthority),
+        ("evidence_status", "status", EvidenceStatus),
+        ("result_authority", "result_authority", AuthorityKind),
+    ):
+        raw_value = case.get(key)
+        if raw_value not in (None, ""):
+            requested.append((field_name, enum_type(str(raw_value))))
+    if case.get("independent") is not None:
+        if type(case["independent"]) is not bool:
+            raise PositivePairAdmissionError("independent metadata must be a boolean")
+        requested.append(("independent", case["independent"]))
+    for field_name, value in requested:
+        if labels and any(getattr(item, field_name) != value for item in labels):
+            raise PositivePairAdmissionError("metadata cannot override supplied evidence " + field_name)
+    receipt_kind = str(case.get("receipt_kind") or receipt_kind_for(relationship))
+    if receipt_kind != receipt_kind_for(relationship):
+        raise PositivePairAdmissionError("recipe cannot override the relationship receipt kind")
     preservation_raw = case.get("preservation")
     if preservation_raw:
         preservation = PreservationClass(str(preservation_raw))
@@ -1164,9 +1197,9 @@ def candidate_from_recipe_case(
         ),
         relationship=relationship,
         lineage=lineage,
-        evidence=(evidence,),
+        evidence=labels,
         source_kind=str(case.get("source_kind") or "recipe"),
-        receipt_kind=str(case.get("receipt_kind") or receipt_kind_for(relationship)),
+        receipt_kind=receipt_kind,
         unresolved_losses=tuple(case.get("unresolved_losses") or ()),
         preservation=preservation,
         split_name=split_name,
@@ -1176,7 +1209,7 @@ def candidate_from_recipe_case(
 
 
 def canonical_positive_pair_recipe() -> dict[str, Any]:
-    """Compact generator for the sealed PGIR-040 class coverage set."""
+    """Describe class-coverage proposals, without issuing checker verdicts."""
 
     cases = [
         {
@@ -1286,6 +1319,13 @@ def canonical_positive_pair_recipe() -> dict[str, Any]:
             "source_kind": "decompiler",
         },
     ]
+    # Keep historical case/source identifiers, while making required authority
+    # explicit as a proposal rather than pretending its checker/review ran.
+    for case in cases:
+        for key in ("authority", "independent", "result_authority"):
+            if key in case:
+                case["required_" + key] = case.pop(key)
+        case["proposal_only"] = True
     recipe = {
         "cases": cases,
         "classes": [item.value for item in POSITIVE_EQUIVALENCE_CLASSES],
@@ -1518,19 +1558,51 @@ def resolve_positive_pair_data_dir(start: str | Path | None = None) -> Path:
 
 def loss_pair_admissions(
     pairs: Sequence[IRPositivePair],
+    *,
+    examples: Sequence[IRTrainingExample] = (),
 ) -> tuple[dict[str, Any], ...]:
-    """Project admitted pairs into the ``IRLossPairAdmission`` shape."""
+    """Project pairs only with explicitly selected, eligible training examples.
 
-    return tuple(
-        {
-            "admitted": True,
+    Decoding an archive or declaring a pair relationship does not select a
+    training admission. Reuse the canonical training-example contract and bind
+    its complete record identity, including exact label evidence, rather than
+    pair IDs alone. Conflicting or quarantined matching examples keep the pair
+    nontraining. This checks a trusted caller's explicit artifacts; it does not
+    authenticate external checker/reviewer execution or reissue old receipts.
+    """
+
+    supplied_pairs = tuple(pairs)
+    if any(type(pair) is not IRPositivePair for pair in supplied_pairs):
+        raise PositivePairAdmissionError("canonical IRPositivePair records required")
+    detached_pairs = tuple(IRPositivePair.from_dict(pair.to_dict()) for pair in supplied_pairs)
+    supplied_examples = tuple(examples)
+    if any(type(example) is not IRTrainingExample for example in supplied_examples):
+        raise PositivePairAdmissionError("explicit IRTrainingExample records required")
+    detached_examples = tuple(
+        IRTrainingExample.from_dict(example.to_dict()) for example in supplied_examples
+    )
+    by_record: dict[tuple[str, str], list[IRTrainingExample]] = {}
+    example_identities: dict[str, str] = {}
+    for example in detached_examples:
+        if type(example.record) is not IRPositivePair:
+            raise PositivePairAdmissionError("positive-pair IRTrainingExample records required")
+        previous = example_identities.get(example.example_id)
+        if previous is not None and previous != example.cid:
+            raise PositivePairAdmissionError("conflicting training example identity")
+        example_identities[example.example_id] = example.cid
+        key = (example.record.digest, example.record.cid)
+        by_record.setdefault(key, []).append(example)
+    rows: list[dict[str, Any]] = []
+    for pair in detached_pairs:
+        selected = by_record.get((pair.digest, pair.cid), ())
+        rows.append({
+            "admitted": bool(selected) and all(example.training_eligible for example in selected),
             "left_id": pair.left.statement_id,
             "pair_class": "positive",
             "relationship": pair.relationship.value,
             "right_id": pair.right.statement_id,
-        }
-        for pair in pairs
-    )
+        })
+    return tuple(rows)
 
 
 __all__ = [

@@ -1,0 +1,145 @@
+{
+  "schema": "legal-ir-varied-compact-training-saved-result/v1",
+  "recorded_at_utc": "2026-10-23T06:05:20.431734+00:00",
+  "provenance_root": "datasets_repository",
+  "scope": "Completed authored four-row variable-length training/resume regression in the existing external owner; saved-evidence recovery audit, not a statutory learning result.",
+  "passed_cases": 1,
+  "passed_phases": 3,
+  "numerical_counts": {
+    "adam_constructions": 6,
+    "autograd_grad_calls": 10,
+    "backward_calls": 10,
+    "clip_calls": 10,
+    "cross_entropy_calls": 10,
+    "gru_forwards": 12,
+    "model_constructions": 19,
+    "optimizer_updates": 10,
+    "selector_calls": 2,
+    "state_restores": 18
+  },
+  "target_label_lengths": {
+    "varied-fictional-conditional-prohibition": 64,
+    "varied-fictional-negated-obligation": 50,
+    "varied-fictional-permission": 46,
+    "varied-fictional-reversed-obligation": 46
+  },
+  "schedule": "five uninterrupted versus three plus exclusive save/load plus two resumed",
+  "final_progress": {
+    "epochs_completed": 1,
+    "optimizer_steps": 5,
+    "row_cursor": 1
+  },
+  "exact_resume_except_immediate_parent": true,
+  "whole_checkpoint_equal": false,
+  "fixed_BOS_coordinates": 1074,
+  "complete_artifact_count": 18,
+  "training_mask": 0,
+  "evaluation_gold_mask": 0,
+  "source_profile": "384 caller-supplied unverified fictional engineering vectors; fixed537 codec",
+  "legal_or_holdout_accuracy_established": false,
+  "training_gain_established": false,
+  "native_source_encoder_executed": false,
+  "generation_executed": false,
+  "Lean_executed": false,
+  "source_READ_closed_by_original_controller": true,
+  "native_resource_and_storage_released": true,
+  "recovery_limitation": "Planned independent prelaunch execution review and finalizer-preflight files are absent. This receipt does not claim those planned gates ran; it records the retained original controller, worker and independent post-run audit.",
+  "current_coordination": {
+    "authority": "explicit legacy Markdown deployment legal-ir-autoencoder-v1",
+    "observed_task_count": 135,
+    "observed_completed": 135,
+    "observed_active_workers": 0,
+    "scope": "Sequential four-lane observation at the original receipt cutoff; no global, atomic or current-forever claim. Refresh before the next assignment.",
+    "scientific_24_task_programme_complete": false
+  },
+  "next_training_gap": "Explicit compatible compact persistent-conditioning training/checkpoint/inference profile reusing bind_persistent_model; preserve genericv2/CP128 contracts, fresh named Adam, matched every_step/first_step controls and source-space identity.",
+  "retained_source_replay": "Separate existing two-case7346 owner replay completed; substantive edition/source/meaning/definition/use decisions remain unresolved.",
+  "GitHub_qualification_performed": false,
+  "catalog_before": {
+    "components": 55,
+    "selected_evidence": 181
+  },
+  "selected_inputs": [
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/compact-varied-population-candidate-v01/execution-v01/controller-complete-varied-population-v01.json",
+      "bytes": 515,
+      "sha256": "999f9750331fdbe37150080e2edd771554ed7efe3ea0b1c7222d7f0f7ec5ce51"
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/compact-varied-population-candidate-v01/execution-v01/launch-varied-population-v01.json",
+      "bytes": 8040,
+      "sha256": "7cfadd177a0152f5f11b9720b1ac0ec4cdf17a0502c6e503b8dbf894e5b92597"
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/compact-varied-population-candidate-v01/execution-v01/request-varied-population-v01.json",
+      "bytes": 70772,
+      "sha256": "aa921d44163e713d090e000fb2e66a07525e3af1315fc0fd700af788c69419b2"
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/compact-varied-population-candidate-v01/execution-v01/attempt-varied-population-v01/exports/test-result.json",
+      "bytes": 5304,
+      "sha256": "5ebc1ab958645def73df1e56c5ad40943d1d5f5a2f11f62111e6c4d9187dce15"
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/compact-varied-population-candidate-v01/execution-v01/independent-saved-result-audit-recovery-v01.json",
+      "bytes": 16582,
+      "sha256": "c500335f181fbe7f6a44dffbd5856e15859f5053c71b9c769fbced4b19d2b06e"
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/compact-varied-population-candidate-v01/execution-v01/persistent-conditioning-compatibility-review-v01.json",
+      "bytes": 8111,
+      "sha256": "82bcade8662447185de335a48b3207247a770129d8ca2b200f73103e61013ed3"
+    },
+    {
+      "path": "docs/autoformalization/evidence/legal-ir-supervisor-reference-plan-20261023.json",
+      "bytes": 17834,
+      "sha256": "b1d4554e037090ed98d333bac353caf4c0d965e892a87e68eff11516bd67a02c"
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/compact-varied-population-candidate-v01/installation-v01/test-installation-v01.json",
+      "bytes": 8400,
+      "sha256": "46ab56842248745d9df77b0f4341056cc162d2bfa8d9729ca570b371549dfeed"
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/width-diagnostics-reconciliation-v01/coordination-v01/legacy-deployment-readback-v01.json",
+      "bytes": 49954,
+      "sha256": "33a77e033004e57f5e5157a223bbc9b16582caa28f7e4fc9897268d6210baac8"
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/width-diagnostics-reconciliation-v01/accelerate/reconciliation-manifest-v01.json",
+      "bytes": 23172,
+      "sha256": "08dd25cf2ff857617efa3949465d108fcfd7f688f1d632239e9a6511f3b63bc3"
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/7346-relational-interpretation-candidate-v01/owner-replay-v01/qualification-summary-v01.json",
+      "bytes": 14161,
+      "sha256": "6725a76a94b5723b91d7c4ea0cd8340e0f8d3ce86769755595398e2efd735f28"
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/recovery-current-document-review-v02.json",
+      "bytes": 6974,
+      "sha256": "c53a822c5e85dacb59d2b71e5d1c367a7fe90cfcf739815eb2679baad1f2d85a"
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/compact-varied-population-candidate-v01/execution-v01/documentation-closeout-v01/controls/prepare_documents_v02.py",
+      "bytes": 17926,
+      "sha256": "3d1e4f92766bb2afba5a44da64e0bb142f389f099d4d65ab67c6f254235a538c"
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-normative-target-binding-20261021-01/controls/install_product_v02.py",
+      "bytes": 14517,
+      "sha256": "733d651fb88f08fd1f09c4075e0b6d2b496509c1dcac04926f9e00d373d85671"
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-counted-threshold-language-20261022-01/controls/catalog_append_wire_v01.py",
+      "bytes": 3733,
+      "sha256": "b6d7fc1f8d63d24f342e5801114de14ae9799486e9676a0eb251f84093197e8c"
+    },
+    {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-refresh-20261022-03/review-02/prepare_refresh.py",
+      "bytes": 40037,
+      "sha256": "669b1b532f5600f9643fc2c072dff1fb8d335663fe3fb31e67a01ddfad8a6fa3"
+    }
+  ],
+  "original_24_task_ids_statuses_dependencies_acceptance_and_history_preserved": true
+}

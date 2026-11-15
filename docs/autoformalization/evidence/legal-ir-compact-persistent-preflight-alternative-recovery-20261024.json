@@ -1,0 +1,219 @@
+{
+  "API_or_trace_compatibility_claimed": false,
+  "actual_per_case_observer_counts": {
+    "adam_constructions": 0,
+    "autograd_grad_calls": 0,
+    "backward_calls": 0,
+    "clip_calls": 0,
+    "cross_entropy_calls": 0,
+    "gru_constructions": 11,
+    "gru_forwards": 279,
+    "optimizer_updates": 0,
+    "selector_calls": 277,
+    "state_restores": 22
+  },
+  "actual_per_case_prefix_observations": 1731,
+  "actual_raw_compile_buffers_available": false,
+  "alternative_implementation_selected": false,
+  "alternative_owning_test": {
+    "bytes": 37412,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/branch-aware-witness-v01/selector-v01/runtime-v03/execution-v01/source-v01/frozen/tests/unit/logic/autoformal/test_legal_compact_content_persistent_runtime_v3.py",
+    "sha256": "885b0b9b9ec7aa1fef4cd03e6e04126cfb93291013688444519005027cebe9c9"
+  },
+  "alternative_source": {
+    "bytes": 23264,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/branch-aware-witness-v01/selector-v01/runtime-v03/execution-v01/source-v01/frozen/ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_persistent_runtime_v3.py",
+    "sha256": "fb5ab477ea5c1f903f24152466e6b66d000f256cb1188276254017bf31f1a0c0"
+  },
+  "audit_evidence_catalogued": true,
+  "authority": {
+    "Lean_admitted": false,
+    "accepted": false,
+    "admitted": false,
+    "source_semantics_verified": false
+  },
+  "canonical_and_alternative_schema_profile_strings_collide": true,
+  "canonical_owner_reused": true,
+  "canonical_source": {
+    "bytes": 22987,
+    "repository_path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_persistent_runtime_v3.py",
+    "sha256": "9c19f559f15e4e612f911af1e116643a383bc5617c756b05df88eb85015e2a5b"
+  },
+  "canonical_test": {
+    "bytes": 24200,
+    "repository_path": "tests/unit/logic/autoformal/test_legal_compact_content_persistent_runtime_v3.py",
+    "sha256": "0e46d64caca3c802ecca0e5ef573cf0607a0118e49b6eb950f25acb682e15b7c"
+  },
+  "cohort_results_aggregated": false,
+  "distinct_source_calls_and_budgets_are_not_matched_accuracy_benchmark": true,
+  "evaluation_gold_mask": 0,
+  "evidence_descriptors": {
+    "alternative_disposition": {
+      "bytes": 16759,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/branch-aware-witness-v01/selector-v01/runtime-v03/result-recovery-v01/stale-installation-unselected-alternative-disposition-v01.json",
+      "sha256": "b7cd73f66b9a9e3a45493e09eea827dee36bac5346d8d0dcc819c80bba39a98d"
+    },
+    "independent_adoption_review": {
+      "bytes": 30232,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/branch-aware-witness-v01/selector-v01/runtime-v03/result-recovery-v01/peer-canonical-adoption-review-v01.json",
+      "sha256": "f400ffa13d412297de322f62c1e6446d3cce82432ea127f5232b70ca33f8aed6"
+    },
+    "independent_disposition_review": {
+      "bytes": 3911,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/branch-aware-witness-v01/selector-v01/runtime-v03/result-recovery-v01/independent-disposition-review-v01.json",
+      "sha256": "ba2fa1d67ea7e7de5539621265285da42e6048140045da89b2f1ca693aa3c974"
+    },
+    "independent_recovery_review": {
+      "bytes": 11494,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/branch-aware-witness-v01/selector-v01/runtime-v03/result-recovery-v01/independent-saved-result-review-v01.json",
+      "sha256": "071b20b055eb7379ecd3e7d7079aaae04dacab6e0d89a6de5334be24bd841189"
+    },
+    "independent_storage_review": {
+      "bytes": 7968,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/branch-aware-witness-v01/selector-v01/runtime-v03/result-recovery-v01/independent-storage-closeout-readback-v01.json",
+      "sha256": "c98dbe707047e453788dc601741154a73e13bb1fd55fd38227a794b3b446153e"
+    },
+    "peer_comparison": {
+      "bytes": 28875,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/branch-aware-witness-v01/selector-v01/runtime-v03/result-recovery-v01/peer-source-contract-comparison-v01.json",
+      "sha256": "03bb541d12c922c07be5de40ff0f4c9904b44be9aaf51e86f019205a964fe948"
+    },
+    "peer_independent_installation_review": {
+      "bytes": 8859,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/branch-aware-witness-v01/consumer-v3-v01/source-publication-v01/final-bundle-v01/independent-final-eight-path-review-v02.json",
+      "sha256": "13a265e369a3e51e1e597a3f32c0bc88e57cb5bffc65420bdd2885311a03888c"
+    },
+    "peer_installation": {
+      "bytes": 4039,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/branch-aware-witness-v01/consumer-v3-v01/source-publication-v01/final-bundle-v01/primary-installation-v01.json",
+      "sha256": "737c0c7de8404892b55cabc1f0c0b68fd1b9d31f3f83a1b349f49905ab4a5298"
+    },
+    "recovery_summary": {
+      "bytes": 9332,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/branch-aware-witness-v01/selector-v01/runtime-v03/result-recovery-v01/qualification-summary-v01.json",
+      "sha256": "e4dce29003cd99087744bc501f84b0b6795527da879a9cd711ccc62d2d75637b"
+    },
+    "recovery_verification": {
+      "bytes": 58913,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/branch-aware-witness-v01/selector-v01/runtime-v03/result-recovery-v01/saved-result-verification-v01.json",
+      "sha256": "ac1e8a4b60f9b035057163f04d5946a98fdf3322d0f50a2519002800c011bc82"
+    },
+    "static_v07_review": {
+      "bytes": 1184,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/branch-aware-witness-v01/selector-v01/runtime-v03/result-recovery-v01/controls/source-reader-binding-static-regression-v01.json",
+      "sha256": "5b5e95d946d0f6e83d7c1e43c154f8ee55bb8a5c932e445d7eacea8dcafd3e8c"
+    },
+    "storage_closeout": {
+      "bytes": 5233,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/branch-aware-witness-v01/selector-v01/runtime-v03/result-recovery-v01/storage-closeout-v01/summary.json",
+      "sha256": "276738c901a0549c5925a9ecd2a7ff361ac5c3a6b18cf4eaf3bc5232bd861df0"
+    }
+  },
+  "failed_E1_preserved": {
+    "disposition": {
+      "bytes": 8354,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/branch-aware-witness-v01/selector-v01/runtime-v03/execution-v01/failed-attempt-disposition-v01.json",
+      "sha256": "ac5b480f0dd72c15c6409abdb1f53ca50fafba261085abf36730a178277e754b"
+    },
+    "historical_storage_status": "retained",
+    "partial_numerical_counts": "UNKNOWN",
+    "qualification_credit": 0
+  },
+  "genuine_terminal_mechanics": "The alternative first-forward terminal no_selection control used a 28-new-ID allowance and emitted zero IDs. Its mechanical controls remain separate from primary quality. A future canonical first-forward control needs distinct source-backed intake; existing canonical later-terminal coverage must not be repeated.",
+  "independent_adoption_audit_count": 1,
+  "independent_global_observer_available": false,
+  "later_original_E2_storage_status": "released",
+  "new_component_or_profile_created": false,
+  "new_numerical_search_or_typed_replays": 0,
+  "original_E2_storage_failed_exit_status": "retained",
+  "original_native_job_credit": 0,
+  "original_native_job_passed": false,
+  "outer_reference_open_log_available": false,
+  "post_pytest13_typed_replays_attributed_only": "Attributed only to the pinned worker control-flow path reached before archive failure; not independently reexecuted or credited by this verifier.",
+  "primary_per_mode": [
+    {
+      "BOS_score_max_absolute_error": 0.0,
+      "counts": {
+        "adam_constructions": 0,
+        "autograd_grad_calls": 0,
+        "backward_calls": 0,
+        "clip_calls": 0,
+        "cross_entropy_calls": 0,
+        "gru_constructions": 3,
+        "gru_forwards": 117,
+        "optimizer_updates": 0,
+        "selector_calls": 116,
+        "state_restores": 6
+      },
+      "emitted_lengths": [
+        58,
+        58
+      ],
+      "generated_lengths_including_BOS": [
+        59,
+        59
+      ],
+      "mode": "every_step",
+      "statuses": [
+        "blocked",
+        "blocked"
+      ]
+    },
+    {
+      "BOS_score_max_absolute_error": 0.0,
+      "counts": {
+        "adam_constructions": 0,
+        "autograd_grad_calls": 0,
+        "backward_calls": 0,
+        "clip_calls": 0,
+        "cross_entropy_calls": 0,
+        "gru_constructions": 3,
+        "gru_forwards": 117,
+        "optimizer_updates": 0,
+        "selector_calls": 116,
+        "state_restores": 6
+      },
+      "emitted_lengths": [
+        58,
+        58
+      ],
+      "generated_lengths_including_BOS": [
+        59,
+        59
+      ],
+      "mode": "first_step",
+      "statuses": [
+        "blocked",
+        "blocked"
+      ]
+    }
+  ],
+  "primary_quality": {
+    "denominator": 4,
+    "exact_compact_content_matches": 0,
+    "exact_token_id_matches": 0,
+    "source_groups": 2,
+    "source_rows": 2,
+    "typed_candidates": 0
+  },
+  "recorded_at_utc": "2026-10-24T02:24:33.078708+00:00",
+  "recorded_compile_exec_source_hashes": 88,
+  "recovered_cases": 9,
+  "recovered_passed_phases": 27,
+  "reference_order_attribution": "Committed reference hashes in saved comparison metadata; reference identity/order attributed to recorded barrier and pinned original helper source control flow, not a new independent reference payload read or missing outer open log.",
+  "retained_bytes": 12474205,
+  "retained_files": 52,
+  "schema": "legal-ir-persistent-preflight-alternative-recovery/v1",
+  "scope": "The unselected alternative (runtime fb5 / test 885b) has nine recovered focused-test cases / 27 passed phases. Its four primary calls used genuine model scores, emitted 58 new compact IDs each and remained blocked: 0/4 typed candidates, 0/4 exact token-ID matches and 0/4 exact compact-content matches. The audit evidence is catalogued while the implementation remains unselected. Distinct source implementations and query budgets are not a matched accuracy benchmark. These results do not qualify the selected canonical runtime (9c19 / test 0e46), despite identical schema and profile strings. The alternative native job failed after pytest with return code 1 and zero job credit. Saved per-case hooks record 11 GRU constructions / 22 loads / 279 forwards / 277 selections / 1,731 prefix observations. The outer global observer, actual raw compile buffers and outer reference-open log are unavailable. 88 recorded source hashes join 194 frozen files. Reference ordering and 13 worker typed replays are attributed to the saved barrier, passed fixture and pinned source paths; recovery ran no model, search or typed-decoder replay. The original owner later sealed and released E2 storage (c80): 52 files / 12,474,205 bytes. E1 retained storage and unknown partial counts remain separate. The v07 worker received static checks only and was never executed.",
+  "scripted_EOS_control": {
+    "genuine_model_forwards": 34,
+    "learned_accuracy_credit": 0,
+    "scripted_current_scores": true
+  },
+  "selected": false,
+  "source_identity_required": true,
+  "stale_seven_path_bundle_installed": false,
+  "static_v07_worker_executed": false,
+  "status": "unselected_alternative_recovered_focused_tests",
+  "training_mask": 0
+}

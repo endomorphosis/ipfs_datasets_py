@@ -1,0 +1,226 @@
+{
+  "api": "inspect_source_head_conditioning_v1",
+  "authority": {
+    "checkpoint_compatible": false,
+    "context_permission_verified": false,
+    "full_decoder_input_verified": false,
+    "model_convergence_proven": false,
+    "proof_authority": false,
+    "runtime_ready": false,
+    "source_producer_execution_authenticated": false,
+    "source_semantics_verified": false,
+    "training_qualified": false
+  },
+  "candidates": {
+    "ipfs_datasets_py/logic/formalization/autoencoder/ir_cell_target_compatibility.py": {
+      "after": {
+        "bytes": 96130,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/source-v04/frozen/ipfs_datasets_py/logic/formalization/autoencoder/ir_cell_target_compatibility.py",
+        "sha256": "3fc17c64bfec51948f0c04adf7f21164a4d666365f73043fe1d45bbcde4cdc3a"
+      },
+      "before": {
+        "bytes": 87243,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/ir_cell_target_compatibility.py",
+        "sha256": "b07ea554203db6ef8180c4b4cd92f062c5d613f8a5b7c1752c77ff8894fc2669"
+      },
+      "original_bytes_and_AST_preserved": true
+    },
+    "tests/unit/logic/formalization/autoencoder/test_ir_cell_target_compatibility.py": {
+      "after": {
+        "bytes": 145461,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/source-v04/frozen/tests/unit/logic/formalization/autoencoder/test_ir_cell_target_compatibility.py",
+        "sha256": "91d9911a0dd8261d4850210494b85262116904d8b36ee2458f89190a0a7cf4d5"
+      },
+      "before": {
+        "bytes": 130676,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_ir_cell_target_compatibility.py",
+        "sha256": "66f827e413032b336c2b35035664f36620f49b89d28021bd6881c141086750a1"
+      },
+      "original_bytes_and_AST_preserved": true
+    }
+  },
+  "canonical_owner": "ipfs_datasets_py/logic/formalization/autoencoder/ir_cell_target_compatibility.py",
+  "contract_schema": "legal-conditioning-space-contract/v1",
+  "coverage": [
+    "producer/preprocessing/basis/full ordered transform differences, including equal-width declarations",
+    "missing lineage remains unknown and known mismatches remain visible",
+    "side inputs retain unsatisfied clauses, padding masks and raw source text",
+    "authored 8D,384D,768D,4096D metadata examples remain separate and unqualified",
+    "independent raw pins, duplicate/nonfinite/deep JSON, exact types and closed fields",
+    "raw document whitespace differs from component identity; integer/float/boolean distinctions preserved"
+  ],
+  "evaluation_gold_mask": 0,
+  "generation": {
+    "actual_compiled_source_observations": 35,
+    "actual_import_origins": 33,
+    "availability_only_unexecuted_source": "ipfs_datasets_py/ipfs_backend_router.py",
+    "captured_source_files": 36,
+    "empty_initializer_transport": {
+      "canonical": {
+        "bytes": 0,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/__init__.py",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "executable_body_empty": true,
+      "frozen_file_omitted": true,
+      "qualification_test_package_transport": "implicit_namespace"
+    },
+    "frozen_root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/source-v04/frozen",
+    "namespace_scope": {
+      "ipfs_datasets_py.logic": {
+        "genuine_fileless": false,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/source-v04/frozen/ipfs_datasets_py/logic"
+      }
+    },
+    "scope": "Original finite-worker namespace, pinned-source checks and recorded compile-source observations only; full public-package/runtime behavior is not qualified.",
+    "source_pins": 62
+  },
+  "id": "source-head-conditioning-inspection-qualified-20261025-01",
+  "installation_scope": "Qualified exact candidate bytes only; canonical byte installation and Git/Hub publication are separate observations.",
+  "limitations": [
+    "Inputs are caller declarations. Raw pins authenticate their bytes, not original artifacts, producer execution, checkpoint validity or training-space compatibility.",
+    "The comparison covers only the conditioning component. Complete contextual inputs, adapter execution and permission require their original owners.",
+    "Authored metadata examples are not native encoder/head inference, legal review, held-out model fidelity or convergence evidence.",
+    "Existing four-width vectors, checkpoints and 0/4 learned complete-output observations were not rerun or promoted.",
+    "No new registry, trainer, scheduler, proof store or default runtime is introduced. All original numerical/checkpoint owners remain unchanged."
+  ],
+  "outcomes": [
+    "adapter_required for encoder_output to decoder_input; no transform inferred or applied",
+    "refused_contract_mismatch for known same-boundary component differences",
+    "conditioning_contract_unresolved for missing critical metadata without a known mismatch",
+    "declared_contract_match only for complete exact vector declarations"
+  ],
+  "owning_test": "tests/unit/logic/formalization/autoencoder/test_ir_cell_target_compatibility.py",
+  "profile": "legal-native-head-compatibility-metadata/v1",
+  "purpose": "Compare complete independently pinned vector-contract declarations at explicit encoder-output/decoder-input boundaries before choosing a compatible source/head path.",
+  "qualification": {
+    "Lean_operations": 0,
+    "SQL_operations": 0,
+    "all_collected_nodes_and_JUnit_cases_matched": true,
+    "all_setup_call_teardown_events_passed": true,
+    "cases_passed": 30,
+    "checkpoint_restores": 0,
+    "encoder_captures": 0,
+    "function_selectors": 21,
+    "legacy_cases_rerun": 0,
+    "manual_storage_release": false,
+    "model_calls": 0,
+    "original_native_owner_cleanup_verified": true,
+    "phase_events_passed": 90,
+    "pytest_elapsed_seconds": 0.38566021295264363,
+    "retained_attempt_bytes": 65295,
+    "source_READ_closed": true,
+    "storage_released_by_original_owner": true,
+    "training_calls": 0
+  },
+  "recorded_at_utc": "2026-10-25T21:48:50.983899+00:00",
+  "remaining_work": [
+    "Bind actual encoder, preprocessing, ordered adapter and basis provenance for a selected compatible head through existing producers.",
+    "Supply independently reviewed complete source/definition/use targets and independently permitted context.",
+    "Freeze source/definition-grouped evaluation, checkpoint selection and semantic/failure/resource criteria before fitting.",
+    "Keep actual model fidelity, legal meaning, graph/Lean admission and convergence as separate qualifications."
+  ],
+  "report_schema": "legal-source-head-conditioning-inspection/v1",
+  "retained_pre_admission_abort": {
+    "completed_cases": 0,
+    "completed_phases": 0,
+    "correction": "Two dynamic source dependencies were identified before a worker started. Fresh v04 adds the exact availability-probe source and profile; original worker and all bounds remain unchanged. Unused v02/v03 controls remain preserved.",
+    "independent_review": {
+      "bytes": 1548,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/independent-pre-admission-abort-review-v01.json",
+      "sha256": "9635e1494ce57f72d03f89403f851a56d90c04e04219c068f9496a032c461cc8"
+    },
+    "native_runner_started": false,
+    "qualification_credit": false,
+    "receipt": {
+      "bytes": 1433,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/pre-admission-abort-metadata-v01.json",
+      "sha256": "9bdfa1a1b0bdbfce7b937791cddc1d660e2882c62da55c93f44c030e22d7bcfe"
+    }
+  },
+  "reviewed_inputs": [
+    {
+      "bytes": 28319,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/source-capture-v04.json",
+      "sha256": "e236cd883b72839114b767a311b93bc95d452c8bff716adce674c08c5747ab9b"
+    },
+    {
+      "bytes": 23788,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/request-metadata-v04.json",
+      "sha256": "845d3541df4e858c089379ab487d622f38cb06aebe43ca5e8ac91d668a86355b"
+    },
+    {
+      "bytes": 16242,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/manifest-metadata-v04.json",
+      "sha256": "99954a66fd0e9d68df11606e7d68d6783a36be1508fd2b53b40312cba9350e94"
+    },
+    {
+      "bytes": 428,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/controller-complete-metadata-v04.json",
+      "sha256": "200fa4f81d2b5e0fe743eec3fcb431f633c89d5d3453085af7d06de8a7917428"
+    },
+    {
+      "bytes": 7697,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/launch-metadata-v04.json",
+      "sha256": "c8ffcedbe74b75bb5e8c75f1eb23aef99b220e6635cb2c53df423533e749f373"
+    },
+    {
+      "bytes": 8974,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/attempt-metadata-v04/exports/test-result.json",
+      "sha256": "51fc35d4d80f308a029f8840f62c033592ec8c756dbe340403d425960d8aac5a"
+    },
+    {
+      "bytes": 25869,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/attempt-metadata-v04/exports/test-collection.json",
+      "sha256": "a6cbe382d8cd551a3fa7fbc14b3bbd2b6640983bf8477958b455acf6cba157ea"
+    },
+    {
+      "bytes": 6358,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/attempt-metadata-v04/exports/tests.xml",
+      "sha256": "87b082a2444d332be5f40e65054662208d648cdca90f6ed983fed219c725d3b0"
+    },
+    {
+      "bytes": 13957,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/attempt-metadata-v04/exports/import-origins.json",
+      "sha256": "6dac7ee56b82f8a27694ece1bfc4f1b22e04a0ceaeefdb53e37562a308301a07"
+    },
+    {
+      "bytes": 5883,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/root-result-review-v04.json",
+      "sha256": "9f2beb46e3863fc15351589a57b85ee970decfb716206f0e1df96144b0995b6b"
+    },
+    {
+      "bytes": 8084,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/independent-result-review-v04.json",
+      "sha256": "1be7ef811e29ac76e19d09cb00da3c71cdcb1207fa72ce6b8eee67e613726f86"
+    },
+    {
+      "bytes": 5541,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/independent-controls-capture-request-review-v04.json",
+      "sha256": "f03434094d046d0a04132767699083de4104e2ef31654dba59cc440ca74928ed"
+    },
+    {
+      "bytes": 2442,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/source-stage/source-candidate-static-review-v01.json",
+      "sha256": "47134e5e9ea1b17ec04af7878deab71cddeb75157c03c070916cfbea27e89a47"
+    },
+    {
+      "bytes": 4161,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/test-stage/independent-owning-test-static-review-v01.json",
+      "sha256": "ca4940c748c6d7a7671b7b1de905ee08df1129e1c57ea1098407aeadf9f59b0e"
+    },
+    {
+      "bytes": 18216,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/preinstallation-selected-delivery-refresh-v01.json",
+      "sha256": "5ab9fbab812413102c8ff41969b8c27caae844e880a93ec9f38bcc8e18466462"
+    },
+    {
+      "bytes": 16209,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/native-head-compatibility-v01/independent-selected-delivery-refresh-review-v01.json",
+      "sha256": "94c9484bcd06d5996793e1f632c3db2f21bfb90b91b4a888db1271680d60e50e"
+    }
+  ],
+  "schema": "legal-ir-source-head-conditioning-qualification/v1",
+  "status": "focused_authored_metadata_cases_passed",
+  "training_mask": 0
+}

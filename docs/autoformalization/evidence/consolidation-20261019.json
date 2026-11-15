@@ -1,0 +1,74 @@
+{
+  "canonical_documentation": "docs/autoformalization",
+  "canonical_source_owner": "ipfs_datasets_py/logic/autoformal",
+  "documentation": {
+    "compatibility_redirects": 58,
+    "original_bytes_archived": true,
+    "recovered_historical_guides": 7,
+    "recovered_survey_json": 3,
+    "relocated_guides": 51,
+    "static_check": "archive:documentation/static-check.json"
+  },
+  "evidence_archive": "consolidation-20261019.tar.gz",
+  "external_publication": false,
+  "installation_evidence_rule": "Consult the exact installation receipt; preparation and passing tests alone do not establish installation.",
+  "installation_receipt": "consolidation-installation-20261019.json",
+  "inventory": {
+    "artifact_directories_shallow": 470,
+    "exhaustive_experiment_audit": false,
+    "landing_paths_reconciled": 132,
+    "previous_capabilities": 54,
+    "staging_trees": 6,
+    "workspace_audit_directories_shallow": 64
+  },
+  "new_training": false,
+  "preserved": [
+    "historical source and run identities",
+    "checkpoint lineages and adverse results",
+    "existing numerical owners",
+    "other worker plan reconciliation",
+    "active control stores and leases"
+  ],
+  "qualified_port": {
+    "legal_meaning_verified": false,
+    "module": "ipfs_datasets_py/logic/autoformal/legal_full_norm_consequences_v1.py",
+    "native_lean_executed": false,
+    "qualification": {
+      "bytes": 5914,
+      "path": "docs/autoformalization/evidence/full-norm-qualification-20261019.json",
+      "root": "datasets_repository",
+      "sha256": "dce57162bdcd5694c50c9ae2de204b9c9dcecde15e11766cb03ecadfef9eb60e"
+    },
+    "source_sha256": "22d89447536ccbf1350cf039888531a07a0144c04e0d2bea821ffb392503fe81",
+    "tests": {
+      "errors": 0,
+      "existing": 1,
+      "failed": 0,
+      "new": 13,
+      "passed": 14,
+      "phase_passes": 42,
+      "skipped": 0
+    }
+  },
+  "remaining_ports": [
+    "Gated conditioning and training-state experimental profile require an explicit versioned port; training_core.py remains a historical harness.",
+    "Journal session and journal inference profiles require versioned compatibility, resume and serving ports.",
+    "Parent native candidate requires actual dependency, focused validation and installation receipts, then separate real compiler qualification.",
+    "Parent shared/incremental composition and statutory semantic/human applicability qualifications remain separate from source consolidation."
+  ],
+  "resource_closeout": {
+    "authority": "saved existing native terminal and source-wrapper exports; no live state inspection",
+    "native_lease_id": "e03c525f301d4762af0215f492c103f3",
+    "native_lease_released": true,
+    "reservation_id": "364bb299dfd54b1d921de504c16e3ff1",
+    "source_read_released": true,
+    "storage_status": "released"
+  },
+  "schema": "legal-ir-canonical-consolidation/v1",
+  "startup_refusal": {
+    "classification": "launcher_argument_refusal_before_admission",
+    "reason": "Initial CLI had a mistyped request directory; refused before source lease, resource admission or child launch. Corrected invocation used the original fresh request/attempt.",
+    "resource_reservation_created": false,
+    "tests_executed": 0
+  }
+}

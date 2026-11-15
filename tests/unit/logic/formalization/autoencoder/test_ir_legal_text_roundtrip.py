@@ -423,3 +423,557 @@ def test_joint_exactness_is_independent_of_edit_distance_budget(bundle):
         "both_exact": 1, "ir_only_exact": 1, "text_only_exact": 0, "neither_exact": 0}
     assert all(row["rendering"]["character_edit"]["status"] == "cell_budget_exhausted"
                and row["rendering"]["character_edit"]["distance"] is None for row in result["rows"])
+
+
+# Authored relational prose scoring is an explicit additional path. These cases
+# supply neither model outputs nor statutory interpretation/review evidence.
+RELATIONAL_PROSE_PROFILE = "source-withheld-typed-relational-legal-prose/v1"
+
+
+_RELATIONAL_SCORE_TEXT = (
+    "Typed legal rule: tdfol/tdfol_default.\nTypes: Object.\n"
+    "Predicate Serve: server of type Object; addressee of type Object.\n"
+    "Rule: (for every officer of type Object, (there exists person of type Object such that "
+    "(it is obligatory that (Serve holds for server: officer of type Object; "
+    "addressee: person of type Object))))."
+)
+
+
+def _relational_score_reference():
+    """Independent AST authored from role and binder expectations, not parser output."""
+    from ipfs_datasets_py.logic.syntax_core import ast as relational_ast, signatures as relational_signatures
+    obj = relational_signatures.LogicSort("Object")
+    atom = relational_ast.mk_predicate("score:serve", "Serve", (
+        relational_ast.mk_variable("score:officer", "officer", obj),
+        relational_ast.mk_variable("score:person", "person", obj)))
+    modal = relational_ast.mk_extension("score:obligation", family="tdfol", profile="tdfol_default",
+        features=("legacy.obligation", "legacy.classic_letter"), payload_schema="legacy.deontic/v1",
+        payload={"kind": "obligation", "letter": "O", "resolution": "deontic",
+                 "schema_version": "legacy.deontic/v1"}, children=(atom,))
+    root = relational_ast.mk_forall("score:all", (relational_ast.Binder("officer", obj),),
+        relational_ast.mk_exists("score:some", (relational_ast.Binder("person", obj),), modal))
+    signature = relational_signatures.LogicSignature("score:signature", family="tdfol",
+        profile="tdfol_default", sorts=(obj,),
+        symbols=(relational_signatures.declare_predicate("Serve", (obj, obj)),))
+    return relational_ast.TypedExpression("score:expression", root, signature), [
+        {"symbol": "Serve", "roles": ["server", "addressee"]}]
+
+
+def _score_relational(candidate, *, original=None):
+    expression, roles = _relational_score_reference()
+    return scorer.score_relational_legal_text_roundtrip(expression, candidate,
+        reference_argument_roles=roles, profile=RELATIONAL_PROSE_PROFILE, original_text=original)
+
+
+def test_relational_score_separates_typed_structure_normalized_prose_and_original_bytes():
+    result = _score_relational(_RELATIONAL_SCORE_TEXT,
+        original="Every officer shall serve some person.")
+    assert result["status"] == "complete_candidate_scored"
+    assert result["input_count"] == result["supported_count"] == 1
+    assert result["abstention_count"] == 0
+    assert result["normalized_candidate_prose"] == result["normalized_reference_prose"] == _RELATIONAL_SCORE_TEXT
+    measurements = result["measurements"]
+    assert measurements["complete_typed_structure_exact"] is True
+    assert measurements["canonical_prose_exact"] is True
+    assert measurements["exact_typed_expression_equal"] is False
+    assert measurements["original_utf8_exact"] is False
+    assert measurements["joint_typed_structure_original_utf8_exact"] is False
+    assert all(measurements[key] is False for key in ("semantic_equivalence_verified",
+        "source_correspondence_verified", "proof_validity_verified", "source_dependence_evaluated"))
+    assert all(value is False for value in result["authority"].values())
+    assert result["training_mask"] == result["evaluation_gold_mask"] == 0
+
+
+def test_relational_score_original_byte_measurement_is_optional_and_same_row_joint():
+    without_source = _score_relational(_RELATIONAL_SCORE_TEXT)
+    assert without_source["measurements"]["original_utf8_exact"] is None
+    assert without_source["measurements"]["joint_typed_structure_original_utf8_exact"] is None
+    with_source = _score_relational(_RELATIONAL_SCORE_TEXT, original=_RELATIONAL_SCORE_TEXT)
+    assert with_source["measurements"]["original_utf8_exact"] is True
+    assert with_source["measurements"]["joint_typed_structure_original_utf8_exact"] is True
+    mutated = _RELATIONAL_SCORE_TEXT.replace("obligatory", "permitted")
+    wrong_structure_exact_bytes = _score_relational(mutated, original=mutated)
+    assert wrong_structure_exact_bytes["measurements"]["original_utf8_exact"] is True
+    assert wrong_structure_exact_bytes["measurements"]["complete_typed_structure_exact"] is False
+    assert wrong_structure_exact_bytes["measurements"]["canonical_prose_exact"] is False
+    assert wrong_structure_exact_bytes["measurements"]["joint_typed_structure_original_utf8_exact"] is False
+
+
+@pytest.mark.parametrize("candidate", ["", "   ", "An officer must serve a person.",
+    _RELATIONAL_SCORE_TEXT + " Further obligations apply.",
+    _RELATIONAL_SCORE_TEXT.replace("addressee: person", "server: person")])
+def test_relational_score_whole_input_abstentions_remain_in_denominator(candidate):
+    result = _score_relational(candidate, original=candidate)
+    assert result["input_count"] == result["abstention_count"] == 1
+    assert result["supported_count"] == 0
+    assert result["status"] == "unsupported_candidate_abstained"
+    assert result["normalized_candidate_prose"] is None
+    assert result["measurements"]["complete_typed_structure_exact"] is False
+    assert result["measurements"]["canonical_prose_exact"] is False
+    assert result["measurements"]["original_utf8_exact"] is True
+    assert result["measurements"]["joint_typed_structure_original_utf8_exact"] is False
+
+
+def test_relational_score_never_passes_original_source_or_reference_to_inverse(monkeypatch):
+    from ipfs_datasets_py.logic.legal_ir import extended_compiler
+    observed = []
+    original_compile = extended_compiler.compile_relational
+    def observe(text, *, profile):
+        observed.append((text, profile))
+        return original_compile(text, profile=profile)
+    monkeypatch.setattr(extended_compiler, "compile_relational", observe)
+    sentinel = "PRIVATE original UTF8 wording — unavailable to the inverse."
+    result = _score_relational(_RELATIONAL_SCORE_TEXT, original=sentinel)
+    assert observed == [(_RELATIONAL_SCORE_TEXT, RELATIONAL_PROSE_PROFILE)]
+    assert result["original_source_available_to_inverse"] is False
+    assert result["reference_target_available_to_inverse"] is False
+    assert sentinel not in result["normalized_candidate_prose"]
+    assert sentinel not in result["normalized_reference_prose"]
+
+
+@pytest.mark.parametrize("value", [None, 7, True])
+def test_relational_score_requires_explicit_text_candidate(value):
+    with pytest.raises(scorer.LegalTextRoundTripError):
+        _score_relational(value)
+
+
+@pytest.mark.parametrize("fault, message", [
+    ("candidate_surrogate", "valid UTF8 candidate and optional original text required"),
+    ("original_surrogate", "valid UTF8 candidate and optional original text required"),
+    ("original_bool", "optional original source text required"),
+])
+def test_relational_score_input_guards_run_before_any_reference_realization(monkeypatch, fault, message):
+    from ipfs_datasets_py.logic.legal_ir import extended_decompiler
+    def forbidden_realization(*args, **kwargs):
+        raise AssertionError("reference realization must follow scorer input guards")
+    monkeypatch.setattr(extended_decompiler, "decompile_relational", forbidden_realization)
+    candidate = _RELATIONAL_SCORE_TEXT + "\ud800" if fault == "candidate_surrogate" else _RELATIONAL_SCORE_TEXT
+    original = {"candidate_surrogate": None, "original_surrogate": "\ud800", "original_bool": True}[fault]
+    with pytest.raises(scorer.LegalTextRoundTripError, match=message):
+        _score_relational(candidate, original=original)
+
+
+@pytest.mark.parametrize("changed", ["governing_context", "definition_uses"])
+def test_relational_score_detects_changed_governing_fields_with_identical_prose(changed):
+    reference = {"governing_context": {"valid_from_utc": "2030-01-01T00:00:00Z"},
+        "definition_uses": [{"definition_unit_id": "fixture:definition-A", "applicability": "governing"}]}
+    candidate = {**reference, changed: {
+        "governing_context": {"valid_from_utc": "2030-04-01T00:00:00Z"},
+        "definition_uses": [{"definition_unit_id": "fixture:definition-B", "applicability": "governing"}],
+    }[changed]}
+    expression, roles = _relational_score_reference()
+    result = scorer.score_relational_legal_text_roundtrip(expression, _RELATIONAL_SCORE_TEXT,
+        reference_argument_roles=roles, profile=RELATIONAL_PROSE_PROFILE, original_text=_RELATIONAL_SCORE_TEXT,
+        reference_governing_fields=reference, candidate_governing_fields=candidate)
+    assert result["measurements"]["complete_typed_structure_exact"] is True
+    assert result["measurements"]["canonical_prose_exact"] is True
+    assert result["measurements"]["original_utf8_exact"] is True
+    assert result["measurements"]["semantic_equivalence_verified"] is False
+    assert result["governing_fields_comparison"] == {
+        "reference": reference, "candidate": candidate,
+        "measurements": {"governing_context_exact": changed != "governing_context",
+                         "definition_uses_exact": changed != "definition_uses"},
+        "authority": {"applicability_verified": False, "governing_use_verified": False},
+    }
+
+
+def test_relational_score_governing_fields_never_reach_renderer_or_inverse(monkeypatch):
+    from ipfs_datasets_py.logic.legal_ir import extended_compiler, extended_decompiler
+    compile_relational = extended_compiler.compile_relational
+    decompile_relational = extended_decompiler.decompile_relational
+    inverse_inputs, renderer_inputs = [], []
+
+    def observe_inverse(text, *, profile):
+        inverse_inputs.append((text, profile))
+        return compile_relational(text, profile=profile)
+
+    def observe_renderer(expression, *, argument_roles, profile):
+        renderer_inputs.append((expression, argument_roles, profile))
+        return decompile_relational(expression, argument_roles=argument_roles, profile=profile)
+
+    monkeypatch.setattr(extended_compiler, "compile_relational", observe_inverse)
+    monkeypatch.setattr(extended_decompiler, "decompile_relational", observe_renderer)
+    expression, roles = _relational_score_reference()
+    reference = {"governing_context": {"instrument_id": "fixture:reference-only-instrument"},
+        "definition_uses": [{"definition_unit_id": "fixture:reference-only-definition"}]}
+    result = scorer.score_relational_legal_text_roundtrip(expression, _RELATIONAL_SCORE_TEXT,
+        reference_argument_roles=roles, profile=RELATIONAL_PROSE_PROFILE,
+        original_text="Original source appears only in the UTF-8 score.", reference_governing_fields=reference)
+    assert inverse_inputs == [(_RELATIONAL_SCORE_TEXT, RELATIONAL_PROSE_PROFILE)]
+    assert renderer_inputs and all(decompile_relational(expression, argument_roles=roles, profile=profile)
+                                   == _RELATIONAL_SCORE_TEXT for expression, roles, profile in renderer_inputs)
+    assert result["normalized_candidate_prose"] == result["normalized_reference_prose"] == _RELATIONAL_SCORE_TEXT
+    assert result["governing_fields_comparison"]["candidate"] == {}
+    assert result["governing_fields_comparison"]["measurements"] == {
+        "governing_context_exact": False, "definition_uses_exact": False,
+    }
+
+
+def test_relational_score_governing_observation_cannot_turn_abstention_into_success():
+    expression, roles = _relational_score_reference()
+    declared = {"definition_uses": None}
+    result = scorer.score_relational_legal_text_roundtrip(expression, "",
+        reference_argument_roles=roles, profile=RELATIONAL_PROSE_PROFILE,
+        reference_governing_fields=declared, candidate_governing_fields=declared)
+    assert result["status"] == "unsupported_candidate_abstained"
+    assert result["input_count"] == result["abstention_count"] == 1
+    assert result["supported_count"] == 0
+    assert result["measurements"]["complete_typed_structure_exact"] is False
+    comparison = result["governing_fields_comparison"]
+    assert comparison["reference"] == comparison["candidate"] == declared
+    assert comparison["measurements"] == {"governing_context_exact": None, "definition_uses_exact": True}
+    assert not any(comparison["authority"].values())
+    assert result["training_mask"] == result["evaluation_gold_mask"] == 0
+
+
+def test_relational_score_governing_measurements_are_explicitly_opt_in():
+    assert "governing_fields_comparison" not in _score_relational(_RELATIONAL_SCORE_TEXT)
+
+
+def _recompiled(candidate=None):
+    return {"status": "recompiled", "candidate_ir": clone(rule() if candidate is None else candidate),
+            "reason": None}
+
+
+
+def test_prose_recompilation_is_unmeasured_and_old_shape_stays_default(bundle):
+    result = score(bundle, render_canonical=True, renderer=render_first)
+    assert "prose_recompilation" not in result
+    assert all("recompilation" not in row for row in result["rows"])
+
+
+
+@pytest.mark.parametrize("options", [
+    {"recompile_rendered": "yes"},
+    {"recompiler": lambda text, request: _recompiled()},
+    {"recompile_rendered": True},
+    {"recompile_rendered": True, "recompiler": lambda text, request: _recompiled()},
+    {"render_canonical": True, "recompile_rendered": True, "recompiler": False},
+])
+def test_prose_recompilation_requires_explicit_complete_selection(bundle, options):
+    with pytest.raises(scorer.LegalTextRoundTripError, match="prose recompilation"):
+        score(bundle, **options)
+
+
+
+def test_recompiler_receives_only_selected_prose_and_constant_non_source_id(bundle):
+    for index, row in enumerate(bundle["corpus"]["rows"]):
+        row["source_text"] = "Hidden authored source wording " + str(index)
+        row["source_sha256"] = hashlib.sha256(row["source_text"].encode()).hexdigest()
+    bundle["repin"]()
+    before = raw((bundle["inputs"], bundle["report"], bundle["corpus"]))
+    calls = []
+    prose = "Registrar must approve notice."
+
+    def recompiler(*args, **kwargs):
+        assert kwargs == {}
+        assert args == (prose, "legal-selected-prose-recompile")
+        assert all(row["id"] not in str(args) and row["source_text"] not in str(args)
+                   for row in bundle["corpus"]["rows"])
+        assert not any(isinstance(arg, (dict, list)) for arg in args)
+        calls.append(args)
+        return _recompiled()
+
+    result = score(bundle, render_canonical=True,
+        renderer=lambda predicted, request: {"status": "rendered", "text": prose, "reason": None},
+        recompile_rendered=True, recompiler=recompiler)
+    metric = result["prose_recompilation"]
+    assert len(calls) == 2
+    assert metric["callback_calls"] == metric["attempted_rows"] == 2
+    assert metric["counts"]["exact_predicted_ir"] == metric["counts"]["exact_reference_ir"] == 2
+    assert metric["rates"] == {"exact_predicted_ir": 1.0, "exact_reference_ir": 1.0}
+    assert result["counts"]["exact_original_utf8"] == 0
+    assert result["counts"]["joint_ir_original_utf8_exact"] == 0
+    assert result["operational_complete"]
+    assert raw((bundle["inputs"], bundle["report"], bundle["corpus"])) == before
+    for row in result["rows"]:
+        rerun = row["recompilation"]
+        assert rerun["input_text_sha256"] == hashlib.sha256(prose.encode()).hexdigest()
+        assert rerun["output_ir"] == rule()
+        assert rerun["output_ir_sha256"] == digest(rule())
+    assert metric["scope"] == "single_rule_CanonicalRoundTripIR@1_seven_facet_syntax_only"
+    assert not metric["callback_behavior_authenticated"]
+    assert not metric["hidden_source_or_target_copying_ruled_out"]
+    assert not metric["native_compiler_or_model_execution_authenticated"]
+    assert not metric["proof_authority"]
+    assert not metric["semantic_correctness_qualified"]
+    assert all(metric[key] is None for key in ("complete_typed_AST_fidelity",
+        "semantic_equivalence", "legal_source_faithfulness", "proof_validity"))
+
+
+
+@pytest.mark.parametrize("facet,value", [
+    ("modality", "P"),
+    ("actor", "court"),
+    ("action", "publish"),
+    ("object", "record"),
+    ("conditions", ["licensed"]),
+    ("exceptions", ["emergency"]),
+    ("temporal", ["on_notice"]),
+])
+def test_prose_cycle_detects_complete_supported_canonical_facet_mutations(bundle, facet, value):
+    changed = rule()
+    changed["rules"][0][facet] = value
+    result = score(bundle, render_canonical=True, renderer=render_first,
+        recompile_rendered=True, recompiler=lambda text, request: _recompiled(changed))
+    metric = result["prose_recompilation"]
+    assert result["counts"]["exact_ir"] == 2
+    assert metric["counts"]["recompiled"] == 2
+    assert metric["counts"]["exact_predicted_ir"] == metric["counts"]["exact_reference_ir"] == 0
+    assert metric["facets_predicted"][facet] == {"matched": 0, "total": 2}
+    assert metric["facets_reference"][facet] == {"matched": 0, "total": 2}
+    assert all(row["recompilation"]["output_ir"] == changed for row in result["rows"])
+    assert metric["semantic_equivalence"] is None
+
+
+
+def test_exact_cycle_does_not_make_the_source_translation_reference_correct(bundle):
+    changed = rule()
+    changed["rules"][0]["modality"] = "P"
+    for prediction in bundle["report"]["rows"]:
+        prediction["candidate_ir"] = clone(changed)
+    result = score(bundle, render_canonical=True, renderer=render_first,
+        recompile_rendered=True, recompiler=lambda text, request: _recompiled(changed))
+    metric = result["prose_recompilation"]
+    assert result["counts"]["exact_ir"] == 0
+    assert metric["counts"]["exact_predicted_ir"] == 2
+    assert metric["counts"]["exact_reference_ir"] == 0
+    assert metric["rates"] == {"exact_predicted_ir": 1.0, "exact_reference_ir": 0.0}
+    assert metric["legal_source_faithfulness"] is None
+
+
+
+@pytest.mark.parametrize("semantics,left,right", [
+    ("quantifier_and_binder_scope",
+     "Every agency must notify one clerk.", "One clerk must receive notice from every agency."),
+    ("observed_compliance",
+     "The agency must notify the clerk.", "The agency notified the clerk."),
+    ("nested_exception_scope",
+     "Every agency must file unless each clerk objects.", "Every agency must file unless one clerk objects."),
+    ("calendar_interpretation",
+     "The agency must file within ten calendar days.", "The agency must file within ten business days."),
+    ("legal_effective_dates",
+     "The duty is effective on 1 January 2024.", "The duty is effective on 1 January 2025."),
+    ("typed_cardinality",
+     "The agency must appoint exactly three members.", "The agency must appoint at least three members."),
+    ("governing_definition_dependencies",
+     "The governing definition is unavailable.", "Two conflicting definitions may govern."),
+])
+def test_unrepresented_norm_semantics_stay_explicitly_unsupported(bundle, semantics, left, right):
+    # These are authored unsupported-language controls, not a parser or teacher.
+    # The narrow canonical schema must never manufacture a full-norm score for
+    # either member of a pair by stashing its meaning inside an opaque atom.
+    render_calls, recompile_calls = [], []
+
+    def renderer(predicted, request):
+        text = (left, right)[len(render_calls)]
+        render_calls.append(text)
+        return {"status": "rendered", "text": text, "reason": None}
+
+    def recompiler(text, request):
+        assert text in (left, right)
+        recompile_calls.append(text)
+        return {"status": "unsupported", "candidate_ir": None, "reason": semantics}
+
+    result = score(bundle, render_canonical=True, renderer=renderer,
+        recompile_rendered=True, recompiler=recompiler)
+    metric = result["prose_recompilation"]
+    assert render_calls == recompile_calls == [left, right]
+    assert semantics in metric["unsupported_semantics"]
+    assert metric["counts"]["unsupported"] == 2
+    assert metric["counts"]["exact_predicted_ir"] == metric["counts"]["exact_reference_ir"] == 0
+    assert not result["operational_complete"]
+    assert metric["rates"]["exact_predicted_ir"] == 0
+    assert all(row["recompilation"]["status"] == "unsupported"
+        and row["recompilation"]["output_ir"] is None for row in result["rows"])
+    assert metric["semantic_equivalence"] is None
+    assert result["proof_authority"] is False
+
+
+
+@pytest.mark.parametrize("field,value", [
+    ("binders", [{"variable": "x", "type": "Person"}]),
+    ("exception_scope", {"inside": "forall"}),
+    ("calendar", {"kind": "business_days", "amount": 10}),
+    ("effective_date", "2024-01-01"),
+    ("cardinality", {"minimum": 3}),
+    ("governing_definition", {"definition_id": "fictional:def:A"}),
+    ("observed_compliance", True),
+])
+def test_full_typed_or_context_fields_cannot_be_silently_dropped_into_canonical_IR(bundle, field, value):
+    unsupported = rule()
+    unsupported["rules"][0][field] = value
+    result = score(bundle, render_canonical=True, renderer=render_first,
+        recompile_rendered=True, recompiler=lambda text, request: _recompiled(unsupported))
+    metric = result["prose_recompilation"]
+    assert metric["counts"]["invalid"] == 2
+    assert metric["counts"]["recompiled"] == 0
+    assert metric["counts"]["exact_predicted_ir"] == 0
+    assert all(row["recompilation"]["output_ir"] is None for row in result["rows"])
+
+
+
+@pytest.mark.parametrize("failure", ["missing", "duplicate", "invalid_prediction", "renderer_refused"])
+def test_prose_recompile_denominator_retains_unavailable_rows_without_callback(bundle, failure):
+    if failure == "missing":
+        bundle["report"]["rows"].pop()
+    elif failure == "duplicate":
+        bundle["report"]["rows"].append(clone(bundle["report"]["rows"][1]))
+    elif failure == "invalid_prediction":
+        bundle["report"]["rows"][1]["candidate_ir"] = {}
+    calls = []
+
+    def recompile(text, request):
+        calls.append(text)
+        return _recompiled()
+
+    # The recompile calls happen after all rendering. A renderer's own count is
+    # kept separately to exercise the second-row refusal.
+    render_calls = []
+
+    def counted_render(predicted, request):
+        render_calls.append(request)
+        if failure == "renderer_refused" and len(render_calls) == 2:
+            return {"status": "refused", "text": None, "reason": "fictional refusal"}
+        return render_first(predicted, request)
+
+    result = score(bundle, render_canonical=True, renderer=counted_render,
+        recompile_rendered=True, recompiler=recompile)
+    metric = result["prose_recompilation"]
+    assert metric["attempted_rows"] == 2
+    assert metric["callback_calls"] == len(calls) == 1
+    assert metric["counts"]["recompiled"] == metric["counts"]["unavailable"] == 1
+    assert metric["rates"]["exact_predicted_ir"] == metric["rates"]["exact_reference_ir"] == .5
+    assert result["rows"][1]["recompilation"]["input_text_sha256"] is None
+
+
+
+@pytest.mark.parametrize("status", ["abstained", "unsupported"])
+def test_prose_recompiler_abstention_and_unsupported_are_distinct(bundle, status):
+    result = score(bundle, render_canonical=True, renderer=render_first,
+        recompile_rendered=True,
+        recompiler=lambda text, request: {"status": status, "candidate_ir": None, "reason": "fictional"})
+    metric = result["prose_recompilation"]
+    assert metric["counts"][status] == 2
+    assert metric["counts"]["error"] == metric["counts"]["invalid"] == 0
+    assert metric["counts"]["exact_predicted_ir"] == 0
+
+
+
+def test_prose_recompiler_errors_are_sanitized_and_preserve_IR_metrics(bundle):
+    def broken(text, request):
+        raise RuntimeError("sensitive provider text must not enter the result")
+    result = score(bundle, render_canonical=True, renderer=render_first,
+        recompile_rendered=True, recompiler=broken)
+    assert result["counts"]["exact_ir"] == 2
+    assert result["prose_recompilation"]["counts"]["error"] == 2
+    assert all(row["recompilation"]["reason"] == "RuntimeError" for row in result["rows"])
+    assert "sensitive provider text" not in str(result)
+
+
+
+@pytest.mark.parametrize("error", [KeyboardInterrupt, SystemExit])
+def test_prose_recompiler_process_control_exceptions_propagate(bundle, error):
+    def stop(text, request):
+        raise error()
+    with pytest.raises(error):
+        score(bundle, render_canonical=True, renderer=render_first,
+            recompile_rendered=True, recompiler=stop)
+
+
+
+@pytest.mark.parametrize("output", [
+    None,
+    {"status": "recompiled", "candidate_ir": rule(), "reason": None, "proof_valid": True},
+    {"status": "unsupported", "candidate_ir": rule(), "reason": "cannot"},
+    {"status": "abstained", "candidate_ir": None, "reason": None},
+    {"status": "complete", "candidate_ir": rule(), "reason": None},
+    {"status": "recompiled", "candidate_ir": {"rules": [rule()["rules"][0], rule()["rules"][0]]}, "reason": None},
+])
+def test_malformed_or_out_of_profile_recompiler_outputs_receive_no_credit(bundle, output):
+    result = score(bundle, render_canonical=True, renderer=render_first,
+        recompile_rendered=True, recompiler=lambda text, request: clone(output))
+    metric = result["prose_recompilation"]
+    assert metric["counts"]["invalid"] == 2
+    assert metric["counts"]["recompiled"] == 0
+    assert metric["counts"]["exact_predicted_ir"] == 0
+
+
+
+def test_recompiled_output_is_detached_from_callback_reuse(bundle):
+    shared = rule()
+    calls = []
+
+    def callback(text, request):
+        if calls:
+            shared["rules"][0]["actor"] = "court"
+        calls.append(text)
+        return {"status": "recompiled", "candidate_ir": shared, "reason": None}
+
+    result = score(bundle, render_canonical=True, renderer=render_first,
+        recompile_rendered=True, recompiler=callback)
+    first, second = [row["recompilation"] for row in result["rows"]]
+    assert first["output_ir"] == rule()
+    assert first["exact_predicted_ir"] is True
+    assert second["output_ir"]["rules"][0]["actor"] == "court"
+    assert second["exact_predicted_ir"] is False
+    assert result["prose_recompilation"]["rates"]["exact_predicted_ir"] == .5
+
+
+
+def test_corpus_endpoint_is_rechecked_after_prose_recompiler_callback(bundle):
+    def callback(text, request):
+        bundle["path"].write_bytes(b"changed by authored callback")
+        return _recompiled()
+    with pytest.raises(scorer.LegalTextRoundTripError):
+        score(bundle, render_canonical=True, renderer=render_first,
+            recompile_rendered=True, recompiler=callback)
+
+
+def test_relational_score_refuses_live_role_change_that_falsifies_prose_equality(monkeypatch):
+    from ipfs_datasets_py.logic.legal_ir import extended_compiler
+    expression,roles=_relational_score_reference()
+    candidate=_RELATIONAL_SCORE_TEXT.replace('server','sender').replace('addressee','recipient')
+    original=extended_compiler.compile_relational
+    def mutate_reference(text,*,profile):
+        parsed=original(text,profile=profile)
+        roles[0]['roles'][:]=parsed[1][0]['roles']
+        return parsed
+    monkeypatch.setattr(extended_compiler,'compile_relational',mutate_reference)
+    with pytest.raises(scorer.LegalTextRoundTripError,match='changed during'):
+        report=scorer.score_relational_legal_text_roundtrip(expression,candidate,
+            reference_argument_roles=roles,profile=RELATIONAL_PROSE_PROFILE)
+        # The unfenced implementation returns this contradictory witness.
+        assert report['measurements']['canonical_prose_exact'] is True
+        assert report['normalized_reference_prose']!=report['normalized_candidate_prose']
+        print(json.dumps(dict(false_canonical_prose_exact=report['measurements']['canonical_prose_exact'],
+            normalized_reference_prose=report['normalized_reference_prose'],normalized_candidate_prose=report['normalized_candidate_prose'])))
+
+
+@pytest.mark.parametrize('which',['reference','candidate'])
+def test_relational_score_refuses_governing_observation_change_during_inverse(monkeypatch,which):
+    from ipfs_datasets_py.logic.legal_ir import extended_compiler
+    expression,roles=_relational_score_reference()
+    reference={'governing_context':{'instrument_id':'fixture:one'},'definition_uses':[]}
+    candidate=clone(reference);original=extended_compiler.compile_relational
+    def mutate_observation(text,*,profile):
+        (reference if which=='reference' else candidate)['governing_context']['instrument_id']='fixture:changed-during-inverse'
+        return original(text,profile=profile)
+    monkeypatch.setattr(extended_compiler,'compile_relational',mutate_observation)
+    with pytest.raises(scorer.LegalTextRoundTripError,match='changed during'):
+        scorer.score_relational_legal_text_roundtrip(expression,_RELATIONAL_SCORE_TEXT,
+            reference_argument_roles=roles,profile=RELATIONAL_PROSE_PROFILE,
+            reference_governing_fields=reference,candidate_governing_fields=candidate)
+
+
+def test_relational_score_reference_inputs_are_detached_before_rendering(monkeypatch):
+    from ipfs_datasets_py.logic.legal_ir import extended_decompiler
+    expression,roles=_relational_score_reference();original=extended_decompiler.decompile_relational;seen=[]
+    def observe(value,*,argument_roles,profile):
+        seen.append((value is expression,argument_roles is roles))
+        return original(value,argument_roles=argument_roles,profile=profile)
+    monkeypatch.setattr(extended_decompiler,'decompile_relational',observe)
+    report=scorer.score_relational_legal_text_roundtrip(expression,_RELATIONAL_SCORE_TEXT,
+        reference_argument_roles=roles,profile=RELATIONAL_PROSE_PROFILE)
+    assert report['measurements']['canonical_prose_exact'] is True
+    assert seen and all(not original_ast and not original_roles for original_ast,original_roles in seen)

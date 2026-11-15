@@ -502,3 +502,155 @@ def execute_prepared_campaign_training(registry, request_artifact, *, max_new_ba
 
 __all__ = ["CampaignOwnedTrainingError", "prepare_campaign_training", "inspect_campaign_training",
            "execute_prepared_campaign_training"]
+
+
+# Fixed F18 sibling; the registered v8 preparation contract above is unchanged.
+F18_REQUEST_SCHEMA = "autoencoder-campaign-owned-f18-request/v1"
+F18_MAX_REQUEST_BYTES = 1024 * 1024
+F18_RESOURCE_FIELDS = frozenset({"ledger_path", "roots", "storage_bytes", "memory_mb", "cpu_slots",
+    "child_process_slots", "require_existing_ledger", "scheduler_state_path", "expected_scheduler_policy_sha256"})
+F18_EXECUTION_FIELDS = frozenset({"max_workers", "timeout_seconds", "poll_seconds"})
+
+
+def _f18_owner():
+    from . import autoencoder_campaign_f18_conditions_v1 as owner
+    return owner
+
+
+def _f18_sources():
+    """Boundary source commitments, not whole-package runtime attestation."""
+    root = Path(__file__).resolve().parents[3]
+    result = {}
+    for filename in ("autoencoder_campaign_owned_training.py", "autoencoder_campaign_owned_execution.py",
+            "autoencoder_campaign_f18_conditions_v1.py", "autoencoder_campaign_process.py",
+            "autoencoder_campaign_process_worker.py", "autoencoder_daemon_resources.py",
+            "autoencoder_daemon_operation_journal.py"):
+        path = _safe_path(Path(__file__).with_name(filename))
+        _require(root in path.parents, "F18 owner source is outside this checkout")
+        raw = coordinator._read_bounded(path, 4 * 1024 * 1024)
+        result[str(path)] = {"bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest()}
+    return result
+
+
+def _f18_resource_policy(value):
+    import math
+    _require(type(value) is dict and set(value) == F18_RESOURCE_FIELDS, "closed F18 resource policy required")
+    for key in ("ledger_path", "scheduler_state_path"):
+        codec._path(value[key], key)
+        _safe_path(value[key])
+    _require(value["require_existing_ledger"] is True, "F18 requires the existing resource ledger")
+    _require(type(value["expected_scheduler_policy_sha256"]) is str
+             and len(value["expected_scheduler_policy_sha256"]) == 64
+             and all(x in "0123456789abcdef" for x in value["expected_scheduler_policy_sha256"]),
+             "invalid scheduler policy commitment")
+    _require(type(value["roots"]) is list and 1 <= len(value["roots"]) <= 64, "invalid F18 resource roots")
+    roots = []
+    for item in value["roots"]:
+        codec._path(item, "resource root")
+        path = _safe_path(item, directory=True)
+        _require(not any(path == old or path in old.parents or old in path.parents for old in roots),
+                 "F18 resource roots overlap")
+        roots.append(path)
+    for key, maximum in (("storage_bytes", codec.MAX_STORAGE_BYTES), ("memory_mb", codec.MAX_MEMORY_MB),
+                         ("cpu_slots", codec.MAX_CPU_SLOTS)):
+        _require(type(value[key]) is int and 1 <= value[key] <= maximum, "invalid F18 " + key)
+    _require(type(value["child_process_slots"]) is int and value["child_process_slots"] == 1,
+             "fixed F18 requires one child process slot")
+    return roots
+
+
+def _f18_execution_policy(value):
+    import math
+    _require(type(value) is dict and set(value) == F18_EXECUTION_FIELDS, "closed F18 execution policy required")
+    _require(type(value["max_workers"]) is int and value["max_workers"] == 1, "fixed F18 requires one worker")
+    for key, maximum in (("timeout_seconds", 600), ("poll_seconds", 1)):
+        _require(type(value[key]) in (int, float) and math.isfinite(value[key])
+                 and 0 < value[key] <= maximum, "invalid F18 " + key)
+    _require(value["poll_seconds"] <= value["timeout_seconds"], "F18 polling exceeds its wall bound")
+
+
+def _f18_job_artifact(value):
+    _require(type(value) is dict and set(value) == {"path", "bytes", "sha256"}, "closed F18 job artifact required")
+    codec._path(value["path"], "job artifact")
+    _require(type(value["bytes"]) is int and 0 < value["bytes"] <= F18_MAX_REQUEST_BYTES,
+             "F18 job metadata exceeds bound")
+    _require(type(value["sha256"]) is str and len(value["sha256"]) == 64
+             and all(x in "0123456789abcdef" for x in value["sha256"]), "invalid F18 job hash")
+    _, raw = _read_bound(_safe_path(value["path"]),
+        {"bytes": value["bytes"], "sha256": value["sha256"]}, retain=True)
+    return _f18_owner().F18JobSpec.from_dict(coordinator._read_json(raw))
+
+
+def f18_conditions_journal_path(output_root):
+    """One journal for a literal output path, independent of mutable request metadata."""
+    output = _safe_path(codec._path(str(output_root), "output root"), directory=True, missing=True)
+    return output.parent / (".f18-owned-" + _digest({"output_directory": str(output)}) + ".json")
+
+
+def _f18_copy_request(value):
+    # Keep the older v8 codec unchanged while bounding this smaller fixed form.
+    codec._ordinary(value)
+    encoder = json.JSONEncoder(ensure_ascii=True, sort_keys=True, separators=(",", ":"), allow_nan=False)
+    chunks, count = [], 0
+    for chunk in encoder.iterencode(value):
+        count += len(chunk)
+        _require(count <= F18_MAX_REQUEST_BYTES, "F18 request exceeds bound")
+        chunks.append(chunk)
+    return json.loads("".join(chunks))
+
+
+def _f18_request(value, *, expected_sha256=None):
+    _require(type(value) is dict and set(value) == {"schema_version", "job_artifact", "resource_policy", "journal_path",
+                             "output_root", "execution_policy"}
+             and value["schema_version"] == F18_REQUEST_SCHEMA, "closed fixed F18 request required")
+    request = _f18_copy_request(value)
+    raw = canonical_json_bytes(request)
+    _require(len(raw) <= F18_MAX_REQUEST_BYTES, "F18 request exceeds bound")
+    digest = hashlib.sha256(raw).hexdigest()
+    if expected_sha256 is not None:
+        _require(type(expected_sha256) is str and digest == expected_sha256, "F18 request commitment differs")
+    roots = _f18_resource_policy(request["resource_policy"])
+    _f18_execution_policy(request["execution_policy"])
+    spec = _f18_job_artifact(request["job_artifact"])
+    output = _safe_path(codec._path(request["output_root"], "output root"), directory=True, missing=True)
+    journal = _safe_path(codec._path(request["journal_path"], "journal path"), missing=True)
+    _safe_path(output.parent, directory=True)
+    _safe_path(journal.parent, directory=True)
+    _require(str(output) == spec.output_directory, "F18 output root differs from job")
+    _require(journal == f18_conditions_journal_path(output), "F18 journal must match deterministic output binding")
+    _require(output != journal and output not in journal.parents, "F18 journal must be outside output")
+    _require(any(output == root or root in output.parents for root in roots)
+             and any(journal == root or root in journal.parents for root in roots),
+             "F18 mutable paths are outside charged roots")
+    document = spec.to_dict()
+    protected = [Path(request["job_artifact"]["path"]), Path(request["resource_policy"]["ledger_path"]),
+                 Path(request["resource_policy"]["scheduler_state_path"]),
+                 *(Path(document[key]["path"]) for key in ("prepared_inputs", "initial_checkpoint")),
+                 *(Path(item["path"]) for item in document["physical_assets"])]
+    if document["runtime_contract"] is not None:
+        protected.append(Path(document["runtime_contract"]["path"]))
+    _require(all(path != journal and path != output and output not in path.parents for path in protected),
+             "F18 control/output overlaps immutable inputs or owners")
+    return request, digest, spec
+
+
+def prepare_f18_conditions_training(*, job_artifact, resource_policy, journal_path, output_root, execution_policy):
+    """Return bounded data-only control metadata under caller-admitted filesystem work.
+
+    Only job metadata and control-source files are read. No payload hydration,
+    journal/ledger write, native resource admission, registry or worker occurs.
+    """
+    sources = _f18_sources()
+    request, digest, spec = _f18_request({"schema_version": F18_REQUEST_SCHEMA,
+        "job_artifact": job_artifact, "resource_policy": resource_policy,
+        "journal_path": str(journal_path), "output_root": str(output_root), "execution_policy": execution_policy})
+    _require(_same(sources, _f18_sources()), "F18 preparation sources changed")
+    return {"request": request, "request_sha256": digest, "job_spec_sha256": spec.canonical_sha256,
+            "metadata_only": True, "native_execution_verified": False, "native_purpose_admitted": False,
+            **{name: False for name in _f18_owner().FALSE_FIELDS}}
+
+
+def execute_prepared_f18_conditions_training(request, *, expected_request_sha256):
+    """Lazily enter the fixed original-owner executor; data preparation is not a grant."""
+    from .autoencoder_campaign_owned_execution import execute_prepared_f18_conditions_training as execute
+    return execute(request, expected_request_sha256=expected_request_sha256)

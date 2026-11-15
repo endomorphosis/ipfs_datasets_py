@@ -1,0 +1,203 @@
+{
+  "actual_terminal_chunk": "2639ea",
+  "actual_terminal_exit_code": 0,
+  "actual_tool_handle": 61170,
+  "cache": {
+    "current_fresh_disk_round_trip": true,
+    "native_processes_during_reuse_or_mismatch": 0,
+    "record_cid": "bafkreidd5zbee67ekzlu4isimhus2xa7svk6ftuhqiryogbobhhybrsu44",
+    "rejected_artifact_facets": [
+      "source",
+      "obligation",
+      "assumptions"
+    ],
+    "rejected_context_facets": [
+      "declaration",
+      "proposition",
+      "toolchain",
+      "backend-profile",
+      "interpretation",
+      "dependency"
+    ],
+    "source_profile_obligation_lookup_mismatches_rejected": true
+  },
+  "credential_pattern_scan_hits": [],
+  "custody": {
+    "Source_admission_seconds": 60,
+    "automatic_retry": false,
+    "budgets_changed": false,
+    "errors": [],
+    "final_attempt_bytes": 484861,
+    "genuine_original_wait": true,
+    "git_pin_count": 12,
+    "initial_total_seconds": 420,
+    "native_lease_id": "2e07dcf5c59a47adb4916c21f7466534",
+    "native_lease_released": true,
+    "original_owner_returncode": 0,
+    "owner_and_all_observed_process_identities_gone": true,
+    "parallel_owner_created": false,
+    "parent_Source_closed_seconds": 158.24966993182898,
+    "positive_acceptance_before_deadline": true,
+    "productive_seconds": 300,
+    "retained_storage_bytes": 0,
+    "sampled_observed_identity_count": 5,
+    "source_closed": true,
+    "source_drift": [],
+    "source_pin_count": 217,
+    "storage_artifacts_durable_asserted": true,
+    "storage_promise_bytes": 16777216,
+    "storage_reservation_id": "6d97d2fa17fc4121a9634afcd5385e57",
+    "storage_status": "released"
+  },
+  "evidence": [
+    {
+      "bytes": 2378,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-ir-current-native-proof-cache-original-v02-input/prepared-plan.json",
+      "sha256": "c15a668fa0177c44933fe2dd7e2af1bac529e8ade4afc35214e46ada31156781"
+    },
+    {
+      "bytes": 7942,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-ir-current-native-proof-cache-original-v02-input/plan.json",
+      "sha256": "1034db27355ceb1e2dab26b96d765aa4f6c1fd45b05e193ff8be903c750f5e02"
+    },
+    {
+      "bytes": 38477,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-ir-current-native-proof-cache-original-v02-input/request.json",
+      "sha256": "1f0564c884199485e6d8386aea9bae9d785885d32edd79fae8ff52f973ae477a"
+    },
+    {
+      "bytes": 8821,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-ir-current-native-proof-cache-original-v02-input/bootstrap.py",
+      "sha256": "175c2c59b8f48311888934a1d9814c995ad22e99ff0d46859672d7029f88c30b"
+    },
+    {
+      "bytes": 23022,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-ir-current-native-proof-cache-original-v02-input/run-original-source-held-native-v01.py",
+      "sha256": "7d9903ce554aa4b734760a7308e26cb5d86a63304a40c3ff8c5300397049b055"
+    },
+    {
+      "bytes": 163,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-ir-current-native-proof-cache-original-v02-input/started.json",
+      "sha256": "a6f3605060f243a62178c61061130b4146bbf96e657fda71834465f0d0280af3"
+    },
+    {
+      "bytes": 12309,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-ir-current-native-proof-cache-original-v02-input/parent-closeout.json",
+      "sha256": "9778f684fd781ab401b4c8f5141a2a9beeca544f73c355ade17a624140ade737"
+    },
+    {
+      "bytes": 5942,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-ir-current-native-proof-cache-original-v02-input/owner.stdout",
+      "sha256": "f7a41ff4d2d17c37cec4a143207920b33a8c2ff9049e3018b2562b92365c3fbc"
+    },
+    {
+      "bytes": 0,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-ir-current-native-proof-cache-original-v02-input/owner.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 234857,
+      "path": "/tmp/pytest-of-barberb/legal-ir-current-native-proof-cache-20261115-v02/a/exports/qualification.json",
+      "sha256": "53c30cca9133eb760a6758b6446215f4d1ce9b8e6e93a15aca90df6430bf715e"
+    },
+    {
+      "bytes": 139095,
+      "path": "/tmp/pytest-of-barberb/legal-ir-current-native-proof-cache-20261115-v02/a/exports/native-kernel-progress.json",
+      "sha256": "3f39a3b7b8081b5baa7816fc890e261f35552e13ef2cc7bdbfa127fc76312c3d"
+    },
+    {
+      "bytes": 2793,
+      "path": "/tmp/pytest-of-barberb/legal-ir-current-native-proof-cache-20261115-v02/a/exports/cache-native-progress.json",
+      "sha256": "7e81475c52b22c2223968b01091f58a31e2e9b9dda7d97b3e9a5101530497ab4"
+    },
+    {
+      "bytes": 522,
+      "path": "/tmp/pytest-of-barberb/legal-ir-current-native-proof-cache-20261115-v02/a/logs/result.json",
+      "sha256": "d8d20b08e75134e0ab4fcd80e2b4245deae63469167662c5a7ab83e3b073aa74"
+    },
+    {
+      "bytes": 115,
+      "path": "/tmp/pytest-of-barberb/legal-ir-current-native-proof-cache-20261115-v02/a/logs/stdout.log",
+      "sha256": "6316cca4d674cc0a560080846a20ec2256f65a80a822aec94bf79f5ff5494d96"
+    },
+    {
+      "bytes": 0,
+      "path": "/tmp/pytest-of-barberb/legal-ir-current-native-proof-cache-20261115-v02/a/logs/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 1727,
+      "path": "/tmp/pytest-of-barberb/legal-ir-current-native-proof-cache-20261115-v02/a/logs/execution.json",
+      "sha256": "92548fd6e0289965b7b9b434cdf44ae458054262f4c93161082e0ea88c5155d4"
+    },
+    {
+      "bytes": 66255,
+      "path": "/tmp/pytest-of-barberb/legal-ir-current-native-proof-cache-20261115-v02/a/tmp/native-cache/native-lean-proof-cache-v3.json",
+      "sha256": "784af5b4e21329089219243738291863572d7f93871daf4591491472f01e02e9"
+    }
+  ],
+  "execution_selection": "One explicit external Root GO for exact V02; preparation metadata unchanged",
+  "native": {
+    "actual_processes": 11,
+    "compiler_invocations": 7,
+    "compiler_mocked": false,
+    "kernel_cases": [
+      {
+        "accepted": true,
+        "case": "conjunction",
+        "status": "proved"
+      },
+      {
+        "accepted": false,
+        "case": "wrong_goal",
+        "status": "error"
+      },
+      {
+        "accepted": false,
+        "case": "direct_unapproved_classical",
+        "status": "error"
+      },
+      {
+        "accepted": false,
+        "case": "implicit_unapproved_classical",
+        "status": "error"
+      },
+      {
+        "accepted": false,
+        "case": "wrong_configured_version",
+        "status": "unavailable"
+      },
+      {
+        "accepted": true,
+        "case": "explicitly_approved_foundations",
+        "status": "proved"
+      }
+    ],
+    "kernel_passed": true,
+    "kernel_scenarios": 6,
+    "library_scope": "installed runtime and approved imports are trusted; transitive libraries are not independently authenticated",
+    "verification_profile": "lean-kernel-verification/v1",
+    "version": "4.34.1",
+    "version_probes": 4
+  },
+  "prepared_plan_execution_authorized_remained_false": true,
+  "qualification": {
+    "historical_native_credit_inherited": false,
+    "hosted_CI_billing_block_not_resolved": true,
+    "hosted_CI_rerun": false,
+    "legal_or_statutory_meaning": false,
+    "model_or_pretrained_execution": false,
+    "ordinary_pytest_cases": 0,
+    "real_statutory_corpus_or_training_admission": false,
+    "standalone_native_pytest_cases": 0,
+    "whole_host_or_transitive_library_attestation": false
+  },
+  "recorded_at_utc": "2026-11-15T04:19:12.524371+00:00",
+  "remaining_gaps": [
+    "Hosted Actions account billing lock remains unchanged.",
+    "Standalone native pytest wrappers and full preservation corpus not rerun.",
+    "Current native success establishes proof/cache controls, not statutory meaning, legal review, model quality, training gold or corpus release authority."
+  ],
+  "request_sha256": "1f0564c884199485e6d8386aea9bae9d785885d32edd79fae8ff52f973ae477a",
+  "schema": "current-native-proof-cache-original-owner-closeout/v1"
+}

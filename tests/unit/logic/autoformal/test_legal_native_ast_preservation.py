@@ -935,3 +935,506 @@ def test_counted_reserved_lean_binders_cannot_reenter_a_resealed_preparation(
     changed = replace(preparation, manifest_json=canonical(meta).decode(), files=tuple(sorted(files.items())))
     with pytest.raises(ValueError):
         _validate_counted_preservation(captured, changed)
+
+
+
+# Reuse the existing complete fictional V3 admission/graph fixture. This test
+# reaches the missing preservation interface only after genuine positive replay.
+def test_mixed_preservation_requires_explicit_profile_after_genuine_reviewed_graph(
+        tmp_path_factory):
+    from tests.unit.logic.autoformal import test_corpus_norm_definition_adapter as graph_fixture
+    from ipfs_datasets_py.logic.autoformal import legal_relational_norm_v1 as relational
+
+    baseline = graph_fixture.reviewed_graph_baseline_v3.__wrapped__(tmp_path_factory)
+    baseline["helper"].assert_signatures_valid(baseline["case"])
+    admission = baseline["admission"]
+    assert admission["semantic_use_eligible"] is True and admission["fixture_only"] is True
+    assert admission["blockers"] == []
+    assert {"formalization", "proof_obligation"} <= set(admission["permitted_uses"])
+    graph = graph_fixture.build_reviewed_graph_fixture_v3(baseline)
+    assert graph_fixture.validate_reviewed_graph_fixture_v3(baseline, graph) == graph
+    assert graph["schema"] == "legal-corpus-reviewed-norm-candidate-graph/v3"
+    assert len(graph["unit_records"]) == len(graph["ast_records"]) == len(admission["units"]) == 3
+    assert graph["semantic_use_eligible"] is False and not any(graph["authority"].values())
+    assert all(type(graph[key]) is int and graph[key] == 0
+               for key in ("training_mask", "evaluation_gold_mask"))
+
+    declaration = baseline["case"]["declaration"]
+    selected = [(index, unit) for index, unit in enumerate(declaration["units"])
+                if unit["relational_profile"] == relational.MIXED_PROFILE]
+    assert len(selected) == 1
+    index, unit = selected[0]
+    inputs = baseline["case"]["relational_inputs"][unit["unit_id"]]
+    report, raw = inputs["report"], inputs["request_raw"]
+    original_report = canonical(report)
+    checked = relational.validate_mixed_relational_norm_v1(report, raw,
+        expected_report_sha256=inputs["expected_report_sha256"],
+        expected_request_sha256=unit["relational_request_sha256"])
+    assert checked == report and canonical(report) == original_report
+    assert report["native_ast"] is None and report["native_parser_roundtrip"] is False
+    assert report["native_build_executed"] is False and report["source_bound"] is False
+    assert {row["name"] for row in report["typed_expression"]["signature"]["sorts"]} == {
+        "Bool", "Object", "EventFrame", "TimeFrame"}
+    complete_ir = json.loads(graph["ast_records"][index]["ast_json"])
+    assert canonical(complete_ir) == canonical(admission["units"][index]["canonical_ir"])
+    assert canonical(complete_ir["typed_expression"]) == canonical(report["typed_expression"])
+    assert complete_ir["argument_roles"] == report["argument_roles"]
+    assert complete_ir["source_binding"]["source_version_cid"] == unit["source_version"]["record_cid"]
+    assert complete_ir["source_binding"]["occurrence_cid"] == unit["occurrence"]["record_cid"]
+
+    # Existing Object/native-fragment preservation must keep its narrower domain.
+    with pytest.raises(ValueError, match="exact closed original relational native fragment fields required"):
+        owner.prepare_relational_ast_preservation(report, raw,
+            expected_report_sha256=inputs["expected_report_sha256"],
+            expected_request_sha256=unit["relational_request_sha256"],
+            toolchain=TOOLCHAIN)
+    assert canonical(report) == original_report
+    assert callable(getattr(owner, "prepare_mixed_relational_ast_preservation", None)), (
+        "explicit concrete mixed-sort preservation builder missing after accepted V3 admission and graph replay")
+
+    captured = {"report": report, "request_raw": raw}
+    prepared = _prepare_mixed_preservation(captured)
+    assert _validate_mixed_preservation(captured, prepared) == prepared
+    meta = manifest(prepared)
+    assert meta["mixed_report_sha256"] == inputs["expected_report_sha256"]
+    assert meta["source_custody"]["reviewed_admission_or_graph_replayed"] is False
+    assert meta["native_ast"] is None and meta["native_parser_roundtrip"] is False
+    assert not any(meta["authority"].values())
+
+
+MIXED_THEOREM_SUFFIXES = (
+    "mixed_typed_value_exact", "mixed_renderer_value_exact", "mixed_ast_closed",
+    "mixed_denotation_matches_lowering", "mixed_role_denotation_matches_lowering",
+)
+
+
+@pytest.fixture(scope="module")
+def mixed_preservation_fixtures():
+    from tests.unit.logic.autoformal import test_legal_relational_norm_v1 as fixtures
+    return fixtures
+
+
+def _mixed_preservation_capture(fixtures, request=None):
+    request = fixtures.mixed_member_request() if request is None else request
+    raw = canonical(request)
+    report = fixtures.bridge.prepare_mixed_relational_norm_v1(
+        raw, expected_request_sha256=sha(raw))
+    return {"report": report, "request_raw": raw, "request": request}
+
+
+def _prepare_mixed_preservation(captured, **overrides):
+    return owner.prepare_mixed_relational_ast_preservation(
+        captured["report"], captured["request_raw"], **({
+            "expected_report_sha256": sha(canonical(captured["report"])),
+            "expected_request_sha256": sha(captured["request_raw"]),
+            "toolchain": TOOLCHAIN,
+        } | overrides))
+
+
+def _validate_mixed_preservation(captured, preparation, **overrides):
+    return owner.validate_mixed_relational_ast_preservation(
+        preparation, captured["report"], captured["request_raw"], **({
+            "expected_preparation_sha256": owner.preparation_sha256(preparation),
+            "expected_report_sha256": sha(canonical(captured["report"])),
+            "expected_request_sha256": sha(captured["request_raw"]),
+            "toolchain": TOOLCHAIN,
+        } | overrides))
+
+
+@pytest.fixture(scope="module")
+def mixed_preservation_base(mixed_preservation_fixtures):
+    captured = _mixed_preservation_capture(mixed_preservation_fixtures)
+    return captured, _prepare_mixed_preservation(captured)
+
+
+def _mixed_reseal(preparation, meta, files):
+    meta = deepcopy(meta)
+    meta["file_sha256"] = {path: sha(text.encode()) for path, text in sorted(files.items())}
+    meta = corpus_contracts.seal_record({key: value for key, value in meta.items()
+        if key not in {"record_cid", "cid_scope"}})
+    return replace(preparation, manifest_json=canonical(meta).decode(), files=tuple(sorted(files.items())))
+
+
+def test_mixed_preservation_retains_complete_values_roles_and_five_exact_obligations(mixed_preservation_base):
+    captured, prepared = mixed_preservation_base
+    report, raw = captured["report"], captured["request_raw"]
+    before = deepcopy(captured)
+    assert _validate_mixed_preservation(captured, prepared) == prepared and captured == before
+    meta, files = manifest(prepared), dict(prepared.files)
+    assert owner.MIXED_PROFILE == "typed-many-sorted-relational-deontic-renderer-preservation/v1"
+    assert meta["profile"] == owner.MIXED_PROFILE
+    assert owner.MIXED_PROJECT_ROOT == "LegalMixedRelationalAstPreservation"
+    assert len(files) == 7 and len(meta["expected_modules"]) == 4
+    instance = meta["expected_modules"][2]
+    assert meta["theorems"] == [instance + "." + suffix for suffix in MIXED_THEOREM_SUFFIXES]
+    body = files[instance.replace(".", "/") + ".lean"]
+    assert report["lean_body"] in body
+    assert all(body.count("#print axioms " + suffix + "\n") == 1 for suffix in MIXED_THEOREM_SUFFIXES)
+    assert "mixedDenote i typedMixedAst emptyCountedEnvironment t ↔ formula i t" in body
+    assert "mixedRoleDenote base atoms mixedArgumentRoles typedMixedAst" in body
+    assert "formula (mixedRoleInterpretation base atoms mixedArgumentRoles) t" in body
+    inputs = json.loads(files["preservation-inputs.json"])
+    assert inputs["mixed_report"] == report and inputs["original_request_raw_utf8"].encode() == raw
+    assert inputs["schema"] == owner.MIXED_INPUT_SCHEMA
+    for key, value in {
+        "mixed_report_sha256": sha(canonical(report)), "original_request_sha256": sha(raw),
+        "typed_expression_sha256": report["typed_expression_sha256"],
+        "typed_expression_content_digest": report["typed_expression_content_digest"],
+        "argument_roles_sha256": sha(canonical(report["argument_roles"])),
+        "renderer_ast_sha256": report["renderer_ast_sha256"],
+        "lean_body_sha256": sha(report["lean_body"].encode()),
+        "typed_ast_node_count": report["counts"]["nodes"],
+    }.items():
+        assert meta[key] == value
+    assert meta["support_profile"]["max_ast_nodes"] == 512
+    assert meta["support_profile"]["max_ast_depth"] == 48
+    assert meta["native_ast"] is None
+    assert meta["native_TDFOL_route_used"] is meta["native_parser_roundtrip"] is False
+    assert meta["preparation_only"] is True and all(value is False for value in meta["authority"].values())
+    assert all(meta[key] is False for key in owner.FALSE_FLAGS)
+    assert all(meta[key] is False for key in ("typed_ast_value_preservation_proved",
+        "renderer_ast_value_preservation_proved", "mixed_ast_denotation_preservation_proved",
+        "ordered_role_denotation_preservation_proved"))
+    assert all(type(meta[key]) is int and meta[key] == 0 for key in ("training_mask", "evaluation_gold_mask"))
+    assert meta["source_custody"]["original_source_bundle_replayed"] is False
+    assert meta["source_custody"]["source_prose_to_ast_proved"] is False
+
+
+@pytest.mark.parametrize("field", ["expected_report_sha256", "expected_request_sha256"])
+@pytest.mark.parametrize("pin", ["0" * 64, "A" * 64, "short", None, True])
+def test_mixed_preservation_independent_pins_precede_lazy_owners(mixed_preservation_base, field, pin):
+    captured, _ = mixed_preservation_base
+    with patch.object(owner, "_owners", side_effect=AssertionError("lazy operation reached")):
+        with pytest.raises(ValueError):
+            _prepare_mixed_preservation(captured, **{field: pin})
+
+
+@pytest.mark.parametrize("field", ["expected_preparation_sha256", "expected_report_sha256", "expected_request_sha256"])
+def test_mixed_preservation_validation_requires_all_three_independent_pins(mixed_preservation_base, field):
+    captured, prepared = mixed_preservation_base
+    with patch.object(owner, "_owners", side_effect=AssertionError("lazy operation reached")):
+        with pytest.raises(ValueError):
+            _validate_mixed_preservation(captured, prepared, **{field: "0" * 64})
+
+
+@pytest.mark.parametrize("damage", ["typed_argument", "roles", "renderer", "lean_body", "request_echo",
+    "producer", "counts", "source_bound", "parser_roundtrip", "renderer_digest"])
+def test_mixed_preservation_rehashed_report_cannot_replace_fresh_original_replay(mixed_preservation_base, damage):
+    captured = deepcopy(mixed_preservation_base[0])
+    report = captured["report"]
+    if damage == "typed_argument":
+        report["typed_expression"]["root"]["arguments"][0]["arguments"][0]["binders"][0]["name"] = "other_moment"
+    elif damage == "roles":
+        report["argument_roles"][0]["roles"][0] = "other_actor"
+    elif damage == "renderer":
+        report["renderer_ast"]["root"]["quantifier"]["value"] = "∃"
+    elif damage == "lean_body":
+        report["lean_body"] = report["lean_body"].replace("∀", "∃", 1)
+    elif damage == "request_echo":
+        report["request_raw_utf8"] += "\n"
+    elif damage == "producer":
+        report["producer_pins"]["/fixture/offered-producer-must-not-be-authoritative.py"] = "0" * 64
+    elif damage == "counts":
+        report["counts"]["nodes"] += 1
+    elif damage == "source_bound":
+        report["source_bound"] = True
+    elif damage == "parser_roundtrip":
+        report["native_parser_roundtrip"] = True
+    else:
+        report["renderer_ast_sha256"] = "0" * 64
+    with pytest.raises(ValueError):
+        _prepare_mixed_preservation(captured)
+
+
+@pytest.mark.parametrize("damage", ["native_ast", "parser_roundtrip", "expression_metadata", "signature_metadata",
+    "unknown_sort", "missing_roles", "unsupported_constructor", "bad_toolchain"])
+def test_mixed_preservation_unsupported_shapes_refuse_before_lazy_owners(mixed_preservation_base, damage):
+    captured = deepcopy(mixed_preservation_base[0])
+    report = captured["report"]
+    override = {}
+    if damage == "native_ast": report["native_ast"] = {}
+    elif damage == "parser_roundtrip": report["native_parser_roundtrip"] = True
+    elif damage == "expression_metadata": report["typed_expression"]["metadata"] = {"hidden": "source"}
+    elif damage == "signature_metadata": report["typed_expression"]["signature"]["metadata"] = {"trusted": "true"}
+    elif damage == "unknown_sort": report["typed_expression"]["signature"]["sorts"][1]["name"] = "CivilDate"
+    elif damage == "missing_roles": report["argument_roles"] = []
+    elif damage == "unsupported_constructor": report["typed_expression"]["root"]["kind"] = "true"
+    else: override["toolchain"] = "leanprover/lean4:latest"
+    with patch.object(owner, "_owners", side_effect=AssertionError("lazy operation reached")):
+        with pytest.raises(ValueError):
+            _prepare_mixed_preservation(captured, **override)
+
+
+@pytest.mark.parametrize("damage", ["typed_source_value", "renderer_value", "typed_ast", "roles", "sorts",
+    "vacuous_theorem", "axiomatic_proof", "semantics_modal_key", "extra_import", "source_binding",
+    "promoted_flags", "toolchain_file"])
+def test_mixed_preservation_resealed_complete_project_requires_regeneration(mixed_preservation_base, damage):
+    captured, prepared = mixed_preservation_base
+    meta, files = manifest(prepared), dict(prepared.files)
+    path = meta["expected_modules"][2].replace(".", "/") + ".lean"
+    body = files[path]
+    if damage in {"typed_source_value", "renderer_value", "typed_ast", "roles", "sorts"}:
+        symbol, before, after, digest = {
+            "typed_source_value": ("actualMixedSourceValue", '"Member"', '"ChangedMember"', "actual_typed_and_roles_lean_value_sha256"),
+            "renderer_value": ("actualMixedRendererValue", '"Member"', '"ChangedMember"', "actual_renderer_lean_value_sha256"),
+            "typed_ast": ("typedMixedAst", '"Member"', '"ChangedMember"', "typed_source_lean_value_sha256"),
+            "roles": ("mixedArgumentRoles", '"actor"', '"other_actor"', "ordered_roles_lean_value_sha256"),
+            "sorts": ("mixedSortOrder", ".object", ".event", "source_sort_order_lean_value_sha256"),
+        }[damage]
+        start = body.index("def " + symbol + " ")
+        end = body.index("\n", start)
+        definition = body[start:end]
+        assert before in definition
+        changed = definition.replace(before, after, 1)
+        files[path] = body[:start] + changed + body[end:]
+        meta[digest] = sha(changed.rsplit(" := ", 1)[1].encode())
+    elif damage in {"vacuous_theorem", "axiomatic_proof"}:
+        suffix = "mixed_denotation_matches_lowering"
+        start = body.index("theorem " + suffix + " ")
+        end = body.index("#print axioms " + suffix, start)
+        if damage == "vacuous_theorem":
+            replacement = "theorem " + suffix + " : True := by\n  trivial\n"
+        else:
+            declaration = body[start:end]
+            statement = declaration.rsplit(" := by\n", 1)[0]
+            replacement = statement + " := by\n  exact Iff.of_eq (propext (Iff.intro (fun h => h) (fun h => h)))\n"
+        files[path] = body[:start] + replacement + body[end:]
+        assert meta["theorems"] == manifest(prepared)["theorems"]
+    elif damage == "semantics_modal_key":
+        semantics_path = owner.MIXED_PROJECT_ROOT + "/Semantics.lean"
+        old = owner.MIXED_SEMANTICS
+        assert '"deontic:O"' in old
+        changed = old.replace('"deontic:O"', '"deontic:P"', 1)
+        files[semantics_path] = files[semantics_path].replace(old, changed, 1)
+        meta["semantics_sha256"] = sha(changed.encode())
+    elif damage == "extra_import":
+        files[path] = "import Lean\n" + body
+        meta["module_imports"][meta["expected_modules"][2]].insert(0, "Lean")
+    elif damage == "source_binding":
+        meta["mixed_report_sha256"] = "0" * 64
+    elif damage == "promoted_flags":
+        meta["typed_ast_value_preservation_proved"] = True
+        meta["authority"]["proof"] = True
+    else:
+        files["lean-toolchain"] = "leanprover/lean4:v4.34.2\n"
+        meta["toolchain"] = "leanprover/lean4:v4.34.2"
+    changed = _mixed_reseal(prepared, meta, files)
+    assert changed != prepared
+    with pytest.raises(ValueError):
+        _validate_mixed_preservation(captured, changed)
+
+
+@pytest.mark.parametrize("damage", ["caller", "detached", "fresh_return", "producer", "policy", "source_code"])
+def test_mixed_preservation_fences_inputs_fresh_return_and_current_producers(mixed_preservation_base,
+        mixed_preservation_fixtures, monkeypatch, damage):
+    from functools import wraps
+    from pathlib import Path
+    captured = deepcopy(mixed_preservation_base[0])
+    relational = mixed_preservation_fixtures.bridge
+    original = relational.validate_mixed_relational_norm_v1
+    actual_read = Path.read_bytes
+    original_owner_path = Path(owner.__file__).resolve()
+    original_owner_bytes = actual_read(original_owner_path)
+    reached = []
+    @wraps(original)
+    def changed_after_original(detached, raw, **kwargs):
+        checked = original(detached, raw, **kwargs)
+        reached.append(True)
+        if damage == "caller": captured["report"]["source_bound"] = True
+        elif damage == "detached": detached["source_bound"] = True
+        elif damage == "fresh_return": checked["source_bound"] = True
+        elif damage == "producer":
+            from ipfs_datasets_py.logic.formalization.autoencoder import native_family_lean_emitters as emit
+            monkeypatch.setattr(emit, "sorted_relational_document", lambda *a, **k: None)
+        elif damage == "policy": monkeypatch.setattr(owner, "MAX_MIXED_AST_NODES", 511)
+        else:
+            monkeypatch.setattr(Path, "read_bytes", lambda path:
+                original_owner_bytes + b"\n# changed observation\n" if path.resolve() == original_owner_path else actual_read(path))
+        return checked
+    monkeypatch.setattr(relational, "validate_mixed_relational_norm_v1", changed_after_original)
+    with pytest.raises(ValueError):
+        _prepare_mixed_preservation(captured)
+    assert reached == [True]
+
+
+def test_mixed_preservation_role_only_change_keeps_same_renderer_but_distinct_subject(mixed_preservation_base,
+        mixed_preservation_fixtures):
+    captured, prepared = mixed_preservation_base
+    request = deepcopy(captured["request"])
+    request["argument_roles"][0]["roles"][0] = "regulated_subject"
+    changed = _mixed_preservation_capture(mixed_preservation_fixtures, request)
+    assert changed["report"]["lean_body"] == captured["report"]["lean_body"]
+    assert changed["report"]["renderer_ast"] == captured["report"]["renderer_ast"]
+    assert changed["report"]["typed_expression"] == captured["report"]["typed_expression"]
+    current = _prepare_mixed_preservation(changed)
+    assert _validate_mixed_preservation(changed, current) == current
+    old_meta, new_meta = manifest(prepared), manifest(current)
+    for key in ("mixed_report_sha256", "original_request_sha256", "argument_roles_sha256",
+                "ordered_roles_lean_value_sha256"):
+        assert old_meta[key] != new_meta[key]
+    assert old_meta["expected_modules"][2] != new_meta["expected_modules"][2]
+    with pytest.raises(ValueError):
+        _validate_mixed_preservation(changed, prepared)
+
+
+def _mixed_sorted_request(fixtures, *, mode="grammar", modal="O", altered=False):
+    ast, sig, b = fixtures.ast, fixtures.signatures, fixtures.Builder()
+    sorts = {name: sig.LogicSort(name) for name in ("Object", "EventFrame", "TimeFrame")}
+    names = {"x": "Object", "y": "Object", "event": "EventFrame", "moment": "TimeFrame"}
+    def var(name): return ast.mk_variable(b.nid(), name, sorts[names[name]])
+    def atom(name, *variables): return ast.mk_predicate(b.nid(), name, [var(v) for v in variables])
+    def eq(left, right): return ast.mk_equality(b.nid(), var(left), var(right))
+    declarations = [("Link", ("Object", "Object"), ("actor", "recipient"))]
+    quantified = [("x", "forall"), ("y", "exists")]
+    if mode == "grammar":
+        declarations += [("Guard", ("Object",), ("subject",)), ("Excepted", ("Object",), ("subject",))]
+        condition = b.binary("and", atom("Guard", "x"), ast.mk_not(b.nid(), atom("Excepted", "x")))
+        equality = b.binary("or", eq("x", "y"), b.binary("and", eq("event", "event"), eq("moment", "moment")))
+        body = b.binary("implies", condition, b.modal(modal, b.binary("iff", atom("Link", "x", "y"), equality)))
+    elif mode == "actor_order":
+        body = atom("Link", *( ("y", "x") if altered else ("x", "y") ))
+    elif mode == "quantifier_order":
+        body = atom("Link", "x", "y")
+        if altered: quantified = [("y", "exists"), ("x", "forall")]
+    elif mode == "exception":
+        quantified = [("x", "forall"), ("y", "forall")]
+        body = atom("Link", "x", "y")
+        if not altered:
+            declarations += [("Excepted", ("Object",), ("subject",))]
+            body = b.binary("implies", ast.mk_not(b.nid(), atom("Excepted", "x")), body)
+    elif mode == "modal_scope":
+        declarations += [("Guard", ("Object",), ("subject",))]
+        guarded = b.binary("implies", atom("Guard", "x"), atom("Link", "x", "y")) if altered else None
+        body = b.modal("O", guarded) if altered else b.binary("implies", atom("Guard", "x"), b.modal("O", atom("Link", "x", "y")))
+    else:
+        assert mode == "modality"
+        body = b.modal("P" if altered else "O", atom("Link", "x", "y"))
+    for name, quantifier in reversed([("event", "forall"), ("moment", "forall")] + quantified):
+        body = (ast.mk_forall if quantifier == "forall" else ast.mk_exists)(b.nid(),
+            [ast.Binder(name, sorts[names[name]])], body)
+    signature = sig.LogicSignature("fixture:mixed-preservation:" + mode, family="tdfol", profile="tdfol_default",
+        sorts=tuple(sorts.values()), symbols=tuple(sig.declare_predicate(name,
+            tuple(sorts[sort] for sort in domain)) for name, domain, _ in declarations))
+    expression = ast.TypedExpression("fixture:mixed-preservation:" + mode, body, signature)
+    return {"schema": fixtures.bridge.MIXED_REQUEST_SCHEMA, "profile": fixtures.bridge.MIXED_PROFILE,
+        "interpretation_status": "authored_unreviewed_declaration", "expression": expression.to_dict(),
+        "argument_roles": [{"symbol": name, "roles": list(roles)} for name, _, roles in declarations],
+        "source_binding": None}
+
+
+@pytest.mark.parametrize("modal", ["O", "P", "F"])
+def test_mixed_preservation_covers_full_closed_sorted_boolean_and_modal_grammar(mixed_preservation_fixtures, modal):
+    fixtures = mixed_preservation_fixtures
+    captured = _mixed_preservation_capture(fixtures, _mixed_sorted_request(fixtures, modal=modal))
+    prepared = _prepare_mixed_preservation(captured)
+    assert _validate_mixed_preservation(captured, prepared) == prepared
+    report = captured["report"]
+    kinds = {node["kind"] for _, node in fixtures._mixed_typed_nodes(report["typed_expression"]["root"])}
+    assert {"predicate", "equality", "not", "and", "or", "implies", "iff", "forall", "exists", "extension"} <= kinds
+    assert report["counts"]["equality_occurrences"] == 3
+    assert 'i.modal "deontic:' + modal + '" [] none' in report["lean_body"]
+    meta = manifest(prepared)
+    assert meta["typed_ast_node_count"] == report["counts"]["nodes"] <= 512
+    assert meta["support_profile"]["source_carriers_may_be_empty"] is True
+
+
+@pytest.mark.parametrize("facet", ["actor_order", "quantifier_order", "exception", "modal_scope", "modality"])
+def test_mixed_preservation_retains_independent_semantic_countermodels(mixed_preservation_fixtures, facet):
+    fixtures = mixed_preservation_fixtures
+    rows = [_mixed_preservation_capture(fixtures, _mixed_sorted_request(fixtures, mode=facet, altered=altered))
+            for altered in (False, True)]
+    domains = {"Object": (0, 1), "EventFrame": ("event",), "TimeFrame": ("authored-time",)}
+    def atoms(name, values, ambient):
+        if facet == "actor_order": return values[0] == 0
+        if facet == "quantifier_order": return values[0] == values[1]
+        if facet == "exception": return name == "Excepted"
+        if facet == "modal_scope": return name == "Guard" and ambient == 1
+        return True
+    def modal(operator, body, ambient):
+        if facet == "modal_scope": return body(1)
+        if facet == "modality": return operator == "O" and body(ambient)
+        return body(ambient)
+    observed = []
+    for row in rows:
+        prepared = _prepare_mixed_preservation(row)
+        assert _validate_mixed_preservation(row, prepared) == prepared
+        original = fixtures._mixed_typed_truth(row["request"]["expression"]["root"], domains, atoms, modal)
+        rendered = fixtures._mixed_renderer_truth(row["report"]["renderer_ast"]["root"], domains, atoms, modal)
+        assert original == rendered
+        observed.append(original)
+    assert observed == ([False, True] if facet == "actor_order" else [True, False])
+
+
+@pytest.fixture(scope="module")
+def mixed_retained_preservation_reports(mixed_preservation_fixtures, tmp_path_factory):
+    # Retain the existing fixture's seven real DATA writes and exact packet pin.
+    return mixed_preservation_fixtures.mixed_retained_reports.__wrapped__(tmp_path_factory)
+
+
+@pytest.mark.parametrize("alternative", [0, 1])
+def test_mixed_preservation_replays_both_complete_unselected_retained_alternatives(
+        mixed_retained_preservation_reports, alternative):
+    row = mixed_retained_preservation_reports[alternative]
+    captured = {"report": row["report"], "request_raw": row["request_raw"], "request": row["request"]}
+    prepared = _prepare_mixed_preservation(captured)
+    assert _validate_mixed_preservation(captured, prepared) == prepared
+    meta = manifest(prepared)
+    assert meta["typed_ast_node_count"] == 98
+    assert row["report"]["counts"]["equality_occurrences"] == 6
+    assert row["report"]["selected_interpretation"] is None
+    assert meta["source_custody"]["original_source_bundle_replayed"] is False
+    assert all(value is False for value in meta["authority"].values())
+
+
+@pytest.mark.parametrize("amount", [0, 3, 4])
+def test_mixed_preservation_keeps_existing_cap_and_permission_countermodels(
+        mixed_preservation_fixtures, mixed_retained_preservation_reports, amount):
+    mixed_preservation_fixtures.test_mixed_counting_and_permission_scope_keep_authored_finite_countermodels(
+        mixed_retained_preservation_reports, amount)
+
+
+@pytest.mark.parametrize("empty_sort", ["Object", "EventFrame", "TimeFrame"])
+def test_mixed_preservation_empty_source_carriers_remain_uninhabited_without_added_axioms(
+        mixed_preservation_base, mixed_preservation_fixtures, empty_sort):
+    captured, prepared = mixed_preservation_base
+    domains = {"Object": (0,), "EventFrame": ("event",), "TimeFrame": ("authored-time",)}
+    domains[empty_sort] = ()
+    atoms = lambda name, values, ambient: False
+    modal = lambda operator, body, ambient: body(ambient)
+    assert mixed_preservation_fixtures._mixed_typed_truth(captured["request"]["expression"]["root"], domains, atoms, modal) is True
+    assert mixed_preservation_fixtures._mixed_renderer_truth(captured["report"]["renderer_ast"]["root"], domains, atoms, modal) is True
+    assert _validate_mixed_preservation(captured, prepared) == prepared
+    assert all("[Inhabited" not in text and "[Nonempty" not in text for _, text in prepared.files)
+
+
+def test_mixed_preservation_authored_time_is_separate_from_ambient_modal_time(
+        mixed_preservation_fixtures, mixed_retained_preservation_reports):
+    mixed_preservation_fixtures.test_mixed_authored_time_frame_is_independent_of_modal_nat_index(
+        mixed_retained_preservation_reports)
+
+
+def test_mixed_pure_preparation_never_runs_a_compiler_or_model(mixed_preservation_base):
+    captured, _ = mixed_preservation_base
+    with patch.object(subprocess, "run", side_effect=AssertionError("subprocess reached")), patch.object(
+            subprocess, "Popen", side_effect=AssertionError("child reached")):
+        prepared = _prepare_mixed_preservation(captured)
+        assert _validate_mixed_preservation(captured, prepared) == prepared
+
+
+def test_mixed_profile_preserves_existing_unary_relational_and_counted_domains(
+        base, relational_preservation_base, counted_preservation_base, mixed_preservation_base):
+    old_data, old_prepared = base
+    relational_captured, relational_prepared = relational_preservation_base
+    counted_captured, counted_prepared = counted_preservation_base
+    captured, prepared = mixed_preservation_base
+    assert prepare(old_data) == old_prepared and validate(old_data, old_prepared) == old_prepared
+    assert _validate_relational_preservation(relational_captured, relational_prepared) == relational_prepared
+    assert _validate_counted_preservation(counted_captured, counted_prepared) == counted_prepared
+    assert _validate_mixed_preservation(captured, prepared) == prepared
+    assert len({manifest(p)["profile"] for p in (old_prepared, relational_prepared, counted_prepared, prepared)}) == 4
+    assert sha(owner.COUNTED_SEMANTICS.encode()) == "fdcff83f56b84d34222f7b567950f5594b8e71303446b8d8d32093939224f091"
+    assert len(owner.COUNTED_SEMANTICS.encode()) == 13993
+    with pytest.raises(ValueError):
+        _prepare_relational_preservation((captured["report"], captured["request_raw"]))
+    with pytest.raises(ValueError):
+        _prepare_counted_preservation((captured["report"], captured["request_raw"]))

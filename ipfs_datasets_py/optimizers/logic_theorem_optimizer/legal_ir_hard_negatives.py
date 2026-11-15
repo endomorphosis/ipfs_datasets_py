@@ -1,11 +1,10 @@
-"""Verified hard-negative curricula for LegalIR training.
+"""Hard-negative curricula under explicit LegalIR caller trust metadata.
 
-Hard negatives are only useful when they are trusted labels.  This module
-therefore accepts verified fuzzing counterexamples and deterministic mutation
-oracles over trusted positive LegalIR records, rejects unverified model guesses,
-schedules negatives by difficulty, and emits an explicit before/after effect
-report for semantic-equivalence false positives and trusted positive
-obligations.
+The legacy builder rejects explicitly untrusted and producer-only proposals,
+including when verification is optional. Its trust flags do not authenticate a
+checker or establish legal meaning. Explicit trusted callers and the separate
+typed PGIR-041 LabelEvidence admission contract retain their existing behavior.
+Scheduling and before/after effect reports remain software diagnostics.
 """
 
 from __future__ import annotations
@@ -42,6 +41,8 @@ from ipfs_datasets_py.logic.formalization.training_shared import (
     IR_HARD_NEGATIVE_INTERFACE,
     IR_HARD_NEGATIVE_SCHEMA_VERSION,
     _RELATION_AUTHORITIES,
+    _normalize_evidence,
+    _validate_evidence_subjects,
 )
 from ipfs_datasets_py.logic.ir_core.protocols import AuthorityKind
 from ipfs_datasets_py.logic.ir_core.source_lineage import RightsDisposition
@@ -56,7 +57,12 @@ from .legal_ir_fuzzing import (
     EVIDENCE_NON_EQUIVALENCE,
     EVIDENCE_SATISFIABILITY,
     MINIMAL_MUTATION_CLASSES,
+    MinimalSemanticMutation,
     MutationValidationRecord,
+    SOLVER_COUNTEREXAMPLE,
+    SOLVER_DISPROVED,
+    SOLVER_SAT_MODEL,
+    SOLVER_NOT_ENTAILED,
     SOLVER_TIMED_OUT,
     SOLVER_UNAVAILABLE,
     SOLVER_UNKNOWN,
@@ -268,9 +274,23 @@ def _verification_payload(value: Any) -> dict[str, Any]:
     }
 
 
+def _explicitly_untrusted_or_proposal(
+    source: Mapping[str, Any], verification: Mapping[str, Any],
+) -> bool:
+    """A negative trust declaration or proposal epoch cannot opt into training."""
+    return (
+        source.get("schema_version") == "legal-ir-fuzzing-unverified-proposal-v2"
+        or source.get("training_partition") == "unverified_proposal"
+        or ("trusted" in source and not _truthy(source["trusted"]))
+        or ("trusted" in verification and not _truthy(verification["trusted"]))
+    )
+
+
 def _verified(value: Any) -> bool:
     source = _as_mapping(value)
     verification = _verification_payload(value)
+    if _explicitly_untrusted_or_proposal(source, verification):
+        return False
     if _truthy(source.get("trusted")) and not verification:
         return False
     return any(_truthy(verification.get(key)) for key in _VERIFIER_KEYS) or bool(
@@ -654,9 +674,12 @@ class LegalIRHardNegativeCurriculumBuilder:
         self,
         candidate: Any,
     ) -> Optional[LegalIRHardNegativeExample]:
-        if self.config.require_verified_negatives and not _verified(candidate):
-            return None
         source = _as_mapping(candidate)
+        verification = _verification_payload(source)
+        if _explicitly_untrusted_or_proposal(source, verification):
+            return None
+        if self.config.require_verified_negatives and not _verified(source):
+            return None
         minimal = source.get("minimal_counterexample", source.get("candidate_ir", source))
         reference = source.get("reference_ir", source.get("original_ir", {}))
         target = source.get("target", source.get("semantic_family", "deontic"))
@@ -664,7 +687,6 @@ class LegalIRHardNegativeCurriculumBuilder:
         semantic_family = _canonical_family_or_default(
             source.get("semantic_family") or _family_from_target(target)
         )
-        verification = _verification_payload(candidate)
         difficulty = self._difficulty(negative_family, semantic_family)
         example_id = (
             source.get("candidate_id")
@@ -1336,7 +1358,7 @@ IR_HARD_NEGATIVE_RECIPE_SCHEMA: Final = "ir-hard-negative-recipe/v1"
 IR_HARD_NEGATIVE_MANIFEST_INTERFACE: Final = "IRHardNegativeManifest@1"
 IR_HARD_NEGATIVE_MANIFEST_SCHEMA: Final = "ir-hard-negative-manifest/v1"
 IR_HARD_NEGATIVE_INDEX_INTERFACE: Final = "IRHardNegativeIndex@1"
-IR_HARD_NEGATIVE_MINER_VERSION: Final = "pgir-041-negative-miner-v1"
+IR_HARD_NEGATIVE_MINER_VERSION: Final = "pgir-041-negative-miner-v2"
 IR_HARD_NEGATIVE_TASK_ID: Final = "PGIR-041"
 
 RECEIPT_COUNTEREXAMPLE: Final = "counterexample"
@@ -1768,6 +1790,10 @@ def classify_hard_negative_candidate(
             return HardNegativeRejection.POSITIVE_EQUIVALENCE_SIBLING
         return HardNegativeRejection.SAME_PROPOSITION_SIBLING
 
+    try:
+        _validate_evidence_subjects(candidate.evidence, (candidate.original, candidate.mutant), candidate.relationship)
+    except (TrainingContractValidationError, TypeError, ValueError):
+        return HardNegativeRejection.UNVERIFIED_EVIDENCE
     outcome = str(candidate.solver_outcome or "").strip().lower()
     if candidate.disposition is NegativeDisposition.CONFIRMED_NEGATIVE:
         if outcome in {SOLVER_TIMED_OUT, "timeout"}:
@@ -1775,7 +1801,7 @@ def classify_hard_negative_candidate(
         if outcome == SOLVER_UNAVAILABLE:
             return HardNegativeRejection.UNAVAILABLE_AS_NEGATIVE
         if (
-            outcome == SOLVER_UNKNOWN
+            outcome not in {SOLVER_COUNTEREXAMPLE, SOLVER_DISPROVED, SOLVER_SAT_MODEL, SOLVER_NOT_ENTAILED}
             or candidate.relationship is SemanticRelationship.UNKNOWN
         ):
             return HardNegativeRejection.UNKNOWN_AS_NEGATIVE
@@ -1810,6 +1836,21 @@ def classify_hard_negative_candidate(
     return None
 
 
+def _selected_negative_evidence(record: IRHardNegative) -> LabelEvidence | None:
+    if record.disposition is not NegativeDisposition.CONFIRMED_NEGATIVE:
+        return None
+    expected = {_endpoint_key(record.original), _endpoint_key(record.mutant)}
+    eligible = [item for item in record.evidence
+        if item.status is EvidenceStatus.VERIFIED and item.independent
+        and item.authority in INDEPENDENT_AUTHORITIES
+        and item.authority in hard_negative_authorities(record.relationship)
+        and item.relationship is record.relationship
+        and set(zip(item.subject_statement_ids, item.subject_statement_digests, strict=True)) == expected]
+    if not eligible:
+        raise HardNegativeAdmissionError("confirmed negative has no admitted relationship evidence")
+    return min(eligible, key=lambda item: item.evidence_id)
+
+
 def _negative_and_example(
     candidate: HardNegativeCandidate,
 ) -> tuple[IRHardNegative, IRTrainingExample]:
@@ -1829,7 +1870,8 @@ def _negative_and_example(
         disposition=candidate.disposition,
         evidence=candidate.evidence,
     )
-    selected = record.evidence[0].evidence_id if record.evidence else ""
+    admitted_evidence = _selected_negative_evidence(record)
+    selected = admitted_evidence.evidence_id if admitted_evidence is not None else ""
     example = IRTrainingExample.classify(
         example_id=f"example:{record.negative_id}",
         record=record,
@@ -1850,9 +1892,10 @@ def _receipt_for(
     record: IRHardNegative,
     candidate: HardNegativeCandidate,
 ) -> NegativeEvidenceReceipt | None:
-    if not record.evidence or record.disposition is NegativeDisposition.UNKNOWN:
+    if not record.evidence or record.disposition is not NegativeDisposition.CONFIRMED_NEGATIVE:
         return None
-    evidence = record.evidence[0]
+    evidence = _selected_negative_evidence(record)
+    assert evidence is not None
     kind = candidate.evidence_kind or RECEIPT_NON_EQUIVALENCE
     if kind not in RECEIPT_KINDS:
         raise HardNegativeAdmissionError(f"unknown receipt kind {kind!r}")
@@ -1958,7 +2001,7 @@ def mine_hard_negatives(
             receipt=receipt,
             example=example,
         )
-        if record.disposition is NegativeDisposition.UNKNOWN:
+        if record.disposition is not NegativeDisposition.CONFIRMED_NEGATIVE:
             unknown.append(wrapped)
         else:
             admitted.append(wrapped)
@@ -1983,83 +2026,97 @@ def candidate_from_validation_record(
     authority: LabelAuthority | None = None,
     evidence_status: EvidenceStatus | None = None,
     independent: bool | None = None,
+    evidence: Sequence[LabelEvidence] = (),
 ) -> HardNegativeCandidate:
-    """Bind a typed mutation validation record to a sealed candidate."""
+    """Bind a mutation proposal to explicitly supplied relationship labels.
 
+    Parsing, changed JSON and reported solver strings provide no independent
+    evidence. Absent labels always produce an unknown, nontraining candidate,
+    including legacy records that call themselves verified. Supplied exact
+    LabelEvidence records are detached and checked through the existing
+    endpoint/authority contracts; override knobs cannot manufacture or upgrade
+    them. Their external checker authentication, directed obligation and
+    toolchain remain the trusted caller's responsibility. This function does
+    not execute or authenticate a solver, proof, review, or legal interpretation.
+    """
     mutation = record.mutation
-    case = case_id or mutation.mutation_class.value
+    original_wire = _stable_json(mutation.original)
+    mutant_wire = _stable_json(mutation.mutant)
+    snapshot = MinimalSemanticMutation(
+        mutation_class=mutation.mutation_class,
+        original=json.loads(original_wire), mutant=json.loads(mutant_wire),
+        mutated_paths=tuple(mutation.mutated_paths), relationship=mutation.relationship,
+        evidence_kind=mutation.evidence_kind, description=mutation.description,
+        solver_outcome=record.solver_outcome,
+    )
+    # Stored parse/minimality flags may refer to older mutable payloads.
+    current = collect_mutation_evidence(snapshot, solver_outcome=record.solver_outcome)
+    case = case_id or snapshot.mutation_class.value
     group = f"lineage:pgir-041:{case}"
     source = f"source:pgir-041:{case}"
     original = make_statement(
-        f"{case}-original",
-        digest=_digest_for("original", case, _stable_json(mutation.original)),
+        f"{case}-original", digest=_digest_for("original", case, original_wire),
         representation=RepresentationKind.CANONICAL_IR,
-        lineage_group_ids=(group,),
-        source_record_ids=(source,),
+        lineage_group_ids=(group,), source_record_ids=(source,),
     )
     mutant = make_statement(
-        f"{case}-mutant",
-        digest=_digest_for("mutant", case, _stable_json(mutation.mutant)),
+        f"{case}-mutant", digest=_digest_for("mutant", case, mutant_wire),
         representation=RepresentationKind.CANONICAL_IR,
-        lineage_group_ids=(group,),
-        source_record_ids=(source,),
+        lineage_group_ids=(group,), source_record_ids=(source,),
     )
-    lineage = sealed_campaign_lineage(
-        lineage_group_ids=(group,),
-        source_record_ids=(source,),
-    )
-    if record.unknown or not record.confirmed:
-        return HardNegativeCandidate(
-            candidate_id=f"candidate:{case}",
-            original=original,
-            mutant=mutant,
-            mutation_class=mutation.mutation_class,
-            mutated_paths=record.minimal_mutated_paths or mutation.mutated_paths,
-            relationship=SemanticRelationship.UNKNOWN,
-            lineage=lineage,
-            evidence=(),
-            minimality_checked=False,
-            disposition=NegativeDisposition.UNKNOWN,
-            evidence_kind=mutation.evidence_kind,
-            solver_outcome=record.solver_outcome,
-            source_kind="typed_mutation",
-            sibling_statement_ids=tuple(sibling_statement_ids),
-        )
-    kind = mutation.evidence_kind
-    label_authority = authority or _AUTHORITY_FOR_EVIDENCE[kind]
-    status = evidence_status or EvidenceStatus.VERIFIED
-    relationship = _RELATIONSHIP_FROM_VALUE[record.relationship]
-    evidence = make_relationship_evidence(
-        original,
-        mutant,
-        relationship,
-        evidence_id=f"evidence:{case}",
-        authority=label_authority,
-        status=status,
-        independent=independent if independent is not None else label_authority in INDEPENDENT_AUTHORITIES,
-        result_authority=_RESULT_AUTHORITY_FOR_EVIDENCE[kind],
-        producer_id="checker:pgir-041",
-        producer_version="1.0",
-    )
-    return HardNegativeCandidate(
-        candidate_id=f"candidate:{case}",
-        original=original,
-        mutant=mutant,
-        mutation_class=mutation.mutation_class,
-        mutated_paths=record.minimal_mutated_paths or mutation.mutated_paths,
-        relationship=relationship,
-        lineage=lineage,
-        evidence=(evidence,),
-        minimality_checked=record.minimality_checked,
+    lineage = sealed_campaign_lineage(lineage_group_ids=(group,), source_record_ids=(source,))
+    provided = tuple(evidence)
+    if any(type(item) is not LabelEvidence for item in provided):
+        raise HardNegativeAdmissionError("explicit LabelEvidence records required")
+    labels = _normalize_evidence(tuple(LabelEvidence.from_dict(item.to_dict()) for item in provided))
+    relationship = _RELATIONSHIP_FROM_VALUE.get(snapshot.relationship, SemanticRelationship.UNKNOWN)
+    if labels:
+        _validate_evidence_subjects(labels, (original, mutant), relationship)
+        for requested, name in ((authority, "authority"), (evidence_status, "status"), (independent, "independent")):
+            if requested is not None and any(getattr(item, name) != requested for item in labels):
+                raise HardNegativeAdmissionError("metadata cannot override supplied evidence " + name)
+
+    def finish(candidate):
+        if (_stable_json(record.mutation.original) != original_wire
+                or _stable_json(record.mutation.mutant) != mutant_wire):
+            raise HardNegativeAdmissionError("mutation endpoints changed during evidence binding")
+        return candidate
+
+    outcome = str(current.solver_outcome or "").strip().lower()
+    if (not labels or not current.check.accepted or not current.minimality_checked
+            or current.evidence_status == "rejected"
+            or outcome not in {SOLVER_COUNTEREXAMPLE, SOLVER_DISPROVED, SOLVER_SAT_MODEL, SOLVER_NOT_ENTAILED}):
+        return finish(HardNegativeCandidate(
+            candidate_id=f"candidate:{case}", original=original, mutant=mutant,
+            mutation_class=snapshot.mutation_class,
+            mutated_paths=current.minimal_mutated_paths or snapshot.mutated_paths,
+            relationship=SemanticRelationship.UNKNOWN, lineage=lineage, evidence=(),
+            minimality_checked=False, disposition=NegativeDisposition.UNKNOWN,
+            evidence_kind=snapshot.evidence_kind, solver_outcome=current.solver_outcome,
+            source_kind="typed_mutation", sibling_statement_ids=tuple(sibling_statement_ids),
+        ))
+    candidate = HardNegativeCandidate(
+        candidate_id=f"candidate:{case}", original=original, mutant=mutant,
+        mutation_class=snapshot.mutation_class,
+        mutated_paths=current.minimal_mutated_paths or snapshot.mutated_paths,
+        relationship=relationship, lineage=lineage, evidence=labels,
+        minimality_checked=current.minimality_checked,
         disposition=NegativeDisposition.CONFIRMED_NEGATIVE,
-        evidence_kind=_RECEIPT_KIND_FOR_EVIDENCE[kind],
-        solver_outcome=record.solver_outcome,
-        source_kind="typed_mutation",
+        evidence_kind=_RECEIPT_KIND_FOR_EVIDENCE[snapshot.evidence_kind],
+        solver_outcome=outcome, source_kind="typed_mutation",
         sibling_statement_ids=tuple(sibling_statement_ids),
     )
+    rejection = classify_hard_negative_candidate(candidate, positive_index=PositiveEquivalenceIndex())
+    if rejection is not None:
+        raise HardNegativeAdmissionError("supplied evidence is not admitted: " + rejection.value)
+    # Reuse the canonical record and training admission checks, not local flags.
+    _negative_and_example(candidate)
+    return finish(candidate)
 
 
-def candidate_from_recipe_case(case: Mapping[str, Any]) -> HardNegativeCandidate:
+def candidate_from_recipe_case(
+    case: Mapping[str, Any], *, evidence: Sequence[LabelEvidence] = (),
+) -> HardNegativeCandidate:
     """Expand one compact recipe case into a fully bound candidate."""
 
     if not isinstance(case, Mapping):
@@ -2099,39 +2156,32 @@ def candidate_from_recipe_case(case: Mapping[str, Any]) -> HardNegativeCandidate
         authority=authority,
         evidence_status=status,
         independent=case.get("independent"),
+        evidence=evidence,
     )
+    if "mutated_paths" in case and tuple(case["mutated_paths"]) != candidate.mutated_paths:
+        raise HardNegativeAdmissionError("recipe cannot override checked mutation paths")
+    if case.get("evidence_kind") and case["evidence_kind"] != candidate.evidence_kind:
+        raise HardNegativeAdmissionError("recipe cannot override checked evidence kind")
     if "disposition" in case:
         disposition = NegativeDisposition(str(case["disposition"]))
-        relationship = (
-            SemanticRelationship.UNKNOWN
-            if disposition is NegativeDisposition.UNKNOWN
-            else candidate.relationship
-        )
-        candidate = HardNegativeCandidate(
-            candidate_id=candidate.candidate_id,
-            original=candidate.original,
-            mutant=candidate.mutant,
-            mutation_class=candidate.mutation_class,
-            mutated_paths=tuple(case.get("mutated_paths") or candidate.mutated_paths),
-            relationship=relationship,
-            lineage=candidate.lineage,
-            evidence=() if disposition is NegativeDisposition.UNKNOWN else candidate.evidence,
-            minimality_checked=(
-                False
-                if disposition is NegativeDisposition.UNKNOWN
-                else candidate.minimality_checked
-            ),
-            disposition=disposition,
-            evidence_kind=str(case.get("evidence_kind") or candidate.evidence_kind),
-            solver_outcome=solver_outcome or candidate.solver_outcome,
-            source_kind=str(case.get("source_kind") or candidate.source_kind),
-            sibling_statement_ids=candidate.sibling_statement_ids,
-        )
+        # Task/recipe data may quarantine a checked candidate, never promote it.
+        if disposition in {NegativeDisposition.UNKNOWN, NegativeDisposition.QUARANTINED}:
+            candidate = HardNegativeCandidate(
+                candidate_id=candidate.candidate_id, original=candidate.original,
+                mutant=candidate.mutant, mutation_class=candidate.mutation_class,
+                mutated_paths=candidate.mutated_paths,
+                relationship=SemanticRelationship.UNKNOWN, lineage=candidate.lineage,
+                evidence=(), minimality_checked=False, disposition=NegativeDisposition.UNKNOWN,
+                evidence_kind=candidate.evidence_kind, solver_outcome=candidate.solver_outcome,
+                source_kind=candidate.source_kind,
+                sibling_statement_ids=candidate.sibling_statement_ids,
+            )
+
     return candidate
 
 
 def canonical_hard_negative_recipe() -> dict[str, Any]:
-    """Compact generator for the sealed PGIR-041 mutation-class coverage set."""
+    """Generate quarantined proposals, not independent semantic verdicts."""
 
     cases: list[dict[str, Any]] = []
     for mutation_class in MINIMAL_MUTATION_CLASSES:
@@ -2142,15 +2192,16 @@ def canonical_hard_negative_recipe() -> dict[str, Any]:
         )
         cases.append(
             {
-                "authority": _AUTHORITY_FOR_EVIDENCE[matching.evidence_kind].value,
+                "authority": LabelAuthority.UNKNOWN.value,
                 "case_id": f"{mutation_class.value}-minimal",
-                "disposition": NegativeDisposition.CONFIRMED_NEGATIVE.value,
+                "disposition": NegativeDisposition.UNKNOWN.value,
                 "evidence_kind": matching.evidence_kind,
-                "independent": True,
+                "independent": False,
                 "mutation_class": mutation_class.value,
                 "mutated_paths": list(matching.mutated_paths),
-                "relationship": matching.relationship,
-                "result_authority": _RESULT_AUTHORITY_FOR_EVIDENCE[matching.evidence_kind].value,
+                "relationship": SemanticRelationship.UNKNOWN.value,
+                "proposed_relationship": matching.relationship,
+                "result_authority": "",
                 "solver_outcome": matching.solver_outcome,
                 "source_kind": "typed_mutation",
             }
@@ -2400,6 +2451,12 @@ def write_hard_negative_shards(
 
 
 def load_hard_negative_shards(input_dir: str | Path) -> tuple[IRHardNegative, ...]:
+    """Decode stored contracts, including historical epochs, without re-admission.
+
+    This archival reader does not authenticate checker execution or upgrade old
+    labels. Current training requires independently supplied eligible evidence;
+    successful decoding is not semantic, toolchain, or legal verification.
+    """
     root = Path(input_dir)
     records: list[IRHardNegative] = []
     for path in sorted((root / "shards").glob("*.json")):

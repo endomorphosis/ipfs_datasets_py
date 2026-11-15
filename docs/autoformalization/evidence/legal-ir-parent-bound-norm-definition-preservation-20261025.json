@@ -1,0 +1,557 @@
+{
+  "accepted_execution": false,
+  "accepted_operation_result_bound": false,
+  "accepted_outer_operation": false,
+  "canonical_home": "ipfs_datasets_py/logic/autoformal",
+  "cohorts": {
+    "A": {
+      "capture_declared_required_sources": 44,
+      "cases": 47,
+      "checked_raw_compiled_and_executed_sources": 172,
+      "declared_namespaces": 14,
+      "input_capsule_seal": {
+        "bytes": 1285,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/preservation-integration-v01/input-capsules-packet-v02.json",
+        "sha256": "05a1668025eb18cbbf8d8f3e3bcfd5a9b3e3b5925226eae3cbc1bfa89e77c9ea"
+      },
+      "mechanical_audit_READ_closed": true,
+      "observed_namespaces": 10,
+      "ordinary_setup_call_teardown_phases": 141,
+      "original_cleanup_and_source_READ_closure_verified": true,
+      "proof_store_SQL_qualified": false,
+      "qualification_profile": "parent-bound-preservation-packet-controls/v2",
+      "qualified": true,
+      "refs": {
+        "cohort": {
+          "bytes": 18597,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/preservation-integration-v01/cohort-packet-v02.json",
+          "sha256": "8f160079f0dd9b6b9e63f2fc24eefd157b5476d053f5970fe877d0c5f3922bbf"
+        },
+        "controller": {
+          "bytes": 1140,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/preservation-integration-v01/controller-complete-packet-v02.json",
+          "sha256": "339a61d9d9311c023bbc49639bbdd953c4f6a1b4c9f7307ef64923e5a5b44d32"
+        },
+        "independent_review": {
+          "bytes": 14805,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/preservation-integration-v01/independent-result-review-packet-v02.json",
+          "sha256": "961cbd687fd07d24bfdde5ff7379ace529b0ab704a07e0f35a3fda95ca87bc9d"
+        },
+        "mechanical_audit": {
+          "bytes": 272339,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/preservation-integration-v01/audit-stage/packet-v02-mechanical-audit-v01.json",
+          "sha256": "add4421a7dfdca2627dc013a4ee1e2a4f2ecf4c45416413b43268559b0f13224"
+        },
+        "request": {
+          "bytes": 15109,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/preservation-integration-v01/request-packet-v02.json",
+          "sha256": "98707394936ada5738ff504714747f002937f726f6f60ae47df5a1ddd13e6418"
+        },
+        "root_review": {
+          "bytes": 11185,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/preservation-integration-v01/root-result-review-packet-v02.json",
+          "sha256": "575a4edefd5f392e617114d7493f485caa3fce0396ecc3200c7c8f1e8fb9f5a7"
+        },
+        "test_result": {
+          "bytes": 22558,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/preservation-integration-v01/attempt-packet-v02/exports/test-result.json",
+          "sha256": "d8d3f2574c50529d34ed3a3c140f0b941fbf895a11e40fafadc35de83cd08956"
+        }
+      },
+      "scope": "Two genuine current public packet readers, one per mode, follow explicitly instrumented custody/refusal controls; all retained compiler, artifact and lifecycle claims are synthetic history.",
+      "selected_required_executed_sources": 43,
+      "selectors": 20,
+      "stage": "packet",
+      "status": "accepted_fresh_full_v02_cohort",
+      "successful_stage_prerequisite": {
+        "bytes": 3416,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/preservation-integration-v01/prerequisite-packet-v02.json",
+        "sha256": "685306c0d93506b6d482372b4d0a1efa77ca600bfa83d1f18c332511c0f4b5a1"
+      }
+    },
+    "B": {
+      "SQL_observation": {
+        "closed_database": {
+          "bytes": 3420160,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/preservation-integration-v01/attempt-sql-write-v02/exports/sql-write/observations.duckdb",
+          "sha256": "82a0df5d8ee98da2e09eb8dc4470d121dbccd6cdba5d4772b49d14d51ff1c202"
+        },
+        "durable_storage_verified": false,
+        "entry_digest": "sha256:2deded90e89d45c08bd7aaa6ac797ba98bf1042566eb6846f8e24ca58557227c",
+        "full_entry_readback_verified": true,
+        "full_key_document": "sql_write_manifest",
+        "full_key_json_pointer": "/key",
+        "key_digest": "sha256:136710177c17a94d6b66296de69db61599d6659f7dff3213f857f7d1eb5ddc3d",
+        "key_dimensions": 15,
+        "mode": "body_with_membership",
+        "proof_usable": false,
+        "sql_write_manifest": {
+          "bytes": 6246,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/preservation-integration-v01/attempt-sql-write-v02/exports/sql-write/sql-write-manifest.json",
+          "sha256": "d5f81ce4096c5afee6e00f780bb8291c9f3a98673258639396478e23fd66de37"
+        }
+      },
+      "capture_declared_required_sources": 40,
+      "cases": 1,
+      "checked_raw_compiled_and_executed_sources": 158,
+      "declared_namespaces": 14,
+      "mechanical_audit_READ_closed": true,
+      "mode": "body_with_membership",
+      "observed_namespaces": 10,
+      "ordinary_setup_call_teardown_phases": 3,
+      "original_cleanup_and_source_READ_closure_verified": true,
+      "proof_store_SQL_qualified": true,
+      "qualification_profile": "parent-bound-preservation-sql-write-controls/v2",
+      "qualified": true,
+      "refs": {
+        "cohort": {
+          "bytes": 7544,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/preservation-integration-v01/cohort-sql-write-v02.json",
+          "sha256": "e501ec893038aa118aeb5237211d1e49f695f7fa426075c6f97ca1a71448e84c"
+        },
+        "controller": {
+          "bytes": 1145,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/preservation-integration-v01/controller-complete-sql-write-v02.json",
+          "sha256": "b7395af1369698009ac3683f4a8b50749f37f6bba7cdf865b3711c60484b9a6c"
+        },
+        "independent_review": {
+          "bytes": 11683,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/preservation-integration-v01/independent-result-review-sql-write-v02.json",
+          "sha256": "7c7191a7da123a5835b0d56821647ef2aca95e8a6eb3f2999d0f73091c0650cb"
+        },
+        "mechanical_audit": {
+          "bytes": 279219,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/preservation-integration-v01/audit-stage/sql-write-v02-mechanical-audit-v01.json",
+          "sha256": "de27b9c3840c9c38c07553f248f0cca7f6079096c38e48d0ea2bab68b1d2e6a3"
+        },
+        "request": {
+          "bytes": 15031,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/preservation-integration-v01/request-sql-write-v02.json",
+          "sha256": "f40257925d37c155f34976eb88bdd0accf482e95e17c998a2a5fd0b5c83e43b6"
+        },
+        "root_review": {
+          "bytes": 5768,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/preservation-integration-v01/root-result-review-sql-write-v02.json",
+          "sha256": "37b3de5d4da64a4c1236297ee5b2f1d583fc848d3dfd17ed2d841f968a9e149b"
+        },
+        "test_result": {
+          "bytes": 11083,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/preservation-integration-v01/attempt-sql-write-v02/exports/test-result.json",
+          "sha256": "9445ae66d82bcb2e16febab57640d01d4948e535aecb52e54d0195b3a55ac909"
+        }
+      },
+      "scope": "One genuine public SQL write and complete full-entry readback with an explicit caller-owned connection, in body_with_membership mode only. This supplies no cold-hit or true-miss qualification by itself.",
+      "selected_required_executed_sources": 38,
+      "selectors": 1,
+      "sql_input_seal": {
+        "bytes": 834,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/preservation-integration-v01/sql-input-sql-write-v02.json",
+        "sha256": "963983ab195a1944bb499aecf6fb55bc72abadcad46fe6b633ed76f5649f3915"
+      },
+      "stage": "sql-write",
+      "status": "accepted_fresh_full_v02_cohort",
+      "successful_stage_prerequisite": {
+        "bytes": 3432,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/preservation-integration-v01/prerequisite-sql-write-v02.json",
+        "sha256": "fa1566b01dc47c91f5fbd9557fde410196ef45ffc78768eff9377e8bb71d5303"
+      }
+    },
+    "C": {
+      "SQL_observation": {
+        "actual_return": "retained-index-lookup-operation",
+        "additional_public_lookup_after_invalidation": false,
+        "dimension_source": "actual public lookup projection",
+        "direct_store_invalidated_after_hit": true,
+        "durable_storage_verified": false,
+        "entry_digest": "sha256:2deded90e89d45c08bd7aaa6ac797ba98bf1042566eb6846f8e24ca58557227c",
+        "key_digest": "sha256:136710177c17a94d6b66296de69db61599d6659f7dff3213f857f7d1eb5ddc3d",
+        "key_dimensions": 15,
+        "mask_source": "actual public lookup operation",
+        "mode": "body_with_membership",
+        "observation": {
+          "bytes": 2819,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/preservation-integration-v01/attempt-sql-hit-v02/exports/observations/cold-hit.json",
+          "sha256": "55bd6a1527b46b440df38c89ca48492028538cf9cffd9b17e1b62b6914bdc743"
+        },
+        "operation_receipt_sha256": "1639f1261a3206a96c3ac276aa56c0a91aabcefa8a8c64c851e77bb7aae88a43",
+        "operation_schema": "legal-corpus-parent-bound-norm-definition-preservation-index-operation/v1",
+        "owned_database_after_direct_invalidation": {
+          "bytes": 3682304,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/preservation-integration-v01/attempt-sql-hit-v02/pytest/cases/test_parent_bound_index_genuine_sql_cold_reopen_-k5itibfe/cold-read.duckdb",
+          "sha256": "9cc2c2773e471b6f9012e6423399e60d0715e4572a346c825966482a2e6b3aa0"
+        },
+        "prior_B_database_unchanged": true,
+        "proof_usable": false
+      },
+      "capture_declared_required_sources": 40,
+      "cases": 1,
+      "checked_raw_compiled_and_executed_sources": 158,
+      "declared_namespaces": 14,
+      "mechanical_audit_READ_closed": true,
+      "mode": "body_with_membership",
+      "observed_namespaces": 10,
+      "ordinary_setup_call_teardown_phases": 3,
+      "original_cleanup_and_source_READ_closure_verified": true,
+      "proof_store_SQL_qualified": true,
+      "qualification_profile": "parent-bound-preservation-sql-cold-hit-controls/v2",
+      "qualified": true,
+      "refs": {
+        "cohort": {
+          "bytes": 8239,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/preservation-integration-v01/cohort-sql-hit-v02.json",
+          "sha256": "72477d74d8e1d8cb0d1c3446638f8c3c5013257e504bbb1ab92f5359045b920c"
+        },
+        "controller": {
+          "bytes": 1141,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/preservation-integration-v01/controller-complete-sql-hit-v02.json",
+          "sha256": "9e38852511a0890d1dff23a2ecb6ec41c70e8fd304dba0de43c3878b329ca61c"
+        },
+        "independent_review": {
+          "bytes": 11298,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/preservation-integration-v01/independent-result-review-sql-hit-v02.json",
+          "sha256": "6458114772199ba2c304816597b31bc44c8524d4ca9e4bba0f76d705baa108bd"
+        },
+        "mechanical_audit": {
+          "bytes": 288067,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/preservation-integration-v01/audit-stage/sql-hit-v02-mechanical-audit-v01.json",
+          "sha256": "0a36a1b6d255bb788f223c796591e5055b5b4d53618ac75d4990e8b2097a6602"
+        },
+        "request": {
+          "bytes": 17699,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/preservation-integration-v01/request-sql-hit-v02.json",
+          "sha256": "3401052cf7abb09db7a88c30d7e99fc5819e5acde24b8cccc213754b713e9efd"
+        },
+        "root_review": {
+          "bytes": 8072,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/preservation-integration-v01/root-result-review-sql-hit-v02.json",
+          "sha256": "aa0520e9dfe219c8e4a4a3c9d58adaa57bdc08c99ade83fef92590d198c7746b"
+        },
+        "test_result": {
+          "bytes": 11777,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/preservation-integration-v01/attempt-sql-hit-v02/exports/test-result.json",
+          "sha256": "3e2f993696aa5a9f217def315fc16c011dff4c1d9f29f308d4a617c2cec5918e"
+        }
+      },
+      "scope": "One genuine public cold lookup hit from a verified owned copy of the closed B database. Later direct-store invalidation is separate; no second public lookup is enrolled.",
+      "selected_required_executed_sources": 38,
+      "selectors": 1,
+      "stage": "sql-hit",
+      "status": "accepted_fresh_full_v02_cohort"
+    },
+    "D": {
+      "SQL_observation": {
+        "actual_operation_returned": false,
+        "actual_return": "none",
+        "additional_public_lookup_after_invalidation": false,
+        "dimension_source": "sealed B expected key schema",
+        "direct_store_invalidation_enrolled": false,
+        "durable_storage_verified": false,
+        "expected_entry_digest": "sha256:2deded90e89d45c08bd7aaa6ac797ba98bf1042566eb6846f8e24ca58557227c",
+        "expected_key_digest": "sha256:136710177c17a94d6b66296de69db61599d6659f7dff3213f857f7d1eb5ddc3d",
+        "expected_key_dimensions": 15,
+        "expected_masks": {
+          "consumer_mask": 0,
+          "evaluation_gold_mask": 0,
+          "semantic_mask": 0,
+          "training_mask": 0
+        },
+        "expected_negative_entry_policy": {
+          "evidence_authority": "none",
+          "outcome": "unknown",
+          "result_authority": "candidate",
+          "status": "unknown",
+          "trust_level": "none"
+        },
+        "mask_source": "sealed B write operation; miss returns None",
+        "mode": "body_with_membership",
+        "observation": {
+          "bytes": 2679,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/preservation-integration-v01/attempt-sql-miss-v02/exports/observations/cold-miss.json",
+          "sha256": "bcde2ec7c5eb705634cafff3c2d418b2d979c49ec7e53783ae1d5e50a071955c"
+        },
+        "operation_receipt_sha256": null,
+        "operation_schema": null,
+        "owned_fresh_empty_database": {
+          "bytes": 536576,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/preservation-integration-v01/attempt-sql-miss-v02/pytest/cases/test_parent_bound_index_genuine_empty_sql_databa-2kzyw2ip/empty-observations.duckdb",
+          "sha256": "16eb2b1cb310f834b9a3251a6eaeeb22c730829290774e264b8ddfb9796e7b86"
+        },
+        "proof_usable": false
+      },
+      "capture_declared_required_sources": 40,
+      "cases": 1,
+      "checked_raw_compiled_and_executed_sources": 158,
+      "declared_namespaces": 14,
+      "mechanical_audit_READ_closed": true,
+      "mode": "body_with_membership",
+      "observed_namespaces": 10,
+      "ordinary_setup_call_teardown_phases": 3,
+      "original_cleanup_and_source_READ_closure_verified": true,
+      "proof_store_SQL_qualified": true,
+      "qualification_profile": "parent-bound-preservation-sql-cold-miss-controls/v2",
+      "qualified": true,
+      "refs": {
+        "cohort": {
+          "bytes": 8221,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/preservation-integration-v01/cohort-sql-miss-v02.json",
+          "sha256": "80a9dd52396cf2ad8c92de3155c4447a90ba6e1fcb9c4c4e1bdd07bc26de4205"
+        },
+        "controller": {
+          "bytes": 1143,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/preservation-integration-v01/controller-complete-sql-miss-v02.json",
+          "sha256": "f7ba8cb9045d3531e31e2f8b03d9531429c643baec946a155879d13cff5ded7e"
+        },
+        "independent_review": {
+          "bytes": 11382,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/preservation-integration-v01/independent-result-review-sql-miss-v02.json",
+          "sha256": "36a09b041e1303f90bd86a9993c2bf7d673c224ef18fd285388ae2a3d917d380"
+        },
+        "mechanical_audit": {
+          "bytes": 287977,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/preservation-integration-v01/audit-stage/sql-miss-v02-mechanical-audit-v01.json",
+          "sha256": "2bc7e4f6335a9be709bd6b281ad787e63d04608d16e74e19c401ec856f447e43"
+        },
+        "request": {
+          "bytes": 17702,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/preservation-integration-v01/request-sql-miss-v02.json",
+          "sha256": "1385e93953317103519dd8dbebc834f294e575bcf18c1b71f3e5aae5b87bde3e"
+        },
+        "root_review": {
+          "bytes": 7921,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/preservation-integration-v01/root-result-review-sql-miss-v02.json",
+          "sha256": "e8a6950fdae09aaa168d30e8de102615871d292c362103234e8518c52fdb1755"
+        },
+        "test_result": {
+          "bytes": 11760,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/preservation-integration-v01/attempt-sql-miss-v02/exports/test-result.json",
+          "sha256": "1452e40eb7607dd08773f7d506efefaa0251b865b470c4a90fe8f524209953c1"
+        }
+      },
+      "scope": "One genuine public lookup returns None from a fresh empty owned database. The recorded 15 dimensions, key/entry digests, negative policy and masks are sealed B expectations; no D operation or entry is returned and no invalidation is enrolled.",
+      "selected_required_executed_sources": 38,
+      "selectors": 1,
+      "stage": "sql-miss",
+      "status": "accepted_fresh_full_v02_cohort"
+    },
+    "E": {
+      "capture_declared_required_sources": 53,
+      "cases": 40,
+      "checked_raw_compiled_and_executed_sources": 180,
+      "declared_namespaces": 14,
+      "mechanical_audit_READ_closed": true,
+      "observed_namespaces": 10,
+      "ordinary_setup_call_teardown_phases": 120,
+      "original_cleanup_and_source_READ_closure_verified": true,
+      "proof_store_SQL_qualified": false,
+      "qualification_profile": "parent-bound-preservation-index-fault-controls/v2",
+      "qualified": true,
+      "refs": {
+        "cohort": {
+          "bytes": 17885,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/preservation-integration-v01/cohort-index-fault-v02.json",
+          "sha256": "960323722ff3961696cf6c56e480782bf82725a7a649a3dabfc29493cb7a68bf"
+        },
+        "controller": {
+          "bytes": 1150,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/preservation-integration-v01/controller-complete-index-fault-v02.json",
+          "sha256": "8f4cba7ddd9d44b481081b0af27bd0ce0f5aa74411246fd851a74396af3e87fa"
+        },
+        "independent_review": {
+          "bytes": 7714,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/preservation-integration-v01/independent-result-review-index-fault-v02.json",
+          "sha256": "825399971ec44912f5f11fd4204bed3da26b97c2a6146da6df9f3e369139a362"
+        },
+        "mechanical_audit": {
+          "bytes": 260857,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/preservation-integration-v01/audit-stage/index-fault-v02-mechanical-audit-v01.json",
+          "sha256": "6779063aa309fb3e5371d701c7aa2839d501519e99e6466cc2cb196c52097902"
+        },
+        "request": {
+          "bytes": 14895,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/preservation-integration-v01/request-index-fault-v02.json",
+          "sha256": "3aab56dea45bd7c5e46f5c31fcc7b4d2a08c5595028ecd68af0dedcce4b83a13"
+        },
+        "root_review": {
+          "bytes": 3413,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/preservation-integration-v01/root-result-review-index-fault-v02.json",
+          "sha256": "b0fe430f91f8d28900498bbe58602303c0865838a091487ee0d6491dacdb0d47"
+        },
+        "test_result": {
+          "bytes": 22396,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/preservation-integration-v01/attempt-index-fault-v02/exports/test-result.json",
+          "sha256": "721352c0366b1a894084401db7dd27ebef515e181237c7f23617d96f90940d81"
+        }
+      },
+      "scope": "39 new index custody/refusal cases plus one existing cheap profile regression. Genuine original baseline and initial packet replay precede explicitly instrumented subsequent reader returns; no proof-store SQL is enrolled.",
+      "selected_required_executed_sources": 51,
+      "selectors": 18,
+      "stage": "index-fault",
+      "status": "accepted_fresh_full_v02_cohort"
+    }
+  },
+  "completed": true,
+  "consumer_mask": 0,
+  "evaluation_gold_mask": 0,
+  "evidence_id": "parent-bound-norm-definition-preservation-qualified-20261025-01",
+  "failed_attempts": {
+    "index-fault-v01": {
+      "diagnosis": {
+        "bytes": 5606,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/preservation-integration-v01/index-fault-v01-wrapper-failure-diagnosis.json",
+        "sha256": "f37e79297f092fecfd5dfa761427c8dd7f1d5af1ba2674ade670098d9dd9f391"
+      },
+      "qualification_credit": 0,
+      "qualified": false,
+      "reason": "Pytest cases passed, then worker refused two unused declared executed-source requirements; remaining terminal guards did not complete."
+    },
+    "packet-v01": {
+      "diagnosis": {
+        "bytes": 5492,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/preservation-integration-v01/packet-v01-wrapper-failure-diagnosis.json",
+        "sha256": "e28485249f4cdd7bc835ce09e98433ba01ebf5d8b1ec00a28241f929464a3f86"
+      },
+      "qualification_credit": 0,
+      "qualified": false,
+      "reason": "Pytest cases passed, then worker refused one unused declared executed-source requirement; remaining terminal guards did not complete."
+    }
+  },
+  "frozen_source_files": 212,
+  "governing_definition_use": null,
+  "index_scope": {
+    "SQL_qualification_requires_each_actual_B_C_D_success": true,
+    "actual_SQL_mode": "body_with_membership",
+    "both_modes_SQL_qualified": false,
+    "cache_polarity": "negative",
+    "durable_storage_verified": false,
+    "evidence_authority": "none",
+    "key_dimensions": 15,
+    "outcome": "unknown",
+    "outer_operation_acceptance_granted": false,
+    "proof_usable": false,
+    "qualified_SQL_operations": {
+      "cold_reopen_hit": true,
+      "fresh_empty_database_true_miss": true,
+      "write_and_full_entry_readback": true
+    },
+    "real_proof_store_SQL_qualified": true,
+    "result_authority": "candidate",
+    "status": "unknown",
+    "trust_level": "none"
+  },
+  "model_forwards": 0,
+  "new_Lean_or_compiler_invocations_enrolled": 0,
+  "norm_interpretation_ready": false,
+  "optimizer_steps": 0,
+  "outer_operation_outcome": "unprovided",
+  "per_mode_packet": {
+    "both_mode_current_packet_readers_qualified": true,
+    "compiler_artifact_and_lifecycle_claims": "Synthetic historical fixture claims only; current replay verifies their consistency without fresh Lean or compiler authentication.",
+    "conditional_theorem_claims": {
+      "body_with_membership": 3,
+      "instance_only": 2
+    },
+    "expected_modules": 6,
+    "full_original_parent_report_and_ten_manifest_commitments_retained": true,
+    "hDefinition_verified": false,
+    "hMembership_verified": false,
+    "original_norm_unchanged_and_unbound": true,
+    "retained_compiled_artifacts": 6,
+    "retained_files": 29,
+    "source_files": 9
+  },
+  "private_audit_controls": {
+    "prior_iterations_runtime_qualification_credit": 0,
+    "prior_source_iterations": [
+      {
+        "bytes": 50441,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/preservation-integration-v01/audit-stage/audit_parent_bound_preservation_results_v01.py",
+        "sha256": "33e906aa8bc6fe53f2161559e7659b1a54708b04e8b27b2aa5bcaf3eb4b838b0"
+      },
+      {
+        "bytes": 50659,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/preservation-integration-v01/audit-stage/audit_parent_bound_preservation_results_v02.py",
+        "sha256": "6350a3853fe46c4207e3244cce20605868bcabbb0988d185e8ab35da218bf687"
+      }
+    ],
+    "scope": "Earlier audit source iterations are control-development evidence, not successful runtime cohorts.",
+    "selected_helper": {
+      "bytes": 53708,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/preservation-integration-v01/audit-stage/audit_parent_bound_preservation_results_v03.py",
+      "sha256": "a90cb03f32957e8c42070d3e8429df1647bbdff639200429cfa1da87ad6d54ef"
+    }
+  },
+  "product_profiles": {
+    "index": "retained-parent-bound-norm-definition-receipt-consistency-index/v1",
+    "packet": "replayed-retained-parent-bound-norm-definition-conditional-native-byte-packet/v1"
+  },
+  "proof_usable": false,
+  "public_APIs": {
+    "index": [
+      "prepare_parent_bound_norm_definition_preservation_index_v1",
+      "write_parent_bound_norm_definition_preservation_index_v1",
+      "lookup_parent_bound_norm_definition_preservation_index_v1"
+    ],
+    "packet": [
+      "validate_parent_bound_norm_definition_native_packet_v1",
+      "parent_bound_norm_definition_packet_sha256"
+    ]
+  },
+  "public_target": "docs/autoformalization/evidence/legal-ir-parent-bound-norm-definition-preservation-20261025.json",
+  "qualified": true,
+  "recorded_at_utc": "2026-10-25T20:30:14.685585+00:00",
+  "required_execution_selection": {
+    "capture_generation_declarations_unchanged": true,
+    "correction_receipt": {
+      "bytes": 10207,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/preservation-integration-v01/controls/required-source-selection-correction-v01.json",
+      "sha256": "96b368e92fd9aefbecba8fd305b298eac76123ce64e054986059659e411f2f8c"
+    },
+    "profile": "parent-bound-preservation-reviewed-executed-source-subset/v1",
+    "scope": "Only fixed reviewed unused-source exclusions distinguish immutable capture declarations from corrected strict runtime selections; every selected source must actually compile and execute."
+  },
+  "schema": "legal-ir-parent-bound-norm-definition-preservation-qualification/v1",
+  "scope": "Five separate accepted focused cohorts over one immutable source generation: A packet47/141, E index custody40/120, and B/C/D each one SQL case/three phases. Both current packet modes replay genuine originals; actual SQL covers body_with_membership only. Failed attempts supply zero qualification credit.",
+  "selected_interpretation": null,
+  "selected_source_generation": {
+    "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_index_v2.py": {
+      "bytes": 81633,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/preservation-integration-v01/source-stage/legal_corpus_definition_use_preservation_index_v2.v07.py.after",
+      "sha256": "af7e7d0da15ffd53d334d3c58d6da695d73b2dfb23959529ea00d741646be9e0"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_packet_v2.py": {
+      "bytes": 110825,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/preservation-integration-v01/source-stage/legal_corpus_definition_use_preservation_packet_v2.v06.py.after",
+      "sha256": "58f8e118d49437e5d749bf53f3604934f8c5b70d06d391f620ecf92661979dc2"
+    },
+    "tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_index_v2.py": {
+      "bytes": 84332,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/preservation-integration-v01/test-stage/test_legal_corpus_definition_use_preservation_index_v2.v02.py.after",
+      "sha256": "74bd0f4c2b78cc7d852838c884b70649654b572d543b8154741b4c1854b8cce1"
+    },
+    "tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_packet_v2.py": {
+      "bytes": 105412,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/preservation-integration-v01/test-stage/test_legal_corpus_definition_use_preservation_packet_v2.v06.py.after",
+      "sha256": "2fc14d7f1c185cc34e95993b989f653ef1b7956ee46b4716ab0385c76be7ff55"
+    }
+  },
+  "semantic_mask": 0,
+  "source_generation": {
+    "bytes": 195551,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/preservation-integration-v01/source-generation-v01.json",
+    "sha256": "18f761c2a5708988de947b62e75ded5a45296b2e6b72973e05d1dbfaa379532f"
+  },
+  "source_generation_sha256": "de74db3b89ada7bae67cbec143f98de966c14d2f8a659cc836e038e51105bfd2",
+  "source_root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-bound-norm-lake-v01/preservation-integration-v01/source-generation-v01/frozen",
+  "source_scope": "The four canonical relative targets identify the exact reviewed byte candidates. Actual evaluation uses the retained frozen source_root plus each relative target. This qualification does not establish producer-path relocation or a new run at canonical installation paths.",
+  "status": "qualified selected controls and SQL engineering observations in the pinned frozen-source namespace",
+  "training_mask": 0,
+  "unqualified": [
+    "Source-to-model equivalence, model training or numerical convergence.",
+    "Statutory meaning, governing interpretation, legal-as-of edition or corpus completeness.",
+    "Source-bound norms, verified hDefinition/hMembership premises or accepted outer-operation provenance.",
+    "Fresh Lean/kernel theorem verification or authentication of retained synthetic compiler history.",
+    "Full package startup, third-party cached bytecode or kernel containment.",
+    "Strict physical-fixture-v2 attestation, transport/filesystem acquisition or storage release.",
+    "Original official49 and direct-parent23 profile generations gain no new qualification from this opt-in29 profile."
+  ]
+}

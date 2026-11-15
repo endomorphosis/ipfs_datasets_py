@@ -1,0 +1,54 @@
+{
+  "admitted": false,
+  "cells_recorded_separately": false,
+  "completion_authority": false,
+  "component_effects_recorded": true,
+  "components": {
+    "context": {
+      "gradient_l2_batches": 32,
+      "gradient_l2_max": 0.0005787796690128744,
+      "gradient_l2_mean": 0.0003062553762447351,
+      "gradient_l2_min": 2.8543323423946276e-05,
+      "nonzero_gradient_updates": 32
+    },
+    "gate": {
+      "changed_updates": 32,
+      "gradient_l2_batches": 32,
+      "gradient_l2_max": 0.012035025283694267,
+      "gradient_l2_mean": 0.006062872416805476,
+      "gradient_l2_min": 0.0008457070216536522,
+      "nonzero_gradient_updates": 32
+    },
+    "query": {
+      "changed_updates": 32,
+      "gradient_l2_batches": 32,
+      "gradient_l2_max": 0.0001476451725466177,
+      "gradient_l2_mean": 7.369465420481447e-05,
+      "gradient_l2_min": 5.938304184383014e-06,
+      "nonzero_gradient_updates": 32
+    },
+    "residual": {
+      "gradient_l2_batches": 32,
+      "gradient_l2_max": 0.036969829350709915,
+      "gradient_l2_mean": 0.021082500723423436,
+      "gradient_l2_min": 0.0020011556334793568,
+      "nonzero_gradient_updates": 32
+    }
+  },
+  "constitution_roundtrip_ok": false,
+  "federal_corpus_acceptance_claimed": false,
+  "federal_corpus_scored": false,
+  "formalized": false,
+  "gold_or_teacher_admission_granted": false,
+  "legal_acceptance_claimed": false,
+  "measurement": "Per-component gradient L2 from the actor-refinement cell-training trace. Each component stays its own record.",
+  "metric": "component_effects",
+  "metric_remains_separate": true,
+  "optimizer_steps": 32,
+  "pooled_score_recorded": false,
+  "reviewed_accuracy": false,
+  "schema": "legal-ir-separated-metric-measurement/v1",
+  "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-refinement-20261014-actor-refinement-ce-01/results/cell-training.json",
+  "source_sha256": "8bdb7ae24b69963b733970ca8a24c13c56692fcc2eb0f9d029f2233f069fab56",
+  "training_executed": false
+}

@@ -300,3 +300,122 @@ def test_closed_policy_refuses_alias_revision_expansion_and_duplicate_mapping_pi
     mapping_policy["record_mappings"].append(deepcopy(mapping_policy["record_mappings"][0]))
     with pytest.raises(ValueError, match="duplicate source mapping"):
         bridge.identity_policy_sha256(mapping_policy)
+
+
+@pytest.mark.parametrize("order", [
+    ("legal_span_section_bridge", "legal_span_provenance"),
+    ("legal_span_provenance", "legal_span_section_bridge"),
+])
+def test_fresh_bridge_and_provenance_imports_leave_processors_unloaded(order):
+    """Ordinary fresh minimal imports do not load the processor namespace."""
+    import os
+    from pathlib import Path
+    import subprocess
+    import sys
+    root = Path(bridge.__file__).resolve().parents[3]
+    script = r"""
+import importlib
+import json
+from pathlib import Path
+import sys
+root = Path(sys.argv[1])
+order = json.loads(sys.argv[2])
+prefix = "ipfs_datasets_py.processors"
+def processors():
+    return sorted(name for name in sys.modules if name == prefix or name.startswith(prefix + "."))
+assert processors() == [], "fresh interpreter already loaded processors"
+origins = {}
+for name in order:
+    module = importlib.import_module("ipfs_datasets_py.logic.autoformal." + name)
+    expected = root / "ipfs_datasets_py/logic/autoformal" / (name + ".py")
+    assert Path(module.__file__).resolve() == expected
+    assert module.__spec__.origin == str(expected)
+    origins[name] = str(expected)
+    assert processors() == [], "metadata import eagerly loaded processors"
+print(json.dumps({"origins": origins, "processors": processors()}, sort_keys=True))
+"""
+    environment = dict(os.environ, PYTHONPATH=str(root),
+        IPFS_DATASETS_PY_MINIMAL_IMPORTS="1", PYTHONDONTWRITEBYTECODE="1")
+    result = subprocess.run([sys.executable, "-P", "-B", "-c", script,
+        str(root), json.dumps(order)], cwd=root, env=environment,
+        stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=30)
+    assert result.returncode == 0, result.stderr
+    witness = json.loads(result.stdout)
+    assert witness["processors"] == []
+    assert set(witness["origins"]) == set(order)
+
+
+@pytest.mark.parametrize("value", ["usc:us:10:1", "USC:US:10:1", "usc:us:10:1(a)", " usc:us:10:1 "])
+def test_lazy_bridge_validator_returns_the_actual_canonical_result(value):
+    from ipfs_datasets_py.processors.legal_data.uscode_release_schema import validate_legal_id
+    expected = validate_legal_id(value)
+    observed = bridge.validate_legal_id(value)
+    assert type(observed) is type(expected) is str
+    assert observed == expected
+    if value == "USC:US:10:1": assert observed == value
+    # The canonical owner already strips boundary whitespace; the bridge must
+    # neither substitute its own normalization nor change that return value.
+    if value == " usc:us:10:1 ": assert observed == "usc:us:10:1"
+
+
+@pytest.mark.parametrize("value", [None, True, 12, "", "  ", "row-7", "document_index4",
+                                    "not-a-legal-id", "usc::10:1", "usc:us:10:\x00"])
+def test_lazy_bridge_validator_preserves_canonical_error_type_and_name(value):
+    from ipfs_datasets_py.processors.legal_data.uscode_release_schema import validate_legal_id
+    name = "bridge.row[9].legal_id"
+    try:
+        validate_legal_id(value, name=name)
+    except Exception as error:
+        expected = error
+    else:
+        pytest.fail("The declared invalid fixture must be refused by the actual canonical owner")
+    with pytest.raises(type(expected)) as caught:
+        bridge.validate_legal_id(value, name=name)
+    assert type(caught.value) is type(expected)
+    assert str(caught.value) == str(expected)
+    assert name in str(caught.value)
+
+
+def test_lazy_bridge_validator_passes_literal_input_and_name_to_current_canonical_owner(monkeypatch):
+    from ipfs_datasets_py.processors.legal_data import uscode_release_schema as canonical
+    validator = canonical.validate_legal_id
+    value = " USC:US:10:1 "
+    name = "exact_source.legal_id"
+    expected = validator(value, name=name)
+    calls = []
+    def observed(value, *, name="legal_id"):
+        calls.append((value, name))
+        return validator(value, name=name)
+    monkeypatch.setattr(canonical, "validate_legal_id", observed)
+    result = bridge.validate_legal_id(value, name=name)
+    assert len(calls) == 1 and calls[0][0] is value and calls[0][1] == name
+    assert result == expected == "USC:US:10:1"
+
+
+def test_parent_source_pin_owner_still_hashes_exact_bridge_bytes_and_detects_changed_bytes(monkeypatch):
+    """Direct maintained _pins control, not a public occurrence-proof claim."""
+    from pathlib import Path
+    from ipfs_datasets_py.logic.autoformal import corpus_parent_occurrence_adapter as parent
+    path = Path(bridge.__file__).resolve()
+    original_read = Path.read_bytes
+    raw = original_read(path)
+    owners = parent._owners()
+    expected = parent._pins(owners)
+    assert expected[str(path)] == hashlib.sha256(raw).hexdigest()
+    changed_raw = raw + b"\n# controlled read-only source drift witness\n"
+    reads = []
+    def observed_read(subject):
+        if subject == path:
+            reads.append(str(subject))
+            return changed_raw
+        return original_read(subject)
+    with monkeypatch.context() as scoped:
+        scoped.setattr(Path, "read_bytes", observed_read)
+        changed = parent._pins(owners)
+    assert reads == [str(path)]
+    assert set(changed) == set(expected)
+    assert changed[str(path)] == hashlib.sha256(changed_raw).hexdigest()
+    assert changed[str(path)] != expected[str(path)]
+    assert {key: val for key, val in changed.items() if key != str(path)} == {
+        key: val for key, val in expected.items() if key != str(path)}
+    assert original_read(path) == raw

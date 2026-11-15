@@ -337,7 +337,9 @@ print(json.dumps({'pair_count':result['pair_count'],'calls':result['model_calls'
 
 # The V2 miniature Act, vector declarations, registries and review process are
 # fictional engineering controls. No actual encoder execution is asserted.
-def reviewed_pair_fixture_v2():
+def _reviewed_pair_fixture(*, norm_fixture_options=None, lineage_group_id="fixture:reviewed-act-lineage",
+        sample_id_prefix="sample:", ledger_id="fixture:reviewed-pairs", admission_version="v2", include_definition=False,
+        reviewed_norm_case=None, shared_split_manifest=None, sample_ids_by_unit=None):
     import importlib.util
     from cryptography.hazmat.primitives import serialization
     from ipfs_datasets_py.logic.profile_g import Ed25519Signer
@@ -350,10 +352,43 @@ def reviewed_pair_fixture_v2():
     assert spec is not None and spec.loader is not None
     helper = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(helper)
-    norm_case = helper.reviewed_norm_fixture_v2(admission)
+    if reviewed_norm_case is None:
+        assert shared_split_manifest is None and sample_ids_by_unit is None
+        norm_case = helper.reviewed_norm_fixture_v2(admission,
+            **({} if norm_fixture_options is None else norm_fixture_options))
+        assert admission_version in {"v2", "v3"}
+        if admission_version == "v3":
+            from tests.unit.logic.autoformal import test_legal_reviewed_norm_admission_v3 as mixed
+            from ipfs_datasets_py.logic.autoformal import legal_reviewed_norm_admission_v3 as admission
+            norm_case["declaration"]["schema"] = admission.REVIEWED_DECLARATION_SCHEMA
+            for unit in norm_case["declaration"]["units"]:
+                unit["relational_profile"] = mixed.relational.PROFILE
+            mixed.set_mixed_ir(norm_case)
+            norm_case["preparation"] = mixed.prepare(admission, norm_case)
+            mixed.refresh_signed_reviews(norm_case, admission)
+    else:
+        # Reuse the complete independent fictional TRAIN review without
+        # regenerating, transforming or resigning its meaning/interpretation.
+        assert admission_version == "v3" and include_definition is True
+        assert norm_fixture_options is None and type(shared_split_manifest) is dict
+        assert type(sample_ids_by_unit) is dict
+        from ipfs_datasets_py.logic.autoformal import legal_reviewed_norm_admission_v3 as admission
+        norm_case = helper.clone_source(reviewed_norm_case)
+        assert norm_case["declaration"]["schema"] == admission.REVIEWED_DECLARATION_SCHEMA
     args, kwargs = helper.reviewed_assessment_arguments_v2(admission, norm_case)
-    norm_report = admission.assess_reviewed_norm_admission_v2(*args, **kwargs)
-    admitted = norm_report["units"][1:]
+    assess = (admission.assess_reviewed_norm_admission_v3 if admission_version == "v3"
+              else admission.assess_reviewed_norm_admission_v2)
+    norm_report = assess(*args, **kwargs)
+    assert norm_report["semantic_use_eligible"] is True
+    suffix = admission_version
+    pair_domain = {"REVIEWED_BODY_SCHEMA": "alignment-reviewed-pair-declaration/" + suffix,
+        "REVIEWED_ACTION": "authorize_reviewed_contrastive_pair_labels/" + suffix,
+        "REVIEWED_AUDIENCE": "legal-autoformalization-reviewed-contrastive-pairs/" + suffix,
+        "REVIEWED_CLAIM_SCHEMA": "alignment-reviewed-pair-signed-claim/" + suffix}
+
+    assert type(include_definition) is bool
+    admitted = norm_report["units"] if include_definition else norm_report["units"][1:]
+    unit_indices = {unit["unit_id"]: index for index, unit in enumerate(admitted)}
     profile = role(lane.PROFILE_SCHEMA, lane_id="native384", stage="raw_embedding", dimension=384,
         producer={"profile_id": "fixture:gte-compatible-native384", "model_id": "fixture:no-actual-encoder-run",
             "model_revision": "fixture:revision-1", "code_sha256": "a" * 64,
@@ -370,7 +405,7 @@ def reviewed_pair_fixture_v2():
             request = {"source_text": text, "context": {"role": "none_required", "text": "", "bindings": {},
                 "sha256": hashlib.sha256(b"").hexdigest()}}
             vector = [0.0] * 384
-            vector[0 if unit["unit_id"] == admitted[0]["unit_id"] else 1] = 1.0
+            vector[unit_indices[unit["unit_id"]]] = 1.0
             binding = {"id": identity, "input_sha256": lane._digest(request),
                 "encoder_text_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(), "status": "available", "reason": None,
                 "vector_sha256": lane._digest(vector), "upstream_vector_sha256": None, "token_receipt_sha256": None}
@@ -385,14 +420,25 @@ def reviewed_pair_fixture_v2():
         return bundle, expected
 
     source_lane, source_bindings = producer_lane("source", admitted)
-    formal_units = [admitted[0], admitted[0], admitted[1]]
+    formal_units = [admitted[0], admitted[0], *admitted[1:]]
     formal_lane, formal_bindings = producer_lane("formal", formal_units)
-    examples = [splits.LegalIRSplitExample.from_sample({"sample_id": "sample:" + str(index),
-        "source_text": unit["source_text"], "lineage_group_id": "fixture:reviewed-act-lineage"})
-        for index, unit in enumerate(admitted)]
-    split_manifest = splits.LegalIRSplitManifest(examples=tuple(examples),
-        assignments={example.sample_id: "train" for example in examples}, config_digest="d" * 64,
-        metadata={"fixture_only": True}).to_dict()
+    if shared_split_manifest is None:
+        examples = [splits.LegalIRSplitExample.from_sample({"sample_id": sample_id_prefix + str(index),
+            "source_text": unit["source_text"], "lineage_group_id": lineage_group_id})
+            for index, unit in enumerate(admitted)]
+        split_manifest = splits.LegalIRSplitManifest(examples=tuple(examples),
+            assignments={example.sample_id: "train" for example in examples}, config_digest="d" * 64,
+            metadata={"fixture_only": True}).to_dict()
+    else:
+        split_manifest = deepcopy(shared_split_manifest)
+        manifest = splits.LegalIRSplitManifest.from_mapping(split_manifest)
+        indexed = {example.sample_id:example for example in manifest.examples}
+        assert set(sample_ids_by_unit) == {unit["unit_id"] for unit in admitted}
+        assert len(set(sample_ids_by_unit.values())) == len(admitted)
+        examples = [indexed[sample_ids_by_unit[unit["unit_id"]]] for unit in admitted]
+        assert all(manifest.assignments[example.sample_id] == "train" for example in examples)
+        assert all(example.content_hash == splits._content_hash(unit["source_text"])
+                   for example,unit in zip(examples,admitted,strict=True))
     admission_id = "fixture:norm-admission"
     group_sha = lane._digest(norm_case["manifest"]["expected_artifact_ids"])
     def endpoints(side, selected, bundle):
@@ -400,7 +446,7 @@ def reviewed_pair_fixture_v2():
         for unit, row in zip(selected, bundle["rows"]):
             ir = unit["canonical_ir"]
             scope = {key: ir[key] for key in ("governing_context", "interpretation_id", "assumptions")}
-            sample_index = 0 if unit["unit_id"] == admitted[0]["unit_id"] else 1
+            sample_index = unit_indices[unit["unit_id"]]
             result.append({"id": row["id"], "unit_id": unit["unit_id"], "admission_id": admission_id,
                 "source_sha256": hashlib.sha256(unit["source_text"].encode("utf-8")).hexdigest(),
                 "formal_view_sha256": admission.norm_content_adjudication_sha256(ir),
@@ -414,12 +460,16 @@ def reviewed_pair_fixture_v2():
     process_raw = b"Fictional independent whole-ledger pair/purpose review process; no actual law or producer execution."
     process_ref = {"artifact_id": process_id, "sha256": hashlib.sha256(process_raw).hexdigest()}
     pair_relations = ["corresponding", "equivalent", "incompatible", "unknown", "analogy", "corresponding"]
-    pairs = [{"left_id": source["id"], "right_id": formal["id"], "relation": pair_relations[i * 3 + j],
+    pairs = [{"left_id": source["id"], "right_id": formal["id"], "relation": (pair_relations[i * 3 + j] if not include_definition else
+            "equivalent" if i == 0 and j == 1 else "corresponding" if source["unit_id"] == formal["unit_id"]
+            else ("incompatible", "unknown", "analogy")[(i + j) % 3]),
         "reason": "Explicit fictional directed-pair declaration; unknown and analogy are excluded.",
-        "evidence_refs": [] if pair_relations[i * 3 + j] in ("unknown", "analogy") else [deepcopy(process_ref)]}
+        "evidence_refs": [] if (pair_relations[i * 3 + j] if not include_definition else
+            "equivalent" if i == 0 and j == 1 else "corresponding" if source["unit_id"] == formal["unit_id"]
+            else ("incompatible", "unknown", "analogy")[(i + j) % 3]) in ("unknown", "analogy") else [deepcopy(process_ref)]}
         for i, source in enumerate(source_endpoints) for j, formal in enumerate(formal_endpoints)]
     author = Ed25519Signer.generate("did:example:fictional-pair-ledger-author")
-    body = {"schema": subject.REVIEWED_BODY_SCHEMA, "ledger_id": "fixture:reviewed-pairs",
+    body = {"schema": pair_domain["REVIEWED_BODY_SCHEMA"], "ledger_id": ledger_id,
         "purpose": "contrastive_supervision", "provenance_kind": "fictional_fixture", "declared_at_utc": helper.EVALUATED,
         "source_endpoints": source_endpoints, "formal_endpoints": formal_endpoints, "pairs": pairs,
         "author_actors": [{"principal_id": "fixture:pair-ledger-author", "signer_did": author.did,
@@ -445,7 +495,9 @@ def reviewed_pair_fixture_v2():
         expected_artifact_ids=list(artifact_pins))
     preparation_inputs.update(dependency_manifest=dependency_manifest,
         expected_manifest_sha256=dependency_manifest["manifest_sha256"])
-    preparation = subject.prepare_reviewed_relation_declaration_v2(**preparation_inputs)
+    prepare_pair = (subject.prepare_reviewed_relation_declaration_v3 if admission_version == "v3"
+                    else subject.prepare_reviewed_relation_declaration_v2)
+    preparation = prepare_pair(**preparation_inputs)
     signing_subject = preparation["subject"]
     signers = [Ed25519Signer.generate("did:example:fictional-pair-" + role) for role in auth.ROLES]
     keys = [{"key_id": "fixture:pair-key:" + str(i), "signer_did": signer.did,
@@ -458,15 +510,15 @@ def reviewed_pair_fixture_v2():
         "valid_until_utc": helper.REVIEWED_END, "keys": keys, "revoked_principals": []}
     policy = {"schema": auth.POLICY_SCHEMA, "mode": registry["mode"], "policy_id": "fixture:pair-policy",
         "process_id": registry["process_id"], "registry_sha256": auth.digest(registry),
-        "action": subject.REVIEWED_ACTION, "audience": subject.REVIEWED_AUDIENCE, "required_roles": list(auth.ROLES),
+        "action": pair_domain["REVIEWED_ACTION"], "audience": pair_domain["REVIEWED_AUDIENCE"], "required_roles": list(auth.ROLES),
         "valid_from_utc": helper.REVIEWED_START, "valid_until_utc": helper.REVIEWED_END, "max_review_age_seconds": 86400}
     body_raw = admission.norm._wire(body)
     body_ref = {"artifact_id": body["ledger_id"], "sha256": hashlib.sha256(body_raw).hexdigest()}
     closure = {"status": "declared_complete", "obligations": [{"slot_id": slot,
         "disposition": "resolved_by_evidence", "evidence_refs": [deepcopy(body_ref), deepcopy(process_ref)]}
         for slot in subject.REVIEWED_SLOTS], "unresolved": []}
-    reviews = [signer.sign({"schema": subject.REVIEWED_CLAIM_SCHEMA, "action": subject.REVIEWED_ACTION,
-        "audience": subject.REVIEWED_AUDIENCE, "review_id": "fixture:pair-review:" + str(i),
+    reviews = [signer.sign({"schema": pair_domain["REVIEWED_CLAIM_SCHEMA"], "action": pair_domain["REVIEWED_ACTION"],
+        "audience": pair_domain["REVIEWED_AUDIENCE"], "review_id": "fixture:pair-review:" + str(i),
         "key_id": keys[i]["key_id"], "principal_id": keys[i]["principal_id"], "role": role,
         "registry_sha256": auth.digest(registry), "policy_sha256": auth.digest(policy),
         "issued_at_utc": helper.EVALUATED, "expires_at_utc": helper.EXPIRES, "subject": deepcopy(signing_subject),
@@ -481,6 +533,14 @@ def reviewed_pair_fixture_v2():
         "current_endpoint_observations": {admission_id: {
             "observed_artifact_sha256s": deepcopy(kwargs["observed_artifact_sha256s"]),
             "observed_pins": deepcopy(kwargs["observed_pins"])}}}
+
+
+def reviewed_pair_fixture_v2(**options):
+    return _reviewed_pair_fixture(**options, admission_version="v2")
+
+
+def reviewed_pair_fixture_v3(**options):
+    return _reviewed_pair_fixture(**options, admission_version="v3")
 
 
 @pytest.fixture(scope="module")
@@ -543,3 +603,324 @@ def test_reviewed_relation_raw_sources_are_pinned_at_import_before_first_v2_call
     monkeypatch.setattr(Path, "read_bytes", changed_read)
     with pytest.raises(ValueError, match="changed since import"):
         subject._reviewed_pins()
+
+
+
+def declared_composed_reviewed_pair_fixture_v3(tmp_path, *, refresh=True):
+    """Fictional externally declared vectors; no encoder execution/quality claim."""
+    from tests.unit.logic.formalization.autoencoder import test_alignment_relation_mask_handoff as masks
+    from tests.unit.logic.formalization.autoencoder import test_alignment_richer_embeddings as numeric
+    fixtures,plan,receipt,options=numeric._declared_complete_composition_case(tmp_path)
+    composition=numeric.subject.compose_native384_complete_chunks(plan,receipt,**options)
+    case=reviewed_pair_fixture_v3()
+    inputs=case['preparation_inputs'];body=inputs['body']
+    for side in ('source','formal'):
+        bundle=inputs[side+'_lane'];bundle['profile']=deepcopy(composition['profile'])
+        for row in bundle['rows']:
+            # Declared numerical DATA is deliberately independent of the above
+            # profile fixture. Complete-vector inference is tested elsewhere.
+            row['upstream_vector_sha256']=lane._digest({'declared_mean':row['vector']})
+            row['token_receipt_sha256']=lane._digest({'declared_chunks':row['id']})
+            binding={key:row[key] for key in lane.ROW_BINDING_FIELDS}
+            row['producer_row_sha256']=lane._digest(binding)
+        producer=bundle['producer_receipt'];producer['profile_sha256']=lane._digest(bundle['profile'])
+        producer['rows']=[{key:row[key] for key in lane.ROW_BINDING_FIELDS} for row in bundle['rows']]
+        seal(producer);seal(bundle)
+        expected=inputs['expected_'+side+'_lane_bindings'];expected['profile_sha256']=lane._digest(bundle['profile']);expected['producer_receipt_sha256']=lane._digest(producer)
+        body[side+'_lane_sha256']=lane._digest(bundle)
+        artifact_id=body['ledger_id']+':'+side+'-lane'
+        next(row for row in inputs['dependency_manifest']['artifacts'] if row['artifact_id']==artifact_id)['artifact_sha256']=lane._digest(bundle)
+        case['observed_artifacts'][artifact_id]=lane._digest(bundle)
+    inputs['representation_stage']='complete_chunk_composition'
+    if refresh:masks.refresh_reviewed_pair_ledger_v3(case)
+    return case
+
+
+@pytest.mark.parametrize('damage',[None,'no-opt-in','unknown-stage','raw-downgrade','mixed-profile'])
+def test_reviewed_v3_composed_profile_requires_explicit_exact_opt_in(tmp_path,damage):
+    case=declared_composed_reviewed_pair_fixture_v3(tmp_path)
+    inputs=deepcopy(case['preparation_inputs'])
+    if damage=='no-opt-in':inputs.pop('representation_stage')
+    elif damage=='unknown-stage':inputs['representation_stage']='inferred-from-vector-width'
+    elif damage=='raw-downgrade':inputs['representation_stage']='raw_embedding'
+    elif damage=='mixed-profile':
+        inputs['formal_lane']=reviewed_pair_fixture_v3()['preparation_inputs']['formal_lane']
+    if damage is not None:
+        with pytest.raises(ValueError):subject.prepare_reviewed_relation_declaration_v3(**inputs)
+    else:
+        result=subject.prepare_reviewed_relation_declaration_v3(**inputs)
+        assert result['source_representation_profile']['stage']==result['formal_representation_profile']['stage']=='complete_chunk_composition'
+        assert result['semantic_label_admission'] is result['actual_fit_authorized'] is result['runtime_computation_proven'] is False
+        assert result==subject.validate_reviewed_relation_declaration_v3(result,expected_preparation_sha256=lane._digest(result),**inputs)
+
+
+def reviewed_pair_fixture_v4(*, fixture_factory=reviewed_pair_fixture_v3, declarations=subject, lane=lane,
+        prepare=True, cross_relation="mixed"):
+    """Combine two genuine *fictional* V3 admissions without rewriting either.
+
+    New context-set label reviews are signed in the explicit V4 fixture domain.
+    Existing independent pair keys may be reused under a fresh exact set-scope
+    registry/policy; no global endpoint/pair reviewer-disjointness is claimed.
+    All source and formal vectors remain authored declarations, not inference.
+    """
+    import hashlib
+    from ipfs_datasets_py.logic.autoformal import legal_norm_content_adjudication_v1 as admission
+    from ipfs_datasets_py.logic.autoformal import legal_graph_dependencies as dependencies
+    from ipfs_datasets_py.logic.autoformal import legal_graph_review as auth
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_ir_eval_splits as splits
+
+    assert cross_relation in {"mixed", "unknown", "analogy", "incompatible"}
+    cases = {key: fixture_factory(
+        norm_fixture_options={"fixture_namespace": "v4-context-" + key,
+            "governing_instrument_id": "fixture:shared-v4-governing-act"},
+        lineage_group_id="fixture:v4-lineage-" + key,
+        sample_id_prefix="v4:" + key + ":", ledger_id="fixture:original-v3-pairs-" + key)
+        for key in ("a", "b")}
+    inputs = deepcopy(cases["a"]["preparation_inputs"])
+    body = inputs["body"]
+    body.update(schema="alignment-reviewed-pair-declaration/v4",
+        ledger_id="fixture:two-context-v4-pairs")
+    body["author_actors"] = [deepcopy(actor) for case in cases.values()
+        for actor in case["preparation_inputs"]["body"]["author_actors"]]
+    admissions, endpoint_ids, contexts = {}, {}, {}
+    for key, case in cases.items():
+        admissions["fixture:v4-admission-" + key] = deepcopy(next(iter(
+            case["preparation_inputs"]["endpoint_admissions"].values())))
+        for endpoint in (*case["preparation"]["source_endpoints"],
+                         *case["preparation"]["formal_endpoints"]):
+            scope = deepcopy(endpoint["scope"])
+            digest = admission.norm_content_adjudication_sha256(scope)
+            assert digest == endpoint["context_sha256"]
+            contexts[digest] = {"context_sha256": digest, "scope": scope}
+    assert len(contexts) == 2
+    ordered_contexts = [contexts[key] for key in sorted(contexts)]
+    assert ordered_contexts[0]["scope"]["governing_context"] == ordered_contexts[1]["scope"]["governing_context"]
+    assert ordered_contexts[0]["scope"]["assumptions"] == ordered_contexts[1]["scope"]["assumptions"]
+    assert ordered_contexts[0]["scope"]["interpretation_id"] != ordered_contexts[1]["scope"]["interpretation_id"]
+    body["context_set"] = ordered_contexts
+
+    for side in ("source", "formal"):
+        rows, bound_rows, endpoints = [], [], []
+        for key, case in cases.items():
+            previous = case["preparation_inputs"]
+            endpoint_ids[key, side] = {}
+            for ordinal, (row, endpoint) in enumerate(zip(previous[side + "_lane"]["rows"],
+                    previous["body"][side + "_endpoints"], strict=True)):
+                row, endpoint = deepcopy(row), deepcopy(endpoint)
+                identity = side + ":" + key + ":" + str(ordinal)
+                endpoint_ids[key, side][row["id"]] = identity
+                row["id"] = identity
+                bound = {name: row[name] for name in ("id", "input_sha256", "encoder_text_sha256",
+                    "status", "reason", "vector_sha256", "upstream_vector_sha256", "token_receipt_sha256")}
+                row["producer_row_sha256"] = lane._digest(bound)
+                rows.append(row); bound_rows.append(bound)
+                endpoint.update(id=identity, admission_id="fixture:v4-admission-" + key)
+                endpoints.append(endpoint)
+        bundle = deepcopy(inputs[side + "_lane"])
+        bundle["rows"] = rows
+        producer = bundle["producer_receipt"]
+        producer["rows"] = bound_rows
+        producer["content_sha256"] = lane._digest({k: v for k, v in producer.items() if k != "content_sha256"})
+        bundle["content_sha256"] = lane._digest({k: v for k, v in bundle.items() if k != "content_sha256"})
+        inputs[side + "_lane"] = bundle
+        inputs["expected_" + side + "_lane_bindings"] = {
+            "profile_sha256": lane._digest(bundle["profile"]),
+            "producer_receipt_sha256": lane._digest(producer),
+            "inputs": [{"id": row["id"], "input_sha256": row["input_sha256"]} for row in rows]}
+        body[side + "_endpoints"] = endpoints
+        body[side + "_lane_sha256"] = lane._digest(bundle)
+
+    examples, assignments = [], {}
+    for case in cases.values():
+        manifest = splits.LegalIRSplitManifest.from_mapping(case["preparation_inputs"]["split_manifest"])
+        examples.extend(manifest.examples); assignments.update(manifest.assignments)
+    manifest = splits.LegalIRSplitManifest(examples=tuple(examples), assignments=assignments,
+        config_digest="d" * 64, metadata={"fixture_only": True}).to_dict()
+    inputs.update(endpoint_admissions=admissions, split_manifest=manifest,
+        expected_split_manifest_sha256=lane._digest(manifest))
+    body["split_manifest_sha256"] = lane._digest(manifest)
+
+    # Review process evidence is newly authored for the combined V4 ledger.
+    # Neither original V3 pair signatures nor endpoint closures are witnesses.
+    process_id = "fixture:independent-v4-context-pair-process"
+    process_raw = (b"Fictional independent V4 whole-context-set directed-pair meaning review process; "
+        b"no actual law, controlling authority, applicability, proof or encoder execution.")
+    process_ref = {"artifact_id": process_id, "sha256": hashlib.sha256(process_raw).hexdigest()}
+    own_pairs = {}
+    for key, case in cases.items():
+        for pair in case["preparation_inputs"]["body"]["pairs"]:
+            pair = deepcopy(pair)
+            pair["left_id"] = endpoint_ids[key, "source"][pair["left_id"]]
+            pair["right_id"] = endpoint_ids[key, "formal"][pair["right_id"]]
+            own_pairs[pair["left_id"], pair["right_id"]] = pair
+    pairs = []
+    for source in body["source_endpoints"]:
+        for formal in body["formal_endpoints"]:
+            old = own_pairs.get((source["id"], formal["id"]))
+            relation = old["relation"] if old else cross_relation
+            if relation == "mixed":
+                relation = ("incompatible" if (source["id"], formal["id"]) == ("source:a:0", "formal:b:2")
+                    else "analogy" if (source["id"], formal["id"]) == ("source:b:1", "formal:a:0") else "unknown")
+            pairs.append({"left_id": source["id"], "right_id": formal["id"], "relation": relation,
+                "reason": "Explicit fictional context-bound meaning label; no legal applicability inferred.",
+                "evidence_refs": [] if relation in {"unknown", "analogy"} else [deepcopy(process_ref)]})
+    body["pairs"] = pairs
+    inputs["expected_body_sha256"] = admission.norm_content_adjudication_sha256(body)
+    pins = {body["ledger_id"]: inputs["expected_body_sha256"],
+        **{body["ledger_id"] + ":admission:" + identity: item["expected_report_sha256"]
+           for identity, item in admissions.items()},
+        body["ledger_id"] + ":source-lane": lane._digest(inputs["source_lane"]),
+        body["ledger_id"] + ":formal-lane": lane._digest(inputs["formal_lane"]),
+        body["ledger_id"] + ":split": lane._digest(manifest)}
+    artifacts = [{"artifact_id": identity, "artifact_sha256": digest,
+        "dependency_pins": {kind: [] for kind in dependencies.PIN_KINDS}}
+        for identity, digest in pins.items()]
+    manifest = dependencies.build_dependency_manifest(artifacts,
+        [{"dependent_id": body["ledger_id"], "dependency_id": identity}
+         for identity in pins if identity != body["ledger_id"]], expected_artifact_ids=list(pins))
+    inputs.update(dependency_manifest=manifest, expected_manifest_sha256=manifest["manifest_sha256"])
+    result = {"preparation_inputs": inputs,
+        "expected_positive_mask": [[True, True, False, False, False, False],
+            [False, False, True, False, False, False], [False, False, False, True, True, False],
+            [False, False, False, False, False, True]],
+        "context_set_sha256": admission.norm_content_adjudication_sha256(body["context_set"]),
+        "source_endpoint_snapshots_rewritten": False, "fixture_only": True,
+        "actual_fit_authorized": False, "runtime_computation_proven": False}
+    if not prepare:
+        return result
+
+    prepared = declarations.prepare_reviewed_relation_declaration_v4(**inputs)
+    signing_subject = prepared["subject"]
+    assert signing_subject["context_set_sha256"] == result["context_set_sha256"]
+    assert signing_subject["scope_id"] == "contrastive-context-set:" + result["context_set_sha256"]
+    contract = declarations._reviewed_contract("v4")
+    slots = [*declarations.REVIEWED_SLOTS, "context_set_and_endpoint_membership"]
+    assert signing_subject["context_slot_ids"] == slots
+    registry = deepcopy(cases["a"]["registry"])
+    registry.update(process_id="fixture:whole-context-v4-review-process", generation=2)
+    for key in registry["keys"]:
+        key["scope_ids"] = [signing_subject["scope_id"]]
+    policy = deepcopy(cases["a"]["policy"])
+    policy.update(policy_id="fixture:whole-context-v4-review-policy", process_id=registry["process_id"],
+        registry_sha256=auth.digest(registry), action=contract["action"], audience=contract["audience"])
+    body_ref = {"artifact_id": body["ledger_id"], "sha256": inputs["expected_body_sha256"]}
+    closure = {"status": "declared_complete", "obligations": [{"slot_id": slot,
+        "disposition": "resolved_by_evidence", "evidence_refs": [deepcopy(body_ref), deepcopy(process_ref)]}
+        for slot in slots], "unresolved": []}
+    signers, reviews = list(cases["a"]["signers"]), []
+    for index, (previous, signer) in enumerate(zip(cases["a"]["reviews"], signers, strict=True)):
+        claim = {key: deepcopy(value) for key, value in previous.items()
+            if key not in {"signer_did", "signature_alg", "signature"}}
+        claim.update(schema=contract["claim_schema"], action=contract["action"], audience=contract["audience"],
+            review_id="fixture:whole-context-v4-pair-review:" + str(index),
+            registry_sha256=auth.digest(registry), policy_sha256=auth.digest(policy),
+            subject=deepcopy(signing_subject), context_closure=deepcopy(closure))
+        claim["interpretation"].update(reviewed_graph_sha256=signing_subject["graph_sha256"],
+            reviewed_ast_sha256=signing_subject["ast_sha256"],
+            rationale="Fictional independently signed V4 whole-context-set pair/purpose review only.")
+        reviews.append(signer.sign(claim))
+    result.update(preparation=prepared, registry=registry, policy=policy, reviews=reviews, signers=signers,
+        at_time_utc=cases["a"]["at_time_utc"], observed_artifacts=pins,
+        observed_pins={kind: {} for kind in dependencies.PIN_KINDS},
+        evidence={body["ledger_id"]: admission.norm._wire(body), process_id: process_raw},
+        current_endpoint_observations={identity: {
+            "observed_artifact_sha256s": deepcopy(entry["kwargs"]["observed_artifact_sha256s"]),
+            "observed_pins": deepcopy(entry["kwargs"]["observed_pins"])} for identity, entry in admissions.items()})
+    return result
+
+
+@pytest.fixture(scope="module")
+def reviewed_pairs_v4():
+    return reviewed_pair_fixture_v4()
+
+
+def test_reviewed_v4_context_set_binds_both_interpretations_without_granting_labels(reviewed_pairs_v4):
+    case = reviewed_pairs_v4
+    prepared = case['preparation']
+    expected = case['preparation_inputs']['body']['context_set']
+    assert len(expected) == 2
+    assert expected == sorted(expected, key=lambda row: row['context_sha256'])
+    assert expected[0]['scope']['interpretation_id'] != expected[1]['scope']['interpretation_id']
+    assert prepared['context_set'] == expected
+    assert prepared['endpoint_admission_version'] == 'v3'
+    assert prepared['context_set_sha256'] == lane._digest(expected)
+    assert prepared['subject']['scope_id'] == 'contrastive-context-set:' + lane._digest(expected)
+    assert prepared['subject']['scope_id'] != prepared['source_endpoints'][0]['jurisdiction']
+    assert prepared['subject']['context_slot_ids'] == list(subject.REVIEWED_V4_SLOTS)
+    assert len(prepared['source_endpoints']) == 4 and len(prepared['formal_endpoints']) == 6
+    assert prepared['semantic_label_admission'] is prepared['actual_fit_authorized'] is False
+    assert prepared['legal_applicability_verified'] is prepared['controlling_authority'] is False
+    replayed = subject.validate_reviewed_relation_declaration_v4(prepared,
+        expected_preparation_sha256=lane._digest(prepared), **case['preparation_inputs'])
+    assert replayed == prepared
+
+
+@pytest.mark.parametrize('damage', ['missing', 'duplicate', 'reordered', 'foreign_scope', 'changed_interpretation',
+    'changed_assumptions', 'extra_field', 'wrong_digest'])
+def test_reviewed_v4_requires_the_complete_exact_context_union(reviewed_pairs_v4, damage):
+    inputs = deepcopy(reviewed_pairs_v4['preparation_inputs'])
+    contexts = inputs['body']['context_set']
+    if damage == 'missing': contexts.pop()
+    elif damage == 'duplicate': contexts.append(deepcopy(contexts[0]))
+    elif damage == 'reordered': contexts.reverse()
+    elif damage == 'foreign_scope':
+        foreign = deepcopy(contexts[0]); foreign['scope']['governing_context']['jurisdiction'] = 'fixture:foreign'
+        foreign['context_sha256'] = lane._digest(foreign['scope']); contexts.append(foreign)
+    elif damage == 'changed_interpretation': contexts[0]['scope']['interpretation_id'] = 'fixture:unprovided-interpretation'
+    elif damage == 'changed_assumptions': contexts[0]['scope']['assumptions'] = ['unreviewed premise']
+    elif damage == 'extra_field': contexts[0]['scope']['legal_applicability'] = True
+    elif damage == 'wrong_digest': contexts[0]['context_sha256'] = 'f' * 64
+    inputs['expected_body_sha256'] = lane._digest(inputs['body'])
+    with pytest.raises(ValueError, match='context inventory'):
+        subject.prepare_reviewed_relation_declaration_v4(**inputs)
+
+
+@pytest.mark.parametrize('version', ['v2', 'v3'])
+def test_reviewed_legacy_pair_domains_cannot_silently_adopt_v4_contexts(reviewed_pairs_v4, version):
+    inputs = deepcopy(reviewed_pairs_v4['preparation_inputs'])
+    inputs['body']['schema'] = subject._reviewed_contract(version)['body_schema']
+    inputs['expected_body_sha256'] = lane._digest(inputs['body'])
+    with pytest.raises(ValueError, match='reviewed pair declaration'):
+        getattr(subject, 'prepare_reviewed_relation_declaration_' + version)(**inputs)
+
+
+def test_reviewed_v3_still_refuses_cross_interpretation_even_without_inventory(reviewed_pairs_v4):
+    inputs = deepcopy(reviewed_pairs_v4['preparation_inputs'])
+    inputs['body'].pop('context_set')
+    inputs['body']['schema'] = subject.REVIEWED_V3_BODY_SCHEMA
+    inputs['expected_body_sha256'] = lane._digest(inputs['body'])
+    with pytest.raises(ValueError, match='differing governing contexts'):
+        subject.prepare_reviewed_relation_declaration_v3(**inputs)
+
+
+def test_reviewed_v4_endpoint_scope_membership_cannot_be_relabelled(reviewed_pairs_v4):
+    inputs = deepcopy(reviewed_pairs_v4['preparation_inputs'])
+    endpoint = inputs['body']['source_endpoints'][0]
+    endpoint['context_sha256'] = next(row['context_sha256'] for row in inputs['body']['context_set']
+        if row['context_sha256'] != endpoint['context_sha256'])
+    inputs['expected_body_sha256'] = lane._digest(inputs['body'])
+    with pytest.raises(ValueError, match='endpoint source, formal view or context'):
+        subject.prepare_reviewed_relation_declaration_v4(**inputs)
+
+
+@pytest.mark.parametrize('damage', ['first_jurisdiction', 'missing_context_slot', 'changed_context_hash'])
+def test_reviewed_v4_signing_subject_cannot_collapse_to_one_jurisdiction(reviewed_pairs_v4, damage):
+    signing = deepcopy(reviewed_pairs_v4['preparation']['subject'])
+    if damage == 'first_jurisdiction': signing['scope_id'] = reviewed_pairs_v4['preparation']['source_endpoints'][0]['jurisdiction']
+    elif damage == 'missing_context_slot': signing['context_slot_ids'].pop()
+    else: signing['context_set_sha256'] = 'f' * 64
+    with pytest.raises(ValueError):
+        subject._reviewed_subject_v4(signing, reviewed_pairs_v4['preparation_inputs']['dependency_manifest'])
+
+
+def test_reviewed_v4_coherently_rehashed_foreign_scope_still_fails_complete_replay(reviewed_pairs_v4):
+    prepared = deepcopy(reviewed_pairs_v4['preparation'])
+    prepared['subject']['context_set_sha256'] = 'f' * 64
+    prepared['subject']['scope_id'] = 'contrastive-context-set:' + 'f' * 64
+    # Syntax/namespace agreement is insufficient: the inventory must also be
+    # regenerated from the original independently admitted endpoint inputs.
+    subject._reviewed_subject_v4(prepared['subject'],
+        reviewed_pairs_v4['preparation_inputs']['dependency_manifest'])
+    with pytest.raises(ValueError, match='complete replay'):
+        subject.validate_reviewed_relation_declaration_v4(prepared,
+            expected_preparation_sha256=lane._digest(prepared), **reviewed_pairs_v4['preparation_inputs'])

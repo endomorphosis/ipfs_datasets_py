@@ -1,0 +1,112 @@
+{
+  "broader_blocked_network_baseline_failures": 19,
+  "broader_modified_failures": 19,
+  "broader_suite_qualified": false,
+  "child_preview_tasks": 10,
+  "cohorts": [
+    {
+      "cases_passed": 21,
+      "existing_controls": 7,
+      "name": "active_generation",
+      "new_controls": 14,
+      "scope": "scoped repair cancellation and selected FIFO/service-fleet/hold/default controls"
+    },
+    {
+      "cases_passed": 33,
+      "existing_controls": 3,
+      "name": "canonical_primary_backport",
+      "new_controls": 30,
+      "scope": "configured repair-unit lifecycle/cancellation and selected FIFO/hold/default controls"
+    }
+  ],
+  "cohorts_pooled": false,
+  "completion_authority": false,
+  "dataset_bodies_downloaded": false,
+  "evidence": {
+    "active_generation_qualification": {
+      "bytes": 27544,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/active-scoped-cancel-v01/qualification-summary-v01.json",
+      "sha256": "6ddeeed2bcb09a72be1dc837556eccdaf73376e49b2f56f00afaf6c683f29abc"
+    },
+    "authored_document_manifest": {
+      "bytes": 6721,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/docs-stage/v02/training-plan-documentation-stage-v02.json",
+      "sha256": "623a6b2b5f2b7f362785882240c8b22fa4deffd36fbe1a29b9470a8af580faaf"
+    },
+    "child_preview": {
+      "bytes": 72653,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/child-task-dispatch-contract-v02.json",
+      "sha256": "bb92fc191ac21bfb1a3d67fed80c6626a58625d52b3c2231edfd94c59046eba1"
+    },
+    "deployment": {
+      "bytes": 6660,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/scoped-watchdog-deployment-v03.json",
+      "sha256": "61651f0a586a40abf76e6406b9e0a618587d0be769056a075b34c9e35583fdea"
+    },
+    "deployment_independent_review": {
+      "bytes": 4716,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/independent-runtime-deployment-review-v03.json",
+      "sha256": "b27f627b887cef2f870b034bfe8f58840f8025c6c42f2ea3ca347899e6e9ede2"
+    },
+    "deployment_live_readback": {
+      "bytes": 14990,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/scoped-watchdog-live-readback-v03.json",
+      "sha256": "c3f2cafc16b1a4e0243fe3fc40a52964bfb45f3a4065b24057c45fa91297e5b5"
+    },
+    "hub_source_recheck": {
+      "bytes": 3766,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/hub-source-recheck-v01.json",
+      "sha256": "2f7ca3f26a15ec72a0ec65ee9f8320ff9fc88d05f6b1504ece2200a30c2223b8"
+    },
+    "preserved_source_alias_stage_failure": {
+      "bytes": 785,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/runtime-deployment-stage-v02/stage-failure-v01.json",
+      "sha256": "8040e523d232a2df03465c45a327b416690ffa9f93720923f32d6b1c5d183fd6"
+    },
+    "primary_backport_qualification": {
+      "bytes": 12536,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/primary-backport-v01/primary-backport-qualification-v01.json",
+      "sha256": "6945f43424b4b1510486878c970dc2aaed4d8f0d8d156cba1ea6a3c950f96296"
+    },
+    "primary_independent_review": {
+      "bytes": 3517,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/primary-backport-v01/independent-source-and-result-review-v01.json",
+      "sha256": "a93cf22a398eb0808435e1faf50490e4e4bb2c041a88d8acb0901d9f7627fc05"
+    },
+    "rejected_release_only_stage": {
+      "bytes": 650,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/runtime-deployment-stage-v01/rejected-review-v01.json",
+      "sha256": "f71dcb624704bd4725a22713f1e798eb243061e066533dae0fc8d4bcdd199763"
+    },
+    "static_plan_consistency_review": {
+      "bytes": 5093,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-planning-watchdog-v01/static-plan-consistency-review-v02.json",
+      "sha256": "5963acb3c4b7fd405576bfb89ec313382ec51ea6747700127c72226dd49f5f1a"
+    }
+  },
+  "evidence_id": "legal-ir-supervisor-plan-watchdog-review-20261026-01",
+  "legacy_engineering_completed_tasks": 135,
+  "legacy_ready_tasks": 0,
+  "limitations": [
+    "Child task preview has no live CIDs/claims/effect grants; runtime proposed is ready-selectable, so unresolved admitted tasks require explicit blocked gates.",
+    "The existing24task DAG and scientific statuses remain unchanged. Corpus engineering progress and learned decoder quality remain separate.",
+    "Deployment uses qualified source first plus a sealed archive. Deferred local compatibility discovery is not new provider/runtime cryptographic attestation.",
+    "Current null384conditioning/native-validation gates and reviewed statutory target/context/meaning gates remain open.",
+    "Only two auxiliary daemons reloaded; no supervised lane, repair-job cgroup, task board or scientific output was stopped or rewritten."
+  ],
+  "live_task_registration": false,
+  "model_imports_or_external_effects_in_accepted_test_cohorts": 0,
+  "new_task_board_or_registry": false,
+  "original_programme_tasks": 24,
+  "original_statuses_and_parent_dependency_DAG_changed": false,
+  "parallel_lanes": 5,
+  "recorded_at_utc": "2026-10-26T22:43:37.809251+00:00",
+  "reviewed_HF_revisions_unchanged": true,
+  "schema": "legal-ir-supervisor-plan-watchdog-review/v1",
+  "scope": "in-place programme plan, documented unregistered child tasks and scoped operational watchdog fix",
+  "scoped_watchdog_deployed": true,
+  "source_edition_meaning_context_decisions_provided": false,
+  "statutory_gold_or_convergence_claimed": false,
+  "supervisor_lane_PIDs_preserved": true,
+  "whole_US_Code_formalized": false
+}
