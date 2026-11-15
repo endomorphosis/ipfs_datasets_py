@@ -1,5 +1,16 @@
 # Operations and evidence ownership
 
+## Cleanup71 Source scheduling and retained-failure boundaries — 2026-11-14
+
+The four cancelled-retained cleanup sources were installed in the published worktrees through the original Source operation and separate readback. A private current-policy fault in one R owning control was then restored after its refusal/no-write assertions through a separately audited one-target Source operation. The SDK, CLI and strict origin/current-state guards retain their reviewed limits.
+
+Fresh P4 ran exactly17 SDK and54 CLI cleanup owning controls:71 clean JUnit records, zero failures/errors/skips,3.6seconds. The original generic CLI route closed Source, Native and process/wait custody before the initial420-second cutoff (158.901seconds); its own16MiB promise was durably released after322 files/616,444bytes. These are selected software controls with modeled proof frames, not a genuine SDK timeout-cleanup lifecycle or a complete SDK/SourceGen qualification.
+
+Earlier P1/P2 Source-admission refusals ran no CLI tests. P3 reached71 call passes but one teardown error; its failed16MiB claim stays retained. The new shared60-second Source-admission cutoff is inside one initial420-second acceptance deadline, with no renewal. CPU1, memory1536MiB, process4, storage16MiB, productive300 and ledger60 remain unchanged. This is no hard preemption or guaranteed worst-case setup/work envelope.
+
+The old C4 SDK timeout and abnormal owned-holder close remain historical failure evidence: no qualified worker report, actual underlying execution unobserved, and no normal Source@2 closure. Complete95/raw source-role execution, genuine SDK cleanup integration, parent delegation and completed-failure cleanup remain separate gates; the latter private proposals gain no qualification here. Runtime holds,119 owners,24 task states and physical200/next201/9,800 remaining at generation2of2 are preserved. No model, legal, Lean or native-corpus gain follows. [Selected71 exact evidence](../../../../workspace/test-logs/federal-corpus-audits/legal-ir-worktree-cleanup71-qualified-20261114-v01/qualification-summary.json).
+
+
 ## Cold SDK Source getter preserves authenticated import order — 2026-11-14
 
 The SDK public Source helper preserves the authenticated control-root then datasets-root import order. The 303-byte correction keeps its unguarded legacy branch and strict origin guard. The SDK and its additive owning tests were installed through the original two-target Source operation.

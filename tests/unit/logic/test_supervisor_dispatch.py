@@ -431,3 +431,153 @@ def test_reviewed_evaluation_optin_preserves_strict_frozen_v6_training_default(t
     unsupported.write_text(json.dumps({"schema_version": "autoencoder-training-job-v9-reviewed-legal-ir"}))
     with pytest.raises(dispatch.SupervisorDispatchError, match="autoencoder-training-job-v6"):
         dispatch.bind_job_template(unsupported)
+
+
+@pytest.fixture(scope='module')
+def reviewed_supervisor_audit_seed():
+    from tests.unit.optimizers.logic_theorem_optimizer import test_autoencoder_inference as helper
+    return helper.parent_candidate_audit_seed.__wrapped__()
+
+
+def _supervisor_audit_metadata(tmp_path, seed, *, typed=False, candidate=None):
+    from copy import deepcopy
+    from types import SimpleNamespace
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_inference as inference
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_training_worker as worker
+    rows, evaluation, contexts = deepcopy(seed)
+    def save(name, value):
+        path = tmp_path / (name + '.json');raw=worker._json_bytes(value);path.write_bytes(raw)
+        return dict(path=str(path), bytes=len(raw), sha256=worker._digest(raw))
+    payload = evaluation['compiler_artifact']['reviewed_source_span_producer_evaluation']
+    generation = dict(last_call=dict(completed=True, raw_generation_outputs=deepcopy(payload['producer_outputs'])))
+    child = dict(output_artifacts={name:save(name,value) for name,value in [('evaluation',evaluation),('generation',generation),('loader',{})]})
+    child_ref=worker.CheckpointArtifact.from_dict(save('cycle',child))
+    request=dict(output_directory=str(tmp_path),rows_artifact=save('rows',rows),source_contexts_artifact=save('contexts',contexts),
+        checkpoint_declarations=deepcopy(payload['configuration']['checkpoint_declarations']))
+    request_ref=worker.CheckpointArtifact.from_dict(save('request',request))
+    runtime=inference.ReviewedInferenceParentRuntime(SimpleNamespace(reservation_id='fictional:unused'),lambda:None,lambda _:None,lambda:{},1.0,
+        typed_structure_profile='canonical-typed-expression-wire/v1' if typed else None,candidate_syntax_profile=candidate)
+    parent=dict(schema=('reviewed-source-evaluation-parent/v3' if candidate else 'reviewed-source-evaluation-parent/v2' if typed else 'reviewed-source-evaluation-parent/v1'))
+    if typed:
+        pins=inference._parent_typed_structure_source_pins()
+        audit=inference._build_parent_typed_structure_audit(child,request,child_ref,request_ref.sha256,pins)
+        parent.update(typed_structure_profile=runtime.typed_structure_profile,typed_structure_audit_artifact=save('typed-structure-audit',audit),
+            parent_typed_structure_audit_after_wait=True,parent_current_admission_rechecked_after_audit=True)
+    if candidate:
+        pins=inference._parent_candidate_syntax_source_pins()
+        audit=inference._build_parent_candidate_syntax_audit(child,request,child_ref,request_ref.sha256,pins,candidate)
+        parent.update(candidate_syntax_profile=candidate,candidate_syntax_audit_artifact=save('candidate-syntax-audit',audit),
+            parent_candidate_syntax_audit_after_wait=True,parent_current_admission_rechecked_after_candidate_audit=True)
+    # This fixture describes DATA only. It neither claims nor exercises an
+    # original execution, resource grant, actual child wait or task transition.
+    return inference,worker,parent,child,request,request_ref,child_ref,runtime,save
+
+
+@pytest.mark.parametrize('typed,candidate', [(False,None),(True,None),
+    (False,'unreviewed-complete-norm-candidate-syntax/v2'),(False,'unreviewed-complete-norm-candidate-syntax/v3'),
+    (True,'unreviewed-complete-norm-candidate-syntax/v3')])
+def test_reviewed_supervisor_audit_metadata_matches_trusted_opt_ins(tmp_path,reviewed_supervisor_audit_seed,typed,candidate):
+    from ipfs_datasets_py.logic.autoformal import supervisor_dispatch as dispatch
+    _,_,parent,child,request,reference,child_ref,runtime,_=_supervisor_audit_metadata(tmp_path,reviewed_supervisor_audit_seed,typed=typed,candidate=candidate)
+    state=dispatch._validate_reviewed_parent_audits(parent,child,request,reference.sha256,child_ref,runtime)
+    assert set(state['artifacts'])==({'typed_structure'} if typed else set())|({'candidate_syntax'} if candidate else set())
+    assert set(state['source_pins'])==set(state['artifacts'])
+    dispatch._reauthenticate_reviewed_parent_audits(state,request,reference,runtime)
+
+
+@pytest.mark.parametrize('damage',['schema','profile','flag','path','report','request','implementation','extra'])
+def test_reviewed_supervisor_audit_rejects_resealed_or_unrequested_sidecars(tmp_path,reviewed_supervisor_audit_seed,damage):
+    from pathlib import Path
+    from ipfs_datasets_py.logic.autoformal import supervisor_dispatch as dispatch
+    inf,worker,parent,child,request,reference,child_ref,runtime,save=_supervisor_audit_metadata(tmp_path,reviewed_supervisor_audit_seed,candidate='unreviewed-complete-norm-candidate-syntax/v3')
+    if damage=='schema':parent['schema']='reviewed-source-evaluation-parent/v1'
+    elif damage=='profile':parent['candidate_syntax_profile']='unreviewed-complete-norm-candidate-syntax/v2'
+    elif damage=='flag':parent['parent_candidate_syntax_audit_after_wait']=False
+    elif damage=='extra':parent['typed_structure_profile']='canonical-typed-expression-wire/v1'
+    else:
+        d=parent['candidate_syntax_audit_artifact'];audit=json.loads(Path(d['path']).read_bytes())
+        if damage=='path':parent['candidate_syntax_audit_artifact']=save('unexpected-audit',audit)
+        else:
+            if damage=='report':audit['report']['counts']['syntax_validated_unreviewed']=999
+            elif damage=='request':audit['request_sha256']='0'*64
+            else:audit['implementation_sha256']={}
+            parent['candidate_syntax_audit_artifact']=save('candidate-syntax-audit',audit)
+    with pytest.raises(ValueError):dispatch._validate_reviewed_parent_audits(parent,child,request,reference.sha256,child_ref,runtime)
+
+
+@pytest.mark.parametrize('damage',['sidecar','context','source'])
+def test_reviewed_supervisor_audit_reauth_after_last_caller_callback(tmp_path,reviewed_supervisor_audit_seed,monkeypatch,damage):
+    from ipfs_datasets_py.logic.autoformal import supervisor_dispatch as dispatch
+    inf,worker,parent,child,request,reference,child_ref,runtime,_=_supervisor_audit_metadata(tmp_path,reviewed_supervisor_audit_seed,candidate='unreviewed-complete-norm-candidate-syntax/v3')
+    state=dispatch._validate_reviewed_parent_audits(parent,child,request,reference.sha256,child_ref,runtime)
+    if damage=='sidecar':Path(parent['candidate_syntax_audit_artifact']['path']).write_text('{}\n')
+    elif damage=='context':Path(request['source_contexts_artifact']['path']).write_text('{}\n')
+    else:monkeypatch.setattr(inf,'_parent_candidate_syntax_source_pins',lambda:{})
+    with pytest.raises(ValueError):dispatch._reauthenticate_reviewed_parent_audits(state,request,reference,runtime)
+
+
+def _simulated_reviewed_dispatch(tmp_path, seed, monkeypatch, *, typed=False, candidate=None):
+    """Exercise adapter control flow using simulated receipts, never Native."""
+    from copy import deepcopy
+    import hashlib
+    import builtins
+    from ipfs_datasets_py.logic.autoformal import supervisor_dispatch as dispatch
+    inf,worker,parent,child,request,_,_,runtime,save=_supervisor_audit_metadata(tmp_path,seed,typed=typed,candidate=candidate)
+    root=Path(dispatch.__file__).resolve().parents[3];cli=root/dispatch.REVIEWED_EVALUATION_ENTRYPOINT
+    request.update(schema='reviewed-source-evaluation-request/v1',request_id='fixture:simulated-dispatch',operation='heldout_evaluation',
+        attempt_directory=str(tmp_path),lifecycle_source_sha256={str(cli):hashlib.sha256(cli.read_bytes()).hexdigest()})
+    reference=worker.CheckpointArtifact.from_dict(save('request',request))
+    false_claims=('training_executed','admitted','model_quality_qualified','legal_meaning_verified','proof_authority','convergence_proved','corpus_admitted')
+    child.update(schema='reviewed-source-evaluation-cycle/v1',request_sha256=reference.sha256,completed=True,execution_path='inference',
+        inference={'profile':request['schema'],**{n:str(tmp_path/(n+'.json')) for n in ('evaluation','loader','generation')}},
+        **dict.fromkeys(false_claims,False))
+    child_ref=worker.CheckpointArtifact.from_dict(save('cycle',child))
+    parent.update(child, schema=parent['schema'],child_cycle_artifact=dict(path=child_ref.path,bytes=child_ref.bytes,sha256=child_ref.sha256),
+        parent_receipt=str(tmp_path/'parent-cycle.json'),receipt=str(tmp_path/'cycle.json'),parent_callbacks=dict(finished=True,closed=True,child_identity={'fixture':'not-a-real-child'}),
+        original_child_identity={'fixture':'not-a-real-child'},original_child_waited=True,parent_FINISH_acknowledged=True,
+        parent_current_admission_rechecked_after_wait=True,parent_output_artifacts_rechecked_after_wait=True,
+        resource_release_performed=False,original_owner_reservation_id=runtime.owner.reservation_id)
+    if typed:
+        parent['typed_structure_audit_artifact']=save('typed-structure-audit',inf._build_parent_typed_structure_audit(child,request,child_ref,reference.sha256,inf._parent_typed_structure_source_pins()))
+    if candidate:
+        parent['candidate_syntax_audit_artifact']=save('candidate-syntax-audit',inf._build_parent_candidate_syntax_audit(child,request,child_ref,reference.sha256,inf._parent_candidate_syntax_source_pins(),candidate))
+    save('parent-cycle',parent)
+    monkeypatch.setattr(inf,'_read_reviewed_evaluation_request',lambda _: (reference,b'fixture-only',deepcopy(request)))
+    def simulated_cli_import(code, namespace):
+        builtins.exec(code,namespace)
+        namespace['main']=lambda *_a,**_k:0 # No process, model, owner or real wait is exercised.
+    monkeypatch.setattr(dispatch,'exec',simulated_cli_import,raising=False)
+    task=dict(task_id=request['request_id'],work_kind=dispatch.WORK_KIND_REVIEWED_EVALUATION,revision=9,status='blocked',operator_hold=True,
+        attempt=2,max_attempts=2,historical_provider_outcome='UNKNOWN',claims=[])
+    descriptor=dict(path=reference.path,bytes=reference.bytes,sha256=reference.sha256)
+    bound=dispatch.bind_reviewed_evaluation_task(task,descriptor)
+    return dispatch,bound,runtime,parent,request
+
+
+@pytest.mark.parametrize('typed,candidate',[(False,None),(True,None),(False,'unreviewed-complete-norm-candidate-syntax/v3'),(True,'unreviewed-complete-norm-candidate-syntax/v3')])
+def test_reviewed_supervisor_audit_simulated_adapter_flow_preserves_task_authority(tmp_path,reviewed_supervisor_audit_seed,monkeypatch,typed,candidate):
+    from copy import deepcopy
+    dispatch,task,runtime,parent,_=_simulated_reviewed_dispatch(tmp_path,reviewed_supervisor_audit_seed,monkeypatch,typed=typed,candidate=candidate)
+    before=deepcopy(task);result=dispatch.execute_reviewed_evaluation_task(task,reviewed_parent_runtime=runtime)
+    assert task==before
+    assert result['schema']==('supervisor-reviewed-source-evaluation-result/v2' if typed or candidate else 'supervisor-reviewed-source-evaluation-result/v1')
+    assert all(result[k] is False for k in ('training_executed','task_status_changed','task_completion_authority','resource_release_performed','admitted'))
+    if typed or candidate:
+        assert result['parent_schema']==parent['schema'] and result['parent_audits_recomputed'] is True
+        assert result['audit_artifacts']
+
+
+@pytest.mark.parametrize('damage',['sidecar','context'])
+def test_reviewed_supervisor_audit_simulated_adapter_catches_final_callback_write(tmp_path,reviewed_supervisor_audit_seed,monkeypatch,damage):
+    from dataclasses import replace
+    dispatch,task,runtime,parent,request=_simulated_reviewed_dispatch(tmp_path,reviewed_supervisor_audit_seed,monkeypatch,candidate='unreviewed-complete-norm-candidate-syntax/v3')
+    original=dispatch._validate_reviewed_parent_audits;phase={}
+    def validated(*args,**kwargs):
+        state=original(*args,**kwargs);phase['after_audit']=True;return state
+    monkeypatch.setattr(dispatch,'_validate_reviewed_parent_audits',validated)
+    def last_callback():
+        if phase.get('after_audit'):
+            target=parent['candidate_syntax_audit_artifact'] if damage=='sidecar' else request['source_contexts_artifact']
+            Path(target['path']).write_text('{}\n')
+    runtime=replace(runtime,source_guard=last_callback)
+    with pytest.raises(ValueError):dispatch.execute_reviewed_evaluation_task(task,reviewed_parent_runtime=runtime)

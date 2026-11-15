@@ -507,6 +507,8 @@ def score_relational_legal_text_roundtrip(reference_expression, candidate_text, 
     native backend or legal review operation is performed by this score path.
     Optional governing_context and definition_uses observations are compared
     independently and stay on the scoring side, even for unsupported prose.
+    Mutable reference/role/governing inputs are detached and fenced; changes
+    during scoring refuse the report rather than mix observation epochs.
     """
     from ipfs_datasets_py.logic.legal_ir.extended_decompiler import decompile_relational
     from ipfs_datasets_py.logic.legal_ir.extended_compiler import compile_relational
@@ -524,12 +526,41 @@ def score_relational_legal_text_roundtrip(reference_expression, candidate_text, 
         raise LegalTextRoundTripError("valid UTF8 candidate and optional original text required") from error
     _require(len(candidate_bytes) <= _MAX_JSON and (original_bytes is None or len(original_bytes) <= _MAX_JSON),
              "bounded candidate and optional original source text required")
+    # The reference and scoring-only observations are caller-owned mutable
+    # objects. Detach them before invoking either realization or inverse code,
+    # and refuse mutation instead of issuing a mixed-epoch equality report.
+    from ipfs_datasets_py.logic.syntax_core import ast
+    _require(type(reference_expression) is ast.TypedExpression, "canonical TypedExpression required")
+    original_expression, original_roles = reference_expression, reference_argument_roles
+    original_reference_governing = reference_governing_fields
+    original_candidate_governing = candidate_governing_fields
+
+    def original_inputs():
+        return {"expression": original_expression.to_dict(), "roles": original_roles,
+            "reference_governing": original_reference_governing,
+            "candidate_governing": original_candidate_governing}
+
+    frozen = _raw(original_inputs())
+    detached = json.loads(frozen)
+    reference_expression = ast.TypedExpression.from_dict(detached["expression"])
+    reference_argument_roles = detached["roles"]
+    reference_governing_fields = detached["reference_governing"]
+    candidate_governing_fields = detached["candidate_governing"]
+
+    def input_fence():
+        current = {"expression": reference_expression.to_dict(), "roles": reference_argument_roles,
+            "reference_governing": reference_governing_fields,
+            "candidate_governing": candidate_governing_fields}
+        _require(_raw(original_inputs()) == frozen and _raw(current) == frozen,
+                 "relational roundtrip inputs changed during scoring")
+
     governing_comparison = None
     if reference_governing_fields is not None or candidate_governing_fields is not None:
         governing_comparison = compare_relational_governing_fields_v1(
             reference_governing_fields, candidate_governing_fields)
     reference_prose = decompile_relational(reference_expression,
         argument_roles=reference_argument_roles, profile=profile)
+    input_fence()
     candidate = compile_relational(candidate_text, profile=profile) if candidate_text.strip() else None
     comparison = dict.fromkeys(("exact_typed_expression_equal", "typed_structure_equal",
                                  "canonical_prose_equal", "argument_roles_equal"), False)
@@ -566,6 +597,7 @@ def score_relational_legal_text_roundtrip(reference_expression, candidate_text, 
     }
     if governing_comparison is not None:
         result["governing_fields_comparison"] = governing_comparison
+    input_fence()
     return result
 
 

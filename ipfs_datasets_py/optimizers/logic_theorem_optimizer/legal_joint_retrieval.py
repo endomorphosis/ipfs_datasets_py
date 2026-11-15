@@ -412,20 +412,27 @@ REVIEWED_SCHEMA = "legal-joint-retrieval-checkpoint/v2"
 REVIEWED_ARCHITECTURE = "two-linear-normalized-reviewed-masked-retrievers/v2"
 REVIEWED_V3_SCHEMA = "legal-joint-retrieval-checkpoint/v3"
 REVIEWED_V3_ARCHITECTURE = "two-linear-normalized-reviewed-masked-retrievers/v3"
+REVIEWED_V4_SCHEMA = "legal-joint-retrieval-checkpoint/v4"
+REVIEWED_V4_ARCHITECTURE = "two-linear-normalized-reviewed-masked-retrievers/v4"
 REVIEWED_MAX_ROWS = 128
 
 
 def _reviewed_contract(version="v2"):
-    _require(type(version) is str and version in ("v2", "v3"), "closed reviewed retriever admission domain required")
-    return {"schema": REVIEWED_V3_SCHEMA if version == "v3" else REVIEWED_SCHEMA,
-        "architecture": REVIEWED_V3_ARCHITECTURE if version == "v3" else REVIEWED_ARCHITECTURE,
+    domains = {"v2": (REVIEWED_SCHEMA, REVIEWED_ARCHITECTURE),
+               "v3": (REVIEWED_V3_SCHEMA, REVIEWED_V3_ARCHITECTURE),
+               "v4": (REVIEWED_V4_SCHEMA, REVIEWED_V4_ARCHITECTURE)}
+    _require(type(version) is str and version in domains, "closed reviewed retriever admission domain required")
+    schema, architecture = domains[version]
+    return {"schema": schema, "architecture": architecture,
         "relation_scope": "full_canonical_reviewed_handoff_replay/" + version}
 
 
 def _reviewed_checkpoint_version(checkpoint):
-    _require(type(checkpoint) is dict and checkpoint.get("schema") in (REVIEWED_SCHEMA, REVIEWED_V3_SCHEMA),
-             "reviewed structural ranking requires an explicit v2 or v3 checkpoint")
-    return "v3" if checkpoint["schema"] == REVIEWED_V3_SCHEMA else "v2"
+    domains = {REVIEWED_SCHEMA: "v2", REVIEWED_V3_SCHEMA: "v3", REVIEWED_V4_SCHEMA: "v4"}
+    _require(type(checkpoint) is dict and type(checkpoint.get("schema")) is str
+             and checkpoint.get("schema") in domains,
+             "reviewed structural ranking requires an explicit v2, v3 or v4 checkpoint")
+    return domains[checkpoint["schema"]]
 
 
 def _reviewed_owners(_admission_version="v2"):
@@ -433,7 +440,15 @@ def _reviewed_owners(_admission_version="v2"):
     from ...logic.formalization.autoencoder import alignment_masked_contrastive as objective
     from ...logic.formalization.autoencoder import alignment_relation_mask_handoff as handoff
     from ...logic.formalization.autoencoder import alignment_relation_declarations as declarations
+    if _admission_version == "v4":
+        _require(declarations._reviewed_contract("v4").get("endpoint_version") == "v3",
+                 "reviewed V4 relations require the explicit V3 endpoint admission domain")
     admission = declarations._reviewed_owners(_admission_version)[0]
+    if _admission_version == "v4":
+        _require(getattr(admission, "__name__", None) == "ipfs_datasets_py.logic.autoformal.legal_reviewed_norm_admission_v3"
+                 and callable(getattr(admission, "validate_reviewed_norm_admission_v3", None))
+                 and callable(getattr(admission, "assess_reviewed_norm_admission_v3", None)),
+                 "reviewed V4 relations cannot fall back to V2 endpoint admission")
     required = "compile_reviewed_train_relation_masks_" + _admission_version
     _require(callable(getattr(handoff, required, None)), "the canonical matching reviewed relation handoff is required")
     return objective, handoff, declarations, admission
@@ -454,6 +469,8 @@ def _reviewed_config(torch, *, _admission_version="v2", **values):
     contract = _reviewed_contract(_admission_version)
     result.update(architecture=contract["architecture"],
         loss="symmetric_masked_multi_positive_contrastive/v1", relation_scope=contract["relation_scope"])
+    if _admission_version == "v4":
+        result["endpoint_admission_version"] = "v3"
     return result
 
 
@@ -462,8 +479,13 @@ def _reviewed_arrays(handoff, *, _admission_version="v2"):
     _, owner, declarations, admission = _reviewed_owners(_admission_version)
     _require(type(handoff) is dict and len(_raw(handoff)) <= MAX_BYTES // 2,
              "bounded complete reviewed training handoff required")
-    _require(handoff.get("schema") == (owner.REVIEWED_V3_SCHEMA if _admission_version == "v3" else owner.REVIEWED_SCHEMA)
-             and handoff.get("profile") == (declarations.REVIEWED_V3_PROFILE if _admission_version == "v3" else declarations.REVIEWED_PROFILE)
+    domains = {"v2": (owner.REVIEWED_SCHEMA, declarations.REVIEWED_PROFILE),
+               "v3": (owner.REVIEWED_V3_SCHEMA, declarations.REVIEWED_V3_PROFILE),
+               "v4": (getattr(owner, "REVIEWED_V4_SCHEMA", None),
+                      getattr(declarations, "REVIEWED_V4_PROFILE", None))}
+    schema, profile = domains[_admission_version]
+    _require(schema is not None and profile is not None
+             and handoff.get("schema") == schema and handoff.get("profile") == profile
              and handoff.get("status") == "reviewed_objective_mask_ready"
              and handoff.get("reviewed_objective_mask_ready") is True
              and handoff.get("reviewed_pair_labels_authenticated") is True,
@@ -491,6 +513,21 @@ def _reviewed_arrays(handoff, *, _admission_version="v2"):
     _require(all(any(row) for row in positive)
              and all(any(positive[i][j] for i in range(len(source))) for j in range(len(formal))),
              "reviewed rows and columns require positive coverage")
+    if _admission_version == "v4":
+        _require(handoff.get("endpoint_admission_version") == "v3",
+                 "reviewed V4 handoff endpoint admission domain differs")
+        endpoints = {name: handoff.get(name + "_endpoints") for name in ("source", "formal")}
+        _require(all(type(endpoints[name]) is list and len(endpoints[name]) == len(values)
+                     for name, values in (("source", source), ("formal", formal))),
+                 "complete reviewed V4 context endpoint populations required")
+        context_validator = getattr(declarations, "_reviewed_context_set_sha256", None)
+        _require(callable(context_validator), "canonical reviewed V4 context-set validator required")
+        context_sha256 = context_validator(handoff.get("context_set"), endpoints)
+        _require(handoff.get("context_set_sha256") == context_sha256,
+                 "reviewed V4 context-set identity differs")
+        _require(handoff.get("legal_applicability_verified") is False
+                 and handoff.get("controlling_authority") is False,
+                 "reviewed structural retrieval cannot establish legal applicability or controlling authority")
     return source, formal, copy.deepcopy(positive), copy.deepcopy(negative)
 
 
@@ -513,7 +550,8 @@ def _restore_reviewed(checkpoint, *, _admission_version=None):
         "seed", "joint_dimension", "learning_rate", "temperature")), "reviewed retrieval configuration missing")
     _require(config.get("architecture") == contract["architecture"]
              and config.get("relation_scope") == contract["relation_scope"]
-             and config.get("loss") == "symmetric_masked_multi_positive_contrastive/v1",
+             and config.get("loss") == "symmetric_masked_multi_positive_contrastive/v1"
+             and (version != "v4" or config.get("endpoint_admission_version") == "v3"),
              "reviewed config admission domain differs")
     import torch
     expected = _reviewed_config(torch, _admission_version=version, **{key: config[key] for key in (
@@ -545,7 +583,7 @@ def _restore_reviewed(checkpoint, *, _admission_version=None):
 
 
 def _restore(checkpoint, *, source_profile=None):
-    if type(checkpoint) is dict and checkpoint.get("schema") in (REVIEWED_SCHEMA, REVIEWED_V3_SCHEMA):
+    if type(checkpoint) is dict and checkpoint.get("schema") in (REVIEWED_SCHEMA, REVIEWED_V3_SCHEMA, REVIEWED_V4_SCHEMA):
         _require(source_profile is None, "a legacy source port cannot authorize a reviewed "
                  + _reviewed_checkpoint_version(checkpoint) + " asset")
         return _restore_reviewed(checkpoint)
@@ -568,8 +606,7 @@ def _train_reviewed_retriever(preparation, registry, policy, reviews, *,
     _require(type(steps) is int and 0 <= steps <= 10000, "steps must be an integer in [0, 10000]")
     objective, owner, _, _ = _reviewed_owners(_admission_version)
     contract = _reviewed_contract(_admission_version)
-    compile_masks = (owner.compile_reviewed_train_relation_masks_v3 if _admission_version == "v3"
-                     else owner.compile_reviewed_train_relation_masks_v2)
+    compile_masks = getattr(owner, "compile_reviewed_train_relation_masks_" + _admission_version)
     replay = dict(expected_preparation_sha256=expected_preparation_sha256,
         preparation_inputs=preparation_inputs, expected_registry_sha256=expected_registry_sha256,
         expected_policy_sha256=expected_policy_sha256, expected_reviews_sha256=expected_reviews_sha256,
@@ -649,6 +686,9 @@ def _train_reviewed_retriever(preparation, registry, policy, reviews, *,
         "legacy_retrieval_index_compatible": False, "proofbridge_reproduction": False,
         **_FALSE, "training_executed": steps > 0, "model_executed": True,
         "target_access": True, "target_access_scope": "reviewed_training_pairs_only", "query_target_access": False}
+    if _admission_version == "v4":
+        report.update(endpoint_admission_version="v3", context_set_sha256=handoff["context_set_sha256"],
+            legal_applicability_verified=False, controlling_authority=False)
     return {"checkpoint": checkpoint, "report": report}
 
 
@@ -863,8 +903,7 @@ class ReviewedLegalJointRetriever:
                  "query lane must use the exact source-only native384 representation profile")
         version = _reviewed_checkpoint_version(self._checkpoint)
         _, owner, _, _ = _reviewed_owners(version)
-        compile_masks = (owner.compile_reviewed_train_relation_masks_v3 if version == "v3"
-                         else owner.compile_reviewed_train_relation_masks_v2)
+        compile_masks = getattr(owner, "compile_reviewed_train_relation_masks_" + version)
         replay = dict(expected_preparation_sha256=expected_preparation_sha256,
             preparation_inputs=preparation_inputs, expected_registry_sha256=expected_registry_sha256,
             expected_policy_sha256=expected_policy_sha256, expected_reviews_sha256=expected_reviews_sha256,
@@ -884,6 +923,11 @@ class ReviewedLegalJointRetriever:
             inference_reference_content_forwarded=False, heldout_evaluation_performed=False,
             input_embedding_runtime_computation_proven=False,
             historical_training_dependency_revalidation="not_performed_historical_weights_only", **_FALSE)
+        if version == "v4":
+            # Keep the whole index's scopes internal: excluded reference/lineage
+            # candidates must not reappear through an unfiltered context table.
+            common.update(endpoint_admission_version="v3", context_set_sha256=current.get("context_set_sha256"),
+                controlling_authority=False)
         if current.get("reviewed_objective_mask_ready") is not True:
             return {**common, "status": "abstained_current_index_unavailable",
                 "rows": [{"id": query["id"], "status": "abstained", "context": None, "retrieved_ids": [],
@@ -1139,4 +1183,51 @@ def train_reviewed_retriever_v3(
         joint_dimension=joint_dimension,
         temperature=temperature,
         _admission_version="v3",
+    )
+
+
+def train_reviewed_retriever_v4(
+        preparation,
+        registry,
+        policy,
+        reviews,
+        *,
+        expected_preparation_sha256,
+        preparation_inputs,
+        expected_registry_sha256,
+        expected_policy_sha256,
+        expected_reviews_sha256,
+        at_time_utc,
+        observed_artifact_sha256s,
+        observed_pins,
+        evidence_artifacts,
+        current_endpoint_observations,
+        steps=0,
+        seed=2718,
+        learning_rate=0.003,
+        joint_dimension=64,
+        temperature=0.1,
+):
+    """Fit canonical reviewed V4 masks under caller-owned runtime admission."""
+    return _train_reviewed_retriever(
+        preparation,
+        registry,
+        policy,
+        reviews,
+        expected_preparation_sha256=expected_preparation_sha256,
+        preparation_inputs=preparation_inputs,
+        expected_registry_sha256=expected_registry_sha256,
+        expected_policy_sha256=expected_policy_sha256,
+        expected_reviews_sha256=expected_reviews_sha256,
+        at_time_utc=at_time_utc,
+        observed_artifact_sha256s=observed_artifact_sha256s,
+        observed_pins=observed_pins,
+        evidence_artifacts=evidence_artifacts,
+        current_endpoint_observations=current_endpoint_observations,
+        steps=steps,
+        seed=seed,
+        learning_rate=learning_rate,
+        joint_dimension=joint_dimension,
+        temperature=temperature,
+        _admission_version="v4",
     )

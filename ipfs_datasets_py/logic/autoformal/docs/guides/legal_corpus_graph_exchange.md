@@ -199,9 +199,36 @@ A larger legacy batch hit its original 120-second deadline and grants no
 whole-batch credit. Use the retained smaller cohorts and the existing
 `--owned-ordinary-temp-factory` option for remaining checks.
 
-The release owning file now declares 152 cases; **98 remain unqualified on
-this current source**. The prior 35-case transport result overlaps this run
+At that run’s cutoff, the release owning file declared 152 cases; **98 remained
+unqualified on its captured source**. The prior 35-case transport result overlaps this run
 and must not be added to it. No actual Lean build, original Native-parent
 authentication, immutable Hub readback, statutory review, model fitting or
 corpus release is established. V3 remains an explicit local replay path.
 [Closed qualification](../../../../../workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/current-canonical-release-v3-physical56-qualified-and-closed.json).
+
+## Shared law-row replay and remaining release checks — 2026-11-15
+
+The existing physical fixture can now represent two source rows carrying three
+legal units. The normative row retains both nonoverlapping occurrences, complete
+original bytes, exact character/UTF-8 offsets, all span overlaps and one graph
+source-version node per identity. Review signing binds the original shared row
+before admission; source/IR artifact identities remain distinct for each unit.
+Defaults retain the prior three-row fixture. Only the two owning test files
+changed for this integration; production schemas and admission owners did not.
+
+All six selected checks passed with closed Source/resource/process/wait/storage
+custody: three new shared-row cases, the retained three-row positive and two
+shared-artifact controls. The negative cases replay genuinely signed inputs and
+refuse duplicate or overlapping source uses. They use fictional law and reviews.
+The successful request released its own 32 MiB promise durably.
+
+Separately, six smaller regression runs passed 35 of the original 98 remaining
+release cases on their captured source epochs. The next six-case physical-map
+run timed out without JUnit or a complete result; its custody closed and its
+32 MiB claim remains retained, with zero case credit. Thus 63 of that original
+98-case selection still need qualification. The release file now declares 155
+cases in 39 functions; neither the whole current file nor a unified current
+source epoch is qualified by combining historical runs. Actual statutory review,
+Lean proof, Native-parent integration and immutable Hub readback remain open.
+
+[Shared-row closeout](../../../../../workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/shared_lawrow6-shared-v01/cohort-closeout.json). [Regression accounting](../../../../../workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/remaining-small-cohort-progress-6closed-shared6closed-physical6failed-v01.json).

@@ -120,28 +120,108 @@ def test_export_requires_exact_external_snapshot_digest(tmp_path, snapshot_input
 
 @pytest.mark.parametrize("path_kind", ["missing", "directory", "symlink", "parent-symlink", "fifo"])
 def test_snapshot_paths_must_be_regular_and_never_follow_symlinks(tmp_path, snapshot_input, path_kind):
-    source, source_sha, _ = snapshot_input
-    if path_kind == "missing":
-        source = tmp_path / "missing"
-    elif path_kind == "directory":
-        source = tmp_path
-    elif path_kind == "symlink":
-        link = tmp_path / "snapshot-link.json"
-        link.symlink_to(source)
-        source = link
-    elif path_kind == "parent-symlink":
-        link = tmp_path / "directory-link"
-        link.symlink_to(tmp_path, target_is_directory=True)
-        source = link / source.name
-    else:
-        source = tmp_path / "input-fifo"
-        os.mkfifo(source)
-    destination = tmp_path / "not-created"
-    result, receipt = run_cli(["export", "--snapshot", str(source), "--snapshot-sha256",
-        source_sha, "--output", str(destination)], cwd=tmp_path)
-    assert result.returncode != 0
-    assert receipt["status"] == "error"
-    assert not destination.exists()
+    import stat
+    original_source, source_sha, _ = snapshot_input
+    # The existing C19 fixture still returns its original mapped case root.
+    # Keep the original ordinary snapshot and use an exact private working copy.
+    tmp_path = tmp_path / "work"
+    tmp_path.mkdir(mode=0o700)
+    snapshot_copy = tmp_path / original_source.name
+    snapshot_copy.write_bytes(original_source.read_bytes())
+    assert hashlib.sha256(snapshot_copy.read_bytes()).hexdigest() == source_sha
+    source = snapshot_copy
+    parent_fd = os.open(tmp_path, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC)
+    parent_identity = lambda info: (info.st_dev, info.st_ino, info.st_uid, info.st_mode)
+    leaf_identity = lambda info: (info.st_dev, info.st_ino, info.st_uid, info.st_gid,
+        info.st_mode, info.st_nlink, info.st_size, info.st_mtime_ns, info.st_ctime_ns)
+    parent = os.fstat(parent_fd)
+    leaf = leaf_fd = created = expected_literal = None
+    try:
+        assert parent_identity(parent) == parent_identity(tmp_path.lstat())
+        assert stat.S_ISDIR(parent.st_mode) and parent.st_uid == os.geteuid()
+        assert stat.S_IMODE(parent.st_mode) == 0o700
+        if path_kind == "missing":
+            source = tmp_path / "missing"
+        elif path_kind == "directory":
+            source = tmp_path
+        elif path_kind == "symlink":
+            link = tmp_path / "snapshot-link.json"
+            link.symlink_to(source)
+            leaf, expected_literal = link, str(source)
+            source = link
+        elif path_kind == "parent-symlink":
+            link = tmp_path / "directory-link"
+            link.symlink_to(tmp_path, target_is_directory=True)
+            leaf, expected_literal = link, str(tmp_path)
+            source = link / source.name
+        else:
+            source = tmp_path / "input-fifo"
+            os.mkfifo(source)
+            leaf = source
+        if leaf is not None:
+            # Immediate post-success observation of this TEST's actual creation.
+            # O_PATH never opens a FIFO body; keep the inode held through teardown.
+            leaf_fd = os.open(leaf.name, os.O_PATH | os.O_NOFOLLOW | os.O_CLOEXEC, dir_fd=parent_fd)
+            observed = os.fstat(leaf_fd)
+            current = os.stat(leaf.name, dir_fd=parent_fd, follow_symlinks=False)
+            assert leaf_identity(observed) == leaf_identity(current)
+            assert observed.st_uid == os.geteuid() and observed.st_nlink == 1
+            assert (stat.S_ISFIFO(observed.st_mode) if path_kind == "fifo" else stat.S_ISLNK(observed.st_mode))
+            if expected_literal is not None:
+                assert os.readlink(leaf.name, dir_fd=parent_fd) == expected_literal
+            created = observed  # Cleanup token exists only after every creation observation passed.
+        destination = tmp_path / "not-created"
+        result, receipt = run_cli(["export", "--snapshot", str(source), "--snapshot-sha256",
+            source_sha, "--output", str(destination)], cwd=tmp_path)
+        assert result.returncode != 0
+        assert receipt["status"] == "error"
+        assert not destination.exists()
+    finally:
+        try:
+            if leaf_fd is not None and created is not None:
+                # Refuse changed/unobserved objects. Only this freshly authored
+                # fixture is finalized, after the original refusal assertions.
+                assert parent_identity(os.fstat(parent_fd)) == parent_identity(parent)
+                assert parent_identity(tmp_path.lstat()) == parent_identity(parent)
+                current = os.stat(leaf.name, dir_fd=parent_fd, follow_symlinks=False)
+                assert leaf_identity(current) == leaf_identity(os.fstat(leaf_fd)) == leaf_identity(created)
+                if expected_literal is not None:
+                    assert os.readlink(leaf.name, dir_fd=parent_fd) == expected_literal
+                for retained_source in (original_source, snapshot_copy):
+                    with retained_source.open("rb") as retained_stream:
+                        assert hashlib.sha256(retained_stream.read()).hexdigest() == source_sha
+                        os.fsync(retained_stream.fileno())
+                evidence = {"schema": "release-cli-authored-physical-fixture-observation/v1",
+                    "path_kind": path_kind, "parent_identity": list(parent_identity(parent)),
+                    "created_identity": list(leaf_identity(created)), "literal": expected_literal,
+                    "snapshot_sha256": source_sha, "child_observed_actual_creation": True,
+                    "atomic_creation_or_independent_SDK_sample_attested": False,
+                    "Native_or_storage_release_authority": False}
+                evidence_fd = os.open("authored-physical-fixture.json",
+                    os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW | os.O_CLOEXEC,
+                    0o600, dir_fd=parent_fd)
+                with os.fdopen(evidence_fd, "wb") as stream:
+                    stream.write((json.dumps(evidence, sort_keys=True) + "\n").encode())
+                    stream.flush()
+                    os.fsync(stream.fileno())
+                os.fsync(parent_fd)
+                # Recheck the same held inode/literal and anchored parent after
+                # fsync, immediately before the one selected unlink.
+                assert parent_identity(tmp_path.lstat()) == parent_identity(os.fstat(parent_fd)) == parent_identity(parent)
+                assert leaf_identity(os.stat(leaf.name, dir_fd=parent_fd, follow_symlinks=False)) == leaf_identity(os.fstat(leaf_fd)) == leaf_identity(created)
+                if expected_literal is not None:
+                    assert os.readlink(leaf.name, dir_fd=parent_fd) == expected_literal
+                os.unlink(leaf.name, dir_fd=parent_fd)
+                removed = os.fstat(leaf_fd)
+                assert (removed.st_dev, removed.st_ino) == (created.st_dev, created.st_ino)
+                assert removed.st_nlink == 0
+                with pytest.raises(FileNotFoundError):
+                    os.stat(leaf.name, dir_fd=parent_fd, follow_symlinks=False)
+                os.fsync(parent_fd)
+        finally:
+            if leaf_fd is not None:
+                os.close(leaf_fd)
+            os.close(parent_fd)
 
 
 @pytest.mark.parametrize("raw", [b"{broken", b"{}", b'{"schema":"x","schema":"y"}',
@@ -431,8 +511,9 @@ def _physical_wire(value):
                       ensure_ascii=False, allow_nan=False).encode("utf-8")
 
 
-def _physical_source_material(directory, *, source_texts=None):
+def _physical_source_material(directory, *, source_texts=None, shared_normative_row=False):
     import shutil
+    from copy import deepcopy
     import pyarrow as pa
     import pyarrow.parquet as pq
     from ipfs_datasets_py.logic.autoformal import corpus_source as source
@@ -453,9 +534,14 @@ def _physical_source_material(directory, *, source_texts=None):
     if source_texts is not None:
         assert type(source_texts) is list and len(source_texts) == 3
         texts = list(source_texts)
+    assert type(shared_normative_row) is bool
+    # The two normative units share the complete second law row. Their
+    # occurrence selectors, rather than document/IR labels, distinguish uses.
+    law_texts = [texts[0], texts[1] + "\n\n" + texts[2]] if shared_normative_row else texts
+    unit_document_ordinals = [0, 1, 1] if shared_normative_row else [0, 1, 2]
     units = []
     laws = []
-    for index, text in enumerate(texts):
+    for index, text in enumerate(law_texts):
         identity = instrument + "/unit-" + str(index + 1)
         source_raw = text.encode("utf-8")
         version = source.build_source_version(source_id=identity, release_id=instrument,
@@ -474,6 +560,28 @@ def _physical_source_material(directory, *, source_texts=None):
             source_url="fixture:physical-law-row:" + str(index),
             text=text, citation_text="Fictional engineering source",
             normalized_citation="fictional:" + str(index + 1)))
+    if shared_normative_row:
+        complete = law_texts[1]
+        version = units[1]["source_version"]
+        raw = complete.encode("utf-8")
+        def selected(start, end):
+            return source.build_source_occurrence(version,
+                expected_raw_sha256=hashlib.sha256(raw).hexdigest(), extracted_text=complete,
+                expected_extracted_sha256=hashlib.sha256(raw).hexdigest(),
+                start_char=start, end_char=end,
+                start_utf8=len(complete[:start].encode("utf-8")),
+                end_utf8=len(complete[:end].encode("utf-8")))
+        first_end = len(texts[1])
+        units[1]["occurrence"] = selected(0, first_end)
+        units.append(dict(unit_id=instrument + "/unit-3", source_version=deepcopy(version),
+            occurrence=selected(first_end + 2, len(complete))))
+    source_bindings = None
+    if shared_normative_row:
+        source_bindings = {unit["unit_id"]: dict(source_version=deepcopy(unit["source_version"]),
+            occurrence=deepcopy(unit["occurrence"]),
+            raw_bytes=law_texts[unit_document_ordinals[index]].encode("utf-8"),
+            extracted_text=law_texts[unit_document_ordinals[index]])
+            for index, unit in enumerate(units)}
     sink = pa.BufferOutputStream()
     pq.write_table(pa.Table.from_pylist(laws), sink)
     law_bytes = sink.getvalue().to_pybytes()
@@ -521,10 +629,15 @@ def _physical_source_material(directory, *, source_texts=None):
             path_in_repo=table["path_in_repo"], file_sha256=table["sha256"],
             row_ordinal=row["row_ordinal"])
         index = row["source_coordinate_span_index"]
-        unit = units[coordinates["spans"][index]["input_document_ordinal"]]
+        coordinate = coordinates["spans"][index]
+        overlapping_units = [unit["unit_id"] for unit_index, unit in enumerate(units)
+            if unit_document_ordinals[unit_index] == coordinate["input_document_ordinal"]
+            and max(unit["occurrence"]["start_char"], coordinate["source_char_start"])
+                < min(unit["occurrence"]["end_char"], coordinate["source_char_end"])]
+        assert overlapping_units
         span_rows.append(dict(physical_identity_sha256=hashlib.sha256(_physical_wire(physical)).hexdigest(),
             row_sha256=row["row_sha256"], source_coordinate_span_index=index,
-            unit_ids=[unit["unit_id"]]))
+            unit_ids=overlapping_units))
 
     # Semantic selectors and arbitrary physical IDs are known before review.
     # Scope/admission-dependent graph CIDs are deliberately absent here.
@@ -554,7 +667,9 @@ def _physical_source_material(directory, *, source_texts=None):
     node("interpretation", "interpretation", instrument + "/selected-interpretation")
     for index, unit in enumerate(units):
         identity = unit["unit_id"]
-        node(("version", index), "source_version", unit["source_version"]["record_cid"])
+        version_key = ("version", unit_document_ordinals[index])
+        if version_key not in node_ids:
+            node(version_key, "source_version", unit["source_version"]["record_cid"])
         node(("occurrence", index), "occurrence", unit["occurrence"]["record_cid"])
         node(("expression", index), "expression", identity + ":complete-IR")
         node(("assertion", index), "definition_assertion" if index == 0 else "norm_assertion", identity)
@@ -563,7 +678,7 @@ def _physical_source_material(directory, *, source_texts=None):
         node(("cross-reference", index), "expression",
              "fixture:reviewed-" + namespace + ":cross-reference:" + str(index))
     for index in range(len(units)):
-        edge(("version", index), ("occurrence", index), "CONTAINS")
+        edge(("version", unit_document_ordinals[index]), ("occurrence", index), "CONTAINS")
         edge(("assertion", index), ("occurrence", index), "HAS_SOURCE")
         edge(("assertion", index), ("expression", index), "DERIVED_FROM")
         edge(("assertion", index), "scope", "APPLIES_WITHIN")
@@ -593,14 +708,17 @@ def _physical_source_material(directory, *, source_texts=None):
             rows=len(entity_rows), projection="complete_reviewed_norm_graph_nodes_and_edges/v1"),
         units=[dict(unit_id=unit["unit_id"], source_version_cid=unit["source_version"]["record_cid"],
             source_occurrence_cid=unit["occurrence"]["record_cid"],
-            document_revision=instrument + "/revision-1", input_document_ordinal=index,
-            law_row_ordinal=index) for index, unit in enumerate(units)],
+            document_revision=instrument + "/revision-1",
+            input_document_ordinal=unit_document_ordinals[index],
+            law_row_ordinal=unit_document_ordinals[index]) for index, unit in enumerate(units)],
         span_rows=span_rows, entity_rows=bindings)
     return dict(namespace=namespace, instrument=instrument, texts=texts, units=units,
         laws=laws, law_bytes=law_bytes, law_path=law_path, capture=capture, datasets=datasets,
         coordinate_report=coordinates, coordinate_pin=coordinate_pin, paired_location=location,
         paired_written=written, retained=retained, original_payload=original_payload,
-        entity_bytes=entity_bytes, entity_path=entity_path, entity_rows=entity_rows, mapping=mapping)
+        entity_bytes=entity_bytes, entity_path=entity_path, entity_rows=entity_rows, mapping=mapping,
+        source_bindings=source_bindings, unit_document_ordinals=unit_document_ordinals,
+        law_texts=law_texts)
 
 
 def _physical_closure_request(material, *, map_damage=None, reviewed_version=2, return_control=False):
@@ -656,8 +774,8 @@ def _physical_closure_request(material, *, map_damage=None, reviewed_version=2, 
     # This is the ONLY review construction. The final map/file/selector
     # dependency is already frozen before preparation and detached signatures.
     case = fixture.reviewed_norm_fixture_v2(admission, fixture_namespace=material["namespace"],
-        source_texts=material["texts"], cross_references=references,
-        dependency_artifacts={map_id: map_raw})
+        source_texts=material["texts"], source_bindings=material.get("source_bindings"),
+        cross_references=references, dependency_artifacts={map_id: map_raw})
     assert type(reviewed_version) is int and reviewed_version in (2, 3)
     if reviewed_version == 2:
         control = shared_fixture.reviewed_preservation_graph_fixture_v2(fixture, admission, case)
@@ -1400,4 +1518,123 @@ def test_mixed_physical_closure_v3_rejects_malformed_complete_legal_json(
     row.update(payload=raw,bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest())
     # Updated outer byte descriptors cannot replace independent subject pins.
     with pytest.raises(ValueError):
+        replay_physical_closure_v3(request)
+
+
+# Fictional shared-row integration: the complete law row and all emitted cache
+# bytes are frozen before the mapping is added to the genuinely signed review.
+@pytest.fixture(scope="module")
+def shared_lawrow_physical_control_v3(tmp_path_factory):
+    texts = [
+        "For this fictional Act, a covered officer means an officer appointed by the Board. Café.",
+        "Every\u00a0covered officer must file a report unless the Board expressly excuses that officer.",
+        "For every officer, supervisor, event, and time, if both people are covered officers, that officer may inspect the register under that supervisor at that event and time.",
+    ]
+    material = _physical_source_material(
+        tmp_path_factory.mktemp("shared-lawrow-v3") / "material",
+        source_texts=texts, shared_normative_row=True)
+    request, control = _physical_closure_request(material, reviewed_version=3, return_control=True)
+    return request, control, material
+
+
+def test_shared_lawrow_v3_replays_two_rows_three_units_and_complete_caches(
+        shared_lawrow_physical_control_v3):
+    request, control, material = shared_lawrow_physical_control_v3
+    report = replay_physical_closure_v3(request)
+    assert_release_v3_byte_authority_only(report)
+    units = control["case"]["declaration"]["units"]
+    definition, duty, permission = units
+    source_inputs = control["case"]["source_inputs"]
+    shared = material["law_texts"][1]
+    assert material["capture"]["documents"][1]["text"] == shared
+    assert "\u00a0" in shared  # Meaning-preserving whitespace, not an extra IR clause.
+    assert len(material["laws"]) == len(material["capture"]["documents"]) == 2
+    assert len(units) == len(report["unit_ids"]) == 3
+    assert material["unit_document_ordinals"] == [0, 1, 1]
+    assert duty["source_version"] == permission["source_version"]
+    assert duty["source_version"]["record_cid"] != definition["source_version"]["record_cid"]
+    assert duty["source_artifact_id"] != permission["source_artifact_id"]
+    assert duty["ir_artifact_id"] != permission["ir_artifact_id"]
+    assert duty["relational_request_sha256"] != permission["relational_request_sha256"]
+    for unit in (duty, permission):
+        value = source_inputs[unit["unit_id"]]
+        assert value == {"raw_bytes": shared.encode("utf-8"), "extracted_text": shared}
+        occurrence = unit["occurrence"]
+        assert occurrence["span_text"] == shared[occurrence["start_char"]:occurrence["end_char"]]
+        assert occurrence["start_utf8"] == len(shared[:occurrence["start_char"]].encode("utf-8"))
+        assert occurrence["end_utf8"] == len(shared[:occurrence["end_char"]].encode("utf-8"))
+    assert duty["occurrence"]["end_char"] + 2 == permission["occurrence"]["start_char"]
+    assert permission["occurrence"]["start_utf8"] > permission["occurrence"]["start_char"]
+    physical = report["physical_crosswalk"]
+    assert physical["counts"]["law_rows"] == 2 and physical["counts"]["reviewed_units"] == 3
+    assert [row["input_document_ordinal"] for row in physical["unit_bindings"]] == [0, 1, 1]
+    assert [row["law_row_ordinal"] for row in physical["unit_bindings"]] == [0, 1, 1]
+    graph = control["graph"]["graph"]
+    assert len([node for node in graph["nodes"] if node["node_type"] == "source_version"]) == 2
+    assert len(control["graph"]["source_versions"]) == 3
+    assert {row["graph_record_cid"] for row in physical["entity_bindings"]} == {
+        row["record_cid"] for row in graph["nodes"] + graph["edges"]}
+    assert len(physical["entity_bindings"]) == len(material["entity_rows"])
+    assert len(physical["span_bindings"]) == len(material["original_payload"]["rows"])
+    for binding in physical["span_bindings"]:
+        span = material["coordinate_report"]["spans"][binding["source_coordinate_span_index"]]
+        expected = [unit["unit_id"] for index, unit in enumerate(units)
+            if material["unit_document_ordinals"][index] == span["input_document_ordinal"]
+            and max(unit["occurrence"]["start_char"], span["source_char_start"])
+                < min(unit["occurrence"]["end_char"], span["source_char_end"])]
+        assert binding["unit_ids"] == expected
+    preserved = control["preparation"].to_dict()
+    assert len(preserved["units"]) == 3
+    assert report["unit_preservation_bindings"] == preserved["units"]
+    assert report["native_receipt_replayed"] is False
+    assert report["local_source_cache_entity_bindings_verified"] is True
+    assert report["independent_reviewed_crosswalk_verified"] is True
+
+
+@pytest.mark.parametrize("damage,reason", [
+    ("duplicate", "physical occurrence"),
+    ("overlap", "overlapping interpretations"),
+])
+def test_shared_lawrow_v3_original_source_replay_refuses_duplicate_or_overlapping_uses(
+        shared_lawrow_physical_control_v3, damage, reason):
+    from copy import deepcopy
+    from ipfs_datasets_py.logic.autoformal import corpus_source as source
+    from ipfs_datasets_py.logic.autoformal import legal_norm_content_adjudication_v1 as admission
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_lake_v2 as transport
+
+    original, control, material = shared_lawrow_physical_control_v3
+    request = deepcopy(original)
+    row = next(row for row in request["artifacts"]
+        if row["artifact_id"] == request["component"]["replay"])
+    replay = transport.decode_parent_replay_value_v1(row["payload"],
+        expected_payload_sha256=row["sha256"], max_bytes=8 * 1024**2)
+    inputs = replay["admission_kwargs"]["preparation_inputs"]
+    duty, permission = inputs["declaration"]["units"][1:]
+    current = permission["occurrence"]
+    complete = inputs["source_inputs"][permission["unit_id"]]
+    start = duty["occurrence"]["start_char"] if damage == "duplicate" else duty["occurrence"]["end_char"] - 1
+    end = duty["occurrence"]["end_char"] if damage == "duplicate" else current["end_char"]
+    text = complete["extracted_text"]
+    occurrence = source.build_source_occurrence(permission["source_version"],
+        expected_raw_sha256=hashlib.sha256(complete["raw_bytes"]).hexdigest(),
+        extracted_text=text, expected_extracted_sha256=hashlib.sha256(text.encode("utf-8")).hexdigest(),
+        start_char=start, end_char=end, start_utf8=len(text[:start].encode("utf-8")),
+        end_utf8=len(text[:end].encode("utf-8")))
+    permission["occurrence"] = occurrence
+    permission["coverage"] = [{"typed_path": mapped["typed_path"],
+        **{key: occurrence[key] for key in ("start_char", "end_char", "start_utf8", "end_utf8")}}
+        for mapped in inputs["relational_inputs"][permission["unit_id"]]["report"]["structural_mapping"]]
+    for use in inputs["declaration"]["definition_uses"]:
+        if use["use_unit_id"] == permission["unit_id"]:
+            use["use_occurrence_cid"] = occurrence["record_cid"]
+    inputs["expected_declaration_sha256"] = admission.norm_content_adjudication_sha256(inputs["declaration"])
+    raw = transport.encode_parent_replay_value_v1(replay, max_bytes=8 * 1024**2)
+    row.update(payload=raw, bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
+    # Retain the genuine positive's final map, detached signatures and report
+    # pins. No new accepted subject or fabricated review authorizes the bad uses.
+    assert request["pins"] == original["pins"]
+    mapping = request["component"]["reviewed_crosswalk"]
+    assert next(r for r in request["artifacts"] if r["artifact_id"] == mapping) == next(
+        r for r in original["artifacts"] if r["artifact_id"] == mapping)
+    with pytest.raises(ValueError, match=reason):
         replay_physical_closure_v3(request)

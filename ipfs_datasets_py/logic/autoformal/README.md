@@ -1,5 +1,11 @@
 # Legal autoformalization
 
+Reviewed retrieval now supports a separately signed V4 context-set relation contract over V3 endpoints. Unknown pairs and analogies remain excluded from negatives; legal applicability is not inferred. See the [handoff](docs/HANDOFF.md) for source-only qualification and pending numerical/legal gates.
+
+The supervisor adapter now validates explicitly requested parent/v2 and parent/v3 audit receipts against trusted runtime selection and recomputed sidecars. All 93 source-only software cases pass; task/completion/resource/admission authority is unchanged. Physical supervisor execution and model/legal/proof qualification remain open. See the [handoff](docs/HANDOFF.md).
+
+The original parent now has an explicit trusted full-candidate audit using independently supplied request contexts and the shared scorer. All 233 selected source-only cases pass. Physical parent/v3 publication, supervisor adoption and model/legal/proof qualification remain open. See the [handoff](docs/HANDOFF.md).
+
 Reviewed admission now rejects duplicate paragraph uses created by raw repackaging, unaligned views or artifact revision labels. All 355 canonical source-only checks pass. Legal source authenticity, real statutory review and native proof remain separate gates. See the [handoff](docs/HANDOFF.md).
 
 The explicit v3 candidate audit now supports the existing many-sorted representation alongside object-only syntax. All 324 source-only software cases pass; legacy v1/v2 refusals and all legal/model/proof limits remain. See the [handoff](docs/HANDOFF.md).

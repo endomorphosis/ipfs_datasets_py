@@ -772,7 +772,7 @@ def reviewed_resign_v2(case):
 def reviewed_norm_fixture_v2(owner, *, fixture_namespace="act-v1", source_texts=None,
         permitted_uses=None, predicate_prefix=None, document_revision=None,
         governing_instrument_id=None, definition_provision_id=None,
-        cross_references=None, dependency_artifacts=None):
+        cross_references=None, dependency_artifacts=None, source_bindings=None):
     """One fictional definition and two distinct complete normative provisions.
 
     This public test helper deliberately exercises the existing source,
@@ -838,6 +838,10 @@ def reviewed_norm_fixture_v2(owner, *, fixture_namespace="act-v1", source_texts=
     if source_texts is not None:
         assert type(source_texts) in (list, tuple) and len(source_texts) == len(requests)
         texts = list(source_texts)
+    if source_bindings is not None:
+        assert type(source_bindings) is dict
+        assert set(source_bindings) == {
+            instrument_id + "/unit-" + str(index + 1) for index in range(len(requests))}
     source_inputs, relational_inputs, units = {}, {}, []
     for index, (text, request) in enumerate(zip(texts, requests)):
         unit_id = instrument_id + "/unit-" + str(index + 1)
@@ -850,9 +854,22 @@ def reviewed_norm_fixture_v2(owner, *, fixture_namespace="act-v1", source_texts=
         occurrence = source_owner.build_source_occurrence(version, expected_raw_sha256=sha(raw),
             extracted_text=text, expected_extracted_sha256=sha(raw), start_char=0, end_char=len(text),
             start_utf8=0, end_utf8=len(raw))
+        extracted_text = text
+        if source_bindings is not None:
+            selected = source_bindings[unit_id]
+            assert type(selected) is dict and set(selected) == {
+                "source_version", "occurrence", "raw_bytes", "extracted_text"}
+            assert type(selected["raw_bytes"]) is bytes and type(selected["extracted_text"]) is str
+            version, occurrence = deepcopy(selected["source_version"]), deepcopy(selected["occurrence"])
+            raw, extracted_text = selected["raw_bytes"], selected["extracted_text"]
+            source_owner.validate_source_version(version, expected_raw_sha256=sha(raw), raw_bytes=raw,
+                extracted_text=extracted_text, expected_extracted_sha256=sha(extracted_text.encode("utf-8")))
+            source_owner.validate_source_occurrence(occurrence, source_version=version,
+                expected_raw_sha256=sha(raw), extracted_text=extracted_text,
+                expected_extracted_sha256=sha(extracted_text.encode("utf-8")))
         request_raw = wire(request)
         report = relational.prepare_relational_norm_v1(request_raw, expected_request_sha256=sha(request_raw))
-        source_inputs[unit_id] = {"raw_bytes": raw, "extracted_text": text}
+        source_inputs[unit_id] = {"raw_bytes": raw, "extracted_text": extracted_text}
         relational_inputs[unit_id] = {"request_raw": request_raw, "report": report,
             "expected_report_sha256": relational.relational_norm_report_sha256(report)}
         units.append({"unit_id": unit_id, "kind": "definition" if index == 0 else "norm",
@@ -860,8 +877,9 @@ def reviewed_norm_fixture_v2(owner, *, fixture_namespace="act-v1", source_texts=
                 if document_revision is None else document_revision),
             "parent_unit_ids": [], "relational_request_sha256": sha(request_raw),
             "source_artifact_id": unit_id + ":source", "ir_artifact_id": unit_id + ":ir",
-            "coverage": [{"typed_path": row["typed_path"], "start_char": 0, "end_char": len(text),
-                "start_utf8": 0, "end_utf8": len(raw)} for row in report["structural_mapping"]]})
+            "coverage": [{"typed_path": row["typed_path"],
+                **{key: occurrence[key] for key in ("start_char", "end_char", "start_utf8", "end_utf8")}}
+                for row in report["structural_mapping"]]})
     process_raw = b"Fictional independent review process record. No actual statutory or human-review claim."
     process_ref = {"artifact_id": REVIEWED_PROCESS_ID, "sha256": sha(process_raw)}
     definition_uses = []

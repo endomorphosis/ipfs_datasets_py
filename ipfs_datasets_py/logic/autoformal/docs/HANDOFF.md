@@ -1,5 +1,70 @@
 # Current handoff
 
+## Reviewed context-set relation contract — 2026-11-15
+
+The existing relation-declaration, mask-handoff and joint-retriever owners now offer an explicit V4 relation-review domain with unchanged mixed-sort V3 endpoint admission. Distinct reviewed interpretations can share one relation ledger only after fresh pair review covers the exact sorted context union and every endpoint's membership. The new signing subject binds its context-set digest and a sixth review obligation. Existing single-context V2/V3 contracts retain their domains and checks; no relation or legal applicability is inferred from context overlap.
+
+Corresponding/equivalent pairs can supply multiple positives, explicitly reviewed incompatibilities can supply negatives, and unknown pairs/analogies supply neither. Current admission and pair review are replayed before training allocation and ranking. Historical checkpoint integrity is distinct from current readmission. Retrieval exposes an opaque context-set commitment rather than an unfiltered context inventory; it grants no controlling-authority or legal-applicability claim. Original numerical machinery and old checkpoint identities are preserved.
+
+Fresh source-only qualification, exact changed-source hashes, adversarial controls and earlier failed attempts are recorded in the [public evidence capsule](../../../../docs/autoformalization/evidence/legal-ir-reviewed-context-v4-20261115.json). These tests use explicitly fictional signed inputs. No V4 tensor fitting, numerical restore, model quality, native Lean, human statutory review or corpus admission is claimed. The whole numerical joint-retriever test module remains unrun in this source-only qualification.
+
+All 24 backlog task IDs/statuses and existing resource constraints remain unchanged. The retained 2024 Title 10 pilot still awaits genuine legal meaning, definition and two-distinct-use reviews. Next under LIR-17/LIR-20: qualify the V4 trainer's numerical fit/restore/ranking using the existing resource-admission procedure, then compare fixed lexical/GTE/aligned retrieval on an independently reviewed grouped held-out population. Private archives and model checkpoints remain on hold.
+
+## Supervisor validation of audited parent receipts — 2026-11-15
+
+The existing supervisor adapter now accepts parent/v1, typed parent/v2 and full-candidate parent/v3 only when their schema and audit fields match the exact trusted in-process runtime selection. Task DATA cannot enable an audit or select an importer. Each sidecar must occupy its fixed output path, match its byte descriptor and equal a fresh recomputation by the existing inference owner using the original request, child outputs, independent contexts and canonical source pins. After the last caller callback, the adapter reauthenticates the request, audited inputs, source closure, sidecars, parent/child receipts and original outputs. Resealed false reports and late sidecar/context/source changes refuse.
+
+All **93 source-only software cases pass**: the entire 45-case dispatch module and 48 parent metadata controls, including 22 new cases. There are no failures, skips, source drift or numerical runtime imports. Accelerate control-plane contracts are explicitly imported from the canonical published checkout and their origin/hash is recorded. Earlier attempts retain one expected missing-validator failure, one Source admission timeout with zero tests and a 42-pass/three-failure run caused by the missing Accelerate import path; the corrected 45-case run and final 93-case run are separate records. Six controls use deliberately simulated CLI returns and receipts; they exercise adapter control flow and final-callback mutation refusal without a real child, original owner or model.
+
+Default result/v1 remains; requested audited results use result/v2 and retain both sidecar descriptors. The adapter leaves task identity, status, holds, attempts, UNKNOWN history, completion authority, resource release and admission unchanged. **Physical supervisor/parent-v3 execution, current model/resource profiles and legal/native-proof/corpus qualification remain unverified.** Source-only acceptance of metadata is not an observed native execution, grant or promotion. Private assets and existing budgets remain on hold/unchanged. [Exact source captures, failed attempts and results](../../../../workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-supervisor-parent-audit-qualification-v01/qualification-summary.json).
+
+## Shared law-row replay and remaining release checks — 2026-11-15
+
+The existing physical fixture can now represent two source rows carrying three
+legal units. The normative row retains both nonoverlapping occurrences, complete
+original bytes, exact character/UTF-8 offsets, all span overlaps and one graph
+source-version node per identity. Review signing binds the original shared row
+before admission; source/IR artifact identities remain distinct for each unit.
+Defaults retain the prior three-row fixture. Only the two owning test files
+changed for this integration; production schemas and admission owners did not.
+
+All six selected checks passed with closed Source/resource/process/wait/storage
+custody: three new shared-row cases, the retained three-row positive and two
+shared-artifact controls. The negative cases replay genuinely signed inputs and
+refuse duplicate or overlapping source uses. They use fictional law and reviews.
+The successful request released its own 32 MiB promise durably.
+
+Separately, six smaller regression runs passed 35 of the original 98 remaining
+release cases on their captured source epochs. The next six-case physical-map
+run timed out without JUnit or a complete result; its custody closed and its
+32 MiB claim remains retained, with zero case credit. Thus 63 of that original
+98-case selection still need qualification. The release file now declares 155
+cases in 39 functions; neither the whole current file nor a unified current
+source epoch is qualified by combining historical runs. Actual statutory review,
+Lean proof, Native-parent integration and immutable Hub readback remain open.
+
+[Shared-row closeout](../../../../workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/shared_lawrow6-shared-v01/cohort-closeout.json). [Regression accounting](../../../../workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/remaining-small-cohort-progress-6closed-shared6closed-physical6failed-v01.json).
+
+
+## Published-worktree cleanup71 controls qualified; SDK lifecycle gates remain — 2026-11-14
+
+The four cancelled-retained cleanup sources were installed in the published worktrees through the original Source operation and separate readback. A private current-policy fault in one R owning control was then restored after its refusal/no-write assertions through a separately audited one-target Source operation. The SDK, CLI and strict origin/current-state guards retain their reviewed limits.
+
+Fresh P4 ran exactly17 SDK and54 CLI cleanup owning controls:71 clean JUnit records, zero failures/errors/skips,3.6seconds. The original generic CLI route closed Source, Native and process/wait custody before the initial420-second cutoff (158.901seconds); its own16MiB promise was durably released after322 files/616,444bytes. These are selected software controls with modeled proof frames, not a genuine SDK timeout-cleanup lifecycle or a complete SDK/SourceGen qualification.
+
+Earlier P1/P2 Source-admission refusals ran no CLI tests. P3 reached71 call passes but one teardown error; its failed16MiB claim stays retained. The new shared60-second Source-admission cutoff is inside one initial420-second acceptance deadline, with no renewal. CPU1, memory1536MiB, process4, storage16MiB, productive300 and ledger60 remain unchanged. This is no hard preemption or guaranteed worst-case setup/work envelope.
+
+The old C4 SDK timeout and abnormal owned-holder close remain historical failure evidence: no qualified worker report, actual underlying execution unobserved, and no normal Source@2 closure. Complete95/raw source-role execution, genuine SDK cleanup integration, parent delegation and completed-failure cleanup remain separate gates; the latter private proposals gain no qualification here. Runtime holds,119 owners,24 task states and physical200/next201/9,800 remaining at generation2of2 are preserved. No model, legal, Lean or native-corpus gain follows. [Selected71 exact evidence](../../../../workspace/test-logs/federal-corpus-audits/legal-ir-worktree-cleanup71-qualified-20261114-v01/qualification-summary.json).
+
+
+## Trusted original-parent complete-candidate audit — 2026-11-14
+
+The full-candidate aggregation now has one public owner, `evaluate_complete_norm_candidate_syntax`, shared by the evaluator and the original parent. The parent accepts a trusted in-process `candidate_syntax_profile` opt-in for the existing v2/v3 candidate contracts. Execution packets v1–v10 cannot select it. The fixed CLI forwards it only when selected; defaults retain parent/v1 and typed-only auditing retains parent/v2. The opted parent/v3 publishes a separate hashed `candidate-syntax-audit.json` after the existing FINISH and genuine child-wait boundary, fresh query/TRAIN policy checks and final artifact reauthentication. Source/context/selection facts come only from the request-bound independent context artifact, never from reference targets. Original child artifacts are preserved.
+
+All **233 selected source-only software cases pass**: the whole 112-case metrics module, 73 evaluator controls and 48 parent metadata controls (36 new cases in total), with no failures, skips, source drift or numerical runtime imports. Twelve source/test pins bind this run, including the corrected admission epoch. Retained red baselines contain two missing-scorer failures and two missing-parent-feature failures. Controls cover callback errors, complete original-artifact joins, untrusted packet refusal, CLI forwarding, canonical source closure, combined sidecar charges including retained promises, individual output bounds and a last-callback context overwrite. No model, tokenizer runtime, pretrained asset or native Lean command runs; the worker is imported for DATA descriptors and JSON IO only.
+
+**Physical original-parent/v3 publication, current resource/model profiles and supervisor adoption remain unqualified.** Metadata passes do not prove an actual FINISH/wait or resource closeout. The existing original owner still owns those execution gates; no new grant, budget, retry or source-profile approval is created. Real statutory meaning, training/gold, native proof, corpus admission and model-quality claims remain unverified. Private assets remain on hold, and historical checkpoints/qualifications retain their source epochs. [Exact source captures, red baselines and results](../../../../workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-parent-candidate-audit-qualification-v01/qualification-summary.json).
+
 ## Reviewed source-use identity correction — 2026-11-14
 
 Complete V2 and mixed-sort V3 admission now share the existing owner's source-use checks. The original physical artifact/view/interval checks remain. A declared legal source, release, edition and provision must have one canonical extracted view in this profile; raw encoding/container changes and artifact document-revision labels cannot create another use of a known paragraph. Conflicting views require an explicit alignment contract, which this profile does not supply. No aliases between different declared legal identities are inferred.
@@ -36,8 +101,8 @@ A larger legacy batch hit its original 120-second deadline and grants no
 whole-batch credit. Use the retained smaller cohorts and the existing
 `--owned-ordinary-temp-factory` option for remaining checks.
 
-The release owning file now declares 152 cases; **98 remain unqualified on
-this current source**. The prior 35-case transport result overlaps this run
+At that run’s cutoff, the release owning file declared 152 cases; **98 remained
+unqualified on its captured source**. The prior 35-case transport result overlaps this run
 and must not be added to it. No actual Lean build, original Native-parent
 authentication, immutable Hub readback, statutory review, model fitting or
 corpus release is established. V3 remains an explicit local replay path.
