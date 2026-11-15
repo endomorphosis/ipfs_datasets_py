@@ -1,0 +1,180 @@
+{
+  "schema": "autoformal-diagnostic-and-source-group-software-qualification/v1",
+  "evidence_id": "diagnostic-verifier-and-heldout-source-boundaries-20261115",
+  "date_utc": "2026-11-15",
+  "existing_task_ids": [
+    "LIR-14",
+    "LIR-20"
+  ],
+  "changed_source_sha256": {
+    "ipfs_datasets_py/logic/backends/kernel/lean.py": "f4925374651fa4dc02eee59034f595a69dc69ec93c251b521665cbb3ee3907f4",
+    "tests/integration/logic/backends/test_kernel_backends.py": "bd4a7e5b35d882bfb46963469b308751376edf4f3d9d25e3099129808226ba9b",
+    "ipfs_datasets_py/logic/legal_ir/proof_cache.py": "013d9977ecc664c806cf747b5fab0101bc665c469213940c5598547717ddad61",
+    "tests/unit/logic/legal_ir/test_proof_cache.py": "e0c287ad1c7e85814f77fcaac4a33435b5167438f119ff2af7b9f93250f2dfa1",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_consumer_binding.py": "9e73df5ca8db73dad6a64b4decefe748ffc226aab082f1e9d353e0496059b992",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_structured_retrieval.py": "fde0f5f3a65839010b035488e34185c3453c0cb2e3f9a1172f945d746ddea4b7",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_evaluation_artifacts.py": "1d83787b68e7d16e09f0907437fcfdaef4ee043b6fede64f5f382b7799e284ff",
+    "tests/unit/logic/autoformal/test_legal_norm_content_adjudication_v1.py": "6bf7d050d92107efe78ba9b3f7977ac1e51f99e9218f245d2700177612b099dd"
+  },
+  "resolved_software_gaps": [
+    "Error diagnostics on stderr could be ignored beside a clean bound stdout dependency report; plain zero-exit errors were also missed.",
+    "An output-framing BOM could hide the same stderr JSON/plain error from classification.",
+    "An unchanged accepted receipt from the old stderr-blind verifier survived current proof-cache build, JSON reopening and exact-context reuse.",
+    "Independently reviewed V2/V3 TRAIN and holdout contexts could share declared legal source identity under different views/revisions/instrument contexts and still reach the producer callback."
+  ],
+  "current_verifier_contract": {
+    "constant": "LEAN_KERNEL_VERIFICATION_PROFILE",
+    "profile": "lean-kernel-verification/v1",
+    "toolchain_metadata_key": "verification_profile",
+    "wire_receipt_schema": "lean-kernel-receipt/v3",
+    "cache_record_schema": "legal-proof-record/v2",
+    "context_schema": "legal-proof-context/v1",
+    "fresh_trusted_backend_marks_profile": true,
+    "from_dict_infers_or_upgrades_missing_profile": false,
+    "accepted_receipt_requires_current_profile": true,
+    "cache_checks_selected_module_profile_before_parser": true,
+    "cache_checks_parsed_receipt_and_complete_expected_context": true,
+    "both_output_streams_checked_for_errors": true,
+    "single_stdout_only_bound_dependency_report_required": true,
+    "one_optional_output_framing_BOM_supported": true,
+    "source_bytes_normalized": false,
+    "diagnostics_are_elaborated_dependency_evidence": false,
+    "marker_is_native_process_authentication_or_execution_grant": false,
+    "old_unmarked_accepted_v3_receipts": "Preserved archival bytes; current proof reuse refuses. Fresh verification is required, never a metadata-only upgrade."
+  },
+  "current_source_group_contract": {
+    "source_identity_fields": [
+      "source_id",
+      "release_id",
+      "edition",
+      "provision_id"
+    ],
+    "view_commitment_field": "source_extracted_sha256",
+    "derived_from_current_reviewed_declaration": true,
+    "collision_key_includes_artifact_revision_or_governing_context_or_view": false,
+    "missing_or_malformed_identity_fails_closed": true,
+    "existing_dependency_raw_CID_provision_near_duplicate_and_split_guards_retained": true,
+    "different_declared_source_aliases_automatically_resolved": false,
+    "new_splitter_importer_queue_or_numerical_kernel": false
+  },
+  "kernel_and_cache_qualification": {
+    "whole_kernel_owning_passed": 331,
+    "whole_cache_owning_passed": 139,
+    "actual_counts": {
+      "tests": 473,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 3
+    },
+    "native_skipped_cases": [
+      "test_lean_native_v2_expected_type_and_dependency_policy",
+      "test_lean_native_v3_proof_cache_round_trip_and_exact_reuse_context",
+      "test_lean_native_quoted_identifier_preserves_expected_goal"
+    ],
+    "junit_seconds": 9.682,
+    "Source_closed": true,
+    "unchanged_old_kernel_and_complete_bound_cache_record_refused": true,
+    "fresh_current_backend_positive": "Actual canonical backend class with function executor and trusted fictional identity; exact cache wire/reuse passes.",
+    "mock_executor_calls": 2,
+    "real_native_processes": 0,
+    "old_witness_and_receipt_bytes_rewritten": false,
+    "private_focused_and_whole_qualifications_overlap_not_additional_counts": true
+  },
+  "source_fixture_and_heldout_qualification": {
+    "whole_reviewed_V2_admission_owning_cases": 263,
+    "whole_reviewed_V3_admission_owning_cases": 25,
+    "selected_heldout_evaluation_cases": 41,
+    "new_source_group_cases": 30,
+    "actual_counts": {
+      "tests": 329,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "junit_seconds": 138.682,
+    "Source_closed": true,
+    "all_eight_changed_source_hashes_unchanged": true,
+    "public_test_dependency": "Exact shared source_bindings hook is adopted with its complete owning-file qualification; no hidden unpublished fixture requirement.",
+    "actual_callback_control_scope": "Ordinary Python producer callbacks over fictional signed admissions; no neural producer or native proof."
+  },
+  "total_fresh_passed": 799,
+  "native_opt_in_skipped": 3,
+  "failures": 0,
+  "errors": 0,
+  "historical_attempts": [
+    {
+      "description": "Current output validator accepted exact clean report plus stderr error; authored contradictory zero-exit ToolRunResult only, not a native Lean false-theorem result.",
+      "receipt": {
+        "name": "result-v01.json",
+        "sha256": "c6d6c76c434513645ae7ff94d052aa0c4aeecd6de6e8278af0f4f01c96bdaacf"
+      }
+    },
+    {
+      "description": "Complete retained-old-backend/current-cache replay and BOM errors reproduced in real software classes with function executor and fictional identity. No compiler or model.",
+      "receipt": {
+        "name": "result-v01.json",
+        "sha256": "7200eb2e4ba4b8f947e612ed817854a5b0f020d01f4b0169857356a5e3edb35f"
+      }
+    },
+    {
+      "description": "V2/V3 source-group baseline:4 controls passed,2 adversarial cases failed after actual producer dispatch.",
+      "receipt": {
+        "name": "current-source-reproducer-result.json",
+        "sha256": "8b540666f8d7af1c03c829c927e0b2de250f0e2c29846ad099ce9ac7d327e19b"
+      }
+    },
+    {
+      "description": "First source-group private qualification:15 failures and26 errors caused by test-fixture package import harness; no product qualification. Corrected private and fresh canonical41 are separate records.",
+      "receipt": {
+        "name": "private-source-group-focused-result.json",
+        "sha256": "5ca380af1c6483af1ecf8a33f0dfc93b88c3775f9b94bb3b822efcdee56bb620"
+      }
+    }
+  ],
+  "evidence_receipts": [
+    {
+      "name": "canonical-four-path-result-v01.json",
+      "sha256": "0b4ef3c3ce890f3a8d734006ca4283c0f88ac12b69b84b15591ca0a1ede3522f"
+    },
+    {
+      "name": "canonical-four-path-v01.xml",
+      "sha256": "1f33af927a5706daf8799b73b1ffb270cc9434fe0f5ebed661818a1efc15812a"
+    },
+    {
+      "name": "canonical-source-fixture-and-heldout-result.json",
+      "sha256": "934f22a7ad209946fad924714bdb380e3ffe6e97feaab1947e96d4d9ac2f3fd8"
+    },
+    {
+      "name": "canonical-source-fixture-and-heldout-junit.xml",
+      "sha256": "71757ab3896d107869cded3abe588f156cb8f4b64b2ccc31944b666487e389a7"
+    },
+    {
+      "name": "canonical-source-group-focused-result.json",
+      "sha256": "3ce34083cef506e04670a13accdfead09fd5ea14007aead364bba60641355322"
+    },
+    {
+      "name": "private-source-read-wait-failure-v01.json",
+      "sha256": "b654fb0f14533309220e364f15053c93aedab85892cb7c04dd648c8214f42d3d"
+    }
+  ],
+  "remaining": {
+    "current_native_Lean_verification": false,
+    "neural_fit_restore_or_quality_qualification": false,
+    "real_Title10_meaning_definition_two_distinct_use_review": false,
+    "real_statutory_gold_admitted": 0,
+    "real_statutory_corpus_admitted": 0,
+    "V4_multi_component_context_route": "Private implementation/testing and preservation branch only; not adopted by this publication.",
+    "private_archives_and_model_checkpoints": "On hold; not published or moved.",
+    "hosted_CI": "Not qualified by source tests or ordinary pushes."
+  },
+  "preserved_invariants": {
+    "backlog_task_ids_and_statuses": 24,
+    "historical_sources_checkpoints_receipts_and_failures_preserved": true,
+    "budgets_reset_or_permissions_broadened": false,
+    "unreviewed_outputs_promoted_to_gold": false
+  },
+  "next_smallest_existing_task": {
+    "task_id": "LIR-20",
+    "action": "Complete and independently qualify the explicit V4 multi-component rich-context/evaluator route over current V3 endpoint consumers, preserving source exclusions, full definitions, combined bounds and separate live policy."
+  }
+}
