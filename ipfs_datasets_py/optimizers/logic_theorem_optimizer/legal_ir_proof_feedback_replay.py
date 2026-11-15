@@ -41,7 +41,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Callable, Iterable, Iterator, Mapping, Optional, Protocol, Sequence
 
-from ipfs_datasets_py.logic.integration.reasoning.hammer import HammerGoal
+from ipfs_datasets_py.logic.integration.reasoning.hammer import HammerGoal, _strict_proof_bool
 from ipfs_datasets_py.logic.integration.reasoning.legal_ir_hammer_translation import (
     reconstruction_receipt_from_hammer_result,
 )
@@ -890,6 +890,16 @@ class ReplayExecutorResult:
     schema_version: str = LEGAL_IR_HISTORICAL_HAMMER_EXECUTION_RESULT_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
+        # Authority flags are attestations, not truthiness switches. Keep the
+        # same exact-boolean contract as the existing Hammer/feedback owners.
+        for name in (
+            "backend_proved", "proof_checked", "trusted", "draft",
+            "reconstruction_attempted", "reconstruction_verified",
+        ):
+            try:
+                _strict_proof_bool(getattr(self, name), name)
+            except ValueError as error:
+                raise HistoricalHammerExecutionError(str(error)) from error
         for name in (
             "status",
             "compiler_schema_version",
@@ -913,26 +923,29 @@ class ReplayExecutorResult:
                 )
 
     def to_cache_dict(self) -> dict[str, Any]:
+        # Recheck before persistence: even a mutated frozen result must not
+        # turn a malformed flag into a true cached attestation.
+        self.__post_init__()
         return {
             "backend": self.backend,
-            "backend_proved": bool(self.backend_proved),
+            "backend_proved": self.backend_proved,
             "checker": self.checker,
             "compiler_schema_version": self.compiler_schema_version,
-            "draft": bool(self.draft),
+            "draft": self.draft,
             "execution_fingerprint": self.execution_fingerprint,
             "obligation_content_address": self.obligation_content_address,
-            "proof_checked": bool(self.proof_checked),
+            "proof_checked": self.proof_checked,
             "proof_receipt_id": self.proof_receipt_id,
-            "reconstruction_attempted": bool(self.reconstruction_attempted),
+            "reconstruction_attempted": self.reconstruction_attempted,
             "reconstruction_receipt_id": self.reconstruction_receipt_id,
             "reconstruction_status": self.reconstruction_status,
-            "reconstruction_verified": bool(self.reconstruction_verified),
+            "reconstruction_verified": self.reconstruction_verified,
             "schema_version": self.schema_version,
             "selected_premise_families": list(self.selected_premise_families),
             "status": self.status,
             "translation_status": self.translation_status,
             "trust_root_id": self.trust_root_id,
-            "trusted": bool(self.trusted),
+            "trusted": self.trusted,
             "versions_fingerprint": self.versions_fingerprint,
         }
 
@@ -1008,30 +1021,24 @@ class ReplayExecutorResult:
             backend=_safe_identifier(
                 first(value.get("backend"), receipt.get("backend"), default="unknown")
             ),
-            backend_proved=bool(
-                first(
+            backend_proved=first(
                     value.get("backend_proved"),
                     receipt.get("backend_proved"),
                     proof.get("proved"),
                     default=False,
-                )
-            ),
-            proof_checked=bool(
-                first(
+                ),
+            proof_checked=first(
                     value.get("proof_checked"),
                     proof.get("proof_checked"),
                     proof.get("verified"),
                     default=False,
-                )
-            ),
-            trusted=bool(first(value.get("trusted"), receipt.get("trusted"), default=False)),
-            draft=bool(
-                first(
+                ),
+            trusted=first(value.get("trusted"), receipt.get("trusted"), default=False),
+            draft=first(
                     value.get("draft"),
                     proof.get("draft"),
                     default=status in _DRAFT_STATUSES,
-                )
-            ),
+                ),
             proof_receipt_id=_safe_identifier(
                 first(
                     value.get("proof_receipt_id"),
@@ -1048,22 +1055,18 @@ class ReplayExecutorResult:
                 ),
                 fallback="",
             ),
-            reconstruction_attempted=bool(
-                first(
+            reconstruction_attempted=first(
                     value.get("reconstruction_attempted"),
                     receipt.get("native_reconstruction"),
                     reconstruction.get("attempted"),
                     default=False,
-                )
-            ),
-            reconstruction_verified=bool(
-                first(
+                ),
+            reconstruction_verified=first(
                     value.get("reconstruction_verified"),
                     receipt.get("native_reconstruction_verified"),
                     reconstruction.get("verified"),
                     default=False,
-                )
-            ),
+                ),
             reconstruction_status=reconstruction_status,
             checker=checker,
             trust_root_id=_safe_identifier(
