@@ -21118,6 +21118,18 @@
         "LIR-14"
       ],
       "id": "LIR-23",
+      "supervisor_audited_parent_receipts_20261115": {
+        "evidence_id": "supervisor-audited-parent-receipts-20261115",
+        "source_only_passes": 93,
+        "new_cases": 22,
+        "default_result_schema": "supervisor-reviewed-source-evaluation-result/v1",
+        "audited_result_schema": "supervisor-reviewed-source-evaluation-result/v2",
+        "trusted_runtime_only": true,
+        "sidecars_recomputed_and_reauthenticated": true,
+        "physical_supervisor_integration_qualified": false,
+        "current_model_or_resource_profile_approved": false,
+        "task_completion_release_or_legal_authority": false
+      },
       "trusted_parent_candidate_syntax_20261114": {
         "evidence_id": "trusted-original-parent-complete-candidate-audit-20261114",
         "source_only_passes": 233,

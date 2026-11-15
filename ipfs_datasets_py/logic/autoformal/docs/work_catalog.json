@@ -8925,11 +8925,24 @@
       ],
       "compatibility_dependency": false,
       "evidence_ids": [
+        "supervisor-audited-parent-receipts-20261115",
         "reviewed-output-binding-canonical-20261111",
         "reviewed-source-only-cli-v3-canonical30-20261111",
         "legal-autoformal-ci-parent-two-shards-source-20261111"
       ],
       "id": "reviewed-supervisor-dispatch",
+      "supervisor_audited_parent_receipts_20261115": {
+        "evidence_id": "supervisor-audited-parent-receipts-20261115",
+        "source_only_passes": 93,
+        "new_cases": 22,
+        "default_result_schema": "supervisor-reviewed-source-evaluation-result/v1",
+        "audited_result_schema": "supervisor-reviewed-source-evaluation-result/v2",
+        "trusted_runtime_only": true,
+        "sidecars_recomputed_and_reauthenticated": true,
+        "physical_supervisor_integration_qualified": false,
+        "current_model_or_resource_profile_approved": false,
+        "task_completion_release_or_legal_authority": false
+      },
       "notes": "Existing supervisor owner binds evaluator requests and rechecks child/parent receipts and outputs after Source callbacks.",
       "owner_module": "ipfs_datasets_py.logic.autoformal.supervisor_dispatch",
       "ownership_role": "existing_single_owner",
@@ -9343,6 +9356,15 @@
   "schema": "legal-autoformal-work-catalog/v1",
   "scope": "Curated current ownership/navigation with attributed saved evidence. Observations are snapshots, not future source-hash requirements or proof admission.",
   "selected_evidence": [
+    {
+      "id": "supervisor-audited-parent-receipts-20261115",
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-supervisor-parent-audit-qualification-v01/qualification-summary.json",
+      "root": "ipfs_datasets",
+      "observed_bytes": 5058,
+      "observed_sha256": "22e328e19c92ec8abf5b84ca34ac36c61885ea7c10ceb54e9c7e460c29c14c0b",
+      "status": "qualified_within_recorded_scope",
+      "scope": "93 source-only software passes/22 new cases; trusted parent audit receipt validation, exact descriptor/source joins, recomputation and final callback controls. Simulated adapter flows only; no physical owner/model/resource/native/legal qualification."
+    },
     {
       "id": "trusted-original-parent-complete-candidate-audit-20261114",
       "path": "workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-parent-candidate-audit-qualification-v01/qualification-summary.json",
