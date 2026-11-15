@@ -10381,3 +10381,101 @@ def test_failed_retained_v5_never_renews_or_borrows_a_deadline(private_control, 
     module, terminal, raw, caller, _ = _failed_retained_binding_fixture(private_control)
     _assert_failed_retained_unknown_without_write(module, terminal, raw, caller, private_control,
         time.monotonic()+remaining)
+
+
+# Fictional SDK-open producer DATA only. The actual failed v5 job and its
+# abnormal keeper closeout remain historical UNKNOWN, with storage retained.
+# These controls create no genuine Popen/Source/Native or cleanup authority.
+def _closed_pre_child_v5_postgrant_ledger_lock_fixture(control):
+    module, terminal, raw, caller, attempt = _closed_pre_child_v5_deadline_fixture(control)
+    # Establish that the inherited original v5 deadline fixture is valid
+    # BEFORE changing the exact failure pair to the unimplemented lock profile.
+    module._no_child_native_closed_profile_v5(terminal, raw, **caller)
+    assert module.inspect_owned_validation_no_child_native_closed_v5(terminal, raw, **caller) == dict(
+        verdict='proven_original_no_child_native_closed', source_custody_closed=True,
+        storage_release_authorized=False)
+    terminal['failure'].update(error_type='DaemonResourceError',
+        error='disk ledger lock unavailable', elapsed_seconds=1.0)
+    return module, terminal, raw, caller, attempt
+
+
+def test_pre_child_v5_postgrant_ledger_lock_current_inspection_is_read_only(private_control, monkeypatch):
+    module, terminal, raw, caller, attempt = _closed_pre_child_v5_postgrant_ledger_lock_fixture(private_control)
+    request = json.loads(raw)
+    assert request['schema'] == 'owned-validation-request/v5'
+    assert hashlib.sha256(raw).hexdigest() == caller['expected_request_sha256']
+    assert all(record['request_sha256'] == caller['expected_request_sha256'] for record in (
+        terminal, terminal['failure'], terminal['source_custody_lifecycle'],
+        terminal['reservation']['ordinary_scratch_profile']))
+    row = terminal['reservation']['record']
+    assert len(row) == 17 and 'owner_birth' not in row and 'validation_request_sha256' not in row
+    assert row['status'] == 'retained' and row['retention_reason'] == 'context_failed'
+    assert row['child'] is None and row['prior_children'] == [] and row['artifacts_durable_asserted'] is False
+    assert _json(private_control['ledger'])['reservations'][row['reservation_id']] == row
+    assert 0 < terminal['failure']['elapsed_seconds'] < request['timeout_seconds']
+    assert terminal['failure']['process_observation'] == terminal['reservation']['process_observation']
+    assert terminal['failure']['process_observation']['observed_identities'] == []
+    assert not any(terminal['source_custody_lifecycle']['events'][key] for key in (
+        'owner_open_returned', 'child_launch_attempted', 'child_created',
+        'barrier_release_attempted', 'barrier_released'))
+    assert next(attempt.iterdir(), None) is None
+    before = private_control['ledger'].read_bytes(), private_control['scheduler'].state_path.read_bytes()
+    original = raw, deepcopy(terminal)
+    def forbidden(*args, **kwargs):
+        raise AssertionError('inspection cannot acquire, persist, inventory or release storage')
+    monkeypatch.setattr(native.GlobalResourceScheduler, 'acquire', forbidden)
+    monkeypatch.setattr(existing._PinnedGlobalResourceScheduler, '_persist_locked_state', forbidden)
+    monkeypatch.setattr(native_disk.DaemonResourceReservation, '_write', forbidden)
+    monkeypatch.setattr(native_disk.DaemonResourceReservation, '_account', forbidden)
+    # Neither the general no-grant gate nor a v1 inspector can accept v5 DATA.
+    assert module.classify_owned_validation_source_custody(terminal, raw, **caller) == _live_no_child_unknown()
+    _assert_closed_pre_child_unknown(module, terminal, raw, caller)
+    # Expected current RED: this existing v5 API returns UNKNOWN because the
+    # acquired/no-child ledger-lock error pair is not an admitted v5 profile.
+    assert module.inspect_owned_validation_no_child_native_closed_v5(terminal, raw, **caller) == dict(
+        verdict='proven_original_no_child_native_closed', source_custody_closed=True,
+        storage_release_authorized=False)
+    assert (private_control['ledger'].read_bytes(), private_control['scheduler'].state_path.read_bytes()) == before
+    assert (raw, terminal) == original and next(attempt.iterdir(), None) is None
+    assert _json(private_control['ledger'])['reservations'][row['reservation_id']]['status'] == 'retained'
+
+
+@pytest.mark.parametrize('boundary', ['zero', 'negative', 'equal-timeout', 'over-timeout', 'bool', 'nan', 'inf'])
+def test_pre_child_v5_postgrant_ledger_lock_rejects_elapsed_boundaries(private_control, boundary):
+    module, terminal, raw, caller, _ = _closed_pre_child_v5_postgrant_ledger_lock_fixture(private_control)
+    timeout = json.loads(raw)['timeout_seconds']
+    terminal['failure']['elapsed_seconds'] = {'zero': 0, 'negative': -1,
+        'equal-timeout': timeout, 'over-timeout': timeout + 1, 'bool': True,
+        'nan': float('nan'), 'inf': float('inf')}[boundary]
+    _assert_closed_pre_child_v5_unknown(module, terminal, raw, caller)
+
+
+@pytest.mark.parametrize('fault', ['wrong-error-type', 'wrong-error-text', 'scratch-request',
+    'child-created', 'owner-open-returned', 'native-unreleased', 'native-uncancelled', 'producer-pin'])
+def test_pre_child_v5_postgrant_ledger_lock_rejects_crossed_bindings(private_control, fault):
+    module, terminal, raw, caller, _ = _closed_pre_child_v5_postgrant_ledger_lock_fixture(private_control)
+    path, replacement = {
+        'wrong-error-type': ('failure.error_type', 'ResourceAdmissionDeadlineError'),
+        'wrong-error-text': ('failure.error', 'original absolute resource operation deadline expired'),
+        'scratch-request': ('reservation.ordinary_scratch_profile.request_sha256', '0' * 64),
+        'child-created': ('source_custody_lifecycle.events.child_created', True),
+        'owner-open-returned': ('source_custody_lifecycle.events.owner_open_returned', True),
+        'native-unreleased': ('reservation.resource_lease.released', False),
+        'native-uncancelled': ('reservation.resource_lease.cancelled', False),
+        'producer-pin': ('source_custody_lifecycle.producer.sha256', '0' * 64)}[fault]
+    target = terminal
+    fields = path.split('.')
+    for key in fields[:-1]: target = target[key]
+    target[fields[-1]] = replacement
+    _assert_closed_pre_child_v5_unknown(module, terminal, raw, caller)
+
+
+@pytest.mark.parametrize('fault', ['source_drift', 'row_drift', 'owner_present',
+    'native_root', 'native_waiter', 'expired_deadline'])
+def test_pre_child_v5_postgrant_ledger_lock_rechecks_current_custody(private_control, monkeypatch, fault):
+    # Reuse the existing v1/v5 adversarial inspector harness. The inherited
+    # original deadline-fixture alias prevents a recursive fixture substitution.
+    with monkeypatch.context() as patch:
+        patch.setitem(globals(), '_closed_pre_child_fixture', _closed_pre_child_v5_postgrant_ledger_lock_fixture)
+        patch.setitem(globals(), '_assert_closed_pre_child_unknown', _assert_closed_pre_child_v5_unknown)
+        test_pre_child_closed_native_inspection_rechecks_current_custody(private_control, patch, fault)

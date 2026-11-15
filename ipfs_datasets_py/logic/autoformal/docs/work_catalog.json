@@ -7835,6 +7835,21 @@
         "separate_recovery_cases": 54,
         "separate_watcher_cases": 49,
         "single_combined_rerun": false
+      },
+      "v5_postgrant_ledger_lock_software_20261115": {
+        "Main_cases": 26,
+        "Main_software_qualified": true,
+        "capsule": {
+          "observed_bytes": 11393,
+          "observed_sha256": "b82d59cbf6b73bd3416901217ba55ea7f70e89a95572367bb9dbf94a0e23329b",
+          "path": "docs/autoformalization/evidence/legal-ir-v5-postgrant-ledger-lock-software-20261115.json",
+          "root": "datasets_repository"
+        },
+        "generic_parent_or_live_cleanup_qualified": false,
+        "model_legal_Lean_corpus_credit": false,
+        "new_cases": 22,
+        "old_failed_claims_released": false,
+        "retained_cases": 4
       }
     },
     {
@@ -9433,7 +9448,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-11-15T03:00:19.396084+00:00",
+  "last_updated_at_utc": "2026-11-15T05:09:52.432861+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -9478,10 +9493,10 @@
     {
       "id": "v4-public-tokenizer-complete-context-refusal-20261115",
       "path": "docs/autoformalization/evidence/legal-ir-v4-public-tokenizer-context-refusal-20261115.json",
-      "root": "datasets_repository",
       "required_for_catalog_check": true,
-      "status": "recorded_original_capacity_failure_unqualified",
-      "scope": "Original12754 EXIT1: one failed case/34.68s; complete4096 context refusal before backend, no exact overflow count. Source/Native validation/process closed;16MiB retained. Five-source V4 preserved/unqualified; no retry/model/gold/nativeLean/corpus credit."
+      "root": "datasets_repository",
+      "scope": "Original12754 EXIT1: one failed case/34.68s; complete4096 context refusal before backend, no exact overflow count. Source/Native validation/process closed;16MiB retained. Five-source V4 preserved/unqualified; no retry/model/gold/nativeLean/corpus credit.",
+      "status": "recorded_original_capacity_failure_unqualified"
     },
     {
       "id": "live-context-policy-exit-and-output-capture-20261115",
@@ -12524,7 +12539,22 @@
       "required_for_catalog_check": true,
       "root": "datasets_repository",
       "scope": "67 selected fictional-fixture controls on CLI8a5/test178e; 204 unchanged pins and original Source/native/process/durable 2 MiB custody closed. Strict new v1 Source-disposition API only; no storage authority, historical e689 acceptance, physical failure-path qualification, model/Lean or task-completion credit. Separate fresh132 strict lock-profile/old-contract regression,126 capturedpins and originalclosedcustody/durable16MiB; physical coverage remains the old deadline case. P5zero-test/admin and wrongcollection histories retained.",
-      "status": "focused_tests_qualified"
+      "status": "focused_tests_qualified",
+      "v5_postgrant_ledger_lock_software_20261115": {
+        "Main_cases": 26,
+        "Main_software_qualified": true,
+        "capsule": {
+          "observed_bytes": 11393,
+          "observed_sha256": "b82d59cbf6b73bd3416901217ba55ea7f70e89a95572367bb9dbf94a0e23329b",
+          "path": "docs/autoformalization/evidence/legal-ir-v5-postgrant-ledger-lock-software-20261115.json",
+          "root": "datasets_repository"
+        },
+        "generic_parent_or_live_cleanup_qualified": false,
+        "model_legal_Lean_corpus_credit": false,
+        "new_cases": 22,
+        "old_failed_claims_released": false,
+        "retained_cases": 4
+      }
     },
     {
       "id": "reviewed-retrieval-full-current-worktree-qualification-20261109",
@@ -15040,6 +15070,36 @@
       "root": "datasets_repository",
       "scope": "Fresh current3R source batch; exact13functions/56 software cases in explicit198 source frontier with original Source/Native/process closure. No all-import/old155/Native Lean/realUSCode/model/corpus transfer.",
       "status": "qualified_current_selected_R56_source_only_software_controls"
+    },
+    {
+      "id": "legal-ir-native-owner-import-scope-G14-qualified-20261115-v01",
+      "observed_bytes": 20881,
+      "observed_sha256": "8ebd2d70a1f68c2c0202b44860d7695d9a336f21bbb06f88d97295378a0ca21e",
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-native-owner-import-scope-G14-qualified-20261115-v01/qualification-summary.json",
+      "required_for_catalog_check": false,
+      "root": "datasets_repository",
+      "scope": "Exact2A literal-constant fix, audited Source2 and fresh14 selected legacy-constructor software controls; prior2setupErrors retained, noCLI4/nativeobserver/physicalR/model/legal/runtime credit.",
+      "status": "qualified_selected_G14_scope_literal_software_controls_only"
+    },
+    {
+      "id": "legal-ir-current-native-cache-20261115",
+      "observed_bytes": 8912,
+      "observed_sha256": "d922ff8f84ee8cacc9c3e4b9b1d3a9b976d1aa8354ba063a40726b0db2c72b70",
+      "path": "docs/autoformalization/evidence/legal-ir-current-native-cache-20261115.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Fresh actual11localLean commands:4versions/7compilations;6expected kernel scenarios with deliberate wrong-goal exit1; current verifierprofilev1; exact disk reopen/reuse and3artifact+6context refusals with0additionalNative. Zero pytest or statutory/model/corpus credit; original custodyclosed and own16MiB durablyreleased. Hostedjob neverstarted.",
+      "status": "qualified_current_local_native_engineering_controls_only"
+    },
+    {
+      "id": "legal-ir-v4-complete-context-census-20261115",
+      "observed_bytes": 12573,
+      "observed_sha256": "7b92c55bf8fe5bfaa6abf488532db250cbb4701c803eb092f5a932bf2d9110be",
+      "path": "docs/autoformalization/evidence/legal-ir-v4-complete-context-census-20261115.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Onepassed count-only diagnostic;3queries×3transports=9measurements,0codec refusals and2plain-context byte refusals; complete sharedv2context4598/4598/2952 vs4096 and fullsource4869/4870/3229 vs65536. Fresh6b5apipeline (no inheritedhistoricalv04 or savedc68 qualification), fullroundtrip/no truncation or backend/model calls; own16MiB released, priorfailed16MiB retained. Separate unqualifiedV3source-preservation d95427c9/3files495504B is notMain or tokenfit. No factory/model/legal/corpus claim.",
+      "status": "qualified_complete_input_count_diagnostic_capacity_refusals_preserved"
     }
   ]
 }

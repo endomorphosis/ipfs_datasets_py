@@ -4,6 +4,236 @@ from ipfs_datasets_py.logic.autoformal import training_cycle_inputs as inputs
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_training_worker as worker
 
 
+def test_keylayout_context_preserves_exact_types_order_empty_layouts_and_detached_values():
+    shared = {"roles": ["actor", "recipient"], "values": [1, 1.0, True, False, None, -0.0],
+              "source": "Café e\u0301", "empty": {}}
+    value = {"a": shared, "b": shared, "ordered": ["must", "may", "forbidden"]}
+    before = inputs._reviewed_wire(value)
+    packed = inputs.pack_reviewed_context_json_v3(value)
+    assert packed["schema"] == inputs.REVIEWED_SHARED_CONTEXT_JSON_SCHEMA_V3
+    assert packed == inputs.pack_reviewed_context_json_v3(value)
+    restored = inputs.unpack_reviewed_context_json_v3(packed)
+    assert inputs._reviewed_wire(restored) == before
+    assert restored["a"] is not restored["b"]
+    restored["a"]["roles"][0] = "changed"
+    assert restored["b"]["roles"][0] == "actor"
+    assert inputs._reviewed_wire(value) == before
+
+
+@pytest.mark.parametrize("value", [None, True, 1, 1.0, -0.0, "é", [], {}])
+def test_keylayout_context_accepts_scalar_array_and_empty_object_roots(value):
+    packed = inputs.pack_reviewed_context_json_v3(value)
+    assert inputs._reviewed_wire(inputs.unpack_reviewed_context_json_v3(packed)) == inputs._reviewed_wire(value)
+
+
+def test_keylayout_context_matches_independent_literal_first_use_layout_order():
+    expected = dict(schema="reviewed-lossless-shared-context/v3", layouts=[[1], [5], [0, 4]],
+        nodes=["a", "x", 1, [0, 0, 2], "b", "y", 2, [0, 1, 6], [0, 2, 3, 7]], root=8)
+    value = {"a": {"x": 1}, "b": {"y": 2}}
+    assert inputs._reviewed_wire(inputs.pack_reviewed_context_json_v3(value)) == inputs._reviewed_wire(expected)
+    assert inputs._reviewed_wire(inputs.unpack_reviewed_context_json_v3(expected)) == inputs._reviewed_wire(value)
+
+
+def test_keylayout_context_rejects_semantically_identical_remapped_layout_permutation():
+    value = {"a": {"x": 1}, "b": {"y": 2}}
+    packed = inputs.pack_reviewed_context_json_v3(value)
+    packed["layouts"].reverse()
+    count = len(packed["layouts"])
+    reconstructed = []
+    for node in packed["nodes"]:
+        if type(node) is list and node[0] == 0:
+            node[1] = count-1-node[1]
+            keys = packed["layouts"][node[1]]
+            reconstructed.append([0, *[ref for pair in zip(keys, node[2:], strict=True) for ref in pair]])
+        else:
+            reconstructed.append(node)
+    v2 = dict(schema=inputs.REVIEWED_SHARED_CONTEXT_JSON_SCHEMA_V2,
+              nodes=reconstructed, root=packed["root"])
+    assert inputs._reviewed_wire(inputs.unpack_reviewed_context_json_v2(v2)) == inputs._reviewed_wire(value)
+    with pytest.raises(ValueError, match="canonical reachable"):
+        inputs.unpack_reviewed_context_json_v3(packed)
+
+
+@pytest.mark.parametrize("damage", ["boolean-tag", "float-tag", "unknown-tag", "boolean-layout",
+    "negative-layout", "unknown-layout", "missing-layout", "wrong-arity", "boolean-key",
+    "non-string-key", "repeated-key", "reversed-keys", "unreachable-layout", "duplicate-layout",
+    "boolean-value-reference", "cycle", "boolean-root", "extra-field"])
+def test_keylayout_context_rejects_noncanonical_layout_and_reference_tables(damage):
+    import copy
+    packed = copy.deepcopy(inputs.pack_reviewed_context_json_v3({"a": "a", "b": ["a"]}))
+    root = packed["root"]; node = packed["nodes"][root]; layout = packed["layouts"][node[1]]
+    if damage == "boolean-tag": node[0] = False
+    elif damage == "float-tag": node[0] = 0.0
+    elif damage == "unknown-tag": node[0] = 2
+    elif damage == "boolean-layout": node[1] = True
+    elif damage == "negative-layout": node[1] = -1
+    elif damage == "unknown-layout": node[1] = len(packed["layouts"])
+    elif damage == "missing-layout": packed["layouts"] = []
+    elif damage == "wrong-arity": node.append(0)
+    elif damage == "boolean-key": layout[0] = False
+    elif damage == "non-string-key": layout[0] = root
+    elif damage == "repeated-key": layout[1] = layout[0]
+    elif damage == "reversed-keys": layout.reverse()
+    elif damage == "unreachable-layout": packed["layouts"].append([])
+    elif damage == "duplicate-layout": packed["layouts"].append(list(layout))
+    elif damage == "boolean-value-reference": node[2] = True
+    elif damage == "cycle": node[2] = root
+    elif damage == "boolean-root": packed["root"] = False
+    else: packed["extra"] = True
+    with pytest.raises(ValueError): inputs.unpack_reviewed_context_json_v3(packed)
+
+
+def test_keylayout_context_preserves_array_scalar_node_ids_and_both_wire_bounds():
+    value = [{"actor": "clerk", "recipient": "agency", "sequence": [i, None]} for i in range(20)]
+    old = inputs.pack_reviewed_context_json_v2(value)
+    new = inputs.pack_reviewed_context_json_v3(value)
+    assert new["root"] == old["root"] and len(new["nodes"]) == len(old["nodes"])
+    reconstructed = []
+    for previous, offered in zip(old["nodes"], new["nodes"], strict=True):
+        if type(previous) is list and previous[0] == 0:
+            keys = new["layouts"][offered[1]]
+            rebuilt = [0, *[ref for pair in zip(keys, offered[2:], strict=True) for ref in pair]]
+            assert rebuilt == previous
+            reconstructed.append(rebuilt)
+        else:
+            assert inputs._reviewed_wire(previous) == inputs._reviewed_wire(offered)
+            reconstructed.append(offered)
+    assert inputs._reviewed_wire(dict(schema=inputs.REVIEWED_SHARED_CONTEXT_JSON_SCHEMA_V2,
+        nodes=reconstructed, root=new["root"])) == inputs._reviewed_wire(old)
+    assert len(inputs._reviewed_wire(new)) < len(inputs._reviewed_wire(old)) <= 16384
+
+
+def test_keylayout_context_keeps_every_complete_example_in_all_three_aggregate_queries():
+    from tests.unit.optimizers.logic_theorem_optimizer import test_legal_ir_evaluation_artifacts as fixtures
+    _, options, _ = fixtures._aggregate_v4_heldout_case()
+    assert len(options["rows"]) == 3
+    for query in options["rows"]:
+        context = dict(permitted=[], retrieved=options["retrieved_examples"][query["id"]])
+        before = inputs._reviewed_wire(context)
+        packed = inputs.pack_reviewed_context_json_v3(context)
+        restored = inputs.unpack_reviewed_context_json_v3(packed)
+        assert inputs._reviewed_wire(restored) == before
+        assert len(restored["retrieved"]) == len(context["retrieved"])
+        assert len(inputs._reviewed_wire(packed)) < len(inputs._reviewed_wire(inputs.pack_reviewed_context_json_v2(context)))
+        assert inputs._reviewed_wire(context) == before
+
+
+def test_keylayout_context_rejects_small_v3_with_oversized_reconstructed_v2():
+    value = [{f"key-{j:02}": i if j == 0 else None for j in range(40)} for i in range(120)]
+    graph = inputs._reviewed_shared_context_json_graph(value)
+    layouts, seen, nodes = [], {}, []
+    for original in graph["nodes"]:
+        if type(original) is list and original[0] == "object":
+            keys = tuple(original[1::2])
+            if keys not in seen: seen[keys] = len(layouts); layouts.append(list(keys))
+            nodes.append([0, seen[keys], *original[2::2]])
+        elif type(original) is list: nodes.append([1, *original[1:]])
+        else: nodes.append(original)
+    packed = dict(schema=inputs.REVIEWED_SHARED_CONTEXT_JSON_SCHEMA_V3,
+                  layouts=layouts, nodes=nodes, root=graph["root"])
+    assert len(inputs._reviewed_wire(packed)) <= 16384
+    with pytest.raises(ValueError, match="reconstructed v2"): inputs.unpack_reviewed_context_json_v3(packed)
+    with pytest.raises(ValueError, match="encoded byte bound"): inputs.pack_reviewed_context_json_v3(value)
+
+
+@pytest.mark.parametrize("kind", ["expanded", "depth", "nodes", "layouts", "encoded"])
+def test_keylayout_context_keeps_existing_expansion_depth_population_and_wire_bounds(kind):
+    packed = dict(schema=inputs.REVIEWED_SHARED_CONTEXT_JSON_SCHEMA_V3, layouts=[], nodes=[None], root=0)
+    if kind == "expanded": packed.update(nodes=[None]+[[1, i-1, i-1] for i in range(1, 25)], root=24)
+    elif kind == "depth": packed.update(nodes=[None]+[[1, i-1] for i in range(1, 67)], root=66)
+    elif kind == "nodes": packed.update(nodes=[0]*4097, root=4096)
+    elif kind == "layouts": packed["layouts"] = [[] for _ in range(4097)]
+    else: packed["nodes"] = ["x"*20000]
+    with pytest.raises(ValueError): inputs.unpack_reviewed_context_json_v3(packed)
+
+
+@pytest.mark.parametrize("version", [1, 2])
+def test_keylayout_context_is_explicitly_separate_from_previous_codec_domains(version):
+    old_pack = getattr(inputs, f"pack_reviewed_context_json_v{version}")
+    old_unpack = getattr(inputs, f"unpack_reviewed_context_json_v{version}")
+    with pytest.raises(ValueError): inputs.unpack_reviewed_context_json_v3(old_pack({"a": 1}))
+    with pytest.raises(ValueError): old_unpack(inputs.pack_reviewed_context_json_v3({"a": 1}))
+
+
+@pytest.mark.parametrize("operation", ["pack", "unpack"])
+def test_keylayout_context_closing_fence_rejects_input_type_mutation(monkeypatch, operation):
+    if operation == "pack":
+        value = {"value": 1}; previous = inputs.pack_reviewed_context_json_v2
+        def mutate(offered):
+            result = previous(offered); value["value"] = True; return result
+        monkeypatch.setattr(inputs, "pack_reviewed_context_json_v2", mutate)
+        with pytest.raises(ValueError, match="changed"): inputs.pack_reviewed_context_json_v3(value)
+    else:
+        value = inputs.pack_reviewed_context_json_v3({"value": 1}); previous = inputs.unpack_reviewed_context_json_v2
+        def mutate(offered):
+            result = previous(offered); value["root"] = True; return result
+        monkeypatch.setattr(inputs, "unpack_reviewed_context_json_v2", mutate)
+        with pytest.raises(ValueError, match="changed"): inputs.unpack_reviewed_context_json_v3(value)
+
+
+@pytest.mark.parametrize("damage", [None, "target-field", "query-id", "duplicate-id", "old-profile", "old-codec"])
+def test_keylayout_generation_wire_requires_explicit_profile_and_keeps_expanded_screening(damage):
+    data = dict(permitted=[], retrieved=[dict(id="TRAIN", content=dict(source_text="Complete source", roles=["actor", "recipient"]))])
+    if damage == "target-field": data["retrieved"][0]["content"]["gold_target"] = "forbidden"
+    elif damage == "query-id": data["retrieved"][0]["content"]["roles"].append("heldout-query")
+    elif damage == "duplicate-id": data["permitted"] = list(data["retrieved"])
+    source = _shared_wire_source(data)
+    source["profile"] = worker.REVIEWED_GENERATION_SHARED_CONTEXT_SOURCE_PROFILE_V3
+    source["context"] = inputs.pack_reviewed_context_json_v3(data)
+    if damage == "old-profile": source["profile"] = worker.REVIEWED_GENERATION_SHARED_CONTEXT_SOURCE_PROFILE_V2
+    elif damage == "old-codec": source["context"] = inputs.pack_reviewed_context_json_v2(data)
+    if damage is None:
+        assert worker._reviewed_generation_context_wire(source, {"heldout-query"}) == inputs._reviewed_wire(source["context"]).decode()
+    else:
+        with pytest.raises(worker.TrainingJobValidationError): worker._reviewed_generation_context_wire(source, {"heldout-query"})
+
+
+def test_keylayout_generation_inputs_reject_qwen_budget_optin_before_tokenizer_use():
+    with pytest.raises(ValueError, match="unchanged default context budget"):
+        inputs.prepare_reviewed_decoder_context_generation_inputs([], source_contexts={},
+            expected_source_contexts_sha256="0"*64, expected_context_records_sha256="0"*64,
+            tokenizer=None, max_source_tokens=65536, context_transport="shared_json_v3",
+            context_budget_profile=worker.REVIEWED_QWEN2_CONTEXT_BUDGET_PROFILE)
+
+
+@pytest.mark.parametrize("transport", ["shared_json_v2", "shared_json_v3"])
+@pytest.mark.parametrize("v3_position", [0, 1])
+def test_keylayout_direct_backend_refuses_larger_context_budget_before_native_or_model_access(
+        monkeypatch, transport, v3_position):
+    import builtins
+    calls = []; native_gate = RuntimeError("existing v2 native gate reached")
+    previous_import = builtins.__import__
+    def no_native_import(name, *args, **kwargs):
+        if name.split(".", 1)[0] in {"torch", "transformers", "tokenizers"}:
+            pytest.fail("DATA preflight imported a numerical library")
+        return previous_import(name, *args, **kwargs)
+    monkeypatch.setattr(builtins, "__import__", no_native_import)
+    backend = object.__new__(worker.TorchReviewedDecoderBackend)
+    backend.max_sequence_tokens = 65536
+    def native():
+        calls.append("native"); raise native_gate
+    backend._torch = native
+    data = dict(permitted=[], retrieved=[dict(id="TRAIN", content=dict(source_text="Complete source"))])
+    records = []
+    for position in range(2):
+        version = 3 if transport == "shared_json_v3" and position == v3_position else 2
+        source = _shared_wire_source(data)
+        source["profile"] = getattr(worker, f"REVIEWED_GENERATION_SHARED_CONTEXT_SOURCE_PROFILE_V{version}")
+        source["context"] = getattr(inputs, f"pack_reviewed_context_json_v{version}")(data)
+        records.append(dict(id=f"query-{position}", unit_id=f"unit-{position}",
+            source_wire=inputs._reviewed_wire(source).decode(), source_token_ids=[257, 1, 0]))
+    options = dict(max_output_tokens=4, execution_guard=lambda: calls.append("guard"),
+        conditioning_profile="qwen2-chatml-complete-legal-ir/v1",
+        context_budget_profile=worker.REVIEWED_QWEN2_CONTEXT_BUDGET_PROFILE)
+    if transport == "shared_json_v3":
+        with pytest.raises(worker.TrainingJobValidationError, match="unchanged default context budget"):
+            backend.generate_batch(records, **options)
+        assert calls == ["guard"]
+    else:
+        with pytest.raises(RuntimeError) as caught: backend.generate_batch(records, **options)
+        assert caught.value is native_gate and calls == ["guard", "native"]
+
+
 def _complete_three_example_context_for_sharing():
     from tests.unit.optimizers.logic_theorem_optimizer import test_legal_ir_evaluation_artifacts as fixtures
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_structured_retrieval as structured

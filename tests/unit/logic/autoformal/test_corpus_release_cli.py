@@ -1842,8 +1842,8 @@ def test_prepare_original_parent_v3_same_physical_public_inputs(
     public = {key: unit.reviewed_parent_fixture_tree_decode_v1(value[key])
               for key in ("graph", "admission", "args", "kwargs")}
     for key in public:
-        assert wire.encode_parent_replay_value_v1(public[key], max_bytes=release.MAX_CLOSURE_REQUEST_BYTES) == \
-            wire.encode_parent_replay_value_v1(control[key], max_bytes=release.MAX_CLOSURE_REQUEST_BYTES)
+        assert owners.canonical(unit.reviewed_parent_fixture_tree_encode_v1(public[key])) == \
+            owners.canonical(value[key]) == owners.canonical(unit.reviewed_parent_fixture_tree_encode_v1(control[key]))
     assert value["preparation"]["manifest_json"] == control["preparation"].manifest_json
     assert tuple((name, body) for name, body in value["preparation"]["files"]) == control["preparation"].files
     assert record["expected_graph_sha256"] == control["graph_sha"]

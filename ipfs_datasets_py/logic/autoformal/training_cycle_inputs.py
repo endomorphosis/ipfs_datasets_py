@@ -1972,11 +1972,15 @@ def prepare_reviewed_decoder_context_generation_inputs(source_arguments, *, sour
         "explicit supported context budget profile required")
     context_token_limit = (worker.REVIEWED_QWEN2_CONTEXT_MAX_TOKENS if context_budget_profile is not None
                            else worker.REVIEWED_GENERATION_CONTEXT_MAX_TOKENS)
-    _reviewed_decoder_need(type(context_transport) is str and context_transport in {"plain_json_v1", "shared_json_v1", "shared_json_v2"},
+    _reviewed_decoder_need(type(context_transport) is str and context_transport in {"plain_json_v1", "shared_json_v1", "shared_json_v2", "shared_json_v3"},
         "explicit supported rich context DATA transport required")
-    shared = context_transport in {"shared_json_v1", "shared_json_v2"}
+    _reviewed_decoder_need(context_transport != "shared_json_v3" or context_budget_profile is None,
+        "key-layout DATA requires the unchanged default context budget")
+    shared = context_transport in {"shared_json_v1", "shared_json_v2", "shared_json_v3"}
     shorttag = context_transport == "shared_json_v2"
-    shared_profile = (worker.REVIEWED_GENERATION_SHARED_CONTEXT_SOURCE_PROFILE_V2 if shorttag
+    keylayout = context_transport == "shared_json_v3"
+    shared_profile = (worker.REVIEWED_GENERATION_SHARED_CONTEXT_SOURCE_PROFILE_V3 if keylayout else
+                      worker.REVIEWED_GENERATION_SHARED_CONTEXT_SOURCE_PROFILE_V2 if shorttag
                       else worker.REVIEWED_GENERATION_SHARED_CONTEXT_SOURCE_PROFILE)
     _reviewed_decoder_need(type(expected_context_records_sha256) is str
         and re.fullmatch(r"[0-9a-f]{64}", expected_context_records_sha256) is not None,
@@ -2027,7 +2031,8 @@ def prepare_reviewed_decoder_context_generation_inputs(source_arguments, *, sour
         source = _reviewed_json(original["source_wire"].encode("utf-8"))
         source["profile"] = (shared_profile if shared
                              else worker.REVIEWED_GENERATION_CONTEXT_SOURCE_PROFILE)
-        source["context"] = ((pack_reviewed_context_json_v2(argument["context"]) if shorttag
+        source["context"] = ((pack_reviewed_context_json_v3(argument["context"]) if keylayout else
+                              pack_reviewed_context_json_v2(argument["context"]) if shorttag
                               else pack_reviewed_context_json_v1(argument["context"])) if shared else
             {"profile": worker.REVIEWED_GENERATION_CONTEXT_PROFILE,
              "mode": "rich_full_ast", **argument["context"]})
@@ -2230,4 +2235,86 @@ def unpack_reviewed_context_json_v2(value):
     _reviewed_decoder_need(_reviewed_wire(pack_reviewed_context_json_v2(restored)) == raw,
                            "shorttag table is not the canonical reachable representation")
     _reviewed_decoder_need(_reviewed_wire(value) == raw, "shorttag input changed during unpacking")
+    return restored
+
+
+REVIEWED_SHARED_CONTEXT_JSON_SCHEMA_V3 = "reviewed-lossless-shared-context/v3"
+
+
+def pack_reviewed_context_json_v3(value):
+    """Intern repeated object-key layouts over the unchanged strict v2 graph.
+
+    Scalar/array nodes, node IDs, field values and list order stay unchanged.
+    Both the encoded v3 and reconstructed v2 wires retain the 16-KiB bound.
+    This optional DATA profile grants no context-use or execution authority.
+    """
+    raw = _reviewed_wire(value)
+    graph = pack_reviewed_context_json_v2(value)
+    layouts, indices, nodes = [], {}, []
+    for node in graph["nodes"]:
+        if type(node) is list and node[0] == 0:
+            keys = tuple(node[1::2])
+            if keys not in indices:
+                indices[keys] = len(layouts)
+                layouts.append(list(keys))
+            nodes.append([0, indices[keys], *node[2::2]])
+        else:
+            nodes.append(node)
+    result = {"schema": REVIEWED_SHARED_CONTEXT_JSON_SCHEMA_V3,
+              "layouts": layouts, "nodes": nodes, "root": graph["root"]}
+    _reviewed_decoder_need(len(_reviewed_wire(result)) <= REVIEWED_SHARED_CONTEXT_MAX_WIRE_BYTES,
+                           "key-layout context encoded byte bound exceeded")
+    _reviewed_decoder_need(_reviewed_wire(value) == raw, "key-layout input changed during packing")
+    return result
+
+
+def unpack_reviewed_context_json_v3(value):
+    """Reconstruct exact v2 DATA, then reuse its full bounded validator.
+
+    Layout IDs follow first object occurrence in the existing node order.
+    Re-encoding rejects duplicate, unused, reordered and noncanonical layouts.
+    Expansion is bounded by v2 before materializing the complete JSON tree.
+    """
+    raw = _reviewed_wire(value)
+    _reviewed_decoder_need(len(raw) <= REVIEWED_SHARED_CONTEXT_MAX_WIRE_BYTES,
+                           "key-layout context encoded byte bound exceeded")
+    packed = _reviewed_json(raw)
+    _reviewed_decoder_need(type(packed) is dict
+        and set(packed) == {"schema", "layouts", "nodes", "root"}
+        and packed["schema"] == REVIEWED_SHARED_CONTEXT_JSON_SCHEMA_V3,
+        "closed key-layout context DATA schema required")
+    layouts, offered_nodes = packed["layouts"], packed["nodes"]
+    _reviewed_decoder_need(type(offered_nodes) is list
+        and 1 <= len(offered_nodes) <= REVIEWED_SHARED_CONTEXT_MAX_NODES
+        and type(layouts) is list and len(layouts) <= REVIEWED_SHARED_CONTEXT_MAX_NODES,
+        "bounded key-layout and node populations required")
+    for keys in layouts:
+        _reviewed_decoder_need(type(keys) is list and len(keys) <= REVIEWED_SHARED_CONTEXT_MAX_NODES,
+                               "bounded key-layout reference list required")
+        _reviewed_decoder_need(all(type(key) is int and 0 <= key < len(offered_nodes)
+            and type(offered_nodes[key]) is str for key in keys),
+            "exact key-layout references to string scalars required")
+    nodes = []
+    for node in offered_nodes:
+        if type(node) is list:
+            _reviewed_decoder_need(node and type(node[0]) is int and node[0] in (0, 1),
+                                   "exact integer key-layout container tag required")
+            if node[0] == 0:
+                _reviewed_decoder_need(len(node) >= 2 and type(node[1]) is int
+                    and 0 <= node[1] < len(layouts), "exact in-range key-layout ID required")
+                keys, values = layouts[node[1]], node[2:]
+                _reviewed_decoder_need(len(keys) == len(values), "complete key-layout value arity required")
+                nodes.append([0, *[ref for pair in zip(keys, values, strict=True) for ref in pair]])
+            else:
+                nodes.append(list(node))
+        else:
+            nodes.append(node)
+    graph = {"schema": REVIEWED_SHARED_CONTEXT_JSON_SCHEMA_V2,
+             "nodes": nodes, "root": packed["root"]}
+    _reviewed_decoder_need(len(_reviewed_wire(graph)) <= REVIEWED_SHARED_CONTEXT_MAX_WIRE_BYTES,
+                           "reconstructed v2 context encoded byte bound exceeded")
+    restored = unpack_reviewed_context_json_v2(graph)
+    _reviewed_decoder_need(_reviewed_wire(pack_reviewed_context_json_v3(restored)) == raw,
+                           "key-layout table is not the canonical reachable representation")
+    _reviewed_decoder_need(_reviewed_wire(value) == raw, "key-layout input changed during unpacking")
     return restored

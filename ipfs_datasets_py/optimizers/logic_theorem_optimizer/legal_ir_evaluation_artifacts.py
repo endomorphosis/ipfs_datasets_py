@@ -1471,7 +1471,8 @@ def evaluate_reviewed_source_span_producer_artifact(*, binding, rows, split_mani
         admission_inputs, exposure_records, compiler_commit, input_profile,
         checkpoint_declarations, permitted_context, retrieved_examples, producer,
         allow_heldout_evaluation=False, reviewed_training_context=None, context_policy_guard=None,
-        typed_structure_profile=None, candidate_syntax_profile=None, known_candidate_inputs=None):
+        typed_structure_profile=None, candidate_syntax_profile=None, known_candidate_inputs=None,
+        reviewed_training_context_profile=None):
     """Evaluate one opt-in validation callback against replayed reviewed targets.
 
     Default hparam_selection never relabels heldout/training use. Explicit
@@ -1498,6 +1499,10 @@ def evaluate_reviewed_source_span_producer_artifact(*, binding, rows, split_mani
     outputs remain visible. Known facts never enter producer arguments and are
     never inferred from targets. Equality does not authenticate these declarations
     or establish legal meaning, training eligibility or proof.
+    Explicit reviewed_training_context_profile selects the V4 aggregate context
+    route over complete V3 endpoint components. This does not upgrade the heldout
+    purpose or grant model/context permission: present TRAIN reviews, the exact
+    union population and the existing independent context policy are replayed.
     Stored artifacts are historical observations. Generic cache retrieval does
     not replay current admission: any later eligibility use requires another
     canonical reviewed-consumer validation against current review inputs.
@@ -1573,6 +1578,12 @@ def evaluate_reviewed_source_span_producer_artifact(*, binding, rows, split_mani
     require((rich_heldout and allow_heldout_evaluation and callable(context_policy_guard))
             or (not rich_heldout and context_policy_guard is None),
             "explicit heldout TRAIN context and live context policy required together")
+    aggregate_rich = reviewed_training_context_profile is not None
+    if aggregate_rich:
+        from . import legal_structured_retrieval as structured_context
+        require(type(reviewed_training_context_profile) is str
+                and reviewed_training_context_profile == structured_context.AGGREGATE_CONTEXT_V4_PROFILE
+                and rich_heldout, "explicit supported aggregate reviewed TRAIN context profile required")
     originals = [rows, split_manifest, exposure_records, input_profile,
                  checkpoint_declarations, permitted_context, retrieved_examples]
     frozen = snapshot(originals)
@@ -1661,6 +1672,27 @@ def evaluate_reviewed_source_span_producer_artifact(*, binding, rows, split_mani
         from . import legal_structured_retrieval as structured
 
         inputs = reviewed_training_context
+        if aggregate_rich:
+            require(admission_version == "v3", "V4 aggregate context requires existing V3 heldout endpoint admission")
+            closed(inputs, ("schema", "components", "split_manifest", "query_rows", "retrieval_rows"),
+                   "V4 aggregate TRAIN context inputs")
+            require(snapshot(inputs["query_rows"]) == [{"id": row["id"], "source_text": row["source_text"]}
+                    for row in row_copy] and snapshot(inputs["split_manifest"]) == manifest_copy,
+                    "aggregate TRAIN context must bind exact heldout sources and common manifest")
+            payload = structured.consume_reviewed_contexts_v4(**inputs,
+                expected_query_rows_sha256=structured.reviewed_context_inputs_sha256(inputs["query_rows"]),
+                expected_retrieval_rows_sha256=structured.reviewed_context_inputs_sha256(inputs["retrieval_rows"]),
+                consumer=lambda complete: complete, heldout_evaluation=heldout)
+            require(retrieval == {row["id"]: [{"id": example["id"], "content": example}
+                    for example in row["examples"]] for row in payload["rows"]},
+                    "offered examples differ from complete aggregate TRAIN context")
+            return {"profile": reviewed_training_context_profile,
+                "endpoint_context_profile": heldout["inference_context_profile"],
+                "heldout_dependency_group_sha256": payload["heldout_dependency_group_sha256"],
+                "training_dependency_manifest_sha256": payload["training_dependency_manifest_sha256"],
+                "training_admission_inputs_sha256": payload["training_admission_inputs_sha256"],
+                "context_payload_sha256": structured.reviewed_context_inputs_sha256(payload),
+                "retrieved_example_ids": sorted({record["id"] for records in retrieval.values() for record in records})}
         closed(inputs, ("binding", "training_rows", "split_manifest", "admission_inputs",
                        "exposure_records", "query_rows", "retrieval_rows"), "reviewed TRAIN context inputs")
         require(snapshot(inputs["query_rows"]) == [{"id": row["id"], "source_text": row["source_text"]}
@@ -1783,6 +1815,9 @@ def evaluate_reviewed_source_span_producer_artifact(*, binding, rows, split_mani
     if rich_heldout:
         configuration.update(profile="reviewed-source-span-producer-heldout-rich-TRAIN/v1",
                              rich_training_context=rich_context_receipt)
+    if aggregate_rich:
+        configuration.update(profile="reviewed-source-span-producer-heldout-aggregate-TRAIN/v4",
+                             reviewed_training_context_profile=reviewed_training_context_profile)
     if typed_report is not None:
         configuration["typed_structure_profile"] = typed_structure_profile
     if candidate_report is not None:

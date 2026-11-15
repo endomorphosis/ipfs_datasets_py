@@ -1,0 +1,268 @@
+{
+  "schema": "LIR20-original-owned-complete-input-census-qualified/v1",
+  "qualification_scope": "one diagnostic observer; fresh same pinned fictional recipe/current pipeline, not historical v04 pipeline/count or factory capacity",
+  "actual_tool_handle": 81408,
+  "actual_terminal_chunk": "56f3b1",
+  "actual_terminal_exit_code": 0,
+  "request_sha256": "11029c8d06699781a30162329084f775493c49a730eef901279b28bf8a2884fb",
+  "tests": 1,
+  "passed": 1,
+  "failed": 0,
+  "skipped": 0,
+  "junit_seconds": 14.238,
+  "query_denominator": 3,
+  "representation_denominator": 3,
+  "measured": 9,
+  "codec_refused": 0,
+  "context_renderer_byte_refusals": 2,
+  "token_counts_include_bos_eos": true,
+  "actual_context_token_limit": 4096,
+  "actual_source_token_limit": 65536,
+  "source_4096_comparison_is_diagnostic_only": true,
+  "context_counts": {
+    "plain_json_v1": [
+      6565,
+      6565,
+      3489
+    ],
+    "shared_json_v1": [
+      4703,
+      4703,
+      3025
+    ],
+    "shared_json_v2": [
+      4598,
+      4598,
+      2952
+    ]
+  },
+  "complete_source_counts": {
+    "plain_json_v1": [
+      6834,
+      6835,
+      3764
+    ],
+    "shared_json_v1": [
+      4974,
+      4975,
+      3302
+    ],
+    "shared_json_v2": [
+      4869,
+      4870,
+      3229
+    ]
+  },
+  "pipeline_sha256": "6b5a538659eff1db0ffb167f65e7655815405f457fc23bb0e829e55a285e01c3",
+  "all_full_string_roundtrips_exact": true,
+  "all18_wire_sidecars_verified": true,
+  "module_origins": {
+    "pytest": {
+      "loaded": true,
+      "path": "/home/barberb/lift_coding/.venv/lib/python3.12/site-packages/pytest/__init__.py",
+      "sha256": "8e6ea1d1910225d0d7957d22e45db498ddf2a55fbe4fba2c9ad307cf3cd8f2e8"
+    },
+    "tokenizers": {
+      "loaded": true,
+      "path": "/home/barberb/.local/lib/python3.12/site-packages/tokenizers/__init__.py",
+      "sha256": "644e596a052fa1b05272b1c141d1286e1c78c2a3346ecabd17d68b62404d8d84"
+    },
+    "transformers": {
+      "loaded": true,
+      "path": "/home/barberb/.local/lib/python3.12/site-packages/transformers/__init__.py",
+      "sha256": "6b646f7212b492bacdf3fd03e4359a97d64d5661f6d539a694b8dc6a66e604ef"
+    },
+    "torch": {
+      "loaded": true,
+      "path": "/home/barberb/.local/lib/python3.12/site-packages/torch/__init__.py",
+      "sha256": "cf40c075c95864036e835795756d69b8cccfafa76f3bcde5eba9d06065ccd3d1"
+    },
+    "numpy": {
+      "loaded": true,
+      "path": "/home/barberb/.local/lib/python3.12/site-packages/numpy/__init__.py",
+      "sha256": "22cd1535fa14d74ef6f457cca149ffdc80875f460be313b8f895273f78bc402e"
+    },
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_training_worker": {
+      "loaded": true,
+      "path": "/tmp/lift-v4-aggregate-context-20261115/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py",
+      "sha256": "903dd33e9eb402f148a404ce0ab802018b26758c468201f0a0094864fd4cc0df"
+    },
+    "ipfs_datasets_py.logic.autoformal.training_cycle_inputs": {
+      "loaded": true,
+      "path": "/tmp/lift-v4-aggregate-context-20261115/ipfs_datasets_py/logic/autoformal/training_cycle_inputs.py",
+      "sha256": "c3ca1e1e24530207c3ee1b85ff392e5732b3c88abf936465af0c1bc7d989f12c"
+    },
+    "tests.unit.optimizers.logic_theorem_optimizer.test_autoencoder_training_worker": {
+      "loaded": true,
+      "path": "/tmp/lift-v4-aggregate-context-20261115/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py",
+      "sha256": "94274f0367f871a31b0cc9a7abc9db822ff29a857fa785a4a14b6f85f20986ac"
+    }
+  },
+  "backend_generation_calls": 0,
+  "model_weights_loaded": false,
+  "training": false,
+  "independent_source_faithfulness": false,
+  "product_limits_changed": false,
+  "truncated": false,
+  "source_closed": true,
+  "source_drift": [],
+  "genuine_original_wait": true,
+  "original_owner_and_child_identities_gone": true,
+  "native_resource_closed": true,
+  "storage_released_and_durable": true,
+  "own_retained_storage_bytes": 0,
+  "earlier_failed_16MiB_retained_untouched": true,
+  "factory_runtime_or_legal_quality_qualified": false,
+  "evidence": [
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-v4-aggregate-factory-public-tokenizer-census-original-v04-input/request.json",
+      "bytes": 46428,
+      "sha256": "11029c8d06699781a30162329084f775493c49a730eef901279b28bf8a2884fb"
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-v4-aggregate-factory-public-tokenizer-census-original-v04-input/run-original-source-held-public-tokenizer-v01.py",
+      "bytes": 23022,
+      "sha256": "85a972bb60b210eec0795318e4b95d659595aca6b4f5a6186696c454aec03c25"
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-v4-aggregate-factory-public-tokenizer-census-original-v04-input/tokenizer-only-child.py",
+      "bytes": 1851,
+      "sha256": "e2426f59818c3127b7c0b438481f675bf6cd9657582a510ce8de7dc21ace252b"
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-v4-aggregate-factory-public-tokenizer-census-original-v04-input/test_lir20_actual_context_census.py",
+      "bytes": 9201,
+      "sha256": "ba5ad79cfb7ccef73b6991b1bfd1f5ba0c53d5fb8584d7a5d1243f5d90dcf521"
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-v4-aggregate-factory-public-tokenizer-census-original-v04-input/parent-closeout.json",
+      "bytes": 11531,
+      "sha256": "f31859c8c30500a5e0108508f57fd0d5ad679e07aa8d98b8be045103c2bdcdce"
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-v4-aggregate-factory-public-tokenizer-census-original-v04-input/owner.stdout",
+      "bytes": 5527,
+      "sha256": "c920fa0cdea72c35c0e3ef0f996e6403eb5d4f4efed79a31e368ec7def4f523f"
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-v4-aggregate-factory-public-tokenizer-census-original-v04-input/owner.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/pytest-of-barberb/legal-v4-aggregate-public-tokenizer-census-20261115-v04/a/logs/stdout.log",
+      "bytes": 683,
+      "sha256": "739195992e3c0000585fb4823aba23a7c86d8118fb6a5ab2050ab1f69353c0cd"
+    },
+    {
+      "path": "/tmp/pytest-of-barberb/legal-v4-aggregate-public-tokenizer-census-20261115-v04/a/logs/stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/pytest-of-barberb/legal-v4-aggregate-public-tokenizer-census-20261115-v04/a/exports/complete-context-token-census.json",
+      "bytes": 21427,
+      "sha256": "ea9e1fdb257d282942430ddcfc683d8c410032bfb13a74cd54e77a460bdaccf9"
+    },
+    {
+      "path": "/tmp/pytest-of-barberb/legal-v4-aggregate-public-tokenizer-census-20261115-v04/a/exports/complete-tokenizer-pipeline.json",
+      "bytes": 787746,
+      "sha256": "6b5a538659eff1db0ffb167f65e7655815405f457fc23bb0e829e55a285e01c3"
+    },
+    {
+      "path": "/tmp/pytest-of-barberb/legal-v4-aggregate-public-tokenizer-census-20261115-v04/a/exports/public-tokenizer-factory.xml",
+      "bytes": 324,
+      "sha256": "079d99e76e739a670a5e8fb65e9f7106d7ed43088e00e5cfbd3ef8d13ea3dd48"
+    },
+    {
+      "path": "/tmp/pytest-of-barberb/legal-v4-aggregate-public-tokenizer-census-20261115-v04/a/exports/query-0-plain_json_v1.context.utf8",
+      "bytes": 29037,
+      "sha256": "0d45c6392a4bb914196626a43d7f8599cd56ef4d3751acc9cd3832ca24f6c58f"
+    },
+    {
+      "path": "/tmp/pytest-of-barberb/legal-v4-aggregate-public-tokenizer-census-20261115-v04/a/exports/query-0-plain_json_v1.source.utf8",
+      "bytes": 29886,
+      "sha256": "afb8740c8bcf3b71d3063e7059a90524a44411b074f2b051a848f8d3cf7127f9"
+    },
+    {
+      "path": "/tmp/pytest-of-barberb/legal-v4-aggregate-public-tokenizer-census-20261115-v04/a/exports/query-0-shared_json_v1.context.utf8",
+      "bytes": 10482,
+      "sha256": "78cd71a60e12075d58446cf47ee862068ed370d7cfb256c647ac72488180bb88"
+    },
+    {
+      "path": "/tmp/pytest-of-barberb/legal-v4-aggregate-public-tokenizer-census-20261115-v04/a/exports/query-0-shared_json_v1.source.utf8",
+      "bytes": 11338,
+      "sha256": "994aa930af4e612e9083a13476ab879015d286bcb95f28ac9cde2c11a0e05c5d"
+    },
+    {
+      "path": "/tmp/pytest-of-barberb/legal-v4-aggregate-public-tokenizer-census-20261115-v04/a/exports/query-0-shared_json_v2.context.utf8",
+      "bytes": 9505,
+      "sha256": "ee6b0aecef72d2b2993e0698a83a49dbe98d0f908e690b54b18f39ada0f9e32e"
+    },
+    {
+      "path": "/tmp/pytest-of-barberb/legal-v4-aggregate-public-tokenizer-census-20261115-v04/a/exports/query-0-shared_json_v2.source.utf8",
+      "bytes": 10361,
+      "sha256": "c07716c5918040c3d2b2532070df43d964631766f32b5e2bd0117137e2f23c24"
+    },
+    {
+      "path": "/tmp/pytest-of-barberb/legal-v4-aggregate-public-tokenizer-census-20261115-v04/a/exports/query-1-plain_json_v1.context.utf8",
+      "bytes": 29037,
+      "sha256": "0d45c6392a4bb914196626a43d7f8599cd56ef4d3751acc9cd3832ca24f6c58f"
+    },
+    {
+      "path": "/tmp/pytest-of-barberb/legal-v4-aggregate-public-tokenizer-census-20261115-v04/a/exports/query-1-plain_json_v1.source.utf8",
+      "bytes": 29896,
+      "sha256": "a5e6ce81c9257e2c1491b0faa01cbeb1b3fe7bf443c38ce4da853e10b0853ba0"
+    },
+    {
+      "path": "/tmp/pytest-of-barberb/legal-v4-aggregate-public-tokenizer-census-20261115-v04/a/exports/query-1-shared_json_v1.context.utf8",
+      "bytes": 10482,
+      "sha256": "78cd71a60e12075d58446cf47ee862068ed370d7cfb256c647ac72488180bb88"
+    },
+    {
+      "path": "/tmp/pytest-of-barberb/legal-v4-aggregate-public-tokenizer-census-20261115-v04/a/exports/query-1-shared_json_v1.source.utf8",
+      "bytes": 11348,
+      "sha256": "3f4386d33a4a70e9fb6d9ae5d7d5f135b1f9da46e0a3fffc0fbeb1f3a3041067"
+    },
+    {
+      "path": "/tmp/pytest-of-barberb/legal-v4-aggregate-public-tokenizer-census-20261115-v04/a/exports/query-1-shared_json_v2.context.utf8",
+      "bytes": 9505,
+      "sha256": "ee6b0aecef72d2b2993e0698a83a49dbe98d0f908e690b54b18f39ada0f9e32e"
+    },
+    {
+      "path": "/tmp/pytest-of-barberb/legal-v4-aggregate-public-tokenizer-census-20261115-v04/a/exports/query-1-shared_json_v2.source.utf8",
+      "bytes": 10371,
+      "sha256": "99cf5e8472e911c81d4f79b02059ab35908d6609050ed98f3489aa96532cf270"
+    },
+    {
+      "path": "/tmp/pytest-of-barberb/legal-v4-aggregate-public-tokenizer-census-20261115-v04/a/exports/query-2-plain_json_v1.context.utf8",
+      "bytes": 15568,
+      "sha256": "f7a0f8033177dc6dd9317e0b32c159dcdc61ec65ba2b21583f7f7b5d4965ba35"
+    },
+    {
+      "path": "/tmp/pytest-of-barberb/legal-v4-aggregate-public-tokenizer-census-20261115-v04/a/exports/query-2-plain_json_v1.source.utf8",
+      "bytes": 16430,
+      "sha256": "d651c97bcd5e316ae2722b0efc6b443bcd283d685853529374e0ab9daf0b0694"
+    },
+    {
+      "path": "/tmp/pytest-of-barberb/legal-v4-aggregate-public-tokenizer-census-20261115-v04/a/exports/query-2-shared_json_v1.context.utf8",
+      "bytes": 7095,
+      "sha256": "ee91f496d8310b47c0188fa57b626b96af70f8e1830c84fcd29ae60e1d512fef"
+    },
+    {
+      "path": "/tmp/pytest-of-barberb/legal-v4-aggregate-public-tokenizer-census-20261115-v04/a/exports/query-2-shared_json_v1.source.utf8",
+      "bytes": 7964,
+      "sha256": "15f1b852e23a746bff3baa8ee524e4d5d684504008cb84c5eb264f66197ef5d5"
+    },
+    {
+      "path": "/tmp/pytest-of-barberb/legal-v4-aggregate-public-tokenizer-census-20261115-v04/a/exports/query-2-shared_json_v2.context.utf8",
+      "bytes": 6473,
+      "sha256": "d1ff5b844d4d4989423721aa4fecc34bfbe9ba9b0b127d9596bfcaddc0f43bf9"
+    },
+    {
+      "path": "/tmp/pytest-of-barberb/legal-v4-aggregate-public-tokenizer-census-20261115-v04/a/exports/query-2-shared_json_v2.source.utf8",
+      "bytes": 7342,
+      "sha256": "cb4bbabf29f345ad708286966ffd9282fdf50ad58c012eedcd46a69988ec8992"
+    }
+  ]
+}

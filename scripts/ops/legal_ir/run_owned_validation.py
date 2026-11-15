@@ -1289,7 +1289,7 @@ def _no_child_native_closed_profile(terminal, request_raw, *, request_version,
         expected_request_sha256, owner_pid, owner_birth, returncode, expected_resource_ledger):
     """Shared finite bindings; each public profile selects original request bytes.
 
-    V5 is only the SDK-open post-grant deadline with exact zero process samples.
+    V5 binds SDK-open post-grant deadline or ledger-lock failure DATA with exact zero process samples.
     No request or terminal projection is used to establish either profile.
     """
     def need(condition):
@@ -1417,7 +1417,7 @@ def _no_child_native_closed_profile(terminal, request_raw, *, request_version,
         and failure['error'] == 'original absolute resource operation deadline expired'
         and failure['process_observation'] is None
         and failure['elapsed_seconds'] >= value['timeout_seconds'])
-    postgrant_lock_profile = (request_version == 'v1'
+    postgrant_lock_profile = (request_version in ('v1', 'v5')
         and type(failure['error_type']) is str
         and failure['error_type'] == 'DaemonResourceError'
         and type(failure['error']) is str and failure['error'] == 'disk ledger lock unavailable'
@@ -1545,7 +1545,7 @@ def _no_child_native_closed_profile_v1(terminal, request_raw, *,
 
 def _no_child_native_closed_profile_v5(terminal, request_raw, *,
         expected_request_sha256, owner_pid, owner_birth, returncode, expected_resource_ledger):
-    """Bind original V5 post-grant SDK-open deadline DATA without normalization."""
+    """Bind original V5 SDK-open deadline or ledger-lock DATA without normalization."""
     return _no_child_native_closed_profile(terminal, request_raw, request_version='v5',
         expected_request_sha256=expected_request_sha256, owner_pid=owner_pid,
         owner_birth=owner_birth, returncode=returncode, expected_resource_ledger=expected_resource_ledger)
@@ -1571,7 +1571,7 @@ def inspect_owned_validation_no_child_native_closed_v5(terminal, request_raw, *,
 
     Only the original Source-held Popen caller may use this observation to close
     its reads. It neither qualifies a vanished caller nor releases retained
-    storage. Original bytes and typed zero-sample deadline evidence stay intact.
+    storage. Original bytes and typed zero-sample deadline/ledger-lock evidence stay intact.
     Current PID/root/row/source and locked Native checks are shared with v1.
     """
     return _inspect_owned_validation_no_child_native_closed(terminal, request_raw,

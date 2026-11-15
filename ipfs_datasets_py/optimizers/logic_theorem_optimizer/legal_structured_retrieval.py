@@ -255,7 +255,7 @@ def reviewed_context_inputs_sha256(value):
     return binding_owner._guard(value).sha256
 
 
-def _require_disjoint_heldout_review(heldout, training_admission, training_rows, queries, manifest, *, _admission_version="v2"):
+def _require_disjoint_heldout_review(heldout, training_admission, training_rows, queries, manifest, *, _admission_version="v2", _aggregate_training_ids=None):
     from . import legal_span_consumer_binding as bound
 
     _require(type(heldout) is dict, "exact frozen rich heldout dependency receipt required")
@@ -270,7 +270,9 @@ def _require_disjoint_heldout_review(heldout, training_admission, training_rows,
              and heldout.get("split_manifest_sha256") == bound._guard(manifest.to_dict()).sha256,
              "exact frozen rich heldout dependency receipt required")
     _require({query["id"] for query in queries} == {unit["id"] for unit in group["source_units"]}
-             and {row["id"] for row in training_rows} == set(heldout["training_example_ids"]),
+             and set(_aggregate_training_ids if _aggregate_training_ids is not None else
+                     [row["id"] for row in training_rows]) == set(heldout["training_example_ids"])
+             and {row["id"] for row in training_rows} <= set(heldout["training_example_ids"]),
              "exact frozen heldout and TRAIN populations required")
     subject, dependencies = bound._reviewed_dependency_closure(training_admission)
     training_declaration = training_admission["preparation"]["declaration"]
@@ -391,7 +393,8 @@ def consume_reviewed_contexts_v3(binding, training_rows, *, split_manifest,
 def _consume_reviewed_contexts(binding, training_rows, *, split_manifest,
         admission_inputs, exposure_records, query_rows, retrieval_rows,
         expected_query_rows_sha256, expected_retrieval_rows_sha256,
-        consumer, max_context_bytes=262144, heldout_evaluation=None, _admission_version="v2"):
+        consumer, max_context_bytes=262144, heldout_evaluation=None, _admission_version="v2",
+        _aggregate_training_ids=None, _allow_empty_selection=False):
     """Dispatch full source/typed-AST examples through present review replay.
 
     The supplied binding must authorize TRAIN targets via the existing reviewed
@@ -415,6 +418,9 @@ def _consume_reviewed_contexts(binding, training_rows, *, split_manifest,
              "existing complete reviewed consumer binding required")
     _require(bound._reviewed_binding_version(binding) == _admission_version,
              "rich context reviewed admission contract differs")
+    _require(type(_allow_empty_selection) is bool and
+             (not _allow_empty_selection or _admission_version == "v3" and _aggregate_training_ids is not None),
+             "empty component selections require explicit V3 aggregate TRAIN custody")
     validate_binding, consume_binding = bound._reviewed_binding_dispatch(binding)
     _require(binding.receipt()["operation"] == "training",
              "rich example index requires a training binding")
@@ -452,7 +458,8 @@ def _consume_reviewed_contexts(binding, training_rows, *, split_manifest,
         # Only the existing consumer supplies these detached, revalidated rows.
         if heldout_evaluation is not None:
             training_dependency_manifest_sha256 = _require_disjoint_heldout_review(
-                heldout_evaluation, admission_inputs, rows, queries, manifest, _admission_version=_admission_version)
+                heldout_evaluation, admission_inputs, rows, queries, manifest, _admission_version=_admission_version,
+                _aggregate_training_ids=_aggregate_training_ids)
         index_sha = bound._guard(rows).sha256
         known = {row["id"]: row for row in rows}
         units = {row["unit_id"]: row for row in rows}
@@ -465,7 +472,7 @@ def _consume_reviewed_contexts(binding, training_rows, *, split_manifest,
                      and selected["index_sha256"] == index_sha,
                      "rich retrieval source or complete training index differs")
             ids = selected["retrieved_ids"]
-            _require(type(ids) is list and 1 <= len(ids) <= 16
+            _require(type(ids) is list and (0 if _allow_empty_selection else 1) <= len(ids) <= 16
                      and all(type(key) is str and key in known for key in ids)
                      and len(set(ids)) == len(ids), "distinct training-only retrieved IDs required")
             queue, exposed, expanded = list(ids), [], set()
@@ -554,7 +561,7 @@ _RICH_FALSE = {"decoder_context_admitted": False, "arbitrary_context_permission"
 def _rich_owners(_admission_version="v2"):
     from . import legal_span_consumer_binding as consumer
     _, handoff, _, admission = joint._reviewed_owners(_admission_version)
-    _require(callable(getattr(consumer, "prepare_reviewed_source_span_consumer_binding_" + _admission_version, None)),
+    _require(callable(getattr(consumer, "prepare_reviewed_source_span_consumer_binding_" + ("v3" if _admission_version == "v4" else _admission_version), None)),
              "the matching complete reviewed source-span consumer is required")
     return handoff, admission, consumer
 
@@ -585,7 +592,7 @@ def _rich_current_assessment(identity, entry, inputs, admission, *, _admission_v
     arguments = dict(entry["kwargs"], at_time_utc=inputs["at_time_utc"],
         observed_artifact_sha256s=observations["observed_artifact_sha256s"],
         observed_pins=observations["observed_pins"])
-    assess = (admission.assess_reviewed_norm_admission_v3 if _admission_version == "v3"
+    assess = (admission.assess_reviewed_norm_admission_v3 if _admission_version in ("v3", "v4")
               else admission.assess_reviewed_norm_admission_v2)
     report = assess(*entry["args"], **arguments)
     # The canonical consumer takes the same full replay as keyword arguments.
@@ -656,11 +663,10 @@ def _build_reviewed_rich_context_candidates(retriever, query_rows, preparation, 
     _require(joint._reviewed_checkpoint_version(retriever.checkpoint) == _admission_version,
              "rich candidate retriever admission domain differs")
     handoff, admission, consumer = _rich_owners(_admission_version)
-    compile_masks = (handoff.compile_reviewed_train_relation_masks_v3 if _admission_version == "v3"
-                     else handoff.compile_reviewed_train_relation_masks_v2)
-    prepare_binding = (consumer.prepare_reviewed_source_span_consumer_binding_v3 if _admission_version == "v3"
+    compile_masks = getattr(handoff, "compile_reviewed_train_relation_masks_" + _admission_version)
+    prepare_binding = (consumer.prepare_reviewed_source_span_consumer_binding_v3 if _admission_version in ("v3", "v4")
                        else consumer.prepare_reviewed_source_span_consumer_binding_v2)
-    validate_binding = (consumer.validate_reviewed_source_span_consumer_binding_v3 if _admission_version == "v3"
+    validate_binding = (consumer.validate_reviewed_source_span_consumer_binding_v3 if _admission_version in ("v3", "v4")
                         else consumer.validate_reviewed_source_span_consumer_binding_v2)
     original = dict(query_rows=query_rows, preparation=preparation, registry=registry, policy=policy,
         reviews=reviews, retrieval_inputs=retrieval_inputs, example_consumer_inputs=example_consumer_inputs,
@@ -679,8 +685,8 @@ def _build_reviewed_rich_context_candidates(retriever, query_rows, preparation, 
     args = tuple(frozen[key] for key in ("preparation", "registry", "policy", "reviews"))
     current = compile_masks(*args, **replay)
     current_sha256 = joint.checkpoint_digest(current)
-    common = dict(schema=RICH_V3_SCHEMA if _admission_version == "v3" else RICH_SCHEMA,
-        profile=RICH_V3_PROFILE if _admission_version == "v3" else RICH_PROFILE, status="candidate_only",
+    common = dict(schema={"v2": RICH_SCHEMA, "v3": RICH_V3_SCHEMA, "v4": RICH_V4_SCHEMA}[_admission_version],
+        profile={"v2": RICH_PROFILE, "v3": RICH_V3_PROFILE, "v4": RICH_V4_PROFILE}[_admission_version], status="candidate_only",
         representation_role="complete_selected_source_and_typed_ast_examples",
         input_sha256=input_sha256, implementation=implementation,
         current_index_handoff_sha256=current_sha256, context_profile_identity=identity,
@@ -692,7 +698,7 @@ def _build_reviewed_rich_context_candidates(retriever, query_rows, preparation, 
         source_byte_scope="exact_selected_extracted_span_UTF8_only",
         supplemental_context_status="governing_definition_and_proof_bodies_unavailable_refs_only",
         model_use_and_resource_admission_scope="caller_owned_not_validated_here", **_RICH_FALSE)
-    if _admission_version == "v3":
+    if _admission_version in ("v3", "v4"):
         common.update(definition_body_scope="selected_indexed_exposure_bound_TRAIN_units_only",
             supplemental_context_lookup_performed=False, selected_definition_unit_refs=[],
             supplemental_context_status="selected_indexed_TRAIN_examples_only_no_supplemental_lookup",
@@ -840,7 +846,7 @@ def _build_reviewed_rich_context_candidates(retriever, query_rows, preparation, 
              and admission.norm._snapshot(frozen)[1] == input_sha256,
              "complete rich candidate inputs changed during construction")
     _require(_rich_implementation(_admission_version) == implementation, "full-example implementation changed during construction")
-    if _admission_version == "v3":
+    if _admission_version in ("v3", "v4"):
         definitions = sorted({(example["admission_id"], example["unit_id"])
             for row in result_rows for example in row["examples"] if example["unit_kind"] == "definition"})
         definition_refs = [{"admission_id": identity, "unit_id": unit} for identity, unit in definitions]
@@ -865,8 +871,8 @@ def _validate_reviewed_rich_context_candidates(candidate, *args, expected_candid
     _require(type(candidate) is dict and joint.checkpoint_digest(candidate) == expected_candidate_sha256,
              "independently pinned full-example candidate differs")
     joint._reviewed_contract(_admission_version)
-    _require(candidate.get("schema") == (RICH_V3_SCHEMA if _admission_version == "v3" else RICH_SCHEMA)
-             and candidate.get("profile") == (RICH_V3_PROFILE if _admission_version == "v3" else RICH_PROFILE),
+    _require(candidate.get("schema") == ({"v2": RICH_SCHEMA, "v3": RICH_V3_SCHEMA, "v4": RICH_V4_SCHEMA}[_admission_version])
+             and candidate.get("profile") == ({"v2": RICH_PROFILE, "v3": RICH_V3_PROFILE, "v4": RICH_V4_PROFILE}[_admission_version]),
              "rich candidate admission domain differs")
     before = joint.checkpoint_digest(candidate)
     replayed = _build_reviewed_rich_context_candidates(*args, **kwargs, _admission_version=_admission_version)
@@ -1053,3 +1059,245 @@ def prepare_reviewed_ranked_training_context_v3(retriever, query_rows, preparati
              "ranked context inputs changed during preparation")
     _require(pins == _rich_implementation("v3"), "ranked context implementation changed during preparation")
     return {"context_inputs": context, "selection_provenance": provenance}
+
+
+RICH_V4_SCHEMA = "legal-reviewed-full-example-context-candidate/v4"
+RICH_V4_PROFILE = "complete-reviewed-context-set-training-examples/v4"
+AGGREGATE_CONTEXT_V4_SCHEMA = "legal-reviewed-multi-component-TRAIN-context/v4"
+AGGREGATE_CONTEXT_V4_PROFILE = "explicit-reviewed-multi-component-TRAIN-context/v4"
+
+
+def build_reviewed_rich_context_candidates_v4(*args, **kwargs):
+    """Replay V4 relation custody with the existing V3 endpoint consumer."""
+    return _build_reviewed_rich_context_candidates(*args, **kwargs, _admission_version="v4")
+
+
+def validate_reviewed_rich_context_candidates_v4(candidate, *args, expected_candidate_sha256, **kwargs):
+    """Recompute the whole V4 candidate; grant no inference-context authority."""
+    return _validate_reviewed_rich_context_candidates(candidate, *args,
+        expected_candidate_sha256=expected_candidate_sha256, **kwargs, _admission_version="v4")
+
+
+def _aggregate_training_index(components):
+    return [{"admission_id": item["admission_id"], "rows": item["training_rows"]} for item in components]
+
+
+def consume_reviewed_contexts_v4(*, schema, components, split_manifest, query_rows, retrieval_rows,
+        expected_query_rows_sha256, expected_retrieval_rows_sha256, consumer,
+        heldout_evaluation=None, max_context_bytes=262144):
+    """Combine complete V3 TRAIN components under an explicit aggregate contract.
+
+    This is a context-argument contract, not a V4 statutory admission, model
+    authorization or heldout-policy upgrade. Each complete endpoint component
+    retains its V3 binding, exposure declarations and present review replay.
+    Selected governing definitions expand inside their owning component. The
+    full TRAIN union must equal the frozen heldout population when supplied.
+    Replays and aggregate byte checks bracket the one external callback.
+    """
+    import json
+    from . import legal_span_consumer_binding as bound
+    _require(type(schema) is str and schema == AGGREGATE_CONTEXT_V4_SCHEMA,
+             "explicit V4 aggregate context schema required")
+    _require(callable(consumer), "explicit aggregate context consumer required")
+    _require(type(max_context_bytes) is int and 1 <= max_context_bytes <= MAX_REVIEWED_CONTEXT_BYTES,
+             "bounded complete aggregate context byte allowance required")
+    _require(type(components) is list and 1 <= len(components) <= 32,
+             "bounded complete ordered TRAIN component list required")
+    fields = {"admission_id", "binding", "training_rows", "admission_inputs", "exposure_records"}
+    for item in components:
+        bound._closed(item, fields, "aggregate TRAIN component")
+        bound._text(item["admission_id"], "aggregate admission ID", 512)
+        _require(type(item["binding"]) is bound.ReviewedSourceSpanConsumerBinding
+                 and bound._reviewed_binding_version(item["binding"]) == "v3",
+                 "aggregate context requires existing V3 endpoint bindings")
+    identities = [item["admission_id"] for item in components]
+    _require(identities == sorted(set(identities)), "sorted distinct admission IDs required")
+    original = dict(split_manifest=split_manifest, query_rows=query_rows, retrieval_rows=retrieval_rows,
+        heldout_evaluation=heldout_evaluation,
+        components=[{key: value for key, value in item.items() if key != "binding"} for item in components],
+        binding_receipts=[item["binding"].receipt() for item in components])
+    # Admission replay includes exact source/request bytes. Reuse the existing
+    # type-separated snapshot owner; never JSON-coerce source evidence.
+    frozen, original_sha256 = bound._reviewed_snapshot(original)
+    pins = _rich_implementation("v4")
+    bound._guard(query_rows, expected_query_rows_sha256)
+    bound._guard(retrieval_rows, expected_retrieval_rows_sha256)
+    queries, selections = frozen["query_rows"], frozen["retrieval_rows"]
+    _require(type(queries) is list and 1 <= len(queries) <= 32
+             and type(selections) is list and len(selections) == len(queries),
+             "complete bounded aggregate query and selection populations required")
+    index = _aggregate_training_index(frozen["components"])
+    index_sha = bound._guard(index).sha256
+    all_ids = [row["id"] for item in frozen["components"] for row in item["training_rows"]]
+    _require(all_ids and len(all_ids) == len(set(all_ids)), "globally distinct TRAIN split identities required")
+    if heldout_evaluation is not None:
+        _require(set(all_ids) == set(frozen["heldout_evaluation"]["training_example_ids"]),
+                 "exact complete union of frozen heldout TRAIN population required")
+    known = {item["admission_id"]: {row["id"] for row in item["training_rows"]}
+             for item in frozen["components"]}
+    for query, selection in zip(queries, selections, strict=True):
+        bound._closed(query, {"id", "source_text"}, "target-free aggregate query")
+        bound._closed(selection, {"id", "source_sha256", "index_sha256", "retrieved_refs"},
+                      "aggregate retrieval selection")
+        _require(selection["id"] == query["id"] and selection["index_sha256"] == index_sha
+                 and selection["source_sha256"] == hashlib.sha256(query["source_text"].encode("utf-8")).hexdigest(),
+                 "aggregate query source or complete TRAIN index differs")
+        refs = selection["retrieved_refs"]
+        _require(type(refs) is list and 1 <= len(refs) <= 16,
+                 "one to sixteen complete ranked TRAIN references required")
+        keys = []
+        for ref in refs:
+            bound._closed(ref, {"admission_id", "id"}, "admission-qualified TRAIN reference")
+            _require(type(ref["admission_id"]) is str and type(ref["id"]) is str
+                     and ref["admission_id"] in known and ref["id"] in known[ref["admission_id"]],
+                     "selected TRAIN reference is outside its admitted component")
+            keys.append((ref["admission_id"], ref["id"]))
+        _require(len(keys) == len(set(keys)), "distinct admission-qualified TRAIN references required")
+
+    def fence():
+        current = dict(split_manifest=split_manifest, query_rows=query_rows, retrieval_rows=retrieval_rows,
+            heldout_evaluation=heldout_evaluation,
+            components=[{key: value for key, value in item.items() if key != "binding"} for item in components],
+            binding_receipts=[item["binding"].receipt() for item in components])
+        _require(bound._reviewed_snapshot(current)[1] == original_sha256
+                 and bound._reviewed_snapshot(frozen)[1] == original_sha256,
+                 "aggregate context inputs changed during dispatch")
+        _require(pins == _rich_implementation("v4"), "aggregate context source owners changed during dispatch")
+
+    def replay():
+        fence()
+        payloads = []
+        for item in components:
+            identity = item["admission_id"]
+            local_rows = item["training_rows"]
+            local_selections = [{"id": selection["id"], "source_sha256": selection["source_sha256"],
+                "index_sha256": bound._guard(local_rows).sha256,
+                "retrieved_ids": [ref["id"] for ref in selection["retrieved_refs"]
+                                  if ref["admission_id"] == identity]} for selection in selections]
+            payload = _consume_reviewed_contexts(item["binding"], local_rows,
+                split_manifest=split_manifest, admission_inputs=item["admission_inputs"],
+                exposure_records=item["exposure_records"], query_rows=queries, retrieval_rows=local_selections,
+                expected_query_rows_sha256=bound._guard(queries).sha256,
+                expected_retrieval_rows_sha256=bound._guard(local_selections).sha256,
+                consumer=lambda value: value, heldout_evaluation=heldout_evaluation,
+                _admission_version="v3", _aggregate_training_ids=all_ids, _allow_empty_selection=True,
+                max_context_bytes=max_context_bytes)
+            payloads.append((identity, payload))
+        rows = []
+        for position, (query, selection) in enumerate(zip(queries, selections, strict=True)):
+            available = {(identity, example["id"]): {**example, "admission_id": identity}
+                         for identity, payload in payloads for example in payload["rows"][position]["examples"]}
+            primary = [(ref["admission_id"], ref["id"]) for ref in selection["retrieved_refs"]]
+            order = primary + [key for key in available if key not in primary]
+            row = dict(id=query["id"], source_text=query["source_text"],
+                source_sha256=selection["source_sha256"], index_sha256=index_sha,
+                retrieved_refs=selection["retrieved_refs"], examples=[available[key] for key in order],
+                query_target_access=False, teacher_forcing=False,
+                retrieval_role=REVIEWED_CONTEXT_ROLE,
+                selection_sha256=bound._guard(selection).sha256,
+                selection_origin="caller_supplied_ordered_admission_qualified_selection")
+            row["context_sha256"] = bound._guard(row).sha256
+            _require(len(bound._preflight(row)) <= max_context_bytes,
+                     "complete aggregate context exceeds byte allowance; truncation refused")
+            rows.append(row)
+        dependencies = [{"admission_id": identity,
+            "dependency_manifest_sha256": payload.get("training_dependency_manifest_sha256"),
+            "binding_receipt_sha256": bound._guard(payload["binding_receipt"]).sha256}
+            for identity, payload in payloads]
+        result = dict(schema=AGGREGATE_CONTEXT_V4_SCHEMA, profile=AGGREGATE_CONTEXT_V4_PROFILE,
+            rows=rows, training_index_sha256=index_sha, component_receipts=dependencies,
+            training_dependency_manifest_sha256=bound._guard(dependencies).sha256,
+            training_admission_inputs_sha256=bound._guard([
+                {"admission_id": item["admission_id"],
+                 "admission_inputs_sha256": bound.reviewed_admission_inputs_sha256(item["admission_inputs"])}
+                for item in components]).sha256,
+            examples_are_complete=True, query_target_access=False, inference_context_permission_verified=False,
+            legal_applicability_established=False, proof_authority=False, corpus_admitted=False,
+            training_executed=False, ranking_authenticated=False)
+        if heldout_evaluation is not None:
+            result["heldout_dependency_group_sha256"] = heldout_evaluation["dependency_group_sha256"]
+        _require(len(bound._preflight(result)) <= RICH_MAX_BYTES,
+                 "complete aggregate payload exceeds byte allowance; truncation refused")
+        fence()
+        return result
+
+    payload = replay()
+    try:
+        return consumer(json.loads(bound._preflight(payload)))
+    finally:
+        _require(bound._preflight(replay()) == bound._preflight(payload),
+                 "aggregate TRAIN context changed during callback")
+
+
+def prepare_reviewed_ranked_training_context_v4(retriever, query_rows, preparation, registry, policy, reviews, *,
+        retrieval_inputs, example_consumer_inputs):
+    """Adapt fresh V4 ranking to complete per-component V3 TRAIN bindings.
+
+    This recipe retains all offered components and full governing definitions.
+    It grants no heldout policy, model, resource or legal authority. The actual
+    evaluator must explicitly select the aggregate context profile and replay
+    it against the independently frozen heldout component and live policy.
+    """
+    _, admission, bound = _rich_owners("v4")
+    original = dict(query_rows=query_rows, preparation=preparation, registry=registry, policy=policy,
+        reviews=reviews, retrieval_inputs=retrieval_inputs, example_consumer_inputs=example_consumer_inputs)
+    frozen, input_sha = admission.norm._snapshot(original)
+    pins = _rich_implementation("v4")
+    args = tuple(frozen[key] for key in ("preparation", "registry", "policy", "reviews"))
+    inputs, offered = frozen["retrieval_inputs"], frozen["example_consumer_inputs"]
+    candidate = build_reviewed_rich_context_candidates_v4(retriever, frozen["query_rows"], *args,
+        retrieval_inputs=inputs, example_consumer_inputs=offered)
+    _require(candidate["status"] == "candidate_only" and candidate["abstention_count"] == 0
+             and len(candidate["rows"]) == len(frozen["query_rows"]),
+             "complete ranked population required; abstentions cannot be dropped")
+    manifest = inputs["preparation_inputs"]["split_manifest"]
+    components = []
+    for identity in sorted(offered):
+        supplied = offered[identity]
+        _, admission_inputs = _rich_current_assessment(identity,
+            inputs["preparation_inputs"]["endpoint_admissions"][identity], inputs, admission, _admission_version="v4")
+        binding = bound.prepare_reviewed_source_span_consumer_binding_v3(supplied["rows"],
+            expected_rows_sha256=supplied["expected_rows_sha256"], split_manifest=manifest,
+            expected_split_manifest_sha256=inputs["preparation_inputs"]["expected_split_manifest_sha256"],
+            admission_inputs=admission_inputs,
+            expected_admission_inputs_sha256=bound.reviewed_admission_inputs_sha256(admission_inputs),
+            exposure_records=supplied["exposure_records"], expected_exposure_sha256=supplied["expected_exposure_sha256"],
+            operation="training", allow_fictional_fixture=supplied["allow_fictional_fixture"])
+        _require(binding.receipt()["status"] == "ready", "complete current V3 TRAIN binding required")
+        components.append(dict(admission_id=identity, binding=binding, training_rows=supplied["rows"],
+            admission_inputs=admission_inputs, exposure_records=supplied["exposure_records"]))
+    row_map = {(item["admission_id"], row["unit_id"]): row for item in components for row in item["training_rows"]}
+    index_sha = bound._guard(_aggregate_training_index(components)).sha256
+    queries, selections, provenance = [], [], []
+    for query, ranked in zip(frozen["query_rows"], candidate["rows"], strict=True):
+        _require(ranked["id"] == query["id"] and ranked["split_sample_id"] == query["split_sample_id"]
+                 and ranked["source_sha256"] == hashlib.sha256(query["source_text"].encode("utf-8")).hexdigest(),
+                 "ranked aggregate query identity differs")
+        refs, endpoint_refs = [], []
+        for example in ranked["examples"]:
+            row = row_map[(example["admission_id"], example["unit_id"])]
+            _require(row["source_text"] == example["source_text"] and row["canonical_ir"] == example["canonical_ir"],
+                     "ranked aggregate example differs from complete permitted TRAIN row")
+            refs.append(dict(admission_id=example["admission_id"], id=row["id"]))
+            endpoint_refs.extend(example["selected_endpoint_refs"])
+        queries.append(dict(id=query["split_sample_id"], source_text=query["source_text"]))
+        selections.append(dict(id=query["split_sample_id"], source_sha256=ranked["source_sha256"],
+            index_sha256=index_sha, retrieved_refs=refs))
+        provenance.append(dict(query_id=query["id"], split_sample_id=query["split_sample_id"], endpoint_refs=endpoint_refs))
+    context = dict(schema=AGGREGATE_CONTEXT_V4_SCHEMA, components=components, split_manifest=manifest,
+        query_rows=queries, retrieval_rows=selections)
+    payload = consume_reviewed_contexts_v4(**context,
+        expected_query_rows_sha256=bound._guard(queries).sha256,
+        expected_retrieval_rows_sha256=bound._guard(selections).sha256, consumer=lambda value: value)
+    _require(admission.norm._snapshot(original)[1] == input_sha
+             and admission.norm._snapshot(frozen)[1] == input_sha,
+             "ranked aggregate inputs changed during preparation")
+    _require(pins == _rich_implementation("v4"), "ranked aggregate owners changed during preparation")
+    return dict(context_inputs=context, selection_provenance=dict(
+        schema="legal-reviewed-ranked-training-context-preparation/v4",
+        ranking_scope="fresh_at_preparation_only_not_later_context_authority",
+        candidate_sha256=joint.checkpoint_digest(candidate), checkpoint_sha256=candidate["checkpoint_sha256"],
+        current_index_handoff_sha256=candidate["current_index_handoff_sha256"],
+        context_payload_sha256=bound._guard(payload).sha256, query_identity_bindings=provenance,
+        decoder_context_admitted=False, heldout_evaluation_performed=False,
+        legal_applicability_verified=False, proof_authority=False, corpus_admitted=False))
