@@ -1,5 +1,16 @@
 # Current handoff
 
+## Corrected CLI4 physical-R selected software controls — 2026-11-15
+
+The explicit CLI4 profile binds exactly 15 physical-R bodies and one real backends namespace metadata record through the original Source42 R/A mapping and unchanged source-exact importer. Real parent imports are guarded before PathFinder; pregrant evidence stays in memory, and the actual child frame and health joins bind request, plan, profile, guard and PID birth. Legacy mixed modes refuse; defaults and resource authority remain unchanged.
+
+Two separate original software cohorts passed independent audits: **A144v02: 144 cases** (102 new native, 40 retained native, two retained health), zero failures/errors/skips, in 3.934s; **H34: 34 new health cases**, zero failures/errors/skips, in 1.413s. Each uses a fresh frontier of 212 source files and eight Git metadata pins. Neither result qualifies the whole 242-case owner module, and no pooled run is claimed.
+
+Original Source R+A, Native-resource, sampled-process and genuine-wait custody closed separately in 168.173s and 168.301s before each initial 420s cutoff. Each durably released only its own 16MiB: A144's 462 files / 4,697,191 bytes and H34's 1,385 files / 3,469,714 bytes. The first A144 remains failed (138 passes / six CALL failures), with its 16MiB retained; the corrected Source-queue timeout wrote nothing and closed all acquired scopes.
+
+Main15 preparation, private delegated immutable@2 SDK/worker and the full A owner/driver/template transition remain unqualified. No genuine DB observation, R negative-lifecycle qualification, scientific activation, model/training, Lean, legal-meaning or corpus authority follows. Peer work, all 119 component records, 24 task IDs/states and private-asset/runtime holds are preserved. [Selected source/software evidence](../../../../workspace/test-logs/federal-corpus-audits/legal-ir-native-physical-R-CLI4-selected-software-qualified-20261115-v01/qualification-summary.json).
+
+
 ## Canonical aggregate context and key-layout transport — 2026-11-15
 
 The existing structured retriever, producer evaluator, source-input builder and decoder worker now carry complete aggregate V4 TRAIN contexts through explicit `shared_json_v3`. Repeated object-key layouts share the existing v2 graph; scalar types, node identities, ordered arguments, complete definitions and source links remain intact. Defaults and v1/v2 remain unchanged. Both encoded and reconstructed-v2 wires retain the 16KiB limit. V3 requires the unchanged 4096-token context profile; a nondefault Qwen budget refuses before model access. No numerical kernel is replaced.

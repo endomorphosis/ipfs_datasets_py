@@ -1,5 +1,14 @@
 # Operations and evidence ownership
 
+## CLI4 separate original custody and retained failures — 2026-11-15
+
+The audited corrected Source5 operation installed two changed bodies and recaptured three same-byte bodies with fresh identities; its separate readback closed. Separate original A144v02 and H34 cohorts passed independent audits: 144 selected cases in 3.934s and 34 new health cases in 1.413s, each with zero failures/errors/skips. Their original Source R+A, Native-resource, sampled-process and genuine-wait custody closed separately in 168.173s and 168.301s before each initial 420s cutoff.
+
+Each durably released only its own 16MiB: A144's 462 files / 4,697,191 bytes and H34's 1,385 files / 3,469,714 bytes. The first failed A144's 16MiB remains retained; the earlier corrected Source queue timed out at 300s with zero writes and all acquired scopes closed.
+
+CPU1, memory1536MiB, process4, storage16MiB, productive300, ledger60, shared Source60 and initial420 remain unchanged, without retry or deadline renewal. Main15, private immutable@2 SDK/worker, full A owner/driver/template transition and all private-asset/runtime holds remain separate. [Selected source/software evidence](../../../../workspace/test-logs/federal-corpus-audits/legal-ir-native-physical-R-CLI4-selected-software-qualified-20261115-v01/qualification-summary.json).
+
+
 ## G14 two-literal fix and retained setup-failure boundary — 2026-11-15
 
 The existing embedded observation owner referenced two import-scope constants that it had never defined. The intended physical-R CLI4 probe therefore stopped with two setup errors in the legacy parser before reaching the proposed CLI4 call. That failed 16MiB claim stays retained and nondurable; it is not a CLI4 feature reproduction.

@@ -1,5 +1,12 @@
 # Training and experiment history
 
+## CLI4 separate software cohorts preserve training and activation holds — 2026-11-15
+
+Two independently audited original software cohorts passed separately: A144v02's 144 selected cases (102 new native, 40 retained native, two retained health) in 3.934s, and H34's 34 new health cases in 1.413s. Each had zero failures/errors/skips. There is no pooled or whole 242-case owner-module qualification.
+
+Original custody closed separately in 168.173s and 168.301s before each initial 420s cutoff. Each durably released only its own 16MiB. The first failed A144's 138-pass/six-CALL-failure outcome and retained 16MiB, plus the zero-write Source-queue timeout, remain unchanged. No genuine DB observation, scientific activation, model/training, Lean, statutory-meaning or corpus gain follows. All 119 component records, 24 task states, private assets and runtime holds remain unchanged. [Selected source/software evidence](../../../../workspace/test-logs/federal-corpus-audits/legal-ir-native-physical-R-CLI4-selected-software-qualified-20261115-v01/qualification-summary.json).
+
+
 ## Canonical complete-context transport; measured software scope — 2026-11-15
 
 The existing aggregate V4 decoder factory and optional lossless key-layout v3 DATA profile now have one canonical-public **114-pass** qualification:99 codec/guard,2 actual frozen-tokenizer and13 retained tiny synthetic Torch/provenance cases, zero failures/errors/skips and one warning,220.802s. Original custody closed379.263s<420; its own16MiB was durably released. V3 persisted context counts3781/3781/2568 retain every permitted example, type, ordered argument, definition and source link. The V2 case separately asserts4598/4598/2952 and refusal before any inert backend call. No pretrained weights or fitting run; inert three-query outputs are abstentions, not quality improvement. [Exact measured scope](../../../../docs/autoformalization/evidence/legal-ir-canonical-key-layout-context-20261115.json).

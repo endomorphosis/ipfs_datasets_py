@@ -1,5 +1,14 @@
 # Conditional native execution for V2 definition use
 
+## CLI4 physical-R controls preserve native and corpus gates — 2026-11-15
+
+The explicit CLI4 profile uses exactly 15 physical-R bodies, one real backends namespace metadata record, original Source42 mapping and the unchanged source-exact importer. Guarded real-parent imports, memory-only pregrant evidence, strict actual child frames and request/plan/profile/guard/PID-birth health joins retain legacy refusals and resource authority.
+
+Two separate original cohorts passed independent software audits: A144v02's 144 selected cases and H34's 34 new health cases. Both original custody scopes closed, and each durably released only its own 16MiB. Neither result qualifies the whole 242-case owner module. The first failed A144 and its retained 16MiB remain unchanged.
+
+Genuine DB observation, R negative-lifecycle qualification, Main15/private immutable@2/full-A transition, scientific activation, model, Lean, legal meaning and corpus admission remain separate gates. All 119 component records, 24 task states and private-asset/runtime holds remain unchanged. [Selected source/software evidence](../../../../../workspace/test-logs/federal-corpus-audits/legal-ir-native-physical-R-CLI4-selected-software-qualified-20261115-v01/qualification-summary.json).
+
+
 ## Native observation scope constants: narrow constructor qualification — 2026-11-15
 
 The existing embedded observation owner referenced two import-scope constants that it had never defined. The intended physical-R CLI4 probe therefore stopped with two setup errors in the legacy parser before reaching the proposed CLI4 call. That failed 16MiB claim stays retained and nondurable; it is not a CLI4 feature reproduction.

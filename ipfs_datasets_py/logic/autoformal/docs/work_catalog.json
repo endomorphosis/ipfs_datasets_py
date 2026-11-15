@@ -14988,6 +14988,16 @@
       "root": "datasets_repository",
       "scope": "Onepassed count-only diagnostic;3queries×3transports=9measurements,0codec refusals and2plain-context byte refusals; complete sharedv2context4598/4598/2952 vs4096 and fullsource4869/4870/3229 vs65536. Fresh6b5apipeline (no inheritedhistoricalv04 or savedc68 qualification), fullroundtrip/no truncation or backend/model calls; own16MiB released, priorfailed16MiB retained. Separate unqualifiedV3source-preservation d95427c9/3files495504B is notMain or tokenfit. No factory/model/legal/corpus claim.",
       "status": "qualified_complete_input_count_diagnostic_capacity_refusals_preserved"
+    },
+    {
+      "id": "legal-ir-native-physical-R-CLI4-selected-software-qualified-20261115-v01",
+      "observed_bytes": 12597,
+      "observed_sha256": "4f72313cf338f8df73b3942a12acfaefb6b67514636ee7ee0c24fc7456bd2b80",
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-native-physical-R-CLI4-selected-software-qualified-20261115-v01/qualification-summary.json",
+      "required_for_catalog_check": false,
+      "root": "datasets_repository",
+      "scope": "Audited corrected external A5 source/readback; separate original A144v02 144-case and H34 34-case software qualifications with original custody closed and each own16MiB durably released. Whole242 unqualified; failedA144 retained and zero-writeSource timeout preserved. No actualDB/Rnegative-lifecycle/scientific/model/legal/Lean/corpus authority.",
+      "status": "qualified_separate_selected_A144_and_H34_source_software_controls_only"
     }
   ]
 }
