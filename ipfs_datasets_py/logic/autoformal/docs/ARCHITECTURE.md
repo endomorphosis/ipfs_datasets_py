@@ -1,5 +1,11 @@
 # Architecture and owner map
 
+## Explicit lossless aggregate-context transport — 2026-11-15
+
+Canonical owners remain `legal_structured_retrieval.py`, `legal_ir_evaluation_artifacts.py`, `training_cycle_inputs.py` and `autoencoder_training_worker.py`. The optional `shared_json_v3` transport interns repeated object-key layouts over the existing strict v2 graph. It preserves complete typed JSON and ordered arrays and reuses v2 validation; both encoded wires remain bounded at16KiB, with the existing expansion/depth/node limits. Canonical re-encoding rejects noncanonical layouts, aliases, bad references and unsupported shapes. The source still accompanies learned representations.
+
+Aggregate V4 preserves per-component reviewed admission, the exact TRAIN union, source/dependency exclusions and complete governing-definition closure. Exit-policy and raw-output snapshot fences remain. Defaults and v1/v2 are retained; V3 explicitly refuses a nondefault Qwen context budget before native model access. The portable tokenizer fixture freezes the public native mapping while current wrapper/source identities are independently derived. [Selected canonical114-case qualification and remaining gates](../../../../docs/autoformalization/evidence/legal-ir-canonical-key-layout-context-20261115.json) do not confer statutory meaning, learned-model quality or proof authority; six slow structural controls remain pending.
+
 ## Evaluator policy and observation boundary — 2026-11-15
 
 Current rich V2/V3 evaluation brackets production with the same independent live context policy. A final policy callback is followed by fresh query/TRAIN/context replay and source/profile/fact fences, so a policy cannot grant and then rewrite the facts being evaluated. Denial identity is retained, with any failed final fence recorded as its cause. Returned producer data is detached before later callbacks; timings and error populations keep their existing meanings. Earlier failed evidence may refuse without another policy call. This adds no interpreter, model, supervisor, execution grant or legal authority.

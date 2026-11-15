@@ -9452,6 +9452,14 @@
   "scope": "Curated current ownership/navigation with attributed saved evidence. Observations are snapshots, not future source-hash requirements or proof admission.",
   "selected_evidence": [
     {
+      "id": "canonical-aggregate-key-layout-context-20261115",
+      "path": "docs/autoformalization/evidence/legal-ir-canonical-key-layout-context-20261115.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Canonical-public114PASS:99codec+2actualfrozen-tokenizer+13tinyretained; Source255/Git8 unchanged, original custody379.263s<420 and own16MiB durable/released. V2 refusal and complete V3 transport; six slow controls unqualified, earlier failures/retained claims preserved. No pretrained quality, statutory meaning, Lean or corpus credit.",
+      "status": "selected_canonical_public_software_qualified_other_gates_pending"
+    },
+    {
       "id": "v4-public-tokenizer-complete-context-refusal-20261115",
       "path": "docs/autoformalization/evidence/legal-ir-v4-public-tokenizer-context-refusal-20261115.json",
       "root": "datasets_repository",

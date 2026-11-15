@@ -1,5 +1,11 @@
 # Training and experiment history
 
+## Canonical complete-context transport; measured software scope — 2026-11-15
+
+The existing aggregate V4 decoder factory and optional lossless key-layout v3 DATA profile now have one canonical-public **114-pass** qualification:99 codec/guard,2 actual frozen-tokenizer and13 retained tiny synthetic Torch/provenance cases, zero failures/errors/skips and one warning,220.802s. Original custody closed379.263s<420; its own16MiB was durably released. V3 persisted context counts3781/3781/2568 retain every permitted example, type, ordered argument, definition and source link. The V2 case separately asserts4598/4598/2952 and refusal before any inert backend call. No pretrained weights or fitting run; inert three-query outputs are abstentions, not quality improvement. [Exact measured scope](../../../../docs/autoformalization/evidence/legal-ir-canonical-key-layout-context-20261115.json).
+
+Historical failures and checkpoint/source identities remain immutable. Public V01 prelaunch Git refusal and V02 deadline failure supply no completed-case credit; V02's16MiB remains retained. Six slow structural controls remain unqualified, separate from the114 passing cases and the earlier private75/partial101/public26 scopes. No review/gold, actual-model capacity, semantic fidelity, Lean or corpus result is inferred. Private assets and existing resource limits remain unchanged.
+
 ## Local Native verification and complete-input capacity census — 2026-11-15
 
 The [current Native engineering qualification](../../../../docs/autoformalization/evidence/legal-ir-current-native-cache-20261115.json) used the existing original owner and real bounded SubprocessExecutor path. Eleven actual commands comprised four version probes and seven compilations. Six existing kernel scenarios had their expected outcomes: conjunction and explicitly approved foundations accepted; wrong goal (actual compiler exit 1), direct/implicit unapproved classical dependencies and configured-version mismatch refused. Current verifier profile `lean-kernel-verification/v1`, disk reopen and exact cache reuse passed. Three artifact and six reuse-context mutations refused without additional Native commands. Ordinary pytest and standalone Native pytest counts are both zero; these are local proof/cache controls, not statutory or corpus qualification.
