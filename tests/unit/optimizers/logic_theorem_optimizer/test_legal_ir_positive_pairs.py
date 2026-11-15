@@ -567,7 +567,8 @@ def test_sealed_shards_regenerate_and_stay_content_addressed(tmp_path: Path) -> 
             selected_evidence_id=pair.evidence[0].evidence_id,
         )
         assert example.training_eligible
-    assert all(row["admitted"] for row in loss_pair_admissions(pairs))
+    assert all(row["admitted"] for row in loss_pair_admissions(
+        pairs, examples=tuple(item.example for item in explicit.admitted)))
     assert all(Path(path).read_bytes() == raw for path, raw in original.items())
 
 
@@ -768,3 +769,180 @@ def test_pgir040_explicit_label_cannot_reuse_stale_endpoint_digests():
     stale = replace(supplied, subject_statement_digests=(DIGEST_A, DIGEST_B))
     with pytest.raises(TrainingContractValidationError, match="another statement"):
         candidate_from_recipe_case(case, evidence=(stale,))
+
+
+# PGIR-040 follow-up: decoding a pair does not select a training admission.
+@pytest.mark.parametrize("population", [
+    "historical_recipe_archive",
+    "pair_without_evidence",
+    "explicit_fixture_without_selected_training_example",
+])
+def test_pgir040_loss_projection_requires_selected_training_admission(population):
+    if population == "historical_recipe_archive":
+        pairs = load_positive_pair_shards(resolve_positive_pair_data_dir())
+        assert len(pairs) == 8
+    elif population == "pair_without_evidence":
+        archived = load_positive_pair_shards(resolve_positive_pair_data_dir())
+        pairs = (replace(archived[0], evidence=()),)
+        assert pairs[0].evidence == ()
+    else:
+        pairs = _fictional_explicit_positive_population().pairs
+        assert len(pairs) == 8
+    rows = loss_pair_admissions(pairs)
+    assert len(rows) == len(pairs)
+    assert all(row["admitted"] is False for row in rows)
+    assert all(row["pair_class"] == "positive" for row in rows)
+    assert {(row["left_id"], row["right_id"]) for row in rows} == {
+        (pair.left.statement_id, pair.right.statement_id) for pair in pairs
+    }
+
+
+def test_pgir040_empty_loss_projection_preserves_empty_population():
+    assert loss_pair_admissions(()) == ()
+
+
+
+def test_pgir040_raw_pair_cannot_enable_cosine_loss():
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_loss_configuration import (
+        AllRecordCosineMaximizationError, IRLossBatch, IRLossPairAdmission,
+        IRLossRecord, evaluate_ir_composite_loss,
+    )
+    archived = load_positive_pair_shards(resolve_positive_pair_data_dir())[0]
+    pair = replace(archived, evidence=())
+    row = loss_pair_admissions((pair,))[0]
+    records = (
+        IRLossRecord(record_id=pair.left.statement_id, lineage_id="fixture:projection-left", latent=(1.0, 0.0)),
+        IRLossRecord(record_id=pair.right.statement_id, lineage_id="fixture:projection-right", latent=(0.0, 1.0)),
+    )
+    admission = IRLossPairAdmission(
+        left_id=row["left_id"], right_id=row["right_id"],
+        pair_class=row["pair_class"], admitted=row["admitted"],
+    )
+    with pytest.raises(AllRecordCosineMaximizationError, match="explicit pair admissions"):
+        evaluate_ir_composite_loss(IRLossBatch(records=records, pair_admissions=(admission,)))
+
+
+# Excerpt for the existing positive-pair owning test after the RED is measured.
+# No external checker/review authentication is implied by these fictional labels.
+
+def test_pgir040_loss_projection_preserves_explicit_fictional_training_examples():
+    result = _fictional_explicit_positive_population()
+    rows = loss_pair_admissions(result.pairs, examples=tuple(item.example for item in result.admitted))
+    assert len(rows) == 8
+    assert all(row["admitted"] is True for row in rows)
+
+
+def test_pgir040_same_pair_id_cannot_attach_a_different_evidence_record():
+    result = _fictional_explicit_positive_population()
+    archived = load_positive_pair_shards(resolve_positive_pair_data_dir())
+    by_id = {item.pair_id: item for item in result.admitted}
+    assert set(pair.pair_id for pair in archived) == set(by_id)
+    assert all(pair.digest != by_id[pair.pair_id].pair.digest for pair in archived)
+    rows = loss_pair_admissions(archived, examples=tuple(item.example for item in result.admitted))
+    assert all(row["admitted"] is False for row in rows)
+
+
+def test_pgir040_quarantined_training_example_cannot_select_a_loss_pair():
+    from ipfs_datasets_py.logic.formalization.training_contracts import QuarantineReason
+    item = _fictional_explicit_positive_population().admitted[0]
+    quarantined = replace(item.example, disposition=ExampleDisposition.QUARANTINED,
+                          quarantine_reasons=(QuarantineReason.POLICY,))
+    rows = loss_pair_admissions((item.pair,), examples=(quarantined,))
+    assert rows[0]["admitted"] is False
+
+
+def test_pgir040_pair_id_change_does_not_reuse_an_old_selected_example():
+    item = _fictional_explicit_positive_population().admitted[0]
+    changed = replace(item.pair, pair_id=item.pair_id + ":different-record")
+    rows = loss_pair_admissions((changed,), examples=(item.example,))
+    assert rows[0]["admitted"] is False
+
+
+def test_pgir040_mapping_cannot_impersonate_a_selected_training_example():
+    item = _fictional_explicit_positive_population().admitted[0]
+    with pytest.raises(PositivePairAdmissionError, match="IRTrainingExample"):
+        loss_pair_admissions((item.pair,), examples=(item.example.to_dict(),))
+
+
+def test_pgir040_matching_training_examples_are_consumed_once():
+    item = _fictional_explicit_positive_population().admitted[0]
+    class Once:
+        calls = 0
+        def __iter__(self):
+            self.calls += 1
+            assert self.calls == 1
+            yield item.example
+    examples = Once()
+    assert loss_pair_admissions((item.pair,), examples=examples)[0]["admitted"] is True
+    assert examples.calls == 1
+
+
+def test_pgir040_explicitly_selected_pair_reaches_existing_cosine_loss():
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_loss_configuration import (
+        IRLossBatch, IRLossPairAdmission, IRLossRecord, evaluate_ir_composite_loss,
+    )
+    item = _fictional_explicit_positive_population().admitted[0]
+    row = loss_pair_admissions((item.pair,), examples=(item.example,))[0]
+    records = (
+        IRLossRecord(record_id=item.pair.left.statement_id, lineage_id="fixture:selected-left", latent=(1.0, 0.0)),
+        IRLossRecord(record_id=item.pair.right.statement_id, lineage_id="fixture:selected-right", latent=(0.0, 1.0)),
+    )
+    admission = IRLossPairAdmission(row["left_id"], row["right_id"], row["pair_class"], admitted=row["admitted"])
+    evaluated = evaluate_ir_composite_loss(IRLossBatch(records=records, pair_admissions=(admission,)))
+    assert evaluated.component("normalized_cosine").raw == pytest.approx(1.0)
+
+
+
+def test_pgir040_any_matching_quarantine_prevents_implicit_readmission():
+    from ipfs_datasets_py.logic.formalization.training_contracts import QuarantineReason
+    item = _fictional_explicit_positive_population().admitted[0]
+    quarantined = replace(item.example, example_id=item.example.example_id + ":policy-hold",
+                          disposition=ExampleDisposition.QUARANTINED,
+                          quarantine_reasons=(QuarantineReason.POLICY,))
+    for examples in ((item.example, quarantined), (quarantined, item.example)):
+        assert loss_pair_admissions((item.pair,), examples=examples)[0]["admitted"] is False
+
+
+def test_pgir040_conflicting_training_example_ids_cannot_choose_an_admission():
+    item = _fictional_explicit_positive_population().admitted[0]
+    changed = replace(item.example, metadata={"fixture": "different-admission-context"})
+    assert changed.example_id == item.example.example_id and changed.cid != item.example.cid
+    with pytest.raises(PositivePairAdmissionError, match="conflicting training example identity"):
+        loss_pair_admissions((item.pair,), examples=(item.example, changed))
+
+
+def test_pgir040_selected_example_cannot_rescue_a_pair_with_removed_evidence():
+    item = _fictional_explicit_positive_population().admitted[0]
+    unverified = replace(item.pair, evidence=())
+    assert loss_pair_admissions((unverified,), examples=(item.example,))[0]["admitted"] is False
+
+
+def test_pgir040_mapping_cannot_impersonate_a_pair_record():
+    item = _fictional_explicit_positive_population().admitted[0]
+    with pytest.raises(PositivePairAdmissionError, match="IRPositivePair"):
+        loss_pair_admissions((item.pair.to_dict(),), examples=(item.example,))
+
+
+def test_pgir040_loss_projection_snapshots_pairs_before_consuming_example_iterators():
+    population = _fictional_explicit_positive_population().admitted
+    pairs = [population[0].pair]
+    def examples():
+        pairs.append(population[1].pair)
+        yield population[0].example
+    rows = loss_pair_admissions(pairs, examples=examples())
+    assert len(pairs) == 2
+    assert len(rows) == 1 and rows[0]["admitted"] is True
+
+
+
+def test_pgir040_proof_example_cannot_substitute_for_pair_admission():
+    # Fictional proof metadata tests kind separation, not actual kernel execution.
+    item = _fictional_explicit_positive_population().admitted[0]
+    trace = _proof_trace("loss-projection-proof", DIGEST_F)
+    proof_example = IRTrainingExample.classify(
+        example_id="fixture:proof-not-pair-admission", record=trace,
+        selected_evidence_id=trace.evidence[0].evidence_id,
+    )
+    assert proof_example.training_eligible
+    with pytest.raises(PositivePairAdmissionError, match="positive-pair IRTrainingExample"):
+        loss_pair_admissions((item.pair,), examples=(proof_example,))

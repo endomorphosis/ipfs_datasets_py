@@ -1,5 +1,11 @@
 # Architecture and owner map
 
+## Explicit pair admission reaches loss through a matching example — 2026-11-15
+
+The existing positive-pair owner exposes `loss_pair_admissions(pairs, *, examples=())`. Raw decoded pairs have no implicit admission. Callers explicitly attach canonical `IRTrainingExample` records; the owner detaches both inputs and matches complete pair digest/CID, including exact label evidence and lineage. Pair ID equality alone cannot attach a different record. The canonical training contract determines eligibility, a matching quarantined example keeps the pair nontraining, and conflicting example IDs refuse. A proof-trace training example cannot substitute for a positive-pair example.
+
+The projected row retains its declared positive relationship with `admitted=False` when unselected, so it never becomes an automatic negative. The existing loss consumer refuses all-record cosine maximization without explicit admissions; a matching fictional selected example still reaches its ordinary cosine calculation. This is a software artifact-linkage boundary. It does not authenticate a human review, external checker, legacy archive claim, model checkpoint or statutory meaning. Existing wire schemas, miner epoch and historical shards remain unchanged.
+
 ## Positive recipes do not execute checkers — 2026-11-15
 
 The existing `legal_ir_positive_pairs.py` owner no longer creates VERIFIED semantic, human-review or proof labels from recipe strings and authority enums. Recipe expansion produces a proposal; explicitly supplied canonical `LabelEvidence` is detached, checked against both exact endpoint identities and the stated relationship, and passed through the existing authority and training contracts. Metadata cannot override that evidence or relabel a receipt as a different check. A verified eligible label, rather than tuple order, selects the training evidence and receipt.

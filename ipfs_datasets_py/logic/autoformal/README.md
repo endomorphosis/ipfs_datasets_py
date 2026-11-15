@@ -1,5 +1,7 @@
 # Legal autoformalization
 
+Positive-pair loss projection additionally requires explicitly selected, eligible `IRTrainingExample` records matching the complete pair identity. Decoding a shard alone keeps its rows nontraining. The [handoff](docs/HANDOFF.md) records the 78-case software qualification and external-authentication limits.
+
 The legacy heuristic fuzzer now retains diagnostics and sanitized unverified proposals without exporting trusted training negatives. Explicit distrust and proposal markers are rejected even when verification is optional. The [93-case software qualification](../../../docs/autoformalization/evidence/legal-ir-legacy-fuzzer-proposal-boundary-20261115.json) preserves explicit caller compatibility and the separate typed PGIR-041 route; independent semantic evidence, training and convergence remain separate gates.
 
 The existing positive-pair miner treats canonical recipes as unverified proposals. Typed caller-supplied evidence is required before a recipe pair can train or emit a relationship receipt; see the [handoff](docs/HANDOFF.md) for the 133-case qualification and its archive-authentication limits.

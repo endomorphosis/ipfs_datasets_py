@@ -1558,19 +1558,51 @@ def resolve_positive_pair_data_dir(start: str | Path | None = None) -> Path:
 
 def loss_pair_admissions(
     pairs: Sequence[IRPositivePair],
+    *,
+    examples: Sequence[IRTrainingExample] = (),
 ) -> tuple[dict[str, Any], ...]:
-    """Project admitted pairs into the ``IRLossPairAdmission`` shape."""
+    """Project pairs only with explicitly selected, eligible training examples.
 
-    return tuple(
-        {
-            "admitted": True,
+    Decoding an archive or declaring a pair relationship does not select a
+    training admission. Reuse the canonical training-example contract and bind
+    its complete record identity, including exact label evidence, rather than
+    pair IDs alone. Conflicting or quarantined matching examples keep the pair
+    nontraining. This checks a trusted caller's explicit artifacts; it does not
+    authenticate external checker/reviewer execution or reissue old receipts.
+    """
+
+    supplied_pairs = tuple(pairs)
+    if any(type(pair) is not IRPositivePair for pair in supplied_pairs):
+        raise PositivePairAdmissionError("canonical IRPositivePair records required")
+    detached_pairs = tuple(IRPositivePair.from_dict(pair.to_dict()) for pair in supplied_pairs)
+    supplied_examples = tuple(examples)
+    if any(type(example) is not IRTrainingExample for example in supplied_examples):
+        raise PositivePairAdmissionError("explicit IRTrainingExample records required")
+    detached_examples = tuple(
+        IRTrainingExample.from_dict(example.to_dict()) for example in supplied_examples
+    )
+    by_record: dict[tuple[str, str], list[IRTrainingExample]] = {}
+    example_identities: dict[str, str] = {}
+    for example in detached_examples:
+        if type(example.record) is not IRPositivePair:
+            raise PositivePairAdmissionError("positive-pair IRTrainingExample records required")
+        previous = example_identities.get(example.example_id)
+        if previous is not None and previous != example.cid:
+            raise PositivePairAdmissionError("conflicting training example identity")
+        example_identities[example.example_id] = example.cid
+        key = (example.record.digest, example.record.cid)
+        by_record.setdefault(key, []).append(example)
+    rows: list[dict[str, Any]] = []
+    for pair in detached_pairs:
+        selected = by_record.get((pair.digest, pair.cid), ())
+        rows.append({
+            "admitted": bool(selected) and all(example.training_eligible for example in selected),
             "left_id": pair.left.statement_id,
             "pair_class": "positive",
             "relationship": pair.relationship.value,
             "right_id": pair.right.statement_id,
-        }
-        for pair in pairs
-    )
+        })
+    return tuple(rows)
 
 
 __all__ = [

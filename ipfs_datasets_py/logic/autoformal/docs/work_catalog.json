@@ -132,10 +132,11 @@
       ],
       "compatibility_dependency": false,
       "evidence_ids": [
-        "PGIR040-explicit-positive-evidence-20261115"
+        "PGIR040-explicit-positive-evidence-20261115",
+        "PGIR040-loss-projection-admission-20261115"
       ],
       "id": "typed-positive-pair-evidence-proposals",
-      "notes": "Existing optimizer owner; canonical recipes propose relationships without executing checkers or reviews. Explicit typed caller evidence is detached and bound before training admission. Historical archive/loss projection authentication remains pending; no native/legal/model qualification inferred.",
+      "notes": "Existing optimizer owner; canonical recipes propose relationships without executing checkers or reviews. Explicit typed caller evidence is detached and bound before training admission. Loss projection also requires an explicitly selected eligible training example matching the complete pair record. Historical archive/loss projection authentication remains pending; no native/legal/model qualification inferred.",
       "owner_module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_positive_pairs",
       "ownership_role": "existing_single_owner",
       "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_positive_pairs.py",
@@ -9537,6 +9538,14 @@
   "schema": "legal-autoformal-work-catalog/v1",
   "scope": "Curated current ownership/navigation with attributed saved evidence. Observations are snapshots, not future source-hash requirements or proof admission.",
   "selected_evidence": [
+    {
+      "id": "PGIR040-loss-projection-admission-20261115",
+      "path": "docs/autoformalization/evidence/legal-ir-PGIR040-loss-projection-admission-20261115.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Original87226 EXIT0:78PASS/0FAIL/ERR/SKIP (63 positive +15 loss), pytest0.768s; Source256/MAX256/Git8 drift0, custody156.157376s<420, own16MiB durableReleased76009B. MeasuredRED4FAIL1PASS/16MiB retained. Earlier257 preowner refusal/operator cancellation earns zero test or qualification credit. Exact selected canonical training-example linkage only; no real review, external checker, native Lean, learned fit or statutory gold claim.",
+      "status": "selected_original_software_qualified_external_authentication_pending"
+    },
     {
       "id": "PGIR040-explicit-positive-evidence-20261115",
       "path": "docs/autoformalization/evidence/legal-ir-PGIR040-explicit-positive-evidence-20261115.json",

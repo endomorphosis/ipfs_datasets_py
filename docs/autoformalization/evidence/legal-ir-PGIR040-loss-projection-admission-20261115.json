@@ -1,0 +1,156 @@
+{
+  "JUnit": {
+    "by_owner": {
+      "tests.unit.optimizers.logic_theorem_optimizer.test_legal_ir_loss_configuration": 15,
+      "tests.unit.optimizers.logic_theorem_optimizer.test_legal_ir_positive_pairs": 63
+    },
+    "errors": 0,
+    "failures": 0,
+    "passed": 78,
+    "seconds": 0.768,
+    "skipped": 0,
+    "tests": 78
+  },
+  "actual_exec": {
+    "exit_code": 0,
+    "handle": "87226",
+    "terminal_chunk": "1e3398"
+  },
+  "compatibility": "Wire schemas, miner-v2 identity, old receipts, archive bytes and CIDs remain unchanged. The existing shard test caller supplies its explicitly fictional selected examples. Existing bound trace factories and miner implementations are unchanged. External checker/reviewer authentication and real statutory gold remain separate upstream gates.",
+  "lifecycle": {
+    "custody_errors": [],
+    "genuine_wait": true,
+    "initial_total_seconds": 420,
+    "observed_processes_gone": true,
+    "original_storage": {
+      "artifacts_durable_asserted": true,
+      "final_attempt_bytes": 76009,
+      "reservation_id": "fcf70b90f6ba4cc8afa9f36f02490ae2",
+      "status": "released",
+      "storage_bytes": 16777216
+    },
+    "owner_independently_birth_probed_gone": true,
+    "parent_seconds": 156.1573763936758,
+    "resource_compute_custody_closed": true,
+    "source_closed": true,
+    "source_exit_closed": true
+  },
+  "measured_RED": {
+    "failures": 4,
+    "passed": 1,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-ir-PGIR040-loss-projection-red-original-v02-input/red-reproduction-summary.json",
+    "retained_claim": "13bf56cc52444774bb4977dc2a90c9b0",
+    "sha256": "54fb320aa1cfa146f0c4a506d0e9e7b53ce79feb9c9f560d3797a0735e019b5c"
+  },
+  "prior_invalid_attempt": {
+    "canonical_classifier_verdict": "UNKNOWN_PRESERVED",
+    "guardian_exit": "operator_SIGINT130",
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-ir-PGIR040-loss-projection-red-original-v01-input",
+    "qualification_claimed": false,
+    "request_source_pins": 257,
+    "resource_or_storage_granted": false,
+    "test_cases_executed": 0
+  },
+  "qualification_summary": {
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-ir-PGIR040-loss-projection-green-original-v01-input/qualification-summary.json",
+    "sha256": "eb2733a940c0545935943d3ca543a52b2f6d779fe9d4bf0cc407fe7ea2829ba7"
+  },
+  "raw_artifacts": [
+    {
+      "bytes": 46530,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-ir-PGIR040-loss-projection-green-original-v01-input/request.json",
+      "sha256": "2c4c6f6562c83ada54a36b44ad3dec080d881653c208aec91c898b512a108261"
+    },
+    {
+      "bytes": 22355,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-ir-PGIR040-loss-projection-green-original-v01-input/run-original-source-held.py",
+      "sha256": "736d164401542d24e31956c76450fbe23434d4ec7ce59ee7273a7a6dd3755f8a"
+    },
+    {
+      "bytes": 1789,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-ir-PGIR040-loss-projection-green-original-v01-input/pgir040-loss-green-child.py",
+      "sha256": "8416db9b5ccae886b726bd4ef87b918652918701eac2fac5fe04bbc4936a729f"
+    },
+    {
+      "bytes": 19,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-ir-PGIR040-loss-projection-green-original-v01-input/pytest.ini",
+      "sha256": "713f986ee48be06ad4bff2a700d39514a9f69e34b3547af52366c0a274e30e5b"
+    },
+    {
+      "bytes": 995,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-ir-PGIR040-loss-projection-green-original-v01-input/frozen-request.json",
+      "sha256": "af083fb0cf3dc1c34f926d30d586dcd78d27fa0f271ca12b0607d61f483b4381"
+    },
+    {
+      "bytes": 437,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-ir-PGIR040-loss-projection-green-original-v01-input/request-static-review.json",
+      "sha256": "6d4eee2e957f811ed9d806d746ce228aab77da053df224eb8554485a7962c6d5"
+    },
+    {
+      "bytes": 163,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-ir-PGIR040-loss-projection-green-original-v01-input/started.json",
+      "sha256": "49489a8dcff7eae8469b66926bb231ed8df56c5fac226d02bed9178a1dc61d05"
+    },
+    {
+      "bytes": 11475,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-ir-PGIR040-loss-projection-green-original-v01-input/parent-closeout.json",
+      "sha256": "7625f6347a99dbf52ea7c7a544a243e1538a4071d8c36e9a7e81c303b76e6cec"
+    },
+    {
+      "bytes": 5486,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-ir-PGIR040-loss-projection-green-original-v01-input/owner.stdout",
+      "sha256": "10a2c16e73d26a8039b44c5c9233e6a43a84ec27c99390d43b8f04a035e2ad79"
+    },
+    {
+      "bytes": 0,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-ir-PGIR040-loss-projection-green-original-v01-input/owner.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 14752,
+      "path": "/tmp/pytest-of-barberb/legal-ir-PGIR040-loss-projection-green-20261115-v01/a/exports/pgir040-loss-green.xml",
+      "sha256": "cbb75c9ac228c2f38f1a9fe0bc5f08eac9cb738569c34026165c4c585a7fe8cb"
+    },
+    {
+      "bytes": 676,
+      "path": "/tmp/pytest-of-barberb/legal-ir-PGIR040-loss-projection-green-20261115-v01/a/logs/result.json",
+      "sha256": "6bd3ab577c74b314b4e014f705c590b802d30ff322574879736f089984c1efac"
+    }
+  ],
+  "resolved_defect": "Raw IRPositivePair records, including eight historical recipe-claimed labels and a record with no evidence, were automatically projected as admitted=True; the latter enabled the existing normalized-cosine consumer.",
+  "resulting_behavior": "loss_pair_admissions(pairs, *, examples=()) defaults to nontraining. Explicit canonical IRTrainingExample records are detached and matched to complete pair record digest/CID, including evidence and lineage. Matching examples must be eligible; any matching quarantine keeps the pair nontraining. Conflicting example IDs are refused. Pair IDs alone and proof-trace examples cannot grant positive-pair admission.",
+  "schema": "loss-projection-explicit-example-qualification/v1",
+  "scope": "Explicit canonical IRTrainingExample attachment to full positive-pair record digest/CID and eligibility. No external reviewer/checker authentication, real statutory gold, new native Lean, learned model fitting or end-to-end corpus claim. Historical schemas/shards/CIDs unchanged.",
+  "source": {
+    "A_HEAD": "21e94730749848ee76ced9cecf8082494ded8ad1",
+    "Git_identity_pins": 8,
+    "MAX_SOURCE_PINS": 256,
+    "R_HEAD": "ad54686ca8403f5ed966d281639e0d7a021d1613",
+    "drift": [],
+    "pins": 256,
+    "qualified_changed_files": [
+      {
+        "before_sha256": "62dd4ba303eaee68f051abf137dfcdd74e0cdde502942c838d4046ea92608f9c",
+        "candidate_sha256": "19a7a482bdb611ba27f2f29855f05e726adb001f4a78dcde3dcdbf37015afaaf",
+        "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_positive_pairs.py"
+      },
+      {
+        "before_sha256": "045ecfa6dc780f8c3af161db6899aeb2a76e8c5f57663fd82c466341e99a47cf",
+        "candidate_sha256": "1f822d986928c0849a313f0638257fe6eade7428681cb4bcef4792559636e8a2",
+        "path": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_positive_pairs.py"
+      }
+    ]
+  },
+  "status": "TWO_EXISTING_WHOLE_OWNERS_PASSED",
+  "task_id": "PGIR-040",
+  "unchanged_downstream_owners": [
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_loss_configuration.py",
+      "sha256": "d088888477452dab1e2d7a26fe754e95049f3a688a56d7a719ee59ed0a34d9d3"
+    },
+    {
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_loss_configuration.py",
+      "sha256": "09819d23a7ff55f8d40849987cf26cb8213f384cac5081f0c1df4c55a50ddbc1"
+    }
+  ]
+}

@@ -1,5 +1,13 @@
 # Current handoff
 
+## PGIR-040 loss projection requires a selected example — 2026-11-15
+
+The separate raw-pair loss-admission gap is corrected in the existing positive-pair owner. Use `loss_pair_admissions(pairs, examples=tuple(item.example for item in result.admitted))` for an explicitly selected mined population. The default `examples=()` keeps decoded pairs nontraining. Full record digest/CID and canonical training eligibility must match; pair IDs alone, removed evidence, conflicting example IDs, quarantine and proof-only examples cannot supply admission. This does not authenticate external reviewers/checkers or turn historical recipe claims into statutory gold.
+
+The corrected original request measured **four intended failures and one passing control**, including an unverified pair reaching cosine loss. After the correction, the original whole positive-pair and loss-configuration modules passed **78 cases: 63 positive-pair and 15 loss controls**, without failures, errors or skips. Source256/Git8 drift was empty; Source and resource custody closed in **156.157376 seconds** within the initial 420 seconds. The original owner durably released its own 16 MiB successful claim, using 76,009 bytes. The measured failure claim remains retained.
+
+A prior 257-pin request was refused before owner construction completed, with no child, Native grant or storage claim. Its inactive read guardian was operator-cancelled; the canonical unknown-custody record remains preserved and that attempt earns no test or qualification credit. The corrected request retained all executed production dependencies and replaced an unselected unit-test pin to stay within the unchanged 256-pin cap. No deadline, exhausted counter or failed claim was reset. All 24 backlog task IDs and states remain unchanged.
+
 ## Legacy fuzzer diagnostics stay outside trusted labels — 2026-11-15
 
 The existing optimizer owners now emit diagnostic report v2 and unverified proposal v2. Similarity, grammar and differential checks retain their diagnostic pass behavior; they do not set semantic `verified`. Minimized, source-copy-safe proposals remain in individual results, with `trusted=False`, an unverified partition and no `verified_by` claims. The curriculum rejects explicit distrust and proposal schema/partition markers before either verification policy can admit an example. Direct V1 trusted-caller defaults and the typed PGIR-041 evidence route retain their existing contracts.

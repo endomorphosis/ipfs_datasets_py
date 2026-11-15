@@ -1,5 +1,13 @@
 # Training and experiment history
 
+## PGIR-040 exact training-example linkage for loss — 2026-11-15
+
+Measured RED original `37130` exited 1 with **four intended failures and one pass**, no fixture errors or skips: historical decoded labels, a pair without evidence and an explicit fixture without a selected training example all acquired automatic admission; the evidence-free pair also bypassed the existing cosine-loss admission refusal. Source256/Git8 stayed unchanged and custody closed in 104.036275 seconds; the failed 16 MiB claim remains retained and nondurable. Its final attempt-byte count was not recorded.
+
+Measured GREEN original `87226` exited 0 with **78 passed** (63 positive-pair and 15 loss-configuration cases), pytest 0.768 seconds, no failures/errors/skips. Source256/Git8 drift was empty; genuine wait, process/resource closure and Source exit completed in 156.157376 seconds. The original owner durably released successful claim `fcf70b90f6ba4cc8afa9f36f02490ae2` with 76,009 bytes. Synthetic fixture labels test exact record attachment, same-ID/different-evidence refusal, quarantine/conflict behavior, detached inputs, stable iteration and proof-kind separation; this run performs no learned fitting or native Lean verification.
+
+The earlier distinct 257-pin preparation error created no child or resource claim. Its original CLI refused, its inactive guardian exited 130 after operator interruption, and its canonical custody verdict remains unknown. It is preserved as an incident, with zero executed cases and no qualification credit. Source-pin selection was corrected within the existing 256-pin policy before the measured RED; old request bytes and records were retained.
+
 ## Legacy heuristic proposals quarantined; software qualification — 2026-11-15
 
 The original two-control reproduction failed twice and retains its nondurable 16 MiB claim. The repaired existing owners passed a fresh **93-case** whole-module run (82 hard-negative + 11 metamorphic), **0 failures/errors/skips in 7.619s**. Original custody closed in 162.788363s with unchanged Source255/Git8; its own 16 MiB claim was durably released at 144,157 bytes. Prior failures and epochs remain unchanged.
