@@ -1204,3 +1204,78 @@ def test_current_cache_refuses_an_unsupported_loaded_lean_verifier_profile_befor
         LegalProofRecord.build(artifact, profile="fictional-older-loaded-verifier", jurisdiction="fictional",
             theorem_receipts=(receipt,), proof_bindings=(binding,))
     assert calls == []
+
+
+# Exact outer protocol coherence over an explicitly fictional kernel receipt.
+# These controls execute no Lean process and attest no native proof or statute.
+def _reissued_backend_version_cache_fixture(advertised_version: str):
+    artifact, _, original_binding, original_context = _bound_fixture()
+    original_snapshot = deepcopy(original_binding)
+    context = deepcopy(original_context)
+    context["backend_version"] = advertised_version
+    previous_claim = IRClaim.from_dict(original_binding["claim"])
+    claim = replace(previous_claim, metadata={**previous_claim.metadata.to_dict(),
+        "proof_context_digest": stable_digest(context)})
+    previous_request = BackendRequest.from_dict(original_binding["request"])
+    payload = previous_request.payload.to_dict()
+    payload["legal_proof_context"] = deepcopy(context)
+    request = BackendRequest.for_claim(claim, previous_request.obligation_id,
+        request_id="request:fictional-reissued-backend-version", requested_backend_id="lean",
+        bounds=previous_request.bounds, payload=payload)
+    # Rebuild the inner request/source binding using the existing fictional
+    # factory, preserving its actual native/toolchain version unchanged.
+    kernel = _fictional_kernel_receipt(request)
+    original_kernel = ProofResult.from_dict(original_binding["result"]).to_dict()["payload"]["kernel_receipt"]
+    assert kernel.accepted is True
+    assert kernel.native_identity.observation_kind == "trusted_fictional_identity_fixture"
+    assert kernel.native_identity.to_dict() == original_kernel["native_identity"]
+    assert kernel.toolchain.to_dict() == context["toolchain"]
+    assert kernel.native_identity.actual_version == kernel.toolchain.version == "fictional"
+    assert kernel.request_digest == request.digest
+    previous_attempt = BackendAttempt.from_dict(original_binding["attempt"])
+    attempt = replace(previous_attempt, attempt_id="attempt:fictional-reissued-backend-version",
+        request_digest=request.digest, backend_version=advertised_version,
+        output_digest=stable_digest({"authored_kernel_fixture": kernel.to_dict()}))
+    previous_result = ProofResult.from_dict(original_binding["result"])
+    result = ProofResult.for_attempt(request, attempt,
+        result_id="result:fictional-reissued-backend-version",
+        authority=replace(previous_result.authority, scope_digest=request.digest,
+            configuration_digest=stable_digest(context)), status=ResultStatus.PROVED,
+        payload={"kernel_receipt": kernel.to_dict(), "fixture_only": True})
+    receipt = ProofReceipt.issue(claim, request, attempt, result,
+        receipt_id="receipt:fictional-reissued-backend-version", verifier="fictional-test")
+    assert receipt.backend_version == result.backend_version == attempt.backend_version == context["backend_version"]
+    assert claim.metadata["proof_context_digest"] == stable_digest(context)
+    assert request.payload.to_dict()["legal_proof_context"] == context
+    assert receipt.request_digest == kernel.request_digest == request.digest
+    assert original_binding == original_snapshot and original_context["backend_version"] == "fictional"
+    return artifact, receipt, claim, request, attempt, result, context, kernel
+
+
+def test_bound_cache_reissued_coherent_native_backend_version_preserves_reuse():
+    """Binding-consistency fixture only; this is not a native Lean result."""
+    artifact, receipt, claim, request, attempt, result, context, kernel = (
+        _reissued_backend_version_cache_fixture("fictional"))
+    assert receipt.backend_version == kernel.native_identity.actual_version == kernel.toolchain.version
+    binding = build_legal_proof_binding(artifact, receipt, claim=claim, request=request,
+        attempt=attempt, result=result, context=context)
+    record = LegalProofRecord.build(artifact, profile="fictional-coherent-native-version",
+        jurisdiction="fictional", theorem_receipts=(receipt,), proof_bindings=(binding,))
+    assert record.verify_integrity() is record
+    assert record.theorem_receipt_results(expected_context=context) == (receipt,)
+
+
+@pytest.mark.parametrize("advertised_version", [
+    "fictional-advertised-other", "lean4",
+])
+def test_bound_cache_rejects_reissued_outer_version_differing_from_native_toolchain(advertised_version):
+    """Reissue every outer link; the native version remains the same fixture."""
+    artifact, receipt, claim, request, attempt, result, context, kernel = (
+        _reissued_backend_version_cache_fixture(advertised_version))
+    assert receipt.backend_version != kernel.native_identity.actual_version
+    assert kernel.native_identity.actual_version == kernel.toolchain.version == "fictional"
+    # ProofReceipt.issue above used the actual canonical factories and checked
+    # all outer digests. Only the cross-owner backend/native version is wrong.
+    with pytest.raises(LegalProofIntegrityError, match="backend version"):
+        build_legal_proof_binding(artifact, receipt, claim=claim, request=request,
+            attempt=attempt, result=result, context=context)

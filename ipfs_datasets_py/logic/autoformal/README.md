@@ -1,5 +1,7 @@
 # Legal autoformalization
 
+Bound Lean proof reuse now requires the advertised backend version to equal the kernel's observed native and toolchain version. All 142 Source-only cache controls pass; the fictional red controls and separate current Native scope are recorded in the [handoff](docs/HANDOFF.md). Historical native results remain bound to their original source epochs and are not inherited by this change.
+
 Reviewed V2/V3 source-use preparation now requires one coordinate view per exact raw artifact; caller source labels cannot create a second physical use. The [24-case software correction](../../../docs/autoformalization/evidence/legal-ir-reviewed-source-raw-view-identity-20261115.json) preserves same-view disjoint uses and the separate historical 355-case qualification, without human legal review or proof/training/corpus admission.
 
 Generated PGIR-041 mutation proposals no longer create independent semantic labels automatically. Default mining quarantines them; explicit caller-supplied labels must bind the current pair and pass the existing contracts. The completed original passed all 88 selected software cases (82 hard-negative and six retained metamorphic cases), with no failures, errors or skips. See the [handoff](docs/HANDOFF.md) for measured scope, preserved failures and the remaining LIR-22 evidence-integration gate. Caller metadata supplies no authenticated solver, directed proof, legal review or statutory gold.

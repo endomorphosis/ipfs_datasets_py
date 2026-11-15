@@ -1,0 +1,222 @@
+{
+  "schema": "legal-proof-cache-native-version-coherence-evidence/v1",
+  "status": "FRESH_CACHE_VERSION_COHERENCE_REPAIR_QUALIFIED_FOR_RECORDED_SCOPES",
+  "task": "Phase1/proof-cache-integrity",
+  "date": "2026-11-15",
+  "defect": "A fully reissued outer receipt, request, result, attempt and context could consistently advertise one backend version while the checked kernel receipt retained another actual native/toolchain version.",
+  "repair": "The canonical proof cache additionally requires the outer receipt backend version to equal both the checked native identity actual version and the checked toolchain version.",
+  "source": [
+    {
+      "path": "ipfs_datasets_py/logic/legal_ir/proof_cache.py",
+      "sha256": "b83c6738e0c854469868a6db8f34fe8b76e27d5dc50703cb9ffa38a1da2478ec"
+    },
+    {
+      "path": "tests/unit/logic/legal_ir/test_proof_cache.py",
+      "sha256": "4baee6dda6afb770e286421c19467bac1fab045b16fe0635f597e8dcfc16a5b2"
+    },
+    {
+      "path": "tests/integration/logic/backends/test_kernel_backends.py",
+      "sha256": "20856f0f5bf33226af183c0af2fcb4bd1b84a517d55174f6194f17de99d72e71"
+    }
+  ],
+  "unchanged_kernel": {
+    "path": "ipfs_datasets_py/logic/backends/kernel/lean.py",
+    "sha256": "f4925374651fa4dc02eee59034f595a69dc69ec93c251b521665cbb3ee3907f4"
+  },
+  "red": {
+    "evidence": {
+      "artifact": "red-reproduction-summary.json",
+      "bytes": 8000,
+      "sha256": "87686a6c7100cb6b9fdb153cb187846bee430dc5340c7fc5fba12120601e7fe2",
+      "repo_relative_path": "workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-proof-cache-version-coherence-red-original-v01-input/red-reproduction-summary.json"
+    },
+    "original_tool_handle": 44539,
+    "terminal": "ed6b99",
+    "exit_code": 1,
+    "natural_tests": 3,
+    "passed": 1,
+    "failed": 2,
+    "errors": 0,
+    "skipped": 0,
+    "seconds": 0.804,
+    "both_negative_failures": "DID NOT RAISE LegalProofIntegrityError",
+    "fixture_scope": "Canonical protocol/cache factories with explicitly fictional native identity, not a compiler run.",
+    "source_pins": 252,
+    "Git_pins": 8,
+    "original_source_drift": [],
+    "source_and_resource_custody_closed": true,
+    "storage_bytes": 16777216,
+    "storage_status": "retained",
+    "storage_durable": false,
+    "old_claim_release_performed": false,
+    "request": {
+      "artifact": "request.json",
+      "repo_relative_path": "workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-proof-cache-version-coherence-red-original-v01-input/request.json",
+      "bytes": 45456,
+      "sha256": "1af0a360800a8faca205385357ddd44f5ca94b4ae9223b4f4b0c67edd0892ce2"
+    },
+    "controller": {
+      "artifact": "run-original-source-held-cache-version-red-READY-v01.py",
+      "repo_relative_path": "workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-proof-cache-version-coherence-red-original-v01-input/run-original-source-held-cache-version-red-READY-v01.py",
+      "bytes": 22352,
+      "sha256": "3d09c01a3ebae11ad6b907c8015d19559065b665463d3e679ec07ae63b2077f8"
+    }
+  },
+  "green": {
+    "evidence": {
+      "artifact": "qualification-summary.json",
+      "bytes": 9145,
+      "sha256": "8b499ba7b7717891804f936696be827a7448ad57a6ca62a4d10688fb1d300fe6",
+      "repo_relative_path": "workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-proof-cache-version-coherence-green-original-v01-input/qualification-summary.json"
+    },
+    "original_tool_handle": 97012,
+    "terminal": "f78839",
+    "exit_code": 0,
+    "scope": "Whole tests/unit/logic/legal_ir/test_proof_cache.py",
+    "natural_tests": 142,
+    "passed": 142,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "seconds": 8.739,
+    "coherent_positive_and_both_mismatch_negatives_passed": true,
+    "source_pins": 252,
+    "Git_pins": 8,
+    "original_source_drift": [],
+    "source_and_resource_custody_closed": true,
+    "positive_acceptance_before_deadline": true,
+    "storage_bytes": 16777216,
+    "storage_status": "released",
+    "artifacts_durable_asserted": true,
+    "actual_Lean_or_solver_provenance": false,
+    "request": {
+      "artifact": "request.json",
+      "repo_relative_path": "workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-proof-cache-version-coherence-green-original-v01-input/request.json",
+      "bytes": 44990,
+      "sha256": "78756be099f5ce2c1f75131e9f03933df39a92052450f2ceefa1e415213420ab"
+    },
+    "controller": {
+      "artifact": "run-original-source-held-cache-version-green-READY-v01.py",
+      "repo_relative_path": "workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-proof-cache-version-coherence-green-original-v01-input/run-original-source-held-cache-version-green-READY-v01.py",
+      "bytes": 22361,
+      "sha256": "1dc22de4a6984155630196766407f9a9c215cd26d5fbacf7db85a6d70ed02ecf"
+    }
+  },
+  "native": {
+    "status": "FRESH_NATIVE_KERNEL_AND_CACHE_CONTROLS_PASSED",
+    "evidence": {
+      "artifact": "qualification-summary.json",
+      "bytes": 14608,
+      "sha256": "d6cb6b1abd1575da73f8932bdb507aff981e48fe18b3d7f59c1b75e21b1bc9f3",
+      "repo_relative_path": "workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-ir-current-native-proof-cache-original-v03-input/qualification-summary.json"
+    },
+    "original_tool_handle": 98092,
+    "terminal": "905bf0",
+    "exit_code": 0,
+    "version": "4.34.1",
+    "verification_profile": "lean-kernel-verification/v1",
+    "executable_sha256": "79fb1d26fa5a39385d59fdc48a711a14b0710ca6480271acce99b4d177cea085",
+    "actual_commands": 11,
+    "actual_version_probes": 4,
+    "actual_compiler_invocations": 7,
+    "kernel_scenarios": [
+      {
+        "case": "conjunction",
+        "accepted": true,
+        "status": "proved"
+      },
+      {
+        "case": "wrong_goal",
+        "accepted": false,
+        "status": "error"
+      },
+      {
+        "case": "direct_unapproved_classical",
+        "accepted": false,
+        "status": "error"
+      },
+      {
+        "case": "implicit_unapproved_classical",
+        "accepted": false,
+        "status": "error"
+      },
+      {
+        "case": "wrong_configured_version",
+        "accepted": false,
+        "status": "unavailable"
+      },
+      {
+        "case": "explicitly_approved_foundations",
+        "accepted": true,
+        "status": "proved"
+      }
+    ],
+    "cache_commands": 3,
+    "cache_fresh_disk_round_trip": true,
+    "cache_reuse_or_mismatch_commands": 0,
+    "software_reissued_version_controls": {
+      "count": 2,
+      "kind": "software_reissued_actual_native_base",
+      "advertised_versions": [
+        "other-version",
+        "lean4"
+      ],
+      "actual_base_version": "4.34.1",
+      "all_cache_bindings_rejected": true,
+      "additional_native_commands": 0,
+      "new_native_results": false
+    },
+    "source_pins": 217,
+    "Git_pins": 8,
+    "native_input_hashes_checked": 19,
+    "original_source_drift": [],
+    "source_and_resource_custody_closed": true,
+    "genuine_original_wait": true,
+    "custody_errors": [],
+    "positive_acceptance_before_deadline": true,
+    "parent_Source_closed_seconds": 161.72517101699486,
+    "storage_bytes": 16777216,
+    "storage_status": "released",
+    "artifacts_durable_asserted": true,
+    "final_attempt_bytes": 573315,
+    "ordinary_pytest_cases": 0,
+    "standalone_native_pytest_cases": 0,
+    "compiler_mocked": false,
+    "historical_native_credit_inherited": false,
+    "scope": "Local native kernel/cache controls over fictional legal source fixtures; two metadata mutation controls reuse an actual returned native receipt and add no compiler commands.",
+    "request": {
+      "artifact": "request.json",
+      "repo_relative_path": "workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-ir-current-native-proof-cache-original-v03-input/request.json",
+      "bytes": 38477,
+      "sha256": "f76f6f4685737214dc52e58d27b88e305b02e89b581d13556ac270866a858c54"
+    },
+    "controller": {
+      "artifact": "run-original-source-held-native-READY-v03.py",
+      "repo_relative_path": "workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-ir-current-native-proof-cache-original-v03-input/run-original-source-held-native-READY-v03.py",
+      "bytes": 22350,
+      "sha256": "8deb3b8e6d276ef63ac6fa21d9dae86e9a8322c3c419867d4422524e85cea106"
+    }
+  },
+  "authority": {
+    "statutory_meaning": false,
+    "independent_legal_review": false,
+    "real_statutory_corpus_admission": false,
+    "model_or_training_quality": false,
+    "hosted_CI_rerun": false,
+    "whole_host_or_transitive_library_attestation": false,
+    "native_proof_cache_control_scope_only": true
+  },
+  "limitations": [
+    "Software mutation controls reissue metadata and are not new native executions.",
+    "Original before/after source pins apply to their recorded run epochs; they are not evergreen current-source attestations.",
+    "Archived prior receipts are not silently upgraded or re-admitted.",
+    "The unrelated private assets hold and previously retained failed-run storage remain unchanged.",
+    "The existing approved-foundations control tests an explicitly selected axiom policy; this change introduces no approved axiom to force proof success.",
+    "Local native controls do not resolve hosted CI availability or establish legal interpretation, reviewed statutory targets, model quality, or a verified statutory corpus."
+  ],
+  "evidence_processing": {
+    "private_summary_extractor_failures_preserved": 2,
+    "failures": "Two post-terminal summary extractors used incorrect JSON field paths; corrected extraction reused the same original closed run.",
+    "native_or_tests_rerun_for_summary": false
+  }
+}

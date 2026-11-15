@@ -356,6 +356,12 @@ def _validate_proof_binding(
             or _canonical_bytes(kernel.toolchain.to_dict()) != _canonical_bytes(context["toolchain"])
             or kernel.toolchain.kernel_id != receipt.backend_id):
         raise LegalProofIntegrityError("checked kernel receipt does not match the proof context")
+    if (kernel.native_identity is None
+            or receipt.backend_version != kernel.native_identity.actual_version
+            or receipt.backend_version != kernel.toolchain.version):
+        raise LegalProofIntegrityError(
+            "proved backend version differs from checked native/toolchain version"
+        )
     # Replay the same source-alias and encoding policy as a fresh backend run;
     # an archival receipt cannot bypass a stricter current request boundary.
     try:

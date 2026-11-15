@@ -5673,7 +5673,8 @@
         "legal-proof-cache-json-context-direct45-20261111",
         "legal-proof-cache-json-context-source-install-20261111",
         "legal-proof-formal-content-private103-20261111",
-        "legal-proof-formal-content-source-installed-20261111"
+        "legal-proof-formal-content-source-installed-20261111",
+        "cache-native-version-coherence-20261115"
       ],
       "exact_formal_content_identity": {
         "canonical_postimages_installed": true,
@@ -9508,6 +9509,14 @@
   "schema": "legal-autoformal-work-catalog/v1",
   "scope": "Curated current ownership/navigation with attributed saved evidence. Observations are snapshots, not future source-hash requirements or proof admission.",
   "selected_evidence": [
+    {
+      "id": "cache-native-version-coherence-20261115",
+      "path": "docs/autoformalization/evidence/legal-ir-cache-native-version-coherence-20261115.json",
+      "root": "datasets_repository",
+      "required_for_catalog_check": true,
+      "status": "selected_source_and_fresh_native_cache_controls_qualified_legal_gates_pending",
+      "scope": "SourceRED1PASS2DIDNOTRAISEfailures0.804s; SourceGREEN142PASS/8.739s Source252/Git8exact, custody252.7759765s<420/own16MiBdurablyreleased431529B. FreshNative11commands=4probes7compiles/6expectedcases/cache3commands,2software-reissuedversionrefusals0newLean,0ordinary/standalonepytest; Source217/Git8+19native-input hashesexact, custody161.7251710s<420/own16MiBdurablyreleased573315B. RED16MiBretained; old013dNative11notinherited. No hostedCI/model/statutory/gold/corpus acceptance."
+    },
     {
       "id": "PGIR041-mutation-label-admission-20261115",
       "path": "docs/autoformalization/evidence/legal-ir-PGIR041-mutation-label-admission-20261115.json",

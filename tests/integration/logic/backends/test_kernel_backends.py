@@ -1186,7 +1186,7 @@ def test_lean_v3_version_output_charge_preserves_complete_source_input_capacity(
 # before 51d2c414, then 27ede074ceb68cd91d50eada99b9c6f02216607e22610bc63db4fde69e17fb4c.
 # Current reviewed constructors explicitly bind the current verifier profile;
 # negative cache controls changed the complete owner. This pin never follows edits itself.
-_NATIVE_PROOF_CACHE_FIXTURE_SHA256 = "e0c287ad1c7e85814f77fcaac4a33435b5167438f119ff2af7b9f93250f2dfa1"
+_NATIVE_PROOF_CACHE_FIXTURE_SHA256 = "4baee6dda6afb770e286421c19467bac1fab045b16fe0635f597e8dcfc16a5b2"
 
 
 def _load_native_proof_cache_fixture_owner():
@@ -1348,6 +1348,82 @@ def _assert_lean_native_v3_proof_cache_round_trip(
     assert loaded.theorem_receipt_results(expected_context=context, obligation_id=obligation.obligation_id) == (receipt,)
     assert disk.cids() == (record.content_cid,)
     assert len(processes) == before_reuse
+    # These are coherently reissued SOFTWARE mutation controls over the real
+    # returned Native receipt.  No mutated request is submitted to a backend.
+    # All outer links agree on the advertised version; the checked toolchain
+    # and actual executable version remain the original Native observation.
+    original_evidence = copy.deepcopy({"artifact": artifact.to_dict(),
+        "profile_outcome": profile_outcome.to_dict(), "bound_outcome": outcome.to_dict(),
+        "context": context, "claim": claim.to_dict(), "request": request.to_dict(),
+        "attempt": attempt.to_dict(), "result": result.to_dict(), "receipt": receipt.to_dict(),
+        "binding": binding, "cache_record": loaded.to_dict()})
+    original_process_results = copy.deepcopy(processes)
+    reissued_backend_version_controls = []
+    for advertised_version in ("other-version", "lean4"):
+        assert advertised_version != version
+        changed_context = copy.deepcopy(context)
+        changed_context["backend_version"] = advertised_version
+        changed_claim = replace(claim, metadata={**claim.metadata.to_dict(),
+            "proof_context_digest": stable_digest(changed_context)})
+        changed_payload = request.payload.to_dict()
+        changed_payload["legal_proof_context"] = copy.deepcopy(changed_context)
+        changed_request = BackendRequest.for_claim(changed_claim, request.obligation_id,
+            request_id="request:software-reissued-native-cache-version:" + advertised_version,
+            requested_backend_id="lean", bounds=request.bounds, payload=changed_payload)
+        changed_source_binding = outcome.receipt.source_binding.bind(changed_request, source)
+        changed_kernel = replace(outcome.receipt, request_digest=changed_request.digest,
+            source_binding=changed_source_binding)
+        # This parser check reissues metadata only; its accepted field retains
+        # the original source check, and establishes no new Native execution.
+        assert LeanKernelReceipt.from_dict(changed_kernel.to_dict()) == changed_kernel
+        assert changed_kernel.native_identity.to_dict() == outcome.receipt.native_identity.to_dict()
+        assert changed_kernel.toolchain.to_dict() == context["toolchain"]
+        assert changed_kernel.native_identity.actual_version == changed_kernel.toolchain.version == version
+        assert changed_kernel.request_digest == changed_kernel.source_binding.request_digest == changed_request.digest
+        assert changed_kernel.source_binding.source_digest == outcome.receipt.source_binding.source_digest
+        changed_attempt = replace(attempt,
+            attempt_id="attempt:software-reissued-native-cache-version:" + advertised_version,
+            request_digest=changed_request.digest, backend_version=advertised_version,
+            usage=replace(attempt.usage, elapsed_ms=0, steps=0, peak_memory_bytes=0, output_bytes=0),
+            diagnostics=("Software-reissued mutation; no corresponding Native execution.",),
+            output_digest=stable_digest({"software_reissued_kernel_receipt": changed_kernel.to_dict(),
+                "original_native_receipt_id": outcome.receipt.receipt_id}))
+        changed_result = ProofResult.for_attempt(changed_request, changed_attempt,
+            result_id="result:software-reissued-native-cache-version:" + advertised_version,
+            authority=replace(result.authority, issuer="software-mutation-control",
+                method="software-reissued-actual-native-base/no-new-execution",
+                scope_digest=changed_request.digest, configuration_digest=stable_digest(changed_context)),
+            status=ResultStatus.PROVED, payload={"kernel_receipt": changed_kernel.to_dict(),
+                "software_reissued_mutation_only": True, "new_native_execution": False,
+                "original_native_receipt_id": outcome.receipt.receipt_id})
+        changed_receipt = ProofReceipt.issue(changed_claim, changed_request, changed_attempt, changed_result,
+            receipt_id="receipt:software-reissued-native-cache-version:" + advertised_version,
+            verifier="software-mutation-control")
+        assert changed_receipt.backend_version == changed_result.backend_version == changed_attempt.backend_version == changed_context["backend_version"]
+        assert changed_claim.metadata["proof_context_digest"] == stable_digest(changed_context)
+        assert changed_request.payload.to_dict()["legal_proof_context"] == changed_context
+        assert changed_receipt.request_digest == changed_kernel.request_digest == changed_request.digest
+        assert changed_receipt.backend_version != changed_kernel.native_identity.actual_version
+        with pytest.raises(LegalProofIntegrityError, match="backend version") as rejected_version:
+            build_legal_proof_binding(artifact, changed_receipt, claim=changed_claim, request=changed_request,
+                attempt=changed_attempt, result=changed_result, context=changed_context)
+        assert processes == original_process_results
+        reissued_backend_version_controls.append({"kind": "software_reissued_actual_native_base",
+            "advertised_backend_version": advertised_version, "actual_native_version": version,
+            "original_native_receipt_id": outcome.receipt.receipt_id,
+            "new_native_execution": False, "native_processes_added": 0,
+            "cache_binding_rejected": True, "rejection": str(rejected_version.value),
+            "context": changed_context, "claim": changed_claim.to_dict(), "request": changed_request.to_dict(),
+            "kernel_receipt": changed_kernel.to_dict(), "attempt": changed_attempt.to_dict(),
+            "result": changed_result.to_dict(), "receipt": changed_receipt.to_dict()})
+    assert original_evidence == {"artifact": artifact.to_dict(),
+        "profile_outcome": profile_outcome.to_dict(), "bound_outcome": outcome.to_dict(),
+        "context": context, "claim": claim.to_dict(), "request": request.to_dict(),
+        "attempt": attempt.to_dict(), "result": result.to_dict(), "receipt": receipt.to_dict(),
+        "binding": binding, "cache_record": loaded.to_dict()}
+    assert loaded.theorem_receipt_results(expected_context=context, obligation_id=obligation.obligation_id) == (receipt,)
+    assert disk.cids() == (record.content_cid,)
+    assert processes == original_process_results and len(processes) == before_reuse == 3
     report = {"schema": "native-lean-v3-proof-cache-integration/v1", "native_Lean_executed": True,
         "compiler_output_mocked": False, "actual_process_results": processes,
         "profile_discovery_outcome": profile_outcome.to_dict(), "bound_outcome": outcome.to_dict(),
@@ -1357,6 +1433,11 @@ def _assert_lean_native_v3_proof_cache_round_trip(
         "rejected_artifact_facets": rejected_artifact_facets, "rejected_context_facets": rejected_context_facets,
         "cache_source_profile_and_obligation_mismatches_rejected": True,
         "native_processes_during_reuse_or_mismatch_checks": len(processes) - before_reuse,
+        "backend_version_mutation_controls": reissued_backend_version_controls,
+        "software_reissued_backend_version_control_count": len(reissued_backend_version_controls),
+        "actual_cache_native_command_count": len(processes),
+        "actual_native_commands_for_version_mutation_controls": 0,
+        "version_mutation_controls_are_new_native_results": False,
         "fictional_source_fixture_only": True, "statutory_meaning_or_corpus_admission": False,
         "resource_admission_scope": "caller_owned_not_established_by_this_helper",
         "outer_resource_closure_asserted": False, "pytest_case_credit_claimed_by_helper": 0}

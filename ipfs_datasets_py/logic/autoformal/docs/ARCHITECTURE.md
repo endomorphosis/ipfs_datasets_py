@@ -1,5 +1,11 @@
 # Architecture and owner map
 
+## Outer backend version is part of exact kernel evidence — 2026-11-15
+
+The existing proof-cache binding validator already checked all outer protocol digests, source/artifact identity, exact obligation, assumptions, declaration/proposition and toolchain context. It now also requires the advertised outer backend version to equal the accepted kernel receipt's observed actual version and toolchain version. An outer chain can be internally reissued and coherent while still describing the wrong implementation; that cross-component mismatch must refuse. The canonical Lean parser and its current verification profile remain the owner of proof-evidence validation.
+
+Source tests deliberately use fictional native identities and reissue claim/context/request/source binding/attempt/result/receipt through existing factories. They establish only this software coherence boundary. The existing native integration helper is source-pinned to the updated `4baee6dd…` fixture. Its two outer-version mutations preserve an actual base receipt's compiler/native data and add no planned Lean command; they are not new native proof results. Historical cache `013d9977…` receipts are preserved without current-source relabelling. [Fresh exact Source and separately measured Native scope](../../../../docs/autoformalization/evidence/legal-ir-cache-native-version-coherence-20261115.json) supplies no legal interpretation, training gold, model fitting, corpus admission or broader execution permission.
+
 ## Mutation generation and semantic-label admission are separate — 2026-11-15
 
 The existing optimizer owners retain PGIR-041 mutation generation and hard-negative admission. `generate_minimal_semantic_mutations`, `collect_mutation_evidence` and the historical `typed_documents_equivalent` API do not execute a solver: the latter compares exact formula payloads only. Changed payloads and reported outcome strings cannot establish semantic non-equivalence, counterexamples or independent verification. Schema/type and canonical pointer checks reject unsupported inputs; overlapping, duplicate and alias paths do not establish structural minimality. No new checker, schema, numerical model or supervisor is introduced.
