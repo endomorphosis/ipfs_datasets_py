@@ -9437,6 +9437,14 @@
   "scope": "Curated current ownership/navigation with attributed saved evidence. Observations are snapshots, not future source-hash requirements or proof admission.",
   "selected_evidence": [
     {
+      "id": "v4-public-tokenizer-complete-context-refusal-20261115",
+      "path": "docs/autoformalization/evidence/legal-ir-v4-public-tokenizer-context-refusal-20261115.json",
+      "root": "datasets_repository",
+      "required_for_catalog_check": true,
+      "status": "recorded_original_capacity_failure_unqualified",
+      "scope": "Original12754 EXIT1: one failed case/34.68s; complete4096 context refusal before backend, no exact overflow count. Source/Native validation/process closed;16MiB retained. Five-source V4 preserved/unqualified; no retry/model/gold/nativeLean/corpus credit."
+    },
+    {
       "id": "live-context-policy-exit-and-output-capture-20261115",
       "path": "docs/autoformalization/evidence/legal-ir-live-context-policy-exit-20261115.json",
       "root": "datasets_repository",

@@ -1,5 +1,11 @@
 # Training and experiment history
 
+## V4 complete-context capacity refusal with public tokenizer — 2026-11-15
+
+The original public-tokenizer/inert-backend attempt **12754** ended with **one failed case, zero passes and zero skips**, in **34.68 seconds**; the actual terminal exit was **1**. Complete rich context exceeded the unchanged **4096-token** bound and refused before backend generation. No exact overflow-token count was measured. Source, Native validation-resource and process custody closed, while its **16 MiB storage promise remains retained**. Earlier failures, source identities and receipts remain intact. [Original unchanged failure evidence](../../../../docs/autoformalization/evidence/legal-ir-v4-public-tokenizer-context-refusal-20261115.json).
+
+The five-source V4 candidate `c638cbd2a52a6f401979d7642aa483bafca2cc59` is preserved and unqualified. No retry, truncation, clipping, raised limit, new profile or execution is selected. Next LIR-20 work is the complete actual-token census and existing lossless representation/capacity route. This failure grants no model quality, statutory gold, native Lean or corpus-admission credit.
+
 ## R56 software evidence preserves corpus, model and training holds — 2026-11-15
 
 The current release-v3 source-only batch covers the release coordinator, validate_uscode_corpus_release CLI and its maintained owning controls. The opt-in transport/closure path preserves the default domain and legacy request identity, checks the literal packet policy, and validates complete ordered chunk transport and mixed physical closure using reviewed test components. These are software behaviors, not actual US Code, Native Lean, model or corpus admission.
