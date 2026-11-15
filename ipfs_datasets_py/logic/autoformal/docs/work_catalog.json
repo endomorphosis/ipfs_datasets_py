@@ -121,6 +121,28 @@
   "canonical_home": "ipfs_datasets_py/logic/autoformal",
   "components": [
     {
+      "apis": [
+        "candidate_from_recipe_case",
+        "canonical_positive_pair_recipe",
+        "mine_canonical_positive_pairs",
+        "mine_positive_pairs",
+        "write_positive_pair_shards",
+        "load_positive_pair_shards",
+        "loss_pair_admissions"
+      ],
+      "compatibility_dependency": false,
+      "evidence_ids": [
+        "PGIR040-explicit-positive-evidence-20261115"
+      ],
+      "id": "typed-positive-pair-evidence-proposals",
+      "notes": "Existing optimizer owner; canonical recipes propose relationships without executing checkers or reviews. Explicit typed caller evidence is detached and bound before training admission. Historical archive/loss projection authentication remains pending; no native/legal/model qualification inferred.",
+      "owner_module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_positive_pairs",
+      "ownership_role": "existing_single_owner",
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_positive_pairs.py",
+      "required": true,
+      "status": "focused_tests_qualified"
+    },
+    {
       "id": "typed-mutation-evidence-proposals",
       "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_fuzzing.py",
       "owner_module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_fuzzing",
@@ -9509,6 +9531,14 @@
   "schema": "legal-autoformal-work-catalog/v1",
   "scope": "Curated current ownership/navigation with attributed saved evidence. Observations are snapshots, not future source-hash requirements or proof admission.",
   "selected_evidence": [
+    {
+      "id": "PGIR040-explicit-positive-evidence-20261115",
+      "path": "docs/autoformalization/evidence/legal-ir-PGIR040-explicit-positive-evidence-20261115.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Original2304 EXIT0/133PASS:45 positive+82 hard-negative+6 metamorphic, Source256/Git8 exact, custody164.245540s<420/own16MiBdurableReleased209720B. OriginalRED4FAIL retained. Explicit fictional labels only; archive/loss projection authentication, actual checkers/reviews, native Lean, statutory gold and model training remain separate.",
+      "status": "selected_original_software_qualified_archive_authentication_pending"
+    },
     {
       "id": "cache-native-version-coherence-20261115",
       "path": "docs/autoformalization/evidence/legal-ir-cache-native-version-coherence-20261115.json",

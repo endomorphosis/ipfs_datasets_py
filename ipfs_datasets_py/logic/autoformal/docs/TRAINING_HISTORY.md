@@ -1,5 +1,11 @@
 # Training and experiment history
 
+## PGIR-040 proposal-only recipes and explicit labels — 2026-11-15
+
+The original unattested-positive reproduction produced four assertion failures, retaining its failed 16 MiB claim and original evidence. After the existing owner was corrected, original handle `2304` exited 0 with **133 passed, no failures, errors or skips** across the three complete owning modules. Source256/Git8 drift was empty; the original owner and child were reaped and Source/resource custody closed in 164.245540 seconds. The successful attempt used 209,720 bytes of its own 16 MiB reservation, which the original owner marked durable and released. Earlier failure evidence was not rewritten or released.
+
+Explicitly fictional caller labels exercise all eight equivalence classes and the existing training contracts. Added refusals cover absent evidence, changed endpoint identities/digests and relationships, metadata overrides, fake receipt kinds, mappings impersonating typed labels and pending evidence selection. Labels are detached and iterables consumed once. The historical eight-row archive remains byte-preserved; newly generated default shards contain zero pairs. No model fitting, semantic checker, human review, native Lean or legal source-correspondence claim follows from this run.
+
 ## Cache/backend version coherence; distinct software and Native scopes — 2026-11-15
 
 The genuine red software original measured **one pass and two `DID NOT RAISE` failures in 0.804s**. Each adversarial control reissued the complete outer protocol chain while retaining the fictional kernel actual/toolchain version, so stale digests did not explain the false acceptance. The existing cache owner now checks equality between the outer advertised version, observed actual native version and toolchain version. The completed Source original then passed **142 cases in 8.739s** with 252 selected source pins/eight Git pins unchanged, EXIT0 and acceptance true. Original Source, Native-resource, sampled-process and genuine-wait custody closed with zero errors in **252.7759765s**, before the initial 420s deadline; owner elapsed time was **157.6408579s**. The successful Source run's own16MiB promise was durably released at431,529bytes. The red run's separate16MiB promise remains retained and nondurable.

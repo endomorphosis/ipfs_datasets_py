@@ -1,5 +1,11 @@
 # Current handoff
 
+## PGIR-040 explicit positive evidence — 2026-11-15
+
+The existing positive-pair miner now requires explicit typed relationship evidence for recipe proposals. Under `pgir-040-positive-miner-v2`, the eight default proposals remain nontraining and produce no relationship receipts. Caller evidence is detached and subject-bound; recipe metadata cannot replace its authority, status, independence, result authority or receipt kind. Pending evidence cannot displace an eligible verified label. The three existing bound trace factories remain unchanged.
+
+The original four false-acceptance reproductions remain recorded as four failures. The fresh original V5 run passed **133 cases: 45 positive-pair, 82 hard-negative and six metamorphic controls**, with 256 Source pins and eight Git identities unchanged. Original Source/resource custody closed in **164.245540 seconds**, within the initial 420-second deadline, and the original owner durably released its own 16 MiB claim. These are software contracts using explicitly fictional caller labels, not new reviews, native proofs, numerical training or statutory gold. Historical shard bytes/CIDs remain unchanged; archive decoding and the existing loss projection are not authenticated by this fix and need their own reproduced follow-up. All 24 backlog task IDs and states remain unchanged.
+
 ## Proof-cache backend/native version coherence — 2026-11-15
 
 The existing `logic/legal_ir/proof_cache.py` owner now binds the outer claim/request/attempt/result/receipt context to the accepted Lean kernel receipt's observed actual version and exact toolchain version. Internally consistent outer digests alone cannot describe another backend version. The unchanged kernel owner retains `lean-kernel-verification/v1`, proposition/declaration/axiom checks and native-identity requirements. No default, caller label or version alias repairs a mismatch.

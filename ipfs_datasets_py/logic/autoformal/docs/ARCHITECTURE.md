@@ -1,5 +1,11 @@
 # Architecture and owner map
 
+## Positive recipes do not execute checkers — 2026-11-15
+
+The existing `legal_ir_positive_pairs.py` owner no longer creates VERIFIED semantic, human-review or proof labels from recipe strings and authority enums. Recipe expansion produces a proposal; explicitly supplied canonical `LabelEvidence` is detached, checked against both exact endpoint identities and the stated relationship, and passed through the existing authority and training contracts. Metadata cannot override that evidence or relabel a receipt as a different check. A verified eligible label, rather than tuple order, selects the training evidence and receipt.
+
+The existing bound transformation, round-trip and same-claim proof factories retain their implementations. Default recipes and new default shards contain no admitted pairs. Historical shards remain immutable archives; decoding them or projecting them through `loss_pair_admissions` is not an authentication step. This change does not establish a checker execution, signed review, real statutory gold or legal equivalence from caller-supplied enums.
+
 ## Outer backend version is part of exact kernel evidence — 2026-11-15
 
 The existing proof-cache binding validator already checked all outer protocol digests, source/artifact identity, exact obligation, assumptions, declaration/proposition and toolchain context. It now also requires the advertised outer backend version to equal the accepted kernel receipt's observed actual version and toolchain version. An outer chain can be internally reissued and coherent while still describing the wrong implementation; that cross-component mismatch must refuse. The canonical Lean parser and its current verification profile remain the owner of proof-evidence validation.

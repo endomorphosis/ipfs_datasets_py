@@ -362,7 +362,23 @@ def test_timeout_unavailable_and_unknown_cannot_be_confirmed_negatives() -> None
 
 
 def test_same_proposition_and_positive_siblings_are_not_negatives() -> None:
-    positives = mine_canonical_positive_pairs()
+    # Fictional caller-supplied labels exercise sibling filtering, not a real proof/review.
+    from ipfs_datasets_py.logic.ir_core.protocols import AuthorityKind
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_ir_positive_pairs as positive_owner
+    candidates = []
+    for case in positive_owner.canonical_positive_pair_recipe()["cases"]:
+        proposal = positive_owner.candidate_from_recipe_case(case)
+        label = positive_owner.make_relationship_evidence(
+            proposal.left, proposal.right, proposal.relationship,
+            evidence_id="fixture:positive-sibling:" + case["case_id"],
+            authority=LabelAuthority(case["required_authority"]),
+            independent=case.get("required_independent"),
+            result_authority=AuthorityKind(case["required_result_authority"])
+                if case.get("required_result_authority") else None,
+            producer_id="fixture:positive-sibling-not-real-checker", producer_version="1",
+        )
+        candidates.append(positive_owner.candidate_from_recipe_case(case, evidence=(label,)))
+    positives = positive_owner.mine_positive_pairs(candidates)
     seed = candidate_from_recipe_case(
         {
             "case_id": "sibling-seed",
