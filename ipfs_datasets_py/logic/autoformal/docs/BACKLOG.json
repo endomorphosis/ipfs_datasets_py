@@ -21118,6 +21118,18 @@
         "LIR-14"
       ],
       "id": "LIR-23",
+      "trusted_parent_candidate_syntax_20261114": {
+        "evidence_id": "trusted-original-parent-complete-candidate-audit-20261114",
+        "source_only_passes": 233,
+        "new_cases": 36,
+        "parent_schema": "reviewed-source-evaluation-parent/v3",
+        "trusted_runtime_only": true,
+        "packet_schemas_changed": false,
+        "physical_parent_v3_qualified": false,
+        "supervisor_adoption_qualified": false,
+        "current_resource_or_model_profile_approved": false,
+        "legal_or_proof_authority": false
+      },
       "next_actions": [
         "Before fallible post-run summary checks, persist the independent observer counters, callable/source bindings, reference-open observations and checked compiled buffers; retain explicit failed status and original native/storage/source custody. The first v2 consumer outer-worker failure lost these late-only witnesses, so passing test-owned panels cannot reconstruct full qualification. This is a separate follow-up to the minimal exact eleven-field observer compatibility fix, not a claim that the refactor or failed-attempt recovery is complete.",
         "Monitor the deployed D watcher and completed-producer routes under their original clocks; finish the A immutable runtime migration through its existing owner, preserve UNKNOWN and retained claims, and require exact owning qualification for changed source generations. Continue scientific work with its own evidence."

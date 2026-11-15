@@ -730,3 +730,39 @@ def test_explicit_metrics_without_a_raw_pair_keep_the_existing_contract():
         families=("deontic",),
     )
     assert report.accepted
+
+
+@pytest.mark.parametrize('version,valid,unsupported', [('v2', 2, 1), ('v3', 3, 0)])
+def test_complete_candidate_shared_metrics_match_existing_evaluator(version, valid, unsupported):
+    from tests.unit.optimizers.logic_theorem_optimizer import test_legal_ir_evaluation_artifacts as bridge
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_ir_semantic_metrics as owner
+    from ipfs_datasets_py.logic.autoformal import legal_norm_content_adjudication_v1 as candidates
+    options, rows, known, _ = bridge._candidate_audit_fixture()
+    profile = getattr(candidates, 'CANDIDATE_SYNTAX_PROFILE_' + version.upper())
+    artifact = bridge._producer_owner.evaluate_reviewed_source_span_producer_artifact(**options,
+        producer=lambda _: bridge._producer_exact_outputs(rows), candidate_syntax_profile=profile,
+        known_candidate_inputs=known)
+    examples = [dict(case_id=r['id'], reference=r['canonical_ir'], candidate=r['canonical_ir'], outcome='complete') for r in rows]
+    report = owner.evaluate_complete_norm_candidate_syntax(examples,
+        known_candidate_inputs=known, candidate_syntax_profile=profile)
+    assert report == artifact.to_dict()['metrics']['complete_candidate_syntax']
+    assert report['counts']['syntax_validated_unreviewed'] == valid
+    assert report['counts']['unsupported_complete'] == unsupported
+
+
+@pytest.mark.parametrize('which', ['examples', 'known'])
+def test_complete_candidate_shared_metrics_fence_original_inputs(which, monkeypatch):
+    from tests.unit.optimizers.logic_theorem_optimizer import test_legal_ir_evaluation_artifacts as bridge
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_ir_semantic_metrics as owner
+    from ipfs_datasets_py.logic.autoformal import legal_norm_content_adjudication_v1 as candidates
+    _, rows, known, profile = bridge._candidate_audit_fixture()
+    examples = [dict(case_id=r['id'], reference=r['canonical_ir'], candidate=None, outcome='incomplete') for r in rows]
+    original = candidates.validate_complete_norm_candidate_v2
+    def mutate(*args, **kwargs):
+        if which == 'examples': examples[0]['outcome'] = 'error'
+        else: known[rows[0]['id']]['known_source_binding']['document_revision'] = 'fixture:mutated-during-metrics'
+        return original(*args, **kwargs)
+    monkeypatch.setattr(candidates, 'validate_complete_norm_candidate_v2', mutate)
+    with pytest.raises(ValueError, match='changed during'):
+        owner.evaluate_complete_norm_candidate_syntax(examples,
+            known_candidate_inputs=known, candidate_syntax_profile=profile)

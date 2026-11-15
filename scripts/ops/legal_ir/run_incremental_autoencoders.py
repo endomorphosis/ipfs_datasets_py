@@ -486,7 +486,8 @@ def supervised_cycle(config, *, reviewed_parent_runtime=None):
             deadline_monotonic=runtime.deadline_monotonic,
             current_training_admission_provider=runtime.current_training_admission_provider,
             context_policy_guard=runtime.context_policy_guard,
-            **({} if runtime.typed_structure_profile is None else {"typed_structure_profile": runtime.typed_structure_profile}))
+            **({} if runtime.typed_structure_profile is None else {"typed_structure_profile": runtime.typed_structure_profile}),
+            **({} if runtime.candidate_syntax_profile is None else {"candidate_syntax_profile": runtime.candidate_syntax_profile}))
     if reviewed_parent_runtime is not None:
         raise ValueError("reviewed parent runtime requires explicit reviewed evaluation opt-in")
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_daemon_resources import DaemonResourceReservation

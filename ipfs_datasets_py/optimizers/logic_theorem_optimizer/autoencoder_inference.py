@@ -145,6 +145,7 @@ class ReviewedInferenceParentRuntime:
     current_training_admission_provider: object = None
     context_policy_guard: object = None
     typed_structure_profile: object = None
+    candidate_syntax_profile: object = None
 
     def __post_init__(self):
         import math
@@ -154,6 +155,7 @@ class ReviewedInferenceParentRuntime:
                 or not math.isfinite(self.deadline_monotonic)):
             raise ValueError("original admitted owner and explicit live reviewed parent callbacks required")
         _validate_parent_typed_structure_profile(self.typed_structure_profile)
+        _validate_parent_candidate_syntax_profile(self.candidate_syntax_profile)
         context_callbacks = (self.current_training_admission_provider, self.context_policy_guard)
         if any(callback is not None for callback in context_callbacks) and not all(map(callable, context_callbacks)):
             raise ValueError("rich heldout context requires both live original parent callbacks")
@@ -243,6 +245,105 @@ def _build_parent_typed_structure_audit(cycle, request, cycle_reference, request
         implementation_sha256=source_pins, generation_join_scope=join_scope, report=report, original_child_artifacts_modified=False,
         scope="canonical_formula_wire_and_signature_only", native_proof_verified=False,
         legal_meaning_verified=False, current_admission_authority_granted=False, model_reexecuted=False)
+
+
+def _validate_parent_candidate_syntax_profile(value):
+    if value is not None:
+        from ...logic.autoformal import legal_norm_content_adjudication_v1 as candidates
+        if type(value) is not str or value not in (candidates.CANDIDATE_SYNTAX_PROFILE_V2,
+                                                  candidates.CANDIDATE_SYNTAX_PROFILE_V3):
+            raise ValueError('explicit trusted parent candidate-syntax profile required')
+
+
+def _parent_candidate_syntax_source_pins():
+    from ...logic.autoformal import legal_norm_content_adjudication_v1 as candidates
+    from ...logic.autoformal import legal_relational_norm_v1 as relational, corpus_contracts
+    from .autoencoder_daemon_invocation_contracts import describe
+    root = Path(__file__).resolve().parents[3]
+    modules = ((candidates, 'logic/autoformal/legal_norm_content_adjudication_v1.py'),
+        (relational, 'logic/autoformal/legal_relational_norm_v1.py'),
+        (corpus_contracts, 'logic/autoformal/corpus_contracts.py'))
+    pins = _parent_typed_structure_source_pins()
+    for module, relative in modules:
+        path = root / 'ipfs_datasets_py' / relative
+        if Path(module.__file__).resolve() != path or module.__spec__.origin != str(path):
+            raise ValueError('canonical parent candidate-syntax owner origin differs')
+        pins[str(path)] = describe(path, 4 * 1024**2)['sha256']
+    # Existing owners retain their own transitive identity fences. Bind their
+    # actual canonical source closure as DATA, never a model or asset profile.
+    for path, digest in {**candidates._pins(), **relational._mixed_owners()[-1]}.items():
+        resolved = Path(path)
+        if (resolved.resolve() != resolved or not resolved.is_relative_to(root / 'ipfs_datasets_py')
+                or describe(resolved, 4 * 1024**2)['sha256'] != digest
+                or path in pins and pins[path] != digest):
+            raise ValueError('canonical parent candidate-syntax source closure differs')
+        pins[path] = digest
+    if not 0 < len(pins) <= 256:
+        raise ValueError('bounded parent candidate-syntax source closure required')
+    return pins
+
+
+def _check_parent_audit_storage(usage, wires):
+    if any(len(wire) > REVIEWED_EVALUATION_OUTPUT_LIMIT for wire in wires):
+        raise ValueError("parent audit exceeds existing output bound")
+    if usage["total_attempt_charged_bytes"] + sum(map(len, wires)) > usage["attempt_limit_bytes"]:
+        raise ValueError("parent audits exceed original storage promise")
+
+
+def _check_parent_audit_inputs(request, reference, *, candidate=False):
+    from . import autoencoder_training_worker as worker
+    worker._reviewed_decoder_artifact(worker.CheckpointArtifact.from_dict(request["rows_artifact"]),
+        limit=REVIEWED_EVALUATION_OUTPUT_LIMIT, load=False)
+    worker._reviewed_decoder_artifact(reference, limit=4 * 1024**2, load=False)
+    if candidate:
+        worker._reviewed_decoder_artifact(worker.CheckpointArtifact.from_dict(request["source_contexts_artifact"]),
+            limit=4 * 1024**2, load=False)
+
+
+def _build_parent_candidate_syntax_audit(cycle, request, cycle_reference, request_sha256,
+                                        source_pins, candidate_syntax_profile):
+    """Build content-bound DATA after the original parent's child wait.
+
+    This helper alone proves neither an actual wait nor current eligibility.
+    The original owner publishes only after its existing FINISH, wait, current
+    admission, quota, source and final artifact checks have all succeeded.
+    """
+    from . import autoencoder_training_worker as worker
+    from .legal_ir_semantic_metrics import evaluate_complete_norm_candidate_syntax
+    _validate_parent_candidate_syntax_profile(candidate_syntax_profile)
+    if candidate_syntax_profile is None or 'source_contexts_artifact' not in request:
+        raise ValueError('parent candidate-syntax requires an explicit profile and independent context artifact')
+    # Reuse the established complete source/output/generation/checkpoint join,
+    # including the recorded batch-exception path. No child artifact is edited.
+    base = _build_parent_typed_structure_audit(cycle, request, cycle_reference, request_sha256, source_pins)
+    def read(descriptor, limit=REVIEWED_EVALUATION_OUTPUT_LIMIT):
+        return worker._parse_json(worker._reviewed_decoder_artifact(
+            worker.CheckpointArtifact.from_dict(descriptor), limit=limit))
+    rows = read(request['rows_artifact'])
+    evaluation = read(cycle['output_artifacts']['evaluation'])
+    contexts = read(request['source_contexts_artifact'], 4 * 1024**2)
+    if (type(contexts) is not dict or set(contexts) != {'profile', 'selection_context', 'rows'}
+            or contexts['profile'] != 'reviewed-source-selection-context/v2'
+            or type(contexts['rows']) is not list or len(contexts['rows']) != len(rows)):
+        raise ValueError('parent candidate-syntax requires complete independent source contexts')
+    known = {}
+    for row, context in zip(rows, contexts['rows'], strict=True):
+        if (type(context) is not dict or set(context) != {'id', 'unit_id', 'governing_context', 'source_binding'}
+                or context['id'] != row['id'] or context['unit_id'] != row['unit_id']):
+            raise ValueError('parent candidate-syntax source context/order/unit differs')
+        known[row['id']] = dict(known_source_binding=context['source_binding'],
+            known_governing_context=context['governing_context'],
+            known_selection_context=contexts['selection_context'])
+    outputs = evaluation['compiler_artifact']['reviewed_source_span_producer_evaluation']['producer_outputs']
+    cases = [dict(case_id=r['id'], reference=r['canonical_ir'], candidate=o['candidate'], outcome=o['outcome'])
+             for r, o in zip(rows, outputs, strict=True)]
+    report = evaluate_complete_norm_candidate_syntax(cases, known_candidate_inputs=known,
+                                                    candidate_syntax_profile=candidate_syntax_profile)
+    return dict(base, schema='reviewed-original-parent-candidate-syntax-audit/v1',
+        profile=candidate_syntax_profile, report=report,
+        source_contexts_artifact=request['source_contexts_artifact'],
+        scope='complete_candidate_syntax_and_declared_source_context_selection_only',
+        semantic_selection_supported=False, source_fidelity_proved=False)
 
 def _reviewed_evaluation_lifecycle_source_sha256(*, rich_context=False):
     """Fixed lifecycle source identity; no configurable importer/entry point."""
@@ -621,7 +722,7 @@ def _execute_reviewed_evaluation_request(request_artifact, *, parent_client):
 
 def run_reviewed_source_inference_cycle(config, cli, *, owner, source_guard, asset_policy_guard,
         current_admission_provider, deadline_monotonic, current_training_admission_provider=None,
-        context_policy_guard=None, typed_structure_profile=None):
+        context_policy_guard=None, typed_structure_profile=None, candidate_syntax_profile=None):
     """One original-owner child, with live parent callbacks and no new grant."""
     import math
     import os
@@ -645,6 +746,8 @@ def run_reviewed_source_inference_cycle(config, cli, *, owner, source_guard, ass
         raise ValueError("reviewed evaluation request cannot mix legacy inputs, training or publication")
     _validate_parent_typed_structure_profile(typed_structure_profile)
     audit_source_pins = None if typed_structure_profile is None else _parent_typed_structure_source_pins()
+    _validate_parent_candidate_syntax_profile(candidate_syntax_profile)
+    candidate_source_pins = (None if candidate_syntax_profile is None else _parent_candidate_syntax_source_pins())
     source_guard()
     reference, raw, request = _read_reviewed_evaluation_request(config["reviewed_evaluation_request"])
     checked_asset_policy = asset_policy_guard
@@ -684,6 +787,8 @@ def run_reviewed_source_inference_cycle(config, cli, *, owner, source_guard, ass
         _check_reviewed_evaluation_lifecycle(request)
         if audit_source_pins is not None and _parent_typed_structure_source_pins() != audit_source_pins:
             raise ValueError("parent typed-structure audit implementation changed")
+        if candidate_source_pins is not None and _parent_candidate_syntax_source_pins() != candidate_source_pins:
+            raise ValueError("parent candidate-syntax audit implementation changed")
     source_guard()
     python_dependency_prefix = sys.prefix
     from . import autoencoder_campaign_process_worker as bootstrap_protocol
@@ -809,18 +914,21 @@ def run_reviewed_source_inference_cycle(config, cli, *, owner, source_guard, ass
             if context is not None and (cycle.get("current_training_admission_sha256") != context["admission_inputs_sha256"]
                     or cycle.get("context_inputs_sha256") != context["context_inputs_sha256"]):
                 raise ValueError("reviewed child TRAIN context receipt differs from original request")
-            audit_wire = None
-            if audit_source_pins is not None:
+            audit_wire = candidate_audit_wire = None
+            if audit_source_pins is not None or candidate_source_pins is not None:
                 _check_reviewed_evaluation_outputs(cycle, request)
                 server._guard_parent()
-                audit = _build_parent_typed_structure_audit(cycle, request, cycle_reference, reference.sha256,
-                    worker._parse_json(worker._json_bytes(audit_source_pins)))
-                audit_wire = worker._json_bytes(audit)
-                if len(audit_wire) > REVIEWED_EVALUATION_OUTPUT_LIMIT:
-                    raise ValueError("parent typed-structure audit exceeds existing output bound")
+                if audit_source_pins is not None:
+                    audit = _build_parent_typed_structure_audit(cycle, request, cycle_reference, reference.sha256,
+                        worker._parse_json(worker._json_bytes(audit_source_pins)))
+                    audit_wire = worker._json_bytes(audit)
+                if candidate_source_pins is not None:
+                    audit = _build_parent_candidate_syntax_audit(cycle, request, cycle_reference, reference.sha256,
+                        worker._parse_json(worker._json_bytes(candidate_source_pins)), candidate_syntax_profile)
+                    candidate_audit_wire = worker._json_bytes(audit)
+                wires = [wire for wire in (audit_wire, candidate_audit_wire) if wire is not None]
                 usage = owner.check_usage(attempt_directory=attempt)
-                if usage["total_attempt_charged_bytes"] + len(audit_wire) > usage["attempt_limit_bytes"]:
-                    raise ValueError("parent typed-structure audit exceeds original storage promise")
+                _check_parent_audit_storage(usage, wires)
                 server._guard_parent()
             # Historical child output cannot substitute for a fresh mapping
             # supplied by the original parent after writes/FINISH/actual wait.
@@ -846,15 +954,21 @@ def run_reviewed_source_inference_cycle(config, cli, *, owner, source_guard, ass
             # a final admission/source callback can otherwise replace it.
             _check_reviewed_evaluation_outputs(cycle, request)
             worker._reviewed_decoder_artifact(cycle_reference, limit=REVIEWED_EVALUATION_OUTPUT_LIMIT, load=False)
-            audit_reference = None
+            audit_reference = candidate_audit_reference = None
+            if audit_wire is not None or candidate_audit_wire is not None:
+                _check_parent_audit_inputs(request, reference, candidate=candidate_audit_wire is not None)
             if audit_wire is not None:
-                worker._reviewed_decoder_artifact(worker.CheckpointArtifact.from_dict(request["rows_artifact"]),
-                    limit=REVIEWED_EVALUATION_OUTPUT_LIMIT, load=False)
-                worker._reviewed_decoder_artifact(reference, limit=4 * 1024**2, load=False)
                 audit_path = Path(request["output_directory"]) / "typed-structure-audit.json"
                 worker._write_exclusive(audit_path, audit_wire)
                 audit_reference = dict(path=str(audit_path), sha256=worker._digest(audit_wire), bytes=len(audit_wire))
                 worker._reviewed_decoder_artifact(worker.CheckpointArtifact.from_dict(audit_reference),
+                    limit=REVIEWED_EVALUATION_OUTPUT_LIMIT, load=False)
+            if candidate_audit_wire is not None:
+                audit_path = Path(request["output_directory"]) / "candidate-syntax-audit.json"
+                worker._write_exclusive(audit_path, candidate_audit_wire)
+                candidate_audit_reference = dict(path=str(audit_path),
+                    sha256=worker._digest(candidate_audit_wire), bytes=len(candidate_audit_wire))
+                worker._reviewed_decoder_artifact(worker.CheckpointArtifact.from_dict(candidate_audit_reference),
                     limit=REVIEWED_EVALUATION_OUTPUT_LIMIT, load=False)
             parent_path = Path(request["output_directory"]) / "parent-cycle.json"
             report = {**cycle, "schema": "reviewed-source-evaluation-parent/v1", "completed": True,
@@ -871,6 +985,12 @@ def run_reviewed_source_inference_cycle(config, cli, *, owner, source_guard, ass
                 report.update(schema="reviewed-source-evaluation-parent/v2",
                     typed_structure_profile=typed_structure_profile, typed_structure_audit_artifact=audit_reference,
                     parent_typed_structure_audit_after_wait=True, parent_current_admission_rechecked_after_audit=True)
+            if candidate_audit_reference is not None:
+                report.update(schema="reviewed-source-evaluation-parent/v3",
+                    candidate_syntax_profile=candidate_syntax_profile,
+                    candidate_syntax_audit_artifact=candidate_audit_reference,
+                    parent_candidate_syntax_audit_after_wait=True,
+                    parent_current_admission_rechecked_after_candidate_audit=True)
             if context is not None:
                 report.update(parent_current_training_admission_rechecked_after_wait=True,
                               parent_context_policy_rechecked_after_wait=True)

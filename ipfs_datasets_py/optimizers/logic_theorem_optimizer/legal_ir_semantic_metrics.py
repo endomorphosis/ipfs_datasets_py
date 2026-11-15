@@ -2581,3 +2581,74 @@ def evaluate_complete_norm_typed_structure(examples: Sequence[Mapping[str, Any]]
 
 __all__ += ["CANONICAL_TYPED_STRUCTURE_PROFILE", "COMPLETE_NORM_TYPED_STRUCTURE_METRICS_SCHEMA",
             "evaluate_complete_norm_typed_structure"]
+
+
+def evaluate_complete_norm_candidate_syntax(examples: Sequence[Mapping[str, Any]], *,
+        known_candidate_inputs, candidate_syntax_profile) -> dict[str, Any]:
+    """Check declared source/context/selection and full candidate syntax only.
+
+    Callers supply independent known facts; no fact is inferred from a target.
+    Unsupported reference profiles and all noncomplete outcomes retain the
+    denominator. Invalid reference facts refuse the report. This pure scorer
+    invokes neither a generator nor a native prover and grants no eligibility.
+    """
+    from ...logic.autoformal import legal_norm_content_adjudication_v1 as candidates
+    validators = {candidates.CANDIDATE_SYNTAX_PROFILE_V2: candidates.validate_complete_norm_candidate_v2,
+                  candidates.CANDIDATE_SYNTAX_PROFILE_V3: candidates.validate_complete_norm_candidate_v3}
+    if type(candidate_syntax_profile) is not str or candidate_syntax_profile not in validators:
+        raise ValueError('explicit complete-candidate syntax profile required')
+    if type(examples) not in (list, tuple) or not 0 < len(examples) <= 4096:
+        raise ValueError('bounded nonempty ordinary example sequence required')
+    rows = _complete_norm_payload_copy(list(examples))
+    known = _complete_norm_payload_copy(known_candidate_inputs)
+    frozen_rows, frozen_known = _complete_norm_payload_wire(rows), _complete_norm_payload_wire(known)
+    evaluate_complete_norm_payloads(rows)
+    if type(known) is not dict or set(known) != {row['case_id'] for row in rows}:
+        raise ValueError('exact complete-candidate known-input population required')
+    validate = validators[candidate_syntax_profile]
+    counts = dict(syntax_validated_unreviewed=0, invalid_complete=0, unsupported_complete=0, not_checked=0)
+    reference_counts = dict(syntax_validated_unreviewed=0, unsupported=0)
+    details = []
+    for row in rows:
+        facts = known[row['case_id']]
+        if type(facts) is not dict or set(facts) != {'known_source_binding', 'known_governing_context', 'known_selection_context'}:
+            raise ValueError('closed independent complete-candidate known facts required')
+        candidates.validate_complete_norm_known_input_v2(**facts)
+        try:
+            validate(row['reference'], **facts)
+            reference_status = 'syntax_validated_unreviewed'
+        except candidates.CompleteNormCandidateUnsupportedError:
+            reference_status = 'unsupported'
+        reference_counts[reference_status] += 1
+        if row['outcome'] != 'complete':
+            status = 'not_checked'
+        else:
+            try:
+                validate(row['candidate'], **facts)
+                status = 'syntax_validated_unreviewed'
+            except candidates.CompleteNormCandidateUnsupportedError:
+                status = 'unsupported_complete'
+            except (ValueError, TypeError, KeyError, RecursionError):
+                status = 'invalid_complete'
+        counts[status] += 1
+        details.append(dict(case_id=row['case_id'], outcome=row['outcome'], status=status,
+                            reference_status=reference_status))
+    if (_complete_norm_payload_wire(rows) != frozen_rows
+            or _complete_norm_payload_wire(known) != frozen_known
+            or _complete_norm_payload_wire(_complete_norm_payload_copy(list(examples))) != frozen_rows
+            or _complete_norm_payload_wire(_complete_norm_payload_copy(known_candidate_inputs)) != frozen_known):
+        raise ValueError('complete-candidate inputs changed during scoring')
+    return dict(schema='complete-norm-source-bound-candidate-syntax-metrics/v1',
+        profile=candidate_syntax_profile, denominator=len(rows), counts=counts,
+        reference_counts=reference_counts, cases=details,
+        syntax_validated_rate=counts['syntax_validated_unreviewed'] / len(rows),
+        known_inputs_sha256=hashlib.sha256(frozen_known).hexdigest(),
+        reference_and_prediction_payload_sha256=hashlib.sha256(frozen_rows).hexdigest(),
+        known_input_authenticity_verified=False, candidate_repaired=False,
+        generator_invoked_by_scorer=False, semantic_selection_supported=False,
+        semantic_use_eligible=False, training_mask=0, evaluation_gold_mask=0,
+        source_fidelity_proved=False, semantic_equivalence_proved=False,
+        native_proof_verified=False, legal_admission_or_proof_authority=False)
+
+
+__all__ += ['evaluate_complete_norm_candidate_syntax']
