@@ -164,7 +164,7 @@ _CLOSURE_REPOSITORIES = (
 )
 
 
-def validate_uscode_release_closure_v1(request_raw: bytes, *, expected_request_sha256: str) -> dict:
+def _validate_uscode_release_byte_closure(request_raw: bytes, *, expected_request_sha256: str, reviewed_version: int) -> dict:
     """Replay exact local package, source/IR/graph/dependency/Lean-text custody.
 
     The request uses the existing bounded plain-value replay codec, including
@@ -179,7 +179,30 @@ def validate_uscode_release_closure_v1(request_raw: bytes, *, expected_request_s
     from . import legal_corpus_definition_use_native_v2 as native
     from . import legal_corpus_shared_lake as shared
     from . import legal_graph_dependencies as dependencies
-    from . import legal_norm_content_adjudication_v1 as admissions
+    _need(type(reviewed_version) is int and reviewed_version in (1, 3), "closed reviewed byte version required")
+    if reviewed_version == 3:
+        _release_v3_policy()
+        from . import legal_reviewed_norm_admission_v3 as admissions
+        request_schema, report_schema, profile = _BYTE_REQUEST_SCHEMA_V3, _BYTE_SCHEMA_V3, _BYTE_PROFILE_V3
+        admission_validator = admissions.validate_reviewed_norm_admission_v3
+        graph_validator = graphs.validate_reviewed_norm_graph_v3
+        preparation_validator = native.validate_reviewed_norm_preservation_native_v3
+        receipt_validator = native.validate_reviewed_norm_preservation_native_receipt_v3
+    else:
+        from . import legal_norm_content_adjudication_v1 as admissions
+        request_schema, report_schema, profile = CLOSURE_REQUEST_SCHEMA, CLOSURE_SCHEMA, CLOSURE_PROFILE
+        admission_validator = admissions.validate_reviewed_norm_admission_v2
+        graph_validator = graphs.validate_reviewed_norm_graph_v2
+        preparation_validator = native.validate_reviewed_norm_preservation_native_v2
+        receipt_validator = native.validate_reviewed_norm_preservation_native_receipt_v2
+    callbacks = (admission_validator, graph_validator, preparation_validator, receipt_validator)
+    callback_states = _release_callback_states_v3(callbacks) if reviewed_version == 3 else None
+    def version_fence():
+        if reviewed_version == 3:
+            _release_v3_policy()
+            current = (admissions.validate_reviewed_norm_admission_v3, graphs.validate_reviewed_norm_graph_v3,
+                native.validate_reviewed_norm_preservation_native_v3, native.validate_reviewed_norm_preservation_native_receipt_v3)
+            _release_callback_fence_v3(current, callback_states)
     from . import legal_source_span_entity_join_v1 as joins
     from ...processors.legal_data import uscode_hf_release as hf
     from ...processors.legal_data.uscode_release_schema import require_immutable_revision
@@ -190,7 +213,7 @@ def validate_uscode_release_closure_v1(request_raw: bytes, *, expected_request_s
     keys = {"schema", "profile", "datasets", "expected_artifact_ids", "artifacts",
             "expected_unit_ids", "component", "pins", "native"}
     _need(type(request) is dict and set(request) == keys, "closed closure request required")
-    _need(request["schema"] == CLOSURE_REQUEST_SCHEMA and request["profile"] == CLOSURE_PROFILE,
+    _need(request["schema"] == request_schema and request["profile"] == profile,
           "unsupported closure schema/profile; explicit compatible consumer required")
     datasets = request["datasets"]
     _need(type(datasets) is list and len(datasets) == 3, "exact law/span/entity revision population required")
@@ -233,7 +256,10 @@ def validate_uscode_release_closure_v1(request_raw: bytes, *, expected_request_s
         return materials[name]["payload"]
     def ordinary(name, family):
         raw = payload(name, family)
-        value = contracts.load_json_bytes(raw, expected_sha256=hashlib.sha256(raw).hexdigest())
+        if reviewed_version == 3 and family in ("admission", "graph"):
+            value = _reviewed_json_artifact_v3(raw)
+        else:
+            value = contracts.load_json_bytes(raw, expected_sha256=hashlib.sha256(raw).hexdigest())
         _need(raw == _canonical(value), "exact canonical artifact bytes required")
         return value
     replay_raw = payload(component["replay"], "replay")
@@ -245,7 +271,9 @@ def validate_uscode_release_closure_v1(request_raw: bytes, *, expected_request_s
           "complete reviewed admission replay required")
     args, kwargs = replay["admission_args"], replay["admission_kwargs"]
     admission = ordinary(component["admission"], "admission")
-    admission = admissions.validate_reviewed_norm_admission_v2(admission, *args,
+    if reviewed_version == 3:
+        version_fence()
+    admission = admission_validator(admission, *args,
         expected_report_sha256=pins["admission"], **kwargs)
     _need(admission["semantic_use_eligible"] is True, "current reviewed admission has unresolved blockers")
     declaration = kwargs["preparation_inputs"]["declaration"]
@@ -273,7 +301,9 @@ def validate_uscode_release_closure_v1(request_raw: bytes, *, expected_request_s
     _need(not dependency["missing_dependencies"] and not dependency["cycles"]
           and not invalidation["stale_artifact_ids"], "complete current acyclic dependencies required")
     graph = ordinary(component["graph"], "graph")
-    graphs.validate_reviewed_norm_graph_v2(graph, admission, *args,
+    if reviewed_version == 3:
+        version_fence()
+    graph_validator(graph, admission, *args,
         expected_graph_sha256=pins["graph"], expected_admission_sha256=pins["admission"], **kwargs)
     preparation_raw = payload(component["preservation"], "preservation")
     saved = wire.decode_parent_replay_value_v1(preparation_raw,
@@ -283,7 +313,9 @@ def validate_uscode_release_closure_v1(request_raw: bytes, *, expected_request_s
           "exact complete Lean preservation project required")
     preparation = shared.ReviewedPreservationCorpusPreparation(saved["manifest_json"],
         tuple(tuple(row) for row in saved["files"]))
-    native.validate_reviewed_norm_preservation_native_v2(preparation, graph, admission, *args,
+    if reviewed_version == 3:
+        version_fence()
+    preparation_validator(preparation, graph, admission, *args,
         expected_preservation_sha256=pins["preservation"], expected_graph_sha256=pins["graph"],
         expected_admission_sha256=pins["admission"], toolchain=replay["toolchain"], **kwargs)
     join = ordinary(component["source_span_entity_join"], "source_span_entity_join")
@@ -325,8 +357,9 @@ def validate_uscode_release_closure_v1(request_raw: bytes, *, expected_request_s
     _need(all(package_files.get(row["path_in_repo"]) == row["raw_utf8"].encode("utf-8")
               for row in intake["files"]), "HF package/selected source metadata bytes differ")
     native_report = None
+    transport_report = None
     selection = request["native"]
-    if selection is not None:
+    if selection is not None and reviewed_version == 1:
         _need(type(selection) is dict and set(selection) == {"receipt", "packet", "expected_packet_sha256", "expected_binary_sha256"},
               "closed exact retained native evidence required")
         _need(selection["receipt"] not in required and selection["packet"] not in required
@@ -343,6 +376,20 @@ def validate_uscode_release_closure_v1(request_raw: bytes, *, expected_request_s
             expected_binary_sha256=selection["expected_binary_sha256"],
             expected_preservation_sha256=pins["preservation"], expected_graph_sha256=pins["graph"],
             expected_admission_sha256=pins["admission"], toolchain=replay["toolchain"], **kwargs)
+    elif selection is not None:
+        receipt_raw, packet, transport_report = _release_native_packet_v3(selection, materials, required, contracts, wire)
+        if selection["observation_profile"] == "fictional-authored-observation/v1":
+            _need(admission["fixture_only"] is True and admission["provenance_kind"] == "fictional_fixture",
+                  "fictional observation requires genuinely admitted fictional fixture")
+        version_fence()
+        native_report = receipt_validator(receipt_raw,
+            preparation, graph, admission, *args, packet_files=packet,
+            expected_receipt_sha256=hashlib.sha256(receipt_raw).hexdigest(),
+            expected_packet_sha256=selection["expected_packet_sha256"],
+            expected_binary_sha256=selection["expected_binary_sha256"],
+            expected_preservation_sha256=pins["preservation"], expected_graph_sha256=pins["graph"],
+            expected_admission_sha256=pins["admission"], toolchain=replay["toolchain"],
+            observation_profile=selection["observation_profile"], **kwargs)
     _need(set(materials) == required, "unreferenced or omitted artifact population")
     blockers = ["independent_law_span_entity_to_reviewed_source_crosswalk_missing",
                 "original_admitted_native_parent_custody_not_established",
@@ -352,7 +399,7 @@ def validate_uscode_release_closure_v1(request_raw: bytes, *, expected_request_s
         blockers.insert(0, "production_packaging_to_wire_profile_adapter_not_established")
     if selection is None:
         blockers.append("retained_native_receipt_and_packet_not_provided")
-    return {"schema": CLOSURE_SCHEMA, "profile": CLOSURE_PROFILE,
+    report = {"schema": report_schema, "profile": profile,
         "request_sha256": expected_request_sha256, "datasets": datasets,
         "artifacts": descriptors, "unit_ids": list(request["expected_unit_ids"]),
         "fixture_only": admission["fixture_only"], "provenance_kind": admission["provenance_kind"],
@@ -367,6 +414,26 @@ def validate_uscode_release_closure_v1(request_raw: bytes, *, expected_request_s
         "source_metadata_arrow_bytes_verified": False, "original_native_parent_custody_verified": False,
         "remote_readback_verified": False,
         "model_or_compiler_execution_performed": False}
+    if reviewed_version == 3:
+        blockers.append("statutory_meaning_and_full_corpus_qualification_not_established")
+        manifest = json.loads(preparation.manifest_json)
+        report.update(reviewed_version=3, native_packet_transport=transport_report,
+            signature_headers_by_unit=manifest["signature_headers_by_unit"],
+            predicate_compatibility_ledger=manifest["predicate_compatibility_ledger"],
+            definition_use_record_cids=manifest["definition_use_record_cids"],
+            unit_preservation_bindings=manifest["units"],
+            original_parent_handle_consumed=False, native_receipt_authenticated=False,
+            release_eligible=False, statutory_meaning_proved=False, gold_verified=False,
+            original_success_authenticated=False, source_kernel_receipt_authenticated=False,
+            admission_mask=0, release_mask=0, gold_mask=0, training_mask=0, evaluation_gold_mask=0)
+    version_fence()
+    return report
+
+
+def validate_uscode_release_closure_v1(request_raw: bytes, *, expected_request_sha256: str) -> dict:
+    """Replay the unchanged closed V1 byte-custody profile."""
+    return _validate_uscode_release_byte_closure(request_raw,
+        expected_request_sha256=expected_request_sha256, reviewed_version=1)
 
 
 # Explicit successor: the preceding v1 request and implementation stay closed.
@@ -377,7 +444,7 @@ REVIEWED_PHYSICAL_CROSSWALK_SCHEMA = "legal-reviewed-physical-source-crosswalk/v
 REVIEWED_PHYSICAL_CROSSWALK_PROFILE = "identity-text-complete-reviewed-graph/v1"
 
 
-def validate_uscode_release_closure_v2(request_raw: bytes, *, expected_request_sha256: str) -> dict:
+def _validate_uscode_release_physical_closure(request_raw: bytes, *, expected_request_sha256: str, reviewed_version: int) -> dict:
     """Replay a reviewed, exact physical law/span/entity-to-IR component.
 
     Crosswalk bytes are versioned cross-reference dependencies of every reviewed
@@ -396,6 +463,17 @@ def validate_uscode_release_closure_v2(request_raw: bytes, *, expected_request_s
     from . import uscode_ingest as coordinates
     from ...optimizers.logic_theorem_optimizer import uscode_dataset as law_owner
     from ...processors.legal_data import uscode_hf_release as hf
+
+    _need(type(reviewed_version) is int and reviewed_version in (2, 3), "closed reviewed physical version required")
+    if reviewed_version == 3:
+        _release_v3_policy()
+        request_schema, report_schema, profile = CLOSURE_REQUEST_SCHEMA_V3, CLOSURE_SCHEMA_V3, CLOSURE_PROFILE_V3
+        core_schema, core_profile = _BYTE_REQUEST_SCHEMA_V3, _BYTE_PROFILE_V3
+        core_validator = _validate_uscode_release_byte_closure_v3
+    else:
+        request_schema, report_schema, profile = CLOSURE_REQUEST_SCHEMA_V2, CLOSURE_SCHEMA_V2, CLOSURE_PROFILE_V2
+        core_schema, core_profile = CLOSURE_REQUEST_SCHEMA, CLOSURE_PROFILE
+        core_validator = validate_uscode_release_closure_v1
 
     # These are the added physical delegates, not a complete execution/library
     # attestation. Existing v1 owners retain their own opening/closing pins.
@@ -420,15 +498,20 @@ def validate_uscode_release_closure_v2(request_raw: bytes, *, expected_request_s
     physical_generation = physical_owner_snapshot()
     physical_callbacks = (law_owner.capture_uscode_source_documents_from_parquet,
         coordinates.validate_uscode_source_coordinates, entity_owner.iter_observed_rows,
-        validate_uscode_release_closure_v1)
+        core_validator)
+    physical_callback_states = (_release_callback_states_v3(physical_callbacks) if reviewed_version == 3 else None)
     def physical_owner_fence():
         _need(physical_owner_snapshot() == physical_generation,
               "physical delegate source generation changed during complete replay")
         current = (law_owner.capture_uscode_source_documents_from_parquet,
             coordinates.validate_uscode_source_coordinates, entity_owner.iter_observed_rows,
-            validate_uscode_release_closure_v1)
+            _validate_uscode_release_byte_closure_v3 if reviewed_version == 3 else validate_uscode_release_closure_v1)
+        if reviewed_version == 3:
+            _release_v3_policy()
         _need(all(left is right for left, right in zip(current, physical_callbacks, strict=True)),
               "physical delegate callback changed during complete replay")
+        if reviewed_version == 3:
+            _release_callback_fence_v3(current, physical_callback_states)
 
     def same(left, right):
         return _canonical(left) == _canonical(right)
@@ -450,7 +533,7 @@ def validate_uscode_release_closure_v2(request_raw: bytes, *, expected_request_s
         expected_payload_sha256=expected_request_sha256, max_bytes=MAX_CLOSURE_REQUEST_BYTES)
     keys(request, {"schema", "profile", "datasets", "expected_artifact_ids", "artifacts",
         "expected_unit_ids", "component", "pins", "native", "physical_inputs"}, "physical closure request")
-    _need(request["schema"] == CLOSURE_REQUEST_SCHEMA_V2 and request["profile"] == CLOSURE_PROFILE_V2,
+    _need(request["schema"] == request_schema and request["profile"] == profile,
           "unsupported physical closure schema/profile")
     physical_inputs = request["physical_inputs"]
     keys(physical_inputs, {"law_path", "entity_path"}, "retained physical inputs")
@@ -522,7 +605,7 @@ def validate_uscode_release_closure_v2(request_raw: bytes, *, expected_request_s
     # Removing only the two new roles retains v1's exact complete artifact check.
     excluded = {component[role] for role in extra_roles}
     core = {key: value for key, value in request.items() if key != "physical_inputs"}
-    core.update(schema=CLOSURE_REQUEST_SCHEMA, profile=CLOSURE_PROFILE,
+    core.update(schema=core_schema, profile=core_profile,
         component={key: component[key] for key in base_roles},
         pins={key: pins[key] for key in ("admission", "graph", "preservation")},
         artifacts=[row for row in rows if row["artifact_id"] not in excluded],
@@ -612,7 +695,9 @@ def validate_uscode_release_closure_v2(request_raw: bytes, *, expected_request_s
     with ExitStack() as stack:
         law_path, law_fence = stack.enter_context(held_file(physical_inputs["law_path"], law_artifact.content))
         entity_path, entity_fence = stack.enter_context(held_file(physical_inputs["entity_path"], entity_raw))
-        opened = validate_uscode_release_closure_v1(core_raw, expected_request_sha256=core_sha)
+        if reviewed_version == 3:
+            physical_owner_fence()
+        opened = core_validator(core_raw, expected_request_sha256=core_sha)
         join = ordinary("source_span_entity_join", "source_span_entity_join")
         graph = ordinary("graph", "graph")
         _need(join["source_repository"] == {key: request["datasets"][0][key] for key in ("repository_id", "revision")}
@@ -798,15 +883,19 @@ def validate_uscode_release_closure_v2(request_raw: bytes, *, expected_request_s
               and edge_cids == {edge["record_cid"] for edge in graph_edges},
               "materialized entity mapping must exhaust the complete reviewed graph node and edge populations")
         # Close the original generation, not a freshly repinned replacement.
+        if reviewed_version == 3:
+            physical_owner_fence()
         _need(same(captured, law_owner.capture_uscode_source_documents_from_parquet(law_path, **capture_args)),
               "physical law capture changed during complete crosswalk traversal")
         coordinate_replay()
         law_fence()
         entity_fence()
-        closed = validate_uscode_release_closure_v1(core_raw, expected_request_sha256=core_sha)
+        if reviewed_version == 3:
+            physical_owner_fence()
+        closed = core_validator(core_raw, expected_request_sha256=core_sha)
         _need(same(opened, closed), "complete source/IR/cache/graph/review generation changed during physical replay")
         report = dict(closed)
-        report.update(schema=CLOSURE_SCHEMA_V2, profile=CLOSURE_PROFILE_V2,
+        report.update(schema=report_schema, profile=profile,
             request_sha256=expected_request_sha256,
             artifacts=[{key: row[key] for key in ("artifact_id", "family", "sha256", "bytes")} for row in rows],
             blockers=[blocker for blocker in closed["blockers"]
@@ -834,3 +923,199 @@ def validate_uscode_release_closure_v2(request_raw: bytes, *, expected_request_s
     # checks and closed. Do the final source-generation check after that custody.
     physical_owner_fence()
     return report
+
+
+def validate_uscode_release_closure_v2(request_raw: bytes, *, expected_request_sha256: str) -> dict:
+    """Replay the unchanged closed V2 physical-three-cache profile."""
+    return _validate_uscode_release_physical_closure(request_raw,
+        expected_request_sha256=expected_request_sha256, reviewed_version=2)
+
+
+# Explicit V3 domains. Byte closure never issues a parent/release capability.
+CLOSURE_REQUEST_SCHEMA_V3 = "legal-uscode-release-closure-request/v3"
+CLOSURE_SCHEMA_V3 = "legal-uscode-release-closure-report/v3"
+CLOSURE_PROFILE_V3 = "reviewed-norm-v3-physical-three-cache-replay/v1"
+_BYTE_REQUEST_SCHEMA_V3 = "legal-uscode-release-byte-closure-request/v3"
+_BYTE_SCHEMA_V3 = "legal-uscode-release-byte-closure-report/v3"
+_BYTE_PROFILE_V3 = "reviewed-norm-v3-local-byte-replay/v1"
+NATIVE_PACKET_INDEX_SCHEMA_V3 = "legal-reviewed-native-packet-index/v3"
+NATIVE_PACKET_INDEX_PROFILE_V3 = "complete-existing-typed-wire-chunks/v1"
+NATIVE_PACKET_CODEC_V3 = "legal_corpus_definition_use_lake_v2.encode_parent_replay_value_v1"
+
+
+def _reviewed_json_artifact_v3(raw):
+    """Decode complete legal reports under their existing norm JSON profile.
+
+    Generic graph envelopes retain corpus_contracts' smaller depth limit.
+    V3 admission/graph reports embed typed expressions and already use the
+    norm correspondence wire's bounded depth/node rules. Byte ceilings and
+    subsequent independent semantic validators remain unchanged.
+    """
+    from . import legal_paired_manifest_inventory_v1 as reader
+    from . import legal_norm_scope_correspondence_v1 as correspondence
+    _need(type(raw) is bytes and 0 < len(raw) <= _MAX_ARTIFACT_BYTES,
+          "bounded exact reviewed artifact bytes required")
+    try:
+        value = json.loads(raw.decode("utf-8"), object_pairs_hook=reader._pairs,
+            parse_constant=lambda _: (_ for _ in ()).throw(ValueError("finite reviewed JSON required")))
+    except (ValueError, UnicodeError, RecursionError) as error:
+        raise ReleaseCoordinatorError("duplicate-free finite UTF8 reviewed JSON required") from error
+    _need(correspondence._wire(value, _MAX_ARTIFACT_BYTES) == raw,
+          "exact canonical reviewed artifact bytes required")
+    return value
+
+
+def _release_callback_states_v3(callbacks):
+    """Capture only these named delegates' cooperative callable generation."""
+    from types import FunctionType
+    states = []
+    for callback in callbacks:
+        _need(type(callback) is FunctionType, "V3 ordinary Python delegate required")
+        defaults = callback.__kwdefaults__ or {}
+        _need(type(defaults) is dict and all(type(key) is str for key in defaults),
+              "V3 ordinary keyword defaults required")
+        states.append((callback, callback.__code__, callback.__defaults__, callback.__kwdefaults__, tuple(defaults.items())))
+    return tuple(states)
+
+
+def _release_callback_fence_v3(callbacks, states):
+    """Refuse identity, code or default drift; no complete memory attestation."""
+    from types import FunctionType
+    _need(len(callbacks) == len(states), "V3 callback population changed")
+    for callback, (original, code, defaults, keyword_mapping, keyword_defaults) in zip(callbacks, states, strict=True):
+        current_keywords = callback.__kwdefaults__ if type(callback) is FunctionType else None
+        _need(type(callback) is FunctionType and callback is original
+              and callback.__code__ is code and callback.__defaults__ is defaults
+              and current_keywords is keyword_mapping
+              and (current_keywords is None or type(current_keywords) is dict)
+              and set(current_keywords or {}) == {key for key, _ in keyword_defaults}
+              and all((current_keywords or {})[key] is value for key, value in keyword_defaults),
+              "V3 callback function/code/default/keyword-default generation changed")
+
+
+def _release_v3_policy():
+    _need(type(_MAX_ARTIFACT_BYTES) is int and _MAX_ARTIFACT_BYTES == 1_000_000
+          and type(MAX_CLOSURE_REQUEST_BYTES) is int and MAX_CLOSURE_REQUEST_BYTES == 8 * 1024 * 1024,
+          "V3 retains the original artifact/request ceilings")
+    _need((CLOSURE_REQUEST_SCHEMA_V3, CLOSURE_SCHEMA_V3, CLOSURE_PROFILE_V3,
+        _BYTE_REQUEST_SCHEMA_V3, _BYTE_SCHEMA_V3, _BYTE_PROFILE_V3,
+        NATIVE_PACKET_INDEX_SCHEMA_V3, NATIVE_PACKET_INDEX_PROFILE_V3, NATIVE_PACKET_CODEC_V3) == (
+        "legal-uscode-release-closure-request/v3", "legal-uscode-release-closure-report/v3",
+        "reviewed-norm-v3-physical-three-cache-replay/v1", "legal-uscode-release-byte-closure-request/v3",
+        "legal-uscode-release-byte-closure-report/v3", "reviewed-norm-v3-local-byte-replay/v1",
+        "legal-reviewed-native-packet-index/v3", "complete-existing-typed-wire-chunks/v1",
+        "legal_corpus_definition_use_lake_v2.encode_parent_replay_value_v1"),
+        "closed explicit V3 release and transport domains required")
+
+
+def prepare_reviewed_native_packet_transport_v3(packet_raw: bytes, *, artifact_id_prefix: str) -> dict:
+    """Split one complete exact existing typed packet wire, without authority.
+
+    Use publish_referenced_artifact for every returned descriptor and the
+    existing seal_coordinator_receipt only after complete readback. This is
+    transport preparation, not Native/source/parent qualification.
+    """
+    from . import legal_corpus_definition_use_lake_v2 as wire
+    _release_v3_policy()
+    _need(type(packet_raw) is bytes and 0 < len(packet_raw) <= MAX_CLOSURE_REQUEST_BYTES,
+          "complete bounded native packet wire required")
+    _need(type(artifact_id_prefix) is str and 0 < len(artifact_id_prefix.encode("utf-8")) <= 480,
+          "bounded explicit native artifact ID prefix required")
+    value = wire.decode_parent_replay_value_v1(packet_raw,
+        expected_payload_sha256=hashlib.sha256(packet_raw).hexdigest(), max_bytes=MAX_CLOSURE_REQUEST_BYTES)
+    _need(type(value) in (list, tuple) and len(value) > 0
+          and all(type(row) in (list, tuple) and len(row) == 2 and type(row[0]) is str
+                  and type(row[1]) is bytes for row in value)
+          and wire.encode_parent_replay_value_v1(value, max_bytes=MAX_CLOSURE_REQUEST_BYTES) == packet_raw,
+          "exact canonical existing typed packet wire required")
+    def artifact(identity, family, raw):
+        return dict(artifact_id=identity, family=family, sha256=hashlib.sha256(raw).hexdigest(), bytes=len(raw), payload=raw)
+    chunks, rows = [], []
+    for ordinal, offset in enumerate(range(0, len(packet_raw), _MAX_ARTIFACT_BYTES)):
+        raw = packet_raw[offset:offset + _MAX_ARTIFACT_BYTES]
+        identity = artifact_id_prefix + ":chunk:" + format(ordinal, "04d")
+        chunks.append(artifact(identity, "native_packet_chunk", raw))
+        rows.append(dict(ordinal=ordinal, artifact_id=identity, offset=offset,
+                         bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest()))
+    index = dict(schema=NATIVE_PACKET_INDEX_SCHEMA_V3, profile=NATIVE_PACKET_INDEX_PROFILE_V3,
+        codec=NATIVE_PACKET_CODEC_V3, wire_bytes=len(packet_raw), wire_sha256=hashlib.sha256(packet_raw).hexdigest(), chunks=rows)
+    _release_v3_policy()
+    return dict(index=artifact(artifact_id_prefix + ":index", "native_packet_index", _canonical(index)),
+                chunks=chunks, preparation_only=True, original_parent_or_release_authority=False)
+
+
+def _release_native_packet_v3(selection, materials, required, contracts, wire):
+    """Precharge every piece before bounded reconstruction of the whole wire."""
+    _release_v3_policy()
+    _need(type(selection) is dict and set(selection) == {"receipt", "packet_index", "expected_packet_sha256",
+        "expected_binary_sha256", "observation_profile"}, "closed explicit V3 retained packet selection required")
+    contracts.require_sha256(selection["expected_packet_sha256"], "logical native inventory SHA256")
+    _need(type(selection["observation_profile"]) is str and selection["observation_profile"] in ("retained-native-observation/v1", "fictional-authored-observation/v1"),
+          "explicit supported retained observation profile required")
+    ids = [selection["receipt"], selection["packet_index"]]
+    _need(all(type(identity) is str and 0 < len(identity.encode("utf-8")) <= 512 for identity in ids)
+          and len(set(ids)) == 2 and not set(ids) & required, "native receipt/index roles overlap original roles")
+    def payload(identity, family):
+        row = materials.get(identity)
+        _need(row is not None and row["family"] == family, "native transport role missing or changed")
+        return row["payload"]
+    receipt_raw, index_raw = payload(ids[0], "native_receipt"), payload(ids[1], "native_packet_index")
+    index = contracts.load_json_bytes(index_raw, expected_sha256=hashlib.sha256(index_raw).hexdigest())
+    _need(type(index) is dict and set(index) == {"schema", "profile", "codec", "wire_bytes", "wire_sha256", "chunks"}
+          and _canonical(index) == index_raw, "closed canonical native packet index required")
+    _need((index["schema"], index["profile"], index["codec"]) == ("legal-reviewed-native-packet-index/v3",
+        "complete-existing-typed-wire-chunks/v1", "legal_corpus_definition_use_lake_v2.encode_parent_replay_value_v1"),
+        "exact existing typed-wire V3 index required")
+    length = index["wire_bytes"]
+    _need(type(length) is int and 0 < length <= MAX_CLOSURE_REQUEST_BYTES, "nonboolean bounded whole wire length required")
+    contracts.require_sha256(index["wire_sha256"], "whole native wire SHA256")
+    chunks = index["chunks"]
+    _need(type(chunks) is list and 1 <= len(chunks) <= 9
+          and len(chunks) == (length + _MAX_ARTIFACT_BYTES - 1) // _MAX_ARTIFACT_BYTES,
+          "complete bounded fixed-width chunk population required")
+    _need(1 <= len(materials) <= 64 and sum(row["bytes"] for row in materials.values()) <= MAX_CLOSURE_REQUEST_BYTES,
+          "all original artifact/count budgets must be precharged")
+    pieces, seen, offset = [], set(ids), 0
+    for ordinal, row in enumerate(chunks):
+        _need(type(row) is dict and set(row) == {"ordinal", "artifact_id", "offset", "bytes", "sha256"},
+              "closed ordered native chunk descriptor required")
+        identity = row["artifact_id"]
+        _need(type(identity) is str and 0 < len(identity.encode("utf-8")) <= 512
+              and identity not in seen and identity not in required, "unique role-disjoint chunk IDs required")
+        expected_bytes = min(_MAX_ARTIFACT_BYTES, length - offset)
+        _need(type(row["ordinal"]) is int and row["ordinal"] == ordinal
+              and type(row["offset"]) is int and row["offset"] == offset
+              and type(row["bytes"]) is int and row["bytes"] == expected_bytes and expected_bytes > 0,
+              "exact gapfree nonoverlapping full-width ordered chunks required")
+        contracts.require_sha256(row["sha256"], "native chunk SHA256")
+        raw = payload(identity, "native_packet_chunk")
+        _need(len(raw) == expected_bytes and hashlib.sha256(raw).hexdigest() == row["sha256"], "native chunk bytes differ")
+        pieces.append(raw);seen.add(identity);offset += len(raw)
+    _need(offset == length and [row["artifact_id"] for row in chunks] == [
+        identity for identity, row in materials.items() if row["family"] == "native_packet_chunk"],
+        "exact chunk membership and artifact order required")
+    packet_raw = b"".join(pieces)
+    _need(len(packet_raw) == length and hashlib.sha256(packet_raw).hexdigest() == index["wire_sha256"], "whole native wire differs")
+    packet = wire.decode_parent_replay_value_v1(packet_raw,
+        expected_payload_sha256=index["wire_sha256"], max_bytes=MAX_CLOSURE_REQUEST_BYTES)
+    _need(type(packet) in (list, tuple) and len(packet) > 0
+          and all(type(row) in (list, tuple) and len(row) == 2 and type(row[0]) is str
+                  and type(row[1]) is bytes for row in packet)
+          and wire.encode_parent_replay_value_v1(packet, max_bytes=MAX_CLOSURE_REQUEST_BYTES) == packet_raw,
+          "whole original canonical typed packet wire required")
+    required.update(seen)
+    _release_v3_policy()
+    return receipt_raw, packet, dict(index_artifact_id=ids[1], codec=index["codec"],
+        complete_wire_bytes=length, complete_wire_sha256=index["wire_sha256"], chunks=chunks,
+        logical_packet_inventory_sha256=selection["expected_packet_sha256"],
+        complete_packet_file_count=len(packet) if type(packet) in (list, tuple) else None, parent_or_release_authority=False)
+
+
+def _validate_uscode_release_byte_closure_v3(request_raw: bytes, *, expected_request_sha256: str) -> dict:
+    return _validate_uscode_release_byte_closure(request_raw, expected_request_sha256=expected_request_sha256, reviewed_version=3)
+
+
+def validate_uscode_release_closure_v3(request_raw: bytes, *, expected_request_sha256: str) -> dict:
+    """Replay complete V3 physical/IR/graph/retained bytes without parent grants."""
+    _release_v3_policy()
+    return _validate_uscode_release_physical_closure(request_raw, expected_request_sha256=expected_request_sha256, reviewed_version=3)

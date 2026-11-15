@@ -46,6 +46,7 @@ def _parser():
     closure.add_argument("--profile", choices=(
         "reviewed-norm-v2-local-replay/v1",
         "reviewed-norm-v2-physical-three-cache-replay/v1",
+        "reviewed-norm-v3-physical-three-cache-replay/v1",
     ), default="reviewed-norm-v2-local-replay/v1")
     return parser
 
@@ -134,6 +135,7 @@ def main(argv=None):
                 result["supported_profiles"] = [
                     "reviewed-norm-v2-local-replay/v1",
                     "reviewed-norm-v2-physical-three-cache-replay/v1",
+                    "reviewed-norm-v3-physical-three-cache-replay/v1",
                 ]
                 result["default_profile"] = "reviewed-norm-v2-local-replay/v1"
         else:
@@ -152,6 +154,11 @@ def main(argv=None):
                         validate_uscode_release_closure_v2,
                     )
                     validator = validate_uscode_release_closure_v2
+                elif args.profile == "reviewed-norm-v3-physical-three-cache-replay/v1":
+                    from ipfs_datasets_py.logic.autoformal.legal_release_coordinator_v1 import (
+                        validate_uscode_release_closure_v3,
+                    )
+                    validator = validate_uscode_release_closure_v3
                 closure = validator(raw, expected_request_sha256=args.request_sha256)
                 result = _receipt(status="success", command=command,
                     validation_scope="selected-component-local-replay-not-release-admission",

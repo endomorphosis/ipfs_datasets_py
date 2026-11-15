@@ -1,0 +1,428 @@
+{
+  "Root_publication_selection_pending": true,
+  "actual_custody": {
+    "Source_exit_seconds": 189.52852627681568,
+    "files_including_seal": 62,
+    "final_total_bytes": 6572203,
+    "independent": {
+      "bytes": 24692,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-release-v3-current56-source-only-ACTIVE-original32MiB-input-v01/independent-current-R56-selected-software-and-custody-qualification-audit-v01.json",
+      "sha256": "3331162cbf90dc9a6926ddf04320febd2f136c62ddc5737d3899b2769c0344a9"
+    },
+    "initial_acceptance_seconds": 420,
+    "original_Source_R_A_Native_process_genuine_wait_closed": true,
+    "own_native_lease_id": "d32f36aafed4462e8330151ab823e471",
+    "own_reservation_id": "7f28875e11ca47aabfaf7c98d7cbaef3",
+    "own_storage_bytes_released_durably": 33554432,
+    "parent": {
+      "bytes": 12261,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-release-v3-current56-source-only-ACTIVE-original32MiB-input-v01/parent-closeout.json",
+      "sha256": "096d8c8cca64427793f5b82c5cc77b7df7de42420c9b317aa8a5a14ce0e54409"
+    },
+    "seal_rows": 61
+  },
+  "all_imports_or_full155_or_SourceGen_or_parent_v2_or_actual_Native_Lean_or_real_USCode_or_model_assets_or_training_or_legal_credit": false,
+  "current_W_R_metadata": {
+    "captures": [
+      {
+        "captured_ref": {
+          "bytes": 1038123,
+          "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-R56-selected-source-only-maintained-docs-inputs-private-v01/captured-current-W_R-catalog.json",
+          "sha256": "4d10f58cd37b695712bf6a07057666069774f98864a46a9aef0cf283ea68ea99"
+        },
+        "label": "catalog",
+        "scope": "Private immutable point-in-time metadata capture; full metadata not duplicated into public capsule.",
+        "source_full9": {
+          "st_ctime_ns": 1794710626926699395,
+          "st_dev": 66306,
+          "st_gid": 1000,
+          "st_ino": 33994843,
+          "st_mode": 33204,
+          "st_mtime_ns": 1794710626924435577,
+          "st_nlink": 1,
+          "st_size": 1038123,
+          "st_uid": 1000
+        },
+        "source_ref": {
+          "bytes": 1038123,
+          "path": "/tmp/datasets-publish-main-20261114/ipfs_datasets_py/logic/autoformal/docs/work_catalog.json",
+          "sha256": "4d10f58cd37b695712bf6a07057666069774f98864a46a9aef0cf283ea68ea99"
+        }
+      },
+      {
+        "captured_ref": {
+          "bytes": 1238566,
+          "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-R56-selected-source-only-maintained-docs-inputs-private-v01/captured-current-W_R-BACKLOG.json",
+          "sha256": "7f697b7148d27fbeaf6091ffe23436417e7ffbf1542b5fdefc7ced2c93ea3914"
+        },
+        "label": "BACKLOG",
+        "scope": "Private immutable point-in-time metadata capture; full metadata not duplicated into public capsule.",
+        "source_full9": {
+          "st_ctime_ns": 1794708943757523037,
+          "st_dev": 66306,
+          "st_gid": 1000,
+          "st_ino": 33994760,
+          "st_mode": 33204,
+          "st_mtime_ns": 1794708943757523037,
+          "st_nlink": 1,
+          "st_size": 1238566,
+          "st_uid": 1000
+        },
+        "source_ref": {
+          "bytes": 1238566,
+          "path": "/tmp/datasets-publish-main-20261114/ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json",
+          "sha256": "7f697b7148d27fbeaf6091ffe23436417e7ffbf1542b5fdefc7ced2c93ea3914"
+        }
+      },
+      {
+        "captured_ref": {
+          "bytes": 73273,
+          "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-R56-selected-source-only-maintained-docs-inputs-private-v01/captured-current-legal_release_coordinator_v1.py",
+          "sha256": "c045ce5e0a090d5579dcf16658c68df9582825a1afc9a90fac28efad65ae0985"
+        },
+        "label": "qualified_source",
+        "source_full9": {
+          "st_ctime_ns": 1794698382354420776,
+          "st_dev": 66306,
+          "st_gid": 1000,
+          "st_ino": 33731160,
+          "st_mode": 33204,
+          "st_mtime_ns": 1794698382351765846,
+          "st_nlink": 1,
+          "st_size": 73273,
+          "st_uid": 1000
+        },
+        "source_ref": {
+          "bytes": 73273,
+          "path": "/tmp/datasets-publish-main-20261114/ipfs_datasets_py/logic/autoformal/legal_release_coordinator_v1.py",
+          "sha256": "c045ce5e0a090d5579dcf16658c68df9582825a1afc9a90fac28efad65ae0985"
+        }
+      },
+      {
+        "captured_ref": {
+          "bytes": 10174,
+          "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-R56-selected-source-only-maintained-docs-inputs-private-v01/captured-current-validate_uscode_corpus_release.py",
+          "sha256": "583af3c23aec8acacd57162f8347aef5f00595a6aeec4d66980af3a1865be852"
+        },
+        "label": "qualified_source",
+        "source_full9": {
+          "st_ctime_ns": 1794697075793231508,
+          "st_dev": 66306,
+          "st_gid": 1000,
+          "st_ino": 35701259,
+          "st_mode": 33204,
+          "st_mtime_ns": 1794697075790203730,
+          "st_nlink": 1,
+          "st_size": 10174,
+          "st_uid": 1000
+        },
+        "source_ref": {
+          "bytes": 10174,
+          "path": "/tmp/datasets-publish-main-20261114/scripts/ops/legal_ir/validate_uscode_corpus_release.py",
+          "sha256": "583af3c23aec8acacd57162f8347aef5f00595a6aeec4d66980af3a1865be852"
+        }
+      },
+      {
+        "captured_ref": {
+          "bytes": 102931,
+          "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-R56-selected-source-only-maintained-docs-inputs-private-v01/captured-current-test_corpus_release_cli.py",
+          "sha256": "db7e2a68069444eb65125761277f78937d7198d31309f8f9840a594a4b6d1a1f"
+        },
+        "label": "qualified_source",
+        "source_full9": {
+          "st_ctime_ns": 1794703609819876848,
+          "st_dev": 66306,
+          "st_gid": 1000,
+          "st_ino": 56649190,
+          "st_mode": 33204,
+          "st_mtime_ns": 1794703609817042851,
+          "st_nlink": 1,
+          "st_size": 102931,
+          "st_uid": 1000
+        },
+        "source_ref": {
+          "bytes": 102931,
+          "path": "/tmp/datasets-publish-main-20261114/tests/unit/logic/autoformal/test_corpus_release_cli.py",
+          "sha256": "db7e2a68069444eb65125761277f78937d7198d31309f8f9840a594a4b6d1a1f"
+        }
+      }
+    ],
+    "catalog_after": 452,
+    "catalog_before": 451,
+    "owners": 119,
+    "task_ID_status_pairs": [
+      [
+        "LIR-01",
+        "in_progress"
+      ],
+      [
+        "LIR-02",
+        "in_progress"
+      ],
+      [
+        "LIR-03",
+        "in_progress"
+      ],
+      [
+        "LIR-04",
+        "in_progress"
+      ],
+      [
+        "LIR-05",
+        "proposed"
+      ],
+      [
+        "LIR-06",
+        "proposed"
+      ],
+      [
+        "LIR-07",
+        "in_progress"
+      ],
+      [
+        "LIR-08",
+        "in_progress"
+      ],
+      [
+        "LIR-09",
+        "in_progress"
+      ],
+      [
+        "LIR-10",
+        "proposed"
+      ],
+      [
+        "LIR-11",
+        "proposed"
+      ],
+      [
+        "LIR-12",
+        "in_progress"
+      ],
+      [
+        "LIR-13",
+        "in_progress"
+      ],
+      [
+        "LIR-14",
+        "in_progress"
+      ],
+      [
+        "LIR-15",
+        "in_progress"
+      ],
+      [
+        "LIR-16",
+        "completed"
+      ],
+      [
+        "LIR-17",
+        "in_progress"
+      ],
+      [
+        "LIR-18",
+        "proposed"
+      ],
+      [
+        "LIR-19",
+        "proposed"
+      ],
+      [
+        "LIR-20",
+        "proposed"
+      ],
+      [
+        "LIR-21",
+        "proposed"
+      ],
+      [
+        "LIR-22",
+        "proposed"
+      ],
+      [
+        "LIR-23",
+        "proposed"
+      ],
+      [
+        "LIR-24",
+        "proposed"
+      ]
+    ]
+  },
+  "custody_helper": {
+    "hard_preemption_or_guaranteed_worst_case_fit": false,
+    "initial_acceptance_seconds": 420,
+    "legacy_32MiB_work120_unchanged": true,
+    "no_deadline_renewal": true,
+    "shared_Source_admission_seconds": 60,
+    "software_profile": "original-owning-shared-Source60-total420/v1"
+  },
+  "explicit_source_frontier": {
+    "all_runtime_imports_observed_or_covered": false,
+    "count": 198,
+    "source_pins_unchanged": true
+  },
+  "feature_usage": {
+    "command": "validate-closure --request PATH --request-sha256 SHA --profile reviewed-norm-v3-physical-three-cache-replay/v1",
+    "default_profile": "reviewed-norm-v2-local-replay/v1",
+    "fixture_scope": "Complete fictional signed three-cache 83-file component/four-chunk transport; not actual corpus or Native Lean evidence"
+  },
+  "framework_history": {
+    "exact_public146": {
+      "public146_framework_raw": {
+        "bytes": 1864971,
+        "path": "/tmp/datasets-publish-main-20261114/workspace/test-logs/federal-corpus-audits/legal-ir-current-immutable-v1-cleanup146-qualified-20261115-v01/execution-evidence.json",
+        "sha256": "1e0f0d085a571edae15eade01ba100bca7690b056d96a52f24ba2c65e9c85f19"
+      },
+      "public146_framework_summary": {
+        "bytes": 28411,
+        "path": "/tmp/datasets-publish-main-20261114/workspace/test-logs/federal-corpus-audits/legal-ir-current-immutable-v1-cleanup146-qualified-20261115-v01/qualification-summary.json",
+        "sha256": "7686b3383250bec9314775b62f909b4205ab202e0800d3c470a12d3d9547d84a"
+      }
+    },
+    "qualification_transferred": false
+  },
+  "historical_RED2_P3_C4_56_155_146_epochs_unchanged": true,
+  "limits": {
+    "child_process_slots": 4,
+    "cpu_slots": 1,
+    "memory_mb": 1536,
+    "storage_bytes": 33554432,
+    "timeout_seconds": 120
+  },
+  "private_packet_only": true,
+  "proof_refs": {
+    "R56_JUnit": {
+      "bytes": 10438,
+      "path": "/tmp/pytest-of-barberb/legal-ir-release-v3-current56-current-source-only-20261115-v01/attempt/exports/test-results.xml",
+      "sha256": "63f9b22f0176c6e82a2abca0a1351ed7e592e85e936c18b3ed0737bc6af14802"
+    },
+    "R56_Root_selected": {
+      "bytes": 7785,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-release-v3-current56-source-only-ACTIVE-original32MiB-input-v01/Root-selected-current-R56-ACTIVE-final-eight-Git-refresh-manifest-v01.json",
+      "sha256": "6126d8b2e47ac90af82f8f6d305261150a81caaaa6fa32081c5170d9a649d8e6"
+    },
+    "R56_durability": {
+      "bytes": 18334,
+      "path": "/tmp/pytest-of-barberb/legal-ir-release-v3-current56-current-source-only-20261115-v01/attempt/logs/validation-durability.json",
+      "sha256": "9004062eec80925c2265d8874df29fc4493fcfb9fc81390e2f4234adaa5df9e8"
+    },
+    "R56_execution": {
+      "bytes": 3648,
+      "path": "/tmp/pytest-of-barberb/legal-ir-release-v3-current56-current-source-only-20261115-v01/attempt/logs/execution.json",
+      "sha256": "5af83c9a622d0e688e4d3a72cb943dbdb4a10effd982f8559987e9fbd5940819"
+    },
+    "R56_independent": {
+      "bytes": 24692,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-release-v3-current56-source-only-ACTIVE-original32MiB-input-v01/independent-current-R56-selected-software-and-custody-qualification-audit-v01.json",
+      "sha256": "3331162cbf90dc9a6926ddf04320febd2f136c62ddc5737d3899b2769c0344a9"
+    },
+    "R56_owner_stdout": {
+      "bytes": 5968,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-release-v3-current56-source-only-ACTIVE-original32MiB-input-v01/owner.stdout",
+      "sha256": "ee9c4978787cdb6549a98560effecb41b53c4579d6c295ae54b62193ee1e5a91"
+    },
+    "R56_parent": {
+      "bytes": 12261,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-release-v3-current56-source-only-ACTIVE-original32MiB-input-v01/parent-closeout.json",
+      "sha256": "096d8c8cca64427793f5b82c5cc77b7df7de42420c9b317aa8a5a14ce0e54409"
+    },
+    "R56_pytest_stdout": {
+      "bytes": 100,
+      "path": "/tmp/pytest-of-barberb/legal-ir-release-v3-current56-current-source-only-20261115-v01/attempt/logs/stdout.log",
+      "sha256": "65e97fc4b6e9c42436633477ee29ee1942ba94c156746767a75a773d674450db"
+    },
+    "R56_request": {
+      "bytes": 41670,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-release-v3-current56-source-only-ACTIVE-original32MiB-input-v01/request.json",
+      "sha256": "3a44e570d31fd1825e91a77edd7a51967cb0d2b00404cdd380f8d423a31b5b1f"
+    },
+    "R56_result": {
+      "bytes": 2672,
+      "path": "/tmp/pytest-of-barberb/legal-ir-release-v3-current56-current-source-only-20261115-v01/attempt/logs/result.json",
+      "sha256": "1a9b0482029fe1f3b49264259949e5089a58f45e514da6d54bb3d1313ef3032a"
+    },
+    "R56_started": {
+      "bytes": 161,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-release-v3-current56-source-only-ACTIVE-original32MiB-input-v01/started.json",
+      "sha256": "b7ba76a2d7bb04a390de5438101f96dfdeb0e56de63fd263d6999ef48eceab14"
+    },
+    "graph_five_doc_builder": {
+      "bytes": 9621,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-R56-selected-source-only-maintained-docs-private-v01/prepare-five-current-worktree-graph-docs-existing6e71-v02.py",
+      "sha256": "11f07827d352cc4b0b4747085b8dd864d92a893dbe29dd64ee9759e1c9e6a3a7"
+    },
+    "immutable_current_BACKLOG_capture": {
+      "bytes": 1238566,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-R56-selected-source-only-maintained-docs-inputs-private-v01/captured-current-W_R-BACKLOG.json",
+      "sha256": "7f697b7148d27fbeaf6091ffe23436417e7ffbf1542b5fdefc7ced2c93ea3914"
+    },
+    "immutable_current_catalog_capture": {
+      "bytes": 1038123,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-R56-selected-source-only-maintained-docs-inputs-private-v01/captured-current-W_R-catalog.json",
+      "sha256": "4d10f58cd37b695712bf6a07057666069774f98864a46a9aef0cf283ea68ea99"
+    },
+    "proof_map": {
+      "bytes": 5666,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-R56-selected-source-only-maintained-docs-private-v01/complete-current-R56-actual-proof-map-v01.json",
+      "sha256": "6ea8fe1e94d5ddaae6730c0fb311d78f1943aa99c2b6d5246668994648de45d2"
+    },
+    "public146_framework_raw": {
+      "bytes": 1864971,
+      "path": "/tmp/datasets-publish-main-20261114/workspace/test-logs/federal-corpus-audits/legal-ir-current-immutable-v1-cleanup146-qualified-20261115-v01/execution-evidence.json",
+      "sha256": "1e0f0d085a571edae15eade01ba100bca7690b056d96a52f24ba2c65e9c85f19"
+    },
+    "public146_framework_summary": {
+      "bytes": 28411,
+      "path": "/tmp/datasets-publish-main-20261114/workspace/test-logs/federal-corpus-audits/legal-ir-current-immutable-v1-cleanup146-qualified-20261115-v01/qualification-summary.json",
+      "sha256": "7686b3383250bec9314775b62f909b4205ab202e0800d3c470a12d3d9547d84a"
+    },
+    "qualified_source_capture//tmp/datasets-publish-main-20261114/ipfs_datasets_py/logic/autoformal/legal_release_coordinator_v1.py": {
+      "bytes": 73273,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-R56-selected-source-only-maintained-docs-inputs-private-v01/captured-current-legal_release_coordinator_v1.py",
+      "sha256": "c045ce5e0a090d5579dcf16658c68df9582825a1afc9a90fac28efad65ae0985"
+    },
+    "qualified_source_capture//tmp/datasets-publish-main-20261114/scripts/ops/legal_ir/validate_uscode_corpus_release.py": {
+      "bytes": 10174,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-R56-selected-source-only-maintained-docs-inputs-private-v01/captured-current-validate_uscode_corpus_release.py",
+      "sha256": "583af3c23aec8acacd57162f8347aef5f00595a6aeec4d66980af3a1865be852"
+    },
+    "qualified_source_capture//tmp/datasets-publish-main-20261114/tests/unit/logic/autoformal/test_corpus_release_cli.py": {
+      "bytes": 102931,
+      "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/current-R56-selected-source-only-maintained-docs-inputs-private-v01/captured-current-test_corpus_release_cli.py",
+      "sha256": "db7e2a68069444eb65125761277f78937d7198d31309f8f9840a594a4b6d1a1f"
+    }
+  },
+  "qualified_current_three_sources": {
+    "/tmp/datasets-publish-main-20261114/ipfs_datasets_py/logic/autoformal/legal_release_coordinator_v1.py": "c045ce5e0a090d5579dcf16658c68df9582825a1afc9a90fac28efad65ae0985",
+    "/tmp/datasets-publish-main-20261114/scripts/ops/legal_ir/validate_uscode_corpus_release.py": "583af3c23aec8acacd57162f8347aef5f00595a6aeec4d66980af3a1865be852",
+    "/tmp/datasets-publish-main-20261114/tests/unit/logic/autoformal/test_corpus_release_cli.py": "db7e2a68069444eb65125761277f78937d7198d31309f8f9840a594a4b6d1a1f"
+  },
+  "recorded_at_utc": "2026-11-15T03:00:19.396084+00:00",
+  "runtime_or_hold_or_cap_reset_authority": false,
+  "schema": "current-R56-release-v3-selected-source-only-software-summary@1",
+  "selected": {
+    "cases": 56,
+    "errors": 0,
+    "failures": 0,
+    "function_counts": {
+      "test_actual_cli_export_validate_and_readable_graph": 2,
+      "test_closure_replays_real_fictional_component_without_native_or_release_claim": 1,
+      "test_help_is_a_json_receipt": 2,
+      "test_mixed_physical_closure_v3_explicit_cli_preserves_default_domain": 2,
+      "test_mixed_physical_closure_v3_never_retags_legacy_request": 2,
+      "test_mixed_physical_closure_v3_rejects_malformed_complete_legal_json": 8,
+      "test_mixed_physical_closure_v3_replays_complete_signed_three_cache_component": 1,
+      "test_native_packet_transport_v3_refuses_nonpacket_or_oversize_wire_before_publication": 6,
+      "test_native_packet_v3_literal_policy_cannot_be_widened_or_retagged": 5,
+      "test_native_packet_v3_publishes_and_reassembles_all_four_chunks": 1,
+      "test_native_packet_v3_rejects_incomplete_reordered_aliased_and_resealed_transport": 23,
+      "test_physical_closure_shared_reviewed_sources_span_coordinates_and_complete_entity_graph": 1,
+      "test_reviewed_v2_manifest_refresh_preserves_shared_uses_and_refuses_conflicting_bytes": 2
+    },
+    "functions": 13,
+    "scope": "One fresh original generic run of maintained software controls, using fictional/test-owned release components. No actual corpus or Native Lean admission.",
+    "seconds": 33.61,
+    "skipped": 0
+  }
+}

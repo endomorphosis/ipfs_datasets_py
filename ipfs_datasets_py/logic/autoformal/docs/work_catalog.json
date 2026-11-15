@@ -9394,7 +9394,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-11-15T02:08:59.996398+00:00",
+  "last_updated_at_utc": "2026-11-15T03:00:19.396084+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -14902,6 +14902,16 @@
       "root": "datasets_repository",
       "scope": "Exact40A+106R selected owning controls in one original CLI run, audited Source4 adoption and retained RED2; no full SDK/SourceGen/live cleanup/@2/model/legal/Lean transfer.",
       "status": "qualified_selected146_current_immutable_v1_cleanup_controls_only"
+    },
+    {
+      "id": "legal-ir-current-release-v3-source-only-R56-qualified-20261115-v01",
+      "observed_bytes": 20033,
+      "observed_sha256": "0ab4f5115040b164ca9c3a0bd2aad6cd5df72362c642f23576f680a0245778aa",
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-current-release-v3-source-only-R56-qualified-20261115-v01/qualification-summary.json",
+      "required_for_catalog_check": false,
+      "root": "datasets_repository",
+      "scope": "Fresh current3R source batch; exact13functions/56 software cases in explicit198 source frontier with original Source/Native/process closure. No all-import/old155/Native Lean/realUSCode/model/corpus transfer.",
+      "status": "qualified_current_selected_R56_source_only_software_controls"
     }
   ]
 }
