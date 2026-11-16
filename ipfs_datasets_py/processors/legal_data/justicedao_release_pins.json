@@ -2,7 +2,7 @@
   "repos": {
     "world_national_law": {"revision": null, "searchable": false},
     "world_municipal_law": {"revision": null, "searchable": false},
-    "world_municipal_law_norm": {"revision": "16398e555fd1c2724004904f828dee27dea5a9e5", "searchable": true},
+    "world_municipal_law_norm": {"revision": "b982e33176c2579b7a17abf2595f0ca6a5a78fb7", "searchable": true},
     "american_municipal_law_norm": {"revision": "df0c0c405bf59cb948d1269dea29767a4712fb81", "searchable": true}
   }
 }

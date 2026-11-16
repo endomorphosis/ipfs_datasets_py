@@ -288,7 +288,7 @@ def test_missing_municipal_slug_does_not_invent_a_repo(monkeypatch) -> None:
     )
     assert opened.coverage == "current"
     assert opened.source_repo == "justicedao/world_municipal_law_norm"
-    assert opened.source_revision == "16398e555fd1c2724004904f828dee27dea5a9e5"
+    assert opened.source_revision == "b982e33176c2579b7a17abf2595f0ca6a5a78fb7"
     assert opened.records == ()
     named = query_legal_records(jurisdiction="chile_municipal", text_query="ordenanza")
     assert named.coverage == "not_published"
@@ -312,7 +312,7 @@ def test_municipal_place_query_opens_world_norm(monkeypatch) -> None:
     assert result.jurisdiction == "BR"
     assert result.coverage == "current"
     assert result.source_repo == "justicedao/world_municipal_law_norm"
-    assert result.source_revision == "16398e555fd1c2724004904f828dee27dea5a9e5"
+    assert result.source_revision == "b982e33176c2579b7a17abf2595f0ca6a5a78fb7"
     assert calls == ["justicedao/world_municipal_law_norm"]
     stale = query_legal_records(
         jurisdiction="spain_municipal",
@@ -1017,7 +1017,7 @@ def test_world_coordinates_stay_in_the_named_country(monkeypatch) -> None:
     assert paris.place_longitude == "2.3522"
     assert paris.coverage == "current"
     assert paris.source_repo == "justicedao/world_municipal_law_norm"
-    assert paris.source_revision == "16398e555fd1c2724004904f828dee27dea5a9e5"
+    assert paris.source_revision == "b982e33176c2579b7a17abf2595f0ca6a5a78fb7"
     assert [row["entry_cid"] for row in paris.records] == ["paris"]
     assert calls == ["justicedao/world_municipal_law_norm"]
     assert seen == ["FR"]
