@@ -1186,7 +1186,7 @@ def test_lean_v3_version_output_charge_preserves_complete_source_input_capacity(
 # before 51d2c414, then 27ede074ceb68cd91d50eada99b9c6f02216607e22610bc63db4fde69e17fb4c.
 # Current reviewed constructors explicitly bind the current verifier profile;
 # negative cache controls changed the complete owner. This pin never follows edits itself.
-_NATIVE_PROOF_CACHE_FIXTURE_SHA256 = "4baee6dda6afb770e286421c19467bac1fab045b16fe0635f597e8dcfc16a5b2"
+_NATIVE_PROOF_CACHE_FIXTURE_SHA256 = "efdd956ba61d5f001cf511078bb381ef93abab9cbbce1ff8e130bfbfc6a704a7"
 
 
 def _load_native_proof_cache_fixture_owner():
@@ -1799,7 +1799,7 @@ def test_lean_fresh_backend_receipt_explicitly_binds_current_verification_profil
     assert LeanKernelReceipt.from_dict(outcome.receipt.to_dict()).to_dict() == outcome.receipt.to_dict()
 
 
-@pytest.mark.parametrize("profile", [None, "lean-kernel-verification/v0", True, {}, [], 1])
+@pytest.mark.parametrize("profile", [None, "lean-kernel-verification/v0", True, {}, [], 1, "lean-kernel-verification/v1"])
 def test_lean_old_or_wrong_verification_profile_cannot_be_reissued_as_current(profile):
     outcome, _, _ = _bound_lean_outcome()
     value = copy.deepcopy(outcome.receipt.to_dict())
@@ -1864,3 +1864,99 @@ def test_lean_one_output_bom_preserves_the_single_bound_dependency_report():
     stdout, expected = _bound_clean_lean_dependency_fixture()
     accepted, report, diagnostics = evaluate_lean_kernel_output(_lean_output("\ufeff" + stdout), **expected)
     assert accepted is True and report is not None and diagnostics == ()
+
+
+# Source-policy admission controls only; no native execution or proof-soundness claim.
+_LEAN_EVALUATION_SOURCE_POLICY_CASES = [
+    "run_elab pure ()\ntheorem wanted : True := True.intro\n",
+    "run_meta pure ()\ntheorem wanted : True := True.intro\n",
+    "theorem wanted : True := by_elab pure (Lean.mkConst ``True.intro)\n",
+]
+
+
+@pytest.mark.parametrize("source", _LEAN_EVALUATION_SOURCE_POLICY_CASES,
+                         ids=["run-elab", "run-meta", "by-elab"])
+def test_lean_evaluation_metaprograms_are_rejected_by_source_policy(source):
+    assert "lean_source_contains_unsupported_metaprogramming_or_output" in scan_lean_incomplete_or_unsafe(source)
+
+
+@pytest.mark.parametrize("source", _LEAN_EVALUATION_SOURCE_POLICY_CASES,
+                         ids=["run-elab", "run-meta", "by-elab"])
+def test_lean_evaluation_metaprograms_never_reach_identity_or_runner(source):
+    runner_calls, identity_calls = [], []
+
+    def execute(invocation, _cancellation):
+        runner_calls.append(invocation)
+        raise AssertionError("unsupported evaluation source reached runner tripwire")
+
+    def observe():
+        identity_calls.append(True)
+        return _fictional_native_identity()
+
+    backend = LeanKernelBackend(runner=BoundedToolRunner(executor=execute),
+        native_probe=lambda: _available_native("lean", "fixture-not-an-executed-compiler"),
+        native_identity_probe=observe)
+    outcome = backend.run(_request(family="lean4", encoding="lean4", source=source,
+        expected_declaration="wanted", expected_proposition="True"))
+    assert outcome.result.status is ResultStatus.MALFORMED
+    assert outcome.receipt.accepted is False
+    assert "lean_source_contains_unsupported_metaprogramming_or_output" in outcome.receipt.diagnostics
+    assert runner_calls == [] and identity_calls == []
+
+
+@pytest.mark.parametrize("prefix", [
+    "",
+    "-- run_elab pure (); run_meta pure (); by_elab pure (Lean.mkConst ``True.intro)\n"
+    "/- run_elab run_meta by_elab -/\n",
+    'def words : String := "run_elab run_meta by_elab"\n',
+], ids=["clean-theorem", "comments-only", "string-only"])
+def test_lean_evaluation_metaprogram_words_remain_inert_in_comments_and_strings(prefix):
+    source = prefix + "theorem wanted : True := True.intro\n"
+    assert scan_lean_incomplete_or_unsafe(source) == ()
+
+
+
+def test_native_cache_fixture_loader_supplies_canonical_constructor_contract_without_execution():
+    """The Native caller needs current fixture constructors, never a compiler run."""
+    import inspect
+    import sys
+
+    fixture_path = Path(__file__).resolve().parents[3] / "unit/logic/legal_ir/test_proof_cache.py"
+    prior = sys.getprofile()
+    calls = []
+
+    def constructors_not_called(frame, event, argument):
+        if event == "call" and frame.f_code.co_filename == str(fixture_path):
+            # Bind the exact Native caller's constructor arguments below, but
+            # do not invoke fixture, adapter/compiler, kernel or model helpers.
+            assert frame.f_code.co_name not in {"_reviewed_fixture", "_legal_artifact"}
+            calls.append(frame.f_code.co_name)
+
+    try:
+        sys.setprofile(constructors_not_called)
+        owner = _load_native_proof_cache_fixture_owner()
+        fixture_arguments = {
+            "sample_id": "fictional-native-cache-provision",
+            "citation": "FICTIONAL Test Act 1",
+            "section": "1",
+            "text": "A fictional agency shall publish a fictional notice.",
+        }
+        assert inspect.signature(owner._reviewed_fixture).bind(**fixture_arguments).arguments == fixture_arguments
+        sample_marker = object()
+        assert inspect.signature(owner._legal_artifact).bind(sample_marker).arguments == {"sample": sample_marker}
+        assert owner._reviewed_fixture.__globals__ is owner.__dict__
+        assert owner._legal_artifact.__globals__ is owner.__dict__
+        assert owner.LegalSample is sys.modules[
+            "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_samples"
+        ].LegalSample
+        assert owner.FormalizationArtifact is sys.modules[
+            "ipfs_datasets_py.logic.formalization.compiler"
+        ].FormalizationArtifact
+        assert owner.LegalIRFormalizationAdapter is sys.modules[
+            "ipfs_datasets_py.logic.legal_ir.adapter"
+        ].LegalIRFormalizationAdapter
+    finally:
+        sys.setprofile(prior)
+    assert "<module>" in calls
+    assert owner._reviewed_fixture.__code__.co_filename == str(fixture_path)
+    assert owner._legal_artifact.__code__.co_filename == str(fixture_path)

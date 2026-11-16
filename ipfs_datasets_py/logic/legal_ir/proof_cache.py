@@ -341,7 +341,7 @@ def _validate_proof_binding(
         )
         if (LEAN_KERNEL_RECEIPT_VERSION != "lean-kernel-receipt/v3"
                 or type(LEAN_KERNEL_VERIFICATION_PROFILE) is not str
-                or LEAN_KERNEL_VERIFICATION_PROFILE != "lean-kernel-verification/v1"):
+                or LEAN_KERNEL_VERIFICATION_PROFILE != "lean-kernel-verification/v2"):
             raise ValueError("the canonical Lean v3 current verification profile is required")
         kernel = LeanKernelReceipt.from_dict(result.to_dict()["payload"]["kernel_receipt"])
     except (ImportError, TypeError, ValueError, KeyError, AttributeError) as exc:

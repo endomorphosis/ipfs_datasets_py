@@ -946,6 +946,55 @@
         "source_binding": null,
         "training_mask": 0
       },
+      "ci_cleanup_software23_20261116": {
+        "GREEN140_results_pooled": false,
+        "Root_closeout": {
+          "bytes": 5280,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/private-reviewed-definition-realization-existing-CI-YAML-v01/Root-native-CI-software23-cleanup-genuine-owner-closeout-v01.json",
+          "sha256": "432c6a7bbea8a23c312914f3e27c2cd287b735a78b374ecd5999337e1cb543d0"
+        },
+        "SOFTWARE100_JUnit_name_is_label_only": true,
+        "Source_seconds": 163.0388814387843,
+        "attack_controls": 17,
+        "audit": {
+          "bytes": 3933,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/private-reviewed-definition-realization-existing-CI-YAML-v01/independent-actual-native-CI-software23-cleanup-qualified-audit-v01.json",
+          "sha256": "237b94f492a9afc485095039c01b00bab381c98096b60edab7f930dd0525e28f"
+        },
+        "complete_attempt_bytes": 323764,
+        "directories": 157,
+        "durability_admitted": false,
+        "errors": 0,
+        "execution_admitted": false,
+        "failures": 0,
+        "hosted_CI_actual_AMD64_archive_zstd_NativeLean_model_gold_or_corpus_authority": false,
+        "own16MiB_released_durable": true,
+        "own_reservation": "66b86835f8bb437dbd4d2d197c8962ba",
+        "parent_positive_software_eligibility": true,
+        "passes": 23,
+        "prior055ca_retained_nondurable": true,
+        "prior055ca_unsealed23PASS0740_qualified": false,
+        "regular_files_including_seal": 94,
+        "retained_bytes": 0,
+        "sealed_file_bytes": 301002,
+        "sealed_files": 93,
+        "seconds": 0.67,
+        "skips": 0,
+        "source_test": {
+          "bytes": 330845,
+          "path": "tests/unit/logic/autoformal/test_legal_corpus_definition_use_native_v2.py",
+          "sha256": "7c5efcdd5858d6822e8b80b357e8e63ddafdb5943749727cb3d73c6c0e01ee38"
+        },
+        "status": "qualified_separate_software_tests_and_custody_only",
+        "symlinks": 0,
+        "unique": 23,
+        "whole_selectors": 7,
+        "workflow": {
+          "bytes": 62867,
+          "path": ".github/workflows/legal-v2-reasoner-ci.yml",
+          "sha256": "14a8419a97cd215829f8a67918d991402307473fbfb42d4d8c82b7c00b9bd8b8"
+        }
+      },
       "compatibility_dependency": false,
       "current_selected_reviewed_corpus_scopes_20261114": {
         "canonical_source_publication": true,
@@ -6103,6 +6152,131 @@
         "unchanged_cases": 21
       },
       "id": "kernel-proof-evidence-integrity",
+      "native_cache_current_v2_aarch64_20261116": {
+        "Lean_version": "4.34.1",
+        "actual_expected_declaration": "_ipfs_expected_obligation_ab1c201afbbd6846b2c493b883672c25b0e0efb8f68f4800d4ab3ac2f114f19a",
+        "actual_legal_gold_model_training_convergence_corpus_or_release_authority": false,
+        "actual_native_commands": 3,
+        "admission_fields": {
+          "durability_admitted": false,
+          "execution_Lean_admitted": false,
+          "execution_admitted": false,
+          "execution_authority_granted": false,
+          "kernel_authority_disposition": "reject",
+          "kernel_receipt_accepted_for_fixture": true,
+          "parent_positive_software_acceptance_eligible": true,
+          "result_admitted_field_present": false,
+          "terminal_admitted": false
+        },
+        "architecture": "aarch64-unknown-linux-gnu",
+        "artifact_mismatch_facets": [
+          "source",
+          "obligation",
+          "assumptions"
+        ],
+        "audit": {
+          "bytes": 22204,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-native-proof-cache-roundtrip-20261109-v01/context-type-identity-v01/native-current-a722-roundtrip-v01/current-R2-743-zero-A-native-cache-private-INERT-v01/independent-actual-current743-Native1-cache-qualified-saved-evidence-audit-v01.json",
+          "sha256": "a32daf5dedeb4aa2a3fb1b84ea1dfe58d03df7763196cf996bc70db4b5c1e117"
+        },
+        "axioms": [],
+        "backend_version_controls": "Two software-reissued controls, zero additional Native executions.",
+        "compile_commands": 2,
+        "context_mismatch_facets": [
+          "declaration",
+          "proposition",
+          "toolchain",
+          "backend-profile",
+          "interpretation",
+          "dependency"
+        ],
+        "disk_roundtrip_exact_reuse": true,
+        "empty_axiom_report_count": 2,
+        "full_Phase1_complete": false,
+        "fulltoolchain_transitive_library_startup_hermetic_AMD64CI_qualification": false,
+        "lifecycle_and_storage": {
+          "Source_closed": true,
+          "Source_elapsed_seconds": 164.4533955641091,
+          "actual_attempt_bytes": 301132,
+          "arbitrary_descendant_containment_claimed": false,
+          "caps": {
+            "RAM_MiB": 1536,
+            "Source_admission_seconds": 60,
+            "cpu": 1,
+            "initial_parent_seconds": 420,
+            "processes": 4,
+            "productive_seconds": 300
+          },
+          "claim_id": "fdd551df8fbb4b788db7895ad4de3cb7",
+          "custody_errors": [],
+          "durable": true,
+          "genuine_wait_all_observed_gone_reaped_and_native_resource_closed": true,
+          "initial_bound_seconds": 420,
+          "resource_scope": "cooperative_sampled_birth_bound_descendants_and_owned_attempt",
+          "retained_bytes": 0,
+          "status": "released",
+          "storage_bytes": 16777216,
+          "two_existing_Source_READs": true
+        },
+        "native_scenarios": 1,
+        "new_commands_during_reuse_or_mismatches": 0,
+        "observation": {
+          "bytes": 147398,
+          "path": "/tmp/pytest-of-barberb/legal-ir-native-cache-current743-a722-20261116-v01/a/exports/native-control-observation.json",
+          "sha256": "23a1277fbcb8f7d99a1fd7e32f11498625f38a7b57eed880c8dda5a46434780b"
+        },
+        "one_explicit_True_assumption": true,
+        "parent": {
+          "bytes": 11741,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-native-proof-cache-roundtrip-20261109-v01/context-type-identity-v01/native-current-a722-roundtrip-v01/current-R2-743-zero-A-native-cache-private-INERT-v01/parent-closeout.json",
+          "sha256": "66060433dd46db5ab8628ad60d4994a01bded3dad28c05d4e9bf5b54c0c1c435"
+        },
+        "preserved_preselection_dispatch_failure": {
+          "before_any_guard_selected_parent_attempt_Source_owner_or_Native_start": true,
+          "cause": "Root dispatcher assumed source field on2absence-only initializer records",
+          "chunk_id": "c41105",
+          "exit_code": 1,
+          "native_GO_not_consumed": true
+        },
+        "prior_GREEN140_GREEN141_CI23_and_failed_claims_unchanged": true,
+        "pytest_case_credit": 0,
+        "receipt_schema": "lean-kernel-receipt/v3",
+        "remaining_actual_Native_expected_type_dependency_coverage": "Separate mapping/qualification; not established by this fixture.",
+        "report_schema": "lean-axiom-report/v2",
+        "result_completed": true,
+        "result_has_admitted_field": false,
+        "source_and_assets_declared_scope": {
+          "A_source_roles": 0,
+          "Git_rows": 8,
+          "all_compiled_and_loaded_file_origins_match_request_pins": true,
+          "compiled_sources": 52,
+          "current_R2": 210,
+          "current_four_compiled_identities": {
+            "ipfs_datasets_py/logic/backends/kernel/lean.py": "260a6abeefe9410fb2f8c3ce25ccf9d37d720af6c9fac3c76f258d9d3eeab5c7",
+            "ipfs_datasets_py/logic/legal_ir/proof_cache.py": "fc7b97d6873f01e3c8073aaa215b456b1a6bcc83016ba7401ea36abb18351749",
+            "tests/integration/logic/backends/test_kernel_backends.py": "0ad3389fce78ca14a68d1588ea9e3fa59f8bc377bf824f3b81b561b0665bbcb1",
+            "tests/unit/logic/legal_ir/test_proof_cache.py": "efdd956ba61d5f001cf511078bb381ef93abab9cbbce1ff8e130bfbfc6a704a7"
+          },
+          "full9_integer_fields": true,
+          "historical_DATA_original_paths": 6,
+          "initializers_absent": 2,
+          "initializers_present": 3,
+          "loaded_origins_including_namespaces": 53,
+          "namespaces": 3,
+          "native_asset_declared_bytes": 277427696,
+          "native_asset_descriptors": 21,
+          "parent_Source_drift": [],
+          "plan_roles": 216,
+          "post_input_error": null,
+          "private_test_modules_compiled_without_registered_product_alias_origin_claim": true,
+          "request_source_count": 218,
+          "witness_limit": "Role/asset full9 and post-immutability facts are recorded by the saved owning capture, selection, bootstrap and parent; this audit did not recapture current source/assets."
+        },
+        "status": "qualified_one_actual_AArch64_Native_fixture_cache_scope_only",
+        "submitted_source": "theorem cache_native_fixture : True := by trivial\n",
+        "verification_profile": "lean-kernel-verification/v2",
+        "version_commands": 1
+      },
       "native_fixture_loader_source_repair_20261114": {
         "canonical_kernel_software_passed": 276,
         "evidence_id": "reviewed-source-use-identity-20261114",
@@ -6127,6 +6301,218 @@
         "ipfs_datasets_py/logic/common/duckdb_proof_store.py"
       ],
       "required": true,
+      "source_policy_v2_software_20261116": {
+        "GREEN140": {
+          "Root_closeout": {
+            "bytes": 4843,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/lean-kernel-evaluation-source-policy-RED-INERT-v01/conditional-GREEN4-INERT-v01/runtime-GREEN140-existing-V5-DATA-INERT-v01/Root-GREEN140-genuine-sealed-qualification-closeout-v01.json",
+            "sha256": "e47eafe69781ee14b14f1f288482cb1900ba9c97427d543600582b240c0a134a"
+          },
+          "authority_granted": false,
+          "declared_source_pins": 72,
+          "errors": 0,
+          "execution_admitted": false,
+          "failures": 0,
+          "final_attempt_bytes": 155568,
+          "independent_audit_ref": {
+            "bytes": 21185,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/lean-kernel-evaluation-source-policy-RED-INERT-v01/conditional-GREEN4-INERT-v01/runtime-GREEN140-existing-V5-DATA-INERT-v01/independent-actual-GREEN140-sealed-software-qualification-audit-v01.json",
+            "sha256": "a3c6b936f12396dcd4e03b8b1051637d8e2f7cb2c81221bb2eda866e09c62595"
+          },
+          "independent_audit_status": "FINALPASS_SAVED_ACTUAL_GREEN140_SEAL_SOURCE_CUSTODY_STORAGE_SOFTWARE_ONLY",
+          "new_coverage_cases": 13,
+          "observed_raw_exec_paths": 57,
+          "own16MiB_released_durable": true,
+          "parent_positive_software_acceptance": true,
+          "passes": 140,
+          "request": {
+            "bytes": 25503,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/lean-kernel-evaluation-source-policy-RED-INERT-v01/conditional-GREEN4-INERT-v01/runtime-GREEN140-existing-V5-DATA-INERT-v01/request.json",
+            "sha256": "1ef640ffb2e9396a4d5f726a63c4d08e77b226dac8b125625f5518d51c997905"
+          },
+          "retained_bytes": 0,
+          "sealed_file_bytes": 153181,
+          "sealed_file_count": 10,
+          "seconds": 4.805,
+          "separate_seal_bytes": 2387,
+          "skips": 0,
+          "terminal_admitted": false,
+          "unique": 140
+        },
+        "GREEN141": {
+          "Git_roles": 8,
+          "Lean_admitted": false,
+          "Root_closeout": {
+            "bytes": 4251,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/lean-kernel-evaluation-source-policy-RED-INERT-v01/conditional-GREEN4-INERT-v01/native-cache-fixture-pin-refresh-INERT-v01/runtime-GREEN141-existing-V5-DATA-INERT-v01/Root-loader-GREEN141-genuine-sealed-software-closeout-v01.json",
+            "sha256": "a66190f5a20fb02171b1d307a4e2f70c56162b993f76bbf831dad9622e1e1373"
+          },
+          "Source_closed_clean": true,
+          "Source_seconds": 164.94356306409463,
+          "actual_Native_Lean_model_training_legal_gold_or_corpus_authority": false,
+          "cache_cases": 61,
+          "declared_source_pins": 72,
+          "durability_admitted": false,
+          "errors": 0,
+          "execution_admitted": false,
+          "execution_authority_granted": false,
+          "failures": 0,
+          "final_attempt_bytes": 156169,
+          "independent_audit_ref": {
+            "bytes": 19488,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/lean-kernel-evaluation-source-policy-RED-INERT-v01/conditional-GREEN4-INERT-v01/native-cache-fixture-pin-refresh-INERT-v01/runtime-GREEN141-existing-V5-DATA-INERT-v01/independent-actual-GREEN141-sealed-software-qualification-audit-v01.json",
+            "sha256": "df2eea66cc185c57342e1a0ede0de78e7397f50a9483f99ad781a28d3f466c42"
+          },
+          "independent_audit_status": "FINALPASS_SAVED_ACTUAL_GREEN141_SEAL_SOURCE_CUSTODY_STORAGE_SOFTWARE_ONLY",
+          "kernel_cases": 80,
+          "new_coverage_vs_separate_GREEN140": 1,
+          "no_constructor_claim_applies_only_to_new_loader_contract_test": true,
+          "old_GREEN140_RED1_CI23_cohorts_not_retagged_or_pooled": true,
+          "own16MiB_released_durable": true,
+          "own_claim": "df00f6863a124e95af6f3ff3158d1c0a",
+          "parent_positive_software_acceptance": true,
+          "passes": 141,
+          "request": {
+            "bytes": 26047,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/lean-kernel-evaluation-source-policy-RED-INERT-v01/conditional-GREEN4-INERT-v01/native-cache-fixture-pin-refresh-INERT-v01/runtime-GREEN141-existing-V5-DATA-INERT-v01/request.json",
+            "sha256": "7bd84a9943abea7486df685ddaddee4ef044baca5a44c903dc43ddcec454ce4a"
+          },
+          "result_completed": true,
+          "result_has_admitted_field": false,
+          "retained_bytes": 0,
+          "sealed_file_bytes": 153782,
+          "sealed_file_count": 10,
+          "seconds": 4.746,
+          "separate_seal_bytes": 2387,
+          "skips": 0,
+          "terminal_admitted": false,
+          "unique": 141,
+          "whole_functions": 29
+        },
+        "RED9": {
+          "audit": {
+            "bytes": 12769,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/lean-kernel-evaluation-source-policy-RED-INERT-v01/owner-port-INERT-v01/runtime-RED9-existing-V5-DATA-INERT-v03-complete-pytest-setup/independent-actual-RED9-v03-feature-RED-and-custody-audit-v01.json",
+            "sha256": "be285302a79b0751b433706033aea5210a3267b2f083aca5219d9d978883fe99"
+          },
+          "errors": 0,
+          "failures": 6,
+          "passes": 3,
+          "seconds": 0.673
+        },
+        "Source1_fixture_pin_refresh": {
+          "WRITE": {
+            "bytes": 2214,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/lean-kernel-evaluation-source-policy-RED-INERT-v01/conditional-GREEN4-INERT-v01/native-cache-fixture-pin-refresh-INERT-v01/owner-port-INERT-v01/actual-native-cache-loader-PINFIX-Source1-WRITE-v01.json",
+            "sha256": "4c782098cce3cc194ee102b873209f5a3e1d72519aa9b56ce6e18e22cfc535aa"
+          },
+          "actual_WRITE_bound_READ": {
+            "bytes": 2125,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/lean-kernel-evaluation-source-policy-RED-INERT-v01/conditional-GREEN4-INERT-v01/native-cache-fixture-pin-refresh-INERT-v01/owner-port-INERT-v01/actual-native-cache-loader-PINFIX-Source1-READ-v01.json",
+            "sha256": "bb16f45780fbf0c89377c30a2e7910ba0bc419eead563d1ac295e418d65c5068"
+          },
+          "audit": {
+            "bytes": 8560,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/lean-kernel-evaluation-source-policy-RED-INERT-v01/conditional-GREEN4-INERT-v01/native-cache-fixture-pin-refresh-INERT-v01/owner-port-INERT-v01/independent-actual-native-cache-loader-PINFIX-Source1-WR-audit-v01.json",
+            "sha256": "e592311c3c6ac9e6fe8da9f86996b874b22b34a5d16607eed7ca12063812499b"
+          },
+          "current_pin": "efdd956ba61d5f001cf511078bb381ef93abab9cbbce1ff8e130bfbfc6a704a7",
+          "integration_after": {
+            "bytes": 108837,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/lean-kernel-evaluation-source-policy-RED-INERT-v01/conditional-GREEN4-INERT-v01/native-cache-fixture-pin-refresh-INERT-v01/one-line-pin-refresh-GREEN-v02-narrow-profile/tests/integration/logic/backends/test_kernel_backends.py",
+            "sha256": "0ad3389fce78ca14a68d1588ea9e3fa59f8bc377bf824f3b81b561b0665bbcb1"
+          },
+          "old_pin": "4baee6dda6afb770e286421c19467bac1fab045b16fe0635f597e8dcfc16a5b2",
+          "target_count": 1,
+          "tests_run_by_adoption": false
+        },
+        "Source4": {
+          "WRITE": {
+            "bytes": 4132,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/lean-kernel-evaluation-source-policy-RED-INERT-v01/conditional-GREEN4-INERT-v01/owner-port-INERT-v01/actual-lean-kernel-source-policy-GREEN4-Source4-WRITE-v01.json",
+            "sha256": "2273231dd441e840cdc438b86f460add7262eb25649decfc2e4f5103af18ae24"
+          },
+          "audit": {
+            "bytes": 13387,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/lean-kernel-evaluation-source-policy-RED-INERT-v01/conditional-GREEN4-INERT-v01/owner-port-INERT-v01/independent-actual-GREEN4-Source4-WR-adoption-audit-v01.json",
+            "sha256": "c16363a2e1388fd3b2d9a2020e030afea86c6041f54d6a79263cd2140173e5ea"
+          },
+          "bound_READ": {
+            "bytes": 3610,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/lean-kernel-evaluation-source-policy-RED-INERT-v01/conditional-GREEN4-INERT-v01/owner-port-INERT-v01/actual-lean-kernel-source-policy-GREEN4-Source4-READ-v01.json",
+            "sha256": "50d7b926a572baa547f82bc27e79f22773984b31138be547cc68acbe5e8a0679"
+          },
+          "tests_run_by_adoption": false
+        },
+        "actual_Native_Lean_model_training_convergence_legal_review_or_corpus_authority": false,
+        "archival_upgrade_or_history_retagging": false,
+        "backend_interface": "LeanKernelBackend@1",
+        "cache_supported_verification_profile": "lean-kernel-verification/v2",
+        "generic_Native_requalification": {
+          "Phase1_complete": false,
+          "actual_Native_execution_qualification": false,
+          "current_integration_epoch": "0ad3389fce78ca14a68d1588ea9e3fa59f8bc377bf824f3b81b561b0665bbcb1",
+          "current_pin": "efdd956ba61d5f001cf511078bb381ef93abab9cbbce1ff8e130bfbfc6a704a7",
+          "ef08_forbids_native_calls": true,
+          "existing_Native256_route_excludes_generic_two": true,
+          "facts_source": "Exact saved RED1/PINFIX/GREEN141 audits and Root closeout; no new Source probe or test by this composer.",
+          "loader_contract_software_test_passed_in_separate_GREEN141": true,
+          "new_Native_runtime_authority": false,
+          "new_test_alone_does_not_invoke_constructors_adapter_compiler_kernel_or_model": true,
+          "other61_cache_cases_intentionally_construct_authored_fixtures": true,
+          "pin_fix0ad_adopted": true,
+          "prior_v02_cutoff_retained_in_immutable_predecessor": {
+            "Phase1_complete": false,
+            "ef08_forbids_native_calls": true,
+            "existing_Native256_route_excludes_generic_two": true,
+            "facts_source": "Root/coordinator explicit supplied staging facts; no new Source probe or native test by this composer.",
+            "old_loader_pin": "4baee6dd",
+            "pin_fix0ad_adopted": false,
+            "qualified_software_test_epoch": "efdd956b",
+            "software140_epoch_untouched": true,
+            "status": "pending_no_runtime_grant",
+            "test_only_stage": "95c OWNEDRED1, actual outcome unmeasured"
+          },
+          "software140_epoch_untouched": true,
+          "status": "fixture_pin_repaired_and_contract_software_verified_actual_Native_pending"
+        },
+        "kernel_verification_profile": "lean-kernel-verification/v2",
+        "loader_RED1": {
+          "audit": {
+            "bytes": 9495,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/lean-kernel-evaluation-source-policy-RED-INERT-v01/conditional-GREEN4-INERT-v01/native-cache-fixture-pin-refresh-INERT-v01/runtime-RED1-existing-V5-DATA-INERT-v01/independent-actual-native-cache-loader-RED1-feature-custody-audit-v01.json",
+            "sha256": "d28ed9030e53d0c1deb8f7d26463a97b5241f8cc3a4e20ab1acb3449d7bd6703"
+          },
+          "errors": 0,
+          "failures": 1,
+          "feature_failure_before_fixture_compile_exec": true,
+          "later_success_does_not_release_or_retag_failed_claim": true,
+          "own16MiB_retained_nondurable": true,
+          "own_claim": "98a39fdc62c9491d9d3eb67fc3f81a7c",
+          "passes": 0,
+          "seconds": 0.59,
+          "skips": 0
+        },
+        "new_screened_tokens": [
+          "run_elab",
+          "run_meta",
+          "by_elab"
+        ],
+        "old_v1_current_acceptance_refused": true,
+        "phase1_full_completion": false,
+        "preserved_failed_claim_prefixes": [
+          "77bf",
+          "9424",
+          "693c"
+        ],
+        "real_reviewed_law_count": 0,
+        "receipt_schema": "lean-kernel-receipt/v3",
+        "status": "qualified_selected_software_tests_and_custody_only",
+        "work_item_labels": [
+          "LFV-G049",
+          "LFV-022"
+        ]
+      },
       "status": "focused_tests_qualified"
     },
     {

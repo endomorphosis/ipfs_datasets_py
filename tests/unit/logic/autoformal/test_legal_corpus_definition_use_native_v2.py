@@ -960,6 +960,14 @@ def bound_norm_installed_lake():
     if not value:
         pytest.skip("set IPFS_DATASETS_BOUND_NORM_NATIVE_LAKE for admitted installed Lean checks")
     executable = Path(value)
+    archive = os.environ.get("IPFS_DATASETS_BOUND_NORM_NATIVE_ARCHIVE")
+    if archive:
+        expected_archive_install = Path.home() / ".elan" / "toolchains" / "leanprover--lean4---v4.34.1" / "bin" / "lake"
+        if executable != expected_archive_install:
+            raise ValueError("archive-backed Lean witness: canonical home toolchain path required")
+        return _bound_norm_archive_native_witness(
+            executable, Path(archive),
+            expected_archive_sha256=_BOUND_NORM_AMD64_RELEASE_ARCHIVE_SHA256)
     expected = Path("/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake")
     assert executable.is_absolute() and executable == executable.resolve() == expected
     pins = {
@@ -5193,3 +5201,461 @@ def test_whole_norm_definition_application_installed_lean_reports_exact_helper_a
     assert control_reports == control_expected_reports
     assert observation["production_empty_helper_axioms_observed"] is True
     assert all(value == [] for value in production_reports.values())
+
+
+# This is an additional fixture trust route, not a Product toolchain profile.
+# The outer fixture supplies this fixed published release checksum; environment
+# variables supply paths only. Local AArch64 discovery above retains its pins.
+_BOUND_NORM_AMD64_RELEASE_ARCHIVE_SHA256 = "47bf4bbd78f70c2e9670598ab7124d92b6efb7330ff33e5fbb4030f6fd72e4e4"
+_BOUND_NORM_AMD64_RELEASE_ROOT = "lean-4.34.1-linux"
+
+
+def _bound_norm_archive_native_witness(executable, archive, *, expected_archive_sha256,
+                                       _decoder=None):
+    """Match fixed-release members to installed siblings without extracting.
+
+    Only fictional tests override the internal expected digest/decoder. The
+    outer fixture always passes the fixed release digest and no decoder. Version
+    provenance is that authenticated release/root, not an invented ELF version
+    string or a new subprocess. Later Native owner observations stay separate.
+    """
+    import contextlib
+    import posixpath
+    import stat
+    import tarfile
+
+    def need(value, message):
+        if not value:
+            raise ValueError("archive-backed Lean witness: " + message)
+
+    def identity(info):
+        return tuple(getattr(info, key) for key in (
+            "st_dev", "st_ino", "st_mode", "st_uid", "st_gid", "st_nlink",
+            "st_size", "st_mtime_ns", "st_ctime_ns"))
+
+    def open_regular(stack, path, maximum):
+        need(path.is_absolute() and path.resolve(strict=True) == path,
+             "canonical absolute regular path required")
+        info = path.lstat()
+        need(stat.S_ISREG(info.st_mode) and info.st_nlink == 1
+             and 0 < info.st_size <= maximum, "regular file byte bound")
+        fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+        try:
+            stream = os.fdopen(fd, "rb")
+        except BaseException:
+            # Construction may already have consumed/closed the descriptor.
+            # Cleanup must not replace the original failure with EBADF.
+            with contextlib.suppress(OSError):
+                os.close(fd)
+            raise
+        try:
+            stream = stack.enter_context(stream)
+        except BaseException:
+            # ExitStack registers ownership only after successful __enter__.
+            with contextlib.suppress(OSError):
+                stream.close()
+            raise
+        need(identity(os.fstat(stream.fileno())) == identity(info), "opening race")
+        return stream, identity(info)
+
+    class LimitedReader:
+        def __init__(self, stream):
+            self.stream = stream
+            self.total = 0
+
+        def read(self, size):
+            need(type(size) is int and 0 <= size <= 1024**2, "decoder read bound")
+            value = self.stream.read(size)
+            need(type(value) is bytes and len(value) <= size, "decoder byte stream")
+            self.total += len(value)
+            need(self.total <= 4 * 1024**3, "uncompressed archive byte bound")
+            return value
+
+    try:
+        executable, archive = Path(executable), Path(archive)
+        need(type(expected_archive_sha256) is str
+             and len(expected_archive_sha256) == 64
+             and set(expected_archive_sha256) <= set("0123456789abcdef"), "digest shape")
+        root = _BOUND_NORM_AMD64_RELEASE_ROOT
+        need(TOOLCHAIN == "leanprover/lean4:v4.34.1", "fixed release version")
+        need(executable.name == "lake" and executable.parent.name == "bin"
+             and executable.parent.parent.name == "leanprover--lean4---v4.34.1"
+             and executable.parent.parent.parent.name == "toolchains"
+             and executable.parent.parent.parent.parent.name == ".elan",
+             "fixed release sibling/version path")
+        installed_paths = {"lake": executable, "lean": executable.parent / "lean"}
+        need(archive not in installed_paths.values(), "archive is not an executable")
+        with contextlib.ExitStack() as stack:
+            source, source_identity = open_regular(stack, archive, 1024**3)
+            installed = {}
+            for name, path in installed_paths.items():
+                stream, snapshot = open_regular(stack, path, 64 * 1024**2)
+                need(path.stat().st_mode & 0o111, "installed executable mode")
+                header = stream.read(64)
+                need(len(header) == 64 and header[:4] == b"\x7fELF"
+                     and header[4:7] == b"\x02\x01\x01"
+                     and int.from_bytes(header[16:18], "little") in (2, 3)
+                     and int.from_bytes(header[18:20], "little") == 62
+                     and int.from_bytes(header[20:24], "little") == 1,
+                     "ELF64 little-endian AMD64 version-one header required")
+                stream.seek(0)
+                installed[name] = (path, stream, snapshot)
+            digest = hashlib.sha256()
+            first = None
+            remaining = source_identity[6]
+            while remaining:
+                piece = source.read(min(remaining, 1024**2))
+                need(piece, "compressed archive truncated while hashing")
+                if first is None:
+                    first = piece[:4]
+                digest.update(piece)
+                remaining -= len(piece)
+            need(source.read(1) == b"", "compressed archive grew while hashing")
+            need(first == b"\x28\xb5\x2f\xfd", "zstd frame required")
+            need(digest.hexdigest() == expected_archive_sha256, "compressed archive SHA256")
+            need(identity(os.fstat(source.fileno())) == source_identity
+                 and identity(archive.lstat()) == source_identity, "archive changed before decoding")
+            source.seek(0)
+            if _decoder is None:
+                # Python3.12 needs this explicitly pinned CI dependency. Never
+                # install it or fall back to an unowned process from a fixture.
+                import zstandard
+                decoder = lambda stream: zstandard.ZstdDecompressor().stream_reader(
+                    stream, read_across_frames=True, closefd=False)
+            else:
+                decoder = _decoder
+            decoded = stack.enter_context(decoder(source))
+            reader = LimitedReader(decoded)
+            seen, found, member_count = set(), {}, 0
+            with tarfile.open(fileobj=reader, mode="r|", ignore_zeros=True) as members:
+                for member in members:
+                    member_count += 1
+                    need(member_count <= 100000, "archive member count")
+                    name = member.name
+                    need(type(name) is str and "\x00" not in name
+                         and len(name.encode("utf-8")) <= 4096, "member name")
+                    normalized = posixpath.normpath(name)
+                    need(not name.startswith("/") and name.rstrip("/") == normalized
+                         and normalized != "." and (normalized == root or normalized.startswith(root + "/")),
+                         "unsafe or wrong-version member path")
+                    need(normalized not in seen, "duplicate archive member")
+                    seen.add(normalized)
+                    need(member.isfile() or member.isdir() or member.issym() or member.islnk(),
+                         "unsafe special archive member")
+                    if member.issym() or member.islnk():
+                        link = member.linkname
+                        need(type(link) is str and "\x00" not in link
+                             and not link.startswith("/"), "unsafe archive link")
+                        destination = posixpath.normpath(
+                            posixpath.join(posixpath.dirname(normalized), link)
+                            if member.issym() else link)
+                        need(destination == root or destination.startswith(root + "/"),
+                             "escaping archive link")
+                    basename = normalized.removeprefix(root + "/bin/")
+                    if normalized not in (root + "/bin/lake", root + "/bin/lean"):
+                        continue
+                    need(member.isfile() and 64 <= member.size <= 64 * 1024**2,
+                         "binary member must be regular and bounded")
+                    path, installed_stream, snapshot = installed[basename]
+                    need(member.size == snapshot[6], "installed/member size differs")
+                    archive_stream = members.extractfile(member)
+                    need(archive_stream is not None, "binary member readback")
+                    binary_digest = hashlib.sha256()
+                    with archive_stream:
+                        remaining = member.size
+                        while remaining:
+                            piece = archive_stream.read(min(remaining, 1024**2))
+                            need(piece and piece == installed_stream.read(len(piece)),
+                                 "installed bytes differ from authenticated member")
+                            binary_digest.update(piece)
+                            remaining -= len(piece)
+                    need(installed_stream.read(1) == b"", "installed executable grew")
+                    found[basename] = binary_digest.hexdigest()
+            need(set(found) == {"lake", "lean"}, "both exact binary members required")
+            for path, stream, snapshot in installed.values():
+                need(identity(os.fstat(stream.fileno())) == snapshot
+                     and identity(path.lstat()) == snapshot, "installed executable changed")
+            need(identity(os.fstat(source.fileno())) == source_identity
+                 and identity(archive.lstat()) == source_identity, "archive changed during decoding")
+            return executable, {str(path): found[name] for name, path in installed_paths.items()}
+    except Exception as error:
+        if isinstance(error, ValueError) and str(error).startswith("archive-backed Lean witness:"):
+            raise
+        raise ValueError("archive-backed Lean witness: invalid or unavailable archive/decoder") from error
+
+
+def _bound_norm_fictional_archive_case(tmp_path, *, entries=None):
+    """Small authored tar transport; this is never an official release witness."""
+    import io
+    import tarfile
+
+    root = _BOUND_NORM_AMD64_RELEASE_ROOT
+    header = bytearray(64)
+    header[:7] = b"\x7fELF\x02\x01\x01"
+    header[16:18], header[18:20], header[20:24] = (2).to_bytes(2, "little"), (62).to_bytes(2, "little"), (1).to_bytes(4, "little")
+    bodies = {"lake": bytes(header) + b"fictional lake\n", "lean": bytes(header) + b"fictional lean\n"}
+    executable = tmp_path / ".elan" / "toolchains" / "leanprover--lean4---v4.34.1" / "bin" / "lake"
+    executable.parent.mkdir(parents=True)
+    for name, body in bodies.items():
+        path = executable.parent / name
+        path.write_bytes(body)
+        path.chmod(0o755)
+    if entries is None:
+        entries = [(root + "/bin/" + name, body, "file", "") for name, body in bodies.items()]
+    buffer = io.BytesIO()
+    with tarfile.open(fileobj=buffer, mode="w") as output:
+        for name, body, kind, link in entries:
+            info = tarfile.TarInfo(name)
+            info.size = len(body) if kind == "file" else 0
+            if kind == "symlink":
+                info.type, info.linkname = tarfile.SYMTYPE, link
+            if kind == "hardlink":
+                info.type, info.linkname = tarfile.LNKTYPE, link
+            output.addfile(info, io.BytesIO(body) if kind == "file" else None)
+    archive = tmp_path / "fictional.tar.zst"
+    archive.write_bytes(b"\x28\xb5\x2f\xfd" + buffer.getvalue())
+    def decode(stream):
+        return io.BytesIO(stream.read()[4:])
+    return executable, archive, sha(archive.read_bytes()), decode, bodies
+
+
+def test_bound_norm_archive_witness_matches_both_authenticated_fictional_members(tmp_path):
+    executable, archive, digest, decode, bodies = _bound_norm_fictional_archive_case(tmp_path)
+    observed, pins = _bound_norm_archive_native_witness(
+        executable, archive, expected_archive_sha256=digest, _decoder=decode)
+    assert observed == executable
+    assert pins == {str(executable.parent / name): sha(body) for name, body in bodies.items()}
+    assert digest != _BOUND_NORM_AMD64_RELEASE_ARCHIVE_SHA256
+
+
+@pytest.mark.parametrize("damage", ["missing-archive", "wrong-digest", "malformed-tar",
+    "changed-installed", "missing-sibling", "symlink-sibling", "wrong-architecture",
+    "wrong-ELF-version", "wrong-release-path", "duplicate-member", "missing-member",
+    "traversal-member", "absolute-member", "wrong-release-member", "symlink-binary",
+    "escaping-link", "archive-race"])
+def test_bound_norm_archive_witness_refuses_fictional_attacks_before_native_execution(tmp_path, damage):
+    import io
+    import os
+    import stat
+
+    owned_link = None
+    link_identity_fields = ("st_dev", "st_ino", "st_mode", "st_uid", "st_gid",
+        "st_nlink", "st_size", "st_mtime_ns", "st_ctime_ns")
+
+    executable, archive, digest, decode, bodies = _bound_norm_fictional_archive_case(tmp_path)
+    root = _BOUND_NORM_AMD64_RELEASE_ROOT
+    if damage == "missing-archive":
+        archive.unlink()
+    elif damage == "wrong-digest":
+        digest = "0" * 64
+    elif damage == "malformed-tar":
+        archive.write_bytes(b"\x28\xb5\x2f\xfdnot a tar")
+        digest = sha(archive.read_bytes())
+    elif damage == "changed-installed":
+        executable.write_bytes(bodies["lake"][:-1] + b"!")
+    elif damage == "missing-sibling":
+        (executable.parent / "lean").unlink()
+    elif damage == "symlink-sibling":
+        sibling = executable.parent / "lean"
+        alternate = tmp_path / "other-lean"
+        sibling.rename(alternate)
+        sibling.symlink_to(alternate)
+        info = sibling.lstat()
+        assert stat.S_ISLNK(info.st_mode)
+        owned_link = (sibling, {key: getattr(info, key) for key in link_identity_fields},
+                      os.readlink(sibling), os.fspath(alternate))
+    elif damage in ("wrong-architecture", "wrong-ELF-version"):
+        changed = bytearray(bodies["lake"])
+        changed[18:20] = (183).to_bytes(2, "little") if damage == "wrong-architecture" else changed[18:20]
+        if damage == "wrong-ELF-version":
+            changed[6] = 2
+        executable.write_bytes(changed)
+    elif damage == "wrong-release-path":
+        changed_root = executable.parent.parent.with_name("leanprover--lean4---v4.34.0")
+        executable.parent.parent.rename(changed_root)
+        executable = changed_root / "bin" / "lake"
+    elif damage == "archive-race":
+        def decode(stream):
+            original = stream.read()[4:]
+            archive.write_bytes(archive.read_bytes() + b"changed")
+            return io.BytesIO(original)
+    else:
+        entries = [(root + "/bin/" + name, body, "file", "") for name, body in bodies.items()]
+        if damage == "duplicate-member":
+            entries.append(entries[0])
+        elif damage == "missing-member":
+            entries.pop()
+        elif damage == "traversal-member":
+            entries.append((root + "/../escaped", b"x", "file", ""))
+        elif damage == "absolute-member":
+            entries.append(("/escaped", b"x", "file", ""))
+        elif damage == "wrong-release-member":
+            entries.append(("lean-4.34.0-linux/bin/lake", b"x", "file", ""))
+        elif damage == "symlink-binary":
+            entries[0] = (root + "/bin/lake", b"", "symlink", "lean")
+        elif damage == "escaping-link":
+            entries.append((root + "/lib/escape", b"", "symlink", "../../outside"))
+        # Rebuild only the small authored archive; preserve installed preimages.
+        generated = tmp_path / "replacement"
+        generated.mkdir()
+        _, replacement, _, _, _ = _bound_norm_fictional_archive_case(generated, entries=entries)
+        archive.write_bytes(replacement.read_bytes())
+        digest = sha(archive.read_bytes())
+    try:
+        with pytest.raises(ValueError, match="archive-backed Lean witness"):
+            _bound_norm_archive_native_witness(executable, archive,
+                expected_archive_sha256=digest, _decoder=decode)
+    finally:
+        if owned_link is not None:
+            link, identity, contents, expected = owned_link
+            current = link.lstat()
+            assert stat.S_ISLNK(current.st_mode)
+            assert {key: getattr(current, key) for key in link_identity_fields} == identity
+            assert os.readlink(link) == contents == expected
+            link.unlink()
+
+
+def test_bound_norm_archive_digest_refusal_precedes_any_decoder_call(tmp_path):
+    executable, archive, _, _, _ = _bound_norm_fictional_archive_case(tmp_path)
+    calls = []
+    def forbidden(stream):
+        calls.append(True)
+        raise AssertionError("must not decode unauthenticated bytes")
+    with pytest.raises(ValueError, match="compressed archive SHA256"):
+        _bound_norm_archive_native_witness(executable, archive,
+            expected_archive_sha256="0" * 64, _decoder=forbidden)
+    assert calls == []
+
+
+def test_bound_norm_archive_outer_fixture_never_accepts_environment_hash_override(tmp_path, monkeypatch):
+    executable, archive, authored_digest, _, _ = _bound_norm_fictional_archive_case(tmp_path)
+    monkeypatch.setenv("IPFS_DATASETS_BOUND_NORM_NATIVE_LAKE", str(executable))
+    monkeypatch.setenv("IPFS_DATASETS_BOUND_NORM_NATIVE_ARCHIVE", str(archive))
+    monkeypatch.setenv("IPFS_DATASETS_BOUND_NORM_NATIVE_ARCHIVE_SHA256", authored_digest)
+    monkeypatch.setattr(Path, "home", classmethod(lambda cls: tmp_path))
+    assert authored_digest != _BOUND_NORM_AMD64_RELEASE_ARCHIVE_SHA256
+    # Exercise the real public fixture and verifier: env self-hash must not
+    # bypass the fixed release digest, even when the decoder is unavailable.
+    with pytest.raises(ValueError, match="compressed archive SHA256"):
+        bound_norm_installed_lake.__wrapped__()
+
+
+
+def test_bound_norm_archive_hash_read_is_bounded_during_fictional_growth(tmp_path, monkeypatch):
+    executable, archive, digest, _, _ = _bound_norm_fictional_archive_case(tmp_path)
+    initial_size, archive_inode = archive.stat().st_size, archive.stat().st_ino
+    original_fdopen, requests, decoder_calls = os.fdopen, [], []
+
+    class GrowingFile:
+        def __init__(self, stream):
+            self.stream = stream
+            self.grown = False
+
+        def __enter__(self):
+            self.stream.__enter__()
+            return self
+
+        def __exit__(self, *args):
+            return self.stream.__exit__(*args)
+
+        def __getattr__(self, name):
+            return getattr(self.stream, name)
+
+        def read(self, size=-1):
+            requests.append(size)
+            value = self.stream.read(size)
+            if not self.grown:
+                self.grown = True
+                with archive.open("ab") as append:
+                    append.write(b"fictional concurrent growth")
+            return value
+
+    def wrapped(fd, *args, **kwargs):
+        source = original_fdopen(fd, *args, **kwargs)
+        return GrowingFile(source) if os.fstat(fd).st_ino == archive_inode else source
+
+    def forbidden_decoder(source):
+        decoder_calls.append(True)
+        raise AssertionError("growth must refuse before decoding")
+
+    monkeypatch.setattr(os, "fdopen", wrapped)
+    with pytest.raises(ValueError, match="compressed archive grew while hashing"):
+        _bound_norm_archive_native_witness(executable, archive,
+            expected_archive_sha256=digest, _decoder=forbidden_decoder)
+    assert requests == [initial_size, 1]
+    assert decoder_calls == []
+
+
+
+def test_bound_norm_archive_fdopen_failure_closes_owned_descriptor(tmp_path, monkeypatch):
+    import errno
+
+    executable, archive, digest, _, _ = _bound_norm_fictional_archive_case(tmp_path)
+    original_open, descriptors, decoder_calls = os.open, [], []
+
+    def tracked_open(*args, **kwargs):
+        fd = original_open(*args, **kwargs)
+        descriptors.append(fd)
+        return fd
+
+    def failed_fdopen(fd, *args, **kwargs):
+        raise OSError("fictional fdopen constructor failure")
+
+    def forbidden_decoder(source):
+        decoder_calls.append(True)
+        raise AssertionError("constructor failure must refuse before decoder")
+
+    monkeypatch.setattr(os, "open", tracked_open)
+    monkeypatch.setattr(os, "fdopen", failed_fdopen)
+    with pytest.raises(ValueError, match="invalid or unavailable archive/decoder") as failure:
+        _bound_norm_archive_native_witness(executable, archive,
+            expected_archive_sha256=digest, _decoder=forbidden_decoder)
+    assert str(failure.value.__cause__) == "fictional fdopen constructor failure"
+    assert len(descriptors) == 1 and decoder_calls == []
+    with pytest.raises(OSError) as closed:
+        os.fstat(descriptors[0])
+    assert closed.value.errno == errno.EBADF
+
+
+def test_bound_norm_archive_enter_context_failure_closes_created_stream(tmp_path, monkeypatch):
+    import errno
+
+    executable, archive, digest, _, _ = _bound_norm_fictional_archive_case(tmp_path)
+    original_fdopen, observations, decoder_calls = os.fdopen, [], []
+
+    class FailedEntry:
+        def __init__(self, source, fd):
+            self.source, self.fd = source, fd
+            self.close_calls, self.exit_calls = 0, 0
+
+        def __enter__(self):
+            raise OSError("fictional stream entry failure")
+
+        def __exit__(self, *args):
+            self.exit_calls += 1
+            self.close()
+
+        def close(self):
+            self.close_calls += 1
+            self.source.close()
+
+    def failed_entry_fdopen(fd, *args, **kwargs):
+        wrapper = FailedEntry(original_fdopen(fd, *args, **kwargs), fd)
+        observations.append(wrapper)
+        return wrapper
+
+    def forbidden_decoder(source):
+        decoder_calls.append(True)
+        raise AssertionError("entry failure must refuse before decoder")
+
+    monkeypatch.setattr(os, "fdopen", failed_entry_fdopen)
+    with pytest.raises(ValueError, match="invalid or unavailable archive/decoder") as failure:
+        _bound_norm_archive_native_witness(executable, archive,
+            expected_archive_sha256=digest, _decoder=forbidden_decoder)
+    assert str(failure.value.__cause__) == "fictional stream entry failure"
+    assert len(observations) == 1 and decoder_calls == []
+    observed = observations[0]
+    assert observed.close_calls == 1 and observed.exit_calls == 0 and observed.source.closed
+    with pytest.raises(OSError) as closed:
+        os.fstat(observed.fd)
+    assert closed.value.errno == errno.EBADF

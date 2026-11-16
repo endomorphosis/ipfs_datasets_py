@@ -372,11 +372,34 @@ jobs:
         tar -xzf "$RUNNER_TEMP/legal-ir-elan/elan.tar.gz" -C "$RUNNER_TEMP/legal-ir-elan"
         "$RUNNER_TEMP/legal-ir-elan/elan-init" -y --no-modify-path \
           --default-toolchain leanprover/lean4:v4.34.1
+    - name: Install the pinned native archive reader
+      if: ${{ matrix.group == 'native' }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        python -m pip install --only-binary=:all: --no-deps --require-hashes -r /dev/stdin <<'ZSTANDARD_WITNESS'
+        zstandard==0.23.0 --hash=sha256:72c68dda124a1a138340fb62fa21b9bf4848437d9ca60bd35db36f2d3345f373
+        ZSTANDARD_WITNESS
+    - name: Retain the pinned Lean archive for native binary witnesses
+      if: ${{ matrix.group == 'native' }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        lean_witness_root="$RUNNER_TEMP/legal-ir-lean-witness"
+        lean_witness_archive="$lean_witness_root/lean-4.34.1-linux.tar.zst"
+        mkdir -p "$lean_witness_root"
+        curl --fail --location --retry 2 \
+          https://github.com/leanprover/lean4/releases/download/v4.34.1/lean-4.34.1-linux.tar.zst \
+          --output "$lean_witness_archive"
+        printf '%s  %s\n' '47bf4bbd78f70c2e9670598ab7124d92b6efb7330ff33e5fbb4030f6fd72e4e4' "$lean_witness_archive" | sha256sum --check --strict
+        chmod 0444 "$lean_witness_archive"
+        printf '%s\n' "IPFS_DATASETS_BOUND_NORM_NATIVE_ARCHIVE=$lean_witness_archive" >> "$GITHUB_ENV"
     - name: Select the pinned executable
       shell: bash
       run: |
         printf '%s\n' "IPFS_DATASETS_LEAN_EXECUTABLE=$HOME/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lean" >> "$GITHUB_ENV"
         printf '%s\n' "IPFS_DATASETS_NATIVE_LAKE_TEST_EXECUTABLE=$HOME/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake" >> "$GITHUB_ENV"
+        printf '%s\n' "IPFS_DATASETS_BOUND_NORM_NATIVE_LAKE=$HOME/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake" >> "$GITHUB_ENV"
       if: ${{ matrix.group == 'native' }}
     - name: Run focused proof, cache and storage contracts
       env:
@@ -415,11 +438,41 @@ jobs:
         IPFS_DATASETS_RUN_NATIVE_LEAN: '0'
         PYTHONPATH: ${{ github.workspace }}
       run: |
+        set -euo pipefail
         python -m pytest -c /dev/null --noconftest \
           tests/unit/logic/autoformal/test_legal_native_ast_preservation.py \
           tests/unit/logic/autoformal/test_legal_native_ast_preservation_native.py \
+          tests/unit/logic/autoformal/test_legal_corpus_definition_use_native_v2.py::test_bound_norm_archive_witness_matches_both_authenticated_fictional_members \
+          tests/unit/logic/autoformal/test_legal_corpus_definition_use_native_v2.py::test_bound_norm_archive_witness_refuses_fictional_attacks_before_native_execution \
+          tests/unit/logic/autoformal/test_legal_corpus_definition_use_native_v2.py::test_bound_norm_archive_digest_refusal_precedes_any_decoder_call \
+          tests/unit/logic/autoformal/test_legal_corpus_definition_use_native_v2.py::test_bound_norm_archive_outer_fixture_never_accepts_environment_hash_override \
+          tests/unit/logic/autoformal/test_legal_corpus_definition_use_native_v2.py::test_bound_norm_archive_hash_read_is_bounded_during_fictional_growth \
+          tests/unit/logic/autoformal/test_legal_corpus_definition_use_native_v2.py::test_bound_norm_archive_fdopen_failure_closes_owned_descriptor \
+          tests/unit/logic/autoformal/test_legal_corpus_definition_use_native_v2.py::test_bound_norm_archive_enter_context_failure_closes_created_stream \
           -k 'not installed_lean' \
           -q --tb=short --junitxml=legal-preservation-contracts-junit.xml
+        python - <<'NATIVE_ARCHIVE_CONTRACTS_JUNIT'
+        from collections import Counter
+        import xml.etree.ElementTree as ET
+        module = "test_legal_corpus_definition_use_native_v2"
+        expected = {
+            'test_bound_norm_archive_witness_matches_both_authenticated_fictional_members': 1,
+            'test_bound_norm_archive_witness_refuses_fictional_attacks_before_native_execution': 17,
+            'test_bound_norm_archive_digest_refusal_precedes_any_decoder_call': 1,
+            'test_bound_norm_archive_outer_fixture_never_accepts_environment_hash_override': 1,
+            'test_bound_norm_archive_hash_read_is_bounded_during_fictional_growth': 1,
+            'test_bound_norm_archive_fdopen_failure_closes_owned_descriptor': 1,
+            'test_bound_norm_archive_enter_context_failure_closes_created_stream': 1,
+        }
+        cases = [case for case in ET.parse("legal-preservation-contracts-junit.xml").getroot().iter("testcase")
+                 if case.get("classname", "").rsplit(".", 1)[-1] == module]
+        observed = Counter(case.get("name", "").split("[", 1)[0] for case in cases)
+        outcomes = ("failure", "error", "skipped")
+        if (len(cases) != 23 or len({case.get("name") for case in cases}) != 23
+                or observed != expected
+                or any(child.tag in outcomes for case in cases for child in case)):
+            raise SystemExit("expected all 23 archive witness contracts to pass without skips")
+        NATIVE_ARCHIVE_CONTRACTS_JUNIT
       if: ${{ matrix.group == 'contracts' }}
     - name: Run Hammer and proof-feedback trust boundaries
       env:
@@ -745,14 +798,28 @@ jobs:
           tests/unit/logic/autoformal/test_corpus_norm_definition_adapter.py \
           -q --tb=short --junitxml=legal-reviewed-admission-junit.xml
       if: ${{ matrix.group == 'admission' }}
-    - name: Run actual unary, relational and counted preservation
+    - name: Run actual unary, relational, counted and whole-norm preservation
       env:
         PYTHONPATH: ${{ github.workspace }}
       run: |
+        set -euo pipefail
         python -m pytest -c /dev/null --noconftest \
           tests/unit/logic/autoformal/test_legal_native_ast_preservation_native.py \
+          tests/unit/logic/autoformal/test_legal_corpus_definition_use_native_v2.py::test_whole_norm_definition_application_installed_lean_checks_all30_and_original_models \
           -k installed_lean --basetemp=native-preservation-cases \
           -v --tb=short --junitxml=native-preservation-junit.xml
+        python - <<'WHOLE_NORM_JUNIT'
+        import xml.etree.ElementTree as ET
+        module = "test_legal_corpus_definition_use_native_v2"
+        prefix = "test_whole_norm_definition_application_installed_lean_checks_all30_and_original_models"
+        expected = {prefix + "[default]", prefix + "[source-use]"}
+        cases = [case for case in ET.parse("native-preservation-junit.xml").getroot().iter("testcase")
+                 if case.get("classname", "").rsplit(".", 1)[-1] == module]
+        outcomes = ("failure", "error", "skipped")
+        if (len(cases) != 2 or {case.get("name") for case in cases} != expected
+                or any(child.tag in outcomes for case in cases for child in case)):
+            raise SystemExit("expected both whole-norm installed Lean cases to pass without skips")
+        WHOLE_NORM_JUNIT
       if: ${{ matrix.group == 'native' }}
     - name: Retain validation evidence for ${{ matrix.lane }}
       if: ${{ always() && matrix.group != 'cpu' && matrix.group != 'parent' }}
@@ -777,6 +844,7 @@ jobs:
           native-preservation-cases/**/installed-relational-*/**
           native-preservation-cases/**/installed-counted-three/**
           native-preservation-cases/**/installed-mixed-*/**
+          native-preservation-cases/**/actual-whole-norm-definition-application/**
     - name: Retain bounded validation shard evidence
       if: ${{ always() && (matrix.group == 'cpu' || matrix.group == 'parent') }}
       uses: actions/upload-artifact@v4

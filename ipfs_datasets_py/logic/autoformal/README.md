@@ -1,5 +1,13 @@
 # Legal autoformalization
 
+## Kernel source screening and current verifier v2 — 2026-11-16
+
+The existing Lean source screen now rejects active `run_elab`, `run_meta` and `by_elab` syntax. Kernel and cache support the same `lean-kernel-verification/v2` marker; receipt wire v3 and `LeanKernelBackend@1` remain unchanged. Old-v1 receipts cannot supply current accepted proof or cache reuse, and archived evidence is preserved. The earlier GREEN140 original passed 140 selected software cases (79 kernel/61 cache, including 13 new controls). After a separately measured stale fixture-pin failure and one-line pin repair, GREEN141 passed 141 unique software cases (80 kernel/61 cache), adding the ungated loader-contract regression; both final independent saved-output audits passed. See the [handoff](docs/HANDOFF.md#kernel-source-screening-and-current-verifier-v2--2026-11-16) for failure lineage and limits. No Native Lean, model-training, legal-review or corpus authority follows.
+
+## AArch64 Native cache fixture — 2026-11-16
+
+A separate current-v2 fixture ran Lean 4.34.1 on AArch64: one version command and two successful compilations with matching expected-declaration empty-axiom reports, followed by disk cache roundtrip and reuse without another compiler command. This checks a constructed `True` theorem with one explicit `True` assumption; it adds no reviewed statutory meaning, model result or corpus authority. It contributes zero pytest cases and does not complete Phase 1. See the [handoff](docs/HANDOFF.md#aarch64-native-cache-fixture--2026-11-16) for the audited scope and remaining Native coverage.
+
 ## Conditional whole-norm definition application in existing owners — 2026-11-16
 
 Existing aggregate, Native, retained/live and incremental realization APIs now independently select `definition_application_profile="whole-norm-definition-expansion/v1"` and identity `None` or `"reviewed-source-use/v1"`. The default realization keeps 26 obligations; the selected application adds four, giving 30: exact typed expansion and conditional whole-norm equivalence for each of two distinct fictional norm uses. Equivalence quantifies arbitrary original interpretations **conditioned on the explicit `hSourceDefinition` hypothesis**; an empty axiom report does not establish that hypothesis or statutory definition applicability.

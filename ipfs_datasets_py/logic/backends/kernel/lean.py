@@ -78,7 +78,7 @@ LEAN_KERNEL_RECEIPT_VERSION: Final = "lean-kernel-receipt/v3"
 # Version this token whenever trust-relevant source, obligation, dependency,
 # native-identity or diagnostic acceptance rules change. It names the verifier
 # rules, not an execution grant; never infer it when decoding old receipts.
-LEAN_KERNEL_VERIFICATION_PROFILE: Final = "lean-kernel-verification/v1"
+LEAN_KERNEL_VERIFICATION_PROFILE: Final = "lean-kernel-verification/v2"
 LEAN_SOURCE_BINDING_VERSION: Final = "lean-source-binding/v1"
 LEAN_AXIOM_REPORT_VERSION: Final = "lean-axiom-report/v2"
 LEAN_NATIVE_ADDRESS_SPACE_FLOOR_BYTES: Final = 4 * 1024**3
@@ -93,7 +93,7 @@ _SORRY = re.compile(r"(?<![A-Za-z0-9_'])(?:sorry|admit|sorryAx)(?![A-Za-z0-9_'])
 _UNSAFE = re.compile(r"(?<![A-Za-z0-9_'])(?:unsafe|axiom|constant)(?![A-Za-z0-9_'])")
 _UNSUPPORTED_COMMAND = re.compile(
     r"#|@\s*\[|(?<![A-Za-z0-9_'])(?:elab|elab_rules|macro|macro_rules|syntax|"
-    r"initialize|builtin_initialize|run_cmd|run_tac|notation|infix|infixl|infixr|"
+    r"initialize|builtin_initialize|run_cmd|run_tac|run_elab|run_meta|by_elab|notation|infix|infixl|infixr|"
     r"prefix|postfix|attribute|instance|set_option|open|local|scoped|export|alias|"
     r"variable|variables|parameter|parameters|include|omit|universe|universes|prelude|module)(?![A-Za-z0-9_'])"
 )

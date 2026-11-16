@@ -1134,7 +1134,7 @@ def test_current_lean_verification_profile_survives_bound_cache_wire_replay(tmp_
     assert reopened.theorem_receipt_results(expected_context=context) == (receipt,)
 
 
-@pytest.mark.parametrize("profile", [None, "lean-kernel-verification/older", False, 1, ["lean-kernel-verification/v1"]])
+@pytest.mark.parametrize("profile", [None, "lean-kernel-verification/older", False, 1, ["lean-kernel-verification/v1"], "lean-kernel-verification/v1"])
 def test_reissued_kernel_profile_cannot_launder_old_or_wrong_verifier_into_current_cache(profile: Any) -> None:
     """Reissue the outer protocol; the canonical Lean parser must still refuse.
 
@@ -1168,7 +1168,7 @@ def test_reissued_kernel_profile_cannot_launder_old_or_wrong_verifier_into_curre
     assert record.to_dict() == original
 
 
-@pytest.mark.parametrize("profile", [None, "lean-kernel-verification/older", False, 1])
+@pytest.mark.parametrize("profile", [None, "lean-kernel-verification/older", False, 1, "lean-kernel-verification/v1"])
 def test_current_cache_reuse_refuses_missing_or_mutated_expected_verification_profile(profile: Any) -> None:
     record, _, receipt, _, context = _bound_record()
     original = record.to_dict()
@@ -1184,7 +1184,7 @@ def test_current_cache_reuse_refuses_missing_or_mutated_expected_verification_pr
 
 
 @pytest.mark.parametrize("profile", [None, "lean-kernel-verification/older", False, 1,
-                                    ["lean-kernel-verification/v1"], {"profile": "lean-kernel-verification/v1"}])
+                                    ["lean-kernel-verification/v1"], {"profile": "lean-kernel-verification/v1"}, "lean-kernel-verification/v1"])
 def test_current_cache_refuses_an_unsupported_loaded_lean_verifier_profile_before_parser(monkeypatch, profile: Any) -> None:
     """An old cached v3 Python module is not upgraded by its wire version."""
     from ipfs_datasets_py.logic.backends.kernel import lean
