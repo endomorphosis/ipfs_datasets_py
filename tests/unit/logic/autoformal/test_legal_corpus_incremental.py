@@ -2766,3 +2766,252 @@ def test_reviewed_realization_source_use_incremental_resealed_cache_cannot_chang
             expected_previous_cache_sha256=sha(raw), previous_artifacts=dict(cold["artifacts"]))
     assert len(runtime["compiler"].calls) == before
     assert not (runtime["directory"] / output).exists()
+
+
+# Four authored cache domains reuse the existing fake compiler and signed
+# fictional source fixture. These observations are not Lean or legal proof.
+@pytest.fixture(scope="module")
+def reviewed_incremental_whole_norm_cold_seeds_v1(
+        reviewed_incremental_realization_source_use_cold_seed_v1,
+        reviewed_incremental_realization_v1, reviewed_incremental_realization_source_use_v1):
+    prior = reviewed_incremental_realization_source_use_cold_seed_v1
+    runtime = prior["runtime"]
+    domains = {}
+    for label, control, identity in (("default", reviewed_incremental_realization_v1, None),
+            ("source-use", reviewed_incremental_realization_source_use_v1, "reviewed-source-use/v1")):
+        legacy = prior["seeds"]["default" if identity is None else "selected"]
+        assert legacy["cold"][0]["build_passed"] is True
+        assert len(legacy["cold"][0]["fresh_theorems"]) == 26
+        assert len(legacy["cold"][0]["compiled_modules"]) == 10
+        domains["legacy-" + label] = {**legacy, "control": control,
+            "identity": identity, "application": None}
+        selected = dict(control)
+        identity_keywords = {} if identity is None else {"instance_identity_profile": identity}
+        selected["realization"] = shared.prepare_reviewed_definition_realization_corpus_v1(
+            selected["preparation"], selected["graph"], selected["admission"], *selected["args"],
+            expected_preservation_sha256=shared.reviewed_preservation_corpus_sha256(selected["preparation"]),
+            expected_graph_sha256=selected["graph_sha"], expected_admission_sha256=selected["admission_sha"],
+            toolchain=TOOLCHAIN, definition_application_profile="whole-norm-definition-expansion/v1",
+            **identity_keywords, **selected["kwargs"])
+        before = len(runtime["compiler"].calls)
+        cold = build_reviewed_incremental_realization_v1(runtime, selected, "whole-norm-" + label + "-healthy-cold",
+            definition_application_profile="whole-norm-definition-expansion/v1", **identity_keywords)
+        assert cold[0]["build_passed"] is True
+        assert len(runtime["compiler"].calls) - before == len(cold[0]["compiled_modules"]) == 10
+        assert len(cold[0]["fresh_theorems"]) == 30
+        domains["whole-" + label] = dict(cold=cold, cache=cache(cold), artifacts=artifacts(cold),
+            control=selected, identity=identity, application="whole-norm-definition-expansion/v1")
+    assert len({row["cache"]["profile"] for row in domains.values()}) == 4
+    return dict(runtime=runtime, domains=domains)
+
+
+@pytest.mark.parametrize("domain", ["whole-default", "whole-source-use"])
+def test_reviewed_whole_norm_incremental_cold10_warm0_preserves_all30_and_actual_contract(
+        reviewed_incremental_whole_norm_cold_seeds_v1, domain):
+    seed = reviewed_incremental_whole_norm_cold_seeds_v1
+    runtime, selected = seed["runtime"], seed["domains"][domain]
+    control = selected["control"]
+    complete = control["realization"].to_dict()
+    legacy = seed["domains"]["legacy-" + ("default" if selected["identity"] is None else "source-use")]
+    original = legacy["control"]["realization"].to_dict()
+    assert complete["upstream_manifest"] == original["upstream_manifest"]
+    assert complete["units"] == original["units"]
+    assert complete["selection"] == original["selection"]
+    assert len(complete["expected_modules"]) == 10 and len(control["realization"].files) == 39
+    assert len(complete["preservation_obligations"]) == 30
+    assert len(complete["realization_obligations"]) == 15
+    assert len(complete["definition_application_obligations"]) == 4
+    assert len(complete["definition_applications"]) == 2
+    assert complete["preservation_obligations"][:15] == original["preservation_obligations"][:15]
+    before = len(runtime["compiler"].calls)
+    raw = canonical_dag_json_bytes(deepcopy(selected["cache"]))
+    assert len(raw) <= contracts.MAX_RECORD_BYTES == 1024 * 1024
+    identity_keywords = {} if selected["identity"] is None else {"instance_identity_profile": selected["identity"]}
+    warm = build_reviewed_incremental_realization_v1(runtime, control, domain + "-warm-positive",
+        definition_application_profile="whole-norm-definition-expansion/v1", **identity_keywords,
+        previous_cache_raw=raw, expected_previous_cache_sha256=sha(raw), previous_artifacts=dict(selected["artifacts"]))
+    assert warm[0]["build_passed"] is True and len(runtime["compiler"].calls) == before
+    assert warm[0]["compiled_modules"] == warm[0]["fresh_theorems"] == []
+    assert len(warm[0]["reused_modules"]) == 10 and len(warm[0]["reused_theorems"]) == 30
+    assert sorted(warm[0]["reused_theorems"]) == sorted(complete["preservation_obligations"])
+    assert artifacts(warm) == selected["artifacts"]
+    saved = cache(warm)
+    suffix = (("+reviewed-source-use/v1" if selected["identity"] is not None else "")
+        + "+whole-norm-definition-expansion/v1+interned-application-binding/v1")
+    assert saved["profile"] == runtime["incremental"].REALIZATION_PROFILE + suffix
+    assert saved["execution_contract"]["profile"] == saved["profile"]
+    expected_binding = {
+        "preparation_sha256": shared.reviewed_preservation_corpus_sha256(control["realization"]),
+        "preservation_sha256": complete["reviewed_preservation_sha256"],
+        "graph_sha256": complete["reviewed_graph_sha256"],
+        "admission_sha256": complete["reviewed_admission_sha256"],
+        "input_commitment_sha256": complete["input_commitment_sha256"],
+        "declaration_sha256": complete["declaration_sha256"],
+        "selection": complete["selection"],
+        "selection_sha256": sha(canonical_dag_json_bytes(complete["selection"])),
+        "units": complete["units"],
+        "original_file_sha256": complete["upstream_manifest"]["file_sha256"],
+        "producer_pins": complete["producer_pins"],
+        "native_producer_pins": complete["native_producer_pins"],
+        "definition_application_profile": "whole-norm-definition-expansion/v1",
+        "definition_applications": complete["definition_applications"],
+        "definition_application_obligations": complete["definition_application_obligations"],
+        **identity_keywords,
+    }
+    expected_record = contracts.seal_record({
+        "schema": "legal-corpus-reviewed-definition-application-binding/v1", "binding": expected_binding})
+    for saved_cache, directory in ((selected["cache"], selected["cold"][1]), (saved, warm[1])):
+        assert len((directory / "cache.json").read_bytes()) <= contracts.MAX_RECORD_BYTES
+        assert saved_cache["execution_contract"]["realization_binding"] == expected_record
+        assert canonical_dag_json_bytes(saved_cache).count(canonical_dag_json_bytes(expected_binding)) == 1
+        assert len(saved_cache["module_facts"]) == 10
+        for fact in saved_cache["module_facts"]:
+            assert fact["recipe"]["contract_cid"] == saved_cache["execution_contract"]["record_cid"]
+            provenance = fact["recipe"]["realization_provenance"]
+            assert set(provenance) == {"module", "role", "contributors", "dependency_units",
+                "dependency_record_cids", "realization_binding_cid"}
+            assert provenance["realization_binding_cid"] == expected_record["record_cid"]
+            assert "realization_binding" not in provenance
+    binding = expected_record["binding"]
+    if selected["identity"] is None:
+        assert "instance_identity_profile" not in binding
+    else:
+        assert binding["instance_identity_profile"] == selected["identity"]
+        assert binding["selection"]["source_use_bindings"] == complete["selection"]["source_use_bindings"]
+    assert "realization_binding" not in legacy["cache"]["execution_contract"]
+    assert all("realization_binding" in fact["recipe"]["realization_provenance"]
+        and "realization_binding_cid" not in fact["recipe"]["realization_provenance"]
+        for fact in legacy["cache"]["module_facts"])
+    assert warm[0]["definition_applications"] == complete["definition_applications"]
+    assert warm[0]["definition_application_obligations"] == complete["definition_application_obligations"]
+    assert warm[0]["constructed_model_only"] is False
+    assert warm[0]["cross_unit_definition_application_proved"] is False
+    assert warm[0]["fresh_proof_for_reused_modules"] is False
+    assert warm[0]["live_native_success_authenticated"] is warm[0]["original_success_authenticated"] is False
+    assert not any(warm[0]["authority"].values())
+    assert warm[0]["training_mask"] == warm[0]["evaluation_gold_mask"] == 0
+    assert all(body.startswith(b"authored-fake-olean-no-native-proof\0") for body in artifacts(warm).values())
+
+
+@pytest.mark.parametrize("source,target", [
+    ("legacy-default", "whole-default"), ("whole-default", "legacy-default"),
+    ("legacy-source-use", "whole-source-use"), ("whole-source-use", "legacy-source-use"),
+    ("whole-default", "whole-source-use"), ("whole-source-use", "whole-default")])
+def test_reviewed_whole_norm_incremental_cache_cannot_cross_explicit_domains(
+        reviewed_incremental_whole_norm_cold_seeds_v1, source, target):
+    seed = reviewed_incremental_whole_norm_cold_seeds_v1
+    runtime = seed["runtime"]
+    offered, selected = seed["domains"][source], seed["domains"][target]
+    raw = canonical_dag_json_bytes(deepcopy(offered["cache"]))
+    keywords = {}
+    if selected["identity"] is not None:
+        keywords["instance_identity_profile"] = selected["identity"]
+    if selected["application"] is not None:
+        keywords["definition_application_profile"] = selected["application"]
+    before = len(runtime["compiler"].calls)
+    output = "whole-norm-cross-domain-" + source + "-to-" + target
+    with pytest.raises(ValueError):
+        build_reviewed_incremental_realization_v1(runtime, selected["control"], output,
+            previous_cache_raw=raw, expected_previous_cache_sha256=sha(raw),
+            previous_artifacts=dict(offered["artifacts"]), **keywords)
+    assert len(runtime["compiler"].calls) == before
+    assert not (runtime["directory"] / output).exists()
+
+
+@pytest.mark.parametrize("damage", ["selector", "missing-application", "typed-content-digest",
+    "target-path", "obligation-order", "contract-cid"])
+def test_reviewed_whole_norm_incremental_resealed_cache_cannot_forge_application_or_contract(
+        reviewed_incremental_whole_norm_cold_seeds_v1, damage):
+    seed = reviewed_incremental_whole_norm_cold_seeds_v1
+    runtime, selected = seed["runtime"], seed["domains"]["whole-source-use"]
+    saved = deepcopy(selected["cache"])
+    fact = saved["module_facts"][-2]
+    contract = saved["execution_contract"]
+    binding_record = contract["realization_binding"]
+    binding = binding_record["binding"]
+    if damage == "selector":
+        binding["definition_application_profile"] = "whole-norm-definition-expansion/v2"
+    elif damage == "missing-application":
+        binding["definition_applications"].pop()
+    elif damage == "typed-content-digest":
+        row = binding["definition_applications"][0]
+        expression = json.loads(row["expanded_typed_expression"])
+        expression["content_digest"] = "a" * 64
+        row["expanded_typed_expression"] = canonical_dag_json_bytes(expression).decode("utf-8")
+        row["expanded_typed_expression_sha256"] = sha(row["expanded_typed_expression"].encode("utf-8"))
+    elif damage == "target-path":
+        binding["definition_applications"][0]["target_typed_paths"][0] += "/extension/children/0"
+    elif damage == "obligation-order":
+        binding["definition_application_obligations"].reverse()
+    if damage != "contract-cid":
+        contract["realization_binding"] = reseal(binding_record)
+        saved["execution_contract"] = reseal(contract)
+        for row in saved["module_facts"]:
+            row["recipe"]["realization_provenance"]["realization_binding_cid"] = contract["realization_binding"]["record_cid"]
+            row["recipe"]["contract_cid"] = saved["execution_contract"]["record_cid"]
+        assert all(row["recipe"]["realization_provenance"]["realization_binding_cid"]
+            == contract["realization_binding"]["record_cid"] for row in saved["module_facts"])
+    else:
+        fact["recipe"]["contract_cid"] = runtime["incremental"].cid_for_dag_json({"other": "execution-contract"})
+    for row in saved["module_facts"]:
+        row["output"]["recipe_cid"] = runtime["incremental"].cid_for_dag_json(row["recipe"])
+    raw = canonical_dag_json_bytes(reseal(saved))
+    assert len(raw) <= contracts.MAX_RECORD_BYTES
+    assert sha(raw) != sha(canonical_dag_json_bytes(selected["cache"]))
+    before = len(runtime["compiler"].calls)
+    output = "whole-norm-resealed-refused-" + damage
+    with pytest.raises(ValueError):
+        build_reviewed_incremental_realization_v1(runtime, selected["control"], output,
+            definition_application_profile="whole-norm-definition-expansion/v1",
+            instance_identity_profile="reviewed-source-use/v1", previous_cache_raw=raw,
+            expected_previous_cache_sha256=sha(raw), previous_artifacts=dict(selected["artifacts"]))
+    assert len(runtime["compiler"].calls) == before
+    assert not (runtime["directory"] / output).exists()
+
+@pytest.mark.parametrize("damage", ["missing-table", "extra-table-key", "changed-table-cid",
+    "missing-reference", "foreign-reference", "extra-inline-binding", "uninterned-profile"])
+def test_reviewed_whole_norm_incremental_interned_binding_refuses_resealed_wire_damage(
+        reviewed_incremental_whole_norm_cold_seeds_v1, damage):
+    seed = reviewed_incremental_whole_norm_cold_seeds_v1
+    runtime, selected = seed["runtime"], seed["domains"]["whole-source-use"]
+    saved = deepcopy(selected["cache"])
+    contract = saved["execution_contract"]
+    table = contract["realization_binding"]
+    fact = saved["module_facts"][-2]
+    provenance = fact["recipe"]["realization_provenance"]
+    if damage == "missing-table":
+        del contract["realization_binding"]
+    elif damage == "extra-table-key":
+        table["unexpected_binding"] = True
+        contract["realization_binding"] = reseal(table)
+    elif damage == "changed-table-cid":
+        table["record_cid"] = runtime["incremental"].cid_for_dag_json({"other": "sealed-realization-binding"})
+    elif damage == "missing-reference":
+        del provenance["realization_binding_cid"]
+    elif damage == "foreign-reference":
+        provenance["realization_binding_cid"] = runtime["incremental"].cid_for_dag_json({"other": "binding-reference"})
+    elif damage == "extra-inline-binding":
+        provenance["realization_binding"] = deepcopy(table["binding"])
+    else:
+        suffix = "+interned-application-binding/v1"
+        assert saved["profile"].endswith(suffix) and contract["profile"].endswith(suffix)
+        saved["profile"] = saved["profile"][:-len(suffix)]
+        contract["profile"] = contract["profile"][:-len(suffix)]
+    saved["execution_contract"] = reseal(contract)
+    for row in saved["module_facts"]:
+        row["recipe"]["contract_cid"] = saved["execution_contract"]["record_cid"]
+        if damage in {"extra-table-key", "changed-table-cid"}:
+            row["recipe"]["realization_provenance"]["realization_binding_cid"] = contract["realization_binding"]["record_cid"]
+        row["output"]["recipe_cid"] = runtime["incremental"].cid_for_dag_json(row["recipe"])
+    raw = canonical_dag_json_bytes(reseal(saved))
+    assert len(raw) <= contracts.MAX_RECORD_BYTES
+    assert sha(raw) != sha(canonical_dag_json_bytes(selected["cache"]))
+    before = len(runtime["compiler"].calls)
+    output = "whole-norm-interned-wire-refused-" + damage
+    with pytest.raises(ValueError):
+        build_reviewed_incremental_realization_v1(runtime, selected["control"], output,
+            definition_application_profile="whole-norm-definition-expansion/v1",
+            instance_identity_profile="reviewed-source-use/v1", previous_cache_raw=raw,
+            expected_previous_cache_sha256=sha(raw), previous_artifacts=dict(selected["artifacts"]))
+    assert len(runtime["compiler"].calls) == before
+    assert not (runtime["directory"] / output).exists()

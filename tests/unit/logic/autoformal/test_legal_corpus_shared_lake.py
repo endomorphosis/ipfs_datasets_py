@@ -2655,15 +2655,21 @@ def reviewed_definition_realization_fresh_case(control, change):
         rf = mh.relational_fixture
         builder = rf.Builder()
         head = builder.atom("CoveredOfficer", "officer")
+        body_symbol = ("InspectsRegisterAt" if change == "body-arity-collision" else
+            "event" if change == "body-binder-collision" else "AppointedByBoard")
         if change == "recursive-body":
             body = builder.binary("and", builder.atom("AppointedByBoard", "officer"), builder.atom("CoveredOfficer", "officer"))
         elif change == "quantified-body":
             body = builder.quantify(builder.atom("AppointedByBoard", "inner"), [("inner", "forall")])
         elif change == "negated-body":
             body = rf.ast.mk_not(builder.nid(), builder.atom("AppointedByBoard", "officer"))
+        elif change == "repeated-body":
+            body = builder.binary("and", builder.atom(body_symbol, "officer"), builder.atom(body_symbol, "officer"))
+        elif change in ("body-arity-collision", "body-binder-collision"):
+            body = builder.atom(body_symbol, "officer")
         else: raise AssertionError("unknown fictional body mutation")
         request = rf.request_for(builder, builder.binary("iff", head, body),
-            [("CoveredOfficer", ("officer",)), ("AppointedByBoard", ("officer",))], [("officer", "forall")])
+            [("CoveredOfficer", ("officer",)), (body_symbol, ("officer",))], [("officer", "forall")])
     raw = canonical_dag_json_bytes(request)
     mixed = unit["relational_profile"] == mh.relational.MIXED_PROFILE
     report = (mh.relational.prepare_mixed_relational_norm_v1 if mixed else mh.relational.prepare_relational_norm_v1)(
@@ -3020,3 +3026,382 @@ def test_reviewed_definition_realization_source_use_replays_current_source_revie
         offered = reviewed_preservation_reseal_fixture_v2(offered, manifest, dict(offered.files))
     with pytest.raises((ValueError, TypeError)):
         reviewed_definition_realization_source_use_validate_v1(control, offered, args=args, kwargs=kwargs)
+
+
+# A whole-norm application is a separate conditional engineering obligation.
+# Existing source/review fixtures remain fictional; preparation executes no Lean.
+def reviewed_definition_application_RED_at_v1(tree, path):
+    selected = tree
+    for token in path.split("/")[1:]:
+        selected = selected[int(token)] if type(selected) is list else selected[token]
+    return selected
+
+
+def reviewed_definition_application_RED_without_node_ids_v1(value):
+    if type(value) is dict:
+        return {key: reviewed_definition_application_RED_without_node_ids_v1(item)
+            for key, item in value.items() if key != "node_id"}
+    if type(value) is list:
+        return [reviewed_definition_application_RED_without_node_ids_v1(item) for item in value]
+    return value
+
+
+@pytest.mark.parametrize("instance_identity_profile", [None, "reviewed-source-use/v1"], ids=["default", "source-use"])
+def test_reviewed_definition_application_whole_norm_requires_both_exact_source_norm_expansions(
+        request, instance_identity_profile):
+    fixture_name = ("reviewed_definition_realization_control" if instance_identity_profile is None else
+        "reviewed_definition_realization_source_use_control_v1")
+    control = request.getfixturevalue(fixture_name)
+    preservation, legacy = control["preparation"], control["realization"]
+    upstream, previous = preservation.to_dict(), legacy.to_dict()
+    mode = {} if instance_identity_profile is None else {"instance_identity_profile": instance_identity_profile}
+    # Current complete admission, V3 source/graph and old realization must all
+    # be healthy before the feature probe. Missing methods/imports cannot count.
+    assert control["owner"].assess_reviewed_norm_admission_v3(*control["args"], **control["kwargs"]) == control["admission"]
+    assert control["admission"]["fixture_only"] is control["admission"]["semantic_use_eligible"] is True
+    assert control["admission"]["blockers"] == []
+    if instance_identity_profile is None:
+        assert reviewed_preservation_validate_fixture_v3(control, preservation) == preservation
+        assert reviewed_definition_realization_validate(control, legacy) == legacy
+        assert "instance_identity_profile" not in previous
+    else:
+        assert reviewed_source_use_validate_fixture(control, 3, preservation) == preservation
+        reviewed_source_use_assert_bindings(preservation)
+        assert reviewed_definition_realization_source_use_validate_v1(control, legacy) == legacy
+        assert previous["instance_identity_profile"] == instance_identity_profile
+    assert len(upstream["units"]) == 3 and len({u["instance_module"] for u in upstream["units"]}) == 3
+    assert len(upstream["preservation_obligations"]) == 15
+    assert len(previous["preservation_obligations"]) == 26
+    assert len(previous["realization_obligations"]) == 11
+    assert "definition_application_profile" not in previous
+    assert previous["support_profile"]["cross_unit_definition_application_proved"] is False
+    assert previous["selection"]["body_typed_node"]["symbol"] == "AppointedByBoard"
+    snapshot = control["owner"].norm._snapshot({"graph": control["graph"], "admission": control["admission"],
+        "args": list(control["args"]), "kwargs": control["kwargs"]})[1]
+
+    # This explicit opt-in is intentionally unsupported by the published
+    # baseline. It must become a complete source-bound expansion, not a new
+    # desired-Iff premise or another constructed-model/head-only receipt.
+    application_profile = "whole-norm-definition-expansion/v1"
+    offered = reviewed_definition_realization_prepare(control,
+        definition_application_profile=application_profile, **mode)
+
+    from ipfs_datasets_py.logic.syntax_core.ast import TypedExpression
+    manifest, files = offered.to_dict(), dict(offered.files)
+    assert manifest["definition_application_profile"] == application_profile
+    assert manifest["selection"] == previous["selection"]
+    assert manifest["units"] == upstream["units"] and manifest["upstream_manifest"] == upstream
+    assert manifest["reviewed_preservation_sha256"] == shared.reviewed_preservation_corpus_sha256(preservation)
+    assert len(files) == 39 and len(manifest["expected_modules"]) == 10
+    assert len(manifest["preservation_obligations"]) == len(set(manifest["preservation_obligations"])) == 30
+    assert manifest["preservation_obligations"][:15] == upstream["preservation_obligations"]
+    assert len(manifest["realization_obligations"]) == 15
+    additions = manifest["definition_application_obligations"]
+    assert len(additions) == len(set(additions)) == 4
+    assert manifest["preservation_obligations"][-4:] == manifest["realization_obligations"][-4:] == additions
+    for name, body in preservation.files:
+        retained = "definition-realization-original-lakefile.txt" if name == "lakefile.toml" else name
+        assert files[retained] == body
+
+    admitted = {row["unit_id"]: row for row in control["admission"]["units"]}
+    definition = next(row for row in upstream["units"] if row["kind"] == "definition")
+    norms = [row for row in upstream["units"] if row["kind"] == "norm"]
+    assert len(norms) == 2
+    original_definition = admitted[definition["unit_id"]]["canonical_ir"]["typed_expression"]
+    assert previous["selection"]["definition_source_occurrence_cid"] == definition["source_occurrence_cid"]
+    applications = manifest["definition_applications"]
+    assert [row["unit_id"] for row in applications] == [row["unit_id"] for row in norms]
+    assert len(applications) == 2
+    for unit, application in zip(norms, applications, strict=True):
+        assert application["typed_expression_transport"] == "canonical-dag-json-text/v1"
+        for kind in ("definition", "original", "expanded"):
+            text = application[kind + "_typed_expression"]
+            assert type(text) is str
+            assert canonical_dag_json_bytes(json.loads(text)) == text.encode("utf-8")
+            assert shared._reviewed_definition_application_expression(application, kind) == json.loads(text)
+            assert application[kind + "_typed_expression_sha256"] == sha(text.encode("utf-8"))
+        ir = admitted[unit["unit_id"]]["canonical_ir"]
+        uses = [use for use in control["graph"]["definition_use_records"]
+            if use["use_unit_id"] == unit["unit_id"] and use["definition_unit_id"] == definition["unit_id"]]
+        assert len(uses) == 1
+        use = uses[0]
+        paths = [row["typed_path"] for row in previous["selection"]["occurrences"] if row["unit_id"] == unit["unit_id"]]
+        assert application["definition_unit_id"] == definition["unit_id"]
+        assert application["definition_use_record_cid"] == use["record_cid"]
+        assert application["scope_record_cid"] == definition["scope_record_cid"] == unit["scope_record_cid"]
+        assert application["interpretation_record_cid"] == unit["interpretation_record_cid"]
+        assert json.loads(application["definition_typed_expression"]) == original_definition
+        assert application["definition_typed_expression_sha256"] == sha(canonical_dag_json_bytes(original_definition))
+        assert json.loads(application["original_typed_expression"]) == ir["typed_expression"]
+        assert application["original_typed_expression_sha256"] == sha(canonical_dag_json_bytes(ir["typed_expression"]))
+        assert application["original_argument_roles"] == ir["argument_roles"]
+        assert application["target_typed_paths"] == paths and len(application["replacement_records"]) == len(paths)
+        expanded = json.loads(application["expanded_typed_expression"])
+        assert application["expanded_typed_expression_sha256"] == sha(canonical_dag_json_bytes(expanded))
+        assert expanded["content_digest"] != ir["typed_expression"]["content_digest"]
+        assert TypedExpression.from_dict(expanded).to_dict() == expanded
+        # The existing fixed fixture's SOURCE body is the single AppointedByBoard
+        # atom. This explicit expectation is not a generic substitution engine.
+        expected = deepcopy(ir["typed_expression"])
+        for path in paths:
+            atom = reviewed_definition_application_RED_at_v1(expected, path)
+            assert atom["kind"] == "predicate" and atom["symbol"] == "CoveredOfficer"
+            atom["symbol"] = "AppointedByBoard"
+        assert reviewed_definition_application_RED_without_node_ids_v1(expanded["root"]) == \
+            reviewed_definition_application_RED_without_node_ids_v1(expected["root"])
+        assert expanded["root"] != ir["typed_expression"]["root"]
+        assert application["expanded_argument_roles"]
+        assert {key: value for key, value in expanded.items() if key not in {"root", "signature", "content_digest"}} == \
+            {key: value for key, value in ir["typed_expression"].items() if key not in {"root", "signature", "content_digest"}}
+
+    whole = [entry for entry in manifest["theorem_bindings"] if entry["binding"]["kind"] == "whole_norm_definition_expansion"]
+    exact = [entry for entry in manifest["theorem_bindings"] if entry["binding"]["kind"] == "whole_norm_expansion_source_exact"]
+    assert len(whole) == len(exact) == 2
+    assert {entry["binding"]["unit_id"] for entry in whole} == {row["unit_id"] for row in norms}
+    assert {entry["binding"]["unit_id"] for entry in exact} == {row["unit_id"] for row in norms}
+    assert {entry["theorem"] for entry in whole + exact} == set(additions)
+    for entry in whole:
+        binding = entry["binding"]
+        assert binding["premise_kind"] == "independently_denoted_source_definition"
+        assert binding["desired_equivalence_hypothesis"] is False
+        unit = next(row for row in norms if row["unit_id"] == binding["unit_id"])
+        if unit["relational_profile"] == "authored-many-sorted-relational-deontic/v1":
+            assert binding["atom_binding"] == "canonical_Object_restriction_of_original_mixed_atoms"
+    assert manifest["preparation_only"] is True
+    assert manifest["proof_status"] == manifest["lean_compilation_status"] == "not_executed"
+    assert manifest["support_profile"]["cross_unit_definition_application_proved"] is False
+    assert not any(manifest["authority"].values()) and manifest["semantic_use_eligible"] is False
+    assert manifest["training_mask"] == manifest["evaluation_gold_mask"] == 0
+    assert shared.validate_reviewed_definition_realization_corpus_v1(offered, preservation,
+        control["graph"], control["admission"], *control["args"],
+        expected_realization_sha256=shared.reviewed_preservation_corpus_sha256(offered),
+        expected_preservation_sha256=shared.reviewed_preservation_corpus_sha256(preservation),
+        expected_graph_sha256=control["graph_sha"], expected_admission_sha256=control["admission_sha"],
+        toolchain=TOOLCHAIN, definition_application_profile=application_profile, **mode, **control["kwargs"]) == offered
+    assert control["owner"].norm._snapshot({"graph": control["graph"], "admission": control["admission"],
+        "args": list(control["args"]), "kwargs": control["kwargs"]})[1] == snapshot
+    assert len(control["realization"].to_dict()["preservation_obligations"]) == 26
+
+
+def reviewed_definition_application_validate_v1(control, offered, **changes):
+    options = dict(expected_realization_sha256=shared.reviewed_preservation_corpus_sha256(offered),
+        expected_preservation_sha256=shared.reviewed_preservation_corpus_sha256(control["preparation"]),
+        expected_graph_sha256=control["graph_sha"], expected_admission_sha256=control["admission_sha"],
+        toolchain=TOOLCHAIN, definition_application_profile="whole-norm-definition-expansion/v1")
+    options.update(changes)
+    return shared.validate_reviewed_definition_realization_corpus_v1(offered, control["preparation"],
+        control["graph"], control["admission"], *control["args"], **options, **control["kwargs"])
+
+
+@pytest.fixture(scope="module")
+def reviewed_definition_application_control_v1(reviewed_definition_realization_control):
+    control = reviewed_definition_realization_control
+    offered = reviewed_definition_realization_prepare(control,
+        definition_application_profile="whole-norm-definition-expansion/v1")
+    assert reviewed_definition_application_validate_v1(control, offered) == offered
+    return control, offered
+
+
+def reviewed_definition_application_node_ids_v1(value):
+    # Inspect JSON identities only; this helper implements no expansion semantics.
+    if type(value) is dict:
+        return ([value["node_id"]] if "node_id" in value else []) + [node_id
+            for item in value.values() for node_id in reviewed_definition_application_node_ids_v1(item)]
+    if type(value) is list:
+        return [node_id for item in value for node_id in reviewed_definition_application_node_ids_v1(item)]
+    return []
+
+
+@pytest.mark.parametrize("change", ["negated-body", "repeated-body"])
+def test_whole_norm_definition_application_rebinds_every_boolean_body_without_capture(
+        reviewed_definition_realization_control, change):
+    changed = reviewed_definition_realization_fresh_case(reviewed_definition_realization_control, change)
+    old = reviewed_definition_realization_prepare(changed)
+    assert len(old.to_dict()["preservation_obligations"]) == 26
+    offered = reviewed_definition_realization_prepare(changed,
+        definition_application_profile="whole-norm-definition-expansion/v1")
+    assert reviewed_definition_application_validate_v1(changed, offered) == offered
+    manifest = offered.to_dict()
+    assert len(manifest["preservation_obligations"]) == 30
+    definition_ids = set(reviewed_definition_application_node_ids_v1(manifest["selection"]["body_typed_node"]))
+    replacements_seen = set()
+    for application in manifest["definition_applications"]:
+        original_expression = json.loads(application["original_typed_expression"])
+        expanded_expression = json.loads(application["expanded_typed_expression"])
+        original = original_expression["root"]
+        expanded = expanded_expression["root"]
+        # Hide exactly the selected replacement subtrees, then compare every
+        # remaining original node, ID, binder and opaque modal payload verbatim.
+        before_context = deepcopy(original_expression)
+        after_context = deepcopy(expanded_expression)
+        for path in application["target_typed_paths"]:
+            for context in (before_context, after_context):
+                target = reviewed_definition_application_RED_at_v1(context, path)
+                target.clear()
+                target["selected_replacement_subtree"] = True
+        assert before_context["root"] == after_context["root"]
+        original_ids = set(reviewed_definition_application_node_ids_v1(original))
+        expanded_ids = reviewed_definition_application_node_ids_v1(expanded)
+        assert len(expanded_ids) == len(set(expanded_ids))
+        assert expanded["node_id"] == original["node_id"]
+        for path in application["target_typed_paths"]:
+            prior = reviewed_definition_application_RED_at_v1(original_expression, path)
+            node = reviewed_definition_application_RED_at_v1(expanded_expression, path)
+            assert prior["symbol"] == "CoveredOfficer"
+            assert node["kind"] == ("not" if change == "negated-body" else "and")
+            assert len(node["arguments"]) == (1 if change == "negated-body" else 2)
+            for atom in node["arguments"]:
+                assert atom["kind"] == "predicate" and atom["symbol"] == "AppointedByBoard"
+                assert [argument["symbol"] for argument in atom["arguments"]] == [prior["arguments"][0]["symbol"]]
+            inserted = reviewed_definition_application_node_ids_v1(node)
+            assert len(inserted) == len(set(inserted))
+            assert not (set(inserted) & (original_ids | definition_ids | replacements_seen))
+            replacements_seen.update(inserted)
+    assert len(manifest["definition_applications"]) == 2 and replacements_seen
+
+
+@pytest.mark.parametrize("change", ["body-arity-collision", "body-binder-collision"])
+def test_whole_norm_definition_application_refuses_cross_unit_signature_or_binder_collisions(
+        reviewed_definition_realization_control, change):
+    changed = reviewed_definition_realization_fresh_case(reviewed_definition_realization_control, change)
+    # Both original V3 and constructed26 support the independently scoped donor.
+    # The new cross-unit application must refuse incompatible target signatures.
+    assert reviewed_preservation_validate_fixture_v3(changed, changed["preparation"]) == changed["preparation"]
+    assert len(reviewed_definition_realization_prepare(changed).to_dict()["preservation_obligations"]) == 26
+    with pytest.raises(ValueError, match="predicate|signature|role|binder|collision|arity"):
+        reviewed_definition_realization_prepare(changed,
+            definition_application_profile="whole-norm-definition-expansion/v1")
+
+
+@pytest.mark.parametrize("change", ["recursive-body", "quantified-body", "opaque-head"])
+def test_whole_norm_definition_application_retains_fresh_reviewed_unsupported_refusals(
+        reviewed_definition_realization_control, change):
+    changed = reviewed_definition_realization_fresh_case(reviewed_definition_realization_control, change)
+    assert changed["admission"]["fixture_only"] and changed["admission"]["semantic_use_eligible"]
+    with pytest.raises(ValueError, match="nonrecursive|definition bodies|opaque modalities"):
+        reviewed_definition_realization_prepare(changed,
+            definition_application_profile="whole-norm-definition-expansion/v1")
+
+
+@pytest.mark.parametrize("damage", ["original-source", "expanded-source", "missing-norm", "use-cid", "source-premise", "profile", "non-record"])
+def test_whole_norm_definition_application_rejects_resealed_witness_and_scope_substitution(
+        reviewed_definition_application_control_v1, damage):
+    from ipfs_datasets_py.logic.syntax_core.ast import TypedExpression
+    control, offered = reviewed_definition_application_control_v1
+    manifest, files = offered.to_dict(), dict(offered.files)
+    applications = manifest["definition_applications"]
+    row = applications[0]
+    if damage in ("original-source", "expanded-source"):
+        key = "original_typed_expression" if damage == "original-source" else "expanded_typed_expression"
+        expression = json.loads(row[key])
+        path = row["target_typed_paths"][0]
+        node = reviewed_definition_application_RED_at_v1(expression, path)
+        assert node["kind"] == "predicate"
+        if damage == "original-source":
+            # Change meaning using another already declared compatible symbol;
+            # preserve the original signature to isolate the full source witness.
+            head = next(declared for declared in expression["signature"]["symbols"]
+                if declared["name"] == node["symbol"])
+            alternative = next(declared for declared in expression["signature"]["symbols"]
+                if declared["name"] != head["name"] and declared["domain"] == head["domain"]
+                and declared["range"] == head["range"])
+            node["symbol"] = alternative["name"]
+        else:
+            node["symbol"] = "CoveredOfficer"
+        expression.pop("content_digest")
+        expression = TypedExpression.from_dict(expression).to_dict()
+        row[key] = canonical_dag_json_bytes(expression).decode("utf-8")
+        row[key + "_sha256"] = sha(canonical_dag_json_bytes(expression))
+    elif damage == "missing-norm": applications.pop()
+    elif damage == "non-record": applications[0] = None
+    elif damage == "use-cid":
+        assert applications[1]["definition_use_record_cid"] != row["definition_use_record_cid"]
+        row["definition_use_record_cid"] = applications[1]["definition_use_record_cid"]
+    elif damage == "source-premise":
+        binding = next(entry["binding"] for entry in manifest["theorem_bindings"]
+            if entry["binding"]["kind"] == "whole_norm_definition_expansion")
+        binding["premise_kind"] = "caller_assumed_whole_norm_equivalence"
+        binding["desired_equivalence_hypothesis"] = True
+    elif damage == "profile": manifest.pop("definition_application_profile")
+    forged = reviewed_preservation_reseal_fixture_v2(offered, manifest, files)
+    with pytest.raises((ValueError, TypeError)):
+        reviewed_definition_application_validate_v1(control, forged)
+
+
+@pytest.mark.parametrize("profile", [True, "unknown", {}, " whole-norm-definition-expansion/v1"])
+def test_whole_norm_definition_application_invalid_selectors_refuse_before_callbacks(
+        reviewed_definition_realization_control, monkeypatch, profile):
+    def forbidden(*args, **kwargs):
+        pytest.fail("invalid application selector reached operation callbacks")
+    monkeypatch.setattr(shared, "_reviewed_definition_realization_callbacks", forbidden)
+    with pytest.raises((ValueError, TypeError)):
+        reviewed_definition_realization_prepare(reviewed_definition_realization_control,
+            definition_application_profile=profile)
+
+
+@pytest.mark.parametrize("damage", ["marker", "structured-value", "noncanonical", "duplicate-key",
+    "nonfinite", "digest", "too-deep", "oversized", "invalid-ast", "key-bound", "integer-bound", "nul-string"])
+def test_whole_norm_definition_application_refuses_invalid_lossless_expression_transport(
+        reviewed_definition_application_control_v1, damage):
+    control, offered = reviewed_definition_application_control_v1
+    manifest, files = offered.to_dict(), dict(offered.files)
+    row = manifest["definition_applications"][0]
+    key = "original_typed_expression"
+    raw = row[key]
+    assert row["typed_expression_transport"] == "canonical-dag-json-text/v1"
+    assert type(raw) is str and json.loads(raw)["root"]
+    if damage == "marker": row["typed_expression_transport"] = "unreviewed-json/v0"
+    elif damage == "structured-value": row[key] = json.loads(raw)
+    elif damage == "noncanonical": row[key] = " " + raw
+    elif damage == "duplicate-key":
+        expression_id = json.loads(raw)["expression_id"]
+        row[key] = '{"expression_id":' + json.dumps(expression_id) + ',' + raw[1:]
+    elif damage == "nonfinite": row[key] = raw[:-1] + ',"untrusted_number":NaN}'
+    elif damage == "digest": row[key + "_sha256"] = "0" * 64
+    elif damage == "too-deep": row[key] = "[" * 145 + "0" + "]" * 145
+    elif damage == "oversized": row[key] = " " * (contracts.MAX_RECORD_BYTES + 1)
+    elif damage in ("key-bound", "integer-bound", "nul-string"):
+        decoded = json.loads(raw)
+        metadata = decoded.setdefault("metadata", {})
+        if damage == "key-bound": metadata["x" * 4097] = "too long"
+        elif damage == "integer-bound": metadata["untrusted_integer"] = contracts.MAX_INTEGER + 1
+        else: metadata["untrusted_text"] = "bad" + chr(0) + "text"
+        row[key] = json.dumps(decoded, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    elif damage == "invalid-ast":
+        decoded = json.loads(raw)
+        decoded["root"]["kind"] = "unsupported-test-constructor"
+        row[key] = canonical_dag_json_bytes(decoded).decode("utf-8")
+    if type(row[key]) is str and damage != "digest":
+        # Bind each malformed payload's actual bytes, so stale hashes cannot
+        # stand in for canonical/shape/depth rejection. The oversize case may
+        # correctly refuse at the unchanged enclosing-record byte bound.
+        row[key + "_sha256"] = sha(row[key].encode("utf-8"))
+    # Check the codec itself as well as the public source replay boundary:
+    # rejection must not rely only on differing from the retained source row.
+    with pytest.raises((ValueError, TypeError)):
+        shared._reviewed_definition_application_expression(row, "original")
+    with pytest.raises((ValueError, TypeError)):
+        forged = reviewed_preservation_reseal_fixture_v2(offered, manifest, files)
+        reviewed_definition_application_validate_v1(control, forged)
+
+
+@pytest.mark.parametrize("endpoint", ["prepare", "validate"])
+def test_physical_realization_api_refuses_none_request_on_healthy_legacy_control(
+        reviewed_definition_realization_control, endpoint):
+    control = reviewed_definition_realization_control
+    original, offered = control["preparation"], control["realization"]
+    assert not control["case"]["declaration"]["cross_references"]
+    assert reviewed_definition_realization_validate(control, offered) == offered
+    assert offered.to_dict()["schema"] == shared.REVIEWED_DEFINITION_REALIZATION_SCHEMA
+    options = dict(physical_request_raw=None, expected_physical_request_sha256=None,
+        expected_preservation_sha256=shared.reviewed_preservation_corpus_sha256(original),
+        expected_graph_sha256=control["graph_sha"], expected_admission_sha256=control["admission_sha"],
+        toolchain=TOOLCHAIN, **control["kwargs"])
+    with pytest.raises(ValueError, match="original immutable physical request bytes required"):
+        if endpoint == "prepare":
+            shared.prepare_reviewed_physical_definition_realization_corpus_v1(
+                original, control["graph"], control["admission"], *control["args"], **options)
+        else:
+            shared.validate_reviewed_physical_definition_realization_corpus_v1(
+                offered, original, control["graph"], control["admission"], *control["args"],
+                expected_realization_sha256=shared.reviewed_preservation_corpus_sha256(offered), **options)

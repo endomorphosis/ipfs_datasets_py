@@ -1,5 +1,11 @@
 # Legal autoformalization
 
+## Conditional whole-norm definition application in existing owners — 2026-11-16
+
+Existing aggregate, Native, retained/live and incremental realization APIs now independently select `definition_application_profile="whole-norm-definition-expansion/v1"` and identity `None` or `"reviewed-source-use/v1"`. The default realization keeps 26 obligations; the selected application adds four, giving 30: exact typed expansion and conditional whole-norm equivalence for each of two distinct fictional norm uses. Equivalence quantifies arbitrary original interpretations **conditioned on the explicit `hSourceDefinition` hypothesis**; an empty axiom report does not establish that hypothesis or statutory definition applicability.
+
+Separately audited results are Native2's two actual installed-Lean builds (30 empty-axiom reports per build), S100's 100 authored-compiler software controls and I21's 21 authored incremental controls. Their source epochs, artifacts and failures remain separate in the [handoff](docs/HANDOFF.md#conditional-whole-norm-definition-application--three-separate-current-scopes--2026-11-16). No statutory meaning/review, gold, corpus/release admission, model training or convergence follows; the 8D/384D/768D/4096D owners are unchanged.
+
 ## Reviewed definition realization in the existing owners — 2026-11-15
 
 Shared, Native and incremental now support a constructed interpretation of one reviewed unary Object definition with a supported Boolean body. The fictional three-unit project retains two genuine norm-use units, three selected head occurrences and15 original+11 realization obligations. Explicit `reviewed-source-use/v1` carries exact current physical-use bindings; default callbacks and domains retain compatibility.

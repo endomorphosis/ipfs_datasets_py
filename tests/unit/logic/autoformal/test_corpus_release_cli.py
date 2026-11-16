@@ -511,7 +511,8 @@ def _physical_wire(value):
                       ensure_ascii=False, allow_nan=False).encode("utf-8")
 
 
-def _physical_source_material(directory, *, source_texts=None, shared_normative_row=False):
+def _physical_source_material(directory, *, source_texts=None, shared_normative_row=False,
+        with_foreign_dependency=False):
     import shutil
     from copy import deepcopy
     import pyarrow as pa
@@ -535,6 +536,7 @@ def _physical_source_material(directory, *, source_texts=None, shared_normative_
         assert type(source_texts) is list and len(source_texts) == 3
         texts = list(source_texts)
     assert type(shared_normative_row) is bool
+    assert type(with_foreign_dependency) is bool
     # The two normative units share the complete second law row. Their
     # occurrence selectors, rather than document/IR labels, distinguish uses.
     law_texts = [texts[0], texts[1] + "\n\n" + texts[2]] if shared_normative_row else texts
@@ -688,6 +690,13 @@ def _physical_source_material(directory, *, source_texts=None, shared_normative_
         edge(("assertion", index), ("assertion", 0), "USES_DEFINITION", index - 1)
     for index in range(len(units)):
         edge(("assertion", index), ("cross-reference", index), "CITES", index)
+    if with_foreign_dependency:
+        # Independently declared fictional legal dependency, represented in
+        # physical rows before crosswalk bytes and detached reviews are made.
+        ordinal = len(units)
+        node(("cross-reference", ordinal), "expression",
+             "fixture:reviewed-" + namespace + ":cross-reference:" + str(ordinal))
+        edge(("assertion", 0), ("cross-reference", ordinal), "CITES", ordinal)
     entity_schema = pa.schema([(key, pa.bool_() if key in ("in_formula", "admitted", "formalized")
                                 else pa.string()) for key in entity_rows[0]])
     sink = pa.BufferOutputStream()
@@ -718,10 +727,11 @@ def _physical_source_material(directory, *, source_texts=None, shared_normative_
         paired_written=written, retained=retained, original_payload=original_payload,
         entity_bytes=entity_bytes, entity_path=entity_path, entity_rows=entity_rows, mapping=mapping,
         source_bindings=source_bindings, unit_document_ordinals=unit_document_ordinals,
-        law_texts=law_texts)
+        law_texts=law_texts, with_foreign_dependency=with_foreign_dependency)
 
 
-def _physical_closure_request(material, *, map_damage=None, reviewed_version=2, return_control=False):
+def _physical_closure_request(material, *, map_damage=None, reviewed_version=2, return_control=False,
+        foreign_dependency_version="fictional-external-legal-dependency/v1"):
     from copy import deepcopy
     from dataclasses import fields
     from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_lake_v2 as transport
@@ -771,11 +781,20 @@ def _physical_closure_request(material, *, map_damage=None, reviewed_version=2, 
     references = [dict(from_unit_id=unit["unit_id"], dependency_artifact_id=map_id,
         dependency_sha256=map_pin, version=mapping["profile"],
         evidence_refs=[dict(process_ref)]) for unit in material["units"]]
+    dependency_artifacts = {map_id: map_raw}
+    if material.get("with_foreign_dependency", False):
+        foreign_id = "fixture:independently-reviewed-external-legal-dependency"
+        foreign_raw = b"Entirely fictional external legal dependency; not physical-crosswalk evidence."
+        dependency_artifacts[foreign_id] = foreign_raw
+        references.append(dict(from_unit_id=material["units"][0]["unit_id"],
+            dependency_artifact_id=foreign_id,
+            dependency_sha256=hashlib.sha256(foreign_raw).hexdigest(),
+            version=foreign_dependency_version, evidence_refs=[dict(process_ref)]))
     # This is the ONLY review construction. The final map/file/selector
     # dependency is already frozen before preparation and detached signatures.
     case = fixture.reviewed_norm_fixture_v2(admission, fixture_namespace=material["namespace"],
         source_texts=material["texts"], source_bindings=material.get("source_bindings"),
-        cross_references=references, dependency_artifacts={map_id: map_raw})
+        cross_references=references, dependency_artifacts=dependency_artifacts)
     assert type(reviewed_version) is int and reviewed_version in (2, 3)
     if reviewed_version == 2:
         control = shared_fixture.reviewed_preservation_graph_fixture_v2(fixture, admission, case)
@@ -1638,3 +1657,337 @@ def test_shared_lawrow_v3_original_source_replay_refuses_duplicate_or_overlappin
         r for r in original["artifacts"] if r["artifact_id"] == mapping)
     with pytest.raises(ValueError, match=reason):
         replay_physical_closure_v3(request)
+
+
+# INERT current-main reproduction recipe. Fictional public fixture only.
+# A later passing API-presence probe is not green integration qualification.
+def test_current_physical_realization_missing_after_complete_physical_v3_replay(physical_closure_control_v3):
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_shared_lake as shared
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_lake_v2 as wire
+
+    request, control = physical_closure_control_v3
+    raw = wire.encode_parent_replay_value_v1(request, max_bytes=release.MAX_CLOSURE_REQUEST_BYTES)
+    pin = hashlib.sha256(raw).hexdigest()
+    report = release.validate_uscode_release_closure_v3(raw, expected_request_sha256=pin)
+    assert_release_v3_byte_authority_only(report)
+    assert report["physical_crosswalk"]["counts"]["reviewed_units"] == 3
+    declaration = control["kwargs"]["preparation_inputs"]["declaration"]
+    refs = declaration["cross_references"]
+    assert len(refs) == 3
+    assert [ref["from_unit_id"] for ref in refs] == request["expected_unit_ids"]
+    assert all(ref["dependency_artifact_id"] == request["component"]["reviewed_crosswalk"]
+        and ref["dependency_sha256"] == request["pins"]["reviewed_crosswalk"]
+        and ref["version"] == release.REVIEWED_PHYSICAL_CROSSWALK_PROFILE for ref in refs)
+    replay_row = next(row for row in request["artifacts"] if row["artifact_id"] == request["component"]["replay"])
+    replay = wire.decode_parent_replay_value_v1(replay_row["payload"],
+        expected_payload_sha256=replay_row["sha256"], max_bytes=release.MAX_CLOSURE_REQUEST_BYTES)
+    # The existing default profile must keep its strict refusal. Required
+    # physical evidence is never removed or renamed to make it fit.
+    with pytest.raises(ValueError, match="initial realization requires one complete definition and no external dependency declarations"):
+        shared.prepare_reviewed_definition_realization_corpus_v1(control["preparation"],
+            control["graph"], control["admission"], *control["args"],
+            expected_preservation_sha256=request["pins"]["preservation"],
+            expected_graph_sha256=control["graph_sha"], expected_admission_sha256=control["admission_sha"],
+            toolchain=replay["toolchain"], **control["kwargs"])
+    assert wire.encode_parent_replay_value_v1(request, max_bytes=release.MAX_CLOSURE_REQUEST_BYTES) == raw
+    assert callable(getattr(release, "validate_reviewed_physical_realization_context_v1", None)), (
+        "Missing explicit physical evidence context after complete current physical V3 replay; "
+        "do not strip required reviewed crosswalk dependencies.")
+    assert callable(getattr(shared, "prepare_reviewed_physical_definition_realization_corpus_v1", None)), (
+        "Missing a separate physical-evidence realization entry preserving full original request replay.")
+
+
+def replay_physical_realization_context_v1(request):
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_lake_v2 as wire
+    raw = wire.encode_parent_replay_value_v1(request, max_bytes=release.MAX_CLOSURE_REQUEST_BYTES)
+    return release.validate_reviewed_physical_realization_context_v1(raw,
+        expected_request_sha256=hashlib.sha256(raw).hexdigest())
+
+
+def test_physical_realization_context_preserves_required_reviewed_crosswalk_evidence(
+        physical_closure_control_v3):
+    request, control = physical_closure_control_v3
+    report = replay_physical_realization_context_v1(request)
+    declaration = control["kwargs"]["preparation_inputs"]["declaration"]
+    assert report["cross_references"] == declaration["cross_references"]
+    assert report["ordered_unit_ids"] == [unit["unit_id"] for unit in declaration["units"]]
+    assert report["crosswalk_artifact_id"] == request["component"]["reviewed_crosswalk"]
+    assert report["crosswalk_sha256"] == request["pins"]["reviewed_crosswalk"]
+    assert report["admission_sha256"] == request["pins"]["admission"]
+    assert report["graph_sha256"] == request["pins"]["graph"]
+    assert report["preservation_sha256"] == request["pins"]["preservation"]
+    assert report["physical_source_bindings"]["counts"]["reviewed_units"] == 3
+    assert report["dependency_role"] == "physical-source-cache-crosswalk-evidence-only/v1"
+    for field in ("external_legal_dependencies_supported", "dependency_meaning_proved",
+            "realization_prepared", "native_execution_performed", "original_success_authenticated",
+            "source_kernel_receipt_authenticated", "proof_verified", "release_ready", "admitted", "formalized"):
+        assert report[field] is False
+    assert type(report["training_mask"]) is type(report["evaluation_gold_mask"]) is int
+    assert report["training_mask"] == report["evaluation_gold_mask"] == 0
+
+
+@pytest.mark.parametrize("damage", ["old_profile", "native_selection", "crosswalk_bytes"])
+def test_physical_realization_context_refuses_resealed_context_changes(
+        physical_closure_control_v3, damage):
+    from copy import deepcopy
+    request = deepcopy(physical_closure_control_v3[0])
+    if damage == "old_profile":
+        request["schema"] = "legal-uscode-release-closure-request/v2"
+        request["profile"] = "reviewed-norm-v2-physical-three-cache-replay/v1"
+    elif damage == "native_selection":
+        request["native"] = {"original_success_authenticated": True}
+    else:
+        row = next(row for row in request["artifacts"]
+            if row["artifact_id"] == request["component"]["reviewed_crosswalk"])
+        value = json.loads(row["payload"])
+        value["units"][0]["document_revision"] += ":changed"
+        raw = _physical_wire(value)
+        row.update(payload=raw, bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
+        request["pins"]["reviewed_crosswalk"] = row["sha256"]
+    with pytest.raises(ValueError):
+        replay_physical_realization_context_v1(request)
+
+
+def test_physical_realization_context_fences_physical_delegate_defaults(
+        physical_closure_control_v3, monkeypatch):
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+    original = release.validate_uscode_release_closure_v3
+    calls = []
+
+    def changing_delegate(*args, _generation=None, **kwargs):
+        result = original(*args, **kwargs)
+        calls.append(True)
+        changing_delegate.__kwdefaults__["_generation"] = object()
+        return result
+
+    monkeypatch.setattr(release, "validate_uscode_release_closure_v3", changing_delegate)
+    with pytest.raises(ValueError, match="callback function/code/default/keyword-default generation changed"):
+        replay_physical_realization_context_v1(physical_closure_control_v3[0])
+    assert calls, "control must complete the existing physical replay"
+
+
+def test_physical_realization_context_requires_independent_request_pin(physical_closure_control_v3):
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_lake_v2 as wire
+    raw = wire.encode_parent_replay_value_v1(physical_closure_control_v3[0], max_bytes=release.MAX_CLOSURE_REQUEST_BYTES)
+    actual = hashlib.sha256(raw).hexdigest()
+    wrong = ("0" if actual[0] != "0" else "1") + actual[1:]
+    with pytest.raises(ValueError):
+        release.validate_reviewed_physical_realization_context_v1(raw, expected_request_sha256=wrong)
+
+
+
+def test_physical_realization_context_requires_stable_closing_replay(physical_closure_control_v3, monkeypatch):
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+    original = release.validate_uscode_release_closure_v3
+    calls = []
+
+    def changing_result(*args, **kwargs):
+        result = original(*args, **kwargs)
+        calls.append(True)
+        if len(calls) == 2:
+            result = dict(result, request_sha256="0" * 64)
+        return result
+
+    monkeypatch.setattr(release, "validate_uscode_release_closure_v3", changing_result)
+    with pytest.raises(ValueError, match="physical replay changed during realization context validation"):
+        replay_physical_realization_context_v1(physical_closure_control_v3[0])
+    assert len(calls) == 2
+
+
+@pytest.mark.parametrize("foreign_version", [
+    "fictional-external-legal-dependency/v1", "identity-text-complete-reviewed-graph/v1"])
+def test_physical_realization_context_refuses_valid_reviewed_foreign_legal_dependency(
+        physical_closure_material_v3, tmp_path, monkeypatch, foreign_version):
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+    material = _physical_source_material(tmp_path / "foreign-dependency-physical",
+        source_texts=physical_closure_material_v3["texts"], with_foreign_dependency=True)
+    request, control = _physical_closure_request(material, reviewed_version=3, return_control=True,
+        foreign_dependency_version=foreign_version)
+    references = control["kwargs"]["preparation_inputs"]["declaration"]["cross_references"]
+    crosswalk_id = request["component"]["reviewed_crosswalk"]
+    assert len(references) == 4
+    assert [ref["from_unit_id"] for ref in references[:3]] == request["expected_unit_ids"]
+    assert references[-1]["dependency_artifact_id"] != crosswalk_id
+    assert references[-1]["version"] == foreign_version
+    assert control["admission"]["semantic_use_eligible"] is True
+    assert control["admission"]["fixture_only"] is True
+    assert control["graph"]["counts"]["cross_references"] == 4
+    original = release.validate_uscode_release_closure_v3
+    completed = []
+
+    def observe_complete_physical_replay(*args, **kwargs):
+        report = original(*args, **kwargs)
+        assert_release_v3_byte_authority_only(report)
+        assert report["physical_crosswalk"]["counts"]["entity_rows"] == len(material["entity_rows"])
+        completed.append(report["request_sha256"])
+        return report
+
+    monkeypatch.setattr(release, "validate_uscode_release_closure_v3", observe_complete_physical_replay)
+    with pytest.raises(ValueError, match="only the complete ordered physical evidence dependencies are supported"):
+        replay_physical_realization_context_v1(request)
+    assert len(completed) == 1, "control must pass full physical replay before role rejection"
+
+
+
+def test_physical_realization_context_fences_loader_replaced_after_closing_replay(
+        physical_closure_control_v3, monkeypatch):
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+    from ipfs_datasets_py.logic.autoformal import corpus_contracts as contracts
+    original = release.validate_uscode_release_closure_v3
+    calls = []
+
+    def changing_loader(*args, **kwargs):
+        report = original(*args, **kwargs)
+        calls.append(True)
+        if len(calls) == 2:
+            def forged_context(*unused_args, **unused_kwargs):
+                return {"admitted": True, "training_mask": 1, "evaluation_gold_mask": 1}
+            monkeypatch.setattr(contracts, "load_json_bytes", forged_context)
+        return report
+
+    monkeypatch.setattr(release, "validate_uscode_release_closure_v3", changing_loader)
+    with pytest.raises(ValueError, match="callback function/code/default/keyword-default generation changed"):
+        replay_physical_realization_context_v1(physical_closure_control_v3[0])
+    assert len(calls) == 2, "both complete physical replays must precede substitution refusal"
+
+
+def test_physical_realization_context_refuses_mutated_opening_report_alias(
+        physical_closure_control_v3, monkeypatch):
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+    original = release.validate_uscode_release_closure_v3
+    reports = []
+
+    def aliased_report(*args, **kwargs):
+        current = original(*args, **kwargs)
+        reports.append(current)
+        if len(reports) == 2:
+            reports[0]["request_sha256"] = "0" * 64
+            return reports[0]
+        return current
+
+    monkeypatch.setattr(release, "validate_uscode_release_closure_v3", aliased_report)
+    with pytest.raises(ValueError, match="physical replay changed during realization context validation"):
+        replay_physical_realization_context_v1(physical_closure_control_v3[0])
+    assert len(reports) == 2
+
+
+@pytest.fixture(scope="module")
+def physical_realization_preparation_v1(physical_closure_control_v3):
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_shared_lake as shared
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_lake_v2 as wire
+    from tests.unit.logic.autoformal import test_legal_corpus_shared_lake as fixture
+    request, control = physical_closure_control_v3
+    raw = wire.encode_parent_replay_value_v1(request)
+    options = dict(physical_request_raw=raw,
+        expected_physical_request_sha256=hashlib.sha256(raw).hexdigest(),
+        expected_preservation_sha256=shared.reviewed_preservation_corpus_sha256(control["preparation"]),
+        expected_graph_sha256=control["graph_sha"], expected_admission_sha256=control["admission_sha"],
+        toolchain=fixture.TOOLCHAIN, **control["kwargs"])
+    prepared = shared.prepare_reviewed_physical_definition_realization_corpus_v1(
+        control["preparation"], control["graph"], control["admission"], *control["args"], **options)
+    return request, control, prepared, options
+
+
+
+def test_physical_realization_preparation_replays_complete_original_request_and_all_obligations(
+        physical_realization_preparation_v1):
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_shared_lake as shared
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+    request, control, prepared, options = physical_realization_preparation_v1
+    checked = shared.validate_reviewed_physical_definition_realization_corpus_v1(
+        prepared, control["preparation"], control["graph"], control["admission"], *control["args"],
+        expected_realization_sha256=shared.reviewed_preservation_corpus_sha256(prepared), **options)
+    assert checked == prepared
+    manifest = prepared.to_dict()
+    assert manifest["schema"] == shared.REVIEWED_PHYSICAL_REALIZATION_SCHEMA
+    assert manifest["profile"] == shared.REVIEWED_PHYSICAL_REALIZATION_PROFILE
+    assert manifest["profile"] != shared.REVIEWED_DEFINITION_REALIZATION_PROFILE
+    assert manifest["physical_context"]["physical_request_sha256"] == options["expected_physical_request_sha256"]
+    assert manifest["physical_context"]["cross_references"] == control["case"]["declaration"]["cross_references"]
+    assert manifest["physical_context_owner_sha256"] == hashlib.sha256(Path(release.__file__).read_bytes()).hexdigest()
+    assert len(manifest["expected_modules"]) == 10
+    assert len(prepared.files) == 39 and len(manifest["preservation_obligations"]) == 26
+    assert manifest["upstream_manifest"] == control["preparation"].to_dict()
+    assert manifest["support_profile"]["cross_unit_definition_application_proved"] is False
+    assert manifest["preparation_only"] is True and manifest["proof_status"] == "not_executed"
+    assert not any(manifest["authority"].values())
+    assert "physical_request_raw" not in manifest
+
+
+
+@pytest.mark.parametrize("damage", ["changed_request_pin", "serialized_context_instead_of_original"])
+def test_physical_realization_preparation_requires_independently_supplied_original_request(
+        physical_realization_preparation_v1, damage):
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_shared_lake as shared
+    _, control, prepared, original = physical_realization_preparation_v1
+    options = dict(original)
+    if damage == "changed_request_pin":
+        options["expected_physical_request_sha256"] = "f" * 64
+    else:
+        options["physical_request_raw"] = prepared.to_dict()["physical_context"]
+    with pytest.raises(ValueError):
+        shared.validate_reviewed_physical_definition_realization_corpus_v1(
+            prepared, control["preparation"], control["graph"], control["admission"], *control["args"],
+            expected_realization_sha256=shared.reviewed_preservation_corpus_sha256(prepared), **options)
+
+
+
+def test_physical_realization_preparation_cannot_retag_into_old_no_reference_profile(
+        physical_realization_preparation_v1):
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_shared_lake as shared
+    _, control, prepared, original = physical_realization_preparation_v1
+    options = {key: value for key, value in original.items()
+        if key not in ("physical_request_raw", "expected_physical_request_sha256")}
+    with pytest.raises(ValueError, match="initial realization requires one complete definition and no external dependency declarations"):
+        shared.validate_reviewed_definition_realization_corpus_v1(
+            prepared, control["preparation"], control["graph"], control["admission"], *control["args"],
+            expected_realization_sha256=shared.reviewed_preservation_corpus_sha256(prepared), **options)
+
+
+
+@pytest.mark.parametrize("selection", [
+    {"instance_identity_profile": "reviewed-source-use/v1"},
+    {"definition_application_profile": "unclosed-physical-whole-norm/v1"},
+])
+def test_physical_realization_selected_modes_require_explicit_bridge(
+        physical_realization_preparation_v1, selection):
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_shared_lake as shared
+    _, control, prepared, original = physical_realization_preparation_v1
+    with pytest.raises(ValueError, match="physical realization selected profiles require a separately closed bridge"):
+        shared.validate_reviewed_physical_definition_realization_corpus_v1(
+            prepared, control["preparation"], control["graph"], control["admission"], *control["args"],
+            expected_realization_sha256=shared.reviewed_preservation_corpus_sha256(prepared),
+            **original, **selection)
+
+
+def test_physical_realization_refuses_mutated_opening_context_alias(
+        physical_closure_control_v3, monkeypatch):
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_shared_lake as shared
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_lake_v2 as wire
+    from tests.unit.logic.autoformal import test_legal_corpus_shared_lake as fixture
+    request, control = physical_closure_control_v3
+    raw = wire.encode_parent_replay_value_v1(request, max_bytes=release.MAX_CLOSURE_REQUEST_BYTES)
+    original = release.validate_reviewed_physical_realization_context_v1
+    contexts = []
+
+    def aliased_context(*args, **kwargs):
+        result = original(*args, **kwargs)
+        contexts.append(result)
+        if len(contexts) == 2:
+            contexts[0]["physical_request_sha256"] = "0" * 64
+            return contexts[0]
+        return result
+
+    monkeypatch.setattr(release, "validate_reviewed_physical_realization_context_v1", aliased_context)
+    with pytest.raises(ValueError, match="complete physical evidence generation changed during realization"):
+        shared.prepare_reviewed_physical_definition_realization_corpus_v1(
+            control["preparation"], control["graph"], control["admission"], *control["args"],
+            physical_request_raw=raw, expected_physical_request_sha256=hashlib.sha256(raw).hexdigest(),
+            expected_preservation_sha256=shared.reviewed_preservation_corpus_sha256(control["preparation"]),
+            expected_graph_sha256=control["graph_sha"], expected_admission_sha256=control["admission_sha"],
+            toolchain=fixture.TOOLCHAIN, **control["kwargs"])
+    assert len(contexts) == 2, "both complete physical context replays must precede alias rejection"

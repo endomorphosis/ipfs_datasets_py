@@ -4663,3 +4663,533 @@ def test_realization_source_use_installed_lean_keeps_actual_live_and_retained_al
     with pytest.raises(ValueError, match="not issued"):
         native.load_verified_reviewed_definition_realization_native_v1(handle, packet,
             c["preparation"], c["preservation"], c["graph"], c["admission"], *c["args"], **default_options)
+
+
+# Authored packet controls exercise the existing wire/replay boundary only.
+# Their synthetic runner supplies no installed Lean or statutory proof credit.
+def reviewed_whole_norm_native_options_v1(c):
+    identity = c["whole_norm_identity_profile"]
+    return reviewed_realization_native_arguments_v1(c) | {
+        "definition_application_profile": "whole-norm-definition-expansion/v1"} | (
+        {} if identity is None else {"instance_identity_profile": identity})
+
+
+@pytest.fixture(scope="module", params=[None, "reviewed-source-use/v1"], ids=["default", "source-use"])
+def reviewed_whole_norm_native_seed_v1(reviewed_native_seed_v3, tmp_path_factory, request):
+    c, _, _, _ = reviewed_retained_case_from_seed_fixture_v2(reviewed_native_seed_v3)
+    c["whole_norm_identity_profile"] = request.param
+    identity = {} if request.param is None else {"instance_identity_profile": request.param}
+    c["preservation"] = c["preparation"] if request.param is None else \
+        c["shared"].prepare_reviewed_norm_preservation_corpus_v3(c["graph"], c["admission"],
+            *c["args"], expected_graph_sha256=c["graph_sha"], expected_admission_sha256=c["admission_sha"],
+            toolchain=TOOLCHAIN, **identity, **c["kwargs"])
+    c["preparation"] = c["shared"].prepare_reviewed_definition_realization_corpus_v1(
+        c["preservation"], c["graph"], c["admission"], *c["args"],
+        expected_preservation_sha256=c["shared"].reviewed_preservation_corpus_sha256(c["preservation"]),
+        expected_graph_sha256=c["graph_sha"], expected_admission_sha256=c["admission_sha"],
+        toolchain=TOOLCHAIN, definition_application_profile="whole-norm-definition-expansion/v1",
+        **identity, **c["kwargs"])
+    directory = tmp_path_factory.mktemp("reviewed-whole-norm-native-" + ("default" if request.param is None else "source-use"), numbered=False)
+    with pytest.MonkeyPatch.context() as patcher:
+        install = synthetic_compiler.__wrapped__(patcher, directory)
+        executable, calls = install(c["preparation"], stdout=reviewed_native_stdout_v2(c["preparation"]))
+        output = directory / "authored-whole-norm"
+        receipt = reviewed_realization_native_build_v1(c, executable, output,
+            **{key: value for key, value in reviewed_whole_norm_native_options_v1(c).items()
+               if key in {"instance_identity_profile", "definition_application_profile"}})
+        packet = reviewed_live_success_packet_v2(output)
+        assert len(calls) == 1
+    fixed = ("helper", "mixed_helper", "owner", "shared", "shared_helper", "preparation", "preservation")
+    environment = tuple((key, c[key]) for key in fixed)
+    data = {key: value for key, value in c.items() if key not in fixed}
+    data["case"] = dict(data["case"])
+    signers = tuple(data["case"].pop("signers"))
+    snapshot = reviewed_retained_freeze_fixture_data_v2({"control": data, "receipt": receipt})
+    return environment, snapshot, signers, packet, tuple(calls)
+
+
+@pytest.fixture
+def reviewed_whole_norm_native_case_v1(reviewed_whole_norm_native_seed_v1):
+    return reviewed_retained_case_from_seed_fixture_v2(reviewed_whole_norm_native_seed_v1)
+
+
+def reviewed_whole_norm_native_reopen_v1(c, receipt, packet, **changes):
+    identity = {} if c["whole_norm_identity_profile"] is None else {
+        "instance_identity_profile": c["whole_norm_identity_profile"]}
+    selected = {"definition_application_profile": "whole-norm-definition-expansion/v1"}
+    options = reviewed_whole_norm_native_options_v1(c) | dict(
+        expected_receipt_sha256=sha(dict(packet)["build-receipt.json"]),
+        expected_packet_sha256=native.reviewed_definition_realization_packet_sha256_v1(packet, **identity, **selected),
+        expected_binary_sha256=receipt["binary_sha256"], observation_profile=native._REVIEWED_REPLAY_FICTIONAL)
+    return native.load_reviewed_definition_realization_native_v1(packet, c["preparation"], c["preservation"],
+        c["graph"], c["admission"], *c["args"], **(options | changes))
+
+
+def test_whole_norm_native_authored_packet_keeps_all30_and_complete_application_witnesses(
+        reviewed_whole_norm_native_case_v1):
+    c, receipt, packet, calls = reviewed_whole_norm_native_case_v1
+    manifest = c["preparation"].to_dict()
+    options = {key: value for key, value in reviewed_whole_norm_native_options_v1(c).items()
+        if key in {"instance_identity_profile", "definition_application_profile"}}
+    assert len(calls) == 1 and receipt["build_passed"] is True
+    assert len(receipt["compiled_modules"]) == 10 and len(receipt["executed_project_sha256"]) == 39
+    assert len(manifest["realization_obligations"]) == 15
+    assert receipt["conditional_theorems"] == manifest["preservation_obligations"]
+    assert len(receipt["theorem_axiom_dependencies"]) == len(receipt["conditional_theorems"]) == 30
+    assert set(receipt["theorem_axiom_dependencies"]) == set(manifest["preservation_obligations"])
+    assert all(value == [] for value in receipt["theorem_axiom_dependencies"].values())
+    for key in ("definition_application_profile", "definition_applications", "definition_application_obligations"):
+        assert receipt[key] == manifest[key]
+    assert len(receipt["definition_applications"]) == 2 and len(receipt["definition_application_obligations"]) == 4
+    assert receipt["constructed_model_only"] is False
+    assert receipt["cross_unit_definition_application_proved"] is receipt["statutory_meaning_proved"] is False
+    assert not any(receipt["authority"].values())
+    assert receipt["training_mask"] == receipt["evaluation_gold_mask"] == 0
+    assert native.reviewed_definition_realization_receipt_bytes_v1(receipt, **options) == dict(packet)["build-receipt.json"]
+    for name, body in c["preparation"].files:
+        assert dict(packet)["project/" + name] == dict(packet)["executed-inputs/" + name] == body.encode()
+
+
+def test_whole_norm_native_retained_replay_has_no_live_authority_and_refuses_mode_crossing(
+        reviewed_whole_norm_native_case_v1, monkeypatch):
+    c, receipt, packet, calls = reviewed_whole_norm_native_case_v1
+    before = deepcopy((receipt, packet, c["graph"], c["admission"]))
+    reviewed_retained_no_tools_v2(monkeypatch)
+    replay = reviewed_whole_norm_native_reopen_v1(c, receipt, packet)
+    assert replay["retained_observations_consistent"] is replay["current_complete_semantics_replayed"] is True
+    assert replay["constructed_model_only"] is False and len(replay["obligations"]) == 30
+    for key in ("native_execution_authenticated", "live_native_success_authenticated", "native_execution_performed",
+            "olean_kernel_rechecked", "original_success_authenticated", "release_ready"):
+        assert replay.get(key, False) is False
+    assert replay["definition_applications"] == receipt["definition_applications"]
+    assert not any(replay["authority"].values())
+    assert replay["training_mask"] == replay["evaluation_gold_mask"] == 0
+    with pytest.raises(ValueError):
+        reviewed_whole_norm_native_reopen_v1(c, receipt, packet, definition_application_profile=None)
+    wrong_identity = "reviewed-source-use/v1" if c["whole_norm_identity_profile"] is None else None
+    with pytest.raises(ValueError):
+        reviewed_whole_norm_native_reopen_v1(c, receipt, packet, instance_identity_profile=wrong_identity)
+    assert len(calls) == 1 and before == (receipt, packet, c["graph"], c["admission"])
+
+
+@pytest.mark.parametrize("damage", ["scope-binding", "application-obligation"])
+def test_whole_norm_native_resealed_witness_or_obligation_cannot_replace_current_replay(
+        reviewed_whole_norm_native_case_v1, monkeypatch, damage):
+    c, receipt, packet, calls = reviewed_whole_norm_native_case_v1
+    changed = deepcopy(receipt)
+    if damage == "scope-binding":
+        row = changed["definition_applications"][0]
+        row["scope_record_cid"] = row["interpretation_record_cid"]
+        assert row != receipt["definition_applications"][0]
+    else:
+        changed["definition_application_obligations"] = list(reversed(changed["definition_application_obligations"]))
+        assert changed["definition_application_obligations"] != receipt["definition_application_obligations"]
+    changed = contracts.seal_record({key: value for key, value in changed.items() if key not in {"record_cid", "cid_scope"}})
+    raw = canonical(changed)
+    rows = dict(packet); rows["build-receipt.json"] = raw
+    changed_packet = tuple(sorted(rows.items()))
+    assert sha(raw) != sha(dict(packet)["build-receipt.json"])
+    identity = {} if c["whole_norm_identity_profile"] is None else {"instance_identity_profile": c["whole_norm_identity_profile"]}
+    application = {"definition_application_profile": "whole-norm-definition-expansion/v1"}
+    assert native.reviewed_definition_realization_packet_sha256_v1(changed_packet, **identity, **application) != \
+        native.reviewed_definition_realization_packet_sha256_v1(packet, **identity, **application)
+    reviewed_retained_no_tools_v2(monkeypatch)
+    with pytest.raises(ValueError):
+        reviewed_whole_norm_native_reopen_v1(c, changed, changed_packet)
+    assert len(calls) == 1
+
+
+# The existing installed toolchain fixture is the only execution admission here.
+# Fictional reviewed source inputs do not acquire statutory or training authority.
+@pytest.mark.parametrize("instance_identity_profile,definition_body", [
+    (None, "negated-body"), ("reviewed-source-use/v1", "repeated-body")],
+    ids=["default", "source-use"])
+def test_whole_norm_definition_application_installed_lean_checks_all30_and_original_models(
+        bound_norm_installed_lake, reviewed_native_control_v3, tmp_path,
+        instance_identity_profile, definition_body):
+    executable, binary_pins = bound_norm_installed_lake
+    c = dict(reviewed_native_control_v3)
+    c = c["shared_helper"].reviewed_definition_realization_fresh_case(c, definition_body)
+    identity = {} if instance_identity_profile is None else {
+        "instance_identity_profile": instance_identity_profile}
+    application = {"definition_application_profile": "whole-norm-definition-expansion/v1"}
+    c["preservation"] = c["preparation"] if instance_identity_profile is None else \
+        c["shared"].prepare_reviewed_norm_preservation_corpus_v3(c["graph"], c["admission"],
+            *c["args"], expected_graph_sha256=c["graph_sha"], expected_admission_sha256=c["admission_sha"],
+            toolchain=TOOLCHAIN, **identity, **c["kwargs"])
+    c["preparation"] = c["shared"].prepare_reviewed_definition_realization_corpus_v1(
+        c["preservation"], c["graph"], c["admission"], *c["args"],
+        expected_preservation_sha256=c["shared"].reviewed_preservation_corpus_sha256(c["preservation"]),
+        expected_graph_sha256=c["graph_sha"], expected_admission_sha256=c["admission_sha"],
+        toolchain=TOOLCHAIN, **identity, **application, **c["kwargs"])
+    options = reviewed_realization_native_arguments_v1(c) | identity | application
+    manifest = c["preparation"].to_dict()
+    assert manifest["selection"]["body_typed_node"]["kind"] == (
+        "not" if definition_body == "negated-body" else "and")
+    assert len(manifest["preservation_obligations"]) == 30
+    assert len(manifest["definition_application_obligations"]) == 4
+    assert len(manifest["definition_applications"]) == 2
+    assert manifest["upstream_manifest"] == c["preservation"].to_dict()
+    for row in manifest["definition_applications"]:
+        assert row["original_typed_expression"] != row["expanded_typed_expression"]
+        assert row["target_typed_paths"]
+    output = tmp_path / "actual-whole-norm-definition-application"
+    handle = native.build_verified_reviewed_definition_realization_native_v1(
+        c["preparation"], c["preservation"], c["graph"], c["admission"], *c["args"],
+        **(options | dict(lake_executable=str(executable), output_directory=output, timeout_seconds=60)))
+    packet = reviewed_live_success_packet_v2(output)
+    bodies = dict(packet)
+    receipt = json.loads(bodies["build-receipt.json"])
+    assert receipt["binary_sha256"] == binary_pins and receipt["build_passed"] is True
+    expected_profile = native.REVIEWED_DEFINITION_REALIZATION_NATIVE_PROFILE + \
+        ("" if instance_identity_profile is None else "+" + instance_identity_profile) + \
+        "+whole-norm-definition-expansion/v1"
+    assert receipt["profile"] == expected_profile
+    assert receipt["definition_application_profile"] == application["definition_application_profile"]
+    assert receipt["definition_applications"] == manifest["definition_applications"]
+    assert receipt["definition_application_obligations"] == manifest["definition_application_obligations"]
+    assert receipt["conditional_theorems"] == manifest["preservation_obligations"]
+    assert sorted(receipt["compiled_modules"]) == sorted(manifest["expected_modules"])
+    assert len(receipt["compiled_modules"]) == 10
+    assert len(receipt["executed_project_sha256"]) == len(c["preparation"].files) == 39
+    assert set(receipt["theorem_axiom_dependencies"]) == set(manifest["preservation_obligations"])
+    assert len(receipt["theorem_axiom_dependencies"]) == 30
+    assert all(dependencies == [] for dependencies in receipt["theorem_axiom_dependencies"].values())
+    for name, body in c["preparation"].files:
+        assert bodies["project/" + name] == bodies["executed-inputs/" + name] == body.encode("utf-8")
+    common = options | dict(expected_receipt_sha256=sha(bodies["build-receipt.json"]),
+        expected_packet_sha256=native.reviewed_definition_realization_packet_sha256_v1(packet,
+            **identity, **application), expected_binary_sha256=binary_pins)
+    live = native.load_verified_reviewed_definition_realization_native_v1(handle, packet,
+        c["preparation"], c["preservation"], c["graph"], c["admission"], *c["args"], **common)
+    retained = native.load_reviewed_definition_realization_native_v1(packet,
+        c["preparation"], c["preservation"], c["graph"], c["admission"], *c["args"],
+        **(common | dict(observation_profile=native._REVIEWED_REPLAY_ACTUAL)))
+    assert live["live_native_success_authenticated"] is live["native_execution_authenticated"] is True
+    assert retained["retained_observations_consistent"] is True
+    assert retained["native_execution_authenticated"] is retained.get("live_native_success_authenticated", False) is False
+    for result in (receipt, live, retained):
+        assert result["constructed_model_only"] is False
+        assert result["cross_unit_definition_application_proved"] is result["statutory_meaning_proved"] is False
+        assert result["installed_toolchain_verified"] is False
+        assert not any(result["authority"].values())
+        assert result["training_mask"] == result["evaluation_gold_mask"] == 0
+    assert live["obligations"] == retained["obligations"] == manifest["preservation_obligations"]
+    omitted = dict(common)
+    omitted.pop("definition_application_profile")
+    wrong_identity = dict(common, instance_identity_profile=(
+        "reviewed-source-use/v1" if instance_identity_profile is None else None))
+    for rejected in (omitted, wrong_identity):
+        with pytest.raises(ValueError):
+            native.load_verified_reviewed_definition_realization_native_v1(handle, packet,
+                c["preparation"], c["preservation"], c["graph"], c["admission"], *c["args"], **rejected)
+
+
+@pytest.mark.parametrize("instance_identity_profile", [None, "reviewed-source-use/v1"], ids=["default", "source-use"])
+def test_whole_norm_native_same_process_default_application_default_keeps_complete_pin_domains(
+        reviewed_native_control_v3, monkeypatch, instance_identity_profile):
+    # Exercise both transitions through current complete replay in one process.
+    # Never clear either owner-pin latch or use an injected Native executor.
+    c = dict(reviewed_native_control_v3)
+    identity = {} if instance_identity_profile is None else {"instance_identity_profile": instance_identity_profile}
+    c["preservation"] = c["preparation"] if instance_identity_profile is None else \
+        c["shared"].prepare_reviewed_norm_preservation_corpus_v3(c["graph"], c["admission"],
+            *c["args"], expected_graph_sha256=c["graph_sha"], expected_admission_sha256=c["admission_sha"],
+            toolchain=TOOLCHAIN, **identity, **c["kwargs"])
+    preparations = {}
+    for label, application in (("legacy", {}), ("whole", {"definition_application_profile": "whole-norm-definition-expansion/v1"})):
+        preparations[label] = c["shared"].prepare_reviewed_definition_realization_corpus_v1(
+            c["preservation"], c["graph"], c["admission"], *c["args"],
+            expected_preservation_sha256=c["shared"].reviewed_preservation_corpus_sha256(c["preservation"]),
+            expected_graph_sha256=c["graph_sha"], expected_admission_sha256=c["admission_sha"],
+            toolchain=TOOLCHAIN, **identity, **application, **c["kwargs"])
+    reviewed_retained_no_tools_v2(monkeypatch)
+    for label in ("legacy", "whole", "legacy", "whole", "legacy"):
+        current = dict(c, preparation=preparations[label])
+        selected = {} if label == "legacy" else {"definition_application_profile": "whole-norm-definition-expansion/v1"}
+        assert reviewed_realization_native_validate_v1(current, **identity, **selected) == preparations[label]
+        manifest = preparations[label].to_dict()
+        assert len(manifest["preservation_obligations"]) == (26 if label == "legacy" else 30)
+        producers = native._reviewed_definition_realization_native_pins(native._owners(), manifest, **identity, **selected)
+        algebra = str(Path(c["shared"].__file__).resolve().parents[1] / "syntax_core" / "algebra.py")
+        if label == "whole":
+            assert producers[algebra] == sha(Path(algebra).read_bytes())
+
+
+# Capture-only helper diagnostics reuse a fresh authenticated V3 native packet.
+# Nonempty dependencies are diagnostic results and are never accepted proof.
+def test_whole_norm_definition_application_installed_lean_reports_exact_helper_axiom_dependencies(
+        reviewed_live_actual_packet_v3, tmp_path):
+    import re
+
+    control, handle, packet, executable, binary_pins = reviewed_live_actual_packet_v3
+    before = reviewed_live_load_v3_fixture(control, handle, packet)
+    assert before["live_native_success_authenticated"] is True
+    packet_files = dict(packet)
+    original_packet_hashes = {name: sha(body) for name, body in packet}
+    receipt = json.loads(packet_files["build-receipt.json"])
+    assert receipt["build_passed"] is receipt["kernel_proofs_checked"] is True
+    assert receipt["binary_sha256"] == binary_pins
+    assert len(receipt["compiled_modules"]) == len(receipt["artifact_files"]) == 8
+    assert len(receipt["theorem_axiom_dependencies"]) == 15
+    assert all(value == [] for value in receipt["theorem_axiom_dependencies"].values())
+    assert native._binary_recheck(binary_pins)
+
+    helper_names = (
+        "sourceObjectDefinitionBody", "instantiateObjectDefinitionBody",
+        "objectDefinitionExpansionAt", "applyObjectDefinitionExpansions",
+        "restrictObjectAtoms", "instantiateMixedDefinitionBody",
+        "mixedDefinitionExpansionAt", "applyMixedDefinitionExpansions",
+    )
+    shared_owner = Path(control["shared"].__file__)
+    shared_owner_sha = sha(shared_owner.read_bytes())
+    production_code = control["shared"]._reviewed_definition_application_lean_helpers(True)
+    production_object_code = control["shared"]._reviewed_definition_application_lean_helpers(False)
+    production_sha = sha(production_code.encode("utf-8"))
+    production_object_sha = sha(production_object_code.encode("utf-8"))
+    scoped_false = "set_option backward.match.sparseCases false in\n"
+    scoped_true = "set_option backward.match.sparseCases true in\n"
+    assert len(scoped_false.encode("utf-8")) == 47
+    assert production_code.count(scoped_false) == 8
+    assert production_object_code.count(scoped_false) == 4
+    assert len(production_code.encode("utf-8")) == 9252
+    assert production_sha == "0acbce1b53803bf160f08c8b3494af2456d3b9522391ffddd43d9832068a40c2"
+    assert len(production_object_code.encode("utf-8")) == 4385
+    assert production_object_sha == "3507ce36646598c32e9b803c89443fbebc32021cf47cd34d9c819d09df6ddcca"
+    old_helper_body = production_code.replace(scoped_false, "")
+    old_object_body = production_object_code.replace(scoped_false, "")
+    old_helper_sha = sha(old_helper_body.encode("utf-8"))
+    old_object_sha = sha(old_object_body.encode("utf-8"))
+    assert len(old_helper_body.encode("utf-8")) == 8876
+    assert old_helper_sha == "a0ade7f443547638b33dda20ce3c106acd861dfe147061a798732ee476da7065"
+    assert len(old_object_body.encode("utf-8")) == 4197
+    assert old_object_sha == "53127db1c4e0f998682063e587168d9e9d0fae916dbe127cdbca296aa3e7ca0d"
+    assert production_code.startswith(production_object_code)
+    assert not re.search(r"(?m)^set_option ", old_helper_body + old_object_body)
+    assert production_code == re.sub(r"(?m)^def ", scoped_false + "def ", old_helper_body)
+    assert production_object_code == re.sub(r"(?m)^def ", scoped_false + "def ", old_object_body)
+    assert tuple(re.findall(r"^def ([A-Za-z0-9_]+)", old_helper_body, re.M)) == helper_names
+    assert tuple(re.findall(r"^def ([A-Za-z0-9_]+)", old_object_body, re.M)) == helper_names[:4]
+    # Reproduce the old body under explicit sparse=True on each declaration.
+    # Both option settings are local to a definition, including its matchers.
+    control_code, control_prefixes = re.subn(r"(?m)^def ", scoped_true + "def ", old_helper_body)
+    assert control_prefixes == control_code.count(scoped_true) == 8
+    assert control_code.replace(scoped_true, "") == old_helper_body
+    assert len(control_code.encode("utf-8")) == 9244
+    control_sha = sha(control_code.encode("utf-8"))
+    assert control_sha == "04fcbd41c23f118f6c174cb56b29e2b79e2d77ab6bf3aef83f93e75e46380905"
+    assert tuple(re.findall(r"^def ([A-Za-z0-9_]+)", production_code, re.M)) == helper_names
+    assert tuple(re.findall(r"^def ([A-Za-z0-9_]+)", control_code, re.M)) == helper_names
+    namespace = "LegalDefinitionApplicationHelperDiagnostics"
+    production_namespace = "LegalDefinitionApplicationHelperProductionNonSparse"
+    begin_marker = "__LEGAL_DEFINITION_APPLICATION_BASELINE_BODY_BEGIN__"
+    end_marker = "__LEGAL_DEFINITION_APPLICATION_BASELINE_BODY_END__"
+    leaf_constants = (
+        "instBEqOfDecidableEq", "instDecidableEqString", "List.instBEq",
+        "instDecidableEqBool", "Bool.and", "ite",
+        "LegalDefinitionApplicationHelperDiagnostics.sourceObjectDefinitionBody.match_1",
+    )
+    leaf_markers = {name: {
+        "begin": "__LEGAL_DEFINITION_APPLICATION_LEAF_" + str(index) + "_BEGIN__",
+        "end": "__LEGAL_DEFINITION_APPLICATION_LEAF_" + str(index) + "_END__",
+    } for index, name in enumerate(leaf_constants)}
+    expected = tuple(namespace + "." + name for name in helper_names)
+    production_expected = tuple(production_namespace + "." + name for name in helper_names)
+    all_expected = set(expected + production_expected + leaf_constants)
+    assert len(all_expected) == 23
+    diagnostic_name = "DefinitionApplicationHelperAxioms.lean"
+    diagnostic = (
+        "import LegalRelationalAstPreservation.Semantics\n"
+        "import LegalMixedRelationalAstPreservation.Semantics\n"
+        "namespace " + namespace + "\n" + control_code + "\n"
+        + "\n".join("#print axioms " + name for name in helper_names)
+        + '\n#check "' + begin_marker + '"\n'
+        + "set_option pp.all true in\n#print sourceObjectDefinitionBody\n"
+        + '#check "' + end_marker + '"\n'
+        + "".join('#check "' + leaf_markers[name]["begin"] + '"\n'
+            + "set_option pp.all true in\n#print " + name + "\n"
+            + '#check "' + leaf_markers[name]["end"] + '"\n'
+            + "#print axioms " + name + "\n" for name in leaf_constants)
+        + "end " + namespace + "\n"
+        + "namespace " + production_namespace + "\n" + production_code + "\n"
+        + "\n".join("#print axioms " + name for name in helper_names)
+        + "\nend " + production_namespace + "\n"
+    ).encode("utf-8")
+    files = {diagnostic_name: diagnostic}
+    for original_name, copied_name in receipt["artifact_files"].items():
+        assert original_name.startswith(".lake/build/lib/lean/")
+        assert copied_name == "compiled/" + original_name.removeprefix(".lake/build/lib/lean/")
+        assert copied_name not in files and copied_name in packet_files
+        body = packet_files[copied_name]
+        assert type(body) is bytes and len(body) == receipt["artifact_bytes"][original_name]
+        assert sha(body) == receipt["artifact_sha256"][original_name]
+        files[copied_name] = body
+    assert len(files) == 9 and sum(map(len, files.values())) <= 8 * 1024**2
+    assert max(map(len, files.values())) <= 2 * 1024**2
+    lean = executable.parent / "lean"
+    assert lean.is_file() and not lean.is_symlink() and str(lean) in binary_pins
+    assert sha(lean.read_bytes()) == binary_pins[str(lean)]
+    command = (str(lean), diagnostic_name)
+    environment = {"ELAN_TOOLCHAIN": TOOLCHAIN, "LEAN_NUM_THREADS": "1", "LEAN_PATH": "compiled"}
+    request = process.ToolRunRequest(
+        argv=command, input_files=files, output_paths=tuple(sorted(files)),
+        environment=environment, owned_process_observation=True,
+        limits=process.ToolRunLimits(
+            timeout_seconds=60, cpu_seconds=60, resident_memory_bytes=1536 * 1024**2,
+            max_input_bytes=8 * 1024**2, max_workspace_bytes=8 * 1024**2,
+            max_output_bytes=2 * 1024**2, max_output_files=len(files)))
+    run = process.BoundedToolRunner(workspace_root=tmp_path).run(request)
+    output = tmp_path / "definition-application-helper-diagnostic"
+    output.mkdir()
+    (output / diagnostic_name).write_bytes(diagnostic)
+    (output / "stdout.txt").write_bytes(run.stdout.encode("utf-8"))
+    (output / "stderr.txt").write_bytes(run.stderr.encode("utf-8"))
+
+    observations = {}
+    axiom_lines = []
+    parse_errors = []
+    stdout_lines = run.stdout.splitlines()
+    for line in stdout_lines:
+        if not re.search(r"\b(?:axiom|axioms|sorry|sorryAx)\b", line):
+            continue
+        axiom_lines.append(line)
+        match = re.search(
+            r"'([A-Za-z0-9_.]+)' (does not depend on any axioms|depends on axioms: \[([^\]]*)\])$",
+            line)
+        if match is None or match.group(1) not in all_expected:
+            parse_errors.append("unexpected axiom report: " + line)
+            continue
+        name = match.group(1)
+        if name in observations:
+            parse_errors.append("duplicate axiom report: " + name)
+            continue
+        if match.group(2) == "does not depend on any axioms":
+            dependencies = []
+        else:
+            dependencies = [value.strip() for value in match.group(3).split(",")]
+            if (not dependencies or not all(re.fullmatch(r"[A-Za-z_][A-Za-z0-9_.]*", value)
+                    for value in dependencies) or len(set(dependencies)) != len(dependencies)):
+                parse_errors.append("malformed dependency inventory: " + line)
+        observations[name] = dependencies
+    control_reports = {name: observations[name] for name in expected if name in observations}
+    production_reports = {name: observations[name] for name in production_expected if name in observations}
+    leaf_reports = {name: observations[name] for name in leaf_constants if name in observations}
+    leaf_bodies = {}
+    leaf_body_complete = {}
+    leaf_marker_observations = {}
+    for name in leaf_constants:
+        markers = leaf_markers[name]
+        starts = [index for index, line in enumerate(stdout_lines)
+            if re.search('"' + re.escape(markers["begin"]) + r'"\s*:\s*String\s*$', line)]
+        ends = [index for index, line in enumerate(stdout_lines)
+            if re.search('"' + re.escape(markers["end"]) + r'"\s*:\s*String\s*$', line)]
+        bounded_capture = len(starts) == len(ends) == 1 and starts[0] < ends[0]
+        body = "\n".join(stdout_lines[starts[0] + 1:ends[0]]) + "\n" if bounded_capture else ""
+        leaf_bodies[name] = body
+        leaf_body_complete[name] = bounded_capture and bool(body.strip()) and "⋯" not in body
+        leaf_marker_observations[name] = {**markers, "begin_count": len(starts), "end_count": len(ends)}
+    begin_lines = [index for index, line in enumerate(stdout_lines)
+        if re.search('"' + re.escape(begin_marker) + r'"\s*:\s*String\s*$', line)]
+    end_lines = [index for index, line in enumerate(stdout_lines)
+        if re.search('"' + re.escape(end_marker) + r'"\s*:\s*String\s*$', line)]
+    complete_control_capture = len(begin_lines) == len(end_lines) == 1 and begin_lines[0] < end_lines[0]
+    elaborated_control_body = ("\n".join(stdout_lines[begin_lines[0] + 1:end_lines[0]]) + "\n"
+        if complete_control_capture else "")
+    control_expected_reports = {name: ([] if name.endswith(".restrictObjectAtoms") else ["propext"])
+        for name in expected}
+    observation = {
+        "schema": "legal-definition-application-helper-axiom-diagnostic/v4",
+        "diagnostic_only": True,
+        "comparison_profile": "declaration-scoped-sparse-control-vs-production-nonsparse/v1",
+        "shared_owner": {"path": str(shared_owner), "sha256": shared_owner_sha},
+        "control_namespace": namespace,
+        "control_sparse_cases_option": True,
+        "control_option_scope": "each helper declaration only",
+        "control_old_helper_body_sha256": old_helper_sha,
+        "control_old_helper_body_bytes": len(old_helper_body.encode("utf-8")),
+        "control_old_object_body_sha256": old_object_sha,
+        "control_helper_source_sha256": control_sha,
+        "control_helper_source_bytes": len(control_code.encode("utf-8")),
+        "control_helper_source_utf8": control_code,
+        "control_decl_scoped_option_count": control_prefixes,
+        "control_helper_reports": control_reports,
+        "control_expected_helper_reports": control_expected_reports,
+        "control_nonempty_helper_reports": [name for name in expected if control_reports.get(name)],
+        "complete_exact_control_helper_reports_captured": set(control_reports) == set(expected) and not parse_errors,
+        "production_namespace": production_namespace,
+        "production_sparse_cases_option": False,
+        "production_option_scope": "each helper declaration only",
+        "production_helper_source_sha256": production_sha,
+        "production_helper_source_bytes": len(production_code.encode("utf-8")),
+        "production_helper_source_utf8": production_code,
+        "production_object_helper_source_sha256": production_object_sha,
+        "production_object_helper_source_bytes": len(production_object_code.encode("utf-8")),
+        "production_mixed_decl_scoped_option_count": production_code.count(scoped_false),
+        "production_object_decl_scoped_option_count": production_object_code.count(scoped_false),
+        "production_strip_options_matches_old_exact_body": True,
+        "production_helper_reports": production_reports,
+        "production_nonempty_helper_reports": [name for name in production_expected if production_reports.get(name)],
+        "complete_exact_production_helper_reports_captured": set(production_reports) == set(production_expected) and not parse_errors,
+        "production_empty_helper_axioms_observed": set(production_reports) == set(production_expected) and all(value == [] for value in production_reports.values()),
+        "diagnostic_source_sha256": sha(diagnostic),
+        "baseline_V3_receipt_sha256": sha(packet_files["build-receipt.json"]),
+        "baseline_V3_packet_sha256": native.reviewed_norm_preservation_packet_sha256_v3(packet),
+        "baseline_V3_modules": receipt["compiled_modules"],
+        "baseline_V3_named_empty_axiom_reports": 15,
+        "input_sha256": {name: sha(body) for name, body in sorted(files.items())},
+        "executed_input_sha256": {name: sha(body) for name, body in sorted(run.output_files.items())},
+        "all_input_bytes_read_back_exactly": run.output_files == files,
+        "command": list(run.command), "environment": environment,
+        "binary_sha256": binary_pins, "pid": run.pid, "returncode": run.returncode,
+        "native_lifecycle": run.native_lifecycle.to_dict() if run.native_lifecycle is not None else None,
+        "workspace_cleaned": run.workspace_cleaned,
+        "whole_norm_source_exactness_qualified": False,
+        "whole_norm_native_success_authenticated": False,
+        "helper_diagnostics_are_accepted_proof": False,
+        "statutory_meaning_proved": False, "release_ready": False,
+        "authority": dict(native.AUTHORITY), "training_mask": 0, "evaluation_gold_mask": 0,
+        "observed_control_leaf_constants": list(leaf_constants),
+        "control_leaf_axiom_reports": leaf_reports,
+        "complete_exact_control_leaf_reports_captured": set(leaf_reports) == set(leaf_constants) and not parse_errors,
+        "expected_control_report_count": 8,
+        "expected_production_report_count": 8,
+        "expected_control_leaf_report_count": 7,
+        "expected_total_report_count": 23,
+        "elaborated_control_leaf_constant_bodies": leaf_bodies,
+        "elaborated_control_leaf_constant_body_sha256": {name: sha(body.encode("utf-8")) for name, body in leaf_bodies.items()},
+        "elaborated_control_leaf_constant_body_complete": leaf_body_complete,
+        "elaborated_control_leaf_constant_body_markers": leaf_marker_observations,
+        "complete_elaborated_control_leaf_bodies_captured": all(leaf_body_complete.values()),
+        "complete_exact_all_axiom_reports_captured": len(axiom_lines) == 23 and set(observations) == all_expected and not parse_errors,
+        "axiom_report_parse_errors": parse_errors,
+        "complete_elaborated_control_body_captured": complete_control_capture and bool(elaborated_control_body.strip()) and "⋯" not in elaborated_control_body,
+        "elaborated_control_body_markers": {"begin": begin_marker, "end": end_marker,
+            "begin_count": len(begin_lines), "end_count": len(end_lines)},
+        "elaborated_control_sourceObjectDefinitionBody": elaborated_control_body,
+        "elaborated_control_body_sha256": sha(elaborated_control_body.encode("utf-8")),
+        "helper_regression_is_whole_norm_proof_or_Product_release": False,
+    }
+    (output / "diagnostic-observation.json").write_bytes(canonical(observation))
+    assert json.loads((output / "diagnostic-observation.json").read_bytes()) == observation
+    assert native._binary_recheck(binary_pins)
+    assert tuple(run.command) == command and run.runtime is process.ToolRuntime.NATIVE
+    assert type(run.pid) is int and run.pid > 0 and run.returncode == 0 and run.ok
+    assert not (run.unavailable or run.timed_out or run.cancelled or run.resource_exhausted
+                or run.workspace_limit_exceeded or run.output_truncated or run.error)
+    assert run.workspace_cleaned and run.native_lifecycle is not None
+    assert native._observed_process_scope(run.native_lifecycle, run.pid, process)
+    assert run.output_files == files
+    assert sha(shared_owner.read_bytes()) == shared_owner_sha
+    assert {name: sha(body) for name, body in packet} == original_packet_hashes
+    assert reviewed_live_load_v3_fixture(control, handle, packet)["live_native_success_authenticated"] is True
+    assert observation["complete_exact_control_helper_reports_captured"] is True
+    assert observation["complete_exact_production_helper_reports_captured"] is True
+    assert observation["complete_exact_control_leaf_reports_captured"] is True
+    assert observation["complete_exact_all_axiom_reports_captured"] is True
+    assert observation["complete_elaborated_control_body_captured"] is True
+    assert observation["complete_elaborated_control_leaf_bodies_captured"] is True
+    assert not re.search(r"\b(?:axiom|axioms|sorry|sorryAx)\b", run.stderr)
+    assert all(value is False for value in observation["authority"].values())
+    assert control_reports == control_expected_reports
+    assert observation["production_empty_helper_axioms_observed"] is True
+    assert all(value == [] for value in production_reports.values())

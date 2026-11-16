@@ -1020,7 +1020,7 @@
         "reviewed-definition-realization-source-use-20261115"
       ],
       "id": "definition-use-native",
-      "notes": "Existing owner contains separate official V2 and parent V1 preparation/build/receipt routes. Original migration compiler fixtures remain synthetic. Two authored FOL/TDFOL parent projects now qualify actual Lean4.34.1 execution and observed custody; pending review and explicit premises remain, without statutory admission or source-to-model equivalence. The separate parent shared-native profile adds four aggregate APIs. Its main cohort qualifies 16 cases (11 new and five existing regressions); a separate actual cohort contains two authored FOL/TDFOL aggregate projects, each with nine modules, 15 executed inputs and six unique conditional theorem observations. Child reviews remain pending in the actual cohort; complete assumptions and contributor lineage survive. No parent incremental cache, source meaning, model, training or statutory admission is qualified. Separate authored complete-norm/bound-definition profile: 42 pure cases/126 phases and two actual Lean4.34.1 cases/six phases. Nine files/six modules preserve the unchanged norm and explicit definition/membership premises; preservation is an alias identity. Namespace-scoped qualification; statutory reviews, source binding and training/gold remain pending. First actual attempt retained separately with its 192-MiB storage reservation. The explicit parent-literal complete-norm route reuses its separately source-pinned authored engineering qualification; no default consumer, full-package, semantic or corpus admission is inferred. The existing parent-bound norm/definition native extension adopts source6e6dd821/test02acd69 with unchanged preparer014dc6/renderer5c. Its retained original R32pure/96 and separate R2actual-native/6phase cohorts retain their own 197-source generation and six observed commands (four ordinary probes and two owned builds). The separately accepted current-public4case/12phase pure compatibility check on the completed c59 snapshot contains one genuine membership-mode validation, two synthetic handoffs and a request-pin refusal. The later8b6 graph change has a separate source-only compatibility review; the combined new generation remains unmeasured. It supplies no new actual native execution or global registration. The separate §7214 mixed renderer profile is now available with focused pure and compiler qualification; parent-source/corpus native integration and substantive legal review remain pending. The explicit parent-nomination graph custody route is indexed under the existing graph adapter and has a separate focused custody qualification; null governing decisions, explicit premises and zero masks remain.",
+      "notes": "Existing owner contains separate official V2 and parent V1 preparation/build/receipt routes. Original migration compiler fixtures remain synthetic. Two authored FOL/TDFOL parent projects now qualify actual Lean4.34.1 execution and observed custody; pending review and explicit premises remain, without statutory admission or source-to-model equivalence. The separate parent shared-native profile adds four aggregate APIs. Its main cohort qualifies 16 cases (11 new and five existing regressions); a separate actual cohort contains two authored FOL/TDFOL aggregate projects, each with nine modules, 15 executed inputs and six unique conditional theorem observations. Child reviews remain pending in the actual cohort; complete assumptions and contributor lineage survive. No parent incremental cache, source meaning, model, training or statutory admission is qualified. Separate authored complete-norm/bound-definition profile: 42 pure cases/126 phases and two actual Lean4.34.1 cases/six phases. Nine files/six modules preserve the unchanged norm and explicit definition/membership premises; preservation is an alias identity. Namespace-scoped qualification; statutory reviews, source binding and training/gold remain pending. First actual attempt retained separately with its 192-MiB storage reservation. The explicit parent-literal complete-norm route reuses its separately source-pinned authored engineering qualification; no default consumer, full-package, semantic or corpus admission is inferred. The existing parent-bound norm/definition native extension adopts source6e6dd821/test02acd69 with unchanged preparer014dc6/renderer5c. Its retained original R32pure/96 and separate R2actual-native/6phase cohorts retain their own 197-source generation and six observed commands (four ordinary probes and two owned builds). The separately accepted current-public4case/12phase pure compatibility check on the completed c59 snapshot contains one genuine membership-mode validation, two synthetic handoffs and a request-pin refusal. The later8b6 graph change has a separate source-only compatibility review; the combined new generation remains unmeasured. It supplies no new actual native execution or global registration. The separate §7214 mixed renderer profile is now available with focused pure and compiler qualification; parent-source/corpus native integration and substantive legal review remain pending. The explicit parent-nomination graph custody route is indexed under the existing graph adapter and has a separate focused custody qualification; null governing decisions, explicit premises and zero masks remain. Separate 2026-11-16 whole-norm application scopes are recorded in whole_norm_definition_expansion_20261116: Native2 is actual conditional installed-Lean engineering; S100/I21 are authored software only. Existing evidence IDs and historical source epochs remain unchanged.",
       "original_admitted_parent_bridge_20261111": {
         "actual_native_parent_positive_qualified": false,
         "apis": [
@@ -1328,7 +1328,114 @@
         "ordinary_fixture_cases": 38,
         "private_native_cases": 1
       },
-      "status": "focused_tests_qualified"
+      "status": "focused_tests_qualified",
+      "whole_norm_definition_expansion_20261116": {
+        "Source_epoch": {
+          "A": "bb47ea2455e011ccad4cd7b8c5439ccebd59b9cf",
+          "R2": "1cc4e60770e7df800051df041c54acd23c3392b6"
+        },
+        "arbitrary_original_interpretations": "conditional on explicit hSourceDefinition, no source-definition truth or governing applicability established",
+        "cohorts": {
+          "I21": {
+            "JUnit_seconds": 48.286,
+            "Source_seconds": 210.626293685,
+            "all30_identities": true,
+            "artifact_bytes": 8312512,
+            "artifact_files": 333,
+            "authored_compiler_software_only": true,
+            "cache_bytes": [
+              347871,
+              370973
+            ],
+            "cases": 21,
+            "cold10_warm0_both_domains": true,
+            "groups": [
+              2,
+              6,
+              6,
+              7
+            ],
+            "recipe_CIDs": 20,
+            "refused_directories_absent": 19,
+            "saved_own16MiB_durable_released": true,
+            "saved_own_claim": "575592",
+            "unique": true,
+            "warm_bytes_and_CIDs_unchanged": true
+          },
+          "Native2": {
+            "JUnit_seconds": 51.836,
+            "Source_seconds": 212.624635198,
+            "actual_installed_Lean": true,
+            "artifact_bytes": 10922872,
+            "artifact_files": 193,
+            "cases": 2,
+            "modules_per_case": 10,
+            "original_and_executed_inputs_per_case": [
+              39,
+              39
+            ],
+            "raw_empty_axiom_reports_per_case": 30,
+            "saved_own16MiB_durable_released": true,
+            "saved_own_claim": "c852"
+          },
+          "S100": {
+            "JUnit_seconds": 169.822,
+            "Source_seconds": 331.532309653,
+            "artifact_bytes": 6131501,
+            "artifact_files": 388,
+            "authored_compiler_software_only": true,
+            "cases": 100,
+            "order": [
+              87,
+              13
+            ],
+            "saved_own16MiB_durable_released": true,
+            "saved_own_claim": "828041",
+            "selectors": 38,
+            "unique": true
+          }
+        },
+        "default_caps_unchanged": true,
+        "definition_application_profile": "whole-norm-definition-expansion/v1",
+        "distinct_fictional_norm_uses": 2,
+        "empty_axiom_reports_do_not_discharge_explicit_hypotheses": true,
+        "historical_failures_preserved": {
+          "H1": "historical one-pass19.386s/eight empty production reports, distinct from older seven-propext observation",
+          "Source2_Native2": "two failures after both30-empty builds: live identity refused missing application profile; claim155174 remains retained/nondurable",
+          "earlier_helper_failures_and_Source1_2_chronology": "unchanged, not retagged",
+          "failure_audit_prefix": "388796"
+        },
+        "identity_profiles": [
+          null,
+          "reviewed-source-use/v1"
+        ],
+        "independent_selectors_and_complete_typed_provenance": true,
+        "legacy_obligations": 26,
+        "no_pooling_of_execution_or_qualification": true,
+        "obligations_added": [
+          "exact typed source expansion per use",
+          "whole-norm equivalence per use conditioned on explicit hSourceDefinition"
+        ],
+        "selected_obligations": 30,
+        "separate_audits": {
+          "INCREMENTAL21": {
+            "bytes": 44835,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/independent-actual-final-forwarding-Source3-INCREMENTAL21-regression-audit-v01.json",
+            "sha256": "1be0a0f0083f2779682a489ce043652dc898cd0ca52d738e51c9b8a52e1061f7"
+          },
+          "NATIVE2": {
+            "bytes": 69088,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/independent-actual-final-forwarding-Source3-NATIVE2-regression-audit-v01.json",
+            "sha256": "eb66e4371a311dac07b4ecfc8bb2a02c085739b2c9190699802e487505d9fec1"
+          },
+          "SOFTWARE100": {
+            "bytes": 32431,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/independent-actual-final-forwarding-Source3-SOFTWARE100-regression-audit-v01.json",
+            "sha256": "2c5b94d1022ac0b4e136ed1dd1e59788d2bf76b089f8e27021b1f8374ba524ab"
+          }
+        },
+        "statutory_meaning_gold_corpus_release_model_training_or_convergence_authority": false
+      }
     },
     {
       "apis": [
@@ -1372,7 +1479,7 @@
         "reviewed-definition-realization-source-use-20261115"
       ],
       "id": "shared-corpus",
-      "notes": "Legacy shared preparation/build remains available. The distinct exact-parent-definition-use-module-sharing/v1 preparation/validation/load/write profile is qualified by28 main cases plus two separately reused physical-source controls. Complete child commitments, separate review outcomes, exact source-bound donor identity and contributor ordinals survive sharing. Closing physical replay is sequential, not an atomic snapshot. This preparation cohort supplies no aggregate build result; the separate native owner now has qualified aggregate controls and two authored builds. Parent incremental caching, model training and statutory meaning remain separate. Retain the separate architecture review; do not fabricate paragraph_indices or norm_record.",
+      "notes": "Legacy shared preparation/build remains available. The distinct exact-parent-definition-use-module-sharing/v1 preparation/validation/load/write profile is qualified by28 main cases plus two separately reused physical-source controls. Complete child commitments, separate review outcomes, exact source-bound donor identity and contributor ordinals survive sharing. Closing physical replay is sequential, not an atomic snapshot. This preparation cohort supplies no aggregate build result; the separate native owner now has qualified aggregate controls and two authored builds. Parent incremental caching, model training and statutory meaning remain separate. Retain the separate architecture review; do not fabricate paragraph_indices or norm_record. Separate 2026-11-16 whole-norm application scopes are recorded in whole_norm_definition_expansion_20261116: Native2 is actual conditional installed-Lean engineering; S100/I21 are authored software only. Existing evidence IDs and historical source epochs remain unchanged.",
       "owner_module": "ipfs_datasets_py.logic.autoformal.legal_corpus_shared_lake",
       "ownership_role": "existing_single_owner",
       "path": "ipfs_datasets_py/logic/autoformal/legal_corpus_shared_lake.py",
@@ -1419,7 +1526,114 @@
         "ordinary_fixture_cases": 38,
         "private_native_cases": 1
       },
-      "status": "focused_tests_qualified"
+      "status": "focused_tests_qualified",
+      "whole_norm_definition_expansion_20261116": {
+        "Source_epoch": {
+          "A": "bb47ea2455e011ccad4cd7b8c5439ccebd59b9cf",
+          "R2": "1cc4e60770e7df800051df041c54acd23c3392b6"
+        },
+        "arbitrary_original_interpretations": "conditional on explicit hSourceDefinition, no source-definition truth or governing applicability established",
+        "cohorts": {
+          "I21": {
+            "JUnit_seconds": 48.286,
+            "Source_seconds": 210.626293685,
+            "all30_identities": true,
+            "artifact_bytes": 8312512,
+            "artifact_files": 333,
+            "authored_compiler_software_only": true,
+            "cache_bytes": [
+              347871,
+              370973
+            ],
+            "cases": 21,
+            "cold10_warm0_both_domains": true,
+            "groups": [
+              2,
+              6,
+              6,
+              7
+            ],
+            "recipe_CIDs": 20,
+            "refused_directories_absent": 19,
+            "saved_own16MiB_durable_released": true,
+            "saved_own_claim": "575592",
+            "unique": true,
+            "warm_bytes_and_CIDs_unchanged": true
+          },
+          "Native2": {
+            "JUnit_seconds": 51.836,
+            "Source_seconds": 212.624635198,
+            "actual_installed_Lean": true,
+            "artifact_bytes": 10922872,
+            "artifact_files": 193,
+            "cases": 2,
+            "modules_per_case": 10,
+            "original_and_executed_inputs_per_case": [
+              39,
+              39
+            ],
+            "raw_empty_axiom_reports_per_case": 30,
+            "saved_own16MiB_durable_released": true,
+            "saved_own_claim": "c852"
+          },
+          "S100": {
+            "JUnit_seconds": 169.822,
+            "Source_seconds": 331.532309653,
+            "artifact_bytes": 6131501,
+            "artifact_files": 388,
+            "authored_compiler_software_only": true,
+            "cases": 100,
+            "order": [
+              87,
+              13
+            ],
+            "saved_own16MiB_durable_released": true,
+            "saved_own_claim": "828041",
+            "selectors": 38,
+            "unique": true
+          }
+        },
+        "default_caps_unchanged": true,
+        "definition_application_profile": "whole-norm-definition-expansion/v1",
+        "distinct_fictional_norm_uses": 2,
+        "empty_axiom_reports_do_not_discharge_explicit_hypotheses": true,
+        "historical_failures_preserved": {
+          "H1": "historical one-pass19.386s/eight empty production reports, distinct from older seven-propext observation",
+          "Source2_Native2": "two failures after both30-empty builds: live identity refused missing application profile; claim155174 remains retained/nondurable",
+          "earlier_helper_failures_and_Source1_2_chronology": "unchanged, not retagged",
+          "failure_audit_prefix": "388796"
+        },
+        "identity_profiles": [
+          null,
+          "reviewed-source-use/v1"
+        ],
+        "independent_selectors_and_complete_typed_provenance": true,
+        "legacy_obligations": 26,
+        "no_pooling_of_execution_or_qualification": true,
+        "obligations_added": [
+          "exact typed source expansion per use",
+          "whole-norm equivalence per use conditioned on explicit hSourceDefinition"
+        ],
+        "selected_obligations": 30,
+        "separate_audits": {
+          "INCREMENTAL21": {
+            "bytes": 44835,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/independent-actual-final-forwarding-Source3-INCREMENTAL21-regression-audit-v01.json",
+            "sha256": "1be0a0f0083f2779682a489ce043652dc898cd0ca52d738e51c9b8a52e1061f7"
+          },
+          "NATIVE2": {
+            "bytes": 69088,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/independent-actual-final-forwarding-Source3-NATIVE2-regression-audit-v01.json",
+            "sha256": "eb66e4371a311dac07b4ecfc8bb2a02c085739b2c9190699802e487505d9fec1"
+          },
+          "SOFTWARE100": {
+            "bytes": 32431,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/independent-actual-final-forwarding-Source3-SOFTWARE100-regression-audit-v01.json",
+            "sha256": "2c5b94d1022ac0b4e136ed1dd1e59788d2bf76b089f8e27021b1f8374ba524ab"
+          }
+        },
+        "statutory_meaning_gold_corpus_release_model_training_or_convergence_authority": false
+      }
     },
     {
       "apis": [
@@ -1579,7 +1793,7 @@
         "private_incremental_test_sha256": "060b9bd6eccdc2a1452e6e98e553f0e090c41d38d5416a4694839a286c8622f0",
         "worker_generation_qualification_transferred": false
       },
-      "notes": "Retain the completed legacy full 16 / warm 0 / affected 8 + 8 reused / clean 16 cohort, the separate aggregate-native observations and the 22-case authored parent coordinator qualification (20 new controls plus two existing regressions). The same owner exposes verified-parent-source-bound-olean-per-module/v1. A separate two-case actual FOL/TDFOL cohort now qualifies conditional direct-Lean cold 13 / warm 0 / affected 6 + 7 reused / clean 13 behavior with complete original source/review intake replay, installed probes/library closure, exact native custody and artifact readback. Each case executes 32 fresh module calls, eight version probes and 24 fresh conditional theorem observations; totals 64/16/48 across eight stage builds, with zero Lake builds. Warm artifacts match cold and affected artifacts match clean. The donor all-to-any change is an explicit unreviewed interpretation on unchanged physical text; the reusable branch has separate engineering custody and copied authored text. Pending review and explicit premises remain. A separate mixed 24-case cohort reruns the earlier 22 regressions and adds two genuine-public-validator warm refusals on an authored cache: late physical drift rejects at closing with zero fresh calls and frozen-project/artifact retention; genuine re-signed revocation rejects an old assessment at opening before probes or compilation. Compiler/probe/library/lifecycle observations, fictional sources and test credentials remain authored. The authored fixture now declares the actual producer/native pin scope so both paths coexist without a production guard reset. The separate parent-shared-incremental-native-refusals-20261020-01 qualification binds real FOL/TDFOL cold artifacts to closing physical-drift and re-signed revocation refusals; its guide and selected-evidence record retain counts and boundaries. Broader source/scope/lookup and producer/toolchain/library invalidation, failed-compiler descendant behavior, statutory meaning, source-to-model equivalence and model convergence remain open. Do not relabel prior coordinator, aggregate Lake or legacy receipts.",
+      "notes": "Retain the completed legacy full 16 / warm 0 / affected 8 + 8 reused / clean 16 cohort, the separate aggregate-native observations and the 22-case authored parent coordinator qualification (20 new controls plus two existing regressions). The same owner exposes verified-parent-source-bound-olean-per-module/v1. A separate two-case actual FOL/TDFOL cohort now qualifies conditional direct-Lean cold 13 / warm 0 / affected 6 + 7 reused / clean 13 behavior with complete original source/review intake replay, installed probes/library closure, exact native custody and artifact readback. Each case executes 32 fresh module calls, eight version probes and 24 fresh conditional theorem observations; totals 64/16/48 across eight stage builds, with zero Lake builds. Warm artifacts match cold and affected artifacts match clean. The donor all-to-any change is an explicit unreviewed interpretation on unchanged physical text; the reusable branch has separate engineering custody and copied authored text. Pending review and explicit premises remain. A separate mixed 24-case cohort reruns the earlier 22 regressions and adds two genuine-public-validator warm refusals on an authored cache: late physical drift rejects at closing with zero fresh calls and frozen-project/artifact retention; genuine re-signed revocation rejects an old assessment at opening before probes or compilation. Compiler/probe/library/lifecycle observations, fictional sources and test credentials remain authored. The authored fixture now declares the actual producer/native pin scope so both paths coexist without a production guard reset. The separate parent-shared-incremental-native-refusals-20261020-01 qualification binds real FOL/TDFOL cold artifacts to closing physical-drift and re-signed revocation refusals; its guide and selected-evidence record retain counts and boundaries. Broader source/scope/lookup and producer/toolchain/library invalidation, failed-compiler descendant behavior, statutory meaning, source-to-model equivalence and model convergence remain open. Do not relabel prior coordinator, aggregate Lake or legacy receipts. Separate 2026-11-16 whole-norm application scopes are recorded in whole_norm_definition_expansion_20261116: Native2 is actual conditional installed-Lean engineering; S100/I21 are authored software only. Existing evidence IDs and historical source epochs remain unchanged.",
       "original_custody_source_delivery_20261112": {
         "D45_Source2_delivered": true,
         "D45_external_Source_parent_wait_returncode": "UNKNOWN",
@@ -1847,7 +2061,114 @@
         "task_owner_states_and_prior_evidence_unchanged": true
       },
       "required": true,
-      "status": "focused_tests_qualified"
+      "status": "focused_tests_qualified",
+      "whole_norm_definition_expansion_20261116": {
+        "Source_epoch": {
+          "A": "bb47ea2455e011ccad4cd7b8c5439ccebd59b9cf",
+          "R2": "1cc4e60770e7df800051df041c54acd23c3392b6"
+        },
+        "arbitrary_original_interpretations": "conditional on explicit hSourceDefinition, no source-definition truth or governing applicability established",
+        "cohorts": {
+          "I21": {
+            "JUnit_seconds": 48.286,
+            "Source_seconds": 210.626293685,
+            "all30_identities": true,
+            "artifact_bytes": 8312512,
+            "artifact_files": 333,
+            "authored_compiler_software_only": true,
+            "cache_bytes": [
+              347871,
+              370973
+            ],
+            "cases": 21,
+            "cold10_warm0_both_domains": true,
+            "groups": [
+              2,
+              6,
+              6,
+              7
+            ],
+            "recipe_CIDs": 20,
+            "refused_directories_absent": 19,
+            "saved_own16MiB_durable_released": true,
+            "saved_own_claim": "575592",
+            "unique": true,
+            "warm_bytes_and_CIDs_unchanged": true
+          },
+          "Native2": {
+            "JUnit_seconds": 51.836,
+            "Source_seconds": 212.624635198,
+            "actual_installed_Lean": true,
+            "artifact_bytes": 10922872,
+            "artifact_files": 193,
+            "cases": 2,
+            "modules_per_case": 10,
+            "original_and_executed_inputs_per_case": [
+              39,
+              39
+            ],
+            "raw_empty_axiom_reports_per_case": 30,
+            "saved_own16MiB_durable_released": true,
+            "saved_own_claim": "c852"
+          },
+          "S100": {
+            "JUnit_seconds": 169.822,
+            "Source_seconds": 331.532309653,
+            "artifact_bytes": 6131501,
+            "artifact_files": 388,
+            "authored_compiler_software_only": true,
+            "cases": 100,
+            "order": [
+              87,
+              13
+            ],
+            "saved_own16MiB_durable_released": true,
+            "saved_own_claim": "828041",
+            "selectors": 38,
+            "unique": true
+          }
+        },
+        "default_caps_unchanged": true,
+        "definition_application_profile": "whole-norm-definition-expansion/v1",
+        "distinct_fictional_norm_uses": 2,
+        "empty_axiom_reports_do_not_discharge_explicit_hypotheses": true,
+        "historical_failures_preserved": {
+          "H1": "historical one-pass19.386s/eight empty production reports, distinct from older seven-propext observation",
+          "Source2_Native2": "two failures after both30-empty builds: live identity refused missing application profile; claim155174 remains retained/nondurable",
+          "earlier_helper_failures_and_Source1_2_chronology": "unchanged, not retagged",
+          "failure_audit_prefix": "388796"
+        },
+        "identity_profiles": [
+          null,
+          "reviewed-source-use/v1"
+        ],
+        "independent_selectors_and_complete_typed_provenance": true,
+        "legacy_obligations": 26,
+        "no_pooling_of_execution_or_qualification": true,
+        "obligations_added": [
+          "exact typed source expansion per use",
+          "whole-norm equivalence per use conditioned on explicit hSourceDefinition"
+        ],
+        "selected_obligations": 30,
+        "separate_audits": {
+          "INCREMENTAL21": {
+            "bytes": 44835,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/independent-actual-final-forwarding-Source3-INCREMENTAL21-regression-audit-v01.json",
+            "sha256": "1be0a0f0083f2779682a489ce043652dc898cd0ca52d738e51c9b8a52e1061f7"
+          },
+          "NATIVE2": {
+            "bytes": 69088,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/independent-actual-final-forwarding-Source3-NATIVE2-regression-audit-v01.json",
+            "sha256": "eb66e4371a311dac07b4ecfc8bb2a02c085739b2c9190699802e487505d9fec1"
+          },
+          "SOFTWARE100": {
+            "bytes": 32431,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/independent-actual-final-forwarding-Source3-SOFTWARE100-regression-audit-v01.json",
+            "sha256": "2c5b94d1022ac0b4e136ed1dd1e59788d2bf76b089f8e27021b1f8374ba524ab"
+          }
+        },
+        "statutory_meaning_gold_corpus_release_model_training_or_convergence_authority": false
+      }
     },
     {
       "apis": [
@@ -9522,7 +9843,7 @@
         "release_ready": false,
         "unchanged_private_cases": 25
       },
-      "notes": "Existing coordinator explicitv2 replays signed dependency-bound physical law/coordinate/cache/entity-to-complete-reviewed-graph correspondence, with heldfile/sourcegeneration custody and exact populations. Source4 installed/closed afterprivate114, plus2separate normalcanonical read-only CLI observations. v1default/prefix unchanged. Original admitted Native parent/retainedpositivepacket/immutableHubreadback/realstatutoryreview remain unresolved; no task completion or model/corpus promotion.",
+      "notes": "Existing coordinator explicitv2 replays signed dependency-bound physical law/coordinate/cache/entity-to-complete-reviewed-graph correspondence, with heldfile/sourcegeneration custody and exact populations. Source4 installed/closed afterprivate114, plus2separate normalcanonical read-only CLI observations. v1default/prefix unchanged. Original admitted Native parent/retainedpositivepacket/immutableHubreadback/realstatutoryreview remain unresolved; no task completion or model/corpus promotion. Separately audited current-source Release21 software scope is recorded in release21_realization_consumer_20261116. Historical private45/103/114, R56, optional Native, Hub and legal/corpus blockers retain their original outcomes; no release-ready or task-completion flag is promoted.",
       "owner_module": "ipfs_datasets_py.logic.autoformal.legal_release_coordinator_v1",
       "ownership_role": "existing_single_owner",
       "owning_tests": [
@@ -9543,6 +9864,69 @@
         "scripts/ops/legal_ir/validate_uscode_corpus_release.py",
         "ipfs_datasets_py/processors/legal_data/uscode_hf_release.py"
       ],
+      "release21_realization_consumer_20261116": {
+        "JUnit": {
+          "bytes": 3917,
+          "path": "/tmp/pytest-of-barberb/legal-ir-release21-current-source-20261116-v01/a/exports/test-results.xml",
+          "sha256": "81783e7efff7bc8dfd881785c061eb0a91f9388ba31f43421931d349dd18063a"
+        },
+        "JUnit_seconds": 87.299,
+        "Lean_Torch_model_execution_statutory_gold_corpus_release_or_task_authority": false,
+        "Root_closeout_earlier_pending_cutoff_preserved": {
+          "bytes": 5165,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-ir-realization-release-retained-private-v01/release21-current-source-freezer-INERT-v03-two-offmap-epoch/Root-release21-genuine-closeout-v01.json",
+          "sha256": "1831c2402cd57972ac7ebf24b7521e95aee7f5b05a502b0085d75bd0ab8c635e"
+        },
+        "Source_drift": [],
+        "Source_seconds": 249.5541125140153,
+        "actual_original": {
+          "exec": "b46191",
+          "returncode": 0,
+          "session": 70026,
+          "terminal": "c50837"
+        },
+        "attempt_bytes": 682375,
+        "captured_project_origins": 187,
+        "compiled_paths": 198,
+        "custody_errors": [],
+        "durability_manifest_bytes": 16171,
+        "independent_final_audit": {
+          "bytes": 12008,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-ir-realization-release-retained-private-v01/release21-current-source-freezer-INERT-v03-two-offmap-epoch/independent-actual-release21-qualification-audit-v01.json",
+          "sha256": "622d9d2309bbca2c0d4d5036217a62536e881b67ef67c31f2e384b1488e4ddf9"
+        },
+        "inner_Source239_outer245": true,
+        "named_vendor_partition": {
+          "complete_vendor_execution_attested": false,
+          "loaded": 20,
+          "not_loaded": 79
+        },
+        "namespace_bypasses": 0,
+        "namespace_origins": 3,
+        "native": null,
+        "observed_code_identities": {
+          "/tmp/datasets-reviewed-source-use-main-20261115/ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_native_v2.py": "eb5f4ac8c5b48c889e5b236cfc9e05379ffe4e9e215edd700d060563f9fd1072",
+          "/tmp/datasets-reviewed-source-use-main-20261115/ipfs_datasets_py/logic/autoformal/legal_corpus_shared_lake.py": "5af16d0a3a97af8894f13a77f231392d0e94528f367be5ed01bfbbddcb52e993",
+          "/tmp/datasets-reviewed-source-use-main-20261115/ipfs_datasets_py/logic/autoformal/legal_release_coordinator_v1.py": "f571fefe0fa3fef832e724a002a7c2169f0d0ca2a86b311f8e30a319252b0e1e",
+          "/tmp/datasets-reviewed-source-use-main-20261115/tests/unit/logic/autoformal/test_corpus_release_cli.py": "9970dc16b1d6e8d506b513e254aece42ea51afb428a784457802fdf394d08447",
+          "/tmp/datasets-reviewed-source-use-main-20261115/tests/unit/logic/autoformal/test_legal_corpus_shared_lake.py": "25ed3e6a71adff8e80eb679324e4e1094d61e2bfef940b9ed0a2cc31682628bf"
+        },
+        "observed_identities_gone_reaped_and_Native_resources_closed": true,
+        "old_R56_private_and_current_Native_metrics_scopes_not_retagged": true,
+        "own16MiB_durable_released": true,
+        "own_reservation_id": "2d78d957d4994868a2da400e46e518cb",
+        "parent_closeout": {
+          "bytes": 11488,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-ir-realization-release-retained-private-v01/release21-current-source-freezer-INERT-v03-two-offmap-epoch/parent-closeout.json",
+          "sha256": "467e54e7679f20681a1806ec1d0dd2e4433ec1bba0193374af590f29d4b7e666"
+        },
+        "retained_storage_bytes": 0,
+        "sealed_file_bytes": 666204,
+        "sealed_files": 47,
+        "status": "PASS_BOUNDED_RELEASE21_SOFTWARE_QUALIFICATION",
+        "unique_cases": 21,
+        "whole_functions": 12
+      },
       "required": false,
       "reviewed_physical_crosswalk_scope": {
         "actual_Native_cases": 0,
@@ -9696,6 +10080,25 @@
         "scope": "canonical_formula_wire_and_signature_only"
       },
       "compatibility_dependency": false,
+      "covered_raw_metric_precedence_20261116": {
+        "JUnit_seconds": 21.817,
+        "Source_only_software_no_Native_model_legal_or_task_completion": true,
+        "computed_raw_pair_scores_and_deltas_take_precedence": true,
+        "explicit_only_and_missing_raw_evidence_contracts_preserved": true,
+        "independent_saved_chain_audit": {
+          "ref": {
+            "bytes": 8779,
+            "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/ordinary-immutable-source-parent-delegation-private-v01/Main-current-immutable-parent-consumer-private-v05/current-comparison3-RED2-reproduction-private-v01/candidate-covered-raw-semantic-score-RED-INERT-v01/product-fix-INERT-v01/owner-port-INERT-v01/independent-LIR03-saved-GREEN114-causal-chain-and-postguard-audit-v01.json",
+            "sha256": "8f5e759bbedc79ccf49f63eaf14972889c85b01e729ca634546c8d5c1ff3a225"
+          },
+          "result": "PASS_SAVED_SOURCE_ONLY_GREEN114"
+        },
+        "preserved_RED_cases": 2,
+        "product_sha256": "b44c482aaf9a96a420c4eb02bb0175cfc99cc14854d02a85347fa3aaf4461c1a",
+        "runner_seconds": 22.066222385969013,
+        "test_sha256": "b53beed2190160506445074a5334ddc5eb5089027e894dcfef9a34b32d49e987",
+        "whole_owning_module_unique_passed": 114
+      },
       "evidence_ids": [
         "trusted-original-parent-complete-candidate-audit-20261114",
         "complete-norm-retrieved-payload-diagnostics-20261111",
@@ -9752,11 +10155,31 @@
         "original-html-origin-map-software178-20261115"
       ],
       "id": "official-document-views",
-      "notes": "Indexes an existing previously omitted owner once; no new product module. RootR and fresh R2 each have a separate current245-source whole3-module178/65 software qualification (28 new plus150 retained), not a pooled356 or whole-commit/WholeNorm result. Default V2 and historical raw-mapping/authority flags are unchanged; no legal/training/model/Lean/corpus authority.",
+      "notes": "Indexes an existing previously omitted owner once; no new product module. RootR and fresh R2 each have a separate current245-source whole3-module178/65 software qualification (28 new plus150 retained), not a pooled356 or whole-commit/WholeNorm result. Default V2 and historical raw-mapping/authority flags are unchanged; no legal/training/model/Lean/corpus authority. The separately scoped retained7213 complete-source diagnostic has one actual passing case over one supplied snapshot; 26 units and28 repeated text occurrences are not formalized laws or independent operative uses. See retained_7213_whole_source_origin_20261116; no new task ownership is assigned.",
       "owner_module": "ipfs_datasets_py.logic.autoformal.legal_official_document_views",
       "ownership_role": "existing_single_owner",
       "path": "ipfs_datasets_py/logic/autoformal/legal_official_document_views.py",
       "required": true,
+      "retained_7213_whole_source_origin_20261116": {
+        "Source251_Git8": true,
+        "blocks_units": 26,
+        "capsule": {
+          "bytes": 3333,
+          "path": "docs/autoformalization/evidence/legal-ir-retained-7213-whole-source-origin-20261116.json",
+          "root": "datasets_repository",
+          "sha256": "e472f1c3d223c1d407a87d39e5a3f2bdb011973eb360f67de950e7eade3f2432"
+        },
+        "case_count": 1,
+        "independent_audit": {
+          "bytes": 21803,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/retained-capacity-watchdog-v01/census-lock-followthrough-v01/completed-body-finalization-recovery-v01/current-V5-producer-SDK-tuple-private-v02/html-origin-map-private-v05/retained-7213-whole-document-origin-diagnostic-private-v02/prospective-v03/ordinary-retained7213-current-source-v03-3750c00d464b4d7aba859bb89c832c63/independent-actual27211-retained7213-all26units28occ-Source251-Git8-full-closure-durable16MiB-review-v01.json",
+          "sha256": "0649b3b09c1ed3e4020ba7f3a6653b9f21d5ee14da33b1c02675fa81272619d6"
+        },
+        "physical_source_engineering_only": true,
+        "sampler_records": 79,
+        "statutory_meaning_training_gold_model_Lean_corpus_authority": false,
+        "text_occurrences_including_repeats": 28
+      },
       "status": "focused_tests_qualified"
     },
     {
@@ -9840,7 +10263,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-11-15T19:43:27.583732+00:00",
+  "last_updated_at_utc": "2026-11-16T12:09:57.732654+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -10034,6 +10457,22 @@
       "status": "qualified_within_recorded_scope"
     },
     {
+      "covered_raw_metric_precedence_20261116": {
+        "independent_saved_chain_audit": {
+          "ref": {
+            "bytes": 8779,
+            "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/ordinary-immutable-source-parent-delegation-private-v01/Main-current-immutable-parent-consumer-private-v05/current-comparison3-RED2-reproduction-private-v01/candidate-covered-raw-semantic-score-RED-INERT-v01/product-fix-INERT-v01/owner-port-INERT-v01/independent-LIR03-saved-GREEN114-causal-chain-and-postguard-audit-v01.json",
+            "sha256": "8f5e759bbedc79ccf49f63eaf14972889c85b01e729ca634546c8d5c1ff3a225"
+          },
+          "result": "PASS_SAVED_SOURCE_ONLY_GREEN114"
+        },
+        "original_closeout": {
+          "bytes": 11852,
+          "path": "/tmp/legal-ir-phase2-reviewed-admission-source-20261108-v01/resource-census-compatible-port-v01/runtime-owner-v4-trainer-compatibility-v01/ordinary-immutable-source-parent-delegation-private-v01/Main-current-immutable-parent-consumer-private-v05/current-comparison3-RED2-reproduction-private-v01/candidate-covered-raw-semantic-score-RED-INERT-v01/product-fix-INERT-v01/owner-port-INERT-v01/Root-LIR03-genuine-GREEN114-closeout-v01.json",
+          "sha256": "8f1c47326d113eaf68d92b3e4a59f57e224c5dffd4711b8fe0d8d7ecc47796b2"
+        },
+        "scope": "Later114 unique semantic-metrics owning tests at b44/b53; no retag of older108metrics+6objective epoch."
+      },
       "id": "proof-screen-and-legacy-metrics-20261114",
       "path": "docs/autoformalization/evidence/legal-ir-proof-screen-and-legacy-metrics-20261114.json",
       "required_for_catalog_check": true,
@@ -15443,6 +15882,69 @@
       "observed_bytes": 20033,
       "observed_sha256": "0ab4f5115040b164ca9c3a0bd2aad6cd5df72362c642f23576f680a0245778aa",
       "path": "workspace/test-logs/federal-corpus-audits/legal-ir-current-release-v3-source-only-R56-qualified-20261115-v01/qualification-summary.json",
+      "release21_realization_consumer_20261116": {
+        "JUnit": {
+          "bytes": 3917,
+          "path": "/tmp/pytest-of-barberb/legal-ir-release21-current-source-20261116-v01/a/exports/test-results.xml",
+          "sha256": "81783e7efff7bc8dfd881785c061eb0a91f9388ba31f43421931d349dd18063a"
+        },
+        "JUnit_seconds": 87.299,
+        "Lean_Torch_model_execution_statutory_gold_corpus_release_or_task_authority": false,
+        "Root_closeout_earlier_pending_cutoff_preserved": {
+          "bytes": 5165,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-ir-realization-release-retained-private-v01/release21-current-source-freezer-INERT-v03-two-offmap-epoch/Root-release21-genuine-closeout-v01.json",
+          "sha256": "1831c2402cd57972ac7ebf24b7521e95aee7f5b05a502b0085d75bd0ab8c635e"
+        },
+        "Source_drift": [],
+        "Source_seconds": 249.5541125140153,
+        "actual_original": {
+          "exec": "b46191",
+          "returncode": 0,
+          "session": 70026,
+          "terminal": "c50837"
+        },
+        "attempt_bytes": 682375,
+        "captured_project_origins": 187,
+        "compiled_paths": 198,
+        "custody_errors": [],
+        "durability_manifest_bytes": 16171,
+        "independent_final_audit": {
+          "bytes": 12008,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-ir-realization-release-retained-private-v01/release21-current-source-freezer-INERT-v03-two-offmap-epoch/independent-actual-release21-qualification-audit-v01.json",
+          "sha256": "622d9d2309bbca2c0d4d5036217a62536e881b67ef67c31f2e384b1488e4ddf9"
+        },
+        "inner_Source239_outer245": true,
+        "named_vendor_partition": {
+          "complete_vendor_execution_attested": false,
+          "loaded": 20,
+          "not_loaded": 79
+        },
+        "namespace_bypasses": 0,
+        "namespace_origins": 3,
+        "native": null,
+        "observed_code_identities": {
+          "/tmp/datasets-reviewed-source-use-main-20261115/ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_native_v2.py": "eb5f4ac8c5b48c889e5b236cfc9e05379ffe4e9e215edd700d060563f9fd1072",
+          "/tmp/datasets-reviewed-source-use-main-20261115/ipfs_datasets_py/logic/autoformal/legal_corpus_shared_lake.py": "5af16d0a3a97af8894f13a77f231392d0e94528f367be5ed01bfbbddcb52e993",
+          "/tmp/datasets-reviewed-source-use-main-20261115/ipfs_datasets_py/logic/autoformal/legal_release_coordinator_v1.py": "f571fefe0fa3fef832e724a002a7c2169f0d0ca2a86b311f8e30a319252b0e1e",
+          "/tmp/datasets-reviewed-source-use-main-20261115/tests/unit/logic/autoformal/test_corpus_release_cli.py": "9970dc16b1d6e8d506b513e254aece42ea51afb428a784457802fdf394d08447",
+          "/tmp/datasets-reviewed-source-use-main-20261115/tests/unit/logic/autoformal/test_legal_corpus_shared_lake.py": "25ed3e6a71adff8e80eb679324e4e1094d61e2bfef940b9ed0a2cc31682628bf"
+        },
+        "observed_identities_gone_reaped_and_Native_resources_closed": true,
+        "old_R56_private_and_current_Native_metrics_scopes_not_retagged": true,
+        "own16MiB_durable_released": true,
+        "own_reservation_id": "2d78d957d4994868a2da400e46e518cb",
+        "parent_closeout": {
+          "bytes": 11488,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-ir-realization-release-retained-private-v01/release21-current-source-freezer-INERT-v03-two-offmap-epoch/parent-closeout.json",
+          "sha256": "467e54e7679f20681a1806ec1d0dd2e4433ec1bba0193374af590f29d4b7e666"
+        },
+        "retained_storage_bytes": 0,
+        "sealed_file_bytes": 666204,
+        "sealed_files": 47,
+        "status": "PASS_BOUNDED_RELEASE21_SOFTWARE_QUALIFICATION",
+        "unique_cases": 21,
+        "whole_functions": 12
+      },
       "required_for_catalog_check": false,
       "root": "datasets_repository",
       "scope": "Fresh current3R source batch; exact13functions/56 software cases in explicit198 source frontier with original Source/Native/process closure. No all-import/old155/Native Lean/realUSCode/model/corpus transfer.",
@@ -15596,7 +16098,114 @@
       "required_for_catalog_check": true,
       "root": "datasets_repository",
       "scope": "Five separate source-scoped originals: A58 software at8336/21e; B1/C6/E2 authored software and actual Lean3 at779/d0ba. Historical peer79/default-Lean1 and RED/C4 failures preserved without retagging. No whole67 coexecution, arbitrary-model/statutory/model/training/convergence/corpus authority.",
-      "status": "source_scoped_A58_B1_C6_E2_software_and_actual_Lean3_qualified_separately"
+      "status": "source_scoped_A58_B1_C6_E2_software_and_actual_Lean3_qualified_separately",
+      "whole_norm_definition_expansion_20261116": {
+        "Source_epoch": {
+          "A": "bb47ea2455e011ccad4cd7b8c5439ccebd59b9cf",
+          "R2": "1cc4e60770e7df800051df041c54acd23c3392b6"
+        },
+        "arbitrary_original_interpretations": "conditional on explicit hSourceDefinition, no source-definition truth or governing applicability established",
+        "cohorts": {
+          "I21": {
+            "JUnit_seconds": 48.286,
+            "Source_seconds": 210.626293685,
+            "all30_identities": true,
+            "artifact_bytes": 8312512,
+            "artifact_files": 333,
+            "authored_compiler_software_only": true,
+            "cache_bytes": [
+              347871,
+              370973
+            ],
+            "cases": 21,
+            "cold10_warm0_both_domains": true,
+            "groups": [
+              2,
+              6,
+              6,
+              7
+            ],
+            "recipe_CIDs": 20,
+            "refused_directories_absent": 19,
+            "saved_own16MiB_durable_released": true,
+            "saved_own_claim": "575592",
+            "unique": true,
+            "warm_bytes_and_CIDs_unchanged": true
+          },
+          "Native2": {
+            "JUnit_seconds": 51.836,
+            "Source_seconds": 212.624635198,
+            "actual_installed_Lean": true,
+            "artifact_bytes": 10922872,
+            "artifact_files": 193,
+            "cases": 2,
+            "modules_per_case": 10,
+            "original_and_executed_inputs_per_case": [
+              39,
+              39
+            ],
+            "raw_empty_axiom_reports_per_case": 30,
+            "saved_own16MiB_durable_released": true,
+            "saved_own_claim": "c852"
+          },
+          "S100": {
+            "JUnit_seconds": 169.822,
+            "Source_seconds": 331.532309653,
+            "artifact_bytes": 6131501,
+            "artifact_files": 388,
+            "authored_compiler_software_only": true,
+            "cases": 100,
+            "order": [
+              87,
+              13
+            ],
+            "saved_own16MiB_durable_released": true,
+            "saved_own_claim": "828041",
+            "selectors": 38,
+            "unique": true
+          }
+        },
+        "default_caps_unchanged": true,
+        "definition_application_profile": "whole-norm-definition-expansion/v1",
+        "distinct_fictional_norm_uses": 2,
+        "empty_axiom_reports_do_not_discharge_explicit_hypotheses": true,
+        "historical_failures_preserved": {
+          "H1": "historical one-pass19.386s/eight empty production reports, distinct from older seven-propext observation",
+          "Source2_Native2": "two failures after both30-empty builds: live identity refused missing application profile; claim155174 remains retained/nondurable",
+          "earlier_helper_failures_and_Source1_2_chronology": "unchanged, not retagged",
+          "failure_audit_prefix": "388796"
+        },
+        "identity_profiles": [
+          null,
+          "reviewed-source-use/v1"
+        ],
+        "independent_selectors_and_complete_typed_provenance": true,
+        "legacy_obligations": 26,
+        "no_pooling_of_execution_or_qualification": true,
+        "obligations_added": [
+          "exact typed source expansion per use",
+          "whole-norm equivalence per use conditioned on explicit hSourceDefinition"
+        ],
+        "selected_obligations": 30,
+        "separate_audits": {
+          "INCREMENTAL21": {
+            "bytes": 44835,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/independent-actual-final-forwarding-Source3-INCREMENTAL21-regression-audit-v01.json",
+            "sha256": "1be0a0f0083f2779682a489ce043652dc898cd0ca52d738e51c9b8a52e1061f7"
+          },
+          "NATIVE2": {
+            "bytes": 69088,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/independent-actual-final-forwarding-Source3-NATIVE2-regression-audit-v01.json",
+            "sha256": "eb66e4371a311dac07b4ecfc8bb2a02c085739b2c9190699802e487505d9fec1"
+          },
+          "SOFTWARE100": {
+            "bytes": 32431,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/independent-actual-final-forwarding-Source3-SOFTWARE100-regression-audit-v01.json",
+            "sha256": "2c5b94d1022ac0b4e136ed1dd1e59788d2bf76b089f8e27021b1f8374ba524ab"
+          }
+        },
+        "statutory_meaning_gold_corpus_release_model_training_or_convergence_authority": false
+      }
     },
     {
       "id": "original-html-origin-map-software178-20261115",
@@ -15604,6 +16213,20 @@
       "observed_sha256": "5e842260b0d58531d2d03390ee800f6c55ec5e86937acddf03d293b7b7c3a3c4",
       "path": "docs/autoformalization/evidence/legal-ir-original-html-origin-map-software178-20261115.json",
       "required_for_catalog_check": true,
+      "retained_7213_whole_source_origin_20261116": {
+        "capsule": {
+          "bytes": 3333,
+          "path": "docs/autoformalization/evidence/legal-ir-retained-7213-whole-source-origin-20261116.json",
+          "root": "datasets_repository",
+          "sha256": "e472f1c3d223c1d407a87d39e5a3f2bdb011973eb360f67de950e7eade3f2432"
+        },
+        "independent_actual_audit": {
+          "bytes": 21803,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/retained-capacity-watchdog-v01/census-lock-followthrough-v01/completed-body-finalization-recovery-v01/current-V5-producer-SDK-tuple-private-v02/html-origin-map-private-v05/retained-7213-whole-document-origin-diagnostic-private-v02/prospective-v03/ordinary-retained7213-current-source-v03-3750c00d464b4d7aba859bb89c832c63/independent-actual27211-retained7213-all26units28occ-Source251-Git8-full-closure-durable16MiB-review-v01.json",
+          "sha256": "0649b3b09c1ed3e4020ba7f3a6653b9f21d5ee14da33b1c02675fa81272619d6"
+        },
+        "scope": "One retained-source physical engineering diagnostic; separate from both178-case scopes and all semantic/model/Lean/corpus qualification."
+      },
       "root": "datasets_repository",
       "scope": "Two separately admitted current245-source whole3-module178/65 software originals,28 new+150 retained in each; not pooled356 or transferred qualification. Exact RootR and R2 Source4 ports/readbacks, retained missing-API RED1 and stdlib UTF7 fixture correction preserved. Later Physical4 outside245 is source context only. No WholeNorm/whole-commit/legal/historical-producer/review/model/training/graph/Lean/corpus authority.",
       "status": "separate_captured_RootR_and_R2_software178_qualified"

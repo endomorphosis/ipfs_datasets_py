@@ -438,10 +438,10 @@ def semantic_equivalence_from_metrics(
         explicit = _explicit_semantic_scores(source)
         if not explicit:
             return computed
-        merged = dict(computed.scores)
-        merged.update(explicit)
-        raw_deltas = dict(computed.raw_deltas)
-        raw_deltas.update(_explicit_proof_deltas(source))
+        merged = dict(explicit)
+        merged.update(computed.scores)
+        raw_deltas = _explicit_proof_deltas(source)
+        raw_deltas.update(computed.raw_deltas)
         return SemanticEquivalenceFamilyResult(
             family=computed.family,
             scores=merged,

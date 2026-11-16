@@ -1,0 +1,62 @@
+{
+  "authority": {
+    "all63_nested_output_authority_maps_false": true,
+    "formal_outputs": [],
+    "graph_corpus_or_Lean_admitted": false,
+    "meaning_target": null,
+    "ordinary_resource_admission": true,
+    "publisher_historical_producer_governing_edition_or_legal_review_verified": false,
+    "training_gold_masks": 0,
+    "training_or_model_quality": false
+  },
+  "governing_edition_selected": false,
+  "historical_failure": "92810 ADMINABORT143/zero checks; a23dd60d7d124de9b6348fc42fb66e3d retained/nondurable16MiB unchanged",
+  "legal_id": "usc:us:10:7213",
+  "measured": {
+    "Git_pins": 8,
+    "JUnit_seconds": 2.244,
+    "Source_seconds": 161.88369137514383,
+    "attempt_files_including_seal": 11,
+    "blocks_units": 26,
+    "complete_outputs": 5,
+    "errors": 0,
+    "failed": 0,
+    "own_reservation_durably_released": true,
+    "own_reserved_bytes": 16777216,
+    "passed": 1,
+    "preserved_artifact_bytes": 1856590,
+    "raw_bytes": 4049,
+    "sampler_records": 79,
+    "sealed_members": 10,
+    "skipped": 0,
+    "source_pins": 251,
+    "statute_blocks": 1,
+    "text_occurrences_including_repeats": 28,
+    "view_UTF8_bytes": 1912,
+    "view_characters": 1887
+  },
+  "no_pooling_or_transfer": "No historical178/67, whole-commit/runtime, noChild/generalUNKNOWN, meaning or model qualification transfers. Equal legacy sampler hash is an observation, not historical producer authentication.",
+  "qualified_code": {
+    "legal_official_document_views.py": "e43e7e19c6d58ec179224128d9ceabe6a9bf0963db6b42e0c738419a110f00cb",
+    "legal_statutory_context.py": "7ee890a13a67d219c044b32fe43c7609437bd5751c56d60f87b159eef98335fa"
+  },
+  "references": {
+    "Root_genuine_witness": {
+      "bytes": 6384,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/retained-capacity-watchdog-v01/census-lock-followthrough-v01/completed-body-finalization-recovery-v01/current-V5-producer-SDK-tuple-private-v02/html-origin-map-private-v05/retained-7213-whole-document-origin-diagnostic-private-v02/prospective-v03/ordinary-retained7213-current-source-v03-3750c00d464b4d7aba859bb89c832c63/Root-genuine-final5d793b-retained7213-complete-source-onecase-and-independent-audit-witness-v01.json",
+      "sha256": "868cca6a9773df0ce37b0d0b475fae634a516ec5579c4b839a9d8512acf82369"
+    },
+    "independent_actual_audit": {
+      "bytes": 21803,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/retained-capacity-watchdog-v01/census-lock-followthrough-v01/completed-body-finalization-recovery-v01/current-V5-producer-SDK-tuple-private-v02/html-origin-map-private-v05/retained-7213-whole-document-origin-diagnostic-private-v02/prospective-v03/ordinary-retained7213-current-source-v03-3750c00d464b4d7aba859bb89c832c63/independent-actual27211-retained7213-all26units28occ-Source251-Git8-full-closure-durable16MiB-review-v01.json",
+      "sha256": "0649b3b09c1ed3e4020ba7f3a6653b9f21d5ee14da33b1c02675fa81272619d6"
+    }
+  },
+  "schema": "legal-ir-retained-whole-source-origin-observation-qualification/v1",
+  "source_edition_metadata": 2024,
+  "status": "one_supplied_snapshot_physical_source_engineering_qualified",
+  "task_ids": [
+    "LIR-02",
+    "LIR-05"
+  ]
+}

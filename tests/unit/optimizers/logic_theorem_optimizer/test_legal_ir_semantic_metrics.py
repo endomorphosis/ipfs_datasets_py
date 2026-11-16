@@ -766,3 +766,63 @@ def test_complete_candidate_shared_metrics_fence_original_inputs(which, monkeypa
     with pytest.raises(ValueError, match='changed during'):
         owner.evaluate_complete_norm_candidate_syntax(examples,
             known_candidate_inputs=known, candidate_syntax_profile=profile)
+
+@pytest.mark.parametrize("damage", ["actor", "proof_obligation_ids"])
+def test_explicit_perfect_scores_cannot_launder_covered_raw_pair_evidence(damage):
+    from copy import deepcopy
+
+    reference, candidate = _reference_ir(), _isomorphic_ir()
+    if damage == "actor":
+        candidate["rules"][0]["subject"] = "Contractor"
+    else:
+        candidate["rules"][0]["proof_obligation_ids"] = ["po-other"]
+    original_inputs = deepcopy((reference, candidate))
+
+    measured = evaluate_legal_ir_semantic_equivalence(
+        reference, candidate, family="deontic",
+    )
+    assert measured.complete is True
+    assert measured.missing_metrics == ()
+    coverage = measured.detail["raw_input_coverage"]
+    assert coverage["reference_unsupported_paths"] == []
+    assert coverage["candidate_unsupported_paths"] == []
+    if damage == "actor":
+        assert measured.scores[OBLIGATION_EQUIVALENCE] < 1.0
+    else:
+        assert measured.raw_deltas[PROOF_OBLIGATION_DELTA] > 0.0
+        assert measured.scores[PROOF_OBLIGATION_DELTA_SCORE] < 1.0
+
+    baseline = {"view_family_metrics": {"deontic": {
+        "reference_ir": reference, "candidate_ir": reference,
+    }}}
+    raw_payload = {"reference_ir": reference, "candidate_ir": candidate}
+    unspoofed = compare_legal_ir_semantic_equivalence(
+        baseline,
+        {"view_family_metrics": {"deontic": raw_payload}},
+        families=("deontic",),
+    )
+    assert unspoofed.accepted is False
+
+    # Only the candidate's caller-reported scores and proof delta are spoofed.
+    # A covered, measured failure must retain its observations and block gate.
+    report = compare_legal_ir_semantic_equivalence(
+        baseline,
+        {"view_family_metrics": {"deontic": {
+            **raw_payload, **_all_semantic_scores(),
+        }}},
+        families=("deontic",),
+    )
+    observed = report.family_results["deontic"].after
+    assert report.to_dict()["hard_promotion_gate"] is True
+    assert (reference, candidate) == original_inputs
+    assert {
+        "accepted": report.accepted,
+        "scores": dict(observed.scores),
+        "raw_deltas": dict(observed.raw_deltas),
+        "missing_metrics": observed.missing_metrics,
+    } == {
+        "accepted": False,
+        "scores": dict(measured.scores),
+        "raw_deltas": dict(measured.raw_deltas),
+        "missing_metrics": measured.missing_metrics,
+    }

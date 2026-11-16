@@ -1119,3 +1119,97 @@ def validate_uscode_release_closure_v3(request_raw: bytes, *, expected_request_s
     """Replay complete V3 physical/IR/graph/retained bytes without parent grants."""
     _release_v3_policy()
     return _validate_uscode_release_physical_closure(request_raw, expected_request_sha256=expected_request_sha256, reviewed_version=3)
+
+
+def validate_reviewed_physical_realization_context_v1(request_raw: bytes, *,
+        expected_request_sha256: str) -> dict:
+    """Replay the physical evidence dependency before a future compiler profile.
+
+    This report is a provenance contract, not a capability or a realization
+    preparation. A consumer must replay the original request and bind its own
+    complete inputs; accepting a serialized report alone is insufficient.
+    Existing realization V1 still refuses all declared cross references.
+    """
+    from . import corpus_contracts as contracts
+    from . import legal_corpus_definition_use_lake_v2 as wire
+    callbacks = (validate_uscode_release_closure_v3, _reviewed_json_artifact_v3,
+        wire.decode_parent_replay_value_v1, wire.encode_parent_replay_value_v1,
+        contracts.seal_record, contracts.load_json_bytes, _canonical)
+    states = _release_callback_states_v3(callbacks)
+
+    def fence():
+        _release_v3_policy()
+        _release_callback_fence_v3((validate_uscode_release_closure_v3,
+            _reviewed_json_artifact_v3, wire.decode_parent_replay_value_v1,
+            wire.encode_parent_replay_value_v1, contracts.seal_record,
+            contracts.load_json_bytes, _canonical), states)
+
+    fence()
+    request = wire.decode_parent_replay_value_v1(request_raw,
+        expected_payload_sha256=expected_request_sha256, max_bytes=MAX_CLOSURE_REQUEST_BYTES)
+    _need(type(request) is dict and request.get("schema") == CLOSURE_REQUEST_SCHEMA_V3
+        and request.get("profile") == CLOSURE_PROFILE_V3 and request.get("native") is None,
+        "explicit physical V3 request without native authority required")
+    # The existing owner checks the complete population, signed reviews,
+    # dependency manifest and every physical source/cache/graph selector.
+    physical = validate_uscode_release_closure_v3(request_raw,
+        expected_request_sha256=expected_request_sha256)
+    fence()
+    opening_physical_raw = _canonical(physical)
+    physical = contracts.load_json_bytes(opening_physical_raw,
+        expected_sha256=hashlib.sha256(opening_physical_raw).hexdigest())
+    _need(_canonical(physical) == opening_physical_raw, "opening physical replay snapshot changed")
+    fence()
+    _need(physical.get("request_sha256") == expected_request_sha256
+        and physical.get("local_source_cache_entity_bindings_verified") is True
+        and physical.get("independent_reviewed_crosswalk_verified") is True,
+        "complete current physical replay required for evidence dependency")
+    rows = {row["artifact_id"]: row for row in request["artifacts"]}
+    component, pins = request["component"], request["pins"]
+    replay_row = rows[component["replay"]]
+    replay = wire.decode_parent_replay_value_v1(replay_row["payload"],
+        expected_payload_sha256=replay_row["sha256"], max_bytes=MAX_CLOSURE_REQUEST_BYTES)
+    declaration = replay["admission_kwargs"]["preparation_inputs"]["declaration"]
+    references = declaration["cross_references"]
+    unit_ids = [unit["unit_id"] for unit in declaration["units"]]
+    crosswalk_id = component["reviewed_crosswalk"]
+    # Do not infer an evidence role from a version label or caller-supplied ID.
+    # The complete physical replay above ties this exact body to the selected
+    # law/span/entity population. No other declared dependency is classified.
+    _need(len(references) == len(unit_ids)
+        and [ref["from_unit_id"] for ref in references] == unit_ids
+        and all(ref["dependency_artifact_id"] == crosswalk_id
+            and ref["dependency_sha256"] == pins["reviewed_crosswalk"]
+            and ref["version"] == REVIEWED_PHYSICAL_CROSSWALK_PROFILE for ref in references),
+        "only the complete ordered physical evidence dependencies are supported")
+    admission = _reviewed_json_artifact_v3(rows[component["admission"]]["payload"])
+    context = contracts.seal_record(dict(
+        schema="legal-reviewed-physical-realization-context/v1",
+        profile="complete-reviewed-physical-crosswalk-evidence-only/v1",
+        physical_request_sha256=expected_request_sha256,
+        declaration_sha256=admission["declaration_sha256"],
+        admission_sha256=pins["admission"], graph_sha256=pins["graph"],
+        preservation_sha256=pins["preservation"], crosswalk_artifact_id=crosswalk_id,
+        crosswalk_sha256=pins["reviewed_crosswalk"],
+        ordered_unit_ids=unit_ids, cross_references=references,
+        physical_source_bindings=physical["physical_crosswalk"],
+        physical_owner_pins=physical["physical_owner_pins"],
+        dependency_role="physical-source-cache-crosswalk-evidence-only/v1",
+        external_legal_dependencies_supported=False,
+        dependency_meaning_proved=False, realization_prepared=False,
+        native_execution_performed=False, original_success_authenticated=False,
+        source_kernel_receipt_authenticated=False, proof_verified=False,
+        release_ready=False, admitted=False, formalized=False,
+        training_mask=0, evaluation_gold_mask=0))
+    # Re-run the original physical owner at closure; a saved context is no authority.
+    closing = validate_uscode_release_closure_v3(request_raw,
+        expected_request_sha256=expected_request_sha256)
+    fence()
+    _need(_canonical(closing) == opening_physical_raw,
+        "physical replay changed during realization context validation")
+    # Return detached JSON containers and fence the final serialization too.
+    raw = _canonical(context)
+    detached = contracts.load_json_bytes(raw, expected_sha256=hashlib.sha256(raw).hexdigest())
+    _need(_canonical(detached) == raw, "detached physical context bytes changed")
+    fence()
+    return detached

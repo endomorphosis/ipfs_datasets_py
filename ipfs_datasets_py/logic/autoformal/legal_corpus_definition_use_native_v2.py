@@ -552,9 +552,10 @@ def _build_validated_native(preparation, validated, *, replay,
         maximum_files=MAX_FILES, maximum_modules=MAX_MODULES,
         maximum_theorems=None, producer_pin_reader=None, receipt_scope=None,
         preparation_document_reader=None, closing_custody_guard=None, execution_observer=None,
-        frozen_authority=None, instance_identity_profile=None):
+        frozen_authority=None, instance_identity_profile=None, definition_application_profile=None):
     """One bounded native execution path, with each source profile replayed by its owner."""
     selected_identity = _reviewed_source_use_kwargs(instance_identity_profile)
+    selected_application = _reviewed_definition_application_kwargs(definition_application_profile)
     if frozen_authority is not None:
         _need(type(frozen_authority) is dict and frozen_authority
               and all(type(key) is str and value is False for key, value in frozen_authority.items()),
@@ -619,6 +620,16 @@ def _build_validated_native(preparation, validated, *, replay,
             _reviewed_source_use_manifest(manifest, instance_identity_profile)
             _need(receipt_binding.get("instance_identity_profile") == instance_identity_profile,
                   "explicit source-use receipt identity selection required")
+        if selected_application:
+            _need(manifest.get("schema") == "legal-reviewed-definition-realization-preparation/v1",
+                  "definition application requires its explicit realization project")
+            reviewed_domains = {(schema, source_profile + "+whole-norm-definition-expansion/v1"):
+                (schema_out, native_profile + "+whole-norm-definition-expansion/v1")
+                for (schema, source_profile), (schema_out, native_profile) in reviewed_domains.items()
+                if schema == "legal-reviewed-definition-realization-preparation/v1"}
+            _reviewed_definition_application_manifest(manifest, definition_application_profile)
+            _need(receipt_binding.get("definition_application_profile") == definition_application_profile,
+                  "explicit whole-norm receipt application selection required")
         reviewed_domain = (manifest.get("schema"), manifest.get("profile"))
         _need(reviewed_domain in reviewed_domains
               and (build_schema, profile) == reviewed_domains[reviewed_domain],
@@ -628,7 +639,7 @@ def _build_validated_native(preparation, validated, *, replay,
         # The declaration's formal assumptions remain separate, unproved data.
         theorem_assumptions = []
     else:
-        _need(not selected_identity, "source-use identity requires a reviewed preservation project")
+        _need(not selected_identity and not selected_application, "explicit identity/application requires a reviewed preservation project")
         theorems = (list(dict.fromkeys(name for row in receipt_binding["theorem_contributors"]
                                       for name in row["conditional_theorems"])) if shared_type
                     else manifest["conditional_theorems"])
@@ -2163,16 +2174,19 @@ def _reviewed_preservation_native_manifest(manifest, shared, *, instance_identit
 
 def _reviewed_preservation_native_operation(preparation, graph, admission, args, kwargs, *,
         expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256,
-        toolchain, operation=None, reviewed_version=2, instance_identity_profile=None, realization_preservation=None,
+        toolchain, operation=None, reviewed_version=2, instance_identity_profile=None, definition_application_profile=None, realization_preservation=None,
         expected_upstream_preservation_sha256=None):
     _need(type(reviewed_version) is int and reviewed_version in (2, 3, 4),
           "explicit closed reviewed native version required")
+    _reviewed_definition_application_kwargs(definition_application_profile)
+    _need(definition_application_profile is None or reviewed_version == 4,
+          "whole-norm application requires the explicit realization native domain")
     if reviewed_version == 4:
         return _reviewed_definition_realization_native_operation(preparation, realization_preservation,
             graph, admission, args, kwargs, expected_realization_sha256=expected_preservation_sha256,
             expected_preservation_sha256=expected_upstream_preservation_sha256,
             expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
-            toolchain=toolchain, operation=operation, **_reviewed_source_use_kwargs(instance_identity_profile))
+            toolchain=toolchain, operation=operation, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
     if reviewed_version == 3:
         _reviewed_mixed_native_policy(**_reviewed_source_use_kwargs(instance_identity_profile))
     _reviewed_source_use_kwargs(instance_identity_profile)
@@ -3147,16 +3161,18 @@ def _live_freeze_inputs(value):
 
 
 def _live_original_inputs(preparation, graph, admission, args, kwargs, *,
-        realization_preservation=None, expected_upstream_preservation_sha256=None):
+        realization_preservation=None, expected_upstream_preservation_sha256=None, definition_application_profile=None):
     original = (_reviewed_preservation_native_document(preparation), graph, admission, args, kwargs)
     if realization_preservation is not None:
         _pin(expected_upstream_preservation_sha256, "complete original realization upstream")
         original = (*original, _reviewed_preservation_native_document(realization_preservation),
                     expected_upstream_preservation_sha256)
+    if _reviewed_definition_application_kwargs(definition_application_profile):
+        original = (*original, definition_application_profile)
     return _live_freeze_inputs(original)
 
 
-def _live_read_persisted_packet(output, checked, receipt, transport, *, reviewed_version=2, instance_identity_profile=None):
+def _live_read_persisted_packet(output, checked, receipt, transport, *, reviewed_version=2, instance_identity_profile=None, definition_application_profile=None):
     """Reopen the closed original packet through existing no-follow readers."""
     output = transport._path(output)
     transport._check_directories(output)
@@ -3199,15 +3215,17 @@ def _live_read_persisted_packet(output, checked, receipt, transport, *, reviewed
         os.close(root_fd)
     packet = tuple(sorted(contents.items()))
     _reviewed_retained_packet(packet)
-    _need(contents["build-receipt.json"] == _live_success_domain(reviewed_version, **_reviewed_source_use_kwargs(instance_identity_profile))[9](receipt, **_reviewed_source_use_kwargs(instance_identity_profile)),
+    _need(contents["build-receipt.json"] == _live_success_domain(reviewed_version, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))[9](receipt, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile)),
           "persisted live success receipt differs from original returned receipt")
     return packet
 
 
-def _live_handle_entry(handle, *, reviewed_version=2, instance_identity_profile=None):
-    _reviewed_source_use_kwargs(instance_identity_profile)
+def _live_handle_entry(handle, *, reviewed_version=2, instance_identity_profile=None, definition_application_profile=None):
+    _reviewed_realization_kwargs(instance_identity_profile, definition_application_profile)
     _need(type(reviewed_version) is int and reviewed_version in (2, 3, 4),
           "explicit closed live handle version required")
+    _need(definition_application_profile is None or reviewed_version == 4,
+          "whole-norm application requires an explicit realization live handle")
     # This check intentionally precedes every owner import and preparation read.
     _need(type(handle) is _LIVE_HANDLE_CLASS
           and VerifiedReviewedPreservationNativeSuccess is _LIVE_HANDLE_CLASS
@@ -3218,17 +3236,18 @@ def _live_handle_entry(handle, *, reviewed_version=2, instance_identity_profile=
           and vars(_LIVE_HANDLE_CLASS).get("__eq__") is object.__eq__,
           "live success handle was not issued by this process and native thread")
     entry = _LIVE_SUCCESS_HANDLES.get(handle)
-    _need(type(entry) is tuple and len(entry) == (9 if instance_identity_profile is None else 10) and type(entry[8]) is int
+    _need(type(entry) is tuple and len(entry) == 9 + int(instance_identity_profile is not None) + int(definition_application_profile is not None) and type(entry[8]) is int
           and entry[8] == reviewed_version
-          and (instance_identity_profile is None or entry[9] == instance_identity_profile) and entry[0] == os.getpid() and entry[1] == threading.get_native_id()
+          and (instance_identity_profile is None or entry[9] == instance_identity_profile)
+          and (definition_application_profile is None or entry[9 + int(instance_identity_profile is not None)] == definition_application_profile) and entry[0] == os.getpid() and entry[1] == threading.get_native_id()
           and entry[6]() is threading.current_thread() and entry[7]() is handle,
           "live success handle was not issued by this process and native thread")
     return entry
 
 
-def _live_success_domain(reviewed_version, *, instance_identity_profile=None):
+def _live_success_domain(reviewed_version, *, instance_identity_profile=None, definition_application_profile=None):
     """Select one closed literal domain after the independent callable fence."""
-    _reviewed_source_use_kwargs(instance_identity_profile)
+    _reviewed_realization_kwargs(instance_identity_profile, definition_application_profile)
     _need(type(reviewed_version) is int and reviewed_version in (2, 3, 4),
           "explicit closed live success version required")
     _need(type(PARENT_FALSE_FLAGS) is dict and set(PARENT_FALSE_FLAGS) == _REVIEWED_MIXED_FALSE_KEYS
@@ -3236,14 +3255,16 @@ def _live_success_domain(reviewed_version, *, instance_identity_profile=None):
           and type(AUTHORITY) is dict and set(AUTHORITY) == _REVIEWED_MIXED_AUTHORITY_KEYS
           and all(value is False for value in AUTHORITY.values()),
           "live success cannot widen its closed false-authority policy")
+    _need(definition_application_profile is None or reviewed_version == 4,
+          "whole-norm application requires the explicit realization live domain")
     if reviewed_version == 4:
-        _reviewed_definition_realization_native_policy(**_reviewed_source_use_kwargs(instance_identity_profile))
-        return (REVIEWED_DEFINITION_REALIZATION_BUILD_SCHEMA, _reviewed_source_use_domain(REVIEWED_DEFINITION_REALIZATION_NATIVE_PROFILE, instance_identity_profile),
-            REVIEWED_DEFINITION_REALIZATION_LIVE_SUCCESS_SCHEMA, _reviewed_source_use_domain(REVIEWED_DEFINITION_REALIZATION_LIVE_SUCCESS_PROFILE, instance_identity_profile),
+        _reviewed_definition_realization_native_policy(**_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
+        return (REVIEWED_DEFINITION_REALIZATION_BUILD_SCHEMA, _reviewed_realization_domain(REVIEWED_DEFINITION_REALIZATION_NATIVE_PROFILE, instance_identity_profile, definition_application_profile),
+            REVIEWED_DEFINITION_REALIZATION_LIVE_SUCCESS_SCHEMA, _reviewed_realization_domain(REVIEWED_DEFINITION_REALIZATION_LIVE_SUCCESS_PROFILE, instance_identity_profile, definition_application_profile),
             _reviewed_definition_realization_receipt_binding, _reviewed_definition_realization_native_pins,
             reviewed_definition_realization_packet_sha256_v1, _reviewed_definition_realization_load_adapter,
             _reviewed_definition_realization_validate_adapter, reviewed_definition_realization_receipt_bytes_v1,
-            _REVIEWED_DEFINITION_REALIZATION_SCOPE)
+            _reviewed_definition_realization_scope(definition_application_profile))
     if reviewed_version == 2:
         _need((REVIEWED_PRESERVATION_BUILD_SCHEMA, REVIEWED_PRESERVATION_NATIVE_PROFILE,
                REVIEWED_LIVE_SUCCESS_SCHEMA, REVIEWED_LIVE_SUCCESS_PROFILE) == (
@@ -3296,7 +3317,7 @@ def _live_review_components(owners, reviewed_version):
 
 def _build_verified_reviewed_norm_preservation_native(preparation, graph, admission, *args,
         _live_integrity_state, reviewed_version, expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256,
-        toolchain, lake_executable, output_directory, timeout_seconds=60, cancellation=None, instance_identity_profile=None,
+        toolchain, lake_executable, output_directory, timeout_seconds=60, cancellation=None, instance_identity_profile=None, definition_application_profile=None,
         realization_preservation=None, expected_upstream_preservation_sha256=None, **kwargs):
     """Issue an opaque handle after one fresh default native build and replay.
 
@@ -3335,11 +3356,12 @@ def _build_verified_reviewed_norm_preservation_native(preparation, graph, admiss
     _need(type(timeout_seconds) in (int, float) and math.isfinite(timeout_seconds)
           and 0 < timeout_seconds <= 60, "finite compiler timeout in (0,60] required")
     integrity_fence()
-    domain = _live_success_domain(reviewed_version, **_reviewed_source_use_kwargs(instance_identity_profile))
+    domain = _live_success_domain(reviewed_version, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
     (build_schema, native_profile, live_schema, live_profile, receipt_binding, pin_reader,
      packet_hasher, retained_loader, validator, formatter, receipt_scope) = domain
     authority_snapshot = dict(AUTHORITY)
-    original = _live_original_inputs(preparation, graph, admission, args, kwargs, **domain_arguments)
+    original = _live_original_inputs(preparation, graph, admission, args, kwargs, **domain_arguments,
+        **_reviewed_definition_application_kwargs(definition_application_profile))
     owners = _owners()
     integrity_fence(owners)
     process = owners[3]
@@ -3347,8 +3369,9 @@ def _build_verified_reviewed_norm_preservation_native(preparation, graph, admiss
 
     def fence():
         integrity_fence(owners)
-        _need(_live_success_domain(reviewed_version, **_reviewed_source_use_kwargs(instance_identity_profile)) == domain, "live success domain changed during build")
-        _need(_live_original_inputs(preparation, graph, admission, args, kwargs, **domain_arguments) == original,
+        _need(_live_success_domain(reviewed_version, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile)) == domain, "live success domain changed during build")
+        _need(_live_original_inputs(preparation, graph, admission, args, kwargs, **domain_arguments,
+            **_reviewed_definition_application_kwargs(definition_application_profile)) == original,
               "live success original inputs changed during build")
 
     def execution(stage, values):
@@ -3408,29 +3431,29 @@ def _build_verified_reviewed_norm_preservation_native(preparation, graph, admiss
             timeout_seconds=timeout_seconds, cancellation=cancellation,
             build_schema=build_schema, profile=native_profile,
             flags=dict(PARENT_FALSE_FLAGS),
-            receipt_binding=lambda manifest: receipt_binding(manifest, admission, **_reviewed_source_use_kwargs(instance_identity_profile)),
+            receipt_binding=lambda manifest: receipt_binding(manifest, admission, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile)),
             maximum_files=MAX_REVIEWED_PRESERVATION_FILES,
             maximum_modules=MAX_REVIEWED_PRESERVATION_MODULES,
             maximum_theorems=MAX_REVIEWED_PRESERVATION_THEOREMS,
-            producer_pin_reader=(pin_reader if instance_identity_profile is None else
-                lambda owners, manifest: pin_reader(owners, manifest, instance_identity_profile=instance_identity_profile)),
+            producer_pin_reader=(pin_reader if not _reviewed_realization_kwargs(instance_identity_profile, definition_application_profile) else
+                lambda owners, manifest: pin_reader(owners, manifest, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))),
             preparation_document_reader=_reviewed_preservation_native_document,
             closing_custody_guard=guard, execution_observer=execution, receipt_scope=receipt_scope,
-            frozen_authority=authority_snapshot, **_reviewed_source_use_kwargs(instance_identity_profile))
+            frozen_authority=authority_snapshot, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
         fence()
         _need(receipt["build_passed"] is True and "projection" in observed
               and _wire(receipt["reviewed_execution_evidence"], MAX_RECEIPT_BYTES) == observed["projection"],
               "successful original live native execution required")
         packet = _live_read_persisted_packet(output_directory, checked, receipt, owners[1],
-                                            reviewed_version=reviewed_version, **_reviewed_source_use_kwargs(instance_identity_profile))
+                                            reviewed_version=reviewed_version, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
         receipt_hash = _sha(dict(packet)["build-receipt.json"])
-        packet_hash = packet_hasher(packet, **_reviewed_source_use_kwargs(instance_identity_profile))
+        packet_hash = packet_hasher(packet, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
         old = retained_loader(packet, preparation, graph, admission, *args,
             expected_receipt_sha256=receipt_hash, expected_packet_sha256=packet_hash,
             expected_binary_sha256=receipt["binary_sha256"],
             expected_preservation_sha256=expected_preservation_sha256,
             expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
-            toolchain=toolchain, **domain_arguments, **kwargs, **_reviewed_source_use_kwargs(instance_identity_profile))
+            toolchain=toolchain, **domain_arguments, **kwargs, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
         fence()
         _need(old["retained_observations_consistent"] is True
               and old["current_complete_semantics_replayed"] is True
@@ -3446,7 +3469,7 @@ def _build_verified_reviewed_norm_preservation_native(preparation, graph, admiss
         expected_preservation_sha256=expected_preservation_sha256,
         expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
         toolchain=toolchain, operation=execute, reviewed_version=reviewed_version, **domain_arguments,
-        **_reviewed_source_use_kwargs(instance_identity_profile))
+        **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
     # The existing after-persistence custody and final outer semantic fence have
     # finished before any capability is inserted into the issuance registry.
     fence()
@@ -3455,6 +3478,8 @@ def _build_verified_reviewed_norm_preservation_native(preparation, graph, admiss
              weakref.ref(threading.current_thread()), weakref.ref(handle), reviewed_version)
     if instance_identity_profile is not None:
         entry = (*entry, instance_identity_profile)
+    if definition_application_profile is not None:
+        entry = (*entry, definition_application_profile)
     _LIVE_SUCCESS_HANDLES[handle] = entry
     # A return-hook mutation cannot leave an issued handle after our last check.
     try:
@@ -3467,7 +3492,7 @@ def _build_verified_reviewed_norm_preservation_native(preparation, graph, admiss
 
 def _load_verified_reviewed_norm_preservation_native(handle, packet_files, preparation, graph, admission, *args,
         _live_integrity_state, reviewed_version, expected_receipt_sha256, expected_packet_sha256, expected_binary_sha256,
-        expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256, toolchain, instance_identity_profile=None,
+        expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256, toolchain, instance_identity_profile=None, definition_application_profile=None,
         realization_preservation=None, expected_upstream_preservation_sha256=None, **kwargs):
     """Join this process's live issuance to exact bytes and current review state.
 
@@ -3503,26 +3528,28 @@ def _load_verified_reviewed_norm_preservation_native(handle, packet_files, prepa
         return function(owners, reviewed_version=reviewed_version)
 
     integrity_fence()
-    entry = _live_handle_entry(handle, reviewed_version=reviewed_version, **_reviewed_source_use_kwargs(instance_identity_profile))
+    entry = _live_handle_entry(handle, reviewed_version=reviewed_version, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
     integrity_fence()
-    domain = _live_success_domain(reviewed_version, **_reviewed_source_use_kwargs(instance_identity_profile))
+    domain = _live_success_domain(reviewed_version, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
     (build_schema, native_profile, live_schema, live_profile, receipt_binding, pin_reader,
      packet_hasher, retained_loader, validator, formatter, receipt_scope) = domain
     authority_snapshot = dict(AUTHORITY)
     contents, _ = _reviewed_retained_packet(packet_files)
     packet = tuple(sorted(contents.items()))
     _need(packet == entry[2], "exact issued live success packet required")
-    original = _live_original_inputs(preparation, graph, admission, args, kwargs, **domain_arguments)
+    original = _live_original_inputs(preparation, graph, admission, args, kwargs, **domain_arguments,
+        **_reviewed_definition_application_kwargs(definition_application_profile))
     _need(original == entry[5], "exact issued live success original inputs required")
     owners = _owners()
     integrity_fence(owners)
 
     def fence():
-        _need(_live_success_domain(reviewed_version, **_reviewed_source_use_kwargs(instance_identity_profile)) == domain, "live success domain changed during read")
-        _need(_live_handle_entry(handle, reviewed_version=reviewed_version, **_reviewed_source_use_kwargs(instance_identity_profile)) is entry,
+        _need(_live_success_domain(reviewed_version, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile)) == domain, "live success domain changed during read")
+        _need(_live_handle_entry(handle, reviewed_version=reviewed_version, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile)) is entry,
               "same issued live success handle required")
         integrity_fence(owners)
-        _need(_live_original_inputs(preparation, graph, admission, args, kwargs, **domain_arguments) == original,
+        _need(_live_original_inputs(preparation, graph, admission, args, kwargs, **domain_arguments,
+            **_reviewed_definition_application_kwargs(definition_application_profile)) == original,
               "live success original inputs changed during read")
 
     replay = retained_loader(packet, preparation, graph, admission, *args,
@@ -3530,7 +3557,7 @@ def _load_verified_reviewed_norm_preservation_native(handle, packet_files, prepa
         expected_binary_sha256=expected_binary_sha256,
         expected_preservation_sha256=expected_preservation_sha256,
         expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
-        toolchain=toolchain, **domain_arguments, **kwargs, **_reviewed_source_use_kwargs(instance_identity_profile))
+        toolchain=toolchain, **domain_arguments, **kwargs, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
     fence()
     joins = _live_freeze_inputs((reviewed_version, expected_preservation_sha256, expected_graph_sha256,
         expected_admission_sha256, toolchain, expected_binary_sha256,
@@ -3541,11 +3568,12 @@ def _load_verified_reviewed_norm_preservation_native(handle, packet_files, prepa
     checked = validator(preparation, graph, admission, *args,
         expected_preservation_sha256=expected_preservation_sha256,
         expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
-        toolchain=toolchain, **domain_arguments, **kwargs, **_reviewed_source_use_kwargs(instance_identity_profile))
+        toolchain=toolchain, **domain_arguments, **kwargs, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
     fence()
-    _need(_live_original_inputs(checked, graph, admission, args, kwargs, **domain_arguments) == original,
+    _need(_live_original_inputs(checked, graph, admission, args, kwargs, **domain_arguments,
+        **_reviewed_definition_application_kwargs(definition_application_profile)) == original,
           "exact issued live success regenerated project required")
-    binding = receipt_binding(checked.to_dict(), admission, **_reviewed_source_use_kwargs(instance_identity_profile)) if reviewed_version in (3, 4) else {}
+    binding = receipt_binding(checked.to_dict(), admission, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile)) if reviewed_version in (3, 4) else {}
     fence()
     result = owners[1].contracts.seal_record({
         **{key: value for key, value in replay.items() if key not in {"schema", "profile", "record_cid", "cid_scope"}},
@@ -3856,7 +3884,7 @@ def _validate_reviewed_native_retained_domain(
         receipt_raw, preparation, graph, admission, *args,
         packet_files, expected_receipt_sha256, expected_packet_sha256, expected_binary_sha256,
         expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256,
-        toolchain, observation_profile=_REVIEWED_REPLAY_ACTUAL, instance_identity_profile=None, reviewed_version=3,
+        toolchain, observation_profile=_REVIEWED_REPLAY_ACTUAL, instance_identity_profile=None, definition_application_profile=None, reviewed_version=3,
         realization_preservation=None, expected_upstream_preservation_sha256=None, **kwargs):
     """Replay the complete retained V3 mixed aggregate and current inputs without Lean.
 
@@ -3867,6 +3895,9 @@ def _validate_reviewed_native_retained_domain(
     original-success adapter remains an explicit prerequisite in every result.
     """
     _need(type(reviewed_version) is int and reviewed_version in (3, 4), "closed retained native domain required")
+    _reviewed_definition_application_kwargs(definition_application_profile)
+    _need(definition_application_profile is None or reviewed_version == 4,
+          "whole-norm application requires the explicit realization retained domain")
     domain_arguments = ({} if reviewed_version == 3 else {
         "realization_preservation": realization_preservation,
         "expected_upstream_preservation_sha256": expected_upstream_preservation_sha256})
@@ -3882,11 +3913,11 @@ def _validate_reviewed_native_retained_domain(
         domain_policy = _reviewed_definition_realization_native_policy
         build_schema, replay_schema, replay_profile = (REVIEWED_DEFINITION_REALIZATION_BUILD_SCHEMA,
             REVIEWED_DEFINITION_REALIZATION_RECEIPT_REPLAY_SCHEMA, REVIEWED_DEFINITION_REALIZATION_RECEIPT_REPLAY_PROFILE)
-        replay_profile = _reviewed_source_use_domain(replay_profile, instance_identity_profile)
+        replay_profile = _reviewed_realization_domain(replay_profile, instance_identity_profile, definition_application_profile)
         validator, formatter = _reviewed_definition_realization_validate_adapter, reviewed_definition_realization_receipt_bytes_v1
         receipt_binding, pin_reader, receipt_scope = (_reviewed_definition_realization_receipt_binding,
-            _reviewed_definition_realization_native_pins, _REVIEWED_DEFINITION_REALIZATION_SCOPE)
-    domain_policy(**_reviewed_source_use_kwargs(instance_identity_profile))
+            _reviewed_definition_realization_native_pins, _reviewed_definition_realization_scope(definition_application_profile))
+    domain_policy(**_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
     for value, label in ((expected_receipt_sha256, "retained reviewed receipt"),
                          (expected_packet_sha256, "whole retained reviewed packet")):
         _pin(value, label)
@@ -3899,7 +3930,7 @@ def _validate_reviewed_native_retained_domain(
           and contents.get("build-receipt.json") == receipt_raw,
           "independent original receipt bytes differ")
     receipt = _parse(receipt_raw, MAX_RECEIPT_BYTES)
-    _need(formatter(receipt, **_reviewed_source_use_kwargs(instance_identity_profile)) == receipt_raw,
+    _need(formatter(receipt, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile)) == receipt_raw,
           "original reviewed receipt must retain its canonical complete bytes")
     _need(type(observation_profile) is str
           and observation_profile in (_REVIEWED_REPLAY_ACTUAL, _REVIEWED_REPLAY_FICTIONAL),
@@ -3913,7 +3944,7 @@ def _validate_reviewed_native_retained_domain(
     checked = validator(preparation, graph, admission, *args,
         expected_preservation_sha256=expected_preservation_sha256,
         expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
-        toolchain=toolchain, **domain_arguments, **kwargs, **_reviewed_source_use_kwargs(instance_identity_profile))
+        toolchain=toolchain, **domain_arguments, **kwargs, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
     owners = _owners(); transport, process = owners[1], owners[3]
     from . import legal_corpus_definition_use_preservation_packet_v2 as packets
     packet_owner_pin = _sha(Path(packets.__file__).read_bytes())
@@ -3921,12 +3952,12 @@ def _validate_reviewed_native_retained_domain(
     manifest = checked.to_dict(); contracts = transport.contracts
     contracts.validate_record(receipt, schema=build_schema,
         fields=set(receipt) - {"schema", "record_cid", "cid_scope"})
-    binding = receipt_binding(manifest, admission, **_reviewed_source_use_kwargs(instance_identity_profile))
+    binding = receipt_binding(manifest, admission, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
     binding.update(preparation_cid=manifest["record_cid"],
         preparation_full_canonical_sha256=expected_preservation_sha256,
         preparation_manifest_sha256=_sha(checked.manifest_json.encode("utf-8")), toolchain=toolchain,
         expected_modules=manifest["expected_modules"], compiled_modules=manifest["expected_modules"],
-        producer_pins=pin_reader(owners, manifest, **_reviewed_source_use_kwargs(instance_identity_profile)),
+        producer_pins=pin_reader(owners, manifest, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile)),
         conditional_theorems=manifest["preservation_obligations"],
         original_preparation_theorem_assumptions=[], theorem_assumptions=[], scope=receipt_scope)
     _need(_wire({name: receipt[name] for name in binding}, MAX_RECEIPT_BYTES)
@@ -4039,18 +4070,18 @@ def _validate_reviewed_native_retained_domain(
     validator(preparation, graph, admission, *args,
         expected_preservation_sha256=expected_preservation_sha256,
         expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
-        toolchain=toolchain, **domain_arguments, **kwargs, **_reviewed_source_use_kwargs(instance_identity_profile))
+        toolchain=toolchain, **domain_arguments, **kwargs, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
     _need(_sha(Path(packets.__file__).read_bytes()) == packet_owner_pin,
           "retained-packet validator changed during replay")
-    domain_policy(**_reviewed_source_use_kwargs(instance_identity_profile))
+    domain_policy(**_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
     return contracts.seal_record({**dict(PARENT_FALSE_FLAGS),
-        **(receipt_binding(manifest, admission, **_reviewed_source_use_kwargs(instance_identity_profile)) if reviewed_version == 4 else {}), "schema": replay_schema,
-        "profile": replay_profile, **_reviewed_source_use_kwargs(instance_identity_profile), "observation_profile": observation_profile,
+        **(receipt_binding(manifest, admission, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile)) if reviewed_version == 4 else {}), "schema": replay_schema,
+        "profile": replay_profile, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile), "observation_profile": observation_profile,
         "retained_receipt_sha256": expected_receipt_sha256, "retained_packet_sha256": expected_packet_sha256,
         "preparation_sha256": expected_preservation_sha256, "graph_sha256": expected_graph_sha256,
         "admission_sha256": expected_admission_sha256, "retained_observations_consistent": True,
         "current_complete_semantics_replayed": True, "obligations": list(manifest["preservation_obligations"]),
-        "packet_inventory": inventory, "producer_pins": {**pin_reader(owners, manifest, **_reviewed_source_use_kwargs(instance_identity_profile)),
+        "packet_inventory": inventory, "producer_pins": {**pin_reader(owners, manifest, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile)),
             str(Path(packets.__file__).resolve()): packet_owner_pin},
         "original_success_authenticated": False, "native_execution_authenticated": False,
         "live_native_success_authenticated": False, "original_admitted_parent_custody_authenticated": False,
@@ -4134,6 +4165,7 @@ REVIEWED_DEFINITION_REALIZATION_RECEIPT_REPLAY_PROFILE = "current-reviewed-defin
 REVIEWED_DEFINITION_REALIZATION_LIVE_SUCCESS_SCHEMA = "legal-reviewed-definition-realization-live-success/v1"
 REVIEWED_DEFINITION_REALIZATION_LIVE_SUCCESS_PROFILE = "current-reviewed-definition-realization-live-native-owner-success/v1"
 _REVIEWED_DEFINITION_REALIZATION_OPERATION_PINS = None
+_REVIEWED_DEFINITION_APPLICATION_OPERATION_PINS = None
 _REVIEWED_DEFINITION_REALIZATION_SCOPE = (
     "Exact original child preservation plus constructed unary Object definition realization and every reviewed "
     "head occurrence's original-source/body connection. Only the explicitly constructed Object/Mixed models "
@@ -4153,8 +4185,55 @@ _REVIEWED_DEFINITION_REALIZATION_CORE_FIELDS = (
     | frozenset(_REVIEWED_DEFINITION_REALIZATION_BINDINGS))
 
 
-def _reviewed_definition_realization_native_policy(shared=None, *, instance_identity_profile=None):
-    _reviewed_source_use_kwargs(instance_identity_profile)
+def _reviewed_definition_application_kwargs(definition_application_profile):
+    if definition_application_profile is None:
+        return {}
+    _need(type(definition_application_profile) is str
+          and definition_application_profile == "whole-norm-definition-expansion/v1",
+          "explicit supported whole-norm definition application profile required")
+    return {"definition_application_profile": definition_application_profile}
+
+
+def _reviewed_realization_kwargs(instance_identity_profile, definition_application_profile):
+    return (_reviewed_source_use_kwargs(instance_identity_profile)
+            | _reviewed_definition_application_kwargs(definition_application_profile))
+
+
+def _reviewed_realization_domain(profile, instance_identity_profile, definition_application_profile):
+    selected = _reviewed_definition_application_kwargs(definition_application_profile)
+    return (_reviewed_source_use_domain(profile, instance_identity_profile)
+            + ("+whole-norm-definition-expansion/v1" if selected else ""))
+
+
+def _reviewed_definition_application_manifest(manifest, definition_application_profile):
+    selected = _reviewed_definition_application_kwargs(definition_application_profile)
+    fields = {"definition_application_profile", "definition_applications", "definition_application_obligations"}
+    _need(type(manifest) is dict, "ordinary definition application binding required")
+    if not selected:
+        _need(not fields.intersection(manifest), "legacy realization cannot acquire definition application witnesses")
+        return {}
+    _need(fields <= set(manifest)
+          and manifest["definition_application_profile"] == definition_application_profile
+          and type(manifest["definition_applications"]) is list
+          and 1 <= len(manifest["definition_applications"]) <= MAX_REVIEWED_PRESERVATION_MODULES
+          and type(manifest["definition_application_obligations"]) is list
+          and 2 <= len(manifest["definition_application_obligations"]) <= MAX_REVIEWED_PRESERVATION_THEOREMS,
+          "complete explicitly selected whole-norm application witnesses required")
+    return {key: manifest[key] for key in sorted(fields)}
+
+
+def _reviewed_definition_realization_scope(definition_application_profile):
+    if not _reviewed_definition_application_kwargs(definition_application_profile):
+        return _REVIEWED_DEFINITION_REALIZATION_SCOPE
+    return ("Exact original child preservation and constructed-model realization obligations plus whole-norm "
+        "definition expansion conditional on satisfaction of the exact original independently denoted SOURCE "
+        "definition under unchanged arbitrary original atom interpretations. Mixed evaluation uses the canonical "
+        "Object restriction of the same original mixed atoms. No source-definition truth, unconditional equivalence, "
+        "governing legal applicability, statutory meaning, training, corpus or release authority is supplied.")
+
+
+def _reviewed_definition_realization_native_policy(shared=None, *, instance_identity_profile=None, definition_application_profile=None):
+    _reviewed_realization_kwargs(instance_identity_profile, definition_application_profile)
     _reviewed_mixed_native_policy(shared, **_reviewed_source_use_kwargs(instance_identity_profile))
     _need((REVIEWED_DEFINITION_REALIZATION_BUILD_SCHEMA, REVIEWED_DEFINITION_REALIZATION_NATIVE_PROFILE,
            REVIEWED_DEFINITION_REALIZATION_RECEIPT_REPLAY_SCHEMA, REVIEWED_DEFINITION_REALIZATION_RECEIPT_REPLAY_PROFILE,
@@ -4168,35 +4247,44 @@ def _reviewed_definition_realization_native_policy(shared=None, *, instance_iden
                shared.REVIEWED_DEFINITION_REALIZATION_ROOT) == (
             "legal-reviewed-definition-realization-preparation/v1", "reviewed-unary-object-definition-realization/v1",
             "LegalReviewedDefinitionRealization"), "exact current constructed-model source profile required")
-        shared._reviewed_definition_realization_policy(**_reviewed_source_use_kwargs(instance_identity_profile))
+        shared._reviewed_definition_realization_policy(**_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
 
 
-def _reviewed_definition_realization_native_pins(owners, manifest, *, instance_identity_profile=None):
-    global _REVIEWED_DEFINITION_REALIZATION_OPERATION_PINS
+def _reviewed_definition_realization_native_pins(owners, manifest, *, instance_identity_profile=None, definition_application_profile=None):
+    global _REVIEWED_DEFINITION_REALIZATION_OPERATION_PINS, _REVIEWED_DEFINITION_APPLICATION_OPERATION_PINS
     shared = owners[4]
-    _reviewed_definition_realization_native_policy(shared, **_reviewed_source_use_kwargs(instance_identity_profile))
-    if instance_identity_profile is not None:
-        _reviewed_definition_realization_native_manifest(manifest, shared, instance_identity_profile=instance_identity_profile)
+    _reviewed_definition_realization_native_policy(shared, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
+    if instance_identity_profile is not None or definition_application_profile is not None:
+        _reviewed_definition_realization_native_manifest(manifest, shared, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
     current = shared._reviewed_preservation_pins(shared._reviewed_mixed_preservation_owners())
     pins = _observed_producer_pins(owners, manifest)
     for path, expected in current.items():
         _need(path not in pins or pins[path] == expected, "realization native producer pin collision")
         pins[path] = expected
-    if _REVIEWED_DEFINITION_REALIZATION_OPERATION_PINS is None:
-        _REVIEWED_DEFINITION_REALIZATION_OPERATION_PINS = dict(pins)
-    _need(pins == _REVIEWED_DEFINITION_REALIZATION_OPERATION_PINS,
-          "realization native operation owners changed since first use")
+    # The selected transform adds canonical algebra to its producer closure.
+    # Each fixed application domain retains its complete first-use pin latch;
+    # switching a caller profile never resets or weakens either observation.
+    if definition_application_profile is None:
+        if _REVIEWED_DEFINITION_REALIZATION_OPERATION_PINS is None:
+            _REVIEWED_DEFINITION_REALIZATION_OPERATION_PINS = dict(pins)
+        expected = _REVIEWED_DEFINITION_REALIZATION_OPERATION_PINS
+    else:
+        if _REVIEWED_DEFINITION_APPLICATION_OPERATION_PINS is None:
+            _REVIEWED_DEFINITION_APPLICATION_OPERATION_PINS = dict(pins)
+        expected = _REVIEWED_DEFINITION_APPLICATION_OPERATION_PINS
+    _need(pins == expected, "realization native operation owners changed since first use")
     return pins
 
 
-def _reviewed_definition_realization_native_manifest(manifest, shared, *, instance_identity_profile=None):
-    _reviewed_definition_realization_native_policy(shared, **_reviewed_source_use_kwargs(instance_identity_profile))
+def _reviewed_definition_realization_native_manifest(manifest, shared, *, instance_identity_profile=None, definition_application_profile=None):
+    _reviewed_definition_realization_native_policy(shared, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
     _reviewed_source_use_manifest(manifest, instance_identity_profile)
     _need(instance_identity_profile is not None or "instance_identity_profile" not in manifest,
           "legacy realization cannot acquire source-use identity")
     _need(manifest.get("schema") == shared.REVIEWED_DEFINITION_REALIZATION_SCHEMA
-          and manifest.get("profile") == _reviewed_source_use_domain(shared.REVIEWED_DEFINITION_REALIZATION_PROFILE, instance_identity_profile),
+          and manifest.get("profile") == _reviewed_realization_domain(shared.REVIEWED_DEFINITION_REALIZATION_PROFILE, instance_identity_profile, definition_application_profile),
           "exact reviewed definition realization preparation required")
+    application = _reviewed_definition_application_manifest(manifest, definition_application_profile)
     upstream = _reviewed_mixed_preservation_native_manifest(manifest["upstream_manifest"], shared,
         **_reviewed_source_use_kwargs(instance_identity_profile))
     for key in ("units", "reviewed_graph_sha256", "reviewed_admission_sha256", "declaration_sha256"):
@@ -4221,8 +4309,13 @@ def _reviewed_definition_realization_native_manifest(manifest, shared, *, instan
           and re.fullmatch(r"LegalReviewedDefinitionRealization\.Instance[0-9a-f]{64}", extra[0]),
           "one exact realization instance and distinct realization root required")
     instance, root = extra
-    identity = _sha(_wire({"profile": _reviewed_source_use_domain(shared.REVIEWED_DEFINITION_REALIZATION_PROFILE, instance_identity_profile),
-        "upstream_preservation_sha256": manifest["reviewed_preservation_sha256"], "selection": selection}, MAX_RECORD_BYTES))
+    identity_payload = {"profile": _reviewed_realization_domain(shared.REVIEWED_DEFINITION_REALIZATION_PROFILE, instance_identity_profile, definition_application_profile),
+        "upstream_preservation_sha256": manifest["reviewed_preservation_sha256"], "selection": selection}
+    if application:
+        shared._reviewed_definition_application_rows(application["definition_applications"], selection, units,
+            definition_application_profile=definition_application_profile)
+        identity_payload["definition_applications"] = application["definition_applications"]
+    identity = _sha(_wire(identity_payload, MAX_RECORD_BYTES))
     _need(instance == "LegalReviewedDefinitionRealization.Instance" + identity,
           "exact explicitly selected realization theorem identity required")
     _need(manifest["expected_modules"] == upstream["expected_modules"] + extra
@@ -4244,6 +4337,13 @@ def _reviewed_definition_realization_native_manifest(manifest, shared, *, instan
     for ordinal in range(len(occurrences)):
         suffixes.extend(("occurrence_" + str(ordinal) + "_source_exact", "occurrence_" + str(ordinal) + "_matches_body"))
     suffixes.extend("unit_" + str(ordinal) + "_preservation_under_realization" for ordinal in range(len(units)))
+    application_suffixes = [name for unit in units if unit["kind"] == "norm"
+        for name in ("unit_" + str(unit["ordinal"]) + "_expansion_source_exact",
+                     "unit_" + str(unit["ordinal"]) + "_whole_norm_definition_expansion")] if application else []
+    if application:
+        _need(application["definition_application_obligations"] == [instance + "." + name for name in application_suffixes],
+              "exact ordered whole-norm application obligations required")
+        suffixes.extend(application_suffixes)
     new = [instance + "." + suffix for suffix in suffixes]
     _need(manifest["realization_obligations"] == new
           and manifest["preservation_obligations"] == upstream["preservation_obligations"] + new
@@ -4251,6 +4351,10 @@ def _reviewed_definition_realization_native_manifest(manifest, shared, *, instan
           and [row["theorem"] for row in manifest["theorem_bindings"]] == new,
           "exact complete source-equality, realization, occurrence and child obligations required")
     support = manifest["support_profile"]
+    application_support = {"conditional_whole_norm_obligations", "source_definition_premise_required", "original_atom_interpretations_unchanged"}
+    _need((all(support.get(key) is True for key in application_support) if application
+           else not application_support.intersection(support)),
+          "exact conditional application support scope required")
     _need(support["cross_unit_definition_application_proved"] is False
           and support["implicit_namespace_coercion"] is False and support["opaque_modal_rewrite"] is False
           and support["single_binder_quantifier_nodes_only"] is True
@@ -4264,17 +4368,18 @@ def _reviewed_definition_realization_native_manifest(manifest, shared, *, instan
     return manifest
 
 
-def _reviewed_definition_realization_receipt_binding(manifest, admission, *, instance_identity_profile=None):
-    _reviewed_source_use_kwargs(instance_identity_profile)
+def _reviewed_definition_realization_receipt_binding(manifest, admission, *, instance_identity_profile=None, definition_application_profile=None):
+    _reviewed_realization_kwargs(instance_identity_profile, definition_application_profile)
     _reviewed_source_use_manifest(manifest, instance_identity_profile)
     _need(instance_identity_profile is not None or "instance_identity_profile" not in manifest,
           "legacy realization receipt cannot acquire source-use identity")
+    application = _reviewed_definition_application_manifest(manifest, definition_application_profile)
     upstream = manifest["upstream_manifest"]
     binding = {key: manifest[key] for key in _REVIEWED_DEFINITION_REALIZATION_BINDINGS
                if key in manifest}
     binding.update({key: upstream[key] for key in ("provenance_kind", "scope_record_cid",
         "interpretation_record_cid", "definition_use_record_cids")})
-    return binding | _reviewed_source_use_kwargs(instance_identity_profile) | {"preservation_only": False, "constructed_model_only": True,
+    return binding | application | _reviewed_realization_kwargs(instance_identity_profile, definition_application_profile) | {"preservation_only": False, "constructed_model_only": definition_application_profile is None,
         "cross_unit_definition_application_proved": False, "statutory_meaning_proved": False,
         "release_ready": False, "full_formal_corpus_consistency_verified": False,
         "generic_lean_v3_receipt_substituted": False,
@@ -4283,8 +4388,8 @@ def _reviewed_definition_realization_receipt_binding(manifest, admission, *, ins
 
 def _reviewed_definition_realization_native_operation(preparation, preservation, graph, admission, args, kwargs, *,
         expected_realization_sha256, expected_preservation_sha256, expected_graph_sha256,
-        expected_admission_sha256, toolchain, operation=None, instance_identity_profile=None):
-    _reviewed_definition_realization_native_policy(**_reviewed_source_use_kwargs(instance_identity_profile))
+        expected_admission_sha256, toolchain, operation=None, instance_identity_profile=None, definition_application_profile=None):
+    _reviewed_definition_realization_native_policy(**_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
     document = _reviewed_preservation_native_document(preparation)
     upstream_document = _reviewed_preservation_native_document(preservation)
     for value, label in ((expected_realization_sha256, "complete realization preparation"),
@@ -4301,9 +4406,11 @@ def _reviewed_definition_realization_native_operation(preparation, preservation,
         toolchain=toolchain)
     if instance_identity_profile is not None:
         original["instance_identity_profile"] = instance_identity_profile
+    if definition_application_profile is not None:
+        original["definition_application_profile"] = definition_application_profile
     _bound_tree({"preparation": document, "preservation": upstream_document, **original}, MAX_INPUT_BYTES, allow_bytes=True)
     owners = _owners(); shared = owners[4]
-    _reviewed_definition_realization_native_policy(shared, **_reviewed_source_use_kwargs(instance_identity_profile))
+    _reviewed_definition_realization_native_policy(shared, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
     _need(type(preparation) is type(preservation) is shared.ReviewedPreservationCorpusPreparation,
           "exact canonical realization and upstream preparation types required")
     reviewer = shared._reviewed_mixed_preservation_owners()[1]
@@ -4315,15 +4422,23 @@ def _reviewed_definition_realization_native_operation(preparation, preservation,
         "_reviewed_definition_realization_native_manifest", "_reviewed_definition_realization_native_operation",
         "_reviewed_preservation_native_document", "_reviewed_definition_realization_native_pins",
         "_reviewed_definition_realization_receipt_binding", "_reviewed_source_use_kwargs",
-        "_reviewed_source_use_domain", "_reviewed_source_use_manifest"))
+        "_reviewed_source_use_domain", "_reviewed_source_use_manifest",
+        "_reviewed_definition_application_kwargs", "_reviewed_realization_kwargs",
+        "_reviewed_realization_domain", "_reviewed_definition_application_manifest",
+        "_reviewed_definition_realization_scope"))
     shared_callbacks = tuple((name, _live_callable_state(getattr(shared, name))) for name in (
         "validate_reviewed_definition_realization_corpus_v1", "_reviewed_definition_realization_policy",
-        "_reviewed_mixed_preservation_policy", "_reviewed_preservation_pins"))
+        "_reviewed_mixed_preservation_policy", "_reviewed_preservation_pins",
+        *(("_reviewed_definition_application_rows", "_reviewed_definition_application_expression") if definition_application_profile is not None else ())))
+    application_contract_callbacks = (tuple((name, _live_callable_state(getattr(shared.contracts, name)))
+        for name in ("require_text", "require_int")) if definition_application_profile is not None else ())
 
     def fence():
-        _reviewed_definition_realization_native_policy(shared, **_reviewed_source_use_kwargs(instance_identity_profile))
+        _reviewed_definition_realization_native_policy(shared, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
         _need(all(_live_callable_matches(globals().get(name), state) for name, state in callbacks)
               and all(_live_callable_matches(getattr(shared, name), state) for name, state in shared_callbacks)
+              and all(_live_callable_matches(getattr(shared.contracts, name), state)
+                      for name, state in application_contract_callbacks)
               and reviewer.norm._snapshot(original)[1] == commitment
               and reviewer.norm._snapshot(detached)[1] == commitment
               and reviewer.norm._snapshot(_reviewed_preservation_native_document(preparation))[1] == project_pin
@@ -4337,11 +4452,11 @@ def _reviewed_definition_realization_native_operation(preparation, preservation,
             expected_realization_sha256=expected_realization_sha256,
             expected_preservation_sha256=expected_preservation_sha256,
             expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
-            toolchain=toolchain, **detached["kwargs"], **_reviewed_source_use_kwargs(instance_identity_profile))
+            toolchain=toolchain, **detached["kwargs"], **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
         _need(_reviewed_preservation_native_document(checked) == document,
               "current complete realization regeneration differs")
-        _reviewed_definition_realization_native_manifest(checked.to_dict(), shared, **_reviewed_source_use_kwargs(instance_identity_profile))
-        _reviewed_definition_realization_native_pins(owners, checked.to_dict(), **_reviewed_source_use_kwargs(instance_identity_profile))
+        _reviewed_definition_realization_native_manifest(checked.to_dict(), shared, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
+        _reviewed_definition_realization_native_pins(owners, checked.to_dict(), **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
         fence()
         return checked
     checked = replay()
@@ -4353,7 +4468,7 @@ def _reviewed_definition_realization_native_operation(preparation, preservation,
         nonlocal error
         try:
             fence()
-            _reviewed_definition_realization_native_pins(owners, checked.to_dict(), **_reviewed_source_use_kwargs(instance_identity_profile))
+            _reviewed_definition_realization_native_pins(owners, checked.to_dict(), **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
         except (ValueError, TypeError, KeyError, OSError, UnicodeError, RecursionError) as failure:
             if stage in ("snapshot", "toolchain", "after_persistence"):
                 raise
@@ -4366,20 +4481,20 @@ def _reviewed_definition_realization_native_operation(preparation, preservation,
 
 def validate_reviewed_definition_realization_native_v1(preparation, preservation, graph, admission, *args,
         expected_realization_sha256, expected_preservation_sha256, expected_graph_sha256,
-        expected_admission_sha256, toolchain, instance_identity_profile=None, **kwargs):
+        expected_admission_sha256, toolchain, instance_identity_profile=None, definition_application_profile=None, **kwargs):
     """Replay complete current source/review and both exact project envelopes."""
     return _reviewed_definition_realization_native_operation(preparation, preservation, graph, admission, args, kwargs,
         expected_realization_sha256=expected_realization_sha256, expected_preservation_sha256=expected_preservation_sha256,
         expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
-        toolchain=toolchain, **_reviewed_source_use_kwargs(instance_identity_profile))
+        toolchain=toolchain, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
 
 
 def build_reviewed_definition_realization_native_v1(preparation, preservation, graph, admission, *args,
         expected_realization_sha256, expected_preservation_sha256, expected_graph_sha256,
         expected_admission_sha256, toolchain, lake_executable, output_directory,
-        timeout_seconds=60, cancellation=None, instance_identity_profile=None, **kwargs):
+        timeout_seconds=60, cancellation=None, instance_identity_profile=None, definition_application_profile=None, **kwargs):
     """Check all constructed-model obligations through the existing native runner."""
-    _reviewed_definition_realization_native_policy(**_reviewed_source_use_kwargs(instance_identity_profile))
+    _reviewed_definition_realization_native_policy(**_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
     _need(type(timeout_seconds) in (int, float) and math.isfinite(timeout_seconds)
           and 0 < timeout_seconds <= 60, "finite compiler timeout in (0,60] required")
     def execute(checked, replay, custody):
@@ -4388,62 +4503,67 @@ def build_reviewed_definition_realization_native_v1(preparation, preservation, g
             lake_executable=lake_executable, output_directory=output_directory,
             timeout_seconds=timeout_seconds, cancellation=cancellation,
             build_schema=REVIEWED_DEFINITION_REALIZATION_BUILD_SCHEMA,
-            profile=_reviewed_source_use_domain(REVIEWED_DEFINITION_REALIZATION_NATIVE_PROFILE, instance_identity_profile),
+            profile=_reviewed_realization_domain(REVIEWED_DEFINITION_REALIZATION_NATIVE_PROFILE, instance_identity_profile, definition_application_profile),
             flags=dict(PARENT_FALSE_FLAGS),
-            receipt_binding=lambda manifest: _reviewed_definition_realization_receipt_binding(manifest, admission, **_reviewed_source_use_kwargs(instance_identity_profile)),
+            receipt_binding=lambda manifest: _reviewed_definition_realization_receipt_binding(manifest, admission, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile)),
             maximum_files=MAX_REVIEWED_PRESERVATION_FILES, maximum_modules=MAX_REVIEWED_PRESERVATION_MODULES,
             maximum_theorems=MAX_REVIEWED_PRESERVATION_THEOREMS,
-            producer_pin_reader=(_reviewed_definition_realization_native_pins if instance_identity_profile is None else
-                lambda owners, manifest: _reviewed_definition_realization_native_pins(owners, manifest, instance_identity_profile=instance_identity_profile)),
+            producer_pin_reader=(_reviewed_definition_realization_native_pins if not _reviewed_realization_kwargs(instance_identity_profile, definition_application_profile) else
+                lambda owners, manifest: _reviewed_definition_realization_native_pins(owners, manifest, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))),
             preparation_document_reader=_reviewed_preservation_native_document,
-            closing_custody_guard=custody, receipt_scope=_REVIEWED_DEFINITION_REALIZATION_SCOPE,
-            frozen_authority=dict(AUTHORITY), **_reviewed_source_use_kwargs(instance_identity_profile))
+            closing_custody_guard=custody, receipt_scope=_reviewed_definition_realization_scope(definition_application_profile),
+            frozen_authority=dict(AUTHORITY), **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
     return _reviewed_definition_realization_native_operation(preparation, preservation, graph, admission, args, kwargs,
         expected_realization_sha256=expected_realization_sha256, expected_preservation_sha256=expected_preservation_sha256,
         expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
-        toolchain=toolchain, operation=execute, **_reviewed_source_use_kwargs(instance_identity_profile))
+        toolchain=toolchain, operation=execute, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
 
 
-def reviewed_definition_realization_receipt_bytes_v1(receipt, *, instance_identity_profile=None):
-    _reviewed_definition_realization_native_policy(**_reviewed_source_use_kwargs(instance_identity_profile))
+def reviewed_definition_realization_receipt_bytes_v1(receipt, *, instance_identity_profile=None, definition_application_profile=None):
+    _reviewed_definition_realization_native_policy(**_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
     fields = _REVIEWED_DEFINITION_REALIZATION_CORE_FIELDS | (frozenset({"instance_identity_profile"}) if instance_identity_profile is not None else frozenset())
+    fields |= (frozenset({"definition_application_profile", "definition_applications", "definition_application_obligations"})
+               if definition_application_profile is not None else frozenset())
     _need(type(receipt) is dict and set(receipt) == fields
           and receipt.get("schema") == REVIEWED_DEFINITION_REALIZATION_BUILD_SCHEMA
-          and receipt.get("profile") == _reviewed_source_use_domain(REVIEWED_DEFINITION_REALIZATION_NATIVE_PROFILE, instance_identity_profile)
+          and receipt.get("profile") == _reviewed_realization_domain(REVIEWED_DEFINITION_REALIZATION_NATIVE_PROFILE, instance_identity_profile, definition_application_profile)
           and (instance_identity_profile is None or receipt.get("instance_identity_profile") == instance_identity_profile),
           "exact complete realization native receipt required")
     _reviewed_source_use_manifest(receipt, instance_identity_profile)
+    _reviewed_definition_application_manifest(receipt, definition_application_profile)
+    _need(receipt["constructed_model_only"] is (definition_application_profile is None),
+          "exact conditional versus constructed-model receipt scope required")
     return _wire(receipt, MAX_RECEIPT_BYTES)
 
 
-def reviewed_definition_realization_packet_sha256_v1(packet_files, *, instance_identity_profile=None):
-    _reviewed_source_use_kwargs(instance_identity_profile)
+def reviewed_definition_realization_packet_sha256_v1(packet_files, *, instance_identity_profile=None, definition_application_profile=None):
+    _reviewed_realization_kwargs(instance_identity_profile, definition_application_profile)
     contents, inventory = _reviewed_retained_packet(packet_files)
     return _sha(_wire(inventory, MAX_RECORD_BYTES))
 
 
 def _reviewed_definition_realization_validate_adapter(preparation, graph, admission, *args,
-        expected_preservation_sha256, realization_preservation, expected_upstream_preservation_sha256, instance_identity_profile=None, **kwargs):
+        expected_preservation_sha256, realization_preservation, expected_upstream_preservation_sha256, instance_identity_profile=None, definition_application_profile=None, **kwargs):
     return validate_reviewed_definition_realization_native_v1(preparation, realization_preservation, graph, admission,
         *args, expected_realization_sha256=expected_preservation_sha256,
         expected_preservation_sha256=expected_upstream_preservation_sha256, **kwargs,
-        **_reviewed_source_use_kwargs(instance_identity_profile))
+        **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
 
 
 def _reviewed_definition_realization_load_adapter(packet_files, preparation, graph, admission, *args,
-        expected_preservation_sha256, realization_preservation, expected_upstream_preservation_sha256, instance_identity_profile=None, **kwargs):
+        expected_preservation_sha256, realization_preservation, expected_upstream_preservation_sha256, instance_identity_profile=None, definition_application_profile=None, **kwargs):
     return load_reviewed_definition_realization_native_v1(packet_files, preparation, realization_preservation, graph, admission,
         *args, expected_realization_sha256=expected_preservation_sha256,
         expected_preservation_sha256=expected_upstream_preservation_sha256, **kwargs,
-        **_reviewed_source_use_kwargs(instance_identity_profile))
+        **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
 
 
 def validate_reviewed_definition_realization_native_receipt_v1(receipt_raw, preparation, preservation, graph, admission, *args,
         packet_files, expected_receipt_sha256, expected_packet_sha256, expected_binary_sha256,
         expected_realization_sha256, expected_preservation_sha256, expected_graph_sha256,
-        expected_admission_sha256, toolchain, observation_profile=_REVIEWED_REPLAY_ACTUAL, instance_identity_profile=None, **kwargs):
+        expected_admission_sha256, toolchain, observation_profile=_REVIEWED_REPLAY_ACTUAL, instance_identity_profile=None, definition_application_profile=None, **kwargs):
     """Replay this separate retained domain, without new native execution."""
-    _reviewed_definition_realization_native_policy(**_reviewed_source_use_kwargs(instance_identity_profile))
+    _reviewed_definition_realization_native_policy(**_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
     return _validate_reviewed_native_retained_domain(receipt_raw, preparation, graph, admission, *args,
         reviewed_version=4, realization_preservation=preservation,
         expected_upstream_preservation_sha256=expected_preservation_sha256,
@@ -4451,16 +4571,16 @@ def validate_reviewed_definition_realization_native_receipt_v1(receipt_raw, prep
         expected_packet_sha256=expected_packet_sha256, expected_binary_sha256=expected_binary_sha256,
         expected_preservation_sha256=expected_realization_sha256, expected_graph_sha256=expected_graph_sha256,
         expected_admission_sha256=expected_admission_sha256, toolchain=toolchain,
-        observation_profile=observation_profile, **kwargs, **_reviewed_source_use_kwargs(instance_identity_profile))
+        observation_profile=observation_profile, **kwargs, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
 
 
-def load_reviewed_definition_realization_native_v1(packet_files, preparation, preservation, graph, admission, *args, instance_identity_profile=None, **kwargs):
-    _reviewed_definition_realization_native_policy(**_reviewed_source_use_kwargs(instance_identity_profile))
+def load_reviewed_definition_realization_native_v1(packet_files, preparation, preservation, graph, admission, *args, instance_identity_profile=None, definition_application_profile=None, **kwargs):
+    _reviewed_definition_realization_native_policy(**_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
     contents, _ = _reviewed_retained_packet(packet_files)
     _need("build-receipt.json" in contents, "original complete realization native receipt required")
     return validate_reviewed_definition_realization_native_receipt_v1(contents["build-receipt.json"],
         preparation, preservation, graph, admission, *args, packet_files=packet_files, **kwargs,
-        **_reviewed_source_use_kwargs(instance_identity_profile))
+        **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
 
 
 __all__ += ["REVIEWED_DEFINITION_REALIZATION_BUILD_SCHEMA", "REVIEWED_DEFINITION_REALIZATION_NATIVE_PROFILE",
@@ -4713,9 +4833,9 @@ def _bind_live_success_independent_guard_v1():
 
     def build_verified_reviewed_definition_realization_native_v1(preparation, preservation, graph, admission, *args,
                 expected_realization_sha256, expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256,
-                toolchain, lake_executable, output_directory, timeout_seconds=60, cancellation=None, instance_identity_profile=None, **kwargs):
+                toolchain, lake_executable, output_directory, timeout_seconds=60, cancellation=None, instance_identity_profile=None, definition_application_profile=None, **kwargs):
             """Issue this explicit reviewed domain through the shared original live engine."""
-            _reviewed_source_use_kwargs(instance_identity_profile)
+            _reviewed_realization_kwargs(instance_identity_profile, definition_application_profile)
             _need(type(timeout_seconds) in (int, float) and math.isfinite(timeout_seconds)
                   and 0 < timeout_seconds <= 60, "finite compiler timeout in (0,60] required")
             if (entry_guard.__code__ is not entry_code
@@ -4736,7 +4856,7 @@ def _bind_live_success_independent_guard_v1():
                 expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
                 toolchain=toolchain, lake_executable=lake_executable, output_directory=output_directory,
                 timeout_seconds=timeout_seconds, cancellation=cancellation, **kwargs,
-                **_reviewed_source_use_kwargs(instance_identity_profile))
+                **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
             try:
                 if (integrity.__code__ is not integrity_state[1]
                         or integrity.__defaults__ is not integrity_state[2]
@@ -4753,9 +4873,9 @@ def _bind_live_success_independent_guard_v1():
 
     def load_verified_reviewed_definition_realization_native_v1(handle, packet_files, preparation, preservation, graph, admission, *args,
                 expected_receipt_sha256, expected_packet_sha256, expected_binary_sha256,
-                expected_realization_sha256, expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256, toolchain, instance_identity_profile=None, **kwargs):
+                expected_realization_sha256, expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256, toolchain, instance_identity_profile=None, definition_application_profile=None, **kwargs):
             """Join this explicit domain's original live issuance without new execution."""
-            _reviewed_source_use_kwargs(instance_identity_profile)
+            _reviewed_realization_kwargs(instance_identity_profile, definition_application_profile)
             if (globals().get("_live_handle_entry") is not original_handle_entry
                     or original_handle_entry.__code__ is not handle_code
                     or original_handle_entry.__defaults__ is not handle_defaults
@@ -4763,7 +4883,7 @@ def _bind_live_success_independent_guard_v1():
                     or not all((original_handle_entry.__kwdefaults__ or {})[key] is value
                                for key, value in handle_keywords)):
                 raise ValueError("live success callable bindings changed: independent _live_handle_entry")
-            original_handle_entry(handle, reviewed_version=4, **_reviewed_source_use_kwargs(instance_identity_profile))
+            original_handle_entry(handle, reviewed_version=4, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
             if (entry_guard.__code__ is not entry_code
                     or entry_guard.__defaults__ is not entry_defaults
                     or guarded.__code__ is not guard_code
@@ -4782,7 +4902,7 @@ def _bind_live_success_independent_guard_v1():
                 expected_preservation_sha256=expected_realization_sha256,
                 realization_preservation=preservation, expected_upstream_preservation_sha256=expected_preservation_sha256,
                 expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
-                toolchain=toolchain, **kwargs, **_reviewed_source_use_kwargs(instance_identity_profile))
+                toolchain=toolchain, **kwargs, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
             if (integrity.__code__ is not integrity_state[1]
                     or integrity.__defaults__ is not integrity_state[2]
                     or set(integrity.__kwdefaults__ or {}) != {key for key, _ in integrity_state[3]}
