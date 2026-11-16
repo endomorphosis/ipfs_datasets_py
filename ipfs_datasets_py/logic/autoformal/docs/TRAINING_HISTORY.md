@@ -1,5 +1,13 @@
 # Training and experiment history
 
+## Original-HTML origin map: two separate 178-case software qualifications — 2026-11-15
+
+The missing-API RED1 measured one intended failure after healthy V2 extraction; its Source/Native/process/wait custody closed and failed16MiB claim `d9be` remains retained and nondurable. A separate stdlib UTF7 observation corrected one existing test's expected three-character decoder envelope, including the following `<`, without changing product bodies or the positive RED helpers. RootR Source4 adoption5860 and separate readbackb20f are preserved.
+
+One captured RootR original passed178/178 across65 whole functions in3.413s; its245-source custody closed in161.079324s, with61 files/779,612 bytes and60 sealed members checked. After separate R2 Source4 port1bb9/readbackc56c, a fresh R2 original independently passed178/178 across65 functions in3.473s, with zero failures/errors/skips; exact245-source custody closed in163.596434s, with61 files/779,702 bytes and60 sealed members checked. Each scope contains28 new plus150 retained cases and durably released only its own16MiB claim. Neither result is a pooled356-case run or a whole-commit qualification.
+
+Later known Physical4 source changes are outside the selected245; their closed source receipts supply context, not WholeNorm/native proof. No fitting, training/gold quality, model quality, statutory review, governing-source selection, historical cache authentication, graph/corpus admission or Lean proof was measured. [Separate originals, retained failure and exact source evidence](../../../../docs/autoformalization/evidence/legal-ir-original-html-origin-map-software178-20261115.json). All24 backlog states remain unchanged.
+
 ## Definition realization: separate software and actual Lean qualifications — 2026-11-15
 
 One actual RED2 original measured two intended engineering failures in16.445s, no fixture errors/skips. Healthy default realization/selected V3 preparation preceded the explicit-selector failure; the other control reached default incremental fact/contract profile refusal. Source/process/Native/genuine-wait custody closed in122.618617s; the failed16MiB claim remains retained and nondurable. Source CAS adoption alone supplies no test qualification.

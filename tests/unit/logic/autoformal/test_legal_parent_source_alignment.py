@@ -293,3 +293,18 @@ def test_nested_aggregate_input_budget_precedes_any_parent_snapshot(tmp_path, po
     args["limits"] = {"max_total_input_report_bytes": cap}
     monkeypatch.setattr(owner, "_parent_snapshot", lambda *a: pytest.fail("copied parent before complete nested input preflight"))
     with pytest.raises(ValueError): owner.prepare_parent_source_alignment(parent, **args)
+
+
+def test_optional_snapshot_origin_map_never_promotes_parent_render_or_historical_HTML_correspondence(tmp_path):
+    report,parent,args=materialize(tmp_path)
+    before=deepcopy(report)
+    for document_input in args['document_inputs']:
+        trusted={key:document_input[key] for key in ('descriptor','expected_descriptor_sha256','expected_raw_sha256','expected_raw_bytes')}
+        view=document_input['view_report'];raw=document_input['raw_bytes']
+        mapping=official.prepare_official_document_origin_map(view,raw,
+            expected_view_report_sha256=document_input['expected_view_report_sha256'],**trusted)
+        assert mapping['old_V2_reports_or_raw_mapping_authority_promoted'] is False
+        assert all(flag is False for flag in mapping['authority'].values())
+    assert report==before and report['raw_HTML_coordinate_mapping_verified'] is False
+    assert report['all_source_correspondence_unverified'] is True
+    assert owner.validate_parent_source_alignment(report,parent,expected_report_sha256=digest(report),**args)['all_source_correspondence_unverified'] is True

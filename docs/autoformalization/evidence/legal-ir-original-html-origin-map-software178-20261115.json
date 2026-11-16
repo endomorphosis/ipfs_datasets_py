@@ -1,0 +1,221 @@
+{
+  "R2_transition_and_qualification": {
+    "JUnit_seconds": 3.473,
+    "Source_Native_process_genuine_wait_closed": true,
+    "Source_seconds": 163.59643425419927,
+    "actual_GREEN178": {
+      "bytes": 2654,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/retained-capacity-watchdog-v01/census-lock-followthrough-v01/completed-body-finalization-recovery-v01/current-V5-producer-SDK-tuple-private-v02/html-origin-map-private-v05/R2-qualification-preparation-private-v01/GREEN178-R2-canonical-whole3-original16MiB-v01/Root-actual60548-R2-GREEN178-genuine-drain-and-JUnit-v01.json",
+      "sha256": "9026e3913bc4941f9351d8632ad4a42362e85899e50b45abf5b2a540bd6ca56d"
+    },
+    "actual_Source4_port": {
+      "bytes": 15943,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/retained-capacity-watchdog-v01/census-lock-followthrough-v01/completed-body-finalization-recovery-v01/current-V5-producer-SDK-tuple-private-v02/html-origin-map-private-v05/R2-port-preparation-private-v01/actual-RawMap-R2-existing-Source42-CAS733-four-target-port-v01.json",
+      "sha256": "1bb9613b0bd9e48bdd7aab0eede728f08e4b18058b7e66944b059cd4d273f5aa"
+    },
+    "actual_Source4_separate_readback": {
+      "bytes": 3345,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/retained-capacity-watchdog-v01/census-lock-followthrough-v01/completed-body-finalization-recovery-v01/current-V5-producer-SDK-tuple-private-v02/html-origin-map-private-v05/R2-port-preparation-private-v01/Root-actual-RawMap-R2-four-target-separate-Source42-readback-v01.json",
+      "sha256": "c56c7e34799a219561fc7fa30690ba1f411626b10254f3face7bc40a057859a1"
+    },
+    "actual_independent_full_closure_review": {
+      "bytes": 68523,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/retained-capacity-watchdog-v01/census-lock-followthrough-v01/completed-body-finalization-recovery-v01/current-V5-producer-SDK-tuple-private-v02/html-origin-map-private-v05/R2-qualification-preparation-private-v01/GREEN178-R2-canonical-whole3-original16MiB-v01/independent-actual60548-R2-RawMap-GREEN178-current245-full-closure-durable16MiB-review-v01.json",
+      "sha256": "ee8b47929b618e4f2139f14aa96d121418aacf6130129bd5f166967822d03d76"
+    },
+    "actual_normal_main_publication": null,
+    "captured_HEAD": "c7600a8143da4c585a8144b6f155b09bee249346",
+    "cases": 178,
+    "checkout": "/tmp/datasets-reviewed-source-use-main-20261115",
+    "complete_runtime_binary_optional_dependency_or_whole_commit_closure_claimed": false,
+    "errors": 0,
+    "failures": 0,
+    "genuine_final_tool": "27575f",
+    "known_Physical4_nonsubject_context": {
+      "all_four_paths_outside245": true,
+      "closed_READ": {
+        "bytes": 5013,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-ir-realization-release-retained-private-v01/current-c760-four-owner-reconciliation-v01/Source42-IO733-reviewed-physical-four-SELECTED-v03/actual-physical-four-Source-READ-v03.json",
+        "sha256": "5b1c54589bcfda02c3657acfa6dab3d24aadeed2e38e9750421e842b4c63ea20"
+      },
+      "closed_WRITE": {
+        "bytes": 6889,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-ir-realization-release-retained-private-v01/current-c760-four-owner-reconciliation-v01/Source42-IO733-reviewed-physical-four-SELECTED-v03/actual-physical-four-Source-WRITE-v03.json",
+        "sha256": "097940bd1bd543c7114303362190a8966768f5cff599d8288361d3bdd1d54140"
+      },
+      "qualification_or_WholeNorm_native_proof_credit": false,
+      "three_previously_captured_context_files_later_changed": true
+    },
+    "new_cases": 28,
+    "oldR_qualification_transferred": false,
+    "original_session": 60548,
+    "own_reservation_id": "aeac064ccb2b416b828977fc10e9c06a",
+    "own_status": "released_durably",
+    "own_storage_bytes": 16777216,
+    "pooled_356_case_run_claimed": false,
+    "qualified": true,
+    "retained_cases": 150,
+    "scope": "One independently admitted genuine original on the R2 current245 declared source controls and four exact canonical RawMap postimages. No whole-R2/commit or WholeNorm qualification.",
+    "seal_member_count": 60,
+    "skipped": 0,
+    "source_control_count": 245,
+    "status": "SOURCE_SCOPED_R2_SOFTWARE178_QUALIFIED_PUBLICATION_PENDING",
+    "strict_attempt_bytes": 779702,
+    "strict_attempt_files": 61,
+    "whole_functions": 65
+  },
+  "authority": {
+    "Lean_or_proof_qualified": false,
+    "full_US_Code_formalized": false,
+    "governing_edition_or_source_selected": false,
+    "graph_or_corpus_admitted": false,
+    "historical_cache_producer_authenticated": false,
+    "legal_role_or_meaning_reviewed": false,
+    "model_quality_or_convergence_verified": false,
+    "training_or_gold_admitted": false
+  },
+  "captured_original_R_qualification": {
+    "JUnit": {
+      "bytes": 40575,
+      "path": "/tmp/pytest-of-barberb/rawmap-GREEN178-canonical-b3585895affd4905a289317c26963a17/attempt/exports/test-results.xml",
+      "sha256": "6f327af12fb62885710e2f10827a4ff5520c05bb4fac00d2607a78f8afe23ad9"
+    },
+    "JUnit_seconds": 3.413,
+    "Source_Native_process_genuine_wait_closed": true,
+    "Source_seconds": 161.07932440610602,
+    "actual_Source4_adoption": {
+      "bytes": 6669,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/retained-capacity-watchdog-v01/census-lock-followthrough-v01/completed-body-finalization-recovery-v01/current-V5-producer-SDK-tuple-private-v02/html-origin-map-private-v04/ordinary-qualification-packets-v01/actual-RawMap-existing-Source42-CAS733-four-target-adoption-v02-corrected-UTF7-fixture.json",
+      "sha256": "5860136dea2b1974cf4f8a7fccf7f5669011cd46aacd08989f8bda274d13f20d"
+    },
+    "actual_Source4_separate_readback": {
+      "bytes": 2751,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/retained-capacity-watchdog-v01/census-lock-followthrough-v01/completed-body-finalization-recovery-v01/current-V5-producer-SDK-tuple-private-v02/html-origin-map-private-v04/ordinary-qualification-packets-v01/Root-actual-RawMap-Source4-separate-Source42-readback-v01.json",
+      "sha256": "b20f7f340378bbe4431384d6191fcae82b53c52a5977a4ae0dfc4c6a115da938"
+    },
+    "actual_independent_review": {
+      "bytes": 67040,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/retained-capacity-watchdog-v01/census-lock-followthrough-v01/completed-body-finalization-recovery-v01/current-V5-producer-SDK-tuple-private-v02/html-origin-map-private-v04/ordinary-qualification-packets-v01/GREEN178-canonical-whole3-original16MiB-v01/independent-actual56556-RawMap-GREEN178-current245-full-closure-durable16MiB-review-v01.json",
+      "sha256": "c5f1dae020997aa9ed43af299f9638351315058ca3279e000f48440752280a0e"
+    },
+    "cases": 178,
+    "checkout": "/tmp/datasets-publish-main-20261114",
+    "errors": 0,
+    "failures": 0,
+    "genuine_final_tool": "7511ea",
+    "new_cases": 28,
+    "original_session": 56556,
+    "own_reservation_id": "e68469bd255b44228e5237e4484c48ae",
+    "own_status": "released_durably",
+    "own_storage_bytes": 16777216,
+    "retained_cases": 150,
+    "scope": "c7600a8143da4c585a8144b6f155b09bee249346 plus exact four Source postimages; current245 declared source controls. This is not R2 qualification.",
+    "seal_member_count": 60,
+    "skipped": 0,
+    "source_control_count": 245,
+    "source_postimages": [
+      {
+        "candidate": {
+          "bytes": 24172,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/retained-capacity-watchdog-v01/census-lock-followthrough-v01/completed-body-finalization-recovery-v01/current-V5-producer-SDK-tuple-private-v02/html-origin-map-private-v04/postimages/ipfs_datasets_py/logic/autoformal/legal_statutory_context.py",
+          "sha256": "7ee890a13a67d219c044b32fe43c7609437bd5751c56d60f87b159eef98335fa"
+        },
+        "canonical": "/tmp/datasets-publish-main-20261114/ipfs_datasets_py/logic/autoformal/legal_statutory_context.py",
+        "path_in_repo": "ipfs_datasets_py/logic/autoformal/legal_statutory_context.py"
+      },
+      {
+        "candidate": {
+          "bytes": 51449,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/retained-capacity-watchdog-v01/census-lock-followthrough-v01/completed-body-finalization-recovery-v01/current-V5-producer-SDK-tuple-private-v02/html-origin-map-private-v04/postimages/ipfs_datasets_py/logic/autoformal/legal_official_document_views.py",
+          "sha256": "e43e7e19c6d58ec179224128d9ceabe6a9bf0963db6b42e0c738419a110f00cb"
+        },
+        "canonical": "/tmp/datasets-publish-main-20261114/ipfs_datasets_py/logic/autoformal/legal_official_document_views.py",
+        "path_in_repo": "ipfs_datasets_py/logic/autoformal/legal_official_document_views.py"
+      },
+      {
+        "candidate": {
+          "bytes": 33317,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/retained-capacity-watchdog-v01/census-lock-followthrough-v01/completed-body-finalization-recovery-v01/current-V5-producer-SDK-tuple-private-v02/html-origin-map-private-v05/postimages/tests/unit/logic/autoformal/test_legal_official_document_views.py",
+          "sha256": "d04ec9f999667bc331404161b944db9f12ea24f362ce41f125dfe13185e70302"
+        },
+        "canonical": "/tmp/datasets-publish-main-20261114/tests/unit/logic/autoformal/test_legal_official_document_views.py",
+        "path_in_repo": "tests/unit/logic/autoformal/test_legal_official_document_views.py"
+      },
+      {
+        "candidate": {
+          "bytes": 20299,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/retained-capacity-watchdog-v01/census-lock-followthrough-v01/completed-body-finalization-recovery-v01/current-V5-producer-SDK-tuple-private-v02/html-origin-map-private-v04/postimages/tests/unit/logic/autoformal/test_legal_parent_source_alignment.py",
+          "sha256": "363d91a4c67bf27c07061b185574d13353e4ca643056265584960f2d4e8b0792"
+        },
+        "canonical": "/tmp/datasets-publish-main-20261114/tests/unit/logic/autoformal/test_legal_parent_source_alignment.py",
+        "path_in_repo": "tests/unit/logic/autoformal/test_legal_parent_source_alignment.py"
+      }
+    ],
+    "strict_attempt_bytes": 779612,
+    "strict_attempt_files": 61,
+    "whole_case_map": {
+      "bytes": 46119,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/retained-capacity-watchdog-v01/census-lock-followthrough-v01/completed-body-finalization-recovery-v01/current-V5-producer-SDK-tuple-private-v02/html-origin-map-private-v04/ordinary-qualification-packets-v01/GREEN178-canonical-whole3-module-selection-INERT-DATA-v02-test-envelope-only.json",
+      "sha256": "68689ffd7ad71b77e71058459487d78e810a8bb2a706558c16686548ed1188bc"
+    },
+    "whole_functions": 65
+  },
+  "existing_tasks": [
+    "LIR-02",
+    "LIR-03"
+  ],
+  "feature_owner": "ipfs_datasets_py.logic.autoformal.legal_official_document_views",
+  "prepared_at": "2026-11-16T00:01:19.775134+00:00",
+  "preserved_failure_and_fixture_history": {
+    "RED1": {
+      "Source_Native_process_genuine_wait_closed": true,
+      "actual_independent_review": {
+        "bytes": 15300,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/retained-capacity-watchdog-v01/census-lock-followthrough-v01/completed-body-finalization-recovery-v01/current-V5-producer-SDK-tuple-private-v02/html-origin-map-private-v04/ordinary-qualification-packets-v01/RED1-current-owner-original16MiB-v01/independent-actual85211-RawMap-RED1-missing-API-full-closure-retained16MiB-review-v01.json",
+        "sha256": "4cee702af19a93b7ebbb0473c1a8dd8bd7ec76a27a093055bcdd000f37da62d7"
+      },
+      "cases": 1,
+      "cause": "Expected missing additive prepare_official_document_origin_map API after successful unchanged V2 preparation.",
+      "errors": 0,
+      "failures": 1,
+      "genuine_final_tool": "20846e",
+      "original_session": 85211,
+      "own_reservation_id": "d9be3b7664294eaba2f5f683af6a1d6c",
+      "own_status": "retained_nondurable",
+      "own_storage_bytes": 16777216,
+      "skipped": 0
+    },
+    "UTF7_fixture_correction": {
+      "change": "Existing UTF7 emission includes following < delimiter: expected run length3 and raw envelope (text+\"<\").encode(\"utf7\"); product bodies, RED positive/helper ASTs and case population unchanged.",
+      "kind": "stdlib mechanism observation and private test-only correction, not a product test failure or passing project qualification",
+      "narrow_test_only_review": {
+        "bytes": 6491,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/retained-capacity-watchdog-v01/census-lock-followthrough-v01/completed-body-finalization-recovery-v01/current-V5-producer-SDK-tuple-private-v02/html-origin-map-private-v05/independent-v05-contextual-UTF7-test-only-delta-static-review-v02.json",
+        "sha256": "2cd266842e02f63994312238bd454c57c689b4e9bed5f37da0cc504446479ddd"
+      },
+      "observation": {
+        "bytes": 1449,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/retained-capacity-watchdog-v01/census-lock-followthrough-v01/completed-body-finalization-recovery-v01/current-V5-producer-SDK-tuple-private-v02/html-origin-map-private-v04/ordinary-qualification-packets-v01/Root-stdlib-UTF7-following-markup-emission-observation-v01.json",
+        "sha256": "796c9bc0e05951503f62e1a0c68e925949afae3aefc9306f885c0ef361e26459"
+      }
+    }
+  },
+  "publication_performed_by_preparer": false,
+  "schema": "legal-ir-original-html-origin-map-software-qualification-reference/v1",
+  "scope": "Deterministic supplied original HTML snapshot to the unchanged V2 normalized view. Reuses existing shared strict decoder and markup parser; optional separate map, complete provenance and exact independent regeneration.",
+  "separate_originals_not_pooled_or_retagged": true,
+  "software_feature": {
+    "default_V2_outputs_and_authority_flags_unchanged": true,
+    "entity_codec_emission_envelopes_explicitly_may_be_nonminimal": true,
+    "map_schema": "legal-official-markup-origin-map/v1",
+    "old_historical_raw_HTML_mapping_flags_promoted": false,
+    "profile": "strict-decoder-emissions-HTMLParser-updatepos-v2-normalization/v1",
+    "source_code_and_Python_identity_pinned": true
+  },
+  "transport_scope": {
+    "ZIP_raw_model_private_assets_added": false,
+    "raw_receipts_remain_at_original_paths": true,
+    "self_contained_portable_raw_evidence_claimed": false,
+    "small_reference_summary_only": true
+  }
+}

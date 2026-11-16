@@ -85,6 +85,111 @@
       "raw_bytes": 1531919
     }
   },
+  "later_DATA53_and_controlled_Source2_delivery_20261115": {
+    "corrected_DATA53": {
+      "Original_session": 92683,
+      "Root_genuine_ref": {
+        "availability": "retained_original_local_evidence_not_added_to_historical_ZIP",
+        "bytes": 1001,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/retained-capacity-watchdog-v01/census-lock-followthrough-v01/completed-body-finalization-recovery-v01/current-V5-producer-SDK-tuple-private-v02/current217-one-nonsubject-postclose-transition-private-v03/ordinary-private-current217-DATA53-current223-original16MiB-v02-coherent-review-fixture/Root-actual92683-corrected53-genuine-drain-and-JUnit-v01.json",
+        "sha256": "645e492fd97d1bd5a314f33605efa97f94b19b9fb007b0fc4140ebe7faa2a117"
+      },
+      "Source_closed": true,
+      "cases": 53,
+      "elapsed_seconds": 159.9757283879444,
+      "failed_DATA36_35P1F_and_first_DATA53_52P1F_claims_preserved": true,
+      "functions": 8,
+      "genuine_terminal": "3a7ee3",
+      "independent_review_ref": {
+        "availability": "retained_original_local_evidence_not_added_to_historical_ZIP",
+        "bytes": 16217,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/retained-capacity-watchdog-v01/census-lock-followthrough-v01/completed-body-finalization-recovery-v01/current-V5-producer-SDK-tuple-private-v02/current217-one-nonsubject-postclose-transition-private-v03/ordinary-private-current217-DATA53-current223-original16MiB-v02-coherent-review-fixture/independent-actual92683-corrected-DATA53-GREEN-full-closure-durable-storage-review-v01.json",
+        "sha256": "c6e34fb8d187754016d4e8159338d408a733692d36157c6be25a09cb9d227333"
+      },
+      "outer_and_SDK_returncode": 0,
+      "own_16MiB_released_durably": true,
+      "qualification_boundary": "Exact current223-source corrected DATA53 method controls only: Common82a2/sealerea5/test9284 with fixed mapab26. Historical45 remains three original217 cutoffs, failed35/1 and52/1 originals remain failed and retained. This is not exact-byte runtime qualification of literal Commonc0e/sealer2c6b/controller9ca6, Source2 activation, new registration/enrollment, Native3/Main feature, statutory/model/training/Lean/corpus or whole published commit qualification. Existing static literal-rebase gate and fresh Root selection/peer conditions plus actual controller/source/metadata/natural-cycle readback remain separate.",
+      "source_drift": [],
+      "source_pins": 223
+    },
+    "engineering_Source2_delivery": {
+      "Root_genuine_ref": {
+        "availability": "retained_original_local_evidence_not_added_to_historical_ZIP",
+        "bytes": 2211,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/retained-capacity-watchdog-v01/census-lock-followthrough-v01/completed-body-finalization-recovery-v01/current-V5-producer-SDK-tuple-private-v02/current217-existing-source2-runtime-literal-port-private-v02-closed-contract-v2/Root-existing-Source2-actual-controller57432-genuine-drain-and-natural-v01.json",
+        "sha256": "7373fde703feccbab45362235c078400f5283cfe65e8a499c581bf623acf175e"
+      },
+      "Source29_capture": {
+        "bytes": 1695773,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/retained-capacity-watchdog-v01/input-bundles/current217-V5-tuple-source2-v3-closed-v2-325ebe13d8fd453699b9dd4b7dee121c/source29-capture-DATA.json",
+        "sha256": "efc14e4501e66e0ba33a0f063c7c440d5561284326e9333f87271606a586f2bc"
+      },
+      "config": {
+        "bytes": 8327,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/retained-capacity-watchdog-v01/input-bundles/current217-V5-tuple-source2-v3-closed-v2-325ebe13d8fd453699b9dd4b7dee121c/watch-config-completed-stage2.json",
+        "sha256": "ae68bab3e35d49550e65b6c0e386248a506f85631c00046bd7d9ab402da1cad1"
+      },
+      "controller": {
+        "PID": 517018,
+        "PID_absent": true,
+        "Root_genuine_drain_tool": "530792",
+        "Root_original_session": 57432,
+        "Root_outer_returncode": 0,
+        "absolute690_satisfied": true,
+        "completed": true,
+        "current_hold_absent": true,
+        "elapsed_seconds": 388.3533100071363,
+        "errors": [],
+        "fresh4lane_healthy_release_fence": true,
+        "own_hold_removed": true,
+        "quiet450_cleanup120_preserved": true,
+        "recorded_birth": "379960679",
+        "timer_restored": true
+      },
+      "independent_review_ref": {
+        "availability": "retained_original_local_evidence_not_added_to_historical_ZIP",
+        "bytes": 46825,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/retained-capacity-watchdog-v01/census-lock-followthrough-v01/completed-body-finalization-recovery-v01/current-V5-producer-SDK-tuple-private-v02/current217-existing-source2-runtime-literal-port-private-v02-closed-contract-v2/independent-existing-Source2-actual-closed-controller-natural-readback-v01.json",
+        "sha256": "55ca092695121a58ac1c5be4eb720ff4dd67f188b8bdffa4012eee6329a92260"
+      },
+      "live_code": [
+        {
+          "bytes": 262198,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_resource_recovery.py",
+          "sha256": "83709f35e9373f4dfc48aa7c330853b86aa3e6726bcaab1df8e625ecc6dc677c"
+        },
+        {
+          "bytes": 277948,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/run_autoformal_supervisor.py",
+          "sha256": "3ccc6de6b62b08aeb40c3168dc2d538a8a2a5221100f8748c7d96cdb1deb1cc7"
+        }
+      ],
+      "natural": {
+        "API_calls": 0,
+        "Root_genuine_drain_tool": "99868e",
+        "Root_original_session": 91345,
+        "Root_outer_returncode": 0,
+        "Source_READ_closed": true,
+        "admitted": false,
+        "native_release_performed": false,
+        "outputs_deleted": false,
+        "qualification": false,
+        "retry_authorized": false,
+        "status": "no_eligible_reviewed_claim_pressure_remains"
+      },
+      "qualification_boundary": "Actual exact live Source2/config/unit cutover and one natural observation, with controller genuine closure. Software45 remains three historical original217 cutoffs; correctedDATA53 method qualification remains its exact223 scope and static literal rebase is explicit. Natural API0/historical-release observation does not grant current/future admission, retry, storage/Native release, new registration or legal/model/training/Lean/corpus/whole-mission completion.",
+      "unit": {
+        "bytes": 1218,
+        "path": "/home/barberb/.config/systemd/user/ipfs-legal-ir-retained-capacity-recovery.service",
+        "sha256": "346e34dbed1d21814aa92b43c344848c54d693c88d4aa47eaaae3b2f55f3f34c"
+      }
+    },
+    "historical_archive_payload_and_original45_scope_unchanged": true,
+    "historical_scope_not_pooled": true,
+    "new_legal_model_training_gold_Lean_corpus_or_whole_mission_authority": false,
+    "no_new_archive_members_or_asset_transport": true,
+    "schema": "selected-current-V5-later-DATA53-and-engineering-delivery-summary/v1"
+  },
   "limits": {
     "current_operational_runtime_or_registries": false,
     "global_storage_and_scheduler_ledgers": "Mutable global ledgers are not copied; exact original terminal row/raw closures remain.",

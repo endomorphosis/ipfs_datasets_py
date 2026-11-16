@@ -251,3 +251,240 @@ def test_catalog_reports_malformed_metadata_without_a_traceback(
     result = json.loads(capsys.readouterr().out)
     assert result["valid"] is False
     assert any(expected in item for item in result["errors"]), result["errors"]
+
+
+@pytest.mark.parametrize("declaration", [
+    "def inner():\n        return None",
+    "async def inner():\n        return None",
+    "class inner:\n        pass",
+])
+def test_catalog_recognizes_explicit_factory_callable_exports_without_importing(
+        navigation_fixture, declaration):
+    owner = catalog()
+    root, values, backlog = navigation_fixture
+    source = ("raise AssertionError('catalog must not import this owner')\n"
+        "def make():\n    " + declaration + "\n"
+        "    states = ()\n    return inner, states\n"
+        "public_api, _states = make()\n")
+    (root / values["components"][0]["path"]).write_text(source)
+    values["components"][0]["apis"] = ["public_api"]
+    _save_fixture(root, values, backlog)
+    result = owner.check_catalog(root)
+    assert result["valid"], result["errors"]
+    assert result["registered_owners_imported"] == 0
+    assert result["model_or_native_execution"] is False
+
+
+def test_catalog_recognizes_live_api_positions_in_mixed_ten_slot_factory_export(
+        navigation_fixture):
+    owner = catalog()
+    root, values, backlog = navigation_fixture
+    source = """
+def make():
+    def hidden():
+        return None
+    def build_live():
+        return None
+    def load_live():
+        return None
+    guard = entry = integrity = old_build_v2 = old_load_v2 = old_build_v3 = old_load_v3 = None
+    states = ()
+    return (guard, entry, integrity, old_build_v2, old_load_v2, old_build_v3,
+            old_load_v3, build_live, load_live, states)
+(_guard, _entry, _integrity, _build_v2, _load_v2, _build_v3, _load_v3,
+ build_live, load_live, _states) = make()
+"""
+    (root / values["components"][0]["path"]).write_text(source)
+    values["components"][0]["apis"] = ["build_live", "load_live"]
+    _save_fixture(root, values, backlog)
+    assert owner.check_catalog(root)["valid"]
+    # Neither an unexported local nor a returned metadata/alias slot is an API.
+    for missing in ("hidden", "_states", "_guard"):
+        values["components"][0]["apis"] = [missing]
+        _save_fixture(root, values, backlog)
+        result = owner.check_catalog(root)
+        assert not result["valid"]
+        assert any("declared APIs missing: " + missing in error for error in result["errors"])
+
+
+@pytest.mark.parametrize("defect", [
+    "uncalled", "unexported", "all-only", "local-rebound", "conditional-local-rebound",
+    "local-deleted", "import-rebound", "factory-rebound", "export-rebound",
+    "conditional-export-rebound", "arity", "noncallable", "alias", "branch-return",
+    "decorated-local", "decorated-factory", "async-factory", "generator-factory",
+    "starred-target", "duplicate-target", "duplicate-return", "list-target",
+    "call-argument", "call-keyword", "list-return",
+    "star-import", "class-nonlocal-rebound", "class-global-rebound",
+])
+def test_catalog_refuses_unbound_or_ambiguous_factory_api_claims(navigation_fixture, defect):
+    owner = catalog()
+    root, values, backlog = navigation_fixture
+    source = ("def make():\n    def inner():\n        return None\n"
+              "    states = ()\n    return inner, states\npublic_api, _states = make()\n")
+    if defect == "uncalled":
+        source = source.replace("public_api, _states = make()\n", "")
+    elif defect == "unexported":
+        source = source.replace("def inner():", "def public_api():").replace(
+            "    states = ()", "    def returned():\n        return None\n    states = ()").replace(
+            "return inner, states", "return returned, states").replace(
+            "public_api, _states =", "_returned, _states =")
+    elif defect == "all-only":
+        source = source.replace("public_api, _states = make()", "__all__ = ['public_api']")
+    elif defect in ("local-rebound", "conditional-local-rebound", "local-deleted", "import-rebound"):
+        change = {"local-rebound": "    inner = None\n",
+                  "conditional-local-rebound": "    if unknown:\n        inner = None\n",
+                  "local-deleted": "    del inner\n",
+                  "import-rebound": "    import math as inner\n"}[defect]
+        source = source.replace("    return inner, states", change + "    return inner, states")
+    elif defect == "factory-rebound":
+        source = source.replace("public_api, _states", "make = lambda: (None, ())\npublic_api, _states")
+    elif defect in ("export-rebound", "conditional-export-rebound"):
+        source += ("public_api = None\n" if defect == "export-rebound" else
+                   "if unknown:\n    public_api = None\n")
+    elif defect == "arity":
+        source = source.replace("public_api, _states", "public_api, _states, extra")
+    elif defect == "noncallable":
+        source = source.replace("return inner, states", "return states, inner")
+    elif defect == "alias":
+        source = source.replace("    return inner, states", "    alias = inner\n    return alias, states")
+    elif defect == "branch-return":
+        source = source.replace("    return inner, states", "    if unknown:\n        return inner, states\n    return inner, states")
+    elif defect == "decorated-local":
+        source = source.replace("    def inner():", "    @replacement\n    def inner():")
+    elif defect == "decorated-factory":
+        source = "@replacement\n" + source
+    elif defect == "async-factory":
+        source = source.replace("def make():", "async def make():")
+    elif defect == "generator-factory":
+        source = source.replace("    return inner, states", "    yield None\n    return inner, states")
+    elif defect == "starred-target":
+        source = source.replace("public_api, _states", "public_api, *_states")
+    elif defect == "duplicate-target":
+        source = source.replace("public_api, _states", "public_api, public_api")
+    elif defect == "duplicate-return":
+        source = source.replace("return inner, states", "return inner, inner")
+    elif defect == "list-target":
+        source = source.replace("public_api, _states =", "[public_api, _states] =")
+    elif defect == "call-argument":
+        source = source.replace("= make()", "= make(1)")
+    elif defect == "call-keyword":
+        source = source.replace("= make()", "= make(flag=True)")
+    elif defect == "list-return":
+        source = source.replace("return inner, states", "return [inner, states]")
+    elif defect == "star-import":
+        source += "from replacement import *\n"
+    elif defect == "class-nonlocal-rebound":
+        source = source.replace("    return inner, states",
+            "    class Rebind:\n        nonlocal inner\n        inner = None\n    return inner, states")
+    elif defect == "class-global-rebound":
+        source += "class Rebind:\n    global public_api\n    public_api = None\n"
+    (root / values["components"][0]["path"]).write_text(source)
+    values["components"][0]["apis"] = ["public_api"]
+    _save_fixture(root, values, backlog)
+    result = owner.check_catalog(root)
+    assert not result["valid"]
+    assert any("declared APIs missing: public_api" in error for error in result["errors"])
+    assert result["registered_owners_imported"] == 0
+
+
+@pytest.fixture
+def large_component_metadata():
+    return {
+        "id": "large-owner", "path": "example/owner.py", "owner_module": "example.owner",
+        "ownership_role": "existing_single_owner", "status": "implementation_present",
+        "apis": ["prepare"], "evidence_ids": ["fixture-evidence"], "required": True,
+        "compatibility_dependency": False, "notes": "full-only notes " * 1000,
+        "private_reviewed_live_guard_selected_20261111": {"opaque": "retained history §\n" * 1000},
+        "unknown_future_history": {"nested": [{"receipt": "uninterpreted", "mask": 0}]},
+    }
+
+
+def test_component_default_is_compact_and_full_preserves_unknown_detached_history(
+        monkeypatch, large_component_metadata):
+    owner = catalog()
+    record = large_component_metadata
+    reads = []
+    def observed():
+        reads.append("catalog")
+        return {"components": [record]}
+    monkeypatch.setattr(owner, "load_catalog", observed)
+    expected_keys = {"id", "path", "owner_module", "ownership_role", "status", "apis",
+                     "evidence_ids", "required", "compatibility_dependency"}
+    compact = owner.component(record["id"])
+    assert len(reads) == 1 and set(compact) == expected_keys
+    assert compact == {key: record[key] for key in expected_keys}
+    assert len(json.dumps(compact, indent=2).encode()) < 8192
+    compact["apis"].append("detached")
+    full = owner.component(record["id"], full=True)
+    assert len(reads) == 2 and full == record
+    assert len(json.dumps(full).encode()) > 8192
+    full["unknown_future_history"]["nested"][0]["receipt"] = "detached"
+    assert owner.component(record["id"], full=True) == record
+    assert len(reads) == 3
+    with pytest.raises(KeyError):
+        owner.component("unknown", full=True)
+    assert len(reads) == 4
+
+
+def test_all_current_components_keep_pretty_navigation_below_compact_limit(monkeypatch):
+    owner = catalog()
+    saved = owner.load_catalog()
+    monkeypatch.setattr(owner, "load_catalog", lambda: saved)
+    for record in saved["components"]:
+        compact = owner.component(record["id"])
+        assert len((json.dumps(compact, indent=2, sort_keys=True) + "\n").encode()) < 8192, record["id"]
+        assert all(key in record and value == record[key] for key, value in compact.items())
+
+
+@pytest.mark.parametrize("full", [False, True], ids=["compact", "complete"])
+def test_component_cli_explicit_full_preserves_history_using_stdlib_only(
+        tmp_path, large_component_metadata, full):
+    home = tmp_path / "source-only-cli"
+    (home / "docs").mkdir(parents=True)
+    script = home / "work_catalog.py"
+    script.write_bytes(SOURCE.read_bytes())
+    (home / "docs/work_catalog.json").write_text(json.dumps({
+        "schema": "legal-autoformal-work-catalog/v1", "components": [large_component_metadata],
+    }))
+    code = r"""
+import importlib.abc,runpy,sys
+class Deny(importlib.abc.MetaPathFinder):
+    def find_spec(self,fullname,path=None,target=None):
+        if fullname.partition('.')[0] in {'ipfs_datasets_py','torch','numpy','transformers','pyarrow'}:
+            raise AssertionError('catalog imported runtime owner: '+fullname)
+sys.meta_path.insert(0,Deny())
+source=sys.argv[1]
+sys.argv=[source,*sys.argv[2:]]
+runpy.run_path(source,run_name='__main__')
+"""
+    args = [sys.executable, "-I", "-S", "-B", "-c", code, str(script),
+            "--component", large_component_metadata["id"]]
+    if full:
+        args.append("--full")
+    result = subprocess.run(args, capture_output=True, text=True, timeout=20, check=False)
+    assert result.returncode == 0, result.stderr
+    value = json.loads(result.stdout)
+    if full:
+        assert value == large_component_metadata
+        assert len(result.stdout.encode()) > 8192
+    else:
+        assert value["id"] == large_component_metadata["id"]
+        assert len(result.stdout.encode()) < 8192
+        assert "notes" not in value and "unknown_future_history" not in value
+
+
+def test_component_full_optin_requires_bool_before_catalog_read(monkeypatch):
+    owner = catalog()
+    def forbidden():
+        raise AssertionError("invalid full option read the catalog")
+    monkeypatch.setattr(owner, "load_catalog", forbidden)
+    with pytest.raises(TypeError, match="full must be a bool"):
+        owner.component("large-owner", full="yes")
+
+
+def test_full_cli_still_requires_explicit_task_or_component(capsys):
+    owner = catalog()
+    with pytest.raises(SystemExit) as error:
+        owner.main(["--full", "--summary"])
+    assert error.value.code == 2
+    assert "--full requires --task ID or --component ID" in capsys.readouterr().err

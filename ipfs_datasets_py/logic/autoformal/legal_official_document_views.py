@@ -419,3 +419,462 @@ def occurrence_region_intersections(report, selector):
 
 __all__ = ["OfficialDocumentViewError", "prepare_official_document_view", "validate_official_document_view",
     "document_view_report_sha256", "exact_view_occurrences", "occurrence_region_intersections"]
+
+
+# Optional supplied-snapshot lineage. Existing V2 extraction and authority stay unchanged.
+ORIGIN_MAP_SCHEMA = "legal-official-markup-origin-map/v1"
+ORIGIN_MAP_PROFILE = "strict-decoder-emissions-HTMLParser-updatepos-v2-normalization/v1"
+
+
+
+def _origin_producer_code_pins():
+    import html
+    import html.parser
+    import sys
+    from pathlib import Path
+    _need(HTMLParser is html.parser.HTMLParser, "original stdlib HTMLParser identity required")
+    roles = {"mapping_owner": Path(__file__), "shared_decoder_owner": Path(contexts.__file__),
+        "stdlib_html": Path(html.__file__), "stdlib_html_parser": Path(html.parser.__file__)}
+    return {"source_sha256": {role: hashlib.sha256(path.read_bytes()).hexdigest() for role, path in roles.items()},
+        "python_implementation": sys.implementation.name, "python_version": list(sys.version_info[:3]),
+        "python_cache_tag": sys.implementation.cache_tag}
+
+
+class _OriginBudget:
+    """Charge complete observations before retention, under existing ceilings."""
+    def __init__(self, bounds, header):
+        self.maximum = bounds["max_report_bytes"]; self.nodes = bounds["max_nodes"]
+        self.used = self.sources = 0
+        self.charge(header, reserve=128)  # final seal plus root/list delimiters
+
+    def charge(self, record, reserve=0):
+        size = len(_wire(record)) + reserve + 1
+        _need(self.used + size <= self.maximum, "complete origin observation byte budget exceeded before retention")
+        self.used += size
+
+    def source(self, source):
+        _need(self.sources < self.nodes, "complete origin source-record bound exceeded before retention")
+        self.charge(source); self.sources += 1
+
+    def record(self, record):
+        # Source members have already been charged individually before append.
+        self.charge({k: v for k, v in record.items() if k != "source_origins"}, reserve=32)
+
+def _origin_decode(raw, decoded, encoding, bounds, budget):
+    import codecs
+    try:
+        decoder = codecs.getincrementaldecoder(encoding)(errors="strict")
+    except (LookupError, TypeError) as error:
+        raise OfficialDocumentViewError("origin profile requires a strict incremental text decoder") from error
+    runs, controls = [], []
+    position = pending = 0
+
+    def retain(output, consumed):
+        nonlocal position, pending
+        _need(type(output) is str and pending <= consumed <= len(raw), "faithful incremental text emission required")
+        _need(decoded.startswith(output, position), "incremental decoder differs from shared strict source decode")
+        if output:
+            _need(consumed > pending, "zero-input decoded emission is outside origin profile")
+            mode = "affine" if len(output) == 1 else "emission_envelope"
+            width = consumed - pending if mode == "affine" else None
+            if (mode == "affine" and runs and runs[-1]["relation"] == mode
+                    and runs[-1]["unit_raw_bytes"] == width
+                    and runs[-1]["decoded_char_end"] == position and runs[-1]["raw_byte_end"] == pending):
+                runs[-1]["decoded_char_end"] += 1; runs[-1]["raw_byte_end"] = consumed
+            else:
+                _need(len(runs) < bounds["max_nodes"], "complete decoder emission-run bound exceeded")
+                run = {"relation": mode, "decoded_char_start": position,
+                    "decoded_char_end": position + len(output), "raw_byte_start": pending,
+                    "raw_byte_end": consumed, "unit_raw_bytes": width}
+                budget.charge(run, reserve=160)  # later digest and bounded integer growth
+                runs.append(run)
+            position += len(output); pending = consumed
+        elif consumed > pending:
+            if controls and controls[-1]["raw_byte_end"] == pending and controls[-1]["decoded_char_anchor"] == position:
+                controls[-1]["raw_byte_end"] = consumed
+            else:
+                _need(len(controls) < bounds["max_nodes"], "complete decoder control-run bound exceeded")
+                control = {"raw_byte_start": pending, "raw_byte_end": consumed,
+                    "decoded_char_anchor": position, "kind": "decoder_no_output_control"}
+                budget.charge(control, reserve=64)
+                controls.append(control)
+            pending = consumed
+
+    for end in range(1, len(raw) + 1):
+        output = decoder.decode(raw[end - 1:end], final=False)
+        state = decoder.getstate()
+        _need(type(state) is tuple and len(state) == 2 and type(state[0]) is bytes,
+              "incremental decoder must expose exact buffered source bytes")
+        buffered = state[0]
+        _need(len(buffered) <= min(4096, bounds["max_block_bytes"]),
+              "incremental decoder emission buffer exceeds explicit origin-profile bound")
+        _need(len(buffered) <= end and raw[end - len(buffered):end] == buffered,
+              "incremental decoder buffer is not an exact source suffix")
+        retain(output, end - len(buffered))
+    output = decoder.decode(b"", final=True)
+    state = decoder.getstate()
+    _need(type(state) is tuple and type(state[0]) is bytes and not state[0], "complete strict decoder flush required")
+    retain(output, len(raw))
+    _need(position == len(decoded) and pending == len(raw), "complete raw/decoded emission accounting differs")
+    for run in runs:
+        run["decoded_text_sha256"] = hashlib.sha256(decoded[run["decoded_char_start"]:run["decoded_char_end"]].encode()).hexdigest()
+    return runs, controls
+
+
+def _origin_sources(runs, lo, hi, budget):
+    from bisect import bisect_right
+    result, covered = [], lo
+    first = max(0, bisect_right(runs, lo, key=lambda run: run["decoded_char_start"]) - 1)
+    for index in range(first, len(runs)):
+        run = runs[index]
+        if run["decoded_char_start"] >= hi:
+            break
+        start, end = max(lo, run["decoded_char_start"]), min(hi, run["decoded_char_end"])
+        if start >= end:
+            continue
+        _need(start == covered, "complete decoded origin range required")
+        if run["relation"] == "affine":
+            raw_start = run["raw_byte_start"] + (start - run["decoded_char_start"]) * run["unit_raw_bytes"]
+            raw_end = run["raw_byte_start"] + (end - run["decoded_char_start"]) * run["unit_raw_bytes"]
+        else:
+            raw_start, raw_end = run["raw_byte_start"], run["raw_byte_end"]
+        source = {"decoder_run_index": index, "relation": run["relation"],
+            "decoded_html_char_start": start, "decoded_html_char_end": end,
+            "raw_byte_start": raw_start, "raw_byte_end": raw_end,
+            "minimal_per_character_raw_slice_claimed": run["relation"] == "affine"}
+        budget.source(source)
+        result.append(source)
+        covered = end
+    _need(covered == hi and lo < hi, "complete nonempty decoded origin range required")
+    return result
+
+
+class _OriginMarkup(_Markup):
+    """Use the existing parser callbacks; never replace its HTML lexer."""
+    def __init__(self, bounds, decoded, runs, budget):
+        super().__init__(bounds)
+        self.decoded = decoded; self.decoder_runs = runs; self.origin_budget = budget
+        self.absolute = 0; self.pending_origin_event = None
+        self.origin_tokens = []; self.origin_fragments = []; self.zero_output_references = []
+        self.origin_token_count = 0
+
+    def _retain_token(self, tokens, token):
+        _need(self.origin_token_count < self.limits["max_nodes"], "complete HTML origin-token bound exceeded before retention")
+        self.origin_budget.charge(token)
+        tokens.append(token); self.origin_token_count += 1
+
+    def handle_data(self, data):
+        _need(self.pending_origin_event is None, "one original parser data callback at a time required")
+        before = len(self.parts)
+        super().handle_data(data)
+        self.pending_origin_event = (data, len(self.parts) > before)
+
+    def updatepos(self, i, j):
+        import html
+        if self.pending_origin_event is not None:
+            data, retained = self.pending_origin_event
+            self.pending_origin_event = None
+            source = self.rawdata[i:j]
+            _need(j > i and source == self.decoded[self.absolute:self.absolute + j - i]
+                  and html.unescape(source) == data, "original HTMLParser callback/source boundary differs")
+            tokens, cursor = [], 0
+            for match in html._charref.finditer(source):
+                if cursor < match.start():
+                    self._retain_token(tokens, {"text": source[cursor:match.start()], "decoded_start": self.absolute + cursor,
+                        "decoded_end": self.absolute + match.start(), "entity": False})
+                text = html.unescape(match.group())
+                token = {"text": text, "decoded_start": self.absolute + match.start(),
+                    "decoded_end": self.absolute + match.end(), "entity": True}
+                self._retain_token(tokens, token)
+                if not text:
+                    _need(len(self.zero_output_references) < self.limits["max_nodes"], "complete removed-reference bound exceeded")
+                    removed = {"decoded_html_char_start": token["decoded_start"],
+                        "decoded_html_char_end": token["decoded_end"],
+                        "source_origins": _origin_sources(self.decoder_runs, token["decoded_start"], token["decoded_end"], self.origin_budget),
+                        "kind": "zero_output_HTML_reference"}
+                    self.origin_budget.record(removed)
+                    self.zero_output_references.append(removed)
+                cursor = match.end()
+            if cursor < len(source):
+                self._retain_token(tokens, {"text": source[cursor:], "decoded_start": self.absolute + cursor,
+                    "decoded_end": self.absolute + len(source), "entity": False})
+            _need("".join(token["text"] for token in tokens) == data, "stdlib character-reference trace differs")
+            if retained:
+                self.origin_tokens.extend(tokens)
+        self.absolute += j - i
+        return super().updatepos(i, j)
+
+    def _retain_fragment(self, fragment):
+        _need(len(self.origin_fragments) < self.limits["max_nodes"], "complete output origin-fragment bound exceeded")
+        self.origin_budget.record(fragment)
+        self.origin_fragments.append(fragment)
+
+    def _flush(self):
+        tokens = self.origin_tokens
+        verbatim = "".join(self.parts)
+        before = len(self.blocks)
+        super()._flush()
+        self.origin_tokens = []
+        if len(self.blocks) == before:
+            _need(not _normal(verbatim), "original visible block unexpectedly disappeared")
+            return
+        block = self.blocks[-1]
+        _need("".join(token["text"] for token in tokens) == verbatim, "complete original verbatim-event trace differs")
+        if block["block_index"]:
+            self._retain_fragment({"kind": "synthetic_interblock_LF", "block_index": block["block_index"],
+                "output_char_start": block["char_start"] - 1, "output_char_end": block["char_start"],
+                "output_utf8_byte_start": block["utf8_byte_start"] - 1, "output_utf8_byte_end": block["utf8_byte_start"],
+                "output_text_sha256": hashlib.sha256(b"\n").hexdigest(), "source_origins": []})
+        char_at, byte_at, emitted, spaces = block["char_start"], block["utf8_byte_start"], [], []
+
+        def origin(token, start, end):
+            lo, hi = ((token["decoded_start"], token["decoded_end"]) if token["entity"]
+                      else (token["decoded_start"] + start, token["decoded_start"] + end))
+            return _origin_sources(self.decoder_runs, lo, hi, self.origin_budget)
+
+        def emit(text, kind, sources, extra=None):
+            nonlocal char_at, byte_at
+            width = len(text.encode())
+            self._retain_fragment({"kind": kind, "block_index": block["block_index"],
+                "output_char_start": char_at, "output_char_end": char_at + len(text),
+                "output_utf8_byte_start": byte_at, "output_utf8_byte_end": byte_at + width,
+                "output_text_sha256": hashlib.sha256(text.encode()).hexdigest(), "source_origins": sources,
+                **(extra or {})})
+            char_at += len(text); byte_at += width; emitted.append(text)
+
+        for token in tokens:
+            for match in re.finditer(r"\s+|\S+", token["text"]):
+                text = match.group()
+                if text.isspace():
+                    if emitted:
+                        spaces.extend(origin(token, match.start(), match.end()))
+                        _need(len(spaces) <= self.limits["max_nodes"], "complete whitespace-origin bound exceeded")
+                    continue
+                if spaces:
+                    emit(" ", "collapsed_whitespace", spaces)
+                    spaces = []
+                lo, hi = ((token["decoded_start"], token["decoded_end"]) if token["entity"]
+                          else (token["decoded_start"] + match.start(), token["decoded_start"] + match.end()))
+                extra = {"decoded_html_char_start": lo, "decoded_html_char_end": hi}
+                if token["entity"]:
+                    extra.update(entity_output_char_start=match.start(), entity_output_char_end=match.end(),
+                        partial_entity_uses_whole_transform_envelope=True)
+                emit(text, "HTML_reference_decoded" if token["entity"] else "decoded_literal", origin(token, match.start(), match.end()), extra)
+        _need("".join(emitted) == block["text"] and char_at == block["char_end"]
+              and byte_at == block["utf8_byte_end"], "complete original normalized-block origin accounting differs")
+
+
+def _origin_raw_partition(raw, fragments, controls, bounds, budget):
+    events = {}
+    for fragment in fragments:
+        for source in fragment["source_origins"]:
+            lo, hi = source["raw_byte_start"], source["raw_byte_end"]
+            for position, change in ((lo, 1), (hi, -1)):
+                _need(position in events or len(events) < bounds["max_nodes"], "complete raw origin endpoint bound exceeded before retention")
+                events[position] = events.get(position, 0) + change
+    positions = set()
+    for position in (0, len(raw), *events):
+        _need(position in positions or len(positions) < bounds["max_nodes"], "complete raw partition endpoint bound exceeded before retention")
+        positions.add(position)
+    for control in controls:
+        for position in (control["raw_byte_start"], control["raw_byte_end"]):
+            _need(position in positions or len(positions) < bounds["max_nodes"], "complete raw partition endpoint bound exceeded before retention")
+            positions.add(position)
+    positions = sorted(positions)
+    result, count, control_index = [], 0, 0
+    for lo, hi in zip(positions, positions[1:]):
+        count += events.get(lo, 0)
+        _need(0 <= lo < hi <= len(raw) and len(result) < bounds["max_nodes"], "complete raw partition bound exceeded")
+        while control_index < len(controls) and controls[control_index]["raw_byte_end"] <= lo:
+            control_index += 1
+        control = (control_index < len(controls) and controls[control_index]["raw_byte_start"] <= lo
+                   and hi <= controls[control_index]["raw_byte_end"])
+        piece = {"raw_byte_start": lo, "raw_byte_end": hi,
+            "raw_sha256": hashlib.sha256(raw[lo:hi]).hexdigest(),
+            "kind": "output_origin_envelope" if count else "decoder_control_removed" if control else "not_in_normalized_output"}
+        budget.charge(piece)
+        result.append(piece)
+    return result
+
+
+
+def _origin_payload_preflight(value):
+    """Bound only the new map's caller JSON before canonical-buffer allocation."""
+    maximum = DEFAULT_LIMITS["max_report_bytes"]
+    remaining = maximum
+    stack = [(iter((value,)), 0, False)]
+
+    def charge(size):
+        nonlocal remaining
+        _need(type(size) is int and 0 <= size <= remaining,
+              "origin caller JSON byte bound exceeded before serialization")
+        remaining -= size
+
+    def string_size(text):
+        _need(type(text) is str, "plain JSON string keys and values required")
+        # Even ASCII JSON needs one output byte per source code point.
+        _need(len(text) <= remaining, "origin caller string bound exceeded before serialization")
+        charge(2)
+        for start in range(0, len(text), 1024):
+            try:
+                chunk = json.dumps(text[start:start + 1024], ensure_ascii=False).encode("utf-8")
+            except (ValueError, TypeError, UnicodeError) as error:
+                raise OfficialDocumentViewError("finite UTF8 origin caller JSON required") from error
+            charge(len(chunk) - 2)
+
+    while stack:
+        iterator, depth, dictionary = stack[-1]
+        try:
+            entry = next(iterator)
+        except StopIteration:
+            stack.pop()
+            continue
+        if dictionary:
+            key, item = entry
+            string_size(key); charge(1)
+        else:
+            item = entry
+        _need(depth <= DEFAULT_LIMITS["max_depth"], "origin caller JSON depth bound exceeded")
+        if type(item) is dict:
+            _need(len(item) <= DEFAULT_LIMITS["max_nodes"], "origin caller JSON container bound exceeded before serialization")
+            charge(2 + max(0, len(item) - 1))
+            stack.append((iter(item.items()), depth + 1, True))
+        elif type(item) is list:
+            _need(len(item) <= DEFAULT_LIMITS["max_nodes"], "origin caller JSON container bound exceeded before serialization")
+            charge(2 + max(0, len(item) - 1))
+            stack.append((iter(item), depth + 1, False))
+        elif type(item) is str:
+            string_size(item)
+        elif item is None:
+            charge(4)
+        elif type(item) is bool:
+            charge(4 if item else 5)
+        elif type(item) in (int, float):
+            try:
+                encoded = json.dumps(item, allow_nan=False)
+            except (ValueError, TypeError) as error:
+                raise OfficialDocumentViewError("finite origin caller JSON numbers required") from error
+            charge(len(encoded))
+        else:
+            raise OfficialDocumentViewError("plain built-in origin caller JSON required")
+    return maximum - remaining
+
+def official_document_origin_map_sha256(origin_map):
+    """Full canonical map digest, including origin_map_sha256."""
+    _origin_payload_preflight(origin_map)
+    return _digest(origin_map)
+
+
+def prepare_official_document_origin_map(view_report, raw, *, expected_view_report_sha256, **trusted_inputs):
+    """Trace only the supplied snapshot; do not authenticate producer or law."""
+    import html
+    producer_pins = _origin_producer_code_pins()
+    checked = validate_official_document_view(view_report, raw,
+        expected_report_sha256=expected_view_report_sha256, **trusted_inputs)
+    _need(checked["status"] == "comparison_view_extracted" and type(raw) is bytes,
+          "complete independently replayed V2 view and original HTML required")
+    bounds = checked["limits"]
+    decoded, encoding = contexts._decode_source_html_with_encoding(raw)
+    result = {"schema": ORIGIN_MAP_SCHEMA, "profile": ORIGIN_MAP_PROFILE,
+        "full_official_view_report_sha256": expected_view_report_sha256,
+        "view_id": checked["normalized_view"]["view_id"], "document_id": checked["document"]["document_id"],
+        "raw_sha256": checked["raw_sha256"], "raw_bytes": len(raw),
+        "decoded_HTML_sha256": hashlib.sha256(decoded.encode()).hexdigest(), "decoded_HTML_characters": len(decoded),
+        "chosen_codec": encoding, "incremental_decoder_buffer_limit": min(4096, bounds["max_block_bytes"]),
+        "decoder_profile": DECODER_PROFILE, "parser_profile": PARSER_PROFILE,
+        "stdlib_entity_pattern_sha256": hashlib.sha256(html._charref.pattern.encode()).hexdigest(),
+        "normalization_profile": NORMALIZATION_PROFILE, "limits": deepcopy(bounds),
+        "producer_code_pins": producer_pins, "decoder_runs": [], "decoder_controls": [],
+        "zero_output_references": [], "output_fragments": [],
+        "raw_partition": [],
+        "scope": "supplied_snapshot_decoder_and_markup_transformation_only_not_historical_producer_or_legal_correspondence",
+        "whole_raw_emission_envelopes_may_include_other_decoded_characters": True,
+        "old_V2_reports_or_raw_mapping_authority_promoted": False, "authority": dict(AUTHORITY)}
+    budget = _OriginBudget(bounds, result)
+    runs, controls = _origin_decode(raw, decoded, encoding, bounds, budget)
+    parser = _OriginMarkup(bounds, decoded, runs, budget); parser.feed(decoded); parser.finish()
+    _need(parser.pending_origin_event is None and parser.absolute == len(decoded), "complete original parser input accounting required")
+    _need(parser.blocks == checked["document"]["blocks"] and parser.comments == checked["document"]["comments"]
+          and _normal("".join(parser.title_parts)) == checked["document"]["title_observation"],
+          "origin trace changed original V2 verbatim/blocks/comments/title")
+    text = checked["document"]["document_text"]
+    cursor = byte_cursor = 0
+    for fragment in parser.origin_fragments:
+        lo, hi = fragment["output_char_start"], fragment["output_char_end"]
+        _need(lo == cursor and fragment["output_utf8_byte_start"] == byte_cursor
+              and hashlib.sha256(text[lo:hi].encode()).hexdigest() == fragment["output_text_sha256"],
+              "complete ordered output origin partition differs")
+        cursor = hi; byte_cursor = fragment["output_utf8_byte_end"]
+    _need(cursor == len(text) and byte_cursor == len(text.encode()), "complete extracted UTF8 origin population required")
+    result.update(decoder_runs=runs, decoder_controls=controls,
+        zero_output_references=parser.zero_output_references, output_fragments=parser.origin_fragments,
+        raw_partition=_origin_raw_partition(raw, parser.origin_fragments, controls, bounds, budget))
+    _need(_origin_producer_code_pins() == producer_pins, "origin producer code changed during complete replay")
+    result["origin_map_sha256"] = _digest(result)
+    _need(len(_wire(result)) <= bounds["max_report_bytes"], "complete origin-map report byte bound exceeded")
+    return result
+
+
+def validate_official_document_origin_map(origin_map, view_report, raw, *, expected_origin_map_sha256,
+        expected_view_report_sha256, **trusted_inputs):
+    _sha(expected_origin_map_sha256)
+    _need(official_document_origin_map_sha256(origin_map) == expected_origin_map_sha256,
+          "independent FULL origin-map pin differs")
+    expected = prepare_official_document_origin_map(view_report, raw,
+        expected_view_report_sha256=expected_view_report_sha256, **trusted_inputs)
+    _need(_wire(origin_map) == _wire(expected), "origin map differs from complete independent original regeneration")
+    return expected
+
+
+def official_origin_span_fragments(origin_map, view_report, raw, *, selector, expected_origin_map_sha256,
+        expected_view_report_sha256, **trusted_inputs):
+    checked = validate_official_document_origin_map(origin_map, view_report, raw,
+        expected_origin_map_sha256=expected_origin_map_sha256,
+        expected_view_report_sha256=expected_view_report_sha256, **trusted_inputs)
+    projection_view = validate_official_document_view(view_report, raw,
+        expected_report_sha256=expected_view_report_sha256, **trusted_inputs)
+    _need(type(selector) is dict, "closed exact V2 selector required")
+    expected = _selector(projection_view, selector.get("char_start"), selector.get("char_end"))
+    _need(type(selector) is dict and _wire(selector) == _wire(expected), "exact existing V2 occurrence identity required")
+    text = projection_view["document"]["document_text"]
+    result = {"schema": "legal-official-markup-origin-span/v1", "profile": ORIGIN_MAP_PROFILE,
+        "origin_map_sha256": expected_origin_map_sha256, "selector": deepcopy(selector), "fragments": [],
+        "whole_transform_envelopes_are_not_minimal_raw_substrings": True, "authority": dict(AUTHORITY)}
+    budget = _OriginBudget(checked["limits"], result)
+    fragments = []
+    byte_cursor = selector["utf8_byte_start"]
+    for original in checked["output_fragments"]:
+        lo, hi = max(selector["char_start"], original["output_char_start"]), min(selector["char_end"], original["output_char_end"])
+        if lo >= hi:
+            continue
+        fragment = {key: deepcopy(value) for key, value in original.items() if key != "source_origins"}
+        fragment["source_origins"] = []
+        clipped = text[lo:hi].encode()
+        fragment.update(output_char_start=lo, output_char_end=hi,
+            output_utf8_byte_start=byte_cursor, output_utf8_byte_end=byte_cursor + len(clipped),
+            output_text_sha256=hashlib.sha256(clipped).hexdigest())
+        byte_cursor += len(clipped)
+        offset = lo - original["output_char_start"]
+        if fragment["kind"] == "decoded_literal":
+            start = original["decoded_html_char_start"] + offset
+            fragment.update(decoded_html_char_start=start, decoded_html_char_end=start + hi - lo,
+                source_origins=_origin_sources(checked["decoder_runs"], start, start + hi - lo, budget))
+        elif fragment["kind"] == "HTML_reference_decoded":
+            fragment.update(entity_output_char_start=original["entity_output_char_start"] + offset,
+                entity_output_char_end=original["entity_output_char_start"] + offset + hi - lo)
+        if fragment["kind"] != "decoded_literal":
+            for source in original["source_origins"]:
+                budget.source(source)
+                fragment["source_origins"].append(deepcopy(source))
+        budget.record(fragment)
+        fragments.append(fragment)
+    _need(sum(f["output_char_end"] - f["output_char_start"] for f in fragments)
+          == selector["char_end"] - selector["char_start"] and byte_cursor == selector["utf8_byte_end"],
+          "complete selected origin population required")
+    result["fragments"] = fragments
+    _need(len(_wire(result)) <= checked["limits"]["max_report_bytes"], "complete origin-span byte bound exceeded")
+    return result
+
+
+__all__ += ["ORIGIN_MAP_SCHEMA", "ORIGIN_MAP_PROFILE", "prepare_official_document_origin_map",
+    "official_document_origin_map_sha256", "validate_official_document_origin_map", "official_origin_span_fragments"]

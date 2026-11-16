@@ -81,3 +81,68 @@ its internal `sampling_report_sha256` payload digest; the two hashes have
 different scopes.
 Both public hashing and validation enforce the fixed hard report budget;
 validation also checks the report's lowered byte limit before source replay.
+
+## Optional original HTML origin map
+
+The additive `legal_official_document_views` origin-map APIs trace an exact,
+independently pinned HTML snapshot into its existing V2 normalized view. They
+reuse the strict declared-codec decoder and original markup parser. The sampler,
+its units and the V2 report are unchanged; mapping is an explicit separate call.
+
+```python
+from ipfs_datasets_py.logic.autoformal import legal_official_document_views as views
+
+# Pass only the independent view inputs; sampler-only controls stay separate.
+view_inputs = {
+    key: trusted_acquisition_inputs[key]
+    for key in ("descriptor", "expected_descriptor_sha256",
+                "expected_raw_sha256", "expected_raw_bytes")
+}
+if "view_limits" in trusted_acquisition_inputs:
+    view_inputs["limits"] = trusted_acquisition_inputs["view_limits"]
+view = views.prepare_official_document_view(raw, **view_inputs)
+view_pin = views.document_view_report_sha256(view)
+origin_map = views.prepare_official_document_origin_map(
+    view, raw, expected_view_report_sha256=view_pin,
+    **view_inputs,
+)
+origin_pin = views.official_document_origin_map_sha256(origin_map)
+fragments = views.official_origin_span_fragments(
+    origin_map, view, raw, selector=exact_existing_v2_selector,
+    expected_origin_map_sha256=origin_pin,
+    expected_view_report_sha256=view_pin,
+    **view_inputs,
+)
+```
+
+The sampler's `limits` and `expected_sampling_report_sha256` are not view
+arguments. Its `view_limits` becomes the view owner's `limits` only in this
+explicit input projection.
+
+Retain both full canonical pins independently with the exact reports and raw
+body. The full pins include the reports' internal seals; the map's inner
+`origin_map_sha256` field alone is not its full report pin.
+`validate_official_document_origin_map` regenerates the complete V2 view and map.
+Projection also checks the exact existing selector and occurrence ID, so repeated
+text retains distinct positions. The new map binds path-independent source-code
+hashes and Python identity and rechecks its producer pins during preparation.
+
+The map accounts for entity decoding, whitespace collapse and trimming, inline
+markup gaps, original decoder/BOM/state-control bytes, and synthetic interblock
+LFs. A partial entity or stateful decoder emission can use a whole transformation
+envelope with an exact decoded subrange. Such an envelope is explicitly coarser
+than a minimal raw substring and can contain bytes for other decoded characters.
+Synthetic separators have no source-byte origins; removed bytes remain in the
+complete raw partition. Every selected fragment retains the V2 Unicode and UTF8
+coordinate system.
+
+Complete provenance populations must fit the existing lowered node/report limits.
+The optional origin profile also bounds an incremental decoder buffer at
+`min(4096, max_block_bytes)` and refuses an untraceable emission relation. A map
+refusal leaves the existing V2 view available under its original contract.
+
+A verified map establishes only the supplied snapshot's transformation. Existing
+V2 and parent-report raw-mapping flags stay unchanged. It authenticates no
+historical cache producer, governing edition, legal role or meaning, review,
+training gold, graph admission or Lean proof; all existing authority flags remain
+false.

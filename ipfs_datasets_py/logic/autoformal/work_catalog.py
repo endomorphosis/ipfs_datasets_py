@@ -113,11 +113,23 @@ def list_components():
     return deepcopy(load_catalog()["components"])
 
 
-def component(component_id):
-    """Return one detached owner record without reading backlog or archives."""
+_COMPONENT_CORE = ("id", "path", "owner_module", "ownership_role", "status",
+                   "apis", "evidence_ids", "required", "compatibility_dependency")
+
+
+def component(component_id, *, full=False):
+    """Return detached compact ownership/API/evidence navigation metadata.
+
+    Explicit ``full=True`` preserves the previous complete-record access,
+    including notes and all unknown historical/profile keys. Neither form
+    reads the referenced evidence, backlog, archives or registered owners.
+    """
+    if type(full) is not bool:
+        raise TypeError("full must be a bool")
     for item in load_catalog()["components"]:
         if item["id"] == component_id:
-            return deepcopy(item)
+            return (deepcopy(item) if full else
+                    {key: deepcopy(item[key]) for key in _COMPONENT_CORE if key in item})
     raise KeyError(component_id)
 
 
@@ -199,6 +211,118 @@ def _canonical_path(root, relative):
     return target
 
 
+def _declared_api_names(tree):
+    """Recognize declarations and one explicit, static factory export shape.
+
+    This inventories source bindings, not runtime callability. In particular,
+    arbitrary nested declarations, aliases and ``__all__`` are not API evidence.
+    """
+    definitions = (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
+    names = {node.name for node in tree.body if isinstance(node, definitions)}
+
+    class Scope(ast.NodeVisitor):
+        def __init__(self, body):
+            self.bindings, self.external, self.returns = {}, set(), []
+            self.suspends = False
+            self.star_import = False
+            for node in body:
+                self.visit(node)
+
+        def bind(self, name):
+            if name:
+                self.bindings[name] = self.bindings.get(name, 0) + 1
+
+        def visit_Name(self, node):
+            if isinstance(node.ctx, (ast.Store, ast.Del)):
+                self.bind(node.id)
+
+        def visit_FunctionDef(self, node):
+            self.bind(node.name)
+            # Headers evaluate in this scope; nested bodies have their own.
+            for field, value in ast.iter_fields(node):
+                if field not in {"name", "body"}:
+                    for child in value if isinstance(value, list) else [value]:
+                        if isinstance(child, ast.AST):
+                            self.visit(child)
+
+        visit_AsyncFunctionDef = visit_FunctionDef
+
+        def visit_ClassDef(self, node):
+            self.visit_FunctionDef(node)
+            # Class bodies execute now. Explicit global/nonlocal declarations
+            # can affect enclosing bindings even though ordinary class names do not.
+            body = Scope(node.body)
+            self.external.update(body.external)
+            self.star_import |= body.star_import
+
+        def visit_Lambda(self, node):
+            self.visit(node.args)
+
+        def visit_Import(self, node):
+            for alias in node.names:
+                self.bind(alias.asname or alias.name.split(".")[0])
+
+        def visit_ImportFrom(self, node):
+            for alias in node.names:
+                if alias.name == "*":
+                    self.star_import = True
+                self.bind(alias.asname or alias.name)
+
+        def visit_Global(self, node):
+            self.external.update(node.names)
+
+        visit_Nonlocal = visit_Global
+
+        def visit_Return(self, node):
+            self.returns.append(node)
+            self.generic_visit(node)
+
+        def visit_Yield(self, node):
+            self.suspends = True
+
+        visit_YieldFrom = visit_Await = visit_Yield
+
+        def generic_visit(self, node):
+            if isinstance(node, (ast.ExceptHandler, ast.MatchAs, ast.MatchStar)):
+                self.bind(node.name)
+            elif isinstance(node, ast.MatchMapping):
+                self.bind(node.rest)
+            super().generic_visit(node)
+
+    module = Scope(tree.body)
+    for factory, assignment in zip(tree.body, tree.body[1:]):
+        if (not isinstance(factory, ast.FunctionDef) or factory.decorator_list
+                or module.star_import or factory.name in module.external
+                or module.bindings.get(factory.name) != 1
+                or factory.args.posonlyargs or factory.args.args or factory.args.kwonlyargs
+                or factory.args.vararg or factory.args.kwarg
+                or not isinstance(assignment, ast.Assign) or len(assignment.targets) != 1
+                or not isinstance(assignment.targets[0], ast.Tuple)
+                or not isinstance(assignment.value, ast.Call)
+                or not isinstance(assignment.value.func, ast.Name)
+                or assignment.value.func.id != factory.name
+                or assignment.value.args or assignment.value.keywords):
+            continue
+        local = Scope(factory.body)
+        if (local.suspends or local.star_import or len(local.returns) != 1
+                or factory.body[-1] is not local.returns[0]
+                or not isinstance(local.returns[0].value, ast.Tuple)):
+            continue
+        targets, returned = assignment.targets[0].elts, local.returns[0].value.elts
+        if (not targets or len(targets) != len(returned)
+                or any(not isinstance(node, ast.Name) for node in targets + returned)
+                or len({node.id for node in targets}) != len(targets)
+                or len({node.id for node in returned}) != len(returned)):
+            continue
+        callables = {node.name for node in factory.body if isinstance(node, definitions)
+                     and not node.decorator_list and local.bindings.get(node.name) == 1
+                     and node.name not in local.external}
+        names.update(target.id for target, value in zip(targets, returned)
+                     if value.id in callables and module.bindings.get(target.id) == 1
+                     and target.id not in module.external)
+    return names
+
+
 def check_catalog(repo_root=None):
     """Check explicit canonical paths, API declarations and metadata joins.
 
@@ -263,9 +387,7 @@ def check_catalog(repo_root=None):
                 if len(raw) > _MAX_COMPONENT_BYTES:
                     raise ValueError("component exceeds bounded source size")
                 tree = ast.parse(raw, filename=path_text)
-                names = {node.name for node in tree.body
-                         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef,
-                                              ast.ClassDef))}
+                names = _declared_api_names(tree)
                 missing = sorted(set(apis) - names)
                 if missing:
                     raise ValueError("declared APIs missing: " + ", ".join(missing))
@@ -332,7 +454,7 @@ def main(argv=None):
     mode.add_argument("--component", metavar="ID", help="print one compact implementation owner")
     mode.add_argument("--task", metavar="ID", help="print compact scope for one active task")
     parser.add_argument("--full", action="store_true",
-                        help="include historical fields only with explicit --task ID")
+                        help="include complete historical metadata with --task ID or --component ID")
     mode.add_argument("--check", action="store_true",
                       help="check explicit canonical files/docs/APIs using metadata and AST")
     mode.add_argument("--section", choices=["components", "selected_evidence",
@@ -342,8 +464,8 @@ def main(argv=None):
     parser.add_argument("--repo-root", type=Path,
                         help="explicit canonical checkout root for --check")
     args = parser.parse_args(argv)
-    if args.full and args.task is None:
-        parser.error("--full requires --task ID")
+    if args.full and args.task is None and args.component is None:
+        parser.error("--full requires --task ID or --component ID")
     try:
         if args.check:
             result = check_catalog(args.repo_root)
@@ -352,7 +474,7 @@ def main(argv=None):
         elif args.task:
             result = task(args.task, full=args.full)
         elif args.component is not None:
-            result = component(args.component)
+            result = component(args.component, full=args.full)
         elif args.section:
             result = section(args.section)
         else:

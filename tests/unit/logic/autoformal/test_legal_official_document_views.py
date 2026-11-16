@@ -296,3 +296,212 @@ def test_repeated_long_selectors_refuse_aggregate_bytes_before_large_list_alloca
     with pytest.raises(ValueError, match="selector output byte bound"):
         views.exact_view_occurrences(report, raw, expected_report_sha256=digest(report), text="a" * 512, **args)
     assert 0 < len(observed) < 100  # Thousands of physical overlaps were not accumulated.
+
+
+# Additive original-byte lineage; these controls confer no legal authority.
+def origin_fixture(*, statute=None, encoding="utf-8"):
+    source = html(statute=statute, head='<meta charset="' + encoding + '"><title>Origin metadata</title>')
+    raw = source.encode(encoding)
+    args = inputs(raw)
+    report = views.prepare_official_document_view(raw, **args)
+    before = deepcopy(report)
+    mapping = views.prepare_official_document_origin_map(report, raw, expected_view_report_sha256=digest(report), **args)
+    assert report == before
+    return raw, args, report, mapping
+
+
+def origin_span(raw, args, report, mapping, text, *, number=0):
+    selectors = views.exact_view_occurrences(report, raw, expected_report_sha256=digest(report), text=text, **args)
+    return views.official_origin_span_fragments(mapping, report, raw, selector=selectors[number],
+        expected_origin_map_sha256=digest(mapping), expected_view_report_sha256=digest(report), **args)
+
+
+def test_origin_map_exact_entity_whitespace_inline_origins_preserve_full_V2_report():
+    raw, args, report, mapping = origin_fixture(statute='<p>Caf&eacute;  <i>x</i>&nbsp;雪</p>')
+    selected = origin_span(raw, args, report, mapping, 'Café x 雪')
+    entity, = [f for f in selected['fragments'] if f['kind'] == 'HTML_reference_decoded']
+    assert raw[entity['source_origins'][0]['raw_byte_start']:entity['source_origins'][-1]['raw_byte_end']] == b'&eacute;'
+    spaces = [f for f in selected['fragments'] if f['kind'] == 'collapsed_whitespace']
+    assert len(spaces) == 2
+    assert [b''.join(raw[s['raw_byte_start']:s['raw_byte_end']] for s in f['source_origins']) for f in spaces] == [b'  ', b'&nbsp;']
+    assert any(raw[p['raw_byte_start']:p['raw_byte_end']] == b'<i>' and p['kind'] == 'not_in_normalized_output' for p in mapping['raw_partition'])
+    assert mapping['raw_partition'][0]['raw_byte_start'] == 0 and mapping['raw_partition'][-1]['raw_byte_end'] == len(raw)
+    assert all(a['raw_byte_end'] == b['raw_byte_start'] for a,b in zip(mapping['raw_partition'],mapping['raw_partition'][1:]))
+    assert all(flag is False for flag in mapping['authority'].values())
+    assert report['normalized_view']['raw_html_coordinate_mapping_verified'] is False
+    assert views.validate_official_document_view(report, raw, expected_report_sha256=digest(report), **args) == report
+
+
+@pytest.mark.parametrize('encoding', ['utf-8-sig', 'utf-16', 'utf-32', 'windows-1252', 'iso2022_jp', 'utf-7'])
+def test_origin_map_reuses_shared_strict_codec_with_actual_BOM_state_and_emission_relations(encoding):
+    text = 'Café' if encoding == 'windows-1252' else '雪雷'
+    raw, args, report, mapping = origin_fixture(statute='<p>' + text + '</p>', encoding=encoding)
+    decoded, chosen = v1._decode_source_html_with_encoding(raw)
+    assert v1._decode_source_html(raw) == decoded and mapping['chosen_codec'] == chosen
+    result = origin_span(raw, args, report, mapping, text)
+    assert result['selector']['text'] == text
+    assert all(0 <= s['raw_byte_start'] < s['raw_byte_end'] <= len(raw) for f in result['fragments'] for s in f['source_origins'])
+    if encoding in {'utf-8-sig', 'utf-16', 'utf-32', 'iso2022_jp'}:
+        assert mapping['decoder_controls']
+    if encoding == 'utf-7':
+        assert any(r['relation'] == 'emission_envelope' for r in mapping['decoder_runs'])
+        partial=origin_span(raw,args,report,mapping,text[0])
+        source_origin,=[source for fragment in partial['fragments'] for source in fragment['source_origins']]
+        run=mapping['decoder_runs'][source_origin['decoder_run_index']]
+        assert source_origin['relation']=='emission_envelope'
+        assert source_origin['minimal_per_character_raw_slice_claimed'] is False
+        assert source_origin['decoded_html_char_end']-source_origin['decoded_html_char_start']==1
+        assert run['decoded_char_end']-run['decoded_char_start']==3
+        assert (source_origin['raw_byte_start'],source_origin['raw_byte_end'])==(run['raw_byte_start'],run['raw_byte_end'])
+        assert raw[source_origin['raw_byte_start']:source_origin['raw_byte_end']]==(text+'<').encode('utf-7')
+    assert all(flag is False for flag in result['authority'].values())
+
+
+def test_origin_map_LF_only_parser_positions_empty_reference_and_literal_less_than_are_exact():
+    raw, args, report, mapping = origin_fixture(statute='<p>A\r\nB\rC\u2028D &#1; E < F</p>')
+    result = origin_span(raw, args, report, mapping, 'A B C D E < F')
+    assert result['selector']['text'] == 'A B C D E < F'
+    zero, = mapping['zero_output_references']
+    assert b''.join(raw[s['raw_byte_start']:s['raw_byte_end']] for s in zero['source_origins']) == b'&#1;'
+    assert any(p['kind'] == 'not_in_normalized_output' and b'&#1;' in raw[p['raw_byte_start']:p['raw_byte_end']] for p in mapping['raw_partition'])
+
+
+def test_origin_map_partial_multicodepoint_entity_repeated_occurrences_and_synthetic_LF_remain_distinct():
+    raw, args, report, mapping = origin_fixture(statute='<p>X&NotEqualTilde;Y</p><p>X&NotEqualTilde;Y</p>')
+    text = 'X≂̸Y'
+    first = origin_span(raw,args,report,mapping,text,number=0)
+    second = origin_span(raw,args,report,mapping,text,number=1)
+    assert first['selector']['occurrence_id'] != second['selector']['occurrence_id']
+    assert first['fragments'][0]['source_origins'] != second['fragments'][0]['source_origins']
+    partial = origin_span(raw,args,report,mapping,'̸',number=0)
+    fragment, = partial['fragments']
+    assert fragment['entity_output_char_start'] == 1 and fragment['entity_output_char_end'] == 2
+    assert fragment['partial_entity_uses_whole_transform_envelope'] is True
+    assert b''.join(raw[s['raw_byte_start']:s['raw_byte_end']] for s in fragment['source_origins']) == b'&NotEqualTilde;'
+    cross = origin_span(raw,args,report,mapping,text+'\n'+text)
+    gap, = [f for f in cross['fragments'] if f['kind'] == 'synthetic_interblock_LF']
+    assert gap['source_origins'] == [] and gap['output_utf8_byte_end'] - gap['output_utf8_byte_start'] == 1
+
+
+@pytest.mark.parametrize('damage', ['profile', 'codec', 'gap', 'origin', 'output_byte', 'decoder', 'producer', 'authority'])
+def test_origin_map_resealed_mutations_do_not_replace_complete_original_regeneration(damage):
+    raw,args,report,mapping=origin_fixture(statute='<p>Caf&eacute; duty.</p>')
+    changed=deepcopy(mapping)
+    if damage=='profile': changed['profile']='other/v1'
+    elif damage=='codec': changed['chosen_codec']='ascii'
+    elif damage=='gap': changed['output_fragments'].pop()
+    elif damage=='origin': changed['output_fragments'][-1]['source_origins'][0]['raw_byte_start']+=1
+    elif damage=='output_byte': changed['output_fragments'][-1]['output_utf8_byte_end']+=1
+    elif damage=='decoder': changed['decoder_runs'][0]['raw_byte_end']-=1
+    elif damage=='producer': changed['producer_code_pins']['python_version'][0]+=1
+    else: changed['authority']['legal_roles_verified']=True
+    changed.pop('origin_map_sha256');changed['origin_map_sha256']=digest(changed)
+    with pytest.raises(views.OfficialDocumentViewError):
+        views.validate_official_document_origin_map(changed,report,raw,expected_origin_map_sha256=digest(changed),expected_view_report_sha256=digest(report),**args)
+
+
+@pytest.mark.parametrize('damage', ['raw', 'map_pin', 'selector'])
+def test_origin_map_independent_raw_map_and_exact_occurrence_pins_refuse_substitution(damage):
+    raw,args,report,mapping=origin_fixture(statute='<p>Café duty.</p>')
+    selector,=views.exact_view_occurrences(report,raw,expected_report_sha256=digest(report),text='Café',**args)
+    if damage=='raw':raw=raw.replace(b'duty',b'evil')
+    elif damage=='selector':selector=dict(selector,occurrence_id='foreign')
+    with pytest.raises(views.OfficialDocumentViewError):
+        views.official_origin_span_fragments(mapping,report,raw,selector=selector,
+            expected_origin_map_sha256='f'*64 if damage=='map_pin' else digest(mapping),
+            expected_view_report_sha256=digest(report),**args)
+
+
+def test_origin_map_stateful_buffer_refusal_is_explicit_without_narrowing_existing_view_decoder():
+    source=html(statute='<p>'+'雪'*4000+'</p>',head='<meta charset="utf-7"><title>Origin</title>')
+    raw=source.encode('utf-7');args=inputs(raw)
+    report=views.prepare_official_document_view(raw,**args)
+    assert report['status']=='comparison_view_extracted'
+    assert v1._decode_source_html(raw)==source
+    with pytest.raises(views.OfficialDocumentViewError,match='explicit origin-profile bound'):
+        views.prepare_official_document_origin_map(report,raw,expected_view_report_sha256=digest(report),**args)
+
+
+def test_origin_map_complete_token_bound_refuses_without_truncating_existing_V2_view(monkeypatch):
+    source=html(prefix='',statute='<p>'+'x&amp;'*40+'</p>')
+    raw=source.encode();args=inputs(raw)
+    report=views.prepare_official_document_view(raw,limits={'max_nodes':16},**args)
+    assert report['status']=='comparison_view_extracted'
+    before=deepcopy(report)
+    counter=origin_entity_match_probe(monkeypatch)
+    with pytest.raises(views.OfficialDocumentViewError,match='origin-token bound'):
+        views.prepare_official_document_origin_map(report,raw,expected_view_report_sha256=digest(report),limits={'max_nodes':16},**args)
+    assert counter['matches']<40
+    assert report==before and all(flag is False for flag in report['authority'].values())
+
+
+def test_origin_span_rechecks_full_view_after_map_replay_before_using_mutable_caller_text(monkeypatch):
+    raw,args,report,mapping=origin_fixture(statute='<p>Café duty.</p>')
+    pin=digest(report)
+    selector,=views.exact_view_occurrences(report,raw,expected_report_sha256=pin,text='Café',**args)
+    original=views.validate_official_document_origin_map
+    def replay_then_mutate(*values,**keywords):
+        result=original(*values,**keywords)
+        report['document']['document_text']='X'*len(report['document']['document_text'])
+        return result
+    monkeypatch.setattr(views,'validate_official_document_origin_map',replay_then_mutate)
+    with pytest.raises(views.OfficialDocumentViewError,match='independent full document-view report pin'):
+        views.official_origin_span_fragments(mapping,report,raw,selector=selector,
+            expected_origin_map_sha256=digest(mapping),expected_view_report_sha256=pin,**args)
+
+
+
+def origin_entity_match_probe(monkeypatch):
+    import html as stdlib_html
+    original=stdlib_html._charref
+    counter={'matches':0}
+    class Probe:
+        pattern=original.pattern
+        def sub(self,*args,**kwargs):return original.sub(*args,**kwargs)
+        def finditer(self,value):
+            for match in original.finditer(value):
+                counter['matches']+=1
+                yield match
+    monkeypatch.setattr(stdlib_html,'_charref',Probe())
+    return counter
+
+
+def test_origin_map_serialized_budget_refuses_before_dense_source_origin_population_is_retained(monkeypatch):
+    source=html(prefix='',statute='<p>'+'a&amp;'*200+'</p>')
+    raw=source.encode();args=inputs(raw)
+    report=views.prepare_official_document_view(raw,limits={'max_report_bytes':12000},**args)
+    assert report['status']=='comparison_view_extracted'
+    before=deepcopy(report);counter=origin_entity_match_probe(monkeypatch)
+    with pytest.raises(views.OfficialDocumentViewError,match='origin observation byte budget'):
+        views.prepare_official_document_origin_map(report,raw,expected_view_report_sha256=digest(report),limits={'max_report_bytes':12000},**args)
+    assert counter['matches']<200 and report==before
+
+
+def test_origin_map_producer_pins_are_path_independent_and_rechecked_after_complete_replay(monkeypatch):
+    raw,args,report,mapping=origin_fixture(statute='<p>Café duty.</p>')
+    pins=mapping['producer_code_pins']
+    assert set(pins['source_sha256'])=={'mapping_owner','shared_decoder_owner','stdlib_html','stdlib_html_parser'}
+    assert all(len(value)==64 and '/' not in value for value in pins['source_sha256'].values())
+    original=views._origin_producer_code_pins;calls={'count':0}
+    def changed_after_start():
+        result=original();calls['count']+=1
+        if calls['count']>1:result['source_sha256']['mapping_owner']='f'*64
+        return result
+    monkeypatch.setattr(views,'_origin_producer_code_pins',changed_after_start)
+    with pytest.raises(views.OfficialDocumentViewError,match='producer code changed'):
+        views.prepare_official_document_origin_map(report,raw,expected_view_report_sha256=digest(report),**args)
+
+
+@pytest.mark.parametrize('damage',['container','string'])
+def test_origin_map_caller_payload_bounds_precede_canonical_buffer_and_ignore_offered_looser_limits(monkeypatch,damage):
+    def forbidden_wire(_value):
+        raise AssertionError('oversized caller payload reached canonical allocation')
+    monkeypatch.setattr(views,'_wire',forbidden_wire)
+    if damage=='container':
+        offered={'output_fragments':[None]*(views.DEFAULT_LIMITS['max_nodes']+1),
+            'limits':{'max_nodes':views.DEFAULT_LIMITS['max_nodes']*2}}
+    else:
+        monkeypatch.setitem(views.DEFAULT_LIMITS,'max_report_bytes',128)
+        offered={'note':'x'*129,'limits':{'max_report_bytes':2**62}}
+    with pytest.raises(views.OfficialDocumentViewError,match='before serialization'):
+        views.official_document_origin_map_sha256(offered)

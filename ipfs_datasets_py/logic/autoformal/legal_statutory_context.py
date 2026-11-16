@@ -65,7 +65,7 @@ class _EncodingDeclarations(HTMLParser):
                 r"\bencoding\s*=\s*[\"']([^\"']+)[\"']", data, re.I))
 
 
-def _decode_source_html(raw: bytes) -> str:
+def _decode_source_html_with_encoding(raw: bytes) -> tuple[str, str]:
     """Honor exact declared encodings; undeclared source must be valid UTF8.
 
     Byte hashes retain the original input. A deterministic strict decode keeps
@@ -99,9 +99,14 @@ def _decode_source_html(raw: bytes) -> str:
         if len(names) > 1 or bom and names and not names <= compatible:
             raise ValueError("conflicting source HTML encoding declarations")
         encoding = bom or next(iter(names), "utf-8")
-        return raw.decode(encoding, errors="strict")
+        return raw.decode(encoding, errors="strict"), encoding
     except (LookupError, UnicodeError) as error:
         raise ValueError("source HTML must strictly decode under its declared encoding or UTF8") from error
+
+
+def _decode_source_html(raw: bytes) -> str:
+    """Preserve the existing strict decoder result; optional lineage uses its codec."""
+    return _decode_source_html_with_encoding(raw)[0]
 
 
 def extract_document(raw: bytes, *, url: str, edition: int, legal_id: str) -> dict:
